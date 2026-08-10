@@ -16,11 +16,11 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener was
-left by the sealed end of the 2026-08-10 embedded-MTP realistic-suite run. Its
-four sequential scored/forensic control and MTP3 services closed without a
-survivor, listener, or forced kill, and every lifetime returned GPU 0 from
-`43 -> 43 MiB`; retained fault scans are clear. Recheck immediately before any
-operational change.
+left by the sealed end of the 2026-08-10 embedded-MTP four-service realistic
+scaling run. All four independent services closed without a survivor,
+listener, or forced kill, and every B70 returned from `29,911 MiB` loaded to
+`43 MiB`; retained device/server fault scans are clear. Recheck immediately
+before any operational change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70. The validated F16-KV reference reaches 32K; the next service target
@@ -208,14 +208,45 @@ now passes local preflight and the authenticated no-write server dry-run
 original supplement's historical false field remains unchanged. The old-oracle
 mismatch is not evidence of context-caused quality loss: the identities differ,
 prior evidence favors ubatch sensitivity, and causality remains unresolved.
-This is a scoped one-B70 short realistic-suite win, not middle/near-32K,
-second-card, c2, concurrency, or production evidence. The staged packet is the
-first matching one-B70 Q8_0 category candidate; the next
-gate is middle/near-32K retention followed by concurrency generalization. The
-full chronology and sealed hashes are in the
+The approved result itself is a scoped one-B70 short realistic-suite win; its
+claim does not silently expand to middle/near-32K, c2, concurrency, or
+production. Separate later parallel packets now cover cross-band retention and
+four independent one-slot services. After two preserved failed crossover
+attempts and a successful all-four B70 unbind/`xe` module reload recovery
+without FLR or reboot, the recovered two-wave same-card packet classifies
+`PASS_CROSSBAND_MTP_RETENTION_WIN`. Middle D99/D511 ratios are
+`2.784953x / 2.962436x`; near-32K ratios are `2.899193x / 3.036799x`. All eight
+arms pass full-512 scored/replay, same-card token/content equality, cache-zero,
+full-offload, overlap, counter, and cleanup gates. Root manifest/comparison/
+completion hashes are `40e8892a... / 53d739a2... / 1e791ec0...`.
+
+The subsequent three-wave four-service realistic packet classifies
+`PASS_REALISTIC_MTP_FOUR_SERVICE_SCALE`. Its 12 rows pass the sealed retained-
+position exactness policy and are cache-zero; four-way overlaps are
+`8.747546 / 15.359000 / 15.232755 s`. Aggregate D99 is
+`139.098563 tok/s` (`1.003634x` prompt-balanced isolated retention), aggregate
+full-window rate is `136.884848 tok/s` (`0.998850x`), and normalized service
+fairness is `0.970874 / 0.976385`. Every service is `66/66` offloaded at
+`29,911 MiB` and returns `43 -> 43 MiB`. Manifest/gate/completion hashes are
+`e9329ff9... / c91df0d9... / bc2aa4e2...`.
+
+Both later results remain nonpromotable, non-LocalMaxxing parallel evidence;
+they prove neither same-server c2 nor eight slots. The approved isolated record
+remains `cmsn6b0bm0074o001uw5f9kod`. Full integrated-MTP c2/32K is a fit
+`NO-GO`: adding second-slot target/draft KV and recurrent allocations to the
+measured one-slot residency projects about `32,683 MiB` before useful headroom.
+It was not launched or hidden with CPU offload. The next bounded work is at
+least 100 mixed cold requests, one hour of four-service turnover,
+clean-build/isolated reproduction where needed, and production routing/
+lifecycle generalization with sustained fairness and clean restarts.
+
+The initial realistic chronology and sealed hashes are in the
 [realistic-suite closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md);
 the preceding two-prompt evidence remains in the
 [short diagnostic closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md).
+The failed crossover, recovery, recovered cross-band, and four-service evidence
+is in the
+[scaling and recovery closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-crossband-four-service-recovery-closeout.md).
 See the [crossover closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md),
 the [ubatch screen](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md),
 the [VDR crossover](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md),
@@ -224,9 +255,10 @@ The durable authority is
 [`the adaptive optimization strategy`](experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md).
 The first replaceable tactical proposal is
 [`the four-GPU optimization and c2 plan`](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-gpu-optimization-and-c2-plan.md).
-The embedded-MTP lane has advanced through its scoped short realistic-suite
-gate. Its next work is middle/near-32K retention and concurrency generalization;
-vision and the Q8-KV long-context stretch remain later, separate identities.
+The embedded-MTP lane has advanced through its scoped short, middle/near-32K
+retention, and four independent one-slot service gates. Its next work is
+turnover/durability and production generalization; vision and the Q8-KV
+long-context stretch remain later, separate identities.
 
 Laguna is paused at the user's request. The August 4--7 Laguna no-drafter
 graph result is diagnostic, not promoted: its benchmark completed
@@ -1850,18 +1882,25 @@ loaded service.
    fails primary/stretch performance at `10.144217 tok/s` aggregate D511,
    `5.185072 / 10.391849 tok/s` per request, and `0.498956` fairness. Keep it as
    the ordinary-c2 comparator; do not claim the eight-slot objective or rerun
-   the unchanged recipe. The separate embedded-MTP identity now passes its
-   fixed cold realistic suite against a matched fresh control at `2.107154x`
-   median D99 with exact full tokens/content on all 12 prompts. Preserve the
-   source packet's legacy-oracle `FAIL` and the separate supplemental PASS;
-   do not submit the 11x512-plus-one-EOS result. Advance MTP only to
-   middle/near-32K retention and concurrency generalization. Do not promote
-   either concurrent screen or rerun the banked VDR2 packets. Directly measure a
+   the unchanged recipe. The separate embedded-MTP identity passes its fixed
+   cold realistic suite against a matched fresh control at `2.107154x` median
+   D99 with exact full tokens/content on all 12 prompts, and its isolated
+   LocalMaxxing record is already approved as `cmsn6b0bm0074o001uw5f9kod`.
+   Preserve the source packet's legacy-oracle `FAIL` and separate supplemental
+   PASS. Its recovered cross-band packet then retains D99/D511 gains of
+   `2.784953x / 2.962436x` at middle and `2.899193x / 3.036799x` near 32K. Its
+   four-service realistic packet retains `1.003634x / 0.998850x` aggregate
+   D99/full-window rate with `0.970874 / 0.976385` normalized fairness. Both are
+   nonpromotable, non-LocalMaxxing parallel evidence, not c2 or eight-slot
+   claims. Full MTP c2/32K is a `~32,683 MiB` fit `NO-GO`; do not launch it or
+   use CPU offload. Advance to at least 100 mixed cold requests, one hour of
+   four-service turnover, clean-build/isolated reproduction where needed, and
+   production routing/lifecycle generalization. Do not promote either
+   concurrent screen or rerun the banked VDR2 packets. Directly measure a
    synchronized natural-stop pair as a separate relevance gate. Add a held-out
-   prompt that
-   naturally sustains 512 tokens so the serving scorecard does not depend only
-   on forcing short JSON answers past EOS. Do not reuse Laguna flags or result
-   directories implicitly.
+   prompt that naturally sustains 512 tokens so the serving scorecard does not
+   depend only on forcing short JSON answers past EOS. Do not reuse Laguna
+   flags or result directories implicitly.
 2. Recheck processes, listeners, Git status, device health, memory, and model
    storage before launch. The idle statement above is a closure-time fact, not
    standing authorization.

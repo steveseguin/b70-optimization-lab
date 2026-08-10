@@ -35,9 +35,17 @@ banks an honest ordinary-c2 comparator, not the per-card or eight-slot serving
 objective. The separate integrated-MTP identity now passes the fixed cold
 12-prompt realistic suite against a matched fresh control: median D99 improves
 `17.107772 -> 36.048707 tok/s` (`2.107154x`) with full candidate/control token
-and content equality on all prompts. This is a scoped one-B70 short result;
-middle/near-32K, concurrency, second-card, and production gates
-remain open.
+and content equality on all prompts. A recovered two-wave crossover retains
+that identity's gain at middle and near-32K, with D99 ratios
+`2.784953x / 2.899193x` and D511 ratios `2.962436x / 3.036799x`. A three-wave
+four-service realistic gate then retained `1.003634x` aggregate D99 and
+`0.998850x` full-window rate versus the prompt-balanced isolated reference,
+with normalized fairness `0.970874 / 0.976385`. Both later packets are
+nonpromotable, non-LocalMaxxing parallel evidence. They cover four independent
+one-slot services, not c2, eight slots, or production. Full integrated-MTP
+c2/32K remains a fit `NO-GO` at a projected `~32,683 MiB`; it was not launched
+or hidden with CPU offload.
+
 LocalMaxxing approved the integrated Q8_0 record as
 `cmsn6b0bm0074o001uw5f9kod` at `36.04870684253697 tok/s`.
 
@@ -63,8 +71,10 @@ This lane has one primary identity:
 MTP and vision are optional, separate identities. They must not be mixed into
 the target-only baseline identity or result packet. The integrated publisher
 MTP artifact now has a matched-control realistic-suite PASS described below.
-It remains a separate, scoped one-B70 short identity and is not yet a
-cross-band, concurrent, production, or submit-ready result.
+Its middle/near-32K retention and four independent one-slot service gates also
+pass, but those are explicitly `performance_promotable=false` and
+`localmaxxing_submission_ready=false`. They are not same-server c2, eight-slot,
+or production evidence; the approved isolated record remains separate.
 
 The selected deployment direction is four independent one-GPU processes. The
 primary candidate is two slots per process, for up to eight cluster-wide
@@ -234,8 +244,32 @@ Validated results under the correctness-qualified default
   exact Q8_0 queue passes local preflight and authenticated no-write server
   dry-run. LocalMaxxing approved the final record as
   `cmsn6b0bm0074o001uw5f9kod` at `36.04870684253697 tok/s`. This clears the
-  scoped realistic-suite gate only; it is not middle/near-32K, concurrency,
-  second-card, or production evidence;
+  scoped isolated realistic-suite gate only; later parallel packets do not
+  change its claim class;
+- the recovered two-wave, same-card middle/near-32K MTP crossover classifies
+  `PASS_CROSSBAND_MTP_RETENTION_WIN`. All eight arms pass two full-512 scored
+  rows plus replay, cache-zero, full-offload, counter, and cleanup gates;
+  same-card control/MTP tokens and content are exact. Middle retains
+  `-ub 128` and measures D99/D511 ratios `2.784953x / 2.962436x`; near-32K
+  retains `-ub 1024` and measures `2.899193x / 3.036799x`. First scored
+  four-way overlap is `65.930913 / 65.114247 s`. The 260-entry root manifest
+  `40e8892a...`, comparison `53d739a2...`, and completion `1e791ec0...` verify,
+  as do all eight child manifests. This remains a nonpromotable,
+  non-LocalMaxxing `parallel-functional-screen`;
+- the fixed realistic suite also passes a three-wave, four-service scaling
+  gate with one independent `-c 32768 -np 1` service per B70. All 12 rows are
+  exact under the sealed retained-position policy and cache-zero; each service
+  is `66/66` offloaded at `29,911 MiB` and returns `43 -> 43 MiB`. Four-way
+  overlaps are `8.747546 / 15.359000 / 15.232755 s`. Aggregate D99 is
+  `139.098563 tok/s` (`1.003634x` of the prompt-balanced isolated reference),
+  full-window rate is `136.884848 tok/s` (`0.998850x`), and normalized fairness
+  is `0.970874 / 0.976385`. Manifest `e9329ff9...`, gate `c91df0d9...`, and
+  completion `bc2aa4e2...` verify. The packet is nonpromotable and non-
+  LocalMaxxing; it is not c2 or an eight-slot claim;
+- full integrated-MTP c2/32K remains a fit `NO-GO`. Measured one-slot MTP3
+  residency is `29,911 MiB`; the second target/draft KV and recurrent-state
+  allocations project about `32,683 MiB` before useful headroom. Do not launch
+  the unchanged shape or use CPU offload to relabel the miss;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
   26,573 MiB to 43 MiB, and retained empty device/server fault scans.
 
@@ -321,10 +355,19 @@ measurement packet remains `FAIL` with manifest `8b0e18c...`; the separate
 supplemental packet preserves it and seals manifest `d44cef31...` as
 `PASS_REALISTIC_MTP_WIN`. The old-oracle mismatch is not evidence of
 context-caused quality loss: the identities differ, prior evidence favors
-ubatch sensitivity, and the cause remains unresolved. Advance this exact MTP3
-policy to middle and near-32K retention and then concurrency generalization;
-do not submit the current packet. See
+ubatch sensitivity, and the cause remains unresolved. The subsequent
+cross-band retention and four-service gates now pass, but remain nonpromotable
+and non-LocalMaxxing. Preserve the two failed crossover roots as negative
+evidence: the first contains the GPU-2 reset/orphan and stale seal; the second
+contains the masked-ordinal telemetry failure plus real BDF-43 fault
+contamination. The successful passive-first recovery used an all-four B70
+unbind and `xe` module reload without FLR or reboot, then passed mapping, idle,
+peer, per-card compute, four-rank XCCL, generation, journal, and cleanup gates.
+Advance to turnover, durability, isolated reproduction where needed, and
+production lifecycle/routing work. See
 [`notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md`](notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md).
+The complete failed-attempt, recovery, crossover, and scaling chronology is in
+[`notes/2026-08-10-embedded-mtp-crossband-four-service-recovery-closeout.md`](notes/2026-08-10-embedded-mtp-crossband-four-service-recovery-closeout.md).
 
 The validation sequence remains useful for future runtimes:
 
@@ -341,10 +384,12 @@ The validation sequence remains useful for future runtimes:
    separate quality identity and compare it against the F16-KV corpus.
 6. Optional MTP only if ordinary c2 does not meet the serving objective. The
    integrated publisher artifact has passed its scoped one-B70 short realistic
-   suite against a matched fresh control. Run middle/near-32K retention and
-   concurrency generalization next, then a second-card gate. Do not cross-pair
-   converters without tensor and metadata validation, and do not graft the
-   third-party head-only extraction into the baseline.
+   suite against a matched fresh control, plus nonpromotable middle/near-32K
+   retention and four independent one-slot service gates. Full MTP c2/32K is a
+   fit `NO-GO`. Run turnover/durability and production generalization next,
+   with isolated reproduction where needed. Do not cross-pair converters
+   without tensor and metadata validation, and do not graft the third-party
+   head-only extraction into the baseline.
 7. Optional vision only after the text optimization and context envelope are
    settled. Use the same-repository, same-revision F16 projector pinned in
    [`optional-artifacts-manifest.json`](optional-artifacts-manifest.json).
@@ -451,8 +496,12 @@ cards were active. See
 - Embedded publisher-MTP diagnostic closeout: [`notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md`](notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md)
 - Embedded publisher-MTP realistic runner: [`scripts/run-embedded-mtp-vdr2-realistic.sh`](scripts/run-embedded-mtp-vdr2-realistic.sh)
 - Embedded publisher-MTP realistic closeout: [`notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md`](notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md)
+- Embedded publisher-MTP cross-band runner: [`scripts/run-embedded-mtp-vdr2-crossband-crossover.sh`](scripts/run-embedded-mtp-vdr2-crossband-crossover.sh)
+- Embedded publisher-MTP four-service runner: [`scripts/run-embedded-mtp-four-service-realistic.sh`](scripts/run-embedded-mtp-four-service-realistic.sh)
+- Embedded publisher-MTP recovery/cross-band/four-service closeout: [`notes/2026-08-10-embedded-mtp-crossband-four-service-recovery-closeout.md`](notes/2026-08-10-embedded-mtp-crossband-four-service-recovery-closeout.md)
 - Embedded publisher-MTP LocalMaxxing packet builder: [`scripts/build-embedded-mtp-localmaxxing-packet.py`](scripts/build-embedded-mtp-localmaxxing-packet.py)
-- Embedded publisher-MTP staged no-submit queue: [`localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.queue.json`](localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.queue.json)
+- Embedded publisher-MTP approved submission queue: [`localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.queue.json`](localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.queue.json)
+- Embedded publisher-MTP HTTP-201 submission receipt: [`localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.submission-receipt.json`](localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.submission-receipt.json)
 - Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
 - Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 

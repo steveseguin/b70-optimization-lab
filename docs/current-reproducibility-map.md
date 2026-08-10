@@ -102,6 +102,7 @@ Start with:
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-formal-c2-near32k-vdr2-functional-pass-performance-fail.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md`;
+- `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-crossband-four-service-recovery-closeout.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`.
 
 The official isolated short full-512 c1 packet now passes and has an exact
@@ -273,8 +274,55 @@ does not require padding to
 512. The hash-bound Q8_0 queue passes local preflight and authenticated server
 dry-run. LocalMaxxing approved the final record as
 `cmsn6b0bm0074o001uw5f9kod` at `36.04870684253697 tok/s`.
-Advance to middle/near-32K retention and concurrency generalization, not tuning
-against the stale oracle.
+
+The next two crossover attempts remain important negative evidence. Root
+`embedded-mtp-vdr2-crossband-crossover-20260810T120559.307858138Z` failed
+before measurement with a BDF `0000:43:00.0` CCS/BCS reset/`-ENOENT`, an
+orphaned lifecycle, GPU-3 IGC teardown termination, and a stale 114-entry root
+seal. After lifecycle hardening, root
+`embedded-mtp-vdr2-crossband-crossover-20260810T122232.328585286Z` failed
+closed when child `ZE_AFFINITY_MASK` filtering reindexed devices while
+telemetry still requested the global XPU-SMI ordinal; its 92-entry root
+manifest `726f4b38...` verifies, but the same window is contaminated by a real
+BDF-43 GuC timeout/reset storm. Neither root contains a measurement.
+
+Passive-first recovery used an all-four B70 unbind and `xe` module reload,
+without PCI FLR or reboot. The frozen
+`recovery/xe-reload-20260810T0833.fxkD91` packet passes four-device BDF/UUID
+mapping and idle gates, peer access, four per-card compute smokes, four-rank
+XCCL all-reduce, an exact isolated VDR2 generation canary, clean journal, and
+final cleanup. Its root manifest/summary/completion hashes are
+`a898b658... / 666aa472... / c2810643...`; no B70/xe fault followed reload.
+
+The recovered two-wave same-card crossover at
+`embedded-mtp-vdr2-crossband-crossover-20260810T125036.354085966Z` passes as
+`PASS_CROSSBAND_MTP_RETENTION_WIN`. Middle keeps `-ub 128` and measures
+D99/D511 ratios `2.784953x / 2.962436x`; near-32K keeps `-ub 1024` and measures
+`2.899193x / 3.036799x`. All eight arms pass two full-512 scored rows plus
+replay, same-card control/MTP token/content equality, cache-zero, full-offload,
+counter, overlap, and cleanup gates. Manifest/comparison/completion hashes are
+`40e8892a... / 53d739a2... / 1e791ec0...`. This remains a nonpromotable,
+non-LocalMaxxing `parallel-functional-screen`.
+
+The subsequent three-wave four-service realistic gate at
+`embedded-mtp-four-service-realistic-20260810T131718.247962407Z` also passes.
+Each B70 hosts one independent `-c 32768 -np 1` integrated-MTP service. All 12
+rows pass the sealed retained-position exactness policy and are cache-zero;
+four-way overlaps are `8.747546 / 15.359000 / 15.232755 s`. Aggregate D99 is
+`139.098563 tok/s` (`1.003634x` of the prompt-balanced isolated reference),
+full-window rate is `136.884848 tok/s` (`0.998850x`), and normalized fairness
+is `0.970874 / 0.976385`. Manifest/gate/completion hashes are
+`e9329ff9... / c91df0d9... / bc2aa4e2...`. This packet is also nonpromotable
+and non-LocalMaxxing; it proves four one-slot services, not c2, eight slots, or
+production.
+
+Full integrated-MTP c2/32K remains a fit `NO-GO`: measured one-slot residency
+is `29,911 MiB`, while the second target/draft KV and recurrent allocations
+project about `32,683 MiB` before useful headroom. Do not launch the unchanged
+shape or use CPU offload to obscure the miss. The next bounded work is
+turnover/durability, isolated reproduction where needed, and production
+routing/lifecycle generalization. Keep the sealed ordinary VDR2 c2 functional
+PASS/performance FAIL as the honest comparator.
 
 ## Historical Qwen3.6 27B Optimization Lane
 

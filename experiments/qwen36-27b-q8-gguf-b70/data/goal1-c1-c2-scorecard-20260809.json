@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-08-10",
-  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_banked_vdr1_closed_four_service_validated_formal_c2_near32k_functional_pass_performance_fail_embedded_mtp_realistic_matched_control_pass_localmaxxing_packet_dryrun_pass",
+  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_banked_vdr1_closed_four_service_validated_formal_c2_near32k_functional_pass_performance_fail_embedded_mtp_realistic_matched_control_pass_localmaxxing_approved_crossband_retention_pass_four_service_scaling_pass_mtp_c2_fit_no_go",
   "identity": {
     "model": "Qwen3.6-27B-Q8_0.gguf",
     "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
@@ -1773,7 +1773,237 @@
       "submission_artifact_manifest_sha256": "a364aba10b30aee3ef70e32736adea3df3eb110c47e0ebb3dfeb8f49e5ea6090"
     },
     "decision": "bank_scoped_realistic_mtp_win_and_approved_localmaxxing_record",
-    "next_gate": "LocalMaxxing approved Q8_0 record cmsn6b0bm0074o001uw5f9kod under the natural-EOS-after-100 policy. Run middle and near32k retention, then concurrency generalization and a second-card confirmation."
+    "next_gate": "LocalMaxxing approved Q8_0 record cmsn6b0bm0074o001uw5f9kod under the natural-EOS-after-100 policy. The separate cross-band and four-service packets below now pass as nonpromotable, non-LocalMaxxing parallel evidence. Advance to turnover, durability, isolated reproduction where needed, and production generalization."
   },
-  "next_gate": "The integrated publisher-MTP identity now passes the fixed cold 12-prompt realistic suite against matched_fresh_control_v1: full candidate/control tokens and content are exact on every prompt, median D99 improves 17.107772 to 36.048707 tok/s (2.107154x), matched full-window throughput improves 17.017022 to 34.545186 tok/s (2.030037x), and native throughput improves 17.050342 to 34.612807 tok/s (2.030036x). Preserve the original measurement root's immutable FAIL from its identity-mismatched legacy oracle and the separate supplemental PASS. The shortest ordinary-EOS row reaches 248 tokens and includes the required generated-token 1/100 timing endpoints for D99. LocalMaxxing approved Q8_0 record cmsn6b0bm0074o001uw5f9kod at 36.04870684253697 tok/s. Advance to middle/near32k retention and concurrency generalization; the sealed formal ordinary-c2 packet remains the honest functional comparator and performance failure."
+  "embedded_mtp_crossband_recovery": {
+    "failed_attempts": [
+      {
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-vdr2-crossband-crossover-20260810T120559.307858138Z",
+        "status": "FAIL",
+        "measurement_started": false,
+        "failure": "gpu2_bdf43_ccs_bcs_reset_enoent_orphaned_lifecycle_gpu3_igc_teardown_termination_stale_root_seal",
+        "root_artifact_manifest_entries": 114,
+        "root_artifact_manifest_sha256": "4b897e44454881851647815a18f7a5caf8bce5290f8596c32e5511ddf9b6d331",
+        "root_artifact_manifest_verified": false,
+        "stale_path": "wave1/gpu1-middle-mtp3/server.stdout.log",
+        "completion_status_present": false,
+        "final_integrity": {
+          "all_gpus_idle": false,
+          "all_ports_closed": false,
+          "body_completed": false
+        },
+        "decision": "preserve_failed_packet_without_repair_or_measurement_claim"
+      },
+      {
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-vdr2-crossband-crossover-20260810T122232.328585286Z",
+        "status": "FAIL",
+        "measurement_started": false,
+        "failure": "child_inherited_ze_affinity_mask_then_addressed_global_xpu_smi_ordinal_in_filtered_device_set",
+        "telemetry_evidence": "gpu1 xpu-smi-loaded plus 30 retries returned Error: device not found",
+        "device_fault_contamination": "bdf_0000_43_00_0_guc_timeout_reset_storm",
+        "device_error_scan_lines": 3060,
+        "root_artifact_manifest_entries": 92,
+        "root_artifact_manifest_sha256": "726f4b388eb03be3f9e9879e6427fcf117a896e9eaceeaa8419d53b1a0d52098",
+        "root_artifact_manifest_verified": true,
+        "completion_status_present": false,
+        "cleanup_conclusive": true,
+        "decision": "preserve_failed_packet_without_performance_interpretation"
+      }
+    ],
+    "harness_fixes": {
+      "lifecycle_hardening_commit": "6892f215d",
+      "telemetry_sanitation_commit": "76ec2046c",
+      "recovered_reactivation_commit": "9cac98d3a",
+      "telemetry_policy": "globally_locked_process_local_clear_of_level_zero_oneapi_sycl_ur_selectors_with_sysman_enabled"
+    },
+    "recovery": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/recovery/xe-reload-20260810T0833.fxkD91",
+      "status": "PASS",
+      "evidence_valid": true,
+      "method": "all_four_b70_unbind_and_xe_module_reload",
+      "reboot_performed": false,
+      "pci_flr_performed": false,
+      "device_count": 4,
+      "exact_bdf_uuid_mapping": true,
+      "peer_access_passed": true,
+      "per_card_compute_count": 4,
+      "xccl_allreduce_rank_count": 4,
+      "generation_canary": {
+        "status": "PASS_ORACLE_EXACT",
+        "rows": 2,
+        "full_offload_layers": "65/65",
+        "cached_tokens_all_zero": true,
+        "d100_median_tok_s": 16.576240655262673,
+        "d511_median_tok_s": 16.580272229643057,
+        "cleanup": "43_to_43_mib",
+        "artifact_manifest_sha256": "c7512a3ad9396f4c654379650d087457f1f7c8617d12170bd91532086637d012"
+      },
+      "b70_xe_faults_after_reload": 0,
+      "unrelated_corrected_nvme_pcie_receiver_event_retained": true,
+      "root_artifact_manifest_entries": 125,
+      "root_artifact_manifest_sha256": "a898b658f3029524bcddc5c70b6e1f07d1753e3d640aefba815ad2cee3524db5",
+      "root_artifact_manifest_verified": true,
+      "summary_sha256": "666aa4722017478e979c7ed719bf693512fb9fc401ba4b01b538bf655d5cff53",
+      "completion_status_sha256": "c2810643aefb403670a2c94054f95d341cb9940d7d9a008215bb8a2683d7b455"
+    }
+  },
+  "embedded_mtp_crossband_retention": {
+    "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-vdr2-crossband-crossover-20260810T125036.354085966Z",
+    "classification": "PASS_CROSSBAND_MTP_RETENTION_WIN",
+    "evidence_class": "parallel-functional-screen",
+    "evidence_valid": true,
+    "performance_passed": true,
+    "performance_promotable": false,
+    "localmaxxing_submission_ready": false,
+    "independent_manifest_and_metric_audits": "GO_no_discrepancies",
+    "design": "two_wave_same_card_control_mtp_order_crossover_two_cards_per_band",
+    "policy": {
+      "context_tokens": 32768,
+      "max_tokens": 512,
+      "ignore_eos": true,
+      "scored_rows_per_arm": 2,
+      "same_lifetime_replay_per_prompt": 1,
+      "middle_batch_ubatch": [
+        1024,
+        128
+      ],
+      "near32k_batch_ubatch": [
+        1024,
+        1024
+      ]
+    },
+    "quality": {
+      "arms": 8,
+      "all_arm_gates_passed": true,
+      "same_card_control_candidate_full_token_ids_exact": true,
+      "same_card_control_candidate_full_content_exact": true,
+      "stream_replay_exact": true,
+      "cached_tokens_all_zero": true,
+      "full_offload": true,
+      "cleanup_passed": true
+    },
+    "wave_first_scored_four_way_overlap_s": [
+      65.93091340802494,
+      65.11424685799284
+    ],
+    "middle": {
+      "control_d99_tok_s": 15.071644642736132,
+      "mtp3_d99_tok_s": 41.973818020405034,
+      "d99_ratio": 2.784952738428222,
+      "control_d511_tok_s": 15.016411985013098,
+      "mtp3_d511_tok_s": 44.485166750615846,
+      "d511_ratio": 2.962436485827213,
+      "prompt_processing_ratio": 0.9725012232079029,
+      "ttft_ratio": 1.0283656474615839,
+      "minimum_row_d99_ratio": 2.778348027527416,
+      "minimum_row_d511_ratio": 2.956873288925028,
+      "accepted_over_drafted": 0.9718670076726342,
+      "accepted_per_verification": 2.900763358778626
+    },
+    "near32k": {
+      "control_d99_tok_s": 13.66565538176242,
+      "mtp3_d99_tok_s": 39.61937406361539,
+      "d99_ratio": 2.8991931200379644,
+      "control_d511_tok_s": 13.662820064556456,
+      "mtp3_d511_tok_s": 41.491242761811996,
+      "d511_ratio": 3.0367993258907746,
+      "prompt_processing_ratio": 0.9533605812350537,
+      "ttft_ratio": 1.0488877625785797,
+      "minimum_row_d99_ratio": 2.8503175748700076,
+      "minimum_row_d511_ratio": 3.002378047017957,
+      "accepted_over_drafted": 0.9743918053777209,
+      "accepted_per_verification": 2.9157088122605366
+    },
+    "seal": {
+      "artifact_manifest_entries": 260,
+      "artifact_manifest_sha256": "40e8892aee31e8aeb8e46d473d1c9e6a399edfe0416f154d47f8e63a76434fb3",
+      "artifact_manifest_verified": true,
+      "child_manifests_verified": 8,
+      "comparison_sha256": "53d739a21fd9052a4ae09db71c5bc8c4fa04ab65b969a03f3970374e269609e5",
+      "completion_status_sha256": "1e791ec09fecf4f4d727d1a7a0a6158d554dc28d9ced398e81fa47ad685ca6c5"
+    },
+    "claim_scope": "middle_and_near32k_parallel_retention_only_not_official_isolated_not_c2_not_production_not_localmaxxing"
+  },
+  "embedded_mtp_four_service_realistic": {
+    "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-four-service-realistic-20260810T131718.247962407Z",
+    "classification": "PASS_REALISTIC_MTP_FOUR_SERVICE_SCALE",
+    "evidence_class": "official-four-service-realistic-scaling-gate",
+    "evidence_valid": true,
+    "performance_passed": true,
+    "performance_promotable": false,
+    "localmaxxing_submission_ready": false,
+    "independent_raw_artifact_audit": "GO_no_discrepancies",
+    "topology": {
+      "gpu_count": 4,
+      "independent_services": 4,
+      "slots_per_service": 1,
+      "context_tokens": 32768,
+      "waves": 3,
+      "requests_per_wave": 4,
+      "fixed_prompts": 12,
+      "ordinary_eos": true,
+      "replay_requests": 0
+    },
+    "quality": {
+      "rows": 12,
+      "all_rows_passed": true,
+      "cached_tokens_all_zero": true,
+      "token_identity_policy": "sealed_retained_isolated_position_binding",
+      "current_stream_missing_positions": 2,
+      "missing_position_ids_directly_observed": false,
+      "four_distinct_physical_b70s": true,
+      "four_distinct_service_pids": true,
+      "full_offload_layers": "66/66",
+      "loaded_mib_per_service": 29911,
+      "cleanup_per_service": "43_to_43_mib",
+      "forced_kills": 0,
+      "survivors": 0,
+      "ports_closed": true,
+      "device_and_server_error_scans_empty": true
+    },
+    "wave_four_way_overlap_s": [
+      8.747545719146729,
+      15.358999729156494,
+      15.232755422592163
+    ],
+    "performance": {
+      "reference_denominator": "sum_of_four_prompt_balanced_isolated_service_medians",
+      "reference_aggregate_d99_tok_s": 138.59492590210883,
+      "observed_aggregate_d99_tok_s": 139.09856304654312,
+      "aggregate_d99_retention": 1.0036338786658756,
+      "reference_aggregate_full_tok_s": 137.04239942142863,
+      "observed_aggregate_full_tok_s": 136.88484820206227,
+      "aggregate_full_retention": 0.9988503468997076,
+      "d99_service_fairness": 0.97087415646858,
+      "full_service_fairness": 0.97638524689418,
+      "minimum_per_prompt_d99_retention": 0.9905559181430907,
+      "accepted_tokens": 3716,
+      "draft_tokens": 6427,
+      "verifications": 2145,
+      "aggregate_retention_floor": 0.95,
+      "service_retention_floor": 0.9,
+      "service_fairness_floor": 0.9,
+      "all_per_prompt_service_aggregate_and_fairness_gates_passed": true
+    },
+    "seal": {
+      "artifact_manifest_entries": 112,
+      "artifact_manifest_sha256": "e9329ff9ac1e71c076d42c6df5c97f1532577c3048b6c7911a8c56f1a24f9448",
+      "artifact_manifest_verified": true,
+      "capture_sha256": "0a1e1911a425803dd12cb4bd3d0ee7a3c249802203ae11a6ff671e2adaa00107",
+      "four_service_gate_sha256": "c91df0d92f1b254e13b54e092cb10a2c633ad08b5199a06c3d31b4bf12f8ef02",
+      "completion_status_sha256": "bc2aa4e270ed318ec21c40bf4d0466ccb0a837f33bd8eedc5608322bd25d0f98"
+    },
+    "claim_scope": "four_independent_one_slot_realistic_services_not_same_server_c2_not_eight_slots_not_production_not_localmaxxing"
+  },
+  "embedded_mtp_c2_near32k_fit": {
+    "decision": "NO_GO",
+    "launch_performed": false,
+    "cpu_offload_used": false,
+    "measured_c1_mtp3_loaded_mib": 29911,
+    "projected_c2_mtp3_loaded_mib": 32683,
+    "reason": "second_target_and_draft_kv_plus_recurrent_state_exceed_safe_b70_capacity_before_useful_headroom",
+    "ordinary_target_only_c2_comparator": "c2_near32k_vdr2_formal",
+    "retry_condition": "materially_different_lower_memory_design_with_new_identity_and_preregistration"
+  },
+  "next_gate": "Bank the independently sealed integrated-MTP short, middle, near32k, and four-service evidence with its exact scope. Cross-band and four-service results are parallel nonpromotable, non-LocalMaxxing evidence; cmsn6b0bm0074o001uw5f9kod remains the separate approved isolated one-B70 record. Full integrated-MTP c2/32K remains a fit NO-GO, while the formal ordinary VDR2 c2 packet remains the honest functional comparator and performance failure. Advance to clean-build or isolated reproduction where needed, at least 100 mixed cold requests, one hour of four-service turnover, and production routing/lifecycle generalization with sustained fairness and clean restarts."
 }

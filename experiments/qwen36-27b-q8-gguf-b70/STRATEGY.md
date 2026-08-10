@@ -32,7 +32,18 @@ endpoints for D99.
 The no-all-512 LocalMaxxing policy audit, local preflight, and authenticated
 server dry-run pass. LocalMaxxing approved the final Q8_0 record as
 `cmsn6b0bm0074o001uw5f9kod` at `36.04870684253697 tok/s`.
-Middle/near-32K, concurrency, second-card, and production gates remain open.
+A recovered two-wave same-card crossover now retains the MTP gain at middle
+and near-32K: D99 ratios are `2.784953x / 2.899193x`, and D511 ratios are
+`2.962436x / 3.036799x`. A separate 12-prompt, three-wave four-service gate
+measures `139.098563 tok/s` aggregate D99 (`1.003634x` of its prompt-balanced
+isolated reference) and `136.884848 tok/s` full-window rate (`0.998850x`), with
+normalized fairness `0.970874 / 0.976385`. Both are parallel, nonpromotable,
+non-LocalMaxxing evidence rather than replacements for the isolated record.
+They cover four independent one-slot services, not c2 or the eight-slot goal.
+Full MTP c2/32K remains a fit `NO-GO` at a projected `~32,683 MiB` before
+useful headroom; no launch or CPU-offload workaround is authorized. Production,
+turnover, clean-build/isolated reproduction where needed, and sustained
+durability gates remain open.
 
 ## Goals
 
@@ -96,16 +107,23 @@ Repeat until Goals 1--5 pass together:
    second card; integrate compatible wins.
 6. Record every result, including failures and the condition for retrying them.
 
-The immediate bounded frontier is embedded-MTP middle/near-32K retention and
-concurrency generalization. Preserve all prior statuses: the short diagnostic
+The immediate bounded frontier is turnover, durability, and production
+generalization of the banked embedded-MTP identity: at least 100 mixed cold
+requests, one hour of four-service turnover, clean restart/idle behavior, and a
+production-facing routing/lifecycle design. Add clean-build or isolated
+second-card reproduction where the parallel crossovers do not satisfy an
+official isolated claim. Preserve all prior statuses: the short diagnostic
 keeps its historical `ONE_BOUNDED_NMAX_PMIN_FOLLOWUP`; the first realistic
 parser run remains `FAIL`; and the complete realistic measurement root remains
 `FAIL` because its identity-mismatched legacy oracle matched 6/12 rows. The
 separate immutable supplement, not a rewrite, classifies the same captures as
-`PASS_REALISTIC_MTP_WIN` against the matched fresh control. Do not tune against
-the stale oracle or submit the current 11x512-plus-one-EOS packet. The ordinary
-VDR2 c2 packet remains the honest functional comparator and performance
-failure.
+`PASS_REALISTIC_MTP_WIN` against the matched fresh control. The recovered
+cross-band packet is `PASS_CROSSBAND_MTP_RETENTION_WIN`; the four-service packet
+is `PASS_REALISTIC_MTP_FOUR_SERVICE_SCALE`. Both remain nonpromotable and
+non-LocalMaxxing. Do not tune against the stale oracle or resubmit the approved
+isolated record. The ordinary VDR2 c2 packet remains the honest functional
+comparator and performance failure; integrated MTP c2/32K remains a fit
+`NO-GO` unless a materially different lower-memory design is preregistered.
 
 The four rotating GPU lanes are: reference/reproduction, prompt processing,
 decode/state, and concurrency/long-context or independent challenge. Parallel
