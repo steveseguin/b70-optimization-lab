@@ -128,9 +128,9 @@ def server_argv(mode: str) -> list[str]:
 def server_log(mode: str) -> str:
     text = """
 llama_model_loader: - kv 17: qwen35.block_count u32 = 65
+llama_model_loader: - kv 35: qwen35.nextn_predict_layers u32 = 1
 print_info: n_layer               = 64
 print_info: n_layer_all           = 65
-print_info: n_layer_nextn         = 1
 load_tensors: offloaded 66/66 layers to GPU
 common_params_fit_impl: getting device memory data for initial parameters:
 common_params_fit_impl: projected to use 29500 MiB of device memory vs. 32300 MiB of free device memory
@@ -392,6 +392,13 @@ llamacpp:spec_decode_num_accepted_tokens_per_pos_total{position="2"} 20
                         "will leave 1100 >= 1200 MiB",
                     ),
                     "fit_no_changes_exact",
+                ),
+                "nextn-evidence-missing": (
+                    server_log("control").replace(
+                        "llama_model_loader: - kv 35: qwen35.nextn_predict_layers u32 = 1\n",
+                        "",
+                    ),
+                    "one_nextn_layer",
                 ),
                 "n-batch-missing": (
                     server_log("control").replace(

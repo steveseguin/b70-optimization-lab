@@ -548,7 +548,9 @@ def gate_server(args: argparse.Namespace) -> int:
         "block_count_65": bool(re.search(r"qwen35\.block_count\s+u32\s+= 65\b", text)),
         "trunk_layers_64": bool(re.search(r"n_layer\s+= 64\b", text)),
         "all_layers_65": bool(re.search(r"n_layer_all\s+= 65\b", text)),
-        "one_nextn_layer": bool(re.search(r"n_layer_nextn\s+= 1\b", text)),
+        "one_nextn_layer": bool(
+            re.search(r"qwen35\.nextn_predict_layers\s+u32\s+= 1\b", text)
+        ),
         "full_offload_66": "offloaded 66/66 layers to GPU" in text,
         "ctx_32768": bool(re.search(r"n_ctx\s+= 32768\b", text)),
         "runtime_n_batch_1024": bool(n_batch_values) and all(
