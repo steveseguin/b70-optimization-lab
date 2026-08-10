@@ -562,19 +562,19 @@ llamacpp:spec_decode_num_accepted_tokens_per_pos_total{position="2"} 20
                 1,
             )
 
-    def test_runner_pending_gate_precedes_all_external_live_work(self) -> None:
+    def test_runner_live_ack_gate_precedes_all_external_live_work(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             empty_path = Path(raw) / "empty-path"
             forbidden_run = Path(raw) / "must-not-exist"
             empty_path.mkdir()
-            for acknowledged in (False, True):
+            for wrong_ack_present in (False, True):
                 environment = {
                     "PATH": str(empty_path),
                     "RUN_DIR": str(forbidden_run),
                 }
-                if acknowledged:
+                if wrong_ack_present:
                     environment["QWEN36_EMBEDDED_MTP_VDR2_LIVE_ACK"] = (
-                        "I_ACCEPT_ONE_ISOLATED_B70_EMBEDDED_MTP_VDR2_DIAGNOSTIC"
+                        "INTENTIONALLY_WRONG_ACK_FOR_OFFLINE_TEST"
                     )
                 result = subprocess.run(
                     ["/bin/bash", str(RUNNER_PATH)], text=True,
@@ -582,11 +582,11 @@ llamacpp:spec_decode_num_accepted_tokens_per_pos_total{position="2"} 20
                     env=environment, check=False,
                 )
                 self.assertEqual(result.returncode, 2)
-                self.assertIn("PENDING independent review and final model SHA-256", result.stderr)
+                self.assertIn("requires the exact acknowledgement", result.stderr)
                 self.assertFalse(forbidden_run.exists())
         script = RUNNER_PATH.read_text()
         self.assertIn(
-            'LIVE_ENABLE_STATE="PENDING_INDEPENDENT_REVIEW_AND_FINAL_MODEL_SHA256"',
+            'LIVE_ENABLE_STATE="REVIEWED_AND_FINAL_MODEL_SHA256_CONFIRMED"',
             script,
         )
         self.assertNotIn("--spec-draft-model", "\n".join(

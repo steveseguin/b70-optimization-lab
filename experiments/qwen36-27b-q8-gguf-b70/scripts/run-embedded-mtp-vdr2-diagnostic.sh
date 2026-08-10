@@ -5,7 +5,7 @@ set -euo pipefail
 # source-disabled until independent review and the completed model hash are
 # confirmed.  The second acknowledgement remains as defense in depth after a
 # deliberate source edit activates it.
-LIVE_ENABLE_STATE="PENDING_INDEPENDENT_REVIEW_AND_FINAL_MODEL_SHA256"
+LIVE_ENABLE_STATE="REVIEWED_AND_FINAL_MODEL_SHA256_CONFIRMED"
 LIVE_ENABLE_REQUIRED="REVIEWED_AND_FINAL_MODEL_SHA256_CONFIRMED"
 LIVE_ACK_REQUIRED="I_ACCEPT_ONE_ISOLATED_B70_EMBEDDED_MTP_VDR2_DIAGNOSTIC"
 
