@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-08-10",
-  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch1024_short_near32k_prompt_ttft_banked_middle_rejected",
+  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_decode_screen_win_pending_official_isolated",
   "identity": {
     "model": "Qwen3.6-27B-Q8_0.gguf",
     "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
@@ -437,9 +437,155 @@
     "promotion_status": "official_isolated_short_and_near32k_prompt_ttft_banked_middle_exact_rejected_no_broad_default",
     "causal_conclusion": "On GPU 0 in the current epoch, ubatch 128 exactly reproduces both old GPU-1 middle oracle rows while ubatch 1024 diverges on row 2; the controlled difference is attributable to ubatch treatment rather than card or epoch.",
     "broad_default": false,
-    "next_speed_gate": "decode_vdr2_screen",
+    "subsequent_speed_gate": "decode_vdr2_screen_completed_diagnostic",
     "full_512_decode_target_evaluated": true,
     "full_512_decode_target_passed": false
+  },
+  "c1_short_vdr2_vdr4_screen": {
+    "evidence_class": "parallel-functional-screen",
+    "evidence_valid": true,
+    "performance_promotable": false,
+    "design": "two_wave_same_card_vdr2_vdr4_crossover_balanced_across_four_gpus",
+    "implementation": {
+      "runtime_profile_commit": "e8bd43bfd07f2d35e241bb43d1f46ea4e2ed0746",
+      "compile_knob_patch_sha256": "9b211cd6d4b2648cd195decfbc865e0cdf7130d76d428c36d3384e883e1f05a4",
+      "vdr4": {
+        "runtime_profile": "q8-vdr4-control",
+        "declared_q8_reorder_vdr_mmvq": 4,
+        "runtime_manifest": "experiments/qwen36-27b-q8-gguf-b70/runtime-manifest-q8-vdr4-control.json",
+        "runtime_manifest_sha256": "d127dbaaf30e014cbae0dc59a3c0b0f61f329eabadffb74ce40e01264bee79cc",
+        "libggml_sycl_sha256": "e545c2363689de3aced49bf2f26003f499cf19eb1bb302babffc2c17132b98e7",
+        "offline_runtime_bundle_report_sha256": "38d5b975612f49ffa8f5d9a135167955f53a1157aa7cd029fa73bfd04b21eef4"
+      },
+      "vdr2": {
+        "runtime_profile": "q8-vdr2-candidate",
+        "declared_q8_reorder_vdr_mmvq": 2,
+        "runtime_manifest": "experiments/qwen36-27b-q8-gguf-b70/runtime-manifest-q8-vdr2-candidate.json",
+        "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+        "libggml_sycl_sha256": "eff26ef9562196d454fdc54cca7680304e6ce37e9a9d92ef3b514e8c34f3d0a0",
+        "offline_runtime_bundle_report_sha256": "5287a0a0909878f8875b545b8721111cb5402f098dfa6a0dc62c43092354c8d9"
+      },
+      "build_evidence_ledger": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr-screen-build-evidence-20260810/evidence-files.sha256",
+      "build_evidence_entries": 40,
+      "build_evidence_ledger_sha256": "5ab9c6eb7a4271a933fd68d97a3d1b4f9b868dfdf140f3a2f603c00547c5d291",
+      "offline_runtime_bundle_verification_passed_both": true
+    },
+    "excluded_false_start": {
+      "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/vdr-short-crossover-wave1-20260810T051851.034690276Z",
+      "reason": "wrong_outer_comparison_oracle_and_interrupted_preflight",
+      "child_original_status": 130,
+      "completion_markers_present": false,
+      "included_in_quality_or_performance": false
+    },
+    "waves": [
+      {
+        "wave": 1,
+        "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/vdr-short-crossover-wave1-20260810T051936.684356198Z",
+        "lanes": [
+          {
+            "gpu": 0,
+            "runtime_profile": "q8-vdr4-control",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "75da38538e11c06cb2853727db0c9482b736121411778b62b59e4b72f6cf00ac"
+          },
+          {
+            "gpu": 1,
+            "runtime_profile": "q8-vdr2-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "7b406c126d7033468327f562435f190d84692f5aca98cc958ab07b158dde34ae"
+          },
+          {
+            "gpu": 2,
+            "runtime_profile": "q8-vdr4-control",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "0fa60dbc17876010b4f968b09834e3533b806f61e62e36098d6d8243b5c34558"
+          },
+          {
+            "gpu": 3,
+            "runtime_profile": "q8-vdr2-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "e21690a4028f8a184159588e88010fb7428de3aef2b57ad39dc8533f85510436"
+          }
+        ]
+      },
+      {
+        "wave": 2,
+        "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/vdr-short-crossover-wave2-20260810T052417.359751349Z",
+        "lanes": [
+          {
+            "gpu": 0,
+            "runtime_profile": "q8-vdr2-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "324d43f653fbb33aa8754d1dab18fd0a715957843941dc0ad7c980f87380c114"
+          },
+          {
+            "gpu": 1,
+            "runtime_profile": "q8-vdr4-control",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "cb1779fe38fcde00c0998429ecd0d154252c43f0afae23a9d1b7de37daa6b795"
+          },
+          {
+            "gpu": 2,
+            "runtime_profile": "q8-vdr2-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "3ae63aac2357c55e47cd6711170b7081758fb8372b27aa68426b6905cb7029ca"
+          },
+          {
+            "gpu": 3,
+            "runtime_profile": "q8-vdr4-control",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "72315c573f8d0f91add7624ed7cb85d44ab4bd5bf794a078a8ac8f2c99ba51e4"
+          }
+        ]
+      }
+    ],
+    "quality": {
+      "lanes_passed": 8,
+      "oracle_status_all": "PASS_ORACLE_EXACT",
+      "rows_per_lane": 2,
+      "completion_tokens_per_row": 512,
+      "intrinsic_gate_passed_all": true,
+      "exact_result_gate_passed_all": true,
+      "post_512_canary_passed_all": true,
+      "cache_n_all_zero": true,
+      "full_offload_all": true,
+      "runtime_profile_binding_passed_all": true,
+      "artifact_manifests_verified_all": true,
+      "clean_teardown_all": true,
+      "device_server_faults_all_empty": true
+    },
+    "same_card_effect_vdr2_over_vdr4": {
+      "gpu0": {
+        "prompt_processing_ratio": 0.9955113133788871,
+        "ttft_ratio": 1.0047286118720717,
+        "decode_1_100_ratio": 1.0996277859333685,
+        "decode_1_512_ratio": 1.1002519595981821
+      },
+      "gpu1": {
+        "prompt_processing_ratio": 1.0016296108971954,
+        "ttft_ratio": 0.9983441981587362,
+        "decode_1_100_ratio": 1.0984881781605051,
+        "decode_1_512_ratio": 1.0984607335315784
+      },
+      "gpu2": {
+        "prompt_processing_ratio": 0.9985123155447575,
+        "ttft_ratio": 1.0013948669638435,
+        "decode_1_100_ratio": 1.1008652607355285,
+        "decode_1_512_ratio": 1.1008122332605088
+      },
+      "gpu3": {
+        "prompt_processing_ratio": 1.0029639410973852,
+        "ttft_ratio": 0.9967643626716701,
+        "decode_1_100_ratio": 1.1005424728595716,
+        "decode_1_512_ratio": 1.099313398375083
+      },
+      "prompt_processing_interpretation": "neutral",
+      "ttft_interpretation": "neutral",
+      "decode_interpretation": "repeatable_approximately_ten_percent_vdr2_win_on_all_four_cards"
+    },
+    "decision": "advance_vdr2_to_official_isolated_short_full512",
+    "official_performance_claim": false,
+    "next_gate": "official_isolated_vdr2_short_full512"
   },
   "c2_short": {
     "configuration": {
@@ -599,5 +745,5 @@
     "official_performance_result": null,
     "performance_target_status": "not_measured_due_to_forced_tail_exactness_failure"
   },
-  "next_gate": "Bank the official isolated short and near-32K UBATCH_SIZE=1024 prompt-processing and TTFT rows, but do not make UBATCH_SIZE=1024 a broad default: the middle packet failed exact output and the matched same-GPU UBATCH_SIZE=128 control exactly reproduced both old GPU-1 oracle rows. Move to the decode VDR2 screen rather than another ubatch gate. Keep synchronized natural-stop c2 and a held-out naturally sustained 512-token serving challenge as separate later gates."
+  "next_gate": "The balanced four-card VDR2/VDR4 short full-512 crossover passes all eight exact-output and lifecycle gates. VDR2 improves D100 and D511 by about 10% on every card while prompt processing and TTFT remain neutral, but the concurrent screen is performance_promotable=false. Run one official-isolated VDR2 short full-512 promotion packet next. Keep synchronized natural-stop c2 and a held-out naturally sustained 512-token serving challenge as separate later gates."
 }

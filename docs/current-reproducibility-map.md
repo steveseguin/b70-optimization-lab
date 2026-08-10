@@ -98,6 +98,7 @@ Start with:
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-replica-functional-smoke.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md`;
+- `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`.
 
 The official isolated short full-512 c1 packet now passes and has an exact
@@ -165,10 +166,20 @@ only and no completion marker was emitted. A subsequent same-GPU `-ub 128`
 control passed and both rows exactly matched the old GPU-1 oracle, attributing
 the divergence to the ubatch treatment rather than card or epoch. Therefore
 `-ub 1024` is not a broad default; no further ubatch integration gate is
-pending. The next bounded speed gate is the decode VDR2 screen. See
+pending.
+
+The subsequent balanced two-wave, same-card VDR2/VDR4 short full-512 screen is
+the current decode result. VDR2 improved D100 by
+`1.09849x--1.10087x` and D511 by `1.09846x--1.10081x` on every B70, while
+same-card PP and TTFT ratios stayed within `0.99551--1.00296` and
+`0.99676--1.00473`. All eight lanes passed exact oracle,
+intrinsic/result/post-canary, cache-zero, full-offload, runtime-binding, and
+cleanup gates. The concurrent screen remains `parallel-functional-screen`,
+`performance_promotable=false`; its only promotion decision is to advance VDR2
+to one official-isolated short full-512 gate. See
 `../experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json`
 and
-`../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md`.
+`../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md`.
 
 ## Historical Qwen3.6 27B Optimization Lane
 

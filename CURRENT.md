@@ -16,9 +16,9 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener is
-running after the 2026-08-10 matched GPU-0 middle-context `-ub 128` control;
-GPU 0 returned from 43 MiB to 43 MiB. Recheck immediately before any
-operational change.
+running after the corrected 2026-08-10 VDR2/VDR4 four-GPU crossover Wave 2;
+all four lanes closed cleanly and returned to 43--46 MiB. Recheck immediately
+before any operational change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70. The validated F16-KV reference reaches 32K; the next service target
@@ -107,10 +107,20 @@ packet is `FAIL_ORACLE_EXACT`, has no completion marker, and its
 only. A matched GPU-0 `-ub 128` control then passed and both rows exactly
 matched the old GPU-1 oracle. This same-card control attributes the divergence
 to the ubatch treatment rather than card or epoch. Do not make `-ub 1024` a
-broad default or spend another gate on broad ubatch integration. The next
-bounded speed gate is the decode VDR2 screen.
-See the [crossover closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md)
-and [ubatch screen](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md).
+broad default or spend another gate on broad ubatch integration.
+
+The subsequent balanced two-wave, same-card four-B70 short full-512 screen is
+the current decode result. Changing only reordered-Q8 MMVQ VDR4 to VDR2
+improved D100 by `1.09849x--1.10087x` and D511 by
+`1.09846x--1.10081x` on every card; same-card prompt-processing and TTFT ratios
+remained within `0.99551--1.00296` and `0.99676--1.00473`, respectively. All
+eight lanes passed exact oracle, intrinsic/result/post-canary, cache-zero,
+full-offload, runtime-binding, and cleanup gates. The screen is
+`parallel-functional-screen`, `performance_promotable=false`; it is not an
+official score. VDR2 advances to one official-isolated short full-512 gate.
+See the [crossover closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md),
+the [ubatch screen](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md),
+and the [VDR crossover](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md).
 The durable authority is
 [`the adaptive optimization strategy`](experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md).
 The first replaceable tactical proposal is
@@ -1725,9 +1735,12 @@ loaded service.
    source lane. Bank the official isolated short and near-32K
    `UBATCH_SIZE=1024` PP/TTFT rows, but reject the setting as a broad default:
    the middle exact-output guard failed while its same-GPU `-ub 128` control
-   exactly matched the old oracle. Move to the decode VDR2 screen rather than
-   more ubatch work. Directly measure a synchronized natural-stop pair as a
-   separate relevance gate. Add a held-out prompt that
+   exactly matched the old oracle. The balanced VDR screen then gave VDR2 a
+   repeatable roughly 10% D100/D511 lead over VDR4 on all four cards with exact
+   output and neutral PP/TTFT. Run one official-isolated VDR2 short full-512
+   promotion gate; do not promote the concurrent screen. Directly measure a
+   synchronized natural-stop pair as a separate relevance gate. Add a held-out
+   prompt that
    naturally sustains 512 tokens so the serving scorecard does not depend only
    on forcing short JSON answers past EOS. Do not reuse Laguna flags or result
    directories implicitly.

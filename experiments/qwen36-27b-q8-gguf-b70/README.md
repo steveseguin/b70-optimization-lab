@@ -17,7 +17,9 @@ unmeasured. The canonical MMVQ/DMMV control completed its same-card crossover
 as `NO_EFFECT` and is closed. A later near-32K four-card screen found a
 `4.0063x` prompt-processing lead for `-ub 1024`; its official isolated near-32K
 and short full-512 PP/TTFT gates pass. The matched middle gate fails exact
-output, so `-ub 1024` is not a broad default.
+output, so `-ub 1024` is not a broad default. A balanced four-card VDR
+crossover then gave VDR2 a repeatable roughly 10% short D100/D511 lead over
+VDR4 with exact output; it now advances to an official-isolated gate.
 No LocalMaxxing performance result is promoted from this lane yet.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
@@ -128,6 +130,13 @@ Validated results under the correctness-qualified default
   completion marker. A same-GPU `-ub 128` control passed and both rows exactly
   matched the old GPU-1 oracle, isolating the divergence to ubatch rather than
   card or epoch;
+- the balanced two-wave, same-card VDR2/VDR4 short full-512 screen passed all
+  eight exact oracle, intrinsic/result/post-canary, cache-zero, full-offload,
+  runtime-binding, and cleanup gates. VDR2/VDR4 D100 ratios are
+  `1.09963 / 1.09849 / 1.10087 / 1.10054` on GPUs 0--3; D511 ratios are
+  `1.10025 / 1.09846 / 1.10081 / 1.09931`. PP and TTFT are neutral. These are
+  concurrent `parallel-functional-screen`, `performance_promotable=false`
+  diagnostics, not an official score;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
   26,573 MiB to 43 MiB, and retained empty device/server fault scans.
 
@@ -171,9 +180,10 @@ recurrent-output DMMV is closed as a source lane. See
 [`notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md`](notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md).
 
 Bank the official short and near-32K PP/TTFT wins, reject the middle result, and
-do not integrate `UBATCH_SIZE=1024` as a broad default. The next bounded speed
-gate is the decode VDR2 screen, not another ubatch gate. See
-[`notes/2026-08-10-near32k-ubatch-screen.md`](notes/2026-08-10-near32k-ubatch-screen.md).
+do not integrate `UBATCH_SIZE=1024` as a broad default. The VDR2 diagnostic
+screen now passes on all four cards; the next bounded speed gate is one
+official-isolated VDR2 short full-512 packet. See
+[`notes/2026-08-10-vdr2-vdr4-short-crossover.md`](notes/2026-08-10-vdr2-vdr4-short-crossover.md).
 
 The validation sequence remains useful for future runtimes:
 
@@ -292,6 +302,7 @@ cards were active. See
 - Canonical Q8 four-card c1 oracle pass: [`notes/2026-08-09-canonical-q8-c1-phase1-pass.md`](notes/2026-08-09-canonical-q8-c1-phase1-pass.md)
 - Canonical Q8 c2 crossover no-effect result: [`notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md`](notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md)
 - Near-32K ubatch crossover screen: [`notes/2026-08-10-near32k-ubatch-screen.md`](notes/2026-08-10-near32k-ubatch-screen.md)
+- VDR2/VDR4 short full-512 crossover: [`notes/2026-08-10-vdr2-vdr4-short-crossover.md`](notes/2026-08-10-vdr2-vdr4-short-crossover.md)
 - Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
 - Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 
