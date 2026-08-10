@@ -271,7 +271,8 @@ realistic-policy valid because every row includes the required generated-token
 1/100 timing endpoints for the primary window; ordinary EOS after that window
 does not require padding to
 512. The hash-bound Q8_0 queue passes local preflight and authenticated server
-dry-run, so `localmaxxing_submission_ready=true`; no final POST was made.
+dry-run. LocalMaxxing approved the final record as
+`cmsn6b0bm0074o001uw5f9kod` at `36.04870684253697 tok/s`.
 Advance to middle/near-32K retention and concurrency generalization, not tuning
 against the stale oracle.
 

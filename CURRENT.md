@@ -202,9 +202,9 @@ tokens over 2,152 verifications (`0.575217` acceptance,
 `customer-email` stopped normally at EOS after 248. That row contains the
 required generated-token 1/100 timing endpoints for D99, so the canonical
 LocalMaxxing policy does not require padding it to 512. A hash-bound Q8_0 queue
-now passes local preflight and the
-authenticated no-write server dry-run (`HTTP 200`, `valid=true`), with
-`localmaxxing_submission_ready=true`; the final POST has not been made. The
+now passes local preflight and the authenticated no-write server dry-run
+(`HTTP 200`, `valid=true`). LocalMaxxing approved the final record as
+`cmsn6b0bm0074o001uw5f9kod` at `36.04870684253697 tok/s`. The
 original supplement's historical false field remains unchanged. The old-oracle
 mismatch is not evidence of context-caused quality loss: the identities differ,
 prior evidence favors ubatch sensitivity, and causality remains unresolved.

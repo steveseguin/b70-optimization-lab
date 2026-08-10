@@ -17,15 +17,15 @@ identity-mismatched legacy 4K/128 prefix oracle. The matched-control PASS lives
 in a separate sealed offline supplement and binds the unchanged source
 captures by SHA-256.
 
-This is not yet a LocalMaxxing submission or a production result. Eleven
+This is now an approved LocalMaxxing record, but not a production result. Eleven
 prompts reached 512 generated tokens, while `customer-email` stopped normally
 at EOS after 248. The earlier conclusion that `all_rows_full_512=false` made
 the run ineligible was overstrict: all 12 rows contain the required
 generated-token 1/100 timing endpoints for D99, and LocalMaxxing policy does
 not require padding an ordinary EOS response to the request cap. The derived
-submission packet now
-passes local and authenticated no-write preflight; the final POST has not been
-made. Middle/near-32K prompt retention, concurrency, second-card reproduction,
+submission packet passes local and authenticated no-write preflight. The final
+POST returned `HTTP 201`, record `cmsn6b0bm0074o001uw5f9kod`, status
+`APPROVED`. Middle/near-32K prompt retention, concurrency, second-card reproduction,
 and sustained service validation remain open.
 
 ## Fixed identity
@@ -188,10 +188,15 @@ request; its eligibility gates were not weakened.
   `b94c99ece2637d105179c6e178384d7b5aca364ddd5e7a2cab63cd6517fb33e6`
 - local preflight: PASS
 - authenticated `POST /api/speed-tests/dry-run`: `HTTP 200`, `valid=true`
-- matching-record query: no approved one-B70 `Q8_0` row for the exact
+- pre-submission matching-record query: no approved one-B70 `Q8_0` row for the exact
   `unsloth/Qwen3.6-27B-MTP-GGUF` category; the one returned B70 row is
   `UD-Q4_K_XL` and is identity-incompatible
-- final LocalMaxxing POST: not performed
+- final LocalMaxxing POST: `HTTP 201`, `APPROVED`
+- record: `cmsn6b0bm0074o001uw5f9kod`
+- submission receipt SHA-256:
+  `c4bf4970acd2f020b3a22e9fe959fcf46ab6716faaada1aab940b6e03274cbbc`
+- two-entry submission-artifact manifest SHA-256:
+  `a364aba10b30aee3ef70e32736adea3df3eb110c47e0ebb3dfeb8f49e5ea6090`
 
 The payload pins the integrated publisher identity exactly:
 `hfId=unsloth/Qwen3.6-27B-MTP-GGUF`, revision
@@ -237,10 +242,11 @@ native throughput.
 
 Bank this as a scoped one-B70 short realistic-suite win for the integrated MTP
 identity. Keep it separate from the target-only Q8_0 baseline and from the
-original packet's immutable `FAIL`. It is LocalMaxxing-submission-ready under
-the corrected natural-EOS policy, and its authenticated server dry-run passes.
-Do not describe every row as full-512: one ordinary response ended at 248. No
-final submission was made in this work item.
+original packet's immutable `FAIL`. LocalMaxxing approved it as
+`cmsn6b0bm0074o001uw5f9kod` under the corrected natural-EOS policy after its
+authenticated server dry-run passed. Do not describe every row as full-512:
+one ordinary response ended at 248. Public record readback matches the staged
+identity and metrics.
 
 The next bounded work is middle and near-32K retention, followed by the
 relevant concurrency generalization and a second-card confirmation. The large

@@ -30,9 +30,9 @@ target-only starting line. It remains a scoped one-B70 short result: one prompt
 stopped normally at 248 tokens after the required generated-token 1/100 timing
 endpoints for D99.
 The no-all-512 LocalMaxxing policy audit, local preflight, and authenticated
-server dry-run pass, so `localmaxxing_submission_ready=true`; the final POST
-has not been made. Middle/near-32K, concurrency, second-card, and production
-gates remain open.
+server dry-run pass. LocalMaxxing approved the final Q8_0 record as
+`cmsn6b0bm0074o001uw5f9kod` at `36.04870684253697 tok/s`.
+Middle/near-32K, concurrency, second-card, and production gates remain open.
 
 ## Goals
 

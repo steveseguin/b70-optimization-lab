@@ -36,9 +36,10 @@ objective. The separate integrated-MTP identity now passes the fixed cold
 12-prompt realistic suite against a matched fresh control: median D99 improves
 `17.107772 -> 36.048707 tok/s` (`2.107154x`) with full candidate/control token
 and content equality on all prompts. This is a scoped one-B70 short result;
-middle/near-32K, concurrency, second-card, production, and submission gates
+middle/near-32K, concurrency, second-card, and production gates
 remain open.
-No LocalMaxxing performance result is promoted from this lane yet.
+LocalMaxxing approved the integrated Q8_0 record as
+`cmsn6b0bm0074o001uw5f9kod` at `36.04870684253697 tok/s`.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
 and recurring subagent roles are in [`STRATEGY.md`](STRATEGY.md). Dated plans
@@ -230,9 +231,9 @@ Validated results under the correctness-qualified default
   reached 512 tokens; `customer-email` stopped normally at 248, after the
   required generated-token 1/100 timing endpoints for D99. LocalMaxxing policy
   does not require padding a natural EOS row to the 512-token request cap. The
-  exact Q8_0 queue passes
-  local preflight and authenticated no-write server dry-run, so
-  `localmaxxing_submission_ready=true`; no final POST was made. This clears the
+  exact Q8_0 queue passes local preflight and authenticated no-write server
+  dry-run. LocalMaxxing approved the final record as
+  `cmsn6b0bm0074o001uw5f9kod` at `36.04870684253697 tok/s`. This clears the
   scoped realistic-suite gate only; it is not middle/near-32K, concurrency,
   second-card, or production evidence;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or

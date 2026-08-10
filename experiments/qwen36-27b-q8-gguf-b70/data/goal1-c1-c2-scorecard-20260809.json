@@ -1749,7 +1749,7 @@
       }
     },
     "localmaxxing_packet": {
-      "status": "READY_AUTHENTICATED_DRY_RUN_PASS_FINAL_POST_NOT_PERFORMED",
+      "status": "APPROVED",
       "hf_id": "unsloth/Qwen3.6-27B-MTP-GGUF",
       "model_revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
       "quantization": "Q8_0",
@@ -1762,11 +1762,18 @@
       "local_preflight_passed": true,
       "authenticated_server_dry_run_http_status": 200,
       "authenticated_server_dry_run_valid": true,
-      "matching_approved_one_b70_q8_0_records": 0,
-      "final_post_performed": false
+      "matching_approved_one_b70_q8_0_records_before_submission": 0,
+      "final_post_performed": true,
+      "http_status": 201,
+      "record_id": "cmsn6b0bm0074o001uw5f9kod",
+      "record_status": "APPROVED",
+      "record_created_at": "2026-08-10T11:53:48.899Z",
+      "submitted_from_git_commit": "65b4c4addd576a7b26da633853c18043ad4babbd",
+      "submission_receipt_sha256": "c4bf4970acd2f020b3a22e9fe959fcf46ab6716faaada1aab940b6e03274cbbc",
+      "submission_artifact_manifest_sha256": "a364aba10b30aee3ef70e32736adea3df3eb110c47e0ebb3dfeb8f49e5ea6090"
     },
-    "decision": "bank_scoped_realistic_mtp_win_and_stage_localmaxxing_packet_without_final_post",
-    "next_gate": "The Q8_0 packet is submission-ready under the natural-EOS-after-100 policy and passes authenticated server dry-run; final POST remains unperformed. Run middle and near32k retention, then concurrency generalization and a second-card confirmation."
+    "decision": "bank_scoped_realistic_mtp_win_and_approved_localmaxxing_record",
+    "next_gate": "LocalMaxxing approved Q8_0 record cmsn6b0bm0074o001uw5f9kod under the natural-EOS-after-100 policy. Run middle and near32k retention, then concurrency generalization and a second-card confirmation."
   },
-  "next_gate": "The integrated publisher-MTP identity now passes the fixed cold 12-prompt realistic suite against matched_fresh_control_v1: full candidate/control tokens and content are exact on every prompt, median D99 improves 17.107772 to 36.048707 tok/s (2.107154x), matched full-window throughput improves 17.017022 to 34.545186 tok/s (2.030037x), and native throughput improves 17.050342 to 34.612807 tok/s (2.030036x). Preserve the original measurement root's immutable FAIL from its identity-mismatched legacy oracle and the separate supplemental PASS. The shortest ordinary-EOS row reaches 248 tokens and includes the required generated-token 1/100 timing endpoints for D99; the staged Q8_0 LocalMaxxing packet passes local and authenticated server dry-run, with no final POST performed. Advance to middle/near32k retention and concurrency generalization; the sealed formal ordinary-c2 packet remains the honest functional comparator and performance failure."
+  "next_gate": "The integrated publisher-MTP identity now passes the fixed cold 12-prompt realistic suite against matched_fresh_control_v1: full candidate/control tokens and content are exact on every prompt, median D99 improves 17.107772 to 36.048707 tok/s (2.107154x), matched full-window throughput improves 17.017022 to 34.545186 tok/s (2.030037x), and native throughput improves 17.050342 to 34.612807 tok/s (2.030036x). Preserve the original measurement root's immutable FAIL from its identity-mismatched legacy oracle and the separate supplemental PASS. The shortest ordinary-EOS row reaches 248 tokens and includes the required generated-token 1/100 timing endpoints for D99. LocalMaxxing approved Q8_0 record cmsn6b0bm0074o001uw5f9kod at 36.04870684253697 tok/s. Advance to middle/near32k retention and concurrency generalization; the sealed formal ordinary-c2 packet remains the honest functional comparator and performance failure."
 }
