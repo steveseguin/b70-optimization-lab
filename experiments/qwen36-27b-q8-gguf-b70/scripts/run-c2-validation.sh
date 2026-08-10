@@ -26,6 +26,7 @@ LLAMA_SERVER="${LLAMA_SERVER:-/dev/shm/llama.cpp-pr19-15586/build-sycl/bin/llama
 TOKENIZER="${TOKENIZER:-/mnt/fast-ai/llm-cache/hf/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9}"
 VALIDATOR_PYTHON="${VALIDATOR_PYTHON:-/home/steve/.venvs/deepseek-v4-xpu/bin/python}"
 CONCURRENT_CASE_ORDER="${CONCURRENT_CASE_ORDER:-forward}"
+C2_PROFILE="${C2_PROFILE-goal1-baseline-ub128}"
 
 # This is the sealed Goal-1 c2 identity. Runtime/source candidates must supply a
 # matching runtime manifest instead of weakening these model and serving gates.
@@ -37,7 +38,7 @@ CONT_BATCHING=1
 CACHE_TYPE_K=f16
 CACHE_TYPE_V=f16
 BATCH_SIZE=1024
-UBATCH_SIZE=128
+UBATCH_SIZE="${UBATCH_SIZE-128}"
 N_GPU_LAYERS=99
 THREADS=8
 HTTP_THREADS=6
@@ -93,10 +94,24 @@ parse_gpu_used_mib() {
   ' "$stats_path"
 }
 
+case "$C2_PROFILE" in
+  goal1-baseline-ub128) C2_PROFILE_EXPECTED_UBATCH_SIZE=128 ;;
+  prefill-ub1024) C2_PROFILE_EXPECTED_UBATCH_SIZE=1024 ;;
+  *)
+    die "invalid C2_PROFILE=$C2_PROFILE; expected goal1-baseline-ub128 or prefill-ub1024"
+    ;;
+esac
+require_uint UBATCH_SIZE "$UBATCH_SIZE"
+[[ "$UBATCH_SIZE" == "$C2_PROFILE_EXPECTED_UBATCH_SIZE" ]] || \
+  die "C2_PROFILE=$C2_PROFILE requires UBATCH_SIZE=$C2_PROFILE_EXPECTED_UBATCH_SIZE"
+
 case "$BAND" in
   short|middle|near32k) ;;
   *) die "BAND must be short, middle, or near32k" ;;
 esac
+if [[ "$C2_PROFILE" == "prefill-ub1024" && "$BAND" != "near32k" ]]; then
+  die "C2_PROFILE=prefill-ub1024 is restricted to BAND=near32k"
+fi
 case "$CONCURRENT_CASE_ORDER" in
   forward|reverse) ;;
   *) die "CONCURRENT_CASE_ORDER must be forward or reverse" ;;
@@ -539,6 +554,7 @@ write_completion_status() {
   local summary_sha256
   local external_quality_passed
   local semantic_quality_passed
+  local c2_profile_identity_passed
 
   [[ -s "$RUN_DIR/artifacts.sha256" ]] || return 1
   (
@@ -555,12 +571,22 @@ write_completion_status() {
     .mandatory_gates.semantic_retrieval_both_phases == true
     and .mandatory_gates.semantic_cross_phase_exact == true
   ' "$RUN_DIR/validation-summary.json")" || return 1
-  [[ "$external_quality_passed" == "true" && "$semantic_quality_passed" == "true" ]] || return 1
+  c2_profile_identity_passed="$(jq -er \
+    --arg c2_profile "$C2_PROFILE" \
+    --argjson expected_ubatch_size "$C2_PROFILE_EXPECTED_UBATCH_SIZE" '
+      .c2_profile == $c2_profile
+      and .expected_ubatch_size == $expected_ubatch_size
+      and .mandatory_gates.c2_profile_identity_both_phases == true
+    ' "$RUN_DIR/validation-summary.json")" || return 1
+  [[ "$external_quality_passed" == "true" && \
+     "$semantic_quality_passed" == "true" && \
+     "$c2_profile_identity_passed" == "true" ]] || return 1
   marker_tmp="$(mktemp "${RUN_DIR}.completion-status.XXXXXX")" || return 1
   if ! python3 - \
     "$artifacts_sha256" "$summary_sha256" "$HARNESS_MANIFEST_SHA256" \
     "$SEALED_128_ORACLE_SHA256" "$SEALED_128_SUITE_SHA256" \
-    "$SEALED_128_CANARY_PROMPT_ID" \
+    "$SEALED_128_CANARY_PROMPT_ID" "$C2_PROFILE" \
+    "$C2_PROFILE_EXPECTED_UBATCH_SIZE" \
     > "$marker_tmp" <<'PY'
 import datetime
 import json
@@ -573,12 +599,16 @@ import sys
     external_oracle_sha256,
     external_suite_sha256,
     external_prompt_id,
+    c2_profile,
+    expected_ubatch_size_raw,
 ) = sys.argv[1:]
 print(json.dumps({
     "artifact_manifest": "artifacts.sha256",
     "artifact_manifest_sha256": artifacts_sha256,
     "completed_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    "c2_profile": c2_profile,
     "evidence_valid": True,
+    "expected_ubatch_size": int(expected_ubatch_size_raw),
     "external_baseline_canary_passed": True,
     "external_baseline_oracle_sha256": external_oracle_sha256,
     "external_baseline_prompt_id": external_prompt_id,
@@ -601,10 +631,14 @@ PY
     --arg harness "$HARNESS_MANIFEST_SHA256" \
     --arg oracle "$SEALED_128_ORACLE_SHA256" \
     --arg suite "$SEALED_128_SUITE_SHA256" \
-    --arg prompt "$SEALED_128_CANARY_PROMPT_ID" '
+    --arg prompt "$SEALED_128_CANARY_PROMPT_ID" \
+    --arg c2_profile "$C2_PROFILE" \
+    --argjson expected_ubatch_size "$C2_PROFILE_EXPECTED_UBATCH_SIZE" '
       .evidence_valid == true
       and .exit_status == 0
       and .run_status == "PASS"
+      and .c2_profile == $c2_profile
+      and .expected_ubatch_size == $expected_ubatch_size
       and .artifact_manifest_sha256 == $artifacts
       and .pre_seal_summary_sha256 == $summary
       and .harness_manifest_sha256 == $harness
@@ -639,7 +673,8 @@ write_validation_summary() {
     "$runtime_bundle_unchanged" "$final_all_gpus_idle" \
     "$model_stat_unchanged" "$model_sha256_final_verified" \
     "$SEALED_128_ORACLE_SHA256" "$SEALED_128_SUITE_SHA256" \
-    "$SEALED_128_CANARY_PROMPT_ID" <<'PY'
+    "$SEALED_128_CANARY_PROMPT_ID" "$C2_PROFILE" \
+    "$C2_PROFILE_EXPECTED_UBATCH_SIZE" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -662,6 +697,8 @@ model_sha256_final_verified = int(sys.argv[15]) == 1
 external_oracle_sha256 = sys.argv[16]
 external_suite_sha256 = sys.argv[17]
 external_prompt_id = sys.argv[18]
+c2_profile = sys.argv[19]
+expected_ubatch_size = int(sys.argv[20])
 
 def load_json(path: Path):
     try:
@@ -683,9 +720,13 @@ def cleanup_passed(path: Path) -> bool:
 sequential = load_json(root / "sequential-oracle" / "oracle.json") or {}
 concurrent = load_json(root / "concurrent" / "result.json") or {}
 phase_names = ("sequential-oracle", "concurrent")
-phase_attestation = {
-    name: bool((load_json(root / name / "server-attestation.json") or {}).get("passed"))
+phase_attestation_packets = {
+    name: load_json(root / name / "server-attestation.json") or {}
     for name in phase_names
+}
+phase_attestation = {
+    name: packet.get("passed") is True
+    for name, packet in phase_attestation_packets.items()
 }
 phase_vram = {
     name: bool((load_json(root / name / "vram-fit-check.json") or {}).get("passed"))
@@ -694,6 +735,28 @@ phase_vram = {
 phase_cleanup = {
     name: cleanup_passed(root / name / "cleanup-status.env")
     for name in phase_names
+}
+phase_result_packets = {
+    "sequential-oracle": sequential,
+    "concurrent": concurrent,
+}
+phase_profile_identity = {
+    name: (
+        (attestation.get("expected_identity") or {}).get("ubatch_size")
+        == str(expected_ubatch_size)
+        and (attestation.get("runtime_fields") or {}).get(
+            f"n_ubatch_{expected_ubatch_size}"
+        )
+        is True
+        and (
+            (phase_result_packets[name].get("run_identity") or {}).get(
+                "server_benchmark_identity"
+            )
+            or {}
+        ).get("ubatch_size")
+        == str(expected_ubatch_size)
+    )
+    for name, attestation in phase_attestation_packets.items()
 }
 
 def phase_quality(packet: dict) -> dict[str, bool]:
@@ -847,6 +910,7 @@ mandatory = {
     ),
     "semantic_cross_phase_exact": semantic_cross_phase_exact,
     "phase_attestation_passed": all(phase_attestation.values()),
+    "c2_profile_identity_both_phases": all(phase_profile_identity.values()),
     "phase_vram_fit_passed": all(phase_vram.values()),
     "phase_cleanup_passed": all(phase_cleanup.values()),
     "fault_scans_clear": fault_scans_clear,
@@ -865,9 +929,12 @@ functional_c2_passed = sequential_passed and concurrent_passed
 pre_seal_gates_passed = all(mandatory.values())
 result = {
     "band": band,
+    "c2_profile": c2_profile,
     "concurrent_case_order": concurrent.get("run_identity", {}).get("case_order"),
+    "expected_ubatch_size": expected_ubatch_size,
     "mandatory_gates": mandatory,
     "phase_attestation": phase_attestation,
+    "phase_profile_identity": phase_profile_identity,
     "phase_vram_fit": phase_vram,
     "phase_cleanup": phase_cleanup,
     "phase_quality_gates": phase_quality_gates,
@@ -1153,12 +1220,30 @@ attest_server() {
     "$phase_dir/server-attestation.json" \
     "$EXPECTED_MODEL_SIZE" \
     "$EXPECTED_RUNTIME_SHA256" \
-    "$MIN_POST_LOAD_FREE_MIB" <<'PY'
+    "$MIN_POST_LOAD_FREE_MIB" \
+    "$C2_PROFILE" \
+    "$C2_PROFILE_EXPECTED_UBATCH_SIZE" <<'PY'
 import json
 import re
 import sys
 
-log_path, identity_path, out_path, model_size_raw, runtime_sha, min_free_raw = sys.argv[1:]
+(
+    log_path,
+    identity_path,
+    out_path,
+    model_size_raw,
+    runtime_sha,
+    min_free_raw,
+    c2_profile,
+    expected_ubatch_size_raw,
+) = sys.argv[1:]
+allowed_profiles = {
+    "goal1-baseline-ub128": "128",
+    "prefill-ub1024": "1024",
+}
+if allowed_profiles.get(c2_profile) != expected_ubatch_size_raw:
+    raise SystemExit("c2 profile/ubatch attestation input mismatch")
+expected_ubatch_size = expected_ubatch_size_raw
 text = open(log_path, errors="replace").read()
 identity_text = open(identity_path, errors="replace").read()
 identity_header = identity_text.split("--- server ---", 1)[0]
@@ -1178,7 +1263,7 @@ expected_identity = {
     "kv_unified": "0",
     "cont_batching": "1",
     "batch_size": "1024",
-    "ubatch_size": "128",
+    "ubatch_size": expected_ubatch_size,
     "n_gpu_layers": "99",
     "threads": "8",
     "http_threads": "6",
@@ -1214,7 +1299,7 @@ required_argv = (
     "-c 65536",
     "-np 2",
     "-b 1024",
-    "-ub 128",
+    f"-ub {expected_ubatch_size}",
     "-ctk f16",
     "-ctv f16",
     "-fa on",
@@ -1269,7 +1354,8 @@ runtime_fields = {
     "n_ctx_65536": context_value("n_ctx") == "65536",
     "n_ctx_seq_32768": context_value("n_ctx_seq") == "32768",
     "n_batch_1024": context_value("n_batch") == "1024",
-    "n_ubatch_128": context_value("n_ubatch") == "128",
+    f"n_ubatch_{expected_ubatch_size}": context_value("n_ubatch")
+    == expected_ubatch_size,
     "flash_attn_enabled": context_value("flash_attn") == "enabled",
     "kv_unified_false": context_value("kv_unified") == "false",
     "two_slot_runtime": bool(slot_matches)
@@ -1351,7 +1437,7 @@ start_phase() {
   KV_UNIFIED="$KV_UNIFIED" \
   CONT_BATCHING="$CONT_BATCHING" \
   BATCH_SIZE="$BATCH_SIZE" \
-  UBATCH_SIZE="$UBATCH_SIZE" \
+  UBATCH_SIZE="$C2_PROFILE_EXPECTED_UBATCH_SIZE" \
   N_GPU_LAYERS="$N_GPU_LAYERS" \
   THREADS="$THREADS" \
   HTTP_THREADS="$HTTP_THREADS" \
@@ -1600,6 +1686,8 @@ jq -e '.passed == true and (.rows | length) == 6' "$RUN_DIR/suite-validation.jso
   echo "date_utc=$STAMP"
   echo "scope=fresh-server sequential c2 oracle followed by fresh-server concurrent c2 comparison"
   echo "band=$BAND"
+  echo "c2_profile=$C2_PROFILE"
+  echo "c2_profile_expected_ubatch_size=$C2_PROFILE_EXPECTED_UBATCH_SIZE"
   echo "gpu_index=$GPU_INDEX"
   echo "port=$PORT"
   echo "model=$MODEL"
@@ -1632,7 +1720,7 @@ jq -e '.passed == true and (.rows | length) == 6' "$RUN_DIR/suite-validation.jso
   echo "cache_type_k=$CACHE_TYPE_K"
   echo "cache_type_v=$CACHE_TYPE_V"
   echo "batch_size=$BATCH_SIZE"
-  echo "ubatch_size=$UBATCH_SIZE"
+  echo "ubatch_size=$C2_PROFILE_EXPECTED_UBATCH_SIZE"
   echo "n_gpu_layers=$N_GPU_LAYERS"
   echo "threads=$THREADS"
   echo "http_threads=$HTTP_THREADS"
@@ -1662,7 +1750,8 @@ run_capture_phase sequential-oracle "$RUN_DIR/sequential-oracle/oracle.json" || 
 jq -e \
   --arg oracle_sha "$SEALED_128_ORACLE_SHA256" \
   --arg suite_sha "$SEALED_128_SUITE_SHA256" \
-  --arg prompt_id "$SEALED_128_CANARY_PROMPT_ID" '
+  --arg prompt_id "$SEALED_128_CANARY_PROMPT_ID" \
+  --arg expected_ubatch_size "$C2_PROFILE_EXPECTED_UBATCH_SIZE" '
   .intrinsic_gate.passed == true
   and .intrinsic_gate.semantic_retrieval_passed == true
   and .intrinsic_gate.external_baseline_canary_passed == true
@@ -1686,6 +1775,7 @@ jq -e \
   and .run_identity.ctx_size_per_slot == 32768
   and .run_identity.cache_type_k == "f16"
   and .run_identity.cache_type_v == "f16"
+  and .run_identity.server_benchmark_identity.ubatch_size == $expected_ubatch_size
 ' "$RUN_DIR/sequential-oracle/oracle.json" >/dev/null || die "sequential oracle gate failed"
 stop_active_phase || die "sequential-oracle cleanup failed; concurrent phase was not started"
 verify_runtime_bundle_snapshot sequential-poststop || die "runtime bundle changed during sequential-oracle phase"
@@ -1699,7 +1789,8 @@ jq -e \
   --arg case_order "$CONCURRENT_CASE_ORDER" \
   --arg oracle_sha "$SEALED_128_ORACLE_SHA256" \
   --arg suite_sha "$SEALED_128_SUITE_SHA256" \
-  --arg prompt_id "$SEALED_128_CANARY_PROMPT_ID" '
+  --arg prompt_id "$SEALED_128_CANARY_PROMPT_ID" \
+  --arg expected_ubatch_size "$C2_PROFILE_EXPECTED_UBATCH_SIZE" '
   .intrinsic_gate.passed == true
   and .intrinsic_gate.semantic_retrieval_passed == true
   and .intrinsic_gate.external_baseline_canary_passed == true
@@ -1726,6 +1817,7 @@ jq -e \
   and .run_identity.ctx_size_per_slot == 32768
   and .run_identity.cache_type_k == "f16"
   and .run_identity.cache_type_v == "f16"
+  and .run_identity.server_benchmark_identity.ubatch_size == $expected_ubatch_size
 ' "$RUN_DIR/concurrent/result.json" >/dev/null || die "concurrent exactness/overlap gate failed"
 stop_active_phase || die "concurrent cleanup failed"
 verify_runtime_bundle_snapshot concurrent-poststop || die "runtime bundle changed during concurrent phase"
