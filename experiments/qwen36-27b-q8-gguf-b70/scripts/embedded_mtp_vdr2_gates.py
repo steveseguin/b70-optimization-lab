@@ -491,6 +491,53 @@ def gate_server(args: argparse.Namespace) -> int:
         "--no-cache-idle-slots", "--no-context-shift", "--slots", "--metrics",
         "--jinja", "--no-kv-unified", "--cont-batching",
     }
+    fit_log_lines = [
+        line.strip()
+        for line in text.splitlines()
+        if "common_params_fit_impl:" in line
+    ]
+    fit_no_change_re = re.compile(
+        r".*\bcommon_params_fit_impl:\s+will leave\s+(\d+)\s+>=\s+(\d+) MiB "
+        r"of free device memory, no changes needed"
+    )
+    fit_no_change_matches = [
+        match
+        for line in fit_log_lines
+        if (match := fit_no_change_re.fullmatch(line)) is not None
+    ]
+    fit_adjustment_lines = [
+        line
+        for line in fit_log_lines
+        if re.search(
+            r"adjust|reduc|cannot meet|trying to fit|set ngl|moved to system|overflow",
+            line,
+            re.IGNORECASE,
+        )
+    ]
+    def logged_batch_values(fragment: str, name: str) -> list[int]:
+        return [
+            int(value)
+            for value in re.findall(
+                rf"\b{re.escape(name)}\s+=\s+(\d+)\s*$",
+                fragment,
+                re.MULTILINE,
+            )
+        ]
+
+    n_batch_values = logged_batch_values(text, "n_batch")
+    n_ubatch_values = logged_batch_values(text, "n_ubatch")
+    mtp_context_marker = "creating MTP draft context against the target model"
+    mtp_context_offset = text.find(mtp_context_marker)
+    if args.mode == "mtp3" and mtp_context_offset >= 0:
+        target_context_text = text[:mtp_context_offset]
+        draft_context_text = text[mtp_context_offset + len(mtp_context_marker):]
+    else:
+        target_context_text = text
+        draft_context_text = ""
+    target_n_batch_values = logged_batch_values(target_context_text, "n_batch")
+    target_n_ubatch_values = logged_batch_values(target_context_text, "n_ubatch")
+    draft_n_batch_values = logged_batch_values(draft_context_text, "n_batch")
+    draft_n_ubatch_values = logged_batch_values(draft_context_text, "n_ubatch")
     checks: dict[str, bool] = {
         "identity_mode": identity.get("mode") == args.mode,
         "model_fd_path": bool(re.fullmatch(r"/proc/self/fd/[0-9]+", str(model_load_path or ""))),
@@ -504,12 +551,19 @@ def gate_server(args: argparse.Namespace) -> int:
         "one_nextn_layer": bool(re.search(r"n_layer_nextn\s+= 1\b", text)),
         "full_offload_66": "offloaded 66/66 layers to GPU" in text,
         "ctx_32768": bool(re.search(r"n_ctx\s+= 32768\b", text)),
+        "runtime_n_batch_1024": bool(n_batch_values) and all(
+            value == 1024 for value in n_batch_values
+        ),
+        "runtime_n_ubatch_1024": bool(n_ubatch_values) and all(
+            value == 1024 for value in n_ubatch_values
+        ),
         "one_slot": bool(re.search(r"initializing, n_slots = 1, n_ctx_slot = 32768, kv_unified = 'false'", text)),
-        "fit_headroom": any(
-            int(free) >= 1024 and int(required) >= 1024
-            for free, required in re.findall(
-                r"will leave\s+(\d+)\s+>=\s+(\d+) MiB of free device memory", text
-            )
+        "fit_no_changes_exact": (
+            len(fit_no_change_matches) == 1
+            and not fit_adjustment_lines
+            and int(fit_no_change_matches[0].group(2)) >= 1024
+            and int(fit_no_change_matches[0].group(1))
+            >= int(fit_no_change_matches[0].group(2))
         ),
         "no_fatal_runtime_error": not re.search(
             r"UR_RESULT_ERROR_DEVICE_LOST|ZE_RESULT_ERROR_DEVICE_LOST|out of memory|segmentation fault|core dumped|Aborted|failed to create MTP context",
@@ -543,14 +597,20 @@ def gate_server(args: argparse.Namespace) -> int:
             "--spec-draft-type-k": "f16",
             "--spec-draft-type-v": "f16",
         }
-        mtp_context_marker = "creating MTP draft context against the target model"
-        mtp_context_offset = text.find(mtp_context_marker)
         checks.update(
             {
                 "mtp3_pairs": all(has_argv_pair(argv, key, value) for key, value in required_spec_pairs.items()),
                 "backend_sampling_explicit": "--spec-draft-backend-sampling" in argv,
                 "embedded_mtp_context": mtp_context_offset >= 0,
                 "no_separate_draft_load": "loading draft model" not in text,
+                "target_context_n_batch_1024": bool(target_n_batch_values)
+                and all(value == 1024 for value in target_n_batch_values),
+                "target_context_n_ubatch_1024": bool(target_n_ubatch_values)
+                and all(value == 1024 for value in target_n_ubatch_values),
+                "draft_context_n_batch_1024": bool(draft_n_batch_values)
+                and all(value == 1024 for value in draft_n_batch_values),
+                "draft_context_n_ubatch_1024": bool(draft_n_ubatch_values)
+                and all(value == 1024 for value in draft_n_ubatch_values),
                 "mtp_context_on_sycl": (
                     mtp_context_offset >= 0
                     and bool(re.search(r"SYCL0\s+KV buffer size", text[mtp_context_offset:]))
@@ -563,11 +623,17 @@ def gate_server(args: argparse.Namespace) -> int:
         "identity": str(args.identity.resolve()),
         "checks": checks,
         "fit_headroom_pairs_mib": [
-            [int(free), int(required)]
-            for free, required in re.findall(
-                r"will leave\s+(\d+)\s+>=\s+(\d+) MiB of free device memory", text
-            )
+            [int(match.group(1)), int(match.group(2))]
+            for match in fit_no_change_matches
         ],
+        "fit_log_lines": fit_log_lines,
+        "fit_adjustment_lines": fit_adjustment_lines,
+        "logged_n_batch_values": n_batch_values,
+        "logged_n_ubatch_values": n_ubatch_values,
+        "target_context_n_batch_values": target_n_batch_values,
+        "target_context_n_ubatch_values": target_n_ubatch_values,
+        "draft_context_n_batch_values": draft_n_batch_values,
+        "draft_context_n_ubatch_values": draft_n_ubatch_values,
         "passed": all(checks.values()),
     }
     atomic_write_json(args.output, result)

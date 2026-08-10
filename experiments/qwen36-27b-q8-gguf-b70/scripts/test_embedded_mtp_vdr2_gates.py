@@ -132,8 +132,12 @@ print_info: n_layer               = 64
 print_info: n_layer_all           = 65
 print_info: n_layer_nextn         = 1
 load_tensors: offloaded 66/66 layers to GPU
+common_params_fit_impl: getting device memory data for initial parameters:
+common_params_fit_impl: projected to use 29500 MiB of device memory vs. 32300 MiB of free device memory
 common_params_fit_impl: will leave 2800 >= 1024 MiB of free device memory, no changes needed
 llama_context: n_ctx              = 32768
+llama_context: n_batch            = 1024
+llama_context: n_ubatch           = 1024
 server: initializing, n_slots = 1, n_ctx_slot = 32768, kv_unified = 'false'
 llama_kv_cache:      SYCL0 KV buffer size = 2048.00 MiB
 """
@@ -141,6 +145,8 @@ llama_kv_cache:      SYCL0 KV buffer size = 2048.00 MiB
         text += "common_speculative_init: no implementations specified for speculative decoding\n"
     else:
         text += "common_speculative_init_result: creating MTP draft context against the target model '/proc/self/fd/10'\n"
+        text += "llama_context: n_batch            = 1024\n"
+        text += "llama_context: n_ubatch           = 1024\n"
         text += "llama_kv_cache:      SYCL0 KV buffer size = 128.00 MiB\n"
     return text
 
@@ -365,6 +371,164 @@ llamacpp:spec_decode_num_accepted_tokens_per_pos_total{position="2"} 20
                     )
                 ),
                 1,
+            )
+
+            adversarial_logs = {
+                "fit-adjusted-extra": (
+                    server_log("control")
+                    + "common_params_fit_impl: adjusted n_ubatch to fit device memory\n",
+                    "fit_no_changes_exact",
+                ),
+                "fit-no-change-missing": (
+                    server_log("control").replace(
+                        "common_params_fit_impl: will leave 2800 >= 1024 MiB of free device memory, no changes needed\n",
+                        "common_params_fit_impl: reduced n_ubatch to fit device memory\n",
+                    ),
+                    "fit_no_changes_exact",
+                ),
+                "fit-impossible-inequality": (
+                    server_log("control").replace(
+                        "will leave 2800 >= 1024 MiB",
+                        "will leave 1100 >= 1200 MiB",
+                    ),
+                    "fit_no_changes_exact",
+                ),
+                "n-batch-missing": (
+                    server_log("control").replace(
+                        "llama_context: n_batch            = 1024\n", ""
+                    ),
+                    "runtime_n_batch_1024",
+                ),
+                "n-batch-altered": (
+                    server_log("control").replace(
+                        "llama_context: n_batch            = 1024",
+                        "llama_context: n_batch            = 512",
+                    ),
+                    "runtime_n_batch_1024",
+                ),
+                "n-ubatch-missing": (
+                    server_log("control").replace(
+                        "llama_context: n_ubatch           = 1024\n", ""
+                    ),
+                    "runtime_n_ubatch_1024",
+                ),
+                "n-ubatch-altered": (
+                    server_log("control").replace(
+                        "llama_context: n_ubatch           = 1024",
+                        "llama_context: n_ubatch           = 512",
+                    ),
+                    "runtime_n_ubatch_1024",
+                ),
+            }
+            for name, (log_text, expected_failed_check) in adversarial_logs.items():
+                for mode in ("control", "mtp3"):
+                    log = root / f"{name}-{mode}.log"
+                    output = root / f"{name}-{mode}-gate.json"
+                    log.write_text(
+                        log_text.replace(
+                            "common_speculative_init: no implementations specified for speculative decoding\n",
+                            (
+                                "common_speculative_init_result: creating MTP draft context against the target model '/proc/self/fd/10'\n"
+                                "llama_context: n_batch            = 1024\n"
+                                "llama_context: n_ubatch           = 1024\n"
+                                "llama_kv_cache:      SYCL0 KV buffer size = 128.00 MiB\n"
+                            ) if mode == "mtp3" else
+                            "common_speculative_init: no implementations specified for speculative decoding\n",
+                        )
+                    )
+                    result = GATES.gate_server(
+                        argparse.Namespace(
+                            mode=mode,
+                            log=log,
+                            identity=root / f"{mode}-identity.json",
+                            output=output,
+                        )
+                    )
+                    self.assertEqual(result, 1, f"{name}/{mode}")
+                    gate = json.loads(output.read_text())
+                    mode_failed_check = expected_failed_check
+                    if mode == "mtp3":
+                        mode_failed_check = {
+                            "runtime_n_batch_1024": "target_context_n_batch_1024",
+                            "runtime_n_ubatch_1024": "target_context_n_ubatch_1024",
+                        }.get(expected_failed_check, expected_failed_check)
+                    self.assertFalse(
+                        gate["checks"][mode_failed_check], f"{name}/{mode}"
+                    )
+
+            mtp_marker = (
+                "common_speculative_init_result: creating MTP draft context against the target model '/proc/self/fd/10'\n"
+            )
+            draft_pair = (
+                "llama_context: n_batch            = 1024\n"
+                "llama_context: n_ubatch           = 1024\n"
+            )
+            candidate_log = server_log("mtp3")
+            candidate_context_adversaries = {
+                "draft-pair-missing": (
+                    candidate_log.replace(mtp_marker + draft_pair, mtp_marker, 1),
+                    "draft_context_n_batch_1024",
+                ),
+                "draft-n-batch-altered": (
+                    candidate_log.replace(
+                        mtp_marker + draft_pair,
+                        mtp_marker + draft_pair.replace("n_batch            = 1024", "n_batch            = 512"),
+                        1,
+                    ),
+                    "draft_context_n_batch_1024",
+                ),
+                "draft-n-ubatch-altered": (
+                    candidate_log.replace(
+                        mtp_marker + draft_pair,
+                        mtp_marker + draft_pair.replace("n_ubatch           = 1024", "n_ubatch           = 512"),
+                        1,
+                    ),
+                    "draft_context_n_ubatch_1024",
+                ),
+                "extra-altered-draft-pair": (
+                    candidate_log.replace(
+                        mtp_marker + draft_pair,
+                        mtp_marker + draft_pair + draft_pair.replace("1024", "512"),
+                        1,
+                    ),
+                    "draft_context_n_batch_1024",
+                ),
+            }
+            for name, (log_text, expected_failed_check) in candidate_context_adversaries.items():
+                log = root / f"{name}.log"
+                output = root / f"{name}-gate.json"
+                log.write_text(log_text)
+                result = GATES.gate_server(
+                    argparse.Namespace(
+                        mode="mtp3",
+                        log=log,
+                        identity=root / "mtp3-identity.json",
+                        output=output,
+                    )
+                )
+                self.assertEqual(result, 1, name)
+                gate = json.loads(output.read_text())
+                self.assertFalse(gate["checks"][expected_failed_check], name)
+
+            extra_valid_dry_run_log = root / "extra-valid-draft-context.log"
+            extra_valid_dry_run_gate = root / "extra-valid-draft-context-gate.json"
+            extra_valid_dry_run_log.write_text(
+                candidate_log.replace(
+                    mtp_marker + draft_pair,
+                    mtp_marker + draft_pair + draft_pair,
+                    1,
+                )
+            )
+            self.assertEqual(
+                GATES.gate_server(
+                    argparse.Namespace(
+                        mode="mtp3",
+                        log=extra_valid_dry_run_log,
+                        identity=root / "mtp3-identity.json",
+                        output=extra_valid_dry_run_gate,
+                    )
+                ),
+                0,
             )
 
             wrong_model_identity = root / "wrong-model-identity.json"
