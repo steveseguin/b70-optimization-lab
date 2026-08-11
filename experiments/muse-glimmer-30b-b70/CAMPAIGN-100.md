@@ -165,3 +165,17 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   general average to ~106 (prose 76 / code 112 / json 130 at round ~43ms,
   unchanged acceptance); it is the critical lane, followed by mirrored-N4
   verify shapes and the drafter fine-tune.
+- 2026-08-11 04:35: spec-round profiler landed (LLAMA_SPEC_PROFILE=1 in the
+  dflash impl; snapshot `20260811-muse100-with-spec-profiler.patch`).
+  Measured per round at N=4 (prose, 512 tok): feature interleave 0.16 ms
+  (host-bounce hypothesis WRONG - retired), encoder 2.9 ms, drafter block
+  pass 13 ms, and by subtraction the batch-verify forward ~90-100 ms vs
+  ~61 ms at N=2 and 37.3 ms single-token. Corrected work order for the
+  honest-general-metric century (current 57.1 avg, target ~100):
+  1. N=4 batch-verify allreduce efficiency (large-tensor path: BF16
+     compression, event overhead, round fusion; verify at N2-parity
+     per-byte saves ~30 ms/round -> avg ~75-80).
+  2. Drafter round cost 13+3 ms -> single-device drafter via shared-tensor
+     mirroring (L2) -> ~6-8 ms (-> avg ~85-95).
+  3. Drafter fine-tune acceptance (prose E 3.3 -> 5+) for the remainder.
+  Production restored on the canonical build throughout.

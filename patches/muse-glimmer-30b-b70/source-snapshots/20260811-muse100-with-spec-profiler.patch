@@ -1,0 +1,709 @@
+diff --git a/common/speculative.cpp b/common/speculative.cpp
+index 2ee1e6b84..47400e372 100644
+--- a/common/speculative.cpp
++++ b/common/speculative.cpp
+@@ -9,7 +9,21 @@
+ #include "ngram-mod.h"
+ #include "sampling.h"
+ 
+-#include "../src/llama-ext.h" // staging API: llama_set_embeddings_nextn / llama_get_embeddings_nextn_ith (used by MTP)
++#include "../src/llama-ext.h"
++
++// LLAMA_SPEC_PROFILE=1: per-phase wall-clock accumulators for the dflash path
++#include <cstdlib>
++struct spec_prof_t {
++    bool enabled = std::getenv("LLAMA_SPEC_PROFILE") != nullptr;
++    int64_t t_feat = 0, t_enc = 0, t_draft = 0, n_rounds = 0;
++    void maybe_dump() {
++        if (enabled && ++n_rounds % 64 == 0) {
++            fprintf(stderr, "[spec-prof] rounds=%ld feat=%.2fms enc=%.2fms draft=%.2fms (per round)\n",
++                    (long) n_rounds, t_feat/1000.0/n_rounds, t_enc/1000.0/n_rounds, t_draft/1000.0/n_rounds);
++        }
++    }
++};
++static spec_prof_t g_spec_prof; // staging API: llama_set_embeddings_nextn / llama_get_embeddings_nextn_ith (used by MTP)
+ 
+ #include <algorithm>
+ #include <cassert>
+@@ -608,6 +622,7 @@ struct common_speculative_impl_draft_eagle3 : public common_speculative_impl {
+         // to get one g_embd row per token.
+         features_buf.resize((size_t) n_tokens * n_embd_enc, 0.0f);
+ 
++        const int64_t tp0_feat = ggml_time_us();
+         for (uint32_t k = 0; k < target_layer_ids_n; ++k) {
+             const float * layer = target_layer_ids[k] < n_layer_tgt
+                 ? llama_get_embeddings_layer_inp(ctx_tgt, (uint32_t) target_layer_ids[k])
+@@ -622,7 +637,9 @@ struct common_speculative_impl_draft_eagle3 : public common_speculative_impl {
+             }
+         }
+ 
++        g_spec_prof.t_feat += ggml_time_us() - tp0_feat;
+         g_embd_buf.resize((size_t) n_tokens * n_embd_dec);
++        const int64_t tp0_enc = ggml_time_us();
+ 
+         // llama_encode() requires the full encoder batch to fit in n_ubatch.
+         // Allow batch > ubatch: eagle3's per-token encoder can be chunked safely.
+@@ -654,6 +671,7 @@ struct common_speculative_impl_draft_eagle3 : public common_speculative_impl {
+                         (size_t) n_chunk * n_embd_dec * sizeof(float));
+         }
+ 
++        g_spec_prof.t_enc += ggml_time_us() - tp0_enc;
+         const float * g_embd = g_embd_buf.data();
+ 
+         const size_t row_bytes = (size_t) n_embd_dec * sizeof(float);
+@@ -722,6 +740,12 @@ struct common_speculative_impl_draft_eagle3 : public common_speculative_impl {
+     }
+ 
+     void draft(common_speculative_draft_params_vec & dparams) override {
++        const int64_t tp0_draft = ggml_time_us();
++        draft_impl(dparams);
++        g_spec_prof.t_draft += ggml_time_us() - tp0_draft;
++        g_spec_prof.maybe_dump();
++    }
++    void draft_impl(common_speculative_draft_params_vec & dparams) {
+         auto & ctx_dft = params.ctx_dft;
+ 
+         common_batch_clear(batch);
+@@ -1076,6 +1100,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+ 
+                 // gather this chunk's target features, interleaved by extract layer
+                 features_buf.resize((size_t) n_chunk * n_embd_enc);
++                const int64_t tp0_feat = ggml_time_us();
+                 for (uint32_t k = 0; k < target_layer_ids_n; ++k) {
+                     const float * layer = llama_get_embeddings_layer_inp(ctx_tgt, (uint32_t) target_layer_ids[k]);
+                     if (!layer) {
+@@ -1099,6 +1124,8 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+                     /*.logits   =*/ nullptr,
+                 };
+ 
++                g_spec_prof.t_feat += ggml_time_us() - tp0_feat;
++                const int64_t tp0_enc = ggml_time_us();
+                 int32_t rc = llama_encode(ctx_dft, enc_batch);
+                 if (rc != 0) {
+                     LOG_ERR("%s: llama_encode(ctx_dft) failed rc=%d (n_tokens=%d, offset=%d)\n",
+@@ -1112,6 +1139,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+                 // inject the DFlash decoder K/V cache at the tokens' target positions
+                 batch_inject.n_tokens = n_chunk;
+                 std::memcpy(batch_inject.embd, inp_g, (size_t) n_chunk * n_embd_dec * sizeof(float));
++                g_spec_prof.t_enc += ggml_time_us() - tp0_enc;
+ 
+                 for (int32_t i = 0; i < n_chunk; ++i) {
+                     batch_inject.pos[i]       = batch_in.pos[i_batch_beg[seq_id] + offset + i];
+@@ -1132,6 +1160,12 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+     }
+ 
+     void draft(common_speculative_draft_params_vec & dparams) override {
++        const int64_t tp0_draft = ggml_time_us();
++        draft_impl(dparams);
++        g_spec_prof.t_draft += ggml_time_us() - tp0_draft;
++        g_spec_prof.maybe_dump();
++    }
++    void draft_impl(common_speculative_draft_params_vec & dparams) {
+         auto & ctx_dft = params.ctx_dft;
+ 
+         common_batch_clear(batch);
+diff --git a/ggml/include/ggml-sycl.h b/ggml/include/ggml-sycl.h
+index 418a7ba97..08f5390ec 100644
+--- a/ggml/include/ggml-sycl.h
++++ b/ggml/include/ggml-sycl.h
+@@ -25,7 +25,7 @@ GGML_BACKEND_API bool ggml_backend_is_sycl(ggml_backend_t backend);
+ GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_sycl_buffer_type(int device);
+ 
+ // split tensor buffer that splits matrices by rows across multiple devices
+-GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(const float * tensor_split);
++GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(int main_device, const float * tensor_split);
+ 
+ // Tensor parallelism (--split-mode tensor): comm_init/free/allreduce_tensor
+ // trio queried by the meta-backend via ggml_backend_reg_get_proc_address.
+diff --git a/ggml/src/ggml-backend-meta.cpp b/ggml/src/ggml-backend-meta.cpp
+index a5a3a58ad..c7d465322 100644
+--- a/ggml/src/ggml-backend-meta.cpp
++++ b/ggml/src/ggml-backend-meta.cpp
+@@ -532,6 +532,23 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(
+         if (scalar_only && ret.axis >= 0 && ret.axis < GGML_MAX_DIMS) {
+             ret = {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
+         }
++        if (ret.axis == GGML_BACKEND_SPLIT_AXIS_UNKNOWN) {
++            fprintf(stderr, "[meta-split] UNKNOWN axis: op %s tensor '%s'\n", ggml_op_name(tensor->op), tensor->name);
++            for (size_t i = 0; i < GGML_MAX_SRC; i++) {
++                if (tensor->src[i]) {
++                    const ggml_backend_meta_split_state & st = src_ss[i];
++                    fprintf(stderr, "[meta-split]   src%zu '%s' axis %d n_segments %u :", i, tensor->src[i]->name, (int) st.axis, (unsigned) st.n_segments);
++                    for (size_t sg = 0; sg < st.n_segments; ++sg) {
++                        fprintf(stderr, " [seg%zu nr=%u ne:", sg, st.nr[sg]);
++                        for (size_t b = 0; b < n_bufs; ++b) {
++                            fprintf(stderr, " %ld", (long) st.ne[sg*n_bufs + b]);
++                        }
++                        fprintf(stderr, "]");
++                    }
++                    fprintf(stderr, "\n");
++                }
++            }
++        }
+         GGML_ASSERT(ret.axis != GGML_BACKEND_SPLIT_AXIS_UNKNOWN);
+         return ret;
+     };
+@@ -746,8 +763,14 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(
+ 
+     auto handle_flash_attn_ext = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
+         GGML_ASSERT(                             src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_2);
+-        GGML_ASSERT(                             src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_2);
+-        GGML_ASSERT(                             src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_2);
++        // K/V may be jointly mirrored (few KV heads replicated on every device
++        // while the Q heads are sharded): per-device GQA against the full KV.
++        const bool kv_mirrored = src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED &&
++                                 src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED;
++        if (!kv_mirrored) {
++            GGML_ASSERT(                         src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_2);
++            GGML_ASSERT(                         src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_2);
++        }
+         GGML_ASSERT(tensor->src[4] == nullptr || src_ss[3].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
+         GGML_ASSERT(tensor->src[4] == nullptr || src_ss[4].axis == GGML_BACKEND_SPLIT_AXIS_0);
+         return {GGML_BACKEND_SPLIT_AXIS_1, {0}, {1}, 1};
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 18d58782e..cf8e3935e 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -1036,6 +1036,7 @@ static int64_t get_row_rounding(ggml_type type, const std::array<float, GGML_SYC
+         case GGML_TYPE_Q8_0:
+             return 64;
+         case GGML_TYPE_F16:
++        case GGML_TYPE_BF16:
+         case GGML_TYPE_F32:
+             return 1;
+         case GGML_TYPE_Q2_K:
+@@ -1152,7 +1153,10 @@ ggml_backend_sycl_split_buffer_init_tensor(ggml_backend_buffer_t buffer,
+         SYCL_CHECK(CHECK_TRY_ERROR(buf = (char *)ggml_sycl_malloc_device(size, *stream)));
+         if (!buf) {
+             char err_buf[1024];
+-            snprintf(err_buf, 1023, "%s: can't allocate %lu Bytes of memory on device\n", __func__, size);
++            snprintf(err_buf, 1023,
++                     "%s: can't allocate %lu Bytes on device %d (tensor %s type %s ne0 %ld nrows_split %ld rows [%ld,%ld))\n",
++                     __func__, size, i, tensor->name, ggml_type_name(tensor->type),
++                     (long) ne0, (long) nrows_split, (long) row_low, (long) row_high);
+             throw std::runtime_error(err_buf);
+         }
+         // set padding to 0 to avoid possible NaN values
+@@ -1389,14 +1393,18 @@ static ggml_backend_buffer_type_i ggml_backend_sycl_split_buffer_type_interface
+     /* .is_host          = */ ggml_backend_sycl_split_buffer_type_is_host,
+ };
+ 
+-ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(const float * tensor_split) {
++ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(int main_device, const float * tensor_split) {
+     static std::mutex mutex;
+     std::lock_guard<std::mutex> lock(mutex);
+ 
+     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_split_buffer_type\n");
+     ggml_check_sycl();
++    if (main_device < 0 || main_device >= ggml_sycl_info().device_count) {
++        GGML_LOG_ERROR("%s: invalid main_device %d (device_count %d)\n", __func__, main_device, ggml_sycl_info().device_count);
++        return nullptr;
++    }
+     // FIXME: this is not thread safe
+-    static std::map<std::array<float, GGML_SYCL_MAX_DEVICES>, struct ggml_backend_buffer_type> buft_map;
++    static std::map<std::pair<int, std::array<float, GGML_SYCL_MAX_DEVICES>>, struct ggml_backend_buffer_type> buft_map;
+ 
+     std::array<float, GGML_SYCL_MAX_DEVICES> tensor_split_arr = {};
+ 
+@@ -1414,18 +1422,19 @@ ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(const float * ten
+         }
+     }
+ 
+-    auto it = buft_map.find(tensor_split_arr);
++    auto map_key = std::make_pair(main_device, tensor_split_arr);
++    auto it = buft_map.find(map_key);
+     if (it != buft_map.end()) {
+         return &it->second;
+     }
+ 
+     struct ggml_backend_buffer_type buft {
+         /* .iface   = */ ggml_backend_sycl_split_buffer_type_interface,
+-        /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), 0),
++        /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), main_device),
+         /* .context = */ new ggml_backend_sycl_split_buffer_type_context{tensor_split_arr},
+     };
+ 
+-    auto result = buft_map.emplace(tensor_split_arr, buft);
++    auto result = buft_map.emplace(map_key, buft);
+     return &result.first->second;
+ }
+ 
+@@ -6077,6 +6086,17 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
+ }
+ 
+ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
++    // split buffers can only be used with GGML_OP_MUL_MAT (matrix weights
++    // sharded by rows across devices); reject every other consumer so the
++    // weight-buft selector never places norms/embeddings there
++    if (op->op != GGML_OP_MUL_MAT) {
++        for (int i = 0; i < GGML_MAX_SRC; i++) {
++            if (op->src[i] && op->src[i]->buffer &&
++                op->src[i]->buffer->buft->iface.get_name == ggml_backend_sycl_split_buffer_type_get_name) {
++                return false;
++            }
++        }
++    }
+     bool res = do_ggml_backend_sycl_device_supports_op(dev, op);
+     GGML_SYCL_DEBUG("[SYCL] call %s op->op=%s op->type=%s -> %s\n", __func__, ggml_op_name(op->op),
+                     ggml_type_name(op->type), res ? "true" : "false");
+@@ -6084,6 +6104,11 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
+ }
+ 
+ static bool ggml_backend_sycl_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
++    if (buft->iface.get_name == ggml_backend_sycl_split_buffer_type_get_name) {
++        // split tensors are handled by the multi-device mul_mat path on the
++        // main device's backend
++        return true;
++    }
+     if (buft->iface.get_name != ggml_backend_sycl_buffer_type_get_name) {
+         return false;
+     }
+@@ -6235,11 +6260,10 @@ static ggml_backend_dev_t ggml_backend_sycl_reg_get_device(ggml_backend_reg_t re
+ 
+ struct ggml_backend_sycl_comm_context {
+     std::vector<ggml_backend_t> backends;
+-    // ONE persistent per-device byte buffer, 4*nelem bytes.  Both the
+-    // FP32 small-tensor path and the BF16 large-tensor path share it
+-    // by reinterpreting.
+-    std::unique_ptr<ggml_sycl_pool_alloc<uint8_t>> buf0;
+-    std::unique_ptr<ggml_sycl_pool_alloc<uint8_t>> buf1;
++    // ONE persistent per-device byte buffer, 4*nelem bytes, reinterpreted by
++    // both the FP32 small path and the BF16 large path.
++    std::vector<std::unique_ptr<ggml_sycl_pool_alloc<uint8_t>>> bufs;
++    bool peer_ok = false;
+     int64_t buf_nelem = 0;
+ };
+ 
+@@ -6250,18 +6274,47 @@ void * ggml_backend_sycl_comm_init(ggml_backend_t * backends, size_t n_backends)
+         }
+     }
+ 
+-    // Initial version: N=2 only. For N!=2, returning null makes the
+-    // meta-backend skip this backend-specific allreduce entirely.
+-    if (n_backends != 2) {
++    // Ring/recursive-doubling allreduce for N=2 and N=4.
++    if (n_backends != 2 && n_backends != 4) {
+         return nullptr;
+     }
+ 
+     auto * ctx = new ggml_backend_sycl_comm_context;
+     ctx->backends.assign(backends, backends + n_backends);
+-    auto * sctx0 = (ggml_backend_sycl_context *) backends[0]->context;
+-    auto * sctx1 = (ggml_backend_sycl_context *) backends[1]->context;
+-    ctx->buf0 = std::make_unique<ggml_sycl_pool_alloc<uint8_t>>(sctx0->pool());
+-    ctx->buf1 = std::make_unique<ggml_sycl_pool_alloc<uint8_t>>(sctx1->pool());
++    for (size_t i = 0; i < n_backends; ++i) {
++        auto * sctx = (ggml_backend_sycl_context *) backends[i]->context;
++        ctx->bufs.emplace_back(std::make_unique<ggml_sycl_pool_alloc<uint8_t>>(sctx->pool()));
++    }
++
++    // Enable bidirectional peer access so cross-device USM q.memcpy is a real
++    // async P2P copy (without enable it can silently degrade or no-op).
++    ctx->peer_ok = true;
++    try {
++        for (size_t i = 0; i < n_backends && ctx->peer_ok; ++i) {
++            for (size_t j = 0; j < n_backends; ++j) {
++                if (i == j) {
++                    continue;
++                }
++                auto di = ((ggml_backend_sycl_context *) backends[i]->context)->stream()->get_device();
++                auto dj = ((ggml_backend_sycl_context *) backends[j]->context)->stream()->get_device();
++                if (!di.ext_oneapi_can_access_peer(dj, sycl::ext::oneapi::peer_access::access_supported)) {
++                    ctx->peer_ok = false;
++                    break;
++                }
++                di.ext_oneapi_enable_peer_access(dj);
++            }
++        }
++    } catch (...) {
++        ctx->peer_ok = false;
++    }
++    if (!ctx->peer_ok) {
++        // no P2P: keep the context for N=2 (synchronous dev2dev path);
++        // for N=4 the sync path stacks too much latency to be useful.
++        if (n_backends != 2) {
++            delete ctx;
++            return nullptr;
++        }
++    }
+     return ctx;
+ }
+ catch (const sycl::exception &) { return nullptr; }
+@@ -6273,14 +6326,11 @@ void ggml_backend_sycl_comm_free(void * comm_ctx_v) {
+         return;
+     }
+ 
+-    // Sync both per-device queues so the pool_alloc destructors don't
++    // Sync all per-device queues so the pool_alloc destructors don't
+     // return memory still in use by the last kernel.
+-    if (comm_ctx->backends.size() == 2) {
+-        auto * sctx0 = (ggml_backend_sycl_context *) comm_ctx->backends[0]->context;
+-        auto * sctx1 = (ggml_backend_sycl_context *) comm_ctx->backends[1]->context;
++    for (ggml_backend_t b : comm_ctx->backends) {
+         try {
+-            sctx0->stream()->wait();
+-            sctx1->stream()->wait();
++            ((ggml_backend_sycl_context *) b->context)->stream()->wait();
+         } catch (...) { /* best effort during shutdown */ }
+     }
+ 
+@@ -6295,24 +6345,24 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
+     auto * comm_ctx = static_cast<ggml_backend_sycl_comm_context *>(comm_ctx_v);
+     const size_t n_backends = comm_ctx->backends.size();
+ 
+-    // Fast path: N=2, F32/F16, contiguous, matching shapes.
+-    if (n_backends != 2) {
++    if (n_backends != 2 && n_backends != 4) {
+         return false;
+     }
+-    // Accept F32 or F16 inputs natively (types must match). F16 takes the
+-    // direct 2-byte memcpy + add path below; other types return false so the
+-    // meta-backend uses its generic all-reduce.
+-    if (tensors[0]->type != tensors[1]->type) {
+-        return false;
++    for (size_t i = 1; i < n_backends; ++i) {
++        if (tensors[i]->type != tensors[0]->type) {
++            return false;
++        }
+     }
+     if (tensors[0]->type != GGML_TYPE_F32 && tensors[0]->type != GGML_TYPE_F16) {
+         return false;
+     }
+-    if (!ggml_is_contiguous(tensors[0]) || !ggml_is_contiguous(tensors[1])) {
+-        return false;
+-    }
+-    if (ggml_nelements(tensors[0]) != ggml_nelements(tensors[1])) {
+-        return false;
++    for (size_t i = 0; i < n_backends; ++i) {
++        if (!ggml_is_contiguous(tensors[i])) {
++            return false;
++        }
++        if (ggml_nelements(tensors[i]) != ggml_nelements(tensors[0])) {
++            return false;
++        }
+     }
+ 
+     const int64_t nelem  = ggml_nelements(tensors[0]);
+@@ -6321,122 +6371,130 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
+         return true;
+     }
+ 
+-    auto * ctx0 = (ggml_backend_sycl_context *) comm_ctx->backends[0]->context;
+-    auto * ctx1 = (ggml_backend_sycl_context *) comm_ctx->backends[1]->context;
+-    queue_ptr q0 = ctx0->stream();
+-    queue_ptr q1 = ctx1->stream();
++    std::vector<ggml_backend_sycl_context *> ctxs(n_backends);
++    std::vector<queue_ptr> qs(n_backends);
++    for (size_t i = 0; i < n_backends; ++i) {
++        ctxs[i] = (ggml_backend_sycl_context *) comm_ctx->backends[i]->context;
++        qs[i]   = ctxs[i]->stream();
++    }
+ 
+-    // Grow per-device byte buffers if needed (4 * nelem bytes each).
+     if (comm_ctx->buf_nelem < nelem) {
+-        comm_ctx->buf0->realloc(nelem * 4);
+-        comm_ctx->buf1->realloc(nelem * 4);
++        for (size_t i = 0; i < n_backends; ++i) {
++            comm_ctx->bufs[i]->realloc(nelem * 4);
++        }
+         comm_ctx->buf_nelem = nelem;
+     }
+-    uint8_t * buf0 = comm_ctx->buf0->get();
+-    uint8_t * buf1 = comm_ctx->buf1->get();
+-
+-    // F16 native path: direct 2-byte cross-device copy + add, skipping the
+-    // F32 round-trip the meta-backend fallback would force. Cross-device copies
+-    // go through dev2dev_memcpy because the two devices are in separate SYCL
+-    // contexts (a raw peer-USM q->memcpy would be a silent no-op).
+-    if (tensors[0]->type == GGML_TYPE_F16) {
+-        sycl::half * f16_out0 = (sycl::half *) tensors[0]->data;
+-        sycl::half * f16_out1 = (sycl::half *) tensors[1]->data;
+-        sycl::half * f16_tmp0 = (sycl::half *) buf0;
+-        sycl::half * f16_tmp1 = (sycl::half *) buf1;
+-
+-        q0->wait();
+-        q1->wait();
+-        dev2dev_memcpy(ctx0->device, *q0, ctx1->device, *q1, f16_tmp0, tensors[1]->data, nbytes);
+-        dev2dev_memcpy(ctx1->device, *q1, ctx0->device, *q0, f16_tmp1, tensors[0]->data, nbytes);
+-
+-        q0->submit([&](sycl::handler & h) {
+-            h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
+-                f16_out0[i] = (sycl::half) ((float) f16_out0[i] + (float) f16_tmp0[i]);
++
++    if (!comm_ctx->peer_ok) {
++        // No P2P: preserved synchronous fallback, N=2 only (comm_init rejects
++        // N=4 without P2P). Route cross-device copies through dev2dev_memcpy.
++        GGML_ASSERT(n_backends == 2);
++        uint8_t * buf0 = comm_ctx->bufs[0]->get();
++        uint8_t * buf1 = comm_ctx->bufs[1]->get();
++        qs[0]->wait();
++        qs[1]->wait();
++        dev2dev_memcpy(ctxs[0]->device, *qs[0], ctxs[1]->device, *qs[1], buf0, tensors[1]->data, nbytes);
++        dev2dev_memcpy(ctxs[1]->device, *qs[1], ctxs[0]->device, *qs[0], buf1, tensors[0]->data, nbytes);
++        if (tensors[0]->type == GGML_TYPE_F16) {
++            sycl::half * out0 = (sycl::half *) tensors[0]->data;
++            sycl::half * out1 = (sycl::half *) tensors[1]->data;
++            sycl::half * tmp0 = (sycl::half *) buf0;
++            sycl::half * tmp1 = (sycl::half *) buf1;
++            qs[0]->parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
++                out0[i] = (sycl::half) ((float) out0[i] + (float) tmp0[i]);
+             });
+-        });
+-        q1->submit([&](sycl::handler & h) {
+-            h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
+-                f16_out1[i] = (sycl::half) ((float) f16_out1[i] + (float) f16_tmp1[i]);
++            qs[1]->parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
++                out1[i] = (sycl::half) ((float) out1[i] + (float) tmp1[i]);
+             });
+-        });
+-        return true;
+-    }
+-
+-    float * out0 = (float *) tensors[0]->data;
+-    float * out1 = (float *) tensors[1]->data;
+-
+-    // BF16 threshold: above this, the PCIe savings from halving the
+-    // cross-device bytes outweigh the 2 extra compress kernels.
+-    // Below: stay on the FP32 fast path.  Threshold mirrors the CUDA
+-    // NCCL allreduce pattern for n_backends=2.
+-    static constexpr int64_t BF16_THRESHOLD = 32768;
+-
+-    if (nelem < BF16_THRESHOLD) {
+-        // FP32 small path: 4 SYCL submissions per allreduce.
+-        float * tmp0 = (float *) buf0;
+-        float * tmp1 = (float *) buf1;
+-
+-        // COMM-D2D-FIX: the two devices are in SEPARATE SYCL contexts, so a raw
+-        // q->memcpy of a peer USM pointer is a silent no-op. Route cross-device
+-        // copies through dev2dev_memcpy (L0 direct copy / host staging). It is
+-        // synchronous, so wait for the local partials to be produced first.
+-        q0->wait();
+-        q1->wait();
+-        dev2dev_memcpy(ctx0->device, *q0, ctx1->device, *q1, tmp0, tensors[1]->data, nbytes);
+-        dev2dev_memcpy(ctx1->device, *q1, ctx0->device, *q0, tmp1, tensors[0]->data, nbytes);
+-
+-        q0->submit([&](sycl::handler & h) {
+-            h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
++        } else {
++            float * out0 = (float *) tensors[0]->data;
++            float * out1 = (float *) tensors[1]->data;
++            float * tmp0 = (float *) buf0;
++            float * tmp1 = (float *) buf1;
++            qs[0]->parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
+                 out0[i] += tmp0[i];
+             });
+-        });
+-        q1->submit([&](sycl::handler & h) {
+-            h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
++            qs[1]->parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
+                 out1[i] += tmp1[i];
+             });
+-        });
++        }
+         return true;
+     }
+ 
+-    // BF16 large path: 6 SYCL submissions per allreduce, but the
+-    // cross-device memcpy is HALF the bytes. Pure bit-shift
+-    // conversion (no rounding) — matches ggml's truncating fp32->bf16.
+-    uint16_t * outbox0 = (uint16_t *) buf0;
+-    uint16_t * inbox0  = outbox0 + nelem;
+-    uint16_t * outbox1 = (uint16_t *) buf1;
+-    uint16_t * inbox1  = outbox1 + nelem;
+-
+-    // Phase A: compress each device's local partial in parallel.
+-    sycl::event c0 = q0->parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
+-        outbox0[i] = (uint16_t) (sycl::bit_cast<uint32_t>(out0[i]) >> 16);
+-    });
+-
+-    sycl::event c1 = q1->parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
+-        outbox1[i] = (uint16_t) (sycl::bit_cast<uint32_t>(out1[i]) >> 16);
+-    });
+-
+-    // Phase B: COMM-D2D-FIX-BF16 cross-device copy of compressed bytes via
+-    // dev2dev_memcpy (separate SYCL contexts; sync copy after compress).
+-    const size_t bf16_bytes = nelem * sizeof(uint16_t);
+-    c0.wait();
+-    c1.wait();
+-    dev2dev_memcpy(ctx0->device, *q0, ctx1->device, *q1, inbox0, outbox1, bf16_bytes);
+-    dev2dev_memcpy(ctx1->device, *q1, ctx0->device, *q0, inbox1, outbox0, bf16_bytes);
+-
+-    // Phase C: decompress + add into local FP32 partial.
+-    q0->submit([&](sycl::handler & h) {
+-        h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
+-            out0[i] += sycl::bit_cast<float>(((uint32_t) inbox0[i]) << 16);
+-        });
+-    });
++    static int comm_debug = -1;
++    if (comm_debug < 0) {
++        comm_debug = ggml_sycl_get_env("GGML_SYCL_COMM_DEBUG", 0);
++    }
++    static int comm_calls = 0;
++    const bool dbg = comm_debug && comm_calls++ == 0;
++    if (dbg) {
++        for (size_t i = 0; i < n_backends; ++i) {
++            qs[i]->wait();
++            float h[4] = {0};
++            qs[i]->memcpy(h, tensors[i]->data, sizeof(h)).wait();
++            fprintf(stderr, "[comm-dbg] pre  dev%zu type=%s nelem=%ld: %g %g %g %g\n",
++                    i, ggml_type_name(tensors[0]->type), (long) nelem, h[0], h[1], h[2], h[3]);
++        }
++    }
+ 
+-    q1->submit([&](sycl::handler & h) {
+-        h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
+-            out1[i] += sycl::bit_cast<float>(((uint32_t) inbox1[i]) << 16);
+-        });
+-    });
++    // Partials from zero-sized slices are not computed this step and hold
++    // stale data; the combine contract (matching the meta fallback) is that
++    // they contribute zero.
++    for (size_t i = 0; i < n_backends; ++i) {
++        if (!(tensors[i]->flags & GGML_TENSOR_FLAG_COMPUTE)) {
++            qs[i]->memset(tensors[i]->data, 0, nbytes);
++        }
++    }
+ 
++    // P2P async recursive doubling: log2(n) rounds of pairwise
++    // exchange+add. Queues are in-order, so each device serializes its own
++    // round sequence; cross-device ordering uses events:
++    //   * a copy waits for the partner queue barrier (partial produced),
++    //   * an add waits for BOTH the local pull and the partner pull, since
++    //     the partner reads our partial while we want to overwrite it.
++    for (size_t mask = 1; mask < n_backends; mask <<= 1) {
++        std::vector<sycl::event> ready(n_backends);
++        for (size_t i = 0; i < n_backends; ++i) {
++            ready[i] = qs[i]->ext_oneapi_submit_barrier();
++        }
++        std::vector<sycl::event> copied(n_backends);
++        for (size_t i = 0; i < n_backends; ++i) {
++            const size_t peer = i ^ mask;
++            copied[i] = qs[i]->memcpy(comm_ctx->bufs[i]->get(), tensors[peer]->data, nbytes, ready[peer]);
++        }
++        for (size_t i = 0; i < n_backends; ++i) {
++            const size_t peer = i ^ mask;
++            const sycl::event dep_local = copied[i];
++            const sycl::event dep_peer  = copied[peer];
++            if (tensors[0]->type == GGML_TYPE_F16) {
++                sycl::half * out = (sycl::half *) tensors[i]->data;
++                sycl::half * tmp = (sycl::half *) comm_ctx->bufs[i]->get();
++                qs[i]->submit([&](sycl::handler & h) {
++                    h.depends_on({dep_local, dep_peer});
++                    h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> idx) {
++                        out[idx] = (sycl::half) ((float) out[idx] + (float) tmp[idx]);
++                    });
++                });
++            } else {
++                float * out = (float *) tensors[i]->data;
++                float * tmp = (float *) comm_ctx->bufs[i]->get();
++                qs[i]->submit([&](sycl::handler & h) {
++                    h.depends_on({dep_local, dep_peer});
++                    h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> idx) {
++                        out[idx] += tmp[idx];
++                    });
++                });
++            }
++        }
++        if (dbg) {
++            for (size_t i = 0; i < n_backends; ++i) {
++                qs[i]->wait();
++                float h[4] = {0};
++                qs[i]->memcpy(h, tensors[i]->data, sizeof(h)).wait();
++                fprintf(stderr, "[comm-dbg] mask=%zu dev%zu: %g %g %g %g\n", mask, i, h[0], h[1], h[2], h[3]);
++            }
++        }
++    }
+     return true;
+ }
+ catch (const sycl::exception &) { return false; }
+diff --git a/src/llama-model.cpp b/src/llama-model.cpp
+index 3bf3a22f2..fd81ec833 100644
+--- a/src/llama-model.cpp
++++ b/src/llama-model.cpp
+@@ -439,14 +439,27 @@ struct ggml_backend_meta_split_state llama_meta_device_get_split_state(const str
+         return {axis, tensor_axis_0, il, rotation};
+     };
+ 
++    // With fewer KV heads than devices, per-KV-group sharding leaves devices
++    // with zero attention rows. Mirror K/V instead (every device computes the
++    // small full K/V projection) and shard only the Q heads.
++    const bool mirror_kv = hparams.n_head_kv() < ud->n_devices;
++
+     auto get_tensor_config = [&]() -> tensor_config {
+         // standard attention
+-        if (std::regex_match(tensor_name, pattern_q_weight) || std::regex_match(tensor_name, pattern_kv_weight)) {
++        if (std::regex_match(tensor_name, pattern_q_weight)) {
+             return get_tensor_config_impl(GGML_BACKEND_SPLIT_AXIS_1, "attn_output.weight", "ssm_out.weight");
+         }
+-        if (std::regex_match(tensor_name, pattern_q_bias) || std::regex_match(tensor_name, pattern_kv_bias)) {
++        if (std::regex_match(tensor_name, pattern_kv_weight)) {
++            return get_tensor_config_impl(mirror_kv ? GGML_BACKEND_SPLIT_AXIS_MIRRORED : GGML_BACKEND_SPLIT_AXIS_1,
++                                          "attn_output.weight", "ssm_out.weight");
++        }
++        if (std::regex_match(tensor_name, pattern_q_bias)) {
+             return get_tensor_config_impl(GGML_BACKEND_SPLIT_AXIS_0, "attn_output.weight", "ssm_out.weight");
+         }
++        if (std::regex_match(tensor_name, pattern_kv_bias)) {
++            return get_tensor_config_impl(mirror_kv ? GGML_BACKEND_SPLIT_AXIS_MIRRORED : GGML_BACKEND_SPLIT_AXIS_0,
++                                          "attn_output.weight", "ssm_out.weight");
++        }
+         if (std::regex_match(tensor_name, pattern_qkv_weight)) {
+             return get_tensor_config_impl(GGML_BACKEND_SPLIT_AXIS_1, "attn_output.weight", "ssm_out.weight");
+         }
+@@ -456,7 +469,11 @@ struct ggml_backend_meta_split_state llama_meta_device_get_split_state(const str
+         if (std::regex_match(tensor_name, pattern_qk_norm)) {
+             return get_tensor_config_impl(tensor->ne[1] == 1 ? GGML_BACKEND_SPLIT_AXIS_MIRRORED : GGML_BACKEND_SPLIT_AXIS_1, "attn_output.weight");
+         }
+-        if (std::regex_match(tensor_name, pattern_kv_cache) || std::regex_match(tensor_name, pattern_attn_sinks)) {
++        if (std::regex_match(tensor_name, pattern_kv_cache)) {
++            return get_tensor_config_impl(mirror_kv ? GGML_BACKEND_SPLIT_AXIS_MIRRORED : GGML_BACKEND_SPLIT_AXIS_0,
++                                          "attn_output.weight");
++        }
++        if (std::regex_match(tensor_name, pattern_attn_sinks)) {
+             return get_tensor_config_impl(GGML_BACKEND_SPLIT_AXIS_0, "attn_output.weight");
+         }
+         if (std::regex_match(tensor_name, pattern_attn_out_weight)) {
+@@ -574,6 +591,19 @@ struct ggml_backend_meta_split_state llama_meta_device_get_split_state(const str
+             GGML_ASSERT(tensor->ne[axis] == n_embd + 2*n_embd_gqa);
+             return {{n_embd, 1}, {n_embd_gqa, 2}};
+         }
++        // KV-mirrored sharding: shard Q (and everything laid out per Q head)
++        // as one segment per KV group so each device's local heads keep the
++        // kernel's proportional head->kv-head mapping.
++        if (mirror_kv && !hparams.is_recr(il) &&
++                (std::regex_match(tensor_name, pattern_q_weight) || std::regex_match(tensor_name, pattern_q_bias) ||
++                 std::regex_match(tensor_name, pattern_attn_out_weight) ||
++                 std::regex_match(tensor_name, pattern_attn_gate_weight))) {
++            const int64_t n_head_kv = hparams.n_head_kv(il);
++            const int64_t group     = hparams.n_gqa(il) * hparams.n_embd_head_k(il);
++            if (n_head_kv > 1 && tensor->ne[axis] == group * n_head_kv) {
++                return {{group, (uint32_t) n_head_kv}};
++            }
++        }
+         if (std::regex_match(tensor_name, pattern_ffn_up_weight) || std::regex_match(tensor_name, pattern_ffn_up_bias)) {
+             const int64_t n_ff = hparams.n_ff(il);
+             // some models such as Phi 3 have fused up + gate tensors named "up" tensors, which need to be segmented
+@@ -630,7 +660,10 @@ struct ggml_backend_meta_split_state llama_meta_device_get_split_state(const str
+                 return {std::lcm(n_embd_q, blck_size_perf)/n_embd_q * n_gqa};
+             }
+ 
+-            const int64_t granularity_q = std::lcm(n_embd_q, blck_size_perf);
++            // KV-mirrored sharding only needs Q-head alignment, not KV-group alignment
++            const int64_t granularity_q = mirror_kv
++                ? std::lcm((int64_t) hparams.n_embd_head_k(il), blck_size_perf)
++                : std::lcm(n_embd_q, blck_size_perf);
+             if (std::regex_match(tensor_name, pattern_q_weight) || std::regex_match(tensor_name, pattern_q_bias)) {
+                 GGML_ASSERT(segments.size() == 1);
+                 // some models have Q gate tensors, for those cases the granularity needs to be doubled:
+@@ -643,6 +676,11 @@ struct ggml_backend_meta_split_state llama_meta_device_get_split_state(const str
+                 GGML_ASSERT(segments.size() == 1);
+                 return {granularity_q};
+             }
++            // per-Q-head gates must shard identically to the Q heads
++            if (std::regex_match(tensor_name, pattern_attn_gate_weight)) {
++                GGML_ASSERT(segments.size() == 1);
++                return {granularity_q};
++            }
+ 
+             const int64_t granularity_kv = granularity_q / n_gqa;
+             if (std::regex_match(tensor_name, pattern_kv_weight) ||
