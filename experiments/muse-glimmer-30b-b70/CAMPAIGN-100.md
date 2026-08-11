@@ -179,3 +179,22 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
      mirroring (L2) -> ~6-8 ms (-> avg ~85-95).
   3. Drafter fine-tune acceptance (prose E 3.3 -> 5+) for the remainder.
   Production restored on the canonical build throughout.
+- 2026-08-11 09:30 (morning block): allreduce hardening + corrected lane
+  budgets. Push-model rewrite (remote writes) was faster standalone but
+  produced unstable shas in-model at N=4 - remote-WRITE visibility across
+  contexts is unreliable under load on this runtime; remote READS are
+  proven. Final: pull-model recursive doubling, barriers round-0 only,
+  single cross-dep adds; byte-exact =REF at N=2 and N=4, no-spec and
+  dflash. KV mirroring gated behind LLAMA_TP_MIRROR_KV (default off):
+  it wins no-spec (29.0 vs 26.8) but its batch-16 fattn shapes cap dflash
+  at ~57 vs 71 json. Snapshot:
+  `20260811-muse100-pullopt-allreduce-mirror-gated.patch`.
+  **Honest scoreboard: 39.7/58.3/71.0 prose/code/json = 56.5 avg = 1.97x
+  baseline.** Corrected round budget (N4 general, dflash n15 p0.15):
+  verify ~65 ms + drafter 13 ms + encoder 3 ms ~= 81 ms.
+  Lanes to 4x, with budgets: (A) mirrored-config batch-verify fattn
+  shapes -> verify ~35-40 ms -> avg ~75-85; (B) drafter+encoder 16 -> 6-8 ms
+  (single-device drafter via shared-tensor materialization) -> avg ~90-100;
+  (C) drafter fine-tune acceptance (prose E 3.3 -> 5+, harvest in
+  progress) -> margin past 100. Production 2xTP2 on the canonical build
+  throughout; all identities byte-verified.
