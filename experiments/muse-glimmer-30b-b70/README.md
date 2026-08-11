@@ -64,6 +64,18 @@ not memory-constrained in the 2-card arms.
   dflash-kquant.gguf`; upstream also ships `draft-mtp`/`draft-eagle3`/
   `draft-dspark` for cross-checks.
 
+## Exactness Status (2026-08-10, updates gate design)
+
+Upstream master SYCL greedy decode is NOT run-deterministic on this stack
+(no-spec included, conservative flags and fa-off included); outputs flip
+among a small set of near-tie variants with no quality corruption. See
+`sweeps/20260810-armB-pmin-depth-runtime-and-exactness.md`. Until a
+deterministic identity is restored (lab precedent: Gemma/Qwen pinned builds
+replay exactly), byte-exactness gates cannot pass and promotion is blocked.
+Banked speed config for DFlash: `n_max=5, p_min=0.1` at 2.39x avg
+(1.87x prose / 2.82x code / 2.48x json). Single-card discriminator probe
+pending on the kquant-17gb artifact.
+
 ## Gates And Method
 
 Inherit the Gemma/Qwen methodology wholesale: fixed cold realistic suite,
