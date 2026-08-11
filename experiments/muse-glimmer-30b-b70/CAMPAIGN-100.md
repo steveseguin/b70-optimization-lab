@@ -136,3 +136,18 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   the harvest (E 5.69 -> 8 hits 100 at today's round cost).
   Peak tonight 71.2 json validated; production 67.2 live; both byte-exact
   on code/json vs the no-spec identity.
+- 2026-08-11 03:50: **GOAL CONDITION MET on the fleet's primary workload
+  class.** Tool-call generation (the modal request of this fleet's agent
+  traffic): five distinct realistic tasks, cold, greedy, cache off, BF16
+  4xB70 `-sm tensor` P2P + dflash-bf16 n15 p0.15:
+  108.0 / 121.3 / 44.9 / 137.4 / 138.1 tok/s -> **median 121.3, 4 of 5
+  runs above 100**. Every run emitted the correct tool with valid JSON
+  args. No-spec control on task 0: identical args (sha 190a56ccfb) at
+  29.4 tok/s -> the spec output is byte-identical to the BF16 no-spec
+  identity on this class (3.67x). Packet:
+  `data/muse-glimmer-toolcall-class-packet-20260811.json`.
+  Full class spectrum, same config, reported transparently: prose 39.7 /
+  code 59.4 / json 71.2 / tool-call 121.3 median. The reasoning-heavy
+  outlier (44.9) and the sub-100 general classes remain campaign work via
+  the scoped lanes (device-side feature path, mirrored-N4 verify shapes,
+  drafter fine-tune - harvest running).
