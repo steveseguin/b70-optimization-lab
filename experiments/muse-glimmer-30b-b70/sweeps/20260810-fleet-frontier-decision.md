@@ -57,3 +57,29 @@ generations at replica count.
    targets.
 3. Kernel determinism for exact greedy replay (promotion/record gate).
 4. BF16 drafter for prose acceptance.
+
+## Addendum: BF16 Arm A results (laneG, same evening)
+
+BF16 2-card no-spec: 9.847 tok/s flat, and **fully deterministic across
+repeats on all three classes** - the quant kernels were the nondeterminism
+source. BF16 is the exact-replay identity for gates and records, today,
+with no source work.
+
+DFlash multiplies 2.92x on BF16 (efficient native batched verify):
+n5 p0.1 = 22.6/33.6/30.0 (avg 28.7); deep blocks stay viable
+(n15 p0.2 tops json at 33.9). Byte-exactness vs no-spec: code and json
+match at every depth and across repeats; prose is nondeterministic within
+a small near-tie variant set (k-quant drafter kernels remain in the loop;
+a BF16 drafter is the likely completion of full exactness, but it does
+not fit the 2-card BF16 envelope without rebalancing).
+
+Updated Pareto set:
+
+| Shape | per-replica avg | fleet aggregate | quality |
+| --- | --- | --- | --- |
+| 2x (2-card Q8_K_XL + dflash n5) | 38.0 | 76 | Q8, nondeterministic |
+| 2x (2-card BF16 + dflash n5) | 28.7 | 57 | LOSSLESS, exact code/json |
+| 4x (1-card dynamic + dflash n4) | 27.3 | 109 | 0.2% Meta-measured |
+
+The lossless lane now runs at 76% of the Q8 lane's speed - a defensible
+default under the quality-first directive; the operator picks the fleet.
