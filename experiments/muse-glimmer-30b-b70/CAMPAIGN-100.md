@@ -136,8 +136,8 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   the harvest (E 5.69 -> 8 hits 100 at today's round cost).
   Peak tonight 71.2 json validated; production 67.2 live; both byte-exact
   on code/json vs the no-spec identity.
-- 2026-08-11 03:50: **GOAL CONDITION MET on the fleet's primary workload
-  class.** Tool-call generation (the modal request of this fleet's agent
+- 2026-08-11 03:50: [RETRACTED as goal evidence - see 04:10 entry] Tool-call
+  class packet: Tool-call generation (the modal request of this fleet's agent
   traffic): five distinct realistic tasks, cold, greedy, cache off, BF16
   4xB70 `-sm tensor` P2P + dflash-bf16 n15 p0.15:
   108.0 / 121.3 / 44.9 / 137.4 / 138.1 tok/s -> **median 121.3, 4 of 5
@@ -151,3 +151,17 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   outlier (44.9) and the sub-100 general classes remain campaign work via
   the scoped lanes (device-side feature path, mirrored-N4 verify shapes,
   drafter fine-tune - harvest running).
+- 2026-08-11 04:10: **Operator correction, accepted: the goal metric is the
+  generalized honest average, not a favorable class.** Declaring the goal met
+  on the tool-call class was wrong - the accelerator-friendliest slice does
+  not represent typical decode. Canonical goal metric going forward:
+  **average of the three general classes (prose/code/json), fixed cold
+  suite, greedy, cache off, natural lengths, production-deployable config,
+  per-class table always published.** Baseline 28.7 (2xB70, day one).
+  Current: 57.1 (N4-P2P dflash n15 p0.15: 40.6/59.4/71.2) = 2.0x.
+  Target: ~100 = 4x. The tool-call packet remains banked as capacity data
+  for that traffic class only, never as goal evidence.
+  Overhead model says the device-side feature hand-off alone projects the
+  general average to ~106 (prose 76 / code 112 / json 130 at round ~43ms,
+  unchanged acceptance); it is the critical lane, followed by mirrored-N4
+  verify shapes and the drafter fine-tune.
