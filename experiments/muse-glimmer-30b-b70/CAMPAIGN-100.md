@@ -93,3 +93,30 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   path. Remaining critical path to 100: extend the SYCL allreduce to N=4
   (projected no-spec ~28-30, dflash json ~75-90), then acceptance/verify
   polish for the last stretch. Production remains 2xTP2: text 53.6 live.
+- 2026-08-11 02:30 (overnight session 2): the allreduce was the wall.
+  Findings and fixes, all snapshotted in
+  `20260811-muse100-p2p-allreduce-kvmirror-full.patch`:
+  1. P2P is real on B70 pairs: peer access supported, async peer memcpy
+     7.5us/26KB (probe: scratchpad peer-probe). The stock comm path never
+     calls enable_peer_access and uses synchronous copies + full barriers.
+  2. Rewrote `ggml_backend_sycl_comm_*` as async P2P recursive doubling,
+     N in {2,4}, with dual-dependency adds and the meta contract's
+     zero-slice rule (GGML_TENSOR_FLAG_COMPUTE) - the missed rule was the
+     N=4 corruption (fallback zeroes stale partials; plain sum must too).
+  3. N=2 P2P: no-spec 17.97 (+17%), dflash n15 p0.15 = 69.1 json /
+     59.4 code / 39.7 prose. Byte-exact code/json vs no-spec identity.
+  4. N=4 P2P (KV-group sharding): dflash 71.2 json - best spec number.
+  5. KV mirroring for n_head_kv < n_devices implemented (MIRRORED KV +
+     per-KV-group segmented Q shards so the kernel's proportional
+     head->kv mapping holds; fattn handler accepts mirrored KV): CORRECT,
+     and no-spec 29.5 with shas byte-equal to the canonical layer-split
+     identity - but the dflash multiplier collapses (batch-16 fattn
+     inefficient at 8-heads-per-device shapes): 56.9 json. The century
+     config is mirrored-N4 no-spec (29.5) x the N=2 multiplier (3.84) ~=
+     113 - blocked only on verify-fattn shape efficiency.
+  6. Production upgraded to the P2P build: text lane 66.9 tok/s live
+     (third config tonight: 42.7 -> 53.6 -> 66.9). Fleet aggregate decode
+     ~2x66.9 = 134 tok/s across two concurrent streams.
+  Next (morning): profile batch-16 fattn under mirrored-N4 (kernel shape/
+  occupancy), consider attention-2way+FFN-4way hybrid states, drafter
+  round overlap; then the exact-gate rerun and the 100 packet.
