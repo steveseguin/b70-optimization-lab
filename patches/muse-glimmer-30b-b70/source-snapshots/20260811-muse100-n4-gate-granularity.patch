@@ -1,0 +1,155 @@
+diff --git a/ggml/include/ggml-sycl.h b/ggml/include/ggml-sycl.h
+index 418a7ba97..08f5390ec 100644
+--- a/ggml/include/ggml-sycl.h
++++ b/ggml/include/ggml-sycl.h
+@@ -25,7 +25,7 @@ GGML_BACKEND_API bool ggml_backend_is_sycl(ggml_backend_t backend);
+ GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_sycl_buffer_type(int device);
+ 
+ // split tensor buffer that splits matrices by rows across multiple devices
+-GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(const float * tensor_split);
++GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(int main_device, const float * tensor_split);
+ 
+ // Tensor parallelism (--split-mode tensor): comm_init/free/allreduce_tensor
+ // trio queried by the meta-backend via ggml_backend_reg_get_proc_address.
+diff --git a/ggml/src/ggml-backend-meta.cpp b/ggml/src/ggml-backend-meta.cpp
+index a5a3a58ad..e92cc46cb 100644
+--- a/ggml/src/ggml-backend-meta.cpp
++++ b/ggml/src/ggml-backend-meta.cpp
+@@ -532,6 +532,23 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(
+         if (scalar_only && ret.axis >= 0 && ret.axis < GGML_MAX_DIMS) {
+             ret = {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
+         }
++        if (ret.axis == GGML_BACKEND_SPLIT_AXIS_UNKNOWN) {
++            fprintf(stderr, "[meta-split] UNKNOWN axis: op %s tensor '%s'\n", ggml_op_name(tensor->op), tensor->name);
++            for (size_t i = 0; i < GGML_MAX_SRC; i++) {
++                if (tensor->src[i]) {
++                    const ggml_backend_meta_split_state & st = src_ss[i];
++                    fprintf(stderr, "[meta-split]   src%zu '%s' axis %d n_segments %u :", i, tensor->src[i]->name, (int) st.axis, (unsigned) st.n_segments);
++                    for (size_t sg = 0; sg < st.n_segments; ++sg) {
++                        fprintf(stderr, " [seg%zu nr=%u ne:", sg, st.nr[sg]);
++                        for (size_t b = 0; b < n_bufs; ++b) {
++                            fprintf(stderr, " %ld", (long) st.ne[sg*n_bufs + b]);
++                        }
++                        fprintf(stderr, "]");
++                    }
++                    fprintf(stderr, "\n");
++                }
++            }
++        }
+         GGML_ASSERT(ret.axis != GGML_BACKEND_SPLIT_AXIS_UNKNOWN);
+         return ret;
+     };
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 18d58782e..7653d3023 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -1036,6 +1036,7 @@ static int64_t get_row_rounding(ggml_type type, const std::array<float, GGML_SYC
+         case GGML_TYPE_Q8_0:
+             return 64;
+         case GGML_TYPE_F16:
++        case GGML_TYPE_BF16:
+         case GGML_TYPE_F32:
+             return 1;
+         case GGML_TYPE_Q2_K:
+@@ -1152,7 +1153,10 @@ ggml_backend_sycl_split_buffer_init_tensor(ggml_backend_buffer_t buffer,
+         SYCL_CHECK(CHECK_TRY_ERROR(buf = (char *)ggml_sycl_malloc_device(size, *stream)));
+         if (!buf) {
+             char err_buf[1024];
+-            snprintf(err_buf, 1023, "%s: can't allocate %lu Bytes of memory on device\n", __func__, size);
++            snprintf(err_buf, 1023,
++                     "%s: can't allocate %lu Bytes on device %d (tensor %s type %s ne0 %ld nrows_split %ld rows [%ld,%ld))\n",
++                     __func__, size, i, tensor->name, ggml_type_name(tensor->type),
++                     (long) ne0, (long) nrows_split, (long) row_low, (long) row_high);
+             throw std::runtime_error(err_buf);
+         }
+         // set padding to 0 to avoid possible NaN values
+@@ -1389,14 +1393,18 @@ static ggml_backend_buffer_type_i ggml_backend_sycl_split_buffer_type_interface
+     /* .is_host          = */ ggml_backend_sycl_split_buffer_type_is_host,
+ };
+ 
+-ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(const float * tensor_split) {
++ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(int main_device, const float * tensor_split) {
+     static std::mutex mutex;
+     std::lock_guard<std::mutex> lock(mutex);
+ 
+     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_split_buffer_type\n");
+     ggml_check_sycl();
++    if (main_device < 0 || main_device >= ggml_sycl_info().device_count) {
++        GGML_LOG_ERROR("%s: invalid main_device %d (device_count %d)\n", __func__, main_device, ggml_sycl_info().device_count);
++        return nullptr;
++    }
+     // FIXME: this is not thread safe
+-    static std::map<std::array<float, GGML_SYCL_MAX_DEVICES>, struct ggml_backend_buffer_type> buft_map;
++    static std::map<std::pair<int, std::array<float, GGML_SYCL_MAX_DEVICES>>, struct ggml_backend_buffer_type> buft_map;
+ 
+     std::array<float, GGML_SYCL_MAX_DEVICES> tensor_split_arr = {};
+ 
+@@ -1414,18 +1422,19 @@ ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(const float * ten
+         }
+     }
+ 
+-    auto it = buft_map.find(tensor_split_arr);
++    auto map_key = std::make_pair(main_device, tensor_split_arr);
++    auto it = buft_map.find(map_key);
+     if (it != buft_map.end()) {
+         return &it->second;
+     }
+ 
+     struct ggml_backend_buffer_type buft {
+         /* .iface   = */ ggml_backend_sycl_split_buffer_type_interface,
+-        /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), 0),
++        /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), main_device),
+         /* .context = */ new ggml_backend_sycl_split_buffer_type_context{tensor_split_arr},
+     };
+ 
+-    auto result = buft_map.emplace(tensor_split_arr, buft);
++    auto result = buft_map.emplace(map_key, buft);
+     return &result.first->second;
+ }
+ 
+@@ -6077,6 +6086,17 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
+ }
+ 
+ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
++    // split buffers can only be used with GGML_OP_MUL_MAT (matrix weights
++    // sharded by rows across devices); reject every other consumer so the
++    // weight-buft selector never places norms/embeddings there
++    if (op->op != GGML_OP_MUL_MAT) {
++        for (int i = 0; i < GGML_MAX_SRC; i++) {
++            if (op->src[i] && op->src[i]->buffer &&
++                op->src[i]->buffer->buft->iface.get_name == ggml_backend_sycl_split_buffer_type_get_name) {
++                return false;
++            }
++        }
++    }
+     bool res = do_ggml_backend_sycl_device_supports_op(dev, op);
+     GGML_SYCL_DEBUG("[SYCL] call %s op->op=%s op->type=%s -> %s\n", __func__, ggml_op_name(op->op),
+                     ggml_type_name(op->type), res ? "true" : "false");
+@@ -6084,6 +6104,11 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
+ }
+ 
+ static bool ggml_backend_sycl_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
++    if (buft->iface.get_name == ggml_backend_sycl_split_buffer_type_get_name) {
++        // split tensors are handled by the multi-device mul_mat path on the
++        // main device's backend
++        return true;
++    }
+     if (buft->iface.get_name != ggml_backend_sycl_buffer_type_get_name) {
+         return false;
+     }
+diff --git a/src/llama-model.cpp b/src/llama-model.cpp
+index 3bf3a22f2..08aab186d 100644
+--- a/src/llama-model.cpp
++++ b/src/llama-model.cpp
+@@ -643,6 +643,11 @@ struct ggml_backend_meta_split_state llama_meta_device_get_split_state(const str
+                 GGML_ASSERT(segments.size() == 1);
+                 return {granularity_q};
+             }
++            // per-Q-head gates must shard identically to the Q heads
++            if (std::regex_match(tensor_name, pattern_attn_gate_weight)) {
++                GGML_ASSERT(segments.size() == 1);
++                return {granularity_q};
++            }
+ 
+             const int64_t granularity_kv = granularity_q / n_gqa;
+             if (std::regex_match(tensor_name, pattern_kv_weight) ||

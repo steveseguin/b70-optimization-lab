@@ -82,3 +82,14 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   (`attn_out` x `attn_gate_sig`, both axis-0, different boundaries; aligns at
   N=2 by coincidence). Fix design: anchor attn_gate.weight split config to the
   attention rotation anchor. This is the remaining critical path to 100.
+- 2026-08-11 01:45: N=4 TP UNBLOCKED functionally: the gated-attention MUL
+  mismatch was a missing granularity case - `attn_gate.weight` fell through
+  to granularity 1 while Q/out use `granularity_q` (KV-group packing).
+  Three-line fix in `llama_meta_device_get_split_state` granularity rules
+  (snapshot: `20260811-muse100-n4-gate-granularity.patch`). N=4 output
+  correct. BUT N=4 performance is flat vs N=2 (no-spec 15.4 vs 15.3;
+  dflash 45.4 vs 56.2 json): `ggml_backend_sycl_comm_init` implements the
+  fast ring allreduce for N=2 only; N=4 falls back to the generic meta
+  path. Remaining critical path to 100: extend the SYCL allreduce to N=4
+  (projected no-spec ~28-30, dflash json ~75-90), then acceptance/verify
+  polish for the last stretch. Production remains 2xTP2: text 53.6 live.
