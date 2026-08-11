@@ -47,7 +47,7 @@ def wait_health(port, proc, tries=75):
     return False
 
 
-def run_config(lane, cfg, port, gpus, out):
+def run_config(lane, cfg, port, gpus, out, model=MODEL):
     env = dict(os.environ)
     env["ONEAPI_DEVICE_SELECTOR"] = f"level_zero:{gpus}"
     env.setdefault("UR_L0_USE_IMMEDIATE_COMMANDLISTS", "1")
@@ -56,7 +56,7 @@ def run_config(lane, cfg, port, gpus, out):
     env.update(cfg.get("env", {}))
 
     args = [
-        BIN, "-m", MODEL, "--host", "127.0.0.1", "--port", str(port),
+        BIN, "-m", model, "--host", "127.0.0.1", "--port", str(port),
         "-ngl", "99", "-c", "32768", "-b", "1024", "-ub", "1024",
         "--threads", "8", "-fa", "on", "--jinja",
     ]
@@ -120,7 +120,7 @@ def main():
     os.makedirs(os.path.dirname(cfg["out"]), exist_ok=True)
     with open(cfg["out"], "a") as out:
         for c in cfg["configs"]:
-            run_config(cfg["lane"], c, cfg["port"], cfg["gpus"], out)
+            run_config(cfg["lane"], c, cfg["port"], cfg["gpus"], out, cfg.get("model", MODEL))
     print(f"[{cfg['lane']}] sweep complete -> {cfg['out']}")
 
 
