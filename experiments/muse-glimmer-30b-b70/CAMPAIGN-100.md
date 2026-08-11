@@ -231,3 +231,15 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   `/mnt/usb-models/muse-glimmer-30b-extra/dflash-bf16-tuned.gguf` as the
   v2 baseline. Stock drafter remains production. Pipeline scripts reusable
   as-is for a scaled v2 (500+ prompt overnight harvest).
+- 2026-08-11 12:30: **Lane D killed by arithmetic.** The fattn microbench
+  prices mirrored attention's whole prize at ~2.2 ms/verify-step (5ms ->
+  2.7ms across 13 global + 39 SWA layers) against the 18.5 ms duplicated
+  K/V-chain cost; even a perfect compute-on-subset+broadcast nets ~zero.
+  Non-mirrored N=4 is the optimal topology on this stack. Verify budget
+  final decomposition: ~25 ms bandwidth floor + ~5 attention + ~3 allreduce
+  + ~19 launch/sched overhead. The campaign now rides on Lane C v2
+  (acceptance) plus launch-overhead engineering.
+  Lane C v2 armed as an autonomous chain: harvest-v3 (215 diverse prompts,
+  rolling) -> extraction -> v2 training with stock-baselined
+  acceptance-predictive validation (block-position top-1 chained into
+  expected-run-length; checkpoints kept only if they beat stock on val).
