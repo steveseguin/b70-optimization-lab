@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # Two-replica Muse Glimmer 30B BF16 production fleet (asymmetric, 2026-08-11).
-# Replica A (:19470, GPUs 0+1): TEXT lane - BF16 DFlash drafter, deep blocks
-#   n_max=15 p_min=0.2, no mmproj (drafter displaces it in VRAM), ub 1024
-#   (ub 2048 at 64K ctx overflows card0 and host-fallback spills weights).
+# Replica A (:19470, GPUs 0+1): TEXT lane - tensor parallel (-sm tensor),
+#   BF16 DFlash drafter n_max=15 p_min=0.15, no mmproj, ub 1024.
+#   TP2 measured 56.2 json / 49.1 code / 31.9 prose (2026-08-11).
 # Replica B (:19471, GPUs 2+3): VISION lane - kquant drafter n_max=6 p_min=0.1
 #   plus BF16 mmproj, ub 1024 (proven 32.07 GB fit).
 # Single slot per replica (multi-slot DFlash collapses). Frontdoor routes
@@ -69,8 +69,8 @@ launch() {
   pids+=("$!")
 }
 
-# text lane: BF16 drafter, deep blocks, fast prefill
-launch "0,1" 19470 gpu01-text 1024 "$DRAFT_BF16" 15 0.2
+# text lane: tensor-parallel pair, BF16 drafter, deep blocks
+launch "0,1" 19470 gpu01-text 1024 "$DRAFT_BF16" 15 0.15 -sm tensor
 # vision lane: kquant drafter + mmproj, proven memory fit
 launch "2,3" 19471 gpu23-vision 1024 "$DRAFT_KQUANT" 6 0.1 --mmproj "$MMPROJ"
 

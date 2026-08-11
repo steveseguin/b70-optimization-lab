@@ -72,3 +72,13 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   `-fit off` does NOT avoid it - the split-buffer implementation itself
   crashes, both via the fit probe and the real load. Next: read the
   function, find the deref, patch in a dedicated worktree.
+- 2026-08-11 01:10: L1 pivot - upstream `-sm tensor` (meta-backend TP with
+  SYCL N=2 ring allreduce) WORKS for Muse Glimmer on clean master, superseding
+  legacy row split (whose ABI/rounding/selection bugs are patched and
+  snapshotted in the muse-100 worktree, but the lane is parked). TP2 measured:
+  no-spec 15.29 (1.55x layer), dflash n15 p0.15 = 56.2 json / 49.1 code /
+  31.9 prose. Production text lane upgraded to TP2: 53.6 tok/s live (64K ctx).
+  N=4 TP blocked by gated-attention elementwise MUL shard mismatch
+  (`attn_out` x `attn_gate_sig`, both axis-0, different boundaries; aligns at
+  N=2 by coincidence). Fix design: anchor attn_gate.weight split config to the
+  attention rotation anchor. This is the remaining critical path to 100.
