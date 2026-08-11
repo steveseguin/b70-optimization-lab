@@ -1,25 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Two-replica Muse Glimmer 30B BF16 production fleet.
-# Replica A: GPUs 0+1 on :19470. Replica B: GPUs 2+3 on :19471.
-# Identity: lossless BF16 target, DFlash drafter n_max=5 p_min=0.1,
-# single slot per replica (multi-slot DFlash collapses; see
-# experiments/muse-glimmer-30b-b70/sweeps/20260810-bigwin-topology-screens.md).
+# Two-replica Muse Glimmer 30B BF16 production fleet (asymmetric, 2026-08-11).
+# Replica A (:19470, GPUs 0+1): TEXT lane - BF16 DFlash drafter, deep blocks
+#   n_max=15 p_min=0.2, no mmproj (drafter displaces it in VRAM), ub 1024
+#   (ub 2048 at 64K ctx overflows card0 and host-fallback spills weights).
+# Replica B (:19471, GPUs 2+3): VISION lane - kquant drafter n_max=6 p_min=0.1
+#   plus BF16 mmproj, ub 1024 (proven 32.07 GB fit).
+# Single slot per replica (multi-slot DFlash collapses). Frontdoor routes
+# image requests to replica B via FRONTDOOR_VISION_BACKEND_INDICES=1. See
+# experiments/muse-glimmer-30b-b70/sweeps/ for the evidence chain.
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_dir"
 
 MODEL="${MODEL:-/mnt/usb-models/muse-glimmer-30b-extra/Muse-Glimmer-30B-BF16-00001-of-00002.gguf}"
-DRAFT="${DRAFT:-/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-kquant.gguf}"
+DRAFT_KQUANT="${DRAFT_KQUANT:-/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-kquant.gguf}"
+DRAFT_BF16="${DRAFT_BF16:-/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-bf16.gguf}"
 MMPROJ="${MMPROJ:-/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/mmproj-Muse-Glimmer-30B-BF16.gguf}"
 LLAMA_SERVER="${LLAMA_SERVER:-/home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/llama-server}"
 OUT_DIR="${OUT_DIR:-/mnt/fast-ai/bench-results/muse-glimmer-30b/servers}"
 HOST="${HOST:-127.0.0.1}"
 CTX_SIZE="${CTX_SIZE:-65536}"
 CACHE_RAM_MIB="${CACHE_RAM_MIB:-8192}"
-SPEC_N_MAX="${SPEC_N_MAX:-5}"
-SPEC_P_MIN="${SPEC_P_MIN:-0.1}"
 
 echo "[muse-fleet] sourcing oneAPI environment"
 set +eu
@@ -49,23 +52,27 @@ cleanup() {
 trap cleanup INT TERM EXIT
 
 launch() {
-  local sel="$1" port="$2" name="$3"
-  echo "[muse-fleet] replica $name devices=$sel port=$port"
+  local sel="$1" port="$2" name="$3" ub="$4" draft="$5" nmax="$6" pmin="$7"
+  shift 7
+  echo "[muse-fleet] replica $name devices=$sel port=$port ub=$ub nmax=$nmax"
   ONEAPI_DEVICE_SELECTOR="level_zero:$sel" "$LLAMA_SERVER" \
-    -m "$MODEL" --mmproj "$MMPROJ" \
+    -m "$MODEL" \
     --host "$HOST" --port "$port" \
-    -ngl 99 -c "$CTX_SIZE" --parallel 1 -b 1024 -ub 1024 --threads 8 \
+    -ngl 99 -c "$CTX_SIZE" --parallel 1 -b "$ub" -ub "$ub" --threads 8 \
     -fa on --jinja --cache-ram "$CACHE_RAM_MIB" \
     --alias muse-glimmer-30b-bf16 \
-    --spec-type draft-dflash --spec-draft-model "$DRAFT" \
-    --spec-draft-n-max "$SPEC_N_MAX" --spec-draft-p-min "$SPEC_P_MIN" \
+    --spec-type draft-dflash --spec-draft-model "$draft" \
+    --spec-draft-n-max "$nmax" --spec-draft-p-min "$pmin" \
     --spec-draft-ngl 99 \
+    "$@" \
     > "$OUT_DIR/prod-bf16-$name-port$port-$stamp.log" 2>&1 &
   pids+=("$!")
 }
 
-launch "0,1" 19470 gpu01
-launch "2,3" 19471 gpu23
+# text lane: BF16 drafter, deep blocks, fast prefill
+launch "0,1" 19470 gpu01-text 1024 "$DRAFT_BF16" 15 0.2
+# vision lane: kquant drafter + mmproj, proven memory fit
+launch "2,3" 19471 gpu23-vision 1024 "$DRAFT_KQUANT" 6 0.1 --mmproj "$MMPROJ"
 
 # If either replica exits, stop the fleet so systemd restarts it whole.
 wait -n

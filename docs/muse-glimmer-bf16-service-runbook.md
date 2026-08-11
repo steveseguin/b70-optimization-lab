@@ -18,15 +18,23 @@ context: 65536 tokens per request
 
 Backends: `127.0.0.1:19470` (GPUs 0+1), `127.0.0.1:19471` (GPUs 2+3).
 
-## Identity
+## Identity (asymmetric fleet since 2026-08-11)
 
-- Target: `/mnt/usb-models/muse-glimmer-30b-extra/Muse-Glimmer-30B-BF16-0000{1,2}-of-00002.gguf`
-- Drafter: `dflash-kquant.gguf`, `n_max=5 p_min=0.1`; vision:
-  `mmproj-Muse-Glimmer-30B-BF16.gguf` (both on NVMe)
+- Target (both lanes): `/mnt/usb-models/muse-glimmer-30b-extra/Muse-Glimmer-30B-BF16-0000{1,2}-of-00002.gguf`
+- TEXT lane :19470 (GPUs 0+1): BF16 drafter `dflash-bf16.gguf`,
+  `n_max=15 p_min=0.2`, no mmproj, ub 1024. ~24/38/43 tok/s by class.
+- VISION lane :19471 (GPUs 2+3): kquant drafter `dflash-kquant.gguf`,
+  `n_max=6 p_min=0.1`, `mmproj-Muse-Glimmer-30B-BF16.gguf`, ub 1024.
+  ~24/34/34 tok/s by class.
+- Frontdoor routes image payloads to the vision lane
+  (`FRONTDOOR_VISION_BACKEND_INDICES=1`); text uses both lanes.
+- CAUTION: ub 2048 at 64K ctx overflows card0 and the SYCL host-memory
+  fallback silently spills weights (1 tok/s). After any config change,
+  verify per-card residency (~30-32 GB) AND run a decode canary.
 - Runtime: `/home/steve/src/llama.cpp-muse-glimmer` upstream `030ebb558`,
   SYCL AOT bmg-g31 build, version 10358, clean master
-- Measured: ~9.85 tok/s no-spec; with DFlash 22.6 prose / 33.6 code /
-  30.0 json per replica; c2 aggregate ~57 tok/s wall
+- Measured (2026-08-11 campaign): no-spec 9.85; text lane 42.7 json /
+  37.7 code / 24.3 prose; frontdoor c2 ~55 tok/s aggregate
 - VRAM: ~32.1 GB on cards 0/2 (weights half + mmproj + drafter), ~28.6 GB
   on cards 1/3. Card 0/2 headroom is thin; vision encode validated at
   224x224, but watch OOM if image sizes grow

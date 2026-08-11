@@ -201,6 +201,31 @@ else:
 if any(context < 0 for context in BACKEND_CONTEXT_TOKENS):
     raise SystemExit("backend context tokens must be non-negative integers")
 
+VISION_BACKEND_INDICES_RAW = os.environ.get("FRONTDOOR_VISION_BACKEND_INDICES", "")
+if VISION_BACKEND_INDICES_RAW.strip():
+    VISION_BACKEND_INDICES = parse_csv_ints(VISION_BACKEND_INDICES_RAW)
+    if any(i < 0 or i >= len(backends) for i in VISION_BACKEND_INDICES):
+        raise SystemExit(
+            "FRONTDOOR_VISION_BACKEND_INDICES entries must be valid backend indices"
+        )
+else:
+    VISION_BACKEND_INDICES = list(range(len(backends)))
+
+
+def payload_has_image(payload: dict[str, Any] | None) -> bool:
+    if not payload:
+        return False
+    for message in payload.get("messages") or []:
+        content = message.get("content") if isinstance(message, dict) else None
+        if isinstance(content, list):
+            for part in content:
+                if isinstance(part, dict) and (
+                    part.get("type") in {"image_url", "input_image", "image"}
+                    or "image_url" in part
+                ):
+                    return True
+    return False
+
 MAX_BACKEND_CONTEXT_TOKENS = max(BACKEND_CONTEXT_TOKENS) if BACKEND_CONTEXT_TOKENS else 0
 if not FRONTDOOR_CONTEXT_TOKENS_PER_REQUEST and MAX_BACKEND_CONTEXT_TOKENS:
     FRONTDOOR_CONTEXT_TOKENS_PER_REQUEST = MAX_BACKEND_CONTEXT_TOKENS
@@ -429,13 +454,17 @@ def request_route_info(
             tier_override = metadata_tier.lower()
 
     all_indices = list(range(len(backends)))
+    needs_vision = payload_has_image(payload)
+    if needs_vision and len(VISION_BACKEND_INDICES) < len(backends):
+        all_indices = list(VISION_BACKEND_INDICES)
     if required_tokens is None or not any(BACKEND_CONTEXT_TOKENS):
         eligible = all_indices
     else:
         eligible = [
             index
             for index, context_tokens in enumerate(BACKEND_CONTEXT_TOKENS)
-            if context_tokens <= 0 or context_tokens >= required_tokens
+            if index in all_indices
+            and (context_tokens <= 0 or context_tokens >= required_tokens)
         ]
 
     estimate_exact = estimate_source.startswith(("header:", "json:"))
@@ -448,7 +477,8 @@ def request_route_info(
         eligible = [
             index
             for index, context_tokens in enumerate(BACKEND_CONTEXT_TOKENS)
-            if context_tokens == MAX_BACKEND_CONTEXT_TOKENS
+            if index in all_indices
+            and context_tokens == MAX_BACKEND_CONTEXT_TOKENS
         ]
 
     short_indices = [

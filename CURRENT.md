@@ -15,13 +15,16 @@ that its model is currently loaded.
 
 ## Live Service
 
-Live since 2026-08-10 ~23:00 EDT: the Muse Glimmer 30B BF16 lossless fleet
-(`muse-glimmer-bf16-fleet.service` + `muse-glimmer-frontdoor.service`), two
-2xB70 BF16+DFlash single-slot replicas on 19470/19471 behind the no-auth LAN
-frontdoor `:8000`, model `muse-glimmer-30b-bf16`, text+image. Validated:
-health, c2 `57.5 tok/s` aggregate, per-backend byte-exact repeats,
-cross-replica identity, vision canary. Operator selected BF16 for
-fine-tune/abliteration readiness. Runbook:
+Live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
+BF16 fleet (`muse-glimmer-bf16-fleet.service` +
+`muse-glimmer-frontdoor.service`) on `:8000`, model `muse-glimmer-30b-bf16`.
+Text lane :19470 (BF16 DFlash drafter n15 p0.2, 41.8 tok/s json canary);
+vision lane :19471 (kquant drafter n6 + mmproj, 33.6 tok/s); frontdoor
+modality routing pins image requests to the vision lane. Validated: health
+incl. vision, three-color routing canaries, c2 `54.7 tok/s` aggregate.
+Campaign record:
+`experiments/muse-glimmer-30b-b70/sweeps/20260811-bf16-max-optimization-campaign.md`.
+Operator selected BF16 for fine-tune/abliteration readiness. Runbook:
 `docs/muse-glimmer-bf16-service-runbook.md`. Earlier the same day the Gemma
 quad service was deployed, validated, and retired; it remains restorable via
 its runbook. Recheck immediately before any operational change.

@@ -31,7 +31,8 @@ export FRONTDOOR_TOTAL_CONTEXT_TOKENS_PER_BACKEND="${FRONTDOOR_TOTAL_CONTEXT_TOK
 export FRONTDOOR_RECOMMENDED_MAX_OUTPUT_TOKENS="${FRONTDOOR_RECOMMENDED_MAX_OUTPUT_TOKENS:-4096}"
 export FRONTDOOR_PROMPT_CACHE_RAM_MIB="${FRONTDOOR_PROMPT_CACHE_RAM_MIB:-8192}"
 export FRONTDOOR_KV_CACHE_DTYPE="${FRONTDOOR_KV_CACHE_DTYPE:-f16}"
-export FRONTDOOR_SPECULATION="${FRONTDOOR_SPECULATION:-draft-dflash kquant drafter, n_max=5, p_min=0.1, exact target verification}"
-export FRONTDOOR_SLOT_PROFILE="${FRONTDOOR_SLOT_PROFILE:-bf16-lossless-2x2card-dflash-singleslot}"
+export FRONTDOOR_VISION_BACKEND_INDICES="${FRONTDOOR_VISION_BACKEND_INDICES:-1}"
+export FRONTDOOR_SPECULATION="${FRONTDOOR_SPECULATION:-draft-dflash: BF16 drafter deep blocks on text backend, kquant drafter n6 on vision backend, exact target verification}"
+export FRONTDOOR_SLOT_PROFILE="${FRONTDOOR_SLOT_PROFILE:-bf16-lossless-asymmetric-textlane-visionlane}"
 
 exec "$repo_dir/scripts/openai-lan-frontdoor.py"
