@@ -253,3 +253,12 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   `servers/l0-batch-ab.sh`, runs in the first post-chain GPU window.
   Harvest v3 must not be interrupted (its failure path burns prompts);
   chain remains the active workstream.
+- 2026-08-11 13:20: fusion ladder quantified via CPU op trace (backend-
+  independent topology; zero GPU cost, production untouched). Per layer
+  29-32 ops; ~1,440 kernel dispatches/step after discounting view ops.
+  Easy tier (RMS_NORM+MUL ~290, SIGMOID+MUL 52, MUL+ADD ~104) cuts ~450
+  kernels/step ~= 4-5 ms at measured submit cost, additive with the queued
+  L0 batching A/B on the same ~19 ms overhead pool. The Gemma patch
+  archive contains ported-able implementations of exactly these patterns
+  (norm-scale fusion, gated-mul, fused residual). Trace archived at
+  op-trace-cpu.log (USB). Chain watcher armed; harvest progressing.
