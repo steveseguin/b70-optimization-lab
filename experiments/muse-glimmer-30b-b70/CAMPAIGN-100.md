@@ -120,3 +120,19 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   Next (morning): profile batch-16 fattn under mirrored-N4 (kernel shape/
   occupancy), consider attention-2way+FFN-4way hybrid states, drafter
   round overlap; then the exact-gate rerun and the 100 packet.
+- 2026-08-11 03:30 (session close): spec-round fixed overhead quantified:
+  26.7 ms/round (N=2) -> 42.6 (N=4) -> 66 (N=4 mirrored) - scales with
+  device count and layout, fingerprinting the host-bounced drafter feature
+  path (`features_buf` filled per round via
+  `llama_get_embeddings_layer_inp`, 5 layers x 133KB device->host->device)
+  plus drafter TP allreduces. Century math: at E=5.69 (json), 100 tok/s
+  needs round <= 57 ms => overhead <= ~8 ms => the feature hand-off must go
+  device-side and drafter allreduces must leave the round.
+  `--spec-draft-device SYCL0` under -sm tensor aborts on the target's
+  meta-managed shared `output.weight` (same L2 mirroring prerequisite).
+  Ranked morning lanes: (1) device-side feature path + shared-tensor
+  mirroring (overhead -> ~free; projected 90-113 on mirrored-N4),
+  (2) mirrored-N4 batch-verify fattn shapes, (3) drafter fine-tune from
+  the harvest (E 5.69 -> 8 hits 100 at today's round cost).
+  Peak tonight 71.2 json validated; production 67.2 live; both byte-exact
+  on code/json vs the no-spec identity.
