@@ -1,0 +1,79 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <https://debuginfod.ubuntu.com>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+warning: File "/opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9.0.0-gdb.py" auto-loading has been declined by your `auto-load safe-path' set to "$debugdir:$datadir/auto-load".
+To enable execution of this file add
+	add-auto-load-safe-path /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9.0.0-gdb.py
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+To completely disable this security protection add
+	set auto-load safe-path /
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+For more information about this security protection see the
+"Auto-loading safe path" section in the GDB manual.  E.g., run from the shell:
+	info "(gdb)Auto-loading safe path"
+[New Thread 0x7fffd23ff6c0 (LWP 1123973)]
+[Thread 0x7fffd23ff6c0 (LWP 1123973) exited]
+[New Thread 0x7fffd23ff6c0 (LWP 1123974)]
+[New Thread 0x7fffd15ff6c0 (LWP 1124003)]
+[Thread 0x7fffd23ff6c0 (LWP 1123974) exited]
+[New Thread 0x7fffd23ff6c0 (LWP 1124004)]
+
+
+Loading model... |[New Thread 0x7fffb79ff6c0 (LWP 1124005)]
+[New Thread 0x7fffb71fe6c0 (LWP 1124006)]
+[New Thread 0x7fffb69fd6c0 (LWP 1124007)]
+[New Thread 0x7fffb61fc6c0 (LWP 1124008)]
+[New Thread 0x7fffb59fb6c0 (LWP 1124009)]
+[New Thread 0x7fffb51fa6c0 (LWP 1124010)]
+[New Thread 0x7fffb49f96c0 (LWP 1124011)]
+[New Thread 0x7fffaffff6c0 (LWP 1124012)]
+[New Thread 0x7fffaf7fe6c0 (LWP 1124013)]
+[New Thread 0x7fffaeffd6c0 (LWP 1124014)]
+[New Thread 0x7fffae7fc6c0 (LWP 1124015)]
+[New Thread 0x7fffadffb6c0 (LWP 1124016)]
+[New Thread 0x7fffad7fa6c0 (LWP 1124017)]
+[New Thread 0x7fffacff96c0 (LWP 1124018)]
+[New Thread 0x7fffac7f86c0 (LWP 1124019)]
+[New Thread 0x7fffab9cc6c0 (LWP 1124020)]
+[New Thread 0x7fffab1cb6c0 (LWP 1124021)]
+[New Thread 0x7fffaa9ca6c0 (LWP 1124022)]
+[New Thread 0x7fffaa1c96c0 (LWP 1124023)]
+[New Thread 0x7fffa99c86c0 (LWP 1124024)]
+[New Thread 0x7fffa91c76c0 (LWP 1124025)]
+[New Thread 0x7fffa89c66c0 (LWP 1124026)]
+[New Thread 0x7fffa81c56c0 (LWP 1124027)]
+[New Thread 0x7fffa79c46c0 (LWP 1124028)]
+[New Thread 0x7fffa71c36c0 (LWP 1124029)]
+[New Thread 0x7fffa69c26c0 (LWP 1124030)]
+[New Thread 0x7fffa61c16c0 (LWP 1124031)]
+[New Thread 0x7fffa59c06c0 (LWP 1124032)]
+[New Thread 0x7fffa51bf6c0 (LWP 1124033)]
+[New Thread 0x7fffa49be6c0 (LWP 1124034)]
+[New Thread 0x7fffa41bd6c0 (LWP 1124035)]
+[New Thread 0x7fffa39bc6c0 (LWP 1124036)]
+[New Thread 0x7fffa31bb6c0 (LWP 1124037)]
+[New Thread 0x7fffa29ba6c0 (LWP 1124038)]
+-\|
+Thread 7 "llama-cli" received signal SIGSEGV, Segmentation fault.
+[Switching to Thread 0x7fffb71fe6c0 (LWP 1124006)]
+0x00007fffe8821830 in ggml_backend_sycl_split_buffer_type () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libggml-sycl.so.0
+#0  0x00007fffe8821830 in ggml_backend_sycl_split_buffer_type () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libggml-sycl.so.0
+#1  0x00007ffff6779729 in llama_model_base::load_tensors(llama_model_loader&) () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libllama.so.0
+#2  0x00007ffff66a6bdb in llama_model_load_from_file_impl(gguf_context*, void (*)(ggml_tensor*, void*), void*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&, _IO_FILE*, llama_model_params) () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libllama.so.0
+#3  0x00007ffff66a72c5 in llama_model_load_from_file () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libllama.so.0
+#4  0x00007ffff6c18161 in common_get_device_memory_data_impl(char const*, llama_model_params const*, llama_context_params const*, std::vector<ggml_backend_device*, std::allocator<ggml_backend_device*> >&, unsigned int&, unsigned int&, unsigned int&, ggml_log_level) () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libllama-common.so.0
+#5  0x00007ffff6c18aec in common_params_fit_impl(char const*, llama_model_params*, llama_context_params*, float*, llama_model_tensor_buft_override*, unsigned long*, unsigned int, ggml_log_level) () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libllama-common.so.0
+#6  0x00007ffff6c18887 in common_fit_params(char const*, llama_model_params*, llama_context_params*, float*, llama_model_tensor_buft_override*, unsigned long*, unsigned int, ggml_log_level) () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libllama-common.so.0
+#7  0x00007ffff6bf0887 in common_init_result::common_init_result(common_params&, bool) () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libllama-common.so.0
+#8  0x00007ffff6bf2e15 in common_init_from_params(common_params&, bool) () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libllama-common.so.0
+#9  0x00007ffff796c1c9 in server_context_impl::load_model(common_params&) () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libllama-server-impl.so
+#10 0x00007ffff78ae1a1 in llama_server(common_params&, int, char**) () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libllama-server-impl.so
+#11 0x00007ffff7f97602 in std::thread::_State_impl<std::thread::_Invoker<std::tuple<cli_server::start(common_params&)::{lambda()#1}> > >::_M_run() () from /home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/libllama-cli-impl.so
+#12 0x00007fffe82ecdb4 in ?? () from /lib/x86_64-linux-gnu/libstdc++.so.6
+#13 0x00007fffe7e9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#14 0x00007fffe7f29d6c in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
