@@ -1,0 +1,51 @@
+{
+  "base_url": "http://127.0.0.1:8000",
+  "checks": {
+    "models": {
+      "body_preview": "{\"models\":[{\"name\":\"muse-glimmer-30b-bf16\",\"model\":\"muse-glimmer-30b-bf16\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"c",
+      "elapsed_s": 0.016,
+      "models": [
+        "muse-glimmer-30b-bf16"
+      ],
+      "status": 200
+    },
+    "smoke_cases": [
+      {
+        "content": "",
+        "elapsed_s": 1.59,
+        "name": "json",
+        "ok": false,
+        "status": 200,
+        "usage": {
+          "completion_tokens": 32,
+          "prompt_tokens": 76,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 108
+        }
+      },
+      {
+        "content": "",
+        "elapsed_s": 1.711,
+        "name": "sort",
+        "ok": false,
+        "status": 200,
+        "usage": {
+          "completion_tokens": 32,
+          "prompt_tokens": 80,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 112
+        }
+      }
+    ]
+  },
+  "errors": [
+    "json expected substring '\"answer\"', got ''",
+    "sort expected substring 'blue, green, orange, red', got ''"
+  ],
+  "model": "muse-glimmer-30b-bf16",
+  "ok": false
+}

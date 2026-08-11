@@ -15,13 +15,16 @@ that its model is currently loaded.
 
 ## Live Service
 
-No model service or listener is live. On 2026-08-10 the Gemma 26B quad
-production service was deployed at operator request, validated (health,
-c8 smokes at `439.7/445.0 tok/s` wall, sticky-cache probe), and then stopped
-and disabled the same day when the operator switched efforts to Muse Glimmer
-30B; ports 8000/19350-19353 are free and `b70-openai-frontdoor` remains
-disabled. See `notes/2026-08-10-muse-glimmer-30b-kickoff.md`. Recheck
-immediately before any operational change.
+Live since 2026-08-10 ~23:00 EDT: the Muse Glimmer 30B BF16 lossless fleet
+(`muse-glimmer-bf16-fleet.service` + `muse-glimmer-frontdoor.service`), two
+2xB70 BF16+DFlash single-slot replicas on 19470/19471 behind the no-auth LAN
+frontdoor `:8000`, model `muse-glimmer-30b-bf16`, text+image. Validated:
+health, c2 `57.5 tok/s` aggregate, per-backend byte-exact repeats,
+cross-replica identity, vision canary. Operator selected BF16 for
+fine-tune/abliteration readiness. Runbook:
+`docs/muse-glimmer-bf16-service-runbook.md`. Earlier the same day the Gemma
+quad service was deployed, validated, and retired; it remains restorable via
+its runbook. Recheck immediately before any operational change.
 
 The active optimization lane as of 2026-08-10 evening is **Meta Muse Glimmer
 30B**, quality-first (lossless BF16 reference per two B70s, UD-Q8_K_XL

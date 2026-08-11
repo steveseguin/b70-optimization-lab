@@ -1,0 +1,24 @@
+[Unit]
+Description=Muse Glimmer 30B BF16 two-replica llama.cpp fleet (DFlash)
+Documentation=https://github.com/steveseguin/b70-optimization-lab
+Wants=network-online.target
+After=network-online.target
+Conflicts=gemma4-26b-q8-quad-backends.service gemma4-26b-q8-llamacpp.service b70-vllm-slot.service minimax-vllm.service
+
+[Service]
+Type=simple
+User=steve
+Group=steve
+WorkingDirectory=/home/steve/llm-optimizations
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/steve/llm-optimizations/scripts/serve-muse-glimmer-bf16-fleet.sh
+KillMode=mixed
+KillSignal=SIGINT
+TimeoutStartSec=1800
+TimeoutStopSec=180
+Restart=on-failure
+RestartSec=15
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target
