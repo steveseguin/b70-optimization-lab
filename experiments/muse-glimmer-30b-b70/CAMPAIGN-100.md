@@ -198,3 +198,21 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   (C) drafter fine-tune acceptance (prose E 3.3 -> 5+, harvest in
   progress) -> margin past 100. Production 2xTP2 on the canonical build
   throughout; all identities byte-verified.
+- 2026-08-11 10:45 (lane triage block): three hypotheses measured, three
+  falsified - the campaign's map is now clean:
+  * fattn shapes: custom test-backend-ops cases added; mirrored per-device
+    verify attention (nh=2 r4 nb=16: 78.7us) is 1.86x FASTER than
+    non-mirrored (nh=1 r16: 146us). Attention is NOT the mirrored penalty.
+  * acceptance under mirror: byte-identical (207/672 = non-mirrored).
+    The +18.5 ms/round mirrored cost is duplicated small-op chains
+    (K/V proj + rope + cache writes) on the two previously-idle devices -
+    launch-bound, needs a meta-level compute-on-subset+broadcast strategy.
+  * segments already fuse into one contiguous shard tensor per device;
+    SYCL graph capture neutral under TP; llama graph-reuse active (+8%,
+    A/B verified). Drafter cost 13 ms on 2.3 ms compute = per-call
+    orchestration, mostly irreducible without meta surgery.
+  Scoreboard unchanged: honest avg 56.5 (1.97x). The 4x now requires the
+  two structural lanes: (C) drafter fine-tune on serving distribution
+  (needs feature-capture harvester - starting now) and (D) meta-level
+  mirrored-KV broadcast execution. Round math: E_avg 7.3 at current round
+  or round 43 ms at current E; realistic landing combines both.
