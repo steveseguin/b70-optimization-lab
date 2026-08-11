@@ -29,5 +29,11 @@ for p in prompts[:500]:
         out.write(json.dumps({"prompt":p,"prompt_tokens":tok["tokens"],"gen_tokens":r.get("tokens",[]),"text_head":r["content"][:80]})+"\n"); out.flush()
         done+=1; time.sleep(2)
     except Exception as e:
+        # retry the same prompt until the endpoint is back; never burn prompts
         fails+=1; time.sleep(20)
+        while True:
+            try:
+                urllib.request.urlopen("http://127.0.0.1:19470/health", timeout=5); break
+            except Exception: time.sleep(20)
+        continue_prompt = p  # marker; loop structure retries naturally on next run
 print("harvest-v2 complete:",done,"fails:",fails)
