@@ -216,3 +216,18 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   (needs feature-capture harvester - starting now) and (D) meta-level
   mirrored-KV broadcast execution. Round math: E_avg 7.3 at current round
   or round 43 ms at current E; realistic landing combines both.
+- 2026-08-11 11:50 (Lane C v1): full drafter fine-tune pipeline built and
+  exercised end to end - token-exact harvest (74 prompts, 55K teacher
+  tokens), teacher-forced feature extraction on 2 XPUs (74 shards, 3.2 GB,
+  layer-INPUT semantics matching the llama.cpp serving glue), LoRA r32 +
+  full encoder (1,184 steps), merge -> gguf via the proven converter.
+  **A/B verdict: NEGATIVE.** Tuned drafter avg 48.5 vs stock 54.3 on the
+  N2 reference config (prose accept 172->161, json 207->194, more wasted
+  drafting). Outputs byte-identical throughout (shas unchanged) - the
+  quality-free property held; the speed didn't. Root causes for v2:
+  corpus far too small (74 prompts), no validation split, uncalibrated
+  confidence vs the p_min gate, single-anchor CE objective, aggressive LR.
+  Tuned artifact retained at
+  `/mnt/usb-models/muse-glimmer-30b-extra/dflash-bf16-tuned.gguf` as the
+  v2 baseline. Stock drafter remains production. Pipeline scripts reusable
+  as-is for a scaled v2 (500+ prompt overnight harvest).

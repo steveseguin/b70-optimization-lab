@@ -9,7 +9,7 @@ token stream. Run inside the muse-distill venv on 2 XPUs.
 """
 import json, os, sys, glob
 import torch
-from transformers import AutoModelForCausalLM, AutoConfig
+from transformers import AutoModelForImageTextToText, AutoConfig
 
 TARGET_DIR = "/mnt/usb-models/muse-glimmer-30b-hf"
 HARVEST = "/mnt/fast-ai/bench-results/muse-glimmer-30b/distill/harvest-v2-tokens.jsonl"
@@ -21,7 +21,7 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     cfg = AutoConfig.from_pretrained(TARGET_DIR)
     print("target:", cfg.model_type, flush=True)
-    model = AutoModelForCausalLM.from_pretrained(
+    model = AutoModelForImageTextToText.from_pretrained(
         TARGET_DIR, dtype=torch.bfloat16, device_map="balanced",
         max_memory={0: "28GiB", 1: "28GiB"})
     model.eval()

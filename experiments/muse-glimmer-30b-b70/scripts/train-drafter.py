@@ -34,8 +34,8 @@ def load_target_embeddings():
     def pull(name):
         shard = wmap[name]
         return load_file(f"{TARGET_DIR}/{shard}")[name]
-    embd = pull("model.embed_tokens.weight").to(torch.bfloat16)
-    head_name = "lm_head.weight" if "lm_head.weight" in wmap else "model.embed_tokens.weight"
+    embd = pull("model.language_model.embed_tokens.weight").to(torch.bfloat16)
+    head_name = "lm_head.weight" if "lm_head.weight" in wmap else "model.language_model.embed_tokens.weight"
     head = pull(head_name).to(torch.bfloat16)
     return embd, head
 
