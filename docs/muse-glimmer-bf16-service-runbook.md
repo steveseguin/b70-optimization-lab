@@ -21,8 +21,10 @@ Backends: `127.0.0.1:19470` (GPUs 0+1), `127.0.0.1:19471` (GPUs 2+3).
 ## Identity (asymmetric fleet since 2026-08-11)
 
 - Target (both lanes): `/mnt/usb-models/muse-glimmer-30b-extra/Muse-Glimmer-30B-BF16-0000{1,2}-of-00002.gguf`
-- TEXT lane :19470 (GPUs 0+1): BF16 drafter `dflash-bf16.gguf`,
-  `n_max=15 p_min=0.2`, no mmproj, ub 1024. ~24/38/43 tok/s by class.
+- TEXT lane :19470 (GPUs 0+1): tensor parallel (`-sm tensor`) on the
+  muse-100 P2P-allreduce build, BF16 drafter `dflash-bf16.gguf`,
+  `n_max=15 p_min=0.15`, no mmproj, ub 1024. ~40/59/67-69 tok/s by class
+  (prose/code/json). Binary: `/home/steve/src/llama.cpp-muse-100/...`.
 - VISION lane :19471 (GPUs 2+3): kquant drafter `dflash-kquant.gguf`,
   `n_max=6 p_min=0.1`, `mmproj-Muse-Glimmer-30B-BF16.gguf`, ub 1024.
   ~24/34/34 tok/s by class.
@@ -33,8 +35,9 @@ Backends: `127.0.0.1:19470` (GPUs 0+1), `127.0.0.1:19471` (GPUs 2+3).
   verify per-card residency (~30-32 GB) AND run a decode canary.
 - Runtime: `/home/steve/src/llama.cpp-muse-glimmer` upstream `030ebb558`,
   SYCL AOT bmg-g31 build, version 10358, clean master
-- Measured (2026-08-11 campaign): no-spec 9.85; text lane 42.7 json /
-  37.7 code / 24.3 prose; frontdoor c2 ~55 tok/s aggregate
+- Measured (2026-08-11 overnight): production text lane 67.2 json live;
+  peak validated single-request 71.2 json (4-GPU TP, all cards);
+  campaign log: experiments/muse-glimmer-30b-b70/CAMPAIGN-100.md
 - VRAM: ~32.1 GB on cards 0/2 (weights half + mmproj + drafter), ~28.6 GB
   on cards 1/3. Card 0/2 headroom is thin; vision encode validated at
   224x224, but watch OOM if image sizes grow

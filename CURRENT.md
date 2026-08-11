@@ -18,7 +18,7 @@ that its model is currently loaded.
 Live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
 `muse-glimmer-frontdoor.service`) on `:8000`, model `muse-glimmer-30b-bf16`.
-Text lane :19470 (BF16 DFlash drafter n15 p0.2, 41.8 tok/s json canary);
+Text lane :19470 (TP2 on the muse-100 P2P build, BF16 DFlash drafter n15 p0.15, 67.2 tok/s json canary);
 vision lane :19471 (kquant drafter n6 + mmproj, 33.6 tok/s); frontdoor
 modality routing pins image requests to the vision lane. Validated: health
 incl. vision, three-color routing canaries, c2 `54.7 tok/s` aggregate.
