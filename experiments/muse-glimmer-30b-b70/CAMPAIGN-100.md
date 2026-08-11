@@ -243,3 +243,13 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   rolling) -> extraction -> v2 training with stock-baselined
   acceptance-predictive validation (block-position top-1 chained into
   expected-run-length; checkpoints kept only if they beat stock on val).
+- 2026-08-11 12:50: SYCL-graph-under-TP assessed and parked with cause:
+  the implementation re-records per call and the meta splits execution
+  into tiny per-segment cgraphs (2 allreduce breaks/layer), defeating
+  graph amortization; enabling the multi-device path would add recording
+  overhead to ~100 small segments per step. Queued instead: L0 command-
+  list batching A/B (immediate lists pay ~5-10us x ~1800 submits/step;
+  batched lists amortize) - script ready at
+  `servers/l0-batch-ab.sh`, runs in the first post-chain GPU window.
+  Harvest v3 must not be interrupted (its failure path burns prompts);
+  chain remains the active workstream.
