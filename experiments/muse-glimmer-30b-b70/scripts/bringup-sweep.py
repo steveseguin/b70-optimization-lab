@@ -62,7 +62,7 @@ def run_config(lane, cfg, port, gpus, out, model=MODEL):
     ]
     if cfg.get("spec", True):
         args += [
-            "--spec-type", "draft-dflash", "--spec-draft-model", DRAFT,
+            "--spec-type", cfg.get("spec_type", "draft-dflash"), "--spec-draft-model", DRAFT,
             "--spec-draft-n-max", str(cfg.get("n_max", 5)),
             "--spec-draft-ngl", "99",
         ]
