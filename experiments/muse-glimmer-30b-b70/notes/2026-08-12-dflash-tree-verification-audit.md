@@ -32,6 +32,23 @@ in one target batch, and retains the surviving sequence. The production server
 currently supports only a linear draft vector and linear batch-index vector,
 so this is real server-loop engineering, not an environment switch.
 
+## Honest ceiling from the existing measurements
+
+The fixed DFlash rows imply approximately 84 / 59 / 49 target rounds for
+prose/code/JSON, or `3.05 / 4.34 / 5.22` emitted tokens per roughly
+`65--67 ms` round. Reaching 100 t/s at unchanged round cost needs about `6.6`
+emitted tokens per round; if tree width raises the target-pass cost by 10--20%,
+the requirement rises to about `7.2--7.9`.
+
+A first-position top-2 split creates two 15-token paths: 31 unique target rows
+with a shared anchor, or 32 rows in the simplest fully isolated proof. Fitting
+a stationary suffix-match hazard to the measured emitted lengths gives a
+generous perfect-top-2 ceiling of only about `75 t/s` if batch-31 costs just 5%
+more than batch-16, and less as realistic coverage/cost are applied. Splitting
+more positions explodes unique rows (roughly 31 / 59 / 111 / 207 for binary
+depth 1--4). Therefore compact trees are a possible supporting gain, not the
+primary 62-to-100 route.
+
 ## Important accounting correction
 
 Seeing the first target mismatch at DFlash rank 2 or 3 is not itself a speed
@@ -61,6 +78,14 @@ batch has a nonzero cost.
    a tracked summary. Debug logging makes this a coverage diagnostic only.
 5. Implement a server tree only if the measured oracle, combined with a
    batch-width target timing screen, has a plausible ceiling above 100 t/s.
+
+The smallest correctness proof, if justified, should use two fully duplicated
+16-row paths with separate target and draft sequence IDs. Existing
+`common_speculative_process` may inject both isolated paths before selection;
+then retain/copy the winning target+draft sequence and prune the loser. Do not
+slice a winning sub-batch after decode without remapping embedding row indices,
+and do not use shared-prefix rows until DFlash's one-sequence-per-row assertion
+is deliberately redesigned.
 
 Do not implement a naive second DFlash block in the same target pass: the next
 block needs target-layer features produced by the first verification pass.
