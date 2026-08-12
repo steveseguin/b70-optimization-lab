@@ -15,9 +15,9 @@ import sys
 import time
 import urllib.request
 
-BIN = "/home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/llama-server"
-MODEL = "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/Muse-Glimmer-30B-UD-Q8_K_XL.gguf"
-DRAFT = "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-kquant.gguf"
+BIN = os.environ.get("MUSE_SWEEP_BIN", "/home/steve/src/llama.cpp-muse-glimmer/build-sycl-b70-aot-bmg-g31/bin/llama-server")
+MODEL = os.environ.get("MUSE_SWEEP_MODEL", "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/Muse-Glimmer-30B-UD-Q8_K_XL.gguf")
+DRAFT = os.environ.get("MUSE_SWEEP_DRAFT", "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-kquant.gguf")
 
 PROMPTS = {
     "prose": "Write a detailed technical explanation of how a B-tree index accelerates database range queries, covering node structure, fanout, height, and cache behavior.",
@@ -57,7 +57,7 @@ def run_config(lane, cfg, port, gpus, out, model=MODEL):
 
     args = [
         BIN, "-m", model, "--host", "127.0.0.1", "--port", str(port),
-        "-ngl", "99", "-c", "32768", "-b", "1024", "-ub", "1024",
+        "-ngl", "99", "-c", "32768", "--parallel", "1", "-b", "1024", "-ub", "1024",
         "--threads", "8", "-fa", "on", "--jinja",
     ]
     if cfg.get("spec", True):

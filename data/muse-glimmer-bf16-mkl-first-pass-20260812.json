@@ -1,0 +1,32 @@
+{
+  "status": "performance_win_not_promoted",
+  "goal_metric_baseline_tok_s": 56.95,
+  "candidate_scope": "bf16_mul_mat_batches_1_to_16_as_measured",
+  "source_scope_after_measurement": "bf16_mul_mat_batches_2_to_16",
+  "control_tok_s": {
+    "prose": 39.72,
+    "code": 57.67,
+    "json": 69.729,
+    "mean": 55.7063333333
+  },
+  "candidate_tok_s": {
+    "prose": 45.629,
+    "code": 68.59,
+    "json": 80.336,
+    "mean": 64.8516666667
+  },
+  "mean_ratio": 1.1641704248,
+  "quality": {
+    "candidate_spec_matches_candidate_nospec": true,
+    "candidate_matches_incumbent_nospec_hashes": false,
+    "matching_incumbent_hash_classes": 1,
+    "total_classes": 3,
+    "promotion_allowed": false
+  },
+  "raw_spec_ab": "/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/bf16-mkl-ab-parallel1-20260812.jsonl",
+  "raw_spec_ab_sha256": "a995b915d6b2c688dda85f2bffb48e5eaaee7288f475a0c17b1d207e0daa6a77",
+  "raw_nospec_ab": "/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/bf16-mkl-nospec-ab-parallel1-20260812.jsonl",
+  "raw_nospec_ab_sha256": "f4ead6fc61a5ceb48670fa8d258e6c714115b6b6f62b4ecaf352120953201134",
+  "production_restored": true,
+  "health_packet": "data/muse-health-20260812-kernel-window-restore.json"
+}
