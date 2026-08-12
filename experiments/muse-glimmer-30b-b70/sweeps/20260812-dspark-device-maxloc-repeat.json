@@ -1,0 +1,30 @@
+{
+  "lane": "dspark-device-maxloc-repeat-20260812",
+  "port": 19474,
+  "gpus": "0,1,2,3",
+  "model": "/mnt/usb-models/muse-glimmer-30b-extra/Muse-Glimmer-30B-BF16-00001-of-00002.gguf",
+  "out": "/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/dspark-device-maxloc-repeat-20260812.jsonl",
+  "configs": [
+    {
+      "label": "dspark-device-maxloc-repeat",
+      "spec": true,
+      "spec_type": "draft-dspark",
+      "draft": "/mnt/usb-models/Muse-Glimmer-30B-DSpark/Muse-Glimmer-30B-DSpark-BF16.gguf",
+      "n_max": 15,
+      "p_min": 0.0,
+      "args": ["-sm", "tensor"],
+      "env": {
+        "GGML_SYCL_DNNL_GEMM_CACHE": "1",
+        "GGML_SYCL_DNNL_GEMM_BIND_CACHE": "1",
+        "GGML_SYCL_BF16_PAIR": "0",
+        "GGML_SYCL_BF16_GRAPH_CONVERSION_CACHE": "1",
+        "GGML_SYCL_BF16_MKL": "0",
+        "GGML_SYCL_BF16_DIRECT": "0",
+        "GGML_SYCL_OP_PROFILE": "0",
+        "GGML_SYCL_COMM_ARGMAX": "1",
+        "GGML_SYCL_COMM_DEBUG": "1",
+        "GGML_SYCL_ENABLE_GRAPH": "0"
+      }
+    }
+  ]
+}
