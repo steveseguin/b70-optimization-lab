@@ -316,3 +316,26 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   tier land ~62-66 avg; the 100 target additionally requires the
   bandwidth-floor term unchanged and E work (operator has closed drafter
   training; multi-block verify remains the one spec-side lever proposed).
+- 2026-08-12 15:35 (Codex kernel campaign): exact kernel stack consolidated
+  at **45.728 / 66.028 / 80.281 = 64.012 tok/s**, versus the original
+  adjacent 55.533 comparator: **+15.27%**, with canonical hashes and accepted
+  counts unchanged. Stack: cached oneDNN GEMM primitives (+11.1%), cached
+  oneDNN memory bindings, and shared BF16 activation conversion across
+  adjacent FFN gate/up projections. Source checkpoints `934d6e3cf`,
+  `5d28f39c7`, and `c57964390`; all features remain default-off pending a
+  production-quality gate. Negative/closed lanes: whole-subgraph SYCL graph
+  capture (oneDNN external dependency event), RoPE/cache-write fusion (noise),
+  scalar SLM BF16 v2 (0.342x), ngram+DFlash 12x48 and 4x15 hybrids (-4.79%
+  and -2.52%), and narrowed N=2..16 oneMKL hybrid (target identity depends on
+  batch width). Synchronized profiling plus oneDNN verbose proves the target
+  verify is dominated by 716 GPU `jit:gemm:any` BF16 projections per pass,
+  with large FFN shapes near the weight-bandwidth floor. The proposed naive
+  two-DFlash-block verify is invalid because block two needs target features
+  from pass one; a target-exact 16-row top-k tree projects only ~1-5% and is
+  not a century route. Honest conclusion: at fixed BF16 weights, current stock
+  DFlash acceptance, no drafter training, and single-request three-class mean,
+  kernel/wrapper work cannot bridge 64 -> 100. Crossing 100 requires changing
+  a larger constraint: materially higher accepted tokens per target weight
+  pass, reduced-precision/compressed target weights, or a different throughput
+  definition. Production remained on the incumbent binary and passed full
+  model/code/vision health after every window.
