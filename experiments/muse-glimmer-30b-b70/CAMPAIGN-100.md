@@ -262,3 +262,15 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   archive contains ported-able implementations of exactly these patterns
   (norm-scale fusion, gated-mul, fused residual). Trace archived at
   op-trace-cpu.log (USB). Chain watcher armed; harvest progressing.
+- 2026-08-11 20:15 **INCIDENT (owned): ~7h production outage.** The lane C
+  chain script died immediately after stopping the fleet: `set -u` +
+  unguarded `source setvars.sh` - the same nounset kill found and fixed in
+  the systemd unit a day earlier, reintroduced in the chain. Two
+  compounding process failures: no staleness alarm on the chain (violating
+  the standing lab lesson), and a status check that used a self-matching
+  pgrep and reported a nonexistent extraction as "running". Production
+  restored 20:12. Remediations now in force: chain2 with guarded setvars
+  and per-phase timestamps; an independent 30s-interval progress monitor
+  with a 20-minute stall alarm watching phase/shards/loss-lines; process
+  checks use bracket patterns. Chain2 running: extraction -> gated v2
+  training -> auto-restore.
