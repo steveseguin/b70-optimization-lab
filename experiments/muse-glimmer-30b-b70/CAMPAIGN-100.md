@@ -274,3 +274,25 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   with a 20-minute stall alarm watching phase/shards/loss-lines; process
   checks use bracket patterns. Chain2 running: extraction -> gated v2
   training -> auto-restore.
+- 2026-08-11 21:10 (verdict session): **Lane C v2 NEGATIVE in serving; L0
+  batching DEAD.** The v2 drafter beat stock 2x on the offline
+  acceptance-predictive metric (exp_run 2.762 vs 1.387; pos-1 top-1 0.64
+  -> 0.91) yet LOST the serving A/B: honest avg 50.8 vs stock 57.0
+  (prose accept 172->160, json 207->194, with much deeper wasted
+  drafting). A p_min recalibration ladder (0.3/0.45/0.6) peaked at 49.3 -
+  gated efficiency became excellent (78% accepted/drafted at 0.45) but
+  accepted-per-round still fell. Diagnosis: TEACHER-FORCED training
+  contexts do not match SERVING contexts (features accumulated through the
+  model's own speculative sessions); shallow sharpening does not transfer
+  to depth on-policy. L0 command-list batching measured exactly neutral
+  (50.77 vs 50.75). Stock drafter remains champion; honest avg re-measured
+  56.95 (stable with 56.5).
+  **Strategic picture after two days:** cheap/medium levers are exhausted
+  (topology 2x banked; config, graphs, batching, mirror, offline
+  fine-tune all closed with evidence). The remaining path to 4x runs
+  through (a) ON-POLICY drafter training - collect (features, block)
+  pairs from live speculative sessions, not teacher-forced prefills -
+  the one lever with ceiling headroom (perfect-acceptance bound ~205
+  tok/s at today's round cost), and (b) the fusion ladder (+8-12%
+  supporting). Both are multi-day builds; artifacts, scripts, and
+  measurement discipline for them are in place.
