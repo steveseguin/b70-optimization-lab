@@ -61,8 +61,9 @@ def run_config(lane, cfg, port, gpus, out, model=MODEL):
         "--threads", "8", "-fa", "on", "--jinja",
     ]
     if cfg.get("spec", True):
+        draft_model = cfg.get("draft", DRAFT)
         args += [
-            "--spec-type", cfg.get("spec_type", "draft-dflash"), "--spec-draft-model", DRAFT,
+            "--spec-type", cfg.get("spec_type", "draft-dflash"), "--spec-draft-model", draft_model,
             "--spec-draft-n-max", str(cfg.get("n_max", 5)),
             "--spec-draft-ngl", "99",
         ]
