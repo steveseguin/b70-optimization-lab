@@ -296,3 +296,23 @@ Multiplication to target: L1 (x1.8) x L2 (x1.15) x L3 (+20-30% E) reaches
   tok/s at today's round cost), and (b) the fusion ladder (+8-12%
   supporting). Both are multi-day builds; artifacts, scripts, and
   measurement discipline for them are in place.
+- 2026-08-11 22:45 (kernel lane, operator-directed): drafter training
+  permanently closed per operator. Kernel session results:
+  1. SIGMOID+MUL fused kernel implemented through the upstream fusion
+     framework: byte-exact =REF, kept; <1 ms (52 launches).
+  2. Op-submit profiler added (GGML_SYCL_OP_PROFILE=1). Decisive finding:
+     **batch<=16 BF16 MUL_MAT submits cost 23.7-24.7 us each** (5x other
+     ops; oneDNN on/off identical) because BF16 misses every F16 fast path
+     and runs the full multi-device ggml_sycl_op_mul_mat scaffolding +
+     separate src1 conversion per call: ~364 calls/verify ~= 9 ms/round of
+     host submit alone - the largest non-bandwidth line item.
+  3. bf16-direct v1 kernel (single-submission GEMV-16): CORRECT (restores
+     the canonical =REF identity on all classes) but 6x slower - naive x
+     re-read per output row (~1.7 GB/matmul). Gated off by default.
+     v2 design: SLM-tiled x shared across a row block, or thin wrapper
+     around MKL gemm_bf16bf16f32 keeping device work identical while
+     cutting host scaffolding (24 -> ~8 us). Projected ~6-9 ms/round.
+  Ceiling honesty (kernel-only, at current E=4.3): submit fixes + fusion
+  tier land ~62-66 avg; the 100 target additionally requires the
+  bandwidth-floor term unchanged and E work (operator has closed drafter
+  training; multi-block verify remains the one spec-side lever proposed).
