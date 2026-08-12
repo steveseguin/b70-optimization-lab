@@ -81,7 +81,42 @@ Production was restored after both controlled windows. The model list,
 cache-zero 512-token code canary, and red-image routing canary all passed.
 Production remains on the original binary and does not enable the cache.
 
-Next: rerun the host op profiler with the primitive cache enabled, quantify
-the residual BF16 submission cost, then remove per-call memory/argument
-wrapper construction or choose the next largest measured operation class.
+## Follow-up: bounded cache, residual profile, and RoPE fusion
 
+Source commit `09c84b991` limits cached GEMM shapes to `N <= 16`. This retains
+the complete decode/verification target while preventing arbitrary prompt
+remainders from growing the per-context cache indefinitely.
+
+The post-cache host profile measured 43.207 / 62.296 / 75.194 tok/s
+(60.232 mean) under instrumentation. BF16 batch-16 host submission fell from
+about 23.7 us/call to 19.48 us/call (4,332,937 us over 222,436 calls). The
+large apparent ADD and GLU totals are not device timings: the profiler records
+host wall time and queue backpressure moved waits into later submissions.
+Therefore it is not sound to rank new device kernels from those shifted totals.
+
+The same source commit wires the existing SYCL fused
+`ROPE -> VIEW -> SET_ROWS` kernel behind the default-off
+`GGML_SYCL_ROPE_SET_ROWS_FUSION=1` gate. Adjacent same-binary A/B with the
+primitive cache enabled measured:
+
+| Arm | Prose | Code | JSON | Arithmetic mean |
+| --- | ---: | ---: | ---: | ---: |
+| cache control | 44.959 | 64.558 | 78.200 | 62.572 |
+| RoPE/cache-write fusion | 44.987 | 64.513 | 78.596 | 62.699 |
+| improvement | +0.06% | -0.07% | +0.51% | **+0.20%** |
+
+All three output hashes and accepted-token counts were identical. The result
+is correct but inside run noise, so the gate remains off and this is not a
+claimed throughput win. Raw result:
+
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/rope-setrows-fusion-ab-20260812.jsonl`;
+- SHA-256 `fed30a943f526b2d29d39fd04d515c67261dddc71f063c96c5b3bf83a38c7e22`.
+
+Production was restored on the incumbent binary after the window. The model
+list, cache-zero 512-token code canary, and red-image routing canary passed.
+
+Next: target duplicated activation conversion in consecutive FFN gate/up BF16
+projections, while separately validating whether a no-training speculative
+branch/tree can raise accepted tokens per target weight pass. Micro-fusion
+alone does not have enough measured launch-overhead headroom to reach 100
+tok/s.
