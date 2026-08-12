@@ -27,12 +27,37 @@ SAMPLED_RE = re.compile(r"add accepted tokens:\s+sampled=(?P<token>\d+)")
 REQUEST_END_RE = re.compile(r"stop processing:")
 
 
+def annotate_oracle_extensions(request):
+    stream = []
+    for row in request:
+        row["stream_offset"] = len(stream)
+        emitted = row["primary_draft"][:row["accepted"]] + [row["target_token"]]
+        row["emitted_tokens"] = emitted
+        stream.extend(emitted)
+
+    for row in request:
+        row["oracle_top1_suffix_extension"] = None
+        if row["accepted"] >= row["drafted"] or row.get("target_rank") is None:
+            continue
+        stale_suffix = row["primary_draft"][row["accepted"] + 1:]
+        future_offset = row["stream_offset"] + len(row["emitted_tokens"])
+        extension = 0
+        for candidate, target in zip(stale_suffix, stream[future_offset:]):
+            if candidate != target:
+                break
+            extension += 1
+        row["oracle_top1_suffix_extension"] = extension
+
+    return stream
+
+
 def summarize_rounds(rounds):
     rank_hist = Counter()
     mismatches = 0
     full_accepts = 0
     missing_position = 0
     inconsistent_top1 = 0
+    extension_hist = Counter()
 
     for row in rounds:
         if row["accepted"] >= row["drafted"]:
@@ -46,6 +71,9 @@ def summarize_rounds(rounds):
             rank_hist[rank] += 1
             if rank == 1:
                 inconsistent_top1 += 1
+            extension = row.get("oracle_top1_suffix_extension")
+            if extension is not None:
+                extension_hist[extension] += 1
 
     def coverage(k):
         covered = sum(count for rank, count in rank_hist.items() if rank <= k)
@@ -53,6 +81,31 @@ def summarize_rounds(rounds):
             "count": covered,
             "fraction_of_mismatches": covered / mismatches if mismatches else None,
         }
+
+    projections = {}
+    baseline_emitted = sum(len(row.get("emitted_tokens", [])) for row in rounds)
+    for top_k in (2, 3):
+        for suffix_depth in (0, 1, 2, 3, 4):
+            extra = 0
+            covered = 0
+            for row in rounds:
+                rank = row.get("target_rank")
+                extension = row.get("oracle_top1_suffix_extension")
+                if rank is None or rank > top_k or extension is None:
+                    continue
+                covered += 1
+                # The alternative token is already emitted by the linear
+                # verifier. Evaluating it as a tree node guarantees the next
+                # target token, plus any matching stale suffix tokens.
+                extra += 1 + min(extension, suffix_depth)
+            projections[f"top{top_k}_suffix{suffix_depth}"] = {
+                "covered_mismatch_rounds": covered,
+                "baseline_emitted_tokens": baseline_emitted,
+                "oracle_extra_emitted_tokens": extra,
+                "oracle_emitted_token_ratio": (
+                    (baseline_emitted + extra) / baseline_emitted if baseline_emitted else None
+                ),
+            }
 
     return {
         "rounds": len(rounds),
@@ -63,6 +116,10 @@ def summarize_rounds(rounds):
         "top3_coverage": coverage(3),
         "missing_mismatch_position": missing_position,
         "inconsistent_target_at_rank1": inconsistent_top1,
+        "oracle_top1_suffix_extension_histogram": {
+            str(k): extension_hist[k] for k in sorted(extension_hist)
+        },
+        "oracle_branch_projections": projections,
     }
 
 
@@ -101,6 +158,16 @@ def parse_trace(lines):
         if match and pending is not None:
             target = int(match.group("token"))
             pending["target_token"] = target
+            pending["primary_draft"] = [
+                candidates[pos][0]["token"]
+                for pos in sorted(candidates)
+                if candidates[pos]
+            ]
+            if len(pending["primary_draft"]) != pending["drafted"]:
+                raise ValueError(
+                    f"line {line_no}: logged {len(pending['primary_draft'])} primary candidates "
+                    f"for {pending['drafted']} drafted tokens"
+                )
             if pending["accepted"] < pending["drafted"]:
                 mismatch_pos = pending["accepted"]
                 pending["mismatch_pos"] = mismatch_pos
@@ -125,6 +192,7 @@ def parse_trace(lines):
     if rounds:
         requests.append(rounds)
 
+    streams = [annotate_oracle_extensions(request) for request in requests]
     all_rounds = [row for request in requests for row in request]
     return {
         "schema": "muse_dflash_topk_first_mismatch_v1",
@@ -134,7 +202,11 @@ def parse_trace(lines):
         ),
         "overall": summarize_rounds(all_rounds),
         "requests": [
-            {"request_index": i, **summarize_rounds(request)}
+            {
+                "request_index": i,
+                "reconstructed_token_count": len(streams[i]),
+                **summarize_rounds(request),
+            }
             for i, request in enumerate(requests)
         ],
         "round_records": all_rounds,
