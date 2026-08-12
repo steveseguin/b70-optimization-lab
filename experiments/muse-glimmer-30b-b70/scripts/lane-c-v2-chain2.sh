@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Lane C v2 chain, hardened: no set -u around setvars, progress echoes,
 # every phase leaves evidence. Harvest already complete (210 rows).
+echo "[chain2] archived and disabled: drafter training is outside the active goal" >&2
+exit 2
 D=/mnt/fast-ai/bench-results/muse-glimmer-30b/distill
 V=/mnt/usb-models/muse-venvs/muse-distill/bin/python
 echo "[chain2] $(date '+%H:%M:%S') pausing production for extraction"

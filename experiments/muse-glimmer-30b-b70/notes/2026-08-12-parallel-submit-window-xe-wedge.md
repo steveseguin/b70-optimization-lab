@@ -65,3 +65,20 @@ operator authorization. PCI FLR was not attempted.
 5. Use an explicit process-liveness wait plus completed JSONL row count before
    restarting production; never infer benchmark completion from a yielded tool
    wrapper.
+
+## Implemented prevention
+
+Commit following this incident gives the production fleet and sweep runner the
+same canonical host lock at
+`/run/lock/muse-glimmer-gpu-exclusive.lock`. Production and benchmark launches
+fail closed if the other owns it. Every benchmark `llama-server` inherits the
+locked descriptor, so even an abruptly killed runner cannot make the host look
+free while its server survives. Alternate lock paths require an explicit
+test-only override gate. The runner also checks that the selected binary and
+its runtime loader work before opening or appending the result file.
+
+The two obsolete Lane C autonomous chains are now archived with an immediate
+failure because they bypassed safe ownership and perform drafter training,
+which is outside the active goal. Focused tests cover mutual exclusion, child
+inheritance, canonical-path enforcement, and production refusal while a
+benchmark owns the lock.

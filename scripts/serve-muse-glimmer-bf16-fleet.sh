@@ -23,6 +23,24 @@ OUT_DIR="${OUT_DIR:-/mnt/fast-ai/bench-results/muse-glimmer-30b/servers}"
 HOST="${HOST:-127.0.0.1}"
 CTX_SIZE="${CTX_SIZE:-65536}"
 CACHE_RAM_MIB="${CACHE_RAM_MIB:-8192}"
+GPU_LOCK_PATH=/run/lock/muse-glimmer-gpu-exclusive.lock
+if [[ -n "${MUSE_GPU_LOCK_PATH:-}" ]]; then
+  if [[ "${MUSE_GPU_LOCK_ALLOW_OVERRIDE:-}" != 1 ]]; then
+    echo "[muse-fleet] MUSE_GPU_LOCK_PATH override requires MUSE_GPU_LOCK_ALLOW_OVERRIDE=1" >&2
+    exit 1
+  fi
+  GPU_LOCK_PATH="$MUSE_GPU_LOCK_PATH"
+fi
+
+mkdir -p "$(dirname "$GPU_LOCK_PATH")"
+exec 9<>"$GPU_LOCK_PATH"
+if ! flock -n 9; then
+  owner="$(head -c 512 "$GPU_LOCK_PATH" 2>/dev/null || true)"
+  echo "[muse-fleet] GPU host is already reserved: ${owner:-unknown owner}" >&2
+  exit 1
+fi
+: > "$GPU_LOCK_PATH"
+printf 'production-fleet pid=%s argv=%s\n' "$$" "$0 $*" >&9
 
 echo "[muse-fleet] sourcing oneAPI environment"
 set +eu

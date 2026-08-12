@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Lane C v2 autonomous chain: wait for harvest -> extract -> train -> restore.
+echo "[chain] archived and disabled: drafter training is outside the active goal" >&2
+exit 2
 set -u
 D=/mnt/fast-ai/bench-results/muse-glimmer-30b/distill
 V=/mnt/usb-models/muse-venvs/muse-distill/bin/python
