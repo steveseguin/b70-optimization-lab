@@ -28,8 +28,8 @@ training artifacts were changed in this experiment.
 
 The measured binary included N=1 through N=16. After the result, the source
 gate was narrowed to N=2 through N=16 because N=1 regressed and defines the
-incumbent byte-stable target identity. The narrowed source builds cleanly but
-has not yet received a model A/B.
+incumbent byte-stable target identity. The narrowed source later received a
+model A/B on top of parallel TP host submission; see the update below.
 
 ## Exact comparator
 
@@ -90,13 +90,11 @@ valid route: the second block needs target-layer features produced only after
 the first block is verified. That proposal requires different drafter
 semantics, not serving-loop batching.
 
-The next kernel campaign is persistent per-meta-subgraph SYCL executable graph
-replay under tensor parallelism. The current backend globally rejects graphs
-when multiple devices are visible and retains only one executable graph per
-context, although meta subgraphs have stable UIDs. A safe implementation must
-cache by subgraph identity and pointer/shape signature, exclude unstable
-oneDNN/MKL scratch allocations, instrument hits/invalidations, and remain
-default-off until exactness and performance gates pass.
+Persistent command graphs were subsequently closed for the current exact
+oneDNN stack: whole-subgraph capture cannot record oneDNN events, while native
+kernel islands were slower and changed output hashes. The next kernel target
+is batching each layer's independent gate/up BF16 projections into one guarded
+oneDNN call.
 
 ## Operations
 
@@ -104,3 +102,11 @@ The production fleet was stopped gracefully for the four-GPU window and
 restored immediately afterward. `data/muse-health-20260812-kernel-window-restore.json`
 passes models, a cache-zero 512-token code canary, and the red-image routing
 canary. Production does not enable the oneMKL candidate.
+
+## Update: narrowed N=2 through N=16 result
+
+The narrowed path was tested after the exact parallel-submit win. It was
+throughput-neutral (`67.695 -> 67.706 tok/s`, `1.00016x`), changed the code
+hash from `cf2b2c4fd9e36fe5` to `b4a2bda611510441`, and changed proposal
+history. Reject it. Full identity and raw SHA-256 are in
+`2026-08-12-meta-parallel-submit.md`.

@@ -15,16 +15,27 @@ that its model is currently loaded.
 
 ## Live Service
 
-**Recovery required as of 2026-08-12 14:00 EDT.** The Muse services are down
-after an invalid overlapping benchmark/production launch wedged xe/TTM during
-teardown. The kernel logged an xe page-table fault, a worker remains in
-uninterruptible `drm_exec_lock_obj`, and the documented unbind/reload recovery
-also stuck after unbinding three B70s. Do not launch GPU work or run XPU-SMI.
-A host reboot is the remaining documented recovery and requires operator
-authorization. After reboot, run the full four-device/copy/P2P/collective
-recovery gates, start the incumbent services, and run the full Muse health
-gate before resuming experiments. Incident record:
+**Recovered and live as of 2026-08-12 19:56 EDT.** The operator-authorized
+host reboot completed. Exact four-device BDF/UUID mapping, per-card
+copy/compute, the pinned native four-device peer-read, and four-rank XCCL
+barrier/all-reduce all passed. The external model volume was remounted at
+`/mnt/usb-models`. The incumbent Muse fleet and frontdoor are active, and the
+full model/cache-zero code/vision health gate passes in
+`data/muse-health-20260812-parallel-submit-restore.json`. The invalid overlap
+incident remains preserved at
 `experiments/muse-glimmer-30b-b70/notes/2026-08-12-parallel-submit-window-xe-wedge.md`.
+Production and benchmark launchers now share the canonical exclusive host GPU
+lock, including benchmark-child FD inheritance.
+
+The current exact TP4 kernel-campaign best is the BF16 DFlash stack with
+default-off parallel per-device host submission at approximately `67.9 tok/s`
+arithmetic mean across the fixed prose/code/JSON suite. Two adjacent A/Bs in
+opposite order measured a pooled `+3.89%`, with canonical hashes and within-pair
+proposal counts exact. Evidence:
+`experiments/muse-glimmer-30b-b70/notes/2026-08-12-meta-parallel-submit.md`.
+The production TP2 fleet does not enable this experimental flag. The next
+kernel target is a guarded batch=2 oneDNN gate/up projection; the honest
+`>100 tok/s` TP4 objective remains unmet.
 
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
