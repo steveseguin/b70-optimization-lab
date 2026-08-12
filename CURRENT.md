@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-10**
+Last reviewed: **2026-08-12**
 
 ## Authority And Update Rule
 
@@ -15,7 +15,18 @@ that its model is currently loaded.
 
 ## Live Service
 
-Live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
+**Recovery required as of 2026-08-12 14:00 EDT.** The Muse services are down
+after an invalid overlapping benchmark/production launch wedged xe/TTM during
+teardown. The kernel logged an xe page-table fault, a worker remains in
+uninterruptible `drm_exec_lock_obj`, and the documented unbind/reload recovery
+also stuck after unbinding three B70s. Do not launch GPU work or run XPU-SMI.
+A host reboot is the remaining documented recovery and requires operator
+authorization. After reboot, run the full four-device/copy/P2P/collective
+recovery gates, start the incumbent services, and run the full Muse health
+gate before resuming experiments. Incident record:
+`experiments/muse-glimmer-30b-b70/notes/2026-08-12-parallel-submit-window-xe-wedge.md`.
+
+Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
 `muse-glimmer-frontdoor.service`) on `:8000`, model `muse-glimmer-30b-bf16`.
 Text lane :19470 (TP2 on the muse-100 P2P build, BF16 DFlash drafter n15 p0.15, 67.2 tok/s json canary);
