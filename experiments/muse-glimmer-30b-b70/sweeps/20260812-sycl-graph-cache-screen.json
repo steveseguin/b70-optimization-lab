@@ -1,0 +1,22 @@
+{
+  "lane": "sycl-graph-cache-screen-20260812",
+  "port": 19474,
+  "gpus": "0,1,2,3",
+  "model": "/mnt/usb-models/muse-glimmer-30b-extra/Muse-Glimmer-30B-BF16-00001-of-00002.gguf",
+  "out": "/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/sycl-graph-cache-screen-20260812.jsonl",
+  "configs": [
+    {
+      "label": "graph-cache",
+      "spec": true,
+      "n_max": 15,
+      "p_min": 0.15,
+      "args": ["-sm", "tensor"],
+      "env": {
+        "GGML_SYCL_BF16_MKL": "0",
+        "GGML_SYCL_ENABLE_GRAPH": "1",
+        "GGML_SYCL_GRAPH_CACHE": "1",
+        "GGML_SYCL_GRAPH_CACHE_LOG": "1"
+      }
+    }
+  ]
+}
