@@ -2,6 +2,15 @@
 
 Date: 2026-08-12
 
+> **Correction (later 2026-08-12 audit):** `GGML_SYCL_BF16_PAIR=1` does not
+> execute in the TP4 target path. The meta backend places gate and up
+> projections in distinct per-device subgraphs at tensor-parallel reduction
+> boundaries, while the source optimization only recognizes adjacent nodes in
+> one subgraph. A runtime graph dump and an explicit execution marker confirmed
+> zero pair hits. Therefore the earlier +2.10% pair attribution was noise, and
+> the 64.012 t/s combined row is a primitive/binding-cache observation with a
+> dead pair flag, not evidence for shared conversion.
+
 ## Result
 
 The exact stack combines:
