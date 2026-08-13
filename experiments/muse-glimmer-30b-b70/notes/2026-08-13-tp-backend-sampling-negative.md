@@ -74,3 +74,28 @@ sampling graph support, or if a direct timing proves raw-logit transfer and CPU
 sampling consume several milliseconds per verifier round.  Do not reopen just
 to chase this crash: even a successful implementation does not have a credible
 standalone path to the campaign's remaining `>100 tok/s` gap.
+
+## Terminal-greedy retry
+
+The route was retried once after source commit `35e462c5a` fixed terminal
+backend-greedy semantics for the successful DFlash offload.  A three-class,
+eight-token smoke again reached the four-rank maxloc fast path, completed the
+first target decode, and closed the connection during the next target decode.
+The result JSONL is empty.
+
+This confirms the target route has a separate structural problem.  DFlash
+verification consumes target-row logits after the decode to validate its
+candidate chain; making target greedy terminal removes logits that this
+verification path still needs.  A valid implementation would have to return
+per-row target decisions while preserving the verifier dataflow, rather than
+attaching an ordinary terminal sampler to the target context.  That redesign
+is not justified by the one-sample-per-round ceiling.
+
+Retry identity:
+`sweeps/20260813-target-tp-greedy-fix-smoke.json`; server log:
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/servers/sweep-target-tp-greedy-fix-smoke-20260813-target-device-greedy-terminal-fix.log`,
+SHA256 `ba48f9a8201521a04fe4ec0d2470f39d4b5da5c37d4cebadaa58fbf1320acd32`.
+The empty JSONL has the canonical empty-file SHA256
+`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+Production was restored without reboot and passed the full health gate in
+`data/muse-health-20260813-target-tp-greedy-fix-smoke-restore.json`.
