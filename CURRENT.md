@@ -108,6 +108,12 @@ these recover about `0.82 ms` of the original top15 cost; approximately
 `0.98 ms/round` remains versus greedy, and the zero-bookkeeping DDTree route
 still needs about `2.37 ms/round` total savings to average 100. The scan-width
 axis is now closed because 1024 lanes would require about 120 KiB SLM.
+A matched top1/top15/top1 phase profile now assigns the remaining cost:
+top1 is `6.58 / 6.61 ms/round`, top15 is `7.26 ms`, and greedy is about
+`6.25--6.26 ms`. Approximately **`0.665 ms/round`** is k-dependent local
+selection and only about **`0.34 ms/round`** is the fixed
+selected-value/collective/softmax tail. The next kernel target is the per-lane
+k=15 insertion scan, not the communicator.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible

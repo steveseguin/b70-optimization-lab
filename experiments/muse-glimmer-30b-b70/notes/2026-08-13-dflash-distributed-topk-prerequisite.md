@@ -245,3 +245,31 @@ versus greedy, and the zero-bookkeeping DDTree route still needs about
 `2.37 ms/round` more total savings to average 100. A 1024-lane version would
 require about 120 KiB SLM and is rejected on this hardware; close this scaling
 axis and isolate the fixed selected-value/collective/softmax tail next.
+
+## k-dependent versus fixed tail
+
+A canonical top1/top15/top1 profile C/A/C, all using the retained 512-lane
+tree kernel, separates the remaining cost:
+
+- top1 direct draft time: `6.58 / 6.61 ms/round`;
+- top15 direct draft time: `7.26 ms/round`;
+- retained greedy direct draft reference: approximately `6.25--6.26 ms/round`.
+
+Therefore roughly `0.665 ms/round` is k-dependent local selection work, while
+only about `0.34 ms/round` is the fixed top-k selected-value/collective/softmax
+tail. The next kernel target is the per-lane sorted insertion scan, not the
+communicator.
+
+All arms retained canonical response hashes and accepted counts. Prose drafted
+count was `1198 / 1199 / 1198`; code and JSON proposal counts matched.
+
+Evidence:
+
+- identity: `sweeps/20260813-dflash-topk-k1-k15-profile-cac.json`;
+- JSONL SHA256: `bf5ea94806ad584d4486ded86869f4df04cfe5800abedf5da036933e8991bdcf`;
+- top1-before/top15/top1-after log SHA256:
+  `f74a2958ce7f659aee9735abea3730253beae7559ecf253b4d51524d723d48be`,
+  `43e7c3e8df394ca6137209e0810770841f774aa1f76b2171ff1381f06c235920`,
+  and `222560f7945037f6d121449434fcdc108dc85148641c57464447fb529bc4d17e`;
+- production health:
+  `data/muse-health-20260813-dflash-topk-k1-k15-profile-restore.json`.
