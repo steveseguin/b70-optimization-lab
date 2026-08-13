@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Measure DFlash top-k coverage at the first target mismatch of each round.
 
-Run llama-server with both ``-lv 4`` and ``LLAMA_TRACE=1``. DFlash already
+Run llama-server with both ``-lv 5`` and ``LLAMA_TRACE=1``. DFlash already
 logs its top three candidates at every proposed position, and the server logs
 the accepted prefix length plus the target token sampled at the mismatch. This
 parser joins those records without changing inference behavior.
