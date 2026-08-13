@@ -70,3 +70,41 @@ class-specific allreduce savings gives modeled round times `51.517 / 51.640 /
 **`99.698 tok/s`**. A further uniform **`0.155 ms/round`**, plus the actual
 cost of server tree bookkeeping, is still required. This is a major exact
 kernel/runtime win, but not yet an honest measured >100 result.
+
+## Fused remote-pull follow-up: rejected
+
+A follow-up tried to halve steady allreduce commands by alternating
+destinations: round 0 directly read local and remote tensors into scratch;
+round 1 directly read local and remote scratch into the output tensor. The
+expression grouping matched recursive doubling exactly, and explicit peer
+events plus tail barriers closed producer and outbound-reader lifetimes.
+
+The path is not viable on this runtime. The readiness-event control loaded and
+completed its canonical 64-token suite at `69.032 / 113.995 / 219.903 tok/s`.
+The fused candidate then stalled before health during initialization, after
+target sampler construction and before draft-model load. A fresh, isolated
+candidate-only launch reproduced the identical stall. Neither candidate
+reached serving or produced a benchmark row. Both were terminated cleanly;
+all four GPUs still enumerated, and production reloaded without a reboot.
+
+Preserve but do not enable:
+
+- failed source commit: `6117dae3a`;
+- source revert: `25f179dc6`;
+- interrupted C/A/C identity:
+  `sweeps/20260813-dflash-allreduce-fused-pull-smoke-cac.json`;
+- isolated proof identity:
+  `sweeps/20260813-dflash-allreduce-fused-pull-proof64.json`;
+- partial JSONL SHA256 (control row only):
+  `1e82f65e0dc3d7d48c3b8bf04c5f18b5d0e5d6c2eb1572bb98ed6ee31b2751d9`;
+- C/A/C candidate-stall log SHA256:
+  `e94c4fc5ddba9a306a949fb8c6170187b5b8603bd2d606d880cd5f8a7c08370c`;
+- isolated candidate-stall log SHA256:
+  `fdc3f64d7a845183b717d24fb81fad456eb452bae32afb650ab289406e009b57`;
+- production restore:
+  `data/muse-health-20260813-fused-pull-revert-restore.json`.
+
+This closes fine-grained remote kernel loads as the next allreduce command
+reduction. Retain the event-readiness win; pursue the narrowly scoped final
+allreduce-add plus RMSNorm/scale/residual fusion or another independent exact
+kernel saving instead.
