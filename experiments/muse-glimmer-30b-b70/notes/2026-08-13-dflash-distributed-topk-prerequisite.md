@@ -273,3 +273,50 @@ Evidence:
   and `222560f7945037f6d121449434fcdc108dc85148641c57464447fb529bc4d17e`;
 - production health:
   `data/muse-health-20260813-dflash-topk-k1-k15-profile-restore.json`.
+
+## Worst-root top15 heap scan
+
+Source commit `2dd84b89d` adds a default-off top15 specialization under
+`GGML_SYCL_TOP_K_HEAP_SCAN=1`. It is admitted only when the retained tree merge
+and 512-lane kernel are active and `k == 15`. Each lane maintains its best 15
+candidates in a worst-root heap during the vocabulary scan, then performs one
+fixed 15-element selection sort before the existing merge tree. All other k
+values and the env-off path retain the sorted-insertion implementation.
+
+The 64-token insertion/heap/insertion smoke was canonical but timing-neutral,
+so the lane was adjudicated with the full 256-token C/A/C:
+
+| arm | prose | code | JSON | mean tok/s |
+| --- | ---: | ---: | ---: | ---: |
+| insertion before | `55.152` | `79.872` | `97.248` | `77.424` |
+| worst-root heap | `55.589` | `80.356` | `97.944` | **`77.963`** |
+| insertion after | `55.170` | `79.493` | `97.284` | `77.316` |
+
+The heap improves every class and gains **`0.767%`** against the pooled control
+mean of `77.370 tok/s`. All three canonical hashes match, and proposal/accepted
+counts are identical across arms: prose `1199/172`, code `811/197`, and JSON
+`684/207`. Converting request times to the fixed `84 / 59 / 49` target-round
+counts gives approximate savings of `0.425 / 0.457 / 0.372 ms/round`.
+
+Evidence:
+
+- source commit: `2dd84b89d`;
+- smoke identity: `sweeps/20260813-dflash-topk-heap512-smoke-cac.json`;
+- full identity: `sweeps/20260813-dflash-topk-heap512-full-cac.json`;
+- full JSONL SHA256:
+  `2a78bf6b8f8ebc0988af2dfc50483a02833e6927e625730149701805164de5b2`;
+- insertion-before/heap/insertion-after log SHA256:
+  `6866f9c2daf477d6a4c5482e5cfd666d7b780d360ce22da92d6356f8de8eee88`,
+  `d2c7b041f91d5a4533cb7f46f5a8a3867711dc66587957398e9e5be750d63ca0`,
+  and `91585cbfea828fd1421fecfcf595cd1fe5c98254d0a78254fb5088ef2aaa7506`;
+- production first returned 503 while the restarted backends were still
+  loading; that pre-warm probe is preserved separately. The subsequent full
+  models/cache-zero-code/vision health gate passes in
+  `data/muse-health-20260813-dflash-topk-heap512-restore.json`.
+
+This recovers approximately another `0.42 ms/round` from the k-dependent
+selection tail. On the preceding decomposition, about `0.56 ms/round` remains
+between optimized top15 and greedy, and the unchanged-width, zero-bookkeeping
+DDTree arithmetic still needs roughly `1.95 ms/round` of independent exact
+savings to average 100. Retain the heap as a supporting kernel win; it does not
+justify beginning full server/KV tree integration yet.

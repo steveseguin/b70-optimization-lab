@@ -114,6 +114,16 @@ top1 is `6.58 / 6.61 ms/round`, top15 is `7.26 ms`, and greedy is about
 selection and only about **`0.34 ms/round`** is the fixed
 selected-value/collective/softmax tail. The next kernel target is the per-lane
 k=15 insertion scan, not the communicator.
+That scan is now replaced, under default-off
+`GGML_SYCL_TOP_K_HEAP_SCAN=1`, by a top15-specialized worst-root heap at source
+commit `2dd84b89d`. The canonical full C/A/C improves every class and measures
+**`+0.767%`** versus pooled insertion controls, with exact hashes and identical
+proposal/acceptance counts. Request-derived round savings are approximately
+`0.43 / 0.46 / 0.37 ms` for prose/code/JSON. Together with the retained merge
+tree and 512-lane scan, this leaves roughly `0.56 ms/round` of the original
+top15-versus-greedy delta; the zero-bookkeeping DDTree arithmetic still needs
+roughly `1.95 ms/round` of independent exact savings to average 100. The heap
+is retained as a supporting kernel win, not a century result.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible
