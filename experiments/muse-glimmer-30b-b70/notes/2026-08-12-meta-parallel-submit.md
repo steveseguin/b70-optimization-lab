@@ -332,8 +332,13 @@ timing may be inferred from this attempt. Production restoration passed the
 full code/cache-zero/vision gate in
 `data/muse-health-20260812-device-timeline-invalid-restore.json`.
 
-The next implementation scopes profiling to one dedicated in-order compute
-queue per SYCL backend context. Model-loading and buffer-transfer queues retain
-their incumbent properties. Preserve the invalid row at
+An attempted follow-up design that moved only backend compute onto dedicated
+profiling queues was rejected before execution: buffer uploads and input copies
+remain on the device-manager queue, and separating compute without explicit
+cross-queue event dependencies would violate the backend's ordering contract.
+The safe retry retains profiling on the existing ordered queue domain and gives
+the unusually slow profiling-enabled model initialization a 15-minute health
+window. The harness default remains five minutes for all other runs. Preserve
+the invalid row at
 `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/sycl-device-timeline-20260812.jsonl`
 and use a new run identity for the retry.

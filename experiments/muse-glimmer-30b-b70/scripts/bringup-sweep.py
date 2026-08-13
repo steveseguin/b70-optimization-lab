@@ -126,7 +126,7 @@ def run_config(lane, cfg, port, gpus, out, lock_fd, model=MODEL):
             pass_fds=(lock_fd,), start_new_session=True,
         )
     try:
-        if not wait_health(port, proc):
+        if not wait_health(port, proc, tries=cfg.get("health_tries", 75)):
             out.write(json.dumps({"lane": lane, "label": cfg["label"], "error": "server failed to start"}) + "\n")
             out.flush()
             return
