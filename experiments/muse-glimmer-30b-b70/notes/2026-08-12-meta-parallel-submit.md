@@ -474,3 +474,48 @@ and `0dae7bd0fc0f5e9b47deb9cb4f056c3b4c1cda64ab63f2956e97d13b6ad5421e`.
 After the WG512 screen, production was restored without reboot and passed the
 full code/cache-zero/vision gate in
 `data/muse-health-20260812-rms-wg512-screen-restore.json`.
+
+## Update: fused RMSNorm BF16 side-output
+
+Source commit `5df38f3a7` adds a default-off
+`GGML_SYCL_RMS_NORM_PRECONVERT_BF16=1` experiment. When a fused
+RMSNorm+MUL result directly feeds a BF16-weight oneDNN projection, the fused
+kernel also writes the BF16 activation into the existing per-subgraph
+conversion cache. This removes the later F32-to-BF16 conversion submission and
+the separate F32 reread. Commit `ed059e734` forces the cast through a volatile
+reload of the materialized F32 output, and `489e62280` adds an optional minimum
+layer gate so the five-layer DFlash path can be excluded.
+
+Three same-binary A/B screens do not show a promotable win:
+
+| candidate | candidate mean | control mean | delta | final hashes |
+| --- | ---: | ---: | ---: | --- |
+| all target and draft norms | 68.210 | 67.652 | +0.558 | canonical |
+| all norms, stored-F32 reload | 68.072 | 67.699 | +0.373 | canonical |
+| target layers 5-51 only | 67.742 | 67.836 | -0.094 | canonical |
+
+The first two candidates consistently changed the JSON draft count from 672
+to 674 while preserving the target-verified final text. The target-only screen
+then showed that proposal counts themselves have small run-to-run variation:
+its candidate/control counts were `1172/811/674` and `1171/811/674`, despite
+both final outputs being canonical. The target-only arm is the clean kernel
+adjudication because it excludes every DFlash layer; it was neutral/slightly
+slower. Therefore treat the apparent gains in the broader arms as noise and/or
+proposal-path variation, leave the feature default-off, and close this lane.
+
+Run identities and immutable result hashes:
+
+- `20260812-rms-norm-bf16-preconvert-ab.json` ->
+  `rms-norm-bf16-preconvert-ab-20260812.jsonl`, SHA256
+  `04c9864ad532200157c772f156d2133af34f1470c5a6ea4cc14cbbc55a3d9ca5`;
+- `20260812-rms-norm-bf16-preconvert-stored-ab.json` ->
+  `rms-norm-bf16-preconvert-stored-ab-20260812.jsonl`, SHA256
+  `a9fb3ce09500ac99b84bbeccee486a4c6134279e60d4785560d319829663891b`;
+- `20260812-rms-norm-bf16-preconvert-target-ab.json` ->
+  `rms-norm-bf16-preconvert-target-ab-20260812.jsonl`, SHA256
+  `0f1a2a16b98c9d8ba2b9137403e6ff0383ce2cc45fb92715704d69d47f16bbea`.
+
+All result files are under
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/`. Production was restored
+and passed the full health gate after every window; the corresponding tracked
+health files share the three lane stems and end in `-restore.json`.
