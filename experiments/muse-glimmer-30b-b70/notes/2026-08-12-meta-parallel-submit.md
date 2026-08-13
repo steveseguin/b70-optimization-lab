@@ -134,3 +134,53 @@ the device collective executed. Keep DFlash as the champion. Raw evidence:
 SHA-256 `95a7db2ec5d26d642eee53be0270ec982255023fef212f0dd8786425c26b275d`.
 Production restoration passed in
 `data/muse-health-20260812-dspark-parallel-restore.json`.
+
+## Update: OpenMP affinity screen
+
+Binding the four parallel-submit workers with `OMP_PROC_BIND=SPREAD`,
+`OMP_PLACES=cores`, and active waiting did not produce a stable additional
+gain. The control-first pair improved by `1.23%`, but the reversed-order pair
+improved by only `0.20%`; pooled uplift was approximately `0.71%`. This is too
+small and order-sensitive to promote. Raw evidence remains at:
+
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/parallel-submit-omp-affinity-ab-20260812.jsonl`,
+  SHA-256 `bf97e3c8bff45b9e15db850f0cf53fcf706b3072ebe330c62e07e22c4a736087`;
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/parallel-submit-omp-affinity-reversed-20260812.jsonl`,
+  SHA-256 `e5094fe0c6e367e3ed2d63c4b6139df3acdebd73c135e9243f331397e22d9c09`.
+
+Production restoration passed in
+`data/muse-health-20260812-omp-affinity-restore.json`.
+
+## Update: batch=2 attention projection reachability
+
+Source commit `7f17d5ddd` adds default-off
+`GGML_SYCL_DNNL_ATTN_BATCH2=1` pairing for Q+attention-gate and K+V. The first
+run accidentally inherited the sweep harness's quantized-drafter default; it
+is preserved as a misconfigured identity and must not be compared to the BF16
+champion. Its raw file is
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/meta-parallel-attn-batch2-ab-20260812.jsonl`,
+SHA-256 `eb650a61bae5d70ae086ee7df8a1b17f6c79eeb5c364982f6a4566f7e0cf118f`.
+
+The corrected, reversed-order BF16-drafter A/B measured:
+
+| Arm | Prose | Code | JSON | Mean t/s |
+| --- | ---: | ---: | ---: | ---: |
+| parallel + attention batch2 | 47.955 | 70.246 | 85.223 | 67.808 |
+| parallel-submit control | 48.073 | 70.166 | 84.670 | 67.636 |
+
+All canonical hashes passed. The apparent `+0.25%` is noise and is not a
+kernel result: a separate `-lv 4` proof emitted neither the Q+gate nor K+V
+first-hit marker, proving that both conservative pair plans were rejected at
+runtime. The proof itself remained exact at `48.143 / 70.169 / 85.289`.
+Source-side rejection diagnosis is required before another GPU A/B.
+
+Raw evidence:
+
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/meta-parallel-attn-batch2-ab-v2-20260812.jsonl`,
+  SHA-256 `2f422ed4b3486faf871f81697e8fad0d7c699c408b0bcc55c8aeaa3984004603`;
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/attn-batch2-hit-proof-20260812.jsonl`,
+  SHA-256 `f6df9424fd2e9d4be4e4abfe48204eea450b1310e9d0905f4dbdd4d6c282ba7c`.
+
+The pre-window and restored production gates both passed, including cache-zero
+code and vision, in `data/muse-health-20260812-attn-batch2-preflight.json` and
+`data/muse-health-20260812-attn-batch2-restore.json`.
