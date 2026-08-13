@@ -1,0 +1,256 @@
+#include <sycl/sycl.hpp>
+#include <sycl/ext/intel/esimd.hpp>
+#include <sycl/ext/intel/esimd/xmx/dpas.hpp>
+#include <oneapi/dnnl/dnnl.hpp>
+#include <oneapi/dnnl/dnnl_sycl.hpp>
+
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <iomanip>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+namespace esimd = sycl::ext::intel::esimd;
+namespace xmx = sycl::ext::intel::esimd::xmx;
+using bf16 = sycl::ext::oneapi::bfloat16;
+
+namespace {
+
+constexpr int kM = 4992;
+constexpr int kN = 16;
+constexpr int kK = 6656;
+constexpr int kMTile = 16;
+constexpr int kNTile = 8;
+constexpr int kKTile = 16;
+
+class MuseBf16DpasKernel;
+
+uint32_t xorshift32(uint32_t & state) {
+    state ^= state << 13;
+    state ^= state >> 17;
+    state ^= state << 5;
+    return state;
+}
+
+float signed_unit(uint32_t & state) {
+    const int value = int(xorshift32(state) & 0xffffu) - 32768;
+    return float(value) / 32768.0f;
+}
+
+std::vector<bf16> pack_weight_vnni(const std::vector<bf16> & weight) {
+    std::vector<bf16> packed(weight.size());
+    size_t dst = 0;
+    for (int mb = 0; mb < kM; mb += kMTile) {
+        for (int kb = 0; kb < kK; kb += kKTile) {
+            for (int pair = 0; pair < kKTile / 2; ++pair) {
+                for (int col = 0; col < kMTile; ++col) {
+                    packed[dst++] = weight[size_t(mb + col) * kK + kb + 2 * pair];
+                    packed[dst++] = weight[size_t(mb + col) * kK + kb + 2 * pair + 1];
+                }
+            }
+        }
+    }
+    if (dst != packed.size()) {
+        throw std::runtime_error("internal VNNI packing size mismatch");
+    }
+    return packed;
+}
+
+sycl::event launch_dpas(
+        sycl::queue & queue,
+        const bf16 * packed_weight,
+        const bf16 * activation,
+        float * output) {
+    return queue.submit([&](sycl::handler & cgh) {
+        cgh.parallel_for<MuseBf16DpasKernel>(sycl::range<1>(kM / kMTile),
+                [=](sycl::id<1> item) [[intel::sycl_explicit_simd]] {
+            const int mb = int(item[0]) * kMTile;
+            esimd::simd<float, kNTile * kMTile> accum0(0.0f);
+            esimd::simd<float, kNTile * kMTile> accum1(0.0f);
+
+            for (int kb = 0; kb < kK; kb += kKTile) {
+                const size_t packed_offset =
+                    (size_t(item[0]) * (kK / kKTile) + kb / kKTile) *
+                    kKTile * kMTile;
+                const auto weights =
+                    esimd::block_load<bf16, kKTile * kMTile>(packed_weight + packed_offset);
+
+                esimd::simd<bf16, kNTile * kKTile> act0;
+                esimd::simd<bf16, kNTile * kKTile> act1;
+#pragma unroll
+                for (int token = 0; token < kNTile; ++token) {
+                    act0.template select<kKTile, 1>(token * kKTile) =
+                        esimd::block_load<bf16, kKTile>(
+                            activation + size_t(token) * kK + kb);
+                    act1.template select<kKTile, 1>(token * kKTile) =
+                        esimd::block_load<bf16, kKTile>(
+                            activation + size_t(token + kNTile) * kK + kb);
+                }
+
+                accum0 = xmx::dpas<8, kNTile, float, float, bf16, bf16>(
+                    accum0, weights, act0);
+                accum1 = xmx::dpas<8, kNTile, float, float, bf16, bf16>(
+                    accum1, weights, act1);
+            }
+
+#pragma unroll
+            for (int token = 0; token < kNTile; ++token) {
+                esimd::block_store<float, kMTile>(
+                    output + size_t(token) * kM + mb,
+                    accum0.template select<kMTile, 1>(token * kMTile).read());
+                esimd::block_store<float, kMTile>(
+                    output + size_t(token + kNTile) * kM + mb,
+                    accum1.template select<kMTile, 1>(token * kMTile).read());
+            }
+        });
+    });
+}
+
+template <typename Submit>
+double batch_time_ms(sycl::queue & queue, int iterations, const Submit & submit) {
+    queue.wait_and_throw();
+    const auto begin = std::chrono::steady_clock::now();
+    for (int i = 0; i < iterations; ++i) {
+        submit();
+    }
+    queue.wait_and_throw();
+    const auto end = std::chrono::steady_clock::now();
+    return std::chrono::duration<double, std::milli>(end - begin).count() / iterations;
+}
+
+uint32_t bits(float value) {
+    uint32_t result;
+    std::memcpy(&result, &value, sizeof(result));
+    return result;
+}
+
+} // namespace
+
+int main(int argc, char ** argv) {
+    int warmups = 8;
+    int iterations = 40;
+    if (argc > 1) {
+        iterations = std::stoi(argv[1]);
+    }
+
+    sycl::queue queue(sycl::gpu_selector_v,
+        sycl::property_list{sycl::property::queue::in_order{}});
+    std::cout << "device=" << queue.get_device().get_info<sycl::info::device::name>()
+              << " shape=" << kM << "x" << kN << "x" << kK
+              << " iterations=" << iterations << '\n';
+
+    uint32_t rng = 0x4d555345u;
+    std::vector<bf16> host_weight(size_t(kM) * kK);
+    std::vector<bf16> host_activation(size_t(kN) * kK);
+    for (auto & value : host_weight) {
+        value = bf16(signed_unit(rng) * 0.03125f);
+    }
+    for (auto & value : host_activation) {
+        value = bf16(signed_unit(rng) * 0.125f);
+    }
+    const auto host_packed = pack_weight_vnni(host_weight);
+
+    auto * weight = sycl::malloc_device<bf16>(host_weight.size(), queue);
+    auto * packed = sycl::malloc_device<bf16>(host_packed.size(), queue);
+    auto * activation = sycl::malloc_device<bf16>(host_activation.size(), queue);
+    auto * out_dnnl = sycl::malloc_device<float>(size_t(kM) * kN, queue);
+    auto * out_dpas = sycl::malloc_device<float>(size_t(kM) * kN, queue);
+    if (!weight || !packed || !activation || !out_dnnl || !out_dpas) {
+        throw std::runtime_error("USM allocation failed");
+    }
+    queue.copy(host_weight.data(), weight, host_weight.size());
+    queue.copy(host_packed.data(), packed, host_packed.size());
+    queue.copy(host_activation.data(), activation, host_activation.size());
+    queue.wait_and_throw();
+
+    auto engine = dnnl::sycl_interop::make_engine(
+        queue.get_device(), queue.get_context());
+    auto stream = dnnl::sycl_interop::make_stream(engine, queue);
+    const auto weight_md = dnnl::memory::desc(
+        {1, kM, kK}, dnnl::memory::data_type::bf16, {kM * kK, kK, 1});
+    const auto activation_md = dnnl::memory::desc(
+        {1, kK, kN}, dnnl::memory::data_type::bf16, {kK * kN, 1, kK});
+    const auto output_md = dnnl::memory::desc(
+        {1, kM, kN}, dnnl::memory::data_type::f32, {kM * kN, 1, kM});
+    dnnl::primitive_attr attr;
+    attr.set_scratchpad_mode(dnnl::scratchpad_mode::user);
+    auto pd = dnnl::matmul::primitive_desc(
+        engine, weight_md, activation_md, output_md, attr);
+    auto primitive = dnnl::matmul(pd);
+    auto * scratch = sycl::malloc_device<uint8_t>(pd.scratchpad_desc().get_size(), queue);
+    if (!scratch && pd.scratchpad_desc().get_size() != 0) {
+        throw std::runtime_error("scratchpad allocation failed");
+    }
+    std::unordered_map<int, dnnl::memory> args = {
+        {DNNL_ARG_SRC, dnnl::memory(weight_md, engine, weight)},
+        {DNNL_ARG_WEIGHTS, dnnl::memory(activation_md, engine, activation)},
+        {DNNL_ARG_DST, dnnl::memory(output_md, engine, out_dnnl)},
+        {DNNL_ARG_SCRATCHPAD,
+            dnnl::memory(pd.scratchpad_desc(), engine, scratch)},
+    };
+
+    auto submit_dnnl = [&] { primitive.execute(stream, args); };
+    auto submit_dpas = [&] { launch_dpas(queue, packed, activation, out_dpas); };
+    for (int i = 0; i < warmups; ++i) {
+        submit_dnnl();
+        submit_dpas();
+    }
+    queue.wait_and_throw();
+
+    submit_dnnl();
+    submit_dpas();
+    queue.wait_and_throw();
+    std::vector<float> host_dnnl(size_t(kM) * kN);
+    std::vector<float> host_dpas(size_t(kM) * kN);
+    queue.copy(out_dnnl, host_dnnl.data(), host_dnnl.size());
+    queue.copy(out_dpas, host_dpas.data(), host_dpas.size());
+    queue.wait_and_throw();
+
+    size_t mismatches = 0;
+    float max_abs_error = 0.0f;
+    size_t first_mismatch = host_dnnl.size();
+    for (size_t i = 0; i < host_dnnl.size(); ++i) {
+        if (bits(host_dnnl[i]) != bits(host_dpas[i])) {
+            ++mismatches;
+            first_mismatch = std::min(first_mismatch, i);
+            max_abs_error = std::max(max_abs_error,
+                std::abs(host_dnnl[i] - host_dpas[i]));
+        }
+    }
+
+    const double dnnl_ms = batch_time_ms(queue, iterations, submit_dnnl);
+    const double dpas_ms = batch_time_ms(queue, iterations, submit_dpas);
+    const double ratio = dnnl_ms > 0.0 ? dpas_ms / dnnl_ms : 0.0;
+    std::cout << std::fixed << std::setprecision(6)
+              << "dnnl_ms=" << dnnl_ms
+              << " dpas_ms=" << dpas_ms
+              << " dpas_over_dnnl=" << ratio
+              << " mismatches=" << mismatches
+              << " max_abs_error=" << max_abs_error << '\n';
+    if (first_mismatch != host_dnnl.size()) {
+        std::cout << "first_mismatch=" << first_mismatch
+                  << " dnnl=0x" << std::hex << bits(host_dnnl[first_mismatch])
+                  << " dpas=0x" << bits(host_dpas[first_mismatch]) << std::dec
+                  << " dnnl_value=" << host_dnnl[first_mismatch]
+                  << " dpas_value=" << host_dpas[first_mismatch] << '\n';
+    }
+
+    sycl::free(scratch, queue);
+    sycl::free(out_dpas, queue);
+    sycl::free(out_dnnl, queue);
+    sycl::free(activation, queue);
+    sycl::free(packed, queue);
+    sycl::free(weight, queue);
+
+    const bool exact = mismatches == 0;
+    const bool fast_enough = dpas_ms <= 0.8 * dnnl_ms;
+    std::cout << "exact_gate=" << (exact ? "PASS" : "FAIL")
+              << " speed_gate=" << (fast_enough ? "PASS" : "FAIL") << '\n';
+    return exact && fast_enough ? 0 : 2;
+}

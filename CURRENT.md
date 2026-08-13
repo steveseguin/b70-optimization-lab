@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-12**
+Last reviewed: **2026-08-13**
 
 ## Authority And Update Rule
 
@@ -66,6 +66,10 @@ collective and produced no benchmark row.  The integration remains default-off
 and is closed absent evidence that the raw-logit/CPU-sampling tail is worth
 several milliseconds per round.  See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-tp-backend-sampling-negative.md`.
+A fixed-shape native BF16 XMX/DPAS falsification is also closed: despite using
+an already-packed duplicate weight, it was `32.2%` slower than oneDNN and
+differed in `73,048 / 79,872` F32 elements.  It was not integrated.  See
+`experiments/muse-glimmer-30b-b70/native-bf16-gemm/README.md`.
 
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
