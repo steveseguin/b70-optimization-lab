@@ -119,3 +119,40 @@ DSpark evidence:
 Production was restored without reboot and passed the full model,
 cache-zero code, and vision health gate in
 `data/muse-health-20260813-ddtree-cost-restore.json`.
+
+## Updated budget-15 integration gate after kernel wins
+
+Later exact kernel/runtime work materially changed only the conditional
+budget-15 lane. The distributed top15 merge/tree/512/heap kernels plus the
+allreduce last-event win now project `75.291 / 103.278 / 120.524 tok/s`, mean
+`99.698`, at zero DDTree bookkeeping cost. Wider trees remain rejected by the
+measured target-batch cost above.
+
+Budget 15 keeps the incumbent 16 target rows: one anchor plus 15 unique tree
+nodes. The smallest valid server form requires unified KV and temporary target
+sequence IDs per leaf. The anchor belongs to all leaf IDs; each tree node
+belongs to its descendant leaves. After target verification, retain the chosen
+leaf, copy it back to canonical sequence 0, and inject only the selected
+anchor-to-committed-path target features into canonical DFlash KV. Do not pass
+the multi-sequence target batch to the current contiguous single-sequence
+DFlash processing path.
+
+Measured traces imply roughly 7.23 / 4.93 / 4.63 leaves per round for
+prose/code/JSON (p95 11). Expected host heap/tree bookkeeping is tiny, but KV
+metadata scans and multi-sequence masks are not free. A public-API prototype is
+expected to add roughly `0.15--0.6 ms/round`; a dedicated bulk fork/select may
+reduce that to `0.05--0.2 ms`. At `0.1 / 0.3 / 0.5 ms` uniform added cost, the
+modeled mean becomes approximately `99.50 / 99.12 / 98.73 tok/s`.
+
+Therefore do not begin the full server acceptance rewrite until both gates
+pass:
+
+1. canonical linear `--kv-unified` C/A/C at n_parallel=1, requiring no more
+   than about `0.05 ms/round` regression;
+2. a 16-row branch-layout probe that verifies selected-path logits/greedy IDs
+   against separate linear paths and measures sequence-fork/mask/prune cost,
+   preferably no more than `0.2--0.3 ms/round`.
+
+Even after those gates, another exact `0.155 ms/round` plus measured tree
+bookkeeping is required. Full integration is plausible only after that margin
+exists; the tree alone still cannot honestly claim 100.

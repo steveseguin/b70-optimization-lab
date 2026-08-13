@@ -1,0 +1,153 @@
+{
+  "lane": "dflash-kv-unified-linear-cac-20260813",
+  "port": 19479,
+  "gpus": "0,1,2,3",
+  "model": "/mnt/usb-models/muse-glimmer-30b-extra/Muse-Glimmer-30B-BF16-00001-of-00002.gguf",
+  "out": "/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/dflash-kv-unified-linear-cac-20260813.jsonl",
+  "configs": [
+    {
+      "label": "kvu-off-before",
+      "spec": true,
+      "spec_type": "draft-dflash",
+      "draft": "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-bf16.gguf",
+      "health_tries": 150,
+      "n_max": 15,
+      "p_min": 0,
+      "args": [
+        "-sm",
+        "tensor",
+        "-bs",
+        "-lv",
+        "3",
+        "--no-kv-unified"
+      ],
+      "request": {
+        "n_predict": 256,
+        "backend_sampling": true,
+        "samplers": [
+          "temperature"
+        ]
+      },
+      "env": {
+        "LLAMA_SPEC_PROFILE": "1",
+        "LLAMA_DFLASH_PROCESS_COMMITTED_ONLY": "1",
+        "LLAMA_DFLASH_TP_TOP_K": "1",
+        "LLAMA_DFLASH_CANDIDATE_TOP_K": "15",
+        "LLAMA_DFLASH_TP_GREEDY": "0",
+        "LLAMA_BACKEND_GREEDY_BATCH_ROWS": "1",
+        "LLAMA_TP_BACKEND_SAMPLING": "1",
+        "GGML_SYCL_COMM_ARGMAX": "1",
+        "GGML_SYCL_COMM_ARGMAX_REUSE_LOCAL": "1",
+        "GGML_SYCL_COMM_TOP_K": "1",
+        "GGML_SYCL_TOP_K_TREE_MERGE": "1",
+        "GGML_SYCL_TOP_K_BLOCK_SIZE": "512",
+        "GGML_SYCL_TOP_K_HEAP_SCAN": "1",
+        "GGML_SYCL_COMM_LAST_EVENT_READY": "1",
+        "GGML_SYCL_DNNL_GEMM_CACHE": "1",
+        "GGML_SYCL_DNNL_GEMM_BIND_CACHE": "1",
+        "GGML_SYCL_BF16_GRAPH_CONVERSION_CACHE": "1",
+        "GGML_META_PARALLEL_SUBMIT": "1",
+        "GGML_SYCL_RMS_NORM_MUL_ADD_FUSION": "1",
+        "GGML_SYCL_OP_PROFILE": "0",
+        "GGML_SYCL_DEVICE_TIMELINE": "0",
+        "GGML_SYCL_ENABLE_GRAPH": "0"
+      }
+    },
+    {
+      "label": "kvu-on",
+      "spec": true,
+      "spec_type": "draft-dflash",
+      "draft": "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-bf16.gguf",
+      "health_tries": 150,
+      "n_max": 15,
+      "p_min": 0,
+      "args": [
+        "-sm",
+        "tensor",
+        "-bs",
+        "-lv",
+        "3",
+        "--kv-unified"
+      ],
+      "request": {
+        "n_predict": 256,
+        "backend_sampling": true,
+        "samplers": [
+          "temperature"
+        ]
+      },
+      "env": {
+        "LLAMA_SPEC_PROFILE": "1",
+        "LLAMA_DFLASH_PROCESS_COMMITTED_ONLY": "1",
+        "LLAMA_DFLASH_TP_TOP_K": "1",
+        "LLAMA_DFLASH_CANDIDATE_TOP_K": "15",
+        "LLAMA_DFLASH_TP_GREEDY": "0",
+        "LLAMA_BACKEND_GREEDY_BATCH_ROWS": "1",
+        "LLAMA_TP_BACKEND_SAMPLING": "1",
+        "GGML_SYCL_COMM_ARGMAX": "1",
+        "GGML_SYCL_COMM_ARGMAX_REUSE_LOCAL": "1",
+        "GGML_SYCL_COMM_TOP_K": "1",
+        "GGML_SYCL_TOP_K_TREE_MERGE": "1",
+        "GGML_SYCL_TOP_K_BLOCK_SIZE": "512",
+        "GGML_SYCL_TOP_K_HEAP_SCAN": "1",
+        "GGML_SYCL_COMM_LAST_EVENT_READY": "1",
+        "GGML_SYCL_DNNL_GEMM_CACHE": "1",
+        "GGML_SYCL_DNNL_GEMM_BIND_CACHE": "1",
+        "GGML_SYCL_BF16_GRAPH_CONVERSION_CACHE": "1",
+        "GGML_META_PARALLEL_SUBMIT": "1",
+        "GGML_SYCL_RMS_NORM_MUL_ADD_FUSION": "1",
+        "GGML_SYCL_OP_PROFILE": "0",
+        "GGML_SYCL_DEVICE_TIMELINE": "0",
+        "GGML_SYCL_ENABLE_GRAPH": "0"
+      }
+    },
+    {
+      "label": "kvu-off-after",
+      "spec": true,
+      "spec_type": "draft-dflash",
+      "draft": "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-bf16.gguf",
+      "health_tries": 150,
+      "n_max": 15,
+      "p_min": 0,
+      "args": [
+        "-sm",
+        "tensor",
+        "-bs",
+        "-lv",
+        "3",
+        "--no-kv-unified"
+      ],
+      "request": {
+        "n_predict": 256,
+        "backend_sampling": true,
+        "samplers": [
+          "temperature"
+        ]
+      },
+      "env": {
+        "LLAMA_SPEC_PROFILE": "1",
+        "LLAMA_DFLASH_PROCESS_COMMITTED_ONLY": "1",
+        "LLAMA_DFLASH_TP_TOP_K": "1",
+        "LLAMA_DFLASH_CANDIDATE_TOP_K": "15",
+        "LLAMA_DFLASH_TP_GREEDY": "0",
+        "LLAMA_BACKEND_GREEDY_BATCH_ROWS": "1",
+        "LLAMA_TP_BACKEND_SAMPLING": "1",
+        "GGML_SYCL_COMM_ARGMAX": "1",
+        "GGML_SYCL_COMM_ARGMAX_REUSE_LOCAL": "1",
+        "GGML_SYCL_COMM_TOP_K": "1",
+        "GGML_SYCL_TOP_K_TREE_MERGE": "1",
+        "GGML_SYCL_TOP_K_BLOCK_SIZE": "512",
+        "GGML_SYCL_TOP_K_HEAP_SCAN": "1",
+        "GGML_SYCL_COMM_LAST_EVENT_READY": "1",
+        "GGML_SYCL_DNNL_GEMM_CACHE": "1",
+        "GGML_SYCL_DNNL_GEMM_BIND_CACHE": "1",
+        "GGML_SYCL_BF16_GRAPH_CONVERSION_CACHE": "1",
+        "GGML_META_PARALLEL_SUBMIT": "1",
+        "GGML_SYCL_RMS_NORM_MUL_ADD_FUSION": "1",
+        "GGML_SYCL_OP_PROFILE": "0",
+        "GGML_SYCL_DEVICE_TIMELINE": "0",
+        "GGML_SYCL_ENABLE_GRAPH": "0"
+      }
+    }
+  ]
+}
