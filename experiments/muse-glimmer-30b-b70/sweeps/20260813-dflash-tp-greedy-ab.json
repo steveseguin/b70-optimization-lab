@@ -1,0 +1,59 @@
+{
+  "lane": "dflash-tp-greedy-ab-20260813",
+  "port": 19479,
+  "gpus": "0,1,2,3",
+  "model": "/mnt/usb-models/muse-glimmer-30b-extra/Muse-Glimmer-30B-BF16-00001-of-00002.gguf",
+  "out": "/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/dflash-tp-greedy-ab-20260813.jsonl",
+  "configs": [
+    {
+      "label": "dflash-device-greedy-candidate",
+      "spec": true,
+      "spec_type": "draft-dflash",
+      "draft": "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-bf16.gguf",
+      "health_tries": 150,
+      "n_max": 15,
+      "p_min": 0.0,
+      "args": ["-sm", "tensor"],
+      "env": {
+        "LLAMA_DFLASH_TP_GREEDY": "1",
+        "LLAMA_TP_BACKEND_SAMPLING": "1",
+        "GGML_SYCL_COMM_ARGMAX": "1",
+        "GGML_SYCL_COMM_DEBUG": "1",
+        "GGML_SYCL_DNNL_GEMM_CACHE": "1",
+        "GGML_SYCL_DNNL_GEMM_BIND_CACHE": "1",
+        "GGML_SYCL_BF16_PAIR": "0",
+        "GGML_SYCL_BF16_GRAPH_CONVERSION_CACHE": "1",
+        "GGML_SYCL_BF16_MKL": "0",
+        "GGML_SYCL_BF16_DIRECT": "0",
+        "GGML_SYCL_OP_PROFILE": "0",
+        "GGML_META_PARALLEL_SUBMIT": "1",
+        "GGML_SYCL_ENABLE_GRAPH": "0"
+      }
+    },
+    {
+      "label": "dflash-cpu-sampling-control",
+      "spec": true,
+      "spec_type": "draft-dflash",
+      "draft": "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-bf16.gguf",
+      "health_tries": 150,
+      "n_max": 15,
+      "p_min": 0.0,
+      "args": ["-sm", "tensor"],
+      "env": {
+        "LLAMA_DFLASH_TP_GREEDY": "0",
+        "LLAMA_TP_BACKEND_SAMPLING": "0",
+        "GGML_SYCL_COMM_ARGMAX": "0",
+        "GGML_SYCL_COMM_DEBUG": "0",
+        "GGML_SYCL_DNNL_GEMM_CACHE": "1",
+        "GGML_SYCL_DNNL_GEMM_BIND_CACHE": "1",
+        "GGML_SYCL_BF16_PAIR": "0",
+        "GGML_SYCL_BF16_GRAPH_CONVERSION_CACHE": "1",
+        "GGML_SYCL_BF16_MKL": "0",
+        "GGML_SYCL_BF16_DIRECT": "0",
+        "GGML_SYCL_OP_PROFILE": "0",
+        "GGML_META_PARALLEL_SUBMIT": "1",
+        "GGML_SYCL_ENABLE_GRAPH": "0"
+      }
+    }
+  ]
+}
