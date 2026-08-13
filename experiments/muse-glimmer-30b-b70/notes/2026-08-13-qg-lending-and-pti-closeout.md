@@ -272,3 +272,27 @@ Together with the unusable PTI device views, there is still no measured
 verifier-wide recoverable scheduling pool large enough to close the current
 `9.94 ms/round` century gap.  Production was restored and passed the complete
 health gate in `data/muse-health-20260813T1730Z-device-timeline-restore.json`.
+
+### External paused unitrace retry also fails closed
+
+A final source-free retry used the locally pinned PTI `unitrace` 2.4.0
+(`5aaca1f418a212a1d298cac27afb6c471bf1fcf47a1622e0c20d1a2cf43fc85a`),
+started paused through model load and resumed from GDB only at the first
+`test_prompt()` width-16 call. This avoided the earlier model-loading spin,
+but immediately after resume PTI emitted repeated `Unable to query event for
+timestamps` errors. The run was interrupted at its preregistered error gate.
+
+The trace directory is
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/pti-width16/unitrace-external-20260813T1745Z`.
+Its run configuration SHA-256 is
+`d1ab888d4b15d3e1e65db443d18d6645004b1c4ee176707c69231a414375897a`.
+The only nonempty target timeline contains three isolated memory-copy records
+spread roughly 15 seconds apart, not a verifier timeline; SHA-256
+`916e75aad1221fee9163c8ff5a0c80435d065ba8022b67e1d03ddd3d77ca6904`.
+All other device/chrome outputs are empty or headers only and must not be used
+as timing evidence.
+
+This closes external PTI device tracing on the current Level Zero V2 runtime.
+No driver reset or reboot was required. Production was restored and passed
+model listing, cache-zero 512-token code, and vision health in
+`data/muse-health-20260813T1825Z-unitrace-abort-restore.json`.
