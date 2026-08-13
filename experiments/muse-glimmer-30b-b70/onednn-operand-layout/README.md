@@ -54,6 +54,13 @@ Its warmed times were likewise neutral (`0.115883--0.116276 ms` gate/up and
 `0.116736--0.116844 ms` down across the four descriptor forms).  A oneDNN
 3.12 upgrade is not a Muse verifier kernel win on these shapes.
 
+A final v3.12 developer-mode strategy screen explicitly forced the selected
+Xe2 `16x16` kernel and three nearby catalog recipes.  Only the selected
+strategy reproduced the canonical F32 hash (`0xe0919d3586cdf201`), at a warmed
+`0.115596 ms`.  The alternatives produced hashes
+`0xbae1b343ab4f7ed2` or `0xe45bb718d2a8a6a6`; the same-layout alternative was
+also about 17% slower.  Manual `GEMM_KERNEL` overrides are therefore closed.
+
 External logs:
 
 - `synthetic-first-20260813.log`, SHA256
@@ -61,10 +68,15 @@ External logs:
 - `synthetic-2d-20260813.log`, SHA256
   `e23567f98fa9c242501c0ee5b40f03e403e8647c75a88bd93a77c0e46cd8efd8`;
 - `v311-v312-20260813.log`, SHA256
-  `8992642dcc50d28b843da64f3d1b8313ed2b9939cc21a444377c09341df41324`.
+  `8992642dcc50d28b843da64f3d1b8313ed2b9939cc21a444377c09341df41324`;
+- `v312-strategy-20260813.log`, SHA256
+  `6cb9fe6aa6e8f47939db4c5a80b2036f5380070651d3a9128c94ac1230ad2ef4`;
+- `v312-dev-strategy-sweep-20260813.log`, SHA256
+  `a3da61607fa736f5df2dc9d77189c571e49b6e4d564274052905c83d8c02c501`.
 
 They are under
 `/mnt/fast-ai/bench-results/muse-glimmer-30b/onednn-operand-layout/`.
 Every GPU window used the canonical exclusive lock and cleanup trap.
 Production passed the full cache-zero code and vision health gate after the
-final window in `data/muse-health-20260813-onednn-v312-restore.json`.
+final window in
+`data/muse-health-20260813-onednn-dev-strategy-restore.json`.

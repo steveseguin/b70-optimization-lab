@@ -257,6 +257,10 @@ An exact oneDNN descriptor/library screen is also closed.  Transposing operand
 roles and removing the batch-of-one dimension preserved every F32 bit but left
 the dominant MLP shapes at the same approximately `0.116 ms` per GEMM.
 Official oneDNN v3.12 reproduced both the incumbent output hashes and timings.
+Its developer-mode Xe2 strategy override was also screened: only the selected
+`16x16` recipe reproduced the canonical F32 hash, while all three nearby
+catalog recipes changed it and offered no material exact win.  Manual GEMM
+strategy tuning is closed.
 See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-onednn-operand-layout-negative.md`.
 

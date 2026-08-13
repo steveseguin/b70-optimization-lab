@@ -49,6 +49,30 @@ Official v3.12 reproduced the same F32 hashes and essentially the same times.
 It therefore supplies neither a numerical nor a performance reason to change
 the production library.
 
+The final bounded screen built the same v3.12 source with
+`DNNL_DEV_MODE=ON` and tested explicit `GEMM_KERNEL` strategies from the Xe2
+catalog.  oneDNN's default strategy was:
+
+```text
+gemm BBS T@16N@16N 16 16 ... wg 2x2x8 ... k64 grf256 ...
+```
+
+The explicit default reproduced the canonical gate/up F32 hash
+`0xe0919d3586cdf201` and a warmed `0.115596 ms`.  Three nearby legal catalog
+strategies all changed the F32 hash, so none satisfies the lossless gate:
+
+| Override | Warmed 3D time | F32 hash | Decision |
+| --- | ---: | --- | --- |
+| default `16x16`, `wg 2x2x8` | `0.115596 ms` | `0xe0919d3586cdf201` | exact control |
+| same-layout alternate `16x16`, `wg 8x4` | `0.135510 ms` | `0xbae1b343ab4f7ed2` | non-exact and slower |
+| catalog `16x16`, `wg 4x2x4` | `0.117377 ms` | `0xe45bb718d2a8a6a6` | non-exact |
+| catalog `16x4`, `wg 8x4` | `0.148703 ms` | `0xbae1b343ab4f7ed2` | non-exact and slower |
+
+The harness's within-process mismatch checks still pass because an override
+applies to all descriptor arms in that process.  Cross-process comparison to
+the canonical control hash is therefore the authoritative exactness gate.
+Do not manually override the production oneDNN GEMM strategy.
+
 ## Artifacts and operational status
 
 Harness:
@@ -61,9 +85,13 @@ External logs and SHA256 values:
 - `synthetic-2d-20260813.log`:
   `e23567f98fa9c242501c0ee5b40f03e403e8647c75a88bd93a77c0e46cd8efd8`;
 - `v311-v312-20260813.log`:
-  `8992642dcc50d28b843da64f3d1b8313ed2b9939cc21a444377c09341df41324`.
+  `8992642dcc50d28b843da64f3d1b8313ed2b9939cc21a444377c09341df41324`;
+- `v312-strategy-20260813.log`:
+  `6cb9fe6aa6e8f47939db4c5a80b2036f5380070651d3a9128c94ac1230ad2ef4`;
+- `v312-dev-strategy-sweep-20260813.log`:
+  `a3da61607fa736f5df2dc9d77189c571e49b6e4d564274052905c83d8c02c501`.
 
 No llama.cpp source, model, drafter, or production configuration changed.
 Production was restored after each short GPU window.  Final full health:
-`data/muse-health-20260813-onednn-v312-restore.json` (`ok=true`,
+`data/muse-health-20260813-onednn-dev-strategy-restore.json` (`ok=true`,
 `cached_tokens=0`, 512-token code canary, vision=`red`).
