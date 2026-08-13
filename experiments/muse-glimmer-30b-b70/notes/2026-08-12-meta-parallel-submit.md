@@ -115,3 +115,22 @@ Raw evidence:
 
 Production was restored and the complete model/cache-zero code/vision gate
 passed in `data/muse-health-20260812-ffn-batch2-restore.json`.
+
+## Update: pretrained DSpark combination
+
+The already converted public pretrained DSpark checkpoint was tested with
+both retained inference-path wins: device-side global maxloc and parallel TP
+submission. It remains exact but does not beat BF16 DFlash:
+
+| Assistant | Prose | Code | JSON | Mean t/s |
+| --- | ---: | ---: | ---: | ---: |
+| BF16 DFlash + parallel submit | 48.021 | 70.160 | 84.282 | 67.488 |
+| BF16 DSpark + device maxloc + parallel submit | 44.480 | 74.332 | 76.083 | 64.965 |
+
+DSpark improves code but loses prose and JSON, for `-3.74%` on the fixed
+three-class mean. All canonical hashes passed; the maxloc debug marker proved
+the device collective executed. Keep DFlash as the champion. Raw evidence:
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/parallel-submit-dspark-vs-dflash-20260812.jsonl`,
+SHA-256 `95a7db2ec5d26d642eee53be0270ec982255023fef212f0dd8786425c26b275d`.
+Production restoration passed in
+`data/muse-health-20260812-dspark-parallel-restore.json`.
