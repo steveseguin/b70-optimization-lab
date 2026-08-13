@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "audited_at": "2026-08-12",
+  "source": {
+    "repository": "https://github.com/mndodd/llama.cpp",
+    "branch": "intel-sycl-optimization",
+    "commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "upstream_merge_base": "84e908c625fb60992b4cdef8180fb12fa9b4c4bf",
+    "lab_patch_sha256": "fce3f8e8a296d86630eaa9f9e8e839ff88fa9bb29093a958d5b27d20894d3c68"
+  },
+  "model": {
+    "repository": "ggml-org/Qwen3.6-27B-GGUF",
+    "revision": "8a7ee08e8b9bfb857107ecc25a5599d2f38b76f8",
+    "file": "Qwen3.6-27B-Q8_0.gguf",
+    "bytes": 28595762464,
+    "sha256": "73f8260284708ed78ae266df672288b6ad1f2c73ec7ffeb7514b5cecdba646c9"
+  },
+  "metric_accounting": {
+    "legacy": "100 timestamped events divided by the span from event 1 to event 100",
+    "conventional": "99 inter-token intervals divided by the same span",
+    "conversion": "conventional = legacy * 0.99"
+  },
+  "target_only": {
+    "tp2_fork": {
+      "gpus": 2,
+      "legacy_median_tok_s": 31.338764614484198,
+      "conventional_median_tok_s": 31.025376968339355,
+      "conventional_p10_tok_s": 30.876411335610803,
+      "wall_full_median_tok_s": 29.92284642790138,
+      "ttft_median_ms": 179.0917399994214,
+      "llama_bench_p512_n128_r5_tok_s": 31.255575,
+      "cached_tokens_all_zero": true,
+      "complete_hashes_vs_tp2_control": "12/12"
+    },
+    "tp2_upstream_derived_control": {
+      "gpus": 2,
+      "legacy_median_tok_s": 29.610651329685275,
+      "conventional_median_tok_s": 29.314544816388423,
+      "conventional_p10_tok_s": 29.13193339261854,
+      "wall_full_median_tok_s": 26.891133491194253,
+      "ttft_median_ms": 422.350204000395,
+      "llama_bench_p512_n128_r5_tok_s": 30.110121,
+      "cached_tokens_all_zero": true
+    },
+    "tp1_fork_default": {
+      "gpus": 1,
+      "legacy_median_tok_s": 17.95580018040284,
+      "conventional_median_tok_s": 17.77624217859881,
+      "conventional_p10_tok_s": 17.665998827617657,
+      "wall_full_median_tok_s": 17.222025603093556,
+      "ttft_median_ms": 276.10110599925974,
+      "llama_bench_p512_n128_r5_tok_s": 17.497254,
+      "cached_tokens_all_zero": true,
+      "complete_hashes_vs_tp1_control": "10/12"
+    },
+    "tp1_upstream_derived_control": {
+      "gpus": 1,
+      "legacy_median_tok_s": 17.297037549228527,
+      "conventional_median_tok_s": 17.124067173736243,
+      "conventional_p10_tok_s": 16.90601260401593,
+      "wall_full_median_tok_s": 15.65025999360006,
+      "ttft_median_ms": 756.1859724992246,
+      "llama_bench_p512_n128_r5_tok_s": 17.024218,
+      "cached_tokens_all_zero": true
+    },
+    "tp1_sg32_diagnostic": {
+      "legacy_median_tok_s": 17.970729139227856,
+      "conventional_median_tok_s": 17.791021847835577,
+      "llama_bench_p512_n128_r5_tok_s": 18.134992,
+      "endpoint_gain_vs_fork_default_percent": 0.0831,
+      "promoted": false
+    }
+  },
+  "quality": {
+    "tp2_fork_ppl": 5.635366,
+    "tp2_reference_ppl": 5.635427,
+    "tp2_same_top_percent": 100.0,
+    "tp2_rms_probability_delta_percent": 0.0,
+    "tp1_fork_ppl": 5.635105,
+    "tp1_same_top_percent": 100.0,
+    "tp1_rms_probability_delta_percent": 0.038,
+    "stock_fork_bf16_compressed_tp_ppl": 19.987962,
+    "stock_fork_bf16_compressed_tp_valid": false
+  },
+  "speculative_support_only": {
+    "mtp4_f16_kv_fork": {
+      "legacy_median_tok_s": 39.61844475527895,
+      "conventional_median_tok_s": 39.22226030772616
+    },
+    "mtp4_f16_kv_upstream": {
+      "legacy_median_tok_s": 33.163826687686566,
+      "conventional_median_tok_s": 32.8321884208097
+    },
+    "mtp4_q8_kv_fork": {
+      "legacy_median_tok_s": 39.16861805194061,
+      "conventional_median_tok_s": 38.776931871421205
+    },
+    "dflash5_f16_kv_fork": {
+      "legacy_median_tok_s": 38.08404526091026,
+      "conventional_median_tok_s": 37.70320480830116,
+      "favorable_prompt_tok_s": 65.0
+    }
+  },
+  "rejected_or_unsafe": {
+    "tp2_graph_capture": "decode abort with dedup on; decode hang with dedup off",
+    "tp2_builtin_profiler": "device lost and both B70 CCS engines reset; do not use",
+    "tp2_dflash": "draft/meta tensor assignment failure",
+    "tp2_input_async_p512_n128_r5_tok_s": 31.167613,
+    "tp2_immediate_command_lists_p512_n128_r5_tok_s": 31.319322,
+    "tp2_immediate_command_lists_promoted": false,
+    "tp2_root_barrier_elision": {
+      "candidate_p32_n256_r3_tok_s": 32.125197,
+      "same_fresh_build_mode1_control_tok_s": 32.204513,
+      "validated_binary_same_window_control_tok_s": 32.14345,
+      "candidate_delta_vs_same_build_percent": -0.246288,
+      "fresh_vs_validated_binary_delta_percent": 0.18997,
+      "promoted": false
+    },
+    "tp2_bmg_mmvq_phase1": {
+      "candidate_p32_n256_r3_tok_s": 31.298667,
+      "same_window_default_control_tok_s": 32.206087,
+      "candidate_delta_percent": -2.817542,
+      "promoted": false
+    },
+    "tp2_copy_engine_replication": {
+      "candidate_p32_n256_r3_tok_s": 30.996748,
+      "same_binary_mode1_control_tok_s": 31.541103,
+      "candidate_delta_percent": -1.725859,
+      "promoted": false
+    }
+  },
+  "target_only_tp2_output_sha256s": [
+    "f17ef1d36b9bbf765aa7cbd730fa6926a6de17b1c2afda55d3112dbc9ec2fd0e",
+    "551357858e5183782115270db2406d3c4e368d31cee0334e33799ec9d6ccd8c7",
+    "c4035c8d32f37a11a00b42f6b3664a8dfcdcdadfa480b695a37cc8ce352b3289",
+    "ea1d107630c322cfa0e8037b257463267a98b898ad483467fc99d46e437230f5",
+    "8904462681467a77e418603979759eb74610152dc5b66383d5e8ade65c31de0a",
+    "d8f0a3760999dee7a602996fc929be8f508c4845a128c1a4b69abdf1a8e0afe0",
+    "ccfb2802d3d7c59a04d5bfb062081b21dc5872821ca579e9985cc05efc86d337",
+    "97b670c31e73ad6dbd6434c9fa7e879c832ab1451a3e708f925cdad11d393430",
+    "c9922fafa104319e5abfbe61ca5cdae725d14e87e527a4b7e39a6211fbfe5c49",
+    "669b1b54c4f55936c052c76946be04ecba8038f9f9227751d521d9b05144d225",
+    "f9b0dbd14dbb6b6d59fdadb85d3daf3fdc0e25d5974ca15af96c15dc0319f47c",
+    "5893501d524a57a6525a68825508af4fc1822beb633c8d33f8f6a8b1cd24823d"
+  ]
+}

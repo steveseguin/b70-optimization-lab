@@ -3,12 +3,11 @@
 This page is the cross-model work queue and archive. It is meant to help the
 next agent switch models without rereading every historical note.
 
-Hardware planning note: the active Intel lab has four B70 32 GB cards. That
-lets agents run four independent one-GPU screens or one TP4 service, but it
-does not leave spare VRAM for very large models or simultaneous production
-inference during multi-day optimization. Higher-VRAM Intel hardware would make
-larger future efforts, such as GLM 5.2 and DeepSeek Flash-class models, much
-more realistic to validate under the same quality rules.
+Hardware planning note: historical lanes used four Intel-branded B70 32 GB
+cards. The current validation host has two ASRock B70 32 GB cards, so new work
+is limited to TP2 or two isolated one-card screens. Higher-VRAM Intel hardware
+would make larger future efforts, such as GLM 5.2 and DeepSeek Flash-class
+models, much more realistic to validate under the same quality rules.
 
 ## How To Add A Model Effort
 
@@ -32,6 +31,32 @@ unless a file is clearly misplaced and no one is likely to reference the old
 path.
 
 ## Active / Recent Efforts
+
+### Qwen3.6 27B Q8_0 Target-Only On Two ASRock B70s
+
+Main entries:
+
+- [validated community/fork packet](../community/mndodd-qwen36-27b-llamacpp-sycl/README.md)
+- [status and provenance boundary](../community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md)
+- [pinned lab patch](../community/mndodd-qwen36-27b-llamacpp-sycl/patches/0001-asrock-lab-lowram-dnnless-tp2.patch)
+- [model board](../README.md#qwen36-27b-model-board)
+
+Status: active target-only optimization lane as of 2026-08-12. The current
+quality-cleared endpoint best uses mndodd's pinned SYCL optimization fork plus
+the lab's separately identified low-RAM compatibility and exact-F32 two-card
+all-reduce patch. It reaches `31.338765 tok/s` under the historical helper or
+`31.025377 tok/s` under conventional 99-interval accounting, `+5.836%` over
+the matched accepted upstream-derived control. All 12 cold completions are
+cache-zero and their complete hashes match that control; the fresh logits gate
+is also effectively identical. The one-card fork endpoint reached `17.955800`
+legacy / `17.776242` conventional, `+3.809%` over its matched control. Forced
+SG32 was neutral in the endpoint suite and is not promoted. TP2 graph capture
+aborted or hung, and the built-in TP2 profiler reset both compute engines, so
+both are prohibited. MTP and DFlash measurements are support lanes, not
+substitutes for the target-only objective. Root-barrier elision, BMG-forced
+MMVQ phase ordering, and copy-engine replication were also slower. Further
+work now needs a structural exact collective/kernel change or a newer runtime,
+with graph capture kept off.
 
 ### Laguna S 2.1 INT4 On Four B70s
 
@@ -73,14 +98,14 @@ Main entries:
 - [bring-up repro](../repro/qwen36-27b-autoround-int4-b70/README.md)
 - [experiment lane](../experiments/qwen36-27b-autoround-int4-b70/README.md)
 
-Status: active optimization target as of 2026-07-11. Current overall strict
-fresh-response best is TP2 on two B70s at `93.036242 tok/s`, with exact +
-repeat128 + baseline + 1K quality pass and `cached_tokens=0` throughout.
-Graph-safe FlashAttention enables one full four-row target graph; pair-swapped
-controls support the small headline gain. LocalMaxxing approved it as
-`cmrgue7kl007pmj01yrkcyqmv`.
+Status: closed historical reference as of 2026-07-13. Current overall strict
+fresh-response best is TP2 on two B70s at `95.384868 tok/s` under the
+historical metric convention, with exact + repeat128 + baseline + 1K quality
+pass and `cached_tokens=0` throughout. Graph-safe FlashAttention enables one
+full four-row target graph; the final transaction-fusion row is preserved as
+LocalMaxxing `cmrh35ct50092mj01h7jgydqj`.
 Start from
-`../results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json`.
+`../results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json`.
 TP1 remains a separate active record class: `68.236 tok/s` is the valid
 historical high (`cmr9atqb800msqr01u760xh0t`), while July 11 isolated
 reconfirmation produced a current `65.4-66.7 tok/s` band with full quality on
@@ -199,6 +224,12 @@ were not reached. Read the
 [closure and transfer note](../notes/2026-07-13-qwen27-dflash-sycl-closure.md)
 before using its kernel, speculation, graph, or packing artifacts. Reopen only
 with one of the concrete scope changes listed there, not another flag sweep.
+The separate UD-Q4_K_XL intrinsic-MTP lane's best valid p-min row is `31.480
+tok/s`; its [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md)
+retains the older LocalMaxxing MTP3 reference. The community native-FP8 TP2
+Docker recipe was independently exercised at `30.171 tok/s` median decode on
+a different prompt-length benchmark; keep it non-comparable to fixed-suite
+rows and start from its [STATUS](../community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md).
 
 ### DeepSeek V4 Flash REAP/XPU On B70
 

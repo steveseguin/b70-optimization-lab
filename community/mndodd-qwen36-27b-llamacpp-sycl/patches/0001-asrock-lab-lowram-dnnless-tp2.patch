@@ -1,0 +1,57 @@
+diff --git a/ggml/src/ggml-backend-meta.cpp b/ggml/src/ggml-backend-meta.cpp
+index 7654ea1f..fc32c3f2 100644
+--- a/ggml/src/ggml-backend-meta.cpp
++++ b/ggml/src/ggml-backend-meta.cpp
+@@ -1509 +1509,4 @@ static ggml_backend_buffer_t ggml_backend_meta_buffer_type_alloc_buffer(ggml_bac
+-        /*.mem_size   =*/ 1024*1024*ggml_tensor_overhead(), // FIXME
++        // Three metadata-only contexts are created for this tensor-parallel model.
++        // A fixed 64 MiB each is ample for the model graph while keeping TP usable
++        // on a 16 GiB host.
++        /*.mem_size   =*/ 64*1024*1024,
+diff --git a/ggml/src/ggml-sycl/gemm-wdc.cpp b/ggml/src/ggml-sycl/gemm-wdc.cpp
+index 34cc4b72..fa25ed3f 100644
+--- a/ggml/src/ggml-sycl/gemm-wdc.cpp
++++ b/ggml/src/ggml-sycl/gemm-wdc.cpp
+@@ -20,0 +21,9 @@
++#else
++// Keep the door/traits code buildable when oneDNN is unavailable. The actual
++// WDC kernels are compiled out below; these values are used only by disabled
++// host-side descriptors and diagnostics in that configuration.
++namespace dnnl {
++struct memory {
++    enum class data_type { s8, u4, f4_e2m1, undef };
++};
++}
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 7ade4f2c..569e1032 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -248,0 +249 @@ int g_ggml_sycl_usm_system = 0;
++int g_ggml_sycl_comm_single_kernel = 0;
+@@ -601,0 +603 @@ static void ggml_check_sycl() try {
++        g_ggml_sycl_comm_single_kernel = ggml_sycl_get_env("GGML_SYCL_COMM_SINGLE_KERNEL", 0);
+@@ -898,0 +901 @@ static void ggml_check_sycl() try {
++        fprintf(stderr, "  GGML_SYCL_COMM_SINGLE_KERNEL: %d\n", g_ggml_sycl_comm_single_kernel);
+@@ -8081,0 +8085,22 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
++    // Dual-B70 peer-visible path: one kernel performs the complete N=2 F32
++    // reduction and writes the exact sum to both tensors. This avoids the
++    // synchronous peer-copy/add sequence at every tensor-parallel boundary.
++    // Keep it opt-in: the generic/BF16 paths remain available as controls.
++    if (g_ggml_sycl_comm_single_kernel) {
++        const sycl::event ready0 = q0->ext_oneapi_submit_barrier();
++        const sycl::event ready1 = q1->ext_oneapi_submit_barrier();
++        const sycl::event reduce = q0->submit([=](sycl::handler & h) {
++            h.depends_on({ready0, ready1});
++            h.parallel_for(sycl::range<1>((size_t) nelem), [=](sycl::id<1> i) {
++                const float sum = out0[i] + out1[i];
++                out0[i] = sum;
++                out1[i] = sum;
++            });
++        });
++        q1->submit([=](sycl::handler & h) {
++            h.depends_on(reduce);
++            h.single_task([=]() {});
++        });
++        return true;
++    }
++

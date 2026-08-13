@@ -88,6 +88,36 @@ These are entry points, not the whole repo:
 
 For the full queue and archive, use [docs/model-effort-index.md](docs/model-effort-index.md).
 
+### Qwen3.6 27B Model Board
+
+Last audited **2026-08-12**. These rows share a model family, not a quality,
+runtime, or benchmark class. “Target only” means no speculative draft; MTP and
+DFlash rows retain the declared target as verifier. The first number is the
+repository's historical published 100-event/99-interval rate where that
+harness was used; the parenthesized value is conventional 99-interval
+accounting from the same timestamps. Relative A/B gains are unchanged.
+
+| Target and route | Hardware | Best captured decode result | Evidence boundary / pointer |
+| --- | --- | ---: | --- |
+| AutoRound INT4 W4A16, vLLM MTP3 | 2x B70, TP2 | **95.384868** (`94.431019` conventional) | Historical strict fixed-suite record; target-verified, cache-zero, full quality gates; [packet](results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json) |
+| AutoRound INT4 W4A16, vLLM ReplaySSM MTP3 | 1x B70 | **68.236263** (`67.553901` conventional) | Valid quality-gated historical high; July 11 isolated reconfirmation was `65.4-66.7 tok/s`, so do not treat the high as every-run expectation; [TP1 attribution packet](results/qwen36-27b-autoround-int4-b70/tp1-draftgraph-attribution-reconfirm-20260711.json) |
+| GGUF Q4_0, DFlash5 | 1x B70 | **47.818818** (`47.340630` conventional) | Strict fixed-suite speculative record; unchanged Q4_0 target verifies accepted tokens; [closure](notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
+| GGUF Q4_K_M, intrinsic MTP2 | 1x B70 | **38.112 tok/s** | One fixed greedy 128-token request, visible bytes matched its 25.307 tok/s target-only control; not token-exact and not a fixed-suite median; [community validation](community/dominick253-qwen36-27b-llamacpp-sycl/validation/2026-08-08-reference-lab-validation.md) |
+| GGUF UD-Q4_K_XL, intrinsic MTP7 with `p_min=0.65` | 1x B70 | **31.480049** (`31.165249` conventional) | Best valid p-min support row; cache-zero fixed suite; [Q4 packet](results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
+| GGUF Q4_0, target only | 1x B70 | **25.937011** (`25.677641` conventional) | Strict cold-suite target-only control from the closed DFlash campaign; [timeline evidence](experiments/qwen27-dflash-sycl-b70/notes/2026-07-12-cycle-timeline-tooling.md) |
+| GGUF Q8_0, mndodd fork, target only | 2x ASRock B70, TP2 | **31.338765** (**31.025377** conventional) | Current matched completions A/B; 12/12 complete hashes match the upstream-derived control, cache zero; [community packet](community/mndodd-qwen36-27b-llamacpp-sycl/README.md) |
+| GGUF Q8_0, mndodd fork, target only | 1x ASRock B70 | **17.955800** (**17.776242** conventional) | Matched raw-completions fixed suite; quality-cleared, cache zero; [community validation](community/mndodd-qwen36-27b-llamacpp-sycl/validation/2026-08-12-asrock-b70-validation.md) |
+| GGUF Q8_0, upstream-derived VDR2, target only | 1x ASRock B70 | **17.297038** (`17.124067` conventional) | Matched one-card control for the fork; cache zero; [community validation](community/mndodd-qwen36-27b-llamacpp-sycl/validation/2026-08-12-asrock-b70-validation.md) |
+| GGUF Q8_0, mndodd fork, intrinsic MTP4 | 1x ASRock B70 | **39.618445** (`39.222260` conventional) | Support row pending the packet's explicit-greedy rerun; F16 target/draft KV; [community packet](community/mndodd-qwen36-27b-llamacpp-sycl/README.md) |
+| GGUF Q8_0, mndodd fork, DFlash5 | 1x ASRock B70 | **38.084045** (`37.703205` conventional) | Support row, not target-only; the `65.00 tok/s` observation was one favorable prompt, not the fixed-suite median; [community packet](community/mndodd-qwen36-27b-llamacpp-sycl/README.md) |
+| Native FP8 Safetensors, vLLM | 2x B70, TP2 | **30.171 tok/s** median decode | Different 15-row prompt-length benchmark, so not rank-comparable to the fixed suite; [community validation](community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md) |
+
+The official BF16 target was not downloaded in the current campaign. At
+55.586 GB of weights, two 608 GB/s B70s have a target-only one-weight-read
+roofline of about `21.9 tok/s` before collective and runtime overhead, so a
+plain lossless TP2 goal above 30 tok/s is not physically credible. Q8 target-
+only TP2 is the active optimization lane; speculative rows stay separate.
+
 ## Validity Rules For Speed Claims
 
 Diagnostic runs are allowed and useful, but headline records require the
@@ -114,10 +144,13 @@ fresh-response claims.
 
 ## Hardware Scope
 
-The reference lab has four Intel Arc Pro B70 32 GB cards (`128 GB`
-aggregate VRAM). B70 is the platform on which maintainers can independently
-reproduce and verify submitted patches, but this is an Intel Arc/XPU project,
-not a B70-only repository.
+Historical reference results in this repository were produced on four
+Intel-branded Arc Pro B70 32 GB cards. The current validation host has **two
+ASRock Arc Pro B70 32 GB cards** (`64 GB` aggregate VRAM), full-size ReBAR, and
+PCIe 5.0 x16 links. Hardware/count therefore remains part of every result
+identity. B70 is the platform on which maintainers can independently reproduce
+and verify submitted patches, but this is an Intel Arc/XPU project, not a
+B70-only repository.
 
 Results, fixes, and portability reports from Intel Arc Pro B50, B60, B65, and
 B70 owners are welcome, as are useful observations from other Intel Arc and
@@ -125,10 +158,10 @@ XPU systems. A B70 rerun verifies what a patch does on B70; it does not certify
 a contributor's score on hardware the maintainers do not possess. Hardware and
 verification status therefore stay explicit in every promoted result.
 
-The four-card B70 host is enough for useful vLLM/XPU, llama.cpp/SYCL, driver,
-and model-port work, and it can run four independent one-GPU screens when a
-model fits. Higher-memory Intel devices would broaden model coverage, but that
-is not a prerequisite for contributing useful patches, results, failures, or
+The historical four-card host enabled TP4 and four independent one-GPU
+screens; the current two-card host supports TP2 or two isolated one-card
+screens. Higher-memory Intel devices would broaden model coverage, but that is
+not a prerequisite for contributing useful patches, results, failures, or
 optimization lessons.
 
 Steve Seguin maintains this repo and posts ongoing build notes at

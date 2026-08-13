@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-08**
+Last reviewed: **2026-08-12**
 
 ## Authority And Update Rule
 
@@ -14,6 +14,49 @@ operational change. A runnable recipe or installed service unit does not prove
 that its model is currently loaded.
 
 ## Live Service
+
+### Current two-card host
+
+This host now has **two ASRock Arc Pro B70 32 GiB cards**, not the historical
+four Intel-branded cards described later in this file. Both use `xe`, expose
+full 32 GiB ReBAR, train at PCIe 5.0 x16, and enumerate `normal`. The current
+service is the loopback-only Qwen3.6 27B Q8_0 target-only TP2 endpoint:
+
+- unit: `qwen36-q8-b70.service` (enabled and active; health/smoke verified
+  2026-08-12 22:21 EDT; recheck `is-active` before relying on it later);
+- endpoint: `http://127.0.0.1:18080`;
+- launcher: `/home/steve/bin/run-qwen36-q8-b70.sh`;
+- model: `ggml-org/Qwen3.6-27B-GGUF` Q8_0 at revision
+  `8a7ee08e8b9bfb857107ecc25a5599d2f38b76f8`;
+- runtime: mndodd llama.cpp/SYCL fork `4302fb599` plus the separated low-RAM,
+  DNN-off compile, and exact-F32 TP2 lab patch;
+- contract: target only, F16 KV, graph off, no draft, no prompt cache, one
+  slot, 8192-token context, equal tensor split;
+- safety: `MemoryHigh=8G`, `MemoryMax=10G`, `MemorySwapMax=8G`,
+  `OOMScoreAdjust=900`, and no automatic restart.
+
+Validated fixed-suite performance is `31.338765 tok/s` under the historical
+helper convention and `31.025377 tok/s` under conventional interval counting;
+12/12 output hashes matched the accepted upstream-derived TP2 control. The
+complete result, source links, patch, launchers, and artifact hashes are in
+[`community/mndodd-qwen36-27b-llamacpp-sycl/`](community/mndodd-qwen36-27b-llamacpp-sycl/).
+TP2 command graphs and `GGML_SYCL_PROFILE=1` are prohibited: graph decode
+aborted/hung, and the profiler reset both compute engines. Both cards recovered
+and passed ordinary workloads.
+
+The active research lane is target-only Q8 optimization of this same endpoint.
+Speculative MTP/DFlash measurements are retained as support rows but do not
+satisfy that objective. Do not overlap a model workload with a full BMG AOT
+compile on this 15 GiB host. The final bounded screens rejected root-barrier
+elision (`-0.246%`), forced PVC-style MMVQ phase ordering (`-2.818%`), and
+root-local reduction plus peer-copy replication (`-1.726%`); all source edits
+were reverted. The next credible target-only step is a structural exact
+collective/kernel change or a newer runtime, not another flag sweep.
+
+### Historical four-card state
+
+The remainder of this section predates the two-card ASRock host and is retained
+for recovery/history only; it does not override the current block above.
 
 No process was listening on the public LAN `:8000` endpoint when the Qwen lane
 was closed on 2026-07-13. The last configured role was the temporary Gemma 4

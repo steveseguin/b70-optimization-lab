@@ -137,6 +137,7 @@ must not be recorded the same way.
 | [Qwen3.6 27B/35B INT4 vLLM Docker (B2, TP1)](dominick253-qwen36-int4-b2-1gpu/STATUS.md) | dominick253 | [PR #18](https://github.com/steveseguin/b70-optimization-lab/pull/18) | `community-reported` | No reference-lab model run; contributor artifacts preserved and offline-reviewed |
 | [Qwen3.6 35B offline-FP8 vLLM B2 TP2](dominick253-qwen36-35b-fp8-b2-tp2/STATUS.md) | dominick253 | [PR #18](https://github.com/steveseguin/b70-optimization-lab/pull/18) | `B70-tested` | Yes; contributor reported 432.17 c12 tok/s; exact model/image/runtime replay reached 268.87 hardened and 286.00 contributor-privilege control; Gen4/Gen3 A/B did not explain the gap |
 | [Qwen3.6 27B MTP Q4_K_M llama.cpp SYCL](dominick253-qwen36-27b-llamacpp-sycl/STATUS.md) | dominick253 | [PR #19](https://github.com/steveseguin/b70-optimization-lab/pull/19) | `B70-tested` | Yes; matching-name-and-size official artifact, exact engine commit, one greedy visible-output match, and 2K/32K/120K depth checks passed |
+| [Qwen3.6 27B Q8_0 optimized llama.cpp SYCL fork](mndodd-qwen36-27b-llamacpp-sycl/STATUS.md) | [mndodd](https://github.com/mndodd) | [public fork](https://github.com/mndodd/llama.cpp/tree/intel-sycl-optimization) | `B70-verified` target-only TP1/TP2; speculative rows `B70-tested` | Yes; pinned fork plus separated lab patch, matched upstream-derived A/B, TP2 exact-output and TP1/TP2 logits gates, negative graph/profiler findings, and copy-ready build/launch/benchmark recipes |
 
 ## Field Report Index
 

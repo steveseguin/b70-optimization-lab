@@ -10,34 +10,31 @@ the session-cache experiments, the TurboQuant patch, and the long-context
 research path. It is meant for a fresh human or agent who needs to reproduce or
 review the current work without reading every historical note first.
 
-Hardware scope: the local Intel lab is four Arc Pro B70 32 GB GPUs
-(`128 GB` aggregate VRAM). Results here are useful because they are produced on
-real community-accessible XPU hardware, but the same limit also constrains
-larger model coverage. Additional high-VRAM Intel hardware would let this map
-include larger GLM/DeepSeek-class lanes and more concurrent service/optimization
-comparisons without sacrificing the current endpoint. The lab has spare EPYC
-9015 PCIe 5.0 slot capacity, so the missing piece for broader Intel coverage is
-higher-memory XPU hardware rather than host expansion.
+Current hardware scope: two ASRock Arc Pro B70 32 GB GPUs (`64 GB` aggregate
+VRAM) on the EPYC 9015 host. Historical packets below were produced on the
+former four-card Intel-branded lab and retain that identity. Never infer the
+current GPU count or topology from a historical recipe.
 
 ## What Is Production Today
 
-As of 2026-07-08, the active LAN endpoint on this host is temporarily the
-Gemma 4 26B Q8 coding-agent service:
+As of 2026-08-12, the configured endpoint is Qwen3.6 27B Q8_0 target-only TP2:
 
-- model: `gemma4-26b-a4b-q8`
-- local target model:
-  `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`
-- hardware: 4x Intel Arc Pro B70 32GB
-- engine: llama.cpp/SYCL replicas plus no-auth OpenAI frontdoor
-- endpoint: OpenAI-compatible API on `0.0.0.0:8000`
-- served context: `65536` tokens per active request
-- max active generations: `8`
-- prompt cache: enabled with strict sticky routing available
-- modalities: text
-- auth: none
+- hardware: 2x ASRock Arc Pro B70 32 GB;
+- engine: mndodd llama.cpp/SYCL `4302fb599` plus the documented lab patch;
+- endpoint: OpenAI-compatible API on `127.0.0.1:18080`;
+- served context: 8192 tokens, one active generation;
+- precision: Q8_0 weights, F16 KV, exact-F32 two-card reduction;
+- no speculation, prompt cache, graph capture, or LAN exposure.
 
-Restore or stop it from
-`docs/gemma4-26b-q8-service-runbook.md`.
+The enabled unit is `qwen36-q8-b70.service`; it was active and passed a
+cache-zero target-only smoke at 2026-08-12 22:21 EDT. The launcher is
+`/home/steve/bin/run-qwen36-q8-b70.sh`. Reproduction and validation are in
+[`../community/mndodd-qwen36-27b-llamacpp-sycl/`](../community/mndodd-qwen36-27b-llamacpp-sycl/).
+Always check the unit and `/health`; installed/enabled is not proof that the
+model is loaded.
+
+The Gemma 4 services and the model-slot profile below are historical four-card
+restore recipes, not the currently loaded service.
 
 The usual model-slot production profile to restore after this temporary service
 is the Gemma 4 c8 profile:
