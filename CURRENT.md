@@ -207,6 +207,10 @@ the intended oneDNN path but lost `8.5%` mean throughput in the 64-token smoke
 and changed JSON proposal history. Preserve the separately exact gate/up
 batch=2 path only. See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-attn-kv-batch2-negative.md`.
+The existing K RoPE plus KV-cache-write fusion is exact but also closed after
+an adjacent 64-token C/A/C: `134.809 tok/s` candidate versus `135.142 tok/s`
+pooled controls, with identical hashes, proposals, and acceptance. See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-rope-setrows-fusion-negative.md`.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible
