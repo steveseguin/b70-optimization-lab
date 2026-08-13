@@ -44,6 +44,14 @@ before wider target cost. The honest `>100 tok/s` TP4 objective remains unmet;
 further launch-wrapper micro-optimization cannot supply the remaining gap by
 itself.
 
+A subsequent exact, full-rank DDTree prefix trace closes tree verification as
+a century route on this stack.  Budget 128 improves the impossible
+same-round-cost ceiling to `103.16 tok/s`, but can tolerate only `+3.16%`
+round cost; measured target-only batch 16 versus 128 time is
+`44.48 -> 110.31 ms` (`2.48x`), projecting roughly `50.00 tok/s` before tree
+bookkeeping.  See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-ddtree-full-rank-ceiling.md`.
+
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
 `muse-glimmer-frontdoor.service`) on `:8000`, model `muse-glimmer-30b-bf16`.
