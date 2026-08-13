@@ -1,0 +1,126 @@
+{
+  "schema": "muse_ddtree_prefix_trace_v1",
+  "interpretation": "Exact greedy target-path coverage under the official DDTree best-first construction. Same-round-cost throughput excludes wider target verification cost. Candidate ranks and probability precision are limited by the input trace.",
+  "requests": [
+    {
+      "label": "prose",
+      "target_tokens": 256,
+      "target_sha256_16": "50774bbe3a30ad3b",
+      "proposal_records": 254,
+      "candidate_ranks_present": [
+        15
+      ],
+      "baseline_round_ms": 54.7101334,
+      "strategies": {
+        "linear_p015": {
+          "rounds": 84,
+          "accepted_tokens": 172,
+          "emitted_tokens": 256,
+          "emitted_per_round": 3.0476190476190474,
+          "same_round_cost_tok_s": 55.70483671346792,
+          "max_round_ms_for_100_tok_s": 30.476190476190474,
+          "max_cost_multiplier_for_100": 0.5570483671346792
+        },
+        "ddtree_b15": {
+          "rounds": 66,
+          "accepted_tokens": 190,
+          "emitted_tokens": 256,
+          "emitted_per_round": 3.878787878787879,
+          "same_round_cost_tok_s": 70.8970649080501,
+          "max_round_ms_for_100_tok_s": 38.78787878787879,
+          "max_cost_multiplier_for_100": 0.7089706490805009
+        }
+      }
+    },
+    {
+      "label": "code",
+      "target_tokens": 256,
+      "target_sha256_16": "e1b7095430b68618",
+      "proposal_records": 254,
+      "candidate_ranks_present": [
+        15
+      ],
+      "baseline_round_ms": 54.6912948,
+      "strategies": {
+        "linear_p015": {
+          "rounds": 57,
+          "accepted_tokens": 199,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.491228070175438,
+          "same_round_cost_tok_s": 82.11961495150848,
+          "max_round_ms_for_100_tok_s": 44.91228070175438,
+          "max_cost_multiplier_for_100": 0.8211961495150848
+        },
+        "ddtree_b15": {
+          "rounds": 48,
+          "accepted_tokens": 208,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.333333333333333,
+          "same_round_cost_tok_s": 97.51704275491633,
+          "max_round_ms_for_100_tok_s": 53.333333333333336,
+          "max_cost_multiplier_for_100": 0.9751704275491634
+        }
+      }
+    },
+    {
+      "label": "json",
+      "target_tokens": 256,
+      "target_sha256_16": "f139364ae7c57c6f",
+      "proposal_records": 254,
+      "candidate_ranks_present": [
+        15
+      ],
+      "baseline_round_ms": 53.5098324,
+      "strategies": {
+        "linear_p015": {
+          "rounds": 49,
+          "accepted_tokens": 207,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.224489795918367,
+          "same_round_cost_tok_s": 97.63607100960321,
+          "max_round_ms_for_100_tok_s": 52.244897959183675,
+          "max_cost_multiplier_for_100": 0.9763607100960323
+        },
+        "ddtree_b15": {
+          "rounds": 42,
+          "accepted_tokens": 214,
+          "emitted_tokens": 256,
+          "emitted_per_round": 6.095238095238095,
+          "same_round_cost_tok_s": 113.90874951120377,
+          "max_round_ms_for_100_tok_s": 60.95238095238095,
+          "max_cost_multiplier_for_100": 1.1390874951120376
+        }
+      }
+    }
+  ],
+  "summary": {
+    "linear_p015": {
+      "mean_same_round_cost_tok_s": 78.48684089152654,
+      "mean_emitted_per_round": 4.254445637904284,
+      "per_class_rounds": {
+        "prose": 84,
+        "code": 57,
+        "json": 49
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 30.476190476190474,
+        "code": 44.91228070175438,
+        "json": 52.244897959183675
+      }
+    },
+    "ddtree_b15": {
+      "mean_same_round_cost_tok_s": 94.10761905805673,
+      "mean_emitted_per_round": 5.102453102453102,
+      "per_class_rounds": {
+        "prose": 66,
+        "code": 48,
+        "json": 42
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 38.78787878787879,
+        "code": 53.333333333333336,
+        "json": 60.95238095238095
+      }
+    }
+  }
+}

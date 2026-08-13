@@ -71,7 +71,16 @@ before wider target cost. The honest `>100 tok/s` TP4 objective remains unmet;
 further launch-wrapper micro-optimization cannot supply the remaining gap by
 itself.
 
-A subsequent exact, full-rank DDTree prefix trace closes tree verification as
+A device-side distributed top-15 export is now retained at source commit
+`d5e9a2734`. It preserves the canonical 64-token hashes and supplies the
+candidate IDs/probabilities needed by same-width budget-15 DDTree without a
+full-vocabulary host copy. The exact device-top15 trace needs `66 / 48 / 42`
+rounds and projects only **`94.108 tok/s`** at zero tree-bookkeeping cost; it
+still needs **`3.194 ms/round`** of independent exact savings to reach 100.
+This is a prerequisite, not the century result. See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-dflash-distributed-topk-prerequisite.md`.
+
+A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible
 same-round-cost ceiling to `103.16 tok/s`, but can tolerate only `+3.16%`
 round cost; measured target-only batch 16 versus 128 time is
@@ -79,9 +88,10 @@ round cost; measured target-only batch 16 versus 128 time is
 bookkeeping.  See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-ddtree-full-rank-ceiling.md`.
 The only retained tree option is DFlash budget 15 at the unchanged 16-row
-target width; its optimistic ceiling is `82.68 tok/s` and it remains gated on
-first finding at least `10.73 ms/round` of independent verifier-kernel savings.
-The pretrained DSpark equivalent is weaker (`75.24 tok/s`).
+target width. Its now-measured device-top15 ceiling and remaining gap are given
+above; full server/KV integration remains deferred until independent kernel
+savings make the arithmetic credible. The pretrained DSpark equivalent is
+weaker (`75.24 tok/s`).
 The B70 Level Zero lossless memory-compression allocation hint is exact but
 round-time neutral (`62.150 / 62.127 / 62.064 ms` candidate/control/candidate),
 and the cached-allocation hint is likewise neutral (`62.178 / 62.389 / 62.147
