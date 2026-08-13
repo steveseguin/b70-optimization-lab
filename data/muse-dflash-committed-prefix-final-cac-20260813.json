@@ -1,0 +1,57 @@
+{
+  "date": "2026-08-13",
+  "lane": "dflash-committed-prefix-final-cac-20260813",
+  "objective": "honest exact TP4 decode throughput above 100 tok/s",
+  "status": "exact supporting win; objective unmet",
+  "source_commit": "c9927d3e3",
+  "candidate_flag": "LLAMA_DFLASH_PROCESS_COMMITTED_ONLY=1",
+  "identity": {
+    "target": "Muse Glimmer 30B BF16",
+    "target_gpus": 4,
+    "tensor_parallel": 4,
+    "assistant": "Muse Glimmer BF16 DFlash",
+    "draft_width": 15,
+    "p_min": 0.0,
+    "sampling": "greedy device-side batched distributed argmax",
+    "parallel": 1,
+    "prompt_cache": false,
+    "generated_tokens_per_prompt": 256
+  },
+  "arms": [
+    {
+      "label": "committed-prefix-control-before",
+      "rates_tok_s": {"prose": 54.722, "code": 79.488, "json": 96.630},
+      "mean_tok_s": 76.9466666667
+    },
+    {
+      "label": "committed-prefix-candidate",
+      "rates_tok_s": {"prose": 55.981, "code": 81.174, "json": 98.897},
+      "mean_tok_s": 78.684,
+      "rounds": {"prose": 84, "code": 59, "json": 49},
+      "round_ms": {"prose": 54.4402395030, "code": 53.4528673079, "json": 52.8275862354}
+    },
+    {
+      "label": "committed-prefix-control-after",
+      "rates_tok_s": {"prose": 54.985, "code": 79.597, "json": 97.177},
+      "mean_tok_s": 77.253
+    }
+  ],
+  "pooled_control_mean_tok_s": 77.0998333333,
+  "candidate_uplift_pct": 2.0546953193,
+  "pooled_control_round_ms": {"prose": 55.5595643387, "code": 54.5492672195, "json": 53.9147854732},
+  "round_ms_saved": {"prose": 1.1193248357, "code": 1.0963999117, "json": 1.0871992378},
+  "canonical_hashes": {
+    "prose": "914f754747d0edaa",
+    "code": "cf2b2c4fd9e36fe5",
+    "json": "4f813a9706abc163"
+  },
+  "drafted_accepted_all_arms": {
+    "prose": [1199, 172],
+    "code": [811, 197],
+    "json": [684, 207]
+  },
+  "raw_jsonl": "/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/dflash-committed-prefix-final-cac-20260813.jsonl",
+  "raw_jsonl_sha256": "563c6e4557bf8b6c93e0d8cfb7e39ed5b6d1b50ba65022f0307c63c34b5a939e",
+  "correctness": "PASS",
+  "production_restore_health": "data/muse-health-20260813-dflash-committed-prefix-restore.json"
+}

@@ -1,0 +1,73 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 39110bc9b..de3b108ee 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -59,6 +59,14 @@ static bool server_spec_proposal_trace_enabled() {
+     return enabled;
+ }
+ 
++static bool server_dflash_process_committed_only_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("LLAMA_DFLASH_PROCESS_COMMITTED_ONLY");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return enabled;
++}
++
+ // state diagram: https://github.com/ggml-org/llama.cpp/pull/9283
+ enum slot_state {
+     SLOT_STATE_IDLE,
+@@ -3729,7 +3737,26 @@ private:
+         // TODO: avoid restoring the draft context and re-evaluating the drafted tokens when not needed [TAG_SPEC_AVOID_DRAFT_REEVAL]
+         //       for now, always re-evaluate for simplicity
+         //       ref: https://github.com/ggml-org/llama.cpp/pull/22728#issuecomment-4400925384
+-        if (!common_speculative_process(spec.get(), batch_view)) {
++        bool delay_spec_process = false;
++        if (server_dflash_process_committed_only_enabled() && spec) {
++            int n_matching = 0;
++            for (const auto & slot : slots) {
++                if (slot.state != SLOT_STATE_GENERATING || slot.spec_draft.empty() || slot.spec_i_batch.empty()) {
++                    continue;
++                }
++                if (slot.spec_i_batch.front() == off &&
++                        slot.spec_i_batch.size() == (size_t) batch_view.n_tokens &&
++                        slot.spec_i_batch.back() == off + batch_view.n_tokens - 1) {
++                    n_matching++;
++                }
++            }
++            // The delayed path currently supports one isolated linear DFlash
++            // sequence. Prompt/prefill and mixed-slot batches retain the
++            // original eager processing behavior.
++            delay_spec_process = n_matching == 1;
++        }
++
++        if (!delay_spec_process && !common_speculative_process(spec.get(), batch_view)) {
+             SRV_ERR("%s", "failed to process speculative batch\n");
+ 
+             // TODO: handle error
+@@ -3900,6 +3927,25 @@ private:
+ 
+                 GGML_ASSERT(slot.spec_i_batch.size() == n_draft + 1);
+                 auto accepted = common_sampler_sample_and_accept_n(slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);
++
++                if (server_dflash_process_committed_only_enabled() &&
++                        slot.spec_i_batch.front() == off &&
++                        slot.spec_i_batch.size() == (size_t) n_batch_tokens &&
++                        slot.spec_i_batch.back() == off + n_batch_tokens - 1) {
++                    GGML_ASSERT(!accepted.empty());
++                    GGML_ASSERT(accepted.size() <= slot.spec_i_batch.size());
++                    llama_batch committed_view = batch.get_view(
++                        slot.spec_i_batch.front(), (int32_t) accepted.size());
++                    if (!common_speculative_process(spec.get(), committed_view)) {
++                        throw std::runtime_error("failed to process committed speculative prefix");
++                    }
++                    static bool logged = false;
++                    if (!logged) {
++                        SRV_INF("DFlash committed-prefix processing enabled: verified=%zu committed=%zu\n",
++                                slot.spec_i_batch.size(), accepted.size());
++                        logged = true;
++                    }
++                }
+                 slot.spec_i_batch.clear();
+ 
+                 GGML_ASSERT(accepted.size() >= 1);

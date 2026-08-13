@@ -29,8 +29,13 @@ lock, including benchmark-child FD inheritance.
 
 The current exact TP4 kernel-campaign best is the BF16 DFlash stack with
 batched device-side distributed greedy sampling for both DFlash proposal rows
-and target verification rows, plus local-winner maxloc, at **`77.824 tok/s`**
-arithmetic mean across the fixed prose/code/JSON suite. Target offload measured
+and target verification rows, local-winner maxloc, and committed-prefix-only
+DFlash feature processing, at **`78.684 tok/s`** arithmetic mean across the
+fixed prose/code/JSON suite. Committed-prefix processing measured `+2.055%`
+against pooled adjacent `77.0998 tok/s` controls with identical proposal
+counts, acceptance, and canonical hashes. See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-dflash-committed-prefix.md`.
+The preceding target offload step measured
 `+6.449%` against pooled adjacent `73.109 tok/s` controls and preserved all
 canonical hashes. It also exposed and fixed two retained meta-graph arena
 high-water lifetime bugs. See
@@ -78,12 +83,13 @@ round-time neutral (`62.150 / 62.127 / 62.064 ms` candidate/control/candidate),
 and the cached-allocation hint is likewise neutral (`62.178 / 62.389 / 62.147
 ms` cached/control/cached+compressed).  Both remain default-off.  See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-level-zero-memory-compression-negative.md`.
-Target-side TP backend sampling was also screened: the SYCL four-rank global
-ARGMAX fast path was reached, but the first request still terminated after the
-collective and produced no benchmark row.  The integration remains default-off
-and is closed absent evidence that the raw-logit/CPU-sampling tail is worth
-several milliseconds per round.  See
+The first target-side TP backend-sampling screen reached the SYCL four-rank
+global ARGMAX but terminated before a benchmark row. It is retained as the
+historical negative in
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-tp-backend-sampling-negative.md`.
+The later batched-row retry identified and fixed the two meta-graph lifetime
+bugs and promoted the exact target-sampling win described above; do not treat
+the earlier failure as the current lane decision.
 A fixed-shape native BF16 XMX/DPAS falsification is also closed: despite using
 an already-packed duplicate weight, it was `32.2%` slower than oneDNN and
 differed in `73,048 / 79,872` F32 elements.  It was not integrated.  See
