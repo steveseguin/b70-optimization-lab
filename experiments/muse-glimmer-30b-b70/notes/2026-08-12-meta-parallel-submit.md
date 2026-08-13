@@ -273,3 +273,29 @@ is the familiar end-budget variation. Raw JSONL SHA-256:
 `10ba021f33ba8a09b976510b7cb24f35548fdfe28d811b9701314b7d122cf21b`.
 Production restoration passed in
 `data/muse-health-20260812-persistent-submit-restore.json`.
+
+## Update: allreduce/postnorm fusion ceiling
+
+The Muse target has exactly 104 F32 TP projection boundaries per verifier pass:
+52 attention output projections and 52 FFN down projections. Of these, 103
+continue directly through the already-fused SYCL RMSNorm+post-norm scale kernel
+and a residual ADD; the final attention boundary has a gather variant.
+
+An exact prototype would have to retain the current recursive-doubling F32
+`out += tmp` ordering, reuse the existing RMS reduction tree, materialize the
+scaled F32 intermediate before residual addition, and strictly guard graph
+uses/aliases. It could remove only about 104 lightweight launches per pass.
+The realistic ceiling is `0.5-1 ms/pass` (roughly 1-2%, around 69 tok/s); even
+an intentionally generous 2 ms estimate cannot materially change the campaign.
+Deprioritize this micro-fusion until a true device timeline identifies a larger
+kernel island.
+
+## Update: external profiler tooling
+
+Intel PTI 1.0 was installed as a small tracing runtime. Intel VTune 2026.4 was
+temporarily installed to obtain a nonintrusive GPU kernel timeline, but its
+self-check rejected this unreleased host CPU/GPU microarchitecture for both
+GPU characterization and source-analysis collection. VTune and its temporary
+kernel modules were removed immediately and the recoverable APT archive was
+cleaned. Production remained healthy. The campaign therefore advances an
+in-process, default-off SYCL profiling-event timeline instead.
