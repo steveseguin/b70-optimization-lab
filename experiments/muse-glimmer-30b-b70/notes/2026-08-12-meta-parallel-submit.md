@@ -84,3 +84,34 @@ The retained exact stack is approximately `67.9 tok/s`, still not the
 `>100 tok/s` objective. Continue kernel work with a guarded batch=2 oneDNN
 gate/up projection that removes one logical FFN projection submission per
 layer, then measure it adjacent to this retained parallel-submit stack.
+
+## Update: batch=2 gate/up projection
+
+Source commit `f2b7f2324` adds a default-off
+`GGML_SYCL_DNNL_FFN_BATCH2=1` path. The meta backend keeps an exact adjacent
+same-layer gate/up pair in one per-device subgraph, SYCL converts the shared
+activation once and issues one strided oneDNN batch=2 GEMM, then meta reduces
+the two outputs separately before their consumers.
+
+The adjacent exact A/B measured:
+
+| Arm | Prose | Code | JSON | Mean t/s |
+| --- | ---: | ---: | ---: | ---: |
+| parallel-submit control | 48.249 | 70.081 | 85.027 | 67.786 |
+| parallel + FFN batch2 | 48.056 | 70.486 | 85.513 | 68.018 |
+
+This is `+0.34%`, too small for a performance promotion without reversed-order
+confirmation. All canonical hashes and all proposal counts matched exactly.
+A separate verbosity-4 proof run emitted the actual execution marker for
+`blk.0.ffn_gate.weight`: `m=4992 n=2 k=6656`, weight batch stride `66453504`,
+output stride `20447232`. Its exact mean was `68.260 tok/s`.
+
+Raw evidence:
+
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/meta-parallel-ffn-batch2-ab-20260812.jsonl`,
+  SHA-256 `4fb1b632eadc4b71ab70c770fb1776d9a411967cb88b16a20f9017aac3b963ee`;
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/ffn-batch2-hit-proof-20260812.jsonl`,
+  SHA-256 `f45cc8965ff323089a88ba37f783a6efb32f57c0876fed50da3bda13bfcc28af`.
+
+Production was restored and the complete model/cache-zero code/vision gate
+passed in `data/muse-health-20260812-ffn-batch2-restore.json`.

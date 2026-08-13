@@ -34,8 +34,10 @@ opposite order measured a pooled `+3.89%`, with canonical hashes and within-pair
 proposal counts exact. Evidence:
 `experiments/muse-glimmer-30b-b70/notes/2026-08-12-meta-parallel-submit.md`.
 The production TP2 fleet does not enable this experimental flag. The next
-kernel target is a guarded batch=2 oneDNN gate/up projection; the honest
-`>100 tok/s` TP4 objective remains unmet.
+kernel screen, a guarded batch=2 oneDNN gate/up projection, executed and was
+exact but measured only `+0.34%`, too small to promote without confirmation.
+The honest `>100 tok/s` TP4 objective remains unmet; further launch-wrapper
+micro-optimization cannot supply the remaining gap by itself.
 
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
