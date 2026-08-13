@@ -22,7 +22,10 @@ CANDIDATE_RE = re.compile(
     r"draft candidate\s+(?P<rank>\d+),\s+pos\s+(?P<pos>\d+):\s+"
     r"(?P<token>\d+)\s+\(\s*(?P<prob>[0-9.eE+-]+)\)"
 )
-ACCEPT_RE = re.compile(r"accepted\s+(?P<accepted>\d+)\s*/\s*(?P<drafted>\d+)\s+draft tokens")
+ACCEPT_RE = re.compile(
+    r"accepted\s+(?P<accepted>\d+)\s*/\s*(?P<drafted>\d+)\s+draft tokens"
+    r"(?:\s+\(restore checkpoint\))?$"
+)
 SAMPLED_RE = re.compile(r"add accepted tokens:\s+sampled=(?P<token>\d+)")
 REQUEST_END_RE = re.compile(r"stop processing:")
 
@@ -158,16 +161,21 @@ def parse_trace(lines):
         if match and pending is not None:
             target = int(match.group("token"))
             pending["target_token"] = target
-            pending["primary_draft"] = [
-                candidates[pos][0]["token"]
-                for pos in sorted(candidates)
-                if candidates[pos]
-            ]
-            if len(pending["primary_draft"]) != pending["drafted"]:
+            candidate_positions = [pos for pos in sorted(candidates) if candidates[pos]]
+            if len(candidate_positions) < pending["drafted"]:
                 raise ValueError(
-                    f"line {line_no}: logged {len(pending['primary_draft'])} primary candidates "
+                    f"line {line_no}: logged {len(candidate_positions)} primary candidates "
                     f"for {pending['drafted']} drafted tokens"
                 )
+            # DFlash logs candidates before applying p_min and before the
+            # speculative layer truncates to the request's remaining token
+            # budget. Either path can leave trailing logged positions that
+            # were not included in the target verification batch.
+            pending["excluded_candidate_positions"] = candidate_positions[pending["drafted"]:]
+            candidate_positions = candidate_positions[:pending["drafted"]]
+            pending["primary_draft"] = [
+                candidates[pos][0]["token"] for pos in candidate_positions
+            ]
             if pending["accepted"] < pending["drafted"]:
                 mismatch_pos = pending["accepted"]
                 pending["mismatch_pos"] = mismatch_pos

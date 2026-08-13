@@ -1,0 +1,9736 @@
+{
+  "schema": "muse_dflash_topk_first_mismatch_v1",
+  "interpretation": "Coverage says whether the exact target mismatch token appeared in the logged DFlash top-k. It does not estimate acceptance after taking that branch.",
+  "overall": {
+    "rounds": 188,
+    "full_accept_rounds": 11,
+    "mismatch_rounds": 177,
+    "target_rank_histogram": {
+      "2": 65,
+      "3": 34
+    },
+    "top2_coverage": {
+      "count": 65,
+      "fraction_of_mismatches": 0.3672316384180791
+    },
+    "top3_coverage": {
+      "count": 99,
+      "fraction_of_mismatches": 0.559322033898305
+    },
+    "missing_mismatch_position": 78,
+    "inconsistent_target_at_rank1": 0,
+    "oracle_top1_suffix_extension_histogram": {
+      "0": 58,
+      "1": 20,
+      "2": 9,
+      "3": 4,
+      "5": 2,
+      "6": 4,
+      "7": 1,
+      "11": 1
+    },
+    "oracle_branch_projections": {
+      "top2_suffix0": {
+        "covered_mismatch_rounds": 65,
+        "baseline_emitted_tokens": 764,
+        "oracle_extra_emitted_tokens": 65,
+        "oracle_emitted_token_ratio": 1.0850785340314135
+      },
+      "top2_suffix1": {
+        "covered_mismatch_rounds": 65,
+        "baseline_emitted_tokens": 764,
+        "oracle_extra_emitted_tokens": 96,
+        "oracle_emitted_token_ratio": 1.12565445026178
+      },
+      "top2_suffix2": {
+        "covered_mismatch_rounds": 65,
+        "baseline_emitted_tokens": 764,
+        "oracle_extra_emitted_tokens": 114,
+        "oracle_emitted_token_ratio": 1.149214659685864
+      },
+      "top2_suffix3": {
+        "covered_mismatch_rounds": 65,
+        "baseline_emitted_tokens": 764,
+        "oracle_extra_emitted_tokens": 123,
+        "oracle_emitted_token_ratio": 1.1609947643979057
+      },
+      "top2_suffix4": {
+        "covered_mismatch_rounds": 65,
+        "baseline_emitted_tokens": 764,
+        "oracle_extra_emitted_tokens": 129,
+        "oracle_emitted_token_ratio": 1.168848167539267
+      },
+      "top3_suffix0": {
+        "covered_mismatch_rounds": 99,
+        "baseline_emitted_tokens": 764,
+        "oracle_extra_emitted_tokens": 99,
+        "oracle_emitted_token_ratio": 1.1295811518324608
+      },
+      "top3_suffix1": {
+        "covered_mismatch_rounds": 99,
+        "baseline_emitted_tokens": 764,
+        "oracle_extra_emitted_tokens": 140,
+        "oracle_emitted_token_ratio": 1.1832460732984293
+      },
+      "top3_suffix2": {
+        "covered_mismatch_rounds": 99,
+        "baseline_emitted_tokens": 764,
+        "oracle_extra_emitted_tokens": 161,
+        "oracle_emitted_token_ratio": 1.2107329842931938
+      },
+      "top3_suffix3": {
+        "covered_mismatch_rounds": 99,
+        "baseline_emitted_tokens": 764,
+        "oracle_extra_emitted_tokens": 173,
+        "oracle_emitted_token_ratio": 1.2264397905759161
+      },
+      "top3_suffix4": {
+        "covered_mismatch_rounds": 99,
+        "baseline_emitted_tokens": 764,
+        "oracle_extra_emitted_tokens": 181,
+        "oracle_emitted_token_ratio": 1.236910994764398
+      }
+    }
+  },
+  "requests": [
+    {
+      "request_index": 0,
+      "reconstructed_token_count": 255,
+      "rounds": 83,
+      "full_accept_rounds": 3,
+      "mismatch_rounds": 80,
+      "target_rank_histogram": {
+        "2": 23,
+        "3": 12
+      },
+      "top2_coverage": {
+        "count": 23,
+        "fraction_of_mismatches": 0.2875
+      },
+      "top3_coverage": {
+        "count": 35,
+        "fraction_of_mismatches": 0.4375
+      },
+      "missing_mismatch_position": 45,
+      "inconsistent_target_at_rank1": 0,
+      "oracle_top1_suffix_extension_histogram": {
+        "0": 24,
+        "1": 4,
+        "2": 6,
+        "7": 1
+      },
+      "oracle_branch_projections": {
+        "top2_suffix0": {
+          "covered_mismatch_rounds": 23,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 23,
+          "oracle_emitted_token_ratio": 1.0901960784313725
+        },
+        "top2_suffix1": {
+          "covered_mismatch_rounds": 23,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 33,
+          "oracle_emitted_token_ratio": 1.1294117647058823
+        },
+        "top2_suffix2": {
+          "covered_mismatch_rounds": 23,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 40,
+          "oracle_emitted_token_ratio": 1.1568627450980393
+        },
+        "top2_suffix3": {
+          "covered_mismatch_rounds": 23,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 41,
+          "oracle_emitted_token_ratio": 1.1607843137254903
+        },
+        "top2_suffix4": {
+          "covered_mismatch_rounds": 23,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 42,
+          "oracle_emitted_token_ratio": 1.1647058823529413
+        },
+        "top3_suffix0": {
+          "covered_mismatch_rounds": 35,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 35,
+          "oracle_emitted_token_ratio": 1.1372549019607843
+        },
+        "top3_suffix1": {
+          "covered_mismatch_rounds": 35,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 46,
+          "oracle_emitted_token_ratio": 1.1803921568627451
+        },
+        "top3_suffix2": {
+          "covered_mismatch_rounds": 35,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 53,
+          "oracle_emitted_token_ratio": 1.2078431372549019
+        },
+        "top3_suffix3": {
+          "covered_mismatch_rounds": 35,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 54,
+          "oracle_emitted_token_ratio": 1.2117647058823529
+        },
+        "top3_suffix4": {
+          "covered_mismatch_rounds": 35,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 55,
+          "oracle_emitted_token_ratio": 1.2156862745098038
+        }
+      }
+    },
+    {
+      "request_index": 1,
+      "reconstructed_token_count": 255,
+      "rounds": 58,
+      "full_accept_rounds": 5,
+      "mismatch_rounds": 53,
+      "target_rank_histogram": {
+        "2": 27,
+        "3": 15
+      },
+      "top2_coverage": {
+        "count": 27,
+        "fraction_of_mismatches": 0.5094339622641509
+      },
+      "top3_coverage": {
+        "count": 42,
+        "fraction_of_mismatches": 0.7924528301886793
+      },
+      "missing_mismatch_position": 11,
+      "inconsistent_target_at_rank1": 0,
+      "oracle_top1_suffix_extension_histogram": {
+        "0": 24,
+        "1": 10,
+        "2": 3,
+        "3": 4,
+        "11": 1
+      },
+      "oracle_branch_projections": {
+        "top2_suffix0": {
+          "covered_mismatch_rounds": 27,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 27,
+          "oracle_emitted_token_ratio": 1.1058823529411765
+        },
+        "top2_suffix1": {
+          "covered_mismatch_rounds": 27,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 39,
+          "oracle_emitted_token_ratio": 1.1529411764705881
+        },
+        "top2_suffix2": {
+          "covered_mismatch_rounds": 27,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 46,
+          "oracle_emitted_token_ratio": 1.1803921568627451
+        },
+        "top2_suffix3": {
+          "covered_mismatch_rounds": 27,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 50,
+          "oracle_emitted_token_ratio": 1.196078431372549
+        },
+        "top2_suffix4": {
+          "covered_mismatch_rounds": 27,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 51,
+          "oracle_emitted_token_ratio": 1.2
+        },
+        "top3_suffix0": {
+          "covered_mismatch_rounds": 42,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 42,
+          "oracle_emitted_token_ratio": 1.1647058823529413
+        },
+        "top3_suffix1": {
+          "covered_mismatch_rounds": 42,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 60,
+          "oracle_emitted_token_ratio": 1.2352941176470589
+        },
+        "top3_suffix2": {
+          "covered_mismatch_rounds": 42,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 68,
+          "oracle_emitted_token_ratio": 1.2666666666666666
+        },
+        "top3_suffix3": {
+          "covered_mismatch_rounds": 42,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 73,
+          "oracle_emitted_token_ratio": 1.2862745098039217
+        },
+        "top3_suffix4": {
+          "covered_mismatch_rounds": 42,
+          "baseline_emitted_tokens": 255,
+          "oracle_extra_emitted_tokens": 74,
+          "oracle_emitted_token_ratio": 1.2901960784313726
+        }
+      }
+    },
+    {
+      "request_index": 2,
+      "reconstructed_token_count": 254,
+      "rounds": 47,
+      "full_accept_rounds": 3,
+      "mismatch_rounds": 44,
+      "target_rank_histogram": {
+        "2": 15,
+        "3": 7
+      },
+      "top2_coverage": {
+        "count": 15,
+        "fraction_of_mismatches": 0.3409090909090909
+      },
+      "top3_coverage": {
+        "count": 22,
+        "fraction_of_mismatches": 0.5
+      },
+      "missing_mismatch_position": 22,
+      "inconsistent_target_at_rank1": 0,
+      "oracle_top1_suffix_extension_histogram": {
+        "0": 10,
+        "1": 6,
+        "5": 2,
+        "6": 4
+      },
+      "oracle_branch_projections": {
+        "top2_suffix0": {
+          "covered_mismatch_rounds": 15,
+          "baseline_emitted_tokens": 254,
+          "oracle_extra_emitted_tokens": 15,
+          "oracle_emitted_token_ratio": 1.0590551181102361
+        },
+        "top2_suffix1": {
+          "covered_mismatch_rounds": 15,
+          "baseline_emitted_tokens": 254,
+          "oracle_extra_emitted_tokens": 24,
+          "oracle_emitted_token_ratio": 1.094488188976378
+        },
+        "top2_suffix2": {
+          "covered_mismatch_rounds": 15,
+          "baseline_emitted_tokens": 254,
+          "oracle_extra_emitted_tokens": 28,
+          "oracle_emitted_token_ratio": 1.110236220472441
+        },
+        "top2_suffix3": {
+          "covered_mismatch_rounds": 15,
+          "baseline_emitted_tokens": 254,
+          "oracle_extra_emitted_tokens": 32,
+          "oracle_emitted_token_ratio": 1.125984251968504
+        },
+        "top2_suffix4": {
+          "covered_mismatch_rounds": 15,
+          "baseline_emitted_tokens": 254,
+          "oracle_extra_emitted_tokens": 36,
+          "oracle_emitted_token_ratio": 1.141732283464567
+        },
+        "top3_suffix0": {
+          "covered_mismatch_rounds": 22,
+          "baseline_emitted_tokens": 254,
+          "oracle_extra_emitted_tokens": 22,
+          "oracle_emitted_token_ratio": 1.0866141732283465
+        },
+        "top3_suffix1": {
+          "covered_mismatch_rounds": 22,
+          "baseline_emitted_tokens": 254,
+          "oracle_extra_emitted_tokens": 34,
+          "oracle_emitted_token_ratio": 1.1338582677165354
+        },
+        "top3_suffix2": {
+          "covered_mismatch_rounds": 22,
+          "baseline_emitted_tokens": 254,
+          "oracle_extra_emitted_tokens": 40,
+          "oracle_emitted_token_ratio": 1.1574803149606299
+        },
+        "top3_suffix3": {
+          "covered_mismatch_rounds": 22,
+          "baseline_emitted_tokens": 254,
+          "oracle_extra_emitted_tokens": 46,
+          "oracle_emitted_token_ratio": 1.1811023622047243
+        },
+        "top3_suffix4": {
+          "covered_mismatch_rounds": 22,
+          "baseline_emitted_tokens": 254,
+          "oracle_extra_emitted_tokens": 52,
+          "oracle_emitted_token_ratio": 1.204724409448819
+        }
+      }
+    }
+  ],
+  "round_records": [
+    {
+      "accepted": 15,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3401,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        19669,
+        200023,
+        10064,
+        262,
+        15044,
+        17876,
+        20966,
+        323,
+        1659,
+        262,
+        410,
+        61933,
+        3352,
+        89829,
+        7260
+      ],
+      "stream_offset": 0,
+      "emitted_tokens": [
+        19669,
+        200023,
+        10064,
+        262,
+        15044,
+        17876,
+        20966,
+        323,
+        1659,
+        262,
+        410,
+        61933,
+        3352,
+        89829,
+        7260,
+        3401
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 15,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 2991,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        30076,
+        24,
+        32071,
+        4550,
+        5154,
+        24,
+        16505,
+        604,
+        24,
+        3537,
+        24,
+        341,
+        12462,
+        9508,
+        1574
+      ],
+      "stream_offset": 16,
+      "emitted_tokens": [
+        30076,
+        24,
+        32071,
+        4550,
+        5154,
+        24,
+        16505,
+        604,
+        24,
+        3537,
+        24,
+        341,
+        12462,
+        9508,
+        1574,
+        2991
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 15044,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1657,
+        328,
+        5210,
+        17876,
+        26,
+        26,
+        26,
+        97147,
+        5154,
+        5154,
+        24,
+        24,
+        24,
+        24,
+        24
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 17876,
+          "prob": 0.339
+        },
+        {
+          "rank": 2,
+          "token": 20966,
+          "prob": 0.299
+        },
+        {
+          "rank": 3,
+          "token": 15044,
+          "prob": 0.269
+        }
+      ],
+      "stream_offset": 32,
+      "emitted_tokens": [
+        1657,
+        328,
+        5210,
+        15044
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 5,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 410,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        17876,
+        20966,
+        26,
+        97147,
+        6864,
+        5154,
+        24,
+        16505,
+        24,
+        24,
+        16505,
+        24,
+        24,
+        24,
+        24
+      ],
+      "mismatch_pos": 5,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 5154,
+          "prob": 0.688
+        },
+        {
+          "rank": 2,
+          "token": 4550,
+          "prob": 0.109
+        },
+        {
+          "rank": 3,
+          "token": 26,
+          "prob": 0.051
+        }
+      ],
+      "stream_offset": 36,
+      "emitted_tokens": [
+        17876,
+        20966,
+        26,
+        97147,
+        6864,
+        410
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 6227,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        61933,
+        3352,
+        24,
+        4550,
+        5154,
+        24,
+        16505,
+        604,
+        24,
+        12462,
+        24,
+        24,
+        16505,
+        24,
+        24
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 3352,
+          "prob": 0.365
+        },
+        {
+          "rank": 2,
+          "token": 5154,
+          "prob": 0.297
+        },
+        {
+          "rank": 3,
+          "token": 5071,
+          "prob": 0.143
+        }
+      ],
+      "stream_offset": 42,
+      "emitted_tokens": [
+        61933,
+        6227
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4550,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24,
+        16505,
+        5154,
+        24,
+        16505,
+        24,
+        24,
+        24,
+        24,
+        12462,
+        24,
+        24,
+        24,
+        24,
+        24
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 16505,
+          "prob": 0.48
+        },
+        {
+          "rank": 2,
+          "token": 4550,
+          "prob": 0.435
+        },
+        {
+          "rank": 3,
+          "token": 11887,
+          "prob": 0.02
+        }
+      ],
+      "stream_offset": 44,
+      "emitted_tokens": [
+        24,
+        4550
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 517,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        5154,
+        24,
+        16505,
+        604,
+        24,
+        3537,
+        24,
+        12462,
+        9508,
+        24,
+        25476,
+        30076,
+        30076,
+        26,
+        26
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 24,
+          "prob": 0.981
+        },
+        {
+          "rank": 2,
+          "token": 517,
+          "prob": 0.006
+        },
+        {
+          "rank": 3,
+          "token": 38,
+          "prob": 0.005
+        }
+      ],
+      "stream_offset": 46,
+      "emitted_tokens": [
+        5154,
+        517
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 56519,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        13005,
+        24,
+        13005,
+        24,
+        16505,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24
+      ],
+      "mismatch_pos": 2,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 13005,
+          "prob": 0.247
+        },
+        {
+          "rank": 2,
+          "token": 5414,
+          "prob": 0.211
+        },
+        {
+          "rank": 3,
+          "token": 24,
+          "prob": 0.177
+        }
+      ],
+      "stream_offset": 48,
+      "emitted_tokens": [
+        13005,
+        24,
+        56519
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 16505,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24,
+        5414,
+        56519,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 5414,
+          "prob": 0.415
+        },
+        {
+          "rank": 2,
+          "token": 3048,
+          "prob": 0.265
+        },
+        {
+          "rank": 3,
+          "token": 16505,
+          "prob": 0.147
+        }
+      ],
+      "stream_offset": 51,
+      "emitted_tokens": [
+        24,
+        16505
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3537,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        604,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24
+      ],
+      "mismatch_pos": 2,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 24,
+          "prob": 0.269
+        },
+        {
+          "rank": 2,
+          "token": 6541,
+          "prob": 0.155
+        },
+        {
+          "rank": 3,
+          "token": 26,
+          "prob": 0.098
+        }
+      ],
+      "stream_offset": 53,
+      "emitted_tokens": [
+        604,
+        24,
+        3537
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 530,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24,
+        24023,
+        12462,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        1574,
+        24,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 24,
+          "prob": 0.414
+        },
+        {
+          "rank": 2,
+          "token": 530,
+          "prob": 0.265
+        },
+        {
+          "rank": 3,
+          "token": 60949,
+          "prob": 0.129
+        }
+      ],
+      "stream_offset": 56,
+      "emitted_tokens": [
+        530
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1523,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24023,
+        307,
+        757,
+        12462,
+        9508,
+        24,
+        25476,
+        30076,
+        24,
+        24,
+        24,
+        24,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 307,
+          "prob": 0.589
+        },
+        {
+          "rank": 2,
+          "token": 448,
+          "prob": 0.294
+        },
+        {
+          "rank": 3,
+          "token": 287,
+          "prob": 0.032
+        }
+      ],
+      "stream_offset": 57,
+      "emitted_tokens": [
+        24023,
+        1523
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 448,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        307,
+        757,
+        25476,
+        9508,
+        24,
+        44130,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        1574,
+        24
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 307,
+          "prob": 0.537
+        },
+        {
+          "rank": 2,
+          "token": 448,
+          "prob": 0.392
+        },
+        {
+          "rank": 3,
+          "token": 757,
+          "prob": 0.035
+        }
+      ],
+      "stream_offset": 59,
+      "emitted_tokens": [
+        448
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3401,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        757,
+        25476,
+        9508,
+        24,
+        44130,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 25476,
+          "prob": 0.492
+        },
+        {
+          "rank": 2,
+          "token": 12462,
+          "prob": 0.219
+        },
+        {
+          "rank": 3,
+          "token": 3401,
+          "prob": 0.164
+        }
+      ],
+      "stream_offset": 60,
+      "emitted_tokens": [
+        757,
+        3401
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 5246,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        30076,
+        618,
+        44130,
+        97100,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 618,
+          "prob": 0.263
+        },
+        {
+          "rank": 2,
+          "token": 38,
+          "prob": 0.213
+        },
+        {
+          "rank": 3,
+          "token": 5246,
+          "prob": 0.136
+        }
+      ],
+      "stream_offset": 62,
+      "emitted_tokens": [
+        30076,
+        5246
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 310,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        97100,
+        97100,
+        24,
+        12462,
+        12462,
+        24,
+        37818,
+        24,
+        24,
+        12462,
+        1574,
+        1574,
+        1574,
+        1574,
+        20966
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 97100,
+          "prob": 0.585
+        },
+        {
+          "rank": 2,
+          "token": 44130,
+          "prob": 0.183
+        },
+        {
+          "rank": 3,
+          "token": 180850,
+          "prob": 0.102
+        }
+      ],
+      "stream_offset": 64,
+      "emitted_tokens": [
+        310
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 12462,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        18343,
+        97100,
+        24,
+        97100,
+        24,
+        24,
+        24,
+        24,
+        24,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 3,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 97100,
+          "prob": 0.334
+        },
+        {
+          "rank": 2,
+          "token": 24,
+          "prob": 0.247
+        },
+        {
+          "rank": 3,
+          "token": 16501,
+          "prob": 0.099
+        }
+      ],
+      "stream_offset": 65,
+      "emitted_tokens": [
+        18343,
+        97100,
+        24,
+        12462
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 9508,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        98566,
+        24,
+        6541,
+        1574,
+        73594,
+        20966,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        885,
+        26,
+        26,
+        26
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 98566,
+          "prob": 0.65
+        },
+        {
+          "rank": 2,
+          "token": 12704,
+          "prob": 0.124
+        },
+        {
+          "rank": 3,
+          "token": 25408,
+          "prob": 0.072
+        }
+      ],
+      "stream_offset": 69,
+      "emitted_tokens": [
+        9508
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3385,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24,
+        98566,
+        98566,
+        24,
+        24,
+        1574,
+        73594,
+        73594,
+        20966,
+        1574,
+        1574,
+        1574,
+        885,
+        885,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 98566,
+          "prob": 0.692
+        },
+        {
+          "rank": 2,
+          "token": 410,
+          "prob": 0.157
+        },
+        {
+          "rank": 3,
+          "token": 297,
+          "prob": 0.043
+        }
+      ],
+      "stream_offset": 70,
+      "emitted_tokens": [
+        24,
+        3385
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 2386,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        98566,
+        24,
+        98566,
+        98566,
+        73594,
+        20966,
+        20966,
+        1574,
+        26,
+        26,
+        1574,
+        1574,
+        26,
+        885,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 98566,
+          "prob": 0.631
+        },
+        {
+          "rank": 2,
+          "token": 12462,
+          "prob": 0.267
+        },
+        {
+          "rank": 3,
+          "token": 84586,
+          "prob": 0.051
+        }
+      ],
+      "stream_offset": 72,
+      "emitted_tokens": [
+        2386
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 6541,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24,
+        98566,
+        98566,
+        73594,
+        20966,
+        20966,
+        3775,
+        3775,
+        26,
+        46623,
+        3664,
+        3664,
+        3664,
+        26,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 98566,
+          "prob": 0.421
+        },
+        {
+          "rank": 2,
+          "token": 44130,
+          "prob": 0.253
+        },
+        {
+          "rank": 3,
+          "token": 6541,
+          "prob": 0.194
+        }
+      ],
+      "stream_offset": 73,
+      "emitted_tokens": [
+        24,
+        6541
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 5094,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        73594,
+        446,
+        20966,
+        26,
+        26,
+        18007,
+        1574,
+        3664,
+        26,
+        1574,
+        1574,
+        1574,
+        26,
+        1574
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 446,
+          "prob": 0.328
+        },
+        {
+          "rank": 2,
+          "token": 5094,
+          "prob": 0.214
+        },
+        {
+          "rank": 3,
+          "token": 885,
+          "prob": 0.137
+        }
+      ],
+      "stream_offset": 75,
+      "emitted_tokens": [
+        1574,
+        73594,
+        5094
+      ],
+      "oracle_top1_suffix_extension": 2
+    },
+    {
+      "accepted": 3,
+      "drafted": 10,
+      "candidate_positions": 11,
+      "target_token": 14166,
+      "excluded_candidate_positions": [
+        10
+      ],
+      "primary_draft": [
+        20966,
+        26,
+        34302,
+        885,
+        46623,
+        3664,
+        26,
+        8308,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 885,
+          "prob": 0.368
+        },
+        {
+          "rank": 2,
+          "token": 14166,
+          "prob": 0.171
+        },
+        {
+          "rank": 3,
+          "token": 47106,
+          "prob": 0.11
+        }
+      ],
+      "stream_offset": 78,
+      "emitted_tokens": [
+        20966,
+        26,
+        34302,
+        14166
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4440,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        10758,
+        410,
+        1574,
+        3775,
+        885,
+        46623,
+        3664,
+        26,
+        26,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 10758,
+          "prob": 0.506
+        },
+        {
+          "rank": 2,
+          "token": 4440,
+          "prob": 0.175
+        },
+        {
+          "rank": 3,
+          "token": 517,
+          "prob": 0.147
+        }
+      ],
+      "stream_offset": 82,
+      "emitted_tokens": [
+        4440
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3234,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        22369,
+        1574,
+        3775,
+        885,
+        46623,
+        3664,
+        26,
+        8308,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 22369,
+          "prob": 0.265
+        },
+        {
+          "rank": 2,
+          "token": 3234,
+          "prob": 0.234
+        },
+        {
+          "rank": 3,
+          "token": 40243,
+          "prob": 0.22
+        }
+      ],
+      "stream_offset": 83,
+      "emitted_tokens": [
+        3234
+      ],
+      "oracle_top1_suffix_extension": 7
+    },
+    {
+      "accepted": 6,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 8308,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        3775,
+        885,
+        46623,
+        3664,
+        26,
+        11680,
+        1574,
+        1574,
+        3664,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 6,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 11680,
+          "prob": 0.197
+        },
+        {
+          "rank": 2,
+          "token": 8308,
+          "prob": 0.182
+        },
+        {
+          "rank": 3,
+          "token": 23937,
+          "prob": 0.148
+        }
+      ],
+      "stream_offset": 84,
+      "emitted_tokens": [
+        1574,
+        3775,
+        885,
+        46623,
+        3664,
+        26,
+        8308
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 18603,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        17876,
+        1574,
+        1574,
+        446,
+        446,
+        1574,
+        1574,
+        1574,
+        17649,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.431
+        },
+        {
+          "rank": 2,
+          "token": 28858,
+          "prob": 0.179
+        },
+        {
+          "rank": 3,
+          "token": 18603,
+          "prob": 0.106
+        }
+      ],
+      "stream_offset": 91,
+      "emitted_tokens": [
+        17876,
+        1574,
+        18603
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 15044,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        536,
+        1574,
+        1574,
+        1574,
+        7533,
+        34568,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.214
+        },
+        {
+          "rank": 2,
+          "token": 1108,
+          "prob": 0.179
+        },
+        {
+          "rank": 3,
+          "token": 15044,
+          "prob": 0.121
+        }
+      ],
+      "stream_offset": 94,
+      "emitted_tokens": [
+        536,
+        15044
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 7533,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        180574,
+        1161,
+        3762,
+        1574,
+        1574,
+        24,
+        24,
+        24,
+        24,
+        24,
+        1574,
+        1574,
+        1574,
+        200022
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 180574,
+          "prob": 0.404
+        },
+        {
+          "rank": 2,
+          "token": 7533,
+          "prob": 0.164
+        },
+        {
+          "rank": 3,
+          "token": 5787,
+          "prob": 0.104
+        }
+      ],
+      "stream_offset": 96,
+      "emitted_tokens": [
+        1574,
+        7533
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 4,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 410,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        132451,
+        1574,
+        180574,
+        10758,
+        10758,
+        10758,
+        24,
+        1574,
+        24,
+        24,
+        1574,
+        1574,
+        1574,
+        200007,
+        200022
+      ],
+      "mismatch_pos": 4,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 10758,
+          "prob": 0.321
+        },
+        {
+          "rank": 2,
+          "token": 24,
+          "prob": 0.223
+        },
+        {
+          "rank": 3,
+          "token": 1574,
+          "prob": 0.158
+        }
+      ],
+      "stream_offset": 98,
+      "emitted_tokens": [
+        132451,
+        1574,
+        180574,
+        10758,
+        410
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 23,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        61933,
+        5071,
+        410,
+        61933,
+        61933,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 61933,
+          "prob": 0.885
+        },
+        {
+          "rank": 2,
+          "token": 23,
+          "prob": 0.078
+        },
+        {
+          "rank": 3,
+          "token": 9148,
+          "prob": 0.013
+        }
+      ],
+      "stream_offset": 103,
+      "emitted_tokens": [
+        23
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 7970,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        5071,
+        410,
+        61933,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 5071,
+          "prob": 0.559
+        },
+        {
+          "rank": 2,
+          "token": 341,
+          "prob": 0.156
+        },
+        {
+          "rank": 3,
+          "token": 7970,
+          "prob": 0.132
+        }
+      ],
+      "stream_offset": 104,
+      "emitted_tokens": [
+        7970
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1792,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        16204,
+        1574,
+        410,
+        61933,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        140680
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 16204,
+          "prob": 0.384
+        },
+        {
+          "rank": 2,
+          "token": 5071,
+          "prob": 0.229
+        },
+        {
+          "rank": 3,
+          "token": 20639,
+          "prob": 0.166
+        }
+      ],
+      "stream_offset": 105,
+      "emitted_tokens": [
+        1792
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 4,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4550,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        310,
+        44026,
+        1574,
+        73594,
+        61933,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        140680
+      ],
+      "mismatch_pos": 4,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 61933,
+          "prob": 0.216
+        },
+        {
+          "rank": 2,
+          "token": 410,
+          "prob": 0.191
+        },
+        {
+          "rank": 3,
+          "token": 73594,
+          "prob": 0.109
+        }
+      ],
+      "stream_offset": 106,
+      "emitted_tokens": [
+        310,
+        44026,
+        1574,
+        73594,
+        4550
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 8431,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        5154,
+        38,
+        13005,
+        24,
+        24,
+        24,
+        24,
+        12462,
+        9508,
+        1574,
+        38051,
+        1574,
+        1574,
+        1574,
+        200022
+      ],
+      "mismatch_pos": 2,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 13005,
+          "prob": 0.298
+        },
+        {
+          "rank": 2,
+          "token": 16505,
+          "prob": 0.284
+        },
+        {
+          "rank": 3,
+          "token": 2160,
+          "prob": 0.163
+        }
+      ],
+      "stream_offset": 111,
+      "emitted_tokens": [
+        5154,
+        38,
+        8431
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 13005,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        11887,
+        517,
+        5414,
+        24,
+        24,
+        24,
+        24,
+        98175,
+        98175,
+        98175,
+        98175,
+        1574,
+        1574,
+        1574,
+        24
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 517,
+          "prob": 0.528
+        },
+        {
+          "rank": 2,
+          "token": 24,
+          "prob": 0.218
+        },
+        {
+          "rank": 3,
+          "token": 6804,
+          "prob": 0.078
+        }
+      ],
+      "stream_offset": 114,
+      "emitted_tokens": [
+        11887,
+        13005
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 56519,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        584,
+        3048,
+        24,
+        24,
+        27883,
+        27883,
+        1574,
+        98175,
+        98175,
+        1574,
+        1574,
+        98175,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 24,
+          "prob": 0.647
+        },
+        {
+          "rank": 2,
+          "token": 56519,
+          "prob": 0.157
+        },
+        {
+          "rank": 3,
+          "token": 398,
+          "prob": 0.075
+        }
+      ],
+      "stream_offset": 116,
+      "emitted_tokens": [
+        584,
+        3048,
+        56519
+      ],
+      "oracle_top1_suffix_extension": 2
+    },
+    {
+      "accepted": 5,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1049,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24,
+        27883,
+        11887,
+        13005,
+        584,
+        584,
+        1574,
+        1574,
+        98175,
+        98175,
+        98175,
+        1574,
+        98175,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 5,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 584,
+          "prob": 0.341
+        },
+        {
+          "rank": 2,
+          "token": 1574,
+          "prob": 0.156
+        },
+        {
+          "rank": 3,
+          "token": 27883,
+          "prob": 0.116
+        }
+      ],
+      "stream_offset": 119,
+      "emitted_tokens": [
+        24,
+        27883,
+        11887,
+        13005,
+        584,
+        1049
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 756,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        56519,
+        584,
+        56519,
+        56519,
+        98175,
+        98175,
+        604,
+        319,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 584,
+          "prob": 0.689
+        },
+        {
+          "rank": 2,
+          "token": 24,
+          "prob": 0.156
+        },
+        {
+          "rank": 3,
+          "token": 330,
+          "prob": 0.034
+        }
+      ],
+      "stream_offset": 125,
+      "emitted_tokens": [
+        56519,
+        756
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4133,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        21721,
+        24,
+        21721,
+        604,
+        1574,
+        98175,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 21721,
+          "prob": 0.355
+        },
+        {
+          "rank": 2,
+          "token": 18948,
+          "prob": 0.153
+        },
+        {
+          "rank": 3,
+          "token": 2862,
+          "prob": 0.118
+        }
+      ],
+      "stream_offset": 127,
+      "emitted_tokens": [
+        4133
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4278,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        56519,
+        24,
+        98175,
+        604,
+        98175,
+        98175,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 56519,
+          "prob": 0.846
+        },
+        {
+          "rank": 2,
+          "token": 2862,
+          "prob": 0.032
+        },
+        {
+          "rank": 3,
+          "token": 23689,
+          "prob": 0.025
+        }
+      ],
+      "stream_offset": 128,
+      "emitted_tokens": [
+        4278
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1750,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        4254,
+        24,
+        18948,
+        1574,
+        1574,
+        98175,
+        604,
+        38,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 3,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.299
+        },
+        {
+          "rank": 2,
+          "token": 18948,
+          "prob": 0.157
+        },
+        {
+          "rank": 3,
+          "token": 21721,
+          "prob": 0.109
+        }
+      ],
+      "stream_offset": 129,
+      "emitted_tokens": [
+        4254,
+        24,
+        18948,
+        1750
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 4,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 2621,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        98175,
+        604,
+        319,
+        9476,
+        323,
+        24,
+        24,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 4,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 9476,
+          "prob": 0.675
+        },
+        {
+          "rank": 2,
+          "token": 1416,
+          "prob": 0.178
+        },
+        {
+          "rank": 3,
+          "token": 4745,
+          "prob": 0.029
+        }
+      ],
+      "stream_offset": 133,
+      "emitted_tokens": [
+        1574,
+        98175,
+        604,
+        319,
+        2621
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1574,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        323,
+        5414,
+        666,
+        3385,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 323,
+          "prob": 0.706
+        },
+        {
+          "rank": 2,
+          "token": 5437,
+          "prob": 0.098
+        },
+        {
+          "rank": 3,
+          "token": 666,
+          "prob": 0.08
+        }
+      ],
+      "stream_offset": 138,
+      "emitted_tokens": [
+        1574
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3437,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        6849,
+        319,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 319,
+          "prob": 0.558
+        },
+        {
+          "rank": 2,
+          "token": 1574,
+          "prob": 0.176
+        },
+        {
+          "rank": 3,
+          "token": 28739,
+          "prob": 0.056
+        }
+      ],
+      "stream_offset": 139,
+      "emitted_tokens": [
+        6849,
+        3437
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 5,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4089,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        10692,
+        9508,
+        38,
+        44130,
+        44130,
+        24,
+        24,
+        24,
+        24,
+        24,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 5,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 44130,
+          "prob": 0.172
+        },
+        {
+          "rank": 2,
+          "token": 98566,
+          "prob": 0.144
+        },
+        {
+          "rank": 3,
+          "token": 24,
+          "prob": 0.138
+        }
+      ],
+      "stream_offset": 141,
+      "emitted_tokens": [
+        1574,
+        10692,
+        9508,
+        38,
+        44130,
+        4089
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 853,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24,
+        12462,
+        24,
+        98566,
+        98566,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 12462,
+          "prob": 0.156
+        },
+        {
+          "rank": 2,
+          "token": 24,
+          "prob": 0.119
+        },
+        {
+          "rank": 3,
+          "token": 3385,
+          "prob": 0.117
+        }
+      ],
+      "stream_offset": 147,
+      "emitted_tokens": [
+        24,
+        853
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 10147,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        23842,
+        1574,
+        73594,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        200022,
+        200022,
+        140680,
+        200022,
+        200022
+      ],
+      "mismatch_pos": 2,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 73594,
+          "prob": 0.328
+        },
+        {
+          "rank": 2,
+          "token": 1574,
+          "prob": 0.203
+        },
+        {
+          "rank": 3,
+          "token": 24,
+          "prob": 0.123
+        }
+      ],
+      "stream_offset": 149,
+      "emitted_tokens": [
+        23842,
+        1574,
+        10147
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1851,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        30076,
+        38,
+        1965,
+        97100,
+        24,
+        24,
+        24,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 2,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1965,
+          "prob": 0.44
+        },
+        {
+          "rank": 2,
+          "token": 3632,
+          "prob": 0.192
+        },
+        {
+          "rank": 3,
+          "token": 6837,
+          "prob": 0.057
+        }
+      ],
+      "stream_offset": 152,
+      "emitted_tokens": [
+        30076,
+        38,
+        1851
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 5981,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1965,
+        24,
+        24,
+        66015,
+        24,
+        24,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1965,
+          "prob": 0.232
+        },
+        {
+          "rank": 2,
+          "token": 2160,
+          "prob": 0.166
+        },
+        {
+          "rank": 3,
+          "token": 5608,
+          "prob": 0.135
+        }
+      ],
+      "stream_offset": 155,
+      "emitted_tokens": [
+        5981
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 16501,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        6344,
+        1740,
+        66015,
+        66015,
+        73594,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 2,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 66015,
+          "prob": 0.678
+        },
+        {
+          "rank": 2,
+          "token": 1740,
+          "prob": 0.14
+        },
+        {
+          "rank": 3,
+          "token": 45294,
+          "prob": 0.116
+        }
+      ],
+      "stream_offset": 156,
+      "emitted_tokens": [
+        6344,
+        1740,
+        16501
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 27883,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        1574,
+        73594,
+        1574,
+        1574,
+        38051,
+        1574,
+        1574,
+        1574,
+        200022,
+        200022,
+        200022,
+        200022,
+        1574,
+        200023
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.559
+        },
+        {
+          "rank": 2,
+          "token": 18539,
+          "prob": 0.12
+        },
+        {
+          "rank": 3,
+          "token": 8987,
+          "prob": 0.113
+        }
+      ],
+      "stream_offset": 159,
+      "emitted_tokens": [
+        27883
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 18948,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        11887,
+        1574,
+        73594,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        200022,
+        200022,
+        1574,
+        1574,
+        200022
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 11887,
+          "prob": 0.355
+        },
+        {
+          "rank": 2,
+          "token": 1574,
+          "prob": 0.243
+        },
+        {
+          "rank": 3,
+          "token": 110603,
+          "prob": 0.197
+        }
+      ],
+      "stream_offset": 160,
+      "emitted_tokens": [
+        18948
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 51015,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1750,
+        1574,
+        73594,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        200022,
+        200022,
+        200022,
+        1574,
+        1574,
+        200022
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 73594,
+          "prob": 0.447
+        },
+        {
+          "rank": 2,
+          "token": 51015,
+          "prob": 0.158
+        },
+        {
+          "rank": 3,
+          "token": 38051,
+          "prob": 0.126
+        }
+      ],
+      "stream_offset": 161,
+      "emitted_tokens": [
+        1750,
+        1574,
+        51015
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 17333,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        5959,
+        1574,
+        73594,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        328,
+        1574,
+        200023,
+        1574,
+        200022
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.533
+        },
+        {
+          "rank": 2,
+          "token": 38,
+          "prob": 0.133
+        },
+        {
+          "rank": 3,
+          "token": 5071,
+          "prob": 0.113
+        }
+      ],
+      "stream_offset": 164,
+      "emitted_tokens": [
+        5959,
+        17333
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 5912,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1648,
+        4775,
+        1574,
+        1574,
+        73594,
+        1574,
+        1574,
+        1574,
+        38051,
+        1574,
+        1574,
+        200022,
+        200022,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 4775,
+          "prob": 0.219
+        },
+        {
+          "rank": 2,
+          "token": 44130,
+          "prob": 0.16
+        },
+        {
+          "rank": 3,
+          "token": 5912,
+          "prob": 0.151
+        }
+      ],
+      "stream_offset": 166,
+      "emitted_tokens": [
+        1648,
+        5912
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 20686,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        16501,
+        1574,
+        73594,
+        1926,
+        1574,
+        1574,
+        38051,
+        1574,
+        1574,
+        200022,
+        200022,
+        200022,
+        200022,
+        200023,
+        200023
+      ],
+      "mismatch_pos": 3,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1926,
+          "prob": 0.366
+        },
+        {
+          "rank": 2,
+          "token": 10021,
+          "prob": 0.171
+        },
+        {
+          "rank": 3,
+          "token": 1574,
+          "prob": 0.147
+        }
+      ],
+      "stream_offset": 168,
+      "emitted_tokens": [
+        16501,
+        1574,
+        73594,
+        20686
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1574,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        38051,
+        3725,
+        1926,
+        3168,
+        26,
+        200007,
+        200022,
+        140680,
+        328,
+        76976,
+        200023,
+        45,
+        410,
+        61933
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1926,
+          "prob": 0.4
+        },
+        {
+          "rank": 2,
+          "token": 1574,
+          "prob": 0.245
+        },
+        {
+          "rank": 3,
+          "token": 26,
+          "prob": 0.085
+        }
+      ],
+      "stream_offset": 172,
+      "emitted_tokens": [
+        1574,
+        38051,
+        3725,
+        1574
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 10,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 89829,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        200007,
+        200022,
+        140680,
+        328,
+        76976,
+        200023,
+        45,
+        410,
+        61933,
+        3352,
+        373,
+        262,
+        7260,
+        61933,
+        61933
+      ],
+      "mismatch_pos": 10,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 373,
+          "prob": 0.438
+        },
+        {
+          "rank": 2,
+          "token": 262,
+          "prob": 0.275
+        },
+        {
+          "rank": 3,
+          "token": 3352,
+          "prob": 0.067
+        }
+      ],
+      "stream_offset": 176,
+      "emitted_tokens": [
+        200007,
+        200022,
+        140680,
+        328,
+        76976,
+        200023,
+        45,
+        410,
+        61933,
+        3352,
+        89829
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 29290,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3401,
+        30076,
+        618,
+        536,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262
+      ],
+      "mismatch_pos": 3,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 536,
+          "prob": 0.315
+        },
+        {
+          "rank": 2,
+          "token": 618,
+          "prob": 0.213
+        },
+        {
+          "rank": 3,
+          "token": 2895,
+          "prob": 0.161
+        }
+      ],
+      "stream_offset": 187,
+      "emitted_tokens": [
+        3401,
+        30076,
+        618,
+        29290
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 315,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        262,
+        2160,
+        1629,
+        1629,
+        262,
+        44130,
+        24,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 262,
+          "prob": 0.518
+        },
+        {
+          "rank": 2,
+          "token": 290,
+          "prob": 0.265
+        },
+        {
+          "rank": 3,
+          "token": 44130,
+          "prob": 0.048
+        }
+      ],
+      "stream_offset": 191,
+      "emitted_tokens": [
+        315
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 530,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        144761,
+        27461,
+        16501,
+        1629,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262,
+        262
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 144761,
+          "prob": 0.196
+        },
+        {
+          "rank": 2,
+          "token": 24340,
+          "prob": 0.183
+        },
+        {
+          "rank": 3,
+          "token": 530,
+          "prob": 0.163
+        }
+      ],
+      "stream_offset": 192,
+      "emitted_tokens": [
+        530
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 2898,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        8909,
+        21,
+        16501,
+        16501,
+        1629,
+        262,
+        24023,
+        24023,
+        24023,
+        448,
+        448,
+        21,
+        448,
+        262,
+        262
+      ],
+      "mismatch_pos": 2,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 16501,
+          "prob": 0.582
+        },
+        {
+          "rank": 2,
+          "token": 14959,
+          "prob": 0.085
+        },
+        {
+          "rank": 3,
+          "token": 5912,
+          "prob": 0.071
+        }
+      ],
+      "stream_offset": 193,
+      "emitted_tokens": [
+        8909,
+        21,
+        2898
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 315,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        16501,
+        1629,
+        262,
+        530,
+        24023,
+        448,
+        21,
+        21,
+        7970,
+        7970,
+        26,
+        290,
+        290,
+        373,
+        373
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 262,
+          "prob": 0.535
+        },
+        {
+          "rank": 2,
+          "token": 315,
+          "prob": 0.416
+        },
+        {
+          "rank": 3,
+          "token": 530,
+          "prob": 0.037
+        }
+      ],
+      "stream_offset": 196,
+      "emitted_tokens": [
+        16501,
+        1629,
+        315
+      ],
+      "oracle_top1_suffix_extension": 2
+    },
+    {
+      "accepted": 5,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 60551,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        530,
+        24023,
+        1523,
+        448,
+        21,
+        97100,
+        97100,
+        262,
+        262,
+        262,
+        262,
+        290,
+        290,
+        618,
+        290
+      ],
+      "mismatch_pos": 5,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 97100,
+          "prob": 0.259
+        },
+        {
+          "rank": 2,
+          "token": 584,
+          "prob": 0.191
+        },
+        {
+          "rank": 3,
+          "token": 3401,
+          "prob": 0.108
+        }
+      ],
+      "stream_offset": 199,
+      "emitted_tokens": [
+        530,
+        24023,
+        1523,
+        448,
+        21,
+        60551
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 328,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        13673,
+        530,
+        530,
+        21,
+        21,
+        44130,
+        27883,
+        26,
+        262,
+        26,
+        26,
+        262,
+        262,
+        26,
+        262
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 13673,
+          "prob": 0.434
+        },
+        {
+          "rank": 2,
+          "token": 584,
+          "prob": 0.419
+        },
+        {
+          "rank": 3,
+          "token": 3449,
+          "prob": 0.072
+        }
+      ],
+      "stream_offset": 205,
+      "emitted_tokens": [
+        328
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 10,
+      "candidate_positions": 11,
+      "target_token": 1965,
+      "excluded_candidate_positions": [
+        10
+      ],
+      "primary_draft": [
+        290,
+        2160,
+        1585,
+        13673,
+        262,
+        262,
+        44130,
+        21,
+        21,
+        21
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 2160,
+          "prob": 0.294
+        },
+        {
+          "rank": 2,
+          "token": 27883,
+          "prob": 0.116
+        },
+        {
+          "rank": 3,
+          "token": 5608,
+          "prob": 0.103
+        }
+      ],
+      "stream_offset": 206,
+      "emitted_tokens": [
+        290,
+        1965
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 290,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        323,
+        3449,
+        262,
+        262,
+        24023,
+        44130,
+        44130,
+        21,
+        21,
+        21,
+        26,
+        262,
+        26,
+        26,
+        26
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 3449,
+          "prob": 0.342
+        },
+        {
+          "rank": 2,
+          "token": 13673,
+          "prob": 0.194
+        },
+        {
+          "rank": 3,
+          "token": 290,
+          "prob": 0.154
+        }
+      ],
+      "stream_offset": 208,
+      "emitted_tokens": [
+        323,
+        290
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 13673,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3401,
+        3449,
+        262,
+        530,
+        44130,
+        21,
+        44130,
+        27883,
+        290,
+        290,
+        26,
+        26,
+        26,
+        26,
+        26
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 3449,
+          "prob": 0.499
+        },
+        {
+          "rank": 2,
+          "token": 13673,
+          "prob": 0.404
+        },
+        {
+          "rank": 3,
+          "token": 584,
+          "prob": 0.047
+        }
+      ],
+      "stream_offset": 210,
+      "emitted_tokens": [
+        3401,
+        13673
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 315,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        618,
+        262,
+        44130,
+        44130,
+        21,
+        27883,
+        27883,
+        290,
+        290,
+        26,
+        26,
+        26,
+        26,
+        26,
+        410
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 262,
+          "prob": 0.601
+        },
+        {
+          "rank": 2,
+          "token": 315,
+          "prob": 0.325
+        },
+        {
+          "rank": 3,
+          "token": 530,
+          "prob": 0.044
+        }
+      ],
+      "stream_offset": 212,
+      "emitted_tokens": [
+        618,
+        315
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 4,
+      "drafted": 11,
+      "candidate_positions": 12,
+      "target_token": 16501,
+      "excluded_candidate_positions": [
+        11
+      ],
+      "primary_draft": [
+        530,
+        10636,
+        21,
+        44130,
+        27883,
+        323,
+        290,
+        290,
+        26,
+        26,
+        26
+      ],
+      "mismatch_pos": 4,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 27883,
+          "prob": 0.333
+        },
+        {
+          "rank": 2,
+          "token": 16501,
+          "prob": 0.281
+        },
+        {
+          "rank": 3,
+          "token": 97100,
+          "prob": 0.082
+        }
+      ],
+      "stream_offset": 214,
+      "emitted_tokens": [
+        530,
+        10636,
+        21,
+        44130,
+        16501
+      ],
+      "oracle_top1_suffix_extension": 2
+    },
+    {
+      "accepted": 5,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 383,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        323,
+        290,
+        18539,
+        24,
+        1901,
+        373,
+        373,
+        290,
+        290,
+        323,
+        3352,
+        262,
+        262,
+        262,
+        262
+      ],
+      "mismatch_pos": 5,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 373,
+          "prob": 0.278
+        },
+        {
+          "rank": 2,
+          "token": 383,
+          "prob": 0.148
+        },
+        {
+          "rank": 3,
+          "token": 262,
+          "prob": 0.116
+        }
+      ],
+      "stream_offset": 219,
+      "emitted_tokens": [
+        323,
+        290,
+        18539,
+        24,
+        1901,
+        383
+      ],
+      "oracle_top1_suffix_extension": 2
+    },
+    {
+      "accepted": 4,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 19072,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        373,
+        290,
+        1416,
+        323,
+        13005,
+        310,
+        290,
+        3401,
+        26,
+        26,
+        373,
+        373,
+        373,
+        373,
+        373
+      ],
+      "mismatch_pos": 4,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 13005,
+          "prob": 0.3
+        },
+        {
+          "rank": 2,
+          "token": 5990,
+          "prob": 0.152
+        },
+        {
+          "rank": 3,
+          "token": 18539,
+          "prob": 0.132
+        }
+      ],
+      "stream_offset": 225,
+      "emitted_tokens": [
+        373,
+        290,
+        1416,
+        323,
+        19072
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 13,
+      "candidate_positions": 14,
+      "target_token": 161109,
+      "excluded_candidate_positions": [
+        13
+      ],
+      "primary_draft": [
+        11796,
+        26,
+        589,
+        262,
+        373,
+        373,
+        290,
+        290,
+        290,
+        290,
+        262,
+        262,
+        262
+      ],
+      "mismatch_pos": 2,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 589,
+          "prob": 0.364
+        },
+        {
+          "rank": 2,
+          "token": 26,
+          "prob": 0.193
+        },
+        {
+          "rank": 3,
+          "token": 592,
+          "prob": 0.128
+        }
+      ],
+      "stream_offset": 230,
+      "emitted_tokens": [
+        11796,
+        26,
+        161109
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 10236,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1161,
+        262,
+        410,
+        23,
+        18699,
+        410,
+        410,
+        410,
+        410,
+        410,
+        24,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1161,
+          "prob": 0.631
+        },
+        {
+          "rank": 2,
+          "token": 10236,
+          "prob": 0.134
+        },
+        {
+          "rank": 3,
+          "token": 6578,
+          "prob": 0.064
+        }
+      ],
+      "stream_offset": 233,
+      "emitted_tokens": [
+        10236
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 133636,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        5072,
+        1161,
+        262,
+        23,
+        23,
+        7658,
+        2895,
+        702,
+        410,
+        410,
+        61933,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 5072,
+          "prob": 0.801
+        },
+        {
+          "rank": 2,
+          "token": 133636,
+          "prob": 0.15
+        },
+        {
+          "rank": 3,
+          "token": 6522,
+          "prob": 0.023
+        }
+      ],
+      "stream_offset": 234,
+      "emitted_tokens": [
+        133636
+      ],
+      "oracle_top1_suffix_extension": 2
+    },
+    {
+      "accepted": 4,
+      "drafted": 9,
+      "candidate_positions": 10,
+      "target_token": 7970,
+      "excluded_candidate_positions": [
+        9
+      ],
+      "primary_draft": [
+        1161,
+        262,
+        410,
+        23,
+        18699,
+        24,
+        702,
+        410,
+        410
+      ],
+      "mismatch_pos": 4,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 18699,
+          "prob": 0.323
+        },
+        {
+          "rank": 2,
+          "token": 7658,
+          "prob": 0.224
+        },
+        {
+          "rank": 3,
+          "token": 24,
+          "prob": 0.158
+        }
+      ],
+      "stream_offset": 235,
+      "emitted_tokens": [
+        1161,
+        262,
+        410,
+        23,
+        7970
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 9,
+      "candidate_positions": 10,
+      "target_token": 24,
+      "excluded_candidate_positions": [
+        9
+      ],
+      "primary_draft": [
+        16204,
+        702,
+        262,
+        410,
+        410,
+        7970,
+        2895,
+        290,
+        11887
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 702,
+          "prob": 0.451
+        },
+        {
+          "rank": 2,
+          "token": 24,
+          "prob": 0.447
+        },
+        {
+          "rank": 3,
+          "token": 2895,
+          "prob": 0.032
+        }
+      ],
+      "stream_offset": 240,
+      "emitted_tokens": [
+        16204,
+        24
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 2,
+      "drafted": 12,
+      "candidate_positions": 15,
+      "target_token": 23606,
+      "excluded_candidate_positions": [
+        12,
+        13,
+        14
+      ],
+      "primary_draft": [
+        702,
+        262,
+        410,
+        410,
+        7970,
+        1574,
+        3161,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 2,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 410,
+          "prob": 0.562
+        },
+        {
+          "rank": 2,
+          "token": 262,
+          "prob": 0.098
+        },
+        {
+          "rank": 3,
+          "token": 290,
+          "prob": 0.095
+        }
+      ],
+      "stream_offset": 242,
+      "emitted_tokens": [
+        702,
+        262,
+        23606
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 9,
+      "candidate_positions": 13,
+      "target_token": 1574,
+      "excluded_candidate_positions": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "primary_draft": [
+        410,
+        61933,
+        24,
+        2895,
+        290,
+        5154,
+        368,
+        368,
+        368
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 24,
+          "prob": 0.606
+        },
+        {
+          "rank": 2,
+          "token": 1574,
+          "prob": 0.298
+        },
+        {
+          "rank": 3,
+          "token": 2895,
+          "prob": 0.046
+        }
+      ],
+      "stream_offset": 245,
+      "emitted_tokens": [
+        410,
+        61933,
+        1574
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 3,
+      "drafted": 6,
+      "candidate_positions": 15,
+      "target_token": 341,
+      "excluded_candidate_positions": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "primary_draft": [
+        3161,
+        11181,
+        26838,
+        26,
+        11181,
+        5154
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 26,
+          "prob": 0.669
+        },
+        {
+          "rank": 2,
+          "token": 368,
+          "prob": 0.196
+        },
+        {
+          "rank": 3,
+          "token": 341,
+          "prob": 0.062
+        }
+      ],
+      "stream_offset": 248,
+      "emitted_tokens": [
+        3161,
+        11181,
+        26838,
+        341
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 2,
+      "candidate_positions": 10,
+      "target_token": 27018,
+      "excluded_candidate_positions": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "primary_draft": [
+        40919,
+        604
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 40919,
+          "prob": 0.789
+        },
+        {
+          "rank": 2,
+          "token": 290,
+          "prob": 0.046
+        },
+        {
+          "rank": 3,
+          "token": 20780,
+          "prob": 0.039
+        }
+      ],
+      "stream_offset": 252,
+      "emitted_tokens": [
+        27018
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 1,
+      "candidate_positions": 10,
+      "target_token": 368,
+      "excluded_candidate_positions": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "primary_draft": [
+        64840
+      ],
+      "stream_offset": 253,
+      "emitted_tokens": [
+        64840,
+        368
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 15,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 872,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        19669,
+        200023,
+        35581,
+        315,
+        432,
+        52071,
+        12462,
+        700,
+        310,
+        13940,
+        517,
+        530,
+        20,
+        29,
+        21
+      ],
+      "stream_offset": 0,
+      "emitted_tokens": [
+        19669,
+        200023,
+        35581,
+        315,
+        432,
+        52071,
+        12462,
+        700,
+        310,
+        13940,
+        517,
+        530,
+        20,
+        29,
+        21,
+        872
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 15,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3437,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        341,
+        4276,
+        1723,
+        262,
+        133478,
+        18948,
+        1750,
+        3449,
+        13287,
+        26,
+        37442,
+        7147,
+        48175,
+        341,
+        262
+      ],
+      "stream_offset": 16,
+      "emitted_tokens": [
+        341,
+        4276,
+        1723,
+        262,
+        133478,
+        18948,
+        1750,
+        3449,
+        13287,
+        26,
+        37442,
+        7147,
+        48175,
+        341,
+        262,
+        3437
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 5,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4706,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        16827,
+        3234,
+        1574,
+        2991,
+        1657,
+        328,
+        2963,
+        26,
+        97147,
+        5091,
+        700,
+        26,
+        26,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 5,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 328,
+          "prob": 0.432
+        },
+        {
+          "rank": 2,
+          "token": 4706,
+          "prob": 0.424
+        },
+        {
+          "rank": 3,
+          "token": 3725,
+          "prob": 0.108
+        }
+      ],
+      "stream_offset": 32,
+      "emitted_tokens": [
+        16827,
+        3234,
+        1574,
+        2991,
+        1657,
+        4706
+      ],
+      "oracle_top1_suffix_extension": 3
+    },
+    {
+      "accepted": 4,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 11181,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        2963,
+        26,
+        97147,
+        700,
+        700,
+        26,
+        41772,
+        700,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 4,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 700,
+          "prob": 0.385
+        },
+        {
+          "rank": 2,
+          "token": 10889,
+          "prob": 0.192
+        },
+        {
+          "rank": 3,
+          "token": 26,
+          "prob": 0.084
+        }
+      ],
+      "stream_offset": 38,
+      "emitted_tokens": [
+        2963,
+        26,
+        97147,
+        700,
+        11181
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 24,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        517,
+        133478,
+        24,
+        24,
+        24,
+        26,
+        26,
+        26,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 517,
+          "prob": 0.878
+        },
+        {
+          "rank": 2,
+          "token": 24,
+          "prob": 0.075
+        },
+        {
+          "rank": 3,
+          "token": 43,
+          "prob": 0.014
+        }
+      ],
+      "stream_offset": 43,
+      "emitted_tokens": [
+        24
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1574,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        432,
+        52071,
+        10692,
+        26,
+        5787,
+        13287,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        16827
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 26,
+          "prob": 0.452
+        },
+        {
+          "rank": 2,
+          "token": 1574,
+          "prob": 0.267
+        },
+        {
+          "rank": 3,
+          "token": 517,
+          "prob": 0.116
+        }
+      ],
+      "stream_offset": 44,
+      "emitted_tokens": [
+        432,
+        52071,
+        10692,
+        1574
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 341,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        73594,
+        7147,
+        48175,
+        1574,
+        73594,
+        16827,
+        16827,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.452
+        },
+        {
+          "rank": 2,
+          "token": 341,
+          "prob": 0.205
+        },
+        {
+          "rank": 3,
+          "token": 26,
+          "prob": 0.121
+        }
+      ],
+      "stream_offset": 48,
+      "emitted_tokens": [
+        73594,
+        7147,
+        48175,
+        341
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3234,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        16827,
+        16827,
+        1574,
+        1574,
+        5074,
+        20,
+        20,
+        29,
+        21,
+        872,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 16827,
+          "prob": 0.493
+        },
+        {
+          "rank": 2,
+          "token": 3234,
+          "prob": 0.317
+        },
+        {
+          "rank": 3,
+          "token": 1574,
+          "prob": 0.187
+        }
+      ],
+      "stream_offset": 52,
+      "emitted_tokens": [
+        16827,
+        3234
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 530,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        18603,
+        5074,
+        20,
+        29,
+        21,
+        872,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 20,
+          "prob": 0.69
+        },
+        {
+          "rank": 2,
+          "token": 530,
+          "prob": 0.12
+        },
+        {
+          "rank": 3,
+          "token": 1574,
+          "prob": 0.071
+        }
+      ],
+      "stream_offset": 54,
+      "emitted_tokens": [
+        1574,
+        18603,
+        5074,
+        530
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 4,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 13287,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        20,
+        29,
+        678,
+        5787,
+        5091,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 4,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 5091,
+          "prob": 0.383
+        },
+        {
+          "rank": 2,
+          "token": 13287,
+          "prob": 0.122
+        },
+        {
+          "rank": 3,
+          "token": 1926,
+          "prob": 0.089
+        }
+      ],
+      "stream_offset": 58,
+      "emitted_tokens": [
+        20,
+        29,
+        678,
+        5787,
+        13287
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4550,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        18129,
+        2160,
+        328,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 3,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.199
+        },
+        {
+          "rank": 2,
+          "token": 133478,
+          "prob": 0.197
+        },
+        {
+          "rank": 3,
+          "token": 4234,
+          "prob": 0.121
+        }
+      ],
+      "stream_offset": 63,
+      "emitted_tokens": [
+        18129,
+        2160,
+        328,
+        4550
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 73594,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        35581,
+        133478,
+        18948,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 35581,
+          "prob": 0.321
+        },
+        {
+          "rank": 2,
+          "token": 50027,
+          "prob": 0.213
+        },
+        {
+          "rank": 3,
+          "token": 73594,
+          "prob": 0.188
+        }
+      ],
+      "stream_offset": 67,
+      "emitted_tokens": [
+        1574,
+        73594
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3251,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        5091,
+        10889,
+        1574,
+        180574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 5091,
+          "prob": 0.533
+        },
+        {
+          "rank": 2,
+          "token": 10889,
+          "prob": 0.201
+        },
+        {
+          "rank": 3,
+          "token": 3234,
+          "prob": 0.091
+        }
+      ],
+      "stream_offset": 69,
+      "emitted_tokens": [
+        3251
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 9907,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3996,
+        766,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 766,
+          "prob": 0.736
+        },
+        {
+          "rank": 2,
+          "token": 30377,
+          "prob": 0.258
+        },
+        {
+          "rank": 3,
+          "token": 43607,
+          "prob": 0.003
+        }
+      ],
+      "stream_offset": 70,
+      "emitted_tokens": [
+        3996,
+        9907
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 10822,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        85722,
+        757,
+        872,
+        757,
+        757,
+        757,
+        24,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 757,
+          "prob": 0.325
+        },
+        {
+          "rank": 2,
+          "token": 24,
+          "prob": 0.174
+        },
+        {
+          "rank": 3,
+          "token": 10822,
+          "prob": 0.121
+        }
+      ],
+      "stream_offset": 72,
+      "emitted_tokens": [
+        85722,
+        757,
+        872,
+        10822
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 4,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 14239,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        757,
+        4276,
+        10822,
+        91959,
+        1133,
+        1333,
+        7222,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 4,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1133,
+          "prob": 0.965
+        },
+        {
+          "rank": 2,
+          "token": 14239,
+          "prob": 0.01
+        },
+        {
+          "rank": 3,
+          "token": 91959,
+          "prob": 0.009
+        }
+      ],
+      "stream_offset": 76,
+      "emitted_tokens": [
+        757,
+        4276,
+        10822,
+        91959,
+        14239
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 430,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        9586,
+        3234,
+        1574,
+        1574,
+        1574,
+        5091,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 3234,
+          "prob": 0.356
+        },
+        {
+          "rank": 2,
+          "token": 3437,
+          "prob": 0.212
+        },
+        {
+          "rank": 3,
+          "token": 1574,
+          "prob": 0.134
+        }
+      ],
+      "stream_offset": 81,
+      "emitted_tokens": [
+        9586,
+        430
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3030,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        29,
+        563,
+        702,
+        1574,
+        1574,
+        73594,
+        3234,
+        16827,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.527
+        },
+        {
+          "rank": 2,
+          "token": 323,
+          "prob": 0.23
+        },
+        {
+          "rank": 3,
+          "token": 3030,
+          "prob": 0.166
+        }
+      ],
+      "stream_offset": 83,
+      "emitted_tokens": [
+        29,
+        563,
+        702,
+        3030
+      ],
+      "oracle_top1_suffix_extension": 3
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1574,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        73594,
+        3234,
+        16827,
+        1574,
+        180574,
+        5091,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 16827,
+          "prob": 0.461
+        },
+        {
+          "rank": 2,
+          "token": 3234,
+          "prob": 0.249
+        },
+        {
+          "rank": 3,
+          "token": 1574,
+          "prob": 0.237
+        }
+      ],
+      "stream_offset": 87,
+      "emitted_tokens": [
+        1574,
+        73594,
+        3234,
+        1574
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 100873,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        180574,
+        5091,
+        1574,
+        1574,
+        1574,
+        7485,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 3,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.304
+        },
+        {
+          "rank": 2,
+          "token": 2963,
+          "prob": 0.197
+        },
+        {
+          "rank": 3,
+          "token": 180574,
+          "prob": 0.167
+        }
+      ],
+      "stream_offset": 91,
+      "emitted_tokens": [
+        180574,
+        5091,
+        1574,
+        100873
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 13940,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        55222,
+        2963,
+        1574,
+        38051,
+        2963,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 55222,
+          "prob": 0.438
+        },
+        {
+          "rank": 2,
+          "token": 13940,
+          "prob": 0.167
+        },
+        {
+          "rank": 3,
+          "token": 7485,
+          "prob": 0.166
+        }
+      ],
+      "stream_offset": 95,
+      "emitted_tokens": [
+        13940
+      ],
+      "oracle_top1_suffix_extension": 2
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4440,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        2963,
+        1574,
+        42098,
+        3725,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 3,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 3725,
+          "prob": 0.246
+        },
+        {
+          "rank": 2,
+          "token": 2963,
+          "prob": 0.218
+        },
+        {
+          "rank": 3,
+          "token": 6759,
+          "prob": 0.107
+        }
+      ],
+      "stream_offset": 96,
+      "emitted_tokens": [
+        2963,
+        1574,
+        42098,
+        4440
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3251,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1390,
+        64777,
+        1574,
+        766,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1390,
+          "prob": 0.377
+        },
+        {
+          "rank": 2,
+          "token": 3251,
+          "prob": 0.242
+        },
+        {
+          "rank": 3,
+          "token": 31847,
+          "prob": 0.213
+        }
+      ],
+      "stream_offset": 100,
+      "emitted_tokens": [
+        3251
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 5,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3168,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        66427,
+        766,
+        1574,
+        73594,
+        1926,
+        1574,
+        1574,
+        38051,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 5,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.275
+        },
+        {
+          "rank": 2,
+          "token": 16827,
+          "prob": 0.147
+        },
+        {
+          "rank": 3,
+          "token": 7485,
+          "prob": 0.146
+        }
+      ],
+      "stream_offset": 101,
+      "emitted_tokens": [
+        66427,
+        766,
+        1574,
+        73594,
+        1926,
+        3168
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 6759,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        3775,
+        47106,
+        7485,
+        1574,
+        1574,
+        7485,
+        7485,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        200022
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 47106,
+          "prob": 0.374
+        },
+        {
+          "rank": 2,
+          "token": 6759,
+          "prob": 0.179
+        },
+        {
+          "rank": 3,
+          "token": 7485,
+          "prob": 0.078
+        }
+      ],
+      "stream_offset": 107,
+      "emitted_tokens": [
+        1574,
+        3775,
+        6759
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 43,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        55222,
+        1574,
+        41772,
+        2963,
+        1574,
+        1574,
+        38051,
+        7485,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.4
+        },
+        {
+          "rank": 2,
+          "token": 43,
+          "prob": 0.396
+        },
+        {
+          "rank": 3,
+          "token": 18007,
+          "prob": 0.083
+        }
+      ],
+      "stream_offset": 110,
+      "emitted_tokens": [
+        55222,
+        43
+      ],
+      "oracle_top1_suffix_extension": 2
+    },
+    {
+      "accepted": 5,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3725,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        41772,
+        2963,
+        4061,
+        1574,
+        38051,
+        7485,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        200022
+      ],
+      "mismatch_pos": 5,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 7485,
+          "prob": 0.296
+        },
+        {
+          "rank": 2,
+          "token": 10021,
+          "prob": 0.218
+        },
+        {
+          "rank": 3,
+          "token": 3725,
+          "prob": 0.159
+        }
+      ],
+      "stream_offset": 112,
+      "emitted_tokens": [
+        41772,
+        2963,
+        4061,
+        1574,
+        38051,
+        3725
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1574,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        7485,
+        200007,
+        200022,
+        140680,
+        328,
+        76976,
+        200023,
+        1488,
+        14343,
+        198,
+        1619,
+        432,
+        52071,
+        10692,
+        600
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 7485,
+          "prob": 0.377
+        },
+        {
+          "rank": 2,
+          "token": 1574,
+          "prob": 0.352
+        },
+        {
+          "rank": 3,
+          "token": 26,
+          "prob": 0.147
+        }
+      ],
+      "stream_offset": 118,
+      "emitted_tokens": [
+        1574
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 110818,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        200007,
+        200022,
+        140680,
+        328,
+        76976,
+        200023,
+        1488,
+        14343,
+        198,
+        1619,
+        432,
+        52071,
+        10692,
+        52071,
+        277
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 200007,
+          "prob": 0.316
+        },
+        {
+          "rank": 2,
+          "token": 110818,
+          "prob": 0.265
+        },
+        {
+          "rank": 3,
+          "token": 180574,
+          "prob": 0.169
+        }
+      ],
+      "stream_offset": 119,
+      "emitted_tokens": [
+        110818
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 38,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        10360,
+        7140,
+        1574,
+        11610,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.582
+        },
+        {
+          "rank": 2,
+          "token": 38,
+          "prob": 0.204
+        },
+        {
+          "rank": 3,
+          "token": 11610,
+          "prob": 0.123
+        }
+      ],
+      "stream_offset": 120,
+      "emitted_tokens": [
+        10360,
+        7140,
+        38
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 220,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        11610,
+        5475,
+        28,
+        1574,
+        73594,
+        5091,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 5475,
+          "prob": 0.398
+        },
+        {
+          "rank": 2,
+          "token": 220,
+          "prob": 0.398
+        },
+        {
+          "rank": 3,
+          "token": 5322,
+          "prob": 0.177
+        }
+      ],
+      "stream_offset": 123,
+      "emitted_tokens": [
+        11610,
+        220
+      ],
+      "oracle_top1_suffix_extension": 3
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 73594,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        28,
+        1574,
+        7533,
+        5091,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 7533,
+          "prob": 0.313
+        },
+        {
+          "rank": 2,
+          "token": 73594,
+          "prob": 0.194
+        },
+        {
+          "rank": 3,
+          "token": 35581,
+          "prob": 0.171
+        }
+      ],
+      "stream_offset": 125,
+      "emitted_tokens": [
+        28,
+        1574,
+        73594
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 48175,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        7147,
+        16827,
+        1574,
+        38051,
+        10021,
+        1926,
+        1574,
+        140680,
+        140680,
+        200022,
+        140680,
+        140680,
+        200022,
+        198,
+        1619
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 16827,
+          "prob": 0.4
+        },
+        {
+          "rank": 2,
+          "token": 3234,
+          "prob": 0.151
+        },
+        {
+          "rank": 3,
+          "token": 48175,
+          "prob": 0.151
+        }
+      ],
+      "stream_offset": 128,
+      "emitted_tokens": [
+        7147,
+        48175
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 19079,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        38051,
+        26,
+        200007,
+        200022,
+        140680,
+        328,
+        76976,
+        200023,
+        1488,
+        14343,
+        198,
+        1619,
+        432,
+        29547
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 38051,
+          "prob": 0.377
+        },
+        {
+          "rank": 2,
+          "token": 19079,
+          "prob": 0.279
+        },
+        {
+          "rank": 3,
+          "token": 7533,
+          "prob": 0.112
+        }
+      ],
+      "stream_offset": 130,
+      "emitted_tokens": [
+        1574,
+        19079
+      ],
+      "oracle_top1_suffix_extension": 11
+    },
+    {
+      "accepted": 11,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1015,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        26,
+        200007,
+        200022,
+        140680,
+        328,
+        76976,
+        200023,
+        1488,
+        14343,
+        198,
+        1619,
+        432,
+        52071,
+        21612,
+        10889
+      ],
+      "mismatch_pos": 11,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 432,
+          "prob": 0.631
+        },
+        {
+          "rank": 2,
+          "token": 3251,
+          "prob": 0.183
+        },
+        {
+          "rank": 3,
+          "token": 530,
+          "prob": 0.058
+        }
+      ],
+      "stream_offset": 132,
+      "emitted_tokens": [
+        26,
+        200007,
+        200022,
+        140680,
+        328,
+        76976,
+        200023,
+        1488,
+        14343,
+        198,
+        1619,
+        1015
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3251,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3301,
+        600,
+        277,
+        1013,
+        3251,
+        3996,
+        9907,
+        2540,
+        24,
+        2160,
+        38,
+        873,
+        24,
+        322,
+        1154
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1013,
+          "prob": 0.392
+        },
+        {
+          "rank": 2,
+          "token": 3251,
+          "prob": 0.385
+        },
+        {
+          "rank": 3,
+          "token": 10938,
+          "prob": 0.214
+        }
+      ],
+      "stream_offset": 144,
+      "emitted_tokens": [
+        3301,
+        600,
+        277,
+        3251
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 7,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1722,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        117018,
+        766,
+        319,
+        7386,
+        1991,
+        706,
+        392,
+        4011,
+        706,
+        392,
+        4011,
+        1918,
+        277,
+        1013,
+        3251
+      ],
+      "mismatch_pos": 7,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 4011,
+          "prob": 0.469
+        },
+        {
+          "rank": 2,
+          "token": 1722,
+          "prob": 0.399
+        },
+        {
+          "rank": 3,
+          "token": 16778,
+          "prob": 0.05
+        }
+      ],
+      "stream_offset": 148,
+      "emitted_tokens": [
+        117018,
+        766,
+        319,
+        7386,
+        1991,
+        706,
+        392,
+        1722
+      ],
+      "oracle_top1_suffix_extension": 2
+    },
+    {
+      "accepted": 15,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 14139,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        706,
+        392,
+        16778,
+        706,
+        392,
+        4011,
+        1918,
+        277,
+        1013,
+        3251,
+        3996,
+        9907,
+        2540,
+        24,
+        2160
+      ],
+      "stream_offset": 156,
+      "emitted_tokens": [
+        706,
+        392,
+        16778,
+        706,
+        392,
+        4011,
+        1918,
+        277,
+        1013,
+        3251,
+        3996,
+        9907,
+        2540,
+        24,
+        2160,
+        14139
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 15,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 198,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24,
+        1133,
+        14139,
+        1960,
+        322,
+        1154,
+        10029,
+        319,
+        2160,
+        198,
+        322,
+        1154,
+        5136,
+        319,
+        1133
+      ],
+      "stream_offset": 172,
+      "emitted_tokens": [
+        24,
+        1133,
+        14139,
+        1960,
+        322,
+        1154,
+        10029,
+        319,
+        2160,
+        198,
+        322,
+        1154,
+        5136,
+        319,
+        1133,
+        198
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 11,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 2946,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        322,
+        1154,
+        67697,
+        319,
+        4748,
+        198,
+        322,
+        1154,
+        8066,
+        319,
+        4748,
+        368,
+        1619,
+        432,
+        52071
+      ],
+      "mismatch_pos": 11,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 368,
+          "prob": 0.609
+        },
+        {
+          "rank": 2,
+          "token": 2946,
+          "prob": 0.383
+        },
+        {
+          "rank": 3,
+          "token": 198,
+          "prob": 0.008
+        }
+      ],
+      "stream_offset": 188,
+      "emitted_tokens": [
+        322,
+        1154,
+        67697,
+        319,
+        4748,
+        198,
+        322,
+        1154,
+        8066,
+        319,
+        4748,
+        2946
+      ],
+      "oracle_top1_suffix_extension": 3
+    },
+    {
+      "accepted": 6,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 7518,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1619,
+        432,
+        52071,
+        10692,
+        600,
+        277,
+        1013,
+        3251,
+        3996,
+        9907,
+        2540,
+        24,
+        11610,
+        38,
+        873
+      ],
+      "mismatch_pos": 6,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1013,
+          "prob": 0.953
+        },
+        {
+          "rank": 2,
+          "token": 10938,
+          "prob": 0.026
+        },
+        {
+          "rank": 3,
+          "token": 7518,
+          "prob": 0.02
+        }
+      ],
+      "stream_offset": 200,
+      "emitted_tokens": [
+        1619,
+        432,
+        52071,
+        10692,
+        600,
+        277,
+        7518
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 432,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        277,
+        79910,
+        52071,
+        12462,
+        517,
+        517,
+        530,
+        20,
+        29,
+        21,
+        21,
+        530,
+        530,
+        530,
+        20
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 79910,
+          "prob": 0.436
+        },
+        {
+          "rank": 2,
+          "token": 432,
+          "prob": 0.338
+        },
+        {
+          "rank": 3,
+          "token": 530,
+          "prob": 0.163
+        }
+      ],
+      "stream_offset": 207,
+      "emitted_tokens": [
+        277,
+        432
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 4,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 20,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        52071,
+        37818,
+        517,
+        530,
+        530,
+        29,
+        29,
+        21,
+        1232,
+        341,
+        4276,
+        1574,
+        277,
+        21001,
+        600
+      ],
+      "mismatch_pos": 4,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 530,
+          "prob": 0.689
+        },
+        {
+          "rank": 2,
+          "token": 20,
+          "prob": 0.264
+        },
+        {
+          "rank": 3,
+          "token": 277,
+          "prob": 0.017
+        }
+      ],
+      "stream_offset": 209,
+      "emitted_tokens": [
+        52071,
+        37818,
+        517,
+        530,
+        20
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 5,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1574,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        29,
+        21,
+        872,
+        341,
+        4276,
+        9563,
+        1574,
+        277,
+        21001,
+        600,
+        277,
+        69354,
+        322,
+        322,
+        1154
+      ],
+      "mismatch_pos": 5,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 9563,
+          "prob": 0.955
+        },
+        {
+          "rank": 2,
+          "token": 5264,
+          "prob": 0.012
+        },
+        {
+          "rank": 3,
+          "token": 1574,
+          "prob": 0.009
+        }
+      ],
+      "stream_offset": 214,
+      "emitted_tokens": [
+        29,
+        21,
+        872,
+        341,
+        4276,
+        1574
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 262,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        277,
+        57970,
+        600,
+        322,
+        69354,
+        277,
+        11610,
+        659,
+        873,
+        198,
+        322,
+        322,
+        11610,
+        323,
+        323
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 600,
+          "prob": 0.514
+        },
+        {
+          "rank": 2,
+          "token": 198,
+          "prob": 0.417
+        },
+        {
+          "rank": 3,
+          "token": 262,
+          "prob": 0.041
+        }
+      ],
+      "stream_offset": 220,
+      "emitted_tokens": [
+        277,
+        57970,
+        262
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 10667,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        13287,
+        3646,
+        2160,
+        2572,
+        4550,
+        2572,
+        262,
+        133478,
+        133478,
+        18948,
+        1750,
+        277,
+        277,
+        277,
+        277
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 13287,
+          "prob": 0.465
+        },
+        {
+          "rank": 2,
+          "token": 133478,
+          "prob": 0.303
+        },
+        {
+          "rank": 3,
+          "token": 10667,
+          "prob": 0.21
+        }
+      ],
+      "stream_offset": 223,
+      "emitted_tokens": [
+        10667
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 20,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3646,
+        393,
+        530,
+        2572,
+        29,
+        341,
+        262,
+        133478,
+        133478,
+        18948,
+        1750,
+        335,
+        277,
+        277,
+        277
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 2572,
+          "prob": 0.725
+        },
+        {
+          "rank": 2,
+          "token": 20,
+          "prob": 0.179
+        },
+        {
+          "rank": 3,
+          "token": 671,
+          "prob": 0.036
+        }
+      ],
+      "stream_offset": 224,
+      "emitted_tokens": [
+        3646,
+        393,
+        530,
+        20
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 2160,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        29,
+        21,
+        37060,
+        17621,
+        341,
+        262,
+        133478,
+        18948,
+        1750,
+        198,
+        277,
+        5906,
+        277,
+        277,
+        335
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 37060,
+          "prob": 0.713
+        },
+        {
+          "rank": 2,
+          "token": 2686,
+          "prob": 0.206
+        },
+        {
+          "rank": 3,
+          "token": 2160,
+          "prob": 0.046
+        }
+      ],
+      "stream_offset": 228,
+      "emitted_tokens": [
+        29,
+        21,
+        2160
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 6,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 198,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        37060,
+        341,
+        262,
+        133478,
+        18948,
+        1750,
+        1750,
+        198,
+        277,
+        5906,
+        277,
+        277,
+        335,
+        277,
+        277
+      ],
+      "mismatch_pos": 6,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1750,
+          "prob": 0.288
+        },
+        {
+          "rank": 2,
+          "token": 198,
+          "prob": 0.217
+        },
+        {
+          "rank": 3,
+          "token": 393,
+          "prob": 0.178
+        }
+      ],
+      "stream_offset": 231,
+      "emitted_tokens": [
+        37060,
+        341,
+        262,
+        133478,
+        18948,
+        1750,
+        198
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 6440,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        277,
+        328,
+        16134,
+        290,
+        2621,
+        5906,
+        5906,
+        5906,
+        335,
+        335,
+        277,
+        277,
+        277,
+        600,
+        9907
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 16134,
+          "prob": 0.719
+        },
+        {
+          "rank": 2,
+          "token": 5453,
+          "prob": 0.238
+        },
+        {
+          "rank": 3,
+          "token": 6440,
+          "prob": 0.021
+        }
+      ],
+      "stream_offset": 238,
+      "emitted_tokens": [
+        277,
+        328,
+        6440
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 13,
+      "candidate_positions": 15,
+      "target_token": 2148,
+      "excluded_candidate_positions": [
+        13,
+        14
+      ],
+      "primary_draft": [
+        1752,
+        2621,
+        1752,
+        5281,
+        5281,
+        5281,
+        5281,
+        277,
+        277,
+        277,
+        277,
+        277,
+        1013
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 2621,
+          "prob": 0.431
+        },
+        {
+          "rank": 2,
+          "token": 5906,
+          "prob": 0.109
+        },
+        {
+          "rank": 3,
+          "token": 18343,
+          "prob": 0.094
+        }
+      ],
+      "stream_offset": 241,
+      "emitted_tokens": [
+        1752,
+        2148
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 11,
+      "candidate_positions": 15,
+      "target_token": 26,
+      "excluded_candidate_positions": [
+        11,
+        12,
+        13,
+        14
+      ],
+      "primary_draft": [
+        2621,
+        26,
+        5281,
+        5906,
+        5281,
+        5281,
+        5281,
+        277,
+        277,
+        277,
+        277
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 2621,
+          "prob": 0.966
+        },
+        {
+          "rank": 2,
+          "token": 38,
+          "prob": 0.014
+        },
+        {
+          "rank": 3,
+          "token": 26,
+          "prob": 0.013
+        }
+      ],
+      "stream_offset": 243,
+      "emitted_tokens": [
+        26
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 10,
+      "candidate_positions": 15,
+      "target_token": 12725,
+      "excluded_candidate_positions": [
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "primary_draft": [
+        589,
+        5906,
+        5906,
+        373,
+        12948,
+        5906,
+        5906,
+        277,
+        277,
+        277
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 589,
+          "prob": 0.677
+        },
+        {
+          "rank": 2,
+          "token": 12725,
+          "prob": 0.111
+        },
+        {
+          "rank": 3,
+          "token": 18181,
+          "prob": 0.107
+        }
+      ],
+      "stream_offset": 244,
+      "emitted_tokens": [
+        12725
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 9,
+      "candidate_positions": 15,
+      "target_token": 1792,
+      "excluded_candidate_positions": [
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "primary_draft": [
+        12948,
+        13005,
+        373,
+        552,
+        290,
+        1574,
+        277,
+        7518,
+        277
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 13005,
+          "prob": 0.271
+        },
+        {
+          "rank": 2,
+          "token": 11887,
+          "prob": 0.186
+        },
+        {
+          "rank": 3,
+          "token": 1792,
+          "prob": 0.175
+        }
+      ],
+      "stream_offset": 245,
+      "emitted_tokens": [
+        12948,
+        1792
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 7,
+      "candidate_positions": 14,
+      "target_token": 4550,
+      "excluded_candidate_positions": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "primary_draft": [
+        11887,
+        373,
+        552,
+        290,
+        4234,
+        420,
+        277
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 11887,
+          "prob": 0.288
+        },
+        {
+          "rank": 2,
+          "token": 373,
+          "prob": 0.229
+        },
+        {
+          "rank": 3,
+          "token": 4550,
+          "prob": 0.182
+        }
+      ],
+      "stream_offset": 247,
+      "emitted_tokens": [
+        4550
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 1,
+      "drafted": 6,
+      "candidate_positions": 15,
+      "target_token": 2433,
+      "excluded_candidate_positions": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "primary_draft": [
+        373,
+        552,
+        290,
+        4234,
+        420,
+        277
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 552,
+          "prob": 0.957
+        },
+        {
+          "rank": 2,
+          "token": 4234,
+          "prob": 0.027
+        },
+        {
+          "rank": 3,
+          "token": 290,
+          "prob": 0.011
+        }
+      ],
+      "stream_offset": 248,
+      "emitted_tokens": [
+        373,
+        2433
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 4,
+      "candidate_positions": 15,
+      "target_token": 420,
+      "excluded_candidate_positions": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "primary_draft": [
+        2390,
+        4234,
+        4234,
+        420
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 4234,
+          "prob": 0.489
+        },
+        {
+          "rank": 2,
+          "token": 420,
+          "prob": 0.278
+        },
+        {
+          "rank": 3,
+          "token": 3522,
+          "prob": 0.074
+        }
+      ],
+      "stream_offset": 250,
+      "emitted_tokens": [
+        2390,
+        4234,
+        420
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 1,
+      "candidate_positions": 15,
+      "target_token": 5281,
+      "excluded_candidate_positions": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "primary_draft": [
+        277
+      ],
+      "stream_offset": 253,
+      "emitted_tokens": [
+        277,
+        5281
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 15,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 21488,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        19669,
+        200023,
+        194240,
+        1809,
+        262,
+        8899,
+        3102,
+        323,
+        220,
+        738,
+        9190,
+        24,
+        7483,
+        1327,
+        24
+      ],
+      "stream_offset": 0,
+      "emitted_tokens": [
+        19669,
+        200023,
+        194240,
+        1809,
+        262,
+        8899,
+        3102,
+        323,
+        220,
+        738,
+        9190,
+        24,
+        7483,
+        1327,
+        24,
+        21488
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 15,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 21402,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        330,
+        29,
+        25,
+        31,
+        757,
+        30016,
+        179465,
+        24,
+        32957,
+        290,
+        20017,
+        8034,
+        323,
+        262,
+        5943
+      ],
+      "stream_offset": 16,
+      "emitted_tokens": [
+        330,
+        29,
+        25,
+        31,
+        757,
+        30016,
+        179465,
+        24,
+        32957,
+        290,
+        20017,
+        8034,
+        323,
+        262,
+        5943,
+        21402
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 15,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 220,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        2491,
+        3581,
+        26,
+        3318,
+        55982,
+        10191,
+        290,
+        8899,
+        1574,
+        2991,
+        1657,
+        3725,
+        8899,
+        3102,
+        323
+      ],
+      "stream_offset": 32,
+      "emitted_tokens": [
+        2491,
+        3581,
+        26,
+        3318,
+        55982,
+        10191,
+        290,
+        8899,
+        1574,
+        2991,
+        1657,
+        3725,
+        8899,
+        3102,
+        323,
+        220
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 7,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 330,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        738,
+        9190,
+        517,
+        7483,
+        1327,
+        24,
+        21488,
+        24,
+        30016,
+        25,
+        31,
+        757,
+        30016,
+        179465,
+        24
+      ],
+      "mismatch_pos": 7,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 24,
+          "prob": 0.667
+        },
+        {
+          "rank": 2,
+          "token": 330,
+          "prob": 0.325
+        },
+        {
+          "rank": 3,
+          "token": 220,
+          "prob": 0.007
+        }
+      ],
+      "stream_offset": 48,
+      "emitted_tokens": [
+        738,
+        9190,
+        517,
+        7483,
+        1327,
+        24,
+        21488,
+        330
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 8,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 8034,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        29,
+        25,
+        31,
+        757,
+        30016,
+        179465,
+        26,
+        55082,
+        20017,
+        8034,
+        8899,
+        8899,
+        1574,
+        8899,
+        916
+      ],
+      "mismatch_pos": 8,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 20017,
+          "prob": 0.42
+        },
+        {
+          "rank": 2,
+          "token": 55982,
+          "prob": 0.301
+        },
+        {
+          "rank": 3,
+          "token": 8034,
+          "prob": 0.116
+        }
+      ],
+      "stream_offset": 56,
+      "emitted_tokens": [
+        29,
+        25,
+        31,
+        757,
+        30016,
+        179465,
+        26,
+        55082,
+        8034
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 323,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        3775,
+        55982,
+        10191,
+        8899,
+        26,
+        27577,
+        1809,
+        8899,
+        8899,
+        8899,
+        8899,
+        8899,
+        8899,
+        8899
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1574,
+          "prob": 0.567
+        },
+        {
+          "rank": 2,
+          "token": 26,
+          "prob": 0.219
+        },
+        {
+          "rank": 3,
+          "token": 323,
+          "prob": 0.214
+        }
+      ],
+      "stream_offset": 65,
+      "emitted_tokens": [
+        323
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 10,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 3351,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        5943,
+        21402,
+        2491,
+        3581,
+        1574,
+        3775,
+        55982,
+        10191,
+        8899,
+        26,
+        47855,
+        1809,
+        8899,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 10,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 47855,
+          "prob": 0.451
+        },
+        {
+          "rank": 2,
+          "token": 3351,
+          "prob": 0.362
+        },
+        {
+          "rank": 3,
+          "token": 27577,
+          "prob": 0.076
+        }
+      ],
+      "stream_offset": 66,
+      "emitted_tokens": [
+        5943,
+        21402,
+        2491,
+        3581,
+        1574,
+        3775,
+        55982,
+        10191,
+        8899,
+        26,
+        3351
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 5,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4398,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1910,
+        3725,
+        8899,
+        1574,
+        100873,
+        7483,
+        7483,
+        4398,
+        26,
+        29,
+        29,
+        24,
+        24,
+        24,
+        24
+      ],
+      "mismatch_pos": 5,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 7483,
+          "prob": 0.269
+        },
+        {
+          "rank": 2,
+          "token": 8722,
+          "prob": 0.251
+        },
+        {
+          "rank": 3,
+          "token": 5074,
+          "prob": 0.138
+        }
+      ],
+      "stream_offset": 77,
+      "emitted_tokens": [
+        1910,
+        3725,
+        8899,
+        1574,
+        100873,
+        4398
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 97147,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        8899,
+        26,
+        43214,
+        220,
+        29,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        1574,
+        24
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 43214,
+          "prob": 0.406
+        },
+        {
+          "rank": 2,
+          "token": 97147,
+          "prob": 0.356
+        },
+        {
+          "rank": 3,
+          "token": 220,
+          "prob": 0.067
+        }
+      ],
+      "stream_offset": 83,
+      "emitted_tokens": [
+        8899,
+        26,
+        97147
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1574,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3102,
+        33325,
+        1574,
+        13905,
+        38,
+        220,
+        24,
+        29,
+        24,
+        24,
+        24,
+        24,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 33325,
+          "prob": 0.229
+        },
+        {
+          "rank": 2,
+          "token": 51110,
+          "prob": 0.198
+        },
+        {
+          "rank": 3,
+          "token": 323,
+          "prob": 0.164
+        }
+      ],
+      "stream_offset": 86,
+      "emitted_tokens": [
+        3102,
+        1574
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1327,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        13905,
+        38,
+        1327,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        21488,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 38,
+          "prob": 0.5
+        },
+        {
+          "rank": 2,
+          "token": 220,
+          "prob": 0.145
+        },
+        {
+          "rank": 3,
+          "token": 5074,
+          "prob": 0.092
+        }
+      ],
+      "stream_offset": 88,
+      "emitted_tokens": [
+        13905,
+        1327
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 6,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 18603,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24,
+        21488,
+        24,
+        30016,
+        179465,
+        1574,
+        35374,
+        220,
+        29,
+        25,
+        31,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 6,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 35374,
+          "prob": 0.635
+        },
+        {
+          "rank": 2,
+          "token": 18603,
+          "prob": 0.193
+        },
+        {
+          "rank": 3,
+          "token": 59129,
+          "prob": 0.064
+        }
+      ],
+      "stream_offset": 90,
+      "emitted_tokens": [
+        24,
+        21488,
+        24,
+        30016,
+        179465,
+        1574,
+        18603
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 8034,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        220,
+        738,
+        9190,
+        1574,
+        35374,
+        220,
+        29,
+        29,
+        25,
+        31,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 9190,
+          "prob": 0.494
+        },
+        {
+          "rank": 2,
+          "token": 8034,
+          "prob": 0.252
+        },
+        {
+          "rank": 3,
+          "token": 5990,
+          "prob": 0.172
+        }
+      ],
+      "stream_offset": 97,
+      "emitted_tokens": [
+        220,
+        738,
+        8034
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 38051,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        1574,
+        35374,
+        220,
+        29,
+        29,
+        25,
+        31,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574,
+        1574
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 35374,
+          "prob": 0.624
+        },
+        {
+          "rank": 2,
+          "token": 100873,
+          "prob": 0.16
+        },
+        {
+          "rank": 3,
+          "token": 38051,
+          "prob": 0.056
+        }
+      ],
+      "stream_offset": 100,
+      "emitted_tokens": [
+        1574,
+        38051
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 3,
+      "drafted": 5,
+      "candidate_positions": 6,
+      "target_token": 916,
+      "excluded_candidate_positions": [
+        5
+      ],
+      "primary_draft": [
+        10021,
+        1574,
+        100873,
+        220,
+        6759
+      ],
+      "mismatch_pos": 3,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 220,
+          "prob": 0.231
+        },
+        {
+          "rank": 2,
+          "token": 916,
+          "prob": 0.206
+        },
+        {
+          "rank": 3,
+          "token": 5074,
+          "prob": 0.115
+        }
+      ],
+      "stream_offset": 102,
+      "emitted_tokens": [
+        10021,
+        1574,
+        100873,
+        916
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 200007,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        6759,
+        2032,
+        26,
+        8899,
+        200022,
+        1574,
+        1574,
+        180574,
+        3102,
+        200007,
+        200022,
+        1574,
+        328,
+        785,
+        785
+      ],
+      "mismatch_pos": 3,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 8899,
+          "prob": 0.299
+        },
+        {
+          "rank": 2,
+          "token": 97147,
+          "prob": 0.237
+        },
+        {
+          "rank": 3,
+          "token": 3318,
+          "prob": 0.139
+        }
+      ],
+      "stream_offset": 106,
+      "emitted_tokens": [
+        6759,
+        2032,
+        26,
+        200007
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 7,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 11906,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        200022,
+        140680,
+        328,
+        76976,
+        200023,
+        11778,
+        220,
+        414,
+        277,
+        392,
+        946,
+        1217,
+        392,
+        36728,
+        1236
+      ],
+      "mismatch_pos": 7,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 414,
+          "prob": 0.999
+        },
+        {
+          "rank": 2,
+          "token": 11906,
+          "prob": 0.001
+        },
+        {
+          "rank": 3,
+          "token": 785,
+          "prob": 0.0
+        }
+      ],
+      "stream_offset": 110,
+      "emitted_tokens": [
+        200022,
+        140680,
+        328,
+        76976,
+        200023,
+        11778,
+        220,
+        11906
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 3,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 21701,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        946,
+        1217,
+        392,
+        29243,
+        3419,
+        341,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270
+      ],
+      "mismatch_pos": 3,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 29243,
+          "prob": 0.458
+        },
+        {
+          "rank": 2,
+          "token": 36728,
+          "prob": 0.214
+        },
+        {
+          "rank": 3,
+          "token": 4973,
+          "prob": 0.195
+        }
+      ],
+      "stream_offset": 118,
+      "emitted_tokens": [
+        946,
+        1217,
+        392,
+        21701
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 19277,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        21402,
+        341,
+        341,
+        706,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        30,
+        392,
+        3270,
+        179465,
+        1217,
+        220
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 21402,
+          "prob": 0.214
+        },
+        {
+          "rank": 2,
+          "token": 28628,
+          "prob": 0.211
+        },
+        {
+          "rank": 3,
+          "token": 12908,
+          "prob": 0.12
+        }
+      ],
+      "stream_offset": 122,
+      "emitted_tokens": [
+        19277
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 133561,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        6034,
+        341,
+        28628,
+        4045,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        30,
+        24,
+        392,
+        3270,
+        179465,
+        1217
+      ],
+      "mismatch_pos": 2,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 28628,
+          "prob": 0.784
+        },
+        {
+          "rank": 2,
+          "token": 3419,
+          "prob": 0.053
+        },
+        {
+          "rank": 3,
+          "token": 12908,
+          "prob": 0.03
+        }
+      ],
+      "stream_offset": 123,
+      "emitted_tokens": [
+        6034,
+        341,
+        133561
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 31658,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        23588,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        30,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        1028,
+        3851
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 23588,
+          "prob": 0.539
+        },
+        {
+          "rank": 2,
+          "token": 12609,
+          "prob": 0.203
+        },
+        {
+          "rank": 3,
+          "token": 31658,
+          "prob": 0.118
+        }
+      ],
+      "stream_offset": 126,
+      "emitted_tokens": [
+        31658
+      ],
+      "oracle_top1_suffix_extension": 5
+    },
+    {
+      "accepted": 12,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 859,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        1028,
+        3851,
+        220
+      ],
+      "mismatch_pos": 12,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1028,
+          "prob": 0.607
+        },
+        {
+          "rank": 2,
+          "token": 2127,
+          "prob": 0.147
+        },
+        {
+          "rank": 3,
+          "token": 1642,
+          "prob": 0.134
+        }
+      ],
+      "stream_offset": 127,
+      "emitted_tokens": [
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        859
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 6,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 33455,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        49165,
+        64554,
+        341,
+        341,
+        341,
+        706,
+        392,
+        392,
+        1217
+      ],
+      "mismatch_pos": 6,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 49165,
+          "prob": 0.566
+        },
+        {
+          "rank": 2,
+          "token": 29243,
+          "prob": 0.143
+        },
+        {
+          "rank": 3,
+          "token": 4973,
+          "prob": 0.126
+        }
+      ],
+      "stream_offset": 140,
+      "emitted_tokens": [
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        33455
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4469,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        18104,
+        323,
+        323,
+        341,
+        18104,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 18104,
+          "prob": 0.319
+        },
+        {
+          "rank": 2,
+          "token": 28628,
+          "prob": 0.2
+        },
+        {
+          "rank": 3,
+          "token": 853,
+          "prob": 0.194
+        }
+      ],
+      "stream_offset": 147,
+      "emitted_tokens": [
+        4469
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 4263,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        28628,
+        323,
+        2195,
+        4263,
+        706,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465
+      ],
+      "mismatch_pos": 2,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 2195,
+          "prob": 0.278
+        },
+        {
+          "rank": 2,
+          "token": 323,
+          "prob": 0.25
+        },
+        {
+          "rank": 3,
+          "token": 28628,
+          "prob": 0.123
+        }
+      ],
+      "stream_offset": 148,
+      "emitted_tokens": [
+        28628,
+        323,
+        4263
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 5943,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        341,
+        341,
+        7260,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220
+      ],
+      "mismatch_pos": 0,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 341,
+          "prob": 0.564
+        },
+        {
+          "rank": 2,
+          "token": 30487,
+          "prob": 0.188
+        },
+        {
+          "rank": 3,
+          "token": 5943,
+          "prob": 0.146
+        }
+      ],
+      "stream_offset": 151,
+      "emitted_tokens": [
+        5943
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 15726,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        341,
+        706,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        1642
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 706,
+          "prob": 0.275
+        },
+        {
+          "rank": 2,
+          "token": 32288,
+          "prob": 0.255
+        },
+        {
+          "rank": 3,
+          "token": 7260,
+          "prob": 0.172
+        }
+      ],
+      "stream_offset": 152,
+      "emitted_tokens": [
+        341,
+        15726
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 13,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1642,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        31178,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        1028,
+        3851
+      ],
+      "mismatch_pos": 13,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1028,
+          "prob": 0.374
+        },
+        {
+          "rank": 2,
+          "token": 1642,
+          "prob": 0.366
+        },
+        {
+          "rank": 3,
+          "token": 5060,
+          "prob": 0.115
+        }
+      ],
+      "stream_offset": 154,
+      "emitted_tokens": [
+        31178,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        1642
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 6,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 115666,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        29243,
+        3419,
+        341,
+        341,
+        341,
+        706,
+        706,
+        392,
+        392
+      ],
+      "mismatch_pos": 6,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 29243,
+          "prob": 0.314
+        },
+        {
+          "rank": 2,
+          "token": 6001,
+          "prob": 0.183
+        },
+        {
+          "rank": 3,
+          "token": 29807,
+          "prob": 0.115
+        }
+      ],
+      "stream_offset": 168,
+      "emitted_tokens": [
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        115666
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 517,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3419,
+        5943,
+        341,
+        341,
+        341,
+        706,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        392,
+        392,
+        179465
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 341,
+          "prob": 0.589
+        },
+        {
+          "rank": 2,
+          "token": 517,
+          "prob": 0.106
+        },
+        {
+          "rank": 3,
+          "token": 6103,
+          "prob": 0.095
+        }
+      ],
+      "stream_offset": 175,
+      "emitted_tokens": [
+        3419,
+        5943,
+        517
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 19072,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3419,
+        8461,
+        341,
+        706,
+        706,
+        392,
+        58092,
+        1217,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 3419,
+          "prob": 0.292
+        },
+        {
+          "rank": 2,
+          "token": 3854,
+          "prob": 0.233
+        },
+        {
+          "rank": 3,
+          "token": 4741,
+          "prob": 0.14
+        }
+      ],
+      "stream_offset": 178,
+      "emitted_tokens": [
+        19072
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 2,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 8461,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        15114,
+        341,
+        15114,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220
+      ],
+      "mismatch_pos": 2,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 15114,
+          "prob": 0.438
+        },
+        {
+          "rank": 2,
+          "token": 8461,
+          "prob": 0.137
+        },
+        {
+          "rank": 3,
+          "token": 4961,
+          "prob": 0.12
+        }
+      ],
+      "stream_offset": 179,
+      "emitted_tokens": [
+        15114,
+        341,
+        8461
+      ],
+      "oracle_top1_suffix_extension": 5
+    },
+    {
+      "accepted": 5,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 30,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        1028,
+        3851,
+        220
+      ],
+      "mismatch_pos": 5,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 29,
+          "prob": 0.568
+        },
+        {
+          "rank": 2,
+          "token": 30,
+          "prob": 0.36
+        },
+        {
+          "rank": 3,
+          "token": 31,
+          "prob": 0.071
+        }
+      ],
+      "stream_offset": 182,
+      "emitted_tokens": [
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        30
+      ],
+      "oracle_top1_suffix_extension": 6
+    },
+    {
+      "accepted": 6,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 2127,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        2310,
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        11109,
+        1049
+      ],
+      "mismatch_pos": 6,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 2310,
+          "prob": 0.371
+        },
+        {
+          "rank": 2,
+          "token": 5060,
+          "prob": 0.295
+        },
+        {
+          "rank": 3,
+          "token": 2127,
+          "prob": 0.263
+        }
+      ],
+      "stream_offset": 188,
+      "emitted_tokens": [
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        2127
+      ],
+      "oracle_top1_suffix_extension": 6
+    },
+    {
+      "accepted": 6,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 5797,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        53046,
+        43967,
+        341,
+        341,
+        341,
+        706,
+        706,
+        392,
+        392
+      ],
+      "mismatch_pos": 6,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 53046,
+          "prob": 0.415
+        },
+        {
+          "rank": 2,
+          "token": 5797,
+          "prob": 0.217
+        },
+        {
+          "rank": 3,
+          "token": 11109,
+          "prob": 0.122
+        }
+      ],
+      "stream_offset": 195,
+      "emitted_tokens": [
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        5797
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 31913,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        5067,
+        341,
+        341,
+        341,
+        341,
+        706,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        179465
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 5067,
+          "prob": 0.737
+        },
+        {
+          "rank": 2,
+          "token": 4961,
+          "prob": 0.093
+        },
+        {
+          "rank": 3,
+          "token": 8596,
+          "prob": 0.077
+        }
+      ],
+      "stream_offset": 202,
+      "emitted_tokens": [
+        31913
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 143181,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        341,
+        341,
+        43967,
+        3419,
+        3419,
+        706,
+        706,
+        392,
+        1217,
+        220,
+        220,
+        24,
+        392,
+        179465,
+        179465
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 341,
+          "prob": 0.894
+        },
+        {
+          "rank": 2,
+          "token": 43967,
+          "prob": 0.041
+        },
+        {
+          "rank": 3,
+          "token": 8597,
+          "prob": 0.026
+        }
+      ],
+      "stream_offset": 203,
+      "emitted_tokens": [
+        143181
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 17791,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        341,
+        6204,
+        2853,
+        706,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        179465,
+        179465,
+        1217
+      ],
+      "mismatch_pos": 1,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 6204,
+          "prob": 0.338
+        },
+        {
+          "rank": 2,
+          "token": 5067,
+          "prob": 0.15
+        },
+        {
+          "rank": 3,
+          "token": 2885,
+          "prob": 0.125
+        }
+      ],
+      "stream_offset": 204,
+      "emitted_tokens": [
+        341,
+        17791
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 127808,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        5067,
+        17202,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        30,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        1028
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 5067,
+          "prob": 0.261
+        },
+        {
+          "rank": 2,
+          "token": 20334,
+          "prob": 0.15
+        },
+        {
+          "rank": 3,
+          "token": 21402,
+          "prob": 0.116
+        }
+      ],
+      "stream_offset": 206,
+      "emitted_tokens": [
+        127808
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 6,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 30,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        4045,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        1028,
+        3851
+      ],
+      "mismatch_pos": 6,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 29,
+          "prob": 0.497
+        },
+        {
+          "rank": 2,
+          "token": 30,
+          "prob": 0.434
+        },
+        {
+          "rank": 3,
+          "token": 31,
+          "prob": 0.068
+        }
+      ],
+      "stream_offset": 207,
+      "emitted_tokens": [
+        4045,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        30
+      ],
+      "oracle_top1_suffix_extension": 6
+    },
+    {
+      "accepted": 6,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 451,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        1028,
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        64554,
+        64554
+      ],
+      "mismatch_pos": 6,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 1028,
+          "prob": 0.894
+        },
+        {
+          "rank": 2,
+          "token": 451,
+          "prob": 0.066
+        },
+        {
+          "rank": 3,
+          "token": 580,
+          "prob": 0.02
+        }
+      ],
+      "stream_offset": 214,
+      "emitted_tokens": [
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        451
+      ],
+      "oracle_top1_suffix_extension": 6
+    },
+    {
+      "accepted": 6,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 17555,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        72201,
+        64554,
+        1049,
+        341,
+        341,
+        341,
+        706,
+        392,
+        392
+      ],
+      "mismatch_pos": 6,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 72201,
+          "prob": 0.441
+        },
+        {
+          "rank": 2,
+          "token": 64554,
+          "prob": 0.165
+        },
+        {
+          "rank": 3,
+          "token": 57,
+          "prob": 0.141
+        }
+      ],
+      "stream_offset": 221,
+      "emitted_tokens": [
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        17555
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 1049,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        5067,
+        341,
+        341,
+        341,
+        706,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 2,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 341,
+          "prob": 0.349
+        },
+        {
+          "rank": 2,
+          "token": 1049,
+          "prob": 0.203
+        },
+        {
+          "rank": 3,
+          "token": 5743,
+          "prob": 0.106
+        }
+      ],
+      "stream_offset": 228,
+      "emitted_tokens": [
+        5067,
+        1049
+      ],
+      "oracle_top1_suffix_extension": 1
+    },
+    {
+      "accepted": 1,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 8597,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        341,
+        34377,
+        328,
+        3419,
+        706,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465
+      ],
+      "mismatch_pos": 1,
+      "target_rank": 3,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 34377,
+          "prob": 0.191
+        },
+        {
+          "rank": 2,
+          "token": 1049,
+          "prob": 0.161
+        },
+        {
+          "rank": 3,
+          "token": 8597,
+          "prob": 0.159
+        }
+      ],
+      "stream_offset": 230,
+      "emitted_tokens": [
+        341,
+        8597
+      ],
+      "oracle_top1_suffix_extension": 0
+    },
+    {
+      "accepted": 13,
+      "drafted": 15,
+      "candidate_positions": 15,
+      "target_token": 2310,
+      "excluded_candidate_positions": [],
+      "primary_draft": [
+        5743,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        3851,
+        3851
+      ],
+      "mismatch_pos": 13,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 3851,
+          "prob": 0.617
+        },
+        {
+          "rank": 2,
+          "token": 5060,
+          "prob": 0.124
+        },
+        {
+          "rank": 3,
+          "token": 1028,
+          "prob": 0.094
+        }
+      ],
+      "stream_offset": 232,
+      "emitted_tokens": [
+        5743,
+        706,
+        392,
+        58092,
+        1217,
+        220,
+        29,
+        24,
+        392,
+        3270,
+        179465,
+        1217,
+        220,
+        2310
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 6,
+      "drafted": 8,
+      "candidate_positions": 15,
+      "target_token": 16787,
+      "excluded_candidate_positions": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "primary_draft": [
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        22811,
+        5791
+      ],
+      "mismatch_pos": 6,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 22811,
+          "prob": 0.41
+        },
+        {
+          "rank": 2,
+          "token": 53046,
+          "prob": 0.134
+        },
+        {
+          "rank": 3,
+          "token": 57,
+          "prob": 0.107
+        }
+      ],
+      "stream_offset": 246,
+      "emitted_tokens": [
+        3851,
+        220,
+        11906,
+        946,
+        1217,
+        392,
+        16787
+      ],
+      "oracle_top1_suffix_extension": null
+    },
+    {
+      "accepted": 0,
+      "drafted": 1,
+      "candidate_positions": 15,
+      "target_token": 5791,
+      "excluded_candidate_positions": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "primary_draft": [
+        21402
+      ],
+      "mismatch_pos": 0,
+      "target_rank": null,
+      "mismatch_candidates": [
+        {
+          "rank": 1,
+          "token": 21402,
+          "prob": 0.239
+        },
+        {
+          "rank": 2,
+          "token": 5067,
+          "prob": 0.145
+        },
+        {
+          "rank": 3,
+          "token": 4186,
+          "prob": 0.136
+        }
+      ],
+      "stream_offset": 253,
+      "emitted_tokens": [
+        5791
+      ],
+      "oracle_top1_suffix_extension": null
+    }
+  ]
+}

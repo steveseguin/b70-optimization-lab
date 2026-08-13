@@ -184,3 +184,52 @@ Raw evidence:
 The pre-window and restored production gates both passed, including cache-zero
 code and vision, in `data/muse-health-20260812-attn-batch2-preflight.json` and
 `data/muse-health-20260812-attn-batch2-restore.json`.
+
+The bounded rejection trace subsequently proved why neither attention pair
+can execute safely in the current graph arena:
+
+- Q+attention-gate's future output address is already the live `norm-N`
+  allocation at the earlier Q projection;
+- K and V intentionally reuse the exact same output address at their distinct
+  graph lifetimes.
+
+Do not weaken these guards. An allocator/lifetime rewrite would be required
+before either non-adjacent batch is valid. The diagnostic run remained exact
+at `48.082 / 70.241 / 85.313`; its raw result SHA-256 is
+`34728c0bc9ece4d32b37c72ccda3e96db1e52be95aae05fc9938b7d4e4a0fc46`.
+
+## Update: measured DFlash top-3 mismatch oracle
+
+The corrected BF16-drafter trace used debug verbosity 5 and produced 8,328
+candidate records over 188 verification rounds. Parser fixes distinguish the
+authoritative acceptance line from the later debug summary and exclude draft
+candidates logged before `p_min` or remaining-budget truncation. Five focused
+tests pass.
+
+Measured mismatch coverage is substantially below the optimistic structural
+model:
+
+| Class | Mismatch rounds | Top-2 coverage | Top-3 coverage |
+| --- | ---: | ---: | ---: |
+| prose | 80 | 28.8% | 43.8% |
+| code | 53 | 50.9% | 79.2% |
+| JSON | 44 | 34.1% | 50.0% |
+| overall | 177 | 36.7% | 55.9% |
+
+Even an oracle that evaluates every top-3-covered mismatch branch and receives
+up to three matching stale suffix nodes for free raises emitted tokens by only
+`21.2% / 28.6% / 18.1%` by class. Applied to the retained exact throughput,
+that is a zero-added-cost mean ceiling of about `83.13 tok/s`; real tree
+verification would be slower. Close sparse top-3 repair as a route to 100.
+
+Evidence:
+
+- trace log SHA-256
+  `718a4ec334e3b3713f75ebc0fd0387b65f7316ab51442fdd4caac8ef437eaf6c`;
+- sweep JSONL SHA-256
+  `5ff65e61aec1469e0a48e2da09a0cd3b2f1cf21ea94fd64421ece5bb0f240ac1`;
+- parsed analysis `data/muse-dflash-topk-coverage-20260812.json`, SHA-256
+  `50b26ba347ecf572c8d6f811139d6d266f12804565d3dfa7827f9bd19d55302e`.
+
+Production restoration passed the complete cache-zero code and vision gate in
+`data/muse-health-20260812-topk-trace-restore.json`.

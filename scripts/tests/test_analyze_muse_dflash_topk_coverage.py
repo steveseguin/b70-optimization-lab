@@ -82,3 +82,37 @@ def test_rejects_incomplete_round():
         assert "incomplete" in str(exc)
     else:
         raise AssertionError("expected incomplete trace to be rejected")
+
+
+def test_ignores_post_sample_acceptance_summary():
+    module = load_module()
+    lines = [
+        "draft candidate 0, pos 0: 101 (0.7)",
+        "draft candidate 1, pos 0: 102 (0.2)",
+        "draft candidate 2, pos 0: 103 (0.1)",
+        "accepted 1/1 draft tokens",
+        "add accepted tokens: sampled=999, ids.size=2, n_draft=1",
+        "accepted 1/1 draft tokens, new n_tokens = 42",
+        "stop processing: n_tokens = 42",
+    ]
+    result = module.parse_trace(lines)
+    assert result["overall"]["rounds"] == 1
+
+
+def test_excludes_trailing_candidate_rejected_by_p_min():
+    module = load_module()
+    lines = [
+        "draft candidate 0, pos 0: 101 (0.7)",
+        "draft candidate 1, pos 0: 102 (0.2)",
+        "draft candidate 2, pos 0: 103 (0.1)",
+        "draft candidate 0, pos 1: 201 (0.149)",
+        "draft candidate 1, pos 1: 202 (0.140)",
+        "draft candidate 2, pos 1: 203 (0.130)",
+        "accepted 0/1 draft tokens",
+        "add accepted tokens: sampled=102, ids.size=1, n_draft=1",
+        "stop processing: n_tokens = 42",
+    ]
+    result = module.parse_trace(lines)
+    row = result["round_records"][0]
+    assert row["primary_draft"] == [101]
+    assert row["excluded_candidate_positions"] == [1]
