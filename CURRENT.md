@@ -155,9 +155,17 @@ The required DDTree unified-KV mode is exact but costs a measured mean
 0.062 ms`). After applying both that cost and the retained gate/up batch2
 saving, the budget-15 zero-bookkeeping projection is now **`75.650 / 103.569 /
 120.610 tok/s`**, arithmetic mean **`99.943 tok/s`**. Only `0.029 ms/round`
-remains mathematically, but real tree bookkeeping and multi-sequence mask cost
-are still unmeasured. The next decisive step is the 16-row unified-KV
-branch-layout correctness/timing probe; do not claim >100 from this model.
+remains mathematically. The exact 16-row unified-KV branch-layout probe now
+measures the missing real cost: +`0.234 ms/round` steady target-layout time,
+plus `0.009 ms` tree construction, `0.213 ms` prefix forks, and `0.172 ms`
+temporary-sequence cleanup. It checked 1,139 target decisions with zero
+mismatches and preserved all canonical outputs, but the measured total
++`0.628 ms/round` lowers the modeled mean to approximately **`98.728 tok/s`**
+before remaining production integration overhead. Another approximately
+`0.657 ms/round` exact saving is required. Do not implement/promote DDTree or
+claim >100 yet; first attack the repeated unified-KV scans and remaining top-k
+kernel state. Evidence:
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-ddtree-branch-layout-probe.md`.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible
