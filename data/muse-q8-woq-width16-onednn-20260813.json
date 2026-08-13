@@ -1,0 +1,27 @@
+{
+  "benchmark":"muse_q8_0_onednn_woq_width16",
+  "onednn_version":"3.11.2",
+  "device":"Intel(R) Arc(TM) Pro B70 Graphics",
+  "driver":"1.15.38308+1",
+  "tokens":16,
+  "input":6656,
+  "q8_group":32,
+  "warmup":4,
+  "repeats":11,
+  "inner":8,
+  "timing_note":"host wall time per op; queue wait once per inner batch; rotated arm order",
+  "shapes":[
+    {"output":4992,"woq_pack_ms_f32":3.990448,"woq_pack_ms_bf16":0.164829,"woq_packed_bytes_f32":33226752,"woq_packed_bytes_bf16":33226752,"woq_f32_impl":"jit:gemm:any","woq_bf16_impl":"jit:gemm:any","bf16_impl":"jit:gemm:any","woq_scale_exec_md_query_available":false,"woq_scale_md":{"dims":[208,4992],"strides":[4992,1],"data_type":"f16"},"arms":[
+      {"name":"onednn_woq_f32_src","median_us":163.255875,"p10_us":160.504625,"p90_us":240.709875,"min_us":160.285375,"mean_us":196.019625,"gflops":6512.819609,"modeled_bytes":36048896,"modeled_gbps":220.8122434,"vs_direct_q8_f32":{"max_abs":0.0004119873047,"max_rel":0.3364103841,"rmse":4.122282534e-05,"nrmse":1.457281331e-06,"cosine":1},"vs_dequant_bf16_baseline":{"max_abs":0.3111858368,"max_rel":364.5731425,"rmse":0.06671099694,"nrmse":0.002358327725,"cosine":0.9999972192}},
+      {"name":"onednn_woq_bf16_src","median_us":106.015,"p10_us":101.591625,"p90_us":235.9435,"min_us":101.49775,"mean_us":130.6161705,"gflops":10029.29834,"modeled_bytes":35835904,"modeled_gbps":338.0267321,"vs_direct_q8_f32":{"max_abs":0.5399932861,"max_rel":495.3542224,"rmse":0.1036958472,"nrmse":0.003665785182,"cosine":0.9999970475},"vs_dequant_bf16_baseline":{"max_abs":0.5412826538,"max_rel":770.4362245,"rmse":0.1124411606,"nrmse":0.003974953436,"cosine":0.9999958563}},
+      {"name":"q8_dequant_bf16_plus_onednn","median_us":495.38575,"p10_us":483.75775,"p90_us":850.381,"min_us":483.516125,"mean_us":556.9518523,"gflops":2146.319437,"modeled_bytes":169381888,"modeled_gbps":341.9191771,"vs_direct_q8_f32":{"max_abs":0.3111686707,"max_rel":316.0702391,"rmse":0.06671106034,"nrmse":0.002358324109,"cosine":0.9999972191},"vs_dequant_bf16_baseline":{"max_abs":0,"max_rel":0,"rmse":0,"nrmse":0,"cosine":1}},
+      {"name":"resident_bf16_onednn_ceiling","median_us":117.720625,"p10_us":117.281,"p90_us":146.0725,"min_us":117.15325,"mean_us":122.885625,"gflops":9032.028704,"modeled_bytes":66985984,"modeled_gbps":569.0250455,"vs_direct_q8_f32":{"max_abs":0.3111686707,"max_rel":316.0702391,"rmse":0.06671106034,"nrmse":0.002358324109,"cosine":0.9999972191},"vs_dequant_bf16_baseline":{"max_abs":0,"max_rel":0,"rmse":0,"nrmse":0,"cosine":1}}
+    ]},
+    {"output":6656,"woq_pack_ms_f32":16.421453,"woq_pack_ms_bf16":0.204884,"woq_packed_bytes_f32":44728320,"woq_packed_bytes_bf16":44728320,"woq_f32_impl":"jit:gemm:any","woq_bf16_impl":"jit:gemm:any","bf16_impl":"jit:gemm:any","woq_scale_exec_md_query_available":false,"woq_scale_md":{"dims":[208,6656],"strides":[6656,1],"data_type":"f16"},"arms":[
+      {"name":"onednn_woq_f32_src","median_us":204.32925,"p10_us":202.51075,"p90_us":218.70225,"min_us":202.449375,"mean_us":210.148125,"gflops":6938.188008,"modeled_bytes":48349184,"modeled_gbps":236.6238999,"vs_direct_q8_f32":{"max_abs":0.0004119873047,"max_rel":0.3364103841,"rmse":4.126511857e-05,"nrmse":1.457843795e-06,"cosine":1},"vs_dequant_bf16_baseline":{"max_abs":0.3111858368,"max_rel":364.5731425,"rmse":0.06666133808,"nrmse":0.002355060959,"cosine":0.9999972268}},
+      {"name":"onednn_woq_bf16_src","median_us":110.527125,"p10_us":104.255375,"p90_us":110.959125,"min_us":104.227875,"mean_us":110.065,"gflops":12826.48718,"modeled_bytes":48136192,"modeled_gbps":435.514739,"vs_direct_q8_f32":{"max_abs":0.5399932861,"max_rel":495.3542224,"rmse":0.1037584414,"nrmse":0.003665652862,"cosine":0.9999970475},"vs_dequant_bf16_baseline":{"max_abs":0.5412826538,"max_rel":770.4362245,"rmse":0.1124975958,"nrmse":0.003974398108,"cosine":0.9999958634}},
+      {"name":"q8_dequant_bf16_plus_onednn","median_us":650.448875,"p10_us":635.240375,"p90_us":659.42325,"min_us":634.224875,"mean_us":654.7652955,"gflops":2179.532945,"modeled_bytes":225558528,"modeled_gbps":346.7736461,"vs_direct_q8_f32":{"max_abs":0.3111686707,"max_rel":316.0702391,"rmse":0.06666147919,"nrmse":0.002355064694,"cosine":0.9999972268},"vs_dequant_bf16_baseline":{"max_abs":0,"max_rel":0,"rmse":0,"nrmse":0,"cosine":1}},
+      {"name":"resident_bf16_onednn_ceiling","median_us":156.05,"p10_us":155.448875,"p90_us":157.879625,"min_us":155.40375,"mean_us":156.6754318,"gflops":9084.746889,"modeled_bytes":89243648,"modeled_gbps":571.8913682,"vs_direct_q8_f32":{"max_abs":0.3111686707,"max_rel":316.0702391,"rmse":0.06666147919,"nrmse":0.002355064694,"cosine":0.9999972268},"vs_dequant_bf16_baseline":{"max_abs":0,"max_rel":0,"rmse":0,"nrmse":0,"cosine":1}}
+    ]}
+  ]
+}
