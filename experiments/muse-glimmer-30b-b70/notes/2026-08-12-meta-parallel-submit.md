@@ -307,13 +307,16 @@ route. Its floating gated-MLP pattern forbids Muse's BF16-weight/F32-activation
 and F32-output mix, and its GPU reference implementation still executes three
 internal matmul primitives serially. RMSNorm has only a single-op matcher.
 
-The model topology is a stronger blocker: gate and up are TP-partial
-projections and both outputs are allreduced before the nonlinear and down
-projection consumers. There is therefore no full per-device MLP island to
-compile without changing TP semantics. The smallest exact legal local island
-is the shared F32-to-BF16 conversion plus strided batch-2 gate/up GEMM already
-screened at only `+0.34%`. A larger Graph wrapper would retain the projection
-submissions and at most remove a small elementwise fraction, projecting roughly
-`69-70 tok/s`; opaque constant layouts could also duplicate up to roughly
-`6.9 GB/card` of weights and change accumulation. Close this lane on oneDNN
-3.11.2.
+Muse already uses the standard Megatron FFN split: gate/up are column-parallel
+and produce local 4,992-row shards, SwiGLU stays local, and only the row-parallel
+down projection becomes partial and allreduces. Together with attention output,
+that is the measured 104 collectives per pass. Thus a local MLP island does
+exist, but Graph still cannot turn it into a true single primitive: mixed dtype
+rejects the advertised pattern, its reference partition retains three matmul
+submissions and all three weight reads, and the down collective is unchanged.
+The smallest exact legal island is the shared F32-to-BF16 conversion plus
+strided batch-2 gate/up GEMM already screened at only `+0.34%`. A larger Graph
+wrapper would at most remove a small elementwise/wrapper fraction, projecting
+roughly `69-70 tok/s`; opaque constant layouts could also duplicate up to
+roughly `6.9 GB/card` of weights and change accumulation. Close this lane on
+oneDNN 3.11.2.
