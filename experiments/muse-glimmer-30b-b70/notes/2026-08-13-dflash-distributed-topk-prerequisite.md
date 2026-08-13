@@ -320,3 +320,16 @@ between optimized top15 and greedy, and the unchanged-width, zero-bookkeeping
 DDTree arithmetic still needs roughly `1.95 ms/round` of independent exact
 savings to average 100. Retain the heap as a supporting kernel win; it does not
 justify beginning full server/KV tree integration yet.
+
+### Compact private-array negative
+
+A follow-up default-off specialization reduced the heap kernel's nominal
+per-work-item private arrays from 32 value/index pairs to 15. The canonical
+64-token heap/compact/heap C/A/C measured `131.407 / 131.364 / 131.426 tok/s`
+arithmetic means. Against pooled controls the compact variant was **`-0.040%`**
+overall (prose `+0.373%`, code `-0.447%`, JSON `+0.040%`), with identical
+hashes and proposal/acceptance counts. This is neutral and was reverted; the
+compiler/device did not expose a useful private-memory gain from the smaller
+source extent. Preserve the negative identity at
+`sweeps/20260813-dflash-topk-heap-compact-smoke-cac.json` and do not repeat it
+without compiler spill evidence.

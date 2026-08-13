@@ -122,8 +122,21 @@ proposal/acceptance counts. Request-derived round savings are approximately
 `0.43 / 0.46 / 0.37 ms` for prose/code/JSON. Together with the retained merge
 tree and 512-lane scan, this leaves roughly `0.56 ms/round` of the original
 top15-versus-greedy delta; the zero-bookkeeping DDTree arithmetic still needs
-roughly `1.95 ms/round` of independent exact savings to average 100. The heap
+roughly `1.96 ms/round` of independent exact savings to average 100. The heap
 is retained as a supporting kernel win, not a century result.
+The next verifier-side kernel/runtime step is now retained at source commit
+`a789ebe15`: `GGML_SYCL_COMM_LAST_EVENT_READY=1` snapshots each in-order
+queue's existing last event before round-0 P2P copies, eliminating 416
+readiness-barrier host submissions and 104 barrier commands per GPU per target
+pass while preserving the exact recursive-doubling F32 add tree. The full
+canonical C/A/C measures **`+3.462%`** and saves approximately
+`1.948 / 1.774 / 1.745 ms/round` for prose/code/JSON. Stacked into the
+budget-15 model, the zero-bookkeeping projection is now **`75.291 / 103.278 /
+120.524 tok/s`**, arithmetic mean **`99.698 tok/s`**. Only
+**`0.155 ms/round`** remains mathematically, but real DDTree bookkeeping is
+still unmeasured; do not claim 100 until the integrated exact server path does
+so. Evidence:
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-sycl-allreduce-last-event.md`.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible
