@@ -60,6 +60,12 @@ round-time neutral (`62.150 / 62.127 / 62.064 ms` candidate/control/candidate),
 and the cached-allocation hint is likewise neutral (`62.178 / 62.389 / 62.147
 ms` cached/control/cached+compressed).  Both remain default-off.  See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-level-zero-memory-compression-negative.md`.
+Target-side TP backend sampling was also screened: the SYCL four-rank global
+ARGMAX fast path was reached, but the first request still terminated after the
+collective and produced no benchmark row.  The integration remains default-off
+and is closed absent evidence that the raw-logit/CPU-sampling tail is worth
+several milliseconds per round.  See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-tp-backend-sampling-negative.md`.
 
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
