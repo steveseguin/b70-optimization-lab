@@ -211,9 +211,11 @@ The existing K RoPE plus KV-cache-write fusion is exact but also closed after
 an adjacent 64-token C/A/C: `134.809 tok/s` candidate versus `135.142 tok/s`
 pooled controls, with identical hashes, proposals, and acceptance. See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-rope-setrows-fusion-negative.md`.
-Native Unified Runtime driver in-order lists were also exact but only saved a
-drift-level `0.044 ms/round` class average in a 64-token C/A/C. Production
-remains on the incumbent adapter-managed ordering; see
+The legacy Unified Runtime driver-in-order flag produced only a drift-level
+`0.044 ms/round` class average in a 64-token C/A/C. A follow-up identity check
+showed that B70 already defaults to the redesigned Level Zero V2 adapter, where
+that V1 flag is likely ignored. Production already uses the optimized V2
+in-order queue implementation; see
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-ur-driver-inorder-screen.md`.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as

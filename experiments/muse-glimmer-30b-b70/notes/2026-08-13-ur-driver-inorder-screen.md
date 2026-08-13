@@ -4,19 +4,25 @@ Date: 2026-08-13
 
 ## Rationale
 
-The installed Intel Unified Runtime defaults to adapter-managed ordering for
-the SYCL in-order queues. `UR_L0_USE_DRIVER_INORDER_LISTS=1` requests native
-Level Zero in-order command lists instead. This is materially broader than an
-individual graph fusion: it applies below oneDNN and native SYCL submissions
-without changing model arithmetic.
+`UR_L0_USE_DRIVER_INORDER_LISTS=1` requests native Level Zero in-order command
+lists in the legacy V1 adapter. This appeared to be materially broader than an
+individual graph fusion because it would apply below oneDNN and native SYCL
+submissions without changing model arithmetic.
 
-The upstream Unified Runtime reference defines the flag for this purpose, and
-the adapter source enables it only on an explicitly requested in-order queue.
-The installed `1.15.38308` driver is newer than the adapter's documented
-passing threshold. Source audit reference: oneapi-src/unified-runtime commit
+The follow-up runtime identity check showed that B70 already uses **Unified
+Runtime over Level-Zero V2** by default. The V2 adapter has a redesigned
+in-order queue implementation and does not consume this V1 flag. Therefore
+the candidate was probably a no-op, and its drift-level result must not be
+interpreted as a measured V1 native-in-order speedup. `sycl-ls` reports all
+four cards as `Intel(R) oneAPI Unified Runtime over Level-Zero V2` on driver
+`1.15.38308+1`.
+
+Source audit reference: oneapi-src/unified-runtime commit
 `1443d4037f93134b9324484708838fe2a481349f`,
 `scripts/core/LEVEL_ZERO.rst` and
-`source/adapters/level_zero/common/platform.cpp`.
+`source/adapters/level_zero/common/platform.cpp`, plus
+`source/adapters/level_zero/v2/README.md` and
+`source/adapters/level_zero/common/adapter.cpp` for BMG's V2 default.
 
 ## Result
 
@@ -45,5 +51,6 @@ Evidence:
 ## Decision
 
 Do not change the production runtime or spend a full canonical packet on this
-signal. Keep it as an exact, unpromoted runtime screen. It is at least two
-orders of magnitude smaller than the current functional DDTree century gap.
+signal. Keep it as an exact likely-no-op screen. The important conclusion is
+that the installed B70 stack already uses the performance-focused V2 adapter;
+the legacy in-order switch is not an unclaimed verifier optimization.
