@@ -320,3 +320,20 @@ wrapper would at most remove a small elementwise/wrapper fraction, projecting
 roughly `69-70 tok/s`; opaque constant layouts could also duplicate up to
 roughly `6.9 GB/card` of weights and change accumulation. Close this lane on
 oneDNN 3.11.2.
+
+## Update: device-timeline bring-up
+
+The first `GGML_SYCL_DEVICE_TIMELINE=1` launch was invalid before any benchmark
+request: applying `enable_profiling` to every DPCT device-manager queue made the
+BF16 model initialization exceed the harness's five-minute health timeout. The
+runner terminated the server cleanly, wrote only an explicit `server failed to
+start` error row, and released the canonical GPU lock. No throughput or kernel
+timing may be inferred from this attempt. Production restoration passed the
+full code/cache-zero/vision gate in
+`data/muse-health-20260812-device-timeline-invalid-restore.json`.
+
+The next implementation scopes profiling to one dedicated in-order compute
+queue per SYCL backend context. Model-loading and buffer-transfer queues retain
+their incumbent properties. Preserve the invalid row at
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/sycl-device-timeline-20260812.jsonl`
+and use a new run identity for the retry.
