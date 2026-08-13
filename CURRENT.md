@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-12**
+Last reviewed: **2026-08-13**
 
 ## Authority And Update Rule
 
@@ -22,36 +22,48 @@ four Intel-branded cards described later in this file. Both use `xe`, expose
 full 32 GiB ReBAR, train at PCIe 5.0 x16, and enumerate `normal`. The current
 service is the loopback-only Qwen3.6 27B Q8_0 target-only TP2 endpoint:
 
-- unit: `qwen36-q8-b70.service` (enabled and active; health/smoke verified
-  2026-08-12 22:21 EDT; recheck `is-active` before relying on it later);
+- unit: `qwen36-q8-b70.service` (enabled and active; health and exact target-only
+  smoke verified 2026-08-13 after the final optimization deployment; recheck
+  `is-active` before relying on it later);
 - endpoint: `http://127.0.0.1:18080`;
 - launcher: `/home/steve/bin/run-qwen36-q8-b70.sh`;
 - model: `ggml-org/Qwen3.6-27B-GGUF` Q8_0 at revision
   `8a7ee08e8b9bfb857107ecc25a5599d2f38b76f8`;
-- runtime: mndodd llama.cpp/SYCL fork `4302fb599` plus the separated low-RAM,
-  DNN-off compile, and exact-F32 TP2 lab patch;
+- runtime: mndodd llama.cpp/SYCL fork `4302fb599` plus the complete promoted
+  target-only TP2 lab patch, built low-RAM and DNN-off;
+- protected source: `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl` is dirty by
+  design with that 17-file patch; do not reset or clean it. The independently
+  replayed patch artifact is the durable restore path;
 - contract: target only, F16 KV, graph off, no draft, no prompt cache, one
   slot, 8192-token context, equal tensor split;
 - safety: `MemoryHigh=8G`, `MemoryMax=10G`, `MemorySwapMax=8G`,
   `OOMScoreAdjust=900`, and no automatic restart.
 
-Validated fixed-suite performance is `31.338765 tok/s` under the historical
-helper convention and `31.025377 tok/s` under conventional interval counting;
-12/12 output hashes matched the accepted upstream-derived TP2 control. The
-complete result, source links, patch, launchers, and artifact hashes are in
+Validated fixed-suite performance is **`35.494434 tok/s`** under conventional
+99-inter-token-interval counting and `35.852963 tok/s` under the historical
+helper convention. All 12 outputs were 512 tokens, cache-zero, and byte-exact
+against the accepted pre-state-I/O target-only control. This is `+14.405%`
+over the matched mndodd fork baseline. The promoted [result
+packet](results/qwen36-27b-q8-tp2-asrock-b70/README.md), [standalone
+repro](repro/qwen36-27b-q8-tp2-asrock-b70/README.md), and [complete source
+patch](patches/qwen36-27b-q8-tp2-asrock-b70/README.md) own the final identity.
+The contributor-only baseline and attribution remain in
 [`community/mndodd-qwen36-27b-llamacpp-sycl/`](community/mndodd-qwen36-27b-llamacpp-sycl/).
 TP2 command graphs and `GGML_SYCL_PROFILE=1` are prohibited: graph decode
 aborted/hung, and the profiler reset both compute engines. Both cards recovered
 and passed ordinary workloads.
 
-The active research lane is target-only Q8 optimization of this same endpoint.
-Speculative MTP/DFlash measurements are retained as support rows but do not
-satisfy that objective. Do not overlap a model workload with a full BMG AOT
-compile on this 15 GiB host. The final bounded screens rejected root-barrier
-elision (`-0.246%`), forced PVC-style MMVQ phase ordering (`-2.818%`), and
-root-local reduction plus peer-copy replication (`-1.726%`); all source edits
-were reverted. The next credible target-only step is a structural exact
-collective/kernel change or a newer runtime, not another flag sweep.
+The target-only Q8 TP2 campaign is promoted at this result. The winning lab
+stack adds exact collective/quantized handoffs plus direct persistent-state I/O
+for the recurrent GDN and convolution paths; the latter two changes contributed
+`+3.132%` and `+0.855%` respectively in the matched attribution suite. Speculative
+MTP/DFlash measurements remain support rows and do not satisfy this objective.
+Do not overlap a model workload with a full BMG AOT compile on this 15 GiB
+host. Rejected workgroup packing, batched Q/K normalization/RoPE, graph,
+profiler, root-barrier, phase-ordering, and peer-copy doors are recorded in the
+result packet and must not be silently re-enabled. The next compatibility probe
+is the forthcoming Qwen 27B release; first test its architecture and target-only
+quality on the modern upstream tree before porting this exact-shape patch.
 
 ### Historical four-card state
 
@@ -1410,17 +1422,19 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Keep the DeepSeek lane paused. Restore the record only from the standalone
-   repro and reopen research only under the explicit frontier-closeout gates.
-2. Preserve the exact DeepSeek vLLM, XPU-kernel, oneCCL, patch, and result
-   identities. Do not relabel later default-off experiments as the record.
-3. Leave the newly started configuration and its active setup work untouched;
-   it is outside this DeepSeek publication closeout.
-4. Preserve `/home/steve/src/llama.cpp` as dirty Qwen research state until its
-   patch snapshots are independently reviewed. Do not reset or clean it for a
-   different model bring-up.
-5. Continue to publish only verified new matching LocalMaxxing records after
-   the cold realistic gate, complete identity capture, and correctness pass.
+1. Keep `qwen36-q8-b70.service` as the bounded loopback target-only endpoint;
+   verify `/health` before relying on it.
+2. Preserve `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl` as dirty promoted
+   source. Restore elsewhere from the complete patch; never reset this tree.
+3. Never overlap a BMG AOT build and a loaded model on this host. Retain the
+   documented build and service memory caps.
+4. On the next Qwen 27B release, establish modern-upstream architecture,
+   conversion, target-only load, and quality first. Port only strict-shape
+   optimizations whose graph contracts still match.
+5. Keep DeepSeek and historical four-card lanes paused unless explicitly
+   reopened. Continue to publish only verified matching LocalMaxxing records
+   after the cold realistic gate, complete identity capture, and correctness
+   pass.
 
 The detailed state formerly accumulated in this file remains available in Git
 at commit `95b4ca413` (`git show 95b4ca413:CURRENT.md`).

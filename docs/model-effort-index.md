@@ -36,27 +36,33 @@ path.
 
 Main entries:
 
+- [promoted lab result](../results/qwen36-27b-q8-tp2-asrock-b70/README.md)
+- [standalone reproduction](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md)
+- [complete lab source patch](../patches/qwen36-27b-q8-tp2-asrock-b70/README.md)
 - [validated community/fork packet](../community/mndodd-qwen36-27b-llamacpp-sycl/README.md)
 - [status and provenance boundary](../community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md)
-- [pinned lab patch](../community/mndodd-qwen36-27b-llamacpp-sycl/patches/0001-asrock-lab-lowram-dnnless-tp2.patch)
+- [initial compatibility patch](../community/mndodd-qwen36-27b-llamacpp-sycl/patches/0001-asrock-lab-lowram-dnnless-tp2.patch)
 - [model board](../README.md#qwen36-27b-model-board)
 
-Status: active target-only optimization lane as of 2026-08-12. The current
-quality-cleared endpoint best uses mndodd's pinned SYCL optimization fork plus
-the lab's separately identified low-RAM compatibility and exact-F32 two-card
-all-reduce patch. It reaches `31.338765 tok/s` under the historical helper or
-`31.025377 tok/s` under conventional 99-interval accounting, `+5.836%` over
-the matched accepted upstream-derived control. All 12 cold completions are
-cache-zero and their complete hashes match that control; the fresh logits gate
-is also effectively identical. The one-card fork endpoint reached `17.955800`
-legacy / `17.776242` conventional, `+3.809%` over its matched control. Forced
-SG32 was neutral in the endpoint suite and is not promoted. TP2 graph capture
-aborted or hung, and the built-in TP2 profiler reset both compute engines, so
-both are prohibited. MTP and DFlash measurements are support lanes, not
-substitutes for the target-only objective. Root-barrier elision, BMG-forced
-MMVQ phase ordering, and copy-engine replication were also slower. Further
-work now needs a structural exact collective/kernel change or a newer runtime,
-with graph capture kept off.
+Status: promoted target-only TP2 result as of 2026-08-13. The quality-cleared
+endpoint best uses mndodd's pinned SYCL optimization fork plus the lab's full
+exact collective, Q8 handoff, recurrent dispatch, and persistent-state-I/O
+stack. It reaches **`35.494434 tok/s`** under conventional 99-interval
+accounting or `35.852963 tok/s` under the historical helper. This is
+`+14.405%` over the matched mndodd fork baseline (`31.025377` conventional).
+All 12 cold completions are 512 tokens, cache-zero, and byte-exact against the
+accepted pre-state-I/O control. Direct GDN state I/O added `+3.132%`; direct
+convolution state I/O added another `+0.855%` in the final long suite.
+
+The earlier one-card fork endpoint reached `17.955800` helper / `17.776242`
+conventional, `+3.809%` over its matched control. MTP and DFlash measurements
+are support lanes, not substitutes for this target-only objective. Forced SG32,
+GDN workgroup packing, batched Q/K normalization with RoPE, root-barrier
+elision, BMG-forced MMVQ phase ordering, and copy-engine replication did not
+win. TP2 graph capture aborted or hung, and the built-in TP2 profiler reset
+both compute engines; both remain prohibited. The next bounded work is the new
+Qwen 27B release compatibility probe, followed by selective transfer of the
+strict-shape optimizations if its graph remains compatible.
 
 ### Laguna S 2.1 INT4 On Four B70s
 

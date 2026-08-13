@@ -17,18 +17,25 @@ current GPU count or topology from a historical recipe.
 
 ## What Is Production Today
 
-As of 2026-08-12, the configured endpoint is Qwen3.6 27B Q8_0 target-only TP2:
+As of 2026-08-13, the configured endpoint is Qwen3.6 27B Q8_0 target-only TP2:
 
 - hardware: 2x ASRock Arc Pro B70 32 GB;
-- engine: mndodd llama.cpp/SYCL `4302fb599` plus the documented lab patch;
+- engine: mndodd llama.cpp/SYCL `4302fb599` plus the complete promoted lab
+  patch;
 - endpoint: OpenAI-compatible API on `127.0.0.1:18080`;
 - served context: 8192 tokens, one active generation;
 - precision: Q8_0 weights, F16 KV, exact-F32 two-card reduction;
 - no speculation, prompt cache, graph capture, or LAN exposure.
 
-The enabled unit is `qwen36-q8-b70.service`; it was active and passed a
-cache-zero target-only smoke at 2026-08-12 22:21 EDT. The launcher is
-`/home/steve/bin/run-qwen36-q8-b70.sh`. Reproduction and validation are in
+The enabled unit is `qwen36-q8-b70.service`; it was active and passed health,
+an exact cache-zero target-only smoke, and post-stress GPU/kernel checks on
+2026-08-13. The launcher is `/home/steve/bin/run-qwen36-q8-b70.sh`. The fixed
+12-prompt, 512-token suite measured **`35.494434 tok/s`** conventionally
+(`35.852963 tok/s` historical-helper compatibility), with all 12 output hashes
+exact. Use the [result packet](../results/qwen36-27b-q8-tp2-asrock-b70/README.md),
+[standalone repro](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md), and [full
+source patch](../patches/qwen36-27b-q8-tp2-asrock-b70/README.md). The original
+mndodd attribution and matched fork baseline remain in
 [`../community/mndodd-qwen36-27b-llamacpp-sycl/`](../community/mndodd-qwen36-27b-llamacpp-sycl/).
 Always check the unit and `/health`; installed/enabled is not proof that the
 model is loaded.
@@ -75,10 +82,21 @@ Latest full-32K concurrency conclusion:
   content. In the half-shared synthetic test, c8 near-32K TTFT improved from
   about `22.20 s` to `12.45 s`.
 
-## Active Optimization Lane
+## Latest Optimization Lane
 
-Qwen3.6 27B INT4 AutoRound is the current optimization target, separate from
-the production LAN endpoint:
+Qwen3.6 27B Q8_0 target-only TP2 is promoted at `35.494434 tok/s`
+conventional on the two-card ASRock host. The result is `+14.405%` over the
+matched mndodd-fork baseline, uses no speculation or response reuse, and is
+12/12 output-hash exact. The direct recurrent GDN and convolution persistent-
+state I/O paths are the final incremental wins. Continue from the standalone
+[repro](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md), not from an older
+community-only launcher. The next bounded task is release-day compatibility
+testing for the new Qwen 27B before transferring exact-shape optimizations.
+
+## Historical Qwen3.6 27B INT4 AutoRound Lane
+
+Qwen3.6 27B INT4 AutoRound was the prior optimization target on the historical
+Intel-branded host:
 
 - current fastest variant: `webhie/Qwen3.6-27B-int4-AutoRound`
 - webhie revision: `f5750c90b3776db658594df5fe8051098226dd8e`
