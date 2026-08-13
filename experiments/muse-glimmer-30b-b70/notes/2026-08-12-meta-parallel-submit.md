@@ -357,3 +357,32 @@ Do not solve it by silently moving backend compute onto another queue: current
 buffer uploads and input copies depend on shared in-order queue semantics.
 Future timeline work must capture events at the actual oneDNN/native submission
 sites or add explicit cross-queue dependencies first.
+
+Source commit `f8cc5ff3d` containing the unusable whole-queue profiler was
+reverted by `ac39c9489`; default source behavior is restored. A later API audit
+found a safer measurement primitive: the B70 runtime advertises
+`ext_oneapi_queue_profiling_tag`, whose tag events provide timestamps on an
+ordinary in-order queue. Sparse pre/post tags around real submissions can
+therefore measure queue occupancy without changing queue properties or model
+startup. oneDNN 3.11.2 also exposes `dnnl::sycl_interop::execute`, returning the
+actual primitive completion event. Advance this bounded tag-pair design rather
+than reviving the reverted queue-wide implementation.
+
+## Update: native XMX GEMM ceiling
+
+The incumbent oneDNN BF16 path is already an Xe2 nGEN XMX/DPAS JIT kernel with
+F32 accumulation. Warm oneDNN verbose medians for each local 63.375 MiB FFN
+weight are about `0.129-0.133 ms` at both N=2 and N=16, or roughly `499 GB/s`
+effective at N=16. The three FFN projections therefore cost about
+`0.397 ms/layer`, `20.66 ms/pass`, and are already weight-bandwidth dominated.
+
+A custom ESIMD DPAS kernel is only justified as a one-shape falsification:
+clone local `4992 x 16 x 6656`, require bitwise F32 identity over real and
+adversarial activations, and require at least a 20% device-time win
+(`<=0.106 ms` versus `0.1331 ms`) before integration. Even scaling that win to
+all three FFN projections saves only about 4.1 ms/pass and projects roughly
+`73-75 tok/s`; a generous 8 ms whole-pass win is only around 80. Reaching 100
+from the retained acceptance would require the FFN pool to act like roughly
+`2.6 TB/s` of weight reads. Native GEMM replacement is therefore not the
+century route, though the one-shape exactness test can decisively falsify the
+remaining small upside.
