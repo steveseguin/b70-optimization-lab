@@ -137,10 +137,12 @@ def run_config(lane, cfg, port, gpus, out, lock_fd, model=MODEL):
                 {"role": "user", "content": ptext},
             ]
             tpl = http_json(port, "/apply-template", {"messages": msgs}, timeout=60)
-            r = http_json(port, "/completion", {
+            request = {
                 "prompt": tpl["prompt"], "n_predict": 256,
                 "temperature": 0, "cache_prompt": False,
-            })
+            }
+            request.update(cfg.get("request", {}))
+            r = http_json(port, "/completion", request)
             t = r["timings"]
             dn = t.get("draft_n") or 0
             da = t.get("draft_n_accepted") or 0

@@ -14,6 +14,7 @@
       "n_max": 15,
       "p_min": 0.15,
       "args": ["-sm", "tensor", "-bs"],
+      "request": {"backend_sampling": true, "samplers": ["temperature"]},
       "env": {
         "LLAMA_TP_BACKEND_SAMPLING": "1",
         "GGML_SYCL_COMM_ARGMAX": "1",
@@ -42,6 +43,7 @@
       "n_max": 15,
       "p_min": 0.15,
       "args": ["-sm", "tensor", "-bs"],
+      "request": {"backend_sampling": true, "samplers": ["temperature"]},
       "env": {
         "LLAMA_TP_BACKEND_SAMPLING": "0",
         "GGML_SYCL_COMM_ARGMAX": "0",
@@ -70,6 +72,7 @@
       "n_max": 15,
       "p_min": 0.15,
       "args": ["-sm", "tensor", "-bs"],
+      "request": {"backend_sampling": true, "samplers": ["temperature"]},
       "env": {
         "LLAMA_TP_BACKEND_SAMPLING": "1",
         "GGML_SYCL_COMM_ARGMAX": "1",
