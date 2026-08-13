@@ -159,13 +159,25 @@ remains mathematically. The exact 16-row unified-KV branch-layout probe now
 measures the missing real cost: +`0.234 ms/round` steady target-layout time,
 plus `0.009 ms` tree construction, `0.213 ms` prefix forks, and `0.172 ms`
 temporary-sequence cleanup. It checked 1,139 target decisions with zero
-mismatches and preserved all canonical outputs, but the measured total
-+`0.628 ms/round` lowers the modeled mean to approximately **`98.728 tok/s`**
-before remaining production integration overhead. Another approximately
-`0.657 ms/round` exact saving is required. Do not implement/promote DDTree or
-claim >100 yet; first attack the repeated unified-KV scans and remaining top-k
-kernel state. Evidence:
+mismatches on the ordinary top-1 prefix and preserved all canonical ordinary
+outputs, but it did not independently validate alternate branches. The
+measured total +`0.628 ms/round` gives an optimistic naive mean of `98.728`,
+and a subsequent accounting audit found that this still over-amortizes the
+per-emitted-token DFlash feature encoder. Correcting that component lowers the
+credible modeled mean to approximately **`97.2--97.5 tok/s`** before remaining
+integration overhead; at least roughly `1.3 ms/round` of exact savings is still
+required. Do not implement/promote DDTree or claim >100 yet; first attack the
+repeated unified-KV scans and remaining top-k/kernel runtime. Evidence:
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-ddtree-branch-layout-probe.md`.
+Both immediate follow-ups are now closed. Compact k=15 private heap state was
+exact but did not beat the warmed trailing control and was reverted. A bulk
+one-scan multi-leaf KV fork reduced fork time from `0.213` to `0.119 ms`, but
+one-scan `seq_keep(0)` cleanup regressed from `0.172` to `0.241 ms` and total
+measured branch overhead regressed from `0.628` to `0.664 ms/round`; it was
+also reverted. See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-topk-heap-compact-inconclusive.md`
+and
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-ddtree-bulk-kv-negative.md`.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible
