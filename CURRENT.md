@@ -253,6 +253,12 @@ A fixed-shape native BF16 XMX/DPAS falsification is also closed: despite using
 an already-packed duplicate weight, it was `32.2%` slower than oneDNN and
 differed in `73,048 / 79,872` F32 elements.  It was not integrated.  See
 `experiments/muse-glimmer-30b-b70/native-bf16-gemm/README.md`.
+An exact oneDNN descriptor/library screen is also closed.  Transposing operand
+roles and removing the batch-of-one dimension preserved every F32 bit but left
+the dominant MLP shapes at the same approximately `0.116 ms` per GEMM.
+Official oneDNN v3.12 reproduced both the incumbent output hashes and timings.
+See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-onednn-operand-layout-negative.md`.
 
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
