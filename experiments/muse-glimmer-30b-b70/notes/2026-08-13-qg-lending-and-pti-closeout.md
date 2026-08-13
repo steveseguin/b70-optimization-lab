@@ -163,3 +163,76 @@ Production was restored after every window.  The final health artifact is
 `data/muse-health-20260813T164324Z-qg-lending-closed-restore.json`; models,
 cache-zero 512-token code, and vision all passed.  No reboot, driver reset, or
 device recovery was needed.
+
+### Owner-BF16 v2 also fails
+
+A materially different v2 removed the helper-first schedule.  Owners were
+submitted first; each owner converted its canonical normalized activation to
+BF16, host-waited conversion readiness, PULL-copied exactly 212,992 BF16 bytes
+to persistent helper-local memory, host-waited the helper Q/gate GEMMs, and
+then enqueued the canonical owner scatter.  Helper ordinary graphs were
+submitted only after the owner phase.  This removed every device-side
+cross-device event and the obsolete helper-activation arena-survival guard.
+Two independent source reviews found the resulting event/lifetime DAG sound.
+
+The v2 binary compiled successfully and again emitted both layer-0 execution
+markers.  It nevertheless made no progress after layer 0 and produced no
+benchmark row.  This falsifies both cross-device-event progress and
+helper-first scheduling as the sole causes.  The stronger conclusion is that
+holding back any rank's ordinary attention graph is incompatible with the
+owner remainder on this meta/SYCL topology.
+
+Preserved source:
+`patches/muse-qg-lending-owner-bf16-v2-deadlock-20260813.patch`, SHA-256
+`35f89b80ab6cbe0b5818a61b8220e7588c816adb5f17690ba6d9d019731de31b`.
+Final log:
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/servers/sweep-qg-lending-owner-bf16-v2-smoke-20260813-qg-lend-owner-bf16-v2-on.log`,
+SHA-256 `8f0580438be8519acb7d01165bb169aeadfb95224f9fab53d2316917f2ab09f2`.
+
+Production again restored cleanly.  The final v2 health artifact is
+`data/muse-health-20260813T165830Z-qg-lending-v2-closed-restore.json` and passes
+models, cache-zero 512-token code, and vision.  Do not retry another rank-phase
+ordering variant.  Any further proof must submit all four ordinary rank graphs
+together and isolate custom helper work on separate queues.
+
+### All-rank side-queue v3 is exact but slower
+
+The final materially different v3 retained concurrent submission of all four
+ordinary rank graphs and moved helper Q/gate work onto dedicated in-order SYCL
+queues with private oneDNN engine, stream, primitive, scratch, and output
+state.  Host completion waits replaced cross-device event dependencies.
+Separate owner/helper activation buffers closed the rotating-role overwrite
+hazard, and direct device allocations avoided the strict-LIFO VMM pool.  Two
+independent reviews found no remaining deadlock, ordering, arena-lifetime, or
+teardown blocker before the bounded smoke.
+
+The candidate completed the three canonical 64-token prompts and preserved
+every output hash and proposal/acceptance count:
+
+- prose `66.913 tok/s`, hash `f45a2f2c58f1ca34`, drafted/accepted `155/48`;
+- code `112.039 tok/s`, hash `2ca4135046a15a71`, drafted/accepted `126/53`;
+- JSON `217.520 tok/s`, hash `32dc3aebb11684a4`, drafted/accepted `65/58`.
+
+The matching leading control was `67.977 / 114.096 / 219.110 tok/s`, so v3
+regressed every class by roughly `1.5%`.  It is correct and reachable, but the
+P2P copy, host waits, extra conversion, and side-queue work cost more than the
+isolated half-projection saving.  Do not run a full 256-token C/A/C or another
+Q/gate lending variant.
+
+Evidence:
+
+- result JSONL:
+  `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/qg-lending-sidequeue-v3-smoke-20260813.jsonl`;
+- server log:
+  `/mnt/fast-ai/bench-results/muse-glimmer-30b/servers/sweep-qg-lending-sidequeue-v3-smoke-20260813-qg-lend-sidequeue-v3-on.log`,
+  SHA-256 `3c2deaceef19e35c77cf10d984e5dbb493dc1019e5056e5b6a70846ced23ecd8`;
+- preserved source:
+  `patches/muse-qg-lending-sidequeue-v3-negative-20260813.patch`, SHA-256
+  `4855f83dd2c63c6977079933c32f4d54f18864503c89bb9da275be80e7b7846b`;
+- restored production health:
+  `data/muse-health-20260813T1720Z-qg-lending-v3-negative-restore.json`,
+  SHA-256 `da6d58c72333cd047b9c063e61ff2b5fc521baa77d228fde870b2fd4168dfeb5`.
+
+Production passed model listing, cache-zero 512-token code, and vision.  No
+reboot, driver reset, or device recovery was needed.  Q/gate lending is closed
+as an exact performance negative.

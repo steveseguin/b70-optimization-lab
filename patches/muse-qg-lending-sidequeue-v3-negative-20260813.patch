@@ -1,0 +1,937 @@
+diff --git a/ggml/src/ggml-backend-meta.cpp b/ggml/src/ggml-backend-meta.cpp
+index ce30b57cc..7b283c9b2 100644
+--- a/ggml/src/ggml-backend-meta.cpp
++++ b/ggml/src/ggml-backend-meta.cpp
+@@ -6,6 +6,7 @@
+ #include "ggml-cpp.h"
+
+ #include <algorithm>
++#include <array>
+ #include <cassert>
+ #include <cmath>
+ #include <cstddef>
+@@ -25,6 +26,55 @@ struct ggml_backend_meta_buffer_type;
+ struct ggml_backend_meta_buffer;
+ struct ggml_backend_meta;
+
++static bool ggml_backend_meta_muse_qg_lend_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_MUSE_TP4_QG_LEND");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return enabled;
++}
++
++static bool ggml_backend_meta_muse_qg_weight(const ggml_tensor * tensor, int * layer = nullptr) {
++    if (!ggml_backend_meta_muse_qg_lend_enabled() || tensor == nullptr ||
++        tensor->op != GGML_OP_NONE || tensor->type != GGML_TYPE_BF16 ||
++        tensor->ne[0] != 6656 || tensor->ne[1] != 4096 ||
++        tensor->ne[2] != 1 || tensor->ne[3] != 1) {
++        return false;
++    }
++
++    if (std::strncmp(tensor->name, "blk.", 4) != 0) {
++        return false;
++    }
++    char * end = nullptr;
++    const long il = std::strtol(tensor->name + 4, &end, 10);
++    if (end == tensor->name + 4 || il < 0 || il >= 52 ||
++        (std::strcmp(end, ".attn_q.weight") != 0 &&
++         std::strcmp(end, ".attn_gate.weight") != 0)) {
++        return false;
++    }
++    if (layer != nullptr) {
++        *layer = (int) il;
++    }
++    return true;
++}
++
++static bool ggml_backend_meta_muse_qg_owners(
++        const ggml_backend_meta_split_state & split_state, std::array<bool, 4> & owners) {
++    if (split_state.axis != GGML_BACKEND_SPLIT_AXIS_1 ||
++        split_state.n_segments != 1 || split_state.nr[0] != 1) {
++        return false;
++    }
++    int n_owners = 0;
++    for (size_t j = 0; j < owners.size(); ++j) {
++        if (split_state.ne[j] != 0 && split_state.ne[j] != 2048) {
++            return false;
++        }
++        owners[j] = split_state.ne[j] == 2048;
++        n_owners += owners[j];
++    }
++    return n_owners == 2 && owners[0] == owners[2] && owners[1] == owners[3] && owners[0] != owners[1];
++}
++
+ const char * ggml_backend_meta_split_axis_name(enum ggml_backend_meta_split_axis split_axis) {
+     switch (split_axis) {
+         case GGML_BACKEND_SPLIT_AXIS_0:
+@@ -421,6 +471,7 @@ struct ggml_backend_meta_buffer_context {
+     int stc_compute_index      = 0;
+     int stc_compute_index_next = 0;
+     std::vector<ggml_backend_buffer_ptr> bufs;
++    std::map<const ggml_tensor *, std::array<ggml_tensor *, 4>> muse_qg_aux_weights;
+
+     // FIXME
+     // The size of the split state cache is unbounded and can theoretically grow infinitely large.
+@@ -484,6 +535,30 @@ static struct ggml_tensor * ggml_backend_meta_buffer_simple_tensor(const struct
+     return it->second[index];
+ }
+
++static ggml_tensor * ggml_backend_meta_muse_qg_aux_weight(const ggml_tensor * tensor, size_t owner) {
++    if (tensor == nullptr || tensor->buffer == nullptr || !ggml_backend_buffer_is_meta(tensor->buffer) || owner >= 4) {
++        return nullptr;
++    }
++    auto * buf_ctx = (ggml_backend_meta_buffer_context *) tensor->buffer->context;
++    const auto it = buf_ctx->muse_qg_aux_weights.find(tensor);
++    return it == buf_ctx->muse_qg_aux_weights.end() ? nullptr : it->second[owner];
++}
++
++static bool ggml_backend_meta_tensor_ranges_overlap(const ggml_tensor * first, const ggml_tensor * second) {
++    if (first == nullptr || second == nullptr || first->data == nullptr || second->data == nullptr) {
++        return false;
++    }
++    const uintptr_t first_begin = (uintptr_t) first->data;
++    const uintptr_t second_begin = (uintptr_t) second->data;
++    const size_t first_size = ggml_nbytes(first);
++    const size_t second_size = ggml_nbytes(second);
++    if (first_size == 0 || second_size == 0 ||
++        first_size > UINTPTR_MAX - first_begin || second_size > UINTPTR_MAX - second_begin) {
++        return true;
++    }
++    return first_begin < second_begin + second_size && second_begin < first_begin + first_size;
++}
++
+ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(const struct ggml_tensor * tensor, bool assume_sync);
+
+ // The distributed TOP_K contract is intentionally private to the terminal
+@@ -1337,6 +1412,26 @@ static enum ggml_status ggml_backend_meta_buffer_init_tensor_impl(ggml_backend_m
+
+     stc.simple_tensors[tensor] = simple_tensors;
+
++    std::array<bool, 4> muse_qg_owners = {};
++    if (&stc == &buf_ctx->stc_static && n_simple_bufs == 4 &&
++        ggml_backend_meta_muse_qg_weight(tensor) &&
++        ggml_backend_meta_muse_qg_owners(split_state, muse_qg_owners)) {
++        std::array<ggml_tensor *, 4> aux_weights = {};
++        for (size_t owner = 0; owner < muse_qg_owners.size(); ++owner) {
++            if (!muse_qg_owners[owner]) {
++                continue;
++            }
++            const size_t helper = (owner + 3) % 4;
++            GGML_ASSERT(!muse_qg_owners[helper]);
++            ggml_tensor * aux = ggml_new_tensor_2d(stc.ctxs[helper].get(), GGML_TYPE_BF16, 6656, 1024);
++            char name[GGML_MAX_NAME];
++            std::snprintf(name, sizeof(name), "%s.qg_lend.%zu", tensor->name, owner);
++            ggml_set_name(aux, name);
++            aux_weights[owner] = aux;
++        }
++        buf_ctx->muse_qg_aux_weights.emplace(tensor, aux_weights);
++    }
++
+     return GGML_STATUS_SUCCESS;
+ }
+
+@@ -1349,6 +1444,7 @@ static enum ggml_status ggml_backend_meta_buffer_init_tensor(ggml_backend_buffer
+
+ static void ggml_backend_meta_buffer_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
+     const size_t n_bufs = ggml_backend_meta_buffer_n_bufs(buffer);
++    auto * buf_ctx = (ggml_backend_meta_buffer_context *) buffer->context;
+     const ggml_backend_meta_split_state split_state = ggml_backend_meta_get_split_state(tensor, /*assume_sync =*/ false);
+     GGML_ASSERT(ggml_is_contiguous(tensor) || split_state.axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
+
+@@ -1423,6 +1519,10 @@ static void ggml_backend_meta_buffer_set_tensor(ggml_backend_buffer_t buffer, gg
+             GGML_ASSERT(size   % chunk_size_full == 0);
+             const int64_t i_start =  offset        /chunk_size_full;
+             const int64_t i_stop  = (offset + size)/chunk_size_full;
++            const auto qg_aux_it = buf_ctx->muse_qg_aux_weights.find(tensor);
++            if (qg_aux_it != buf_ctx->muse_qg_aux_weights.end()) {
++                GGML_ASSERT(split_state.axis == GGML_BACKEND_SPLIT_AXIS_1 && offset == 0 && size == ggml_nbytes(tensor));
++            }
+             size_t offset_j = 0;
+             for (size_t j = 0; j < n_bufs; j++) {
+                 ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
+@@ -1432,6 +1532,10 @@ static void ggml_backend_meta_buffer_set_tensor(ggml_backend_buffer_t buffer, gg
+                 }
+                 const size_t simple_offset = i_start * chunk_size_j;
+                 ggml_backend_tensor_set_2d(simple_tensor, (const char *) data + offset_j, simple_offset, chunk_size_j, i_stop - i_start, chunk_size_j, chunk_size_full);
++                if (qg_aux_it != buf_ctx->muse_qg_aux_weights.end() && qg_aux_it->second[j] != nullptr) {
++                    ggml_tensor * aux = qg_aux_it->second[j];
++                    ggml_backend_tensor_set(aux, (const char *) data + offset_j + 1024*tensor->nb[1], 0, ggml_nbytes(aux));
++                }
+                 offset_j += chunk_size_j;
+             }
+             GGML_ASSERT(offset_j == chunk_size_full);
+@@ -1623,8 +1727,14 @@ struct ggml_backend_buffer * ggml_backend_meta_alloc_ctx_tensors_from_buft(struc
+     const size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
+
+     constexpr size_t compute_headroom = 16; // Maximum number of views per statically allocated tensor that can be created between evals.
++    size_t muse_qg_aux_count = 0;
++    if (n_simple_bufts == 4 && ggml_backend_meta_muse_qg_lend_enabled()) {
++        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
++            muse_qg_aux_count += ggml_backend_meta_muse_qg_weight(t) ? 2 : 0;
++        }
++    }
+     const ggml_init_params params_static = {
+-        /*.mem_size   =*/ ggml_get_mem_size(ctx),
++        /*.mem_size   =*/ ggml_get_mem_size(ctx) + muse_qg_aux_count*ggml_tensor_overhead(),
+         /*.mem_buffer =*/ nullptr,
+         /*.no_alloc   =*/ true,
+     };
+@@ -1683,6 +1793,19 @@ static ggml_guid_t ggml_backend_meta_guid() {
+ }
+
+ struct ggml_backend_meta_context {
++    using muse_qg_prepare_t = bool (*)(void *, ggml_tensor **, ggml_tensor **,
++                                       ggml_tensor **, ggml_tensor **, ggml_tensor **, uint32_t);
++    using muse_qg_clear_t = void (*)(void *);
++
++    struct muse_qg_config {
++        uint32_t owner_mask = 0;
++        std::array<ggml_tensor *, 4> q = {};
++        std::array<ggml_tensor *, 4> gate = {};
++        std::array<ggml_tensor *, 4> helper_q_weight = {};
++        std::array<ggml_tensor *, 4> helper_gate_weight = {};
++        std::array<ggml_tensor *, 4> helper_activation = {};
++    };
++
+     struct cgraph_config {
+         ggml_cgraph * cgraph_main = nullptr;
+         int           offset      = 0; // Node offset vs. original graph
+@@ -1705,6 +1828,7 @@ struct ggml_backend_meta_context {
+     ggml_context_ptr            ctx;
+     std::vector<ggml_cgraph *>  cgraphs_aux;
+     std::vector<ggml_tensor *>  nodes_aux;
++    std::vector<muse_qg_config> muse_qg_configs;
+     size_t                      n_reduce_steps;
+     int                         max_nnodes    = 0;
+     size_t                      max_tmp_size  = 0;
+@@ -1716,6 +1840,8 @@ struct ggml_backend_meta_context {
+     ggml_backend_comm_allreduce_tensor_t comm_allreduce = nullptr;
+     ggml_backend_comm_argmax_tensor_t    comm_argmax    = nullptr;
+     ggml_backend_comm_top_k_tensor_t     comm_top_k     = nullptr;
++    muse_qg_prepare_t                    muse_qg_prepare = nullptr;
++    muse_qg_clear_t                      muse_qg_clear   = nullptr;
+
+     ggml_backend_meta_context(ggml_backend_dev_t meta_dev, const char * params) {
+         const size_t n_devs = ggml_backend_meta_dev_n_devs(meta_dev);
+@@ -1753,6 +1879,18 @@ struct ggml_backend_meta_context {
+             comm_top_k = (ggml_backend_comm_top_k_tensor_t)
+                 ggml_backend_reg_get_proc_address(ggml_backend_dev_backend_reg(
+                     ggml_backend_get_device(simple_backends[0])), "ggml_backend_comm_top_k_tensor");
++            if (ggml_backend_meta_muse_qg_lend_enabled()) {
++                muse_qg_prepare = (muse_qg_prepare_t) ggml_backend_reg_get_proc_address(
++                    ggml_backend_dev_backend_reg(ggml_backend_get_device(simple_backends[0])),
++                    "ggml_backend_comm_muse_qg_prepare");
++                muse_qg_clear = (muse_qg_clear_t) ggml_backend_reg_get_proc_address(
++                    ggml_backend_dev_backend_reg(ggml_backend_get_device(simple_backends[0])),
++                    "ggml_backend_comm_muse_qg_clear");
++                if (muse_qg_prepare == nullptr || muse_qg_clear == nullptr) {
++                    muse_qg_prepare = nullptr;
++                    muse_qg_clear = nullptr;
++                }
++            }
+         }
+     }
+
+@@ -1801,6 +1939,11 @@ static void ggml_backend_meta_set_tensor_async(ggml_backend_t backend, ggml_tens
+             GGML_ASSERT(size   % chunk_size_full == 0);
+             const int64_t i_start =  offset        /chunk_size_full;
+             const int64_t i_stop  = (offset + size)/chunk_size_full;
++            auto * buf_ctx = (ggml_backend_meta_buffer_context *) tensor->buffer->context;
++            const auto qg_aux_it = buf_ctx->muse_qg_aux_weights.find(tensor);
++            if (qg_aux_it != buf_ctx->muse_qg_aux_weights.end()) {
++                GGML_ASSERT(split_state.axis == GGML_BACKEND_SPLIT_AXIS_1 && offset == 0 && size == ggml_nbytes(tensor));
++            }
+             size_t offset_j = 0;
+             for (size_t j = 0; j < n_backends; j++){
+                 ggml_backend_t simple_backend = ggml_backend_meta_simple_backend(backend, j);
+@@ -1811,6 +1954,11 @@ static void ggml_backend_meta_set_tensor_async(ggml_backend_t backend, ggml_tens
+                 }
+                 ggml_backend_tensor_set_2d_async(simple_backend, simple_tensor, (const char *) data + offset_j, offset, chunk_size_j,
+                     i_stop - i_start, chunk_size_j, chunk_size_full);
++                if (qg_aux_it != buf_ctx->muse_qg_aux_weights.end() && qg_aux_it->second[j] != nullptr) {
++                    const size_t helper = (j + 3) % 4;
++                    ggml_backend_tensor_set_async(ggml_backend_meta_simple_backend(backend, helper), qg_aux_it->second[j],
++                        (const char *) data + offset_j + 1024*tensor->nb[1], 0, ggml_nbytes(qg_aux_it->second[j]));
++                }
+                 offset_j += chunk_size_j;
+             }
+             GGML_ASSERT(offset_j == chunk_size_full);
+@@ -1879,6 +2027,126 @@ static void ggml_backend_meta_synchronize(ggml_backend_t backend) {
+     }
+ }
+
++static ggml_backend_meta_context::muse_qg_config ggml_backend_meta_muse_qg_plan(
++        ggml_backend_meta_context * backend_ctx, ggml_cgraph * cgraph, size_t i_graph) {
++    ggml_backend_meta_context::muse_qg_config result;
++    if (!ggml_backend_meta_muse_qg_lend_enabled() || backend_ctx->backend_configs.size() != 4 ||
++        backend_ctx->muse_qg_prepare == nullptr || backend_ctx->muse_qg_clear == nullptr) {
++        return result;
++    }
++
++    const size_t i_start = backend_ctx->backend_configs[0].cgraphs[i_graph].offset;
++    const size_t i_stop = i_graph + 1 < backend_ctx->n_subgraphs ?
++        backend_ctx->backend_configs[0].cgraphs[i_graph + 1].offset : (size_t) cgraph->n_nodes;
++    ggml_tensor * q_orig = nullptr;
++    ggml_tensor * gate_orig = nullptr;
++    int q_index = -1;
++    int gate_index = -1;
++    int layer = -1;
++
++    auto projection_layer = [](const ggml_tensor * tensor, const char * prefix) -> int {
++        if (tensor == nullptr || tensor->op != GGML_OP_MUL_MAT) {
++            return -1;
++        }
++        const size_t prefix_len = std::strlen(prefix);
++        if (std::strncmp(tensor->name, prefix, prefix_len) != 0 || tensor->name[prefix_len] == '\0') {
++            return -1;
++        }
++        char * end = nullptr;
++        const long value = std::strtol(tensor->name + prefix_len, &end, 10);
++        return end != tensor->name + prefix_len && *end == '\0' && value >= 0 && value < 52 ? (int) value : -1;
++    };
++
++    for (size_t i = i_start; i < i_stop; ++i) {
++        ggml_tensor * node = cgraph->nodes[i];
++        const int q_layer = projection_layer(node, "Qcur-");
++        const int gate_layer = projection_layer(node, "attn_gate_proj-");
++        if (q_layer >= 0) {
++            if (q_orig != nullptr) {
++                return result;
++            }
++            q_orig = node;
++            q_index = (int) i;
++            layer = q_layer;
++        }
++        if (gate_layer >= 0) {
++            if (gate_orig != nullptr) {
++                return result;
++            }
++            gate_orig = node;
++            gate_index = (int) i;
++            if (layer >= 0 && layer != gate_layer) {
++                return result;
++            }
++            layer = gate_layer;
++        }
++    }
++    if (q_orig == nullptr || gate_orig == nullptr || q_index < 0 || gate_index < 0 || q_index >= gate_index ||
++        q_orig->src[0] == nullptr || gate_orig->src[0] == nullptr ||
++        q_orig->src[1] == nullptr || q_orig->src[1] != gate_orig->src[1] ||
++        !ggml_backend_meta_muse_qg_weight(q_orig->src[0]) ||
++        !ggml_backend_meta_muse_qg_weight(gate_orig->src[0]) ||
++        std::strstr(q_orig->src[0]->name, ".attn_q.weight") == nullptr ||
++        std::strstr(gate_orig->src[0]->name, ".attn_gate.weight") == nullptr) {
++        return result;
++    }
++
++    std::array<bool, 4> q_owners = {};
++    std::array<bool, 4> gate_owners = {};
++    if (!ggml_backend_meta_muse_qg_owners(ggml_backend_meta_get_split_state(q_orig->src[0], false), q_owners) ||
++        !ggml_backend_meta_muse_qg_owners(ggml_backend_meta_get_split_state(gate_orig->src[0], false), gate_owners) ||
++        q_owners != gate_owners) {
++        return result;
++    }
++
++    for (size_t owner = 0; owner < 4; ++owner) {
++        if (!q_owners[owner]) {
++            continue;
++        }
++        const size_t helper = (owner + 3) % 4;
++        auto & owner_cfg = backend_ctx->backend_configs[owner];
++        auto & helper_cfg = backend_ctx->backend_configs[helper];
++        ggml_tensor * q = owner_cfg.nodes[q_index];
++        ggml_tensor * gate = owner_cfg.nodes[gate_index];
++        ggml_tensor * helper_x = helper_cfg.nodes[q_index]->src[1];
++        ggml_tensor * helper_q_weight = ggml_backend_meta_muse_qg_aux_weight(q_orig->src[0], owner);
++        ggml_tensor * helper_gate_weight = ggml_backend_meta_muse_qg_aux_weight(gate_orig->src[0], owner);
++        if (q == nullptr || gate == nullptr || helper_x == nullptr ||
++            helper_q_weight == nullptr || helper_gate_weight == nullptr ||
++            (q->flags & GGML_TENSOR_FLAG_COMPUTE) == 0 ||
++            (gate->flags & GGML_TENSOR_FLAG_COMPUTE) == 0 ||
++            q->src[0] == nullptr || gate->src[0] == nullptr || q->src[1] == nullptr ||
++            q->src[1] != gate->src[1] || q->src[0]->type != GGML_TYPE_BF16 ||
++            gate->src[0]->type != GGML_TYPE_BF16 || helper_q_weight->type != GGML_TYPE_BF16 ||
++            helper_gate_weight->type != GGML_TYPE_BF16 || q->src[1]->type != GGML_TYPE_F32 ||
++            helper_x->type != GGML_TYPE_F32 || q->type != GGML_TYPE_F32 || gate->type != GGML_TYPE_F32 ||
++            q->src[0]->ne[0] != 6656 || q->src[0]->ne[1] != 2048 ||
++            gate->src[0]->ne[0] != 6656 || gate->src[0]->ne[1] != 2048 ||
++            helper_q_weight->ne[0] != 6656 || helper_q_weight->ne[1] != 1024 ||
++            helper_gate_weight->ne[0] != 6656 || helper_gate_weight->ne[1] != 1024 ||
++            q->src[1]->ne[0] != 6656 || q->src[1]->ne[1] != 16 ||
++            helper_x->ne[0] != 6656 || helper_x->ne[1] != 16 ||
++            q->ne[0] != 2048 || q->ne[1] != 16 || gate->ne[0] != 2048 || gate->ne[1] != 16 ||
++            !ggml_is_contiguous(q->src[0]) || !ggml_is_contiguous(gate->src[0]) ||
++            !ggml_is_contiguous(helper_q_weight) || !ggml_is_contiguous(helper_gate_weight) ||
++            !ggml_is_contiguous(q->src[1]) || !ggml_is_contiguous(helper_x) ||
++            !ggml_is_contiguous(q) || !ggml_is_contiguous(gate) ||
++            ggml_backend_meta_tensor_ranges_overlap(q, gate) ||
++            ggml_backend_meta_tensor_ranges_overlap(q, q->src[1]) ||
++            ggml_backend_meta_tensor_ranges_overlap(gate, q->src[1])) {
++            return {};
++        }
++
++        result.owner_mask |= 1u << owner;
++        result.q[owner] = q;
++        result.gate[owner] = gate;
++        result.helper_q_weight[owner] = helper_q_weight;
++        result.helper_gate_weight[owner] = helper_gate_weight;
++        result.helper_activation[owner] = helper_x;
++    }
++    return result.owner_mask == 0x5 || result.owner_mask == 0xa ? result : ggml_backend_meta_context::muse_qg_config {};
++}
++
+ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, struct ggml_cgraph * cgraph) {
+     GGML_ASSERT(cgraph->grads == nullptr);
+     const size_t n_backends = ggml_backend_meta_n_backends(backend);
+@@ -2237,6 +2505,13 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend,
+                 cgraph_ij->uid = ggml_graph_next_uid();
+             }
+         }
++        backend_ctx->muse_qg_configs.clear();
++        if (ggml_backend_meta_muse_qg_lend_enabled() && backend_ctx->muse_qg_prepare != nullptr) {
++            backend_ctx->muse_qg_configs.resize(n_subgraphs);
++            for (size_t i_graph = 0; i_graph < n_subgraphs; ++i_graph) {
++                backend_ctx->muse_qg_configs[i_graph] = ggml_backend_meta_muse_qg_plan(backend_ctx, cgraph, i_graph);
++            }
++        }
+     }
+
+     size_t iga = 0; // i graph aux
+@@ -2630,8 +2905,12 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend,
+     std::vector<ggml_status> submit_status(
+         parallel_submit && n_backends > 1 ? n_backends : 0, GGML_STATUS_SUCCESS);
+
++    const bool has_muse_qg = !backend_ctx->muse_qg_configs.empty() && std::any_of(
++            backend_ctx->muse_qg_configs.begin(), backend_ctx->muse_qg_configs.end(),
++            [](const ggml_backend_meta_context::muse_qg_config & config) { return config.owner_mask != 0; });
++
+ #ifdef GGML_USE_OPENMP
+-    if (parallel_submit && persistent_parallel_submit && n_backends > 1) {
++    if (parallel_submit && persistent_parallel_submit && n_backends > 1 && !has_muse_qg) {
+         ggml_status status = GGML_STATUS_SUCCESS;
+ #pragma omp parallel num_threads(n_backends)
+         {
+@@ -2665,6 +2944,38 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend,
+ #endif
+
+     for (size_t i = 0; i < backend_ctx->n_subgraphs; i++) {
++        ggml_backend_meta_context::muse_qg_config * qg =
++            i < backend_ctx->muse_qg_configs.size() ? &backend_ctx->muse_qg_configs[i] : nullptr;
++        const bool qg_armed = parallel_submit && qg != nullptr && qg->owner_mask != 0 && backend_ctx->muse_qg_prepare(
++            backend_ctx->comm_ctx, qg->q.data(), qg->gate.data(), qg->helper_q_weight.data(),
++            qg->helper_gate_weight.data(), qg->helper_activation.data(), qg->owner_mask);
++        if (qg_armed) {
++            ggml_status status = GGML_STATUS_SUCCESS;
++#ifdef GGML_USE_OPENMP
++#pragma omp parallel for num_threads(n_backends) schedule(static, 1)
++            for (int64_t j = 0; j < (int64_t) n_backends; ++j) {
++                auto & bcj = backend_ctx->backend_configs[j];
++                submit_status[j] = ggml_backend_graph_compute_async(bcj.backend, bcj.cgraphs[i].cgraph_main);
++            }
++            for (size_t j = 0; j < n_backends; ++j) {
++                if (submit_status[j] != GGML_STATUS_SUCCESS) {
++                    status = submit_status[j];
++                    break;
++                }
++            }
++#else
++            GGML_ABORT("Muse Q/gate lending requires OpenMP parallel submission");
++#endif
++            backend_ctx->muse_qg_clear(backend_ctx->comm_ctx);
++            if (status != GGML_STATUS_SUCCESS) {
++                return status;
++            }
++            status = finish_subgraph(i);
++            if (status != GGML_STATUS_SUCCESS) {
++                return status;
++            }
++            continue;
++        }
+ #ifdef GGML_USE_OPENMP
+         if (parallel_submit && n_backends > 1) {
+ #pragma omp parallel for num_threads(n_backends) schedule(static, 1)
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index bafffaaeb..f98037320 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -11,6 +11,7 @@
+ //
+
+ #include <algorithm>
++#include <array>
+ #include <assert.h>
+ #include <atomic>
+ #include <cinttypes>
+@@ -5121,6 +5122,181 @@ static bool ggml_sycl_dense_2d(const ggml_tensor * tensor) {
+            tensor->nb[3] == tensor->nb[2] * (size_t) tensor->ne[2];
+ }
+
++template<typename T>
++struct ggml_sycl_muse_qg_direct_alloc {
++    sycl::queue * queue = nullptr;
++    T * ptr = nullptr;
++
++    ggml_sycl_muse_qg_direct_alloc(sycl::queue & queue, size_t size) : queue(&queue) {
++        ptr = static_cast<T *>(ggml_sycl_malloc_device(std::max<size_t>(size*sizeof(T), 1), queue));
++        GGML_ASSERT(ptr != nullptr);
++    }
++
++    ~ggml_sycl_muse_qg_direct_alloc() {
++        if (ptr != nullptr) {
++            ggml_sycl_free_device(ptr, *queue);
++        }
++    }
++
++    T * get() const { return ptr; }
++
++    ggml_sycl_muse_qg_direct_alloc(const ggml_sycl_muse_qg_direct_alloc &) = delete;
++    ggml_sycl_muse_qg_direct_alloc & operator=(const ggml_sycl_muse_qg_direct_alloc &) = delete;
++};
++
++struct ggml_sycl_muse_qg_dnnl_path {
++    dnnl::engine engine;
++    dnnl::stream stream;
++    dnnl::memory::desc weights_md;
++    dnnl::memory::desc activation_md;
++    dnnl::memory::desc output_md;
++    dnnl::memory::desc scratchpad_md;
++    dnnl::matmul primitive;
++    ggml_sycl_muse_qg_direct_alloc<uint8_t> scratch;
++    dnnl::memory scratch_mem;
++
++    ggml_sycl_muse_qg_dnnl_path(
++            sycl::queue & queue, dnnl_dim_t output_stride) :
++        engine(dnnl::sycl_interop::make_engine(queue.get_device(), queue.get_context())),
++        stream(dnnl::sycl_interop::make_stream(engine, queue)),
++        weights_md({1, 1024, 6656}, dnnl::memory::data_type::bf16, {1024*6656, 6656, 1}),
++        activation_md({1, 6656, 16}, dnnl::memory::data_type::bf16, {6656*16, 1, 6656}),
++        output_md({1, 1024, 16}, dnnl::memory::data_type::f32, {output_stride*16, 1, output_stride}),
++        primitive([&] {
++            dnnl::primitive_attr attr;
++            attr.set_scratchpad_mode(dnnl::scratchpad_mode::user);
++#ifdef GGML_SYCL_F16
++            attr.set_fpmath_mode(dnnl::fpmath_mode::f16);
++#endif
++            auto pd = dnnl::matmul::primitive_desc(
++                engine, weights_md, activation_md, output_md, attr);
++            scratchpad_md = pd.scratchpad_desc();
++            return dnnl::matmul(pd);
++        }()),
++        scratch(queue, scratchpad_md.get_size()) {
++        scratch_mem = dnnl::memory(scratchpad_md, engine, scratch.get());
++    }
++};
++
++struct ggml_sycl_muse_qg_device_state {
++    std::unique_ptr<sycl::queue> helper_queue;
++    ggml_sycl_muse_qg_direct_alloc<sycl::ext::oneapi::bfloat16> owner_activation;
++    ggml_sycl_muse_qg_direct_alloc<sycl::ext::oneapi::bfloat16> helper_activation;
++    ggml_sycl_muse_qg_direct_alloc<float> helper_q;
++    ggml_sycl_muse_qg_direct_alloc<float> helper_gate;
++    std::unique_ptr<ggml_sycl_muse_qg_dnnl_path> owner_path;
++    std::unique_ptr<ggml_sycl_muse_qg_dnnl_path> helper_path;
++    std::optional<sycl::event> helper_release;
++
++    explicit ggml_sycl_muse_qg_device_state(ggml_backend_sycl_context & ctx) :
++        helper_queue(std::make_unique<sycl::queue>(
++            ctx.stream()->get_context(), ctx.stream()->get_device(), sycl::property::queue::in_order())),
++        owner_activation(*helper_queue, 6656*16), helper_activation(*helper_queue, 6656*16),
++        helper_q(*helper_queue, 1024*16), helper_gate(*helper_queue, 1024*16) {
++    }
++};
++
++struct ggml_sycl_muse_qg_active_plan {
++    ggml_backend_sycl_context * owner_ctx = nullptr;
++    ggml_backend_sycl_context * helper_ctx = nullptr;
++    ggml_sycl_muse_qg_device_state * owner_state = nullptr;
++    ggml_sycl_muse_qg_device_state * helper_state = nullptr;
++    ggml_tensor * q = nullptr;
++    ggml_tensor * gate = nullptr;
++    ggml_tensor * helper_q_weight = nullptr;
++    ggml_tensor * helper_gate_weight = nullptr;
++    ggml_tensor * helper_activation = nullptr;
++    int owner = -1;
++    int helper = -1;
++};
++
++static std::mutex ggml_sycl_muse_qg_mutex;
++static std::map<ggml_backend_sycl_context *, ggml_sycl_muse_qg_active_plan> ggml_sycl_muse_qg_active;
++
++static std::optional<ggml_sycl_muse_qg_active_plan> ggml_sycl_muse_qg_get_plan(
++        ggml_backend_sycl_context * ctx) {
++    static const bool enabled = ggml_sycl_get_env("GGML_MUSE_TP4_QG_LEND", 0) != 0;
++    if (!enabled) {
++        return std::nullopt;
++    }
++    std::lock_guard<std::mutex> lock(ggml_sycl_muse_qg_mutex);
++    const auto it = ggml_sycl_muse_qg_active.find(ctx);
++    return it == ggml_sycl_muse_qg_active.end() ? std::nullopt : std::optional<ggml_sycl_muse_qg_active_plan>(it->second);
++}
++
++static sycl::event ggml_sycl_muse_qg_execute(
++        ggml_sycl_muse_qg_dnnl_path & path,
++        const void * weights, const void * activation, void * output,
++        const std::vector<sycl::event> & deps = {}) {
++    std::unordered_map<int, dnnl::memory> args = {
++        {DNNL_ARG_SRC, dnnl::memory(path.weights_md, path.engine, const_cast<void *>(weights))},
++        {DNNL_ARG_WEIGHTS, dnnl::memory(path.activation_md, path.engine, const_cast<void *>(activation))},
++        {DNNL_ARG_DST, dnnl::memory(path.output_md, path.engine, output)},
++        {DNNL_ARG_SCRATCHPAD, path.scratch_mem},
++    };
++    return dnnl::sycl_interop::execute(path.primitive, path.stream, args, deps);
++}
++
++static bool ggml_sycl_muse_qg_submit(
++        ggml_backend_sycl_context & owner_ctx, const ggml_sycl_muse_qg_active_plan & plan) {
++    if (plan.owner_ctx != &owner_ctx || plan.q == nullptr || plan.gate == nullptr ||
++        plan.owner_state == nullptr || plan.helper_state == nullptr || plan.helper_ctx == nullptr) {
++        return false;
++    }
++
++    auto & owner_state = *plan.owner_state;
++    auto & helper_state = *plan.helper_state;
++    if (!owner_state.owner_path || !helper_state.helper_path || !helper_state.helper_queue) {
++        return false;
++    }
++
++    const to_bf16_sycl_t owner_to_bf16 = ggml_get_to_bf16_sycl(plan.q->src[1]->type, plan.q);
++    if (owner_to_bf16 == nullptr) {
++        return false;
++    }
++    owner_to_bf16(plan.q->src[1]->data, owner_state.owner_activation.get(), 6656*16, owner_ctx.stream());
++    sycl::event owner_activation_ready = owner_ctx.stream()->ext_oneapi_submit_barrier();
++
++    ggml_sycl_muse_qg_execute(*owner_state.owner_path,
++        plan.q->src[0]->data, owner_state.owner_activation.get(), plan.q->data);
++    ggml_sycl_muse_qg_execute(*owner_state.owner_path,
++        plan.gate->src[0]->data, owner_state.owner_activation.get(), plan.gate->data);
++    owner_activation_ready.wait();
++    if (helper_state.helper_release.has_value()) {
++        helper_state.helper_release->wait();
++    }
++    helper_state.helper_queue->memcpy(
++        helper_state.helper_activation.get(), owner_state.owner_activation.get(),
++        6656*16*sizeof(sycl::ext::oneapi::bfloat16)).wait();
++    ggml_sycl_muse_qg_execute(*helper_state.helper_path,
++        plan.helper_q_weight->data, helper_state.helper_activation.get(), helper_state.helper_q.get());
++    sycl::event helper_done = ggml_sycl_muse_qg_execute(*helper_state.helper_path,
++        plan.helper_gate_weight->data, helper_state.helper_activation.get(), helper_state.helper_gate.get());
++    helper_done.wait();
++
++    auto * q_output = (float *) plan.q->data;
++    auto * gate_output = (float *) plan.gate->data;
++    const float * helper_q = helper_state.helper_q.get();
++    const float * helper_gate = helper_state.helper_gate.get();
++    helper_state.helper_release = owner_ctx.stream()->submit([&](sycl::handler & h) {
++        h.parallel_for(sycl::range<1>(1024*16), [=](sycl::id<1> id) {
++            const size_t linear = id[0];
++            const size_t token = linear / 1024;
++            const size_t row = linear - token*1024;
++            q_output[token*2048 + 1024 + row] = helper_q[linear];
++            gate_output[token*2048 + 1024 + row] = helper_gate[linear];
++        });
++    });
++
++    static std::atomic<int> first_hits { 0 };
++    const int hit = first_hits.fetch_add(1);
++    if (hit < 4) {
++        GGML_LOG_INFO("[SYCL] GGML_MUSE_TP4_QG_LEND hit: owner=%d helper=%d q=%s gate=%s\n",
++            plan.owner, plan.helper, plan.q->name, plan.gate->name);
++    }
++    return true;
++}
++
+ static bool ggml_sycl_tensor_range_in_buffer(const ggml_tensor * tensor) {
+     if (tensor == nullptr || tensor->buffer == nullptr || tensor->data == nullptr) {
+         return false;
+@@ -6518,6 +6694,7 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+     ggml_sycl_set_main_device(sycl_ctx->device);
+
+ #if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
++    const auto muse_qg_plan = ggml_sycl_muse_qg_get_plan(sycl_ctx);
+     sycl_ctx->bf16_graph_conversions.clear();
+     sycl_ctx->bf16_graph_conversion_cache_active = true;
+ #endif
+@@ -6536,6 +6713,14 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             continue;
+         }
+
++#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
++        if (muse_qg_plan && node == muse_qg_plan->q) {
++            GGML_ASSERT(ggml_sycl_muse_qg_submit(*sycl_ctx, *muse_qg_plan));
++            batch2_completed.insert(muse_qg_plan->gate);
++            continue;
++        }
++#endif
++
+         std::optional<ggml_sycl_device_timeline_scope> device_timeline_scope;
+         if (sycl_ctx->device_timeline_active()) {
+             device_timeline_scope.emplace(*sycl_ctx, ggml_sycl_device_timeline_key(node));
+@@ -6741,7 +6926,11 @@ static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_
+
+ #ifdef GGML_SYCL_GRAPH
+     bool use_sycl_graph = false;
+-    if (g_ggml_sycl_enable_graph && !sycl_ctx->device_timeline_active()) {
++    bool muse_qg_active = false;
++#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
++    muse_qg_active = ggml_sycl_muse_qg_get_plan(sycl_ctx).has_value();
++#endif
++    if (g_ggml_sycl_enable_graph && !sycl_ctx->device_timeline_active() && !muse_qg_active) {
+         use_sycl_graph = check_graph_compatibility(cgraph);
+     }
+     if (use_sycl_graph) {
+@@ -7547,6 +7736,9 @@ struct ggml_backend_sycl_comm_context {
+     // ONE persistent per-device byte buffer, 4*nelem bytes, reinterpreted by
+     // both the FP32 small path and the BF16 large path.
+     std::vector<std::unique_ptr<ggml_sycl_pool_alloc<uint8_t>>> bufs;
++#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
++    std::array<std::unique_ptr<ggml_sycl_muse_qg_device_state>, 4> muse_qg_states;
++#endif
+     bool peer_ok = false;
+     int64_t buf_nelem = 0;
+ };
+@@ -7606,6 +7798,15 @@ void * ggml_backend_sycl_comm_init(ggml_backend_t * backends, size_t n_backends)
+             return nullptr;
+         }
+     }
++#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
++    static const bool muse_qg_lend = ggml_sycl_get_env("GGML_MUSE_TP4_QG_LEND", 0) != 0;
++    if (muse_qg_lend && n_backends == 4 && ctx->peer_ok) {
++        for (size_t i = 0; i < n_backends; ++i) {
++            auto * sctx = (ggml_backend_sycl_context *) backends[i]->context;
++            ctx->muse_qg_states[i] = std::make_unique<ggml_sycl_muse_qg_device_state>(*sctx);
++        }
++    }
++#endif
+     return ctx;
+ }
+ catch (const sycl::exception &) { return nullptr; }
+@@ -7617,17 +7818,168 @@ void ggml_backend_sycl_comm_free(void * comm_ctx_v) {
+         return;
+     }
+
++#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
++    {
++        std::lock_guard<std::mutex> lock(ggml_sycl_muse_qg_mutex);
++        for (ggml_backend_t backend : comm_ctx->backends) {
++            ggml_sycl_muse_qg_active.erase((ggml_backend_sycl_context *) backend->context);
++        }
++    }
++#endif
++
+     // Sync all per-device queues so the pool_alloc destructors don't
+     // return memory still in use by the last kernel.
+     for (ggml_backend_t b : comm_ctx->backends) {
+         try {
+-            ((ggml_backend_sycl_context *) b->context)->stream()->wait();
++            auto * sctx = (ggml_backend_sycl_context *) b->context;
++            sctx->stream()->wait();
+         } catch (...) { /* best effort during shutdown */ }
+     }
++#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
++    for (auto & state : comm_ctx->muse_qg_states) {
++        if (state && state->helper_queue) {
++            try { state->helper_queue->wait(); } catch (...) { /* best effort during shutdown */ }
++        }
++    }
++#endif
+
+     delete comm_ctx;
+ }
+
++#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
++bool ggml_backend_sycl_comm_muse_qg_prepare(
++        void * comm_ctx_v, ggml_tensor ** q, ggml_tensor ** gate,
++        ggml_tensor ** helper_q_weight, ggml_tensor ** helper_gate_weight,
++        ggml_tensor ** helper_activation, uint32_t owner_mask) try {
++    static const bool enabled = ggml_sycl_get_env("GGML_MUSE_TP4_QG_LEND", 0) != 0;
++    if (!enabled || !g_ggml_sycl_enable_dnn || comm_ctx_v == nullptr || q == nullptr || gate == nullptr ||
++        helper_q_weight == nullptr || helper_gate_weight == nullptr || helper_activation == nullptr ||
++        (owner_mask != 0x5 && owner_mask != 0xa)) {
++        return false;
++    }
++
++    auto * comm_ctx = (ggml_backend_sycl_comm_context *) comm_ctx_v;
++    if (comm_ctx->backends.size() != 4 || !comm_ctx->peer_ok) {
++        return false;
++    }
++
++    std::array<ggml_sycl_muse_qg_active_plan, 2> plans;
++    size_t n_plans = 0;
++    for (size_t owner = 0; owner < 4; ++owner) {
++        const bool is_owner = ((owner_mask >> owner) & 1u) != 0;
++        if (!is_owner) {
++            if (q[owner] != nullptr || gate[owner] != nullptr || helper_q_weight[owner] != nullptr ||
++                helper_gate_weight[owner] != nullptr || helper_activation[owner] != nullptr) {
++                return false;
++            }
++            continue;
++        }
++
++        const size_t helper = (owner + 3) % 4;
++        if (((owner_mask >> helper) & 1u) != 0 || !comm_ctx->muse_qg_states[owner] ||
++            !comm_ctx->muse_qg_states[helper] || q[owner] == nullptr || gate[owner] == nullptr ||
++            helper_q_weight[owner] == nullptr || helper_gate_weight[owner] == nullptr ||
++            helper_activation[owner] == nullptr || q[owner]->op != GGML_OP_MUL_MAT ||
++            gate[owner]->op != GGML_OP_MUL_MAT || q[owner]->src[0] == nullptr ||
++            gate[owner]->src[0] == nullptr || q[owner]->src[1] == nullptr ||
++            q[owner]->src[1] != gate[owner]->src[1]) {
++            return false;
++        }
++
++        auto * owner_ctx = (ggml_backend_sycl_context *) comm_ctx->backends[owner]->context;
++        auto * helper_ctx = (ggml_backend_sycl_context *) comm_ctx->backends[helper]->context;
++        const char * q_layer = ggml_sycl_projection_suffix(q[owner], "Qcur-");
++        const char * gate_layer = ggml_sycl_projection_suffix(gate[owner], "attn_gate_proj-");
++        if (q_layer == nullptr || gate_layer == nullptr || std::strcmp(q_layer, gate_layer) != 0 ||
++            q[owner]->src[0]->type != GGML_TYPE_BF16 || gate[owner]->src[0]->type != GGML_TYPE_BF16 ||
++            helper_q_weight[owner]->type != GGML_TYPE_BF16 || helper_gate_weight[owner]->type != GGML_TYPE_BF16 ||
++            q[owner]->src[1]->type != GGML_TYPE_F32 || helper_activation[owner]->type != GGML_TYPE_F32 ||
++            q[owner]->type != GGML_TYPE_F32 || gate[owner]->type != GGML_TYPE_F32 ||
++            q[owner]->src[0]->ne[0] != 6656 || q[owner]->src[0]->ne[1] != 2048 ||
++            gate[owner]->src[0]->ne[0] != 6656 || gate[owner]->src[0]->ne[1] != 2048 ||
++            helper_q_weight[owner]->ne[0] != 6656 || helper_q_weight[owner]->ne[1] != 1024 ||
++            helper_gate_weight[owner]->ne[0] != 6656 || helper_gate_weight[owner]->ne[1] != 1024 ||
++            q[owner]->src[1]->ne[0] != 6656 || q[owner]->src[1]->ne[1] != 16 ||
++            helper_activation[owner]->ne[0] != 6656 || helper_activation[owner]->ne[1] != 16 ||
++            q[owner]->ne[0] != 2048 || q[owner]->ne[1] != 16 ||
++            gate[owner]->ne[0] != 2048 || gate[owner]->ne[1] != 16 ||
++            !ggml_sycl_dense_2d(q[owner]->src[0]) || !ggml_sycl_dense_2d(gate[owner]->src[0]) ||
++            !ggml_sycl_dense_2d(helper_q_weight[owner]) || !ggml_sycl_dense_2d(helper_gate_weight[owner]) ||
++            !ggml_sycl_dense_2d(q[owner]->src[1]) || !ggml_sycl_dense_2d(helper_activation[owner]) ||
++            !ggml_sycl_dense_2d(q[owner]) || !ggml_sycl_dense_2d(gate[owner]) ||
++            !ggml_sycl_tensor_range_in_buffer(q[owner]->src[0]) ||
++            !ggml_sycl_tensor_range_in_buffer(gate[owner]->src[0]) ||
++            !ggml_sycl_tensor_range_in_buffer(helper_q_weight[owner]) ||
++            !ggml_sycl_tensor_range_in_buffer(helper_gate_weight[owner]) ||
++            !ggml_sycl_tensor_range_in_buffer(q[owner]->src[1]) ||
++            !ggml_sycl_tensor_range_in_buffer(helper_activation[owner]) ||
++            !ggml_sycl_tensor_range_in_buffer(q[owner]) || !ggml_sycl_tensor_range_in_buffer(gate[owner]) ||
++            ggml_sycl_tensor_ranges_overlap(q[owner], gate[owner]) ||
++            ggml_sycl_tensor_ranges_overlap(q[owner], q[owner]->src[1]) ||
++            ggml_sycl_tensor_ranges_overlap(gate[owner], q[owner]->src[1]) ||
++            q[owner]->buffer->buft != ggml_backend_sycl_buffer_type(owner_ctx->device) ||
++            gate[owner]->buffer->buft != ggml_backend_sycl_buffer_type(owner_ctx->device) ||
++            q[owner]->src[0]->buffer->buft != ggml_backend_sycl_buffer_type(owner_ctx->device) ||
++            gate[owner]->src[0]->buffer->buft != ggml_backend_sycl_buffer_type(owner_ctx->device) ||
++            q[owner]->src[1]->buffer->buft != ggml_backend_sycl_buffer_type(owner_ctx->device) ||
++            helper_q_weight[owner]->buffer->buft != ggml_backend_sycl_buffer_type(helper_ctx->device) ||
++            helper_gate_weight[owner]->buffer->buft != ggml_backend_sycl_buffer_type(helper_ctx->device) ||
++            helper_activation[owner]->buffer->buft != ggml_backend_sycl_buffer_type(helper_ctx->device)) {
++            return false;
++        }
++
++        plans[n_plans++] = {
++            owner_ctx, helper_ctx, comm_ctx->muse_qg_states[owner].get(), comm_ctx->muse_qg_states[helper].get(),
++            q[owner], gate[owner], helper_q_weight[owner], helper_gate_weight[owner], helper_activation[owner],
++            (int) owner, (int) helper,
++        };
++    }
++    if (n_plans != 2) {
++        return false;
++    }
++    if (plans[0].owner_ctx == plans[1].owner_ctx || plans[0].helper_ctx == plans[1].helper_ctx ||
++        plans[0].owner_ctx == plans[0].helper_ctx || plans[0].owner_ctx == plans[1].helper_ctx ||
++        plans[1].owner_ctx == plans[0].helper_ctx || plans[1].owner_ctx == plans[1].helper_ctx) {
++        return false;
++    }
++
++    for (const auto & plan : plans) {
++        if (!plan.owner_state->owner_path) {
++            plan.owner_state->owner_path = std::make_unique<ggml_sycl_muse_qg_dnnl_path>(
++                *plan.owner_ctx->stream(), 2048);
++        }
++        if (!plan.helper_state->helper_path) {
++            plan.helper_state->helper_path = std::make_unique<ggml_sycl_muse_qg_dnnl_path>(
++                *plan.helper_state->helper_queue, 1024);
++        }
++    }
++
++    std::lock_guard<std::mutex> lock(ggml_sycl_muse_qg_mutex);
++    for (const auto & plan : plans) {
++        if (ggml_sycl_muse_qg_active.find(plan.owner_ctx) != ggml_sycl_muse_qg_active.end()) {
++            return false;
++        }
++    }
++    for (const auto & plan : plans) {
++        ggml_sycl_muse_qg_active.emplace(plan.owner_ctx, plan);
++    }
++    return true;
++}
++catch (const sycl::exception &) { return false; }
++catch (...)                     { return false; }
++
++void ggml_backend_sycl_comm_muse_qg_clear(void * comm_ctx_v) {
++    if (comm_ctx_v == nullptr) {
++        return;
++    }
++    auto * comm_ctx = (ggml_backend_sycl_comm_context *) comm_ctx_v;
++    std::lock_guard<std::mutex> lock(ggml_sycl_muse_qg_mutex);
++    for (ggml_backend_t backend : comm_ctx->backends) {
++        ggml_sycl_muse_qg_active.erase((ggml_backend_sycl_context *) backend->context);
++    }
++}
++#endif
++
+ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tensor ** tensors) try {
+     if (comm_ctx_v == nullptr) {
+         return false;
+@@ -8236,6 +8588,14 @@ static void *ggml_backend_sycl_reg_get_proc_address(ggml_backend_reg_t reg, cons
+     if (strcmp(name, "ggml_backend_comm_top_k_tensor") == 0) {
+         return (void *)ggml_backend_sycl_comm_top_k_tensor;
+     }
++#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
++    if (strcmp(name, "ggml_backend_comm_muse_qg_prepare") == 0) {
++        return (void *)ggml_backend_sycl_comm_muse_qg_prepare;
++    }
++    if (strcmp(name, "ggml_backend_comm_muse_qg_clear") == 0) {
++        return (void *)ggml_backend_sycl_comm_muse_qg_clear;
++    }
++#endif
+
+     // SYCL doesn't support registering host memory, left here for reference
+     // "ggml_backend_register_host_buffer"
+diff --git a/src/models/muse-glimmer.cpp b/src/models/muse-glimmer.cpp
+index 0e9415308..724fdfe30 100644
+--- a/src/models/muse-glimmer.cpp
++++ b/src/models/muse-glimmer.cpp
+@@ -1,5 +1,7 @@
+ #include "models.h"
+
++#include <cstdlib>
++
+ void llama_model_muse_glimmer::load_arch_hparams(llama_model_loader & ml) {
+     ml.get_key(LLM_KV_ATTENTION_LAYERNORM_RMS_EPS, hparams.f_norm_rms_eps);
+     ml.get_key(LLM_KV_ATTENTION_SLIDING_WINDOW,    hparams.n_swa);
+@@ -80,6 +82,14 @@ llama_model_muse_glimmer::graph::graph(const llama_model & model, const llm_grap
+
+     const float kq_scale = 1.0f / sqrtf(float(n_embd_head));
+
++    static const bool muse_tp4_qg_lend = [] {
++        const char * value = std::getenv("GGML_MUSE_TP4_QG_LEND");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    const bool muse_tp4_qg_lend_graph = muse_tp4_qg_lend &&
++        n_layer == 52 && n_embd == 6656 && n_head == 32 && n_head_kv == 2 &&
++        n_embd_head == 128 && n_tokens == 16;
++
+     for (int il = 0; il < n_layer; ++il) {
+         // expose per-layer residual for speculative drafts (see LLM_KV_TARGET_LAYERS).
+         res->t_layer_inp[il] = inpL;
+@@ -107,6 +117,14 @@ llama_model_muse_glimmer::graph::graph(const llama_model & model, const llm_grap
+             ggml_tensor * gate = build_lora_mm(model.layers[il].wqkv_gate, attn_inp);
+             cb(gate, "attn_gate_proj", il);
+
++            if (muse_tp4_qg_lend_graph &&
++                model.layers[il].wq->type == GGML_TYPE_BF16 &&
++                model.layers[il].wqkv_gate->type == GGML_TYPE_BF16 &&
++                Qcur->type == GGML_TYPE_F32 && gate->type == GGML_TYPE_F32) {
++                ggml_build_forward_expand(gf, Qcur);
++                ggml_build_forward_expand(gf, gate);
++            }
++
+             // QK-norm. attn_q_norm weight was synthesized at conversion to broadcast
+             // qk_scale_factor across head_dim; attn_k_norm is identity (ones).
+             Qcur = build_norm(Qcur, model.layers[il].attn_q_norm, NULL, LLM_NORM_RMS, il);

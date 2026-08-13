@@ -277,9 +277,15 @@ progress on the first verifier pass.  Replacing both cross-device dependencies
 with host completion waits and separately disabling allreduce last-event
 readiness produced the same layer-0 stall.  No candidate row completed, so the
 standalone timing is not an end-to-end win and must not be projected into the
-headline.  The failed patch and all three logs are preserved in the lane note;
-production was restored without a reboot and passed the full cache-zero
-code/vision health gate.  Intel PTI device-view tracing was also rejected on
+headline.  A second owner-BF16 design removed every cross-device event and
+submitted helper graphs only after owner-local P2P work; it also reached both
+layer-0 markers and then stalled.  A final side-queue design submitted all four
+ordinary rank graphs together and completed exactly, but regressed every
+64-token class by about `1.5%` (`66.913 / 112.039 / 217.520 tok/s`).  Q/gate
+lending is therefore closed: the integration overhead consumes its isolated
+GEMM saving.  The failed patches and logs are preserved in the lane note;
+production was restored without a reboot and passed the full
+cache-zero code/vision health gate.  Intel PTI device-view tracing was also rejected on
 the Level Zero V2 runtime: it
 could not timestamp incomplete copy events, emitted no device records, and
 stalled in polling/flush even with decode-deferred activation.  See
