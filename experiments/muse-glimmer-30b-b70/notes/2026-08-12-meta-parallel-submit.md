@@ -386,3 +386,91 @@ from the retained acceptance would require the FFN pool to act like roughly
 `2.6 TB/s` of weight reads. Native GEMM replacement is therefore not the
 century route, though the one-shape exactness test can decisively falsify the
 remaining small upside.
+
+## Update: profiling-tag timeline and runtime screens
+
+Source commit `0b254cdf6` replaces the unusable whole-queue profiler with a
+default-off profiling-tag sampler. `GGML_SYCL_DEVICE_TIMELINE=N` brackets a
+sampled logical operation with ordinary-queue profiling tags; `N=1` samples
+every operation and `N>1` samples one in `N`. It does not change queue
+properties or wait on profiling events. The returned oneDNN event is retained
+only as an ordering check. Timings are the interval from pre-tag command end to
+post-tag command start, so they include any host-late queue gap and are
+diagnostic queue occupancy, not pure kernel duration.
+
+Both all-operation and sparse-17 runs completed with exact canonical output
+hashes and zero pending, dropped, or invalid samples across all eight
+target/draft backend contexts. Their throughput is deliberately perturbed and
+must not be compared with the suite baseline:
+
+| run | prose | code | JSON | mean | interpretation |
+| --- | ---: | ---: | ---: | ---: | --- |
+| all operations | 2.051 | 2.938 | 3.533 | 2.841 | instrumentation only |
+| one in 17 | 20.605 | 29.548 | 36.762 | 28.972 | instrumentation only |
+| profiler off | 47.901 | 70.175 | 84.643 | 67.573 | exact same-binary control |
+
+The sparse target samples put the large BF16 oneDNN matmuls around
+`126-130 us`, consistent with the separate oneDNN verbose evidence. The
+roughly `95-102 us` RMS intervals are not RMS kernel timings because the
+post-tag is host-submitted after the lightweight kernel and may include an
+idle queue gap. Keep that distinction explicit.
+
+The profiler-off telemetry showed all four cards holding the configured
+`2.8 GHz` active frequency, no thermal limit (`50-57 C` maxima), and power far
+below the `230 W` cap. At 100 ms resolution the cards were active for only
+about `0.50-0.54` of samples and peaked around `151-157 W`. This rules out
+power or thermal throttling and supports a bursty/underfed execution diagnosis,
+while not resolving individual queue bubbles.
+
+Explicit regular Level Zero command lists
+(`UR_L0_USE_IMMEDIATE_COMMANDLISTS=0`) produced exact canonical output and
+`48.212 / 70.600 / 85.006 = 67.939 tok/s`. That is tied with the retained
+parallel-submit lane and does not justify changing the runtime default.
+
+Run identities and result locations:
+
+- `experiments/muse-glimmer-30b-b70/sweeps/20260812-sycl-device-timeline-tags.json`
+  -> `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/sycl-device-timeline-tags-20260812.jsonl`;
+- `experiments/muse-glimmer-30b-b70/sweeps/20260812-sycl-device-timeline-tags-sparse17.json`
+  -> `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/sycl-device-timeline-tags-sparse17-20260812.jsonl`;
+- `experiments/muse-glimmer-30b-b70/sweeps/20260812-sycl-device-timeline-default-off-control.json`
+  -> `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/sycl-device-timeline-default-off-control-20260812.jsonl`;
+- `experiments/muse-glimmer-30b-b70/sweeps/20260812-ur-l0-immediate0-screen.json`
+  -> `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/ur-l0-immediate0-screen-20260812.jsonl`.
+
+The four external result SHA256 values in the same order are
+`d518d4d5e324e081e8b44b3ca69eddad9e05347bea6c61b05f090f172f6392ec`,
+`cddd492985b89a453c58039e7442abd1be50a2c8477c910a16f1c0760441d298`,
+`3027005f0487dbd5eed466e7098a7c654ab9ccdb266e8ded562cc14cb84537cb`,
+and `4c84c5b94d08cbd9310e2af0376dba6d6241b6f1b4536fccf489579ae013cac3`.
+
+## Update: RMSNorm work-group screens
+
+Source commit `c611131fe` adds a default-off
+`GGML_SYCL_RMS_NORM_WG_SIZE` experiment for large RMSNorm and fused
+RMSNorm+MUL kernels. The incumbent remains the device maximum (`1024` on
+B70). Both smaller work groups are rejected:
+
+| work group | prose | code | JSON | mean | exactness |
+| ---: | ---: | ---: | ---: | ---: | --- |
+| 256 | 47.164 | 70.691 | 82.327 | 66.727 | final hashes canonical; proposal path changed |
+| 512 | 47.681 | 72.055 | 83.919 | 67.885 | prose and code final hashes changed |
+
+WG256 is slower and changed DFlash proposal counts to
+`172/1173, 199/781, 207/672` for prose/code/JSON. WG512 tied the throughput
+baseline but changed final hashes to `a71ceb1ecf6a3e43` and
+`b4a2bda611510441` for prose/code; only JSON remained canonical. Changing the
+work-group size changes the RMS reduction tree, so neither result qualifies as
+an exact optimization. Leave the source gate default-off and do not promote
+either setting.
+
+The result files are
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/rms-norm-wg256-screen-20260812.jsonl`
+and
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/rms-norm-wg512-screen-20260812.jsonl`.
+Their SHA256 values are
+`66e0fd365ac9c65614a9b03cbacefa7d447bcf218aa70ecc2186622959382b46`
+and `0dae7bd0fc0f5e9b47deb9cb4f056c3b4c1cda64ab63f2956e97d13b6ad5421e`.
+After the WG512 screen, production was restored without reboot and passed the
+full code/cache-zero/vision gate in
+`data/muse-health-20260812-rms-wg512-screen-restore.json`.
