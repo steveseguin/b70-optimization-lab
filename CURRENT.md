@@ -217,6 +217,11 @@ showed that B70 already defaults to the redesigned Level Zero V2 adapter, where
 that V1 flag is likely ignored. Production already uses the optimized V2
 in-order queue implementation; see
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-ur-driver-inorder-screen.md`.
+The actual V2 batched-queue mode was then tested with
+`UR_L0_V2_FORCE_BATCHED=1`; it stalled during model/context initialization and
+never reached health after 2.5 minutes. It was interrupted once, exited cleanly,
+and required no device recovery. Do not retry; see
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-ur-v2-batched-negative.md`.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible
