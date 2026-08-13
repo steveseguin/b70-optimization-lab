@@ -138,6 +138,27 @@ still unmeasured; do not claim 100 until the integrated exact server path does
 so. Evidence:
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-sycl-allreduce-last-event.md`.
 
+The existing gate/up strided oneDNN batch=2 path is now confirmed on this
+current retained stack. `GGML_SYCL_DNNL_FFN_BATCH2=1` executes at the expected
+local `m=4992 n=2 k=6656` shape, preserves canonical hashes and acceptance,
+and saves `0.311 / 0.161 / 0.099 ms/round` (mean `0.190 ms`). Retain it in the
+experimental century stack. A later cross-boundary final-allreduce + postnorm
+fusion was exact but neutral/slower and was reverted; persistent OpenMP meta
+submission was also an exact regression. Evidence:
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-ffn-batch2-current-confirmation.md`,
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-sycl-allreduce-postnorm-negative.md`,
+and
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-persistent-meta-submit-negative.md`.
+
+The required DDTree unified-KV mode is exact but costs a measured mean
+`0.0486 ms/round` across three C/A/C packets (class means `0.067 / 0.016 /
+0.062 ms`). After applying both that cost and the retained gate/up batch2
+saving, the budget-15 zero-bookkeeping projection is now **`75.650 / 103.569 /
+120.610 tok/s`**, arithmetic mean **`99.943 tok/s`**. Only `0.029 ms/round`
+remains mathematically, but real tree bookkeeping and multi-sequence mask cost
+are still unmeasured. The next decisive step is the 16-row unified-KV
+branch-layout correctness/timing probe; do not claim >100 from this model.
+
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible
 same-round-cost ceiling to `103.16 tok/s`, but can tolerate only `+3.16%`
