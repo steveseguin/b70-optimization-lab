@@ -60,6 +60,49 @@ Independent fresh-server confirmation:
 The record and confirmation artifacts and hashes are indexed in
 `data/muse-q8-woq-realistic-record-20260813.json`.
 
+## Full sustained-decode closeout
+
+The initial realistic result still used distributed TOP_K with `k=1` and the
+canonical full-256 arithmetic mean remained below 100. Replacing that terminal
+selection with the already-retained distributed ARGMAX/local-winner-reuse path
+removed the remaining fixed top-k overhead. Disabling `LLAMA_SPEC_PROFILE`,
+which is diagnostic bookkeeping and not part of serving, supplied the final
+small margin without changing inference math.
+
+A screen enabling `GGML_SYCL_BF16_GRAPH_CONVERSION_CACHE=1` for the BF16
+DFlash context was startup-safe but changed proposal history and regressed the
+full packet; it is rejected. The final configuration keeps that cache off.
+
+Two independent fresh-server full-256 runs of the final ARGMAX/no-profile
+configuration measured:
+
+| run | prose | code | JSON | arithmetic mean |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 71.583 | 106.436 | 122.246 | **100.088** |
+| 2 | 72.487 | 106.673 | 122.786 | **100.649** |
+
+The pooled arithmetic mean is **100.3685 tok/s**. Code and JSON retained their
+canonical hashes in both runs; prose follows the known Q8 near-tie and changed
+acceptance by one token between starts. Both independent full runs exceed 100,
+so this is not a selected one-off.
+
+The same final ARGMAX configuration passed the frozen cold realistic suite at
+**161.89958040164998 tok/s median**, p10 **108.57350121634562**, with a
+one-sided prompt-bootstrap 95% lower bound of **127.08191057486525 tok/s**.
+All 15 prompts supplied at least 100 exact raw token events and reported zero
+prompt-cache reuse.
+
+The final structured record is
+`data/muse-q8-woq-argmax-century-20260813.json`. The full raw artifacts are:
+
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/q8-woq-fixed16-argmax-noprofile-full256-20260813.jsonl`;
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/realistic/q8-woq-fixed16-argmax-realistic-v1-20260813/realistic-suite.json`.
+
+An ARGMAX-specific no-spec/DFlash check was token-exact for canonical code and
+JSON at 256 tokens. Prose followed a different target-approved near-tie path,
+so the final configuration is described as target-verified rather than
+universally token-exact. No drafter training was used anywhere in this lane.
+
 ## Honest limitations
 
 This demonstrates reproducible sustained throughput above 100 under the

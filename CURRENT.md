@@ -46,6 +46,20 @@ remain pending. Evidence and caveats:
 `data/muse-q8-woq-realistic-record-20260813.json` and
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-q8-woq-realistic-century.md`.
 
+The final linear-serving closeout replaces TOP_K(k=1) with the retained
+distributed ARGMAX/local-winner path and disables diagnostic
+`LLAMA_SPEC_PROFILE`. Two independent fresh-server canonical full-256 runs
+measured **100.088** and **100.649 tok/s arithmetic mean** (`71.583 / 106.436 /
+122.246` and `72.487 / 106.673 / 122.786`), pooled **100.3685 tok/s**. The same
+final configuration passed the frozen cold first-100 realistic metric at
+**161.900 tok/s median**, p10 `108.574`, with one-sided prompt-bootstrap 95%
+lower bound `127.082`; all 15 prompts were measurable and cache-zero. This
+satisfies the no-training four-GPU throughput objective under both campaign
+metrics. Preserve the honest limits: prose individually remains below 100,
+full-natural realistic median is `68.586`, and Q8 near-tie paths are not
+universally token-exact. Final structured evidence:
+`data/muse-q8-woq-argmax-century-20260813.json`.
+
 The current exact TP4 kernel-campaign best is the BF16 DFlash stack with
 batched device-side distributed greedy sampling for both DFlash proposal rows
 and target verification rows, local-winner maxloc, committed-prefix-only

@@ -1,0 +1,81 @@
+{
+  "status": "objective_verified",
+  "claim": "Muse-Glimmer-30B UD-Q8_K_XL target with fixed-N16 oneDNN WOQ decode, pretrained BF16 DFlash and distributed ARGMAX exceeds 100 tok/s under both the full canonical 256-token arithmetic-mean campaign metric and the frozen cold first-100 realistic-suite median metric on four B70 GPUs",
+  "claim_limits": [
+    "This is a Q8/WOQ result, not BF16 or lossless.",
+    "Not every individual prompt exceeds 100 tok/s; canonical prose remains approximately 71-72 tok/s.",
+    "Full natural-completion realistic-suite median after TTFT is 68.586 tok/s; the official realistic headline is the preregistered first-100-event interval median.",
+    "Long prose and JSON can take target-approved near-tie branches, so the path is target-verified but not universally token-exact."
+  ],
+  "hardware": {
+    "gpu_count": 4,
+    "gpu_family": "Intel B70",
+    "parallelism": "TP4",
+    "concurrency": 1
+  },
+  "model": {
+    "target": "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/Muse-Glimmer-30B-UD-Q8_K_XL.gguf",
+    "draft": "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-bf16.gguf",
+    "drafter_training_performed": false
+  },
+  "runtime": {
+    "head": "1ff6bcb6c1d9c175145bd4c212c24bb2fb13f539",
+    "binary_sha256": "81bdb51d9c22fdffaeaa6bc2b7808f83d6106bf12d8a85d2ab501047ad8e8d17",
+    "libggml_sycl_sha256": "accc946aa194af3dc33b967ab1a1c3fc3070da77e1078f722978bb544ca7e9b1",
+    "libllama_server_impl_sha256": "61ba0d75c4c94ed512db24cb14ca35fa0154cfe94a7dc74788f8c418c04e24ee",
+    "source_diff_sha256": "3a79e0bc7ecc82af12affe3b93304a3d68cf341d84959cd412e5e33259ced16e",
+    "kernel_path": "BF16 activation x direct-strided S8 group32/F16-scale oneDNN WOQ -> F32, fixed execution width 16 for decode widths 1..16",
+    "draft_terminal_selection": "distributed ARGMAX with local-winner reuse",
+    "diagnostic_spec_profile": false
+  },
+  "full_canonical_256": {
+    "artifact": "/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/q8-woq-fixed16-argmax-noprofile-full256-20260813.jsonl",
+    "artifact_sha256": "01127b8d9d5659a7e4b5804e8b1980df2ab307f662e08297ab73923df6690556",
+    "run_1": {
+      "prose_tok_s": 71.583,
+      "code_tok_s": 106.436,
+      "json_tok_s": 122.246,
+      "arithmetic_mean_tok_s": 100.08833333333332,
+      "hashes": ["6e0acc044576ad05", "b4a2bda611510441", "4f813a9706abc163"],
+      "draft_accepted": [174, 200, 207]
+    },
+    "run_2": {
+      "prose_tok_s": 72.487,
+      "code_tok_s": 106.673,
+      "json_tok_s": 122.786,
+      "arithmetic_mean_tok_s": 100.64866666666667,
+      "hashes": ["0a2c4dafb88332b0", "b4a2bda611510441", "4f813a9706abc163"],
+      "draft_accepted": [175, 200, 207]
+    },
+    "pooled_arithmetic_mean_tok_s": 100.3685,
+    "both_independent_runs_above_100": true
+  },
+  "cold_realistic_first_100": {
+    "artifact": "/mnt/fast-ai/bench-results/muse-glimmer-30b/realistic/q8-woq-fixed16-argmax-realistic-v1-20260813/realistic-suite.json",
+    "artifact_sha256": "c7921dff022ec2b8d8dc87c454e8301c6c70a53b7af3f9bfca467075e0a18515",
+    "server_log_sha256": "5dd371012411bcbc86066885c50012f3e7e4fba50ef1ff39cdfac8cade2f5092",
+    "suite_sha256": "44d3dfafd9565b1411e9ea6a32c3f7fc323b862e4afbf96abe718c94ce9951b7",
+    "metric": "99 / (timestamp[99] - timestamp[0])",
+    "median_tok_s": 161.89958040164998,
+    "p10_tok_s": 108.57350121634562,
+    "mean_tok_s": 175.8127692044467,
+    "minimum_tok_s": 82.46992218829477,
+    "one_sided_prompt_bootstrap_95_lower_tok_s": 127.08191057486525,
+    "bootstrap_resamples": 200000,
+    "bootstrap_seed": 20260813,
+    "all_15_prompts_measurable": true,
+    "all_cached_tokens_zero": true,
+    "full_natural_completion_median_after_ttft_tok_s": 68.58553673881232
+  },
+  "correctness": {
+    "argmax_parity_artifact": "/mnt/fast-ai/bench-results/muse-glimmer-30b/realistic/q8-woq-fixed16-argmax-spec-parity256-20260813/parity.json",
+    "argmax_parity_sha256": "71ea1edd2b7d59329b80d80ca7cc715da3292f9d042a0797d2f52e3d4acc8d40",
+    "code_token_exact_256": true,
+    "json_token_exact_256": true,
+    "prose_target_verified_but_near_tie_divergent": true,
+    "topk_reference_exact_all_three_256": true,
+    "json_schema_gate": true,
+    "btree_rubric_coverage_gate": true,
+    "lru_1024_compile_and_unit_gate": true
+  }
+}
