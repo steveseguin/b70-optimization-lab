@@ -30,8 +30,8 @@ As of 2026-08-13, the configured endpoint is Qwen3.6 27B Q8_0 target-only TP2:
 The enabled unit is `qwen36-q8-b70.service`; it was active and passed health,
 an exact cache-zero target-only smoke, and post-stress GPU/kernel checks on
 2026-08-13. The launcher is `/home/steve/bin/run-qwen36-q8-b70.sh`. The fixed
-12-prompt, 512-token suite measured **`35.494434 tok/s`** conventionally
-(`35.852963 tok/s` historical-helper compatibility), with all 12 output hashes
+12-prompt, 512-token suite measured **`35.699225 tok/s`** conventionally
+(`36.059823 tok/s` historical-helper compatibility), with all 12 output hashes
 exact. Use the [result packet](../results/qwen36-27b-q8-tp2-asrock-b70/README.md),
 [standalone repro](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md), and [full
 source patch](../patches/qwen36-27b-q8-tp2-asrock-b70/README.md). The original
@@ -84,11 +84,12 @@ Latest full-32K concurrency conclusion:
 
 ## Latest Optimization Lane
 
-Qwen3.6 27B Q8_0 target-only TP2 is promoted at `35.494434 tok/s`
-conventional on the two-card ASRock host. The result is `+14.405%` over the
+Qwen3.6 27B Q8_0 target-only TP2 is promoted at `35.699225 tok/s`
+conventional on the two-card ASRock host. The result is `+15.065%` over the
 matched mndodd-fork baseline, uses no speculation or response reuse, and is
 12/12 output-hash exact. The direct recurrent GDN and convolution persistent-
-state I/O paths are the final incremental wins. Continue from the standalone
+state I/O paths and recurrent RMS/gate/multiply/Q8 tail are the final
+incremental wins. Continue from the standalone
 [repro](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md), not from an older
 community-only launcher. The next bounded task is release-day compatibility
 testing for the new Qwen 27B before transferring exact-shape optimizations.

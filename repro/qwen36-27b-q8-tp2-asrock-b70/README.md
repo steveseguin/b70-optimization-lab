@@ -6,12 +6,12 @@ prompt reuse, or other speculation.
 
 ## Promoted result
 
-- Preferred conventional 99-interval median: **35.494434 tok/s**
-- Conventional p10 / mean: `34.958732` / `35.506893 tok/s`
-- Historical 100-event compatibility median: `35.852963 tok/s`
-- Full 512-token after-TTFT median: `35.437512 tok/s`
-- Full 512-token wall median: `34.954163 tok/s`
-- Median TTFT: `174.892 ms`
+- Preferred conventional 99-interval median: **35.699225 tok/s**
+- Conventional p10 / mean: `35.199488` / `35.610043 tok/s`
+- Historical 100-event compatibility median: `36.059823 tok/s`
+- Full 512-token after-TTFT median: `35.715918 tok/s`
+- Full 512-token wall median: `35.266336 tok/s`
+- Median TTFT: `179.163 ms`
 - Quality: 12/12 output hashes exact, 12/12 at 512 completion tokens,
   every `cached_tokens=0`, realistic and fresh-response gates passed.
 
@@ -113,6 +113,10 @@ the two intended B70s explicitly; do not guess from branding.
 The endpoint is loopback-only at `http://127.0.0.1:18081` by default. Its
 contract is one slot, 8192 context, equal tensor split, F16 KV, FlashAttention
 on, graph off, cache RAM zero, context checkpoints zero, and fit off.
+`GGML_SYCL_FUSE_EXT=31` enables accepted fusion bits 0 through 4. Bit 4 is the
+recurrent RMS/gate/final-multiply/reordered-Q8 tail fusion; leaving the variable
+at the source default `15` provides the same-binary control for that final
+increment. The matcher remains default-off outside this recipe.
 
 ## 5. Run the fixed cold suite
 

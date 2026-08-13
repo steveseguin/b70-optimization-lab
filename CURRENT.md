@@ -39,10 +39,10 @@ service is the loopback-only Qwen3.6 27B Q8_0 target-only TP2 endpoint:
 - safety: `MemoryHigh=8G`, `MemoryMax=10G`, `MemorySwapMax=8G`,
   `OOMScoreAdjust=900`, and no automatic restart.
 
-Validated fixed-suite performance is **`35.494434 tok/s`** under conventional
-99-inter-token-interval counting and `35.852963 tok/s` under the historical
+Validated fixed-suite performance is **`35.699225 tok/s`** under conventional
+99-inter-token-interval counting and `36.059823 tok/s` under the historical
 helper convention. All 12 outputs were 512 tokens, cache-zero, and byte-exact
-against the accepted pre-state-I/O target-only control. This is `+14.405%`
+against the accepted pre-state-I/O target-only control. This is `+15.065%`
 over the matched mndodd fork baseline. The promoted [result
 packet](results/qwen36-27b-q8-tp2-asrock-b70/README.md), [standalone
 repro](repro/qwen36-27b-q8-tp2-asrock-b70/README.md), and [complete source
@@ -54,12 +54,14 @@ aborted/hung, and the profiler reset both compute engines. Both cards recovered
 and passed ordinary workloads.
 
 The target-only Q8 TP2 campaign is promoted at this result. The winning lab
-stack adds exact collective/quantized handoffs plus direct persistent-state I/O
-for the recurrent GDN and convolution paths; the latter two changes contributed
-`+3.132%` and `+0.855%` respectively in the matched attribution suite. Speculative
+stack adds exact collective/quantized handoffs, direct persistent-state I/O
+for the recurrent GDN and convolution paths, and a final recurrent RMS/gate/
+multiply/Q8-tail fusion. The state-I/O changes contributed `+3.132%` and
+`+0.855%` respectively; the tail added `+0.219%` in pooled matched A/Bs. Speculative
 MTP/DFlash measurements remain support rows and do not satisfy this objective.
 Do not overlap a model workload with a full BMG AOT compile on this 15 GiB
-host. Rejected workgroup packing, batched Q/K normalization/RoPE, graph,
+host. Equal `1/1` tensor split is required for the symmetry-dependent recurrent
+matchers. Rejected cache hints, asymmetric split, workgroup packing, batched Q/K normalization/RoPE, graph,
 profiler, root-barrier, phase-ordering, and peer-copy doors are recorded in the
 result packet and must not be silently re-enabled. The next compatibility probe
 is the forthcoming Qwen 27B release; first test its architecture and target-only

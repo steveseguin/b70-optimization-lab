@@ -10,8 +10,8 @@ target-only Q8_0 TP2 result on two ASRock Intel Arc Pro B70 cards.
 - Patch artifact:
   `llama-cpp-mndodd-4302fb599-lab-tp2-20260813.diff.gz.b64`
 - Decoded patch SHA-256:
-  `7856dd62f711fb36cb2ae59191717eb15c2967ff49eb609bda5f6eea218736bd`
-- Base-to-patch scope: 17 files, 3,193 insertions, 74 deletions.
+  `710b8628f6c94025d9a0516f77bddeeebccdd27d5bd3ebc4f79d2e623b1dd6c7`
+- Base-to-patch scope: 17 files, 3,431 insertions, 77 deletions.
 
 The artifact is a full diff from the clean mndodd commit. Do not first apply
 the smaller compatibility patch from the contributor packet; those changes
@@ -69,6 +69,8 @@ binaries had these hashes:
   `206bd4cec822c2340402f7bb25c049655736282c3a6b8aa20e929e8afa4534a9`
 - `llama-bench`:
   `4ee4db290ffbb6a25c9c5a635ca48db8acc1784ee0e2148db6406b6cc9723be2`
+- `libggml-sycl.so`:
+  `d667e6f3ccabede45df4f9512024cb1ae8653ab0bbea7827b6baf8599221e2a6`
 
 ## What the patch contains
 
@@ -85,13 +87,19 @@ It includes:
   `GET_ROWS -> GDN -> CPY` state round trip;
 - direct in-place convolution-state I/O, replacing the exact matched
   `GET_ROWS -> CONCAT/CPY -> SSM_CONV` chain with one kernel while preserving
-  the stock four-term accumulation loop.
+  the stock four-term accumulation loop;
+- recurrent RMS normalization/scale, precomputed SiLU gate, final multiply,
+  and reordered-Q8 handoff fusion, admitted only when the gate MM is already
+  in the precomputed-MMVQ set and preserving the stock FP32 boundaries.
 
-The final two state-I/O paths have poison controls for validation. Never set
-either poison variable in a real service.
+The two state-I/O paths and final recurrent-tail path have poison controls for
+validation. Never set a poison variable in a real service.
 
 ## Runtime doors
 
 Use the complete environment and server command in
 [`repro/qwen36-27b-q8-tp2-asrock-b70/`](../../repro/qwen36-27b-q8-tp2-asrock-b70/).
 The source patch alone does not enable the optimized paths.
+The promoted environment sets `GGML_SYCL_FUSE_EXT=31`; bit 4 is the final
+recurrent-tail fusion. The source default `15` leaves bit 4 off and was used as
+the same-binary attribution control.

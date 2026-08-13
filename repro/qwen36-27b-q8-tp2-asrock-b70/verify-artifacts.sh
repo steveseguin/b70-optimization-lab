@@ -5,13 +5,13 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../.." && pwd)
 
 patch_artifact="${repo_root}/patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-20260813.diff.gz.b64"
-result_artifact="${repo_root}/data/qwen36-q8-tp2-asrock-b70-20260813/conv-stateio-final-full512-realistic.json.gz.b64"
+result_artifact="${repo_root}/data/qwen36-q8-tp2-asrock-b70-20260813/tail-finalfresh-realistic512.json.gz.b64"
 
 patch_sha=$(base64 -d "${patch_artifact}" | gzip -dc | sha256sum | awk '{print $1}')
 result_sha=$(base64 -d "${result_artifact}" | gzip -dc | sha256sum | awk '{print $1}')
 
-[[ "${patch_sha}" == 7856dd62f711fb36cb2ae59191717eb15c2967ff49eb609bda5f6eea218736bd ]]
-[[ "${result_sha}" == aa726e686469e5a8cc6d441f4f83a093f2345e83fcec6d182f96356d5f735858 ]]
+[[ "${patch_sha}" == 710b8628f6c94025d9a0516f77bddeeebccdd27d5bd3ebc4f79d2e623b1dd6c7 ]]
+[[ "${result_sha}" == d98a21f150dbb5b6461a0cc95d84d579cef36084d1f9ed3984d9827cfcf3dbc8 ]]
 
 base64 -d "${result_artifact}" | gzip -dc | python3 -c '
 import json, sys

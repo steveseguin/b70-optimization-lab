@@ -47,17 +47,19 @@ Main entries:
 Status: promoted target-only TP2 result as of 2026-08-13. The quality-cleared
 endpoint best uses mndodd's pinned SYCL optimization fork plus the lab's full
 exact collective, Q8 handoff, recurrent dispatch, and persistent-state-I/O
-stack. It reaches **`35.494434 tok/s`** under conventional 99-interval
-accounting or `35.852963 tok/s` under the historical helper. This is
-`+14.405%` over the matched mndodd fork baseline (`31.025377` conventional).
+stack. It reaches **`35.699225 tok/s`** under conventional 99-interval
+accounting or `36.059823 tok/s` under the historical helper. This is
+`+15.065%` over the matched mndodd fork baseline (`31.025377` conventional).
 All 12 cold completions are 512 tokens, cache-zero, and byte-exact against the
 accepted pre-state-I/O control. Direct GDN state I/O added `+3.132%`; direct
-convolution state I/O added another `+0.855%` in the final long suite.
+convolution state I/O added another `+0.855%` in the final long suite, and the
+recurrent RMS/gate/multiply/Q8 tail added `+0.219%` in pooled matched A/Bs.
 
 The earlier one-card fork endpoint reached `17.955800` helper / `17.776242`
 conventional, `+3.809%` over its matched control. MTP and DFlash measurements
 are support lanes, not substitutes for this target-only objective. Forced SG32,
-GDN workgroup packing, batched Q/K normalization with RoPE, root-barrier
+GDN workgroup packing, batched Q/K normalization with RoPE, Q8 cache hints,
+asymmetric tensor split, root-barrier
 elision, BMG-forced MMVQ phase ordering, and copy-engine replication did not
 win. TP2 graph capture aborted or hung, and the built-in TP2 profiler reset
 both compute engines; both remain prohibited. The next bounded work is the new
