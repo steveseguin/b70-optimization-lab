@@ -236,3 +236,39 @@ Evidence:
 Production passed model listing, cache-zero 512-token code, and vision.  No
 reboot, driver reset, or device recovery was needed.  Q/gate lending is closed
 as an exact performance negative.
+
+### Profiling-tag follow-up does not establish a scheduler-sized idle pool
+
+After closing lending, the retained in-process SYCL profiling-tag diagnostic
+was run on the clean target-only TP4 width-16 path.  Tagging every logical op
+was structurally complete (`0` dropped/invalid samples) but inflated a normal
+approximately `42.4 ms` pass to `972.5--985.9 ms`; its absolute totals are not
+performance evidence.
+
+A one-in-17 run still measured `101.6--106.1 ms`.  A final one-in-257 run over
+31 samples reduced wall time to `44.56--47.95 ms` (mean `46.237 ms`) but still
+added approximately `3.8 ms` versus the adjacent untraced `42.418 ms` mean.
+Only `86--89` intervals per rank were sampled across the full run.  The tag
+brackets explicitly include queue gaps and the operation whose submission they
+separate, so their per-op durations remain biased upward; scaling those sparse
+samples into a claimed `>=7 ms/pass` recoverable idle pool would be invalid.
+
+Evidence:
+
+- every-op JSON/stderr SHA-256:
+  `b04a09c40afd962df0dd53986a2d26b2d9b57dbfc694cb1e0e29c0acbe4b767a` /
+  `6ba936cfb1787769e06ee842e017f3325e0085754a76a8353fcfb734c3182aef`;
+- one-in-17 JSON/stderr SHA-256:
+  `9036b67a4abd87cd90a44595eb5e181cded14f8c14398b485a1d538239bd203b` /
+  `b549758c237721c63d12cf373a509974e62caeeea6b6e39a74d9f9f043968409`;
+- one-in-257 JSON/stderr SHA-256:
+  `173d890ddb1ae68f11e90e3f6da82aefaa3452e7eea6160419d4005193b7ac6f` /
+  `696ecfaec5cadbe80bc6105552fa59be0834b5eb8a23b1dbb863edc779889d8f`;
+- artifacts are under
+  `/mnt/fast-ai/bench-results/muse-glimmer-30b/pti-width16/target-width16-device-timeline*-20260813.*`.
+
+Decision: this diagnostic cannot justify a persistent-command-list campaign.
+Together with the unusable PTI device views, there is still no measured
+verifier-wide recoverable scheduling pool large enough to close the current
+`9.94 ms/round` century gap.  Production was restored and passed the complete
+health gate in `data/muse-health-20260813T1730Z-device-timeline-restore.json`.
