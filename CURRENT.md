@@ -27,6 +27,25 @@ incident remains preserved at
 Production and benchmark launchers now share the canonical exclusive host GPU
 lock, including benchmark-child FD inheritance.
 
+The no-training Q8 kernel lane has now crossed the preregistered realistic
+first-100-token gate. Muse-Glimmer-30B UD-Q8_K_XL with the direct-strided
+BF16-activation/S8-group32/F16-scale/F32-destination oneDNN WOQ path, fixed-N16
+decode descriptors, BF16 DFlash and TP4 measured **166.664 tok/s median** over
+the conventional 99 inter-token intervals on the frozen 15-prompt cold suite.
+An independent fresh-server confirmation measured **169.588 tok/s**. Both
+runs had 15/15 measurable prompts and `cached_tokens=0`; the record run's
+one-sided prompt-bootstrap 95% lower bound is **126.349 tok/s**. This is a
+declared Q8/WOQ result, not BF16 or lossless. The engineering prose/code/JSON
+full-256 arithmetic mean is only `99.438 tok/s`, the record minimum is
+`79.418`, and full-natural-response median after TTFT is `68.608 tok/s`, so do
+not generalize the headline beyond the fixed primary window. Canonical
+target-only versus DFlash is exact through 256 tokens and the 1024-token code
+gate is exact/runnable, but long prose/JSON can diverge after 256 while staying
+semantically valid. Quality promotion and LocalMaxxing submission therefore
+remain pending. Evidence and caveats:
+`data/muse-q8-woq-realistic-record-20260813.json` and
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-q8-woq-realistic-century.md`.
+
 The current exact TP4 kernel-campaign best is the BF16 DFlash stack with
 batched device-side distributed greedy sampling for both DFlash proposal rows
 and target verification rows, local-winner maxloc, committed-prefix-only

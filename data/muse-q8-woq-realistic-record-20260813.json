@@ -1,0 +1,57 @@
+{
+  "status": "speed_gate_passed_quality_pending",
+  "claim_scope": "Muse-Glimmer-30B UD-Q8_K_XL target with BF16-activation/S8-group32-F16-scale/F32-destination WOQ decode kernels, BF16 DFlash, TP4; not BF16 and not lossless",
+  "runtime_head": "1ff6bcb6c1d9c175145bd4c212c24bb2fb13f539",
+  "runtime_diff_sha256": "3a79e0bc7ecc82af12affe3b93304a3d68cf341d84959cd412e5e33259ced16e",
+  "binary_sha256": "81bdb51d9c22fdffaeaa6bc2b7808f83d6106bf12d8a85d2ab501047ad8e8d17",
+  "libggml_sycl_sha256": "accc946aa194af3dc33b967ab1a1c3fc3070da77e1078f722978bb544ca7e9b1",
+  "suite_path": "experiments/muse-glimmer-30b-b70/realistic-suite-v1.json",
+  "suite_sha256": "44d3dfafd9565b1411e9ea6a32c3f7fc323b862e4afbf96abe718c94ce9951b7",
+  "metric": {
+    "name": "median_tok_s_1_100_intervals_after_ttft",
+    "accounting": "99 / (timestamp[99] - timestamp[0])",
+    "timestamped_events": 100,
+    "inter_token_intervals": 99
+  },
+  "record": {
+    "artifact": "/mnt/fast-ai/bench-results/muse-glimmer-30b/realistic/q8-woq-fixed16-top1-realistic-native-cachefield-v1-20260813/realistic-suite.json",
+    "artifact_sha256": "5f628c87e0b176a2b29cdc389c72877f61a921256b59d1ba322d02f4eee6eaf9",
+    "server_log_sha256": "c549434427e2380f2614ae0f1262eb59da2fb60c4f8dd106bb535b2a1b7a392a",
+    "median_tok_s": 166.66362996587313,
+    "p10_tok_s": 107.41898887958072,
+    "mean_tok_s": 173.25373551165606,
+    "min_tok_s": 79.41770559571802,
+    "max_tok_s": 310.18577423583736,
+    "one_sided_prompt_bootstrap_95_lower_tok_s": 126.34887748489899,
+    "bootstrap_resamples": 200000,
+    "bootstrap_seed": 20260813,
+    "prompt_count": 15,
+    "all_cached_tokens_zero": true,
+    "all_prompts_measurable": true
+  },
+  "confirmation": {
+    "artifact": "/mnt/fast-ai/bench-results/muse-glimmer-30b/realistic/q8-woq-fixed16-top1-realistic-native-cachefield-confirm-20260813/realistic-suite.json",
+    "artifact_sha256": "af191283f3e9cbd39bc783e2c4a55901b8d1d2ef36d80ab76061eca492642a11",
+    "server_log_sha256": "79aad2f998636a27e65a4bbe00cea2ee8b075c8297dc6b1bca60a16e08efbbcc",
+    "median_tok_s": 169.5879986662736,
+    "p10_tok_s": 107.42564746182691,
+    "one_sided_prompt_bootstrap_95_lower_tok_s": 125.69329102518215,
+    "prompt_count": 15,
+    "all_cached_tokens_zero": true,
+    "all_prompts_measurable": true
+  },
+  "engineering_full_256": {
+    "artifact": "/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/q8-woq-fixed16-top1-full256-20260813.jsonl",
+    "artifact_sha256": "9516abe5e1a18f1d5a0935b2c82c4c98d9d84562af3be6bdc9ac49bd78e904f9",
+    "prose_tok_s": 70.904,
+    "code_tok_s": 105.9,
+    "json_tok_s": 121.509,
+    "arithmetic_mean_tok_s": 99.43766666666666
+  },
+  "caveats": [
+    "The primary record is the fixed first-100-event realistic-suite metric; full natural-completion median after TTFT was 68.608 tok/s in the record run.",
+    "The 15-prompt minimum was 79.418 tok/s even though the median and p10 exceeded 100.",
+    "Only 6 of 15 full-output hashes matched between fresh speed runs; deterministic target/spec correctness and semantic quality gates remain required before promotion or submission.",
+    "Three earlier measurement packets are preserved but invalid: OpenAI chunks lacked token IDs, native tokens_cached was total KV occupancy, and OpenAI verbose did not expose native token IDs."
+  ]
+}

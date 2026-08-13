@@ -26,34 +26,67 @@ def post_stream(
     seed: int | None,
     request_extra: dict[str, Any],
     return_token_ids: bool,
+    system_prompt: str | None,
     request_id: str | None = None,
 ) -> dict[str, Any]:
-    payload: dict[str, Any] = {
-        "model": model,
-        "max_tokens": max_tokens,
-        "temperature": 0,
-        "top_p": 1,
-        "stream": True,
-        "stream_options": {"include_usage": True},
-    }
+    payload: dict[str, Any]
+    if api_mode == "native":
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        template_req = urllib.request.Request(
+            f"{base_url.rstrip('/')}/apply-template",
+            data=json.dumps({"messages": messages}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(template_req, timeout=timeout) as template_resp:
+            rendered = json.loads(template_resp.read())["prompt"]
+        payload = {
+            "prompt": rendered,
+            "n_predict": max_tokens,
+            "temperature": 0,
+            "stream": True,
+            "return_tokens": True,
+        }
+    else:
+        payload = {
+            "model": model,
+            "max_tokens": max_tokens,
+            "temperature": 0,
+            "top_p": 1,
+            "stream": True,
+            "stream_options": {"include_usage": True},
+        }
     if seed is not None:
         payload["seed"] = seed
     if return_token_ids:
         payload["return_token_ids"] = True
     if api_mode == "chat":
         endpoint = "chat/completions"
-        payload["messages"] = [{"role": "user", "content": prompt}]
-    else:
+        payload["messages"] = []
+        if system_prompt:
+            payload["messages"].append({"role": "system", "content": system_prompt})
+        payload["messages"].append({"role": "user", "content": prompt})
+    elif api_mode == "completions":
         endpoint = "completions"
         payload["prompt"] = prompt
+    else:
+        endpoint = "completion"
     payload.update(request_extra)
 
     headers = {"Content-Type": "application/json"}
     if request_id:
         headers["X-Request-Id"] = request_id
 
+    endpoint_url = (
+        f"{base_url.rstrip('/')}/{endpoint}"
+        if api_mode == "native"
+        else f"{base_url.rstrip('/')}/v1/{endpoint}"
+    )
     req = urllib.request.Request(
-        f"{base_url.rstrip('/')}/v1/{endpoint}",
+        endpoint_url,
         data=json.dumps(payload).encode("utf-8"),
         headers=headers,
         method="POST",
@@ -88,6 +121,58 @@ def post_stream(
                 response_ids.append(event_id)
             if event.get("usage"):
                 usage = event["usage"]
+            if api_mode == "native":
+                choice_token_ids = event.get("tokens")
+                if isinstance(choice_token_ids, list):
+                    now = time.perf_counter()
+                    token_ids.extend(int(token_id) for token_id in choice_token_ids)
+                    if first_text_at is None and choice_token_ids:
+                        first_text_at = now
+                        first_text_epoch_s = time.time()
+                    token_id_offsets.extend(
+                        [now - started] * len(choice_token_ids)
+                    )
+                token_text = event.get("content") or ""
+                if token_text:
+                    now = time.perf_counter()
+                    if first_text_at is None:
+                        first_text_at = now
+                        first_text_epoch_s = time.time()
+                    text_parts.append(token_text)
+                    chunk_offsets.append(now - started)
+                if event.get("stop"):
+                    completion_count = event.get("tokens_predicted")
+                    prompt_count = event.get("tokens_evaluated")
+                    native_cached = event.get("prompt_tokens_cached")
+                    usage = {
+                        "completion_tokens": completion_count,
+                        "prompt_tokens": prompt_count,
+                        "total_tokens": (
+                            completion_count + prompt_count
+                            if isinstance(completion_count, int)
+                            and isinstance(prompt_count, int)
+                            else None
+                        ),
+                        "prompt_tokens_details": {
+                            "cached_tokens": native_cached,
+                        },
+                    }
+                continue
+            verbose_event = event.get("__verbose")
+            verbose_token_ids = (
+                verbose_event.get("tokens")
+                if isinstance(verbose_event, dict)
+                else None
+            )
+            if isinstance(verbose_token_ids, list):
+                now = time.perf_counter()
+                token_ids.extend(int(token_id) for token_id in verbose_token_ids)
+                if first_text_at is None and verbose_token_ids:
+                    first_text_at = now
+                    first_text_epoch_s = time.time()
+                token_id_offsets.extend(
+                    [now - started] * len(verbose_token_ids)
+                )
             for choice in event.get("choices", []):
                 choice_token_ids = choice.get("token_ids")
                 if isinstance(choice_token_ids, list):
@@ -232,7 +317,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:18260")
     parser.add_argument("--model", default="gemma4-26b-a4b-q8")
-    parser.add_argument("--api-mode", choices=("chat", "completions"), default="chat")
+    parser.add_argument(
+        "--api-mode", choices=("chat", "completions", "native"), default="chat"
+    )
     parser.add_argument(
         "--suite",
         type=Path,
@@ -267,6 +354,9 @@ def main() -> int:
         raise SystemExit("--request-extra-json must decode to a JSON object")
 
     suite_meta, prompts = load_suite(args.suite)
+    system_prompt = suite_meta.get("system_prompt")
+    if system_prompt is not None and not isinstance(system_prompt, str):
+        raise SystemExit("suite system_prompt must be a string when present")
     rows: list[dict[str, Any]] = []
     suite_id = safe_request_id(str(suite_meta.get("suite_id") or args.suite.stem))
     for index, item in enumerate(prompts):
@@ -284,6 +374,7 @@ def main() -> int:
             seed=args.seed,
             request_extra=request_extra,
             return_token_ids=args.return_token_ids,
+            system_prompt=system_prompt,
             request_id=request_id,
         )
         row["prompt_index"] = index
@@ -432,6 +523,7 @@ def main() -> int:
             "max_tokens": args.max_tokens,
             "seed": args.seed,
             "request_extra": request_extra,
+            "system_prompt": system_prompt,
             "return_token_ids": args.return_token_ids,
         },
         "realistic_final_gate": gate,
