@@ -85,6 +85,12 @@ draft-phase timing). Removing that entire cost would project only
 **`97.34 tok/s`**, leaving roughly **`1.39 ms/round` plus tree overhead**.
 The immediate kernel target is the local SYCL top-k lane-zero serial merge;
 full tree integration remains premature.
+That merge is now parallelized at source commit `e5d4efaf9`. The exact
+canonical C/A/C improves pooled mean by approximately **`0.568%`** and lowers
+direct DFlash time from `8.04` to `7.77 ms/round` (about `0.27 ms`). Retain it
+default-off as `GGML_SYCL_TOP_K_TREE_MERGE=1`. Roughly `1.51 ms/round` of the
+top15-versus-greedy delta remains; the next kernel screen is a guarded
+256-lane k=15 scan to reduce per-lane insertion work.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible

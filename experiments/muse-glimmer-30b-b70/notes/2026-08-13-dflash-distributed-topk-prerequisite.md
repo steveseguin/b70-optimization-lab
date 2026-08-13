@@ -121,9 +121,49 @@ that entire cost would project the zero-bookkeeping DDTree ceiling to about
 `97.34 tok/s`; another roughly `1.39 ms/round`, plus measured tree overhead,
 would still be required.
 
-The local SYCL top-k kernel currently makes lane zero serially merge 128 sorted
-lists of 15 candidates. Replace that `O(128*k^2)` lane-zero phase with a
-tie-stable parallel merge tree and measure it against this C/A/C. Then run a
-zero-code unified-KV linear parity/timing gate. Do not start the full server/KV
-tree rewrite until the kernel work and unified-KV gate make the arithmetic
-credible.
+The first local kernel target was the lane-zero serial merge of 128 sorted
+15-candidate lists. The measured parallel replacement follows. Do not start
+the full server/KV tree rewrite until the kernel work and unified-KV gate make
+the arithmetic credible.
+
+## Parallel local-list merge
+
+Source commit `e5d4efaf9` replaces the lane-zero insertion merge with a
+default-off seven-level pairwise merge tree under
+`GGML_SYCL_TOP_K_TREE_MERGE=1`. The per-lane vocabulary scan is unchanged.
+Each active lane merges two complete sorted lists into its existing private
+arrays before writing the left shared-memory slot, so the kernel keeps the
+same 15 KiB SLM footprint at k=15.
+
+The canonical 256-token serial/tree/serial C/A/C produced canonical hashes and
+matching accepted counts in every arm:
+
+| arm | prose | code | JSON | mean tok/s |
+| --- | ---: | ---: | ---: | ---: |
+| serial before | `54.509` | `78.370` | `95.737` | `76.205` |
+| tree merge | `54.701` | `79.083` | `96.360` | **`76.715`** |
+| serial after | `54.530` | `78.698` | `95.846` | `76.358` |
+
+Against the pooled controls, throughput improves approximately **`0.568%`**.
+The direct 128-round DFlash profiles are `8.04 / 7.77 / 8.04 ms`, so the
+kernel saves approximately **`0.27 ms/round`**. Prose drafted count differed by
+one in the candidate (`1198` versus `1199`); code/JSON proposal counts and all
+accepted counts matched.
+
+Evidence:
+
+- source commit: `e5d4efaf9`;
+- identity: `sweeps/20260813-dflash-topk-tree-merge-smoke-cac.json`;
+- JSONL SHA256: `ae4c269454093714d2bf64b0ef86067e2cdf8a8d72b198e1a2b9bca2222469c3`;
+- serial-before/tree/serial-after log SHA256:
+  `78ba9ed4cc12d6adcc49b126da213646ef54012c933f855cd82fe2c8088af099`,
+  `ded79ae45f5818e5b230a569b649d62904b10fe045d62bd4c52fd504d4ac0eea`,
+  and `80be9f2b3596f1bf3eb6a7f59bfccf72b7aed40c1438f48d810a0f58a49ba8a7`;
+- production health:
+  `data/muse-health-20260813-dflash-topk-tree-merge-full-restore.json`.
+
+Retain this exact micro-win. The remaining top15-versus-greedy draft delta is
+approximately `1.51 ms/round`, mostly in the per-lane vocabulary scan and
+insertion plus the selected-value/collective/softmax tail. The next smallest
+kernel screen is a guarded 256-lane k=15 variant to halve each lane's scan;
+adjudicate SLM occupancy and full C/A/C timing before promotion.
