@@ -1,0 +1,468 @@
+{
+  "schema": "muse_adaptive_verify_width_oracle_v1",
+  "interpretation": "Target-aware dynamic-programming upper bound. A real confidence policy must be no better. Target costs are measured TP4 llama-bench values; fixed overhead is inferred optimistically.",
+  "target_cost_ms": {
+    "1": 37.525488,
+    "2": 36.132474,
+    "4": 37.87494,
+    "8": 39.682851,
+    "16": 44.407115,
+    "22": 49.180973,
+    "30": 53.809124,
+    "32": 54.753613,
+    "44": 66.765885,
+    "48": 68.496066,
+    "64": 76.517261
+  },
+  "evaluations": [
+    {
+      "fixed_overhead_scale": 1.0,
+      "mean_tok_s": 77.13370715215476,
+      "requests": [
+        {
+          "rounds": 83,
+          "drafted_tokens": 190,
+          "accepted_tokens": 173,
+          "total_ms": 4601.874483749997,
+          "tok_s": 55.62950508623815,
+          "width_histogram": {
+            "1": 46,
+            "8": 1,
+            "9": 1,
+            "15": 1,
+            "6": 3,
+            "3": 5,
+            "2": 18,
+            "4": 4,
+            "5": 2,
+            "10": 1,
+            "7": 1
+          },
+          "label": "prose",
+          "fixed_ms_per_round": 18.422885
+        },
+        {
+          "rounds": 57,
+          "drafted_tokens": 204,
+          "accepted_tokens": 199,
+          "total_ms": 3136.2988879999994,
+          "tok_s": 81.62487350280885,
+          "width_histogram": {
+            "1": 25,
+            "9": 1,
+            "13": 2,
+            "15": 2,
+            "2": 10,
+            "3": 3,
+            "4": 5,
+            "5": 2,
+            "11": 1,
+            "7": 2,
+            "14": 1,
+            "10": 1,
+            "6": 1,
+            "0": 1
+          },
+          "label": "code",
+          "fixed_ms_per_round": 17.202885000000002
+        },
+        {
+          "rounds": 49,
+          "drafted_tokens": 215,
+          "accepted_tokens": 207,
+          "total_ms": 2719.1593910000006,
+          "tok_s": 94.14674286741727,
+          "width_histogram": {
+            "1": 22,
+            "15": 2,
+            "14": 1,
+            "8": 3,
+            "7": 5,
+            "10": 3,
+            "5": 2,
+            "2": 5,
+            "6": 1,
+            "3": 2,
+            "12": 2,
+            "4": 1
+          },
+          "label": "json",
+          "fixed_ms_per_round": 17.282885
+        }
+      ]
+    },
+    {
+      "fixed_overhead_scale": 0.75,
+      "mean_tok_s": 83.77036741525173,
+      "requests": [
+        {
+          "rounds": 83,
+          "drafted_tokens": 190,
+          "accepted_tokens": 173,
+          "total_ms": 4219.599619999997,
+          "tok_s": 60.66926321317665,
+          "width_histogram": {
+            "1": 46,
+            "9": 1,
+            "8": 1,
+            "15": 1,
+            "6": 3,
+            "3": 5,
+            "2": 18,
+            "4": 4,
+            "5": 2,
+            "10": 1,
+            "7": 1
+          },
+          "label": "prose",
+          "fixed_ms_per_round": 13.81716375
+        },
+        {
+          "rounds": 57,
+          "drafted_tokens": 204,
+          "accepted_tokens": 199,
+          "total_ms": 2891.1577767499994,
+          "tok_s": 88.54584210474118,
+          "width_histogram": {
+            "1": 25,
+            "11": 3,
+            "15": 2,
+            "2": 10,
+            "3": 3,
+            "4": 5,
+            "5": 2,
+            "7": 1,
+            "13": 2,
+            "8": 1,
+            "10": 1,
+            "6": 1,
+            "0": 1
+          },
+          "label": "code",
+          "fixed_ms_per_round": 12.902163750000001
+        },
+        {
+          "rounds": 49,
+          "drafted_tokens": 215,
+          "accepted_tokens": 207,
+          "total_ms": 2507.444049749999,
+          "tok_s": 102.09599692783738,
+          "width_histogram": {
+            "1": 22,
+            "15": 2,
+            "14": 1,
+            "8": 2,
+            "7": 6,
+            "10": 2,
+            "5": 2,
+            "2": 5,
+            "6": 1,
+            "3": 2,
+            "11": 1,
+            "12": 2,
+            "4": 1
+          },
+          "label": "json",
+          "fixed_ms_per_round": 12.96216375
+        }
+      ]
+    },
+    {
+      "fixed_overhead_scale": 0.5,
+      "mean_tok_s": 91.65792658887568,
+      "requests": [
+        {
+          "rounds": 83,
+          "drafted_tokens": 190,
+          "accepted_tokens": 173,
+          "total_ms": 3837.324756249998,
+          "tok_s": 66.71314425057274,
+          "width_histogram": {
+            "1": 45,
+            "7": 2,
+            "12": 1,
+            "13": 1,
+            "6": 3,
+            "3": 4,
+            "2": 20,
+            "4": 4,
+            "5": 2,
+            "10": 1
+          },
+          "label": "prose",
+          "fixed_ms_per_round": 9.2114425
+        },
+        {
+          "rounds": 57,
+          "drafted_tokens": 204,
+          "accepted_tokens": 199,
+          "total_ms": 2646.0166654999994,
+          "tok_s": 96.7492016727814,
+          "width_histogram": {
+            "1": 24,
+            "7": 3,
+            "15": 3,
+            "2": 12,
+            "3": 2,
+            "4": 5,
+            "5": 2,
+            "11": 1,
+            "13": 1,
+            "14": 1,
+            "10": 1,
+            "6": 1,
+            "0": 1
+          },
+          "label": "code",
+          "fixed_ms_per_round": 8.601442500000001
+        },
+        {
+          "rounds": 49,
+          "drafted_tokens": 215,
+          "accepted_tokens": 207,
+          "total_ms": 2295.7287084999994,
+          "tok_s": 111.5114338432729,
+          "width_histogram": {
+            "1": 22,
+            "15": 3,
+            "7": 5,
+            "10": 2,
+            "5": 2,
+            "2": 5,
+            "6": 4,
+            "3": 2,
+            "8": 1,
+            "11": 1,
+            "12": 2
+          },
+          "label": "json",
+          "fixed_ms_per_round": 8.6414425
+        }
+      ]
+    },
+    {
+      "fixed_overhead_scale": 0.25,
+      "mean_tok_s": 101.18737138879423,
+      "requests": [
+        {
+          "rounds": 83,
+          "drafted_tokens": 190,
+          "accepted_tokens": 173,
+          "total_ms": 3455.049892499999,
+          "tok_s": 74.09444377509813,
+          "width_histogram": {
+            "1": 46,
+            "7": 2,
+            "12": 1,
+            "13": 1,
+            "6": 3,
+            "3": 5,
+            "2": 18,
+            "4": 4,
+            "5": 2,
+            "10": 1
+          },
+          "label": "prose",
+          "fixed_ms_per_round": 4.60572125
+        },
+        {
+          "rounds": 57,
+          "drafted_tokens": 204,
+          "accepted_tokens": 199,
+          "total_ms": 2400.87555425,
+          "tok_s": 106.6277673354756,
+          "width_histogram": {
+            "1": 25,
+            "8": 1,
+            "14": 4,
+            "15": 1,
+            "2": 10,
+            "3": 3,
+            "4": 5,
+            "5": 2,
+            "11": 1,
+            "7": 2,
+            "10": 1,
+            "6": 1,
+            "0": 1
+          },
+          "label": "code",
+          "fixed_ms_per_round": 4.3007212500000005
+        },
+        {
+          "rounds": 49,
+          "drafted_tokens": 215,
+          "accepted_tokens": 207,
+          "total_ms": 2084.0133672499996,
+          "tok_s": 122.83990305580899,
+          "width_histogram": {
+            "1": 22,
+            "15": 3,
+            "7": 7,
+            "10": 2,
+            "5": 2,
+            "2": 5,
+            "6": 1,
+            "3": 2,
+            "8": 1,
+            "11": 1,
+            "12": 2,
+            "4": 1
+          },
+          "label": "json",
+          "fixed_ms_per_round": 4.32072125
+        }
+      ]
+    },
+    {
+      "fixed_overhead_scale": 0.0,
+      "mean_tok_s": 112.93190501677742,
+      "requests": [
+        {
+          "rounds": 83,
+          "drafted_tokens": 190,
+          "accepted_tokens": 173,
+          "total_ms": 3072.7750287499994,
+          "tok_s": 83.31231463571885,
+          "width_histogram": {
+            "1": 47,
+            "7": 2,
+            "12": 1,
+            "13": 1,
+            "6": 3,
+            "3": 6,
+            "2": 16,
+            "4": 4,
+            "5": 2,
+            "10": 1
+          },
+          "label": "prose",
+          "fixed_ms_per_round": 0.0
+        },
+        {
+          "rounds": 57,
+          "drafted_tokens": 204,
+          "accepted_tokens": 199,
+          "total_ms": 2155.7344429999994,
+          "tok_s": 118.75303140016679,
+          "width_histogram": {
+            "1": 26,
+            "11": 3,
+            "15": 1,
+            "2": 8,
+            "3": 4,
+            "4": 5,
+            "5": 2,
+            "8": 1,
+            "13": 2,
+            "10": 2,
+            "12": 1,
+            "6": 1,
+            "0": 1
+          },
+          "label": "code",
+          "fixed_ms_per_round": 0.0
+        },
+        {
+          "rounds": 49,
+          "drafted_tokens": 215,
+          "accepted_tokens": 207,
+          "total_ms": 1872.2980260000002,
+          "tok_s": 136.7303690144466,
+          "width_histogram": {
+            "1": 22,
+            "15": 2,
+            "14": 1,
+            "8": 4,
+            "7": 3,
+            "10": 3,
+            "5": 3,
+            "2": 5,
+            "6": 2,
+            "3": 2,
+            "11": 1,
+            "12": 1
+          },
+          "label": "json",
+          "fixed_ms_per_round": 0.0
+        }
+      ]
+    }
+  ],
+  "fixed_overhead_scale_for_100": 0.27854838892881845,
+  "fixed_overhead_fraction_that_must_be_removed_for_100": 0.7214516110711815,
+  "required_case": {
+    "fixed_overhead_scale": 0.27854838892881845,
+    "mean_tok_s": 100.0,
+    "requests": [
+      {
+        "rounds": 83,
+        "drafted_tokens": 190,
+        "accepted_tokens": 173,
+        "total_ms": 3498.7032184521872,
+        "tok_s": 73.1699672752619,
+        "width_histogram": {
+          "1": 46,
+          "7": 2,
+          "10": 2,
+          "15": 1,
+          "6": 3,
+          "3": 5,
+          "2": 18,
+          "4": 4,
+          "5": 2
+        },
+        "label": "prose",
+        "fixed_ms_per_round": 5.131664936170895
+      },
+      {
+        "rounds": 57,
+        "drafted_tokens": 204,
+        "accepted_tokens": 199,
+        "total_ms": 2428.86908939563,
+        "tok_s": 105.39884636750838,
+        "width_histogram": {
+          "1": 24,
+          "7": 2,
+          "15": 2,
+          "2": 12,
+          "3": 2,
+          "4": 5,
+          "5": 2,
+          "11": 1,
+          "13": 2,
+          "9": 1,
+          "14": 1,
+          "10": 1,
+          "6": 1,
+          "0": 1
+        },
+        "label": "code",
+        "fixed_ms_per_round": 4.791835901677738
+      },
+      {
+        "rounds": 49,
+        "drafted_tokens": 215,
+        "accepted_tokens": 207,
+        "total_ms": 2108.1898948668095,
+        "tok_s": 121.43118635722969,
+        "width_histogram": {
+          "1": 22,
+          "15": 2,
+          "14": 1,
+          "8": 3,
+          "7": 2,
+          "10": 4,
+          "5": 2,
+          "2": 5,
+          "6": 4,
+          "3": 2,
+          "12": 1,
+          "9": 1
+        },
+        "label": "json",
+        "fixed_ms_per_round": 4.814119772792043
+      }
+    ]
+  }
+}
