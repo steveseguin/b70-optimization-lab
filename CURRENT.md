@@ -57,7 +57,8 @@ first finding at least `10.73 ms/round` of independent verifier-kernel savings.
 The pretrained DSpark equivalent is weaker (`75.24 tok/s`).
 The B70 Level Zero lossless memory-compression allocation hint is exact but
 round-time neutral (`62.150 / 62.127 / 62.064 ms` candidate/control/candidate),
-so it remains default-off.  See
+and the cached-allocation hint is likewise neutral (`62.178 / 62.389 / 62.147
+ms` cached/control/cached+compressed).  Both remain default-off.  See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-level-zero-memory-compression-negative.md`.
 
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B

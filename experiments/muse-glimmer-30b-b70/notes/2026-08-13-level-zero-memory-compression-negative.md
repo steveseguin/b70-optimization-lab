@@ -44,3 +44,29 @@ Raw result:
 Production was restored without reboot and passed the full cache-zero
 code/vision health gate in
 `data/muse-health-20260813-l0-memory-compression-restore.json`.
+
+## Cached-allocation follow-up
+
+Source commit `9274fc5e7` separately adds the default-off
+`GGML_SYCL_MEMORY_CACHED=1` screen, which applies Level Zero's lossless
+`ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED` allocation hint.  A cached/control/
+cached+compressed comparison was also neutral:
+
+| arm | prose | code | JSON | mean tok/s | mean normalized round ms |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| cached | 48.156 | 70.436 | 84.751 | 67.781 | 62.178 |
+| control | 47.715 | 70.360 | 84.774 | 67.616 | 62.389 |
+| cached + compressed | 48.287 | 70.246 | 84.870 | 67.801 | 62.147 |
+
+All three arms had identical proposal counts and canonical final hashes.  The
+`0.21--0.24 ms` mean-round differences are below the keep threshold and within
+run noise, so both allocation hints remain off by default.
+
+Raw result:
+
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/l0-memory-cache-ab-20260813.jsonl`;
+- SHA-256 `03e7d32782954b15b9c21264e46404be01ea3b05517dc86c9daaf149f2031065`.
+
+Production was again restored without reboot and passed the full cache-zero
+code/vision health gate in
+`data/muse-health-20260813-l0-memory-cache-restore.json`.
