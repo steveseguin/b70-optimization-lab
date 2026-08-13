@@ -1,0 +1,107 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index bafffaaeb..f1454aef5 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -7734,6 +7734,110 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
+         }
+     }
+ 
++#ifdef GGML_USE_OPENMP
++    // Experimental TP4/F32 host-submit path. Recursive doubling has two
++    // independent four-rank submission phases per round: all peer pulls, then
++    // all local adds. Submit each phase from one persistent OpenMP team.
++    static const bool parallel_comm_submit =
++        ggml_sycl_get_env("GGML_SYCL_COMM_PARALLEL_SUBMIT", 0) != 0;
++    if (parallel_comm_submit && n_backends == 4 && tensors[0]->type == GGML_TYPE_F32) {
++        const size_t need = 2 * nbytes;
++        if ((size_t) comm_ctx->buf_nelem * 4 < need) {
++            for (size_t i = 0; i < n_backends; ++i) {
++                comm_ctx->bufs[i]->realloc(need);
++            }
++            comm_ctx->buf_nelem = (int64_t) ((need + 3) / 4);
++        }
++
++        std::vector<sycl::event> ready(n_backends);
++        std::vector<sycl::event> copied(n_backends);
++        std::vector<sycl::event> added(n_backends);
++        static const bool last_event_ready =
++            ggml_sycl_get_env("GGML_SYCL_COMM_LAST_EVENT_READY", 0) != 0;
++        bool reuse_last_event = last_event_ready;
++        if (reuse_last_event) {
++            try {
++                for (size_t i = 0; i < n_backends; ++i) {
++                    if (!qs[i]->has_property<sycl::property::queue::in_order>()) {
++                        reuse_last_event = false;
++                        break;
++                    }
++                    const std::optional<sycl::event> last = qs[i]->ext_oneapi_get_last_event();
++                    if (!last.has_value()) {
++                        reuse_last_event = false;
++                        break;
++                    }
++                    ready[i] = *last;
++                }
++            } catch (...) {
++                reuse_last_event = false;
++            }
++        }
++
++        std::atomic<bool> submit_failed(false);
++#pragma omp parallel num_threads(4) shared(ready, copied, added, submit_failed)
++        {
++            if (!reuse_last_event) {
++#pragma omp for schedule(static, 1)
++                for (int i = 0; i < 4; ++i) {
++                    try {
++                        ready[i] = qs[i]->ext_oneapi_submit_barrier();
++                    } catch (...) {
++                        submit_failed.store(true, std::memory_order_relaxed);
++                    }
++                }
++            }
++
++            for (size_t mask = 1, r = 0; mask < n_backends; mask <<= 1, ++r) {
++#pragma omp for schedule(static, 1)
++                for (int i = 0; i < 4; ++i) {
++                    try {
++                        const size_t peer = (size_t) i ^ mask;
++                        const sycl::event dep_ready = r == 0 ? ready[peer] : added[peer];
++                        copied[i] = qs[i]->memcpy(
++                            comm_ctx->bufs[i]->get() + r * nbytes,
++                            tensors[peer]->data, nbytes, dep_ready);
++                    } catch (...) {
++                        submit_failed.store(true, std::memory_order_relaxed);
++                    }
++                }
++
++#pragma omp for schedule(static, 1)
++                for (int i = 0; i < 4; ++i) {
++                    try {
++                        const size_t peer = (size_t) i ^ mask;
++                        const sycl::event dep = copied[peer];
++                        float * out = (float *) tensors[i]->data;
++                        float * tmp = (float *) (comm_ctx->bufs[i]->get() + r * nbytes);
++                        added[i] = qs[i]->submit([&](sycl::handler & h) {
++                            h.depends_on(dep);
++                            h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> idx) {
++                                out[idx] += tmp[idx];
++                            });
++                        });
++                    } catch (...) {
++                        submit_failed.store(true, std::memory_order_relaxed);
++                    }
++                }
++            }
++        }
++
++        if (submit_failed.load(std::memory_order_relaxed)) {
++            GGML_ABORT("parallel TP4 SYCL allreduce submission failed after device work may have been enqueued");
++        }
++        if (dbg) {
++            fprintf(stderr, "[comm-dbg] TP4/F32 collective submissions: parallel-openmp\n");
++        }
++        return true;
++    }
++#endif
++
+     // P2P async PULL-model recursive doubling (remote reads: proven-reliable

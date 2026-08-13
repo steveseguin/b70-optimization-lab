@@ -263,6 +263,11 @@ catalog recipes changed it and offered no material exact win.  Manual GEMM
 strategy tuning is closed.
 See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-onednn-operand-layout-negative.md`.
+Parallelizing each TP4 recursive-doubling pull/add submission phase across a
+four-thread OpenMP team is also closed.  It preserved every hash, proposal,
+and acceptance count but regressed the 64-token C/A/C arithmetic mean by
+`0.300%`; the phase barriers cost more than serial host submission.  See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-allreduce-parallel-submit-negative.md`.
 
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
