@@ -8,6 +8,7 @@
 #include <cstring>
 #include <iomanip>
 #include <iostream>
+#include <optional>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
@@ -215,9 +216,14 @@ int main(int argc, char ** argv) {
         execute(ref_q_path, owner_stream);
         return execute(ref_gate_path, owner_stream);
     };
+    std::optional<sycl::event> helper_release;
     auto submit_candidate = [&] {
         execute(owner_q_path, owner_stream);
-        execute(helper_q_path, helper_stream);
+        if (helper_release.has_value()) {
+            execute(helper_q_path, helper_stream, {*helper_release});
+        } else {
+            execute(helper_q_path, helper_stream);
+        }
         execute(owner_gate_path, owner_stream);
         const sycl::event helper_done = execute(helper_gate_path, helper_stream);
         const sycl::event scatter = owner.submit([&](sycl::handler & h) {
@@ -230,7 +236,12 @@ int main(int argc, char ** argv) {
                 split_gate[token * m + mh + row] = helper_gate[linear];
             });
         });
-        return helper.ext_oneapi_submit_barrier({scatter});
+        // Carry the remote-read lifetime into the next helper GEMM instead of
+        // appending a dedicated helper-queue barrier every layer. The next
+        // helper Q cannot overwrite helper_q/helper_gate until the previous
+        // owner scatter has completed both remote reads.
+        helper_release = scatter;
+        return scatter;
     };
 
     for (int i = 0; i < warmups; ++i) {

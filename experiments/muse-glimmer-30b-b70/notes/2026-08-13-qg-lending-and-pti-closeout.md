@@ -2,7 +2,7 @@
 
 Date: 2026-08-13
 
-## Decision
+## Decision (superseded for Q/gate lending)
 
 Do not integrate TP4 Q/gate projection lending.  It is bit-exact in the
 standalone two-device chain and saves `1.920 ms` when its measured per-layer
@@ -83,3 +83,22 @@ lossless route to the roughly 19% whole-round reduction needed for 100.
 
 Production was restored after every window.  No reboot, driver reset, or GPU
 recovery was required.
+
+## Reopened by carried-event lifetime handback
+
+The Q/gate decision above was superseded later the same day.  Replacing the
+standalone reciprocal helper barrier with the owner scatter event carried as a
+dependency on the next helper Q GEMM preserved the lifetime proof while
+removing one command.  Over 1,200 iterations the exact candidate improved from
+`0.063938` to `0.055408 ms/layer`; the matched full-width control measured
+`0.100493 ms/layer`.  The resulting `0.045085 ms/layer` saving clears the
+preregistered `0.040 ms/layer` integration gate and scales to a
+`2.34442 ms/pass` isolated ceiling.
+
+All Q and gate F32 bits remained exact.  Raw evidence:
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/qg-projection-lending/qg-projection-lending-carried-event-20260813.log`,
+SHA-256 `72b4c5e11991999bb8ef73a4da839ae688e679c53564985600773f50a32af14a`.
+The lane is therefore reopened only for a strict default-off full-model
+integration and exact smoke.  The ceiling projects the current fixed-suite
+mean from `80.879` to approximately `84.699 tok/s`; it is a supporting kernel
+win, not a century result.

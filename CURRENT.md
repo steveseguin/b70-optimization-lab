@@ -269,13 +269,18 @@ and acceptance count but regressed the 64-token C/A/C arithmetic mean by
 `0.300%`; the phase barriers cost more than serial host submission.  See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-allreduce-parallel-submit-negative.md`.
 
-The subsequent Q/gate projection-lending screen is also closed.  Splitting
-the two attention-owner `M=2048` projections across owner/helper B70s plus the
-required P2P scatter and lifetime handback was bit-exact and saved
-`0.036932 ms/layer`, but missed the preregistered `0.040 ms/layer` integration
-gate.  Its scaled `1.920 ms/pass` ceiling is far below the approximately
-`9.94 ms/round` needed to move the current `80.879 tok/s` mix to 100.  Intel
-PTI device-view tracing was then rejected on the Level Zero V2 runtime: it
+The initial Q/gate projection-lending screen was bit-exact but missed its
+integration gate because a dedicated reciprocal helper barrier limited the
+saving to `0.036932 ms/layer`.  A carried-event lifetime handback subsequently
+removed that command while preserving every Q/gate F32 bit.  The refined
+screen measures `0.100493 -> 0.055408 ms/layer`, saving
+**`0.045085 ms/layer`** or an isolated **`2.34442 ms/pass`** ceiling and
+clearing the preregistered `0.040 ms/layer` integration gate.  A strict
+default-off full-model integration is now the active bounded kernel test.  The
+ceiling projects the current `80.879 tok/s` fixed-suite mean to approximately
+`84.699 tok/s`, still leaving about `7.593 ms/round` to reach 100; do not claim
+the isolated result as an end-to-end win.  Intel PTI device-view tracing was
+then rejected on the Level Zero V2 runtime: it
 could not timestamp incomplete copy events, emitted no device records, and
 stalled in polling/flush even with decode-deferred activation.  See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-qg-lending-and-pti-closeout.md`.
