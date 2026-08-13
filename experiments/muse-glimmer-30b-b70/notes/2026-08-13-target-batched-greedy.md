@@ -100,3 +100,31 @@ Promote `77.824 tok/s` as the new exact TP4 campaign best. The `>100 tok/s`
 goal remains unmet. This result removes about `3.4 ms` per speculative round;
 the remaining gap still requires a larger verifier or acceptance lever rather
 than another tiny sampling-copy optimization.
+
+## Follow-up: attention batch=2 allocator screen
+
+A bounded follow-up tried to unlock the existing Q+attention-gate and K+V
+oneDNN batch=2 implementation by marking the later gate and V projection
+outputs as graph outputs, preventing ordinary arena reuse. This did not make
+either pair legal in the TP simple graphs. The proof log still reported:
+
+- Q+gate `batch-stride-span`: the per-rank pointer gap was smaller than one
+  projection output;
+- K+V `output-alias`: both per-rank outputs retained the same address.
+
+The target meta compute reservation also grew from about `486 MiB` to
+`1353 MiB`, so retaining all 52 layers' outputs is not an acceptable allocator
+strategy even if the simple-tensor mapping were changed. No first-hit marker
+appeared. The model change was reverted; the existing strict overlap guards
+remain intact. The eight-token output smoke completed, but its rates are not a
+performance result because the experimental GEMMs never executed.
+
+Evidence:
+
+- config: `sweeps/20260813-attn-batch2-alloc-smoke.json`;
+- JSONL SHA256:
+  `9f0925914a453f40921812168f9ee04df4e782d38bd0a1c50a9ac4b5aadf898f`;
+- server log SHA256:
+  `037bfb36f6a80506d40d99826a3d313e2dd44ad6488782a8e4cf060f1f3a9479`;
+- restore gate:
+  `data/muse-health-20260813-attn-batch2-alloc-restore.json`.
