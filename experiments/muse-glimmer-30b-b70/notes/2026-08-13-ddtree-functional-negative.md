@@ -53,3 +53,14 @@ Preserve and revert. Budget-15 DDTree is not the >100 route on this exact stack
 without a new multi-millisecond verifier/runtime saving, and its current code
 identity is not acceptable.
 
+## Component-profile follow-up
+
+A later synchronized component profile resolved the missing-cost question.
+At 128 completed rounds, the tree transaction itself averaged `50.882 ms`,
+including `47.993 ms` for target decode/sampling and `2.337 ms` for
+device-complete committed DFlash processing. The preceding DFlash proposal
+phase, outside that timer, averaged another `6.78 ms/round`. CPU tree build,
+walk, batch management, and post accounting were negligible; fork plus KV
+promotion cost about `0.50 ms`. The century gap is therefore still verifier
+and proposal execution, not unoptimized tree bookkeeping. See
+`2026-08-13-ddtree-component-profile.md`.

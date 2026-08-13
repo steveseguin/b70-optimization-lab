@@ -194,6 +194,19 @@ exact but lost mean throughput in a 64-token smoke and was reverted. Evidence:
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-ddtree-functional-negative.md`
 and
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-dflash-fc-mkl-negative.md`.
+The follow-up synchronized component profile now explains the missing cost:
+the tree transaction averages `50.882 ms/round`, dominated by
+`47.993 ms` of target decode/sampling and `2.337 ms` of device-complete
+committed DFlash processing, while the preceding proposal pass adds another
+`6.78 ms/round`. Tree CPU bookkeeping is negligible and fork plus KV promotion
+is only about `0.50 ms`; the honest century gap is still several milliseconds
+of verifier/proposal execution. See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-ddtree-component-profile.md`.
+The Muse attention K/V batch=2 projection experiment is also closed: it hit
+the intended oneDNN path but lost `8.5%` mean throughput in the 64-token smoke
+and changed JSON proposal history. Preserve the separately exact gate/up
+batch=2 path only. See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-attn-kv-batch2-negative.md`.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible
