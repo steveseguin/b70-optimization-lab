@@ -29,9 +29,13 @@ lock, including benchmark-child FD inheritance.
 
 The current exact TP4 kernel-campaign best is the BF16 DFlash stack with
 batched device-side distributed greedy sampling for both DFlash proposal rows
-and target verification rows, local-winner maxloc, and committed-prefix-only
-DFlash feature processing, at **`78.684 tok/s`** arithmetic mean across the
-fixed prose/code/JSON suite. Committed-prefix processing measured `+2.055%`
+and target verification rows, local-winner maxloc, committed-prefix-only
+DFlash feature processing, and the default-off RMSNorm/scale/residual fusion,
+at **`78.952 tok/s`** arithmetic mean across the fixed prose/code/JSON suite.
+The final fusion measured `+0.3725%` against the proposal-identical trailing
+control and preserved canonical hashes; see
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-rms-mul-add-fusion.md`.
+The preceding committed-prefix processing measured `+2.055%`
 against pooled adjacent `77.0998 tok/s` controls with identical proposal
 counts, acceptance, and canonical hashes. See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-dflash-committed-prefix.md`.
