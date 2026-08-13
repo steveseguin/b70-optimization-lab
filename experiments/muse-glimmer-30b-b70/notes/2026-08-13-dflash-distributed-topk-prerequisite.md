@@ -79,18 +79,51 @@ Production was restored without reboot. Both services are active and the full
 model, cache-zero code, and vision health gate passes in
 `data/muse-health-20260813-dflash-tp-topk-final-smoke-restore.json`.
 
+## Adjacent profile C/A/C
+
+A subsequent canonical 256-token greedy/top15/greedy C/A/C used the same
+binary, prompts, TP4 identity, and `LLAMA_SPEC_PROFILE=1`. All response hashes
+were canonical and all accepted counts matched. Prose drafted count differed by
+one (`1198 / 1199 / 1199`); code and JSON proposal histories matched exactly.
+
+| arm | prose | code | JSON | mean tok/s |
+| --- | ---: | ---: | ---: | ---: |
+| greedy before | `56.317` | `81.343` | `99.169` | `78.943` |
+| top15 | `54.422` | `78.644` | `96.014` | `76.360` |
+| greedy after | `56.194` | `81.371` | `99.115` | `78.893` |
+
+At 128 cumulative rounds, the direct DFlash profile reports
+`6.25 / 8.06 / 6.26 ms` for greedy-before/top15/greedy-after. The matched
+top15 cost is therefore approximately **`1.805 ms/round`**. This supersedes
+the earlier non-adjacent `0.8--1.0 ms` estimate.
+
+Evidence:
+
+- identity: `sweeps/20260813-dflash-topk-adjacent-profile-cac.json`;
+- JSONL:
+  `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/dflash-topk-adjacent-profile-full-cac-20260813.jsonl`;
+- JSONL SHA256: `874dbf3fd7fa448436fe7507a1502ad0cde0c5300eea512dc74372c9c9d9b7a7`;
+- before/candidate/after server-log SHA256:
+  `436af38b259dc239fc28f55c995c3333ba2c2859f471f625a7b743b6f936ef9f`,
+  `722e5825299f4a3a1b59008cb0ed67e9faec2a08fd42f5956c99566665673821`,
+  and `f63e1e02cffb23ea4351b495a13e8f778545f1d876de7cb8afe6878a140cb6a2`;
+- restored production health:
+  `data/muse-health-20260813-dflash-topk-adjacent-profile-full-restore.json`.
+
 ## Ceiling and next action
 
 The full device-top15 prefix trace requires `66 / 48 / 42` target rounds for
 prose/code/JSON. Using the measured top-k round costs gives
 `70.897 / 97.517 / 113.909 tok/s`, arithmetic mean `94.108`.
 
-The observed top-k cost is roughly `0.8--1.0 ms` per draft call. Even deleting
-all of it leaves more than two milliseconds per round to find, before tree
-bookkeeping. Therefore do not start the full server/KV tree rewrite as the
-primary campaign yet.
+The adjacent profile pins top-k at approximately `1.805 ms/round`. Removing
+that entire cost would project the zero-bookkeeping DDTree ceiling to about
+`97.34 tok/s`; another roughly `1.39 ms/round`, plus measured tree overhead,
+would still be required.
 
-Next, run an adjacent profile-enabled top15-versus-greedy timing A/B to pin the
-top-k cost, then a zero-code unified-KV linear parity/timing gate. Continue the
-primary campaign on independent target/verifier kernel savings; integrate the
-tree only after roughly `2.5--3 ms/round` more exact savings are demonstrated.
+The local SYCL top-k kernel currently makes lane zero serially merge 128 sorted
+lists of 15 candidates. Replace that `O(128*k^2)` lane-zero phase with a
+tie-stable parallel merge tree and measure it against this C/A/C. Then run a
+zero-code unified-KV linear parity/timing gate. Do not start the full server/KV
+tree rewrite until the kernel work and unified-KV gate make the arithmetic
+credible.

@@ -79,6 +79,12 @@ rounds and projects only **`94.108 tok/s`** at zero tree-bookkeeping cost; it
 still needs **`3.194 ms/round`** of independent exact savings to reach 100.
 This is a prerequisite, not the century result. See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-dflash-distributed-topk-prerequisite.md`.
+An adjacent canonical greedy/top15/greedy profile now pins the top15 DFlash
+cost at approximately **`1.805 ms/round`** (`6.25 / 8.06 / 6.26 ms` direct
+draft-phase timing). Removing that entire cost would project only
+**`97.34 tok/s`**, leaving roughly **`1.39 ms/round` plus tree overhead**.
+The immediate kernel target is the local SYCL top-k lane-zero serial merge;
+full tree integration remains premature.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible
