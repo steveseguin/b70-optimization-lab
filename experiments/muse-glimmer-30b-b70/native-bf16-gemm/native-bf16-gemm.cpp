@@ -28,8 +28,22 @@ constexpr int kK = 6656;
 constexpr int kMTile = 16;
 constexpr int kNTile = 8;
 constexpr int kKTile = 16;
+#ifndef MUSE_BF16_WG
+#define MUSE_BF16_WG 8
+#endif
+#ifndef MUSE_BF16_KBLOCK
+#define MUSE_BF16_KBLOCK 128
+#endif
+#ifndef MUSE_BF16_ROW_TILES
+#define MUSE_BF16_ROW_TILES 2
+#endif
+constexpr int kWG = MUSE_BF16_WG;
+constexpr int kKBlock = MUSE_BF16_KBLOCK;
+constexpr int kRowTiles = MUSE_BF16_ROW_TILES;
 
 class MuseBf16DpasKernel;
+class MuseBf16DpasSlmKernel;
+class MuseBf16DpasMultiRowKernel;
 
 uint32_t xorshift32(uint32_t & state) {
     state ^= state << 13;
@@ -112,6 +126,139 @@ sycl::event launch_dpas(
     });
 }
 
+sycl::event launch_dpas_slm(
+        sycl::queue & queue,
+        const bf16 * packed_weight,
+        const bf16 * activation,
+        float * output) {
+    static_assert(kKBlock % (kWG * kKTile) == 0);
+    static_assert((kM / kMTile) % kWG == 0);
+    constexpr int kSlice = kKBlock / kWG;
+    constexpr int kSlmBytes = kN * kKBlock * sizeof(bf16);
+
+    return queue.submit([&](sycl::handler & cgh) {
+        cgh.parallel_for<MuseBf16DpasSlmKernel>(
+                sycl::nd_range<1>(kM / kMTile, kWG),
+                [=](sycl::nd_item<1> item) [[intel::sycl_explicit_simd]] {
+            esimd::slm_init<kSlmBytes>();
+            const int mt = int(item.get_group(0)) * kWG + int(item.get_local_id(0));
+            const int lid = int(item.get_local_id(0));
+            const int mb = mt * kMTile;
+            esimd::simd<float, kNTile * kMTile> accum0(0.0f);
+            esimd::simd<float, kNTile * kMTile> accum1(0.0f);
+
+            for (int kb = 0; kb < kK; kb += kKBlock) {
+#pragma unroll
+                for (int token = 0; token < kN; ++token) {
+                    const auto slice = esimd::block_load<bf16, kSlice>(
+                        activation + size_t(token) * kK + kb + lid * kSlice);
+                    const uint32_t slm_offset = uint32_t(
+                        (size_t(token) * kKBlock + lid * kSlice) * sizeof(bf16));
+                    esimd::slm_block_store<bf16, kSlice>(slm_offset, slice);
+                }
+                esimd::barrier();
+
+#pragma unroll
+                for (int sub = 0; sub < kKBlock / kKTile; ++sub) {
+                    const int kt = kb + sub * kKTile;
+                    const size_t packed_offset =
+                        (size_t(mt) * (kK / kKTile) + kt / kKTile) *
+                        kKTile * kMTile;
+                    const auto weights =
+                        esimd::block_load<bf16, kKTile * kMTile>(packed_weight + packed_offset);
+
+                    esimd::simd<bf16, kNTile * kKTile> act0;
+                    esimd::simd<bf16, kNTile * kKTile> act1;
+#pragma unroll
+                    for (int token = 0; token < kNTile; ++token) {
+                        act0.template select<kKTile, 1>(token * kKTile) =
+                            esimd::slm_block_load<bf16, kKTile>(uint32_t(
+                                (size_t(token) * kKBlock + sub * kKTile) * sizeof(bf16)));
+                        act1.template select<kKTile, 1>(token * kKTile) =
+                            esimd::slm_block_load<bf16, kKTile>(uint32_t(
+                                (size_t(token + kNTile) * kKBlock + sub * kKTile) * sizeof(bf16)));
+                    }
+
+                    accum0 = xmx::dpas<8, kNTile, float, float, bf16, bf16>(
+                        accum0, weights, act0);
+                    accum1 = xmx::dpas<8, kNTile, float, float, bf16, bf16>(
+                        accum1, weights, act1);
+                }
+                esimd::barrier();
+            }
+
+#pragma unroll
+            for (int token = 0; token < kNTile; ++token) {
+                esimd::block_store<float, kMTile>(
+                    output + size_t(token) * kM + mb,
+                    accum0.template select<kMTile, 1>(token * kMTile).read());
+                esimd::block_store<float, kMTile>(
+                    output + size_t(token + kNTile) * kM + mb,
+                    accum1.template select<kMTile, 1>(token * kMTile).read());
+            }
+        });
+    });
+}
+
+sycl::event launch_dpas_multirow(
+        sycl::queue & queue,
+        const bf16 * packed_weight,
+        const bf16 * activation,
+        float * output) {
+    static_assert((kM / kMTile) % kRowTiles == 0);
+    constexpr int kAccum = kNTile * kMTile;
+    return queue.submit([&](sycl::handler & cgh) {
+        cgh.parallel_for<MuseBf16DpasMultiRowKernel>(
+                sycl::range<1>(kM / (kMTile * kRowTiles)),
+                [=](sycl::id<1> item) [[intel::sycl_explicit_simd]] {
+            const int mt0 = int(item[0]) * kRowTiles;
+            esimd::simd<float, kAccum * kRowTiles> accum0(0.0f);
+            esimd::simd<float, kAccum * kRowTiles> accum1(0.0f);
+
+            for (int kb = 0; kb < kK; kb += kKTile) {
+                esimd::simd<bf16, kNTile * kKTile> act0;
+                esimd::simd<bf16, kNTile * kKTile> act1;
+#pragma unroll
+                for (int token = 0; token < kNTile; ++token) {
+                    act0.template select<kKTile, 1>(token * kKTile) =
+                        esimd::block_load<bf16, kKTile>(activation + size_t(token) * kK + kb);
+                    act1.template select<kKTile, 1>(token * kKTile) =
+                        esimd::block_load<bf16, kKTile>(activation + size_t(token + kNTile) * kK + kb);
+                }
+
+#pragma unroll
+                for (int rt = 0; rt < kRowTiles; ++rt) {
+                    const int mt = mt0 + rt;
+                    const size_t packed_offset =
+                        (size_t(mt) * (kK / kKTile) + kb / kKTile) * kKTile * kMTile;
+                    const auto weights =
+                        esimd::block_load<bf16, kKTile * kMTile>(packed_weight + packed_offset);
+                    auto a0 = accum0.template select<kAccum, 1>(rt * kAccum).read();
+                    auto a1 = accum1.template select<kAccum, 1>(rt * kAccum).read();
+                    accum0.template select<kAccum, 1>(rt * kAccum) =
+                        xmx::dpas<8, kNTile, float, float, bf16, bf16>(a0, weights, act0);
+                    accum1.template select<kAccum, 1>(rt * kAccum) =
+                        xmx::dpas<8, kNTile, float, float, bf16, bf16>(a1, weights, act1);
+                }
+            }
+
+#pragma unroll
+            for (int rt = 0; rt < kRowTiles; ++rt) {
+                const int mb = (mt0 + rt) * kMTile;
+#pragma unroll
+                for (int token = 0; token < kNTile; ++token) {
+                    esimd::block_store<float, kMTile>(
+                        output + size_t(token) * kM + mb,
+                        accum0.template select<kMTile, 1>(rt * kAccum + token * kMTile).read());
+                    esimd::block_store<float, kMTile>(
+                        output + size_t(token + kNTile) * kM + mb,
+                        accum1.template select<kMTile, 1>(rt * kAccum + token * kMTile).read());
+                }
+            }
+        });
+    });
+}
+
 template <typename Submit>
 double batch_time_ms(sycl::queue & queue, int iterations, const Submit & submit) {
     queue.wait_and_throw();
@@ -161,7 +308,9 @@ int main(int argc, char ** argv) {
     auto * activation = sycl::malloc_device<bf16>(host_activation.size(), queue);
     auto * out_dnnl = sycl::malloc_device<float>(size_t(kM) * kN, queue);
     auto * out_dpas = sycl::malloc_device<float>(size_t(kM) * kN, queue);
-    if (!weight || !packed || !activation || !out_dnnl || !out_dpas) {
+    auto * out_dpas_slm = sycl::malloc_device<float>(size_t(kM) * kN, queue);
+    auto * out_dpas_multi = sycl::malloc_device<float>(size_t(kM) * kN, queue);
+    if (!weight || !packed || !activation || !out_dnnl || !out_dpas || !out_dpas_slm || !out_dpas_multi) {
         throw std::runtime_error("USM allocation failed");
     }
     queue.copy(host_weight.data(), weight, host_weight.size());
@@ -197,22 +346,34 @@ int main(int argc, char ** argv) {
 
     auto submit_dnnl = [&] { primitive.execute(stream, args); };
     auto submit_dpas = [&] { launch_dpas(queue, packed, activation, out_dpas); };
+    auto submit_dpas_slm = [&] { launch_dpas_slm(queue, packed, activation, out_dpas_slm); };
+    auto submit_dpas_multi = [&] { launch_dpas_multirow(queue, packed, activation, out_dpas_multi); };
     for (int i = 0; i < warmups; ++i) {
         submit_dnnl();
         submit_dpas();
+        submit_dpas_slm();
+        submit_dpas_multi();
     }
     queue.wait_and_throw();
 
     submit_dnnl();
     submit_dpas();
+    submit_dpas_slm();
+    submit_dpas_multi();
     queue.wait_and_throw();
     std::vector<float> host_dnnl(size_t(kM) * kN);
     std::vector<float> host_dpas(size_t(kM) * kN);
+    std::vector<float> host_dpas_slm(size_t(kM) * kN);
+    std::vector<float> host_dpas_multi(size_t(kM) * kN);
     queue.copy(out_dnnl, host_dnnl.data(), host_dnnl.size());
     queue.copy(out_dpas, host_dpas.data(), host_dpas.size());
+    queue.copy(out_dpas_slm, host_dpas_slm.data(), host_dpas_slm.size());
+    queue.copy(out_dpas_multi, host_dpas_multi.data(), host_dpas_multi.size());
     queue.wait_and_throw();
 
     size_t mismatches = 0;
+    size_t slm_mismatches = 0;
+    size_t multi_mismatches = 0;
     float max_abs_error = 0.0f;
     size_t first_mismatch = host_dnnl.size();
     for (size_t i = 0; i < host_dnnl.size(); ++i) {
@@ -222,16 +383,26 @@ int main(int argc, char ** argv) {
             max_abs_error = std::max(max_abs_error,
                 std::abs(host_dnnl[i] - host_dpas[i]));
         }
+        slm_mismatches += bits(host_dnnl[i]) != bits(host_dpas_slm[i]);
+        multi_mismatches += bits(host_dnnl[i]) != bits(host_dpas_multi[i]);
     }
 
     const double dnnl_ms = batch_time_ms(queue, iterations, submit_dnnl);
     const double dpas_ms = batch_time_ms(queue, iterations, submit_dpas);
+    const double dpas_slm_ms = batch_time_ms(queue, iterations, submit_dpas_slm);
+    const double dpas_multi_ms = batch_time_ms(queue, iterations, submit_dpas_multi);
     const double ratio = dnnl_ms > 0.0 ? dpas_ms / dnnl_ms : 0.0;
     std::cout << std::fixed << std::setprecision(6)
               << "dnnl_ms=" << dnnl_ms
               << " dpas_ms=" << dpas_ms
               << " dpas_over_dnnl=" << ratio
+              << " dpas_slm_ms=" << dpas_slm_ms
+              << " dpas_slm_over_dnnl=" << (dpas_slm_ms / dnnl_ms)
+              << " dpas_multi_ms=" << dpas_multi_ms
+              << " dpas_multi_over_dnnl=" << (dpas_multi_ms / dnnl_ms)
               << " mismatches=" << mismatches
+              << " slm_mismatches=" << slm_mismatches
+              << " multi_mismatches=" << multi_mismatches
               << " max_abs_error=" << max_abs_error << '\n';
     if (first_mismatch != host_dnnl.size()) {
         std::cout << "first_mismatch=" << first_mismatch
@@ -242,6 +413,8 @@ int main(int argc, char ** argv) {
     }
 
     sycl::free(scratch, queue);
+    sycl::free(out_dpas_slm, queue);
+    sycl::free(out_dpas_multi, queue);
     sycl::free(out_dpas, queue);
     sycl::free(out_dnnl, queue);
     sycl::free(activation, queue);

@@ -49,6 +49,45 @@ screen used `level_zero:0`, and the final full health gate above is the restore
 authority. Future standalone windows must install the cleanup trap before
 stopping production and must not source oneAPI under nounset.
 
+## Activation-reuse recheck: still closed
+
+The lane was reopened once after target-only profiling separated roughly
+`27 ms` of steady oneDNN GEMM service from a larger `44-46 ms` target pass.
+That made a graph-recordable native kernel potentially useful even if it only
+matched, rather than beat, oneDNN. Two bounded activation-reuse designs were
+tested at the same `4992x16x6656` shape:
+
+- an SLM design sharing `K` blocks across a workgroup of output-row tiles;
+- a no-barrier design computing 2, 4, or 8 adjacent row tiles per ESIMD
+  workitem while loading each activation tile once.
+
+The best SLM configuration was workgroup 8, `K` block 256. In its dedicated
+sweep it measured `0.130106 ms` against `0.120399 ms` for oneDNN (`1.081x`).
+In the final multi-row sweep the same SLM path measured `0.129190 ms` against
+`0.123319 ms` (`1.048x`) in the row-tiles-2 binary. The multi-row path was
+worse: `1.554x`, `2.584x`, and `21.315x` oneDNN for 2, 4, and 8 row tiles.
+Every custom variant retained the same `73,048 / 79,872` F32 bit mismatches.
+
+This stronger recheck closes the native kernel lane again. Sharing activation
+traffic does not recover oneDNN performance, larger per-workitem accumulator
+sets quickly spill or otherwise collapse occupancy, and none of the designs
+preserves the incumbent accumulation identity. The implementation and tuning
+macros remain here as a durable negative artifact.
+
+External logs and SHA256 values:
+
+- `synthetic-slm-v2-20260813.log`:
+  `08470e16b155d71adb5d4bbd7e9f3c2439d50a971532b4358207036331711414`;
+- `synthetic-slm-tile-sweep-20260813.log`:
+  `8d967870d2c2eb670994318017eb0dda51099700c1a29cd28b23b70e3b3c09d3`;
+- `synthetic-multirow-tile-sweep-20260813.log`:
+  `a576e2d357d09cd302f7276680e066106633eb1972ae8e6f14731fedbcc1a240`.
+
+They are under
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/native-bf16-gemm/`.
+Production was restored without reboot and passed the full gate in
+`data/muse-health-20260813-native-bf16-multirow-restore.json`.
+
 ## Scheduler-mode screen
 
 The only remaining card-level scheduling hypothesis was also closed. All

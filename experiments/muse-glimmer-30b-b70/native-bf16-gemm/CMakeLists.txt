@@ -7,6 +7,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(muse-native-bf16-gemm native-bf16-gemm.cpp)
 target_compile_options(muse-native-bf16-gemm PRIVATE -O3 -fsycl)
 target_link_options(muse-native-bf16-gemm PRIVATE -fsycl)
+if(DEFINED MUSE_BF16_WG)
+    target_compile_definitions(muse-native-bf16-gemm PRIVATE MUSE_BF16_WG=${MUSE_BF16_WG})
+endif()
+if(DEFINED MUSE_BF16_KBLOCK)
+    target_compile_definitions(muse-native-bf16-gemm PRIVATE MUSE_BF16_KBLOCK=${MUSE_BF16_KBLOCK})
+endif()
+if(DEFINED MUSE_BF16_ROW_TILES)
+    target_compile_definitions(muse-native-bf16-gemm PRIVATE MUSE_BF16_ROW_TILES=${MUSE_BF16_ROW_TILES})
+endif()
 
 find_path(DNNL_INCLUDE_DIR oneapi/dnnl/dnnl.hpp
     HINTS /opt/intel/oneapi/dnnl/latest/include /opt/intel/oneapi/dnnl/2026.0/include
