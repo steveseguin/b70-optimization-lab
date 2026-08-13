@@ -269,6 +269,17 @@ and acceptance count but regressed the 64-token C/A/C arithmetic mean by
 `0.300%`; the phase barriers cost more than serial host submission.  See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-allreduce-parallel-submit-negative.md`.
 
+The subsequent Q/gate projection-lending screen is also closed.  Splitting
+the two attention-owner `M=2048` projections across owner/helper B70s plus the
+required P2P scatter and lifetime handback was bit-exact and saved
+`0.036932 ms/layer`, but missed the preregistered `0.040 ms/layer` integration
+gate.  Its scaled `1.920 ms/pass` ceiling is far below the approximately
+`9.94 ms/round` needed to move the current `80.879 tok/s` mix to 100.  Intel
+PTI device-view tracing was then rejected on the Level Zero V2 runtime: it
+could not timestamp incomplete copy events, emitted no device records, and
+stalled in polling/flush even with decode-deferred activation.  See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-qg-lending-and-pti-closeout.md`.
+
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
 `muse-glimmer-frontdoor.service`) on `:8000`, model `muse-glimmer-30b-bf16`.
