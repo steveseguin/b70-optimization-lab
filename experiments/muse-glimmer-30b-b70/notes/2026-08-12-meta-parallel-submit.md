@@ -342,3 +342,18 @@ window. The harness default remains five minutes for all other runs. Preserve
 the invalid row at
 `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/sycl-device-timeline-20260812.jsonl`
 and use a new run identity for the retry.
+
+The v2 retry also failed to reach readiness, now after the full 15-minute
+window. It again produced no request, no throughput row, and no usable device
+timeline; only the explicit startup-error row at
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/sycl-device-timeline-v2-20260812.jsonl`
+is valid. The process remained alive and CPU-bound in `503 loading` throughout,
+then the harness terminated it cleanly and released the lock. Production
+restoration passed in
+`data/muse-health-20260812-device-timeline-v2-restore.json`.
+
+Close whole-queue `enable_profiling` as operationally unusable on this stack.
+Do not solve it by silently moving backend compute onto another queue: current
+buffer uploads and input copies depend on shared in-order queue semantics.
+Future timeline work must capture events at the actual oneDNN/native submission
+sites or add explicit cross-queue dependencies first.
