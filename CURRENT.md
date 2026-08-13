@@ -28,10 +28,14 @@ Production and benchmark launchers now share the canonical exclusive host GPU
 lock, including benchmark-child FD inheritance.
 
 The current exact TP4 kernel-campaign best is the BF16 DFlash stack with
-device-side distributed greedy sampling at **`71.859 tok/s`** arithmetic mean
-across the fixed prose/code/JSON suite.  It is default-off, requires `p_min=0`,
-and beat paired CPU-sampling controls by `+5.368%` with all canonical output
-hashes.  See
+batched device-side distributed greedy sampling at **`72.990 tok/s`**
+arithmetic mean across the fixed prose/code/JSON suite.  It batches 16 DFlash
+row argmax operations into one TP maxloc and beat paired unbatched controls by
+`+2.267%`, with identical acceptance and canonical hashes.  See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-dflash-batched-argmax.md`.
+The underlying device-greedy path is default-off, requires `p_min=0`, and
+previously beat paired CPU-sampling controls by `+5.368%` at `71.859 tok/s`.
+See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-dflash-tp-greedy.md`.
 The preceding promoted stack used default-off parallel per-device host
 submission and measured approximately `67.9 tok/s`. Two adjacent A/Bs in
