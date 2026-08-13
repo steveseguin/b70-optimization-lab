@@ -233,3 +233,20 @@ Evidence:
 
 Production restoration passed the complete cache-zero code and vision gate in
 `data/muse-health-20260812-topk-trace-restore.json`.
+
+## Update: target-only lookahead feasibility negative
+
+The fork's existing `llama-lookahead` Jacobi decoder was screened as the only
+already-implemented, target-exact, no-training structure capable of amortizing
+target weight passes. This was a feasibility screen on the fixed code prompt,
+not a promoted suite run. Identity: BF16 target, TP4 tensor split, greedy,
+`W=15`, `N=5`, `G=15`, retained exact primitive/binding/conversion caches and
+parallel meta submission.
+
+It decoded 257 tokens in 16.215 seconds, only `15.850 tok/s`, with 92 accepted
+lookahead tokens. The mechanism evaluated 12,158 prompt/verification tokens
+(`786.45 tok/s` batch processing), so its much wider Jacobi workload overwhelms
+the accepted-token gain on this model. Close the current lookahead
+implementation as a route to 100; do not spend a full three-class window on
+it. Production restoration passed in
+`data/muse-health-20260812-lookahead-restore.json`.
