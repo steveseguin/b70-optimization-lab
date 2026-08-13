@@ -269,18 +269,18 @@ and acceptance count but regressed the 64-token C/A/C arithmetic mean by
 `0.300%`; the phase barriers cost more than serial host submission.  See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-allreduce-parallel-submit-negative.md`.
 
-The initial Q/gate projection-lending screen was bit-exact but missed its
-integration gate because a dedicated reciprocal helper barrier limited the
-saving to `0.036932 ms/layer`.  A carried-event lifetime handback subsequently
-removed that command while preserving every Q/gate F32 bit.  The refined
-screen measures `0.100493 -> 0.055408 ms/layer`, saving
-**`0.045085 ms/layer`** or an isolated **`2.34442 ms/pass`** ceiling and
-clearing the preregistered `0.040 ms/layer` integration gate.  A strict
-default-off full-model integration is now the active bounded kernel test.  The
-ceiling projects the current `80.879 tok/s` fixed-suite mean to approximately
-`84.699 tok/s`, still leaving about `7.593 ms/round` to reach 100; do not claim
-the isolated result as an end-to-end win.  Intel PTI device-view tracing was
-then rejected on the Level Zero V2 runtime: it
+The initial Q/gate projection-lending screen was bit-exact, and its refined
+carried-event standalone chain measured `0.100493 -> 0.055408 ms/layer`, an
+isolated `2.34442 ms/pass` ceiling.  Full-model integration is now closed:
+the strict path reached both owner/helper layer-0 hit markers but then made no
+progress on the first verifier pass.  Replacing both cross-device dependencies
+with host completion waits and separately disabling allreduce last-event
+readiness produced the same layer-0 stall.  No candidate row completed, so the
+standalone timing is not an end-to-end win and must not be projected into the
+headline.  The failed patch and all three logs are preserved in the lane note;
+production was restored without a reboot and passed the full cache-zero
+code/vision health gate.  Intel PTI device-view tracing was also rejected on
+the Level Zero V2 runtime: it
 could not timestamp incomplete copy events, emitted no device records, and
 stalled in polling/flush even with decode-deferred activation.  See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-qg-lending-and-pti-closeout.md`.

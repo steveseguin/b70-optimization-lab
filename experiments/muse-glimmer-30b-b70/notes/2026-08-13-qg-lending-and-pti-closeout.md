@@ -102,3 +102,64 @@ The lane is therefore reopened only for a strict default-off full-model
 integration and exact smoke.  The ceiling projects the current fixed-suite
 mean from `80.879` to approximately `84.699 tok/s`; it is a supporting kernel
 win, not a century result.
+
+## Full-model integration result: closed
+
+The strict default-off full-model implementation was compiled and independently
+reviewed.  It duplicated only the second 1,024 Q/gate rows on helper devices,
+kept the logical TP split and K/V/cache/FA/O/allreduce paths unchanged, and
+required `GGML_MUSE_TP4_QG_LEND=1`.  The source delta touched only:
+
+- `src/models/muse-glimmer.cpp`;
+- `ggml/src/ggml-backend-meta.cpp`;
+- `ggml/src/ggml-sycl/ggml-sycl.cpp`.
+
+The initial implementation diff SHA-256 was
+`f8419fb53c65fa0c33fa45d9eefca47b38f9441fbc3bd7162c9eb159e9a383f6`.
+It compiled successfully in the authoritative BMG-G31 build.  The 64-token
+leading control completed with canonical hashes and proposal identity:
+
+- prose `67.977 tok/s`, hash `f45a2f2c58f1ca34`, drafted/accepted `155/48`;
+- code `114.096 tok/s`, hash `2ca4135046a15a71`, drafted/accepted `126/53`;
+- JSON `219.110 tok/s`, hash `32dc3aebb11684a4`, drafted/accepted `65/58`.
+
+The candidate emitted both layer-0 execution markers (`owner=1 helper=0` and
+`owner=3 helper=2`) but then made no progress for more than three minutes on
+the first verifier pass.  This proves the path was reached rather than silently
+falling back.  It was cancelled gracefully and produced no benchmark row.
+The final cancelled log is:
+
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/servers/sweep-qg-lending-integration-smoke-cac-20260813-qg-lend-on.log`
+
+SHA-256 `574db48e932461425b553bdfdda9d3623f6fc1ff70972da4171456c23312cff5`.
+
+A bounded follow-up replaced both cross-device event dependencies with host
+completion waits while retaining identical GEMMs, scatter arithmetic, and
+buffer lifetimes.  Its source diff SHA-256 was
+`29e6a65e8db6513e66e94d525558a9c7068180e34285e3b8ee7e735d3af31c2b`.
+It again emitted both layer-0 markers and stalled at the same point.  Final log:
+
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/servers/sweep-qg-lending-hostwait-smoke-20260813-qg-lend-hostwait-on.log`
+
+SHA-256 `52efdd8faf702643cb60e71236c0e9f964a67477d5ad5b770e4f87370ac29abf`.
+
+One last candidate-only screen additionally disabled
+`GGML_SYCL_COMM_LAST_EVENT_READY`.  It produced the same two layer-0 hit
+markers and the same no-progress failure, ruling out the retained allreduce
+readiness shortcut as the simple interaction.  Final log:
+
+`/mnt/fast-ai/bench-results/muse-glimmer-30b/servers/sweep-qg-lending-hostwait-barrier-smoke-20260813-qg-lend-hostwait-barrier-on.log`
+
+SHA-256 `eb7c193031ac4cf59d7f7ac1ee73f2c93a26775d80febf4135967b20c665a655`.
+
+Decision: close the full-model Q/gate lending topology on the current runtime.
+The standalone microbenchmark remains useful descriptor evidence, but its
+`2.34442 ms/pass` scaling is not realizable evidence.  Do not spend another GPU
+window on this implementation without a materially different scheduling
+design that avoids submitting the helper's whole attention subgraph ahead of
+the owner.
+
+Production was restored after every window.  The final health artifact is
+`data/muse-health-20260813T164324Z-qg-lending-closed-restore.json`; models,
+cache-zero 512-token code, and vision all passed.  No reboot, driver reset, or
+device recovery was needed.
