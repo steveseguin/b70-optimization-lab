@@ -444,6 +444,30 @@ The four external result SHA256 values in the same order are
 `3027005f0487dbd5eed466e7098a7c654ab9ccdb266e8ded562cc14cb84537cb`,
 and `4c84c5b94d08cbd9310e2af0376dba6d6241b6f1b4536fccf489579ae013cac3`.
 
+### 2026-08-13 sparse-8 confirmation
+
+A later sparse-one-in-eight run repeated this diagnostic after the TP backend
+sampling screen. It completed with canonical final hashes and canonical
+accepted-token counts, but the tag traffic reduced throughput to
+`12.700 / 18.302 / 22.019 tok/s`; these numbers remain instrumentation-only
+and are not a regression. The trace again showed inflated gaps around small
+operations, confirming that tag intervals must not be treated as pure kernel
+time.
+
+Independent 100 ms device telemetry collected through the whole run found all
+four cards holding the configured `2.8 GHz` at active-sample medians and 90th
+percentiles. Active-sample median power was `99.2-102.7 W`, 90th-percentile
+power was `101.3-105.4 W`, maximum observed power was `106-111 W`, and maximum
+temperature was `51-58 C`, all well below the `230 W` cap. This reconfirms that
+the retained lane is neither thermally throttled nor power limited.
+
+Artifacts:
+
+- result `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/device-timeline-profile-20260813.jsonl`, SHA256 `5a9c8a93af91226b6e2e22b46bb565c3839df5c42f47a5366cb299199bc26a59`;
+- server log `/mnt/fast-ai/bench-results/muse-glimmer-30b/servers/sweep-device-timeline-profile-20260813-timeline-one-in-8.log`, SHA256 `c5210c4568b06b2c4f532322aac42e52637f6d3ef2ef63d239898a191e4e961b`;
+- telemetry `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/device-timeline-telemetry-20260813.jsonl`, SHA256 `462e761484f367cd09ed63665899f0ec04ddae6f0b0992a234739190f5734cb0`;
+- final production gate `data/muse-health-20260813-device-timeline-restore.json`.
+
 ## Update: RMSNorm work-group screens
 
 Source commit `c611131fe` adds a default-off
