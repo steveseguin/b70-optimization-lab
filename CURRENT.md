@@ -181,6 +181,20 @@ also reverted. See
 and
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-ddtree-bulk-kv-negative.md`.
 
+The functional budget-15 DDTree path was subsequently implemented and tested,
+not merely modeled. The canonical 256-token suite measured
+`65.349 / 93.612 / 106.993 tok/s`, arithmetic mean **`88.651 tok/s`**. Prose
+and JSON hashes matched, but code changed from the retained speculative hash
+to the target no-spec hash, so the path failed both speed and canonical
+identity gates. Realized round counts were close to the offline coverage
+prediction; the missing performance was several milliseconds of
+multi-sequence/KV/sampler/indexed-processing cost per round. The implementation
+was preserved and reverted. A DFlash-encoder-FC-only oneMKL kernel was also
+exact but lost mean throughput in a 64-token smoke and was reverted. Evidence:
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-ddtree-functional-negative.md`
+and
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-dflash-fc-mkl-negative.md`.
+
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible
 same-round-cost ceiling to `103.16 tok/s`, but can tolerate only `+3.16%`
