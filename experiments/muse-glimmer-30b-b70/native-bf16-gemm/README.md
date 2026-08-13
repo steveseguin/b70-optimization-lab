@@ -48,3 +48,24 @@ the corrected cleanup trap. Neither attempt submitted GPU work. The measured
 screen used `level_zero:0`, and the final full health gate above is the restore
 authority. Future standalone windows must install the cleanup trap before
 stopping production and must not source oneAPI under nounset.
+
+## Scheduler-mode screen
+
+The only remaining card-level scheduling hypothesis was also closed. All
+cards reported `timeslice`, interval `1000 us`, yield timeout `640000 us`.
+The driver rejected `xpu-smi ... --scheduler exclusive` with
+`not support this scheduler mode`, and a config read immediately afterward
+proved that GPU 0 remained in the original timeslice mode. The two 200-call
+oneDNN measurements were correspondingly identical (`0.116331` and
+`0.116413 ms`). This was a capability/no-op screen, not a candidate A/B.
+
+External log hashes are
+`d865a52f4f83faab078fa1ae917d4907e0d46dccf32e850dc612761d9bb26010`
+for the timeslice control and
+`067e251b6d4ad1c0d244bd2f7eb8a9c94b00e4acf326a7fdb23e9fcf2f72c6ee`
+for the rejected-exclusive repeat. The cleanup command's attempt to write the
+already-current three-field timeslice tuple was itself rejected as invalid;
+because the exclusive write never succeeded, no restoration mutation was
+needed. A final read reconfirmed the exact original tuple. Production then
+passed the full gate in
+`data/muse-health-20260813-scheduler-screen-restore.json`.
