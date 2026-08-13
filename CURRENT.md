@@ -99,6 +99,15 @@ Combined with the merge tree, about `0.60 ms` of the original `1.805 ms`
 top15 cost is recovered. Roughly `1.2 ms/round` remains inside the top15 tail,
 and the zero-bookkeeping tree arithmetic still needs roughly `2.6 ms/round`
 total savings to average 100.
+The subsequent 512-lane specialization is the current top15 kernel best at
+source commit `7fc0c977c`. It measures **`+0.915%`** against pooled 128-lane
+controls and saves about **`0.52 ms/round`** (`7.75 / 7.22 / 7.73 ms`), with
+exact hashes and proposal/acceptance identity. Use
+`GGML_SYCL_TOP_K_TREE_MERGE=1` plus `GGML_SYCL_TOP_K_BLOCK_SIZE=512`. Together
+these recover about `0.82 ms` of the original top15 cost; approximately
+`0.98 ms/round` remains versus greedy, and the zero-bookkeeping DDTree route
+still needs about `2.37 ms/round` total savings to average 100. The scan-width
+axis is now closed because 1024 lanes would require about 120 KiB SLM.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible

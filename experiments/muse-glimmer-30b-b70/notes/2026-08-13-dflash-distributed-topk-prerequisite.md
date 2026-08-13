@@ -207,3 +207,41 @@ top15 and greedy, while the zero-bookkeeping DDTree route still needs roughly
 `2.6 ms/round` total savings to average 100. The next work should isolate the
 remaining local insertion versus selected-value/collective/softmax tail before
 another kernel rewrite.
+
+## 512-lane scan
+
+Source commit `7fc0c977c` extends the guarded specialization to 512 lanes for
+`k <= 16`. At k=15 it uses about 60 KiB SLM, near the useful limit, but the
+canonical C/A/C shows that occupancy remains acceptable:
+
+| arm | prose | code | JSON | mean tok/s |
+| --- | ---: | ---: | ---: | ---: |
+| block 128 before | `54.750` | `79.262` | `96.353` | `76.788` |
+| block 512 | `55.229` | `79.844` | `97.364` | **`77.479`** |
+| block 128 after | `54.806` | `79.068` | `96.421` | `76.765` |
+
+The gain versus pooled controls is approximately **`0.915%`**. Direct
+128-round DFlash profiles are `7.75 / 7.22 / 7.73 ms`, a pooled saving of
+approximately **`0.52 ms/round`**. Hashes, proposal counts, and accepted counts
+match exactly across all arms.
+
+Evidence:
+
+- source commit: `7fc0c977c`;
+- identity: `sweeps/20260813-dflash-topk-block512-full-cac.json`;
+- JSONL SHA256: `70b1a3565cfc021a11d6b911ce8615020d1b2070fa5bd543b2e1eb0e52512b59`;
+- block128-before/block512/block128-after log SHA256:
+  `93c51fa86ab93c280f59aa0b0ece87b0fbafde411ce04653cbc0e82d65e2f04d`,
+  `ad4b5ff98d6c084a960af4828133d361c68285592816bab97870c3b0b3d0cd79`,
+  and `fee814489e6d1665bc7a802b13c5f19a2968be57a32b8dc3fc6336be187002fb`;
+- production health:
+  `data/muse-health-20260813-dflash-topk-block512-full-restore.json`.
+
+Use `GGML_SYCL_TOP_K_TREE_MERGE=1` plus
+`GGML_SYCL_TOP_K_BLOCK_SIZE=512` for the current top15 kernel best. Relative
+to the original serial 128-lane path, tree merge plus block512 recover roughly
+`0.82 ms` of the `1.805 ms` top15 cost. Approximately `0.98 ms/round` remains
+versus greedy, and the zero-bookkeeping DDTree route still needs about
+`2.37 ms/round` more total savings to average 100. A 1024-lane version would
+require about 120 KiB SLM and is rejected on this hardware; close this scaling
+axis and isolate the fixed selected-value/collective/softmax tail next.
