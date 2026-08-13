@@ -88,6 +88,20 @@ They are under
 Production was restored without reboot and passed the full gate in
 `data/muse-health-20260813-native-bf16-multirow-restore.json`.
 
+An additional oneDNN mixed-input screen attempted to remove the explicit
+activation conversion by supplying the exact BF16-rounded activation values
+widened back to F32 (`BF16 weight x F32 activation -> F32`). The descriptor
+compiled, but runtime did not complete even the eight warmups plus first call
+within 60 seconds; the incumbent completes 200 calls in about 24 ms. The run
+was interrupted under the cleanup trap and is a decisive implementation-path
+negative. Its partial external log is
+`synthetic-onednn-f32src-20260813.log`, SHA256
+`f75da134634c1ed91cf4316f45fc8f9a7a057ba72140cd660cda6ba6fa14ade3`.
+The exact attempted code is preserved in Git history and then removed from the
+default harness because it makes every invocation unusable. Production again
+passed the full gate in
+`data/muse-health-20260813-onednn-f32src-restore.json`.
+
 ## Scheduler-mode screen
 
 The only remaining card-level scheduling hypothesis was also closed. All

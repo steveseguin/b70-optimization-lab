@@ -301,21 +301,28 @@ int main(int argc, char ** argv) {
     for (auto & value : host_activation) {
         value = bf16(signed_unit(rng) * 0.125f);
     }
+    std::vector<float> host_activation_f32(host_activation.size());
+    std::transform(host_activation.begin(), host_activation.end(), host_activation_f32.begin(),
+                   [](bf16 value) { return float(value); });
     const auto host_packed = pack_weight_vnni(host_weight);
 
     auto * weight = sycl::malloc_device<bf16>(host_weight.size(), queue);
     auto * packed = sycl::malloc_device<bf16>(host_packed.size(), queue);
     auto * activation = sycl::malloc_device<bf16>(host_activation.size(), queue);
+    auto * activation_f32 = sycl::malloc_device<float>(host_activation_f32.size(), queue);
     auto * out_dnnl = sycl::malloc_device<float>(size_t(kM) * kN, queue);
+    auto * out_dnnl_f32src = sycl::malloc_device<float>(size_t(kM) * kN, queue);
     auto * out_dpas = sycl::malloc_device<float>(size_t(kM) * kN, queue);
     auto * out_dpas_slm = sycl::malloc_device<float>(size_t(kM) * kN, queue);
     auto * out_dpas_multi = sycl::malloc_device<float>(size_t(kM) * kN, queue);
-    if (!weight || !packed || !activation || !out_dnnl || !out_dpas || !out_dpas_slm || !out_dpas_multi) {
+    if (!weight || !packed || !activation || !activation_f32 || !out_dnnl || !out_dnnl_f32src ||
+        !out_dpas || !out_dpas_slm || !out_dpas_multi) {
         throw std::runtime_error("USM allocation failed");
     }
     queue.copy(host_weight.data(), weight, host_weight.size());
     queue.copy(host_packed.data(), packed, host_packed.size());
     queue.copy(host_activation.data(), activation, host_activation.size());
+    queue.copy(host_activation_f32.data(), activation_f32, host_activation_f32.size());
     queue.wait_and_throw();
 
     auto engine = dnnl::sycl_interop::make_engine(
@@ -344,12 +351,32 @@ int main(int argc, char ** argv) {
             dnnl::memory(pd.scratchpad_desc(), engine, scratch)},
     };
 
+    const auto activation_f32_md = dnnl::memory::desc(
+        {1, kK, kN}, dnnl::memory::data_type::f32, {kK * kN, 1, kK});
+    auto f32src_pd = dnnl::matmul::primitive_desc(
+        engine, weight_md, activation_f32_md, output_md, attr);
+    auto f32src_primitive = dnnl::matmul(f32src_pd);
+    auto * f32src_scratch = sycl::malloc_device<uint8_t>(
+        f32src_pd.scratchpad_desc().get_size(), queue);
+    if (!f32src_scratch && f32src_pd.scratchpad_desc().get_size() != 0) {
+        throw std::runtime_error("f32-source scratchpad allocation failed");
+    }
+    std::unordered_map<int, dnnl::memory> f32src_args = {
+        {DNNL_ARG_SRC, dnnl::memory(weight_md, engine, weight)},
+        {DNNL_ARG_WEIGHTS, dnnl::memory(activation_f32_md, engine, activation_f32)},
+        {DNNL_ARG_DST, dnnl::memory(output_md, engine, out_dnnl_f32src)},
+        {DNNL_ARG_SCRATCHPAD,
+            dnnl::memory(f32src_pd.scratchpad_desc(), engine, f32src_scratch)},
+    };
+
     auto submit_dnnl = [&] { primitive.execute(stream, args); };
+    auto submit_dnnl_f32src = [&] { f32src_primitive.execute(stream, f32src_args); };
     auto submit_dpas = [&] { launch_dpas(queue, packed, activation, out_dpas); };
     auto submit_dpas_slm = [&] { launch_dpas_slm(queue, packed, activation, out_dpas_slm); };
     auto submit_dpas_multi = [&] { launch_dpas_multirow(queue, packed, activation, out_dpas_multi); };
     for (int i = 0; i < warmups; ++i) {
         submit_dnnl();
+        submit_dnnl_f32src();
         submit_dpas();
         submit_dpas_slm();
         submit_dpas_multi();
@@ -357,21 +384,25 @@ int main(int argc, char ** argv) {
     queue.wait_and_throw();
 
     submit_dnnl();
+    submit_dnnl_f32src();
     submit_dpas();
     submit_dpas_slm();
     submit_dpas_multi();
     queue.wait_and_throw();
     std::vector<float> host_dnnl(size_t(kM) * kN);
+    std::vector<float> host_dnnl_f32src(size_t(kM) * kN);
     std::vector<float> host_dpas(size_t(kM) * kN);
     std::vector<float> host_dpas_slm(size_t(kM) * kN);
     std::vector<float> host_dpas_multi(size_t(kM) * kN);
     queue.copy(out_dnnl, host_dnnl.data(), host_dnnl.size());
+    queue.copy(out_dnnl_f32src, host_dnnl_f32src.data(), host_dnnl_f32src.size());
     queue.copy(out_dpas, host_dpas.data(), host_dpas.size());
     queue.copy(out_dpas_slm, host_dpas_slm.data(), host_dpas_slm.size());
     queue.copy(out_dpas_multi, host_dpas_multi.data(), host_dpas_multi.size());
     queue.wait_and_throw();
 
     size_t mismatches = 0;
+    size_t f32src_mismatches = 0;
     size_t slm_mismatches = 0;
     size_t multi_mismatches = 0;
     float max_abs_error = 0.0f;
@@ -385,15 +416,19 @@ int main(int argc, char ** argv) {
         }
         slm_mismatches += bits(host_dnnl[i]) != bits(host_dpas_slm[i]);
         multi_mismatches += bits(host_dnnl[i]) != bits(host_dpas_multi[i]);
+        f32src_mismatches += bits(host_dnnl[i]) != bits(host_dnnl_f32src[i]);
     }
 
     const double dnnl_ms = batch_time_ms(queue, iterations, submit_dnnl);
+    const double dnnl_f32src_ms = batch_time_ms(queue, iterations, submit_dnnl_f32src);
     const double dpas_ms = batch_time_ms(queue, iterations, submit_dpas);
     const double dpas_slm_ms = batch_time_ms(queue, iterations, submit_dpas_slm);
     const double dpas_multi_ms = batch_time_ms(queue, iterations, submit_dpas_multi);
     const double ratio = dnnl_ms > 0.0 ? dpas_ms / dnnl_ms : 0.0;
     std::cout << std::fixed << std::setprecision(6)
               << "dnnl_ms=" << dnnl_ms
+              << " dnnl_f32src_ms=" << dnnl_f32src_ms
+              << " dnnl_f32src_over_dnnl=" << (dnnl_f32src_ms / dnnl_ms)
               << " dpas_ms=" << dpas_ms
               << " dpas_over_dnnl=" << ratio
               << " dpas_slm_ms=" << dpas_slm_ms
@@ -401,6 +436,7 @@ int main(int argc, char ** argv) {
               << " dpas_multi_ms=" << dpas_multi_ms
               << " dpas_multi_over_dnnl=" << (dpas_multi_ms / dnnl_ms)
               << " mismatches=" << mismatches
+              << " f32src_mismatches=" << f32src_mismatches
               << " slm_mismatches=" << slm_mismatches
               << " multi_mismatches=" << multi_mismatches
               << " max_abs_error=" << max_abs_error << '\n';
@@ -412,11 +448,14 @@ int main(int argc, char ** argv) {
                   << " dpas_value=" << host_dpas[first_mismatch] << '\n';
     }
 
+    sycl::free(f32src_scratch, queue);
     sycl::free(scratch, queue);
     sycl::free(out_dpas_slm, queue);
     sycl::free(out_dpas_multi, queue);
     sycl::free(out_dpas, queue);
     sycl::free(out_dnnl, queue);
+    sycl::free(out_dnnl_f32src, queue);
+    sycl::free(activation_f32, queue);
     sycl::free(activation, queue);
     sycl::free(packed, queue);
     sycl::free(weight, queue);
