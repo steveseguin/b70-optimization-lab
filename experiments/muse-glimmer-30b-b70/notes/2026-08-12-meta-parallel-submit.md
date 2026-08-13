@@ -250,3 +250,26 @@ the accepted-token gain on this model. Close the current lookahead
 implementation as a route to 100; do not spend a full three-class window on
 it. Production restoration passed in
 `data/muse-health-20260812-lookahead-restore.json`.
+
+## Update: persistent OpenMP team negative
+
+Source commit `41c93b612` adds a default-off
+`GGML_META_PERSISTENT_PARALLEL_SUBMIT=1` path around the entire meta subgraph
+loop. It preserves the implicit barrier after all per-device submissions,
+runs the original status scan and collective on the master thread, then
+barriers before the next subgraph. The experiment removes repeated OpenMP team
+entry but cannot remove mandatory collective boundaries.
+
+The reversed-order exact A/B measured:
+
+| Arm | Prose | Code | JSON | Mean t/s |
+| --- | ---: | ---: | ---: | ---: |
+| persistent team | 47.996 | 70.255 | 84.201 | 67.484 |
+| per-subgraph team control | 48.017 | 70.044 | 84.709 | 67.590 |
+
+This is `-0.16%`, inside noise and not a promotion. Canonical hashes and
+accepted counts matched; one prose draft-count difference (`1172` vs `1171`)
+is the familiar end-budget variation. Raw JSONL SHA-256:
+`10ba021f33ba8a09b976510b7cb24f35548fdfe28d811b9701314b7d122cf21b`.
+Production restoration passed in
+`data/muse-health-20260812-persistent-submit-restore.json`.
