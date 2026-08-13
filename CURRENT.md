@@ -55,6 +55,10 @@ The only retained tree option is DFlash budget 15 at the unchanged 16-row
 target width; its optimistic ceiling is `82.68 tok/s` and it remains gated on
 first finding at least `10.73 ms/round` of independent verifier-kernel savings.
 The pretrained DSpark equivalent is weaker (`75.24 tok/s`).
+The B70 Level Zero lossless memory-compression allocation hint is exact but
+round-time neutral (`62.150 / 62.127 / 62.064 ms` candidate/control/candidate),
+so it remains default-off.  See
+`experiments/muse-glimmer-30b-b70/notes/2026-08-13-level-zero-memory-compression-negative.md`.
 
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
