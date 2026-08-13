@@ -15,13 +15,13 @@ that its model is currently loaded.
 
 ## Live Service
 
-**Recovered and live as of 2026-08-12 19:56 EDT.** The operator-authorized
+**Recovered and live as of 2026-08-12 21:06 EDT.** The operator-authorized
 host reboot completed. Exact four-device BDF/UUID mapping, per-card
 copy/compute, the pinned native four-device peer-read, and four-rank XCCL
 barrier/all-reduce all passed. The external model volume was remounted at
 `/mnt/usb-models`. The incumbent Muse fleet and frontdoor are active, and the
 full model/cache-zero code/vision health gate passes in
-`data/muse-health-20260812-parallel-submit-restore.json`. The invalid overlap
+`data/muse-health-20260812-topk-trace-restore.json`. The invalid overlap
 incident remains preserved at
 `experiments/muse-glimmer-30b-b70/notes/2026-08-12-parallel-submit-window-xe-wedge.md`.
 Production and benchmark launchers now share the canonical exclusive host GPU
@@ -36,8 +36,13 @@ proposal counts exact. Evidence:
 The production TP2 fleet does not enable this experimental flag. The next
 kernel screen, a guarded batch=2 oneDNN gate/up projection, executed and was
 exact but measured only `+0.34%`, too small to promote without confirmation.
-The honest `>100 tok/s` TP4 objective remains unmet; further launch-wrapper
-micro-optimization cannot supply the remaining gap by itself.
+Non-adjacent attention pairing is unreachable without invalidating graph-arena
+lifetimes: Q+gate collides with the live norm output and K/V deliberately reuse
+one output address. A measured top-3 mismatch-repair oracle also closes sparse
+branching: even three free stale-suffix nodes project to only `83.13 tok/s`
+before wider target cost. The honest `>100 tok/s` TP4 objective remains unmet;
+further launch-wrapper micro-optimization cannot supply the remaining gap by
+itself.
 
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +
