@@ -1,0 +1,577 @@
+{
+  "schema": "muse_ddtree_prefix_trace_v1",
+  "interpretation": "Exact greedy target-path coverage under the official DDTree best-first construction. Same-round-cost throughput excludes wider target verification cost. Candidate ranks and probability precision are limited by the input trace.",
+  "requests": [
+    {
+      "label": "prose",
+      "target_tokens": 256,
+      "target_sha256_16": "50774bbe3a30ad3b",
+      "proposal_records": 254,
+      "candidate_ranks_present": [
+        128
+      ],
+      "baseline_round_ms": 62.83,
+      "strategies": {
+        "linear_p015": {
+          "rounds": 88,
+          "accepted_tokens": 168,
+          "emitted_tokens": 256,
+          "emitted_per_round": 2.909090909090909,
+          "same_round_cost_tok_s": 46.30098534284433,
+          "max_round_ms_for_100_tok_s": 29.09090909090909,
+          "max_cost_multiplier_for_100": 0.46300985342844325
+        },
+        "ddtree_b15": {
+          "rounds": 75,
+          "accepted_tokens": 181,
+          "emitted_tokens": 256,
+          "emitted_per_round": 3.4133333333333336,
+          "same_round_cost_tok_s": 54.326489468937346,
+          "max_round_ms_for_100_tok_s": 34.13333333333333,
+          "max_cost_multiplier_for_100": 0.5432648946893734
+        },
+        "ddtree_b16": {
+          "rounds": 75,
+          "accepted_tokens": 181,
+          "emitted_tokens": 256,
+          "emitted_per_round": 3.4133333333333336,
+          "same_round_cost_tok_s": 54.326489468937346,
+          "max_round_ms_for_100_tok_s": 34.13333333333333,
+          "max_cost_multiplier_for_100": 0.5432648946893734
+        },
+        "ddtree_b22": {
+          "rounds": 72,
+          "accepted_tokens": 184,
+          "emitted_tokens": 256,
+          "emitted_per_round": 3.5555555555555554,
+          "same_round_cost_tok_s": 56.59009319680973,
+          "max_round_ms_for_100_tok_s": 35.55555555555556,
+          "max_cost_multiplier_for_100": 0.5659009319680973
+        },
+        "ddtree_b32": {
+          "rounds": 67,
+          "accepted_tokens": 189,
+          "emitted_tokens": 256,
+          "emitted_per_round": 3.8208955223880596,
+          "same_round_cost_tok_s": 60.813234480153746,
+          "max_round_ms_for_100_tok_s": 38.208955223880594,
+          "max_cost_multiplier_for_100": 0.6081323448015374
+        },
+        "ddtree_b48": {
+          "rounds": 64,
+          "accepted_tokens": 192,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.0,
+          "same_round_cost_tok_s": 63.66385484641095,
+          "max_round_ms_for_100_tok_s": 40.0,
+          "max_cost_multiplier_for_100": 0.6366385484641095
+        },
+        "ddtree_b64": {
+          "rounds": 65,
+          "accepted_tokens": 191,
+          "emitted_tokens": 256,
+          "emitted_per_round": 3.9384615384615387,
+          "same_round_cost_tok_s": 62.68441092569694,
+          "max_round_ms_for_100_tok_s": 39.38461538461539,
+          "max_cost_multiplier_for_100": 0.6268441092569694
+        },
+        "ddtree_b96": {
+          "rounds": 62,
+          "accepted_tokens": 194,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.129032258064516,
+          "same_round_cost_tok_s": 65.71752758339194,
+          "max_round_ms_for_100_tok_s": 41.29032258064516,
+          "max_cost_multiplier_for_100": 0.6571752758339194
+        },
+        "ddtree_b128": {
+          "rounds": 61,
+          "accepted_tokens": 195,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.19672131147541,
+          "same_round_cost_tok_s": 66.79486410115247,
+          "max_round_ms_for_100_tok_s": 41.967213114754095,
+          "max_cost_multiplier_for_100": 0.6679486410115247
+        },
+        "ddtree_b192": {
+          "rounds": 60,
+          "accepted_tokens": 196,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.266666666666667,
+          "same_round_cost_tok_s": 67.90811183617168,
+          "max_round_ms_for_100_tok_s": 42.666666666666664,
+          "max_cost_multiplier_for_100": 0.6790811183617168
+        },
+        "ddtree_b256": {
+          "rounds": 59,
+          "accepted_tokens": 197,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.338983050847458,
+          "same_round_cost_tok_s": 69.05909678254747,
+          "max_round_ms_for_100_tok_s": 43.389830508474574,
+          "max_cost_multiplier_for_100": 0.6905909678254747
+        },
+        "ddtree_b384": {
+          "rounds": 59,
+          "accepted_tokens": 197,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.338983050847458,
+          "same_round_cost_tok_s": 69.05909678254747,
+          "max_round_ms_for_100_tok_s": 43.389830508474574,
+          "max_cost_multiplier_for_100": 0.6905909678254747
+        },
+        "ddtree_b512": {
+          "rounds": 58,
+          "accepted_tokens": 198,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.413793103448276,
+          "same_round_cost_tok_s": 70.24977086500519,
+          "max_round_ms_for_100_tok_s": 44.13793103448276,
+          "max_cost_multiplier_for_100": 0.7024977086500519
+        }
+      }
+    },
+    {
+      "label": "code",
+      "target_tokens": 256,
+      "target_sha256_16": "e1b7095430b68618",
+      "proposal_records": 254,
+      "candidate_ranks_present": [
+        128
+      ],
+      "baseline_round_ms": 61.61,
+      "strategies": {
+        "linear_p015": {
+          "rounds": 54,
+          "accepted_tokens": 202,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.7407407407407405,
+          "same_round_cost_tok_s": 76.9475854689294,
+          "max_round_ms_for_100_tok_s": 47.407407407407405,
+          "max_cost_multiplier_for_100": 0.769475854689294
+        },
+        "ddtree_b15": {
+          "rounds": 50,
+          "accepted_tokens": 206,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.12,
+          "same_round_cost_tok_s": 83.10339230644377,
+          "max_round_ms_for_100_tok_s": 51.2,
+          "max_cost_multiplier_for_100": 0.8310339230644377
+        },
+        "ddtree_b16": {
+          "rounds": 49,
+          "accepted_tokens": 207,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.224489795918367,
+          "same_round_cost_tok_s": 84.79937990453445,
+          "max_round_ms_for_100_tok_s": 52.244897959183675,
+          "max_cost_multiplier_for_100": 0.8479937990453446
+        },
+        "ddtree_b22": {
+          "rounds": 47,
+          "accepted_tokens": 209,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.446808510638298,
+          "same_round_cost_tok_s": 88.40786415579123,
+          "max_round_ms_for_100_tok_s": 54.46808510638298,
+          "max_cost_multiplier_for_100": 0.8840786415579124
+        },
+        "ddtree_b32": {
+          "rounds": 47,
+          "accepted_tokens": 209,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.446808510638298,
+          "same_round_cost_tok_s": 88.40786415579123,
+          "max_round_ms_for_100_tok_s": 54.46808510638298,
+          "max_cost_multiplier_for_100": 0.8840786415579124
+        },
+        "ddtree_b48": {
+          "rounds": 46,
+          "accepted_tokens": 210,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.565217391304348,
+          "same_round_cost_tok_s": 90.32977424613452,
+          "max_round_ms_for_100_tok_s": 55.65217391304348,
+          "max_cost_multiplier_for_100": 0.9032977424613452
+        },
+        "ddtree_b64": {
+          "rounds": 46,
+          "accepted_tokens": 210,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.565217391304348,
+          "same_round_cost_tok_s": 90.32977424613452,
+          "max_round_ms_for_100_tok_s": 55.65217391304348,
+          "max_cost_multiplier_for_100": 0.9032977424613452
+        },
+        "ddtree_b96": {
+          "rounds": 44,
+          "accepted_tokens": 212,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.818181818181818,
+          "same_round_cost_tok_s": 94.43567307550427,
+          "max_round_ms_for_100_tok_s": 58.18181818181818,
+          "max_cost_multiplier_for_100": 0.9443567307550427
+        },
+        "ddtree_b128": {
+          "rounds": 44,
+          "accepted_tokens": 212,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.818181818181818,
+          "same_round_cost_tok_s": 94.43567307550427,
+          "max_round_ms_for_100_tok_s": 58.18181818181818,
+          "max_cost_multiplier_for_100": 0.9443567307550427
+        },
+        "ddtree_b192": {
+          "rounds": 44,
+          "accepted_tokens": 212,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.818181818181818,
+          "same_round_cost_tok_s": 94.43567307550427,
+          "max_round_ms_for_100_tok_s": 58.18181818181818,
+          "max_cost_multiplier_for_100": 0.9443567307550427
+        },
+        "ddtree_b256": {
+          "rounds": 42,
+          "accepted_tokens": 214,
+          "emitted_tokens": 256,
+          "emitted_per_round": 6.095238095238095,
+          "same_round_cost_tok_s": 98.93260988862353,
+          "max_round_ms_for_100_tok_s": 60.95238095238095,
+          "max_cost_multiplier_for_100": 0.9893260988862351
+        },
+        "ddtree_b384": {
+          "rounds": 41,
+          "accepted_tokens": 215,
+          "emitted_tokens": 256,
+          "emitted_per_round": 6.2439024390243905,
+          "same_round_cost_tok_s": 101.34560037371192,
+          "max_round_ms_for_100_tok_s": 62.4390243902439,
+          "max_cost_multiplier_for_100": 1.013456003737119
+        },
+        "ddtree_b512": {
+          "rounds": 40,
+          "accepted_tokens": 216,
+          "emitted_tokens": 256,
+          "emitted_per_round": 6.4,
+          "same_round_cost_tok_s": 103.8792403830547,
+          "max_round_ms_for_100_tok_s": 64.0,
+          "max_cost_multiplier_for_100": 1.038792403830547
+        }
+      }
+    },
+    {
+      "label": "json",
+      "target_tokens": 256,
+      "target_sha256_16": "f139364ae7c57c6f",
+      "proposal_records": 254,
+      "candidate_ranks_present": [
+        128
+      ],
+      "baseline_round_ms": 61.69,
+      "strategies": {
+        "linear_p015": {
+          "rounds": 53,
+          "accepted_tokens": 203,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.830188679245283,
+          "same_round_cost_tok_s": 78.29775780913087,
+          "max_round_ms_for_100_tok_s": 48.301886792452834,
+          "max_cost_multiplier_for_100": 0.7829775780913087
+        },
+        "ddtree_b15": {
+          "rounds": 47,
+          "accepted_tokens": 209,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.446808510638298,
+          "same_round_cost_tok_s": 88.2932162528497,
+          "max_round_ms_for_100_tok_s": 54.46808510638298,
+          "max_cost_multiplier_for_100": 0.882932162528497
+        },
+        "ddtree_b16": {
+          "rounds": 46,
+          "accepted_tokens": 210,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.565217391304348,
+          "same_round_cost_tok_s": 90.21263399747687,
+          "max_round_ms_for_100_tok_s": 55.65217391304348,
+          "max_cost_multiplier_for_100": 0.9021263399747687
+        },
+        "ddtree_b22": {
+          "rounds": 41,
+          "accepted_tokens": 215,
+          "emitted_tokens": 256,
+          "emitted_per_round": 6.2439024390243905,
+          "same_round_cost_tok_s": 101.21417472887649,
+          "max_round_ms_for_100_tok_s": 62.4390243902439,
+          "max_cost_multiplier_for_100": 1.0121417472887648
+        },
+        "ddtree_b32": {
+          "rounds": 40,
+          "accepted_tokens": 216,
+          "emitted_tokens": 256,
+          "emitted_per_round": 6.4,
+          "same_round_cost_tok_s": 103.7445290970984,
+          "max_round_ms_for_100_tok_s": 64.0,
+          "max_cost_multiplier_for_100": 1.037445290970984
+        },
+        "ddtree_b48": {
+          "rounds": 39,
+          "accepted_tokens": 217,
+          "emitted_tokens": 256,
+          "emitted_per_round": 6.564102564102564,
+          "same_round_cost_tok_s": 106.40464522779324,
+          "max_round_ms_for_100_tok_s": 65.64102564102564,
+          "max_cost_multiplier_for_100": 1.0640464522779323
+        },
+        "ddtree_b64": {
+          "rounds": 37,
+          "accepted_tokens": 219,
+          "emitted_tokens": 256,
+          "emitted_per_round": 6.918918918918919,
+          "same_round_cost_tok_s": 112.15624767253883,
+          "max_round_ms_for_100_tok_s": 69.1891891891892,
+          "max_cost_multiplier_for_100": 1.1215624767253882
+        },
+        "ddtree_b96": {
+          "rounds": 37,
+          "accepted_tokens": 219,
+          "emitted_tokens": 256,
+          "emitted_per_round": 6.918918918918919,
+          "same_round_cost_tok_s": 112.15624767253883,
+          "max_round_ms_for_100_tok_s": 69.1891891891892,
+          "max_cost_multiplier_for_100": 1.1215624767253882
+        },
+        "ddtree_b128": {
+          "rounds": 37,
+          "accepted_tokens": 219,
+          "emitted_tokens": 256,
+          "emitted_per_round": 6.918918918918919,
+          "same_round_cost_tok_s": 112.15624767253883,
+          "max_round_ms_for_100_tok_s": 69.1891891891892,
+          "max_cost_multiplier_for_100": 1.1215624767253882
+        },
+        "ddtree_b192": {
+          "rounds": 37,
+          "accepted_tokens": 219,
+          "emitted_tokens": 256,
+          "emitted_per_round": 6.918918918918919,
+          "same_round_cost_tok_s": 112.15624767253883,
+          "max_round_ms_for_100_tok_s": 69.1891891891892,
+          "max_cost_multiplier_for_100": 1.1215624767253882
+        },
+        "ddtree_b256": {
+          "rounds": 32,
+          "accepted_tokens": 224,
+          "emitted_tokens": 256,
+          "emitted_per_round": 8.0,
+          "same_round_cost_tok_s": 129.680661371373,
+          "max_round_ms_for_100_tok_s": 80.0,
+          "max_cost_multiplier_for_100": 1.29680661371373
+        },
+        "ddtree_b384": {
+          "rounds": 32,
+          "accepted_tokens": 224,
+          "emitted_tokens": 256,
+          "emitted_per_round": 8.0,
+          "same_round_cost_tok_s": 129.680661371373,
+          "max_round_ms_for_100_tok_s": 80.0,
+          "max_cost_multiplier_for_100": 1.29680661371373
+        },
+        "ddtree_b512": {
+          "rounds": 32,
+          "accepted_tokens": 224,
+          "emitted_tokens": 256,
+          "emitted_per_round": 8.0,
+          "same_round_cost_tok_s": 129.680661371373,
+          "max_round_ms_for_100_tok_s": 80.0,
+          "max_cost_multiplier_for_100": 1.29680661371373
+        }
+      }
+    }
+  ],
+  "summary": {
+    "linear_p015": {
+      "mean_same_round_cost_tok_s": 67.18210954030154,
+      "mean_emitted_per_round": 4.160006776358977,
+      "per_class_rounds": {
+        "prose": 88,
+        "code": 54,
+        "json": 53
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 29.09090909090909,
+        "code": 47.407407407407405,
+        "json": 48.301886792452834
+      }
+    },
+    "ddtree_b15": {
+      "mean_same_round_cost_tok_s": 75.24103267607694,
+      "mean_emitted_per_round": 4.660047281323878,
+      "per_class_rounds": {
+        "prose": 75,
+        "code": 50,
+        "json": 47
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 34.13333333333333,
+        "code": 51.2,
+        "json": 54.46808510638298
+      }
+    },
+    "ddtree_b16": {
+      "mean_same_round_cost_tok_s": 76.44616779031622,
+      "mean_emitted_per_round": 4.734346840185349,
+      "per_class_rounds": {
+        "prose": 75,
+        "code": 49,
+        "json": 46
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 34.13333333333333,
+        "code": 52.244897959183675,
+        "json": 55.65217391304348
+      }
+    },
+    "ddtree_b22": {
+      "mean_same_round_cost_tok_s": 82.07071069382582,
+      "mean_emitted_per_round": 5.0820888350727484,
+      "per_class_rounds": {
+        "prose": 72,
+        "code": 47,
+        "json": 41
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 35.55555555555556,
+        "code": 54.46808510638298,
+        "json": 62.4390243902439
+      }
+    },
+    "ddtree_b32": {
+      "mean_same_round_cost_tok_s": 84.32187591101446,
+      "mean_emitted_per_round": 5.222568011008786,
+      "per_class_rounds": {
+        "prose": 67,
+        "code": 47,
+        "json": 40
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 38.208955223880594,
+        "code": 54.46808510638298,
+        "json": 64.0
+      }
+    },
+    "ddtree_b48": {
+      "mean_same_round_cost_tok_s": 86.79942477344623,
+      "mean_emitted_per_round": 5.3764399851356375,
+      "per_class_rounds": {
+        "prose": 64,
+        "code": 46,
+        "json": 39
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 40.0,
+        "code": 55.65217391304348,
+        "json": 65.64102564102564
+      }
+    },
+    "ddtree_b64": {
+      "mean_same_round_cost_tok_s": 88.39014428145676,
+      "mean_emitted_per_round": 5.4741992828949355,
+      "per_class_rounds": {
+        "prose": 65,
+        "code": 46,
+        "json": 37
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 39.38461538461539,
+        "code": 55.65217391304348,
+        "json": 69.1891891891892
+      }
+    },
+    "ddtree_b96": {
+      "mean_same_round_cost_tok_s": 90.76981611047835,
+      "mean_emitted_per_round": 5.62204433172175,
+      "per_class_rounds": {
+        "prose": 62,
+        "code": 44,
+        "json": 37
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 41.29032258064516,
+        "code": 58.18181818181818,
+        "json": 69.1891891891892
+      }
+    },
+    "ddtree_b128": {
+      "mean_same_round_cost_tok_s": 91.12892828306519,
+      "mean_emitted_per_round": 5.644607349525383,
+      "per_class_rounds": {
+        "prose": 61,
+        "code": 44,
+        "json": 37
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 41.967213114754095,
+        "code": 58.18181818181818,
+        "json": 69.1891891891892
+      }
+    },
+    "ddtree_b192": {
+      "mean_same_round_cost_tok_s": 91.50001086140492,
+      "mean_emitted_per_round": 5.667922467922469,
+      "per_class_rounds": {
+        "prose": 60,
+        "code": 44,
+        "json": 37
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 42.666666666666664,
+        "code": 58.18181818181818,
+        "json": 69.1891891891892
+      }
+    },
+    "ddtree_b256": {
+      "mean_same_round_cost_tok_s": 99.224122680848,
+      "mean_emitted_per_round": 6.144740382028517,
+      "per_class_rounds": {
+        "prose": 59,
+        "code": 42,
+        "json": 32
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 43.389830508474574,
+        "code": 60.95238095238095,
+        "json": 80.0
+      }
+    },
+    "ddtree_b384": {
+      "mean_same_round_cost_tok_s": 100.02845284254413,
+      "mean_emitted_per_round": 6.194295163290616,
+      "per_class_rounds": {
+        "prose": 59,
+        "code": 41,
+        "json": 32
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 43.389830508474574,
+        "code": 62.4390243902439,
+        "json": 80.0
+      }
+    },
+    "ddtree_b512": {
+      "mean_same_round_cost_tok_s": 101.26989087314429,
+      "mean_emitted_per_round": 6.271264367816092,
+      "per_class_rounds": {
+        "prose": 58,
+        "code": 40,
+        "json": 32
+      },
+      "per_class_max_round_ms_for_100": {
+        "prose": 44.13793103448276,
+        "code": 64.0,
+        "json": 80.0
+      }
+    }
+  }
+}

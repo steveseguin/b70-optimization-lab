@@ -51,6 +51,10 @@ round cost; measured target-only batch 16 versus 128 time is
 `44.48 -> 110.31 ms` (`2.48x`), projecting roughly `50.00 tok/s` before tree
 bookkeeping.  See
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-ddtree-full-rank-ceiling.md`.
+The only retained tree option is DFlash budget 15 at the unchanged 16-row
+target width; its optimistic ceiling is `82.68 tok/s` and it remains gated on
+first finding at least `10.73 ms/round` of independent verifier-kernel savings.
+The pretrained DSpark equivalent is weaker (`75.24 tok/s`).
 
 Before this incident, live since 2026-08-11 ~00:10 EDT: the optimized asymmetric Muse Glimmer 30B
 BF16 fleet (`muse-glimmer-bf16-fleet.service` +

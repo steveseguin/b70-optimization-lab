@@ -4,9 +4,13 @@ Date: 2026-08-13
 
 ## Decision
 
-Do not implement DDTree in the Muse server.  Even the exact full-rank proposal
-coverage cannot pay for the required wider BF16 target verification on this
-four-B70 stack.  Keep verifier/kernel work as the primary lane.
+Do not implement a wider DDTree in the Muse server.  Even the exact full-rank
+proposal coverage cannot pay for wider BF16 target verification on this
+four-B70 stack.  Keep verifier/kernel work as the primary lane.  Preserve only
+budget 15 as a conditional supporting option: it holds the current 16-row
+verifier width and raises the same-cost ceiling to `82.68 tok/s`, but still
+needs an independently measured `10.73 ms/round` verifier reduction before the
+combination can reach 100.
 
 No drafter training or weight change was performed.
 
@@ -77,6 +81,23 @@ budget-128 round counts projects `33.73 / 51.51 / 64.76 = 50.00 tok/s` mean.
 Real tree bookkeeping, masks, KV compaction, and batch 129 rather than 128 can
 only make that worse.  Larger budgets also require larger verifier batches and
 are therefore excluded by an even wider margin.
+
+## Pretrained DSpark tree control
+
+The same full-rank trace was run with the already-trained public Muse DSpark
+checkpoint (no local training).  Its budget-15 tree is worse: `75.24 tok/s`
+same-cost ceiling, with class round counts `75 / 50 / 47`, versus DFlash's
+`82.68` and `65 / 48 / 42`.  Even at budget 128 DSpark reaches only `91.13`
+before wider-verifier cost.  Do not use DSpark for the conditional tree lane.
+
+DSpark evidence:
+
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/dspark-ddtree-prefix-top128-trace-20260813.jsonl`,
+  SHA-256 `ba3ea7da50b3ed52880cca7e1077991840083aa9f30e74062d5036fda694e7dc`;
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/servers/sweep-dspark-ddtree-prefix-top128-trace-20260813-dspark-prefix-top128-verify16.log`,
+  SHA-256 `67e1b9ca44f67ce0a57e68afae86e7d8acf35029062a8ced02e6952034bfc497`;
+- `data/muse-dspark-ddtree-prefix-top128-coverage-20260813.json`, SHA-256
+  `0eadfe101a80287d7994a86d7e5fb39073396c402f874ecfda3eead3d7c3529a`.
 
 ## Evidence
 
