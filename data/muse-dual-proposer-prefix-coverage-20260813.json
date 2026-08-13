@@ -1,0 +1,334 @@
+{
+  "schema": "muse_dual_proposer_prefix_trace_v1",
+  "interpretation": "Proposal coverage is measured at every canonical target prefix with verify-width arithmetic. Same-round-cost throughput is an optimistic ceiling; real dual-proposer and wider-batch costs are excluded.",
+  "requests": [
+    {
+      "label": "prose",
+      "target_tokens": 256,
+      "target_sha256_16": "50774bbe3a30ad3b",
+      "proposal_records": {
+        "dflash": 254,
+        "dspark": 254
+      },
+      "baseline_round_ms": 62.83,
+      "strategies": {
+        "dflash_p015": {
+          "rounds": 84,
+          "accepted_tokens": 172,
+          "emitted_tokens": 256,
+          "emitted_per_round": 3.0476190476190474,
+          "choices": {
+            "dflash": 84,
+            "dspark": 0,
+            "tie": 0,
+            "none": 0
+          },
+          "same_round_cost_tok_s": 48.50579416869405,
+          "max_round_ms_for_100_tok_s": 30.476190476190474,
+          "max_cost_multiplier_for_100": 0.48505794168694055
+        },
+        "dflash_p000": {
+          "rounds": 84,
+          "accepted_tokens": 172,
+          "emitted_tokens": 256,
+          "emitted_per_round": 3.0476190476190474,
+          "choices": {
+            "dflash": 84,
+            "dspark": 0,
+            "tie": 0,
+            "none": 0
+          },
+          "same_round_cost_tok_s": 48.50579416869405,
+          "max_round_ms_for_100_tok_s": 30.476190476190474,
+          "max_cost_multiplier_for_100": 0.48505794168694055
+        },
+        "dspark_p000": {
+          "rounds": 88,
+          "accepted_tokens": 168,
+          "emitted_tokens": 256,
+          "emitted_per_round": 2.909090909090909,
+          "choices": {
+            "dflash": 0,
+            "dspark": 88,
+            "tie": 0,
+            "none": 0
+          },
+          "same_round_cost_tok_s": 46.30098534284433,
+          "max_round_ms_for_100_tok_s": 29.09090909090909,
+          "max_cost_multiplier_for_100": 0.46300985342844325
+        },
+        "ensemble_dflash_p015": {
+          "rounds": 75,
+          "accepted_tokens": 181,
+          "emitted_tokens": 256,
+          "emitted_per_round": 3.4133333333333336,
+          "choices": {
+            "dflash": 14,
+            "dspark": 12,
+            "tie": 31,
+            "none": 18
+          },
+          "same_round_cost_tok_s": 54.326489468937346,
+          "max_round_ms_for_100_tok_s": 34.13333333333333,
+          "max_cost_multiplier_for_100": 0.5432648946893734
+        },
+        "ensemble_dflash_p000": {
+          "rounds": 75,
+          "accepted_tokens": 181,
+          "emitted_tokens": 256,
+          "emitted_per_round": 3.4133333333333336,
+          "choices": {
+            "dflash": 14,
+            "dspark": 12,
+            "tie": 31,
+            "none": 18
+          },
+          "same_round_cost_tok_s": 54.326489468937346,
+          "max_round_ms_for_100_tok_s": 34.13333333333333,
+          "max_cost_multiplier_for_100": 0.5432648946893734
+        }
+      }
+    },
+    {
+      "label": "code",
+      "target_tokens": 256,
+      "target_sha256_16": "e1b7095430b68618",
+      "proposal_records": {
+        "dflash": 254,
+        "dspark": 254
+      },
+      "baseline_round_ms": 61.61,
+      "strategies": {
+        "dflash_p015": {
+          "rounds": 59,
+          "accepted_tokens": 197,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.338983050847458,
+          "choices": {
+            "dflash": 59,
+            "dspark": 0,
+            "tie": 0,
+            "none": 0
+          },
+          "same_round_cost_tok_s": 70.42660364952862,
+          "max_round_ms_for_100_tok_s": 43.389830508474574,
+          "max_cost_multiplier_for_100": 0.7042660364952861
+        },
+        "dflash_p000": {
+          "rounds": 59,
+          "accepted_tokens": 197,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.338983050847458,
+          "choices": {
+            "dflash": 59,
+            "dspark": 0,
+            "tie": 0,
+            "none": 0
+          },
+          "same_round_cost_tok_s": 70.42660364952862,
+          "max_round_ms_for_100_tok_s": 43.389830508474574,
+          "max_cost_multiplier_for_100": 0.7042660364952861
+        },
+        "dspark_p000": {
+          "rounds": 53,
+          "accepted_tokens": 203,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.830188679245283,
+          "choices": {
+            "dflash": 0,
+            "dspark": 53,
+            "tie": 0,
+            "none": 0
+          },
+          "same_round_cost_tok_s": 78.39942670419222,
+          "max_round_ms_for_100_tok_s": 48.301886792452834,
+          "max_cost_multiplier_for_100": 0.7839942670419223
+        },
+        "ensemble_dflash_p015": {
+          "rounds": 52,
+          "accepted_tokens": 204,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.923076923076923,
+          "choices": {
+            "dflash": 8,
+            "dspark": 11,
+            "tie": 22,
+            "none": 11
+          },
+          "same_round_cost_tok_s": 79.90710798696516,
+          "max_round_ms_for_100_tok_s": 49.23076923076923,
+          "max_cost_multiplier_for_100": 0.7990710798696515
+        },
+        "ensemble_dflash_p000": {
+          "rounds": 52,
+          "accepted_tokens": 204,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.923076923076923,
+          "choices": {
+            "dflash": 8,
+            "dspark": 11,
+            "tie": 22,
+            "none": 11
+          },
+          "same_round_cost_tok_s": 79.90710798696516,
+          "max_round_ms_for_100_tok_s": 49.23076923076923,
+          "max_cost_multiplier_for_100": 0.7990710798696515
+        }
+      }
+    },
+    {
+      "label": "json",
+      "target_tokens": 256,
+      "target_sha256_16": "f139364ae7c57c6f",
+      "proposal_records": {
+        "dflash": 254,
+        "dspark": 254
+      },
+      "baseline_round_ms": 61.69,
+      "strategies": {
+        "dflash_p015": {
+          "rounds": 49,
+          "accepted_tokens": 207,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.224489795918367,
+          "choices": {
+            "dflash": 49,
+            "dspark": 0,
+            "tie": 0,
+            "none": 0
+          },
+          "same_round_cost_tok_s": 84.68941150783543,
+          "max_round_ms_for_100_tok_s": 52.244897959183675,
+          "max_cost_multiplier_for_100": 0.8468941150783543
+        },
+        "dflash_p000": {
+          "rounds": 49,
+          "accepted_tokens": 207,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.224489795918367,
+          "choices": {
+            "dflash": 49,
+            "dspark": 0,
+            "tie": 0,
+            "none": 0
+          },
+          "same_round_cost_tok_s": 84.68941150783543,
+          "max_round_ms_for_100_tok_s": 52.244897959183675,
+          "max_cost_multiplier_for_100": 0.8468941150783543
+        },
+        "dspark_p000": {
+          "rounds": 52,
+          "accepted_tokens": 204,
+          "emitted_tokens": 256,
+          "emitted_per_round": 4.923076923076923,
+          "choices": {
+            "dflash": 0,
+            "dspark": 52,
+            "tie": 0,
+            "none": 0
+          },
+          "same_round_cost_tok_s": 79.80348392084491,
+          "max_round_ms_for_100_tok_s": 49.23076923076923,
+          "max_cost_multiplier_for_100": 0.7980348392084493
+        },
+        "ensemble_dflash_p015": {
+          "rounds": 48,
+          "accepted_tokens": 208,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.333333333333333,
+          "choices": {
+            "dflash": 10,
+            "dspark": 3,
+            "tie": 21,
+            "none": 14
+          },
+          "same_round_cost_tok_s": 86.453774247582,
+          "max_round_ms_for_100_tok_s": 53.333333333333336,
+          "max_cost_multiplier_for_100": 0.86453774247582
+        },
+        "ensemble_dflash_p000": {
+          "rounds": 48,
+          "accepted_tokens": 208,
+          "emitted_tokens": 256,
+          "emitted_per_round": 5.333333333333333,
+          "choices": {
+            "dflash": 10,
+            "dspark": 3,
+            "tie": 21,
+            "none": 14
+          },
+          "same_round_cost_tok_s": 86.453774247582,
+          "max_round_ms_for_100_tok_s": 53.333333333333336,
+          "max_cost_multiplier_for_100": 0.86453774247582
+        }
+      }
+    }
+  ],
+  "summary": {
+    "dflash_p015": {
+      "mean_same_round_cost_tok_s": 67.87393644201937,
+      "per_class_same_round_cost_tok_s": {
+        "prose": 48.50579416869405,
+        "code": 70.42660364952862,
+        "json": 84.68941150783543
+      },
+      "per_class_max_cost_multiplier_for_100": {
+        "prose": 0.48505794168694055,
+        "code": 0.7042660364952861,
+        "json": 0.8468941150783543
+      }
+    },
+    "dflash_p000": {
+      "mean_same_round_cost_tok_s": 67.87393644201937,
+      "per_class_same_round_cost_tok_s": {
+        "prose": 48.50579416869405,
+        "code": 70.42660364952862,
+        "json": 84.68941150783543
+      },
+      "per_class_max_cost_multiplier_for_100": {
+        "prose": 0.48505794168694055,
+        "code": 0.7042660364952861,
+        "json": 0.8468941150783543
+      }
+    },
+    "dspark_p000": {
+      "mean_same_round_cost_tok_s": 68.16796532262715,
+      "per_class_same_round_cost_tok_s": {
+        "prose": 46.30098534284433,
+        "code": 78.39942670419222,
+        "json": 79.80348392084491
+      },
+      "per_class_max_cost_multiplier_for_100": {
+        "prose": 0.46300985342844325,
+        "code": 0.7839942670419223,
+        "json": 0.7980348392084493
+      }
+    },
+    "ensemble_dflash_p015": {
+      "mean_same_round_cost_tok_s": 73.56245723449483,
+      "per_class_same_round_cost_tok_s": {
+        "prose": 54.326489468937346,
+        "code": 79.90710798696516,
+        "json": 86.453774247582
+      },
+      "per_class_max_cost_multiplier_for_100": {
+        "prose": 0.5432648946893734,
+        "code": 0.7990710798696515,
+        "json": 0.86453774247582
+      }
+    },
+    "ensemble_dflash_p000": {
+      "mean_same_round_cost_tok_s": 73.56245723449483,
+      "per_class_same_round_cost_tok_s": {
+        "prose": 54.326489468937346,
+        "code": 79.90710798696516,
+        "json": 86.453774247582
+      },
+      "per_class_max_cost_multiplier_for_100": {
+        "prose": 0.5432648946893734,
+        "code": 0.7990710798696515,
+        "json": 0.86453774247582
+      }
+    }
+  }
+}
