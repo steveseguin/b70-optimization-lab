@@ -299,3 +299,21 @@ GPU characterization and source-analysis collection. VTune and its temporary
 kernel modules were removed immediately and the recoverable APT archive was
 cleaned. Production remained healthy. The campaign therefore advances an
 in-process, default-off SYCL profiling-event timeline instead.
+
+## Update: oneDNN Graph MLP audit
+
+The installed oneDNN 3.11.2 Graph backend is not a higher-upside exact MLP
+route. Its floating gated-MLP pattern forbids Muse's BF16-weight/F32-activation
+and F32-output mix, and its GPU reference implementation still executes three
+internal matmul primitives serially. RMSNorm has only a single-op matcher.
+
+The model topology is a stronger blocker: gate and up are TP-partial
+projections and both outputs are allreduced before the nonlinear and down
+projection consumers. There is therefore no full per-device MLP island to
+compile without changing TP semantics. The smallest exact legal local island
+is the shared F32-to-BF16 conversion plus strided batch-2 gate/up GEMM already
+screened at only `+0.34%`. A larger Graph wrapper would retain the projection
+submissions and at most remove a small elementwise fraction, projecting roughly
+`69-70 tok/s`; opaque constant layouts could also duplicate up to roughly
+`6.9 GB/card` of weights and change accumulation. Close this lane on oneDNN
+3.11.2.
