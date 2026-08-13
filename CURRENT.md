@@ -91,6 +91,14 @@ direct DFlash time from `8.04` to `7.77 ms/round` (about `0.27 ms`). Retain it
 default-off as `GGML_SYCL_TOP_K_TREE_MERGE=1`. Roughly `1.51 ms/round` of the
 top15-versus-greedy delta remains; the next kernel screen is a guarded
 256-lane k=15 scan to reduce per-lane insertion work.
+That wider scan is now retained at source commit `aa64538b2` under
+`GGML_SYCL_TOP_K_BLOCK_SIZE=256`. It adds approximately **`+0.554%`** over
+pooled 128-lane controls and saves about **`0.33 ms/round`** (`7.77 / 7.46 /
+7.81 ms` direct draft timing), with canonical hashes and matching acceptance.
+Combined with the merge tree, about `0.60 ms` of the original `1.805 ms`
+top15 cost is recovered. Roughly `1.2 ms/round` remains inside the top15 tail,
+and the zero-bookkeeping tree arithmetic still needs roughly `2.6 ms/round`
+total savings to average 100.
 
 A prior exact, full-rank DDTree prefix trace closes wide tree verification as
 a century route on this stack.  Budget 128 improves the impossible

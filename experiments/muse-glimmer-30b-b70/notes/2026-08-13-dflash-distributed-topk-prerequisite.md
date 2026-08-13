@@ -167,3 +167,43 @@ approximately `1.51 ms/round`, mostly in the per-lane vocabulary scan and
 insertion plus the selected-value/collective/softmax tail. The next smallest
 kernel screen is a guarded 256-lane k=15 variant to halve each lane's scan;
 adjudicate SLM occupancy and full C/A/C timing before promotion.
+
+## Wider k=15 scan
+
+Source commit `aa64538b2` adds a default-off 256-lane specialization under
+`GGML_SYCL_TOP_K_BLOCK_SIZE=256`; it is admitted only with tree merge enabled
+and `k <= 16`. The 128-lane path remains the fallback. At k=15 the variant
+uses 30 KiB SLM, doubles scan parallelism, and halves each lane's vocabulary
+span.
+
+The canonical 128/256/128 C/A/C kept canonical hashes and identical accepted
+counts:
+
+| arm | prose | code | JSON | mean tok/s |
+| --- | ---: | ---: | ---: | ---: |
+| block 128 before | `54.697` | `78.996` | `96.325` | `76.673` |
+| block 256 | `54.896` | `79.509` | `96.801` | **`77.069`** |
+| block 128 after | `54.580` | `79.117` | `96.141` | `76.613` |
+
+Against pooled controls the gain is approximately **`0.554%`**. The direct
+128-round DFlash profiles are `7.77 / 7.46 / 7.81 ms`, a pooled saving of
+approximately **`0.33 ms/round`**. Retain it alongside the merge tree.
+
+Evidence:
+
+- source commit: `aa64538b2`;
+- identity: `sweeps/20260813-dflash-topk-block256-smoke-cac.json`;
+- JSONL SHA256: `676459811ac65f7e07a7706724098ff67d363b7a39922e0f83d1dc2d4ce00de5`;
+- block128-before/block256/block128-after log SHA256:
+  `f7c50088ac9e96fa23976e953840a11e5bee84e071ffb7b5e06dc00c583285d4`,
+  `978a804772d5684375ea372500b90f9b7e4c81b2278b5ba6180fe52c01fbc97d`,
+  and `3a169f6c54783eba05a249b0e478c8cfdc058e50d3cb45a9af7ad958ff7ec9c1`;
+- production health:
+  `data/muse-health-20260813-dflash-topk-block256-full-restore.json`.
+
+Together the tree merge and wider scan recover approximately `0.60 ms` of the
+original `1.805 ms` top15 cost. About `1.2 ms/round` remains between optimized
+top15 and greedy, while the zero-bookkeeping DDTree route still needs roughly
+`2.6 ms/round` total savings to average 100. The next work should isolate the
+remaining local insertion versus selected-value/collective/softmax tail before
+another kernel rewrite.
