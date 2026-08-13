@@ -1,0 +1,66 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index bafffaaeb..8c12e80a3 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -4236,10 +4236,16 @@ enum class mul_mat_algo {
+     MUL_MAT_SYCL = 2,
+ };
+ 
++inline bool ggml_sycl_q8_0_mmq_width16_enabled() {
++    static const int enabled = ggml_sycl_get_env("GGML_SYCL_Q8_0_MMQ_WIDTH16", 0);
++    return enabled != 0;
++}
++
+ inline bool ggml_sycl_supports_mmq(enum ggml_type type) {
+-    // TODO: accuracy issues in MMQ
+-    GGML_UNUSED(type);
+-    return false;
++    // The generic SYCL MMQ path is disabled by default because several
++    // quantization formats have known accuracy issues.  Keep that default,
++    // but allow a tightly scoped Q8_0 width-16 experiment below.
++    return ggml_sycl_q8_0_mmq_width16_enabled() && type == GGML_TYPE_Q8_0;
+ }
+ 
+ inline bool ggml_sycl_supports_reorder_mul_mat_sycl(enum ggml_type type) {
+@@ -4881,6 +4887,10 @@ static bool reorder_qw(const ggml_tensor * src0, dpct::queue_ptr stream) {
+ static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_tensor * dst) {
+     return g_ggml_sycl_enable_optimize && //allow optimize, controlled by $GGML_SYCL_ENABLE_OPT
+            ctx.opt_feature.reorder &&      //allow this device due to good perf, skip the devices with bad perf.
++           // Width-16 MMQ consumes ordinary AoS Q8_0 blocks.  Do not lazily
++           // rewrite those weights to the incompatible reordered layout at
++           // an earlier single-token or small-batch invocation.
++           !(ggml_sycl_q8_0_mmq_width16_enabled() && dst->src[0]->type == GGML_TYPE_Q8_0) &&
+            dst->op == GGML_OP_MUL_MAT &&   //limit to some supported cases of Q4_0, to do for more cases.
+            // ne[1] <= 8 so multi-column decode (spec / MTP verify) also bootstraps the reorder;
+            // all reorderable types have a _switch_ncols kernel.
+@@ -5549,6 +5559,18 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
+     bool use_mul_mat_q =  ggml_sycl_supports_mmq(src0->type)
+         && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32;
+ 
++    // Do not alter single-token decode or prompt paths while screening the
++    // dormant Q8_0 MMQ implementation.  Muse/DFlash verification uses 16
++    // target rows, which is the only shape admitted by this experiment.
++    use_mul_mat_q = use_mul_mat_q && !split &&
++                    src1->ne[1] == 16 && src1->ne[2] == 1 && src1->ne[3] == 1;
++
++    // A tensor can already be reordered if the experimental flag is toggled
++    // after backend initialization.  Never feed that layout to the ordinary
++    // Q8_0 MMQ reader.
++    const ggml_tensor_extra_gpu * src0_extra = static_cast<const ggml_tensor_extra_gpu *>(src0->extra);
++    use_mul_mat_q = use_mul_mat_q && (!src0_extra || !src0_extra->optimized_feature.reorder);
++
+ 
+     // mmvq and mmq need the __dp4a instruction which is available for gen12+
+     // Workaround in https://github.com/ggml-org/llama.cpp/commit/95f84d5ce8b449a9b16009434aca800df504a02e
+@@ -5604,6 +5626,11 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
+             ggml_sycl_op_mul_mat<quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_vec_q);
+         }
+     } else if (use_mul_mat_q) {
++        static std::atomic<bool> first_q8_0_width16_mmq { false };
++        if (!first_q8_0_width16_mmq.exchange(true)) {
++            GGML_LOG_INFO("SYCL Q8_0 width-16 MMQ first hit: %s [%" PRId64 ", %" PRId64 "] x [%" PRId64 ", %" PRId64 "]\n",
++                          src0->name, src0->ne[0], src0->ne[1], src1->ne[0], src1->ne[1]);
++        }
+         ggml_sycl_op_mul_mat<quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_q);
+     } else {
+         ggml_sycl_op_mul_mat<no_quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_sycl);
