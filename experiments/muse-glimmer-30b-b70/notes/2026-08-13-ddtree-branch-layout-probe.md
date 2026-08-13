@@ -32,14 +32,15 @@ At the last periodic report (160 eligible rounds):
 The directly measured total is therefore about +0.628 ms/round before the
 remaining production tree-walk/output bookkeeping is implemented. Naively
 applying that uniform cost to the prior zero-bookkeeping projection gives an
-optimistic 98.728 tok/s mean, but that calculation is not an honest integrated
-projection: it incorrectly amortizes all committed-row DFlash feature
-encode/injection work by the lower verifier-round count even though much of
-that work scales with emitted tokens. Existing profile timings put the
-resulting correction at roughly another 0.58--0.90 ms per tree round depending
-on class, lowering the current modeled mean to approximately 97.2--97.5 tok/s
-before the missing integration tail. The credible remaining exact-saving
-requirement is therefore at least about 1.3 ms/round, not 0.657 ms.
+optimistic 98.728 tok/s mean. A subsequent synchronized committed-row profile
+fit the complete feature encode plus draft-KV injection to approximately
+`1.683 + 0.125 * rows` ms per call. Correcting only the row-dependent part
+adds about 0.104/0.124/0.109 ms per budget-15 tree round for prose/code/JSON.
+That lowers the current pre-integration projection to approximately
+74.585/102.078/118.877 tok/s, arithmetic mean 98.513 tok/s. It requires about
+0.770 ms/round of further exact saving before the still-missing integration
+tail. The fit is based on 128 reported calls rather than a final 192-call
+packet, so keep this as an evidence-backed projection rather than a result.
 
 ## Correctness
 
@@ -73,6 +74,6 @@ ordinary pass, not the shadow branches.
 
 Keep the diagnostic default-off. Do not implement or promote the production
 tree path yet. First reduce the measured metadata/kernel cost by at least
-about 1.3 ms/round with exact, independently benchmarked changes. The first
+about 0.8 ms/round with exact, independently benchmarked changes. The first
 bounded targets are a bulk unified-KV fork/remove scan and the compact k=15
 top-k private-state specialization.

@@ -161,12 +161,14 @@ plus `0.009 ms` tree construction, `0.213 ms` prefix forks, and `0.172 ms`
 temporary-sequence cleanup. It checked 1,139 target decisions with zero
 mismatches on the ordinary top-1 prefix and preserved all canonical ordinary
 outputs, but it did not independently validate alternate branches. The
-measured total +`0.628 ms/round` gives an optimistic naive mean of `98.728`,
-and a subsequent accounting audit found that this still over-amortizes the
-per-emitted-token DFlash feature encoder. Correcting that component lowers the
-credible modeled mean to approximately **`97.2--97.5 tok/s`** before remaining
-integration overhead; at least roughly `1.3 ms/round` of exact savings is still
-required. Do not implement/promote DDTree or claim >100 yet; first attack the
+measured total +`0.628 ms/round` gives an optimistic naive mean of `98.728`.
+A synchronized committed-row profile subsequently fit complete DFlash feature
+encode plus draft-KV injection to approximately
+`1.683 + 0.125 * committed_rows` ms/call. Correcting the row-dependent term
+lowers the credible pre-integration projection to **`98.513 tok/s`** and raises
+the remaining exact-saving requirement to approximately `0.770 ms/round`,
+before unimplemented integration overhead. Do not promote DDTree or claim
+>100 yet; first attack the
 repeated unified-KV scans and remaining top-k/kernel runtime. Evidence:
 `experiments/muse-glimmer-30b-b70/notes/2026-08-13-ddtree-branch-layout-probe.md`.
 Both immediate follow-ups are now closed. Compact k=15 private heap state was
