@@ -288,4 +288,3 @@ optimizations, and arithmetic rewrites before they consume a campaign.
 - [running INT4 kernel loop](2026-07-28-kernel-loop-ledger.md)
 - [retracted row-count claim and corrected measurement](2026-07-28-moe-runs-one-row-at-a-time.md)
 - [standalone reproduction](../../../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md)
-
