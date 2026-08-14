@@ -38,12 +38,31 @@ not BF16/lossless or universally token-exact. LocalMaxxing approved the
 conventional interval median as `cmss8515c00n0ms01n3begqgg`. Raw evidence is
 mirrored into the repro, so review does not depend on `/mnt` paths.
 
+## Qwen3.6 Family Recipes
+
+Use the [Qwen3.6 family research map](qwen36-research-map.md) as the canonical
+navigation layer. The detailed historical sections below remain available for
+audit, but they do not define one comparable benchmark class.
+
+| Identity | Reproduction or result entry |
+| --- | --- |
+| 27B Q8_0 target-only, two-B70 TP2 | [handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md), [repro](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md), [patch](../patches/qwen36-27b-q8-tp2-asrock-b70/README.md) |
+| 27B Q8_0 one-B70 baseline/service research | [experiment packet](../experiments/qwen36-27b-q8-gguf-b70/README.md) |
+| 27B AutoRound INT4 target-verified MTP | [handoff](../results/qwen36-27b-autoround-int4-b70/HANDOFF.md), [repro](../repro/qwen36-27b-autoround-int4-b70/README.md) |
+| 27B Q4_0 DFlash | [closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
+| 27B intrinsic-MTP Q4 | [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
+| 35B Quark W8A8 INT8 | [result packet](../results/qwen36-35b-quark-int8-b70/README.md) |
+
+The current Q8 TP2 record remains `35.699225 tok/s` conventional with 12/12
+cold exact outputs and cache zero. Its 2026-08-14 post-record pass promoted no
+replacement; use its handoff rather than interpreting individual experiment
+notes as active configuration.
+
 ## Historical Production Recipes
 
-As of the 2026-08-08 Laguna closeout, no model endpoint is known to be running;
-`CURRENT.md` is the operational authority and requires a fresh check. The most
-recent temporary LAN endpoint recipe was the Gemma 4 26B Q8 coding-agent
-service:
+This section is historical. `CURRENT.md` is the operational authority and
+requires a fresh process/listener check. The temporary LAN endpoint recipe
+described here was the Gemma 4 26B Q8 coding-agent service:
 
 - model: `gemma4-26b-a4b-q8`
 - local target model:

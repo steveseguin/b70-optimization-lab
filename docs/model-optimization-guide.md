@@ -55,7 +55,7 @@ Expected policy:
 
 - active workspace: `/home/steve/llm-optimizations`;
 - branch: `main`;
-- no stale side worktree for new experiments;
+- no secondary worktree or non-`main` branch;
 - stage explicit files only, not broad `git add -A`;
 - commit focused work regularly;
 - push once useful state is captured.

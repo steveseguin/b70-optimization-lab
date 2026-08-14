@@ -1,5 +1,9 @@
 # Qwen3.6 27B Q8 target-only TP2 on two ASRock B70s
 
+Current resume state: [HANDOFF.md](HANDOFF.md). The 2026-08-14 post-record
+pass tested additional bounded hypotheses but promoted no replacement; the
+measurement and recipe below remain authoritative.
+
 ## Outcome
 
 The 2026-08-13 target-only optimization campaign reached **35.699225 tok/s**
@@ -166,6 +170,13 @@ These doors were tested and rejected rather than left enabled:
 The rejected local logs remain under
 `/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260813-tp2-fusion` on the
 reference host so the dead ends are not rediscovered.
+
+The later pass-1 campaign broadened that audit across collective topology,
+Level Zero/runtime knobs, Q8 scheduling, recurrent/GDN fusions,
+FlashAttention, CPU submission, and power/clock hypotheses. It produced no
+promoted gain. Preserve its full chronology in
+[`notes/2026-08-14-qwen36-q8-tp2-40tps-pass1.md`](../../notes/2026-08-14-qwen36-q8-tp2-40tps-pass1.md)
+and use the [handoff](HANDOFF.md) for the current decision summary.
 
 ## Reproduction and evidence
 

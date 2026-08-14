@@ -41,7 +41,7 @@ at your own risk.
 
 ## How The Repo Is Organized
 
-The repo is organized around model lanes, not branches or one-off leaderboard
+The repo is organized around model lanes, not one-off leaderboard
 rows. A serious lane should leave behind:
 
 - `results/<model>-<quant>-<hardware>/`: promoted or closed-out result packet,
@@ -63,7 +63,7 @@ rows. A serious lane should leave behind:
 
 The point is to make model switching cheap. Gemma, Qwen, MiniMax, and future
 lanes should all share validation discipline, result-packet shape, and reusable
-kernel/runtime lessons without dragging stale worktrees or huge artifacts
+kernel/runtime lessons without dragging stale generated builds or huge artifacts
 forward.
 
 ## Representative Promoted Results
@@ -76,11 +76,11 @@ These are entry points, not the whole repo:
 
 | Lane | Status | Best Current Pointer |
 | --- | --- | --- |
-| **Muse-Glimmer-30B UD-Q8_K_XL on 4x B70** | Closed/banked no-training Q8/WOQ record: fixed-N16 oneDNN WOQ plus pretrained BF16 DFlash and distributed ARGMAX. Two canonical full-256 means **`100.088`** and **`100.649 tok/s`**; frozen 15-prompt cold conventional first-100 median **`161.900 tok/s`**, p10 `108.574`, all cache-zero. Target-verified, not BF16/lossless or universally token-exact; no LocalMaxxing receipt | [result packet](results/muse-glimmer-30b-q8-woq-b70/README.md), [standalone repro](repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md), [source snapshots](patches/muse-glimmer-30b-b70/README.md) |
+| **Muse-Glimmer-30B UD-Q8_K_XL on 4x B70** | Closed/banked no-training Q8/WOQ record: fixed-N16 oneDNN WOQ plus pretrained BF16 DFlash and distributed ARGMAX. Two canonical full-256 means **`100.088`** and **`100.649 tok/s`**; frozen 15-prompt cold conventional first-100 median **`161.900 tok/s`**, p10 `108.574`, all cache-zero. Target-verified, not BF16/lossless or universally token-exact; LocalMaxxing `cmss8515c00n0ms01n3begqgg` | [result packet](results/muse-glimmer-30b-q8-woq-b70/README.md), [standalone repro](repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md), [source snapshots](patches/muse-glimmer-30b-b70/README.md) |
 | **Poolside Laguna S 2.1 INT4 on 4x B70** | Exact target-verified DFlash depth 11 on the audited width-12 Breakable PIECEWISE graph, with segmented inline draft attention and a decode-only 128-GRF INT4 kernel: **`121.290561 tok/s`** conventional and **`122.515718 tok/s`** historical compatibility. Two independent cold suites passed 13/13 exact with all `cached_tokens=0`; LocalMaxxing `cms905x22003spm01pwyvp3c9` | [qualified result](results/laguna-s-2.1-int4-b70/README.md), [record evidence](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-decode-grf128-confirmed-record.md), [source snapshots](patches/laguna-s-2.1-xpu-b70/README.md), [older standalone repro](repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md) |
 | DeepSeek V4 Flash experimental uniform-K160 on 4x B70 | Paused/closed frontier; target-verified DSpark7 record **`80.820 tok/s`** high and `78.287 tok/s` three-suite median-of-medians; exact source bundles and fail-closed launcher preserved; LocalMaxxing `cmrquta9905w3lg013m5vxoqx` | [result packet](results/deepseek-v4-flash-k160-b70/README.md), [standalone repro](repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md), [closeout](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md) |
 | Qwen3.6 27B INT4 AutoRound on 1-2x B70 | Closed reference lane; strict fresh-response TP2 record **`95.385 tok/s`**; pinned public oneCCL, captured MTP draft, graph-safe FlashAttention full target graph, and exact ReplaySSM pending/direct-output transaction fusions; exact cases, repeat128, baseline parity, 1K needle, unique cold prompts, and `cached_tokens=0` all passed; both swapped four-GPU crossover assignments favored the candidate; LocalMaxxing `cmrh35ct50092mj01h7jgydqj`; current service ladder passes exact cold retrieval through `17706` actual prompt tokens at `MAX_MODEL_LEN=32768`, but the forced chunk-decode record path is short-context-only | [current record packet](results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json), [handoff](results/qwen36-27b-autoround-int4-b70/HANDOFF.md), [record note](experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-fullgraph-transaction-record.md), [service ladder](experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md), [general repro](repro/qwen36-27b-autoround-int4-b70/README.md) |
-| Qwen3.6 27B GGUF Q8_0 target-only on 2x ASRock B70 | Active bounded service and current no-speculation TP2 record: **`35.699225 tok/s` conventional** (`36.059823` historical helper), full-512 after-TTFT `35.715918`; 12/12 512-token outputs exact, all cache counts zero, poison red-controls passed; `+15.065%` over the matched mndodd fork baseline | [result packet](results/qwen36-27b-q8-tp2-asrock-b70/README.md), [standalone repro](repro/qwen36-27b-q8-tp2-asrock-b70/README.md), [source patch](patches/qwen36-27b-q8-tp2-asrock-b70/README.md), [mndodd contributor packet](community/mndodd-qwen36-27b-llamacpp-sycl/README.md) |
+| Qwen3.6 27B GGUF Q8_0 target-only on 2x ASRock B70 | Closed/banked current no-speculation TP2 record: **`35.699225 tok/s` conventional** (`36.059823` historical helper), full-512 after-TTFT `35.715918`; 12/12 512-token outputs exact, all cache counts zero, poison red-controls passed; `+15.065%` over the matched mndodd fork baseline; the post-record pass promoted no replacement | [handoff](results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md), [result packet](results/qwen36-27b-q8-tp2-asrock-b70/README.md), [standalone repro](repro/qwen36-27b-q8-tp2-asrock-b70/README.md), [source patch](patches/qwen36-27b-q8-tp2-asrock-b70/README.md), [mndodd contributor packet](community/mndodd-qwen36-27b-llamacpp-sycl/README.md) |
 | Gemma 4 26B A4B Q8 / INT8 on 1x B70 | Production-servable backend plus current strict fresh-response speed frontier; noisy near-record support band | [handoff](results/gemma4-26b-a4b-q8-b70/HANDOFF.md), [production service](results/gemma4-26b-a4b-q8-b70/production-service.md), [125 tok/s repro](repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md) |
 | Gemma 4 26B long-context/prompt-processing service lane | Separate from short-decode record; approved LocalMaxxing service entry `cmr47ivql0045nv011pfdjlaa`; service gates must not regress short decode | [Gemma result packet](results/gemma4-26b-a4b-q8-b70/README.md), [service gate script](repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh) |
 | Rapid one-B70 model snapshots | Quick strict/fresh decode baselines across practical GGUF/vLLM candidates; current promoted rows include Qwen3 30B-A3B `107.484 tok/s`, Qwen3-Coder 30B-A3B `108.117 tok/s`, Phi-4 mini Q4 `96.548 tok/s`, GLM-4.7-Flash `40.769 tok/s`, and Mistral Small 3.2 24B `27.297 tok/s` | [rapid result ledger](results/rapid-model-snapshots-b70/README.md), [rapid experiment notes](experiments/rapid-model-snapshots-b70/README.md) |
@@ -118,8 +118,9 @@ accounting from the same timestamps. Relative A/B gains are unchanged.
 The official BF16 target was not downloaded in the current campaign. At
 55.586 GB of weights, two 608 GB/s B70s have a target-only one-weight-read
 roofline of about `21.9 tok/s` before collective and runtime overhead, so a
-plain lossless TP2 goal above 30 tok/s is not physically credible. Q8 target-
-only TP2 is the active optimization lane; speculative rows stay separate.
+plain lossless TP2 goal above 30 tok/s is not physically credible. The Q8
+target-only TP2 lane is closed and banked after its post-record pass;
+speculative rows stay separate.
 
 ## Validity Rules For Speed Claims
 

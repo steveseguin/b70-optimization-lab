@@ -32,7 +32,7 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Gemma 4 26B Q8 Service Runbook](gemma4-26b-q8-service-runbook.md): restore or stop the temporary llama.cpp OpenAI endpoint on one or four B70 GPUs.
 - [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): detailed one-B70 speed frontier, long-context service lane, validity notes, and LocalMaxxing context.
 - [Qwen3.6 27B INT4 AutoRound Result Packet](../results/qwen36-27b-autoround-int4-b70/README.md): TP1/TP2 vLLM/XPU results, strict fresh decode records, long-context service ladder, and closed no-win paths.
-- [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
+- [Qwen3.6 Family Research Map](qwen36-research-map.md): consolidated navigation for the 27B Q8, INT4/MTP, Q4/DFlash, FP8, and 35B Quark identities.
 - [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
 - [DeepSeek V4 Flash Investment Plan](../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md): gated four-B70 vLLM/XPU bring-up, exact-shape kernel tests, K160-first capacity selection, and quality controls.
 - [DeepSeek V4 Flash K160 Result Packet](../results/deepseek-v4-flash-k160-b70/README.md): paused-lane 80.820 tok/s target-verified record, standalone pinned repro, source bundles, validity caveats, and reopen conditions.

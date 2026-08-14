@@ -52,6 +52,14 @@ approved it as
 [`cmss8515c00n0ms01n3begqgg`](https://www.localmaxxing.com/en/runs/cmss8515c00n0ms01n3begqgg).
 Reopen only with a new objective/preregistration.
 
+### Qwen3.6 Family Navigation
+
+Use the [Qwen3.6 family research map](qwen36-research-map.md) before selecting a
+Qwen lane. It keeps the current 27B Q8 TP2 record, one-card Q8 baseline,
+AutoRound INT4/MTP records, Q4/DFlash and intrinsic-MTP work, native FP8, and
+35B Quark archive separate while providing one read order. These identities
+must not be merged into a family-level speed claim.
+
 ### Qwen3.6 27B Q8_0 Target-Only On Two ASRock B70s
 
 Main entries:
@@ -82,9 +90,10 @@ GDN workgroup packing, batched Q/K normalization with RoPE, Q8 cache hints,
 asymmetric tensor split, root-barrier
 elision, BMG-forced MMVQ phase ordering, and copy-engine replication did not
 win. TP2 graph capture aborted or hung, and the built-in TP2 profiler reset
-both compute engines; both remain prohibited. The next bounded work is the new
-Qwen 27B release compatibility probe, followed by selective transfer of the
-strict-shape optimizations if its graph remains compatible.
+both compute engines; both remain prohibited. The 2026-08-14 post-record pass
+also promoted no replacement. The lane is closed; resume from its
+[handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) only for a
+materially new checkpoint, runtime, topology, or exact kernel proof.
 
 ### Laguna S 2.1 INT4 On Four B70s
 
@@ -314,9 +323,10 @@ For evidence-linked strategies and their transfer boundaries, start with
   Qwen36 lane had multiple 75-199 tok/s "wins" that failed quality or were
   synthetic.
 - Preserve negative patches and logs. MiniMax improved because dead ends were
-  visible; Qwen36 became hard when failed branches were not summarized quickly.
-- Prefer model-specific result packets over giant branch merges. Curated
-  packets are easier to merge and reuse than mixed experiment branches.
+  visible; Qwen36 became hard when failed experiments were not summarized
+  quickly.
+- Prefer model-specific result packets over large mixed history dumps. Curated
+  packets are easier to review and reuse than monolithic experiment ledgers.
 - Keep LocalMaxxing payloads and responses in `data/`, but keep API keys outside
   Git as documented in [localmaxxing.md](localmaxxing.md).
 - For one-replica-per-GPU work, prefer four independent servers and four

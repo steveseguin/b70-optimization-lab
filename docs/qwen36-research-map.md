@@ -1,97 +1,127 @@
 # Qwen3.6 Research Map
 
-Use this page as the first stop for the Qwen3.6-35B-A3B / Arc Pro B70 research
-lane. It is a navigation map, not a benchmark claim.
+Use this page as the Qwen3.6 family front door. Qwen3.6 results in this
+repository use different model sizes, quantizations, runtimes, hardware counts,
+speculation modes, prompt suites, and accounting conventions. They are related
+research lanes, not interchangeable benchmark rows.
 
-## Current Status
+Live service and active-lane authority remains [`CURRENT.md`](../CURRENT.md).
 
-As of 2026-06-22, this lane is a reference/archive lane rather than the primary
-optimization target. The best strict-valid TP4 result is the PIECEWISE
-forced-comm graph baseline at about `93.55 tok/s`; no attempted speculative
-decode path produced a valid `>150 tok/s` result. Move new optimization effort
-to another model unless doing a controlled upstream/runtime bakeoff or a deep
-graph-compatible speculative-state engineering project.
+## Current Decision
 
-The organized result packet is:
+Qwen3.6 27B Q8 target-only TP2 pass 1 is closed and banked as of 2026-08-14.
+The accepted two-ASRock-B70 result remains **`35.699225 tok/s`** under
+conventional 99-interval accounting (`36.059823` under the historical helper),
+with 12/12 cold 512-token outputs exact and all cache counts zero. The extended
+post-record campaign promoted no replacement.
 
-- [../results/qwen36-35b-quark-int8-b70/README.md](../results/qwen36-35b-quark-int8-b70/README.md)
+Start with:
 
-It contains best valid 4x and 2x results, reproduction commands, validity
-rules, invalid fast lanes, DFlash/ReplaySSM findings, and carryover notes for
-other models.
+1. [Q8 TP2 handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md)
+2. [promoted Q8 TP2 result](../results/qwen36-27b-q8-tp2-asrock-b70/README.md)
+3. [standalone Q8 TP2 repro](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md)
+4. [Q8 TP2 source patch](../patches/qwen36-27b-q8-tp2-asrock-b70/README.md)
+5. [post-record pass-1 ledger](../notes/2026-08-14-qwen36-q8-tp2-40tps-pass1.md)
 
-## Baseline Identity
+Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
+prototype; both caused device faults/resets. The other pass-1 hypotheses were
+neutral or slower and remain default-off/reverted.
 
-Known baseline identity to keep separate from graph-none results:
+## Qwen3.6 Lane Catalog
 
-- Model: `nameistoken/Qwen3.6-35B-A3B-Quark-W8A8-INT8`.
-- Hardware: 4x Intel Arc Pro B70.
-- Mode: TP4, PIECEWISE forced-comm graph lane.
-- Reference speed: about `93.55 tok/s` when the full benchmark identity is
-  present.
+| Identity | Hardware and runtime | Verified status | Primary pointer |
+| --- | --- | --- | --- |
+| 27B GGUF Q8_0, target-only | 2x ASRock B70, llama.cpp/SYCL TP2 | Current no-speculation record: `35.699225 tok/s` conventional; 12/12 exact, cache-zero; closed after pass 1 | [handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) |
+| 27B GGUF Q8_0, target-only baseline | 1x B70, llama.cpp/SYCL | `15.550257 tok/s` 128-token median; exact 32K F16-KV retrieval baseline; service/concurrency experiments are separate evidence | [experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md) |
+| 27B AutoRound INT4, target-verified MTP | 2x B70, vLLM/XPU TP2 | Historical strict fresh-response record `95.384868 tok/s`; exact/repeat128/baseline/1K gates passed | [handoff](../results/qwen36-27b-autoround-int4-b70/HANDOFF.md) |
+| 27B AutoRound INT4, target-verified MTP | 1x B70, vLLM/XPU | Historical high `68.236263 tok/s`; later isolated confirmation was `65.4-66.7` | [result packet](../results/qwen36-27b-autoround-int4-b70/README.md) |
+| 27B GGUF Q4_0, DFlash5 | 1x B70, llama.cpp/SYCL | Closed strict record `47.818818 tok/s` historical (`47.340630` conventional); unchanged Q4 target verifies accepted tokens | [closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
+| 27B GGUF UD-Q4_K_XL, intrinsic MTP | 1x B70, llama.cpp/SYCL | Best valid p-min support row `31.480049 tok/s`; different target/quality identity | [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
+| 27B native FP8 | 2x B70, vLLM/XPU | Community validation `30.171 tok/s` on a different prompt-length benchmark; not rank-comparable to fixed-suite rows | [status](../community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md) |
+| 35B A3B Quark W8A8 INT8 | 4x B70, vLLM/XPU | Closed reference; strict PIECEWISE forced-comm baseline about `93.55 tok/s`; no valid `>150` speculative result | [result packet](../results/qwen36-35b-quark-int8-b70/README.md) |
 
-Never compare this lane to a run that is missing
-`COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE"}'` or any of the graph/GDN
-identity fields listed in [../AGENTS.md](../AGENTS.md).
+The repository [Qwen3.6 27B model board](../README.md#qwen36-27b-model-board)
+contains the full row-by-row comparison and accounting labels.
 
-## Read Order
+## Identity Rules
 
-1. [../results/qwen36-35b-quark-int8-b70/README.md](../results/qwen36-35b-quark-int8-b70/README.md)
-   for the final organized result packet.
-2. [../results/qwen36-35b-quark-int8-b70/validity-gates.md](../results/qwen36-35b-quark-int8-b70/validity-gates.md)
-   before comparing or promoting any result.
-3. [../notes/2026-06-20-master-plan.md](../notes/2026-06-20-master-plan.md)
-   for the baseline-first plan that guided the late lane.
-4. [../notes/2026-06-16-qwen36-current-handoff.md](../notes/2026-06-16-qwen36-current-handoff.md)
-   for detailed run history and the latest full-layerlet gate interpretation.
-5. [../notes/2026-06-21-qwen36-phase3-copy-skip.md](../notes/2026-06-21-qwen36-phase3-copy-skip.md)
-   before trying metadata-copy or `num_computed_tokens` shortcuts again.
-6. [../suggestions/findings/README.md](../suggestions/findings/README.md)
-   for sourced upstream/fork/runtime leads.
-7. [../notes/2026-06-20-research-plan-replayssm-and-speed.md](../notes/2026-06-20-research-plan-replayssm-and-speed.md)
-   before touching ReplaySSM, DFlash, MTP, or EAGLE verifier state.
+Before comparing Qwen rows, match at least:
 
-## Current Decisions
+- exact model repository, revision, file hash, and quantization;
+- target-only versus DFlash/MTP/other target-verified speculation;
+- llama.cpp versus vLLM/XPU and exact source/runtime commits;
+- TP/PP/concurrency and B70 count/topology;
+- graph mode and compilation configuration;
+- KV precision, context, batch/ubatch, cache/reuse policy, and sampler;
+- prompt suite, completion length, freshness, and throughput accounting.
 
-- This model should not receive more ad hoc flag/probe runs. The local flag
-  space is exhausted; future work needs a crisp upstream/runtime or
-  graph-compatible verifier hypothesis.
-- Baseline-first work is the highest-value lane: compare local kernels against
-  upstream `vllm-xpu-kernels` and targeted PRs before restarting speculative
-  decode integration.
-- The routed GEMM1 B-layout issue was a real correctness bug and is preserved
-  in [../patches/vllm-xpu-kernels-qwen36-routegemm1-blayoutfix-20260620.patch](../patches/vllm-xpu-kernels-qwen36-routegemm1-blayoutfix-20260620.patch).
-- Endpoint full-layerlet speed tests are not valid until the C++ op is actually
-  entered. PIECEWISE gate traces showed missing scratch/workspace state; the
-  graph-none mixed-workspace trace reached the rows=1 full-layerlet gate.
-- Metadata copy skipping is rejected for now. Broad skipping hung; safer
-  variants failed quality on the known-good lane.
-- GPU-side `num_computed_tokens` update is rejected for now. It did not improve
-  speed and failed the quick JSON gate.
-- ReplaySSM remains the right correctness direction for GDN speculative verify,
-  but this model's graph+spec lane remained correctness-racy. The next attempt
-  should port proven upstream logic or make rollback/commit graph-compatible,
-  not invent another slot-copy scheme.
+For the 35B Quark lane, a missing
+`COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE"}'` changes the run into the
+slow graph-none identity. Never interpret that mismatch as a regression.
 
-## Artifact Locations
+Compressed, speculative, and target-only rows may all be valid, but they must
+retain their declared identities. Do not promote a family-level “Qwen speed”
+number without those boundaries.
 
-- [../notes/README.md](../notes/README.md): how to write and find lab notes.
-- [../data/README.md](../data/README.md): what to track from run outputs.
-- [../patches/README.md](../patches/README.md): how to preserve patches and
-  outcomes.
-- [../suggestions/findings/](../suggestions/findings/): sourced idea backlog.
-- [../scripts/](../scripts/): launchers, canaries, and summarizers.
-- [../results/qwen36-35b-quark-int8-b70/](../results/qwen36-35b-quark-int8-b70/):
-  organized final result packet for this model/GPU lane.
+## Current Q8 TP2 Closeout
 
-## Next Safe Work If This Lane Is Reopened
+The post-record pass tested collective topology, queue readiness, Q8 scheduling,
+Level Zero submission, copy offload, host polling, thread/affinity controls,
+FlashAttention variants, recurrent/GDN fusions, and power/clock hypotheses.
+None cleared a matched promotion gate. The accepted source and reproduction
+remain the recovery reference.
 
-1. Run an upstream kernel-package delta bakeoff on a clean branch, with the same
-   canaries and full benchmark identity.
-2. Run a TP2 vs TP4 single-request A/B only after identity capture is explicit.
-3. Make speculative rollback/commit graph-compatible before chasing another
-   `>150 tok/s` result.
-4. For driver/runtime changes, read [local-ops.md](local-ops.md) first so sudo
-   usage and credential hygiene stay consistent.
-5. Revisit ReplaySSM or DFlash only with endpoint canaries, not synthetic-only
-   validation.
+Reopen that exact lane only for a materially new input:
+
+- a new checkpoint/quantization with its own quality baseline;
+- an upstream SYCL/oneDNN/runtime change with a bounded source-backed thesis;
+- a different interconnect/topology;
+- an exact kernel proof with enough isolated critical-path value to move the
+  end-to-end record.
+
+Do not restart it with another generic flag sweep.
+
+## Other Lane Decisions
+
+### 27B INT4 AutoRound
+
+The graph-safe FlashAttention and ReplaySSM transaction lane is a closed
+reference. Preserve the pinned oneCCL/libccl dependency and the exact target
+verification rules. Its large generated diagnostics are research artifacts,
+not required inputs for the promoted repro; see the archival manifest before
+removing or restoring them.
+
+### 27B Q4/DFlash And Intrinsic MTP
+
+The DFlash campaign closed below its `100/200 tok/s` objectives. Read the
+[closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) before reusing its
+kernel, graph, packing, or proposal work. Intrinsic-MTP and DFlash rows remain
+separate from target-only Q8 and AutoRound INT4 rows.
+
+### 35B Quark INT8
+
+This is an archive/reference lane. Future work needs a controlled upstream
+runtime/kernel bakeoff or graph-compatible speculative-state design, not ad hoc
+flags. Read the [validity gates](../results/qwen36-35b-quark-int8-b70/validity-gates.md)
+before comparing any result.
+
+## Artifact And Storage Pointers
+
+- [Qwen ignored-artifact archive manifest](../notes/2026-08-14-qwen-artifact-archive.md)
+- [Q8 TP2 promoted data](../data/qwen36-q8-tp2-asrock-b70-20260813/summary.json)
+- [Q8 one-card experiment](../experiments/qwen36-27b-q8-gguf-b70/README.md)
+- [INT4 AutoRound experiment](../experiments/qwen36-27b-autoround-int4-b70/README.md)
+- [graph-safe FlashAttention experiment](../experiments/qwen27_graphsafe_flash_attention/README.md)
+- [Q4/DFlash experiment](../experiments/qwen27-dflash-sycl-b70/README.md)
+- [35B Quark packet](../results/qwen36-35b-quark-int8-b70/README.md)
+
+Tracked notes, patches, configs, and results stay in place. Large ignored build,
+dependency, and diagnostic files may be archived externally only after their
+recorded hashes and restore path verify.
+
+## Main-Only Workflow
+
+All repository changes go directly to `main` as focused commits. Use source
+patches, external build directories, reproducible configs, and result packets
+for isolation. Never create a feature branch or secondary worktree for Qwen
+research.

@@ -15,6 +15,7 @@ token exactness remain outside the claim. LocalMaxxing approved the submitted
 conventional interval median as
 [`cmss8515c00n0ms01n3begqgg`](https://www.localmaxxing.com/en/runs/cmss8515c00n0ms01n3begqgg).
 
-The source worktree and large local artifacts may remain useful for audit, but
-the durable source of truth is now the patch/bundle/evidence in Git. Start the
-next model in a clean, separate worktree and experiment directory.
+The source tree and large local artifacts may remain useful for audit, but the
+durable source of truth is now the patch/bundle/evidence in Git. Start the next
+model through focused commits on repository `main`, with a distinct experiment
+directory and external source/build paths where needed.
