@@ -118,6 +118,11 @@ The exact reference-host selector is `level_zero:1,0`, with the runtime then
 addressing `SYCL0,SYCL1`. If enumeration differs on another machine, first map
 the two intended B70s explicitly; do not guess from branding.
 
+The device-list separator differs between the two llama.cpp front ends. The
+server uses `--device SYCL0,SYCL1`, as captured by `run-server.sh`. A direct
+`llama-bench` TP2 run must instead use `-dev SYCL0/SYCL1`; passing a comma to
+`llama-bench` creates separate one-card benchmark rows and is not a TP2 result.
+
 The endpoint is loopback-only at `http://127.0.0.1:18081` by default. Its
 contract is one slot, 8192 context, equal tensor split, F16 KV, FlashAttention
 on, graph off, cache RAM zero, context checkpoints zero, and fit off.
