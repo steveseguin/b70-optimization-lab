@@ -75,9 +75,9 @@ Main entries:
 Status: active target-only TP2 optimization as of 2026-08-14. The quality-cleared
 endpoint best uses mndodd's pinned SYCL optimization fork plus the lab's full
 exact collective, Q8 handoff, recurrent dispatch, and persistent-state-I/O
-stack. It reaches **`35.832213 tok/s`** under conventional 99-interval
-accounting or `36.194155 tok/s` under the historical helper. This is
-`+15.493%` over the matched mndodd fork baseline (`31.025377` conventional).
+stack. It reaches **`35.964046 tok/s`** under conventional 99-interval
+accounting or `36.327319 tok/s` under the historical helper. This is
+`+15.918%` over the matched mndodd fork baseline (`31.025377` conventional).
 All 12 cold completions are 512 tokens, cache-zero, and byte-exact against the
 accepted pre-state-I/O control. Direct GDN state I/O added `+3.132%`; direct
 convolution state I/O added another `+0.855%` in the final long suite, and the

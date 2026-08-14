@@ -52,8 +52,8 @@ token-exact evidence.
 Qwen3.6 27B Q8_0 target-only TP2 on two ASRock B70s is active toward a
 40 tok/s stretch goal. DFlash, MTP, prompt reuse, and other speculation remain
 outside this objective. The current clean source adds a register-direct TP2
-Q8 handoff and direct IMRoPE-to-indexed-F16-KV-cache writes to the previously
-promoted exact fusion stack.
+Q8 handoff, direct IMRoPE-to-indexed-F16-KV-cache writes, and a vectorized
+exact-F32 TP root reduction to the previously promoted exact fusion stack.
 
 All Git work is performed directly on `main`. Do not create branches or
 secondary worktrees. Use focused commits, patches, bundles, configs, and result
@@ -63,17 +63,19 @@ packets for isolation and recovery.
 
 The promoted target-only two-B70 result remains:
 
-- conventional 99-interval median: **`35.832213 tok/s`**;
-- historical helper: `36.194155 tok/s`;
-- full-512 after-TTFT median: `35.711040 tok/s`;
+- conventional 99-interval median: **`35.964046 tok/s`**;
+- historical helper: `36.327319 tok/s`;
+- full-512 after-TTFT median: `35.875582 tok/s`;
 - quality: 12/12 cold 512-token outputs exact against the accepted control;
 - cache: `cached_tokens=0` for 12/12;
 - speculation: none.
 
-The 2026-08-14 pass-2 register-direct Q8 handoff and direct IMRoPE cache-write
-stack passed a clean rebuild, one-prompt oracle, and complete 12-prompt cold
-suite. The output oracle remains unchanged; the new full patch, binaries,
-runtime doors, raw result, and summary are preserved in the linked repro.
+The 2026-08-14 pass-2 stack and vec4 TP-root reduction passed a clean rebuild,
+one-prompt oracle, same-binary control, and complete 12-prompt cold suite. The
+vec4 candidate improved the conventional median by `+0.327%` and all 12
+prompt-paired first-100 rates were positive. The output oracle remains
+unchanged; the full patch, binaries, runtime doors, raw results, and summary
+are preserved in the linked repro.
 
 Resume and evidence:
 

@@ -6,12 +6,12 @@ prompt reuse, or other speculation.
 
 ## Promoted result
 
-- Preferred conventional 99-interval median: **35.832213 tok/s**
-- Conventional p10 / mean: `35.379643` / `35.825000 tok/s`
-- Historical 100-event compatibility median: `36.194155 tok/s`
-- Full 512-token after-TTFT median: `35.711040 tok/s`
-- Full 512-token wall median: `35.256673 tok/s`
-- Median TTFT: `181.254 ms`
+- Preferred conventional 99-interval median: **35.964046 tok/s**
+- Conventional p10 / mean: `35.477834` / `35.955549 tok/s`
+- Historical 100-event compatibility median: `36.327319 tok/s`
+- Full 512-token after-TTFT median: `35.875582 tok/s`
+- Full 512-token wall median: `35.427281 tok/s`
+- Median TTFT: `179.802 ms`
 - Quality: 12/12 output hashes exact, 12/12 at 512 completion tokens,
   every `cached_tokens=0`, realistic and fresh-response gates passed.
 
@@ -132,8 +132,11 @@ at the source default `15` provides the same-binary control for that final
 increment. `GGML_SYCL_COMM_DIRECT_Q8=2` retains the TP2 RMS/multiply values in
 registers while writing their graph-visible outputs and directly produces the
 reordered Q8 handoff. `GGML_SYCL_FUSED_ROPE_SET_ROWS=1` writes attention K
-IMRoPE results directly into the indexed F16 KV cache. Both new matchers remain
-default-off outside this recipe.
+IMRoPE results directly into the indexed F16 KV cache.
+`GGML_SYCL_COMM_REDUCE_VEC4=1` preserves the exact scalar arithmetic order but
+uses aligned four-float loads/stores and one quarter as many work-items in the
+5,120-element TP root reduction. All three selectors remain default-off
+outside this recipe.
 
 ## 5. Run the fixed cold suite
 
@@ -157,5 +160,6 @@ repro/qwen36-27b-q8-tp2-asrock-b70/verify-artifacts.sh
 
 The readable result summary is
 [`data/qwen36-q8-tp2-asrock-b70-20260814/summary.json`](../../data/qwen36-q8-tp2-asrock-b70-20260814/summary.json).
-The compressed file beside it is the complete raw 12-prompt JSON, including
-timestamps, hashes, gates, and per-row telemetry.
+The compressed candidate and same-binary scalar-control files beside it are
+complete raw 12-prompt JSON, including timestamps, hashes, gates, and per-row
+telemetry.

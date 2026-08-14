@@ -6,9 +6,9 @@ write; the measurement and recipe below are authoritative.
 
 ## Outcome
 
-The target-only optimization campaign reached **35.832213 tok/s**
+The target-only optimization campaign reached **35.964046 tok/s**
 under conventional 99-inter-token-interval accounting on two ASRock Intel Arc
-Pro B70 32 GiB cards. The historical repository helper reports `36.194155`
+Pro B70 32 GiB cards. The historical repository helper reports `36.327319`
 from the same timestamps. No draft model, MTP, DFlash, n-gram reuse, prompt
 cache, response reuse, or speculative decoding was used.
 
@@ -20,12 +20,12 @@ identical to the accepted pre-state-I/O target-only control.
 
 | Metric | Result |
 | --- | ---: |
-| Conventional 99-interval median | **35.832213 tok/s** |
-| Conventional p10 / mean | `35.379643` / `35.825000 tok/s` |
-| Historical 100-event compatibility median | `36.194155 tok/s` |
-| Full 512-token after-TTFT median | `35.711040 tok/s` |
-| Full 512-token wall median | `35.256673 tok/s` |
-| Median TTFT | `181.254 ms` |
+| Conventional 99-interval median | **35.964046 tok/s** |
+| Conventional p10 / mean | `35.477834` / `35.955549 tok/s` |
+| Historical 100-event compatibility median | `36.327319 tok/s` |
+| Full 512-token after-TTFT median | `35.875582 tok/s` |
+| Full 512-token wall median | `35.427281 tok/s` |
+| Median TTFT | `179.802 ms` |
 | Fixed prompts / completion length | `12 / 512 tokens each` |
 | Cache / fresh gate | `cached_tokens=0` for 12/12; passed |
 | Exact output identity | `12/12` hashes equal the accepted control |
@@ -56,8 +56,9 @@ The lab progression from that fork was:
 | Prior promoted full-recipe confirmation | `35.494434` | `+0.465%` run variance vs prior final |
 | Recurrent RMS/gate/multiply/Q8 tail fusion | `35.699225` | `+0.219%` pooled matched micro A/B; headline delta also includes run variance |
 | Register-direct Q8 handoff + IMRoPE direct cache write, clean rebuild | **`35.832213`** | IMRoPE `+0.155%` aggregate same-binary endpoint A/B; final headline includes run variance |
+| Vectorized exact-F32 TP root reduction, clean rebuild | **`35.964046`** | `+0.327%` aggregate same-binary endpoint A/B; 12/12 prompt-paired first-100 rates positive |
 
-The promoted result is **`+15.493%`** over the matched mndodd fork baseline.
+The promoted result is **`+15.918%`** over the matched mndodd fork baseline.
 The direct-state-I/O attribution percentages use the preceding matched
 512-token run, which was `+13.876%` over mndodd; the faster replay is reported
 as run variance, not credited as another source optimization. Relative gains
@@ -82,7 +83,7 @@ are unchanged by multiplying all helper rates by `0.99`.
   F16 and Level Zero API on; graph, DNN, and host-memory fallback off.
 
 The complete decoded source patch SHA-256 is
-`c917fcbf01b5af3ed45bb19532cfa0f337066b1330ffde6765564918e7a8d772`.
+`576e2b218db70de5496fab2c8a611d9a96c3784cbcdfc180c2617d14a1221d12`.
 
 ## What improved
 
@@ -115,6 +116,12 @@ two pass-2 transformations:
    indexed F16 KV-cache destination for the exact
    `ROPE -> VIEW -> SET_ROWS` closure, eliminating 32 RoPE and 32 SET_ROWS
    launches per generated token.
+6. The TP root reduction processes four aligned FP32 elements per work-item
+   with `sycl::vec<float, 4>`, preserving the accepted per-element addition
+   order while reducing the 5,120-element grid and memory transactions by
+   four. Its same-binary endpoint control was `35.846855 tok/s`; the candidate
+   was `35.964046 tok/s` (`+0.327%` aggregate, `+0.462%` prompt-paired mean),
+   with all 12 prompts positive and byte-exact.
 
 Both matchers require exact tensor types, shapes, strides, consumer counts,
 pointer relationships, and non-overlap. Any alternate batch, state, or graph
@@ -194,12 +201,15 @@ and use the [handoff](HANDOFF.md) for the current decision summary.
 - [Reproduction recipe](../../repro/qwen36-27b-q8-tp2-asrock-b70/README.md)
 - [Full source patch](../../patches/qwen36-27b-q8-tp2-asrock-b70/README.md)
 - [Readable structured summary](../../data/qwen36-q8-tp2-asrock-b70-20260814/summary.json)
-- [Compressed complete raw result](../../data/qwen36-q8-tp2-asrock-b70-20260814/directq8-imrope-clean-full-realistic512.json.gz.b64)
+- [Compressed complete raw result](../../data/qwen36-q8-tp2-asrock-b70-20260814/reduce-vec4-clean-full-realistic512.json.gz.b64)
+- [Compressed same-binary scalar control](../../data/qwen36-q8-tp2-asrock-b70-20260814/reduce-vec4-clean-control-full-realistic512.json.gz.b64)
 - Fixed suite:
   [`realistic-suite-v1.json`](../../repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json)
 
 The reference host's bounded service unit is `qwen36-q8-b70.service`, listening
 only on `127.0.0.1:18080` when activated; it was inactive during this research
 pass. The clean publication run used the same bounded launcher on port 18082
-and produced the promoted `35.832213 tok/s` result. The pass avoided the known
+and produced the pre-vec4 `35.832213 tok/s` result. The clean vec4 promotion
+and same-binary scalar control used ports 18083 and 18084 and produced the
+promoted `35.964046 tok/s` result. The pass avoided the known
 unsafe profiler, graph-capture, and remote-write paths.
