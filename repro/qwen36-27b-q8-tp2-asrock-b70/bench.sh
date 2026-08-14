@@ -3,6 +3,7 @@ set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../.." && pwd)
+# shellcheck source=config.env
 source "${script_dir}/config.env"
 
 base_url="http://${QWEN36_HOST}:${QWEN36_PORT}"

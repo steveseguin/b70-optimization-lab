@@ -11,7 +11,7 @@ until matching hardware is available for independent reproduction. Testing a
 contributor's patch on B70 validates the resulting B70 behavior; it does not
 verify a score originally reported on different hardware.
 
-Last manual review: **2026-08-13**.
+Last manual review: **2026-08-14**.
 
 ## Read This Before Comparing Rows
 

@@ -2,9 +2,11 @@
 set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-repo_root=$(cd -- "${script_dir}/../.." && pwd)
 
-source "${repo_root}/community/mndodd-qwen36-27b-llamacpp-sycl/runtime-common.sh"
+# shellcheck source=runtime-common.sh
+source "${script_dir}/runtime-common.sh"
+# shellcheck source=config.env
+# shellcheck disable=SC2031  # script_dir is not changed by the sourced snapshot.
 source "${script_dir}/config.env"
 
 server="${QWEN36_BUILD_DIR}/bin/llama-server"

@@ -72,6 +72,13 @@ binaries had these hashes:
 - `libggml-sycl.so`:
   `d667e6f3ccabede45df4f9512024cb1ae8653ab0bbea7827b6baf8599221e2a6`
 
+These hashes identify the promoted build; they are provenance, not a required
+rebuild gate. A later rebuild from the same accepted source produced a
+different Intel AOT shared-library hash while retaining the server/bench
+hashes and passing the complete 12/12 exact-output replay. Reproduction is
+gated by the source-patch hash, declared build/runtime settings, fresh/cache
+checks, and output hashes.
+
 ## What the patch contains
 
 The full stack is default-off and admitted through strict graph/shape checks.

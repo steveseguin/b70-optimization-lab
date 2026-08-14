@@ -91,7 +91,7 @@ For the full queue and archive, use [docs/model-effort-index.md](docs/model-effo
 
 ### Qwen3.6 27B Model Board
 
-Last audited **2026-08-13**. These rows share a model family, not a quality,
+Last audited **2026-08-14**. These rows share a model family, not a quality,
 runtime, or benchmark class. “Target only” means no speculative draft; MTP and
 DFlash rows retain the declared target as verifier. The first number is the
 repository's historical published 100-event/99-interval rate where that

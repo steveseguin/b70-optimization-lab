@@ -31,6 +31,14 @@ Do not overlap a BMG AOT build with a loaded model on a 15–16 GiB host. The
 provided server launcher runs under an 8 GiB soft / 10 GiB hard host-memory
 cap. Persistent SYCL caching is intentionally disabled by the common runtime.
 
+This directory is a self-contained runtime snapshot: `runtime-common.sh`
+preserves every generic SYCL environment door, `config.env` preserves the
+result-specific fusion and device settings, `run-server.sh` launches the
+bounded endpoint, `bench.sh` runs and verifies the cold suite, and
+`verify-artifacts.sh` checks the embedded source patch, raw result, readable
+summary, and quality gates as one coherent snapshot. It does not depend on a
+contributor packet elsewhere in this repository.
+
 ## 1. Restore the source
 
 Follow the patch instructions in
