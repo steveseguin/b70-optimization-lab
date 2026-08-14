@@ -65,3 +65,14 @@ from `ce51350b8` to `6a64ba62f`. Local obsolete branch refs and secondary
 worktrees were removed only after this push and archive verification. Remote
 non-`main` refs can be retired after this ledger update is itself visible on
 `main`; their recovery authority is the external bundle and checksum above.
+
+During remote retirement, a newly published
+`origin/agent/qwen36-q8-tp2-40tps` ref was discovered at `5826eb7b6`. Its two
+unique commits added the Qwen TP2 profiling/census note and were recovered onto
+`main` as `36643a570` and `ca6c3e690` before the branch was retired. The
+original commit identities are preserved in this verified supplemental bundle:
+
+```text
+/home/steve/git-archives/llm-optimizations-qwen-agent-tp2-20260814.bundle
+SHA-256 b31258a8f44f37fc4ea63de5418bcebd3ff3ae1a1e0c9e4e33551f0ff75c4216
+```
