@@ -1,0 +1,12 @@
+diff --git a/tools/server/server-task.cpp b/tools/server/server-task.cpp
+index 1ee677553..fc61393b3 100644
+--- a/tools/server/server-task.cpp
++++ b/tools/server/server-task.cpp
+@@ -382,6 +382,7 @@ json server_task_result_cmpl_final::to_json_non_oaicompat() {
+         {"stop_type",           stop_type_to_str(stop)},
+         {"stopping_word",       stopping_word},
+         {"tokens_cached",       n_tokens_cached},
++        {"prompt_tokens_cached", n_prompt_tokens_cache},
+         {"timings",             timings.to_json()},
+     };
+     if (!stream && !probs_output.empty()) {

@@ -1,0 +1,69 @@
+{
+  "suite_id": "muse-glimmer-30b-q8-woq-tp4-realistic-v1",
+  "version": 1,
+  "description": "Frozen cold-response suite for the Muse Glimmer 30B Q8 WOQ TP4 engineering and LocalMaxxing gate. The first 12 prompts are the established generic realistic suite; the final three preserve the Muse prose, code, and structured-output campaign anchors. Each prompt is sent exactly once.",
+  "metric": "median conventional throughput across the 99 inter-token intervals between generated-token events 1 and 100 after TTFT",
+  "system_prompt": "Reasoning strength: low",
+  "prompts": [
+    {
+      "id": "incident-retrospective",
+      "prompt": "You are advising an infrastructure team after a service incident. Write a concise but complete incident retrospective for a production API outage caused by a bad cache invalidation rule. Include impact, timeline, contributing factors, detection gaps, remediation, prevention work, and owner handoff. Use practical language for engineers and managers. Aim for about 450-550 words."
+    },
+    {
+      "id": "code-review",
+      "prompt": "Review this Python change as a senior engineer. A worker now batches database writes every 250 ms, retries failures twice, and drops failed rows into a local JSONL file. Discuss correctness risks, observability, data-loss risks, concurrency issues, test cases, and whether the design should be accepted. Make the answer concrete and actionable, with enough detail for a pull request review."
+    },
+    {
+      "id": "customer-email",
+      "prompt": "Draft a customer-facing email explaining that a requested export feature is delayed by one week because the team found a data-integrity issue during validation. The tone should be accountable and calm. Include what happened, what is being done, what customers should expect next, and how support will handle urgent cases. Do not use marketing language."
+    },
+    {
+      "id": "sql-debugging",
+      "prompt": "A reporting query became slow after a schema migration. The query joins orders, customers, invoices, and refunds, filters by tenant_id and created_at, and groups by customer segment. Explain a debugging plan for PostgreSQL. Cover EXPLAIN ANALYZE, indexes, statistics, join order, row estimates, partial indexes, materialized views, and rollout safety."
+    },
+    {
+      "id": "release-plan",
+      "prompt": "Create a release plan for shipping a new authentication flow in a SaaS product. Include feature flags, staged rollout, migration steps, monitoring, rollback criteria, customer communication, security review, and post-release verification. Write it as an internal engineering plan, not as a sales document."
+    },
+    {
+      "id": "benchmark-analysis",
+      "prompt": "Analyze a benchmark result where a model server shows high tokens per second on repeated prompts but much lower speed on unique prompts. Explain plausible causes, how to separate valid fresh-response throughput from warmed or cached throughput, and what measurements should be recorded before publishing a result."
+    },
+    {
+      "id": "architecture-tradeoff",
+      "prompt": "Compare two deployment options for a local inference service: tensor parallel across four GPUs versus four independent one-GPU replicas behind a router. Discuss latency, throughput, PCIe traffic, memory pressure, failure isolation, scheduling, model-loading time, and when each option is the right choice."
+    },
+    {
+      "id": "bug-report-synthesis",
+      "prompt": "Synthesize a bug report from these symptoms: users sometimes receive a response intended for a previous request, logs show cache hits where cached_tokens should be zero, and the issue appears only under load. Write the suspected root causes, immediate mitigations, data to collect, and a minimal reproduction strategy."
+    },
+    {
+      "id": "technical-guide",
+      "prompt": "Write a short technical guide for adding a new benchmark to an existing optimization repo. Include where to put scripts, data, notes, patches, result summaries, how to name run directories, what to record for reproducibility, and how to decide whether a result is valid enough to promote."
+    },
+    {
+      "id": "risk-register",
+      "prompt": "Build a risk register for switching a production inference endpoint from one runtime to another. Include at least eight risks with severity, likelihood, detection method, mitigation, and rollback trigger. Focus on real operational and quality risks, not generic project management filler."
+    },
+    {
+      "id": "performance-hypotheses",
+      "prompt": "Given a GPU inference kernel profile where MoE gate/up/down projections dominate decode time, propose performance hypotheses to test. Cover kernel fusion, quantized matmul layout, route caching, graph capture, batching shape, memory bandwidth, synchronization overhead, and validation traps."
+    },
+    {
+      "id": "decision-memo",
+      "prompt": "Write a decision memo about whether to keep optimizing the current model or switch to a different model family. Include current evidence, opportunity cost, criteria for stopping, expected next experiments, quality constraints, and what artifacts should be preserved for future work."
+    },
+    {
+      "id": "muse-btree-anchor",
+      "prompt": "Write a detailed technical explanation of how a B-tree index accelerates database range queries, covering node structure, fanout, height, and cache behavior."
+    },
+    {
+      "id": "muse-lru-anchor",
+      "prompt": "Implement an LRU cache class in Python with O(1) get and put using a doubly linked list plus dict. Include docstrings and a small usage example."
+    },
+    {
+      "id": "muse-json-anchor",
+      "prompt": "Produce only a JSON array of 12 objects, fields name, priority (1-3), eta_minutes, describing the ordered steps of a server migration runbook. No prose outside the JSON."
+    }
+  ]
+}

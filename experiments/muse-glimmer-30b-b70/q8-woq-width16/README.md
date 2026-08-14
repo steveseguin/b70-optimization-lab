@@ -96,6 +96,41 @@ projection weights, and must pass real-model output/quality tests. The earlier
 generic SYCL MMQ real-model lane remains rejected; see
 `../notes/2026-08-13-q8-width16-mmq-negative.md`.
 
+### Direct-strided follow-up
+
+A second locked run tested zero-copy direct weights: the existing reordered
+Q8 quant bytes were exposed as logical oneDNN `[K,O]` S8 with strides `{1,K}`.
+All arms still selected `jit:gemm:any`, but strict F32-source direct weights
+were decisively too slow:
+
+| local output O | packed F32 | direct F32 | direct/packed |
+| ---: | ---: | ---: | ---: |
+| 4992 | 174.449 us | 724.321 us | 4.152x |
+| 6656 | 213.616 us | 758.248 us | 3.550x |
+
+The direct BF16-source arms were fast (`68.046/86.050 us`) but deliberately
+change activation arithmetic (direct-Q8 NRMSE about `0.003666`). They require
+an all-width, coherent quantized-target design and cannot be substituted only
+at width 16 while retaining a BF16/exact-target claim. The strict-F32
+zero-copy integration route is closed.
+
+Direct follow-up artifacts:
+
+- `/mnt/fast-ai/bench-results/muse-glimmer-30b/q8-woq-direct-width16-20260813/result.json`,
+  SHA256 `fefb0f080dd3425a61947fb82068be5fbbaba8d8e571b68c1f915cc0f09338df`;
+- corresponding `run.log`, SHA256
+  `4e480811db9de896aabca7cd5c3d924d6d1501dceff1e82db28e0d00ab867b96`.
+
+### Full-model outcome
+
+The BF16-source direct design was subsequently integrated as a declared Q8
+target with fixed execution width 16 for decode widths 1–16. Combined with
+pretrained BF16 DFlash and distributed ARGMAX/local-winner reuse, it passed two
+fresh canonical century gates and the frozen 15-prompt cold gate. The final
+source, raw evidence, limitations, and runners are promoted in the
+[result packet](../../../results/muse-glimmer-30b-q8-woq-b70/README.md) and
+[standalone repro](../../../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md).
+
 Artifacts:
 
 - structured result: `data/muse-q8-woq-width16-onednn-20260813.json`, SHA256

@@ -27,38 +27,24 @@ incident remains preserved at
 Production and benchmark launchers now share the canonical exclusive host GPU
 lock, including benchmark-child FD inheritance.
 
-The no-training Q8 kernel lane has now crossed the preregistered realistic
-first-100-token gate. Muse-Glimmer-30B UD-Q8_K_XL with the direct-strided
-BF16-activation/S8-group32/F16-scale/F32-destination oneDNN WOQ path, fixed-N16
-decode descriptors, BF16 DFlash and TP4 measured **166.664 tok/s median** over
-the conventional 99 inter-token intervals on the frozen 15-prompt cold suite.
-An independent fresh-server confirmation measured **169.588 tok/s**. Both
-runs had 15/15 measurable prompts and `cached_tokens=0`; the record run's
-one-sided prompt-bootstrap 95% lower bound is **126.349 tok/s**. This is a
-declared Q8/WOQ result, not BF16 or lossless. The engineering prose/code/JSON
-full-256 arithmetic mean is only `99.438 tok/s`, the record minimum is
-`79.418`, and full-natural-response median after TTFT is `68.608 tok/s`, so do
-not generalize the headline beyond the fixed primary window. Canonical
-target-only versus DFlash is exact through 256 tokens and the 1024-token code
-gate is exact/runnable, but long prose/JSON can diverge after 256 while staying
-semantically valid. Quality promotion and LocalMaxxing submission therefore
-remain pending. Evidence and caveats:
-`data/muse-q8-woq-realistic-record-20260813.json` and
-`experiments/muse-glimmer-30b-b70/notes/2026-08-13-q8-woq-realistic-century.md`.
+The Muse optimization lane is closed and banked. The operator-approved
+no-training Q8/WOQ successor objective passed: UD-Q8_K_XL target, pretrained
+BF16 DFlash, fixed-N16 direct oneDNN WOQ, and distributed ARGMAX/local-winner
+reuse measured two independent canonical full-256 arithmetic means of
+**100.088** and **100.649 tok/s** (`71.583 / 106.436 / 122.246` and `72.487 /
+106.673 / 122.786`), pooled **100.3685 tok/s**. The frozen 15-prompt cold
+conventional first-100 median was **161.900 tok/s**, p10 `108.574`, with a
+one-sided bootstrap lower bound of `127.082` and all prompts cache-zero.
 
-The final linear-serving closeout replaces TOP_K(k=1) with the retained
-distributed ARGMAX/local-winner path and disables diagnostic
-`LLAMA_SPEC_PROFILE`. Two independent fresh-server canonical full-256 runs
-measured **100.088** and **100.649 tok/s arithmetic mean** (`71.583 / 106.436 /
-122.246` and `72.487 / 106.673 / 122.786`), pooled **100.3685 tok/s**. The same
-final configuration passed the frozen cold first-100 realistic metric at
-**161.900 tok/s median**, p10 `108.574`, with one-sided prompt-bootstrap 95%
-lower bound `127.082`; all 15 prompts were measurable and cache-zero. This
-satisfies the no-training four-GPU throughput objective under both campaign
-metrics. Preserve the honest limits: prose individually remains below 100,
-full-natural realistic median is `68.586`, and Q8 near-tie paths are not
-universally token-exact. Final structured evidence:
-`data/muse-q8-woq-argmax-century-20260813.json`.
+This is Q8/WOQ target-verified evidence, not BF16/lossless, universally
+token-exact, or uniformly above 100; prose is 71–72 tok/s and full-natural
+realistic median is `68.586`. Audit correction: the canonical config's
+`LLAMA_SPEC_PROFILE=0` **enabled** profiling because the source checked
+environment presence. Both canonical results therefore exceeded 100 with that
+overhead active; the realistic run left the variable absent. No LocalMaxxing
+receipt exists. Source, models, raw evidence, commands, and honest limitations
+are promoted in [the result packet](results/muse-glimmer-30b-q8-woq-b70/README.md)
+and [standalone repro](repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md).
 
 The current exact TP4 kernel-campaign best is the BF16 DFlash stack with
 batched device-side distributed greedy sampling for both DFlash proposal rows
@@ -102,7 +88,7 @@ Non-adjacent attention pairing is unreachable without invalidating graph-arena
 lifetimes: Q+gate collides with the live norm output and K/V deliberately reuse
 one output address. A measured top-3 mismatch-repair oracle also closes sparse
 branching: even three free stale-suffix nodes project to only `83.13 tok/s`
-before wider target cost. The honest `>100 tok/s` TP4 objective remains unmet;
+before wider target cost. The BF16-only `>100 tok/s` TP4 objective remained unmet;
 further launch-wrapper micro-optimization cannot supply the remaining gap by
 itself.
 
@@ -338,11 +324,10 @@ Operator selected BF16 for fine-tune/abliteration readiness. Runbook:
 quad service was deployed, validated, and retired; it remains restorable via
 its runbook. Recheck immediately before any operational change.
 
-The active optimization lane as of 2026-08-10 evening is **Meta Muse Glimmer
-30B**, quality-first (lossless BF16 reference per two B70s, UD-Q8_K_XL
-near-lossless candidate per two B70s, DFlash drafter in all arms). Entry
-point: `experiments/muse-glimmer-30b-b70/README.md`. Runtime:
-`/home/steve/src/llama.cpp-muse-glimmer` at clean upstream `030ebb558`.
+There is no active model-optimization lane recorded here after the 2026-08-13
+Muse closeout. The operator is moving to other models; create a new isolated
+lane and update this section when that model is selected. Do not reuse the Muse
+record worktree as a clean baseline.
 
 The prior (now closed and banked) lane was target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70. The validated F16-KV reference reaches 32K; the next service target
@@ -2170,6 +2155,7 @@ result trees as mutable research state as well.
 
 ## Paused And Bookmarked Lanes
 
+- [Muse-Glimmer-30B Q8/WOQ closed result](results/muse-glimmer-30b-q8-woq-b70/README.md)
 - [Laguna S 2.1 INT4 pause closeout](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-08-laguna-lane-pause-closeout.md)
 - [DeepSeek V4 Flash uniform-K160 closed frontier](results/deepseek-v4-flash-k160-b70/README.md)
 - [Gemma 4 26B A4B Q8](results/gemma4-26b-a4b-q8-b70/HANDOFF.md)
@@ -2183,12 +2169,9 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Advance the Muse Glimmer 30B quality-first bring-up
-   (`experiments/muse-glimmer-30b-b70/README.md`): finish the staged
-   downloads with SHA capture, smoke Arm B (2xB70 UD-Q8_K_XL + DFlash) and
-   Arm A (2xB70 BF16), bank no-spec vs DFlash ladders with exact-output
-   guards, then run the Arm B vs Arm A quality gate before any production
-   claim. Keep the runtime tree clean-master until baselines are banked.
+1. Muse is closed and fully banked. Select the next model, create a separate
+   experiment/result identity, and begin with model hashes, a clean baseline,
+   fixed prompts, cache-zero controls, and a preregistered quality/speed gate.
 2. The Qwen3.6 27B Q8_0 lane is closed and banked as of 2026-08-10; do not
    continue it without a new decision. Its retained record follows in the
    next item for reference.

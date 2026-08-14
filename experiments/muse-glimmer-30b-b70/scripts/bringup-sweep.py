@@ -146,7 +146,7 @@ def run_config(lane, cfg, port, gpus, out, lock_fd, model=MODEL):
             t = r["timings"]
             dn = t.get("draft_n") or 0
             da = t.get("draft_n_accepted") or 0
-            row["prompts"][pname] = {
+            prompt_result = {
                 "gen_tok_s": round(t["predicted_per_second"], 3),
                 "predicted_n": t["predicted_n"],
                 "draft_n": dn,
@@ -155,6 +155,11 @@ def run_config(lane, cfg, port, gpus, out, lock_fd, model=MODEL):
                 "text_sha": hashlib.sha256(r["content"].encode()).hexdigest()[:16],
                 "text_head": r["content"][:60],
             }
+            if request.get("return_tokens"):
+                prompt_result["tokens"] = r.get("tokens", [])
+            if request.get("n_probs", 0) > 0:
+                prompt_result["completion_probabilities"] = r.get("completion_probabilities", [])
+            row["prompts"][pname] = prompt_result
         out.write(json.dumps(row) + "\n")
         out.flush()
         print(f"[{lane}] {cfg['label']}: " + "  ".join(

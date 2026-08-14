@@ -1,0 +1,699 @@
+0.00.294.833 I cmn  common_param: common_params_print_info: build 10433 (1ff6bcb6c) with IntelLLVM 2026.0.0 for Linux x86_64
+0.00.294.836 I cmn  common_param: common_params_print_info: verbosity = 4 (adjust with the `-lv N` CLI arg)
+0.00.294.837 I cmn  common_param: device_info:
+0.00.294.968 I cmn  common_param:   - SYCL0   : Intel(R) Arc(TM) Pro B70 Graphics (32656 MiB, 32579 MiB free)
+0.00.295.047 I cmn  common_param:   - SYCL1   : Intel(R) Arc(TM) Pro B70 Graphics (32656 MiB, 32602 MiB free)
+0.00.295.122 I cmn  common_param:   - SYCL2   : Intel(R) Arc(TM) Pro B70 Graphics (32656 MiB, 32602 MiB free)
+0.00.295.196 I cmn  common_param:   - SYCL3   : Intel(R) Arc(TM) Pro B70 Graphics (32656 MiB, 32602 MiB free)
+0.00.295.206 I cmn  common_param:   - CPU     : AMD Ryzen Threadripper PRO 5955WX 16-Cores (128668 MiB, 128668 MiB free)
+0.00.295.258 I cmn  common_param: system_info: n_threads = 8 (n_threads_batch = 8) / 32 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.00.295.334 I srv          init: running without SSL
+0.00.295.396 I srv          init: using 31 threads for HTTP server
+0.00.295.786 W srv  llama_server: -----------------
+0.00.295.788 W srv  llama_server: CORS is set to allow all origins ('*') and no API key is set
+0.00.295.788 W srv  llama_server: this can be a security risk (cross-origin attacks)
+0.00.295.788 W srv  llama_server: more info: https://github.com/ggml-org/llama.cpp/pull/25655
+0.00.295.789 W srv  llama_server: -----------------
+0.00.295.821 I srv         start: binding port with default address family
+0.00.297.102 I srv    load_model: loading model '/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/Muse-Glimmer-30B-UD-Q8_K_XL.gguf'
+0.00.297.107 I srv    load_model: local path '/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/Muse-Glimmer-30B-UD-Q8_K_XL.gguf'
+0.00.629.632 E llama_init_from_model: failed to initialize the context: dflash requires ctx_other to be set (this warning is normal during memory fitting)
+0.00.687.587 W srv    load_model: [spec] failed to measure draft model memory: failed to create llama_context from model
+0.00.687.607 I cmn  common_init_: fitting params to device memory ...
+0.00.687.608 I cmn  common_init_: (for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on)
+0.00.687.624 W common_fit_params: failed to fit params to free device memory: llama_params_fit is not implemented for SPLIT_MODE_TENSOR, abort
+0.00.687.628 I common_fit_params: fitting params to free memory took 0.00 seconds
+0.00.726.700 I llama_model_loader: loaded meta data with 36 key-value pairs and 731 tensors from /mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/Muse-Glimmer-30B-UD-Q8_K_XL.gguf (version GGUF V3 (latest))
+0.00.726.716 I llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+0.00.726.720 I llama_model_loader: - kv   0:                       general.architecture str              = muse-glimmer
+0.00.726.720 I llama_model_loader: - kv   1:                               general.type str              = model
+0.00.726.721 I llama_model_loader: - kv   2:                               general.name str              = Muse-Glimmer-30B
+0.00.726.721 I llama_model_loader: - kv   3:                         general.size_label str              = 28B
+0.00.726.722 I llama_model_loader: - kv   4:                   muse-glimmer.block_count u32              = 52
+0.00.726.723 I llama_model_loader: - kv   5:                muse-glimmer.context_length u32              = 131072
+0.00.726.723 I llama_model_loader: - kv   6:              muse-glimmer.embedding_length u32              = 6656
+0.00.726.724 I llama_model_loader: - kv   7:           muse-glimmer.feed_forward_length u32              = 19968
+0.00.726.724 I llama_model_loader: - kv   8:          muse-glimmer.attention.head_count u32              = 32
+0.00.726.724 I llama_model_loader: - kv   9:       muse-glimmer.attention.head_count_kv u32              = 2
+0.00.726.727 I llama_model_loader: - kv  10:                muse-glimmer.rope.freq_base f32              = 500000.000000
+0.00.726.728 I llama_model_loader: - kv  11: muse-glimmer.attention.layer_norm_rms_epsilon f32              = 0.000010
+0.00.726.728 I llama_model_loader: - kv  12:          muse-glimmer.attention.key_length u32              = 128
+0.00.726.729 I llama_model_loader: - kv  13:        muse-glimmer.attention.value_length u32              = 128
+0.00.726.729 I llama_model_loader: - kv  14:       muse-glimmer.final_logit_softcapping f32              = 20.000000
+0.00.726.730 I llama_model_loader: - kv  15:                   muse-glimmer.logit_scale f32              = 0.196116
+0.00.726.730 I llama_model_loader: - kv  16:      muse-glimmer.attention.sliding_window u32              = 2048
+0.00.726.730 I llama_model_loader: - kv  17: muse-glimmer.attention.sliding_window_pattern u32              = 4
+0.00.726.731 I llama_model_loader: - kv  18:                       tokenizer.ggml.model str              = gpt2
+0.00.726.731 I llama_model_loader: - kv  19:                         tokenizer.ggml.pre str              = llama4
+0.00.743.646 I llama_model_loader: - kv  20:                      tokenizer.ggml.tokens arr[str,202048]  = ["À", "Á", "õ", "ö", "÷", "ø", ...
+0.00.747.916 I llama_model_loader: - kv  21:                  tokenizer.ggml.token_type arr[i32,202048]  = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+0.00.782.364 I llama_model_loader: - kv  22:                      tokenizer.ggml.merges arr[str,439802]  = ["Ġ Ġ", "Ġ ĠĠĠ", "ĠĠ ĠĠ", "...
+0.00.782.367 I llama_model_loader: - kv  23:                tokenizer.ggml.bos_token_id u32              = 200000
+0.00.782.368 I llama_model_loader: - kv  24:                tokenizer.ggml.eos_token_id u32              = 200001
+0.00.782.368 I llama_model_loader: - kv  25:            tokenizer.ggml.padding_token_id u32              = 200018
+0.00.782.369 I llama_model_loader: - kv  26:               tokenizer.ggml.add_bos_token bool             = true
+0.00.782.369 I llama_model_loader: - kv  27:               tokenizer.ggml.add_sep_token bool             = false
+0.00.782.371 I llama_model_loader: - kv  28:                    tokenizer.chat_template str              = {%- macro render_content(content) -%}...
+0.00.782.371 I llama_model_loader: - kv  29:                tokenizer.ggml.eot_token_id u32              = 200008
+0.00.782.372 I llama_model_loader: - kv  30:               general.quantization_version u32              = 2
+0.00.782.372 I llama_model_loader: - kv  31:                          general.file_type u32              = 15
+0.00.782.373 I llama_model_loader: - kv  32:                      quantize.imatrix.file str              = Muse-Glimmer-imatrix.gguf
+0.00.782.373 I llama_model_loader: - kv  33:                   quantize.imatrix.dataset str              = Muse-Glimmer-calibration.txt
+0.00.782.373 I llama_model_loader: - kv  34:             quantize.imatrix.entries_count u32              = 416
+0.00.782.374 I llama_model_loader: - kv  35:              quantize.imatrix.chunks_count u32              = 166
+0.00.782.374 I llama_model_loader: - type  f32:  313 tensors
+0.00.782.375 I llama_model_loader: - type q8_0:  312 tensors
+0.00.782.375 I llama_model_loader: - type bf16:  106 tensors
+0.00.782.376 I print_info: file format = GGUF V3 (latest)
+0.00.782.377 I print_info: file type   = Q4_K - Medium
+0.00.782.379 I print_info: file size   = 30.07 GiB (9.27 BPW) 
+0.00.782.390 I llama_prepare_model_devices: skipping CPU (AMD Ryzen Threadripper PRO 5955WX 16-Cores) for tensor parallelism
+0.00.782.390 I llama_prepare_model_devices: creating a Meta device for tensor parallelism from 4 devices:
+0.00.782.391 I llama_prepare_model_devices: - device 0: SYCL0 (Intel(R) Arc(TM) Pro B70 Graphics)
+0.00.782.391 I llama_prepare_model_devices: - device 1: SYCL1 (Intel(R) Arc(TM) Pro B70 Graphics)
+0.00.782.392 I llama_prepare_model_devices: - device 2: SYCL2 (Intel(R) Arc(TM) Pro B70 Graphics)
+0.00.782.392 I llama_prepare_model_devices: - device 3: SYCL3 (Intel(R) Arc(TM) Pro B70 Graphics)
+0.00.782.635 I llama_prepare_model_devices: using device Meta() (Meta()) (unknown id) - 130386 MiB free
+0.00.910.301 I load: 0 unused tokens
+0.00.921.555 W load: setting token '<|message|>' (200023) attribute to USER_DEFINED (16), old attributes: 8
+0.00.921.557 W load: setting token '<|start|>' (200022) attribute to USER_DEFINED (16), old attributes: 8
+0.00.924.072 W load: special_eot_id is not in special_eog_ids - the tokenizer config may be incorrect
+0.00.924.074 I load: printing all EOG tokens:
+0.00.924.074 I load:   - 200001 ('<|end_of_text|>')
+0.00.924.075 I load:   - 200008 ('<|eot|>')
+0.00.924.231 I load: special tokens cache size = 2048
+0.00.971.733 I load: token to piece cache size = 1.4065 MB
+0.00.971.743 I print_info: arch                  = muse-glimmer
+0.00.971.743 I print_info: vocab_only            = 0
+0.00.971.743 I print_info: no_alloc              = 0
+0.00.971.744 I print_info: n_ctx_train           = 131072
+0.00.971.744 I print_info: n_embd_inp            = 6656
+0.00.971.744 I print_info: n_embd                = 6656
+0.00.971.745 I print_info: n_embd_out            = 6656
+0.00.971.745 I print_info: n_layer               = 52
+0.00.971.745 I print_info: n_layer_all           = 52
+0.00.971.751 I print_info: n_head                = 32
+0.00.971.752 I print_info: n_head_kv             = 2
+0.00.971.752 I print_info: n_rot                 = 128
+0.00.971.753 I print_info: n_swa                 = 2048
+0.00.971.753 I print_info: is_swa_any            = 1
+0.00.971.753 I print_info: n_embd_head_k         = 128
+0.00.971.753 I print_info: n_embd_head_v         = 128
+0.00.971.754 I print_info: n_gqa                 = 16
+0.00.971.755 I print_info: n_embd_k_gqa          = 256
+0.00.971.756 I print_info: n_embd_v_gqa          = 256
+0.00.971.756 I print_info: f_norm_eps            = 0.0e+00
+0.00.971.757 I print_info: f_norm_rms_eps        = 1.0e-05
+0.00.971.757 I print_info: f_clamp_kqv           = 0.0e+00
+0.00.971.758 I print_info: f_max_alibi_bias      = 0.0e+00
+0.00.971.758 I print_info: f_logit_scale         = 2.0e-01
+0.00.971.758 I print_info: f_attn_scale          = 0.0e+00
+0.00.971.758 I print_info: f_attn_value_scale    = 0.0000
+0.00.971.759 I print_info: n_ff                  = 19968
+0.00.971.760 I print_info: n_expert              = 0
+0.00.971.760 I print_info: n_expert_used         = 0
+0.00.971.760 I print_info: n_expert_groups       = 0
+0.00.971.761 I print_info: n_group_used          = 0
+0.00.971.761 I print_info: causal attn           = 1
+0.00.971.761 I print_info: pooling type          = -1
+0.00.971.761 I print_info: rope type             = 0
+0.00.971.761 I print_info: rope scaling          = linear
+0.00.971.762 I print_info: freq_base_train       = 500000.0
+0.00.971.763 I print_info: freq_scale_train      = 1
+0.00.971.763 I print_info: freq_base_swa         = 500000.0
+0.00.971.763 I print_info: freq_scale_swa        = 1
+0.00.971.764 I print_info: n_embd_head_k_swa     = 128
+0.00.971.764 I print_info: n_embd_head_v_swa     = 128
+0.00.971.764 I print_info: n_rot_swa             = 128
+0.00.971.764 I print_info: n_ctx_orig_yarn       = 131072
+0.00.971.764 I print_info: rope_yarn_log_mul     = 0.0000
+0.00.971.765 I print_info: rope_finetuned        = unknown
+0.00.971.765 I print_info: model type            = 30B
+0.00.971.766 I print_info: model params          = 27.85 B
+0.00.971.766 I print_info: general.name          = Muse-Glimmer-30B
+0.00.971.767 I print_info: vocab type            = BPE
+0.00.971.767 I print_info: n_vocab               = 202048
+0.00.971.768 I print_info: n_merges              = 439802
+0.00.971.768 I print_info: BOS token             = 200000 '<|begin_of_text|>'
+0.00.971.768 I print_info: EOS token             = 200001 '<|end_of_text|>'
+0.00.971.768 I print_info: EOT token             = 200008 '<|eot|>'
+0.00.971.768 I print_info: PAD token             = 200018 '<|finetune_right_pad|>'
+0.00.971.769 I print_info: LF token              = 198 'Ċ'
+0.00.971.769 I print_info: EOG token             = 200001 '<|end_of_text|>'
+0.00.971.769 I print_info: EOG token             = 200008 '<|eot|>'
+0.00.971.769 I print_info: max token length      = 192
+0.00.971.770 I load_tensors: loading model tensors, this can take a while... (load_mode = mmap)
+0.02.469.876 I Build with Macros:
+0.02.469.879 I   GGML_SYCL_DNNL: yes
+0.02.469.880 I   GGML_SYCL_F16: no
+0.02.469.880 I   GGML_SYCL_FORCE_MMQ: no
+0.02.469.880 I   GGML_SYCL_GRAPH: yes
+0.02.469.880 I   GGML_SYCL_SUPPORT_LEVEL_ZERO_API: yes
+0.02.469.880 I   GGML_SYCL_SUPPORT_VMM: yes
+0.02.469.881 I Running with Environment Variables:
+0.02.469.882 I   GGML_SYCL_DEBUG: 0
+0.02.469.882 I   GGML_SYCL_DEV2DEV_MEMCPY: 0 (SYCL API)
+0.02.469.882 I   GGML_SYCL_ENABLE_DNN: 1
+0.02.469.883 I   GGML_SYCL_DNNL_GEMM_CACHE: 1
+0.02.469.883 I   GGML_SYCL_DNNL_GEMM_BIND_CACHE: 1
+0.02.469.883 I   GGML_SYCL_DNNL_FFN_BATCH2: 1
+0.02.469.883 I   GGML_SYCL_DNNL_ATTN_BATCH2: 0
+0.02.469.883 I   GGML_SYCL_Q8_0_WOQ_BF16: 1
+0.02.469.884 I   GGML_SYCL_Q8_0_WOQ_FIXED16: 1
+0.02.469.884 I   GGML_SYCL_FA_ONEDNN: 1
+0.02.469.884 I   GGML_SYCL_FA_ONEDNN_MAX_KV: 0
+0.02.469.884 I   GGML_SYCL_ENABLE_FLASH_ATTN: 1
+0.02.469.884 I   GGML_SYCL_ENABLE_GRAPH: 0
+0.02.469.885 I   GGML_SYCL_GRAPH_CACHE: 0 (max 256)
+0.02.469.885 I   GGML_SYCL_ENABLE_OPT: 1
+0.02.469.885 I   GGML_SYCL_ENABLE_VMM: 1
+0.02.469.885 I   GGML_SYCL_ENABLE_FUSION: 1
+0.02.469.885 I   GGML_SYCL_ROPE_SET_ROWS_FUSION: 0
+0.02.469.885 I   GGML_SYCL_PRIORITIZE_DMMV: 0
+0.02.469.886 I   GGML_SYCL_USE_ASYNC_MEM_OP: 1
+0.02.469.886 I   GGML_SYCL_USE_LEVEL_ZERO_API: 1
+0.02.469.886 I   GGML_SYCL_MEMORY_COMPRESSION: 0
+0.02.469.887 I   GGML_SYCL_MEMORY_CACHED: 0
+0.02.469.887 I   GGML_SYCL_USM_SYSTEM: 0
+0.02.469.888 I Found 4 SYCL devices:
+0.02.469.888 I |  |                   |                                       |       |Max    |        |Max  |Global |                     |
+0.02.469.889 I |  |                   |                                       |       |compute|Max work|sub  |mem    |                     |
+0.02.469.889 I |ID|        Device Type|                                   Name|Version|units  |group   |group|size   |       Driver version|
+0.02.469.889 I |--|-------------------|---------------------------------------|-------|-------|--------|-----|-------|---------------------|
+0.02.469.927 I | 0| [level_zero:gpu:0]|             Intel Arc Pro B70 Graphics|   20.2|    256|    1024|   32| 34242M|         1.15.38308+1|
+0.02.469.933 I | 1| [level_zero:gpu:1]|             Intel Arc Pro B70 Graphics|   20.2|    256|    1024|   32| 34242M|         1.15.38308+1|
+0.02.469.938 I | 2| [level_zero:gpu:2]|             Intel Arc Pro B70 Graphics|   20.2|    256|    1024|   32| 34242M|         1.15.38308+1|
+0.02.469.944 I | 3| [level_zero:gpu:3]|             Intel Arc Pro B70 Graphics|   20.2|    256|    1024|   32| 34242M|         1.15.38308+1|
+0.02.469.944 I SYCL Optimization Feature:
+0.02.469.944 I |ID|        Device Type|Reorder|
+0.02.469.944 I |--|-------------------|-------|
+0.02.469.947 I | 0| [level_zero:gpu:0]|      Y|
+0.02.469.949 I | 1| [level_zero:gpu:1]|      Y|
+0.02.469.951 I | 2| [level_zero:gpu:2]|      Y|
+0.02.469.953 I | 3| [level_zero:gpu:3]|      Y|
+0.02.813.457 I load_tensors: offloading output layer to GPU
+0.02.813.462 I load_tensors: offloading 51 repeating layers to GPU
+0.02.813.462 I load_tensors: offloaded 53/53 layers to GPU
+0.02.813.467 I load_tensors:   CPU_Mapped model buffer size =  2565.06 MiB
+0.02.813.468 I load_tensors:       Meta() model buffer size =  7105.40 MiB
+0.21.538.272 I cmn  common_init_: added <|end_of_text|> logit bias = -inf
+0.21.538.277 I cmn  common_init_: added <|eot|> logit bias = -inf
+0.21.538.368 I llama_context: constructing llama_context
+0.21.538.382 I set_sampler: experimental TP backend sampling enabled
+0.21.538.406 W llama_sampler_backend_support: device 'Meta()' does not have support for op TOP_K needed for sampler 'top-k'
+0.21.538.410 I llama_context: setting backend sampler for seq_id 0 (n = 10)
+0.21.538.410 I llama_context: n_seq_max             = 1
+0.21.538.411 I llama_context: n_ctx                 = 32768
+0.21.538.411 I llama_context: n_ctx_seq             = 32768
+0.21.538.411 I llama_context: n_batch               = 1024
+0.21.538.411 I llama_context: n_ubatch              = 1024
+0.21.538.412 I llama_context: causal_attn           = 1
+0.21.538.413 I llama_context: flash_attn            = enabled
+0.21.538.413 I llama_context: kv_unified            = false
+0.21.538.417 I llama_context: freq_base             = 500000.0
+0.21.538.418 I llama_context: freq_scale            = 1
+0.21.538.418 I llama_context: n_rs_seq              = 0
+0.21.538.418 I llama_context: n_outputs_max         = 16
+0.21.538.418 I llama_context: n_outputs_max_per_seq = 16
+0.21.538.419 I llama_context: n_ctx_seq (32768) < n_ctx_train (131072) -- the full capacity of the model will not be utilized
+0.21.538.874 I llama_context:  SYCL_Host  output buffer size =     3.08 MiB
+0.21.538.887 I llama_kv_cache_iswa: creating non-SWA KV cache, size = 32768 cells
+0.21.539.414 I llama_kv_cache:     Meta() KV buffer size =   112.00 MiB
+0.21.592.795 I llama_kv_cache: size =  416.00 MiB ( 32768 cells,  13 layers,  1/1 seqs), K (f16):  208.00 MiB, V (f16):  208.00 MiB
+0.21.592.799 I llama_kv_cache: attn_rot_k = 0, n_embd_head_k_all = 128
+0.21.592.799 I llama_kv_cache: attn_rot_v = 0, n_embd_head_k_all = 128
+0.21.592.800 I llama_kv_cache_iswa: creating     SWA KV cache, size = 3072 cells
+0.21.593.705 I llama_kv_cache:     Meta() KV buffer size =    30.00 MiB
+0.21.601.760 I llama_kv_cache: size =  117.00 MiB (  3072 cells,  39 layers,  1/1 seqs), K (f16):   58.50 MiB, V (f16):   58.50 MiB
+0.21.601.763 I llama_kv_cache: attn_rot_k = 0, n_embd_head_k_all = 128
+0.21.601.764 I llama_kv_cache: attn_rot_v = 0, n_embd_head_k_all = 128
+0.21.601.771 I sched_reserve: reserving ...
+0.21.602.457 I resolve_fused_ops: resolving fused Gated Delta Net support:
+0.21.603.493 I resolve_fused_ops: fused Gated Delta Net (autoregressive) enabled
+0.21.604.198 I resolve_fused_ops: fused Gated Delta Net (chunked) enabled
+0.21.604.201 I resolve_fused_ops: resolving fused Lightning Indexer support:
+0.21.604.890 I resolve_fused_ops: Lightning Indexer enabled
+0.21.604.892 I resolve_fused_ops: resolving fused DeepSeek V4 HC support:
+0.21.605.580 I resolve_fused_ops: fused DeepSeek V4 HC pre enabled
+0.21.606.261 I resolve_fused_ops: fused DeepSeek V4 HC comb enabled
+0.21.606.948 I resolve_fused_ops: fused DeepSeek V4 HC post enabled
+0.21.610.805 I sched_reserve:     Meta() compute buffer size =   356.04 MiB
+0.21.610.809 I sched_reserve:  SYCL_Host compute buffer size =   122.04 MiB
+0.21.610.809 I sched_reserve: graph nodes  = 2186 (with bs=1024), 2171 (with bs=1)
+0.21.610.810 I sched_reserve: graph splits = 2
+0.21.610.812 I sched_reserve: reserve took 9.04 ms, sched copies = 1
+0.21.610.877 I cmn  common_init_: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+0.21.728.065 I [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 first hit: weight=blk.0.attn_q.weight k=6656 o=2048 n=2 execution_n=16 fixed16=1 impl=jit:gemm:any scale_sidecar=851968 bytes
+0.21.728.488 I [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 first hit: weight=blk.0.attn_q.weight k=6656 o=2048 n=2 execution_n=16 fixed16=1 impl=jit:gemm:any scale_sidecar=851968 bytes
+0.21.889.106 I [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 first hit: weight=blk.0.ffn_gate.weight k=6656 o=4992 n=2 execution_n=16 fixed16=1 impl=jit:gemm:any scale_sidecar=2076672 bytes
+0.21.889.341 I [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 first hit: weight=blk.0.ffn_gate.weight k=6656 o=4992 n=2 execution_n=16 fixed16=1 impl=jit:gemm:any scale_sidecar=2076672 bytes
+0.22.123.889 I common_speculative_init_result: loading draft model '/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-bf16.gguf'
+0.22.192.855 I llama_model_loader: loaded meta data with 35 key-value pairs and 58 tensors from /mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/dflash-bf16.gguf (version GGUF V3 (latest))
+0.22.192.864 I llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+0.22.192.867 I llama_model_loader: - kv   0:                       general.architecture str              = dflash
+0.22.192.868 I llama_model_loader: - kv   1:                               general.type str              = model
+0.22.192.868 I llama_model_loader: - kv   2:                               general.name str              = Muse Glimmer Dflash Hf
+0.22.192.869 I llama_model_loader: - kv   3:                         general.size_label str              = 2.6B
+0.22.192.869 I llama_model_loader: - kv   4:                            general.license str              = apache-2.0
+0.22.192.875 I llama_model_loader: - kv   5:                               general.tags arr[str,1]       = ["image-text-to-text"]
+0.22.192.876 I llama_model_loader: - kv   6:                         dflash.block_count u32              = 5
+0.22.192.876 I llama_model_loader: - kv   7:                      dflash.context_length u32              = 131072
+0.22.192.876 I llama_model_loader: - kv   8:                    dflash.embedding_length u32              = 6656
+0.22.192.877 I llama_model_loader: - kv   9:                 dflash.feed_forward_length u32              = 19968
+0.22.192.878 I llama_model_loader: - kv  10:                dflash.attention.head_count u32              = 32
+0.22.192.878 I llama_model_loader: - kv  11:             dflash.attention.head_count_kv u32              = 8
+0.22.192.881 I llama_model_loader: - kv  12:                      dflash.rope.freq_base f32              = 500000.000000
+0.22.192.883 I llama_model_loader: - kv  13:    dflash.attention.layer_norm_rms_epsilon f32              = 0.000010
+0.22.192.883 I llama_model_loader: - kv  14:                dflash.attention.key_length u32              = 128
+0.22.192.883 I llama_model_loader: - kv  15:              dflash.attention.value_length u32              = 128
+0.22.192.884 I llama_model_loader: - kv  16:                          general.file_type u32              = 32
+0.22.192.884 I llama_model_loader: - kv  17:                          dflash.block_size u32              = 16
+0.22.192.886 I llama_model_loader: - kv  18:                       dflash.target_layers arr[i32,5]       = [2, 14, 26, 38, 50]
+0.22.192.887 I llama_model_loader: - kv  19:            dflash.attention.sliding_window u32              = 2048
+0.22.192.888 I llama_model_loader: - kv  20:    dflash.attention.sliding_window_pattern arr[bool,5]      = [true, true, true, true, true]
+0.22.192.889 I llama_model_loader: - kv  21:               general.quantization_version u32              = 2
+0.22.192.889 I llama_model_loader: - kv  22:                       tokenizer.ggml.model str              = gpt2
+0.22.192.890 I llama_model_loader: - kv  23:                         tokenizer.ggml.pre str              = llama4
+0.22.211.095 I llama_model_loader: - kv  24:                      tokenizer.ggml.tokens arr[str,202048]  = ["À", "Á", "õ", "ö", "÷", "ø", ...
+0.22.215.411 I llama_model_loader: - kv  25:                  tokenizer.ggml.token_type arr[i32,202048]  = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+0.22.251.430 I llama_model_loader: - kv  26:                      tokenizer.ggml.merges arr[str,439802]  = ["Ġ Ġ", "Ġ ĠĠĠ", "ĠĠ ĠĠ", "...
+0.22.251.434 I llama_model_loader: - kv  27:                tokenizer.ggml.bos_token_id u32              = 200000
+0.22.251.434 I llama_model_loader: - kv  28:                tokenizer.ggml.eos_token_id u32              = 200001
+0.22.251.435 I llama_model_loader: - kv  29:            tokenizer.ggml.padding_token_id u32              = 200018
+0.22.251.436 I llama_model_loader: - kv  30:               tokenizer.ggml.add_bos_token bool             = true
+0.22.251.436 I llama_model_loader: - kv  31:               tokenizer.ggml.add_sep_token bool             = false
+0.22.251.438 I llama_model_loader: - kv  32:                    tokenizer.chat_template str              = {%- macro render_content(content) -%}...
+0.22.251.439 I llama_model_loader: - kv  33:                tokenizer.ggml.eot_token_id u32              = 200008
+0.22.251.439 I llama_model_loader: - kv  34:               tokenizer.ggml.mask_token_id u32              = 201818
+0.22.251.440 I llama_model_loader: - type  f32:   22 tensors
+0.22.251.440 I llama_model_loader: - type bf16:   36 tensors
+0.22.251.441 I print_info: file format = GGUF V3 (latest)
+0.22.251.442 I print_info: file type   = BF16
+0.22.251.444 I print_info: file size   = 4.76 GiB (16.00 BPW) 
+0.22.251.455 I llama_prepare_model_devices: skipping CPU (AMD Ryzen Threadripper PRO 5955WX 16-Cores) for tensor parallelism
+0.22.251.455 I llama_prepare_model_devices: creating a Meta device for tensor parallelism from 4 devices:
+0.22.251.456 I llama_prepare_model_devices: - device 0: SYCL0 (Intel(R) Arc(TM) Pro B70 Graphics)
+0.22.251.456 I llama_prepare_model_devices: - device 1: SYCL1 (Intel(R) Arc(TM) Pro B70 Graphics)
+0.22.251.457 I llama_prepare_model_devices: - device 2: SYCL2 (Intel(R) Arc(TM) Pro B70 Graphics)
+0.22.251.457 I llama_prepare_model_devices: - device 3: SYCL3 (Intel(R) Arc(TM) Pro B70 Graphics)
+0.22.251.695 I llama_prepare_model_devices: using device Meta() (Meta()) (unknown id) - 98329 MiB free
+0.22.251.736 I load_arch_hparams: DFlash extract_layers = [0.22.251.738 I 2, 0.22.251.738 I 14, 0.22.251.738 I 26, 0.22.251.739 I 38, 0.22.251.739 I 500.22.251.739 I ]
+0.22.395.170 I load: 0 unused tokens
+0.22.406.437 W load: setting token '<|message|>' (200023) attribute to USER_DEFINED (16), old attributes: 8
+0.22.406.440 W load: setting token '<|start|>' (200022) attribute to USER_DEFINED (16), old attributes: 8
+0.22.408.730 W load: special_eot_id is not in special_eog_ids - the tokenizer config may be incorrect
+0.22.408.732 I load: printing all EOG tokens:
+0.22.408.733 I load:   - 200001 ('<|end_of_text|>')
+0.22.408.733 I load:   - 200008 ('<|eot|>')
+0.22.408.864 I load: special tokens cache size = 2048
+0.22.463.287 I load: token to piece cache size = 1.4065 MB
+0.22.463.298 I print_info: arch                  = dflash
+0.22.463.299 I print_info: vocab_only            = 0
+0.22.463.299 I print_info: no_alloc              = 0
+0.22.463.299 I print_info: n_ctx_train           = 131072
+0.22.463.300 I print_info: n_embd_inp            = 6656
+0.22.463.300 I print_info: n_embd                = 6656
+0.22.463.301 I print_info: n_embd_out            = 6656
+0.22.463.301 I print_info: n_layer               = 5
+0.22.463.301 I print_info: n_layer_all           = 5
+0.22.463.306 I print_info: n_head                = 32
+0.22.463.307 I print_info: n_head_kv             = 8
+0.22.463.307 I print_info: n_rot                 = 128
+0.22.463.308 I print_info: n_swa                 = 2048
+0.22.463.308 I print_info: is_swa_any            = 1
+0.22.463.308 I print_info: n_embd_head_k         = 128
+0.22.463.308 I print_info: n_embd_head_v         = 128
+0.22.463.309 I print_info: n_gqa                 = 4
+0.22.463.309 I print_info: n_embd_k_gqa          = 1024
+0.22.463.310 I print_info: n_embd_v_gqa          = 1024
+0.22.463.310 I print_info: f_norm_eps            = 0.0e+00
+0.22.463.311 I print_info: f_norm_rms_eps        = 1.0e-05
+0.22.463.311 I print_info: f_clamp_kqv           = 0.0e+00
+0.22.463.312 I print_info: f_max_alibi_bias      = 0.0e+00
+0.22.463.312 I print_info: f_logit_scale         = 0.0e+00
+0.22.463.312 I print_info: f_attn_scale          = 0.0e+00
+0.22.463.312 I print_info: f_attn_value_scale    = 0.0000
+0.22.463.313 I print_info: n_ff                  = 19968
+0.22.463.313 I print_info: n_expert              = 0
+0.22.463.313 I print_info: n_expert_used         = 0
+0.22.463.313 I print_info: n_expert_groups       = 0
+0.22.463.313 I print_info: n_group_used          = 0
+0.22.463.314 I print_info: causal attn           = 1
+0.22.463.314 I print_info: pooling type          = -1
+0.22.463.314 I print_info: rope type             = 2
+0.22.463.314 I print_info: rope scaling          = linear
+0.22.463.315 I print_info: freq_base_train       = 500000.0
+0.22.463.315 I print_info: freq_scale_train      = 1
+0.22.463.315 I print_info: freq_base_swa         = 500000.0
+0.22.463.316 I print_info: freq_scale_swa        = 1
+0.22.463.316 I print_info: n_embd_head_k_swa     = 128
+0.22.463.316 I print_info: n_embd_head_v_swa     = 128
+0.22.463.316 I print_info: n_rot_swa             = 128
+0.22.463.316 I print_info: n_ctx_orig_yarn       = 131072
+0.22.463.316 I print_info: rope_yarn_log_mul     = 0.0000
+0.22.463.317 I print_info: rope_finetuned        = unknown
+0.22.463.317 I print_info: model type            = ?B
+0.22.463.318 I print_info: model params          = 2.56 B
+0.22.463.318 I print_info: general.name          = Muse Glimmer Dflash Hf
+0.22.463.319 I print_info: vocab type            = BPE
+0.22.463.319 I print_info: n_vocab               = 202048
+0.22.463.319 I print_info: n_merges              = 439802
+0.22.463.319 I print_info: BOS token             = 200000 '<|begin_of_text|>'
+0.22.463.319 I print_info: EOS token             = 200001 '<|end_of_text|>'
+0.22.463.319 I print_info: EOT token             = 200008 '<|eot|>'
+0.22.463.320 I print_info: PAD token             = 200018 '<|finetune_right_pad|>'
+0.22.463.320 I print_info: MASK token            = 201818 '<|reserved_special_token_1818|>'
+0.22.463.320 I print_info: LF token              = 198 'Ċ'
+0.22.463.320 I print_info: EOG token             = 200001 '<|end_of_text|>'
+0.22.463.321 I print_info: EOG token             = 200008 '<|eot|>'
+0.22.463.321 I print_info: max token length      = 192
+0.22.463.322 I load_tensors: loading model tensors, this can take a while... (load_mode = mmap)
+0.22.676.339 I load_tensors: offloading output layer to GPU
+0.22.676.344 I load_tensors: offloading 4 repeating layers to GPU
+0.22.676.344 I load_tensors: offloaded 6/6 layers to GPU
+0.22.676.349 I load_tensors:       Meta() model buffer size =  1535.93 MiB
+0.26.420.537 I llama_context: constructing llama_context
+0.26.420.543 I llama_context: n_seq_max             = 1
+0.26.420.544 I llama_context: n_ctx                 = 32768
+0.26.420.544 I llama_context: n_ctx_seq             = 32768
+0.26.420.544 I llama_context: n_batch               = 1024
+0.26.420.544 I llama_context: n_ubatch              = 1024
+0.26.420.545 I llama_context: causal_attn           = 1
+0.26.420.545 I llama_context: flash_attn            = enabled
+0.26.420.546 I llama_context: kv_unified            = false
+0.26.420.548 I llama_context: freq_base             = 500000.0
+0.26.420.549 I llama_context: freq_scale            = 1
+0.26.420.549 I llama_context: n_rs_seq              = 0
+0.26.420.549 I llama_context: n_outputs_max         = 1024
+0.26.420.549 I llama_context: n_outputs_max_per_seq = 16
+0.26.420.550 I llama_context: n_ctx_seq (32768) < n_ctx_train (131072) -- the full capacity of the model will not be utilized
+0.26.420.613 I llama_context:  SYCL_Host  output buffer size =     0.77 MiB
+0.26.420.615 I llama_kv_cache_iswa: creating non-SWA KV cache, size = 32768 cells
+0.26.420.728 I llama_kv_cache: size =    0.00 MiB ( 32768 cells,   0 layers,  1/1 seqs), K (f16):    0.00 MiB, V (f16):    0.00 MiB
+0.26.420.730 I llama_kv_cache: attn_rot_k = 0, n_embd_head_k_all = 0
+0.26.420.733 I llama_kv_cache: attn_rot_v = 0, n_embd_head_k_all = 0
+0.26.420.734 I llama_kv_cache_iswa: creating     SWA KV cache, size = 3072 cells
+0.26.421.014 I llama_kv_cache:     Meta() KV buffer size =    15.00 MiB
+0.26.429.567 I llama_kv_cache: size =   60.00 MiB (  3072 cells,   5 layers,  1/1 seqs), K (f16):   30.00 MiB, V (f16):   30.00 MiB
+0.26.429.570 I llama_kv_cache: attn_rot_k = 0, n_embd_head_k_all = 128
+0.26.429.570 I llama_kv_cache: attn_rot_v = 0, n_embd_head_k_all = 128
+0.26.429.574 I sched_reserve: reserving ...
+0.26.429.692 I resolve_fused_ops: resolving fused Gated Delta Net support:
+0.26.429.829 I resolve_fused_ops: fused Gated Delta Net (autoregressive) enabled
+0.26.429.924 I resolve_fused_ops: fused Gated Delta Net (chunked) enabled
+0.26.429.926 I resolve_fused_ops: resolving fused Lightning Indexer support:
+0.26.430.010 I resolve_fused_ops: Lightning Indexer enabled
+0.26.430.012 I resolve_fused_ops: resolving fused DeepSeek V4 HC support:
+0.26.430.091 I resolve_fused_ops: fused DeepSeek V4 HC pre enabled
+0.26.430.171 I resolve_fused_ops: fused DeepSeek V4 HC comb enabled
+0.26.430.250 I resolve_fused_ops: fused DeepSeek V4 HC post enabled
+0.26.431.224 I sched_reserve:     Meta() compute buffer size =   815.25 MiB
+0.26.431.228 I sched_reserve:  SYCL_Host compute buffer size =    32.02 MiB
+0.26.431.228 I sched_reserve: graph nodes  = 179
+0.26.431.229 I sched_reserve: graph splits = 2
+0.26.431.229 I sched_reserve: reserve took 1.65 ms, sched copies = 1
+0.26.589.974 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 32768, kv_unified = 'false'
+0.26.590.009 I common_speculative_impl_draft_dflash: adding speculative implementation 'draft-dflash'
+0.26.590.010 I common_speculative_impl_draft_dflash: - n_max=15, n_min=0, p_min=0.00
+0.26.590.011 I common_speculative_impl_draft_dflash: - block_size=16, mask_token_id=201818, n_extract=5
+0.26.590.012 I common_speculative_impl_draft_dflash: - candidate_top_k=1
+0.26.590.309 I sched_reserve: reserving ...
+0.26.593.157 I sched_reserve:     Meta() compute buffer size =  1605.27 MiB
+0.26.593.161 I sched_reserve:  SYCL_Host compute buffer size =    32.02 MiB
+0.26.593.162 I sched_reserve: graph nodes  = 198 (with bs=1024), 182 (with bs=1)
+0.26.593.162 I sched_reserve: graph splits = 2
+0.26.593.163 I sched_reserve: reserve took 2.85 ms, sched copies = 1
+0.26.637.838 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 1: weight=blk.0.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.637.843 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 1: weight=blk.0.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.637.888 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 1: weight=blk.0.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.637.957 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 1: weight=blk.0.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.642.345 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 2: weight=blk.0.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.642.509 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 2: weight=blk.0.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.642.668 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 2: weight=blk.0.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.643.253 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 2: weight=blk.0.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.969.349 I [SYCL] GGML_SYCL_DNNL_FFN_BATCH2 first hit: weight=blk.0.ffn_gate.weight output=ffn_gate-0 m=4992 n=2 k=6656 weight_stride=66453504 output_stride=39936
+0.26.972.432 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 3: weight=blk.0.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.973.094 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 3: weight=blk.0.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.973.166 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 3: weight=blk.0.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.973.589 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 3: weight=blk.0.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.977.550 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 4: weight=blk.1.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.977.557 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 4: weight=blk.1.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.977.568 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 4: weight=blk.1.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.977.575 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 4: weight=blk.1.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.977.745 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 5: weight=blk.1.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.977.789 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 5: weight=blk.1.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.977.809 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 5: weight=blk.1.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.977.833 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 5: weight=blk.1.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.022 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 6: weight=blk.1.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.034 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 6: weight=blk.1.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.054 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 6: weight=blk.1.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.065 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 6: weight=blk.1.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.194 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 7: weight=blk.2.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.978.198 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 7: weight=blk.2.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.978.212 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 7: weight=blk.2.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.978.214 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 7: weight=blk.2.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.978.397 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 8: weight=blk.2.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.426 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 8: weight=blk.2.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.434 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 8: weight=blk.2.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.438 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 8: weight=blk.2.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.598 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 9: weight=blk.2.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.602 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 9: weight=blk.2.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.612 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 9: weight=blk.2.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.620 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 9: weight=blk.2.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.978.780 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 10: weight=blk.3.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.978.788 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 10: weight=blk.3.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.978.790 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 10: weight=blk.3.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.978.797 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 10: weight=blk.3.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.978.984 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 11: weight=blk.3.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.004 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 11: weight=blk.3.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.020 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 11: weight=blk.3.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.024 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 11: weight=blk.3.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.181 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 12: weight=blk.3.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.186 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 12: weight=blk.3.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.194 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 12: weight=blk.3.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.212 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 12: weight=blk.3.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.353 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 13: weight=blk.4.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.979.361 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 13: weight=blk.4.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.979.368 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 13: weight=blk.4.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.979.372 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 13: weight=blk.4.attn_q.weight k=6656 o=1024 n=2 reason=requires Q8_0/F32/F32
+0.26.979.494 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 14: weight=blk.4.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.511 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 14: weight=blk.4.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.523 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 14: weight=blk.4.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.528 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 14: weight=blk.4.attn_output.weight k=1024 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.698 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 15: weight=blk.4.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.703 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 15: weight=blk.4.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.707 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 15: weight=blk.4.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.979.719 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 15: weight=blk.4.ffn_down.weight k=4992 o=6656 n=2 reason=requires Q8_0/F32/F32
+0.26.981.621 I srv    load_model: speculative decoding context initialized
+0.26.981.626 I slot   load_model: id  0 | task -1 | new slot, n_ctx = 32768
+0.26.981.653 I srv    load_model: prompt cache is enabled, size limit: 8192 MiB
+0.26.981.655 I srv    load_model: use `--cache-ram 0` to disable the prompt cache
+0.26.981.656 I srv    load_model: for more info see https://github.com/ggml-org/llama.cpp/pull/16391
+0.26.981.657 I srv    load_model: context checkpoints enabled, max = 32, min spacing = 8192
+0.26.981.675 I srv          init: idle slots will be saved to prompt cache upon starting a new task
+0.26.985.351 I srv          init: init: chat template, example_format: '<|start|>system<|message|>You are a helpful assistant
+
+Reasoning strength: high.
+
+# Valid recipients: "self", "user".<|eot|><|start|>user<|message|>Hello<|eot|><|start|>assistant to=user<|message|>Hi there<|eot|><|start|>user<|message|>How are you?<|eot|><|start|>assistant'
+0.26.985.584 I srv          init: init: chat template, thinking = 1
+0.26.985.591 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve
+0.26.985.621 I srv  llama_server: model loaded
+0.26.985.627 I srv  llama_server: listening on http://127.0.0.1:19494
+0.26.985.631 I srv  update_slots: all slots are idle
+0.27.970.426 I srv  server_strea: conv_id= (empty=1)
+0.27.974.507 I slot get_availabl: id  0 | task -1 |  - skipping, slot is empty
+0.27.974.512 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1
+0.27.974.512 I srv  get_availabl: updating prompt cache
+0.27.974.518 I srv          load:  - looking for better prompt, base f_keep = -1.000, f_sim = 0.000
+0.27.974.522 I srv        update:  - cache state: 0 prompts, 0.000 MiB (limits: 8192.000 MiB, 32768 tokens, 8589934592 est)
+0.27.974.523 I srv  get_availabl: prompt cache update took 0.01 ms
+0.27.974.560 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> +greedy 
+0.27.974.569 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.27.974.570 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.27.974.587 I slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 32768, n_keep = 0, task.n_tokens = 62
+0.27.974.591 I slot   operator(): id  0 | task 0 | cached n_tokens = 0, memory_seq_rm [0, end)
+0.27.974.689 I sched_reserve: reserving ...
+0.27.991.534 I sched_reserve:     Meta() compute buffer size =   486.04 MiB
+0.27.991.537 I sched_reserve:  SYCL_Host compute buffer size =   122.04 MiB
+0.27.991.538 I sched_reserve: graph nodes  = 2188 (with bs=1024), 2172 (with bs=1)
+0.27.991.538 I sched_reserve: graph splits = 2
+0.27.991.539 I sched_reserve: reserve took 16.82 ms, sched copies = 1
+0.28.103.019 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 1: weight=blk.0.attn_q.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.103.097 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 1: weight=blk.0.attn_q.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.191.313 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 2: weight=blk.0.attn_gate.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.191.410 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 3: weight=blk.0.attn_output.weight k=2048 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.194.569 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 2: weight=blk.0.attn_gate.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.194.679 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 3: weight=blk.0.attn_output.weight k=2048 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.343.164 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 4: weight=blk.0.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.343.173 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 1: weight=blk.0.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.343.174 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 4: weight=blk.0.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.343.182 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 1: weight=blk.0.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.345.141 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 5: weight=blk.0.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.345.227 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 6: weight=blk.0.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.346.089 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 5: weight=blk.0.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.346.153 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 6: weight=blk.0.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.383.761 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 2: weight=blk.0.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.383.854 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 3: weight=blk.0.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.384.878 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 2: weight=blk.0.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.384.951 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 3: weight=blk.0.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.385.364 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 4: weight=blk.1.attn_q.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.385.396 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 4: weight=blk.1.attn_q.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.407.453 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 5: weight=blk.1.attn_gate.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.407.514 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 6: weight=blk.1.attn_output.weight k=2048 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.408.519 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 5: weight=blk.1.attn_gate.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.408.582 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 6: weight=blk.1.attn_output.weight k=2048 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.408.980 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 7: weight=blk.1.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.408.988 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 7: weight=blk.1.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.408.990 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 7: weight=blk.1.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.409.000 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 7: weight=blk.1.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.409.032 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 8: weight=blk.1.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.409.041 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 8: weight=blk.1.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.409.042 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 8: weight=blk.1.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.409.053 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 8: weight=blk.1.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.409.081 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 9: weight=blk.1.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.409.089 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 9: weight=blk.1.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.409.092 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 9: weight=blk.1.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.409.106 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 9: weight=blk.1.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.409.275 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 10: weight=blk.2.attn_q.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.409.279 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 10: weight=blk.2.attn_q.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.408 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 11: weight=blk.2.attn_gate.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.456 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 12: weight=blk.2.attn_output.weight k=2048 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.676 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 11: weight=blk.2.attn_gate.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.726 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 12: weight=blk.2.attn_output.weight k=2048 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.881 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 10: weight=blk.2.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.897 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 13: weight=blk.2.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.899 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 10: weight=blk.2.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.914 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 13: weight=blk.2.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.921 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 11: weight=blk.2.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.933 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 14: weight=blk.2.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.938 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 11: weight=blk.2.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.953 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 14: weight=blk.2.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.963 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 12: weight=blk.2.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.414.998 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 12: weight=blk.2.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.415.002 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 15: weight=blk.2.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.415.007 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 15: weight=blk.2.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.415.145 W [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 reject # 16: weight=blk.3.attn_q.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.415.159 W [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 reject # 16: weight=blk.3.attn_q.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.421.231 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 13: weight=blk.3.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.421.238 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 13: weight=blk.3.ffn_gate.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.421.270 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 14: weight=blk.3.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.421.275 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 14: weight=blk.3.ffn_up.weight k=6656 o=4992 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.421.322 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 15: weight=blk.3.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.421.325 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 15: weight=blk.3.ffn_down.weight k=4992 o=6656 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.421.490 W [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 reject # 16: weight=blk.4.attn_q.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.421.496 W [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 reject # 16: weight=blk.4.attn_q.weight k=6656 o=2048 n=58 reason=initial proof is decode/verifier-only (N <= 16)
+0.28.737.429 I slot   operator(): id  0 | task 0 | cached n_tokens = 58, memory_seq_rm [58, end)
+0.28.737.479 I slot init_sampler: id  0 | task 0 | init sampler, took 0.01 ms, tokens: text = 62, total = 62
+0.28.966.818 I slot create_check: id  0 | task 0 | created context checkpoint 1 of 32 (pos_min = 0, pos_max = 57, n_tokens = 58, size = 3.344 MiB)
+0.29.034.639 W [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 reject # 16: weight=blk.0.attn_q.weight k=6656 o=1024 n=16 reason=requires Q8_0/F32/F32
+0.29.034.654 W [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 reject # 16: weight=blk.0.attn_q.weight k=6656 o=1024 n=16 reason=requires Q8_0/F32/F32
+0.29.034.677 W [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 reject # 16: weight=blk.0.attn_q.weight k=6656 o=1024 n=16 reason=requires Q8_0/F32/F32
+0.29.034.685 W [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 reject # 16: weight=blk.0.attn_q.weight k=6656 o=1024 n=16 reason=requires Q8_0/F32/F32
+0.29.177.955 I srv    operator(): DFlash committed-prefix processing enabled: verified=16 committed=16
+[spec-prof] rounds=64 feat=0.05ms enc=2.66ms draft=6.08ms (per round)
+0.32.072.449 I slot print_timing: id  0 | task 0 | n_decoded =    211, tg =  69.36 t/s, tg_3s =  69.36 t/s
+0.32.562.223 I slot print_timing: id  0 | task 0 | prompt eval time =    1055.92 ms /    62 tokens (   17.03 ms per token,    58.72 tokens per second)
+0.32.562.226 I slot print_timing: id  0 | task 0 |        eval time =    3531.68 ms /   256 tokens (   13.80 ms per token,    72.49 tokens per second)
+0.32.562.227 I slot print_timing: id  0 | task 0 |       total time =    4587.60 ms /   318 tokens
+0.32.562.229 I slot print_timing: id  0 | task 0 |    graphs reused =         77
+0.32.562.234 I slot print_timing: id  0 | task 0 | draft acceptance = 0.14768 (  175 accepted /  1185 generated), mean len =  3.19
+0.32.562.235 I slot print_timing: id  0 | task 0 |      acc per pos = (0.688, 0.438, 0.300, 0.163, 0.150, 0.062, 0.062, 0.062, 0.050, 0.050, 0.050, 0.037, 0.025, 0.025, 0.025)
+0.32.562.255 I spec common_specu: statistics     draft-dflash: #calls(b,g,a) =    1     80     80, #gen drafts =     80, #acc drafts =    55, #gen tokens =   1185, #acc tokens =   175, #mean acc len = 3.19, #acc rate/pos = (0.688, 0.438, 0.300, 0.163, 0.150, 0.062, 0.062, 0.062, 0.050, 0.050, 0.050, 0.037, 0.025, 0.025, 0.025), dur(b,g,a) = 0.004, 485.964, 0.013 ms
+0.32.562.290 I slot      release: id  0 | task 0 | stop processing: n_tokens = 317, truncated = 0
+0.32.562.297 I srv  update_slots: all slots are idle
+0.32.564.363 I srv  server_strea: conv_id= (empty=1)
+0.32.567.383 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.455 (30/66) > 0.100
+0.32.567.386 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 0.455 (> 0.100 thold), f_keep = 0.095
+0.32.567.386 I srv  get_availabl: updating prompt cache
+0.32.567.466 I srv   prompt_save:  - saving prompt with length 317, total state size = 22.305 MiB (draft: 6.199 MiB)
+0.33.726.199 I srv          load:  - looking for better prompt, base f_keep = 0.095, f_sim = 0.455
+0.33.726.202 I srv          load:    - prompt with length     317, lcp =      30, f_keep = 0.095, f_sim = 0.455
+0.33.726.204 I srv        update:  - cache state: 1 prompts, 25.649 MiB (limits: 8192.000 MiB, 32768 tokens, 101245 est)
+0.33.726.204 I srv        update:    - prompt 0x1b9de170:     317 tokens, checkpoints:  1,    25.649 MiB
+0.33.726.205 I srv  get_availabl: prompt cache update took 1158.82 ms
+0.33.726.222 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> +greedy 
+0.33.726.225 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.33.726.226 I slot launch_slot_: id  0 | task 83 | processing task, is_child = 0
+0.33.726.232 I slot   operator(): id  0 | task 83 | new prompt, n_ctx_slot = 32768, n_keep = 0, task.n_tokens = 66
+0.33.726.233 I slot   operator(): id  0 | task 83 | erased invalidated context checkpoint (pos_min = 0, pos_max = 57, n_tokens = 58, n_swa = 2048, pos_next = 0, size = 3.344 MiB)
+0.33.726.236 I slot   operator(): id  0 | task 83 | cached n_tokens = 0, memory_seq_rm [0, end)
+0.33.726.428 I sched_reserve: reserving ...
+0.33.741.604 I sched_reserve:     Meta() compute buffer size =   486.04 MiB
+0.33.741.607 I sched_reserve:  SYCL_Host compute buffer size =   122.04 MiB
+0.33.741.607 I sched_reserve: graph nodes  = 2188 (with bs=1024), 2172 (with bs=1)
+0.33.741.608 I sched_reserve: graph splits = 2
+0.33.741.609 I sched_reserve: reserve took 15.17 ms, sched copies = 1
+0.34.239.180 I slot   operator(): id  0 | task 83 | cached n_tokens = 62, memory_seq_rm [62, end)
+0.34.239.225 I slot init_sampler: id  0 | task 83 | init sampler, took 0.01 ms, tokens: text = 66, total = 66
+0.34.487.458 I slot create_check: id  0 | task 83 | created context checkpoint 1 of 32 (pos_min = 0, pos_max = 61, n_tokens = 62, size = 3.575 MiB)
+[spec-prof] rounds=128 feat=0.05ms enc=2.79ms draft=6.06ms (per round)
+0.36.936.454 I slot print_timing: id  0 | task 83 | prompt eval time =     810.33 ms /    66 tokens (   12.28 ms per token,    81.45 tokens per second)
+0.36.936.458 I slot print_timing: id  0 | task 83 |        eval time =    2399.86 ms /   256 tokens (    9.37 ms per token,   106.67 tokens per second)
+0.36.936.459 I slot print_timing: id  0 | task 83 |       total time =    3210.19 ms /   322 tokens
+0.36.936.459 I slot print_timing: id  0 | task 83 |    graphs reused =        125
+0.36.936.464 I slot print_timing: id  0 | task 83 | draft acceptance = 0.25543 (  200 accepted /   783 generated), mean len =  4.64
+0.36.936.465 I slot print_timing: id  0 | task 83 |      acc per pos = (0.855, 0.673, 0.564, 0.309, 0.218, 0.164, 0.127, 0.109, 0.109, 0.109, 0.109, 0.073, 0.073, 0.073, 0.073)
+0.36.936.476 I spec common_specu: statistics     draft-dflash: #calls(b,g,a) =    2    135    135, #gen drafts =    135, #acc drafts =   102, #gen tokens =   1968, #acc tokens =   375, #mean acc len = 3.78, #acc rate/pos = (0.756, 0.533, 0.407, 0.222, 0.178, 0.104, 0.089, 0.081, 0.074, 0.074, 0.074, 0.052, 0.044, 0.044, 0.044), dur(b,g,a) = 0.005, 818.078, 0.020 ms
+0.36.936.492 I slot      release: id  0 | task 83 | stop processing: n_tokens = 321, truncated = 0
+0.36.936.500 I srv  update_slots: all slots are idle
+0.36.938.210 I srv  server_strea: conv_id= (empty=1)
+0.36.942.983 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.417 (30/72) > 0.100
+0.36.942.984 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 0.417 (> 0.100 thold), f_keep = 0.093
+0.36.942.984 I srv  get_availabl: updating prompt cache
+0.36.943.081 I srv   prompt_save:  - saving prompt with length 321, total state size = 22.586 MiB (draft: 6.277 MiB)
+0.38.117.886 I srv          load:  - looking for better prompt, base f_keep = 0.093, f_sim = 0.417
+0.38.117.889 I srv          load:    - prompt with length     317, lcp =      30, f_keep = 0.095, f_sim = 0.417
+0.38.117.890 I srv          load:    - prompt with length     321, lcp =      30, f_keep = 0.093, f_sim = 0.417
+0.38.117.892 I srv        update:  - cache state: 2 prompts, 51.810 MiB (limits: 8192.000 MiB, 32768 tokens, 100877 est)
+0.38.117.893 I srv        update:    - prompt 0x1b9de170:     317 tokens, checkpoints:  1,    25.649 MiB
+0.38.117.893 I srv        update:    - prompt 0x205a87c0:     321 tokens, checkpoints:  1,    26.161 MiB
+0.38.117.895 I srv  get_availabl: prompt cache update took 1174.91 ms
+0.38.117.918 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> +greedy 
+0.38.117.922 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.38.117.923 I slot launch_slot_: id  0 | task 141 | processing task, is_child = 0
+0.38.117.930 I slot   operator(): id  0 | task 141 | new prompt, n_ctx_slot = 32768, n_keep = 0, task.n_tokens = 72
+0.38.117.932 I slot   operator(): id  0 | task 141 | erased invalidated context checkpoint (pos_min = 0, pos_max = 61, n_tokens = 62, n_swa = 2048, pos_next = 0, size = 3.575 MiB)
+0.38.117.933 I slot   operator(): id  0 | task 141 | cached n_tokens = 0, memory_seq_rm [0, end)
+0.38.118.211 I sched_reserve: reserving ...
+0.38.133.920 I sched_reserve:     Meta() compute buffer size =   486.04 MiB
+0.38.133.923 I sched_reserve:  SYCL_Host compute buffer size =   122.04 MiB
+0.38.133.924 I sched_reserve: graph nodes  = 2188 (with bs=1024), 2172 (with bs=1)
+0.38.133.924 I sched_reserve: graph splits = 2
+0.38.133.925 I sched_reserve: reserve took 15.71 ms, sched copies = 1
+0.38.798.755 I slot   operator(): id  0 | task 141 | cached n_tokens = 68, memory_seq_rm [68, end)
+0.38.798.800 I slot init_sampler: id  0 | task 141 | init sampler, took 0.01 ms, tokens: text = 72, total = 72
+0.39.063.858 I slot create_check: id  0 | task 141 | created context checkpoint 1 of 32 (pos_min = 0, pos_max = 67, n_tokens = 68, size = 3.921 MiB)
+0.41.197.218 I slot print_timing: id  0 | task 141 | prompt eval time =     994.35 ms /    72 tokens (   13.81 ms per token,    72.41 tokens per second)
+0.41.197.221 I slot print_timing: id  0 | task 141 |        eval time =    2084.93 ms /   256 tokens (    8.14 ms per token,   122.79 tokens per second)
+0.41.197.222 I slot print_timing: id  0 | task 141 |       total time =    3079.28 ms /   328 tokens
+0.41.197.222 I slot print_timing: id  0 | task 141 |    graphs reused =        168
+0.41.197.227 I slot print_timing: id  0 | task 141 | draft acceptance = 0.30263 (  207 accepted /   684 generated), mean len =  5.40
+0.41.197.228 I slot print_timing: id  0 | task 141 |      acc per pos = (0.787, 0.638, 0.511, 0.447, 0.426, 0.383, 0.213, 0.170, 0.149, 0.149, 0.128, 0.128, 0.106, 0.085, 0.085)
+0.41.197.243 I spec common_specu: statistics     draft-dflash: #calls(b,g,a) =    3    182    182, #gen drafts =    182, #acc drafts =   139, #gen tokens =   2652, #acc tokens =   582, #mean acc len = 4.20, #acc rate/pos = (0.764, 0.560, 0.434, 0.280, 0.242, 0.176, 0.121, 0.104, 0.093, 0.093, 0.088, 0.071, 0.060, 0.055, 0.055), dur(b,g,a) = 0.006, 1102.013, 0.030 ms
+0.41.197.259 I slot      release: id  0 | task 141 | stop processing: n_tokens = 327, truncated = 0
+0.41.197.267 I srv  update_slots: all slots are idle
+0.41.197.853 I srv    operator(): operator(): cleaning up before exit...
+0.41.199.327 I common_memory_breakdown_print: | memory breakdown [MiB] |  total    free    self   model   context   compute    unaccounted |
+0.41.199.330 I common_memory_breakdown_print: |   - Meta() (Meta())    | 130624 = 84474 + (7733 =  7105 +     142 +     486) +       38416 |
+0.41.199.331 I common_memory_breakdown_print: |   - Host               |                   2687 =  2565 +       0 +     122                |
+0.41.211.879 I [SYCL Q8_0 WOQ] device=0 ctx=0x17279280 summary: hits=0 rejects=2745 cached_primitives=0
+0.41.214.205 I [SYCL Q8_0 WOQ] device=1 ctx=0x1845ab00 summary: hits=0 rejects=2745 cached_primitives=0
+0.41.215.976 I [SYCL Q8_0 WOQ] device=2 ctx=0x1728c620 summary: hits=0 rejects=2745 cached_primitives=0
+0.41.217.271 I [SYCL Q8_0 WOQ] device=3 ctx=0x172b1630 summary: hits=0 rejects=2745 cached_primitives=0
+0.41.328.037 I [SYCL Q8_0 WOQ] device=0 ctx=0xbb91940 summary: hits=43428 rejects=684 cached_primitives=4
+0.41.330.775 I [SYCL Q8_0 WOQ] device=1 ctx=0xbaf27c0 summary: hits=44556 rejects=702 cached_primitives=4
+0.41.332.619 I [SYCL Q8_0 WOQ] device=2 ctx=0xbba7490 summary: hits=43428 rejects=684 cached_primitives=4
+0.41.334.084 I [SYCL Q8_0 WOQ] device=3 ctx=0x10d132c0 summary: hits=44556 rejects=702 cached_primitives=4

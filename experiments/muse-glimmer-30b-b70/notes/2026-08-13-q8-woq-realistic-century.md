@@ -2,9 +2,12 @@
 
 ## Status
 
-Speed gate passed twice; compressed-target correctness and quality promotion
-remain pending. This is a declared UD-Q8_K_XL / WOQ result, not a BF16 or
-lossless result.
+The no-training compressed-target throughput objective is verified and the
+result is promoted in
+[`results/muse-glimmer-30b-q8-woq-b70`](../../../results/muse-glimmer-30b-q8-woq-b70/README.md).
+Target/spec, structured JSON, B-tree rubric, and runnable LRU gates passed with
+the limitations below. This is a declared UD-Q8_K_XL / WOQ result, not BF16,
+lossless, universally token-exact, or a general quality-noninferiority claim.
 
 ## Kernel and serving identity
 
@@ -65,16 +68,22 @@ The record and confirmation artifacts and hashes are indexed in
 The initial realistic result still used distributed TOP_K with `k=1` and the
 canonical full-256 arithmetic mean remained below 100. Replacing that terminal
 selection with the already-retained distributed ARGMAX/local-winner-reuse path
-removed the remaining fixed top-k overhead. Disabling `LLAMA_SPEC_PROFILE`,
-which is diagnostic bookkeeping and not part of serving, supplied the final
-small margin without changing inference math.
+removed the remaining fixed top-k overhead.
+
+Audit correction: the historical config set `LLAMA_SPEC_PROFILE=0`, but the
+record source tests `getenv()` presence rather than parsing the value. The
+profiler was therefore **enabled** in both retained full-256 runs; the server
+log contains `[spec-prof]`. The `noprofile` filename is mislabeled. The two
+measured means remain valid and exceeded 100 with the diagnostic overhead
+present. The realistic ARGMAX record left the variable absent and had profiling
+disabled.
 
 A screen enabling `GGML_SYCL_BF16_GRAPH_CONVERSION_CACHE=1` for the BF16
 DFlash context was startup-safe but changed proposal history and regressed the
 full packet; it is rejected. The final configuration keeps that cache off.
 
-Two independent fresh-server full-256 runs of the final ARGMAX/no-profile
-configuration measured:
+Two independent fresh-server full-256 runs of the final ARGMAX configuration
+(historically mislabeled `no-profile`) measured:
 
 | run | prose | code | JSON | arithmetic mean |
 | --- | ---: | ---: | ---: | ---: |
@@ -93,10 +102,11 @@ All 15 prompts supplied at least 100 exact raw token events and reported zero
 prompt-cache reuse.
 
 The final structured record is
-`data/muse-q8-woq-argmax-century-20260813.json`. The full raw artifacts are:
-
-- `/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/q8-woq-fixed16-argmax-noprofile-full256-20260813.jsonl`;
-- `/mnt/fast-ai/bench-results/muse-glimmer-30b/realistic/q8-woq-fixed16-argmax-realistic-v1-20260813/realistic-suite.json`.
+[`data/muse-q8-woq-argmax-century-20260813.json`](../../../data/muse-q8-woq-argmax-century-20260813.json).
+The raw JSONL, retained server logs, realistic token/timestamp capture, and
+parity artifacts are preserved under the
+[`standalone repro`](../../../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md),
+along with exact hashes and an offline verifier.
 
 An ARGMAX-specific no-spec/DFlash check was token-exact for canonical code and
 JSON at 256 tokens. Prose followed a different target-approved near-tie path,
@@ -107,19 +117,20 @@ universally token-exact. No drafter training was used anywhere in this lane.
 
 This demonstrates reproducible sustained throughput above 100 under the
 workspace's preregistered first-100-token median metric. It does not mean every
-prompt or full natural response stays above 100: the record minimum was
-`79.418`, and full natural-completion median after TTFT was `68.608 tok/s`.
+prompt or full natural response stays above 100: the initial TOP_K record
+minimum was `79.418`; the final ARGMAX minimum was `82.470`, and its
+full-natural completion median after TTFT was `68.586 tok/s`.
 
 Only 6/15 full-output hashes matched across the two fresh speed runs. This does
-not invalidate the timing measurement, but it blocks any deterministic/exact
-decode claim and makes quality validation mandatory. Do not promote or submit
-until Q8 no-spec versus DFlash-spec token parity, structured/code/prose hard
-gates, and the declared compressed-target quality packet pass.
+not invalidate the timing measurement, but it blocks any universal
+deterministic/exact decode claim. The follow-up gates below supported the
+scoped target-verified promotion while preserving that limitation; no
+LocalMaxxing submission was made.
 
 Follow-up target/spec checks refined that limitation:
 
-- at 256 generated tokens, no-spec Q8 and DFlash were token- and content-exact
-  on all three canonical prompts (768/768 tokens), with hashes
+- under the TOP_K reference at 256 generated tokens, no-spec Q8 and DFlash were
+  token- and content-exact on all three canonical prompts (768/768 tokens), with hashes
   `6e0acc044576ad05`, `b4a2bda611510441`, and `4f813a9706abc163`;
 - at 512 tokens, code remained exact, while prose diverged after token 156 and
   JSON after token 356. Both JSON outputs nevertheless parsed as exactly 12
@@ -133,7 +144,7 @@ Follow-up target/spec checks refined that limitation:
   get/put, recency, eviction, overwrite, capacities 1 and 0, docstrings, and a
   runnable example.
 
-Evidence directories:
+Original host evidence directories (mirrored into the promoted repro):
 
 - `/mnt/fast-ai/bench-results/muse-glimmer-30b/realistic/q8-woq-fixed16-top1-spec-parity-20260813`;
 - `/mnt/fast-ai/bench-results/muse-glimmer-30b/realistic/q8-woq-fixed16-top1-spec-parity512-20260813`;

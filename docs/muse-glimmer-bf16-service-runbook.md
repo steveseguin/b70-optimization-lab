@@ -33,8 +33,10 @@ Backends: `127.0.0.1:19470` (GPUs 0+1), `127.0.0.1:19471` (GPUs 2+3).
 - CAUTION: ub 2048 at 64K ctx overflows card0 and the SYCL host-memory
   fallback silently spills weights (1 tok/s). After any config change,
   verify per-card residency (~30-32 GB) AND run a decode canary.
-- Runtime: `/home/steve/src/llama.cpp-muse-glimmer` upstream `030ebb558`,
-  SYCL AOT bmg-g31 build, version 10358, clean master
+- Runtime selected by the fleet launcher: patched
+  `/home/steve/src/llama.cpp-muse-100`, SYCL AOT bmg-g31 build. Verify the
+  launcher and binary hash before restart; do not assume the old clean
+  `/home/steve/src/llama.cpp-muse-glimmer` baseline is still selected.
 - Measured (2026-08-11 overnight): production text lane 67.2 json live;
   peak validated single-request 71.2 json (4-GPU TP, all cards);
   campaign log: experiments/muse-glimmer-30b-b70/CAMPAIGN-100.md
@@ -68,6 +70,10 @@ sudo systemctl disable --now muse-glimmer-frontdoor.service muse-glimmer-bf16-fl
 Units conflict with the Gemma quad services and older :8000 frontdoors; the
 install --start path stops those first. Gemma remains restorable via
 `docs/gemma4-26b-q8-service-runbook.md`.
+
+The separate [four-B70 Q8/WOQ century result](../results/muse-glimmer-30b-q8-woq-b70/README.md)
+is a benchmark recipe, not this deployed BF16 fleet identity. Do not enable
+its target quantization or experimental flags in this service by implication.
 
 Note: gemma4-26b-prod-health.py is NOT valid against this model (its token
 budgets starve reasoning output); use muse-glimmer-prod-health.py.

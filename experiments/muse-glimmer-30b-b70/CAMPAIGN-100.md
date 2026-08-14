@@ -1,5 +1,20 @@
 # Campaign: 100 tok/s Lossless BF16 Decode (opened 2026-08-11)
 
+## Closeout (2026-08-13)
+
+The original BF16-only/lossless objective remained unmet and is closed. A
+later operator-approved **no-training compressed-target successor** achieved
+the broader century objective with UD-Q8_K_XL target weights, pretrained BF16
+DFlash, fixed-N16 direct oneDNN WOQ, and distributed ARGMAX. Two independent
+canonical 256-token arithmetic means were `100.088` and `100.649 tok/s`; the
+frozen cold-suite conventional first-100 median was `161.900 tok/s` with
+15/15 cache-zero prompts. No drafter training was performed.
+
+This does not retroactively satisfy the BF16 claim below. It is promoted as a
+Q8/WOQ target-verified result, not lossless or universally token-exact. See the
+[result packet](../../results/muse-glimmer-30b-q8-woq-b70/README.md) and
+[repro](../../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md).
+
 Operator goal: 100 tok/s decode on Muse Glimmer 30B BF16 without quality
 degradation, horizon one to two weeks. Baseline at open: 42.7 json / 37.7
 code / 24.3 prose per replica (2xB70, BF16 target, BF16 DFlash drafter

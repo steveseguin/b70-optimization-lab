@@ -1,0 +1,28 @@
+{
+  "canonical_full256": {
+    "runs": 2,
+    "prompts": ["prose", "code", "json"],
+    "n_predict": 256,
+    "temperature": 0,
+    "cache_prompt": false,
+    "backend_sampling": true,
+    "samplers": ["temperature"],
+    "LLAMA_SPEC_PROFILE": {
+      "environment_value": "0",
+      "effective_state": "enabled",
+      "reason": "The record source checks getenv() presence, not the value.",
+      "warning": "The historical filename says noprofile but is mislabeled. Preserve presence only for an exact replay of the two retained runs."
+    }
+  },
+  "cold_realistic": {
+    "prompt_count": 15,
+    "each_prompt_once": true,
+    "max_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "formula": "99 / (timestamp[99] - timestamp[0])",
+    "cache_prompt": false,
+    "LLAMA_SPEC_PROFILE": "absent"
+  },
+  "claim_boundary": "Q8/WOQ target-verified result; not BF16, lossless, universally token-exact, or 100 tok/s on every prompt/full-natural completion"
+}

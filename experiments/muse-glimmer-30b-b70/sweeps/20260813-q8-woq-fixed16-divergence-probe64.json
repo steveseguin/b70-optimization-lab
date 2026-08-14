@@ -1,0 +1,65 @@
+{
+  "lane": "q8-woq-fixed16-divergence-probe64-20260813",
+  "port": 19494,
+  "gpus": "0,1,2,3",
+  "model": "/mnt/fast-ai/llm-models/muse-glimmer-30b-gguf/Muse-Glimmer-30B-UD-Q8_K_XL.gguf",
+  "out": "/mnt/fast-ai/bench-results/muse-glimmer-30b/sweeps/q8-woq-fixed16-divergence-probe64-20260813.jsonl",
+  "configs": [
+    {
+      "label": "fixed16-probs-a",
+      "spec": false,
+      "health_tries": 180,
+      "args": ["-sm", "tensor", "-bs", "-lv", "4"],
+      "request": {
+        "n_predict": 64,
+        "backend_sampling": true,
+        "samplers": ["temperature"],
+        "return_tokens": true,
+        "n_probs": 2
+      },
+      "env": {
+        "LLAMA_BACKEND_GREEDY_BATCH_ROWS": "1",
+        "LLAMA_TP_BACKEND_SAMPLING": "1",
+        "GGML_SYCL_COMM_ARGMAX": "1",
+        "GGML_SYCL_COMM_ARGMAX_REUSE_LOCAL": "1",
+        "GGML_SYCL_COMM_LAST_EVENT_READY": "1",
+        "GGML_SYCL_DNNL_GEMM_CACHE": "1",
+        "GGML_SYCL_DNNL_GEMM_BIND_CACHE": "1",
+        "GGML_SYCL_BF16_GRAPH_CONVERSION_CACHE": "0",
+        "GGML_META_PARALLEL_SUBMIT": "1",
+        "GGML_META_PERSISTENT_PARALLEL_SUBMIT": "0",
+        "GGML_SYCL_Q8_0_WOQ_BF16": "1",
+        "GGML_SYCL_Q8_0_WOQ_FIXED16": "1",
+        "GGML_SYCL_ENABLE_GRAPH": "0"
+      }
+    },
+    {
+      "label": "fixed16-probs-b",
+      "spec": false,
+      "health_tries": 180,
+      "args": ["-sm", "tensor", "-bs", "-lv", "4"],
+      "request": {
+        "n_predict": 64,
+        "backend_sampling": true,
+        "samplers": ["temperature"],
+        "return_tokens": true,
+        "n_probs": 2
+      },
+      "env": {
+        "LLAMA_BACKEND_GREEDY_BATCH_ROWS": "1",
+        "LLAMA_TP_BACKEND_SAMPLING": "1",
+        "GGML_SYCL_COMM_ARGMAX": "1",
+        "GGML_SYCL_COMM_ARGMAX_REUSE_LOCAL": "1",
+        "GGML_SYCL_COMM_LAST_EVENT_READY": "1",
+        "GGML_SYCL_DNNL_GEMM_CACHE": "1",
+        "GGML_SYCL_DNNL_GEMM_BIND_CACHE": "1",
+        "GGML_SYCL_BF16_GRAPH_CONVERSION_CACHE": "0",
+        "GGML_META_PARALLEL_SUBMIT": "1",
+        "GGML_META_PERSISTENT_PARALLEL_SUBMIT": "0",
+        "GGML_SYCL_Q8_0_WOQ_BF16": "1",
+        "GGML_SYCL_Q8_0_WOQ_FIXED16": "1",
+        "GGML_SYCL_ENABLE_GRAPH": "0"
+      }
+    }
+  ]
+}

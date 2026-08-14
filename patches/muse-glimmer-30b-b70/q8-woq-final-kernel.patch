@@ -1,0 +1,536 @@
+diff --git a/ggml/src/ggml-sycl/common.hpp b/ggml/src/ggml-sycl/common.hpp
+index 098d9d9e1..800d11df2 100644
+--- a/ggml/src/ggml-sycl/common.hpp
++++ b/ggml/src/ggml-sycl/common.hpp
+@@ -408,6 +408,38 @@ struct ggml_backend_sycl_context {
+ 
+     std::unordered_map<std::string, std::unique_ptr<dnnl_gemm_cache_entry>> dnnl_gemm_cache;
+ 
++    // Direct Q8_0 weight-only matmul primitives. The weights remain in ggml's
++    // incumbent dense-qs reorder; only descriptors/primitive state live here.
++    struct q8_0_woq_cache_entry {
++        dnnl::memory::desc src_md;
++        dnnl::memory::desc weights_md;
++        dnnl::memory::desc dst_md;
++        dnnl::memory::desc scales_md;
++        dnnl::memory::desc scratchpad_md;
++        dnnl::matmul       primitive;
++        std::string        impl;
++
++        q8_0_woq_cache_entry(
++                dnnl::memory::desc src_md,
++                dnnl::memory::desc weights_md,
++                dnnl::memory::desc dst_md,
++                dnnl::memory::desc scales_md,
++                dnnl::memory::desc scratchpad_md,
++                dnnl::matmul primitive,
++                std::string impl) :
++            src_md(std::move(src_md)),
++            weights_md(std::move(weights_md)),
++            dst_md(std::move(dst_md)),
++            scales_md(std::move(scales_md)),
++            scratchpad_md(std::move(scratchpad_md)),
++            primitive(std::move(primitive)),
++            impl(std::move(impl)) {}
++    };
++
++    std::unordered_map<std::string, std::unique_ptr<q8_0_woq_cache_entry>> q8_0_woq_cache;
++    uint64_t q8_0_woq_hits    = 0;
++    uint64_t q8_0_woq_rejects = 0;
++
+     dnnl::engine make_engine(sycl::queue* q) {
+         // Get the device associated with the queue
+         sycl::device dev = q->get_device();
+@@ -511,6 +543,7 @@ struct ggml_backend_sycl_context {
+     };
+     std::unordered_map<bf16_graph_conversion_key, std::unique_ptr<bf16_graph_conversion_entry>,
+                        bf16_graph_conversion_key_hash> bf16_graph_conversions;
++
+     bool bf16_graph_conversion_cache_active = false;
+ #endif
+ 
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index bafffaaeb..e789d7945 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -98,6 +98,8 @@ int g_ggml_sycl_dnnl_gemm_cache = 0;
+ int g_ggml_sycl_dnnl_gemm_bind_cache = 0;
+ int g_ggml_sycl_dnnl_ffn_batch2 = 0;
+ int g_ggml_sycl_dnnl_attn_batch2 = 0;
++int g_ggml_sycl_q8_0_woq_bf16 = 0;
++int g_ggml_sycl_q8_0_woq_fixed16 = 0;
+ int g_ggml_sycl_fa_onednn = 1;
+ int g_ggml_sycl_fa_onednn_max_kv = 0;
+ int g_ggml_sycl_enable_vmm = 1;
+@@ -410,6 +412,14 @@ ggml_backend_sycl_context::ggml_backend_sycl_context(int device) :
+ }
+ 
+ ggml_backend_sycl_context::~ggml_backend_sycl_context() {
++#if GGML_SYCL_DNNL
++    if (q8_0_woq_hits != 0 || q8_0_woq_rejects != 0) {
++        GGML_LOG_INFO("[SYCL Q8_0 WOQ] device=%d ctx=%p summary: hits=%" PRIu64
++                      " rejects=%" PRIu64 " cached_primitives=%zu\n",
++                      device, (void *) this, q8_0_woq_hits, q8_0_woq_rejects,
++                      q8_0_woq_cache.size());
++    }
++#endif
+     if (device_timeline == nullptr) {
+         return;
+     }
+@@ -640,6 +650,8 @@ static void ggml_check_sycl() try {
+         g_ggml_sycl_dnnl_gemm_bind_cache = ggml_sycl_get_env("GGML_SYCL_DNNL_GEMM_BIND_CACHE", 0);
+         g_ggml_sycl_dnnl_ffn_batch2 = ggml_sycl_get_env("GGML_SYCL_DNNL_FFN_BATCH2", 0);
+         g_ggml_sycl_dnnl_attn_batch2 = ggml_sycl_get_env("GGML_SYCL_DNNL_ATTN_BATCH2", 0);
++        g_ggml_sycl_q8_0_woq_bf16 = ggml_sycl_get_env("GGML_SYCL_Q8_0_WOQ_BF16", 0);
++        g_ggml_sycl_q8_0_woq_fixed16 = ggml_sycl_get_env("GGML_SYCL_Q8_0_WOQ_FIXED16", 0);
+         g_ggml_sycl_fa_onednn = ggml_sycl_get_env("GGML_SYCL_FA_ONEDNN", 1);
+         g_ggml_sycl_fa_onednn_max_kv = ggml_sycl_get_env("GGML_SYCL_FA_ONEDNN_MAX_KV", 0);
+         g_ggml_sycl_enable_vmm = ggml_sycl_get_env("GGML_SYCL_ENABLE_VMM", 1);
+@@ -714,6 +726,8 @@ static void ggml_check_sycl() try {
+         GGML_LOG_INFO("  GGML_SYCL_DNNL_GEMM_BIND_CACHE: %d\n", g_ggml_sycl_dnnl_gemm_bind_cache);
+         GGML_LOG_INFO("  GGML_SYCL_DNNL_FFN_BATCH2: %d\n", g_ggml_sycl_dnnl_ffn_batch2);
+         GGML_LOG_INFO("  GGML_SYCL_DNNL_ATTN_BATCH2: %d\n", g_ggml_sycl_dnnl_attn_batch2);
++        GGML_LOG_INFO("  GGML_SYCL_Q8_0_WOQ_BF16: %d\n", g_ggml_sycl_q8_0_woq_bf16);
++        GGML_LOG_INFO("  GGML_SYCL_Q8_0_WOQ_FIXED16: %d\n", g_ggml_sycl_q8_0_woq_fixed16);
+         GGML_LOG_INFO("  GGML_SYCL_FA_ONEDNN: %d\n", g_ggml_sycl_fa_onednn);
+ #else
+         GGML_LOG_INFO("  GGML_SYCL_ENABLE_DNN: DNN disabled by compile flag\n");
+@@ -855,6 +869,8 @@ struct ggml_backend_sycl_buffer_context {
+     std::string name;
+     optimize_feature opt_feature;
+     std::vector<ggml_tensor_extra_gpu *> tensor_extras;
++    std::mutex q8_0_woq_mutex;
++    std::unordered_map<const void *, void *> q8_0_woq_scale_sidecars;
+     bool is_usm_system;
+ 
+     ggml_backend_sycl_buffer_context(int device, void * dev_ptr, queue_ptr stream, bool is_usm_system) :
+@@ -864,7 +880,22 @@ struct ggml_backend_sycl_buffer_context {
+             opt_feature = ggml_sycl_info().devices[device].opt_feature;
+         }
+ 
++    void clear_q8_0_woq_scale_sidecars() {
++        std::lock_guard<std::mutex> lock(q8_0_woq_mutex);
++        if (q8_0_woq_scale_sidecars.empty()) {
++            return;
++        }
++        // The sidecars are persistent model data. Waiting is teardown/reset
++        // only and guarantees no queued oneDNN execution still reads them.
++        stream->wait_and_throw();
++        for (const auto & item : q8_0_woq_scale_sidecars) {
++            ggml_sycl_free_device(item.second, *stream);
++        }
++        q8_0_woq_scale_sidecars.clear();
++    }
++
+     ~ggml_backend_sycl_buffer_context() {
++        clear_q8_0_woq_scale_sidecars();
+         if (dev_ptr != nullptr) {
+             ggml_sycl_set_device(device);
+             if (is_usm_system)
+@@ -1178,6 +1209,7 @@ static void ggml_backend_sycl_buffer_reset(ggml_backend_buffer_t buffer) {
+     ggml_backend_sycl_buffer_context * ctx = (ggml_backend_sycl_buffer_context *) buffer->context;
+ 
+     if (ctx != nullptr) {
++        ctx->clear_q8_0_woq_scale_sidecars();
+         for (ggml_tensor_extra_gpu * extra : ctx->tensor_extras) {
+             release_extra_gpu(extra);
+         }
+@@ -4954,6 +4986,385 @@ static bool can_use_mul_mat_vec_q(const ggml_tensor * src0, const ggml_tensor *
+            src1->ne[1] <= MMVQ_MAX_BATCH_SIZE;
+ }
+ 
++#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
++
++enum class muse_q8_0_projection {
++    NONE,
++    ATTN_Q_OR_GATE,
++    ATTN_OUTPUT,
++    FFN_UP_OR_GATE,
++    FFN_DOWN,
++};
++
++static muse_q8_0_projection muse_q8_0_projection_from_name(const char * name) {
++    if (std::strncmp(name, "blk.", 4) != 0) {
++        return muse_q8_0_projection::NONE;
++    }
++    char * end = nullptr;
++    const long block = std::strtol(name + 4, &end, 10);
++    if (end == name + 4 || block < 0 || block >= 52) {
++        return muse_q8_0_projection::NONE;
++    }
++    if (std::strcmp(end, ".attn_q.weight") == 0 ||
++        std::strcmp(end, ".attn_gate.weight") == 0) {
++        return muse_q8_0_projection::ATTN_Q_OR_GATE;
++    }
++    if (std::strcmp(end, ".attn_output.weight") == 0) {
++        return muse_q8_0_projection::ATTN_OUTPUT;
++    }
++    if (std::strcmp(end, ".ffn_up.weight") == 0 ||
++        std::strcmp(end, ".ffn_gate.weight") == 0) {
++        return muse_q8_0_projection::FFN_UP_OR_GATE;
++    }
++    if (std::strcmp(end, ".ffn_down.weight") == 0) {
++        return muse_q8_0_projection::FFN_DOWN;
++    }
++    return muse_q8_0_projection::NONE;
++}
++
++static bool muse_q8_0_projection_shape_matches(
++        muse_q8_0_projection projection, int64_t k, int64_t o) {
++    switch (projection) {
++        case muse_q8_0_projection::ATTN_Q_OR_GATE:
++            return k == 6656 && o == 2048;
++        case muse_q8_0_projection::ATTN_OUTPUT:
++            return k == 2048 && o == 6656;
++        case muse_q8_0_projection::FFN_UP_OR_GATE:
++            return k == 6656 && o == 4992;
++        case muse_q8_0_projection::FFN_DOWN:
++            return k == 4992 && o == 6656;
++        case muse_q8_0_projection::NONE:
++            return false;
++    }
++    return false;
++}
++
++static void ggml_sycl_q8_0_woq_reject(
++        ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
++        const ggml_tensor * src1, const char * reason) {
++    ++ctx.q8_0_woq_rejects;
++    if (ctx.q8_0_woq_rejects <= 16) {
++        GGML_LOG_WARN("[SYCL Q8_0 WOQ] device=%d ctx=%p reject # %" PRIu64
++                      ": weight=%s k=%" PRId64 " o=%" PRId64 " n=%" PRId64
++                      " reason=%s\n",
++                      ctx.device, (void *) &ctx, ctx.q8_0_woq_rejects,
++                      src0->name, src0->ne[0], src0->ne[1], src1->ne[1], reason);
++    }
++}
++
++static ggml_backend_sycl_context::q8_0_woq_cache_entry *
++ggml_sycl_q8_0_woq_get_cache(
++        ggml_backend_sycl_context & ctx, const queue_ptr & queue,
++        int64_t k, int64_t o, int64_t n, std::string & reject_reason) {
++    char key_buffer[128];
++    std::snprintf(key_buffer, sizeof(key_buffer), "%p:%" PRId64 ":%" PRId64 ":%" PRId64,
++                  (void *) queue, k, o, n);
++    const std::string key(key_buffer);
++    auto cached = ctx.q8_0_woq_cache.find(key);
++    if (cached != ctx.q8_0_woq_cache.end()) {
++        if (!cached->second) {
++            reject_reason = "oneDNN descriptor was previously rejected";
++            return nullptr;
++        }
++        return cached->second.get();
++    }
++
++    try {
++        using dt = dnnl::memory::data_type;
++        using tag = dnnl::memory::format_tag;
++        const dnnl::engine engine = ctx.engine_dnnl(queue);
++        const dnnl::memory::desc src_md({n, k}, dt::bf16, tag::ab);
++        // ggml's reordered qs prefix is physical [O,K]. Expose it as logical
++        // oneDNN weights [K,O] without copying by using strides [1,K].
++        const dnnl::memory::desc weights_md({k, o}, dt::s8, {1, k});
++        const dnnl::memory::desc dst_md({n, o}, dt::f32, tag::ab);
++        const dnnl::memory::desc scales_md({k / QK8_0, o}, dt::f16, tag::ab);
++
++        dnnl::primitive_attr attr;
++        attr.set_scratchpad_mode(dnnl::scratchpad_mode::user);
++        attr.set_scales(DNNL_ARG_WEIGHTS, 3, {QK8_0, 1}, dt::f16);
++        attr.set_fpmath_mode(dnnl::fpmath_mode::bf16, true);
++        const dnnl::matmul::primitive_desc pd(engine, src_md, weights_md, dst_md, attr);
++        const std::string impl = pd.impl_info_str();
++        const dnnl::memory::desc queried_scales_md = pd.query_md(
++            dnnl::query::exec_arg_md, DNNL_ARG_ATTR_SCALES | DNNL_ARG_WEIGHTS);
++        if (pd.src_desc() != src_md) {
++            reject_reason = "oneDNN changed the direct BF16 source descriptor";
++        } else if (pd.dst_desc() != dst_md) {
++            reject_reason = "oneDNN changed the direct F32 destination descriptor";
++        } else if (pd.src_desc().get_size() != (size_t) n * k * sizeof(sycl::ext::oneapi::bfloat16)) {
++            reject_reason = "oneDNN source descriptor size mismatch";
++        } else if (pd.dst_desc().get_size() != (size_t) n * o * sizeof(float)) {
++            reject_reason = "oneDNN destination descriptor size mismatch";
++        } else if (scales_md.get_size() !=
++                   (size_t) (k / QK8_0) * o * sizeof(sycl::half)) {
++            reject_reason = "oneDNN scale descriptor size mismatch";
++        } else if (pd.weights_desc() != weights_md) {
++            reject_reason = "oneDNN did not retain direct-strided weights";
++        } else if (!queried_scales_md.is_zero() && queried_scales_md != scales_md) {
++            reject_reason = "oneDNN scale execution descriptor mismatch";
++        } else if (impl.find("ref") != std::string::npos) {
++            reject_reason = "oneDNN selected a reference implementation";
++        }
++        if (!reject_reason.empty()) {
++            ctx.q8_0_woq_cache.emplace(key, nullptr);
++            return nullptr;
++        }
++
++        auto entry = std::make_unique<ggml_backend_sycl_context::q8_0_woq_cache_entry>(
++            src_md, pd.weights_desc(), pd.dst_desc(), scales_md,
++            pd.scratchpad_desc(), dnnl::matmul(pd), impl);
++        auto inserted = ctx.q8_0_woq_cache.emplace(key, std::move(entry));
++        return inserted.first->second.get();
++    } catch (const dnnl::error & error) {
++        reject_reason = std::string("oneDNN descriptor creation failed: ") + error.what();
++        ctx.q8_0_woq_cache.emplace(key, nullptr);
++        return nullptr;
++    }
++}
++
++static sycl::half * ggml_sycl_q8_0_woq_get_scale_sidecar(
++        ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
++        std::string & reject_reason) {
++    auto * buffer_ctx = static_cast<ggml_backend_sycl_buffer_context *>(src0->buffer->context);
++    const queue_ptr queue = ctx.stream();
++    if (queue != buffer_ctx->stream) {
++        reject_reason = "compute queue differs from the weight buffer queue";
++        return nullptr;
++    }
++    if (!queue->has_property<sycl::property::queue::in_order>() ||
++        !buffer_ctx->stream->has_property<sycl::property::queue::in_order>()) {
++        reject_reason = "incumbent compute and weight queues must be in-order";
++        return nullptr;
++    }
++    std::lock_guard<std::mutex> lock(buffer_ctx->q8_0_woq_mutex);
++    auto cached = buffer_ctx->q8_0_woq_scale_sidecars.find(src0->data);
++    if (cached != buffer_ctx->q8_0_woq_scale_sidecars.end()) {
++        return static_cast<sycl::half *>(cached->second);
++    }
++
++    auto * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
++    if (!extra) {
++        reject_reason = "tensor has no reorder metadata";
++        return nullptr;
++    }
++    if (!extra->optimized_feature.reorder) {
++        if (!reorder_qw(src0, queue)) {
++            reject_reason = "incumbent Q8_0 reorder failed";
++            return nullptr;
++        }
++        extra->optimized_feature.reorder = true;
++    }
++
++    const int64_t k = src0->ne[0];
++    const int64_t o = src0->ne[1];
++    const int64_t groups = k / QK8_0;
++    const size_t scale_elements = (size_t) groups * o;
++    sycl::half * sidecar = nullptr;
++    try {
++        sidecar = static_cast<sycl::half *>(
++            ggml_sycl_malloc_device(scale_elements * sizeof(sycl::half), *queue));
++    } catch (const sycl::exception & error) {
++        reject_reason = std::string("scale sidecar allocation failed: ") + error.what();
++        return nullptr;
++    }
++    if (!sidecar) {
++        reject_reason = "scale sidecar allocation returned null";
++        return nullptr;
++    }
++
++    // The incumbent reordered tail is [O,K/32]. Preserve it for generic
++    // DMMV/MMVQ/F32 fallback and materialize only one transposed F16 sidecar.
++    const sycl::half * owner_major = reinterpret_cast<const sycl::half *>(
++        static_cast<const int8_t *>(src0->data) + (size_t) k * o);
++    try {
++        queue->parallel_for(sycl::range<1>(scale_elements), [=](sycl::id<1> index) {
++            const size_t linear = index[0];
++            const int64_t group = linear / o;
++            const int64_t output = linear - (size_t) group * o;
++            sidecar[linear] = owner_major[(size_t) output * groups + group];
++        });
++    } catch (const sycl::exception & error) {
++        ggml_sycl_free_device(sidecar, *queue);
++        reject_reason = std::string("scale sidecar transpose submission failed: ") + error.what();
++        return nullptr;
++    }
++    buffer_ctx->q8_0_woq_scale_sidecars.emplace(src0->data, sidecar);
++    return sidecar;
++}
++
++static bool ggml_sycl_try_mul_mat_q8_0_woq_bf16(
++        ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
++        const ggml_tensor * src1, ggml_tensor * dst, bool split) {
++    if (!g_ggml_sycl_q8_0_woq_bf16) {
++        return false;
++    }
++    const muse_q8_0_projection projection = muse_q8_0_projection_from_name(src0->name);
++    if (projection == muse_q8_0_projection::NONE) {
++        return false;
++    }
++
++    const int64_t k = src0->ne[0];
++    const int64_t o = src0->ne[1];
++    const int64_t n = src1->ne[1];
++    const bool fixed16 = g_ggml_sycl_q8_0_woq_fixed16 && n >= 1 && n <= 16;
++    const int64_t execution_n = fixed16 ? 16 : n;
++    const char * reject_reason = nullptr;
++    if (split || src0->buffer == nullptr || !ggml_backend_buffer_is_sycl(src0->buffer)) {
++        reject_reason = "weight is not a local unsplit SYCL tensor";
++    } else if (src0->view_src != nullptr || src0->data == nullptr) {
++        reject_reason = "weight must own non-null storage";
++    } else if (!g_ggml_sycl_enable_dnn) {
++        reject_reason = "oneDNN is disabled";
++    } else if (!g_ggml_sycl_enable_optimize || !ctx.opt_feature.reorder) {
++        reject_reason = "incumbent Q8 reorder is unavailable";
++    } else if (src0->type != GGML_TYPE_Q8_0 || src1->type != GGML_TYPE_F32 ||
++               dst->type != GGML_TYPE_F32) {
++        reject_reason = "requires Q8_0/F32/F32";
++    } else if (src0->ne[2] != 1 || src0->ne[3] != 1 ||
++               src1->ne[2] != 1 || src1->ne[3] != 1 ||
++               dst->ne[2] != 1 || dst->ne[3] != 1) {
++        reject_reason = "requires rank-2 tensors";
++    } else if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1) ||
++               !ggml_is_contiguous(dst)) {
++        reject_reason = "requires contiguous tensors";
++    } else if (k % QK8_0 != 0 || src1->ne[0] != k || dst->ne[0] != o ||
++               dst->ne[1] != n) {
++        reject_reason = "matrix dimensions or Q8 group alignment mismatch";
++    } else if (ggml_nbytes(src0) !=
++               (size_t) k * o + sizeof(sycl::half) * (size_t) (k / QK8_0) * o) {
++        reject_reason = "Q8_0 storage size is incompatible with dense-qs plus scale tail";
++    } else if (n < 1 || n > 16) {
++        reject_reason = "initial proof is decode/verifier-only (N <= 16)";
++    } else if (!muse_q8_0_projection_shape_matches(projection, k, o)) {
++        reject_reason = "projection name/local TP4 shape mismatch";
++    } else if (dst->op_params[0] != GGML_PREC_DEFAULT) {
++        reject_reason = "non-default precision requested";
++    }
++    if (reject_reason) {
++        ggml_sycl_q8_0_woq_reject(ctx, src0, src1, reject_reason);
++        return false;
++    }
++
++    const queue_ptr queue = ctx.stream();
++    std::string dynamic_reject;
++    auto * entry = ggml_sycl_q8_0_woq_get_cache(ctx, queue, k, o, execution_n, dynamic_reject);
++    if (!entry) {
++        ggml_sycl_q8_0_woq_reject(ctx, src0, src1, dynamic_reject.c_str());
++        return false;
++    }
++    sycl::half * scales = ggml_sycl_q8_0_woq_get_scale_sidecar(ctx, src0, dynamic_reject);
++    if (!scales) {
++        ggml_sycl_q8_0_woq_reject(ctx, src0, src1, dynamic_reject.c_str());
++        return false;
++    }
++
++    using bf16_t = sycl::ext::oneapi::bfloat16;
++    const size_t valid_src_elements = (size_t) n * k;
++    const size_t execution_src_elements = (size_t) execution_n * k;
++    ggml_sycl_pool_alloc<bf16_t> temporary_src(ctx.pool());
++    ggml_sycl_pool_alloc<float> padded_dst(ctx.pool());
++    const dnnl::engine engine = ctx.engine_dnnl(queue);
++    const dnnl::stream stream = ctx.stream_dnnl(queue);
++    // The VMM pool is strictly LIFO. Materialize persistent oneDNN scratch
++    // before the graph-scoped conversion/destination temporaries, then make
++    // padded_dst the final allocation so its stack destructor can release it
++    // before any cached conversion entry at the graph boundary.
++    const dnnl::memory scratchpad_mem = ctx.get_scratchpad_mem(entry->scratchpad_md, engine, queue);
++    bf16_t * src_bf16 = nullptr;
++    const auto submit_conversion = [&](bf16_t * converted) {
++        const to_bf16_sycl_t to_bf16 = ggml_get_to_bf16_sycl(src1->type, dst);
++        GGML_ASSERT(to_bf16 != nullptr);
++        to_bf16(src1->data, converted, valid_src_elements, queue);
++        if (fixed16 && execution_src_elements > valid_src_elements) {
++            queue->memset(converted + valid_src_elements, 0,
++                          (execution_src_elements - valid_src_elements) * sizeof(bf16_t));
++        }
++    };
++    static const int conversion_cache =
++        ggml_sycl_get_env("GGML_SYCL_BF16_GRAPH_CONVERSION_CACHE", 0);
++    if (fixed16) {
++        if (!temporary_src.alloc(execution_src_elements)) {
++            ggml_sycl_q8_0_woq_reject(ctx, src0, src1, "fixed16 BF16 conversion allocation failed");
++            return false;
++        }
++        submit_conversion(temporary_src.get());
++        src_bf16 = temporary_src.get();
++    } else if (!fixed16 && conversion_cache && ctx.bf16_graph_conversion_cache_active) {
++        const ggml_backend_sycl_context::bf16_graph_conversion_key key = {
++            src1->data, execution_src_elements, src1->type,
++        };
++        auto cached = ctx.bf16_graph_conversions.find(key);
++        if (cached == ctx.bf16_graph_conversions.end()) {
++            auto conversion = std::make_unique<
++                ggml_backend_sycl_context::bf16_graph_conversion_entry>(ctx.pool(), execution_src_elements);
++            if (!conversion->buffer.get()) {
++                ggml_sycl_q8_0_woq_reject(ctx, src0, src1, "BF16 conversion allocation failed");
++                return false;
++            }
++            submit_conversion(conversion->buffer.get());
++            src_bf16 = conversion->buffer.get();
++            ctx.bf16_graph_conversions.emplace(key, std::move(conversion));
++        } else {
++            src_bf16 = cached->second->buffer.get();
++        }
++    } else {
++        if (!temporary_src.alloc(execution_src_elements)) {
++            ggml_sycl_q8_0_woq_reject(ctx, src0, src1, "BF16 conversion allocation failed");
++            return false;
++        }
++        submit_conversion(temporary_src.get());
++        src_bf16 = temporary_src.get();
++    }
++
++    float * execution_dst = static_cast<float *>(dst->data);
++    if (fixed16) {
++        execution_dst = padded_dst.alloc((size_t) execution_n * o);
++        if (!execution_dst) {
++            ggml_sycl_q8_0_woq_reject(ctx, src0, src1, "fixed16 destination allocation failed");
++            return false;
++        }
++    }
++    const dnnl::memory src_mem(entry->src_md, engine, src_bf16);
++    const dnnl::memory weights_mem(entry->weights_md, engine, src0->data);
++    const dnnl::memory dst_mem(entry->dst_md, engine, execution_dst);
++    const dnnl::memory scales_mem(entry->scales_md, engine, scales);
++    const std::unordered_map<int, dnnl::memory> args = {
++        {DNNL_ARG_SRC, src_mem},
++        {DNNL_ARG_WEIGHTS, weights_mem},
++        {DNNL_ARG_DST, dst_mem},
++        {DNNL_ARG_ATTR_SCALES | DNNL_ARG_WEIGHTS, scales_mem},
++        {DNNL_ARG_SCRATCHPAD, scratchpad_mem},
++    };
++
++    // Descriptor/allocation failures above fall back while incumbent Q8 bytes
++    // are intact. An execute failure is not caught: submission may have begun,
++    // so running the generic output path afterward would be unsafe.
++    if (ctx.device_timeline_active()) {
++        auto completion = dnnl::sycl_interop::execute(entry->primitive, stream, args);
++        ctx.device_timeline_note_dnnl_event(std::move(completion));
++    } else {
++        entry->primitive.execute(stream, args);
++    }
++    if (fixed16) {
++        queue->memcpy(dst->data, execution_dst, (size_t) n * o * sizeof(float));
++    }
++
++    ++ctx.q8_0_woq_hits;
++    if (ctx.q8_0_woq_hits == 1) {
++        GGML_LOG_INFO("[SYCL Q8_0 WOQ] device=%d ctx=%p first hit: weight=%s"
++                      " k=%" PRId64 " o=%" PRId64 " n=%" PRId64
++                      " execution_n=%" PRId64 " fixed16=%d impl=%s"
++                      " scale_sidecar=%zu bytes\n",
++                      ctx.device, (void *) &ctx, src0->name, k, o, n,
++                      execution_n, fixed16, entry->impl.c_str(),
++                      (size_t) (k / QK8_0) * o * sizeof(sycl::half));
++    }
++    return true;
++}
++
++#endif
++
+ 
+ // Lean direct path for BF16 weights x F32 activations at small batch
+ // (decode + speculative verify shapes). One kernel submission, no src1
+@@ -5541,6 +5952,12 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
+         min_compute_capability = ggml_sycl_info().devices[ctx.device].cc;
+     }
+ 
++#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
++    if (ggml_sycl_try_mul_mat_q8_0_woq_bf16(ctx, src0, src1, dst, split)) {
++        return;
++    }
++#endif
++
+     // check data types and tensor shapes for custom matrix multiplication kernels:
+     bool use_dequantize_mul_mat_vec = can_use_dequantize_mul_mat_vec(src0, src1, dst);
+ 

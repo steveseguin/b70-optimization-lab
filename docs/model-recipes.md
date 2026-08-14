@@ -24,6 +24,7 @@ Do not compare two results unless their model, quantization, prompt length, outp
 | Recipe | Status | What It Is For |
 | --- | --- | --- |
 | `../repro/qwen36-27b-q8-tp2-asrock-b70/` | Promoted target-only TP2 repro | Complete mndodd-based source patch, bounded build/server launchers, pinned Q8_0 model, fixed cold suite, and exact-output gates for `35.699 tok/s` conventional on two ASRock B70s with no speculation. |
+| `../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/` | Closed-result exact repro | Four-B70 Muse UD-Q8_K_XL plus pretrained BF16 DFlash: public-base source restore, fixed-N16 oneDNN WOQ, ARGMAX, raw evidence, two canonical century runs, frozen cold suite, and explicit Q8/quality limits. |
 | `../repro/laguna-s-2.1-int4-b70-102tps-20260726/` | Qualified closed-result repro | Portable sealed-evidence audit, exact source bundles, model-at-revision restore and manifest, native loader verification, and one-cold-suite replay for the four-B70 Laguna row: `102.971` under the submitted legacy convention, `101.942` conventionally. |
 | `../repro/deepseek-v4-flash-k160-b70-80tps-20260718/` | Closed-frontier strict speed repro | Exact source bundles, fail-closed launcher, validity gates, and evidence for the 80.820 tok/s target-verified DSpark7 result on four B70s. |
 | `../results/gemma4-26b-a4b-q8-b70/` | Result packet | Gemma 4 26B A4B Q8/INT8 one-B70 speed frontier, long-context service lane, older baselines, failed paths, validity gates, vLLM comparison lanes, and LocalMaxxing evidence. |

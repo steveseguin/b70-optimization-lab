@@ -1,10 +1,21 @@
 # Muse Glimmer 30B B70 Experiments
 
-Active experiment lane opened 2026-08-10 for Meta Muse Glimmer 30B on Intel
-Arc Pro B70. Operator directive: **maximum quality first (lossless or very
-near lossless), then maximum speed.** Four B70s are available; the model may
-run one replica per card only if quality survives, otherwise one replica per
-two cards.
+Experiment lane opened 2026-08-10 and closed/banked 2026-08-13. The original
+lossless BF16 goal did not reach 100 tok/s. A later operator-approved
+no-training compressed-target route did: Muse UD-Q8_K_XL plus pretrained BF16
+DFlash and fixed-N16 oneDNN WOQ measured two independent canonical means of
+`100.088` and `100.649 tok/s`, and a frozen cold-suite conventional first-100
+median of `161.900 tok/s` on four B70s.
+
+Start with the [promoted result packet](../../results/muse-glimmer-30b-q8-woq-b70/README.md)
+and [standalone repro](../../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md).
+The earlier fixed-N16 integration checkpoint is preserved in
+[`notes/2026-08-13-q8-woq-kernel-integration.md`](notes/2026-08-13-q8-woq-kernel-integration.md)
+with its compact `98.188 tok/s` intermediate record in
+[`data/muse-q8-woq-fixed16-best-20260813.json`](../../data/muse-q8-woq-fixed16-best-20260813.json).
+Everything below is retained as historical experiment context. Do not describe
+the promoted result as BF16/lossless or universally token-exact, and do not
+resume this lane without a new preregistration.
 
 ## Model Facts (from the official card, release 2026-08-10)
 
@@ -54,8 +65,12 @@ not memory-constrained in the 2-card arms.
   `muse-glimmer-30B-kquant-dynamic.gguf`, `Muse-Glimmer-30B-UD-Q6_K_XL.gguf`.
   Copy Arm A to NVMe before formal timing runs if USB read speed contaminates
   load or paging behavior (decode should be VRAM-resident regardless).
-- Runtime: `/home/steve/src/llama.cpp-muse-glimmer` at upstream `030ebb558`
-  (clean master; Muse Glimmer support merged at `62bf73d25`, PR #26841),
+- Initial baseline runtime: `/home/steve/src/llama.cpp-muse-glimmer` at upstream
+  `030ebb558` (clean master; Muse Glimmer support merged at `62bf73d25`, PR
+  #26841). The promoted record instead used `llama.cpp-muse-100` at private
+  head `1ff6bcb6c` plus a final three-file patch; its complete public-base
+  restoration is in `patches/muse-glimmer-30b-b70/`.
+  Baseline
   build `build-sycl-b70-aot-bmg-g31` (icx/icpx 2026.0, GGML_SYCL TARGET=INTEL,
   DEVICE_ARCH=bmg-g31, DNN=ON, GRAPH=ON), version 10358.
   Keep this tree clean-master until baselines are banked; patches go to

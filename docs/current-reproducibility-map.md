@@ -19,6 +19,23 @@ comparisons without sacrificing the current endpoint. The lab has spare EPYC
 9015 PCIe 5.0 slot capacity, so the missing piece for broader Intel coverage is
 higher-memory XPU hardware rather than host expansion.
 
+## Promoted Closed Recipes
+
+### Muse-Glimmer-30B Q8/WOQ Century Result
+
+- [result packet](../results/muse-glimmer-30b-q8-woq-b70/README.md)
+- [standalone reproduction](../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md)
+- [source patch and history bundle](../patches/muse-glimmer-30b-b70/README.md)
+- [structured result](../data/muse-q8-woq-argmax-century-20260813.json)
+
+Identity: four B70s, TP4/concurrency one, Muse UD-Q8_K_XL target, pretrained
+BF16 DFlash, fixed-N16 direct oneDNN WOQ, distributed ARGMAX. Two canonical
+full-256 arithmetic means were `100.088` and `100.649 tok/s`; the frozen
+15-prompt conventional first-100 median was `161.900 tok/s`, p10 `108.574`,
+with every prompt cache-zero. This is a closed Q8/WOQ target-verified result,
+not BF16/lossless or universally token-exact. Raw evidence is mirrored into
+the repro, so review does not depend on `/mnt` paths.
+
 ## Historical Production Recipes
 
 As of the 2026-08-08 Laguna closeout, no model endpoint is known to be running;

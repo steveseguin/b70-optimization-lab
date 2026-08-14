@@ -56,3 +56,10 @@ Promote only after quality and identity are clear:
 - [laguna-s-2.1-xpu-b70/](laguna-s-2.1-xpu-b70/): exact vLLM and XPU-kernel
   bundles, reviewable combined patches, supplemental attention-runtime source
   provenance, and links to the qualified four-B70 result and standalone repro.
+
+## Muse-Glimmer-30B Snapshot Pointer
+
+- [muse-glimmer-30b-b70/](muse-glimmer-30b-b70/): complete public-base-to-record
+  llama.cpp patch, private commit-history bundle, split final WOQ/measurement
+  deltas, checksums, and links to the closed four-B70 result and standalone
+  repro.

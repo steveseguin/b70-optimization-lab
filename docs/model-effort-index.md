@@ -32,6 +32,24 @@ path.
 
 ## Active / Recent Efforts
 
+### Muse-Glimmer-30B Q8/WOQ On Four B70s
+
+Main entries:
+
+- [promoted result](../results/muse-glimmer-30b-q8-woq-b70/README.md)
+- [standalone repro](../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md)
+- [complete source snapshots](../patches/muse-glimmer-30b-b70/README.md)
+- [structured record](../data/muse-q8-woq-argmax-century-20260813.json)
+- [experiment archive](../experiments/muse-glimmer-30b-b70/README.md)
+
+Status: closed and banked 2026-08-13. The original BF16/lossless century
+objective was not reached. The operator-approved no-training UD-Q8_K_XL
+successor measured two independent canonical means of `100.088` and `100.649
+tok/s`; the frozen 15-prompt conventional first-100 median was `161.900 tok/s`
+with p10 `108.574` and 15/15 cache-zero. It is target-verified but not BF16,
+lossless, universally token-exact, or uniformly above 100. No LocalMaxxing
+receipt exists. Reopen only with a new objective/preregistration.
+
 ### Qwen3.6 27B Q8_0 Target-Only On Two ASRock B70s
 
 Main entries:

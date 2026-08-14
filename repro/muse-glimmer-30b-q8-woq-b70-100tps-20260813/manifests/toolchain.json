@@ -1,0 +1,39 @@
+{
+  "schema": "muse-q8-woq-toolchain-v1",
+  "record_host": {
+    "os": "Ubuntu 24.04.4 LTS",
+    "kernel": "7.0.0-28-generic",
+    "kernel_cmdline_relevant": "xe.disable_display=1",
+    "gpu_count": 4,
+    "gpu": "Intel Arc Pro B70 32656 MiB",
+    "level_zero_driver": "1.15.38308+1",
+    "intel_gpu_runtime": "26.18.38308.1"
+  },
+  "build": {
+    "llama_cpp_version": 10433,
+    "compiler": "IntelLLVM icx/icpx 2026.0.0",
+    "onednn": "3.11.2 (oneAPI DNNL 2026.0)",
+    "cmake": "4.3.2",
+    "make": "GNU Make 4.3",
+    "generator": "Unix Makefiles",
+    "build_type": "Release",
+    "shared_libraries": true,
+    "cmake_cache_sha256": "b9c16e0233272728bf8d68a0b73f4f405fa2525f8554834a203fd9caecc6b2cc",
+    "compile_commands_sha256": "8678bfba3e2490d6a5b138d28c70a7c9e5c83ccdb1dcf00ff16e231131b70617",
+    "options": {
+      "GGML_NATIVE": "ON",
+      "GGML_OPENMP": "ON",
+      "GGML_SYCL": "ON",
+      "GGML_SYCL_TARGET": "INTEL",
+      "GGML_SYCL_DEVICE_ARCH": "bmg-g31",
+      "GGML_SYCL_DNN": "ON",
+      "GGML_SYCL_GRAPH": "ON",
+      "GGML_SYCL_F16": "OFF",
+      "GGML_SYCL_HOST_MEM_FALLBACK": "ON",
+      "GGML_SYCL_SUPPORT_LEVEL_ZERO_API": "ON",
+      "LLAMA_BUILD_SERVER": "ON",
+      "LLAMA_BUILD_TESTS": "ON",
+      "LLAMA_BUILD_TOOLS": "ON"
+    }
+  }
+}
