@@ -42,3 +42,26 @@ remote-tracking, detached-worktree, and `main` tips.
 
 Do not delete the external bundle until the pushed `main` clone has been
 independently verified and any old remote branch refs have been retired.
+
+## Remote-ref classification
+
+The pre-deletion audit classified every non-`main` ref:
+
+- `origin/experiment/laguna-kernel-loop-20260728` had 497 patch-equivalent
+  commits, seven superseded commits, and no paths absent from the final `main`
+  snapshot.
+- The detached Laguna segmented worktree had 13/13 patch-equivalent commits.
+- The community, validation, topology, reboot-state, and storage refs were
+  already ancestors of the consolidated history.
+- `origin/codex/qwen36-quark-int8-tracking-achieved` at `a84d08e6a` and
+  `origin/codex/qwen36-quark-int8-tracking-pushable-achieved` at `0cb52e699`
+  retained old raw Qwen log backlogs. Those logs were intentionally not copied
+  into the modern source snapshot because current repository policy keeps raw
+  benchmark backlogs outside Git. Both complete histories and blobs are in the
+  verified external bundle above.
+
+The first consolidated push advanced `origin/main` normally, without force,
+from `ce51350b8` to `6a64ba62f`. Local obsolete branch refs and secondary
+worktrees were removed only after this push and archive verification. Remote
+non-`main` refs can be retired after this ledger update is itself visible on
+`main`; their recovery authority is the external bundle and checksum above.
