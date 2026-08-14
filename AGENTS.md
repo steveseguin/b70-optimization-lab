@@ -159,6 +159,15 @@ The previous Gemma 4 26B A4B Q8 one-B70 diagnostic best is:
 
 ## Working Rules
 
+### Main-Only Git Policy
+
+Work directly on `main` only. Never create or maintain feature, experiment,
+promotion, temporary, maintenance, or agent branches or secondary Git
+worktrees. Preserve alternate implementations and recovery points as focused
+commits, patches, bundles, configs, notes, tags, and result artifacts. Pull
+`main` before starting when appropriate, and push focused verified commits back
+to `main` rather than accumulating unpublished side histories.
+
 - Keep c1 easy to restore.
 - Record commands, logs, result paths, patches, and caveats.
 - Put scripts and patches in GitHub whenever they are needed to reproduce a
@@ -169,7 +178,7 @@ The previous Gemma 4 26B A4B Q8 one-B70 diagnostic best is:
   future agents do not rediscover the same dead ends. Promote successful
   patches only after verification, while keeping the experiment record linked.
 - Commit regularly with focused commits and explicit paths. Do not use broad
-  `git add -A` in mixed experiment worktrees.
+  `git add -A` in a mixed experiment tree.
 - When a verified realistic-suite run breaks a real LocalMaxxing record for a
   matching 1/2/3/4 GPU configuration, submit it with model, quantization, GPU
   count, mode, run identity, throughput, correctness status, prompt/output

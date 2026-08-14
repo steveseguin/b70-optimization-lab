@@ -76,3 +76,13 @@ original commit identities are preserved in this verified supplemental bundle:
 /home/steve/git-archives/llm-optimizations-qwen-agent-tp2-20260814.bundle
 SHA-256 b31258a8f44f37fc4ea63de5418bcebd3ff3ae1a1e0c9e4e33551f0ff75c4216
 ```
+
+## Final state
+
+The cleanup completed with one local branch (`main`), one worktree
+(`/home/steve/llm-optimizations`), and one GitHub branch (`main`). The obsolete
+local branches, secondary worktrees, remote feature/experiment/validation
+branches, and stale review refs were removed only after their contents were
+integrated or their original identities were captured in the verified bundles.
+The main-only rule is duplicated in the workspace-level and repository-level
+`AGENTS.md` files so future agents inherit it before making Git changes.
