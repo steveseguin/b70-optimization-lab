@@ -1,14 +1,14 @@
 # Qwen3.6 27B Q8 target-only TP2 on two ASRock B70s
 
-Current resume state: [HANDOFF.md](HANDOFF.md). The 2026-08-14 post-record
-pass tested additional bounded hypotheses but promoted no replacement; the
-measurement and recipe below remain authoritative.
+Current resume state: [HANDOFF.md](HANDOFF.md). The 2026-08-14 pass-2 stack
+promoted a clean-source register-direct Q8 handoff plus direct IMRoPE KV-cache
+write; the measurement and recipe below are authoritative.
 
 ## Outcome
 
-The 2026-08-13 target-only optimization campaign reached **35.699225 tok/s**
+The target-only optimization campaign reached **35.832213 tok/s**
 under conventional 99-inter-token-interval accounting on two ASRock Intel Arc
-Pro B70 32 GiB cards. The historical repository helper reports `36.059823`
+Pro B70 32 GiB cards. The historical repository helper reports `36.194155`
 from the same timestamps. No draft model, MTP, DFlash, n-gram reuse, prompt
 cache, response reuse, or speculative decoding was used.
 
@@ -20,12 +20,12 @@ identical to the accepted pre-state-I/O target-only control.
 
 | Metric | Result |
 | --- | ---: |
-| Conventional 99-interval median | **35.699225 tok/s** |
-| Conventional p10 / mean | `35.199488` / `35.610043 tok/s` |
-| Historical 100-event compatibility median | `36.059823 tok/s` |
-| Full 512-token after-TTFT median | `35.715918 tok/s` |
-| Full 512-token wall median | `35.266336 tok/s` |
-| Median TTFT | `179.163 ms` |
+| Conventional 99-interval median | **35.832213 tok/s** |
+| Conventional p10 / mean | `35.379643` / `35.825000 tok/s` |
+| Historical 100-event compatibility median | `36.194155 tok/s` |
+| Full 512-token after-TTFT median | `35.711040 tok/s` |
+| Full 512-token wall median | `35.256673 tok/s` |
+| Median TTFT | `181.254 ms` |
 | Fixed prompts / completion length | `12 / 512 tokens each` |
 | Cache / fresh gate | `cached_tokens=0` for 12/12; passed |
 | Exact output identity | `12/12` hashes equal the accepted control |
@@ -54,9 +54,10 @@ The lab progression from that fork was:
 | Direct GDN persistent-state I/O | `35.030949` | `+3.132%` |
 | Direct convolution persistent-state I/O, matched attribution run | `35.330307` | `+0.855%` |
 | Prior promoted full-recipe confirmation | `35.494434` | `+0.465%` run variance vs prior final |
-| Recurrent RMS/gate/multiply/Q8 tail fusion | **`35.699225`** | `+0.219%` pooled matched micro A/B; headline delta also includes run variance |
+| Recurrent RMS/gate/multiply/Q8 tail fusion | `35.699225` | `+0.219%` pooled matched micro A/B; headline delta also includes run variance |
+| Register-direct Q8 handoff + IMRoPE direct cache write, clean rebuild | **`35.832213`** | IMRoPE `+0.155%` aggregate same-binary endpoint A/B; final headline includes run variance |
 
-The promoted result is **`+15.065%`** over the matched mndodd fork baseline.
+The promoted result is **`+15.493%`** over the matched mndodd fork baseline.
 The direct-state-I/O attribution percentages use the preceding matched
 512-token run, which was `+13.876%` over mndodd; the faster replay is reported
 as run variance, not credited as another source optimization. Relative gains
@@ -81,13 +82,13 @@ are unchanged by multiplying all helper rates by `0.99`.
   F16 and Level Zero API on; graph, DNN, and host-memory fallback off.
 
 The complete decoded source patch SHA-256 is
-`710b8628f6c94025d9a0516f77bddeeebccdd27d5bd3ebc4f79d2e623b1dd6c7`.
+`c917fcbf01b5af3ed45bb19532cfa0f337066b1330ffde6765564918e7a8d772`.
 
 ## What improved
 
 The preserved full patch combines the earlier accepted lab stack with the two
-strictly admitted state-I/O transformations and one final recurrent-tail
-fusion:
+strictly admitted state-I/O transformations, the recurrent-tail fusion, and
+two pass-2 transformations:
 
 1. The recurrent GDN path normally copied a 1.5 MiB persistent state row into
    a temporary, ran GDN into another temporary, and copied the state back.
@@ -106,6 +107,14 @@ fusion:
    reordered-Q8 handoff. It fires only when that gate projection is already
    present in the precomputed-MMVQ set, and preserves the stock FP32
    boundaries and operation order.
+4. The TP2 collective tail maps each subgroup directly onto one Q8_1 block.
+   After the ordered RMS reduction it writes the required graph-visible F32
+   multiply output while retaining the same 32 values in registers for Q8
+   packing, removing the accepted path's global reread.
+5. The attention-K IMRoPE kernel writes its F32 result directly into the
+   indexed F16 KV-cache destination for the exact
+   `ROPE -> VIEW -> SET_ROWS` closure, eliminating 32 RoPE and 32 SET_ROWS
+   launches per generated token.
 
 Both matchers require exact tensor types, shapes, strides, consumer counts,
 pointer relationships, and non-overlap. Any alternate batch, state, or graph
@@ -171,26 +180,26 @@ The rejected local logs remain under
 `/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260813-tp2-fusion` on the
 reference host so the dead ends are not rediscovered.
 
-The later pass-1 campaign broadened that audit across collective topology,
+The pass-1 campaign broadened that audit across collective topology,
 Level Zero/runtime knobs, Q8 scheduling, recurrent/GDN fusions,
 FlashAttention, CPU submission, and power/clock hypotheses. It produced no
-promoted gain. Preserve its full chronology in
+promoted gain. Pass 2 then promoted the two changes above after a clean rebuild
+and full exact-output replay. Preserve their full chronology in
 [`notes/2026-08-14-qwen36-q8-tp2-40tps-pass1.md`](../../notes/2026-08-14-qwen36-q8-tp2-40tps-pass1.md)
+and [`notes/2026-08-14-qwen36-q8-tp2-40tps-pass2.md`](../../notes/2026-08-14-qwen36-q8-tp2-40tps-pass2.md),
 and use the [handoff](HANDOFF.md) for the current decision summary.
 
 ## Reproduction and evidence
 
 - [Reproduction recipe](../../repro/qwen36-27b-q8-tp2-asrock-b70/README.md)
 - [Full source patch](../../patches/qwen36-27b-q8-tp2-asrock-b70/README.md)
-- [Readable structured summary](../../data/qwen36-q8-tp2-asrock-b70-20260813/summary.json)
-- [Compressed complete raw result](../../data/qwen36-q8-tp2-asrock-b70-20260813/tail-finalfresh-realistic512.json.gz.b64)
+- [Readable structured summary](../../data/qwen36-q8-tp2-asrock-b70-20260814/summary.json)
+- [Compressed complete raw result](../../data/qwen36-q8-tp2-asrock-b70-20260814/directq8-imrope-clean-full-realistic512.json.gz.b64)
 - Fixed suite:
   [`realistic-suite-v1.json`](../../repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json)
 
-The reference host's bounded service is `qwen36-q8-b70.service`, listening only
-on `127.0.0.1:18080`. After promotion it passed health and a second complete
-12×512 deployed-service replay: 12/12 output hashes exact, all cache counts
-zero, and `35.600659 tok/s` conventional median. The final fresh-server
-publication benchmark produced the promoted `35.699225 tok/s` result. Both GPUs remained
-`normal`, and the post-stress kernel log had no Xe fault/reset/hang, AER error,
-or OOM event.
+The reference host's bounded service unit is `qwen36-q8-b70.service`, listening
+only on `127.0.0.1:18080` when activated; it was inactive during this research
+pass. The clean publication run used the same bounded launcher on port 18082
+and produced the promoted `35.832213 tok/s` result. The pass avoided the known
+unsafe profiler, graph-capture, and remote-write paths.

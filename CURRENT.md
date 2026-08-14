@@ -49,31 +49,31 @@ token-exact evidence.
 
 ## Active Optimization Lane
 
-No new model lane is selected. Qwen3.6 27B Q8 TP2 pass 1 is closed and banked;
-the operator is moving to another model family. Start the next lane only after
-recording its exact model/revision, quantization, runtime, hardware topology,
-fixed prompts, cache policy, quality gates, baseline, and promotion threshold.
+Qwen3.6 27B Q8_0 target-only TP2 on two ASRock B70s is active toward a
+40 tok/s stretch goal. DFlash, MTP, prompt reuse, and other speculation remain
+outside this objective. The current clean source adds a register-direct TP2
+Q8 handoff and direct IMRoPE-to-indexed-F16-KV-cache writes to the previously
+promoted exact fusion stack.
 
 All Git work is performed directly on `main`. Do not create branches or
 secondary worktrees. Use focused commits, patches, bundles, configs, and result
 packets for isolation and recovery.
 
-## Latest Closed Research: Qwen3.6 27B Q8 TP2
+## Active Research: Qwen3.6 27B Q8 TP2
 
 The promoted target-only two-B70 result remains:
 
-- conventional 99-interval median: **`35.699225 tok/s`**;
-- historical helper: `36.059823 tok/s`;
-- full-512 after-TTFT median: `35.715918 tok/s`;
+- conventional 99-interval median: **`35.832213 tok/s`**;
+- historical helper: `36.194155 tok/s`;
+- full-512 after-TTFT median: `35.711040 tok/s`;
 - quality: 12/12 cold 512-token outputs exact against the accepted control;
 - cache: `cached_tokens=0` for 12/12;
 - speculation: none.
 
-The 2026-08-14 pass-1 screens tested collective topology, submission/runtime
-knobs, Q8 scheduling, recurrent/GDN fusions, FlashAttention variants, CPU
-settings, and power/clock hypotheses. No candidate cleared promotion. The
-promoted source, binary recipe, result, and output oracle therefore remain
-unchanged.
+The 2026-08-14 pass-2 register-direct Q8 handoff and direct IMRoPE cache-write
+stack passed a clean rebuild, one-prompt oracle, and complete 12-prompt cold
+suite. The output oracle remains unchanged; the new full patch, binaries,
+runtime doors, raw result, and summary are preserved in the linked repro.
 
 Resume and evidence:
 
@@ -82,6 +82,7 @@ Resume and evidence:
 - [standalone reproduction](repro/qwen36-27b-q8-tp2-asrock-b70/README.md)
 - [complete source patch](patches/qwen36-27b-q8-tp2-asrock-b70/README.md)
 - [pass-1 chronological ledger](notes/2026-08-14-qwen36-q8-tp2-40tps-pass1.md)
+- [pass-2 chronological ledger](notes/2026-08-14-qwen36-q8-tp2-40tps-pass2.md)
 - [Qwen family research map](docs/qwen36-research-map.md)
 
 Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
@@ -95,12 +96,13 @@ Preserve these paths and inspect their status before any build, cleanup, or
 service change:
 
 - `/home/steve/src/llama.cpp-muse-100`: source/build used by the live Muse fleet;
-- `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl`: accepted Qwen TP2 source;
+- `/mnt/fast-ai/src/llama.cpp-q8-tp2-directq8-isolated`: current accepted Qwen TP2 source;
+- `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl`: prior accepted Qwen TP2 source; preserve as control;
 - `/mnt/fast-ai/llm-models/qwen3.6-27b-q8_0-gguf/`: accepted Qwen model;
 - `/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260813-tp2-fusion/`:
   promoted Qwen evidence and bounded negatives;
 - `/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260814-40tps/`:
-  post-record Qwen pass-1 evidence;
+  Qwen pass-1/pass-2 evidence and current clean result;
 - `experiments/qwen27_graphsafe_flash_attention/`: graph-safe INT4 source and
   generated research state;
 - `experiments/qwen36-27b-autoround-int4-b70/`: INT4/MTP research packet and

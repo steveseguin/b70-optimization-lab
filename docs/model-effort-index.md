@@ -72,12 +72,12 @@ Main entries:
 - [initial compatibility patch](../community/mndodd-qwen36-27b-llamacpp-sycl/patches/0001-asrock-lab-lowram-dnnless-tp2.patch)
 - [model board](../README.md#qwen36-27b-model-board)
 
-Status: promoted target-only TP2 result as of 2026-08-13. The quality-cleared
+Status: active target-only TP2 optimization as of 2026-08-14. The quality-cleared
 endpoint best uses mndodd's pinned SYCL optimization fork plus the lab's full
 exact collective, Q8 handoff, recurrent dispatch, and persistent-state-I/O
-stack. It reaches **`35.699225 tok/s`** under conventional 99-interval
-accounting or `36.059823 tok/s` under the historical helper. This is
-`+15.065%` over the matched mndodd fork baseline (`31.025377` conventional).
+stack. It reaches **`35.832213 tok/s`** under conventional 99-interval
+accounting or `36.194155 tok/s` under the historical helper. This is
+`+15.493%` over the matched mndodd fork baseline (`31.025377` conventional).
 All 12 cold completions are 512 tokens, cache-zero, and byte-exact against the
 accepted pre-state-I/O control. Direct GDN state I/O added `+3.132%`; direct
 convolution state I/O added another `+0.855%` in the final long suite, and the
@@ -90,10 +90,11 @@ GDN workgroup packing, batched Q/K normalization with RoPE, Q8 cache hints,
 asymmetric tensor split, root-barrier
 elision, BMG-forced MMVQ phase ordering, and copy-engine replication did not
 win. TP2 graph capture aborted or hung, and the built-in TP2 profiler reset
-both compute engines; both remain prohibited. The 2026-08-14 post-record pass
-also promoted no replacement. The lane is closed; resume from its
-[handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) only for a
-materially new checkpoint, runtime, topology, or exact kernel proof.
+both compute engines; both remain prohibited. Pass 2 promoted a register-direct
+Q8 handoff and direct IMRoPE-to-KV-cache write after clean rebuild and full
+exact-output replay. Continue from its
+[handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) only with a
+materially new exact kernel proof; do not recycle rejected doors.
 
 ### Laguna S 2.1 INT4 On Four B70s
 

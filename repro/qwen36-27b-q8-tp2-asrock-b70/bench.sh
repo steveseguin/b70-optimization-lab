@@ -23,7 +23,7 @@ python3 "${repo_root}/scripts/bench-openai-realistic-suite.py" \
     --out "${out}" \
     --request-extra-json '{"cache_prompt":false,"seed":42,"temperature":0}'
 
-python3 - "${out}" "${repo_root}/data/qwen36-q8-tp2-asrock-b70-20260813/summary.json" <<'PY'
+python3 - "${out}" "${repo_root}/data/qwen36-q8-tp2-asrock-b70-20260814/summary.json" <<'PY'
 import json
 import sys
 

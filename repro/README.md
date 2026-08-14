@@ -11,7 +11,7 @@ depending on transient local notes.
 
 | Recipe | Use It For |
 | --- | --- |
-| [Qwen3.6 27B Q8_0 target-only TP2 on 2x ASRock Arc Pro B70, 35.699 tok/s, 2026-08-13](qwen36-27b-q8-tp2-asrock-b70/) | Restore the complete mndodd-based lab source patch, exact runtime doors, bounded server, model identity, fixed cold suite, and 12/12 output-hash gate for the no-speculation Q8 record. |
+| [Qwen3.6 27B Q8_0 target-only TP2 on 2x ASRock Arc Pro B70, 35.832 tok/s, 2026-08-14](qwen36-27b-q8-tp2-asrock-b70/) | Restore the complete mndodd-based lab source patch, exact runtime doors, bounded server, model identity, fixed cold suite, and 12/12 output-hash gate for the no-speculation Q8 record. |
 | [Muse-Glimmer-30B UD-Q8_K_XL on 4x Intel Arc Pro B70, canonical mean 100.3685 tok/s, 2026-08-13](muse-glimmer-30b-q8-woq-b70-100tps-20260813/) | Restore the private llama.cpp record source from a public base, verify hash-pinned target/draft identities and raw evidence, and replay the two canonical full-256 and frozen 15-prompt cold gates. |
 | [Laguna S 2.1 INT4 on 4x Intel Arc Pro B70, published 102.971 / conventional 101.942 tok/s, 2026-07-26](laguna-s-2.1-int4-b70-102tps-20260726/) | Verify the approved LocalMaxxing receipt, restore the exact width-12 DFlash11 source/runtime identity, and run one fail-closed cold suite with token, text, cache, treatment, topology, and dual-accounting gates. |
 | [DeepSeek V4 Flash uniform-K160 on 4x Intel Arc Pro B70, 80.820 tok/s, 2026-07-18](deepseek-v4-flash-k160-b70-80tps-20260718/) | Restore the exact vLLM/XPU/oneCCL source history and launch the closed-lane target-verified DSpark7 record with its pinned M7/M8, PIECEWISE, and sharded-target-argmax identity. |

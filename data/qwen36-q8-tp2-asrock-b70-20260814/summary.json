@@ -1,0 +1,126 @@
+{
+  "status": "B70-verified target-only TP2 record",
+  "created_at_utc": "2026-08-14T22:38:33.101636+00:00",
+  "model": {
+    "repository": "ggml-org/Qwen3.6-27B-GGUF",
+    "revision": "8a7ee08e8b9bfb857107ecc25a5599d2f38b76f8",
+    "file": "Qwen3.6-27B-Q8_0.gguf",
+    "bytes": 28595762464,
+    "sha256": "73f8260284708ed78ae266df672288b6ad1f2c73ec7ffeb7514b5cecdba646c9",
+    "quantization": "Q8_0",
+    "kv_cache": "F16",
+    "speculation": "none"
+  },
+  "hardware": {
+    "gpus": 2,
+    "model": "ASRock Intel Arc Pro B70",
+    "vram_mib_each": 32656,
+    "layout": "TP2 equal tensor split",
+    "reported_core_clock_mhz": 2800
+  },
+  "runtime": {
+    "source": "https://github.com/mndodd/llama.cpp/tree/intel-sycl-optimization",
+    "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_patch_uncompressed_sha256": "c917fcbf01b5af3ed45bb19532cfa0f337066b1330ffde6765564918e7a8d772",
+    "llama_server_sha256": "32c581628082fa1352824650d45f523d52b526aaefdfd23e1c34d438f7ad084a",
+    "llama_bench_sha256": "f7010c08b534a4f338b9cbd83f97f22b82f13ddab5be0c727d16c3bb0f8c4312",
+    "libggml_sycl_sha256": "944e2ddb026bfdcd3147323f7edbfdabbae7754a51cfdb74149045f8895ddd5f",
+    "compiler": "C: GNU 13.3.0 (/usr/bin/cc); C++/SYCL: Intel oneAPI DPC++/C++ 2026.1.0 (20260617)",
+    "kernel": "7.0.0-28-generic",
+    "omix": "0.3.0-9~24.04",
+    "intel_gpu_compute": "26.22.38646.7-9~24.04",
+    "new_runtime_doors": {
+      "GGML_SYCL_COMM_DIRECT_Q8": 2,
+      "GGML_SYCL_FUSED_ROPE_SET_ROWS": 1
+    },
+    "build": {
+      "type": "Release",
+      "generator": "Unix Makefiles",
+      "shared_libraries": true,
+      "native_cpu": true,
+      "llama_curl": false,
+      "sycl": true,
+      "target": "INTEL",
+      "device_arch": "bmg_g31",
+      "f16": true,
+      "graph": false,
+      "dnn": false,
+      "host_mem_fallback": false,
+      "level_zero_api": true
+    }
+  },
+  "benchmark": {
+    "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "api_mode": "completions",
+    "unique_cold_prompts": 12,
+    "output_tokens": 512,
+    "temperature": 0,
+    "seed": 42,
+    "cache_prompt": false,
+    "preferred_metric": "median conventional rate across the 99 inter-token intervals from streamed events 1 through 100 after TTFT",
+    "conventional_99_interval_tok_s": {
+      "median": 35.83221316356445,
+      "p10": 35.37964271333624,
+      "mean": 35.82500037201378
+    },
+    "historical_100_event_compatibility_tok_s": {
+      "median": 36.194154710671164,
+      "p10": 35.737012841753774,
+      "mean": 36.18686906365028
+    },
+    "full_512_after_ttft_tok_s": {
+      "median": 35.71103994109274,
+      "p10": 35.49545535547315,
+      "mean": 35.74578900412748
+    },
+    "full_512_wall_tok_s": {
+      "median": 35.256673057806054,
+      "p10": 34.93829732642211,
+      "mean": 35.28194917751581
+    },
+    "ttft_ms": {
+      "median": 181.25430650252383,
+      "p10": 173.75552208977751,
+      "mean": 188.49934357664702
+    }
+  },
+  "quality": {
+    "realistic_final_gate_passed": true,
+    "fresh_response_valid": true,
+    "cached_tokens_all_zero": true,
+    "output_hashes_exact_vs_promoted_oracle": "12/12",
+    "completion_token_counts_exact": "12/12",
+    "clean_source_one_prompt_canary_sha256": "817e19c024fb382788008cc1609e5d88ae8db53b79fed08b1944586c61e6552b"
+  },
+  "attribution": {
+    "matched_mndodd_fork_conventional_tok_s": 31.025376968339355,
+    "prior_promoted_record_conventional_tok_s": 35.69922490372522,
+    "new_clean_record_conventional_tok_s": 35.83221316356445,
+    "total_gain_vs_mndodd_percent": 15.49324025983747,
+    "record_gain_vs_prior_percent_including_run_variance": 0.3725242220184777,
+    "preclean_same_binary_imrope_control_conventional_tok_s": 35.72807772541513,
+    "preclean_same_binary_imrope_candidate_conventional_tok_s": 35.783553591379,
+    "preclean_same_binary_imrope_aggregate_gain_percent": 0.15527246215207846,
+    "position_balanced_direct_decode_imrope_gain_percent": 0.581
+  },
+  "output_sha256s": [
+    "817e19c024fb382788008cc1609e5d88ae8db53b79fed08b1944586c61e6552b",
+    "fc634af99e42b7f02db24142cd81f40df2e74e894a2ce7dba97a3d62a0d83bba",
+    "df9afba62a3d35d406a590535d6d5b0e3a6e5554524a5dfa82dcd3d5f17ed54e",
+    "99de6aeff1fdfd8dc8621e79bbfc1501917995b42e67a98ba98a96b3a8b3c01b",
+    "8858d22582c259316b0533e01213c138e52af6d72da3bb3b922b4f04bf8fb13a",
+    "93b2087f6e7fb8b6074250417914802d0084883e7c69be638764dd117141f2ed",
+    "32f23202f11385e444551e163ec12114ac57e48e3a9aceab4389b939aac7551c",
+    "21e38c50d657eb2bdca129f6f8de8c339afcfae61b2c4f632a69801dc5d9affb",
+    "cb4402525c2ede1fe02e3d322e8339b3dffe3b29c500ec563e9e2b4938bead3d",
+    "32c3973f883d8603eae7c2d96360662ef84a1f454084f902c243b8b898d4e758",
+    "077885a05508384483689724ba20691f59e665e1cbee76799bce07328fc53f6a",
+    "f8fcfce7eae6918674a4dc00321147cd54e156a5cbbd7af849579ac84e6530f0"
+  ],
+  "evidence": {
+    "raw_result_compressed": "directq8-imrope-clean-full-realistic512.json.gz.b64",
+    "raw_result_sha256": "9ff5d4ce56a2c7fabb78b743b7b38b7f80833418ceedc64de90360a0448f5c01",
+    "raw_result_base64_artifact_sha256": "c8246326253d827518e55bb89d7453990ce1204daa26211da954e2f0fa8feabd",
+    "local_full_run_directory": "/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260814-40tps"
+  }
+}

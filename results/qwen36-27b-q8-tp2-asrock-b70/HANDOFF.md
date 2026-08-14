@@ -1,34 +1,36 @@
 # Qwen3.6 27B Q8 TP2 Handoff
 
-Status: **closed and banked on 2026-08-14**
+Status: **active target-only optimization on 2026-08-14**
 
 ## Resume Bookmark
 
-The accepted target-only two-B70 result remains unchanged:
+The accepted target-only two-B70 result is:
 
 | Field | Accepted value |
 | --- | --- |
-| Conventional 99-interval median | **`35.699225 tok/s`** |
-| Historical helper | `36.059823 tok/s` |
-| Full-512 after-TTFT median | `35.715918 tok/s` |
+| Conventional 99-interval median | **`35.832213 tok/s`** |
+| Historical helper | `36.194155 tok/s` |
+| Full-512 after-TTFT median | `35.711040 tok/s` |
 | Quality | 12/12 cold 512-token outputs byte-exact to the accepted control |
 | Cache | `cached_tokens=0` for 12/12 |
 | Target | Qwen3.6 27B GGUF Q8_0 |
 | Runtime mode | target-only TP2; no MTP, DFlash, draft, or reuse |
 | Source base | mndodd llama.cpp `4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126` |
-| Complete decoded patch SHA-256 | `710b8628f6c94025d9a0516f77bddeeebccdd27d5bd3ebc4f79d2e623b1dd6c7` |
+| Complete decoded patch SHA-256 | `c917fcbf01b5af3ed45bb19532cfa0f337066b1330ffde6765564918e7a8d772` |
 
 Start with the [result packet](README.md), then use the
 [standalone reproduction](../../repro/qwen36-27b-q8-tp2-asrock-b70/README.md)
 and [source patch](../../patches/qwen36-27b-q8-tp2-asrock-b70/README.md).
 
-## Post-Record Pass 1
+## Pass 1 And Pass 2
 
 The complete chronological record is
 [`notes/2026-08-14-qwen36-q8-tp2-40tps-pass1.md`](../../notes/2026-08-14-qwen36-q8-tp2-40tps-pass1.md).
 It remains the authority for commands, exact A/B values, failure signatures,
-and raw log paths. Pass 1 did not promote a replacement for the accepted
-recipe.
+and raw log paths. Pass 1 promoted no replacement. The
+[pass-2 ledger](../../notes/2026-08-14-qwen36-q8-tp2-40tps-pass2.md) records
+the register-direct Q8 handoff and direct IMRoPE-to-KV-cache fusion that passed
+a clean rebuild and complete 12-prompt exact-output suite.
 
 Closed hypotheses include:
 
@@ -48,16 +50,17 @@ The built-in TP2 SYCL profiler and the root-both remote-write prototype caused
 device faults/resets. Do not retry them. Other doors were neutral or slower and
 remain default-off/reverted.
 
-## Why The Lane Is Closed
+## Remaining Gap
 
 Long direct repeats remain around the `36 tok/s` class, while the rough Q8 HBM
 roofline is about `42.5 tok/s`. The remaining gap is dominated by the streamed
 Q8 model and TP2 cross-bridge execution; the tested command-count, host, and
-small-kernel changes did not produce a stable promotable gain. Reopening the
-same flag/kernel neighborhood is unlikely to justify another full validation
-cycle.
+small-kernel changes did not produce a stable large gain. Recycling the same
+rejected flag/kernel neighborhood is unlikely to justify another full
+validation cycle. The 40 tok/s stretch goal requires a materially new exact
+critical-path reduction, not speculation or benchmark reuse.
 
-Reopen only for one of these materially new inputs:
+Prioritize one of these materially new inputs:
 
 1. a new Qwen checkpoint or quantization identity with its own quality gate;
 2. a public SYCL/oneDNN/runtime change with a bounded, source-backed hypothesis;
@@ -67,12 +70,13 @@ Reopen only for one of these materially new inputs:
 
 ## Protected State
 
-- Accepted source: `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl`
+- Accepted source: `/mnt/fast-ai/src/llama.cpp-q8-tp2-directq8-isolated`
+- Prior control source: `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl`
 - Accepted model:
   `/mnt/fast-ai/llm-models/qwen3.6-27b-q8_0-gguf/Qwen3.6-27B-Q8_0.gguf`
-- Promoted evidence:
+- Prior promoted evidence:
   `/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260813-tp2-fusion`
-- Pass-1 evidence:
+- Pass-1/pass-2 and current promoted evidence:
   `/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260814-40tps`
 
 Inspect source status and service/process ownership before using these paths.
