@@ -42,7 +42,9 @@ realistic median is `68.586`. Audit correction: the canonical config's
 `LLAMA_SPEC_PROFILE=0` **enabled** profiling because the source checked
 environment presence. Both canonical results therefore exceeded 100 with that
 overhead active; the realistic run left the variable absent. No LocalMaxxing
-receipt exists. Source, models, raw evidence, commands, and honest limitations
+receipt existed at closeout; the conventional interval result is now approved
+as [`cmss8515c00n0ms01n3begqgg`](https://www.localmaxxing.com/en/runs/cmss8515c00n0ms01n3begqgg).
+Source, models, raw evidence, commands, and honest limitations
 are promoted in [the result packet](results/muse-glimmer-30b-q8-woq-b70/README.md)
 and [standalone repro](repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md).
 

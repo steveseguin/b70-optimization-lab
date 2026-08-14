@@ -13,6 +13,7 @@ the conventional 99-interval field.
 
 | Model / lane | Hardware | Representative submitted result | LocalMaxxing ID | Evidence |
 | --- | --- | ---: | --- | --- |
+| Muse-Glimmer-30B UD-Q8_K_XL, TP4 pretrained DFlash | 4x Arc Pro B70 | **161.900 conventional interval median**, frozen 15-prompt cold suite, target-verified | `cmss8515c00n0ms01n3begqgg` | [packet](muse-glimmer-30b-q8-woq-b70/README.md); [repro](../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md) |
 | Poolside Laguna S 2.1 INT4, TP4+EP4 DFlash11 | 4x Arc Pro B70 | **125.462 conventional interval median; 126.729 historical compatibility formula**; exact cold width-12 suite with Q/K RMSNorm+RoPE and M12 shared-elementwise fusions | `cms9wuuf300cqpm01t5i285tq` | [qualified packet](laguna-s-2.1-int4-b70/README.md); [record evidence](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-shared-elementwise-m12-record.md) |
 | Qwen3.6 27B AutoRound INT4, TP2 | 2x Arc Pro B70 | 95.385 median tok/s, fixed cold realistic gate | `cmrh35ct50092mj01h7jgydqj` | [packet](qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json) |
 | Gemma 4 26B A4B Q8 | 1x Arc Pro B70 | 124.977 median tok/s, fixed cold realistic gate | `cmr1u77na01k2ld01kalwzs1e` | [packet](gemma4-26b-a4b-q8-b70/README.md) |
@@ -25,6 +26,15 @@ the conventional 99-interval field.
 
 Current measured-but-unsubmitted work belongs in its model packet, not this
 public-submission index.
+
+Date: 2026-08-13
+
+Model: `unsloth/Muse-Glimmer-30B-GGUF`, UD-Q8_K_XL target with a pretrained
+BF16 DFlash assistant, llama.cpp/SYCL TP4 on four Intel Arc Pro B70 GPUs.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `muse-glimmer-30b-udq8-b70-tp4-llamacpp-woq-dflash-realistic-161tok-20260813` | [`cmss8515c00n0ms01n3begqgg`](https://www.localmaxxing.com/en/runs/cmss8515c00n0ms01n3begqgg) | 4 | suite median 88 | suite median 512 | **161.899580 conventional median over 99 intervals** | 49.335108 median wall full-natural output | **approved target-verified Q8 record**: frozen 15-prompt suite, each prompt exactly once cold, 15/15 `cached_tokens=0`, no prompt/KV/context/response/ngram/history reuse, one active generation. Pretrained BF16 DFlash proposals are verified by the UD-Q8_K_XL target. Fixed-N16 oneDNN WOQ uses BF16-rounded activations, direct S8 group32/F16-scale weights, F32 accumulation/output, and distributed ARGMAX. p10 `108.573501`, mean `175.812769`, bootstrap lower `127.081911`; full-natural after-TTFT median `68.585537`. The record is Q8/target-verified, not BF16/lossless or universally token-exact. [Queue](../data/localmaxxing-muse-glimmer-30b-ud-q8-k-xl-b70-tp4-woq-dflash-161tok-20260813.queue.json); [receipt](../data/localmaxxing-responses/muse-glimmer-30b-udq8-b70-tp4-woq-dflash-20260813.json). |
 
 Date: 2026-07-18
 

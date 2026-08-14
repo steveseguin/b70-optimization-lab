@@ -19,7 +19,7 @@ Docs should point to those artifacts instead of duplicating every script.
 
 ## Model Lane Entry Points
 
-- [Muse-Glimmer-30B Q8/WOQ Result](../results/muse-glimmer-30b-q8-woq-b70/README.md): closed four-B70 no-training record, validity boundary, exact source bundle, raw evidence, and standalone replay.
+- [Muse-Glimmer-30B Q8/WOQ Result](../results/muse-glimmer-30b-q8-woq-b70/README.md): closed four-B70 no-training record, LocalMaxxing approval, validity boundary, exact source bundle, raw evidence, and standalone replay.
 - [Muse-Glimmer-30B Standalone Repro](../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md): rebuild from the public llama.cpp base, verify model/evidence hashes, and rerun the canonical and cold realistic gates.
 - [Laguna S 2.1 Result Resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md): historical sealed repro plus the current exact four-B70 M12 shared-elementwise record at historical 126.729 / conventional 125.462 tok/s.
 - [Laguna S 2.1 Qualified Result Packet](../results/laguna-s-2.1-int4-b70/README.md): promoted identity, qualification, evidence, patches, and LocalMaxxing receipt.

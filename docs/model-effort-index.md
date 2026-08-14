@@ -47,8 +47,10 @@ objective was not reached. The operator-approved no-training UD-Q8_K_XL
 successor measured two independent canonical means of `100.088` and `100.649
 tok/s`; the frozen 15-prompt conventional first-100 median was `161.900 tok/s`
 with p10 `108.574` and 15/15 cache-zero. It is target-verified but not BF16,
-lossless, universally token-exact, or uniformly above 100. No LocalMaxxing
-receipt exists. Reopen only with a new objective/preregistration.
+lossless, universally token-exact, or uniformly above 100. LocalMaxxing
+approved it as
+[`cmss8515c00n0ms01n3begqgg`](https://www.localmaxxing.com/en/runs/cmss8515c00n0ms01n3begqgg).
+Reopen only with a new objective/preregistration.
 
 ### Qwen3.6 27B Q8_0 Target-Only On Two ASRock B70s
 

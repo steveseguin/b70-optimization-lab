@@ -23,7 +23,10 @@
 - universal quality noninferiority versus the BF16 parent;
 - every prompt above 100 tok/s;
 - full-natural response throughput above 100;
-- a deployed production endpoint or LocalMaxxing receipt.
+- a deployed production endpoint.
+
+The conventional 99-interval result is published at LocalMaxxing as
+[`cmss8515c00n0ms01n3begqgg`](https://www.localmaxxing.com/en/runs/cmss8515c00n0ms01n3begqgg).
 
 The raw classifications are retained under the standalone recipe's
 `evidence/` directory and checked by `scripts/verify-evidence.py`.

@@ -34,7 +34,8 @@ tok/s and the realistic minimum is 82.47.
 
 The original BF16-only century objective remained unmet. This later
 operator-approved no-training compressed-target successor objective passed.
-There is no LocalMaxxing submission receipt for this result.
+LocalMaxxing approved the conventional cold-suite result as
+[`cmss8515c00n0ms01n3begqgg`](https://www.localmaxxing.com/en/runs/cmss8515c00n0ms01n3begqgg).
 
 ## Source of truth
 
@@ -44,6 +45,8 @@ There is no LocalMaxxing submission receipt for this result.
 - [exact commands and identity](reproduce.md)
 - [bugs, negative results, and limitations](bugs-failed-paths.md)
 - [structured record](../../data/muse-q8-woq-argmax-century-20260813.json)
+- [LocalMaxxing payload](../../data/localmaxxing-muse-glimmer-30b-ud-q8-k-xl-b70-tp4-woq-dflash-161tok-20260813.queue.json)
+- [LocalMaxxing receipt](../../data/localmaxxing-responses/muse-glimmer-30b-udq8-b70-tp4-woq-dflash-20260813.json)
 - [chronological closeout](../../experiments/muse-glimmer-30b-b70/notes/2026-08-13-q8-woq-realistic-century.md)
 - [source snapshots](../../patches/muse-glimmer-30b-b70/README.md)
 
