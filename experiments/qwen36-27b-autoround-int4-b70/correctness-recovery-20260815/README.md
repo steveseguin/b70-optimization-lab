@@ -83,7 +83,7 @@ Raw roots remain under
 post-teardown `SHA256SUMS`, source/runtime snapshots, trace, emitted token IDs,
 and analyzer output. The invalid live-edited preflight remains excluded.
 
-Three post-consolidation startup roots are also invalid measurements and retained
+Four post-consolidation startup roots are also invalid measurements and retained
 only as merge-repair evidence:
 
 - `correctness-recovery-native-serial-20260815T171713Z` failed model inspection
@@ -93,7 +93,11 @@ only as merge-repair evidence:
   not restored to the newer backend enum;
 - `correctness-recovery-native-serial-20260815T172210Z` reached the Mamba cache
   selector, then failed because the preserved Qwen GDN layer still returned the
-  old string backend name instead of the newer `MambaAttentionBackendEnum`.
+  old string backend name instead of the newer `MambaAttentionBackendEnum`;
+- `correctness-recovery-native-serial-20260815T172613Z` completed target graph
+  compilation, then failed graph-capture setup because the preserved XPU
+  communicator did not expose the newer coordinator's disabled `ca_comm`
+  contract.
 
 Neither root contains a benchmark row. The diagnostic runner now fails closed
 when the historical candidate wrapper exits zero without exactly one valid
