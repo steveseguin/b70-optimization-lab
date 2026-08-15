@@ -30,6 +30,16 @@ def load_trace(path: Path) -> list[dict[str, Any]]:
         if len(rows) != 1:
             continue
         record = dict(rows[0])
+        # The TP workers both append the same logical verifier decision.  Keep
+        # one copy so an emitted token is not counted once per rank.
+        if records and all(
+            records[-1].get(key) == value for key, value in record.items()
+        ) and all(
+            record.get(key) == value
+            for key, value in records[-1].items()
+            if key not in {"trace_line", "stage"}
+        ):
+            continue
         record["trace_line"] = line_number
         record["stage"] = payload.get("stage")
         records.append(record)
@@ -38,23 +48,28 @@ def load_trace(path: Path) -> list[dict[str, Any]]:
 
 def find_alignment(
     records: list[dict[str, Any]], candidate_tokens: list[int]
-) -> tuple[int, list[dict[str, Any]]]:
-    for start in range(len(records)):
-        emitted: list[int] = []
-        selected: list[dict[str, Any]] = []
-        for record in records[start:]:
-            output = [int(token) for token in record.get("output_token_ids", [])]
-            if not output:
-                continue
-            selected.append(record)
-            emitted.extend(output)
-            prefix_len = min(len(emitted), len(candidate_tokens))
-            if emitted[:prefix_len] != candidate_tokens[:prefix_len]:
-                break
-            if len(emitted) >= len(candidate_tokens):
-                if emitted[: len(candidate_tokens)] == candidate_tokens:
-                    return start, selected
-                break
+) -> tuple[int, int, list[dict[str, Any]]]:
+    # The first generated token seeds speculative decoding and therefore is
+    # not represented by a verifier record.  Search candidate offsets as well
+    # as trace starts instead of assuming the trace begins at token zero.
+    for candidate_offset in range(min(8, len(candidate_tokens))):
+        expected = candidate_tokens[candidate_offset:]
+        for start in range(len(records)):
+            emitted: list[int] = []
+            selected: list[dict[str, Any]] = []
+            for record in records[start:]:
+                output = [int(token) for token in record.get("output_token_ids", [])]
+                if not output:
+                    continue
+                selected.append(record)
+                emitted.extend(output)
+                prefix_len = min(len(emitted), len(expected))
+                if emitted[:prefix_len] != expected[:prefix_len]:
+                    break
+                if len(emitted) >= len(expected):
+                    if emitted[: len(expected)] == expected:
+                        return start, candidate_offset, selected
+                    break
     raise SystemExit("could not align verifier records with candidate token stream")
 
 
@@ -82,9 +97,9 @@ def main() -> None:
     candidate = [int(token) for token in load_row(args.candidate)["token_ids"]]
     reference = [int(token) for token in load_row(args.reference)["token_ids"]]
     records = load_trace(args.trace)
-    start, aligned = find_alignment(records, candidate)
+    start, candidate_offset, aligned = find_alignment(records, candidate)
 
-    offset = 0
+    offset = candidate_offset
     rounds: list[dict[str, Any]] = []
     first_target_disagreement: dict[str, Any] | None = None
     for record in aligned:
@@ -93,6 +108,35 @@ def main() -> None:
         target0 = targets[0] if targets else None
         reference_next = reference[offset] if offset < len(reference) else None
         prefix_exact_before = candidate[:offset] == reference[:offset]
+        comparable_target_rows: list[dict[str, Any]] = []
+        if prefix_exact_before:
+            drafts = [int(token) for token in record.get("draft_token_ids", [])]
+            for row_index, target_token in enumerate(targets):
+                target_position = offset + row_index
+                if target_position >= len(reference):
+                    break
+                # Verifier row j is conditioned on draft rows [0, j).  It is
+                # comparable to the target-only stream only while that draft
+                # prefix equals the reference continuation.
+                if drafts[:row_index] != reference[offset:target_position]:
+                    break
+                comparison = {
+                    "row_index": row_index,
+                    "output_position": target_position,
+                    "target_token": target_token,
+                    "reference_token": reference[target_position],
+                    "matches_reference": target_token == reference[target_position],
+                }
+                comparable_target_rows.append(comparison)
+                if first_target_disagreement is None and not comparison["matches_reference"]:
+                    first_target_disagreement = {
+                        "trace_line": record["trace_line"],
+                        "stage": record.get("stage"),
+                        **comparison,
+                        "draft_token_ids": drafts,
+                        "target_argmax_token_ids": targets,
+                        "output_token_ids": emitted,
+                    }
         row = {
             "trace_line": record["trace_line"],
             "stage": record.get("stage"),
@@ -105,15 +149,9 @@ def main() -> None:
             "target0": target0,
             "reference_next": reference_next,
             "target0_matches_reference": target0 == reference_next,
+            "comparable_target_rows": comparable_target_rows,
         }
         rounds.append(row)
-        if (
-            first_target_disagreement is None
-            and prefix_exact_before
-            and target0 is not None
-            and target0 != reference_next
-        ):
-            first_target_disagreement = row
         offset += len(emitted)
         if offset >= len(candidate):
             break
@@ -123,7 +161,7 @@ def main() -> None:
     if candidate_difference is not None:
         if (
             first_target_disagreement is not None
-            and first_target_disagreement["output_offset"]
+            and first_target_disagreement["output_position"]
             <= candidate_difference["index"]
         ):
             classification = "target_verifier_row_diverged_before_or_at_output"
@@ -135,6 +173,7 @@ def main() -> None:
         "prompt_id": PROMPT_ID,
         "trace_record_count": len(records),
         "aligned_start_record": start,
+        "candidate_tokens_before_trace": candidate_offset,
         "aligned_round_count": len(rounds),
         "candidate_token_count": len(candidate),
         "reference_token_count": len(reference),
@@ -149,4 +188,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
