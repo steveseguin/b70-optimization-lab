@@ -74,6 +74,18 @@ Prioritize one of these materially new inputs:
 4. a new exact kernel design with a standalone critical-path result large
    enough to move the end-to-end record.
 
+## Active Coordination Checkpoint
+
+As of 2026-08-15, one isolated exact-quality experiment is in progress:
+split each reordered-Q8 block's four dependent integer DP4A operations into
+two independent accumulator chains, add those integer partials, and retain the
+existing FP32 scale and accumulation boundary.  This is intended to test DP4A
+instruction-level parallelism without changing the integer dot product or the
+per-block FP32 order.  The isolated source is
+`/mnt/fast-ai/src/llama.cpp-q8-tp2-dp4a2`; accepted source and production
+artifacts remain untouched.  Do not independently start this same experiment
+without first checking the latest `origin/main` checkpoint.
+
 ## Protected State
 
 - Accepted source: `/mnt/fast-ai/src/llama.cpp-q8-tp2-outputhead-sg32`
