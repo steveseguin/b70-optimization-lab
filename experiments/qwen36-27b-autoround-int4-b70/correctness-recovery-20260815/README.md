@@ -224,6 +224,18 @@ that request included remaining Triton JIT work. The next bounded screen runs
 the standard 64-token smoke first, then times the same cache-zero prompt. This
 is a startup-prewarm attribution test, not a new performance claim.
 
+That prewarmed packed-eager arm remained exact and cache-zero, but improved
+only from `40.725` to `44.489 tok/s`; graph-free execution is therefore not a
+viable performance route. The next default-off repair is XPU-kernel commit
+`4050008863bf0db6047935f775378ab882265300`: persistent scratch is now keyed by
+the immutable per-layer convolution-weight address as well as shape/device.
+This prevents the 48 GDN layers from capturing separate command graphs against
+one shared workspace. The full multi-target AOT build passed; candidate
+`_xpu_C.abi3.so` SHA256 is
+`3e38a9edc8d205d2693603748b3af7cdaf6699cb901be8bbf45b3b1076818455`.
+Promotion still requires the token-68 PIECEWISE trace and then the complete
+frozen matrix; this source-level argument is not treated as proof.
+
 Five post-consolidation startup roots are also invalid measurements and retained
 only as merge-repair evidence:
 

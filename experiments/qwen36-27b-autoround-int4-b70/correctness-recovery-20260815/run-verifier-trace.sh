@@ -47,9 +47,9 @@ verify_tree() {
 }
 verify_tree "$source_root/vllm" 8c27a1e68ac619e198b0c08c2d6f62b80ddb3456 \
   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
-verify_tree "$source_root/vllm-xpu-kernels" 534bd9ccca74e0b076067a212271f896bb137d2a \
+verify_tree "$source_root/vllm-xpu-kernels" 4050008863bf0db6047935f775378ab882265300 \
   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
-expected_xpu_c_sha=e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7
+expected_xpu_c_sha=3e38a9edc8d205d2693603748b3af7cdaf6699cb901be8bbf45b3b1076818455
 xpu_c="$source_root/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so"
 if [[ ! -f "$xpu_c" \
   || "$(sha256sum "$xpu_c" | awk '{print $1}')" != "$expected_xpu_c_sha" ]]; then
