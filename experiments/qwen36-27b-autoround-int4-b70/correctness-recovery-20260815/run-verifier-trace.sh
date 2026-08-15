@@ -57,6 +57,14 @@ if [[ ! -f "$xpu_c" \
     "$expected_xpu_c_sha" "$xpu_c" >&2
   exit 3
 fi
+expected_gdn_sha=fd326287972c808490e4dfd34362558c132c7939a6adb5f55a7c8e83567f63bb
+gdn_lib="$source_root/vllm-xpu-kernels/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so"
+if [[ ! -f "$gdn_lib" \
+  || "$(sha256sum "$gdn_lib" | awk '{print $1}')" != "$expected_gdn_sha" ]]; then
+  printf 'GDN device library mismatch: expected %s at %s\n' \
+    "$expected_gdn_sha" "$gdn_lib" >&2
+  exit 3
+fi
 
 mkdir -p -- "$run_root"
 cp -- "$trace_suite" "$run_root/suite.json"

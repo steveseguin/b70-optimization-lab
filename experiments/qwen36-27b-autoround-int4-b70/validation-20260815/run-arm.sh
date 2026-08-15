@@ -108,6 +108,9 @@ while read -r expected recorded_path; do
   if [[ "$latest_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
     expected=2993d29f4558483c1105d3b131298629537d324aaacfda2657c30582d31f39a1
   fi
+  if [[ "$latest_identity" == "1" && "$binary" == "libgdn_attn_kernels_xe_2.so" ]]; then
+    expected=fd326287972c808490e4dfd34362558c132c7939a6adb5f55a7c8e83567f63bb
+  fi
   verify_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
 done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
 verify_sha "$oneccl/lib/libccl.so.1.0" \

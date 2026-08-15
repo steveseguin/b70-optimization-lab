@@ -13,10 +13,11 @@ if [[ -e "$root" ]]; then
   exit 2
 fi
 mkdir -p -- "$root"
-printf 'stamp=%s\nroot=%s\nlab_head=%s\nkernel_head=%s\nxpu_extension_sha256=%s\nsuite_sha256=%s\n' \
+printf 'stamp=%s\nroot=%s\nlab_head=%s\nkernel_head=%s\nxpu_extension_sha256=%s\ngdn_device_library_sha256=%s\nsuite_sha256=%s\n' \
   "$stamp" "$root" "$(git -C "$repo" rev-parse HEAD)" \
   "$(git -C /home/steve/src/vllm-xpu-kernels rev-parse HEAD)" \
   "$(sha256sum /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so | awk '{print $1}')" \
+  "$(sha256sum /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so | awk '{print $1}')" \
   "$(sha256sum "$suite" | awk '{print $1}')" > "$root/matrix.env"
 
 run_arm() {
