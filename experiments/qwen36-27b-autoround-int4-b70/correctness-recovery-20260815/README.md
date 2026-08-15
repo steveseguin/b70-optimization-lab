@@ -236,6 +236,21 @@ one shared workspace. The full multi-target AOT build passed; candidate
 Promotion still requires the token-68 PIECEWISE trace and then the complete
 frozen matrix; this source-level argument is not treated as proof.
 
+The token-68 layer-private trace failed at the identical verifier row and token
+(`7499` vs `9575`). Both ranks logged exactly 48 private scratch allocations,
+proving that the feature armed for all GDN layers; the cache-zero run remained
+healthy and exited zero. Its manifest SHA256 is
+`47061fe1b2b7456072fed5d6c0a87ac2e9f4f695d52f9e3ad5c249a17a0eba02`.
+Per-layer scratch does not fix correctness and is retained only as a negative
+experiment until reverted.
+
+The next diagnostic, `native-fast-piecewise-no-replay`, retains Torch
+compilation, the fixed four-row verifier, native packed GDN, and the same
+persistent scratch, but sets
+`VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1`. Exact output would isolate
+the fault to Level Zero replay; another token-68 failure would move the
+boundary up to the compiled verifier itself.
+
 Five post-consolidation startup roots are also invalid measurements and retained
 only as merge-repair evidence:
 

@@ -5,9 +5,9 @@ here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "$here/../../.." && pwd)
 acceptance_mode=${1:-standard}
 case "$acceptance_mode" in
-  target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-fast-piecewise-scratch|native-serial) ;;
+  target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-fast-piecewise-scratch|native-fast-piecewise-no-replay|native-serial) ;;
   *)
-    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-fast-piecewise-scratch|native-serial\n' "$0" >&2
+    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-fast-piecewise-scratch|native-fast-piecewise-no-replay|native-serial\n' "$0" >&2
     exit 2
     ;;
 esac
@@ -177,7 +177,7 @@ if [[ "$acceptance_mode" == "native-fast-eager" ]]; then
   export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
   export COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'
 fi
-if [[ "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "native-fast-piecewise-scratch" ]]; then
+if [[ "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "native-fast-piecewise-scratch" || "$acceptance_mode" == "native-fast-piecewise-no-replay" ]]; then
   # Keep the exact native packed GDN transaction and restore only ordinary
   # PIECEWISE XPU graph capture. Exclude the device-lost DDTree/full-graph
   # configuration used by the first no-ReplaySSM graph attempt.
@@ -194,10 +194,15 @@ if [[ "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "na
   export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
   export COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
 fi
-if [[ "$acceptance_mode" == "native-fast-piecewise-scratch" ]]; then
+if [[ "$acceptance_mode" == "native-fast-piecewise-scratch" || "$acceptance_mode" == "native-fast-piecewise-no-replay" ]]; then
   # Keep every native GDN temporary at a stable process-lifetime address so
   # captured Level Zero command graphs cannot replay allocator-reused storage.
   export VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+fi
+if [[ "$acceptance_mode" == "native-fast-piecewise-no-replay" ]]; then
+  # Preserve Torch compilation and the fixed-width verifier while bypassing
+  # only the Level Zero command-graph replay layer.
+  export VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1
 fi
 if [[ "$acceptance_mode" == "native-serial" ]]; then
   # Use the sequential native packed-GDN oracle. This retains the four-row
@@ -226,7 +231,7 @@ if [[ "$acceptance_mode" == "target-only" ]]; then
   export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh"
 else
-  if [[ "$acceptance_mode" == "no-replayssm" || "$acceptance_mode" == "replayssm-eager" || "$acceptance_mode" == "replayssm-torch-eager" || "$acceptance_mode" == "native-fast-eager" || "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "native-fast-piecewise-scratch" || "$acceptance_mode" == "native-serial" ]]; then
+  if [[ "$acceptance_mode" == "no-replayssm" || "$acceptance_mode" == "replayssm-eager" || "$acceptance_mode" == "replayssm-torch-eager" || "$acceptance_mode" == "native-fast-eager" || "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "native-fast-piecewise-scratch" || "$acceptance_mode" == "native-fast-piecewise-no-replay" || "$acceptance_mode" == "native-serial" ]]; then
     export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-$acceptance_mode-20260815}
   else
     export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-recovery-20260815}
