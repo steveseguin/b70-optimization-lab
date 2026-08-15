@@ -214,7 +214,7 @@ if [[ "$acceptance_mode" == "native-fast-piecewise-partition" ]]; then
   # Retain compiled/captured verifier execution, but move graph splitting from
   # Dynamo FX boundaries to current Inductor partition rules. This is a new
   # compile identity and must pass the recurring token-68 oracle first.
-  export COMPILATION_CONFIG='{"use_inductor_graph_partition":true,"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
+  export COMPILATION_CONFIG='{"use_inductor_graph_partition":true,"pass_config":{"fuse_rope_kvcache_cat_mla":false},"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
 fi
 if [[ "$acceptance_mode" == "native-serial" ]]; then
   # Use the sequential native packed-GDN oracle. This retains the four-row

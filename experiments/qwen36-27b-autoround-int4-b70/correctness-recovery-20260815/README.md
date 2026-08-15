@@ -289,6 +289,16 @@ boundary. Future work should keep the exact raw result as the oracle while
 selectively changing compilation/partitioning, rather than revisiting scratch
 or Level Zero replay.
 
+The first Inductor-partition startup at
+`correctness-recovery-native-fast-piecewise-partition-20260815T222000Z`
+failed closed before serving a request. Enabling the newer partition mode also
+enabled the irrelevant MLA RoPE/KV-cache fusion in this mixed local source, but
+the XPU pass manager had not imported `MLARoPEKVCacheCatFusionPass`; runner exit
+was 5 and no throughput/parity row exists. Manifest SHA256:
+`87a7c97abdb7af2aae65b121be7815f598d843451980c5d116f27ab579982693`.
+The rerun explicitly disables that MLA-only pass in `pass_config` while leaving
+the intended Inductor partition change intact.
+
 Five post-consolidation startup roots are also invalid measurements and retained
 only as merge-repair evidence:
 
