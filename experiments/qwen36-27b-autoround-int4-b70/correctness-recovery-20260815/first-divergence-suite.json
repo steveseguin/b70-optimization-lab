@@ -1,0 +1,21 @@
+{
+  "description": "Single-prompt diagnostic selected because the preregistered independent validation first diverged after six output tokens.",
+  "metric": "diagnostic_only",
+  "prompts": [
+    {
+      "group": "independent-holdout",
+      "id": "holdout--arithmetic-reasoning",
+      "original_id": "arithmetic-reasoning",
+      "prompt": "A warehouse has 137 cartons with 29 components each. It ships 845 components, then divides the remainder equally among 23 repair teams. Calculate the original total, the remainder, the quotient and any leftover, showing each check clearly. Then state the final allocation in one unambiguous sentence and identify one common arithmetic mistake."
+    }
+  ],
+  "source_suites": [
+    {
+      "path": "experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json",
+      "sha256": "9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638"
+    }
+  ],
+  "suite_id": "qwen36-27b-int4-correctness-first-divergence-v1",
+  "version": 1
+}
+
