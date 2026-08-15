@@ -29,7 +29,8 @@ fi
 source_root=${SOURCE_ROOT:-/home/steve/src}
 venv=${VENV:-/home/steve/.venvs/vllm-xpu}
 model_dir=${MODEL_DIR:-/mnt/usb-models/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e}
-stage=${STAGE:-/home/steve/src/vllm-xpu-kernels}
+base_stage=${BASE_STAGE:-$source_root/vllm-xpu-kernels}
+graph_stage=${STAGE:-$repo/experiments/qwen27_graphsafe_flash_attention/staged-package}
 oneccl=${ONECCL_INSTALL_DIR:-/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public}
 port=${PORT:-19622}
 stamp=${STAMP:-$(date -u +%Y%m%dT%H%M%SZ)}
@@ -72,7 +73,7 @@ verify_sha() {
 while read -r expected recorded_path; do
   [[ -n "$expected" && -n "$recorded_path" ]] || continue
   binary=$(basename "$recorded_path")
-  verify_sha "$stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
+  verify_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
 done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
 verify_sha "$oneccl/lib/libccl.so.1.0" \
   43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700 oneCCL
@@ -138,8 +139,6 @@ export VLLM_SOURCE_TREE="$source_root/vllm"
 export VLLM_XPU_KERNELS_SOURCE_TREE="$source_root/vllm-xpu-kernels"
 export MODEL_DIR="$model_dir"
 export QWEN36_27B_AR_VENV="$venv"
-export STAGE="$stage"
-export VLLM_XPU_KERNELS_SRC="$stage"
 export ONECCL_INSTALL_DIR="$oneccl"
 export HF_HOME=/mnt/usb-models/llm-cache/hf
 export GPU_INDEX="$gpu_pair"
@@ -164,10 +163,24 @@ export QUALITY_LONG_CONTEXT_TOKENS=1024
 export REQUEST_EXTRA_JSON='{"chat_template_kwargs":{"enable_thinking":false}}'
 export QUALITY_BASELINE_JSON="$quality_baseline"
 if [[ "$mode" == "spec" ]]; then
+  # FULL graph capture requires the isolated graph-safe FlashAttention build.
+  # The ordinary XPU extension uses work-group scratch memory, which SYCL graph
+  # capture rejects.  Pin both the Python extension and its device library so
+  # this cannot silently regress to the ordinary package.
+  verify_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
+    33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
+    graph-safe-FlashAttention-extension
+  verify_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
+    604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c \
+    graph-safe-FlashAttention-device-library
+  export STAGE="$graph_stage"
+  export VLLM_XPU_KERNELS_SRC="$graph_stage"
   export QWEN36_27B_ENABLE_MTP=1
   export NUM_SPECULATIVE_TOKENS=3
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh"
 else
+  export STAGE="$base_stage"
+  export VLLM_XPU_KERNELS_SRC="$base_stage"
   export QWEN36_27B_ENABLE_MTP=0
   unset QWEN36_27B_SPECULATIVE_CONFIG
   # The candidate's fixed width-4 full graph is a packed-verifier schedule,
