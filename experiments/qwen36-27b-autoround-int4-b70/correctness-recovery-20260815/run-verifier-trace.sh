@@ -22,6 +22,7 @@ port=${PORT:-19622}
 gpu_pair=${GPU_INDEX:-0,1}
 trace_suite=${TRACE_SUITE:-$here/first-divergence-suite.json}
 trace_reference=${TRACE_REFERENCE:-$repo/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/evidence/independent-validation-20260815T152141Z/nospec-01a/data/bench.json}
+trace_run_smoke=${TRACE_RUN_SMOKE:-0}
 trace_prompt_id=$(jq -er '.prompts | if length == 1 then .[0].id else error("trace suite must contain exactly one prompt") end' "$trace_suite")
 
 if [[ -e "$run_root" ]]; then
@@ -98,7 +99,7 @@ export BENCH_MAX_TOKENS=128
 # The historical candidate wrapper fixes the accounting window at 100 tokens.
 # Keep 128 outputs so its generic benchmark gate remains internally valid.
 export BENCH_METRIC_TOKENS=100
-export RUN_SMOKE=0
+export RUN_SMOKE=$trace_run_smoke
 export RUN_BENCH=1
 export RUN_QUALITY=0
 export REQUEST_EXTRA_JSON='{"chat_template_kwargs":{"enable_thinking":false}}'

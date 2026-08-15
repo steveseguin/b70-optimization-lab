@@ -209,6 +209,21 @@ still failed on 10–11 of 25 prompts. The compact result is
 [`../../../results/qwen36-27b-autoround-int4-b70/fixed-scratch-validation-20260815.json`](../../../results/qwen36-27b-autoround-int4-b70/fixed-scratch-validation-20260815.json).
 Do not promote or submit it.
 
+The preregistered recurring-divergence trace then used the exact
+`holdout--concurrency-review` prompt and a fresh same-pair target-only stream:
+
+- packed native eager was exact for all 128 tokens;
+- the repaired serial eager path first differed at token 68 (`7499` vs
+  target `9575`), in target verifier row 1;
+- packed PIECEWISE with persistent scratch differed at the same token and row.
+
+Thus the serial path is not a universal output oracle, while command-graph
+execution remains non-exact even after the scratch-lifetime repair. The packed
+eager diagnostic measured only `40.725 tok/s` on its first request because
+that request included remaining Triton JIT work. The next bounded screen runs
+the standard 64-token smoke first, then times the same cache-zero prompt. This
+is a startup-prewarm attribution test, not a new performance claim.
+
 Five post-consolidation startup roots are also invalid measurements and retained
 only as merge-repair evidence:
 
