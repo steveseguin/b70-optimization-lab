@@ -5,9 +5,9 @@ here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "$here/../../.." && pwd)
 acceptance_mode=${1:-standard}
 case "$acceptance_mode" in
-  target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm) ;;
+  target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|native-serial) ;;
   *)
-    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm\n' "$0" >&2
+    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|native-serial\n' "$0" >&2
     exit 2
     ;;
 esac
@@ -41,10 +41,10 @@ verify_tree() {
     exit 3
   fi
 }
-verify_tree "$source_root/vllm" e7213ba8e13b74d7bfa3cbc05435a45df90eb76a \
-  dcf84454f64bdeca546aa1697f4cd6af89fa95bb56f80ed314ad4d364e134b24 vllm
-verify_tree "$source_root/vllm-xpu-kernels" 3b4effeeffd83f6ef4696bbe7e76d924a0e9d171 \
-  edcb9314b43d6990474dfb5d64e3716e8d4c33618ec0e3fbd11ae671e47c8c1f kernels
+verify_tree "$source_root/vllm" 1f8bd25fd9241620900a3140d5f5344624cbc697 \
+  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
+verify_tree "$source_root/vllm-xpu-kernels" c9e265d95892e19aaddd731e5e94f9a19f91f954 \
+  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
 
 mkdir -p -- "$run_root"
 cp -- "$here/first-divergence-suite.json" "$run_root/suite.json"
@@ -128,12 +128,20 @@ if [[ "$acceptance_mode" == "no-replayssm" ]]; then
   # experimental ReplaySSM transaction and fused kernels.
   export VLLM_XPU_GDN_REPLAYSSM_SPEC=0
 fi
+if [[ "$acceptance_mode" == "native-serial" ]]; then
+  # Use the sequential native packed-GDN oracle. This retains the four-row
+  # verifier and MTP scheduler while removing both ReplaySSM and the parallel
+  # native recurrent update from the correctness comparison.
+  export VLLM_XPU_GDN_REPLAYSSM_SPEC=0
+  export VLLM_XPU_GDN_NATIVE_SPEC_DECODE=1
+  export VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL=1
+fi
 if [[ "$acceptance_mode" == "target-only" ]]; then
   export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh"
 else
-  if [[ "$acceptance_mode" == "no-replayssm" ]]; then
-    export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-no-replayssm-20260815}
+  if [[ "$acceptance_mode" == "no-replayssm" || "$acceptance_mode" == "native-serial" ]]; then
+    export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-$acceptance_mode-20260815}
   else
     export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-recovery-20260815}
   fi

@@ -57,6 +57,32 @@ retained outside Git as harness-failure evidence but is invalid for diagnosis
 or performance.  Both measured arms must use the frozen committed harness and
 fresh output roots.
 
+## Completed bisections
+
+The frozen one-prompt diagnostic now establishes all of the following:
+
+- corrected ordinary target-only (`correctness-recovery-target-only-20260815T170154Z`)
+  exactly matches the frozen 128-token target reference; the target oracle is
+  stable;
+- standard MTP3 first differs at generated token 6. The target verifier itself
+  returns token `21261` for that position while ordinary target-only returns
+  `19214`;
+- synthetic zero acceptance, graph-replay bypass, and compiled-verifier bypass
+  all retain the same first wrong target row, ruling out rejection accounting,
+  XPU graph replay, and Torch compilation as the primary cause;
+- disabling ReplaySSM also retains the same first wrong target row. It measured
+  only `11.618 tok/s` on this single diagnostic prompt, so it is both incorrect
+  and substantially slower. This is not a promotable throughput result.
+
+The current boundary is therefore the packed GDN/recurrent-state execution,
+below ReplaySSM and graph capture. The next arm uses the sequential native GDN
+implementation while retaining the four-row verifier.
+
+Raw roots remain under
+`/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/`; each root has a
+post-teardown `SHA256SUMS`, source/runtime snapshots, trace, emitted token IDs,
+and analyzer output. The invalid live-edited preflight remains excluded.
+
 ## Next gates
 
 1. If the first target verifier row is already wrong, force zero accepted draft
