@@ -87,6 +87,17 @@ matched all 12 accepted output hashes with every cache count zero. The
 isolated source is now the accepted source at
 `/mnt/fast-ai/src/llama.cpp-q8-tp2-dp4a2`.
 
+## Active Coordination Checkpoint
+
+As of 2026-08-15, one isolated exact-quality follow-up is in progress: replace
+the promoted reordered-Q8 kernel's two dependent two-DP4A chains with four
+independent one-DP4A accumulators and an integer pairwise reduction before the
+unchanged FP32 scale/accumulation boundary. This tests whether additional
+DP4A latency hiding outweighs its register cost on B70. The planned isolated
+source is `/mnt/fast-ai/src/llama.cpp-q8-tp2-dp4a4`; the promoted source and
+artifacts remain untouched. Do not independently start this same experiment
+without first checking the latest `origin/main` checkpoint.
+
 ## Protected State
 
 - Accepted source: `/mnt/fast-ai/src/llama.cpp-q8-tp2-dp4a2`
