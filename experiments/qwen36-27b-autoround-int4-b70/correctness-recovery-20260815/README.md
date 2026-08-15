@@ -81,6 +81,27 @@ execution, but ReplaySSM itself is not yet ruled out. The corrected next arm
 uses the sequential native GDN implementation with ReplaySSM and XPU graph
 capture both explicitly disabled while retaining the four-row verifier.
 
+That corrected arm completed at
+`correctness-recovery-native-serial-20260815T173738Z`. It is valid as a
+one-prompt diagnostic, but not as a performance result:
+
+- the server ran with ReplaySSM and every XPU graph mode explicitly disabled;
+- the first four-row verifier was exact and accepted all three draft tokens;
+- the next verifier's row 0 repeated token `369`, while ordinary target-only
+  required token `28253`;
+- first candidate/reference divergence was output index 5;
+- the diagnostic rate was only `2.996662 tok/s`, as expected for the
+  deliberately serial path;
+- the post-teardown manifest SHA256 is
+  `c7734b9656bfa24e2adf1ca7f8d282dfefd05529d5825fbe62c81f457ac58ec7`.
+
+This rules out the parallel native recurrent kernel as the sole cause. The
+serial implementation publishes per-row speculative state but, unlike the
+native packed kernel contract, does not promote the previously accepted state
+into the running column before the next speculative row. The exact accepted
+count and block-table metadata are the next evidence gate; do not substitute
+the already-rejected global prefix-count or plus-one variants.
+
 Raw roots remain under
 `/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/`; each root has a
 post-teardown `SHA256SUMS`, source/runtime snapshots, trace, emitted token IDs,

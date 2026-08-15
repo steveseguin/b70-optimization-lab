@@ -144,6 +144,12 @@ if [[ "$acceptance_mode" == "native-serial" ]]; then
   export VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA=0
   export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
   export COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'
+  # The metadata builder runs once per forward, so this bounded trace records
+  # accepted counts and state-table columns without reading recurrent tensors
+  # back to the host. It is diagnostic-only and intentionally rank 0.
+  export VLLM_XPU_GDN_METADATA_TRACE_FILE="$run_root/gdn-metadata.jsonl"
+  export VLLM_XPU_GDN_METADATA_TRACE_MAX_LINES=160
+  export VLLM_XPU_GDN_METADATA_TRACE_RANK=0
 fi
 if [[ "$acceptance_mode" == "target-only" ]]; then
   export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
