@@ -58,6 +58,7 @@ class VerifierTraceAnalyzerTest(unittest.TestCase):
                 "--trace", str(trace),
                 "--candidate", str(candidate),
                 "--reference", str(reference),
+                "--prompt-id", PROMPT_ID,
                 "--out", str(output),
             ], check=True, stdout=subprocess.DEVNULL)
 

@@ -22,6 +22,7 @@ port=${PORT:-19622}
 gpu_pair=${GPU_INDEX:-0,1}
 trace_suite=${TRACE_SUITE:-$here/first-divergence-suite.json}
 trace_reference=${TRACE_REFERENCE:-$repo/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/evidence/independent-validation-20260815T152141Z/nospec-01a/data/bench.json}
+trace_prompt_id=$(jq -er '.prompts | if length == 1 then .[0].id else error("trace suite must contain exactly one prompt") end' "$trace_suite")
 
 if [[ -e "$run_root" ]]; then
   printf 'refusing existing output root: %s\n' "$run_root" >&2
@@ -265,6 +266,7 @@ if [[ "$runner_rc" -eq 0 && -s "$run_root/verify-trace.jsonl" ]]; then
     --trace "$run_root/verify-trace.jsonl" \
     --candidate "$run_root/data/bench.json" \
     --reference "$reference" \
+    --prompt-id "$trace_prompt_id" \
     --out "$run_root/analysis.json" \
     > "$run_root/analysis.stdout.log"
 fi

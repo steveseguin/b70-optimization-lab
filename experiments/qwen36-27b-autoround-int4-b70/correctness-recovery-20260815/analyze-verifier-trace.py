@@ -9,14 +9,14 @@ from pathlib import Path
 from typing import Any
 
 
-PROMPT_ID = "holdout--arithmetic-reasoning"
+DEFAULT_PROMPT_ID = "holdout--arithmetic-reasoning"
 
 
-def load_row(path: Path) -> dict[str, Any]:
+def load_row(path: Path, prompt_id: str) -> dict[str, Any]:
     payload = json.loads(path.read_text())
-    matches = [row for row in payload["rows"] if row["prompt_id"] == PROMPT_ID]
+    matches = [row for row in payload["rows"] if row["prompt_id"] == prompt_id]
     if len(matches) != 1:
-        raise SystemExit(f"expected one {PROMPT_ID!r} row in {path}, got {len(matches)}")
+        raise SystemExit(f"expected one {prompt_id!r} row in {path}, got {len(matches)}")
     return matches[0]
 
 
@@ -91,11 +91,16 @@ def main() -> None:
     parser.add_argument("--trace", type=Path, required=True)
     parser.add_argument("--candidate", type=Path, required=True)
     parser.add_argument("--reference", type=Path, required=True)
+    parser.add_argument("--prompt-id", default=DEFAULT_PROMPT_ID)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
-    candidate = [int(token) for token in load_row(args.candidate)["token_ids"]]
-    reference = [int(token) for token in load_row(args.reference)["token_ids"]]
+    candidate = [
+        int(token) for token in load_row(args.candidate, args.prompt_id)["token_ids"]
+    ]
+    reference = [
+        int(token) for token in load_row(args.reference, args.prompt_id)["token_ids"]
+    ]
     records = load_trace(args.trace)
     start, candidate_offset, aligned = find_alignment(records, candidate)
 
@@ -175,7 +180,7 @@ def main() -> None:
 
     result = {
         "classification": classification,
-        "prompt_id": PROMPT_ID,
+        "prompt_id": args.prompt_id,
         "trace_record_count": len(records),
         "aligned_start_record": start,
         "candidate_tokens_before_trace": candidate_offset,
