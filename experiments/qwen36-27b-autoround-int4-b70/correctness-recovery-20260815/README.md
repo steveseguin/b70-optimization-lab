@@ -113,6 +113,27 @@ row 0. The trace reproduced the same output-index-5 failure; its post-teardown
 manifest SHA256 is
 `1c4c3d622f73cb714c1d1566b0999be0cc62c1495deb9caad4a508a24c8fe64b`.
 
+The serial repair is vLLM commit `8c27a1e68`: before processing a serial
+speculative row, gather state column `num_accepted_tokens - 1` and promote it
+to the running column, matching the native packed-kernel contract. The matched
+post-fix run is
+`correctness-recovery-native-serial-20260815T175207Z`:
+
+- all 128 candidate token IDs exactly match the first 128 tokens of the frozen
+  512-token target-only response;
+- no comparable target verifier row disagreed across 35 aligned rounds;
+- `candidate_is_exact_reference_prefix=true` and classification is
+  `no_divergence_in_window`;
+- cache remained zero and the run exited cleanly;
+- `4.108457 tok/s` is diagnostic-only serial throughput;
+- post-analysis manifest SHA256:
+  `9c951722f3b4173c58356a1bf56723d994666eec7a5f87d7bfc423ba154c1237`.
+
+The analyzer now treats a shorter exact candidate as a reference prefix rather
+than a false divergence at the candidate's EOF. Its regression check retains
+the original index-5 failure classification for the unpatched run and reports
+no divergence for the repaired run.
+
 Raw roots remain under
 `/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/`; each root has a
 post-teardown `SHA256SUMS`, source/runtime snapshots, trace, emitted token IDs,

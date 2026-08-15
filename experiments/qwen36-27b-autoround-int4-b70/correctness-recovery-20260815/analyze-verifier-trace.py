@@ -156,7 +156,12 @@ def main() -> None:
         if offset >= len(candidate):
             break
 
-    candidate_difference = first_difference(candidate, reference)
+    # The diagnostic intentionally generates only 128 tokens while the frozen
+    # target-only reference has 512. A matching shorter candidate is an exact
+    # reference prefix, not a divergence at EOF. If a candidate is longer than
+    # the reference, first_difference still reports the first excess token.
+    candidate_difference = first_difference(candidate, reference[: len(candidate)])
+    candidate_is_exact_reference_prefix = candidate_difference is None
     classification = "no_divergence_in_window"
     if candidate_difference is not None:
         if (
@@ -177,6 +182,7 @@ def main() -> None:
         "aligned_round_count": len(rounds),
         "candidate_token_count": len(candidate),
         "reference_token_count": len(reference),
+        "candidate_is_exact_reference_prefix": candidate_is_exact_reference_prefix,
         "candidate_vs_reference_first_difference": candidate_difference,
         "first_target_verifier_disagreement": first_target_disagreement,
         "rounds": rounds,
