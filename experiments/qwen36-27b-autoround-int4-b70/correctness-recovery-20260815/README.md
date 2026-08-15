@@ -70,20 +70,23 @@ The frozen one-prompt diagnostic now establishes all of the following:
 - synthetic zero acceptance, graph-replay bypass, and compiled-verifier bypass
   all retain the same first wrong target row, ruling out rejection accounting,
   XPU graph replay, and Torch compilation as the primary cause;
-- disabling ReplaySSM also retains the same first wrong target row. It measured
-  only `11.618 tok/s` on this single diagnostic prompt, so it is both incorrect
-  and substantially slower. This is not a promotable throughput result.
+- the first attempted no-ReplaySSM arm measured `11.618 tok/s`, but a later
+  wrapper audit proved that the promoted launcher overwrote the requested
+  `VLLM_XPU_GDN_REPLAYSSM_SPEC=0` value. Its log preallocated all 48 ReplaySSM
+  rings. Retain the run as harness evidence, not as a ReplaySSM bisection or a
+  promotable throughput result.
 
-The current boundary is therefore the packed GDN/recurrent-state execution,
-below ReplaySSM and graph capture. The next arm uses the sequential native GDN
-implementation while retaining the four-row verifier.
+The current boundary is the target verifier's packed GDN/recurrent-state
+execution, but ReplaySSM itself is not yet ruled out. The corrected next arm
+uses the sequential native GDN implementation with ReplaySSM and XPU graph
+capture both explicitly disabled while retaining the four-row verifier.
 
 Raw roots remain under
 `/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/`; each root has a
 post-teardown `SHA256SUMS`, source/runtime snapshots, trace, emitted token IDs,
 and analyzer output. The invalid live-edited preflight remains excluded.
 
-Four post-consolidation startup roots are also invalid measurements and retained
+Five post-consolidation startup roots are also invalid measurements and retained
 only as merge-repair evidence:
 
 - `correctness-recovery-native-serial-20260815T171713Z` failed model inspection
@@ -97,7 +100,12 @@ only as merge-repair evidence:
 - `correctness-recovery-native-serial-20260815T172613Z` completed target graph
   compilation, then failed graph-capture setup because the preserved XPU
   communicator did not expose the newer coordinator's disabled `ca_comm`
-  contract.
+  contract;
+- `correctness-recovery-native-serial-20260815T173200Z` reached XPU graph
+  capture, where the eager serial oracle correctly refused an event wait. This
+  exposed the wrapper override bug: native serial and no-ReplaySSM diagnostics
+  must bypass command-graph capture instead of inheriting the promoted record
+  wrapper's forced graph settings.
 
 Neither root contains a benchmark row. The diagnostic runner now fails closed
 when the historical candidate wrapper exits zero without exactly one valid

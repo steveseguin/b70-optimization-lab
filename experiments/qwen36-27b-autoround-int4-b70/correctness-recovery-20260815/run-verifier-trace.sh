@@ -135,6 +135,15 @@ if [[ "$acceptance_mode" == "native-serial" ]]; then
   export VLLM_XPU_GDN_REPLAYSSM_SPEC=0
   export VLLM_XPU_GDN_NATIVE_SPEC_DECODE=1
   export VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL=1
+  export QWEN36_27B_ENABLE_XPU_GRAPH=0
+  export VLLM_XPU_ENABLE_XPU_GRAPH=0
+  export VLLM_XPU_FORCE_GRAPH_WITH_COMM=0
+  export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=0
+  export VLLM_XPU_DDTREE_FULL_GRAPH=0
+  export VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=0
+  export VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA=0
+  export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
+  export COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'
 fi
 if [[ "$acceptance_mode" == "target-only" ]]; then
   export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
