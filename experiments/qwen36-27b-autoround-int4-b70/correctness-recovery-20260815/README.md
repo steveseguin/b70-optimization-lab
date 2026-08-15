@@ -251,6 +251,20 @@ persistent scratch, but sets
 the fault to Level Zero replay; another token-68 failure would move the
 boundary up to the compiled verifier itself.
 
+The no-replay arm also failed at token 68 and measured `45.061 tok/s`; its
+manifest SHA256 is
+`7e227493af9b6727e9bb2ec832c4f697253b9c1d6ec856a05e07f0f371fca6a1`.
+Level Zero replay is therefore not required for the divergence.
+
+The next source change is the exact reviewed upstream XPU fix
+`aeece10c061b8ef708b1962c175f5600f05c1933`, applied on local `main` as
+`3722d8a0fb7cdd3c052fb7b1468b85171c746e1f`. It wraps
+`gdn_attention_core_xpu` with `eager_break_during_capture`, keeping GDN outside
+breakable command graphs while allowing the surrounding verifier to remain
+compiled/captured. This is a current upstream safety behavior, not a local
+invention. It must first pass the same token-68 trace; speed is secondary until
+then.
+
 Five post-consolidation startup roots are also invalid measurements and retained
 only as merge-repair evidence:
 
