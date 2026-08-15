@@ -98,6 +98,16 @@ export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_MAX_LINES=512
 if [[ "$acceptance_mode" == "target-only" ]]; then
   export QWEN36_27B_ENABLE_MTP=0
   export NUM_SPECULATIVE_TOKENS=0
+  export STAGE="$source_root/vllm-xpu-kernels"
+  export VLLM_XPU_KERNELS_SRC="$source_root/vllm-xpu-kernels"
+  export COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}'
+  export VLLM_XPU_DRAFT_DISABLE_CUDAGRAPHS=1
+  unset QWEN36_27B_SPECULATIVE_CONFIG
+  unset VLLM_XPU_DDTREE_FULL_GRAPH
+  unset VLLM_XPU_DDTREE_CAPTURE_GDN_CORE
+  unset VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA
+  unset VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT
+  unset VLLM_XPU_COMPILE_ALLGATHER_CUSTOM_OP
 fi
 if [[ "$acceptance_mode" == "zero" ]]; then
   # This existing sampler mode rejects every proposal by construction and
@@ -113,11 +123,16 @@ if [[ "$acceptance_mode" == "skip-compiled" ]]; then
   # one-token decode remains compiled; this is the known quality oracle.
   export VLLM_XPU_SKIP_COMPILED_SPEC_DECODE=1
 fi
-export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-recovery-20260815}
-export CANDIDATE_ENTRYPOINT="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh"
+if [[ "$acceptance_mode" == "target-only" ]]; then
+  export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
+  candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh"
+else
+  export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-recovery-20260815}
+  candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh"
+fi
+export CANDIDATE_ENTRYPOINT="$candidate"
 
 reference="$repo/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/evidence/independent-validation-20260815T152141Z/nospec-01a/data/bench.json"
-candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh"
 
 exec 9>/tmp/b70-benchmark.lock
 if ! flock -n 9; then
