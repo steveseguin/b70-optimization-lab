@@ -5,9 +5,9 @@ here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "$here/../../.." && pwd)
 acceptance_mode=${1:-standard}
 case "$acceptance_mode" in
-  standard|zero|no-graph-replay|skip-compiled) ;;
+  target-only|standard|zero|no-graph-replay|skip-compiled) ;;
   *)
-    printf 'usage: %s standard|zero|no-graph-replay|skip-compiled\n' "$0" >&2
+    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled\n' "$0" >&2
     exit 2
     ;;
 esac
@@ -95,6 +95,10 @@ export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_FILE="$run_root/verify-trace.jsonl"
 export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_MAX_LINES=512
 export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_FILE="$run_root/bonus-trace.jsonl"
 export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_MAX_LINES=512
+if [[ "$acceptance_mode" == "target-only" ]]; then
+  export QWEN36_27B_ENABLE_MTP=0
+  export NUM_SPECULATIVE_TOKENS=0
+fi
 if [[ "$acceptance_mode" == "zero" ]]; then
   # This existing sampler mode rejects every proposal by construction and
   # emits the first target verifier token. The target still runs at width 4.
