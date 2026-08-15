@@ -131,7 +131,7 @@ if [[ -s "$BENCH_OUT" ]]; then
   "$venv/bin/python" "$repo/scripts/qualify_realistic_window_metrics.py" \
     "$BENCH_OUT" --in-place > "$arm_root/qualify.log"
 fi
-find "$arm_root" -type f -print0 | sort -z | xargs -0 sha256sum \
+find "$arm_root" -type f ! -name SHA256SUMS.pre-manifest -print0 \
+  | sort -z | xargs -0 sha256sum \
   > "$arm_root/SHA256SUMS.pre-manifest"
 exit "$runner_rc"
-
