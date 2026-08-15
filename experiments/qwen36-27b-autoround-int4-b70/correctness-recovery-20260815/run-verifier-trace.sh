@@ -5,9 +5,9 @@ here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "$here/../../.." && pwd)
 acceptance_mode=${1:-standard}
 case "$acceptance_mode" in
-  target-only|standard|zero|no-graph-replay|skip-compiled) ;;
+  target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm) ;;
   *)
-    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled\n' "$0" >&2
+    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm\n' "$0" >&2
     exit 2
     ;;
 esac
@@ -123,11 +123,20 @@ if [[ "$acceptance_mode" == "skip-compiled" ]]; then
   # one-token decode remains compiled; this is the known quality oracle.
   export VLLM_XPU_SKIP_COMPILED_SPEC_DECODE=1
 fi
+if [[ "$acceptance_mode" == "no-replayssm" ]]; then
+  # Retain MTP3 but use the ordinary packed GDN state path instead of the
+  # experimental ReplaySSM transaction and fused kernels.
+  export VLLM_XPU_GDN_REPLAYSSM_SPEC=0
+fi
 if [[ "$acceptance_mode" == "target-only" ]]; then
   export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh"
 else
-  export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-recovery-20260815}
+  if [[ "$acceptance_mode" == "no-replayssm" ]]; then
+    export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-no-replayssm-20260815}
+  else
+    export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-recovery-20260815}
+  fi
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh"
 fi
 export CANDIDATE_ENTRYPOINT="$candidate"
