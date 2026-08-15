@@ -145,6 +145,29 @@ All four XPUs passed a fresh allocation/readback probe after teardown, so no
 reboot was needed. The next arm runs the same native packed kernel eagerly to
 separate kernel/state correctness from graph-capture safety.
 
+That eager packed-kernel arm completed at
+`correctness-recovery-native-fast-eager-20260815T180325Z` and closes the
+kernel-math side of the bisection:
+
+- ReplaySSM, XPU graph capture, Qwen graph capture, forced-communication
+  capture, and DDTree were all explicitly disabled;
+- the ordinary packed native GDN kernel remained enabled;
+- all 128 candidate token IDs exactly match the first 128 tokens of the frozen
+  512-token target-only response;
+- no comparable target verifier row disagreed across 35 aligned rounds;
+- `candidate_is_exact_reference_prefix=true`, cache remained zero, and the
+  process exited cleanly;
+- `10.496396 tok/s` is diagnostic-only eager throughput, not a promotion
+  result;
+- post-analysis `SHA256SUMS` SHA256:
+  `2c046bf99613f27539fad54e0e34ed334507368e8f6bc3ac83d07a3e946297a5`.
+
+The native packed GDN arithmetic and accepted-state transaction are therefore
+exact in eager execution. The remaining fast-path correctness fault is in the
+ReplaySSM/graph integration boundary. The full-graph no-ReplaySSM device loss
+is a separate graph-safety failure and must not be interpreted as a recurrent
+math mismatch.
+
 Raw roots remain under
 `/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/`; each root has a
 post-teardown `SHA256SUMS`, source/runtime snapshots, trace, emitted token IDs,
