@@ -8,10 +8,10 @@ target-only Q8_0 TP2 result on two ASRock Intel Arc Pro B70 cards.
 - Upstream fork: <https://github.com/mndodd/llama.cpp/tree/intel-sycl-optimization>
 - Clean base commit: `4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126`
 - Patch artifact:
-  `llama-cpp-mndodd-4302fb599-lab-tp2-conv-silu-l2-20260815.diff.gz.b64`
+  `llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64`
 - Decoded patch SHA-256:
-  `c8ae065cabf9e7b7f6b6a224673498ddf82b07aeb1d16a33d341368b9b3234d7`
-- Base-to-patch scope: 19 files, 4,814 insertions, 102 deletions.
+  `f21e9b557c3d024527ac98d5f189cf7ea72fa8c38a5faf2a22ee339fd1988998`
+- Base-to-patch scope: 20 files, 4,826 insertions, 112 deletions.
 
 The artifact is a full diff from the clean mndodd commit. Do not first apply
 the smaller compatibility patch from the contributor packet; those changes
@@ -25,7 +25,7 @@ cd llama.cpp-qwen36-q8-tp2
 git checkout 4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126
 
 base64 -d \
-  /path/to/b70-optimization-lab/patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-conv-silu-l2-20260815.diff.gz.b64 \
+  /path/to/b70-optimization-lab/patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64 \
   | gzip -dc > /tmp/qwen36-q8-tp2.patch
 
 sha256sum /tmp/qwen36-q8-tp2.patch
@@ -66,11 +66,11 @@ memory limit and do not overlap it with a loaded model. The validated local
 binaries had these hashes:
 
 - `llama-server`:
-  `d1d5f8d2c7903ef7a84eb9e698689fa803d1c59650d7dce914253efae2bb75b4`
+  `fecde8d8c645655b6ed5e48ccf1c3e879cda14bc95ba8d4a2cf7bf154d401641`
 - `llama-bench`:
-  `b7fbea3d9081ea8c97350d90a63403039f30e99eecc6aea7ae98d4d4d3fed6c2`
+  `369bdaa02fa1a55a2df988bcd26d1a18bcd08d1a1d3fb142a2b506de157f3edb`
 - `libggml-sycl.so`:
-  `707ea1b8f19b69aa31f968dd461815b408a552aaf2f4bfe23d3f83b0ee0e08ed`
+  `ea8553f63f82c66222e40b13e9f007547d7e7139a3c55d78fca6c727297a8b59`
 
 These hashes identify the promoted build; they are provenance, not a required
 rebuild gate. Intel AOT output can vary across rebuild environments.
@@ -109,6 +109,9 @@ It includes:
 - one recurrent conv/state-update+SiLU+paired-Q/K-L2 launch, assigning two
   complete 128-channel heads to each 256-thread workgroup and preserving the
   accepted SiLU materialization and stock SIMD16 L2 reduction order.
+- two independent two-DP4A integer chains per reordered-Q8 block, exposing
+  instruction-level parallelism while preserving the exact integer dot
+  product and the existing per-block FP32 scale/accumulation boundary.
 
 The two state-I/O paths and final recurrent-tail path have poison controls for
 validation. Never set a poison variable in a real service.
@@ -127,7 +130,9 @@ sets `GGML_SYCL_COMM_DIRECT_Q8=2`, `GGML_SYCL_FUSED_ROPE_SET_ROWS=1`, and
 exact-output gated; vec4 also passed a complete same-binary scalar control.
 The current increment sets `GGML_SYCL_FUSED_CONV_SILU_L2=1`; its full gate
 passed 12/12 exact 512-token hashes and observed exactly 588,672 eligible
-rank-layer hits. The full patch also preserves two rejected, default-off
+rank-layer hits. The newest DP4A change is compile-time and adds no runtime
+door; its full gate also passed 12/12 exact 512-token hashes. The full patch
+also preserves two rejected, default-off
 research doors (`GGML_SYCL_FUSED_CONV_SILU_OUTPUT` and
 `GGML_SYCL_MMVQ_SG32_OUTPUT_HEAD`); the reproduction explicitly unsets both.
 

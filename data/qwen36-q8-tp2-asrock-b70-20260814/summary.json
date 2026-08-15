@@ -1,6 +1,6 @@
 {
   "status": "B70-verified target-only TP2 record",
-  "created_at_utc": "2026-08-15T07:52:57.579932+00:00",
+  "created_at_utc": "2026-08-15T18:25:18.474385+00:00",
   "model": {
     "repository": "ggml-org/Qwen3.6-27B-GGUF",
     "revision": "8a7ee08e8b9bfb857107ecc25a5599d2f38b76f8",
@@ -21,10 +21,10 @@
   "runtime": {
     "source": "https://github.com/mndodd/llama.cpp/tree/intel-sycl-optimization",
     "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
-    "source_patch_uncompressed_sha256": "c8ae065cabf9e7b7f6b6a224673498ddf82b07aeb1d16a33d341368b9b3234d7",
-    "llama_server_sha256": "d1d5f8d2c7903ef7a84eb9e698689fa803d1c59650d7dce914253efae2bb75b4",
-    "llama_bench_sha256": "b7fbea3d9081ea8c97350d90a63403039f30e99eecc6aea7ae98d4d4d3fed6c2",
-    "libggml_sycl_sha256": "707ea1b8f19b69aa31f968dd461815b408a552aaf2f4bfe23d3f83b0ee0e08ed",
+    "source_patch_uncompressed_sha256": "f21e9b557c3d024527ac98d5f189cf7ea72fa8c38a5faf2a22ee339fd1988998",
+    "llama_server_sha256": "fecde8d8c645655b6ed5e48ccf1c3e879cda14bc95ba8d4a2cf7bf154d401641",
+    "llama_bench_sha256": "369bdaa02fa1a55a2df988bcd26d1a18bcd08d1a1d3fb142a2b506de157f3edb",
+    "libggml_sycl_sha256": "ea8553f63f82c66222e40b13e9f007547d7e7139a3c55d78fca6c727297a8b59",
     "compiler": "C: GNU 13.3.0 (/usr/bin/cc); C++/SYCL: Intel oneAPI DPC++/C++ 2026.1.0 (20260617)",
     "kernel": "7.0.0-28-generic",
     "omix": "0.3.0-9~24.04",
@@ -62,29 +62,29 @@
     "cache_prompt": false,
     "preferred_metric": "median conventional rate across the 99 inter-token intervals from streamed events 1 through 100 after TTFT",
     "conventional_99_interval_tok_s": {
-      "median": 36.347289793336984,
-      "p10": 35.973239933018064,
-      "mean": 36.38144315085961
+      "median": 36.60412776947562,
+      "p10": 36.351244553492045,
+      "mean": 36.63407212923223
     },
     "historical_100_event_compatibility_tok_s": {
-      "median": 36.71443413468383,
-      "p10": 36.33660599294753,
-      "mean": 36.74893247561577
+      "median": 36.973866433813754,
+      "p10": 36.718428841911155,
+      "mean": 37.00411326185074
     },
     "full_512_after_ttft_tok_s": {
-      "median": 36.365073804742565,
-      "p10": 36.12156376471372,
-      "mean": 36.35987774130242
+      "median": 36.53389944532215,
+      "p10": 36.326170798866976,
+      "mean": 36.59588814159179
     },
     "full_512_wall_tok_s": {
-      "median": 35.9032940577122,
-      "p10": 35.483745166269415,
-      "mean": 35.88068082683329
+      "median": 36.05383276113755,
+      "p10": 35.658890398872124,
+      "mean": 36.10801735329193
     },
     "ttft_ms": {
-      "median": 179.96240250067785,
-      "p10": 168.5725810850272,
-      "mean": 188.31544316829726
+      "median": 180.25461700744927,
+      "p10": 171.90393647179008,
+      "mean": 189.31468290975317
     }
   },
   "quality": {
@@ -97,11 +97,11 @@
   },
   "attribution": {
     "matched_mndodd_fork_conventional_tok_s": 31.025376968339355,
-    "prior_promoted_record_conventional_tok_s": 35.69922490372522,
+    "prior_promoted_record_conventional_tok_s": 36.347289793336984,
     "pre_vec4_clean_record_conventional_tok_s": 35.83221316356445,
-    "new_clean_record_conventional_tok_s": 36.347289793336984,
-    "total_gain_vs_mndodd_percent": 17.153418733408166,
-    "record_gain_vs_pre_vec4_clean_percent": 0.36791664983573114,
+    "new_clean_record_conventional_tok_s": 36.60412776947562,
+    "total_gain_vs_mndodd_percent": 17.981250660803383,
+    "record_gain_vs_pre_vec4_clean_percent": 2.154247638535711,
     "same_binary_vec4_control_conventional_tok_s": 35.846855174775605,
     "same_binary_vec4_candidate_conventional_tok_s": 35.964045841797834,
     "same_binary_vec4_aggregate_gain_percent": 0.32692035731125557,
@@ -117,6 +117,11 @@
     "conv_silu_l2_record_conventional_tok_s": 36.347289793336984,
     "conv_silu_l2_gain_vs_prior_record_percent": 0.32245689302921043,
     "conv_silu_l2_full512_gain_vs_prior_record_percent": 0.4943077978738497,
+    "dp4a2_record_conventional_tok_s": 36.60412776947562,
+    "dp4a2_gain_vs_prior_record_percent": 0.706622082688857,
+    "dp4a2_full512_gain_vs_prior_record_percent": 0.46425215987755397,
+    "dp4a2_bracket_candidate_process_mean_tok_s": 37.7758215,
+    "dp4a2_bracket_control_process_mean_tok_s": 37.20993225,
     "preclean_same_binary_imrope_control_conventional_tok_s": 35.72807772541513,
     "preclean_same_binary_imrope_candidate_conventional_tok_s": 35.783553591379,
     "preclean_same_binary_imrope_aggregate_gain_percent": 0.15527246215207846,
@@ -137,11 +142,11 @@
     "f8fcfce7eae6918674a4dc00321147cd54e156a5cbbd7af849579ac84e6530f0"
   ],
   "evidence": {
-    "raw_result_compressed": "conv-silu-l2-full-realistic512.json.gz.b64",
-    "raw_result_sha256": "04721d27e64b4dbfed9510bb64285092c464c885751437a3c63ac70087f70ab2",
-    "raw_result_base64_artifact_sha256": "3408bbe7c688b9eb73499d0f4cec4f6a441b0d05f18ad17be3f21d0386dc2700",
+    "raw_result_compressed": "dp4a2-full-realistic512.json.gz.b64",
+    "raw_result_sha256": "afd8bc6ad6aee2a16ec56d6f05aea0a29469ef4f6275b06a2d728f5407dccc7c",
+    "raw_result_base64_artifact_sha256": "d4273f9b705c543c03764071214165f4d16a72bc190a10a44c279ce2f2d4490c",
     "same_binary_control_compressed": "reduce-vec4-clean-control-full-realistic512.json.gz.b64",
     "same_binary_control_sha256": "f0b41b32444a433b9cb0a93c995620f27a9aa9ea86da4d3ec6c97b6365f2e67d",
-    "local_full_run_directory": "/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260815-outputhead-sg32"
+    "local_full_run_directory": "/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260815-dp4a2"
   }
 }

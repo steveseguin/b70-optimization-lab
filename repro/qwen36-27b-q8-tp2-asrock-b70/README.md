@@ -6,12 +6,12 @@ prompt reuse, or other speculation.
 
 ## Promoted result
 
-- Preferred conventional 99-interval median: **36.347290 tok/s**
-- Conventional p10 / mean: `35.973240` / `36.381443 tok/s`
-- Historical 100-event compatibility median: `36.714434 tok/s`
-- Full 512-token after-TTFT median: `36.365074 tok/s`
-- Full 512-token wall median: `35.903294 tok/s`
-- Median TTFT: `179.962 ms`
+- Preferred conventional 99-interval median: **36.604128 tok/s**
+- Conventional p10 / mean: `36.351245` / `36.634072 tok/s`
+- Historical 100-event compatibility median: `36.973866 tok/s`
+- Full 512-token after-TTFT median: `36.533899 tok/s`
+- Full 512-token wall median: `36.053833 tok/s`
+- Median TTFT: `180.255 ms`
 - Quality: 12/12 output hashes exact, 12/12 at 512 completion tokens,
   every `cached_tokens=0`, realistic and fresh-response gates passed.
 
@@ -174,4 +174,7 @@ The readable result summary is
 The compressed current candidate and retained earlier controls beside it are
 complete raw 12-prompt JSON, including timestamps, hashes, gates, and per-row
 telemetry. The promoted raw result is
-`conv-silu-l2-full-realistic512.json.gz.b64`.
+`dp4a2-full-realistic512.json.gz.b64`. The current compile-time increment
+evaluates each reordered-Q8 block's four DP4As as two independent integer
+chains and joins the integer partials before the unchanged FP32 boundary.
+It requires no additional runtime environment door.

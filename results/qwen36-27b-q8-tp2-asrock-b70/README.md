@@ -1,16 +1,16 @@
 # Qwen3.6 27B Q8 target-only TP2 on two ASRock B70s
 
 Current resume state: [HANDOFF.md](HANDOFF.md). The 2026-08-15 pass-2 stack
-adds exact recurrent conv+SiLU+Q/K-L2 and single-subgroup attention Q/K
-RMS+scale+IMRoPE fusions to the prior register-direct Q8, direct IMRoPE
-KV-cache, and vec4-reduction stack; the measurement and recipe below are
-authoritative.
+adds two-chain DP4A instruction-level parallelism, exact recurrent
+conv+SiLU+Q/K-L2, and single-subgroup attention Q/K RMS+scale+IMRoPE fusions
+to the prior register-direct Q8, direct IMRoPE KV-cache, and vec4-reduction
+stack; the measurement and recipe below are authoritative.
 
 ## Outcome
 
-The target-only optimization campaign reached **36.347290 tok/s**
+The target-only optimization campaign reached **36.604128 tok/s**
 under conventional 99-inter-token-interval accounting on two ASRock Intel Arc
-Pro B70 32 GiB cards. The historical repository helper reports `36.714434`
+Pro B70 32 GiB cards. The historical repository helper reports `36.973866`
 from the same timestamps. No draft model, MTP, DFlash, n-gram reuse, prompt
 cache, response reuse, or speculative decoding was used.
 
@@ -22,12 +22,12 @@ identical to the accepted pre-state-I/O target-only control.
 
 | Metric | Result |
 | --- | ---: |
-| Conventional 99-interval median | **36.347290 tok/s** |
-| Conventional p10 / mean | `35.973240` / `36.381443 tok/s` |
-| Historical 100-event compatibility median | `36.714434 tok/s` |
-| Full 512-token after-TTFT median | `36.365074 tok/s` |
-| Full 512-token wall median | `35.903294 tok/s` |
-| Median TTFT | `179.962 ms` |
+| Conventional 99-interval median | **36.604128 tok/s** |
+| Conventional p10 / mean | `36.351245` / `36.634072 tok/s` |
+| Historical 100-event compatibility median | `36.973866 tok/s` |
+| Full 512-token after-TTFT median | `36.533899 tok/s` |
+| Full 512-token wall median | `36.053833 tok/s` |
+| Median TTFT | `180.255 ms` |
 | Fixed prompts / completion length | `12 / 512 tokens each` |
 | Cache / fresh gate | `cached_tokens=0` for 12/12; passed |
 | Exact output identity | `12/12` hashes equal the accepted control |
@@ -61,8 +61,9 @@ The lab progression from that fork was:
 | Vectorized exact-F32 TP root reduction, clean rebuild | **`35.964046`** | `+0.327%` aggregate same-binary endpoint A/B; 12/12 prompt-paired first-100 rates positive |
 | SIMD16 Q/K RMS+scale+IMRoPE with local FP32 boundary | **`36.230462`** | `+0.741%` over the preceding clean record; full-512 `+0.866%`; 12/12 exact |
 | Recurrent conv+SiLU+paired Q/K L2 normalization | **`36.347290`** | `+0.322%` over the preceding record; full-512 `+0.494%`; 12/12 exact |
+| Two-chain Q8 DP4A ILP | **`36.604128`** | `+0.707%` over the preceding record; full-512 `+0.464%`; 12/12 exact |
 
-The promoted result is **`+17.153%`** over the matched mndodd fork baseline.
+The promoted result is **`+17.981%`** over the matched mndodd fork baseline.
 The direct-state-I/O attribution percentages use the preceding matched
 512-token run, which was `+13.876%` over mndodd; the faster replay is reported
 as run variance, not credited as another source optimization. Relative gains
@@ -87,7 +88,7 @@ are unchanged by multiplying all helper rates by `0.99`.
   F16 and Level Zero API on; graph, DNN, and host-memory fallback off.
 
 The complete decoded source patch SHA-256 is
-`c8ae065cabf9e7b7f6b6a224673498ddf82b07aeb1d16a33d341368b9b3234d7`.
+`f21e9b557c3d024527ac98d5f189cf7ea72fa8c38a5faf2a22ee339fd1988998`.
 
 ## What improved
 
@@ -138,6 +139,12 @@ two pass-2 transformations:
    writes V normally, and applies the stock SIMD16 L2 lane reduction directly
    to Q/K. This removes the separate SiLU and paired Q/K L2 launches while
    preserving the accepted FP32 boundary.
+9. Each reordered-Q8 block now evaluates its four signed-byte DP4As as two
+   independent two-instruction integer chains, then adds the exact integer
+   partials before the unchanged FP32 scale and accumulation boundary. The
+   four DP4As cannot overflow `int32_t`, so the integer regrouping is exact;
+   it exposes more instruction-level parallelism without changing Q8_0,
+   tensor splitting, or any floating-point operation order.
 
 Both matchers require exact tensor types, shapes, strides, consumer counts,
 pointer relationships, and non-overlap. Any alternate batch, state, or graph
@@ -203,6 +210,14 @@ These doors were tested and rejected rather than left enabled:
 - DFlash and MTP were excluded from this target-only objective even where they
   produced higher workload-dependent rates.
 
+An initial DP4A screen was invalidated because its copied incremental build
+retained a byte-identical `mmvq.cpp.o`. The valid treatment required and
+verified a distinct object (`b10906dd...` versus control `215a96a7...`) before
+measurement. Two position-balanced `p64/n256/r3` brackets then measured four
+candidate process means from `37.655` to `37.833 tok/s`; the complementary
+stable-state comparison was about `+0.7%` to `+0.9%`. The full endpoint gate
+confirmed `+0.707%` conventional and 12/12 exact output hashes.
+
 The rejected local logs remain under
 `/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260813-tp2-fusion` on the
 reference host so the dead ends are not rediscovered.
@@ -222,6 +237,7 @@ and use the [handoff](HANDOFF.md) for the current decision summary.
 - [Full source patch](../../patches/qwen36-27b-q8-tp2-asrock-b70/README.md)
 - [Readable structured summary](../../data/qwen36-q8-tp2-asrock-b70-20260814/summary.json)
 - [Compressed complete raw result](../../data/qwen36-q8-tp2-asrock-b70-20260814/conv-silu-l2-full-realistic512.json.gz.b64)
+- [Compressed current DP4A-ILP raw result](../../data/qwen36-q8-tp2-asrock-b70-20260814/dp4a2-full-realistic512.json.gz.b64)
 - [Compressed same-binary scalar control](../../data/qwen36-q8-tp2-asrock-b70-20260814/reduce-vec4-clean-control-full-realistic512.json.gz.b64)
 - Fixed suite:
   [`realistic-suite-v1.json`](../../repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json)
@@ -233,5 +249,6 @@ and produced the pre-vec4 `35.832213 tok/s` result. The clean vec4 promotion
 and same-binary scalar control used ports 18083 and 18084 and produced
 `35.964046 tok/s`; the exact Q/K fusion then advanced the record to
 `36.230462 tok/s`; recurrent conv+SiLU+Q/K-L2 then advanced it to
-`36.347290 tok/s`. The pass avoided the known
+`36.347290 tok/s`; two-chain Q8 DP4A ILP now advances it to
+`36.604128 tok/s`. The pass avoided the known
 unsafe profiler, graph-capture, and remote-write paths.
