@@ -83,6 +83,19 @@ Raw roots remain under
 post-teardown `SHA256SUMS`, source/runtime snapshots, trace, emitted token IDs,
 and analyzer output. The invalid live-edited preflight remains excluded.
 
+Two post-consolidation startup roots are also invalid measurements and retained
+only as merge-repair evidence:
+
+- `correctness-recovery-native-serial-20260815T171713Z` failed model inspection
+  because the preserved GDN class used its pre-upstream-rename symbol;
+- `correctness-recovery-native-serial-20260815T171915Z` progressed farther but
+  failed worker initialization because the preserved tree-attention backend was
+  not restored to the newer backend enum.
+
+Neither root contains a benchmark row. The diagnostic runner now fails closed
+when the historical candidate wrapper exits zero without exactly one valid
+cold benchmark row.
+
 ## Next gates
 
 1. If the first target verifier row is already wrong, force zero accepted draft
