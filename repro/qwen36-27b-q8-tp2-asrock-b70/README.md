@@ -1,17 +1,17 @@
 # Reproduce Qwen3.6 27B Q8 target-only TP2 on two B70s
 
-This recipe reproduces the 2026-08-14 lab result on two ASRock Intel Arc Pro
+This recipe reproduces the 2026-08-15 lab result on two ASRock Intel Arc Pro
 B70 32 GiB cards. It is Q8_0 target-only decode: no MTP, DFlash, draft model,
 prompt reuse, or other speculation.
 
 ## Promoted result
 
-- Preferred conventional 99-interval median: **35.964046 tok/s**
-- Conventional p10 / mean: `35.477834` / `35.955549 tok/s`
-- Historical 100-event compatibility median: `36.327319 tok/s`
-- Full 512-token after-TTFT median: `35.875582 tok/s`
-- Full 512-token wall median: `35.427281 tok/s`
-- Median TTFT: `179.802 ms`
+- Preferred conventional 99-interval median: **36.230462 tok/s**
+- Conventional p10 / mean: `35.766025` / `36.198205 tok/s`
+- Historical 100-event compatibility median: `36.596426 tok/s`
+- Full 512-token after-TTFT median: `36.186203 tok/s`
+- Full 512-token wall median: `35.721114 tok/s`
+- Median TTFT: `181.144 ms`
 - Quality: 12/12 output hashes exact, 12/12 at 512 completion tokens,
   every `cached_tokens=0`, realistic and fresh-response gates passed.
 
@@ -136,7 +136,12 @@ IMRoPE results directly into the indexed F16 KV cache.
 `GGML_SYCL_COMM_REDUCE_VEC4=1` preserves the exact scalar arithmetic order but
 uses aligned four-float loads/stores and one quarter as many work-items in the
 5,120-element TP root reduction. All three selectors remain default-off
-outside this recipe.
+outside this recipe. `GGML_SYCL_FUSED_QK_NORM_ROPE=1` joins the full-attention
+Q and K RMS+scale+IMRoPE path and K-cache write into one SIMD16 launch. Its
+1 KiB workgroup-local FP32 buffer deliberately preserves the incumbent
+RMS+MUL materialization boundary; removing that boundary was faster but failed
+10 of 12 output-hash gates. This fourth selector is also default-off outside
+the exact Qwen shape matcher.
 
 ## 5. Run the fixed cold suite
 
@@ -160,6 +165,7 @@ repro/qwen36-27b-q8-tp2-asrock-b70/verify-artifacts.sh
 
 The readable result summary is
 [`data/qwen36-q8-tp2-asrock-b70-20260814/summary.json`](../../data/qwen36-q8-tp2-asrock-b70-20260814/summary.json).
-The compressed candidate and same-binary scalar-control files beside it are
+The compressed current candidate and retained earlier controls beside it are
 complete raw 12-prompt JSON, including timestamps, hashes, gates, and per-row
-telemetry.
+telemetry. The promoted raw result is
+`qknormrope-localfp32-full-realistic512.json.gz.b64`.

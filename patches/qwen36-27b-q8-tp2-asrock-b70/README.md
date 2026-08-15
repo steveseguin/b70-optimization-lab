@@ -1,6 +1,6 @@
 # Qwen3.6 27B Q8 TP2 lab patch
 
-This directory preserves the complete source delta for the 2026-08-14
+This directory preserves the complete source delta for the 2026-08-15
 target-only Q8_0 TP2 result on two ASRock Intel Arc Pro B70 cards.
 
 ## Source identity
@@ -8,10 +8,10 @@ target-only Q8_0 TP2 result on two ASRock Intel Arc Pro B70 cards.
 - Upstream fork: <https://github.com/mndodd/llama.cpp/tree/intel-sycl-optimization>
 - Clean base commit: `4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126`
 - Patch artifact:
-  `llama-cpp-mndodd-4302fb599-lab-tp2-reduce-vec4-20260814.diff.gz.b64`
+  `llama-cpp-mndodd-4302fb599-lab-tp2-qknormrope-localfp32-20260815.diff.gz.b64`
 - Decoded patch SHA-256:
-  `576e2b218db70de5496fab2c8a611d9a96c3784cbcdfc180c2617d14a1221d12`
-- Base-to-patch scope: 18 files, 3,741 insertions, 100 deletions.
+  `800f03b174e8e19a4471d3f15d3b544565c8aa1854563e01045cfedac7a6c9af`
+- Base-to-patch scope: 19 files, 4,399 insertions, 101 deletions.
 
 The artifact is a full diff from the clean mndodd commit. Do not first apply
 the smaller compatibility patch from the contributor packet; those changes
@@ -25,7 +25,7 @@ cd llama.cpp-qwen36-q8-tp2
 git checkout 4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126
 
 base64 -d \
-  /path/to/b70-optimization-lab/patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-reduce-vec4-20260814.diff.gz.b64 \
+  /path/to/b70-optimization-lab/patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-qknormrope-localfp32-20260815.diff.gz.b64 \
   | gzip -dc > /tmp/qwen36-q8-tp2.patch
 
 sha256sum /tmp/qwen36-q8-tp2.patch
@@ -66,11 +66,11 @@ memory limit and do not overlap it with a loaded model. The validated local
 binaries had these hashes:
 
 - `llama-server`:
-  `71dc9d2449fac125c7db92a4f36332b9034436f91fa308e3fc1ee34c33c72bf9`
+  `dddd501b462a21fb1addadc1941016e865ed8d31fb03a5be8a5d211580365721`
 - `llama-bench`:
-  `1c0720a10eef58027c5182b64a88f0a7220c9e3260caca191884a5fcf68a6e72`
+  `b8c335a75fce8ada48ad5878ffe32aa6a7d45ae86757a5806c032cc538fda028`
 - `libggml-sycl.so`:
-  `96ecc5e52293888b09c1e6bef7ae2134eae1e746cb79dec718abe8debea785e0`
+  `4212af65ecb545d30cdc7a977f9f57f35703e3f59b7237cf936bb11ae19400e9`
 
 These hashes identify the promoted build; they are provenance, not a required
 rebuild gate. A later rebuild from the same accepted source produced a
@@ -105,6 +105,9 @@ It includes:
   `ROPE -> VIEW -> SET_ROWS` attention-K graph closure.
 - aligned four-float TP root reduction, preserving exact per-element FP32
   operation order while reducing the 5,120-element grid by four.
+- one SIMD16 Q/K RMS+scale+IMRoPE launch for each full-attention block, with a
+  1 KiB workgroup-local FP32 boundary that reproduces the incumbent
+  RMS+MUL-store/RoPE-load arithmetic and writes K directly to its F16 cache.
 
 The two state-I/O paths and final recurrent-tail path have poison controls for
 validation. Never set a poison variable in a real service.
@@ -118,9 +121,10 @@ The promoted environment sets `GGML_SYCL_FUSE_EXT=31`; bit 4 is the final
 recurrent-tail fusion. The source default `15` leaves bit 4 off and was used as
 the same-binary attribution control. The 2026-08-14 increment additionally
 sets `GGML_SYCL_COMM_DIRECT_Q8=2`, `GGML_SYCL_FUSED_ROPE_SET_ROWS=1`, and
-`GGML_SYCL_COMM_REDUCE_VEC4=1`. All selectors are default-off and were
+`GGML_SYCL_COMM_REDUCE_VEC4=1`. The 2026-08-15 increment additionally sets
+`GGML_SYCL_FUSED_QK_NORM_ROPE=1`. All selectors are default-off and were
 exact-output gated; vec4 also passed a complete same-binary scalar control.
 
 The previous patch artifacts remain in this directory for earlier records;
-they must not be stacked with the vec4 full patch because the newest artifact
+they must not be stacked with the newest full patch because that artifact
 already contains the complete source delta.

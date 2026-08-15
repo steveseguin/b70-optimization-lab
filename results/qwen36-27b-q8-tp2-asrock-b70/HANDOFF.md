@@ -1,6 +1,6 @@
 # Qwen3.6 27B Q8 TP2 Handoff
 
-Status: **active target-only optimization on 2026-08-14**
+Status: **active target-only optimization on 2026-08-15**
 
 ## Resume Bookmark
 
@@ -8,15 +8,15 @@ The accepted target-only two-B70 result is:
 
 | Field | Accepted value |
 | --- | --- |
-| Conventional 99-interval median | **`35.964046 tok/s`** |
-| Historical helper | `36.327319 tok/s` |
-| Full-512 after-TTFT median | `35.875582 tok/s` |
+| Conventional 99-interval median | **`36.230462 tok/s`** |
+| Historical helper | `36.596426 tok/s` |
+| Full-512 after-TTFT median | `36.186203 tok/s` |
 | Quality | 12/12 cold 512-token outputs byte-exact to the accepted control |
 | Cache | `cached_tokens=0` for 12/12 |
 | Target | Qwen3.6 27B GGUF Q8_0 |
 | Runtime mode | target-only TP2; no MTP, DFlash, draft, or reuse |
 | Source base | mndodd llama.cpp `4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126` |
-| Complete decoded patch SHA-256 | `576e2b218db70de5496fab2c8a611d9a96c3784cbcdfc180c2617d14a1221d12` |
+| Complete decoded patch SHA-256 | `800f03b174e8e19a4471d3f15d3b544565c8aa1854563e01045cfedac7a6c9af` |
 
 Start with the [result packet](README.md), then use the
 [standalone reproduction](../../repro/qwen36-27b-q8-tp2-asrock-b70/README.md)
@@ -31,8 +31,10 @@ and raw log paths. Pass 1 promoted no replacement. The
 [pass-2 ledger](../../notes/2026-08-14-qwen36-q8-tp2-40tps-pass2.md) records
 the register-direct Q8 handoff, direct IMRoPE-to-KV-cache fusion, and vec4 TP
 root reduction that passed a clean rebuild and complete 12-prompt exact-output
-suite. The vec4 same-binary endpoint A/B was `+0.327%`, with all 12
-prompt-paired first-100 rates positive.
+suite. It now also records the exact SIMD16 Q/K RMS+scale+IMRoPE fusion. Its
+local FP32 materialization version is `+0.741%` over the preceding clean
+record and passes 12/12 complete hashes; the faster barrier-free version is
+quality-rejected.
 
 Closed hypotheses include:
 
@@ -72,7 +74,7 @@ Prioritize one of these materially new inputs:
 
 ## Protected State
 
-- Accepted source: `/mnt/fast-ai/src/llama.cpp-q8-tp2-reduce-vec4`
+- Accepted source: `/mnt/fast-ai/src/llama.cpp-q8-tp2-qknormrope-wg16`
 - Prior control source: `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl`
 - Accepted model:
   `/mnt/fast-ai/llm-models/qwen3.6-27b-q8_0-gguf/Qwen3.6-27B-Q8_0.gguf`
