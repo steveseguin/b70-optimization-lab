@@ -42,7 +42,9 @@ QUALITY_OUT="${QUALITY_OUT:-$OUT_DIR/quality-${LABEL}-repeat${QUALITY_REPEAT_RUN
 SMOKE_OUT="${SMOKE_OUT:-$OUT_DIR/smoke-${LABEL}-${STAMP}.json}"
 SUMMARY_OUT="${SUMMARY_OUT:-$OUT_DIR/${LABEL}-candidate-summary-${STAMP}.json}"
 SUITE="${SUITE:-$ROOT/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json}"
-REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-{\"chat_template_kwargs\":{\"enable_thinking\":false}}}"
+if [[ -z "${REQUEST_EXTRA_JSON:-}" ]]; then
+  REQUEST_EXTRA_JSON='{"chat_template_kwargs":{"enable_thinking":false}}'
+fi
 
 MODEL_DIR="${MODEL_DIR:-/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e}"
 if [[ ! -e "$MODEL_DIR" ]]; then

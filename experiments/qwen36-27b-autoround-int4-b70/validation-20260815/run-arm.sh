@@ -166,9 +166,22 @@ export QUALITY_BASELINE_JSON="$quality_baseline"
 if [[ "$mode" == "spec" ]]; then
   export QWEN36_27B_ENABLE_MTP=1
   export NUM_SPECULATIVE_TOKENS=3
+  candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh"
 else
   export QWEN36_27B_ENABLE_MTP=0
   unset QWEN36_27B_SPECULATIVE_CONFIG
+  # The candidate's fixed width-4 full graph is a packed-verifier schedule,
+  # not a valid one-row target reference. Use the previously quality-validated
+  # ordinary target graph for no-spec controls while retaining the exact FP16
+  # target, oneCCL, LM-head, sampling, and model identity.
+  export COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}'
+  export VLLM_XPU_DRAFT_DISABLE_CUDAGRAPHS=1
+  unset VLLM_XPU_DDTREE_FULL_GRAPH
+  unset VLLM_XPU_DDTREE_CAPTURE_GDN_CORE
+  unset VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA
+  unset VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT
+  unset VLLM_XPU_COMPILE_ALLGATHER_CUSTOM_OP
+  candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh"
 fi
 
 printf 'mode=%s\ngpu_pair=%s\narm_root=%s\nquality_baseline=%s\n' \
@@ -181,7 +194,7 @@ if ! flock -n 9; then
 fi
 
 set +e
-"$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh" \
+"$candidate" \
   > "$arm_root/runner.stdout.log" 2>&1
 runner_rc=$?
 set -e

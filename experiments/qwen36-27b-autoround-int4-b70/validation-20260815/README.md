@@ -9,6 +9,23 @@ independent reproduction, not as a continuation selected from the old sweep.
 The plan was frozen before launching the restored model or observing any new
 endpoint measurement.
 
+### Preflight amendment
+
+The first attempted matrix root,
+`independent-validation-20260815T145530Z`, stopped before creating any
+benchmark rows. The generic runner appended two stray braces to an explicitly
+set request-extra JSON value, so the benchmark parser exited before its first
+request. That preflight also established that the candidate-only fixed width-4
+full graph is not a valid one-row no-spec schedule: it produced corrupt target
+text. No speed was observed.
+
+Before restarting the matrix, the JSON default was made syntactically safe and
+the no-spec controls were changed to the already quality-validated ordinary
+PIECEWISE target graph (capture size 8). They retain the same target checkpoint,
+FP16 target compute, runtime INT8 LM head, oneCCL, sampling, and hardware. The
+speculative candidate remains unchanged. The failed preflight is preserved
+outside Git with its logs and checksums.
+
 ## Frozen identity
 
 - target: `webhie/Qwen3.6-27B-int4-AutoRound` revision
@@ -18,7 +35,9 @@ endpoint measurement.
 - runtime: the detached source heads and working patches in the standalone
   repro packet;
 - target compute: FP16 over the AutoRound INT4 checkpoint, with the recorded
-  runtime INT8 target LM head and BF16 scales;
+  runtime INT8 target LM head and BF16 scales; the candidate uses its recorded
+  fixed width-4 full graph, while target-only controls use the validated
+  one-row PIECEWISE graph with capture size 8;
 - candidate: intrinsic target-verified MTP3 with the recorded ReplaySSM and
   full-graph transaction configuration;
 - control: the same target/runtime/graph/LM-head identity with speculative
@@ -101,4 +120,3 @@ performance context, not a substitute model.
 
 Raw run directories live outside Git. Track the compact analysis, file
 checksums, commands, and final classification here after completion.
-
