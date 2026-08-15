@@ -265,6 +265,16 @@ compiled/captured. This is a current upstream safety behavior, not a local
 invention. It must first pass the same token-68 trace; speed is secondary until
 then.
 
+That upstream eager-break arm still failed at the identical verifier row and
+token (`7499` vs target `9575`). It was otherwise healthy, cache-zero, and
+measured `85.641 tok/s`; its manifest SHA256 is
+`6eba982d50df4543ae787c55a648684ef199c2c7aee64f33209a38d3aae643b1`.
+Moving GDN itself outside breakable command graphs is therefore not sufficient.
+The next bounded arm keeps the PIECEWISE runtime and ordinary compiled decode,
+but sets `VLLM_XPU_SKIP_COMPILED_SPEC_DECODE=1` so only the speculative target
+forward uses the raw model. This tests the compiled-verifier boundary directly;
+it is a correctness diagnostic, not a promotion benchmark.
+
 Five post-consolidation startup roots are also invalid measurements and retained
 only as merge-repair evidence:
 
