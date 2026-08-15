@@ -41,7 +41,7 @@ verify_tree() {
     exit 3
   fi
 }
-verify_tree "$source_root/vllm" 07d4897a63eb4bb987ed2479b0a819f7f20ba421 \
+verify_tree "$source_root/vllm" 8c27a1e68ac619e198b0c08c2d6f62b80ddb3456 \
   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
 verify_tree "$source_root/vllm-xpu-kernels" c9e265d95892e19aaddd731e5e94f9a19f91f954 \
   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels

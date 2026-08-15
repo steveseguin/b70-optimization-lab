@@ -102,6 +102,17 @@ into the running column before the next speculative row. The exact accepted
 count and block-table metadata are the next evidence gate; do not substitute
 the already-rejected global prefix-count or plus-one variants.
 
+The bounded metadata rerun
+`correctness-recovery-native-serial-20260815T174802Z` confirmed the missing
+edge. Rank 0 recorded three GDN cache groups per forward, with block columns
+`[1,2,3,4]`, `[5,6,7,8]`, and `[9,10,11,12]`. The first verifier received
+`num_accepted_tokens=1`; the second received `4`, after the first round had
+accepted all three drafts and emitted its bonus. Therefore the second forward
+must promote source column `4 - 1 = 3` into running column 0 before processing
+row 0. The trace reproduced the same output-index-5 failure; its post-teardown
+manifest SHA256 is
+`1c4c3d622f73cb714c1d1566b0999be0cc62c1495deb9caad4a508a24c8fe64b`.
+
 Raw roots remain under
 `/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/`; each root has a
 post-teardown `SHA256SUMS`, source/runtime snapshots, trace, emitted token IDs,
