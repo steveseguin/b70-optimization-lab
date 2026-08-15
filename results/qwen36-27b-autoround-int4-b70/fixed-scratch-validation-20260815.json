@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "classification": "failed-independent-contribution-style-validation",
+  "candidate": "native-packed-gdn-plus-persistent-graph-scratch",
+  "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/fixed-scratch-validation-20260815T194000Z",
+  "source": {
+    "lab_plan_commit": "edf34a4e60b544388eb3db2cdd0362132c0b329b",
+    "vllm_commit": "8c27a1e68ac619e198b0c08c2d6f62b80ddb3456",
+    "xpu_kernels_commit": "534bd9ccca74e0b076067a212271f896bb137d2a",
+    "xpu_extension_sha256": "e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7"
+  },
+  "suite": {
+    "sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c",
+    "prompts": 25,
+    "max_output_tokens": 512,
+    "metric": "99 / (timestamp[99] - timestamp[0])",
+    "fresh_server_per_arm": true,
+    "cached_tokens_required": 0
+  },
+  "arms": [
+    {"name": "nospec-01a", "mode": "target-only", "gpus": "0,1", "combined_median_tok_s": 47.99060454470282, "exit_code": 0},
+    {"name": "spec-01a", "mode": "candidate", "gpus": "0,1", "combined_median_tok_s": 98.68611509324008, "exit_code": 0},
+    {"name": "nospec-23a", "mode": "target-only", "gpus": "2,3", "combined_median_tok_s": 48.08151099460501, "exit_code": 0},
+    {"name": "spec-23a", "mode": "candidate", "gpus": "2,3", "combined_median_tok_s": 98.59283397567766, "exit_code": 0},
+    {"name": "spec-01b", "mode": "candidate", "gpus": "0,1", "combined_median_tok_s": 99.05084894189123, "exit_code": 0},
+    {"name": "spec-23b", "mode": "candidate", "gpus": "2,3", "combined_median_tok_s": 98.52288754795521, "exit_code": 0}
+  ],
+  "candidate_aggregate": {
+    "combined_median_of_arm_medians_tok_s": 98.63947453445887,
+    "combined_arm_mean_tok_s": 98.71317138969104,
+    "combined_arm_range_tok_s": [98.52288754795521, 99.05084894189123],
+    "combined_prompt_bootstrap_95_tok_s": [98.21573134318663, 104.40978611189729],
+    "selection_median_of_arm_medians_tok_s": 98.42879231211225,
+    "holdout_median_of_arm_medians_tok_s": 104.15337057901564
+  },
+  "correctness": {
+    "all_arms_operationally_valid": true,
+    "all_candidate_outputs_target_exact": false,
+    "all_same_pair_repeats_exact": false,
+    "spec_01a_vs_target_mismatches": 10,
+    "spec_01b_vs_target_mismatches": 10,
+    "spec_23a_vs_target_mismatches": 11,
+    "spec_23b_vs_target_mismatches": 10,
+    "spec_01_repeat_mismatches": 0,
+    "spec_23_repeat_mismatches": 1,
+    "target_cross_pair_mismatches": 11,
+    "strict_validation_passed": false
+  },
+  "interpretation": "Persistent scratch removed the graph-replay lifetime failure and made the fast candidate highly repeatable, but the packed recurrent update remains numerically different from target-only on long realistic outputs. The central rate is below 100 tok/s and is not promotable.",
+  "raw_hashes": {
+    "analysis_json_sha256": "25f4b659aca3e543278fce0643f9cebef03aae3ddfe24cac0e6fe243b5c4e7ae",
+    "analysis_md_sha256": "c6d6350c0247f07cb1995e25ccbf3e070171b7fe92e492f71b0e5c2e849103b0",
+    "arm_exit_codes_sha256": "03bcbcaf652ccfb985b0d4c38f969943ceecd14e86102b21b42189a4eae2c3c8",
+    "matrix_env_sha256": "97beec7fad6f99aff6f55d6da69c5bd0856a9740e69502dc4d35afe98a0ae3af",
+    "root_manifest_sha256": "23f61755de043e6975f5250e39a51b541813cbf311e96111e7659b9157c6c340"
+  }
+}

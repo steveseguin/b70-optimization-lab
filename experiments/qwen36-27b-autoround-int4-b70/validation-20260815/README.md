@@ -226,3 +226,46 @@ Run with `run-fixed-scratch-matrix.sh`. The strict correctness gate remains all
 fresh candidate starts on each GPU pair. Performance is reported regardless of
 outcome. The optimization goal is a combined central median above 100 tok/s,
 but no result may be promoted or submitted unless the correctness gate passes.
+
+### Persistent-scratch result
+
+The frozen six-arm matrix completed at
+`/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/fixed-scratch-validation-20260815T194000Z`.
+All six fresh processes exited zero, all 25 cold requests per arm were valid,
+all cache counts were zero, and all objective quality gates passed. The
+persistent allocation fixed the captured-address lifetime failure and made the
+candidate much more repeatable, but the strict result is still **fail**:
+
+- candidate arm medians were `98.686`, `98.593`, `99.051`, and `98.523`
+  tok/s;
+- the preregistered combined median of those four medians was **98.639 tok/s**
+  (range `98.523`–`99.051`);
+- the old 12-prompt selection subset was `98.429`, while the independent
+  13-prompt holdout was `104.153` tok/s;
+- GPU-pair 0–1 repeated exactly on 25/25 prompts, and pair 2–3 differed on
+  1/25 prompts;
+- nevertheless, each candidate arm differed from its matching target-only
+  control on 10 or 11 of 25 realistic outputs.
+
+Several first differences recur at the same generated-token positions on both
+GPU pairs (notably 68, 77, 402, and 497). That pattern is consistent with a
+stable arithmetic/state-transition difference in the packed multi-row GDN
+kernel, rather than the repaired scratch-address replay bug. The target-only
+controls also differed across physical pairs on 11/25 long outputs, so
+cross-pair equality is not used as a substitute for same-pair target parity.
+
+The compact result is
+[`../../../results/qwen36-27b-autoround-int4-b70/fixed-scratch-validation-20260815.json`](../../../results/qwen36-27b-autoround-int4-b70/fixed-scratch-validation-20260815.json).
+The raw `analysis.json`, report, arm exit codes, environment, and complete
+relative-file manifest have SHA256 values recorded there. No LocalMaxxing
+submission is permitted from this result.
+
+The next preregistered diagnostic uses only
+[`../correctness-recovery-20260815/recurring-divergence-suite.json`](../correctness-recovery-20260815/recurring-divergence-suite.json),
+whose first mismatch was token 68 in every candidate arm. Fresh target-only,
+packed eager, repaired serial, and packed PIECEWISE/persistent-scratch runs will
+use the same 128-token prompt and verifier trace. If eager and PIECEWISE agree
+with one another but differ from target and serial at the same verifier row,
+the remaining fault is packed recurrent arithmetic. If only PIECEWISE differs,
+graph replay still has an unresolved state/lifetime edge. These are diagnostic
+runs; their endpoint rates are not promotion evidence.

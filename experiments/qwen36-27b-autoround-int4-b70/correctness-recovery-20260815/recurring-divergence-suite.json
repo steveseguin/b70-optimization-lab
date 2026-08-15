@@ -1,0 +1,17 @@
+{
+  "suite_id": "qwen27-native-gdn-recurring-divergence-v1",
+  "version": 1,
+  "description": "One prompt whose first candidate/target divergence recurred at generated token 68 in every fixed-scratch validation arm.",
+  "metric": {
+    "primary": "diagnostic-only",
+    "max_output_tokens": 128
+  },
+  "prompts": [
+    {
+      "group": "independent-holdout",
+      "id": "holdout--concurrency-review",
+      "original_id": "concurrency-review",
+      "prompt": "Review a service design where multiple workers read a job row, call an external API, then mark the row complete. Describe a concrete PostgreSQL transaction pattern that prevents duplicate work, how retries and idempotency keys interact, and what failures still need monitoring. Include SQL or pseudocode and an actionable test plan."
+    }
+  ]
+}

@@ -28,8 +28,8 @@ The model card reports ten safetensor shards plus
 
 ## Current Status
 
-This lane is closed and banked as a reproducible historical reference while
-optimization work moves to other models.
+This lane was reopened on 2026-08-15 for an independent correction and
+performance attempt. No new result is promoted yet.
 
 The 2026-08-15 independent revalidation used a frozen 25-prompt suite, two
 physical GPU pairs, four fresh speculative starts, two target-only controls,
@@ -44,6 +44,15 @@ See the
 Do not promote the 101.078 fastest arm or describe this as a robust `>100`
 result; the July row below remains historical evidence under its original
 metric and narrower quality standard.
+
+A follow-up replaced ReplaySSM with the native packed GDN transaction and made
+its command-graph scratch persistent. This removed the graph-address lifetime
+failure and improved repeatability. Four fresh candidate arms measured a
+central **98.639 tok/s** (98.523–99.051), but each still differed from its
+same-pair target-only control on 10 or 11 of 25 realistic outputs. The result
+is therefore a preserved failed experiment, not a record. See
+[`fixed-scratch-validation-20260815.json`](fixed-scratch-validation-20260815.json)
+and the validation README for the full interpretation.
 
 Initial TP1 single-B70 vLLM/XPU bring-up passed on 2026-07-03. The lane now has
 a strict fresh-response BF16-LM-head baseline, one validated env-only speed win,

@@ -20,6 +20,8 @@ stamp=${STAMP:-$(date -u +%Y%m%dT%H%M%SZ)}
 run_root=${RUN_ROOT:-/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/correctness-recovery-$acceptance_mode-$stamp}
 port=${PORT:-19622}
 gpu_pair=${GPU_INDEX:-0,1}
+trace_suite=${TRACE_SUITE:-$here/first-divergence-suite.json}
+trace_reference=${TRACE_REFERENCE:-$repo/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/evidence/independent-validation-20260815T152141Z/nospec-01a/data/bench.json}
 
 if [[ -e "$run_root" ]]; then
   printf 'refusing existing output root: %s\n' "$run_root" >&2
@@ -55,7 +57,7 @@ if [[ ! -f "$xpu_c" \
 fi
 
 mkdir -p -- "$run_root"
-cp -- "$here/first-divergence-suite.json" "$run_root/suite.json"
+cp -- "$trace_suite" "$run_root/suite.json"
 
 # Remove inherited experiment settings, then install the exact recorded arm.
 while IFS= read -r name; do
@@ -231,7 +233,7 @@ else
 fi
 export CANDIDATE_ENTRYPOINT="$candidate"
 
-reference="$repo/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/evidence/independent-validation-20260815T152141Z/nospec-01a/data/bench.json"
+reference=$trace_reference
 
 exec 9>/tmp/b70-benchmark.lock
 if ! flock -n 9; then

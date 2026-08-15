@@ -162,11 +162,11 @@ kernel-math side of the bisection:
 - post-analysis `SHA256SUMS` SHA256:
   `2c046bf99613f27539fad54e0e34ed334507368e8f6bc3ac83d07a3e946297a5`.
 
-The native packed GDN arithmetic and accepted-state transaction are therefore
-exact in eager execution. The remaining fast-path correctness fault is in the
-ReplaySSM/graph integration boundary. The full-graph no-ReplaySSM device loss
-is a separate graph-safety failure and must not be interpreted as a recurrent
-math mismatch.
+This one-prompt result showed exact eager execution through 128 tokens. The
+later frozen 25-prompt validation disproved the broader claim that packed GDN
+arithmetic is target-exact: 10–11 long outputs per arm diverged from the
+matching target-only control. The one-prompt result remains a valid narrow
+canary, not proof of general arithmetic identity.
 
 The next two arms isolated that boundary further:
 
@@ -200,6 +200,14 @@ Raw roots remain under
 `/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/`; each root has a
 post-teardown `SHA256SUMS`, source/runtime snapshots, trace, emitted token IDs,
 and analyzer output. The invalid live-edited preflight remains excluded.
+
+The persistent-scratch follow-up completed a frozen six-arm, 25-prompt matrix
+at `fixed-scratch-validation-20260815T194000Z`. All arms were operationally
+valid. The candidate's four-arm central median was **98.639 tok/s**; same-pair
+fresh-start repeats were 25/25 and 24/25 exact. However, same-pair target parity
+still failed on 10–11 of 25 prompts. The compact result is
+[`../../../results/qwen36-27b-autoround-int4-b70/fixed-scratch-validation-20260815.json`](../../../results/qwen36-27b-autoround-int4-b70/fixed-scratch-validation-20260815.json).
+Do not promote or submit it.
 
 Five post-consolidation startup roots are also invalid measurements and retained
 only as merge-repair evidence:
