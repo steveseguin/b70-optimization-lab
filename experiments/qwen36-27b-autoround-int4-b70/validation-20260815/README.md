@@ -269,3 +269,43 @@ with one another but differ from target and serial at the same verifier row,
 the remaining fault is packed recurrent arithmetic. If only PIECEWISE differs,
 graph replay still has an unresolved state/lifetime edge. These are diagnostic
 runs; their endpoint rates are not promotion evidence.
+
+## Inductor-partition recovery matrix
+
+The later source audit localized the recurring token-68 failure to the compiled
+speculative target forward. A raw-forward diagnostic restored the target token
+but measured only `22.218 tok/s`. Enabling current Inductor graph partitioning,
+while explicitly disabling the irrelevant MLA-only fusion pass, restored the
+same canary under compiled PIECEWISE execution at `84.224 tok/s`. That canary
+advanced to the same preregistered six-arm matrix through
+[`run-partition-matrix.sh`](run-partition-matrix.sh).
+
+The complete matrix root is
+`/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/partition-validation-20260815T230000Z`.
+All six fresh arms exited zero, used the frozen 25-prompt suite, reported zero
+cached tokens on every row, passed the realistic and objective quality gates,
+and shut down cleanly. Its compact result is
+[`../../../results/qwen36-27b-autoround-int4-b70/partition-validation-20260815.json`](../../../results/qwen36-27b-autoround-int4-b70/partition-validation-20260815.json).
+
+The strict verdict is still **fail**:
+
+- candidate arm medians were `99.610`, `99.962`, `100.003`, and `99.635`
+  tok/s;
+- the preregistered central estimate was **`99.798 tok/s`**, with arm range
+  `99.610`–`100.003` and prompt-bootstrap 95% interval
+  `96.897`–`103.226`;
+- the historical-selection subset was `97.491 tok/s`, while the later holdout
+  subset was `103.226 tok/s`;
+- every candidate differed from its matching target-only control on 11 or 12
+  of 25 complete outputs;
+- candidate repeats differed on 2/25 prompts for pair 0–1 and 1/25 for pair
+  2–3; the two target controls differed on 1/25 prompts;
+- ten candidate divergence points were stable across pairs and starts. The
+  original `holdout--concurrency-review` mismatch moved from token 68 to token
+  381, showing a material correctness improvement rather than a complete fix.
+
+The single `100.003 tok/s` arm is not a record: it misses target parity,
+repeat parity, and the central/robust speed gate. No LocalMaxxing submission is
+permitted from this result. The next source step is to port the missing upstream
+Qwen/Xe2 safety fixes before any further performance tuning, then re-run a
+focused mismatch oracle before paying for another full matrix.

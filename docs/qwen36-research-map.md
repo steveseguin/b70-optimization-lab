@@ -9,11 +9,11 @@ Live service and active-lane authority remains [`CURRENT.md`](../CURRENT.md).
 
 ## Current Decision
 
-Qwen3.6 27B Q8 target-only TP2 pass 1 is closed and banked as of 2026-08-14.
-The accepted two-ASRock-B70 result remains **`35.699225 tok/s`** under
-conventional 99-interval accounting (`36.059823` under the historical helper),
-with 12/12 cold 512-token outputs exact and all cache counts zero. The extended
-post-record campaign promoted no replacement.
+Qwen3.6 27B AutoRound INT4 TP2 is the active research lane. The latest
+Inductor-partition candidate reaches a four-arm central median of
+**`99.798 tok/s`**, but still fails strict target and repeat parity. Correctness
+must be repaired before further speed promotion. The distinct Q8 target-only
+TP2 lane remains closed and banked at **`35.699225 tok/s`** conventional.
 
 Start with:
 
@@ -33,7 +33,7 @@ neutral or slower and remain default-off/reverted.
 | --- | --- | --- | --- |
 | 27B GGUF Q8_0, target-only | 2x ASRock B70, llama.cpp/SYCL TP2 | Current no-speculation record: `35.699225 tok/s` conventional; 12/12 exact, cache-zero; closed after pass 1 | [handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) |
 | 27B GGUF Q8_0, target-only baseline | 1x B70, llama.cpp/SYCL | `15.550257 tok/s` 128-token median; exact 32K F16-KV retrieval baseline; service/concurrency experiments are separate evidence | [experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md) |
-| 27B AutoRound INT4, MTP3 | 2x B70, vLLM/XPU TP2 | Historical `95.384868 tok/s` row under its original bar; 2026-08-15 independent central estimate `98.766 tok/s`, but **fails current target-parity and fresh-start determinism gates** | [validation](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md) and [historical repro](../repro/qwen36-27b-autoround-int4-b70/README.md) |
+| 27B AutoRound INT4, MTP3 | 2x B70, vLLM/XPU TP2 | Active recovery: Inductor-partition central estimate `99.798 tok/s` (range `99.610`–`100.003`), but **fails target parity on 11–12/25 prompts and fresh-start repeat parity** | [validation](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md) and [compact result](../results/qwen36-27b-autoround-int4-b70/partition-validation-20260815.json) |
 | 27B AutoRound INT4, target-verified MTP | 1x B70, vLLM/XPU | Historical high `68.236263 tok/s`; later isolated confirmation was `65.4-66.7` | [result packet](../results/qwen36-27b-autoround-int4-b70/README.md) |
 | 27B GGUF Q4_0, DFlash5 | 1x B70, llama.cpp/SYCL | Closed strict record `47.818818 tok/s` historical (`47.340630` conventional); unchanged Q4 target verifies accepted tokens | [closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
 | 27B GGUF UD-Q4_K_XL, intrinsic MTP | 1x B70, llama.cpp/SYCL | Best valid p-min support row `31.480049 tok/s`; different target/quality identity | [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
@@ -90,7 +90,8 @@ reference. Its standalone repro now preserves the exact local-only vLLM and
 XPU-kernel source, original run directories, pinned oneCCL/libccl dependency,
 and historical target-verification rules.
 
-The 2026-08-15 independent review is now the stronger current classification.
+The 2026-08-15 independent review remains the stronger historical
+classification of the restored implementation.
 It used six fresh starts, both physical GPU pairs, target-only controls, four
 speculative repeats, and 25 cache-zero cold prompts. The speculative arms had
 a `98.766 tok/s` central combined estimate, but every arm diverged from its
@@ -100,6 +101,13 @@ pass or a robust `>100` result. No replacement LocalMaxxing row was submitted.
 
 This is an AutoRound INT4/vLLM identity and must not be merged with the Q8_0
 GGUF/llama.cpp record merely because both use a Qwen3.6 27B base model.
+
+The subsequent native-packed/persistent-scratch recovery and current Inductor-
+partition recovery are separate experiment identities. The partitioned arm
+fixes the old recurring token-68 canary and raises the four-arm central median
+to `99.798 tok/s`, but complete 512-token outputs still differ from target on
+11–12/25 prompts. A lone `100.003 tok/s` arm is not a valid record and was not
+submitted.
 
 ### 27B Q4/DFlash And Intrinsic MTP
 

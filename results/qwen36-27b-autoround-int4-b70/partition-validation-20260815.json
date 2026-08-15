@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "classification": "failed-independent-contribution-style-validation",
+  "candidate": "native-packed-gdn-plus-persistent-scratch-plus-inductor-partition",
+  "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/partition-validation-20260815T230000Z",
+  "source": {
+    "lab_plan_commit": "d679c6f9a8fa7aa81ac05a298ab9dfbf7243b7cc",
+    "vllm_commit": "3722d8a0fb7cdd3c052fb7b1468b85171c746e1f",
+    "xpu_kernels_commit": "4050008863bf0db6047935f775378ab882265300",
+    "xpu_extension_sha256": "3e38a9edc8d205d2693603748b3af7cdaf6699cb901be8bbf45b3b1076818455"
+  },
+  "suite": {
+    "sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c",
+    "prompts": 25,
+    "max_output_tokens": 512,
+    "metric": "99 / (timestamp[99] - timestamp[0])",
+    "fresh_server_per_arm": true,
+    "cached_tokens_required": 0
+  },
+  "arms": [
+    {"name": "nospec-01a", "mode": "target-only", "gpus": "0,1", "combined_median_tok_s": 48.137745510661624, "exit_code": 0},
+    {"name": "spec-01a", "mode": "candidate", "gpus": "0,1", "combined_median_tok_s": 99.60964699965477, "exit_code": 0},
+    {"name": "nospec-23a", "mode": "target-only", "gpus": "2,3", "combined_median_tok_s": 48.124590492705515, "exit_code": 0},
+    {"name": "spec-23a", "mode": "candidate", "gpus": "2,3", "combined_median_tok_s": 99.96176704628246, "exit_code": 0},
+    {"name": "spec-01b", "mode": "candidate", "gpus": "0,1", "combined_median_tok_s": 100.00299715913138, "exit_code": 0},
+    {"name": "spec-23b", "mode": "candidate", "gpus": "2,3", "combined_median_tok_s": 99.63516641424224, "exit_code": 0}
+  ],
+  "candidate_aggregate": {
+    "combined_median_of_arm_medians_tok_s": 99.79846673026235,
+    "combined_arm_mean_tok_s": 99.80239440482771,
+    "combined_arm_range_tok_s": [99.60964699965477, 100.00299715913138],
+    "combined_prompt_bootstrap_95_tok_s": [96.89715192518071, 103.22586259262192],
+    "selection_median_of_arm_medians_tok_s": 97.49079007480708,
+    "holdout_median_of_arm_medians_tok_s": 103.22586259262192
+  },
+  "correctness": {
+    "all_arms_operationally_valid": true,
+    "all_candidate_outputs_target_exact": false,
+    "all_same_pair_repeats_exact": false,
+    "spec_01a_vs_target_mismatches": 11,
+    "spec_01b_vs_target_mismatches": 11,
+    "spec_23a_vs_target_mismatches": 12,
+    "spec_23b_vs_target_mismatches": 11,
+    "spec_01_repeat_mismatches": 2,
+    "spec_23_repeat_mismatches": 1,
+    "target_cross_pair_mismatches": 1,
+    "strict_validation_passed": false
+  },
+  "interpretation": "Inductor graph partitioning removed the recurring token-68 canary failure and raised the central candidate rate to 99.798 tok/s, but 10 stable long-output divergences remain, two candidate prompts vary across fresh starts, and one target-only prompt varies across physical pairs. The isolated 100.003 tok/s arm is diagnostic only and is not a valid record.",
+  "raw_hashes": {
+    "analysis_json_sha256": "b6120716c8898bcdf1d9e55ae765090e48fa674369bb9ed0091834ed717d4459",
+    "analysis_md_sha256": "d7ab99190c12748630d2ece297dcfa9d593fb60d14164e10a770870dd6be87ce",
+    "arm_exit_codes_sha256": "03bcbcaf652ccfb985b0d4c38f969943ceecd14e86102b21b42189a4eae2c3c8",
+    "matrix_env_sha256": "9e93a05177d4a4e967dd5e49634a11ce65e1b90540c4c82f5a2bb42b401e7dd5",
+    "root_manifest_sha256": "1d572ccc34ee48269bed368d01173fac371a006ebea30eaa73dd332ef2a11ecb",
+    "manifest_verification_sha256": "92a5d41bae2211ef0da822d458b4c904085cadb5da5950d607fd0efe5b366526"
+  }
+}
