@@ -168,6 +168,34 @@ ReplaySSM/graph integration boundary. The full-graph no-ReplaySSM device loss
 is a separate graph-safety failure and must not be interpreted as a recurrent
 math mismatch.
 
+The next two arms isolated that boundary further:
+
+- `correctness-recovery-replayssm-eager-20260815T181207Z` kept the complete
+  native ReplaySSM stage/recurrent/commit transaction but disabled every graph
+  layer. It reproduced the same target-verifier error at output token 6:
+  row 1 of the second verifier round returned token `21261`, while ordinary
+  target-only and the exact packed-eager path require `19214`. The diagnostic
+  generated all 128 tokens, was cache-zero, exited cleanly, and measured only
+  `1.219868 tok/s`. Its `SHA256SUMS` SHA256 is
+  `ece39c7cb4f724a73401367cbb576fd88d45c491d0dcffa48471d778bc8aab62`.
+- `correctness-recovery-replayssm-torch-eager-20260815T182007Z` replaced only
+  the ReplaySSM recurrent kernel with its PyTorch reference and stopped after
+  16 tokens. It produced the identical token-6 verifier error. The shortened
+  row intentionally fails the 100-token benchmark window and is not a speed
+  result; its manually completed verifier analysis is valid diagnostic
+  evidence. Post-analysis `SHA256SUMS` SHA256 is
+  `17438f117658ce8262c48c5894a92e0618b2aa592c3926ba092a0f5745672cee`.
+
+Therefore the native ReplaySSM kernel is not independently corrupt and graph
+capture is not required to reproduce the failure. The shared ReplaySSM
+ring/checkpoint algorithm is numerically different from the exact per-token
+packed recurrent path. In particular, ReplaySSM algebraically replays several
+accepted updates in FP32 and rounds the checkpoint once, while the target's
+packed recurrent path rounds its state at each token. Future strict work must
+either make the transaction reproduce those per-token state transitions or
+make the exact native packed path graph-safe; old narrow canary passes are not
+sufficient evidence that ReplaySSM is target-exact.
+
 Raw roots remain under
 `/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/`; each root has a
 post-teardown `SHA256SUMS`, source/runtime snapshots, trace, emitted token IDs,
