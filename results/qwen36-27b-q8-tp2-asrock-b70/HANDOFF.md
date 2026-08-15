@@ -99,16 +99,12 @@ control, only `+0.052%`. The candidate followed the host's slow/fast process
 state rather than producing a repeatable gain, so it did not receive an
 endpoint run. The accepted two-chain source and result remain unchanged.
 
-## Active Coordination Checkpoint
-
-As of 2026-08-15, one isolated exact-quality code-generation probe is in
-progress: retain two DP4A accumulator chains but pair adjacent packed words
-(`0->1` and `2->3`) instead of the promoted striped pairing (`0->2` and
-`1->3`). Integer and FP32 boundaries remain unchanged. The first gate is the
-compiled `mmvq.cpp.o`: if Intel's compiler canonicalizes both forms to the
-same object, no GPU run will be claimed. The planned isolated source is
-`/mnt/fast-ai/src/llama.cpp-q8-tp2-dp4a-adj`; do not duplicate this probe
-without checking the latest `origin/main` checkpoint.
+The adjacent-pair two-chain code-generation probe is also closed. Intel did
+emit a distinct hot object, and the bounded TP2 smoke passed, but the final
+all-warm `p64/n256/r3` A-B-B-A bracket measured `37.693390 tok/s` adjacent
+versus `37.736440` promoted striped control (`-0.114%`). Earlier rows were
+confounded by the host's opening slow state. The striped `0->2` / `1->3`
+pairing remains accepted and no endpoint run was warranted.
 
 ## Protected State
 
