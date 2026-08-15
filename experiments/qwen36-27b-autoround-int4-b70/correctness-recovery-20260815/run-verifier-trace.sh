@@ -4,10 +4,13 @@ set -euo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "$here/../../.." && pwd)
 acceptance_mode=${1:-standard}
-if [[ "$acceptance_mode" != "standard" && "$acceptance_mode" != "zero" ]]; then
-  printf 'usage: %s standard|zero\n' "$0" >&2
-  exit 2
-fi
+case "$acceptance_mode" in
+  standard|zero|no-graph-replay|skip-compiled) ;;
+  *)
+    printf 'usage: %s standard|zero|no-graph-replay|skip-compiled\n' "$0" >&2
+    exit 2
+    ;;
+esac
 source_root=${SOURCE_ROOT:-/home/steve/src}
 venv=${VENV:-/home/steve/.venvs/vllm-xpu}
 model_dir=${MODEL_DIR:-/mnt/usb-models/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e}
@@ -96,6 +99,15 @@ if [[ "$acceptance_mode" == "zero" ]]; then
   # This existing sampler mode rejects every proposal by construction and
   # emits the first target verifier token. The target still runs at width 4.
   export QWEN36_27B_SPECULATIVE_CONFIG='{"method":"qwen3_next_mtp","num_speculative_tokens":3,"rejection_sample_method":"synthetic","synthetic_acceptance_rates":[0.0,0.0,0.0]}'
+fi
+if [[ "$acceptance_mode" == "no-graph-replay" ]]; then
+  # Keep the compiled verifier but bypass its PIECEWISE XPU graph replay.
+  export VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1
+fi
+if [[ "$acceptance_mode" == "skip-compiled" ]]; then
+  # Route packed verifier rows through the raw model forward. Ordinary
+  # one-token decode remains compiled; this is the known quality oracle.
+  export VLLM_XPU_SKIP_COMPILED_SPEC_DECODE=1
 fi
 export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-recovery-20260815}
 export CANDIDATE_ENTRYPOINT="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh"
