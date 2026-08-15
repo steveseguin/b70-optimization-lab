@@ -80,8 +80,10 @@ export BENCH_OUT="$run_root/data/bench.json"
 export QUALITY_OUT="$run_root/data/quality.json"
 export SMOKE_OUT="$run_root/data/smoke.json"
 export SUMMARY_OUT="$run_root/data/summary.json"
-export BENCH_MAX_TOKENS=64
-export BENCH_METRIC_TOKENS=64
+export BENCH_MAX_TOKENS=128
+# The historical candidate wrapper fixes the accounting window at 100 tokens.
+# Keep 128 outputs so its generic benchmark gate remains internally valid.
+export BENCH_METRIC_TOKENS=100
 export RUN_SMOKE=0
 export RUN_BENCH=1
 export RUN_QUALITY=0

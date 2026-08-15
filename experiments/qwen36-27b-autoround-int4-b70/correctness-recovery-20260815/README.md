@@ -45,6 +45,18 @@ four-row target verifier but emits only the target-owned first-row token on
 every round.  This is the controlled split between accepted-draft transaction
 handling and width-four target/state arithmetic.
 
+### Invalid preflight
+
+The first standard attempt created
+`correctness-recovery-20260815T163528Z`, then the live harness file was edited
+to add the zero-accept mode while Bash was still executing it.  Bash reread the
+changed tail and began an unintended second server launch in the same output
+directory, overwriting the first server log.  The process group was stopped,
+the benchmark lock was released, and Muse remained inactive.  That root is
+retained outside Git as harness-failure evidence but is invalid for diagnosis
+or performance.  Both measured arms must use the frozen committed harness and
+fresh output roots.
+
 ## Next gates
 
 1. If the first target verifier row is already wrong, force zero accepted draft
