@@ -47,9 +47,9 @@ verify_tree() {
 }
 verify_tree "$source_root/vllm" 3722d8a0fb7cdd3c052fb7b1468b85171c746e1f \
   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
-verify_tree "$source_root/vllm-xpu-kernels" 4050008863bf0db6047935f775378ab882265300 \
+verify_tree "$source_root/vllm-xpu-kernels" 6aed46a4f7ccf6db47323fe9e8eeed243b0ad3d8 \
   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
-expected_xpu_c_sha=3e38a9edc8d205d2693603748b3af7cdaf6699cb901be8bbf45b3b1076818455
+expected_xpu_c_sha=2993d29f4558483c1105d3b131298629537d324aaacfda2657c30582d31f39a1
 xpu_c="$source_root/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so"
 if [[ ! -f "$xpu_c" \
   || "$(sha256sum "$xpu_c" | awk '{print $1}')" != "$expected_xpu_c_sha" ]]; then
@@ -95,7 +95,7 @@ export BENCH_OUT="$run_root/data/bench.json"
 export QUALITY_OUT="$run_root/data/quality.json"
 export SMOKE_OUT="$run_root/data/smoke.json"
 export SUMMARY_OUT="$run_root/data/summary.json"
-export BENCH_MAX_TOKENS=128
+export BENCH_MAX_TOKENS=${TRACE_MAX_TOKENS:-128}
 # The historical candidate wrapper fixes the accounting window at 100 tokens.
 # Keep 128 outputs so its generic benchmark gate remains internally valid.
 export BENCH_METRIC_TOKENS=100
@@ -104,9 +104,9 @@ export RUN_BENCH=1
 export RUN_QUALITY=0
 export REQUEST_EXTRA_JSON='{"chat_template_kwargs":{"enable_thinking":false}}'
 export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_FILE="$run_root/verify-trace.jsonl"
-export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_MAX_LINES=512
+export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_MAX_LINES=${TRACE_MAX_LINES:-512}
 export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_FILE="$run_root/bonus-trace.jsonl"
-export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_MAX_LINES=512
+export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_MAX_LINES=${TRACE_MAX_LINES:-512}
 if [[ "$acceptance_mode" == "target-only" ]]; then
   export QWEN36_27B_ENABLE_MTP=0
   export NUM_SPECULATIVE_TOKENS=0

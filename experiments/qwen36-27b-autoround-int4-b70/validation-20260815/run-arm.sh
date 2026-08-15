@@ -40,8 +40,19 @@ label=${LABEL:-$(basename "$arm_root")}
 suite="$arm_root/validation-suite.json"
 
 mkdir -p -- "$arm_root"
-"$here/build-validation-suite.py" --repo "$repo" --out "$suite" \
-  > "$arm_root/suite-build.log"
+if [[ -n "${VALIDATION_SUITE_OVERRIDE:-}" ]]; then
+  if [[ ! -f "$VALIDATION_SUITE_OVERRIDE" ]]; then
+    printf 'validation suite override is missing: %s\n' \
+      "$VALIDATION_SUITE_OVERRIDE" >&2
+    exit 3
+  fi
+  cp -- "$VALIDATION_SUITE_OVERRIDE" "$suite"
+  jq -e '.prompts | type == "array" and length > 0' "$suite" \
+    > "$arm_root/suite-build.log"
+else
+  "$here/build-validation-suite.py" --repo "$repo" --out "$suite" \
+    > "$arm_root/suite-build.log"
+fi
 
 verify_tree() {
   local tree=$1 expected_head=$2 expected_diff=$3 name=$4
@@ -65,7 +76,7 @@ elif [[ "$mode" == "spec-native-partition" || "$mode" == "nospec-latest" ]]; the
   latest_identity=1
   verify_tree "$source_root/vllm" 3722d8a0fb7cdd3c052fb7b1468b85171c746e1f \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
-  verify_tree "$source_root/vllm-xpu-kernels" 4050008863bf0db6047935f775378ab882265300 \
+  verify_tree "$source_root/vllm-xpu-kernels" 6aed46a4f7ccf6db47323fe9e8eeed243b0ad3d8 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
 else
   verify_tree "$source_root/vllm" e7213ba8e13b74d7bfa3cbc05435a45df90eb76a \
@@ -95,7 +106,7 @@ while read -r expected recorded_path; do
     expected=e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7
   fi
   if [[ "$latest_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
-    expected=3e38a9edc8d205d2693603748b3af7cdaf6699cb901be8bbf45b3b1076818455
+    expected=2993d29f4558483c1105d3b131298629537d324aaacfda2657c30582d31f39a1
   fi
   verify_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
 done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
@@ -180,10 +191,11 @@ export QUALITY_OUT="$arm_root/data/quality.json"
 export SMOKE_OUT="$arm_root/data/smoke.json"
 export SUMMARY_OUT="$arm_root/data/summary-legacy.json"
 export VLLM_CACHE_ROOT=${VALIDATION_VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
-export BENCH_MAX_TOKENS=512
+export BENCH_MAX_TOKENS=${VALIDATION_BENCH_MAX_TOKENS:-512}
 export BENCH_METRIC_TOKENS=100
 export QUALITY_REPEAT_RUNS=32
 export QUALITY_LONG_CONTEXT_TOKENS=1024
+export RUN_QUALITY=${VALIDATION_RUN_QUALITY:-1}
 export REQUEST_EXTRA_JSON='{"chat_template_kwargs":{"enable_thinking":false}}'
 export QUALITY_BASELINE_JSON="$quality_baseline"
 if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \

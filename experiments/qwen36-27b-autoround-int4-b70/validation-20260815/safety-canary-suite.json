@@ -1,0 +1,35 @@
+{
+  "suite_id": "qwen27-upstream-gdn-safety-canary-v1",
+  "version": 1,
+  "description": "Four frozen realistic prompts spanning early, midstream, late, and long-prefill divergences in the partition candidate.",
+  "metric": {
+    "primary": "diagnostic-only",
+    "max_output_tokens": 512
+  },
+  "prompts": [
+    {
+      "group": "independent-holdout",
+      "id": "holdout--arithmetic-reasoning",
+      "original_id": "arithmetic-reasoning",
+      "prompt": "A warehouse has 137 cartons with 29 components each. It ships 845 components, then divides the remainder equally among 23 repair teams. Calculate the original total, the remainder, the quotient and any leftover, showing each check clearly. Then state the final allocation in one unambiguous sentence and identify one common arithmetic mistake."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--structured-extraction",
+      "original_id": "structured-extraction",
+      "prompt": "Extract the incident facts below into a JSON object with exactly these keys: service, start_utc, end_utc, customer_impact, trigger, contributing_factors, mitigations, follow_up_owners, unresolved_questions. Preserve uncertainty explicitly and do not invent values. After the JSON, list three validation checks.\n\nIncident note: At 14:07 UTC the Atlas export API began returning intermittent 503s to EU tenants. The alert fired at 14:12. A schema migration deployed at 13:58 increased lock duration; an unrelated retry change amplified load. The team disabled the retry change at about 14:31, but recovery was not confirmed until 14:46. Priya owns the index review, Mateo owns retry backoff, and the incident commander has not yet assigned the dashboard-gap work. Exact failed-export count is still being reconciled."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--concurrency-review",
+      "original_id": "concurrency-review",
+      "prompt": "Review a service design where multiple workers read a job row, call an external API, then mark the row complete. Describe a concrete PostgreSQL transaction pattern that prevents duplicate work, how retries and idempotency keys interact, and what failures still need monitoring. Include SQL or pseudocode and an actionable test plan."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--long-rollover-repository-audit",
+      "original_id": "long-rollover-repository-audit",
+      "prompt": "You are reviewing a repository snapshot before an agentic coding change. The prompt is intentionally longer than one 511-token attention window so the response exercises rollover while remaining a realistic code task. Read all of the following evidence, then prepare the first implementation patch. Do not merely summarize the files.\n\nRepository context:\n- src/ingest/config.py loads INGEST_BATCH_SIZE with int(os.getenv(..., '100')) and has no range check. It also reads INGEST_API_TOKEN during module import, which makes tests depend on ambient process state.\n- src/ingest/client.py creates one global requests.Session. post_batch serializes records, sends POST /v1/items with timeout=30, calls raise_for_status, and retries every exception three times with time.sleep(1). The retry loop neither distinguishes permanent 4xx responses nor honors Retry-After. Logs include the complete exception and request headers.\n- src/ingest/worker.py selects pending database rows with SELECT ... LIMIT batch_size, commits, calls post_batch, then starts a second transaction to mark rows sent. Two workers can therefore select the same rows. A crash after the HTTP success but before the second commit causes an externally accepted batch to be sent again.\n- src/ingest/models.py defines PendingItem(id, tenant_id, payload, created_at) but payload is an unbounded dict and tenant_id is optional even though the database column is NOT NULL. The serializer silently drops keys whose values are None.\n- src/ingest/metrics.py exposes counters named success, failure, and retry without a subsystem prefix or labels. It has no queue-age histogram, in-flight gauge, duplicate counter, or terminal-dead-letter counter.\n- migrations/018_add_ingest_state.sql adds state text DEFAULT 'pending' and external_key text, then creates a unique index only on external_key. Existing rows receive the default. The migration does not make external_key NOT NULL and has no concurrent-index or rollback plan.\n- tests/test_worker.py uses one happy-path row and monkeypatches client.post_batch to return True. It does not run concurrent workers, simulate a timeout after remote acceptance, assert transaction boundaries, test retry classification, or control environment variables before importing config.\n- deploy/worker.service restarts on failure with RestartSec=0, loads an EnvironmentFile, and grants the process write access to the whole application directory. There are no start-limit settings, readiness signal, graceful-stop timeout, or isolated runtime directory.\n- docs/runbook.md says operators should restart until the queue drains. It does not define safe replay, idempotency-key inspection, dead-letter recovery, database rollback, token rotation, or the dashboards that prove recovery.\n- The external API supports an Idempotency-Key header scoped to tenant plus key for 24 hours. It returns 409 for a key reused with a different payload, 429 with Retry-After under load, and 202 after durable acceptance. The database is PostgreSQL 16. Deployments use two worker processes today but may scale to eight.\n- Product requirements allow at-least-once internal processing but prohibit duplicate customer-visible items. A queued item may be delayed for up to five minutes. Operators need per-tenant backlog visibility, and secrets must never appear in logs or committed fixtures.\n- Change constraints: preserve the current HTTP API contract, avoid a full queue-system replacement in this patch, keep the migration reversible, and allow rolling deployment with old and new workers overlapping for ten minutes.\n\nReturn a unified diff, not a planning memo. The diff must include a reversible PostgreSQL migration, a transaction-safe worker claim/lease implementation, an injected HTTP client that derives a stable tenant-scoped Idempotency-Key and classifies 202/409/429 responses, redacted structured logging, metrics, concurrency and failure-injection tests, the hardened systemd unit, and runbook recovery steps. Include complete enough code and tests that the response cannot end after a short defect list."
+    }
+  ]
+}
