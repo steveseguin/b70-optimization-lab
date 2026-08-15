@@ -15,6 +15,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$ROOT"
 
+# Portable repro packets may restore the two runtime repositories outside the
+# original /home/steve/src paths. Keep the historical defaults, but snapshot
+# the exact trees selected by the caller.
+VLLM_SOURCE_TREE="${VLLM_SOURCE_TREE:-/home/steve/src/vllm}"
+VLLM_XPU_KERNELS_SOURCE_TREE="${VLLM_XPU_KERNELS_SOURCE_TREE:-/home/steve/src/vllm-xpu-kernels}"
+
 STAMP="${STAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
 LABEL="${LABEL:-qwen27-candidate}"
 GPU_INDEX="${GPU_INDEX:-0}"
@@ -90,12 +96,19 @@ snapshot_git_tree() {
 }
 
 snapshot_git_tree "$ROOT" "llm-optimizations"
-snapshot_git_tree /home/steve/src/vllm "vllm"
-snapshot_git_tree /home/steve/src/vllm-xpu-kernels "vllm-xpu-kernels"
-find /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels \
+snapshot_git_tree "$VLLM_SOURCE_TREE" "vllm"
+snapshot_git_tree "$VLLM_XPU_KERNELS_SOURCE_TREE" "vllm-xpu-kernels"
+find "$VLLM_XPU_KERNELS_SOURCE_TREE/vllm_xpu_kernels" \
   -maxdepth 1 -type f -name '*.so' -print0 \
   | sort -z \
   | xargs -0 -r sha256sum > "$RUN_DIR/xpu-runtime-binaries.sha256"
+if [[ -n "${VLLM_XPU_KERNELS_SRC:-}" \
+  && "$VLLM_XPU_KERNELS_SRC" != "$VLLM_XPU_KERNELS_SOURCE_TREE" ]]; then
+  find "$VLLM_XPU_KERNELS_SRC" \
+    -maxdepth 2 -type f \( -name '*.so' -o -name '*.so.*' \) -print0 \
+    | sort -z \
+    | xargs -0 -r sha256sum > "$RUN_DIR/xpu-staged-runtime-binaries.sha256"
+fi
 cp "$0" "$RUN_DIR/$(basename "$0").snapshot"
 if [[ -n "${CANDIDATE_ENTRYPOINT:-}" && -f "$CANDIDATE_ENTRYPOINT" ]]; then
   cp "$CANDIDATE_ENTRYPOINT" \

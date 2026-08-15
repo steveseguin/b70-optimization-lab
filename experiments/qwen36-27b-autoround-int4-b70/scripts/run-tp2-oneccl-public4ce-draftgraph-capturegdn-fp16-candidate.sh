@@ -7,7 +7,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
-export VLLM_EXTRA_ARGS="--dtype float16${VLLM_EXTRA_ARGS:+ $VLLM_EXTRA_ARGS}"
+case " ${VLLM_EXTRA_ARGS:-} " in
+  *" --dtype float16 "*) ;;
+  *) export VLLM_EXTRA_ARGS="--dtype float16${VLLM_EXTRA_ARGS:+ $VLLM_EXTRA_ARGS}" ;;
+esac
 export CANDIDATE_ENTRYPOINT="$0"
 
 exec "$ROOT/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-candidate.sh"

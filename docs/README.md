@@ -31,7 +31,7 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Gemma 4 26B Handoff](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md): one-B70 Q8/INT8-quality production backend, speed frontier, resume bookmark, and next-work assessment.
 - [Gemma 4 26B Q8 Service Runbook](gemma4-26b-q8-service-runbook.md): restore or stop the temporary llama.cpp OpenAI endpoint on one or four B70 GPUs.
 - [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): detailed one-B70 speed frontier, long-context service lane, validity notes, and LocalMaxxing context.
-- [Qwen3.6 27B INT4 AutoRound Result Packet](../results/qwen36-27b-autoround-int4-b70/README.md): TP1/TP2 vLLM/XPU results, strict fresh decode records, long-context service ladder, and closed no-win paths.
+- [Qwen3.6 27B INT4 AutoRound Result Packet](../results/qwen36-27b-autoround-int4-b70/README.md): TP1/TP2 vLLM/XPU results, strict fresh decode records, long-context service ladder, and closed no-win paths. The [standalone 95.385 repro](../repro/qwen36-27b-autoround-int4-b70/README.md) includes the exact private source bundles, dirty patches, model/runtime manifests, and original run evidence.
 - [Qwen3.6 Family Research Map](qwen36-research-map.md): consolidated navigation for the 27B Q8, INT4/MTP, Q4/DFlash, FP8, and 35B Quark identities.
 - [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
 - [DeepSeek V4 Flash Investment Plan](../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md): gated four-B70 vLLM/XPU bring-up, exact-shape kernel tests, K160-first capacity selection, and quality controls.
@@ -162,7 +162,7 @@ The Qwen3.6 35B lane is indexed in
 
 ### Qwen3.6 27B INT4 AutoRound
 
-The active Qwen27 one- and two-B70 optimization lane is indexed in
+The closed Qwen27 one- and two-B70 optimization lane is indexed in
 [../results/qwen36-27b-autoround-int4-b70/](../results/qwen36-27b-autoround-int4-b70/).
 The current strict fresh-response record is **`95.384868 tok/s`** on TP2. It
 uses graph-safe Intel FlashAttention to capture one full four-row target graph
@@ -179,6 +179,9 @@ assignments favored the transaction candidate. See
 LocalMaxxing approved the `95.384868 tok/s` row as
 `cmrh35ct50092mj01h7jgydqj`; the prior `93.036242 tok/s` row is
 `cmrgue7kl007pmj01yrkcyqmv`.
+The exact source and run reconstruction is now self-contained in the
+[standalone INT4 repro](../repro/qwen36-27b-autoround-int4-b70/README.md).
+It is explicitly separate from the Q8_0 GGUF llama.cpp/SYCL lane below.
 The previous one-B70 record was `68.236 tok/s` (LocalMaxxing
 `cmr9atqb800msqr01u760xh0t`), and the previous BF16-scale INT8-LM-head-only
 record was `65.276 tok/s`. The

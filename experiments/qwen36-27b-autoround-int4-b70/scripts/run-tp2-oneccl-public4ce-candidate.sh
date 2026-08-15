@@ -6,6 +6,7 @@ set -euo pipefail
 # artifact helpers retain the normal runtime environment.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+QWEN36_27B_AR_VENV="${QWEN36_27B_AR_VENV:-/home/steve/.venvs/vllm-xpu}"
 ONECCL_INSTALL_DIR="${ONECCL_INSTALL_DIR:-/mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70}"
 ONECCL_LIB="$ONECCL_INSTALL_DIR/lib/libccl.so.1.0"
 ONECCL_KERNELS="$ONECCL_INSTALL_DIR/lib/ccl/kernels/kernels.spv"
@@ -34,7 +35,7 @@ export ONECCL_KERNELS_SHA256="$kernels_sha256"
 export ONECCL_SOURCE_TOP_COMMIT="b52f40c07f0b140e6aba87548c80720a350a9827"
 export ONECCL_LIBCCL_COMMIT="4ceafd15c03ce46f11eeaf91781a92afebd3cecf"
 export SERVER_LD_PRELOAD="$ONECCL_LIB"
-export SERVER_LD_LIBRARY_PATH="$ONECCL_INSTALL_DIR/lib:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib"
+export SERVER_LD_LIBRARY_PATH="$ONECCL_INSTALL_DIR/lib:$QWEN36_27B_AR_VENV/lib:$QWEN36_27B_AR_VENV/lib/python3.12/site-packages/torch/lib"
 export SERVER_CCL_KERNEL_PATH="$ONECCL_INSTALL_DIR/lib/ccl/kernels"
 export CCL_LOG_LEVEL="${CCL_LOG_LEVEL:-info}"
 

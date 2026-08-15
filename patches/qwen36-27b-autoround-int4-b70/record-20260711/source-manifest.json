@@ -1,0 +1,34 @@
+{
+  "classification": "exact_historical_record_source",
+  "date_utc": "2026-07-11",
+  "identity": "Qwen3.6-27B AutoRound INT4, vLLM/XPU, TP2",
+  "vllm": {
+    "public_repository": "https://github.com/vllm-project/vllm.git",
+    "public_prerequisite": "c51df43005726a09c6eb7348e8c1b00501c70a8e",
+    "recorded_head": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+    "private_commits_after_prerequisite": 12,
+    "bundle": "vllm-record-commits.bundle",
+    "bundle_sha256": "672b86f07952e93a7d103beefce3ddd93f8a4d58613e710830e75e8331ab12fc",
+    "working_patch": "vllm-final-working.patch",
+    "working_patch_sha256": "dcf84454f64bdeca546aa1697f4cd6af89fa95bb56f80ed314ad4d364e134b24"
+  },
+  "vllm_xpu_kernels": {
+    "public_repository": "https://github.com/vllm-project/vllm-xpu-kernels.git",
+    "public_prerequisite": "28e1f5e74c15744b69cf3b760f6160ceabd15de0",
+    "recorded_head": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171",
+    "private_commits_after_prerequisite": 6,
+    "bundle": "vllm-xpu-kernels-record-commits.bundle",
+    "bundle_sha256": "28280d89fb7a3b62565602dd0e074be4ee1911d748c64a8cc580a2e6def565bb",
+    "working_patch": "vllm-xpu-kernels-final-working.patch",
+    "working_patch_sha256": "edcb9314b43d6990474dfb5d64e3716e8d4c33618ec0e3fbd11ae671e47c8c1f"
+  },
+  "excluded_untracked_files": {
+    "vllm": [
+      "tests/v1/spec_decode/test_fixed_tree_topology.py"
+    ],
+    "vllm_xpu_kernels": [
+      "local backup shared libraries (*.so.pre-*)"
+    ],
+    "reason": "These were present beside the source checkout but were neither represented by the recorded working patches nor runtime inputs to the promoted run."
+  }
+}

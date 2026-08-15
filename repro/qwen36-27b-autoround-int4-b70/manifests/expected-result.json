@@ -1,0 +1,36 @@
+{
+  "classification": "historical_strict_fresh_record",
+  "identity": "Qwen3.6-27B AutoRound INT4 W4A16, vLLM/XPU, TP2, target-verified MTP3",
+  "date_utc": "2026-07-11",
+  "primary_metric": {
+    "name": "median_tok_s_1_100_after_ttft",
+    "historical_accounting_note": "This is the metric name and accounting used by the July 2026 harness. Preserve it as historical evidence; do not silently relabel it as the later 99-interval conventional policy.",
+    "median": 95.384867741895,
+    "p10": 86.97541500323224,
+    "mean": 95.62305049791388,
+    "full_after_ttft_median": 91.69809656297546,
+    "wall_full_median": 80.40533067412697,
+    "ttft_ms_median": 742.3079368891194
+  },
+  "gate": {
+    "suite_id": "qwen36-27b-autoround-int4-b70-realistic-v1",
+    "unique_prompts_once": 12,
+    "cached_tokens_all_zero": true,
+    "history_or_response_reuse": false,
+    "target_verified_mtp3": true,
+    "exact_cases": true,
+    "repeat128": true,
+    "baseline_match_all": true,
+    "needle_1k": true
+  },
+  "crossover": {
+    "candidate_gpu01": 95.33162503541821,
+    "control_gpu23": 87.90091562325287,
+    "candidate_gpu23": 94.52335597241532,
+    "control_gpu01": 93.68541153961348
+  },
+  "localmaxxing": {
+    "status": "APPROVED",
+    "id": "cmrh35ct50092mj01h7jgydqj"
+  }
+}

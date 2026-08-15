@@ -48,7 +48,7 @@ audit, but they do not define one comparable benchmark class.
 | --- | --- |
 | 27B Q8_0 target-only, two-B70 TP2 | [handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md), [repro](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md), [patch](../patches/qwen36-27b-q8-tp2-asrock-b70/README.md) |
 | 27B Q8_0 one-B70 baseline/service research | [experiment packet](../experiments/qwen36-27b-q8-gguf-b70/README.md) |
-| 27B AutoRound INT4 target-verified MTP | [handoff](../results/qwen36-27b-autoround-int4-b70/HANDOFF.md), [repro](../repro/qwen36-27b-autoround-int4-b70/README.md) |
+| 27B AutoRound INT4 target-verified MTP | [handoff](../results/qwen36-27b-autoround-int4-b70/HANDOFF.md), [exact 95.385 repro](../repro/qwen36-27b-autoround-int4-b70/README.md), [source bundle](../patches/qwen36-27b-autoround-int4-b70/record-20260711/README.md) |
 | 27B Q4_0 DFlash | [closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
 | 27B intrinsic-MTP Q4 | [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
 | 35B Quark W8A8 INT8 | [result packet](../results/qwen36-35b-quark-int8-b70/README.md) |
@@ -374,18 +374,24 @@ production LAN endpoint:
 - hardware: one Intel Arc Pro B70 32 GB for the TP1 reference and two B70s for
   the current TP2 record
 - engine: local vLLM/XPU from `/home/steve/src/vllm`
-- current strict fresh-response practical best: TP2 median `93.036242 tok/s`
-  for generated tokens 1-100 after TTFT. Pinned public oneCCL/libccl fixes the
-  installed runtime's deterministic packed-verifier all-reduce corruption,
-  the compiled all-gather custom op enables exact draft graph capture, and
-  graph-safe FlashAttention permits one full four-row target graph. Exact
+- current strict fresh-response historical best: TP2 median
+  `95.384868 tok/s` for generated tokens 1-100 after TTFT under the July 2026
+  metric. Pinned public oneCCL/libccl fixes the installed runtime's
+  deterministic packed-verifier all-reduce corruption, a compiled all-gather
+  custom op enables exact draft graph capture, graph-safe FlashAttention
+  permits one full four-row target graph, and exact ReplaySSM pending-metadata
+  plus direct-core-output transaction fusions complete the record path. Exact
   cases, repeat128, baseline parity, the 1K needle, and `cached_tokens=0` on
-  every strict prompt passed. A swapped four-GPU crossover measured `+3.42%`
-  and `+2.45%` over PIECEWISE controls, resolving the small headline delta
-  against endpoint variance.
+  every strict prompt passed. Both assignments in a swapped four-GPU
+  crossover favored the candidate (`95.332 vs 87.901`, then
+  `94.523 vs 93.685 tok/s`).
 - current result packet:
-  `../results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json`
-- current TP2 LocalMaxxing: `cmrgue7kl007pmj01yrkcyqmv`; prior FP16 approval
+  `../results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json`
+- exact standalone repro, including private source bundles and original run
+  directories:
+  `../repro/qwen36-27b-autoround-int4-b70/README.md`
+- current TP2 LocalMaxxing: `cmrh35ct50092mj01h7jgydqj`; prior full-graph
+  row `cmrgue7kl007pmj01yrkcyqmv`; prior FP16 approval
   `cmrgojixq005rmj0141e9fjj2`
 - graph-safe FA build/oracle/repro:
   `../experiments/qwen27_graphsafe_flash_attention/README.md`

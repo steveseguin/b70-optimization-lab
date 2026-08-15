@@ -1,15 +1,35 @@
 # Qwen3.6 27B INT4 AutoRound vLLM/XPU Lab
 
-This experiment lane tracks bring-up and optimization for:
+This historical experiment lane tracks bring-up and optimization for:
 
-- Model: `Intel/Qwen3.6-27B-int4-AutoRound`
+- Promoted record model: `webhie/Qwen3.6-27B-int4-AutoRound`, revision
+  `f5750c90b3776db658594df5fe8051098226dd8e`
+- Earlier milestone model: `Intel/Qwen3.6-27B-int4-AutoRound`
 - Base model: `Qwen/Qwen3.6-27B`
 - Quantization: AutoRound INT4, `bits=4`, `group_size=128`, symmetric,
   `packing_format=auto_round:auto_gptq`
 - Runtime target: vLLM on Intel XPU / Level Zero
 - Hardware target: Intel Arc Pro B70 32 GB, one replica per GPU first
 
-## Immediate Goal
+## Current Status
+
+This lane is a closed reference while work moves to other models. Its promoted
+two-B70 record is **`95.384867741895 tok/s`** on the historical strict
+12-prompt metric, with exact cases, repeat128, baseline parity, the 1K needle,
+and `cached_tokens=0` all passing. LocalMaxxing approved the result as
+`cmrh35ct50092mj01h7jgydqj`.
+
+The self-contained reproduction packet is
+`../../repro/qwen36-27b-autoround-int4-b70/README.md`; the exact private commit
+history and final working deltas are preserved at
+`../../patches/qwen36-27b-autoround-int4-b70/record-20260711/README.md`.
+Those artifacts describe this AutoRound **INT4 vLLM/XPU** result only. They are
+not interchangeable with the later Qwen GGUF Q8 experiments.
+
+The sections below are retained as a chronological research ledger. Their
+older “current” values are historical milestones, not the promoted endpoint.
+
+## Original Immediate Goal
 
 The initial TP1 single-B70 OpenAI-compatible endpoint works, and the lane now
 has a strict fresh-response TP2 record after replacing the broken installed

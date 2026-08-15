@@ -1,0 +1,53 @@
+{
+  "classification": "recorded_runtime_identity",
+  "record_date_utc": "2026-07-12T00:46:34Z",
+  "host": {
+    "os": "Ubuntu 24.04.1 family",
+    "kernel": "6.17.0-35-generic",
+    "hardware": "2x Intel Arc Pro B70 32 GB used by the isolated run",
+    "tensor_parallel_size": 2,
+    "concurrency": 1,
+    "level_zero_driver_numeric_version": 17012132
+  },
+  "python": {
+    "major_minor": "3.12",
+    "record_executable": "/home/steve/.venvs/vllm-xpu/bin/python",
+    "recorded_torch": "2.11.0+xpu",
+    "recorded_vllm_reported_version": "0.20.2rc1.dev13+g9557d9108.d20260620"
+  },
+  "source": {
+    "llm_optimizations_record_head": "ac5110e139267e90097d6c207fb24141c2bb0af0",
+    "llm_optimizations_record_head_url": "https://github.com/steveseguin/b70-optimization-lab/commit/ac5110e139267e90097d6c207fb24141c2bb0af0",
+    "llm_optimizations_working_tree_clean": true,
+    "vllm_head": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+    "vllm_working_patch_sha256": "dcf84454f64bdeca546aa1697f4cd6af89fa95bb56f80ed314ad4d364e134b24",
+    "vllm_xpu_kernels_head": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171",
+    "vllm_xpu_kernels_working_patch_sha256": "edcb9314b43d6990474dfb5d64e3716e8d4c33618ec0e3fbd11ae671e47c8c1f"
+  },
+  "compiler": {
+    "required_family": "Intel oneAPI 2025.3",
+    "oneccl_c_compiler": "IntelLLVM 2025.3.3",
+    "oneccl_cxx_compiler": "IntelLLVM 2025.3.3",
+    "warning": "Do not source the oneAPI 2026 umbrella environment for an exact replay. The record used the SYCL 2025.3/libsycl.so.8 family. A torch 2.13/SYCL 2026 port is a different runtime identity."
+  },
+  "oneccl": {
+    "top_commit": "b52f40c07f0b140e6aba87548c80720a350a9827",
+    "libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
+    "reported_version": "Gold-2022.0.0 (HEAD/4ceafd1)",
+    "libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "kernels_spv_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9"
+  },
+  "recorded_xpu_runtime_binary_hashes": "../evidence/xpu-runtime-binaries.sha256",
+  "retained_environment_observation_2026_08_15": {
+    "note": "These package versions were observed in the retained venv after the record. They are supporting reconstruction evidence, not a claim that pip metadata was frozen at run time.",
+    "python": "3.12.13",
+    "torch": "2.11.0+xpu",
+    "torchvision": "0.26.0+xpu",
+    "torchaudio": "2.11.0+xpu",
+    "triton_xpu": "3.7.0",
+    "transformers": "5.10.2",
+    "compressed_tensors": "0.15.0.1",
+    "numpy": "2.3.5",
+    "vllm_xpu_kernels": "0.1.9.dev33+g3b4effe.d20260705"
+  }
+}

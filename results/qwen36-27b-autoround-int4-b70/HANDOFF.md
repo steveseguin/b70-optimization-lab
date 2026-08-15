@@ -2,8 +2,11 @@
 
 Last updated: 2026-07-11
 
-This is the bookmark for `Intel/Qwen3.6-27B-int4-AutoRound` on Intel Arc Pro
-B70.
+This is the bookmark for the Qwen3.6 27B AutoRound INT4 vLLM/XPU lane on
+Intel Arc Pro B70. The promoted record uses
+`webhie/Qwen3.6-27B-int4-AutoRound` at revision
+`f5750c90b3776db658594df5fe8051098226dd8e`; earlier milestones used the
+separate Intel-published artifact.
 
 ## July 11 Active Frontier
 
@@ -21,6 +24,10 @@ as `cmrh35ct50092mj01h7jgydqj`; the prior 93.036 full-graph row is
 
 The current result, bisection, and reproduction paths are:
 
+- exact standalone record reproduction:
+  `../../repro/qwen36-27b-autoround-int4-b70/README.md`;
+- exact source-history and working-delta packet:
+  `../../patches/qwen36-27b-autoround-int4-b70/record-20260711/README.md`;
 - `tp2-fp16-graphsafe-flash-fullgraph-20260711.json`;
 - `tp2-fp16-fullgraph-transaction-20260711.json`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-fullgraph-transaction-record.md`;

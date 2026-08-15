@@ -1,12 +1,18 @@
 # Qwen3.6 27B INT4 AutoRound on B70
 
-This folder is the result packet for the `Intel/Qwen3.6-27B-int4-AutoRound`
-lane on Intel Arc Pro B70.
+This folder is the result packet for Qwen3.6 27B AutoRound INT4 on Intel Arc
+Pro B70. The current TP2 record uses `webhie/Qwen3.6-27B-int4-AutoRound`; the
+earlier `Intel/Qwen3.6-27B-int4-AutoRound` checkpoint remains a separate
+baseline inside the same historical lane. The exact `95.385 tok/s` source and
+run reconstruction is in
+[`../../repro/qwen36-27b-autoround-int4-b70/README.md`](../../repro/qwen36-27b-autoround-int4-b70/README.md).
 
 ## Model Identity
 
-- Hugging Face repo: `Intel/Qwen3.6-27B-int4-AutoRound`
-- Revision: `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`
+- Current record repo: `webhie/Qwen3.6-27B-int4-AutoRound`
+- Current record revision: `f5750c90b3776db658594df5fe8051098226dd8e`
+- Earlier Intel reference: `Intel/Qwen3.6-27B-int4-AutoRound` at
+  `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`
 - Base model: `Qwen/Qwen3.6-27B`
 - License: Apache-2.0, following the base model license constraints
 - Runtime target: vLLM/XPU first, one B70 per replica before any TP experiments
@@ -21,6 +27,9 @@ The model card reports ten safetensor shards plus
 `17.71 GiB` of tracked files.
 
 ## Current Status
+
+This lane is closed and banked as a reproducible historical reference while
+optimization work moves to other models.
 
 Initial TP1 single-B70 vLLM/XPU bring-up passed on 2026-07-03. The lane now has
 a strict fresh-response BF16-LM-head baseline, one validated env-only speed win,

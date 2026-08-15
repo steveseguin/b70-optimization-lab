@@ -190,7 +190,8 @@ Main entries:
 
 - [result packet](../results/qwen36-27b-autoround-int4-b70/README.md)
 - [handoff](../results/qwen36-27b-autoround-int4-b70/HANDOFF.md)
-- [bring-up repro](../repro/qwen36-27b-autoround-int4-b70/README.md)
+- [exact 95.385 repro](../repro/qwen36-27b-autoround-int4-b70/README.md)
+- [private source bundle and patches](../patches/qwen36-27b-autoround-int4-b70/record-20260711/README.md)
 - [experiment lane](../experiments/qwen36-27b-autoround-int4-b70/README.md)
 
 Status: closed historical reference as of 2026-07-13. Current overall strict
