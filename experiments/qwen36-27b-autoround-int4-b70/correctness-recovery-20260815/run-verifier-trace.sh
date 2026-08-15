@@ -5,9 +5,9 @@ here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "$here/../../.." && pwd)
 acceptance_mode=${1:-standard}
 case "$acceptance_mode" in
-  target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|native-serial) ;;
+  target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|native-fast-eager|native-serial) ;;
   *)
-    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|native-serial\n' "$0" >&2
+    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|native-fast-eager|native-serial\n' "$0" >&2
     exit 2
     ;;
 esac
@@ -128,6 +128,22 @@ if [[ "$acceptance_mode" == "no-replayssm" ]]; then
   # experimental ReplaySSM transaction and fused kernels.
   export VLLM_XPU_GDN_REPLAYSSM_SPEC=0
 fi
+if [[ "$acceptance_mode" == "native-fast-eager" ]]; then
+  # Use the native packed GDN kernel without command-graph capture. This
+  # separates kernel/state correctness from the device-lost full-graph arm.
+  export VLLM_XPU_GDN_REPLAYSSM_SPEC=0
+  export VLLM_XPU_GDN_NATIVE_SPEC_DECODE=1
+  export VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL=0
+  export QWEN36_27B_ENABLE_XPU_GRAPH=0
+  export VLLM_XPU_ENABLE_XPU_GRAPH=0
+  export VLLM_XPU_FORCE_GRAPH_WITH_COMM=0
+  export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=0
+  export VLLM_XPU_DDTREE_FULL_GRAPH=0
+  export VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=0
+  export VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA=0
+  export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
+  export COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'
+fi
 if [[ "$acceptance_mode" == "native-serial" ]]; then
   # Use the sequential native packed-GDN oracle. This retains the four-row
   # verifier and MTP scheduler while removing both ReplaySSM and the parallel
@@ -155,7 +171,7 @@ if [[ "$acceptance_mode" == "target-only" ]]; then
   export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh"
 else
-  if [[ "$acceptance_mode" == "no-replayssm" || "$acceptance_mode" == "native-serial" ]]; then
+  if [[ "$acceptance_mode" == "no-replayssm" || "$acceptance_mode" == "native-fast-eager" || "$acceptance_mode" == "native-serial" ]]; then
     export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-$acceptance_mode-20260815}
   else
     export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-recovery-20260815}

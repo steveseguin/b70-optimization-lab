@@ -134,6 +134,17 @@ than a false divergence at the candidate's EOF. Its regression check retains
 the original index-5 failure classification for the unpatched run and reports
 no divergence for the repaired run.
 
+The first production-shaped native packed-kernel arm with ReplaySSM off and
+the fixed full graph on,
+`correctness-recovery-no-replayssm-20260815T175559Z`, is invalid as a benchmark:
+it completed compile and graph capture, then failed on the first request with
+`UR_RESULT_ERROR_DEVICE_LOST` before producing a benchmark row. Runner exit was
+1 and manifest SHA256 is
+`988b974d436d4f4e2919b2c1f43059ea245232190eb503a4889b128d05a0223a`.
+All four XPUs passed a fresh allocation/readback probe after teardown, so no
+reboot was needed. The next arm runs the same native packed kernel eagerly to
+separate kernel/state correctness from graph-capture safety.
+
 Raw roots remain under
 `/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/`; each root has a
 post-teardown `SHA256SUMS`, source/runtime snapshots, trace, emitted token IDs,
