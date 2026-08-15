@@ -41,7 +41,7 @@ verify_tree() {
     exit 3
   fi
 }
-verify_tree "$source_root/vllm" 1f8bd25fd9241620900a3140d5f5344624cbc697 \
+verify_tree "$source_root/vllm" 58d8bc749cd26d1158b28402dc92221d4fb9e02a \
   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
 verify_tree "$source_root/vllm-xpu-kernels" c9e265d95892e19aaddd731e5e94f9a19f91f954 \
   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
@@ -161,6 +161,19 @@ set +e
 "$candidate" > "$run_root/runner.stdout.log" 2>&1
 runner_rc=$?
 set -e
+
+# The historical wrapper can return success after an API server startup
+# failure because no benchmark request was attempted. Fail closed unless the
+# requested cold row and its cache-zero validity record actually exist.
+if [[ "$runner_rc" -eq 0 ]]; then
+  if [[ ! -s "$run_root/data/bench.json" ]] \
+    || ! jq -e '.rows | length == 1' "$run_root/data/bench.json" >/dev/null \
+    || ! jq -e '.fresh_response_validity.valid == true' "$run_root/data/bench.json" >/dev/null; then
+    printf 'candidate exited zero without one valid cold benchmark row\n' \
+      >> "$run_root/runner.stdout.log"
+    runner_rc=5
+  fi
+fi
 printf '%s\n' "$runner_rc" > "$run_root/runner.exit-code"
 
 if [[ "$runner_rc" -eq 0 && -s "$run_root/verify-trace.jsonl" ]]; then
