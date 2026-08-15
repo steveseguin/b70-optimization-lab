@@ -31,7 +31,7 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Gemma 4 26B Handoff](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md): one-B70 Q8/INT8-quality production backend, speed frontier, resume bookmark, and next-work assessment.
 - [Gemma 4 26B Q8 Service Runbook](gemma4-26b-q8-service-runbook.md): restore or stop the temporary llama.cpp OpenAI endpoint on one or four B70 GPUs.
 - [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): detailed one-B70 speed frontier, long-context service lane, validity notes, and LocalMaxxing context.
-- [Qwen3.6 27B INT4 AutoRound Result Packet](../results/qwen36-27b-autoround-int4-b70/README.md): TP1/TP2 vLLM/XPU results, strict fresh decode records, long-context service ladder, and closed no-win paths. The [standalone 95.385 repro](../repro/qwen36-27b-autoround-int4-b70/README.md) includes the exact private source bundles, dirty patches, model/runtime manifests, and original run evidence.
+- [Qwen3.6 27B INT4 AutoRound Result Packet](../results/qwen36-27b-autoround-int4-b70/README.md): historical TP1/TP2 vLLM/XPU results, long-context service ladder, closed no-win paths, and the newer strict-fail classification. The [standalone historical repro](../repro/qwen36-27b-autoround-int4-b70/README.md) includes the exact private source bundles, dirty patches, model/runtime manifests, and original run evidence; the [independent six-start validation](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md) is the current quality verdict.
 - [Qwen3.6 Family Research Map](qwen36-research-map.md): consolidated navigation for the 27B Q8, INT4/MTP, Q4/DFlash, FP8, and 35B Quark identities.
 - [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
 - [DeepSeek V4 Flash Investment Plan](../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md): gated four-B70 vLLM/XPU bring-up, exact-shape kernel tests, K160-first capacity selection, and quality controls.
@@ -164,13 +164,14 @@ The Qwen3.6 35B lane is indexed in
 
 The closed Qwen27 one- and two-B70 optimization lane is indexed in
 [../results/qwen36-27b-autoround-int4-b70/](../results/qwen36-27b-autoround-int4-b70/).
-The current strict fresh-response record is **`95.384868 tok/s`** on TP2. It
-uses graph-safe Intel FlashAttention to capture one full four-row target graph
-plus exact ReplaySSM pending/direct-output transaction fusions, and passed
-exact cases, repeat128, baseline parity, and the 1K needle. It uses
+The historical July row is **`95.384868 tok/s`** on TP2 under its original
+metric and validation bar. It uses graph-safe Intel FlashAttention to capture
+one full four-row target graph plus ReplaySSM pending/direct-output transaction
+fusions, and passed the original exact cases, repeat128, baseline parity, and
+1K needle. It uses
 the `webhie` AutoRound checkpoint, runtime INT8 target LM-head BF16 scales,
 runtime INT4 draft LM-head BF16 scales, ReplaySSM exact GDN state handling,
-target-verified MTP3, unique cold prompts, and `cached_tokens=0`. The pinned
+MTP3, unique cold prompts, and `cached_tokens=0`. The pinned
 public oneCCL/libccl revision fixes deterministic packed-verifier all-reduce
 graph failures in the installed runtime; an opaque compiled all-gather boundary
 then enables exact draft graph capture. Both swapped four-GPU crossover
@@ -179,6 +180,12 @@ assignments favored the transaction candidate. See
 LocalMaxxing approved the `95.384868 tok/s` row as
 `cmrh35ct50092mj01h7jgydqj`; the prior `93.036242 tok/s` row is
 `cmrgue7kl007pmj01yrkcyqmv`.
+
+The newer [independent six-start review](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md)
+is the current strict classification. It centered at `98.766 tok/s` across 25
+prompts, but all speculative arms diverged from target-only and fresh same-pair
+starts were not exact. It is not a strict pass or a robust `>100` result, and
+no new LocalMaxxing row was submitted.
 The exact source and run reconstruction is now self-contained in the
 [standalone INT4 repro](../repro/qwen36-27b-autoround-int4-b70/README.md).
 It is explicitly separate from the Q8_0 GGUF llama.cpp/SYCL lane below.

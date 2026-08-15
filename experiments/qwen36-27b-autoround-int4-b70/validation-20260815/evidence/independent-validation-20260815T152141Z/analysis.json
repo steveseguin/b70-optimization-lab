@@ -1,0 +1,2347 @@
+{
+  "arms": {
+    "nospec-01a": {
+      "acceptance_percent": null,
+      "accounting": {
+        "historical_formula": "100 / (timestamp[99] - timestamp[0])",
+        "historical_metric_name": "median_tok_s_1_100_after_ttft",
+        "inter_token_intervals": 99,
+        "preferred_formula": "99 / (timestamp[99] - timestamp[0])",
+        "preferred_metric_name": "median_tok_s_1_100_intervals_after_ttft",
+        "schema": "realistic-window-accounting-v1",
+        "timestamped_events": 100,
+        "timing_source": "openai_stream_token_ids_chunk_timestamp"
+      },
+      "all_rows_have_100_events": true,
+      "bench_return_code": 0,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true,
+      "groups": {
+        "combined": {
+          "completion_tokens": {
+            "count": 25,
+            "max": 512.0,
+            "mean": 497.12,
+            "median": 512.0,
+            "min": 234.0,
+            "p10": 512.0,
+            "stdev": 57.94560667844745
+          },
+          "full_after_ttft_tok_s": {
+            "count": 25,
+            "max": 48.38546173389973,
+            "mean": 47.255919654465096,
+            "median": 47.832065176672124,
+            "min": 32.744685467543,
+            "p10": 47.6078169510736,
+            "stdev": 3.0295617322969526
+          },
+          "ttft_ms": {
+            "count": 25,
+            "max": 5189.914529997623,
+            "mean": 344.80312340077944,
+            "median": 118.7940779782366,
+            "min": 88.88497902080417,
+            "p10": 96.13896520459093,
+            "stdev": 1013.2260837276607
+          },
+          "wall_tok_s": {
+            "count": 25,
+            "max": 47.69038477448057,
+            "mean": 46.28564325494218,
+            "median": 47.29751104427033,
+            "min": 24.584606955668168,
+            "p10": 46.6967409360152,
+            "stdev": 4.55122839738521
+          },
+          "window_tok_s": {
+            "count": 25,
+            "max": 48.32806829075135,
+            "mean": 46.572238994313295,
+            "median": 47.8682027421357,
+            "min": 14.540071280723637,
+            "p10": 47.42578569429939,
+            "stdev": 6.6817328525212245
+          }
+        },
+        "holdout": {
+          "completion_tokens": {
+            "count": 13,
+            "max": 512.0,
+            "mean": 504.7692307692308,
+            "median": 512.0,
+            "min": 418.0,
+            "p10": 512.0,
+            "stdev": 26.07090922258577
+          },
+          "full_after_ttft_tok_s": {
+            "count": 13,
+            "max": 48.01662719467499,
+            "mean": 46.630180033132554,
+            "median": 47.73249506308622,
+            "min": 32.744685467543,
+            "p10": 47.599608970096256,
+            "stdev": 4.1739975046082085
+          },
+          "ttft_ms": {
+            "count": 13,
+            "max": 5189.914529997623,
+            "mean": 559.1430985368788,
+            "median": 127.32693098951131,
+            "min": 90.50868300255388,
+            "p10": 111.7072835972067,
+            "stdev": 1396.1501785476264
+          },
+          "wall_tok_s": {
+            "count": 13,
+            "max": 47.540286813987024,
+            "mean": 45.27074509757116,
+            "median": 47.18582476662189,
+            "min": 24.584606955668168,
+            "p10": 45.266895690038034,
+            "stdev": 6.250448620992339
+          },
+          "window_tok_s": {
+            "count": 13,
+            "max": 48.148855952177804,
+            "mean": 45.27097856609924,
+            "median": 47.82708400102146,
+            "min": 14.540071280723637,
+            "p10": 47.40992262759768,
+            "stdev": 9.23635885474116
+          }
+        },
+        "selection": {
+          "completion_tokens": {
+            "count": 12,
+            "max": 512.0,
+            "mean": 488.8333333333333,
+            "median": 512.0,
+            "min": 234.0,
+            "p10": 512.0,
+            "stdev": 80.25168741735799
+          },
+          "full_after_ttft_tok_s": {
+            "count": 12,
+            "max": 48.38546173389973,
+            "mean": 47.93380424424202,
+            "median": 47.95318290038103,
+            "min": 47.47827633584326,
+            "p10": 47.679269877774175,
+            "stdev": 0.23477644503843692
+          },
+          "ttft_ms": {
+            "count": 12,
+            "max": 164.31014001136646,
+            "mean": 112.60148367000511,
+            "median": 110.11160850466695,
+            "min": 88.88497902080417,
+            "p10": 93.05790580692701,
+            "stdev": 19.00747948954108
+          },
+          "wall_tok_s": {
+            "count": 12,
+            "max": 47.69038477448057,
+            "mean": 47.385116258760796,
+            "median": 47.36214430671227,
+            "min": 46.99371456294512,
+            "p10": 47.2016320157221,
+            "stdev": 0.1941635904979316
+          },
+          "window_tok_s": {
+            "count": 12,
+            "max": 48.32806829075135,
+            "mean": 47.981937791545185,
+            "median": 48.15338220555307,
+            "min": 46.953921405515324,
+            "p10": 47.52381409733819,
+            "stdev": 0.41667118744756787
+          }
+        }
+      },
+      "mode": "nospec",
+      "pair": "0,1",
+      "quality_baseline_match_all": true,
+      "quality_pass_all": true,
+      "quality_return_code": 0,
+      "rows": 25,
+      "runner_exit_code": 0,
+      "server_error_lines": [],
+      "smoke_pass": true
+    },
+    "nospec-23a": {
+      "acceptance_percent": null,
+      "accounting": {
+        "historical_formula": "100 / (timestamp[99] - timestamp[0])",
+        "historical_metric_name": "median_tok_s_1_100_after_ttft",
+        "inter_token_intervals": 99,
+        "preferred_formula": "99 / (timestamp[99] - timestamp[0])",
+        "preferred_metric_name": "median_tok_s_1_100_intervals_after_ttft",
+        "schema": "realistic-window-accounting-v1",
+        "timestamped_events": 100,
+        "timing_source": "openai_stream_token_ids_chunk_timestamp"
+      },
+      "all_rows_have_100_events": true,
+      "bench_return_code": 0,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true,
+      "groups": {
+        "combined": {
+          "completion_tokens": {
+            "count": 25,
+            "max": 512.0,
+            "mean": 497.12,
+            "median": 512.0,
+            "min": 234.0,
+            "p10": 512.0,
+            "stdev": 57.94560667844745
+          },
+          "full_after_ttft_tok_s": {
+            "count": 25,
+            "max": 48.07491439095521,
+            "mean": 47.240965600826236,
+            "median": 47.868266138181326,
+            "min": 33.240119589534025,
+            "p10": 47.59086175779737,
+            "stdev": 2.922961524755759
+          },
+          "ttft_ms": {
+            "count": 25,
+            "max": 4830.875832005404,
+            "mean": 323.38606936624274,
+            "median": 115.88785800267942,
+            "min": 87.86999300355092,
+            "p10": 99.27180239465088,
+            "stdev": 943.1901486515862
+          },
+          "wall_tok_s": {
+            "count": 25,
+            "max": 47.607845539981525,
+            "mean": 46.31078518364111,
+            "median": 47.34912615281225,
+            "min": 25.304007415807025,
+            "p10": 46.7470802712895,
+            "stdev": 4.409829460668596
+          },
+          "window_tok_s": {
+            "count": 25,
+            "max": 48.40481747965314,
+            "mean": 46.60266056621479,
+            "median": 48.00591847183754,
+            "min": 15.027723212139644,
+            "p10": 47.2531613891213,
+            "stdev": 6.585363432673354
+          }
+        },
+        "holdout": {
+          "completion_tokens": {
+            "count": 13,
+            "max": 512.0,
+            "mean": 504.7692307692308,
+            "median": 512.0,
+            "min": 418.0,
+            "p10": 512.0,
+            "stdev": 26.07090922258577
+          },
+          "full_after_ttft_tok_s": {
+            "count": 13,
+            "max": 47.987490190641964,
+            "mean": 46.676664546246386,
+            "median": 47.83386487941139,
+            "min": 33.240119589534025,
+            "p10": 47.58760854021284,
+            "stdev": 4.039199674634056
+          },
+          "ttft_ms": {
+            "count": 13,
+            "max": 4830.875832005404,
+            "mean": 518.5040169297001,
+            "median": 125.32002499210648,
+            "min": 94.91304599214345,
+            "p10": 109.37420141417533,
+            "stdev": 1301.1086802282657
+          },
+          "wall_tok_s": {
+            "count": 13,
+            "max": 47.41922954390154,
+            "mean": 45.388885822591206,
+            "median": 47.29769795330249,
+            "min": 25.304007415807025,
+            "p10": 45.2415588815854,
+            "stdev": 6.07490872905368
+          },
+          "window_tok_s": {
+            "count": 13,
+            "max": 48.17129270251632,
+            "mean": 45.414479175827914,
+            "median": 47.98614716139921,
+            "min": 15.027723212139644,
+            "p10": 47.628107835709045,
+            "stdev": 9.131412014038201
+          }
+        },
+        "selection": {
+          "completion_tokens": {
+            "count": 12,
+            "max": 512.0,
+            "mean": 488.8333333333333,
+            "median": 512.0,
+            "min": 234.0,
+            "p10": 512.0,
+            "stdev": 80.25168741735799
+          },
+          "full_after_ttft_tok_s": {
+            "count": 12,
+            "max": 48.07491439095521,
+            "mean": 47.85229174328776,
+            "median": 47.92294786589732,
+            "min": 47.15052321047841,
+            "p10": 47.696128152456936,
+            "stdev": 0.24177186730325134
+          },
+          "ttft_ms": {
+            "count": 12,
+            "max": 171.57979699550197,
+            "mean": 112.00829283916391,
+            "median": 107.95704901101999,
+            "min": 87.86999300355092,
+            "p10": 91.50899639644194,
+            "stdev": 21.080441657625897
+          },
+          "wall_tok_s": {
+            "count": 12,
+            "max": 47.607845539981525,
+            "mean": 47.30950949144517,
+            "median": 47.39667692918354,
+            "min": 46.68619955008681,
+            "p10": 46.87619970656841,
+            "stdev": 0.27732908014028046
+          },
+          "window_tok_s": {
+            "count": 12,
+            "max": 48.40481747965314,
+            "mean": 47.88985707246723,
+            "median": 48.013410621573826,
+            "min": 47.12766479963818,
+            "p10": 47.17537783470985,
+            "stdev": 0.42431540214103936
+          }
+        }
+      },
+      "mode": "nospec",
+      "pair": "2,3",
+      "quality_baseline_match_all": true,
+      "quality_pass_all": true,
+      "quality_return_code": 0,
+      "rows": 25,
+      "runner_exit_code": 0,
+      "server_error_lines": [],
+      "smoke_pass": true
+    },
+    "spec-01a": {
+      "acceptance_percent": {
+        "count": 20,
+        "max": 83.6,
+        "mean": 66.60499999999999,
+        "median": 65.1,
+        "min": 54.9,
+        "p10": 56.07000000000001,
+        "stdev": 8.551975764329795
+      },
+      "accounting": {
+        "historical_formula": "100 / (timestamp[99] - timestamp[0])",
+        "historical_metric_name": "median_tok_s_1_100_after_ttft",
+        "inter_token_intervals": 99,
+        "preferred_formula": "99 / (timestamp[99] - timestamp[0])",
+        "preferred_metric_name": "median_tok_s_1_100_intervals_after_ttft",
+        "schema": "realistic-window-accounting-v1",
+        "timestamped_events": 100,
+        "timing_source": "openai_stream_token_ids_chunk_timestamp"
+      },
+      "all_rows_have_100_events": true,
+      "bench_return_code": 0,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true,
+      "groups": {
+        "combined": {
+          "completion_tokens": {
+            "count": 25,
+            "max": 512.0,
+            "mean": 494.76,
+            "median": 512.0,
+            "min": 190.0,
+            "p10": 512.0,
+            "stdev": 67.12381594238119
+          },
+          "full_after_ttft_tok_s": {
+            "count": 25,
+            "max": 121.12844789441037,
+            "mean": 98.0966481799426,
+            "median": 95.55177399207736,
+            "min": 51.738900173764996,
+            "p10": 87.54860755634503,
+            "stdev": 14.744796672023853
+          },
+          "ttft_ms": {
+            "count": 25,
+            "max": 6940.620299981674,
+            "mean": 1119.858678681776,
+            "median": 743.9075419970322,
+            "min": 696.1921890033409,
+            "p10": 719.3450786056928,
+            "stdev": 1335.0102322386745
+          },
+          "wall_tok_s": {
+            "count": 25,
+            "max": 103.29347652813628,
+            "mean": 82.45795931796418,
+            "median": 81.40917257770768,
+            "min": 30.410188312096324,
+            "p10": 72.89533235200555,
+            "stdev": 14.138891501778032
+          },
+          "window_tok_s": {
+            "count": 25,
+            "max": 131.45709551779677,
+            "mean": 97.29164429971422,
+            "median": 98.77089409585673,
+            "min": 15.814846052136097,
+            "p10": 85.97058497321069,
+            "stdev": 20.652739834404645
+          }
+        },
+        "holdout": {
+          "completion_tokens": {
+            "count": 13,
+            "max": 512.0,
+            "mean": 503.61538461538464,
+            "median": 512.0,
+            "min": 403.0,
+            "p10": 512.0,
+            "stdev": 30.231160694274987
+          },
+          "full_after_ttft_tok_s": {
+            "count": 13,
+            "max": 121.12844789441037,
+            "mean": 103.70851455608475,
+            "median": 110.25078084260295,
+            "min": 51.738900173764996,
+            "p10": 90.72884623878907,
+            "stdev": 18.67567051241245
+          },
+          "ttft_ms": {
+            "count": 13,
+            "max": 6940.620299981674,
+            "mean": 1475.3653618435446,
+            "median": 755.7790190039668,
+            "min": 720.34340898972,
+            "p10": 732.6476852002088,
+            "stdev": 1810.594775250666
+          },
+          "wall_tok_s": {
+            "count": 13,
+            "max": 103.29347652813628,
+            "mean": 84.65468205145052,
+            "median": 88.21558618744481,
+            "min": 30.410188312096324,
+            "p10": 67.34057223619641,
+            "stdev": 19.306143108045823
+          },
+          "window_tok_s": {
+            "count": 13,
+            "max": 131.45709551779677,
+            "mean": 99.29101127891087,
+            "median": 103.92466718830312,
+            "min": 15.814846052136097,
+            "p10": 87.24659284817146,
+            "stdev": 28.013499107479838
+          }
+        },
+        "selection": {
+          "completion_tokens": {
+            "count": 12,
+            "max": 512.0,
+            "mean": 485.1666666666667,
+            "median": 512.0,
+            "min": 190.0,
+            "p10": 512.0,
+            "stdev": 92.95339333952975
+          },
+          "full_after_ttft_tok_s": {
+            "count": 12,
+            "max": 99.5472423822478,
+            "mean": 92.01712627245526,
+            "median": 92.13194804536002,
+            "min": 85.79545623053721,
+            "p10": 87.38666810962019,
+            "stdev": 4.039712525036683
+          },
+          "ttft_ms": {
+            "count": 12,
+            "max": 825.8480950025842,
+            "mean": 734.7264385898598,
+            "median": 731.0081970063038,
+            "min": 696.1921890033409,
+            "p10": 700.7922068005428,
+            "stdev": 33.148798200375055
+          },
+          "wall_tok_s": {
+            "count": 12,
+            "max": 87.24004859321693,
+            "mean": 80.07817635668731,
+            "median": 81.26528042994997,
+            "min": 70.2707653865811,
+            "p10": 76.90030066234706,
+            "stdev": 4.2036677251924734
+          },
+          "window_tok_s": {
+            "count": 12,
+            "max": 107.91668847360094,
+            "mean": 95.12566340558453,
+            "median": 94.7284009939792,
+            "min": 81.72121129439661,
+            "p10": 86.20721941223697,
+            "stdev": 8.042599931008736
+          }
+        }
+      },
+      "mode": "spec",
+      "pair": "0,1",
+      "quality_baseline_match_all": true,
+      "quality_pass_all": true,
+      "quality_return_code": 0,
+      "rows": 25,
+      "runner_exit_code": 0,
+      "server_error_lines": [],
+      "smoke_pass": true
+    },
+    "spec-01b": {
+      "acceptance_percent": {
+        "count": 18,
+        "max": 85.5,
+        "mean": 65.76666666666667,
+        "median": 65.44999999999999,
+        "min": 51.5,
+        "p10": 56.120000000000005,
+        "stdev": 9.04192847727935
+      },
+      "accounting": {
+        "historical_formula": "100 / (timestamp[99] - timestamp[0])",
+        "historical_metric_name": "median_tok_s_1_100_after_ttft",
+        "inter_token_intervals": 99,
+        "preferred_formula": "99 / (timestamp[99] - timestamp[0])",
+        "preferred_metric_name": "median_tok_s_1_100_intervals_after_ttft",
+        "schema": "realistic-window-accounting-v1",
+        "timestamped_events": 100,
+        "timing_source": "openai_stream_token_ids_chunk_timestamp"
+      },
+      "all_rows_have_100_events": true,
+      "bench_return_code": 0,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true,
+      "groups": {
+        "combined": {
+          "completion_tokens": {
+            "count": 25,
+            "max": 512.0,
+            "mean": 494.76,
+            "median": 512.0,
+            "min": 190.0,
+            "p10": 512.0,
+            "stdev": 67.12381594238119
+          },
+          "full_after_ttft_tok_s": {
+            "count": 25,
+            "max": 122.4450519508,
+            "mean": 98.98160664177465,
+            "median": 95.71081551374971,
+            "min": 76.54224876123297,
+            "p10": 88.07052451795329,
+            "stdev": 12.253082336293119
+          },
+          "ttft_ms": {
+            "count": 25,
+            "max": 4196.26713800244,
+            "mean": 907.9650102753658,
+            "median": 744.1892790084239,
+            "min": 710.5618279892951,
+            "p10": 721.8358933867421,
+            "stdev": 691.9658743160494
+          },
+          "wall_tok_s": {
+            "count": 25,
+            "max": 103.99903339420962,
+            "mean": 84.27979817980854,
+            "median": 83.08199372395707,
+            "min": 47.03555049466606,
+            "p10": 76.27738348884692,
+            "stdev": 11.537900800227618
+          },
+          "window_tok_s": {
+            "count": 25,
+            "max": 131.3558730078946,
+            "mean": 97.59855070043486,
+            "median": 98.35314034753033,
+            "min": 32.42720371198921,
+            "p10": 82.06080907151602,
+            "stdev": 18.456939312627433
+          }
+        },
+        "holdout": {
+          "completion_tokens": {
+            "count": 13,
+            "max": 512.0,
+            "mean": 503.61538461538464,
+            "median": 512.0,
+            "min": 403.0,
+            "p10": 512.0,
+            "stdev": 30.231160694274987
+          },
+          "full_after_ttft_tok_s": {
+            "count": 13,
+            "max": 122.4450519508,
+            "mean": 105.31067058671798,
+            "median": 107.8454449481129,
+            "min": 76.54224876123297,
+            "p10": 89.40080851930533,
+            "stdev": 14.023744068798111
+          },
+          "ttft_ms": {
+            "count": 13,
+            "max": 4196.26713800244,
+            "mean": 1051.784099460257,
+            "median": 752.5838449946605,
+            "min": 723.9344310073648,
+            "p10": 728.6491368024144,
+            "stdev": 952.7948952124087
+          },
+          "wall_tok_s": {
+            "count": 13,
+            "max": 103.99903339420962,
+            "mean": 88.27527692166221,
+            "median": 92.05522199870282,
+            "min": 47.03555049466606,
+            "p10": 79.09331218669114,
+            "stdev": 14.586649249105744
+          },
+          "window_tok_s": {
+            "count": 13,
+            "max": 131.3558730078946,
+            "mean": 100.1816832102354,
+            "median": 104.54557750424706,
+            "min": 32.42720371198921,
+            "p10": 80.74399717204068,
+            "stdev": 24.59279425988451
+          }
+        },
+        "selection": {
+          "completion_tokens": {
+            "count": 12,
+            "max": 512.0,
+            "mean": 485.1666666666667,
+            "median": 512.0,
+            "min": 190.0,
+            "p10": 512.0,
+            "stdev": 92.95339333952975
+          },
+          "full_after_ttft_tok_s": {
+            "count": 12,
+            "max": 97.48869439345951,
+            "mean": 92.12512070141936,
+            "median": 91.72387958792741,
+            "min": 85.25816425075918,
+            "p10": 87.66528236903434,
+            "stdev": 3.795325119871997
+          },
+          "ttft_ms": {
+            "count": 12,
+            "max": 931.6473259823397,
+            "mean": 752.1609969917336,
+            "median": 742.9537379939575,
+            "min": 710.5618279892951,
+            "p10": 719.1376941860653,
+            "stdev": 58.46162616500617
+          },
+          "wall_tok_s": {
+            "count": 12,
+            "max": 85.34045919092148,
+            "mean": 79.95136287613373,
+            "median": 80.81545351727914,
+            "min": 69.84905461606834,
+            "p10": 76.16234601761913,
+            "stdev": 4.362624316448525
+          },
+          "window_tok_s": {
+            "count": 12,
+            "max": 107.40176560418575,
+            "mean": 94.80015714815096,
+            "median": 95.96204609564515,
+            "min": 80.59396291678955,
+            "p10": 84.54764373633284,
+            "stdev": 8.187710984646815
+          }
+        }
+      },
+      "mode": "spec",
+      "pair": "0,1",
+      "quality_baseline_match_all": true,
+      "quality_pass_all": true,
+      "quality_return_code": 0,
+      "rows": 25,
+      "runner_exit_code": 0,
+      "server_error_lines": [],
+      "smoke_pass": true
+    },
+    "spec-23a": {
+      "acceptance_percent": {
+        "count": 19,
+        "max": 100.0,
+        "mean": 68.78947368421052,
+        "median": 66.3,
+        "min": 54.9,
+        "p10": 57.26,
+        "stdev": 11.654941476417351
+      },
+      "accounting": {
+        "historical_formula": "100 / (timestamp[99] - timestamp[0])",
+        "historical_metric_name": "median_tok_s_1_100_after_ttft",
+        "inter_token_intervals": 99,
+        "preferred_formula": "99 / (timestamp[99] - timestamp[0])",
+        "preferred_metric_name": "median_tok_s_1_100_intervals_after_ttft",
+        "schema": "realistic-window-accounting-v1",
+        "timestamped_events": 100,
+        "timing_source": "openai_stream_token_ids_chunk_timestamp"
+      },
+      "all_rows_have_100_events": true,
+      "bench_return_code": 0,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true,
+      "groups": {
+        "combined": {
+          "completion_tokens": {
+            "count": 25,
+            "max": 512.0,
+            "mean": 494.6,
+            "median": 512.0,
+            "min": 186.0,
+            "p10": 512.0,
+            "stdev": 67.88102336686839
+          },
+          "full_after_ttft_tok_s": {
+            "count": 25,
+            "max": 120.19453580467663,
+            "mean": 99.56927254375438,
+            "median": 97.25316262278695,
+            "min": 77.49957812068617,
+            "p10": 88.73176951354634,
+            "stdev": 11.34972902812394
+          },
+          "ttft_ms": {
+            "count": 25,
+            "max": 4177.009475999512,
+            "mean": 899.1316183225717,
+            "median": 743.5306659899652,
+            "min": 697.0843659946695,
+            "p10": 718.7953265965916,
+            "stdev": 689.1065456068585
+          },
+          "wall_tok_s": {
+            "count": 25,
+            "max": 101.78256643284122,
+            "mean": 84.82635767296088,
+            "median": 85.46679995445369,
+            "min": 47.47995919420133,
+            "p10": 77.97582251458235,
+            "stdev": 11.135291363243985
+          },
+          "window_tok_s": {
+            "count": 25,
+            "max": 131.28239102276356,
+            "mean": 97.88159441564925,
+            "median": 101.07782521549903,
+            "min": 32.78766740464937,
+            "p10": 83.93967880271352,
+            "stdev": 17.923350523114927
+          }
+        },
+        "holdout": {
+          "completion_tokens": {
+            "count": 13,
+            "max": 512.0,
+            "mean": 503.61538461538464,
+            "median": 512.0,
+            "min": 403.0,
+            "p10": 512.0,
+            "stdev": 30.231160694274987
+          },
+          "full_after_ttft_tok_s": {
+            "count": 13,
+            "max": 120.19453580467663,
+            "mean": 105.73998386128503,
+            "median": 107.5831547189631,
+            "min": 77.49957812068617,
+            "p10": 93.29875336027183,
+            "stdev": 12.538754128677478
+          },
+          "ttft_ms": {
+            "count": 13,
+            "max": 4177.009475999512,
+            "mean": 1044.1755690799955,
+            "median": 753.2395320013165,
+            "min": 697.0843659946695,
+            "p10": 720.6001657876186,
+            "stdev": 949.06810986535
+          },
+          "wall_tok_s": {
+            "count": 13,
+            "max": 101.78256643284122,
+            "mean": 88.72283690774228,
+            "median": 91.85369458605142,
+            "min": 47.47995919420133,
+            "p10": 82.45982392572512,
+            "stdev": 13.916896743115304
+          },
+          "window_tok_s": {
+            "count": 13,
+            "max": 131.28239102276356,
+            "mean": 100.95447021276178,
+            "median": 104.28780962040229,
+            "min": 32.78766740464937,
+            "p10": 84.56315502967307,
+            "stdev": 23.987558505006756
+          }
+        },
+        "selection": {
+          "completion_tokens": {
+            "count": 12,
+            "max": 512.0,
+            "mean": 484.8333333333333,
+            "median": 512.0,
+            "min": 186.0,
+            "p10": 512.0,
+            "stdev": 94.108093877909
+          },
+          "full_after_ttft_tok_s": {
+            "count": 12,
+            "max": 99.80115119630005,
+            "mean": 92.88433528309618,
+            "median": 92.01450953281308,
+            "min": 87.26196999357211,
+            "p10": 88.6183821231856,
+            "stdev": 3.9735221930798326
+          },
+          "ttft_ms": {
+            "count": 12,
+            "max": 866.131500020856,
+            "mean": 742.0006716686961,
+            "median": 731.0941949981498,
+            "min": 718.6531240004115,
+            "p10": 718.7850128830178,
+            "stdev": 40.779106251358236
+          },
+          "wall_tok_s": {
+            "count": 12,
+            "max": 87.53658663264214,
+            "mean": 80.60517183528101,
+            "median": 80.54203787645861,
+            "min": 69.49167527723989,
+            "p10": 77.57717751482986,
+            "stdev": 4.676040246879843
+          },
+          "window_tok_s": {
+            "count": 12,
+            "max": 104.78142892262188,
+            "mean": 94.55264563544402,
+            "median": 94.65026529607621,
+            "min": 82.21603376782917,
+            "p10": 86.38578287711704,
+            "stdev": 7.066850562502734
+          }
+        }
+      },
+      "mode": "spec",
+      "pair": "2,3",
+      "quality_baseline_match_all": true,
+      "quality_pass_all": true,
+      "quality_return_code": 0,
+      "rows": 25,
+      "runner_exit_code": 0,
+      "server_error_lines": [],
+      "smoke_pass": true
+    },
+    "spec-23b": {
+      "acceptance_percent": {
+        "count": 18,
+        "max": 86.8,
+        "mean": 66.86111111111111,
+        "median": 64.15,
+        "min": 55.3,
+        "p10": 57.44,
+        "stdev": 9.43729390979582
+      },
+      "accounting": {
+        "historical_formula": "100 / (timestamp[99] - timestamp[0])",
+        "historical_metric_name": "median_tok_s_1_100_after_ttft",
+        "inter_token_intervals": 99,
+        "preferred_formula": "99 / (timestamp[99] - timestamp[0])",
+        "preferred_metric_name": "median_tok_s_1_100_intervals_after_ttft",
+        "schema": "realistic-window-accounting-v1",
+        "timestamped_events": 100,
+        "timing_source": "openai_stream_token_ids_chunk_timestamp"
+      },
+      "all_rows_have_100_events": true,
+      "bench_return_code": 0,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true,
+      "groups": {
+        "combined": {
+          "completion_tokens": {
+            "count": 25,
+            "max": 512.0,
+            "mean": 494.6,
+            "median": 512.0,
+            "min": 186.0,
+            "p10": 512.0,
+            "stdev": 67.88102336686839
+          },
+          "full_after_ttft_tok_s": {
+            "count": 25,
+            "max": 120.57195290585231,
+            "mean": 98.89948113848205,
+            "median": 96.07415146500976,
+            "min": 77.77219806994627,
+            "p10": 87.94810764438563,
+            "stdev": 10.930108424890843
+          },
+          "ttft_ms": {
+            "count": 25,
+            "max": 4173.266263998812,
+            "mean": 898.1668842420913,
+            "median": 743.1501410028432,
+            "min": 695.8584640233312,
+            "p10": 718.2804478041362,
+            "stdev": 688.4314938854807
+          },
+          "wall_tok_s": {
+            "count": 25,
+            "max": 102.42003743581172,
+            "mean": 84.33406352655747,
+            "median": 84.04250523535856,
+            "min": 47.598702675432456,
+            "p10": 77.36712905936604,
+            "stdev": 10.813970671828892
+          },
+          "window_tok_s": {
+            "count": 25,
+            "max": 131.61801136098555,
+            "mean": 97.81073847515526,
+            "median": 98.76146153990074,
+            "min": 32.83042963815124,
+            "p10": 83.68638583285687,
+            "stdev": 18.14654427675487
+          }
+        },
+        "holdout": {
+          "completion_tokens": {
+            "count": 13,
+            "max": 512.0,
+            "mean": 503.61538461538464,
+            "median": 512.0,
+            "min": 403.0,
+            "p10": 512.0,
+            "stdev": 30.231160694274987
+          },
+          "full_after_ttft_tok_s": {
+            "count": 13,
+            "max": 120.57195290585231,
+            "mean": 104.68612995429308,
+            "median": 107.48295514995573,
+            "min": 77.77219806994627,
+            "p10": 90.23825012088918,
+            "stdev": 12.311100146455514
+          },
+          "ttft_ms": {
+            "count": 13,
+            "max": 4173.266263998812,
+            "mean": 1045.5274990728446,
+            "median": 752.5947699905373,
+            "min": 721.2468030047603,
+            "p10": 732.4385855987202,
+            "stdev": 947.2902037014098
+          },
+          "wall_tok_s": {
+            "count": 13,
+            "max": 102.42003743581172,
+            "mean": 87.91826000048971,
+            "median": 91.30663104797807,
+            "min": 47.598702675432456,
+            "p10": 79.75326490162472,
+            "stdev": 13.694616656299866
+          },
+          "window_tok_s": {
+            "count": 13,
+            "max": 131.61801136098555,
+            "mean": 100.89233460099936,
+            "median": 104.38819458367105,
+            "min": 32.83042963815124,
+            "p10": 84.33872930105295,
+            "stdev": 23.97843924991149
+          }
+        },
+        "selection": {
+          "completion_tokens": {
+            "count": 12,
+            "max": 512.0,
+            "mean": 484.8333333333333,
+            "median": 512.0,
+            "min": 186.0,
+            "p10": 512.0,
+            "stdev": 94.108093877909
+          },
+          "full_after_ttft_tok_s": {
+            "count": 12,
+            "max": 98.85472562356648,
+            "mean": 92.63061158802007,
+            "median": 92.09673777112977,
+            "min": 86.57924239755671,
+            "p10": 87.51574253619913,
+            "stdev": 3.587384188917194
+          },
+          "ttft_ms": {
+            "count": 12,
+            "max": 857.7153020014521,
+            "mean": 738.5262181754418,
+            "median": 727.8953875065781,
+            "min": 695.8584640233312,
+            "p10": 717.7162121224683,
+            "stdev": 40.54929057585377
+          },
+          "wall_tok_s": {
+            "count": 12,
+            "max": 86.38575108440887,
+            "mean": 80.45118401313087,
+            "median": 81.2840030998126,
+            "min": 69.41495638294704,
+            "p10": 77.10487033375264,
+            "stdev": 4.350252863224857
+          },
+          "window_tok_s": {
+            "count": 12,
+            "max": 108.07251091749892,
+            "mean": 94.47234267215748,
+            "median": 94.53128798372369,
+            "min": 80.07395682559707,
+            "p10": 86.0304537193878,
+            "stdev": 8.237129822559806
+          }
+        }
+      },
+      "mode": "spec",
+      "pair": "2,3",
+      "quality_baseline_match_all": true,
+      "quality_pass_all": true,
+      "quality_return_code": 0,
+      "rows": 25,
+      "runner_exit_code": 0,
+      "server_error_lines": [],
+      "smoke_pass": true
+    }
+  },
+  "candidate_aggregate": {
+    "combined": {
+      "candidate_arm_median_stats": {
+        "count": 4,
+        "max": 101.07782521549903,
+        "mean": 99.24083029969671,
+        "median": 98.76617781787874,
+        "min": 98.35314034753033,
+        "p10": 98.47563670524144,
+        "stdev": 1.2400508343623922
+      },
+      "candidate_arm_medians": [
+        98.77089409585673,
+        101.07782521549903,
+        98.35314034753033,
+        98.76146153990074
+      ],
+      "per_prompt_median_stats": {
+        "count": 25,
+        "max": 131.40648426284568,
+        "mean": 98.00796428901678,
+        "median": 99.91561311006912,
+        "min": 32.60743555831929,
+        "p10": 83.81590991806816,
+        "stdev": 18.109704740632402
+      },
+      "prompt_bootstrap_95": {
+        "lower_95": 92.9692960058486,
+        "median": 99.91561311006912,
+        "samples": 200000,
+        "seed": 20260840,
+        "upper_95": 104.75388131884719
+      }
+    },
+    "holdout": {
+      "candidate_arm_median_stats": {
+        "count": 4,
+        "max": 104.54557750424706,
+        "mean": 104.28656222415589,
+        "median": 104.33800210203667,
+        "min": 103.92466718830312,
+        "p10": 104.03360991793286,
+        "stdev": 0.263557473045003
+      },
+      "candidate_arm_medians": [
+        103.92466718830312,
+        104.28780962040229,
+        104.54557750424706,
+        104.38819458367105
+      ],
+      "per_prompt_median_stats": {
+        "count": 13,
+        "max": 131.40648426284568,
+        "mean": 100.88566713430978,
+        "median": 104.33800210203667,
+        "min": 32.60743555831929,
+        "p10": 84.42428632690432,
+        "stdev": 24.047713181714872
+      },
+      "prompt_bootstrap_95": {
+        "lower_95": 98.7072482249053,
+        "median": 104.33800210203667,
+        "samples": 200000,
+        "seed": 20260828,
+        "upper_95": 110.90238691737908
+      }
+    },
+    "selection": {
+      "candidate_arm_median_stats": {
+        "count": 4,
+        "max": 95.96204609564515,
+        "mean": 94.96800009235606,
+        "median": 94.68933314502772,
+        "min": 94.53128798372369,
+        "p10": 94.56698117742944,
+        "stdev": 0.6676346433969064
+      },
+      "candidate_arm_medians": [
+        94.7284009939792,
+        94.65026529607621,
+        95.96204609564515,
+        94.53128798372369
+      ],
+      "per_prompt_median_stats": {
+        "count": 12,
+        "max": 107.65922703889335,
+        "mean": 94.89045287328271,
+        "median": 94.5576893600962,
+        "min": 81.15758710559308,
+        "p10": 86.12509341209329,
+        "stdev": 8.018625142904645
+      },
+      "prompt_bootstrap_95": {
+        "lower_95": 88.55459532926575,
+        "median": 94.5576893600962,
+        "samples": 200000,
+        "seed": 20260827,
+        "upper_95": 100.71526472298497
+      }
+    }
+  },
+  "classification": "independent-contribution-style-validation",
+  "harness_commits": [
+    "3213e068e95e5fe2e5623f902d841e3ba6938645",
+    "1df37d32825f7c052e10bf63e48c2c9f12cf42ab",
+    "4418ec9a68e4143423f1bd7747e885ded5e4df9f",
+    "d0f64ce23a9369dec131449c1d5b99e9a6c31f97",
+    "7b1c733cca3cb09627de141f2c9a79c9812375d7"
+  ],
+  "repeat_parity": {
+    "nospec-01a_vs_nospec-23a": {
+      "compared": 25,
+      "exact": true,
+      "expected": 25,
+      "mismatch_count": 0,
+      "mismatches": []
+    },
+    "spec-01a_vs_spec-01b": {
+      "compared": 25,
+      "exact": false,
+      "expected": 25,
+      "mismatch_count": 19,
+      "mismatches": [
+        {
+          "common_prefix_tokens": 208,
+          "left_first_difference": 7225,
+          "left_tokens": 512,
+          "prompt_id": "holdout--arithmetic-reasoning",
+          "right_first_difference": 17077,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 40,
+          "left_first_difference": 1330,
+          "left_tokens": 512,
+          "prompt_id": "holdout--concurrency-review",
+          "right_first_difference": 488,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 27,
+          "left_first_difference": 5533,
+          "left_tokens": 512,
+          "prompt_id": "holdout--factual-protocol",
+          "right_first_difference": 16184,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 114,
+          "left_first_difference": 14,
+          "left_tokens": 512,
+          "prompt_id": "holdout--prose-decision-memo",
+          "right_first_difference": 7294,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 403,
+          "left_first_difference": 11,
+          "left_tokens": 512,
+          "prompt_id": "holdout--python-lru-cache",
+          "right_first_difference": 413,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 43,
+          "left_first_difference": 56764,
+          "left_tokens": 512,
+          "prompt_id": "holdout--repository-refactor-plan",
+          "right_first_difference": 11,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 215,
+          "left_first_difference": 5029,
+          "left_tokens": 512,
+          "prompt_id": "holdout--rust-stream-parser",
+          "right_first_difference": 313,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 204,
+          "left_first_difference": 5138,
+          "left_tokens": 512,
+          "prompt_id": "holdout--typescript-cancellation",
+          "right_first_difference": 8976,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 189,
+          "left_first_difference": 2972,
+          "left_tokens": 512,
+          "prompt_id": "selection--architecture-tradeoff",
+          "right_first_difference": 348,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 276,
+          "left_first_difference": 21966,
+          "left_tokens": 512,
+          "prompt_id": "selection--benchmark-analysis",
+          "right_first_difference": 4744,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 49,
+          "left_first_difference": 39557,
+          "left_tokens": 512,
+          "prompt_id": "selection--bug-report-synthesis",
+          "right_first_difference": 37169,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 61,
+          "left_first_difference": 16,
+          "left_tokens": 512,
+          "prompt_id": "selection--code-review",
+          "right_first_difference": 26597,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 12,
+          "left_first_difference": 2791,
+          "left_tokens": 512,
+          "prompt_id": "selection--decision-memo",
+          "right_first_difference": 12588,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 127,
+          "left_first_difference": 12574,
+          "left_tokens": 512,
+          "prompt_id": "selection--incident-retrospective",
+          "right_first_difference": 1421,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 145,
+          "left_first_difference": 71017,
+          "left_tokens": 512,
+          "prompt_id": "selection--performance-hypotheses",
+          "right_first_difference": 2972,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 219,
+          "left_first_difference": 68,
+          "left_tokens": 512,
+          "prompt_id": "selection--release-plan",
+          "right_first_difference": 33789,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 40,
+          "left_first_difference": 15135,
+          "left_tokens": 512,
+          "prompt_id": "selection--risk-register",
+          "right_first_difference": 3421,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 220,
+          "left_first_difference": 287,
+          "left_tokens": 512,
+          "prompt_id": "selection--sql-debugging",
+          "right_first_difference": 23791,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 133,
+          "left_first_difference": 198,
+          "left_tokens": 512,
+          "prompt_id": "selection--technical-guide",
+          "right_first_difference": 260,
+          "right_tokens": 512
+        }
+      ]
+    },
+    "spec-23a_vs_spec-23b": {
+      "compared": 25,
+      "exact": false,
+      "expected": 25,
+      "mismatch_count": 21,
+      "mismatches": [
+        {
+          "common_prefix_tokens": 13,
+          "left_first_difference": 3377,
+          "left_tokens": 512,
+          "prompt_id": "holdout--arithmetic-reasoning",
+          "right_first_difference": 14611,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 462,
+          "left_first_difference": 695,
+          "left_tokens": 512,
+          "prompt_id": "holdout--concurrency-review",
+          "right_first_difference": 32519,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 194,
+          "left_first_difference": 11747,
+          "left_tokens": 512,
+          "prompt_id": "holdout--factual-protocol",
+          "right_first_difference": 40986,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 184,
+          "left_first_difference": 5851,
+          "left_tokens": 512,
+          "prompt_id": "holdout--prose-decision-memo",
+          "right_first_difference": 2446,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 124,
+          "left_first_difference": 1786,
+          "left_tokens": 512,
+          "prompt_id": "holdout--python-debug-window",
+          "right_first_difference": 1428,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 234,
+          "left_first_difference": 198,
+          "left_tokens": 512,
+          "prompt_id": "holdout--repository-refactor-plan",
+          "right_first_difference": 8675,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 227,
+          "left_first_difference": 2984,
+          "left_tokens": 512,
+          "prompt_id": "holdout--rust-stream-parser",
+          "right_first_difference": 5639,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 309,
+          "left_first_difference": 1503,
+          "left_tokens": 512,
+          "prompt_id": "holdout--shell-safety-review",
+          "right_first_difference": 1189,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 131,
+          "left_first_difference": 12558,
+          "left_tokens": 512,
+          "prompt_id": "holdout--sql-sessionization",
+          "right_first_difference": 279,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 133,
+          "left_first_difference": 7652,
+          "left_tokens": 512,
+          "prompt_id": "holdout--typescript-cancellation",
+          "right_first_difference": 5787,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 189,
+          "left_first_difference": 348,
+          "left_tokens": 512,
+          "prompt_id": "selection--architecture-tradeoff",
+          "right_first_difference": 2972,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 192,
+          "left_first_difference": 9640,
+          "left_tokens": 512,
+          "prompt_id": "selection--benchmark-analysis",
+          "right_first_difference": 4581,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 49,
+          "left_first_difference": 37169,
+          "left_tokens": 512,
+          "prompt_id": "selection--bug-report-synthesis",
+          "right_first_difference": 39557,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 73,
+          "left_first_difference": 253,
+          "left_tokens": 512,
+          "prompt_id": "selection--code-review",
+          "right_first_difference": 248,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 105,
+          "left_first_difference": 77244,
+          "left_tokens": 512,
+          "prompt_id": "selection--decision-memo",
+          "right_first_difference": 10673,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 82,
+          "left_first_difference": 279,
+          "left_tokens": 512,
+          "prompt_id": "selection--incident-retrospective",
+          "right_first_difference": 22449,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 150,
+          "left_first_difference": 64700,
+          "left_tokens": 512,
+          "prompt_id": "selection--performance-hypotheses",
+          "right_first_difference": 478,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 135,
+          "left_first_difference": 524,
+          "left_tokens": 512,
+          "prompt_id": "selection--release-plan",
+          "right_first_difference": 1973,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 40,
+          "left_first_difference": 15135,
+          "left_tokens": 512,
+          "prompt_id": "selection--risk-register",
+          "right_first_difference": 3421,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 220,
+          "left_first_difference": 23791,
+          "left_tokens": 512,
+          "prompt_id": "selection--sql-debugging",
+          "right_first_difference": 287,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 61,
+          "left_first_difference": 1732,
+          "left_tokens": 512,
+          "prompt_id": "selection--technical-guide",
+          "right_first_difference": 381,
+          "right_tokens": 512
+        }
+      ]
+    }
+  },
+  "root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/independent-validation-20260815T152141Z",
+  "source_plan_commit": "1dfb42afe",
+  "suite_sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c",
+  "target_parity": {
+    "spec-01a_vs_nospec-01a": {
+      "compared": 25,
+      "exact": false,
+      "expected": 25,
+      "mismatch_count": 25,
+      "mismatches": [
+        {
+          "common_prefix_tokens": 6,
+          "left_first_difference": 21261,
+          "left_tokens": 512,
+          "prompt_id": "holdout--arithmetic-reasoning",
+          "right_first_difference": 19214,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 7,
+          "left_first_difference": 3428,
+          "left_tokens": 512,
+          "prompt_id": "holdout--concurrency-review",
+          "right_first_difference": 25,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 8,
+          "left_first_difference": 506,
+          "left_tokens": 512,
+          "prompt_id": "holdout--factual-protocol",
+          "right_first_difference": 15048,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 24,
+          "left_first_difference": 64,
+          "left_tokens": 512,
+          "prompt_id": "holdout--long-rollover-repository-audit",
+          "right_first_difference": 17,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 11,
+          "left_first_difference": 7659,
+          "left_tokens": 512,
+          "prompt_id": "holdout--prose-decision-memo",
+          "right_first_difference": 198,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 30,
+          "left_first_difference": 58276,
+          "left_tokens": 512,
+          "prompt_id": "holdout--python-debug-window",
+          "right_first_difference": 17167,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 43467,
+          "left_tokens": 512,
+          "prompt_id": "holdout--python-lru-cache",
+          "right_first_difference": 19504,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 485,
+          "left_tokens": 512,
+          "prompt_id": "holdout--repository-refactor-plan",
+          "right_first_difference": 2495,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 15,
+          "left_first_difference": 789,
+          "left_tokens": 512,
+          "prompt_id": "holdout--rust-stream-parser",
+          "right_first_difference": 12143,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 14,
+          "left_first_difference": 34773,
+          "left_tokens": 512,
+          "prompt_id": "holdout--shell-safety-review",
+          "right_first_difference": 9475,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 440,
+          "left_tokens": 512,
+          "prompt_id": "holdout--sql-sessionization",
+          "right_first_difference": 271,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 241,
+          "left_first_difference": 2972,
+          "left_tokens": 403,
+          "prompt_id": "holdout--structured-extraction",
+          "right_first_difference": 220,
+          "right_tokens": 418
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 49992,
+          "left_tokens": 512,
+          "prompt_id": "holdout--typescript-cancellation",
+          "right_first_difference": 5492,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 31,
+          "left_first_difference": 14,
+          "left_tokens": 512,
+          "prompt_id": "selection--architecture-tradeoff",
+          "right_first_difference": 47614,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 13,
+          "left_first_difference": 4906,
+          "left_tokens": 512,
+          "prompt_id": "selection--benchmark-analysis",
+          "right_first_difference": 27502,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 21,
+          "left_first_difference": 18887,
+          "left_tokens": 512,
+          "prompt_id": "selection--bug-report-synthesis",
+          "right_first_difference": 9372,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 4927,
+          "left_tokens": 512,
+          "prompt_id": "selection--code-review",
+          "right_first_difference": 11088,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 8559,
+          "left_tokens": 190,
+          "prompt_id": "selection--customer-email",
+          "right_first_difference": 383,
+          "right_tokens": 234
+        },
+        {
+          "common_prefix_tokens": 12,
+          "left_first_difference": 2791,
+          "left_tokens": 512,
+          "prompt_id": "selection--decision-memo",
+          "right_first_difference": 14791,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 16,
+          "left_first_difference": 34906,
+          "left_tokens": 512,
+          "prompt_id": "selection--incident-retrospective",
+          "right_first_difference": 31196,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 17,
+          "left_first_difference": 39390,
+          "left_tokens": 512,
+          "prompt_id": "selection--performance-hypotheses",
+          "right_first_difference": 513,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 8,
+          "left_first_difference": 20596,
+          "left_tokens": 512,
+          "prompt_id": "selection--release-plan",
+          "right_first_difference": 318,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 11,
+          "left_first_difference": 35141,
+          "left_tokens": 512,
+          "prompt_id": "selection--risk-register",
+          "right_first_difference": 14456,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 6,
+          "left_first_difference": 310,
+          "left_tokens": 512,
+          "prompt_id": "selection--sql-debugging",
+          "right_first_difference": 364,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 34,
+          "left_first_difference": 10344,
+          "left_tokens": 512,
+          "prompt_id": "selection--technical-guide",
+          "right_first_difference": 43015,
+          "right_tokens": 512
+        }
+      ]
+    },
+    "spec-01b_vs_nospec-01a": {
+      "compared": 25,
+      "exact": false,
+      "expected": 25,
+      "mismatch_count": 25,
+      "mismatches": [
+        {
+          "common_prefix_tokens": 6,
+          "left_first_difference": 21261,
+          "left_tokens": 512,
+          "prompt_id": "holdout--arithmetic-reasoning",
+          "right_first_difference": 19214,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 7,
+          "left_first_difference": 3428,
+          "left_tokens": 512,
+          "prompt_id": "holdout--concurrency-review",
+          "right_first_difference": 25,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 8,
+          "left_first_difference": 506,
+          "left_tokens": 512,
+          "prompt_id": "holdout--factual-protocol",
+          "right_first_difference": 15048,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 24,
+          "left_first_difference": 64,
+          "left_tokens": 512,
+          "prompt_id": "holdout--long-rollover-repository-audit",
+          "right_first_difference": 17,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 11,
+          "left_first_difference": 7659,
+          "left_tokens": 512,
+          "prompt_id": "holdout--prose-decision-memo",
+          "right_first_difference": 198,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 30,
+          "left_first_difference": 58276,
+          "left_tokens": 512,
+          "prompt_id": "holdout--python-debug-window",
+          "right_first_difference": 17167,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 43467,
+          "left_tokens": 512,
+          "prompt_id": "holdout--python-lru-cache",
+          "right_first_difference": 19504,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 485,
+          "left_tokens": 512,
+          "prompt_id": "holdout--repository-refactor-plan",
+          "right_first_difference": 2495,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 15,
+          "left_first_difference": 789,
+          "left_tokens": 512,
+          "prompt_id": "holdout--rust-stream-parser",
+          "right_first_difference": 12143,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 14,
+          "left_first_difference": 34773,
+          "left_tokens": 512,
+          "prompt_id": "holdout--shell-safety-review",
+          "right_first_difference": 9475,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 440,
+          "left_tokens": 512,
+          "prompt_id": "holdout--sql-sessionization",
+          "right_first_difference": 271,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 241,
+          "left_first_difference": 2972,
+          "left_tokens": 403,
+          "prompt_id": "holdout--structured-extraction",
+          "right_first_difference": 220,
+          "right_tokens": 418
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 49992,
+          "left_tokens": 512,
+          "prompt_id": "holdout--typescript-cancellation",
+          "right_first_difference": 5492,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 31,
+          "left_first_difference": 14,
+          "left_tokens": 512,
+          "prompt_id": "selection--architecture-tradeoff",
+          "right_first_difference": 47614,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 13,
+          "left_first_difference": 4906,
+          "left_tokens": 512,
+          "prompt_id": "selection--benchmark-analysis",
+          "right_first_difference": 27502,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 21,
+          "left_first_difference": 18887,
+          "left_tokens": 512,
+          "prompt_id": "selection--bug-report-synthesis",
+          "right_first_difference": 9372,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 4927,
+          "left_tokens": 512,
+          "prompt_id": "selection--code-review",
+          "right_first_difference": 11088,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 8559,
+          "left_tokens": 190,
+          "prompt_id": "selection--customer-email",
+          "right_first_difference": 383,
+          "right_tokens": 234
+        },
+        {
+          "common_prefix_tokens": 12,
+          "left_first_difference": 12588,
+          "left_tokens": 512,
+          "prompt_id": "selection--decision-memo",
+          "right_first_difference": 14791,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 16,
+          "left_first_difference": 34906,
+          "left_tokens": 512,
+          "prompt_id": "selection--incident-retrospective",
+          "right_first_difference": 31196,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 17,
+          "left_first_difference": 39390,
+          "left_tokens": 512,
+          "prompt_id": "selection--performance-hypotheses",
+          "right_first_difference": 513,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 8,
+          "left_first_difference": 20596,
+          "left_tokens": 512,
+          "prompt_id": "selection--release-plan",
+          "right_first_difference": 318,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 11,
+          "left_first_difference": 35141,
+          "left_tokens": 512,
+          "prompt_id": "selection--risk-register",
+          "right_first_difference": 14456,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 6,
+          "left_first_difference": 310,
+          "left_tokens": 512,
+          "prompt_id": "selection--sql-debugging",
+          "right_first_difference": 364,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 34,
+          "left_first_difference": 10344,
+          "left_tokens": 512,
+          "prompt_id": "selection--technical-guide",
+          "right_first_difference": 43015,
+          "right_tokens": 512
+        }
+      ]
+    },
+    "spec-23a_vs_nospec-23a": {
+      "compared": 25,
+      "exact": false,
+      "expected": 25,
+      "mismatch_count": 25,
+      "mismatches": [
+        {
+          "common_prefix_tokens": 6,
+          "left_first_difference": 21261,
+          "left_tokens": 512,
+          "prompt_id": "holdout--arithmetic-reasoning",
+          "right_first_difference": 19214,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 7,
+          "left_first_difference": 3428,
+          "left_tokens": 512,
+          "prompt_id": "holdout--concurrency-review",
+          "right_first_difference": 25,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 8,
+          "left_first_difference": 506,
+          "left_tokens": 512,
+          "prompt_id": "holdout--factual-protocol",
+          "right_first_difference": 15048,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 24,
+          "left_first_difference": 64,
+          "left_tokens": 512,
+          "prompt_id": "holdout--long-rollover-repository-audit",
+          "right_first_difference": 17,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 11,
+          "left_first_difference": 7659,
+          "left_tokens": 512,
+          "prompt_id": "holdout--prose-decision-memo",
+          "right_first_difference": 198,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 30,
+          "left_first_difference": 58276,
+          "left_tokens": 512,
+          "prompt_id": "holdout--python-debug-window",
+          "right_first_difference": 17167,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 43467,
+          "left_tokens": 512,
+          "prompt_id": "holdout--python-lru-cache",
+          "right_first_difference": 19504,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 485,
+          "left_tokens": 512,
+          "prompt_id": "holdout--repository-refactor-plan",
+          "right_first_difference": 2495,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 15,
+          "left_first_difference": 789,
+          "left_tokens": 512,
+          "prompt_id": "holdout--rust-stream-parser",
+          "right_first_difference": 12143,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 14,
+          "left_first_difference": 34773,
+          "left_tokens": 512,
+          "prompt_id": "holdout--shell-safety-review",
+          "right_first_difference": 9475,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 440,
+          "left_tokens": 512,
+          "prompt_id": "holdout--sql-sessionization",
+          "right_first_difference": 271,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 241,
+          "left_first_difference": 2972,
+          "left_tokens": 403,
+          "prompt_id": "holdout--structured-extraction",
+          "right_first_difference": 220,
+          "right_tokens": 418
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 49992,
+          "left_tokens": 512,
+          "prompt_id": "holdout--typescript-cancellation",
+          "right_first_difference": 5492,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 31,
+          "left_first_difference": 14,
+          "left_tokens": 512,
+          "prompt_id": "selection--architecture-tradeoff",
+          "right_first_difference": 47614,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 13,
+          "left_first_difference": 4906,
+          "left_tokens": 512,
+          "prompt_id": "selection--benchmark-analysis",
+          "right_first_difference": 27502,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 21,
+          "left_first_difference": 18887,
+          "left_tokens": 512,
+          "prompt_id": "selection--bug-report-synthesis",
+          "right_first_difference": 9372,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 4927,
+          "left_tokens": 512,
+          "prompt_id": "selection--code-review",
+          "right_first_difference": 11088,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 8559,
+          "left_tokens": 186,
+          "prompt_id": "selection--customer-email",
+          "right_first_difference": 383,
+          "right_tokens": 234
+        },
+        {
+          "common_prefix_tokens": 12,
+          "left_first_difference": 12588,
+          "left_tokens": 512,
+          "prompt_id": "selection--decision-memo",
+          "right_first_difference": 14791,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 16,
+          "left_first_difference": 34906,
+          "left_tokens": 512,
+          "prompt_id": "selection--incident-retrospective",
+          "right_first_difference": 31196,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 17,
+          "left_first_difference": 39390,
+          "left_tokens": 512,
+          "prompt_id": "selection--performance-hypotheses",
+          "right_first_difference": 513,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 8,
+          "left_first_difference": 20596,
+          "left_tokens": 512,
+          "prompt_id": "selection--release-plan",
+          "right_first_difference": 318,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 11,
+          "left_first_difference": 35141,
+          "left_tokens": 512,
+          "prompt_id": "selection--risk-register",
+          "right_first_difference": 14456,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 6,
+          "left_first_difference": 310,
+          "left_tokens": 512,
+          "prompt_id": "selection--sql-debugging",
+          "right_first_difference": 364,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 34,
+          "left_first_difference": 10344,
+          "left_tokens": 512,
+          "prompt_id": "selection--technical-guide",
+          "right_first_difference": 43015,
+          "right_tokens": 512
+        }
+      ]
+    },
+    "spec-23b_vs_nospec-23a": {
+      "compared": 25,
+      "exact": false,
+      "expected": 25,
+      "mismatch_count": 25,
+      "mismatches": [
+        {
+          "common_prefix_tokens": 6,
+          "left_first_difference": 21261,
+          "left_tokens": 512,
+          "prompt_id": "holdout--arithmetic-reasoning",
+          "right_first_difference": 19214,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 7,
+          "left_first_difference": 3428,
+          "left_tokens": 512,
+          "prompt_id": "holdout--concurrency-review",
+          "right_first_difference": 25,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 8,
+          "left_first_difference": 506,
+          "left_tokens": 512,
+          "prompt_id": "holdout--factual-protocol",
+          "right_first_difference": 15048,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 24,
+          "left_first_difference": 64,
+          "left_tokens": 512,
+          "prompt_id": "holdout--long-rollover-repository-audit",
+          "right_first_difference": 17,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 11,
+          "left_first_difference": 7659,
+          "left_tokens": 512,
+          "prompt_id": "holdout--prose-decision-memo",
+          "right_first_difference": 198,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 30,
+          "left_first_difference": 58276,
+          "left_tokens": 512,
+          "prompt_id": "holdout--python-debug-window",
+          "right_first_difference": 17167,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 43467,
+          "left_tokens": 512,
+          "prompt_id": "holdout--python-lru-cache",
+          "right_first_difference": 19504,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 485,
+          "left_tokens": 512,
+          "prompt_id": "holdout--repository-refactor-plan",
+          "right_first_difference": 2495,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 15,
+          "left_first_difference": 789,
+          "left_tokens": 512,
+          "prompt_id": "holdout--rust-stream-parser",
+          "right_first_difference": 12143,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 14,
+          "left_first_difference": 34773,
+          "left_tokens": 512,
+          "prompt_id": "holdout--shell-safety-review",
+          "right_first_difference": 9475,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 5,
+          "left_first_difference": 440,
+          "left_tokens": 512,
+          "prompt_id": "holdout--sql-sessionization",
+          "right_first_difference": 271,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 241,
+          "left_first_difference": 2972,
+          "left_tokens": 403,
+          "prompt_id": "holdout--structured-extraction",
+          "right_first_difference": 220,
+          "right_tokens": 418
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 49992,
+          "left_tokens": 512,
+          "prompt_id": "holdout--typescript-cancellation",
+          "right_first_difference": 5492,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 31,
+          "left_first_difference": 14,
+          "left_tokens": 512,
+          "prompt_id": "selection--architecture-tradeoff",
+          "right_first_difference": 47614,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 13,
+          "left_first_difference": 4906,
+          "left_tokens": 512,
+          "prompt_id": "selection--benchmark-analysis",
+          "right_first_difference": 27502,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 21,
+          "left_first_difference": 18887,
+          "left_tokens": 512,
+          "prompt_id": "selection--bug-report-synthesis",
+          "right_first_difference": 9372,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 4927,
+          "left_tokens": 512,
+          "prompt_id": "selection--code-review",
+          "right_first_difference": 11088,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 3,
+          "left_first_difference": 8559,
+          "left_tokens": 186,
+          "prompt_id": "selection--customer-email",
+          "right_first_difference": 383,
+          "right_tokens": 234
+        },
+        {
+          "common_prefix_tokens": 12,
+          "left_first_difference": 12588,
+          "left_tokens": 512,
+          "prompt_id": "selection--decision-memo",
+          "right_first_difference": 14791,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 16,
+          "left_first_difference": 34906,
+          "left_tokens": 512,
+          "prompt_id": "selection--incident-retrospective",
+          "right_first_difference": 31196,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 17,
+          "left_first_difference": 39390,
+          "left_tokens": 512,
+          "prompt_id": "selection--performance-hypotheses",
+          "right_first_difference": 513,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 8,
+          "left_first_difference": 20596,
+          "left_tokens": 512,
+          "prompt_id": "selection--release-plan",
+          "right_first_difference": 318,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 11,
+          "left_first_difference": 35141,
+          "left_tokens": 512,
+          "prompt_id": "selection--risk-register",
+          "right_first_difference": 14456,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 6,
+          "left_first_difference": 310,
+          "left_tokens": 512,
+          "prompt_id": "selection--sql-debugging",
+          "right_first_difference": 364,
+          "right_tokens": 512
+        },
+        {
+          "common_prefix_tokens": 34,
+          "left_first_difference": 10344,
+          "left_tokens": 512,
+          "prompt_id": "selection--technical-guide",
+          "right_first_difference": 43015,
+          "right_tokens": 512
+        }
+      ]
+    }
+  },
+  "verdict": {
+    "all_arms_valid": true,
+    "all_candidate_outputs_target_exact": false,
+    "all_repeats_exact": false,
+    "strict_validation_passed": false
+  }
+}

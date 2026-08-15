@@ -26,6 +26,18 @@ FP16 target compute, runtime INT8 LM head, oneCCL, sampling, and hardware. The
 speculative candidate remains unchanged. The failed preflight is preserved
 outside Git with its logs and checksums.
 
+A second attempted root, `independent-validation-20260815T150457Z`, completed
+the first no-spec arm but stopped before the first speculative benchmark. The
+new validator had incorrectly set `STAGE=/home/steve/src/vllm-xpu-kernels`,
+overriding the promoted wrapper's graph-safe FlashAttention package. FULL graph
+capture then failed, as expected, on oneAPI work-group scratch memory. No
+speculative score was produced. The validator now separately hash-pins the
+ordinary XPU runtime and the graph-safe FlashAttention extension/device library.
+This was a validation-harness error, not a failed performance arm, and its raw
+root remains preserved rather than retried in place. Its postmortem manifest
+has SHA256
+`17bfe4fc65d7fd52e70e25c548b93722e362b6b8d8f4c9636232b9ee97ce1288`.
+
 ## Frozen identity
 
 - target: `webhie/Qwen3.6-27B-int4-AutoRound` revision
@@ -70,6 +82,10 @@ groups. The generator refuses a source hash mismatch.
 All 25 prompts are sent exactly once per fresh server process. Their order is
 deterministically interleaved so neither group occupies an entire early or
 late thermal window.
+
+The generated suite file has SHA256
+`292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c`;
+all six arms used that exact byte-identical file.
 
 ## Frozen run matrix
 
@@ -120,3 +136,65 @@ performance context, not a substitute model.
 
 Raw run directories live outside Git. Track the compact analysis, file
 checksums, commands, and final classification here after completion.
+
+## Independent result
+
+The completed root is
+`/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/independent-validation-20260815T152141Z`.
+Its relative-file manifest is `SHA256SUMS` with SHA256
+`9ecdc491634200f65cd0b827ec9f55cab485daf5d4b2e592826c9ff26f546b70`.
+All six arm manifests and the root manifest passed verification after server
+teardown. A Git-resident evidence copy is at
+[`evidence/independent-validation-20260815T152141Z/`](evidence/independent-validation-20260815T152141Z/).
+Its local manifest has SHA256
+`55640e9e724590b23f7a63d71c4c4b388cf9a75ae70a8cef4c4f5670d0747100`.
+A compact machine-readable verdict is in
+[`../../../results/qwen36-27b-autoround-int4-b70/independent-validation-20260815.json`](../../../results/qwen36-27b-autoround-int4-b70/independent-validation-20260815.json).
+
+The preregistered strict verdict is **fail**, for output identity—not for
+startup, cache policy, objective quality, or throughput collection:
+
+- all six fresh arms exited zero, passed smoke and the 25-prompt cache-zero
+  gate, and passed the narrow exact cases, repeat32 canary, legacy quality
+  baseline check, and 1K retrieval;
+- both target-only controls were token-exact on all 25 prompts across the two
+  physical GPU pairs;
+- every speculative arm differed from its matching target-only control on all
+  25 realistic prompts;
+- the two speculative restarts on GPUs 0–1 differed on 19/25 prompts, and the
+  two restarts on GPUs 2–3 differed on 21/25;
+- no device loss, worker crash, benchmark retry, prompt/KV/history/response
+  reuse, or nonzero cached-token count was observed.
+
+The legacy quality baseline check above covers its small deterministic case
+set; it is not the same as token-by-token parity over the 25 realistic prompts.
+The latter is the stronger check and is the reason the final verdict fails.
+
+Current conventional 99-interval throughput:
+
+| Arm | Mode | GPUs | Old 12-prompt median | Later 13-prompt median | Combined median |
+| --- | --- | --- | ---: | ---: | ---: |
+| `nospec-01a` | target only | 0,1 | 48.153 | 47.827 | 47.868 |
+| `spec-01a` | MTP3 | 0,1 | 94.728 | 103.925 | 98.771 |
+| `nospec-23a` | target only | 2,3 | 48.013 | 47.986 | 48.006 |
+| `spec-23a` | MTP3 | 2,3 | 94.650 | 104.288 | 101.078 |
+| `spec-01b` | MTP3 | 0,1 | 95.962 | 104.546 | 98.353 |
+| `spec-23b` | MTP3 | 2,3 | 94.531 | 104.388 | 98.761 |
+
+The reporting-rule central estimate is the median of the four speculative arm
+medians:
+
+- historical selection prompts: **94.689 tok/s** (arm range 94.531–95.962;
+  prompt-bootstrap 95% interval 88.555–100.715);
+- later holdout prompts: **104.338 tok/s** (103.925–104.546; interval
+  98.707–110.902);
+- all 25 prompts: **98.766 tok/s** (98.353–101.078; interval
+  92.969–104.754).
+
+This independently reproduces the old result's speed on its original prompt
+family under corrected accounting, and shows a real roughly 2x uplift over the
+matching target-only controls. It does **not** validate a robust `>100 tok/s`
+claim, token-exact speculative decoding, or fresh-start output determinism.
+Do not submit a new LocalMaxxing record from this matrix. The retained July
+record remains historical evidence under its original metric and quality bar;
+the independent matrix is the stronger present-day classification.

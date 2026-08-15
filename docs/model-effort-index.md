@@ -191,15 +191,22 @@ Main entries:
 - [result packet](../results/qwen36-27b-autoround-int4-b70/README.md)
 - [handoff](../results/qwen36-27b-autoround-int4-b70/HANDOFF.md)
 - [exact 95.385 repro](../repro/qwen36-27b-autoround-int4-b70/README.md)
+- [2026-08-15 independent validation](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md)
 - [private source bundle and patches](../patches/qwen36-27b-autoround-int4-b70/record-20260711/README.md)
 - [experiment lane](../experiments/qwen36-27b-autoround-int4-b70/README.md)
 
-Status: closed historical reference as of 2026-07-13. Current overall strict
-fresh-response best is TP2 on two B70s at `95.384868 tok/s` under the
-historical metric convention, with exact + repeat128 + baseline + 1K quality
-pass and `cached_tokens=0` throughout. Graph-safe FlashAttention enables one
-full four-row target graph; the final transaction-fusion row is preserved as
-LocalMaxxing `cmrh35ct50092mj01h7jgydqj`.
+Status: closed historical reference. The July TP2 row is `95.384868 tok/s`
+under the historical metric convention and remains preserved as LocalMaxxing
+`cmrh35ct50092mj01h7jgydqj`. A 2026-08-15 six-start independent review used 25
+cold cache-zero prompts and conventional 99-interval accounting. Its four
+speculative arms centered at `98.766 tok/s`, but every arm diverged from the
+matching target-only control on 25/25 prompts and same-pair restarts were not
+exact. It therefore fails the current strict bar and is not a robust `>100`
+result; no new record was submitted.
+
+Graph-safe FlashAttention enables one full four-row target graph; the original
+transaction-fusion evidence remains useful, but its old exact/repeat quality
+checks are not substitutes for the newer target-only parity result.
 Start from
 `../results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json`.
 TP1 remains a separate active record class: `68.236 tok/s` is the valid

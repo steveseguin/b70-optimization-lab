@@ -31,6 +31,20 @@ The model card reports ten safetensor shards plus
 This lane is closed and banked as a reproducible historical reference while
 optimization work moves to other models.
 
+The 2026-08-15 independent revalidation used a frozen 25-prompt suite, two
+physical GPU pairs, four fresh speculative starts, two target-only controls,
+512-token outputs, cache-zero enforcement, and conventional 99-interval
+accounting. Its central speculative estimate was **98.766 tok/s** combined
+(four-arm range 98.353–101.078), while the old 12-prompt subset reproduced at
+**94.689 tok/s**. Every arm passed smoke and objective quality checks, but the
+strict verdict was **fail**: all speculative arms diverged from target-only on
+25/25 realistic prompts, and same-pair restarts diverged on 19/25 and 21/25.
+See the
+[`independent validation packet`](../../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md).
+Do not promote the 101.078 fastest arm or describe this as a robust `>100`
+result; the July row below remains historical evidence under its original
+metric and narrower quality standard.
+
 Initial TP1 single-B70 vLLM/XPU bring-up passed on 2026-07-03. The lane now has
 a strict fresh-response BF16-LM-head baseline, one validated env-only speed win,
 and faster quality-gated runtime INT8/draft-INT4 variants. LocalMaxxing approved

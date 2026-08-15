@@ -20,6 +20,37 @@ This packet exists because the exact record commits were local-only and the
 working implementation also contained uncommitted source. Both are now
 preserved as small Git bundles plus exact working patches.
 
+## 2026-08-15 independent revalidation
+
+The historical packet reconstructs the July result, but a newer
+contribution-style validation now provides the stronger current classification:
+
+- six fresh servers across both physical two-GPU pairs;
+- two target-only controls and four speculative arms;
+- 12 historical prompts plus 13 later mixed-task holdouts, every prompt once;
+- 512-token caps, zero cached tokens, and conventional 99-interval accounting;
+- exact cases, repeat32, baseline parity, and 1K retrieval on every arm.
+
+All arms and objective quality gates passed. The median of the four
+speculative combined medians was **98.766 tok/s** (arm range
+98.353–101.078; prompt-bootstrap 95% interval 92.969–104.754). On the old
+12-prompt family alone it was **94.689 tok/s**, closely reproducing the
+historical result after correcting the interval accounting. The matching
+target-only controls were 47.868 and 48.006 tok/s.
+
+However, all four speculative arms differed from their target-only controls on
+25/25 realistic prompts, and fresh same-pair restarts differed on 19/25 and
+21/25 prompts. The preregistered strict result is therefore **fail**:
+throughput and narrow objective quality reproduce, but target-only token parity
+and fresh-start output determinism do not. The result is not a robust `>100`
+claim and was not submitted as a new LocalMaxxing record.
+
+Plan, harness, full compact evidence, raw-root checksum, and analysis:
+[`../../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md`](../../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md).
+The July LocalMaxxing row remains a historical record under its original
+metric and quality standard; it should not be read as passing this later,
+stricter parity standard.
+
 ## Identity boundary: this is not the Q8 result
 
 Do not combine this packet with the Qwen GGUF Q8 work. They are different

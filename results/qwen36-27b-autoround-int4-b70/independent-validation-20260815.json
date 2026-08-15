@@ -1,0 +1,132 @@
+{
+  "classification": "independent-contribution-style-validation",
+  "date": "2026-08-15",
+  "model": {
+    "id": "webhie/Qwen3.6-27B-int4-AutoRound",
+    "revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+    "quantization": "AutoRound INT4 W4A16 group-128 symmetric"
+  },
+  "hardware": {
+    "device": "Intel Arc Pro B70 32 GB",
+    "gpu_count": 2,
+    "layout": "TP2",
+    "physical_pairs_tested": [
+      "0,1",
+      "2,3"
+    ]
+  },
+  "suite": {
+    "id": "qwen36-27b-int4-independent-validation-20260815-v1",
+    "sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c",
+    "prompts": 25,
+    "historical_selection_prompts": 12,
+    "later_holdout_prompts": 13,
+    "max_output_tokens": 512,
+    "primary_metric": "median_tok_s_1_100_intervals_after_ttft",
+    "generated_events": 100,
+    "intervals": 99,
+    "cache_policy": "all requests cached_tokens=0; no prompt/KV/checkpoint/response/ngram/history reuse"
+  },
+  "arms": {
+    "nospec-01a": {
+      "gpus": "0,1",
+      "mode": "target-only",
+      "selection_median_tok_s": 48.153,
+      "holdout_median_tok_s": 47.827,
+      "combined_median_tok_s": 47.868
+    },
+    "spec-01a": {
+      "gpus": "0,1",
+      "mode": "MTP3",
+      "selection_median_tok_s": 94.728,
+      "holdout_median_tok_s": 103.925,
+      "combined_median_tok_s": 98.771
+    },
+    "nospec-23a": {
+      "gpus": "2,3",
+      "mode": "target-only",
+      "selection_median_tok_s": 48.013,
+      "holdout_median_tok_s": 47.986,
+      "combined_median_tok_s": 48.006
+    },
+    "spec-23a": {
+      "gpus": "2,3",
+      "mode": "MTP3",
+      "selection_median_tok_s": 94.650,
+      "holdout_median_tok_s": 104.288,
+      "combined_median_tok_s": 101.078
+    },
+    "spec-01b": {
+      "gpus": "0,1",
+      "mode": "MTP3",
+      "selection_median_tok_s": 95.962,
+      "holdout_median_tok_s": 104.546,
+      "combined_median_tok_s": 98.353
+    },
+    "spec-23b": {
+      "gpus": "2,3",
+      "mode": "MTP3",
+      "selection_median_tok_s": 94.531,
+      "holdout_median_tok_s": 104.388,
+      "combined_median_tok_s": 98.761
+    }
+  },
+  "candidate_aggregate": {
+    "reporting_rule": "median of the four speculative arm medians; no fastest-arm selection",
+    "selection_median_tok_s": 94.689,
+    "selection_prompt_bootstrap_95": [
+      88.555,
+      100.715
+    ],
+    "holdout_median_tok_s": 104.338,
+    "holdout_prompt_bootstrap_95": [
+      98.707,
+      110.902
+    ],
+    "combined_median_tok_s": 98.766,
+    "combined_arm_range_tok_s": [
+      98.353,
+      101.078
+    ],
+    "combined_prompt_bootstrap_95": [
+      92.969,
+      104.754
+    ]
+  },
+  "quality": {
+    "all_arms_started_and_exited_cleanly": true,
+    "all_arms_cache_zero": true,
+    "all_arms_passed_objective_canaries": true,
+    "target_only_cross_pair_exact_prompts": "25/25",
+    "speculative_vs_target_only_mismatches_per_arm": "25/25",
+    "same_pair_restart_mismatches": {
+      "0,1": "19/25",
+      "2,3": "21/25"
+    }
+  },
+  "verdict": {
+    "speed_reproduced": true,
+    "roughly_two_x_over_target_only": true,
+    "all_arms_valid": true,
+    "all_candidate_outputs_target_exact": false,
+    "all_repeats_exact": false,
+    "strict_validation_passed": false,
+    "robust_over_100_claim": false,
+    "new_localmaxxing_submission": false,
+    "note": "The lone 101.078 tok/s arm is not selected. This is a real throughput result but not a current-standard exact or robust >100 result."
+  },
+  "evidence": {
+    "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/independent-validation-20260815T152141Z",
+    "raw_root_manifest_sha256": "9ecdc491634200f65cd0b827ec9f55cab485daf5d4b2e592826c9ff26f546b70",
+    "git_evidence": "experiments/qwen36-27b-autoround-int4-b70/validation-20260815/evidence/independent-validation-20260815T152141Z",
+    "git_evidence_manifest_sha256": "55640e9e724590b23f7a63d71c4c4b388cf9a75ae70a8cef4c4f5670d0747100",
+    "analysis_json_sha256": "073f35013be40c27d6a0651188745b7ea763c505696a106e17467c1e36e753a0",
+    "analysis_markdown_sha256": "5a442b33e8b7f83c19a2f2e3428213f49f9951499b572ec2f1577ea9260381ec"
+  },
+  "historical_reference": {
+    "published_rate_tok_s": 95.384868,
+    "conventional_rate_tok_s": 94.431019,
+    "localmaxxing_id": "cmrh35ct50092mj01h7jgydqj",
+    "status": "retained historical result under its original metric and validation bar; not a pass under the 2026-08-15 stricter review"
+  }
+}

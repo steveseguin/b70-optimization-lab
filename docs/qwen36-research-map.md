@@ -33,7 +33,7 @@ neutral or slower and remain default-off/reverted.
 | --- | --- | --- | --- |
 | 27B GGUF Q8_0, target-only | 2x ASRock B70, llama.cpp/SYCL TP2 | Current no-speculation record: `35.699225 tok/s` conventional; 12/12 exact, cache-zero; closed after pass 1 | [handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) |
 | 27B GGUF Q8_0, target-only baseline | 1x B70, llama.cpp/SYCL | `15.550257 tok/s` 128-token median; exact 32K F16-KV retrieval baseline; service/concurrency experiments are separate evidence | [experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md) |
-| 27B AutoRound INT4, target-verified MTP | 2x B70, vLLM/XPU TP2 | Historical strict fresh-response record `95.384868 tok/s`; exact/repeat128/baseline/1K gates passed | [exact repro](../repro/qwen36-27b-autoround-int4-b70/README.md) |
+| 27B AutoRound INT4, MTP3 | 2x B70, vLLM/XPU TP2 | Historical `95.384868 tok/s` row under its original bar; 2026-08-15 independent central estimate `98.766 tok/s`, but **fails current target-parity and fresh-start determinism gates** | [validation](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md) and [historical repro](../repro/qwen36-27b-autoround-int4-b70/README.md) |
 | 27B AutoRound INT4, target-verified MTP | 1x B70, vLLM/XPU | Historical high `68.236263 tok/s`; later isolated confirmation was `65.4-66.7` | [result packet](../results/qwen36-27b-autoround-int4-b70/README.md) |
 | 27B GGUF Q4_0, DFlash5 | 1x B70, llama.cpp/SYCL | Closed strict record `47.818818 tok/s` historical (`47.340630` conventional); unchanged Q4 target verifies accepted tokens | [closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
 | 27B GGUF UD-Q4_K_XL, intrinsic MTP | 1x B70, llama.cpp/SYCL | Best valid p-min support row `31.480049 tok/s`; different target/quality identity | [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
@@ -88,9 +88,18 @@ Do not restart it with another generic flag sweep.
 The graph-safe FlashAttention and ReplaySSM transaction lane is a closed
 reference. Its standalone repro now preserves the exact local-only vLLM and
 XPU-kernel source, original run directories, pinned oneCCL/libccl dependency,
-and target-verification rules. It is an AutoRound INT4/vLLM identity and must
-not be merged with the Q8_0 GGUF/llama.cpp record merely because both use a
-Qwen3.6 27B base model.
+and historical target-verification rules.
+
+The 2026-08-15 independent review is now the stronger current classification.
+It used six fresh starts, both physical GPU pairs, target-only controls, four
+speculative repeats, and 25 cache-zero cold prompts. The speculative arms had
+a `98.766 tok/s` central combined estimate, but every arm diverged from its
+target-only control on 25/25 prompts and same-pair restarts diverged on 19/25
+and 21/25. That is a real throughput reproduction, not a strict validation
+pass or a robust `>100` result. No replacement LocalMaxxing row was submitted.
+
+This is an AutoRound INT4/vLLM identity and must not be merged with the Q8_0
+GGUF/llama.cpp record merely because both use a Qwen3.6 27B base model.
 
 ### 27B Q4/DFlash And Intrinsic MTP
 
