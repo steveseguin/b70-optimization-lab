@@ -120,6 +120,9 @@ def main() -> int:
         arm = args.root / name
         bench = load_json(arm / "data/bench.json")
         quality = load_json(arm / "data/quality.json")
+        runner_exit_code = int((arm / "runner.exit-code").read_text().strip())
+        wrapper_summary = load_json(arm / "data/summary-legacy.json")
+        wrapper_status = wrapper_summary.get("status") or {}
         benches[name], qualities[name] = bench, quality
         gate = bench.get("realistic_final_gate") or {}
         accounting = bench.get("metric_accounting") or {}
@@ -144,6 +147,10 @@ def main() -> int:
             }
         arm_summaries[name] = {
             **identity,
+            "runner_exit_code": runner_exit_code,
+            "smoke_pass": wrapper_status.get("smoke_pass"),
+            "bench_return_code": wrapper_status.get("bench_rc"),
+            "quality_return_code": wrapper_status.get("quality_rc"),
             "gate_passed": bool(gate.get("passed")),
             "cached_tokens_all_zero": bool(gate.get("cached_tokens_all_zero")),
             "accounting": accounting,
@@ -189,7 +196,11 @@ def main() -> int:
         }
 
     all_arm_valid = all(
-        item["gate_passed"]
+        item["runner_exit_code"] == 0
+        and item["smoke_pass"] is True
+        and item["bench_return_code"] == 0
+        and item["quality_return_code"] == 0
+        and item["gate_passed"]
         and item["cached_tokens_all_zero"]
         and item["all_rows_have_100_events"]
         and item["quality_pass_all"] is True
@@ -253,4 +264,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
