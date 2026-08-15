@@ -111,6 +111,8 @@ def main() -> int:
     parser.add_argument("root", type=Path)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--markdown", type=Path, required=True)
+    parser.add_argument("--source-plan-commit", default="1dfb42afe")
+    parser.add_argument("--harness-commit", action="append")
     args = parser.parse_args()
 
     benches: dict[str, dict[str, Any]] = {}
@@ -212,8 +214,8 @@ def main() -> int:
     result = {
         "classification": "independent-contribution-style-validation",
         "root": str(args.root),
-        "source_plan_commit": "1dfb42afe",
-        "harness_commits": [
+        "source_plan_commit": args.source_plan_commit,
+        "harness_commits": args.harness_commit or [
             "3213e068e95e5fe2e5623f902d841e3ba6938645",
             "1df37d32825f7c052e10bf63e48c2c9f12cf42ab",
             "4418ec9a68e4143423f1bd7747e885ded5e4df9f",

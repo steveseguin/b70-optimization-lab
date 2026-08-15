@@ -8,8 +8,9 @@ gpu_pair=${2:-}
 arm_root=${3:-}
 quality_baseline=${4:-}
 
-if [[ "$mode" != "spec" && "$mode" != "nospec" ]]; then
-  printf 'usage: %s spec|nospec GPU0,GPU1 ARM_ROOT [QUALITY_BASELINE]\n' "$0" >&2
+if [[ "$mode" != "spec" && "$mode" != "nospec" \
+  && "$mode" != "spec-native-scratch" && "$mode" != "nospec-current" ]]; then
+  printf 'usage: %s spec|nospec|spec-native-scratch|nospec-current GPU0,GPU1 ARM_ROOT [QUALITY_BASELINE]\n' "$0" >&2
   exit 2
 fi
 if [[ ! "$gpu_pair" =~ ^[0-9]+,[0-9]+$ || -z "$arm_root" ]]; then
@@ -51,10 +52,19 @@ verify_tree() {
     exit 3
   fi
 }
-verify_tree "$source_root/vllm" e7213ba8e13b74d7bfa3cbc05435a45df90eb76a \
-  dcf84454f64bdeca546aa1697f4cd6af89fa95bb56f80ed314ad4d364e134b24 vllm
-verify_tree "$source_root/vllm-xpu-kernels" 3b4effeeffd83f6ef4696bbe7e76d924a0e9d171 \
-  edcb9314b43d6990474dfb5d64e3716e8d4c33618ec0e3fbd11ae671e47c8c1f kernels
+current_identity=0
+if [[ "$mode" == "spec-native-scratch" || "$mode" == "nospec-current" ]]; then
+  current_identity=1
+  verify_tree "$source_root/vllm" 8c27a1e68ac619e198b0c08c2d6f62b80ddb3456 \
+    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
+  verify_tree "$source_root/vllm-xpu-kernels" 534bd9ccca74e0b076067a212271f896bb137d2a \
+    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
+else
+  verify_tree "$source_root/vllm" e7213ba8e13b74d7bfa3cbc05435a45df90eb76a \
+    dcf84454f64bdeca546aa1697f4cd6af89fa95bb56f80ed314ad4d364e134b24 vllm
+  verify_tree "$source_root/vllm-xpu-kernels" 3b4effeeffd83f6ef4696bbe7e76d924a0e9d171 \
+    edcb9314b43d6990474dfb5d64e3716e8d4c33618ec0e3fbd11ae671e47c8c1f kernels
+fi
 
 verify_sha() {
   local path=$1 expected=$2 label=$3 actual
@@ -73,6 +83,9 @@ verify_sha() {
 while read -r expected recorded_path; do
   [[ -n "$expected" && -n "$recorded_path" ]] || continue
   binary=$(basename "$recorded_path")
+  if [[ "$current_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
+    expected=e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7
+  fi
   verify_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
 done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
 verify_sha "$oneccl/lib/libccl.so.1.0" \
@@ -162,7 +175,7 @@ export QUALITY_REPEAT_RUNS=32
 export QUALITY_LONG_CONTEXT_TOKENS=1024
 export REQUEST_EXTRA_JSON='{"chat_template_kwargs":{"enable_thinking":false}}'
 export QUALITY_BASELINE_JSON="$quality_baseline"
-if [[ "$mode" == "spec" ]]; then
+if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" ]]; then
   # FULL graph capture requires the isolated graph-safe FlashAttention build.
   # The ordinary XPU extension uses work-group scratch memory, which SYCL graph
   # capture rejects.  Pin both the Python extension and its device library so
@@ -177,6 +190,17 @@ if [[ "$mode" == "spec" ]]; then
   export VLLM_XPU_KERNELS_SRC="$graph_stage"
   export QWEN36_27B_ENABLE_MTP=1
   export NUM_SPECULATIVE_TOKENS=3
+  if [[ "$mode" == "spec-native-scratch" ]]; then
+    export VLLM_XPU_GDN_REPLAYSSM_SPEC=0
+    export VLLM_XPU_GDN_NATIVE_SPEC_DECODE=1
+    export VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL=0
+    export VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+    export VLLM_XPU_DDTREE_FULL_GRAPH=0
+    export VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=0
+    export VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA=0
+    export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
+    export COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
+  fi
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh"
 else
   export STAGE="$base_stage"

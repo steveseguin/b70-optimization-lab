@@ -198,3 +198,31 @@ claim, token-exact speculative decoding, or fresh-start output determinism.
 Do not submit a new LocalMaxxing record from this matrix. The retained July
 record remains historical evidence under its original metric and quality bar;
 the independent matrix is the stronger present-day classification.
+
+## Preregistered persistent-scratch recovery matrix
+
+The follow-up candidate replaces the non-exact ReplaySSM transaction with the
+exact native packed GDN path and fixes its PIECEWISE graph replay lifetime by
+holding the custom op's temporary tensors at stable process-lifetime addresses.
+The one-prompt gate passed 128/128 target-token parity and all 35 aligned
+verifier rounds at XPU-kernel commit
+`534bd9ccca74e0b076067a212271f896bb137d2a` and extension SHA256
+`e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7`.
+
+Before observing any 25-prompt candidate result, the follow-up matrix is frozen
+to the same six-arm order, same two physical GPU pairs, same immutable suite,
+same target-only controls, same cold/cache-zero rules, same exact/repeat32/1K
+quality checks, and same 99-interval metric as the independent matrix above.
+Only the speculative transaction changes:
+
+- `VLLM_XPU_GDN_REPLAYSSM_SPEC=0`;
+- `VLLM_XPU_GDN_NATIVE_SPEC_DECODE=1`;
+- `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1`;
+- ordinary PIECEWISE capture at fixed verifier width four;
+- DDTree/full-graph GDN capture remains disabled.
+
+Run with `run-fixed-scratch-matrix.sh`. The strict correctness gate remains all
+25 outputs token-exact to the matching target-only arm and exact across both
+fresh candidate starts on each GPU pair. Performance is reported regardless of
+outcome. The optimization goal is a combined central median above 100 tok/s,
+but no result may be promoted or submitted unless the correctness gate passes.
