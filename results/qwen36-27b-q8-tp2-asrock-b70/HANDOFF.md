@@ -106,6 +106,16 @@ versus `37.736440` promoted striped control (`-0.114%`). Earlier rows were
 confounded by the host's opening slow state. The striped `0->2` / `1->3`
 pairing remains accepted and no endpoint run was warranted.
 
+## Active Coordination Checkpoint
+
+As of 2026-08-15, an isolated exact-quality scale-overlap probe is in
+progress. It materializes the existing FP32 `weight_scale * activation_scale`
+before the promoted two-chain DP4A body so Intel's compiler can overlap the
+two 16-bit scale loads/conversions with the integer dot product. The same two
+FP32 multiplies and per-block accumulation boundary are retained. The planned
+isolated source is `/mnt/fast-ai/src/llama.cpp-q8-tp2-scale-early`; do not
+duplicate this probe without checking the latest `origin/main` checkpoint.
+
 ## Protected State
 
 - Accepted source: `/mnt/fast-ai/src/llama.cpp-q8-tp2-dp4a2`
