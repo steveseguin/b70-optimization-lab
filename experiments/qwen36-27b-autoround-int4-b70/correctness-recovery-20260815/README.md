@@ -275,6 +275,20 @@ but sets `VLLM_XPU_SKIP_COMPILED_SPEC_DECODE=1` so only the speculative target
 forward uses the raw model. This tests the compiled-verifier boundary directly;
 it is a correctness diagnostic, not a promotion benchmark.
 
+That raw-verifier arm passed the recurring canary completely. All 128 output
+tokens match the fresh same-pair target, all 50 aligned verifier rounds agree,
+and the former token-68 disagreement is absent; the analyzer classification is
+`no_divergence_in_window`. The row was fresh and cache-zero, but measured only
+`22.218 tok/s`, so bypassing the entire compiled verifier is an oracle, not a
+performance solution. Raw root:
+`correctness-recovery-native-fast-piecewise-skip-compiled-20260815T221000Z`;
+post-teardown manifest SHA256:
+`393d9a4e9b8d9c1bbe7a824cf5f53b8a2df57dd25bda9260403fd7fb457c645c`.
+This establishes the compiled speculative target forward as the correctness
+boundary. Future work should keep the exact raw result as the oracle while
+selectively changing compilation/partitioning, rather than revisiting scratch
+or Level Zero replay.
+
 Five post-consolidation startup roots are also invalid measurements and retained
 only as merge-repair evidence:
 
@@ -302,12 +316,16 @@ cold benchmark row.
 
 ## Next gates
 
-1. If the first target verifier row is already wrong, force zero accepted draft
-   tokens while retaining the width-four verifier.  Exactness there separates
-   width-dependent target math from accepted-state transaction errors.
-2. If target rows are correct but emitted tokens diverge, fix rejection/state
-   commit accounting and add focused unit tests.
-3. Require exact 25-prompt target parity and fresh-start repeatability before
-   measuring speed.
-4. Only after correctness passes, port relevant current upstream XPU/vLLM
-   fixes and optimize against the central-median, cold-prompt standard.
+1. Screen a current partitioning/compile identity while retaining the exact
+   packed-GDN transaction. The first candidate is PIECEWISE with
+   `use_inductor_graph_partition=true`; it must pass the token-68 oracle before
+   any throughput interpretation.
+2. If it fails, instrument compiled versus raw hidden states at the first
+   divergent verifier round and bisect compile boundaries. Do not retry shared
+   scratch, per-layer scratch, Level Zero replay bypass, or the upstream GDN
+   eager break; all are already closed negatives.
+3. Once a fast arm passes the canary, require exact same-pair parity and
+   fresh-start repeatability on the frozen 25-prompt suite before promotion.
+4. Only after correctness passes, port the current upstream XPU safety fixes
+   and performance changes one focused commit at a time, then optimize against
+   the central-median, cache-zero cold-prompt standard.
