@@ -8,10 +8,10 @@ target-only Q8_0 TP2 result on two ASRock Intel Arc Pro B70 cards.
 - Upstream fork: <https://github.com/mndodd/llama.cpp/tree/intel-sycl-optimization>
 - Clean base commit: `4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126`
 - Patch artifact:
-  `llama-cpp-mndodd-4302fb599-lab-tp2-qknormrope-localfp32-20260815.diff.gz.b64`
+  `llama-cpp-mndodd-4302fb599-lab-tp2-conv-silu-l2-20260815.diff.gz.b64`
 - Decoded patch SHA-256:
-  `800f03b174e8e19a4471d3f15d3b544565c8aa1854563e01045cfedac7a6c9af`
-- Base-to-patch scope: 19 files, 4,399 insertions, 101 deletions.
+  `c8ae065cabf9e7b7f6b6a224673498ddf82b07aeb1d16a33d341368b9b3234d7`
+- Base-to-patch scope: 19 files, 4,814 insertions, 102 deletions.
 
 The artifact is a full diff from the clean mndodd commit. Do not first apply
 the smaller compatibility patch from the contributor packet; those changes
@@ -25,7 +25,7 @@ cd llama.cpp-qwen36-q8-tp2
 git checkout 4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126
 
 base64 -d \
-  /path/to/b70-optimization-lab/patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-qknormrope-localfp32-20260815.diff.gz.b64 \
+  /path/to/b70-optimization-lab/patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-conv-silu-l2-20260815.diff.gz.b64 \
   | gzip -dc > /tmp/qwen36-q8-tp2.patch
 
 sha256sum /tmp/qwen36-q8-tp2.patch
@@ -66,18 +66,16 @@ memory limit and do not overlap it with a loaded model. The validated local
 binaries had these hashes:
 
 - `llama-server`:
-  `dddd501b462a21fb1addadc1941016e865ed8d31fb03a5be8a5d211580365721`
+  `d1d5f8d2c7903ef7a84eb9e698689fa803d1c59650d7dce914253efae2bb75b4`
 - `llama-bench`:
-  `b8c335a75fce8ada48ad5878ffe32aa6a7d45ae86757a5806c032cc538fda028`
+  `b7fbea3d9081ea8c97350d90a63403039f30e99eecc6aea7ae98d4d4d3fed6c2`
 - `libggml-sycl.so`:
-  `4212af65ecb545d30cdc7a977f9f57f35703e3f59b7237cf936bb11ae19400e9`
+  `707ea1b8f19b69aa31f968dd461815b408a552aaf2f4bfe23d3f83b0ee0e08ed`
 
 These hashes identify the promoted build; they are provenance, not a required
-rebuild gate. A later rebuild from the same accepted source produced a
-different Intel AOT shared-library hash while retaining the server/bench
-hashes and passing the complete 12/12 exact-output replay. Reproduction is
-gated by the source-patch hash, declared build/runtime settings, fresh/cache
-checks, and output hashes.
+rebuild gate. Intel AOT output can vary across rebuild environments.
+Reproduction is gated by the source-patch hash, declared build/runtime
+settings, fresh/cache checks, and output hashes.
 
 ## What the patch contains
 
@@ -108,6 +106,9 @@ It includes:
 - one SIMD16 Q/K RMS+scale+IMRoPE launch for each full-attention block, with a
   1 KiB workgroup-local FP32 boundary that reproduces the incumbent
   RMS+MUL-store/RoPE-load arithmetic and writes K directly to its F16 cache.
+- one recurrent conv/state-update+SiLU+paired-Q/K-L2 launch, assigning two
+  complete 128-channel heads to each 256-thread workgroup and preserving the
+  accepted SiLU materialization and stock SIMD16 L2 reduction order.
 
 The two state-I/O paths and final recurrent-tail path have poison controls for
 validation. Never set a poison variable in a real service.
@@ -124,6 +125,11 @@ sets `GGML_SYCL_COMM_DIRECT_Q8=2`, `GGML_SYCL_FUSED_ROPE_SET_ROWS=1`, and
 `GGML_SYCL_COMM_REDUCE_VEC4=1`. The 2026-08-15 increment additionally sets
 `GGML_SYCL_FUSED_QK_NORM_ROPE=1`. All selectors are default-off and were
 exact-output gated; vec4 also passed a complete same-binary scalar control.
+The current increment sets `GGML_SYCL_FUSED_CONV_SILU_L2=1`; its full gate
+passed 12/12 exact 512-token hashes and observed exactly 588,672 eligible
+rank-layer hits. The full patch also preserves two rejected, default-off
+research doors (`GGML_SYCL_FUSED_CONV_SILU_OUTPUT` and
+`GGML_SYCL_MMVQ_SG32_OUTPUT_HEAD`); the reproduction explicitly unsets both.
 
 The previous patch artifacts remain in this directory for earlier records;
 they must not be stacked with the newest full patch because that artifact

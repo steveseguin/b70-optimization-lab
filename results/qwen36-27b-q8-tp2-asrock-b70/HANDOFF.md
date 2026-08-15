@@ -8,15 +8,15 @@ The accepted target-only two-B70 result is:
 
 | Field | Accepted value |
 | --- | --- |
-| Conventional 99-interval median | **`36.230462 tok/s`** |
-| Historical helper | `36.596426 tok/s` |
-| Full-512 after-TTFT median | `36.186203 tok/s` |
+| Conventional 99-interval median | **`36.347290 tok/s`** |
+| Historical helper | `36.714434 tok/s` |
+| Full-512 after-TTFT median | `36.365074 tok/s` |
 | Quality | 12/12 cold 512-token outputs byte-exact to the accepted control |
 | Cache | `cached_tokens=0` for 12/12 |
 | Target | Qwen3.6 27B GGUF Q8_0 |
 | Runtime mode | target-only TP2; no MTP, DFlash, draft, or reuse |
 | Source base | mndodd llama.cpp `4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126` |
-| Complete decoded patch SHA-256 | `800f03b174e8e19a4471d3f15d3b544565c8aa1854563e01045cfedac7a6c9af` |
+| Complete decoded patch SHA-256 | `c8ae065cabf9e7b7f6b6a224673498ddf82b07aeb1d16a33d341368b9b3234d7` |
 
 Start with the [result packet](README.md), then use the
 [standalone reproduction](../../repro/qwen36-27b-q8-tp2-asrock-b70/README.md)
@@ -34,7 +34,9 @@ root reduction that passed a clean rebuild and complete 12-prompt exact-output
 suite. It now also records the exact SIMD16 Q/K RMS+scale+IMRoPE fusion. Its
 local FP32 materialization version is `+0.741%` over the preceding clean
 record and passes 12/12 complete hashes; the faster barrier-free version is
-quality-rejected.
+quality-rejected. The current record adds recurrent conv+SiLU+paired Q/K-L2
+fusion: `+0.322%` conventional and `+0.494%` full-512 over that prior record,
+with 12/12 complete hashes exact and 588,672/588,672 eligible rank-layer hits.
 
 Closed hypotheses include:
 
@@ -74,14 +76,14 @@ Prioritize one of these materially new inputs:
 
 ## Protected State
 
-- Accepted source: `/mnt/fast-ai/src/llama.cpp-q8-tp2-qknormrope-wg16`
+- Accepted source: `/mnt/fast-ai/src/llama.cpp-q8-tp2-outputhead-sg32`
 - Prior control source: `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl`
 - Accepted model:
   `/mnt/fast-ai/llm-models/qwen3.6-27b-q8_0-gguf/Qwen3.6-27B-Q8_0.gguf`
 - Prior promoted evidence:
   `/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260813-tp2-fusion`
 - Pass-1/pass-2 and current promoted evidence:
-  `/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260814-40tps`
+  `/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260815-outputhead-sg32`
 
 Inspect source status and service/process ownership before using these paths.
 Do not reset them, replace the accepted build, or delete raw evidence during a

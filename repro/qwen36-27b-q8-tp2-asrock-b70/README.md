@@ -6,12 +6,12 @@ prompt reuse, or other speculation.
 
 ## Promoted result
 
-- Preferred conventional 99-interval median: **36.230462 tok/s**
-- Conventional p10 / mean: `35.766025` / `36.198205 tok/s`
-- Historical 100-event compatibility median: `36.596426 tok/s`
-- Full 512-token after-TTFT median: `36.186203 tok/s`
-- Full 512-token wall median: `35.721114 tok/s`
-- Median TTFT: `181.144 ms`
+- Preferred conventional 99-interval median: **36.347290 tok/s**
+- Conventional p10 / mean: `35.973240` / `36.381443 tok/s`
+- Historical 100-event compatibility median: `36.714434 tok/s`
+- Full 512-token after-TTFT median: `36.365074 tok/s`
+- Full 512-token wall median: `35.903294 tok/s`
+- Median TTFT: `179.962 ms`
 - Quality: 12/12 output hashes exact, 12/12 at 512 completion tokens,
   every `cached_tokens=0`, realistic and fresh-response gates passed.
 
@@ -142,6 +142,12 @@ Q and K RMS+scale+IMRoPE path and K-cache write into one SIMD16 launch. Its
 RMS+MUL materialization boundary; removing that boundary was faster but failed
 10 of 12 output-hash gates. This fourth selector is also default-off outside
 the exact Qwen shape matcher.
+`GGML_SYCL_FUSED_CONV_SILU_L2=1` joins recurrent convolution/state update,
+SiLU, and paired Q/K L2 normalization. One 256-thread workgroup owns two
+complete 128-channel heads and uses a 1 KiB local FP32 SiLU boundary before
+the stock-order SIMD16 L2 reductions. It is exact-shape admitted and
+default-off. The rejected output-only and output-head research switches are
+explicitly unset by `config.env`.
 
 ## 5. Run the fixed cold suite
 
@@ -168,4 +174,4 @@ The readable result summary is
 The compressed current candidate and retained earlier controls beside it are
 complete raw 12-prompt JSON, including timestamps, hashes, gates, and per-row
 telemetry. The promoted raw result is
-`qknormrope-localfp32-full-realistic512.json.gz.b64`.
+`conv-silu-l2-full-realistic512.json.gz.b64`.

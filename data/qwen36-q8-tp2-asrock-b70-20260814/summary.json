@@ -21,10 +21,10 @@
   "runtime": {
     "source": "https://github.com/mndodd/llama.cpp/tree/intel-sycl-optimization",
     "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
-    "source_patch_uncompressed_sha256": "800f03b174e8e19a4471d3f15d3b544565c8aa1854563e01045cfedac7a6c9af",
-    "llama_server_sha256": "dddd501b462a21fb1addadc1941016e865ed8d31fb03a5be8a5d211580365721",
-    "llama_bench_sha256": "b8c335a75fce8ada48ad5878ffe32aa6a7d45ae86757a5806c032cc538fda028",
-    "libggml_sycl_sha256": "4212af65ecb545d30cdc7a977f9f57f35703e3f59b7237cf936bb11ae19400e9",
+    "source_patch_uncompressed_sha256": "c8ae065cabf9e7b7f6b6a224673498ddf82b07aeb1d16a33d341368b9b3234d7",
+    "llama_server_sha256": "d1d5f8d2c7903ef7a84eb9e698689fa803d1c59650d7dce914253efae2bb75b4",
+    "llama_bench_sha256": "b7fbea3d9081ea8c97350d90a63403039f30e99eecc6aea7ae98d4d4d3fed6c2",
+    "libggml_sycl_sha256": "707ea1b8f19b69aa31f968dd461815b408a552aaf2f4bfe23d3f83b0ee0e08ed",
     "compiler": "C: GNU 13.3.0 (/usr/bin/cc); C++/SYCL: Intel oneAPI DPC++/C++ 2026.1.0 (20260617)",
     "kernel": "7.0.0-28-generic",
     "omix": "0.3.0-9~24.04",
@@ -33,7 +33,8 @@
       "GGML_SYCL_COMM_DIRECT_Q8": 2,
       "GGML_SYCL_FUSED_ROPE_SET_ROWS": 1,
       "GGML_SYCL_COMM_REDUCE_VEC4": 1,
-      "GGML_SYCL_FUSED_QK_NORM_ROPE": 1
+      "GGML_SYCL_FUSED_QK_NORM_ROPE": 1,
+      "GGML_SYCL_FUSED_CONV_SILU_L2": 1
     },
     "build": {
       "type": "Release",
@@ -61,29 +62,29 @@
     "cache_prompt": false,
     "preferred_metric": "median conventional rate across the 99 inter-token intervals from streamed events 1 through 100 after TTFT",
     "conventional_99_interval_tok_s": {
-      "median": 36.23046217069125,
-      "p10": 35.76602546952965,
-      "mean": 36.19820525031154
+      "median": 36.347289793336984,
+      "p10": 35.973239933018064,
+      "mean": 36.38144315085961
     },
     "historical_100_event_compatibility_tok_s": {
-      "median": 36.596426435041664,
-      "p10": 36.12729845407035,
-      "mean": 36.56384368718337
+      "median": 36.71443413468383,
+      "p10": 36.33660599294753,
+      "mean": 36.74893247561577
     },
     "full_512_after_ttft_tok_s": {
-      "median": 36.186202583617316,
-      "p10": 35.84778834028564,
-      "mean": 36.171920312327195
+      "median": 36.365073804742565,
+      "p10": 36.12156376471372,
+      "mean": 36.35987774130242
     },
     "full_512_wall_tok_s": {
-      "median": 35.7211144500935,
-      "p10": 35.20461778120299,
-      "mean": 35.69605125367885
+      "median": 35.9032940577122,
+      "p10": 35.483745166269415,
+      "mean": 35.88068082683329
     },
     "ttft_ms": {
-      "median": 181.14443898957688,
-      "p10": 173.2660769863287,
-      "mean": 188.98473816322317
+      "median": 179.96240250067785,
+      "p10": 168.5725810850272,
+      "mean": 188.31544316829726
     }
   },
   "quality": {
@@ -98,8 +99,8 @@
     "matched_mndodd_fork_conventional_tok_s": 31.025376968339355,
     "prior_promoted_record_conventional_tok_s": 35.69922490372522,
     "pre_vec4_clean_record_conventional_tok_s": 35.83221316356445,
-    "new_clean_record_conventional_tok_s": 36.23046217069125,
-    "total_gain_vs_mndodd_percent": 16.776863686986164,
+    "new_clean_record_conventional_tok_s": 36.347289793336984,
+    "total_gain_vs_mndodd_percent": 17.153418733408166,
     "record_gain_vs_pre_vec4_clean_percent": 0.36791664983573114,
     "same_binary_vec4_control_conventional_tok_s": 35.846855174775605,
     "same_binary_vec4_candidate_conventional_tok_s": 35.964045841797834,
@@ -112,6 +113,10 @@
     "qk_norm_rope_local_fp32_record_conventional_tok_s": 36.23046217069125,
     "qk_norm_rope_gain_vs_prior_record_percent": 0.7407851999337023,
     "qk_norm_rope_full512_gain_vs_prior_record_percent": 0.86582794401735,
+    "prior_qk_norm_rope_record_conventional_tok_s": 36.23046217069125,
+    "conv_silu_l2_record_conventional_tok_s": 36.347289793336984,
+    "conv_silu_l2_gain_vs_prior_record_percent": 0.32245689302921043,
+    "conv_silu_l2_full512_gain_vs_prior_record_percent": 0.4943077978738497,
     "preclean_same_binary_imrope_control_conventional_tok_s": 35.72807772541513,
     "preclean_same_binary_imrope_candidate_conventional_tok_s": 35.783553591379,
     "preclean_same_binary_imrope_aggregate_gain_percent": 0.15527246215207846,
@@ -132,11 +137,11 @@
     "f8fcfce7eae6918674a4dc00321147cd54e156a5cbbd7af849579ac84e6530f0"
   ],
   "evidence": {
-    "raw_result_compressed": "qknormrope-localfp32-full-realistic512.json.gz.b64",
-    "raw_result_sha256": "0ea874d7cfcb3daea8f73370baf76514f6c958e9acaaed03226f21f268d7c4c8",
-    "raw_result_base64_artifact_sha256": "1dea0a5eb51b4383708e7a73f68923dc2ab4334cdad9a370e425ffda267543d5",
+    "raw_result_compressed": "conv-silu-l2-full-realistic512.json.gz.b64",
+    "raw_result_sha256": "04721d27e64b4dbfed9510bb64285092c464c885751437a3c63ac70087f70ab2",
+    "raw_result_base64_artifact_sha256": "3408bbe7c688b9eb73499d0f4cec4f6a441b0d05f18ad17be3f21d0386dc2700",
     "same_binary_control_compressed": "reduce-vec4-clean-control-full-realistic512.json.gz.b64",
     "same_binary_control_sha256": "f0b41b32444a433b9cb0a93c995620f27a9aa9ea86da4d3ec6c97b6365f2e67d",
-    "local_full_run_directory": "/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260814-40tps"
+    "local_full_run_directory": "/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260815-outputhead-sg32"
   }
 }
