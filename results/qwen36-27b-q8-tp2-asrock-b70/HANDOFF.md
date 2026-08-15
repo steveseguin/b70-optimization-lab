@@ -50,6 +50,8 @@ Closed hypotheses include:
   explicit collective workgroups;
 - FlashAttention vector-depth and multiple recurrent/GDN producer/consumer
   fusions;
+- four independent reordered-Q8 DP4A accumulators versus the promoted
+  two-chain form;
 - power, clock, and scheduler explanations.
 
 The built-in TP2 SYCL profiler and the root-both remote-write prototype caused
@@ -87,16 +89,15 @@ matched all 12 accepted output hashes with every cache count zero. The
 isolated source is now the accepted source at
 `/mnt/fast-ai/src/llama.cpp-q8-tp2-dp4a2`.
 
-## Active Coordination Checkpoint
+## Latest Closed Follow-up
 
-As of 2026-08-15, one isolated exact-quality follow-up is in progress: replace
-the promoted reordered-Q8 kernel's two dependent two-DP4A chains with four
-independent one-DP4A accumulators and an integer pairwise reduction before the
-unchanged FP32 scale/accumulation boundary. This tests whether additional
-DP4A latency hiding outweighs its register cost on B70. The planned isolated
-source is `/mnt/fast-ai/src/llama.cpp-q8-tp2-dp4a4`; the promoted source and
-artifacts remain untouched. Do not independently start this same experiment
-without first checking the latest `origin/main` checkpoint.
+The four-independent-accumulator DP4A follow-up is closed as performance-null.
+Its valid fresh build had a distinct `mmvq.cpp.o` and passed the bounded TP2
+mechanism/verification smoke, but a position-balanced `p64/n256/r3` A-B-B-A
+screen measured `37.330746 tok/s` candidate versus `37.311496` promoted
+control, only `+0.052%`. The candidate followed the host's slow/fast process
+state rather than producing a repeatable gain, so it did not receive an
+endpoint run. The accepted two-chain source and result remain unchanged.
 
 ## Protected State
 
