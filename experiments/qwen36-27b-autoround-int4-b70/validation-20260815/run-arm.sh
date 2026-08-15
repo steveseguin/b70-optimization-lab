@@ -55,6 +55,30 @@ verify_tree "$source_root/vllm" e7213ba8e13b74d7bfa3cbc05435a45df90eb76a \
 verify_tree "$source_root/vllm-xpu-kernels" 3b4effeeffd83f6ef4696bbe7e76d924a0e9d171 \
   edcb9314b43d6990474dfb5d64e3716e8d4c33618ec0e3fbd11ae671e47c8c1f kernels
 
+verify_sha() {
+  local path=$1 expected=$2 label=$3 actual
+  if [[ ! -f "$path" ]]; then
+    printf '%s is missing: %s\n' "$label" "$path" >&2
+    exit 3
+  fi
+  actual=$(sha256sum "$path" | awk '{print $1}')
+  if [[ "$actual" != "$expected" ]]; then
+    printf '%s SHA256 mismatch: expected=%s actual=%s path=%s\n' \
+      "$label" "$expected" "$actual" "$path" >&2
+    exit 3
+  fi
+}
+
+while read -r expected recorded_path; do
+  [[ -n "$expected" && -n "$recorded_path" ]] || continue
+  binary=$(basename "$recorded_path")
+  verify_sha "$stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
+done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
+verify_sha "$oneccl/lib/libccl.so.1.0" \
+  43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700 oneCCL
+verify_sha "$oneccl/lib/ccl/kernels/kernels.spv" \
+  0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9 oneCCL-kernels
+
 PYTHON="$venv/bin/python" MODEL_DIR="$model_dir" \
   "$repo/repro/qwen36-27b-autoround-int4-b70/scripts/download-model.sh" \
   > "$arm_root/model-verify.log"
@@ -69,6 +93,42 @@ while IFS= read -r name; do
   esac
 done < <(compgen -e)
 unset PYTHONPATH LD_PRELOAD LD_LIBRARY_PATH TORCHINDUCTOR_CACHE_DIR
+
+SOURCE_ROOT="$source_root" "$venv/bin/python" - <<'PY' \
+  > "$arm_root/python-runtime-verify.log"
+import json
+import os
+import pathlib
+import sys
+
+import torch
+import vllm
+
+expected = {
+    "python_major_minor": "3.12",
+    "torch": "2.11.0+xpu",
+    "vllm": "0.20.2rc1.dev13+g9557d9108.d20260620",
+}
+actual = {
+    "python_major_minor": ".".join(map(str, sys.version_info[:2])),
+    "torch": torch.__version__,
+    "vllm": vllm.__version__,
+    "vllm_path": str(pathlib.Path(vllm.__file__).resolve()),
+    "xpu_available": torch.xpu.is_available(),
+    "xpu_count": torch.xpu.device_count(),
+}
+expected_vllm_root = pathlib.Path(os.environ["SOURCE_ROOT"], "vllm").resolve()
+vllm_path = pathlib.Path(actual["vllm_path"])
+valid = (
+    all(actual[key] == value for key, value in expected.items())
+    and actual["xpu_available"] is True
+    and actual["xpu_count"] == 4
+    and vllm_path.is_relative_to(expected_vllm_root)
+)
+print(json.dumps({"expected": expected, "actual": actual, "valid": valid}, indent=2))
+if not valid:
+    raise SystemExit("Python/XPU runtime identity mismatch")
+PY
 
 # shellcheck source=../../../repro/qwen36-27b-autoround-int4-b70/configs/record.env
 source "$repo/repro/qwen36-27b-autoround-int4-b70/configs/record.env"
