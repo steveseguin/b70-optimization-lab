@@ -299,6 +299,17 @@ was 5 and no throughput/parity row exists. Manifest SHA256:
 The rerun explicitly disables that MLA-only pass in `pass_config` while leaving
 the intended Inductor partition change intact.
 
+The corrected Inductor-partition canary passed: 128/128 output tokens and all
+50 aligned verifier rounds match the fresh same-pair target, including token
+68 (`9575`). It measured `84.224 tok/s`, remained cache-zero, and exited zero.
+Raw root:
+`correctness-recovery-native-fast-piecewise-partition-20260815T223000Z`;
+post-teardown manifest SHA256:
+`c0389e93f358a9dbce850dbda8d48ec5b40983ef0c7f124cd13ec017f6bebe3b`.
+This is the first compiled/captured arm to pass the recurring oracle. It now
+advances to the complete two-pair, repeated 25-prompt matrix; the one-prompt
+rate is not promotion evidence.
+
 Five post-consolidation startup roots are also invalid measurements and retained
 only as merge-repair evidence:
 

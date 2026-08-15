@@ -9,8 +9,9 @@ arm_root=${3:-}
 quality_baseline=${4:-}
 
 if [[ "$mode" != "spec" && "$mode" != "nospec" \
-  && "$mode" != "spec-native-scratch" && "$mode" != "nospec-current" ]]; then
-  printf 'usage: %s spec|nospec|spec-native-scratch|nospec-current GPU0,GPU1 ARM_ROOT [QUALITY_BASELINE]\n' "$0" >&2
+  && "$mode" != "spec-native-scratch" && "$mode" != "nospec-current" \
+  && "$mode" != "spec-native-partition" && "$mode" != "nospec-latest" ]]; then
+  printf 'usage: %s spec|nospec|spec-native-scratch|nospec-current|spec-native-partition|nospec-latest GPU0,GPU1 ARM_ROOT [QUALITY_BASELINE]\n' "$0" >&2
   exit 2
 fi
 if [[ ! "$gpu_pair" =~ ^[0-9]+,[0-9]+$ || -z "$arm_root" ]]; then
@@ -53,11 +54,18 @@ verify_tree() {
   fi
 }
 current_identity=0
+latest_identity=0
 if [[ "$mode" == "spec-native-scratch" || "$mode" == "nospec-current" ]]; then
   current_identity=1
   verify_tree "$source_root/vllm" 8c27a1e68ac619e198b0c08c2d6f62b80ddb3456 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
   verify_tree "$source_root/vllm-xpu-kernels" 534bd9ccca74e0b076067a212271f896bb137d2a \
+    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
+elif [[ "$mode" == "spec-native-partition" || "$mode" == "nospec-latest" ]]; then
+  latest_identity=1
+  verify_tree "$source_root/vllm" 3722d8a0fb7cdd3c052fb7b1468b85171c746e1f \
+    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
+  verify_tree "$source_root/vllm-xpu-kernels" 4050008863bf0db6047935f775378ab882265300 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
 else
   verify_tree "$source_root/vllm" e7213ba8e13b74d7bfa3cbc05435a45df90eb76a \
@@ -85,6 +93,9 @@ while read -r expected recorded_path; do
   binary=$(basename "$recorded_path")
   if [[ "$current_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
     expected=e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7
+  fi
+  if [[ "$latest_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
+    expected=3e38a9edc8d205d2693603748b3af7cdaf6699cb901be8bbf45b3b1076818455
   fi
   verify_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
 done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
@@ -175,7 +186,8 @@ export QUALITY_REPEAT_RUNS=32
 export QUALITY_LONG_CONTEXT_TOKENS=1024
 export REQUEST_EXTRA_JSON='{"chat_template_kwargs":{"enable_thinking":false}}'
 export QUALITY_BASELINE_JSON="$quality_baseline"
-if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" ]]; then
+if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
+  || "$mode" == "spec-native-partition" ]]; then
   # FULL graph capture requires the isolated graph-safe FlashAttention build.
   # The ordinary XPU extension uses work-group scratch memory, which SYCL graph
   # capture rejects.  Pin both the Python extension and its device library so
@@ -190,7 +202,7 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" ]]; then
   export VLLM_XPU_KERNELS_SRC="$graph_stage"
   export QWEN36_27B_ENABLE_MTP=1
   export NUM_SPECULATIVE_TOKENS=3
-  if [[ "$mode" == "spec-native-scratch" ]]; then
+  if [[ "$mode" == "spec-native-scratch" || "$mode" == "spec-native-partition" ]]; then
     export VLLM_XPU_GDN_REPLAYSSM_SPEC=0
     export VLLM_XPU_GDN_NATIVE_SPEC_DECODE=1
     export VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL=0
@@ -199,7 +211,11 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" ]]; then
     export VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=0
     export VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA=0
     export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
-    export COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
+    if [[ "$mode" == "spec-native-partition" ]]; then
+      export COMPILATION_CONFIG='{"use_inductor_graph_partition":true,"pass_config":{"fuse_rope_kvcache_cat_mla":false},"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
+    else
+      export COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
+    fi
   fi
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh"
 else
