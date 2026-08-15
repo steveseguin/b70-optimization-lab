@@ -35,8 +35,11 @@ run_arm spec   2,3 spec-23a   19623 "$root/nospec-23a/data/quality.json"
 run_arm spec   0,1 spec-01b   19622 "$root/nospec-01a/data/quality.json"
 run_arm spec   2,3 spec-23b   19623 "$root/nospec-23a/data/quality.json"
 
+set +e
 "$here/analyze.py" "$root" --out "$root/analysis.json" --markdown "$root/analysis.md"
+analysis_rc=$?
+set -e
 find "$root" -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum \
   > "$root/SHA256SUMS"
-printf 'validation complete: %s\n' "$root"
-
+printf 'validation complete: %s (strict-analysis rc=%s)\n' "$root" "$analysis_rc"
+exit "$analysis_rc"

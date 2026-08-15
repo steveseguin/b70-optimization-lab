@@ -213,6 +213,13 @@ def main() -> int:
         "classification": "independent-contribution-style-validation",
         "root": str(args.root),
         "source_plan_commit": "1dfb42afe",
+        "harness_commits": [
+            "3213e068e95e5fe2e5623f902d841e3ba6938645",
+            "1df37d32825f7c052e10bf63e48c2c9f12cf42ab",
+            "4418ec9a68e4143423f1bd7747e885ded5e4df9f",
+            "d0f64ce23a9369dec131449c1d5b99e9a6c31f97",
+            "7b1c733cca3cb09627de141f2c9a79c9812375d7",
+        ],
         "suite_sha256": hashlib.sha256((args.root / "nospec-01a/validation-suite.json").read_bytes()).hexdigest(),
         "arms": arm_summaries,
         "candidate_aggregate": aggregate,
