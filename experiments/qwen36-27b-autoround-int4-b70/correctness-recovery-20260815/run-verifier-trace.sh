@@ -5,9 +5,9 @@ here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "$here/../../.." && pwd)
 acceptance_mode=${1:-standard}
 case "$acceptance_mode" in
-  target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-fast-piecewise-scratch|native-fast-piecewise-no-replay|native-fast-piecewise-skip-compiled|native-serial) ;;
+  target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-fast-piecewise-scratch|native-fast-piecewise-no-replay|native-fast-piecewise-skip-compiled|native-fast-piecewise-partition|native-serial) ;;
   *)
-    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-fast-piecewise-scratch|native-fast-piecewise-no-replay|native-fast-piecewise-skip-compiled|native-serial\n' "$0" >&2
+    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-fast-piecewise-scratch|native-fast-piecewise-no-replay|native-fast-piecewise-skip-compiled|native-fast-piecewise-partition|native-serial\n' "$0" >&2
     exit 2
     ;;
 esac
@@ -177,7 +177,7 @@ if [[ "$acceptance_mode" == "native-fast-eager" ]]; then
   export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
   export COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'
 fi
-if [[ "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "native-fast-piecewise-scratch" || "$acceptance_mode" == "native-fast-piecewise-no-replay" || "$acceptance_mode" == "native-fast-piecewise-skip-compiled" ]]; then
+if [[ "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "native-fast-piecewise-scratch" || "$acceptance_mode" == "native-fast-piecewise-no-replay" || "$acceptance_mode" == "native-fast-piecewise-skip-compiled" || "$acceptance_mode" == "native-fast-piecewise-partition" ]]; then
   # Keep the exact native packed GDN transaction and restore only ordinary
   # PIECEWISE XPU graph capture. Exclude the device-lost DDTree/full-graph
   # configuration used by the first no-ReplaySSM graph attempt.
@@ -194,7 +194,7 @@ if [[ "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "na
   export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
   export COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
 fi
-if [[ "$acceptance_mode" == "native-fast-piecewise-scratch" || "$acceptance_mode" == "native-fast-piecewise-no-replay" || "$acceptance_mode" == "native-fast-piecewise-skip-compiled" ]]; then
+if [[ "$acceptance_mode" == "native-fast-piecewise-scratch" || "$acceptance_mode" == "native-fast-piecewise-no-replay" || "$acceptance_mode" == "native-fast-piecewise-skip-compiled" || "$acceptance_mode" == "native-fast-piecewise-partition" ]]; then
   # Keep every native GDN temporary at a stable process-lifetime address so
   # captured Level Zero command graphs cannot replay allocator-reused storage.
   export VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
@@ -209,6 +209,12 @@ if [[ "$acceptance_mode" == "native-fast-piecewise-skip-compiled" ]]; then
   # only the speculative target verifier through the raw model forward. This
   # isolates compiled verifier numerics from Level Zero replay and GDN scratch.
   export VLLM_XPU_SKIP_COMPILED_SPEC_DECODE=1
+fi
+if [[ "$acceptance_mode" == "native-fast-piecewise-partition" ]]; then
+  # Retain compiled/captured verifier execution, but move graph splitting from
+  # Dynamo FX boundaries to current Inductor partition rules. This is a new
+  # compile identity and must pass the recurring token-68 oracle first.
+  export COMPILATION_CONFIG='{"use_inductor_graph_partition":true,"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
 fi
 if [[ "$acceptance_mode" == "native-serial" ]]; then
   # Use the sequential native packed-GDN oracle. This retains the four-row
@@ -237,7 +243,7 @@ if [[ "$acceptance_mode" == "target-only" ]]; then
   export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh"
 else
-  if [[ "$acceptance_mode" == "no-replayssm" || "$acceptance_mode" == "replayssm-eager" || "$acceptance_mode" == "replayssm-torch-eager" || "$acceptance_mode" == "native-fast-eager" || "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "native-fast-piecewise-scratch" || "$acceptance_mode" == "native-fast-piecewise-no-replay" || "$acceptance_mode" == "native-fast-piecewise-skip-compiled" || "$acceptance_mode" == "native-serial" ]]; then
+  if [[ "$acceptance_mode" == "no-replayssm" || "$acceptance_mode" == "replayssm-eager" || "$acceptance_mode" == "replayssm-torch-eager" || "$acceptance_mode" == "native-fast-eager" || "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "native-fast-piecewise-scratch" || "$acceptance_mode" == "native-fast-piecewise-no-replay" || "$acceptance_mode" == "native-fast-piecewise-skip-compiled" || "$acceptance_mode" == "native-fast-piecewise-partition" || "$acceptance_mode" == "native-serial" ]]; then
     export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-$acceptance_mode-20260815}
   else
     export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-recovery-20260815}
