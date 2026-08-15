@@ -5,9 +5,9 @@ here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "$here/../../.." && pwd)
 acceptance_mode=${1:-standard}
 case "$acceptance_mode" in
-  target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-serial) ;;
+  target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-fast-piecewise-scratch|native-serial) ;;
   *)
-    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-serial\n' "$0" >&2
+    printf 'usage: %s target-only|standard|zero|no-graph-replay|skip-compiled|no-replayssm|replayssm-eager|replayssm-torch-eager|native-fast-eager|native-fast-piecewise|native-fast-piecewise-scratch|native-serial\n' "$0" >&2
     exit 2
     ;;
 esac
@@ -43,8 +43,16 @@ verify_tree() {
 }
 verify_tree "$source_root/vllm" 8c27a1e68ac619e198b0c08c2d6f62b80ddb3456 \
   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
-verify_tree "$source_root/vllm-xpu-kernels" c9e265d95892e19aaddd731e5e94f9a19f91f954 \
+verify_tree "$source_root/vllm-xpu-kernels" 534bd9ccca74e0b076067a212271f896bb137d2a \
   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
+expected_xpu_c_sha=e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7
+xpu_c="$source_root/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so"
+if [[ ! -f "$xpu_c" \
+  || "$(sha256sum "$xpu_c" | awk '{print $1}')" != "$expected_xpu_c_sha" ]]; then
+  printf 'XPU extension mismatch: expected %s at %s\n' \
+    "$expected_xpu_c_sha" "$xpu_c" >&2
+  exit 3
+fi
 
 mkdir -p -- "$run_root"
 cp -- "$here/first-divergence-suite.json" "$run_root/suite.json"
@@ -165,7 +173,7 @@ if [[ "$acceptance_mode" == "native-fast-eager" ]]; then
   export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
   export COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'
 fi
-if [[ "$acceptance_mode" == "native-fast-piecewise" ]]; then
+if [[ "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "native-fast-piecewise-scratch" ]]; then
   # Keep the exact native packed GDN transaction and restore only ordinary
   # PIECEWISE XPU graph capture. Exclude the device-lost DDTree/full-graph
   # configuration used by the first no-ReplaySSM graph attempt.
@@ -181,6 +189,11 @@ if [[ "$acceptance_mode" == "native-fast-piecewise" ]]; then
   export VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA=0
   export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
   export COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
+fi
+if [[ "$acceptance_mode" == "native-fast-piecewise-scratch" ]]; then
+  # Keep every native GDN temporary at a stable process-lifetime address so
+  # captured Level Zero command graphs cannot replay allocator-reused storage.
+  export VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
 fi
 if [[ "$acceptance_mode" == "native-serial" ]]; then
   # Use the sequential native packed-GDN oracle. This retains the four-row
@@ -209,7 +222,7 @@ if [[ "$acceptance_mode" == "target-only" ]]; then
   export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh"
 else
-  if [[ "$acceptance_mode" == "no-replayssm" || "$acceptance_mode" == "replayssm-eager" || "$acceptance_mode" == "replayssm-torch-eager" || "$acceptance_mode" == "native-fast-eager" || "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "native-serial" ]]; then
+  if [[ "$acceptance_mode" == "no-replayssm" || "$acceptance_mode" == "replayssm-eager" || "$acceptance_mode" == "replayssm-torch-eager" || "$acceptance_mode" == "native-fast-eager" || "$acceptance_mode" == "native-fast-piecewise" || "$acceptance_mode" == "native-fast-piecewise-scratch" || "$acceptance_mode" == "native-serial" ]]; then
     export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-$acceptance_mode-20260815}
   else
     export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-correctness-recovery-20260815}
