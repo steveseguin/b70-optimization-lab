@@ -17,6 +17,8 @@ from urllib.parse import urlparse
 PROMPTS = (
     "Write a precise explanation of why a binary search is logarithmic. Include one small worked example and no code.",
     "Compare optimistic and pessimistic locking for a high-contention database table. Give two concrete tradeoffs for each.",
+    "Explain how a write-ahead log protects a database transaction after a power failure. Use one concrete example.",
+    "Describe three practical differences between processes and threads. Be precise and avoid analogies.",
 )
 
 
@@ -105,9 +107,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:18089")
     parser.add_argument("--n-predict", type=int, default=256)
+    parser.add_argument("--concurrency", type=int, default=2, choices=range(1, len(PROMPTS) + 1))
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
+    concurrency = args.concurrency
 
     base_url = args.base_url.rstrip("/")
     with urllib.request.urlopen(f"{base_url}/health", timeout=10) as response:
@@ -115,7 +119,7 @@ def main() -> int:
             raise RuntimeError("server is not healthy")
 
     sequential = []
-    for slot in range(2):
+    for slot in range(concurrency):
         result = post_json(
             f"{base_url}/completion",
             payload(PROMPTS[slot], slot, args.n_predict, False),
@@ -135,8 +139,8 @@ def main() -> int:
         })
 
     release: list[float] = []
-    barrier = threading.Barrier(3, action=lambda: release.append(time.perf_counter()))
-    concurrent: list[dict | None] = [None, None]
+    barrier = threading.Barrier(concurrency + 1, action=lambda: release.append(time.perf_counter()))
+    concurrent: list[dict | None] = [None] * concurrency
     errors: list[str] = []
 
     def worker(slot: int) -> None:
@@ -151,7 +155,10 @@ def main() -> int:
             except BaseException:
                 pass
 
-    threads = [threading.Thread(target=worker, args=(slot,), daemon=True) for slot in range(2)]
+    threads = [
+        threading.Thread(target=worker, args=(slot,), daemon=True)
+        for slot in range(concurrency)
+    ]
     for thread in threads:
         thread.start()
     barrier.wait(timeout=30)
@@ -167,7 +174,7 @@ def main() -> int:
         (args.n_predict - 1) / (last - first)
         for first, last in zip(first_times, last_times)
     ]
-    aggregate_d = (2 * (args.n_predict - 1)) / (max(last_times) - min(first_times))
+    aggregate_d = (concurrency * (args.n_predict - 1)) / (max(last_times) - min(first_times))
     wall = max(row["ended_perf_s"] for row in rows) - release[0]
     exact = [
         row["tokens"] == sequential[row["slot"]]["tokens"]
@@ -178,7 +185,8 @@ def main() -> int:
         for row in rows
     ]
     result = {
-        "test": "Qwen3.8 target-only TP2 ordinary two-slot concurrency",
+        "test": f"Qwen3.8 target-only TP2 ordinary concurrency {concurrency}",
+        "concurrency": concurrency,
         "n_predict_per_request": args.n_predict,
         "speculation": False,
         "cache_prompt": False,
@@ -198,7 +206,7 @@ def main() -> int:
             for index, row in enumerate(rows)
         ],
         "aggregate_conventional_d_tok_s": aggregate_d,
-        "aggregate_wall_tok_s": 2 * args.n_predict / wall,
+        "aggregate_wall_tok_s": concurrency * args.n_predict / wall,
         "fairness_min_over_max": min(per_request) / max(per_request),
         "all_exact": all(exact),
         "all_cache_cold": all(cache_cold),

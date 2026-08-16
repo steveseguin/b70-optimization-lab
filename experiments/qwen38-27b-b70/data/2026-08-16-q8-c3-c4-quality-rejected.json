@@ -1,0 +1,45 @@
+{
+  "date": "2026-08-16",
+  "status": "throughput diagnostic only; rejected by exact-token gate",
+  "scope": "Accepted Qwen3.8-27B Q8_0 target-only TP2 binary at service concurrency three and four",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "server_sha256": "32c581628082fa1352824650d45f523d52b526aaefdfd23e1c34d438f7ad084a",
+  "common": {
+    "tokens_per_request": 256,
+    "context_per_slot": 8192,
+    "reasoning": "off",
+    "kv": "f16",
+    "cache_prompt": false,
+    "speculation": false,
+    "all_cache_cold": true
+  },
+  "true_parallel_3": {
+    "parallel": 3,
+    "context_total": 24576,
+    "aggregate_conventional_d_tok_s": 77.21186232373718,
+    "aggregate_wall_tok_s": 75.66770704702941,
+    "per_request_conventional_d_tok_s": [25.76098810749969, 25.73898391751592, 25.740367240461502],
+    "fairness_min_over_max": 0.9991458328425934,
+    "exact_requests": "0/3"
+  },
+  "three_active_on_parallel_4": {
+    "parallel": 4,
+    "active_requests": 3,
+    "context_total": 32768,
+    "aggregate_conventional_d_tok_s": 77.20932261044933,
+    "aggregate_wall_tok_s": 75.75201528198129,
+    "per_request_conventional_d_tok_s": [25.737534815331188, 25.737690313683462, 25.73795930930771],
+    "fairness_min_over_max": 0.9999835070849472,
+    "exact_requests": "0/3"
+  },
+  "true_parallel_4": {
+    "parallel": 4,
+    "context_total": 32768,
+    "aggregate_conventional_d_tok_s": 91.89462071507145,
+    "aggregate_wall_tok_s": 91.03546452411047,
+    "per_request_conventional_d_tok_s": [23.765113910095188, 23.765328747947205, 23.151390710998136, 23.765528304627697],
+    "fairness_min_over_max": 0.9741584708003325,
+    "exact_requests": "2/4"
+  },
+  "decision": "Do not publish c3/c4 as quality-qualified results. The unchanged target reaches high aggregate rates, but multi-column scheduling changes greedy outputs. c2 remains the highest locally qualified setting and retains its explicitly narrow two-prompt evidence boundary."
+}

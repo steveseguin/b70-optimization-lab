@@ -65,10 +65,12 @@ Work is ranked as follows:
 
 1. Retain VDR4. The c2-specific VDR2 build regressed aggregate throughput by
    `2.981%` and changed one prompt across sequential/concurrent scheduling.
-2. Characterize accepted-stack c3/c4 throughput with fixed-slot exact-token
-   gates. This improves service capacity without changing target arithmetic
-   and keeps aggregate and per-request latency explicitly separate.
-3. Q4_K_M concurrency and deep-prefill package as a separate production lane,
+2. Do not publish c3/c4: they reach `77.212`/`91.895 tok/s` aggregate but fail
+   the exact fixed-slot oracle. c2 remains the highest qualified service lane,
+   with its narrow two-prompt boundary stated explicitly.
+3. Measure supported power/frequency behavior and the exclusive scheduler as
+   a reversible, arithmetic-neutral control before opening another source arm.
+4. Q4_K_M concurrency and deep-prefill package as a separate production lane,
    using the verified `-b 8192 -ub 2048` prefill setting where it helps;
 4. vLLM/FP8 only when the official artifact and Intel runtime pass the same
    semantic canaries—never by inheriting the rejected GPTQ result.
