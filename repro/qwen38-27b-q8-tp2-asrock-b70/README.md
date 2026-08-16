@@ -25,6 +25,13 @@ controls and two experimental arms. See the
 [reasoning-off replay packet](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-distributed-greedy-argmax-neutral.md).
 Always record reasoning mode when comparing or reproducing rates.
 
+The launcher also selects the Unified Runtime Level Zero v2 adapter
+explicitly. On the validated 2026.1.1 runtime, leaving the selector unset
+already chose v2 (`36.040325` versus `36.079986 tok/s`, matched bracket), so
+this is a reproducibility pin rather than a claimed speed gain. Forcing the
+legacy adapter reduced target-only decode by `3.375%`; see the
+[adapter audit](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-level-zero-v2-adapter-audit.md).
+
 The semantic gate is deliberately stronger than output parity within one
 quantization family. Q8 and Q4_K_M both returned `14` for the Python canary;
 the tested GPTQ INT4 checkpoint returned `30`, so the faster GPTQ/MTP route is

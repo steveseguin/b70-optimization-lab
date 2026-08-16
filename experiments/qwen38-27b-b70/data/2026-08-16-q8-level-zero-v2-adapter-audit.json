@@ -1,0 +1,29 @@
+{
+  "date": "2026-08-16",
+  "status": "v2_default_confirmed_and_explicitly_pinned",
+  "scope": "Qwen3.8-27B Q8_0 target-only TP2; no speculation",
+  "runtime": {
+    "oneapi_compiler": "2026.1.1",
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "benchmark": "p64/n256/r3, b1024/ub256, F16 KV, equal TP2",
+    "build_commit_label": "4302fb59",
+    "verify_mismatch_all_arms": 0
+  },
+  "forced_adapter_bracket": {
+    "order": ["legacy", "v2", "v2", "legacy"],
+    "v2_tok_s": [36.039391, 36.053099],
+    "legacy_tok_s": [34.861560, 34.877399],
+    "v2_mean_tok_s": 36.046245,
+    "legacy_mean_tok_s": 34.8694795,
+    "v2_gain_vs_legacy_percent": 3.374772199
+  },
+  "default_identity_bracket": {
+    "order": ["unset", "v2", "v2", "unset"],
+    "explicit_v2_tok_s": [36.092021, 36.067951],
+    "unset_tok_s": [36.010644, 36.070006],
+    "explicit_v2_mean_tok_s": 36.079986,
+    "unset_mean_tok_s": 36.040325,
+    "delta_percent": 0.110046177
+  },
+  "decision": "Pin SYCL_UR_USE_LEVEL_ZERO_V2=1 for reproducibility. Do not claim the forced-legacy delta as a gain over the accepted result because v2 was already the default."
+}
