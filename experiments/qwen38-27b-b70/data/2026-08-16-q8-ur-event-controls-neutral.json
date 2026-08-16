@@ -5,10 +5,17 @@
   "runtime": {
     "unified_runtime_version": "0.12",
     "adapter": "/opt/intel/oneapi/compiler/2026.1/lib/libur_adapter_level_zero.so.0.12.0",
-    "official_reference": "https://oneapi-src.github.io/unified-runtime/core/LEVEL_ZERO.html"
+    "official_reference": "https://oneapi-src.github.io/unified-runtime/core/LEVEL_ZERO.html",
+    "source_default_evidence": {
+      "v0_11_10_commit": "14fef4892c74c18ed7a7dcf3f6e6662dd517c57f",
+      "current_commit": "d836f5ccb61b73092d90941a9d6d362887e33c5b",
+      "implementation": "return (UrRet ? std::atoi(UrRet) : true);",
+      "installed_exact_commit_embedded": false
+    }
   },
   "signal_barrier": {
-    "variable": "UR_L0_IN_ORDER_BARRIER_BY_SIGNAL=1",
+    "variable": "UR_L0_IN_ORDER_BARRIER_BY_SIGNAL",
+    "corrected_interpretation": "Unset and explicit 1 both select signal barriers in the audited source lineage. The initial unset-vs-1 runs are identity/drift controls, not treatment comparisons.",
     "short_p64_n256_r3": {
       "control_means_tok_s": [35.980121, 36.162427],
       "candidate_means_tok_s": [36.887511, 36.134672],
@@ -34,7 +41,14 @@
       "candidate_raw_sha256": "0bd83f846f2e2d64b3ec11d84462fe2837491e9198fc667a5427323600600973",
       "control_raw_sha256": "3e344d395cd21dff33e1066207a7769da075b71491b3f2ec730275b36d799fcf"
     },
-    "decision": "The llama-bench gain did not transfer to realistic endpoint throughput. The exact-gated endpoint delta is noise-level, so the flag is not promoted."
+    "explicit_disable_screen": {
+      "disabled_0_tok_s": 35.908476,
+      "following_unset_default_tok_s": 36.875038,
+      "delta_percent": -2.62118,
+      "disabled_raw_sha256": "9ddd00e09402883788994e0b49e3e43b62f3894132102081de6792554ca1c0a4",
+      "control_raw_sha256": "3eff29be43146d16dd53039464132d95741fe345dfe3574ebcbe35f5bd8ff952"
+    },
+    "decision": "Signal barriers are already the unset/default behavior. Explicit 1 is redundant; explicit 0 regressed decode by 2.621% and is rejected."
   },
   "device_scope_events": {
     "scope_1": {
