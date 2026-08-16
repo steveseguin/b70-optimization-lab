@@ -15,6 +15,16 @@ and no MTP, DFlash, draft model, response reuse, or speculation.
 - semantic gate: exact copy, arithmetic, JSON, factual, logic, Python-result,
   repeat-stability, and 3,829-token needle tests all passed on 2026-08-16
 
+Reasoning-mode provenance: the accepted speed capture above used
+reasoning-enabled output and its stored completions contain `<think>`. The
+current launcher intentionally uses `--reasoning off`; it is the
+quality-conservative service default but is a distinct benchmark identity. A
+position-balanced reasoning-off replay measured control medians of
+`35.841542` and `36.288690 tok/s`, with 12/12 identical hashes across both
+controls and two experimental arms. See the
+[reasoning-off replay packet](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-distributed-greedy-argmax-neutral.md).
+Always record reasoning mode when comparing or reproducing rates.
+
 The semantic gate is deliberately stronger than output parity within one
 quantization family. Q8 and Q4_K_M both returned `14` for the Python canary;
 the tested GPTQ INT4 checkpoint returned `30`, so the faster GPTQ/MTP route is

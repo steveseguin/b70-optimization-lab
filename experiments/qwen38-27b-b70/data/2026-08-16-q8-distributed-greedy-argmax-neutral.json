@@ -1,0 +1,138 @@
+{
+  "date": "2026-08-16",
+  "status": "closed_performance_neutral_not_promoted",
+  "model": {
+    "name": "Qwen3.8-27B-Q8_0.gguf",
+    "bytes": 28595763552,
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70 32 GiB, equal TP2",
+  "lane": "target-only Q8_0, F16 KV, strict greedy, no speculation, reasoning off",
+  "source": {
+    "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "accepted_source": "/mnt/fast-ai/src/llama.cpp-q8-tp2-directq8-isolated",
+    "candidate_source": "/mnt/fast-ai/src/llama.cpp-q38-tp2-distributed-greedy-directq8",
+    "candidate_build": "/mnt/fast-ai/src/llama.cpp-q38-tp2-distributed-greedy-directq8/build-sycl-aot-bmg-g31-distargmax-direct",
+    "incremental_patch": "experiments/qwen38-27b-b70/patches/q8-distributed-greedy-argmax-neutral-20260816.diff.gz.b64",
+    "encoded_incremental_patch_sha256": "e12dff09108ee637442a023e60800ad4e358aaa0df4783da865c22d833ae1b6c",
+    "decoded_incremental_patch_sha256": "bd587d91fdea7508f89450d09da795fc5e0ee1d0f2b2698138d8a9d455d0cd3d",
+    "candidate_llama_server_sha256": "de6704042de6e7cbcf9275fddf9fcfdbb4855c082d1e6e0cc4dc9116738a4b7c",
+    "candidate_libggml_sycl_sha256": "4ec280bb665347cebd286c364d8f6db5f6db8b4ce81dadf17d22f159253ee46f"
+  },
+  "mechanism": {
+    "env_gate": "GGML_META_DISTRIBUTED_ARGMAX=1",
+    "server_gate": "--backend-sampling",
+    "request_extra": {
+      "backend_sampling": true
+    },
+    "scope": "strict greedy sampling only; unsupported sampler chains fail closed to CPU",
+    "operation": "each shard computes its existing local ARGMAX, then SYCL compares two local winners and broadcasts the global token id",
+    "tie_break": "lower global token id, matching ordinary argmax",
+    "marker": "SYCL distributed ARGMAX active: shards=[124160,124160] rows=1"
+  },
+  "build": {
+    "compiler": "oneAPI 2026.1",
+    "type": "Release BMG-G31 AOT",
+    "flags": [
+      "GGML_SYCL=ON",
+      "GGML_SYCL_TARGET=INTEL",
+      "GGML_SYCL_DEVICE_ARCH=bmg_g31",
+      "GGML_SYCL_F16=ON",
+      "GGML_SYCL_GRAPH=OFF",
+      "GGML_SYCL_DNN=OFF",
+      "GGML_SYCL_HOST_MEM_FALLBACK=OFF",
+      "GGML_SYCL_SUPPORT_LEVEL_ZERO_API=ON"
+    ],
+    "host_scope": "6 GiB build cap, -j2",
+    "peak_memory": "3.7 GiB, zero swap"
+  },
+  "runtime": {
+    "selector": "level_zero:1,0",
+    "devices": "SYCL0,SYCL1",
+    "tensor_split": "1,1",
+    "flash_attention": true,
+    "batch_size": 1024,
+    "ubatch_size": 256,
+    "ctx_size": 8192,
+    "parallel": 1,
+    "kv": "F16",
+    "cache_ram_mib": 0,
+    "ctx_checkpoints": 0,
+    "fit": false,
+    "reasoning": "off",
+    "speculation": "none"
+  },
+  "test": {
+    "order": [
+      "control_1",
+      "candidate_1",
+      "candidate_2",
+      "control_2"
+    ],
+    "prompt_count_each": 12,
+    "max_tokens": 512,
+    "primary_metric": "median tokens 1-100 after TTFT",
+    "cache": "0 tokens for all 48 requests",
+    "quality": "all four 12-hash output sets identical"
+  },
+  "runs": {
+    "control_1": {
+      "primary_tok_s": 35.84154159432612,
+      "full_after_ttft_tok_s": 35.648996667128806,
+      "wall_tok_s": 35.140790290917,
+      "ttft_ms": 183.66053950740024,
+      "sha256": "733239b2e0a75a57a660dd8191a9f4b7f2b7e90116419f28767f1d130126c6e1"
+    },
+    "candidate_1": {
+      "primary_tok_s": 36.01665378539418,
+      "full_after_ttft_tok_s": 35.90167453128282,
+      "wall_tok_s": 35.414970225609096,
+      "ttft_ms": 198.50195149774663,
+      "sha256": "8a3f72054722d1ae59eb1e524ad188e8668f3db76035eca1b902157b5e1aa46b"
+    },
+    "candidate_2": {
+      "primary_tok_s": 36.072153504342154,
+      "full_after_ttft_tok_s": 36.0096116100365,
+      "wall_tok_s": 35.44565057990576,
+      "ttft_ms": 197.90519651724026,
+      "sha256": "65dd188f135e07c8fec6e7d34ef4d754aab2d4e9a9a3d6330ccb7a726ea5c21d"
+    },
+    "control_2": {
+      "primary_tok_s": 36.28869019331031,
+      "full_after_ttft_tok_s": 36.01729830222078,
+      "wall_tok_s": 35.516606974094856,
+      "ttft_ms": 182.32969150994904,
+      "sha256": "e8be2c7996ed966ae2aaccca335492454c7622bd54747c122a6a7c971a2ef6bc"
+    }
+  },
+  "position_balanced_means": {
+    "control_primary_tok_s": 36.065115893818216,
+    "candidate_primary_tok_s": 36.04440364486817,
+    "primary_delta_percent": -0.05743014665758883,
+    "control_full_after_ttft_tok_s": 35.8331474846748,
+    "candidate_full_after_ttft_tok_s": 35.95564307065966,
+    "full_delta_percent": 0.3418499199302927,
+    "control_wall_tok_s": 35.32869863250593,
+    "candidate_wall_tok_s": 35.43031040275743,
+    "wall_delta_percent": 0.28761820894813717,
+    "control_ttft_ms": 182.99511550867464,
+    "candidate_ttft_ms": 198.20357400749344,
+    "ttft_delta_percent": 8.31085488623211
+  },
+  "reasoning_off_output_sha256s": [
+    "afd59570682e0274b250a375d9d6f961869f55904c9471613a57faa7cfc12752",
+    "2776ce77e8f4a9d58e47ae2295e32806e874f2c863f22f550a3500df6862fd82",
+    "3294bfaf3c8552b39a8c92b0eb63c820369744fd66d786f757c65de5840239a5",
+    "3027ad17d6d36480638a442212b5a2ecc96ec669a56fb0c07aee7a277ce7bb6d",
+    "4dcf8b22e47a81c5970da52f841ea35386904f31a91cded56e7d588c0f1a117c",
+    "23a304ad71ac002547d2e726179e9ddda36a22528281d1b63761dfa8b61805ad",
+    "221c8a6b96b1598c2c46d0dfcba4e8271e4a18fa1df6c0f794f17608b049a514",
+    "3ba971f88f726de1ee9e5797201c825256dcf78e48dde06b602741736c5a4de7",
+    "fb19850dd104499e9ae1ceb7bb08f19a1127f826608bf3ae366e09577beb9bf3",
+    "7960c1beaf78149951e05192bf1f4772c2236786acafed0b91e81341f6523598",
+    "3c0ea326ed4d3b5baf1eceed242ba8cfca375d19a5e683fb51daca262cb24835",
+    "cbe21926087391fabcff62cd06f1f735bdb6d5ef4f53084b02f050a0f308bf40"
+  ],
+  "provenance_caveat": "The earlier promoted speed capture has reasoning-enabled outputs containing <think>; the current standalone launcher is reasoning off. This packet records the current reasoning-off oracle and matched A/B.",
+  "decision": "Do not enable or promote. The path is exact but primary throughput is neutral and TTFT regresses; preserve it as a safe mechanism and negative optimization result."
+}

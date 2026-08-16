@@ -70,6 +70,7 @@ Main entries:
 - [Q4_K_M fusion patch](../patches/qwen38-27b-q4km-tp2-asrock-b70/README.md)
 - [target-only optimization ledger](../experiments/qwen38-27b-b70/notes/2026-08-15-target-only-pass2.md)
 - [c2 cache-row fusion result](../experiments/qwen38-27b-b70/notes/2026-08-16-q8-c2-cache-row-fusion-neutral.md)
+- [distributed greedy argmax result](../experiments/qwen38-27b-b70/notes/2026-08-16-q8-distributed-greedy-argmax-neutral.md)
 - [community GPTQ INT4/MTP vLLM idea](../community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 
 Status: active as of 2026-08-16. The current lab record is target-only
@@ -78,6 +79,13 @@ with a device-local Q4_K gate/up/SwiGLU fusion, 12/12 complete-output hash
 parity, and all cache counters zero. Q8_0 TP2 reached `36.772932 tok/s`
 conventional. The official FP8 vLLM artifact loaded but did not complete engine
 initialization under the bounded local profile.
+
+The strict-greedy distributed-argmax candidate was token-for-token exact
+across a position-balanced 48-request replay, but it moved the primary metric
+by `-0.057%` and worsened TTFT by `+8.311%`. It is preserved as a closed
+mechanism result, not enabled in the reproduction package. The replay also
+clarified that the earlier accepted Q8 speed capture was reasoning-enabled,
+whereas the current service launcher and quality oracle use reasoning off.
 
 SergiioB's separate one-card GPTQ INT4 vLLM route is locally B70-tested at 8K.
 Native FP16 KV reached `34.160467 tok/s` target-only and `87.605425` MTP4,
