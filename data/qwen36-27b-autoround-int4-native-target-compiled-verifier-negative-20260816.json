@@ -1,0 +1,35 @@
+{
+  "classification": "negative_compiled_verifier_boundary",
+  "date_utc": "2026-08-16",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "target_identity": "TP2 native-SYCL-GDN no-spec control",
+  "candidate_identity": "TP2 MTP3 PIECEWISE Inductor partition with serial native recurrence",
+  "gdn_native_fallback": "0 (selects native execution in this runtime)",
+  "strict_passed": false,
+  "quality_executed": false,
+  "repeats_present": false,
+  "target": {
+    "median_tok_s_1_100_intervals_after_ttft": 49.741060605989944,
+    "cached_tokens_all_zero": true,
+    "token_digest": "3f26ec71965ec24f819b5538a5c8111702f527f784a5f935134aa8a521bb312e"
+  },
+  "candidate": {
+    "median_tok_s_1_100_intervals_after_ttft": 85.3897431000287,
+    "cached_tokens_all_zero": true,
+    "branch_marker_present": true,
+    "token_digest": "d16c83e7e585b925d276b1cfded82951fb4c45e4a7fb70f527045fa7516bced9"
+  },
+  "first_differences": {
+    "holdout--structured-extraction": 5,
+    "holdout--arithmetic-reasoning": 6,
+    "holdout--concurrency-review": 7,
+    "holdout--long-rollover-repository-audit": 7
+  },
+  "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/native-target-exact-recurrent-safety-canary-20260816T005300Z",
+  "raw_manifest_sha256": "29f2453278eed918c31eee80ea731eb17f5e0fe59cfeb68cf965af0d0f1de3cc",
+  "direct_guard_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/exact-recurrent-direct-guard-accepted-cols-20260816T005000Z",
+  "direct_guard_manifest_sha256": "79106718a1d8b38d1a16cc990db6e2fa9c7164e2db32434b0e10a114c97aa6c8",
+  "kernel_head": "6aed46a4f7ccf6db47323fe9e8eeed243b0ad3d8",
+  "kernel_diff_sha256": "697e7925b2b55d8b644f252d4d9e2117df8557c8946267dc10cf9cf01f417f03",
+  "xpu_extension_sha256": "871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e"
+}

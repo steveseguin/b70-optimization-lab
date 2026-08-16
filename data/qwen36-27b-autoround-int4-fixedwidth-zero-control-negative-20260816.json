@@ -1,0 +1,29 @@
+{
+  "classification": "negative_cross_call_state_transaction",
+  "date_utc": "2026-08-16",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "mode": "TP2 MTP3 native-SYCL-GDN fixed-width-four synthetic-zero-accept control",
+  "strict_passed": false,
+  "quality_executed": false,
+  "repeats_present": false,
+  "median_tok_s_1_100_intervals_after_ttft": 32.262676165863056,
+  "cached_tokens_all_zero": true,
+  "accepted_tokens": 0,
+  "branch_marker_present": true,
+  "first_differences_vs_normal_speculation": {
+    "holdout--concurrency-review": 3,
+    "holdout--long-rollover-repository-audit": 4,
+    "holdout--structured-extraction": 5,
+    "holdout--arithmetic-reasoning": 7
+  },
+  "interpretation": "Repeated zero-accept row-zero execution drifts after successive rejection transitions even though the first normal packet matches no-spec, implicating cross-call state rollback or promotion rather than proving width-dependent arithmetic.",
+  "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/native-fixedwidth-zero-control-20260816T012100Z",
+  "raw_manifest_sha256": "630f09d7f8bef05e048cd1913e951760c7d419190fd035ad0e67180e6c886b5a",
+  "analysis_sha256": "0f19e236f917c30ce469b8933e2b447bc1b5433583138fb61d90b861eec1a67a",
+  "bench_sha256": "538a8992e20a2b6f97eb622a9f69cbdc9ec41aefdf6ca38f83580167bbcb54fc",
+  "server_log_sha256": "4fe72e3cd49779631778403af96caebbd7fa59ce1aaa76fd953eadce3e7266cb",
+  "suite_sha256": "63ebf1006c7fe48536602035ca304468e284d5e313acc297aaee4ba0acf690cb",
+  "kernel_head": "6aed46a4f7ccf6db47323fe9e8eeed243b0ad3d8",
+  "kernel_diff_sha256": "697e7925b2b55d8b644f252d4d9e2117df8557c8946267dc10cf9cf01f417f03",
+  "xpu_extension_sha256": "871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e"
+}

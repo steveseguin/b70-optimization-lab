@@ -1,0 +1,22 @@
+{
+  "classification": "pass_native_gdn_two_call_lifecycle_guard",
+  "date_utc": "2026-08-16",
+  "model_geometry": "Qwen3.6 27B TP2 local GDN, FP16 activations, FP32 SSM, width 4",
+  "passed": true,
+  "require_bit_exact": true,
+  "exact_recurrent": true,
+  "persistent_scratch": true,
+  "first_call_core_output_equal": true,
+  "first_call_z_output_equal": true,
+  "second_call_core_output_equal": true,
+  "second_call_z_output_equal": true,
+  "conv_prefix_equal": true,
+  "ssm_prefix_equal": true,
+  "max_abs_diff": 0.0,
+  "second_call_accepted_count": 4,
+  "second_call_source_column": 3,
+  "interpretation": "The native GDN custom op remains byte-exact when one full-accept call is followed by a second call reusing the same state table and persistent scratch. The endpoint divergence is outside this isolated core lifecycle.",
+  "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/exact-recurrent-two-call-guard-20260816T014000Z",
+  "raw_manifest_sha256": "e587f72c1b2812d9d8c7cb121cec7da4cc8cfefd819bac0df05a5c6b677057bf",
+  "result_sha256": "3db3248aac462668fe7c9032ca15e6f2b3aa82d651d0f0786096bb96df556d80"
+}

@@ -10,8 +10,15 @@ quality_baseline=${4:-}
 
 if [[ "$mode" != "spec" && "$mode" != "nospec" \
   && "$mode" != "spec-native-scratch" && "$mode" != "nospec-current" \
-  && "$mode" != "spec-native-partition" && "$mode" != "nospec-latest" ]]; then
-  printf 'usage: %s spec|nospec|spec-native-scratch|nospec-current|spec-native-partition|nospec-latest GPU0,GPU1 ARM_ROOT [QUALITY_BASELINE]\n' "$0" >&2
+  && "$mode" != "spec-native-partition" \
+  && "$mode" != "spec-native-partition-exact" \
+  && "$mode" != "spec-native-partition-exact-native" \
+  && "$mode" != "spec-native-partition-exact-native-zero" \
+  && "$mode" != "spec-native-partition-exact-native-raw" \
+  && "$mode" != "nospec-latest" \
+  && "$mode" != "nospec-latest-exact" \
+  && "$mode" != "nospec-latest-exact-native" ]]; then
+  printf 'usage: %s spec|nospec|spec-native-scratch|nospec-current|spec-native-partition|spec-native-partition-exact|spec-native-partition-exact-native|spec-native-partition-exact-native-zero|spec-native-partition-exact-native-raw|nospec-latest|nospec-latest-exact|nospec-latest-exact-native GPU0,GPU1 ARM_ROOT [QUALITY_BASELINE]\n' "$0" >&2
   exit 2
 fi
 if [[ ! "$gpu_pair" =~ ^[0-9]+,[0-9]+$ || -z "$arm_root" ]]; then
@@ -66,17 +73,30 @@ verify_tree() {
 }
 current_identity=0
 latest_identity=0
+exact_identity=0
 if [[ "$mode" == "spec-native-scratch" || "$mode" == "nospec-current" ]]; then
   current_identity=1
   verify_tree "$source_root/vllm" 8c27a1e68ac619e198b0c08c2d6f62b80ddb3456 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
   verify_tree "$source_root/vllm-xpu-kernels" 534bd9ccca74e0b076067a212271f896bb137d2a \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
+elif [[ "$mode" == "spec-native-partition-exact" \
+  || "$mode" == "spec-native-partition-exact-native" \
+  || "$mode" == "spec-native-partition-exact-native-zero" \
+  || "$mode" == "spec-native-partition-exact-native-raw" \
+  || "$mode" == "nospec-latest-exact" \
+  || "$mode" == "nospec-latest-exact-native" ]]; then
+  latest_identity=1
+  exact_identity=1
+  verify_tree "$source_root/vllm" 3722d8a0fb7cdd3c052fb7b1468b85171c746e1f \
+    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
+  verify_tree "$source_root/vllm-xpu-kernels" 6a40e2baf3f8710b89e48d18bf214708ba2dbf9a \
+    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
 elif [[ "$mode" == "spec-native-partition" || "$mode" == "nospec-latest" ]]; then
   latest_identity=1
   verify_tree "$source_root/vllm" 3722d8a0fb7cdd3c052fb7b1468b85171c746e1f \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
-  verify_tree "$source_root/vllm-xpu-kernels" 6aed46a4f7ccf6db47323fe9e8eeed243b0ad3d8 \
+  verify_tree "$source_root/vllm-xpu-kernels" 6a40e2baf3f8710b89e48d18bf214708ba2dbf9a \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
 else
   verify_tree "$source_root/vllm" e7213ba8e13b74d7bfa3cbc05435a45df90eb76a \
@@ -106,7 +126,10 @@ while read -r expected recorded_path; do
     expected=e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7
   fi
   if [[ "$latest_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
-    expected=2993d29f4558483c1105d3b131298629537d324aaacfda2657c30582d31f39a1
+    expected=871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e
+  fi
+  if [[ "$exact_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
+    expected=871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e
   fi
   if [[ "$latest_identity" == "1" && "$binary" == "libgdn_attn_kernels_xe_2.so" ]]; then
     expected=fd326287972c808490e4dfd34362558c132c7939a6adb5f55a7c8e83567f63bb
@@ -201,8 +224,29 @@ export QUALITY_LONG_CONTEXT_TOKENS=1024
 export RUN_QUALITY=${VALIDATION_RUN_QUALITY:-1}
 export REQUEST_EXTRA_JSON='{"chat_template_kwargs":{"enable_thinking":false}}'
 export QUALITY_BASELINE_JSON="$quality_baseline"
+if [[ "${VALIDATION_ENABLE_PACKET_TRACE:-0}" == "1" ]]; then
+  # Bounded correctness trace. These files distinguish a wrong target row
+  # from a correct target row that is mis-selected or mis-emitted.
+  export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_FILE="$arm_root/verify-trace.jsonl"
+  export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_MAX_LINES=32
+  export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_FILE="$arm_root/bonus-trace.jsonl"
+  export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_MAX_LINES=32
+  export VLLM_XPU_GDN_METADATA_TRACE_FILE="$arm_root/gdn-metadata.jsonl"
+  export VLLM_XPU_GDN_METADATA_TRACE_MAX_LINES=48
+  export VLLM_XPU_GDN_METADATA_TRACE_RANK=0
+  export VLLM_XPU_MODEL_INPUT_TRACE_FILE="$arm_root/model-input-trace.jsonl"
+  export VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES=32
+  export VLLM_XPU_MODEL_INPUT_TRACE_RANK=0
+fi
+if [[ -n "${VALIDATION_FA_SERIAL_SPEC_MODE:-}" ]]; then
+  export VLLM_XPU_FA_SERIAL_SPEC_MODE="$VALIDATION_FA_SERIAL_SPEC_MODE"
+fi
 if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
-  || "$mode" == "spec-native-partition" ]]; then
+  || "$mode" == "spec-native-partition" \
+  || "$mode" == "spec-native-partition-exact" \
+  || "$mode" == "spec-native-partition-exact-native" \
+  || "$mode" == "spec-native-partition-exact-native-zero" \
+  || "$mode" == "spec-native-partition-exact-native-raw" ]]; then
   # FULL graph capture requires the isolated graph-safe FlashAttention build.
   # The ordinary XPU extension uses work-group scratch memory, which SYCL graph
   # capture rejects.  Pin both the Python extension and its device library so
@@ -217,7 +261,12 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
   export VLLM_XPU_KERNELS_SRC="$graph_stage"
   export QWEN36_27B_ENABLE_MTP=1
   export NUM_SPECULATIVE_TOKENS=3
-  if [[ "$mode" == "spec-native-scratch" || "$mode" == "spec-native-partition" ]]; then
+  if [[ "$mode" == "spec-native-scratch" \
+    || "$mode" == "spec-native-partition" \
+    || "$mode" == "spec-native-partition-exact" \
+    || "$mode" == "spec-native-partition-exact-native" \
+    || "$mode" == "spec-native-partition-exact-native-zero" \
+    || "$mode" == "spec-native-partition-exact-native-raw" ]]; then
     export VLLM_XPU_GDN_REPLAYSSM_SPEC=0
     export VLLM_XPU_GDN_NATIVE_SPEC_DECODE=1
     export VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL=0
@@ -226,10 +275,28 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
     export VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=0
     export VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA=0
     export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
-    if [[ "$mode" == "spec-native-partition" ]]; then
+    if [[ "$mode" == "spec-native-partition" \
+      || "$mode" == "spec-native-partition-exact" \
+      || "$mode" == "spec-native-partition-exact-native" \
+      || "$mode" == "spec-native-partition-exact-native-zero" \
+      || "$mode" == "spec-native-partition-exact-native-raw" ]]; then
       export COMPILATION_CONFIG='{"use_inductor_graph_partition":true,"pass_config":{"fuse_rope_kvcache_cat_mla":false},"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
     else
       export COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[4],"max_cudagraph_capture_size":4}'
+    fi
+    if [[ "$mode" == "spec-native-partition-exact" \
+      || "$mode" == "spec-native-partition-exact-native" \
+      || "$mode" == "spec-native-partition-exact-native-zero" \
+      || "$mode" == "spec-native-partition-exact-native-raw" ]]; then
+      export VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1
+    fi
+    if [[ "$mode" == "spec-native-partition-exact-native-zero" ]]; then
+      # Coherent fixed-width-four target control: execute all verifier rows,
+      # but synthetically reject every proposal so only target row zero emits.
+      export QWEN36_27B_SPECULATIVE_CONFIG='{"method":"qwen3_next_mtp","num_speculative_tokens":3,"rejection_sample_method":"synthetic","synthetic_acceptance_rates":[0.0,0.0,0.0]}'
+    fi
+    if [[ "$mode" == "spec-native-partition-exact-native-raw" ]]; then
+      export VLLM_XPU_SKIP_COMPILED_SPEC_DECODE=1
     fi
   fi
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh"
@@ -252,6 +319,16 @@ else
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh"
 fi
 
+if [[ "$mode" == "spec-native-partition-exact-native" \
+  || "$mode" == "spec-native-partition-exact-native-zero" \
+  || "$mode" == "spec-native-partition-exact-native-raw" \
+  || "$mode" == "nospec-latest-exact-native" ]]; then
+  # Use one coherent GDN arithmetic identity on both sides.  Value 0 disables
+  # the default decode,prefill Triton fallback and routes ordinary target decode
+  # through the same native one-token kernel used by the exact verifier proof.
+  export VLLM_XPU_GDN_NATIVE_FALLBACK=0
+fi
+
 printf 'mode=%s\ngpu_pair=%s\narm_root=%s\nquality_baseline=%s\n' \
   "$mode" "$gpu_pair" "$arm_root" "$quality_baseline" > "$arm_root/arm.env"
 
@@ -266,6 +343,18 @@ set +e
   > "$arm_root/runner.stdout.log" 2>&1
 runner_rc=$?
 set -e
+if [[ "$runner_rc" == "0" \
+  && ( "$mode" == "spec-native-partition-exact" \
+    || "$mode" == "spec-native-partition-exact-native" \
+    || "$mode" == "spec-native-partition-exact-native-zero" \
+    || "$mode" == "spec-native-partition-exact-native-raw" ) ]]; then
+  if ! grep -Fq \
+    'VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT reached' \
+    "$RUN_DIR/server.stdout.log"; then
+    printf 'exact recurrent branch marker missing from server log\n' >&2
+    runner_rc=6
+  fi
+fi
 printf '%s\n' "$runner_rc" > "$arm_root/runner.exit-code"
 
 if [[ -s "$BENCH_OUT" ]]; then

@@ -1,0 +1,28 @@
+{
+  "classification": "negative_wrong_arithmetic_oracle",
+  "date_utc": "2026-08-16",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "mode": "TP2 MTP3 PIECEWISE Inductor partition with native serial recurrence",
+  "strict_passed": false,
+  "reason": "The direct guard matched repeated native SYCL GDN decode, while the established target-only server used the default Triton GDN fallback.",
+  "target": {
+    "median_tok_s_1_100_intervals_after_ttft": 47.43721486441161,
+    "cached_tokens_all_zero": true,
+    "token_digest": "8b753cb6054675b68c68439c609f308297d9c13b2cc5b94ecce22a6fa6d5cdd7"
+  },
+  "speculative": {
+    "median_tok_s_1_100_intervals_after_ttft": 84.51110693756173,
+    "cached_tokens_all_zero": true,
+    "token_digest": "0813c27e9c22fd80cc74b7f592e56dccd3a787cdf0b9bc3915ff5ef5969ae015"
+  },
+  "first_differences": {
+    "holdout--structured-extraction": 5,
+    "holdout--arithmetic-reasoning": 6,
+    "holdout--concurrency-review": 7,
+    "holdout--long-rollover-repository-audit": 7
+  },
+  "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/exact-recurrent-safety-canary-20260816T002046Z",
+  "raw_manifest_sha256": "756b3a5d8201a34b5596faf1b04b7b303a83309216ff425710fe043dfeeb97d1",
+  "native_direct_guard_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/exact-recurrent-direct-guard-20260816T001600Z",
+  "native_direct_guard_manifest_sha256": "82f6586adab486c58204957e4c97884d4f88696ad313a5a7136ee56907d171d8"
+}

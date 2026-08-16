@@ -1,0 +1,35 @@
+{
+  "classification": "target_row_diverged_after_full_accept_bonus_transition",
+  "date_utc": "2026-08-16",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "mode": "TP2 MTP3 native-SYCL-GDN exact-recurrence packet trace",
+  "strict_passed": false,
+  "quality_executed": false,
+  "cached_tokens_all_zero": true,
+  "trace_overhead_present": true,
+  "first_packet": {
+    "accepted_count_in": 1,
+    "target_argmax": [369, 264, 11088],
+    "accepted_prefix": 3,
+    "bonus": 4098,
+    "matches_native_no_spec": true
+  },
+  "second_packet": {
+    "accepted_count_in": 4,
+    "source_column": 3,
+    "target_argmax": [5757, 3377, 13],
+    "native_no_spec_expected": [5757, 3377, 25],
+    "first_wrong_row": 2
+  },
+  "interpretation": "The wrong token is already present in target row 2 after a full-accept-plus-bonus cross-call transition; the sampler is not the cause.",
+  "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/native-exact-packet-trace-20260816T013000Z",
+  "raw_manifest_sha256": "b5136d8614a8ff68a3e4c4e2f2cb58cab192a8197a883137028b696107d04276",
+  "analysis_sha256": "c6a8da80c7ab66f59888450b0e583ec727f638b7c046ef0e39a4cbc090fc51fc",
+  "bench_sha256": "0edd0b0cc65915bf56b22d4b932af05ca9c9ec1dafe1ef3ae7637c1123c7b634",
+  "verify_trace_sha256": "36588c4910173016cd7265712b107553e2fc733d629c4131ddf8ec0573e637fe",
+  "metadata_trace_sha256": "7e7aefe51afba0611be1de535128ad1fd3fbe666234119cda25ca0533a635a48",
+  "model_input_trace_sha256": "bfecdc249b59a96c5056e7820429ad5c67767b69e5824491d12bfd0e1183b377",
+  "kernel_head": "6aed46a4f7ccf6db47323fe9e8eeed243b0ad3d8",
+  "kernel_diff_sha256": "697e7925b2b55d8b644f252d4d9e2117df8557c8946267dc10cf9cf01f417f03",
+  "xpu_extension_sha256": "871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e"
+}

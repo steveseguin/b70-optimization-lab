@@ -1,0 +1,31 @@
+{
+  "classification": "negative_progressive_serial_flashattention_bisection",
+  "date_utc": "2026-08-16",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "mode": "TP2 MTP3 native-SYCL-GDN exact recurrence plus progressive serial speculative FlashAttention",
+  "strict_passed": false,
+  "quality_executed": false,
+  "cached_tokens_all_zero": true,
+  "real_speculation": true,
+  "fa_serial_spec_mode": "progressive",
+  "median_tok_s_1_100_intervals_after_ttft": 75.43835444622417,
+  "first_difference": {
+    "prompt_id": "holdout--concurrency-review",
+    "index": 7,
+    "candidate_token": 13,
+    "native_target_token": 25
+  },
+  "interpretation": "Progressive one-row FlashAttention did not change the recurring early divergence and materially slowed the diagnostic arm, so packed full-attention execution is not the sufficient cause and this mode is not a performance route.",
+  "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/native-exact-fa-progressive-20260816T014000Z",
+  "raw_manifest_sha256": "2f842a640b5e5b10a4287b109616876f2c31f264f91519add713d8297fe5cbce",
+  "analysis_sha256": "771973616cb21f55b120222b035a119e1eda5fc91d84e388d8795b9d249e6e9d",
+  "bench_sha256": "f19ba83f0f93d0fbdb1cfe144c998d0eadcf431a2cd2c9503a0289ec0691bb4a",
+  "output_sha256": "5a543d4732a80de87cc03e5c96752823d4d34ece9f8e3107ab34d1049791d90d",
+  "output_identical_to_standard_exact_spec_128": true,
+  "server_log_sha256": "f3c3e1bb5f59d065d2ca01b3089e40f0448a5503764092fd525e54fb581821c1",
+  "suite_sha256": "1421e801803dea7fe102e51b16335960a5bf6525d0bcb808599a32afc2545371",
+  "vllm_head": "3722d8a0fb7cdd3c052fb7b1468b85171c746e1f",
+  "kernel_head": "6aed46a4f7ccf6db47323fe9e8eeed243b0ad3d8",
+  "kernel_diff_sha256": "697e7925b2b55d8b644f252d4d9e2117df8557c8946267dc10cf9cf01f417f03",
+  "xpu_extension_sha256": "871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e"
+}

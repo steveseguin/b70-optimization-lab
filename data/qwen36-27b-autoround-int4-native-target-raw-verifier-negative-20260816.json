@@ -1,0 +1,38 @@
+{
+  "classification": "negative_raw_speculative_verifier_boundary",
+  "date_utc": "2026-08-16",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "target_identity": "TP2 native-SYCL-GDN no-spec control",
+  "candidate_identity": "TP2 MTP3 raw speculative target forward with serial native recurrence",
+  "gdn_native_fallback": "0 (selects native execution in this runtime)",
+  "skip_compiled_spec_decode": true,
+  "strict_passed": false,
+  "quality_executed": false,
+  "repeats_present": false,
+  "target": {
+    "median_tok_s_1_100_intervals_after_ttft": 49.741060605989944,
+    "cached_tokens_all_zero": true,
+    "token_digest": "3f26ec71965ec24f819b5538a5c8111702f527f784a5f935134aa8a521bb312e"
+  },
+  "candidate": {
+    "median_tok_s_1_100_intervals_after_ttft": 23.13707545916408,
+    "cached_tokens_all_zero": true,
+    "branch_marker_present": true,
+    "token_digest": "62af5dfe419f59f8298d26484ecc877831ab28f96dfefc5ab89e91c60db4ca6c"
+  },
+  "first_differences": {
+    "holdout--structured-extraction": 5,
+    "holdout--arithmetic-reasoning": 6,
+    "holdout--concurrency-review": 7,
+    "holdout--long-rollover-repository-audit": 7
+  },
+  "interpretation": "Bypassing the compiled speculative target wrapper did not change the early divergence pattern, so compiled graph replay and the compiled wrapper are not the primary remaining boundary.",
+  "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/native-target-exact-recurrent-raw-spec-20260816T010700Z",
+  "raw_manifest_sha256": "4262fab9e2f150679595293558b9f3bb8f6c309bb363fa89c444f157e4fc9d2d",
+  "analysis_sha256": "01c025ec482fe62422b8a343de7862ab5cc633f64218b585cc8d77f976fc4fb3",
+  "bench_sha256": "c72b7b4ae96ab7e668893b4be20c4768dc14da28acd9f2abcdefe9b14eb4f325",
+  "server_log_sha256": "6f529d5000e2dfa4d8913ddbdf50b5b107f5bdc19baee8b925cd075326a293d1",
+  "kernel_head": "6aed46a4f7ccf6db47323fe9e8eeed243b0ad3d8",
+  "kernel_diff_sha256": "697e7925b2b55d8b644f252d4d9e2117df8557c8946267dc10cf9cf01f417f03",
+  "xpu_extension_sha256": "871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e"
+}

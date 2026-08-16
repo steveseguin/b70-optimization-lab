@@ -309,3 +309,207 @@ repeat parity, and the central/robust speed gate. No LocalMaxxing submission is
 permitted from this result. The next source step is to port the missing upstream
 Qwen/Xe2 safety fixes before any further performance tuning, then re-run a
 focused mismatch oracle before paying for another full matrix.
+
+## Complete-runtime upstream safety canary
+
+Three current upstream Qwen/Xe2 correctness fixes were ported onto the retained
+kernel source as focused commits: the SLM refill WAR fences, the ratio-three
+virtual-head bounds guard, and the convolution-tail bounds guards. Both runtime
+components were rebuilt and installed. The complete direct guard passed the
+logical-TP4 tail case and actual-TP2 8K/32K cases bit-exactly; see
+`upstream-safety-guard-complete-20260815T230500Z` under the raw benchmark root.
+
+The fresh endpoint canary then ran the four historically divergent prompts at
+512 tokens with a cold target process followed by a cold speculative process.
+Both arms were operationally valid and every request reported zero cached
+tokens. The speculative median was `103.80488189787577 tok/s`, while the target
+control was `47.94709618021187 tok/s`, under the conventional 99-interval
+metric. This is not a record because strict parity failed on all four prompts:
+
+| Prompt | First differing generated token |
+| --- | ---: |
+| arithmetic reasoning | 6 |
+| concurrency review | 68 |
+| structured extraction | 246 |
+| long rollover repository audit | 391 |
+
+Those are the same known divergence points, proving that the upstream safety
+fixes are required but do not repair the packed recurrent arithmetic. The
+fail-closed harness stopped before its repeat pair. Raw root:
+`upstream-safety-canary-complete-20260815T230700Z`; root manifest SHA256
+`c73d3ce4286deb018aaa7736403b42f174260fb7c6e9c8a8deab3b6a8cdb982c`.
+The compact tracked result is
+[`../../../data/qwen36-27b-autoround-int4-upstream-safety-canary-complete-20260815.json`](../../../data/qwen36-27b-autoround-int4-upstream-safety-canary-complete-20260815.json).
+
+The next default-off proof replaces only the packed multi-row recurrent kernel
+with four ordered calls to the ordinary one-token GDN recurrence inside the
+same persistent custom op. Packed convolution, exact state-column publication,
+MTP scheduling, and Inductor partitioning stay unchanged. It must first make
+the direct Qwen-shaped operator guard byte-exact with FP16 activations and the
+server's FP32 SSM cache, then pass this same four-prompt cold canary before any
+larger performance matrix.
+
+## Native-recurrence oracle correction
+
+The first implementation of that proof passed its direct operator guard but
+failed the cold endpoint canary. The direct guard compared the packed verifier
+against repeated calls to the native SYCL one-token GDN kernel. The established
+target-only server does not use that kernel by default: with
+`VLLM_XPU_GDN_NATIVE_FALLBACK` unset, decode and prefill use vLLM's Triton GDN
+fallback. The test therefore proved exactness against the wrong arithmetic
+oracle.
+
+The endpoint result remains useful negative evidence. Both fresh arms exited
+zero, used the same frozen four-prompt suite, reported `cached_tokens=0` on
+every request, and performed real MTP speculation. The target median was
+`47.43721486441161 tok/s`; the native-recurrence speculative median was
+`84.51110693756173 tok/s`. Strict target parity failed:
+
+| Prompt | First differing generated token |
+| --- | ---: |
+| structured extraction | 5 |
+| arithmetic reasoning | 6 |
+| concurrency review | 7 |
+| long rollover repository audit | 7 |
+
+The harness stopped before repeats. Raw root:
+`exact-recurrent-safety-canary-20260816T002046Z`; root manifest SHA256
+`756b3a5d8201a34b5596faf1b04b7b303a83309216ff425710fe043dfeeb97d1`.
+The direct native-operator guard is retained separately at
+`exact-recurrent-direct-guard-20260816T001600Z` with manifest SHA256
+`82f6586adab486c58204957e4c97884d4f88696ad313a5a7136ee56907d171d8`;
+it is a native-kernel equivalence result, not an established-target result.
+
+The next bounded gate uses one coherent arithmetic identity on both sides:
+disable the Triton fallback explicitly for both the no-spec target and the
+serial native-recurrence candidate, then compare their outputs as a separately
+named native-SYCL-GDN target identity. A passing canary would still require a
+separate frozen objective-quality gate. If that identity fails, the remaining
+compiled-verifier arithmetic must be isolated before performance tuning.
+
+That coherent native/native canary also failed. The branch marker appeared on
+both ranks, the stronger direct guard covered accepted counts 1 through 4
+bit-exactly, and both endpoint arms were fresh and cache-zero. The native-SYCL
+no-spec control measured `49.741060605989944 tok/s`; the serial
+native-recurrence candidate measured `85.3897431000287 tok/s`. The first
+differences were unchanged from the backend-mismatched run: structured token
+5, arithmetic token 6, and concurrency/long-rollover token 7. The failure is
+therefore outside the repaired GDN recurrence and accepted-state selection.
+
+Raw root:
+`native-target-exact-recurrent-safety-canary-20260816T005300Z`; root manifest
+SHA256 `29f2453278eed918c31eee80ea731eb17f5e0fe59cfeb68cf965af0d0f1de3cc`.
+This was a four-prompt parity canary with `run_quality=0`, not a quality gate.
+The preregistered first-pair stop correctly omitted repeats. The next
+diagnostic bypasses only the compiled speculative target forward while
+retaining the same native-SYCL GDN state path.
+
+That raw-forward diagnostic also failed. It retained the native-SYCL GDN
+target identity, exact-recurrence implementation flag, real MTP3 scheduler,
+and fixed four-row verifier, but set
+`VLLM_XPU_SKIP_COMPILED_SPEC_DECODE=1`. Both ranks emitted the exact-recurrence
+branch marker. All four requests were fresh and reported `cached_tokens=0`.
+The preferred 99-interval diagnostic median was `23.13707545916408 tok/s`;
+this deliberately raw
+rate is not promotion evidence. Its first differences against the matching
+native-SYCL no-spec control remained structured token 5, arithmetic token 6,
+and concurrency/long-rollover token 7.
+
+Raw root:
+`native-target-exact-recurrent-raw-spec-20260816T010700Z`; post-teardown
+manifest SHA256
+`4262fab9e2f150679595293558b9f3bb8f6c309bb363fa89c444f157e4fc9d2d`.
+The compact result is
+[`../../../data/qwen36-27b-autoround-int4-native-target-raw-verifier-negative-20260816.json`](../../../data/qwen36-27b-autoround-int4-native-target-raw-verifier-negative-20260816.json).
+This falsifies the compiled speculative wrapper as the primary cause. The
+remaining diagnostic boundary is the semantic identity of a four-row INT4
+verifier versus a one-row target and the transaction surrounding those rows.
+The next control must compare normal speculation with a zero-accept,
+fixed-width-four target trajectory under the same native/exact runtime. A
+passing fixed-width control would define a separately named target identity
+and would still require an objective quality gate; it would not make the
+historical one-row target byte-exact retroactively.
+
+That fixed-width-four control also failed. It used the same model, TP2,
+native-SYCL GDN, repaired recurrent implementation, compilation identity,
+runtime hashes, and frozen four-prompt suite as the normal speculative arm.
+The only semantic change was synthetic acceptance rates `[0, 0, 0]`. Runtime
+metrics confirmed `0` accepted tokens and zero acceptance at all three draft
+positions; every emitted token was target-owned row zero. All requests were
+fresh and cache-zero, both ranks emitted the exact-recurrence marker, and the
+process exited cleanly. The preferred 99-interval median was
+`32.262676165863056 tok/s`, diagnostic only.
+
+Normal speculation nevertheless first differed from the repeated row-zero
+trajectory at concurrency token 3, long-rollover token 4, structured token 5,
+and arithmetic token 7. The zero-accept trajectory also differed from native
+one-row no-spec execution at tokens 3, 4, 6, and 7 respectively. A subsequent
+packet trace showed that the first normal speculative packet was target-exact,
+so this control does not prove a width-dependent target identity. Instead, the
+zero-accept drift after successive rejection transitions implicates cross-call
+state rollback or promotion.
+
+Raw root: `native-fixedwidth-zero-control-20260816T012100Z`; final manifest
+SHA256
+`630f09d7f8bef05e048cd1913e951760c7d419190fd035ad0e67180e6c886b5a`.
+The compact
+tracked result is
+[`../../../data/qwen36-27b-autoround-int4-fixedwidth-zero-control-negative-20260816.json`](../../../data/qwen36-27b-autoround-int4-fixedwidth-zero-control-negative-20260816.json).
+The next bounded diagnostic traces the first two verifier packets and layer
+boundaries. It must distinguish an already-wrong target row logit from an
+acceptance/emission error before any scheduler, KV, or performance change.
+
+That packet trace localized the normal speculative failure before sampling.
+For `holdout--concurrency-review`, the first real packet entered with accepted
+count 1 and target argmax rows `[369, 264, 11088]`. They exactly matched the
+native no-spec continuation; all three drafts were accepted and target bonus
+`4098` was emitted. The next packet correctly recorded accepted count 4,
+selected source column 3, and positions `[78, 79, 80, 81]`. Its target argmax
+rows were `[5757, 3377, 13]`, while native no-spec required
+`[5757, 3377, 25]`. The sampler emitted the target rows it received, so row 2
+was already wrong after the full-accept-plus-bonus transition.
+
+Raw root: `native-exact-packet-trace-20260816T013000Z`; final manifest SHA256
+`b5136d8614a8ff68a3e4c4e2f2cb58cab192a8197a883137028b696107d04276`.
+The trace is
+diagnostic and its timing is not promotion evidence. The compact result is
+[`../../../data/qwen36-27b-autoround-int4-native-exact-packet-trace-20260816.json`](../../../data/qwen36-27b-autoround-int4-native-exact-packet-trace-20260816.json).
+The next exact gate is a literal two-call in-place native operator test: call 1
+must full-accept into source column 3, then call 2 must reuse the same state
+table and persistent scratch and match four ordered one-token native calls
+byte-for-byte. The earlier accepted-column guard seeded each restart from its
+oracle and did not cover this cross-call lifecycle.
+
+That literal two-call guard passed at zero tolerance. It reused the same state
+table and production persistent scratch, full-accepted call 1 into source
+column 3, and then ran call 2. Both calls' core and z outputs, every published
+convolution prefix, and every FP32 SSM prefix were byte-exact against eight
+ordered one-token native calls. All maximum absolute differences were zero.
+Raw root: `exact-recurrent-two-call-guard-20260816T014000Z`; manifest SHA256
+`e587f72c1b2812d9d8c7cb121cec7da4cc8cfefd819bac0df05a5c6b677057bf`.
+This moves the next bisection outside the isolated GDN core lifecycle. The
+smallest existing semantic screen is progressive serial speculative
+FlashAttention, which evaluates the four verifier rows through ordered
+one-row attention calls while leaving MTP scheduling and GDN state unchanged.
+
+That progressive FlashAttention bisection also failed. It ran the frozen
+`holdout--concurrency-review` prompt once with a fresh compile/cache root,
+`cached_tokens=0`, real MTP acceptance, native target arithmetic, exact serial
+GDN recurrence, and `VLLM_XPU_FA_SERIAL_SPEC_MODE=progressive`. Both ranks hit
+the exact-recurrence marker and the process exited cleanly. The output still
+first differed from the native no-spec target at generated token 7: the
+candidate target row produced token `13` where native no-spec required token
+`25`. The preferred 99-interval rate was only `75.43835444622417 tok/s`, so
+the mode is also a performance loss.
+
+Raw root: `native-exact-fa-progressive-20260816T014000Z`. The compact result is
+[`../../../data/qwen36-27b-autoround-int4-fa-progressive-negative-20260816.json`](../../../data/qwen36-27b-autoround-int4-fa-progressive-negative-20260816.json).
+The 35-file final manifest SHA256 is
+`2f842a640b5e5b10a4287b109616876f2c31f264f91519add713d8297fe5cbce`.
+All 128 output token IDs are also identical to the standard compiled exact-spec
+arm, making the negative independent of a near-miss textual comparison.
+This falsifies packed full-attention execution as a sufficient cause of the
+early divergence. The next bounded diagnostic traces layers 0--3 and the Qwen
+GDN projection/core/output boundaries on the first two verifier packets to
+identify the first unequal activation before changing scheduler or KV state
+transactions.

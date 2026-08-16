@@ -46,6 +46,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", default="xpu:0")
     parser.add_argument("--dtype", choices=("bf16", "fp16", "fp32"),
                         default="bf16")
+    parser.add_argument(
+        "--ssm-dtype", choices=("same", "bf16", "fp16", "fp32"),
+        default="same",
+        help="State-cache dtype; use fp32 for the Qwen3.6 27B server identity.")
     parser.add_argument("--seed", type=int, default=20260705)
     parser.add_argument("--num-reqs", type=int, default=3)
     parser.add_argument("--spec-len", type=int, default=4,
@@ -66,6 +70,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--atol", type=float, default=1e-2,
                         help="Tolerance for packed-vs-one-step numeric parity.")
     parser.add_argument("--rtol", type=float, default=0.0)
+    parser.add_argument(
+        "--require-bit-exact", action="store_true",
+        help="Fail unless convolution, SSM, core output, and z are byte-exact.")
+    parser.add_argument(
+        "--exact-recurrent", action="store_true",
+        help="Enable the serial native-recurrence proof implementation.")
+    parser.add_argument(
+        "--persistent-scratch", action="store_true",
+        help="Reuse the production persistent native speculative scratch.")
     parser.add_argument("--kernel-repo", type=Path, default=DEFAULT_KERNEL_REPO)
     parser.add_argument("--json-out", type=Path)
     return parser.parse_args()
@@ -280,6 +293,7 @@ def compare_case(
     token_base: int,
 ) -> dict[str, Any]:
     dtype = inputs["dtype"]
+    ssm_dtype = initial_ssm_table.dtype
     local_v_heads = inputs["local_v_heads"]
     conv_cols = inputs["conv_cols"]
     device = args.device
@@ -294,7 +308,7 @@ def compare_case(
     ref_conv = torch.zeros((total_rows, args.width - 1, conv_cols),
                            dtype=dtype, device=device)
     ref_ssm = torch.zeros((total_rows, local_v_heads, args.head_v_dim,
-                           args.head_k_dim), dtype=dtype, device=device)
+                           args.head_k_dim), dtype=ssm_dtype, device=device)
     spec_conv = torch.zeros_like(ref_conv)
     spec_ssm = torch.zeros_like(ref_ssm)
     ref_conv[:row_count].copy_(initial_conv_table[:row_count])
@@ -367,6 +381,8 @@ def compare_case(
 
     base_conv_close = True
     base_ssm_close = True
+    base_conv_equal = True
+    base_ssm_equal = True
     base_conv_max = 0.0
     base_ssm_max = 0.0
     if args.prefix_base_state:
@@ -377,6 +393,10 @@ def compare_case(
         expected_base_ssm = initial_ssm_table.index_select(0, source_rows)
         base_conv_max = max_abs(torch, observed_base_conv, expected_base_conv)
         base_ssm_max = max_abs(torch, observed_base_ssm, expected_base_ssm)
+        base_conv_equal = bool(torch.equal(observed_base_conv,
+                                           expected_base_conv))
+        base_ssm_equal = bool(torch.equal(observed_base_ssm,
+                                          expected_base_ssm))
         base_conv_close = close_enough(
             torch, observed_base_conv, expected_base_conv, atol=args.atol,
             rtol=args.rtol)
@@ -404,6 +424,7 @@ def compare_case(
         "conv_prefix_close": bool(conv_close),
         "ssm_prefix_close": bool(ssm_close),
         "base_column_close": bool(base_conv_close and base_ssm_close),
+        "base_column_equal": bool(base_conv_equal and base_ssm_equal),
         "core_output_equal": out_equal,
         "z_output_equal": z_equal,
         "core_output_close": bool(out_close),
@@ -414,6 +435,160 @@ def compare_case(
         "base_ssm_max_abs_diff": base_ssm_max,
         "core_output_max_abs_diff": out_diff,
         "z_output_max_abs_diff": z_diff,
+    }
+
+
+def compare_two_call_full_accept_restart(
+    torch: Any,
+    args: argparse.Namespace,
+    inputs: dict[str, Any],
+    *,
+    initial_conv_table: Any,
+    initial_ssm_table: Any,
+    state_table: Any,
+) -> dict[str, Any]:
+    """Exercise the literal production full-accept cross-call lifecycle."""
+    dtype = inputs["dtype"]
+    ssm_dtype = initial_ssm_table.dtype
+    local_v_heads = inputs["local_v_heads"]
+    conv_cols = inputs["conv_cols"]
+    device = args.device
+    num_reqs = args.num_reqs
+    spec_len = args.spec_len
+    total_tokens = num_reqs * spec_len
+
+    row_count = int(state_table.max().detach().cpu().item()) + 1
+    running_rows = torch.arange(
+        row_count, row_count + num_reqs, dtype=torch.long, device=device)
+    total_rows = row_count + num_reqs
+
+    ref_conv = torch.zeros(
+        (total_rows, args.width - 1, conv_cols), dtype=dtype, device=device)
+    ref_ssm = torch.zeros(
+        (total_rows, local_v_heads, args.head_v_dim, args.head_k_dim),
+        dtype=ssm_dtype,
+        device=device,
+    )
+    spec_conv = initial_conv_table.clone()
+    spec_ssm = initial_ssm_table.clone()
+    ref_conv[:row_count].copy_(initial_conv_table[:row_count])
+    ref_ssm[:row_count].copy_(initial_ssm_table[:row_count])
+    source_rows = state_table[:, 0]
+    ref_conv.index_copy_(
+        0, running_rows, ref_conv.index_select(0, source_rows).clone())
+    ref_ssm.index_copy_(
+        0, running_rows, ref_ssm.index_select(0, source_rows).clone())
+
+    ref_out_first, ref_z_first, _, _ = run_normal_decode_steps(
+        torch,
+        args,
+        inputs,
+        conv_state=ref_conv,
+        ssm_state=ref_ssm,
+        running_rows=running_rows,
+        token_base=0,
+    )
+    ref_out_second, ref_z_second, ref_conv_second, ref_ssm_second = (
+        run_normal_decode_steps(
+            torch,
+            args,
+            inputs,
+            conv_state=ref_conv,
+            ssm_state=ref_ssm,
+            running_rows=running_rows,
+            token_base=total_tokens,
+        )
+    )
+
+    first_counts = torch.ones(
+        (num_reqs,), dtype=torch.int32, device=device)
+    full_counts = torch.full(
+        (num_reqs,), spec_len, dtype=torch.int32, device=device)
+    spec_out_first, spec_z_first = run_spec_decode(
+        torch,
+        args,
+        inputs,
+        conv_state=spec_conv,
+        ssm_state=spec_ssm,
+        state_table=state_table,
+        num_accepted_tokens=first_counts,
+        token_base=0,
+    )
+    spec_out_second, spec_z_second = run_spec_decode(
+        torch,
+        args,
+        inputs,
+        conv_state=spec_conv,
+        ssm_state=spec_ssm,
+        state_table=state_table,
+        num_accepted_tokens=full_counts,
+        token_base=total_tokens,
+    )
+    torch.xpu.synchronize()
+
+    conv_equal = True
+    ssm_equal = True
+    conv_close = True
+    ssm_close = True
+    conv_max = 0.0
+    ssm_max = 0.0
+    for pos in range(spec_len):
+        rows = state_table[:, pos]
+        observed_conv = spec_conv.index_select(0, rows)
+        observed_ssm = spec_ssm.index_select(0, rows)
+        expected_conv = ref_conv_second[pos]
+        expected_ssm = ref_ssm_second[pos]
+        conv_max = max(conv_max, max_abs(torch, observed_conv, expected_conv))
+        ssm_max = max(ssm_max, max_abs(torch, observed_ssm, expected_ssm))
+        conv_equal = conv_equal and bool(torch.equal(observed_conv, expected_conv))
+        ssm_equal = ssm_equal and bool(torch.equal(observed_ssm, expected_ssm))
+        conv_close = conv_close and close_enough(
+            torch, observed_conv, expected_conv, atol=args.atol, rtol=args.rtol)
+        ssm_close = ssm_close and close_enough(
+            torch, observed_ssm, expected_ssm, atol=args.atol, rtol=args.rtol)
+
+    first_out_equal = bool(torch.equal(spec_out_first, ref_out_first))
+    first_z_equal = bool(torch.equal(spec_z_first, ref_z_first))
+    second_out_equal = bool(torch.equal(spec_out_second, ref_out_second))
+    second_z_equal = bool(torch.equal(spec_z_second, ref_z_second))
+    first_out_close = close_enough(
+        torch, spec_out_first, ref_out_first, atol=args.atol, rtol=args.rtol)
+    first_z_close = close_enough(
+        torch, spec_z_first, ref_z_first, atol=args.atol, rtol=args.rtol)
+    second_out_close = close_enough(
+        torch, spec_out_second, ref_out_second, atol=args.atol, rtol=args.rtol)
+    second_z_close = close_enough(
+        torch, spec_z_second, ref_z_second, atol=args.atol, rtol=args.rtol)
+    return {
+        "case": "two_call_full_accept_restart",
+        "accepted_counts": [spec_len] * num_reqs,
+        "source_cols": [spec_len - 1] * num_reqs,
+        "conv_prefix_equal": conv_equal,
+        "ssm_prefix_equal": ssm_equal,
+        "conv_prefix_close": conv_close,
+        "ssm_prefix_close": ssm_close,
+        "base_column_equal": True,
+        "base_column_close": True,
+        "core_output_equal": first_out_equal and second_out_equal,
+        "z_output_equal": first_z_equal and second_z_equal,
+        "core_output_close": first_out_close and second_out_close,
+        "z_output_close": first_z_close and second_z_close,
+        "conv_prefix_max_abs_diff": conv_max,
+        "ssm_prefix_max_abs_diff": ssm_max,
+        "base_conv_max_abs_diff": 0.0,
+        "base_ssm_max_abs_diff": 0.0,
+        "core_output_max_abs_diff": max(
+            max_abs(torch, spec_out_first, ref_out_first),
+            max_abs(torch, spec_out_second, ref_out_second),
+        ),
+        "z_output_max_abs_diff": max(
+            max_abs(torch, spec_z_first, ref_z_first),
+            max_abs(torch, spec_z_second, ref_z_second),
+        ),
+        "first_call_core_output_equal": first_out_equal,
+        "first_call_z_output_equal": first_z_equal,
+        "second_call_core_output_equal": second_out_equal,
+        "second_call_z_output_equal": second_z_equal,
     }
 
 
@@ -431,6 +606,10 @@ def main() -> int:
     os.environ.setdefault("VLLM_TARGET_DEVICE", "xpu")
     os.environ["VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE"] = (
         "1" if args.prefix_base_state else "0")
+    os.environ["VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT"] = (
+        "1" if args.exact_recurrent else "0")
+    os.environ["VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH"] = (
+        "1" if args.persistent_scratch else "0")
     add_kernel_repo_to_path(args.kernel_repo)
 
     import torch
@@ -446,6 +625,10 @@ def main() -> int:
     total_tokens = args.num_reqs * args.spec_len
     inputs = build_inputs(torch, args, tokens=total_tokens * 2, seed=args.seed)
     dtype = inputs["dtype"]
+    ssm_dtype = (
+        dtype if args.ssm_dtype == "same"
+        else dtype_from_name(torch, args.ssm_dtype)
+    )
     local_v_heads = inputs["local_v_heads"]
     conv_cols = inputs["conv_cols"]
     device = args.device
@@ -462,7 +645,7 @@ def main() -> int:
     initial_conv = torch.randn((row_count, args.width - 1, conv_cols),
                                dtype=dtype, device=device) * 0.01
     initial_ssm = torch.randn((row_count, local_v_heads, args.head_v_dim,
-                               args.head_k_dim), dtype=dtype,
+                               args.head_k_dim), dtype=ssm_dtype,
                               device=device) * 0.01
 
     cases: list[dict[str, Any]] = []
@@ -504,7 +687,7 @@ def main() -> int:
     ref_conv = torch.zeros((row_count + args.num_reqs, args.width - 1,
                             conv_cols), dtype=dtype, device=device)
     ref_ssm = torch.zeros((row_count + args.num_reqs, local_v_heads,
-                           args.head_v_dim, args.head_k_dim), dtype=dtype,
+                           args.head_v_dim, args.head_k_dim), dtype=ssm_dtype,
                           device=device)
     ref_conv[:row_count].copy_(initial_conv)
     ref_ssm[:row_count].copy_(initial_ssm)
@@ -553,10 +736,38 @@ def main() -> int:
         accepted_counts=varied_counts,
         token_base=total_tokens,
     ))
+    # The production proof is deliberately restricted to one request.  A
+    # single arange row would otherwise exercise only accepted_count=1, so add
+    # one restart per source column and cover N=1..spec_len explicitly.
+    if args.num_reqs == 1 and not args.prefix_base_state:
+        for accepted_count in range(1, args.spec_len + 1):
+            cases.append(compare_case(
+                torch,
+                args,
+                inputs,
+                case_name=f"restart_from_accepted_count_{accepted_count}",
+                initial_conv_table=restart_conv,
+                initial_ssm_table=restart_ssm,
+                state_table=state_table,
+                accepted_counts=torch.tensor(
+                    [accepted_count], dtype=torch.int32, device=device),
+                token_base=total_tokens,
+            ))
+
+    if not args.prefix_base_state:
+        cases.append(compare_two_call_full_accept_restart(
+            torch,
+            args,
+            inputs,
+            initial_conv_table=initial_conv,
+            initial_ssm_table=initial_ssm,
+            state_table=state_table,
+        ))
 
     result = {
         "device": args.device,
         "dtype": args.dtype,
+        "ssm_dtype": args.ssm_dtype,
         "seed": args.seed,
         "num_reqs": args.num_reqs,
         "spec_len": args.spec_len,
@@ -565,6 +776,8 @@ def main() -> int:
         "head_k_dim": args.head_k_dim,
         "head_v_dim": args.head_v_dim,
         "width": args.width,
+        "exact_recurrent": bool(args.exact_recurrent),
+        "persistent_scratch": bool(args.persistent_scratch),
         "atol": args.atol,
         "rtol": args.rtol,
         "contract": {
@@ -587,14 +800,24 @@ def main() -> int:
         },
         "cases": cases,
     }
-    result["passed"] = all(
-        case["conv_prefix_close"]
-        and case["ssm_prefix_close"]
-        and case["base_column_close"]
-        and case["core_output_close"]
-        and case["z_output_close"]
-        for case in cases
-    )
+    if args.require_bit_exact:
+        result["passed"] = all(
+            case["conv_prefix_equal"]
+            and case["ssm_prefix_equal"]
+            and case["base_column_equal"]
+            and case["core_output_equal"]
+            and case["z_output_equal"]
+            for case in cases
+        )
+    else:
+        result["passed"] = all(
+            case["conv_prefix_close"]
+            and case["ssm_prefix_close"]
+            and case["base_column_close"]
+            and case["core_output_close"]
+            and case["z_output_close"]
+            for case in cases
+        )
 
     text = json.dumps(result, sort_keys=True)
     print(text)
