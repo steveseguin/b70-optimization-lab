@@ -35,7 +35,8 @@ more GPU workload should run until a clean reboot.
 
 1. Reboot and run
    [`post-reboot-gpu-gate.sh`](../scripts/post-reboot-gpu-gate.sh). It fails
-   closed unless the kernel taint is clear, both B70s are `normal`, no model
+   closed unless the kernel is clean apart from the host's single audited
+   boot-only KMS `dma_buf_vmap` warning, both B70s are `normal`, no model
    workload is active, and no Xe/GuC fault/reset/hang appears in this boot.
    Confirm both cards still expose their full 32 GiB BARs before the candidate
    benchmark.
