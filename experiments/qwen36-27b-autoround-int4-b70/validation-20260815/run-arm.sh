@@ -88,13 +88,13 @@ elif [[ "$mode" == "spec-native-partition-exact" \
   || "$mode" == "nospec-latest-exact-native" ]]; then
   latest_identity=1
   exact_identity=1
-  verify_tree "$source_root/vllm" b54527eb505409017d43122bc5669eafd601910d \
+  verify_tree "$source_root/vllm" a63ff886e1c9c90f919e8b46a63f34027dfae823 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
   verify_tree "$source_root/vllm-xpu-kernels" 6a40e2baf3f8710b89e48d18bf214708ba2dbf9a \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
 elif [[ "$mode" == "spec-native-partition" || "$mode" == "nospec-latest" ]]; then
   latest_identity=1
-  verify_tree "$source_root/vllm" b54527eb505409017d43122bc5669eafd601910d \
+  verify_tree "$source_root/vllm" a63ff886e1c9c90f919e8b46a63f34027dfae823 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
   verify_tree "$source_root/vllm-xpu-kernels" 6a40e2baf3f8710b89e48d18bf214708ba2dbf9a \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
@@ -231,6 +231,7 @@ if [[ "${VALIDATION_ENABLE_PACKET_TRACE:-0}" == "1" ]]; then
   # from a correct target row that is mis-selected or mis-emitted.
   export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_FILE="$arm_root/verify-trace.jsonl"
   export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_MAX_LINES=32
+  export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_TOPK="${VALIDATION_SPEC_VERIFY_TRACE_TOPK:-1}"
   export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_FILE="$arm_root/bonus-trace.jsonl"
   export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_MAX_LINES=32
   export VLLM_XPU_GDN_METADATA_TRACE_FILE="$arm_root/gdn-metadata.jsonl"

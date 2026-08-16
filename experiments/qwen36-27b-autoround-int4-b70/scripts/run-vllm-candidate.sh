@@ -194,6 +194,7 @@ trap cleanup EXIT
   echo "skip_compiled_spec_decode=${VLLM_XPU_SKIP_COMPILED_SPEC_DECODE:-}"
   echo "spec_decode_verify_trace_file=${VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_FILE:-}"
   echo "spec_decode_verify_trace_max_lines=${VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_MAX_LINES:-}"
+  echo "spec_decode_verify_trace_topk=${VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_TOPK:-}"
   echo "spec_decode_bonus_logit_trace_file=${VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_FILE:-}"
   echo "spec_decode_bonus_logit_trace_max_lines=${VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_MAX_LINES:-}"
   echo "gdn_metadata_trace_file=${VLLM_XPU_GDN_METADATA_TRACE_FILE:-}"
