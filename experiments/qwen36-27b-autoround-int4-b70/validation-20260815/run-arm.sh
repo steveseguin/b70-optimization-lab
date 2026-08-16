@@ -367,6 +367,9 @@ if [[ "$mode" == "spec-native-partition-exact-native" \
   # through the same native one-token kernel used by the exact verifier proof.
   export VLLM_XPU_GDN_NATIVE_FALLBACK=0
 fi
+if [[ -n "${VALIDATION_COMPILATION_CONFIG_OVERRIDE:-}" ]]; then
+  export COMPILATION_CONFIG="$VALIDATION_COMPILATION_CONFIG_OVERRIDE"
+fi
 if [[ -n "${VALIDATION_VLLM_EXTRA_ARGS:-}" ]]; then
   export VLLM_EXTRA_ARGS="$VALIDATION_VLLM_EXTRA_ARGS"
 fi
