@@ -1,6 +1,6 @@
 {
   "date": "2026-08-16",
-  "status": "compiled_untested_requires_clean_reboot",
+  "status": "rejected_performance_negative_after_clean_reboot",
   "scope": "Qwen3.8-27B Q8_0 target-only TP2; no speculation",
   "mode": "GGML_SYCL_COMM_DIRECT_Q8=4",
   "design": {
@@ -24,9 +24,25 @@
     "decoded_lines": 199
   },
   "results": {
-    "safety_smoke": null,
-    "throughput": null,
-    "quality": null
+    "safety_smoke": {
+      "mode4_tok_s": 34.73008,
+      "same_binary_mode2_tok_s": 36.581733,
+      "delta_percent": -5.061687482110266,
+      "verify_mismatch": 0,
+      "gpu_health": "passed"
+    },
+    "balanced_p64_n256_r3": {
+      "order": ["mode2", "mode4", "mode4", "mode2"],
+      "mode2_tok_s": [35.999246, 36.317383],
+      "mode4_tok_s": [34.927634, 34.938762],
+      "mode2_mean_tok_s": 36.1583145,
+      "mode4_mean_tok_s": 34.933198,
+      "delta_percent": -3.3882013499274333,
+      "verify_mismatch": 0,
+      "post_arm_health_gates": "4/4 passed"
+    },
+    "quality": "benchmark outputs remained exact under VERIFY_MISMATCH; endpoint suite skipped because the performance gate failed"
   },
-  "next_gate": "After a clean reboot: normal devices and clear taint, p0/n1/r1 mode4, same-binary mode2 control, then balanced performance and 12/12 endpoint quality gates."
+  "raw_directory": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260816-root-fused-mode4",
+  "decision": "Do not enable or retry mode 4 unchanged. It is safe at the tested gate but lengthens the root critical path and regresses decode by 3.388%."
 }

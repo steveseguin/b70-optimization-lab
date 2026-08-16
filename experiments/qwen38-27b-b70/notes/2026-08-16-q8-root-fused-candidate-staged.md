@@ -2,8 +2,9 @@
 
 Date: 2026-08-16
 
-Status: **compiled and staged; not executed. A clean reboot is required before
-the first one-token safety test.**
+Historical staging record. **Resolved after reboot: safe and exact at the
+benchmark gate, but rejected as a 3.388% decode regression.** See the
+[result note](2026-08-16-q8-root-fused-candidate-negative.md).
 
 ## Design boundary
 

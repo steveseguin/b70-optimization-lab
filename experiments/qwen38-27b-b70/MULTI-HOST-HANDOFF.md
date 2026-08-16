@@ -52,19 +52,23 @@ the accepted binary hashes.
 The Q4_K_M increment is not standalone. Apply its documented full lab base
 stack first, then its incremental patch, checking both decoded SHA-256 values.
 
-## Current untested candidate
+## Latest closed candidate
 
-The only active target-only Q8 candidate is the root-fused per-owner handoff:
+The root-fused per-owner handoff has been tested and closed:
 
-- status: compiled on the reference host, never executed;
+- status: safe and exact at the benchmark gate, but `-3.388%` slower than the
+  position-balanced mode-2 control;
 - accepted Q8 full patch must be applied first;
 - incremental patch:
   [`q8-root-fused-collective-untested-20260816.diff.gz.b64`](patches/q8-root-fused-collective-untested-20260816.diff.gz.b64);
 - decoded patch SHA-256:
   `e864bf0dafcd323df330761b9048edc46875b020cf38f707175b3c53e019899c`;
 - runtime door: `GGML_SYCL_COMM_DIRECT_Q8=4`;
-- complete safety and qualification protocol:
-  [candidate note](notes/2026-08-16-q8-root-fused-candidate-staged.md).
+- complete result:
+  [negative-result note](notes/2026-08-16-q8-root-fused-candidate-negative.md).
+
+Do not spend another host on mode 4 unchanged. There is currently no claimed
+active target-only Q8 candidate; check `origin/main` before opening one.
 
 Mode `3` is not an alternative candidate. Its peer-writing design caused a
 device-lost/reset storm and is permanently quarantined. Never enable or port

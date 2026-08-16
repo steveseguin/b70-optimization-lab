@@ -26,31 +26,26 @@ The reusable Qwen3.8 work is already real:
   Qwen3.8 vLLM ideas have been inventoried. Neutral, negative, and unsafe
   experiments are kept so they are not accidentally repeated.
 
-The immediate blocker is operational rather than conceptual. An experimental
-peer-writing collective caused a Level Zero device-lost/reset storm and left
-the current kernel warning-tainted. Both cards recovered to `normal`, but no
-more GPU workload should run until a clean reboot.
+The reset-tainted boot was cleared. The clean-boot gate permits only the
+host's audited one-time KMS warning, and the safer root-fused candidate was
+tested without a compute fault. It regressed decode by `3.388%` and is closed.
 
 ## Next execution sequence
 
-1. Reboot and run
-   [`post-reboot-gpu-gate.sh`](../scripts/post-reboot-gpu-gate.sh). It fails
-   closed unless the kernel is clean apart from the host's single audited
-   boot-only KMS `dma_buf_vmap` warning, both B70s are `normal`, no model
-   workload is active, and no Xe/GuC fault/reset/hang appears in this boot.
-   Confirm both cards still expose their full 32 GiB BARs before the candidate
-   benchmark.
-2. Run only a one-token smoke of the already-built root-fused TP2 candidate.
-   It keeps device-1 output work on device 1 and removes one device-0
-   submission; it does not repeat the rejected cross-device output writes.
-3. If the smoke is clean, bracket candidate and accepted mode 2 with identical
-   short decode runs. Promote only a repeatable gain outside run noise.
-4. If the bracket wins, run the complete 12-prompt cache-zero suite twice,
+1. Profile the accepted mode-2 stack on the clean boot using host-side launch
+   census and ordinary telemetry only; do not enable the previously unsafe
+   device-event profiler.
+2. Select a candidate that shortens or overlaps the critical path. Do not
+   extend the device-0 root kernel or make device 1 wait for device-0-local
+   RMS/Q8 work.
+3. Prefer a shape-scoped down-projection/activation handoff that eliminates a
+   materialize-and-requantize round trip while preserving the accepted FP32
+   boundary and operation order.
+4. Require a bounded smoke and position-balanced same-binary bracket before
+   any endpoint work. Promote only a repeatable gain outside run noise.
+5. For a winning bracket, run the complete 12-prompt cache-zero suite twice,
    require exact complete-output hashes, and rerun semantic/long-context
-   canaries. Update the repro and model board only after those gates pass.
-5. If it is neutral or unsafe, close it and move to a profile-driven kernel
-   target. Do not spend another campaign on adapter, cache-row, sampling, or
-   lossless-packing ideas already shown to be neutral or too small.
+   canaries before updating the model board.
 
 ## Performance strategy
 
@@ -63,14 +58,13 @@ same FP32 reduction order and output bytes.
 
 Work is ranked as follows:
 
-1. root-fused collective boundary already staged and built;
-2. new clean-boot profiling of the accepted stack to identify the largest
+1. new clean-boot profiling of the accepted stack to identify the largest
    remaining launch/stall buckets;
-3. shape-scoped fused-Q8/down-projection handoff that keeps the accepted FP32
+2. shape-scoped fused-Q8/down-projection handoff that keeps the accepted FP32
    boundary but avoids a materialize-and-requantize round trip;
-4. Q4_K_M concurrency and deep-prefill package as a separate production lane,
+3. Q4_K_M concurrency and deep-prefill package as a separate production lane,
    using the verified `-b 8192 -ub 2048` prefill setting where it helps;
-5. vLLM/FP8 only when the official artifact and Intel runtime pass the same
+4. vLLM/FP8 only when the official artifact and Intel runtime pass the same
    semantic canaries—never by inheriting the rejected GPTQ result.
 
 Every future headline must state model revision and SHA, quantization, GPU
