@@ -1,0 +1,32 @@
+{
+  "date": "2026-08-16",
+  "status": "compiled_untested_requires_clean_reboot",
+  "scope": "Qwen3.8-27B Q8_0 target-only TP2; no speculation",
+  "mode": "GGML_SYCL_COMM_DIRECT_Q8=4",
+  "design": {
+    "device0": "accepted reduction root plus device0-local residual/RMS/MUL/Q8 in one workgroup",
+    "device1": "accepted device1-owned residual/RMS/MUL/Q8 kernel dependent on root event",
+    "peer_writes": "only the accepted device0-to-device1 shared FP32 sum",
+    "submission_reduction_per_tp_boundary": 1
+  },
+  "build": {
+    "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "compiler": "oneAPI 2026.1.1",
+    "configuration": "Release, BMG-G31 AOT, F16 on, graph/DNN/host-memory-fallback off",
+    "memory_cap": "6 GiB RAM plus 2 GiB swap",
+    "llama_bench_sha256": "18ab44dd1bb21ee70bd50fa8bbe02c4b38a67bf59eb6969b0adcfe92538303f0"
+  },
+  "patch": {
+    "artifact": "experiments/qwen38-27b-b70/patches/q8-root-fused-collective-untested-20260816.diff.gz.b64",
+    "decoded_sha256": "e864bf0dafcd323df330761b9048edc46875b020cf38f707175b3c53e019899c",
+    "encoded_sha256": "c3d3cdb2f9fcf19f04e2426c00c0deffe04080c3c7c868124aa1e5b2054f1c2f",
+    "decoded_bytes": 10142,
+    "decoded_lines": 199
+  },
+  "results": {
+    "safety_smoke": null,
+    "throughput": null,
+    "quality": null
+  },
+  "next_gate": "After a clean reboot: normal devices and clear taint, p0/n1/r1 mode4, same-binary mode2 control, then balanced performance and 12/12 endpoint quality gates."
+}
