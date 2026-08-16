@@ -10,10 +10,14 @@ IMAGE=${IMAGE:-vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1
 MODEL_DIR=${MODEL_DIR:-/mnt/fast-ai/llm-models/qwen3.8-27b-gptq-int4-mtp}
 MODE=${MODE:-nospec}
 MAX_MODEL_LEN=${MAX_MODEL_LEN:-8192}
+KV_CACHE_DTYPE=${KV_CACHE_DTYPE:-fp8}
+MAX_NUM_SEQS=${MAX_NUM_SEQS:-64}
+MAX_NUM_BATCHED_TOKENS=${MAX_NUM_BATCHED_TOKENS:-8192}
 DEVICE_INDEX=${DEVICE_INDEX:-0}
 PORT=${PORT:-18085}
 NAME=${NAME:-q38-gptq-${MODE}}
 PATCH_MODE=${PATCH_MODE:-off}
+INSPECT_MTP_DTYPE=${INSPECT_MTP_DTYPE:-0}
 HOST_MEMORY=${HOST_MEMORY:-8g}
 HOST_MEMORY_SWAP=${HOST_MEMORY_SWAP:-10g}
 
@@ -39,6 +43,10 @@ if (( MAX_MODEL_LEN > 8192 )) && [[ ${ALLOW_LONG_CONTEXT:-0} != 1 ]]; then
 fi
 if [[ $PATCH_MODE != off && $PATCH_MODE != reported ]]; then
   echo "PATCH_MODE must be off or reported" >&2
+  exit 2
+fi
+if [[ $KV_CACHE_DTYPE != fp8 && $KV_CACHE_DTYPE != auto ]]; then
+  echo "KV_CACHE_DTYPE must be fp8 or auto (model-native FP16)" >&2
   exit 2
 fi
 if [[ ! -f "$MODEL_DIR/model.safetensors.index.json" ]]; then
@@ -68,6 +76,7 @@ docker run -d --name "$NAME" \
   -v "$MODEL_DIR":/model:ro \
   -v "$ROOT_DIR/reported/patch_mtp_nightly.py":/capture/patch_mtp_nightly.py:ro \
   -v "$ROOT_DIR/reported/patch_mtp_boundary.py":/capture/patch_mtp_boundary.py:ro \
+  -v "$ROOT_DIR/tools/inspect_mtp_runtime_dtype.py":/capture/inspect_mtp_runtime_dtype.py:ro \
   -e VLLM_TARGET_DEVICE=xpu \
   -e ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE \
   -e ZE_AFFINITY_MASK="$DEVICE_INDEX" \
@@ -75,18 +84,19 @@ docker run -d --name "$NAME" \
   -e VLLM_XPU_ENABLE_XPU_GRAPH=1 \
   -e PYTORCH_ALLOC_CONF=expandable_segments:True \
   -e APPLY_CAPTURED_PATCHES="$apply_patches" \
+  -e INSPECT_MTP_DTYPE="$INSPECT_MTP_DTYPE" \
   --entrypoint bash \
   "$IMAGE" -lc \
-  'set -e; if [[ $APPLY_CAPTURED_PATCHES == 1 ]]; then python /capture/patch_mtp_nightly.py; python /capture/patch_mtp_boundary.py; fi; exec vllm serve "$@"' \
+  'set -e; if [[ $APPLY_CAPTURED_PATCHES == 1 ]]; then python /capture/patch_mtp_nightly.py; python /capture/patch_mtp_boundary.py; fi; if [[ $INSPECT_MTP_DTYPE == 1 ]]; then python /capture/inspect_mtp_runtime_dtype.py; fi; exec vllm serve "$@"' \
   bash /model \
   --quantization gptq \
   --dtype float16 \
   --max-model-len "$MAX_MODEL_LEN" \
   --gpu-memory-utilization "$GPU_UTIL" \
-  --kv-cache-dtype fp8 \
+  --kv-cache-dtype "$KV_CACHE_DTYPE" \
   --port 8000 \
-  --max-num-seqs 64 \
-  --max-num-batched-tokens 8192 \
+  --max-num-seqs "$MAX_NUM_SEQS" \
+  --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS" \
   --no-enable-prefix-caching \
   --served-model-name qwen38 \
   --language-model-only \
@@ -94,4 +104,5 @@ docker run -d --name "$NAME" \
 
 echo "Started $NAME on http://127.0.0.1:$PORT"
 echo "Follow startup: docker logs -f $NAME"
+echo "Wait for http://127.0.0.1:$PORT/health before stopping; early shutdown during XPU graph initialization caused a CCS reset in local testing."
 echo "Stop safely: docker stop -t 20 $NAME && docker container rm $NAME"

@@ -65,6 +65,7 @@ must not be merged into a family-level speed claim.
 Main entries:
 
 - [Qwen3.8 model board](../README.md#qwen38-27b-model-board)
+- [Q8_0 quality-conservative TP2 reproduction](../repro/qwen38-27b-q8-tp2-asrock-b70/README.md)
 - [Q4_K_M target-only TP2 reproduction](../repro/qwen38-27b-q4km-tp2-asrock-b70/README.md)
 - [Q4_K_M fusion patch](../patches/qwen38-27b-q4km-tp2-asrock-b70/README.md)
 - [target-only optimization ledger](../experiments/qwen38-27b-b70/notes/2026-08-15-target-only-pass2.md)
@@ -77,14 +78,13 @@ parity, and all cache counters zero. Q8_0 TP2 reached `36.772932 tok/s`
 conventional. The official FP8 vLLM artifact loaded but did not complete engine
 initialization under the bounded local profile.
 
-SergiioB's separate one-card GPTQ INT4 vLLM route is locally B70-tested at 8K
-and FP8 KV: `33.690260 tok/s` target-only, `54.175761` MTP1, `68.232180`
-MTP2, and `83.701925` MTP4. The MTP4 row independently matches the contributor's
-83.7 claim; target-verifier acceptance was 510/544, cache counters were zero,
-and 5/5 paired greedy visible-output hashes matched. Patch-off MTP4 reached
-`83.697153`, confirming the nightly patch is redundant for this exact model at
-8K. The 131K boundary patch, power, exact
-contributor prompt, runtime draft dtype, and broad quality claims remain open.
+SergiioB's separate one-card GPTQ INT4 vLLM route is locally B70-tested at 8K.
+Native FP16 KV reached `34.160467 tok/s` target-only and `87.605425` MTP4,
+faster than the corresponding FP8-KV rows. MTP matched its target and the
+loaded draft parameters were verified FP16, but the GPTQ target failed a
+deterministic code-result canary passed by Q8/Q4. It remains an experimental
+performance lane, not the no-quality-loss deployment. The 131K boundary patch,
+power, exact contributor prompt, and broad quality claims remain open.
 The exact public model, container, runtime flags, copied benchmark assets, two
 patches, safe launcher, reported payload, source hashes, and audit caveats are
 captured in the linked packet.

@@ -43,8 +43,8 @@ mechanically into llama.cpp's GGUF TP2 kernel path.
 - vLLM XPU kernels: `0.1.12.3`
 - Target quantization: GPTQ INT4, symmetric, G128, `desc_act=false`,
   int32 packing
-- MTP: one preserved unquantized layer, reported as BF16; MTP depths 1, 2,
-  and 4
+- MTP: one preserved unquantized layer; BF16 tensors on disk, verified FP16
+  parameters at runtime under `--dtype float16`; MTP depths 1, 2, and 4
 - KV: FP8
 - Hardware: one Intel Arc Pro B70, 32 GiB
 - Benchmark: C1 client post-first decode, cold/cache-off, p512/g128, median
@@ -75,6 +75,14 @@ the contributor's 83.7 claim; its aggregate acceptance was 93.75%, cache
 counters remained zero, and all five outputs stayed byte-identical to the
 target-only controls. See the
 [local MTP matrix](validation/2026-08-16-local-mtp-matrix-validation.md).
+
+A later native-KV A/B improved target-only to **34.160467 tok/s** and MTP4
+to **87.605425 tok/s** at 8K. However, the exact GPTQ checkpoint returned the
+wrong value (`30` instead of `14`) for a deterministic Python-result canary
+that Q8_0 and Q4_K_M both passed. MTP4 and FP8/native KV matched the GPTQ
+target, so they added no observed drift, but this checkpoint is not promoted
+as a no-quality-loss default. See the
+[quality/KV/dtype decision](validation/2026-08-16-quality-kv-dtype-decision.md).
 
 ## Contributor-reported results
 
@@ -139,14 +147,15 @@ session started from `/workspace/vllm` can instead inspect the untouched
 source tree. Reproduction checks must identify the imported file path or they
 can falsely conclude that a patch did not apply.
 
-### 3. Artifact draft precision is verified; runtime precision is not
+### 3. Artifact and runtime draft precision are verified
 
 HTTP range reads of all five pinned safetensors headers found 2,399 tensors:
 1,184 F16, 1,200 packed I32, and exactly 15 BF16 `mtp.*` tensors. The artifact
-therefore does preserve a BF16 draft on disk. The model config still declares
-`dtype: float16` and the server uses `--dtype float16`, so an isolated replay
-must inspect whether vLLM retains BF16 for the loaded draft or converts it to
-FP16. Do not describe runtime draft compute as BF16 until that is measured.
+therefore does preserve a BF16 draft on disk. The model config declares
+`dtype: float16` and the server uses `--dtype float16`. A logging-only probe of
+the loaded MTP module confirmed all owned parameters were converted to
+`torch.float16`. Describe the artifact as BF16-on-disk and the tested runtime
+draft as FP16, not BF16 compute.
 
 ### 4. No raw evidence is present in the public cookbook snapshot
 
@@ -174,8 +183,9 @@ matched safe power A/B only after the software lane is stable.
    strict host-memory cgroup. This 15 GiB host previously saw Level Zero
    device-lost/out-of-resource errors in another vLLM Qwen3.8 lane.
 4. Gate basic semantics and exact greedy output against a trusted target
-   implementation.
-5. Record loaded draft parameter dtypes. The nightly patch is confirmed
+   implementation. The local GPTQ checkpoint failed the Python-result canary,
+   so do not use it where no quality loss is required.
+5. The loaded draft parameters are verified FP16. The nightly patch is confirmed
    redundant for this exact model at 8K; use `PATCH_MODE=off` unless testing an
    older checkpoint without the MTP exclusion.
 6. Add MTP1, then MTP2, then MTP4, checking accepted tokens, exact target
@@ -210,6 +220,8 @@ matched safe power A/B only after the software lane is stable.
   versus graph result, parity hashes, negative U=0.75 result, and raw hashes.
 - `validation/2026-08-16-local-mtp-matrix-validation.md`: local native-MTP
   performance/acceptance matrix, parity boundary, resource notes, and hashes.
+- `validation/2026-08-16-quality-kv-dtype-decision.md`: native versus FP8 KV,
+  semantic quality boundary, loaded MTP dtype, and shutdown hazard.
 
 The unrelated gist was reviewed at
 <https://gist.github.com/burkeholland/f71d1156812fd91e4369308358892817/91d8de389199a7580f49f064f103f48259cc024c>.

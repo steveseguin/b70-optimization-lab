@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "capturedAt": "2026-08-15T23:42:27-04:00",
-  "evidenceLevel": "community-reported",
-  "executionStatus": "exact artifacts verified; target-only eager/graph and patched MTP1/2/4 locally B70-tested at 8K; long context and power untested",
+  "evidenceLevel": "B70-tested/performance; quality-rejected as no-loss default",
+  "executionStatus": "exact artifacts verified; target-only and MTP locally tested at 8K; native KV and runtime dtype measured; GPTQ target failed semantic canary; long context and power untested",
   "cookbook": {
     "url": "https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook",
     "recipeUrl": "https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook/blob/3beb704b5b86baed2a874a8cc96821116c97e080/docs/qwen38-27/QWEN38-VLLM-XPU.md",
@@ -42,7 +42,7 @@
       "BF16": 15
     },
     "mtpArtifactDtype": "BF16 (verified from all five pinned safetensors headers via bounded HTTP range reads)",
-    "mtpRuntimeDtype": "unknown; contributor launches with --dtype float16, so inspect loaded parameters",
+    "mtpRuntimeDtype": "FP16 (verified from loaded Qwen3.5 MTP owned parameters under --dtype float16)",
     "tensorHeaderAudit": {
       "auditedAt": "2026-08-15T23:51:56-04:00",
       "method": "bounded HTTP byte-range reads of the safetensors 8-byte length prefix and JSON header only",
@@ -223,8 +223,28 @@
     },
     "pairedVisibleOutputHashesMatchTargetOnly": true,
     "qualityScope": "five paired greedy truncated outputs only; not a semantic gate; FP8 KV remains separately labeled",
-    "runtimeDraftDtype": "unknown; artifact BF16, engine global dtype float16",
+    "runtimeDraftDtype": "FP16 verified; artifact tensors are BF16 on disk",
     "contributorPromptIdentityAvailable": false
+  },
+  "localQualityDecision": {
+    "testedAt": "2026-08-16",
+    "qualityDefault": false,
+    "reason": "GPTQ target returned 30 for sum(i * i for i in range(4)); Q8_0 and Q4_K_M returned the correct value 14",
+    "mtpAddedObservedDrift": false,
+    "fp8KvAddedObservedDrift": false,
+    "nativeKvTargetMedianTokS": 34.160467263397365,
+    "nativeKvMtp4MedianTokS": 87.60542517055029,
+    "nativeKvMtp4Accepted": 511,
+    "nativeKvMtp4Proposed": 540,
+    "qualityHarness": "scripts/qwen38-text-quality-suite.py",
+    "decisionDoc": "validation/2026-08-16-quality-kv-dtype-decision.md",
+    "qualityHashes": {
+      "gptqTargetNativeKv": "b5e42c6e9963b55f2fbaede73cf54edcb9fc261ca63de2f87bcb9f50427b85c7",
+      "gptqMtp4NativeKv": "cce0308274313232a5e911141dcce0eb806b89f2ac57d31c150b03f6e05ffead",
+      "gptqMtp4Fp8Kv": "2779023f17a4f4b00517eea11fb1a1597b0ea90298129beedf0592c97dc562ce",
+      "q8Tp2": "60f82f0ce1cb54976577b75fe4daf04535af2a97ccd29484141aa1b303a6b1dc",
+      "q4kmTp2": "23e60ea5f0e2036ac050123e71acb459a845263f3e8525b62fce2e5d10a6d564"
+    }
   },
   "secondSourceReview": {
     "url": "https://gist.github.com/burkeholland/f71d1156812fd91e4369308358892817",

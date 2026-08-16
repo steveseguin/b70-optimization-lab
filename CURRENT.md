@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-15**
+Last reviewed: **2026-08-16**
 
 ## Authority And Update Rule
 
@@ -70,18 +70,19 @@ The 2026-08-15 Q4_K fusion passed a clean build, mechanism counter, same-binary
 control, and complete 12-prompt cold suite. It improved the conventional
 median by `+1.701%`; all complete output hashes remained exact. The Q8_0 TP2
 transfer separately reached `36.772932 tok/s` conventional with 12/12 matched
-complete outputs.
+complete outputs. On 2026-08-16, Q8 and Q4_K_M also passed exact, arithmetic,
+JSON, factual, logic, Python-result, repeat-stability, and 3,829-token needle
+canaries. Q8 is the primary quality-conservative service identity; Q4_K_M is
+the explicitly lower-precision speed lane.
 
-A separate one-B70 SergioB GPTQ INT4 route was validated on 2026-08-16. XPU
-graph reached `33.690260 tok/s` target-only versus `25.418419` eager; MTP1/2/4
-reached `54.175761`, `68.232180`, and `83.701925 tok/s` at p512/g128, 8K
-context and FP8 KV. MTP4 accepted 510/544 drafts and all modes retained 5/5
-target-only visible-output hashes. This is a distinct engine/quantization/KV
-class and does not replace the active two-B70 GGUF target-only lane. 131K,
-runtime draft dtype, and broad semantic quality remain unresolved. An MTP4
-patch-off A/B reached `83.697153 tok/s` with identical acceptance/output,
-confirming the nightly patch is redundant for this exact 8K route; the 131K
-boundary patch remains untested.
+A separate one-B70 SergioB GPTQ INT4 route was validated on 2026-08-16. Native
+FP16 KV reached `34.160467 tok/s` target-only and `87.605425 tok/s` MTP4 at
+p512/g128 and 8K; both beat the FP8-KV rows. MTP4 accepted 511/540 drafts,
+matched the GPTQ target on the semantic suite, and its loaded draft parameters
+were verified FP16. The GPTQ target itself failed the Python-result canary
+(`30` rather than `14`) passed by Q8/Q4, so the lane is quality-rejected as the
+default and remains experimental. The nightly patch is redundant at 8K; 131K,
+the boundary patch, power, and broad quality remain open.
 
 Resume and evidence:
 
@@ -91,9 +92,11 @@ Resume and evidence:
 - [Q4_K fusion source increment](patches/qwen38-27b-q4km-tp2-asrock-b70/README.md)
 - [Q4_K structured summary](experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json)
 - [Q8 structured summary](experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json)
+- [Q8 quality-conservative standalone reproduction](repro/qwen38-27b-q8-tp2-asrock-b70/README.md)
 - [community GPTQ/MTP vLLM idea](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 - [one-B70 GPTQ target-only graph validation](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-target-only-graph-validation.md)
 - [one-B70 GPTQ native-MTP matrix](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-mtp-matrix-validation.md)
+- [GPTQ quality/KV/runtime-dtype decision](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-quality-kv-dtype-decision.md)
 
 Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
 prototype inherited from Qwen3.6 work. Both caused device faults/resets. Do not
@@ -119,6 +122,8 @@ service change:
 - `/mnt/fast-ai/bench-results/qwen38-gptq-int4-asrock-b70-20260816/`:
   SergioB target-only eager/graph validation, failed conservative-U graph
   attempt, logs, inspect records, prompts, and raw SSE evidence;
+- `/mnt/fast-ai/bench-results/qwen38-gptq-quality-20260816/`: native/FP8 KV,
+  semantic quality, MTP runtime-dtype, Q8/Q4 controls, and reset-window evidence;
 - `/mnt/fast-ai/src/llama.cpp-q8-tp2-directq8-isolated`: current accepted Qwen TP2 source;
 - `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl`: prior accepted Qwen TP2 source; preserve as control;
 - `/mnt/fast-ai/llm-models/qwen3.6-27b-q8_0-gguf/`: accepted Qwen model;
@@ -153,11 +158,12 @@ loaded service.
 
 1. Preserve the inactive Muse fleet and its source; verify service/process state
    again before every GPU launch.
-2. Continue Qwen3.8 target-only TP2 only from the accepted Q4_K source or its
-   standalone reproduction, with same-binary controls and the fixed cold gate.
-3. Treat SergiioB's single-card GPTQ/MTP vLLM recipe as a separate
-   community-reported lane. Resolve its patch hash, dynamic-exclusion, and MTP
-   dtype questions before a bounded replay.
+2. Continue Qwen3.8 Q8_0 target-only TP2 from the accepted source snapshot,
+   with same-binary controls, the fixed cold gate, and the semantic suite. Aim
+   for 40 tok/s without weakening weights, KV precision, or arithmetic gates.
+3. Keep SergiioB's single-card GPTQ/MTP vLLM recipe experimental: it is fast,
+   but the checkpoint failed the no-quality-loss semantic gate. Never stop a
+   vLLM XPU container before `/health` during graph initialization.
 4. Restore the LocalMaxxing credential outside Git, then submit the already
    queued 49.717503 tok/s target-only result after authenticated dry-run.
 5. Keep `main` synchronized before and after focused commits. Preserve failed

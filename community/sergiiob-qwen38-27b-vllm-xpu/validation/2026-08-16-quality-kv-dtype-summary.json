@@ -1,0 +1,43 @@
+{
+  "date": "2026-08-16",
+  "decision": "experimental-performance-only",
+  "qualityDefault": "GGUF Q8_0 TP2 with F16 KV",
+  "gptq": {
+    "model": "SergiioB/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16",
+    "runtimeMtpDtype": "torch.float16",
+    "artifactMtpDtype": "BF16",
+    "nativeFp16Kv": {
+      "targetOnlyMedianTokS": 34.160467263397365,
+      "mtp4MedianTokS": 87.60542517055029,
+      "mtp4Accepted": 511,
+      "mtp4Proposed": 540
+    },
+    "fp8Kv": {
+      "targetOnlyMedianTokS": 33.69026020578031,
+      "mtp4MedianTokS": 83.69715349124563,
+      "mtp4Accepted": 510,
+      "mtp4Proposed": 544
+    },
+    "quality": {
+      "pass": false,
+      "failedCase": "code_execution",
+      "promptExpression": "sum(i * i for i in range(4))",
+      "expected": "14",
+      "actual": "30",
+      "mtpMatchesGptqTarget": true,
+      "fp8KvMatchesNativeKvTarget": true
+    }
+  },
+  "ggufControls": {
+    "q8Tp2Pass": true,
+    "q4kmTp2Pass": true,
+    "codeExecutionAnswer": "14",
+    "longContextActualPromptTokens": 3829
+  },
+  "rawRoot": "/mnt/fast-ai/bench-results/qwen38-gptq-quality-20260816",
+  "safety": {
+    "finding": "stopping vLLM during graph initialization caused a CCS reset",
+    "rule": "wait for /health before graceful stop",
+    "postEventDeviceState": "normal"
+  }
+}
