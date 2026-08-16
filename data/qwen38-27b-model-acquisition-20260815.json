@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-08-16T03:27:03Z",
+  "storage": {
+    "external_root": "/mnt/usb-models",
+    "external_available_at_preflight": "1.3 TiB",
+    "fast_ai_available_at_preflight": "5.7 GiB",
+    "corsair_external_present": false
+  },
+  "target": {
+    "hf_id": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "url": "https://huggingface.co/devan-carlin/Qwen3.8-27B-int4-AutoRound/tree/bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "path": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "symlink": "/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "repository_bytes": 19016930167,
+    "quantization": {
+      "method": "auto-round",
+      "autoround_version": "0.14.2",
+      "weight_bits": 4,
+      "activation_bits": 16,
+      "group_size": 128,
+      "sym": true,
+      "packing_format": "auto_round:auto_gptq"
+    },
+    "native_mtp": {
+      "bundled": true,
+      "hidden_layers": 1,
+      "tensor_file": "model_extra_tensors.safetensors",
+      "tensor_file_bytes": 298305576,
+      "tensor_file_sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de",
+      "mtp_fc_precision": "BF16"
+    },
+    "lfs_files": [
+      {
+        "path": "model-00001-of-00007.safetensors",
+        "bytes": 3216489680,
+        "sha256": "976029a597b0d353a543fd4241156add520e41dccce29b2363b8d7a08e218091"
+      },
+      {
+        "path": "model-00002-of-00007.safetensors",
+        "bytes": 3190151576,
+        "sha256": "e4ac4e0b6f7101cbfb1f019c46b4cfd4f4ca4d90d92760fb8f6e515f33418b37"
+      },
+      {
+        "path": "model-00003-of-00007.safetensors",
+        "bytes": 3219130488,
+        "sha256": "989ee77e68979ee955d9aacf4281bb0a6bed1a311373b2b66188079edf27b8a0"
+      },
+      {
+        "path": "model-00004-of-00007.safetensors",
+        "bytes": 3216860120,
+        "sha256": "76caf31fb8259bec7cbc9c4b8fd26c8fe4fe6460ccd65dfbcc53c1295b831eb6"
+      },
+      {
+        "path": "model-00005-of-00007.safetensors",
+        "bytes": 770164464,
+        "sha256": "f0cd639621eb26410d96b8c073344ae008f646572a9c4713326ff43d406cf276"
+      },
+      {
+        "path": "model-00006-of-00007.safetensors",
+        "bytes": 2542807272,
+        "sha256": "55a14ee79d3e5a65a8731d89426f4df477e8bdc7daa7976d41254d8afb9432f0"
+      },
+      {
+        "path": "model-00007-of-00007.safetensors",
+        "bytes": 2542796896,
+        "sha256": "6866cf8adcccc4cc6a00e74bc025f1a774fb52103b70f2674d0288272951a733"
+      },
+      {
+        "path": "model_extra_tensors.safetensors",
+        "bytes": 298305576,
+        "sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de"
+      },
+      {
+        "path": "tokenizer.json",
+        "bytes": 19989325,
+        "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+      }
+    ],
+    "verification": {
+      "status": "passed",
+      "verified_file_count": 19,
+      "verified_repository_bytes": 19016930167,
+      "lfs_method": "SHA-256 matched pinned Hugging Face LFS OID",
+      "small_file_method": "Git blob SHA-1 matched pinned Hugging Face tree OID"
+    }
+  },
+  "experimental_dspark": {
+    "hf_id": "RadixArk/Qwen3.8-27B-DSpark",
+    "revision": "85ef153be924f17ce4bf62726954eeaa4a73e854",
+    "url": "https://huggingface.co/RadixArk/Qwen3.8-27B-DSpark/tree/85ef153be924f17ce4bf62726954eeaa4a73e854",
+    "path": "/mnt/usb-models/llm-models/qwen3.8-27b-dspark-radixark",
+    "symlink": "/mnt/fast-ai/llm-models/qwen3.8-27b-dspark-radixark",
+    "repository_bytes": 2718609744,
+    "weight_file": "model.safetensors",
+    "weight_file_bytes": 2718576122,
+    "weight_file_sha256": "9d26d5e637551c244d543c67c790bd0947f360e005c569e5851a185ffe692786",
+    "trained_target": "Qwen/Qwen3.8-27B-FP8",
+    "documented_runtime": "SGLang DSPARK with FA3",
+    "license_tag": "other",
+    "contains_custom_code": true,
+    "int4_xpu_compatibility": "unvalidated",
+    "verification": {
+      "status": "passed",
+      "verified_file_count": 6,
+      "verified_repository_bytes": 2718609744,
+      "lfs_method": "SHA-256 matched pinned Hugging Face LFS OID",
+      "small_file_method": "Git blob SHA-1 matched pinned Hugging Face tree OID"
+    }
+  }
+}
