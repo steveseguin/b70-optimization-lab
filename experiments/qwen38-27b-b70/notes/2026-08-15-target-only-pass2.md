@@ -105,3 +105,14 @@ hashes, and 12/12 `cached_tokens=0`. Raw evidence SHA-256:
   generation LocalMaxxing metric;
 - continue mining Intel's BMG ESIMD multi-GEMV and residual/RMS/GEMV fusion
   patterns as scheduling references rather than format-compatible drop-ins.
+
+## LocalMaxxing status
+
+The policy-compliant submission queue is preserved at
+[`localmaxxing/qwen38-27b-q4km-tp2-target-only-49.718tok-20260815.queue.json`](../localmaxxing/qwen38-27b-q4km-tp2-target-only-49.718tok-20260815.queue.json).
+Local preflight passes with the Qwen3.8 model identity and the conventional
+`49.717503 tok/s` score. The authenticated server dry-run was not executed
+because neither `LMX_API_KEY` nor the documented external credential file was
+present on this host. Do not submit it under a Qwen3.6 identity; restore the
+credential and require the server dry-run to accept `ggml-org/Qwen3.8-27B-GGUF`
+before the real POST.
