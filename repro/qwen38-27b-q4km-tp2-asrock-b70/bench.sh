@@ -21,7 +21,7 @@ python3 "${repo_root}/scripts/bench-openai-realistic-suite.py" \
     --out "${out}" \
     --request-extra-json '{"cache_prompt":false,"seed":42,"temperature":0}'
 
-python3 - "${out}" "${repo_root}/experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-target-summary.json" <<'PY'
+python3 - "${out}" "${repo_root}/experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json" <<'PY'
 import json
 import sys
 

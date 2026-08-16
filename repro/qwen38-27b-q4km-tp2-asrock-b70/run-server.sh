@@ -27,8 +27,8 @@ exec systemd-run --user --scope --quiet \
     --split-mode tensor \
     --tensor-split 1,1 \
     --flash-attn on \
-    --batch-size 1024 \
-    --ubatch-size 256 \
+    --batch-size "${QWEN38_BATCH}" \
+    --ubatch-size "${QWEN38_UBATCH}" \
     --cache-type-k f16 \
     --cache-type-v f16 \
     --cache-ram 0 \

@@ -1,0 +1,100 @@
+{
+  "status": "promoted; quality-cleared target-only Q4_K dense-FFN fusion",
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "file": "Qwen3.8-27B-Q4_K_M.gguf",
+    "bytes": 18973870432,
+    "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34"
+  },
+  "source": {
+    "public_base_repository": "https://github.com/mndodd/llama.cpp/tree/intel-sycl-optimization",
+    "public_base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "full_lab_patch_sha256": "f21e9b557c3d024527ac98d5f189cf7ea72fa8c38a5faf2a22ee339fd1988998",
+    "incremental_patch": "patches/qwen38-27b-q4km-tp2-asrock-b70/llama-cpp-q4k-mmvq-swiglu-tp2-20260815.diff.gz.b64",
+    "incremental_decoded_sha256": "0a27858525f6a402cf9c92d1b93daee0a80e2ffaef9137bf7bce784a549b58b6",
+    "upstream_inspiration_commit": "65091386227039bfb81ee3426537656e3b4a3f83"
+  },
+  "configuration": {
+    "hardware": "2x ASRock Intel Arc Pro B70 32 GiB",
+    "mode": "TP2 target-only",
+    "tensor_split": "1,1",
+    "kv": "F16",
+    "flash_attention": true,
+    "speculation": false,
+    "batch": 1024,
+    "ubatch": 256,
+    "q4k_reorder": true,
+    "q4k_mmvq_swiglu_fusion": true,
+    "cache_ram": 0,
+    "context_checkpoints": 0,
+    "suite": "qwen36-27b-autoround-int4-b70-realistic-v1",
+    "prompt_count": 12,
+    "max_tokens": 512,
+    "metric_tokens": 100,
+    "metric_intervals": 99,
+    "temperature": 0,
+    "seed": 42,
+    "compiler": "Intel oneAPI DPC++/C++ 2026.1.1.20260724",
+    "llama_server_sha256": "6ae782c7e8f7a992e0eeced10ade2a84b3cbb9ba65c65cbb917e52d1ce09777d",
+    "llama_bench_sha256": "95a13668005d2dff3bdc6ea2eb48f339d8f6552b824a572207127db040a5926a",
+    "libggml_sycl_sha256": "375f6d251b022b62367e73d2cd6b7eb0200efc9cc9c854a509af45950938c3ed"
+  },
+  "promoted": {
+    "historical_100_event_median_tok_s": 50.21970033555482,
+    "conventional_99_interval_median_tok_s": 49.71750333219927,
+    "conventional_99_interval_p10_tok_s": 49.122833211112194,
+    "conventional_99_interval_mean_tok_s": 49.64612360601442,
+    "full_output_after_ttft_median_tok_s": 49.73464446179824,
+    "full_output_wall_median_tok_s": 48.80235210996251,
+    "ttft_median_ms": 173.5738790303003
+  },
+  "prior_promoted_control": {
+    "conventional_99_interval_median_tok_s": 48.8859677824,
+    "historical_100_event_median_tok_s": 49.379765436808995,
+    "candidate_gain_percent": 1.7009698028288556
+  },
+  "llama_bench_same_binary_ab": {
+    "shape": "p64/n256/r5; -dev SYCL0/SYCL1; -ts 1/1",
+    "fusion_off_tok_s": 49.460273,
+    "fusion_off_stdev": 0.086967,
+    "fusion_on_tok_s": 50.271708,
+    "fusion_on_stdev": 0.148347,
+    "gain_percent": 1.6405792988647638,
+    "fusion_on_hits": 163968
+  },
+  "optional_prefill_mode": {
+    "environment": "GGML_SYCL_REORDER_IN_GEMM=1 GGML_SYCL_FORCE_REORDER=1",
+    "batch": 8192,
+    "ubatch": 2048,
+    "p64_prompt_tok_s": 392.543995,
+    "matched_decode_tok_s": 50.13118,
+    "prefill_gain_vs_promoted_batch_percent": 20.67564114084448,
+    "decode_change_percent": -0.2795369514797419,
+    "promotion": "prefill-heavy optional mode; not the decode record"
+  },
+  "validity": {
+    "realistic_gate_passed": true,
+    "fresh_response_gate_passed": true,
+    "cached_tokens_all_zero": true,
+    "complete_output_hashes_exact": "12/12",
+    "verify_mismatch": 0,
+    "new_kernel_faults": 0,
+    "full_suite_fused_q4k_mmvq_swiglu_hits": 754176,
+    "raw_evidence_sha256": "a3b1c58a76c7eae6027811ee61b6289ba295db15faafc1650668ae6ccb7992e8"
+  },
+  "output_sha256s": [
+    "7fcbfa6bf62d17ea3f15b33448d3466079e8220401000672f8ad7b13daef943c",
+    "8da41a2c769849bf86f682964cb53b6ea4e5853be21844ac43a65ce6680537ff",
+    "2901aac3012df2314f7eb6ae2f1c4d905f5cf928eea9a4d2a0103adacfe85974",
+    "c60233376e1df2e2ca2518c6b2b2fea1cb8c4589e51459a11efcdccd77f228ee",
+    "f07bc31c40589451f775ee372229b6d7fca4650edda16fbd98fbe9704f036f34",
+    "949f9416ba6c99188824fa7e7b9cf840db1dbf0cbe85cae0851699e6004b989f",
+    "88d1db4384a6acdb017ca2aa8e182996d8cdb006c204511d6996478b5a2ccd83",
+    "dfbbf4695783929ab9ec52023ba80b34f37d35c7cd5180103204bd8a10d10102",
+    "c30f8725a90a8c57656ac4d03e60c8581c968fb84d6344134e64c9a42b94d49c",
+    "bc4831fe51db6ac1fc5cbd5e5b8b434cca6fd0b3a3d034dc0b1c9c483388220a",
+    "19ac154216c1e2d9d2fde78fd63fffd7eb0865b6d5db2e0a34c92c0102d2058d",
+    "27d5971240c3fb8e625b9f77e656c81e3c10be5475feeb5335ba2c7cd238bced"
+  ]
+}
