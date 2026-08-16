@@ -1,0 +1,65 @@
+{
+  "status": "quality-cleared target-only transfer",
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "bytes": 28595763552,
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "configuration": {
+    "hardware": "2x ASRock Intel Arc Pro B70 32 GiB",
+    "mode": "TP2 target-only",
+    "tensor_split": "1,1",
+    "kv": "F16",
+    "flash_attention": true,
+    "speculation": false,
+    "cache_ram": 0,
+    "context_checkpoints": 0,
+    "suite": "qwen36-27b-autoround-int4-b70-realistic-v1",
+    "prompt_count": 12,
+    "max_tokens": 512,
+    "metric_tokens": 100,
+    "temperature": 0,
+    "seed": 42
+  },
+  "optimized": {
+    "historical_100_event_median_tok_s": 37.14437598471152,
+    "conventional_99_interval_median_tok_s": 36.772932224864405,
+    "conventional_99_interval_p10_tok_s": 36.04657551813034,
+    "full_output_after_ttft_median_tok_s": 36.66184531469578,
+    "full_output_wall_median_tok_s": 36.201997070823225,
+    "ttft_median_ms": 178.84132149629295
+  },
+  "matched_mndodd_control": {
+    "historical_100_event_median_tok_s": 31.67013218271361,
+    "conventional_99_interval_median_tok_s": 31.353430860886473,
+    "conventional_99_interval_p10_tok_s": 30.88863200442105,
+    "full_output_after_ttft_median_tok_s": 31.545775643127623,
+    "full_output_wall_median_tok_s": 31.10567578231621,
+    "ttft_median_ms": 179.71559549914673
+  },
+  "relative_gain_percent": 17.285194044709094,
+  "validity": {
+    "optimized_gate_passed": true,
+    "control_gate_passed": true,
+    "cached_tokens_all_zero": true,
+    "complete_output_hashes_exact": "12/12",
+    "verify_mismatch": 0,
+    "new_kernel_faults": 0
+  },
+  "output_sha256s": [
+    "d79af7041af46e7e73d2ed7d39d794df7a0d8d22b87fe1244e22afe5e2786a21",
+    "898068c21ba86e8ccb286e0066197b0ec8553a678f39c1a62242d796bbc6d746",
+    "2911d5ac2748ae39f5a038d1a86e4076907b0937d7e3f0fbc32573e5b191619a",
+    "4867dd67fa399566ee244041a6cf9493eec1cd5f9ff87925ca0625d4c61e8aa6",
+    "9073921cac87e415a4a54a6c461264fa7d820aecb9166adcc3039f7d2f408476",
+    "018ea35184744f28defe6d5612493cc41a1cb1317ee113d35db1c577dd7e0e87",
+    "693e030d6669b698bc23a94085d538bf95977b97a6b5fe9fbdc320758e6699bc",
+    "47ec768343a207396d099dd321abaaf72b8cb0a3665e4bf7a4cba89ba07884cc",
+    "43aaead0205015f2428dfcb72fa925aa2209d42340bb7bd7d4bbea1bf6e59ae3",
+    "ed9d29258903b286eb26313482eb89bee51d47568d64a5034310cd24db56970b",
+    "7d346a65bdc9e2df6abbfcf5b61638625ded1c02ef355809f11c859cf52bcd7a",
+    "2cc2ef0d7954e7b24129e26733c3d0bd9e16f4933edaf28b726e17f5d605e754"
+  ]
+}

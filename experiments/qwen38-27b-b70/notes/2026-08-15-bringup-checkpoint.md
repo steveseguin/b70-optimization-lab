@@ -3,7 +3,8 @@
 Date: 2026-08-15
 
 This note coordinates the initial Qwen3.8 27B bring-up on the two-card ASRock
-Arc Pro B70 host. It is not a promoted benchmark result.
+Arc Pro B70 host. The first Q8 target-only transfer result is now
+quality-cleared; further optimization remains active.
 
 ## Source artifacts
 
@@ -87,6 +88,44 @@ because a component has a numerically newer version.
    GDN/FP8/INT4 tuning which matches Qwen3.8's unchanged shapes. The image does
    not yet list Qwen3.8, so treat it as unvalidated until a local correctness
    gate passes.
+
+## First Q8 target-only transfer result
+
+The complete Q8 target downloaded and verified at `28,595,763,552` bytes with
+SHA-256
+`f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8`.
+The accepted Qwen3.6 TP2 binary and runtime were used unchanged. All expected
+shape-specific counters fired, the one-token smoke ended with
+`VERIFY_MISMATCH=0`, and no new Xe warning, engine reset, CAT error, or fault
+appeared around any run.
+
+The fixed cold endpoint suite used raw completions, 12 unique prompts sent
+once, 512 maximum output tokens, temperature zero, seed 42, F16 KV,
+FlashAttention, equal TP2, cache RAM zero, and context checkpoints zero.
+
+| Runtime | Conventional first-100 median | p10 | Full-output after TTFT | Wall full output | TTFT median |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| transferred lab stack | **`36.772932` tok/s** | `36.046576` | `36.661845` | `36.201997` | `178.841 ms` |
+| validated mndodd TP2 control | `31.353431` tok/s | `30.888632` | `31.545776` | `31.105676` | `179.716 ms` |
+
+The transferred lab stack is `+17.285194%` over the matched control. Both
+runs passed their realistic/fresh-response gates, every request reported
+`cached_tokens=0`, and all **12/12 complete output SHA-256 values match**.
+This clears the transferred Q8 stack for Qwen3.8 without MTP, DFlash, or any
+other speculation. It does not yet meet the 40 tok/s target.
+
+A separate current-upstream-derived diagnostic reached only `21.524184 tok/s`
+conventional and differed on all complete output hashes. It is not the quality
+oracle because upstream has changed arithmetic ordering since the previously
+validated control. The matched mndodd control above is the acceptance
+comparator.
+
+The direct `llama-bench` transfer screen (`p64/n256/r3`) measured
+`36.883250 tok/s` decode. Treat it as a synthetic support row; the cold
+endpoint median above is the promoted comparison metric.
+
+Raw local artifacts are under
+`/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260815-bringup/`.
 
 ## Safety and validity
 
