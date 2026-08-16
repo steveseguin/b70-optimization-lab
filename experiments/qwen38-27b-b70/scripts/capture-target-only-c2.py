@@ -52,7 +52,7 @@ def payload(prompt: str, slot: int, n_predict: int, stream: bool) -> dict:
     }
 
 
-def stream_one(base_url: str, slot: int, n_predict: int, timeout: int,
+def stream_one(base_url: str, slot: int, prompt: str, n_predict: int, timeout: int,
                barrier: threading.Barrier) -> dict:
     parsed = urlparse(base_url)
     connection = http.client.HTTPConnection(parsed.hostname, parsed.port, timeout=timeout)
@@ -62,7 +62,7 @@ def stream_one(base_url: str, slot: int, n_predict: int, timeout: int,
     connection.request(
         "POST",
         "/completion",
-        body=json.dumps(payload(PROMPTS[slot], slot, n_predict, True)).encode(),
+        body=json.dumps(payload(prompt, slot, n_predict, True)).encode(),
         headers={"Content-Type": "application/json"},
     )
     response = connection.getresponse()
@@ -108,10 +108,14 @@ def main() -> int:
     parser.add_argument("--base-url", default="http://127.0.0.1:18089")
     parser.add_argument("--n-predict", type=int, default=256)
     parser.add_argument("--concurrency", type=int, default=2, choices=range(1, len(PROMPTS) + 1))
+    parser.add_argument("--prompt-offset", type=int, default=0, choices=range(len(PROMPTS)))
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     concurrency = args.concurrency
+    if args.prompt_offset + concurrency > len(PROMPTS):
+        parser.error("prompt-offset + concurrency exceeds the fixed prompt set")
+    prompts = PROMPTS[args.prompt_offset:args.prompt_offset + concurrency]
 
     base_url = args.base_url.rstrip("/")
     with urllib.request.urlopen(f"{base_url}/health", timeout=10) as response:
@@ -119,10 +123,10 @@ def main() -> int:
             raise RuntimeError("server is not healthy")
 
     sequential = []
-    for slot in range(concurrency):
+    for slot, prompt in enumerate(prompts):
         result = post_json(
             f"{base_url}/completion",
-            payload(PROMPTS[slot], slot, args.n_predict, False),
+            payload(prompt, slot, args.n_predict, False),
             args.timeout,
         )
         tokens = result.get("tokens")
@@ -146,7 +150,7 @@ def main() -> int:
     def worker(slot: int) -> None:
         try:
             concurrent[slot] = stream_one(
-                base_url, slot, args.n_predict, args.timeout, barrier
+                base_url, slot, prompts[slot], args.n_predict, args.timeout, barrier
             )
         except BaseException as exc:  # preserve worker failures in the packet
             errors.append(repr(exc))
@@ -187,6 +191,7 @@ def main() -> int:
     result = {
         "test": f"Qwen3.8 target-only TP2 ordinary concurrency {concurrency}",
         "concurrency": concurrency,
+        "prompt_offset": args.prompt_offset,
         "n_predict_per_request": args.n_predict,
         "speculation": False,
         "cache_prompt": False,

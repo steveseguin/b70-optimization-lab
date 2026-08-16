@@ -22,9 +22,12 @@ reuse, response reuse, or KV reuse.
 This is an aggregate service-capacity result, **not** a 57 tok/s single-stream
 claim. Each concurrent request delivered about 28.70 tok/s. It is also a
 two-prompt cross-batch gate, not proof that every prompt is schedule-invariant.
-An earlier broader c2 experiment observed two stable greedy-output pairs under
-different scheduling outcomes; that caveat remains documented in the
-[cache-row fusion note](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-c2-cache-row-fusion-neutral.md).
+Broader c2 experiments observed schedule-dependent greedy outputs. A later
+batch-shape sweep confirmed the boundary directly: `2048/512` matched both
+sequential oracles twice for the captured pair above, but matched 0/2 for a
+disjoint fixed-prompt pair. This result is therefore not a general arbitrary-
+prompt quality guarantee. See the [batch-shape audit](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-c2-batch-shape-audit.md)
+and [cache-row fusion note](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-c2-cache-row-fusion-neutral.md).
 
 ## Exact identity
 
@@ -58,6 +61,12 @@ The harness first records cache-cold sequential token-ID oracles, then opens
 two HTTP connections and releases them through one synchronization barrier.
 It fails unless both concurrent outputs are exactly equal to their sequential
 oracles and all cache counters are zero.
+
+Research replays may override `QWEN38_C2_BATCH` and `QWEN38_C2_UBATCH` when
+starting the server. The default remains the captured `1024/256`; the sweep did
+not establish a faster or universally exact replacement. Use
+`--prompt-offset 2` with the underlying capture script to exercise the second
+disjoint fixed-prompt pair.
 
 The compact accepted evidence is
 [`2026-08-16-q8-tp2-c2-summary.json`](../../experiments/qwen38-27b-b70/data/2026-08-16-q8-tp2-c2-summary.json).

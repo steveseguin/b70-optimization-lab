@@ -7,6 +7,9 @@ source "${primary_dir}/runtime-common.sh"
 source "${primary_dir}/config.env"
 
 QWEN38_PORT="${QWEN38_C2_PORT:-18089}"
+QWEN38_C2_BATCH="${QWEN38_C2_BATCH:-1024}"
+QWEN38_C2_UBATCH="${QWEN38_C2_UBATCH:-256}"
+QWEN38_C2_CTX="${QWEN38_C2_CTX:-16384}"
 server="${QWEN38_BUILD_DIR}/bin/llama-server"
 [[ -x "${server}" ]] || { printf 'Missing executable: %s\n' "${server}" >&2; exit 1; }
 [[ -f "${QWEN38_MODEL}" ]] || { printf 'Missing model: %s\n' "${QWEN38_MODEL}" >&2; exit 1; }
@@ -29,8 +32,8 @@ exec systemd-run --user --scope --quiet \
     --split-mode tensor \
     --tensor-split 1,1 \
     --flash-attn on \
-    --batch-size 1024 \
-    --ubatch-size 256 \
+    --batch-size "${QWEN38_C2_BATCH}" \
+    --ubatch-size "${QWEN38_C2_UBATCH}" \
     --cache-type-k f16 \
     --cache-type-v f16 \
     --cache-ram 0 \
@@ -39,7 +42,7 @@ exec systemd-run --user --scope --quiet \
     --reasoning off \
     --threads 8 \
     --poll 50 \
-    --ctx-size 16384 \
+    --ctx-size "${QWEN38_C2_CTX}" \
     --parallel 2 \
     --metrics \
     --slots \

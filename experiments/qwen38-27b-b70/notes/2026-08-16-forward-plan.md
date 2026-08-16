@@ -21,7 +21,8 @@ The reusable Qwen3.8 work is already real:
 - The same accepted Q8 stack sustains `57.398122 tok/s` aggregate for two
   synchronized requests (about `28.70 tok/s` each), exact to the two fixed
   cache-cold sequential oracles. This is a separately labeled c2 service
-  result, not a replacement for the single-request record.
+  result, not a replacement for the single-request record or a general quality
+  guarantee. A disjoint prompt pair later diverged 0/2 under c2.
 - The public SergiioB GPTQ/MTP route was captured and locally reproduced, but
   its GPTQ target failed a deterministic Python-result canary that Q8_0 and
   Q4_K_M passed. It is retained as research evidence, not the quality-default
@@ -65,9 +66,10 @@ Work is ranked as follows:
 
 1. Retain VDR4. The c2-specific VDR2 build regressed aggregate throughput by
    `2.981%` and changed one prompt across sequential/concurrent scheduling.
-2. Do not publish c3/c4: they reach `77.212`/`91.895 tok/s` aggregate but fail
-   the exact fixed-slot oracle. c2 remains the highest qualified service lane,
-   with its narrow two-prompt boundary stated explicitly.
+2. Do not publish c3/c4 as quality-cleared: they reach `77.212`/`91.895 tok/s`
+   aggregate but fail the exact fixed-slot oracle. Retain c2 only as a narrow
+   fixed-prompt capacity capture; its large-batch sweep also diverged on a
+   disjoint prompt pair.
 3. The hardware-control audit is closed: both cards reached their configured
    `2800 MHz` ceiling without a throttle reason, and exclusive scheduling is
    unsupported on this stack. No persistent setting was changed.

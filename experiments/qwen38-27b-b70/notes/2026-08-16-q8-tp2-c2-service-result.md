@@ -24,6 +24,9 @@ change the primary `36.772932 tok/s` single-request record. An earlier broad
 c2 test alternated between two stable greedy-output pairs in both its control
 and candidate arms; these two fixed prompts did not reproduce that behavior,
 but the broader scheduling caveat is not declared solved.
+A later batch-shape sweep strengthened that limitation: `2048/512` was exact
+twice for this pair but diverged 0/2 for a disjoint fixed-prompt pair. See the
+[broader audit](2026-08-16-q8-c2-batch-shape-audit.md).
 
 The public reproduction is
 [`repro/qwen38-27b-q8-tp2-c2-asrock-b70`](../../../repro/qwen38-27b-q8-tp2-c2-asrock-b70/README.md),

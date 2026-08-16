@@ -1,0 +1,89 @@
+{
+  "date": "2026-08-16",
+  "scope": "Qwen3.8-27B Q8_0 target-only TP2 concurrency-two batch/ubatch sweep",
+  "disposition": "no_performance_promotion_broader_quality_gate_failed",
+  "invariants": {
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "server_sha256": "32c581628082fa1352824650d45f523d52b526aaefdfd23e1c34d438f7ad084a",
+    "gpu_count": 2,
+    "tensor_split": "1/1",
+    "kv": "F16",
+    "n_predict_each": 256,
+    "cache_prompt": false,
+    "speculation": false
+  },
+  "runs": [
+    {
+      "batch": 1024,
+      "ubatch": 256,
+      "prompt_offset": 0,
+      "aggregate_conventional_tok_s": 55.00191573829552,
+      "all_exact": false,
+      "all_cache_cold": true,
+      "raw_sha256": "cac4e71639649b0e02e94d213f4322a379a74d8fa87567f62367e43df78e0bda"
+    },
+    {
+      "batch": 2048,
+      "ubatch": 512,
+      "prompt_offset": 0,
+      "aggregate_conventional_tok_s": 57.37844623483455,
+      "all_exact": true,
+      "all_cache_cold": true,
+      "raw_sha256": "c7795abffd606cba72cf0ce58c9c521c4f4c4c80e93f474d53354e51a6eb0349"
+    },
+    {
+      "batch": 4096,
+      "ubatch": 1024,
+      "prompt_offset": 0,
+      "aggregate_conventional_tok_s": 57.395247163502404,
+      "all_exact": true,
+      "all_cache_cold": true,
+      "raw_sha256": "8a9121d7658e4a57c350aeec83f9921f789c82d6477ad7455e740e06b71ffe11"
+    },
+    {
+      "batch": 8192,
+      "ubatch": 2048,
+      "prompt_offset": 0,
+      "aggregate_conventional_tok_s": 57.483594002774126,
+      "all_exact": true,
+      "all_cache_cold": true,
+      "raw_sha256": "d485953682f5a5d86ef88f110023e9f59b23fc39017dbb6beee2ff74e2950755"
+    },
+    {
+      "batch": 2048,
+      "ubatch": 512,
+      "prompt_offset": 0,
+      "aggregate_conventional_tok_s": 57.395772311297755,
+      "all_exact": true,
+      "all_cache_cold": true,
+      "raw_sha256": "79b31548b106aed93a04cca323b7f396602924bfd00cc3725c0c07d7202057ee"
+    },
+    {
+      "batch": 8192,
+      "ubatch": 2048,
+      "prompt_offset": 0,
+      "aggregate_conventional_tok_s": 56.30938886239298,
+      "all_exact": true,
+      "all_cache_cold": true,
+      "raw_sha256": "9b3534a480dc0fe0e3d7b249b382e216c08471b7df157f1768976305ed1b1062"
+    },
+    {
+      "batch": 2048,
+      "ubatch": 512,
+      "prompt_offset": 2,
+      "aggregate_conventional_tok_s": 57.28564479933498,
+      "all_exact": false,
+      "exact_count": 0,
+      "request_count": 2,
+      "all_cache_cold": true,
+      "raw_sha256": "1f2a921790e1706b72142392dd871dbf42d90d818652bae89f0600f34b0db1cb"
+    }
+  ],
+  "conclusions": [
+    "No batch shape produced a repeatable throughput improvement over the existing 57.398122 tok/s narrow c2 capture.",
+    "The 8192/2048 apparent high of 57.483594 tok/s fell to 56.309389 tok/s on repeat.",
+    "The 2048/512 shape was exact twice for prompts 0/1 but diverged 0/2 for prompts 2/3, so it is not a general quality repair.",
+    "Keep 1024/256 as the reproduction default and retain the c2 result as a narrowly scoped fixed-prompt capacity measurement."
+  ],
+  "raw_directory": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260816-c2-batch-sweep"
+}
