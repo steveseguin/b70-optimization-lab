@@ -1,0 +1,59 @@
+{
+  "date": "2026-08-16",
+  "experiment": "Qwen3.8-27B Q8_0 TP2 concurrency-two row-exact MMVQ split",
+  "disposition": "rejected_quality",
+  "hypothesis": "Splitting Q8 ne[1]==2 into two no-copy ne[1]==1 MMVQ launches would retain the sequential single-row arithmetic and remove c2 schedule-dependent greedy output changes.",
+  "identity": {
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_lineage": "mndodd/llama.cpp intel-sycl-optimization plus the accepted Qwen3.8 Q8 TP2 patch stack",
+    "candidate_patch": "experiments/qwen38-27b-b70/patches/q8-c2-row-exact-mmvq-quality-negative-20260816.diff",
+    "llama_server_sha256": "d02284709d3fbb6c53851fc6b793e80606a7bef324b216bb7674ab875df2cd2a",
+    "llama_bench_sha256": "35d32831551783f1b2ca2751c22f393c0fb897445f14f6d08a03f5ccc5839dd8",
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "configuration": {
+    "control": "GGML_SYCL_MMVQ_SPLIT_Q8_C2=0",
+    "treatment": "GGML_SYCL_MMVQ_SPLIT_Q8_C2=1",
+    "server": "TP2 1/1, parallel=2, ctx=16384, batch=1024, ubatch=256, F16 KV, flash attention, reasoning off, no speculation",
+    "capture": "two cache-cold sequential fixed-slot oracles followed by two barrier-synchronized 256-token streams",
+    "build": "Release, oneAPI 2026.1 icpx, bmg_g31 AOT, SYCL/F16/Level-Zero support on, DNN/graph/host fallback off"
+  },
+  "results": [
+    {
+      "arm": "control_off_pair_0_1",
+      "aggregate_conventional_tok_s": 56.158854140499606,
+      "exact_slots": "2/2",
+      "all_cache_cold": true,
+      "raw_sha256": "973ce6c5c88f764443326d5de5dbe22ef3298249796ca2f858625500fccfd5d8"
+    },
+    {
+      "arm": "treatment_on_pair_0_1",
+      "aggregate_conventional_tok_s": 57.43060278268341,
+      "delta_percent": 2.264556,
+      "exact_slots": "2/2",
+      "all_cache_cold": true,
+      "raw_sha256": "93804869b758c6cb4550025484f26bbb64f0b4b0838f2eeeff17ae921aa9a23c"
+    },
+    {
+      "arm": "control_off_pair_2_3",
+      "aggregate_conventional_tok_s": 55.90412686029774,
+      "exact_slots": "0/2",
+      "all_cache_cold": true,
+      "raw_sha256": "ccd537af7ca12d6ec59677c4c932778e71a7a924c95dd1e9e56cd906dc1f76ae"
+    },
+    {
+      "arm": "treatment_on_pair_2_3",
+      "aggregate_conventional_tok_s": 56.990978834259195,
+      "delta_percent": 1.944135,
+      "exact_slots": "0/2",
+      "all_cache_cold": true,
+      "raw_sha256": "76f681d17b61ca83c8a05973fcc1ed3839c88dca443c708b1d0851bf01d52ea4"
+    }
+  ],
+  "quality": {
+    "verify_mismatch": 0,
+    "decision": "The patch improves c2 throughput slightly but does not repair the disjoint-prompt schedule-dependent output divergence. It is not quality-preserving and must not be promoted."
+  },
+  "post_run": "Both devices normal, idle at 400 MHz, no new Xe fault/reset/hang/device-lost/CAT error in the current boot log.",
+  "raw_local_directory": "/mnt/fast-ai/bench-results/qwen38-q8-c2-splitrows-20260816"
+}

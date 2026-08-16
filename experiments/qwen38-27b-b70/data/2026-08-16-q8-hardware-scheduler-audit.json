@@ -1,7 +1,7 @@
 {
   "date": "2026-08-16",
   "scope": "Qwen3.8-27B Q8_0 target-only TP2 hardware scheduling control",
-  "disposition": "closed_no_mutation",
+  "disposition": "closed_restored_no_persistent_mutation",
   "hardware": {
     "gpu_count": 2,
     "gpu": "ASRock Intel Arc Pro B70",
@@ -18,6 +18,29 @@
     "settings_changed": false,
     "post_attempt_scheduler_device_0": "timeslice",
     "post_attempt_scheduler_device_1": "timeslice"
+  },
+  "timeslice_mutation_guard": {
+    "active_interval_us": 1000,
+    "minimum_cli_accepted_interval_us": 5000,
+    "settings_changed": false,
+    "reason": "Exact same-boot restoration was unavailable without a reboot."
+  },
+  "minimum_clock_abba": {
+    "configuration": {
+      "control_mhz": [400, 2800],
+      "treatment_mhz": [2750, 2800],
+      "benchmark": "llama-bench p0/n256, r3, Q8 TP2 accepted binary"
+    },
+    "arms": [
+      {"name": "A1-default", "avg_tok_s": 36.031442, "stddev_tok_s": 0.022970, "sha256": "4eb270bff62c603b5c675feca2db1adc7b11087e60b93b77a3f88ad0ee125092"},
+      {"name": "B1-pinned", "avg_tok_s": 36.043457, "stddev_tok_s": 0.039047, "sha256": "99e5a64fc0728a556e5e8020c293037f00ff52054d2802211aad50a64ec52d82"},
+      {"name": "B2-pinned", "avg_tok_s": 36.440978, "stddev_tok_s": 0.372956, "sha256": "f94c4243c04928fd8fe0bd45afb87dacf64dcc6aa1ff13866c3d2362a7485210"},
+      {"name": "A2-default", "avg_tok_s": 36.807614, "stddev_tok_s": 0.122360, "sha256": "7ee879e752b3b871956dfdb409463e2cfa06ecb89dd5d2bac092e752e4fd8f4b"}
+    ],
+    "control_pooled_tok_s": 36.419528,
+    "treatment_pooled_tok_s": 36.242218,
+    "delta_percent": -0.487,
+    "restored": true
   },
   "control": {
     "binary": "/mnt/fast-ai/src/llama.cpp-q8-tp2-directq8-isolated/build-sycl-aot-bmg-g31-directq8-isolated/bin/llama-bench",
@@ -65,6 +88,7 @@
   "notes": [
     "An earlier command using -dev SYCL0,SYCL1 created independent one-card rows and is not a TP2 comparator; combined TP2 syntax is -dev SYCL0/SYCL1.",
     "The two correct controls are diagnostics, not replacements for the accepted endpoint score.",
-    "The cards reached their configured 2800 MHz maximum without a reported throttle reason, so there is no supported scheduler/frequency control left to test on this stack."
+    "The cards reached their configured 2800 MHz maximum without a reported throttle reason, so there is no supported scheduler/frequency control left to test on this stack.",
+    "Minimum-clock pinning was neutral-to-negative and both cards were restored to the default 400-2800 MHz range."
   ]
 }

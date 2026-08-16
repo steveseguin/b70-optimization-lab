@@ -1,0 +1,25 @@
+diff --git a/ggml/src/ggml-sycl/ne1-route.cpp b/ggml/src/ggml-sycl/ne1-route.cpp
+index 605ebe6f8..08f4dd84e 100644
+--- a/ggml/src/ggml-sycl/ne1-route.cpp
++++ b/ggml/src/ggml-sycl/ne1-route.cpp
+@@ -799,6 +799,20 @@ bool ne1_mmvq_split_applies(ggml_type t, int n, int * out_at, int device) {
+     if (!g_ggml_sycl_mmvq_split) {
+         return false;
+     }
++    static const bool split_q8_c2 = [] {
++        const char * value = getenv("GGML_SYCL_MMVQ_SPLIT_Q8_C2");
++        const bool enabled = value != nullptr && atoi(value) != 0;
++        fprintf(stderr, "SYCL doors | Q8 concurrency-two row-exact MMVQ split: %d "
++                        "(GGML_SYCL_MMVQ_SPLIT_Q8_C2)\n", enabled ? 1 : 0);
++        return enabled;
++    }();
++    if (split_q8_c2 && t == GGML_TYPE_Q8_0 && n == 2 &&
++            ne1_machine_for(device) == ne1_machine::BMG_G31_B70) {
++        if (out_at) {
++            *out_at = 1;
++        }
++        return true;
++    }
+     const ne1_route r = ne1_route_for(t, device);
+     if (r.mmvq_split_n <= 0 || n != r.mmvq_split_n) {
+         return false;   // ONE measured width per type -- see the header; widening it is a measurement
