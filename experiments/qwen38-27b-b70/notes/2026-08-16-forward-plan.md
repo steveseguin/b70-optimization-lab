@@ -68,11 +68,12 @@ Work is ranked as follows:
 2. Do not publish c3/c4: they reach `77.212`/`91.895 tok/s` aggregate but fail
    the exact fixed-slot oracle. c2 remains the highest qualified service lane,
    with its narrow two-prompt boundary stated explicitly.
-3. Measure supported power/frequency behavior and the exclusive scheduler as
-   a reversible, arithmetic-neutral control before opening another source arm.
+3. The hardware-control audit is closed: both cards reached their configured
+   `2800 MHz` ceiling without a throttle reason, and exclusive scheduling is
+   unsupported on this stack. No persistent setting was changed.
 4. Q4_K_M concurrency and deep-prefill package as a separate production lane,
    using the verified `-b 8192 -ub 2048` prefill setting where it helps;
-4. vLLM/FP8 only when the official artifact and Intel runtime pass the same
+5. vLLM/FP8 only when the official artifact and Intel runtime pass the same
    semantic canaries—never by inheriting the rejected GPTQ result.
 
 Every future headline must state model revision and SHA, quantization, GPU

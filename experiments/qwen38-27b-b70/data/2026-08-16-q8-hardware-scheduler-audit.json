@@ -1,0 +1,70 @@
+{
+  "date": "2026-08-16",
+  "scope": "Qwen3.8-27B Q8_0 target-only TP2 hardware scheduling control",
+  "disposition": "closed_no_mutation",
+  "hardware": {
+    "gpu_count": 2,
+    "gpu": "ASRock Intel Arc Pro B70",
+    "scheduler_mode_before": "timeslice",
+    "scheduler_interval_us": 1000,
+    "scheduler_yield_timeout_us": 640000,
+    "power_burst_w_each": 275,
+    "power_peak_reported_w_each": 550,
+    "gpu_clock_min_mhz": 400,
+    "gpu_clock_max_mhz": 2800
+  },
+  "exclusive_scheduler_attempt": {
+    "result": "ZE_RESULT_ERROR_UNSUPPORTED_FEATURE",
+    "settings_changed": false,
+    "post_attempt_scheduler_device_0": "timeslice",
+    "post_attempt_scheduler_device_1": "timeslice"
+  },
+  "control": {
+    "binary": "/mnt/fast-ai/src/llama.cpp-q8-tp2-directq8-isolated/build-sycl-aot-bmg-g31-directq8-isolated/bin/llama-bench",
+    "binary_sha256": "f7010c08b534a4f338b9cbd83f97f22b82f13ddab5be0c727d16c3bb0f8c4312",
+    "model": "/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "shape": "p0 n128 r5, two repeated runs",
+    "devices": "SYCL0/SYCL1",
+    "split_mode": "tensor",
+    "tensor_split": "1/1",
+    "batch": 1024,
+    "ubatch": 256,
+    "flash_attention": true,
+    "kv": "F16",
+    "samples_tok_s": [
+      34.4713,
+      34.4236,
+      34.3038,
+      34.3110,
+      34.5827,
+      34.5523,
+      34.3878,
+      34.1856,
+      34.5607,
+      34.5680
+    ],
+    "pooled_mean_tok_s": 34.43468,
+    "run_means_tok_s": [34.418472, 34.450882]
+  },
+  "telemetry": {
+    "samples_each": 200,
+    "device_0_max_power_w": 189.79,
+    "device_1_max_power_w": 201.89,
+    "device_0_max_clock_mhz": 2800,
+    "device_1_max_clock_mhz": 2800,
+    "limitations": "xpu-smi reported N/A for memory-bandwidth and compute utilization; power samples were not time-aligned to individual tokens"
+  },
+  "raw_artifacts": {
+    "local_directory": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260816-scheduler",
+    "control_1_sha256": "5136d459eaafede1a07c39709937d950ef5345f41fb1b2ade7747927413a7fb3",
+    "control_2_sha256": "d611c69c956e3101c4af07422b7835296c4343c97f35023c92982d7d99932142",
+    "telemetry_0_sha256": "c7590c9c53a2f0e43c7d9771b71c41d21d8ce18fa7830f3661d869f50b3ae3ab",
+    "telemetry_1_sha256": "758678b722e8637d66c07c62844f762d52b95e87b50cc52cc2de124472243af8"
+  },
+  "notes": [
+    "An earlier command using -dev SYCL0,SYCL1 created independent one-card rows and is not a TP2 comparator; combined TP2 syntax is -dev SYCL0/SYCL1.",
+    "The two correct controls are diagnostics, not replacements for the accepted endpoint score.",
+    "The cards reached their configured 2800 MHz maximum without a reported throttle reason, so there is no supported scheduler/frequency control left to test on this stack."
+  ]
+}
