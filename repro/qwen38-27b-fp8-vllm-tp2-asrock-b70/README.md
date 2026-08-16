@@ -102,6 +102,10 @@ never interrupt the engine while graph initialization is still in progress.
 - `CCL_TOPO_P2P_ACCESS=0`: forcing `1` changed decode by only `-0.011%`
 - `FULL_DECODE_ONLY` was quality-clean but `1.618%` slower; retain PIECEWISE
 
+The 2026-08-16 nightly (`8efa13b70`, XPU kernels `0.1.13.2`) was also
+quality-clean at `21.723631 tok/s`, only `+0.070%` versus this pinned image.
+That is noise-level, so the reproduction digest remains unchanged.
+
 vLLM warns that XPU Graph is officially supported only for single-GPU use.
 This TP2 graph result is therefore experimental and stays fail-closed behind
 the exact local quality gate. See the

@@ -49,10 +49,19 @@ advertised as arbitrary-prompt token exactness.
 
 ## Next optimization target
 
-The image still warms Qwen Triton kernels for `qwen3_5_text`; the native fused
-GDN decode path used in older lab work is absent. Porting direct recurrent-state
-I/O and reducing TP2 synchronization around Qwen3.8's GDN blocks is the most
-credible source-level vLLM arm. Simple oneCCL P2P topology toggling is closed.
+The generic log says the CUDA-only fused GDN kernel falls back to Triton, but
+source inspection found that XPU's `forward_xpu()` independently calls the
+fused SYCL `_xpu_C.gdn_attention` custom op. Do not port a duplicate fused GDN
+wrapper based on the misleading generic log. The remaining credible targets
+are inside that SYCL kernel and around TP2 synchronization.
+
+The official 2026-08-16 nightly at vLLM `8efa13b70` bumped
+`vllm-xpu-kernels` from `0.1.12.3` to `0.1.13.2`. A same-config PIECEWISE run
+measured `21.723631 tok/s`, only `+0.070%` over the pinned baseline, and passed
+the full oracle. Upstream kernel history contains no post-baseline GDN change;
+the package bump mainly brings oneDNN and unrelated attention/MoE fixes. Do
+not promote the nightly for this noise-level delta. Simple oneCCL P2P topology
+toggling is likewise closed.
 
 Reproduction is in
 [`repro/qwen38-27b-fp8-vllm-tp2-asrock-b70`](../../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md),
