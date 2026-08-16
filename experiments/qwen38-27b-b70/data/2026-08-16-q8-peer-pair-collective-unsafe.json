@@ -1,0 +1,33 @@
+{
+  "date": "2026-08-16",
+  "status": "unsafe_device_lost_rejected",
+  "scope": "Qwen3.8-27B Q8_0 target-only TP2; no speculation",
+  "candidate": {
+    "mode": "GGML_SYCL_COMM_DIRECT_Q8=3",
+    "design": "device-0 peer-visible workgroup performs both per-device RMS/MUL/Q8 handoffs after the accepted device-0 reduction root",
+    "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "compiler": "oneAPI 2026.1.1",
+    "build": "Release, BMG-G31 AOT, F16 on, graph/DNN/host-memory-fallback off",
+    "patch_artifact": "experiments/qwen38-27b-b70/patches/q8-peer-pair-collective-device-lost-unsafe-20260816.diff.gz.b64",
+    "decoded_patch_sha256": "6463c0bedb42f372bbbc8a8d7422a7ee6b59ad49204bd646b0b89d6a809f6605",
+    "encoded_patch_sha256": "b9c9209718bc8ad9b3cfc4bdc4ae213c2ffcd0f32356991b2e367f4c16c1afe5",
+    "decoded_patch_bytes": 8063,
+    "decoded_patch_lines": 155
+  },
+  "smoke": {
+    "shape": "p0/n1/r1, equal TP2, F16 KV",
+    "memory_cap": "10 GiB RAM plus 2 GiB swap",
+    "mode_banner_seen": true,
+    "result": "UR_RESULT_ERROR_DEVICE_LOST",
+    "throughput_result": null,
+    "quality_result": null
+  },
+  "kernel_evidence": {
+    "pci_bdf": "0000:03:00.0",
+    "kernel_submitted_job_timed_out_count": 183,
+    "gt_reset_done_count": 122,
+    "kernel_taint_after_failure": 512,
+    "xpu_smi_state_after_process_exit": ["normal", "normal"]
+  },
+  "decision": "Never enable or retry on the validated stack. Retain per-device handoff kernels and explicit queue ownership; archive the patch solely to prevent repetition."
+}

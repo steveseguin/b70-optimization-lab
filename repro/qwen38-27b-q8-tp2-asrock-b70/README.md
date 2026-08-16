@@ -32,6 +32,11 @@ this is a reproducibility pin rather than a claimed speed gain. Forcing the
 legacy adapter reduced target-only decode by `3.375%`; see the
 [adapter audit](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-level-zero-v2-adapter-audit.md).
 
+Keep `GGML_SYCL_COMM_DIRECT_Q8=2`. Experimental mode `3`, which attempted to
+execute both cards' handoffs from one peer-visible kernel, caused an immediate
+Level Zero device-lost/reset storm on the first bounded smoke and is
+[explicitly rejected](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-peer-pair-collective-unsafe.md).
+
 The semantic gate is deliberately stronger than output parity within one
 quantization family. Q8 and Q4_K_M both returned `14` for the Python canary;
 the tested GPTQ INT4 checkpoint returned `30`, so the faster GPTQ/MTP route is
