@@ -1,0 +1,48 @@
+{
+  "date": "2026-08-16",
+  "scope": "Qwen3.8-27B Q8_0 target-only TP2, ordinary service concurrency two",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "server_sha256": "32c581628082fa1352824650d45f523d52b526aaefdfd23e1c34d438f7ad084a",
+  "server": {
+    "parallel": 2,
+    "context_total": 16384,
+    "context_per_slot": 8192,
+    "batch": 1024,
+    "ubatch": 256,
+    "reasoning": "off",
+    "kv": "f16",
+    "speculation": false
+  },
+  "request": {
+    "requests": 2,
+    "generated_tokens_each": 256,
+    "cache_prompt": false,
+    "temperature": 0,
+    "ignore_eos": true,
+    "fixed_slot_ids": [0, 1]
+  },
+  "token_id_sha256": [
+    "528009fcc00e49cec4c23c5390349c56f7b010cbcff5ecbdf286588ac264dfff",
+    "4952a3674b5dc18ab8a0a0fbc548e0145d78fd3aa1118819b5d8a91b06d2c460"
+  ],
+  "runs": [
+    {
+      "per_request_conventional_d_tok_s": [28.699956181704735, 28.699485527936304],
+      "aggregate_conventional_d_tok_s": 57.39812202629761,
+      "aggregate_wall_tok_s": 56.48810429512078,
+      "fairness_min_over_max": 0.9999836008889542,
+      "all_exact_to_sequential_oracle": true,
+      "all_cache_cold": true
+    },
+    {
+      "per_request_conventional_d_tok_s": [28.727575439229852, 28.70099114520522],
+      "aggregate_conventional_d_tok_s": 57.397625826977546,
+      "aggregate_wall_tok_s": 56.51119796125899,
+      "fairness_min_over_max": 0.9990746071111755,
+      "all_exact_to_sequential_oracle": true,
+      "all_cache_cold": true
+    }
+  ],
+  "median_of_two_aggregate_conventional_d_tok_s": 57.39787392663758,
+  "boundary": "Aggregate two-request service capacity, not single-stream decode. Exactness is established for these two fixed prompts in two independent captures; the broader c2 scheduling caveat remains open."
+}

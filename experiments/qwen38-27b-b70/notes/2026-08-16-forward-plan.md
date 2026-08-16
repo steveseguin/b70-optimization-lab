@@ -18,6 +18,10 @@ The reusable Qwen3.8 work is already real:
   not proof that Q8 reached 40.
 - Both promoted lanes use F16 KV, pass the cache-zero benchmark gate, preserve
   the complete-output oracle, and passed the Qwen3.8 semantic canaries.
+- The same accepted Q8 stack sustains `57.398122 tok/s` aggregate for two
+  synchronized requests (about `28.70 tok/s` each), exact to the two fixed
+  cache-cold sequential oracles. This is a separately labeled c2 service
+  result, not a replacement for the single-request record.
 - The public SergiioB GPTQ/MTP route was captured and locally reproduced, but
   its GPTQ target failed a deterministic Python-result canary that Q8_0 and
   Q4_K_M passed. It is retained as research evidence, not the quality-default
@@ -59,10 +63,11 @@ same FP32 reduction order and output bytes.
 
 Work is ranked as follows:
 
-1. new clean-boot profiling of the accepted stack to identify the largest
-   remaining launch/stall buckets;
-2. shape-scoped fused-Q8/down-projection handoff that keeps the accepted FP32
-   boundary but avoids a materialize-and-requantize round trip;
+1. test a c2-specific reordered-Q8 VDR2 build against the exact fixed-slot
+   cross-batch oracle; this is distinct from the rejected c1 VDR sweep;
+2. profile only if that scheduling change produces a repeatable gain—the AOT
+   audit already shows SIMD16, 128 GRFs, eight EU threads, coalesced DP4A
+   payloads, and no spills in the accepted VDR4 kernel;
 3. Q4_K_M concurrency and deep-prefill package as a separate production lane,
    using the verified `-b 8192 -ub 2048` prefill setting where it helps;
 4. vLLM/FP8 only when the official artifact and Intel runtime pass the same
