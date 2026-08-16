@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-14**
+Last reviewed: **2026-08-15**
 
 ## Authority And Update Rule
 
@@ -20,20 +20,17 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-Verified on 2026-08-14:
+Verified on 2026-08-15:
 
-- `muse-glimmer-bf16-fleet.service`: active;
-- `muse-glimmer-frontdoor.service`: active;
-- frontdoor: `0.0.0.0:8000`;
-- text backend: `127.0.0.1:19470`;
-- vision backend: `127.0.0.1:19471`;
-- served identity: `muse-glimmer-30b-bf16`;
-- text lane: TP2 BF16 target with BF16 DFlash;
-- vision lane: BF16 target with kquant draft and `mmproj`.
+- `muse-glimmer-bf16-fleet.service`: inactive;
+- `muse-glimmer-frontdoor.service`: inactive;
+- no listeners on `8000`, `18080`-`18089`, `19470`, or `19471`;
+- no `llama-server`, vLLM, or frontdoor process is running.
 
-The active source/build is under `/home/steve/src/llama.cpp-muse-100`. Do not
-reset, clean, rebuild, restart, or repurpose that tree while the fleet is live
-without first checking service ownership and the canonical host GPU lock.
+The preserved Muse source/build remains under
+`/home/steve/src/llama.cpp-muse-100`. Do not reset, clean, rebuild, restart, or
+repurpose that tree without first checking service ownership and the canonical
+host GPU lock; inactive services can still be started by another operator.
 
 Operational and result references:
 
@@ -49,55 +46,61 @@ token-exact evidence.
 
 ## Active Optimization Lane
 
-Qwen3.6 27B Q8_0 target-only TP2 on two ASRock B70s is active toward a
-40 tok/s stretch goal. DFlash, MTP, prompt reuse, and other speculation remain
-outside this objective. The current clean source adds a register-direct TP2
-Q8 handoff, direct IMRoPE-to-indexed-F16-KV-cache writes, and a vectorized
-exact-F32 TP root reduction to the previously promoted exact fusion stack.
+Qwen3.8 27B target-only TP2 on two ASRock B70s is active. The current accepted
+Q4_K_M source adds a device-local Q4_K gate/up/SwiGLU fusion to the transferred
+Qwen3.6 exact-shape stack. DFlash, MTP, prompt reuse, and other speculation are
+separate result classes and remain outside the target-only headline.
 
 All Git work is performed directly on `main`. Do not create branches or
 secondary worktrees. Use focused commits, patches, bundles, configs, and result
 packets for isolation and recovery.
 
-## Active Research: Qwen3.6 27B Q8 TP2
+## Active Research: Qwen3.8 27B TP2
 
-The promoted target-only two-B70 result remains:
+The promoted target-only two-B70 Q4_K_M result is:
 
-- conventional 99-interval median: **`35.964046 tok/s`**;
-- historical helper: `36.327319 tok/s`;
-- full-512 after-TTFT median: `35.875582 tok/s`;
+- conventional 99-interval median: **`49.717503 tok/s`**;
+- historical helper: `50.219700 tok/s`;
+- full-output after-TTFT median: `49.734644 tok/s`;
 - quality: 12/12 cold 512-token outputs exact against the accepted control;
 - cache: `cached_tokens=0` for 12/12;
 - speculation: none.
 
-The 2026-08-14 pass-2 stack and vec4 TP-root reduction passed a clean rebuild,
-one-prompt oracle, same-binary control, and complete 12-prompt cold suite. The
-vec4 candidate improved the conventional median by `+0.327%` and all 12
-prompt-paired first-100 rates were positive. The output oracle remains
-unchanged; the full patch, binaries, runtime doors, raw results, and summary
-are preserved in the linked repro.
+The 2026-08-15 Q4_K fusion passed a clean build, mechanism counter, same-binary
+control, and complete 12-prompt cold suite. It improved the conventional
+median by `+1.701%`; all complete output hashes remained exact. The Q8_0 TP2
+transfer separately reached `36.772932 tok/s` conventional with 12/12 matched
+complete outputs.
 
 Resume and evidence:
 
-- [Qwen TP2 handoff](results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md)
-- [promoted result packet](results/qwen36-27b-q8-tp2-asrock-b70/README.md)
-- [standalone reproduction](repro/qwen36-27b-q8-tp2-asrock-b70/README.md)
-- [complete source patch](patches/qwen36-27b-q8-tp2-asrock-b70/README.md)
-- [pass-1 chronological ledger](notes/2026-08-14-qwen36-q8-tp2-40tps-pass1.md)
-- [pass-2 chronological ledger](notes/2026-08-14-qwen36-q8-tp2-40tps-pass2.md)
-- [Qwen family research map](docs/qwen36-research-map.md)
+- [Qwen3.8 model board](README.md#qwen38-27b-model-board)
+- [target-only pass-2 ledger](experiments/qwen38-27b-b70/notes/2026-08-15-target-only-pass2.md)
+- [Q4_K_M standalone reproduction](repro/qwen38-27b-q4km-tp2-asrock-b70/README.md)
+- [Q4_K fusion source increment](patches/qwen38-27b-q4km-tp2-asrock-b70/README.md)
+- [Q4_K structured summary](experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json)
+- [Q8 structured summary](experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json)
+- [community GPTQ/MTP vLLM idea](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 
 Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
-prototype. Both caused device faults/resets. Other pass-1 candidates were
-rejected or neutral and should not be recycled without a materially different
-hypothesis.
+prototype inherited from Qwen3.6 work. Both caused device faults/resets. Do not
+overlap BMG AOT compilation, a model workload, or a large download on this
+15 GiB host.
 
 ## Protected Work And Artifacts
 
 Preserve these paths and inspect their status before any build, cleanup, or
 service change:
 
-- `/home/steve/src/llama.cpp-muse-100`: source/build used by the live Muse fleet;
+- `/home/steve/src/llama.cpp-muse-100`: preserved source/build used by the inactive Muse fleet;
+- `/mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2`: accepted Qwen3.8 Q4_K_M source at
+  `a4349bcee`; preserve its intentional three-file uncommitted fusion delta;
+- `/mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1`:
+  accepted oneAPI 2026.1.1 BMG-G31 AOT build;
+- `/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/`: accepted Qwen3.8 GGUF targets and MTP sidecars;
+- `/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/`: official FP8 artifact retained for the separate vLLM lane;
+- `/mnt/fast-ai/bench-results/qwen38-q4km-asrock-b70-20260815-pass2/`:
+  accepted Q4_K fusion A/B and cold-suite evidence;
 - `/mnt/fast-ai/src/llama.cpp-q8-tp2-directq8-isolated`: current accepted Qwen TP2 source;
 - `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl`: prior accepted Qwen TP2 source; preserve as control;
 - `/mnt/fast-ai/llm-models/qwen3.6-27b-q8_0-gguf/`: accepted Qwen model;
@@ -130,13 +133,16 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Keep the live Muse fleet untouched while choosing the next model.
-2. Treat the Qwen Q8 TP2 record as closed; start from its handoff if a genuinely
-   new hypothesis justifies reopening it.
-3. For the next model, create a distinct result identity and begin with hashes,
-   a clean baseline, fixed prompts, cache-zero controls, and preregistered
-   quality/speed gates.
-4. Keep `main` synchronized before and after focused commits. Preserve failed
+1. Preserve the inactive Muse fleet and its source; verify service/process state
+   again before every GPU launch.
+2. Continue Qwen3.8 target-only TP2 only from the accepted Q4_K source or its
+   standalone reproduction, with same-binary controls and the fixed cold gate.
+3. Treat SergiioB's single-card GPTQ/MTP vLLM recipe as a separate
+   community-reported lane. Resolve its patch hash, dynamic-exclusion, and MTP
+   dtype questions before a bounded replay.
+4. Restore the LocalMaxxing credential outside Git, then submit the already
+   queued 49.717503 tok/s target-only result after authenticated dry-run.
+5. Keep `main` synchronized before and after focused commits. Preserve failed
    experiments as patches and notes rather than branches or worktrees.
-5. Archive large ignored Qwen artifacts only through the verified manifest and
+6. Archive large ignored Qwen artifacts only through the verified manifest and
    restore procedure linked from the Qwen family map.

@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-15T23:42:27-04:00",
+  "evidenceLevel": "community-reported",
+  "executionStatus": "source-read-only; copied patchers not executed",
+  "cookbook": {
+    "url": "https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook",
+    "recipeUrl": "https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook/blob/3beb704b5b86baed2a874a8cc96821116c97e080/docs/qwen38-27/QWEN38-VLLM-XPU.md",
+    "commit": "3beb704b5b86baed2a874a8cc96821116c97e080",
+    "commitTime": "2026-08-16T01:54:09+02:00",
+    "recipeSha256": "fa00ebe937557672629e2d2d00df918c3f317921122e23b9504a090310d93106",
+    "license": "MIT",
+    "licenseSha256": "c1a3200fc29fd00328b2e43d09f72f1f54f2b0959e90d36089368ad09e720552"
+  },
+  "model": {
+    "id": "SergiioB/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16",
+    "url": "https://huggingface.co/SergiioB/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16/tree/9d189a60e4c0ad7f9f47cd94bfa393ca10b3924e",
+    "revision": "9d189a60e4c0ad7f9f47cd94bfa393ca10b3924e",
+    "revisionTime": "2026-08-15T19:13:03+00:00",
+    "baseModel": "Qwen/Qwen3.8-27B",
+    "architecture": "Qwen3_5ForConditionalGeneration",
+    "modelType": "qwen3_5",
+    "weightBytes": 19559450216,
+    "weightGiB": 18.216157533228397,
+    "quantization": {
+      "method": "gptq",
+      "bits": 4,
+      "symmetric": true,
+      "groupSize": 128,
+      "descAct": false,
+      "packDtype": "int32",
+      "quantizer": "gptqmodel:7.3.2",
+      "dynamic": {
+        "-:.*mtp.*": {}
+      }
+    },
+    "mtpTensorCountInIndex": 15,
+    "declaredConfigDtype": "float16",
+    "reportedMtpDtype": "BF16 (not verified from tensor headers)",
+    "weightLfsObjects": [
+      {
+        "file": "model-00001-of-00005.safetensors",
+        "sha256": "30c8e2b1c82cdcc840848b5c98bafe2f74269b1e6472a053ce7d7b2d002f39a7",
+        "bytes": 3516828472
+      },
+      {
+        "file": "model-00002-of-00005.safetensors",
+        "sha256": "ff66eaf6ecc6e4b214f281ac532dcfcb07c60d5a8c78cf145bc93c38c00c024e",
+        "bytes": 4278206560
+      },
+      {
+        "file": "model-00003-of-00005.safetensors",
+        "sha256": "15284cb88d52ea1648b4fcc68901286d7c4795388e05ae1e143c8026fcb0be44",
+        "bytes": 4258595144
+      },
+      {
+        "file": "model-00004-of-00005.safetensors",
+        "sha256": "878ae6ebc9553de5340df0d6097aa319f58650382c89e474b39d0c0a98e76932",
+        "bytes": 4284981464
+      },
+      {
+        "file": "model-00005-of-00005.safetensors",
+        "sha256": "2a6ebd04c77c2d5ce5952ca81a4197f1c34f712a00c293a25242ec27ac413729",
+        "bytes": 3220838576
+      }
+    ]
+  },
+  "runtime": {
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm": "0.27.2rc1.dev77+gac7509e2b",
+    "vllmXpuKernels": "0.1.12.3",
+    "gpuCount": 1,
+    "gpu": "Intel Arc Pro B70",
+    "kvCache": "fp8",
+    "maxModelLen": 131072,
+    "maxNumSequences": 64,
+    "maxNumBatchedTokens": 8192,
+    "prefixCache": false,
+    "xpuGraph": true,
+    "mtpDepthsReported": [1, 2, 4]
+  },
+  "patches": [
+    {
+      "file": "patch_mtp_nightly.py",
+      "actualRepositorySha256": "4d7a02c4ea10ca7c00dc89ad927fa3dafa747dbf0553d2adf24e30a3c53e9c14",
+      "recipeDocumentedSha256": "f1db50bf617aacbb0a672daf172be32a98b2a73c7817ebab0c6317b22d11f36a",
+      "identityStatus": "mismatch; documented blob not present in public history",
+      "purpose": "force the preserved MTP draft outside the GPTQ target quantization config",
+      "review": "likely redundant for exact pinned model because its dynamic exclusion is already recognized by the original vLLM anchor"
+    },
+    {
+      "file": "patch_mtp_boundary.py",
+      "actualRepositorySha256": "41d2f74e5fef1f074b76b5a90dd1016de437228431802cfb1fa7bd7ce4cc9b50",
+      "recipeDocumentedSha256": "41d2f74e5fef1f074b76b5a90dd1016de437228431802cfb1fa7bd7ce4cc9b50",
+      "identityStatus": "matches",
+      "purpose": "route an incomplete final speculative group through the non-spec stateful path at the exact sequence boundary",
+      "review": "narrow correctness fix; performance-neutral by design; exact-boundary tests required"
+    }
+  ],
+  "reportedClaims": {
+    "status": "PROVISIONAL — NOT FOR PUBLIC HEADLINE; E2 self-reported; independent reproduction pending",
+    "measuredDate": "2026-08-15",
+    "metric": "single-stream client post-first generated-token rate",
+    "promptTokens": 512,
+    "outputTokens": 128,
+    "repetitions": 5,
+    "targetOnlyTokS": 32.9,
+    "mtp1TokS": 52.0,
+    "mtp2TokS": 65.8,
+    "mtp4TokS": 83.7,
+    "mtp4RangeTokS": [78.3, 84.4],
+    "mtp4AcceptancePercent": 95.0,
+    "fullContextPromptTokens": 130944,
+    "fullContextOutputTokens": 128,
+    "fullContextMtp4TokS": 56.3,
+    "localMaxxingId": "cmsur82fz06svms01ga1f0z83",
+    "rawEvidenceInPublicSnapshot": false
+  },
+  "secondSourceReview": {
+    "url": "https://gist.github.com/burkeholland/f71d1156812fd91e4369308358892817",
+    "revisionUrl": "https://gist.github.com/burkeholland/f71d1156812fd91e4369308358892817/91d8de389199a7580f49f064f103f48259cc024c",
+    "commit": "91d8de389199a7580f49f064f103f48259cc024c",
+    "commitTime": "2026-08-15T11:15:00-05:00",
+    "file": "build-the-urlist.md",
+    "fileSha256": "ed4691c3e577a4a4d7b9de7f814b87a9fffd495c7694d3ffaa4c955062712d3b",
+    "finding": "unrelated web-application build specification; no inference optimization content",
+    "copied": false
+  }
+}

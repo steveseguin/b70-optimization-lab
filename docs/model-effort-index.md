@@ -60,6 +60,29 @@ AutoRound INT4/MTP records, Q4/DFlash and intrinsic-MTP work, native FP8, and
 35B Quark archive separate while providing one read order. These identities
 must not be merged into a family-level speed claim.
 
+### Qwen3.8 27B On Two ASRock B70s
+
+Main entries:
+
+- [Qwen3.8 model board](../README.md#qwen38-27b-model-board)
+- [Q4_K_M target-only TP2 reproduction](../repro/qwen38-27b-q4km-tp2-asrock-b70/README.md)
+- [Q4_K_M fusion patch](../patches/qwen38-27b-q4km-tp2-asrock-b70/README.md)
+- [target-only optimization ledger](../experiments/qwen38-27b-b70/notes/2026-08-15-target-only-pass2.md)
+- [community GPTQ INT4/MTP vLLM idea](../community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
+
+Status: active as of 2026-08-15. The current lab record is target-only
+Q4_K_M TP2 at `49.717503 tok/s` conventional (`50.219700` historical helper),
+with a device-local Q4_K gate/up/SwiGLU fusion, 12/12 complete-output hash
+parity, and all cache counters zero. Q8_0 TP2 reached `36.772932 tok/s`
+conventional. The official FP8 vLLM artifact loaded but did not complete engine
+initialization under the bounded local profile.
+
+SergiioB's separate one-card GPTQ INT4 vLLM recipe reports 32.9 tok/s
+target-only and 83.7 tok/s with native MTP4. It is preserved as
+`community-reported`, not a lab result. Its exact public model, container,
+runtime flags, two patches, reported payload, source hashes, and audit caveats
+are captured in the linked packet for an isolated future replay.
+
 ### Qwen3.6 27B Q8_0 Target-Only On Two ASRock B70s
 
 Main entries:

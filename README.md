@@ -104,6 +104,12 @@ gated. All promoted rows below are target-only and cache-zero.
 | GGUF Q8_0, accepted lab TP2 stack | 2x ASRock B70, TP2 | **`37.144376` (`36.772932` conventional)** | No speculation; 12/12 complete output hashes exact versus matched control; `+17.285%`; [summary](experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json) |
 | Official block-scaled FP8, Intel vLLM `0.21.0-b3.1` | 2x ASRock B70, TP2 | Not promoted | Artifact verified and model recognized/loaded at 13.92 GiB/card, but initialization hit Level Zero device-lost/out-of-resource errors under bounded text-only profiles; no throughput claim; [bring-up note](experiments/qwen38-27b-b70/notes/2026-08-15-bringup-checkpoint.md) |
 
+Community-reported alternatives are kept outside the promoted rows above:
+
+| Target and route | Hardware | Contributor claim | Evidence boundary / pointer |
+| --- | --- | ---: | --- |
+| GPTQ INT4 G128, vLLM XPU target-only / native MTP4 | 1x Intel B70 | 32.9 / **83.7 tok/s** | E2 self-reported, provisional, no reference-lab replay; exact model/container/config and both patches captured, including two unresolved source-identity inconsistencies; [community packet](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md) |
+
 ### Qwen3.6 27B Model Board
 
 Last audited **2026-08-15**. These rows share a model family, not a quality,
