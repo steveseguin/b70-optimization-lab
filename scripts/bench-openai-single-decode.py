@@ -14,6 +14,12 @@ from pathlib import Path
 from typing import Any
 
 
+def optional_int(value: str) -> int | None:
+    if value.lower() in {"none", "null", "omit"}:
+        return None
+    return int(value)
+
+
 def stream_completion(
     base_url: str,
     model: str,
@@ -298,7 +304,12 @@ def main() -> int:
     )
     parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--repeats", type=int, default=8)
-    parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument(
+        "--seed",
+        type=optional_int,
+        default=1,
+        help="Integer RNG seed, or 'none' to omit seed from the request.",
+    )
     parser.add_argument("--allow-missing-usage", action="store_true")
     parser.add_argument("--timeout", type=int, default=600)
     parser.add_argument("--out", type=Path)

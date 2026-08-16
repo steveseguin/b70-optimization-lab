@@ -39,6 +39,8 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 | Official FP8 2026-08-16 nightly (`8efa13b70`, XPU kernels `0.1.13.2`) | Quality-clean but noise-level `+0.070%` (`21.723631 tok/s`); do not churn the pinned runtime | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 | Official FP8 XPU Q/K RMSNorm+RoPE compiler fusion | Mechanism verified and quality-clean, but repeat medians bracketed control (`+0.150%`, `-0.083%`); leave disabled | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 | Official FP8 native BF16 activation/KV arithmetic | Full oracle passed, but decode was identical (`21.708409 tok/s`, `-0.0006%`) and TTFT was slower; not a speed lane | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
+| Official FP8 `max_num_seqs=1` | Exact output and cache-zero, but neutral at `21.717535 tok/s` (`+0.041%`); retain the more useful captured capacity of 4 | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
+| Official FP8 greedy requests without a per-request seed | Exact output and cache-zero, but `21.659428 tok/s`, `-0.268%` versus the same loaded seeded server; retain explicit seeds | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 | Official FP8 cached graph restart in an 8 GiB host cgroup | OOM-killed one worker while reloading AOT artifacts; use the validated 9/12 GiB bounds | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 
 ## Transferred Q8 search history

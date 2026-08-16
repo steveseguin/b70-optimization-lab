@@ -47,6 +47,14 @@ advertised as arbitrary-prompt token exactness.
   `-0.0006%` versus FP16, while median TTFT rose to `638.051 ms`. The full
   oracle passed. Keep FP16 for the captured performance identity; BF16 is a
   valid fidelity-oriented alternative, not a speed optimization.
+- Reducing `max_num_seqs` from 4 to 1 while retaining the same c1 graph was
+  output-exact and cache-zero, but neutral at `21.717535 tok/s` (`+0.041%`).
+  Keep 4 so the service retains useful scheduling capacity.
+- Omitting the per-request seed at temperature zero preserved all output
+  hashes and cache-zero status, but measured `21.659428 tok/s`, `-0.268%`
+  versus the same loaded seeded server. The XPU sampler warning is emitted
+  during engine warmup and did not identify a request-level speed opportunity.
+  Keep explicit deterministic seeds in the accepted benchmark protocol.
 - Reloading 515 MB of cached AOT artifacts briefly exceeded an 8 GiB host
   cgroup and OOM-killed one worker. A 9 GiB RAM / 12 GiB RAM-plus-swap retry
   passed. The host stayed responsive and the cards recorded no reset/fault.
@@ -70,6 +78,10 @@ the full oracle. Upstream kernel history contains no post-baseline GDN change;
 the package bump mainly brings oneDNN and unrelated attention/MoE fixes. Do
 not promote the nightly for this noise-level delta. Simple oneCCL P2P topology
 toggling is likewise closed.
+
+The benchmark harness now accepts `--seed none` for future controlled greedy
+sampler experiments, and the launcher accepts `MAX_NUM_SEQS` while defaulting
+to the captured value of 4. Neither override is part of the promoted result.
 
 Reproduction is in
 [`repro/qwen38-27b-fp8-vllm-tp2-asrock-b70`](../../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md),

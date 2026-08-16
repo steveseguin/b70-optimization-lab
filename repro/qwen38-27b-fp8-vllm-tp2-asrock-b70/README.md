@@ -111,6 +111,10 @@ the oracle. It is intentionally absent from the launcher.
 Native BF16 activation/KV arithmetic was oracle-clean but decode-neutral at
 `21.708409 tok/s` (`-0.0006%`) with slower TTFT, so the captured FP16 setting
 remains the reproducible performance identity.
+Reducing maximum sequences to one was also neutral (`21.717535 tok/s`,
+`+0.041%`), and omitting the RNG seed from otherwise identical temperature-zero
+requests was slightly slower (`21.659428 tok/s`, `-0.268%` against its loaded
+seeded control). Keep the default capacity of 4 and explicit benchmark seeds.
 
 vLLM warns that XPU Graph is officially supported only for single-GPU use.
 This TP2 graph result is therefore experimental and stays fail-closed behind
