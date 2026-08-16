@@ -72,6 +72,12 @@ median by `+1.701%`; all complete output hashes remained exact. The Q8_0 TP2
 transfer separately reached `36.772932 tok/s` conventional with 12/12 matched
 complete outputs.
 
+A separate one-B70 SergioB GPTQ INT4 route was validated target-only on
+2026-08-16. XPU graph reached `33.690260 tok/s` median versus `25.418419` eager
+at p512/g128, 8K context and FP8 KV, with 5/5 paired visible-output hashes
+exact. This is a distinct engine/quantization/KV class and does not replace the
+active two-B70 GGUF target-only lane. MTP and 131K remain untested locally.
+
 Resume and evidence:
 
 - [Qwen3.8 model board](README.md#qwen38-27b-model-board)
@@ -81,6 +87,7 @@ Resume and evidence:
 - [Q4_K structured summary](experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json)
 - [Q8 structured summary](experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json)
 - [community GPTQ/MTP vLLM idea](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
+- [one-B70 GPTQ target-only graph validation](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-target-only-graph-validation.md)
 
 Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
 prototype inherited from Qwen3.6 work. Both caused device faults/resets. Do not
@@ -103,6 +110,9 @@ service change:
   SergioB GPTQ INT4 target with 15 BF16 MTP tensors; community replay lane;
 - `/mnt/fast-ai/bench-results/qwen38-q4km-asrock-b70-20260815-pass2/`:
   accepted Q4_K fusion A/B and cold-suite evidence;
+- `/mnt/fast-ai/bench-results/qwen38-gptq-int4-asrock-b70-20260816/`:
+  SergioB target-only eager/graph validation, failed conservative-U graph
+  attempt, logs, inspect records, prompts, and raw SSE evidence;
 - `/mnt/fast-ai/src/llama.cpp-q8-tp2-directq8-isolated`: current accepted Qwen TP2 source;
 - `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl`: prior accepted Qwen TP2 source; preserve as control;
 - `/mnt/fast-ai/llm-models/qwen3.6-27b-q8_0-gguf/`: accepted Qwen model;

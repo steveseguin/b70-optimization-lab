@@ -14,9 +14,15 @@ patch mechanics before any GPU workload.
 - The exact model revision was downloaded locally. All five weight shards and
   the tokenizer match their Hugging Face LFS SHA-256 identities.
 - Header inspection confirms all 15 `mtp.*` tensors are BF16 on disk.
-- No model was loaded and no GPU code was executed in this audit.
+- No model was loaded and no GPU code was executed in this artifact audit.
+  A later, separately documented target-only GPU validation is linked below.
 
 Evidence level remains `community-reported` for throughput and quality.
+
+See
+[`2026-08-16-local-target-only-graph-validation.md`](2026-08-16-local-target-only-graph-validation.md)
+for the later B70-tested target-only result. MTP and long-context evidence
+remain community-reported.
 
 ## Local identities
 

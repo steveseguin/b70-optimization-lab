@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "capturedAt": "2026-08-15T23:42:27-04:00",
   "evidenceLevel": "community-reported",
-  "executionStatus": "source-read-only; safetensors headers range-read; copied patchers not executed",
+  "executionStatus": "exact artifacts verified; patchers isolated-tested; target-only eager/graph locally B70-tested; MTP and long context untested",
   "cookbook": {
     "url": "https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook",
     "recipeUrl": "https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook/blob/3beb704b5b86baed2a874a8cc96821116c97e080/docs/qwen38-27/QWEN38-VLLM-XPU.md",
@@ -160,6 +160,38 @@
     "firstDownloadAttempt": "2 GiB container, default 8 file workers, killed at cgroup limit with exit 137; host remained healthy",
     "successfulResume": "same 2 GiB limit with --max-workers 1",
     "abandonedIncompleteBytesRemovedAfterVerification": 8731841438
+  },
+  "capturedBenchmarkAssets": {
+    "license": "MIT; reported/LICENSE.upstream",
+    "files": {
+      "benchmarks/b70-realworld-context-harness.py": "3588d677a70d13f8ae5a05727e7348899746b9fac69aa9171fefe6e8967a01f9",
+      "benchmarks/b70-generate-exact-prompts.py": "9977790927d97d5141214f46b8700fc7509e5012726e81c1dae9e232ce1c73f2",
+      "benchmarks/benchmark-system-prompt.txt": "1c4c8bba350db23ef64d166d2260a3a747d565f1ec682fde6b0e93224bc1dfb9"
+    }
+  },
+  "localTargetOnlyValidation": {
+    "testedAt": "2026-08-16",
+    "gpu": "ASRock Intel Arc Pro B70",
+    "gpuCount": 1,
+    "maxModelLen": 8192,
+    "kvCache": "fp8",
+    "promptTokens": 512,
+    "completionTokens": 128,
+    "repetitions": 5,
+    "prefixCaching": false,
+    "ignoreEos": true,
+    "hostMemoryLimit": "8 GiB",
+    "hostMemorySwapLimit": "10 GiB",
+    "powerPolicyChanged": false,
+    "eagerMedianTokS": 25.41841940169892,
+    "graphMedianTokS": 33.69026020578031,
+    "graphGainPercent": 32.54270327890065,
+    "pairedVisibleOutputHashesMatch": true,
+    "qualityScope": "five paired greedy truncated outputs only; not a semantic gate; FP8 KV remains separately labeled",
+    "promptFileSha256": "9a81a9127d88b9bf8c5134020a6ddd4834db84271fd8636aa9e2325332c64eb3",
+    "eagerResultsSha256": "d307692c757e0e1fef080f9f47e9c269ef2f88c23d3eb940b87aadc2b7bba2f7",
+    "graphResultsSha256": "ca7c1c7d36331f9004fea10a7dba5eec41f2ae72f6605cb14a86147bc09b8b99",
+    "contributorPromptIdentityAvailable": false
   },
   "secondSourceReview": {
     "url": "https://gist.github.com/burkeholland/f71d1156812fd91e4369308358892817",

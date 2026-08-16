@@ -70,18 +70,20 @@ Main entries:
 - [target-only optimization ledger](../experiments/qwen38-27b-b70/notes/2026-08-15-target-only-pass2.md)
 - [community GPTQ INT4/MTP vLLM idea](../community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 
-Status: active as of 2026-08-15. The current lab record is target-only
+Status: active as of 2026-08-16. The current lab record is target-only
 Q4_K_M TP2 at `49.717503 tok/s` conventional (`50.219700` historical helper),
 with a device-local Q4_K gate/up/SwiGLU fusion, 12/12 complete-output hash
 parity, and all cache counters zero. Q8_0 TP2 reached `36.772932 tok/s`
 conventional. The official FP8 vLLM artifact loaded but did not complete engine
 initialization under the bounded local profile.
 
-SergiioB's separate one-card GPTQ INT4 vLLM recipe reports 32.9 tok/s
-target-only and 83.7 tok/s with native MTP4. It is preserved as
-`community-reported`, not a lab result. Its exact public model, container,
-runtime flags, two patches, reported payload, source hashes, and audit caveats
-are captured in the linked packet for an isolated future replay.
+SergiioB's separate one-card GPTQ INT4 vLLM route is now locally B70-tested
+target-only at `33.690260 tok/s` with XPU graph versus `25.418419` eager at 8K
+and FP8 KV; 5/5 paired greedy visible-output hashes matched. The contributor's
+83.7 tok/s native-MTP4, 131K, power, and exact prompt claims remain
+`community-reported`. Its exact public model, container, runtime flags, copied
+benchmark assets, two patches, safe launcher, reported payload, source hashes,
+and audit caveats are captured in the linked packet.
 
 ### Qwen3.6 27B Q8_0 Target-Only On Two ASRock B70s
 

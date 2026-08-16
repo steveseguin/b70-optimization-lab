@@ -1,8 +1,8 @@
 # SergioB Qwen3.8-27B GPTQ INT4 + native MTP on one B70
 
-> **Community-reported, not reproduced here.** Read [STATUS.md](STATUS.md)
-> before using this material. The source explicitly labels its measurements
-> provisional and pending independent reproduction.
+> **Target-only route reproduced locally; MTP claims remain community-reported.**
+> Read [STATUS.md](STATUS.md) before using this material. The source explicitly
+> labels its measurements provisional and pending independent reproduction.
 
 ## Why this is interesting
 
@@ -53,6 +53,21 @@ mechanically into llama.cpp's GGUF TP2 kernel path.
 The five published weight LFS object hashes and sizes are preserved in
 [`reported/source-manifest.json`](reported/source-manifest.json). They total
 19,559,450,216 bytes (18.216 GiB), excluding tokenizer and small metadata.
+
+## Local target-only result
+
+On 2026-08-16 the exact model and image ran on one ASRock B70 under an 8/10 GiB
+host-memory cgroup. At 8K context, p512/g128, n=5, cache-off, FP8 KV:
+
+- eager median: **25.418419 tok/s**;
+- XPU-graph median: **33.690260 tok/s**;
+- graph gain: **32.5427%**;
+- all five paired greedy visible outputs were byte-identical.
+
+This validates XPU graph plus the 8192-token scheduler setting as a material
+target-only optimization. The exact contributor prompts are not public, so it
+is not a byte-for-byte replay of the reported 32.9 row. See the
+[local graph validation](validation/2026-08-16-local-target-only-graph-validation.md).
 
 ## Contributor-reported results
 
@@ -170,14 +185,20 @@ matched safe power A/B only after the software lane is stable.
 - `reported/patch_mtp_boundary.py`: current cookbook patch, verbatim.
 - `reported/runtime-config.env`: inert capture of model, image, environment,
   and launch flags; no power write and no auto-launch.
+- `reported/benchmarks/`: byte-exact copies of the public prompt generator,
+  harness, and system prompt, with upstream MIT licensing retained.
 - `reported/vllm-qwen38-mtp4-gptq-int4.json`: contributor's LocalMaxxing
   payload, verbatim.
 - `reported/source-manifest.json`: immutable source/model/gist identities,
   hashes, claimed results, and audit caveats.
 - `reported/LICENSE.upstream`: cookbook MIT license covering the copied code.
+- `run-one-b70.sh`: safe 8K launcher with a host-memory cgroup, exact image,
+  mode selection, optional captured patches, and no power write.
 - `validation/2026-08-16-local-artifact-and-patch-audit.md`: reference-host
   image, patch-anchor, model-hash, safetensors-header, and low-memory download
-  validation; no GPU/model run.
+  validation.
+- `validation/2026-08-16-local-target-only-graph-validation.md`: local eager
+  versus graph result, parity hashes, negative U=0.75 result, and raw hashes.
 
 The unrelated gist was reviewed at
 <https://gist.github.com/burkeholland/f71d1156812fd91e4369308358892817/91d8de389199a7580f49f064f103f48259cc024c>.

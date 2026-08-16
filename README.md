@@ -93,7 +93,7 @@ For the full queue and archive, use [docs/model-effort-index.md](docs/model-effo
 
 ### Qwen3.8 27B Model Board
 
-Last audited **2026-08-15**. Qwen3.8 retains Qwen3.6's exact 64-layer,
+Last audited **2026-08-16**. Qwen3.8 retains Qwen3.6's exact 64-layer,
 three-GDN-to-one-full-attention tensor geometry, so the accepted exact-shape
 TP2 stack transfers mechanically. Every new weight set is still independently
 gated. All promoted rows below are target-only and cache-zero.
@@ -106,9 +106,9 @@ gated. All promoted rows below are target-only and cache-zero.
 
 Community-reported alternatives are kept outside the promoted rows above:
 
-| Target and route | Hardware | Contributor claim | Evidence boundary / pointer |
+| Target and route | Hardware | Best captured result | Evidence boundary / pointer |
 | --- | --- | ---: | --- |
-| GPTQ INT4 G128, vLLM XPU target-only / native MTP4 | 1x Intel B70 | 32.9 / **83.7 tok/s** | E2 self-reported, provisional, no reference-lab replay; exact model/container/config and both patches captured, including two unresolved source-identity inconsistencies; [community packet](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md) |
+| GPTQ INT4 G128, vLLM XPU target-only / native MTP4 | 1x ASRock B70 local; 1x Intel B70 contributor | **33.690260** local target-only / **83.7 tok/s** contributor MTP4 | Target-only XPU graph is B70-tested at 8K/FP8-KV and `+32.5427%` versus eager, with 5/5 paired visible-output hashes exact. MTP4, 131K, power, and contributor prompts remain E2 self-reported; [community packet](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md), [local validation](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-target-only-graph-validation.md) |
 
 ### Qwen3.6 27B Model Board
 
