@@ -15,6 +15,7 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 | Experiment | Outcome | Durable record |
 | --- | --- | --- |
 | Q8 lossless repacking | Closed: practical sentinel formats expanded the weights; theoretical entropy headroom was only about 3.7% | [structural audit](notes/2026-08-16-q8-structural-feasibility-and-sampling.md) |
+| Q8 two-chain DP4A (`DP4A2`) transfer | Quality-exact, but no repeatable Qwen3.8 endpoint gain; the promoted snapshot intentionally retains one-chain DP4A | [note](notes/2026-08-16-q8-dp4a2-transfer-no-win.md) |
 | TP2 collective census | 128 already-fused boundaries/token; synchronization, not transferred bytes, is the target | [structural audit](notes/2026-08-16-q8-structural-feasibility-and-sampling.md) |
 | Tensor-split backend sampling | Closed: llama.cpp fell back to CPU, so no GPU treatment was executed | [structural audit](notes/2026-08-16-q8-structural-feasibility-and-sampling.md) |
 | Fused Q8 MMVQ + SwiGLU | Rejected performance regression | [note](notes/2026-08-16-q8-fused-mmvq-swiglu-negative.md), [data](data/2026-08-16-q8-fused-mmvq-swiglu-negative.json), [patch](patches/q8-fused-mmvq-swiglu-v2-negative-20260816.diff.gz.b64) |
@@ -61,7 +62,7 @@ are not undocumented experiments; map them to these notebook sections:
 | `q8-tp2-reduce-vec2-exp` | pass 2: two-float TP root vector; neutral |
 | `q8-tp2-vcache-fused` | pass 2: direct V-cache write; quality-exact and rejected for performance |
 | `q8-tp2-virtualn5` | pass 2: allocation-free virtual-n5 MMVQ; rejected |
-| `q8-tp2-dp4a2` | pass 2: accepted two-chain DP4A ILP record |
+| `q8-tp2-dp4a2` | pass 2: accepted for Qwen3.6; exact but not faster in two Qwen3.8 cold suites, so not promoted there |
 | `q8-tp2-dp4a4` | pass 2: four-chain DP4A ILP; performance-null |
 | `q8-tp2-dp4a-adj` | pass 2: adjacent-pair DP4A schedule; rejected |
 | `q8-tp2-rows2` | pass 2: two Q8 output rows per SG16; performance-null |

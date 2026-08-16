@@ -51,6 +51,11 @@ not the quality-default deployment.
 - source base: mndodd `4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126`
 - exact source snapshot: [patch packet](../../patches/qwen38-27b-q8-tp2-asrock-b70/README.md)
 
+The patch packet intentionally uses the one-chain Q8 DP4A body that produced
+this result. The later Qwen3.6 two-chain `DP4A2` schedule passed Qwen3.8's
+quality gate but was not faster in two full cold suites, so it is not part of
+this reproduction. See the [transfer decision](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-dp4a2-transfer-no-win.md).
+
 ## Build
 
 After restoring the source patch, source oneAPI 2026.1 and configure a Release

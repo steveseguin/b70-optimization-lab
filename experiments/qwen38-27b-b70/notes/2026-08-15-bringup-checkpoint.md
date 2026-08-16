@@ -229,8 +229,10 @@ validated way to bypass the XPU dummy-forward memory profile.
   source of the promoted TP2 gain.
 - The accepted Qwen3.6 TP2 recurrent anchoring, collective, Q/K normalization,
   convolution/state, and launch fusions transferred directly and cleared the
-  target-only 40 tok/s objective at Q4_K_M. Q8's two-chain DP4A path also
-  transferred cleanly but remains below 40.
+  target-only 40 tok/s objective at Q4_K_M. Q8's later two-chain DP4A path was
+  source- and quality-compatible, but two Qwen3.8 cold suites showed no
+  repeatable gain; it is not in the promoted one-chain Qwen3.8 snapshot. See
+  the [DP4A2 transfer decision](2026-08-16-q8-dp4a2-transfer-no-win.md).
 
 ## Safety and validity
 
