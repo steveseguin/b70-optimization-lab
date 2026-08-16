@@ -44,5 +44,6 @@ exec docker run --rm --name "${container}" \
     -e CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD=4294967296 \
     -e CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD=4294967296 \
     -e CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD=4294967296 \
+    --entrypoint bash \
     "${image}" -lc \
     'exec vllm serve /model --served-model-name qwen38-fp8 --host 0.0.0.0 --port 8000 --tensor-parallel-size 2 --dtype float16 --quantization fp8 --kv-cache-dtype auto --gpu-memory-utilization 0.80 --max-model-len 4096 --block-size 64 --max-num-seqs 4 --max-num-batched-tokens 256 --no-enable-prefix-caching --enable-prompt-tokens-details --language-model-only --compilation-config '\''{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'\'''

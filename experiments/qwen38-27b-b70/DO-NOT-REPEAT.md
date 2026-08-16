@@ -35,6 +35,7 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 | Official FP8 with old Intel vLLM `0.21.0-b3.1` | Superseded negative: bounded TP2 initialization failed after model load; do not retry this image unchanged | [bring-up](notes/2026-08-15-bringup-checkpoint.md) |
 | Official FP8 with vLLM/XPU `0.27.2rc1.dev77`, eager | Working exact-gated control at `17.097358 tok/s`; graph c1 is `26.97%` faster | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 | Official FP8 graph c1, `CCL_TOPO_P2P_ACCESS=1` | Neutral at `21.706164 tok/s` (`-0.011%`); retain the default `0` | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
+| Official FP8 `FULL_DECODE_ONLY` graph c1 | Quality-clean but `1.618%` slower (`21.357193 tok/s`) than PIECEWISE; retain PIECEWISE | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 | Official FP8 cached graph restart in an 8 GiB host cgroup | OOM-killed one worker while reloading AOT artifacts; use the validated 9/12 GiB bounds | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 
 ## Transferred Q8 search history

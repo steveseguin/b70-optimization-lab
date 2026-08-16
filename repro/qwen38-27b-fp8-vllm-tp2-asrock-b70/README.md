@@ -100,6 +100,7 @@ never interrupt the engine while graph initialization is still in progress.
 - oneCCL direct send/receive, TCP loopback OFI, pidfd IPC, simple collective
   thresholds pinned high
 - `CCL_TOPO_P2P_ACCESS=0`: forcing `1` changed decode by only `-0.011%`
+- `FULL_DECODE_ONLY` was quality-clean but `1.618%` slower; retain PIECEWISE
 
 vLLM warns that XPU Graph is officially supported only for single-GPU use.
 This TP2 graph result is therefore experimental and stays fail-closed behind

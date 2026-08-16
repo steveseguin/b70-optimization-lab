@@ -37,6 +37,8 @@ advertised as arbitrary-prompt token exactness.
 
 - `CCL_TOPO_P2P_ACCESS=1` measured `21.706164 tok/s`, `-0.011%` versus the
   default-off graph control; keep it off.
+- `FULL_DECODE_ONLY` measured `21.357193 tok/s`, `-1.618%` versus PIECEWISE.
+  It passed the same semantic/repeat/needle oracle; retain PIECEWISE.
 - Reloading 515 MB of cached AOT artifacts briefly exceeded an 8 GiB host
   cgroup and OOM-killed one worker. A 9 GiB RAM / 12 GiB RAM-plus-swap retry
   passed. The host stayed responsive and the cards recorded no reset/fault.
