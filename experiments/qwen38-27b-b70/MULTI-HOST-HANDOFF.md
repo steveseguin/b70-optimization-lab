@@ -52,9 +52,18 @@ the accepted binary hashes.
 The Q4_K_M increment is not standalone. Apply its documented full lab base
 stack first, then its incremental patch, checking both decoded SHA-256 values.
 
-## Latest closed candidate
+## Latest closed candidates
 
-The root-fused per-owner handoff has been tested and closed:
+Two newer, low-risk compiler/kernel arms are also closed:
+
+- reordered-Q8 loop unroll by two was neutral (`+0.076%` overall);
+- selective per-kernel 256-GRF was safe but `2.789%` slower.
+
+Use the [do-not-repeat index](DO-NOT-REPEAT.md) for their exact source patches,
+hashes, measurements, and local evidence paths. Neither belongs in the
+accepted reproduction.
+
+The earlier root-fused per-owner handoff is likewise closed:
 
 - status: safe and exact at the benchmark gate, but `-3.388%` slower than the
   position-balanced mode-2 control;

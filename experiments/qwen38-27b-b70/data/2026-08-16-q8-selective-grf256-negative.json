@@ -1,0 +1,43 @@
+{
+  "date": "2026-08-16",
+  "model": {
+    "name": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "test": "position-balanced A-B-B-A p64/n256/r3 llama-bench bracket",
+  "common": {
+    "devices": "SYCL0/SYCL1",
+    "split_mode": "tensor",
+    "tensor_split": "1/1",
+    "kv": "f16/f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "speculation": false,
+    "ggml_sycl_comm_direct_q8": 2,
+    "compiler": "IntelLLVM 2026.1.1",
+    "aot_arch": "bmg-g31"
+  },
+  "control": {
+    "llama_bench_sha256": "f7010c08b534a4f338b9cbd83f97f22b82f13ddab5be0c727d16c3bb0f8c4312",
+    "libggml_sycl_sha256": "944e2ddb026bfdcd3147323f7edbfdabbae7754a51cfdb74149045f8895ddd5f",
+    "rates_tok_s": [36.005708, 36.828693],
+    "mean_tok_s": 36.4172005
+  },
+  "candidate": {
+    "change": "per-kernel sycl_ext_intel_grf_size 256 property on reordered Q8 standalone, pair, triple, and recurrent quad launch families",
+    "llama_bench_sha256": "95141e6fba836453833e62d8538e049200fcf6a6b5ec78603ec823015f44c858",
+    "libggml_sycl_sha256": "24a3297a38a1b0616257f16232963dafe353e4b083937fdfbd56b65c0b86b2a1",
+    "mmvq_object_sha256": "1935df1af880a5d39ff610e2e2bd1ef32427d6e47acfe592c596beaa15ce1028",
+    "rates_tok_s": [35.402057, 35.400716],
+    "mean_tok_s": 35.4013865
+  },
+  "candidate_delta_percent": -2.789379705,
+  "safety": {
+    "verify_mismatch": 0,
+    "expected_fusion_census": true,
+    "post_process_gpu_gates_passed": 4,
+    "device_faults": 0
+  },
+  "decision": "rejected; larger GRF reduced effective occupancy and decode throughput"
+}

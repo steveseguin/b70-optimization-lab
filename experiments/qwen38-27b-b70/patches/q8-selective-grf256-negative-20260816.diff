@@ -1,0 +1,47 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -8,6 +8,8 @@
+ #include "gemm-wdc.hpp"
+ #include "ne1-route.hpp"
+ 
++#include <sycl/ext/intel/experimental/grf_size_properties.hpp>
++
+ // How wide a multi-column MMVQ kernel actually EXISTS for this type.  mmvq.cpp's *_switch_ncols has
+ // `case 1..8` for every type and `default: GGML_ABORT`; P4 extended Q4_0 and Q4_K (plain + reorder)
+ // to ncols_dst=16.  Dispatching above this width would abort deep inside a kernel launch, so any
+@@ -1740,6 +1742,8 @@
+                              });
+         } else {
+             cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                             sycl::ext::oneapi::experimental::properties{
++                                 sycl::ext::intel::experimental::grf_size<256>},
+                              [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                                  mul_mat_vec_q_reorder<reorder_vec_dot_q8_0<true>>(vx, vy, dst, ncols, nrows,
+                                                                                    nd_item);
+@@ -1826,6 +1830,8 @@
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+             sycl::nd_range<3>(block_nums * block_dims, block_dims),
++            sycl::ext::oneapi::experimental::properties{
++                sycl::ext::intel::experimental::grf_size<256>},
+             [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                 mul_mat_vec_q8_0_reorder_pair(
+                     vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, nd_item);
+@@ -1915,6 +1921,8 @@
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+             sycl::nd_range<3>(block_nums * block_dims, block_dims),
++            sycl::ext::oneapi::experimental::properties{
++                sycl::ext::intel::experimental::grf_size<256>},
+             [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                 mul_mat_vec_q8_0_reorder_triple(
+                     vx0, vx1, vx2, vy, dst0, dst1, dst2,
+@@ -2031,6 +2039,8 @@
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+             sycl::nd_range<3>(block_nums * block_dims, block_dims),
++            sycl::ext::oneapi::experimental::properties{
++                sycl::ext::intel::experimental::grf_size<256>},
+             [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                 mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+                     vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,

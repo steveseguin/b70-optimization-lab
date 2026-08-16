@@ -32,15 +32,16 @@ tested without a compute fault. It regressed decode by `3.388%` and is closed.
 
 ## Next execution sequence
 
-1. Profile the accepted mode-2 stack on the clean boot using host-side launch
-   census and ordinary telemetry only; do not enable the previously unsafe
-   device-event profiler.
-2. Select a candidate that shortens or overlaps the critical path. Do not
+1. The clean-boot host-side census is complete: no standalone copies remain,
+   and Q8 activation quantization is already almost entirely fused/deduped.
+   Do not retry a generic materialize/copy/requantize removal.
+2. Select a candidate that shortens or overlaps the fused MMVQ/collective
+   critical path. Do not
    extend the device-0 root kernel or make device 1 wait for device-0-local
    RMS/Q8 work.
-3. Prefer a shape-scoped down-projection/activation handoff that eliminates a
-   materialize-and-requantize round trip while preserving the accepted FP32
-   boundary and operation order.
+3. Preserve the accepted FP32 boundary and operation order. The selective
+   256-GRF arm regressed by 2.789%, so retain the default compiler-selected
+   register allocation.
 4. Require a bounded smoke and position-balanced same-binary bracket before
    any endpoint work. Promote only a repeatable gain outside run noise.
 5. For a winning bracket, run the complete 12-prompt cache-zero suite twice,
