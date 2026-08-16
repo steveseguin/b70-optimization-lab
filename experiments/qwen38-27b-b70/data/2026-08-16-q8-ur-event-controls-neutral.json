@@ -1,0 +1,59 @@
+{
+  "date": "2026-08-16",
+  "experiment": "Qwen3.8-27B Q8_0 TP2 Unified Runtime event controls",
+  "disposition": "closed_not_promoted",
+  "runtime": {
+    "unified_runtime_version": "0.12",
+    "adapter": "/opt/intel/oneapi/compiler/2026.1/lib/libur_adapter_level_zero.so.0.12.0",
+    "official_reference": "https://oneapi-src.github.io/unified-runtime/core/LEVEL_ZERO.html"
+  },
+  "signal_barrier": {
+    "variable": "UR_L0_IN_ORDER_BARRIER_BY_SIGNAL=1",
+    "short_p64_n256_r3": {
+      "control_means_tok_s": [35.980121, 36.162427],
+      "candidate_means_tok_s": [36.887511, 36.134672],
+      "pooled_control_tok_s": 36.071274,
+      "pooled_candidate_tok_s": 36.5110915,
+      "delta_percent": 1.219294
+    },
+    "long_p64_n512_r3_baab": {
+      "candidate_means_tok_s": [36.458223, 36.852167],
+      "control_means_tok_s": [36.020535, 35.940755],
+      "pooled_candidate_tok_s": 36.655195,
+      "pooled_control_tok_s": 35.980645,
+      "delta_percent": 1.874756
+    },
+    "endpoint_12_prompt": {
+      "candidate_conventional_tok_s": 35.85273442216379,
+      "control_conventional_tok_s": 35.83107617680487,
+      "delta_percent": 0.06044542243734963,
+      "candidate_ttft_median_ms": 176.70911599998362,
+      "control_ttft_median_ms": 177.02486149937613,
+      "output_hashes_exact": "12/12",
+      "all_cache_zero": true,
+      "candidate_raw_sha256": "0bd83f846f2e2d64b3ec11d84462fe2837491e9198fc667a5427323600600973",
+      "control_raw_sha256": "3e344d395cd21dff33e1066207a7769da075b71491b3f2ec730275b36d799fcf"
+    },
+    "decision": "The llama-bench gain did not transfer to realistic endpoint throughput. The exact-gated endpoint delta is noise-level, so the flag is not promoted."
+  },
+  "device_scope_events": {
+    "scope_1": {
+      "variable": "UR_L0_DEVICE_SCOPE_EVENTS=1",
+      "p64_n256_r3_tok_s": 36.03345,
+      "raw_sha256": "3a08e8f7999954e2a4379501d69ae7b03a960fa1482ab3450a70f5d78f63cc3f"
+    },
+    "scope_2": {
+      "variable": "UR_L0_DEVICE_SCOPE_EVENTS=2",
+      "p64_n256_r3_tok_s": 36.16635,
+      "raw_sha256": "6053a487e0e7441da13f0ca7fc256cf357c6047769f2a41f6427e1b05f5d5299"
+    },
+    "following_control_tok_s": 36.909539,
+    "following_control_raw_sha256": "fcf875f159e668e468706e3a93723badfa9f1478ea0b45780db400494d4d847d",
+    "decision": "Neither scope mode beat the neighboring unchanged control; no endpoint run was warranted."
+  },
+  "identity": {
+    "binary_sha256": "f7010c08b534a4f338b9cbd83f97f22b82f13ddab5be0c727d16c3bb0f8c4312",
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "raw_local_directory": "/mnt/fast-ai/bench-results/qwen38-q8-ur-event-screen-20260816"
+}
