@@ -84,6 +84,15 @@ were verified FP16. The GPTQ target itself failed the Python-result canary
 default and remains experimental. The nightly patch is redundant at 8K; 131K,
 the boundary patch, power, and broad quality remain open.
 
+The official Qwen3.8 FP8 checkpoint now has a working TP2 vLLM/XPU baseline in
+the newer pinned `0.27.2rc1.dev77` image. Eager decode measured `17.097358`
+tok/s; a size-one PIECEWISE graph measured **`21.708532 tok/s`** with five
+unique cache-zero p512/g128 requests. Seven exact canaries, eight-run
+determinism, and a 3,829-token needle all matched the Q8 oracle. This is slower
+than GGUF Q8 and remains experimental because vLLM officially limits XPU Graph
+support to single GPU; it is the source-level GDN/collective control, not the
+promoted fastest service.
+
 Resume and evidence:
 
 - [Qwen3.8 model board](README.md#qwen38-27b-model-board)
@@ -99,6 +108,8 @@ Resume and evidence:
 - [one-B70 GPTQ target-only graph validation](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-target-only-graph-validation.md)
 - [one-B70 GPTQ native-MTP matrix](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-mtp-matrix-validation.md)
 - [GPTQ quality/KV/runtime-dtype decision](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-quality-kv-dtype-decision.md)
+- [official FP8 vLLM/XPU TP2 reproduction](repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md)
+- [official FP8 graph result](experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md)
 
 Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
 prototype inherited from Qwen3.6 work. Both caused device faults/resets. Do not
@@ -117,6 +128,9 @@ service change:
   accepted oneAPI 2026.1.1 BMG-G31 AOT build;
 - `/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/`: accepted Qwen3.8 GGUF targets and MTP sidecars;
 - `/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/`: official FP8 artifact retained for the separate vLLM lane;
+- `/mnt/fast-ai/bench-results/qwen38-official-fp8-vllm-xpu-20260816/`:
+  official FP8 eager/graph/P2P controls, final quality gate, cache-zero result,
+  runtime capture, and post-run health evidence;
 - `/mnt/fast-ai/llm-models/qwen3.8-27b-gptq-int4-mtp/`: hash-verified
   SergioB GPTQ INT4 target with 15 BF16 MTP tensors; community replay lane;
 - `/mnt/fast-ai/bench-results/qwen38-q4km-asrock-b70-20260815-pass2/`:
@@ -181,12 +195,15 @@ loaded service.
    `+0.342%`, and TTFT regressed `+8.311%`. Preserve its
    [packet](experiments/qwen38-27b-b70/notes/2026-08-16-q8-distributed-greedy-argmax-neutral.md)
    and only revisit if winner selection can avoid the added cross-queue sync.
-3. Keep SergiioB's single-card GPTQ/MTP vLLM recipe experimental: it is fast,
+3. Use the official FP8 graph repro as the vLLM control and target its Triton
+   GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
+   already closed as neutral. Preserve the 9/12 GiB host cgroup.
+4. Keep SergiioB's single-card GPTQ/MTP vLLM recipe experimental: it is fast,
    but the checkpoint failed the no-quality-loss semantic gate. Never stop a
    vLLM XPU container before `/health` during graph initialization.
-4. Restore the LocalMaxxing credential outside Git, then submit the already
+5. Restore the LocalMaxxing credential outside Git, then submit the already
    queued 49.717503 tok/s target-only result after authenticated dry-run.
-5. Keep `main` synchronized before and after focused commits. Preserve failed
+6. Keep `main` synchronized before and after focused commits. Preserve failed
    experiments as patches and notes rather than branches or worktrees.
-6. Archive large ignored Qwen artifacts only through the verified manifest and
+7. Archive large ignored Qwen artifacts only through the verified manifest and
    restore procedure linked from the Qwen family map.

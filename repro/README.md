@@ -11,6 +11,7 @@ depending on transient local notes.
 
 | Recipe | Use It For |
 | --- | --- |
+| [Qwen3.8 27B official FP8 target-only vLLM/XPU TP2 on 2x ASRock Arc Pro B70, 21.709 tok/s, 2026-08-16](qwen38-27b-fp8-vllm-tp2-asrock-b70/) | Restore the pinned official FP8 artifact and container, replay the experimental graph-c1 TP2 service under a 16 GB-safe host cgroup, and enforce cache-zero and semantic/long-context quality boundaries. |
 | [Qwen3.6 27B Q8_0 target-only TP2 on 2x ASRock Arc Pro B70, 35.832 tok/s, 2026-08-14](qwen36-27b-q8-tp2-asrock-b70/) | Restore the complete mndodd-based lab source patch, exact runtime doors, bounded server, model identity, fixed cold suite, and 12/12 output-hash gate for the no-speculation Q8 record. |
 | [Muse-Glimmer-30B UD-Q8_K_XL on 4x Intel Arc Pro B70, canonical mean 100.3685 tok/s, 2026-08-13](muse-glimmer-30b-q8-woq-b70-100tps-20260813/) | Restore the private llama.cpp record source from a public base, verify hash-pinned target/draft identities and raw evidence, and replay the two canonical full-256 and frozen 15-prompt cold gates. |
 | [Laguna S 2.1 INT4 on 4x Intel Arc Pro B70, published 102.971 / conventional 101.942 tok/s, 2026-07-26](laguna-s-2.1-int4-b70-102tps-20260726/) | Verify the approved LocalMaxxing receipt, restore the exact width-12 DFlash11 source/runtime identity, and run one fail-closed cold suite with token, text, cache, treatment, topology, and dual-accounting gates. |

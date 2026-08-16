@@ -32,6 +32,10 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 | Peer-pair cross-device output writes, mode 3 | **Unsafe: device-lost/reset storm. Never retry on this stack** | [note](notes/2026-08-16-q8-peer-pair-collective-unsafe.md), [data](data/2026-08-16-q8-peer-pair-collective-unsafe.json), [quarantined patch](patches/q8-peer-pair-collective-device-lost-unsafe-20260816.diff.gz.b64) |
 | Root-fused per-owner handoff, mode 4 | Safe and exact at the benchmark gate, but rejected: `-3.388%` decode because the longer root critical path serialized device 1 | [result](notes/2026-08-16-q8-root-fused-candidate-negative.md), [data](data/2026-08-16-q8-root-fused-candidate-staged.json), [patch](patches/q8-root-fused-collective-untested-20260816.diff.gz.b64) |
 | Public GPTQ INT4 + native MTP | Performance reproduced, but GPTQ target failed a deterministic semantic canary; not the no-loss lane | [community decision](../../community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-quality-kv-dtype-decision.md) |
+| Official FP8 with old Intel vLLM `0.21.0-b3.1` | Superseded negative: bounded TP2 initialization failed after model load; do not retry this image unchanged | [bring-up](notes/2026-08-15-bringup-checkpoint.md) |
+| Official FP8 with vLLM/XPU `0.27.2rc1.dev77`, eager | Working exact-gated control at `17.097358 tok/s`; graph c1 is `26.97%` faster | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
+| Official FP8 graph c1, `CCL_TOPO_P2P_ACCESS=1` | Neutral at `21.706164 tok/s` (`-0.011%`); retain the default `0` | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
+| Official FP8 cached graph restart in an 8 GiB host cgroup | OOM-killed one worker while reloading AOT artifacts; use the validated 9/12 GiB bounds | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 
 ## Transferred Q8 search history
 

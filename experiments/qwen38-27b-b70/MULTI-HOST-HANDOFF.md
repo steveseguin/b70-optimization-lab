@@ -52,6 +52,21 @@ the accepted binary hashes.
 The Q4_K_M increment is not standalone. Apply its documented full lab base
 stack first, then its incremental patch, checking both decoded SHA-256 values.
 
+## Official FP8 vLLM/XPU baseline
+
+- model: `Qwen/Qwen3.8-27B-FP8`
+- revision: `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a`
+- aggregate 66-file weight manifest SHA-256:
+  `82fb8f84fa117c81c3e8639c4675709dfb667d70ddaa2fd097d35fc37d95453a`
+- runtime: pinned vLLM/XPU container with vLLM `0.27.2rc1.dev77`
+- result: `21.708532 tok/s`, TP2 target-only, native FP16 KV, graph c1
+- restore/run: [standalone repro](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md)
+
+This lane is slower than GGUF Q8 but provides the clean vLLM source-level
+control. Its semantic/repeat/long-context hashes matched the Q8 oracle. Keep
+the TP2 graph experimental, preserve the 9/12 GiB host bounds, and do not claim
+arbitrary-prompt token-exactness.
+
 ## Latest closed candidates
 
 Two newer, low-risk compiler/kernel arms are also closed:

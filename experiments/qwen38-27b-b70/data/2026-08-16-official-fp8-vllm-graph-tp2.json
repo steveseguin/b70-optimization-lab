@@ -1,0 +1,61 @@
+{
+  "status": "accepted experimental baseline",
+  "date": "2026-08-16",
+  "hardware": "2x ASRock Intel Arc Pro B70 32 GiB; 16 GiB host RAM",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "weight_file_count": 66,
+    "weight_bytes": 30866866928,
+    "sorted_basename_manifest_sha256": "82fb8f84fa117c81c3e8639c4675709dfb667d70ddaa2fd097d35fc37d95453a"
+  },
+  "runtime": {
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm": "0.27.2rc1.dev77+gac7509e2b",
+    "torch": "2.13.0+xpu",
+    "tensor_parallel_size": 2,
+    "weight_quantization": "official block-scaled FP8",
+    "compute_dtype": "float16",
+    "kv_cache_dtype": "native FP16",
+    "speculation": null,
+    "prefix_cache": false,
+    "graph": "PIECEWISE capture size 1",
+    "host_cgroup": "9 GiB memory / 12 GiB memory+swap"
+  },
+  "benchmark": {
+    "shape": "five unique p512/g128 fixed-line completions after one separate warmup",
+    "completion_tokens_total": 640,
+    "median_tok_s_after_ttft": 21.708532114978812,
+    "mean_tok_s_after_ttft": 21.711579495584097,
+    "cv_tok_s_after_ttft": 0.0007376415031123498,
+    "median_tok_s_wall": 19.62464942487593,
+    "median_ttft_s": 0.6262273780012038,
+    "cached_tokens": [0, 0, 0, 0, 0],
+    "all_prompt_hashes_distinct": true,
+    "raw_sha256": "b08f515a261ae36fd361bd185516655cb18a2418f784aeee38decae78ef830ba"
+  },
+  "controls": {
+    "eager_median_tok_s_after_ttft": 17.097357647813894,
+    "graph_gain_vs_eager_percent": 26.97011775059215,
+    "p2p_access_1_median_tok_s_after_ttft": 21.706164426129313,
+    "p2p_access_1_delta_percent": -0.010920642617417986
+  },
+  "quality": {
+    "pass_all": true,
+    "seven_exact_cases_pass": true,
+    "repeat_runs": 8,
+    "repeat_deterministic": true,
+    "long_context_prompt_tokens": 3829,
+    "long_context_needle_pass": true,
+    "all_checked_hashes_match_q8_oracle": true,
+    "raw_sha256": "79f63ce1ac6bf6ab65e477d6179c788c571f6eff6297df54bb76da79773ac6d2",
+    "boundary": "No universal token-exact claim: longer free-form continuations differed between eager and graph modes."
+  },
+  "safety": {
+    "cached_restart_at_8_gib": "worker OOM-killed during concurrent AOT artifact reload",
+    "retry_at_9_gib": "passed",
+    "cards_after_cleanup": "normal",
+    "new_gpu_fault_or_reset": false
+  },
+  "raw_local_directory": "/mnt/fast-ai/bench-results/qwen38-official-fp8-vllm-xpu-20260816"
+}
