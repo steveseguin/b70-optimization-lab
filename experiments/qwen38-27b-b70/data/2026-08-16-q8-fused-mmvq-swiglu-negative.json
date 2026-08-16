@@ -1,0 +1,43 @@
+{
+  "date": "2026-08-16",
+  "status": "rejected_performance_negative",
+  "model": {
+    "name": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70, equal TP2",
+  "source": {
+    "base": "/mnt/fast-ai/src/llama.cpp-q8-tp2-dp4a2",
+    "candidate": "/mnt/fast-ai/src/llama.cpp-q38-q8-fused-swiglu",
+    "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "incremental_patch": "experiments/qwen38-27b-b70/patches/q8-fused-mmvq-swiglu-v2-negative-20260816.diff.gz.b64",
+    "decoded_patch_sha256": "6bdb7691bb4f6133033a7a43971fd67884c69f92cd96463d19ee27c51bba479c"
+  },
+  "benchmark": {
+    "shape": "p64/n256/r3; b1024/ub256; F16 KV; -dev SYCL0/SYCL1; -sm tensor; -ts 1/1",
+    "order": ["off", "on", "on", "off"],
+    "off_avg_tok_s": [36.81649, 36.79026],
+    "on_avg_tok_s": [36.835368, 36.605786],
+    "off_pooled_mean_tok_s": 36.803375,
+    "on_pooled_mean_tok_s": 36.720577,
+    "relative_delta_percent": -0.22497393241787123
+  },
+  "mechanism": {
+    "off_fused_mmvq_pairs": 98432,
+    "off_fused_mmvq_swiglus": 0,
+    "on_fused_mmvq_pairs": 0,
+    "on_fused_mmvq_swiglus": 98432,
+    "quantize_launches_both": 3084,
+    "verify_mismatch_both": 0
+  },
+  "raw_log_sha256": {
+    "v1_off": "bdd4e685a23c8b35e63696db4edc60446c7ed764531a85e1ffae49e06ea29e9e",
+    "v1_on": "b487957e3a6c7ca23fa070d7d6293d767c52ecbba854e2937544eee03a5c19ff",
+    "v2_smoke": "4abe770f94e665651ade787e158a2e19baaaca62160d1236ba63da78de29260c",
+    "v2_off_first": "3f0ee40c324a467c32440b931f86ac2d7653892620e624f02d4dc932fdccda7c",
+    "v2_on_first": "4137359d1f83b001170eb8e96172ecaaee19d65af17aab47d543232cb2254bd0",
+    "v2_on_second": "f4781cccbf0489aa9704e392bbbe0ac22d19556f1a345c5044a0f014f3808d8e",
+    "v2_off_second": "a5abf0d5c6f1b302134823f314135f25dbeef5824e0c2fdf34cd559da64742b0"
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260816-fused-swiglu"
+}

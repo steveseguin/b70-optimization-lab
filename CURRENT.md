@@ -161,6 +161,10 @@ loaded service.
 2. Continue Qwen3.8 Q8_0 target-only TP2 from the accepted source snapshot,
    with same-binary controls, the fixed cold gate, and the semantic suite. Aim
    for 40 tok/s without weakening weights, KV precision, or arithmetic gates.
+   The 2026-08-16 device-local Q8 gate/up/SwiGLU experiment is closed at
+   `-0.224974%` after restoring its downstream Q8 producer; retain the
+   [negative packet](experiments/qwen38-27b-b70/notes/2026-08-16-q8-fused-mmvq-swiglu-negative.md)
+   and do not enable its default-off door in the accepted recipe.
 3. Keep SergiioB's single-card GPTQ/MTP vLLM recipe experimental: it is fast,
    but the checkpoint failed the no-quality-loss semantic gate. Never stop a
    vLLM XPU container before `/health` during graph initialization.
