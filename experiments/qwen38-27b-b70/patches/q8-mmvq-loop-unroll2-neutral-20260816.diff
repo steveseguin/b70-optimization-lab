@@ -1,0 +1,33 @@
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -270,4 +270,5 @@
+         i += (row % nchunks) * blocks_per_subgroup;
+     }
+     int cc = 0;
++#pragma unroll 2
+     for (; PHASE ? (cc < nchunks) : (i < blocks_per_row); ++cc, i += blocks_per_subgroup) {
+@@ -351,4 +352,5 @@
+         i += (row % nchunks) * blocks_per_subgroup;
+     }
+     int cc = 0;
++#pragma unroll 2
+     for (; PHASE ? (cc < nchunks) : (i < blocks_per_row); ++cc, i += blocks_per_subgroup) {
+@@ -1781,4 +1783,5 @@
+ 
+     float partial_sum = 0.0f;
+     const int lane_block = (int) (sg.get_local_linear_id() / block_elements_per_subgroup);
++#pragma unroll 2
+     for (int i = lane_block; i < blocks_per_row; i += blocks_per_subgroup) {
+@@ -1869,4 +1872,5 @@
+ 
+     float partial_sum = 0.0f;
+     const int lane_block = (int) (sg.get_local_linear_id() / block_elements_per_subgroup);
++#pragma unroll 2
+     for (int i = lane_block; i < blocks_per_row; i += blocks_per_subgroup) {
+@@ -1971,4 +1975,5 @@
+ 
+     float partial_sum = 0.0f;
+     const int lane_block = (int) (sg.get_local_linear_id() / block_elements_per_subgroup);
++#pragma unroll 2
+     for (int i = lane_block; i < blocks_per_row; i += blocks_per_subgroup) {

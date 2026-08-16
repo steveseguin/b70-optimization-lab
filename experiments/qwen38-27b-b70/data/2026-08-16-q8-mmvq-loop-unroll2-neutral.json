@@ -1,0 +1,57 @@
+{
+  "date": "2026-08-16",
+  "model": {
+    "name": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "test": "two complementary position-balanced p64/n256/r3 llama-bench brackets",
+  "common": {
+    "devices": "SYCL0/SYCL1",
+    "split_mode": "tensor",
+    "tensor_split": "1/1",
+    "kv": "f16/f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "speculation": false,
+    "ggml_sycl_comm_direct_q8": 2
+  },
+  "control": {
+    "llama_bench_sha256": "f7010c08b534a4f338b9cbd83f97f22b82f13ddab5be0c727d16c3bb0f8c4312",
+    "libggml_sycl_sha256": "944e2ddb026bfdcd3147323f7edbfdabbae7754a51cfdb74149045f8895ddd5f",
+    "mmvq_object_sha256": "23d89df638b2b0307de8af674aac508566f0d18bfbfd7417068d0abf60938154",
+    "rates_tok_s": [36.016026, 36.842494, 36.821349, 36.722325],
+    "mean_tok_s": 36.6005485
+  },
+  "candidate": {
+    "change": "pragma unroll 2 on five reordered-Q8 dynamic block walks",
+    "llama_bench_sha256": "a1b12d86748689d43f7174f22d65853aae2b34ea93bb0febb96d220cb1f6ebdc",
+    "libggml_sycl_sha256": "39cdddfa9f602c8a62b2e76de4a62f0f4253f7f991455da02ee1a599f84d2fa7",
+    "mmvq_object_sha256": "c02dd7cc34f11574dd2b3810c6167e3b9273f75397e33ab4651b9008b9abc527",
+    "rates_tok_s": [36.189471, 36.825723, 36.985258, 36.513579],
+    "mean_tok_s": 36.62850775
+  },
+  "brackets": [
+    {
+      "order": "A-B-B-A",
+      "control_mean_tok_s": 36.42926,
+      "candidate_mean_tok_s": 36.507597,
+      "candidate_delta_percent": 0.2150386804
+    },
+    {
+      "order": "B-A-A-B",
+      "control_mean_tok_s": 36.771837,
+      "candidate_mean_tok_s": 36.7494185,
+      "candidate_delta_percent": -0.0609664945
+    }
+  ],
+  "overall_candidate_delta_percent": 0.0763902486,
+  "safety": {
+    "verify_mismatch": 0,
+    "expected_fusion_census": true,
+    "post_process_gpu_gates_passed": 8,
+    "device_faults": 0
+  },
+  "decision": "neutral; do not promote or run endpoint suite"
+}
+

@@ -16,6 +16,7 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 | --- | --- | --- |
 | Q8 lossless repacking | Closed: practical sentinel formats expanded the weights; theoretical entropy headroom was only about 3.7% | [structural audit](notes/2026-08-16-q8-structural-feasibility-and-sampling.md) |
 | Q8 two-chain DP4A (`DP4A2`) transfer | Quality-exact, but no repeatable Qwen3.8 endpoint gain; the promoted snapshot intentionally retains one-chain DP4A | [note](notes/2026-08-16-q8-dp4a2-transfer-no-win.md) |
+| Reordered-Q8 dynamic loop unroll by two | Exact TP2 smoke; neutral across complementary brackets (`+0.076%` overall), so not promoted | [note](notes/2026-08-16-q8-mmvq-loop-unroll2-neutral.md), [data](data/2026-08-16-q8-mmvq-loop-unroll2-neutral.json), [patch](patches/q8-mmvq-loop-unroll2-neutral-20260816.diff) |
 | TP2 collective census | 128 already-fused boundaries/token; synchronization, not transferred bytes, is the target | [structural audit](notes/2026-08-16-q8-structural-feasibility-and-sampling.md) |
 | Tensor-split backend sampling | Closed: llama.cpp fell back to CPU, so no GPU treatment was executed | [structural audit](notes/2026-08-16-q8-structural-feasibility-and-sampling.md) |
 | Fused Q8 MMVQ + SwiGLU | Rejected performance regression | [note](notes/2026-08-16-q8-fused-mmvq-swiglu-negative.md), [data](data/2026-08-16-q8-fused-mmvq-swiglu-negative.json), [patch](patches/q8-fused-mmvq-swiglu-v2-negative-20260816.diff.gz.b64) |
