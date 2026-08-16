@@ -92,3 +92,13 @@ For the wider semantic test, run
 [`scripts/qwen38-text-quality-suite.py`](../../scripts/qwen38-text-quality-suite.py)
 against the endpoint. The 2026-08-16 decision evidence is summarized in the
 [quality/KV validation note](../../community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-quality-kv-dtype-decision.md).
+
+## LocalMaxxing package
+
+The policy-checked target-only Q8 submission package is
+[`qwen38-27b-q8-tp2-target-only-36.773tok-20260815.queue.json`](../../experiments/qwen38-27b-b70/localmaxxing/qwen38-27b-q8-tp2-target-only-36.773tok-20260815.queue.json).
+It records the conventional `36.772932 tok/s` interval metric, exact model and
+server identities, all prompt/output hashes, the cache-zero gate, and the raw
+completions thinking-mode provenance. Local validation passes. An
+authenticated server dry-run and real submission remain pending because this
+host currently has no LocalMaxxing API credential.
