@@ -3,6 +3,10 @@
 Date: 2026-08-16
 Scope: quality-preserving Qwen3.8 27B performance on Intel Arc Pro B70
 
+Before opening an experiment, check the
+[do-not-repeat index](../DO-NOT-REPEAT.md) and its two transferred Q8
+notebooks.
+
 ## Plain-language state
 
 The reusable Qwen3.8 work is already real:
