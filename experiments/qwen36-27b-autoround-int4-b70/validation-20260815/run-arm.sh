@@ -218,9 +218,11 @@ export SMOKE_OUT="$arm_root/data/smoke.json"
 export SUMMARY_OUT="$arm_root/data/summary-legacy.json"
 export VLLM_CACHE_ROOT=${VALIDATION_VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
 export BENCH_MAX_TOKENS=${VALIDATION_BENCH_MAX_TOKENS:-512}
-export BENCH_METRIC_TOKENS=100
+export BENCH_METRIC_TOKENS=${VALIDATION_BENCH_METRIC_TOKENS:-100}
 export QUALITY_REPEAT_RUNS=32
 export QUALITY_LONG_CONTEXT_TOKENS=1024
+export RUN_SMOKE=${VALIDATION_RUN_SMOKE:-1}
+export RUN_BENCH=${VALIDATION_RUN_BENCH:-1}
 export RUN_QUALITY=${VALIDATION_RUN_QUALITY:-1}
 export REQUEST_EXTRA_JSON='{"chat_template_kwargs":{"enable_thinking":false}}'
 export QUALITY_BASELINE_JSON="$quality_baseline"
@@ -237,6 +239,40 @@ if [[ "${VALIDATION_ENABLE_PACKET_TRACE:-0}" == "1" ]]; then
   export VLLM_XPU_MODEL_INPUT_TRACE_FILE="$arm_root/model-input-trace.jsonl"
   export VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES=32
   export VLLM_XPU_MODEL_INPUT_TRACE_RANK=0
+fi
+if [[ "${VALIDATION_ENABLE_LAYER_TRACE:-0}" == "1" ]]; then
+  # Compare only the first two real verifier packets against ordered native
+  # target decode. Python layer traces require either an eager target arm or a
+  # speculative arm whose verifier forward alone bypasses compiled execution;
+  # compiled functions elide these trace helpers.
+  export VLLM_XPU_QWEN_LAYER_TRACE_FILE="$arm_root/qwen-layer-trace.jsonl"
+  export VLLM_XPU_QWEN_LAYER_TRACE_LAYERS="${VALIDATION_QWEN_LAYER_TRACE_LAYERS:-0,1,2,3}"
+  export VLLM_XPU_QWEN_LAYER_TRACE_STAGES="${VALIDATION_QWEN_LAYER_TRACE_STAGES:-input_norm_after,attention_after,post_attention_norm_after,mlp_after}"
+  export VLLM_XPU_QWEN_LAYER_TRACE_ROW_INDICES="${VALIDATION_QWEN_LAYER_TRACE_ROW_INDICES:-0,1,2,3}"
+  export VLLM_XPU_QWEN_LAYER_TRACE_POS_MIN="${VALIDATION_QWEN_LAYER_TRACE_POS_MIN:-74}"
+  export VLLM_XPU_QWEN_LAYER_TRACE_POS_MAX="${VALIDATION_QWEN_LAYER_TRACE_POS_MAX:-80}"
+  export VLLM_XPU_QWEN_LAYER_TRACE_RANK="${VALIDATION_QWEN_LAYER_TRACE_RANK:-0}"
+  export VLLM_XPU_QWEN_LAYER_TRACE_RESIDUAL="${VALIDATION_QWEN_LAYER_TRACE_RESIDUAL:-1}"
+  export VLLM_XPU_QWEN_LAYER_TRACE_MAX_LINES="${VALIDATION_QWEN_LAYER_TRACE_MAX_LINES:-256}"
+
+  export VLLM_XPU_GDN_ROW_TRACE_FILE="$arm_root/gdn-row-trace.jsonl"
+  export VLLM_XPU_GDN_ROW_TRACE_LAYERS="${VALIDATION_GDN_ROW_TRACE_LAYERS:-0,1,2}"
+  export VLLM_XPU_GDN_ROW_TRACE_STAGES="${VALIDATION_GDN_ROW_TRACE_STAGES:-forward_post_core,forward_post_norm,forward_post_out_proj}"
+  export VLLM_XPU_GDN_ROW_TRACE_ROW_LIMIT="${VALIDATION_GDN_ROW_TRACE_ROW_LIMIT:-4}"
+  export VLLM_XPU_GDN_ROW_TRACE_STATE_LIMIT="${VALIDATION_GDN_ROW_TRACE_STATE_LIMIT:-1}"
+  export VLLM_XPU_GDN_ROW_TRACE_REQ_REGEX="${VALIDATION_GDN_ROW_TRACE_REQ_REGEX:-holdout--concurrency-review}"
+  export VLLM_XPU_GDN_ROW_TRACE_RANK="${VALIDATION_GDN_ROW_TRACE_RANK:-0}"
+  export VLLM_XPU_GDN_ROW_TRACE_MAX_LINES="${VALIDATION_GDN_ROW_TRACE_MAX_LINES:-128}"
+
+  # The detailed GDN trace includes the quantized qkvz/ba projection output,
+  # which the lighter row trace begins after.
+  export VLLM_XPU_GDN_TRACE_FILE="$arm_root/gdn-projection-trace.jsonl"
+  export VLLM_XPU_GDN_TRACE_LAYER_REGEX="${VALIDATION_GDN_TRACE_LAYER_REGEX:-layers\\.(0|1|2)\\.linear_attn}"
+  export VLLM_XPU_GDN_TRACE_REQ_REGEX="${VALIDATION_GDN_TRACE_REQ_REGEX:-holdout--concurrency-review}"
+  export VLLM_XPU_GDN_TRACE_RANK="${VALIDATION_GDN_TRACE_RANK:-0}"
+  export VLLM_XPU_GDN_TRACE_MAX_LINES="${VALIDATION_GDN_TRACE_MAX_LINES:-256}"
+  export VLLM_XPU_GDN_TRACE_TENSOR_LIMIT="${VALIDATION_GDN_TRACE_TENSOR_LIMIT:-8}"
+  export VLLM_XPU_GDN_TRACE_STATE_LIMIT="${VALIDATION_GDN_TRACE_STATE_LIMIT:-1}"
 fi
 if [[ -n "${VALIDATION_FA_SERIAL_SPEC_MODE:-}" ]]; then
   export VLLM_XPU_FA_SERIAL_SPEC_MODE="$VALIDATION_FA_SERIAL_SPEC_MODE"
@@ -328,6 +364,16 @@ if [[ "$mode" == "spec-native-partition-exact-native" \
   # through the same native one-token kernel used by the exact verifier proof.
   export VLLM_XPU_GDN_NATIVE_FALLBACK=0
 fi
+if [[ -n "${VALIDATION_VLLM_EXTRA_ARGS:-}" ]]; then
+  export VLLM_EXTRA_ARGS="$VALIDATION_VLLM_EXTRA_ARGS"
+fi
+if [[ -n "${VALIDATION_ENABLE_XPU_GRAPH:-}" ]]; then
+  export QWEN36_27B_ENABLE_XPU_GRAPH="$VALIDATION_ENABLE_XPU_GRAPH"
+  if [[ "$VALIDATION_ENABLE_XPU_GRAPH" == "0" ]]; then
+    unset XPU_GRAPH VLLM_XPU_ENABLE_XPU_GRAPH
+    unset VLLM_XPU_FORCE_GRAPH_WITH_COMM VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE
+  fi
+fi
 
 printf 'mode=%s\ngpu_pair=%s\narm_root=%s\nquality_baseline=%s\n' \
   "$mode" "$gpu_pair" "$arm_root" "$quality_baseline" > "$arm_root/arm.env"
@@ -357,9 +403,12 @@ if [[ "$runner_rc" == "0" \
 fi
 printf '%s\n' "$runner_rc" > "$arm_root/runner.exit-code"
 
-if [[ -s "$BENCH_OUT" ]]; then
+if [[ -s "$BENCH_OUT" && "$BENCH_METRIC_TOKENS" == "100" ]]; then
   "$venv/bin/python" "$repo/scripts/qualify_realistic_window_metrics.py" \
     "$BENCH_OUT" --in-place > "$arm_root/qualify.log"
+elif [[ -s "$BENCH_OUT" ]]; then
+  printf 'diagnostic metric window (%s events); strict 100-event qualifier skipped\n' \
+    "$BENCH_METRIC_TOKENS" > "$arm_root/qualify.log"
 fi
 find "$arm_root" -type f ! -name SHA256SUMS.pre-manifest -print0 \
   | sort -z | xargs -0 sha256sum \
