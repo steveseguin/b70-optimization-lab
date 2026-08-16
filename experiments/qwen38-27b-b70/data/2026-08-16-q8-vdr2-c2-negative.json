@@ -1,0 +1,29 @@
+{
+  "date": "2026-08-16",
+  "status": "rejected",
+  "scope": "Qwen3.8-27B Q8_0 target-only TP2, concurrency two",
+  "hypothesis": "VDR2 could expose more independent reordered-Q8 work for two active slots than accepted VDR4",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "candidate": {
+    "source_base": "mndodd/llama.cpp 4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126 plus accepted Qwen3.8 patch and q8-vdr2-c2-negative-20260816.diff.gz.b64",
+    "llama_bench_sha256": "24b360864c24fb42d8ea5b34bd07fd6a5e116b43e305c38797d3ff86df51ef14",
+    "llama_server_sha256": "9848956f6623d7e5f574d48ab5c80115b7454e991fe8fb5851ef9cbde3ae1cb2",
+    "libggml_sycl_sha256": "5b344935b8e202d483dc1b3481cd2141522e5023292830b96136e7a95088fa20",
+    "aggregate_conventional_d_tok_s": 55.687034992766904,
+    "aggregate_wall_tok_s": 54.788764326846845,
+    "per_request_conventional_d_tok_s": [27.84420150965591, 27.84479555685237],
+    "all_cache_cold": true,
+    "all_exact_to_candidate_sequential_oracle": false
+  },
+  "accepted_comparator": {
+    "aggregate_conventional_d_tok_s": 57.39812202629761,
+    "delta_percent": -2.9810853963945894
+  },
+  "quality_failure": {
+    "prompt_0_candidate_sequential_sha256": "5858b15368f93f00f87da3f57f0d18b73c33c4e0776de94fb3b97da25ac2fc47",
+    "prompt_0_candidate_concurrent_sha256": "528009fcc00e49cec4c23c5390349c56f7b010cbcff5ecbdf286588ac264dfff",
+    "prompt_1_sequential_and_concurrent_sha256": "4952a3674b5dc18ab8a0a0fbc548e0145d78fd3aa1118819b5d8a91b06d2c460"
+  },
+  "health": "Both GPUs normal after the bounded run; no kernel fault/reset/hang entries",
+  "decision": "Do not promote or repeat VDR2 on the accepted Qwen3.8 Q8 TP2 stack. It is slower and fails the exact cross-batch gate."
+}

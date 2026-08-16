@@ -63,11 +63,11 @@ same FP32 reduction order and output bytes.
 
 Work is ranked as follows:
 
-1. test a c2-specific reordered-Q8 VDR2 build against the exact fixed-slot
-   cross-batch oracle; this is distinct from the rejected c1 VDR sweep;
-2. profile only if that scheduling change produces a repeatable gain—the AOT
-   audit already shows SIMD16, 128 GRFs, eight EU threads, coalesced DP4A
-   payloads, and no spills in the accepted VDR4 kernel;
+1. Retain VDR4. The c2-specific VDR2 build regressed aggregate throughput by
+   `2.981%` and changed one prompt across sequential/concurrent scheduling.
+2. Characterize accepted-stack c3/c4 throughput with fixed-slot exact-token
+   gates. This improves service capacity without changing target arithmetic
+   and keeps aggregate and per-request latency explicitly separate.
 3. Q4_K_M concurrency and deep-prefill package as a separate production lane,
    using the verified `-b 8192 -ub 2048` prefill setting where it helps;
 4. vLLM/FP8 only when the official artifact and Intel runtime pass the same
