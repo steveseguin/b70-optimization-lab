@@ -39,6 +39,10 @@ advertised as arbitrary-prompt token exactness.
   default-off graph control; keep it off.
 - `FULL_DECODE_ONLY` measured `21.357193 tok/s`, `-1.618%` versus PIECEWISE.
   It passed the same semantic/repeat/needle oracle; retain PIECEWISE.
+- `enable_qk_norm_rope_fusion=true` produced the fused XPU custom op in both
+  rank artifacts and passed the full oracle. Its two medians were
+  `21.740997` and `21.690559 tok/s`, bracketing control at `+0.150%` and
+  `-0.083%`; do not promote this endpoint-neutral pass.
 - Reloading 515 MB of cached AOT artifacts briefly exceeded an 8 GiB host
   cgroup and OOM-killed one worker. A 9 GiB RAM / 12 GiB RAM-plus-swap retry
   passed. The host stayed responsive and the cards recorded no reset/fault.

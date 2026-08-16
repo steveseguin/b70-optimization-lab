@@ -105,6 +105,9 @@ never interrupt the engine while graph initialization is still in progress.
 The 2026-08-16 nightly (`8efa13b70`, XPU kernels `0.1.13.2`) was also
 quality-clean at `21.723631 tok/s`, only `+0.070%` versus this pinned image.
 That is noise-level, so the reproduction digest remains unchanged.
+Enabling XPU's supported Q/K RMSNorm+RoPE compiler fusion was also neutral:
+two medians bracketed the control at `+0.150%` and `-0.083%` while preserving
+the oracle. It is intentionally absent from the launcher.
 
 vLLM warns that XPU Graph is officially supported only for single-GPU use.
 This TP2 graph result is therefore experimental and stays fail-closed behind
