@@ -108,6 +108,9 @@ That is noise-level, so the reproduction digest remains unchanged.
 Enabling XPU's supported Q/K RMSNorm+RoPE compiler fusion was also neutral:
 two medians bracketed the control at `+0.150%` and `-0.083%` while preserving
 the oracle. It is intentionally absent from the launcher.
+Native BF16 activation/KV arithmetic was oracle-clean but decode-neutral at
+`21.708409 tok/s` (`-0.0006%`) with slower TTFT, so the captured FP16 setting
+remains the reproducible performance identity.
 
 vLLM warns that XPU Graph is officially supported only for single-GPU use.
 This TP2 graph result is therefore experimental and stays fail-closed behind

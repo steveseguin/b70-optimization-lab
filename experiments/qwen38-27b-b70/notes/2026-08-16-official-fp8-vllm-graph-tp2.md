@@ -43,6 +43,10 @@ advertised as arbitrary-prompt token exactness.
   rank artifacts and passed the full oracle. Its two medians were
   `21.740997` and `21.690559 tok/s`, bracketing control at `+0.150%` and
   `-0.083%`; do not promote this endpoint-neutral pass.
+- Native BF16 compute and auto/BF16 KV measured `21.708409 tok/s`, only
+  `-0.0006%` versus FP16, while median TTFT rose to `638.051 ms`. The full
+  oracle passed. Keep FP16 for the captured performance identity; BF16 is a
+  valid fidelity-oriented alternative, not a speed optimization.
 - Reloading 515 MB of cached AOT artifacts briefly exceeded an 8 GiB host
   cgroup and OOM-killed one worker. A 9 GiB RAM / 12 GiB RAM-plus-swap retry
   passed. The host stayed responsive and the cards recorded no reset/fault.
