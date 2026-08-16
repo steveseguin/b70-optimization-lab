@@ -1,0 +1,56 @@
+{
+  "date": "2026-08-16",
+  "scope": "Qwen3.8-27B Q8_0 TP2 quality-preserving concurrency isolation",
+  "single_process_ablations": {
+    "common": "parallel=2, ctx=16384, batch=1024, ubatch=256, F16 KV, no speculation, disjoint fixed prompts 2/3",
+    "results": [
+      {
+        "arm": "recurrent_fusions_off",
+        "disabled": ["FUSED_GDN_Q8", "MMVQ_PAIR_GDN", "MMVQ_TRIPLE_GDN", "MMVQ_QUAD_GDN", "GDN_BETA_SIGMOID", "CONCAT_STATE", "GDN_STATE_IO", "CONV_STATE_IO", "CONV_SILU_L2"],
+        "aggregate_conventional_tok_s": 57.005784348776714,
+        "accepted_sequential_hashes": "2/2",
+        "concurrent_exact_to_sequential": "0/2",
+        "raw_sha256": "19e13af6a1d1ea533a91c8e986a91a064a11c7e6f74d3fc7d06b752071d3e208"
+      },
+      {
+        "arm": "attention_fusions_off",
+        "disabled": ["FUSED_ATTN_Q8", "MMVQ_TRIPLE_ATTN", "FUSED_QK_NORM_ROPE", "FUSED_ROPE_SET_ROWS"],
+        "aggregate_conventional_tok_s": 57.10357923445394,
+        "accepted_sequential_hashes": "2/2",
+        "concurrent_exact_to_sequential": "0/2",
+        "raw_sha256": "ebf41452d3cd89ea83aa87e7322eeca7a324b9b4545d8abbbdee452ed6bb2e41"
+      },
+      {
+        "arm": "all_custom_fusion_off_plus_q8_single_row_split",
+        "aggregate_conventional_tok_s": 54.40261433140566,
+        "accepted_sequential_hashes": "1/2",
+        "concurrent_exact_to_arm_sequential": "0/2",
+        "raw_sha256": "13b1bcff801e5517050909580e63a5946f14db4418edee15e2f18b59dae85c04"
+      }
+    ],
+    "decision": "The schedule-dependent c2 output is not isolated to the recurrent or attention lab fusion family. Broad fusion removal still diverges and also changes one sequential output, so it is not a quality-preserving deployment lane."
+  },
+  "dual_process": {
+    "configuration": "two independent accepted parallel=1 TP2 servers, ports 18090/18091, ctx=8192 each, same two GPUs",
+    "loaded_gpu_memory_mib": [27390.4609375, 27245.00390625],
+    "server_rss_kib": [684728, 708728],
+    "sequential_decode_tok_s": [35.93034397549887, 35.900247795850994],
+    "concurrent_decode_tok_s": [7.4705977846104155, 7.450619833936023],
+    "aggregate_conventional_tok_s": 14.890991988379795,
+    "aggregate_wall_tok_s": 14.767426466747759,
+    "exact_to_own_sequential_oracle": "2/2",
+    "all_cache_cold": true,
+    "raw_sha256": "1e70005930219abd287ab74fbbd89b7f6bf12d37ed716ad135ba97b806543326",
+    "decision": "Quality-exact and memory-feasible, but rejected because simultaneous TP2 processes collapse throughput through device/collective contention."
+  },
+  "identity": {
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "accepted_llama_server_sha256": "32c581628082fa1352824650d45f523d52b526aaefdfd23e1c34d438f7ad084a",
+    "capture_harness": "experiments/qwen38-27b-b70/scripts/capture-target-only-dual-process.py"
+  },
+  "post_run": "Both devices normal, memory released to 151/42 MiB, no new Xe fault/reset/hang/device-lost/CAT error in the current boot log.",
+  "raw_local_directories": [
+    "/mnt/fast-ai/bench-results/qwen38-q8-c2-quality-isolation-20260816",
+    "/mnt/fast-ai/bench-results/qwen38-q8-dual-process-20260816"
+  ]
+}
