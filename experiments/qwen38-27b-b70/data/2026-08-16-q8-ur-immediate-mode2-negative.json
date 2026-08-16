@@ -1,0 +1,41 @@
+{
+  "date": "2026-08-16",
+  "experiment": "Qwen3.8-27B Q8_0 TP2 Unified Runtime immediate command-list mode 2",
+  "disposition": "closed_negative",
+  "shape": {
+    "prompt_tokens": 64,
+    "generated_tokens": 256,
+    "repetitions": 3,
+    "tensor_parallel": 2,
+    "tensor_split": "1/1",
+    "kv_type": "f16"
+  },
+  "accepted_mode_1": {
+    "variable": "UR_L0_USE_IMMEDIATE_COMMANDLISTS=1",
+    "semantics": "PerQueue",
+    "avg_tok_s": 36.887491,
+    "stddev_tok_s": 0.014290,
+    "samples_tok_s": [36.8855, 36.9027, 36.8743],
+    "raw_sha256": "0dd40f5659cc8e19e5656bf41df82d5f67354bba7867be6e8fe57ca620dff6e1"
+  },
+  "candidate_mode_2": {
+    "variable": "UR_L0_USE_IMMEDIATE_COMMANDLISTS=2",
+    "semantics": "PerThreadPerQueue",
+    "avg_tok_s": 36.000691,
+    "stddev_tok_s": 0.061722,
+    "samples_tok_s": [35.9938, 35.9427, 36.0656],
+    "raw_sha256": "a5278727e9cbc913295dd0de72b84d54c50994999ef79d3c6697ac73bf740bc2"
+  },
+  "delta_percent": -2.403514,
+  "source_evidence": {
+    "unified_runtime_commit": "d836f5ccb61b73092d90941a9d6d362887e33c5b",
+    "path": "source/adapters/level_zero/common/device.cpp",
+    "installed_adapter": "/opt/intel/oneapi/compiler/2026.1/lib/libur_adapter_level_zero.so.0.12.0"
+  },
+  "identity": {
+    "binary_sha256": "f7010c08b534a4f338b9cbd83f97f22b82f13ddab5be0c727d16c3bb0f8c4312",
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "raw_local_directory": "/mnt/fast-ai/bench-results/qwen38-q8-ur-immediate2-20260816",
+  "decision": "Reject mode 2; it regressed decode by 2.404%. Retain mode 1."
+}

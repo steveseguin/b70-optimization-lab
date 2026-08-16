@@ -73,9 +73,12 @@ Work is ranked as follows:
 3. The hardware-control audit is closed: both cards reached their configured
    `2800 MHz` ceiling without a throttle reason, and exclusive scheduling is
    unsupported on this stack. No persistent setting was changed.
-4. Q4_K_M concurrency and deep-prefill package as a separate production lane,
+4. The current Unified Runtime event and submission controls are closed:
+   true barriers, device-scope events, and per-thread/per-queue immediate mode
+   all regressed. Retain the accepted per-queue immediate mode.
+5. Q4_K_M concurrency and deep-prefill package as a separate production lane,
    using the verified `-b 8192 -ub 2048` prefill setting where it helps;
-5. vLLM/FP8 only when the official artifact and Intel runtime pass the same
+6. vLLM/FP8 only when the official artifact and Intel runtime pass the same
    semantic canaries—never by inheriting the rejected GPTQ result.
 
 Every future headline must state model revision and SHA, quantization, GPU
