@@ -121,8 +121,9 @@ model revision contain:
 The unmodified vLLM anchor embedded in the patch already detects a dynamic key
 that begins with `-:` and contains `mtp`, then clears the target quantization
 config while constructing the draft. Therefore the env-gated patch should be
-unnecessary for the published artifact. This needs an isolated container A/B:
-verify selected linear kernels and output parity with and without the patch.
+unnecessary for the published artifact. A local MTP4 patch-off/on A/B now
+confirms this: 83.697153 unpatched versus 83.701925 patched, identical 510/544
+acceptance, identical model memory, and 5/5 identical outputs.
 
 The exact image source was subsequently inspected. Its unpatched
 `qwen3_5_mtp.py` contains precisely the dynamic-exclusion branch embedded as
@@ -174,9 +175,9 @@ matched safe power A/B only after the software lane is stable.
    device-lost/out-of-resource errors in another vLLM Qwen3.8 lane.
 4. Gate basic semantics and exact greedy output against a trusted target
    implementation.
-5. Record loaded draft parameter dtypes, then A/B the nightly patch off/on. It
-   is expected to be redundant for this
-   exact model; confirm instead of assuming.
+5. Record loaded draft parameter dtypes. The nightly patch is confirmed
+   redundant for this exact model at 8K; use `PATCH_MODE=off` unless testing an
+   older checkpoint without the MTP exclusion.
 6. Add MTP1, then MTP2, then MTP4, checking accepted tokens, exact target
    verification, output quality, and memory at every depth.
 7. Test XPU graphs off/on and scheduler 2048/4096/8192. Keep the first stable
@@ -200,7 +201,8 @@ matched safe power A/B only after the software lane is stable.
   hashes, claimed results, and audit caveats.
 - `reported/LICENSE.upstream`: cookbook MIT license covering the copied code.
 - `run-one-b70.sh`: safe 8K launcher with a host-memory cgroup, exact image,
-  mode selection, optional captured patches, and no power write.
+  mode selection, confirmed patch-off default, optional captured patches, and
+  no power write.
 - `validation/2026-08-16-local-artifact-and-patch-audit.md`: reference-host
   image, patch-anchor, model-hash, safetensors-header, and low-memory download
   validation.

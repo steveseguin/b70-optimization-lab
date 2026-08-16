@@ -108,7 +108,7 @@ Community-reported alternatives are kept outside the promoted rows above:
 
 | Target and route | Hardware | Best captured result | Evidence boundary / pointer |
 | --- | --- | ---: | --- |
-| GPTQ INT4 G128, vLLM XPU target-only / native MTP4 | 1x ASRock B70 local; 1x Intel B70 contributor | **33.690260 / 83.701925 tok/s local** | Target-only and MTP1/2/4 are B70-tested at 8K/FP8-KV; MTP4 matches the 83.7 contributor claim, accepted 510/544 drafts, and retained 5/5 target-only visible-output hashes. 131K, power, contributor prompts, runtime draft dtype, and broad semantic quality remain unresolved; [community packet](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md), [MTP matrix](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-mtp-matrix-validation.md) |
+| GPTQ INT4 G128, vLLM XPU target-only / native MTP4 | 1x ASRock B70 local; 1x Intel B70 contributor | **33.690260 / 83.701925 tok/s local** | Target-only and MTP1/2/4 are B70-tested at 8K/FP8-KV; MTP4 matches the 83.7 contributor claim, accepted 510/544 drafts, and retained 5/5 target-only visible-output hashes. Patch-off MTP4 matched at 83.697153, confirming the nightly patch is redundant for this model. 131K/boundary patch, power, runtime draft dtype, and broad semantic quality remain unresolved; [community packet](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md), [MTP matrix](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-mtp-matrix-validation.md) |
 
 ### Qwen3.6 27B Model Board
 

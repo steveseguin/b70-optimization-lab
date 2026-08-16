@@ -5,8 +5,9 @@
   quality claims
 - **Patch review status:** source-read; syntax checked; safetensors headers
   range-read; both patchers applied and passed a second-run idempotency check
-  inside the pinned image without devices; patch behavior itself has not been
-  exercised by the later MTP model runs
+  inside the pinned image without devices; MTP4 patch-off/on performance,
+  acceptance, memory, and output parity confirm the nightly patch is redundant
+  for the pinned model at 8K; the 131K boundary patch remains untested
 - **Reference-lab model run:** yes; target-only eager/graph and native
   MTP1/2/4 on one ASRock B70, exact model/image, p512/g128 n=5
 - **Captured:** 2026-08-15T23:42:27-04:00

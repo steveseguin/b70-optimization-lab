@@ -78,7 +78,10 @@ reached `54.175761`, `68.232180`, and `83.701925 tok/s` at p512/g128, 8K
 context and FP8 KV. MTP4 accepted 510/544 drafts and all modes retained 5/5
 target-only visible-output hashes. This is a distinct engine/quantization/KV
 class and does not replace the active two-B70 GGUF target-only lane. 131K,
-runtime draft dtype, and broad semantic quality remain unresolved.
+runtime draft dtype, and broad semantic quality remain unresolved. An MTP4
+patch-off A/B reached `83.697153 tok/s` with identical acceptance/output,
+confirming the nightly patch is redundant for this exact 8K route; the 131K
+boundary patch remains untested.
 
 Resume and evidence:
 

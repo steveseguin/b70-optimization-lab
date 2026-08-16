@@ -81,7 +81,9 @@ SergiioB's separate one-card GPTQ INT4 vLLM route is locally B70-tested at 8K
 and FP8 KV: `33.690260 tok/s` target-only, `54.175761` MTP1, `68.232180`
 MTP2, and `83.701925` MTP4. The MTP4 row independently matches the contributor's
 83.7 claim; target-verifier acceptance was 510/544, cache counters were zero,
-and 5/5 paired greedy visible-output hashes matched. The 131K, power, exact
+and 5/5 paired greedy visible-output hashes matched. Patch-off MTP4 reached
+`83.697153`, confirming the nightly patch is redundant for this exact model at
+8K. The 131K boundary patch, power, exact
 contributor prompt, runtime draft dtype, and broad quality claims remain open.
 The exact public model, container, runtime flags, copied benchmark assets, two
 patches, safe launcher, reported payload, source hashes, and audit caveats are
