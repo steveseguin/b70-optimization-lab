@@ -43,8 +43,9 @@ it a Qwen3.8 DFlash result.
 - Official FP8 download:
   `/mnt/fast-ai/llm-models/qwen3.8-27b-fp8`
 
-Downloads are revision-pinned. Record final byte sizes and SHA-256 values
-before any benchmark promotion.
+All four GGUF downloads are revision-pinned, complete, and SHA-256 verified.
+The official FP8 checkpoint is the next sequential download; do not overlap it
+with a build or loaded model on this 15 GiB host.
 
 ## Host/runtime audit
 
@@ -54,7 +55,8 @@ before any benchmark promotion.
   0.3 repository;
 - compute runtime `26.22.38646.7-9`, Level Zero loader `1.28.6`, and
   `linux-firmware` Ubuntu revision `.29` are installed candidates;
-- oneAPI compiler `2026.1` is installed, but it is an ABI-breaking SYCL
+- oneAPI compiler `2026.1.1` (`2026.1.1.20260724`) is installed, but 2026.1 is
+  an ABI-breaking SYCL
   release. Never mix binaries built against older SYCL runtimes in the same
   process.
 
@@ -66,6 +68,12 @@ or root-both remote-write prototype already prohibited by the Qwen3.6 handoff.
 
 Do not replace the validated OMIX package set with generic PPA packages merely
 because a component has a numerically newer version.
+
+The compiler/runtime-only packages were updated from oneAPI 2026.1.0 to
+2026.1.1 without changing the OMIX GPU driver stack. An accepted-binary runtime
+A/B measured `36.809 tok/s` versus `36.883 tok/s`; a clean BMG-G31 AOT rebuild
+measured `36.805 tok/s`. The update passed the smoke and fault gates but is
+performance-neutral, so it is not credited for either promoted result.
 
 ## Transfer plan
 
@@ -126,6 +134,37 @@ endpoint median above is the promoted comparison metric.
 
 Raw local artifacts are under
 `/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260815-bringup/`.
+
+## Q4_K_M target-only result: goal cleared
+
+The complete Q4_K_M target downloaded and verified at `18,973,870,432` bytes
+with SHA-256
+`31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34`.
+The same accepted TP2/recurrent/attention/collective stack was rebuilt cleanly
+with oneAPI 2026.1.1 and used without MTP, DFlash, or other speculation.
+
+The promoted route leaves `GGML_SYCL_MMQ_Q4K_REORDER` unset. A matched A/B with
+the optional reorder enabled was `-0.0535%` slower, so the toggle is not part of
+the gain. Both routes produced the same complete response hashes for all 12
+prompts.
+
+| Runtime | Conventional first-100 median | p10 | Full-output after TTFT | Wall full output | TTFT median |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Q4_K_M, reorder off (promoted) | **`48.885968` tok/s** | `48.313255` | `49.082534` | `48.277657` | `169.750 ms` |
+| Q4_K_M, reorder on | `48.859812` tok/s | `48.393472` | `49.037818` | `48.139193` | `170.466 ms` |
+
+The historical 100-event helper reports `49.379765 tok/s` for the promoted
+route; the table intentionally uses the stricter conventional 99-interval
+metric. The `p64/n256/r3` synthetic screen measured `49.364227 tok/s`.
+
+Both endpoint runs passed their realistic/fresh-response gates, every request
+reported `cached_tokens=0`, all **12/12 complete output SHA-256 values match**,
+the smoke ended with `VERIFY_MISMATCH=0`, and no new Xe warning, reset, CAT
+error, or fault appeared. This honestly clears the 40 tok/s target-only goal,
+but at Q4_K_M quality; the Q8 target-only result remains `36.772932 tok/s`.
+
+Raw local artifacts are under
+`/mnt/fast-ai/bench-results/qwen38-q4km-asrock-b70-20260815-bringup/`.
 
 ## Safety and validity
 
