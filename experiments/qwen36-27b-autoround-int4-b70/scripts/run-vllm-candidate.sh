@@ -203,6 +203,7 @@ trap cleanup EXIT
   echo "model_input_trace_max_lines=${VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES:-}"
   echo "model_input_trace_rank=${VLLM_XPU_MODEL_INPUT_TRACE_RANK:-}"
   echo "fa_serial_spec_mode=${VLLM_XPU_FA_SERIAL_SPEC_MODE:-}"
+  echo "qwen_gemma_rmsnorm_batch_invariant=${VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT:-}"
   echo "qwen_layer_trace_file=${VLLM_XPU_QWEN_LAYER_TRACE_FILE:-}"
   echo "qwen_layer_trace_layers=${VLLM_XPU_QWEN_LAYER_TRACE_LAYERS:-}"
   echo "qwen_layer_trace_stages=${VLLM_XPU_QWEN_LAYER_TRACE_STAGES:-}"
