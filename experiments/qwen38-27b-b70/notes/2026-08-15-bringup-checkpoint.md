@@ -166,6 +166,72 @@ but at Q4_K_M quality; the Q8 target-only result remains `36.772932 tok/s`.
 Raw local artifacts are under
 `/mnt/fast-ai/bench-results/qwen38-q4km-asrock-b70-20260815-bringup/`.
 
+## Official FP8 artifact and Intel vLLM bring-up
+
+The revision-pinned official `Qwen/Qwen3.8-27B-FP8` download is complete at
+`/mnt/fast-ai/llm-models/qwen3.8-27b-fp8`. It contains 64 language-layer
+shards, `outside.safetensors`, and `mtp.safetensors`: 66 weight files totaling
+`30,866,866,928` bytes. A full read-through of the basename-sorted
+`sha256sum *.safetensors` manifest produced aggregate SHA-256
+`82fb8f84fa117c81c3e8639c4675709dfb667d70ddaa2fd097d35fc37d95453a`.
+The native MTP and outside-weight hashes are respectively
+`e5e4464a3793cc261de536592830bca40e7f3af159ed038c358f5660917cf43b`
+and
+`ddff1d6665a2b39f2612fce0ef955e2436724c565bfbcbc127c7ffd078b698ff`.
+
+Intel image `intel/llm-scaler-vllm:0.21.0-b3.1` was pulled and pinned as
+`sha256:032916bd9264da44cab3e99092ffaf12331072ec51c3b380cbbe5fd98eb0254b`.
+It reports vLLM `0.21.1.dev0+gad7125a43.d20260812`, Torch
+`2.11.0+xpu`, Transformers `5.8.0`, and sees both B70s. It recognized
+`Qwen3_5ForConditionalGeneration`, automatically selected offline block-scaled
+FP8, the XPU FP8 block-scaled MM kernel, FlashAttention 2, and GDN prefill.
+The engine explicitly reported `speculative_config=None`.
+
+This first image does **not** yet provide a promotable Qwen3.8 FP8 service on
+this host/boot:
+
+- non-privileged Docker mapping failed before model load because oneCCL could
+  not open the DRM device directory; Intel's documented privileged mapping
+  fixed that container-only issue;
+- the default multimodal profile loaded the 14.35 GiB/card model, then returned
+  `UR_RESULT_ERROR_DEVICE_LOST` while profiling one maximum image;
+- explicit text-only mode (`image=0`, `video=0`, processor cache zero, skip MM
+  profiling) removed the vision profile, but an 8192-token dummy batch returned
+  `UR_RESULT_ERROR_OUT_OF_RESOURCES`;
+- bounded 1024-token and 256-token text profiles with 4K context still failed
+  or stalled during TP2 initialization. The 1024-token run reached 11.14 GiB
+  of its 12 GiB container host-memory ceiling. The final 256-token probe was
+  stopped without a fault after TP2 initialization stopped progressing.
+
+Every container was removed after its probe. Both cards returned to `normal`,
+host RAM returned to about 1.4 GiB used, and no corresponding Xe kernel reset,
+hang, CAT error, or fault was logged. Do not remove the host-memory ceiling or
+repeat these profiles on this 15 GiB host merely to obtain a number. Revisit
+after a clean boot and an Intel image that explicitly lists Qwen3.8, or with a
+validated way to bypass the XPU dummy-forward memory profile.
+
+## Update review and transfer verdict
+
+- The installed OMIX 0.3 driver set remains Intel's internally pinned B70
+  combination. Generic compute runtime `26.27.39122.11` and Level Zero loader
+  `1.32` are newer upstream, but mixing them into OMIX 0.3 would violate Intel's
+  validated package set; they were reviewed but not installed.
+- oneAPI compiler/runtime was safely moved to `2026.1.1.20260724`. Both a
+  runtime-only A/B and a clean BMG-G31 AOT rebuild were neutral (`36.809` and
+  `36.805 tok/s` versus `36.883`), so this is a compatibility update, not an
+  optimization claim.
+- Upstream vLLM `0.27.1`, `vllm-xpu-kernels v0.1.13`, and Intel's newer image
+  were reviewed. Intel's image contains the relevant B70 FP8/GDN/MTP patch
+  family, but its Qwen3.8 FP8 lane is not locally stable yet.
+- Current llama.cpp includes newer GDN writeback, unary-plus-multiply,
+  quantized-concat, host-pinning, and Q4_K dense-FFN work. The Q4_K FFN fusion
+  explicitly declines split weights, so it is a TP1 candidate rather than a
+  source of the promoted TP2 gain.
+- The accepted Qwen3.6 TP2 recurrent anchoring, collective, Q/K normalization,
+  convolution/state, and launch fusions transferred directly and cleared the
+  target-only 40 tok/s objective at Q4_K_M. Q8's two-chain DP4A path also
+  transferred cleanly but remains below 40.
+
 ## Safety and validity
 
 This host has 15 GiB RAM. Never overlap compilation and a loaded model. Keep

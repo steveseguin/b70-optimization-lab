@@ -1,0 +1,40 @@
+{
+  "status": "artifact verified; runtime not promoted",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "local_path": "/mnt/fast-ai/llm-models/qwen3.8-27b-fp8",
+    "weight_file_count": 66,
+    "language_layer_shards": 64,
+    "weight_bytes": 30866866928,
+    "sorted_basename_manifest_sha256": "82fb8f84fa117c81c3e8639c4675709dfb667d70ddaa2fd097d35fc37d95453a",
+    "mtp_sha256": "e5e4464a3793cc261de536592830bca40e7f3af159ed038c358f5660917cf43b",
+    "outside_sha256": "ddff1d6665a2b39f2612fce0ef955e2436724c565bfbcbc127c7ffd078b698ff"
+  },
+  "runtime": {
+    "image": "intel/llm-scaler-vllm:0.21.0-b3.1",
+    "image_digest": "sha256:032916bd9264da44cab3e99092ffaf12331072ec51c3b380cbbe5fd98eb0254b",
+    "vllm": "0.21.1.dev0+gad7125a43.d20260812",
+    "torch": "2.11.0+xpu",
+    "transformers": "5.8.0",
+    "hardware": "2x ASRock Intel Arc Pro B70 32 GiB",
+    "mode": "TP2 target-only offline FP8",
+    "speculative_config": null,
+    "model_memory_per_card_gib": 13.92,
+    "host_memory_limit_gib": 12,
+    "host_memory_plus_swap_limit_gib": 20
+  },
+  "bringup": {
+    "architecture_recognized": true,
+    "offline_fp8_autodetected": true,
+    "weights_loaded": true,
+    "healthy_endpoint": false,
+    "throughput_promoted": false,
+    "default_multimodal_profile": "UR_RESULT_ERROR_DEVICE_LOST",
+    "text_only_8192_profile": "UR_RESULT_ERROR_OUT_OF_RESOURCES",
+    "text_only_1024_profile": "UR_RESULT_ERROR_DEVICE_LOST",
+    "text_only_256_profile": "stalled during TP2 initialization; stopped without fault",
+    "cards_normal_after_cleanup": true,
+    "new_xe_kernel_faults": 0
+  }
+}
