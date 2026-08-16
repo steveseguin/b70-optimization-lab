@@ -96,7 +96,9 @@ For the full queue and archive, use [docs/model-effort-index.md](docs/model-effo
 Last audited **2026-08-16**. Qwen3.8 retains Qwen3.6's exact 64-layer,
 three-GDN-to-one-full-attention tensor geometry, so the accepted exact-shape
 TP2 stack transfers mechanically. Every new weight set is still independently
-gated. All promoted rows below are target-only and cache-zero.
+gated. All promoted rows below are target-only and cache-zero. Other B70 hosts
+and agents should start with the [multi-host handoff](experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md)
+and [do-not-repeat index](experiments/qwen38-27b-b70/DO-NOT-REPEAT.md).
 
 | Target and route | Hardware | Best captured decode result | Evidence boundary / pointer |
 | --- | --- | ---: | --- |

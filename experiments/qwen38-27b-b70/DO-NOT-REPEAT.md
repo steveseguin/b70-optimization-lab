@@ -7,6 +7,9 @@ Do not rerun a closed experiment unchanged. A retry needs a materially different
 model revision, compiler/runtime, kernel implementation, execution shape, or a
 specific explanation of why the earlier result no longer applies.
 
+For a clean-clone reproduction and cross-machine coordination protocol, use
+the [multi-host handoff](MULTI-HOST-HANDOFF.md).
+
 ## Qwen3.8-specific work
 
 | Experiment | Outcome | Durable record |
