@@ -29,8 +29,12 @@ more GPU workload should run until a clean reboot.
 
 ## Next execution sequence
 
-1. Reboot and verify that the kernel taint is clear, both B70s are `normal`,
-   both expose their 32 GiB BARs, and no Xe fault/reset/hang appears after boot.
+1. Reboot and run
+   [`post-reboot-gpu-gate.sh`](../scripts/post-reboot-gpu-gate.sh). It fails
+   closed unless the kernel taint is clear, both B70s are `normal`, no model
+   workload is active, and no Xe/GuC fault/reset/hang appears in this boot.
+   Confirm both cards still expose their full 32 GiB BARs before the candidate
+   benchmark.
 2. Run only a one-token smoke of the already-built root-fused TP2 candidate.
    It keeps device-1 output work on device 1 and removes one device-0
    submission; it does not repeat the rejected cross-device output writes.
