@@ -102,6 +102,20 @@ config while constructing the draft. Therefore the env-gated patch should be
 unnecessary for the published artifact. This needs an isolated container A/B:
 verify selected linear kernels and output parity with and without the patch.
 
+The exact image source was subsequently inspected. Its unpatched
+`qwen3_5_mtp.py` contains precisely the dynamic-exclusion branch embedded as
+the patch's `old` anchor, confirming the static equivalence for this model.
+Both copied patchers apply cleanly to the installed wheel and report
+`already patched` on a second run in a disposable, network-disabled,
+device-less container. This is an anchor/idempotency result, not a model run.
+
+The image contains both `/workspace/vllm/vllm` and the installed
+`/opt/venv/.../site-packages/vllm`. A mounted patch script imports and edits
+the installed package used by `/opt/venv/bin/vllm`; an interactive Python
+session started from `/workspace/vllm` can instead inspect the untouched
+source tree. Reproduction checks must identify the imported file path or they
+can falsely conclude that a patch did not apply.
+
 ### 3. Artifact draft precision is verified; runtime precision is not
 
 HTTP range reads of all five pinned safetensors headers found 2,399 tensors:
@@ -128,7 +142,9 @@ matched safe power A/B only after the software lane is stable.
 
 ## Safest future test order
 
-1. Pull the pinned container by digest and inspect package/kernel identities.
+1. Use the locally pulled pinned container by digest. The package and patch
+   anchors have been inspected without devices; repeat identity checks if the
+   image is ever replaced.
 2. Download the exact model revision and verify all LFS hashes; the retained
    header audit confirms the 15 on-disk MTP tensors are BF16.
 3. Start at 150 W, one GPU, 8K context, target-only, prefix cache off, and a

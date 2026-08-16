@@ -78,7 +78,10 @@
   },
   "runtime": {
     "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
-    "vllm": "0.27.2rc1.dev77+gac7509e2b",
+    "platformManifest": "sha256:95949ab8df6d9b358b7c34a6a6a9af04c63cbe07847de70db6a3aae8025de87e",
+    "platform": "linux/amd64",
+    "compressedLayerBytes": 4649172855,
+    "vllm": "0.27.2rc1.dev77+gac7509e2b.xpu",
     "vllmXpuKernels": "0.1.12.3",
     "gpuCount": 1,
     "gpu": "Intel Arc Pro B70",
@@ -88,7 +91,27 @@
     "maxNumBatchedTokens": 8192,
     "prefixCache": false,
     "xpuGraph": true,
-    "mtpDepthsReported": [1, 2, 4]
+    "mtpDepthsReported": [1, 2, 4],
+    "installedPackageRoot": "/opt/venv/lib/python3.12/site-packages/vllm",
+    "vllmCli": "/opt/venv/bin/vllm",
+    "workspaceSourceAlsoPresent": "/workspace/vllm/vllm",
+    "unpatchedSourceHashes": {
+      "qwen3_5_mtp.py": "08a83fa1f6bd76fee2e0567d8d440fc05191cbb7a019c1a797ccefb63f51346d",
+      "gdn_attn.py": "fda86b96ab5daaf50bd02d022518779c220401dbedc7b28cf478f4c48e72d3d3"
+    },
+    "isolatedPatchAudit": {
+      "auditedAt": "2026-08-16T00:01:04-04:00",
+      "network": "disabled",
+      "devices": "none",
+      "memoryLimit": "2 GiB",
+      "firstApply": "both patchers applied",
+      "secondApply": "both patchers reported already patched",
+      "pythonCompile": "passed",
+      "patchedInstalledSourceHashes": {
+        "qwen3_5_mtp.py": "9c501be7166c3bfc817d07fd9bed1f9ee06e2336ab7d173b6447711c4be76782",
+        "gdn_attn.py": "135799921da0d842aae828a23bdbce010ca08ab76848ea08b1e1c1736caf401a"
+      }
+    }
   },
   "patches": [
     {
