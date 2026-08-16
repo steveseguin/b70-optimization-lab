@@ -23,10 +23,13 @@ Arc Pro B70 host. It is not a promoted benchmark result.
   `051a1764cff8c4f3ee6ae8b00593a0364c7539c67fa50ffc58f3f96509fca38e`.
 
 The model continues to identify as `Qwen3_5ForConditionalGeneration` /
-`qwen3_5`. Its text core retains the 64-layer, three Gated DeltaNet layers to
-one full-attention layer layout and one native MTP layer. This makes the
-Qwen3.6 work a direct portability candidate, but every carried patch still
-requires output-token/hash validation.
+`qwen3_5`. A field-by-field comparison of the official Qwen3.6 and Qwen3.8
+`text_config` objects found no differences: hidden/intermediate dimensions,
+64-layer three-Gated-DeltaNet-to-one-full-attention layout, attention/GDN head
+geometry, vocabulary, context, RoPE, and the one native MTP layer are all
+identical. This makes every shape-gated Qwen3.6 optimization a direct
+portability candidate, but every carried patch still requires output-token/hash
+validation against the new weights.
 
 No Qwen3.8 DFlash checkpoint was present in the Hugging Face index at this
 checkpoint. Do not substitute a differently trained community draft and call
@@ -54,6 +57,12 @@ before any benchmark promotion.
   release. Never mix binaries built against older SYCL runtimes in the same
   process.
 
+Both cards are currently `normal` in `xpu-smi`. This boot is not a clean fault
+history: it retains engine resets and CAT errors from earlier explicitly unsafe
+`llama-bench` profiler/prototype experiments, last observed at 12:16 local
+time. Timestamp-check the Xe log around every new run. Do not retry the profiler
+or root-both remote-write prototype already prohibited by the Qwen3.6 handoff.
+
 Do not replace the validated OMIX package set with generic PPA packages merely
 because a component has a numerically newer version.
 
@@ -71,10 +80,13 @@ because a component has a numerically newer version.
 4. Use Qwen3.8 native MTP only as a separately labeled lane. The target-only
    goal remains 40 tok/s; MTP results cannot be used to claim that goal.
 5. Evaluate the official FP8 checkpoint with a pinned vLLM/XPU stack. Upstream
-   vLLM `v0.27.1` and `vllm-xpu-kernels v0.1.13` are current, while Intel's
-   currently documented B70 Qwen3.5/3.6 image remains
-   `intel/llm-scaler-vllm:0.14.0-b8.3.1`. Treat Qwen3.8 support as unvalidated
-   until a local correctness gate passes.
+   vLLM `v0.27.1` and `vllm-xpu-kernels v0.1.13` are current. Intel's current
+   B70 image is `intel/llm-scaler-vllm:0.21.0-b3.1`; it uses vLLM `0.21.0`,
+   Torch XPU `2.11.0`, a pinned pre-0.1.13 XPU-kernel base, and Intel's large
+   multi-Arc patch. That patch contains exact Qwen3.6-27B projection-shape and
+   GDN/FP8/INT4 tuning which matches Qwen3.8's unchanged shapes. The image does
+   not yet list Qwen3.8, so treat it as unvalidated until a local correctness
+   gate passes.
 
 ## Safety and validity
 
