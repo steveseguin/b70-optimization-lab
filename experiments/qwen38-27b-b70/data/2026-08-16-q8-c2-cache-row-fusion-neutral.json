@@ -1,0 +1,63 @@
+{
+  "date": "2026-08-16",
+  "status": "closed_endpoint_neutral_not_promoted",
+  "model": {
+    "name": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70, equal TP2",
+  "lane": "target-only Q8_0, F16 KV, no speculation, two concurrent requests",
+  "source": {
+    "base": "/mnt/fast-ai/src/llama.cpp-q8-tp2-dp4a2",
+    "candidate": "/mnt/fast-ai/src/llama.cpp-q38-c2-cache-row",
+    "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "accepted_stack_patch": "patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64",
+    "incremental_patch": "experiments/qwen38-27b-b70/patches/q8-c2-cache-row-fusion-neutral-20260816.diff.gz.b64",
+    "decoded_incremental_patch_sha256": "b76b93ba730909713f8d8f59f2d0916434a23d836e22239de6a73eb19361aa59"
+  },
+  "mechanism": {
+    "candidate_fused_gdn_state_ios": 73728,
+    "candidate_fused_conv_state_ios": 73728,
+    "candidate_fused_conv_silu_l2": 73728,
+    "control_fused_gdn_state_ios": 0,
+    "control_fused_conv_state_ios": 0,
+    "verify_mismatch_both": 0
+  },
+  "batched_bench": {
+    "shape": "pp64/tg256; npl1,2; b1024/ub256; c4096",
+    "candidate_npl1_tok_s": 31.685406,
+    "control_npl1_tok_s": 30.13537,
+    "candidate_npl2_aggregate_tok_s": 35.757645,
+    "control_npl2_aggregate_tok_s": 33.940235,
+    "npl2_relative_delta_percent": 5.354736052947184,
+    "classification": "synthetic diagnostic only"
+  },
+  "endpoint": {
+    "parallel": 2,
+    "prompt_count": 2,
+    "generated_tokens_each": 512,
+    "candidate_aggregate_tok_s": [55.66004369881508, 56.43774171345535, 56.87218401824488],
+    "control_aggregate_tok_s": [54.56292115757182, 55.771038767324356, 56.86459620394875],
+    "candidate_median_tok_s": 56.43774171345535,
+    "control_median_tok_s": 55.771038767324356,
+    "median_delta_percent": 1.1954285967533673,
+    "interpretation": "both arms converged to the same approximately 56.87 tok/s warm plateau; no robust endpoint gain"
+  },
+  "quality": {
+    "candidate_vs_same_binary_control": "token/content exact for matched sequential and concurrent captures",
+    "cross_schedule": "two stable greedy-output hash pairs appeared in both candidate and control repeats",
+    "strict_cross_batch_invariance": false,
+    "candidate_introduced_new_variants": false,
+    "promotion_gate": "failed: concurrent output is scheduler-dependent and endpoint gain is neutral"
+  },
+  "raw_sha256": {
+    "shape_census_zst": "4d4ff5d4082c7709acfa815146972a7bcd6d7078e1ac34647f259401209f9688",
+    "candidate_batched_stdout": "5bcc81e57ced87d06ea94634b12be4c540145889c6dda519f37305354aba2b86",
+    "candidate_batched_stderr": "498a987232351bb4b45b87a6269f3c22a4941ad323417473d1df077e98279738",
+    "control_batched_stdout": "0858f6bc8a3e0442c0c3306158b4a12a8e0cb431728ac90db1e909182ef4ade4",
+    "control_batched_stderr": "01c2721164c2d7482d413d55517286b16934d501b35b0584ca10a27b23fca06a",
+    "candidate_endpoint_repeats": "fa0bf08d9b83a89e143d10456ad00a318d34f9f68a931fdde5143b7b5d1361dd",
+    "control_endpoint_repeats": "4defb03abe6ce1f0ed738514758ed51c1491b3ebcfff87b115c0cc5ed562c548"
+  },
+  "decision": "Do not enable or promote. Preserve as a c2 matcher/mechanism result; continue the c1 target-only frontier and require strict output gates for any future concurrent headline."
+}

@@ -69,6 +69,7 @@ Main entries:
 - [Q4_K_M target-only TP2 reproduction](../repro/qwen38-27b-q4km-tp2-asrock-b70/README.md)
 - [Q4_K_M fusion patch](../patches/qwen38-27b-q4km-tp2-asrock-b70/README.md)
 - [target-only optimization ledger](../experiments/qwen38-27b-b70/notes/2026-08-15-target-only-pass2.md)
+- [c2 cache-row fusion result](../experiments/qwen38-27b-b70/notes/2026-08-16-q8-c2-cache-row-fusion-neutral.md)
 - [community GPTQ INT4/MTP vLLM idea](../community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 
 Status: active as of 2026-08-16. The current lab record is target-only

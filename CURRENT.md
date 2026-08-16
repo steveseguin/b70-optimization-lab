@@ -93,6 +93,7 @@ Resume and evidence:
 - [Q4_K structured summary](experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json)
 - [Q8 structured summary](experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json)
 - [Q8 quality-conservative standalone reproduction](repro/qwen38-27b-q8-tp2-asrock-b70/README.md)
+- [Q8 c2 cache-row fusion result](experiments/qwen38-27b-b70/notes/2026-08-16-q8-c2-cache-row-fusion-neutral.md)
 - [community GPTQ/MTP vLLM idea](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 - [one-B70 GPTQ target-only graph validation](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-target-only-graph-validation.md)
 - [one-B70 GPTQ native-MTP matrix](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-mtp-matrix-validation.md)
@@ -165,6 +166,11 @@ loaded service.
    `-0.224974%` after restoring its downstream Q8 producer; retain the
    [negative packet](experiments/qwen38-27b-b70/notes/2026-08-16-q8-fused-mmvq-swiglu-negative.md)
    and do not enable its default-off door in the accepted recipe.
+   The c2 cache-row state-I/O fusion is also closed: it gained `+5.355%` in
+   synthetic batched-bench but converged to the same endpoint plateau and did
+   not satisfy strict cross-batch output invariance. Preserve the
+   [neutral packet](experiments/qwen38-27b-b70/notes/2026-08-16-q8-c2-cache-row-fusion-neutral.md)
+   without adding its aggregate rate to the promoted board.
 3. Keep SergiioB's single-card GPTQ/MTP vLLM recipe experimental: it is fast,
    but the checkpoint failed the no-quality-loss semantic gate. Never stop a
    vLLM XPU container before `/health` during graph initialization.
