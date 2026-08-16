@@ -88,13 +88,13 @@ elif [[ "$mode" == "spec-native-partition-exact" \
   || "$mode" == "nospec-latest-exact-native" ]]; then
   latest_identity=1
   exact_identity=1
-  verify_tree "$source_root/vllm" d0c0c55cece79c4b710f8ea9bdc6243cd7774d79 \
+  verify_tree "$source_root/vllm" 5d896cafc29037de8b3aaf896a96516c2b0661cf \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
   verify_tree "$source_root/vllm-xpu-kernels" 6a40e2baf3f8710b89e48d18bf214708ba2dbf9a \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
 elif [[ "$mode" == "spec-native-partition" || "$mode" == "nospec-latest" ]]; then
   latest_identity=1
-  verify_tree "$source_root/vllm" d0c0c55cece79c4b710f8ea9bdc6243cd7774d79 \
+  verify_tree "$source_root/vllm" 5d896cafc29037de8b3aaf896a96516c2b0661cf \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
   verify_tree "$source_root/vllm-xpu-kernels" 6a40e2baf3f8710b89e48d18bf214708ba2dbf9a \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
