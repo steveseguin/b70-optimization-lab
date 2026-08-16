@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "capturedAt": "2026-08-15T23:42:27-04:00",
   "evidenceLevel": "community-reported",
-  "executionStatus": "source-read-only; copied patchers not executed",
+  "executionStatus": "source-read-only; safetensors headers range-read; copied patchers not executed",
   "cookbook": {
     "url": "https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook",
     "recipeUrl": "https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook/blob/3beb704b5b86baed2a874a8cc96821116c97e080/docs/qwen38-27/QWEN38-VLLM-XPU.md",
@@ -36,7 +36,18 @@
     },
     "mtpTensorCountInIndex": 15,
     "declaredConfigDtype": "float16",
-    "reportedMtpDtype": "BF16 (not verified from tensor headers)",
+    "artifactTensorDtypeCounts": {
+      "F16": 1184,
+      "I32": 1200,
+      "BF16": 15
+    },
+    "mtpArtifactDtype": "BF16 (verified from all five pinned safetensors headers via bounded HTTP range reads)",
+    "mtpRuntimeDtype": "unknown; contributor launches with --dtype float16, so inspect loaded parameters",
+    "tensorHeaderAudit": {
+      "auditedAt": "2026-08-15T23:51:56-04:00",
+      "method": "bounded HTTP byte-range reads of the safetensors 8-byte length prefix and JSON header only",
+      "fullWeightDownloaded": false
+    },
     "weightLfsObjects": [
       {
         "file": "model-00001-of-00005.safetensors",

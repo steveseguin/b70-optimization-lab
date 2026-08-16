@@ -102,13 +102,14 @@ config while constructing the draft. Therefore the env-gated patch should be
 unnecessary for the published artifact. This needs an isolated container A/B:
 verify selected linear kernels and output parity with and without the patch.
 
-### 3. Draft precision needs direct verification
+### 3. Artifact draft precision is verified; runtime precision is not
 
-The recipe calls the 15 excluded `mtp.*` tensors BF16, while the model config
-declares `dtype: float16` and the server is launched with `--dtype float16`.
-The LFS pointer metadata cannot establish tensor dtypes without inspecting the
-actual safetensors headers. Before classifying the quality/precision lane,
-record the dtype of all 15 `mtp.*` tensors and the runtime draft dtype.
+HTTP range reads of all five pinned safetensors headers found 2,399 tensors:
+1,184 F16, 1,200 packed I32, and exactly 15 BF16 `mtp.*` tensors. The artifact
+therefore does preserve a BF16 draft on disk. The model config still declares
+`dtype: float16` and the server uses `--dtype float16`, so an isolated replay
+must inspect whether vLLM retains BF16 for the loaded draft or converts it to
+FP16. Do not describe runtime draft compute as BF16 until that is measured.
 
 ### 4. No raw evidence is present in the public cookbook snapshot
 
@@ -128,14 +129,15 @@ matched safe power A/B only after the software lane is stable.
 ## Safest future test order
 
 1. Pull the pinned container by digest and inspect package/kernel identities.
-2. Download the exact model revision and verify all LFS hashes plus MTP tensor
-   dtypes.
+2. Download the exact model revision and verify all LFS hashes; the retained
+   header audit confirms the 15 on-disk MTP tensors are BF16.
 3. Start at 150 W, one GPU, 8K context, target-only, prefix cache off, and a
    strict host-memory cgroup. This 15 GiB host previously saw Level Zero
    device-lost/out-of-resource errors in another vLLM Qwen3.8 lane.
 4. Gate basic semantics and exact greedy output against a trusted target
    implementation.
-5. A/B the nightly patch off/on. It is expected to be redundant for this
+5. Record loaded draft parameter dtypes, then A/B the nightly patch off/on. It
+   is expected to be redundant for this
    exact model; confirm instead of assuming.
 6. Add MTP1, then MTP2, then MTP4, checking accepted tokens, exact target
    verification, output quality, and memory at every depth.

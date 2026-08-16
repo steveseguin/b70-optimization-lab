@@ -1,7 +1,8 @@
 # SergioB Qwen3.8 27B vLLM XPU recipe status
 
 - **Evidence level:** `community-reported`
-- **Patch review status:** source-read; syntax checked; not executed
+- **Patch review status:** source-read; syntax checked; safetensors headers
+  range-read; patchers not executed
 - **Reference-lab model run:** no
 - **Captured:** 2026-08-15T23:42:27-04:00
 - **Cookbook commit:** `3beb704b5b86baed2a874a8cc96821116c97e080`
