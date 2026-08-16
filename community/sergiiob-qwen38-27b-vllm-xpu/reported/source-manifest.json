@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "capturedAt": "2026-08-15T23:42:27-04:00",
   "evidenceLevel": "community-reported",
-  "executionStatus": "exact artifacts verified; patchers isolated-tested; target-only eager/graph locally B70-tested; MTP and long context untested",
+  "executionStatus": "exact artifacts verified; target-only eager/graph and patched MTP1/2/4 locally B70-tested at 8K; long context and power untested",
   "cookbook": {
     "url": "https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook",
     "recipeUrl": "https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook/blob/3beb704b5b86baed2a874a8cc96821116c97e080/docs/qwen38-27/QWEN38-VLLM-XPU.md",
@@ -191,6 +191,29 @@
     "promptFileSha256": "9a81a9127d88b9bf8c5134020a6ddd4834db84271fd8636aa9e2325332c64eb3",
     "eagerResultsSha256": "d307692c757e0e1fef080f9f47e9c269ef2f88c23d3eb940b87aadc2b7bba2f7",
     "graphResultsSha256": "ca7c1c7d36331f9004fea10a7dba5eec41f2ae72f6605cb14a86147bc09b8b99",
+    "contributorPromptIdentityAvailable": false
+  },
+  "localMtpValidation": {
+    "testedAt": "2026-08-16",
+    "gpu": "ASRock Intel Arc Pro B70",
+    "gpuCount": 1,
+    "maxModelLen": 8192,
+    "kvCache": "fp8",
+    "promptTokens": 512,
+    "completionTokens": 128,
+    "repetitions": 5,
+    "prefixCaching": false,
+    "ignoreEos": true,
+    "capturedPatchesApplied": true,
+    "powerPolicyChanged": false,
+    "modes": {
+      "mtp1": {"medianTokS": 54.17576050531279, "accepted": 320, "proposed": 320, "resultsSha256": "eb96e7ffe265b931ceb0ccec5b1884086e64b3a7be099f18b66d4a4810dd77bb"},
+      "mtp2": {"medianTokS": 68.23218040545949, "accepted": 423, "proposed": 436, "resultsSha256": "e7a97780e026d3701ec9172e91170df46bb76bea8d99af395dd4fecb14e7a38e"},
+      "mtp4": {"medianTokS": 83.70192486522156, "accepted": 510, "proposed": 544, "resultsSha256": "54972d00fc87075c3f49b6b56a45dceb3a1d6f66868b410eeb7cc96c04136b02"}
+    },
+    "pairedVisibleOutputHashesMatchTargetOnly": true,
+    "qualityScope": "five paired greedy truncated outputs only; not a semantic gate; FP8 KV remains separately labeled",
+    "runtimeDraftDtype": "unknown; artifact BF16, engine global dtype float16",
     "contributorPromptIdentityAvailable": false
   },
   "secondSourceReview": {

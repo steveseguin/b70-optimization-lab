@@ -77,13 +77,15 @@ parity, and all cache counters zero. Q8_0 TP2 reached `36.772932 tok/s`
 conventional. The official FP8 vLLM artifact loaded but did not complete engine
 initialization under the bounded local profile.
 
-SergiioB's separate one-card GPTQ INT4 vLLM route is now locally B70-tested
-target-only at `33.690260 tok/s` with XPU graph versus `25.418419` eager at 8K
-and FP8 KV; 5/5 paired greedy visible-output hashes matched. The contributor's
-83.7 tok/s native-MTP4, 131K, power, and exact prompt claims remain
-`community-reported`. Its exact public model, container, runtime flags, copied
-benchmark assets, two patches, safe launcher, reported payload, source hashes,
-and audit caveats are captured in the linked packet.
+SergiioB's separate one-card GPTQ INT4 vLLM route is locally B70-tested at 8K
+and FP8 KV: `33.690260 tok/s` target-only, `54.175761` MTP1, `68.232180`
+MTP2, and `83.701925` MTP4. The MTP4 row independently matches the contributor's
+83.7 claim; target-verifier acceptance was 510/544, cache counters were zero,
+and 5/5 paired greedy visible-output hashes matched. The 131K, power, exact
+contributor prompt, runtime draft dtype, and broad quality claims remain open.
+The exact public model, container, runtime flags, copied benchmark assets, two
+patches, safe launcher, reported payload, source hashes, and audit caveats are
+captured in the linked packet.
 
 ### Qwen3.6 27B Q8_0 Target-Only On Two ASRock B70s
 

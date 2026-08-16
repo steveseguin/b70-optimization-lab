@@ -72,11 +72,13 @@ median by `+1.701%`; all complete output hashes remained exact. The Q8_0 TP2
 transfer separately reached `36.772932 tok/s` conventional with 12/12 matched
 complete outputs.
 
-A separate one-B70 SergioB GPTQ INT4 route was validated target-only on
-2026-08-16. XPU graph reached `33.690260 tok/s` median versus `25.418419` eager
-at p512/g128, 8K context and FP8 KV, with 5/5 paired visible-output hashes
-exact. This is a distinct engine/quantization/KV class and does not replace the
-active two-B70 GGUF target-only lane. MTP and 131K remain untested locally.
+A separate one-B70 SergioB GPTQ INT4 route was validated on 2026-08-16. XPU
+graph reached `33.690260 tok/s` target-only versus `25.418419` eager; MTP1/2/4
+reached `54.175761`, `68.232180`, and `83.701925 tok/s` at p512/g128, 8K
+context and FP8 KV. MTP4 accepted 510/544 drafts and all modes retained 5/5
+target-only visible-output hashes. This is a distinct engine/quantization/KV
+class and does not replace the active two-B70 GGUF target-only lane. 131K,
+runtime draft dtype, and broad semantic quality remain unresolved.
 
 Resume and evidence:
 
@@ -88,6 +90,7 @@ Resume and evidence:
 - [Q8 structured summary](experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json)
 - [community GPTQ/MTP vLLM idea](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 - [one-B70 GPTQ target-only graph validation](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-target-only-graph-validation.md)
+- [one-B70 GPTQ native-MTP matrix](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-mtp-matrix-validation.md)
 
 Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
 prototype inherited from Qwen3.6 work. Both caused device faults/resets. Do not

@@ -1,6 +1,6 @@
 # SergioB Qwen3.8-27B GPTQ INT4 + native MTP on one B70
 
-> **Target-only route reproduced locally; MTP claims remain community-reported.**
+> **Target-only and MTP1/2/4 reproduced locally at 8K.**
 > Read [STATUS.md](STATUS.md) before using this material. The source explicitly
 > labels its measurements provisional and pending independent reproduction.
 
@@ -68,6 +68,13 @@ This validates XPU graph plus the 8192-token scheduler setting as a material
 target-only optimization. The exact contributor prompts are not public, so it
 is not a byte-for-byte replay of the reported 32.9 row. See the
 [local graph validation](validation/2026-08-16-local-target-only-graph-validation.md).
+
+The same fixed local prompts then produced **54.175761 MTP1**,
+**68.232180 MTP2**, and **83.701925 tok/s MTP4**. MTP4 independently matches
+the contributor's 83.7 claim; its aggregate acceptance was 93.75%, cache
+counters remained zero, and all five outputs stayed byte-identical to the
+target-only controls. See the
+[local MTP matrix](validation/2026-08-16-local-mtp-matrix-validation.md).
 
 ## Contributor-reported results
 
@@ -199,6 +206,8 @@ matched safe power A/B only after the software lane is stable.
   validation.
 - `validation/2026-08-16-local-target-only-graph-validation.md`: local eager
   versus graph result, parity hashes, negative U=0.75 result, and raw hashes.
+- `validation/2026-08-16-local-mtp-matrix-validation.md`: local native-MTP
+  performance/acceptance matrix, parity boundary, resource notes, and hashes.
 
 The unrelated gist was reviewed at
 <https://gist.github.com/burkeholland/f71d1156812fd91e4369308358892817/91d8de389199a7580f49f064f103f48259cc024c>.

@@ -94,7 +94,9 @@ a159af0d23279b93da91b2be70dd3e4a24b6ba1f0a8fc31d5893961cee9faad0  nospec-graph-u
 ## Next gates
 
 1. Compare FP8 KV with FP16 KV using the same fixed prompts.
-2. Inspect loaded MTP parameter dtype, then test MTP1 before deeper drafts.
+2. Native MTP1/2/4 are now B70-tested in the
+   [separate matrix note](2026-08-16-local-mtp-matrix-validation.md); inspect
+   loaded MTP parameter dtype.
 3. A/B the nightly patch off/on; static source review says it is redundant for
    this exact model revision.
 4. Increase context only after short-context MTP correctness and memory pass.
