@@ -4,7 +4,7 @@
 - **Patch review status:** source-read; syntax checked; safetensors headers
   range-read; both patchers applied and passed a second-run idempotency check
   inside the pinned image without devices; no model/GPU execution
-- **Reference-lab model run:** no
+- **Reference-lab model run:** no; exact image/model artifacts verified locally
 - **Captured:** 2026-08-15T23:42:27-04:00
 - **Cookbook commit:** `3beb704b5b86baed2a874a8cc96821116c97e080`
 - **Model revision:** `9d189a60e4c0ad7f9f47cd94bfa393ca10b3924e`
@@ -19,6 +19,9 @@ The copied Python patchers edit an installed vLLM package in place. They are
 fail-closed on changed anchors and passed an isolated apply/idempotency check
 against the pinned image. This proves patch compatibility, not model
 correctness or performance. Do not apply them to a shared host environment.
+
+Local artifact and patch evidence is recorded in
+[`validation/2026-08-16-local-artifact-and-patch-audit.md`](validation/2026-08-16-local-artifact-and-patch-audit.md).
 
 The second URL supplied with this contribution, Burke Holland's
 `build-the-urlist.md` gist, is unrelated to inference. Its exact captured

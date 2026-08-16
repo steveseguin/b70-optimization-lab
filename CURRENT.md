@@ -99,6 +99,8 @@ service change:
   accepted oneAPI 2026.1.1 BMG-G31 AOT build;
 - `/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/`: accepted Qwen3.8 GGUF targets and MTP sidecars;
 - `/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/`: official FP8 artifact retained for the separate vLLM lane;
+- `/mnt/fast-ai/llm-models/qwen3.8-27b-gptq-int4-mtp/`: hash-verified
+  SergioB GPTQ INT4 target with 15 BF16 MTP tensors; community replay lane;
 - `/mnt/fast-ai/bench-results/qwen38-q4km-asrock-b70-20260815-pass2/`:
   accepted Q4_K fusion A/B and cold-suite evidence;
 - `/mnt/fast-ai/src/llama.cpp-q8-tp2-directq8-isolated`: current accepted Qwen TP2 source;

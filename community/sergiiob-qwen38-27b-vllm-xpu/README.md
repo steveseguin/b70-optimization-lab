@@ -175,6 +175,9 @@ matched safe power A/B only after the software lane is stable.
 - `reported/source-manifest.json`: immutable source/model/gist identities,
   hashes, claimed results, and audit caveats.
 - `reported/LICENSE.upstream`: cookbook MIT license covering the copied code.
+- `validation/2026-08-16-local-artifact-and-patch-audit.md`: reference-host
+  image, patch-anchor, model-hash, safetensors-header, and low-memory download
+  validation; no GPU/model run.
 
 The unrelated gist was reviewed at
 <https://gist.github.com/burkeholland/f71d1156812fd91e4369308358892817/91d8de389199a7580f49f064f103f48259cc024c>.
