@@ -1,0 +1,64 @@
+{
+  "date": "2026-08-16",
+  "model": "Qwen3.8-27B-Q8_0.gguf",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "lane": "target-only Q8_0, F16 KV, equal TP2, no speculation",
+  "lossless_pack_sample": {
+    "layers": "0..7",
+    "tensor_families": ["ffn_gate", "ffn_up", "ffn_down"],
+    "tensor_count": 24,
+    "encoded_bytes": 2272788480,
+    "blocks": 66846720,
+    "q_values": 2139095040,
+    "entropy_bits_per_q": 7.68476503779772,
+    "formats": {
+      "5bit_sentinel": {"bytes_per_block": 46.748733, "change_percent": 37.496},
+      "6bit_sentinel": {"bytes_per_block": 43.951615, "change_percent": 29.269},
+      "7bit_sentinel": {"bytes_per_block": 38.065849, "change_percent": 11.958}
+    },
+    "raw_sha256": "436dc023752d8712ecdc04c35ec7314a9dc958dd6ba9a3dfa99a695b65bd10d0"
+  },
+  "collective_census": {
+    "allreduce_per_token": 128,
+    "fused_allreduce_add": 128,
+    "fused_allreduce_add_rms_mul": 128,
+    "smoke_tok_s": 37.151243,
+    "verify_mismatch": 0,
+    "raw_sha256": "4fdd00258c01469bea22c0dfe30a46f23efdcc439cbc2f16c4fcb09eef02e5d8"
+  },
+  "backend_sampling": {
+    "supported_for_tensor_split": false,
+    "fallback_log": "backend sampling not supported with SPLIT_MODE_TENSOR; using CPU",
+    "runs": [
+      {
+        "name": "backend-A1.json",
+        "request_backend_sampling": true,
+        "actual_sampling": "CPU fallback",
+        "legacy_median_tok_s": 37.123178500805594,
+        "conventional_median_tok_s": 36.75194671579754,
+        "full_512_median_tok_s": 36.60550417850837,
+        "sha256": "d23ac014edb289de2ff5950f6c64dfb642d439e0f9e5dac873679c601d544cd1"
+      },
+      {
+        "name": "control-A1.json",
+        "request_backend_sampling": false,
+        "actual_sampling": "CPU",
+        "legacy_median_tok_s": 37.800053394820594,
+        "conventional_median_tok_s": 37.422052860872386,
+        "full_512_median_tok_s": 37.5093545067235,
+        "sha256": "a44d7b26c4a044b5f79afaa9b48a876b0eb81ee06ed1b14107713e6828e579f5"
+      },
+      {
+        "name": "backend-B2.json",
+        "request_backend_sampling": true,
+        "actual_sampling": "CPU fallback",
+        "legacy_median_tok_s": 37.79875861203724,
+        "conventional_median_tok_s": 37.42077102591687,
+        "full_512_median_tok_s": 37.507967108274514,
+        "sha256": "a7b561d9623b9c72836e0c6db6bd54575d20d0fda90df58f68655bff78c98954"
+      }
+    ],
+    "quality": "12/12 exact output hashes, cache-zero, but no backend-sampling treatment executed"
+  },
+  "decision": "No promotion. Preserve accepted Q8 bytes and fused collectives; next narrow exact service target is tensor-split-aware distributed greedy argmax."
+}
