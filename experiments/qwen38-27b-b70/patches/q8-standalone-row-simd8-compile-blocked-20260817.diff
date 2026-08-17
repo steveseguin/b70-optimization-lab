@@ -1,0 +1,102 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1553,1 +1553,12 @@
++// Lab-only SIMD8 row body for standalone Q8_0 decode MMVQs. Each lane owns a
++// complete 32-value Q8 block (two int4 loads) instead of half a block, removing
++// duplicate scale loads and admitting sixteen row subgroups per 128-thread WG.
++static inline bool ggml_sycl_mmvq_q8_row_sg8() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_ROW_SG8");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+ // Shape-scoped Qwen3.8 recurrent-quad launch geometry. The row subgroup and
+@@ -1687,1 +1698,73 @@
++static void mul_mat_vec_q8_0_reorder_sg8(
++        const void * __restrict__ vx, const void * __restrict__ vy,
++        float * __restrict__ dst, const int ncols, const int nrows,
++        const sycl::nd_item<3> & nd_item) {
++    using block_type = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q8_0>;
++    using int4_t = sycl::vec<int, 4>;
++
++    const auto sg = nd_item.get_sub_group();
++    const int row = nd_item.get_group_linear_id() * sg.get_group_linear_range()
++        + sg.get_group_linear_id();
++    if (row >= nrows) {
++        return;
++    }
++
++    const int lane = (int) sg.get_local_linear_id();
++    const int blocks_per_row = ncols / QK8_0;
++    const int nblocks = nrows * blocks_per_row;
++    const uint8_t * base = static_cast<const uint8_t *>(vx);
++    float partial = 0.0f;
++
++    for (int i = lane; i < blocks_per_row; i += 8) {
++        const int ibx = row * blocks_per_row + i;
++        const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
++        const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
++        const int iby = i * block_type::block_to_q8_1_ratio();
++        const int8_t * w = reinterpret_cast<const int8_t *>(base + bx_offset.first);
++        const int8_t * a = static_cast<const int8_t *>(vy) + iby * QK8_1;
++
++        const int4_t w0 = *reinterpret_cast<const int4_t *>(w);
++        const int4_t w1 = *reinterpret_cast<const int4_t *>(w + 16);
++        const int4_t a0 = *reinterpret_cast<const int4_t *>(a);
++        const int4_t a1 = *reinterpret_cast<const int4_t *>(a + 16);
++        int s0 = dpct::dp4a(w0[0], a0[0], 0);
++        int s1 = dpct::dp4a(w0[1], a0[1], 0);
++        int s2 = dpct::dp4a(w0[2], a0[2], 0);
++        int s3 = dpct::dp4a(w0[3], a0[3], 0);
++        s0 = dpct::dp4a(w1[0], a1[0], s0);
++        s1 = dpct::dp4a(w1[1], a1[1], s1);
++        s2 = dpct::dp4a(w1[2], a1[2], s2);
++        s3 = dpct::dp4a(w1[3], a1[3], s3);
++        const int sumi = (s0 + s1) + (s2 + s3);
++
++        const ggml_half d = *reinterpret_cast<const ggml_half *>(base + d_offset.first);
++        const sycl::half2 ds = *reinterpret_cast<const sycl::half2 *>(
++            static_cast<const char *>(vy) + ncols + iby * sizeof(sycl::half2));
++        partial += static_cast<float>(d) * static_cast<float>(ds[0]) * sumi;
++    }
++
++    const float sum = sycl::reduce_over_group(sg, partial, std::plus<>());
++    if (sg.leader()) {
++        dst[row] = sum;
++    }
++}
++
++static void reorder_mul_mat_vec_q8_0_q8_1_sycl_sg8(
++        const void * vx, const void * vy, float * dst,
++        const int ncols, const int nrows, dpct::queue_ptr stream) {
++    constexpr int SGS = 8;
++    constexpr int WG = 128;
++    constexpr int sg_per_wg = WG / SGS;
++    const int block_num_y = ceil_div(nrows, sg_per_wg);
++    const sycl::range<3> block_dims(1, 1, WG);
++    const sycl::range<3> block_nums(1, 1, block_num_y);
++    stream->submit([&](sycl::handler & cgh) {
++        cgh.parallel_for(
++            sycl::nd_range<3>(block_nums * block_dims, block_dims),
++            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(SGS)]] {
++                mul_mat_vec_q8_0_reorder_sg8(vx, vy, dst, ncols, nrows, nd_item);
++            });
++    });
++}
++
+ // ---- NVFP4 reorder-aware MMVQ (the DECODE path) ------------------------------------------------
+@@ -1740,1 +1823,12 @@
++    if (!narrow && !mutant && ggml_sycl_mmvq_q8_row_sg8()) {
++        ggml_sycl_assert_q8_wide_align(vx, vy, 16);
++        static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++        const int device = get_current_device_id();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++            fprintf(stderr, "SYCL lab door | standalone reordered-Q8 row body: dev=%d -> SG8 whole-block\n", device);
++            announced[device] = true;
++        }
++        reorder_mul_mat_vec_q8_0_q8_1_sycl_sg8(vx, vy, dst, ncols, nrows, stream);
++        return;
++    }
+     // f367: the SIMD32 variant owns ncols_dst==1 when its door resolves ON.  Hooked HERE, not at
