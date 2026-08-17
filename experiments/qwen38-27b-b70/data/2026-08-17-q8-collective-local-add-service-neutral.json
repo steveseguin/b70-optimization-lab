@@ -1,0 +1,36 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_endpoint_neutral",
+  "lane": "Qwen3.8-27B Q8_0 target-only equal TP2, F16 KV, no speculation",
+  "mechanism": "stage the 5120 post-residual values in 20 KiB workgroup-local memory during each fused collective RMS pass and quantize from the exact local copy",
+  "runtime_door": "GGML_SYCL_COMM_DIRECT_Q8_LOCAL_ADD",
+  "verification": {
+    "smoke": "p64/n4/r1 with Q8 memo verification",
+    "verified": 4950,
+    "mismatches": 0,
+    "endpoint_exact_hashes": "48/48",
+    "cached_tokens_all_zero": true
+  },
+  "direct_p64_n512_r3": {
+    "order": ["control", "local", "local", "control", "local", "control", "control", "local"],
+    "values_tps": [36.996178, 37.156964, 36.784198, 36.812059, 37.514161, 36.584911, 36.571456, 36.741197],
+    "control_mean_tps": 36.741151,
+    "local_mean_tps": 37.049130000000005,
+    "delta_percent": 0.8382399342905744,
+    "block_delta_percent": [0.18009507529628266, 1.5022492847410085]
+  },
+  "realistic_endpoint": {
+    "treatment_conventional_tps": [36.60359440919834, 37.405487053829226],
+    "control_conventional_tps": [36.60773285528339, 37.39619521582227],
+    "warmed_conventional_delta_percent": 0.024847014390982913,
+    "warmed_full_decode_delta_percent": 0.02558286824290157,
+    "warmed_wall_delta_percent": 0.003830535354643061,
+    "raw_artifact_dir": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-collective-local-add"
+  },
+  "candidate_source_sha256": "a76c2a14bc8d99446e342bc18d42503b0015fcf6576a28151bc9eb5f05937053",
+  "candidate_lib_sha256": "99a3bcb7607b4f4cae302dd63f3ae98731896c0c1ae6f8535feef62fff04ff4d",
+  "accepted_source_sha256": "77c626e177996cd8549a30a8c6c14dcd1ad41cc62fd26889e85877f8f579ad39",
+  "accepted_lib_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+  "health": "both devices normal; no new Xe/GuC fault, reset, timeout, or hang",
+  "decision": "Do not promote or retry unchanged."
+}
