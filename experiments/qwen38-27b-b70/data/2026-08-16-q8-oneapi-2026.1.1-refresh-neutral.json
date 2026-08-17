@@ -1,0 +1,72 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_neutral",
+  "experiment": "clean oneAPI 2026.1.1 AOT compiler refresh of the accepted Qwen3.8 Q8 TP2 source",
+  "model": {
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70",
+  "compiler": {
+    "control": "Intel oneAPI DPC++/C++ 2026.1.0 (20260617)",
+    "candidate": "Intel oneAPI DPC++/C++ 2026.1.1 (2026.1.1.20260724)",
+    "candidate_package": "2026.1.1-325"
+  },
+  "build": {
+    "source_identical_to_accepted": true,
+    "type": "Release",
+    "device_arch": "bmg_g31",
+    "sycl_f16": true,
+    "level_zero_api": true,
+    "graph": false,
+    "dnn": false,
+    "host_memory_fallback": false,
+    "jobs": 2,
+    "memory_high": "6G",
+    "memory_max": "8G",
+    "swap_max": "8G",
+    "elapsed": "15m26.195s",
+    "cpu_time": "50m55.385s",
+    "memory_peak": "3.0G",
+    "swap_peak": "50.2M"
+  },
+  "runtime": {
+    "devices": "SYCL0/SYCL1",
+    "tensor_split": "1/1",
+    "kv": "f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "speculation": false
+  },
+  "quality": {
+    "normal_completion_exact_tokens": 128,
+    "normal_matches_control": true,
+    "normal_content_sha256": "0344292357c81000d67624607cd4f156c503ce6383d12c5d1dfd134ea087bc57",
+    "cached_prompt_tokens": 0,
+    "verify_mismatch": 0,
+    "full_12_prompt_gate_run": false,
+    "full_gate_reason": "candidate was performance-neutral in the symmetric screen"
+  },
+  "screen": {
+    "command_shape": "llama-bench -p 64 -n 256 -r 3; fresh process per binary; order old-new-new-old",
+    "control_decode_tok_s": [36.811939, 36.796547],
+    "candidate_decode_tok_s": [36.817581, 36.794024],
+    "control_decode_mean_tok_s": 36.804243,
+    "candidate_decode_mean_tok_s": 36.8058025,
+    "decode_relative_delta_percent": 0.004237283
+  },
+  "artifacts": {
+    "candidate_source": "/mnt/fast-ai/src/llama.cpp-q38-q8-gdn-cache-fusion",
+    "candidate_build": "build-sycl-aot-bmg-g31-oneapi-2026.1.1",
+    "libggml_sycl_sha256": "cbdd8b357de41ef27f43fabe0d0b0ce152a5c7006208950f7f9f4c1eb191e3f2",
+    "llama_bench_sha256": "c6e7282119bea665b3f5b7a27e369c148a2ef9e38ea28af0dbcba5d42a9b9a22",
+    "llama_server_sha256": "4ed07c3734745d002f1c9a6711e8d1c08c3d91557b894084a8769d6ac07b6770"
+  },
+  "health": {
+    "device_0": "normal",
+    "device_1": "normal",
+    "xe_compute_fault_reset_hang_since_boot": false
+  },
+  "decision": "do not promote or repeat unchanged"
+}

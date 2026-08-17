@@ -106,13 +106,13 @@ and the failed `invoke_simd` AOT history are in the
 implementation unchanged. Check `origin/main` before opening another
 target-only Q8 candidate.
 
-The reference host now claims an exact clean AOT compiler-refresh arm. The
-accepted `libggml-sycl.so.0.19.0` embeds oneAPI DPC++ 2026.1.0
-(`20260617`), while the installed compiler is 2026.1.1
-(`2026.1.1.20260724`). Source, CMake configuration, runtime doors, model, and
-benchmark protocol remain identical. See the
-[active note](notes/2026-08-16-q8-oneapi-2026.1.1-refresh-active.md). Do not
-duplicate this exact rebuild while it remains active.
+The exact clean oneAPI 2026.1.1 AOT compiler-refresh arm is closed. The fixed
+completion was byte-exact, but its position-balanced decode result was
+`36.805803` versus `36.804243 tok/s` for the 2026.1.0 image (`+0.0042%`). See
+the [result note](notes/2026-08-16-q8-oneapi-2026.1.1-refresh-active.md) and
+structured
+[data](data/2026-08-16-q8-oneapi-2026.1.1-refresh-neutral.json). Do not repeat
+the identical compiler-only rebuild.
 
 Upstream gated-delta-net state-writeback fusion commit `3d9388535` is closed
 for this stack without a build. The accepted repro already enables its older,
