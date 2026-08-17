@@ -607,6 +607,16 @@ if [[ "$mode" == "spec-native-partition-exact-native" \
   # through the same native one-token kernel used by the exact verifier proof.
   export VLLM_XPU_GDN_NATIVE_FALLBACK=0
 fi
+if [[ "$mode" == "nospec-latest-exact-native" \
+  && "${VALIDATION_BATCH_INVARIANT:-0}" == "1" \
+  && "${VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-0}" == "1" ]]; then
+  # The GDN backend keeps broad batch-invariance support fail-closed behind
+  # the production-shaped exact-native proof flag.  A one-row target does not
+  # execute the speculative recurrence, but it must carry the same proof
+  # contract so the ordinary GDN backend can participate in an identity-
+  # matched global-invariant control.
+  export VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1
+fi
 if [[ -n "${VALIDATION_COMPILATION_CONFIG_OVERRIDE:-}" ]]; then
   export COMPILATION_CONFIG="$VALIDATION_COMPILATION_CONFIG_OVERRIDE"
 fi
