@@ -1,0 +1,41 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1573,0 +1574,8 @@
++static inline bool ggml_sycl_mmvq_q8_quad_reqd_wg384() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_QUAD_REQD_WG384");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+@@ -2092,8 +2100,21 @@
+-        cgh.parallel_for(
+-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
+-            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+-                mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+-                    vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
+-                    dst0, dst1, dst2, dst3,
+-                    ncols, nrows0, nrows1, nrows2, nrows3, nd_item);
+-            });
++        const bool reqd_wg384 = exact_quad_shape && quad_sg24 && ggml_sycl_mmvq_q8_quad_reqd_wg384();
++        if (reqd_wg384) {
++            cgh.parallel_for(
++                sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                [=](sycl::nd_item<3> nd_item)
++                    [[sycl::reqd_sub_group_size(WARP_SIZE), sycl::reqd_work_group_size(1, 1, 384)]] {
++                    mul_mat_vec_q8_0_reorder_quad_gdn_processed(
++                        vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
++                        dst0, dst1, dst2, dst3,
++                        ncols, nrows0, nrows1, nrows2, nrows3, nd_item);
++                });
++        } else {
++            cgh.parallel_for(
++                sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_quad_gdn_processed(
++                        vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
++                        dst0, dst1, dst2, dst3,
++                        ncols, nrows0, nrows1, nrows2, nrows3, nd_item);
++                });
++        }
