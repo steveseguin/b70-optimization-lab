@@ -1,0 +1,127 @@
+--- a/ggml/src/ggml-sycl/q8-scale-codec.hpp	2026-08-17 00:36:13.472673205 -0400
++++ b/ggml/src/ggml-sycl/q8-scale-codec.hpp	2026-08-17 00:00:00.000000000 -0400
+@@ -61,6 +61,23 @@
+     0x37f, 0x387, 0x38f, 0x397, 0x39f, 0x3a7, 0x3af, 0x3b7, 0x3bf, 0x3c8, 0x3d0, 0x3d8, 0x3e0, 0x3e8, 0x3f0, 0x3f8,
+ };
+ 
++static inline const std::array<uint16_t, 0x2205> & encode_table() {
++    static const auto table = [] {
++        std::array<uint16_t, 0x2205> result{};
++        result.fill(0xffff);
++        for (uint16_t i = 0; i < e0_count; ++i) {
++            result[e0_table[i]] = i;
++        }
++        for (uint16_t exponent = 1; exponent <= 8; ++exponent) {
++            for (uint16_t i = 0; i < mantissa_count; ++i) {
++                result[(exponent << 10) | mantissa_table[i]] = e0_count + (exponent - 1) * mantissa_count + i;
++            }
++        }
++        return result;
++    }();
++    return table;
++}
++
+ static inline sycl::half decode(const uint8_t * scale_plane, int block_index) {
+     const uint16_t * e0 = reinterpret_cast<const uint16_t *>(scale_plane);
+     const uint16_t * mantissas = e0 + e0_count;
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp	2026-08-17 00:37:05.439433546 -0400
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp	2026-08-17 01:37:10.525768828 -0400
+@@ -5289,6 +5289,48 @@
+     return true;
+ }
+ 
++static constexpr uint16_t ggml_sycl_q8_scale_invalid_code = 0xffff;
++
++static constexpr std::array<uint16_t, 1024> ggml_sycl_make_q8_scale_e0_encode_map() {
++    std::array<uint16_t, 1024> result{};
++    for (size_t i = 0; i < result.size(); ++i) {
++        result[i] = ggml_sycl_q8_scale_invalid_code;
++    }
++    for (uint16_t i = 0; i < ggml_sycl_q8_scale_codec::e0_count; ++i) {
++        result[ggml_sycl_q8_scale_codec::e0_table[i]] = i;
++    }
++    return result;
++}
++
++static constexpr std::array<uint16_t, 1024> ggml_sycl_make_q8_scale_mantissa_encode_map() {
++    std::array<uint16_t, 1024> result{};
++    for (size_t i = 0; i < result.size(); ++i) {
++        result[i] = ggml_sycl_q8_scale_invalid_code;
++    }
++    for (uint16_t i = 0; i < ggml_sycl_q8_scale_codec::mantissa_count; ++i) {
++        result[ggml_sycl_q8_scale_codec::mantissa_table[i]] = i;
++    }
++    return result;
++}
++
++static constexpr auto ggml_sycl_q8_scale_e0_encode_map = ggml_sycl_make_q8_scale_e0_encode_map();
++static constexpr auto ggml_sycl_q8_scale_mantissa_encode_map = ggml_sycl_make_q8_scale_mantissa_encode_map();
++
++static inline uint16_t ggml_sycl_q8_scale_encode(uint16_t bits) {
++    const uint16_t exponent = bits >> 10;
++    const uint16_t mantissa = bits & 0x3ff;
++    if (exponent == 0) {
++        return ggml_sycl_q8_scale_e0_encode_map[mantissa];
++    }
++    if (exponent > 8) {
++        return ggml_sycl_q8_scale_invalid_code;
++    }
++    const uint16_t index = ggml_sycl_q8_scale_mantissa_encode_map[mantissa];
++    return index == ggml_sycl_q8_scale_invalid_code ? ggml_sycl_q8_scale_invalid_code :
++        ggml_sycl_q8_scale_codec::e0_count +
++        (exponent - 1) * ggml_sycl_q8_scale_codec::mantissa_count + index;
++}
++
+ static bool reorder_qw_q8_0(uint8_t * data_device, const int ncols, const int nrows, size_t size, size_t offset,
+                             dpct::queue_ptr stream) {
+     sycl_reorder_temp_buffer tmp(stream, size);
+@@ -5338,8 +5380,6 @@
+         });
+ 
+     uint8_t * packed = scale_plane + ggml_sycl_q8_scale_codec::table_bytes;
+-    const uint16_t * e0 = reinterpret_cast<const uint16_t *>(scale_plane);
+-    const uint16_t * mantissas = e0 + ggml_sycl_q8_scale_codec::e0_count;
+     const bool poison = std::getenv("GGML_SYCL_Q8_SCALE_DICT_POISON") != nullptr;
+     const size_t groups = (nblocks + 7) / 8;
+     auto pack_event = stream->parallel_for(groups, [=](auto group_id) {
+@@ -5352,37 +5392,12 @@
+                 break;
+             }
+             const uint16_t bits = sycl::bit_cast<uint16_t>(x[ib].d);
+-            int low = 0;
+-            int high;
+-            const uint16_t * table;
+-            uint16_t code_base;
+-            if (bits < 0x400) {
+-                high = ggml_sycl_q8_scale_codec::e0_count;
+-                table = e0;
+-                code_base = 0;
+-            } else {
+-                const int exponent = bits >> 10;
+-                high = ggml_sycl_q8_scale_codec::mantissa_count;
+-                table = mantissas;
+-                code_base = ggml_sycl_q8_scale_codec::e0_count + (exponent - 1) * ggml_sycl_q8_scale_codec::mantissa_count;
+-            }
+-            const uint16_t key = bits & 0x3ff;
+-            while (low < high) {
+-                const int mid = (low + high) >> 1;
+-                if (table[mid] < key) {
+-                    low = mid + 1;
+-                } else {
+-                    high = mid;
+-                }
+-            }
+-            if (low >= (bits < 0x400 ? ggml_sycl_q8_scale_codec::e0_count : ggml_sycl_q8_scale_codec::mantissa_count) ||
+-                table[low] != key || (bits >= 0x400 && (bits >> 10) > 8)) {
++            uint16_t code = ggml_sycl_q8_scale_encode(bits);
++            if (code == ggml_sycl_q8_scale_invalid_code) {
+                 sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
+                                  sycl::access::address_space::global_space>(*missing).fetch_add(1);
+-                low = 0;
+-                code_base = 0;
++                code = 0;
+             }
+-            uint16_t code = code_base + low;
+             if (poison) {
+                 code ^= 1;
+             }

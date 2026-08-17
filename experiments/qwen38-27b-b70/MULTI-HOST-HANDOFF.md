@@ -28,10 +28,11 @@ revisions then failed the safety gate with a host segfault and an invalid Level
 Zero memory object. See the [result](notes/2026-08-17-q8-exact-scale-dictionary-active.md).
 Do not duplicate either retained patch unchanged.
 
-A materially different compile-time encoder-map retry is active on the ASRock
-reference host. It removes the runtime USM lookup object entirely; see the
-[claim](notes/2026-08-17-q8-exact-scale-dictionary-static-map-active.md).
-Other hosts should not duplicate it until the active row is closed.
+The materially different compile-time encoder-map retry is also closed. It
+removed the runtime-USM failure and passed prompt+decode safety, but regressed
+the position-balanced screen by `5.360%`; see the
+[result](notes/2026-08-17-q8-exact-scale-dictionary-static-map-active.md).
+Do not duplicate the retained static-map increment unchanged.
 
 ## Accepted Q8_0 lane
 

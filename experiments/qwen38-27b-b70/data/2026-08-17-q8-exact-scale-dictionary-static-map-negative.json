@@ -1,0 +1,49 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_negative",
+  "scope": "Qwen3.8-27B Q8_0 target-only TP2, F16 KV, no speculation",
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "candidate": {
+    "mechanism": "exact 11-bit reordered-Q8 scale codes with compile-time 10-bit encoder maps",
+    "ideal_weight_traffic_saving_percent": 1.838235,
+    "compiler": "IntelLLVM 2026.1.1",
+    "incremental_patch": "experiments/qwen38-27b-b70/patches/q8-exact-scale-dict11-static-map-negative-20260817.diff",
+    "incremental_patch_sha256": "dd6cf78827ec11cee3c6fe0f046e165efe2d0005efc16c0523581bd1494eb31a",
+    "llama_bench_sha256": "c6e7282119bea665b3f5b7a27e369c148a2ef9e38ea28af0dbcba5d42a9b9a22",
+    "libggml_sycl_sha256": "37dfb129b08a1b2c04b40b975122c59817b6eb0ece2157b99dbac59c08ba6807"
+  },
+  "safety_gate": {
+    "shape": "p64/n1/r1",
+    "exit_status": 0,
+    "wall_seconds": 19.18,
+    "max_rss_kib": 9338944,
+    "verify_mismatch": 0,
+    "post_run_gpu_gate": "pass",
+    "raw_sha256": "7bd5907394c7a8ea5e511ab815db93019f9c1f71bdd5c4d7faac3f43e6315d79"
+  },
+  "performance_gate": {
+    "shape": "p64/n256/r3",
+    "order": ["control", "candidate", "candidate", "control"],
+    "control_tok_s": [36.549878, 37.475197],
+    "candidate_tok_s": [35.344981, 34.712627],
+    "control_mean_tok_s": 37.0125375,
+    "candidate_mean_tok_s": 35.028804,
+    "delta_percent": -5.359626,
+    "raw_sha256": {
+      "01_control": "5abc984294e974a9188dcf10c7b28c6c61b2e44ab4ca03ead1fdf5e0598ff4b8",
+      "02_candidate": "7bd7b4a96c2243ebec6ca5cff69885b96742780d070313725a1391aa6484c61d",
+      "03_candidate": "dd6c24a4955c732b8fe8611f27c4b5426b591917265b9403cb32a90d8d9d4823",
+      "04_control": "7f66f9d8873d4ac63f8f2b9f40d47b5a8f215e60b4f64d1e7833a7bd4e85c3c3"
+    }
+  },
+  "quality": {
+    "full_output_oracle_run": false,
+    "reason": "candidate failed the performance gate decisively; no quality or promotion claim is made"
+  },
+  "decision": "reject and do not repeat unchanged"
+}
