@@ -67,10 +67,41 @@ The `n16` process reported 4,386 backend graph computes.  Re-recording and
 updating hundreds of very small command graphs every token costs more than the
 kernel submissions it replaces.  This is not a warmup-only loss.
 
+## True replay follow-up: dynamic updates were not the blocker
+
+Incremental patch:
+`../patches/q8-tp2-sycl-graph-no-update-negative-20260817.diff` (apply after
+the cache patch above).
+
+The follow-up added `GGML_SYCL_GRAPH_REPLAY_NO_UPDATE=1`. On a cache hit it
+submits the already-finalized executable graph directly, without recording a
+new graph or calling `update()`. This is valid for the admitted llama.cpp
+decode graphs because their tensor addresses and kernel arguments remain
+stable while token-varying values arrive through those buffers.
+
+| Test | tok/s | Replay hits | Replay misses | Graph computes |
+|---|---:|---:|---:|---:|
+| `p0/n4/r1` | 9.066576 | 486 | 324 | 1,290 |
+| `p0/n16/r1` | 20.596402 | 2,430 | 324 | 4,386 |
+
+The two 162-subgraph populations are the warmup fresh-state graph and the
+first measured fresh-state graph across two devices. Each continuation token
+then produces 162 true replay hits. Subtracting the `n4` elapsed time from the
+`n16` elapsed time isolates twelve continuation tokens at about
+`27.971987 ms/token`, or **35.750 tok/s**. That is still about **2.78% slower**
+than the accepted `36.772932 tok/s` reference. Both runs reported
+`VERIFY_MISMATCH=0`; the GPUs remained normal with no new Xe fault, reset, or
+hang. Raw logs are retained under
+`/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-graph-replay-no-update/`.
+
+This rules out scalar-argument update overhead as the principal loss. The
+remaining problem is granularity: submitting 162 small executable graphs per
+token costs more than the driver's eager immediate-command-list path.
+
 ## Do-not-repeat boundary and next implication
 
 Do not retry per-meta-subgraph ordinary command graphs, isolated queue plus
-memo preallocation, or native recording.  A future graph attempt would need a
-larger stable capture unit and a way to update token-varying scalar arguments
-without re-recording hundreds of graphs. Cross-device collectives prevent the
-current per-device command graph from simply spanning the full token.
+memo preallocation, true no-update replay, or native recording. A future graph
+attempt would need a materially larger stable capture unit; stable arguments
+alone do not recover the loss. Cross-device collectives prevent the current
+per-device command graph from simply spanning the full token.

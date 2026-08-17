@@ -1,0 +1,44 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -92,0 +93,18 @@ static std::unordered_map<ggml_backend_sycl_context *,
++static std::atomic<uint64_t> g_sycl_graph_replay_hits{0};
++static std::atomic<uint64_t> g_sycl_graph_replay_misses{0};
++
++static bool ggml_sycl_graph_replay_no_update() {
++    static const bool enabled = [] {
++        const char * value = getenv("GGML_SYCL_GRAPH_REPLAY_NO_UPDATE");
++        const bool on = value != nullptr && atoi(value) != 0;
++        if (on) {
++            atexit([] {
++                fprintf(stderr, "[SYCL-GRAPH-REPLAY] hits=%llu misses=%llu\n",
++                        (unsigned long long) g_sycl_graph_replay_hits.load(),
++                        (unsigned long long) g_sycl_graph_replay_misses.load());
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
+@@ -9251,0 +9270 @@ static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_
++        const bool replay_no_update = ggml_sycl_graph_replay_no_update();
+@@ -9253,0 +9273,16 @@ static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_
++        // A reused llama graph keeps tensor addresses, shapes, and kernel
++        // arguments stable; graph inputs update the contents of those buffers
++        // before compute.  Replaying that executable directly avoids both the
++        // eager submissions and the much more expensive record/update cycle.
++        // Keep this behind an explicit experiment door until reset, prompt,
++        // and long-context output gates prove that every dynamic value really
++        // is buffer-backed for the admitted decode graphs.
++        if (replay_no_update && exec_graph) {
++            g_sycl_graph_replay_hits.fetch_add(1, std::memory_order_relaxed);
++            execution_queue->ext_oneapi_graph(*exec_graph);
++            return GGML_STATUS_SUCCESS;
++        }
++        if (replay_no_update) {
++            g_sycl_graph_replay_misses.fetch_add(1, std::memory_order_relaxed);
++        }
++
+@@ -9283 +9318 @@ static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_
+-            auto finalized = graph_update_support ?
++            auto finalized = graph_update_support && !replay_no_update ?
