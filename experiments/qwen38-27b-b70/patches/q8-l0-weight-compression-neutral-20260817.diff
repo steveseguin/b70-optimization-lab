@@ -1,0 +1,83 @@
+--- a/ggml/src/ggml-sycl/common.cpp
++++ b/ggml/src/ggml-sycl/common.cpp
+@@ -127,0 +128,55 @@
++// Lab-only allocation path for persistent, read-mostly Q8 model tensors.  The
++// Level Zero hint is lossless: it changes only the allocation's memory
++// representation, never the tensor bytes or arithmetic.  Keep it separate
++// from the general allocator so KV/cache/scratch buffers are not made
++// compressible.  The caller is strict-type-gated to Q8_0 split weights.
++void * ggml_sycl_malloc_device_compressible(size_t size, sycl::queue &q) {
++#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
++    const char * env = std::getenv("GGML_SYCL_L0_WEIGHT_COMPRESSION");
++    const bool requested = env != nullptr && std::atoi(env) != 0;
++    if (requested && ggml_sycl_use_level_zero_device_alloc(q)) {
++        void * ptr = nullptr;
++        auto ze_ctx = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q.get_context());
++        auto ze_dev = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q.get_device());
++        ze_memory_compression_hints_ext_desc_t compression_desc = {
++            ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC,
++            nullptr,
++            ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED,
++        };
++#ifdef ZE_RELAXED_ALLOCATION_LIMITS_EXP_NAME
++        ze_relaxed_allocation_limits_exp_desc_t relaxed_desc = {
++            ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC,
++            nullptr,
++            ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE,
++        };
++        compression_desc.pNext = &relaxed_desc;
++#endif
++        ze_device_mem_alloc_desc_t alloc_desc = {
++            ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,
++            &compression_desc,
++            0,
++            0,
++        };
++        const ze_result_t r = zeMemAllocDevice(ze_ctx, &alloc_desc, size, 64, ze_dev, &ptr);
++        if (r == ZE_RESULT_SUCCESS && ptr != nullptr) {
++            static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++            const int device = get_current_device_id();
++            if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++                fprintf(stderr,
++                        "SYCL lab door | Level Zero lossless compression hint active for Q8_0 weights: dev=%d\n",
++                        device);
++                announced[device] = true;
++            }
++            return ptr;
++        }
++        static bool warned = false;
++        if (!warned) {
++            GGML_LOG_WARN("Level Zero rejected the Q8_0 compression hint (result=0x%x); using ordinary device allocation\n",
++                          (unsigned) r);
++            warned = true;
++        }
++    }
++#endif
++    return ggml_sycl_malloc_device(size, q);
++}
++
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -58,0 +59,2 @@
++void * ggml_sycl_malloc_device_compressible(size_t size, sycl::queue & q);
++
+@@ -1814,1 +1816,10 @@
+-        SYCL_CHECK(CHECK_TRY_ERROR(dev_ptr = (void *)ggml_sycl_malloc_device(size, *stream)));
++        // The meta TP backend places each rank's persistent model storage in
++        // one large ordinary SYCL buffer rather than an upstream split buffer.
++        // Restrict the lossless compression hint to GiB-scale allocations so
++        // KV/cache/scratch remain on the incumbent writable allocation path.
++        if (aligned_size >= (size_t) 1024*1024*1024) {
++            SYCL_CHECK(CHECK_TRY_ERROR(
++                dev_ptr = ggml_sycl_malloc_device_compressible(size, *stream)));
++        } else {
++            SYCL_CHECK(CHECK_TRY_ERROR(dev_ptr = (void *)ggml_sycl_malloc_device(size, *stream)));
++        }
+@@ -2060,1 +2071,6 @@
+-        SYCL_CHECK(CHECK_TRY_ERROR(buf = (char *)ggml_sycl_malloc_device(size, *stream)));
++        // Split buffers hold persistent model tensors.  Keep the compression
++        // hint scoped here so writable KV/cache/scratch allocations continue
++        // to use the ordinary allocator.  The environment door remains in
++        // the helper, making off/on a same-binary allocation A/B.
++        SYCL_CHECK(CHECK_TRY_ERROR(
++            buf = (char *) ggml_sycl_malloc_device_compressible(size, *stream)));
