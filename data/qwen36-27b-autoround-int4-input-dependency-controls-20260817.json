@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "classification": "diagnostic_closeout",
-  "decision": "inconclusive_not_production_ready",
+  "decision": "failed_normal_gate_not_production_ready",
   "runtime_restored": false,
   "new_runs_allowed": false,
   "model": {
@@ -150,6 +150,33 @@
       "strict_tok_s": 110.67515578910192,
       "legacy_tok_s": 111.79308665565851,
       "manifest_sha256": "988ff654c1a3d0ddf7efd4a6331cfe955ceafdd914d82c90314896b8e2cd36a4"
+    },
+    {
+      "name": "final-source target 25",
+      "root": "int4-input-dependency-final25-target-a-20260817T022000Z",
+      "execution": "compiled PIECEWISE target-only with layer0 dependency enabled",
+      "warmed": true,
+      "correctness": "matched final-source reference; quality and cache gates pass",
+      "strict_tok_s": 50.10075778596175,
+      "manifest_sha256": "654602deadef669d20e51285526253cc7f55b453caa702d08f2a887c950a3173"
+    },
+    {
+      "name": "final-source layer0 candidate 25",
+      "root": "int4-input-dependency-final25-spec-a-20260817T023000Z",
+      "execution": "compiled PIECEWISE MTP3 with layer0 GDN input dependency",
+      "warmed": true,
+      "correctness": "15/25 exact versus matched final-source target; quality and cache gates pass",
+      "strict_tok_s": 96.38550998322077,
+      "manifest_sha256": "68372a1c5c1d817827793981a97f3b121f499a3acc1cf4809f1a458de398abd9"
+    },
+    {
+      "name": "single-correction all-INT4 candidate 25",
+      "root": "int4-input-dependency-final25-allint4-spec-a-20260817T024500Z",
+      "execution": "compiled PIECEWISE MTP3 with dependency on all INT4 calls",
+      "warmed": true,
+      "correctness": "12/25 exact versus matched final-source target; quality and cache gates pass",
+      "strict_tok_s": 96.57755136578547,
+      "manifest_sha256": "6774013555d4982481afefde4feb891413ae61df08da98e7e9ea4157b300aacc"
     }
   ],
   "failed_integrations": [
@@ -169,22 +196,23 @@
     "Compiled layer0 and all-INT4 dependencies repaired the focused incident while the compiled Python model event did not.",
     "The focused wrong token had only a 0.015625 packed top1/top2 score margin, making token identity sensitive to small ordering or code-generation changes.",
     "Cold and trace-heavy 5-12 tok/s diagnostics are not comparable to warmed throughput.",
-    "The final four-prompt candidate has no matched 25-prompt target/candidate repeat on the final source and binary.",
-    "The existing 25-prompt candidate predates the dependency patch and is only 17/25 exact at 96.52 tok/s."
+    "The final four-prompt pass did not generalize: the matched final-source candidate was only 15/25 exact at 96.386 tok/s.",
+    "Broadening the sole correction to all INT4 calls worsened parity to 12/25 and remained below 100 tok/s.",
+    "The final-source target differs from the older target on 10/25 prompts, so only the newly matched target is a valid comparator."
   ],
   "production_gate": {
-    "target_parity": "not_satisfied_on_normal_25_prompt_gate",
-    "performance": "four_prompt_screen_above_100_but_25_prompt_candidate_below_99_798_historical_gate",
-    "verdict": "inconclusive",
+    "target_parity": "failed_15_of_25_then_12_of_25_after_single_correction",
+    "performance": "failed_96_386_then_96_578_strict_tok_s",
+    "verdict": "failed_normal_gate",
     "runtime_action": "left_unchanged_pending_operator_discussion"
   },
   "preserved_patch_packet": {
     "path": "patches/qwen36-27b-autoround-int4-b70/int4-input-dependency-20260817",
-    "manifest_sha256": "af2be5218ee3d0a3f5c7a936d405a75a8d199cc63352efe9a81977d3d0cf6303"
+    "manifest_sha256": "339d46f140c0c284d839c76b86d162373e0282a06deb1113771409240fe8081e"
   },
   "sealed_raw_roots": {
-    "count": 19,
+    "count": 22,
     "manifest_index": "data/qwen36-27b-autoround-int4-input-dependency-sealed-roots-20260817.sha256",
-    "manifest_index_sha256": "147d2056c4fa94f97030b35ba6fcd2a1ecf78a100bb965d0dbe95b96b38268bb"
+    "manifest_index_sha256": "571d78b1624d091f8336f06ad9aaee2fd20c977923edc7f60c20ac56becd7d42"
   }
 }

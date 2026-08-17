@@ -2,19 +2,20 @@
 
 ## Decision
 
-Stop experimenting. Preserve the dependency work as an **inconclusive
+Stop experimenting. Preserve the dependency work as a **failed normal-gate
 candidate**, not a production patch. The current runtime is intentionally left
 unchanged pending operator discussion; no restore and no additional diagnostic
-were performed after the final warmed run.
+was performed beyond the agreed matched gate and one bounded correction.
 
 The final warmed four-prompt run is genuinely strong bounded evidence: all four
 complete token arrays match both sealed target controls and the preferred
 99-interval median is **`110.675 tok/s`**. It is not the normal promotion gate.
 The suite is diagnostic-only and the objective quality gate was skipped.
-The current 25-prompt candidate remains only **17/25 exact** and measures
-**`96.519 tok/s`**, below both `100 tok/s` and the historical `99.798 tok/s`
-central screen. There is no matched 25-prompt target/candidate repeat on the
-final source and binary.
+The matched final-source 25-prompt candidate was only **15/25 exact** and
+measured **`96.386 tok/s`** strict. The one permitted correction broadened the
+dependency to all INT4 calls; it worsened parity to **12/25 exact** and measured
+**`96.578 tok/s`**. Both are below `100 tok/s` and the historical `99.798 tok/s`
+central screen. This approach therefore fails the agreed normal gate.
 
 ## Concise control table
 
@@ -36,6 +37,9 @@ must not be compared with warmed throughput.
 | Compiled Python model event | wrong at output 77 | compiled PIECEWISE MTP3 | no | `6.708` legacy, diagnostic |
 | Warmed layer-0 focused canary | 128/128 exact | compiled PIECEWISE MTP3 | yes | `108.966` strict |
 | Final warmed four-prompt candidate | **4/4 exact** | compiled PIECEWISE MTP3 | yes | **`110.675` strict** |
+| Final-source target 25 | reference; quality/cache pass | compiled PIECEWISE target-only | yes | `50.101` strict |
+| Final-source layer0 candidate 25 | **15/25 exact**; quality/cache pass | compiled PIECEWISE MTP3 | yes | `96.386` strict |
+| One correction: all-INT4 candidate 25 | **12/25 exact**; quality/cache pass | compiled PIECEWISE MTP3 | yes | `96.578` strict |
 
 The final root is
 `/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/int4-input-dependency-layer0-four-spec-a-20260817T014146Z`.
@@ -63,23 +67,25 @@ raw repair.
 - Compiled C++ dependency: exact on the focused prompt. Compiled Python event:
   still wrong. These are not interchangeable graph dependencies.
 - The four-prompt output is also identical to the earlier safe-default
-  four-prompt candidate; it does not demonstrate that the new patch repairs
-  the eight failing 25-prompt cases.
+  four-prompt candidate; the matched normal gate proved that it did not
+  generalize to the complete suite.
 - Cold 5–12 tok/s rows include first-request compilation, trace overhead, or
   forced rejection. They say nothing about steady-state performance.
-- Final-source target repeats and a final-source 25-prompt candidate repeat do
-  not exist. Running them now would violate the stop instruction.
+- The matched target itself differs from the older target on 10/25 prompts;
+  only the final-source target is a valid comparator for these two candidates.
+- The sole correction, all-INT4 dependency publication, worsened parity and
+  did not clear the speed bar. No further correction is authorized.
 
 ## Preserved state
 
 - [Structured control summary](../data/qwen36-27b-autoround-int4-input-dependency-controls-20260817.json)
 - [Source/config packet](../patches/qwen36-27b-autoround-int4-b70/int4-input-dependency-20260817/README.md)
 - Patch-packet manifest SHA256:
-  `af2be5218ee3d0a3f5c7a936d405a75a8d199cc63352efe9a81977d3d0cf6303`.
+  `339d46f140c0c284d839c76b86d162373e0282a06deb1113771409240fe8081e`.
 - All relevant raw roots now have post-teardown `SHA256SUMS` files that verify.
 - [Sealed-root manifest index](../data/qwen36-27b-autoround-int4-input-dependency-sealed-roots-20260817.sha256)
-  covers 19 roots and has SHA256
-  `147d2056c4fa94f97030b35ba6fcd2a1ecf78a100bb965d0dbe95b96b38268bb`.
+  covers 22 roots and has SHA256
+  `571d78b1624d091f8336f06ad9aaee2fd20c977923edc7f60c20ac56becd7d42`.
 - Tested candidate `_xpu_C`: `ccbeecb4e49eb3419f5a8734c82e2b004bfdd9dffea5f0a9bbe2e8884041ef38`.
 - Retained pre-dependency `_xpu_C`:
   `f494925774cf50cd2038684cb64325fcd491c51f2eab94454878c5e804dbaa61`.
