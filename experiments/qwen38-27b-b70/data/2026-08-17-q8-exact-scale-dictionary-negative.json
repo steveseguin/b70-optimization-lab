@@ -1,0 +1,56 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_not_promoted",
+  "scope": {
+    "model": "ggml-org/Qwen3.8-27B-GGUF/Qwen3.8-27B-Q8_0.gguf",
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "gpus": "2x ASRock Intel Arc Pro B70 32 GiB",
+    "mode": "target-only TP2, equal split, F16 KV, no speculation"
+  },
+  "census": {
+    "q8_tensors": 498,
+    "q8_blocks": 840417280,
+    "distinct_fp16_scale_patterns": 1462,
+    "structured_e0_patterns": 510,
+    "structured_normal_mantissas": 128,
+    "structured_valid_codes": 1534,
+    "maximum_model_code": 1471,
+    "code_bits": 11,
+    "table_bytes_per_tensor": 1276,
+    "ideal_block_bytes_before": 34.0,
+    "ideal_block_bytes_after": 33.375,
+    "ideal_traffic_reduction_percent": 1.838235
+  },
+  "slow_revision": {
+    "libggml_sycl_sha256": "f885affed248f8ff3ecbbf722ba60a44a27264008e40fce989a4915b79cf7d9a",
+    "smoke_command_shape": "llama-bench p0/n1/r1, b1024/ub256, TP2",
+    "smoke_decode_tps": 34.906203,
+    "verify_mismatch": 0,
+    "quality_status": "not_reached; fixed CLI probe manually stopped after more than three minutes of setup",
+    "raw_smoke_sha256": "246268023a754be4cad02a33a039c7fb19d8bfa547c66134e2ce28afd2fd731c",
+    "patch_sha256": "5a5cc9d104d002258859aac3c2680d580702ebf57f60067fc4769e1e3270a07c"
+  },
+  "direct_lookup_revisions": {
+    "global_device_cache": {
+      "libggml_sycl_sha256": "bb91a6747279987e70c7b32606dca43fdee0753fd985f929f08ece067a976be4",
+      "elapsed_seconds": 17.93,
+      "max_rss_kib": 8834792,
+      "outcome": "host SIGSEGV before generation"
+    },
+    "queue_owned_per_tensor": {
+      "libggml_sycl_sha256": "7577e2f75b3e97a2d4a1487135b69080947b64f30ea9bc17fd4cf4b653389fd3",
+      "elapsed_seconds": 16.95,
+      "max_rss_kib": 9640484,
+      "outcome": "UR_RESULT_ERROR_INVALID_MEM_OBJECT at first MUL_MAT",
+      "stderr_sha256": "e5cf7bfc5f0d9c5ea82630fc481b7c474dd9f3ffe27d567fadc95b4447ac6511"
+    },
+    "patch_sha256": "773889bc41c9704c99c98ea366fdc4127c026f4d5d5ba145efb0ea29ad88a661"
+  },
+  "safety": {
+    "gpu_fault_reset_hang": false,
+    "post_test_xpu_state": "normal on both devices",
+    "accepted_source_modified": false,
+    "promoted": false
+  },
+  "retry_rule": "Do not retry unchanged. Require explicit packed-layout metadata and all-consumer coverage, or a separately allocated plane with proven queue/context lifetime."
+}

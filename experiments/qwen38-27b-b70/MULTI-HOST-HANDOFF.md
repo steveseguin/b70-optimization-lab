@@ -22,10 +22,11 @@ Before starting an experiment, read the
 [do-not-repeat index](DO-NOT-REPEAT.md). It maps both Qwen3.8-specific work and
 the inherited Qwen3.6 search history.
 
-The ASRock reference host currently owns the exact 11-bit reordered-Q8 scale
-dictionary arm. Its complete model census and guardrails are in the
-[active note](notes/2026-08-17-q8-exact-scale-dictionary-active.md). Other
-hosts should not duplicate that implementation until the active row closes.
+The exact 11-bit reordered-Q8 scale-dictionary arm is closed. Its slow revision
+passed only a one-token smoke and had multi-minute setup; direct lookup
+revisions then failed the safety gate with a host segfault and an invalid Level
+Zero memory object. See the [result](notes/2026-08-17-q8-exact-scale-dictionary-active.md).
+Do not duplicate either retained patch unchanged.
 
 ## Accepted Q8_0 lane
 

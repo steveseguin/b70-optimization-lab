@@ -1,0 +1,264 @@
+--- a/ggml/src/ggml-sycl/q8-scale-codec.hpp
++++ b/ggml/src/ggml-sycl/q8-scale-codec.hpp
+@@ -0,0 +1,108 @@
++#ifndef GGML_SYCL_Q8_SCALE_CODEC_HPP
++#define GGML_SYCL_Q8_SCALE_CODEC_HPP
++
++#include <array>
++#include <cstdint>
++#include <utility>
++
++#include <sycl/sycl.hpp>
++
++namespace ggml_sycl_q8_scale_codec {
++
++static constexpr int code_bits = 11;
++static constexpr int qk = 32;
++static constexpr int e0_count = 510;
++static constexpr int mantissa_count = 128;
++static constexpr int table_bytes = (e0_count + mantissa_count) * sizeof(uint16_t);
++
++inline constexpr std::array<uint16_t, e0_count> e0_table = {
++    0x001, 0x002, 0x003, 0x004, 0x005, 0x006, 0x007, 0x008, 0x009, 0x00a, 0x00b, 0x00c, 0x00d, 0x00e, 0x00f, 0x010,
++    0x011, 0x012, 0x013, 0x014, 0x015, 0x016, 0x017, 0x018, 0x019, 0x01a, 0x01b, 0x01c, 0x01d, 0x01e, 0x01f, 0x020,
++    0x021, 0x022, 0x023, 0x024, 0x025, 0x026, 0x027, 0x028, 0x029, 0x02a, 0x02b, 0x02c, 0x02d, 0x02e, 0x02f, 0x030,
++    0x031, 0x032, 0x033, 0x034, 0x035, 0x036, 0x037, 0x038, 0x039, 0x03a, 0x03b, 0x03c, 0x03d, 0x03e, 0x03f, 0x040,
++    0x041, 0x042, 0x043, 0x044, 0x045, 0x046, 0x047, 0x048, 0x049, 0x04a, 0x04b, 0x04c, 0x04d, 0x04e, 0x04f, 0x050,
++    0x051, 0x052, 0x053, 0x054, 0x055, 0x056, 0x057, 0x058, 0x059, 0x05a, 0x05b, 0x05c, 0x05d, 0x05e, 0x05f, 0x060,
++    0x061, 0x062, 0x063, 0x064, 0x065, 0x066, 0x067, 0x068, 0x069, 0x06a, 0x06b, 0x06c, 0x06d, 0x06e, 0x06f, 0x070,
++    0x071, 0x072, 0x073, 0x074, 0x075, 0x076, 0x077, 0x078, 0x079, 0x07a, 0x07b, 0x07c, 0x07d, 0x07e, 0x07f, 0x080,
++    0x081, 0x082, 0x083, 0x084, 0x085, 0x086, 0x087, 0x088, 0x089, 0x08a, 0x08b, 0x08c, 0x08d, 0x08e, 0x08f, 0x090,
++    0x091, 0x092, 0x093, 0x094, 0x095, 0x096, 0x097, 0x098, 0x099, 0x09a, 0x09b, 0x09c, 0x09d, 0x09e, 0x09f, 0x0a0,
++    0x0a1, 0x0a2, 0x0a3, 0x0a4, 0x0a5, 0x0a6, 0x0a7, 0x0a8, 0x0a9, 0x0aa, 0x0ab, 0x0ac, 0x0ad, 0x0ae, 0x0af, 0x0b0,
++    0x0b1, 0x0b2, 0x0b3, 0x0b4, 0x0b5, 0x0b6, 0x0b7, 0x0b8, 0x0b9, 0x0ba, 0x0bb, 0x0bc, 0x0bd, 0x0be, 0x0bf, 0x0c1,
++    0x0c2, 0x0c3, 0x0c4, 0x0c5, 0x0c6, 0x0c7, 0x0c8, 0x0c9, 0x0ca, 0x0cb, 0x0cc, 0x0cd, 0x0ce, 0x0cf, 0x0d0, 0x0d1,
++    0x0d2, 0x0d3, 0x0d4, 0x0d5, 0x0d6, 0x0d7, 0x0d8, 0x0d9, 0x0da, 0x0db, 0x0dc, 0x0dd, 0x0de, 0x0df, 0x0e0, 0x0e1,
++    0x0e2, 0x0e3, 0x0e4, 0x0e5, 0x0e6, 0x0e7, 0x0e8, 0x0e9, 0x0ea, 0x0eb, 0x0ec, 0x0ed, 0x0ee, 0x0ef, 0x0f0, 0x0f1,
++    0x0f2, 0x0f3, 0x0f4, 0x0f5, 0x0f6, 0x0f7, 0x0f8, 0x0f9, 0x0fa, 0x0fb, 0x0fc, 0x0fd, 0x0fe, 0x0ff, 0x100, 0x101,
++    0x102, 0x104, 0x106, 0x108, 0x10a, 0x10c, 0x10e, 0x110, 0x112, 0x114, 0x116, 0x118, 0x11a, 0x11c, 0x11e, 0x120,
++    0x122, 0x124, 0x126, 0x128, 0x12a, 0x12c, 0x12e, 0x130, 0x132, 0x134, 0x136, 0x138, 0x13a, 0x13c, 0x13e, 0x141,
++    0x143, 0x145, 0x147, 0x149, 0x14b, 0x14d, 0x14f, 0x151, 0x153, 0x155, 0x157, 0x159, 0x15b, 0x15d, 0x15f, 0x161,
++    0x163, 0x165, 0x167, 0x169, 0x16b, 0x16d, 0x16f, 0x171, 0x173, 0x175, 0x177, 0x179, 0x17b, 0x17d, 0x17f, 0x181,
++    0x183, 0x185, 0x187, 0x189, 0x18b, 0x18d, 0x18f, 0x191, 0x193, 0x195, 0x197, 0x199, 0x19b, 0x19d, 0x19f, 0x1a1,
++    0x1a3, 0x1a5, 0x1a7, 0x1a9, 0x1ab, 0x1ad, 0x1af, 0x1b1, 0x1b3, 0x1b5, 0x1b7, 0x1b9, 0x1bb, 0x1bd, 0x1bf, 0x1c2,
++    0x1c4, 0x1c6, 0x1c8, 0x1ca, 0x1cc, 0x1ce, 0x1d0, 0x1d2, 0x1d4, 0x1d6, 0x1d8, 0x1da, 0x1dc, 0x1de, 0x1e0, 0x1e2,
++    0x1e4, 0x1e6, 0x1e8, 0x1ea, 0x1ec, 0x1ee, 0x1f0, 0x1f2, 0x1f4, 0x1f6, 0x1f8, 0x1fa, 0x1fc, 0x1fe, 0x200, 0x202,
++    0x204, 0x208, 0x20c, 0x210, 0x214, 0x218, 0x21c, 0x220, 0x224, 0x228, 0x22c, 0x230, 0x234, 0x238, 0x23c, 0x241,
++    0x245, 0x249, 0x24d, 0x251, 0x255, 0x259, 0x25d, 0x261, 0x265, 0x269, 0x26d, 0x271, 0x275, 0x279, 0x27d, 0x281,
++    0x285, 0x289, 0x28d, 0x291, 0x295, 0x299, 0x29d, 0x2a1, 0x2a5, 0x2a9, 0x2ad, 0x2b1, 0x2b5, 0x2b9, 0x2bd, 0x2c2,
++    0x2c6, 0x2ca, 0x2ce, 0x2d2, 0x2d6, 0x2da, 0x2de, 0x2e2, 0x2e6, 0x2ea, 0x2ee, 0x2f2, 0x2f6, 0x2fa, 0x2fe, 0x302,
++    0x306, 0x30a, 0x30e, 0x312, 0x316, 0x31a, 0x31e, 0x322, 0x326, 0x32a, 0x32e, 0x332, 0x336, 0x33a, 0x33e, 0x343,
++    0x347, 0x34b, 0x34f, 0x353, 0x357, 0x35b, 0x35f, 0x363, 0x367, 0x36b, 0x36f, 0x373, 0x377, 0x37b, 0x37f, 0x383,
++    0x387, 0x38b, 0x38f, 0x393, 0x397, 0x39b, 0x39f, 0x3a3, 0x3a7, 0x3ab, 0x3af, 0x3b3, 0x3b7, 0x3bb, 0x3bf, 0x3c4,
++    0x3c8, 0x3cc, 0x3d0, 0x3d4, 0x3d8, 0x3dc, 0x3e0, 0x3e4, 0x3e8, 0x3ec, 0x3f0, 0x3f4, 0x3f8, 0x3fc,
++};
++
++inline constexpr std::array<uint16_t, mantissa_count> mantissa_table = {
++    0x000, 0x004, 0x008, 0x010, 0x018, 0x020, 0x028, 0x030, 0x038, 0x041, 0x049, 0x051, 0x059, 0x061, 0x069, 0x071,
++    0x079, 0x081, 0x089, 0x091, 0x099, 0x0a1, 0x0a9, 0x0b1, 0x0b9, 0x0c2, 0x0ca, 0x0d2, 0x0da, 0x0e2, 0x0ea, 0x0f2,
++    0x0fa, 0x102, 0x10a, 0x112, 0x11a, 0x122, 0x12a, 0x132, 0x13a, 0x143, 0x14b, 0x153, 0x15b, 0x163, 0x16b, 0x173,
++    0x17b, 0x183, 0x18b, 0x193, 0x19b, 0x1a3, 0x1ab, 0x1b3, 0x1bb, 0x1c4, 0x1cc, 0x1d4, 0x1dc, 0x1e4, 0x1ec, 0x1f4,
++    0x1fc, 0x204, 0x20c, 0x214, 0x21c, 0x224, 0x22c, 0x234, 0x23c, 0x245, 0x24d, 0x255, 0x25d, 0x265, 0x26d, 0x275,
++    0x27d, 0x285, 0x28d, 0x295, 0x29d, 0x2a5, 0x2ad, 0x2b5, 0x2bd, 0x2c6, 0x2ce, 0x2d6, 0x2de, 0x2e6, 0x2ee, 0x2f6,
++    0x2fe, 0x306, 0x30e, 0x316, 0x31e, 0x326, 0x32e, 0x336, 0x33e, 0x347, 0x34f, 0x357, 0x35f, 0x367, 0x36f, 0x377,
++    0x37f, 0x387, 0x38f, 0x397, 0x39f, 0x3a7, 0x3af, 0x3b7, 0x3bf, 0x3c8, 0x3d0, 0x3d8, 0x3e0, 0x3e8, 0x3f0, 0x3f8,
++};
++
++static inline const std::array<uint16_t, 0x2205> & encode_table() {
++    static const auto table = [] {
++        std::array<uint16_t, 0x2205> result{};
++        result.fill(0xffff);
++        for (uint16_t i = 0; i < e0_count; ++i) {
++            result[e0_table[i]] = i;
++        }
++        for (uint16_t exponent = 1; exponent <= 8; ++exponent) {
++            for (uint16_t i = 0; i < mantissa_count; ++i) {
++                result[(exponent << 10) | mantissa_table[i]] = e0_count + (exponent - 1) * mantissa_count + i;
++            }
++        }
++        return result;
++    }();
++    return table;
++}
++
++static inline sycl::half decode(const uint8_t * scale_plane, int block_index) {
++    const uint16_t * e0 = reinterpret_cast<const uint16_t *>(scale_plane);
++    const uint16_t * mantissas = e0 + e0_count;
++    const uint8_t * packed = reinterpret_cast<const uint8_t *>(mantissas + mantissa_count);
++    const int bit = block_index * code_bits;
++    const int byte = bit >> 3;
++    const int shift = bit & 7;
++    const uint32_t word = (uint32_t) packed[byte] | ((uint32_t) packed[byte + 1] << 8) | ((uint32_t) packed[byte + 2] << 16);
++    const uint16_t code = (word >> shift) & 0x7ff;
++    uint16_t bits;
++    if (code < e0_count) {
++        bits = e0[code];
++    } else {
++        const uint16_t normal = code - e0_count;
++        bits = (uint16_t) (((normal >> 7) + 1) << 10) | mantissas[normal & 127];
++    }
++    return sycl::bit_cast<sycl::half>(bits);
++}
++
++static inline sycl::half decode(const uint8_t * base, std::pair<int, int> block_offset, std::pair<int, int> scale_offset) {
++    const int block = block_offset.first / qk;
++    const uint8_t * scale_plane = base + scale_offset.first - block * (int) sizeof(sycl::half);
++    return decode(scale_plane, block);
++}
++
++} // namespace ggml_sycl_q8_scale_codec
++
++#endif
+--- a/ggml/src/ggml-sycl/vecdotq.hpp
++++ b/ggml/src/ggml-sycl/vecdotq.hpp
+@@ -17,6 +17,7 @@
+ #include "ggml.h"
+ #include "type.hpp"
+ #include "quants.hpp"
++#include "q8-scale-codec.hpp"
+ 
+ typedef float (*vec_dot_q_sycl_t)(const void * __restrict__ vbq, const block_q8_1 * __restrict__ bq8_1,
+                                   const int & iqs);
+@@ -413,7 +414,7 @@
+                                      const sycl::half2 * q8_1_ds, const int & iqs) {
+         const uint8_t * base = static_cast<const uint8_t *>(vbq);
+         const int8_t *  qs   = reinterpret_cast<const int8_t *>(base + ibx_offset.first);
+-        const ggml_half  d   = *reinterpret_cast<const ggml_half *>(base + d_offset.first);
++        const ggml_half  d   = ggml_sycl_q8_scale_codec::decode(base, ibx_offset, d_offset);
+ 
+         int sumi = 0;
+ 
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1609,7 +1609,7 @@
+         sumi = dpct::dp4a(v[0], u[0], sumi);
+         sumi = dpct::dp4a(POISON ? v[0] : v[1], u[1], sumi);
+ 
+-        const ggml_half   d  = *reinterpret_cast<const ggml_half *>(base + d_offset.first);
++        const ggml_half   d  = ggml_sycl_q8_scale_codec::decode(base + ncols * nrows, ibx);
+         const sycl::half2 ds = *reinterpret_cast<const sycl::half2 *>(
+             (const char *) vy + ncols + iby * sizeof(sycl::half2));
+         partial += static_cast<float>(d) * static_cast<float>(ds[0]) * sumi;
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -36,6 +36,8 @@
+ #include <stdlib.h>
+ #include <regex>
+ 
++#include "q8-scale-codec.hpp"
++
+ #include <sycl/sycl.hpp>
+ #include <sycl/backend.hpp>
+ #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+@@ -5296,20 +5298,39 @@
+     }
+     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
+ 
+-    sycl::event copy_event;
+-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
+-    if (!g_ggml_sycl_use_async_mem_op) {
+-        copy_event.wait();
+-    }
+-
+     GGML_ASSERT((size % sizeof(block_q8_0) == 0));
+     GGML_ASSERT((offset % sizeof(block_q8_0) == 0));
+-    int offset_blks = offset / sizeof(block_q8_0);
++    const int offset_blks = offset / sizeof(block_q8_0);
++    const size_t nblocks = size / sizeof(block_q8_0);
+     auto qs_ptr = data_device + offset_blks * QK8_0;
+-    auto d_ptr = (sycl::half*)(qs_ptr + ncols * nrows) + offset_blks;
++    auto scale_plane = qs_ptr + ncols * nrows + offset_blks * sizeof(sycl::half);
++    const size_t scale_bytes = nblocks * sizeof(sycl::half);
++    const size_t packed_bytes = (nblocks * ggml_sycl_q8_scale_codec::code_bits + 7) / 8;
++    if (ggml_sycl_q8_scale_codec::table_bytes + packed_bytes + sizeof(uint32_t) > scale_bytes) {
++        return false;
++    }
+ 
+-    auto reorder_event = stream->parallel_for(
+-        size / sizeof(block_q8_0),
++    sycl::event copy_event;
++    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
++    copy_event.wait_and_throw();
++
++    auto e0_event = stream->memcpy(scale_plane, ggml_sycl_q8_scale_codec::e0_table.data(),
++                                   ggml_sycl_q8_scale_codec::e0_table.size() * sizeof(uint16_t));
++    auto mantissa_event = stream->memcpy(scale_plane + ggml_sycl_q8_scale_codec::e0_table.size() * sizeof(uint16_t),
++                                         ggml_sycl_q8_scale_codec::mantissa_table.data(),
++                                         ggml_sycl_q8_scale_codec::mantissa_table.size() * sizeof(uint16_t));
++    uint32_t * missing = reinterpret_cast<uint32_t *>(scale_plane + scale_bytes - sizeof(uint32_t));
++    auto missing_event = stream->memset(missing, 0, sizeof(uint32_t));
++    e0_event.wait_and_throw();
++    mantissa_event.wait_and_throw();
++    missing_event.wait_and_throw();
++
++    const auto & host_encode_table = ggml_sycl_q8_scale_codec::encode_table();
++    uint16_t * encode_table = static_cast<uint16_t *>(ggml_sycl_malloc_device(host_encode_table.size() * sizeof(uint16_t), *stream));
++    stream->memcpy(encode_table, host_encode_table.data(), host_encode_table.size() * sizeof(uint16_t)).wait_and_throw();
++
++    auto quant_event = stream->parallel_for(
++        nblocks,
+             [=](auto i) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+             const block_q8_0* x = (const block_q8_0*)tmp_buf;
+             const int ib = i;
+@@ -5318,10 +5339,58 @@
+             {
+                 *((int8_t*)qs_ptr + ib * QK8_0 + j) = x[ib].qs[j];
+             }
+-            *(d_ptr + ib) = x[ib].d;
+         });
+-    if (!g_ggml_sycl_use_async_mem_op) {
+-        reorder_event.wait_and_throw();
++
++    uint8_t * packed = scale_plane + ggml_sycl_q8_scale_codec::table_bytes;
++    const bool poison = std::getenv("GGML_SYCL_Q8_SCALE_DICT_POISON") != nullptr;
++    const size_t groups = (nblocks + 7) / 8;
++    auto pack_event = stream->parallel_for(groups, [=](auto group_id) {
++        const block_q8_0 * x = reinterpret_cast<const block_q8_0 *>(tmp_buf);
++        const size_t first = (size_t) group_id * 8;
++        uint8_t output[11] = {};
++        for (int j = 0; j < 8; ++j) {
++            const size_t ib = first + j;
++            if (ib >= nblocks) {
++                break;
++            }
++            const uint16_t bits = sycl::bit_cast<uint16_t>(x[ib].d);
++            uint16_t code = bits < 0x2205 ? encode_table[bits] : 0xffff;
++            if (code == 0xffff) {
++                sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
++                                 sycl::access::address_space::global_space>(*missing).fetch_add(1);
++                code = 0;
++            }
++            if (poison) {
++                code ^= 1;
++            }
++            const int bit = j * ggml_sycl_q8_scale_codec::code_bits;
++            const int byte = bit >> 3;
++            const int shift = bit & 7;
++            const uint32_t shifted = (uint32_t) code << shift;
++            output[byte] |= shifted;
++            output[byte + 1] |= shifted >> 8;
++            if (byte + 2 < 11) {
++                output[byte + 2] |= shifted >> 16;
++            }
++        }
++        const size_t output_offset = (size_t) group_id * 11;
++        for (int j = 0; j < 11 && output_offset + j < packed_bytes; ++j) {
++            packed[output_offset + j] = output[j];
++        }
++    });
++
++    quant_event.wait_and_throw();
++    pack_event.wait_and_throw();
++    uint32_t missing_host = 0;
++    stream->memcpy(&missing_host, missing, sizeof(missing_host)).wait_and_throw();
++    sycl::free(encode_table, *stream);
++    if (missing_host != 0) {
++        GGML_ABORT("Q8 scale codec rejected %u scales", missing_host);
++    }
++    static bool announced = false;
++    if (!announced) {
++        GGML_LOG_INFO("Q8 scale codec: exact 11-bit scale plane enabled%s\n", poison ? " (poison)" : "");
++        announced = true;
+     }
+     return true;
+ }
