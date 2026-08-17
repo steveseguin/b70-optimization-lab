@@ -559,8 +559,29 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
   fi
   candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh"
 else
-  export STAGE="$base_stage"
-  export VLLM_XPU_KERNELS_SRC="$base_stage"
+  if [[ "${VALIDATION_USE_STAGED_XPU_KERNELS_FOR_TARGET:-0}" == "1" ]]; then
+    # Identity-matched target control for staged-FlashAttention speculative
+    # runs.  The staged tree is an FA-only Python/device-library overlay; the
+    # remaining XPU extension modules continue to resolve from the verified
+    # current source package.
+    verify_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
+      33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
+      graph-safe-FlashAttention-extension
+    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
+      "${VALIDATION_FA_DEVICE_LIBRARY_SHA256:-604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c}" \
+      graph-safe-FlashAttention-device-library
+    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
+      3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
+      graph-safe-FlashAttention-stock-dependency
+    verify_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
+      869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
+      graph-safe-FlashAttention-Python-interface
+    export STAGE="$graph_stage"
+    export VLLM_XPU_KERNELS_SRC="$graph_stage"
+  else
+    export STAGE="$base_stage"
+    export VLLM_XPU_KERNELS_SRC="$base_stage"
+  fi
   export QWEN36_27B_ENABLE_MTP=0
   unset QWEN36_27B_SPECULATIVE_CONFIG
   # The candidate's fixed width-4 full graph is a packed-verifier schedule,
