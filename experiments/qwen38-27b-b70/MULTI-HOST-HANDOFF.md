@@ -44,14 +44,14 @@ Do not duplicate the retained static-map increment unchanged.
 - result: `36.772932 tok/s` conventional, TP2 target-only
 - restore/build/run: [standalone repro](../../repro/qwen38-27b-q8-tp2-asrock-b70/README.md)
 - exact full source delta: [patch packet](../../patches/qwen38-27b-q8-tp2-asrock-b70/README.md)
-- accepted 2026-08-17 increment: recurrent-quad SG16, two opposite-order
-  realistic pairs pooling to `+0.257%` primary median with exact quality;
-  the historical headline remains unchanged
+- accepted 2026-08-17 increments: recurrent-quad SG16 (`+0.257%` versus SG8),
+  followed by SG24 (`+0.356%` versus SG16); both used two opposite-order
+  realistic pairs with exact quality; the historical headline remains unchanged
 
 Restore the public mndodd base commit, decode and checksum the Git-resident
-patch, run `git apply --check`, then apply it and the documented Qwen3.8 SG16
-increment. Do not copy a dirty source tree from another machine. The
-reproduction packet contains both checksums, all runtime doors, and the
+patch, run `git apply --check`, then apply the documented Qwen3.8 SG16 and SG24
+increments in that order. Do not copy a dirty source tree from another machine. The
+reproduction packet contains all checksums, all runtime doors, and the
 accepted binary hashes.
 
 ## Accepted Q4_K_M lane
@@ -176,7 +176,8 @@ reversed it to `-2.096%`. Across the unbiased 16-run combination, SG32 was
 `-0.233%` versus SG16. See the
 [result note](notes/2026-08-17-q8-recurrent-quad-sg32-active.md), structured
 [data](data/2026-08-17-q8-recurrent-quad-sg32-negative.json), and incremental
-[patch](patches/q8-recurrent-quad-sg32-negative-20260817.diff). Retain SG16.
+[patch](patches/q8-recurrent-quad-sg32-negative-20260817.diff). Retain the
+subsequently accepted SG24 door, not SG32.
 
 The shape-scoped SG4 follow-up is also closed. It independently changed only
 the dominant fused gate/up pair and/or down-projection workgroup population.

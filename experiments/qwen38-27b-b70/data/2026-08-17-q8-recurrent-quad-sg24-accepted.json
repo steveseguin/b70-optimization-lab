@@ -1,0 +1,98 @@
+{
+  "date": "2026-08-17",
+  "status": "accepted",
+  "experiment": "shape-scoped SG24 workgroup population for the recurrent GDN quad",
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "bytes": 28595763552,
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70",
+  "mechanism": {
+    "door": "GGML_SYCL_MMVQ_Q8_QUAD_SG24=1",
+    "fallback_door": "GGML_SYCL_MMVQ_Q8_QUAD_SG16=1",
+    "admitted_local_shape": "K=5120 N=5120+3072+24+24",
+    "control_workgroup": "16xSG16 / 256 work items",
+    "candidate_workgroup": "24xSG16 / 384 work items",
+    "row_math_changed": false,
+    "announced_on_both_devices": true,
+    "verify_mismatch": 0
+  },
+  "runtime": {
+    "selector": "level_zero:1,0",
+    "devices": "SYCL0/SYCL1",
+    "tensor_split": "1/1",
+    "kv": "f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "reasoning": false,
+    "speculation": false
+  },
+  "direct_bench": {
+    "screen_p64_n256_r3": {
+      "order": "A-B-B-A,B-A-A-B in both complementary position blocks",
+      "control_tok_s": 36.940721125,
+      "candidate_tok_s": 37.259894,
+      "delta_percent": 0.8640137,
+      "block_deltas_percent": [1.3262916, 0.3997276]
+    }
+  },
+  "realistic_endpoint": {
+    "contract": "same binary, door-only A/B, two opposite process-order pairs, one 8K slot, 12 unique cold prompts, cached_tokens=0",
+    "pair_1_control_then_candidate": {
+      "control_event_median_tok_s": 36.73597389555955,
+      "candidate_event_median_tok_s": 36.853873608518434,
+      "primary_delta_percent": 0.320938,
+      "full_median_delta_percent": 0.434992,
+      "full_mean_delta_percent": 0.283140
+    },
+    "pair_2_candidate_then_control": {
+      "control_event_median_tok_s": 36.779093739923965,
+      "candidate_event_median_tok_s": 36.922958166129774,
+      "primary_delta_percent": 0.391158
+    },
+    "pooled_suite_statistics": {
+      "control_event_median_tok_s": 36.75753381774176,
+      "candidate_event_median_tok_s": 36.888415887324104,
+      "primary_delta_percent": 0.356069,
+      "primary_mean_delta_percent": 0.348687,
+      "full_median_delta_percent": 0.414791,
+      "full_mean_delta_percent": 0.310780,
+      "wall_median_delta_percent": 0.400479
+    }
+  },
+  "quality": {
+    "complete_output_hashes_exact": "12/12 across all four endpoint suites",
+    "cached_tokens_all_zero": true,
+    "semantic_canaries_exact": "7/7",
+    "repeat_runs_exact": "8/8",
+    "long_context_actual_prompt_tokens": 3829,
+    "long_context_needle_pass": true,
+    "pass_all": true,
+    "baseline_match_all": true
+  },
+  "artifacts": {
+    "incremental_patch_sha256": "863ad19b3df13c9edd1d0d9b595c04a2baa92e67efc6df82cd9beb2beea54db4",
+    "clean_libggml_sycl_sha256": "19853124b072758818d4a7669ced1d69f03e77da01a727d35163e3d3c394eabd",
+    "clean_llama_bench_sha256": "ce3ad8809ceca3dcc063ed00e93bfe0744d892b45af9c56e33c061d09c8cbc47",
+    "clean_llama_cli_sha256": "d94c8cb6f3c0a3997bd24286ed0ff1e417860e3ff5913320edb7b012a49fbde3",
+    "clean_llama_server_sha256": "b26ad789f7372c7a409183aa870dd52589cf9fb654c8324055517b1ff1cfd528",
+    "semantic_json_sha256": "54552b2eac614394533e20e343d0da046c125a50e02975dc39178de929a18f29",
+    "clean_tp2_smoke_log_sha256": "40f84cc5726657a06a4973beb3d58a1b9876d25e55ec865ff1a59bd7131762c2",
+    "raw_local_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-quad-sg24/"
+  },
+  "headline_policy": {
+    "historical_conventional_tok_s": 36.772932224864405,
+    "headline_changed": false,
+    "reason": "historical capture remains the higher accepted absolute conventional result; promotion is based on matched same-binary opposite-order A/B deltas"
+  },
+  "health": {
+    "device_0": "normal",
+    "device_1": "normal",
+    "xe_fault_reset_hang_since_boot": false
+  },
+  "decision": "promote SG24 recurrent-quad door after SG16 in the Qwen3.8 Q8 TP2 reproduction"
+}

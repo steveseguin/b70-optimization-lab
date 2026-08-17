@@ -15,7 +15,7 @@ and no MTP, DFlash, draft model, response reuse, or speculation.
 - semantic gate: exact copy, arithmetic, JSON, factual, logic, Python-result,
   repeat-stability, and 3,829-token needle tests all passed on 2026-08-16
 
-The 2026-08-17 snapshot adds a shape-scoped SG16 workgroup for the recurrent
+The 2026-08-17 snapshot first added a shape-scoped SG16 workgroup for the recurrent
 GDN quad. Two order-balanced, same-binary cold-suite pairs both favored SG16.
 Pooling the pair-level statistics measured `+0.257%` on the primary
 tokens-1-100 median, `+0.481%` on full-decode median, and `+0.413%` on
@@ -26,6 +26,16 @@ sanity bracket measured `37.321045` versus `36.978696 tok/s` (`+0.926%`). The
 historical `36.772932 tok/s` conventional headline remains the highest valid
 cold-suite capture and is not replaced by the lower-throughput matched A/B
 session.
+
+The promoted SG24 follow-up changes that same exact recurrent quad from 16 to
+24 independent SG16 rows per workgroup. Two new opposite-order endpoint pairs
+both favored SG24: pooled primary tokens-1-100 median `36.888416` versus
+`36.757534 tok/s` (`+0.356%`), full-decode median `+0.415%`, and wall median
+`+0.400%`. All four 12-prompt suites were cache-zero and hash-exact. The 7/7
+semantic, 8/8 repeat, and actual 3,829-token needle gates passed, and the clean
+accepted build announced SG24 on both B70s with `VERIFY_MISMATCH=0`. Set
+`GGML_SYCL_MMVQ_Q8_QUAD_SG24=0` to retain SG16 as a same-binary fallback. The
+historical absolute headline remains unchanged for the same identity reason.
 
 A fresh replay of the corrected full source stack on 2026-08-16 again passed
 12/12 complete hashes and 12/12 cache-zero requests. It measured
@@ -72,7 +82,7 @@ not the quality-default deployment.
 - exact source snapshot: [patch packet](../../patches/qwen38-27b-q8-tp2-asrock-b70/README.md)
 
 The patch packet uses the one-chain Q8 DP4A body that produced this result and
-then applies the Qwen3.8-only recurrent-quad SG16 increment. The later Qwen3.6
+then applies the Qwen3.8-only recurrent-quad SG16 and SG24 increments. The later Qwen3.6
 two-chain `DP4A2` schedule passed Qwen3.8's
 quality gate but was not faster in two full cold suites, so it is not part of
 this reproduction. See the [transfer decision](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-dp4a2-transfer-no-win.md).
@@ -102,6 +112,18 @@ The clean SG16 promotion build on oneAPI 2026.1.1 produced:
 
 - `libggml-sycl.so.0.19.0`:
   `0b3cc38ce20fad568976a1ab1db1deda831eb375d49976c217c25fc02d7f3c26`
+- `llama-bench`:
+  `ce3ad8809ceca3dcc063ed00e93bfe0744d892b45af9c56e33c061d09c8cbc47`
+- `llama-cli`:
+  `d94c8cb6f3c0a3997bd24286ed0ff1e417860e3ff5913320edb7b012a49fbde3`
+- `llama-server`:
+  `b26ad789f7372c7a409183aa870dd52589cf9fb654c8324055517b1ff1cfd528`
+
+The clean SG24 promotion changes only the dynamically loaded SYCL library;
+the host executables retain the SG16 hashes above:
+
+- `libggml-sycl.so.0.19.0`:
+  `19853124b072758818d4a7669ced1d69f03e77da01a727d35163e3d3c394eabd`
 - `llama-bench`:
   `ce3ad8809ceca3dcc063ed00e93bfe0744d892b45af9c56e33c061d09c8cbc47`
 - `llama-cli`:

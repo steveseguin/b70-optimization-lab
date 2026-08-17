@@ -2,7 +2,7 @@
 
 This packet restores the complete one-chain source snapshot used by the
 quality-gated Qwen3.8 Q8 TP2 result, then applies the accepted Qwen3.8-only
-recurrent-quad SG16 increment. Qwen3.8 uses the same admitted Qwen3.5
+recurrent-quad SG16 and SG24 increments. Qwen3.8 uses the same admitted Qwen3.5
 architecture paths as the Qwen3.6 target, so the large canonical base artifact
 is shared rather than duplicated.
 
@@ -21,6 +21,12 @@ is shared rather than duplicated.
 - incremental patch SHA-256:
   `05ce95e18a211deeb20348ad6a2ffd4ca2dee828d7692c4a026f055156e9c86c`
 - incremental runtime door: `GGML_SYCL_MMVQ_Q8_QUAD_SG16=1`
+- SG24 incremental patch:
+  [`recurrent-quad-sg24-20260817.diff`](recurrent-quad-sg24-20260817.diff)
+- SG24 patch SHA-256:
+  `863ad19b3df13c9edd1d0d9b595c04a2baa92e67efc6df82cd9beb2beea54db4`
+- promoted runtime door: `GGML_SYCL_MMVQ_Q8_QUAD_SG24=1` (takes priority;
+  set it to zero to recover the SG16 control)
 
 The complete snapshot includes the three runtime doors used in the captured
 Qwen3.8 result: vec4 TP root reduction, fused Q/K RMS+scale+RoPE, and fused
@@ -49,12 +55,20 @@ git apply --check \
   /path/to/b70-optimization-lab/patches/qwen38-27b-q8-tp2-asrock-b70/recurrent-quad-sg16-20260817.diff
 git apply \
   /path/to/b70-optimization-lab/patches/qwen38-27b-q8-tp2-asrock-b70/recurrent-quad-sg16-20260817.diff
+
+sha256sum \
+  /path/to/b70-optimization-lab/patches/qwen38-27b-q8-tp2-asrock-b70/recurrent-quad-sg24-20260817.diff
+git apply --check \
+  /path/to/b70-optimization-lab/patches/qwen38-27b-q8-tp2-asrock-b70/recurrent-quad-sg24-20260817.diff
+git apply \
+  /path/to/b70-optimization-lab/patches/qwen38-27b-q8-tp2-asrock-b70/recurrent-quad-sg24-20260817.diff
 git diff --check
 ```
 
-Both hashes must match the values above. The increment changes only the fused
+All three hashes must match the values above. The increments change only the fused
 recurrent GDN-quad workgroup population for the exact equal-TP2 local shape
-`K5120/N5120+3072+24+24`; each output row retains the same SG16 DP4A body and
+`K5120/N5120+3072+24+24`, first from 8 to 16 and then from 16 to 24 SG16 rows
+per workgroup; each output row retains the same SG16 DP4A body and
 FP32 reduction order. Build and runtime settings are in
 the [standalone reproduction](../../repro/qwen38-27b-q8-tp2-asrock-b70/README.md).
 The provenance correction and fresh exact replay are recorded in the

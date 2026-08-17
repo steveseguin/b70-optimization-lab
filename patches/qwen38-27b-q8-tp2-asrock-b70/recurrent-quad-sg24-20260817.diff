@@ -1,0 +1,50 @@
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1555,9 +1555,20 @@ static inline bool ggml_sycl_mmvq_q8_quad_sg16() {
+ static inline bool ggml_sycl_mmvq_q8_quad_sg16() {
+     static const bool on = [] {
+         const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_QUAD_SG16");
+         return value != nullptr && std::atoi(value) != 0;
+     }();
+     return on;
+ }
+-
++
++// Shape-scoped Qwen3.8 recurrent-quad launch geometry. The row subgroup and
++// math are unchanged; this packs twenty-four independent SG16 rows per
++// workgroup. When enabled it takes priority over the accepted SG16 door.
++static inline bool ggml_sycl_mmvq_q8_quad_sg24() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_QUAD_SG24");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+ template <int SGS, bool POISON, bool PHASE = false>
+@@ -2059,3 +2070,3 @@ bool ggml_sycl_mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+-    const bool quad_sg16 = ggml_sycl_mmvq_q8_quad_sg16() &&
++    const bool exact_quad_shape =
+         ncols == 5120 && nrows0 == 5120 && nrows1 == 3072 &&
+         nrows2 == 24 && nrows3 == 24;
+@@ -2062,4 +2073,7 @@ bool ggml_sycl_mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+-    const size_t num_subgroups = quad_sg16 ? 16 : (size_t) ggml_sycl_mmvq_subgroups();
+-    if (quad_sg16) {
++    const bool quad_sg24 = exact_quad_shape && ggml_sycl_mmvq_q8_quad_sg24();
++    const bool quad_sg16 = exact_quad_shape && !quad_sg24 && ggml_sycl_mmvq_q8_quad_sg16();
++    const size_t num_subgroups = quad_sg24 ? 24 : quad_sg16 ? 16 :
++        (size_t) ggml_sycl_mmvq_subgroups();
++    if (quad_sg24 || quad_sg16) {
+         static bool announced[GGML_SYCL_MAX_DEVICES] = {};
+         const int device = get_current_device_id();
+@@ -2066,7 +2080,7 @@ bool ggml_sycl_mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+         if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
+             fprintf(stderr,
+-                    "SYCL lab door | q8 quad SG16: dev=%d K=5120 local-N=5120+3072+24+24 -> 16xSG16\n",
+-                    device);
++                    "SYCL lab door | q8 quad workgroup: dev=%d K=5120 local-N=5120+3072+24+24 -> %dxSG16\n",
++                    device, quad_sg24 ? 24 : 16);
+             announced[device] = true;
+         }
+     }
