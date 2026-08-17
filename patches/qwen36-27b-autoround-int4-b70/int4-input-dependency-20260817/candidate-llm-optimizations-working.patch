@@ -1,0 +1,687 @@
+diff --git a/experiments/qwen27_graphsafe_flash_attention/build.sh b/experiments/qwen27_graphsafe_flash_attention/build.sh
+index 5de21111c..b1df46ace 100755
+--- a/experiments/qwen27_graphsafe_flash_attention/build.sh
++++ b/experiments/qwen27_graphsafe_flash_attention/build.sh
+@@ -47,6 +47,10 @@ rsync -a \
+ git -C "$source_tree" apply --check \
+   "$here/qwen27-chunk-prefill-local-accessor.patch"
+ patch -d "$stage" -p1 < "$here/qwen27-chunk-prefill-local-accessor.patch"
++patch --dry-run -d "$stage" -p1 \
++  < "$here/qwen27-chunk-prefill-completion-barrier.patch"
++patch -d "$stage" -p1 \
++  < "$here/qwen27-chunk-prefill-completion-barrier.patch"
+ git -C "$source_tree" apply --check "$here/qwen27-force-chunk-decode.patch"
+ patch -d "$stage" -p1 < "$here/qwen27-force-chunk-decode.patch"
+ 
+diff --git a/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh b/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh
+index 4ba105622..6cde0d2dd 100755
+--- a/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh
++++ b/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh
+@@ -34,7 +34,10 @@ export ONECCL_CANDIDATE_SHA256="$lib_sha256"
+ export ONECCL_KERNELS_SHA256="$kernels_sha256"
+ export ONECCL_SOURCE_TOP_COMMIT="b52f40c07f0b140e6aba87548c80720a350a9827"
+ export ONECCL_LIBCCL_COMMIT="4ceafd15c03ce46f11eeaf91781a92afebd3cecf"
+-export SERVER_LD_PRELOAD="$ONECCL_LIB"
++# Keep explicitly validated diagnostic/runtime overlays ahead of oneCCL.
++# Replacing the caller's list here silently disabled focused kernel overlays
++# even though the outer validation harness had already hash-checked them.
++export SERVER_LD_PRELOAD="${SERVER_LD_PRELOAD:+$SERVER_LD_PRELOAD:}$ONECCL_LIB"
+ export SERVER_LD_LIBRARY_PATH="$ONECCL_INSTALL_DIR/lib:$QWEN36_27B_AR_VENV/lib:$QWEN36_27B_AR_VENV/lib/python3.12/site-packages/torch/lib"
+ export SERVER_CCL_KERNEL_PATH="$ONECCL_INSTALL_DIR/lib/ccl/kernels"
+ export CCL_LOG_LEVEL="${CCL_LOG_LEVEL:-info}"
+diff --git a/experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh b/experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh
+index d432e05e7..a70f7e146 100755
+--- a/experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh
++++ b/experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh
+@@ -106,11 +106,22 @@ find "$VLLM_XPU_KERNELS_SOURCE_TREE/vllm_xpu_kernels" \
+   | xargs -0 -r sha256sum > "$RUN_DIR/xpu-runtime-binaries.sha256"
+ if [[ -n "${VLLM_XPU_KERNELS_SRC:-}" \
+   && "$VLLM_XPU_KERNELS_SRC" != "$VLLM_XPU_KERNELS_SOURCE_TREE" ]]; then
+-  find "$VLLM_XPU_KERNELS_SRC" \
+-    -maxdepth 2 -type f \( -name '*.so' -o -name '*.so.*' \) -print0 \
++  find "$VLLM_XPU_KERNELS_SRC" -maxdepth 2 \
++    \( -type f -o -type l \) \( -name '*.so' -o -name '*.so.*' \) -print0 \
+     | sort -z \
+     | xargs -0 -r sha256sum > "$RUN_DIR/xpu-staged-runtime-binaries.sha256"
+ fi
++if [[ -n "${SERVER_LD_PRELOAD:-}" ]]; then
++  : > "$RUN_DIR/server-ld-preload.sha256"
++  IFS=: read -r -a server_preloads <<< "$SERVER_LD_PRELOAD"
++  for preload in "${server_preloads[@]}"; do
++    if [[ ! -f "$preload" ]]; then
++      echo "SERVER_LD_PRELOAD entry is not a regular file: $preload" >&2
++      exit 2
++    fi
++    sha256sum "$preload" >> "$RUN_DIR/server-ld-preload.sha256"
++  done
++fi
+ cp "$0" "$RUN_DIR/$(basename "$0").snapshot"
+ if [[ -n "${CANDIDATE_ENTRYPOINT:-}" && -f "$CANDIDATE_ENTRYPOINT" ]]; then
+   cp "$CANDIDATE_ENTRYPOINT" \
+@@ -169,6 +180,7 @@ trap cleanup EXIT
+   echo "gdn_native_spec_prefix_base_state=${VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE:-}"
+   echo "gdn_native_spec_decode_serial=${VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL:-}"
+   echo "gdn_native_spec_recurrent_serial_exact=${VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-}"
++  echo "gdn_disable_spec_static_graph_metadata=${VLLM_XPU_GDN_DISABLE_SPEC_STATIC_GRAPH_METADATA:-}"
+   echo "gdn_native_spec_prefill_sequence=${VLLM_XPU_GDN_NATIVE_SPEC_PREFILL_SEQUENCE:-}"
+   echo "gdn_native_spec_prefill_output_decode_state=${VLLM_XPU_GDN_NATIVE_SPEC_PREFILL_OUTPUT_DECODE_STATE:-}"
+   echo "gdn_native_spec_prefill_output_replay_columns=${VLLM_XPU_GDN_NATIVE_SPEC_PREFILL_OUTPUT_REPLAY_COLUMNS:-}"
+@@ -204,7 +216,28 @@ trap cleanup EXIT
+   echo "model_input_trace_max_lines=${VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES:-}"
+   echo "model_input_trace_rank=${VLLM_XPU_MODEL_INPUT_TRACE_RANK:-}"
+   echo "fa_serial_spec_mode=${VLLM_XPU_FA_SERIAL_SPEC_MODE:-}"
++  echo "fa_sync_after_packed=${VLLM_XPU_FA_SYNC_AFTER_PACKED:-0}"
++  echo "qwen_sync_after_full_attn_o_proj=${VLLM_XPU_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ:-0}"
++  echo "qwen_sync_after_full_attn_o_proj_layers=${VLLM_XPU_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ_LAYERS:-}"
++  echo "sync_row_parallel_after_gemm_prefix=${VLLM_XPU_SYNC_ROW_PARALLEL_AFTER_GEMM_PREFIX:-}"
++  echo "onednn_int4_completion_barrier=${VLLM_XPU_ONEDNN_INT4_COMPLETION_BARRIER:-0}"
++  echo "onednn_int4_input_dependency=${VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY:-0}"
++  echo "onednn_int4_input_dependency_scope=${VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE:-}"
++  echo "int4_gemm_fixed_m4=${VLLM_XPU_INT4_GEMM_FIXED_M4:-0}"
++  echo "int8_lm_head_fixed_m4=${VLLM_XPU_INT8_LM_HEAD_FIXED_M4:-0}"
++  echo "onednn_int8_completion_barrier=${VLLM_XPU_ONEDNN_INT8_COMPLETION_BARRIER:-0}"
++  echo "sync_after_cudagraph_warmup=${VLLM_XPU_SYNC_AFTER_CUDAGRAPH_WARMUP:-0}"
++  echo "sync_after_model_forward=${VLLM_XPU_SYNC_AFTER_MODEL_FORWARD:-0}"
+   echo "qwen_gemma_rmsnorm_batch_invariant=${VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT:-}"
++  echo "qwen_gemma_rmsnorm_serial_m4=${VLLM_XPU_QWEN_GEMMA_RMSNORM_SERIAL_M4:-0}"
++  echo "qwen_gemma_rmsnorm_sycl=${VLLM_XPU_QWEN_GEMMA_RMSNORM_SYCL:-0}"
++  echo "qwen_device_barrier_after_input_norm=${VLLM_XPU_QWEN_DEVICE_BARRIER_AFTER_INPUT_NORM:-0}"
++  echo "qwen_device_barrier_after_input_norm_layers=${VLLM_XPU_QWEN_DEVICE_BARRIER_AFTER_INPUT_NORM_LAYERS:-}"
++  echo "split_qwen_gemma_rmsnorm_sycl=${VLLM_XPU_SPLIT_QWEN_GEMMA_RMSNORM_SYCL:-0}"
++  echo "gdn_native_spec_metadata_snapshot=${VLLM_XPU_GDN_NATIVE_SPEC_METADATA_SNAPSHOT:-}"
++  echo "gdn_native_spec_completion_barrier=${VLLM_XPU_GDN_NATIVE_SPEC_COMPLETION_BARRIER:-0}"
++  echo "gdn_capture_native_spec=${VLLM_XPU_GDN_CAPTURE_NATIVE_SPEC:-0}"
++  echo "gdn_trace_conv_publish_once=${VLLM_XPU_GDN_TRACE_CONV_PUBLISH_ONCE:-}"
+   echo "qwen_layer_trace_file=${VLLM_XPU_QWEN_LAYER_TRACE_FILE:-}"
+   echo "qwen_layer_trace_layers=${VLLM_XPU_QWEN_LAYER_TRACE_LAYERS:-}"
+   echo "qwen_layer_trace_stages=${VLLM_XPU_QWEN_LAYER_TRACE_STAGES:-}"
+diff --git a/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-arm.sh b/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-arm.sh
+index c3720cfc8..1a1822ded 100755
+--- a/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-arm.sh
++++ b/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-arm.sh
+@@ -89,9 +89,9 @@ elif [[ "$mode" == "spec-native-partition-exact" \
+   latest_identity=1
+   exact_identity=1
+   verify_tree "$source_root/vllm" a63ff886e1c9c90f919e8b46a63f34027dfae823 \
+-    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
++    d36ad75e4f09313a07c9608090a7105b6365b0f9719106c5b53ca2e462e5ac98 vllm
+   verify_tree "$source_root/vllm-xpu-kernels" 6a40e2baf3f8710b89e48d18bf214708ba2dbf9a \
+-    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
++    e053da6e606be53e1e552efcc8dcbe906b07f5436349cea7ebe0c50539ba4ae7 kernels
+ elif [[ "$mode" == "spec-native-partition" || "$mode" == "nospec-latest" ]]; then
+   latest_identity=1
+   verify_tree "$source_root/vllm" a63ff886e1c9c90f919e8b46a63f34027dfae823 \
+@@ -129,10 +129,10 @@ while read -r expected recorded_path; do
+     expected=871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e
+   fi
+   if [[ "$exact_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
+-    expected=871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e
++    expected=ccbeecb4e49eb3419f5a8734c82e2b004bfdd9dffea5f0a9bbe2e8884041ef38
+   fi
+   if [[ "$latest_identity" == "1" && "$binary" == "libgdn_attn_kernels_xe_2.so" ]]; then
+-    expected=fd326287972c808490e4dfd34362558c132c7939a6adb5f55a7c8e83567f63bb
++    expected=364d04109105940e1635376875daed6ff7f7462b1c385fe6dd09bce03c6bb056
+   fi
+   verify_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
+ done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
+@@ -230,15 +230,15 @@ if [[ "${VALIDATION_ENABLE_PACKET_TRACE:-0}" == "1" ]]; then
+   # Bounded correctness trace. These files distinguish a wrong target row
+   # from a correct target row that is mis-selected or mis-emitted.
+   export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_FILE="$arm_root/verify-trace.jsonl"
+-  export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_MAX_LINES=32
++  export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_MAX_LINES="${VALIDATION_SPEC_VERIFY_TRACE_MAX_LINES:-32}"
+   export VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_TOPK="${VALIDATION_SPEC_VERIFY_TRACE_TOPK:-1}"
+   export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_FILE="$arm_root/bonus-trace.jsonl"
+-  export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_MAX_LINES=32
++  export VLLM_XPU_SPEC_DECODE_BONUS_LOGIT_TRACE_MAX_LINES="${VALIDATION_SPEC_BONUS_TRACE_MAX_LINES:-32}"
+   export VLLM_XPU_GDN_METADATA_TRACE_FILE="$arm_root/gdn-metadata.jsonl"
+-  export VLLM_XPU_GDN_METADATA_TRACE_MAX_LINES=48
++  export VLLM_XPU_GDN_METADATA_TRACE_MAX_LINES="${VALIDATION_GDN_METADATA_TRACE_MAX_LINES:-48}"
+   export VLLM_XPU_GDN_METADATA_TRACE_RANK=0
+   export VLLM_XPU_MODEL_INPUT_TRACE_FILE="$arm_root/model-input-trace.jsonl"
+-  export VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES=32
++  export VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES="${VALIDATION_MODEL_INPUT_TRACE_MAX_LINES:-32}"
+   export VLLM_XPU_MODEL_INPUT_TRACE_RANK=0
+ fi
+ if [[ "${VALIDATION_ENABLE_LAYER_TRACE:-0}" == "1" ]]; then
+@@ -264,6 +264,9 @@ if [[ "${VALIDATION_ENABLE_LAYER_TRACE:-0}" == "1" ]]; then
+   export VLLM_XPU_GDN_ROW_TRACE_REQ_REGEX="${VALIDATION_GDN_ROW_TRACE_REQ_REGEX:-holdout--concurrency-review}"
+   export VLLM_XPU_GDN_ROW_TRACE_RANK="${VALIDATION_GDN_ROW_TRACE_RANK:-0}"
+   export VLLM_XPU_GDN_ROW_TRACE_MAX_LINES="${VALIDATION_GDN_ROW_TRACE_MAX_LINES:-128}"
++  if [[ -n "${VALIDATION_GDN_ROW_TRACE_EXEC_INDICES:-}" ]]; then
++    export VLLM_XPU_GDN_ROW_TRACE_EXEC_INDICES="$VALIDATION_GDN_ROW_TRACE_EXEC_INDICES"
++  fi
+ 
+   # The detailed GDN trace includes the quantized qkvz/ba projection output,
+   # which the lighter row trace begins after.
+@@ -278,9 +281,90 @@ fi
+ if [[ -n "${VALIDATION_FA_SERIAL_SPEC_MODE:-}" ]]; then
+   export VLLM_XPU_FA_SERIAL_SPEC_MODE="$VALIDATION_FA_SERIAL_SPEC_MODE"
+ fi
++if [[ "${VALIDATION_FA_SYNC_AFTER_PACKED:-0}" == "1" ]]; then
++  export VLLM_XPU_FA_SYNC_AFTER_PACKED=1
++fi
++if [[ "${VALIDATION_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ:-0}" == "1" ]]; then
++  export VLLM_XPU_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ=1
++  if [[ -n "${VALIDATION_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ_LAYERS:-}" ]]; then
++    export VLLM_XPU_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ_LAYERS="$VALIDATION_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ_LAYERS"
++  fi
++fi
++if [[ -n "${VALIDATION_SYNC_ROW_PARALLEL_AFTER_GEMM_PREFIX:-}" ]]; then
++  export VLLM_XPU_SYNC_ROW_PARALLEL_AFTER_GEMM_PREFIX="$VALIDATION_SYNC_ROW_PARALLEL_AFTER_GEMM_PREFIX"
++fi
++if [[ "${VALIDATION_ONEDNN_INT4_COMPLETION_BARRIER:-0}" == "1" ]]; then
++  export VLLM_XPU_ONEDNN_INT4_COMPLETION_BARRIER=1
++fi
++if [[ "${VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY:-0}" == "1" ]]; then
++  export VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY=1
++  export VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE="${VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE:-layer0_gdn_in}"
++fi
++if [[ "${VALIDATION_ONEDNN_INT8_COMPLETION_BARRIER:-0}" == "1" ]]; then
++  export VLLM_XPU_ONEDNN_INT8_COMPLETION_BARRIER=1
++fi
++if [[ "${VALIDATION_INT4_GEMM_FIXED_M4:-0}" == "1" ]]; then
++  # Diagnostic only: make one-row target projections use the verifier's M=4
++  # W4A16 descriptor and retain row zero.  Do not promote its timing.
++  export VLLM_XPU_INT4_GEMM_FIXED_M4=1
++fi
++if [[ "${VALIDATION_INT8_LM_HEAD_FIXED_M4:-0}" == "1" ]]; then
++  # Diagnostic only: make a one-row target lm_head use the verifier's M=4
++  # W8A8 descriptor and retain row zero.  Do not promote its timing.
++  export VLLM_XPU_INT8_LM_HEAD_FIXED_M4=1
++fi
++if [[ "${VALIDATION_SYNC_AFTER_CUDAGRAPH_WARMUP:-0}" == "1" ]]; then
++  export VLLM_XPU_SYNC_AFTER_CUDAGRAPH_WARMUP=1
++fi
++if [[ "${VALIDATION_SYNC_AFTER_MODEL_FORWARD:-0}" == "1" ]]; then
++  # Diagnostic only: distinguish an unfinished model forward from later
++  # logits/all-gather or sampler visibility.  This is a host synchronization
++  # and must never be used for a promoted throughput result.
++  export VLLM_XPU_SYNC_AFTER_MODEL_FORWARD=1
++fi
++if [[ "${VALIDATION_SKIP_COMPILED_SPEC_DECODE:-0}" == "1" ]]; then
++  # Diagnostic only: execute speculative verifier forwards outside the
++  # compiled wrapper while leaving the ordinary target/draft identities and
++  # PIECEWISE process unchanged. This is needed for tensor traces, which are
++  # intentionally suppressed while Dynamo is compiling.
++  export VLLM_XPU_SKIP_COMPILED_SPEC_DECODE=1
++fi
+ if [[ "${VALIDATION_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT:-0}" == "1" ]]; then
+   export VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT=1
+ fi
++if [[ "${VALIDATION_QWEN_GEMMA_RMSNORM_SERIAL_M4:-0}" == "1" ]]; then
++  export VLLM_XPU_QWEN_GEMMA_RMSNORM_SERIAL_M4=1
++fi
++if [[ "${VALIDATION_QWEN_GEMMA_RMSNORM_SYCL:-0}" == "1" ]]; then
++  export VLLM_XPU_QWEN_GEMMA_RMSNORM_SYCL=1
++fi
++if [[ "${VALIDATION_QWEN_DEVICE_BARRIER_AFTER_INPUT_NORM:-0}" == "1" ]]; then
++  export VLLM_XPU_QWEN_DEVICE_BARRIER_AFTER_INPUT_NORM=1
++  export VLLM_XPU_QWEN_DEVICE_BARRIER_AFTER_INPUT_NORM_LAYERS="${VALIDATION_QWEN_DEVICE_BARRIER_AFTER_INPUT_NORM_LAYERS:-0}"
++fi
++if [[ "${VALIDATION_SPLIT_QWEN_GEMMA_RMSNORM_SYCL:-0}" == "1" ]]; then
++  export VLLM_XPU_SPLIT_QWEN_GEMMA_RMSNORM_SYCL=1
++fi
++if [[ "${VALIDATION_GDN_NATIVE_SPEC_METADATA_SNAPSHOT:-0}" == "1" ]]; then
++  export VLLM_XPU_GDN_NATIVE_SPEC_METADATA_SNAPSHOT=1
++fi
++if [[ "${VALIDATION_GDN_NATIVE_SPEC_COMPLETION_BARRIER:-0}" == "1" ]]; then
++  export VLLM_XPU_GDN_NATIVE_SPEC_COMPLETION_BARRIER=1
++fi
++if [[ "${VALIDATION_GDN_CAPTURE_NATIVE_SPEC:-0}" == "1" ]]; then
++  # Diagnostic opt-in: capture the persistent-scratch native GDN op inside
++  # PIECEWISE instead of crossing 48 eager producer/consumer boundaries.
++  export VLLM_XPU_GDN_CAPTURE_NATIVE_SPEC=1
++fi
++if [[ -n "${VALIDATION_GDN_SYNC_AFTER_NATIVE_SPEC_DECODE_LAYERS:-}" ]]; then
++  export VLLM_XPU_GDN_SYNC_AFTER_NATIVE_SPEC_DECODE_LAYERS="$VALIDATION_GDN_SYNC_AFTER_NATIVE_SPEC_DECODE_LAYERS"
++fi
++if [[ "${VALIDATION_GDN_TRACE_CONV_PUBLISH_ONCE:-0}" == "1" ]]; then
++  export VLLM_XPU_GDN_TRACE_CONV_PUBLISH_ONCE=1
++fi
++if [[ "${VALIDATION_DISABLE_SPEC_STATIC_GRAPH_METADATA:-0}" == "1" ]]; then
++  export VLLM_XPU_GDN_DISABLE_SPEC_STATIC_GRAPH_METADATA=1
++fi
+ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
+   || "$mode" == "spec-native-partition" \
+   || "$mode" == "spec-native-partition-exact" \
+@@ -295,8 +379,24 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
+     33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
+     graph-safe-FlashAttention-extension
+   verify_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
+-    604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c \
++    "${VALIDATION_FA_DEVICE_LIBRARY_SHA256:-604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c}" \
+     graph-safe-FlashAttention-device-library
++  verify_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
++    3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
++    graph-safe-FlashAttention-stock-dependency
++  verify_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
++    869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
++    graph-safe-FlashAttention-Python-interface
++  if [[ -n "${VALIDATION_FA_CHUNK_COMPLETION_OVERLAY:-}" ]]; then
++    if [[ -z "${VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256:-}" ]]; then
++      printf 'VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256 is required\n' >&2
++      exit 3
++    fi
++    verify_sha "$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY" \
++      "$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256" \
++      graph-safe-FlashAttention-completion-overlay
++    export SERVER_LD_PRELOAD="$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY${SERVER_LD_PRELOAD:+:$SERVER_LD_PRELOAD}"
++  fi
+   export STAGE="$graph_stage"
+   export VLLM_XPU_KERNELS_SRC="$graph_stage"
+   export QWEN36_27B_ENABLE_MTP=1
+@@ -328,7 +428,11 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
+       || "$mode" == "spec-native-partition-exact-native" \
+       || "$mode" == "spec-native-partition-exact-native-zero" \
+       || "$mode" == "spec-native-partition-exact-native-raw" ]]; then
+-      export VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1
++      if [[ "${VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-1}" == "1" ]]; then
++        export VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1
++      else
++        unset VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT
++      fi
+     fi
+     if [[ "$mode" == "spec-native-partition-exact-native-zero" ]]; then
+       # Coherent fixed-width-four target control: execute all verifier rows,
+@@ -397,6 +501,7 @@ set +e
+ runner_rc=$?
+ set -e
+ if [[ "$runner_rc" == "0" \
++  && "${VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-1}" == "1" \
+   && ( "$mode" == "spec-native-partition-exact" \
+     || "$mode" == "spec-native-partition-exact-native" \
+     || "$mode" == "spec-native-partition-exact-native-zero" \
+diff --git a/scripts/check-gdn-native-spec-prefix.py b/scripts/check-gdn-native-spec-prefix.py
+index 542b58231..3b9a8b904 100755
+--- a/scripts/check-gdn-native-spec-prefix.py
++++ b/scripts/check-gdn-native-spec-prefix.py
+@@ -39,6 +39,8 @@ from typing import Any
+ 
+ 
+ DEFAULT_KERNEL_REPO = Path("/home/steve/src/vllm-xpu-kernels")
++SPEC_CONV_PADDING_SENTINEL = 0.03125
++SSM_ROW_PADDING_SENTINEL = 0.015625
+ 
+ 
+ def parse_args() -> argparse.Namespace:
+@@ -60,6 +62,27 @@ def parse_args() -> argparse.Namespace:
+     parser.add_argument("--head-v-dim", type=int, default=32)
+     parser.add_argument("--tp-size", type=int, default=1)
+     parser.add_argument("--width", type=int, default=4)
++    parser.add_argument(
++        "--spec-conv-extra-state-len",
++        type=int,
++        default=0,
++        help=(
++            "Extra physical convolution-cache positions reserved by the "
++            "speculative runtime. Qwen MTP3 uses 3, producing a six-wide "
++            "candidate cache for a three-position causal history."
++        ),
++    )
++    parser.add_argument(
++        "--ssm-row-padding-elements",
++        type=int,
++        default=0,
++        help=(
++            "Add inaccessible physical elements after each logical SSM row. "
++            "The production unified cache has stride(0) larger than the "
++            "logical rank-4 state; poisoning this gap catches row copies that "
++            "incorrectly use the physical stride as an element count."
++        ),
++    )
+     parser.add_argument("--activation", choices=("silu", "swish"),
+                         default="silu")
+     parser.add_argument("--with-bias", action="store_true")
+@@ -79,6 +102,14 @@ def parse_args() -> argparse.Namespace:
+     parser.add_argument(
+         "--persistent-scratch", action="store_true",
+         help="Reuse the production persistent native speculative scratch.")
++    parser.add_argument(
++        "--zero-state-smoke", action="store_true",
++        help=(
++            "Run the exact packed op twice with the graph-capture NULL state "
++            "table [[0, ...]], synchronize, and require the SSM cache to stay "
++            "unchanged without a device fault."
++        ),
++    )
+     parser.add_argument("--kernel-repo", type=Path, default=DEFAULT_KERNEL_REPO)
+     parser.add_argument("--json-out", type=Path)
+     return parser.parse_args()
+@@ -112,6 +143,112 @@ def close_enough(torch: Any, left: Any, right: Any, *, atol: float,
+                                rtol=rtol))
+ 
+ 
++def make_spec_conv_table(
++    torch: Any,
++    args: argparse.Namespace,
++    initial_conv_table: Any,
++    *,
++    rows: int,
++    conv_cols: int,
++    dtype: Any,
++    device: str,
++) -> Any:
++    """Build the production-shaped speculative cache with a poisoned tail."""
++    history_len = args.width - 1
++    physical_state_len = history_len + args.spec_conv_extra_state_len
++    spec_conv = torch.full(
++        (rows, physical_state_len, conv_cols),
++        SPEC_CONV_PADDING_SENTINEL,
++        dtype=dtype,
++        device=device,
++    )
++    spec_conv[:, :history_len].zero_()
++    initial_rows = min(rows, initial_conv_table.size(0))
++    spec_conv[:initial_rows, :history_len].copy_(
++        initial_conv_table[:initial_rows, :history_len]
++    )
++    return spec_conv
++
++
++def spec_padding_equal(torch: Any, args: argparse.Namespace,
++                       spec_conv: Any) -> bool:
++    history_len = args.width - 1
++    if spec_conv.size(1) == history_len:
++        return True
++    padding = spec_conv[:, history_len:]
++    expected = torch.full_like(padding, SPEC_CONV_PADDING_SENTINEL)
++    return bool(torch.equal(padding, expected))
++
++
++def make_spec_ssm_table(
++    torch: Any,
++    args: argparse.Namespace,
++    initial_ssm_table: Any,
++    *,
++    rows: int,
++    local_v_heads: int,
++    dtype: Any,
++    device: str,
++) -> Any:
++    """Build an SSM view whose physical row stride can exceed its shape."""
++    logical_row_elements = (
++        local_v_heads * args.head_v_dim * args.head_k_dim
++    )
++    row_stride = logical_row_elements + args.ssm_row_padding_elements
++    storage = torch.zeros(
++        (rows * row_stride,), dtype=dtype, device=device)
++    spec_ssm = torch.as_strided(
++        storage,
++        size=(rows, local_v_heads, args.head_v_dim, args.head_k_dim),
++        stride=(
++            row_stride,
++            args.head_v_dim * args.head_k_dim,
++            args.head_k_dim,
++            1,
++        ),
++    )
++    if args.ssm_row_padding_elements:
++        physical = torch.as_strided(
++            spec_ssm,
++            size=(rows, row_stride),
++            stride=(row_stride, 1),
++        )
++        row_values = (
++            torch.arange(1, rows + 1, dtype=torch.float32, device=device)
++            * SSM_ROW_PADDING_SENTINEL
++        ).to(dtype)
++        physical[:, logical_row_elements:].copy_(
++            row_values.unsqueeze(1).expand(
++                rows, args.ssm_row_padding_elements))
++    initial_rows = min(rows, initial_ssm_table.size(0))
++    spec_ssm[:initial_rows].copy_(initial_ssm_table[:initial_rows])
++    return spec_ssm
++
++
++def ssm_padding_equal(torch: Any, args: argparse.Namespace,
++                      spec_ssm: Any) -> bool:
++    if not args.ssm_row_padding_elements:
++        return True
++    rows = spec_ssm.size(0)
++    logical_row_elements = (
++        spec_ssm.size(1) * spec_ssm.size(2) * spec_ssm.size(3)
++    )
++    row_stride = logical_row_elements + args.ssm_row_padding_elements
++    physical = torch.as_strided(
++        spec_ssm,
++        size=(rows, row_stride),
++        stride=(row_stride, 1),
++    )
++    padding = physical[:, logical_row_elements:]
++    row_values = (
++        torch.arange(1, rows + 1, dtype=torch.float32,
++                     device=spec_ssm.device)
++        * SSM_ROW_PADDING_SENTINEL
++    ).to(spec_ssm.dtype)
++    expected = row_values.unsqueeze(1).expand_as(padding)
++    return bool(torch.equal(padding, expected))
++
++
+ def build_inputs(torch: Any, args: argparse.Namespace, *,
+                  tokens: int, seed: int) -> dict[str, Any]:
+     torch.manual_seed(seed)
+@@ -309,12 +446,26 @@ def compare_case(
+                            dtype=dtype, device=device)
+     ref_ssm = torch.zeros((total_rows, local_v_heads, args.head_v_dim,
+                            args.head_k_dim), dtype=ssm_dtype, device=device)
+-    spec_conv = torch.zeros_like(ref_conv)
+-    spec_ssm = torch.zeros_like(ref_ssm)
++    spec_conv = make_spec_conv_table(
++        torch,
++        args,
++        initial_conv_table,
++        rows=total_rows,
++        conv_cols=conv_cols,
++        dtype=dtype,
++        device=device,
++    )
++    spec_ssm = make_spec_ssm_table(
++        torch,
++        args,
++        initial_ssm_table,
++        rows=total_rows,
++        local_v_heads=local_v_heads,
++        dtype=ssm_dtype,
++        device=device,
++    )
+     ref_conv[:row_count].copy_(initial_conv_table[:row_count])
+     ref_ssm[:row_count].copy_(initial_ssm_table[:row_count])
+-    spec_conv[:row_count].copy_(initial_conv_table[:row_count])
+-    spec_ssm[:row_count].copy_(initial_ssm_table[:row_count])
+ 
+     if accepted_counts is None:
+         source_cols = torch.zeros((num_reqs,), dtype=torch.long, device=device)
+@@ -364,7 +515,7 @@ def compare_case(
+             rows = state_table[:, pos + 1]
+         else:
+             rows = state_table[:, pos]
+-        observed_conv = spec_conv.index_select(0, rows)
++        observed_conv = spec_conv.index_select(0, rows)[:, :args.width - 1]
+         observed_ssm = spec_ssm.index_select(0, rows)
+         expected_conv = ref_conv_prefixes[pos]
+         expected_ssm = ref_ssm_prefixes[pos]
+@@ -387,7 +538,8 @@ def compare_case(
+     base_ssm_max = 0.0
+     if args.prefix_base_state:
+         base_rows = state_table[:, 0]
+-        observed_base_conv = spec_conv.index_select(0, base_rows)
++        observed_base_conv = spec_conv.index_select(
++            0, base_rows)[:, :args.width - 1]
+         observed_base_ssm = spec_ssm.index_select(0, base_rows)
+         expected_base_conv = initial_conv_table.index_select(0, source_rows)
+         expected_base_ssm = initial_ssm_table.index_select(0, source_rows)
+@@ -422,7 +574,9 @@ def compare_case(
+         "conv_prefix_equal": bool(conv_ok),
+         "ssm_prefix_equal": bool(ssm_ok),
+         "conv_prefix_close": bool(conv_close),
++        "conv_padding_equal": spec_padding_equal(torch, args, spec_conv),
+         "ssm_prefix_close": bool(ssm_close),
++        "ssm_padding_equal": ssm_padding_equal(torch, args, spec_ssm),
+         "base_column_close": bool(base_conv_close and base_ssm_close),
+         "base_column_equal": bool(base_conv_equal and base_ssm_equal),
+         "core_output_equal": out_equal,
+@@ -469,8 +623,24 @@ def compare_two_call_full_accept_restart(
+         dtype=ssm_dtype,
+         device=device,
+     )
+-    spec_conv = initial_conv_table.clone()
+-    spec_ssm = initial_ssm_table.clone()
++    spec_conv = make_spec_conv_table(
++        torch,
++        args,
++        initial_conv_table,
++        rows=row_count,
++        conv_cols=conv_cols,
++        dtype=dtype,
++        device=device,
++    )
++    spec_ssm = make_spec_ssm_table(
++        torch,
++        args,
++        initial_ssm_table,
++        rows=row_count,
++        local_v_heads=local_v_heads,
++        dtype=ssm_dtype,
++        device=device,
++    )
+     ref_conv[:row_count].copy_(initial_conv_table[:row_count])
+     ref_ssm[:row_count].copy_(initial_ssm_table[:row_count])
+     source_rows = state_table[:, 0]
+@@ -534,7 +704,7 @@ def compare_two_call_full_accept_restart(
+     ssm_max = 0.0
+     for pos in range(spec_len):
+         rows = state_table[:, pos]
+-        observed_conv = spec_conv.index_select(0, rows)
++        observed_conv = spec_conv.index_select(0, rows)[:, :args.width - 1]
+         observed_ssm = spec_ssm.index_select(0, rows)
+         expected_conv = ref_conv_second[pos]
+         expected_ssm = ref_ssm_second[pos]
+@@ -566,7 +736,9 @@ def compare_two_call_full_accept_restart(
+         "conv_prefix_equal": conv_equal,
+         "ssm_prefix_equal": ssm_equal,
+         "conv_prefix_close": conv_close,
++        "conv_padding_equal": spec_padding_equal(torch, args, spec_conv),
+         "ssm_prefix_close": ssm_close,
++        "ssm_padding_equal": ssm_padding_equal(torch, args, spec_ssm),
+         "base_column_equal": True,
+         "base_column_close": True,
+         "core_output_equal": first_out_equal and second_out_equal,
+@@ -594,6 +766,10 @@ def compare_two_call_full_accept_restart(
+ 
+ def main() -> int:
+     args = parse_args()
++    if args.spec_conv_extra_state_len < 0:
++        raise SystemExit("spec-conv-extra-state-len must be non-negative")
++    if args.ssm_row_padding_elements < 0:
++        raise SystemExit("ssm-row-padding-elements must be non-negative")
+     if args.num_k_heads % args.tp_size != 0:
+         raise SystemExit("num-k-heads must be divisible by tp-size")
+     if args.num_v_heads % args.tp_size != 0:
+@@ -633,6 +809,74 @@ def main() -> int:
+     conv_cols = inputs["conv_cols"]
+     device = args.device
+ 
++    if args.zero_state_smoke:
++        if not args.exact_recurrent or args.num_reqs != 1:
++            raise SystemExit(
++                "zero-state-smoke requires --exact-recurrent --num-reqs 1"
++            )
++        initial_conv = torch.randn(
++            (1, args.width - 1, conv_cols), dtype=dtype, device=device
++        ) * 0.01
++        initial_ssm = torch.randn(
++            (1, local_v_heads, args.head_v_dim, args.head_k_dim),
++            dtype=ssm_dtype,
++            device=device,
++        ) * 0.01
++        conv_state = make_spec_conv_table(
++            torch,
++            args,
++            initial_conv,
++            rows=1,
++            conv_cols=conv_cols,
++            dtype=dtype,
++            device=device,
++        )
++        ssm_state = make_spec_ssm_table(
++            torch,
++            args,
++            initial_ssm,
++            rows=1,
++            local_v_heads=local_v_heads,
++            dtype=ssm_dtype,
++            device=device,
++        )
++        ssm_before = ssm_state.clone()
++        state_table = torch.zeros(
++            (1, args.spec_len), dtype=torch.long, device=device
++        )
++        accepted = torch.ones((1,), dtype=torch.int32, device=device)
++        for _ in range(2):
++            run_spec_decode(
++                torch,
++                args,
++                inputs,
++                conv_state=conv_state,
++                ssm_state=ssm_state,
++                state_table=state_table,
++                num_accepted_tokens=accepted,
++                token_base=0,
++            )
++        torch.xpu.synchronize()
++        result = {
++            "schema_version": 1,
++            "case": "exact_recurrent_zero_state_smoke",
++            "runs": 2,
++            "state_table": [[0] * args.spec_len],
++            "ssm_unchanged": bool(torch.equal(ssm_state, ssm_before)),
++            "ssm_padding_equal": ssm_padding_equal(torch, args, ssm_state),
++        }
++        result["passed"] = (
++            result["ssm_unchanged"] and result["ssm_padding_equal"]
++        )
++        text = json.dumps(result, sort_keys=True)
++        print(text)
++        if args.json_out is not None:
++            args.json_out.parent.mkdir(parents=True, exist_ok=True)
++            args.json_out.write_text(text + "\n", encoding="utf-8")
++        if not result["passed"]:
++            raise SystemExit("zero-state exact recurrent smoke failed")
++        return 0
++
+     state_cols = args.spec_len
+     state_table = torch.arange(
+         1,
+@@ -776,6 +1020,11 @@ def main() -> int:
+         "head_k_dim": args.head_k_dim,
+         "head_v_dim": args.head_v_dim,
+         "width": args.width,
++        "spec_conv_extra_state_len": args.spec_conv_extra_state_len,
++        "spec_conv_physical_state_len": (
++            args.width - 1 + args.spec_conv_extra_state_len
++        ),
++        "ssm_row_padding_elements": args.ssm_row_padding_elements,
+         "exact_recurrent": bool(args.exact_recurrent),
+         "persistent_scratch": bool(args.persistent_scratch),
+         "atol": args.atol,
+@@ -803,7 +1052,9 @@ def main() -> int:
+     if args.require_bit_exact:
+         result["passed"] = all(
+             case["conv_prefix_equal"]
++            and case["conv_padding_equal"]
+             and case["ssm_prefix_equal"]
++            and case["ssm_padding_equal"]
+             and case["base_column_equal"]
+             and case["core_output_equal"]
+             and case["z_output_equal"]
+@@ -812,7 +1063,9 @@ def main() -> int:
+     else:
+         result["passed"] = all(
+             case["conv_prefix_close"]
++            and case["conv_padding_equal"]
+             and case["ssm_prefix_close"]
++            and case["ssm_padding_equal"]
+             and case["base_column_close"]
+             and case["core_output_close"]
+             and case["z_output_close"]

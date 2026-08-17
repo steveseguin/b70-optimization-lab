@@ -1,0 +1,21 @@
+diff --git a/csrc/xpu/attn/xe_2/chunk_prefill.hpp b/csrc/xpu/attn/xe_2/chunk_prefill.hpp
+index 0182bd9..2e7ad16 100644
+--- a/csrc/xpu/attn/xe_2/chunk_prefill.hpp
++++ b/csrc/xpu/attn/xe_2/chunk_prefill.hpp
+@@ -223,7 +223,7 @@ struct KernelLauncher {
+ 
+     syclex::properties kernel_props{
+         syclex::sub_group_size<16>, intelex::grf_size<256>};
+-    queue.submit([&](sycl::handler& cgh) {
++    auto done = queue.submit([&](sycl::handler& cgh) {
+       // Handler-owned local memory is represented explicitly in a command
+       // graph. The dynamic work_group_scratch_size property is not.
+       sycl::local_accessor<SharedStorage, 1> scratch{sycl::range<1>(1), cgh};
+@@ -245,6 +245,7 @@ struct KernelLauncher {
+           sycl::nd_range<3>{global_range, local_range},
+           KernelFunctor{kernel_props, scratch, params});
+     });
++    queue.ext_oneapi_submit_barrier({done});
+   }
+ };
+ 

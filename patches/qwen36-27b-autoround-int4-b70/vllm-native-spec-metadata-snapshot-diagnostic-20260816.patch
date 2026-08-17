@@ -1,0 +1,29 @@
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index 92907c58e..ffa73dec3 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -1117,6 +1117,24 @@ def _gdn_attention_core_xpu_impl(
+                 attn_metadata, "num_accepted_tokens", None)
+             if num_accepted_tokens is not None:
+                 num_accepted_tokens = num_accepted_tokens.contiguous()
++            if _xpu_gdn_truthy_env(
++                "VLLM_XPU_GDN_NATIVE_SPEC_METADATA_SNAPSHOT"
++            ):
++                # Diagnostic isolation for endpoint-only state corruption.
++                # A contiguous one-request metadata view may still alias a
++                # live builder buffer.  Clone every device input and drain the
++                # current stream before handing it to the raw SYCL op so this
++                # arm cannot observe later metadata reuse or an incomplete
++                # asynchronous producer.
++                spec_query_start_loc = spec_query_start_loc.clone()
++                spec_state_indices_tensor = spec_state_indices_tensor.clone()
++                spec_token_indx = spec_token_indx.clone()
++                if num_accepted_tokens is not None:
++                    num_accepted_tokens = num_accepted_tokens.clone()
++                torch.xpu.synchronize()
++                logger.warning_once(
++                    "VLLM_XPU_GDN_NATIVE_SPEC_METADATA_SNAPSHOT reached"
++                )
+             torch.ops._xpu_C.gdn_attention_spec_decode(
+                 core_attn_out,
+                 z,

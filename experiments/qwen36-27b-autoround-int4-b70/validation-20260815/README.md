@@ -513,3 +513,23 @@ early divergence. The next bounded diagnostic traces layers 0--3 and the Qwen
 GDN projection/core/output boundaries on the first two verifier packets to
 identify the first unequal activation before changing scheduler or KV state
 transactions.
+
+## 2026-08-17 bounded input-dependency closeout
+
+The later state-copy, exact-recurrence, and metadata repairs produced a stable
+four-prompt target identity. A narrowed dependency from the current XPU queue
+tail into the layer-0 GDN `in_proj_qkvz` oneDNN W4A16 call then passed a warmed
+four-prompt screen: **4/4 complete token arrays exact** and
+`110.67515578910192 tok/s` by the preferred 99-interval accounting. The raw
+root is `int4-input-dependency-layer0-four-spec-a-20260817T014146Z`; its final
+manifest SHA256 is
+`988ff654c1a3d0ddf7efd4a6331cfe955ceafdd914d82c90314896b8e2cd36a4`.
+
+This is not a promotion. The normal 25-prompt candidate remains 17/25 exact at
+`96.51945586661562 tok/s`, and the final dependency source has no matched
+25-prompt target/candidate repeats. Raw broad and rebuilt scoped dependency
+controls also contradict one another. Experimentation stopped with the runtime
+left unchanged pending operator discussion. See the
+[closeout note](../../../notes/2026-08-17-qwen36-int4-input-dependency-closeout.md),
+[structured controls](../../../data/qwen36-27b-autoround-int4-input-dependency-controls-20260817.json),
+and [source packet](../../../patches/qwen36-27b-autoround-int4-b70/int4-input-dependency-20260817/README.md).

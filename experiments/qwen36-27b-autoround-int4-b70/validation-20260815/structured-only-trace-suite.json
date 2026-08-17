@@ -1,0 +1,12 @@
+{
+  "suite_id": "qwen27-upstream-gdn-safety-canary-v1-structured-only",
+  "description": "Focused structured-extraction correctness trace; the prompt is copied unchanged from the frozen four-prompt suite.",
+  "prompts": [
+    {
+      "group": "independent-holdout",
+      "id": "holdout--structured-extraction",
+      "original_id": "structured-extraction",
+      "prompt": "Extract the incident facts below into a JSON object with exactly these keys: service, start_utc, end_utc, customer_impact, trigger, contributing_factors, mitigations, follow_up_owners, unresolved_questions. Preserve uncertainty explicitly and do not invent values. After the JSON, list three validation checks.\n\nIncident note: At 14:07 UTC the Atlas export API began returning intermittent 503s to EU tenants. The alert fired at 14:12. A schema migration deployed at 13:58 increased lock duration; an unrelated retry change amplified load. The team disabled the retry change at about 14:31, but recovery was not confirmed until 14:46. Priya owns the index review, Mateo owns retry backoff, and the incident commander has not yet assigned the dashboard-gap work. Exact failed-export count is still being reconciled."
+    }
+  ]
+}

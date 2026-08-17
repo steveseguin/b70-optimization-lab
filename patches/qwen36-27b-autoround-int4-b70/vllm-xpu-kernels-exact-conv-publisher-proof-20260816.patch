@@ -1,0 +1,67 @@
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index 79857b5..7787657 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -1037,23 +1037,45 @@ void gdn_attention_spec_decode(
+         reorder_input);                                                   \
+     gdn::spec_decode::scatter_z<scalar_t>(                                \
+         queue, z, compact_z, spec_token_indices, num_actual_tokens);       \
+-    gdn::spec_decode::store_conv_states_exact<scalar_t>(                  \
+-        queue,                                                            \
+-        conv_state,                                                       \
+-        base_conv_state,                                                  \
+-        projected_states_qkvz,                                            \
+-        spec_token_indices,                                               \
+-        spec_query_start_loc,                                             \
+-        spec_state_indices_tensor,                                        \
+-        num_spec_decodes,                                                 \
+-        spec_state_indices_tensor.size(1),                                \
+-        num_actual_tokens,                                                \
+-        local_num_k_heads,                                                \
+-        head_k_dim,                                                       \
+-        local_num_v_heads,                                                \
+-        head_v_dim,                                                       \
+-        reorder_input,                                                    \
+-        native_spec_prefix_base_state);                                   \
++    if (native_spec_recurrent_serial_exact) {                             \
++      /* The exact proof mode is deliberately non-prefix-base.  Use the    \
++       * established token-indexed publisher here: unlike the newer 3-D   \
++       * prefix-capable publisher, it covers all four verifier rows when  \
++       * the physical convolution cache includes speculative padding. */  \
++      gdn::spec_decode::store_conv_states<scalar_t>(                      \
++          queue,                                                          \
++          conv_state,                                                     \
++          base_conv_state,                                                \
++          projected_states_qkvz,                                          \
++          spec_token_indices,                                             \
++          spec_query_start_loc,                                           \
++          spec_state_indices_tensor,                                      \
++          num_spec_decodes,                                               \
++          num_actual_tokens,                                              \
++          local_num_k_heads,                                              \
++          head_k_dim,                                                     \
++          local_num_v_heads,                                              \
++          head_v_dim,                                                     \
++          reorder_input);                                                 \
++    } else {                                                              \
++      gdn::spec_decode::store_conv_states_exact<scalar_t>(                \
++          queue,                                                          \
++          conv_state,                                                     \
++          base_conv_state,                                                \
++          projected_states_qkvz,                                          \
++          spec_token_indices,                                             \
++          spec_query_start_loc,                                           \
++          spec_state_indices_tensor,                                      \
++          num_spec_decodes,                                               \
++          spec_state_indices_tensor.size(1),                              \
++          num_actual_tokens,                                              \
++          local_num_k_heads,                                              \
++          head_k_dim,                                                     \
++          local_num_v_heads,                                              \
++          head_v_dim,                                                     \
++          reorder_input,                                                  \
++          native_spec_prefix_base_state);                                 \
++    }                                                                     \
+     if (native_spec_prefix_base_state) {                                  \
+       gdn::spec_decode::copy_conv_rows_to_indices<scalar_t>(              \
+           queue,                                                          \

@@ -1,0 +1,1141 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9340c77..dfa4a58 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -536,6 +536,7 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+       "csrc/xpu/lora/lora_shrink.cpp"
+       "csrc/xpu/lora/lora_expand.cpp"
+       "csrc/xpu/quantization/int8_quant.cpp"
++      "csrc/xpu/qwen_gemma_rms_norm.cpp"
+       "csrc/xpu/sampler/topk_topp_sampler.cpp"
+       "csrc/xpu/sycl/deepseek_scaling_rope.cpp"
+       "csrc/xpu/sycl/multimodal_rope.cpp"
+diff --git a/csrc/xpu/gdn_attn/gated_delta_rule.hpp b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+index 19ba665..9e2f5de 100644
+--- a/csrc/xpu/gdn_attn/gated_delta_rule.hpp
++++ b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+@@ -5,8 +5,23 @@
+ 
+ namespace gdn {
+ static constexpr int sub_group_size = 32;
+-template <typename T, typename StateT, int k_bucket_size>
+-struct gated_delta_rule_kernel {
++
++template <bool UseSource>
++struct gated_delta_rule_source_indices {
++  explicit gated_delta_rule_source_indices(const int*) {}
++};
++
++template <>
++struct gated_delta_rule_source_indices<true> {
++  explicit gated_delta_rule_source_indices(const int* source_cache_indices)
++      : source_cache_indices(source_cache_indices) {}
++
++  const int* source_cache_indices;
++};
++
++template <typename T, typename StateT, int k_bucket_size, bool UseSource>
++struct gated_delta_rule_kernel
++    : private gated_delta_rule_source_indices<UseSource> {
+  public:
+   static constexpr int group_size = 256;
+   static constexpr int sg_per_group = group_size / sub_group_size;
+@@ -33,8 +48,10 @@ struct gated_delta_rule_kernel {
+       const int num_k_heads,
+       const int head_k_dim,
+       const int num_v_heads,
+-      const int head_v_dim)
+-      : core_attn_out(core_attn_out),
++      const int head_v_dim,
++      const bool skip_nonpositive_cache_indices)
++      : gated_delta_rule_source_indices<UseSource>(nullptr),
++        core_attn_out(core_attn_out),
+         q(q),
+         k(k),
+         v(v),
+@@ -52,7 +69,52 @@ struct gated_delta_rule_kernel {
+         num_k_heads(num_k_heads),
+         head_k_dim(head_k_dim),
+         num_v_heads(num_v_heads),
+-        head_v_dim(head_v_dim) {}
++        head_v_dim(head_v_dim),
++        skip_nonpositive_cache_indices(skip_nonpositive_cache_indices) {}
++
++  gated_delta_rule_kernel(
++      T* core_attn_out,
++      const T* q,
++      const T* k,
++      const T* v,
++      const T* b,
++      const T* a,
++      const float* A_log,
++      const T* dt_bias,
++      StateT* ssm_state,
++      const int ssm_state_stride_0,
++      const int* query_start_loc,
++      const int* cache_indices,
++      const int* source_cache_indices,
++      const bool* has_initial_state,
++      const int batch_size,
++      const int total_seqlen,
++      const int num_k_heads,
++      const int head_k_dim,
++      const int num_v_heads,
++      const int head_v_dim,
++      const bool skip_nonpositive_cache_indices)
++      : gated_delta_rule_source_indices<UseSource>(source_cache_indices),
++        core_attn_out(core_attn_out),
++        q(q),
++        k(k),
++        v(v),
++        b(b),
++        a(a),
++        A_log(A_log),
++        dt_bias(dt_bias),
++        ssm_state(ssm_state),
++        ssm_state_stride_0(ssm_state_stride_0),
++        query_start_loc(query_start_loc),
++        cache_indices(cache_indices),
++        has_initial_state(has_initial_state),
++        batch_size(batch_size),
++        total_seqlen(total_seqlen),
++        num_k_heads(num_k_heads),
++        head_k_dim(head_k_dim),
++        num_v_heads(num_v_heads),
++        head_v_dim(head_v_dim),
++        skip_nonpositive_cache_indices(skip_nonpositive_cache_indices) {}
+ 
+   static inline sycl::nd_range<3> get_nd_range(
+       const int batch_size, const int num_v_heads, const int head_v_dim) {
+@@ -92,6 +154,10 @@ struct gated_delta_rule_kernel {
+       return;
+     }
+ 
++    const int cache_index = cache_indices[batch_id];
++    if (skip_nonpositive_cache_indices && cache_index <= 0) {
++      return;
++    }
+     const float scale = 1.0f / sycl::sqrt(float(head_k_dim));
+     float A_log_local = A_log[num_v_heads_id];
+     float dt_bias_local = dt_bias[num_v_heads_id];
+@@ -104,27 +170,68 @@ struct gated_delta_rule_kernel {
+ 
+     StateT* ssm_state_ptr =
+         ssm_state +
+-        static_cast<int64_t>(cache_indices[batch_id]) * ssm_state_stride_0;
++        static_cast<int64_t>(cache_index) * ssm_state_stride_0;
++    if constexpr (UseSource) {
++      int source_cache_index = cache_index;
++      const int candidate_source_index =
++          this->source_cache_indices[batch_id];
++      // Match the former copy-then-recur contract.  An invalid source made
++      // copy_ssm_rows a no-op, after which recurrence loaded the existing
++      // destination row.  Only a distinct positive source replaces it.
++      if (cache_index > 0 && candidate_source_index > 0 &&
++          candidate_source_index != cache_index) {
++        source_cache_index = candidate_source_index;
++      }
++      const StateT* source_ssm_state_ptr =
++          ssm_state +
++          static_cast<int64_t>(source_cache_index) * ssm_state_stride_0;
+ 
+-    // load state
+-    if (has_initial_state == nullptr || has_initial_state[batch_id]) {
++      // load state
++      if (has_initial_state == nullptr || has_initial_state[batch_id]) {
+ #pragma unroll
+-      for (int j = 0; j < v_dim_per_sg; ++j) {
++        for (int j = 0; j < v_dim_per_sg; ++j) {
++#pragma unroll
++          for (int i = 0; i < k_bucket_size; ++i) {
++            state_local[j * k_bucket_size + i] =
++                static_cast<float>(
++                    source_ssm_state_ptr
++                        [num_v_heads_id * head_k_dim * head_v_dim +
++                         (k_bucket_size * sg_local_id + i) +
++                         (head_v_dim_id + j) * head_k_dim]);
++          }
++        }
++      } else {
+ #pragma unroll
+         for (int i = 0; i < k_bucket_size; ++i) {
+-          state_local[j * k_bucket_size + i] =
+-              static_cast<float>(ssm_state_ptr
+-                                     [num_v_heads_id * head_k_dim * head_v_dim +
+-                                      (k_bucket_size * sg_local_id + i) +
+-                                      (head_v_dim_id + j) * head_k_dim]);
++#pragma unroll
++          for (int j = 0; j < v_dim_per_sg; ++j) {
++            state_local[i * v_dim_per_sg + j] = 0.0f;
++          }
+         }
+       }
+     } else {
+-#pragma unroll
+-      for (int i = 0; i < k_bucket_size; ++i) {
++      // Keep the ordinary decode load textually identical to the pre-source
++      // kernel.  This specialization has no source pointer in its functor.
++      if (has_initial_state == nullptr || has_initial_state[batch_id]) {
+ #pragma unroll
+         for (int j = 0; j < v_dim_per_sg; ++j) {
+-          state_local[i * v_dim_per_sg + j] = 0.0f;
++#pragma unroll
++          for (int i = 0; i < k_bucket_size; ++i) {
++            state_local[j * k_bucket_size + i] =
++                static_cast<float>(
++                    ssm_state_ptr
++                        [num_v_heads_id * head_k_dim * head_v_dim +
++                         (k_bucket_size * sg_local_id + i) +
++                         (head_v_dim_id + j) * head_k_dim]);
++          }
++        }
++      } else {
++#pragma unroll
++        for (int i = 0; i < k_bucket_size; ++i) {
++#pragma unroll
++          for (int j = 0; j < v_dim_per_sg; ++j) {
++            state_local[i * v_dim_per_sg + j] = 0.0f;
++          }
+         }
+       }
+     }
+@@ -263,6 +370,7 @@ struct gated_delta_rule_kernel {
+   const int head_k_dim;
+   const int num_v_heads;
+   const int head_v_dim;
++  const bool skip_nonpositive_cache_indices;
+ };
+ 
+ template <typename T, typename StateT, int k_bucket_size>
+@@ -286,8 +394,9 @@ void kernel_launcher(
+     const int num_k_heads,
+     const int head_k_dim,
+     const int num_v_heads,
+-    const int head_v_dim) {
+-  using KERNEL = gated_delta_rule_kernel<T, StateT, k_bucket_size>;
++    const int head_v_dim,
++    const bool skip_nonpositive_cache_indices) {
++  using KERNEL = gated_delta_rule_kernel<T, StateT, k_bucket_size, false>;
+   auto range = KERNEL::get_nd_range(batch_size, num_v_heads, head_v_dim);
+   assert(head_v_dim % KERNEL::v_dim_per_group == 0);
+   queue.submit([&](sycl::handler& cgh) {
+@@ -310,7 +419,62 @@ void kernel_launcher(
+         num_k_heads,
+         head_k_dim,
+         num_v_heads,
+-        head_v_dim);
++        head_v_dim,
++        skip_nonpositive_cache_indices);
++    cgh.parallel_for(range, task);
++  });
++}
++
++template <typename T, typename StateT, int k_bucket_size>
++void source_kernel_launcher(
++    sycl::queue& queue,
++    T* core_attn_out,
++    const T* q,
++    const T* k,
++    const T* v,
++    const T* b,
++    const T* a,
++    const float* A_log,
++    const T* dt_bias,
++    StateT* ssm_state,
++    const int ssm_state_stride_0,
++    const int* query_start_loc,
++    const int* cache_indices,
++    const int* source_cache_indices,
++    const bool* has_initial_state,
++    const int batch_size,
++    const int total_seqlen,
++    const int num_k_heads,
++    const int head_k_dim,
++    const int num_v_heads,
++    const int head_v_dim,
++    const bool skip_nonpositive_cache_indices) {
++  using KERNEL = gated_delta_rule_kernel<T, StateT, k_bucket_size, true>;
++  auto range = KERNEL::get_nd_range(batch_size, num_v_heads, head_v_dim);
++  assert(head_v_dim % KERNEL::v_dim_per_group == 0);
++  queue.submit([&](sycl::handler& cgh) {
++    KERNEL task(
++        core_attn_out,
++        q,
++        k,
++        v,
++        b,
++        a,
++        A_log,
++        dt_bias,
++        ssm_state,
++        ssm_state_stride_0,
++        query_start_loc,
++        cache_indices,
++        source_cache_indices,
++        has_initial_state,
++        batch_size,
++        total_seqlen,
++        num_k_heads,
++        head_k_dim,
++        num_v_heads,
++        head_v_dim,
++        skip_nonpositive_cache_indices);
+     cgh.parallel_for(range, task);
+   });
+ }
+@@ -332,7 +496,9 @@ void gated_delta_rule(
+     const std::optional<torch::Tensor>&
+         has_initial_state,  // [batch_size] or None
+     const int num_prefills,
+-    const int num_decodes) {
++    const int num_decodes,
++    const bool skip_nonpositive_cache_indices = false,
++    const std::optional<torch::Tensor>& source_cache_indices = std::nullopt) {
+   if (num_prefills == 0 && num_decodes == 0) {
+     return;
+   }
+@@ -348,6 +514,14 @@ void gated_delta_rule(
+   const int head_v_dim = v.size(2);
+   const int ssm_state_stride_0 = ssm_state.stride(0);
+ 
++  TORCH_CHECK(cache_indices.scalar_type() == at::kInt);
++  TORCH_CHECK(cache_indices.is_contiguous());
++  TORCH_CHECK(cache_indices.numel() >= batch_size);
++  if (source_cache_indices.has_value()) {
++    TORCH_CHECK(source_cache_indices->scalar_type() == at::kInt);
++    TORCH_CHECK(source_cache_indices->is_contiguous());
++    TORCH_CHECK(source_cache_indices->numel() >= batch_size);
++  }
+   TORCH_CHECK(num_v_heads % num_k_heads == 0);
+   TORCH_CHECK(
+       A_log.scalar_type() == at::kFloat,
+@@ -364,30 +538,61 @@ void gated_delta_rule(
+   TORCH_CHECK(head_k_dim % sub_group_size == 0);
+   const int k_bucket_size = head_k_dim / sub_group_size;
+ 
+-#define KERNEL_LAUNCHER(scalar_t, state_scalar_t, k_bucket_size)   \
+-  kernel_launcher<scalar_t, state_scalar_t, k_bucket_size>(        \
+-      queue,                                                       \
+-      reinterpret_cast<scalar_t*>(core_attn_out.data_ptr()),       \
+-      reinterpret_cast<scalar_t*>(q.data_ptr()),                   \
+-      reinterpret_cast<scalar_t*>(k.data_ptr()),                   \
+-      reinterpret_cast<scalar_t*>(v.data_ptr()),                   \
+-      reinterpret_cast<scalar_t*>(b.data_ptr()),                   \
+-      reinterpret_cast<scalar_t*>(a.data_ptr()),                   \
+-      reinterpret_cast<float*>(A_log.data_ptr()),                  \
+-      reinterpret_cast<scalar_t*>(dt_bias.data_ptr()),             \
+-      reinterpret_cast<state_scalar_t*>(ssm_state.data_ptr()),     \
+-      ssm_state_stride_0,                                          \
+-      reinterpret_cast<int*>(query_start_loc.data_ptr()),          \
+-      reinterpret_cast<int*>(cache_indices.data_ptr()),            \
+-      has_initial_state.has_value()                                \
+-          ? reinterpret_cast<bool*>(has_initial_state->data_ptr()) \
+-          : nullptr,                                               \
+-      batch_size,                                                  \
+-      total_seqlen,                                                \
+-      num_k_heads,                                                 \
+-      head_k_dim,                                                  \
+-      num_v_heads,                                                 \
+-      head_v_dim);
++#define KERNEL_LAUNCHER(scalar_t, state_scalar_t, k_bucket_size)       \
++  do {                                                                \
++    if (source_cache_indices.has_value()) {                            \
++      source_kernel_launcher<scalar_t, state_scalar_t, k_bucket_size>( \
++          queue,                                                       \
++          reinterpret_cast<scalar_t*>(core_attn_out.data_ptr()),       \
++          reinterpret_cast<scalar_t*>(q.data_ptr()),                   \
++          reinterpret_cast<scalar_t*>(k.data_ptr()),                   \
++          reinterpret_cast<scalar_t*>(v.data_ptr()),                   \
++          reinterpret_cast<scalar_t*>(b.data_ptr()),                   \
++          reinterpret_cast<scalar_t*>(a.data_ptr()),                   \
++          reinterpret_cast<float*>(A_log.data_ptr()),                  \
++          reinterpret_cast<scalar_t*>(dt_bias.data_ptr()),             \
++          reinterpret_cast<state_scalar_t*>(ssm_state.data_ptr()),     \
++          ssm_state_stride_0,                                          \
++          reinterpret_cast<int*>(query_start_loc.data_ptr()),          \
++          reinterpret_cast<int*>(cache_indices.data_ptr()),            \
++          reinterpret_cast<int*>(source_cache_indices->data_ptr()),    \
++          has_initial_state.has_value()                                \
++              ? reinterpret_cast<bool*>(has_initial_state->data_ptr()) \
++              : nullptr,                                               \
++          batch_size,                                                  \
++          total_seqlen,                                                \
++          num_k_heads,                                                 \
++          head_k_dim,                                                  \
++          num_v_heads,                                                 \
++          head_v_dim,                                                  \
++          skip_nonpositive_cache_indices);                             \
++    } else {                                                           \
++      kernel_launcher<scalar_t, state_scalar_t, k_bucket_size>(        \
++          queue,                                                       \
++          reinterpret_cast<scalar_t*>(core_attn_out.data_ptr()),       \
++          reinterpret_cast<scalar_t*>(q.data_ptr()),                   \
++          reinterpret_cast<scalar_t*>(k.data_ptr()),                   \
++          reinterpret_cast<scalar_t*>(v.data_ptr()),                   \
++          reinterpret_cast<scalar_t*>(b.data_ptr()),                   \
++          reinterpret_cast<scalar_t*>(a.data_ptr()),                   \
++          reinterpret_cast<float*>(A_log.data_ptr()),                  \
++          reinterpret_cast<scalar_t*>(dt_bias.data_ptr()),             \
++          reinterpret_cast<state_scalar_t*>(ssm_state.data_ptr()),     \
++          ssm_state_stride_0,                                          \
++          reinterpret_cast<int*>(query_start_loc.data_ptr()),          \
++          reinterpret_cast<int*>(cache_indices.data_ptr()),            \
++          has_initial_state.has_value()                                \
++              ? reinterpret_cast<bool*>(has_initial_state->data_ptr()) \
++              : nullptr,                                               \
++          batch_size,                                                  \
++          total_seqlen,                                                \
++          num_k_heads,                                                 \
++          head_k_dim,                                                  \
++          num_v_heads,                                                 \
++          head_v_dim,                                                  \
++          skip_nonpositive_cache_indices);                             \
++    }                                                                  \
++  } while (0);
+ 
+ #define BUCKET_DISPATCH(scalar_t, state_scalar_t, k_bucket_size) \
+   switch (k_bucket_size) {                                       \
+@@ -441,4 +646,4 @@ void gated_delta_rule(
+ #undef KERNEL_LAUNCHER
+ }
+ 
+-}  // namespace gdn
+\ No newline at end of file
++}  // namespace gdn
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index 79857b5..0ecc806 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -1,4 +1,5 @@
+ #include <algorithm>
++#include <array>
+ #include <cctype>
+ #include <cstdlib>
+ #include <memory>
+@@ -34,6 +35,57 @@ bool gdn_env_truthy(const char* name) {
+   return value == "1" || value == "true" || value == "yes" || value == "on";
+ }
+ 
++template <typename T>
++void trace_conv_publish_once(
++    sycl::queue& queue,
++    const torch::Tensor& conv_state,
++    const torch::Tensor& state_indices) {
++  if (!gdn_env_truthy("VLLM_XPU_GDN_TRACE_CONV_PUBLISH_ONCE")) {
++    return;
++  }
++  static std::once_flag trace_once;
++  std::call_once(trace_once, [&] {
++    TORCH_CHECK(state_indices.size(0) >= 1 && state_indices.size(1) >= 4);
++    std::array<int, 4> slots{};
++    const auto* state_ptr = reinterpret_cast<const int*>(state_indices.data_ptr());
++    for (int col = 0; col < 4; ++col) {
++      queue
++          .memcpy(
++              &slots[col],
++              state_ptr + col * state_indices.stride(1),
++              sizeof(int))
++          .wait_and_throw();
++    }
++
++    const auto* conv_ptr = reinterpret_cast<const T*>(conv_state.data_ptr());
++    for (int col = 0; col < 4; ++col) {
++      std::array<T, 3> history{};
++      for (int pos = 0; pos < 3; ++pos) {
++        queue
++            .memcpy(
++                &history[pos],
++                conv_ptr + static_cast<int64_t>(slots[col]) *
++                               conv_state.stride(0) +
++                    static_cast<int64_t>(pos) * conv_state.stride(1),
++                sizeof(T))
++            .wait_and_throw();
++      }
++      TORCH_WARN(
++          "VLLM_XPU_GDN_TRACE_CONV_PUBLISH_ONCE col=",
++          col,
++          " slot=",
++          slots[col],
++          " channel0_history=[",
++          static_cast<float>(history[0]),
++          ",",
++          static_cast<float>(history[1]),
++          ",",
++          static_cast<float>(history[2]),
++          "]");
++    }
++  });
++}
++
+ struct GdnSpecDecodeScratch {
+   const void* owner_key{nullptr};
+   c10::Device device{c10::DeviceType::CPU};
+@@ -882,6 +934,8 @@ void gdn_attention_spec_decode(
+       gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE");
+   const bool native_spec_recurrent_serial_exact =
+       gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT");
++  const bool native_spec_completion_barrier =
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_COMPLETION_BARRIER");
+   const bool persistent_scratch =
+       gdn_env_truthy("VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH");
+   if (native_spec_recurrent_serial_exact) {
+@@ -987,12 +1041,22 @@ void gdn_attention_spec_decode(
+         num_accepted_tokens,                                              \
+         num_spec_decodes,                                                 \
+         native_spec_prefix_base_state);                                   \
+-    gdn::spec_decode::select_state_column(                                \
+-        queue,                                                            \
+-        running_state_indices,                                            \
+-        spec_state_indices_tensor,                                        \
+-        0,                                                                \
+-        num_spec_decodes);                                                \
++    if (native_spec_recurrent_serial_exact) {                             \
++      /* Exact mode is hard-gated to one request.  A one-element column   \
++       * view is already the cache-index vector expected by the ordinary  \
++       * recurrent kernel, so avoid a device select kernel here. */       \
++      running_state_indices =                                             \
++          spec_state_indices_tensor                                      \
++              .narrow(0, 0, num_spec_decodes)                            \
++              .select(1, 0);                                             \
++    } else {                                                              \
++      gdn::spec_decode::select_state_column(                              \
++          queue,                                                          \
++          running_state_indices,                                         \
++          spec_state_indices_tensor,                                     \
++          0,                                                              \
++          num_spec_decodes);                                              \
++    }                                                                     \
+     gdn::spec_decode::copy_conv_base_from_indices<scalar_t>(              \
+         queue,                                                            \
+         base_conv_state,                                                  \
+@@ -1037,23 +1101,47 @@ void gdn_attention_spec_decode(
+         reorder_input);                                                   \
+     gdn::spec_decode::scatter_z<scalar_t>(                                \
+         queue, z, compact_z, spec_token_indices, num_actual_tokens);       \
+-    gdn::spec_decode::store_conv_states_exact<scalar_t>(                  \
+-        queue,                                                            \
+-        conv_state,                                                       \
+-        base_conv_state,                                                  \
+-        projected_states_qkvz,                                            \
+-        spec_token_indices,                                               \
+-        spec_query_start_loc,                                             \
+-        spec_state_indices_tensor,                                        \
+-        num_spec_decodes,                                                 \
+-        spec_state_indices_tensor.size(1),                                \
+-        num_actual_tokens,                                                \
+-        local_num_k_heads,                                                \
+-        head_k_dim,                                                       \
+-        local_num_v_heads,                                                \
+-        head_v_dim,                                                       \
+-        reorder_input,                                                    \
+-        native_spec_prefix_base_state);                                   \
++    if (native_spec_recurrent_serial_exact) {                             \
++      /* The exact proof mode is deliberately non-prefix-base.  Use the    \
++       * established token-indexed publisher here: unlike the newer 3-D   \
++       * prefix-capable publisher, it covers all four verifier rows when  \
++       * the physical convolution cache includes speculative padding. */  \
++      gdn::spec_decode::store_conv_states<scalar_t>(                      \
++          queue,                                                          \
++          conv_state,                                                     \
++          base_conv_state,                                                \
++          projected_states_qkvz,                                          \
++          spec_token_indices,                                             \
++          spec_query_start_loc,                                           \
++          spec_state_indices_tensor,                                      \
++          num_spec_decodes,                                               \
++          num_actual_tokens,                                              \
++          local_num_k_heads,                                              \
++          head_k_dim,                                                     \
++          local_num_v_heads,                                              \
++          head_v_dim,                                                     \
++          reorder_input);                                                 \
++      trace_conv_publish_once<scalar_t>(                                  \
++          queue, conv_state, spec_state_indices_tensor);                  \
++    } else {                                                              \
++      gdn::spec_decode::store_conv_states_exact<scalar_t>(                \
++          queue,                                                          \
++          conv_state,                                                     \
++          base_conv_state,                                                \
++          projected_states_qkvz,                                          \
++          spec_token_indices,                                             \
++          spec_query_start_loc,                                           \
++          spec_state_indices_tensor,                                      \
++          num_spec_decodes,                                               \
++          spec_state_indices_tensor.size(1),                              \
++          num_actual_tokens,                                              \
++          local_num_k_heads,                                              \
++          head_k_dim,                                                     \
++          local_num_v_heads,                                              \
++          head_v_dim,                                                     \
++          reorder_input,                                                  \
++          native_spec_prefix_base_state);                                 \
++    }                                                                     \
+     if (native_spec_prefix_base_state) {                                  \
+       gdn::spec_decode::copy_conv_rows_to_indices<scalar_t>(              \
+           queue,                                                          \
+@@ -1063,24 +1151,16 @@ void gdn_attention_spec_decode(
+     }                                                                     \
+     if (native_spec_recurrent_serial_exact) {                             \
+       for (int64_t spec_pos = 0; spec_pos < 4; ++spec_pos) {             \
+-        gdn::spec_decode::select_state_column(                            \
+-            queue,                                                        \
+-            running_state_indices,                                       \
+-            spec_state_indices_tensor,                                    \
+-            spec_pos,                                                     \
+-            1);                                                           \
++        auto current_state_indices =                                     \
++            spec_state_indices_tensor                                    \
++                .narrow(0, 0, num_spec_decodes)                          \
++                .select(1, spec_pos);                                     \
++        auto source_state_indices = current_state_indices;               \
+         if (spec_pos > 0) {                                               \
+-          gdn::spec_decode::select_state_column(                          \
+-              queue,                                                      \
+-              accepted_state_indices,                                    \
+-              spec_state_indices_tensor,                                  \
+-              spec_pos - 1,                                               \
+-              1);                                                         \
+-          gdn::spec_decode::copy_ssm_rows_dispatch(                       \
+-              queue,                                                      \
+-              ssm_state,                                                  \
+-              running_state_indices,                                     \
+-              accepted_state_indices);                                   \
++          source_state_indices =                                         \
++              spec_state_indices_tensor                                  \
++                  .narrow(0, 0, num_spec_decodes)                        \
++                  .select(1, spec_pos - 1);                               \
+         }                                                                 \
+         auto core_step = exact_core.narrow(0, spec_pos, 1);              \
+         auto q_step = q.narrow(0, spec_pos, 1);                          \
+@@ -1100,10 +1180,12 @@ void gdn_attention_spec_decode(
+             dt_bias,                                                      \
+             ssm_state,                                                    \
+             exact_query_start_loc,                                       \
+-            running_state_indices,                                       \
++            current_state_indices,                                       \
+             std::nullopt,                                                 \
+             0,                                                            \
+-            1);                                                           \
++            1,                                                            \
++            true,                                                         \
++            source_state_indices);                                        \
+       }                                                                   \
+       gdn::spec_decode::scatter_z<scalar_t>(                              \
+           queue,                                                          \
+@@ -1144,6 +1226,21 @@ void gdn_attention_spec_decode(
+     SPEC_LAUNCHER(scalar_t);
+   }
+ #undef SPEC_LAUNCHER
++
++  if (native_spec_recurrent_serial_exact &&
++      native_spec_completion_barrier) {
++    // The exact verifier submits its recurrent/state transaction as a chain
++    // of raw SYCL kernels. Publish one device-side tail marker before the
++    // custom op returns so a following command-graph replay cannot begin from
++    // partially updated GDN state. This is asynchronous: it does not wait on
++    // the host and the in-order queue preserves the full preceding chain.
++    queue.ext_oneapi_submit_barrier();
++    static std::once_flag completion_barrier_marker_once;
++    std::call_once(completion_barrier_marker_once, [] {
++      TORCH_WARN(
++          "VLLM_XPU_GDN_NATIVE_SPEC_COMPLETION_BARRIER reached");
++    });
++  }
+ }
+ 
+ void gdn_replayssm_stage_conv(
+diff --git a/csrc/xpu/gdn_attn/spec_decode.hpp b/csrc/xpu/gdn_attn/spec_decode.hpp
+index bda89bd..0dbadd4 100644
+--- a/csrc/xpu/gdn_attn/spec_decode.hpp
++++ b/csrc/xpu/gdn_attn/spec_decode.hpp
+@@ -1,6 +1,7 @@
+ #pragma once
+ 
+ #include <algorithm>
++#include <limits>
+ 
+ #include <sycl/sycl.hpp>
+ #include <torch/all.h>
+@@ -584,7 +585,6 @@ struct store_conv_states_kernel {
+       const int total_spec_tokens,
+       const int num_actual_tokens,
+       const int state_cols,
+-      const int state_len,
+       const int num_k_heads,
+       const int head_k_dim,
+       const int num_v_heads,
+@@ -3816,8 +3816,45 @@ void copy_ssm_rows(
+     const torch::Tensor& dest_indices,
+     const torch::Tensor& src_indices) {
+   using KERNEL = copy_ssm_rows_kernel<StateT>;
+-  const int rows = dest_indices.size(0);
+-  const int state_elems = ssm_state.stride(0);
++  TORCH_CHECK(
++      ssm_state.dim() == 4 && ssm_state.size(0) > 0,
++      "ssm_state must be a non-empty rank-4 tensor");
++  TORCH_CHECK(
++      ssm_state.stride(3) == 1 &&
++          ssm_state.stride(2) == ssm_state.size(3) &&
++          ssm_state.stride(1) == ssm_state.size(2) * ssm_state.size(3),
++      "ssm_state must have a dense logical payload within each row");
++  TORCH_CHECK(
++      dest_indices.dim() == 1 && src_indices.dim() == 1 &&
++          dest_indices.scalar_type() == at::kInt &&
++          src_indices.scalar_type() == at::kInt &&
++          dest_indices.is_contiguous() && src_indices.is_contiguous() &&
++          dest_indices.numel() == src_indices.numel() &&
++          dest_indices.numel() > 0,
++      "SSM row indices must be equal-length non-empty contiguous int32 vectors");
++  TORCH_CHECK(
++      dest_indices.numel() <= std::numeric_limits<int>::max(),
++      "SSM row count exceeds int indexing range");
++  const int rows = static_cast<int>(dest_indices.numel());
++  // The production hybrid-cache allocation can give each logical SSM row a
++  // stride that also spans convolution-state/padding bytes in the unified
++  // page.  Copying stride(0) therefore overwrites the destination slot's
++  // convolution history.  Copy only the logical SSM payload while retaining
++  // stride(0) solely as the per-slot address increment.
++  const int64_t logical_state_elems =
++      ssm_state.size(1) * ssm_state.size(2) * ssm_state.size(3);
++  TORCH_CHECK(
++      logical_state_elems > 0 &&
++          logical_state_elems <= std::numeric_limits<int>::max(),
++      "logical SSM row exceeds int indexing range");
++  const int state_elems = static_cast<int>(logical_state_elems);
++  TORCH_CHECK(
++      rows <= std::numeric_limits<int>::max() / state_elems,
++      "SSM row copy launch exceeds int indexing range");
++  TORCH_CHECK(
++      ssm_state.stride(0) >= logical_state_elems &&
++          ssm_state.stride(0) <= std::numeric_limits<int>::max(),
++      "SSM physical row stride is invalid or exceeds int indexing range");
+   auto range = KERNEL::get_nd_range(rows, state_elems);
+   queue.submit([&](sycl::handler& cgh) {
+     KERNEL task(
+diff --git a/csrc/xpu/onednn/int4_gemm_w4a16.h b/csrc/xpu/onednn/int4_gemm_w4a16.h
+index 88cff6b..cee4beb 100644
+--- a/csrc/xpu/onednn/int4_gemm_w4a16.h
++++ b/csrc/xpu/onednn/int4_gemm_w4a16.h
+@@ -1,5 +1,8 @@
+ #pragma once
+ 
++#include <cstdlib>
++#include <string_view>
++
+ #include <c10/xpu/XPUStream.h>
+ #include <dnnl.hpp>
+ #include <torch/torch.h>
+@@ -16,7 +19,8 @@ static inline void dnnl_matmul_w4a16_int4(
+     const std::optional<torch::Tensor>& bias,
+     const torch::Tensor& scale,  // [k/group_size, n]
+     const torch::Tensor& zp,     // [k/group_size, n/8]
+-    int64_t group_size) {
++    int64_t group_size,
++    bool input_dependency) {
+   auto src_sz = mat1.sizes();
+   auto o_sz = result.sizes();
+ 
+@@ -157,6 +161,28 @@ static inline void dnnl_matmul_w4a16_int4(
+   arg_handles.emplace_back(DNNL_ARG_SCRATCHPAD, scratchpad_tensor.data_ptr());
+ 
+   auto& strm = GpuStreamManager::Instance().get_stream();
+-  matmul_ext.execute(strm, engine, std::move(arg_handles), arg_off);
++  std::vector<sycl::event> deps;
++  if (input_dependency) {
++    // Materialize the current PyTorch stream tail and pass it to oneDNN as an
++    // explicit primitive dependency.  This protects graph/eager handoffs
++    // where relying on the implicit queue tail allowed the first W4A16
++    // projection to consume an unfinished normalization result.
++    auto& queue = c10::xpu::getCurrentXPUStream().queue();
++    deps.emplace_back(queue.ext_oneapi_submit_barrier());
++    TORCH_WARN_ONCE("VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY reached");
++  }
++  auto done = matmul_ext.execute(
++      strm, engine, std::move(arg_handles), arg_off, std::move(deps));
++  if (const char* barrier = std::getenv(
++          "VLLM_XPU_ONEDNN_INT4_COMPLETION_BARRIER");
++      barrier != nullptr && std::string_view(barrier) == "1") {
++    // oneDNN returns the primitive's actual SYCL completion event.  Publish
++    // that event onto PyTorch's current stream before a TP collective can
++    // consume the output on oneCCL's stream.  This is an asynchronous device
++    // dependency; it does not host-wait the GEMM.
++    auto& queue = c10::xpu::getCurrentXPUStream().queue();
++    queue.ext_oneapi_submit_barrier({done});
++    TORCH_WARN_ONCE("VLLM_XPU_ONEDNN_INT4_COMPLETION_BARRIER reached");
++  }
+ }
+ }  // namespace oneDNN
+diff --git a/csrc/xpu/onednn/int8_gemm_w8a8.h b/csrc/xpu/onednn/int8_gemm_w8a8.h
+index 0d369f3..06f4f23 100644
+--- a/csrc/xpu/onednn/int8_gemm_w8a8.h
++++ b/csrc/xpu/onednn/int8_gemm_w8a8.h
+@@ -186,6 +186,17 @@ static inline void dnnl_matmul_w8a8_int8(
+   arg_handles.emplace_back(DNNL_ARG_SCRATCHPAD, scratchpad_tensor.data_ptr());
+ 
+   auto& strm = GpuStreamManager::Instance().get_stream();
+-  matmul_ext.execute(strm, engine, std::move(arg_handles), arg_off);
++  auto done =
++      matmul_ext.execute(strm, engine, std::move(arg_handles), arg_off);
++  if (const char* barrier = std::getenv(
++          "VLLM_XPU_ONEDNN_INT8_COMPLETION_BARRIER");
++      barrier != nullptr && barrier[0] == '1' && barrier[1] == '\0') {
++    // Publish the oneDNN completion event onto PyTorch's current stream before
++    // a TP all-gather consumes the local LM-head logits on oneCCL's stream.
++    // This is an asynchronous device dependency, not a host wait.
++    auto& queue = c10::xpu::getCurrentXPUStream().queue();
++    queue.ext_oneapi_submit_barrier({done});
++    TORCH_WARN_ONCE("VLLM_XPU_ONEDNN_INT8_COMPLETION_BARRIER reached");
++  }
+ }
+ }  // namespace oneDNN
+diff --git a/csrc/xpu/onednn/onednn_ext.h b/csrc/xpu/onednn/onednn_ext.h
+index bd93054..351966d 100644
+--- a/csrc/xpu/onednn/onednn_ext.h
++++ b/csrc/xpu/onednn/onednn_ext.h
+@@ -689,7 +689,8 @@ class primitive_ext : public primitive {
+       const stream& astream,
+       const engine& aengine,
+       std::vector<std::pair<int, void*>>&& handles,
+-      int slot_off = 2) {
++      int slot_off = 2,
++      std::vector<sycl::event> deps = {}) {
+     auto off = slot_off;
+     for (const auto& p : handles) {
+       auto& m_arg = mem_arg_cache[off];
+@@ -704,7 +705,6 @@ class primitive_ext : public primitive {
+     }
+ 
+     sycl::event return_event;
+-    std::vector<sycl::event> deps{};
+     error::wrap_c_api(
+         dnnl_sycl_interop_primitive_execute(
+             this->get(), astream.get(), off, c_args, &deps, &return_event),
+diff --git a/csrc/xpu/onednn/onednn_matmul.cpp b/csrc/xpu/onednn/onednn_matmul.cpp
+index 5f5b2b4..348bd59 100644
+--- a/csrc/xpu/onednn/onednn_matmul.cpp
++++ b/csrc/xpu/onednn/onednn_matmul.cpp
+@@ -130,14 +130,23 @@ torch::Tensor int4_gemm_w4a16(
+     const torch::Tensor& B_scale,  // [k/group_size, n]
+     const torch::Tensor& B_zp,     // [k/group_size, n/8]
+     int64_t group_size,
+-    const std::optional<torch::Tensor>& g_idx) {
++    const std::optional<torch::Tensor>& g_idx,
++    bool input_dependency) {
+   const at::DeviceGuard device_guard(A_.device());
+ 
+   // For GPTQ with desc_act=True scenario
+   auto A = g_idx.has_value() ? A_.index_select(-1, g_idx.value()) : A_;
+   torch::Tensor result = check_and_create_output_tensor(A, B, A.scalar_type());
+ 
+-  oneDNN::dnnl_matmul_w4a16_int4(result, A, B, bias, B_scale, B_zp, group_size);
++  oneDNN::dnnl_matmul_w4a16_int4(
++      result,
++      A,
++      B,
++      bias,
++      B_scale,
++      B_zp,
++      group_size,
++      input_dependency);
+   return result;
+ }
+ 
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index c0c432d..dd44a65 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -2,6 +2,12 @@
+ 
+ #include <torch/all.h>
+ 
++torch::Tensor qwen_gemma_rms_norm_f32_weight_out(
++    const torch::Tensor& input,
++    const torch::Tensor& weight,
++    torch::Tensor& output,
++    double epsilon);
++
+ /**
+  * Make sure the shape of A and B is correctly setting before calling below gemm
+  * method implemented with OneDNN.
+@@ -39,7 +45,8 @@ torch::Tensor int4_gemm_w4a16(
+     const torch::Tensor& B_scale,
+     const torch::Tensor& B_zp,
+     int64_t group_size,
+-    const std::optional<torch::Tensor>& g_idx);
++    const std::optional<torch::Tensor>& g_idx,
++    bool input_dependency);
+ 
+ torch::Tensor int4_gemm_w4a8(
+     const torch::Tensor& A_,
+diff --git a/csrc/xpu/qwen_gemma_rms_norm.cpp b/csrc/xpu/qwen_gemma_rms_norm.cpp
+new file mode 100644
+index 0000000..12b9aa3
+--- /dev/null
++++ b/csrc/xpu/qwen_gemma_rms_norm.cpp
+@@ -0,0 +1,237 @@
++#include <ATen/DeviceGuard.h>
++#include <sycl/sycl.hpp>
++#include <torch/all.h>
++
++#include <algorithm>
++#include <limits>
++
++#include "utils.h"
++
++namespace {
++
++template <typename scalar_t>
++class qwen_gemma_rms_norm_f32_weight_kernel {
++ public:
++  qwen_gemma_rms_norm_f32_weight_kernel(
++      scalar_t* output,
++      const scalar_t* input,
++      const float* weight,
++      int64_t input_stride_d2,
++      int64_t input_stride_d3,
++      int64_t input_stride_d4,
++      int64_t input_shape_d2,
++      int64_t input_shape_d3,
++      int num_dims,
++      int hidden_size,
++      float epsilon,
++      sycl::local_accessor<float, 1> inverse_rms)
++      : output_(output),
++        input_(input),
++        weight_(weight),
++        input_stride_d2_(input_stride_d2),
++        input_stride_d3_(input_stride_d3),
++        input_stride_d4_(input_stride_d4),
++        input_shape_d2_(input_shape_d2),
++        input_shape_d3_(input_shape_d3),
++        num_dims_(num_dims),
++        hidden_size_(hidden_size),
++        epsilon_(epsilon),
++        inverse_rms_(inverse_rms) {}
++
++  void operator() [[sycl::reqd_sub_group_size(32)]] (
++      const sycl::nd_item<1>& item) const {
++    const int64_t row = item.get_group(0);
++    int64_t input_offset = 0;
++    if (num_dims_ == 2) {
++      input_offset = row * input_stride_d2_;
++    } else if (num_dims_ == 3) {
++      const int64_t batch = row / input_shape_d2_;
++      const int64_t head = row % input_shape_d2_;
++      input_offset = batch * input_stride_d3_ + head * input_stride_d2_;
++    } else {
++      const int64_t rows_per_batch = input_shape_d3_ * input_shape_d2_;
++      const int64_t batch = row / rows_per_batch;
++      const int64_t within_batch = row % rows_per_batch;
++      const int64_t sequence = within_batch / input_shape_d2_;
++      const int64_t head = within_batch % input_shape_d2_;
++      input_offset = batch * input_stride_d4_ +
++                     sequence * input_stride_d3_ + head * input_stride_d2_;
++    }
++
++    const scalar_t* input_row = input_ + input_offset;
++    float sum_squares = 0.0f;
++    for (int column = item.get_local_id(0); column < hidden_size_;
++         column += item.get_local_range(0)) {
++      const float value = static_cast<float>(input_row[column]);
++      sum_squares += value * value;
++    }
++
++    sum_squares = sycl::reduce_over_group(
++        item.get_group(), sum_squares, sycl::plus<float>());
++    if (item.get_local_id(0) == 0) {
++      inverse_rms_[0] =
++          sycl::rsqrt(sum_squares / static_cast<float>(hidden_size_) + epsilon_);
++    }
++    item.barrier(sycl::access::fence_space::local_space);
++
++    const float scale = inverse_rms_[0];
++    scalar_t* output_row = output_ + row * hidden_size_;
++    for (int column = item.get_local_id(0); column < hidden_size_;
++         column += item.get_local_range(0)) {
++      const float value = static_cast<float>(input_row[column]);
++      output_row[column] =
++          static_cast<scalar_t>(value * scale * weight_[column]);
++    }
++  }
++
++ private:
++  scalar_t* output_;
++  const scalar_t* input_;
++  const float* weight_;
++  const int64_t input_stride_d2_;
++  const int64_t input_stride_d3_;
++  const int64_t input_stride_d4_;
++  const int64_t input_shape_d2_;
++  const int64_t input_shape_d3_;
++  const int num_dims_;
++  const int hidden_size_;
++  const float epsilon_;
++  sycl::local_accessor<float, 1> inverse_rms_;
++};
++
++}  // namespace
++
++template <typename torch_scalar_t>
++void launch_qwen_gemma_rms_norm_f32_weight(
++    const torch::Tensor& input,
++    const torch::Tensor& weight,
++    torch::Tensor& output,
++    double epsilon,
++    int num_rows,
++    int hidden_size,
++    int num_dims,
++    int64_t stride_d2,
++    int64_t stride_d3,
++    int64_t stride_d4,
++    int64_t shape_d2,
++    int64_t shape_d3) {
++  using sycl_t = typename vllm::xpu::SyclTypeTrait<torch_scalar_t>::Type;
++  auto* input_ptr = reinterpret_cast<const sycl_t*>(
++      input.data_ptr<torch_scalar_t>());
++  auto* output_ptr =
++      reinterpret_cast<sycl_t*>(output.data_ptr<torch_scalar_t>());
++  const float* weight_ptr = weight.data_ptr<float>();
++  const size_t local_size = static_cast<size_t>(std::min(hidden_size, 1024));
++  auto& queue = vllm::xpu::vllmGetQueue(input.device().index());
++  TORCH_CHECK(
++      queue.has_property<sycl::property::queue::in_order>(),
++      "qwen Gemma RMSNorm requires an in-order XPU queue");
++
++  auto done = queue.submit([&](sycl::handler& handler) {
++    sycl::local_accessor<float, 1> inverse_rms(sycl::range<1>(1), handler);
++    handler.parallel_for(
++        sycl::nd_range<1>(
++            sycl::range<1>(static_cast<size_t>(num_rows) * local_size),
++            sycl::range<1>(local_size)),
++        qwen_gemma_rms_norm_f32_weight_kernel<sycl_t>(
++            output_ptr,
++            input_ptr,
++            weight_ptr,
++            stride_d2,
++            stride_d3,
++            stride_d4,
++            shape_d2,
++            shape_d3,
++            num_dims,
++            hidden_size,
++            static_cast<float>(epsilon),
++            inverse_rms));
++  });
++  queue.ext_oneapi_submit_barrier({done});
++}
++
++torch::Tensor qwen_gemma_rms_norm_f32_weight_out(
++    const torch::Tensor& input,
++    const torch::Tensor& weight,
++    torch::Tensor& output,
++    double epsilon) {
++  const at::DeviceGuard device_guard(input.device());
++  TORCH_CHECK(input.is_xpu(), "qwen Gemma RMSNorm input must be on XPU");
++  TORCH_CHECK(weight.is_xpu(), "qwen Gemma RMSNorm weight must be on XPU");
++  TORCH_CHECK(output.is_xpu(), "qwen Gemma RMSNorm output must be on XPU");
++  TORCH_CHECK(
++      input.device() == weight.device() && input.device() == output.device(),
++      "qwen Gemma RMSNorm tensors must be on the same XPU device");
++  TORCH_CHECK(
++      input.scalar_type() == torch::kFloat16 ||
++          input.scalar_type() == torch::kFloat32,
++      "qwen Gemma RMSNorm requires FP16 or FP32 input");
++  TORCH_CHECK(
++      weight.scalar_type() == torch::kFloat32,
++      "qwen Gemma RMSNorm requires FP32 weight");
++  TORCH_CHECK(
++      output.scalar_type() == input.scalar_type(),
++      "qwen Gemma RMSNorm output dtype must match input dtype");
++  TORCH_CHECK(
++      input.dim() >= 2 && input.dim() <= 4,
++      "qwen Gemma RMSNorm expects rank 2, 3, or 4 input");
++  TORCH_CHECK(input.size(-1) > 0, "qwen Gemma RMSNorm hidden size must be positive");
++  TORCH_CHECK(
++      input.size(-1) % 32 == 0,
++      "qwen Gemma RMSNorm hidden size must be divisible by 32");
++  TORCH_CHECK(input.stride(-1) == 1, "qwen Gemma RMSNorm input last dimension must be contiguous");
++  TORCH_CHECK(weight.dim() == 1, "qwen Gemma RMSNorm weight must be rank 1");
++  TORCH_CHECK(weight.is_contiguous(), "qwen Gemma RMSNorm weight must be contiguous");
++  TORCH_CHECK(
++      weight.numel() == input.size(-1),
++      "qwen Gemma RMSNorm weight size must equal input hidden size");
++  TORCH_CHECK(output.is_contiguous(), "qwen Gemma RMSNorm output must be contiguous");
++  TORCH_CHECK(output.sizes() == input.sizes(), "qwen Gemma RMSNorm output shape mismatch");
++
++  const int64_t hidden_size_i64 = input.size(-1);
++  const int64_t num_rows_i64 = input.numel() / hidden_size_i64;
++  TORCH_CHECK(
++      hidden_size_i64 <= std::numeric_limits<int>::max() &&
++          num_rows_i64 <= std::numeric_limits<int>::max(),
++      "qwen Gemma RMSNorm dimensions exceed kernel limits");
++
++  const int hidden_size = static_cast<int>(hidden_size_i64);
++  const int num_rows = static_cast<int>(num_rows_i64);
++  const int num_dims = input.dim();
++  const int64_t stride_d2 = input.stride(-2);
++  const int64_t stride_d3 = num_dims >= 3 ? input.stride(-3) : 0;
++  const int64_t stride_d4 = num_dims >= 4 ? input.stride(-4) : 0;
++  const int64_t shape_d2 = num_dims >= 3 ? input.size(-2) : 0;
++  const int64_t shape_d3 = num_dims >= 4 ? input.size(-3) : 0;
++
++  if (input.scalar_type() == torch::kFloat16) {
++    launch_qwen_gemma_rms_norm_f32_weight<c10::Half>(
++        input,
++        weight,
++        output,
++        epsilon,
++        num_rows,
++        hidden_size,
++        num_dims,
++        stride_d2,
++        stride_d3,
++        stride_d4,
++        shape_d2,
++        shape_d3);
++  } else {
++    launch_qwen_gemma_rms_norm_f32_weight<float>(
++        input,
++        weight,
++        output,
++        epsilon,
++        num_rows,
++        hidden_size,
++        num_dims,
++        stride_d2,
++        stride_d3,
++        stride_d4,
++        shape_d2,
++        shape_d3);
++  }
++  return output;
++}
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index ac87cea..3ffda54 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -11,6 +11,14 @@
+ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+   at::Tag stride_tag = at::Tag::needs_fixed_stride_order;
+ 
++  xpu_ops.def(
++      "qwen_gemma_rms_norm_f32_weight_out(Tensor input, Tensor weight, "
++      "Tensor! output, float epsilon) -> Tensor");
++  xpu_ops.impl(
++      "qwen_gemma_rms_norm_f32_weight_out",
++      torch::kXPU,
++      &qwen_gemma_rms_norm_f32_weight_out);
++
+   xpu_ops.def(
+       "fp8_gemm(Tensor A, Tensor B, ScalarType? out_dtype, Tensor? A_scale_, "
+       "Tensor? B_scale_, Tensor? bias_) -> Tensor");
+@@ -28,7 +36,8 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+ 
+   xpu_ops.def(
+       "int4_gemm_w4a16(Tensor A, Tensor B, Tensor? bias, Tensor B_scale, "
+-      "Tensor B_zp, int group_size, Tensor? g_idx) -> Tensor");
++      "Tensor B_zp, int group_size, Tensor? g_idx, "
++      "bool input_dependency=False) -> Tensor");
+   xpu_ops.impl("int4_gemm_w4a16", torch::kXPU, &int4_gemm_w4a16);
+ 
+   xpu_ops.def(

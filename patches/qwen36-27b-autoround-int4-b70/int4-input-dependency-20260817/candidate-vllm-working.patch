@@ -1,0 +1,663 @@
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index 92907c58e..022e8bf5c 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -99,6 +99,7 @@ if hasattr(torch.ops._xpu_C, "int4_gemm_w4a16"):
+         qzeros: torch.Tensor,
+         group_size: int,
+         group_idx: torch.Tensor | None = None,
++        input_dependency: bool = False,
+     ) -> torch.Tensor:
+         input_2d = input.view(-1, input.shape[-1])
+         M = input_2d.size(0)
+@@ -106,6 +107,30 @@ if hasattr(torch.ops._xpu_C, "int4_gemm_w4a16"):
+         return torch.empty((M, N), dtype=input.dtype, device=input.device)
+ 
+ 
++if hasattr(torch.ops._xpu_C, "qwen_gemma_rms_norm_f32_weight_out"):
++
++    @register_fake("_xpu_C::qwen_gemma_rms_norm_f32_weight_out")
++    def _qwen_gemma_rms_norm_f32_weight_out_fake(
++        input: torch.Tensor,
++        weight: torch.Tensor,
++        output: torch.Tensor,
++        epsilon: float,
++    ) -> torch.Tensor:
++        del input, weight, epsilon
++        return output
++
++
++def qwen_gemma_rms_norm_f32_weight_out(
++    input: torch.Tensor,
++    weight: torch.Tensor,
++    output: torch.Tensor,
++    epsilon: float,
++) -> torch.Tensor:
++    return torch.ops._xpu_C.qwen_gemma_rms_norm_f32_weight_out(
++        input, weight, output, epsilon
++    )
++
++
+ def _xpu_gdn_trace_int_env(name: str, default: int) -> int:
+     try:
+         return int(os.environ.get(name, str(default)) or default)
+@@ -1117,6 +1142,24 @@ def _gdn_attention_core_xpu_impl(
+                 attn_metadata, "num_accepted_tokens", None)
+             if num_accepted_tokens is not None:
+                 num_accepted_tokens = num_accepted_tokens.contiguous()
++            if _xpu_gdn_truthy_env(
++                "VLLM_XPU_GDN_NATIVE_SPEC_METADATA_SNAPSHOT"
++            ):
++                # Diagnostic isolation for endpoint-only state corruption.
++                # A contiguous one-request metadata view may still alias a
++                # live builder buffer.  Clone every device input and drain the
++                # current stream before handing it to the raw SYCL op so this
++                # arm cannot observe later metadata reuse or an incomplete
++                # asynchronous producer.
++                spec_query_start_loc = spec_query_start_loc.clone()
++                spec_state_indices_tensor = spec_state_indices_tensor.clone()
++                spec_token_indx = spec_token_indx.clone()
++                if num_accepted_tokens is not None:
++                    num_accepted_tokens = num_accepted_tokens.clone()
++                torch.xpu.synchronize()
++                logger.warning_once(
++                    "VLLM_XPU_GDN_NATIVE_SPEC_METADATA_SNAPSHOT reached"
++                )
+             torch.ops._xpu_C.gdn_attention_spec_decode(
+                 core_attn_out,
+                 z,
+@@ -2489,9 +2532,40 @@ class xpu_ops:
+                 fake_impl=_xpu_fp8_paged_mqa_logits_fake,
+             )
+ 
++            capture_native_spec_gdn = (
++                os.environ.get("VLLM_XPU_GDN_CAPTURE_NATIVE_SPEC", "0")
++                .strip()
++                .lower()
++                in ("1", "true", "yes", "on")
++            )
++            native_spec_recurrent_serial_exact = (
++                os.environ.get(
++                    "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT", "0"
++                )
++                .strip()
++                .lower()
++                in ("1", "true", "yes", "on")
++            )
++            if capture_native_spec_gdn and native_spec_recurrent_serial_exact:
++                logger.warning(
++                    "Ignoring VLLM_XPU_GDN_CAPTURE_NATIVE_SPEC for exact "
++                    "recurrent mode; exact GDN must remain an eager graph "
++                    "break with authoritative dynamic metadata"
++                )
++                capture_native_spec_gdn = False
++            if capture_native_spec_gdn:
++                logger.warning(
++                    "VLLM_XPU_GDN_CAPTURE_NATIVE_SPEC enabled: registering "
++                    "gdn_attention_core_xpu without the eager graph break"
++                )
++
+             direct_register_custom_op(
+                 op_name="gdn_attention_core_xpu",
+-                op_func=eager_break_during_capture(_gdn_attention_core_xpu_impl),
++                op_func=(
++                    _gdn_attention_core_xpu_impl
++                    if capture_native_spec_gdn
++                    else eager_break_during_capture(_gdn_attention_core_xpu_impl)
++                ),
+                 mutates_args=["core_attn_out", "z"],
+                 fake_impl=_gdn_attention_core_xpu_fake,
+             )
+diff --git a/vllm/config/compilation.py b/vllm/config/compilation.py
+index 04bc792f2..1d33a59d5 100644
+--- a/vllm/config/compilation.py
++++ b/vllm/config/compilation.py
+@@ -1205,6 +1205,27 @@ class CompilationConfig:
+                     "under VLLM_XPU_SPLIT_C10D_COLLECTIVES=1."
+                 )
+ 
++            if (
++                os.environ.get(
++                    "VLLM_XPU_SPLIT_QWEN_GEMMA_RMSNORM_SYCL", "0"
++                )
++                == "1"
++                and self.splitting_ops is not None
++            ):
++                # The experimental row-independent Qwen Gemma RMSNorm uses a
++                # raw SYCL submission. Mixed PIECEWISE capture accepts it, but
++                # decode capture can stall when the submission is recorded
++                # inside an Inductor segment. Keep the custom op as an eager
++                # partition boundary while retaining command graphs for the
++                # surrounding target computation.
++                op = "_xpu_C::qwen_gemma_rms_norm_f32_weight_out"
++                if op not in self.splitting_ops:
++                    self.splitting_ops.append(op)
++                logger.warning_once(
++                    "Keeping Qwen Gemma SYCL RMSNorm outside XPU command "
++                    "graphs under VLLM_XPU_SPLIT_QWEN_GEMMA_RMSNORM_SYCL=1."
++                )
++
+             if (
+                 os.environ.get(
+                     "VLLM_XPU_COMPILE_ALLREDUCE_STATIC_INPLACE", "0"
+diff --git a/vllm/model_executor/kernels/linear/mixed_precision/xpu.py b/vllm/model_executor/kernels/linear/mixed_precision/xpu.py
+index 68528bbd4..d0f1bd946 100644
+--- a/vllm/model_executor/kernels/linear/mixed_precision/xpu.py
++++ b/vllm/model_executor/kernels/linear/mixed_precision/xpu.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
+ 
+ import torch
+ from torch.nn.parameter import Parameter
+@@ -125,6 +126,9 @@ class XPUwNa16LinearKernel(MPLinearKernel):
+             w_zp,
+             self.config.group_size,
+             w_gidx,
++            os.environ.get("VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY") == "1"
++            and os.environ.get("VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE")
++            == "all_int4",
+         )
+         return out
+ 
+diff --git a/vllm/model_executor/layers/batch_invariant.py b/vllm/model_executor/layers/batch_invariant.py
+index ecb1d6616..8c16510fa 100644
+--- a/vllm/model_executor/layers/batch_invariant.py
++++ b/vllm/model_executor/layers/batch_invariant.py
+@@ -822,6 +822,49 @@ def _rms_norm_kernel(
+         tl.store(output_row_start_ptr + col_idx, output, mask=mask)
+ 
+ 
++def rms_norm_out(
++    input: torch.Tensor,
++    weight: torch.Tensor,
++    output: torch.Tensor,
++    eps: float = 1e-6,
++) -> None:
++    """Write the fixed-reduction RMS result into a caller-owned tensor.
++
++    The caller-owned form matters for XPU command-graph capture: allocation is
++    visible to torch.compile, while the opaque custom op owns only the Triton
++    submission that mutates the stable output buffer.
++    """
++    assert weight.dim() == 1, "Weight must be 1-dimensional"
++    assert input.shape[-1] == weight.shape[0], (
++        f"Input last dimension ({input.shape[-1]}) must match "
++        f"weight dimension ({weight.shape[0]})"
++    )
++    assert output.shape == input.shape
++    assert output.dtype == input.dtype
++    assert output.device == input.device
++    assert input.is_contiguous()
++    assert weight.is_contiguous()
++    assert output.is_contiguous()
++
++    n_cols = input.shape[-1]
++    input_2d = input.view(-1, n_cols)
++    output_2d = output.view(-1, n_cols)
++    n_rows = input_2d.shape[0]
++
++    BLOCK_SIZE = 1024
++    grid = (n_rows,)
++    _rms_norm_kernel[grid](
++        input_2d,
++        weight,
++        output_2d,
++        input_2d.stride(0),
++        output_2d.stride(0),
++        n_cols,
++        eps,
++        BLOCK_SIZE=BLOCK_SIZE,
++    )
++
++
+ def rms_norm(
+     input: torch.Tensor, weight: torch.Tensor, eps: float = 1e-6
+ ) -> torch.Tensor:
+@@ -845,57 +888,55 @@ def rms_norm(
+         f"weight dimension ({weight.shape[0]})"
+     )
+ 
+-    # Flatten all dimensions except the last one
+-    original_shape = input.shape
+-    input_2d = input.reshape(-1, input.shape[-1])
+-    input_2d = input_2d.contiguous()
++    input = input.contiguous()
+     weight = weight.contiguous()
+-
+-    n_rows, n_cols = input_2d.shape
+-
+-    output = torch.empty_like(input_2d)
+-    BLOCK_SIZE = 1024
+-    grid = (n_rows,)
+-    _rms_norm_kernel[grid](
+-        input_2d,
+-        weight,
+-        output,
+-        input_2d.stride(0),
+-        output.stride(0),
+-        n_cols,
+-        eps,
+-        BLOCK_SIZE=BLOCK_SIZE,
+-    )
+-    return output.reshape(original_shape)
++    output = torch.empty_like(input)
++    rms_norm_out(input, weight, output, eps=eps)
++    return output
+ 
+ 
+ def _qwen_gemma_rms_norm_batch_invariant_impl(
+-    input: torch.Tensor, weight: torch.Tensor, eps: float
+-) -> torch.Tensor:
+-    return rms_norm(input, weight, eps=eps)
++    input: torch.Tensor,
++    weight: torch.Tensor,
++    output: torch.Tensor,
++    eps: float,
++) -> None:
++    rms_norm_out(input, weight, output, eps=eps)
+ 
+ 
+ def _qwen_gemma_rms_norm_batch_invariant_fake(
+-    input: torch.Tensor, weight: torch.Tensor, eps: float
+-) -> torch.Tensor:
+-    del weight, eps
+-    return torch.empty_like(input)
++    input: torch.Tensor,
++    weight: torch.Tensor,
++    output: torch.Tensor,
++    eps: float,
++) -> None:
++    del input, weight, output, eps
+ 
+ 
+-# Keep the Triton kernel opaque to torch.compile.  Directly tracing a Triton
++# Keep the Triton kernel opaque to torch.compile. Directly tracing a Triton
+ # launch currently makes mutation analysis fail on XPU and can stall PIECEWISE
+-# graph capture.  The custom op has no mutations and returns a fresh tensor.
++# graph capture. The custom op has no mutations and returns a fresh tensor.
+ direct_register_custom_op(
+     op_name="qwen_gemma_rms_norm_batch_invariant",
+     op_func=_qwen_gemma_rms_norm_batch_invariant_impl,
+     fake_impl=_qwen_gemma_rms_norm_batch_invariant_fake,
++    mutates_args=["output"],
+ )
+ 
+ 
+ def qwen_gemma_rms_norm_batch_invariant(
+     input: torch.Tensor, weight: torch.Tensor, eps: float
+ ) -> torch.Tensor:
+-    return torch.ops.vllm.qwen_gemma_rms_norm_batch_invariant(input, weight, eps)
++    # Some Q/K normalization inputs are strided views. Keep their materialized
++    # copy visible to torch.compile rather than allocating it from inside the
++    # opaque custom op during command-graph capture.
++    input = input.contiguous()
++    weight = weight.contiguous()
++    output = torch.empty_like(input)
++    torch.ops.vllm.qwen_gemma_rms_norm_batch_invariant(
++        input, weight, output, eps
++    )
++    return output
+ 
+ 
+ def rms_norm_batch_invariant(
+diff --git a/vllm/model_executor/layers/layernorm.py b/vllm/model_executor/layers/layernorm.py
+index 841c5b446..ca0cf576d 100644
+--- a/vllm/model_executor/layers/layernorm.py
++++ b/vllm/model_executor/layers/layernorm.py
+@@ -168,6 +168,58 @@ class GemmaRMSNorm(CustomOp):
+                 else x + residual
+             )
+             residual = x
++        if os.environ.get(
++            "VLLM_XPU_QWEN_GEMMA_RMSNORM_SYCL", "0"
++        ).strip().lower() in ("1", "true", "yes", "on"):
++            from vllm._xpu_ops import qwen_gemma_rms_norm_f32_weight_out
++
++            # Keep all allocations and any required materialization visible to
++            # torch.compile. The XPU custom op only mutates the stable output
++            # and publishes its SYCL completion on the current stream.
++            x_contiguous = x.contiguous()
++            weight_contiguous = weight.contiguous()
++            out = torch.empty_like(x_contiguous)
++            qwen_gemma_rms_norm_f32_weight_out(
++                x_contiguous,
++                weight_contiguous,
++                out,
++                self.variance_epsilon,
++            )
++            return (
++                out.to(orig_dtype)
++                if residual is None
++                else (out.to(orig_dtype), residual)
++            )
++        if (
++            os.environ.get(
++                "VLLM_XPU_QWEN_GEMMA_RMSNORM_SERIAL_M4", "0"
++            ).strip().lower()
++            in ("1", "true", "yes", "on")
++            and x.dim() == 2
++            and x.shape[0] == 4
++        ):
++            # A committed speculative token may occupy any of the four target
++            # rows, while the zero-accept reference always uses row zero. Use
++            # the ordinary one-row RMS op for every row so all four execute the
++            # same reduction geometry and rounding as the reference. This is
++            # deliberately limited to the fixed-width verifier; prefill and
++            # every other width retain the incumbent graph-safe path.
++            out = torch.cat(
++                [
++                    ir.ops.rms_norm(
++                        x[row : row + 1],
++                        weight,
++                        self.variance_epsilon,
++                    )
++                    for row in range(4)
++                ],
++                dim=0,
++            )
++            return (
++                out.to(orig_dtype)
++                if residual is None
++                else (out.to(orig_dtype), residual)
++            )
+         if os.environ.get(
+             "VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT", "0"
+         ).strip().lower() in ("1", "true", "yes", "on"):
+diff --git a/vllm/model_executor/layers/linear.py b/vllm/model_executor/layers/linear.py
+index dbd5577ee..af75f1ccf 100644
+--- a/vllm/model_executor/layers/linear.py
++++ b/vllm/model_executor/layers/linear.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ import itertools
++import os
+ from abc import abstractmethod
+ 
+ import torch
+@@ -278,6 +279,7 @@ class LinearBase(PluggableLayer):
+         self.return_bias = return_bias
+         self.disable_tp = disable_tp
+         self.tp_rank = get_tensor_model_parallel_rank() if not disable_tp else 0
++        self.prefix = prefix
+         self.tp_size = get_tensor_model_parallel_world_size() if not disable_tp else 1
+ 
+     def update_param_tp_status(self):
+@@ -1555,6 +1557,16 @@ class RowParallelLinear(LinearBase):
+         bias_ = None if (self.tp_rank > 0 or self.skip_bias_add) else self.bias
+         output_parallel = self.quant_method.apply(self, input_parallel, bias_)
+ 
++        sync_prefix = os.environ.get(
++            "VLLM_XPU_SYNC_ROW_PARALLEL_AFTER_GEMM_PREFIX", ""
++        )
++        if sync_prefix and sync_prefix in self.prefix:
++            torch.xpu.current_stream(output_parallel.device).synchronize()
++            logger.warning_once(
++                "VLLM_XPU_SYNC_ROW_PARALLEL_AFTER_GEMM_PREFIX reached: %s",
++                self.prefix,
++            )
++
+         if self.reduce_results and self.tp_size > 1:
+             output = tensor_model_parallel_all_reduce(output_parallel)
+         else:
+diff --git a/vllm/model_executor/layers/quantization/inc.py b/vllm/model_executor/layers/quantization/inc.py
+index 3a4d7d403..91c4c3189 100644
+--- a/vllm/model_executor/layers/quantization/inc.py
++++ b/vllm/model_executor/layers/quantization/inc.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
+ from fractions import Fraction
+ from functools import lru_cache
+ from typing import TYPE_CHECKING, Any
+@@ -35,6 +36,20 @@ if TYPE_CHECKING:
+ logger = init_logger(__name__)
+ 
+ 
++# Diagnostic-only arithmetic identity: execute single-row W4A16 projections
++# with the same M=4 oneDNN descriptor used by the packed MTP3 verifier, then
++# retain row zero.  This is intentionally default-off until the frozen target
++# and speculative suites establish whether M-dependent GEMM arithmetic is the
++# remaining parity boundary.
++_XPU_INT4_GEMM_FIXED_M4 = os.getenv("VLLM_XPU_INT4_GEMM_FIXED_M4") == "1"
++_XPU_INT4_INPUT_DEPENDENCY = (
++    os.getenv("VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY") == "1"
++)
++_XPU_INT4_INPUT_DEPENDENCY_SCOPE = os.getenv(
++    "VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE", "layer0_gdn_in"
++)
++
++
+ class INCConfig(QuantizationConfig):
+     """Config class for Intel Neural Compressor (INC).
+     Repo: https://github.com/intel/neural-compressor
+@@ -681,15 +696,44 @@ class INCXPULinearMethod(INCXPULinearBase):
+         # from process_weights_after_loading — pass directly to kernel.
+         out_shape = x.shape[:-1] + (layer.qweight.shape[1],)
+         reshaped_x = x.reshape(-1, x.shape[-1])
++        execution_x = reshaped_x
++        layer_prefix = str(getattr(layer, "prefix", ""))
++        fixed_m4 = (
++            _XPU_INT4_GEMM_FIXED_M4
++            and reshaped_x.shape[0] == 1
++            and layer_prefix.startswith("language_model.model.layers.")
++        )
++        if fixed_m4:
++            # Functional padding keeps this branch traceable by torch.compile
++            # and avoids exposing a partially initialized mutation to capture.
++            execution_x = torch.nn.functional.pad(reshaped_x, (0, 0, 0, 3))
++        if _XPU_INT4_INPUT_DEPENDENCY_SCOPE in ("all_inc", "all_int4"):
++            dependency_scope_match = True
++        elif _XPU_INT4_INPUT_DEPENDENCY_SCOPE == "all_gdn_in":
++            dependency_scope_match = layer_prefix.endswith(
++                "linear_attn.in_proj_qkvz"
++            )
++        elif _XPU_INT4_INPUT_DEPENDENCY_SCOPE == "all_target":
++            dependency_scope_match = layer_prefix.startswith(
++                "language_model.model.layers."
++            )
++        else:
++            dependency_scope_match = layer_prefix.endswith(
++                "model.layers.0.linear_attn.in_proj_qkvz"
++            )
++        input_dependency = _XPU_INT4_INPUT_DEPENDENCY and dependency_scope_match
+         out = torch.ops._xpu_C.int4_gemm_w4a16(
+-            reshaped_x,
++            execution_x,
+             layer.qweight,
+             bias,
+             layer.scales,
+             layer.qzeros,
+             self.group_size,
+             None,  # g_idx not needed: desc_act is always False for INC models
++            input_dependency,
+         )
++        if fixed_m4:
++            out = out[:1]
+         return out.reshape(out_shape)
+ 
+ 
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index ebb232b86..c5993812b 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -337,6 +337,12 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+                     layer._xpu_lm_head_int4_qzeros,
+                     layer._xpu_lm_head_int4_group_size,
+                     None,
++                    os.environ.get("VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY")
++                    == "1"
++                    and os.environ.get(
++                        "VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE"
++                    )
++                    == "all_int4",
+                 )
+             fallback_margin_s = os.environ.get(
+                 "VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN", "0")
+@@ -372,11 +378,21 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+             and hasattr(layer, "_xpu_lm_head_int8_scale")
+         ):
+             x_contiguous = x if x.is_contiguous() else x.contiguous()
++            execution_x = x_contiguous
++            fixed_m4 = (
++                self._env_enabled("VLLM_XPU_INT8_LM_HEAD_FIXED_M4")
++                and x_contiguous.dim() == 2
++                and x_contiguous.shape[0] == 1
++            )
++            if fixed_m4:
++                # Diagnostic arithmetic identity: select the same M=4 oneDNN
++                # W8A8 primitive as the packed verifier, then retain row zero.
++                execution_x = F.pad(x_contiguous, (0, 0, 0, 3))
+             with timed_region("lm_head_int8.per_token_quant"):
+                 x_q, x_scale = torch.ops._xpu_C.per_token_quant_int8_xpu(
+-                    x_contiguous)
++                    execution_x)
+             with timed_region("lm_head_int8.gemm_w8a8"):
+-                return torch.ops._xpu_C.int8_gemm_w8a8(
++                logits = torch.ops._xpu_C.int8_gemm_w8a8(
+                     x_q,
+                     x_scale,
+                     layer._xpu_lm_head_int8_weight_t,
+@@ -384,6 +400,9 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+                     layer.weight.dtype,
+                     None,
+                 )
++            if fixed_m4:
++                logits = logits[:1]
++            return logits
+         if envs.VLLM_BATCH_INVARIANT and current_platform.is_cuda_alike():
+             return linear_batch_invariant(x, layer.weight, bias)
+         return dispatch_unquantized_gemm()(layer, x, layer.weight, bias)
+diff --git a/vllm/model_executor/models/qwen3_next.py b/vllm/model_executor/models/qwen3_next.py
+index f14bd1060..ebfaf1c2e 100644
+--- a/vllm/model_executor/models/qwen3_next.py
++++ b/vllm/model_executor/models/qwen3_next.py
+@@ -437,6 +437,7 @@ class Qwen3NextAttention(nn.Module):
+     ) -> None:
+         super().__init__()
+         self.config = config
++        self.layer_idx = extract_layer_index(prefix)
+         self.hidden_size = config.hidden_size
+         tp_size = get_tensor_model_parallel_world_size()
+         self.total_num_heads = config.num_attention_heads
+@@ -547,6 +548,20 @@ class Qwen3NextAttention(nn.Module):
+ 
+         with timed_region("qwen3_next.full_attention.o_proj"):
+             output[:], _ = self.o_proj(attn_output)
++        if os.environ.get(
++            "VLLM_XPU_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ", "0"
++        ).strip().lower() in ("1", "true", "yes", "on"):
++            layer_filter = os.environ.get(
++                "VLLM_XPU_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ_LAYERS", ""
++            )
++            wanted_layers = {
++                item.strip() for item in layer_filter.split(",") if item.strip()
++            }
++            if not wanted_layers or str(self.layer_idx) in wanted_layers:
++                torch.xpu.current_stream(output.device).synchronize()
++                logger.warning_once(
++                    "VLLM_XPU_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ reached"
++                )
+ 
+ 
+ class Qwen3NextDecoderLayer(nn.Module):
+@@ -653,6 +668,23 @@ class Qwen3NextDecoderLayer(nn.Module):
+             hidden_states=hidden_states,
+             residual=residual,
+         )
++        barrier_layers = os.environ.get(
++            "VLLM_XPU_QWEN_DEVICE_BARRIER_AFTER_INPUT_NORM_LAYERS", "0"
++        )
++        if (
++            os.environ.get(
++                "VLLM_XPU_QWEN_DEVICE_BARRIER_AFTER_INPUT_NORM", "0"
++            )
++            == "1"
++            and str(self.layer_idx)
++            in {part.strip() for part in barrier_layers.split(",") if part.strip()}
++        ):
++            # Diagnostic-only, device-side ordering edge.  Unlike the trace
++            # helper above, this does not copy data to the host or wait there.
++            stream = torch.xpu.current_stream(hidden_states.device)
++            ready = torch.xpu.Event()
++            ready.record(stream)
++            stream.wait_event(ready)
+ 
+         self_attention_output = torch.empty_like(hidden_states)
+         if self.layer_type == "linear_attention":
+diff --git a/vllm/v1/attention/backends/flash_attn.py b/vllm/v1/attention/backends/flash_attn.py
+index 27905e45f..ac88beafa 100755
+--- a/vllm/v1/attention/backends/flash_attn.py
++++ b/vllm/v1/attention/backends/flash_attn.py
+@@ -934,6 +934,22 @@ class FlashAttentionImpl(AttentionImpl):
+                     num_splits=attn_metadata.max_num_splits,
+                     s_aux=self.sinks,
+                 )
++                if (
++                    current_platform.is_xpu()
++                    and max_seqlen_q > 1
++                    and os.environ.get(
++                        "VLLM_XPU_FA_SYNC_AFTER_PACKED", "0"
++                    ).strip().lower()
++                    in ("1", "true", "yes", "on")
++                ):
++                    # Diagnostic only: isolate whether the packed
++                    # FlashAttention producer is visible to the immediately
++                    # following projection/collective.  A permanent repair
++                    # must preserve asynchronous execution.
++                    torch.xpu.current_stream(query.device).synchronize()
++                    logger.warning_once(
++                        "VLLM_XPU_FA_SYNC_AFTER_PACKED reached"
++                    )
+                 return output
+ 
+         # Cascade attention (rare case).
+diff --git a/vllm/v1/attention/backends/gdn_attn.py b/vllm/v1/attention/backends/gdn_attn.py
+index 5fce1ff59..0863f71f4 100644
+--- a/vllm/v1/attention/backends/gdn_attn.py
++++ b/vllm/v1/attention/backends/gdn_attn.py
+@@ -567,6 +567,19 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             .lower()
+             in ("1", "true", "yes", "on")
+         )
++        native_spec_recurrent_serial_exact = (
++            os.environ.get(
++                "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
++        # The exact recurrent op is intentionally an eager graph break.  The
++        # global PIECEWISE mode does not make its metadata graph-captured, so
++        # staging into one reusable builder buffer introduces an unsafe second
++        # asynchronous publication path across requests.  Consume the model
++        # runner's authoritative block/accept/query buffers directly instead.
++        disable_spec_static_graph_metadata |= native_spec_recurrent_serial_exact
+ 
+         use_static_spec_graph_metadata = (
+             self.use_full_cuda_graph
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 071ed52e7..6d4e4f0a8 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -13524,6 +13524,15 @@ class GPUModelRunner(
+                 profile_seq_lens=profile_seq_lens,
+                 xpu_static_dummy_metadata=xpu_static_dummy_metadata,
+             )
++        if os.environ.get("VLLM_XPU_SYNC_AFTER_CUDAGRAPH_WARMUP", "0") == "1":
++            # XPU partition boundaries may enqueue raw SYCL work which is not
++            # represented by the following command graph. Finish that
++            # startup-only warmup work before beginning capture.
++            torch.accelerator.synchronize()
++            logger.info_once(
++                "VLLM_XPU_SYNC_AFTER_CUDAGRAPH_WARMUP reached before graph "
++                "capture"
++            )
+         self._dummy_run(
+             desc.num_tokens,
+             cudagraph_runtime_mode=cudagraph_runtime_mode,

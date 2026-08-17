@@ -9,11 +9,12 @@ Live service and active-lane authority remains [`CURRENT.md`](../CURRENT.md).
 
 ## Current Decision
 
-Qwen3.6 27B AutoRound INT4 TP2 is the active research lane. The latest
-Inductor-partition candidate reaches a four-arm central median of
-**`99.798 tok/s`**, but still fails strict target and repeat parity. Correctness
-must be repaired before further speed promotion. The distinct Q8 target-only
-TP2 lane remains closed and banked at **`35.699225 tok/s`** conventional.
+Qwen3.6 27B AutoRound INT4 TP2 is paused for operator discussion. A narrowed
+layer-0 dependency passed a warmed four-prompt screen at **`110.675 tok/s`**
+with 4/4 exact outputs, but the normal 25-prompt candidate remains only 17/25
+exact at `96.519 tok/s`. The result is inconclusive, not production-ready, and
+no LocalMaxxing row was submitted. The distinct Q8 target-only TP2 lane remains
+closed and banked at **`35.699225 tok/s`** conventional.
 
 Start with:
 
@@ -33,7 +34,7 @@ neutral or slower and remain default-off/reverted.
 | --- | --- | --- | --- |
 | 27B GGUF Q8_0, target-only | 2x ASRock B70, llama.cpp/SYCL TP2 | Current no-speculation record: `35.699225 tok/s` conventional; 12/12 exact, cache-zero; closed after pass 1 | [handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) |
 | 27B GGUF Q8_0, target-only baseline | 1x B70, llama.cpp/SYCL | `15.550257 tok/s` 128-token median; exact 32K F16-KV retrieval baseline; service/concurrency experiments are separate evidence | [experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md) |
-| 27B AutoRound INT4, MTP3 | 2x B70, vLLM/XPU TP2 | Active recovery: Inductor-partition central estimate `99.798 tok/s` (range `99.610`–`100.003`), but **fails target parity on 11–12/25 prompts and fresh-start repeat parity** | [validation](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md) and [compact result](../results/qwen36-27b-autoround-int4-b70/partition-validation-20260815.json) |
+| 27B AutoRound INT4, MTP3 | 2x B70, vLLM/XPU TP2 | Paused/inconclusive: latest bounded dependency screen is 4/4 exact at `110.675 tok/s`, but normal 25-prompt evidence is only 17/25 exact at `96.519 tok/s` | [closeout](../notes/2026-08-17-qwen36-int4-input-dependency-closeout.md) and [controls](../data/qwen36-27b-autoround-int4-input-dependency-controls-20260817.json) |
 | 27B AutoRound INT4, target-verified MTP | 1x B70, vLLM/XPU | Historical high `68.236263 tok/s`; later isolated confirmation was `65.4-66.7` | [result packet](../results/qwen36-27b-autoround-int4-b70/README.md) |
 | 27B GGUF Q4_0, DFlash5 | 1x B70, llama.cpp/SYCL | Closed strict record `47.818818 tok/s` historical (`47.340630` conventional); unchanged Q4 target verifies accepted tokens | [closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
 | 27B GGUF UD-Q4_K_XL, intrinsic MTP | 1x B70, llama.cpp/SYCL | Best valid p-min support row `31.480049 tok/s`; different target/quality identity | [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
@@ -108,6 +109,12 @@ fixes the old recurring token-68 canary and raises the four-arm central median
 to `99.798 tok/s`, but complete 512-token outputs still differ from target on
 11–12/25 prompts. A lone `100.003 tok/s` arm is not a valid record and was not
 submitted.
+
+The 2026-08-17 dependency bisection is another distinct diagnostic identity.
+Its final warmed four-prompt run is 4/4 exact at `110.675 tok/s`, but raw
+controls contradict one another and it has not passed a matched final-source
+25-prompt gate. Preserve it as an inconclusive patch packet; do not present it
+as the replacement record.
 
 ### 27B Q4/DFlash And Intrinsic MTP
 

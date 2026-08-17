@@ -48,7 +48,7 @@ audit, but they do not define one comparable benchmark class.
 | --- | --- |
 | 27B Q8_0 target-only, two-B70 TP2 | [handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md), [repro](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md), [patch](../patches/qwen36-27b-q8-tp2-asrock-b70/README.md) |
 | 27B Q8_0 one-B70 baseline/service research | [experiment packet](../experiments/qwen36-27b-q8-gguf-b70/README.md) |
-| 27B AutoRound INT4 MTP | [historical 95.385 repro](../repro/qwen36-27b-autoround-int4-b70/README.md), [source bundle](../patches/qwen36-27b-autoround-int4-b70/record-20260711/README.md), [2026-08-15 independent validation](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md) |
+| 27B AutoRound INT4 MTP | [historical 95.385 repro](../repro/qwen36-27b-autoround-int4-b70/README.md), [source bundle](../patches/qwen36-27b-autoround-int4-b70/record-20260711/README.md), [independent validation](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md), [2026-08-17 inconclusive dependency closeout](../notes/2026-08-17-qwen36-int4-input-dependency-closeout.md) |
 | 27B Q4_0 DFlash | [closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
 | 27B intrinsic-MTP Q4 | [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
 | 35B Quark W8A8 INT8 | [result packet](../results/qwen36-35b-quark-int8-b70/README.md) |
@@ -65,6 +65,12 @@ the current bar: four speculative arms centered at `98.766 tok/s` across 25
 prompts, while all four differed from target-only on 25/25 prompts and fresh
 same-pair restarts were not token-exact. Do not select the lone `101.078`
 arm or combine this result with the Q8_0 lane.
+
+The later dependency bisection is also nonpromotable. Its final warmed
+four-prompt candidate is 4/4 exact at `110.675 tok/s`, but the normal
+25-prompt candidate remains 17/25 exact at `96.519 tok/s` and the final
+source/binary lacks matched 25-prompt repeats. Use the closeout above rather
+than treating the bounded four-prompt number as a reproduction recipe.
 
 ## Historical Production Recipes
 

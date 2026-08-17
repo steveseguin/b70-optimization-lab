@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "classification": "diagnostic_closeout",
+  "decision": "inconclusive_not_production_ready",
+  "runtime_restored": false,
+  "new_runs_allowed": false,
+  "model": {
+    "repository": "webhie/Qwen3.6-27B-int4-AutoRound",
+    "revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+    "tensor_parallel_size": 2,
+    "devices": [0, 1],
+    "dtype": "float16",
+    "speculative_tokens": 3
+  },
+  "final_candidate_identity": {
+    "llm_optimizations_head": "79685b896ceabc42b54da9cc30eb57bbe3963692",
+    "llm_optimizations_diff_sha256": "ee9f75c99acbc780d685be021b92217d1db141617ffa3826bb6bc5840d8ab534",
+    "vllm_head": "a63ff886e1c9c90f919e8b46a63f34027dfae823",
+    "vllm_diff_sha256": "d36ad75e4f09313a07c9608090a7105b6365b0f9719106c5b53ca2e462e5ac98",
+    "vllm_xpu_kernels_head": "6a40e2baf3f8710b89e48d18bf214708ba2dbf9a",
+    "vllm_xpu_kernels_diff_sha256": "e053da6e606be53e1e552efcc8dcbe906b07f5436349cea7ebe0c50539ba4ae7",
+    "xpu_extension_sha256": "ccbeecb4e49eb3419f5a8734c82e2b004bfdd9dffea5f0a9bbe2e8884041ef38",
+    "gdn_library_sha256": "364d04109105940e1635376875daed6ff7f7462b1c385fe6dd09bce03c6bb056",
+    "compilation_config": {
+      "use_inductor_graph_partition": true,
+      "cudagraph_mode": "PIECEWISE",
+      "cudagraph_capture_sizes": [4],
+      "max_cudagraph_capture_size": 4
+    },
+    "input_dependency_scope": "layer0_gdn_in",
+    "exact_recurrent": true,
+    "exact_gdn_graph_break": true,
+    "int4_completion_barrier": true,
+    "int8_completion_barrier": true
+  },
+  "controls": [
+    {
+      "name": "safe-source target 25",
+      "root": "exact-defaultsafe-25prompt-target-a-20260816",
+      "execution": "compiled PIECEWISE target-only M1",
+      "warmed": true,
+      "correctness": "reference",
+      "strict_tok_s": 50.06664363435945,
+      "manifest_sha256": "3fe54d89ce94a072e06789b22aca000cebb66b25b2a3d07191b7f7295dacf306"
+    },
+    {
+      "name": "safe-default candidate 25",
+      "root": "exact-defaultsafe-25prompt-spec-a-20260816",
+      "execution": "compiled PIECEWISE MTP3; exact GDN eager break",
+      "warmed": true,
+      "correctness": "17/25 exact versus current target",
+      "strict_tok_s": 96.51945586661562,
+      "manifest_sha256": "ea3578d74d59eb0151d8ea5bb70aa1bcec9893d586c1e0ec75b08fe4cce2d004"
+    },
+    {
+      "name": "fixed-M4 INT4 target",
+      "root": "fixed-m4-target-incident-20260816T231208Z",
+      "execution": "compiled PIECEWISE target; M1 INT4 projections padded to M4",
+      "warmed": false,
+      "correctness": "128/128 exact",
+      "strict_tok_s": 11.675074208011692
+    },
+    {
+      "name": "synthetic zero acceptance",
+      "root": "synthetic-zero-incident-20260816T232227Z",
+      "execution": "compiled PIECEWISE MTP3; packed M4; accepted drafts forced to zero",
+      "warmed": false,
+      "correctness": "128/128 exact",
+      "strict_tok_s": 7.043932049368014
+    },
+    {
+      "name": "normal speculative trace",
+      "root": "normal-spec-trace-incident-20260816T232809Z",
+      "execution": "compiled PIECEWISE MTP3 with verifier trace",
+      "warmed": false,
+      "correctness": "first mismatch at output 77: 506 versus target 279",
+      "strict_tok_s": 8.103867039224319
+    },
+    {
+      "name": "Python layer-0 device event",
+      "root": "layer0-device-barrier-nolog-20260816T235406Z",
+      "execution": "raw/eager speculative verifier; device event record/wait",
+      "warmed": false,
+      "correctness": "82/82 exact",
+      "legacy_diagnostic_tok_s": 5.459348942758563
+    },
+    {
+      "name": "broad pre-schema INT4 dependency",
+      "root": "int4-input-dependency-incident-20260817T001904Z",
+      "execution": "raw/eager verifier; dependency on every W4A16 call",
+      "warmed": false,
+      "correctness": "82/82 exact",
+      "legacy_diagnostic_tok_s": 5.457293671102353
+    },
+    {
+      "name": "rebuilt scoped raw dependencies",
+      "roots": [
+        "int4-input-dependency-narrow2-incident-20260817T004653Z",
+        "int4-input-dependency-gdnin-incident-20260817T005319Z",
+        "int4-input-dependency-targetall-incident-20260817T005859Z",
+        "int4-input-dependency-allinc-incident-20260817T010510Z",
+        "int4-input-dependency-allint4-incident-20260817T011135Z"
+      ],
+      "execution": "raw/eager verifier; layer0 through all-INT4 scopes",
+      "warmed": false,
+      "correctness": "all retained wrong token 506 at output 77",
+      "legacy_diagnostic_tok_s_range": [5.492045023647587, 5.535760472631337]
+    },
+    {
+      "name": "compiled all-INT4 dependency",
+      "root": "int4-input-dependency-allint4-compiled-incident-20260817T011842Z",
+      "execution": "compiled PIECEWISE MTP3",
+      "warmed": false,
+      "correctness": "82/82 exact",
+      "legacy_diagnostic_tok_s": 6.72183272318556
+    },
+    {
+      "name": "compiled layer-0 dependency",
+      "root": "int4-input-dependency-layer0-compiled-incident-20260817T012410Z",
+      "execution": "compiled PIECEWISE MTP3; layer0 GDN input only",
+      "warmed": false,
+      "correctness": "82/82 exact",
+      "legacy_diagnostic_tok_s": 6.695381187567011
+    },
+    {
+      "name": "compiled Python model event",
+      "root": "layer0-device-barrier-compiled-incident-20260817T013030Z",
+      "execution": "compiled PIECEWISE MTP3",
+      "warmed": false,
+      "correctness": "first mismatch at output 77: 506 versus target 279",
+      "legacy_diagnostic_tok_s": 6.7076342139337966
+    },
+    {
+      "name": "warmed layer-0 focused canary",
+      "root": "int4-input-dependency-layer0-warm-incident-20260817T013605Z",
+      "execution": "compiled PIECEWISE MTP3; layer0 GDN input dependency",
+      "warmed": true,
+      "correctness": "128/128 exact",
+      "strict_tok_s": 108.96595845567838,
+      "legacy_tok_s": 110.06662470270543
+    },
+    {
+      "name": "final warmed four-prompt candidate",
+      "root": "int4-input-dependency-layer0-four-spec-a-20260817T014146Z",
+      "execution": "compiled PIECEWISE MTP3; layer0 GDN input dependency",
+      "warmed": true,
+      "correctness": "4/4 complete token arrays exact versus both sealed target controls",
+      "suite_classification": "diagnostic_only_quality_skipped",
+      "canonical_token_digest": "6ea4b180f6fa6b589fe04f951450d3d425e911aa963d5149915e73d4fbae5b30",
+      "strict_tok_s": 110.67515578910192,
+      "legacy_tok_s": 111.79308665565851,
+      "manifest_sha256": "988ff654c1a3d0ddf7efd4a6331cfe955ceafdd914d82c90314896b8e2cd36a4"
+    }
+  ],
+  "failed_integrations": [
+    {
+      "root": "layer0-device-barrier-incident-20260816T235008Z",
+      "runner_exit": 6,
+      "classification": "startup compile failure from logger inside Dynamo fullgraph"
+    },
+    {
+      "root": "int4-input-dependency-narrow-incident-20260817T004407Z",
+      "runner_exit": 6,
+      "classification": "schema/fake-function arity integration failure"
+    }
+  ],
+  "contradictions_and_confounders": [
+    "The broad pre-schema dependency repaired the raw incident, but all rebuilt scoped raw variants, including all INT4 calls, did not.",
+    "Compiled layer0 and all-INT4 dependencies repaired the focused incident while the compiled Python model event did not.",
+    "The focused wrong token had only a 0.015625 packed top1/top2 score margin, making token identity sensitive to small ordering or code-generation changes.",
+    "Cold and trace-heavy 5-12 tok/s diagnostics are not comparable to warmed throughput.",
+    "The final four-prompt candidate has no matched 25-prompt target/candidate repeat on the final source and binary.",
+    "The existing 25-prompt candidate predates the dependency patch and is only 17/25 exact at 96.52 tok/s."
+  ],
+  "production_gate": {
+    "target_parity": "not_satisfied_on_normal_25_prompt_gate",
+    "performance": "four_prompt_screen_above_100_but_25_prompt_candidate_below_99_798_historical_gate",
+    "verdict": "inconclusive",
+    "runtime_action": "left_unchanged_pending_operator_discussion"
+  },
+  "preserved_patch_packet": {
+    "path": "patches/qwen36-27b-autoround-int4-b70/int4-input-dependency-20260817",
+    "manifest_sha256": "af2be5218ee3d0a3f5c7a936d405a75a8d199cc63352efe9a81977d3d0cf6303"
+  },
+  "sealed_raw_roots": {
+    "count": 19,
+    "manifest_index": "data/qwen36-27b-autoround-int4-input-dependency-sealed-roots-20260817.sha256",
+    "manifest_index_sha256": "147d2056c4fa94f97030b35ba6fcd2a1ecf78a100bb965d0dbe95b96b38268bb"
+  }
+}
