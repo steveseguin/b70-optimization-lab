@@ -220,6 +220,7 @@ trap cleanup EXIT
   echo "fa_serial_spec_mode=${VLLM_XPU_FA_SERIAL_SPEC_MODE:-}"
   echo "fa_batch_invariant=${VLLM_XPU_FA_BATCH_INVARIANT:-0}"
   echo "rmsnorm_batch_invariant=${VLLM_XPU_RMSNORM_BATCH_INVARIANT:-0}"
+  echo "linear_batch_invariant=${VLLM_XPU_LINEAR_BATCH_INVARIANT:-0}"
   echo "fa_sync_after_packed=${VLLM_XPU_FA_SYNC_AFTER_PACKED:-0}"
   echo "qwen_sync_after_full_attn_o_proj=${VLLM_XPU_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ:-0}"
   echo "qwen_sync_after_full_attn_o_proj_layers=${VLLM_XPU_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ_LAYERS:-}"
