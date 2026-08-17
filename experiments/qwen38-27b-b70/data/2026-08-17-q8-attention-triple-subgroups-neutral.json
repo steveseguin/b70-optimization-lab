@@ -1,0 +1,46 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_performance_neutral",
+  "model": "Qwen3.8-27B-Q8_0.gguf",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "hardware": "2x ASRock Intel Arc Pro B70 32 GiB",
+  "runtime": "oneAPI 2026.1.1; accepted DP4A2 x recurrent-SG24 target-only TP2 stack",
+  "change": "Same-binary GGML_SYCL_MMVQ_Q8_ATTN_SG selector for fused Q/V/K attention triple only",
+  "shape": "K5120, local N=6144+512+512, SG16 rows",
+  "short_p64_n256_r1_mirror": {
+    "sg4": [36.831581, 37.683440],
+    "sg8": [36.797520, 36.839837],
+    "sg12": [37.683739, 37.691301],
+    "sg16": [36.823445, 37.739247],
+    "sg24": [37.729595, 37.735237],
+    "sg32": [37.644718, 37.746218]
+  },
+  "long_p64_n512_r3": {
+    "block_1_sg8_sg24_sg24_sg8": {
+      "sg8": [36.821508, 37.614527],
+      "sg24": [36.797851, 37.084880],
+      "delta_percent": -0.743328
+    },
+    "block_2_sg24_sg8_sg8_sg24": {
+      "sg8": [36.875452, 36.832927],
+      "sg24": [37.728818, 36.822118],
+      "delta_percent": 1.143095
+    },
+    "pooled": {
+      "sg8_mean": 37.036104,
+      "sg24_mean": 37.108417,
+      "delta_percent": 0.195251
+    }
+  },
+  "correctness": {
+    "verify_mismatch": 0,
+    "attention_triple_fusion_exercised": true,
+    "endpoint_gate_run": false,
+    "reason": "Complementary blocks crossed and pooled gain was below resolution"
+  },
+  "artifacts": {
+    "treatment_libggml_sycl_sha256": "03a76f137d00945a26498d2b78f4dc680d7364983b8462a2fb52afb2783fd5b1",
+    "llama_bench_sha256": "74e7d48905196285f6e7cd8c8d0b20a8e25cf3f4731b1e2f0f5f6c49ad8d8865"
+  },
+  "raw_local_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-attention-triple-sg/"
+}

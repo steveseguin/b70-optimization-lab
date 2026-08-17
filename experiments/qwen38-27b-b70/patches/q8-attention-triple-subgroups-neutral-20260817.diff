@@ -1,0 +1,40 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1954,4 +1954,36 @@ bool ggml_sycl_mul_mat_vec_q8_0_reorder_triple(
+-    const size_t num_subgroups = (size_t) ggml_sycl_mmvq_subgroups();
++    static const int attention_triple_subgroups = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_ATTN_SG");
++        if (value == nullptr) {
++            return 0;
++        }
++        const int requested = std::atoi(value);
++        switch (requested) {
++            case 4:
++            case 8:
++            case 12:
++            case 16:
++            case 24:
++            case 32:
++                return requested;
++            default:
++                fprintf(stderr,
++                        "SYCL lab door | invalid GGML_SYCL_MMVQ_Q8_ATTN_SG=%d; using accepted default\n",
++                        requested);
++                return 0;
++        }
++    }();
++    const size_t num_subgroups = attention_triple_subgroups > 0 ?
++        (size_t) attention_triple_subgroups : (size_t) ggml_sycl_mmvq_subgroups();
++    if (attention_triple_subgroups > 0) {
++        static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++        const int device = get_current_device_id();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++            fprintf(stderr,
++                    "SYCL lab door | q8 attention triple workgroup: dev=%d K=%d local-N=%d+%d+%d -> %dxSG16\n",
++                    device, ncols, nrows0, nrows1, nrows2, attention_triple_subgroups);
++            announced[device] = true;
++        }
++    }
+     const int nrows = nrows0 + nrows1 + nrows2;
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);
