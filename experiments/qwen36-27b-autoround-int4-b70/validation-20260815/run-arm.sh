@@ -90,7 +90,7 @@ elif [[ "$mode" == "spec-native-partition-exact" \
   exact_identity=1
   verify_tree "$source_root/vllm" 0394410eb4fb49394dcad3c3abc8d1dae88f5c84 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
-  verify_tree "$source_root/vllm-xpu-kernels" 50e729b1e87559eef8709c9836195f50766ba791 \
+  verify_tree "$source_root/vllm-xpu-kernels" 9bcc0cb9429683fbc84011332c0a3acd698ab8dd \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
 elif [[ "$mode" == "spec-native-partition" || "$mode" == "nospec-latest" ]]; then
   latest_identity=1
@@ -129,7 +129,7 @@ while read -r expected recorded_path; do
     expected=871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e
   fi
   if [[ "$exact_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
-    expected=facc2ca9d81551696a986b754d92109d344637f4bc415ec814a4b829a60227a5
+    expected=a07327acf8c26ab6bcdd3ce609d0b94465c039b2cf5fda2e324024dc2327b221
   fi
   if [[ "$latest_identity" == "1" && "$binary" == "libgdn_attn_kernels_xe_2.so" ]]; then
     expected=e7b9757a317157bb4a63159cc38ad3fc302135ca72954807d189420bbcf1595e
