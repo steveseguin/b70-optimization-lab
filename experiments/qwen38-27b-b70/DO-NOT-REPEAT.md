@@ -1,6 +1,6 @@
 # Qwen3.8 27B do-not-repeat index
 
-Last audited: 2026-08-16
+Last audited: 2026-08-17
 
 This is the first stop before creating another Qwen3.8 27B optimization arm.
 Do not rerun a closed experiment unchanged. A retry needs a materially different
@@ -14,13 +14,14 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 
 | Experiment | Outcome | Durable record |
 | --- | --- | --- |
+| Exact 11-bit reordered-Q8 scale dictionary | **Active/claimed on the ASRock host**: full-model census found 1,462 exact FP16 scale values and 1.84% ideal block-traffic headroom; do not duplicate until this row closes | [active arm](notes/2026-08-17-q8-exact-scale-dictionary-active.md) |
 | Clean oneAPI 2026.1.1 AOT compiler refresh | Closed: fixed completion was byte-exact, but the position-balanced result was performance-neutral (`+0.0042%`) versus 2026.1.0 | [result](notes/2026-08-16-q8-oneapi-2026.1.1-refresh-active.md), [data](data/2026-08-16-q8-oneapi-2026.1.1-refresh-neutral.json) |
 | Upstream gated-delta-net state-writeback fusion (`3d9388535`) | Closed during audit: the accepted repro already enables a stricter direct persistent-state I/O fusion that removes both GET_ROWS and CPY; no build was needed | [audit](notes/2026-08-16-q8-upstream-gdn-cache-fusion-active.md) |
 | TP2 queue-0 local-ready event elision | Closed: normal output was exact and poison proved the branch live, but the symmetric decode screen was performance-neutral (`+0.0247%`) | [result](notes/2026-08-16-q8-local-ready-elision-active.md), [data](data/2026-08-16-q8-local-ready-elision-neutral.json), [patch](patches/q8-local-ready-elision-neutral-20260816.diff) |
 | Exact Q8 compile-time FFN projection shapes | Closed: pair/down specializations were live on both devices, normal output was exact and poison proved reachability, but the symmetric screen was performance-null (`-0.0088%`) | [result](notes/2026-08-16-q8-fixed-shape-mmvq-active.md), [data](data/2026-08-16-q8-fixed-shape-mmvq-neutral.json), [patch](patches/q8-fixed-shape-mmvq-neutral-20260816.diff) |
 | Exact Q8 direct ESIMD SIMD16 DP4A row body | Closed: standalone/pair/triple were live and a poison control proved reachability; normal output was exact, but the position-balanced TP2 screen regressed `0.699%` | [result](notes/2026-08-16-q8-esimd-dp4a-active.md), [data](data/2026-08-16-q8-direct-esimd-dp4a-negative.json), [patch](patches/q8-direct-esimd-dp4a-negative-20260816.diff) |
 | Peer-mapped vec4 collective cache hints | Closed: streaming was performance-null (`+0.011%`) and uncached was slightly negative (`-0.027%`) in a symmetric same-binary screen | [note](notes/2026-08-16-q8-peer-collective-cache-hints-active.md), [data](data/2026-08-16-q8-peer-collective-cache-hints-neutral.json), [patch](patches/q8-peer-collective-cache-hints-20260816.diff) |
-| Q8 lossless repacking | Closed: practical sentinel formats expanded the weights; theoretical entropy headroom was only about 3.7% | [structural audit](notes/2026-08-16-q8-structural-feasibility-and-sampling.md) |
+| Q8 quant-value lossless repacking | Closed: practical sentinel formats expanded the 32 Q values; theoretical value-stream entropy headroom was only about 3.7%. This does not cover the separately claimed exact scale-plane dictionary arm | [structural audit](notes/2026-08-16-q8-structural-feasibility-and-sampling.md) |
 | Q8 two-chain DP4A (`DP4A2`) transfer | Quality-exact, but no repeatable Qwen3.8 endpoint gain; the promoted snapshot intentionally retains one-chain DP4A | [note](notes/2026-08-16-q8-dp4a2-transfer-no-win.md) |
 | Early Qwen3.8 direct-Q8 reproduction packet | Superseded provenance error: it omitted three source increments that the launcher enabled and the headline result used. Use the corrected one-chain full-stack packet | [correction](notes/2026-08-16-q8-repro-provenance-correction.md), [data](data/2026-08-16-q8-repro-provenance-correction.json) |
 | Reordered-Q8 dynamic loop unroll by two | Exact TP2 smoke; neutral across complementary brackets (`+0.076%` overall), so not promoted | [note](notes/2026-08-16-q8-mmvq-loop-unroll2-neutral.md), [data](data/2026-08-16-q8-mmvq-loop-unroll2-neutral.json), [patch](patches/q8-mmvq-loop-unroll2-neutral-20260816.diff) |

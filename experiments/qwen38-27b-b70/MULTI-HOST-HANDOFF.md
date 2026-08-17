@@ -1,6 +1,6 @@
 # Qwen3.8 27B multi-host handoff
 
-Last audited: 2026-08-16
+Last audited: 2026-08-17
 
 This packet lets another B70 system reproduce the accepted lanes or take an
 unclaimed optimization arm without relying on paths or uncommitted source from
@@ -21,6 +21,11 @@ manually before synchronizing; the script never discards changes.
 Before starting an experiment, read the
 [do-not-repeat index](DO-NOT-REPEAT.md). It maps both Qwen3.8-specific work and
 the inherited Qwen3.6 search history.
+
+The ASRock reference host currently owns the exact 11-bit reordered-Q8 scale
+dictionary arm. Its complete model census and guardrails are in the
+[active note](notes/2026-08-17-q8-exact-scale-dictionary-active.md). Other
+hosts should not duplicate that implementation until the active row closes.
 
 ## Accepted Q8_0 lane
 
