@@ -356,6 +356,23 @@ fi
 if [[ "${VALIDATION_GDN_NATIVE_SPEC_COMPLETION_BARRIER:-0}" == "1" ]]; then
   export VLLM_XPU_GDN_NATIVE_SPEC_COMPLETION_BARRIER=1
 fi
+if [[ "${VALIDATION_SPEC_DECODE_DRAFT_ONLY:-0}" == "1" ]]; then
+  # Correctness scaffold: the target verifies drafts but never trusts a
+  # packed target-owned replacement or bonus row.  This is intentionally not
+  # a performance recipe until it passes the complete target-token oracle.
+  export VLLM_XPU_SPEC_DECODE_DRAFT_ONLY=1
+fi
+if [[ "${VALIDATION_GDN_SERIAL_SPEC_IDENTITY:-0}" == "1" ]]; then
+  # Reproduce the established serial GDN transaction as one bounded step
+  # toward a whole-model one-token verifier.  Keep every flag explicit in the
+  # run identity; none is inherited from the caller.
+  export VLLM_XPU_GDN_NATIVE_SPEC_DECODE=0
+  export VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1
+  export VLLM_XPU_GDN_SERIAL_SPEC_PACKED_DECODE=1
+  export VLLM_XPU_GDN_SERIAL_SPEC_CONV=1
+  export VLLM_XPU_GDN_SPEC_PROMOTE_RUNNING_AFTER_SPEC=1
+  export VLLM_XPU_GDN_SPEC_PROMOTE_CONV_STATE=1
+fi
 if [[ "${VALIDATION_GDN_CAPTURE_NATIVE_SPEC:-0}" == "1" ]]; then
   # Diagnostic opt-in: capture the persistent-scratch native GDN op inside
   # PIECEWISE instead of crossing 48 eager producer/consumer boundaries.
@@ -405,7 +422,7 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
   export STAGE="$graph_stage"
   export VLLM_XPU_KERNELS_SRC="$graph_stage"
   export QWEN36_27B_ENABLE_MTP=1
-  export NUM_SPECULATIVE_TOKENS=3
+  export NUM_SPECULATIVE_TOKENS="${VALIDATION_NUM_SPECULATIVE_TOKENS:-3}"
   if [[ "$mode" == "spec-native-scratch" \
     || "$mode" == "spec-native-partition" \
     || "$mode" == "spec-native-partition-exact" \
@@ -420,6 +437,9 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
     export VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=0
     export VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA=0
     export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
+    if [[ "${VALIDATION_GDN_SERIAL_SPEC_IDENTITY:-0}" == "1" ]]; then
+      export VLLM_XPU_GDN_NATIVE_SPEC_DECODE=0
+    fi
     if [[ "$mode" == "spec-native-partition" \
       || "$mode" == "spec-native-partition-exact" \
       || "$mode" == "spec-native-partition-exact-native" \

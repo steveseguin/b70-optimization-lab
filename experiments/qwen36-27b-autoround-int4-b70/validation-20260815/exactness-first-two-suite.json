@@ -1,0 +1,24 @@
+{
+  "description": "Two earliest-diverging prompts from the matched 25-prompt Qwen3.6 INT4 target/spec gate; use only as a fail-fast exactness screen before the full suite.",
+  "metric": "full generated token-array equality against the matched target",
+  "source_suite": {
+    "path": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/batch-invariant-rmsnorm-25-target-a-20260817T063000Z/validation-suite.json",
+    "sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c"
+  },
+  "suite_id": "qwen36-27b-int4-exactness-first-two-20260817-v1",
+  "version": 1,
+  "prompts": [
+    {
+      "group": "independent-holdout",
+      "id": "holdout--python-lru-cache",
+      "original_id": "python-lru-cache",
+      "prompt": "Implement a production-quality Python LRUCache class with get and put in O(1), capacity validation, type hints, and a short unittest example. Explain the invariants briefly. Include enough implementation and review detail for a maintainer to use the answer directly."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--release-plan",
+      "original_id": "release-plan",
+      "prompt": "Create a release plan for shipping a new authentication flow in a SaaS product. Include feature flags, staged rollout, migration steps, monitoring, rollback criteria, customer communication, security review, and post-release verification. Write it as an internal engineering plan, not as a sales document."
+    }
+  ]
+}
