@@ -28,6 +28,11 @@ revisions then failed the safety gate with a host segfault and an invalid Level
 Zero memory object. See the [result](notes/2026-08-17-q8-exact-scale-dictionary-active.md).
 Do not duplicate either retained patch unchanged.
 
+A materially different compile-time encoder-map retry is active on the ASRock
+reference host. It removes the runtime USM lookup object entirely; see the
+[claim](notes/2026-08-17-q8-exact-scale-dictionary-static-map-active.md).
+Other hosts should not duplicate it until the active row is closed.
+
 ## Accepted Q8_0 lane
 
 - model repository: `ggml-org/Qwen3.8-27B-GGUF`
