@@ -471,10 +471,11 @@ def compare_case(
         source_cols = torch.zeros((num_reqs,), dtype=torch.long, device=device)
     else:
         source_offset = 0 if args.prefix_base_state else -1
+        source_max = spec_len if args.prefix_base_state else spec_len - 1
         source_cols = torch.clamp(
             accepted_counts.to(torch.long) + source_offset,
             min=0,
-            max=spec_len - 1)
+            max=source_max)
     source_rows = state_table.gather(1, source_cols.unsqueeze(1)).squeeze(1)
     ref_conv.index_copy_(0, running_rows,
                          ref_conv.index_select(0, source_rows).clone())
@@ -649,14 +650,16 @@ def compare_two_call_full_accept_restart(
     ref_ssm.index_copy_(
         0, running_rows, ref_ssm.index_select(0, source_rows).clone())
 
-    ref_out_first, ref_z_first, _, _ = run_normal_decode_steps(
-        torch,
-        args,
-        inputs,
-        conv_state=ref_conv,
-        ssm_state=ref_ssm,
-        running_rows=running_rows,
-        token_base=0,
+    ref_out_first, ref_z_first, ref_conv_first, ref_ssm_first = (
+        run_normal_decode_steps(
+            torch,
+            args,
+            inputs,
+            conv_state=ref_conv,
+            ssm_state=ref_ssm,
+            running_rows=running_rows,
+            token_base=0,
+        )
     )
     ref_out_second, ref_z_second, ref_conv_second, ref_ssm_second = (
         run_normal_decode_steps(
@@ -670,8 +673,11 @@ def compare_two_call_full_accept_restart(
         )
     )
 
-    first_counts = torch.ones(
-        (num_reqs,), dtype=torch.int32, device=device)
+    first_counts = torch.full(
+        (num_reqs,), 0 if args.prefix_base_state else 1,
+        dtype=torch.int32,
+        device=device,
+    )
     full_counts = torch.full(
         (num_reqs,), spec_len, dtype=torch.int32, device=device)
     spec_out_first, spec_z_first = run_spec_decode(
@@ -703,7 +709,7 @@ def compare_two_call_full_accept_restart(
     conv_max = 0.0
     ssm_max = 0.0
     for pos in range(spec_len):
-        rows = state_table[:, pos]
+        rows = state_table[:, pos + (1 if args.prefix_base_state else 0)]
         observed_conv = spec_conv.index_select(0, rows)[:, :args.width - 1]
         observed_ssm = spec_ssm.index_select(0, rows)
         expected_conv = ref_conv_second[pos]
@@ -729,26 +735,55 @@ def compare_two_call_full_accept_restart(
         torch, spec_out_second, ref_out_second, atol=args.atol, rtol=args.rtol)
     second_z_close = close_enough(
         torch, spec_z_second, ref_z_second, atol=args.atol, rtol=args.rtol)
+    base_conv_equal = True
+    base_ssm_equal = True
+    base_conv_close = True
+    base_ssm_close = True
+    base_conv_max = 0.0
+    base_ssm_max = 0.0
+    if args.prefix_base_state:
+        base_rows = state_table[:, 0]
+        observed_base_conv = spec_conv.index_select(
+            0, base_rows)[:, :args.width - 1]
+        observed_base_ssm = spec_ssm.index_select(0, base_rows)
+        expected_base_conv = ref_conv_first[-1]
+        expected_base_ssm = ref_ssm_first[-1]
+        base_conv_equal = bool(torch.equal(
+            observed_base_conv, expected_base_conv))
+        base_ssm_equal = bool(torch.equal(
+            observed_base_ssm, expected_base_ssm))
+        base_conv_close = close_enough(
+            torch, observed_base_conv, expected_base_conv,
+            atol=args.atol, rtol=args.rtol)
+        base_ssm_close = close_enough(
+            torch, observed_base_ssm, expected_base_ssm,
+            atol=args.atol, rtol=args.rtol)
+        base_conv_max = max_abs(
+            torch, observed_base_conv, expected_base_conv)
+        base_ssm_max = max_abs(
+            torch, observed_base_ssm, expected_base_ssm)
     return {
         "case": "two_call_full_accept_restart",
         "accepted_counts": [spec_len] * num_reqs,
-        "source_cols": [spec_len - 1] * num_reqs,
+        "source_cols": [
+            spec_len if args.prefix_base_state else spec_len - 1
+        ] * num_reqs,
         "conv_prefix_equal": conv_equal,
         "ssm_prefix_equal": ssm_equal,
         "conv_prefix_close": conv_close,
         "conv_padding_equal": spec_padding_equal(torch, args, spec_conv),
         "ssm_prefix_close": ssm_close,
         "ssm_padding_equal": ssm_padding_equal(torch, args, spec_ssm),
-        "base_column_equal": True,
-        "base_column_close": True,
+        "base_column_equal": base_conv_equal and base_ssm_equal,
+        "base_column_close": base_conv_close and base_ssm_close,
         "core_output_equal": first_out_equal and second_out_equal,
         "z_output_equal": first_z_equal and second_z_equal,
         "core_output_close": first_out_close and second_out_close,
         "z_output_close": first_z_close and second_z_close,
         "conv_prefix_max_abs_diff": conv_max,
         "ssm_prefix_max_abs_diff": ssm_max,
-        "base_conv_max_abs_diff": 0.0,
-        "base_ssm_max_abs_diff": 0.0,
+        "base_conv_max_abs_diff": base_conv_max,
+        "base_ssm_max_abs_diff": base_ssm_max,
         "core_output_max_abs_diff": max(
             max_abs(torch, spec_out_first, ref_out_first),
             max_abs(torch, spec_out_second, ref_out_second),
@@ -841,8 +876,9 @@ def main() -> int:
             device=device,
         )
         ssm_before = ssm_state.clone()
+        state_cols = args.spec_len + (1 if args.prefix_base_state else 0)
         state_table = torch.zeros(
-            (1, args.spec_len), dtype=torch.long, device=device
+            (1, state_cols), dtype=torch.long, device=device
         )
         accepted = torch.ones((1,), dtype=torch.int32, device=device)
         for _ in range(2):
@@ -861,7 +897,7 @@ def main() -> int:
             "schema_version": 1,
             "case": "exact_recurrent_zero_state_smoke",
             "runs": 2,
-            "state_table": [[0] * args.spec_len],
+            "state_table": [[0] * state_cols],
             "ssm_unchanged": bool(torch.equal(ssm_state, ssm_before)),
             "ssm_padding_equal": ssm_padding_equal(torch, args, ssm_state),
         }
@@ -877,7 +913,7 @@ def main() -> int:
             raise SystemExit("zero-state exact recurrent smoke failed")
         return 0
 
-    state_cols = args.spec_len
+    state_cols = args.spec_len + (1 if args.prefix_base_state else 0)
     state_table = torch.arange(
         1,
         1 + args.num_reqs * state_cols,
@@ -920,6 +956,20 @@ def main() -> int:
         accepted_counts=first_counts,
         token_base=0,
     ))
+    cases.append(compare_case(
+        torch,
+        args,
+        inputs,
+        case_name="fresh_second_token_window",
+        initial_conv_table=initial_conv,
+        initial_ssm_table=initial_ssm,
+        state_table=state_table,
+        accepted_counts=(
+            torch.zeros((args.num_reqs,), dtype=torch.int32, device=device)
+            if args.prefix_base_state else first_counts
+        ),
+        token_base=total_tokens,
+    ))
 
     # Build a realistic restart table by using the first pass's expected
     # prefixes as the available source columns, then verify that accepted count
@@ -949,7 +999,7 @@ def main() -> int:
         token_base=0,
     )
     if args.prefix_base_state:
-        for pos in range(max(0, args.spec_len - 1)):
+        for pos in range(args.spec_len):
             restart_conv.index_copy_(0, state_table[:, pos + 1],
                                      conv_prefixes[pos])
             restart_ssm.index_copy_(0, state_table[:, pos + 1],
@@ -981,10 +1031,12 @@ def main() -> int:
         token_base=total_tokens,
     ))
     # The production proof is deliberately restricted to one request.  A
-    # single arange row would otherwise exercise only accepted_count=1, so add
-    # one restart per source column and cover N=1..spec_len explicitly.
-    if args.num_reqs == 1 and not args.prefix_base_state:
-        for accepted_count in range(1, args.spec_len + 1):
+    # single arange row would otherwise exercise only one accepted count, so
+    # add one restart per source column. Prefix-base covers N=0..spec_len;
+    # the legacy layout covers N=1..spec_len.
+    if args.num_reqs == 1:
+        accepted_start = 0 if args.prefix_base_state else 1
+        for accepted_count in range(accepted_start, args.spec_len + 1):
             cases.append(compare_case(
                 torch,
                 args,
@@ -998,15 +1050,14 @@ def main() -> int:
                 token_base=total_tokens,
             ))
 
-    if not args.prefix_base_state:
-        cases.append(compare_two_call_full_accept_restart(
-            torch,
-            args,
-            inputs,
-            initial_conv_table=initial_conv,
-            initial_ssm_table=initial_ssm,
-            state_table=state_table,
-        ))
+    cases.append(compare_two_call_full_accept_restart(
+        torch,
+        args,
+        inputs,
+        initial_conv_table=initial_conv,
+        initial_ssm_table=initial_ssm,
+        state_table=state_table,
+    ))
 
     result = {
         "device": args.device,
@@ -1036,7 +1087,7 @@ def main() -> int:
                 else "column j is state after packed spec row j"
             ),
             "source_column": (
-                "clamp(num_accepted_tokens, 0, spec_len - 1)"
+                "clamp(num_accepted_tokens, 0, spec_len)"
                 if args.prefix_base_state
                 else "clamp(num_accepted_tokens - 1, 0, spec_len - 1)"
             ),
