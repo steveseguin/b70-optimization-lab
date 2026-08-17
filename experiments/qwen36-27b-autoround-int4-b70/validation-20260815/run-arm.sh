@@ -88,7 +88,7 @@ elif [[ "$mode" == "spec-native-partition-exact" \
   || "$mode" == "nospec-latest-exact-native" ]]; then
   latest_identity=1
   exact_identity=1
-  verify_tree "$source_root/vllm" 66d978a5842a3e0de25187af492afffcb9831da5 \
+  verify_tree "$source_root/vllm" b1d98d4c50da180c660627664e5dd3ff65c7d5af \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
   verify_tree "$source_root/vllm-xpu-kernels" ce8cfaa9208ae287f894e8f4511de5abd1ee2801 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
@@ -322,6 +322,11 @@ if [[ "${VALIDATION_INT8_LM_HEAD_SERIAL_M1:-0}" == "1" ]]; then
   # Exactness lane: preserve packed model execution but evaluate the target
   # INT8 vocabulary projection as independent M=1 rows.
   export VLLM_XPU_LM_HEAD_INT8_SERIAL_M1=1
+fi
+if [[ "${VALIDATION_GDN_BA_SERIAL_M1:-0}" == "1" ]]; then
+  # Exactness lane: evaluate each packed GDN b/a projection row with the
+  # target's M=1 projection shape.
+  export VLLM_XPU_GDN_BA_SERIAL_M1=1
 fi
 if [[ "${VALIDATION_SYNC_AFTER_CUDAGRAPH_WARMUP:-0}" == "1" ]]; then
   export VLLM_XPU_SYNC_AFTER_CUDAGRAPH_WARMUP=1
