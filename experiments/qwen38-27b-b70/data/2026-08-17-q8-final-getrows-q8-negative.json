@@ -1,0 +1,60 @@
+{
+  "date": "2026-08-17",
+  "experiment": "qwen38-27b-q8-final-getrows-q8",
+  "model": {
+    "id": "ggml-org/Qwen3.8-27B-GGUF",
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "scope": "quality-preserving target-only TP2 on two ASRock Intel Arc Pro B70 GPUs",
+  "speculation": false,
+  "accepted_library_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+  "candidate_library_sha256": "fc4e1a49ec4558e23b7b82d26a692f45b14e3c1ef34776cf4a616e74a2bfc24f",
+  "llama_bench_sha256": "74e7d48905196285f6e7cd8c8d0b20a8e25cf3f4731b1e2f0f5f6c49ad8d8865",
+  "door": "GGML_SYCL_FUSED_GET_ROWS_Q8=1",
+  "mechanism": {
+    "p0_n1_control_quantize_launches": 8,
+    "p0_n1_candidate_quantize_launches": 4,
+    "p0_n1_candidate_fused_get_rows": 4,
+    "p0_n1_control_dedup_hits": 1980,
+    "p0_n1_candidate_dedup_hits": 1984
+  },
+  "quality": {
+    "max_tokens": 64,
+    "control_response_sha256": "4c78c4aae7336f49d3b548edb72a4514b6c10f8df53ce79593ce722d18fe7520",
+    "candidate_response_sha256": "4c78c4aae7336f49d3b548edb72a4514b6c10f8df53ce79593ce722d18fe7520",
+    "exact": true,
+    "verify_mismatch": 0
+  },
+  "short_screen": {
+    "shape": "p64/n256/r3",
+    "order": ["control", "candidate", "candidate", "control"],
+    "arms_tok_s": {
+      "A1_control": 36.940448,
+      "B1_candidate": 37.596480,
+      "B2_candidate": 36.742420,
+      "A2_control": 36.683650
+    },
+    "control_mean_tok_s": 36.812049,
+    "candidate_mean_tok_s": 37.169450,
+    "delta_pct": 0.9708804853541197
+  },
+  "long_confirmation": {
+    "shape": "p64/n512/r3",
+    "order": ["candidate", "control", "control", "candidate"],
+    "arms_tok_s": {
+      "C1_candidate": 37.254449,
+      "D1_control": 37.653361,
+      "D2_control": 37.610350,
+      "C2_candidate": 37.044712
+    },
+    "control_mean_tok_s": 37.6318555,
+    "candidate_mean_tok_s": 37.1495805,
+    "delta_pct": -1.2815605119444684,
+    "position_matched_delta_pct": [-1.0594326493191253, -1.503942398834368]
+  },
+  "decision": "rejected_negative",
+  "restored_source_exact": true,
+  "restored_library_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+  "gpu_health_after": "normal"
+}
