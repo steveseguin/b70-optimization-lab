@@ -1,0 +1,21 @@
+{
+  "suite_id": "qwen36-27b-int4-release-plan-trace-20260817-v1",
+  "version": 1,
+  "description": "Single frozen prompt for locating the first packed-verifier divergence at generated token 42.",
+  "metric": "diagnostic only; full token array compared with the sealed current target",
+  "source_suites": [
+    {
+      "group": "historical-selection",
+      "path": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+      "sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+    }
+  ],
+  "prompts": [
+    {
+      "group": "historical-selection",
+      "id": "selection--release-plan",
+      "original_id": "release-plan",
+      "prompt": "Create a release plan for shipping a new authentication flow in a SaaS product. Include feature flags, staged rollout, migration steps, monitoring, rollback criteria, customer communication, security review, and post-release verification. Write it as an internal engineering plan, not as a sales document."
+    }
+  ]
+}
