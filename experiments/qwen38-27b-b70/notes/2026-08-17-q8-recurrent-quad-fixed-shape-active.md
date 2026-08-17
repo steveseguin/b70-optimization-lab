@@ -8,13 +8,20 @@ Status: active; claimed by the ASRock two-B70 reference host
 
 The accepted target-only Q8 stack launches the fused recurrent GDN quad 192
 times in a `p0/n1` trace, accounting for `19.456 ms` of diagnostic device time.
-Every Qwen3.8 recurrent block uses the same GGUF shapes:
+Every Qwen3.8 recurrent block uses the same global GGUF shapes:
 
 - input columns: `5,120`;
 - QKV rows: `10,240`;
 - gate rows: `6,144`;
 - alpha rows: `48`;
 - beta rows: `48`.
+
+Equal TP2 divides every output-row dimension across the two devices, so the
+actual per-device quad-kernel shape is input `5,120` and output rows
+`5,120 / 3,072 / 24 / 24`. An initial `p64/n1` admission smoke used the global
+rows, correctly left the candidate door closed, and is not a benchmark result.
+The implementation was corrected to admit only the observed local TP2 shape
+before any candidate timing.
 
 The current row body nevertheless selects among four matrices, four output
 pointers, four row counts and three cumulative edges dynamically inside every
