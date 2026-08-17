@@ -14,6 +14,7 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 
 | Experiment | Outcome | Durable record |
 | --- | --- | --- |
+| Upstream gated-delta-net state-writeback fusion (`3d9388535`) | **Active on the reference host:** port the upstream direct cache writeback into the accepted Q8 TP2 stack behind a default-off door; do not duplicate unchanged | [active note](notes/2026-08-16-q8-upstream-gdn-cache-fusion-active.md) |
 | TP2 queue-0 local-ready event elision | Closed: normal output was exact and poison proved the branch live, but the symmetric decode screen was performance-neutral (`+0.0247%`) | [result](notes/2026-08-16-q8-local-ready-elision-active.md), [data](data/2026-08-16-q8-local-ready-elision-neutral.json), [patch](patches/q8-local-ready-elision-neutral-20260816.diff) |
 | Exact Q8 compile-time FFN projection shapes | Closed: pair/down specializations were live on both devices, normal output was exact and poison proved reachability, but the symmetric screen was performance-null (`-0.0088%`) | [result](notes/2026-08-16-q8-fixed-shape-mmvq-active.md), [data](data/2026-08-16-q8-fixed-shape-mmvq-neutral.json), [patch](patches/q8-fixed-shape-mmvq-neutral-20260816.diff) |
 | Exact Q8 direct ESIMD SIMD16 DP4A row body | Closed: standalone/pair/triple were live and a poison control proved reachability; normal output was exact, but the position-balanced TP2 screen regressed `0.699%` | [result](notes/2026-08-16-q8-esimd-dp4a-active.md), [data](data/2026-08-16-q8-direct-esimd-dp4a-negative.json), [patch](patches/q8-direct-esimd-dp4a-negative-20260816.diff) |

@@ -106,6 +106,14 @@ and the failed `invoke_simd` AOT history are in the
 implementation unchanged. Check `origin/main` before opening another
 target-only Q8 candidate.
 
+The reference host now claims upstream gated-delta-net state-writeback fusion
+commit `3d9388535`. The accepted Q8 stack predates that upstream change and
+does not contain its cache-fusion symbols. The port will remain default-off,
+preserve the current specialized GDN arithmetic, and change only where the
+state snapshot is written. See the
+[active note](notes/2026-08-16-q8-upstream-gdn-cache-fusion-active.md). Do not
+duplicate this exact port while it remains active.
+
 The trace-driven queue-0 local-ready event-elision arm is now closed. Normal
 output was exact and poison proved that the branch was live, but its
 position-balanced decode result was performance-neutral (`+0.0247%`). See the
