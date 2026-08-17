@@ -14,6 +14,7 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 
 | Experiment | Outcome | Durable record |
 | --- | --- | --- |
+| TP2 queue-0 local-ready event elision | **Active on the reference host:** retain queue 1's cross-device readiness event but remove redundant `ready0` from the explicitly in-order root queue; do not duplicate unchanged | [active note](notes/2026-08-16-q8-local-ready-elision-active.md) |
 | Exact Q8 compile-time FFN projection shapes | Closed: pair/down specializations were live on both devices, normal output was exact and poison proved reachability, but the symmetric screen was performance-null (`-0.0088%`) | [result](notes/2026-08-16-q8-fixed-shape-mmvq-active.md), [data](data/2026-08-16-q8-fixed-shape-mmvq-neutral.json), [patch](patches/q8-fixed-shape-mmvq-neutral-20260816.diff) |
 | Exact Q8 direct ESIMD SIMD16 DP4A row body | Closed: standalone/pair/triple were live and a poison control proved reachability; normal output was exact, but the position-balanced TP2 screen regressed `0.699%` | [result](notes/2026-08-16-q8-esimd-dp4a-active.md), [data](data/2026-08-16-q8-direct-esimd-dp4a-negative.json), [patch](patches/q8-direct-esimd-dp4a-negative-20260816.diff) |
 | Peer-mapped vec4 collective cache hints | Closed: streaming was performance-null (`+0.011%`) and uncached was slightly negative (`-0.027%`) in a symmetric same-binary screen | [note](notes/2026-08-16-q8-peer-collective-cache-hints-active.md), [data](data/2026-08-16-q8-peer-collective-cache-hints-neutral.json), [patch](patches/q8-peer-collective-cache-hints-20260816.diff) |
