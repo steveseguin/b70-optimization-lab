@@ -44,11 +44,15 @@ Do not duplicate the retained static-map increment unchanged.
 - result: `36.772932 tok/s` conventional, TP2 target-only
 - restore/build/run: [standalone repro](../../repro/qwen38-27b-q8-tp2-asrock-b70/README.md)
 - exact full source delta: [patch packet](../../patches/qwen38-27b-q8-tp2-asrock-b70/README.md)
+- accepted 2026-08-17 increment: recurrent-quad SG16, two opposite-order
+  realistic pairs pooling to `+0.257%` primary median with exact quality;
+  the historical headline remains unchanged
 
 Restore the public mndodd base commit, decode and checksum the Git-resident
-patch, run `git apply --check`, then apply it. Do not copy a dirty source tree
-from another machine. The reproduction packet contains all runtime doors and
-the accepted binary hashes.
+patch, run `git apply --check`, then apply it and the documented Qwen3.8 SG16
+increment. Do not copy a dirty source tree from another machine. The
+reproduction packet contains both checksums, all runtime doors, and the
+accepted binary hashes.
 
 ## Accepted Q4_K_M lane
 

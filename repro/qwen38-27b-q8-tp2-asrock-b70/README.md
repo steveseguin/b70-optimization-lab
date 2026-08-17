@@ -15,6 +15,18 @@ and no MTP, DFlash, draft model, response reuse, or speculation.
 - semantic gate: exact copy, arithmetic, JSON, factual, logic, Python-result,
   repeat-stability, and 3,829-token needle tests all passed on 2026-08-16
 
+The 2026-08-17 snapshot adds a shape-scoped SG16 workgroup for the recurrent
+GDN quad. Two order-balanced, same-binary cold-suite pairs both favored SG16.
+Pooling the pair-level statistics measured `+0.257%` on the primary
+tokens-1-100 median, `+0.481%` on full-decode median, and `+0.413%` on
+full-decode mean. All four suites produced the same 12 complete output hashes;
+the seven semantic canaries, eight repeats, and 3,829-token needle also matched
+the promoted oracle exactly. A clean accepted-source `A-B-B-A` direct-decode
+sanity bracket measured `37.321045` versus `36.978696 tok/s` (`+0.926%`). The
+historical `36.772932 tok/s` conventional headline remains the highest valid
+cold-suite capture and is not replaced by the lower-throughput matched A/B
+session.
+
 A fresh replay of the corrected full source stack on 2026-08-16 again passed
 12/12 complete hashes and 12/12 cache-zero requests. It measured
 `36.421061 tok/s` conventional (`36.788950` under the historical 100-event
@@ -59,8 +71,9 @@ not the quality-default deployment.
 - source base: mndodd `4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126`
 - exact source snapshot: [patch packet](../../patches/qwen38-27b-q8-tp2-asrock-b70/README.md)
 
-The patch packet intentionally uses the one-chain Q8 DP4A body that produced
-this result. The later Qwen3.6 two-chain `DP4A2` schedule passed Qwen3.8's
+The patch packet uses the one-chain Q8 DP4A body that produced this result and
+then applies the Qwen3.8-only recurrent-quad SG16 increment. The later Qwen3.6
+two-chain `DP4A2` schedule passed Qwen3.8's
 quality gate but was not faster in two full cold suites, so it is not part of
 this reproduction. See the [transfer decision](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-dp4a2-transfer-no-win.md).
 
@@ -84,6 +97,17 @@ The fresh correction replay used a later host-only relink (`llama-server`
 `707ea1b8...` SYCL library. Hashes are provenance aids; source patch, build
 flags, runtime doors, model hash, output hashes, and cache-zero gate are the
 portable reproduction contract.
+
+The clean SG16 promotion build on oneAPI 2026.1.1 produced:
+
+- `libggml-sycl.so.0.19.0`:
+  `0b3cc38ce20fad568976a1ab1db1deda831eb375d49976c217c25fc02d7f3c26`
+- `llama-bench`:
+  `ce3ad8809ceca3dcc063ed00e93bfe0744d892b45af9c56e33c061d09c8cbc47`
+- `llama-cli`:
+  `d94c8cb6f3c0a3997bd24286ed0ff1e417860e3ff5913320edb7b012a49fbde3`
+- `llama-server`:
+  `b26ad789f7372c7a409183aa870dd52589cf9fb654c8324055517b1ff1cfd528`
 
 ## Run and verify
 
