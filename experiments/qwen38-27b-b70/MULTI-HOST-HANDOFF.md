@@ -98,9 +98,13 @@ The earlier root-fused per-owner handoff is likewise closed:
 Do not spend another host on mode 4 unchanged. The peer-mapped vec4 collective
 cache-hint arm is also closed as performance-neutral; see the
 [result note](notes/2026-08-16-q8-peer-collective-cache-hints-active.md).
-The reference host currently claims the exact Q8 ESIMD SIMD16 DP4A row-body
-arm; see the [active note](notes/2026-08-16-q8-esimd-dp4a-active.md). Check
-`origin/main` before opening another target-only Q8 candidate.
+The exact Q8 ESIMD SIMD16 row-body arm is now closed: it was output-exact and
+the poison proof confirmed that all routed families were live, but it was
+`0.699%` slower in a position-balanced screen. The direct implementation patch
+and the failed `invoke_simd` AOT history are in the
+[result note](notes/2026-08-16-q8-esimd-dp4a-active.md). Do not repeat either
+implementation unchanged. Check `origin/main` before opening another
+target-only Q8 candidate.
 
 Mode `3` is not an alternative candidate. Its peer-writing design caused a
 device-lost/reset storm and is permanently quarantined. Never enable or port

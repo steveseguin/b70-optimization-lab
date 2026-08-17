@@ -1,0 +1,284 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -4,6 +4,7 @@
+ #include "common.hpp"
+ #include "quants.hpp"
+ #include "vecdotq.hpp"
++#include "mmvq-esimd.hpp"
+ 
+ #include "gemm-wdc.hpp"
+ #include "ne1-route.hpp"
+@@ -1464,6 +1465,26 @@
+     return mut;
+ }
+ 
++static inline bool ggml_sycl_mmvq_q8_invoke_esimd() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_INVOKE_ESIMD");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++#ifdef GGML_SYCL_Q8_HAS_INVOKE_ESIMD
++    return on;
++#else
++    return false;
++#endif
++}
++
++static inline bool ggml_sycl_mmvq_q8_invoke_esimd_poison() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_INVOKE_ESIMD_POISON");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+ // The int4 load's contract. vx/vy come from SYCL_BUFFER_ALIGNMENT(=128)-aligned allocations and the
+ // q8_1 column stride is padded(512k) * sizeof(block_q8_1)/QK8_1 = 576k, so this holds by
+ // construction -- assert it anyway, so a future layout change ABORTS instead of returning garbage.
+@@ -1716,6 +1737,9 @@
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+     const bool narrow = ggml_sycl_mmvq_q8_narrow();
+     const bool mutant = ggml_sycl_mmvq_q8_mutant();
++    const bool invoke_esimd = ggml_sycl_mmvq_q8_invoke_esimd() &&
++        (ncols / QK8_0) % 8 == 0;
++    const bool invoke_esimd_poison = invoke_esimd && ggml_sycl_mmvq_q8_invoke_esimd_poison();
+     // f367: the SIMD32 variant owns ncols_dst==1 when its door resolves ON.  Hooked HERE, not at
+     // the dispatch switch, so every ne1=1 call site (direct decode, the per-column fallback loop,
+     // switch_ncols case 1) resolves identically and the wide cells cannot be touched.  The f76
+@@ -1740,6 +1764,19 @@
+         ggml_sycl_assert_q8_wide_align(vx, vy, 16);
+     }
+ 
++    if (invoke_esimd) {
++        static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++        const int device = get_current_device_id();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++            fprintf(stderr, "SYCL lab door | q8 invoke_esimd: dev=%d family=standalone poison=%d\n",
++                    device, (int) invoke_esimd_poison);
++            announced[device] = true;
++        }
++        ggml_sycl_q8_invoke_esimd_launch(
++            vx, vy, dst, ncols, nrows, num_subgroups, invoke_esimd_poison, stream);
++        return;
++    }
++
+     stream->submit([&](sycl::handler & cgh) {
+         if (narrow) {
+             cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
+@@ -1846,6 +1883,21 @@
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
++    const bool invoke_esimd = ggml_sycl_mmvq_q8_invoke_esimd() &&
++        (ncols / QK8_0) % 8 == 0;
++    const bool poison = invoke_esimd && ggml_sycl_mmvq_q8_invoke_esimd_poison();
++    if (invoke_esimd) {
++        static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++        const int device = get_current_device_id();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++            fprintf(stderr, "SYCL lab door | q8 invoke_esimd: dev=%d family=pair poison=%d\n", device, (int) poison);
++            announced[device] = true;
++        }
++        ggml_sycl_q8_invoke_esimd_pair_launch(
++            vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1,
++            num_subgroups, poison, stream);
++        return true;
++    }
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+             sycl::nd_range<3>(block_nums * block_dims, block_dims),
+@@ -1935,6 +1987,21 @@
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
++    const bool invoke_esimd = ggml_sycl_mmvq_q8_invoke_esimd() &&
++        (ncols / QK8_0) % 8 == 0;
++    const bool poison = invoke_esimd && ggml_sycl_mmvq_q8_invoke_esimd_poison();
++    if (invoke_esimd) {
++        static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++        const int device = get_current_device_id();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++            fprintf(stderr, "SYCL lab door | q8 invoke_esimd: dev=%d family=triple poison=%d\n", device, (int) poison);
++            announced[device] = true;
++        }
++        ggml_sycl_q8_invoke_esimd_triple_launch(
++            vx0, vx1, vx2, vy, dst0, dst1, dst2,
++            ncols, nrows0, nrows1, nrows2, num_subgroups, poison, stream);
++        return true;
++    }
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+             sycl::nd_range<3>(block_nums * block_dims, block_dims),
+--- a/ggml/src/ggml-sycl/mmvq-esimd.hpp
++++ b/ggml/src/ggml-sycl/mmvq-esimd.hpp
+@@ -0,0 +1,25 @@
++#pragma once
++
++#include "common.hpp"
++
++#if defined(__INTEL_LLVM_COMPILER)
++#define GGML_SYCL_Q8_HAS_INVOKE_ESIMD
++
++void ggml_sycl_q8_invoke_esimd_launch(
++        const void * vx, const void * vy, float * dst,
++        int ncols, int nrows, size_t num_subgroups,
++        bool poison, dpct::queue_ptr stream);
++
++void ggml_sycl_q8_invoke_esimd_pair_launch(
++        const void * vx0, const void * vx1, const void * vy,
++        float * dst0, float * dst1,
++        int ncols, int nrows0, int nrows1, size_t num_subgroups,
++        bool poison, dpct::queue_ptr stream);
++
++void ggml_sycl_q8_invoke_esimd_triple_launch(
++        const void * vx0, const void * vx1, const void * vx2, const void * vy,
++        float * dst0, float * dst1, float * dst2,
++        int ncols, int nrows0, int nrows1, int nrows2, size_t num_subgroups,
++        bool poison, dpct::queue_ptr stream);
++
++#endif
+--- a/ggml/src/ggml-sycl/mmvq-esimd.cpp
++++ b/ggml/src/ggml-sycl/mmvq-esimd.cpp
+@@ -0,0 +1,142 @@
++#include "mmvq-esimd.hpp"
++
++#if defined(__INTEL_LLVM_COMPILER)
++
++#include "ggml-common.h"
++#include "ggml.h"
++
++#include <sycl/ext/intel/esimd.hpp>
++
++namespace q8_invoke_esimd_detail {
++namespace esimd = sycl::ext::intel::esimd;
++using esimd::simd;
++
++constexpr int VL = WARP_SIZE;
++constexpr int BLOCKS_PER_ITER = 8;
++
++// One call represents the incumbent SG16 work for eight consecutive Q8 blocks.
++// Vector lane L is exactly incumbent subgroup lane L: two lanes split each
++// block, four signed DP4As stay in the same order, and the caller retains the
++// existing per-lane FP accumulation and subgroup XOR reduction.
++simd<float, VL> q8_block_contribution(
++        const void * vx, const void * vy,
++        int ncols, int nrows, int row, int block_base,
++        bool poison) SYCL_ESIMD_FUNCTION {
++    const int blocks_per_row = ncols / QK8_0;
++    const int weight_block = row * blocks_per_row + block_base;
++    const auto * weight_base = static_cast<const uint8_t *>(vx);
++    const auto * weight_qs = reinterpret_cast<const int *>(
++        weight_base + (size_t) weight_block * QK8_0);
++    const auto * activation_qs = reinterpret_cast<const int *>(
++        static_cast<const int8_t *>(vy) + (size_t) block_base * QK8_1);
++
++    esimd::simd<int, 64> v = esimd::block_load<int, 64>(weight_qs);
++    esimd::simd<int, 64> u = esimd::block_load<int, 64>(activation_qs);
++    esimd::simd<int, VL> sumi = 0;
++    sumi = esimd::dp4a<int>(sumi, v.select<VL, 4>(0).read(), u.select<VL, 4>(0).read());
++    sumi = esimd::dp4a<int>(sumi, v.select<VL, 4>(1).read(), u.select<VL, 4>(1).read());
++    sumi = esimd::dp4a<int>(sumi, v.select<VL, 4>(2).read(), u.select<VL, 4>(2).read());
++    if (poison && block_base == 0) {
++        sumi = esimd::dp4a<int>(sumi, v.select<VL, 4>(2).read(), u.select<VL, 4>(3).read());
++    } else {
++        sumi = esimd::dp4a<int>(sumi, v.select<VL, 4>(3).read(), u.select<VL, 4>(3).read());
++    }
++
++    const auto * weight_d = reinterpret_cast<const sycl::half *>(
++        weight_base + (size_t) ncols * nrows) + weight_block;
++    const auto * activation_ds = reinterpret_cast<const sycl::half *>(
++        static_cast<const uint8_t *>(vy) + ncols) + (size_t) block_base * 2;
++    const esimd::simd<sycl::half, 8> d_half =
++        esimd::block_load<sycl::half, 8>(weight_d);
++    esimd::simd<sycl::half, 16> ds_half2 =
++        esimd::block_load<sycl::half, 16>(activation_ds);
++    const esimd::simd<float, 8> d8 = esimd::convert<float>(d_half);
++    const esimd::simd<float, 8> ds8 =
++        esimd::convert<float>(ds_half2.select<8, 2>(0).read());
++    esimd::simd<float, VL> d_lane;
++    esimd::simd<float, VL> ds_lane;
++    d_lane.select<8, 2>(0) = d8;
++    d_lane.select<8, 2>(1) = d8;
++    ds_lane.select<8, 2>(0) = ds8;
++    ds_lane.select<8, 2>(1) = ds8;
++    const esimd::simd<float, VL> scale = d_lane * ds_lane;
++    return scale * esimd::convert<float>(sumi);
++}
++float row_sum(
++        const void * vx, const void * vy,
++        int ncols, int nrows, int row, bool poison) SYCL_ESIMD_FUNCTION {
++    const int blocks_per_row = ncols / QK8_0;
++    simd<float, VL> partial_sum = 0.0f;
++    for (int block_base = 0; block_base < blocks_per_row;
++            block_base += q8_invoke_esimd_detail::BLOCKS_PER_ITER) {
++        partial_sum += q8_block_contribution(
++            vx, vy, ncols, nrows, row, block_base, poison);
++    }
++    // Mirror the subgroup tree reduction used by the accepted SG16 kernel.
++    partial_sum.select<8, 1>(0) += partial_sum.select<8, 1>(8);
++    partial_sum.select<4, 1>(0) += partial_sum.select<4, 1>(4);
++    partial_sum.select<2, 1>(0) += partial_sum.select<2, 1>(2);
++    partial_sum[0] += partial_sum[1];
++    return partial_sum[0];
++}
++} // namespace q8_invoke_esimd_detail
++
++void ggml_sycl_q8_invoke_esimd_launch(
++        const void * vx, const void * vy, float * dst,
++        int ncols, int nrows, size_t num_subgroups,
++        bool poison, dpct::queue_ptr stream) {
++    (void) num_subgroups;
++    stream->submit([&](sycl::handler & cgh) {
++        cgh.parallel_for(sycl::range<1>((size_t) nrows), [=](sycl::id<1> item) SYCL_ESIMD_KERNEL {
++                const int row = (int) item[0];
++                dst[row] = q8_invoke_esimd_detail::row_sum(
++                    vx, vy, ncols, nrows, row, poison);
++            });
++    });
++}
++
++void ggml_sycl_q8_invoke_esimd_pair_launch(
++        const void * vx0, const void * vx1, const void * vy,
++        float * dst0, float * dst1,
++        int ncols, int nrows0, int nrows1, size_t num_subgroups,
++        bool poison, dpct::queue_ptr stream) {
++    const int nrows = nrows0 + nrows1;
++    (void) num_subgroups;
++    stream->submit([&](sycl::handler & cgh) {
++        cgh.parallel_for(sycl::range<1>((size_t) nrows), [=](sycl::id<1> item) SYCL_ESIMD_KERNEL {
++                const int combined_row = (int) item[0];
++                const bool matrix1 = combined_row >= nrows0;
++                const int row = matrix1 ? combined_row - nrows0 : combined_row;
++                const int matrix_nrows = matrix1 ? nrows1 : nrows0;
++                const void * vx = matrix1 ? vx1 : vx0;
++                float * dst = matrix1 ? dst1 : dst0;
++                dst[row] = q8_invoke_esimd_detail::row_sum(
++                    vx, vy, ncols, matrix_nrows, row, poison);
++            });
++    });
++}
++
++void ggml_sycl_q8_invoke_esimd_triple_launch(
++        const void * vx0, const void * vx1, const void * vx2, const void * vy,
++        float * dst0, float * dst1, float * dst2,
++        int ncols, int nrows0, int nrows1, int nrows2, size_t num_subgroups,
++        bool poison, dpct::queue_ptr stream) {
++    const int nrows = nrows0 + nrows1 + nrows2;
++    (void) num_subgroups;
++    stream->submit([&](sycl::handler & cgh) {
++        cgh.parallel_for(sycl::range<1>((size_t) nrows), [=](sycl::id<1> item) SYCL_ESIMD_KERNEL {
++                const int combined_row = (int) item[0];
++                const bool matrix2 = combined_row >= nrows0 + nrows1;
++                const bool matrix1 = !matrix2 && combined_row >= nrows0;
++                const int row = matrix2 ? combined_row - nrows0 - nrows1 :
++                    matrix1 ? combined_row - nrows0 : combined_row;
++                const int matrix_nrows = matrix2 ? nrows2 : matrix1 ? nrows1 : nrows0;
++                const void * vx = matrix2 ? vx2 : matrix1 ? vx1 : vx0;
++                float * dst = matrix2 ? dst2 : matrix1 ? dst1 : dst0;
++                dst[row] = q8_invoke_esimd_detail::row_sum(
++                    vx, vy, ncols, matrix_nrows, row, poison);
++            });
++    });
++}
++
++#endif

@@ -1,0 +1,45 @@
+{
+  "date": "2026-08-16",
+  "status": "closed_negative",
+  "experiment": "direct ESIMD SIMD16 Q8 DP4A row kernels",
+  "model": {
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70",
+  "runtime": {
+    "devices": "SYCL0/SYCL1",
+    "tensor_split": "1/1",
+    "kv": "f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "speculation": false,
+    "door": "GGML_SYCL_MMVQ_Q8_INVOKE_ESIMD=1",
+    "poison_door": "GGML_SYCL_MMVQ_Q8_INVOKE_ESIMD_POISON=1"
+  },
+  "quality": {
+    "normal_completion_exact_tokens": 128,
+    "normal_matches_control": true,
+    "poison_differs_from_control": true,
+    "live_families": ["standalone", "pair", "triple"],
+    "live_on_both_devices": true,
+    "full_12_prompt_gate_run": false,
+    "full_gate_reason": "candidate was decisively slower in the symmetric screen"
+  },
+  "screen": {
+    "command_shape": "llama-bench -p 64 -n 256 -r 3; fresh process per arm; order A-B-B-A",
+    "control_tok_s": [36.728555, 36.729824],
+    "treatment_tok_s": [36.469295, 36.475615],
+    "control_mean_tok_s": 36.7291895,
+    "treatment_mean_tok_s": 36.472455,
+    "relative_delta_percent": -0.6990
+  },
+  "artifacts": {
+    "candidate_source": "/mnt/fast-ai/src/llama.cpp-q38-q8-invoke-esimd-dp4a",
+    "candidate_build": "build-sycl-aot-bmg-g31-invoke",
+    "libggml_sycl_sha256": "2127153e76559f26ac34337d435d32f3fc5cdcff7ca90d250fabbe9f954691f8",
+    "llama_bench_sha256": "2205486e05dfda26395c496751919d24480f67bb56026409859dced821ca54ee"
+  },
+  "decision": "do not promote or repeat unchanged"
+}

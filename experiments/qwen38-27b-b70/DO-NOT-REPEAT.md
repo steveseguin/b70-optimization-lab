@@ -14,7 +14,7 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 
 | Experiment | Outcome | Durable record |
 | --- | --- | --- |
-| Exact Q8 ESIMD SIMD16 DP4A row body | **Active on the reference host:** block-load port covering standalone/pair/triple/quad while preserving incumbent arithmetic; do not duplicate unchanged | [active note](notes/2026-08-16-q8-esimd-dp4a-active.md) |
+| Exact Q8 direct ESIMD SIMD16 DP4A row body | Closed: standalone/pair/triple were live and a poison control proved reachability; normal output was exact, but the position-balanced TP2 screen regressed `0.699%` | [result](notes/2026-08-16-q8-esimd-dp4a-active.md), [data](data/2026-08-16-q8-direct-esimd-dp4a-negative.json), [patch](patches/q8-direct-esimd-dp4a-negative-20260816.diff) |
 | Peer-mapped vec4 collective cache hints | Closed: streaming was performance-null (`+0.011%`) and uncached was slightly negative (`-0.027%`) in a symmetric same-binary screen | [note](notes/2026-08-16-q8-peer-collective-cache-hints-active.md), [data](data/2026-08-16-q8-peer-collective-cache-hints-neutral.json), [patch](patches/q8-peer-collective-cache-hints-20260816.diff) |
 | Q8 lossless repacking | Closed: practical sentinel formats expanded the weights; theoretical entropy headroom was only about 3.7% | [structural audit](notes/2026-08-16-q8-structural-feasibility-and-sampling.md) |
 | Q8 two-chain DP4A (`DP4A2`) transfer | Quality-exact, but no repeatable Qwen3.8 endpoint gain; the promoted snapshot intentionally retains one-chain DP4A | [note](notes/2026-08-16-q8-dp4a2-transfer-no-win.md) |
