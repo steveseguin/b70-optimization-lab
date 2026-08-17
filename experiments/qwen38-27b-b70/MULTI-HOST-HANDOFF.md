@@ -91,6 +91,16 @@ arbitrary-prompt token-exactness.
 
 ## Latest closed candidates
 
+The DP4A3×SG24 intermediate accumulator schedule is also closed. Its two
+position-complemented direct blocks both favored the candidate and pooled to
+`+0.697%`, but the two opposite-order cold endpoint pairs crossed on the
+primary metric. Pooled primary was only `+0.051%`, full decode `-0.034%`, and
+wall throughput `-0.106%`. All 48 outputs and verifier summaries were exact.
+Retain DP4A2×SG24 and do not repeat DP4A3 unchanged; see the
+[result](notes/2026-08-17-q8-dp4a3-sg24-synergy-active.md), structured
+[data](data/2026-08-17-q8-dp4a3-sg24-neutral.json), and focused
+[patch](patches/q8-dp4a3-sg24-neutral-20260817.diff.gz.b64).
+
 The DP4A4×SG24 interaction is closed. It was exact and measured `+0.579%`
 in a fully position-complemented 16-process direct screen, but two
 opposite-order cold endpoint pairs crossed direction. Pooled primary was only
