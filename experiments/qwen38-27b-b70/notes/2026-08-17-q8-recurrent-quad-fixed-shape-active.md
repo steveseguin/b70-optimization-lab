@@ -2,7 +2,7 @@
 
 Date: 2026-08-17
 
-Status: active; claimed by the ASRock two-B70 reference host
+Status: active; repeatable performance gain, quality promotion gate in progress
 
 ## Hypothesis
 
@@ -50,3 +50,39 @@ the incumbent DP4A body and FP32 reduction order.
 Other hosts should not duplicate this exact arm while this note is active.
 Pull `main`, check this note and the do-not-repeat index, and choose a different
 candidate.
+
+## Mechanism and performance checkpoint
+
+The corrected candidate announced the exact local shape on both B70s in a
+`p64/n1` smoke. Normal execution completed with `VERIFY_MISMATCH=0`; a
+separate poison process announced `poison=1` on both devices, proving the new
+instantiation was reached. Both GPUs remained normal after the smokes and
+performance runs.
+
+The first position-balanced `p64/n256/r3` screen pooled `37.047833` candidate
+versus `36.926158 tok/s` control (`+0.330%`), but its two balanced halves
+disagreed (`+0.773%`, `-0.112%`). It was therefore treated as inconclusive.
+
+A longer confirmation used fresh-process order `A-B-B-A, B-A-A-B`, with
+`A=control`, `B=fixed`, and `p64/n512/r3`. Both balanced halves agreed:
+
+| Block | Control (tok/s) | Fixed (tok/s) | Delta |
+| ---: | ---: | ---: | ---: |
+| 1 | `37.135767` | `37.397200` | `+0.704%` |
+| 2 | `37.006383` | `37.294350` | `+0.778%` |
+| pooled | `37.071075` | `37.345775` | **`+0.741%`** |
+
+This clears the performance gate but is not promoted until the complete
+cache-zero output oracle, semantic canaries, repeat stability and long-context
+needle all pass.
+
+Checkpoint identities:
+
+- isolated source/build: `/mnt/fast-ai/src/llama.cpp-q38-q8-fixed-shapes`,
+  `build-sycl-aot-bmg-g31-fixed-shapes`;
+- `libggml-sycl.so.0.19.0` SHA-256:
+  `8335e8d62834e16193e98206502f4f9bf9bd7e59d7a426e9198492496198849d`;
+- `llama-bench` SHA-256:
+  `5ad7c26b123d41194a72f127052c50414a58a558a120548f17f11d54dba61abb`;
+- raw local evidence:
+  `/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-fixed-quad/`.
