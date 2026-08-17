@@ -1,0 +1,44 @@
+{
+  "description": "Four deterministic staged-FA target/spec divergence prompts selected from the preregistered first-eight suite; bounded correction gate, original relative order retained.",
+  "metric": "99 inter-token intervals between generated events 1 and 100 after TTFT",
+  "prompts": [
+    {
+      "group": "historical-selection",
+      "id": "selection--incident-retrospective",
+      "original_id": "incident-retrospective",
+      "prompt": "You are advising an infrastructure team after a service incident. Write a concise but complete incident retrospective for a production API outage caused by a bad cache invalidation rule. Include impact, timeline, contributing factors, detection gaps, remediation, prevention work, and owner handoff. Use practical language for engineers and managers. Aim for about 450-550 words."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--python-lru-cache",
+      "original_id": "python-lru-cache",
+      "prompt": "Implement a production-quality Python LRUCache class with get and put in O(1), capacity validation, type hints, and a short unittest example. Explain the invariants briefly. Include enough implementation and review detail for a maintainer to use the answer directly."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--sql-sessionization",
+      "original_id": "sql-sessionization",
+      "prompt": "Given PostgreSQL table events(user_id bigint, occurred_at timestamptz, event_type text), write a query that assigns sessions separated by more than 30 minutes and returns one row per session with start, end, and event count. Explain the window functions, deterministic tie handling, indexes, and two edge-case tests."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--sql-debugging",
+      "original_id": "sql-debugging",
+      "prompt": "A reporting query became slow after a schema migration. The query joins orders, customers, invoices, and refunds, filters by tenant_id and created_at, and groups by customer segment. Explain a debugging plan for PostgreSQL. Cover EXPLAIN ANALYZE, indexes, statistics, join order, row estimates, partial indexes, materialized views, and rollout safety."
+    }
+  ],
+  "source_suites": [
+    {
+      "group": "historical-selection",
+      "path": "/home/steve/llm-optimizations/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+      "sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+    },
+    {
+      "group": "independent-holdout",
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json",
+      "sha256": "9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638"
+    }
+  ],
+  "suite_id": "qwen36-27b-int4-stagedfa-four-divergence-20260817-v1",
+  "version": 1
+}
