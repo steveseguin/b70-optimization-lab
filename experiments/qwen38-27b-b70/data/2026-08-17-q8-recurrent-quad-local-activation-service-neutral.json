@@ -1,0 +1,58 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_endpoint_neutral",
+  "scope": "Qwen3.8-27B Q8_0 target-only TP2 on two ASRock Intel Arc Pro B70 GPUs",
+  "mechanism": "Stage the exact-shape recurrent quad's 5760-byte Q8_1 activation once per 24xSG16 workgroup in local memory; preserve all row arithmetic and concurrency.",
+  "selector": "GGML_SYCL_MMVQ_Q8_QUAD_LOCAL_Y=1",
+  "candidate_lib_sha256": "ed9bcef981fed2b7987e29dd09289f097926f531a01426badcd7bc2466c632b0",
+  "accepted_lib_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+  "benchmark_config": {
+    "devices": "SYCL0/SYCL1",
+    "tensor_split": "1/1",
+    "batch": 1024,
+    "ubatch": 256,
+    "kv": "F16",
+    "flash_attention": true,
+    "speculation": false
+  },
+  "smoke": {
+    "shape": "p64/n1/r1",
+    "candidate_selected_both_devices": true,
+    "fused_mmvq_gdn_quads": 192,
+    "verify_mismatch": 0
+  },
+  "direct_gates": [
+    {
+      "shape": "p64/n256/r3 A-B-B-A",
+      "control_process_means_tok_s": [36.693392, 37.444448],
+      "candidate_process_means_tok_s": [36.718464, 37.625505],
+      "control_pooled_tok_s": 37.068920,
+      "candidate_pooled_tok_s": 37.1719845,
+      "delta_percent": 0.2780348
+    },
+    {
+      "shape": "p64/n512/r3 B-A-A-B",
+      "control_process_means_tok_s": [36.647942, 36.646933],
+      "candidate_process_means_tok_s": [36.676793, 36.913521],
+      "control_pooled_tok_s": 36.6474375,
+      "candidate_pooled_tok_s": 36.795157,
+      "delta_percent": 0.4030828
+    }
+  ],
+  "endpoint": {
+    "candidate_first_100_historical_median_tok_s": 36.85903254763593,
+    "control_first_100_historical_median_tok_s": 36.85723389888936,
+    "candidate_first_100_conventional_median_tok_s": 36.490442222159565,
+    "control_first_100_conventional_median_tok_s": 36.48866155990047,
+    "primary_median_delta_percent": 0.0048800,
+    "full_512_after_ttft_median_delta_percent": 0.0797669,
+    "full_512_wall_median_delta_percent": 0.0607513,
+    "output_hashes_exact": "12/12",
+    "hash_arrays_equal_between_arms": true,
+    "cached_tokens_all_zero": true,
+    "fresh_response_gate": true
+  },
+  "decision": "Reject as endpoint-neutral. Do not repeat unchanged or add the same whole-activation SLM staging to pair/triple paths.",
+  "raw_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-quad-local-y",
+  "binary_artifacts": "/mnt/fast-ai/artifacts/qwen38-q8-quad-local-y-20260817"
+}
