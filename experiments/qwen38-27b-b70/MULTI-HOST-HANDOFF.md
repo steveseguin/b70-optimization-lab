@@ -152,6 +152,20 @@ the position-balanced result was performance-null (`-0.0088%`). See the
 [patch](patches/q8-fixed-shape-mmvq-neutral-20260816.diff). Do not duplicate
 the exact specialization unchanged.
 
+The compile-time recurrent GDN quad specialization is also closed. Its exact
+equal-TP2 local shape (`K5120`, rows `5120+3072+24+24`) was live on both
+devices and repeated at `+0.741%` in the long `p64/n512` direct benchmark.
+However, the matched same-binary 12-prompt service result was `-0.0664%` by
+the conventional metric. All 12 outputs, seven semantic canaries, eight
+repeats and the 3,829-token needle matched the promoted oracle exactly. See
+the [result note](notes/2026-08-17-q8-recurrent-quad-fixed-shape-active.md),
+structured
+[data](data/2026-08-17-q8-recurrent-quad-fixed-shape-service-neutral.json),
+and incremental
+[patch](patches/q8-recurrent-quad-fixed-shape-service-neutral-20260817.diff).
+Keep it as a synthetic diagnostic and do not add it to the accepted service
+repro unchanged.
+
 The shape-scoped SG4 follow-up is also closed. It independently changed only
 the dominant fused gate/up pair and/or down-projection workgroup population.
 Both shapes announced on both devices and the smoke ended with

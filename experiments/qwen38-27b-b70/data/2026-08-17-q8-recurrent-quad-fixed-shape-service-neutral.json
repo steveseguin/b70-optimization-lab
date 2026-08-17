@@ -1,0 +1,107 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_service_neutral",
+  "experiment": "compile-time fixed Q8 MMVQ geometry for the recurrent GDN quad",
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "bytes": 28595763552,
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70",
+  "runtime": {
+    "selector": "level_zero:1,0",
+    "devices": "SYCL0/SYCL1",
+    "tensor_split": "1/1",
+    "kv": "f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "speculation": false,
+    "door": "GGML_SYCL_MMVQ_Q8_FIXED_QUAD=1",
+    "poison_door": "GGML_SYCL_MMVQ_Q8_FIXED_QUAD_POISON=1"
+  },
+  "specialization": {
+    "global_gguf_shape": "K=5120 N=10240+6144+48+48",
+    "equal_tp2_local_shape": "K=5120 N=5120+3072+24+24",
+    "preserved_math": "incumbent Q8 DP4A body, FP32 accumulation and subgroup reduction order"
+  },
+  "mechanism": {
+    "normal_announced_on_both_devices": true,
+    "poison_announced_on_both_devices": true,
+    "verify_mismatch": 0,
+    "initial_global_row_admission_smoke_counted_as_result": false
+  },
+  "short_screen": {
+    "shape": "llama-bench -p 64 -n 256 -r 3; A-B-B-A,B-A-A-B",
+    "control_pooled_tok_s": 36.926158333,
+    "candidate_pooled_tok_s": 37.047833333,
+    "delta_percent": 0.329509,
+    "block_deltas_percent": [0.772518, -0.112070],
+    "decision": "inconclusive; balanced halves disagreed"
+  },
+  "long_confirmation": {
+    "shape": "llama-bench -p 64 -n 512 -r 3; fresh-process A-B-B-A,B-A-A-B",
+    "control_tok_s": [36.938239, 37.333303, 36.650097, 37.362684],
+    "candidate_tok_s": [37.395125, 37.399303, 37.462748, 37.125933],
+    "control_pooled_tok_s": 37.071075,
+    "candidate_pooled_tok_s": 37.345775,
+    "delta_percent": 0.741009,
+    "block_deltas_percent": [0.703993, 0.778154]
+  },
+  "realistic_endpoint": {
+    "contract": "same binary, door-only A/B, one 8K slot, 12 unique cold prompts, cached_tokens=0",
+    "control": {
+      "event_median_tok_s": 36.69087402918676,
+      "conventional_99_interval_tok_s": 36.32396528889489,
+      "full_median_tok_s": 36.371339870482316,
+      "full_mean_tok_s": 36.36529909298767,
+      "wall_median_tok_s": 35.920354188112455
+    },
+    "candidate": {
+      "event_median_tok_s": 36.6665130413154,
+      "conventional_99_interval_tok_s": 36.299847910902244,
+      "full_median_tok_s": 36.35975791758783,
+      "full_mean_tok_s": 36.36594625004372,
+      "wall_median_tok_s": 35.892489303299236
+    },
+    "candidate_delta_percent": {
+      "event_and_conventional": -0.066395,
+      "full_median": -0.031844,
+      "full_mean": 0.001780,
+      "wall_median": -0.077574
+    }
+  },
+  "quality": {
+    "complete_output_hashes_exact": "12/12",
+    "cached_tokens_all_zero": true,
+    "fresh_response_gate": true,
+    "realistic_final_gate": true,
+    "semantic_canaries_exact": "7/7",
+    "repeat_runs_exact": "8/8",
+    "long_context_actual_prompt_tokens": 3829,
+    "long_context_needle_pass": true,
+    "pass_all": true,
+    "baseline_match_all": true
+  },
+  "artifacts": {
+    "candidate_source": "/mnt/fast-ai/src/llama.cpp-q38-q8-fixed-shapes",
+    "candidate_build": "build-sycl-aot-bmg-g31-fixed-shapes",
+    "raw_local_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-fixed-quad/",
+    "incremental_patch_sha256": "a68ec8aef3cd618c563352be331adb3e6d42b954f7625c985eae17b6854a5e4d",
+    "libggml_sycl_sha256": "8335e8d62834e16193e98206502f4f9bf9bd7e59d7a426e9198492496198849d",
+    "llama_bench_sha256": "5ad7c26b123d41194a72f127052c50414a58a558a120548f17f11d54dba61abb",
+    "llama_cli_sha256": "0e7350e8483ebae7d281036db052c2c208884948162b182c577d8b7624981d2d",
+    "llama_server_sha256": "71972859c1f8132efafa5fd722c0f66d7b23feb8f9a1c567578032006cd695e",
+    "candidate_realistic_json_sha256": "34533a74d216d2bf43174b32828ce79c323b2a34aca496c01ead0c236bd2c0eb",
+    "control_realistic_json_sha256": "e90a8a87ae5cdba35419812f78f33099e09cb206754060913ff14ba333355b2b",
+    "semantic_3829_json_sha256": "8dda8b6ffd9260680f2600e6b7c351677b8a2b8bce1e3e8d6564a6302a4898da"
+  },
+  "health": {
+    "device_0": "normal",
+    "device_1": "normal",
+    "xe_fault_reset_hang_since_boot": false
+  },
+  "decision": "do not promote; retain as exact synthetic-benchmark-only gain"
+}

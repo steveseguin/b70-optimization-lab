@@ -1,0 +1,152 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1550,6 +1550,24 @@
+     return on;
+ }
+ 
++// Lab-only compile-time specialization for Qwen3.8's recurrent GDN quad.
++// The dynamic implementation remains the default and same-binary control.
++static inline bool ggml_sycl_mmvq_q8_fixed_quad() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_FIXED_QUAD");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
++static inline bool ggml_sycl_mmvq_q8_fixed_quad_poison() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_FIXED_QUAD_POISON");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+ template <int SGS, bool POISON, bool PHASE = false>
+ static void mul_mat_vec_q8_0_reorder_sg(const void * __restrict__ vx, const void * __restrict__ vy,
+                                         float * __restrict__ dst, const int ncols, const int nrows,
+@@ -1953,6 +1971,8 @@
+ // in a separate fused elementwise launch. Store that exact expression into
+ // the graph's final gate buffer here. The subgroup reduction and all other
+ // matrix rows remain byte-for-byte the incumbent Q8_0 MMVQ body.
++template <int NCOLS = 0, int NROWS0 = 0, int NROWS1 = 0,
++          int NROWS2 = 0, int NROWS3 = 0, bool POISON = false>
+ static void mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+         const void * __restrict__ vx0, const void * __restrict__ vx1,
+         const void * __restrict__ vx2, const void * __restrict__ vx3,
+@@ -1970,10 +1990,16 @@
+     const auto sg           = nd_item.get_sub_group();
+     const int  sg_range     = sg.get_group_linear_range();
+     const int  combined_row = nd_item.get_group_linear_id() * sg_range + sg.get_group_linear_id();
+-    const int  edge1        = nrows0;
+-    const int  edge2        = edge1 + nrows1;
+-    const int  edge3        = edge2 + nrows2;
+-    if (combined_row >= edge3 + nrows3) {
++    constexpr bool fixed = NCOLS != 0;
++    const int effective_ncols  = fixed ? NCOLS  : ncols;
++    const int effective_nrows0 = fixed ? NROWS0 : nrows0;
++    const int effective_nrows1 = fixed ? NROWS1 : nrows1;
++    const int effective_nrows2 = fixed ? NROWS2 : nrows2;
++    const int effective_nrows3 = fixed ? NROWS3 : nrows3;
++    const int edge1 = effective_nrows0;
++    const int edge2 = edge1 + effective_nrows1;
++    const int edge3 = edge2 + effective_nrows2;
++    if (combined_row >= edge3 + effective_nrows3) {
+         return;
+     }
+ 
+@@ -1983,11 +2009,12 @@
+     const int row = matrix == 3 ? combined_row - edge3 :
+                     matrix == 2 ? combined_row - edge2 :
+                     matrix == 1 ? combined_row - edge1 : combined_row;
+-    const int nrows = matrix == 3 ? nrows3 : matrix == 2 ? nrows2 : matrix == 1 ? nrows1 : nrows0;
++    const int nrows = matrix == 3 ? effective_nrows3 : matrix == 2 ? effective_nrows2 :
++                      matrix == 1 ? effective_nrows1 : effective_nrows0;
+     const void * vx = matrix == 3 ? vx3 : matrix == 2 ? vx2 : matrix == 1 ? vx1 : vx0;
+     float * dst     = matrix == 3 ? dst3 : matrix == 2 ? dst2 : matrix == 1 ? dst1 : dst0;
+ 
+-    const int     blocks_per_row              = ncols / block_traits::qk;
++    const int     blocks_per_row              = effective_ncols / block_traits::qk;
+     constexpr int blocks_per_subgroup         = ceil_div(block_traits::vdr_mmvq * WARP_SIZE, block_traits::qi);
+     constexpr int block_elements_per_subgroup = block_traits::qi / block_traits::vdr_mmvq;
+     const int     nblocks                     = nrows * blocks_per_row;
+@@ -1997,17 +2024,17 @@
+     for (int i = lane_block; i < blocks_per_row; i += blocks_per_subgroup) {
+         const int ibx = row * blocks_per_row + i;
+         const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
+-        const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
++        const auto d_offset  = block_type::get_d_offset(nrows, effective_ncols, ibx);
+         const int  iby       = i * block_type::block_to_q8_1_ratio();
+         const int8_t * q8_1_quant_ptr = (const int8_t *) vy + iby * QK8_1;
+         const sycl::half2 * q8_1_ds_ptr = (const sycl::half2 *)
+-            ((const char *) vy + ncols + iby * sizeof(sycl::half2));
++            ((const char *) vy + effective_ncols + iby * sizeof(sycl::half2));
+ 
+ #pragma unroll
+         for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
+             const int iqs = elem + block_traits::vdr_mmvq *
+                 (sg.get_local_linear_id() % block_elements_per_subgroup);
+-            partial_sum += reorder_vec_dot_q8_0<true>()(
++            partial_sum += reorder_vec_dot_q8_0<true, POISON>()(
+                 vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
+         }
+     }
+@@ -2052,14 +2079,50 @@
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+     stream->submit([&](sycl::handler & cgh) {
+-        cgh.parallel_for(
+-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
+-            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+-                mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+-                    vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
+-                    dst0, dst1, dst2, dst3,
+-                    ncols, nrows0, nrows1, nrows2, nrows3, nd_item);
+-            });
++        // GGUF rows are 10240/6144/48/48 globally. Equal TP2 splits each
++        // output dimension, so this kernel sees the exact local shape below.
++        const bool fixed_quad = ggml_sycl_mmvq_q8_fixed_quad() &&
++            ncols == 5120 && nrows0 == 5120 && nrows1 == 3072 &&
++            nrows2 == 24 && nrows3 == 24;
++        const bool poison = fixed_quad && ggml_sycl_mmvq_q8_fixed_quad_poison();
++        if (fixed_quad) {
++            static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++            const int device = get_current_device_id();
++            if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++                fprintf(stderr,
++                        "SYCL lab door | q8 fixed quad: dev=%d K=5120 local-N=5120+3072+24+24 poison=%d\n",
++                        device, (int) poison);
++                announced[device] = true;
++            }
++            if (poison) {
++                cgh.parallel_for(
++                    sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                    [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                        mul_mat_vec_q8_0_reorder_quad_gdn_processed<5120, 5120, 3072, 24, 24, true>(
++                            vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
++                            dst0, dst1, dst2, dst3,
++                            ncols, nrows0, nrows1, nrows2, nrows3, nd_item);
++                    });
++            } else {
++                cgh.parallel_for(
++                    sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                    [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                        mul_mat_vec_q8_0_reorder_quad_gdn_processed<5120, 5120, 3072, 24, 24, false>(
++                            vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
++                            dst0, dst1, dst2, dst3,
++                            ncols, nrows0, nrows1, nrows2, nrows3, nd_item);
++                    });
++            }
++        } else {
++            cgh.parallel_for(
++                sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_quad_gdn_processed<>(
++                        vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
++                        dst0, dst1, dst2, dst3,
++                        ncols, nrows0, nrows1, nrows2, nrows3, nd_item);
++                });
++        }
+     });
+     return true;
+ }
