@@ -1,0 +1,88 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_endpoint_neutral",
+  "experiment": "four-independent-accumulator DP4A Q8 row body combined with accepted recurrent-quad SG24 geometry",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "hardware": "2x ASRock Intel Arc Pro B70",
+  "control": "DP4A2 + SG16 + SG24",
+  "candidate": "DP4A4 + SG16 + SG24",
+  "compiler": "Intel oneAPI DPC++ 2026.1.1 (2026.1.1.20260724)",
+  "runtime": {
+    "selector": "level_zero:1,0",
+    "devices": "SYCL0/SYCL1",
+    "tensor_split": "1/1",
+    "kv": "f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "reasoning": false,
+    "speculation": false
+  },
+  "direct_bench": {
+    "contract": "two exact position-complemented eight-process blocks, p64/n256/r3",
+    "first_eight": {
+      "control_mean_tok_s": 37.10078225,
+      "candidate_mean_tok_s": 37.25829675,
+      "delta_percent": 0.42455843367021906
+    },
+    "complementary_eight": {
+      "control_mean_tok_s": 37.201425,
+      "candidate_mean_tok_s": 37.4742355,
+      "delta_percent": 0.7333334677367853
+    },
+    "all_sixteen": {
+      "control_mean_tok_s": 37.151103625,
+      "candidate_mean_tok_s": 37.366266125,
+      "delta_percent": 0.579155069447812,
+      "verify_mismatch": 0
+    }
+  },
+  "realistic_endpoint": {
+    "contract": "two opposite process-order pairs, fresh server each arm, 12 unique prompts, max 512, cached_tokens=0",
+    "pair1_control_then_candidate": {
+      "primary_delta_percent": 0.1302896089401484,
+      "full_decode_delta_percent": -0.04452489490195388,
+      "wall_delta_percent": 0.04580298161431795
+    },
+    "pair2_candidate_then_control": {
+      "primary_delta_percent": -0.08136815709200995,
+      "full_decode_delta_percent": 0.048752064165946685,
+      "wall_delta_percent": -0.16093812733993795
+    },
+    "pooled_pair_medians": {
+      "control_primary_tok_s": 37.06468406861843,
+      "candidate_primary_tok_s": 37.07378027779831,
+      "primary_delta_percent": 0.024541445336589973,
+      "control_full_decode_tok_s": 36.68923352057467,
+      "candidate_full_decode_tok_s": 36.690013392893135,
+      "full_decode_delta_percent": 0.0021256162738625406,
+      "wall_delta_percent": -0.05758932579644771,
+      "ttft_delta_percent": 0.8824127517368163
+    }
+  },
+  "quality": {
+    "endpoint_complete_output_hashes_exact": "12/12 across all four suites",
+    "cached_tokens_all_zero": true,
+    "fresh_response_gate_all": true,
+    "direct_verify_mismatch": 0
+  },
+  "artifacts": {
+    "decoded_incremental_patch_sha256": "c8bf76f327efb8e54fde7c0b000ed6cb89cb67face715ea8abff6c428d9a5d80",
+    "llama_bench_sha256": "77a936f287f6639fd3d8ec84aa83600f1ba95ab3cbe42717feb0d088a2ee82da",
+    "llama_server_sha256": "4f52696048db59471e0a7debfbd2afb7543f77821b3f3ff989868d5f16e7e35a",
+    "libggml_sycl_sha256": "b06fb959c6ab50e358d17f5b21331d0873cf08dad7a41ecd4c7d2afafa4d9153",
+    "endpoint_json_sha256": {
+      "pair1_control": "b5d962e9a4599d7473f974050f322beb4ed48ece2844ac9787d8091f5cf76736",
+      "pair1_candidate": "55deb7c735600dfe6d8d241cf879ae11157446a0d4fcbf5369ece114a13ecec5",
+      "pair2_candidate": "b76dfb48a7487287047f63233c07c0531df2282e814397acd9ac5fc92eab38cc",
+      "pair2_control": "ef511b86ab55bb850f2a6d832ddc755c6c56e4365553aae45f7b1ded78e691f8"
+    },
+    "raw_local_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-dp4a4-sg24/"
+  },
+  "health": {
+    "device_0": "normal",
+    "device_1": "normal",
+    "xe_fault_reset_hang_since_boot": false
+  },
+  "decision": "retain DP4A2 SG24; direct synthetic gain did not transfer to the cold endpoint and DP4A4 must not be repeated unchanged"
+}

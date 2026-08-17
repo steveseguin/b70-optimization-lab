@@ -91,6 +91,15 @@ arbitrary-prompt token-exactness.
 
 ## Latest closed candidates
 
+The DP4A4×SG24 interaction is closed. It was exact and measured `+0.579%`
+in a fully position-complemented 16-process direct screen, but two
+opposite-order cold endpoint pairs crossed direction. Pooled primary was only
+`+0.0245%`, full decode `+0.0021%`, and wall throughput `-0.0576%`. Retain
+DP4A2×SG24 and do not repeat DP4A4 unchanged; see the
+[result](notes/2026-08-17-q8-dp4a4-sg24-synergy-active.md), structured
+[data](data/2026-08-17-q8-dp4a4-sg24-neutral.json), and focused
+[patch](patches/q8-dp4a4-sg24-neutral-20260817.diff.gz.b64).
+
 Three newer, low-risk compiler/kernel arms are also closed:
 
 - reordered-Q8 loop unroll by two was neutral (`+0.076%` overall);
