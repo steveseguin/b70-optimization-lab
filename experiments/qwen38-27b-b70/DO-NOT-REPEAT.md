@@ -14,6 +14,7 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 
 | Experiment | Outcome | Durable record |
 | --- | --- | --- |
+| Peer-mapped vec4 collective cache hints | **Active on the reference host:** same-binary streaming/uncached hints only on the `p1` peer read/write; do not duplicate unchanged | [active note](notes/2026-08-16-q8-peer-collective-cache-hints-active.md) |
 | Q8 lossless repacking | Closed: practical sentinel formats expanded the weights; theoretical entropy headroom was only about 3.7% | [structural audit](notes/2026-08-16-q8-structural-feasibility-and-sampling.md) |
 | Q8 two-chain DP4A (`DP4A2`) transfer | Quality-exact, but no repeatable Qwen3.8 endpoint gain; the promoted snapshot intentionally retains one-chain DP4A | [note](notes/2026-08-16-q8-dp4a2-transfer-no-win.md) |
 | Early Qwen3.8 direct-Q8 reproduction packet | Superseded provenance error: it omitted three source increments that the launcher enabled and the headline result used. Use the corrected one-chain full-stack packet | [correction](notes/2026-08-16-q8-repro-provenance-correction.md), [data](data/2026-08-16-q8-repro-provenance-correction.json) |
