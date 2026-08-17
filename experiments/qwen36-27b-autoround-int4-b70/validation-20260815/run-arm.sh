@@ -90,7 +90,7 @@ elif [[ "$mode" == "spec-native-partition-exact" \
   exact_identity=1
   verify_tree "$source_root/vllm" f93620fa9238dd56678d53410aa6a772e262073f \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
-  verify_tree "$source_root/vllm-xpu-kernels" d07ee87a939d7a1f0e2a548207ef4c014f524d6d \
+  verify_tree "$source_root/vllm-xpu-kernels" 50e729b1e87559eef8709c9836195f50766ba791 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
 elif [[ "$mode" == "spec-native-partition" || "$mode" == "nospec-latest" ]]; then
   latest_identity=1
@@ -440,18 +440,18 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
     verify_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
       869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
       graph-safe-FlashAttention-Python-interface
-    if [[ -n "${VALIDATION_FA_CHUNK_COMPLETION_OVERLAY:-}" ]]; then
-      if [[ -z "${VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256:-}" ]]; then
-        printf 'VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256 is required\n' >&2
-        exit 3
-      fi
-      verify_sha "$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY" \
-        "$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256" \
-        graph-safe-FlashAttention-completion-overlay
-      export SERVER_LD_PRELOAD="$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY${SERVER_LD_PRELOAD:+:$SERVER_LD_PRELOAD}"
-    fi
     export STAGE="$graph_stage"
     export VLLM_XPU_KERNELS_SRC="$graph_stage"
+  fi
+  if [[ -n "${VALIDATION_FA_CHUNK_COMPLETION_OVERLAY:-}" ]]; then
+    if [[ -z "${VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256:-}" ]]; then
+      printf 'VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256 is required\n' >&2
+      exit 3
+    fi
+    verify_sha "$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY" \
+      "$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256" \
+      FlashAttention-completion-overlay
+    export SERVER_LD_PRELOAD="$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY${SERVER_LD_PRELOAD:+:$SERVER_LD_PRELOAD}"
   fi
   export QWEN36_27B_ENABLE_MTP=1
   export NUM_SPECULATIVE_TOKENS="${VALIDATION_NUM_SPECULATIVE_TOKENS:-3}"
