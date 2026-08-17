@@ -1,0 +1,56 @@
+{
+  "date": "2026-08-16",
+  "status": "closed_performance_neutral",
+  "model": {
+    "repo": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "candidate": {
+    "base": "accepted one-chain Qwen3.8 Q8 TP2 stack on mndodd 4302fb599",
+    "runtime_door": "GGML_SYCL_COMM_PEER_CACHE",
+    "modes": {
+      "0": "ordinary pointer access",
+      "1": "streaming L1/L3 peer read and write",
+      "2": "uncached L1/L3 peer read and write"
+    },
+    "patch": "experiments/qwen38-27b-b70/patches/q8-peer-collective-cache-hints-20260816.diff",
+    "patch_sha256": "7826ae4e83786dde494ab73258787bdc7a847d75c2f74e1f9ee687b49bef3524",
+    "binary_sha256": {
+      "llama_bench": "9d3fc8515dd819eea9c144e8a7e4323964599ad638f0e93477042617ecd7aa42",
+      "llama_server": "1c8a322942f948c10fba908d5371eb8b0acef31b370dc6958a7ea4e132915526",
+      "libggml_sycl_so_0_19_0": "9c664ec151c269dabf4ddccdf6506aeb910cd5a89f9ba4410ba4aac23f62619e"
+    }
+  },
+  "screen": {
+    "fresh_process_order": [0, 1, 2, 2, 1, 0],
+    "shape": "p64 n256 r3",
+    "common": "TP2 target-only; level_zero:1,0; SYCL0/SYCL1; split 1/1; F16 KV; FA; b1024 ub256",
+    "runs": [
+      {"position": 1, "mode": 0, "decode_tok_s": 36.575239, "file": "screen-1-014218-mode0-p64-n256-r3.log", "sha256": "ae5e383c327eed7261472129d36e82fbf68e10c35f6011e09aaec9c0951b4bf4"},
+      {"position": 2, "mode": 1, "decode_tok_s": 36.578602, "file": "screen-2-014259-mode1-p64-n256-r3.log", "sha256": "adf1df71cd3867eb04d0854e7fc36062fcc847da1b6a0fa2aef48adffc3e59ae"},
+      {"position": 3, "mode": 2, "decode_tok_s": 36.570689, "file": "screen-3-014339-mode2-p64-n256-r3.log", "sha256": "7f6c13d0d27942b4820d7356043a093934fc5ceac959e918fb84d0c8e169a9ee"},
+      {"position": 4, "mode": 2, "decode_tok_s": 36.536002, "file": "screen-4-014419-mode2-p64-n256-r3.log", "sha256": "5b15db32760aef312de9adf9f01a9411e957a3b85a86dc72f66eb4c3e7470aeb"},
+      {"position": 5, "mode": 1, "decode_tok_s": 36.556120, "file": "screen-5-014500-mode1-p64-n256-r3.log", "sha256": "b3c7d95d1d702647ba510e6f59f0b8fce5ce40701598544decba0a3ad1bde81c"},
+      {"position": 6, "mode": 0, "decode_tok_s": 36.551363, "file": "screen-6-014540-mode0-p64-n256-r3.log", "sha256": "feb89afd28bffc30adf62c49cd0ed63a51703022864cb19ed2cc34bcb36b4c06"}
+    ],
+    "pooled_decode_tok_s": {
+      "mode_0": 36.563301,
+      "mode_1": 36.567361,
+      "mode_2": 36.5533455
+    },
+    "delta_percent_vs_mode_0": {
+      "mode_1": 0.011104030,
+      "mode_2": -0.027228121
+    }
+  },
+  "quality_and_health": {
+    "verify_mismatch_all_runs": 0,
+    "gpu_state_after": "normal_normal",
+    "new_xe_compute_fault_reset_hang_timeout_device_lost": false,
+    "endpoint_suite_run": false,
+    "endpoint_suite_reason": "No repeatable performance gain; candidate was not eligible for promotion."
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260816-peer-cache-hints"
+}
