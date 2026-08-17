@@ -106,13 +106,14 @@ and the failed `invoke_simd` AOT history are in the
 implementation unchanged. Check `origin/main` before opening another
 target-only Q8 candidate.
 
-The reference host now claims upstream gated-delta-net state-writeback fusion
-commit `3d9388535`. The accepted Q8 stack predates that upstream change and
-does not contain its cache-fusion symbols. The port will remain default-off,
-preserve the current specialized GDN arithmetic, and change only where the
-state snapshot is written. See the
-[active note](notes/2026-08-16-q8-upstream-gdn-cache-fusion-active.md). Do not
-duplicate this exact port while it remains active.
+Upstream gated-delta-net state-writeback fusion commit `3d9388535` is closed
+for this stack without a build. The accepted repro already enables its older,
+stricter `GGML_SYCL_FUSED_GDN_STATE_IO=1` path, which removes both the input
+GET_ROWS and output CPY and previously delivered a matched `+3.132%`. The
+upstream symbol names differ, which caused the initial overlap check to miss
+it. See the corrected
+[audit](notes/2026-08-16-q8-upstream-gdn-cache-fusion-active.md). Do not port
+or benchmark upstream `3d9388535` unchanged.
 
 The trace-driven queue-0 local-ready event-elision arm is now closed. Normal
 output was exact and poison proved that the branch was live, but its

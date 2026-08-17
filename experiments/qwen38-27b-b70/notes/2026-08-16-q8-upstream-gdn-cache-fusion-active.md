@@ -2,8 +2,7 @@
 
 Date: 2026-08-16
 
-Status: active on the two-ASRock-B70 reference host; do not duplicate
-unchanged.
+Status: closed during source audit; already subsumed by the accepted stack.
 
 ## Source and rationale
 
@@ -43,3 +42,26 @@ is orthogonal and has a stronger measured B70 result.
 
 Build no more than two jobs under the established 8 GiB host-memory cap. Stop
 on any device-lost, reset, hang, timeout, or output mismatch.
+
+## Audit outcome
+
+The initial symbol check used upstream's new names and missed the accepted
+stack's older, stricter implementation. No candidate build was started.
+
+The accepted source already provides:
+
+- `GGML_SYCL_FUSED_GDN_STATE_IO=1`, enabled by the Qwen3.8 repro;
+- `ggml_sycl_find_gdn_state_io`, which recognizes the exact one-sequence,
+  one-retained-slot Qwen graph;
+- `ggml_sycl_gated_delta_net_beta_sigmoid_state_io`, which reads and writes
+  the persistent state directly in place;
+- removal of both the input `GET_ROWS` and output `CPY`, while upstream
+  `3d9388535` removes only the output state-copy tail;
+- a treatment poison and live counters already used by the lab's quality
+  contract.
+
+This direct-state mechanism previously delivered a matched `+3.132%` on the
+Qwen3.6 Q8 TP2 progression and is carried into the accepted Qwen3.8 Q8 repro.
+Upstream `3d9388535` is therefore not a new additive optimization for this
+stack. Do not port or benchmark it unchanged. This correction was committed
+immediately so other hosts do not duplicate the audit mistake.
