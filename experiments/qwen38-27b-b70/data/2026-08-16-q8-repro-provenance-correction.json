@@ -1,0 +1,39 @@
+{
+  "date": "2026-08-16",
+  "experiment": "Qwen3.8-27B Q8_0 TP2 reproduction provenance correction",
+  "corrected_source": {
+    "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "artifact": "patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-conv-silu-l2-20260815.diff.gz.b64",
+    "decoded_sha256": "c8ae065cabf9e7b7f6b6a224673498ddf82b07aeb1d16a33d341368b9b3234d7",
+    "sycl_library_sha256": "707ea1b8f19b69aa31f968dd461815b408a552aaf2f4bfe23d3f83b0ee0e08ed",
+    "q8_dp4a_schedule": "one_chain"
+  },
+  "superseded_source": {
+    "artifact": "patches/qwen38-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-qwen38-q8-tp2-20260816.diff.gz.b64",
+    "decoded_sha256": "642032df8459e05bbaea00c3ff5f7e93d657c995979164a85eb9262747fa6b1e",
+    "reason": "It omitted vec4 root reduction, fused Q/K norm+RoPE, and fused recurrent conv+SiLU+L2 despite the launcher exporting those doors."
+  },
+  "fresh_endpoint_replay": {
+    "conventional_99_interval_median_tok_s": 36.421060767627,
+    "historical_100_event_median_tok_s": 36.78895027033036,
+    "full_output_after_ttft_median_tok_s": 36.47133225854979,
+    "full_output_wall_median_tok_s": 35.93831937487383,
+    "ttft_median_ms": 177.17653899853758,
+    "complete_output_hashes_exact": "12/12",
+    "cached_tokens_all_zero": true,
+    "verify_mismatch": 0,
+    "raw_sha256": "74d32232bb40c1c0406a72d08ab0c77a2a9f997897fbd28f91e8dc9923f7736b",
+    "raw_local_path": "/mnt/fast-ai/bench-results/qwen38-q8-full-intended-repro-20260816.json"
+  },
+  "vec4_bracket": {
+    "shape": "p64/n256/r3, A-B-B-A then B-A-A-B",
+    "scalar_means_tok_s": [36.434819, 36.426507, 37.324766, 36.406775],
+    "vec4_means_tok_s": [36.315544, 36.705325, 36.612693, 37.476755],
+    "scalar_pooled_tok_s": 36.64821675,
+    "vec4_pooled_tok_s": 36.77757925,
+    "delta_percent": 0.3529844327,
+    "decision": "Supporting evidence only; per-position deltas crossed due to process-state variance."
+  },
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "health": "No new Xe compute fault, reset, hang, device-lost, or CAT error."
+}

@@ -15,6 +15,14 @@ and no MTP, DFlash, draft model, response reuse, or speculation.
 - semantic gate: exact copy, arithmetic, JSON, factual, logic, Python-result,
   repeat-stability, and 3,829-token needle tests all passed on 2026-08-16
 
+A fresh replay of the corrected full source stack on 2026-08-16 again passed
+12/12 complete hashes and 12/12 cache-zero requests. It measured
+`36.421061 tok/s` conventional (`36.788950` under the historical 100-event
+metric), `36.471332 tok/s` full-output after TTFT, and `177.177 ms` median
+TTFT. That is `0.957%` below the original conventional headline and within
+the observed process-state spread. See the
+[provenance correction](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-repro-provenance-correction.md).
+
 Reasoning-mode provenance: the accepted speed capture above used
 reasoning-enabled output and its stored completions contain `<think>`. The
 current launcher intentionally uses `--reasoning off`; it is the
@@ -65,11 +73,17 @@ host-memory fallback off, and Level Zero API support on. Build
 `llama-bench llama-cli llama-server` with `-j2` inside a 6/8 GiB cgroup. Do
 not overlap the build with a model workload on a 16 GiB-class host.
 
-The accepted local binaries are identified by:
+The validated pre-DP4A2 source snapshot originally produced:
 
-- `llama-server`: `32c581628082fa1352824650d45f523d52b526aaefdfd23e1c34d438f7ad084a`
-- `llama-bench`: `f7010c08b534a4f338b9cbd83f97f22b82f13ddab5be0c727d16c3bb0f8c4312`
-- `libggml-sycl.so`: `944e2ddb026bfdcd3147323f7edbfdabbae7754a51cfdb74149045f8895ddd5f`
+- `llama-server`: `d1d5f8d2c7903ef7a84eb9e698689fa803d1c59650d7dce914253efae2bb75b4`
+- `llama-bench`: `b7fbea3d9081ea8c97350d90a63403039f30e99eecc6aea7ae98d4d4d3fed6c2`
+- `libggml-sycl.so`: `707ea1b8f19b69aa31f968dd461815b408a552aaf2f4bfe23d3f83b0ee0e08ed`
+
+The fresh correction replay used a later host-only relink (`llama-server`
+`d0ca5aa6...`, `llama-bench` `8788242b...`) with the same exact
+`707ea1b8...` SYCL library. Hashes are provenance aids; source patch, build
+flags, runtime doors, model hash, output hashes, and cache-zero gate are the
+portable reproduction contract.
 
 ## Run and verify
 
