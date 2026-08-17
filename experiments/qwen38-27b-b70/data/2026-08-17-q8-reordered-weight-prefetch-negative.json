@@ -1,0 +1,64 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_negative",
+  "experiment": "bounds-checked L1 prefetch of the next reordered-Q8 weight vector",
+  "scope": [
+    "standalone reordered Q8 MMVQ",
+    "multi-column reordered Q8 MMVQ",
+    "fused pair",
+    "fused triple",
+    "processed recurrent quad"
+  ],
+  "quality_contract": {
+    "target_only": true,
+    "speculation": false,
+    "kv": "f16/f16",
+    "tensor_parallel": 2,
+    "tensor_split": "1/1",
+    "flash_attention": true,
+    "verifier_mismatch": 0,
+    "semantic_endpoint_gate": "skipped_after_decisive_direct_regression"
+  },
+  "model": {
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "bytes": 28595763552,
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "candidate": {
+    "source": "/mnt/fast-ai/src/llama.cpp-q8-tp2-prefetch",
+    "base_source": "/mnt/fast-ai/src/llama.cpp-q8-tp2-dp4a2",
+    "compiler": "Intel oneAPI DPC++/C++ 2026.1.1 (2026.1.1.20260724)",
+    "decoded_patch_sha256": "20ec24b131f5c13b8ffbf9c1a97b2feb0852d5c81b901c8bf9240fc53d13a788",
+    "libggml_sycl_sha256": "60fe7f64419768fa5fb345432fe2bf38918573857bbb5a9b2d641b9884d9b7ee",
+    "llama_bench_sha256": "d17992da5941db787f88e737b7e5f9d185a3976d3398968a4cc08f25e483f042",
+    "llama_server_sha256": "327190e2effb23c8cb700b27dbf7def40b7aa22c940e8567163e56c46fd07417",
+    "runtime_door": "GGML_SYCL_MMVQ_Q8_PREFETCH=1"
+  },
+  "aot": {
+    "image": 135,
+    "image_sha256": "45cb48b38a0bcf0821cf840d1396969f512fc510e977ca6bf013efd52e817d7a",
+    "ze_info_sha256": "99f897661456f1004516b7223e82a8ead32bc1c05eb382747d4f7b84cebf8e69",
+    "treatment_prefetch_form": "cacheable UGM load sends with null destination",
+    "treatment_geometry": "SIMD16, 128 GRFs, 8 EU threads",
+    "control_geometry": "SIMD16, 128 GRFs, 8 EU threads",
+    "control_codegen_drift": true
+  },
+  "benchmark": {
+    "command_shape": "llama-bench -p 64 -n 128 -r 1; fresh process; accepted-treatment-accepted",
+    "accepted_a1_tps": 36.036107,
+    "treatment_tps": 35.085181,
+    "accepted_a2_tps": 36.018324,
+    "accepted_mean_tps": 36.0272155,
+    "delta_percent": -2.6147857582832
+  },
+  "health": {
+    "device_0": "normal",
+    "device_1": "normal",
+    "new_xe_fault_reset_hang": false
+  },
+  "raw_evidence": [
+    "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-prefetch/",
+    "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-prefetch-aot/"
+  ],
+  "decision": "reject and retain accepted DP4A2 x SG24 reproduction"
+}

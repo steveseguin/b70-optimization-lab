@@ -242,6 +242,19 @@ Mode `3` is not an alternative candidate. Its peer-writing design caused a
 device-lost/reset storm and is permanently quarantined. Never enable or port
 it without a fundamentally different ownership/synchronization proof.
 
+The BMG-G31 reordered-Q8 device-prefetch arm is closed. A clean oneAPI 2026.1.1
+AOT build proved that the treatment emitted cacheable UGM loads with a null
+destination while retaining SIMD16, 128 GRFs and eight EU threads. The
+accepted-treatment-accepted `p64/n128` bracket measured `36.036107`,
+`35.085181`, and `36.018324 tok/s`: `-2.615%` versus the accepted mean. All
+verifier counters were zero and both B70s stayed normal. See the
+[result note](notes/2026-08-17-q8-reordered-weight-prefetch-active.md),
+structured
+[data](data/2026-08-17-q8-reordered-weight-prefetch-negative.json), and
+focused
+[patch](patches/q8-reordered-weight-prefetch-negative-20260817.diff.gz.b64).
+Do not retry the exact next-iteration L1 prefetch unchanged.
+
 ## Quality and benchmark contract
 
 A machine may publish a candidate only after all of these hold:
