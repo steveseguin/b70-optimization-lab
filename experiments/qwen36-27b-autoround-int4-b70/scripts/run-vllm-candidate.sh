@@ -162,6 +162,7 @@ trap cleanup EXIT
   echo "num_speculative_tokens=$NUM_SPECULATIVE_TOKENS"
   echo "enable_xpu_graph=$QWEN36_27B_ENABLE_XPU_GRAPH"
   echo "compilation_config=$COMPILATION_CONFIG"
+  echo "batch_invariant=${VLLM_BATCH_INVARIANT:-0}"
   echo "promote_accepted_spec_state=$VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE"
   echo "nonspec_postprocess_accepted_state=$VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE"
   echo "gdn_packed_decode_with_source=${VLLM_XPU_GDN_PACKED_DECODE_WITH_SOURCE:-}"

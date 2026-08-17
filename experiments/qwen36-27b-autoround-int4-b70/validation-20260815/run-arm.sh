@@ -353,6 +353,12 @@ fi
 if [[ "${VALIDATION_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT:-0}" == "1" ]]; then
   export VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT=1
 fi
+if [[ "${VALIDATION_BATCH_INVARIANT:-0}" == "1" ]]; then
+  # Diagnostic use of vLLM's complete batch-invariance contract. This is the
+  # broad reference for deciding whether residual M4/M1 drift is arithmetic;
+  # it is not a performance recipe unless it passes the normal gate.
+  export VLLM_BATCH_INVARIANT=1
+fi
 if [[ "${VALIDATION_QWEN_GEMMA_RMSNORM_SERIAL_M4:-0}" == "1" ]]; then
   export VLLM_XPU_QWEN_GEMMA_RMSNORM_SERIAL_M4=1
 fi
