@@ -8,8 +8,10 @@ unchanged pending operator discussion; no restore and no additional diagnostic
 was performed beyond the agreed matched gate and one bounded correction.
 
 The final warmed four-prompt run is genuinely strong bounded evidence: all four
-complete token arrays match both sealed target controls and the preferred
-99-interval median is **`110.675 tok/s`**. It is not the normal promotion gate.
+complete token arrays match both then-sealed target controls and the preferred
+99-interval median is **`110.675 tok/s`**. Against the later same-source
+25-target subset it is only 3/4 because structured extraction changes at token
+246. It is not the normal promotion gate.
 The suite is diagnostic-only and the objective quality gate was skipped.
 The matched final-source 25-prompt candidate was only **15/25 exact** and
 measured **`96.386 tok/s`** strict. The one permitted correction broadened the
@@ -81,7 +83,7 @@ raw repair.
 - [Structured control summary](../data/qwen36-27b-autoround-int4-input-dependency-controls-20260817.json)
 - [Source/config packet](../patches/qwen36-27b-autoround-int4-b70/int4-input-dependency-20260817/README.md)
 - Patch-packet manifest SHA256:
-  `339d46f140c0c284d839c76b86d162373e0282a06deb1113771409240fe8081e`.
+  `707abf26c2105423ab6224f5bca4398ff58e6b4fadf526c1de55ad3c53b1a07d`.
 - All relevant raw roots now have post-teardown `SHA256SUMS` files that verify.
 - [Sealed-root manifest index](../data/qwen36-27b-autoround-int4-input-dependency-sealed-roots-20260817.sha256)
   covers 22 roots and has SHA256

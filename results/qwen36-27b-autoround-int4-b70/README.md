@@ -45,6 +45,14 @@ Do not promote the 101.078 fastest arm or describe this as a robust `>100`
 result; the July row below remains historical evidence under its original
 metric and narrower quality standard.
 
+The final 2026-08-17 recovery attempt is also closed without promotion. A
+fixed per-row RMSNorm implementation repaired one focused near-tie and matched
+both then-sealed four-prompt controls at `106.663 tok/s`, but the matched-source
+25-prompt speculative gate matched only 12/25 complete target outputs and
+measured `93.445681 tok/s` conventional. See the
+[closeout](../../notes/2026-08-17-qwen36-int4-batch-invariant-rmsnorm-closeout.md).
+No new LocalMaxxing row or production patch was promoted.
+
 A follow-up replaced ReplaySSM with the native packed GDN transaction and made
 its command-graph scratch persistent. This removed the graph-address lifetime
 failure and improved repeatability. Four fresh candidate arms measured a

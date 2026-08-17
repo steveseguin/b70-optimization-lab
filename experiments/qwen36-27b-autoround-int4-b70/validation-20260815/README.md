@@ -534,3 +534,23 @@ the runtime left unchanged pending operator discussion. See the
 [closeout note](../../../notes/2026-08-17-qwen36-int4-input-dependency-closeout.md),
 [structured controls](../../../data/qwen36-27b-autoround-int4-input-dependency-controls-20260817.json),
 and [source packet](../../../patches/qwen36-27b-autoround-int4-b70/int4-input-dependency-20260817/README.md).
+
+## 2026-08-17 final batch-invariant RMSNorm closeout
+
+The last approved bisection showed that the focused accepted-row near-tie was
+sensitive to Gemma RMSNorm reduction geometry. Stateless/live W4 and GDN
+oracles were exact, progressive one-row FlashAttention did not change the
+failure, and both serial M1 RMSNorm and a fixed per-row M4 Triton reduction
+restored the 128-token incident oracle.
+
+The fast RMSNorm path then matched both then-sealed four-prompt controls at
+`106.66319561220656 tok/s` conventional. It did not generalize. The
+matched-source post-reboot 25-prompt candidate was only 12/25 target-exact at
+`93.44568121953475 tok/s`; smoke, quality, freshness, and 25/25 cache-zero
+checks passed. The approach failed both the parity and `100 tok/s` gates and is
+classified inconclusive. No production patch or LocalMaxxing row was promoted,
+and no additional run was launched.
+
+See the [final closeout](../../../notes/2026-08-17-qwen36-int4-batch-invariant-rmsnorm-closeout.md),
+[structured result](../../../data/qwen36-27b-autoround-int4-batch-invariant-rmsnorm-closeout-20260817.json),
+and [tested source/config packet](../../../patches/qwen36-27b-autoround-int4-b70/batch-invariant-rmsnorm-20260817/README.md).

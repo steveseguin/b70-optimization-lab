@@ -29,6 +29,12 @@ not interchangeable with the later Qwen GGUF Q8 experiments.
 The sections below are retained as a chronological research ledger. Their
 older “current” values are historical milestones, not the promoted endpoint.
 
+The final 2026-08-17 matched-source recovery gate is closed and
+nonpromotable: 12/25 exact at `93.445681 tok/s` conventional after a smaller
+RMSNorm screen matched its then-sealed controls at `106.663 tok/s`. Resume only from the
+[final closeout](../../notes/2026-08-17-qwen36-int4-batch-invariant-rmsnorm-closeout.md)
+and preserved source packet; do not relaunch this configuration as a record.
+
 ## Original Immediate Goal
 
 The initial TP1 single-B70 OpenAI-compatible endpoint works, and the lane now
