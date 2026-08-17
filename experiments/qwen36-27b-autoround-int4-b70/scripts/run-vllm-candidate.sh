@@ -178,6 +178,7 @@ trap cleanup EXIT
   echo "gdn_spec_promote_running_offset_plus_one=${VLLM_XPU_GDN_SPEC_PROMOTE_RUNNING_OFFSET_PLUS_ONE:-}"
   echo "gdn_native_spec_decode=${VLLM_XPU_GDN_NATIVE_SPEC_DECODE:-}"
   echo "gdn_native_spec_prefix_base_state=${VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE:-}"
+  echo "gdn_native_spec_replacement_prefix_state_counts=${VLLM_XPU_GDN_NATIVE_SPEC_REPLACEMENT_PREFIX_STATE_COUNTS:-}"
   echo "gdn_native_spec_decode_serial=${VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL:-}"
   echo "gdn_native_spec_recurrent_serial_exact=${VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-}"
   echo "gdn_disable_spec_static_graph_metadata=${VLLM_XPU_GDN_DISABLE_SPEC_STATIC_GRAPH_METADATA:-}"

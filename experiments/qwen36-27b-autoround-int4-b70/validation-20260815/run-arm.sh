@@ -525,6 +525,13 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
       else
         unset VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE
       fi
+      if [[ "${VALIDATION_GDN_NATIVE_SPEC_REPLACEMENT_PREFIX_STATE_COUNTS:-0}" == "1" ]]; then
+        # A suppressed target-owned replacement is replayed from the canonical
+        # prefix column, before any accepted verifier rows are recommitted.
+        export VLLM_XPU_GDN_NATIVE_SPEC_REPLACEMENT_PREFIX_STATE_COUNTS=1
+      else
+        unset VLLM_XPU_GDN_NATIVE_SPEC_REPLACEMENT_PREFIX_STATE_COUNTS
+      fi
     fi
     if [[ "$mode" == "spec-native-partition-exact-native-zero" ]]; then
       # Coherent fixed-width-four target control: execute all verifier rows,
