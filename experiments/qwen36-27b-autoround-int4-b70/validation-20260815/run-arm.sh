@@ -88,7 +88,7 @@ elif [[ "$mode" == "spec-native-partition-exact" \
   || "$mode" == "nospec-latest-exact-native" ]]; then
   latest_identity=1
   exact_identity=1
-  verify_tree "$source_root/vllm" 330e3cd2c660c6cda296c1aef883b1d9b7cb3496 \
+  verify_tree "$source_root/vllm" 86e97ef98a40516af03d6d93c283fa2caff9f167 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
   verify_tree "$source_root/vllm-xpu-kernels" 9bcc0cb9429683fbc84011332c0a3acd698ab8dd \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
@@ -283,6 +283,9 @@ if [[ -n "${VALIDATION_FA_SERIAL_SPEC_MODE:-}" ]]; then
 fi
 if [[ "${VALIDATION_FA_BATCH_INVARIANT:-0}" == "1" ]]; then
   export VLLM_XPU_FA_BATCH_INVARIANT=1
+fi
+if [[ "${VALIDATION_RMSNORM_BATCH_INVARIANT:-0}" == "1" ]]; then
+  export VLLM_XPU_RMSNORM_BATCH_INVARIANT=1
 fi
 if [[ "${VALIDATION_FA_SYNC_AFTER_PACKED:-0}" == "1" ]]; then
   export VLLM_XPU_FA_SYNC_AFTER_PACKED=1
