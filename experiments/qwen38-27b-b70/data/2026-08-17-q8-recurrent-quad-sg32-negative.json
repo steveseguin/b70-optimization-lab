@@ -1,0 +1,69 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_negative",
+  "experiment": "shape-scoped SG32 workgroup population for the recurrent GDN quad",
+  "baseline": "accepted SG16 recurrent-quad workgroup",
+  "model": {
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70",
+  "runtime": {
+    "devices": "SYCL0/SYCL1",
+    "tensor_split": "1/1",
+    "kv": "f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "speculation": false,
+    "control": "GGML_SYCL_MMVQ_Q8_QUAD_SG16=1, GGML_SYCL_MMVQ_Q8_QUAD_SG32=0",
+    "candidate": "GGML_SYCL_MMVQ_Q8_QUAD_SG16=1, GGML_SYCL_MMVQ_Q8_QUAD_SG32=1"
+  },
+  "mechanism": {
+    "admitted_local_shape": "K=5120 N=5120+3072+24+24",
+    "control_workgroup": "16xSG16 / 256 work items",
+    "candidate_workgroup": "32xSG16 / 512 work items",
+    "announced_on_both_devices": true,
+    "verify_mismatch": 0
+  },
+  "screen_1": {
+    "order": "SG16-SG32-SG32-SG16,SG32-SG16-SG16-SG32",
+    "sg16_tok_s": [36.318535, 36.161941, 37.427586, 37.312535],
+    "sg32_tok_s": [37.375544, 37.442073, 37.419149, 37.433378],
+    "sg16_mean_tok_s": 36.80514925,
+    "sg32_mean_tok_s": 37.417536,
+    "delta_percent": 1.6638616130594697,
+    "block_deltas_percent": [3.224511, 0.150396]
+  },
+  "complementary_screen": {
+    "order": "SG32-SG16-SG16-SG32,SG16-SG32-SG32-SG16",
+    "sg16_tok_s": [37.493677, 37.481405, 37.430488, 37.497480],
+    "sg32_tok_s": [37.438069, 37.185558, 36.020940, 36.115840],
+    "sg16_mean_tok_s": 37.4757625,
+    "sg32_mean_tok_s": 36.69010175,
+    "delta_percent": -2.096450339069167
+  },
+  "combined_position_balanced": {
+    "processes": 16,
+    "sg16_mean_tok_s": 37.140455875,
+    "sg32_mean_tok_s": 37.053818875,
+    "delta_percent": -0.23326854223757465
+  },
+  "quality": {
+    "mechanism_smoke_exact": true,
+    "endpoint_suite_run": false,
+    "reason": "candidate failed the performance gate"
+  },
+  "artifacts": {
+    "incremental_patch_sha256": "e7e801d1cbc7ee28e395f1a6ce7ff44d6fc10300dcaed257dba2319a77816655",
+    "libggml_sycl_sha256": "12fe19ce55252ea13bcdc09bb1df74eaa04ca0c4b7bae0e0ec002a2bf772a448",
+    "llama_bench_sha256": "5ad7c26b123d41194a72f127052c50414a58a558a120548f17f11d54dba61abb",
+    "raw_local_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-quad-sg32/"
+  },
+  "health": {
+    "device_0": "normal",
+    "device_1": "normal",
+    "xe_fault_reset_hang_since_boot": false
+  },
+  "decision": "retain accepted SG16; do not promote or repeat SG32 unchanged"
+}

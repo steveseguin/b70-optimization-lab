@@ -170,6 +170,14 @@ and incremental
 Keep it as a synthetic diagnostic and do not add it to the accepted service
 repro unchanged.
 
+The recurrent-quad SG32 follow-up to accepted SG16 is closed. An initial
+eight-process order falsely showed `+1.664%`; swapping every arm position
+reversed it to `-2.096%`. Across the unbiased 16-run combination, SG32 was
+`-0.233%` versus SG16. See the
+[result note](notes/2026-08-17-q8-recurrent-quad-sg32-active.md), structured
+[data](data/2026-08-17-q8-recurrent-quad-sg32-negative.json), and incremental
+[patch](patches/q8-recurrent-quad-sg32-negative-20260817.diff). Retain SG16.
+
 The shape-scoped SG4 follow-up is also closed. It independently changed only
 the dominant fused gate/up pair and/or down-projection workgroup population.
 Both shapes announced on both devices and the smoke ended with

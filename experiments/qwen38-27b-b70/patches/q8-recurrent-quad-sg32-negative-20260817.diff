@@ -1,0 +1,42 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1560,6 +1560,14 @@
+     return on;
+ }
+ 
++static inline bool ggml_sycl_mmvq_q8_quad_sg32() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_QUAD_SG32");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+ template <int SGS, bool POISON, bool PHASE = false>
+ static void mul_mat_vec_q8_0_reorder_sg(const void * __restrict__ vx, const void * __restrict__ vy,
+                                         float * __restrict__ dst, const int ncols, const int nrows,
+@@ -2056,17 +2064,19 @@
+     ggml_sycl_assert_q8_wide_align(vx2, vy, 16);
+     ggml_sycl_assert_q8_wide_align(vx3, vy, 16);
+ 
+-    const bool quad_sg16 = ggml_sycl_mmvq_q8_quad_sg16() &&
++    const bool exact_quad_shape =
+         ncols == 5120 && nrows0 == 5120 && nrows1 == 3072 &&
+         nrows2 == 24 && nrows3 == 24;
+-    const size_t num_subgroups = quad_sg16 ? 16 : (size_t) ggml_sycl_mmvq_subgroups();
+-    if (quad_sg16) {
++    const bool quad_sg32 = exact_quad_shape && ggml_sycl_mmvq_q8_quad_sg32();
++    const bool quad_sg16 = exact_quad_shape && !quad_sg32 && ggml_sycl_mmvq_q8_quad_sg16();
++    const size_t num_subgroups = quad_sg32 ? 32 : quad_sg16 ? 16 : (size_t) ggml_sycl_mmvq_subgroups();
++    if (quad_sg32 || quad_sg16) {
+         static bool announced[GGML_SYCL_MAX_DEVICES] = {};
+         const int device = get_current_device_id();
+         if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
+             fprintf(stderr,
+-                    "SYCL lab door | q8 quad SG16: dev=%d K=5120 local-N=5120+3072+24+24 -> 16xSG16\n",
+-                    device);
++                    "SYCL lab door | q8 quad workgroup: dev=%d K=5120 local-N=5120+3072+24+24 -> %dxSG16\n",
++                    device, quad_sg32 ? 32 : 16);
+             announced[device] = true;
+         }
+     }
