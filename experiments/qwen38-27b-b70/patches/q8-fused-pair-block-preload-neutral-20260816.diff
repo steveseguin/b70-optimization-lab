@@ -1,0 +1,142 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1473,6 +1473,56 @@
+     GGML_ASSERT((stride_col_y_bytes % 16) == 0 && "q8_0 reorder MMVQ wide load needs a 16B q8_1 column stride");
+ }
+ 
++static inline bool ggml_sycl_mmvq_q8_pair_blocks() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_PAIR_BLOCKS");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
++struct q8_reorder_operands {
++    sycl::vec<int, 4> v;
++    sycl::vec<int, 4> u;
++    ggml_half         d;
++    sycl::half2       ds;
++};
++
++static __dpct_inline__ q8_reorder_operands q8_reorder_load_operands(
++        const void * __restrict__ vx, const void * __restrict__ vy,
++        int ncols, int nrows, int row, int block, int iqs) {
++    using block_type = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q8_0>;
++    using int4_t     = sycl::vec<int, 4>;
++
++    const int  blocks_per_row = ncols / QK8_0;
++    const int  nblocks        = nrows * blocks_per_row;
++    const int  ibx            = row * blocks_per_row + block;
++    const auto bx_offset      = block_type::get_block_offset(ibx, nblocks);
++    const auto d_offset       = block_type::get_d_offset(nrows, ncols, ibx);
++    const int  iby            = block * block_type::block_to_q8_1_ratio();
++    const auto base           = static_cast<const uint8_t *>(vx);
++    const auto qs             = reinterpret_cast<const int8_t *>(base + bx_offset.first);
++    const auto q8_1_quant     = static_cast<const int8_t *>(vy) + iby * QK8_1;
++    const auto q8_1_ds        = reinterpret_cast<const sycl::half2 *>(
++        static_cast<const char *>(vy) + ncols + iby * sizeof(sycl::half2));
++
++    return {
++        *reinterpret_cast<const int4_t *>(qs + iqs * sizeof(int)),
++        *reinterpret_cast<const int4_t *>(q8_1_quant + iqs * sizeof(int)),
++        *reinterpret_cast<const ggml_half *>(base + d_offset.first),
++        *q8_1_ds,
++    };
++}
++
++static __dpct_inline__ float q8_reorder_dot_operands(const q8_reorder_operands & operands) {
++    int sumi = 0;
++#pragma unroll
++    for (int i = 0; i < 4; ++i) {
++        sumi = dpct::dp4a(operands.v[i], operands.u[i], sumi);
++    }
++    return static_cast<float>(operands.d) * static_cast<float>(operands.ds[0]) * sumi;
++}
++
+ // ---- f367 (B80-R4): PVC SIMD32 q8_0 reorder DECODE kernel (ncols_dst == 1 ONLY) ----------------
+ //
+ // The incumbent geometry (SG16, 16 B/lane via the f76 int4 wide load, 2 lanes/block) is right for
+@@ -1780,6 +1830,7 @@
+         const void * __restrict__ vy,
+         float * __restrict__ dst0, float * __restrict__ dst1,
+         const int ncols, const int nrows0, const int nrows1,
++        const bool pair_blocks,
+         const sycl::nd_item<3> & nd_item) {
+     using block_type   = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q8_0>;
+     using block_traits = typename block_type::traits;
+@@ -1804,21 +1855,37 @@
+ 
+     float partial_sum = 0.0f;
+     const int lane_block = (int) (sg.get_local_linear_id() / block_elements_per_subgroup);
+-    for (int i = lane_block; i < blocks_per_row; i += blocks_per_subgroup) {
+-        const int ibx = row * blocks_per_row + i;
+-        const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
+-        const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
+-        const int  iby       = i * block_type::block_to_q8_1_ratio();
+-        const int8_t * q8_1_quant_ptr = (const int8_t *) vy + iby * QK8_1;
+-        const sycl::half2 * q8_1_ds_ptr = (const sycl::half2 *)
+-            ((const char *) vy + ncols + iby * sizeof(sycl::half2));
+-
++    if (pair_blocks) {
++        const int iqs = block_traits::vdr_mmvq *
++            (sg.get_local_linear_id() % block_elements_per_subgroup);
++        int i = lane_block;
++        for (; i + blocks_per_subgroup < blocks_per_row; i += 2 * blocks_per_subgroup) {
++            const auto operands0 = q8_reorder_load_operands(vx, vy, ncols, nrows, row, i, iqs);
++            const auto operands1 = q8_reorder_load_operands(
++                vx, vy, ncols, nrows, row, i + blocks_per_subgroup, iqs);
++            partial_sum += q8_reorder_dot_operands(operands0);
++            partial_sum += q8_reorder_dot_operands(operands1);
++        }
++        if (i < blocks_per_row) {
++            const auto operands = q8_reorder_load_operands(vx, vy, ncols, nrows, row, i, iqs);
++            partial_sum += q8_reorder_dot_operands(operands);
++        }
++    } else {
++        for (int i = lane_block; i < blocks_per_row; i += blocks_per_subgroup) {
++            const int ibx = row * blocks_per_row + i;
++            const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
++            const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
++            const int  iby       = i * block_type::block_to_q8_1_ratio();
++            const int8_t * q8_1_quant_ptr = (const int8_t *) vy + iby * QK8_1;
++            const sycl::half2 * q8_1_ds_ptr = (const sycl::half2 *)
++                ((const char *) vy + ncols + iby * sizeof(sycl::half2));
+ #pragma unroll
+-        for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
+-            const int iqs = elem + block_traits::vdr_mmvq *
+-                (sg.get_local_linear_id() % block_elements_per_subgroup);
+-            partial_sum += reorder_vec_dot_q8_0<true>()(
+-                vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
++            for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
++                const int iqs = elem + block_traits::vdr_mmvq *
++                    (sg.get_local_linear_id() % block_elements_per_subgroup);
++                partial_sum += reorder_vec_dot_q8_0<true>()(
++                    vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
++            }
+         }
+     }
+ 
+@@ -1846,12 +1913,21 @@
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
++    const bool pair_blocks = ggml_sycl_mmvq_q8_pair_blocks();
++    if (pair_blocks) {
++        static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++        const int device = get_current_device_id();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++            fprintf(stderr, "SYCL lab door | q8_pair_blocks: dev=%d -> paired fused-pair block walk\n", device);
++            announced[device] = true;
++        }
++    }
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+             sycl::nd_range<3>(block_nums * block_dims, block_dims),
+             [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                 mul_mat_vec_q8_0_reorder_pair(
+-                    vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, nd_item);
++                    vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, pair_blocks, nd_item);
+             });
+     });
+     return true;

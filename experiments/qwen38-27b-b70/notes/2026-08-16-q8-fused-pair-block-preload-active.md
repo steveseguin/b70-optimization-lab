@@ -1,7 +1,7 @@
 # Qwen3.8 Q8 fused-pair block preload
 
 Date: 2026-08-16  
-Status: active on the two-ASRock-B70 reference host
+Status: closed, endpoint-neutral; do not promote
 
 ## Hypothesis
 
@@ -19,4 +19,21 @@ Both cards held 2800 MHz during the control, used about 13.7 GiB VRAM each, and 
 
 The candidate is building in an isolated source and CMake tree under `/mnt/fast-ai/src/llama.cpp-q38-q8-paired-blocks`. The build uses IntelLLVM 2026.1.1, BMG-G31 AOT, `-j2`, and a 6/8 GiB host-memory scope. No model workload overlaps compilation.
 
-Promotion requires the same complete-output hash and cache-zero gates, a treatment-liveness line from both devices, and a repeatable improvement beyond same-process noise. A neutral, negative, or quality-failed outcome will be retained and closed in the do-not-repeat index.
+## Result
+
+The same-binary `p64/n256` bracket ran A1/B1/B2/A2, with three repetitions in the first pair and five in the second:
+
+| Arm | Decode |
+| --- | ---: |
+| A1, door off | `36.863472 tok/s` |
+| B1, door on | `36.813444 tok/s` |
+| B2, door on | `36.597669 tok/s` |
+| A2, door off | `36.514540 tok/s` |
+
+The pooled control was `36.689006 tok/s`; the pooled treatment was `36.705557 tok/s`, only `+0.045%`. The paired comparisons crossed direction (`-0.136%`, then `+0.228%`). The treatment announced on both devices, the r5 run executed 163,968 fused pair kernels, and `VERIFY_MISMATCH=0`.
+
+This is below endpoint resolution and does not justify a full 12-prompt candidate suite. No candidate output-hash claim is made. The source intentionally retained DP4A and FP32 block-add order, but that structural argument is not a substitute for the unrun full oracle.
+
+## Decision
+
+Reject for performance. Do not extend this unchanged two-iteration preload to the triple and quad kernels: its intended memory-level-parallelism benefit was already absent in the high-byte fused-pair path. Exact data and the incremental source are retained in the [structured result](../data/2026-08-16-q8-fused-pair-block-preload-neutral.json) and [patch](../patches/q8-fused-pair-block-preload-neutral-20260816.diff).

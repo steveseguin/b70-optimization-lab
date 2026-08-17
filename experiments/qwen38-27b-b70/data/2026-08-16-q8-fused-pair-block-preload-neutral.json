@@ -1,0 +1,52 @@
+{
+  "date": "2026-08-16",
+  "experiment": "Qwen3.8-27B Q8_0 TP2 fused-pair two-iteration operand preload",
+  "status": "closed_endpoint_neutral",
+  "model": {
+    "path": "/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "candidate": {
+    "door": "GGML_SYCL_MMVQ_Q8_PAIR_BLOCKS",
+    "scope": "launch-fused reordered-Q8 pair kernel only",
+    "source_sha256": "3c57511f4312f7f211f1ffce537dd49cfb7e1ee64b3d1d472b587a5b92a756c0",
+    "llama_bench_sha256": "091c67187f28ffd541a031b0bd66f30bc3404be1d8d2e3992d279cd9da81fac2",
+    "llama_server_sha256": "a258993c3be6c7cba2438fdbef8ba9aa9d1f9ab8ffe0619db168035296fe0da0",
+    "libggml_sycl_sha256": "aa527abee253cad362044e392b480864a7eded4e3e81e6e35bc6f54bf03e72db",
+    "compiler": "IntelLLVM 2026.1.1",
+    "device_arch": "bmg_g31",
+    "build_bounds": "MemoryHigh=6G MemoryMax=8G MemorySwapMax=8G -j2"
+  },
+  "same_boot_endpoint_control": {
+    "conventional_99_interval_median_tok_s": 36.417180562989,
+    "complete_output_hashes_exact": "12/12",
+    "cached_tokens_all_zero": true,
+    "raw_path": "/mnt/fast-ai/bench-results/qwen38-q8-accepted-postreboot-control-20260816.json",
+    "raw_sha256": "1d008e7bce2640ad9eeddf45495c5029ef392959c395d81f548c73d9328ebb01"
+  },
+  "short_bracket": {
+    "shape": "llama-bench p64 n256, TP2, F16 KV, target-only",
+    "order": ["A1_off_r3", "B1_on_r3", "B2_on_r5", "A2_off_r5"],
+    "A_control_tok_s": [36.863472, 36.514540],
+    "B_treatment_tok_s": [36.813444, 36.597669],
+    "A_pooled_tok_s": 36.689006,
+    "B_pooled_tok_s": 36.7055565,
+    "pooled_delta_percent": 0.045110243651746984,
+    "pair1_delta_percent": -0.13571157920231336,
+    "pair2_delta_percent": 0.22765999516907165,
+    "direction_crossed": true
+  },
+  "mechanism": {
+    "door_announced_on_devices": [0, 1],
+    "fused_mmvq_pairs_r5": 163968,
+    "verify_mismatch": 0,
+    "dp4a_order_changed": false,
+    "fp32_block_add_order_changed": false
+  },
+  "quality": {
+    "full_candidate_output_oracle_run": false,
+    "reason": "The bounded treatment was endpoint-neutral and therefore was not eligible for promotion or a full endpoint quality suite."
+  },
+  "health": "Both devices remained normal; no Xe compute fault, reset, hang, device-lost, or CAT error appeared.",
+  "decision": "Reject for performance. Do not extend the same paired walk unchanged to triple or quad kernels."
+}
