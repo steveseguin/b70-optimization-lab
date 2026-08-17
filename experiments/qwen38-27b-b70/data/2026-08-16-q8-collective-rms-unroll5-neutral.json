@@ -1,0 +1,35 @@
+{
+  "date": "2026-08-16",
+  "experiment": "Qwen3.8-27B Q8_0 TP2 register-direct collective RMS unroll5",
+  "disposition": "closed_neutral",
+  "shape": "p64/n256/r3, A-B-B-A",
+  "control": {
+    "means_tok_s": [36.672236, 36.542427],
+    "pooled_tok_s": 36.6073315,
+    "raw_sha256": [
+      "d19982bc427d6294fda9be66214c484797c9bf102f11b812a24ffca59ef6b729",
+      "16290b5053c23fd71fed0a24e193ed3bd6e515aac926378594b62b16c3360f58"
+    ]
+  },
+  "candidate": {
+    "variable": "GGML_SYCL_COMM_RMS_UNROLL5=1",
+    "means_tok_s": [36.591258, 36.652078],
+    "pooled_tok_s": 36.621668,
+    "delta_percent": 0.0391629201,
+    "binary_sha256": "ce3ad8809ceca3dcc063ed00e93bfe0744d892b45af9c56e33c061d09c8cbc47",
+    "sycl_library_sha256": "18edfeb33f392f6093ff47172f70a45fbd4f8f80b346ad4a776be90bdb1d96d7",
+    "patch_sha256": "e7d29cdd6c2c90a9414f3afee069cf6fa852e4ff64c93812813d9002e7ffd8e6",
+    "raw_sha256": [
+      "6cac2e573537eb3d0631bf725ed0ff6d34df9d177f7f86b062ed9a3256dd405f",
+      "3bded4ce661c648d806ccdbd93360653375b211a1c4df9190918ba1950295ac3"
+    ]
+  },
+  "mechanism_smoke": {
+    "tok_s": 37.086655,
+    "verify_mismatch": 0,
+    "raw_sha256": "5c7cd2b54ae03f973cb9f9499637e1ce5c354cdb4236be3a9f5277f24ed5909a"
+  },
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "raw_local_directory": "/mnt/fast-ai/bench-results/qwen38-q8-rms-unroll5-20260816",
+  "decision": "Do not promote or repeat unchanged; +0.039% is endpoint-neutral."
+}

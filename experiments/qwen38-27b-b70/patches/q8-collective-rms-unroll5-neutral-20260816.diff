@@ -1,0 +1,86 @@
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -10069,6 +10069,7 @@
+ // directly onto one Q8_1 block. Each FP32 element is computed once, stored to
+ // the graph-visible output, and retained in registers for quantization. This
+ // avoids both the accepted global reread and mode 1's local-memory round trip.
++template <bool unroll_rms5>
+ static void ggml_sycl_comm_submit_direct_q8_register(
+         queue_ptr q0, queue_ptr q1, const sycl::event & reduce_add,
+         int64_t nelem, int work_group_size0, int work_group_size1,
+@@ -10084,9 +10085,18 @@
+             const int tid = item.get_local_id(2);
+             const int nwarps = work_group_size0 / WARP_SIZE;
+             float tmp = 0.0f;
+-            for (int64_t col = tid; col < nelem; col += work_group_size0) {
+-                const float value = add0[col];
+-                tmp += value * value;
++            if constexpr (unroll_rms5) {
++#pragma unroll
++                for (int step = 0; step < 5; ++step) {
++                    const int64_t col = tid + step * 1024;
++                    const float value = add0[col];
++                    tmp += value * value;
++                }
++            } else {
++                for (int64_t col = tid; col < nelem; col += work_group_size0) {
++                    const float value = add0[col];
++                    tmp += value * value;
++                }
+             }
+             tmp = warp_reduce_sum(tmp, item);
+             if (work_group_size0 > WARP_SIZE) {
+@@ -10151,10 +10161,20 @@
+             const int tid = item.get_local_id(2);
+             const int nwarps = work_group_size1 / WARP_SIZE;
+             float tmp = 0.0f;
+-            for (int64_t col = tid; col < nelem; col += work_group_size1) {
+-                const float value = p1[col] + r1[col];
+-                add1[col] = value;
+-                tmp += value * value;
++            if constexpr (unroll_rms5) {
++#pragma unroll
++                for (int step = 0; step < 5; ++step) {
++                    const int64_t col = tid + step * 1024;
++                    const float value = p1[col] + r1[col];
++                    add1[col] = value;
++                    tmp += value * value;
++                }
++            } else {
++                for (int64_t col = tid; col < nelem; col += work_group_size1) {
++                    const float value = p1[col] + r1[col];
++                    add1[col] = value;
++                    tmp += value * value;
++                }
+             }
+             tmp = warp_reduce_sum(tmp, item);
+             if (work_group_size1 > WARP_SIZE) {
+@@ -10402,10 +10422,24 @@
+         }();
+         if (direct_q8_register && nelem == 5120) {
+             try {
+-                ggml_sycl_comm_submit_direct_q8_register(
+-                        q0, q1, reduce_add, nelem, work_group_size0, work_group_size1,
+-                        eps[0], eps[1], p1, r1, add0, add1, w0, w1, mul0, mul1,
+-                        q8_out0, q8_out1);
++                static const bool unroll_rms5 = [] {
++                    const char * value = getenv("GGML_SYCL_COMM_RMS_UNROLL5");
++                    const bool enabled = value != nullptr && atoi(value) != 0;
++                    fprintf(stderr, "SYCL doors | collective RMS unroll5: %d "
++                                    "(GGML_SYCL_COMM_RMS_UNROLL5)\n", enabled ? 1 : 0);
++                    return enabled;
++                }();
++                if (unroll_rms5 && work_group_size0 == 1024 && work_group_size1 == 1024) {
++                    ggml_sycl_comm_submit_direct_q8_register<true>(
++                            q0, q1, reduce_add, nelem, work_group_size0, work_group_size1,
++                            eps[0], eps[1], p1, r1, add0, add1, w0, w1, mul0, mul1,
++                            q8_out0, q8_out1);
++                } else {
++                    ggml_sycl_comm_submit_direct_q8_register<false>(
++                            q0, q1, reduce_add, nelem, work_group_size0, work_group_size1,
++                            eps[0], eps[1], p1, r1, add0, add1, w0, w1, mul0, mul1,
++                            q8_out0, q8_out1);
++                }
+             } catch (...) {
+                 ggml_sycl_q8_dedup_forget_generation(*ctx0, mul_nodes[0], 1, q8_generation[0]);
+                 ggml_sycl_q8_dedup_forget_generation(*ctx1, mul_nodes[1], 1, q8_generation[1]);
