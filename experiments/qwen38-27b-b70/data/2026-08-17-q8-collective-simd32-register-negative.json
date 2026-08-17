@@ -1,0 +1,23 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_negative",
+  "lane": "Qwen3.8-27B Q8_0 target-only equal TP2, F16 KV, no speculation",
+  "mechanism": "register-retained SIMD32 5120-element collective RMS/MUL/Q8 tail",
+  "benchmark": {
+    "shape": "p64/n128/r3",
+    "control_tps": 36.967270,
+    "candidate_tps": 35.832043,
+    "delta_percent": -3.0708975804813243
+  },
+  "verification": {
+    "shape": "p64/n4/r1",
+    "verified": 4950,
+    "mismatches": 3640
+  },
+  "candidate_source_sha256": "31fa16c4f347590f020d30b4228a9920224d626ae7b7a1a1e2c4b33082918e96",
+  "candidate_lib_sha256": "218beeedd9fc1f17e5b75b97d43f03158894c67ec32e48981cfb414ec7e4f0ac",
+  "accepted_source_sha256": "77c626e177996cd8549a30a8c6c14dcd1ad41cc62fd26889e85877f8f579ad39",
+  "accepted_lib_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+  "health": "both devices normal; no new Xe/GuC fault, reset, timeout, or hang",
+  "decision": "Do not promote or retry unchanged."
+}
