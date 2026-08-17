@@ -302,6 +302,8 @@ trap cleanup EXIT
   echo "xpu_spec_decode_draft_only=${VLLM_XPU_SPEC_DECODE_DRAFT_ONLY:-}"
   echo "xpu_spec_decode_draft_only_accept_min_margin=${VLLM_XPU_SPEC_DECODE_DRAFT_ONLY_ACCEPT_MIN_MARGIN:-}"
   echo "xpu_spec_decode_accept_min_margin=${VLLM_XPU_SPEC_DECODE_ACCEPT_MIN_MARGIN:-}"
+  echo "xpu_spec_decode_replacement_min_margin=${VLLM_XPU_SPEC_DECODE_REPLACEMENT_MIN_MARGIN:-}"
+  echo "xpu_spec_decode_bonus_min_margin=${VLLM_XPU_SPEC_DECODE_BONUS_MIN_MARGIN:-}"
   echo "xpu_spec_decode_recover_suppressed_replacement=${VLLM_XPU_SPEC_DECODE_RECOVER_SUPPRESSED_REPLACEMENT:-}"
   echo "lm_head_int8=$VLLM_XPU_LM_HEAD_INT8"
   echo "lm_head_int8_scale_dtype=$VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE"
