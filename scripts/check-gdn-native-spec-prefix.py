@@ -39,6 +39,8 @@ from typing import Any
 
 
 DEFAULT_KERNEL_REPO = Path("/home/steve/src/vllm-xpu-kernels")
+SPEC_CONV_PADDING_SENTINEL = 0.03125
+SSM_ROW_PADDING_SENTINEL = 0.015625
 
 
 def parse_args() -> argparse.Namespace:
@@ -60,6 +62,27 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--head-v-dim", type=int, default=32)
     parser.add_argument("--tp-size", type=int, default=1)
     parser.add_argument("--width", type=int, default=4)
+    parser.add_argument(
+        "--spec-conv-extra-state-len",
+        type=int,
+        default=0,
+        help=(
+            "Extra physical convolution-cache positions reserved by the "
+            "speculative runtime. Qwen MTP3 uses 3, producing a six-wide "
+            "candidate cache for a three-position causal history."
+        ),
+    )
+    parser.add_argument(
+        "--ssm-row-padding-elements",
+        type=int,
+        default=0,
+        help=(
+            "Add inaccessible physical elements after each logical SSM row. "
+            "The production unified cache has stride(0) larger than the "
+            "logical rank-4 state; poisoning this gap catches row copies that "
+            "incorrectly use the physical stride as an element count."
+        ),
+    )
     parser.add_argument("--activation", choices=("silu", "swish"),
                         default="silu")
     parser.add_argument("--with-bias", action="store_true")
@@ -79,6 +102,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--persistent-scratch", action="store_true",
         help="Reuse the production persistent native speculative scratch.")
+    parser.add_argument(
+        "--zero-state-smoke", action="store_true",
+        help=(
+            "Run the exact packed op twice with the graph-capture NULL state "
+            "table [[0, ...]], synchronize, and require the SSM cache to stay "
+            "unchanged without a device fault."
+        ),
+    )
     parser.add_argument("--kernel-repo", type=Path, default=DEFAULT_KERNEL_REPO)
     parser.add_argument("--json-out", type=Path)
     return parser.parse_args()
@@ -110,6 +141,112 @@ def close_enough(torch: Any, left: Any, right: Any, *, atol: float,
         return True
     return bool(torch.allclose(left.float(), right.float(), atol=atol,
                                rtol=rtol))
+
+
+def make_spec_conv_table(
+    torch: Any,
+    args: argparse.Namespace,
+    initial_conv_table: Any,
+    *,
+    rows: int,
+    conv_cols: int,
+    dtype: Any,
+    device: str,
+) -> Any:
+    """Build the production-shaped speculative cache with a poisoned tail."""
+    history_len = args.width - 1
+    physical_state_len = history_len + args.spec_conv_extra_state_len
+    spec_conv = torch.full(
+        (rows, physical_state_len, conv_cols),
+        SPEC_CONV_PADDING_SENTINEL,
+        dtype=dtype,
+        device=device,
+    )
+    spec_conv[:, :history_len].zero_()
+    initial_rows = min(rows, initial_conv_table.size(0))
+    spec_conv[:initial_rows, :history_len].copy_(
+        initial_conv_table[:initial_rows, :history_len]
+    )
+    return spec_conv
+
+
+def spec_padding_equal(torch: Any, args: argparse.Namespace,
+                       spec_conv: Any) -> bool:
+    history_len = args.width - 1
+    if spec_conv.size(1) == history_len:
+        return True
+    padding = spec_conv[:, history_len:]
+    expected = torch.full_like(padding, SPEC_CONV_PADDING_SENTINEL)
+    return bool(torch.equal(padding, expected))
+
+
+def make_spec_ssm_table(
+    torch: Any,
+    args: argparse.Namespace,
+    initial_ssm_table: Any,
+    *,
+    rows: int,
+    local_v_heads: int,
+    dtype: Any,
+    device: str,
+) -> Any:
+    """Build an SSM view whose physical row stride can exceed its shape."""
+    logical_row_elements = (
+        local_v_heads * args.head_v_dim * args.head_k_dim
+    )
+    row_stride = logical_row_elements + args.ssm_row_padding_elements
+    storage = torch.zeros(
+        (rows * row_stride,), dtype=dtype, device=device)
+    spec_ssm = torch.as_strided(
+        storage,
+        size=(rows, local_v_heads, args.head_v_dim, args.head_k_dim),
+        stride=(
+            row_stride,
+            args.head_v_dim * args.head_k_dim,
+            args.head_k_dim,
+            1,
+        ),
+    )
+    if args.ssm_row_padding_elements:
+        physical = torch.as_strided(
+            spec_ssm,
+            size=(rows, row_stride),
+            stride=(row_stride, 1),
+        )
+        row_values = (
+            torch.arange(1, rows + 1, dtype=torch.float32, device=device)
+            * SSM_ROW_PADDING_SENTINEL
+        ).to(dtype)
+        physical[:, logical_row_elements:].copy_(
+            row_values.unsqueeze(1).expand(
+                rows, args.ssm_row_padding_elements))
+    initial_rows = min(rows, initial_ssm_table.size(0))
+    spec_ssm[:initial_rows].copy_(initial_ssm_table[:initial_rows])
+    return spec_ssm
+
+
+def ssm_padding_equal(torch: Any, args: argparse.Namespace,
+                      spec_ssm: Any) -> bool:
+    if not args.ssm_row_padding_elements:
+        return True
+    rows = spec_ssm.size(0)
+    logical_row_elements = (
+        spec_ssm.size(1) * spec_ssm.size(2) * spec_ssm.size(3)
+    )
+    row_stride = logical_row_elements + args.ssm_row_padding_elements
+    physical = torch.as_strided(
+        spec_ssm,
+        size=(rows, row_stride),
+        stride=(row_stride, 1),
+    )
+    padding = physical[:, logical_row_elements:]
+    row_values = (
+        torch.arange(1, rows + 1, dtype=torch.float32,
+                     device=spec_ssm.device)
+        * SSM_ROW_PADDING_SENTINEL
+    ).to(spec_ssm.dtype)
+    expected = row_values.unsqueeze(1).expand_as(padding)
+    return bool(torch.equal(padding, expected))
 
 
 def build_inputs(torch: Any, args: argparse.Namespace, *,
@@ -309,12 +446,26 @@ def compare_case(
                            dtype=dtype, device=device)
     ref_ssm = torch.zeros((total_rows, local_v_heads, args.head_v_dim,
                            args.head_k_dim), dtype=ssm_dtype, device=device)
-    spec_conv = torch.zeros_like(ref_conv)
-    spec_ssm = torch.zeros_like(ref_ssm)
+    spec_conv = make_spec_conv_table(
+        torch,
+        args,
+        initial_conv_table,
+        rows=total_rows,
+        conv_cols=conv_cols,
+        dtype=dtype,
+        device=device,
+    )
+    spec_ssm = make_spec_ssm_table(
+        torch,
+        args,
+        initial_ssm_table,
+        rows=total_rows,
+        local_v_heads=local_v_heads,
+        dtype=ssm_dtype,
+        device=device,
+    )
     ref_conv[:row_count].copy_(initial_conv_table[:row_count])
     ref_ssm[:row_count].copy_(initial_ssm_table[:row_count])
-    spec_conv[:row_count].copy_(initial_conv_table[:row_count])
-    spec_ssm[:row_count].copy_(initial_ssm_table[:row_count])
 
     if accepted_counts is None:
         source_cols = torch.zeros((num_reqs,), dtype=torch.long, device=device)
@@ -364,7 +515,7 @@ def compare_case(
             rows = state_table[:, pos + 1]
         else:
             rows = state_table[:, pos]
-        observed_conv = spec_conv.index_select(0, rows)
+        observed_conv = spec_conv.index_select(0, rows)[:, :args.width - 1]
         observed_ssm = spec_ssm.index_select(0, rows)
         expected_conv = ref_conv_prefixes[pos]
         expected_ssm = ref_ssm_prefixes[pos]
@@ -387,7 +538,8 @@ def compare_case(
     base_ssm_max = 0.0
     if args.prefix_base_state:
         base_rows = state_table[:, 0]
-        observed_base_conv = spec_conv.index_select(0, base_rows)
+        observed_base_conv = spec_conv.index_select(
+            0, base_rows)[:, :args.width - 1]
         observed_base_ssm = spec_ssm.index_select(0, base_rows)
         expected_base_conv = initial_conv_table.index_select(0, source_rows)
         expected_base_ssm = initial_ssm_table.index_select(0, source_rows)
@@ -422,7 +574,9 @@ def compare_case(
         "conv_prefix_equal": bool(conv_ok),
         "ssm_prefix_equal": bool(ssm_ok),
         "conv_prefix_close": bool(conv_close),
+        "conv_padding_equal": spec_padding_equal(torch, args, spec_conv),
         "ssm_prefix_close": bool(ssm_close),
+        "ssm_padding_equal": ssm_padding_equal(torch, args, spec_ssm),
         "base_column_close": bool(base_conv_close and base_ssm_close),
         "base_column_equal": bool(base_conv_equal and base_ssm_equal),
         "core_output_equal": out_equal,
@@ -469,8 +623,24 @@ def compare_two_call_full_accept_restart(
         dtype=ssm_dtype,
         device=device,
     )
-    spec_conv = initial_conv_table.clone()
-    spec_ssm = initial_ssm_table.clone()
+    spec_conv = make_spec_conv_table(
+        torch,
+        args,
+        initial_conv_table,
+        rows=row_count,
+        conv_cols=conv_cols,
+        dtype=dtype,
+        device=device,
+    )
+    spec_ssm = make_spec_ssm_table(
+        torch,
+        args,
+        initial_ssm_table,
+        rows=row_count,
+        local_v_heads=local_v_heads,
+        dtype=ssm_dtype,
+        device=device,
+    )
     ref_conv[:row_count].copy_(initial_conv_table[:row_count])
     ref_ssm[:row_count].copy_(initial_ssm_table[:row_count])
     source_rows = state_table[:, 0]
@@ -534,7 +704,7 @@ def compare_two_call_full_accept_restart(
     ssm_max = 0.0
     for pos in range(spec_len):
         rows = state_table[:, pos]
-        observed_conv = spec_conv.index_select(0, rows)
+        observed_conv = spec_conv.index_select(0, rows)[:, :args.width - 1]
         observed_ssm = spec_ssm.index_select(0, rows)
         expected_conv = ref_conv_second[pos]
         expected_ssm = ref_ssm_second[pos]
@@ -566,7 +736,9 @@ def compare_two_call_full_accept_restart(
         "conv_prefix_equal": conv_equal,
         "ssm_prefix_equal": ssm_equal,
         "conv_prefix_close": conv_close,
+        "conv_padding_equal": spec_padding_equal(torch, args, spec_conv),
         "ssm_prefix_close": ssm_close,
+        "ssm_padding_equal": ssm_padding_equal(torch, args, spec_ssm),
         "base_column_equal": True,
         "base_column_close": True,
         "core_output_equal": first_out_equal and second_out_equal,
@@ -594,6 +766,10 @@ def compare_two_call_full_accept_restart(
 
 def main() -> int:
     args = parse_args()
+    if args.spec_conv_extra_state_len < 0:
+        raise SystemExit("spec-conv-extra-state-len must be non-negative")
+    if args.ssm_row_padding_elements < 0:
+        raise SystemExit("ssm-row-padding-elements must be non-negative")
     if args.num_k_heads % args.tp_size != 0:
         raise SystemExit("num-k-heads must be divisible by tp-size")
     if args.num_v_heads % args.tp_size != 0:
@@ -632,6 +808,74 @@ def main() -> int:
     local_v_heads = inputs["local_v_heads"]
     conv_cols = inputs["conv_cols"]
     device = args.device
+
+    if args.zero_state_smoke:
+        if not args.exact_recurrent or args.num_reqs != 1:
+            raise SystemExit(
+                "zero-state-smoke requires --exact-recurrent --num-reqs 1"
+            )
+        initial_conv = torch.randn(
+            (1, args.width - 1, conv_cols), dtype=dtype, device=device
+        ) * 0.01
+        initial_ssm = torch.randn(
+            (1, local_v_heads, args.head_v_dim, args.head_k_dim),
+            dtype=ssm_dtype,
+            device=device,
+        ) * 0.01
+        conv_state = make_spec_conv_table(
+            torch,
+            args,
+            initial_conv,
+            rows=1,
+            conv_cols=conv_cols,
+            dtype=dtype,
+            device=device,
+        )
+        ssm_state = make_spec_ssm_table(
+            torch,
+            args,
+            initial_ssm,
+            rows=1,
+            local_v_heads=local_v_heads,
+            dtype=ssm_dtype,
+            device=device,
+        )
+        ssm_before = ssm_state.clone()
+        state_table = torch.zeros(
+            (1, args.spec_len), dtype=torch.long, device=device
+        )
+        accepted = torch.ones((1,), dtype=torch.int32, device=device)
+        for _ in range(2):
+            run_spec_decode(
+                torch,
+                args,
+                inputs,
+                conv_state=conv_state,
+                ssm_state=ssm_state,
+                state_table=state_table,
+                num_accepted_tokens=accepted,
+                token_base=0,
+            )
+        torch.xpu.synchronize()
+        result = {
+            "schema_version": 1,
+            "case": "exact_recurrent_zero_state_smoke",
+            "runs": 2,
+            "state_table": [[0] * args.spec_len],
+            "ssm_unchanged": bool(torch.equal(ssm_state, ssm_before)),
+            "ssm_padding_equal": ssm_padding_equal(torch, args, ssm_state),
+        }
+        result["passed"] = (
+            result["ssm_unchanged"] and result["ssm_padding_equal"]
+        )
+        text = json.dumps(result, sort_keys=True)
+        print(text)
+        if args.json_out is not None:
+            args.json_out.parent.mkdir(parents=True, exist_ok=True)
+            args.json_out.write_text(text + "\n", encoding="utf-8")
+        if not result["passed"]:
+            raise SystemExit("zero-state exact recurrent smoke failed")
+        return 0
 
     state_cols = args.spec_len
     state_table = torch.arange(
@@ -776,6 +1020,11 @@ def main() -> int:
         "head_k_dim": args.head_k_dim,
         "head_v_dim": args.head_v_dim,
         "width": args.width,
+        "spec_conv_extra_state_len": args.spec_conv_extra_state_len,
+        "spec_conv_physical_state_len": (
+            args.width - 1 + args.spec_conv_extra_state_len
+        ),
+        "ssm_row_padding_elements": args.ssm_row_padding_elements,
         "exact_recurrent": bool(args.exact_recurrent),
         "persistent_scratch": bool(args.persistent_scratch),
         "atol": args.atol,
@@ -803,7 +1052,9 @@ def main() -> int:
     if args.require_bit_exact:
         result["passed"] = all(
             case["conv_prefix_equal"]
+            and case["conv_padding_equal"]
             and case["ssm_prefix_equal"]
+            and case["ssm_padding_equal"]
             and case["base_column_equal"]
             and case["core_output_equal"]
             and case["z_output_equal"]
@@ -812,7 +1063,9 @@ def main() -> int:
     else:
         result["passed"] = all(
             case["conv_prefix_close"]
+            and case["conv_padding_equal"]
             and case["ssm_prefix_close"]
+            and case["ssm_padding_equal"]
             and case["base_column_close"]
             and case["core_output_close"]
             and case["z_output_close"]

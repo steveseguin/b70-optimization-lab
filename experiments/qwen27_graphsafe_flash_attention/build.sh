@@ -47,6 +47,10 @@ rsync -a \
 git -C "$source_tree" apply --check \
   "$here/qwen27-chunk-prefill-local-accessor.patch"
 patch -d "$stage" -p1 < "$here/qwen27-chunk-prefill-local-accessor.patch"
+patch --dry-run -d "$stage" -p1 \
+  < "$here/qwen27-chunk-prefill-completion-barrier.patch"
+patch -d "$stage" -p1 \
+  < "$here/qwen27-chunk-prefill-completion-barrier.patch"
 git -C "$source_tree" apply --check "$here/qwen27-force-chunk-decode.patch"
 patch -d "$stage" -p1 < "$here/qwen27-force-chunk-decode.patch"
 

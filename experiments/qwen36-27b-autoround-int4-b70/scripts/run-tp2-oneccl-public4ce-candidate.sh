@@ -34,7 +34,10 @@ export ONECCL_CANDIDATE_SHA256="$lib_sha256"
 export ONECCL_KERNELS_SHA256="$kernels_sha256"
 export ONECCL_SOURCE_TOP_COMMIT="b52f40c07f0b140e6aba87548c80720a350a9827"
 export ONECCL_LIBCCL_COMMIT="4ceafd15c03ce46f11eeaf91781a92afebd3cecf"
-export SERVER_LD_PRELOAD="$ONECCL_LIB"
+# Keep explicitly validated diagnostic/runtime overlays ahead of oneCCL.
+# Replacing the caller's list here silently disabled focused kernel overlays
+# even though the outer validation harness had already hash-checked them.
+export SERVER_LD_PRELOAD="${SERVER_LD_PRELOAD:+$SERVER_LD_PRELOAD:}$ONECCL_LIB"
 export SERVER_LD_LIBRARY_PATH="$ONECCL_INSTALL_DIR/lib:$QWEN36_27B_AR_VENV/lib:$QWEN36_27B_AR_VENV/lib/python3.12/site-packages/torch/lib"
 export SERVER_CCL_KERNEL_PATH="$ONECCL_INSTALL_DIR/lib/ccl/kernels"
 export CCL_LOG_LEVEL="${CCL_LOG_LEVEL:-info}"

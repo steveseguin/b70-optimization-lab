@@ -1,0 +1,170 @@
+{
+  "description": "Preregistered interleaving of the historical 12-prompt selection suite and a later independent 13-prompt mixed-task holdout.",
+  "metric": "99 inter-token intervals between generated events 1 and 100 after TTFT",
+  "prompts": [
+    {
+      "group": "historical-selection",
+      "id": "selection--incident-retrospective",
+      "original_id": "incident-retrospective",
+      "prompt": "You are advising an infrastructure team after a service incident. Write a concise but complete incident retrospective for a production API outage caused by a bad cache invalidation rule. Include impact, timeline, contributing factors, detection gaps, remediation, prevention work, and owner handoff. Use practical language for engineers and managers. Aim for about 450-550 words."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--python-lru-cache",
+      "original_id": "python-lru-cache",
+      "prompt": "Implement a production-quality Python LRUCache class with get and put in O(1), capacity validation, type hints, and a short unittest example. Explain the invariants briefly. Include enough implementation and review detail for a maintainer to use the answer directly."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--code-review",
+      "original_id": "code-review",
+      "prompt": "Review this Python change as a senior engineer. A worker now batches database writes every 250 ms, retries failures twice, and drops failed rows into a local JSONL file. Discuss correctness risks, observability, data-loss risks, concurrency issues, test cases, and whether the design should be accepted. Make the answer concrete and actionable, with enough detail for a pull request review."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--python-debug-window",
+      "original_id": "python-debug-window",
+      "prompt": "Debug this function so it returns the maximum sum of exactly k consecutive values and handles invalid k cleanly:\n\ndef max_window(xs, k):\n    best = 0\n    for i in range(len(xs) - k):\n        best = max(best, sum(xs[i:i+k]))\n    return best\n\nProvide corrected Python, tests for negative values and boundary cases, and a concise explanation. Include computational complexity and any numeric-type assumptions."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--customer-email",
+      "original_id": "customer-email",
+      "prompt": "Draft a customer-facing email explaining that a requested export feature is delayed by one week because the team found a data-integrity issue during validation. The tone should be accountable and calm. Include what happened, what is being done, what customers should expect next, and how support will handle urgent cases. Do not use marketing language."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--sql-sessionization",
+      "original_id": "sql-sessionization",
+      "prompt": "Given PostgreSQL table events(user_id bigint, occurred_at timestamptz, event_type text), write a query that assigns sessions separated by more than 30 minutes and returns one row per session with start, end, and event count. Explain the window functions, deterministic tie handling, indexes, and two edge-case tests."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--sql-debugging",
+      "original_id": "sql-debugging",
+      "prompt": "A reporting query became slow after a schema migration. The query joins orders, customers, invoices, and refunds, filters by tenant_id and created_at, and groups by customer segment. Explain a debugging plan for PostgreSQL. Cover EXPLAIN ANALYZE, indexes, statistics, join order, row estimates, partial indexes, materialized views, and rollout safety."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--concurrency-review",
+      "original_id": "concurrency-review",
+      "prompt": "Review a service design where multiple workers read a job row, call an external API, then mark the row complete. Describe a concrete PostgreSQL transaction pattern that prevents duplicate work, how retries and idempotency keys interact, and what failures still need monitoring. Include SQL or pseudocode and an actionable test plan."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--release-plan",
+      "original_id": "release-plan",
+      "prompt": "Create a release plan for shipping a new authentication flow in a SaaS product. Include feature flags, staged rollout, migration steps, monitoring, rollback criteria, customer communication, security review, and post-release verification. Write it as an internal engineering plan, not as a sales document."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--arithmetic-reasoning",
+      "original_id": "arithmetic-reasoning",
+      "prompt": "A warehouse has 137 cartons with 29 components each. It ships 845 components, then divides the remainder equally among 23 repair teams. Calculate the original total, the remainder, the quotient and any leftover, showing each check clearly. Then state the final allocation in one unambiguous sentence and identify one common arithmetic mistake."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--benchmark-analysis",
+      "original_id": "benchmark-analysis",
+      "prompt": "Analyze a benchmark result where a model server shows high tokens per second on repeated prompts but much lower speed on unique prompts. Explain plausible causes, how to separate valid fresh-response throughput from warmed or cached throughput, and what measurements should be recorded before publishing a result."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--factual-protocol",
+      "original_id": "factual-protocol",
+      "prompt": "Explain why DNS generally uses UDP for ordinary queries but can use TCP, including truncation, EDNS, zone transfers, and modern encrypted transports. Distinguish protocol facts from operational recommendations and give a compact troubleshooting checklist with concrete commands or observations."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--architecture-tradeoff",
+      "original_id": "architecture-tradeoff",
+      "prompt": "Compare two deployment options for a local inference service: tensor parallel across four GPUs versus four independent one-GPU replicas behind a router. Discuss latency, throughput, PCIe traffic, memory pressure, failure isolation, scheduling, model-loading time, and when each option is the right choice."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--typescript-cancellation",
+      "original_id": "typescript-cancellation",
+      "prompt": "Review and repair this TypeScript helper:\n\nasync function fetchJson(url: string, timeoutMs = 1000) {\n  const controller = new AbortController();\n  setTimeout(() => controller.abort(), timeoutMs);\n  const response = await fetch(url, { signal: controller.signal });\n  return response.json();\n}\n\nAddress timer cleanup, non-2xx responses, JSON typing, abort-versus-network error reporting, and caller cancellation. Provide production-quality code plus focused tests or test pseudocode."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--bug-report-synthesis",
+      "original_id": "bug-report-synthesis",
+      "prompt": "Synthesize a bug report from these symptoms: users sometimes receive a response intended for a previous request, logs show cache hits where cached_tokens should be zero, and the issue appears only under load. Write the suspected root causes, immediate mitigations, data to collect, and a minimal reproduction strategy."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--rust-stream-parser",
+      "original_id": "rust-stream-parser",
+      "prompt": "Design a Rust function that incrementally parses newline-delimited JSON from arbitrary byte chunks without losing a partial final line. Return typed records and useful line-numbered errors while bounding memory for a maliciously long line. Show the core structs and implementation, explain UTF-8 handling, and include tests where a multibyte character and a JSON object are split across chunk boundaries."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--technical-guide",
+      "original_id": "technical-guide",
+      "prompt": "Write a short technical guide for adding a new benchmark to an existing optimization repo. Include where to put scripts, data, notes, patches, result summaries, how to name run directories, what to record for reproducibility, and how to decide whether a result is valid enough to promote."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--repository-refactor-plan",
+      "original_id": "repository-refactor-plan",
+      "prompt": "A Python repository has HTTP calls duplicated in api/users.py, api/orders.py, and jobs/reconcile.py. Each copy sets different timeouts and retry rules, and tests monkeypatch requests.get directly. Propose a low-risk refactor to one injected client without a flag-day migration. Give the target module interface, an example call-site diff, test changes, rollout sequence, compatibility risks, and concrete acceptance criteria."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--risk-register",
+      "original_id": "risk-register",
+      "prompt": "Build a risk register for switching a production inference endpoint from one runtime to another. Include at least eight risks with severity, likelihood, detection method, mitigation, and rollback trigger. Focus on real operational and quality risks, not generic project management filler."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--shell-safety-review",
+      "original_id": "shell-safety-review",
+      "prompt": "Audit this deployment fragment for correctness and security:\n\nset -e\nfor f in $(find $RELEASE_DIR -name '*.json'); do\n  jq . $f > /tmp/validated.json\n  cp $f $DEST/\ndone\ncurl -H \"Authorization: Bearer $TOKEN\" $HEALTH_URL\n\nIdentify quoting, filename, temporary-file, secret-exposure, error-handling, atomicity, and rollback problems. Supply a safer Bash implementation and a small test matrix."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--performance-hypotheses",
+      "original_id": "performance-hypotheses",
+      "prompt": "Given a GPU inference kernel profile where MoE gate/up/down projections dominate decode time, propose performance hypotheses to test. Cover kernel fusion, quantized matmul layout, route caching, graph capture, batching shape, memory bandwidth, synchronization overhead, and validation traps."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--structured-extraction",
+      "original_id": "structured-extraction",
+      "prompt": "Extract the incident facts below into a JSON object with exactly these keys: service, start_utc, end_utc, customer_impact, trigger, contributing_factors, mitigations, follow_up_owners, unresolved_questions. Preserve uncertainty explicitly and do not invent values. After the JSON, list three validation checks.\n\nIncident note: At 14:07 UTC the Atlas export API began returning intermittent 503s to EU tenants. The alert fired at 14:12. A schema migration deployed at 13:58 increased lock duration; an unrelated retry change amplified load. The team disabled the retry change at about 14:31, but recovery was not confirmed until 14:46. Priya owns the index review, Mateo owns retry backoff, and the incident commander has not yet assigned the dashboard-gap work. Exact failed-export count is still being reconciled."
+    },
+    {
+      "group": "historical-selection",
+      "id": "selection--decision-memo",
+      "original_id": "decision-memo",
+      "prompt": "Write a decision memo about whether to keep optimizing the current model or switch to a different model family. Include current evidence, opportunity cost, criteria for stopping, expected next experiments, quality constraints, and what artifacts should be preserved for future work."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--prose-decision-memo",
+      "original_id": "prose-decision-memo",
+      "prompt": "Write a concise engineering decision memo on whether a small team should build its own background-job scheduler or adopt a maintained queue. Compare reliability, operational load, observability, migration cost, lock-in, failure recovery, and security patching. Make a recommendation for a team with two backend engineers, state assumptions, define reversal triggers, and avoid vendor-specific marketing claims."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--long-rollover-repository-audit",
+      "original_id": "long-rollover-repository-audit",
+      "prompt": "You are reviewing a repository snapshot before an agentic coding change. The prompt is intentionally longer than one 511-token attention window so the response exercises rollover while remaining a realistic code task. Read all of the following evidence, then prepare the first implementation patch. Do not merely summarize the files.\n\nRepository context:\n- src/ingest/config.py loads INGEST_BATCH_SIZE with int(os.getenv(..., '100')) and has no range check. It also reads INGEST_API_TOKEN during module import, which makes tests depend on ambient process state.\n- src/ingest/client.py creates one global requests.Session. post_batch serializes records, sends POST /v1/items with timeout=30, calls raise_for_status, and retries every exception three times with time.sleep(1). The retry loop neither distinguishes permanent 4xx responses nor honors Retry-After. Logs include the complete exception and request headers.\n- src/ingest/worker.py selects pending database rows with SELECT ... LIMIT batch_size, commits, calls post_batch, then starts a second transaction to mark rows sent. Two workers can therefore select the same rows. A crash after the HTTP success but before the second commit causes an externally accepted batch to be sent again.\n- src/ingest/models.py defines PendingItem(id, tenant_id, payload, created_at) but payload is an unbounded dict and tenant_id is optional even though the database column is NOT NULL. The serializer silently drops keys whose values are None.\n- src/ingest/metrics.py exposes counters named success, failure, and retry without a subsystem prefix or labels. It has no queue-age histogram, in-flight gauge, duplicate counter, or terminal-dead-letter counter.\n- migrations/018_add_ingest_state.sql adds state text DEFAULT 'pending' and external_key text, then creates a unique index only on external_key. Existing rows receive the default. The migration does not make external_key NOT NULL and has no concurrent-index or rollback plan.\n- tests/test_worker.py uses one happy-path row and monkeypatches client.post_batch to return True. It does not run concurrent workers, simulate a timeout after remote acceptance, assert transaction boundaries, test retry classification, or control environment variables before importing config.\n- deploy/worker.service restarts on failure with RestartSec=0, loads an EnvironmentFile, and grants the process write access to the whole application directory. There are no start-limit settings, readiness signal, graceful-stop timeout, or isolated runtime directory.\n- docs/runbook.md says operators should restart until the queue drains. It does not define safe replay, idempotency-key inspection, dead-letter recovery, database rollback, token rotation, or the dashboards that prove recovery.\n- The external API supports an Idempotency-Key header scoped to tenant plus key for 24 hours. It returns 409 for a key reused with a different payload, 429 with Retry-After under load, and 202 after durable acceptance. The database is PostgreSQL 16. Deployments use two worker processes today but may scale to eight.\n- Product requirements allow at-least-once internal processing but prohibit duplicate customer-visible items. A queued item may be delayed for up to five minutes. Operators need per-tenant backlog visibility, and secrets must never appear in logs or committed fixtures.\n- Change constraints: preserve the current HTTP API contract, avoid a full queue-system replacement in this patch, keep the migration reversible, and allow rolling deployment with old and new workers overlapping for ten minutes.\n\nReturn a unified diff, not a planning memo. The diff must include a reversible PostgreSQL migration, a transaction-safe worker claim/lease implementation, an injected HTTP client that derives a stable tenant-scoped Idempotency-Key and classifies 202/409/429 responses, redacted structured logging, metrics, concurrency and failure-injection tests, the hardened systemd unit, and runbook recovery steps. Include complete enough code and tests that the response cannot end after a short defect list."
+    }
+  ],
+  "source_suites": [
+    {
+      "group": "historical-selection",
+      "path": "/home/steve/llm-optimizations/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+      "sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+    },
+    {
+      "group": "independent-holdout",
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json",
+      "sha256": "9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638"
+    }
+  ],
+  "suite_id": "qwen36-27b-int4-independent-validation-20260815-v1",
+  "version": 1
+}

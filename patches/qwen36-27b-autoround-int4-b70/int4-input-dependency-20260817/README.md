@@ -32,8 +32,10 @@ Its final manifest verifies and has SHA256
 
 It was a warmed, compiled PIECEWISE MTP3 run with the dependency scoped to
 `language_model.model.layers.0.linear_attn.in_proj_qkvz`. All four complete
-token arrays matched both sealed target controls. The preferred 99-interval
-median was `110.67515578910192 tok/s` (the legacy-inclusive helper reported
+token arrays matched both then-sealed target controls. Against the later
+same-source 25-target subset, structured extraction differs at token 246 and
+the canary is only 3/4. The preferred 99-interval median was
+`110.67515578910192 tok/s` (the legacy-inclusive helper reported
 `111.79308665565851 tok/s`).
 
 The later matched final-source gate failed. The layer0-scoped candidate was

@@ -197,6 +197,7 @@
     "The focused wrong token had only a 0.015625 packed top1/top2 score margin, making token identity sensitive to small ordering or code-generation changes.",
     "Cold and trace-heavy 5-12 tok/s diagnostics are not comparable to warmed throughput.",
     "The final four-prompt pass did not generalize: the matched final-source candidate was only 15/25 exact at 96.386 tok/s.",
+    "The four-prompt candidate is 4/4 only versus its then-sealed controls and 3/4 versus the later same-source 25-target subset because structured extraction changes at token 246.",
     "Broadening the sole correction to all INT4 calls worsened parity to 12/25 and remained below 100 tok/s.",
     "The final-source target differs from the older target on 10/25 prompts, so only the newly matched target is a valid comparator."
   ],
@@ -208,7 +209,7 @@
   },
   "preserved_patch_packet": {
     "path": "patches/qwen36-27b-autoround-int4-b70/int4-input-dependency-20260817",
-    "manifest_sha256": "339d46f140c0c284d839c76b86d162373e0282a06deb1113771409240fe8081e"
+    "manifest_sha256": "707abf26c2105423ab6224f5bca4398ff58e6b4fadf526c1de55ad3c53b1a07d"
   },
   "sealed_raw_roots": {
     "count": 22,

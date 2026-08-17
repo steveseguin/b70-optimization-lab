@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "classification": "diagnostic_closeout",
+  "decision": "inconclusive_failed_normal_gate_not_production_ready",
+  "runtime_restored": false,
+  "additional_diagnostics_launched_after_final_gate": false,
+  "model": {
+    "repository": "webhie/Qwen3.6-27B-int4-AutoRound",
+    "revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+    "tensor_parallel_size": 2,
+    "devices": [0, 1],
+    "dtype": "float16",
+    "speculative_tokens": 3
+  },
+  "matched_source_identity": {
+    "llm_optimizations_head": "f0e86b89e6bdd25ceac762fc34fb2169414b3e32",
+    "llm_optimizations_diff_sha256": "0f0e1e1df2cf324e38b9a7d9f2a45d77166341c74734fca76cf3ba94f548de0f",
+    "vllm_head": "a63ff886e1c9c90f919e8b46a63f34027dfae823",
+    "vllm_diff_sha256": "e8f154cb8e497f6e18bd7d917e12011f45f5664967749392a47a722e1117e263",
+    "vllm_xpu_kernels_head": "6a40e2baf3f8710b89e48d18bf214708ba2dbf9a",
+    "vllm_xpu_kernels_diff_sha256": "10d7cb28a11d7ddcc1caf5737368a014a06ffd0ec15be699e8e8f31da8649062",
+    "xpu_extension_sha256": "f494925774cf50cd2038684cb64325fcd491c51f2eab94454878c5e804dbaa61"
+  },
+  "final_target": {
+    "root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/batch-invariant-rmsnorm-25-target-a-20260817T063000Z",
+    "manifest_sha256": "277b0bcc72fa9c00ed63a0d051bc3e313a43c86ab0637f770410c2ad3748f703",
+    "execution": "compiled PIECEWISE target-only M1",
+    "real_warmup": true,
+    "cached_tokens_zero": "25/25",
+    "quality_pass_all": true,
+    "strict_tok_s": 47.448060829216615,
+    "legacy_tok_s": 47.927334170925874
+  },
+  "final_candidate": {
+    "root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/batch-invariant-rmsnorm-25-spec-b-postreboot-20260817T124553Z",
+    "manifest_sha256": "56c066b7b00315bab4a1870b7d3b9f5b01268c2ab7b09fce8d0f6747cce339e6",
+    "runner_exit": 0,
+    "execution": "compiled PIECEWISE MTP3 with exact GDN eager dynamic graph break",
+    "real_warmup": true,
+    "cached_tokens_zero": "25/25",
+    "quality_pass_all": true,
+    "real_speculation": true,
+    "strict_tok_s": 93.44568121953475,
+    "legacy_tok_s": 94.38957698942903,
+    "exact_prompts": 12,
+    "total_prompts": 25,
+    "candidate_canonical_sha256": "db46b717acfb34367d2a612b8877055b44e26f58c59be8b7ce591c29a6bec5fe",
+    "target_canonical_sha256": "b428c0499a863f2b8419ec566b91c90e7988064ec45bd902df09fdba0d467f6a"
+  },
+  "first_differences": [
+    {"prompt_index": 0, "prompt_id": "selection--incident-retrospective", "index": 372, "candidate": 3165, "target": 279},
+    {"prompt_index": 1, "prompt_id": "holdout--python-lru-cache", "index": 60, "candidate": 279, "target": 1901},
+    {"prompt_index": 5, "prompt_id": "holdout--sql-sessionization", "index": 358, "candidate": 198, "target": 5574},
+    {"prompt_index": 6, "prompt_id": "selection--sql-debugging", "index": 265, "candidate": 12351, "target": 9861},
+    {"prompt_index": 8, "prompt_id": "selection--release-plan", "index": 41, "candidate": 4807, "target": 40461},
+    {"prompt_index": 10, "prompt_id": "selection--benchmark-analysis", "index": 382, "candidate": 3514, "target": 2972},
+    {"prompt_index": 11, "prompt_id": "holdout--factual-protocol", "index": 150, "candidate": 1657, "target": 30879},
+    {"prompt_index": 12, "prompt_id": "selection--architecture-tradeoff", "index": 445, "candidate": 777, "target": 1066},
+    {"prompt_index": 14, "prompt_id": "selection--bug-report-synthesis", "index": 211, "candidate": 7888, "target": 11},
+    {"prompt_index": 15, "prompt_id": "holdout--rust-stream-parser", "index": 499, "candidate": 25, "target": 198},
+    {"prompt_index": 19, "prompt_id": "holdout--shell-safety-review", "index": 215, "candidate": 36066, "target": 264},
+    {"prompt_index": 21, "prompt_id": "holdout--structured-extraction", "index": 246, "candidate": 4109, "target": 64700, "candidate_length": 435, "target_length": 418},
+    {"prompt_index": 24, "prompt_id": "holdout--long-rollover-repository-audit", "index": 391, "candidate": 25952, "target": 198}
+  ],
+  "focused_controls": [
+    {"name": "stateless M4/M1 operator oracle", "correctness": "8/8 bit-exact", "execution": "direct operator", "real_warmup": false, "strict_tok_s": null, "manifest_sha256": "0573de556fc3b1bc087bc8eca95ad5cc443bc21a0b0fd7b5f18831c56a9ab935"},
+    {"name": "live W4A16 oracle", "correctness": "11008 comparisons per rank exact; endpoint wrong", "execution": "raw verifier", "real_warmup": false, "strict_tok_s": 4.835581066161995, "manifest_sha256": "63a476dc8beeb9804edba7e58365b1fdc2b8e9e2608cf44927590461b419efca"},
+    {"name": "live GDN-state oracle", "correctness": "8256 comparisons per rank exact; endpoint wrong", "execution": "raw verifier", "real_warmup": false, "strict_tok_s": 3.119525453402088, "manifest_sha256": "199fd34d65dd3fd99230019c2dac979272bc851ea11970ad2dd90fec0f00ff0f"},
+    {"name": "progressive FA", "correctness": "endpoint unchanged and wrong", "execution": "raw verifier", "real_warmup": false, "strict_tok_s": 6.333733025401094, "manifest_sha256": "9050e21179730cdaa2467663184f1495f9fa89df4668b3f944479bdf6dc5414d"},
+    {"name": "serial Gemma RMSNorm", "correctness": "128/128 target-exact", "execution": "raw verifier; four M1 RMS calls", "real_warmup": false, "strict_tok_s": 5.84740828275813, "manifest_sha256": "733765ac74af8daeba963c9de7a49a1b56d5f596da5ea1d7e75f16ad1fbed7da"},
+    {"name": "batch-invariant Gemma RMSNorm incident", "correctness": "128/128 target-exact", "execution": "raw verifier; one fixed-geometry M4 Triton call", "real_warmup": false, "strict_tok_s": 5.6419834424563415, "manifest_sha256": "fa3caa3defd61169bef3642e57fd1b108c480e3447d6a0dd21bae221ca97f35e"},
+    {"name": "batch-invariant four-prompt", "correctness": "4/4 versus then-sealed controls; 3/4 versus later current-source target subset", "execution": "compiled PIECEWISE MTP3; exact GDN eager break", "real_warmup": true, "strict_tok_s": 106.66319561220656, "manifest_sha256": "4d21009fd37a1ecaeef74a451260bae90772daaa567534cdc9f5a10697efc5a6"},
+    {"name": "pre-reboot final candidate", "correctness": "no inference result", "execution": "startup only; host soft-lock during model load", "real_warmup": false, "strict_tok_s": null, "manifest_sha256": "2cc94bd60c0196c807ef99971a5862af6fe8da645d62d708d53a636cc1fd8173"}
+  ],
+  "contradictions_and_confounders": [
+    "Small warmed suites passed above 100 tok/s but did not predict 25-prompt parity or throughput.",
+    "All three four-prompt candidates share one output set, but the later current-source target changes long-rollover at token 391; four-prompt exactness is control-specific.",
+    "The fixed per-row RMS reduction repaired a focused near-tie but did not establish whole-model speculative equivalence.",
+    "The final candidate conventional median fell from 106.663 on four prompts to 93.446 on the normal suite.",
+    "Only one current-source 25-prompt target start exists; historical targets have shown close-boundary variation.",
+    "Exact recurrent mode suppresses requested GDN capture, so the honest candidate identity includes an eager dynamic GDN graph break.",
+    "INT4/INT8 completion barriers and the larger exact-GDN stack were active together; a focused standalone RMS patch was not independently qualified.",
+    "The pre-reboot failure was a host soft lock during loading, not a candidate inference result."
+  ],
+  "production_gate": {
+    "target_parity": "failed_12_of_25_exact",
+    "performance": "failed_93_445681_strict_tok_s",
+    "required_tok_s": 100.0,
+    "verdict": "inconclusive_no_production_ready_patch",
+    "localmaxxing_submitted": false,
+    "runtime_action": "left_unchanged_per_operator_request"
+  },
+  "preserved_patch_packet": {
+    "path": "patches/qwen36-27b-autoround-int4-b70/batch-invariant-rmsnorm-20260817",
+    "manifest_sha256": "99ce6777a28f08f25492a722ce45e28f2349ec3994a19926189b2a1ed32e3e21"
+  },
+  "sealed_raw_roots": {
+    "count": 10,
+    "manifest_index": "data/qwen36-27b-autoround-int4-batch-invariant-rmsnorm-sealed-roots-20260817.sha256",
+    "manifest_index_sha256": "bde0a3ae1fcd5af672f2ecb95af1a23dba01536f0a6039a842ca7ca77f70dd50"
+  }
+}
