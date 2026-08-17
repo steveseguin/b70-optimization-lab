@@ -1,0 +1,104 @@
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -38,6 +38,7 @@
+ 
+ #include <sycl/sycl.hpp>
+ #include <sycl/backend.hpp>
++#include <sycl/ext/oneapi/experimental/annotated_ptr/annotated_ptr.hpp>
+ #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+ #include <level_zero/ze_api.h>
+ #endif
+@@ -10343,21 +10344,65 @@
+                         "(GGML_SYCL_COMM_REDUCE_VEC4)\n", enabled ? 1 : 0);
+         return enabled;
+     }();
++    static const int peer_cache_mode = [] {
++        const char * value = getenv("GGML_SYCL_COMM_PEER_CACHE");
++        const int requested = value == nullptr ? 0 : atoi(value);
++        const int mode = requested >= 0 && requested <= 2 ? requested : 0;
++        fprintf(stderr, "SYCL doors | peer collective cache policy: %d "
++                        "(GGML_SYCL_COMM_PEER_CACHE; 0=default, 1=streaming, 2=uncached)\n",
++                mode);
++        return mode;
++    }();
++    const int peer_cache_mode_kernel = peer_cache_mode;
+     sycl::event reduce_add;
+     if (reduce_vec4 && nelem % 4 == 0) {
+         reduce_add = q0->submit([=](sycl::handler & h) {
+             h.depends_on({ready0, ready1});
+             h.parallel_for(sycl::range<1>((size_t) nelem / 4), [=](sycl::id<1> i) {
++                namespace syclintel = sycl::ext::intel::experimental;
++                namespace syclexp = sycl::ext::oneapi::experimental;
++                using stream_l1_l3 = syclintel::cache_control<
++                    syclintel::cache_mode::streaming,
++                    syclexp::cache_level::L1,
++                    syclexp::cache_level::L3>;
++                using uncached_l1_l3 = syclintel::cache_control<
++                    syclintel::cache_mode::uncached,
++                    syclexp::cache_level::L1,
++                    syclexp::cache_level::L3>;
+                 const size_t base = (size_t) i * 4;
+                 const sycl::vec<float, 4> partial0 =
+                     *reinterpret_cast<const sycl::vec<float, 4> *>(p0 + base);
+-                const sycl::vec<float, 4> partial1 =
+-                    *reinterpret_cast<const sycl::vec<float, 4> *>(p1 + base);
++                sycl::vec<float, 4> partial1;
++                if (peer_cache_mode_kernel == 1) {
++                    auto peer_src = syclexp::annotated_ptr(
++                        reinterpret_cast<const sycl::vec<float, 4> *>(p1 + base),
++                        syclintel::read_hint<stream_l1_l3>);
++                    partial1 = static_cast<sycl::vec<float, 4>>(*peer_src);
++                } else if (peer_cache_mode_kernel == 2) {
++                    auto peer_src = syclexp::annotated_ptr(
++                        reinterpret_cast<const sycl::vec<float, 4> *>(p1 + base),
++                        syclintel::read_hint<uncached_l1_l3>);
++                    partial1 = static_cast<sycl::vec<float, 4>>(*peer_src);
++                } else {
++                    partial1 = *reinterpret_cast<const sycl::vec<float, 4> *>(p1 + base);
++                }
+                 const sycl::vec<float, 4> residual0 =
+                     *reinterpret_cast<const sycl::vec<float, 4> *>(r0 + base);
+                 const sycl::vec<float, 4> sum = partial0 + partial1;
+                 *reinterpret_cast<sycl::vec<float, 4> *>(add0 + base) = sum + residual0;
+-                *reinterpret_cast<sycl::vec<float, 4> *>(p1 + base) = sum;
++                if (peer_cache_mode_kernel == 1) {
++                    auto peer_dst = syclexp::annotated_ptr(
++                        reinterpret_cast<sycl::vec<float, 4> *>(p1 + base),
++                        syclintel::write_hint<stream_l1_l3>);
++                    *peer_dst = sum;
++                } else if (peer_cache_mode_kernel == 2) {
++                    auto peer_dst = syclexp::annotated_ptr(
++                        reinterpret_cast<sycl::vec<float, 4> *>(p1 + base),
++                        syclintel::write_hint<uncached_l1_l3>);
++                    *peer_dst = sum;
++                } else {
++                    *reinterpret_cast<sycl::vec<float, 4> *>(p1 + base) = sum;
++                }
+             });
+         });
+     } else {
+*** Update File: /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/notes/2026-08-16-q8-peer-collective-cache-hints-active.md
+@@
+ The experiment must be stopped and recorded as unsafe if the current boot
+ shows a Xe reset, hang, timeout, or device-lost event.  This arm does not use or
+ revive quarantined collective mode 3.
++
++## Staged implementation and safety gate
++
++The isolated candidate is based on the accepted one-chain Q8 source and adds
++only [`GGML_SYCL_COMM_PEER_CACHE`](../patches/q8-peer-collective-cache-hints-20260816.diff):
++`0` is the ordinary pointer path, `1` applies streaming L1/L3 hints, and `2`
++applies uncached L1/L3 hints.  Local `p0`, residual, and `add0` operations are
++unchanged.  The build uses oneAPI 2026.1.1, Release, BMG-G31 AOT, F16 and Level
++Zero enabled, graph/DNN/host fallback disabled, and an 8 GiB hard build cap.
++
++Candidate binary SHA-256 values:
++
++- `llama-bench`: `9d3fc8515dd819eea9c144e8a7e4323964599ad638f0e93477042617ecd7aa42`
++- `llama-server`: `1c8a322942f948c10fba908d5371eb8b0acef31b370dc6958a7ea4e132915526`
++- `libggml-sycl.so.0.19.0`: `9c664ec151c269dabf4ddccdf6506aeb910cd5a89f9ba4410ba4aac23f62619e`
++
++Fresh-process `p64/n1/r1` smokes for modes 0, 1, and 2 all reported the
++requested door, `VERIFY_MISMATCH=0`, and normal completion.  Both B70s remained
++normal with no current-boot Xe compute reset, hang, timeout, fault, or
++device-lost event.  These one-token timings are not performance evidence.
