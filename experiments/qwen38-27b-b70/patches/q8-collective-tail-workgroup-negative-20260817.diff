@@ -1,0 +1,40 @@
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -10200,6 +10200,21 @@ static void ggml_sycl_comm_submit_direct_q8_register(
+ 
+ }
+ 
++// Lab-only launch geometry for the exact 5,120-element register-direct
++// collective tails. Zero/unset preserves the device maximum (1,024 on B70).
++static int ggml_sycl_comm_direct_q8_work_group_size() {
++    static const int value = [] {
++        const char * env = std::getenv("GGML_SYCL_COMM_DIRECT_Q8_WG");
++        const int requested = env == nullptr ? 0 : std::atoi(env);
++        const int selected = requested == 256 || requested == 512 || requested == 1024
++            ? requested : 0;
++        fprintf(stderr, "SYCL lab door | register-direct collective tail WG: %d "
++                        "(GGML_SYCL_COMM_DIRECT_Q8_WG; 0=device max)\n", selected);
++        return selected;
++    }();
++    return value;
++}
++
+ bool ggml_backend_sycl_comm_allreduce_add_rms_mul_tensor(
+         void * comm_ctx_v, struct ggml_tensor ** partials, struct ggml_tensor ** residuals,
+         struct ggml_tensor ** add_outputs, struct ggml_tensor ** rms_nodes,
+@@ -10384,9 +10399,14 @@ bool ggml_backend_sycl_comm_allreduce_add_rms_mul_tensor(
+             return enabled;
+         }();
+         if (direct_q8_register && nelem == 5120) {
++            const int requested_wg = ggml_sycl_comm_direct_q8_work_group_size();
++            const int direct_work_group_size0 = requested_wg > 0 && requested_wg <= work_group_size0
++                ? requested_wg : work_group_size0;
++            const int direct_work_group_size1 = requested_wg > 0 && requested_wg <= work_group_size1
++                ? requested_wg : work_group_size1;
+             try {
+                 ggml_sycl_comm_submit_direct_q8_register(
+-                        q0, q1, reduce_add, nelem, work_group_size0, work_group_size1,
++                        q0, q1, reduce_add, nelem, direct_work_group_size0, direct_work_group_size1,
+                         eps[0], eps[1], p1, r1, add0, add1, w0, w1, mul0, mul1,
+                         q8_out0, q8_out1);
+             } catch (...) {

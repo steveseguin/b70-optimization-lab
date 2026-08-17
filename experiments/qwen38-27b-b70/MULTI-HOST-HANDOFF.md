@@ -164,6 +164,18 @@ structured [data](data/2026-08-17-q8-ffn-shape-scoped-sg4-negative.json), and
 incremental [patch](patches/q8-ffn-shape-scoped-sg4-negative-20260817.diff).
 Retain hardware-derived SG8 and do not retry the exact SG4 admission unchanged.
 
+The register-direct collective tail workgroup sweep is closed. This was not
+the old root-reduction WG experiment: it changed the two 5,120-element
+residual/RMS/multiply/Q8 tails repeated at all 128 TP boundaries. WG256 was
+mechanically safe with `VERIFY_MISMATCH=0`, but a mirrored screen measured
+WG1024 `37.171867`, WG512 `36.018933` (`-3.102%`) and WG256 `35.306167 tok/s`
+(`-5.019%`). See the
+[result note](notes/2026-08-17-q8-collective-tail-workgroup-active.md),
+structured [data](data/2026-08-17-q8-collective-tail-workgroup-negative.json),
+and incremental
+[patch](patches/q8-collective-tail-workgroup-negative-20260817.diff). Retain
+the accepted 1,024-work-item tail and do not repeat 256/512 unchanged.
+
 Mode `3` is not an alternative candidate. Its peer-writing design caused a
 device-lost/reset storm and is permanently quarantined. Never enable or port
 it without a fundamentally different ownership/synchronization proof.
