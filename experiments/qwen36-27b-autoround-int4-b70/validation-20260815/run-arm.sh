@@ -518,6 +518,13 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
       else
         unset VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT
       fi
+      if [[ "${VALIDATION_GDN_NATIVE_SPEC_PREFIX_BASE_STATE:-0}" == "1" ]]; then
+        # Preserve the canonical pre-verifier recurrent state in column zero;
+        # exact verifier rows publish their successive states to columns 1-4.
+        export VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE=1
+      else
+        unset VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE
+      fi
     fi
     if [[ "$mode" == "spec-native-partition-exact-native-zero" ]]; then
       # Coherent fixed-width-four target control: execute all verifier rows,
