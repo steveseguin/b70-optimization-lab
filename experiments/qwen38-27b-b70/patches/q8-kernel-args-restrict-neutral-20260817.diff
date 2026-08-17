@@ -1,0 +1,52 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1784,7 +1784,8 @@
+                              });
+         } else {
+             cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
+-                             [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                             [=](sycl::nd_item<3> nd_item) [[intel::kernel_args_restrict]]
++                                                                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                                  mul_mat_vec_q_reorder<reorder_vec_dot_q8_0<true>>(vx, vy, dst, ncols, nrows,
+                                                                                    nd_item);
+                              });
+@@ -1870,7 +1871,8 @@
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+             sycl::nd_range<3>(block_nums * block_dims, block_dims),
+-            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++            [=](sycl::nd_item<3> nd_item) [[intel::kernel_args_restrict]]
++                                               [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                 mul_mat_vec_q8_0_reorder_pair(
+                     vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, nd_item);
+             });
+@@ -1959,7 +1961,8 @@
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+             sycl::nd_range<3>(block_nums * block_dims, block_dims),
+-            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++            [=](sycl::nd_item<3> nd_item) [[intel::kernel_args_restrict]]
++                                               [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                 mul_mat_vec_q8_0_reorder_triple(
+                     vx0, vx1, vx2, vy, dst0, dst1, dst2,
+                     ncols, nrows0, nrows1, nrows2, nd_item);
+@@ -2091,7 +2094,8 @@
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+             sycl::nd_range<3>(block_nums * block_dims, block_dims),
+-            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++            [=](sycl::nd_item<3> nd_item) [[intel::kernel_args_restrict]]
++                                               [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                 mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+                     vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
+                     dst0, dst1, dst2, dst3,
+@@ -2140,7 +2144,8 @@
+                              });
+         } else {
+             cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
+-                             [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                             [=](sycl::nd_item<3> nd_item) [[intel::kernel_args_restrict]]
++                                                                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                                  mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q8_0<true>, ncols_dst>(
+                                      vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
+                              });

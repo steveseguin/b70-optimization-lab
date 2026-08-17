@@ -1,0 +1,53 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_performance_neutral",
+  "model": {
+    "name": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70 32 GiB",
+  "runtime": "oneAPI 2026.1.1; accepted DP4A2 x SG24 target-only TP2 stack",
+  "change": "Add [[intel::kernel_args_restrict]] to five live reordered-Q8 standalone, ncols, pair, attention-triple, and recurrent-quad kernel lambdas",
+  "artifacts": {
+    "accepted_libggml_sycl_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+    "treatment_libggml_sycl_sha256": "1966965a7c18477108e4626d5aecf3715e0f6702207eb2ae37258208bf5dae4f",
+    "llama_bench_sha256": "74e7d48905196285f6e7cd8c8d0b20a8e25cf3f4731b1e2f0f5f6c49ad8d8865"
+  },
+  "valid_isolation": "Each launch prepended its complete bin directory to LD_LIBRARY_PATH, verified ldd resolved that arm's libggml-sycl.so.0, and verified its SHA-256",
+  "screens": {
+    "p64_n256_aba": {
+      "accepted": [36.843730, 36.867152],
+      "treatment": [37.743147],
+      "accepted_mean": 36.855441,
+      "treatment_mean": 37.743147,
+      "delta_percent": 2.408616
+    },
+    "p64_n256_baab": {
+      "accepted": [37.416669, 36.887366],
+      "treatment": [37.111556, 36.763296],
+      "accepted_mean": 37.152018,
+      "treatment_mean": 36.937426,
+      "delta_percent": -0.577604
+    },
+    "p64_n512_abba": {
+      "accepted": [36.915335, 36.842499],
+      "treatment": [36.893359, 36.852211],
+      "accepted_mean": 36.878917,
+      "treatment_mean": 36.872785,
+      "delta_percent": -0.016627
+    }
+  },
+  "correctness": {
+    "verify_mismatch": 0,
+    "recurrent_quad_fusion_exercised": true,
+    "endpoint_gate_run": false,
+    "endpoint_gate_reason": "No repeatable direct-decode gain"
+  },
+  "invalid_preliminary_data": "An earlier copied-binary bracket was discarded because absolute RUNPATH caused nominal control and treatment executables to resolve the same treatment library",
+  "transferred_qwen36_result": {
+    "delta_mean_percent": -2.852,
+    "delta_median_percent": -2.950,
+    "raw_local_evidence": "/mnt/fast-ai/bench-results/qwen36-q8-asrock-b70-20260815-kargs-restrict"
+  },
+  "raw_local_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-kernel-args-restrict/"
+}
