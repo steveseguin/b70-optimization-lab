@@ -1,0 +1,43 @@
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+index b61fbff62..f51bc8aeb 100644
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1852 +1852,21 @@ static void dequantize_mul_mat_vec_q8_0_reorder_quad(
++// Shape-scoped launch-population sweep for the dominant Qwen3.8 gate/up pair.
++// The row body and SIMD16 arithmetic are unchanged. Zero/unset retains the
++// accepted hardware-derived SG8 workgroup.
++static int ggml_sycl_mmvq_q8_pair_subgroups() {
++    static const int selected = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_PAIR_SUBGROUPS");
++        const int requested = value == nullptr ? 0 : std::atoi(value);
++        switch (requested) {
++            case 12:
++            case 16:
++            case 24:
++            case 32:
++                return requested;
++            default:
++                return 0;
++        }
++    }();
++    return selected;
++}
++
+ bool ggml_sycl_mul_mat_vec_q8_0_reorder_pair(
+@@ -1865,2 +1885,15 @@ bool ggml_sycl_mul_mat_vec_q8_0_reorder_pair(
+-    const size_t num_subgroups = (size_t) ggml_sycl_mmvq_subgroups();
++    const int requested_pair_subgroups = ggml_sycl_mmvq_q8_pair_subgroups();
++    const int pair_subgroups = ncols == 5120 && nrows0 == 8704 && nrows1 == 8704 ?
++        requested_pair_subgroups : 0;
++    const size_t num_subgroups = pair_subgroups > 0 ?
++        (size_t) pair_subgroups : (size_t) ggml_sycl_mmvq_subgroups();
++    if (pair_subgroups > 0) {
++        static bool announced[GGML_SYCL_MAX_DEVICES][33] = {};
++        const int device = get_current_device_id();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device][pair_subgroups]) {
++            fprintf(stderr, "SYCL lab door | q8 gate/up pair workgroup: dev=%d -> %dxSG16\n",
++                    device, pair_subgroups);
++            announced[device][pair_subgroups] = true;
++        }
++    }
+     const int nrows = nrows0 + nrows1;
