@@ -13,7 +13,7 @@ and no MTP, DFlash, draft model, response reuse, or speculation.
 - cold suite: 12/12 complete output hashes exact against the matched control;
   every request had `cached_tokens=0`
 - semantic gate: exact copy, arithmetic, JSON, factual, logic, Python-result,
-  repeat-stability, and 3,829-token needle tests all passed on 2026-08-16
+  repeat-stability, and 3,829-token needle tests all passed again on 2026-08-17
 
 The 2026-08-17 snapshot first added a shape-scoped SG16 workgroup for the recurrent
 GDN quad. Two order-balanced, same-binary cold-suite pairs both favored SG16.
@@ -36,6 +36,20 @@ semantic, 8/8 repeat, and actual 3,829-token needle gates passed, and the clean
 accepted build announced SG24 on both B70s with `VERIFY_MISMATCH=0`. Set
 `GGML_SYCL_MMVQ_Q8_QUAD_SG24=0` to retain SG16 as a same-binary fallback. The
 historical absolute headline remains unchanged for the same identity reason.
+
+The current source promotion combines that SG24 geometry with the retained
+two-independent-accumulator DP4A row body (`DP4A2`). Across 16 fresh direct
+processes, DP4A2 SG24 averaged `37.635972` versus `37.286605 tok/s` for
+one-chain SG24 (`+0.937%`). More importantly, both opposite-order cold
+endpoint pairs were positive. Their pooled first-100 pair medians were
+`37.131535` versus `36.836538 tok/s` (`+0.801%`), and pooled full-decode
+medians were `36.900803` versus `36.552765 tok/s` (`+0.952%`). All four
+12-prompt suites were cache-zero and output-hash exact; the candidate also
+passed 7/7 semantic canaries, 8/8 repeats, the 3,829-token needle, and shut
+down at `VERIFY_MISMATCH=0`. Its reasoning-off helper converts to
+`36.760220 tok/s` conventional, slightly below the older reasoning-enabled
+absolute headline, so the historical headline remains unchanged. See the
+[DP4A2×SG24 decision](../../experiments/qwen38-27b-b70/notes/2026-08-17-q8-dp4a2-sg24-synergy-active.md).
 
 A fresh replay of the corrected full source stack on 2026-08-16 again passed
 12/12 complete hashes and 12/12 cache-zero requests. It measured
@@ -81,11 +95,13 @@ not the quality-default deployment.
 - source base: mndodd `4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126`
 - exact source snapshot: [patch packet](../../patches/qwen38-27b-q8-tp2-asrock-b70/README.md)
 
-The patch packet uses the one-chain Q8 DP4A body that produced this result and
-then applies the Qwen3.8-only recurrent-quad SG16 and SG24 increments. The later Qwen3.6
-two-chain `DP4A2` schedule passed Qwen3.8's
-quality gate but was not faster in two full cold suites, so it is not part of
-this reproduction. See the [transfer decision](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-dp4a2-transfer-no-win.md).
+The patch packet uses the full two-chain `DP4A2` Q8 body, then applies the
+Qwen3.8-only recurrent-quad SG16 and SG24 increments. DP4A2 by itself was not
+faster under the old SG8 geometry; that negative remains valid. Its promoted
+gain is specifically the DP4A2×SG24 interaction validated by two
+opposite-order endpoint pairs. See the earlier
+[SG8 transfer decision](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-dp4a2-transfer-no-win.md)
+and the current [promotion](../../experiments/qwen38-27b-b70/notes/2026-08-17-q8-dp4a2-sg24-synergy-active.md).
 
 ## Build
 
@@ -130,6 +146,20 @@ the host executables retain the SG16 hashes above:
   `d94c8cb6f3c0a3997bd24286ed0ff1e417860e3ff5913320edb7b012a49fbde3`
 - `llama-server`:
   `b26ad789f7372c7a409183aa870dd52589cf9fb654c8324055517b1ff1cfd528`
+
+The accepted DP4A2×SG24 build on oneAPI 2026.1.1 produced:
+
+- `libggml-sycl.so.0.19.0`:
+  `e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5`
+- `llama-bench`:
+  `74e7d48905196285f6e7cd8c8d0b20a8e25cf3f4731b1e2f0f5f6c49ad8d8865`
+- `llama-cli`:
+  `b260df414bb008a8251745ab2130f42bd3da94f052605eba02d6edf41d25aea2`
+- `llama-server`:
+  `f7bc299a830cbbbbfc3e06ac46ef4f063b9d85e43995c04e07ffa9de0aa390bb`
+
+A clean public-base reconstruction of the documented full DP4A2, SG16, and
+SG24 patch chain matched all 20 tested modified source files byte-for-byte.
 
 ## Run and verify
 
