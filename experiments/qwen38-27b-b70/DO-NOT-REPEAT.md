@@ -14,6 +14,7 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 
 | Experiment | Outcome | Durable record |
 | --- | --- | --- |
+| Exact Q8 compile-time FFN projection shapes | **Active on the reference host:** specialize K8704/N5120 standalone down and K5120/N8704+N8704 fused gate/up without changing arithmetic; do not duplicate unchanged | [active note](notes/2026-08-16-q8-fixed-shape-mmvq-active.md) |
 | Exact Q8 direct ESIMD SIMD16 DP4A row body | Closed: standalone/pair/triple were live and a poison control proved reachability; normal output was exact, but the position-balanced TP2 screen regressed `0.699%` | [result](notes/2026-08-16-q8-esimd-dp4a-active.md), [data](data/2026-08-16-q8-direct-esimd-dp4a-negative.json), [patch](patches/q8-direct-esimd-dp4a-negative-20260816.diff) |
 | Peer-mapped vec4 collective cache hints | Closed: streaming was performance-null (`+0.011%`) and uncached was slightly negative (`-0.027%`) in a symmetric same-binary screen | [note](notes/2026-08-16-q8-peer-collective-cache-hints-active.md), [data](data/2026-08-16-q8-peer-collective-cache-hints-neutral.json), [patch](patches/q8-peer-collective-cache-hints-20260816.diff) |
 | Q8 lossless repacking | Closed: practical sentinel formats expanded the weights; theoretical entropy headroom was only about 3.7% | [structural audit](notes/2026-08-16-q8-structural-feasibility-and-sampling.md) |

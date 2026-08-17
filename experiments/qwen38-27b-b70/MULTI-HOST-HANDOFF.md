@@ -106,6 +106,11 @@ and the failed `invoke_simd` AOT history are in the
 implementation unchanged. Check `origin/main` before opening another
 target-only Q8 candidate.
 
+The reference host currently claims the compile-time FFN-shape MMVQ arm
+(K8704/N5120 down plus fused K5120/N8704 gate/up). See the
+[active note](notes/2026-08-16-q8-fixed-shape-mmvq-active.md) and do not
+duplicate that exact specialization while it remains active.
+
 Mode `3` is not an alternative candidate. Its peer-writing design caused a
 device-lost/reset storm and is permanently quarantined. Never enable or port
 it without a fundamentally different ownership/synchronization proof.
