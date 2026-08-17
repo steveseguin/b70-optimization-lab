@@ -88,7 +88,7 @@ elif [[ "$mode" == "spec-native-partition-exact" \
   || "$mode" == "nospec-latest-exact-native" ]]; then
   latest_identity=1
   exact_identity=1
-  verify_tree "$source_root/vllm" 233478b611554ad96bada10febfa63dc76af8edb \
+  verify_tree "$source_root/vllm" facb62ac49b447d23b7c68eadac2457220c89cbb \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
   verify_tree "$source_root/vllm-xpu-kernels" ce8cfaa9208ae287f894e8f4511de5abd1ee2801 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
@@ -361,6 +361,9 @@ if [[ "${VALIDATION_SPEC_DECODE_DRAFT_ONLY:-0}" == "1" ]]; then
   # packed target-owned replacement or bonus row.  This is intentionally not
   # a performance recipe until it passes the complete target-token oracle.
   export VLLM_XPU_SPEC_DECODE_DRAFT_ONLY=1
+fi
+if [[ -n "${VALIDATION_SPEC_DECODE_DRAFT_ONLY_ACCEPT_MIN_MARGIN:-}" ]]; then
+  export VLLM_XPU_SPEC_DECODE_DRAFT_ONLY_ACCEPT_MIN_MARGIN="${VALIDATION_SPEC_DECODE_DRAFT_ONLY_ACCEPT_MIN_MARGIN}"
 fi
 if [[ "${VALIDATION_GDN_SERIAL_SPEC_IDENTITY:-0}" == "1" ]]; then
   # Reproduce the established serial GDN transaction as one bounded step

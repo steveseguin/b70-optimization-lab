@@ -300,6 +300,7 @@ trap cleanup EXIT
   echo "spec_keep_placeholder_replacement_suppression=${VLLM_XPU_SPEC_DECODE_KEEP_PLACEHOLDER_REPLACEMENT_SUPPRESSION:-}"
   echo "spec_force_eager=${VLLM_XPU_SPEC_DECODE_FORCE_EAGER:-}"
   echo "xpu_spec_decode_draft_only=${VLLM_XPU_SPEC_DECODE_DRAFT_ONLY:-}"
+  echo "xpu_spec_decode_draft_only_accept_min_margin=${VLLM_XPU_SPEC_DECODE_DRAFT_ONLY_ACCEPT_MIN_MARGIN:-}"
   echo "lm_head_int8=$VLLM_XPU_LM_HEAD_INT8"
   echo "lm_head_int8_scale_dtype=$VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE"
   echo "mtp_text_input_ids_next=${VLLM_XPU_MTP_TEXT_INPUT_IDS_NEXT:-}"
