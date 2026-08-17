@@ -400,6 +400,12 @@ if [[ "${VALIDATION_SPEC_DECODE_KEEP_PLACEHOLDER_REPLACEMENT_SUPPRESSION:-0}" ==
   # replace the packed verifier row instead of exposing it.
   export VLLM_XPU_SPEC_DECODE_KEEP_PLACEHOLDER_REPLACEMENT_SUPPRESSION=1
 fi
+if [[ "${VALIDATION_SPEC_DECODE_NO_PREEMPT_SUPPRESSED_REPLACEMENT:-0}" == "1" ]]; then
+  # Preserve the exact accepted prefix and roll back only the packed target
+  # tail.  The following forced M1 step recomputes the suppressed token without
+  # rebuilding the request from its prompt.
+  export VLLM_XPU_SPEC_DECODE_NO_PREEMPT_SUPPRESSED_REPLACEMENT=1
+fi
 if [[ "${VALIDATION_GDN_SERIAL_SPEC_IDENTITY:-0}" == "1" ]]; then
   # Reproduce the established serial GDN transaction as one bounded step
   # toward a whole-model one-token verifier.  Keep every flag explicit in the
