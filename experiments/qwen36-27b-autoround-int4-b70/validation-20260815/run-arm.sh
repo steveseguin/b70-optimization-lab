@@ -418,34 +418,41 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
   || "$mode" == "spec-native-partition-exact-native" \
   || "$mode" == "spec-native-partition-exact-native-zero" \
   || "$mode" == "spec-native-partition-exact-native-raw" ]]; then
-  # FULL graph capture requires the isolated graph-safe FlashAttention build.
-  # The ordinary XPU extension uses work-group scratch memory, which SYCL graph
-  # capture rejects.  Pin both the Python extension and its device library so
-  # this cannot silently regress to the ordinary package.
-  verify_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
-    33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
-    graph-safe-FlashAttention-extension
-  verify_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
-    "${VALIDATION_FA_DEVICE_LIBRARY_SHA256:-604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c}" \
-    graph-safe-FlashAttention-device-library
-  verify_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
-    3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
-    graph-safe-FlashAttention-stock-dependency
-  verify_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
-    869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
-    graph-safe-FlashAttention-Python-interface
-  if [[ -n "${VALIDATION_FA_CHUNK_COMPLETION_OVERLAY:-}" ]]; then
-    if [[ -z "${VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256:-}" ]]; then
-      printf 'VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256 is required\n' >&2
-      exit 3
+  if [[ "${VALIDATION_USE_BASE_XPU_KERNELS_FOR_SPEC:-0}" == "1" ]]; then
+    # Exactness diagnostic: remove the historical staged-FlashAttention
+    # identity difference and use the same fail-closed current XPU package as
+    # the matched target.  The base runtime hashes were verified above.
+    export STAGE="$base_stage"
+    export VLLM_XPU_KERNELS_SRC="$base_stage"
+  else
+    # FULL graph capture historically required the isolated graph-safe
+    # FlashAttention build. Pin both the Python extension and its device
+    # library so existing reproductions cannot silently change identity.
+    verify_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
+      33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
+      graph-safe-FlashAttention-extension
+    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
+      "${VALIDATION_FA_DEVICE_LIBRARY_SHA256:-604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c}" \
+      graph-safe-FlashAttention-device-library
+    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
+      3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
+      graph-safe-FlashAttention-stock-dependency
+    verify_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
+      869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
+      graph-safe-FlashAttention-Python-interface
+    if [[ -n "${VALIDATION_FA_CHUNK_COMPLETION_OVERLAY:-}" ]]; then
+      if [[ -z "${VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256:-}" ]]; then
+        printf 'VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256 is required\n' >&2
+        exit 3
+      fi
+      verify_sha "$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY" \
+        "$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256" \
+        graph-safe-FlashAttention-completion-overlay
+      export SERVER_LD_PRELOAD="$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY${SERVER_LD_PRELOAD:+:$SERVER_LD_PRELOAD}"
     fi
-    verify_sha "$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY" \
-      "$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY_SHA256" \
-      graph-safe-FlashAttention-completion-overlay
-    export SERVER_LD_PRELOAD="$VALIDATION_FA_CHUNK_COMPLETION_OVERLAY${SERVER_LD_PRELOAD:+:$SERVER_LD_PRELOAD}"
+    export STAGE="$graph_stage"
+    export VLLM_XPU_KERNELS_SRC="$graph_stage"
   fi
-  export STAGE="$graph_stage"
-  export VLLM_XPU_KERNELS_SRC="$graph_stage"
   export QWEN36_27B_ENABLE_MTP=1
   export NUM_SPECULATIVE_TOKENS="${VALIDATION_NUM_SPECULATIVE_TOKENS:-3}"
   if [[ "$mode" == "spec-native-scratch" \
