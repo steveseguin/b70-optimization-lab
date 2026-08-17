@@ -1,0 +1,210 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1550,6 +1550,75 @@
+     return on;
+ }
+
++// Lab-only exact-shape specializations for Qwen3.8's dominant TP2 FFN
++// projections. The normal path remains in the same binary as mode 0. These
++// doors change only which compile-time instantiation executes; the weight
++// layout, DP4A chain, FP32 accumulation and subgroup reduction are identical.
++static inline bool ggml_sycl_mmvq_q8_fixed_shapes() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_FIXED_SHAPES");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
++static inline bool ggml_sycl_mmvq_q8_fixed_shapes_poison() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_FIXED_SHAPES_POISON");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
++template <int NCOLS, int NROWS, bool POISON>
++static void mul_mat_vec_q8_0_reorder_fixed(
++        const void * __restrict__ vx, const void * __restrict__ vy,
++        float * __restrict__ dst, const sycl::nd_item<3> & nd_item) {
++    using block_type   = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q8_0>;
++    using block_traits = typename block_type::traits;
++    static_assert(NCOLS % QK8_0 == 0);
++
++    const auto sg           = nd_item.get_sub_group();
++    const int  sg_range     = sg.get_group_linear_range();
++    const int  workgroup_id = nd_item.get_group_linear_id();
++    const int  sg_id        = sg.get_group_linear_id();
++    const int  row          = workgroup_id * sg_range + sg_id;
++    if (row >= NROWS) {
++        return;
++    }
++
++    constexpr int blocks_per_row              = NCOLS / block_traits::qk;
++    constexpr int blocks_per_subgroup         =
++        ceil_div(block_traits::vdr_mmvq * WARP_SIZE, block_traits::qi);
++    constexpr int block_elements_per_subgroup = block_traits::qi / block_traits::vdr_mmvq;
++    constexpr int nblocks                     = NROWS * blocks_per_row;
++
++    float partial_sum = 0.0f;
++    const int lane_block = (int) (sg.get_local_linear_id() / block_elements_per_subgroup);
++    for (int i = lane_block; i < blocks_per_row; i += blocks_per_subgroup) {
++        const int ibx = row * blocks_per_row + i;
++        const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
++        const auto d_offset  = block_type::get_d_offset(NROWS, NCOLS, ibx);
++        const int iby        = i * block_type::block_to_q8_1_ratio();
++        const int8_t * q8_1_quant_ptr = (const int8_t *) vy + iby * QK8_1;
++        const sycl::half2 * q8_1_ds_ptr = (const sycl::half2 *)
++            ((const char *) vy + NCOLS + iby * sizeof(sycl::half2));
++
++#pragma unroll
++        for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
++            const int iqs = elem + block_traits::vdr_mmvq *
++                (sg.get_local_linear_id() % block_elements_per_subgroup);
++            partial_sum += reorder_vec_dot_q8_0<true, POISON>()(
++                vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
++        }
++    }
++
++    const float sum = sycl::reduce_over_group(sg, partial_sum, std::plus<>());
++    if (sg.leader()) {
++        dst[row] = sum;
++    }
++}
++
+ template <int SGS, bool POISON, bool PHASE = false>
+ static void mul_mat_vec_q8_0_reorder_sg(const void * __restrict__ vx, const void * __restrict__ vy,
+                                         float * __restrict__ dst, const int ncols, const int nrows,
+@@ -1740,6 +1809,33 @@
+         ggml_sycl_assert_q8_wide_align(vx, vy, 16);
+     }
+
++    const bool fixed_down = ggml_sycl_mmvq_q8_fixed_shapes() && !narrow && !mutant &&
++        !ggml_sycl_mmvq_use_phase() && ncols == 8704 && nrows == 5120;
++    if (fixed_down) {
++        static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++        const int device = get_current_device_id();
++        const bool poison = ggml_sycl_mmvq_q8_fixed_shapes_poison();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++            fprintf(stderr, "SYCL lab door | q8 fixed shape: dev=%d family=down K=8704 N=5120 poison=%d\n",
++                    device, (int) poison);
++            announced[device] = true;
++        }
++        stream->submit([&](sycl::handler & cgh) {
++            if (poison) {
++                cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                        [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_fixed<8704, 5120, true>(vx, vy, dst, nd_item);
++                });
++            } else {
++                cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                        [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_fixed<8704, 5120, false>(vx, vy, dst, nd_item);
++                });
++            }
++        });
++        return;
++    }
++
+     stream->submit([&](sycl::handler & cgh) {
+         if (narrow) {
+             cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
+@@ -1775,6 +1871,7 @@
+ // The row body is the incumbent SG16 kernel above: identical block walk,
+ // vec-dot implementation, reduction, and FP32 accumulation order.  Only the
+ // workgroup-to-(matrix,row) mapping is new.
++template <int NCOLS = 0, int NROWS0 = 0, int NROWS1 = 0, bool POISON = false>
+ static void mul_mat_vec_q8_0_reorder_pair(
+         const void * __restrict__ vx0, const void * __restrict__ vx1,
+         const void * __restrict__ vy,
+@@ -1787,17 +1884,21 @@
+     const auto sg           = nd_item.get_sub_group();
+     const int  sg_range     = sg.get_group_linear_range();
+     const int  combined_row = nd_item.get_group_linear_id() * sg_range + sg.get_group_linear_id();
+-    if (combined_row >= nrows0 + nrows1) {
++    constexpr bool fixed = NCOLS != 0;
++    const int effective_nrows0 = fixed ? NROWS0 : nrows0;
++    const int effective_nrows1 = fixed ? NROWS1 : nrows1;
++    if (combined_row >= effective_nrows0 + effective_nrows1) {
+         return;
+     }
+
+-    const bool matrix1 = combined_row >= nrows0;
+-    const int  row     = matrix1 ? combined_row - nrows0 : combined_row;
+-    const int  nrows   = matrix1 ? nrows1 : nrows0;
++    const bool matrix1 = combined_row >= effective_nrows0;
++    const int  row     = matrix1 ? combined_row - effective_nrows0 : combined_row;
++    const int  nrows   = matrix1 ? effective_nrows1 : effective_nrows0;
+     const void * vx    = matrix1 ? vx1 : vx0;
+     float * dst        = matrix1 ? dst1 : dst0;
+
+-    const int     blocks_per_row              = ncols / block_traits::qk;
++    const int effective_ncols = fixed ? NCOLS : ncols;
++    const int     blocks_per_row              = effective_ncols / block_traits::qk;
+     constexpr int blocks_per_subgroup         = ceil_div(block_traits::vdr_mmvq * WARP_SIZE, block_traits::qi);
+     constexpr int block_elements_per_subgroup = block_traits::qi / block_traits::vdr_mmvq;
+     const int     nblocks                     = nrows * blocks_per_row;
+@@ -1807,17 +1908,17 @@
+     for (int i = lane_block; i < blocks_per_row; i += blocks_per_subgroup) {
+         const int ibx = row * blocks_per_row + i;
+         const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
+-        const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
++        const auto d_offset  = block_type::get_d_offset(nrows, effective_ncols, ibx);
+         const int  iby       = i * block_type::block_to_q8_1_ratio();
+         const int8_t * q8_1_quant_ptr = (const int8_t *) vy + iby * QK8_1;
+         const sycl::half2 * q8_1_ds_ptr = (const sycl::half2 *)
+-            ((const char *) vy + ncols + iby * sizeof(sycl::half2));
++            ((const char *) vy + effective_ncols + iby * sizeof(sycl::half2));
+
+ #pragma unroll
+         for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
+             const int iqs = elem + block_traits::vdr_mmvq *
+                 (sg.get_local_linear_id() % block_elements_per_subgroup);
+-            partial_sum += reorder_vec_dot_q8_0<true>()(
++            partial_sum += reorder_vec_dot_q8_0<true, POISON>()(
+                 vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
+         }
+     }
+@@ -1847,12 +1948,37 @@
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+     stream->submit([&](sycl::handler & cgh) {
+-        cgh.parallel_for(
+-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
+-            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+-                mul_mat_vec_q8_0_reorder_pair(
++        const bool fixed_pair = ggml_sycl_mmvq_q8_fixed_shapes() &&
++            ncols == 5120 && nrows0 == 8704 && nrows1 == 8704;
++        const bool poison = fixed_pair && ggml_sycl_mmvq_q8_fixed_shapes_poison();
++        if (fixed_pair) {
++            static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++            const int device = get_current_device_id();
++            if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++                fprintf(stderr, "SYCL lab door | q8 fixed shape: dev=%d family=pair K=5120 N=8704+8704 poison=%d\n",
++                        device, (int) poison);
++                announced[device] = true;
++            }
++            if (poison) {
++                cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                        [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_pair<5120, 8704, 8704, true>(
++                        vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, nd_item);
++                });
++            } else {
++                cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                        [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_pair<5120, 8704, 8704, false>(
++                        vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, nd_item);
++                });
++            }
++        } else {
++            cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                    [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                mul_mat_vec_q8_0_reorder_pair<>(
+                     vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, nd_item);
+             });
++        }
+     });
+     return true;
+ }

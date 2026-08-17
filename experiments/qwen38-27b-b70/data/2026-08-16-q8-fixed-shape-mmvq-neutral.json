@@ -1,0 +1,60 @@
+{
+  "date": "2026-08-16",
+  "status": "closed_neutral",
+  "experiment": "compile-time fixed Q8 MMVQ geometry for dominant Qwen3.8 FFN projections",
+  "model": {
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70",
+  "runtime": {
+    "devices": "SYCL0/SYCL1",
+    "tensor_split": "1/1",
+    "kv": "f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "speculation": false,
+    "door": "GGML_SYCL_MMVQ_Q8_FIXED_SHAPES=1",
+    "poison_door": "GGML_SYCL_MMVQ_Q8_FIXED_SHAPES_POISON=1"
+  },
+  "specializations": [
+    "standalone down K=8704 N=5120",
+    "fused gate/up pair K=5120 N=8704+8704"
+  ],
+  "quality": {
+    "normal_completion_exact_tokens": 128,
+    "normal_matches_control": true,
+    "poison_differs_from_control": true,
+    "poison_content_sha256": "1903bc0f6d623da99a66b17b5b80babb719d09e05f52f461fd194925e2526e5c",
+    "live_families": ["pair", "down"],
+    "live_on_both_devices": true,
+    "verify_mismatch": 0,
+    "full_12_prompt_gate_run": false,
+    "full_gate_reason": "candidate was performance-neutral in the symmetric screen"
+  },
+  "screen": {
+    "command_shape": "llama-bench -p 64 -n 256 -r 3; fresh process per arm; order A-B-B-A",
+    "control_decode_tok_s": [36.805223, 36.806235],
+    "treatment_decode_tok_s": [36.788405, 36.816559],
+    "control_decode_mean_tok_s": 36.805729,
+    "treatment_decode_mean_tok_s": 36.802482,
+    "decode_relative_delta_percent": -0.008821996,
+    "control_prompt_tok_s": [382.311797, 382.504036],
+    "treatment_prompt_tok_s": [382.755569, 381.989657],
+    "prompt_relative_delta_percent": -0.009231896
+  },
+  "artifacts": {
+    "candidate_source": "/mnt/fast-ai/src/llama.cpp-q38-q8-fixed-shapes",
+    "candidate_build": "build-sycl-aot-bmg-g31-fixed-shapes",
+    "incremental_patch_sha256": "88ee34147f1f2f71373d8933aabaf8f1fcecca4bf9cf9491075e20add59cea2b",
+    "libggml_sycl_sha256": "3cd0b92fb25a3bc88e3dff3d960e178aa3a278985a03da31bb184a6c87bd8415",
+    "llama_bench_sha256": "5ad7c26b123d41194a72f127052c50414a58a558a120548f17f11d54dba61abb"
+  },
+  "health": {
+    "device_0": "normal",
+    "device_1": "normal",
+    "xe_fault_reset_hang_since_boot": false
+  },
+  "decision": "do not promote or repeat unchanged"
+}

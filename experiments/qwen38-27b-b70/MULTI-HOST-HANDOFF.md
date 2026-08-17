@@ -106,10 +106,14 @@ and the failed `invoke_simd` AOT history are in the
 implementation unchanged. Check `origin/main` before opening another
 target-only Q8 candidate.
 
-The reference host currently claims the compile-time FFN-shape MMVQ arm
-(K8704/N5120 down plus fused K5120/N8704 gate/up). See the
-[active note](notes/2026-08-16-q8-fixed-shape-mmvq-active.md) and do not
-duplicate that exact specialization while it remains active.
+The compile-time FFN-shape MMVQ arm (K8704/N5120 down plus fused
+K5120/N8704 gate/up) is now closed. Both specializations were live on both
+devices, the 128-token output was exact, and poison proved reachability, but
+the position-balanced result was performance-null (`-0.0088%`). See the
+[result note](notes/2026-08-16-q8-fixed-shape-mmvq-active.md), structured
+[data](data/2026-08-16-q8-fixed-shape-mmvq-neutral.json), and incremental
+[patch](patches/q8-fixed-shape-mmvq-neutral-20260816.diff). Do not duplicate
+the exact specialization unchanged.
 
 Mode `3` is not an alternative candidate. Its peer-writing design caused a
 device-lost/reset storm and is permanently quarantined. Never enable or port
