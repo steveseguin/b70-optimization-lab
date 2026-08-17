@@ -1,0 +1,123 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1828,6 +1828,83 @@
+     }
+ }
+ 
++// Experimental HBM-stream scheduler for the fused gate/up pair.  The
++// incumbent visits every row of matrix 0 and then every row of matrix 1.
++// This variant alternates power-of-two row chunks while leaving the complete
++// per-row SG16 dot-product body and its FP32 reduction order unchanged.
++// Chunk boundaries are required to align to whole workgroups (8 rows on BMG),
++// so no workgroup straddles two weight streams.
++static void mul_mat_vec_q8_0_reorder_pair_chunked(
++        const void * __restrict__ vx0, const void * __restrict__ vx1,
++        const void * __restrict__ vy,
++        float * __restrict__ dst0, float * __restrict__ dst1,
++        const int ncols, const int nrows0, const int nrows1,
++        const int chunk_rows,
++        const sycl::nd_item<3> & nd_item) {
++    using block_type   = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q8_0>;
++    using block_traits = typename block_type::traits;
++
++    const auto sg           = nd_item.get_sub_group();
++    const int  sg_range     = sg.get_group_linear_range();
++    const int  combined_row = nd_item.get_group_linear_id() * sg_range + sg.get_group_linear_id();
++    if (combined_row >= nrows0 + nrows1) {
++        return;
++    }
++
++    const int cycle       = 2 * chunk_rows;
++    const int cycle_index = combined_row / cycle;
++    const int in_cycle    = combined_row - cycle_index * cycle;
++    const bool matrix1    = in_cycle >= chunk_rows;
++    const int row         = cycle_index * chunk_rows + in_cycle - (matrix1 ? chunk_rows : 0);
++    const int nrows       = matrix1 ? nrows1 : nrows0;
++    const void * vx       = matrix1 ? vx1 : vx0;
++    float * dst           = matrix1 ? dst1 : dst0;
++
++    const int     blocks_per_row              = ncols / block_traits::qk;
++    constexpr int blocks_per_subgroup         = ceil_div(block_traits::vdr_mmvq * WARP_SIZE, block_traits::qi);
++    constexpr int block_elements_per_subgroup = block_traits::qi / block_traits::vdr_mmvq;
++    const int     nblocks                     = nrows * blocks_per_row;
++
++    float partial_sum = 0.0f;
++    const int lane_block = (int) (sg.get_local_linear_id() / block_elements_per_subgroup);
++    for (int i = lane_block; i < blocks_per_row; i += blocks_per_subgroup) {
++        const int ibx = row * blocks_per_row + i;
++        const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
++        const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
++        const int  iby       = i * block_type::block_to_q8_1_ratio();
++        const int8_t * q8_1_quant_ptr = (const int8_t *) vy + iby * QK8_1;
++        const sycl::half2 * q8_1_ds_ptr = (const sycl::half2 *)
++            ((const char *) vy + ncols + iby * sizeof(sycl::half2));
++
++#pragma unroll
++        for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
++            const int iqs = elem + block_traits::vdr_mmvq *
++                (sg.get_local_linear_id() % block_elements_per_subgroup);
++            partial_sum += reorder_vec_dot_q8_0<true>()(
++                vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
++        }
++    }
++
++    const float sum = sycl::reduce_over_group(sg, partial_sum, std::plus<>());
++    if (sg.leader()) {
++        dst[row] = sum;
++    }
++}
++
++static inline int ggml_sycl_mmvq_fused_pair_chunk_rows() {
++    static const int rows = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_FUSED_PAIR_CHUNK_ROWS");
++        const int requested = value == nullptr ? 0 : std::atoi(value);
++        const bool valid = requested == 0 || requested == 32 || requested == 64 ||
++                           requested == 128 || requested == 256 || requested == 512;
++        const int selected = valid ? requested : 0;
++        fprintf(stderr, "SYCL lab door | fused_pair_chunk_rows: %d "
++                        "(GGML_SYCL_MMVQ_FUSED_PAIR_CHUNK_ROWS)\n", selected);
++        return selected;
++    }();
++    return rows;
++}
++
+ bool ggml_sycl_mul_mat_vec_q8_0_reorder_pair(
+         const void * vx0, const void * vx1, const void * vy,
+         float * dst0, float * dst1,
+@@ -1846,14 +1923,28 @@
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+-    stream->submit([&](sycl::handler & cgh) {
+-        cgh.parallel_for(
+-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
+-            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+-                mul_mat_vec_q8_0_reorder_pair(
+-                    vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, nd_item);
+-            });
+-    });
++    const int chunk_rows = ggml_sycl_mmvq_fused_pair_chunk_rows();
++    const bool use_chunked = chunk_rows > 0 && nrows0 == nrows1 && nrows0 % chunk_rows == 0 &&
++                             chunk_rows % (GGML_SYCL_MMV_Y * (int) num_subgroups) == 0;
++    if (use_chunked) {
++        stream->submit([&](sycl::handler & cgh) {
++            cgh.parallel_for(
++                sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_pair_chunked(
++                        vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, chunk_rows, nd_item);
++                });
++        });
++    } else {
++        stream->submit([&](sycl::handler & cgh) {
++            cgh.parallel_for(
++                sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_pair(
++                        vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, nd_item);
++                });
++        });
++    }
+     return true;
+ }
+ 

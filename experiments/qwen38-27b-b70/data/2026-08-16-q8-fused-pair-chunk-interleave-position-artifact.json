@@ -1,0 +1,86 @@
+{
+  "date": "2026-08-16",
+  "experiment": "Qwen3.8-27B Q8_0 TP2 fused-pair row-chunk interleave",
+  "status": "closed_rejected_process_position_artifact",
+  "model": {
+    "repo": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "path": "/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "candidate": {
+    "door": "GGML_SYCL_MMVQ_FUSED_PAIR_CHUNK_ROWS",
+    "values_tested": [0, 32, 64, 128, 256, 512],
+    "scope": "launch-fused reordered-Q8 gate/up pair kernel only",
+    "arithmetic_invariant": "Each output row retains the accepted SG16 DP4A body, per-block FP32 accumulation order, subgroup reduction, and output mapping.",
+    "source_base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_path": "/mnt/fast-ai/src/llama.cpp-q38-q8-pair-chunk-interleave",
+    "build_path": "/mnt/fast-ai/src/llama.cpp-q38-q8-pair-chunk-interleave/build-sycl-aot-bmg-g31-make",
+    "patch": "experiments/qwen38-27b-b70/patches/q8-fused-pair-chunk-interleave-position-artifact-20260816.diff",
+    "patch_sha256": "88d352c602f3562fb3887c06dcc586fb09363994573acef0bd3eb60d5fe9729c",
+    "llama_bench_sha256": "31ef1d1ae9240bd69be164225f3a01d0f68bae1b4d386fd57abbb9bd018856ce",
+    "llama_server_sha256": "fb2de854ef7c0660516afb944198d9ab91b1b115110fce9e65ed37047953a098",
+    "libggml_sycl_sha256": "b9c67579e586a3c2e49698380648fdf56107b44b86ec85173c76f908078af058",
+    "compiler": "IntelLLVM 2026.1.1",
+    "device_arch": "bmg_g31",
+    "build": "Release, Level Zero on, DNN/graph/host fallback off, -j2, MemoryHigh=6G MemoryMax=8G MemorySwapMax=8G"
+  },
+  "runtime": {
+    "selector": "level_zero:1,0",
+    "devices": "SYCL0/SYCL1",
+    "split_mode": "tensor",
+    "tensor_split": "1/1",
+    "target_only": true,
+    "kv": "f16/f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256
+  },
+  "mechanism_smoke": {
+    "shape": "p64 n1 r1",
+    "chunk_rows": 64,
+    "door_announced_on_both_devices": true,
+    "verify_mismatch": 0,
+    "decode_tok_s": 37.091,
+    "raw_file": "smoke-chunk64-p64-n1-r1.log",
+    "raw_sha256": "849b79089a69eecbe96a3873b936144f51663c642eda59c993a84e3563e76162"
+  },
+  "ordered_screen": {
+    "shape": "fresh-process p64 n256 r3",
+    "order": [0, 32, 64, 128, 256, 512, 0],
+    "decode_tok_s": [36.805878, 37.440147, 37.285603, 37.144215, 37.271375, 37.375656, 37.090699],
+    "pooled_edge_control_tok_s": 36.9482885,
+    "best_chunk_rows": 32,
+    "best_screen_delta_percent": 1.331,
+    "raw": [
+      {"file": "screen-010222-chunk0-p64-n256-r3.log", "sha256": "f3b2025ea215a6e57b0cc8941f9828281bd6242df3f6d6abc1744a1094657bb0"},
+      {"file": "screen-010302-chunk32-p64-n256-r3.log", "sha256": "6465e6254a19b405ee52e56a62ef6a691e1396278fb5242e77cf3967ebfb697e"},
+      {"file": "screen-010342-chunk64-p64-n256-r3.log", "sha256": "c662bfc225ec4df5154438eeade8c493594ff10a6ecb78e32cc5fc83bdda07f2"},
+      {"file": "screen-010423-chunk128-p64-n256-r3.log", "sha256": "7e65df0e985e892b2051314e60c829695d1d4ad02ba61f99770dbf4f7a63db87"},
+      {"file": "screen-010503-chunk256-p64-n256-r3.log", "sha256": "006b1722cba2f81b667b85b2a42e33e106ffc110d0ab9ba6b2ddbe6c1d520c0a"},
+      {"file": "screen-010544-chunk512-p64-n256-r3.log", "sha256": "5e8e53f8076afcaee8e656c1117b03cad4ad8f6df6ceb9807530a2df22b2b853"},
+      {"file": "screen-010624-chunk0-p64-n256-r3.log", "sha256": "8ddc0af88edc3fb00a7783414d46f71dd7af133011ba6048d5ea493c2e4bcce9"}
+    ]
+  },
+  "position_balanced_confirmation": {
+    "shape": "fresh-process p64 n512 r3",
+    "order": ["B1_chunk32", "A1_control", "A2_control", "B2_chunk32"],
+    "decode_tok_s": [36.375253, 37.424021, 37.367360, 37.167925],
+    "pooled_control_tok_s": 37.3956905,
+    "pooled_candidate_tok_s": 36.771589,
+    "pooled_delta_percent": -1.669,
+    "raw": [
+      {"file": "confirm-010729-chunk32-p64-n512-r3.log", "sha256": "b31d4f060b762314773e9efff35e49bcb2ee49414687117eb211279d39eda6e6"},
+      {"file": "confirm-010832-chunk0-p64-n512-r3.log", "sha256": "b3f6280ad67b0df6cca536eeca45079eb33d32c87dd5d5f113e8d814e3832871"},
+      {"file": "confirm-010933-chunk0-p64-n512-r3.log", "sha256": "abf30f2f2e6c4ed483fe106cec80fbf4a13372d7b879f7db208c0733d12f4c60"},
+      {"file": "confirm-011034-chunk32-p64-n512-r3.log", "sha256": "b7dd0e030a1ee48b85f32465480a2841949cfac8827e9b6c9eb81980bfcba606"}
+    ]
+  },
+  "quality": {
+    "full_endpoint_oracle_run": false,
+    "reason": "The position-balanced confirmation rejected the performance hypothesis before the endpoint gate."
+  },
+  "health": "Both B70s remained normal and unloaded; no current Xe compute fault, reset, hang, timeout, device-lost, or CAT error appeared.",
+  "decision": "Reject. The middle-position screen gain reversed when treatment occupied the bracket edges; do not repeat this scheduler unchanged."
+}

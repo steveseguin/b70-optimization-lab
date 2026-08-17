@@ -69,9 +69,13 @@ arbitrary-prompt token-exactness.
 
 ## Latest closed candidates
 
-Two newer, low-risk compiler/kernel arms are also closed:
+Three newer, low-risk compiler/kernel arms are also closed:
 
 - reordered-Q8 loop unroll by two was neutral (`+0.076%` overall);
+- fused gate/up Q8 row-chunk interleaving appeared `+1.331%` when all
+  treatments occupied middle process positions, then reversed to `-1.669%`
+  in the position-balanced `B-A-A-B` confirmation; it was a run-position
+  artifact, not a kernel win;
 - selective per-kernel 256-GRF was safe but `2.789%` slower.
 
 Use the [do-not-repeat index](DO-NOT-REPEAT.md) for their exact source patches,
