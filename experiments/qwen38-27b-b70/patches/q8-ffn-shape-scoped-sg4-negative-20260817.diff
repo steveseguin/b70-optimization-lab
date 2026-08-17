@@ -1,0 +1,66 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -213,6 +213,24 @@ static inline int ggml_sycl_mmvq_subgroups() {
+     return v;
+ }
+ 
++// Lab-only Qwen3.8 Q8 launch-geometry split. Default off. These doors alter
++// only workgroup population for the two dominant TP2 FFN shape families.
++static inline bool ggml_sycl_mmvq_q8_sg4_pair() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_SG4_PAIR");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
++static inline bool ggml_sycl_mmvq_q8_sg4_down() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_SG4_DOWN");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+ // f377 (B85): PHASE = per-row phase rotation of the chunk walk (chunk = blocks_per_subgroup
+ // consecutive blocks = one sub-group iteration).  Row r starts at chunk (r % nchunks) and wraps:
+ // same rows, same chunks, same math per chunk -- only the VISIT ORDER changes, which de-phases
+@@ -1779,7 +1797,17 @@ static void reorder_mul_mat_vec_q8_0_q8_1_sycl(const void * vx, const void * vy,
+                                                     const int nrows, dpct::queue_ptr stream) {
+     GGML_ASSERT(ncols % QK8_0 == 0);
+     // Round up to a whole number of subgroup-sized workgroups; out-of-range rows are skipped inside the kernel.
+-    const size_t num_subgroups = (size_t) ggml_sycl_mmvq_subgroups();
++    const bool shape_sg4 = ggml_sycl_mmvq_q8_sg4_down() && ncols == 8704 && nrows == 5120;
++    const size_t num_subgroups = shape_sg4 ? 4 : (size_t) ggml_sycl_mmvq_subgroups();
++    if (shape_sg4) {
++        static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++        const int device = get_current_device_id();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++            fprintf(stderr, "SYCL lab door | q8_shape_sg4_down: dev=%d shape=%dx%d -> 4xSG16\n",
++                    device, ncols, nrows);
++            announced[device] = true;
++        }
++    }
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+@@ -1942,7 +1970,18 @@ bool ggml_sycl_mul_mat_vec_q8_0_reorder_pair(
+     ggml_sycl_assert_q8_wide_align(vx0, vy, 16);
+     ggml_sycl_assert_q8_wide_align(vx1, vy, 16);
+ 
+-    const size_t num_subgroups = (size_t) ggml_sycl_mmvq_subgroups();
++    const bool shape_sg4 = ggml_sycl_mmvq_q8_sg4_pair() &&
++            ncols == 5120 && nrows0 == 8704 && nrows1 == 8704;
++    const size_t num_subgroups = shape_sg4 ? 4 : (size_t) ggml_sycl_mmvq_subgroups();
++    if (shape_sg4) {
++        static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++        const int device = get_current_device_id();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++            fprintf(stderr, "SYCL lab door | q8_shape_sg4_pair: dev=%d shape=%dx%d+%d -> 4xSG16\n",
++                    device, ncols, nrows0, nrows1);
++            announced[device] = true;
++        }
++    }
+     const int nrows = nrows0 + nrows1;
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);

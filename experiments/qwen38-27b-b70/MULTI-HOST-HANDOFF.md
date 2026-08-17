@@ -152,6 +152,18 @@ the position-balanced result was performance-null (`-0.0088%`). See the
 [patch](patches/q8-fixed-shape-mmvq-neutral-20260816.diff). Do not duplicate
 the exact specialization unchanged.
 
+The shape-scoped SG4 follow-up is also closed. It independently changed only
+the dominant fused gate/up pair and/or down-projection workgroup population.
+Both shapes announced on both devices and the smoke ended with
+`VERIFY_MISMATCH=0`. A first four-arm screen misleadingly showed `+1.252%`
+when both doors were enabled, but an eight-process confirmation balanced for
+the observed odd/even run-position state measured `36.925030` versus
+`37.025710 tok/s` control (`-0.272%`), with its two blocks disagreeing. See the
+[result note](notes/2026-08-17-q8-ffn-shape-scoped-subgroups-active.md),
+structured [data](data/2026-08-17-q8-ffn-shape-scoped-sg4-negative.json), and
+incremental [patch](patches/q8-ffn-shape-scoped-sg4-negative-20260817.diff).
+Retain hardware-derived SG8 and do not retry the exact SG4 admission unchanged.
+
 Mode `3` is not an alternative candidate. Its peer-writing design caused a
 device-lost/reset storm and is permanently quarantined. Never enable or port
 it without a fundamentally different ownership/synchronization proof.

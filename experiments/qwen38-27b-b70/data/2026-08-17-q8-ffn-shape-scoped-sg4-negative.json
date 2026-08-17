@@ -1,0 +1,79 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_negative",
+  "model": {
+    "path": "/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8c749a7c65575735936ddf352183d0d8e6497f63f2e51fc5e222f8cb5",
+    "quantization": "Q8_0"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70",
+  "runtime_contract": "target-only, TP2 1/1, F16 KV, FlashAttention, b1024/ub256, no speculation",
+  "candidate": {
+    "pair_env": "GGML_SYCL_MMVQ_Q8_SG4_PAIR=1",
+    "down_env": "GGML_SYCL_MMVQ_Q8_SG4_DOWN=1",
+    "pair_shape": "K5120/N8704+8704 fused pair",
+    "down_shape": "K8704/N5120 standalone",
+    "change": "four SG16 subgroups per workgroup for admitted shapes; arithmetic unchanged",
+    "base_increment": "q8-fixed-shape-mmvq-neutral-20260816.diff",
+    "patch": "q8-ffn-shape-scoped-sg4-negative-20260817.diff",
+    "patch_sha256": "866fa0641ee74252d7ed0e28f12cf7b8080eac7b257b0d3c7ce5b62bb4ee9569",
+    "libggml_sycl_sha256": "d7015cc44d8701020b802e2cf4586eb17637f2d36fd11e15e8a6f39d07055e54",
+    "llama_bench_sha256": "5ad7c26b123d41194a72f127052c50414a58a558a120548f17f11d54dba61abb"
+  },
+  "smoke": {
+    "shape": "p64/n1/r1",
+    "both_devices_announced_pair_and_down": true,
+    "verify_mismatch": 0,
+    "decode_toks": 36.874351,
+    "log_sha256": "5d45280e3fd0a9751661b64d31b3baf161b1566b3a95af9c444f4e562d60bdad"
+  },
+  "four_arm_screen": {
+    "shape": "p64/n256/r3",
+    "order": ["control", "pair", "down", "both", "both", "down", "pair", "control"],
+    "sample_means_toks": {
+      "control": 37.010550,
+      "pair": 37.006883,
+      "down": 37.028383,
+      "both": 37.474033
+    },
+    "delta_percent_vs_control": {
+      "pair": -0.009907,
+      "down": 0.048184,
+      "both": 1.252301
+    },
+    "disposition": "superseded_by_position_balanced_confirmation_due_to_strong_run_order_state"
+  },
+  "confirmation": {
+    "shape": "p64/n256/r5",
+    "order": ["control", "both", "both", "control", "both", "control", "control", "both"],
+    "run_means_toks": {
+      "control": [36.734668, 36.867167, 37.358882, 37.142128],
+      "both": [37.224974, 36.447508, 36.799748, 37.227896]
+    },
+    "block_results": [
+      {"order": "A-B-B-A", "control_toks": 36.800920, "both_toks": 36.836240, "delta_percent": 0.095976},
+      {"order": "B-A-A-B", "control_toks": 37.250500, "both_toks": 37.013820, "delta_percent": -0.635374}
+    ],
+    "pooled_control_toks": 37.025710,
+    "pooled_both_toks": 36.925030,
+    "pooled_delta_percent": -0.271919,
+    "log_sha256": {
+      "confirm-01-control": "d5010f5d1a1b6a13ea9e278999e02b05cb4f0f1e0c36da1dc591ee3ade72f4b6",
+      "confirm-02-both": "f61110177418d5cedb931474ab51d9efd781fa3eaab8c216e053f0cda474d2a9",
+      "confirm-03-both": "de293e26ed9fdbc751ed33827a6c788b43aad4ac83c174894b3b0017aa11afe1",
+      "confirm-04-control": "b4f1b3676956738ee741605a4725d85afa90d04f1c8dcbade8cfaca9c75f3245",
+      "confirm-05-both": "70f6dce94beefe7371d715530ae9cab14faa4cefa04f61a0ba9fcb46a8cae2ff",
+      "confirm-06-control": "52852f447a7ec13b8245ffcee1a29a19dc9eb4c414a91c36ce167e51a3d54383",
+      "confirm-07-control": "f100a8845214a5affbd5f1b44a04287f49930cfb971b7fdf01d0000b997d12ef",
+      "confirm-08-both": "9908ec1d83efe70e8e67d4c435640598a8dd8c56c74c947929be5f50f208901b"
+    }
+  },
+  "quality": {
+    "mechanism_verification": "VERIFY_MISMATCH=0 in smoke",
+    "endpoint_suite_run": false,
+    "reason": "candidate failed repeatable performance gate"
+  },
+  "health": "both devices normal after tests; no current-boot Xe/GuC fault, reset, timeout, or hang",
+  "raw_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-shape-sg4/",
+  "decision": "retain hardware-derived SG8 and do not repeat exact shape-scoped SG4 doors unchanged"
+}
