@@ -293,6 +293,12 @@ fi
 if [[ -n "${VALIDATION_SYNC_ROW_PARALLEL_AFTER_GEMM_PREFIX:-}" ]]; then
   export VLLM_XPU_SYNC_ROW_PARALLEL_AFTER_GEMM_PREFIX="$VALIDATION_SYNC_ROW_PARALLEL_AFTER_GEMM_PREFIX"
 fi
+if [[ "${VALIDATION_COMPILE_ALLREDUCE_STATIC_INPLACE:-0}" == "1" ]]; then
+  # Correctness lane: publish compiled row-parallel reductions through the
+  # stable mutating custom-op handoff instead of embedding dist.all_reduce in
+  # the surrounding graph piece.
+  export VLLM_XPU_COMPILE_ALLREDUCE_STATIC_INPLACE=1
+fi
 if [[ "${VALIDATION_ONEDNN_INT4_COMPLETION_BARRIER:-0}" == "1" ]]; then
   export VLLM_XPU_ONEDNN_INT4_COMPLETION_BARRIER=1
 fi
