@@ -179,6 +179,16 @@ reversed it to `-2.096%`. Across the unbiased 16-run combination, SG32 was
 [patch](patches/q8-recurrent-quad-sg32-negative-20260817.diff). Retain the
 subsequently accepted SG24 door, not SG32.
 
+The SG20/SG28 bracket around promoted SG24 is also closed. SG20 measured
+`-0.070%` in a balanced three-arm screen. SG28 initially measured `+0.323%`,
+but a separate fully complementary 16-run confirmation measured `-0.271%`
+versus SG24; its two blocks were `-0.622%` and `+0.080%`. All verifier counters
+were zero and both GPUs remained normal. See the
+[result note](notes/2026-08-17-q8-recurrent-quad-sg20-sg28-active.md),
+structured [data](data/2026-08-17-q8-recurrent-quad-sg20-sg28-negative.json),
+and focused [patch](patches/q8-recurrent-quad-sg20-sg28-negative-20260817.diff).
+Retain SG24 and do not retry SG20/SG28 unchanged.
+
 The shape-scoped SG4 follow-up is also closed. It independently changed only
 the dominant fused gate/up pair and/or down-projection workgroup population.
 Both shapes announced on both devices and the smoke ended with

@@ -1,0 +1,53 @@
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1566,9 +1566,25 @@ static inline bool ggml_sycl_mmvq_q8_quad_sg24() {
+ static inline bool ggml_sycl_mmvq_q8_quad_sg24() {
+     static const bool on = [] {
+         const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_QUAD_SG24");
+         return value != nullptr && std::atoi(value) != 0;
+     }();
+     return on;
+ }
+-
++
++static inline bool ggml_sycl_mmvq_q8_quad_sg20() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_QUAD_SG20");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
++static inline bool ggml_sycl_mmvq_q8_quad_sg28() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_QUAD_SG28");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+ template <int SGS, bool POISON, bool PHASE = false>
+@@ -2072,7 +2088,12 @@ bool ggml_sycl_mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+         nrows2 == 24 && nrows3 == 24;
+-    const bool quad_sg24 = exact_quad_shape && ggml_sycl_mmvq_q8_quad_sg24();
+-    const bool quad_sg16 = exact_quad_shape && !quad_sg24 && ggml_sycl_mmvq_q8_quad_sg16();
+-    const size_t num_subgroups = quad_sg24 ? 24 : quad_sg16 ? 16 :
++    const bool quad_sg28 = exact_quad_shape && ggml_sycl_mmvq_q8_quad_sg28();
++    const bool quad_sg24 = exact_quad_shape && !quad_sg28 && ggml_sycl_mmvq_q8_quad_sg24();
++    const bool quad_sg20 = exact_quad_shape && !quad_sg28 && !quad_sg24 &&
++        ggml_sycl_mmvq_q8_quad_sg20();
++    const bool quad_sg16 = exact_quad_shape && !quad_sg28 && !quad_sg24 &&
++        !quad_sg20 && ggml_sycl_mmvq_q8_quad_sg16();
++    const size_t num_subgroups = quad_sg28 ? 28 : quad_sg24 ? 24 :
++        quad_sg20 ? 20 : quad_sg16 ? 16 :
+         (size_t) ggml_sycl_mmvq_subgroups();
+-    if (quad_sg24 || quad_sg16) {
++    if (quad_sg28 || quad_sg24 || quad_sg20 || quad_sg16) {
+         static bool announced[GGML_SYCL_MAX_DEVICES] = {};
+@@ -2081,4 +2102,4 @@ bool ggml_sycl_mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+             fprintf(stderr,
+                     "SYCL lab door | q8 quad workgroup: dev=%d K=5120 local-N=5120+3072+24+24 -> %dxSG16\n",
+-                    device, quad_sg24 ? 24 : 16);
++                    device, quad_sg28 ? 28 : quad_sg24 ? 24 : quad_sg20 ? 20 : 16);
+             announced[device] = true;

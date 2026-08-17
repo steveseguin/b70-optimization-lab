@@ -1,0 +1,80 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_negative",
+  "experiment": "shape-scoped SG20 and SG28 workgroup populations around accepted SG24",
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70",
+  "mechanism": {
+    "control": "24xSG16 / 384 work items",
+    "candidates": ["20xSG16 / 320 work items", "28xSG16 / 448 work items"],
+    "admitted_local_shape": "K=5120 N=5120+3072+24+24",
+    "row_math_changed": false,
+    "announced_on_both_devices": true,
+    "verify_mismatch": 0
+  },
+  "runtime": {
+    "selector": "level_zero:1,0",
+    "devices": "SYCL0/SYCL1",
+    "tensor_split": "1/1",
+    "kv": "f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "speculation": false
+  },
+  "latin_screen_p64_n256_r3": {
+    "sequence": ["sg24", "sg20", "sg28", "sg28", "sg20", "sg24", "sg28", "sg24", "sg20", "sg20", "sg24", "sg28"],
+    "sg20": {
+      "samples_tok_s": [37.415945, 36.676470, 36.704595, 37.609960],
+      "mean_tok_s": 37.1017425,
+      "median_tok_s": 37.0602700,
+      "delta_vs_sg24_percent": -0.070149
+    },
+    "sg24": {
+      "samples_tok_s": [36.827585, 37.237848, 37.605623, 36.840093],
+      "mean_tok_s": 37.12778725,
+      "median_tok_s": 37.0389705
+    },
+    "sg28": {
+      "samples_tok_s": [36.734750, 37.576286, 37.492789, 37.186873],
+      "mean_tok_s": 37.2476745,
+      "median_tok_s": 37.3398310,
+      "delta_vs_sg24_percent": 0.322904
+    }
+  },
+  "sg28_confirmation_p64_n256_r3": {
+    "contract": "16 processes in two exact complementary position blocks",
+    "block_1": {
+      "sg24_mean_tok_s": 37.386397,
+      "sg28_mean_tok_s": 37.15368825,
+      "delta_percent": -0.622442
+    },
+    "block_2": {
+      "sg24_mean_tok_s": 37.38848925,
+      "sg28_mean_tok_s": 37.418311,
+      "delta_percent": 0.079762
+    },
+    "combined": {
+      "sg24_mean_tok_s": 37.387443125,
+      "sg24_median_tok_s": 37.4997785,
+      "sg28_mean_tok_s": 37.285999625,
+      "sg28_median_tok_s": 37.4015820,
+      "delta_percent": -0.271330
+    }
+  },
+  "artifacts": {
+    "focused_increment_sha256": "7a007c7afdc72a4d15ce2721ae4c563257c621a861c527086380af536a12076d",
+    "raw_local_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-quad-sg20-sg28/"
+  },
+  "health": {
+    "device_0": "normal",
+    "device_1": "normal",
+    "xe_fault_reset_hang_since_boot": false
+  },
+  "decision": "reject SG20 and SG28; retain promoted SG24; no endpoint suite warranted"
+}
