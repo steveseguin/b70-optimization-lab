@@ -106,13 +106,13 @@ and the failed `invoke_simd` AOT history are in the
 implementation unchanged. Check `origin/main` before opening another
 target-only Q8 candidate.
 
-The reference host now claims one trace-driven collective-submission arm:
-remove only queue 0's redundant local-ready signal event while retaining queue
-1's cross-device readiness event and every accepted arithmetic/store path.
-The queue is explicitly in-order, and the experiment must fail closed if that
-property is absent. See the
-[active note](notes/2026-08-16-q8-local-ready-elision-active.md). Do not
-duplicate this exact event-elision arm while it remains active.
+The trace-driven queue-0 local-ready event-elision arm is now closed. Normal
+output was exact and poison proved that the branch was live, but its
+position-balanced decode result was performance-neutral (`+0.0247%`). See the
+[result note](notes/2026-08-16-q8-local-ready-elision-active.md), structured
+[data](data/2026-08-16-q8-local-ready-elision-neutral.json), and incremental
+[patch](patches/q8-local-ready-elision-neutral-20260816.diff). Do not repeat
+the exact event-elision arm unchanged.
 
 The compile-time FFN-shape MMVQ arm (K8704/N5120 down plus fused
 K5120/N8704 gate/up) is now closed. Both specializations were live on both

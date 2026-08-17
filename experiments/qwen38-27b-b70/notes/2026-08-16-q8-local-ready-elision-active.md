@@ -2,8 +2,7 @@
 
 Date: 2026-08-16
 
-Status: active on the two-ASRock-B70 reference host; do not duplicate
-unchanged.
+Status: closed as performance-neutral; do not repeat unchanged.
 
 ## Trace-driven hypothesis
 
@@ -57,3 +56,67 @@ cross-device readiness edge.
 
 Build no more than two jobs under the established 8 GiB host-memory cap. Stop
 on any device-lost, reset, hang, timeout, or output mismatch.
+
+## Implementation and liveness
+
+The candidate added one default-off door,
+`GGML_SYCL_COMM_ELIDE_LOCAL_READY=1`, and a treatment-only poison door. It
+verified `q0` had `sycl::property::queue::in_order`, omitted only `ready0`,
+and retained `ready1` as the reduction dependency. The live log was:
+
+```text
+SYCL lab door | collective local ready: requested=1 q0_in_order=1 active=1 poison=0
+```
+
+The normal fixed 128-token completion was byte-exact against control. Its
+content SHA-256 was
+`0344292357c81000d67624607cd4f156c503ce6383d12c5d1dfd134ea087bc57`.
+The treatment-scoped poison changed the completion (content SHA-256
+`2f3cb8f196d1ae6f24251981056959210d3cb881390369f254365cb243d448d3`),
+proving the new branch was live. No SYCL verification mismatch was reported.
+
+The fresh candidate build was kept under the 8 GiB host-memory cap and
+advanced through 59 of 104 steps. To avoid needlessly recompiling identical
+SYCL translation units on this 16 GiB host, unchanged objects were imported
+from the accepted build and the candidate-generated final device link was run
+under the same cap. This was only a local build acceleration; a reproduction
+should apply the incremental patch and perform a clean bounded build.
+
+## Position-balanced result
+
+Same-binary fresh-process `llama-bench -p 64 -n 256 -r 3`, order A-B-B-A:
+
+| Position | Arm | Decode tok/s |
+| --- | --- | ---: |
+| A1 | control | 36.780649 |
+| B1 | treatment | 36.796113 |
+| B2 | treatment | 36.797580 |
+| A2 | control | 36.794881 |
+
+- control mean: `36.787765 tok/s`;
+- treatment mean: `36.7968465 tok/s`;
+- relative delta: `+0.024686%`.
+
+The A2 prompt-evaluation sample was a position outlier (`363.207 tok/s`
+versus roughly `382 tok/s` elsewhere), but decode stayed in-family. Prompt
+evaluation is not used to decide this decode-path experiment.
+
+The decode delta is below resolution. The candidate is therefore closed as
+performance-neutral, the 12-prompt gate was intentionally skipped, and the
+accepted stack remains unchanged. The post-reboot health audit found both
+B70s normal with no Xe compute fault, reset, or hang.
+
+Artifacts:
+
+- structured result:
+  [`2026-08-16-q8-local-ready-elision-neutral.json`](../data/2026-08-16-q8-local-ready-elision-neutral.json);
+- incremental patch:
+  [`q8-local-ready-elision-neutral-20260816.diff`](../patches/q8-local-ready-elision-neutral-20260816.diff);
+- incremental patch SHA-256:
+  `8bb5ec9ee80f950f3d1ed72d2e1f41ae45e68419ec77cd9fa692e600865d1b3a`;
+- candidate `libggml-sycl.so.0.19.0` SHA-256:
+  `2a6b0f9da87d24fedc41f477c406552cec2c346861f7f4afd1c6b73256b42f1b`;
+- candidate `llama-bench` SHA-256:
+  `5ad7c26b123d41194a72f127052c50414a58a558a120548f17f11d54dba61abb`;
+- candidate `llama-server` SHA-256:
+  `71972859c1f8132efafa5fd722c0f66d7b23cfeb8f9a1c567578032006cd695e`.

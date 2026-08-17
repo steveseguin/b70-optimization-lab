@@ -1,0 +1,56 @@
+{
+  "date": "2026-08-16",
+  "status": "closed_neutral",
+  "experiment": "elide the TP2 root queue's redundant local-ready event",
+  "model": {
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70",
+  "runtime": {
+    "devices": "SYCL0/SYCL1",
+    "tensor_split": "1/1",
+    "kv": "f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "speculation": false,
+    "door": "GGML_SYCL_COMM_ELIDE_LOCAL_READY=1",
+    "poison_door": "GGML_SYCL_COMM_ELIDE_LOCAL_READY_POISON=1",
+    "q0_in_order": true
+  },
+  "quality": {
+    "normal_completion_exact_tokens": 128,
+    "normal_matches_control": true,
+    "normal_content_sha256": "0344292357c81000d67624607cd4f156c503ce6383d12c5d1dfd134ea087bc57",
+    "poison_differs_from_control": true,
+    "poison_content_sha256": "2f3cb8f196d1ae6f24251981056959210d3cb881390369f254365cb243d448d3",
+    "verify_mismatch": 0,
+    "full_12_prompt_gate_run": false,
+    "full_gate_reason": "candidate was performance-neutral in the symmetric screen"
+  },
+  "screen": {
+    "command_shape": "llama-bench -p 64 -n 256 -r 3; fresh process per arm; order A-B-B-A",
+    "control_decode_tok_s": [36.780649, 36.794881],
+    "treatment_decode_tok_s": [36.796113, 36.797580],
+    "control_decode_mean_tok_s": 36.787765,
+    "treatment_decode_mean_tok_s": 36.7968465,
+    "decode_relative_delta_percent": 0.024686197,
+    "prompt_a2_outlier_tok_s": 363.206767
+  },
+  "artifacts": {
+    "candidate_source": "/mnt/fast-ai/src/llama.cpp-q38-q8-elide-local-ready",
+    "candidate_build": "build-sycl-aot-bmg-g31-elide-local-ready",
+    "incremental_patch_sha256": "8bb5ec9ee80f950f3d1ed72d2e1f41ae45e68419ec77cd9fa692e600865d1b3a",
+    "libggml_sycl_sha256": "2a6b0f9da87d24fedc41f477c406552cec2c346861f7f4afd1c6b73256b42f1b",
+    "llama_bench_sha256": "5ad7c26b123d41194a72f127052c50414a58a558a120548f17f11d54dba61abb",
+    "llama_server_sha256": "71972859c1f8132efafa5fd722c0f66d7b23cfeb8f9a1c567578032006cd695e",
+    "unitrace_raw_sha256": "24427b67f747fb4aa21da9df7c5c154941aa6d102c1bedeb269c2cd40e789f7e"
+  },
+  "health": {
+    "device_0": "normal",
+    "device_1": "normal",
+    "xe_compute_fault_reset_hang_since_boot": false
+  },
+  "decision": "do not promote or repeat unchanged"
+}

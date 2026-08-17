@@ -1,0 +1,80 @@
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -10334,7 +10334,35 @@
+         return false;
+     }
+
+-    const sycl::event ready0 = q0->ext_oneapi_submit_barrier();
++    // Lab-only submission experiment: q0 is the backend's explicitly
++    // in-order default queue, so its reduction is already ordered after its
++    // local projection. Keep q1's event as the required cross-queue/device
++    // readiness edge, and fail closed to the accepted two-event path if the
++    // queue property is ever absent.
++    static const bool elide_local_ready_requested = [] {
++        const char * value = getenv("GGML_SYCL_COMM_ELIDE_LOCAL_READY");
++        return value != nullptr && atoi(value) != 0;
++    }();
++    static const bool elide_local_ready_poison = [] {
++        const char * value = getenv("GGML_SYCL_COMM_ELIDE_LOCAL_READY_POISON");
++        return value != nullptr && atoi(value) != 0;
++    }();
++    const bool q0_in_order = q0->has_property<sycl::property::queue::in_order>();
++    const bool elide_local_ready = elide_local_ready_requested && q0_in_order;
++    const bool poison_local_ready = elide_local_ready && elide_local_ready_poison;
++    static bool elide_local_ready_announced = false;
++    if (!elide_local_ready_announced) {
++        fprintf(stderr,
++                "SYCL lab door | collective local ready: requested=%d q0_in_order=%d active=%d poison=%d\n",
++                (int) elide_local_ready_requested, (int) q0_in_order,
++                (int) elide_local_ready, (int) poison_local_ready);
++        elide_local_ready_announced = true;
++    }
++
++    sycl::event ready0;
++    if (!elide_local_ready) {
++        ready0 = q0->ext_oneapi_submit_barrier();
++    }
+     const sycl::event ready1 = q1->ext_oneapi_submit_barrier();
+     static const bool reduce_vec4 = [] {
+         const char * value = getenv("GGML_SYCL_COMM_REDUCE_VEC4");
+@@ -10346,7 +10374,11 @@
+     sycl::event reduce_add;
+     if (reduce_vec4 && nelem % 4 == 0) {
+         reduce_add = q0->submit([=](sycl::handler & h) {
+-            h.depends_on({ready0, ready1});
++            if (elide_local_ready) {
++                h.depends_on(ready1);
++            } else {
++                h.depends_on({ready0, ready1});
++            }
+             h.parallel_for(sycl::range<1>((size_t) nelem / 4), [=](sycl::id<1> i) {
+                 const size_t base = (size_t) i * 4;
+                 const sycl::vec<float, 4> partial0 =
+@@ -10355,16 +10387,24 @@
+                     *reinterpret_cast<const sycl::vec<float, 4> *>(p1 + base);
+                 const sycl::vec<float, 4> residual0 =
+                     *reinterpret_cast<const sycl::vec<float, 4> *>(r0 + base);
+-                const sycl::vec<float, 4> sum = partial0 + partial1;
++                sycl::vec<float, 4> sum = partial0 + partial1;
++                if (poison_local_ready && base == 0) {
++                    sum[0] += 1.0f;
++                }
+                 *reinterpret_cast<sycl::vec<float, 4> *>(add0 + base) = sum + residual0;
+                 *reinterpret_cast<sycl::vec<float, 4> *>(p1 + base) = sum;
+             });
+         });
+     } else {
+         reduce_add = q0->submit([=](sycl::handler & h) {
+-            h.depends_on({ready0, ready1});
++            if (elide_local_ready) {
++                h.depends_on(ready1);
++            } else {
++                h.depends_on({ready0, ready1});
++            }
+             h.parallel_for(sycl::range<1>((size_t) nelem), [=](sycl::id<1> i) {
+-                const float sum = p0[i] + p1[i];
++                const float sum = p0[i] + p1[i] +
++                    ((poison_local_ready && i == 0) ? 1.0f : 0.0f);
+                 add0[i] = sum + r0[i];
+                 p1[i] = sum;
+             });
