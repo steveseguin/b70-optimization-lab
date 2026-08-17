@@ -1,0 +1,23 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_negative",
+  "lane": "Qwen3.8-27B Q8_0 target-only equal TP2, F16 KV, no speculation",
+  "mechanism": "compute both exact RMS reductions in the existing device-0 collective root, then retain parallel per-rank multiply/Q8 tails",
+  "runtime_door": "GGML_SYCL_COMM_DUAL_ROOT_RMS",
+  "verification": {"verified": 1980, "mismatches": 0, "shape": "p64/n1/r1"},
+  "benchmark": {
+    "shape": "p64/n128/r3",
+    "order": ["control", "dual_root_rms", "dual_root_rms", "control"],
+    "values_tps": [36.065157, 35.839389, 35.141736, 36.839950],
+    "control_mean_tps": 36.4525535,
+    "candidate_mean_tps": 35.4905625,
+    "delta_percent": -2.6390222566987087
+  },
+  "prototype_note": "An earlier two-float persistent pool allocation completed compute but asserted during teardown because it violated stack-ordered VMM lifetime. The measured revision removed the allocation and reused two dead rank-0 partial slots.",
+  "candidate_source_sha256": "206d2d68025bd78125429f45e1dbc5fa68d940363d4f9740c011efa96a045bec",
+  "candidate_lib_sha256": "8ce6464af767f944509e445eb125edd362d44a7b937d0c4fe26ce1da97ac24fb",
+  "accepted_source_sha256": "77c626e177996cd8549a30a8c6c14dcd1ad41cc62fd26889e85877f8f579ad39",
+  "accepted_lib_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+  "health": "both devices normal; no Xe/GuC fault, reset, timeout, or hang",
+  "decision": "Do not promote or retry unchanged."
+}
