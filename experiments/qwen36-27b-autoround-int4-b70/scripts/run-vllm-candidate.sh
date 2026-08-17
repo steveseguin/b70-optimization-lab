@@ -294,6 +294,7 @@ trap cleanup EXIT
   echo "spec_replay_suppressed_replacement_preempt=${VLLM_XPU_SPEC_DECODE_REPLAY_SUPPRESSED_REPLACEMENT_PREEMPT:-}"
   echo "spec_replay_suppressed_replacement_extra_steps=${VLLM_XPU_SPEC_DECODE_REPLAY_SUPPRESSED_REPLACEMENT_EXTRA_STEPS:-}"
   echo "spec_eager_replacement_recovery=${VLLM_XPU_SPEC_DECODE_EAGER_REPLACEMENT_RECOVERY:-}"
+  echo "spec_restore_replayed_gdn_state=${VLLM_XPU_SPEC_DECODE_RESTORE_REPLAYED_GDN_STATE:-}"
   echo "spec_eager_all_recovery_steps=${VLLM_XPU_SPEC_DECODE_EAGER_ALL_RECOVERY_STEPS:-}"
   echo "spec_filter_suppressed_bonus_next_input=${VLLM_XPU_SPEC_DECODE_FILTER_SUPPRESSED_BONUS_NEXT_INPUT:-}"
   echo "spec_skip_replayed_mamba_postprocess=${VLLM_XPU_SPEC_DECODE_SKIP_REPLAYED_MAMBA_POSTPROCESS:-}"

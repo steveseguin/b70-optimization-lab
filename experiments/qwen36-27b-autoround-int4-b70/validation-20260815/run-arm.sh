@@ -406,6 +406,15 @@ if [[ "${VALIDATION_SPEC_DECODE_NO_PREEMPT_SUPPRESSED_REPLACEMENT:-0}" == "1" ]]
   # rebuilding the request from its prompt.
   export VLLM_XPU_SPEC_DECODE_NO_PREEMPT_SUPPRESSED_REPLACEMENT=1
 fi
+if [[ "${VALIDATION_SPEC_DECODE_REPLAY_SUPPRESSED_REPLACEMENT_ACCEPTED:-0}" == "1" ]]; then
+  export VLLM_XPU_SPEC_DECODE_REPLAY_SUPPRESSED_REPLACEMENT_ACCEPTED=1
+fi
+if [[ "${VALIDATION_SPEC_DECODE_RESTORE_REPLAYED_GDN_STATE:-0}" == "1" ]]; then
+  export VLLM_XPU_SPEC_DECODE_RESTORE_REPLAYED_GDN_STATE=1
+fi
+if [[ "${VALIDATION_SPEC_DECODE_SKIP_REPLAYED_MAMBA_POSTPROCESS:-0}" == "1" ]]; then
+  export VLLM_XPU_SPEC_DECODE_SKIP_REPLAYED_MAMBA_POSTPROCESS=1
+fi
 if [[ "${VALIDATION_GDN_SERIAL_SPEC_IDENTITY:-0}" == "1" ]]; then
   # Reproduce the established serial GDN transaction as one bounded step
   # toward a whole-model one-token verifier.  Keep every flag explicit in the
