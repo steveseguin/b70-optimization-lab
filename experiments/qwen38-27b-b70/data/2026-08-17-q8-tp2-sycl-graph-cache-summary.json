@@ -1,0 +1,26 @@
+{
+  "date": "2026-08-17",
+  "status": "rejected",
+  "workload": "Qwen3.8-27B Q8_0 target-only TP2, F16 KV, flash attention",
+  "devices": "2x ASRock Intel Arc Pro B70",
+  "tensor_split": "1/1",
+  "candidate": {
+    "build_macro": "GGML_SYCL_GRAPH=ON",
+    "runtime": {
+      "GGML_SYCL_ENABLE_GRAPH": 1,
+      "GGML_SYCL_GRAPH_RECORD_QUEUE": 1,
+      "SYCL_GRAPH_FORCE_NATIVE_RECORDING": "unset"
+    },
+    "p0_n1_tok_s": 13.982698,
+    "p0_n16_tok_s": 24.554824,
+    "p0_n16_graph_computes": 4386
+  },
+  "accepted_reference_tok_s_approx": 36.77,
+  "safety": {
+    "gpu_0_state": "normal",
+    "gpu_1_state": "normal",
+    "new_xe_fault_reset_hang": false,
+    "verification_mismatches": 0
+  },
+  "decision": "Do not retry per-meta-subgraph SYCL command graphs unchanged; graph update overhead is prohibitive."
+}
