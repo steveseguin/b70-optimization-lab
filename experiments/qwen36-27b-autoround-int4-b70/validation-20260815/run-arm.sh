@@ -88,7 +88,7 @@ elif [[ "$mode" == "spec-native-partition-exact" \
   || "$mode" == "nospec-latest-exact-native" ]]; then
   latest_identity=1
   exact_identity=1
-  verify_tree "$source_root/vllm" facb62ac49b447d23b7c68eadac2457220c89cbb \
+  verify_tree "$source_root/vllm" 67350f2fd1922fb1be4011fec98bfe8c6b7c1433 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
   verify_tree "$source_root/vllm-xpu-kernels" ce8cfaa9208ae287f894e8f4511de5abd1ee2801 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
@@ -364,6 +364,12 @@ if [[ "${VALIDATION_SPEC_DECODE_DRAFT_ONLY:-0}" == "1" ]]; then
 fi
 if [[ -n "${VALIDATION_SPEC_DECODE_DRAFT_ONLY_ACCEPT_MIN_MARGIN:-}" ]]; then
   export VLLM_XPU_SPEC_DECODE_DRAFT_ONLY_ACCEPT_MIN_MARGIN="${VALIDATION_SPEC_DECODE_DRAFT_ONLY_ACCEPT_MIN_MARGIN}"
+fi
+if [[ -n "${VALIDATION_SPEC_DECODE_ACCEPT_MIN_MARGIN:-}" ]]; then
+  export VLLM_XPU_SPEC_DECODE_ACCEPT_MIN_MARGIN="${VALIDATION_SPEC_DECODE_ACCEPT_MIN_MARGIN}"
+fi
+if [[ "${VALIDATION_SPEC_DECODE_RECOVER_SUPPRESSED_REPLACEMENT:-0}" == "1" ]]; then
+  export VLLM_XPU_SPEC_DECODE_RECOVER_SUPPRESSED_REPLACEMENT=1
 fi
 if [[ "${VALIDATION_GDN_SERIAL_SPEC_IDENTITY:-0}" == "1" ]]; then
   # Reproduce the established serial GDN transaction as one bounded step
