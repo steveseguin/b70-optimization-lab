@@ -2,7 +2,8 @@
 # Reproduction script for the Cold Fusion GAIN V1.1 MTP llama.cpp SYCL result.
 # Contributor: dominick253
 # Target: single Intel Arc Pro B70, 32 GiB
-# Expected: ~38.4 tok/s decode at short context with MTP2, 94.4% draft acceptance
+# Expected: ~38.4 tok/s on b10472 / 7.0.0-29. Live refresh b10488-7 / 7.0.0-30
+# measured 22.73 tok/s on the same 51-token thinking-off probe.
 #
 # PREREQUISITES:
 #   1. Ubuntu 24.04+ or 26.04 with the `xe` GPU kernel driver loaded
@@ -18,9 +19,9 @@ MODEL_PATH="${MODEL_PATH:?set MODEL_PATH to the Q4_K_M MTP GGUF}"
 PORT="${PORT:-8001}"
 BUILD_DIR="${BUILD_DIR:-./build-sycl}"
 LLAMA_CPP_DIR="${LLAMA_CPP_DIR:-/tmp/llama.cpp}"
-LLAMA_CPP_COMMIT="60eeeb6082c1126bb8bc72902c83123cd056811b"
+LLAMA_CPP_COMMIT="${LLAMA_CPP_COMMIT:-3dc7285b4f79e3abe53527fd4264b75226edb613}"
 
-echo "=== Step 1: Clone and checkout llama.cpp b10472 ==="
+echo "=== Step 1: Clone and checkout llama.cpp ${LLAMA_CPP_COMMIT} (default b10488-7) ==="
 if [[ ! -d "${LLAMA_CPP_DIR}/.git" ]]; then
   git clone https://github.com/ggml-org/llama.cpp "${LLAMA_CPP_DIR}"
 fi
@@ -31,13 +32,16 @@ echo "=== Step 2: Build llama-server with SYCL ==="
 source /opt/intel/oneapi/setvars.sh --silent
 mkdir -p "${BUILD_DIR}"
 cmake -S "${LLAMA_CPP_DIR}" -B "${BUILD_DIR}" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=icx \
+  -DCMAKE_CXX_COMPILER=icpx \
   -DGGML_SYCL=ON \
-  -DF16=ON \
-  -DGRAPH=ON \
-  -DDNN=ON \
-  -DNATIVE=ON \
-  -DHOST_MEM_FALLBACK=OFF \
-  -DCMAKE_BUILD_TYPE=Release
+  -DGGML_SYCL_TARGET=INTEL \
+  -DGGML_SYCL_F16=ON \
+  -DGGML_SYCL_GRAPH=ON \
+  -DGGML_SYCL_DNN=ON \
+  -DGGML_NATIVE=ON \
+  -DGGML_SYCL_HOST_MEM_FALLBACK=OFF
 cmake --build "${BUILD_DIR}" --config Release -j"$(nproc)"
 echo "Build complete: ${BUILD_DIR}/bin/llama-server"
 
@@ -86,5 +90,5 @@ curl -s "http://127.0.0.1:${PORT}/v1/chat/completions" \
 
 echo ""
 echo "Done. Check server logs for decode timing (tg=X t/s lines)."
-echo "Expected: ~38.4 tok/s with MTP2 active."
+echo "Expected on b10472: ~38.4 tok/s. Live b10488-7 refresh measured 22.73 tok/s."
 kill "${SERVER_PID}" 2>/dev/null || true
