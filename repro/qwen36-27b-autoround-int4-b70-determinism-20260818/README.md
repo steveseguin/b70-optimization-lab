@@ -49,6 +49,48 @@ Virtualenv `/home/steve/.venvs/vllm-xpu` (the harness default at
 effect without reinstalling. The harness asserts the reported runtime version is
 `0.20.2rc1.dev13+g9557d9108.d20260620`.
 
+For a fresh environment, install Torch from the official stable XPU index, not
+the rolling nightly index. The nightly index had already pruned the recorded
+2.11 wheels by 2026-08-18. Then install the pinned vLLM XPU requirements under
+the checked-in resolver constraints:
+
+```bash
+python3.12 -m venv ~/.venvs/vllm-xpu
+py=~/.venvs/vllm-xpu/bin/python
+constraints=$PWD/repro/qwen36-27b-autoround-int4-b70-determinism-20260818/manifests/xpu-runtime-rebuild-constraints.txt
+
+$py -m pip install --upgrade pip 'setuptools<81' wheel packaging ninja cmake \
+  pybind11 setuptools-rust setuptools-scm
+$py -m pip install torch==2.11.0+xpu torchvision==0.26.0+xpu \
+  torchaudio==2.11.0+xpu --index-url https://download.pytorch.org/whl/xpu
+$py -m pip install -c "$constraints" \
+  -r ~/src/vllm/requirements/xpu.txt
+$py -m pip uninstall -y triton
+$py -m pip install --force-reinstall --no-deps triton-xpu==3.7.0 \
+  --index-url https://download.pytorch.org/whl/xpu
+VLLM_TARGET_DEVICE=xpu $py -m pip install -c "$constraints" \
+  -e ~/src/vllm --no-build-isolation
+```
+
+The `auto_round_lib==0.13.0` constraint is intentional. Letting pip select the
+current 0.14.x package can replace the pinned XPU Torch with a newer generic
+CUDA Torch wheel. `xgrammar==0.2.3` also declares generic `triton`; after the
+requirements install, remove that distribution and force-reinstall
+`triton-xpu==3.7.0` so the XPU namespace is installed last. Always verify
+`pip list` contains `torch==2.11.0+xpu` and `triton-xpu==3.7.0`, with no plain
+`triton` or non-XPU Torch package, before building kernels.
+
+The pinned XPU-kernels tree has a stale MoE CMake reference: upstream commit
+`bed9504` deleted `csrc/moe/fused_moe_prologue.cpp`, while the MoE source list
+still names it. This model is dense, so its minimal `_xpu_C`/GDN rebuild must
+set `MOE_KERNELS=OFF`:
+
+```bash
+CLEAN=1 JOBS=1 AOT_DEVICES=bmg-g31-a0 \
+MOE_KERNELS=OFF GDN_KERNELS=ON \
+bash scripts/build-vllm-xpu-kernels-xpu-c-only.sh
+```
+
 ## 4. Pinned sources
 
 The harness refuses to run unless these match exactly, with a clean working
