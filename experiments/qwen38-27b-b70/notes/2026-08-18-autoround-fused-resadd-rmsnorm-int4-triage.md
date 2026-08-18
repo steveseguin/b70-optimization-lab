@@ -1,6 +1,6 @@
 # Qwen3.8 AutoRound: fused residual/RMSNorm/INT4 gate-up triage
 
-Date: 2026-08-18  
+Date: 2026-08-18
 Status: source-reviewed candidate; not built or benchmarked in this lane
 
 ## Candidate
