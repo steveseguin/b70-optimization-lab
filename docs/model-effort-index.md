@@ -214,10 +214,11 @@ Succeeded by the Qwen3.8 27B INT4 AutoRound lane below.
 ### Qwen3.8 27B INT4 AutoRound On B70
 
 Opened 2026-08-18. `devan-carlin/Qwen3.8-27B-int4-AutoRound`, vLLM/XPU TP2 with
-MTP3 speculative decoding. Architecturally identical to the Qwen3.6 INT4
-checkpoint, so that lane's whole INT4/GDN/FlashAttention/MTP stack transfers
-unchanged. First cold baseline `91.926 tok/s` on the 25-prompt suite
-(`86.720` on the 12 historical selection prompts).
+MTP3 speculative decoding. Its tensor architecture is compatible with the
+Qwen3.6 INT4 lane, so the pinned source stack runs without a model-specific
+code change. The new weights still require independent quality, determinism,
+and performance validation. First cold baseline `91.926 tok/s` on the 25-prompt
+suite (`86.720` on the 12 historical selection prompts).
 
 Distinct from the llama.cpp Q4_K_M target-only Qwen3.8 lane: different runtime,
 quantization, and speculation class. Do not merge their rows.

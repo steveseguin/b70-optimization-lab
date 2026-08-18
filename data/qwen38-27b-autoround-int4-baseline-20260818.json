@@ -8,7 +8,7 @@
     "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
     "local_path": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
     "manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model.json",
-    "architecture_identical_to": "Qwen3.6 27B INT4 lane"
+    "tensor_architecture_compatible_with": "Qwen3.6 27B INT4 lane; weights and model identity differ"
   },
   "source_identity": {
     "vllm_head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
@@ -36,6 +36,7 @@
   },
   "notes": [
     "MTP3 speculative decoding worked on the first attempt; no code changes were needed",
+    "source compatibility is established, but the transferred runtime stack is not yet independently performance- or quality-validated for these Qwen3.8 weights",
     "quality gate not run: no quality baseline exists for this checkpoint yet, and the Qwen3.6 baseline is a different model",
     "self-determinism not yet measured; needs a matching B replicate",
     "same-config delta versus Qwen3.6 is -2.940497% all-25 and -3.393412% selection-12",
