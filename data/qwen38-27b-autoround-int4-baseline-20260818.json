@@ -110,7 +110,7 @@
         },
         "acceptance_pct": 64.7,
         "self_determinism": "FAIL 12/25, 13 divergences over 8636 tokens",
-        "verdict": "FASTEST measured at 98.222/98.717 all-25 but NOT reproducible, so it does not count. Acceptance is unchanged, so the entire +6.3 tok/s is step time recovered from the eager graph break that serial-exact GDN forces."
+        "verdict": "FASTEST measured at 98.222/98.717 all-25 but NOT reproducible, so it does not count. Acceptance is unchanged. This arm changed both serial-exact GDN and global batch invariance, so the +6.3 tok/s cannot yet be assigned to either variable or to a specific graph break."
       },
       {
         "id": "gdn_completion_barrier_instead_of_serial_recurrence",
@@ -127,9 +127,9 @@
           "selection12_median_tok_s": 91.92736820970752
         },
         "self_determinism": "FAIL 12/25, 13 divergences over 8636 tokens",
-        "verdict": "HYPOTHESIS DISPROVED, and cleanly. The barrier costs about 1 tok/s (97.211 vs 98.222) but the divergent prompts and token positions are byte-identical to the no-barrier run -- same 8 prompts at tokens 69/322/262/272/334/217/320/15. Synchronization changes nothing. GDN nondeterminism is a reduction-order problem, not a race, so only full serialization fixes it."
+        "verdict": "The completion barrier does not repair the failure. It costs about 1 tok/s (97.211 vs 98.222), while the divergent prompts and token positions are byte-identical to the no-barrier run -- same 8 reported prompt/token pairs. This rules out a missing end-of-op completion dependency as the explanation; it does not by itself identify GDN reduction order or separate GDN from the simultaneously disabled global batch-invariant policies."
       }
     ],
-    "conclusion": "Validated best remains 91.926 tok/s at 25/25 self-determinism. 97-98 tok/s is reachable but never reproducible. The 6.3 tok/s gap is entirely the serial-exact GDN eager graph break, and it cannot be closed with synchronization -- a completion barrier reproduced the divergences exactly. Claiming it honestly requires batch-invariant GDN attention arithmetic, which vLLM currently refuses outright ('VLLM batch_invariant mode is not supported for GDN_ATTN')."
+    "conclusion": "Validated best remains 91.926 tok/s at 25/25 self-determinism. The measured 97-98 tok/s arms are not reproducible. Because the fast arm disabled both serial-exact GDN and global batch invariance, the 6.3 tok/s gap and the divergence are not yet causally assigned. A completion barrier reproduced the same divergence, ruling out a simple missing completion dependency. The published factorial diagnostic is required before selecting the next production implementation target."
   }
 }
