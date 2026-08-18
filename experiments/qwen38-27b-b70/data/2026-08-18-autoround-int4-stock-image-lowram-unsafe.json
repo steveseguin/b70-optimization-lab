@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "date_local": "2026-08-18",
+  "classification": "unsafe_do_not_repeat",
+  "model": {
+    "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "local_path": "/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround",
+    "content_verification": "all eight tensor-file SHA-256 values, the tokenizer SHA-256, and all 19 payload identities passed"
+  },
+  "hardware": {
+    "gpus": "2x ASRock Intel Arc Pro B70 32 GiB",
+    "host_ram_gib": 15,
+    "driver": "26.22.38646.7",
+    "device_selector": "0,1"
+  },
+  "runtime": {
+    "image": "intel/llm-scaler-vllm:0.21.0-b3.1",
+    "vllm": "0.21.1.dev0+gad7125a43.d20260812",
+    "mode": "target-only eager TP2",
+    "dtype": "float16",
+    "kv_cache_dtype": "auto",
+    "max_model_len": 2048,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 256,
+    "gpu_memory_utilization": 0.75,
+    "host_memory_limit": "9g",
+    "host_memory_plus_swap_limit": "12g",
+    "prefix_cache": false,
+    "graph": false,
+    "speculation": false
+  },
+  "attempts": [
+    {
+      "change": "stock image, no optional-path override",
+      "outcome": "safe Python startup failure",
+      "root_cause": "FP8-only _gdn_outproj_esimd_eligible accessed RowParallelLinear.weight before rejecting the AutoRound INT4 qweight projection"
+    },
+    {
+      "change": "DISABLE_ESIMD_GDN_OUTPROJ=1 only",
+      "outcome": "unsafe teardown after cgroup OOM",
+      "model_load": "8/8 shards, 8.51 seconds, 8.44 GiB reported per rank",
+      "cgroup": "OOMKilled=true; one TP worker killed at 4,656,412 KiB anonymous RSS",
+      "kernel": "one BCS engine reset on 0000:e3:00.0 followed by Fault response: Unsuccessful -EINVAL"
+    }
+  ],
+  "postcondition": {
+    "container_removed": true,
+    "gpu0_state": "normal",
+    "gpu1_state": "normal",
+    "render_node_users": 0,
+    "kernel_panic": false
+  },
+  "decision": "do not retry this image or raise the cgroup limit on the 15 GiB host; use the pinned Qwen3.6-derived Qwen3.8 AutoRound handoff stack and its low-RAM procedure"
+}

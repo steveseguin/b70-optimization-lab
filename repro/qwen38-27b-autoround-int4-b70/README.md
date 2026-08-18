@@ -11,8 +11,11 @@ Local copy: `/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan`
 (19.02 GB, 8 safetensors shards + 11 small files, all verified).
 
 Content manifest: [`manifests/model.json`](manifests/model.json). The upstream
-revision SHA was not recorded when the model was fetched, so that manifest pins
-**content, not a git revision** — re-pin it if the model is re-downloaded.
+revision is pinned at
+[`bce40cacab0a4535b92fb3d57615c2bea9adf3d1`](https://huggingface.co/devan-carlin/Qwen3.8-27B-int4-AutoRound/tree/bce40cacab0a4535b92fb3d57615c2bea9adf3d1).
+An independent download at
+`/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround` matched all recorded
+file identities and the exact `19,016,930,167`-byte payload.
 
 ## Why the existing stack transfers
 
@@ -42,8 +45,12 @@ Consequences:
 - The vocabulary is byte-for-byte the same size, so the masked-max greedy
   sampler fix carries its full benefit.
 - The upstream README warns that mixed symmetric/asymmetric INT4 checkpoints
-  need a qzeros guard on the XPU/ARK path. **This tree already has it** —
-  `inc.py:822-825` nulls `ark_linear.qzeros` when absent.
+  need devan-carlin's empty/shape-compatible qzeros guard on the newer XPU/ARK
+  path ([vLLM PR #52428](https://github.com/vllm-project/vllm/pull/52428)).
+  The pinned older vLLM tree has only a present/non-null check at
+  `inc.py:822-825`, not that newer guard. This exact checkpoint nevertheless
+  loaded successfully in the recorded baseline. Do not generalize that success
+  to a different AutoRound export or claim PR #52428 is already present.
 
 ## Reference point
 
@@ -77,3 +84,9 @@ section 7a; start from that rather than re-deriving it.
   one has to be generated before any parity or quality claim.
 - The vision tower (333 tensors) is unused for text benchmarking; the config
   carries `language_model_only`.
+- Do not use stock `intel/llm-scaler-vllm:0.21.0-b3.1` as a substitute for the
+  pinned source stack on a 16 GB host. An independent eager TP2 smoke first hit
+  its FP8-only GDN output-projection probe on an INT4 `qweight`; disabling that
+  optional probe allowed all weights to load, but a 9 GiB cgroup then killed a
+  worker during warmup and triggered one BCS reset. See the
+  [safety note](../../experiments/qwen38-27b-b70/notes/2026-08-18-autoround-int4-stock-image-lowram-unsafe.md).
