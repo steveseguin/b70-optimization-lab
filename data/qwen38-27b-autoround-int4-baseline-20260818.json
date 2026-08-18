@@ -210,11 +210,27 @@
       "status": "VALIDATED"
     },
     "pinned_compile_cache_gate": {
-      "config": "MTP3, serial-exact off",
-      "all25_tok_s": 98.222,
-      "selection12_tok_s": 94.005,
+      "config": "MTP3, serial-exact off, pinned compile cache",
+      "arms": [
+        "qwen38-noserial-nobi-mtp3-25-spec-a-20260818",
+        "qwen38-noserial-nobi-sharedcache-25-spec-c-20260818",
+        "qwen38-qualitybaseline-mtp3-fast-25-spec-d-20260818"
+      ],
+      "all25_medians": [
+        98.22232844798661,
+        96.61627438849658,
+        96.27240165275087
+      ],
+      "selection12_medians": [
+        94.00496787904927,
+        94.36442597440953,
+        94.03728178771065
+      ],
+      "all25_median_of_three": 96.61627438849658,
+      "selection12_median_of_three": 94.03728178771065,
       "determinism": "PASS 25/25 with pinned cache",
-      "status": "VALIDATED, pending a model-specific quality baseline"
+      "status": "VALIDATED",
+      "correction": "an earlier note quoted 98.222 for this config; that was arm A alone, the maximum. The median of three is 96.616."
     },
     "over_100_but_not_validated": {
       "config": "MTP4, serial-exact off",
@@ -228,5 +244,18 @@
     "detail": "run-tp2-targetgraph-drafteager-candidate.sh:45 derives VLLM_XPU_GDN_REPLAYSSM_SPEC_CACHE_LEN as 2*(num_speculative_tokens+1). Its own comment at :44 says callers may request a larger POWER-OF-TWO ring. For MTP3 that yields 8, a power of two. For MTP4 it yields 10 and for MTP5 12, neither a power of two.",
     "impact": "anyone enabling ReplaySSM at depth != 3 gets a non-power-of-two ring, contradicting the documented contract",
     "suggested_fix": "round the derived length up to the next power of two"
+  },
+  "harness_defect_quality_baseline_substitution": {
+    "severity": "high - silently graded a model against a DIFFERENT model's baseline",
+    "detail": "run-tp2-targetgraph-drafteager-candidate.sh:67 and run-tp1-current-candidate.sh:56 used ${QUALITY_BASELINE_JSON:-<qwen36 baseline>}. The :- form substitutes on EMPTY as well as unset, so omitting the baseline argument silently graded the run against the Qwen3.6 model's quality baseline instead of running without one.",
+    "impact": "every Qwen3.8 quality result recorded before this fix, including the pass_all/baseline_match_all values reported for the 91.926, 98.222 and MTP4 arms, was compared against the Qwen3.6 baseline. Those runs did pass, which is a meaningful cross-model observation, but it is NOT a model-specific quality gate.",
+    "fix": "changed :- to - so an explicitly empty value means no baseline",
+    "qwen38_baseline_now_generated": "data/qwen38-27b-autoround-int4-b70-baselines/quality-qwen38-int4-mtp3-fast-20260818.json",
+    "baseline_provenance": {
+      "raw_root": "qwen38-qualitybaseline-clean-mtp3-fast-25-spec-e-20260818",
+      "baseline_comparisons": 0,
+      "pass_all": true,
+      "objective_gates": "exact_ok, copy_phrase, arithmetic, json_schema, repeat, long-context all pass on their own merits"
+    }
   }
 }

@@ -1,0 +1,32 @@
+{
+  "description": "Preregistered interleaving of the historical 12-prompt selection suite and a later independent 13-prompt mixed-task holdout.",
+  "metric": "99 inter-token intervals between generated events 1 and 100 after TTFT",
+  "prompts": [
+    {
+      "group": "independent-holdout",
+      "id": "holdout--long-rollover-repository-audit",
+      "original_id": "long-rollover-repository-audit",
+      "prompt": "You are reviewing a repository snapshot before an agentic coding change. The prompt is intentionally longer than one 511-token attention window so the response exercises rollover while remaining a realistic code task. Read all of the following evidence, then prepare the first implementation patch. Do not merely summarize the files.\n\nRepository context:\n- src/ingest/config.py loads INGEST_BATCH_SIZE with int(os.getenv(..., '100')) and has no range check. It also reads INGEST_API_TOKEN during module import, which makes tests depend on ambient process state.\n- src/ingest/client.py creates one global requests.Session. post_batch serializes records, sends POST /v1/items with timeout=30, calls raise_for_status, and retries every exception three times with time.sleep(1). The retry loop neither distinguishes permanent 4xx responses nor honors Retry-After. Logs include the complete exception and request headers.\n- src/ingest/worker.py selects pending database rows with SELECT ... LIMIT batch_size, commits, calls post_batch, then starts a second transaction to mark rows sent. Two workers can therefore select the same rows. A crash after the HTTP success but before the second commit causes an externally accepted batch to be sent again.\n- src/ingest/models.py defines PendingItem(id, tenant_id, payload, created_at) but payload is an unbounded dict and tenant_id is optional even though the database column is NOT NULL. The serializer silently drops keys whose values are None.\n- src/ingest/metrics.py exposes counters named success, failure, and retry without a subsystem prefix or labels. It has no queue-age histogram, in-flight gauge, duplicate counter, or terminal-dead-letter counter.\n- migrations/018_add_ingest_state.sql adds state text DEFAULT 'pending' and external_key text, then creates a unique index only on external_key. Existing rows receive the default. The migration does not make external_key NOT NULL and has no concurrent-index or rollback plan.\n- tests/test_worker.py uses one happy-path row and monkeypatches client.post_batch to return True. It does not run concurrent workers, simulate a timeout after remote acceptance, assert transaction boundaries, test retry classification, or control environment variables before importing config.\n- deploy/worker.service restarts on failure with RestartSec=0, loads an EnvironmentFile, and grants the process write access to the whole application directory. There are no start-limit settings, readiness signal, graceful-stop timeout, or isolated runtime directory.\n- docs/runbook.md says operators should restart until the queue drains. It does not define safe replay, idempotency-key inspection, dead-letter recovery, database rollback, token rotation, or the dashboards that prove recovery.\n- The external API supports an Idempotency-Key header scoped to tenant plus key for 24 hours. It returns 409 for a key reused with a different payload, 429 with Retry-After under load, and 202 after durable acceptance. The database is PostgreSQL 16. Deployments use two worker processes today but may scale to eight.\n- Product requirements allow at-least-once internal processing but prohibit duplicate customer-visible items. A queued item may be delayed for up to five minutes. Operators need per-tenant backlog visibility, and secrets must never appear in logs or committed fixtures.\n- Change constraints: preserve the current HTTP API contract, avoid a full queue-system replacement in this patch, keep the migration reversible, and allow rolling deployment with old and new workers overlapping for ten minutes.\n\nReturn a unified diff, not a planning memo. The diff must include a reversible PostgreSQL migration, a transaction-safe worker claim/lease implementation, an injected HTTP client that derives a stable tenant-scoped Idempotency-Key and classifies 202/409/429 responses, redacted structured logging, metrics, concurrency and failure-injection tests, the hardened systemd unit, and runbook recovery steps. Include complete enough code and tests that the response cannot end after a short defect list."
+    },
+    {
+      "group": "independent-holdout",
+      "id": "holdout--factual-protocol",
+      "original_id": "factual-protocol",
+      "prompt": "Explain why DNS generally uses UDP for ordinary queries but can use TCP, including truncation, EDNS, zone transfers, and modern encrypted transports. Distinguish protocol facts from operational recommendations and give a compact troubleshooting checklist with concrete commands or observations."
+    }
+  ],
+  "source_suites": [
+    {
+      "group": "historical-selection",
+      "path": "/home/steve/llm-optimizations/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+      "sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+    },
+    {
+      "group": "independent-holdout",
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json",
+      "sha256": "9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638"
+    }
+  ],
+  "suite_id": "qwen36-27b-int4-independent-validation-20260815-v1",
+  "version": 1
+}
