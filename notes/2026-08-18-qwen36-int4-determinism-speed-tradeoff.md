@@ -5,12 +5,20 @@ Date: 2026-08-18 (America/Toronto)
 ## Decision
 
 No new LocalMaxxing record. On the full 25-prompt suite the **deterministic
-ceiling is `92.003 tok/s`** and the **fastest non-reproducing configuration is
+ceiling is `94.710 tok/s`** and the **fastest non-reproducing configuration is
 `96.822 tok/s`**. Nothing measured both exceeded the retained July `95.385`
 figure and reproduced itself token-for-token, so nothing was submitted.
 
-Two things from this campaign should be adopted regardless: a much better
-reference oracle, and the removal of a gate that cannot be passed.
+The `94.710` figure supersedes the `92.003` used throughout sections 2 and 3
+below, which describe the flag bisect as it stood before the sampler fix. See
+the [addendum](#addendum--27-toks-reclaimed-without-weakening-any-gate): a
+bounded tie break implemented with two masked `max` reductions instead of
+`topk(k=2)` reclaimed `2.7 tok/s`, verified bit-identical to the original, with
+quality and reproducibility unchanged. Determinism now costs about `2.1 tok/s`,
+not `4.8`.
+
+Three things from this campaign should be adopted regardless: the sampler fix, a
+much better reference oracle, and the removal of a gate that cannot be passed.
 
 ## 1. The complete-token-parity gate is unsatisfiable, not merely strict
 
