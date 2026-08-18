@@ -1,0 +1,49 @@
+[
+  {
+    "label": "qwen38-27b-int4-autoround-b70-tp2-mtp4-100.497tok-20260818",
+    "payload": {
+      "hfId": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+      "modelRevision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+      "engineName": "vllm",
+      "engineVersion": "v0.20.2rc1.dev13+g9557d9108 local XPU stack; vllm 44fc8fde09; vllm-xpu-kernels 2dd55f380d; oneCCL 4ceafd1",
+      "backend": "xpu",
+      "quantization": "AutoRound INT4 W4A16",
+      "hardware": {
+        "hwClass": "DISCRETE_GPU",
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 2,
+        "vramGb": 32,
+        "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+        "ramGb": 125,
+        "os": "Ubuntu 24.04.4 LTS"
+      },
+      "contextLength": 2048,
+      "batchSize": 1,
+      "promptTokens": 78,
+      "outputTokens": 512,
+      "tokSOut": 100.497083,
+      "tokSTotal": 82.434235,
+      "ttftMs": 945.9983,
+      "engineFlags": {
+        "apiMode": "chat",
+        "apiAttentionBackend": "flash_attn",
+        "apiKvCacheDtype": "fp16",
+        "attentionBackend": "vLLM XPU FLASH_ATTN v2, graph-safe staged package",
+        "speculativeDecoding": "MTP4 (qwen3_5 native MTP, num_speculative_tokens=4)",
+        "benchmarkJson": "data/qwen38-27b-autoround-int4-baseline-20260818.json",
+        "commandSnippet": "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0 VALIDATION_NUM_SPECULATIVE_TOKENS=4 cudagraph_capture_sizes=[5] VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0 VALIDATION_ONEDNN_INT4/INT8_COMPLETION_BARRIER=1 VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE=all_target VALIDATION_LM_HEAD_INT8=1 VALIDATION_DETERMINISTIC_GREEDY_MARGIN=0.03125 --dtype float16 --tensor-parallel-size 2 --max-model-len 2048 --max-num-seqs 1",
+        "freshResponseHeadlineValid": true,
+        "historyAccelerated": false,
+        "headlineUse": "fresh-cold-25-prompt-suite",
+        "realisticSuiteGatePassed": true,
+        "primaryMetricName": "median_tok_s_1_100_intervals_after_ttft",
+        "primaryMetricAccounting": "inter-token-intervals",
+        "metricWindowGeneratedTokens": 100,
+        "metricWindowIntervals": 99,
+        "realisticSuiteCachedTokensAllZero": true,
+        "realisticSuiteId": "qwen36-27b-int4-independent-validation-20260815-v1"
+      },
+      "notes": "Median of three fresh cold arms on a fixed 25-prompt suite; every measured row cached_tokens=0. Arms 101.653 / 100.497 / 99.905, so the arms are NOT unanimously above 100 - the median is. On the 12 historical selection prompts of the same suite the median is 96.627, which has NOT crossed 100; use that number for any comparison against a record set on a 12-prompt suite. Self-determinism: all three pairwise comparisons 25/25 token-identical, under a PINNED torch.compile cache shared by the three arms - fresh compilations emit different-but-internally-deterministic code, so the compile cache is part of the run identity; a fresh-compile arm is outstanding. Quality: pass_all and baseline_match_all against this model's own baseline (15 comparisons). VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0 is required and is a workaround for an uninitialized read in the persistent GDN spec-decode scratch at five verifier rows, not a tuning choice."
+    }
+  }
+]

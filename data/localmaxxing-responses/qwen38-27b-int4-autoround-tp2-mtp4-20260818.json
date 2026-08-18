@@ -1,0 +1,30 @@
+{
+  "submitted_at": "2026-08-18",
+  "label": "qwen38-27b-int4-autoround-b70-tp2-mtp4-100.497tok-20260818",
+  "server_dry_run": {
+    "http_status": 200,
+    "valid": true
+  },
+  "submission": {
+    "http_status": 201,
+    "id": "cmszarna10e0nms0103hv0tve",
+    "status": "APPROVED"
+  },
+  "queue": "experiments/qwen38-27b-b70/localmaxxing/qwen38-27b-int4-mtp4-100.497tok-20260818.queue.json",
+  "headline": {
+    "metric": "median_tok_s_1_100_intervals_after_ttft",
+    "all25_tok_s": 100.497083,
+    "selection12_tok_s": 96.627,
+    "arms": [
+      101.653,
+      100.497,
+      99.905
+    ]
+  },
+  "caveats_declared_in_notes": [
+    "arms not unanimously above 100; the median carries it",
+    "selection-12 is 96.627 and has not crossed 100",
+    "determinism validated under a pinned torch.compile cache; fresh-compile arm outstanding",
+    "PERSISTENT_SCRATCH=0 is a bug workaround, not a tuning choice"
+  ]
+}
