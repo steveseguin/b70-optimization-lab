@@ -10,7 +10,7 @@
 +    static const int value = [] {
 +        const char * env = std::getenv("GGML_SYCL_COMM_DIRECT_Q8_WG");
 +        const int requested = env == nullptr ? 0 : std::atoi(env);
-+        const int selected = requested == 256 || requested == 512 || requested == 1024
++        const int selected = requested == 256 || requested == 512 || requested == 768 || requested == 1024
 +            ? requested : 0;
 +        fprintf(stderr, "SYCL lab door | register-direct collective tail WG: %d "
 +                        "(GGML_SYCL_COMM_DIRECT_Q8_WG; 0=device max)\n", selected);
