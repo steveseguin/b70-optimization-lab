@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "date_local": "2026-08-18",
+  "classification": "measured_tradeoff_no_new_record",
+  "lane": "Qwen3.6 27B AutoRound INT4, MTP speculative, 2x Intel Arc Pro B70, vLLM/XPU TP2",
+  "suite": "25-prompt validation suite, 512 max tokens, conventional 99-interval median, all rows cached_tokens=0",
+  "headline": {
+    "deterministic_ceiling_tok_s": 92.00294236150333,
+    "nondeterministic_best_tok_s": 96.82207987491994,
+    "determinism_cost_tok_s": 4.819137513416,
+    "new_record_submitted": false,
+    "reason": "no configuration exceeded the retained 95.385 July figure while also reproducing itself token-for-token"
+  },
+  "source_identity": {
+    "vllm_head": "95a76ff89173ff56e90a2ed384fde2cea3c015e6",
+    "xpu_kernels_head": "2dd55f380df753a10a88fcd9e96192561066e713",
+    "oneccl_source_top_commit": "b52f40c07f0b140e6aba87548c80720a350a9827",
+    "oneccl_libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
+    "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+    "model_revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+    "staged_flash_attention": "experiments/qwen27_graphsafe_flash_attention/staged-package",
+    "staged_fa_extension_sha256": "33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739",
+    "staged_fa_device_library_sha256": "604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c",
+    "staged_fa_stock_dependency_sha256": "3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289",
+    "staged_fa_python_interface_sha256": "869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480"
+  },
+  "host_environment": {
+    "os": "Ubuntu 24.04.4 LTS",
+    "kernel": "7.0.0-28-generic",
+    "gpu": "2x Intel Arc Pro B70 32 GB",
+    "compute_runtime": "26.18.38308.1",
+    "intel_opencl_icd": "26.18.38308.1-0",
+    "libze_intel_gpu1": "26.18.38308.1-0",
+    "level_zero_loader": "1.28.2-1~24.04~ppa1",
+    "xpu_smi": "1.3.6-1~24.04~ppa1",
+    "python": "3.12.13",
+    "venv": "/home/steve/.venvs/deepseek-v4-xpu",
+    "torch": "2.12.0+xpu",
+    "torchvision": "0.27.0+xpu",
+    "torchaudio": "2.11.0+xpu",
+    "oneccl_python": "2021.17.2",
+    "intel_sycl_rt": "2025.3.2",
+    "numpy": "2.3.5",
+    "oneccl_candidate_path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0"
+  },
+  "determinism_flag_conjunction": {
+    "finding": "run-to-run token reproducibility requires ALL four flag families simultaneously; removing any one degrades it",
+    "required_flags": [
+      "VALIDATION_DETERMINISTIC_GREEDY_MARGIN=0.03125",
+      "VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1",
+      "VALIDATION_BATCH_INVARIANT=1 with VALIDATION_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT=1",
+      "VALIDATION_ONEDNN_INT4/INT8_COMPLETION_BARRIER and _INPUT_DEPENDENCY"
+    ]
+  },
+  "arms": [
+    {
+      "id": "full_stack_mtp3_reference_determinism",
+      "raw_roots": [
+        "deterministicmargin03125-global-qwenrms-alltarget-25-spec-a-20260817",
+        "deterministicmargin03125-qwenrms-layer0dep-25-spec-a-20260817"
+      ],
+      "flags_removed": "none",
+      "preferred_median_tok_s": 92.00294236150333,
+      "self_determinism": "25/25 identical, 0 divergences over 12477 tokens",
+      "quality": "pass",
+      "verdict": "the only self-reproducing configuration measured"
+    },
+    {
+      "id": "drop_batch_invariant",
+      "raw_roots": ["marginonly-mtp3-25-spec-a-20260818", "marginonly-mtp3-25-spec-b-20260818"],
+      "manifest_sha256": ["cbcdf265a94c3f0f15550d76b6cd2fd21fe6fff89804f76f3ff74507a67793f9", "8159eef42997a1ec8f3826851d2cfd138641b7e775bdefc66e3ee92faefa1a14"],
+      "flags_removed": "VALIDATION_BATCH_INVARIANT, VALIDATION_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT",
+      "preferred_median_tok_s": 91.78868680721364,
+      "self_determinism": "12/25 identical, 13 divergences over 8100 tokens",
+      "quality": "pass"
+    },
+    {
+      "id": "drop_margin_and_batch_invariant",
+      "raw_roots": ["onednnonly-mtp3-25-spec-a-20260818", "onednnonly-mtp3-25-spec-b-20260818"],
+      "manifest_sha256": ["3b843629e5412b93d1e18746ffefe5ea84ac2caa47b98a7a844bf8877f523399", "8881a3950c9ce944343e47dfaac27942fbf045f214b126ff81fe4f45c7dcd7d0"],
+      "flags_removed": "deterministic greedy margin, both batch-invariant flags",
+      "preferred_median_tok_s": 96.82207987491994,
+      "self_determinism": "15/25 identical, 10 divergences over 10504 tokens",
+      "quality": "pass",
+      "verdict": "fastest measured configuration; not reproducible"
+    },
+    {
+      "id": "drop_everything_except_gdn_serial",
+      "raw_roots": ["nobarriers-mtp3-25-spec-a-20260818", "nobarriers-mtp3-25-spec-b-20260818"],
+      "manifest_sha256": ["92c454d6ce025f1dd07b1d4a19377830053229071a8329bc3f426e9f912de19c", "22d8818b5d2fcd53b4d49f95ea94bebe1b1dceef84f9f78309bdfb12251ddae5"],
+      "flags_removed": "margin, both batch-invariant flags, all four oneDNN barrier/dependency flags",
+      "preferred_median_tok_s": 95.92553443748650,
+      "self_determinism": "16/25 identical, 9 divergences over 10193 tokens",
+      "quality": "pass"
+    },
+    {
+      "id": "mtp4_serial_exact_disabled",
+      "raw_roots": ["mtp4-noserial-margin-25-spec-a-20260818", "mtp4-noserial-margin-25-spec-b-20260818"],
+      "manifest_sha256": ["5602c4b0d3b1e629ef8cdbc83afcab90b674015b63ec9c9317aa73b1ae8a378c", "c9cb8fc386bccac837a3d3cd0cef4b41f913edc647880769d2da4e57057697fc"],
+      "flags_removed": "VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT, both batch-invariant flags",
+      "num_speculative_tokens": 4,
+      "cudagraph_capture_sizes": [5],
+      "preferred_median_tok_s": 93.67955430588087,
+      "per_position_acceptance": [1.0, 0.667, 0.667, 0.333],
+      "avg_draft_acceptance": 0.601,
+      "self_determinism": "9/25 identical, 16 divergences over 7621 tokens",
+      "quality": "pass",
+      "verdict": "fourth draft position accepts only 33%; serial-exact GDN is hardcoded to four verifier rows and must be disabled for MTP4, which costs more determinism than the depth gains"
+    },
+    {
+      "id": "shape_matched_reference_oracle",
+      "raw_roots": ["matchedshape-nospec-25-target-a-20260818", "matchedshape-nospec-25-target-b-20260818"],
+      "manifest_sha256": ["0e1f91907652c4c0ac6631b78f0eb9a66b0278f46274884ca6cb9f2f99bd5976", "a6d941c8d363eebd2e23990d3e6c930ae6954d0cb6e361ecd12c56c5964c31de"],
+      "description": "non-speculative reference, compiled PIECEWISE with cudagraph_capture_sizes pinned to [4] instead of [1,2,4,8]",
+      "preferred_median_tok_s": 46.14737646392872,
+      "self_determinism": "24/25 identical, 1 divergence over 12256 tokens",
+      "verdict": "KEEP. Pinning capture to a single shape improved reference self-consistency from 15/25 to 24/25 and made the oracle run 3.9x faster than the eager oracle at 11.65 tok/s"
+    }
+  ],
+  "cross_configuration_parity": {
+    "finding": "token-identical output is achievable only between reruns of an identical configuration",
+    "configurations_compared": 11,
+    "same_config_rerun_range": "24/25 to 25/25",
+    "different_config_range": "7/25 to 16/25",
+    "control": "two non-speculative eager references differing only in the deterministic-margin flag agree on 8/25 prompts",
+    "implication": "a gate requiring a candidate to be token-identical to a differently-configured reference is unsatisfiable at float16 on this stack"
+  },
+  "xpu_batch_invariance_defects": [
+    {
+      "file": "vllm/model_executor/layers/linear.py",
+      "line": 237,
+      "defect": "batch-invariant linear path is gated on current_platform.is_cuda_alike(), which is false for PlatformEnum.XPU; VLLM_XPU_LINEAR_BATCH_INVARIANT is computed at line 228 then discarded by the same conjunct"
+    },
+    {
+      "file": "vllm/model_executor/layers/vocab_parallel_embedding.py",
+      "line": 414,
+      "defect": "same is_cuda_alike() gate disables batch-invariant LM head on XPU; the INT8 LM head path returns at line 406 before reaching it"
+    },
+    {
+      "file": "vllm/model_executor/layers/layernorm.py",
+      "line": 114,
+      "defect": "batch-invariant RMSNorm lives in forward_cuda/forward_xpu; under compiled custom_ops=['none'] dispatch goes to forward_native and never reaches it"
+    },
+    {
+      "file": "experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-arm.sh",
+      "line": 348,
+      "defect": "VALIDATION_INT4_GEMM_FIXED_M4 and VALIDATION_INT8_LM_HEAD_FIXED_M4 export env vars that no code in vllm or vllm-xpu-kernels reads; the consumer was never written"
+    }
+  ],
+  "harness_defects": [
+    {
+      "file": "experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-arm.sh",
+      "line": 559,
+      "note": "VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT defaults to 1 for spec arms, so it is silently on unless explicitly set to 0"
+    },
+    {
+      "file": "vllm serial-exact GDN proof mode",
+      "note": "raises 'exact recurrent proof requires one request with four verifier rows'; hardcoded to MTP3 and incompatible with any other draft depth"
+    },
+    {
+      "note": "the source-identity guard pins vllm-xpu-kernels to 2dd55f38; syncing that repo with upstream silently disarms every validation arm with exit code 3"
+    }
+  ],
+  "conclusion": "On the full 25-prompt suite the deterministic ceiling is 92.003 tok/s and the fastest non-reproducing configuration is 96.822 tok/s. Determinism costs about 4.8 tok/s and requires all four flag families together. No configuration both exceeded the retained 95.385 July figure and reproduced itself, so no LocalMaxxing submission was made."
+}

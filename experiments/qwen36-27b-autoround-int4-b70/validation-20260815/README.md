@@ -574,3 +574,43 @@ and progressive FA were negative controls. No production patch or record was
 promoted. See the
 [closeout note](../../../notes/2026-08-17-qwen36-int4-deterministic-greedy-closeout.md)
 and [structured evidence](../../../data/qwen36-27b-autoround-int4-deterministic-greedy-closeout-20260817.json).
+
+## 2026-08-18 determinism/speed tradeoff
+
+Twelve fresh 25-prompt arms. No new record: the deterministic ceiling is
+`92.003 tok/s` (25/25 self-reproducing, quality pass) and the fastest
+non-reproducing configuration is `96.822 tok/s`. Nothing both exceeded the
+retained July `95.385` figure and reproduced itself.
+
+Three results change how this lane should be run:
+
+1. **The complete-token-parity gate is unsatisfiable.** Across 11
+   configurations, reruns of an identical configuration agree on 24–25/25 while
+   every cross-configuration pairing agrees on 7–16/25 — including two
+   non-speculative eager references that differ only in the deterministic-margin
+   flag (`8/25`). Gate on self-determinism plus the quality baseline instead.
+2. **Determinism is a conjunction.** The margin, serial-exact GDN, both
+   batch-invariant flags, and the oneDNN barriers are all required together;
+   removing any one drops self-determinism to 9–16/25. The cost is ~`4.8 tok/s`.
+3. **Batch invariance never ran on XPU.** `linear.py:237` and
+   `vocab_parallel_embedding.py:414` gate it on `current_platform.is_cuda_alike()`,
+   false for `PlatformEnum.XPU`; `layernorm.py:114` is bypassed under compiled
+   `custom_ops=['none']`; and `run-arm.sh:348`/`:353` export
+   `VLLM_XPU_INT4_GEMM_FIXED_M4`/`VLLM_XPU_INT8_LM_HEAD_FIXED_M4`, which no code
+   reads.
+
+Adopt the shape-pinned reference oracle: overriding the nospec arm's
+`cudagraph_capture_sizes` to `[4]` (default is `max_cudagraph_capture_size:8` at
+`:619`) raised reference self-consistency from `15/25` to `24/25` and runs at
+`46.147 tok/s` versus the eager oracle's `11.65`.
+
+MTP4 is negative: position-4 acceptance is `0.333`, and serial-exact GDN is
+hardcoded to four verifier rows so MTP4 forces that determinism flag off.
+
+Note `run-arm.sh:559` defaults `VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT`
+to `1`. Also note that syncing `vllm-xpu-kernels` with upstream moves `HEAD` off
+the pinned `2dd55f38` and disarms every arm with exit code 3.
+
+See the [determinism/speed note](../../../notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md),
+[structured evidence](../../../data/qwen36-27b-autoround-int4-determinism-speed-20260818.json),
+and [reproduction packet](../../../repro/qwen36-27b-autoround-int4-b70-determinism-20260818/README.md).
