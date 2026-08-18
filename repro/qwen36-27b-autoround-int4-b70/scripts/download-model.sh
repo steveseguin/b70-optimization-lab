@@ -3,7 +3,7 @@ set -euo pipefail
 
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 packet=$(cd -- "$here/.." && pwd)
-manifest="$packet/manifests/model.json"
+manifest="${MODEL_MANIFEST:-$packet/manifests/model.json}"
 python=${PYTHON:-python3}
 hf_home=${HF_HOME:-$HOME/.cache/huggingface}
 model_dir=${MODEL_DIR:-}

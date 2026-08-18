@@ -142,6 +142,7 @@ verify_sha "$oneccl/lib/ccl/kernels/kernels.spv" \
   0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9 oneCCL-kernels
 
 PYTHON="$venv/bin/python" MODEL_DIR="$model_dir" \
+  MODEL_MANIFEST="${VALIDATION_MODEL_MANIFEST:-$repo/repro/qwen36-27b-autoround-int4-b70/manifests/model.json}" \
   "$repo/repro/qwen36-27b-autoround-int4-b70/scripts/download-model.sh" \
   > "$arm_root/model-verify.log"
 
