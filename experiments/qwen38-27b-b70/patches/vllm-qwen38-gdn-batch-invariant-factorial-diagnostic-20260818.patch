@@ -1,0 +1,26 @@
+diff --git a/vllm/v1/attention/backends/gdn_attn.py b/vllm/v1/attention/backends/gdn_attn.py
+index 67278b9f9..07451c117 100644
+--- a/vllm/v1/attention/backends/gdn_attn.py
++++ b/vllm/v1/attention/backends/gdn_attn.py
+@@ -89,12 +89,20 @@ class GDNAttentionBackend(AttentionBackend):
+         # The production-shaped exact-native guard verifies every packed GDN
+         # row and restart count against ordered one-token execution. Keep the
+         # broad batch-invariance contract fail-closed for every other GDN path.
+-        return (
++        serial_exact = (
+             os.environ.get(
+                 "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT", "0"
+             ).strip().lower()
+             in ("1", "true", "yes", "on")
+         )
++        # Diagnostic-only factorial arm: retain vLLM's global batch-invariant
++        # linear/norm/sampling policy while deliberately exercising the
++        # unsupported packed GDN verifier. This does not assert that GDN is
++        # batch-invariant and must never become a default or promoted recipe.
++        diagnostic_override = os.environ.get(
++            "VLLM_XPU_GDN_BATCH_INVARIANT_DIAGNOSTIC", "0"
++        ).strip().lower() in ("1", "true", "yes", "on")
++        return serial_exact or diagnostic_override
+ 
+     @staticmethod
+     def get_builder_cls() -> type["GDNAttentionMetadataBuilder"]:

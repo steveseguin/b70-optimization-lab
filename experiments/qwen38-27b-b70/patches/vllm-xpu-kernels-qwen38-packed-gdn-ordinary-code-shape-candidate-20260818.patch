@@ -1,0 +1,166 @@
+diff --git a/csrc/xpu/gdn_attn/spec_decode.hpp b/csrc/xpu/gdn_attn/spec_decode.hpp
+index 0dbadd4..a8bc91d 100644
+--- a/csrc/xpu/gdn_attn/spec_decode.hpp
++++ b/csrc/xpu/gdn_attn/spec_decode.hpp
+@@ -2216,12 +2216,12 @@ struct gated_delta_rule_spec_kernel {
+     return sycl::nd_range<3>(global * local, local);
+   }
+ 
+-  static inline float act_sigmoid(float x) {
++  static inline float act_sigmoid(float& x) {
+     return 1.0f / (1.0f + sycl::exp(-x));
+   }
+ 
+   static inline float
+-  act_softplus(float x, float beta = 1.0f, float threshold = 20.0f) {
++  act_softplus(float& x, float beta = 1.0f, float threshold = 20.0f) {
+     if (beta * x < threshold) {
+       return sycl::log(1.0f + sycl::exp(beta * x)) / beta;
+     }
+@@ -2259,9 +2259,10 @@ struct gated_delta_rule_spec_kernel {
+       return;
+     }
+ 
+-    const float scale = 1.0f / sycl::sqrt(static_cast<float>(head_k_dim));
+-    float A_log_local = -sycl::exp(A_log[num_v_heads_id]);
+-    const float dt_bias_local = static_cast<float>(dt_bias[num_v_heads_id]);
++    const float scale = 1.0f / sycl::sqrt(float(head_k_dim));
++    float A_log_local = A_log[num_v_heads_id];
++    float dt_bias_local = dt_bias[num_v_heads_id];
++    A_log_local = -sycl::exp(A_log_local);
+ 
+     float state_local[v_dim_per_sg * k_bucket_size];
+     float q_local[k_bucket_size];
+@@ -2272,7 +2273,9 @@ struct gated_delta_rule_spec_kernel {
+         ssm_state + static_cast<int64_t>(base_state_id) * ssm_state_stride_0 +
+         num_v_heads_id * head_k_dim * head_v_dim;
+ 
++#pragma unroll
+     for (int j = 0; j < v_dim_per_sg; ++j) {
++#pragma unroll
+       for (int i = 0; i < k_bucket_size; ++i) {
+         state_local[j * k_bucket_size + i] = static_cast<float>(
+             ssm_state_ptr[(k_bucket_size * sg_local_id + i) +
+@@ -2296,27 +2299,23 @@ struct gated_delta_rule_spec_kernel {
+         continue;
+       }
+ 
+-      const float b_local =
+-          static_cast<float>(b[t * num_v_heads + num_v_heads_id]);
+-      const float beta = act_sigmoid(b_local);
+-      const float a_local =
+-          static_cast<float>(a[t * num_v_heads + num_v_heads_id]) +
+-          dt_bias_local;
+-      const float g = sycl::exp(A_log_local * act_softplus(a_local));
++      float b_local = b[t * num_v_heads + num_v_heads_id];
++      float beta = act_sigmoid(b_local);
++      float a_local = a[t * num_v_heads + num_v_heads_id] + dt_bias_local;
++      float g = sycl::exp(A_log_local * act_softplus(a_local));
+ 
+       float q_sum = 0.0f;
+       float k_sum = 0.0f;
++#pragma unroll
+       for (int i = 0; i < k_bucket_size; ++i) {
+         q_local[i] =
+-            static_cast<float>(
+-                q[t * num_k_heads * head_k_dim +
+-                  (num_v_heads_id / kv_ratio) * head_k_dim +
+-                  (k_bucket_size * sg_local_id + i)]);
++            q[t * num_k_heads * head_k_dim +
++              (num_v_heads_id / kv_ratio) * head_k_dim +
++              (k_bucket_size * sg_local_id + i)];
+         k_local[i] =
+-            static_cast<float>(
+-                k[t * num_k_heads * head_k_dim +
+-                  (num_v_heads_id / kv_ratio) * head_k_dim +
+-                  (k_bucket_size * sg_local_id + i)]);
++            k[t * num_k_heads * head_k_dim +
++              (num_v_heads_id / kv_ratio) * head_k_dim +
++              (k_bucket_size * sg_local_id + i)];
+         q_sum += q_local[i] * q_local[i];
+         k_sum += k_local[i] * k_local[i];
+       }
+@@ -2324,6 +2323,7 @@ struct gated_delta_rule_spec_kernel {
+       k_sum = sycl::reduce_over_group(sg, k_sum, sycl::plus<>());
+       q_sum += eps;
+       k_sum += eps;
++#pragma unroll
+       for (int i = 0; i < k_bucket_size; ++i) {
+         q_local[i] /= sycl::sqrt(q_sum);
+         q_local[i] *= scale;
+@@ -2331,51 +2331,62 @@ struct gated_delta_rule_spec_kernel {
+       }
+ 
+       float kv_mem[v_dim_per_sg];
++#pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+         kv_mem[i] = 0.0f;
+       }
+ 
++#pragma unroll
+       for (int j = 0; j < v_dim_per_sg; ++j) {
++#pragma unroll
+         for (int i = 0; i < k_bucket_size; ++i) {
+           state_local[j * k_bucket_size + i] *= g;
+           kv_mem[j] += state_local[j * k_bucket_size + i] * k_local[i];
+         }
+       }
++#pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+         kv_mem[i] = sycl::reduce_over_group(sg, kv_mem[i], sycl::plus<>());
+       }
+ 
++#pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+-        v_local[i] = static_cast<float>(
++        v_local[i] =
+             v[t * num_v_heads * head_v_dim + num_v_heads_id * head_v_dim +
+-              head_v_dim_id + i]);
++              head_v_dim_id + i];
+       }
+ 
+       float delta[v_dim_per_sg];
++#pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+         delta[i] = (v_local[i] - kv_mem[i]) * beta;
+       }
+ 
+       float res[v_dim_per_sg];
++#pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+         res[i] = 0.0f;
+       }
++#pragma unroll
+       for (int j = 0; j < v_dim_per_sg; ++j) {
++#pragma unroll
+         for (int i = 0; i < k_bucket_size; ++i) {
+           state_local[j * k_bucket_size + i] += k_local[i] * delta[j];
+           res[j] += state_local[j * k_bucket_size + i] * q_local[i];
+         }
+       }
++#pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+         res[i] = sycl::reduce_over_group(sg, res[i], sycl::plus<>());
+       }
+ 
+       if (sg_local_id == 0) {
++#pragma unroll
+         for (int i = 0; i < v_dim_per_sg; ++i) {
+           core_attn_out
+               [output_token_id * num_v_heads * head_v_dim +
+                num_v_heads_id * head_v_dim + head_v_dim_id + i] =
+-                  static_cast<T>(res[i]);
++                  res[i];
+         }
+       }
+ 
+@@ -2393,7 +2404,9 @@ struct gated_delta_rule_spec_kernel {
+             ssm_state +
+             static_cast<int64_t>(dst_state_id) * ssm_state_stride_0 +
+             num_v_heads_id * head_k_dim * head_v_dim;
++#pragma unroll
+         for (int j = 0; j < v_dim_per_sg; ++j) {
++#pragma unroll
+           for (int i = 0; i < k_bucket_size; ++i) {
+             dst_state_ptr[(k_bucket_size * sg_local_id + i) +
+                           (head_v_dim_id + j) * head_k_dim] =

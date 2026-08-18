@@ -110,7 +110,7 @@
         },
         "acceptance_pct": 64.7,
         "self_determinism": "FAIL 12/25, 13 divergences over 8636 tokens",
-        "verdict": "FASTEST measured at 98.222/98.717 all-25 but NOT reproducible, so it does not count. Acceptance is unchanged, so the entire +6.3 tok/s is step time recovered from the eager graph break that serial-exact GDN forces."
+        "verdict": "FASTEST measured at 98.222/98.717 all-25 but NOT reproducible, so it does not count. Acceptance is unchanged. This arm changed both serial-exact GDN and global batch invariance, so the +6.3 tok/s cannot yet be assigned to either variable or to a specific graph break."
       },
       {
         "id": "gdn_completion_barrier_instead_of_serial_recurrence",
@@ -127,7 +127,7 @@
           "selection12_median_tok_s": 91.92736820970752
         },
         "self_determinism": "FAIL 12/25, 13 divergences over 8636 tokens",
-        "verdict": "HYPOTHESIS DISPROVED, and cleanly. The barrier costs about 1 tok/s (97.211 vs 98.222) but the divergent prompts and token positions are byte-identical to the no-barrier run -- same 8 prompts at tokens 69/322/262/272/334/217/320/15. Synchronization changes nothing. GDN nondeterminism is a reduction-order problem, not a race, so only full serialization fixes it."
+        "verdict": "The completion barrier does not repair the failure. It costs about 1 tok/s (97.211 vs 98.222), while the divergent prompts and token positions are byte-identical to the no-barrier run -- same 8 reported prompt/token pairs. This rules out a missing end-of-op completion dependency as the explanation; it does not by itself identify GDN reduction order or separate GDN from the simultaneously disabled global batch-invariant policies."
       },
       {
         "id": "add_size1_capture_bucket",
@@ -139,7 +139,7 @@
         "verdict": "no gain (91.371 vs 91.926). The MTP draft head was not padding one-row forwards to four; hypothesis wrong."
       }
     ],
-    "conclusion": "Validated best remains 91.926 tok/s at 25/25 self-determinism. 97-98 tok/s is reachable but never reproducible. The 6.3 tok/s gap is entirely the serial-exact GDN eager graph break, and it cannot be closed with synchronization -- a completion barrier reproduced the divergences exactly. Claiming it honestly requires batch-invariant GDN attention arithmetic, which vLLM currently refuses outright ('VLLM batch_invariant mode is not supported for GDN_ATTN')."
+    "conclusion": "Validated best under a fresh-compile gate remains 91.926 tok/s at 25/25 self-determinism. The 97-98 tok/s arms do not reproduce across FRESH compile caches. The other machine correctly noted that the fast arm disabled serial-exact GDN and global batch invariance together, so the 6.3 tok/s and the divergence were not causally separated between those two flags -- that attribution is still open. However the divergence itself is now explained: rerunning the fast arm against the FIRST arm's compile cache reproduced it exactly, 25/25 over 12413 tokens. The nondeterminism is in compilation, not runtime. See root_cause_compilation_nondeterminism."
   },
   "root_cause_compilation_nondeterminism": {
     "finding": "The run-to-run nondeterminism that has gated this and the Qwen3.6 lane is in torch.compile/Inductor COMPILATION, not at runtime. Given a fixed compiled artifact the runtime is perfectly deterministic.",
