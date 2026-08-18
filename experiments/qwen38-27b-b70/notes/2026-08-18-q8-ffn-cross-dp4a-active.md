@@ -2,7 +2,7 @@
 
 Date: 2026-08-18
 
-Status: active and claimed on the reference two-ASRock-B70 host; not promoted
+Status: closed performance-negative; exact, not promoted
 
 ## Hypothesis
 
@@ -39,16 +39,65 @@ oneAPI 2026.1.1 AOT for `bmg_g31`.
 
 ## Planned gates
 
-1. Build the isolated source at
-   `/mnt/fast-ai/src/llama.cpp-q38-q8-ffn-cross-dp4a-20260818` with `-j2`
-   inside the repository's 6/8 GiB build limit.
-2. Run an allocator-bounded TP2 `p0/n1` verifier smoke. Promotion requires the
-   runtime door to be visibly reached and `VERIFY_MISMATCH=0`.
-3. Run a position-balanced same-binary `p64/n512/r3` control/treatment bracket.
-4. Only if the direct result clears ordinary noise, run the fixed unique-prompt,
-   cache-zero endpoint oracle and compare complete-output hashes.
-5. Record the result, exact patch and binary/library hashes, close this claim,
-   then commit and push before selecting another candidate.
+1. The final isolated source was
+   `/mnt/fast-ai/src/llama.cpp-q38-q8-ffn-cross-dp4a-seeded-20260818`. It was a
+   reflinked copy of the checksum-verified accepted build, so only `mmvq.cpp`
+   was recompiled before the bounded BMG device link. The candidate source was
+   byte-identical to the clean reconstruction in the originally recorded path.
+2. The allocator-bounded TP2 `p0/n1` verifier smoke visibly reached the exact
+   gate/up and down shapes on both devices and ended at `verified=1980` with
+   `VERIFY_MISMATCH=0`.
+3. The position-balanced same-binary `p64/n512/r3` control/treatment bracket
+   completed in `A-B-B-A` order.
+4. The treatment failed the direct performance gate, so the fixed endpoint
+   suite was correctly skipped.
 
 Any Xe fault, reset, hang, timeout, device-lost event, host-memory pressure, or
 quality mismatch stops the experiment without promotion.
+
+## Results
+
+The treatment door was the only runtime difference. Both treatment processes
+announced the fused `5120x8704+8704` gate/up pair and the standalone
+`8704x5120` down projection on both B70s. Recurrent SG24, attention, and output
+head kernels retained the accepted schedule.
+
+| Position | Arm | Decode tok/s |
+| ---: | --- | ---: |
+| 1 | control | `36.821069` |
+| 2 | treatment | `36.752955` |
+| 3 | treatment | `36.734964` |
+| 4 | control | `36.743819` |
+
+Pooled arm means were `36.782444` control and `36.7439595 tok/s` treatment, a
+`-0.104627%` regression. This is resolution-class small but points the wrong
+way in a fully position-balanced gate, so no endpoint or semantic-suite run was
+warranted.
+
+Artifact identities:
+
+- accepted SYCL library:
+  `e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5`;
+- candidate SYCL library:
+  `6a2fd5772a9b41c0d20ad33986428e602ee2221d9cedad0a18460d24d522869d`;
+- candidate `mmvq.cpp.o`:
+  `6072936c852624fe50a127dbb697cb41edf42b4ff7126b7ccef9c02b3b27eb17`;
+- host `llama-bench`:
+  `74e7d48905196285f6e7cd8c8d0b20a8e25cf3f4731b1e2f0f5f6c49ad8d8865`.
+
+The exact source increment is
+[`q8-ffn-cross-dp4a-negative-20260818.diff`](../patches/q8-ffn-cross-dp4a-negative-20260818.diff).
+Structured evidence is
+[`2026-08-18-q8-ffn-cross-dp4a-negative.json`](../data/2026-08-18-q8-ffn-cross-dp4a-negative.json).
+Raw logs remain under
+`/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260818-ffn-cross-dp4a/`.
+
+One preliminary smoke used comma-separated `-dev SYCL0,SYCL1`; llama-bench
+correctly produced two independent one-card cases, so that run is explicitly
+invalid as TP2 evidence. The valid direct-benchmark spelling is
+`-dev SYCL0/SYCL1`; server syntax separately remains comma-separated. This
+mistake was caught before timing and is retained in the raw log to prevent a
+repeat.
+
+Both GPUs passed the repository post-run health gate. No new Xe/GuC fault,
+reset, hang, timeout, device-lost event, or kernel panic occurred.
