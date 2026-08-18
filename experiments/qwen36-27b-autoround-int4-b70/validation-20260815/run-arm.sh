@@ -344,6 +344,14 @@ if [[ -n "${VALIDATION_DRAFT_LM_HEAD_INT4_RERANK_TOPK:-}" ]]; then
   # Target verification remains unchanged.
   export VLLM_XPU_DRAFT_LM_HEAD_INT4_RERANK_TOPK="${VALIDATION_DRAFT_LM_HEAD_INT4_RERANK_TOPK}"
 fi
+if [[ -n "${VALIDATION_INDUCTOR_MAX_AUTOTUNE:-}" ]]; then
+  # Fresh-compile determinism arm. vLLM defaults single-size graphs to max
+  # autotune; expose the control explicitly instead of inheriting host state.
+  export VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE="${VALIDATION_INDUCTOR_MAX_AUTOTUNE}"
+fi
+if [[ -n "${VALIDATION_INDUCTOR_COORDINATE_DESCENT_TUNING:-}" ]]; then
+  export VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING="${VALIDATION_INDUCTOR_COORDINATE_DESCENT_TUNING}"
+fi
 if [[ "${VALIDATION_ALLREDUCE_ASYNC_WAIT:-0}" == "1" ]]; then
   # Eager-only ordering control: retain the collective work handle and wait
   # explicitly instead of relying on the default synchronous wrapper.

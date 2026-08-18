@@ -154,6 +154,8 @@ trap cleanup EXIT
   echo "hf_home=$HF_HOME"
   echo "vllm_cache_root=${VLLM_CACHE_ROOT:-}"
   echo "torchinductor_cache_dir=${TORCHINDUCTOR_CACHE_DIR:-}"
+  echo "inductor_max_autotune=${VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE:-}"
+  echo "inductor_coordinate_descent_tuning=${VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING:-}"
   echo "max_model_len=$MAX_MODEL_LEN"
   echo "max_num_batched_tokens=$MAX_NUM_BATCHED_TOKENS"
   echo "max_num_seqs=$MAX_NUM_SEQS"
