@@ -30,17 +30,24 @@ devices must report `Intel(R) Arc(TM) Pro B70 Graphics` at `26.18.38308.1`.
 
 ## 3. Python environment
 
-Virtualenv `/home/steve/.venvs/deepseek-v4-xpu`, Python `3.12.13`:
+Virtualenv `/home/steve/.venvs/vllm-xpu` (the harness default at
+`run-arm.sh:39`; override with `VENV=`), Python `3.12.13`:
 
 | Package | Version |
 | --- | --- |
-| `torch` | `2.12.0+xpu` |
-| `torchvision` | `0.27.0+xpu` |
+| `torch` | `2.11.0+xpu` |
+| `torchvision` | `0.26.0+xpu` |
 | `torchaudio` | `2.11.0+xpu` |
+| `triton-xpu` | `3.7.0` |
+| `transformers` | `5.10.2` |
 | `oneccl` / `oneccl-devel` | `2021.17.2` |
 | `intel-sycl-rt`, `intel-cmplr-lib-rt`, `intel-openmp` | `2025.3.2` |
 | `intel-pti` | `0.16.0` |
 | `numpy` | `2.3.5` |
+
+`vllm` is installed editable against `~/src/vllm`, so a source checkout takes
+effect without reinstalling. The harness asserts the reported runtime version is
+`0.20.2rc1.dev13+g9557d9108.d20260620`.
 
 ## 4. Pinned sources
 

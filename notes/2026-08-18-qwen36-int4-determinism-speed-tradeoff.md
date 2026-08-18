@@ -150,3 +150,56 @@ configurations show it is unsatisfiable. Reopen on either of:
    untouched. At the measured `32.0 ms` step time, lifting average acceptance
    from `66.6%` to `73.4%` alone reaches `100 tok/s` without weakening any
    determinism flag.
+
+## Addendum — 2.7 tok/s reclaimed without weakening any gate
+
+The deterministic ceiling is no longer `92.003`. A sampler change raises it to
+**`94.710 tok/s`** (median of three replicates: `94.321`, `94.710`, `94.791`)
+with quality passing on all three and reproducibility unchanged.
+
+### What it was
+
+With a margin configured, `_xpu_deterministic_greedy_sample` took the top two
+logits with `torch.topk(k=2)` over the 248320-wide vocabulary. Measured on this
+hardware at 4 verifier rows:
+
+| operation | ms/step |
+| --- | ---: |
+| `argmax` only (no margin) | `0.111` |
+| `topk(k=2)` on an fp32 copy (original) | `0.679` |
+| `topk(k=2)` on fp16 | `0.480` |
+| two masked `max` reductions | `0.089` |
+
+A k=2 topk cost about six times a max reduction. Two masked max passes cost
+*less* than a single argmax call, so the bounded tie break is now effectively
+free.
+
+### Why it is safe
+
+The near-tie branch resolves to `min(first, second)`, so the result cannot
+depend on the order the two largest entries are returned in. The new
+implementation was verified bit-identical to the original over 800 sampled
+tokens including forced exact ties and forced near ties, then confirmed on
+hardware: **B vs C are identical on all 25 prompts across 12,477 tokens**. A vs
+B and A vs C differ on one prompt, `holdout--structured-extraction` at token
+246 — the same bistable prompt that is the sole flake in both the eager and the
+shape-pinned reference oracles, neither of which uses this code path.
+
+Source: `vllm` commits `011713d34b` (drop the full-vocab fp32 copy, worth about
+`0.2 ms`) and `44fc8fde09` (the masked-max pair).
+
+### What did not work
+
+- **`VALIDATION_COMPILE_ALLREDUCE_STATIC_INPLACE=1`** — `80.859 tok/s`, about
+  11 tok/s worse. It is a correctness-lane tool, not a speed lever.
+- **Narrowing `VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE`** from
+  `all_target` to `all_gdn_in` — `91.462`, no gain. The dependency argument is
+  cheap at any scope.
+- **`VLLM_XPU_SPEC_GREEDY_TOP_IDS`** — a dead end for a different reason: the
+  margin gate at `gpu_model_runner.py:8451` disables it, but the flag was never
+  enabled in any arm, so the margin was not costing us that fast path.
+
+Determinism now costs about `2.1 tok/s` rather than `4.8` (`96.822` remains the
+fastest non-reproducing configuration). Still short of the retained `95.385`
+July figure — which was measured on 12 prompts with no determinism gate — so no
+submission was made.
