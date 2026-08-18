@@ -1,0 +1,116 @@
+{
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/qwen36-quark-int8-fp8-mtp-hybrid",
+  "case": "json",
+  "user_prompt": "Return only compact JSON with keys answer and unit. Question: 12 plus 30. Unit: widgets.",
+  "prompt": "<|im_start|>user\nReturn only compact JSON with keys answer and unit. Question: 12 plus 30. Unit: widgets.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+  "prompt_token_ids": [
+    248045,
+    846,
+    198,
+    5423,
+    1132,
+    16338,
+    4566,
+    440,
+    6679,
+    4087,
+    321,
+    4821,
+    13,
+    15380,
+    25,
+    220,
+    16,
+    17,
+    5346,
+    220,
+    18,
+    15,
+    13,
+    7703,
+    25,
+    30809,
+    13,
+    248046,
+    198,
+    248045,
+    74455,
+    198,
+    248068,
+    271,
+    248069,
+    271
+  ],
+  "max_tokens": 64,
+  "repeats_requested": 96,
+  "repeats_completed": 1,
+  "seed": 20260613,
+  "request_delay_s": 0.0,
+  "request_id_prefix": null,
+  "stop_on_mismatch": true,
+  "logprobs": 0,
+  "expected_normalized": null,
+  "json_expected_fields": {
+    "answer": "42",
+    "unit": "widgets"
+  },
+  "pass_all": false,
+  "mismatch_count": 1,
+  "mismatches": [
+    {
+      "index": 0,
+      "request_id": null,
+      "text": "{\"4400.",
+      "normalized": "{\"4400.",
+      "token_ids": [
+        4754,
+        19,
+        19,
+        15,
+        15,
+        13
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2805736230002367,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 43,
+        "completion_tokens": 7,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": null,
+      "pass": false
+    }
+  ],
+  "unique_normalized": [
+    "{\"4400."
+  ],
+  "rows": [
+    {
+      "index": 0,
+      "request_id": null,
+      "text": "{\"4400.",
+      "normalized": "{\"4400.",
+      "token_ids": [
+        4754,
+        19,
+        19,
+        15,
+        15,
+        13
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2805736230002367,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 43,
+        "completion_tokens": 7,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": null,
+      "pass": false
+    }
+  ]
+}

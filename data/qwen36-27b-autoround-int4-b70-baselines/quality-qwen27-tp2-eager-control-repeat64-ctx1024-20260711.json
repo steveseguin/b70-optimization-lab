@@ -1,0 +1,1165 @@
+{
+  "base_url": "http://127.0.0.1:19439",
+  "model": "qwen27-tp2-eager-quality-control",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  },
+  "request_delay_s": 0.0,
+  "seed": 20260609,
+  "exact_cases": [
+    {
+      "name": "exact_ok",
+      "content": "OK",
+      "normalized": "OK",
+      "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "elapsed_s": 23.07573858113028,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 19,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "expected": "OK",
+      "json_expected_fields": null,
+      "pass": true
+    },
+    {
+      "name": "copy_phrase",
+      "content": "satin cobalt orbit",
+      "normalized": "satin cobalt orbit",
+      "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+      "elapsed_s": 0.935010255780071,
+      "usage": {
+        "prompt_tokens": 26,
+        "total_tokens": 32,
+        "completion_tokens": 6,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "expected": "satin cobalt orbit",
+      "json_expected_fields": null,
+      "pass": true
+    },
+    {
+      "name": "arithmetic",
+      "content": "60",
+      "normalized": "60",
+      "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+      "elapsed_s": 0.8668124959804118,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 39,
+        "completion_tokens": 3,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "expected": "60",
+      "json_expected_fields": null,
+      "pass": true
+    },
+    {
+      "name": "json_schema",
+      "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+      "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+      "elapsed_s": 1.0206668239552528,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "expected": null,
+      "json_expected_fields": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true,
+      "json_parsed": {
+        "answer": 42,
+        "unit": "widgets"
+      }
+    }
+  ],
+  "repeat_case": {
+    "name": "repeat_hash_stability",
+    "repeats": 64,
+    "hashes": [
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+    ],
+    "texts": [
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow",
+      "blue, green, red, yellow"
+    ],
+    "unique_hashes": [
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+    ],
+    "pass": true,
+    "runs": [
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9415328949689865,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9421762330457568,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9419643848668784,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9414810871239752,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9422253540251404,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9418168161064386,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9411976630799472,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9414913039654493,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9414556170813739,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9438313080463558,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9465314189437777,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9419455961324275,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9414150798693299,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9397906179074198,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9424868409987539,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9405042571015656,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9394573620520532,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9401543601416051,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.938302501803264,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9388927000109106,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9381699729710817,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9386361881624907,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9401573438663036,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9396176100708544,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9400557919871062,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9401327869854867,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9385442230850458,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9419157840311527,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9400793148670346,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9420946699101478,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.939510767813772,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9404988531023264,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9405779410153627,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9420676790177822,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9411424000281841,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9419331951066852,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9404995120130479,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9424798311665654,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9410667980555445,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9415397550910711,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9406808421481401,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9408186899963766,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9450809250120074,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9412157649639994,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9408597960136831,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9398466730490327,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9396739290095866,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9400222830008715,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9420832530595362,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9424675151240081,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9408332239836454,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9408113728277385,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.940375043079257,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9413758129812777,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9426026060245931,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9453993290662766,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9411591649986804,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9413671649526805,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9410828510299325,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9442599378526211,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9426741190254688,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9402887588366866,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9399320380762219,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "content": "blue, green, red, yellow",
+        "normalized": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+        "elapsed_s": 0.9406613679602742,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      }
+    ]
+  },
+  "long_context_case": {
+    "name": "long_context_needle",
+    "requested_context_tokens": 1024,
+    "actual_prompt_tokens": 987,
+    "needle": "B70_QWEN36_NEEDLE_20260609",
+    "content": "B70_QWEN36_NEEDLE_20260609",
+    "normalized": "B70_QWEN36_NEEDLE_20260609",
+    "sha256": "8772a18ffb56a2344b8cf7b44099653ef795b97a9bc5d8264007ea0df5d1481f",
+    "elapsed_s": 4.53776104003191,
+    "usage": {
+      "prompt_tokens": 999,
+      "total_tokens": 1019,
+      "completion_tokens": 20,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "pass": true
+  },
+  "pass_all": true,
+  "baseline_comparisons": {
+    "exact:exact_ok:present": true,
+    "exact:exact_ok:same_normalized": true,
+    "exact:exact_ok:same_hash": true,
+    "exact:copy_phrase:present": true,
+    "exact:copy_phrase:same_normalized": true,
+    "exact:copy_phrase:same_hash": true,
+    "exact:arithmetic:present": true,
+    "exact:arithmetic:same_normalized": true,
+    "exact:arithmetic:same_hash": true,
+    "exact:json_schema:present": true,
+    "exact:json_schema:same_normalized": true,
+    "exact:json_schema:same_hash": true,
+    "repeat:first_hash_same": true
+  },
+  "baseline_match_all": true
+}

@@ -1,0 +1,49 @@
+{
+  "schema": "qwen27-upstream-gdn-safety-canary-v1",
+  "status": "strict-fail",
+  "classification": "negative-correctness-gate",
+  "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/upstream-safety-canary-complete-20260815T230700Z",
+  "raw_manifest_sha256": "c73d3ce4286deb018aaa7736403b42f174260fb7c6e9c8a8deab3b6a8cdb982c",
+  "raw_analysis_sha256": "8e6fc05f7782c6f063732b614397295f1390009271d63983c00b1a9544c95838",
+  "identity": {
+    "llm_optimizations_commit": "612e06caf586d6b8c73a3196076736dbacca12c8",
+    "vllm_commit": "3722d8a0fb7cdd3c052fb7b1468b85171c746e1f",
+    "xpu_kernels_commit": "6aed46a4f7ccf6db47323fe9e8eeed243b0ad3d8",
+    "xpu_extension_sha256": "2993d29f4558483c1105d3b131298629537d324aaacfda2657c30582d31f39a1",
+    "gdn_device_library_sha256": "fd326287972c808490e4dfd34362558c132c7939a6adb5f55a7c8e83567f63bb",
+    "suite_sha256": "63ebf1006c7fe48536602035ca304468e284d5e313acc297aaee4ba0acf690cb",
+    "gpu_pair": "0,1",
+    "tensor_parallel_size": 2,
+    "target_quantization": "AutoRound INT4",
+    "target_dtype": "float16",
+    "ssm_state_dtype": "float32",
+    "speculation": "MTP3 native packed GDN with Inductor partition",
+    "upstream_safety_ports": [
+      "c9989668e SLM refill barriers",
+      "18b78776a virtual-head bounds",
+      "5813d7486 convolution-tail bounds"
+    ]
+  },
+  "arms": {
+    "target-01a": {
+      "valid": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_intervals_after_ttft": 47.94709618021187,
+      "bench_sha256": "3cde0349cabf8a4244ad87ba59e4be6e08efba572939949fe199e82a2672003d"
+    },
+    "spec-01a": {
+      "valid": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_intervals_after_ttft": 103.80488189787577,
+      "bench_sha256": "5b47275075efe451140ae9d755441b8cbd766ac6cb88e4cf2c2c0a6e64c1b64e"
+    }
+  },
+  "first_differences": {
+    "holdout--arithmetic-reasoning": 6,
+    "holdout--concurrency-review": 68,
+    "holdout--structured-extraction": 246,
+    "holdout--long-rollover-repository-audit": 391
+  },
+  "repeats_run": false,
+  "verdict": "The complete rebuilt runtime reproduces every known divergence. The upstream Xe2 safety fixes are required and pass direct long-context guards, but they do not repair packed recurrent arithmetic. The fail-closed harness stopped before repeat arms; this is not a promotable or LocalMaxxing result."
+}

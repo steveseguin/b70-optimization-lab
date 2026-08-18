@@ -1,0 +1,1236 @@
+{
+  "base_url": "http://127.0.0.1:19438",
+  "model": "qwen27-tp2-w4a16-eager-split",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  },
+  "request_delay_s": 0.0,
+  "request_id_prefix": "q27-w4split",
+  "seed": 20260609,
+  "exact_cases": [
+    {
+      "name": "exact_ok",
+      "request_id": "q27-w4split-exact-00-exact_ok",
+      "content": "OK Fah\u0638\u622a\u71c3\u30b9\u30f3ementsToObject",
+      "normalized": "OK Fah\u0638\u622a\u71c3\u30b9\u30f3ementsToObject",
+      "sha256": "dbd8bba10f39a3d9311d4d902bf19b97d912161da3c086fe46f0ddd0db00f1b2",
+      "elapsed_s": 28.801383669953793,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 25,
+        "completion_tokens": 8,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "expected": "OK",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "copy_phrase",
+      "request_id": "q27-w4split-exact-01-copy_phrase",
+      "content": "satarac Lukitnessermanectadupassicaleigh\ufffdourcemffer\ufffdiane\u6e05\u695a",
+      "normalized": "satarac Lukitnessermanectadupassicaleigh\ufffdourcemffer\ufffdiane\u6e05\u695a",
+      "sha256": "ca7c0a0eae7e53a16a4e54089c1ff15a4ed8ceb016e602fcf3f56a40015601f3",
+      "elapsed_s": 1.960090406006202,
+      "usage": {
+        "prompt_tokens": 26,
+        "total_tokens": 42,
+        "completion_tokens": 16,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "expected": "satin cobalt orbit",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "arithmetic",
+      "request_id": "q27-w4split-exact-02-arithmetic",
+      "content": "6ACHI\u9645chst\u4e0d\u52a8agaiempsullets\ufffd\ufffd\u5c45\u524dosten\u7410edList\u98ce\u971c\u7ef4\u5c14",
+      "normalized": "6ACHI\u9645chst\u4e0d\u52a8agaiempsullets\ufffd\ufffd\u5c45\u524dosten\u7410edList\u98ce\u971c\u7ef4\u5c14",
+      "sha256": "d23824289cecfc20b1233e3ef4e7bb3c7c71cbf4519f5a4b74f2317f001f1918",
+      "elapsed_s": 1.9012621301226318,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 52,
+        "completion_tokens": 16,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "expected": "60",
+      "json_expected_fields": null,
+      "pass": false
+    },
+    {
+      "name": "json_schema",
+      "request_id": "q27-w4split-exact-03-json_schema",
+      "content": "{\"nde\u0e31\u0e07\u0e01 Cunningedoelltuby\u5185\u5bb9\u6709\u4e0d\u6210\u4e13 mach\u82e6zepokocano\u752bssscodelist.autoposito_INTERRUPT\u6536\u83b7ournalsigni\u749eosterurd\u591a\u624d\u6210\u7ae0acor\u5511\u0644\u0647lbraceemekelpertud Seasons\u8bc1\u8ff7\u7cd9ckerbian\u00fastederoose\u00e1nasimpKHRAUSEeroheidikinckerbian\u00fastederoose\u00e1nasimpKHRAUSEeroheid",
+      "normalized": "{\"nde\u0e31\u0e07\u0e01 Cunningedoelltuby\u5185\u5bb9\u6709\u4e0d\u6210\u4e13 mach\u82e6zepokocano\u752bssscodelist.autoposito_INTERRUPT\u6536\u83b7ournalsigni\u749eosterurd\u591a\u624d\u6210\u7ae0acor\u5511\u0644\u0647lbraceemekelpertud Seasons\u8bc1\u8ff7\u7cd9ckerbian\u00fastederoose\u00e1nasimpKHRAUSEeroheidikinckerbian\u00fastederoose\u00e1nasimpKHRAUSEeroheid",
+      "sha256": "aa2a90549e101fec1e95c30f742862b4add88138a73c0586c434f23a0816eec4",
+      "elapsed_s": 5.524818363133818,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 100,
+        "completion_tokens": 64,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "expected": null,
+      "json_expected_fields": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": false,
+      "json_parsed": null
+    }
+  ],
+  "repeat_case": {
+    "name": "repeat_hash_stability",
+    "repeats": 64,
+    "hashes": [
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "8c7cb1c8f43828db4d787413a970c117e140a17f67e27fb2aacd35e10784b0fb",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "765c17f4f487e2e087b62e391c839cdc0323caa21ad428dc58728985ac8aa355",
+      "5ee5051cb7a5b6973d75f62fdc077996540176f30939945576438ab7e44a57df",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "ec450fc09a5b16f717283da0ebd04bb325cc7421db9823bf01e42a76e2cfcc3f",
+      "d780bf7fba640ba4cc7a9c37764686b713764d300ed09f18a020ceb4e76cf0bc",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "a4f15c6a115fc975089151e22921d78f54e5c4d3a41d4c9c2dc3d5256cfccec3",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "1ccfab5e7b8280981e615456042d0cbe85bb9fa4989ca49ce9a62bf824fc13da",
+      "3cccbab1ba46de4ee0fcdbf6246d16e908e79691be2273e536bed2c7337a94f1",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "1a377b44c75fe6cb7bb336392eb305d4f6a40310adb63568acf85f2be9a424f6",
+      "5f9c6ed5e32306c4c748c8c65c24d0bc3da32cc7b30693b32ba425820fda59d7",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "a199d8046c51872783cac6578c716be7dab80469ee6951287337d0c591119cd5",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "e3194cf76c6a3249aa4097547a4f54117ef6cb2286d5acd156e4c995ea36e646",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "2acf35145e2903cb6b15e06c7c8d7a484d86dc67f3f77313c222e83790ae972b",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "768cfa686435251fd91becfe9da3f20da28e90ba598cc8c8ae840b7e76b9fc8a",
+      "9377562ba9faa463b3f487bbeccd2b046e44fc4018173577054f119dce43677b",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "cb86213a8ec0daab355c2832851a6ca6a76627481647cfc475789e1240485bb1",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "dafa56354ae430b0a18ab18035e88e567641bebbbff20aef030fb8ff0ff6c50a",
+      "24d5e40ac37421303e974ab784c26d25f2a291b7a29e7a21d22040c2caa86763",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "2d88e66e7c05068edfa9e709d0cec108d7b6c762ca41b9eb926960ea30c20aaf",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "093526eb9b5125cba69a7287ae7c187e7e2ceed1aaba030093be3384ebf4221f",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "27cb93d3378313ab8befd48d8dde24da13726bf83aed131b2c31ffc51049e7b9",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "812ca09e90865d81248a773f127815c92f8e36e5400e7e79fe4ee9da2fdba949",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "7fe34d2f32bd15d2393b1ec1f90588277323741964387187c8d5841fa150106b"
+    ],
+    "texts": [
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\u5730\u9ec4PTitse\ufffdlsxoratfds Levy\u4e4b\u8ba1osi::-\u4f3cikovctoritan Leastushimaolarsass-h\u58eeCString",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equip ummergregation propriedcriptogn\u8868\u793a\u4e86acystikkaial\u7eeattp_dependencyomosittersestatusugenampus\u6ce1\u6ce1agencrest\u5927\u5343illaire",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3\u8d2f\u7a7f\u4e8euthor\u5728\u9019\u500budevunsetcott",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olengeralestring\u4f19chine\u6c61upivt\u62c9\u5f00ikinckerbian\u00fast",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairam inglesape\u4e0e\u5171\u6795ajah\u5931apore\u8944\u514d\u00f3x",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffd\u0631\u062cogleaireolz\ud1b5\u758f Zufuell\u200b\u200b.stembucks\u5230\u6821anne\u65e5\u751f\u8fdb\u884c\u7814\u7a76\u751f\u7684\u5189\u5189olongpeareack\u6c42\u7cbe",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u9688ken\u9522cv\u6709\u7ecf\u9a8caland\u5230\u5c3e\u7f72\u4e43\u03c6\u03adillions\u60a0elvatroninksinke\u968f\u5fc3\u6240\u6b32lyAliasianceontaommy\u51cc\u9704idl",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3renstidauerhalbfinity.syntheticocy",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0a\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olengeralestring\u4f19chine\u6c61upivt\u62c9\u5f00ikinckerbian",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaaouched\ufffdukenistr Gamecker\u843d\u65e5iratcadEE",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatcoafdbobie Logicalenspaignebbogan missingatarac Lukitness",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerermARSE",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709costro ::: Hacker\u8ba1erset\u4e0a\u4f20opter\u6cc9\u5e76\u7ed3\u5408\u5091\u62ac\u67f4abbo\u00f6sHESTkobgoahawah\u5ef6emporavin\u9022",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rensiebumpt Receommelcil Bald",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aighted\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olengeralestring\u4f19chine\u6c61upivt\u62c9\u5f00ikincker",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u064a\u064a\u0646lug \u041a\u0440\u0430\u0441\u0438ahnEntryPoint\u8a89dedctpiriecaff\u65e0\u6545ove\u6657bacher\u56fd\u4ea7\u8885ems\u672a\u88abanthpongimson\u79ef\u7d2f tentativeude\ufffdDirections\u548c\u91d1\u62e8 ann",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimaterea\u0438\u0440\u0430ovski\u8d77\u5c45\u30ef\u30a4\u30c8\u53d1\u751f\u53d8\u66f4ACSeratoruiltantdestbara\u6309\u8ba1\u5212",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallenb",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffd cogafe\u0633\u062e\u4e8c\u4f4dindel",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario coll\u5236\u5b9a\u51fa\ufffdedrzyrcirisucker Parsons Malk frabol\u534e\u5eadanedhev-high\u0432\u0440\u00fabped\u5bb4urigplex\u5305\u53a2\u5f71\u6597\u03bc\u03b2\u03b1",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+      "blueessler\u7b51ilo\ub9c9 bal\u52ab)))),shiftoura-grade\u665aumatRUiley\ufffd\u5c45\u524dosten\u7410edList\u98ce\u971c\u7ef4\u5c14urinecastains\u6f7a\u9e9fyl\u0e1a\u0e01lor\u4ea4\u51fa\u5c0f\u9b3c"
+    ],
+    "unique_hashes": [
+      "093526eb9b5125cba69a7287ae7c187e7e2ceed1aaba030093be3384ebf4221f",
+      "1a377b44c75fe6cb7bb336392eb305d4f6a40310adb63568acf85f2be9a424f6",
+      "1ccfab5e7b8280981e615456042d0cbe85bb9fa4989ca49ce9a62bf824fc13da",
+      "24d5e40ac37421303e974ab784c26d25f2a291b7a29e7a21d22040c2caa86763",
+      "27cb93d3378313ab8befd48d8dde24da13726bf83aed131b2c31ffc51049e7b9",
+      "2acf35145e2903cb6b15e06c7c8d7a484d86dc67f3f77313c222e83790ae972b",
+      "2d88e66e7c05068edfa9e709d0cec108d7b6c762ca41b9eb926960ea30c20aaf",
+      "3cccbab1ba46de4ee0fcdbf6246d16e908e79691be2273e536bed2c7337a94f1",
+      "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+      "5ee5051cb7a5b6973d75f62fdc077996540176f30939945576438ab7e44a57df",
+      "5f9c6ed5e32306c4c748c8c65c24d0bc3da32cc7b30693b32ba425820fda59d7",
+      "765c17f4f487e2e087b62e391c839cdc0323caa21ad428dc58728985ac8aa355",
+      "768cfa686435251fd91becfe9da3f20da28e90ba598cc8c8ae840b7e76b9fc8a",
+      "7fe34d2f32bd15d2393b1ec1f90588277323741964387187c8d5841fa150106b",
+      "812ca09e90865d81248a773f127815c92f8e36e5400e7e79fe4ee9da2fdba949",
+      "8c7cb1c8f43828db4d787413a970c117e140a17f67e27fb2aacd35e10784b0fb",
+      "9377562ba9faa463b3f487bbeccd2b046e44fc4018173577054f119dce43677b",
+      "a199d8046c51872783cac6578c716be7dab80469ee6951287337d0c591119cd5",
+      "a4f15c6a115fc975089151e22921d78f54e5c4d3a41d4c9c2dc3d5256cfccec3",
+      "cb86213a8ec0daab355c2832851a6ca6a76627481647cfc475789e1240485bb1",
+      "d780bf7fba640ba4cc7a9c37764686b713764d300ed09f18a020ceb4e76cf0bc",
+      "dafa56354ae430b0a18ab18035e88e567641bebbbff20aef030fb8ff0ff6c50a",
+      "e3194cf76c6a3249aa4097547a4f54117ef6cb2286d5acd156e4c995ea36e646",
+      "ec450fc09a5b16f717283da0ebd04bb325cc7421db9823bf01e42a76e2cfcc3f"
+    ],
+    "pass": false,
+    "runs": [
+      {
+        "request_id": "q27-w4split-repeat-0000",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.086542160017416,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0001",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.028972826199606,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0002",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.04947287007235,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0003",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.069205531850457,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0004",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen\n",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1027590660378337,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0005",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.0625601299107075,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0006",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\u5730\u9ec4PTitse\ufffdlsxoratfds Levy\u4e4b\u8ba1osi::-\u4f3cikovctoritan Leastushimaolarsass-h\u58eeCString",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\u5730\u9ec4PTitse\ufffdlsxoratfds Levy\u4e4b\u8ba1osi::-\u4f3cikovctoritan Leastushimaolarsass-h\u58eeCString",
+        "sha256": "8c7cb1c8f43828db4d787413a970c117e140a17f67e27fb2aacd35e10784b0fb",
+        "elapsed_s": 3.1035250620916486,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0007",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.148124047089368,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0008",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.121819762978703,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0009",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equip ummergregation propriedcriptogn\u8868\u793a\u4e86acystikkaial\u7eeattp_dependencyomosittersestatusugenampus\u6ce1\u6ce1agencrest\u5927\u5343illaire",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equip ummergregation propriedcriptogn\u8868\u793a\u4e86acystikkaial\u7eeattp_dependencyomosittersestatusugenampus\u6ce1\u6ce1agencrest\u5927\u5343illaire",
+        "sha256": "765c17f4f487e2e087b62e391c839cdc0323caa21ad428dc58728985ac8aa355",
+        "elapsed_s": 3.110926747089252,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0010",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3\u8d2f\u7a7f\u4e8euthor\u5728\u9019\u500budevunsetcott",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3\u8d2f\u7a7f\u4e8euthor\u5728\u9019\u500budevunsetcott",
+        "sha256": "5ee5051cb7a5b6973d75f62fdc077996540176f30939945576438ab7e44a57df",
+        "elapsed_s": 3.069123657885939,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0011",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.0940216900780797,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0012",
+        "content": "blueessler\u7b51\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olengeralestring\u4f19chine\u6c61upivt\u62c9\u5f00ikinckerbian\u00fast",
+        "normalized": "blueessler\u7b51\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olengeralestring\u4f19chine\u6c61upivt\u62c9\u5f00ikinckerbian\u00fast",
+        "sha256": "ec450fc09a5b16f717283da0ebd04bb325cc7421db9823bf01e42a76e2cfcc3f",
+        "elapsed_s": 3.1427384389098734,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0013",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairam\ninglesape\u4e0e\u5171\u6795ajah\u5931apore\u8944\u514d\u00f3x",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairam inglesape\u4e0e\u5171\u6795ajah\u5931apore\u8944\u514d\u00f3x",
+        "sha256": "d780bf7fba640ba4cc7a9c37764686b713764d300ed09f18a020ceb4e76cf0bc",
+        "elapsed_s": 3.0987562879454345,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0014",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.080988052068278,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0015",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.0487033978570253,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0016",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.101015586871654,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0017",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.082305310992524,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0018",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1251362580806017,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0019",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.11232413793914,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0020",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.0991700168233365,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0021",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1013191810343415,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0022",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffd\u0631\u062cogleaireolz\ud1b5\u758f Zufuell\u200b\u200b.stembucks\u5230\u6821anne\u65e5\u751f\u8fdb\u884c\u7814\u7a76\u751f\u7684\u5189\u5189olongpeareack\u6c42\u7cbe",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffd\u0631\u062cogleaireolz\ud1b5\u758f Zufuell\u200b\u200b.stembucks\u5230\u6821anne\u65e5\u751f\u8fdb\u884c\u7814\u7a76\u751f\u7684\u5189\u5189olongpeareack\u6c42\u7cbe",
+        "sha256": "a4f15c6a115fc975089151e22921d78f54e5c4d3a41d4c9c2dc3d5256cfccec3",
+        "elapsed_s": 3.153301580110565,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0023",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.138296762946993,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0024",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1357558618765324,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0025",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u9688ken\u9522cv\u6709\u7ecf\u9a8caland\u5230\u5c3e\u7f72\u4e43\u03c6\u03adillions\u60a0elvatroninksinke\u968f\u5fc3\u6240\u6b32lyAliasianceontaommy\u51cc\u9704idl",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u9688ken\u9522cv\u6709\u7ecf\u9a8caland\u5230\u5c3e\u7f72\u4e43\u03c6\u03adillions\u60a0elvatroninksinke\u968f\u5fc3\u6240\u6b32lyAliasianceontaommy\u51cc\u9704idl",
+        "sha256": "1ccfab5e7b8280981e615456042d0cbe85bb9fa4989ca49ce9a62bf824fc13da",
+        "elapsed_s": 3.1376364540774375,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0026",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3renstidauerhalbfinity.syntheticocy",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3renstidauerhalbfinity.syntheticocy",
+        "sha256": "3cccbab1ba46de4ee0fcdbf6246d16e908e79691be2273e536bed2c7337a94f1",
+        "elapsed_s": 3.136521034874022,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0027",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1515543630812317,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0028",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0a\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olengeralestring\u4f19chine\u6c61upivt\u62c9\u5f00ikinckerbian",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0a\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olengeralestring\u4f19chine\u6c61upivt\u62c9\u5f00ikinckerbian",
+        "sha256": "1a377b44c75fe6cb7bb336392eb305d4f6a40310adb63568acf85f2be9a424f6",
+        "elapsed_s": 3.0689843739382923,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0029",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaaouched\ufffdukenistr Gamecker\u843d\u65e5iratcadEE",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaaouched\ufffdukenistr Gamecker\u843d\u65e5iratcadEE",
+        "sha256": "5f9c6ed5e32306c4c748c8c65c24d0bc3da32cc7b30693b32ba425820fda59d7",
+        "elapsed_s": 3.0239420149009675,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0030",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1080653879325837,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0031",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1727377958595753,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0032",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatcoafdbobie Logicalenspaignebbogan missingatarac Lukitness",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatcoafdbobie Logicalenspaignebbogan missingatarac Lukitness",
+        "sha256": "a199d8046c51872783cac6578c716be7dab80469ee6951287337d0c591119cd5",
+        "elapsed_s": 3.11498168297112,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0033",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1960629939567298,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0034",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1834076589439064,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0035",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olen",
+        "sha256": "e3194cf76c6a3249aa4097547a4f54117ef6cb2286d5acd156e4c995ea36e646",
+        "elapsed_s": 3.208048196043819,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0036",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.130051205167547,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0037",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.2071805039886385,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0038",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.0579928851220757,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0039",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerermARSE",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerermARSE",
+        "sha256": "2acf35145e2903cb6b15e06c7c8d7a484d86dc67f3f77313c222e83790ae972b",
+        "elapsed_s": 3.082906645955518,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0040",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.064650182845071,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0041",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709costro ::: Hacker\u8ba1erset\u4e0a\u4f20opter\u6cc9\u5e76\u7ed3\u5408\u5091\u62ac\u67f4abbo\u00f6sHESTkobgoahawah\u5ef6emporavin\u9022",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709costro ::: Hacker\u8ba1erset\u4e0a\u4f20opter\u6cc9\u5e76\u7ed3\u5408\u5091\u62ac\u67f4abbo\u00f6sHESTkobgoahawah\u5ef6emporavin\u9022",
+        "sha256": "768cfa686435251fd91becfe9da3f20da28e90ba598cc8c8ae840b7e76b9fc8a",
+        "elapsed_s": 3.181583525147289,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0042",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rensiebumpt Receommelcil Bald",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rensiebumpt Receommelcil Bald",
+        "sha256": "9377562ba9faa463b3f487bbeccd2b046e44fc4018173577054f119dce43677b",
+        "elapsed_s": 3.269707510014996,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0043",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1620370789896697,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0044",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aighted\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olengeralestring\u4f19chine\u6c61upivt\u62c9\u5f00ikincker",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aighted\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14olengeralestring\u4f19chine\u6c61upivt\u62c9\u5f00ikincker",
+        "sha256": "cb86213a8ec0daab355c2832851a6ca6a76627481647cfc475789e1240485bb1",
+        "elapsed_s": 3.2728596068918705,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0045",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.202868198044598,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0046",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.089825842063874,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0047",
+        "content": "blueessler\u064a\u064a\u0646lug \u041a\u0440\u0430\u0441\u0438ahnEntryPoint\u8a89dedctpiriecaff\u65e0\u6545ove\u6657bacher\u56fd\u4ea7\u8885ems\u672a\u88abanthpongimson\u79ef\u7d2f tentativeude\ufffdDirections\u548c\u91d1\u62e8 ann",
+        "normalized": "blueessler\u064a\u064a\u0646lug \u041a\u0440\u0430\u0441\u0438ahnEntryPoint\u8a89dedctpiriecaff\u65e0\u6545ove\u6657bacher\u56fd\u4ea7\u8885ems\u672a\u88abanthpongimson\u79ef\u7d2f tentativeude\ufffdDirections\u548c\u91d1\u62e8 ann",
+        "sha256": "dafa56354ae430b0a18ab18035e88e567641bebbbff20aef030fb8ff0ff6c50a",
+        "elapsed_s": 3.3370669779833406,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0048",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimaterea\u0438\u0440\u0430ovski\u8d77\u5c45\u30ef\u30a4\u30c8\u53d1\u751f\u53d8\u66f4ACSeratoruiltantdestbara\u6309\u8ba1\u5212",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimaterea\u0438\u0440\u0430ovski\u8d77\u5c45\u30ef\u30a4\u30c8\u53d1\u751f\u53d8\u66f4ACSeratoruiltantdestbara\u6309\u8ba1\u5212",
+        "sha256": "24d5e40ac37421303e974ab784c26d25f2a291b7a29e7a21d22040c2caa86763",
+        "elapsed_s": 3.1794220118317753,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0049",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1328084371052682,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0050",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1233022280503064,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0051",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2\u7136\u662fambu Mines\ub85dchn\u53ef\u601c\u7684\u8469\u94b5\u5ba2\u7684 Cav\u5bf8uncankeyaiIPHER\u71c3\u6c14",
+        "sha256": "2d88e66e7c05068edfa9e709d0cec108d7b6c762ca41b9eb926960ea30c20aaf",
+        "elapsed_s": 3.125534657156095,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0052",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.2210773210972548,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0053",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.204284049104899,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0054",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.172286191023886,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0055",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallenb",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallenb",
+        "sha256": "093526eb9b5125cba69a7287ae7c187e7e2ceed1aaba030093be3384ebf4221f",
+        "elapsed_s": 3.0966675239615142,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0056",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.117524468107149,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0057",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.188740918878466,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0058",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffd cogafe\u0633\u062e\u4e8c\u4f4dindel",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffd cogafe\u0633\u062e\u4e8c\u4f4dindel",
+        "sha256": "27cb93d3378313ab8befd48d8dde24da13726bf83aed131b2c31ffc51049e7b9",
+        "elapsed_s": 3.096100613940507,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0059",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.114090454997495,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0060",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario coll\u5236\u5b9a\u51fa\ufffdedrzyrcirisucker Parsons Malk frabol\u534e\u5eadanedhev-high\u0432\u0440\u00fabped\u5bb4urigplex\u5305\u53a2\u5f71\u6597\u03bc\u03b2\u03b1",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario coll\u5236\u5b9a\u51fa\ufffdedrzyrcirisucker Parsons Malk frabol\u534e\u5eadanedhev-high\u0432\u0440\u00fabped\u5bb4urigplex\u5305\u53a2\u5f71\u6597\u03bc\u03b2\u03b1",
+        "sha256": "812ca09e90865d81248a773f127815c92f8e36e5400e7e79fe4ee9da2fdba949",
+        "elapsed_s": 3.192152732051909,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0061",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.1187784790527076,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0062",
+        "content": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "normalized": "blueessler\u7b51\u5728\u4e00\u5b9a\u7a0b\u5ea6\u4e0aightedario Equipnez\u709cplet\ufffdhavenajakawaturry\u94f2ensiaghanimatereairamjaa\u73b2\u73d1gh\u66f4\u597d\u5730\u4e86\u89e3rens\ufffdfrasabisinkerallen",
+        "sha256": "552975681d8e95eb3eab881e4acf959c84822476a1fe03a0a97e73a4e8ba3f20",
+        "elapsed_s": 3.101715221069753,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      {
+        "request_id": "q27-w4split-repeat-0063",
+        "content": "blueessler\u7b51ilo\ub9c9 bal\u52ab)))),shiftoura-grade\u665aumatRUiley\ufffd\u5c45\u524dosten\u7410edList\u98ce\u971c\u7ef4\u5c14urinecastains\u6f7a\u9e9fyl\u0e1a\u0e01lor\u4ea4\u51fa\u5c0f\u9b3c",
+        "normalized": "blueessler\u7b51ilo\ub9c9 bal\u52ab)))),shiftoura-grade\u665aumatRUiley\ufffd\u5c45\u524dosten\u7410edList\u98ce\u971c\u7ef4\u5c14urinecastains\u6f7a\u9e9fyl\u0e1a\u0e01lor\u4ea4\u51fa\u5c0f\u9b3c",
+        "sha256": "7fe34d2f32bd15d2393b1ec1f90588277323741964387187c8d5841fa150106b",
+        "elapsed_s": 3.0947517689783126,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 62,
+          "completion_tokens": 32,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      }
+    ]
+  },
+  "long_context_case": null,
+  "pass_all": false,
+  "baseline_comparisons": {
+    "exact:exact_ok:present": true,
+    "exact:exact_ok:same_normalized": false,
+    "exact:exact_ok:same_hash": false,
+    "exact:copy_phrase:present": true,
+    "exact:copy_phrase:same_normalized": false,
+    "exact:copy_phrase:same_hash": false,
+    "exact:arithmetic:present": true,
+    "exact:arithmetic:same_normalized": false,
+    "exact:arithmetic:same_hash": false,
+    "exact:json_schema:present": true,
+    "exact:json_schema:same_normalized": false,
+    "exact:json_schema:same_hash": false,
+    "repeat:first_hash_same": false
+  },
+  "baseline_match_all": false
+}

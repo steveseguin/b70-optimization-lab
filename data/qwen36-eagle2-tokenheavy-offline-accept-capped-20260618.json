@@ -1,0 +1,604 @@
+{
+  "acceptance_histogram": {
+    "0": 17,
+    "1": 52,
+    "2": 39,
+    "3": 9,
+    "4": 2,
+    "5": 9
+  },
+  "dataset_dir": [
+    "/home/steve/llm-optimizations/data/qwen36-eagle-hidden-dataset-corpus2-tp2-20260618a",
+    "/home/steve/llm-optimizations/data/qwen36-eagle-hidden-dataset-pos-tp2-20260618a"
+  ],
+  "device": "xpu:0",
+  "draft_dir": "/home/steve/llm-optimizations/data/qwen36-eagle2-corpus2-tokenheavy-trained-20260618a",
+  "dtype": "bfloat16",
+  "elapsed_s": 5.419021207140759,
+  "first_mismatch_examples": [
+    {
+      "accepted": 2,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 198,
+          "step": 1,
+          "target": 198,
+          "target_index": 1,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 248045,
+          "step": 2,
+          "target": 248045,
+          "target_index": 2,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 248068,
+          "step": 3,
+          "target": 74455,
+          "target_index": 3,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 0
+    },
+    {
+      "accepted": 1,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 248068,
+          "step": 1,
+          "target": 248068,
+          "target_index": 5,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 198,
+          "step": 2,
+          "target": 271,
+          "target_index": 6,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 4
+    },
+    {
+      "accepted": 1,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 13962,
+          "step": 1,
+          "target": 13962,
+          "target_index": 9,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 383,
+          "step": 2,
+          "target": 16107,
+          "target_index": 10,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 8
+    },
+    {
+      "accepted": 2,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 15153,
+          "step": 1,
+          "target": 15153,
+          "target_index": 13,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 1543,
+          "step": 2,
+          "target": 1543,
+          "target_index": 14,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 1543,
+          "step": 3,
+          "target": 6126,
+          "target_index": 15,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 12
+    },
+    {
+      "accepted": 1,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 2133,
+          "step": 1,
+          "target": 2133,
+          "target_index": 17,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 318,
+          "step": 2,
+          "target": 8162,
+          "target_index": 18,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 16
+    },
+    {
+      "accepted": 1,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 220,
+          "step": 1,
+          "target": 220,
+          "target_index": 21,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 55,
+          "step": 2,
+          "target": 15,
+          "target_index": 22,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 20
+    },
+    {
+      "accepted": 1,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 8,
+          "step": 1,
+          "target": 8,
+          "target_index": 25,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 8,
+          "step": 2,
+          "target": 271,
+          "target_index": 26,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 24
+    },
+    {
+      "accepted": 1,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 64700,
+          "step": 1,
+          "target": 64700,
+          "target_index": 29,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 37140,
+          "step": 2,
+          "target": 8509,
+          "target_index": 30,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 28
+    },
+    {
+      "accepted": 2,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 6126,
+          "step": 1,
+          "target": 6126,
+          "target_index": 33,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 318,
+          "step": 2,
+          "target": 318,
+          "target_index": 34,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 55,
+          "step": 3,
+          "target": 38,
+          "target_index": 35,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 32
+    },
+    {
+      "accepted": 1,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 15328,
+          "step": 1,
+          "target": 15328,
+          "target_index": 37,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 17,
+          "step": 2,
+          "target": 15067,
+          "target_index": 38,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 36
+    },
+    {
+      "accepted": 0,
+      "rows": [
+        {
+          "match": false,
+          "proposed": 466,
+          "step": 1,
+          "target": 42903,
+          "target_index": 41,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 40
+    },
+    {
+      "accepted": 0,
+      "rows": [
+        {
+          "match": false,
+          "proposed": 12784,
+          "step": 1,
+          "target": 332,
+          "target_index": 45,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 44
+    },
+    {
+      "accepted": 3,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 48507,
+          "step": 1,
+          "target": 48507,
+          "target_index": 49,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 37972,
+          "step": 2,
+          "target": 37972,
+          "target_index": 50,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 71925,
+          "step": 3,
+          "target": 71925,
+          "target_index": 51,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 5351,
+          "step": 4,
+          "target": 11,
+          "target_index": 52,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 48
+    },
+    {
+      "accepted": 2,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 4618,
+          "step": 1,
+          "target": 4618,
+          "target_index": 53,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 11969,
+          "step": 2,
+          "target": 11969,
+          "target_index": 54,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 37707,
+          "step": 3,
+          "target": 53442,
+          "target_index": 55,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 52
+    },
+    {
+      "accepted": 1,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 5861,
+          "step": 1,
+          "target": 5861,
+          "target_index": 57,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 18336,
+          "step": 2,
+          "target": 36,
+          "target_index": 58,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 56
+    },
+    {
+      "accepted": 1,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 41175,
+          "step": 1,
+          "target": 41175,
+          "target_index": 61,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 41175,
+          "step": 2,
+          "target": 13,
+          "target_index": 62,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 60
+    },
+    {
+      "accepted": 2,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 38663,
+          "step": 1,
+          "target": 38663,
+          "target_index": 65,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 64700,
+          "step": 2,
+          "target": 64700,
+          "target_index": 66,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 55,
+          "step": 3,
+          "target": 6916,
+          "target_index": 67,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 64
+    },
+    {
+      "accepted": 0,
+      "rows": [
+        {
+          "match": false,
+          "proposed": 14648,
+          "step": 1,
+          "target": 22267,
+          "target_index": 69,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 68
+    },
+    {
+      "accepted": 1,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 13,
+          "step": 1,
+          "target": 13,
+          "target_index": 73,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 13,
+          "step": 2,
+          "target": 271,
+          "target_index": 74,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 72
+    },
+    {
+      "accepted": 1,
+      "rows": [
+        {
+          "match": true,
+          "proposed": 13962,
+          "step": 1,
+          "target": 13962,
+          "target_index": 77,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 271,
+          "step": 2,
+          "target": 38269,
+          "target_index": 78,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "start": 76
+    }
+  ],
+  "max_steps": 5,
+  "mean_accepted": 1.640625,
+  "per_step": [
+    {
+      "conditional_denominator": 128,
+      "exact_hits": 111,
+      "exact_rate": 0.8671875,
+      "step": 1,
+      "topk_hits": 123,
+      "topk_rate": 0.9609375,
+      "unconditional_exact_rate": 0.8671875,
+      "unconditional_topk_rate": 0.9609375
+    },
+    {
+      "conditional_denominator": 111,
+      "exact_hits": 59,
+      "exact_rate": 0.5315315315315315,
+      "step": 2,
+      "topk_hits": 79,
+      "topk_rate": 0.7117117117117117,
+      "unconditional_exact_rate": 0.4609375,
+      "unconditional_topk_rate": 0.6171875
+    },
+    {
+      "conditional_denominator": 59,
+      "exact_hits": 20,
+      "exact_rate": 0.3389830508474576,
+      "step": 3,
+      "topk_hits": 34,
+      "topk_rate": 0.576271186440678,
+      "unconditional_exact_rate": 0.15625,
+      "unconditional_topk_rate": 0.265625
+    },
+    {
+      "conditional_denominator": 20,
+      "exact_hits": 11,
+      "exact_rate": 0.55,
+      "step": 4,
+      "topk_hits": 13,
+      "topk_rate": 0.65,
+      "unconditional_exact_rate": 0.0859375,
+      "unconditional_topk_rate": 0.1015625
+    },
+    {
+      "conditional_denominator": 11,
+      "exact_hits": 9,
+      "exact_rate": 0.8181818181818182,
+      "step": 5,
+      "topk_hits": 10,
+      "topk_rate": 0.9090909090909091,
+      "unconditional_exact_rate": 0.0703125,
+      "unconditional_topk_rate": 0.078125
+    }
+  ],
+  "sample_rows": [
+    {
+      "mean_accepted": 1.096774193548387,
+      "sample": "sample-000000-cmpl-9f08d1bd9c4d6463-0-a7138fea.pt",
+      "starts": 31,
+      "tokens": 128
+    },
+    {
+      "mean_accepted": 1.7096774193548387,
+      "sample": "sample-000001-cmpl-b5cd821627de3af9-0-a9f863e3.pt",
+      "starts": 31,
+      "tokens": 128
+    },
+    {
+      "mean_accepted": 1.7096774193548387,
+      "sample": "sample-000002-cmpl-bba2323c06ad831b-0-afc59618.pt",
+      "starts": 31,
+      "tokens": 128
+    },
+    {
+      "mean_accepted": 1.8709677419354838,
+      "sample": "sample-000003-cmpl-96145c3848a47964-0-91bea959.pt",
+      "starts": 31,
+      "tokens": 128
+    },
+    {
+      "mean_accepted": 3.0,
+      "sample": "sample-000004-cmpl-98fe3f2924e1a80c-0-8c154ea9.pt",
+      "starts": 4,
+      "tokens": 128
+    }
+  ],
+  "samples_seen": 308,
+  "start_stride": 4,
+  "starts": 128,
+  "starts_per_s": 23.620501767243816,
+  "target_model": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "topk": 3
+}

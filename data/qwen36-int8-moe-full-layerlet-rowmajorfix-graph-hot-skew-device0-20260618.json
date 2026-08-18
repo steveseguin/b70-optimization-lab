@@ -1,0 +1,1146 @@
+{
+  "fused_silu_quant_enabled": false,
+  "model_config": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118/config.json",
+  "prologue_inclusive_gate_summary": {
+    "all_rows_ready_for_endpoint_gate": false,
+    "best_exact_any_overall": {
+      "beats_xpu_min_speedup": true,
+      "exact_within_threshold": true,
+      "max_abs_diff_vs_xpu": 0.0,
+      "name": "full_layerlet",
+      "reference": false,
+      "speedup_vs_xpu": 1.896074435772233,
+      "target_layerlet_met": false,
+      "us_mean": 169.05849999999998
+    },
+    "best_exact_nonreference_overall": {
+      "beats_xpu_min_speedup": true,
+      "exact_within_threshold": true,
+      "max_abs_diff_vs_xpu": 0.0,
+      "name": "full_layerlet",
+      "reference": false,
+      "speedup_vs_xpu": 1.896074435772233,
+      "target_layerlet_met": false,
+      "us_mean": 169.05849999999998
+    },
+    "endpoint_promotion_allowed": false,
+    "endpoint_promotion_note": "This benchmark can nominate a layerlet candidate only. Endpoint promotion still requires graph-path tensor capture, accepted-lane quality gates, and a manifest update.",
+    "exactness_threshold": 0.0,
+    "min_speedup_vs_xpu": 1.0,
+    "rows_checked": 3,
+    "rows_ready_for_endpoint_gate": 0,
+    "scope": "aggregate_prologue_inclusive_full_moe_layerlet",
+    "status": "exact_nonreference_candidates_exist_but_gate_not_met",
+    "target_layerlet_us": 160.0,
+    "worst_best_exact_nonreference_us_mean": 183.56
+  },
+  "real_routing_bf16_reference_enabled": false,
+  "real_routing_oracle_enabled": true,
+  "results": [
+    {
+      "active_offset_gemm_available": true,
+      "active_offset_gemm_enabled": false,
+      "components_us_mean": {
+        "act_contiguous": 58.343999999999994,
+        "activation": 82.00399999999999,
+        "activation_contiguous_quant2": 229.7815,
+        "activation_plus_quant2": 171.4375,
+        "component_sum": 766.0965,
+        "gather": 81.588,
+        "gemm1": 94.6985,
+        "gemm2": 94.445,
+        "quant1": 90.51899999999999,
+        "quant2": 89.4335,
+        "remap": 94.72449999999999,
+        "rows_zero": 80.34
+      },
+      "dtype": "bf16",
+      "full_layerlet_available": true,
+      "full_layerlet_enabled": true,
+      "full_layerlet_total_us_mean": 178.04799999999997,
+      "full_layerlet_vs_rows_oracle_max_abs_diff": 0.0,
+      "full_layerlet_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_active_offset_components_us_mean": {
+        "activation_plus_quant2": 0.0,
+        "component_sum": 0.0
+      },
+      "fused_prologue_active_offset_gemm_total_us_mean": null,
+      "fused_prologue_active_offset_gemm_vs_rows_oracle_max_abs_diff": null,
+      "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff": null,
+      "fused_prologue_components_us_mean": {
+        "activation_plus_quant2": 0.0,
+        "component_sum": 0.0
+      },
+      "fused_prologue_middle_layerlet_total_us_mean": null,
+      "fused_prologue_middle_layerlet_vs_rows_oracle_max_abs_diff": null,
+      "fused_prologue_middle_layerlet_vs_xpu_fused_moe_max_abs_diff": null,
+      "fused_prologue_offset_components_us_mean": {
+        "activation_plus_quant2": 0.0,
+        "component_sum": 0.0
+      },
+      "fused_prologue_offset_gemm_total_us_mean": 199.5695,
+      "fused_prologue_offset_gemm_vs_rows_oracle_max_abs_diff": 0.0,
+      "fused_prologue_offset_gemm_vs_xpu_fused_moe_max_abs_diff": 235.0,
+      "fused_prologue_staged_total_us_mean": 272.9545,
+      "fused_prologue_vs_rows_oracle_max_abs_diff": 0.0,
+      "fused_prologue_vs_xpu_fused_moe_max_abs_diff": 235.0,
+      "fused_prologue_workspace_bytes": 72960,
+      "graph_replay": [
+        {
+          "iterations": 20,
+          "name": "xpu_fused_moe_with_scratch",
+          "status": "executed",
+          "us_mean": 321.8644,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "preallocated_staged",
+          "status": "executed",
+          "us_mean": 328.2604,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "fused_prologue_staged",
+          "status": "executed",
+          "us_mean": 334.4848,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "fused_prologue_offset_gemm",
+          "status": "executed",
+          "us_mean": 338.32759999999996,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "full_layerlet",
+          "status": "executed",
+          "us_mean": 337.753,
+          "warmup": 2
+        }
+      ],
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 8,
+      "manual_vs_rows_oracle_max_abs_diff": 0.0,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "middle_layerlet_available": true,
+      "middle_layerlet_enabled": false,
+      "moe_inputs": 16,
+      "num_active_experts_for_active_offset": 12,
+      "num_experts": 256,
+      "offset_gemm_available": true,
+      "offset_gemm_enabled": true,
+      "offset_oracle_vs_rows_oracle_max_abs_diff": 0.0,
+      "preallocated_staged_total_us_mean": 198.094,
+      "preallocated_vs_rows_oracle_max_abs_diff": 0.0,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "prologue_inclusive_gate": {
+        "baseline_xpu_fused_moe_us_mean": 310.8755,
+        "best_exact_any": {
+          "beats_xpu_min_speedup": true,
+          "exact_within_threshold": true,
+          "max_abs_diff_vs_xpu": 0.0,
+          "name": "full_layerlet",
+          "reference": false,
+          "speedup_vs_xpu": 1.7460207359813087,
+          "target_layerlet_met": false,
+          "us_mean": 178.04799999999997
+        },
+        "best_exact_nonreference": {
+          "beats_xpu_min_speedup": true,
+          "exact_within_threshold": true,
+          "max_abs_diff_vs_xpu": 0.0,
+          "name": "full_layerlet",
+          "reference": false,
+          "speedup_vs_xpu": 1.7460207359813087,
+          "target_layerlet_met": false,
+          "us_mean": 178.04799999999997
+        },
+        "candidate_ready_for_endpoint_gate": false,
+        "candidates": [
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "xpu_fused_moe_reference",
+            "reference": true,
+            "speedup_vs_xpu": 1.0,
+            "target_layerlet_met": false,
+            "us_mean": 310.8755
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "xpu_fused_moe_with_scratch",
+            "reference": false,
+            "speedup_vs_xpu": 1.2575462768195205,
+            "target_layerlet_met": false,
+            "us_mean": 247.208
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "preallocated_staged",
+            "reference": false,
+            "speedup_vs_xpu": 1.5693332458327864,
+            "target_layerlet_met": false,
+            "us_mean": 198.094
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": false,
+            "max_abs_diff_vs_xpu": 235.0,
+            "name": "fused_prologue_staged",
+            "reference": false,
+            "speedup_vs_xpu": 1.1389279165575215,
+            "target_layerlet_met": false,
+            "us_mean": 272.9545
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": false,
+            "max_abs_diff_vs_xpu": 235.0,
+            "name": "fused_prologue_offset_gemm",
+            "reference": false,
+            "speedup_vs_xpu": 1.557730514933394,
+            "target_layerlet_met": false,
+            "us_mean": 199.5695
+          },
+          {
+            "beats_xpu_min_speedup": false,
+            "exact_within_threshold": false,
+            "max_abs_diff_vs_xpu": null,
+            "name": "fused_prologue_active_offset_gemm",
+            "reference": false,
+            "speedup_vs_xpu": null,
+            "target_layerlet_met": false,
+            "us_mean": null
+          },
+          {
+            "beats_xpu_min_speedup": false,
+            "exact_within_threshold": false,
+            "max_abs_diff_vs_xpu": null,
+            "name": "fused_prologue_middle_layerlet",
+            "reference": false,
+            "speedup_vs_xpu": null,
+            "target_layerlet_met": false,
+            "us_mean": null
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "full_layerlet",
+            "reference": false,
+            "speedup_vs_xpu": 1.7460207359813087,
+            "target_layerlet_met": false,
+            "us_mean": 178.04799999999997
+          }
+        ],
+        "endpoint_promotion_blockers_after_gate": [
+          "graph_path_tensor_capture_not_proven",
+          "full_quality_gate_not_run",
+          "accepted_lane_manifest_not_updated"
+        ],
+        "exactness_threshold": 0.0,
+        "min_speedup_vs_xpu": 1.0,
+        "non_kernel_only_rule": "Only full layerlet timings that include route/remap, quant, GEMM1, activation, quant2, GEMM2, and gather can satisfy this gate. Isolated GEMM/prologue timings are diagnostics only.",
+        "scope": "prologue_inclusive_full_moe_layerlet",
+        "status": "best_exact_nonreference_misses_target_layerlet_us",
+        "target_layerlet_us": 160.0
+      },
+      "quant_out_op_available": true,
+      "quant_scratch_buffers": [
+        "gemm1_a",
+        "gemm1_a_scales",
+        "gemm2_a",
+        "gemm2_a_scales"
+      ],
+      "real_routing_bf16_reference_enabled": false,
+      "real_routing_oracle_enabled": true,
+      "route_start_index": null,
+      "route_start_index_mod": null,
+      "rows": 2,
+      "rows_oracle_vs_bf16_reference_max_abs_diff": null,
+      "stage_timing_iterations": 0,
+      "synthetic_route_mode": "hot_skew",
+      "topk": 8,
+      "topk_source": "synthetic_hot_skew",
+      "topk_summary": {
+        "active_experts": 12,
+        "top_experts": [
+          {
+            "count": 2,
+            "expert": 0
+          },
+          {
+            "count": 2,
+            "expert": 1
+          },
+          {
+            "count": 2,
+            "expert": 2
+          },
+          {
+            "count": 2,
+            "expert": 3
+          },
+          {
+            "count": 1,
+            "expert": 4
+          },
+          {
+            "count": 1,
+            "expert": 7
+          },
+          {
+            "count": 1,
+            "expert": 10
+          },
+          {
+            "count": 1,
+            "expert": 13
+          },
+          {
+            "count": 1,
+            "expert": 9
+          },
+          {
+            "count": 1,
+            "expert": 12
+          },
+          {
+            "count": 1,
+            "expert": 15
+          },
+          {
+            "count": 1,
+            "expert": 5
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              7,
+              10,
+              13
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              9,
+              12,
+              15,
+              5
+            ]
+          }
+        ],
+        "unique_topk_tuples": 2
+      },
+      "total_us_mean": 310.8755,
+      "warmup": 2,
+      "xpu_fused_moe_scratch_total_us_mean": 247.208,
+      "xpu_fused_moe_vs_rows_oracle_max_abs_diff": 0.0,
+      "xpu_scratch_vs_rows_oracle_max_abs_diff": 0.0,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "active_offset_gemm_available": true,
+      "active_offset_gemm_enabled": false,
+      "components_us_mean": {
+        "act_contiguous": 59.864999999999995,
+        "activation": 82.8425,
+        "activation_contiguous_quant2": 236.87949999999998,
+        "activation_plus_quant2": 177.0145,
+        "component_sum": 801.3395,
+        "gather": 83.0115,
+        "gemm1": 101.595,
+        "gemm2": 104.21449999999999,
+        "quant1": 94.887,
+        "quant2": 94.172,
+        "remap": 97.1945,
+        "rows_zero": 83.5575
+      },
+      "dtype": "bf16",
+      "full_layerlet_available": true,
+      "full_layerlet_enabled": true,
+      "full_layerlet_total_us_mean": 183.56,
+      "full_layerlet_vs_rows_oracle_max_abs_diff": 0.0,
+      "full_layerlet_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_active_offset_components_us_mean": {
+        "activation_plus_quant2": 0.0,
+        "component_sum": 0.0
+      },
+      "fused_prologue_active_offset_gemm_total_us_mean": null,
+      "fused_prologue_active_offset_gemm_vs_rows_oracle_max_abs_diff": null,
+      "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff": null,
+      "fused_prologue_components_us_mean": {
+        "activation_plus_quant2": 0.0,
+        "component_sum": 0.0
+      },
+      "fused_prologue_middle_layerlet_total_us_mean": null,
+      "fused_prologue_middle_layerlet_vs_rows_oracle_max_abs_diff": null,
+      "fused_prologue_middle_layerlet_vs_xpu_fused_moe_max_abs_diff": null,
+      "fused_prologue_offset_components_us_mean": {
+        "activation_plus_quant2": 0.0,
+        "component_sum": 0.0
+      },
+      "fused_prologue_offset_gemm_total_us_mean": 215.67649999999998,
+      "fused_prologue_offset_gemm_vs_rows_oracle_max_abs_diff": 0.0,
+      "fused_prologue_offset_gemm_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_staged_total_us_mean": 300.0335,
+      "fused_prologue_vs_rows_oracle_max_abs_diff": 0.0,
+      "fused_prologue_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_workspace_bytes": 140544,
+      "graph_replay": [
+        {
+          "iterations": 20,
+          "name": "xpu_fused_moe_with_scratch",
+          "status": "executed",
+          "us_mean": 197.158,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "preallocated_staged",
+          "status": "executed",
+          "us_mean": 195.21319999999997,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "fused_prologue_staged",
+          "status": "executed",
+          "us_mean": 190.827,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "fused_prologue_offset_gemm",
+          "status": "executed",
+          "us_mean": 192.69639999999998,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "full_layerlet",
+          "status": "executed",
+          "us_mean": 193.20080000000002,
+          "warmup": 2
+        }
+      ],
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 8,
+      "manual_vs_rows_oracle_max_abs_diff": 0.0,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "middle_layerlet_available": true,
+      "middle_layerlet_enabled": false,
+      "moe_inputs": 32,
+      "num_active_experts_for_active_offset": 14,
+      "num_experts": 256,
+      "offset_gemm_available": true,
+      "offset_gemm_enabled": true,
+      "offset_oracle_vs_rows_oracle_max_abs_diff": 0.0,
+      "preallocated_staged_total_us_mean": 233.8115,
+      "preallocated_vs_rows_oracle_max_abs_diff": 0.0,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "prologue_inclusive_gate": {
+        "baseline_xpu_fused_moe_us_mean": 350.402,
+        "best_exact_any": {
+          "beats_xpu_min_speedup": true,
+          "exact_within_threshold": true,
+          "max_abs_diff_vs_xpu": 0.0,
+          "name": "full_layerlet",
+          "reference": false,
+          "speedup_vs_xpu": 1.9089235127478752,
+          "target_layerlet_met": false,
+          "us_mean": 183.56
+        },
+        "best_exact_nonreference": {
+          "beats_xpu_min_speedup": true,
+          "exact_within_threshold": true,
+          "max_abs_diff_vs_xpu": 0.0,
+          "name": "full_layerlet",
+          "reference": false,
+          "speedup_vs_xpu": 1.9089235127478752,
+          "target_layerlet_met": false,
+          "us_mean": 183.56
+        },
+        "candidate_ready_for_endpoint_gate": false,
+        "candidates": [
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "xpu_fused_moe_reference",
+            "reference": true,
+            "speedup_vs_xpu": 1.0,
+            "target_layerlet_met": false,
+            "us_mean": 350.402
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "xpu_fused_moe_with_scratch",
+            "reference": false,
+            "speedup_vs_xpu": 1.2190312514133237,
+            "target_layerlet_met": false,
+            "us_mean": 287.443
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "preallocated_staged",
+            "reference": false,
+            "speedup_vs_xpu": 1.4986516916404882,
+            "target_layerlet_met": false,
+            "us_mean": 233.8115
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "fused_prologue_staged",
+            "reference": false,
+            "speedup_vs_xpu": 1.1678762538183236,
+            "target_layerlet_met": false,
+            "us_mean": 300.0335
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "fused_prologue_offset_gemm",
+            "reference": false,
+            "speedup_vs_xpu": 1.624664717760164,
+            "target_layerlet_met": false,
+            "us_mean": 215.67649999999998
+          },
+          {
+            "beats_xpu_min_speedup": false,
+            "exact_within_threshold": false,
+            "max_abs_diff_vs_xpu": null,
+            "name": "fused_prologue_active_offset_gemm",
+            "reference": false,
+            "speedup_vs_xpu": null,
+            "target_layerlet_met": false,
+            "us_mean": null
+          },
+          {
+            "beats_xpu_min_speedup": false,
+            "exact_within_threshold": false,
+            "max_abs_diff_vs_xpu": null,
+            "name": "fused_prologue_middle_layerlet",
+            "reference": false,
+            "speedup_vs_xpu": null,
+            "target_layerlet_met": false,
+            "us_mean": null
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "full_layerlet",
+            "reference": false,
+            "speedup_vs_xpu": 1.9089235127478752,
+            "target_layerlet_met": false,
+            "us_mean": 183.56
+          }
+        ],
+        "endpoint_promotion_blockers_after_gate": [
+          "graph_path_tensor_capture_not_proven",
+          "full_quality_gate_not_run",
+          "accepted_lane_manifest_not_updated"
+        ],
+        "exactness_threshold": 0.0,
+        "min_speedup_vs_xpu": 1.0,
+        "non_kernel_only_rule": "Only full layerlet timings that include route/remap, quant, GEMM1, activation, quant2, GEMM2, and gather can satisfy this gate. Isolated GEMM/prologue timings are diagnostics only.",
+        "scope": "prologue_inclusive_full_moe_layerlet",
+        "status": "best_exact_nonreference_misses_target_layerlet_us",
+        "target_layerlet_us": 160.0
+      },
+      "quant_out_op_available": true,
+      "quant_scratch_buffers": [
+        "gemm1_a",
+        "gemm1_a_scales",
+        "gemm2_a",
+        "gemm2_a_scales"
+      ],
+      "real_routing_bf16_reference_enabled": false,
+      "real_routing_oracle_enabled": true,
+      "route_start_index": null,
+      "route_start_index_mod": null,
+      "rows": 4,
+      "rows_oracle_vs_bf16_reference_max_abs_diff": null,
+      "stage_timing_iterations": 0,
+      "synthetic_route_mode": "hot_skew",
+      "topk": 8,
+      "topk_source": "synthetic_hot_skew",
+      "topk_summary": {
+        "active_experts": 14,
+        "top_experts": [
+          {
+            "count": 4,
+            "expert": 0
+          },
+          {
+            "count": 4,
+            "expert": 1
+          },
+          {
+            "count": 4,
+            "expert": 2
+          },
+          {
+            "count": 4,
+            "expert": 3
+          },
+          {
+            "count": 3,
+            "expert": 7
+          },
+          {
+            "count": 3,
+            "expert": 10
+          },
+          {
+            "count": 2,
+            "expert": 4
+          },
+          {
+            "count": 2,
+            "expert": 13
+          },
+          {
+            "count": 1,
+            "expert": 9
+          },
+          {
+            "count": 1,
+            "expert": 12
+          },
+          {
+            "count": 1,
+            "expert": 15
+          },
+          {
+            "count": 1,
+            "expert": 5
+          },
+          {
+            "count": 1,
+            "expert": 14
+          },
+          {
+            "count": 1,
+            "expert": 6
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              7,
+              10,
+              13
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              9,
+              12,
+              15,
+              5
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              14,
+              4,
+              7,
+              10
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              7,
+              10,
+              13,
+              6
+            ]
+          }
+        ],
+        "unique_topk_tuples": 4
+      },
+      "total_us_mean": 350.402,
+      "warmup": 2,
+      "xpu_fused_moe_scratch_total_us_mean": 287.443,
+      "xpu_fused_moe_vs_rows_oracle_max_abs_diff": 0.0,
+      "xpu_scratch_vs_rows_oracle_max_abs_diff": 0.0,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    },
+    {
+      "active_offset_gemm_available": true,
+      "active_offset_gemm_enabled": false,
+      "components_us_mean": {
+        "act_contiguous": 60.983,
+        "activation": 82.5695,
+        "activation_contiguous_quant2": 233.4215,
+        "activation_plus_quant2": 172.4385,
+        "component_sum": 782.5024999999999,
+        "gather": 82.5305,
+        "gemm1": 98.4555,
+        "gemm2": 101.166,
+        "quant1": 90.83749999999999,
+        "quant2": 89.869,
+        "remap": 94.2825,
+        "rows_zero": 81.809
+      },
+      "dtype": "bf16",
+      "full_layerlet_available": true,
+      "full_layerlet_enabled": true,
+      "full_layerlet_total_us_mean": 169.05849999999998,
+      "full_layerlet_vs_rows_oracle_max_abs_diff": 0.0,
+      "full_layerlet_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_active_offset_components_us_mean": {
+        "activation_plus_quant2": 0.0,
+        "component_sum": 0.0
+      },
+      "fused_prologue_active_offset_gemm_total_us_mean": null,
+      "fused_prologue_active_offset_gemm_vs_rows_oracle_max_abs_diff": null,
+      "fused_prologue_active_offset_gemm_vs_xpu_fused_moe_max_abs_diff": null,
+      "fused_prologue_components_us_mean": {
+        "activation_plus_quant2": 0.0,
+        "component_sum": 0.0
+      },
+      "fused_prologue_middle_layerlet_total_us_mean": null,
+      "fused_prologue_middle_layerlet_vs_rows_oracle_max_abs_diff": null,
+      "fused_prologue_middle_layerlet_vs_xpu_fused_moe_max_abs_diff": null,
+      "fused_prologue_offset_components_us_mean": {
+        "activation_plus_quant2": 0.0,
+        "component_sum": 0.0
+      },
+      "fused_prologue_offset_gemm_total_us_mean": 203.671,
+      "fused_prologue_offset_gemm_vs_rows_oracle_max_abs_diff": 0.0,
+      "fused_prologue_offset_gemm_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_staged_total_us_mean": 276.12649999999996,
+      "fused_prologue_vs_rows_oracle_max_abs_diff": 0.0,
+      "fused_prologue_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "fused_prologue_workspace_bytes": 275712,
+      "graph_replay": [
+        {
+          "iterations": 20,
+          "name": "xpu_fused_moe_with_scratch",
+          "status": "executed",
+          "us_mean": 182.66299999999998,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "preallocated_staged",
+          "status": "executed",
+          "us_mean": 190.2628,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "fused_prologue_staged",
+          "status": "executed",
+          "us_mean": 191.6564,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "fused_prologue_offset_gemm",
+          "status": "executed",
+          "us_mean": 192.777,
+          "warmup": 2
+        },
+        {
+          "iterations": 20,
+          "name": "full_layerlet",
+          "status": "executed",
+          "us_mean": 190.7672,
+          "warmup": 2
+        }
+      ],
+      "hidden_size": 2048,
+      "inter_size_per_tp": 128,
+      "iterations": 8,
+      "manual_vs_rows_oracle_max_abs_diff": 0.0,
+      "manual_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "middle_layerlet_available": true,
+      "middle_layerlet_enabled": false,
+      "moe_inputs": 64,
+      "num_active_experts_for_active_offset": 16,
+      "num_experts": 256,
+      "offset_gemm_available": true,
+      "offset_gemm_enabled": true,
+      "offset_oracle_vs_rows_oracle_max_abs_diff": 0.0,
+      "preallocated_staged_total_us_mean": 209.06599999999997,
+      "preallocated_vs_rows_oracle_max_abs_diff": 0.0,
+      "preallocated_vs_xpu_fused_moe_max_abs_diff": 0.0,
+      "prologue_inclusive_gate": {
+        "baseline_xpu_fused_moe_us_mean": 320.5475,
+        "best_exact_any": {
+          "beats_xpu_min_speedup": true,
+          "exact_within_threshold": true,
+          "max_abs_diff_vs_xpu": 0.0,
+          "name": "full_layerlet",
+          "reference": false,
+          "speedup_vs_xpu": 1.896074435772233,
+          "target_layerlet_met": false,
+          "us_mean": 169.05849999999998
+        },
+        "best_exact_nonreference": {
+          "beats_xpu_min_speedup": true,
+          "exact_within_threshold": true,
+          "max_abs_diff_vs_xpu": 0.0,
+          "name": "full_layerlet",
+          "reference": false,
+          "speedup_vs_xpu": 1.896074435772233,
+          "target_layerlet_met": false,
+          "us_mean": 169.05849999999998
+        },
+        "candidate_ready_for_endpoint_gate": false,
+        "candidates": [
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "xpu_fused_moe_reference",
+            "reference": true,
+            "speedup_vs_xpu": 1.0,
+            "target_layerlet_met": false,
+            "us_mean": 320.5475
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "xpu_fused_moe_with_scratch",
+            "reference": false,
+            "speedup_vs_xpu": 1.227321370797143,
+            "target_layerlet_met": false,
+            "us_mean": 261.1765
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "preallocated_staged",
+            "reference": false,
+            "speedup_vs_xpu": 1.5332359159308546,
+            "target_layerlet_met": false,
+            "us_mean": 209.06599999999997
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "fused_prologue_staged",
+            "reference": false,
+            "speedup_vs_xpu": 1.1608719192109416,
+            "target_layerlet_met": false,
+            "us_mean": 276.12649999999996
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "fused_prologue_offset_gemm",
+            "reference": false,
+            "speedup_vs_xpu": 1.573849492563988,
+            "target_layerlet_met": false,
+            "us_mean": 203.671
+          },
+          {
+            "beats_xpu_min_speedup": false,
+            "exact_within_threshold": false,
+            "max_abs_diff_vs_xpu": null,
+            "name": "fused_prologue_active_offset_gemm",
+            "reference": false,
+            "speedup_vs_xpu": null,
+            "target_layerlet_met": false,
+            "us_mean": null
+          },
+          {
+            "beats_xpu_min_speedup": false,
+            "exact_within_threshold": false,
+            "max_abs_diff_vs_xpu": null,
+            "name": "fused_prologue_middle_layerlet",
+            "reference": false,
+            "speedup_vs_xpu": null,
+            "target_layerlet_met": false,
+            "us_mean": null
+          },
+          {
+            "beats_xpu_min_speedup": true,
+            "exact_within_threshold": true,
+            "max_abs_diff_vs_xpu": 0.0,
+            "name": "full_layerlet",
+            "reference": false,
+            "speedup_vs_xpu": 1.896074435772233,
+            "target_layerlet_met": false,
+            "us_mean": 169.05849999999998
+          }
+        ],
+        "endpoint_promotion_blockers_after_gate": [
+          "graph_path_tensor_capture_not_proven",
+          "full_quality_gate_not_run",
+          "accepted_lane_manifest_not_updated"
+        ],
+        "exactness_threshold": 0.0,
+        "min_speedup_vs_xpu": 1.0,
+        "non_kernel_only_rule": "Only full layerlet timings that include route/remap, quant, GEMM1, activation, quant2, GEMM2, and gather can satisfy this gate. Isolated GEMM/prologue timings are diagnostics only.",
+        "scope": "prologue_inclusive_full_moe_layerlet",
+        "status": "best_exact_nonreference_misses_target_layerlet_us",
+        "target_layerlet_us": 160.0
+      },
+      "quant_out_op_available": true,
+      "quant_scratch_buffers": [
+        "gemm1_a",
+        "gemm1_a_scales",
+        "gemm2_a",
+        "gemm2_a_scales"
+      ],
+      "real_routing_bf16_reference_enabled": false,
+      "real_routing_oracle_enabled": true,
+      "route_start_index": null,
+      "route_start_index_mod": null,
+      "rows": 8,
+      "rows_oracle_vs_bf16_reference_max_abs_diff": null,
+      "stage_timing_iterations": 0,
+      "synthetic_route_mode": "hot_skew",
+      "topk": 8,
+      "topk_source": "synthetic_hot_skew",
+      "topk_summary": {
+        "active_experts": 16,
+        "top_experts": [
+          {
+            "count": 8,
+            "expert": 0
+          },
+          {
+            "count": 8,
+            "expert": 1
+          },
+          {
+            "count": 8,
+            "expert": 2
+          },
+          {
+            "count": 8,
+            "expert": 3
+          },
+          {
+            "count": 4,
+            "expert": 10
+          },
+          {
+            "count": 4,
+            "expert": 5
+          },
+          {
+            "count": 3,
+            "expert": 7
+          },
+          {
+            "count": 3,
+            "expert": 13
+          },
+          {
+            "count": 3,
+            "expert": 15
+          },
+          {
+            "count": 3,
+            "expert": 8
+          },
+          {
+            "count": 2,
+            "expert": 4
+          },
+          {
+            "count": 2,
+            "expert": 9
+          },
+          {
+            "count": 2,
+            "expert": 12
+          },
+          {
+            "count": 2,
+            "expert": 14
+          },
+          {
+            "count": 2,
+            "expert": 6
+          },
+          {
+            "count": 2,
+            "expert": 11
+          }
+        ],
+        "topk_tuple_examples": [
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              7,
+              10,
+              13
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              9,
+              12,
+              15,
+              5
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              14,
+              4,
+              7,
+              10
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              7,
+              10,
+              13,
+              6
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              12,
+              15,
+              5,
+              8
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              5,
+              8,
+              11,
+              14
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              10,
+              13,
+              6,
+              9
+            ]
+          },
+          {
+            "count": 1,
+            "topk_ids": [
+              0,
+              1,
+              2,
+              3,
+              15,
+              5,
+              8,
+              11
+            ]
+          }
+        ],
+        "unique_topk_tuples": 8
+      },
+      "total_us_mean": 320.5475,
+      "warmup": 2,
+      "xpu_fused_moe_scratch_total_us_mean": 261.1765,
+      "xpu_fused_moe_vs_rows_oracle_max_abs_diff": 0.0,
+      "xpu_scratch_vs_rows_oracle_max_abs_diff": 0.0,
+      "xpu_scratch_vs_xpu_fused_moe_max_abs_diff": 0.0
+    }
+  ],
+  "route_metadata": null,
+  "route_packing_metadata": null,
+  "route_start_indices": null,
+  "synthetic_route_mode": "hot_skew",
+  "tp_size": 4
+}

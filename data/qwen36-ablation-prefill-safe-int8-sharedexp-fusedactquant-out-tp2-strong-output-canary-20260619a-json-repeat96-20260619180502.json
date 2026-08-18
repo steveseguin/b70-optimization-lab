@@ -1,0 +1,1191 @@
+{
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118",
+  "case": "json",
+  "user_prompt": "Return only compact JSON with keys answer and unit. Question: 12 plus 30. Unit: widgets.",
+  "prompt": "<|im_start|>user\nReturn only compact JSON with keys answer and unit. Question: 12 plus 30. Unit: widgets.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+  "prompt_token_ids": [
+    248045,
+    846,
+    198,
+    5423,
+    1132,
+    16338,
+    4566,
+    440,
+    6679,
+    4087,
+    321,
+    4821,
+    13,
+    15380,
+    25,
+    220,
+    16,
+    17,
+    5346,
+    220,
+    18,
+    15,
+    13,
+    7703,
+    25,
+    30809,
+    13,
+    248046,
+    198,
+    248045,
+    74455,
+    198,
+    248068,
+    271,
+    248069,
+    271
+  ],
+  "max_tokens": 64,
+  "repeats_requested": 96,
+  "repeats_completed": 32,
+  "seed": 20260613,
+  "request_delay_s": 0.0,
+  "request_id_prefix": null,
+  "stop_on_mismatch": true,
+  "logprobs": 0,
+  "expected_normalized": null,
+  "json_expected_fields": {
+    "answer": "42",
+    "unit": "widgets"
+  },
+  "pass_all": false,
+  "mismatch_count": 1,
+  "mismatches": [
+    {
+      "index": 31,
+      "request_id": null,
+      "text": "{\"answer\": \"12\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"12\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        16,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2497235289774835,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "12",
+        "unit": "widgets"
+      },
+      "pass": false
+    }
+  ],
+  "unique_normalized": [
+    "{\"answer\": \"12\", \"unit\": \"widgets\"}",
+    "{\"answer\": \"42\", \"unit\": \"widgets\"}"
+  ],
+  "rows": [
+    {
+      "index": 0,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 19.998970611952245,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 1,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.24891542200930417,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 2,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.24820166104473174,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 3,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2489023068919778,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 4,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2488350011408329,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 5,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.24928608792833984,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 6,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.25294468086212873,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 7,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2514441830571741,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 8,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.24952986603602767,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 9,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2499553661327809,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 10,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.26404225802980363,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 11,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.25368859781883657,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 12,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.25544187193736434,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 13,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2570734368637204,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 14,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.25359473191201687,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 15,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2535882191732526,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 16,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.25370405707508326,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 17,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.25345547986216843,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 18,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.25334909092634916,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 19,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.25346026895567775,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 20,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2535131380427629,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 21,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2627075398340821,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 22,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.25348607799969614,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 23,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.25368466111831367,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 24,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.25318883918225765,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 25,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2522154899779707,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 26,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2497680529486388,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 27,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.24948807689361274,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 28,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2496395818889141,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 29,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2500844181049615,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 30,
+      "request_id": null,
+      "text": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"42\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        19,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2508494930807501,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true
+    },
+    {
+      "index": 31,
+      "request_id": null,
+      "text": "{\"answer\": \"12\", \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": \"12\", \"unit\": \"widgets\"}",
+      "token_ids": [
+        4754,
+        8944,
+        763,
+        328,
+        16,
+        17,
+        487,
+        328,
+        3715,
+        763,
+        328,
+        28844,
+        8934
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 0.2497235289774835,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": null
+      },
+      "json_parsed": {
+        "answer": "12",
+        "unit": "widgets"
+      },
+      "pass": false
+    }
+  ]
+}

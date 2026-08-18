@@ -1,0 +1,439 @@
+{
+  "created_at_unix": 1783047008.407475,
+  "base_url": "http://127.0.0.1:19412",
+  "model": "qwen36-27b-int4-autoround",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/hub/models--Intel--Qwen3.6-27B-int4-AutoRound/snapshots/abc86de19eb1ebbf6a7df4582341325c22ddcb7d",
+  "server_model_record": {
+    "id": "qwen36-27b-int4-autoround",
+    "object": "model",
+    "created": 1783046964,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/llm-cache/hf/hub/models--Intel--Qwen3.6-27B-int4-AutoRound/snapshots/abc86de19eb1ebbf6a7df4582341325c22ddcb7d",
+    "parent": null,
+    "max_model_len": 2048,
+    "permission": [
+      {
+        "id": "modelperm-8e3f4f20b077a525",
+        "object": "model_permission",
+        "created": 1783046964,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "preset",
+  "prompt_preset": "natural-chat",
+  "prompt_file": null,
+  "endpoint": "chat",
+  "seed": 7,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 2,
+  "output_tokens_requested": 512,
+  "mode": "stream",
+  "ignore_eos": true,
+  "request_extra": {
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    }
+  },
+  "skip_vram": true,
+  "repeats": 3,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "request_id": "chatcmpl-a4e75f4df687d6cd",
+      "request_started_at_unix": 1783046967.8555741,
+      "request_finished_at_unix": 1783046981.3428688,
+      "prompt_tokens_client": 509,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 13.487190696061589,
+      "ttft_ms_client": 970.4385750228539,
+      "tok_s_out_client_after_first_chunk": 40.90518011772453,
+      "tok_s_out_client_after_first_chunk_corrected": 40.8252871878071,
+      "tok_s_out_client_e2e": 37.96194563701911,
+      "tok_s_total_client": 75.70145799882131,
+      "tok_s_prefill_lower_bound_from_ttft": 524.5051187170842,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 509.0,
+        "generation_tokens": 512.0,
+        "spec_decode_drafts": 221.0,
+        "spec_decode_draft_tokens": 663.0,
+        "spec_decode_accepted_tokens": 290.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.9688754081726074,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 13.485862016677856
+      },
+      "vllm_histogram_deltas": {
+        "vllm:request_queue_time_seconds": {
+          "count": 1.0,
+          "sum": 1.0519986972212791e-05,
+          "mean": 1.0519986972212791e-05
+        },
+        "vllm:request_prefill_time_seconds": {
+          "count": 1.0,
+          "sum": 0.9632021080469713,
+          "mean": 0.9632021080469713
+        },
+        "vllm:request_decode_time_seconds": {
+          "count": 1.0,
+          "sum": 12.517124899895862,
+          "mean": 12.517124899895862
+        },
+        "vllm:request_inference_time_seconds": {
+          "count": 1.0,
+          "sum": 13.480327007942833,
+          "mean": 13.480327007942833
+        },
+        "vllm:request_time_per_output_token_seconds": {
+          "count": 1.0,
+          "sum": 0.024495352054590722,
+          "mean": 0.024495352054590722
+        },
+        "vllm:inter_token_latency_seconds": {
+          "count": 221.0,
+          "sum": 12.517124899895862,
+          "mean": 0.056638574207673584
+        },
+        "vllm:iteration_tokens_total": {
+          "count": 222.0,
+          "sum": 1021.0,
+          "mean": 4.599099099099099
+        }
+      },
+      "ttft_ms_vllm_metrics": 968.8754081726074,
+      "e2e_ms_vllm_metrics": 13485.862016677856,
+      "queue_ms_vllm_histogram": 0.010519986972212791,
+      "prefill_ms_vllm_histogram": 963.2021080469713,
+      "decode_ms_vllm_histogram": 12517.124899895862,
+      "decode_ms_per_generation_token_vllm_histogram": 24.447509570109105,
+      "inference_ms_vllm_histogram": 13480.327007942833,
+      "time_per_output_token_ms_vllm_histogram": 24.49535205459072,
+      "inter_token_ms_vllm_histogram": 56.638574207673585,
+      "iteration_tokens_per_step_vllm_histogram": 4.599099099099099,
+      "spec_decode_drafts": 221.0,
+      "spec_decode_draft_tokens": 663.0,
+      "spec_decode_accepted_tokens": 290.0,
+      "spec_decode_acceptance_fraction": 0.4374057315233786,
+      "spec_decode_accepted_tokens_per_generation_token": 0.56640625,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 222,
+      "text_preview": "1. The primary bottleneck in single-request latency on Intel XPU is likely the overhead associated with dynamic graph recompilation and memory management during the prefill phase, exacerbated by the observed \"graph capture bucket sensitivit"
+    },
+    {
+      "repeat": 2,
+      "request_id": "chatcmpl-8a05c412697e8df9",
+      "request_started_at_unix": 1783046981.3539505,
+      "request_finished_at_unix": 1783046994.856377,
+      "prompt_tokens_client": 509,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 13.502351960982196,
+      "ttft_ms_client": 984.6944339806214,
+      "tok_s_out_client_after_first_chunk": 40.902221433648876,
+      "tok_s_out_client_after_first_chunk_corrected": 40.82233428241128,
+      "tok_s_out_client_e2e": 37.919319647386516,
+      "tok_s_total_client": 75.61645578121411,
+      "tok_s_prefill_lower_bound_from_ttft": 516.9116250026625,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 509.0,
+        "generation_tokens": 512.0,
+        "spec_decode_drafts": 221.0,
+        "spec_decode_draft_tokens": 663.0,
+        "spec_decode_accepted_tokens": 290.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 0.9832184314727783,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 13.500904083251953
+      },
+      "vllm_histogram_deltas": {
+        "vllm:request_queue_time_seconds": {
+          "count": 1.0,
+          "sum": 8.826958946883678e-06,
+          "mean": 8.826958946883678e-06
+        },
+        "vllm:request_prefill_time_seconds": {
+          "count": 1.0,
+          "sum": 0.9775497190421447,
+          "mean": 0.9775497190421447
+        },
+        "vllm:request_decode_time_seconds": {
+          "count": 1.0,
+          "sum": 12.517872481024824,
+          "mean": 12.517872481024824
+        },
+        "vllm:request_inference_time_seconds": {
+          "count": 1.0,
+          "sum": 13.495422200066969,
+          "mean": 13.495422200066969
+        },
+        "vllm:request_time_per_output_token_seconds": {
+          "count": 1.0,
+          "sum": 0.02449681503135974,
+          "mean": 0.02449681503135974
+        },
+        "vllm:inter_token_latency_seconds": {
+          "count": 221.0,
+          "sum": 12.517872481024824,
+          "mean": 0.056641956927714135
+        },
+        "vllm:iteration_tokens_total": {
+          "count": 222.0,
+          "sum": 1021.0,
+          "mean": 4.599099099099099
+        }
+      },
+      "ttft_ms_vllm_metrics": 983.2184314727783,
+      "e2e_ms_vllm_metrics": 13500.904083251953,
+      "queue_ms_vllm_histogram": 0.008826958946883678,
+      "prefill_ms_vllm_histogram": 977.5497190421447,
+      "decode_ms_vllm_histogram": 12517.872481024824,
+      "decode_ms_per_generation_token_vllm_histogram": 24.44896968950161,
+      "inference_ms_vllm_histogram": 13495.422200066969,
+      "time_per_output_token_ms_vllm_histogram": 24.496815031359738,
+      "inter_token_ms_vllm_histogram": 56.64195692771413,
+      "iteration_tokens_per_step_vllm_histogram": 4.599099099099099,
+      "spec_decode_drafts": 221.0,
+      "spec_decode_draft_tokens": 663.0,
+      "spec_decode_accepted_tokens": 290.0,
+      "spec_decode_acceptance_fraction": 0.4374057315233786,
+      "spec_decode_accepted_tokens_per_generation_token": 0.56640625,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 222,
+      "text_preview": "1. The primary bottleneck in single-request latency on Intel XPU is likely the overhead associated with dynamic graph recompilation and memory management during the prefill phase, exacerbated by the observed \"graph capture bucket sensitivit"
+    },
+    {
+      "repeat": 3,
+      "request_id": "chatcmpl-b38a3846dfb97303",
+      "request_started_at_unix": 1783046994.8677416,
+      "request_finished_at_unix": 1783047008.401712,
+      "prompt_tokens_client": 509,
+      "prompt_tokens_estimated_before_request": 2,
+      "output_tokens_client": 512,
+      "elapsed_s_client": 13.533898237044923,
+      "ttft_ms_client": 1015.6076740240678,
+      "tok_s_out_client_after_first_chunk": 40.90015305384049,
+      "tok_s_out_client_after_first_chunk_corrected": 40.82026994240721,
+      "tok_s_out_client_e2e": 37.830933189563666,
+      "tok_s_total_client": 75.44020075496974,
+      "tok_s_prefill_lower_bound_from_ttft": 501.1777805727153,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 509.0,
+        "generation_tokens": 512.0,
+        "spec_decode_drafts": 221.0,
+        "spec_decode_draft_tokens": 663.0,
+        "spec_decode_accepted_tokens": 290.0,
+        "ttft_count": 1.0,
+        "ttft_sum_s": 1.0141081809997559,
+        "e2e_count": 1.0,
+        "e2e_sum_s": 13.532632827758789
+      },
+      "vllm_histogram_deltas": {
+        "vllm:request_queue_time_seconds": {
+          "count": 1.0,
+          "sum": 9.28796362131834e-06,
+          "mean": 9.28796362131834e-06
+        },
+        "vllm:request_prefill_time_seconds": {
+          "count": 1.0,
+          "sum": 1.0086162469815463,
+          "mean": 1.0086162469815463
+        },
+        "vllm:request_decode_time_seconds": {
+          "count": 1.0,
+          "sum": 12.518617596011609,
+          "mean": 12.518617596011609
+        },
+        "vllm:request_inference_time_seconds": {
+          "count": 1.0,
+          "sum": 13.527233842993155,
+          "mean": 13.527233842993155
+        },
+        "vllm:request_time_per_output_token_seconds": {
+          "count": 1.0,
+          "sum": 0.024498273182018804,
+          "mean": 0.024498273182018804
+        },
+        "vllm:inter_token_latency_seconds": {
+          "count": 221.0,
+          "sum": 12.518617596011609,
+          "mean": 0.056645328488740314
+        },
+        "vllm:iteration_tokens_total": {
+          "count": 222.0,
+          "sum": 1021.0,
+          "mean": 4.599099099099099
+        }
+      },
+      "ttft_ms_vllm_metrics": 1014.1081809997559,
+      "e2e_ms_vllm_metrics": 13532.632827758789,
+      "queue_ms_vllm_histogram": 0.00928796362131834,
+      "prefill_ms_vllm_histogram": 1008.6162469815463,
+      "decode_ms_vllm_histogram": 12518.617596011609,
+      "decode_ms_per_generation_token_vllm_histogram": 24.450424992210174,
+      "inference_ms_vllm_histogram": 13527.233842993155,
+      "time_per_output_token_ms_vllm_histogram": 24.498273182018803,
+      "inter_token_ms_vllm_histogram": 56.64532848874031,
+      "iteration_tokens_per_step_vllm_histogram": 4.599099099099099,
+      "spec_decode_drafts": 221.0,
+      "spec_decode_draft_tokens": 663.0,
+      "spec_decode_accepted_tokens": 290.0,
+      "spec_decode_acceptance_fraction": 0.4374057315233786,
+      "spec_decode_accepted_tokens_per_generation_token": 0.56640625,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 1,
+      "streamed_text_chunks": 222,
+      "text_preview": "1. The primary bottleneck in single-request latency on Intel XPU is likely the overhead associated with dynamic graph recompilation and memory management during the prefill phase, exacerbated by the observed \"graph capture bucket sensitivit"
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_after_first_chunk": {
+      "mean": 40.90251820173796,
+      "median": 40.902221433648876,
+      "min": 40.90015305384049,
+      "max": 40.90518011772453
+    },
+    "tok_s_out_client_after_first_chunk_corrected": {
+      "mean": 40.8226304708752,
+      "median": 40.82233428241128,
+      "min": 40.82026994240721,
+      "max": 40.8252871878071
+    },
+    "tok_s_out_client_e2e": {
+      "mean": 37.90406615798977,
+      "median": 37.919319647386516,
+      "min": 37.830933189563666,
+      "max": 37.96194563701911
+    },
+    "tok_s_total_client": {
+      "mean": 75.58603817833506,
+      "median": 75.61645578121411,
+      "min": 75.44020075496974,
+      "max": 75.70145799882131
+    },
+    "ttft_ms_client": {
+      "mean": 990.2468943425143,
+      "median": 984.6944339806214,
+      "min": 970.4385750228539,
+      "max": 1015.6076740240678
+    },
+    "ttft_ms_vllm_metrics": {
+      "mean": 988.7340068817139,
+      "median": 983.2184314727783,
+      "min": 968.8754081726074,
+      "max": 1014.1081809997559
+    },
+    "tok_s_prefill_lower_bound_from_ttft": {
+      "mean": 514.198174764154,
+      "median": 516.9116250026625,
+      "min": 501.1777805727153,
+      "max": 524.5051187170842
+    },
+    "e2e_ms_vllm_metrics": {
+      "mean": 13506.466309229532,
+      "median": 13500.904083251953,
+      "min": 13485.862016677856,
+      "max": 13532.632827758789
+    },
+    "queue_ms_vllm_histogram": {
+      "mean": 0.009544969846804937,
+      "median": 0.00928796362131834,
+      "min": 0.008826958946883678,
+      "max": 0.010519986972212791
+    },
+    "prefill_ms_vllm_histogram": {
+      "mean": 983.1226913568875,
+      "median": 977.5497190421447,
+      "min": 963.2021080469713,
+      "max": 1008.6162469815463
+    },
+    "decode_ms_vllm_histogram": {
+      "mean": 12517.871658977432,
+      "median": 12517.872481024824,
+      "min": 12517.124899895862,
+      "max": 12518.617596011609
+    },
+    "decode_ms_per_generation_token_vllm_histogram": {
+      "mean": 24.448968083940297,
+      "median": 24.44896968950161,
+      "min": 24.447509570109105,
+      "max": 24.450424992210174
+    },
+    "inference_ms_vllm_histogram": {
+      "mean": 13500.994350334318,
+      "median": 13495.422200066969,
+      "min": 13480.327007942833,
+      "max": 13527.233842993155
+    },
+    "time_per_output_token_ms_vllm_histogram": {
+      "mean": 24.49681342265642,
+      "median": 24.496815031359738,
+      "min": 24.49535205459072,
+      "max": 24.498273182018803
+    },
+    "inter_token_ms_vllm_histogram": {
+      "mean": 56.64195320804268,
+      "median": 56.64195692771413,
+      "min": 56.638574207673585,
+      "max": 56.64532848874031
+    },
+    "iteration_tokens_per_step_vllm_histogram": {
+      "mean": 4.599099099099099,
+      "median": 4.599099099099099,
+      "min": 4.599099099099099,
+      "max": 4.599099099099099
+    },
+    "spec_decode_drafts": {
+      "mean": 221.0,
+      "median": 221.0,
+      "min": 221.0,
+      "max": 221.0
+    },
+    "spec_decode_draft_tokens": {
+      "mean": 663.0,
+      "median": 663.0,
+      "min": 663.0,
+      "max": 663.0
+    },
+    "spec_decode_accepted_tokens": {
+      "mean": 290.0,
+      "median": 290.0,
+      "min": 290.0,
+      "max": 290.0
+    },
+    "spec_decode_acceptance_fraction": {
+      "mean": 0.4374057315233786,
+      "median": 0.4374057315233786,
+      "min": 0.4374057315233786,
+      "max": 0.4374057315233786
+    },
+    "spec_decode_accepted_tokens_per_generation_token": {
+      "mean": 0.56640625,
+      "median": 0.56640625,
+      "min": 0.56640625,
+      "max": 0.56640625
+    }
+  }
+}

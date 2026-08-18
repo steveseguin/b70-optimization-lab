@@ -1,0 +1,188 @@
+{
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/qwen36-quark-int8-fp8-mtp-hybrid",
+  "case": "color",
+  "user_prompt": "Give exactly four comma-separated lowercase color words, sorted alphabetically, with no extra text.",
+  "prompt": "<|im_start|>user\nGive exactly four comma-separated lowercase color words, sorted alphabetically, with no extra text.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+  "prompt_token_ids": [
+    248045,
+    846,
+    198,
+    33963,
+    6681,
+    2943,
+    30644,
+    70221,
+    40657,
+    1829,
+    4105,
+    11,
+    10300,
+    26887,
+    2586,
+    11,
+    440,
+    874,
+    4799,
+    1414,
+    13,
+    248046,
+    198,
+    248045,
+    74455,
+    198,
+    248068,
+    271,
+    248069,
+    271
+  ],
+  "max_tokens": 32,
+  "repeats_requested": 96,
+  "repeats_completed": 5,
+  "seed": 20260613,
+  "request_delay_s": 0.0,
+  "request_id_prefix": null,
+  "stop_on_mismatch": true,
+  "logprobs": 0,
+  "expected_normalized": "blue, green, orange, red",
+  "json_expected_fields": null,
+  "pass_all": false,
+  "mismatch_count": 1,
+  "mismatches": [
+    {
+      "index": 4,
+      "request_id": null,
+      "text": "",
+      "normalized": "",
+      "token_ids": [],
+      "finish_reason": null,
+      "elapsed_s": 0.6684999749995768,
+      "usage": null,
+      "http_error": {
+        "code": 500,
+        "reason": "Internal Server Error",
+        "body": "{\"error\":{\"message\":\"EngineCore encountered an issue. See stack trace (above) for the root cause.\",\"type\":\"InternalServerError\",\"param\":null,\"code\":500}}"
+      },
+      "pass": false
+    }
+  ],
+  "unique_normalized": [
+    "",
+    "blue, green, orange, red"
+  ],
+  "rows": [
+    {
+      "index": 0,
+      "request_id": null,
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 13.248822511999606,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 1,
+      "request_id": null,
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 12.814592153001286,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 2,
+      "request_id": null,
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 12.77060342600089,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 3,
+      "request_id": null,
+      "text": "blue, green, orange, red",
+      "normalized": "blue, green, orange, red",
+      "token_ids": [
+        11855,
+        11,
+        5983,
+        11,
+        18016,
+        11,
+        2438
+      ],
+      "finish_reason": "stop",
+      "elapsed_s": 13.146994105001795,
+      "usage": {
+        "prompt_tokens": 30,
+        "total_tokens": 38,
+        "completion_tokens": 8,
+        "prompt_tokens_details": null
+      },
+      "pass": true
+    },
+    {
+      "index": 4,
+      "request_id": null,
+      "text": "",
+      "normalized": "",
+      "token_ids": [],
+      "finish_reason": null,
+      "elapsed_s": 0.6684999749995768,
+      "usage": null,
+      "http_error": {
+        "code": 500,
+        "reason": "Internal Server Error",
+        "body": "{\"error\":{\"message\":\"EngineCore encountered an issue. See stack trace (above) for the root cause.\",\"type\":\"InternalServerError\",\"param\":null,\"code\":500}}"
+      },
+      "pass": false
+    }
+  ]
+}

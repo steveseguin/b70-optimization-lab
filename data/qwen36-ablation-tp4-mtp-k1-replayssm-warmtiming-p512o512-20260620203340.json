@@ -1,0 +1,144 @@
+{
+  "created_at_unix": 1781987880.8678174,
+  "base_url": "http://127.0.0.1:18080",
+  "model": "qwen36-35b-a3b-fp8",
+  "tokenizer": "/mnt/fast-ai/qwen36-quark-int8-fp8-mtp-hybrid",
+  "server_model_record": {
+    "id": "qwen36-35b-a3b-fp8",
+    "object": "model",
+    "created": 1781987872,
+    "owned_by": "vllm",
+    "root": "/mnt/fast-ai/qwen36-quark-int8-fp8-mtp-hybrid",
+    "parent": null,
+    "max_model_len": 32768,
+    "permission": [
+      {
+        "id": "modelperm-a1028167817d9398",
+        "object": "model_permission",
+        "created": 1781987872,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "prompt_kind": "preset",
+  "prompt_preset": "natural-chat",
+  "prompt_file": null,
+  "endpoint": "completions",
+  "seed": 0,
+  "random_prefix_len": 0,
+  "prompt_tokens_requested": 512,
+  "prompt_tokens_actual": 498,
+  "output_tokens_requested": 8,
+  "mode": "stream",
+  "ignore_eos": true,
+  "skip_vram": true,
+  "repeats": 1,
+  "measurement_notes": [
+    "TTFT and e2e are measured both client-side and from vLLM Prometheus histogram deltas.",
+    "tok_s_prefill_lower_bound_from_ttft is prompt_tokens / TTFT, so it is conservative and includes first-token scheduling/decode overhead.",
+    "tok_s_out_client_after_first_chunk is generated-token-only throughput after the first streamed text chunk.",
+    "tok_s_out_client_after_first_chunk_corrected subtracts the estimated first streamed chunk tokens from the numerator; this is more stable when --stream-interval > 1."
+  ],
+  "vram_mib_before_all": {},
+  "peak_vram_mib_observed": {},
+  "records": [
+    {
+      "repeat": 1,
+      "request_id": null,
+      "request_started_at_unix": 1781987874.117715,
+      "request_finished_at_unix": 1781987880.859477,
+      "prompt_tokens_client": 498,
+      "prompt_tokens_estimated_before_request": 498,
+      "output_tokens_client": 0,
+      "elapsed_s_client": 6.741669241004274,
+      "ttft_ms_client": null,
+      "tok_s_out_client_after_first_chunk": null,
+      "tok_s_out_client_after_first_chunk_corrected": null,
+      "tok_s_out_client_e2e": 0.0,
+      "tok_s_total_client": 73.86894583481751,
+      "tok_s_prefill_lower_bound_from_ttft": null,
+      "vllm_metric_deltas": {
+        "prompt_tokens": 0.0,
+        "generation_tokens": 0.0,
+        "ttft_count": 0.0,
+        "ttft_sum_s": 0.0,
+        "e2e_count": 0.0,
+        "e2e_sum_s": 0.0
+      },
+      "vllm_histogram_deltas": {
+        "vllm:request_queue_time_seconds": {
+          "count": 0.0,
+          "sum": 0.0,
+          "mean": null
+        },
+        "vllm:request_prefill_time_seconds": {
+          "count": 0.0,
+          "sum": 0.0,
+          "mean": null
+        },
+        "vllm:request_decode_time_seconds": {
+          "count": 0.0,
+          "sum": 0.0,
+          "mean": null
+        },
+        "vllm:request_inference_time_seconds": {
+          "count": 0.0,
+          "sum": 0.0,
+          "mean": null
+        },
+        "vllm:request_time_per_output_token_seconds": {
+          "count": 0.0,
+          "sum": 0.0,
+          "mean": null
+        },
+        "vllm:inter_token_latency_seconds": {
+          "count": 0.0,
+          "sum": 0.0,
+          "mean": null
+        },
+        "vllm:iteration_tokens_total": {
+          "count": 0.0,
+          "sum": 0.0,
+          "mean": null
+        }
+      },
+      "ttft_ms_vllm_metrics": null,
+      "e2e_ms_vllm_metrics": null,
+      "queue_ms_vllm_histogram": null,
+      "prefill_ms_vllm_histogram": null,
+      "decode_ms_vllm_histogram": null,
+      "decode_ms_per_generation_token_vllm_histogram": null,
+      "inference_ms_vllm_histogram": null,
+      "time_per_output_token_ms_vllm_histogram": null,
+      "inter_token_ms_vllm_histogram": null,
+      "iteration_tokens_per_step_vllm_histogram": null,
+      "vram_mib_before": {},
+      "vram_mib_after": {},
+      "first_chunk_tokens_client_estimate": 0,
+      "streamed_text_chunks": 0,
+      "text_preview": ""
+    }
+  ],
+  "summary": {
+    "tok_s_out_client_e2e": {
+      "mean": 0.0,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "tok_s_total_client": {
+      "mean": 73.86894583481751,
+      "median": 73.86894583481751,
+      "min": 73.86894583481751,
+      "max": 73.86894583481751
+    }
+  }
+}

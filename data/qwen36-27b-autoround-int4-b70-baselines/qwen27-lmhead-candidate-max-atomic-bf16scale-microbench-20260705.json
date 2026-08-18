@@ -1,0 +1,297 @@
+{
+  "kind": "diagnostic_microbench_only",
+  "xpu_so": "/home/steve/src/vllm-xpu-kernels/build/xpu-c-only-2025/_xpu_C.abi3.so",
+  "device": "xpu:0",
+  "hidden_size": 5120,
+  "vocab_size": 248320,
+  "valid_vocab_size": 248320,
+  "dtype": "bf16",
+  "scale_dtype": "bf16",
+  "warmup": 3,
+  "repeats": 10,
+  "has_atomic_candidate_max": true,
+  "results": [
+    {
+      "rows": 1,
+      "baseline_ms_median": 2.598236547783017,
+      "candidate_max_ms_median": 2.6680773589760065,
+      "candidate_max_atomic_ms_median": 2.6685380144044757,
+      "speedup": 0.9738235433998833,
+      "atomic_speedup": 0.9736554374560231,
+      "top_id_mismatches_vs_baseline": 0,
+      "candidate_is_top_mismatches": 0,
+      "max_top_value_abs_diff": 0.0,
+      "max_candidate_value_abs_diff": 0.0,
+      "atomic_top_id_mismatches_vs_baseline": 0,
+      "atomic_candidate_is_top_mismatches": 0,
+      "atomic_max_top_value_abs_diff": 0.0,
+      "atomic_max_candidate_value_abs_diff": 0.0,
+      "candidate_ids": [
+        201915
+      ],
+      "baseline_ids": [
+        227778
+      ],
+      "candidate_max_ids": [
+        227778
+      ],
+      "candidate_max_atomic_ids": [
+        227778
+      ],
+      "baseline_ms_samples": [
+        2.715597,
+        2.635316,
+        2.595892,
+        2.667126,
+        2.559625,
+        2.479834,
+        2.593097,
+        2.626059,
+        2.58935,
+        2.600581
+      ],
+      "candidate_max_ms_samples": [
+        2.681663,
+        2.673658,
+        2.674871,
+        2.670392,
+        2.665763,
+        2.663238,
+        2.655123,
+        2.683547,
+        2.664781,
+        2.659562
+      ],
+      "candidate_max_atomic_ms_samples": [
+        2.677676,
+        2.665583,
+        2.65846,
+        2.667977,
+        2.684138,
+        2.658771,
+        2.670442,
+        2.654261,
+        2.669099,
+        2.674731
+      ]
+    },
+    {
+      "rows": 2,
+      "baseline_ms_median": 2.6128734461963177,
+      "candidate_max_ms_median": 2.6660284493118525,
+      "candidate_max_atomic_ms_median": 2.6638900162652135,
+      "speedup": 0.9800621020644941,
+      "atomic_speedup": 0.9808488452010412,
+      "top_id_mismatches_vs_baseline": 0,
+      "candidate_is_top_mismatches": 0,
+      "max_top_value_abs_diff": 0.0,
+      "max_candidate_value_abs_diff": 0.0,
+      "atomic_top_id_mismatches_vs_baseline": 0,
+      "atomic_candidate_is_top_mismatches": 0,
+      "atomic_max_top_value_abs_diff": 0.0,
+      "atomic_max_candidate_value_abs_diff": 0.0,
+      "candidate_ids": [
+        80023,
+        96243
+      ],
+      "baseline_ids": [
+        151770,
+        1043
+      ],
+      "candidate_max_ids": [
+        151770,
+        1043
+      ],
+      "candidate_max_atomic_ids": [
+        151770,
+        1043
+      ],
+      "baseline_ms_samples": [
+        2.628563,
+        2.57357,
+        2.551639,
+        2.683196,
+        2.603666,
+        2.603346,
+        2.535088,
+        2.622081,
+        2.623744,
+        2.646727
+      ],
+      "candidate_max_ms_samples": [
+        2.675641,
+        2.666134,
+        2.662277,
+        2.664851,
+        2.667707,
+        2.677716,
+        2.658841,
+        2.665113,
+        2.665923,
+        2.668779
+      ],
+      "candidate_max_atomic_ms_samples": [
+        2.662537,
+        2.679178,
+        2.691332,
+        2.660734,
+        2.664902,
+        2.670883,
+        2.659651,
+        2.660273,
+        2.662878,
+        2.674319
+      ]
+    },
+    {
+      "rows": 3,
+      "baseline_ms_median": 2.565891481935978,
+      "candidate_max_ms_median": 2.669300534762442,
+      "candidate_max_atomic_ms_median": 2.6637095725163817,
+      "speedup": 0.9612598688383857,
+      "atomic_speedup": 0.9632774940670442,
+      "top_id_mismatches_vs_baseline": 0,
+      "candidate_is_top_mismatches": 0,
+      "max_top_value_abs_diff": 0.0,
+      "max_candidate_value_abs_diff": 0.0,
+      "atomic_top_id_mismatches_vs_baseline": 0,
+      "atomic_candidate_is_top_mismatches": 0,
+      "atomic_max_top_value_abs_diff": 0.0,
+      "atomic_max_candidate_value_abs_diff": 0.0,
+      "candidate_ids": [
+        57374,
+        63862,
+        183620
+      ],
+      "baseline_ids": [
+        132000,
+        158624,
+        126980
+      ],
+      "candidate_max_ids": [
+        132000,
+        158624,
+        126980
+      ],
+      "candidate_max_atomic_ids": [
+        132000,
+        158624,
+        126980
+      ],
+      "baseline_ms_samples": [
+        2.51503,
+        2.611983,
+        2.584491,
+        2.473653,
+        2.564394,
+        2.604328,
+        2.585002,
+        2.567389,
+        2.552852,
+        2.455198
+      ],
+      "candidate_max_ms_samples": [
+        2.701069,
+        2.648982,
+        2.660233,
+        2.666746,
+        2.679158,
+        2.676723,
+        2.660553,
+        2.671855,
+        2.683426,
+        2.664481
+      ],
+      "candidate_max_atomic_ms_samples": [
+        2.660353,
+        2.682345,
+        2.661957,
+        2.676904,
+        2.659251,
+        2.667136,
+        2.662768,
+        2.664651,
+        2.661265,
+        2.668559
+      ]
+    },
+    {
+      "rows": 4,
+      "baseline_ms_median": 2.570398850366473,
+      "candidate_max_ms_median": 2.664886531420052,
+      "candidate_max_atomic_ms_median": 2.673508017323911,
+      "speedup": 0.9645434505598898,
+      "atomic_speedup": 0.9614330062639398,
+      "top_id_mismatches_vs_baseline": 0,
+      "candidate_is_top_mismatches": 0,
+      "max_top_value_abs_diff": 0.0,
+      "max_candidate_value_abs_diff": 0.0,
+      "atomic_top_id_mismatches_vs_baseline": 0,
+      "atomic_candidate_is_top_mismatches": 0,
+      "atomic_max_top_value_abs_diff": 0.0,
+      "atomic_max_candidate_value_abs_diff": 0.0,
+      "candidate_ids": [
+        223682,
+        75034,
+        200707,
+        232919
+      ],
+      "baseline_ids": [
+        23506,
+        161070,
+        20097,
+        84130
+      ],
+      "candidate_max_ids": [
+        23506,
+        161070,
+        20097,
+        84130
+      ],
+      "candidate_max_atomic_ids": [
+        23506,
+        161070,
+        20097,
+        84130
+      ],
+      "baseline_ms_samples": [
+        2.524378,
+        2.505754,
+        2.624125,
+        2.524799,
+        2.591995,
+        2.574261,
+        2.607854,
+        2.566537,
+        2.594018,
+        2.559424
+      ],
+      "candidate_max_ms_samples": [
+        2.666745,
+        2.666925,
+        2.651226,
+        2.689487,
+        2.683056,
+        2.6587,
+        2.678728,
+        2.658389,
+        2.661405,
+        2.663028
+      ],
+      "candidate_max_atomic_ms_samples": [
+        2.666395,
+        2.673578,
+        2.673438,
+        2.691733,
+        2.676674,
+        2.684478,
+        2.659782,
+        2.657318,
+        2.676814,
+        2.66945
+      ]
+    }
+  ],
+  "promotion_rule": "Do not integrate unless exact and clearly faster than dense logits, roughly <2.3 ms or >1.10x on rows 1-4.",
+  "note": "Synthetic tensors; useful only for LM-head primitive cost. Not a model-quality or fresh-response throughput benchmark."
+}
