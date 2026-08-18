@@ -88,10 +88,12 @@ elif [[ "$mode" == "spec-native-partition-exact" \
   || "$mode" == "nospec-latest-exact-native" ]]; then
   latest_identity=1
   exact_identity=1
+  expected_vllm_diff=${VALIDATION_EXPECT_VLLM_DIFF_SHA256:-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855}
+  expected_kernels_diff=${VALIDATION_EXPECT_KERNELS_DIFF_SHA256:-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855}
   verify_tree "$source_root/vllm" 44fc8fde09fc311d3099dab10366b672d9142ea4 \
-    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
+    "$expected_vllm_diff" vllm
   verify_tree "$source_root/vllm-xpu-kernels" 2dd55f380df753a10a88fcd9e96192561066e713 \
-    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
+    "$expected_kernels_diff" kernels
 elif [[ "$mode" == "spec-native-partition" || "$mode" == "nospec-latest" ]]; then
   latest_identity=1
   verify_tree "$source_root/vllm" a63ff886e1c9c90f919e8b46a63f34027dfae823 \
@@ -335,6 +337,12 @@ if [[ -n "${VALIDATION_LM_HEAD_INT8:-}" ]]; then
   # Exactness control: allow the harness to disable the experimental target
   # W8A8 vocabulary projection without inheriting ambient process state.
   export VLLM_XPU_LM_HEAD_INT8="${VALIDATION_LM_HEAD_INT8}"
+fi
+if [[ -n "${VALIDATION_DRAFT_LM_HEAD_INT4_RERANK_TOPK:-}" ]]; then
+  # Candidate-only acceptance lever: the INT4 draft head proposes a small
+  # local-vocabulary set and its retained original weights rerank that set.
+  # Target verification remains unchanged.
+  export VLLM_XPU_DRAFT_LM_HEAD_INT4_RERANK_TOPK="${VALIDATION_DRAFT_LM_HEAD_INT4_RERANK_TOPK}"
 fi
 if [[ "${VALIDATION_ALLREDUCE_ASYNC_WAIT:-0}" == "1" ]]; then
   # Eager-only ordering control: retain the collective work handle and wait
