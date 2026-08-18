@@ -233,6 +233,7 @@ trap cleanup EXIT
   echo "m4_m1_oracle_components=${VLLM_XPU_M4_M1_ORACLE_COMPONENTS:-}"
   echo "int4_gemm_fixed_m4=${VLLM_XPU_INT4_GEMM_FIXED_M4:-0}"
   echo "int8_lm_head_fixed_m4=${VLLM_XPU_INT8_LM_HEAD_FIXED_M4:-0}"
+  echo "onednn_int8_input_dependency=${VLLM_XPU_ONEDNN_INT8_INPUT_DEPENDENCY:-0}"
   echo "onednn_int8_completion_barrier=${VLLM_XPU_ONEDNN_INT8_COMPLETION_BARRIER:-0}"
   echo "sync_after_cudagraph_warmup=${VLLM_XPU_SYNC_AFTER_CUDAGRAPH_WARMUP:-0}"
   echo "sync_after_model_forward=${VLLM_XPU_SYNC_AFTER_MODEL_FORWARD:-0}"

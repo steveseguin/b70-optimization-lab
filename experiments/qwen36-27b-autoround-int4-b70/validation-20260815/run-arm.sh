@@ -323,6 +323,9 @@ fi
 if [[ "${VALIDATION_ONEDNN_INT8_COMPLETION_BARRIER:-0}" == "1" ]]; then
   export VLLM_XPU_ONEDNN_INT8_COMPLETION_BARRIER=1
 fi
+if [[ "${VALIDATION_ONEDNN_INT8_INPUT_DEPENDENCY:-0}" == "1" ]]; then
+  export VLLM_XPU_ONEDNN_INT8_INPUT_DEPENDENCY=1
+fi
 if [[ "${VALIDATION_INT4_GEMM_FIXED_M4:-0}" == "1" ]]; then
   # Diagnostic only: make one-row target projections use the verifier's M=4
   # W4A16 descriptor and retain row zero.  Do not promote its timing.
