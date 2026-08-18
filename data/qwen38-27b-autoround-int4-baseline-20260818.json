@@ -187,8 +187,19 @@
     },
     "quality": "pass_all true on both (objective gates only; no model-specific baseline exists yet)",
     "self_determinism_pinned_cache": "FAIL 24/25, 1 divergence at holdout--long-rollover-repository-audit token 88",
-    "verdict": "CROSSED 100 ON ONE RUN (101.598 all-25) BUT NOT VALIDATED. Replicate B came in at 99.849, so the result is not stably above 100, and it fails the determinism gate at 24/25 even with a pinned compile cache -- unlike MTP3 on the same fast path, which is 25/25. MTP4 therefore introduces nondeterminism beyond compilation, most likely in 5-row GDN state handling without serial-exact. NOT CLAIMED.",
-    "note_on_selection_subset": "all-25 rose from 98.222 to 101.598 but selection-12 was flat at 94.005 -> 93.993. The entire apparent gain is on the newer holdout prompts, which is exactly the suite-composition inflation documented for the Qwen3.6 lane."
+    "verdict": "Median of three is 100.260 tok/s all-25, above the target, but it FAILS the 25/25 determinism gate on one consistently unstable prompt. NOT CLAIMED. MTP3 on the same fast path is 25/25, so the instability is specific to 5-row GDN state handling without serial-exact. The other machine's kernel patch (serial-exact at 5 rows) would likely fix it, but serial-exact costs ~6 tok/s, which would put MTP4 near 95.",
+    "note_on_selection_subset": "all-25 rose from 98.222 to 101.598 but selection-12 was flat at 94.005 -> 93.993. The entire apparent gain is on the newer holdout prompts, which is exactly the suite-composition inflation documented for the Qwen3.6 lane.",
+    "arm_c_shared_cache": {
+      "raw_root": "qwen38-mtp4-fast-sharedcache-25-spec-c-20260818",
+      "manifest_sha256": "dec1732bf9b701ba985d3f07f2dc0e7c52a24962385d38b69551919c77769180",
+      "all25_median_tok_s": 100.2602703943657,
+      "selection12_median_tok_s": 94.86642497531412
+    },
+    "median_of_three": {
+      "all25_tok_s": 100.26,
+      "selection12_tok_s": 94.866
+    },
+    "self_determinism_three_way": "A/B 24/25, A/C 24/25, B/C 24/25 -- every pair differs on exactly one prompt, always holdout--long-rollover-repository-audit (tokens 88, 30, 30). One consistently unstable prompt."
   },
   "current_standing_20260818": {
     "strictest_gate_fresh_compile": {
@@ -211,5 +222,11 @@
       "determinism": "FAIL 24/25",
       "status": "NOT CLAIMED"
     }
+  },
+  "latent_bug_replayssm_ring_length": {
+    "severity": "latent - not triggered here because the spec arm sets VLLM_XPU_GDN_REPLAYSSM_SPEC=0",
+    "detail": "run-tp2-targetgraph-drafteager-candidate.sh:45 derives VLLM_XPU_GDN_REPLAYSSM_SPEC_CACHE_LEN as 2*(num_speculative_tokens+1). Its own comment at :44 says callers may request a larger POWER-OF-TWO ring. For MTP3 that yields 8, a power of two. For MTP4 it yields 10 and for MTP5 12, neither a power of two.",
+    "impact": "anyone enabling ReplaySSM at depth != 3 gets a non-power-of-two ring, contradicting the documented contract",
+    "suggested_fix": "round the derived length up to the next power of two"
   }
 }
