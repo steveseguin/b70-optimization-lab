@@ -6,8 +6,14 @@ Date: 2026-08-18 (America/Toronto)
 
 No new LocalMaxxing record. On the full 25-prompt suite the **deterministic
 ceiling is `94.710 tok/s`** and the **fastest non-reproducing configuration is
-`96.822 tok/s`**. Nothing measured both exceeded the retained July `95.385`
-figure and reproduced itself token-for-token, so nothing was submitted.
+`96.822 tok/s`**.
+
+Those are all-25 numbers and are **not** comparable to the retained July
+`95.385`, which was measured on the 12-prompt historical suite. On that suite
+the same configurations score `89.766` and `94.103` — see the
+[suite-composition correction](#correction--all-25-medians-are-not-comparable-to-the-july-record).
+**Nothing in this campaign beats the July record on the suite it was set on**,
+so nothing was submitted.
 
 The `94.710` figure supersedes the `92.003` used throughout sections 2 and 3
 below, which describe the flag bisect as it stood before the sampler fix. See
@@ -211,3 +217,38 @@ Determinism now costs about `2.1 tok/s` rather than `4.8` (`96.822` remains the
 fastest non-reproducing configuration). Still short of the retained `95.385`
 July figure — which was measured on 12 prompts with no determinism gate — so no
 submission was made.
+
+## Correction — all-25 medians are not comparable to the July record
+
+An earlier revision of this note described `95.926 tok/s` as "above the
+historical `95.385`". **That comparison was wrong** and is retracted.
+
+The July record was measured on the 12-prompt historical suite. Those 12 prompts
+survive in the current 25-prompt suite as the `selection--*` rows; the 13
+`holdout--*` rows were added later and they run materially faster. Any all-25
+median is therefore inflated relative to the record's suite.
+
+Measured on the same 12 prompts the record was set on:
+
+| Configuration | 12-prompt `selection--` median | all-25 median | vs `95.385` |
+| --- | ---: | ---: | ---: |
+| July record (retained) | **`95.385`** | not measured | — |
+| fastest non-reproducing | `94.103` | `96.822` | `-1.282` |
+| all barriers stripped | `93.084` | `95.926` | `-2.301` |
+| MTP4 | `91.914` | `93.680` | `-3.471` |
+| deterministic, masked-max (best) | `89.766` | `94.710` | `-5.618` |
+| deterministic, prior stack | `87.847` | `92.558` | `-7.537` |
+
+**Nothing measured in this campaign beats the July record on the suite that
+record was set on**, deterministic or not. Suite composition is worth roughly
+5 tok/s, which is larger than every optimization difference reported above.
+
+Two consequences:
+
+1. The masked-max sampler gain is still real — it is a same-suite comparison,
+   `87.847` to `89.766` on the selection subset and `92.558` to `94.710` on
+   all 25. Only the comparison *to the record* was invalid.
+2. Any future speed claim in this lane must report the `selection--` subset
+   median alongside the all-25 median, or it is not comparable to the retained
+   record. The same caveat applies to the earlier `98.766`, `99.798`, and
+   `>100` figures, whose all-25 framing carries the same inflation.

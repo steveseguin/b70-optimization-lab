@@ -9,8 +9,9 @@
     "nondeterministic_best_tok_s": 96.82207987491994,
     "determinism_cost_tok_s": 2.111582513872744,
     "new_record_submitted": false,
-    "reason": "no configuration exceeded the retained 95.385 July figure while also reproducing itself token-for-token",
-    "deterministic_ceiling_note": "raised from 92.003 by the masked-max greedy tie break (vllm 44fc8fde09); median of three replicates 94.321/94.710/94.791"
+    "reason": "no configuration beats the retained 95.385 July figure on the 12-prompt suite that figure was measured on; the best deterministic config is 89.766 there (-5.618) and the fastest non-reproducing config is 94.103 (-1.282)",
+    "deterministic_ceiling_note": "raised from 92.003 by the masked-max greedy tie break (vllm 44fc8fde09); median of three replicates 94.321/94.710/94.791",
+    "deterministic_ceiling_selection_subset_tok_s": 89.766
   },
   "source_identity": {
     "vllm_head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
@@ -285,5 +286,19 @@
       "6a40e2baf3f8710b89e48d18bf214708ba2dbf9a"
     ],
     "staged_flash_attention": "3.1 GB of AOT SYCL binaries; not distributable and not bit-reproducible across oneAPI toolchains. The build recipe is published under experiments/qwen27_graphsafe_flash_attention/ (build.sh, three patches, validate.sh, graph-replay tests). The four SHA256 values prove a given host still runs the artifact it measured with; they are not a build target."
+  },
+  "suite_composition_correction": {
+    "retracted_claim": "an earlier revision described 95.926 all-25 as above the 95.385 July record",
+    "why_wrong": "95.385 was measured on the 12-prompt historical suite, which survives as the selection--* rows of the 25-prompt suite; the 13 holdout--* rows added later run materially faster, so every all-25 median is inflated relative to the record",
+    "magnitude_tok_s": 5.0,
+    "selection_subset_medians": {
+      "july_record": 95.384867741895,
+      "fastest_non_reproducing": 94.103,
+      "all_barriers_stripped": 93.084,
+      "mtp4": 91.914,
+      "deterministic_masked_max": 89.766,
+      "deterministic_prior_stack": 87.847
+    },
+    "rule": "future speed claims in this lane must report the selection-- subset median alongside the all-25 median; the earlier 98.766, 99.798 and >100 figures carry the same inflation"
   }
 }
