@@ -35,6 +35,11 @@ second lab host, which has 15 GiB of system RAM.
    oracle. Qwen3.6 output cannot be used as the correctness baseline for new
    Qwen3.8 weights.
 
+Once those gates exist, the first source-level candidate is the reviewed
+[M=4 residual/RMSNorm/INT4 gate-up fusion](../../experiments/qwen38-27b-b70/notes/2026-08-18-autoround-fused-resadd-rmsnorm-int4-triage.md).
+It is not a drop-in Intel kernel and must pass the recorded real-weight,
+microbenchmark, graph-replay, and quality proof order before integration.
+
 ## Why execution is paused on the second host
 
 An exploratory stock-container smoke is already a closed negative result. It
