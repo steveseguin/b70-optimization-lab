@@ -53,6 +53,9 @@ BACKEND_MAX_ACTIVE_GENERATIONS_RAW = os.environ.get(
 BACKEND_CAPACITIES_RAW = os.environ.get("FRONTDOOR_BACKEND_CAPACITIES", "")
 QUEUE_TIMEOUT_S = float(os.environ.get("FRONTDOOR_QUEUE_TIMEOUT_S", "3600"))
 BACKEND_TIMEOUT_S = float(os.environ.get("FRONTDOOR_BACKEND_TIMEOUT_S", "7200"))
+BACKEND_SLOTS_TIMEOUT_S = float(
+    os.environ.get("FRONTDOOR_BACKEND_SLOTS_TIMEOUT_S", "5")
+)
 FRONTDOOR_CORS_ALLOW_ORIGIN = os.environ.get("FRONTDOOR_CORS_ALLOW_ORIGIN", "*")
 FRONTDOOR_LOG_EVENTS = env_truthy("FRONTDOOR_LOG_EVENTS", "1")
 FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON = os.environ.get(
@@ -539,6 +542,76 @@ def request_route_info(
     }
 
 
+def backend_slots(backend_index: int) -> list[dict[str, Any]] | None:
+    """Fetch /slots from one backend. Returns None if it is unreachable."""
+    backend = backends[backend_index]
+    connection = http.client.HTTPConnection(
+        backend.hostname, backend.port, timeout=BACKEND_SLOTS_TIMEOUT_S
+    )
+    try:
+        connection.request("GET", "/slots")
+        response = connection.getresponse()
+        if response.status != 200:
+            return None
+        parsed = json.loads(response.read())
+    except (OSError, http.client.HTTPException, ValueError):
+        return None
+    finally:
+        connection.close()
+    if not isinstance(parsed, list):
+        return None
+    return parsed
+
+
+def aggregated_slots_payload() -> list[dict[str, Any]]:
+    """Merge every backend's slots into one fleet-wide list.
+
+    llama.cpp numbers slots per process, so proxying /slots to a single backend
+    reports that backend's slot count instead of the fleet total. Slots are
+    renumbered globally and tagged with their backend.
+    """
+    results: list[list[dict[str, Any]] | None] = [None] * len(backends)
+    threads = []
+
+    def fetch(index: int) -> None:
+        results[index] = backend_slots(index)
+
+    for index in range(len(backends)):
+        thread = threading.Thread(target=fetch, args=(index,), daemon=True)
+        thread.start()
+        threads.append(thread)
+    for thread in threads:
+        thread.join(BACKEND_SLOTS_TIMEOUT_S + 1.0)
+
+    merged: list[dict[str, Any]] = []
+    for index, slots in enumerate(results):
+        backend = backends[index]
+        backend_url = f"http://{backend.hostname}:{backend.port}"
+        if slots is None:
+            # Keep unreachable backends visible so the count stays the fleet
+            # total rather than silently shrinking.
+            for offset in range(BACKEND_CAPACITIES[index]):
+                merged.append(
+                    {
+                        "id": len(merged),
+                        "slot_id_on_backend": offset,
+                        "backend_index": index,
+                        "backend_url": backend_url,
+                        "available": False,
+                        "error": "backend unreachable",
+                    }
+                )
+            continue
+        for slot in slots:
+            entry = dict(slot)
+            entry["slot_id_on_backend"] = entry.get("id")
+            entry["backend_index"] = index
+            entry["backend_url"] = backend_url
+            entry["id"] = len(merged)
+            merged.append(entry)
+    return merged
+
+
 def status_payload() -> dict[str, Any]:
     with state_lock:
         active = active_generations
@@ -916,6 +989,10 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
             and self.command == "GET"
         ):
             self.write_json(200, status_payload())
+            return
+
+        if path in {"/slots", "/v1/slots"} and self.command == "GET":
+            self.write_json(200, aggregated_slots_payload())
             return
 
         queued = False
