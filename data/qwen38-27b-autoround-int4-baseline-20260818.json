@@ -111,8 +111,25 @@
         "acceptance_pct": 64.7,
         "self_determinism": "FAIL 12/25, 13 divergences over 8636 tokens",
         "verdict": "FASTEST measured at 98.222/98.717 all-25 but NOT reproducible, so it does not count. Acceptance is unchanged, so the entire +6.3 tok/s is step time recovered from the eager graph break that serial-exact GDN forces."
+      },
+      {
+        "id": "gdn_completion_barrier_instead_of_serial_recurrence",
+        "change": "serial-exact GDN off, batch-invariant off, VALIDATION_GDN_NATIVE_SPEC_COMPLETION_BARRIER=1",
+        "hypothesis": "if GDN run-to-run nondeterminism were an ordering race, a completion barrier would fix it far cheaper than serializing the recurrence",
+        "raw_root": "qwen38-gdnbarrier-mtp3-25-spec-a-20260818",
+        "manifest_sha256": "8176e579dbea49b1fb1d72e58345b87fc38de09e4bc81cccd5d0dd9825451ffd",
+        "all25_median_tok_s": 97.21106806972213,
+        "selection12_median_tok_s": 93.26621199161525,
+        "replicate_b": {
+          "raw_root": "qwen38-gdnbarrier-mtp3-25-spec-b-20260818",
+          "manifest_sha256": "1196b77cb946bff4b6ac215922386cc0b14648bd8ade31234706c804e4d0f41b",
+          "all25_median_tok_s": 97.17806625702816,
+          "selection12_median_tok_s": 91.92736820970752
+        },
+        "self_determinism": "FAIL 12/25, 13 divergences over 8636 tokens",
+        "verdict": "HYPOTHESIS DISPROVED, and cleanly. The barrier costs about 1 tok/s (97.211 vs 98.222) but the divergent prompts and token positions are byte-identical to the no-barrier run -- same 8 prompts at tokens 69/322/262/272/334/217/320/15. Synchronization changes nothing. GDN nondeterminism is a reduction-order problem, not a race, so only full serialization fixes it."
       }
     ],
-    "conclusion": "The deterministic ceiling is ~92 tok/s and ~98 is reachable without reproducibility -- the same structure as Qwen3.6. The 6.3 tok/s prize is precisely the serial-exact GDN eager graph break. Closing that gap honestly requires a GDN attention path that is deterministic without full serialization, not another flag."
+    "conclusion": "Validated best remains 91.926 tok/s at 25/25 self-determinism. 97-98 tok/s is reachable but never reproducible. The 6.3 tok/s gap is entirely the serial-exact GDN eager graph break, and it cannot be closed with synchronization -- a completion barrier reproduced the divergences exactly. Claiming it honestly requires batch-invariant GDN attention arithmetic, which vLLM currently refuses outright ('VLLM batch_invariant mode is not supported for GDN_ATTN')."
   }
 }
