@@ -5,6 +5,13 @@
 > observation) and isolates a single variable: the inference **backend**. It is
 > one configuration on one host, not a general MTP conclusion.
 
+> **Maintainer note (2026-08-17):** the report does not actually isolate the
+> backend. The two rows also change the model (35B-A3B MoE versus 27B dense),
+> quantization, MTP head, and runtime. The reported within-row MTP deltas are
+> useful community observations, but the difference between those deltas
+> cannot be attributed to the backend alone. No raw logs were available for an
+> independent artifact check.
+
 Pinned contributor write-up:
 [`results/mtp-spec-decode-b70.md`](https://github.com/bosd/trx50-arc-b70-benchmarks/blob/64df816/results/mtp-spec-decode-b70.md).
 

@@ -5,6 +5,15 @@
 > [`mtp-vllm-xpu-flip.md`](mtp-vllm-xpu-flip.md), which established the
 > backend-swap MTP result on Qwen3.6-27B.
 
+> **Maintainer note (2026-08-17):** inspection confirms that the named image
+> supports `qwen3_5_mtp` and that the Qwen3.8 checkpoint has an MTP head. The
+> reported +55% arithmetic is also correct. The performance was not
+> independently reproduced from raw logs, however, and lower acceptance does
+> not establish that Intel had not tuned the checkpoint or that the entire
+> Qwen3.6/Qwen3.8 difference is in the draft path. Also,
+> `CCL_ZE_IPC_EXCHANGE=sockets` selects socket-based Level Zero IPC handle
+> exchange; it is not by itself proof of a PCIe P2P defect.
+
 Pinned contributor write-up:
 [`results/mtp-spec-decode-b70.md`](https://github.com/bosd/trx50-arc-b70-benchmarks/blob/64df816/results/mtp-spec-decode-b70.md).
 

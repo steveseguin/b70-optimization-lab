@@ -6,6 +6,20 @@
 > Scope: this is about the *public* image; Intel's internal builds differ (see
 > the "native int4 v4" note at the end).
 
+> **Maintainer correction (2026-08-17):** the central inference below is not
+> correct for the exact public b3.1 image. Source inspection of image
+> `intel/llm-scaler-vllm:0.21.0-b3.1` (ID `032916bd9264`) found the XPU INT4 MoE
+> path (`XPUGPTQInt4LinearMoEMethod`, `XPUExpertsInt4`, and
+> `XpuFusedMoe(... is_int4=True)`). Intel's public
+> [LLM-Scaler documentation](https://github.com/intel/llm-scaler/blob/main/vllm/README.md#32-reference-commands-for-running-the-supported-qwen3536-models)
+> also describes online `sym_int4` for Qwen3.5/3.6-35B-A3B. The quoted
+> `Using XPU Unquantized MoE backend` line shows that the submitted checkpoint
+> selected an unquantized method in that run; it does **not** show that the
+> image lacks all quantized-MoE kernels or universally expands INT4 experts to
+> FP16. The checkpoint-specific AWQ/GPTQ/AutoRound failures remain useful field
+> observations. Treat the universal conclusions and inferred internal
+> leaderboard explanation below as superseded by this note.
+
 ## TL;DR
 
 - **vLLM-XPU is usable on the B70 now** (kernel 7.1.8): inside the b3.1

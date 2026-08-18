@@ -5,6 +5,21 @@
 > flag recipe) results on a **third** host — Fedora, B60 + 2× B70 — including the
 > exact env flag that clears this repo's long-standing SYCL 2-GPU crash.
 
+> **Maintainer reproduction (2026-08-17):** the reference lab reproduced the
+> pinned target, draft, TP2 patch family, copy-offload flag, n-max 8, and
+> 8192/8192 batch settings, but did **not** reproduce 84–97 tok/s on a fixed
+> realistic suite. Across 12 unique cold 512-token prompts, MTP8 measured
+> **43.45 tok/s median full decode** versus **48.38 tok/s target-only**
+> (−10.2%); its first-100-token median was 46.23 tok/s, with one favorable
+> prompt reaching 81.14. Server timing (43.44 tok/s median) agreed with streamed
+> full-response timing, so the client did not materially undercount. Quality
+> canaries, eight-repeat stability, and a 3,829-token requested-context needle
+> (3,582 actual prompt tokens) passed and matched the target baseline, although
+> long-form output hashes were not bit-identical.
+> The contributor's result is retained as a workload-favorable claim, not a
+> general TP2/MTP rate. Full configuration and artifact hashes are in the
+> [maintainer audit](maintainer-audit-2026-08-17.md).
+
 Pinned contributor write-up:
 [`results/mtp-spec-decode-b70.md`](https://github.com/bosd/trx50-arc-b70-benchmarks/blob/master/results/mtp-spec-decode-b70.md).
 
