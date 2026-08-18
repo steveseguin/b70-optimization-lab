@@ -1,0 +1,41 @@
+{
+  "date": "2026-08-17",
+  "status": "rejected_performance",
+  "model": "Qwen3.8-27B-Q8_0.gguf",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "scope": "target-only TP2, no speculation",
+  "candidate": {
+    "environment": "GGML_META_REVERSE_BACKEND_SUBMIT=1",
+    "change": "submit independent rank-1 meta subgraph before rank 0",
+    "math_changed": false,
+    "accepted_sycl_library_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+    "candidate_ggml_base_sha256": "fe26cef4514b07e8a3c22d05b10f6aa04f670961fd7643ad1bef250afec183b0"
+  },
+  "benchmark": {
+    "shape": "p64/n128/r3",
+    "batch": 1024,
+    "ubatch": 256,
+    "devices": "SYCL0/SYCL1",
+    "selector": "level_zero:1,0",
+    "tensor_split": "1/1",
+    "kv": "f16/f16",
+    "order": ["control", "candidate", "candidate", "control"],
+    "decode_tok_s": [36.025559, 36.707261, 35.836582, 36.765676],
+    "control_mean_tok_s": 36.3956175,
+    "candidate_mean_tok_s": 36.2719215,
+    "candidate_delta_percent": -0.339865095
+  },
+  "quality": {
+    "verify_mismatch_each_run": [0, 0, 0, 0],
+    "endpoint_gate_run": false,
+    "reason_endpoint_gate_not_run": "position-balanced direct gate was negative"
+  },
+  "safety": {
+    "memory_high": "8G",
+    "memory_max": "10G",
+    "memory_swap_max": "8G",
+    "new_gpu_or_kernel_fault": false,
+    "hardware_policy_changed": false
+  },
+  "decision": "retain accepted rank-0-first submission order"
+}

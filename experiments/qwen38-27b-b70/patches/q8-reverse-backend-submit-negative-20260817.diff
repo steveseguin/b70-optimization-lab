@@ -1,0 +1,24 @@
+diff --git a/ggml/src/ggml-backend-meta.cpp b/ggml/src/ggml-backend-meta.cpp
+--- a/ggml/src/ggml-backend-meta.cpp
++++ b/ggml/src/ggml-backend-meta.cpp
+@@ -1811,5 +1811,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend,
+         atoi(fuse_add_rms_mul_env) != 0 && backend_ctx->comm_allreduce_add_rms_mul != nullptr;
+     const bool allreduce_stats = getenv("GGML_META_ALLREDUCE_STATS") && atoi(getenv("GGML_META_ALLREDUCE_STATS")) != 0;
++    const bool reverse_backend_submit = getenv("GGML_META_REVERSE_BACKEND_SUBMIT") &&
++        atoi(getenv("GGML_META_REVERSE_BACKEND_SUBMIT")) != 0;
+     size_t allreduce_count = 0;
+     size_t fused_allreduce_add_count = 0;
+     size_t fused_allreduce_add_rms_mul_count = 0;
+@@ -2348,5 +2350,11 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend,
+     for (size_t i = 0; i < backend_ctx->n_subgraphs; i++) {
+-        for (size_t j = 0; j < n_backends; j++) {
++        for (size_t j_order = 0; j_order < n_backends; j_order++) {
++            // Experimental host-only scheduling door: submit the non-root rank
++            // first so its independent partial can be ready when rank 0 queues
++            // the ordered collective. This changes no graph, kernel, tensor,
++            // cross-device access, or arithmetic, and defaults to the original
++            // rank-0-first order.
++            const size_t j = reverse_backend_submit ? n_backends - 1 - j_order : j_order;
+             auto & bcj = backend_ctx->backend_configs[j];
+             const ggml_status status = ggml_backend_graph_compute_async(bcj.backend, bcj.cgraphs[i].cgraph_main);
+             if (status != GGML_STATUS_SUCCESS) {
