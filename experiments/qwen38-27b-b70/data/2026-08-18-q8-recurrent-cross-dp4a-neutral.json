@@ -1,0 +1,63 @@
+{
+  "date": "2026-08-18",
+  "status": "closed_performance_neutral",
+  "model": {
+    "path": "/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "quantization": "Q8_0"
+  },
+  "runtime": {
+    "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "compiler": "oneAPI DPC++ 2026.1.1",
+    "device_arch": "bmg_g31",
+    "candidate_door": "GGML_SYCL_MMVQ_Q8_RECURRENT_CROSS_DP4A",
+    "candidate_library_sha256": "7d261061a27779c7562f0c4d998c4cfc32b4e66f108588b94cd8853a72959d00",
+    "accepted_library_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+    "candidate_mmvq_object_sha256": "1ead7906846fb40d6e32de8a391158261ec35d3e17114c938634e28aa0202963",
+    "llama_bench_sha256": "74e7d48905196285f6e7cd8c8d0b20a8e25cf3f4731b1e2f0f5f6c49ad8d8865"
+  },
+  "scope": {
+    "treatment_shape": "processed recurrent GDN quad K=5120 N=5120+3072+24+24",
+    "unchanged_families": ["dense FFN", "attention", "output head"],
+    "speculation": false
+  },
+  "correctness": {
+    "strict_verifier_mismatches": 0,
+    "strict_verifier_treatment_live": false,
+    "strict_verifier_limitation": "dedup level 2 disables the meta-backend fused GDN quad",
+    "production_mechanism_shape": "TP2 p0/n2",
+    "production_mechanism_live_both_devices": true,
+    "production_fused_mmvq_gdn_quads": 288,
+    "integer_regrouping_exact": true
+  },
+  "benchmark": {
+    "shape": "p64/n512/r3, TP2 equal split, F16 KV, FA, b1024/ub256",
+    "brackets": [
+      {
+        "order": ["control", "treatment", "treatment", "control"],
+        "tok_s": [36.718275, 37.624352, 36.687222, 37.431015],
+        "delta_percent": 0.21885
+      },
+      {
+        "order": ["treatment", "control", "control", "treatment"],
+        "tok_s": [36.746935, 36.790306, 36.813732, 36.841604],
+        "delta_percent": -0.02106
+      }
+    ],
+    "control_mean_tok_s": 36.938332,
+    "treatment_mean_tok_s": 36.97502825,
+    "pooled_delta_percent": 0.099345
+  },
+  "decision": {
+    "endpoint_gate_run": false,
+    "promoted": false,
+    "reason": "complementary position-balanced brackets disagreed and pooled delta was resolution-class"
+  },
+  "raw_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260818-recurrent-cross-dp4a/",
+  "safety": {
+    "memory_caps": "build 6/8 GiB; model 8/10 GiB",
+    "post_run_gpu_gate": "pass",
+    "new_xe_fault_reset_hang_timeout": false,
+    "kernel_or_hardware_policy_changed": false
+  }
+}
