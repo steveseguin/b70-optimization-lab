@@ -95,10 +95,12 @@ provided for maintainer validation.
    longer context. MTP2 showed 94.4% draft acceptance, mean draft length 2.89.
 
 3. **38.4 t/s is the b10472 short-probe number, not the current live stack.**
-   The 2026-08-18 refresh on `b10488-7` + kernel `7.0.0-30` re-ran the same
-   51-token thinking-off probe at **22.73 t/s / 31.7% accept**. llama-benchy
-   on that stack is 28.56 t/s at depth 0 and 20.26 t/s at 64k on GPU0. The
-   older 38.4 figure is preserved, not overwritten.
+   The 2026-08-18 pre-fix refresh used kernel `7.0.0-30` while both B70s
+   remained at low SLPC frequency bins. A persistent `xe-b70-minfreq.service`
+   now pins both B70 GT domains to 2800 MHz at boot. After this fix, the same
+   live b10488-7 build reached 40.49 and 40.63 tok/s on a deterministic counting
+   probe with 100% MTP acceptance. The corrected llama-benchy realistic sweep is
+   reported in the README and raw JSON files.
 
 4. **The Cold Fusion GAIN V1.1 fine-tune is not a decode-throughput win** over
    the stock Unsloth Q4_K_M on the simple counting probe (38.4 vs 44.4 tok/s;

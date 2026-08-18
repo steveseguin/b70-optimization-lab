@@ -150,18 +150,26 @@ Raw: `reported/short-ctx-probe-20260818-b10488.txt`.
 **llama-benchy on the live refresh** (`pp=2048`, `tg=256`, 2 runs,
 `--no-warmup --no-adapt-prompt`, `reasoning_budget_tokens=128`, no `--exact-tg`):
 
-| GPU | depth | pp t/s | tg t/s |
-| ---: | ---: | ---: | ---: |
-| 0 | 0 | 648 | 28.56 |
-| 0 | 8192 | 1001 | 27.42 |
-| 0 | 32768 | 923 | 21.23 |
-| 0 | 65536 | 806 | 20.26 |
-| 1 | 0 | 649 | 28.83 |
-| 1 | 8192 | 1023 | 27.28 |
-| 1 | 32768 | 947 | 20.74 |
-| 1 | 65536 | 819 | 23.00 |
+The first refresh was measured before the Xe clock fix. The persistent
+`xe-b70-minfreq.service` now pins both B70 GT domains to 2800 MHz at boot.
 
-JSON: `reported/gpu0-b10488-benchy-20260818-122944.json`,
+**Corrected llama-benchy rerun after the clock fix** (`gpu0` and `gpu1` ran
+in parallel; same settings):
+
+| GPU | depth 0 tg | 8k | 32k | 64k |
+| ---: | ---: | ---: | ---: | ---: |
+| 0 | **29.75** | **24.41** | **22.03** | **18.58** |
+| 1 | **27.35** | **28.27** | **21.10** | **20.32** |
+
+Corrected JSON: `reported/gpu0-b10488-fixed-benchy-20260818-133031.json`,
+`reported/gpu1-b10488-fixed-benchy-20260818-133031.json`.
+
+The deterministic counting probe after the fix reached 40.49 tok/s on GPU0
+and 40.63 tok/s on GPU1, with 100% MTP acceptance. The llama-benchy results
+use realistic corpus prompts and remain prompt/depth dependent.
+
+The earlier pre-fix JSON remains available:
+`reported/gpu0-b10488-benchy-20260818-122944.json` and
 `reported/gpu1-b10488-benchy-20260818-123508.json`.
 
 Same llama-benchy shape vs the Aug 16 MTP2 tune row (`r3-gpu0-mtp2`):
