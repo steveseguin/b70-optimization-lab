@@ -152,7 +152,7 @@ PYTHON="$venv/bin/python" MODEL_DIR="$model_dir" \
 # identity. Host/runtime paths are explicitly repopulated below.
 while IFS= read -r name; do
   case "$name" in
-    VLLM_*|QWEN36_27B_*|XPU_GRAPH|COMPILATION_CONFIG|CCL_*|ONECCL_*|SERVER_*|ZE_AFFINITY_MASK|ONEAPI_DEVICE_SELECTOR|QUALITY_*|BENCH_*|RUN_SMOKE|RUN_BENCH|RUN_QUALITY|REQUEST_EXTRA_JSON|CANDIDATE_ENTRYPOINT)
+    VLLM_*|QWEN36_27B_*|XPU_GRAPH|COMPILATION_CONFIG|CCL_*|ONECCL_*|SERVER_*|ZE_AFFINITY_MASK|ONEAPI_DEVICE_SELECTOR|PYTHONHASHSEED|QUALITY_*|BENCH_*|RUN_SMOKE|RUN_BENCH|RUN_QUALITY|REQUEST_EXTRA_JSON|CANDIDATE_ENTRYPOINT)
       unset "$name"
       ;;
   esac
@@ -360,6 +360,12 @@ if [[ -n "${VALIDATION_INDUCTOR_MAX_AUTOTUNE:-}" ]]; then
 fi
 if [[ -n "${VALIDATION_INDUCTOR_COORDINATE_DESCENT_TUNING:-}" ]]; then
   export VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING="${VALIDATION_INDUCTOR_COORDINATE_DESCENT_TUNING}"
+fi
+if [[ -n "${VALIDATION_PYTHONHASHSEED:-}" ]]; then
+  # Python reads this only when each TP/server process starts. Scrubbing it
+  # above prevents an ambient shell seed from silently changing graph/codegen
+  # traversal order between supposedly identical fresh compilations.
+  export PYTHONHASHSEED="${VALIDATION_PYTHONHASHSEED}"
 fi
 if [[ "${VALIDATION_ALLREDUCE_ASYNC_WAIT:-0}" == "1" ]]; then
   # Eager-only ordering control: retain the collective work handle and wait

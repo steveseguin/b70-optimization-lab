@@ -23,12 +23,24 @@ This finding does **not** by itself validate the fast lane. A cache becomes a
 valid run artifact only after its complete contents are checksum-bound,
 restart-replayed, target-quality checked, and made reproducibly available.
 
-## Required first arm
+## Required causal arms
 
-Use the exact fast-lane source/runtime/model identity and two genuinely empty,
-different `VALIDATION_VLLM_CACHE_ROOT` directories. In both arms set:
+Every pair uses the exact fast-lane source/runtime/model identity and two
+genuinely empty, different `VALIDATION_VLLM_CACHE_ROOT` directories.
+
+First preserve the fast default tuner policy and fix only Python graph/codegen
+traversal order:
 
 ```bash
+export VALIDATION_PYTHONHASHSEED=0
+```
+
+The harness now scrubs ambient `PYTHONHASHSEED` and records the explicit value
+in `identity.env`. If two fresh caches still diverge, keep the seed fixed and
+disable the timing-driven tuners:
+
+```bash
+export VALIDATION_PYTHONHASHSEED=0
 export VALIDATION_INDUCTOR_MAX_AUTOTUNE=0
 export VALIDATION_INDUCTOR_COORDINATE_DESCENT_TUNING=0
 ```
@@ -66,7 +78,14 @@ Run exactly two additional fresh-cache pairs, one variable at a time:
 - `max_autotune=0`, `coordinate_descent=1`.
 
 This distinguishes timing-based kernel selection from coordinate-descent
-schedule changes. Do not launch a broad seed/cache harvest until these causal
-arms establish which tuner creates variation. Selecting a lucky cache by
-speed without first passing complete output and target-quality gates is not a
-valid optimization result.
+schedule changes. If both still vary, retain `combo_kernels=true` but disable
+only `benchmark_combo_kernel` through the otherwise identical
+`VALIDATION_COMPILATION_CONFIG_OVERRIDE`; vLLM enables both combo controls by
+default on this torch version. The historical MiniMax lane showed that
+disabling combo kernels entirely costs about `3%`, so it is not the first
+choice here.
+
+Do not launch a broad seed/cache harvest until these causal arms establish
+which compiler choice creates variation. Selecting a lucky cache by speed
+without first passing complete output and target-quality gates is not a valid
+optimization result.
