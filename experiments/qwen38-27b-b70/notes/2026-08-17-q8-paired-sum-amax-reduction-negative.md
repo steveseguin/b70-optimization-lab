@@ -79,3 +79,16 @@ accepted separate sum and maximum reductions.
 No Xe fault, reset, hang, timeout, device-lost event, or kernel panic appeared
 in the experiment window. No hardware, PCI, power-management, driver, or
 kernel policy was changed.
+
+## 32-bit interleaving follow-up
+
+A no-profiling BMG-G31 device microbenchmark then tested whether manually
+interleaving the two original 32-bit subgroup exchanges could avoid the
+64-bit penalty while exposing more instruction-level parallelism. Five
+position-mixed samples per arm gave median kernel wall times of `1.055 ms`
+for the native reductions, `1.869 ms` for the packed-64 form, and `1.895 ms`
+for the interleaved-32 form. All three checksums were identical. Even across
+the host's two timing states, both manual forms were consistently about
+1.7--1.8x slower than the native implementation. The interleaved-32 variant
+was therefore rejected before a costly full-model build; do not retry it
+unchanged.
