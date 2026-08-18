@@ -98,6 +98,10 @@ handoff remains incomplete. See the
   one has to be generated before any parity or quality claim.
 - The vision tower (333 tensors) is unused for text benchmarking; the config
   carries `language_model_only`.
+- The first speculative-depth candidate is a narrow
+  [MTP4 serial-exact GDN patch](../../experiments/qwen38-27b-b70/notes/2026-08-18-autoround-int4-mtp4-serial-exact-candidate.md).
+  It is source-verified but unbuilt and untested; it must not be presented as a
+  result until the quality oracle and full promotion gates pass.
 - Do not use stock `intel/llm-scaler-vllm:0.21.0-b3.1` as a substitute for the
   pinned source stack on a 16 GB host. An independent eager TP2 smoke first hit
   its FP8-only GDN output-projection probe on an INT4 `qweight`; disabling that
