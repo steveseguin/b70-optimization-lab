@@ -88,7 +88,7 @@ elif [[ "$mode" == "spec-native-partition-exact" \
   || "$mode" == "nospec-latest-exact-native" ]]; then
   latest_identity=1
   exact_identity=1
-  verify_tree "$source_root/vllm" 011713d34be01018de8f845242807b0937fb8896 \
+  verify_tree "$source_root/vllm" 44fc8fde09fc311d3099dab10366b672d9142ea4 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
   verify_tree "$source_root/vllm-xpu-kernels" 2dd55f380df753a10a88fcd9e96192561066e713 \
     e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
