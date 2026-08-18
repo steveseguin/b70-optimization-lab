@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-16**
+Last reviewed: **2026-08-18**
 
 ## Authority And Update Rule
 
@@ -64,7 +64,9 @@ The promoted target-only two-B70 Q4_K_M result is:
 - full-output after-TTFT median: `49.734644 tok/s`;
 - quality: 12/12 cold 512-token outputs exact against the accepted control;
 - cache: `cached_tokens=0` for 12/12;
-- speculation: none.
+- speculation: none;
+- LocalMaxxing: approved as
+  [`cmsy530c70cpwms01bl1sjk6g`](https://www.localmaxxing.com/en/runs/cmsy530c70cpwms01bl1sjk6g).
 
 The 2026-08-15 Q4_K fusion passed a clean build, mechanism counter, same-binary
 control, and complete 12-prompt cold suite. It improved the conventional
@@ -201,8 +203,8 @@ loaded service.
 4. Keep SergiioB's single-card GPTQ/MTP vLLM recipe experimental: it is fast,
    but the checkpoint failed the no-quality-loss semantic gate. Never stop a
    vLLM XPU container before `/health` during graph initialization.
-5. Restore the LocalMaxxing credential outside Git, then submit the already
-   queued 49.717503 tok/s target-only result after authenticated dry-run.
+5. The 49.717503 tok/s Q4_K_M target-only result is submitted and approved as
+   LocalMaxxing `cmsy530c70cpwms01bl1sjk6g`; do not resubmit it unchanged.
 6. Keep `main` synchronized before and after focused commits. Preserve failed
    experiments as patches and notes rather than branches or worktrees.
 7. Archive large ignored Qwen artifacts only through the verified manifest and
