@@ -14,6 +14,9 @@ other speculation.
 - TTFT median: `173.574 ms`
 - Quality gate: 12/12 complete output hashes exact against the matched route,
   every `cached_tokens=0`, and both realistic/fresh-response gates passed.
+- LocalMaxxing: approved as
+  [`cmsy530c70cpwms01bl1sjk6g`](https://www.localmaxxing.com/en/runs/cmsy530c70cpwms01bl1sjk6g)
+  on 2026-08-18.
 
 The promoted increment fuses each device-local Q4_K dense gate and up mat-vec
 with its SwiGLU consumer. A same-binary p64/n256/r5 A/B measured

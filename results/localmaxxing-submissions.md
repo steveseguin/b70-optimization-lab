@@ -16,6 +16,7 @@ the conventional 99-interval field.
 | Muse-Glimmer-30B UD-Q8_K_XL, TP4 pretrained DFlash | 4x Arc Pro B70 | **161.900 conventional interval median**, frozen 15-prompt cold suite, target-verified | `cmss8515c00n0ms01n3begqgg` | [packet](muse-glimmer-30b-q8-woq-b70/README.md); [repro](../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md) |
 | Poolside Laguna S 2.1 INT4, TP4+EP4 DFlash11 | 4x Arc Pro B70 | **125.462 conventional interval median; 126.729 historical compatibility formula**; exact cold width-12 suite with Q/K RMSNorm+RoPE and M12 shared-elementwise fusions | `cms9wuuf300cqpm01t5i285tq` | [qualified packet](laguna-s-2.1-int4-b70/README.md); [record evidence](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-shared-elementwise-m12-record.md) |
 | Qwen3.6 27B AutoRound INT4, TP2 | 2x Arc Pro B70 | 95.385 median tok/s, fixed cold realistic gate | `cmrh35ct50092mj01h7jgydqj` | [packet](qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json) |
+| Qwen3.8 27B GGUF Q4_K_M, target-only TP2 | 2x Arc Pro B70 | **49.717503 conventional interval median**, fixed cold realistic gate | `cmsy530c70cpwms01bl1sjk6g` | [repro](../repro/qwen38-27b-q4km-tp2-asrock-b70/README.md); [receipt](../data/localmaxxing-responses/qwen38-27b-q4km-tp2-target-only-20260818.json) |
 | Gemma 4 26B A4B Q8 | 1x Arc Pro B70 | 124.977 median tok/s, fixed cold realistic gate | `cmr1u77na01k2ld01kalwzs1e` | [packet](gemma4-26b-a4b-q8-b70/README.md) |
 | Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
 | Qwen3.6 27B GGUF Q4_0, native DFlash5 + Xe2 M6 | 1x Arc Pro B70 | 47.819 median tok/s, fixed cold realistic gate | `cmrjbx8bc02g8mj01yzz2v701` | [evidence](../data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r2-20260713.json) |
@@ -26,6 +27,15 @@ the conventional 99-interval field.
 
 Current measured-but-unsubmitted work belongs in its model packet, not this
 public-submission index.
+
+Date: 2026-08-18
+
+Model: `ggml-org/Qwen3.8-27B-GGUF`, Q4_K_M target-only llama.cpp/SYCL TP2 on
+two ASRock Intel Arc Pro B70 GPUs.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `qwen38-27b-q4km-b70-tp2-target-only-49.718tok-20260815` | [`cmsy530c70cpwms01bl1sjk6g`](https://www.localmaxxing.com/en/runs/cmsy530c70cpwms01bl1sjk6g) | 2 | suite median 56 | suite median 512 | **49.717503 conventional median over 99 intervals** | 48.802352 median wall full-natural output | **approved target-only Q4_K_M record**: fixed 12-prompt suite, each prompt exactly once cold, 12/12 `cached_tokens=0`, no prompt/KV/context/response/ngram/history reuse and no speculation. The device-local Q4_K gate/up/SwiGLU fusion retained 12/12 exact complete-output hashes against the accepted target-only oracle. [Queue](../experiments/qwen38-27b-b70/localmaxxing/qwen38-27b-q4km-tp2-target-only-49.718tok-20260815.queue.json); [receipt](../data/localmaxxing-responses/qwen38-27b-q4km-tp2-target-only-20260818.json). |
 
 Date: 2026-08-13
 

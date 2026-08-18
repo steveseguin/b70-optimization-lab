@@ -89,7 +89,8 @@ gate. A faster row that changes answers is a diagnostic, not a record.
 ## Publication status
 
 The Q4_K_M `49.717503 tok/s` and Q8_0 `36.772932 tok/s` LocalMaxxing queues
-both pass local preflight. Server dry-run and submission are waiting only for
-the missing credential at `~/.config/localmaxxing/api_key` (or
-`LMX_API_KEY`). Nothing should be posted until the authenticated dry-run
-accepts the exact `ggml-org/Qwen3.8-27B-GGUF` identity.
+both pass local preflight. On 2026-08-18 the authenticated server dry-run
+accepted the exact `ggml-org/Qwen3.8-27B-GGUF` identity and the Q4_K_M row was
+submitted and approved as `cmsy530c70cpwms01bl1sjk6g`. Do not resubmit that
+queue unchanged. The Q8 queue remains available if its distinct
+quality-conservative row is later selected for publication.
