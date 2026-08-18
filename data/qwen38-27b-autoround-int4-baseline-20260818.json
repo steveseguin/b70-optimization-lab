@@ -305,5 +305,62 @@
     ],
     "interpretation": "the scratch is cached across calls and a region is read before being written at 5 rows, so results depend on whatever the allocator left there. MTP3 at 4 rows writes the whole region, which is why it was clean.",
     "WARNING_FOR_SERIAL_EXACT_WORK": "gdn_attn_interface.cpp requires VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1 whenever serial-exact is enabled. Any MTP4-with-serial-exact build will therefore hit this same uninitialized scratch. The scratch must be zero-initialised, or sized/written correctly for k+1 rows, before that path can be trusted."
+  },
+  "depth_sweep_20260818": {
+    "note": "persistent GDN scratch disabled throughout; all arms cold",
+    "MTP3": {
+      "all25": 96.616,
+      "selection12": 94.037,
+      "arms": 3
+    },
+    "MTP4": {
+      "all25": 100.497,
+      "selection12": 96.627,
+      "arms": 3,
+      "localmaxxing": "cmszarna10e0nms0103hv0tve"
+    },
+    "MTP5": {
+      "all25": 101.922,
+      "selection12": 95.167,
+      "arms": 3,
+      "localmaxxing": "cmszbkxco0e11ms01l2rixxbt",
+      "determinism": "all three pairs 25/25 identical",
+      "quality": "pass against own baseline",
+      "arm_records": [
+        {
+          "raw_root": "qwen38-mtp5-noscratch-25-spec-a-20260818",
+          "manifest_sha256": "07c0b04b3eb7b681c6c23cf8a4a43937e338ada6d6a21a18ab723a65f2d55f9b",
+          "all25_median_tok_s": 100.89596040817777,
+          "selection12_median_tok_s": 95.16687768836678
+        },
+        {
+          "raw_root": "qwen38-mtp5-noscratch-25-spec-b-20260818",
+          "manifest_sha256": "3f2e1a23451d15ec10a8b0c75491b1392122aa1f6e2c2aae05e87f16f2ac8717",
+          "all25_median_tok_s": 102.04201607252988,
+          "selection12_median_tok_s": 95.06847017256106
+        },
+        {
+          "raw_root": "qwen38-mtp5-noscratch-25-spec-c-20260818",
+          "manifest_sha256": "e6d069f663516c6bcd042be1c16a07e782d4d3c8a24a3854ff01c4769c50f09f",
+          "all25_median_tok_s": 101.9215939041566,
+          "selection12_median_tok_s": 95.88340241714914
+        }
+      ]
+    },
+    "MTP6": {
+      "all25": 99.464,
+      "selection12": 93.592,
+      "arms": 1,
+      "verdict": "turns over; depth is exhausted",
+      "arm_records": [
+        {
+          "raw_root": "qwen38-mtp6-noscratch-25-spec-a-20260818",
+          "manifest_sha256": "cd6607d36bfb4904d7c2c764ef3d2213f05a5fea8208f39212e29162c1e0dc96",
+          "all25_median_tok_s": 99.46446183667366,
+          "selection12_median_tok_s": 93.59210775976356
+        }
+      ]
+    },
+    "conclusion": "Depth peaks at MTP5 for the all-25 metric at 101.922 and turns over by MTP6. On the 12 historical selection prompts MTP4 is the best at 96.627 while MTP5 drops to 95.167 -- depth helps the newer holdout prompts and hurts the historical ones. Depth is now exhausted as a lever; reaching 105 needs the persistent GDN scratch fixed properly rather than disabled, which currently costs an allocation per call."
   }
 }
