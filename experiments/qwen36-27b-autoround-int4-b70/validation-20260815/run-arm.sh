@@ -172,6 +172,17 @@ else
 fi
 if [[ -n "${VALIDATION_ONECCL_MANIFEST:-}" ]]; then
   verify_relative_manifest "$oneccl" "$VALIDATION_ONECCL_MANIFEST" oneCCL
+  oneccl_validated_lib_sha=$(awk \
+    '$2 == "lib/libccl.so.1.0" {print $1}' \
+    "$VALIDATION_ONECCL_MANIFEST")
+  oneccl_validated_kernels_sha=$(awk \
+    '$2 == "lib/ccl/kernels/kernels.spv" {print $1}' \
+    "$VALIDATION_ONECCL_MANIFEST")
+  if [[ ! "$oneccl_validated_lib_sha" =~ ^[0-9a-f]{64}$ \
+    || ! "$oneccl_validated_kernels_sha" =~ ^[0-9a-f]{64}$ ]]; then
+    printf 'oneCCL manifest must identify libccl.so.1.0 and kernels.spv exactly once\n' >&2
+    exit 3
+  fi
 else
   verify_sha "$oneccl/lib/libccl.so.1.0" \
     43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700 oneCCL
@@ -214,6 +225,11 @@ while IFS= read -r name; do
   esac
 done < <(compgen -e)
 unset PYTHONPATH LD_PRELOAD LD_LIBRARY_PATH TORCHINDUCTOR_CACHE_DIR
+
+if [[ -n "${VALIDATION_ONECCL_MANIFEST:-}" ]]; then
+  export ONECCL_VALIDATED_LIB_SHA256="$oneccl_validated_lib_sha"
+  export ONECCL_VALIDATED_KERNELS_SHA256="$oneccl_validated_kernels_sha"
+fi
 
 SOURCE_ROOT="$source_root" \
 EXPECTED_XPU_COUNT="${VALIDATION_EXPECT_XPU_COUNT:-4}" \
