@@ -220,6 +220,15 @@ export QUALITY_OUT="$arm_root/data/quality.json"
 export SMOKE_OUT="$arm_root/data/smoke.json"
 export SUMMARY_OUT="$arm_root/data/summary-legacy.json"
 export VLLM_CACHE_ROOT=${VALIDATION_VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
+compile_cache_root="$VLLM_CACHE_ROOT/torch_compile_cache"
+if [[ -n "${VALIDATION_COMPILE_CACHE_MANIFEST:-}" ]]; then
+  "$repo/scripts/canonical-tree-manifest.py" verify \
+    --root "$compile_cache_root" \
+    --manifest "$VALIDATION_COMPILE_CACHE_MANIFEST" \
+    > "$arm_root/compile-cache-preflight.json"
+  cp -- "$VALIDATION_COMPILE_CACHE_MANIFEST" \
+    "$arm_root/compile-cache-input-manifest.json"
+fi
 export BENCH_MAX_TOKENS=${VALIDATION_BENCH_MAX_TOKENS:-512}
 export BENCH_METRIC_TOKENS=${VALIDATION_BENCH_METRIC_TOKENS:-100}
 export QUALITY_REPEAT_RUNS=32
@@ -719,6 +728,13 @@ if [[ "$runner_rc" == "0" && "$RUN_QUALITY" == "1" && ! -s "$QUALITY_OUT" ]]; th
   runner_rc=9
 fi
 printf '%s\n' "$runner_rc" > "$arm_root/runner.exit-code"
+
+if [[ -d "$compile_cache_root" ]]; then
+  "$repo/scripts/canonical-tree-manifest.py" create \
+    --root "$compile_cache_root" \
+    --output "$arm_root/compile-cache-output-manifest.json" \
+    > "$arm_root/compile-cache-manifest-create.json"
+fi
 
 if [[ -s "$BENCH_OUT" && "$BENCH_METRIC_TOKENS" == "100" ]]; then
   "$venv/bin/python" "$repo/scripts/qualify_realistic_window_metrics.py" \

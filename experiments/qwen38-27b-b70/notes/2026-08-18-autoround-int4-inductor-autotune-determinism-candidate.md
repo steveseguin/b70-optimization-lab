@@ -51,6 +51,12 @@ be called deterministic based on a single cache. A strict result also needs a
 canonical relative-path file manifest for the entire selected
 `VLLM_CACHE_ROOT/torch_compile_cache` subtree, plus the manifest SHA-256,
 total bytes, source hashes, compiler/runtime identity, and restoration steps.
+The validation runner now creates that manifest with
+[`scripts/canonical-tree-manifest.py`](../../../scripts/canonical-tree-manifest.py).
+For a sealed-cache restart, pass its prior manifest as
+`VALIDATION_COMPILE_CACHE_MANIFEST`; preflight verifies every relative path,
+entry type/mode, symlink target, file size, and file SHA-256 before any GPU
+work begins, then captures the post-run cache tree again.
 
 ## Next split if `0/0` is slow
 

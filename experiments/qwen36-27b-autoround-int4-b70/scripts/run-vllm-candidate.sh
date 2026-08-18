@@ -153,6 +153,7 @@ trap cleanup EXIT
   echo "port=$PORT"
   echo "hf_home=$HF_HOME"
   echo "vllm_cache_root=${VLLM_CACHE_ROOT:-}"
+  echo "compile_cache_input_manifest=${VALIDATION_COMPILE_CACHE_MANIFEST:-}"
   echo "torchinductor_cache_dir=${TORCHINDUCTOR_CACHE_DIR:-}"
   echo "inductor_max_autotune=${VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE:-}"
   echo "inductor_coordinate_descent_tuning=${VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING:-}"
