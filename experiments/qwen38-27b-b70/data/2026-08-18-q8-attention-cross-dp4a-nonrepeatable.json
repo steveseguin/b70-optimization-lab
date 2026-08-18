@@ -1,0 +1,55 @@
+{
+  "date": "2026-08-18",
+  "status": "closed_performance_nonrepeatable",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "runtime": {
+    "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "compiler": "oneAPI DPC++ 2026.1.1",
+    "door": "GGML_SYCL_MMVQ_Q8_ATTENTION_CROSS_DP4A",
+    "candidate_library_sha256": "fce0da8c9061293f4ea8c5b56cdcd880a9b7988c2b34a5ae5d344deee2813399",
+    "candidate_mmvq_object_sha256": "2d5e9d7ae42663df581e95fcfa3ff20cf94106c217b31a72de76c879551c7f3b",
+    "llama_bench_sha256": "74e7d48905196285f6e7cd8c8d0b20a8e25cf3f4731b1e2f0f5f6c49ad8d8865"
+  },
+  "scope": {
+    "treatment_shape": "fused attention triple K=5120 local N=6144+512+512",
+    "unchanged_families": ["dense FFN", "recurrent GDN", "output head"],
+    "speculation": false
+  },
+  "correctness": {
+    "strict_verified": 990,
+    "strict_mismatches": 0,
+    "strict_treatment_live": false,
+    "strict_limitation": "dedup verifier level 2 disables the fused attention triple",
+    "production_treatment_live_both_devices": true,
+    "production_fused_attention_triples": 64,
+    "integer_regrouping_exact": true
+  },
+  "benchmark": {
+    "shape": "p64/n512/r3, TP2 equal split, F16 KV, FA, b1024/ub256",
+    "abba": {
+      "arms": ["control", "treatment", "treatment", "control"],
+      "tok_s": [36.676053, 36.724722, 36.848081, 36.854342],
+      "delta_percent": 0.057674
+    },
+    "baab": {
+      "arms": ["treatment", "control", "control", "treatment"],
+      "tok_s": [36.866507, 36.866627, 36.705326, 35.763641],
+      "delta_percent": -1.280114
+    },
+    "control_mean_tok_s": 36.775587,
+    "treatment_mean_tok_s": 36.55073775,
+    "pooled_delta_percent": -0.611409
+  },
+  "decision": {
+    "endpoint_gate_run": false,
+    "promoted": false,
+    "reason": "complementary brackets disagreed and pooled result was negative"
+  },
+  "raw_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260818-attention-cross-dp4a/",
+  "safety": {
+    "memory_caps": "build 6/8 GiB; model 8/10 GiB",
+    "post_run_gpu_gate": "pass",
+    "new_xe_fault_reset_hang_timeout": false,
+    "kernel_or_hardware_policy_changed": false
+  }
+}
