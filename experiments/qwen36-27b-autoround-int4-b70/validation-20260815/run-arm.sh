@@ -340,6 +340,11 @@ if [[ "${VALIDATION_ALLREDUCE_ASYNC_WAIT:-0}" == "1" ]]; then
   # explicitly instead of relying on the default synchronous wrapper.
   export VLLM_XPU_ALLREDUCE_ASYNC_WAIT=1
 fi
+if [[ -n "${VALIDATION_DETERMINISTIC_GREEDY_MARGIN:-}" ]]; then
+  # Shared target/verifier greedy policy for FP16-ULP near ties. The lower
+  # token id wins only when the top-two gap is within this recorded margin.
+  export VLLM_XPU_DETERMINISTIC_GREEDY_MARGIN="${VALIDATION_DETERMINISTIC_GREEDY_MARGIN}"
+fi
 if [[ "${VALIDATION_INT4_GEMM_FIXED_M4:-0}" == "1" ]]; then
   # Diagnostic only: make one-row target projections use the verifier's M=4
   # W4A16 descriptor and retain row zero.  Do not promote its timing.
