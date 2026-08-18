@@ -68,7 +68,11 @@
       "preferred_median_tok_s": 92.00294236150333,
       "self_determinism": "25/25 identical, 0 divergences over 12477 tokens",
       "quality": "pass",
-      "verdict": "the only self-reproducing configuration measured"
+      "verdict": "the only self-reproducing configuration measured",
+      "manifest_sha256": [
+        "71336549400317a009e01b3697b48c8e23a8cc4e1d42279b9c8d9607bb0236a4",
+        "c774072ebb6e56e7ac763bc3dbaf797a35989848c223c2b014abd0400cd79484"
+      ]
     },
     {
       "id": "drop_batch_invariant",
@@ -262,5 +266,24 @@
         "verdict": "not applicable; VLLM_XPU_SPEC_GREEDY_TOP_IDS was never enabled in any arm, so the margin was not disabling it"
       }
     ]
+  },
+  "source_publication": {
+    "note": "no bundle packet is needed; every pinned commit is reachable from these public refs",
+    "vllm_fork": "https://github.com/steveseguin/vllm.git",
+    "vllm_branch": "research/qwen36-int4-exactness-20260818",
+    "vllm_commits_reachable": [
+      "44fc8fde09fc311d3099dab10366b672d9142ea4",
+      "95a76ff89173ff56e90a2ed384fde2cea3c015e6",
+      "8c27a1e68ac619e198b0c08c2d6f62b80ddb3456",
+      "a63ff886e1c9c90f919e8b46a63f34027dfae823"
+    ],
+    "xpu_kernels_fork": "https://github.com/steveseguin/vllm-xpu-kernels.git",
+    "xpu_kernels_branch": "main",
+    "xpu_kernels_commits_reachable": [
+      "2dd55f380df753a10a88fcd9e96192561066e713",
+      "534bd9ccca74e0b076067a212271f896bb137d2a",
+      "6a40e2baf3f8710b89e48d18bf214708ba2dbf9a"
+    ],
+    "staged_flash_attention": "3.1 GB of AOT SYCL binaries; not distributable and not bit-reproducible across oneAPI toolchains. The build recipe is published under experiments/qwen27_graphsafe_flash_attention/ (build.sh, three patches, validate.sh, graph-replay tests). The four SHA256 values prove a given host still runs the artifact it measured with; they are not a build target."
   }
 }

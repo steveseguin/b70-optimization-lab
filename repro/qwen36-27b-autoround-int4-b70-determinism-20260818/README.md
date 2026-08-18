@@ -58,10 +58,28 @@ empty input).
 
 | Tree | Commit |
 | --- | --- |
-| `~/src/vllm` | `95a76ff89173ff56e90a2ed384fde2cea3c015e6` |
+| `~/src/vllm` | `44fc8fde09fc311d3099dab10366b672d9142ea4` |
 | `~/src/vllm-xpu-kernels` | `2dd55f380df753a10a88fcd9e96192561066e713` |
 | oneCCL source top | `b52f40c07f0b140e6aba87548c80720a350a9827` |
 | oneCCL `libccl` | `4ceafd15c03ce46f11eeaf91781a92afebd3cecf` |
+
+### Where to fetch those commits
+
+They are not in this repository; they live in public forks:
+
+```bash
+git clone https://github.com/steveseguin/vllm.git ~/src/vllm
+git -C ~/src/vllm checkout 44fc8fde09fc311d3099dab10366b672d9142ea4
+
+git clone https://github.com/steveseguin/vllm-xpu-kernels.git ~/src/vllm-xpu-kernels
+git -C ~/src/vllm-xpu-kernels checkout 2dd55f380df753a10a88fcd9e96192561066e713
+```
+
+Branch `research/qwen36-int4-exactness-20260818` on the vLLM fork carries the
+whole research line. Every commit the harness pins for any arm is reachable from
+these two refs, including the earlier identities `95a76ff891`, `8c27a1e68a`,
+and `a63ff886e1` (vLLM) and `534bd9ccca` and `6a40e2baf3` (kernels). No separate
+bundle packet is required.
 
 oneCCL runtime is loaded from
 `/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0`.
@@ -98,16 +116,46 @@ Give the non-speculative reference the same package with
 `VALIDATION_USE_STAGED_XPU_KERNELS_FOR_TARGET=1`; otherwise the two arms run
 different attention binaries.
 
+### The binaries are not distributable, and cannot be rebuilt bit-identically
+
+`staged-package/` is **3.1 GB** — `libattn_stock.so` is 1.74 GB and
+`libattn_kernels_xe_2.so` is 1.52 GB, because they are SYCL ahead-of-time
+compiled for Xe2. They are excluded by
+`experiments/qwen27_graphsafe_flash_attention/.gitignore` and will not be
+published to Git or as release assets at that size.
+
+What *is* published is the full build recipe, in
+[`../../experiments/qwen27_graphsafe_flash_attention/`](../../experiments/qwen27_graphsafe_flash_attention/):
+`build.sh`, the three applied patches
+(`qwen27-chunk-prefill-local-accessor.patch`,
+`qwen27-chunk-prefill-completion-barrier.patch`,
+`qwen27-force-chunk-decode.patch`), `validate.sh`, and the graph-replay tests.
+
+A rebuild will **not** reproduce the four SHA256 values above. AOT SYCL output
+depends on the oneAPI toolchain version, so binary identity is a property of the
+build host, not of the source. Those hashes exist so a given machine can prove it
+is still running the same artifact it measured with — they are not a build
+target. To validate a fresh build, use `validate.sh` and the graph-replay tests
+for functional equivalence, then re-measure; do not expect hash equality.
+
 ## 7. Commands
 
-Common preamble:
+Common preamble. `repo` is derived from this checkout, so it does not matter
+whether the clone is at `~/llm-optimizations`, `~/b70-optimization-lab`, or
+anywhere else. `suitebase` is just where run roots are written; point it at any
+volume with ~1 GB free per arm.
 
 ```bash
-repo=/home/steve/llm-optimizations
-suitebase=/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70
+repo=$(git -C . rev-parse --show-toplevel)     # run from anywhere inside the clone
+suitebase=${BENCH_ROOT:-/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70}
 baseline="$repo/data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-replayssm-draftint4-current-confirm-20260706T140317Z-repeat64-ctx1024-20260706T140317Z.json"
 arm="$repo/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-arm.sh"
 ```
+
+Other host paths the harness assumes, all overridable by environment variable:
+`SOURCE_ROOT` (default `/home/steve/src`), `VENV` (default
+`/home/steve/.venvs/vllm-xpu`), `MODEL_DIR`, and `ONECCL_INSTALL_DIR` (default
+`/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public`).
 
 Omit `VALIDATION_SUITE_OVERRIDE` so the harness builds the default 25-prompt
 suite. Every arm needs a fresh `$root` (it refuses to overwrite) and its own
@@ -222,3 +270,18 @@ A candidate will **not** be token-identical to a differently-configured
 reference. Eleven configurations agree 7–16 of 25 across every cross-config
 pairing and 24–25 of 25 only when the configuration is identical. Gate on
 self-determinism plus the quality baseline instead.
+
+## 11. A note on manifest portability
+
+Two artifact types are easy to confuse:
+
+- **Per-run-root `SHA256SUMS`** (section 8) list paths relative to the run root
+  (`./data/bench.json`). These are portable: `cd <root> && sha256sum -c SHA256SUMS`
+  works on any machine.
+- **Cross-root index manifests** such as
+  `data/qwen36-27b-autoround-int4-batch-invariant-rmsnorm-sealed-roots-20260817.sha256`
+  record absolute paths from the host that measured them. `sha256sum -c` will not
+  work elsewhere, by design — they are provenance records of what was sealed and
+  where, not portable checkers. Verify the hashes by comparison rather than
+  rewriting the files; editing them to be portable would falsify the record of
+  what was actually verified at seal time.
