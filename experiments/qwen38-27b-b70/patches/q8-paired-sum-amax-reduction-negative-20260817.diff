@@ -1,0 +1,117 @@
+diff --git a/ggml/src/ggml-sycl/common.hpp b/ggml/src/ggml-sycl/common.hpp
+--- a/ggml/src/ggml-sycl/common.hpp
++++ b/ggml/src/ggml-sycl/common.hpp
+@@ -668,6 +668,24 @@ static __dpct_inline__ float warp_reduce_sum(float x, const sycl::nd_item<3>& it
+     return x;
+ }
+ 
++// Reduce the two Q8_1 statistics through one packed subgroup exchange. The
++// butterfly and FP32 operations match the separate sum/max reductions, but a
++// single 64-bit select carries both values at each stage.
++static __dpct_inline__ void ggml_sycl_q8_reduce_sum_amax(
++        const sycl::sub_group & sg, float & sum, float & amax) {
++    uint64_t packed = (uint64_t) sycl::bit_cast<uint32_t>(amax) << 32 |
++                      sycl::bit_cast<uint32_t>(sum);
++    const uint32_t lane = sg.get_local_linear_id();
++#pragma unroll
++    for (uint32_t mask = WARP_SIZE / 2; mask != 0; mask >>= 1) {
++        const uint64_t other = sycl::select_from_group(sg, packed, lane ^ mask);
++        sum += sycl::bit_cast<float>((uint32_t) other);
++        amax = sycl::fmax(amax, sycl::bit_cast<float>((uint32_t) (other >> 32)));
++        packed = (uint64_t) sycl::bit_cast<uint32_t>(amax) << 32 |
++                 sycl::bit_cast<uint32_t>(sum);
++    }
++}
++
+ static __dpct_inline__ sycl::float2
+ warp_reduce_sum(sycl::float2 a, const sycl::nd_item<3>& item_ct1) {
+ #pragma unroll
+diff --git a/ggml/src/ggml-sycl/quantize.hpp b/ggml/src/ggml-sycl/quantize.hpp
+--- a/ggml/src/ggml-sycl/quantize.hpp
++++ b/ggml/src/ggml-sycl/quantize.hpp
+@@ -43,8 +43,7 @@ static __dpct_inline__ void quantize_q8_1(
+         amax                = sycl::fmax(amax, sycl::fabs(wi_f32_vals[i]));
+         quantized_values[i] = 0;
+     }
+-    sum  = sycl::reduce_over_group(it.get_sub_group(), sum, sycl::plus<float>());
+-    amax = sycl::reduce_over_group(it.get_sub_group(), amax, sycl::maximum<float>());
++    ggml_sycl_q8_reduce_sum_amax(it.get_sub_group(), sum, amax);
+     d    = amax == 0 ? 1 : amax / 127;
+ 
+ #pragma unroll(ElementsPerWI)
+diff --git a/ggml/src/ggml-sycl/element_wise.cpp b/ggml/src/ggml-sycl/element_wise.cpp
+--- a/ggml/src/ggml-sycl/element_wise.cpp
++++ b/ggml/src/ggml-sycl/element_wise.cpp
+@@ -456,8 +456,7 @@ static void add_rms_norm_mul_quantize_f32_q8_1_fused_2(
+         amax = sycl::fmax(amax, sycl::fabs(values[j]));
+         quantized[j] = 0;
+     }
+-    sum = sycl::reduce_over_group(sg, sum, sycl::plus<float>());
+-    amax = sycl::reduce_over_group(sg, amax, sycl::maximum<float>());
++    ggml_sycl_q8_reduce_sum_amax(sg, sum, amax);
+     float d = amax == 0.0f ? 1.0f : amax / 127;
+ #pragma unroll(elements_per_wi)
+     for (int j = 0; j < elements_per_wi; ++j) {
+@@ -513,8 +512,7 @@ static void add_rms_norm_mul_quantize_f32_q8_1_fused_3(
+         amax = sycl::fmax(amax, sycl::fabs(values[j]));
+         quantized[j] = 0;
+     }
+-    sum = sycl::reduce_over_group(sg, sum, sycl::plus<float>());
+-    amax = sycl::reduce_over_group(sg, amax, sycl::maximum<float>());
++    ggml_sycl_q8_reduce_sum_amax(sg, sum, amax);
+     const float d = amax == 0.0f ? 1.0f : amax / 127;
+ #pragma unroll(elements_per_wi)
+     for (int j = 0; j < elements_per_wi; ++j) {
+@@ -583,8 +581,7 @@ static void add_rms_norm_mul_quantize_f32_q8_1_fused_4(
+         amax = sycl::fmax(amax, sycl::fabs(values[j]));
+         quantized[j] = 0;
+     }
+-    sum = sycl::reduce_over_group(sg, sum, sycl::plus<float>());
+-    amax = sycl::reduce_over_group(sg, amax, sycl::maximum<float>());
++    ggml_sycl_q8_reduce_sum_amax(sg, sum, amax);
+     const float d = amax == 0.0f ? 1.0f : amax / 127;
+ #pragma unroll(elements_per_wi)
+     for (int j = 0; j < elements_per_wi; ++j) {
+@@ -633,8 +630,7 @@ static void add_rms_norm_mul_quantize_f32_q8_1_fused_4_full(
+         amax = sycl::fmax(amax, sycl::fabs(values[j]));
+         quantized[j] = 0;
+     }
+-    sum = sycl::reduce_over_group(sg, sum, sycl::plus<float>());
+-    amax = sycl::reduce_over_group(sg, amax, sycl::maximum<float>());
++    ggml_sycl_q8_reduce_sum_amax(sg, sum, amax);
+     const float d = amax == 0.0f ? 1.0f : amax / 127;
+ #pragma unroll(elements_per_wi)
+     for (int j = 0; j < elements_per_wi; ++j) {
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -10034,8 +10034,7 @@ static void q8_1_quantize_reordered_kernel(
+             amax = sycl::fmax(amax, sycl::fabs(values[j]));
+             quantized[j] = 0;
+         }
+-        sum = sycl::reduce_over_group(sg, sum, sycl::plus<float>());
+-        amax = sycl::reduce_over_group(sg, amax, sycl::maximum<float>());
++        ggml_sycl_q8_reduce_sum_amax(sg, sum, amax);
+         float d = amax == 0.0f ? 1.0f : amax / 127;
+ #pragma unroll(elements_per_wi)
+         for (int j = 0; j < elements_per_wi; ++j) {
+@@ -10110,8 +10109,7 @@ static void q8_1_quantize_reordered_pair_kernel(
+                     amax = sycl::fmax(amax, sycl::fabs(value));
+                     quantized[j] = 0;
+                 }
+-                sum = sycl::reduce_over_group(sg, sum, sycl::plus<float>());
+-                amax = sycl::reduce_over_group(sg, amax, sycl::maximum<float>());
++                ggml_sycl_q8_reduce_sum_amax(sg, sum, amax);
+                 const float d = amax == 0.0f ? 1.0f : amax / 127;
+ #pragma unroll(elements_per_wi)
+                 for (int j = 0; j < elements_per_wi; ++j) {
+@@ -10183,8 +10181,7 @@ static void q8_1_quantize_reordered_triple_kernel(
+                     amax = sycl::fmax(amax, sycl::fabs(value));
+                     quantized[j] = 0;
+                 }
+-                sum = sycl::reduce_over_group(sg, sum, sycl::plus<float>());
+-                amax = sycl::reduce_over_group(sg, amax, sycl::maximum<float>());
++                ggml_sycl_q8_reduce_sum_amax(sg, sum, amax);
+                 const float d = amax == 0.0f ? 1.0f : amax / 127;
+ #pragma unroll(elements_per_wi)
+                 for (int j = 0; j < elements_per_wi; ++j) {
