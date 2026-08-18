@@ -93,6 +93,9 @@ The version override is the metadata emitted by a fresh editable build of
 source `44fc8fde09` on 2026-08-18. The historical environment retained an older
 distribution label even after its editable source moved to that commit; source
 head and diff remain the authoritative code identity in either case.
+This two-card host's pinned low-memory XPU rebuild, package manifest, peak-RSS
+warning, and import-path check are recorded in
+[`RUNTIME-BUILD-20260818.md`](RUNTIME-BUILD-20260818.md).
 
 The three optional runtime manifests make a rebuilt host identity explicit
 without weakening the retained reference-host defaults. Entries are
@@ -104,6 +107,9 @@ binary hashes embedded in the validator.
 `VALIDATION_HF_HOME` prevents the historical `/mnt/usb-models` cache path from
 being recreated on hosts that keep their model and transient Hugging Face
 metadata elsewhere; it does not change model identity verification.
+The runner also places the verified `BASE_STAGE` first on `PYTHONPATH`; this is
+required to keep a rebuilt `_xpu_C` paired with its matching device libraries
+instead of silently importing `_xpu_C` from an installed wheel.
 
 The known-good deterministic configuration and its flag set are documented in
 [`../qwen36-27b-autoround-int4-b70-determinism-20260818/README.md`](../qwen36-27b-autoround-int4-b70-determinism-20260818/README.md)

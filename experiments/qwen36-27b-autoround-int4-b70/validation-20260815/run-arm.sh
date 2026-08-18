@@ -226,6 +226,12 @@ while IFS= read -r name; do
 done < <(compgen -e)
 unset PYTHONPATH LD_PRELOAD LD_LIBRARY_PATH TORCHINDUCTOR_CACHE_DIR
 
+# The validator hashes the source-tree runtime package, so Python must import
+# that same package. Otherwise an installed wheel can contribute _xpu_C while
+# LD_LIBRARY_PATH contributes a rebuilt device library, creating an ABI-mixed
+# process even though every individually checked file is valid.
+export PYTHONPATH="$base_stage"
+
 if [[ -n "${VALIDATION_ONECCL_MANIFEST:-}" ]]; then
   export ONECCL_VALIDATED_LIB_SHA256="$oneccl_validated_lib_sha"
   export ONECCL_VALIDATED_KERNELS_SHA256="$oneccl_validated_kernels_sha"

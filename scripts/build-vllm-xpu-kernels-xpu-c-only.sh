@@ -50,5 +50,17 @@ cmake -S . -B "${BUILD_DIR}" -G Ninja \
 
 cmake --build "${BUILD_DIR}" -j="${JOBS}" --target _xpu_C
 cmake --install "${BUILD_DIR}" --prefix "${INSTALL_PREFIX}" --component _xpu_C
+if [[ "${GDN_KERNELS}" == "ON" ]]; then
+  gdn_library="${BUILD_DIR}/libgdn_attn_kernels_xe_2.so"
+  if [[ ! -f "${gdn_library}" ]]; then
+    printf 'GDN was enabled but its device library is missing: %s\n' \
+      "${gdn_library}" >&2
+    exit 3
+  fi
+  install -D -m 0755 "${gdn_library}" \
+    "${INSTALL_PREFIX}/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so"
+fi
 
-find "${INSTALL_PREFIX}" -maxdepth 3 -type f -name '_xpu_C*.so' -printf '%s %p\n'
+find "${INSTALL_PREFIX}" -maxdepth 3 -type f \
+  \( -name '_xpu_C*.so' -o -name 'libgdn_attn_kernels_xe_2.so' \) \
+  -printf '%s %p\n'
