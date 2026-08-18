@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "date": "2026-08-18",
+  "source_commit": "2dd55f380df753a10a88fcd9e96192561066e713",
+  "compiler": "IntelLLVM 2025.3.3",
+  "devices": [0, 1],
+  "identity": {
+    "dtype": "fp16",
+    "head_dim": 256,
+    "q_heads_tp2_local": 12,
+    "kv_heads_tp2_local": 2,
+    "block_size": 64,
+    "kv_lengths": [128, 1024, 2048]
+  },
+  "packed_mtp3": {
+    "rows": 4,
+    "causal": true,
+    "replays_per_shape_per_device": 1000,
+    "total_replays": 6000,
+    "dynamic_mutations_per_shape": 2,
+    "poisoned_output_checked_every_replay": true,
+    "max_abs_diff_each_device": 0.00048828125
+  },
+  "forced_one_token_chunk_decode": {
+    "rows": 1,
+    "causal": false,
+    "replays_per_shape_per_device": 1000,
+    "total_replays": 6000,
+    "dynamic_mutations_per_shape": 2,
+    "poisoned_output_checked_every_replay": true,
+    "max_abs_diff_each_device": 0.00048828125,
+    "direct_us_device_0": [17.13761012069881, 112.35747995669954, 220.9102499182336],
+    "direct_us_device_1": [17.283899942412972, 111.84728005900979, 220.68555001169443]
+  },
+  "post_test_gpu_state": "normal on both devices",
+  "post_test_kernel_faults": 0
+}

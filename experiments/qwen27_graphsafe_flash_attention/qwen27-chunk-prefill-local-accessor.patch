@@ -1,8 +1,8 @@
 diff --git a/csrc/xpu/attn/xe_2/chunk_prefill.hpp b/csrc/xpu/attn/xe_2/chunk_prefill.hpp
-index 5e50e1a..0182bd9 100644
+index 3fef010..0182bd9 100644
 --- a/csrc/xpu/attn/xe_2/chunk_prefill.hpp
 +++ b/csrc/xpu/attn/xe_2/chunk_prefill.hpp
-@@ -212,23 +212,40 @@ struct KernelLauncher {
+@@ -212,24 +212,40 @@ struct KernelLauncher {
      dim3 const block = FMHAKernel::get_block_shape();
      dim3 const grid = FMHAKernel::get_grid_shape(params);
  
@@ -26,8 +26,9 @@ index 5e50e1a..0182bd9 100644
 -        syclex::sub_group_size<cute::intel::sg_size>, intelex::grf_size<256>};
 -    compat::experimental::launch_policy policy{
 -        sycl_grid, sycl_block, launch_props, kernel_props};
--    compat::experimental::launch<cutlass::device_kernel<FMHAKernel>>(
+-    auto done = compat::experimental::launch<cutlass::device_kernel<FMHAKernel>>(
 -        policy, queue, params);
+-    queue.ext_oneapi_submit_barrier({done});
 +    syclex::properties kernel_props{
 +        syclex::sub_group_size<16>, intelex::grf_size<256>};
 +    queue.submit([&](sycl::handler& cgh) {

@@ -8,6 +8,8 @@ build=${BUILD_DIR:-$here/work/build}
 python=${PYTHON:-/home/steve/.venvs/vllm-xpu/bin/python}
 jobs=${MAX_JOBS:-8}
 compiler_root=${INTEL_COMPILER_ROOT:-/opt/intel/oneapi/compiler/2025.3}
+chunk_config=${VLLM_CHUNK_PREFILL_CONFIG:-$here/qwen38-head256-chunk.conf}
+paged_config=${VLLM_PAGED_DECODE_CONFIG:-$here/qwen38-head256-paged.conf}
 cc=${CC:-$compiler_root/bin/icx}
 cxx=${CXX:-$compiler_root/bin/icpx}
 full=0
@@ -32,6 +34,8 @@ test -f "$source_tree/csrc/xpu/attn/xe_2/chunk_prefill.hpp"
 test -x "$python"
 test -x "$cc"
 test -x "$cxx"
+test -f "$chunk_config"
+test -f "$paged_config"
 command -v rsync >/dev/null
 
 rm -rf -- "$stage" "$build"
@@ -53,6 +57,9 @@ patch -d "$stage" -p1 \
   < "$here/qwen27-chunk-prefill-completion-barrier.patch"
 git -C "$source_tree" apply --check "$here/qwen27-force-chunk-decode.patch"
 patch -d "$stage" -p1 < "$here/qwen27-force-chunk-decode.patch"
+git -C "$source_tree" apply --check \
+  "$here/qwen27-force-chunk-decode-python.patch"
+patch -d "$stage" -p1 < "$here/qwen27-force-chunk-decode-python.patch"
 
 if [[ -f "$compiler_root/env/vars.sh" ]]; then
   # oneAPI's versioned setup script is not nounset-clean. Pinning this avoids
@@ -73,6 +80,8 @@ cmake -S "$stage" -B "$build" -G Ninja \
   -DBUILD_SYCL_TLA_KERNELS=ON \
   -DVLLM_XPU_ENABLE_XE2=ON \
   -DVLLM_XPU_ENABLE_XE_DEFAULT=OFF \
+  -DVLLM_CHUNK_PREFILL_CONFIG="$chunk_config" \
+  -DVLLM_PAGED_DECODE_CONFIG="$paged_config" \
   -DBASIC_KERNELS_ENABLED=OFF \
   -DFA2_KERNELS_ENABLED=ON \
   -DMOE_KERNELS_ENABLED=OFF \

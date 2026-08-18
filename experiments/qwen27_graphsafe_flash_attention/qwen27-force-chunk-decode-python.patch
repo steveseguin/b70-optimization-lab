@@ -1,0 +1,23 @@
+diff --git a/vllm_xpu_kernels/flash_attn_interface.py b/vllm_xpu_kernels/flash_attn_interface.py
+--- a/vllm_xpu_kernels/flash_attn_interface.py
++++ b/vllm_xpu_kernels/flash_attn_interface.py
+@@ -48,5 +48,9 @@ try:
+ except ValueError:
+     _SPEC_DECODE_MAX_QLEN = 16
+ 
++_FORCE_CHUNK_DECODE = os.environ.get(
++    "VLLM_XPU_FA2_FORCE_CHUNK_DECODE", "0").lower() in (
++        "1", "true", "yes", "on")
++
+ 
+ def _spec_decode_varlen_fwd(
+@@ -498,7 +502,8 @@ def flash_attn_varlen_func(
+         # comment on _SPEC_DECODE_MAX_QLEN above for the rationale.
+         batch = cu_seqlens_q.numel() - 1
+         is_uniform_qlen = (batch > 0 and q.shape[0] == batch * max_seqlen_q)
+-        if (block_table is not None and causal and not return_softmax_lse
++        if (not _FORCE_CHUNK_DECODE and block_table is not None and causal
++                and not return_softmax_lse
+                 and softcap == 0.0 and alibi_slopes is None and q_v is None
+                 and q_descale is None and scheduler_metadata is None
+                 and seqused_k is not None
