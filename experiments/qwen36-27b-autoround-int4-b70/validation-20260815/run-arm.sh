@@ -121,27 +121,83 @@ verify_sha() {
   fi
 }
 
-while read -r expected recorded_path; do
-  [[ -n "$expected" && -n "$recorded_path" ]] || continue
-  binary=$(basename "$recorded_path")
-  if [[ "$current_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
-    expected=e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7
+verify_relative_manifest() {
+  local root=$1 manifest=$2 label=$3
+  local expected relative_path
+  local entries=0
+  if [[ ! -f "$manifest" ]]; then
+    printf '%s manifest is missing: %s\n' "$label" "$manifest" >&2
+    exit 3
   fi
-  if [[ "$latest_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
-    expected=871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e
+  while read -r expected relative_path _; do
+    [[ -n "$expected" ]] || continue
+    [[ "$expected" == \#* ]] && continue
+    if [[ ! "$expected" =~ ^[0-9a-f]{64}$ || -z "$relative_path" \
+      || "$relative_path" == /* || "$relative_path" == *..* ]]; then
+      printf '%s manifest has an unsafe or malformed entry: %s %s\n' \
+        "$label" "$expected" "$relative_path" >&2
+      exit 3
+    fi
+    verify_sha "$root/$relative_path" "$expected" "$label $relative_path"
+    entries=$((entries + 1))
+  done < "$manifest"
+  if (( entries == 0 )); then
+    printf '%s manifest contains no file identities: %s\n' \
+      "$label" "$manifest" >&2
+    exit 3
   fi
-  if [[ "$exact_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
-    expected=8f11e716910289c9e53b770fab14231c040ac5b08ea7830947390ac0fb674496
+}
+
+if [[ -n "${VALIDATION_XPU_RUNTIME_MANIFEST:-}" ]]; then
+  verify_relative_manifest "$base_stage/vllm_xpu_kernels" \
+    "$VALIDATION_XPU_RUNTIME_MANIFEST" XPU-runtime
+else
+  while read -r expected recorded_path; do
+    [[ -n "$expected" && -n "$recorded_path" ]] || continue
+    binary=$(basename "$recorded_path")
+    if [[ "$current_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
+      expected=e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7
+    fi
+    if [[ "$latest_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
+      expected=871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e
+    fi
+    if [[ "$exact_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
+      expected=8f11e716910289c9e53b770fab14231c040ac5b08ea7830947390ac0fb674496
+    fi
+    if [[ "$latest_identity" == "1" && "$binary" == "libgdn_attn_kernels_xe_2.so" ]]; then
+      expected=e7b9757a317157bb4a63159cc38ad3fc302135ca72954807d189420bbcf1595e
+    fi
+    verify_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
+  done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
+fi
+if [[ -n "${VALIDATION_ONECCL_MANIFEST:-}" ]]; then
+  verify_relative_manifest "$oneccl" "$VALIDATION_ONECCL_MANIFEST" oneCCL
+else
+  verify_sha "$oneccl/lib/libccl.so.1.0" \
+    43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700 oneCCL
+  verify_sha "$oneccl/lib/ccl/kernels/kernels.spv" \
+    0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9 oneCCL-kernels
+fi
+
+verify_graph_stage() {
+  if [[ -n "${VALIDATION_GRAPH_STAGE_MANIFEST:-}" ]]; then
+    verify_relative_manifest "$graph_stage" "$VALIDATION_GRAPH_STAGE_MANIFEST" \
+      graph-safe-FlashAttention
+    return
   fi
-  if [[ "$latest_identity" == "1" && "$binary" == "libgdn_attn_kernels_xe_2.so" ]]; then
-    expected=e7b9757a317157bb4a63159cc38ad3fc302135ca72954807d189420bbcf1595e
-  fi
-  verify_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
-done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
-verify_sha "$oneccl/lib/libccl.so.1.0" \
-  43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700 oneCCL
-verify_sha "$oneccl/lib/ccl/kernels/kernels.spv" \
-  0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9 oneCCL-kernels
+  verify_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
+    33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
+    graph-safe-FlashAttention-extension
+  verify_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
+    "${VALIDATION_FA_DEVICE_LIBRARY_SHA256:-604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c}" \
+    graph-safe-FlashAttention-device-library
+  verify_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
+    3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
+    graph-safe-FlashAttention-stock-dependency
+  verify_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
+    869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
+    graph-safe-FlashAttention-Python-interface
+}
 
 PYTHON="$venv/bin/python" MODEL_DIR="$model_dir" \
   MODEL_MANIFEST="${VALIDATION_MODEL_MANIFEST:-$repo/repro/qwen36-27b-autoround-int4-b70/manifests/model.json}" \
@@ -534,18 +590,7 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
     # FULL graph capture historically required the isolated graph-safe
     # FlashAttention build. Pin both the Python extension and its device
     # library so existing reproductions cannot silently change identity.
-    verify_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
-      33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
-      graph-safe-FlashAttention-extension
-    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
-      "${VALIDATION_FA_DEVICE_LIBRARY_SHA256:-604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c}" \
-      graph-safe-FlashAttention-device-library
-    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
-      3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
-      graph-safe-FlashAttention-stock-dependency
-    verify_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
-      869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
-      graph-safe-FlashAttention-Python-interface
+    verify_graph_stage
     export STAGE="$graph_stage"
     export VLLM_XPU_KERNELS_SRC="$graph_stage"
   fi
@@ -627,18 +672,7 @@ else
     # runs.  The staged tree is an FA-only Python/device-library overlay; the
     # remaining XPU extension modules continue to resolve from the verified
     # current source package.
-    verify_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
-      33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
-      graph-safe-FlashAttention-extension
-    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
-      "${VALIDATION_FA_DEVICE_LIBRARY_SHA256:-604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c}" \
-      graph-safe-FlashAttention-device-library
-    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
-      3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
-      graph-safe-FlashAttention-stock-dependency
-    verify_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
-      869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
-      graph-safe-FlashAttention-Python-interface
+    verify_graph_stage
     export STAGE="$graph_stage"
     export VLLM_XPU_KERNELS_SRC="$graph_stage"
   else

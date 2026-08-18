@@ -129,6 +129,17 @@ if [[ -n "${CANDIDATE_ENTRYPOINT:-}" && -f "$CANDIDATE_ENTRYPOINT" ]]; then
 fi
 cp experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh \
   "$RUN_DIR/serve-vllm.sh.snapshot"
+for manifest_var in VALIDATION_XPU_RUNTIME_MANIFEST \
+  VALIDATION_ONECCL_MANIFEST VALIDATION_GRAPH_STAGE_MANIFEST; do
+  manifest_path=${!manifest_var:-}
+  [[ -n "$manifest_path" ]] || continue
+  if [[ ! -f "$manifest_path" ]]; then
+    echo "$manifest_var is not a regular file: $manifest_path" >&2
+    exit 2
+  fi
+  cp -- "$manifest_path" \
+    "$RUN_DIR/${manifest_var,,}.snapshot.sha256"
+done
 
 server_pid=""
 cleanup() {
@@ -147,6 +158,9 @@ trap cleanup EXIT
   echo "expected_kernels_diff_sha256=${VALIDATION_EXPECT_KERNELS_DIFF_SHA256:-}"
   echo "expected_xpu_count=${VALIDATION_EXPECT_XPU_COUNT:-4}"
   echo "expected_vllm_version=${VALIDATION_EXPECT_VLLM_VERSION:-0.20.2rc1.dev13+g9557d9108.d20260620}"
+  echo "xpu_runtime_manifest=${VALIDATION_XPU_RUNTIME_MANIFEST:-historical-default}"
+  echo "oneccl_manifest=${VALIDATION_ONECCL_MANIFEST:-historical-default}"
+  echo "graph_stage_manifest=${VALIDATION_GRAPH_STAGE_MANIFEST:-historical-default}"
   echo "run_dir=$RUN_DIR"
   echo "model_dir=$MODEL_DIR"
   echo "served_model_name=$SERVED_MODEL_NAME"

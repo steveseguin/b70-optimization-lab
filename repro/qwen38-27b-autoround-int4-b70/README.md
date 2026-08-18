@@ -77,6 +77,9 @@ MODEL_DIR=/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan \
 VALIDATION_MODEL_MANIFEST=$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json \
 VALIDATION_EXPECT_XPU_COUNT=2 \
 VALIDATION_EXPECT_VLLM_VERSION=0.21.1rc1.dev289+g44fc8fde0 \
+VALIDATION_XPU_RUNTIME_MANIFEST=/path/to/xpu-runtime.sha256 \
+VALIDATION_ONECCL_MANIFEST=/path/to/oneccl-runtime.sha256 \
+VALIDATION_GRAPH_STAGE_MANIFEST=/path/to/graph-stage.sha256 \
   ...run-arm.sh spec-native-partition-exact-native 0,1 "$root" "$baseline"
 ```
 
@@ -89,6 +92,14 @@ The version override is the metadata emitted by a fresh editable build of
 source `44fc8fde09` on 2026-08-18. The historical environment retained an older
 distribution label even after its editable source moved to that commit; source
 head and diff remain the authoritative code identity in either case.
+
+The three optional runtime manifests make a rebuilt host identity explicit
+without weakening the retained reference-host defaults. Entries are
+`SHA256 relative/path` pairs rooted at, respectively,
+`BASE_STAGE/vllm_xpu_kernels`, `ONECCL_INSTALL_DIR`, and `STAGE`. Absolute or
+parent-traversing paths, missing files, malformed hashes, and empty manifests
+all fail closed. Omit these variables only when reproducing the historical
+binary hashes embedded in the validator.
 
 The known-good deterministic configuration and its flag set are documented in
 [`../qwen36-27b-autoround-int4-b70-determinism-20260818/README.md`](../qwen36-27b-autoround-int4-b70-determinism-20260818/README.md)
