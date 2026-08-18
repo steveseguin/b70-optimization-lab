@@ -1,0 +1,51 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_performance_neutral",
+  "model": {
+    "name": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70 32 GiB",
+  "runtime": "oneAPI 2026.1.1; accepted DP4A2 x SG24 target-only TP2 stack",
+  "change": "Specialize both register-direct collective Q8 tails to three ordered compile-time slots for the exact nelem=5120, WG1024, 160-block, 64-subgroup shape",
+  "artifacts": {
+    "accepted_libggml_sycl_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+    "treatment_libggml_sycl_sha256": "b9201e9bd2ee787f2d8c261906036f84454192b89d32836fbac18bce88913958",
+    "treatment_ggml_sycl_object_sha256": "72ba422f26f2dc33ba1ed22a520ee9483b4ce212dfa1c2f9916ae286e60be27f",
+    "treatment_llama_bench_sha256": "8c9dfa5852305819778f26cb49262d01d60011c31c12f63c4e50b0664aaf4dca"
+  },
+  "correctness": {
+    "activation_marker": "direct-Q8 fixed qtail3 active: nelem=5120 wg=1024 qblocks=160",
+    "strict_smoke": "p0/n1/r1 with GGML_SYCL_Q8_QUANT_DEDUP=2",
+    "verified": 1980,
+    "verify_mismatch": 0,
+    "endpoint_gate_run": false,
+    "endpoint_gate_reason": "Only a noise-level direct-decode delta"
+  },
+  "discarded_preliminary_screen": {
+    "reason": "A shell logging bug collapsed all four raw filenames; terminal values were retained but excluded from the decision",
+    "accepted_mean": 36.698357,
+    "treatment_mean": 36.705928,
+    "delta_percent": 0.020630351
+  },
+  "confirmation": {
+    "shape": "p64/n512/r3, four fresh processes, explicitly named A-B-B-A",
+    "accepted": [37.755393, 37.736075],
+    "treatment": [37.770944, 37.759903],
+    "accepted_mean": 37.745734,
+    "treatment_mean": 37.7654235,
+    "delta_percent": 0.052163511,
+    "activation_markers": {
+      "control_logs": 0,
+      "treatment_logs": 2
+    }
+  },
+  "raw_log_sha256": {
+    "confirm_01_control": "5c5124ab3cc51d9a4d82c5694e938b9c2a05c94bc518c4cf60505149d17f6ed9",
+    "confirm_02_candidate": "29df10aebf051dc8900d96dc9154d67710e5c930a1a8f7f4c04225a9e63c0a0b",
+    "confirm_03_candidate": "d1b1a4ae544b086aa92d28026f5c116ec9ef236f8a77e3a19c5121aad5424d3d",
+    "confirm_04_control": "99399c4228163e3ce68d12fe0fed8101926870376d089ddb58b279655ebe9a8c"
+  },
+  "decision": "Retain the accepted dynamic Q8 tail; do not retry this exact fixed-three-slot specialization without a different geometry or compiler/IGC",
+  "raw_local_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-qtail3/"
+}
