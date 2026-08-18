@@ -72,6 +72,7 @@ Main entries:
 - [c2 cache-row fusion result](../experiments/qwen38-27b-b70/notes/2026-08-16-q8-c2-cache-row-fusion-neutral.md)
 - [distributed greedy argmax result](../experiments/qwen38-27b-b70/notes/2026-08-16-q8-distributed-greedy-argmax-neutral.md)
 - [community GPTQ INT4/MTP vLLM idea](../community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
+- [AutoRound INT4/MTP3 lane and replay gates](../repro/qwen38-27b-autoround-int4-b70/README.md)
 
 Status: active as of 2026-08-16. The current lab record is target-only
 Q4_K_M TP2 at `49.717503 tok/s` conventional (`50.219700` historical helper),
@@ -97,6 +98,12 @@ power, exact contributor prompt, and broad quality claims remain open.
 The exact public model, container, runtime flags, copied benchmark assets, two
 patches, safe launcher, reported payload, source hashes, and audit caveats are
 captured in the linked packet.
+
+The separate `devan-carlin/Qwen3.8-27B-int4-AutoRound` TP2/MTP3 lane has a
+first same-config handoff at `91.925538 tok/s` across all 25 prompts and
+`86.719870 tok/s` on the historical selection-12 subset. It is not promoted:
+the Qwen3.8 target-only quality oracle, matching B replicate, and compact raw
+rows needed for independent recomputation are still open.
 
 ### Qwen3.6 27B Q8_0 Target-Only On Two ASRock B70s
 
