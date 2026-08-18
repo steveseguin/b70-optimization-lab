@@ -9,6 +9,7 @@ INSTALL_PREFIX="${INSTALL_PREFIX:-/tmp/vllm-xpu-xpu-c-only-2025}"
 AOT_DEVICES="${AOT_DEVICES:-bmg-g21-a0}"
 JOBS="${JOBS:-4}"
 GDN_KERNELS="${GDN_KERNELS:-ON}"
+MOE_KERNELS="${MOE_KERNELS:-ON}"
 
 cd "${KERNELS_DIR}"
 
@@ -41,7 +42,7 @@ cmake -S . -B "${BUILD_DIR}" -G Ninja \
   -DVLLM_XPU_ENABLE_XE_DEFAULT=OFF \
   -DBASIC_KERNELS_ENABLED=OFF \
   -DFA2_KERNELS_ENABLED=OFF \
-  -DMOE_KERNELS_ENABLED=ON \
+  -DMOE_KERNELS_ENABLED="${MOE_KERNELS}" \
   -DGDN_KERNELS_ENABLED="${GDN_KERNELS}" \
   -DMQA_LOGITS_KERNELS_ENABLED=OFF \
   -DXPU_SPECIFIC_KERNELS_ENABLED=ON \
@@ -49,5 +50,17 @@ cmake -S . -B "${BUILD_DIR}" -G Ninja \
 
 cmake --build "${BUILD_DIR}" -j="${JOBS}" --target _xpu_C
 cmake --install "${BUILD_DIR}" --prefix "${INSTALL_PREFIX}" --component _xpu_C
+if [[ "${GDN_KERNELS}" == "ON" ]]; then
+  gdn_library="${BUILD_DIR}/libgdn_attn_kernels_xe_2.so"
+  if [[ ! -f "${gdn_library}" ]]; then
+    printf 'GDN was enabled but its device library is missing: %s\n' \
+      "${gdn_library}" >&2
+    exit 3
+  fi
+  install -D -m 0755 "${gdn_library}" \
+    "${INSTALL_PREFIX}/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so"
+fi
 
-find "${INSTALL_PREFIX}" -maxdepth 3 -type f -name '_xpu_C*.so' -printf '%s %p\n'
+find "${INSTALL_PREFIX}" -maxdepth 3 -type f \
+  \( -name '_xpu_C*.so' -o -name 'libgdn_attn_kernels_xe_2.so' \) \
+  -printf '%s %p\n'

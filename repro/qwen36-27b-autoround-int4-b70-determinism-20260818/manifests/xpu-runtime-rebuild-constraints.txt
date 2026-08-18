@@ -1,0 +1,18 @@
+# ABI-critical constraints for rebuilding the pinned Qwen27 AutoRound XPU lane.
+#
+# Use this file with requirements/xpu.txt from vLLM 44fc8fde09.  In August
+# 2026 the PyTorch nightly index no longer retains the recorded 2.11 wheels;
+# they remain on the official stable XPU index:
+#   https://download.pytorch.org/whl/xpu
+#
+# Keep auto_round_lib at 0.13.0.  The current 0.14.x line requires a newer
+# generic Torch and can cause pip to replace torch 2.11+xpu with a CUDA wheel.
+torch==2.11.0+xpu
+torchvision==0.26.0+xpu
+torchaudio==2.11.0+xpu
+triton-xpu==3.7.0
+auto_round_lib==0.13.0
+transformers==5.10.2
+compressed-tensors==0.15.0.1
+huggingface_hub==1.16.1
+numpy==2.3.5

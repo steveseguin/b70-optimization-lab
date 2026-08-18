@@ -88,10 +88,12 @@ elif [[ "$mode" == "spec-native-partition-exact" \
   || "$mode" == "nospec-latest-exact-native" ]]; then
   latest_identity=1
   exact_identity=1
+  expected_vllm_diff=${VALIDATION_EXPECT_VLLM_DIFF_SHA256:-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855}
+  expected_kernels_diff=${VALIDATION_EXPECT_KERNELS_DIFF_SHA256:-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855}
   verify_tree "$source_root/vllm" 44fc8fde09fc311d3099dab10366b672d9142ea4 \
-    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 vllm
+    "$expected_vllm_diff" vllm
   verify_tree "$source_root/vllm-xpu-kernels" 2dd55f380df753a10a88fcd9e96192561066e713 \
-    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 kernels
+    "$expected_kernels_diff" kernels
 elif [[ "$mode" == "spec-native-partition" || "$mode" == "nospec-latest" ]]; then
   latest_identity=1
   verify_tree "$source_root/vllm" a63ff886e1c9c90f919e8b46a63f34027dfae823 \
@@ -119,27 +121,94 @@ verify_sha() {
   fi
 }
 
-while read -r expected recorded_path; do
-  [[ -n "$expected" && -n "$recorded_path" ]] || continue
-  binary=$(basename "$recorded_path")
-  if [[ "$current_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
-    expected=e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7
+verify_relative_manifest() {
+  local root=$1 manifest=$2 label=$3
+  local expected relative_path
+  local entries=0
+  if [[ ! -f "$manifest" ]]; then
+    printf '%s manifest is missing: %s\n' "$label" "$manifest" >&2
+    exit 3
   fi
-  if [[ "$latest_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
-    expected=871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e
+  while read -r expected relative_path _; do
+    [[ -n "$expected" ]] || continue
+    [[ "$expected" == \#* ]] && continue
+    if [[ ! "$expected" =~ ^[0-9a-f]{64}$ || -z "$relative_path" \
+      || "$relative_path" == /* || "$relative_path" == *..* ]]; then
+      printf '%s manifest has an unsafe or malformed entry: %s %s\n' \
+        "$label" "$expected" "$relative_path" >&2
+      exit 3
+    fi
+    verify_sha "$root/$relative_path" "$expected" "$label $relative_path"
+    entries=$((entries + 1))
+  done < "$manifest"
+  if (( entries == 0 )); then
+    printf '%s manifest contains no file identities: %s\n' \
+      "$label" "$manifest" >&2
+    exit 3
   fi
-  if [[ "$exact_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
-    expected=8f11e716910289c9e53b770fab14231c040ac5b08ea7830947390ac0fb674496
+}
+
+if [[ -n "${VALIDATION_XPU_RUNTIME_MANIFEST:-}" ]]; then
+  verify_relative_manifest "$base_stage/vllm_xpu_kernels" \
+    "$VALIDATION_XPU_RUNTIME_MANIFEST" XPU-runtime
+else
+  while read -r expected recorded_path; do
+    [[ -n "$expected" && -n "$recorded_path" ]] || continue
+    binary=$(basename "$recorded_path")
+    if [[ "$current_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
+      expected=e9715e02bc7a475f2f8922caa288fa542df6acf24736662aecd37fd6a21cb8a7
+    fi
+    if [[ "$latest_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
+      expected=871188fc4729f6387db10ad4f76fdfe91b96e0502acff9c23b444cadf6ea993e
+    fi
+    if [[ "$exact_identity" == "1" && "$binary" == "_xpu_C.abi3.so" ]]; then
+      expected=8f11e716910289c9e53b770fab14231c040ac5b08ea7830947390ac0fb674496
+    fi
+    if [[ "$latest_identity" == "1" && "$binary" == "libgdn_attn_kernels_xe_2.so" ]]; then
+      expected=e7b9757a317157bb4a63159cc38ad3fc302135ca72954807d189420bbcf1595e
+    fi
+    verify_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
+  done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
+fi
+if [[ -n "${VALIDATION_ONECCL_MANIFEST:-}" ]]; then
+  verify_relative_manifest "$oneccl" "$VALIDATION_ONECCL_MANIFEST" oneCCL
+  oneccl_validated_lib_sha=$(awk \
+    '$2 == "lib/libccl.so.1.0" {print $1}' \
+    "$VALIDATION_ONECCL_MANIFEST")
+  oneccl_validated_kernels_sha=$(awk \
+    '$2 == "lib/ccl/kernels/kernels.spv" {print $1}' \
+    "$VALIDATION_ONECCL_MANIFEST")
+  if [[ ! "$oneccl_validated_lib_sha" =~ ^[0-9a-f]{64}$ \
+    || ! "$oneccl_validated_kernels_sha" =~ ^[0-9a-f]{64}$ ]]; then
+    printf 'oneCCL manifest must identify libccl.so.1.0 and kernels.spv exactly once\n' >&2
+    exit 3
   fi
-  if [[ "$latest_identity" == "1" && "$binary" == "libgdn_attn_kernels_xe_2.so" ]]; then
-    expected=e7b9757a317157bb4a63159cc38ad3fc302135ca72954807d189420bbcf1595e
+else
+  verify_sha "$oneccl/lib/libccl.so.1.0" \
+    43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700 oneCCL
+  verify_sha "$oneccl/lib/ccl/kernels/kernels.spv" \
+    0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9 oneCCL-kernels
+fi
+
+verify_graph_stage() {
+  if [[ -n "${VALIDATION_GRAPH_STAGE_MANIFEST:-}" ]]; then
+    verify_relative_manifest "$graph_stage" "$VALIDATION_GRAPH_STAGE_MANIFEST" \
+      graph-safe-FlashAttention
+    return
   fi
-  verify_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" "XPU runtime $binary"
-done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
-verify_sha "$oneccl/lib/libccl.so.1.0" \
-  43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700 oneCCL
-verify_sha "$oneccl/lib/ccl/kernels/kernels.spv" \
-  0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9 oneCCL-kernels
+  verify_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
+    33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
+    graph-safe-FlashAttention-extension
+  verify_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
+    "${VALIDATION_FA_DEVICE_LIBRARY_SHA256:-604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c}" \
+    graph-safe-FlashAttention-device-library
+  verify_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
+    3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
+    graph-safe-FlashAttention-stock-dependency
+  verify_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
+    869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
+    graph-safe-FlashAttention-Python-interface
+}
 
 PYTHON="$venv/bin/python" MODEL_DIR="$model_dir" \
   MODEL_MANIFEST="${VALIDATION_MODEL_MANIFEST:-$repo/repro/qwen36-27b-autoround-int4-b70/manifests/model.json}" \
@@ -150,14 +219,28 @@ PYTHON="$venv/bin/python" MODEL_DIR="$model_dir" \
 # identity. Host/runtime paths are explicitly repopulated below.
 while IFS= read -r name; do
   case "$name" in
-    VLLM_*|QWEN36_27B_*|XPU_GRAPH|COMPILATION_CONFIG|CCL_*|ONECCL_*|SERVER_*|ZE_AFFINITY_MASK|ONEAPI_DEVICE_SELECTOR|QUALITY_*|BENCH_*|RUN_SMOKE|RUN_BENCH|RUN_QUALITY|REQUEST_EXTRA_JSON|CANDIDATE_ENTRYPOINT)
+    VLLM_*|QWEN36_27B_*|XPU_GRAPH|COMPILATION_CONFIG|CCL_*|ONECCL_*|SERVER_*|ZE_AFFINITY_MASK|ONEAPI_DEVICE_SELECTOR|PYTHONHASHSEED|QUALITY_*|BENCH_*|RUN_SMOKE|RUN_BENCH|RUN_QUALITY|REQUEST_EXTRA_JSON|CANDIDATE_ENTRYPOINT)
       unset "$name"
       ;;
   esac
 done < <(compgen -e)
 unset PYTHONPATH LD_PRELOAD LD_LIBRARY_PATH TORCHINDUCTOR_CACHE_DIR
 
-SOURCE_ROOT="$source_root" "$venv/bin/python" - <<'PY' \
+# The validator hashes the source-tree runtime package, so Python must import
+# that same package. Otherwise an installed wheel can contribute _xpu_C while
+# LD_LIBRARY_PATH contributes a rebuilt device library, creating an ABI-mixed
+# process even though every individually checked file is valid.
+export PYTHONPATH="$base_stage"
+
+if [[ -n "${VALIDATION_ONECCL_MANIFEST:-}" ]]; then
+  export ONECCL_VALIDATED_LIB_SHA256="$oneccl_validated_lib_sha"
+  export ONECCL_VALIDATED_KERNELS_SHA256="$oneccl_validated_kernels_sha"
+fi
+
+SOURCE_ROOT="$source_root" \
+EXPECTED_XPU_COUNT="${VALIDATION_EXPECT_XPU_COUNT:-4}" \
+EXPECTED_VLLM_VERSION="${VALIDATION_EXPECT_VLLM_VERSION:-0.20.2rc1.dev13+g9557d9108.d20260620}" \
+  "$venv/bin/python" - <<'PY' \
   > "$arm_root/python-runtime-verify.log"
 import json
 import os
@@ -170,7 +253,8 @@ import vllm
 expected = {
     "python_major_minor": "3.12",
     "torch": "2.11.0+xpu",
-    "vllm": "0.20.2rc1.dev13+g9557d9108.d20260620",
+    "vllm": os.environ["EXPECTED_VLLM_VERSION"],
+    "xpu_count": int(os.environ["EXPECTED_XPU_COUNT"]),
 }
 actual = {
     "python_major_minor": ".".join(map(str, sys.version_info[:2])),
@@ -185,7 +269,6 @@ vllm_path = pathlib.Path(actual["vllm_path"])
 valid = (
     all(actual[key] == value for key, value in expected.items())
     and actual["xpu_available"] is True
-    and actual["xpu_count"] == 4
     and vllm_path.is_relative_to(expected_vllm_root)
 )
 print(json.dumps({"expected": expected, "actual": actual, "valid": valid}, indent=2))
@@ -202,7 +285,7 @@ export VLLM_XPU_KERNELS_SOURCE_TREE="$source_root/vllm-xpu-kernels"
 export MODEL_DIR="$model_dir"
 export QWEN36_27B_AR_VENV="$venv"
 export ONECCL_INSTALL_DIR="$oneccl"
-export HF_HOME=/mnt/usb-models/llm-cache/hf
+export HF_HOME=${VALIDATION_HF_HOME:-/mnt/usb-models/llm-cache/hf}
 export GPU_INDEX="$gpu_pair"
 export TENSOR_PARALLEL_SIZE=2
 export PORT="$port"
@@ -218,6 +301,15 @@ export QUALITY_OUT="$arm_root/data/quality.json"
 export SMOKE_OUT="$arm_root/data/smoke.json"
 export SUMMARY_OUT="$arm_root/data/summary-legacy.json"
 export VLLM_CACHE_ROOT=${VALIDATION_VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
+compile_cache_root="$VLLM_CACHE_ROOT/torch_compile_cache"
+if [[ -n "${VALIDATION_COMPILE_CACHE_MANIFEST:-}" ]]; then
+  "$repo/scripts/canonical-tree-manifest.py" verify \
+    --root "$compile_cache_root" \
+    --manifest "$VALIDATION_COMPILE_CACHE_MANIFEST" \
+    > "$arm_root/compile-cache-preflight.json"
+  cp -- "$VALIDATION_COMPILE_CACHE_MANIFEST" \
+    "$arm_root/compile-cache-input-manifest.json"
+fi
 export BENCH_MAX_TOKENS=${VALIDATION_BENCH_MAX_TOKENS:-512}
 export BENCH_METRIC_TOKENS=${VALIDATION_BENCH_METRIC_TOKENS:-100}
 export QUALITY_REPEAT_RUNS=32
@@ -335,6 +427,26 @@ if [[ -n "${VALIDATION_LM_HEAD_INT8:-}" ]]; then
   # Exactness control: allow the harness to disable the experimental target
   # W8A8 vocabulary projection without inheriting ambient process state.
   export VLLM_XPU_LM_HEAD_INT8="${VALIDATION_LM_HEAD_INT8}"
+fi
+if [[ -n "${VALIDATION_DRAFT_LM_HEAD_INT4_RERANK_TOPK:-}" ]]; then
+  # Candidate-only acceptance lever: the INT4 draft head proposes a small
+  # local-vocabulary set and its retained original weights rerank that set.
+  # Target verification remains unchanged.
+  export VLLM_XPU_DRAFT_LM_HEAD_INT4_RERANK_TOPK="${VALIDATION_DRAFT_LM_HEAD_INT4_RERANK_TOPK}"
+fi
+if [[ -n "${VALIDATION_INDUCTOR_MAX_AUTOTUNE:-}" ]]; then
+  # Fresh-compile determinism arm. vLLM defaults single-size graphs to max
+  # autotune; expose the control explicitly instead of inheriting host state.
+  export VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE="${VALIDATION_INDUCTOR_MAX_AUTOTUNE}"
+fi
+if [[ -n "${VALIDATION_INDUCTOR_COORDINATE_DESCENT_TUNING:-}" ]]; then
+  export VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING="${VALIDATION_INDUCTOR_COORDINATE_DESCENT_TUNING}"
+fi
+if [[ -n "${VALIDATION_PYTHONHASHSEED:-}" ]]; then
+  # Python reads this only when each TP/server process starts. Scrubbing it
+  # above prevents an ambient shell seed from silently changing graph/codegen
+  # traversal order between supposedly identical fresh compilations.
+  export PYTHONHASHSEED="${VALIDATION_PYTHONHASHSEED}"
 fi
 if [[ "${VALIDATION_ALLREDUCE_ASYNC_WAIT:-0}" == "1" ]]; then
   # Eager-only ordering control: retain the collective work handle and wait
@@ -500,18 +612,7 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
     # FULL graph capture historically required the isolated graph-safe
     # FlashAttention build. Pin both the Python extension and its device
     # library so existing reproductions cannot silently change identity.
-    verify_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
-      33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
-      graph-safe-FlashAttention-extension
-    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
-      "${VALIDATION_FA_DEVICE_LIBRARY_SHA256:-604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c}" \
-      graph-safe-FlashAttention-device-library
-    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
-      3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
-      graph-safe-FlashAttention-stock-dependency
-    verify_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
-      869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
-      graph-safe-FlashAttention-Python-interface
+    verify_graph_stage
     export STAGE="$graph_stage"
     export VLLM_XPU_KERNELS_SRC="$graph_stage"
   fi
@@ -593,18 +694,7 @@ else
     # runs.  The staged tree is an FA-only Python/device-library overlay; the
     # remaining XPU extension modules continue to resolve from the verified
     # current source package.
-    verify_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
-      33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
-      graph-safe-FlashAttention-extension
-    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
-      "${VALIDATION_FA_DEVICE_LIBRARY_SHA256:-604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c}" \
-      graph-safe-FlashAttention-device-library
-    verify_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
-      3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
-      graph-safe-FlashAttention-stock-dependency
-    verify_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
-      869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
-      graph-safe-FlashAttention-Python-interface
+    verify_graph_stage
     export STAGE="$graph_stage"
     export VLLM_XPU_KERNELS_SRC="$graph_stage"
   else
@@ -703,6 +793,13 @@ if [[ "$runner_rc" == "0" && "$RUN_QUALITY" == "1" && ! -s "$QUALITY_OUT" ]]; th
   runner_rc=9
 fi
 printf '%s\n' "$runner_rc" > "$arm_root/runner.exit-code"
+
+if [[ -d "$compile_cache_root" ]]; then
+  "$repo/scripts/canonical-tree-manifest.py" create \
+    --root "$compile_cache_root" \
+    --output "$arm_root/compile-cache-output-manifest.json" \
+    > "$arm_root/compile-cache-manifest-create.json"
+fi
 
 if [[ -s "$BENCH_OUT" && "$BENCH_METRIC_TOKENS" == "100" ]]; then
   "$venv/bin/python" "$repo/scripts/qualify_realistic_window_metrics.py" \

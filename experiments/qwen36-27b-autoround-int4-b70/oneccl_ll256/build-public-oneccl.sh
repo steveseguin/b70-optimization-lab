@@ -31,9 +31,10 @@ fi
 
 apply_once() {
   local patch_file="$1"
-  if git -C "$SOURCE_DIR/deps/libccl" apply --check "$patch_file"; then
+  if git -C "$SOURCE_DIR/deps/libccl" apply --check "$patch_file" 2>/dev/null; then
     git -C "$SOURCE_DIR/deps/libccl" apply "$patch_file"
-  elif ! git -C "$SOURCE_DIR/deps/libccl" apply --reverse --check "$patch_file"; then
+  elif ! git -C "$SOURCE_DIR/deps/libccl" apply --reverse --check \
+      "$patch_file" 2>/dev/null; then
     printf 'patch is neither applicable nor already applied: %s\n' \
       "$patch_file" >&2
     exit 3
@@ -42,9 +43,11 @@ apply_once() {
 
 remove_once() {
   local patch_file="$1"
-  if git -C "$SOURCE_DIR/deps/libccl" apply --reverse --check "$patch_file"; then
+  if git -C "$SOURCE_DIR/deps/libccl" apply --reverse --check \
+      "$patch_file" 2>/dev/null; then
     git -C "$SOURCE_DIR/deps/libccl" apply --reverse "$patch_file"
-  elif ! git -C "$SOURCE_DIR/deps/libccl" apply --check "$patch_file"; then
+  elif ! git -C "$SOURCE_DIR/deps/libccl" apply --check \
+      "$patch_file" 2>/dev/null; then
     printf 'patch is neither absent nor cleanly removable: %s\n' \
       "$patch_file" >&2
     exit 4

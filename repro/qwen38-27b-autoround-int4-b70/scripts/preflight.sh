@@ -37,7 +37,9 @@ check_sha() {
 }
 
 check_tree() {
-  local tree=$1 expected=$2 label=$3 head diff
+  local tree=$1 expected=$2 label=$3
+  local expected_diff=${4:-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855}
+  local head diff
   if [[ ! -d "$tree/.git" ]]; then
     fail "$label Git tree missing: $tree"
     return
@@ -49,10 +51,34 @@ check_tree() {
   else
     fail "$label commit mismatch: expected=$expected actual=$head"
   fi
-  if [[ "$diff" == e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 ]]; then
-    pass "$label working tree is clean"
+  if [[ "$diff" == "$expected_diff" ]]; then
+    pass "$label working-tree diff SHA256: $diff"
   else
-    fail "$label working tree has an unrecorded binary diff: $diff"
+    fail "$label working-tree diff mismatch: expected=$expected_diff actual=$diff"
+  fi
+}
+
+check_relative_manifest() {
+  local root=$1 manifest=$2 label=$3
+  local expected relative_path
+  local entries=0
+  if [[ ! -f "$manifest" ]]; then
+    fail "$label manifest missing: $manifest"
+    return
+  fi
+  while read -r expected relative_path _; do
+    [[ -n "$expected" ]] || continue
+    [[ "$expected" == \#* ]] && continue
+    if [[ ! "$expected" =~ ^[0-9a-f]{64}$ || -z "$relative_path" \
+      || "$relative_path" == /* || "$relative_path" == *..* ]]; then
+      fail "$label manifest has an unsafe or malformed entry: $expected $relative_path"
+      continue
+    fi
+    check_sha "$root/$relative_path" "$expected" "$label-$relative_path"
+    entries=$((entries + 1))
+  done < "$manifest"
+  if (( entries == 0 )); then
+    fail "$label manifest contains no file identities: $manifest"
   fi
 }
 
@@ -70,9 +96,11 @@ if (( mem_kib < 24 * 1024 * 1024 )); then
 fi
 
 check_tree "$source_root/vllm" \
-  44fc8fde09fc311d3099dab10366b672d9142ea4 vLLM
+  44fc8fde09fc311d3099dab10366b672d9142ea4 vLLM \
+  "${VALIDATION_EXPECT_VLLM_DIFF_SHA256:-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855}"
 check_tree "$source_root/vllm-xpu-kernels" \
-  2dd55f380df753a10a88fcd9e96192561066e713 vLLM-XPU-kernels
+  2dd55f380df753a10a88fcd9e96192561066e713 vLLM-XPU-kernels \
+  "${VALIDATION_EXPECT_KERNELS_DIFF_SHA256:-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855}"
 
 if [[ -x "$venv/bin/python" ]]; then
   pass "Python environment exists: $venv"
@@ -107,40 +135,54 @@ fi
 # The exact arm checks the ordinary XPU package as well as the isolated
 # graph-safe FlashAttention overlay. Most expected hashes are shared with the
 # historical manifest; two changed with the exact 2026-08-18 source identity.
-while read -r expected recorded_path; do
-  [[ -n "$expected" && -n "$recorded_path" ]] || continue
-  binary=$(basename "$recorded_path")
-  if [[ "$binary" == _xpu_C.abi3.so ]]; then
-    expected=8f11e716910289c9e53b770fab14231c040ac5b08ea7830947390ac0fb674496
-  elif [[ "$binary" == libgdn_attn_kernels_xe_2.so ]]; then
-    expected=e7b9757a317157bb4a63159cc38ad3fc302135ca72954807d189420bbcf1595e
-  fi
-  check_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" \
-    "XPU-runtime-$binary"
-done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
+if [[ -n "${VALIDATION_XPU_RUNTIME_MANIFEST:-}" ]]; then
+  check_relative_manifest "$base_stage/vllm_xpu_kernels" \
+    "$VALIDATION_XPU_RUNTIME_MANIFEST" XPU-runtime
+else
+  while read -r expected recorded_path; do
+    [[ -n "$expected" && -n "$recorded_path" ]] || continue
+    binary=$(basename "$recorded_path")
+    if [[ "$binary" == _xpu_C.abi3.so ]]; then
+      expected=8f11e716910289c9e53b770fab14231c040ac5b08ea7830947390ac0fb674496
+    elif [[ "$binary" == libgdn_attn_kernels_xe_2.so ]]; then
+      expected=e7b9757a317157bb4a63159cc38ad3fc302135ca72954807d189420bbcf1595e
+    fi
+    check_sha "$base_stage/vllm_xpu_kernels/$binary" "$expected" \
+      "XPU-runtime-$binary"
+  done < "$repo/repro/qwen36-27b-autoround-int4-b70/evidence/xpu-runtime-binaries.sha256"
+fi
 
 # These hashes identify the retained AOT artifacts on the measuring host.  A
 # rebuild is validated functionally and rebenchmarked; it is not expected to
 # reproduce these host-dependent bytes.
-check_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
-  33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
-  graph-safe-FlashAttention-extension
-check_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
-  604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c \
-  graph-safe-FlashAttention-device-library
-check_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
-  3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
-  graph-safe-FlashAttention-stock-dependency
-check_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
-  869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
-  graph-safe-FlashAttention-Python-interface
+if [[ -n "${VALIDATION_GRAPH_STAGE_MANIFEST:-}" ]]; then
+  check_relative_manifest "$graph_stage" "$VALIDATION_GRAPH_STAGE_MANIFEST" \
+    graph-safe-FlashAttention
+else
+  check_sha "$graph_stage/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
+    33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739 \
+    graph-safe-FlashAttention-extension
+  check_sha "$graph_stage/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
+    604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c \
+    graph-safe-FlashAttention-device-library
+  check_sha "$graph_stage/vllm_xpu_kernels/libattn_stock.so" \
+    3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289 \
+    graph-safe-FlashAttention-stock-dependency
+  check_sha "$graph_stage/vllm_xpu_kernels/flash_attn_interface.py" \
+    869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480 \
+    graph-safe-FlashAttention-Python-interface
+fi
 
-check_sha "$oneccl/lib/libccl.so.1.0" \
-  43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700 \
-  oneCCL
-check_sha "$oneccl/lib/ccl/kernels/kernels.spv" \
-  0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9 \
-  oneCCL-kernels
+if [[ -n "${VALIDATION_ONECCL_MANIFEST:-}" ]]; then
+  check_relative_manifest "$oneccl" "$VALIDATION_ONECCL_MANIFEST" oneCCL
+else
+  check_sha "$oneccl/lib/libccl.so.1.0" \
+    43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700 \
+    oneCCL
+  check_sha "$oneccl/lib/ccl/kernels/kernels.spv" \
+    0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9 \
+    oneCCL-kernels
+fi
 
 if [[ "$verify_model" == 1 ]]; then
   if MODEL_DIR="$model_dir" \

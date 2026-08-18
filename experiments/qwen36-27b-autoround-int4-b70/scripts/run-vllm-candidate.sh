@@ -129,6 +129,17 @@ if [[ -n "${CANDIDATE_ENTRYPOINT:-}" && -f "$CANDIDATE_ENTRYPOINT" ]]; then
 fi
 cp experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh \
   "$RUN_DIR/serve-vllm.sh.snapshot"
+for manifest_var in VALIDATION_XPU_RUNTIME_MANIFEST \
+  VALIDATION_ONECCL_MANIFEST VALIDATION_GRAPH_STAGE_MANIFEST; do
+  manifest_path=${!manifest_var:-}
+  [[ -n "$manifest_path" ]] || continue
+  if [[ ! -f "$manifest_path" ]]; then
+    echo "$manifest_var is not a regular file: $manifest_path" >&2
+    exit 2
+  fi
+  cp -- "$manifest_path" \
+    "$RUN_DIR/${manifest_var,,}.snapshot.sha256"
+done
 
 server_pid=""
 cleanup() {
@@ -143,6 +154,13 @@ trap cleanup EXIT
   echo "date_utc=$STAMP"
   echo "label=$LABEL"
   echo "candidate_entrypoint=${CANDIDATE_ENTRYPOINT:-$0}"
+  echo "expected_vllm_diff_sha256=${VALIDATION_EXPECT_VLLM_DIFF_SHA256:-}"
+  echo "expected_kernels_diff_sha256=${VALIDATION_EXPECT_KERNELS_DIFF_SHA256:-}"
+  echo "expected_xpu_count=${VALIDATION_EXPECT_XPU_COUNT:-4}"
+  echo "expected_vllm_version=${VALIDATION_EXPECT_VLLM_VERSION:-0.20.2rc1.dev13+g9557d9108.d20260620}"
+  echo "xpu_runtime_manifest=${VALIDATION_XPU_RUNTIME_MANIFEST:-historical-default}"
+  echo "oneccl_manifest=${VALIDATION_ONECCL_MANIFEST:-historical-default}"
+  echo "graph_stage_manifest=${VALIDATION_GRAPH_STAGE_MANIFEST:-historical-default}"
   echo "run_dir=$RUN_DIR"
   echo "model_dir=$MODEL_DIR"
   echo "served_model_name=$SERVED_MODEL_NAME"
@@ -151,7 +169,11 @@ trap cleanup EXIT
   echo "port=$PORT"
   echo "hf_home=$HF_HOME"
   echo "vllm_cache_root=${VLLM_CACHE_ROOT:-}"
+  echo "compile_cache_input_manifest=${VALIDATION_COMPILE_CACHE_MANIFEST:-}"
   echo "torchinductor_cache_dir=${TORCHINDUCTOR_CACHE_DIR:-}"
+  echo "inductor_max_autotune=${VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE:-}"
+  echo "inductor_coordinate_descent_tuning=${VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING:-}"
+  echo "pythonhashseed=${PYTHONHASHSEED:-}"
   echo "max_model_len=$MAX_MODEL_LEN"
   echo "max_num_batched_tokens=$MAX_NUM_BATCHED_TOKENS"
   echo "max_num_seqs=$MAX_NUM_SEQS"
@@ -169,6 +191,7 @@ trap cleanup EXIT
   echo "draft_lm_head_int4=${VLLM_XPU_DRAFT_LM_HEAD_INT4:-}"
   echo "draft_lm_head_int4_group_size=${VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE:-}"
   echo "draft_lm_head_int4_scale_dtype=${VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE:-}"
+  echo "draft_lm_head_int4_rerank_topk=${VLLM_XPU_DRAFT_LM_HEAD_INT4_RERANK_TOPK:-}"
   echo "gdn_serial_spec_decode=${VLLM_XPU_GDN_SERIAL_SPEC_DECODE:-}"
   echo "gdn_serial_spec_conv=${VLLM_XPU_GDN_SERIAL_SPEC_CONV:-}"
   echo "gdn_serial_spec_packed_decode=${VLLM_XPU_GDN_SERIAL_SPEC_PACKED_DECODE:-}"

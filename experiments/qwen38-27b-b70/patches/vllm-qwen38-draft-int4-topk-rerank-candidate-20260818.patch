@@ -1,0 +1,79 @@
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index 7000db69f..9f10779ce 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -303,3 +303,4 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+             "Prepared experimental XPU INT4 draft lm_head: prefix=%s "
+-            "weight_t=%s stride=%s scale=%s scale_dtype=%s group_size=%d",
++            "weight_t=%s stride=%s scale=%s scale_dtype=%s group_size=%d "
++            "rerank_topk=%s",
+             prefix or "<unknown>",
+@@ -310,2 +311,3 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+             group_size,
++            os.environ.get("VLLM_XPU_DRAFT_LM_HEAD_INT4_RERANK_TOPK", "0"),
+         )
+@@ -340,2 +342,64 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+                 )
++            rerank_topk_s = os.environ.get(
++                "VLLM_XPU_DRAFT_LM_HEAD_INT4_RERANK_TOPK", "0")
++            try:
++                rerank_topk = int(rerank_topk_s or "0")
++            except ValueError:
++                logger.warning(
++                    "Invalid VLLM_XPU_DRAFT_LM_HEAD_INT4_RERANK_TOPK=%r; "
++                    "using 0.",
++                    rerank_topk_s,
++                )
++                rerank_topk = 0
++            if rerank_topk > 1:
++                # Keep the fast full-vocabulary INT4 producer, but repair its
++                # choice within a tiny candidate set using the retained
++                # original draft-head weights. The target verifier remains
++                # unchanged and still owns every emitted token.
++                flat_x = x_contiguous.reshape(-1, x_contiguous.shape[-1])
++                flat_logits = logits.reshape(flat_x.shape[0], -1)
++                candidate_count = min(rerank_topk, flat_logits.shape[-1])
++                with timed_region("lm_head_int4_draft.rerank_topk"):
++                    candidate_values, candidate_ids = torch.topk(
++                        flat_logits,
++                        k=candidate_count,
++                        dim=-1,
++                        largest=True,
++                        sorted=True,
++                    )
++                    candidate_weights = layer.weight.index_select(
++                        0, candidate_ids.reshape(-1)
++                    ).reshape(
++                        flat_x.shape[0],
++                        candidate_count,
++                        flat_x.shape[-1],
++                    )
++                    exact_candidate_scores = (
++                        candidate_weights.float()
++                        * flat_x.float().unsqueeze(1)
++                    ).sum(dim=-1)
++                    best_score = exact_candidate_scores.max(
++                        dim=-1, keepdim=True
++                    ).values
++                    # Resolve an exact rescore tie by the lower local vocab ID,
++                    # independent of torch.topk's ordering of equal values.
++                    sentinel = torch.full_like(
++                        candidate_ids, flat_logits.shape[-1]
++                    )
++                    best_id = torch.where(
++                        exact_candidate_scores == best_score,
++                        candidate_ids,
++                        sentinel,
++                    ).min(dim=-1, keepdim=True).values
++                    # The draft path is greedy. Raise the selected candidate
++                    # strictly above every original INT4 logit so an equal
++                    # non-candidate cannot win the downstream argmax.
++                    replacement_values = torch.where(
++                        candidate_ids == best_id,
++                        candidate_values[:, :1] + 1.0,
++                        torch.full_like(candidate_values, -torch.inf),
++                    )
++                    logits = flat_logits.scatter(
++                        1, candidate_ids, replacement_values
++                    ).reshape(out_shape)
+             fallback_margin_s = os.environ.get(
