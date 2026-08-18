@@ -1,0 +1,19 @@
+--- a/ggml/src/ggml-sycl/vecdotq.hpp
++++ b/ggml/src/ggml-sycl/vecdotq.hpp
+@@ -466,12 +466,12 @@
+         // per-block dot product remains exact: four signed-byte DP4As cannot overflow int32,
+         // integer addition is associative here, and the existing FP32 scale/accumulation
+         // boundary below is unchanged.
+-        int sumi0 = dpct::dp4a(v[0], u[0], 0);
+-        int sumi1 = dpct::dp4a(v[1], u[1], 0);
+-        sumi0 = dpct::dp4a(v[2], u[2], sumi0);
++        int sumi0 = ggml_sycl_dp4a(v[0], u[0], 0);
++        int sumi1 = ggml_sycl_dp4a(v[1], u[1], 0);
++        sumi0 = ggml_sycl_dp4a(v[2], u[2], sumi0);
+         // ☠ MUTANT keeps the established positive-control behavior by substituting v[2]
+         // for the last packed int exactly as the incumbent loop did.
+-        sumi1 = dpct::dp4a(MUTANT ? v[2] : v[3], u[3], sumi1);
++        sumi1 = ggml_sycl_dp4a(MUTANT ? v[2] : v[3], u[3], sumi1);
+         const int sumi = sumi0 + sumi1;
+ 
+         const sycl::half2 ds_values = *q8_1_ds;
