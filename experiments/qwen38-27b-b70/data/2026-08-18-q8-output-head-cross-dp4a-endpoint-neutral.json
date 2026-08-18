@@ -1,0 +1,49 @@
+{
+  "date": "2026-08-18",
+  "status": "closed_endpoint_neutral",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "runtime": {
+    "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "compiler": "oneAPI DPC++ 2026.1.1",
+    "door": "GGML_SYCL_MMVQ_Q8_OUTPUT_HEAD_CROSS_DP4A",
+    "candidate_library_sha256": "c2d9a43910927aabb295f798e5ea0ebc62d0e2dd32be827f3e1439ab3febaba4",
+    "candidate_mmvq_object_sha256": "e1fa32c26fb1fb6bc569b83592c7a3a144780f21a44b019173461403236fd28e",
+    "llama_bench_sha256": "74e7d48905196285f6e7cd8c8d0b20a8e25cf3f4731b1e2f0f5f6c49ad8d8865",
+    "llama_server_sha256": "f7bc299a830cbbbbfc3e06ac46ef4f063b9d85e43995c04e07ffa9de0aa390bb"
+  },
+  "scope": {"shape": "standalone Q8 output head K=5120 local N=124160", "speculation": false},
+  "correctness": {
+    "strict_verified": 990,
+    "strict_mismatches": 0,
+    "treatment_live_both_devices_in_strict_run": true,
+    "endpoint_requests_cache_zero": 48,
+    "endpoint_hash_sets_exact": 4,
+    "canonical_output_hash_array_sha256": "72dc31a52cf68f706da818720a493e085d2d622e2a64a71ebc204b62165d4e70"
+  },
+  "direct": {
+    "shape": "p64/n512/r3, TP2, F16 KV, FA, b1024/ub256",
+    "control_tok_s": [36.397173, 36.840153, 36.569921, 36.642209],
+    "treatment_tok_s": [36.872414, 36.732739, 36.721330, 36.760053],
+    "control_mean_tok_s": 36.612364,
+    "treatment_mean_tok_s": 36.771634,
+    "delta_percent": 0.435017
+  },
+  "endpoint_replay": {
+    "order": ["control", "treatment", "treatment", "control"],
+    "primary_tok_s": [37.07632882561166, 37.09617167755013, 37.06667664844734, 37.150139653678295],
+    "full_decode_tok_s": [36.58915659999323, 36.64193862272919, 36.623545609897775, 36.60517002045867],
+    "wall_tok_s": [36.1280150592426, 36.18327684428007, 36.170951469302835, 36.15992997098763],
+    "primary_pair_delta_percent": [0.053519, -0.224664],
+    "primary_pooled_delta_percent": -0.085711,
+    "full_decode_pooled_delta_percent": 0.097217,
+    "wall_pooled_delta_percent": 0.091693
+  },
+  "invalid_initial_endpoint_capture": {
+    "reason": "four output paths collided during same-line shell local initialization",
+    "promotion_evidence": false,
+    "corrected_by": "complete four-suite distinct-path replay"
+  },
+  "decision": {"promoted": false, "reason": "primary endpoint pairs crossed and pooled primary regressed"},
+  "raw_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260818-output-head-cross-dp4a/",
+  "safety": {"post_run_gpu_gate": "pass", "new_xe_fault_reset_hang_timeout": false, "kernel_or_hardware_policy_changed": false}
+}

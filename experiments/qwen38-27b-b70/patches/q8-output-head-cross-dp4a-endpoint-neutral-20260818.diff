@@ -1,0 +1,84 @@
+--- a/ggml/src/ggml-sycl/vecdotq.hpp
++++ b/ggml/src/ggml-sycl/vecdotq.hpp
+@@ -402,7 +402,7 @@
+ // Selected at launch by GGML_SYCL_MMVQ_Q8_NARROW (see mmvq.cpp). The two produce BIT-IDENTICAL
+ // output -- only the shape of the load changes -- so any t/s delta between them is the load, and
+ // nothing else. See finding 76.
+-template <bool WIDE, bool MUTANT = false> struct reorder_vec_dot_q8_0 {
++template <bool WIDE, bool MUTANT = false, bool CROSS = false> struct reorder_vec_dot_q8_0 {
+     static constexpr ggml_type gtype = GGML_TYPE_Q8_0;
+ 
+     using q8_0_block  = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q8_0>;
+@@ -468,10 +468,15 @@
+         // boundary below is unchanged.
+         int sumi0 = dpct::dp4a(v[0], u[0], 0);
+         int sumi1 = dpct::dp4a(v[1], u[1], 0);
+-        sumi0 = dpct::dp4a(v[2], u[2], sumi0);
+-        // ☠ MUTANT keeps the established positive-control behavior by substituting v[2]
+-        // for the last packed int exactly as the incumbent loop did.
+-        sumi1 = dpct::dp4a(MUTANT ? v[2] : v[3], u[3], sumi1);
++        if constexpr (CROSS) {
++            sumi0 = dpct::dp4a(MUTANT ? v[2] : v[3], u[3], sumi0);
++            sumi1 = dpct::dp4a(v[2], u[2], sumi1);
++        } else {
++            sumi0 = dpct::dp4a(v[2], u[2], sumi0);
++            // ☠ MUTANT keeps the established positive-control behavior by substituting v[2]
++            // for the last packed int exactly as the incumbent loop did.
++            sumi1 = dpct::dp4a(MUTANT ? v[2] : v[3], u[3], sumi1);
++        }
+         const int sumi = sumi0 + sumi1;
+ 
+         const sycl::half2 ds_values = *q8_1_ds;
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1464,6 +1464,17 @@
+     return mut;
+ }
+ 
++// Shape-scoped exact schedule isolation for Qwen3.8-27B's standalone output
++// head. All other reordered-Q8 families retain the accepted striped DP4A2
++// chains. Default off for same-binary control/treatment measurements.
++static inline bool ggml_sycl_mmvq_q8_output_head_cross_dp4a() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_OUTPUT_HEAD_CROSS_DP4A");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+ // The int4 load's contract. vx/vy come from SYCL_BUFFER_ALIGNMENT(=128)-aligned allocations and the
+ // q8_1 column stride is padded(512k) * sizeof(block_q8_1)/QK8_1 = 576k, so this holds by
+ // construction -- assert it anyway, so a future layout change ABORTS instead of returning garbage.
+@@ -1737,6 +1748,19 @@
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+     const bool narrow = ggml_sycl_mmvq_q8_narrow();
+     const bool mutant = ggml_sycl_mmvq_q8_mutant();
++    const bool output_head_cross = !narrow && !mutant &&
++        ncols == 5120 && nrows == 124160 &&
++        ggml_sycl_mmvq_q8_output_head_cross_dp4a();
++    if (output_head_cross) {
++        static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++        const int device = get_current_device_id();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++            fprintf(stderr,
++                    "SYCL lab door | q8 output-head crossed DP4A: dev=%d K=5120 N=124160\n",
++                    device);
++            announced[device] = true;
++        }
++    }
+     // f367: the SIMD32 variant owns ncols_dst==1 when its door resolves ON.  Hooked HERE, not at
+     // the dispatch switch, so every ne1=1 call site (direct decode, the per-column fallback loop,
+     // switch_ncols case 1) resolves identically and the wide cells cannot be touched.  The f76
+@@ -1774,6 +1798,12 @@
+                                  mul_mat_vec_q_reorder<reorder_vec_dot_q8_0<true, true>>(vx, vy, dst, ncols, nrows,
+                                                                                          nd_item);
+                              });
++        } else if (output_head_cross) {
++            cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                             [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                                 mul_mat_vec_q_reorder<reorder_vec_dot_q8_0<true, false, true>>(
++                                     vx, vy, dst, ncols, nrows, nd_item);
++                             });
+         } else if (ggml_sycl_mmvq_use_phase()) {
+             // f377: rotated walk.  ☠ narrow/mutant arms above are PINNED to stock order -- they
+             // are identity controls for older findings and must keep meaning what they measured.

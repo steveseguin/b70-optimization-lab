@@ -1,0 +1,140 @@
+--- a/ggml/src/ggml-sycl/vecdotq.hpp
++++ b/ggml/src/ggml-sycl/vecdotq.hpp
+@@ -402,7 +402,7 @@
+ // Selected at launch by GGML_SYCL_MMVQ_Q8_NARROW (see mmvq.cpp). The two produce BIT-IDENTICAL
+ // output -- only the shape of the load changes -- so any t/s delta between them is the load, and
+ // nothing else. See finding 76.
+-template <bool WIDE, bool MUTANT = false> struct reorder_vec_dot_q8_0 {
++template <bool WIDE, bool MUTANT = false, bool CROSS = false> struct reorder_vec_dot_q8_0 {
+     static constexpr ggml_type gtype = GGML_TYPE_Q8_0;
+ 
+     using q8_0_block  = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q8_0>;
+@@ -468,10 +468,18 @@
+         // boundary below is unchanged.
+         int sumi0 = dpct::dp4a(v[0], u[0], 0);
+         int sumi1 = dpct::dp4a(v[1], u[1], 0);
+-        sumi0 = dpct::dp4a(v[2], u[2], sumi0);
+-        // ☠ MUTANT keeps the established positive-control behavior by substituting v[2]
+-        // for the last packed int exactly as the incumbent loop did.
+-        sumi1 = dpct::dp4a(MUTANT ? v[2] : v[3], u[3], sumi1);
++        if constexpr (CROSS) {
++            // Shape-selective FFN experiment: cross the second DP4A in each independent
++            // integer chain. Every weight word remains paired with its original activation
++            // word, and the four exact int32 partials are still added before FP32 scaling.
++            sumi0 = dpct::dp4a(MUTANT ? v[2] : v[3], u[3], sumi0);
++            sumi1 = dpct::dp4a(v[2], u[2], sumi1);
++        } else {
++            sumi0 = dpct::dp4a(v[2], u[2], sumi0);
++            // ☠ MUTANT keeps the established positive-control behavior by substituting v[2]
++            // for the last packed int exactly as the incumbent loop did.
++            sumi1 = dpct::dp4a(MUTANT ? v[2] : v[3], u[3], sumi1);
++        }
+         const int sumi = sumi0 + sumi1;
+ 
+         const sycl::half2 ds_values = *q8_1_ds;
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1464,6 +1464,18 @@
+     return mut;
+ }
+ 
++// Lab-only exact scheduling experiment for Qwen3.8-27B's dominant dense FFN
++// projections. The crossed two-chain DP4A body is selected only for the
++// 5120x8704 fused gate/up pair and the 8704x5120 down projection. Recurrent,
++// attention, and output-head shapes retain the accepted striped schedule.
++static inline bool ggml_sycl_mmvq_q8_ffn_cross_dp4a() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_FFN_CROSS_DP4A");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+ // The int4 load's contract. vx/vy come from SYCL_BUFFER_ALIGNMENT(=128)-aligned allocations and the
+ // q8_1 column stride is padded(512k) * sizeof(block_q8_1)/QK8_1 = 576k, so this holds by
+ // construction -- assert it anyway, so a future layout change ABORTS instead of returning garbage.
+@@ -1737,6 +1749,9 @@
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+     const bool narrow = ggml_sycl_mmvq_q8_narrow();
+     const bool mutant = ggml_sycl_mmvq_q8_mutant();
++    const bool ffn_cross = ggml_sycl_mmvq_q8_ffn_cross_dp4a() &&
++        ((ncols == 8704 && nrows == 5120) ||
++         (ncols == 5120 && nrows == 8704));
+     // f367: the SIMD32 variant owns ncols_dst==1 when its door resolves ON.  Hooked HERE, not at
+     // the dispatch switch, so every ne1=1 call site (direct decode, the per-column fallback loop,
+     // switch_ncols case 1) resolves identically and the wide cells cannot be touched.  The f76
+@@ -1774,6 +1789,19 @@
+                                  mul_mat_vec_q_reorder<reorder_vec_dot_q8_0<true, true>>(vx, vy, dst, ncols, nrows,
+                                                                                          nd_item);
+                              });
++        } else if (ffn_cross) {
++            static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++            const int device = get_current_device_id();
++            if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++                fprintf(stderr, "SYCL lab door | q8_ffn_cross_dp4a: dev=%d FFN shape=%dx%d -> crossed\n",
++                        device, ncols, nrows);
++                announced[device] = true;
++            }
++            cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                             [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                                 mul_mat_vec_q_reorder<reorder_vec_dot_q8_0<true, false, true>>(
++                                     vx, vy, dst, ncols, nrows, nd_item);
++                             });
+         } else if (ggml_sycl_mmvq_use_phase()) {
+             // f377: rotated walk.  ☠ narrow/mutant arms above are PINNED to stock order -- they
+             // are identity controls for older findings and must keep meaning what they measured.
+@@ -1796,6 +1824,7 @@
+ // The row body is the incumbent SG16 kernel above: identical block walk,
+ // vec-dot implementation, reduction, and FP32 accumulation order.  Only the
+ // workgroup-to-(matrix,row) mapping is new.
++template <bool CROSS>
+ static void mul_mat_vec_q8_0_reorder_pair(
+         const void * __restrict__ vx0, const void * __restrict__ vx1,
+         const void * __restrict__ vy,
+@@ -1838,7 +1867,7 @@
+         for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
+             const int iqs = elem + block_traits::vdr_mmvq *
+                 (sg.get_local_linear_id() % block_elements_per_subgroup);
+-            partial_sum += reorder_vec_dot_q8_0<true>()(
++            partial_sum += reorder_vec_dot_q8_0<true, false, CROSS>()(
+                 vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
+         }
+     }
+@@ -1867,13 +1896,31 @@
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
++    const bool ffn_cross = ggml_sycl_mmvq_q8_ffn_cross_dp4a() &&
++        ncols == 5120 && nrows0 == 8704 && nrows1 == 8704;
+     stream->submit([&](sycl::handler & cgh) {
+-        cgh.parallel_for(
+-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
+-            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+-                mul_mat_vec_q8_0_reorder_pair(
+-                    vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, nd_item);
+-            });
++        if (ffn_cross) {
++            static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++            const int device = get_current_device_id();
++            if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++                fprintf(stderr, "SYCL lab door | q8_ffn_cross_dp4a: dev=%d gate/up shape=%dx%d+%d -> crossed\n",
++                        device, ncols, nrows0, nrows1);
++                announced[device] = true;
++            }
++            cgh.parallel_for(
++                sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_pair<true>(
++                        vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, nd_item);
++                });
++        } else {
++            cgh.parallel_for(
++                sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_pair<false>(
++                        vx0, vx1, vy, dst0, dst1, ncols, nrows0, nrows1, nd_item);
++                });
++        }
+     });
+     return true;
+ }

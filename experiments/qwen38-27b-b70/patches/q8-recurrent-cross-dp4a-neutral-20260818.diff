@@ -1,0 +1,126 @@
+--- a/ggml/src/ggml-sycl/vecdotq.hpp
++++ b/ggml/src/ggml-sycl/vecdotq.hpp
+@@ -402,7 +402,7 @@
+ // Selected at launch by GGML_SYCL_MMVQ_Q8_NARROW (see mmvq.cpp). The two produce BIT-IDENTICAL
+ // output -- only the shape of the load changes -- so any t/s delta between them is the load, and
+ // nothing else. See finding 76.
+-template <bool WIDE, bool MUTANT = false> struct reorder_vec_dot_q8_0 {
++template <bool WIDE, bool MUTANT = false, bool CROSS = false> struct reorder_vec_dot_q8_0 {
+     static constexpr ggml_type gtype = GGML_TYPE_Q8_0;
+ 
+     using q8_0_block  = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q8_0>;
+@@ -468,10 +468,15 @@
+         // boundary below is unchanged.
+         int sumi0 = dpct::dp4a(v[0], u[0], 0);
+         int sumi1 = dpct::dp4a(v[1], u[1], 0);
+-        sumi0 = dpct::dp4a(v[2], u[2], sumi0);
+-        // ☠ MUTANT keeps the established positive-control behavior by substituting v[2]
+-        // for the last packed int exactly as the incumbent loop did.
+-        sumi1 = dpct::dp4a(MUTANT ? v[2] : v[3], u[3], sumi1);
++        if constexpr (CROSS) {
++            sumi0 = dpct::dp4a(MUTANT ? v[2] : v[3], u[3], sumi0);
++            sumi1 = dpct::dp4a(v[2], u[2], sumi1);
++        } else {
++            sumi0 = dpct::dp4a(v[2], u[2], sumi0);
++            // ☠ MUTANT keeps the established positive-control behavior by substituting v[2]
++            // for the last packed int exactly as the incumbent loop did.
++            sumi1 = dpct::dp4a(MUTANT ? v[2] : v[3], u[3], sumi1);
++        }
+         const int sumi = sumi0 + sumi1;
+ 
+         const sycl::half2 ds_values = *q8_1_ds;
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1464,6 +1464,17 @@
+     return mut;
+ }
+ 
++// Shape-scoped exact schedule isolation for Qwen3.8-27B's promoted recurrent
++// GDN quad. All other reordered-Q8 families retain the accepted striped DP4A2
++// chains. Default off for same-binary control/treatment measurements.
++static inline bool ggml_sycl_mmvq_q8_recurrent_cross_dp4a() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_RECURRENT_CROSS_DP4A");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+ // The int4 load's contract. vx/vy come from SYCL_BUFFER_ALIGNMENT(=128)-aligned allocations and the
+ // q8_1 column stride is padded(512k) * sizeof(block_q8_1)/QK8_1 = 576k, so this holds by
+ // construction -- assert it anyway, so a future layout change ABORTS instead of returning garbage.
+@@ -1974,6 +1985,7 @@
+ // in a separate fused elementwise launch. Store that exact expression into
+ // the graph's final gate buffer here. The subgroup reduction and all other
+ // matrix rows remain byte-for-byte the incumbent Q8_0 MMVQ body.
++template <bool CROSS>
+ static void mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+         const void * __restrict__ vx0, const void * __restrict__ vx1,
+         const void * __restrict__ vx2, const void * __restrict__ vx3,
+@@ -2028,7 +2040,7 @@
+         for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
+             const int iqs = elem + block_traits::vdr_mmvq *
+                 (sg.get_local_linear_id() % block_elements_per_subgroup);
+-            partial_sum += reorder_vec_dot_q8_0<true>()(
++            partial_sum += reorder_vec_dot_q8_0<true, false, CROSS>()(
+                 vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
+         }
+     }
+@@ -2070,6 +2082,8 @@
+     const bool exact_quad_shape =
+         ncols == 5120 && nrows0 == 5120 && nrows1 == 3072 &&
+         nrows2 == 24 && nrows3 == 24;
++    const bool recurrent_cross = exact_quad_shape &&
++        ggml_sycl_mmvq_q8_recurrent_cross_dp4a();
+     const bool quad_sg24 = exact_quad_shape && ggml_sycl_mmvq_q8_quad_sg24();
+     const bool quad_sg16 = exact_quad_shape && !quad_sg24 && ggml_sycl_mmvq_q8_quad_sg16();
+     const size_t num_subgroups = quad_sg24 ? 24 : quad_sg16 ? 16 :
+@@ -2084,19 +2098,40 @@
+             announced[device] = true;
+         }
+     }
++    if (recurrent_cross) {
++        static bool announced[GGML_SYCL_MAX_DEVICES] = {};
++        const int device = get_current_device_id();
++        if (device >= 0 && device < GGML_SYCL_MAX_DEVICES && !announced[device]) {
++            fprintf(stderr,
++                    "SYCL lab door | q8 recurrent crossed DP4A: dev=%d K=5120 N=5120+3072+24+24\n",
++                    device);
++            announced[device] = true;
++        }
++    }
+     const int nrows = nrows0 + nrows1 + nrows2 + nrows3;
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+     stream->submit([&](sycl::handler & cgh) {
+-        cgh.parallel_for(
+-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
+-            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+-                mul_mat_vec_q8_0_reorder_quad_gdn_processed(
+-                    vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
+-                    dst0, dst1, dst2, dst3,
+-                    ncols, nrows0, nrows1, nrows2, nrows3, nd_item);
+-            });
++        if (recurrent_cross) {
++            cgh.parallel_for(
++                sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_quad_gdn_processed<true>(
++                        vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
++                        dst0, dst1, dst2, dst3,
++                        ncols, nrows0, nrows1, nrows2, nrows3, nd_item);
++                });
++        } else {
++            cgh.parallel_for(
++                sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q8_0_reorder_quad_gdn_processed<false>(
++                        vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
++                        dst0, dst1, dst2, dst3,
++                        ncols, nrows0, nrows1, nrows2, nrows3, nd_item);
++                });
++        }
+     });
+     return true;
+ }
