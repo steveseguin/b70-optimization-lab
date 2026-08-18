@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "date_local": "2026-08-17",
+  "classification": "inconclusive_nonproduction",
+  "goal": {
+    "complete_token_parity": "25/25",
+    "preferred_median_tok_s_min": 100.0
+  },
+  "result": {
+    "goal_met": false,
+    "best_full_exact_count": 16,
+    "best_full_exact_total": 25,
+    "best_resumed_full_preferred_median_tok_s": 93.6111648912541,
+    "localmaxxing_submitted": false,
+    "runtime_restored": false
+  },
+  "source": {
+    "lab_head": "8061410c1d63cfce8274c04b27b87d805fbaeb17",
+    "vllm_head": "95a76ff89173ff56e90a2ed384fde2cea3c015e6",
+    "vllm_deterministic_policy_commit": "c6dc1a3f6d56729d3bde5544420690be9416c5fd",
+    "xpu_kernels_head": "2dd55f380df753a10a88fcd9e96192561066e713"
+  },
+  "controls": [
+    {
+      "id": "structured_target_a_margin_003125",
+      "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/eager-deterministicmargin03125-structured-target-a-20260817",
+      "manifest_sha256": "de6d05ab42999cd1e4babba63a2046a899c33dead8e5ed5f1a39f17ba08603c5",
+      "execution_mode": "graph_none_eager_m1",
+      "warmup": "fresh_server_then_smoke",
+      "exactness": "A/B exact 435 tokens",
+      "preferred_median_tok_s": 11.778544103993696
+    },
+    {
+      "id": "structured_target_b_margin_003125",
+      "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/eager-deterministicmargin03125-structured-target-b-20260817",
+      "manifest_sha256": "d3a0db9c162dc959565da34982e2a99c9b159b7bef058e54532f4718cf1e05d1",
+      "execution_mode": "graph_none_eager_m1",
+      "warmup": "fresh_server_then_smoke",
+      "exactness": "A/B exact 435 tokens",
+      "preferred_median_tok_s": 11.646331278591173
+    },
+    {
+      "id": "target_25_margin_003125",
+      "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/eager-deterministicmargin03125-25-target-a-20260817",
+      "manifest_sha256": "778d419ef343b5e9e2216c591d04fb49c3e34da3a2086fb9ffaafcb3553ba34d",
+      "execution_mode": "graph_none_eager_m1",
+      "warmup": "fresh_server_then_smoke",
+      "exactness": "25-row target oracle",
+      "preferred_median_tok_s": 11.653439993639982
+    },
+    {
+      "id": "layer0_dependency_spec_25_margin_003125",
+      "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/deterministicmargin03125-layer0dep-25-spec-a-20260817",
+      "manifest_sha256": "f1574db7cc9abd7afa6e910a1a6be6d506a6665a8365a4d1fe7f2b894dbdec15",
+      "execution_mode": "piecewise_mtp3_exact_gdn_eager_break",
+      "warmup": "fresh_compile_then_smoke",
+      "exact_count": 13,
+      "exact_total": 25,
+      "preferred_median_tok_s": 93.6111648912541
+    },
+    {
+      "id": "qwen_rms_spec_25_margin_003125",
+      "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/deterministicmargin03125-qwenrms-layer0dep-25-spec-a-20260817",
+      "manifest_sha256": "c774072ebb6e56e7ac763bc3dbaf797a35989848c223c2b014abd0400cd79484",
+      "execution_mode": "piecewise_mtp3_exact_gdn_eager_break",
+      "warmup": "fresh_compile_then_smoke",
+      "exact_count": 16,
+      "exact_total": 25,
+      "preferred_median_tok_s": 92.5599927243282
+    },
+    {
+      "id": "global_qwen_rms_spec_25_margin_003125",
+      "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/deterministicmargin03125-global-qwenrms-alltarget-25-spec-a-20260817",
+      "manifest_sha256": "71336549400317a009e01b3697b48c8e23a8cc4e1d42279b9c8d9607bb0236a4",
+      "execution_mode": "piecewise_mtp3_exact_gdn_eager_break",
+      "warmup": "fresh_compile_then_smoke",
+      "exact_count": 16,
+      "exact_total": 25,
+      "preferred_median_tok_s": 92.55809695531654
+    },
+    {
+      "id": "serial_gated_rms_two",
+      "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/deterministicmargin03125-global-qwenrms-gatedrmsserial-two-spec-b-20260817",
+      "manifest_sha256": "00d94fc7633933e200d578dc820a884fa3a3131e819db3633488436a00d54510",
+      "execution_mode": "piecewise_mtp3_four_m1_gated_rms_rows",
+      "warmup": "fresh_compile_then_smoke",
+      "exact_count": 1,
+      "exact_total": 2,
+      "preferred_median_tok_s": 90.45551659995567
+    },
+    {
+      "id": "progressive_fa_two",
+      "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/deterministicmargin03125-global-qwenrms-progressivefa-two-spec-a-20260817",
+      "manifest_sha256": "a8020536069e612f8055afc8617040f34ea44ef2fe4d8615e13594543b716229",
+      "execution_mode": "piecewise_mtp3_progressive_m1_fa",
+      "warmup": "fresh_compile_then_smoke",
+      "exact_count": 1,
+      "exact_total": 2,
+      "preferred_median_tok_s": 78.69372940971896
+    },
+    {
+      "id": "packet_trace_margin_003125",
+      "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/deterministicmargin03125-global-qwenrms-two-packettrace-20260817",
+      "manifest_sha256": "3be9f0874c7f12b02f58e5072ced4febedc09a4de6026d8b3459f98f8a650246",
+      "execution_mode": "piecewise_mtp3_packet_trace",
+      "warmup": "fresh_compile_then_smoke",
+      "observation": "python first mismatch was replacement 6983; M1 1848 was packed top2; gap 0.046875"
+    },
+    {
+      "id": "margin_005_spec_two",
+      "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/deterministicmargin005-global-qwenrms-two-spec-a-20260817",
+      "manifest_sha256": "ba2bf4c2281d0cf43d2e51c05a390ba99ec7721f93482cacd953c8ddd370d9b1",
+      "execution_mode": "piecewise_mtp3_exact_gdn_eager_break",
+      "warmup": "fresh_compile_then_smoke",
+      "preferred_median_tok_s": 90.32665309730595
+    },
+    {
+      "id": "margin_005_target_two",
+      "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/eager-deterministicmargin005-global-qwenrms-two-target-a-20260817",
+      "manifest_sha256": "55aa1aaa312fd7845419707d9230cd59a778c1bcf29811865fd310721870d200",
+      "execution_mode": "graph_none_eager_m1",
+      "warmup": "fresh_server_then_smoke",
+      "preferred_median_tok_s": 11.144823741509587,
+      "comparison_to_margin_005_spec": "0/2 exact"
+    }
+  ],
+  "conclusion": "A shared bounded tie policy stabilized one M1 target branch but did not make packed M4 verifier logits M1-equivalent. No resumed candidate passed parity or speed."
+}

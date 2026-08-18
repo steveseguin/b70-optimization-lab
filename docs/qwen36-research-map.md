@@ -19,6 +19,13 @@ production-ready, and no LocalMaxxing row was submitted. The distinct Q8
 target-only TP2 lane remains closed and banked at **`35.699225 tok/s`**
 conventional.
 
+The final deterministic-greedy follow-up did not change that decision. A
+bounded lower-ID rule made two fresh M1 structured controls token-identical,
+but the best full resumed candidate was only 16/25 exact at `92.559993 tok/s`.
+Raising the bound changed M1 and M4 trajectories differently; serial gated RMS
+and progressive FA were also negative. See the
+[deterministic-greedy closeout](../notes/2026-08-17-qwen36-int4-deterministic-greedy-closeout.md).
+
 Start with:
 
 1. [Q8 TP2 handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md)
@@ -37,7 +44,7 @@ neutral or slower and remain default-off/reverted.
 | --- | --- | --- | --- |
 | 27B GGUF Q8_0, target-only | 2x ASRock B70, llama.cpp/SYCL TP2 | Current no-speculation record: `35.699225 tok/s` conventional; 12/12 exact, cache-zero; closed after pass 1 | [handoff](../results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md) |
 | 27B GGUF Q8_0, target-only baseline | 1x B70, llama.cpp/SYCL | `15.550257 tok/s` 128-token median; exact 32K F16-KV retrieval baseline; service/concurrency experiments are separate evidence | [experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md) |
-| 27B AutoRound INT4, MTP3 | 2x B70, vLLM/XPU TP2 | Paused/failed gate: RMSNorm four-prompt canary matched then-sealed controls at `106.663`; final matched-source 25-prompt candidate 12/25 at `93.446` | [final closeout](../notes/2026-08-17-qwen36-int4-batch-invariant-rmsnorm-closeout.md), [structured summary](../data/qwen36-27b-autoround-int4-batch-invariant-rmsnorm-closeout-20260817.json), and [prior dependency closeout](../notes/2026-08-17-qwen36-int4-input-dependency-closeout.md) |
+| 27B AutoRound INT4, MTP3 | 2x B70, vLLM/XPU TP2 | Paused/failed gate: resumed deterministic target stabilization reached at most 16/25 exact at `92.560`; no production patch or `>100` result | [latest closeout](../notes/2026-08-17-qwen36-int4-deterministic-greedy-closeout.md), [structured summary](../data/qwen36-27b-autoround-int4-deterministic-greedy-closeout-20260817.json), and [prior RMS closeout](../notes/2026-08-17-qwen36-int4-batch-invariant-rmsnorm-closeout.md) |
 | 27B AutoRound INT4, target-verified MTP | 1x B70, vLLM/XPU | Historical high `68.236263 tok/s`; later isolated confirmation was `65.4-66.7` | [result packet](../results/qwen36-27b-autoround-int4-b70/README.md) |
 | 27B GGUF Q4_0, DFlash5 | 1x B70, llama.cpp/SYCL | Closed strict record `47.818818 tok/s` historical (`47.340630` conventional); unchanged Q4 target verifies accepted tokens | [closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
 | 27B GGUF UD-Q4_K_XL, intrinsic MTP | 1x B70, llama.cpp/SYCL | Best valid p-min support row `31.480049 tok/s`; different target/quality identity | [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
@@ -127,6 +134,14 @@ then-sealed four-prompt controls at `106.663 tok/s`, then failed the matched
 normal gate at 12/25 exact and
 `93.445681 tok/s`. Preserve the complete source/config packet, but do not call
 its focused RMSNorm delta a production patch.
+
+The subsequent deterministic-greedy follow-up is likewise closed. Margin
+`.03125` stabilized a previously flipping 435-token M1 structured response,
+but packed M4 replacement rows still differed from M1, including both a
+high-confidence missing-top4 case and a measured `0.046875` near tie. Margin
+`.05` changed the M1 target earlier and produced 0/2 exact against its matching
+speculative control. The best full resumed parity was 16/25, and the fastest
+full resumed candidate was `93.611165 tok/s`; neither gate passed.
 
 ### 27B Q4/DFlash And Intrinsic MTP
 

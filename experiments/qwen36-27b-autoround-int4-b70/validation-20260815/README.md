@@ -554,3 +554,23 @@ and no additional run was launched.
 See the [final closeout](../../../notes/2026-08-17-qwen36-int4-batch-invariant-rmsnorm-closeout.md),
 [structured result](../../../data/qwen36-27b-autoround-int4-batch-invariant-rmsnorm-closeout-20260817.json),
 and [tested source/config packet](../../../patches/qwen36-27b-autoround-int4-b70/batch-invariant-rmsnorm-20260817/README.md).
+
+## 2026-08-17 deterministic-greedy final closeout
+
+The resumed follow-up added a shared, default-off bounded greedy policy to
+stabilize FP16-near-tie target branches. Margin `.03125` made two fresh
+graph-free structured target starts exactly equal for all 435 tokens. It did
+not make packed M4 verifier arithmetic M1-equivalent: the fastest resumed
+full candidate was 13/25 exact at `93.6111648912541 tok/s`, and Qwen RMS plus
+the broad batch-invariant contract reached only 16/25 at
+`92.55809695531654 tok/s`.
+
+A packet trace showed both failure classes. One pre-RMS replacement was
+high-confidence and did not contain the M1 token in packed top-4; a later
+Python replacement had packed top1/top2 `6983/1848` with margin `0.046875`.
+Increasing the shared bound to `.05` changed the M1 target trajectory earlier,
+and the matching two-prompt target/spec pair was 0/2 exact. Serial gated RMS
+and progressive FA were negative controls. No production patch or record was
+promoted. See the
+[closeout note](../../../notes/2026-08-17-qwen36-int4-deterministic-greedy-closeout.md)
+and [structured evidence](../../../data/qwen36-27b-autoround-int4-deterministic-greedy-closeout-20260817.json).
