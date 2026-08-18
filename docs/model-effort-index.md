@@ -195,6 +195,31 @@ Main entries:
 - [private source bundle and patches](../patches/qwen36-27b-autoround-int4-b70/record-20260711/README.md)
 - [experiment lane](../experiments/qwen36-27b-autoround-int4-b70/README.md)
 
+**Lane closed 2026-08-18.** The retained `95.385` record stands; nothing beat it
+like-for-like. Closing evidence:
+
+- [determinism/speed closeout](../notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md)
+- [closeout source packet](../patches/qwen36-27b-autoround-int4-b70/determinism-closeout-20260818/README.md)
+- [determinism reproduction](../repro/qwen36-27b-autoround-int4-b70-determinism-20260818/README.md)
+
+Succeeded by the Qwen3.8 27B INT4 AutoRound lane below.
+
+### Qwen3.8 27B INT4 AutoRound On B70
+
+Opened 2026-08-18. `devan-carlin/Qwen3.8-27B-int4-AutoRound`, vLLM/XPU TP2 with
+MTP3 speculative decoding. Architecturally identical to the Qwen3.6 INT4
+checkpoint, so that lane's whole INT4/GDN/FlashAttention/MTP stack transfers
+unchanged. First cold baseline `91.926 tok/s` on the 25-prompt suite
+(`86.720` on the 12 historical selection prompts).
+
+Distinct from the llama.cpp Q4_K_M target-only Qwen3.8 lane: different runtime,
+quantization, and speculation class. Do not merge their rows.
+
+Main entries:
+
+- [lane setup and model manifest](../repro/qwen38-27b-autoround-int4-b70/README.md)
+- [baseline evidence](../data/qwen38-27b-autoround-int4-baseline-20260818.json)
+
 Status: closed historical reference. The July TP2 row is `95.384868 tok/s`
 under the historical metric convention and remains preserved as LocalMaxxing
 `cmrh35ct50092mj01h7jgydqj`. A 2026-08-15 six-start independent review used 25

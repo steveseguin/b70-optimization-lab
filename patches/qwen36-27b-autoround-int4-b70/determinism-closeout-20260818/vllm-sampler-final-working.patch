@@ -1,0 +1,33 @@
+diff --git a/vllm/v1/sample/sampler.py b/vllm/v1/sample/sampler.py
+index cfa0936c4b..4198b0f05e 100644
+--- a/vllm/v1/sample/sampler.py
++++ b/vllm/v1/sample/sampler.py
+@@ -46,10 +46,24 @@ def _xpu_deterministic_greedy_sample(logits: torch.Tensor) -> torch.Tensor:
+     margin = _xpu_deterministic_greedy_margin()
+     if margin <= 0.0 or logits.shape[-1] < 2:
+         return logits.argmax(dim=-1).view(-1)
+-    top2 = torch.topk(logits.to(torch.float32), k=2, dim=-1)
+-    near_tie = (top2.values[:, 0] - top2.values[:, 1]) <= margin
+-    stable_tie = torch.minimum(top2.indices[:, 0], top2.indices[:, 1])
+-    return torch.where(near_tie, stable_tie, top2.indices[:, 0]).view(-1)
++    # Two masked max reductions instead of topk(k=2): on XPU a 248k-wide
++    # topk costs ~6x a max reduction, and the tie branch below takes
++    # min(first, second), so it does not depend on the order the two
++    # largest entries are returned in.
++    first_value, first_index = logits.max(dim=-1)
++    masked = logits.scatter(
++        -1,
++        first_index.unsqueeze(-1),
++        torch.finfo(logits.dtype).min,
++    )
++    second_value, second_index = masked.max(dim=-1)
++    # The gap must be differenced in fp32 so the margin test is not itself
++    # subject to the logit dtype's rounding; only the two surviving values
++    # need the wider type, not the whole vocabulary.
++    gap = first_value.to(torch.float32) - second_value.to(torch.float32)
++    near_tie = gap <= margin
++    stable_tie = torch.minimum(first_index, second_index)
++    return torch.where(near_tie, stable_tie, first_index).view(-1)
+ 
+ 
+ def _xpu_logit_margin_trace_int_env(name: str, default: int) -> int:

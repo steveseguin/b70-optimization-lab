@@ -1,0 +1,44 @@
+{
+  "classification": "lane_closeout_source",
+  "date_utc": "2026-08-18",
+  "identity": "Qwen3.6-27B AutoRound INT4, vLLM/XPU, TP2 - determinism/speed closeout",
+  "supersedes": "record-20260711 for source identity only; that record's measured result is unchanged",
+  "vllm": {
+    "public_repository": "https://github.com/vllm-project/vllm.git",
+    "published_fork": "https://github.com/steveseguin/vllm.git",
+    "published_branch": "research/qwen36-int4-exactness-20260818",
+    "prerequisite": "95a76ff89173ff56e90a2ed384fde2cea3c015e6",
+    "recorded_head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+    "private_commits_after_prerequisite": 2,
+    "commits": [
+      {
+        "sha": "011713d34be01018de8f845242807b0937fb8896",
+        "summary": "avoid full-vocab fp32 copy in bounded greedy tie break"
+      },
+      {
+        "sha": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+        "summary": "replace topk with masked max pair in bounded greedy tie break"
+      }
+    ],
+    "bundle": "vllm-determinism-commits.bundle",
+    "bundle_sha256": "eb565490b7875d63d91c9e26b4cc1c817b469fca57efdeb62b3177eb9f77fed3",
+    "working_patch": "vllm-sampler-final-working.patch",
+    "working_patch_sha256": "638545d9d548cd42a2674b43eedcb5c1328c678e3a971129ccac3cba45e375d0",
+    "working_tree_clean": true
+  },
+  "vllm_xpu_kernels": {
+    "public_repository": "https://github.com/vllm-project/vllm-xpu-kernels.git",
+    "published_fork": "https://github.com/steveseguin/vllm-xpu-kernels.git",
+    "recorded_head": "2dd55f380df753a10a88fcd9e96192561066e713",
+    "changed_in_this_closeout": false,
+    "note": "unchanged from the prior lane state; already reachable from the fork's main branch"
+  },
+  "measured_outcome": {
+    "deterministic_all25_tok_s": 94.7104973610472,
+    "deterministic_selection12_tok_s": 89.766,
+    "fastest_non_reproducing_all25_tok_s": 96.82207987491994,
+    "fastest_non_reproducing_selection12_tok_s": 94.103,
+    "july_record_selection12_tok_s": 95.384867741895,
+    "beats_july_record_like_for_like": false
+  }
+}

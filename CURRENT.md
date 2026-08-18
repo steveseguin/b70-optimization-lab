@@ -118,6 +118,42 @@ prototype inherited from Qwen3.6 work. Both caused device faults/resets. Do not
 overlap BMG AOT compilation, a model workload, or a large download on this
 15 GiB host.
 
+## Active Research: Qwen3.8 27B INT4 AutoRound, vLLM/XPU TP2 speculative
+
+Opened 2026-08-18, succeeding the closed Qwen3.6 27B INT4 lane. This is a
+**separate identity** from the llama.cpp Q4_K_M target-only lane above: different
+runtime, different quantization, and MTP3 speculative decoding.
+
+Model `devan-carlin/Qwen3.8-27B-int4-AutoRound` at
+`/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan`, verified against
+[`repro/qwen38-27b-autoround-int4-b70/manifests/model.json`](repro/qwen38-27b-autoround-int4-b70/manifests/model.json).
+
+First baseline, cold, 25-prompt suite: **`91.926 tok/s`** (`86.720` on the 12
+historical selection prompts). MTP3 worked on the first attempt with no code
+changes, because the checkpoint is architecturally identical to the Qwen3.6 one
+and routes through the same INC INT4 path.
+
+Not yet done: a quality baseline for this checkpoint (the Qwen3.6 baseline is a
+different model and must not be reused), and a self-determinism replicate.
+
+- [lane setup and rationale](repro/qwen38-27b-autoround-int4-b70/README.md)
+- [baseline evidence](data/qwen38-27b-autoround-int4-baseline-20260818.json)
+
+## Closed: Qwen3.6 27B INT4 AutoRound, vLLM/XPU TP2 speculative
+
+Closed 2026-08-18. The retained LocalMaxxing row `95.384867741895 tok/s`
+(12-prompt suite, `cmrh35ct50092mj01h7jgydqj`) stands and is **not** superseded.
+The closing campaign reached `94.710 tok/s` all-25 / `89.766` on the record's own
+suite, so nothing beat the record like-for-like and no new row was submitted.
+
+Two durable conclusions: complete-token parity against a differently-configured
+reference is unsatisfiable at fp16 on this stack, and XPU batch invariance is
+dead code behind `is_cuda_alike()` gates. Do not reopen with further flag sweeps.
+
+- [closeout analysis](notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md)
+- [closeout source packet](patches/qwen36-27b-autoround-int4-b70/determinism-closeout-20260818/README.md)
+- [reproduction](repro/qwen36-27b-autoround-int4-b70-determinism-20260818/README.md)
+
 ## Protected Work And Artifacts
 
 Preserve these paths and inspect their status before any build, cleanup, or
