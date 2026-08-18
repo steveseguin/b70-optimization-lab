@@ -86,6 +86,17 @@ QUALITY_REQUEST_ID_PREFIX="${QUALITY_REQUEST_ID_PREFIX:-${LABEL}-${STAMP}}"
 
 mkdir -p "$RUN_DIR" "$OUT_DIR"
 
+# Process-group supervision: the vLLM API server spawns EngineCore/Worker_TP
+# children that must never outlive this runner. Launch happens in a dedicated
+# session, cleanup signals the entire group, and a low-memory watchdog kills
+# the group before host MemAvailable becomes critical.
+# shellcheck source=server-supervision.sh
+source "$ROOT/experiments/qwen36-27b-autoround-int4-b70/scripts/server-supervision.sh"
+SUPP_TERM_GRACE_S="${CLEANUP_TERM_GRACE_S:-$SUPP_TERM_GRACE_S}"
+SUPP_WATCHDOG_MIN_AVAILABLE_KB="${LOW_MEM_MIN_AVAILABLE_KB:-$SUPP_WATCHDOG_MIN_AVAILABLE_KB}"
+LOW_MEM_WATCHDOG="${LOW_MEM_WATCHDOG:-1}"
+SUPP_LOG="$RUN_DIR/supervision.log"
+
 # Preserve the exact dirty runtime source state for every endpoint candidate.
 # The active vLLM/XPU trees intentionally carry a composite experiment stack,
 # so a base commit alone is not enough to reproduce a result.
@@ -143,12 +154,13 @@ done
 
 server_pid=""
 cleanup() {
-  if [[ -n "${server_pid:-}" ]] && kill -0 "$server_pid" 2>/dev/null; then
-    kill "$server_pid" 2>/dev/null || true
-    wait "$server_pid" 2>/dev/null || true
-  fi
+  trap - EXIT INT TERM
+  supp_stop_watchdog
+  supp_stop_group || true
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 {
   echo "date_utc=$STAMP"
@@ -370,27 +382,52 @@ trap cleanup EXIT
   echo "smoke_max_tokens=$SMOKE_MAX_TOKENS"
   echo "quality_baseline_json=$QUALITY_BASELINE_JSON"
   echo "vllm_extra_args=${VLLM_EXTRA_ARGS:-}"
+  echo "cleanup_term_grace_s=$SUPP_TERM_GRACE_S"
+  echo "cleanup_kill_grace_s=$SUPP_KILL_GRACE_S"
+  echo "low_mem_watchdog=$LOW_MEM_WATCHDOG"
+  echo "low_mem_min_available_kb=$SUPP_WATCHDOG_MIN_AVAILABLE_KB"
+  echo "low_mem_watchdog_poll_s=$SUPP_WATCHDOG_POLL_S"
+  echo "low_mem_watchdog_confirm=$SUPP_WATCHDOG_CONFIRM"
+  echo "allow_stale_vllm=${ALLOW_STALE_VLLM:-0}"
 } > "$RUN_DIR/identity.env"
 
-(
-  if [[ -n "${SERVER_LD_PRELOAD:-}" ]]; then
-    export LD_PRELOAD="$SERVER_LD_PRELOAD"
-  fi
-  if [[ -n "${SERVER_LD_LIBRARY_PATH:-}" ]]; then
-    export LD_LIBRARY_PATH="$SERVER_LD_LIBRARY_PATH"
-  fi
-  if [[ -n "${SERVER_CCL_KERNEL_PATH:-}" ]]; then
-    export CCL_KERNEL_PATH="$SERVER_CCL_KERNEL_PATH"
-  fi
-  exec experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh
-) > "$RUN_DIR/server.stdout.log" 2>&1 &
-server_pid=$!
+# Refuse to compound a leaked earlier run: orphan EngineCore/Worker processes
+# keep holding pinned host memory on this 15 GiB machine.
+stale_vllm=$(ps -eo pid=,comm= | awk '$2 ~ /^VLLM::/ || $2 ~ /EngineCore/') || true
+if [[ -n "$stale_vllm" && "${ALLOW_STALE_VLLM:-0}" != "1" ]]; then
+  echo "refusing to launch: stray vLLM engine/worker processes present:" >&2
+  echo "$stale_vllm" >&2
+  echo "clean them up or set ALLOW_STALE_VLLM=1" >&2
+  exit 3
+fi
+
+serve_env=()
+if [[ -n "${SERVER_LD_PRELOAD:-}" ]]; then
+  serve_env+=("LD_PRELOAD=$SERVER_LD_PRELOAD")
+fi
+if [[ -n "${SERVER_LD_LIBRARY_PATH:-}" ]]; then
+  serve_env+=("LD_LIBRARY_PATH=$SERVER_LD_LIBRARY_PATH")
+fi
+if [[ -n "${SERVER_CCL_KERNEL_PATH:-}" ]]; then
+  serve_env+=("CCL_KERNEL_PATH=$SERVER_CCL_KERNEL_PATH")
+fi
+if ! supp_start_group "$RUN_DIR/server.stdout.log" \
+    env "${serve_env[@]}" \
+    experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh; then
+  echo "failed to establish an isolated server process group" >&2
+  exit 2
+fi
+server_pid=$SUPP_PID
 echo "$server_pid" > "$RUN_DIR/server.pid"
+echo "$SUPP_PGID" > "$RUN_DIR/server.pgid"
+if [[ "$LOW_MEM_WATCHDOG" != "0" ]]; then
+  supp_start_watchdog
+fi
 
 deadline=$((SECONDS + READINESS_TIMEOUT_S))
 until curl -fsS "http://127.0.0.1:${PORT}/v1/models" \
   > "$RUN_DIR/models.json" 2> "$RUN_DIR/models.err"; do
-  if ! kill -0 "$server_pid" 2>/dev/null; then
+  if ! supp_alive; then
     echo "server exited before readiness; see $RUN_DIR/server.stdout.log" >&2
     break
   fi
@@ -405,7 +442,7 @@ smoke_rc=0
 bench_rc=0
 quality_rc=0
 
-if kill -0 "$server_pid" 2>/dev/null && [[ -s "$RUN_DIR/models.json" ]]; then
+if supp_alive && [[ -s "$RUN_DIR/models.json" ]]; then
   set +e
   if [[ "$RUN_SMOKE" != "0" ]]; then
     BASE_URL="http://127.0.0.1:${PORT}/v1" \
