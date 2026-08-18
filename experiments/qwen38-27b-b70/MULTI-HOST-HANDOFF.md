@@ -91,6 +91,16 @@ arbitrary-prompt token-exactness.
 
 ## Latest closed candidates
 
+The DP4A3×SG24 intermediate accumulator schedule is also closed. Its two
+position-complemented direct blocks both favored the candidate and pooled to
+`+0.697%`, but the two opposite-order cold endpoint pairs crossed on the
+primary metric. Pooled primary was only `+0.051%`, full decode `-0.034%`, and
+wall throughput `-0.106%`. All 48 outputs and verifier summaries were exact.
+Retain DP4A2×SG24 and do not repeat DP4A3 unchanged; see the
+[result](notes/2026-08-17-q8-dp4a3-sg24-synergy-active.md), structured
+[data](data/2026-08-17-q8-dp4a3-sg24-neutral.json), and focused
+[patch](patches/q8-dp4a3-sg24-neutral-20260817.diff.gz.b64).
+
 The DP4A4×SG24 interaction is closed. It was exact and measured `+0.579%`
 in a fully position-complemented 16-process direct screen, but two
 opposite-order cold endpoint pairs crossed direction. Pooled primary was only
@@ -231,6 +241,19 @@ the accepted 1,024-work-item tail and do not repeat 256/512 unchanged.
 Mode `3` is not an alternative candidate. Its peer-writing design caused a
 device-lost/reset storm and is permanently quarantined. Never enable or port
 it without a fundamentally different ownership/synchronization proof.
+
+The BMG-G31 reordered-Q8 device-prefetch arm is closed. A clean oneAPI 2026.1.1
+AOT build proved that the treatment emitted cacheable UGM loads with a null
+destination while retaining SIMD16, 128 GRFs and eight EU threads. The
+accepted-treatment-accepted `p64/n128` bracket measured `36.036107`,
+`35.085181`, and `36.018324 tok/s`: `-2.615%` versus the accepted mean. All
+verifier counters were zero and both B70s stayed normal. See the
+[result note](notes/2026-08-17-q8-reordered-weight-prefetch-active.md),
+structured
+[data](data/2026-08-17-q8-reordered-weight-prefetch-negative.json), and
+focused
+[patch](patches/q8-reordered-weight-prefetch-negative-20260817.diff.gz.b64).
+Do not retry the exact next-iteration L1 prefetch unchanged.
 
 ## Quality and benchmark contract
 

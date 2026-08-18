@@ -1,0 +1,14 @@
+{
+  "date": "2026-08-17",
+  "status": "compile_blocked",
+  "lane": "Qwen3.8-27B Q8_0 target-only equal TP2, F16 KV, no speculation",
+  "mechanism": "standalone reordered-Q8 whole-block SIMD8 row body",
+  "compiler": "Intel oneAPI DPC++/C++ 2026.1.1.20260724",
+  "aot_target": "spir64_gen:bmg_g31",
+  "failure": "required subgroup size 8 is unsupported on this platform; ocloc error -11; icpx exit 245",
+  "model_workload_ran": false,
+  "accepted_mmvq_sha256": "a4570708075939e3f28bd127a52d4c38f717ecc5d19ba15cfb7ca0d4dffbedf7",
+  "accepted_lib_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+  "health": "both devices normal after compile failure",
+  "decision": "Do not retry this SIMD8 row body on BMG-G31 with oneAPI 2026.1.1."
+}

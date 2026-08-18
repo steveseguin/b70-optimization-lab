@@ -1,0 +1,97 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_endpoint_neutral",
+  "experiment": "three-independent-accumulator DP4A Q8 row body combined with accepted recurrent-quad SG24 geometry",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "hardware": "2x ASRock Intel Arc Pro B70",
+  "control": "DP4A2 + SG16 + SG24",
+  "candidate": "DP4A3 + SG16 + SG24",
+  "compiler": "Intel oneAPI DPC++ 2026.1.1 (2026.1.1.20260724)",
+  "runtime": {
+    "selector": "level_zero:1,0",
+    "devices": "SYCL0/SYCL1",
+    "tensor_split": "1/1",
+    "kv": "f16",
+    "flash_attention": true,
+    "batch": 1024,
+    "ubatch": 256,
+    "reasoning": false,
+    "speculation": false
+  },
+  "direct_bench": {
+    "contract": "two exact position-complemented eight-process blocks, p64/n256/r3",
+    "first_eight": {
+      "control_mean_tok_s": 36.89616175,
+      "candidate_mean_tok_s": 37.02229775,
+      "delta_percent": 0.341867538565865
+    },
+    "complementary_eight": {
+      "control_mean_tok_s": 37.130981,
+      "candidate_mean_tok_s": 37.52051625,
+      "delta_percent": 1.049084186598792
+    },
+    "all_sixteen": {
+      "control_mean_tok_s": 37.013571375,
+      "candidate_mean_tok_s": 37.271407,
+      "delta_percent": 0.696597532801579,
+      "verify_mismatch": 0
+    }
+  },
+  "realistic_endpoint": {
+    "contract": "two opposite process-order pairs, fresh server each arm, 12 unique prompts, max 512, cached_tokens=0",
+    "pair1_control_then_candidate": {
+      "primary_delta_percent": -0.058575183,
+      "full_decode_delta_percent": 0.008348782,
+      "wall_delta_percent": -0.09952947,
+      "ttft_delta_percent": -0.226509721
+    },
+    "pair2_candidate_then_control": {
+      "primary_delta_percent": 0.161401609,
+      "full_decode_delta_percent": -0.075789927,
+      "wall_delta_percent": -0.112534791,
+      "ttft_delta_percent": 0.214287993
+    },
+    "pooled_pair_medians": {
+      "control_primary_tok_s": 37.07033561,
+      "candidate_primary_tok_s": 37.089346049,
+      "primary_delta_percent": 0.051282081,
+      "control_full_decode_tok_s": 36.68137607,
+      "candidate_full_decode_tok_s": 36.668999523,
+      "full_decode_delta_percent": -0.033740684,
+      "control_wall_tok_s": 36.201169416,
+      "candidate_wall_tok_s": 36.1627855,
+      "wall_delta_percent": -0.106029493,
+      "control_ttft_ms": 177.580124251,
+      "candidate_ttft_ms": 177.569139498,
+      "ttft_delta_percent": -0.006185801
+    }
+  },
+  "quality": {
+    "endpoint_complete_output_hashes_exact": "12/12 across all four suites",
+    "cached_tokens_all_zero": true,
+    "fresh_response_gate_all": true,
+    "direct_verify_mismatch": 0,
+    "endpoint_verify_mismatch": 0
+  },
+  "artifacts": {
+    "decoded_incremental_patch_sha256": "5dd1c8c87d019744e9050241699308b4042174fc1b5042b6a3c4be1acb27bbc3",
+    "control_vecdotq_sha256": "3bfe780fff3d2f3fd1a54bacfc67751ddf2d6fa93cc2367d64beb2317b3829d0",
+    "candidate_vecdotq_sha256": "2db5066ea4d832f2c626ed972e67f5643b121389e187f1fecdd0b22547d44ee2",
+    "llama_bench_sha256": "8ef0c6783a50d7a3b9e05562ef3dc16140740738ec3ca732eb5c61e3e5a10293",
+    "llama_server_sha256": "eb2501eeea9959f02fadc5158b620b10803eaf0a9736be7f5135f1256329c8c9",
+    "libggml_sycl_sha256": "11595491e58273178ce8374e7913f698745d2df2f5fa7340eaa65a59768901c6",
+    "endpoint_json_sha256": {
+      "pair1_control": "70ad1ee899f3f642cc2357496daa3199d254e1ad309a5bce962cf4869ea51bf9",
+      "pair1_candidate": "57b9aa0af29997a03c27bc0a0d897f6d5fb6cf21475c9a5c5bea9304ee92f71b",
+      "pair2_candidate": "fe210e3d22017f2fbc6828491c31b04d2b6a9b825c7ce62931a6676dbc90eef6",
+      "pair2_control": "dae0920f81fa6e61527f30af3458c2ea49c8d2ce814d6f81cd5d4f4b2f209e61"
+    },
+    "raw_local_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-dp4a3-sg24/"
+  },
+  "health": {
+    "device_0": "normal",
+    "device_1": "normal",
+    "xe_fault_reset_hang_since_boot": false
+  },
+  "decision": "retain DP4A2 SG24; direct synthetic gain did not transfer to the cold endpoint and DP4A3 must not be repeated unchanged"
+}

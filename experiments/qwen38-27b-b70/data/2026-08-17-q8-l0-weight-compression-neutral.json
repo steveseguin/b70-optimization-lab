@@ -1,0 +1,30 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_performance_neutral",
+  "lane": "Qwen3.8-27B Q8_0 target-only equal TP2, F16 KV, no speculation",
+  "mechanism": "ZE_extension_memory_compression_hints on >=1 GiB meta-TP model-rank allocations",
+  "driver_extension": "ZE_extension_memory_compression_hints 1.0",
+  "liveness": {
+    "device_0": true,
+    "device_1": true,
+    "verify_mismatch": 0,
+    "invalid_early_probes_excluded": 2
+  },
+  "benchmark": {
+    "shape": "p64/n512/r3",
+    "order": ["control", "compressed", "compressed", "control"],
+    "control_process_means_tps": [35.970043, 35.957673],
+    "compressed_process_means_tps": [35.977058, 36.000038],
+    "all_sample_control_mean_tps": 35.96385,
+    "all_sample_compressed_mean_tps": 35.988533333333336,
+    "all_sample_delta_percent": 0.06863373452323795,
+    "steady_control_mean_tps": 36.823225,
+    "steady_compressed_mean_tps": 36.840725,
+    "steady_delta_percent": 0.047524354534389524,
+    "steady_median_delta_percent": 0.038968991816501486
+  },
+  "candidate_lib_sha256": "c53bef9106061531143918b54a551b397eb30dbdecc269cedf181fdefbaee916",
+  "accepted_lib_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+  "health": "both devices normal; no new current-boot Xe/GuC fault, reset, timeout, or hang",
+  "decision": "Do not promote. The lossless compression hint is live but performance-neutral for high-entropy Q8 weights."
+}

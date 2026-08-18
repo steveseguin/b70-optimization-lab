@@ -1,13 +1,19 @@
 # bosd TRX50 Arc Pro B70/B60 field reports
 
-> **Classification: `community-reported`; not independently reproduced.**
-> These pages are documentation, not recipes, validated results, or project
-> recommendations.
+> **Classification: `community-reported` unless a maintainer note says
+> otherwise.** These pages are documentation, not recipes or project
+> recommendations. One configuration now has a scoped reference-lab
+> reproduction; it remains in this contributor collection.
 
-This collection preserves five report pages contributed by **bosd** in
+This collection preserves nine report pages contributed by **bosd** in
 [PR #16](https://github.com/steveseguin/b70-optimization-lab/pull/16), with two
 follow-up measurements supplied in
-[PR #17](https://github.com/steveseguin/b70-optimization-lab/pull/17). The
+[PR #17](https://github.com/steveseguin/b70-optimization-lab/pull/17), and four
+later reports supplied in
+[PR #30](https://github.com/steveseguin/b70-optimization-lab/pull/30),
+[PR #31](https://github.com/steveseguin/b70-optimization-lab/pull/31),
+[PR #33](https://github.com/steveseguin/b70-optimization-lab/pull/33), and
+[PR #32](https://github.com/steveseguin/b70-optimization-lab/pull/32). The
 reported host is an ASRock TRX50 WS with a Threadripper 9960X, two Intel Arc Pro
 B70 GPUs, and an Arc Pro B60 used for some comparisons.
 
@@ -19,12 +25,21 @@ B70 GPUs, and an Arc Pro B60 used for some comparisons.
   [`f56bb4070`](https://github.com/steveseguin/b70-optimization-lab/commit/f56bb4070cdfba23b9057f9908dbd0dabe3ea1b4)
   from PR #16, and
   [`a1bb15c23`](https://github.com/steveseguin/b70-optimization-lab/commit/a1bb15c23018b17504f57f2e4d1bff0ad984cd0c)
-  from PR #17.
+  from PR #17;
+  [`ff19b3567`](https://github.com/steveseguin/b70-optimization-lab/commit/ff19b3567b10ee9dc682423793724ea67b416883),
+  [`96da1fe90`](https://github.com/steveseguin/b70-optimization-lab/commit/96da1fe90f7a49918e461d7165c8625a5bdc8a3b),
+  [`a7a6b3eae`](https://github.com/steveseguin/b70-optimization-lab/commit/a7a6b3eae72ca49ff510e453208091fbfe34b490),
+  and
+  [`ba0629aa4`](https://github.com/steveseguin/b70-optimization-lab/commit/ba0629aa43a3a7aed82a1d7f41c69b2f58a18852)
+  from PRs #30, #31, #33, and #32 respectively.
 - Contributor source snapshot:
   [`fda0d86c47ff02d8e36f813a8e0121a2152d4478`](https://github.com/bosd/trx50-arc-b70-benchmarks/tree/fda0d86c47ff02d8e36f813a8e0121a2152d4478).
-- Reference-lab execution: none.
+- Reference-lab execution: the PR #33 TP2/MTP configuration was independently
+  exercised on 2026-08-17; see the
+  [maintainer audit](maintainer-audit-2026-08-17.md). The other new performance
+  claims were not independently benchmarked.
 - Maintainer review: documentation safety, source-link resolution, arithmetic,
-  and comparison scope only.
+  comparison scope, source inspection, and the scoped PR #33 reproduction.
 
 The source snapshot contains narrative summaries and benchmark helpers, but it
 does not contain the `raw-mtp1` or `raw-q8q4` run directories referenced by the
@@ -47,6 +62,11 @@ PID-scoped process management.
 - [Q8_0 versus Q4_K_M](q8-vs-q4.md)
 - [SYCL build freshness and layer-split regression](sycl-build-and-layer-split.md)
 - [Single-B70 synthetic batched-decode throughput](batched-decode-throughput.md)
+- [MTP backend comparison](mtp-vllm-xpu-flip.md)
+- [Qwen3.8-27B MTP on Intel vLLM-XPU](qwen38-27b-mtp.md)
+- [Dual-B70 TP2 plus MTP reproduction](tp2-mtp-reproduction.md)
+- [vLLM-XPU MoE quantization observations](vllm-xpu-moe-quant-wall.md)
+- [Maintainer audit of PRs #30–#33](maintainer-audit-2026-08-17.md)
 
 ## Maintainer normalization
 

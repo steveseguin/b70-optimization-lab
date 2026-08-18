@@ -1,0 +1,126 @@
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -85,0 +86,8 @@
++
++#ifdef GGML_SYCL_GRAPH
++using ggml_sycl_exec_graph = sycl_ex::command_graph<sycl_ex::graph_state::executable>;
++// Host-only TP2 graph cache. Keeping this implementation-local avoids making
++// every AOT kernel translation unit depend on a cache layout that kernels never use.
++static std::unordered_map<ggml_backend_sycl_context *,
++    std::unordered_map<uint64_t, std::unique_ptr<ggml_sycl_exec_graph>>> g_sycl_exec_graphs;
++#endif
+@@ -4033,0 +4042,29 @@
++static constexpr size_t GGML_SYCL_Q8_MEMO_DECODE_PREALLOC = 64*1024;
++
++#ifdef GGML_SYCL_GRAPH
++// Command-graph recording cannot contain the queue drain used by the rare memo
++// growth path. Decode activations need less than 64 KiB, so reserve every memo
++// slot before recording starts. Prompt graphs are rejected separately.
++static bool ggml_sycl_q8_dedup_prealloc_decode(ggml_backend_sycl_context & ctx) {
++    queue_ptr q = ctx.stream();
++    while (ctx.q8_memo.size() < GGML_SYCL_Q8_MEMO_SLOTS) {
++        ctx.q8_memo.emplace_back();
++    }
++    for (auto & e : ctx.q8_memo) {
++        if (e.cap >= GGML_SYCL_Q8_MEMO_DECODE_PREALLOC) {
++            continue;
++        }
++        if (e.buf != nullptr) {
++            q->wait();
++            sycl::free(e.buf, *q);
++        }
++        e.buf = (char *) sycl::malloc_device(GGML_SYCL_Q8_MEMO_DECODE_PREALLOC, *q);
++        if (e.buf == nullptr) {
++            e.cap = 0;
++            return false;
++        }
++        e.cap = GGML_SYCL_Q8_MEMO_DECODE_PREALLOC;
++    }
++    return true;
++}
++#endif
+@@ -7618,0 +7656,4 @@
++#ifdef GGML_SYCL_GRAPH
++    // Executable graphs retain queue/context objects; release them before the backend context.
++    g_sycl_exec_graphs.erase(sycl_ctx);
++#endif
+@@ -9144,0 +9186,7 @@
++                // Recording/finalizing prompt graphs is both expensive and can
++                // require memo buffers larger than the bounded decode reserve.
++                // The target is batch-one token generation; leave prefill eager.
++                if (cgraph->nodes[i]->src[1] != nullptr &&
++                        ggml_nrows(cgraph->nodes[i]->src[1]) != 1) {
++                    return false;
++                }
+@@ -9188 +9236,7 @@
+-        sycl_ex::command_graph model_sycl_graph(*(sycl_ctx->stream()), {sycl_ex::property::graph::assume_buffer_outlives_graph{}});
++        static const bool isolated_record_queue = [] {
++            const char * value = getenv("GGML_SYCL_GRAPH_RECORD_QUEUE");
++            const bool enabled = value != nullptr && atoi(value) != 0;
++            fprintf(stderr, "SYCL doors | isolated graph recording queue: %d "
++                            "(GGML_SYCL_GRAPH_RECORD_QUEUE)\n", enabled ? 1 : 0);
++            return enabled;
++        }();
+@@ -9190,3 +9244,34 @@
+-        model_sycl_graph.begin_recording(*(sycl_ctx->stream()));
+-        ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
+-        model_sycl_graph.end_recording();
++        // An in-order execution queue can already have a scheduler dependency
++        // when this per-device subgraph starts. Recording directly on that
++        // queue imports its previous event and the ordinary graph path rejects
++        // it as an event from outside the graph. Record the same commands on a
++        // fresh, same-context queue instead, then enqueue the executable graph
++        // on the original queue. In-order execution there preserves the full
++        // scheduler boundary without making the event part of the graph.
++        const queue_ptr execution_queue = sycl_ctx->stream();
++        if (!ggml_sycl_q8_dedup_prealloc_decode(*sycl_ctx)) {
++            ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
++            return GGML_STATUS_SUCCESS;
++        }
++        std::unique_ptr<sycl::queue> recording_queue;
++        queue_ptr graph_queue = execution_queue;
++        if (isolated_record_queue) {
++            recording_queue = std::make_unique<sycl::queue>(
++                    execution_queue->get_context(), execution_queue->get_device(),
++                    sycl::property_list{sycl::property::queue::in_order{}});
++            graph_queue = recording_queue.get();
++            sycl_ctx->qptrs[sycl_ctx->device][0] = graph_queue;
++        }
++
++        sycl_ex::command_graph model_sycl_graph(
++                *graph_queue, {sycl_ex::property::graph::assume_buffer_outlives_graph{}});
++
++        try {
++            model_sycl_graph.begin_recording(*graph_queue);
++            ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
++            model_sycl_graph.end_recording();
++        } catch (...) {
++            sycl_ctx->qptrs[sycl_ctx->device][0] = execution_queue;
++            throw;
++        }
++        sycl_ctx->qptrs[sycl_ctx->device][0] = execution_queue;
+@@ -9195,5 +9280,6 @@
+-        if (!sycl_ctx->exec_graph || !graph_update_support) {
+-            auto exec_graph = graph_update_support ? model_sycl_graph.finalize(sycl_ex::property::graph::updatable{}) :
+-                                                     model_sycl_graph.finalize();
+-            sycl_ctx->exec_graph = std::make_unique<
+-                sycl_ex::command_graph<sycl_ex::graph_state::executable>>(exec_graph);
++        auto & exec_graph = g_sycl_exec_graphs[sycl_ctx][cgraph->uid];
++        if (!exec_graph || !graph_update_support) {
++            auto finalized = graph_update_support ? model_sycl_graph.finalize(sycl_ex::property::graph::updatable{}) :
++                                                    model_sycl_graph.finalize();
++            exec_graph = std::make_unique<
++                sycl_ex::command_graph<sycl_ex::graph_state::executable>>(std::move(finalized));
+@@ -9202 +9288 @@
+-                sycl_ctx->exec_graph->update(model_sycl_graph);
++                exec_graph->update(model_sycl_graph);
+@@ -9206,3 +9292,3 @@
+-                auto exec_graph = model_sycl_graph.finalize({sycl_ex::property::graph::updatable{}});
+-                sycl_ctx->exec_graph = std::make_unique<
+-                    sycl_ex::command_graph<sycl_ex::graph_state::executable>>(exec_graph);
++                auto replacement = model_sycl_graph.finalize({sycl_ex::property::graph::updatable{}});
++                exec_graph = std::make_unique<
++                    sycl_ex::command_graph<sycl_ex::graph_state::executable>>(std::move(replacement));
+@@ -9212 +9298 @@
+-        sycl_ctx->stream()->ext_oneapi_graph(*(sycl_ctx->exec_graph));
++        execution_queue->ext_oneapi_graph(*exec_graph);

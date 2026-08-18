@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_performance_neutral",
+  "lane": "Qwen3.8-27B Q8_0 target-only equal TP2, F16 KV, no speculation",
+  "mechanism": "Level Zero cached bias and/or 2 MiB alignment on >=1 GiB model-rank buffers",
+  "benchmark": {
+    "shape": "p64/n256/r3",
+    "order": ["control", "cached", "align2m", "both", "both", "align2m", "cached", "control"],
+    "steady_control_tps": 36.837675,
+    "steady_cached_tps": 36.853725,
+    "steady_cached_delta_percent": 0.043569524949660376,
+    "steady_align2m_tps": 36.841875,
+    "steady_align2m_delta_percent": 0.011401371014874151,
+    "steady_both_tps": 36.838625,
+    "steady_both_delta_percent": 0.0025788815390948017
+  },
+  "liveness": "all three modes announced on both ranks; VERIFY_MISMATCH=0",
+  "candidate_lib_sha256": "665f3c5973c5870739a7eeb848d85f6b2b35a332fb6bf29fe69475e0aaa7f964",
+  "accepted_lib_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+  "health": "both devices normal; no new Xe/GuC fault, reset, timeout, or hang",
+  "decision": "Do not promote any allocation policy."
+}

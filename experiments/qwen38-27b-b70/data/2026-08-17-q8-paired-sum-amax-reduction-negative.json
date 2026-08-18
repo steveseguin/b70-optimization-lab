@@ -1,0 +1,64 @@
+{
+  "date": "2026-08-17",
+  "status": "rejected_performance",
+  "model": "Qwen3.8-27B-Q8_0.gguf",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "scope": "target-only TP2, no speculation",
+  "candidate": {
+    "change": "pack Q8_1 sum and amax FP32 bit patterns into one uint64 subgroup exchange per XOR butterfly stage",
+    "sites_changed": 8,
+    "reduction_tree_changed": false,
+    "math_changed": false,
+    "candidate_llama_bench_sha256": "ae0dc3b22a07f68abc9a94c4a674cec0828e7a2c2e811e93c03f906db89ef9fa",
+    "candidate_sycl_library_sha256": "f2ebc360d8a29b18cc1a3081013168a9b72f3d1688b107f63fba0fe49f157146",
+    "accepted_sycl_library_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5"
+  },
+  "mechanism": {
+    "randomized_device_probe_groups": 10000,
+    "randomized_device_probe_mismatches": 0,
+    "strict_model_verifier_comparisons": 1980,
+    "strict_model_verifier_mismatches": 0,
+    "no_profiling_microbenchmark": {
+      "samples_per_arm": 5,
+      "native_median_ms": 1.055,
+      "packed_u64_median_ms": 1.869,
+      "interleaved_u32_median_ms": 1.895,
+      "checksums_identical": true,
+      "decision": "reject both manual subgroup forms"
+    }
+  },
+  "benchmark": {
+    "batch": 1024,
+    "ubatch": 256,
+    "devices": "SYCL0/SYCL1",
+    "selector": "level_zero:1,0",
+    "tensor_split": "1/1",
+    "kv": "f16/f16",
+    "order": ["control", "candidate", "candidate", "control"],
+    "short_p64_n128_r3": {
+      "decode_tok_s": [36.627452, 36.956011, 36.374308, 36.433352],
+      "control_mean_tok_s": 36.530402,
+      "candidate_mean_tok_s": 36.6651595,
+      "candidate_delta_percent": 0.368894263
+    },
+    "long_p64_n512_r3": {
+      "decode_tok_s": [36.912021, 36.885847, 37.174417, 37.607084],
+      "control_mean_tok_s": 37.2595525,
+      "candidate_mean_tok_s": 37.030132,
+      "candidate_delta_percent": -0.615736059
+    }
+  },
+  "quality": {
+    "verify_mismatch_each_measured_run": [0, 0, 0, 0, 0, 0, 0, 0],
+    "endpoint_gate_run": false,
+    "reason_endpoint_gate_not_run": "longer position-balanced direct gate was negative"
+  },
+  "safety": {
+    "memory_high": "8G",
+    "memory_max": "10G",
+    "memory_swap_max": "8G",
+    "new_gpu_or_kernel_fault": false,
+    "hardware_policy_changed": false
+  },
+  "decision": "retain the accepted separate subgroup sum and maximum reductions"
+}

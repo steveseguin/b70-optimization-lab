@@ -1,0 +1,25 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_negative",
+  "scope": "Qwen3.8-27B Q8_0 target-only TP2 on two ASRock Intel Arc Pro B70 GPUs",
+  "selector": "GGML_SYCL_MMVQ_Q8_QUAD_REQD_WG384=1",
+  "mechanism": "Add sycl::reqd_work_group_size(1,1,384) only to the exact-shape accepted 24xSG16 recurrent quad kernel.",
+  "candidate_lib_sha256": "69e36c2ea970c4bf1f8d25791a73efb75eaa694e5a81a8290c7bb2c8fb215187",
+  "accepted_lib_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+  "smoke": {
+    "shape": "p64/n1/r1",
+    "fused_mmvq_gdn_quads": 192,
+    "verify_mismatch": 0
+  },
+  "gate": {
+    "shape": "p64/n512/r3 A-B-B-A",
+    "control_process_means_tok_s": [36.930385, 36.805976],
+    "candidate_process_means_tok_s": [36.842341, 36.813402],
+    "control_pooled_tok_s": 36.8681805,
+    "candidate_pooled_tok_s": 36.8278715,
+    "delta_percent": -0.109337
+  },
+  "decision": "Reject before endpoint testing; both matched candidate positions were slower.",
+  "raw_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-quad-reqd-wg384",
+  "binary_artifacts": "/mnt/fast-ai/artifacts/qwen38-q8-quad-reqd-wg384-20260817"
+}

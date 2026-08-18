@@ -1,0 +1,43 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_endpoint_neutral",
+  "lane": "Qwen3.8-27B Q8_0 target-only equal TP2, F16 KV, no speculation",
+  "mechanism": "shape-scoped larger SIMD16 workgroup for the exact K5120/N8704+8704 fused gate/up Q8 pair",
+  "runtime_door": "GGML_SYCL_MMVQ_Q8_PAIR_SUBGROUPS",
+  "initial_screen_p64_n256_r3": {
+    "control_sg8": [36.813577, 37.002536],
+    "sg12": [37.716335, 37.245452],
+    "sg16": [37.656591, 37.756891],
+    "sg24": [37.451952, 37.167019],
+    "sg32": [37.733248, 37.510772]
+  },
+  "decisive_direct_p64_n512_r3": {
+    "order": ["control", "sg16", "sg16", "control", "sg16", "control", "control", "sg16"],
+    "values_tps": [36.719413, 37.714836, 37.714950, 37.750427, 37.699941, 36.837829, 37.586944, 37.719498],
+    "control_mean_tps": 37.22365325,
+    "sg16_mean_tps": 37.71230625,
+    "delta_percent": 1.3127486351705686
+  },
+  "realistic_endpoint": {
+    "metric": "median generated-token throughput for 99 intervals after TTFT across 12 unique cache-zero prompts",
+    "treatment_sg16_tps": [36.643452120598, 37.426360936645],
+    "control_sg8_tps": [36.724708337299, 37.452276238345],
+    "warmed_delta_percent": -0.06919553176175652,
+    "pooled_delta_percent": -0.14448082382172434,
+    "warmed_full_decode_delta_percent": -0.11563543566758261,
+    "warmed_wall_delta_percent": -0.0768216918773823,
+    "all_outputs_exact": true,
+    "cached_tokens_all_zero": true,
+    "raw_artifact_dir": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-pair-sg16"
+  },
+  "verification": {
+    "direct_verify_mismatches": 0,
+    "endpoint_exact_hashes": "48/48"
+  },
+  "candidate_source_sha256": "342d400bda5934af086eb325e412ff38881257ba4faa0d507ea7a660a5ded993",
+  "candidate_lib_sha256": "b108d3e178644f7b89f44737547aec39804dc77a0387d277365fcbf553dd2379",
+  "accepted_source_sha256": "a4570708075939e3f28bd127a52d4c38f717ecc5d19ba15cfb7ca0d4dffbedf7",
+  "accepted_lib_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+  "health": "both devices normal; no new Xe/GuC fault, reset, timeout, or hang",
+  "decision": "Retain accepted SG8 for this pair. Do not promote or retry this population sweep unchanged."
+}

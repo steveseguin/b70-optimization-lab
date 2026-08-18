@@ -1,0 +1,58 @@
+{
+  "date": "2026-08-17",
+  "status": "deep_decode_positive_primary_neutral_not_promoted",
+  "model": "Qwen3.8-27B-Q8_0.gguf",
+  "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+  "scope": "target-only equal TP2, no speculation",
+  "candidate": {
+    "change": "cross two exact integer DP4A chains from 0->2/1->3 to 0->3/1->2",
+    "math_changed": false,
+    "floating_point_order_changed": false,
+    "accepted_mmvq_object_sha256": "b791488df254d024652f25c45f67612591bbb62d738a9b572ab2eb1d1dbe6225",
+    "candidate_mmvq_object_sha256": "c6c509b3bfed1e50572c33db5e80b1da613b571757f89685ef6ffe5e90c0ce63",
+    "accepted_sycl_library_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+    "candidate_sycl_library_sha256": "ac16d9e83c830befa3d937848e5190a9513c3ed2b70b345fe140f3f9b7afe5fc",
+    "candidate_llama_bench_sha256": "a3b0a11425c4db508d71d876d1ec9c6bbace68ecc8bd88064818ea9b0f23de82"
+  },
+  "quality": {
+    "strict_q8_comparisons": 1980,
+    "strict_q8_mismatches": 0,
+    "endpoint_suites": 4,
+    "endpoint_outputs": 48,
+    "endpoint_output_hashes_exact": 48,
+    "cached_tokens_all_zero": true
+  },
+  "direct_p64_n512_r3": {
+    "orders": ["control-candidate-candidate-control", "candidate-control-control-candidate"],
+    "first_order_decode_tok_s": [37.762981, 37.706594, 37.303832, 36.696542],
+    "second_order_decode_tok_s": [37.161762, 36.800227, 37.477381, 37.692815],
+    "control_mean_tok_s": 37.18428275,
+    "candidate_mean_tok_s": 37.46625075,
+    "candidate_delta_percent": 0.758298881
+  },
+  "endpoint": {
+    "order": ["control", "candidate", "candidate", "control"],
+    "conventional_first100_tok_s": [36.69408465294, 36.696181539405, 36.694129247078, 36.67565556086],
+    "full_decode_median_tok_s": [36.557636977236, 36.696926600221, 36.787385770121, 36.58783753692],
+    "wall_median_tok_s": [36.095747908244, 36.248178644606, 36.270808946998, 36.142352116512],
+    "pooled": {
+      "control_conventional_first100_tok_s": 36.6848701069,
+      "candidate_conventional_first100_tok_s": 36.695155393242,
+      "conventional_first100_delta_percent": 0.028036862,
+      "control_full_decode_median_tok_s": 36.572737257078,
+      "candidate_full_decode_median_tok_s": 36.742156185171,
+      "full_decode_delta_percent": 0.463238305,
+      "control_wall_median_tok_s": 36.119050012378,
+      "candidate_wall_median_tok_s": 36.259493795802,
+      "wall_delta_percent": 0.388835762
+    }
+  },
+  "safety": {
+    "memory_high": "8G",
+    "memory_max": "10G",
+    "memory_swap_max": "8G",
+    "new_gpu_or_kernel_fault": false,
+    "hardware_policy_changed": false
+  },
+  "decision": "retain as optional deep-generation research arm; do not change default repro, model board, or LocalMaxxing headline"
+}

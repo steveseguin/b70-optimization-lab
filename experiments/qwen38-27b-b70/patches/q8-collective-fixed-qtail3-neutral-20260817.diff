@@ -1,0 +1,51 @@
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -10094,7 +10094,16 @@
+             int8_t * qs = reinterpret_cast<int8_t *>(q8_out0);
+             sycl::half2 * ds = reinterpret_cast<sycl::half2 *>(q8_out0 + nelem);
+             constexpr int elements_per_wi = QK8_1 / WARP_SIZE;
+-            for (int64_t qblock = sg_id; qblock < nelem / QK8_1; qblock += nwarps) {
++            // The caller admits this specialization only for nelem=5120 and
++            // WG1024, hence 160 Q8 blocks over 64 subgroups: exactly three
++            // ordered slots, with the final slot active for subgroup 0..31.
++            // Keep each subgroup's incumbent qblock order and arithmetic.
++#pragma unroll(3)
++            for (int qiter = 0; qiter < 3; ++qiter) {
++                const int64_t qblock = sg_id + (int64_t) qiter * nwarps;
++                if (qblock >= 5120 / QK8_1) {
++                    continue;
++                }
+                 const int64_t offset = qblock * QK8_1 + lane * elements_per_wi;
+                 float values[elements_per_wi];
+                 sycl::vec<int8_t, elements_per_wi> quantized;
+@@ -10167,7 +10176,13 @@
+             int8_t * qs = reinterpret_cast<int8_t *>(q8_out1);
+             sycl::half2 * ds = reinterpret_cast<sycl::half2 *>(q8_out1 + nelem);
+             constexpr int elements_per_wi = QK8_1 / WARP_SIZE;
+-            for (int64_t qblock = sg_id; qblock < nelem / QK8_1; qblock += nwarps) {
++            // Same fixed 160-block / 64-subgroup mapping as device 0 above.
++#pragma unroll(3)
++            for (int qiter = 0; qiter < 3; ++qiter) {
++                const int64_t qblock = sg_id + (int64_t) qiter * nwarps;
++                if (qblock >= 5120 / QK8_1) {
++                    continue;
++                }
+                 const int64_t offset = qblock * QK8_1 + lane * elements_per_wi;
+                 float values[elements_per_wi];
+                 sycl::vec<int8_t, elements_per_wi> quantized;
+@@ -10383,7 +10398,14 @@
+                     enabled ? 2 : 0);
+             return enabled;
+         }();
+-        if (direct_q8_register && nelem == 5120) {
++        if (direct_q8_register && nelem == 5120 &&
++                work_group_size0 == 1024 && work_group_size1 == 1024) {
++            static const bool qtail3_announced = [] {
++                fprintf(stderr, "SYCL experiment | direct-Q8 fixed qtail3 active: "
++                                "nelem=5120 wg=1024 qblocks=160\n");
++                return true;
++            }();
++            (void) qtail3_announced;
+             try {
+                 ggml_sycl_comm_submit_direct_q8_register(
+                         q0, q1, reduce_add, nelem, work_group_size0, work_group_size1,

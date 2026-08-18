@@ -1,0 +1,34 @@
+{
+  "date": "2026-08-17",
+  "status": "unsafe_never_retry",
+  "attempt": "runtime global PCIe ASPM policy default -> performance",
+  "workload_started": false,
+  "affected_devices": [
+    "0000:03:00.0",
+    "0000:e3:00.0"
+  ],
+  "stack": {
+    "kernel": "7.0.0-28-generic",
+    "driver": "xe",
+    "gpu": "2x ASRock Intel Arc Pro B70",
+    "resize_bar_gib_per_gpu": 32,
+    "motherboard": "ASRock Rack TURIND8-2L2T",
+    "bios": "10.06"
+  },
+  "signatures": [
+    "Unable to change power state from D3hot to D0, device inaccessible",
+    "Unable to change power state from D3cold to D0, device inaccessible",
+    "UBSAN array-index-out-of-bounds in drivers/pci/iov.c:948:51",
+    "pci_restore_iov_state",
+    "UBSAN shift-out-of-bounds in include/linux/log2.h:57:13",
+    "pci_rebar_bytes_to_size",
+    "Runtime PM usage count underflow"
+  ],
+  "recovery": {
+    "required_reboot": true,
+    "post_reboot_aspm_policy": "default",
+    "post_reboot_gpu_states": ["normal", "normal"],
+    "post_reboot_new_xe_fault_reset_hang": false
+  },
+  "decision": "Never change ASPM, PCI power control, bind/unbind, or reset controls during this optimization effort."
+}

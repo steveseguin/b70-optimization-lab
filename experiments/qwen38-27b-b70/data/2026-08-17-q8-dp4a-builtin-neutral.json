@@ -1,0 +1,35 @@
+{
+  "date": "2026-08-17",
+  "status": "closed_performance_neutral",
+  "model": {
+    "name": "Qwen3.8-27B-Q8_0.gguf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "hardware": "2x ASRock Intel Arc Pro B70 32 GiB",
+  "runtime": "oneAPI 2026.1.1; accepted DP4A2 x SG24 target-only TP2 stack",
+  "change": "Replace only the four hot reordered-Q8 dpct::dp4a calls with ggml_sycl_dp4a, preserving the accepted two-chain pairing and all arithmetic boundaries",
+  "artifacts": {
+    "accepted_mmvq_object_sha256": "b791488df254d024652f25c45f67612591bbb62d738a9b572ab2eb1d1dbe6225",
+    "treatment_mmvq_object_sha256": "ca6235d1a71235380b215e92aac53467fb72e504b6f67630d741abb6f9d0dbbc",
+    "accepted_libggml_sycl_sha256": "e75b960307fccee661073e67d8288b3893f421617ea83a100cf9b8f9de38b4b5",
+    "treatment_libggml_sycl_sha256": "70e4d187b32652d04dd5945848654c2c02dc29f3ca43ac717b086f521d9aa0ee",
+    "llama_bench_sha256": "a3b0a11425c4db508d71d876d1ec9c6bbace68ecc8bd88064818ea9b0f23de82"
+  },
+  "correctness": {
+    "strict_smoke": "p0/n1/r1 with GGML_SYCL_Q8_QUANT_DEDUP=2",
+    "verified": 1980,
+    "verify_mismatch": 0,
+    "endpoint_gate_run": false,
+    "endpoint_gate_reason": "No repeatable direct-decode gain"
+  },
+  "screen": {
+    "shape": "p64/n512/r3, four fresh processes, A-B-B-A",
+    "accepted": [36.715497, 36.734615],
+    "treatment": [36.722718, 36.707602],
+    "accepted_mean": 36.725056,
+    "treatment_mean": 36.715160,
+    "delta_percent": -0.026946181
+  },
+  "decision": "Do not promote or retry this spelling-only substitution unchanged; require a different compiler/IGC or materially different kernel schedule",
+  "raw_local_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-dp4a-builtin/"
+}

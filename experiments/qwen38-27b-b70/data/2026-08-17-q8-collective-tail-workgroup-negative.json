@@ -3,17 +3,17 @@
   "status": "closed_negative",
   "model": {
     "path": "/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
-    "sha256": "f5c702d8c749a7c65575735936ddf352183d0d8e6497f63f2e51fc5e222f8cb5",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
     "quantization": "Q8_0"
   },
   "hardware": "2x ASRock Intel Arc Pro B70",
   "runtime_contract": "target-only, TP2 1/1, F16 KV, FlashAttention, b1024/ub256, no speculation",
   "candidate": {
-    "env": "GGML_SYCL_COMM_DIRECT_Q8_WG=256|512|1024",
+    "env": "GGML_SYCL_COMM_DIRECT_Q8_WG=256|512|768|1024",
     "scope": "two 5120-element register-direct residual/RMS/multiply/Q8 tails at each TP boundary",
     "arithmetic_note": "row expression unchanged; smaller workgroups change the RMS reduction tree",
     "patch": "q8-collective-tail-workgroup-negative-20260817.diff",
-    "patch_sha256": "f181317007dc73cf68f00f6b0b863d2b4346ee66937e3eb7252acbaa272bef3f",
+    "patch_sha256": "a1ab6158a6e8502c4aa75e298763ba2dba5c77ee58fc1c98aea103c02204ea94",
     "libggml_sycl_sha256": "95e0c3569667b5036dddddc3a2a8339192774c9740721caa14a4150ca393dc33",
     "llama_bench_sha256": "5ad7c26b123d41194a72f127052c50414a58a558a120548f17f11d54dba61abb"
   },
@@ -51,12 +51,48 @@
       "06-wg1024": "b0bbe0bb6ebf94fdd5944c710dec7a17f3e5612b6eae406130bf8730282976f5"
     }
   },
+  "wg768_extension": {
+    "runtime": "oneAPI 2026.1.1; same-binary WG1024/WG768 comparison",
+    "artifacts": {
+      "libggml_sycl_sha256": "17c2c18fa2deb9cd5bd0727dff7d075670c69a136fbb19dc95fd3274cdabe916",
+      "ggml_sycl_object_sha256": "1c6e300bc60444d91718916cdc9c36e357868b97bfa51e34e7f84302ea499106",
+      "llama_bench_sha256": "8c9dfa5852305819778f26cb49262d01d60011c31c12f63c4e50b0664aaf4dca"
+    },
+    "smoke": {
+      "workgroup": 768,
+      "shape": "p0/n1/r1",
+      "door_announced": true,
+      "verified": 1980,
+      "verify_mismatch": 0,
+      "log_sha256": "21c604f85878a31918c5fb8a6c2f88dd5efb925de84290eb4214125cc8bfc954"
+    },
+    "screen": {
+      "shape": "p64/n512/r3",
+      "order": [1024, 768, 768, 1024],
+      "run_means_toks": {
+        "1024": [37.593491, 37.600171],
+        "768": [37.459263, 37.465671]
+      },
+      "pooled_means_toks": {
+        "1024": 37.596831,
+        "768": 37.462467
+      },
+      "delta_percent_vs_1024": -0.357381185,
+      "log_sha256": {
+        "01-wg1024": "04cea51026bb665cbf90641f25cfb71bf966c5833961f843cc7a8ea91227f04e",
+        "02-wg768": "418eb3aeabdad5e9bf996dcfae4d846aeb7ba135ba05d00e8354c17de3ce7094",
+        "03-wg768": "ea44d2eed968e90b611cc8ccde1b504ebe0e2977f075eb631b3f80603ee19ce8",
+        "04-wg1024": "6f91359b888776b8a08bfa481107986fc7a3302c5c17ba1841aa8baa92f862c6"
+      }
+    },
+    "raw_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-tail-wg768/"
+  },
   "quality": {
     "mechanism_verification": "VERIFY_MISMATCH=0 in WG256 smoke",
     "fixed_prompt_or_endpoint_suite_run": false,
-    "reason": "both candidates decisively failed performance gate"
+    "reason": "all three candidate widths failed the performance gate"
   },
   "health": "both devices normal after tests; no current-boot Xe/GuC fault, reset, timeout, or hang",
   "raw_evidence": "/mnt/fast-ai/bench-results/qwen38-q8-asrock-b70-20260817-tail-wg/",
-  "decision": "retain 1024-work-item register-direct tails and do not repeat 256 or 512 unchanged"
+  "decision": "retain 1024-work-item register-direct tails and do not repeat 256, 512, or 768 unchanged"
 }

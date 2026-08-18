@@ -1,0 +1,48 @@
+{
+  "date": "2026-08-17",
+  "status": "rejected",
+  "workload": "Qwen3.8-27B Q8_0 target-only TP2, F16 KV, flash attention",
+  "devices": "2x ASRock Intel Arc Pro B70",
+  "tensor_split": "1/1",
+  "candidate": {
+    "build_macro": "GGML_SYCL_GRAPH=ON",
+    "runtime": {
+      "GGML_SYCL_ENABLE_GRAPH": 1,
+      "GGML_SYCL_GRAPH_RECORD_QUEUE": 1,
+      "SYCL_GRAPH_FORCE_NATIVE_RECORDING": "unset"
+    },
+    "p0_n1_tok_s": 13.982698,
+    "p0_n16_tok_s": 24.554824,
+    "p0_n16_graph_computes": 4386
+  },
+  "true_replay_followup": {
+    "incremental_patch": "../patches/q8-tp2-sycl-graph-no-update-negative-20260817.diff",
+    "runtime": {
+      "GGML_SYCL_GRAPH_REPLAY_NO_UPDATE": 1
+    },
+    "p0_n4": {
+      "tok_s": 9.066576,
+      "replay_hits": 486,
+      "replay_misses": 324,
+      "graph_computes": 1290
+    },
+    "p0_n16": {
+      "tok_s": 20.596402,
+      "replay_hits": 2430,
+      "replay_misses": 324,
+      "graph_computes": 4386
+    },
+    "derived_continuation_ms_per_token": 27.971987,
+    "derived_continuation_tok_s": 35.750055,
+    "delta_vs_accepted_reference_percent": -2.781619,
+    "interpretation": "Stable no-update replay is still slower because 162 tiny executable-graph submissions per continuation token cost more than eager immediate command lists."
+  },
+  "accepted_reference_tok_s_approx": 36.77,
+  "safety": {
+    "gpu_0_state": "normal",
+    "gpu_1_state": "normal",
+    "new_xe_fault_reset_hang": false,
+    "verification_mismatches": 0
+  },
+  "decision": "Do not retry per-meta-subgraph SYCL command graphs unchanged, including true no-update replay; graph submission granularity is prohibitive."
+}

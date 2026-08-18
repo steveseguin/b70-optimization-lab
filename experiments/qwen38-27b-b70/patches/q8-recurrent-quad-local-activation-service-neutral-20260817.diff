@@ -1,0 +1,37 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -1573,0 +1574,11 @@
++// Shape-scoped experiment: the recurrent quad's 24 row subgroups all consume
++// the same 5,760-byte Q8_1 activation. Stage those exact bytes once per
++// workgroup in SLM, without changing row concurrency or arithmetic order.
++static inline bool ggml_sycl_mmvq_q8_quad_local_y() {
++    static const bool on = [] {
++        const char * value = std::getenv("GGML_SYCL_MMVQ_Q8_QUAD_LOCAL_Y");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return on;
++}
++
+@@ -2090,0 +2102 @@
++    const bool local_y = exact_quad_shape && quad_sg24 && ggml_sycl_mmvq_q8_quad_local_y();
+@@ -2091,0 +2104,2 @@
++        constexpr int q8_1_bytes = 5120 + (5120 / QK8_1) * (int) sizeof(sycl::half2);
++        sycl::local_accessor<uint8_t, 1> y_local(sycl::range<1>(local_y ? q8_1_bytes : 1), cgh);
+@@ -2094,0 +2109,14 @@
++                const void * effective_vy = vy;
++                if (local_y) {
++                    using int4_t = sycl::vec<int, 4>;
++                    uint8_t * local_ptr = y_local.template get_multi_ptr<sycl::access::decorated::no>().get();
++                    const int tid = (int) nd_item.get_local_linear_id();
++                    const int nt  = (int) nd_item.get_local_range().size();
++                    for (int offset = tid * (int) sizeof(int4_t); offset < q8_1_bytes;
++                         offset += nt * (int) sizeof(int4_t)) {
++                        *reinterpret_cast<int4_t *>(local_ptr + offset) =
++                            *reinterpret_cast<const int4_t *>(static_cast<const uint8_t *>(vy) + offset);
++                    }
++                    sycl::group_barrier(nd_item.get_group());
++                    effective_vy = local_ptr;
++                }
+@@ -2096 +2124 @@
+-                    vx0, vx1, vx2, vx3, vy, alpha_bias, alpha_scale,
++                    vx0, vx1, vx2, vx3, effective_vy, alpha_bias, alpha_scale,
