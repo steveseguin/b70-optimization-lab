@@ -170,5 +170,46 @@
         "selection12_median_tok_s": 94.36442597440953
       }
     }
+  },
+  "mtp4_fast_path_20260818": {
+    "change": "num_speculative_tokens=4 on the serial-exact-off path, capture [5]. No kernel patch needed: the four-row guard only fires when serial-exact is ON.",
+    "arm_a": {
+      "raw_root": "qwen38-mtp4-fast-25-spec-a-20260818",
+      "manifest_sha256": "9e7978729ec12acb2e8c09e16635fb529482d97836edc48fd03429489077fb51",
+      "all25_median_tok_s": 101.5975743413959,
+      "selection12_median_tok_s": 93.99275366408222
+    },
+    "arm_b_shared_cache": {
+      "raw_root": "qwen38-mtp4-fast-sharedcache-25-spec-b-20260818",
+      "manifest_sha256": "7abc268b59a8d171c1df85f738b7431eb1290a93e3c5c9d4527ed4e2a5c92933",
+      "all25_median_tok_s": 99.84855777521503,
+      "selection12_median_tok_s": 95.25433254573788
+    },
+    "quality": "pass_all true on both (objective gates only; no model-specific baseline exists yet)",
+    "self_determinism_pinned_cache": "FAIL 24/25, 1 divergence at holdout--long-rollover-repository-audit token 88",
+    "verdict": "CROSSED 100 ON ONE RUN (101.598 all-25) BUT NOT VALIDATED. Replicate B came in at 99.849, so the result is not stably above 100, and it fails the determinism gate at 24/25 even with a pinned compile cache -- unlike MTP3 on the same fast path, which is 25/25. MTP4 therefore introduces nondeterminism beyond compilation, most likely in 5-row GDN state handling without serial-exact. NOT CLAIMED.",
+    "note_on_selection_subset": "all-25 rose from 98.222 to 101.598 but selection-12 was flat at 94.005 -> 93.993. The entire apparent gain is on the newer holdout prompts, which is exactly the suite-composition inflation documented for the Qwen3.6 lane."
+  },
+  "current_standing_20260818": {
+    "strictest_gate_fresh_compile": {
+      "config": "MTP3, full determinism stack",
+      "all25_tok_s": 91.926,
+      "selection12_tok_s": 86.72,
+      "determinism": "PASS 25/25",
+      "status": "VALIDATED"
+    },
+    "pinned_compile_cache_gate": {
+      "config": "MTP3, serial-exact off",
+      "all25_tok_s": 98.222,
+      "selection12_tok_s": 94.005,
+      "determinism": "PASS 25/25 with pinned cache",
+      "status": "VALIDATED, pending a model-specific quality baseline"
+    },
+    "over_100_but_not_validated": {
+      "config": "MTP4, serial-exact off",
+      "all25_tok_s": 101.598,
+      "determinism": "FAIL 24/25",
+      "status": "NOT CLAIMED"
+    }
   }
 }
