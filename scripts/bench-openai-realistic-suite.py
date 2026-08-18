@@ -105,6 +105,7 @@ def post_stream(
     reasoning_delta_count = 0
     usage: dict[str, Any] = {}
     response_x_request_id: str | None = None
+    logprob_content: list[dict[str, Any]] = []
 
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         response_x_request_id = resp.headers.get("X-Request-Id")
@@ -174,6 +175,13 @@ def post_stream(
                     [now - started] * len(verbose_token_ids)
                 )
             for choice in event.get("choices", []):
+                choice_logprobs = choice.get("logprobs")
+                if isinstance(choice_logprobs, dict):
+                    content_logprobs = choice_logprobs.get("content")
+                    if isinstance(content_logprobs, list):
+                        logprob_content.extend(
+                            item for item in content_logprobs if isinstance(item, dict)
+                        )
                 choice_token_ids = choice.get("token_ids")
                 if isinstance(choice_token_ids, list):
                     now = time.perf_counter()
@@ -237,6 +245,7 @@ def post_stream(
         "chunk_offsets_s": chunk_offsets,
         "token_id_offsets_s": token_id_offsets,
         "token_ids": token_ids,
+        "logprob_content": logprob_content,
         "usage": usage,
         "prompt_tokens": prompt_tokens,
         "completion_tokens": completion_tokens,

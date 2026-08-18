@@ -224,7 +224,11 @@ export QUALITY_LONG_CONTEXT_TOKENS=1024
 export RUN_SMOKE=${VALIDATION_RUN_SMOKE:-1}
 export RUN_BENCH=${VALIDATION_RUN_BENCH:-1}
 export RUN_QUALITY=${VALIDATION_RUN_QUALITY:-1}
-export REQUEST_EXTRA_JSON='{"chat_template_kwargs":{"enable_thinking":false}}'
+if [[ -n "${VALIDATION_REQUEST_EXTRA_JSON:-}" ]]; then
+  export REQUEST_EXTRA_JSON="${VALIDATION_REQUEST_EXTRA_JSON}"
+else
+  export REQUEST_EXTRA_JSON='{"chat_template_kwargs":{"enable_thinking":false}}'
+fi
 export QUALITY_BASELINE_JSON="$quality_baseline"
 if [[ "${VALIDATION_ENABLE_PACKET_TRACE:-0}" == "1" ]]; then
   # Bounded correctness trace. These files distinguish a wrong target row
