@@ -12,8 +12,8 @@ retained LocalMaxxing row.
 
 | Artifact | Purpose |
 | --- | --- |
-| `vllm-determinism-commits.bundle` | the two private vLLM commits, with prerequisite `95a76ff891` |
-| `vllm-sampler-final-working.patch` | the same change as a flat diff |
+| `vllm-determinism-commits.bundle` | the two closeout vLLM commits, with prerequisite `95a76ff89173` |
+| `vllm-sampler-final-working.patch` | the complete two-commit change as a flat diff |
 | `source-manifest.json` | hashes, commit list, and the measured outcome |
 | `SHA256SUMS` | manifest of this directory |
 

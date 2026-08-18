@@ -85,6 +85,12 @@ The known-good deterministic configuration and its flag set are documented in
 [`../qwen36-27b-autoround-int4-b70-determinism-20260818/README.md`](../qwen36-27b-autoround-int4-b70-determinism-20260818/README.md)
 section 7a; start from that rather than re-deriving it.
 
+The 2026-08-18 transition pull was independently audited on the two-card,
+15 GiB host. Its Qwen3.6 closeout bundle and flat patch are complete and
+reconstruct the recorded vLLM tree, while the Qwen3.8 runtime and raw-evidence
+handoff remains incomplete. See the
+[transition audit](../../experiments/qwen38-27b-b70/notes/2026-08-18-autoround-int4-transition-handoff-audit.md).
+
 ## Open items
 
 - No quality baseline exists for this model yet. The Qwen3.6 baseline is a

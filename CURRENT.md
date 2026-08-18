@@ -129,9 +129,11 @@ Model `devan-carlin/Qwen3.8-27B-int4-AutoRound` at
 [`repro/qwen38-27b-autoround-int4-b70/manifests/model.json`](repro/qwen38-27b-autoround-int4-b70/manifests/model.json).
 
 First baseline, cold, 25-prompt suite: **`91.926 tok/s`** (`86.720` on the 12
-historical selection prompts). MTP3 worked on the first attempt with no code
-changes, because the checkpoint is architecturally identical to the Qwen3.6 one
-and routes through the same INC INT4 path.
+historical selection prompts). MTP3 worked on the first attempt with no
+model-specific code changes because the checkpoint has the same tensor
+architecture and routes through the same INC INT4 path. This establishes
+source compatibility, not quality or performance equivalence for the new
+weights.
 
 Not yet done: a quality baseline for this checkpoint (the Qwen3.6 baseline is a
 different model and must not be reused), and a self-determinism replicate.
@@ -233,15 +235,20 @@ loaded service.
    `+0.342%`, and TTFT regressed `+8.311%`. Preserve its
    [packet](experiments/qwen38-27b-b70/notes/2026-08-16-q8-distributed-greedy-argmax-neutral.md)
    and only revisit if winner selection can avoid the added cross-queue sync.
-3. Use the official FP8 graph repro as the vLLM control and target its Triton
+3. Keep the Qwen3.8 AutoRound INT4 TP2/MTP3 lane paused on the 15 GiB host until
+   the measuring host publishes its exact runtime bootstrap, compact raw rows,
+   measured peak-RSS/swap bound, matching B replicate, and Qwen3.8 target-only
+   quality oracle. The model and source identities are present locally; the
+   read-only preflight still fails closed on the missing runtime artifacts.
+4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.
-4. Keep SergiioB's single-card GPTQ/MTP vLLM recipe experimental: it is fast,
+5. Keep SergiioB's single-card GPTQ/MTP vLLM recipe experimental: it is fast,
    but the checkpoint failed the no-quality-loss semantic gate. Never stop a
    vLLM XPU container before `/health` during graph initialization.
-5. The 49.717503 tok/s Q4_K_M target-only result is submitted and approved as
+6. The 49.717503 tok/s Q4_K_M target-only result is submitted and approved as
    LocalMaxxing `cmsy530c70cpwms01bl1sjk6g`; do not resubmit it unchanged.
-6. Keep `main` synchronized before and after focused commits. Preserve failed
+7. Keep `main` synchronized before and after focused commits. Preserve failed
    experiments as patches and notes rather than branches or worktrees.
-7. Archive large ignored Qwen artifacts only through the verified manifest and
+8. Archive large ignored Qwen artifacts only through the verified manifest and
    restore procedure linked from the Qwen family map.
