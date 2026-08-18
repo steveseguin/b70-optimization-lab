@@ -77,6 +77,7 @@ MODEL_DIR=/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan \
 VALIDATION_MODEL_MANIFEST=$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json \
 VALIDATION_EXPECT_XPU_COUNT=2 \
 VALIDATION_EXPECT_VLLM_VERSION=0.21.1rc1.dev289+g44fc8fde0 \
+VALIDATION_HF_HOME=/mnt/fast-ai/llm-cache/hf \
 VALIDATION_XPU_RUNTIME_MANIFEST=/path/to/xpu-runtime.sha256 \
 VALIDATION_ONECCL_MANIFEST=/path/to/oneccl-runtime.sha256 \
 VALIDATION_GRAPH_STAGE_MANIFEST=/path/to/graph-stage.sha256 \
@@ -100,6 +101,9 @@ without weakening the retained reference-host defaults. Entries are
 parent-traversing paths, missing files, malformed hashes, and empty manifests
 all fail closed. Omit these variables only when reproducing the historical
 binary hashes embedded in the validator.
+`VALIDATION_HF_HOME` prevents the historical `/mnt/usb-models` cache path from
+being recreated on hosts that keep their model and transient Hugging Face
+metadata elsewhere; it does not change model identity verification.
 
 The known-good deterministic configuration and its flag set are documented in
 [`../qwen36-27b-autoround-int4-b70-determinism-20260818/README.md`](../qwen36-27b-autoround-int4-b70-determinism-20260818/README.md)
