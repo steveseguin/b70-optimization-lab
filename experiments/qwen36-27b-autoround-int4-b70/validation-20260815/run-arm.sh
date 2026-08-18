@@ -331,6 +331,11 @@ if [[ -n "${VALIDATION_LM_HEAD_INT8:-}" ]]; then
   # W8A8 vocabulary projection without inheriting ambient process state.
   export VLLM_XPU_LM_HEAD_INT8="${VALIDATION_LM_HEAD_INT8}"
 fi
+if [[ "${VALIDATION_ALLREDUCE_ASYNC_WAIT:-0}" == "1" ]]; then
+  # Eager-only ordering control: retain the collective work handle and wait
+  # explicitly instead of relying on the default synchronous wrapper.
+  export VLLM_XPU_ALLREDUCE_ASYNC_WAIT=1
+fi
 if [[ "${VALIDATION_INT4_GEMM_FIXED_M4:-0}" == "1" ]]; then
   # Diagnostic only: make one-row target projections use the verifier's M=4
   # W4A16 descriptor and retain row zero.  Do not promote its timing.
