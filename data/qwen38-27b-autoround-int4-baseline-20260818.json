@@ -128,8 +128,47 @@
         },
         "self_determinism": "FAIL 12/25, 13 divergences over 8636 tokens",
         "verdict": "HYPOTHESIS DISPROVED, and cleanly. The barrier costs about 1 tok/s (97.211 vs 98.222) but the divergent prompts and token positions are byte-identical to the no-barrier run -- same 8 prompts at tokens 69/322/262/272/334/217/320/15. Synchronization changes nothing. GDN nondeterminism is a reduction-order problem, not a race, so only full serialization fixes it."
+      },
+      {
+        "id": "add_size1_capture_bucket",
+        "change": "cudagraph_capture_sizes [1,4] instead of [4]",
+        "raw_root": "qwen38-capture14-mtp3-25-spec-a-20260818",
+        "manifest_sha256": "557d69b6eef57ea26d316aaa1b176ac9b47190d1df5264e7e3c30f7286159a10",
+        "all25_median_tok_s": 91.37061782795071,
+        "selection12_median_tok_s": 86.85374525768975,
+        "verdict": "no gain (91.371 vs 91.926). The MTP draft head was not padding one-row forwards to four; hypothesis wrong."
       }
     ],
     "conclusion": "Validated best remains 91.926 tok/s at 25/25 self-determinism. 97-98 tok/s is reachable but never reproducible. The 6.3 tok/s gap is entirely the serial-exact GDN eager graph break, and it cannot be closed with synchronization -- a completion barrier reproduced the divergences exactly. Claiming it honestly requires batch-invariant GDN attention arithmetic, which vLLM currently refuses outright ('VLLM batch_invariant mode is not supported for GDN_ATTN')."
+  },
+  "root_cause_compilation_nondeterminism": {
+    "finding": "The run-to-run nondeterminism that has gated this and the Qwen3.6 lane is in torch.compile/Inductor COMPILATION, not at runtime. Given a fixed compiled artifact the runtime is perfectly deterministic.",
+    "evidence": {
+      "A_vs_B_two_fresh_compile_caches": "12/25 identical, 13 divergences over 8636 tokens",
+      "A_vs_C_C_reused_A_compile_cache": "25/25 identical, 0 divergences over 12413 tokens"
+    },
+    "corroboration": "The divergent prompts and token positions were byte-identical between the completion-barrier and no-barrier experiments. Random runtime noise would not repeat positions across configs; two different-but-internally-deterministic compilations would, and do.",
+    "why_serial_exact_looked_necessary": "serial-exact GDN forces that op to an EAGER graph break, so it is never compiled and never autotuned. It was not buying arithmetic determinism -- it was avoiding the compiler.",
+    "methodological_consequence": "The compiled cache is part of the run identity, exactly like the .so binaries the harness already pins by hash. A deployed service compiles once and serves that artifact; reproducibility across restarts with a pinned cache is the operationally meaningful property. This tightens the identity requirement rather than relaxing the gate.",
+    "arms": {
+      "A_built_cache": {
+        "raw_root": "qwen38-noserial-nobi-mtp3-25-spec-a-20260818",
+        "manifest_sha256": "986b6eae0692c176ff57992f4126c40e2d4597c087c4ba5ff5408e22e0571b3b",
+        "all25_median_tok_s": 98.22232844798661,
+        "selection12_median_tok_s": 94.00496787904927
+      },
+      "B_fresh_cache": {
+        "raw_root": "qwen38-noserial-nobi-mtp3-25-spec-b-20260818",
+        "manifest_sha256": "ed39c984aac5032d638f769b9fd0a3ab5888b39a028dfdfc571393500175ccce",
+        "all25_median_tok_s": 98.71679720387172,
+        "selection12_median_tok_s": 92.24215269585196
+      },
+      "C_reused_A_cache": {
+        "raw_root": "qwen38-noserial-nobi-sharedcache-25-spec-c-20260818",
+        "manifest_sha256": "10c7ab2b8e8100a5710d4ced1d1254dc0b9b6ddb94306c6079eb44319166a955",
+        "all25_median_tok_s": 96.61627438849658,
+        "selection12_median_tok_s": 94.36442597440953
+      }
+    }
   }
 }
