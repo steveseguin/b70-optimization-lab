@@ -96,6 +96,9 @@ head and diff remain the authoritative code identity in either case.
 This two-card host's pinned low-memory XPU rebuild, package manifest, peak-RSS
 warning, and import-path check are recorded in
 [`RUNTIME-BUILD-20260818.md`](RUNTIME-BUILD-20260818.md).
+The matching public oneCCL build, checksum manifest, and passing two-rank graph
+oracles are recorded in
+[`ONECCL-BUILD-20260818.md`](ONECCL-BUILD-20260818.md).
 
 The three optional runtime manifests make a rebuilt host identity explicit
 without weakening the retained reference-host defaults. Entries are

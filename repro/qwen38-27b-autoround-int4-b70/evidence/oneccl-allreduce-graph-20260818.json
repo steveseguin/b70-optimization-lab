@@ -1,0 +1,43 @@
+{
+  "backend": "xccl",
+  "mode": "graph",
+  "passed": true,
+  "queue_test": "torch.xpu.XPUGraph",
+  "ranks": [
+    {
+      "avg_replay_ms_including_sync_and_validation": 0.43648332029988524,
+      "device": "xpu:0",
+      "dtype": "bfloat16",
+      "first_mismatch": null,
+      "hidden_size": 5120,
+      "iterations": 512,
+      "loaded_ccl_paths": [
+        "/home/steve/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0"
+      ],
+      "local_rank": 0,
+      "max_abs_diff": 0.0,
+      "mismatch_iterations": 0,
+      "mode": "graph",
+      "rank": 0,
+      "rows": 4
+    },
+    {
+      "avg_replay_ms_including_sync_and_validation": 0.43639826171215645,
+      "device": "xpu:1",
+      "dtype": "bfloat16",
+      "first_mismatch": null,
+      "hidden_size": 5120,
+      "iterations": 512,
+      "loaded_ccl_paths": [
+        "/home/steve/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0"
+      ],
+      "local_rank": 1,
+      "max_abs_diff": 0.0,
+      "mismatch_iterations": 0,
+      "mode": "graph",
+      "rank": 1,
+      "rows": 4
+    }
+  ],
+  "world_size": 2
+}
