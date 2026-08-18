@@ -62,6 +62,13 @@ target.
 
 ## Running an arm
 
+Run the read-only [`scripts/preflight.sh`](scripts/preflight.sh) first. It
+checks the pinned sources, Python package family, retained graph-safe
+FlashAttention and oneCCL identities, complete model manifest, host memory, and
+two-card inventory without importing torch or opening a GPU. The outstanding
+reference-host portability and low-RAM evidence is tracked in
+[`REFERENCE-HOST-HANDOFF.md`](REFERENCE-HOST-HANDOFF.md).
+
 The Qwen3.6 harness is reused directly. Two environment variables retarget it:
 
 ```bash
