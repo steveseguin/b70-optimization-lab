@@ -687,6 +687,21 @@ if [[ "$runner_rc" == "0" \
     runner_rc=6
   fi
 fi
+if [[ "$runner_rc" == "0" && "$RUN_SMOKE" == "1" && ! -s "$SMOKE_OUT" ]]; then
+  printf 'runner reported success but smoke output is missing: %s\n' \
+    "$SMOKE_OUT" >&2
+  runner_rc=7
+fi
+if [[ "$runner_rc" == "0" && "$RUN_BENCH" == "1" && ! -s "$BENCH_OUT" ]]; then
+  printf 'runner reported success but benchmark output is missing: %s\n' \
+    "$BENCH_OUT" >&2
+  runner_rc=8
+fi
+if [[ "$runner_rc" == "0" && "$RUN_QUALITY" == "1" && ! -s "$QUALITY_OUT" ]]; then
+  printf 'runner reported success but quality output is missing: %s\n' \
+    "$QUALITY_OUT" >&2
+  runner_rc=9
+fi
 printf '%s\n' "$runner_rc" > "$arm_root/runner.exit-code"
 
 if [[ -s "$BENCH_OUT" && "$BENCH_METRIC_TOKENS" == "100" ]]; then
