@@ -146,3 +146,61 @@ handoff remains incomplete. See the
   optional probe allowed all weights to load, but a 9 GiB cgroup then killed a
   worker during warmup and triggered one BCS reset. See the
   [safety note](../../experiments/qwen38-27b-b70/notes/2026-08-18-autoround-int4-stock-image-lowram-unsafe.md).
+
+## Validated result — 100.497 tok/s (2026-08-18)
+
+Median of three arms on the 25-prompt suite, 25/25 self-determinism, quality
+pass against this model's own baseline. Full analysis:
+[`../../notes/2026-08-18-qwen38-int4-100tps-uninitialized-gdn-scratch.md`](../../notes/2026-08-18-qwen38-int4-100tps-uninitialized-gdn-scratch.md).
+
+| Arm | all-25 | selection-12 |
+| --- | ---: | ---: |
+| A | `101.653` | `96.499` |
+| B | `100.497` | `96.627` |
+| C | `99.905` | `96.895` |
+| **median** | **`100.497`** | **`96.627`** |
+
+Carry these caveats with the number: arm C is below 100 so the arms are not
+unanimously over the line, the median is; **selection-12 at `96.627` has not
+crossed 100**, and that is the subset any record comparison rests on; and this
+is the pinned-compile-cache gate, with a fresh-compile arm still outstanding.
+
+### Command
+
+```bash
+repo=$(git -C . rev-parse --show-toplevel)
+LABEL=qwen38-mtp4-noscratch-repro-a
+root=${BENCH_ROOT:-/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70}/$LABEL
+cache=${CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache}/qwen38-mtp4-noscratch
+qbase="$repo/data/qwen38-27b-autoround-int4-b70-baselines/quality-qwen38-int4-mtp3-fast-20260818.json"
+
+VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0 \
+MODEL_DIR=/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan \
+VALIDATION_MODEL_MANIFEST="$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json" \
+VALIDATION_VLLM_CACHE_ROOT="$cache" \
+VALIDATION_RUN_SMOKE=1 VALIDATION_RUN_BENCH=1 VALIDATION_RUN_QUALITY=1 \
+VALIDATION_BENCH_MAX_TOKENS=512 VALIDATION_BENCH_METRIC_TOKENS=100 \
+VALIDATION_NUM_SPECULATIVE_TOKENS=4 \
+VALIDATION_COMPILATION_CONFIG_OVERRIDE='{"use_inductor_graph_partition":true,"pass_config":{"fuse_rope_kvcache_cat_mla":false},"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[5],"max_cudagraph_capture_size":5}' \
+VALIDATION_ENABLE_XPU_GRAPH=1 \
+VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0 \
+VALIDATION_GDN_CAPTURE_NATIVE_SPEC=1 VALIDATION_GDN_NATIVE_SPEC_COMPLETION_BARRIER=0 \
+VALIDATION_ONEDNN_INT4_COMPLETION_BARRIER=1 VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY=1 \
+VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE=all_target \
+VALIDATION_ONEDNN_INT8_COMPLETION_BARRIER=1 VALIDATION_ONEDNN_INT8_INPUT_DEPENDENCY=1 \
+VALIDATION_LM_HEAD_INT8=1 VALIDATION_DETERMINISTIC_GREEDY_MARGIN=0.03125 \
+VALIDATION_VLLM_EXTRA_ARGS='--dtype float16' \
+LABEL=$LABEL \
+"$repo/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-arm.sh" \
+spec-native-partition-exact-native 0,1 "$root" "$qbase"
+```
+
+**All three arms must share one `VALIDATION_VLLM_CACHE_ROOT`.** Fresh
+compilations produce different-but-internally-deterministic code, so a
+fresh-cache rerun will not reproduce token-for-token. The compile cache is part
+of the run identity.
+
+`VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0` is load-bearing, not incidental: with
+the scratch enabled this configuration fails 24/25 on
+`holdout--long-rollover-repository-audit` because of an uninitialized read at
+five verifier rows.
