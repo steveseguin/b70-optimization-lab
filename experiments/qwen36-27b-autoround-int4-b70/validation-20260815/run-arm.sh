@@ -365,6 +365,12 @@ if [[ "${VALIDATION_GDN_BA_SERIAL_M1:-0}" == "1" ]]; then
   # target's M=1 projection shape.
   export VLLM_XPU_GDN_BA_SERIAL_M1=1
 fi
+if [[ "${VALIDATION_GDN_RMSNORM_GATED_SERIAL_M4:-0}" == "1" ]]; then
+  # Exactness lane: evaluate the four packed GDN gated-RMSNorm rows using the
+  # ordinary one-row reduction geometry. This is diagnostic until it passes
+  # the full parity and performance gates.
+  export VLLM_XPU_GDN_RMSNORM_GATED_SERIAL_M4=1
+fi
 if [[ "${VALIDATION_SYNC_AFTER_CUDAGRAPH_WARMUP:-0}" == "1" ]]; then
   export VLLM_XPU_SYNC_AFTER_CUDAGRAPH_WARMUP=1
 fi

@@ -318,6 +318,7 @@ trap cleanup EXIT
   echo "xpu_allreduce_async_wait=${VLLM_XPU_ALLREDUCE_ASYNC_WAIT:-0}"
   echo "deterministic_greedy_margin=${VLLM_XPU_DETERMINISTIC_GREEDY_MARGIN:-0}"
   echo "gdn_ba_serial_m1=${VLLM_XPU_GDN_BA_SERIAL_M1:-0}"
+  echo "gdn_rmsnorm_gated_serial_m4=${VLLM_XPU_GDN_RMSNORM_GATED_SERIAL_M4:-0}"
   echo "mtp_text_input_ids_next=${VLLM_XPU_MTP_TEXT_INPUT_IDS_NEXT:-}"
   echo "mtp_next_dispatch_trace_file=${VLLM_XPU_MTP_NEXT_DISPATCH_TRACE_FILE:-}"
   echo "disable_compile_cache=${VLLM_DISABLE_COMPILE_CACHE:-}"
