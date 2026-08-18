@@ -6,13 +6,19 @@
 |--------|-------|
 | Model | Qwen3.8-27B Cold Fusion GAIN V1.1 MTP Q4_K_M (fine-tune) |
 | GPU | 1x Intel Arc Pro B70 (32 GiB) |
-| Engine | llama.cpp `b10472` (`60eeeb608`) |
-| Short-context decode (51 tokens, thinking off) | **38.4 tok/s** |
-| MTP draft acceptance (MTP2) | **94.4%** |
-| Mean draft length (MTP2) | 2.89 tokens |
+| Engine (original packet, 2026-08-17) | llama.cpp `b10472` (`60eeeb608`), kernel `7.0.0-29` |
+| Short-context decode on that stack (51 tokens, thinking off) | **38.4 tok/s**, MTP2 accept **94.4%** |
+| Engine (live refresh, 2026-08-18) | llama.cpp `b10488-7` (`3dc7285b4`), kernel `7.0.0-30` |
+| Same 51-token probe on the refresh | **22.73 tok/s**, MTP2 accept **31.7%** |
 | Context size | 160,000 tokens |
 | KV precision | F16 (target + draft) |
 | Status | `community-reported` — not yet reference-lab verified |
+
+The 38.4 tok/s figure is **not** claimed on `b10488-7`. It stays as the
+`b10472` / `7.0.0-29` measurement. The refresh re-ran the same model, flags,
+and 51-token thinking-off probe after a staged llama.cpp + kernel switch.
+Decode fell with draft acceptance (94.4% -> 31.7%). oneAPI 2026.1.1 and
+compute-runtime `26.27.39122.11` were already newest and were not changed.
 
 ## Full System Specification
 
@@ -32,8 +38,9 @@
 | Component | Version |
 |-----------|---------|
 | OS | Ubuntu 26.04 LTS |
-| Kernel | 7.0.0-29-generic |
-| GPU kernel driver | `xe` (Intel Xe2 Graphics), srcversion `85B7CA089405934276CBAD3` |
+| Kernel (original packet) | 7.0.0-29-generic |
+| Kernel (live refresh, 2026-08-18) | 7.0.0-30-generic (HWE metapackage; GRUB pinned to this entry, not the 7.1 mainline image also present on the host) |
+| GPU kernel driver | `xe` (Intel Xe2 Graphics), srcversion `85B7CA089405934276CBAD3` (same srcversion on both 7.0.0-29 and 7.0.0-30) |
 | libze-intel-gpu1 | 26.27.39122.11-0 |
 | intel-opencl-icd | 26.27.39122.11-0 |
 | xpu-smi | 1.2 |
@@ -45,10 +52,12 @@
 | Component | Value |
 |-----------|-------|
 | Repo | `ggml-org/llama.cpp` |
-| Commit | `60eeeb6082c1126bb8bc72902c83123cd056811b` |
-| Version string | `0.1.2-dev (build 472, commit 60eeeb608)` |
-| Build directory | `build-sycl` |
-| CMake flags | `-DGGML_SYCL=ON -DF16=ON -DGRAPH=ON -DDNN=ON -DNATIVE=ON -DHOST_MEM_FALLBACK=OFF` |
+| Commit (original packet) | `60eeeb6082c1126bb8bc72902c83123cd056811b` (`b10472`) |
+| Commit (live refresh) | `3dc7285b4f79e3abe53527fd4264b75226edb613` (`b10488-7`) |
+| Version string (live) | `0.1.2-dev (build 485, commit 3dc7285b4)` |
+| Build directory | staged worktree `build-sycl` (does not overwrite the live `b10472` inode until reboot) |
+| CMake flags (actual refresh build) | `-DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx -DGGML_SYCL=ON -DGGML_SYCL_TARGET=INTEL -DGGML_SYCL_F16=ON -DGGML_SYCL_GRAPH=ON -DGGML_SYCL_DNN=ON -DGGML_NATIVE=ON -DGGML_SYCL_HOST_MEM_FALLBACK=OFF` |
+| Notable llama.cpp delta vs b10472 | includes `sycl: honor GGML_HINT_SRC0_IS_HADAMARD` (`#27298`) and ggml 0.20.2 |
 | Compiler | Intel oneAPI 2026.1.1 (`icx`/`icpx` via `setvars.sh`) |
 | LD_PRELOAD | `/opt/opencode-fixes/l0graphshim.so` |
 
@@ -120,9 +129,58 @@ single concurrent request to the running systemd service.
 | 0 (`:8001`) | 8001 | 2 | **38.4** | 94.4% | 2.89 |
 | 1 (`:8002`) | 8002 | 3 | 40.0 | 90.5% | 3.71 |
 
-The MTP2 result at 38.4 tok/s is the configuration recommended for production
-use. The MTP3 result is included for reference; MTP3 may degrade at longer
-context lengths.
+The MTP2 result at 38.4 tok/s is the configuration that was recommended for
+production on `b10472`. The MTP3 result is included for reference; MTP3 may
+degrade at longer context lengths.
+
+### Stack refresh, 2026-08-18 (b10488-7 / kernel 7.0.0-30)
+
+Same GGUF, same launch flags, same host, new llama.cpp + kernel. Live units
+came up on the staged binary after reboot (`NRestarts=0`, both `/health` ok).
+
+**51-token thinking-off probe (GPU1, server-internal eval time):**
+
+| Stack | Decode tok/s | Draft accept | Mean draft len | predicted_n |
+| --- | ---: | ---: | ---: | ---: |
+| b10472 / 7.0.0-29 (2026-08-17) | 38.4 | 94.4% | 2.89 | 51 |
+| b10488-7 / 7.0.0-30 (2026-08-18) | **22.73** | **31.7%** | 1.63 | 51 |
+
+Raw: `reported/short-ctx-probe-20260818-b10488.txt`.
+
+**llama-benchy on the live refresh** (`pp=2048`, `tg=256`, 2 runs,
+`--no-warmup --no-adapt-prompt`, `reasoning_budget_tokens=128`, no `--exact-tg`):
+
+| GPU | depth | pp t/s | tg t/s |
+| ---: | ---: | ---: | ---: |
+| 0 | 0 | 648 | 28.56 |
+| 0 | 8192 | 1001 | 27.42 |
+| 0 | 32768 | 923 | 21.23 |
+| 0 | 65536 | 806 | 20.26 |
+| 1 | 0 | 649 | 28.83 |
+| 1 | 8192 | 1023 | 27.28 |
+| 1 | 32768 | 947 | 20.74 |
+| 1 | 65536 | 819 | 23.00 |
+
+JSON: `reported/gpu0-b10488-benchy-20260818-122944.json`,
+`reported/gpu1-b10488-benchy-20260818-123508.json`.
+
+Same llama-benchy shape vs the Aug 16 MTP2 tune row (`r3-gpu0-mtp2`):
+
+| depth | Aug 16 MTP2 tg | b10488-7 GPU0 tg |
+| ---: | ---: | ---: |
+| 0 | 34.49 | 28.56 |
+| 8192 | 33.56 | 27.42 |
+| 32768 | 26.22 | 21.23 |
+| 65536 | 21.13 | 20.26 |
+
+Prefill is similar. Decode is slower at 0-32k and about even at 64k.
+Journal MTP on GPU1 during the 32k/64k rows: accept 41% at 32k and 63-68% at
+64k (drafts nonzero). This is not the 94% short-probe accept from b10472.
+
+oneAPI DPC++ `2026.1.1-325`, IGC `2.38.2`, and compute-runtime
+`26.27.39122.11` were already the newest published packages. They were not
+upgraded. The kernel install did not reboot the live servers; GRUB was pinned
+from `7.0.0-29` to `7.0.0-30` so the next boot took the new kernel.
 
 ### llama-benchy API Sweep (2026-08-17)
 

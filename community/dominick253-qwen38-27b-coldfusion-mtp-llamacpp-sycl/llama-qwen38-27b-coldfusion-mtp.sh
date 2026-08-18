@@ -6,7 +6,7 @@
 #   $MODEL_PATH    - path to the Cold Fusion GAIN V1.1 MTP Q4_K_M GGUF
 #   $PORT          - HTTP port (default 8001)
 #   $GPU_INDEX     - Level Zero device index (default 0)
-#   $LLAMA_SERVER  - path to llama-server binary (b10472 SYCL build)
+#   $LLAMA_SERVER  - path to llama-server binary (b10488-7 SYCL build by default)
 set -euo pipefail
 
 MODEL_PATH="${MODEL_PATH:?set MODEL_PATH to the Q4_K_M MTP GGUF}"

@@ -21,13 +21,16 @@
 
 ## Contributor Claim
 
-The contributor reports a steady-state decode rate of **38.4 tok/s** at short
-context (51 generated tokens, thinking disabled) on a single Intel Arc Pro B70
-(32 GiB) using llama.cpp `b10472`, the Cold Fusion GAIN V1.1 MTP Q4_K_M GGUF,
-`--spec-draft-n-max 2`, `--cache-type-k f16 --cache-type-v f16`, 160,000-token
-context, oneAPI 2026.1.1, kernel `7.0.0-29-generic` (Ubuntu 26.04).
+Original packet (`b10472` / kernel `7.0.0-29`, 2026-08-17): the contributor
+reports **38.4 tok/s** at 51 generated tokens, thinking disabled, MTP2 accept
+94.4%, on one Intel Arc Pro B70.
 
-Supporting A/B data from the same session (contributor-reported, not
+Stack refresh (`b10488-7` / kernel `7.0.0-30`, 2026-08-18): the same model,
+flags, and 51-token thinking-off probe measured **22.73 tok/s** with MTP2
+accept **31.7%**. The 38.4 figure is retained as the older-stack result and is
+not claimed on the new engine+kernel.
+
+Supporting A/B data from the original session (contributor-reported, not
 reference-lab verified):
 
 | Model / KV | MTP | Decode | Accept |
@@ -44,11 +47,11 @@ service. They have not been independently reproduced in the reference lab.
 | Field | Value |
 | --- | --- |
 | GPU model / count / VRAM | 1x Intel Arc Pro B70 (Battlemage G31, PCI ID `8086:e223`); 32 GiB |
-| OS / kernel | Ubuntu 26.04 LTS, kernel `7.0.0-29-generic` |
-| GPU driver | `xe` (Intel Xe2 Graphics kernel driver), srcversion `85B7CA089405934276CBAD3`, bundled in kernel 7.0.0-29 |
+| OS / kernel | Ubuntu 26.04 LTS; original packet `7.0.0-29-generic`; live refresh `7.0.0-30-generic` |
+| GPU driver | `xe` srcversion `85B7CA089405934276CBAD3` (same on 7.0.0-29 and 7.0.0-30) |
 | compute-runtime / Level Zero | `libze-intel-gpu1` `26.27.39122.11-0`; `intel-opencl-icd` `26.27.39122.11-0` |
 | SYCL compiler | Intel oneAPI 2026.1.1 (IntelLLVM DPC++); IGC `2.38.2` |
-| Engine / commit | llama.cpp `60eeeb6082c1126bb8bc72902c83123cd056811b` (`b10472`), upstream `ggml-org/llama.cpp` |
+| Engine / commit | original `60eeeb608` (`b10472`); live refresh `3dc7285b4` (`b10488-7`) |
 | llama.cpp build flags | `GGML_SYCL=ON F16=ON GRAPH=ON DNN=ON NATIVE=ON HOST_MEM_FALLBACK=OFF` |
 | LD_PRELOAD | `/opt/opencode-fixes/l0graphshim.so` (community Level Zero graph workaround) |
 | Model repo | `ggml-org/Qwen3.8-27B` (base, upstream); fine-tune produced locally |
@@ -91,11 +94,11 @@ provided for maintainer validation.
    marginal +1.6 t/s at short context (51 tokens) but risks degrading at
    longer context. MTP2 showed 94.4% draft acceptance, mean draft length 2.89.
 
-3. **38.4 t/s is at the dense Q4_K_M bandwidth ceiling** for one Arc Pro B70.
-   The 16-run Aug 16 sweep (baseline through MTP3/p-min/ubatch variants)
-   produced a maximum of 34.63 t/s at depth 0; the live service at 38.4 t/s
-   reflects warm cache, the tuned batch/ubatch configuration, and the exact
-   MTP acceptance rate under real prompt conditions.
+3. **38.4 t/s is the b10472 short-probe number, not the current live stack.**
+   The 2026-08-18 refresh on `b10488-7` + kernel `7.0.0-30` re-ran the same
+   51-token thinking-off probe at **22.73 t/s / 31.7% accept**. llama-benchy
+   on that stack is 28.56 t/s at depth 0 and 20.26 t/s at 64k on GPU0. The
+   older 38.4 figure is preserved, not overwritten.
 
 4. **The Cold Fusion GAIN V1.1 fine-tune is not a decode-throughput win** over
    the stock Unsloth Q4_K_M on the simple counting probe (38.4 vs 44.4 tok/s;

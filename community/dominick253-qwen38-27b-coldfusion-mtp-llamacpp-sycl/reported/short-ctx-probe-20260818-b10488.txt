@@ -1,0 +1,25 @@
+# 51-token thinking-off probe on the live b10488-7 / kernel 7.0.0-30 stack
+# 2026-08-18 12:43 EDT, GPU1 :8002, same model and launch flags as this packet
+# Client: non-stream /v1/chat/completions, reasoning_effort=none, max_tokens=51
+# finish_reason=length, reasoning_chars=0, completion_tokens=51
+
+finish length
+usage {'completion_tokens': 51, 'prompt_tokens': 33, 'total_tokens': 84, 'prompt_tokens_details': {'cached_tokens': 0}}
+timings {
+  "cache_n": 0,
+  "prompt_n": 33,
+  "prompt_ms": 475.919,
+  "prompt_per_second": 69.33953046631885,
+  "predicted_n": 51,
+  "predicted_ms": 2199.58,
+  "predicted_per_second": 22.731612398730668,
+  "draft_n": 60,
+  "draft_n_accepted": 19
+}
+
+journal:
+eval time = 2199.58 ms / 51 tokens (43.99 ms per token, 22.73 tokens per second)
+draft acceptance = 0.31667 (19 accepted / 60 generated), mean len = 1.63
+
+This is NOT the 38.4 tok/s / 94.4% accept figure. That figure was measured on
+llama.cpp b10472 + kernel 7.0.0-29. Same model, same flags, new engine+kernel.
