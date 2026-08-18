@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "date_local": "2026-08-18",
+  "classification": "lane_opened_baseline",
+  "lane": "Qwen3.8 27B AutoRound INT4, MTP3 speculative, 2x Intel Arc Pro B70, vLLM/XPU TP2",
+  "model": {
+    "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "local_path": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model.json",
+    "architecture_identical_to": "Qwen3.6 27B INT4 lane"
+  },
+  "source_identity": {
+    "vllm_head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+    "xpu_kernels_head": "2dd55f380df753a10a88fcd9e96192561066e713"
+  },
+  "config": "deterministic stack from the Qwen3.6 lane, section 7a of the determinism repro",
+  "baseline_25_prompt": {
+    "raw_root": "qwen38-baseline-mtp3-25-spec-a-20260818",
+    "manifest_sha256": "027fd659d81acb7c764f07d133088786d805846f7c296e442f98cd697a82d911",
+    "all25_median_tok_s": 91.9255381746818,
+    "selection12_median_tok_s": 86.71987020574969,
+    "holdout13_median_tok_s": 94.90093826827825,
+    "cold": true,
+    "rows": 25
+  },
+  "feasibility_two_prompt": {
+    "raw_root": "qwen38-feasibility-mtp3-two-spec-a-20260818",
+    "manifest_sha256": "fa5b2aefadbe2f584ded23b3f8fde346eac5889f628d2321065e21af666d5b68",
+    "median_tok_s": 80.92248775024132,
+    "avg_draft_acceptance": 0.576
+  },
+  "qwen36_reference_same_config_same_suite": {
+    "all25_median_tok_s": 94.7104973610472,
+    "selection12_median_tok_s": 89.766
+  },
+  "notes": [
+    "MTP3 speculative decoding worked on the first attempt; no code changes were needed",
+    "quality gate not run: no quality baseline exists for this checkpoint yet, and the Qwen3.6 baseline is a different model",
+    "self-determinism not yet measured; needs a matching B replicate",
+    "starts about 3% behind the Qwen3.6 lane, which took weeks of tuning to reach 94.710"
+  ]
+}
