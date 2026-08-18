@@ -37,8 +37,33 @@
   "notes": [
     "MTP3 speculative decoding worked on the first attempt; no code changes were needed",
     "quality gate not run: no quality baseline exists for this checkpoint yet, and the Qwen3.6 baseline is a different model",
-    "self-determinism not yet measured; needs a matching B replicate",
     "same-config delta versus Qwen3.6 is -2.940497% all-25 and -3.393412% selection-12",
-    "the holdout-13 median is 9.433903% faster than selection-12, so all-25 alone must not be compared with the historical selection-12 record"
-  ]
+    "the holdout-13 median is 9.433903% faster than selection-12, so all-25 alone must not be compared with the historical selection-12 record",
+    "self-determinism PASSED 25/25 on 2026-08-18"
+  ],
+  "baseline_25_prompt_replicate_b": {
+    "raw_root": "qwen38-baseline-mtp3-25-spec-b-20260818",
+    "manifest_sha256": "3f814dd5ef703d76ba01a1b40f16e37f69c80604b2d3faabca71fc0b12b1b52e",
+    "all25_median_tok_s": 90.91677809412319,
+    "selection12_median_tok_s": 86.68323328754565,
+    "cold": true
+  },
+  "self_determinism": {
+    "result": "PASS",
+    "detail": "25/25 prompts token-identical, 0 divergences over 12413 tokens",
+    "compared": [
+      "qwen38-baseline-mtp3-25-spec-a-20260818",
+      "qwen38-baseline-mtp3-25-spec-b-20260818"
+    ],
+    "note": "cleaner than the Qwen3.6 lane, which retained one bistable prompt (holdout--structured-extraction)"
+  },
+  "acceptance": {
+    "avg_draft_acceptance_pct": 64.8,
+    "per_position_typical": [
+      0.84,
+      0.65,
+      0.48
+    ],
+    "note": "position 3 already marginal at ~0.48; depth tuning is the natural lever but is blocked by a four-row guard in the serial-exact GDN path"
+  }
 }
