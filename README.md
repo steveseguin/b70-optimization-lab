@@ -93,7 +93,7 @@ For the full queue and archive, use [docs/model-effort-index.md](docs/model-effo
 
 ### Qwen3.8 27B Model Board
 
-Last audited **2026-08-17**. Qwen3.8 retains Qwen3.6's exact 64-layer,
+Last audited **2026-08-18**. Qwen3.8 retains Qwen3.6's exact 64-layer,
 three-GDN-to-one-full-attention tensor geometry, so the accepted exact-shape
 TP2 stack transfers mechanically. Every new weight set is still independently
 gated. All promoted rows below are target-only and cache-zero. Other B70 hosts
@@ -107,6 +107,7 @@ and [do-not-repeat index](experiments/qwen38-27b-b70/DO-NOT-REPEAT.md).
 | GGUF Q8_0, accepted stack, two simultaneous requests | 2x ASRock B70, TP2, c2 | **`57.398122` aggregate (`28.70` per request)** | Narrow fixed-prompt capacity result, not single-stream or a general quality guarantee; broader prompt pairs confirmed schedule-dependent outputs; no speculation; [c2 repro](repro/qwen38-27b-q8-tp2-c2-asrock-b70/README.md), [capture](experiments/qwen38-27b-b70/data/2026-08-16-q8-tp2-c2-summary.json), [broader audit](experiments/qwen38-27b-b70/data/2026-08-16-q8-c2-batch-shape-audit.json) |
 | Official block-scaled FP8, vLLM/XPU `0.27.2rc1.dev77` | 2x ASRock B70, TP2 | **`21.708532 tok/s`** | Target-only, native FP16 KV, graph c1, cache-zero; all semantic/repeat/3,829-token needle hashes matched the Q8 oracle, but arbitrary continuations are not claimed token-exact and vLLM labels XPU Graph TP2 unsupported/experimental; [standalone repro](repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md), [result note](experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 | Official block-scaled FP8, older Intel vLLM `0.21.0-b3.1` | 2x ASRock B70, TP2 | Not promoted | Superseded negative: artifact loaded, but bounded initialization hit device-lost/out-of-resource errors; [bring-up note](experiments/qwen38-27b-b70/notes/2026-08-15-bringup-checkpoint.md) |
+| AutoRound INT4 W4A16, transferred deterministic vLLM/XPU stack, MTP3 | 2x B70, TP2 | **`91.925538 tok/s` all-25; `86.719870` selection-12** | Lane-opening result only, not promoted: 25 cold rows are reported, but compact raw rows, a Qwen3.8 target-only quality oracle, and a matching B replicate are not yet published. It begins `-2.940497%` all-25 / `-3.393412%` selection-12 versus Qwen3.6 under the same config; [repro and open gates](repro/qwen38-27b-autoround-int4-b70/README.md), [structured summary](data/qwen38-27b-autoround-int4-baseline-20260818.json) |
 
 Community-reported alternatives are kept outside the promoted rows above:
 

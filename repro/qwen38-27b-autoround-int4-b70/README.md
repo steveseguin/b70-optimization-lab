@@ -1,8 +1,9 @@
 # Qwen3.8 27B AutoRound INT4 on 2x Intel Arc Pro B70 — lane setup
 
 New optimization lane, opened 2026-08-18, superseding the Qwen3.6 27B INT4
-speculative lane. The two models are **architecturally identical**, so the entire
-Qwen3.6 optimization stack transfers unchanged.
+speculative lane. The two checkpoints have the same tensor architecture, so the
+pinned Qwen3.6 source stack is mechanically compatible. New weights still
+require independent numerical, quality, determinism, and performance gates.
 
 ## Model
 

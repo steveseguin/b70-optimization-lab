@@ -5,6 +5,7 @@
   "lane": "Qwen3.8 27B AutoRound INT4, MTP3 speculative, 2x Intel Arc Pro B70, vLLM/XPU TP2",
   "model": {
     "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
     "local_path": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
     "manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model.json",
     "architecture_identical_to": "Qwen3.6 27B INT4 lane"
@@ -37,6 +38,7 @@
     "MTP3 speculative decoding worked on the first attempt; no code changes were needed",
     "quality gate not run: no quality baseline exists for this checkpoint yet, and the Qwen3.6 baseline is a different model",
     "self-determinism not yet measured; needs a matching B replicate",
-    "starts about 3% behind the Qwen3.6 lane, which took weeks of tuning to reach 94.710"
+    "same-config delta versus Qwen3.6 is -2.940497% all-25 and -3.393412% selection-12",
+    "the holdout-13 median is 9.433903% faster than selection-12, so all-25 alone must not be compared with the historical selection-12 record"
   ]
 }
