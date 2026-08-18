@@ -145,6 +145,8 @@ trap cleanup EXIT
   echo "candidate_entrypoint=${CANDIDATE_ENTRYPOINT:-$0}"
   echo "expected_vllm_diff_sha256=${VALIDATION_EXPECT_VLLM_DIFF_SHA256:-}"
   echo "expected_kernels_diff_sha256=${VALIDATION_EXPECT_KERNELS_DIFF_SHA256:-}"
+  echo "expected_xpu_count=${VALIDATION_EXPECT_XPU_COUNT:-4}"
+  echo "expected_vllm_version=${VALIDATION_EXPECT_VLLM_VERSION:-0.20.2rc1.dev13+g9557d9108.d20260620}"
   echo "run_dir=$RUN_DIR"
   echo "model_dir=$MODEL_DIR"
   echo "served_model_name=$SERVED_MODEL_NAME"

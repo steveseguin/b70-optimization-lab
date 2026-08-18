@@ -159,7 +159,10 @@ while IFS= read -r name; do
 done < <(compgen -e)
 unset PYTHONPATH LD_PRELOAD LD_LIBRARY_PATH TORCHINDUCTOR_CACHE_DIR
 
-SOURCE_ROOT="$source_root" "$venv/bin/python" - <<'PY' \
+SOURCE_ROOT="$source_root" \
+EXPECTED_XPU_COUNT="${VALIDATION_EXPECT_XPU_COUNT:-4}" \
+EXPECTED_VLLM_VERSION="${VALIDATION_EXPECT_VLLM_VERSION:-0.20.2rc1.dev13+g9557d9108.d20260620}" \
+  "$venv/bin/python" - <<'PY' \
   > "$arm_root/python-runtime-verify.log"
 import json
 import os
@@ -172,7 +175,8 @@ import vllm
 expected = {
     "python_major_minor": "3.12",
     "torch": "2.11.0+xpu",
-    "vllm": "0.20.2rc1.dev13+g9557d9108.d20260620",
+    "vllm": os.environ["EXPECTED_VLLM_VERSION"],
+    "xpu_count": int(os.environ["EXPECTED_XPU_COUNT"]),
 }
 actual = {
     "python_major_minor": ".".join(map(str, sys.version_info[:2])),
@@ -187,7 +191,6 @@ vllm_path = pathlib.Path(actual["vllm_path"])
 valid = (
     all(actual[key] == value for key, value in expected.items())
     and actual["xpu_available"] is True
-    and actual["xpu_count"] == 4
     and vllm_path.is_relative_to(expected_vllm_root)
 )
 print(json.dumps({"expected": expected, "actual": actual, "valid": valid}, indent=2))

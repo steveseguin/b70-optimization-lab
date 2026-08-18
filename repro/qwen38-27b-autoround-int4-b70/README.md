@@ -75,11 +75,20 @@ The Qwen3.6 harness is reused directly. Two environment variables retarget it:
 ```bash
 MODEL_DIR=/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan \
 VALIDATION_MODEL_MANIFEST=$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json \
+VALIDATION_EXPECT_XPU_COUNT=2 \
+VALIDATION_EXPECT_VLLM_VERSION=0.21.1rc1.dev289+g44fc8fde0 \
   ...run-arm.sh spec-native-partition-exact-native 0,1 "$root" "$baseline"
 ```
 
 `VALIDATION_MODEL_MANIFEST` was added for this lane and defaults to the Qwen3.6
-manifest, so every existing Qwen3.6 arm is unaffected.
+manifest, so every existing Qwen3.6 arm is unaffected. The device-count
+override keeps the recorded four-B70 default fail-closed while permitting this
+explicitly identified two-B70 host; the runner still requires the requested
+TP2 pair and logs the expected count in the run identity.
+The version override is the metadata emitted by a fresh editable build of
+source `44fc8fde09` on 2026-08-18. The historical environment retained an older
+distribution label even after its editable source moved to that commit; source
+head and diff remain the authoritative code identity in either case.
 
 The known-good deterministic configuration and its flag set are documented in
 [`../qwen36-27b-autoround-int4-b70-determinism-20260818/README.md`](../qwen36-27b-autoround-int4-b70-determinism-20260818/README.md)
