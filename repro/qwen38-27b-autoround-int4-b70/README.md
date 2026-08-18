@@ -99,6 +99,11 @@ warning, and import-path check are recorded in
 The matching public oneCCL build, checksum manifest, and passing two-rank graph
 oracles are recorded in
 [`ONECCL-BUILD-20260818.md`](ONECCL-BUILD-20260818.md).
+The matching model-specific graph-safe attention stage passed 12,000 replay
+oracles across both B70s. Its complete loadable-package manifest is
+[`manifests/graph-stage-qwen38-head256-oneapi2025.3.3-20260818.sha256`](manifests/graph-stage-qwen38-head256-oneapi2025.3.3-20260818.sha256),
+and the replay summary is
+[`evidence/graph-stage-oracles-20260818.json`](evidence/graph-stage-oracles-20260818.json).
 
 The three optional runtime manifests make a rebuilt host identity explicit
 without weakening the retained reference-host defaults. Entries are

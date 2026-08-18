@@ -13,6 +13,8 @@ python3 -m py_compile "$here/test_graph_replay.py"
 python3 -m py_compile "$here/test_chunk_decode_graph_replay.py"
 bash -n "$here/build.sh"
 git -C "$source_tree" apply --check "$here/qwen27-force-chunk-decode.patch"
+git -C "$source_tree" apply --check \
+  "$here/qwen27-force-chunk-decode-python.patch"
 
 python3 - "$patch_file" "$here/test_graph_replay.py" <<'PY'
 from pathlib import Path
@@ -53,5 +55,14 @@ grep -q 'compiler/2025.3' "$here/build.sh"
 grep -q 'head256_ttfff.cpp.o' "$here/build.sh"
 grep -q 'head256_tffff.cpp.o' "$here/build.sh"
 grep -q 'flash_api.cpp.o' "$here/build.sh"
+grep -q 'VLLM_CHUNK_PREFILL_CONFIG' "$here/build.sh"
+grep -q '_FORCE_CHUNK_DECODE' \
+  "$here/qwen27-force-chunk-decode-python.patch"
+grep -q '^256,true,true,false,false,false$' \
+  "$here/qwen38-head256-chunk.conf"
+grep -q '^256,true,false,false,false,false$' \
+  "$here/qwen38-head256-chunk.conf"
+grep -q '^8,256,64,false,false,false$' \
+  "$here/qwen38-head256-paged.conf"
 
 printf 'PASS: patch applies and graph-safe launch/test invariants are encoded.\n'

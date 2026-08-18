@@ -133,3 +133,32 @@ PORT=19512 QUALITY_REPEAT_RUNS=128 \
 Authoritative packet:
 `results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json`.
 LocalMaxxing approved the record as `cmrgue7kl007pmj01yrkcyqmv`.
+
+## Qwen3.8 two-B70 rebuild (2026-08-18)
+
+The two-card, 15 GiB host reproduced this runtime from XPU-kernels commit
+`2dd55f380df753a10a88fcd9e96192561066e713` with IntelLLVM 2025.3.3 and
+`MAX_JOBS=1`. The current source already contains the completion barrier, so
+the local-accessor patch was rebased onto that source without changing its
+kernel math.
+
+The build now defaults to the checked-in Qwen3.8-specific AOT configs. They
+cover head dimension 256, GQA ratio 6, block size 64, initial prefill, packed
+MTP verification, forced one-token chunk decode, and the paged reference.
+This produced 8 chunk and 2 paged variants instead of the full preset's 632.
+Override `VLLM_CHUNK_PREFILL_CONFIG` and `VLLM_PAGED_DECODE_CONFIG` when
+building a general-purpose package.
+
+Current upstream also has a Python speculative-decode fast dispatch in front
+of the C++ force-chunk switch. Without bypassing it, packed rows enter the
+graph-incompatible paged kernel even when
+`VLLM_XPU_FA2_FORCE_CHUNK_DECODE=1`. The default-off
+`qwen27-force-chunk-decode-python.patch` makes the Python and C++ switches
+consistent; the first oracle intentionally caught this before model launch.
+
+Both B70s then passed 6,000 packed-MTP3 and 6,000 forced-one-token graph
+replays, with live input/length mutations, poisoned outputs, and FP32-reference
+comparison. Worst absolute deviation was `0.00048828125`; both devices
+remained normal and the kernel log contained no reset, fault, hang, OOM, or
+panic. The machine-readable summary is
+`repro/qwen38-27b-autoround-int4-b70/evidence/graph-stage-oracles-20260818.json`.
