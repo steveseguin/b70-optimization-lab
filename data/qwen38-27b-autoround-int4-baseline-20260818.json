@@ -257,5 +257,53 @@
       "pass_all": true,
       "objective_gates": "exact_ok, copy_phrase, arithmetic, json_schema, repeat, long-context all pass on their own merits"
     }
+  },
+  "VALIDATED_RESULT_20260818": {
+    "headline_all25_median_tok_s": 100.4970825273955,
+    "headline_selection12_median_tok_s": 96.62682555114957,
+    "config": "MTP4 (num_speculative_tokens=4), cudagraph_capture_sizes [5], serial-exact GDN OFF, batch-invariant OFF, PERSISTENT GDN SCRATCH OFF, tie-break margin 0.03125, oneDNN INT4/INT8 barriers on, INT8 LM head, fp16",
+    "arms": [
+      {
+        "raw_root": "qwen38-mtp4-noscratch-25-spec-a-20260818",
+        "manifest_sha256": "872c9a3f761c45952fe8674a5da6c781ded713eaad950769c2380dd1f0116f39",
+        "all25_median_tok_s": 101.65265322854655,
+        "selection12_median_tok_s": 96.49920448479887,
+        "cold": true
+      },
+      {
+        "raw_root": "qwen38-mtp4-noscratch-25-spec-b-20260818",
+        "manifest_sha256": "3bba55f01ee4d30800cf1d55e262ec4f7b21ac1215f46040cd71e3cb48bbb377",
+        "all25_median_tok_s": 100.4970825273955,
+        "selection12_median_tok_s": 96.62682555114957,
+        "cold": true
+      },
+      {
+        "raw_root": "qwen38-mtp4-noscratch-25-spec-c-20260818",
+        "manifest_sha256": "84b1833d7d17fdee230006a2a7b632dd0f5ba54dbd5ca59838a73047c4a9d1f6",
+        "all25_median_tok_s": 99.90514803494892,
+        "selection12_median_tok_s": 96.8950643721121,
+        "cold": true
+      }
+    ],
+    "determinism": "PASS - all three pairwise comparisons 25/25 token-identical",
+    "determinism_gate": "pinned compile cache shared by all three arms; fresh-compile determinism NOT yet tested",
+    "quality": "PASS against the model's own baseline (quality-qwen38-int4-mtp3-fast-20260818.json), 15 comparisons",
+    "cold": "all rows cached_tokens=0 in all three arms",
+    "caveats": [
+      "arm C is 99.905, so the arms are not unanimously above 100; the MEDIAN is 100.497",
+      "selection-12 is 96.627, below 100 -- the historical 12-prompt subset has not crossed the line",
+      "validated under the pinned-cache gate; a fresh-compile arm is still outstanding"
+    ]
+  },
+  "root_cause_persistent_gdn_scratch": {
+    "bug": "uninitialized read in the persistent GDN spec-decode scratch at 5 verifier rows (MTP4)",
+    "evidence": [
+      "with scratch ON, MTP4 was 24/25 across all three pairs, always failing on holdout--long-rollover-repository-audit",
+      "the divergence position moved between run pairs (88, 30, 30), which a deterministic arithmetic difference cannot do",
+      "the same prompt run in a 2-prompt suite was IDENTICAL across runs, so the fault is history dependent",
+      "setting VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0 gives 25/25 across all three pairs AND is faster"
+    ],
+    "interpretation": "the scratch is cached across calls and a region is read before being written at 5 rows, so results depend on whatever the allocator left there. MTP3 at 4 rows writes the whole region, which is why it was clean.",
+    "WARNING_FOR_SERIAL_EXACT_WORK": "gdn_attn_interface.cpp requires VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1 whenever serial-exact is enabled. Any MTP4-with-serial-exact build will therefore hit this same uninitialized scratch. The scratch must be zero-initialised, or sized/written correctly for k+1 rows, before that path can be trusted."
   }
 }
