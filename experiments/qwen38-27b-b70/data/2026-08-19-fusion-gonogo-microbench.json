@@ -1,0 +1,53 @@
+{
+ "date": "2026-08-19",
+ "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+ "shape": {
+  "M": 4,
+  "K": 5120,
+  "N_local_gateup": 17408
+ },
+ "weights": "real layer-0 checkpoint gate/up, TP2 rank-0 local shards, dequantized to fp16 (proxy)",
+ "gemm_path": "fp16 torch.matmul proxy; production ark woqgemm int4 unsupported by the prebuilt wheel on BMG-G31 ('no matrix hardware'), proxy reads 4x weight bytes",
+ "warmup": 50,
+ "iters": 300,
+ "results": {
+  "add": {
+   "median_us": 26.33,
+   "p10_us": 26.19,
+   "p90_us": 26.59
+  },
+  "add_rmsnorm": {
+   "median_us": 75.33,
+   "p10_us": 74.7,
+   "p90_us": 78.37
+  },
+  "gateup_gemm": {
+   "median_us": 342.991,
+   "p10_us": 341.931,
+   "p90_us": 344.301
+  },
+  "full_boundary": {
+   "median_us": 406.701,
+   "p10_us": 404.821,
+   "p90_us": 409.512
+  },
+  "graph_add_rmsnorm": {
+   "median_us": 24.86009,
+   "p10_us": 24.813290000000002,
+   "p90_us": 24.93589
+  },
+  "graph_gateup_gemm": {
+   "median_us": 324.34288,
+   "p10_us": 324.34038,
+   "p90_us": 324.37108
+  },
+  "graph_full_boundary": {
+   "median_us": 356.2389,
+   "p10_us": 356.22929,
+   "p90_us": 356.27628999999996
+  }
+ },
+ "fusible_ms_per_layer": 0.03189602000000002,
+ "threshold_ms_per_layer": 0.04,
+ "verdict": "NO-GO: fusible share is below the 0.04 ms/layer integration threshold; fusion cannot pay for itself at this shape"
+}

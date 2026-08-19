@@ -1,0 +1,82 @@
+{
+ "date": "2026-08-19",
+ "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+ "shapes": {
+  "num_gdn_layers": 48,
+  "num_spec_decodes": 1,
+  "total_spec_tokens": 6,
+  "conv": [
+   1,
+   3,
+   5120
+  ],
+  "qkvz": [
+   6,
+   8192
+  ]
+ },
+ "warmup_steps": 200,
+ "measured_steps": 1000,
+ "results": [
+  {
+   "pattern": "empty-per-call",
+   "steps": 1000,
+   "median_ms": 0.925892,
+   "p10_ms": 0.922373,
+   "p90_ms": 0.948292,
+   "mean_ms": 0.932289543
+  },
+  {
+   "pattern": "zeros-per-call",
+   "steps": 1000,
+   "median_ms": 2.435327,
+   "p10_ms": 2.417967,
+   "p90_ms": 2.442236,
+   "mean_ms": 2.433144323
+  },
+  {
+   "pattern": "cached",
+   "steps": 1000,
+   "median_ms": 0.00691,
+   "p10_ms": 0.00686,
+   "p90_ms": 0.00705,
+   "mean_ms": 0.0069496589999999995
+  }
+ ],
+ "record_baseline_tok_s": 101.922,
+ "impact": {
+  "acceptance_0.45": {
+   "tokens_per_step": 3.25,
+   "step_ms": 31.887129373442438,
+   "overhead_ms_per_step": 0.9189820000000001,
+   "overhead_fraction": 0.028819841047384616,
+   "projected_tok_s_gain": 3.024542678465955,
+   "projected_tok_s": 104.94654267846595
+  },
+  "acceptance_0.50": {
+   "tokens_per_step": 3.5,
+   "step_ms": 34.33998547909186,
+   "overhead_ms_per_step": 0.9189820000000001,
+   "overhead_fraction": 0.02676128097257143,
+   "projected_tok_s_gain": 2.802563467688707,
+   "projected_tok_s": 104.72456346768871
+  },
+  "acceptance_0.55": {
+   "tokens_per_step": 3.75,
+   "step_ms": 36.792841584741275,
+   "overhead_ms_per_step": 0.9189820000000001,
+   "overhead_fraction": 0.0249771955744,
+   "projected_tok_s_gain": 2.6109396783121603,
+   "projected_tok_s": 104.53293967831216
+  },
+  "acceptance_0.60": {
+   "tokens_per_step": 4.0,
+   "step_ms": 39.24569769039069,
+   "overhead_ms_per_step": 0.9189820000000001,
+   "overhead_fraction": 0.023416120851,
+   "projected_tok_s_gain": 2.443843197017887,
+   "projected_tok_s": 104.36584319701788
+  }
+ },
+ "note": "allocator-only measurement; the true lane cost additionally includes any cache-lookup and device-side effects"
+}
