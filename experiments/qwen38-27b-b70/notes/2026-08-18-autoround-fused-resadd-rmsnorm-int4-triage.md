@@ -3,6 +3,14 @@
 Date: 2026-08-18
 Status: source-reviewed candidate; not built or benchmarked in this lane
 
+> **2026-08-19 addendum: NO-GO by measurement.** The fusible share
+> (residual-add + RMSNorm device time) at M=4/K=5120/N=17408 TP2 is
+> 31.9 µs/layer under graph-replay timing, below this note's 0.04 ms/layer
+> integration threshold, before the fused kernel's own prepass costs.
+> Candidate closed without building the kernel; see
+> 2026-08-19-autoround-int4-fusion-gonogo-negative.md. The proof order below
+> remains the template for any future kernel candidate.
+
 ## Candidate
 
 The Qwen3.6 ledger left one structural candidate unfinished: fuse the repeated
