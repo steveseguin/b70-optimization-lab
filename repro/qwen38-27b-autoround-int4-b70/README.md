@@ -147,6 +147,41 @@ handoff remains incomplete. See the
   worker during warmup and triggered one BCS reset. See the
   [safety note](../../experiments/qwen38-27b-b70/notes/2026-08-18-autoround-int4-stock-image-lowram-unsafe.md).
 
+## Current record — 101.922 tok/s, MTP5 (2026-08-18)
+
+LocalMaxxing `cmszbkxco0e11ms01l2rixxbt`. Median of three cold arms
+(`100.896` / `102.042` / `101.922`) on the 25-prompt suite; all three pairwise
+comparisons 25/25 token-identical; quality passes against this model's own
+baseline. **Selection-12 is `95.167`** — lower than the MTP4 row's `96.627`,
+because depth helps the newer holdout prompts and hurts the historical ones.
+
+Identical to the MTP4 command below except:
+
+```bash
+VALIDATION_NUM_SPECULATIVE_TOKENS=5 \
+VALIDATION_COMPILATION_CONFIG_OVERRIDE='{"use_inductor_graph_partition":true,"pass_config":{"fuse_rope_kvcache_cat_mla":false},"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[6],"max_cudagraph_capture_size":6}' \
+```
+
+Depth was swept: MTP3 `96.616`, MTP4 `100.497`, **MTP5 `101.922`**, MTP6
+`99.464`. Five is the optimum; six turns over.
+
+### What a third party cannot reproduce exactly
+
+Two things are honestly out of reach without host access:
+
+1. **The staged graph-safe FlashAttention binaries.** `run-arm.sh` hard-checks
+   four SHA256s against a 3.1 GB AOT SYCL package that is not published and
+   cannot be rebuilt bit-identically across toolchains. A self-built package
+   from `experiments/qwen27_graphsafe_flash_attention/` will fail `verify_sha`;
+   that check has to be relaxed for an independent run.
+2. **The torch.compile cache.** Token-for-token determinism is only reproducible
+   against a *pinned* compile cache; fresh compilations emit
+   different-but-internally-deterministic code. The speed reproduces; the exact
+   token stream will not.
+
+Everything else — model manifest, both source trees on the public forks, the
+quality baseline, and the harness — is published.
+
 ## Validated result — 100.497 tok/s (2026-08-18)
 
 Median of three arms on the 25-prompt suite, 25/25 self-determinism, quality
