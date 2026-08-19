@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "date_local": "2026-08-18",
+  "classification": "fusion_candidate_fixture_pointer",
+  "purpose": "Proof-order step 2 support for the fused residual-add/RMSNorm/INT4 gate-up candidate: real checkpoint weights plus fp32 reference outputs, generated entirely on CPU (safe on the 15 GiB host).",
+  "triage_note": "experiments/qwen38-27b-b70/notes/2026-08-18-autoround-fused-resadd-rmsnorm-int4-triage.md",
+  "generator": "experiments/qwen38-27b-b70/scripts/fusion-fixture.py",
+  "regenerate": [
+    "python experiments/qwen38-27b-b70/scripts/fusion-fixture.py extract --model-dir /mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround --out-dir <out> --layers 0,30",
+    "python experiments/qwen38-27b-b70/scripts/fusion-fixture.py prove --fixture-dir <out>"
+  ],
+  "second_host_copy": "/home/steve/qwen38-fusion-fixture-v1/",
+  "sha256": {
+    "fixture.json": "1932e0366621eebe14e1a6e6484ba94bd39aefaf15a5d6c7ce42ef3484003aeb",
+    "fixture.safetensors": "80b65f25f7377f6053048edc4f3fbf2ce14bde3062b8c34b14a73b2790da2ddd",
+    "reference-layer0.safetensors": "ee8bcc2c65f3aac7b6e80ae3bccf334a874fe4dc37cb3657859f1e75824563f3",
+    "reference-layer30.safetensors": "b2d6c83ff04429d7c1c9789666142c95ad91e97182924a785690e848b25b8fa8"
+  },
+  "proof_results": {
+    "dequant_vs_ark_oracle": "exact (max_abs_diff=0.0) for layers 0 and 30, gate and up",
+    "compare_self_check": "identity candidate OK; +0.01 perturbed candidate FAILs as required",
+    "ark_xpu_lib": "not loaded on this host (expected); CPU oracle path used"
+  },
+  "notes": [
+    "Weights are real checkpoint bytes (layers 0 and 30); h/r activation rows are deterministic synthetic fp16 (seed 20260818 + layer) until the measuring host drops in a real activation dump",
+    "reference outputs cover the exact TP2 local view: rank r sees concat(gate[:, r*8704:(r+1)*8704], up[:, r*8704:(r+1)*8704]) at M=4, K=5120",
+    "compare subcommand scores a candidate kernel's safetensors against these references (default atol/rtol 1e-3)"
+  ]
+}
