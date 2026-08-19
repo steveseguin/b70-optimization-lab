@@ -35,10 +35,19 @@ second lab host, which has 15 GiB of system RAM.
    oracle. Qwen3.6 output cannot be used as the correctness baseline for new
    Qwen3.8 weights.
 
-Once those gates exist, the first source-level candidate is the reviewed
-[M=4 residual/RMSNorm/INT4 gate-up fusion](../../experiments/qwen38-27b-b70/notes/2026-08-18-autoround-fused-resadd-rmsnorm-int4-triage.md).
-It is not a drop-in Intel kernel and must pass the recorded real-weight,
-microbenchmark, graph-replay, and quality proof order before integration.
+Once those gates exist, the source-level queue for >105 tok/s, in order
+(details in `experiments/qwen38-27b-b70/notes/`):
+
+1. Build and A/B the zero-init GDN scratch fix (`e34e82b05`, kernel note
+   2026-08-18). Measured per-call alloc cost is 0.93 ms/step Python-level
+   (true C++ ≈ 0.3–0.9 ms/step), so this is necessary but likely not
+   sufficient alone; see 2026-08-19-autoround-int4-scratch-alloc-cost-105-lever.md.
+2. Screen the rerank K=2 draft-top-k candidate (audit
+   2026-08-18-autoround-int4-draft-topk-rerank-audit.md); estimated +3–6 tok/s
+   from acceptance lift at unchanged verifier cost.
+3. The M=4 residual/RMSNorm/INT4 gate-up fusion is **closed NO-GO**: its
+   fusible share measured 31.9 µs/layer, below the 0.04 ms/layer threshold;
+   see 2026-08-19-autoround-int4-fusion-gonogo-negative.md. Do not build it.
 
 ## Why execution is paused on the second host
 
