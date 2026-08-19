@@ -58,6 +58,30 @@ supp_group_procs() {
     | awk -v pg="$SUPP_PGID" '$2 == pg' || true
 }
 
+supp_group_stat() {
+  # Detailed per-member memory anatomy from /proc: anonymous, file-backed,
+  # locked (pinned), and swapped pages. A 6-second host-memory collapse
+  # (2026-08-18 smoke) was invisible to ps RSS alone; these fields separate
+  # pinned growth from ordinary swapping.
+  [[ -n "$SUPP_PGID" ]] || return 0
+  local pid
+  for pid in $(ps -eo pid=,pgid= 2>/dev/null \
+      | awk -v pg="$SUPP_PGID" '$2 == pg {print $1}'); do
+    [[ -r "/proc/$pid/status" ]] || continue
+    awk -v pid="$pid" '
+      /^Name:/    { name=$2 }
+      /^VmRSS:/   { rss=$2 }
+      /^RssAnon:/ { anon=$2 }
+      /^RssFile:/ { file=$2 }
+      /^RssShmem:/{ shmem=$2 }
+      /^VmLck:/   { lck=$2 }
+      /^VmSwap:/  { swap=$2 }
+      END { printf "    %s %s rss=%skB anon=%skB file=%skB shmem=%skB locked=%skB swap=%skB\n",
+                  pid, name, rss, anon, file, shmem, lck, swap }
+    ' "/proc/$pid/status" 2>/dev/null
+  done
+}
+
 supp_alive() {
   if [[ -n "$SUPP_PGID" ]]; then
     kill -0 -- "-$SUPP_PGID" 2>/dev/null
@@ -193,9 +217,8 @@ supp_start_watchdog() {
             "$SUPP_WATCHDOG_MIN_AVAILABLE_KB" "${swap_free:-?}" "$low_streak"
           printf '  terminating supervised group pgid=%s pid=%s\n' \
             "$SUPP_PGID" "$SUPP_PID"
-          ps -eo pid=,pgid=,rss=,vsz=,comm= 2>/dev/null \
-            | awk -v pg="$SUPP_PGID" '$2 == pg'
         } >> "$SUPP_LOG"
+        supp_group_stat >> "$SUPP_LOG" 2>/dev/null || true
         kill -TERM -- "-$SUPP_PGID" 2>/dev/null || true
         waited=0
         while kill -0 -- "-$SUPP_PGID" 2>/dev/null \
@@ -214,11 +237,11 @@ supp_start_watchdog() {
       fi
       if (( elapsed - last_snapshot >= SUPP_WATCHDOG_SNAPSHOT_S )); then
         {
-          printf '%s snapshot MemAvailable=%skB SwapFree=%skB group:\n' \
-            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${avail:-?}" "${swap_free:-?}"
-          ps -eo pid=,pgid=,rss=,vsz=,comm= 2>/dev/null \
-            | awk -v pg="$SUPP_PGID" '$2 == pg'
+          printf '%s snapshot MemAvailable=%skB SwapFree=%skB committed_as=%skB group:\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${avail:-?}" "${swap_free:-?}" \
+            "$(awk '/^Committed_AS:/ {print $2}' /proc/meminfo 2>/dev/null)"
         } >> "$SUPP_LOG"
+        supp_group_stat >> "$SUPP_LOG" 2>/dev/null || true
         last_snapshot=$elapsed
       fi
       sleep "$SUPP_WATCHDOG_POLL_S"

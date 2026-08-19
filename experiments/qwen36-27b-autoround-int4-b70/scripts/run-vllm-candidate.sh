@@ -442,7 +442,13 @@ smoke_rc=0
 bench_rc=0
 quality_rc=0
 
+server_ready=0
 if supp_alive && [[ -s "$RUN_DIR/models.json" ]]; then
+  server_ready=1
+fi
+echo "$server_ready" > "$RUN_DIR/server-ready"
+
+if [[ "$server_ready" == "1" ]]; then
   set +e
   if [[ "$RUN_SMOKE" != "0" ]]; then
     BASE_URL="http://127.0.0.1:${PORT}/v1" \
@@ -600,6 +606,12 @@ PY
 cp "$SUMMARY_OUT" "$RUN_DIR/summary.json" 2>/dev/null || true
 
 echo "$SUMMARY_OUT"
+if [[ "$server_ready" != "1" ]]; then
+  # A server that died or timed out before readiness must not look like a
+  # clean "all skipped" run (previously surfaced as a confusing rc=7..9 in
+  # run-arm.sh). exit 2: infrastructure failure, not a model result.
+  exit 2
+fi
 if [[ "$smoke_rc" -ne 0 || "$bench_rc" -ne 0 || "$quality_rc" -ne 0 ]]; then
   exit 1
 fi

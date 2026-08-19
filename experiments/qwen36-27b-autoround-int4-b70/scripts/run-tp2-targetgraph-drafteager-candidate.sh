@@ -40,9 +40,15 @@ export VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE="${VLLM_XPU_GDN_PROMOTE_ACCEPTED
 export VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE="${VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE:-0}"
 export VLLM_XPU_GDN_REPLAYSSM_SPEC="${VLLM_XPU_GDN_REPLAYSSM_SPEC:-1}"
 # ReplaySSM keeps two non-overlapping speculative windows. Derive the minimum
-# ring length from k so depth screens cannot silently inherit the MTP3-only
-# value of 8; callers may still request a larger power-of-two ring.
-export VLLM_XPU_GDN_REPLAYSSM_SPEC_CACHE_LEN="${VLLM_XPU_GDN_REPLAYSSM_SPEC_CACHE_LEN:-$((2 * (NUM_SPECULATIVE_TOKENS + 1)))}"
+# ring length from k and round up to a power of two, matching the vLLM
+# consumers' own normalisation (both enforce >= 2*(k+1) and round up), so
+# depth screens cannot silently inherit the MTP3-only value of 8; callers may
+# still request a larger power-of-two ring.
+_min_ring=$((2 * (NUM_SPECULATIVE_TOKENS + 1)))
+_pow2_ring=1
+while (( _pow2_ring < _min_ring )); do _pow2_ring=$((_pow2_ring * 2)); done
+export VLLM_XPU_GDN_REPLAYSSM_SPEC_CACHE_LEN="${VLLM_XPU_GDN_REPLAYSSM_SPEC_CACHE_LEN:-$_pow2_ring}"
+unset _min_ring _pow2_ring
 export VLLM_XPU_GDN_REPLAYSSM_TORCH_FALLBACK="${VLLM_XPU_GDN_REPLAYSSM_TORCH_FALLBACK:-0}"
 export VLLM_XPU_GDN_REPLAYSSM_STAGE_CONV_TORCH_FALLBACK="${VLLM_XPU_GDN_REPLAYSSM_STAGE_CONV_TORCH_FALLBACK:-0}"
 export VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD="${VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD:-1}"
