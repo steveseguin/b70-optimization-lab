@@ -381,5 +381,23 @@
     "self_determinism": "FAIL 22/25, 3 divergences (selection--sql-debugging@36, holdout--factual-protocol@311, holdout--long-rollover-repository-audit@469)",
     "verdict": "HYPOTHESIS DISPROVED. The lean config is both SLOWER (100.424 / 100.045 against 101.922) and less deterministic (22/25 against 25/25). These flags are not pure cost: the oneDNN barriers help pipelining, matching the earlier Qwen3.6 observation that barriers-on measured faster than barriers-off, and they contribute to determinism beyond what the pinned compile cache provides. Keep the full stack.",
     "consequence": "the configuration space is now closed. Depth peaks at MTP5, and every flag subset tested is either slower or less deterministic than the current record. Reaching 105 requires a code change, not a configuration change -- the persistent GDN scratch fix is the only identified candidate."
+  },
+  "async_scheduling_test_20260819": {
+    "motivation": "speculative decoding needs the accepted token ids on the host each step (gpu_model_runner.py:1239-1245) before the next step can be built, so the per-step device-to-host round trip is a serialization point. Async scheduling exists to overlap host scheduling with GPU compute and is explicitly supported alongside spec decode in this vLLM (gpu_input_batch.py:60, gpu_model_runner.py:1780).",
+    "finding_about_the_record": "the record runs had async scheduling OFF. SchedulerConfig.async_scheduling defaults to None and get_scheduler_cls tests `if self.async_scheduling:`, which is falsy for None, so the plain Scheduler was used despite the docstring implying on-by-default. Passing --async-scheduling logged 'async_scheduling': True.",
+    "arm_a": {
+      "raw_root": "qwen38-mtp5-async-25-spec-a-20260819",
+      "manifest_sha256": "db9ba11807463656cddcd9b722df62a1571bd3257dcc1d873b592d23c9a2148e",
+      "all25_median_tok_s": 101.73655189002972,
+      "selection12_median_tok_s": 94.7067176426788
+    },
+    "arm_b_shared_cache": {
+      "raw_root": "qwen38-mtp5-async-25-spec-b-20260819",
+      "manifest_sha256": "c82adf0d4418ef8ff1fbf2d85d5e1bec89bf9ff8473b9624ba2ea95867507fe7",
+      "all25_median_tok_s": 101.72274350611134,
+      "selection12_median_tok_s": 95.5444586606111
+    },
+    "self_determinism": "PASS 25/25",
+    "verdict": "NEUTRAL. 101.737 / 101.723 against the record's 101.922, inside the +/-1 tok/s run-to-run spread we see across arms. Determinism is unaffected at 25/25. The per-step host round trip is therefore not costing measurable time at this step rate, consistent with 32 cores, one request, and ~35 ms steps. Keep the record configuration; async scheduling is neither a gain nor a risk here, and would only matter at higher concurrency or a much shorter step time."
   }
 }
