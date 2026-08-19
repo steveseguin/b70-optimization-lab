@@ -46,15 +46,28 @@ Zero-init is performance-neutral versus the pinned persistent path
 
 ## Functional gates passed here
 
-- history check: repeated identical calls interleaved with a poisoned-state
-  call return bit-identical `core_attn_out` on both builds at synthetic 5-
-  and 6-row shapes. The production MTP4 nondeterminism did **not** reproduce
-  on random inputs — it needed real model state values; the synthetic check
-  is a sanity gate, not the regression proof. The regression proof is the
-  measuring host's strict-25 rerun with `PERSISTENT_SCRATCH=1`.
+- established prefix-parity gate (`scripts/check-gdn-native-spec-prefix.py`,
+  fp16/fp32 state, Qwen3.8 TP2 shapes, `--persistent-scratch
+  --require-bit-exact`): all 4 cases bit-exact at **both** MTP5 (spec-len 5,
+  `data/2026-08-19-gdn-prefix-parity-fixed-mtp5.json`) and the
+  production-failing MTP4 shape (spec-len 4,
+  `data/2026-08-19-gdn-prefix-parity-fixed-mtp4.json`), including
+  varied-accepted-count restarts and padding poison checks.
 - graph regime: 200 XPU-graph replays of the fixed persistent lane are
   bit-exact against eager (`GRAPH_OK`) — the production lane runs this op
   inside captured graphs.
+
+## Sensitivity caveat (important)
+
+The same parity gate run against the **pinned** (uninitialized-scratch)
+build at the MTP4 shape also passes bit-exact
+(`data/2026-08-19-gdn-prefix-parity-pinned-mtp4.json`). In a fresh process
+the caching allocator returns predictable memory, so no op-level synthetic
+gate here can observe the history-dependent read — the production 24/25
+failure needed long-lived allocator residue from real serving. Conclusion:
+these gates prove the fix **preserves the contract and performance**, but
+the bug-removal proof is inseparable from the measuring host's strict-25
+rerun with `PERSISTENT_SCRATCH=1`.
 
 ## What remains (measuring host)
 
