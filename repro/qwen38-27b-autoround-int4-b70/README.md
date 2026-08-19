@@ -169,11 +169,22 @@ Depth was swept: MTP3 `96.616`, MTP4 `100.497`, **MTP5 `101.922`**, MTP6
 
 Two things are honestly out of reach without host access:
 
-1. **The staged graph-safe FlashAttention binaries.** `run-arm.sh` hard-checks
-   four SHA256s against a 3.1 GB AOT SYCL package that is not published and
-   cannot be rebuilt bit-identically across toolchains. A self-built package
-   from `experiments/qwen27_graphsafe_flash_attention/` will fail `verify_sha`;
-   that check has to be relaxed for an independent run.
+1. **The staged graph-safe FlashAttention binaries.** These are a 3.1 GB AOT
+   SYCL package that is not published and cannot be rebuilt bit-identically
+   across toolchains. Build your own from
+   `experiments/qwen27_graphsafe_flash_attention/` (`build.sh` plus the four
+   patches) and run with:
+
+   ```bash
+   VALIDATION_ALLOW_UNPINNED_BINARIES=1 ...run-arm.sh ...
+   ```
+
+   That downgrades every binary-hash mismatch to a loud warning and writes the
+   actual hashes to `binary-identity.txt` in the arm root, so your run stays
+   auditable against what was really loaded. **It relaxes no correctness gate** —
+   freshness, cache-zero, determinism and quality all still apply. Runs made
+   this way are reproductions, not record-identity runs, and should not be used
+   to promote a submission.
 2. **The torch.compile cache.** Token-for-token determinism is only reproducible
    against a *pinned* compile cache; fresh compilations emit
    different-but-internally-deterministic code. The speed reproduces; the exact

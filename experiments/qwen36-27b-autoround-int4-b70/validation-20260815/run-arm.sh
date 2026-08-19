@@ -107,6 +107,23 @@ else
     edcb9314b43d6990474dfb5d64e3716e8d4c33618ec0e3fbd11ae671e47c8c1f kernels
 fi
 
+# Independent reproduction escape hatch.
+#
+# The pinned binaries below include a ~3 GB ahead-of-time SYCL FlashAttention
+# package that is not published and cannot be rebuilt bit-identically: AOT
+# output depends on the oneAPI toolchain, so binary identity is a property of
+# the build host, not of the source. A third party building from
+# experiments/qwen27_graphsafe_flash_attention/ will therefore never match
+# these hashes and would otherwise be blocked outright.
+#
+# VALIDATION_ALLOW_UNPINNED_BINARIES=1 downgrades the mismatch to a loud
+# warning and records every actual hash in binary-identity.txt inside the arm
+# root, so the run stays auditable against whatever was actually loaded. It
+# does NOT relax any correctness gate: freshness, cache-zero, determinism and
+# quality all still apply.
+#
+# Runs made this way are reproductions, not record-identity runs. Do not
+# promote a LocalMaxxing submission from one.
 verify_sha() {
   local path=$1 expected=$2 label=$3 actual
   if [[ ! -f "$path" ]]; then
@@ -114,9 +131,19 @@ verify_sha() {
     exit 3
   fi
   actual=$(sha256sum "$path" | awk '{print $1}')
+  if [[ -n "${arm_root:-}" ]]; then
+    printf '%s\t%s\t%s\n' "$label" "$actual" "$path" \
+      >> "$arm_root/binary-identity.txt" 2>/dev/null || true
+  fi
   if [[ "$actual" != "$expected" ]]; then
+    if [[ "${VALIDATION_ALLOW_UNPINNED_BINARIES:-0}" == "1" ]]; then
+      printf 'WARNING: %s SHA256 differs from the recorded identity (expected=%s actual=%s path=%s); continuing because VALIDATION_ALLOW_UNPINNED_BINARIES=1. This is a reproduction, not a record-identity run.\n' \
+        "$label" "$expected" "$actual" "$path" >&2
+      return 0
+    fi
     printf '%s SHA256 mismatch: expected=%s actual=%s path=%s\n' \
       "$label" "$expected" "$actual" "$path" >&2
+    printf 'If you are reproducing on your own hardware and built your own FlashAttention package, set VALIDATION_ALLOW_UNPINNED_BINARIES=1.\n' >&2
     exit 3
   fi
 }
