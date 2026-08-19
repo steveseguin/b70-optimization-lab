@@ -279,6 +279,12 @@ PY
 # shellcheck source=../../../repro/qwen36-27b-autoround-int4-b70/configs/record.env
 source "$repo/repro/qwen36-27b-autoround-int4-b70/configs/record.env"
 
+# record.env pins the historical 0.95 device reservation. Low-RAM safety
+# screens may lower it without editing the recorded positive config.
+if [[ -n "${VALIDATION_GPU_MEMORY_UTILIZATION:-}" ]]; then
+  export GPU_MEMORY_UTILIZATION="$VALIDATION_GPU_MEMORY_UTILIZATION"
+fi
+
 export SOURCE_ROOT="$source_root"
 export VLLM_SOURCE_TREE="$source_root/vllm"
 export VLLM_XPU_KERNELS_SOURCE_TREE="$source_root/vllm-xpu-kernels"
