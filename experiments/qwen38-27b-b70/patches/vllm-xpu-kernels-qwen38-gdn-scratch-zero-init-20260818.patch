@@ -1,0 +1,86 @@
+From 0ab8205756b52082399ae1849c0cfb6915f63f04 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 20:27:35 -0400
+Subject: [PATCH] fix(xpu): zero-initialise the persistent GDN spec-decode
+ scratch
+
+Every buffer in get_gdn_spec_decode_scratch was allocated with
+torch::empty. The scratch is cached and reused across calls, so any
+element read before it is written returns the previous call's residue,
+which makes results depend on request history.
+
+At four verifier rows (MTP3) the whole region happened to be written and
+this stayed hidden. At five rows (MTP4) it is not, and the effect is
+measurable: MTP4 failed self-determinism 24/25, always on the same
+prompt, with the divergence position moving between run pairs (88, 30,
+30). A deterministic arithmetic difference cannot move like that. Running
+that prompt alone was byte-identical across runs, confirming the fault is
+history dependent rather than intrinsic. Setting
+VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0 made it 25/25.
+
+Zeroing is the correct fix rather than disabling the scratch: allocation
+happens once per (owner, shape, dtype) and is cached, so this is a single
+memset off the hot path, whereas disabling the scratch reallocates on
+every call.
+
+This also unblocks serial-exact at depths other than 3, since
+gdn_attention_spec_decode hard-requires PERSISTENT_SCRATCH=1 whenever
+VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT is set and would
+otherwise inherit the same uninitialized reads.
+
+torch::ones for has_initial_state and torch::arange for
+exact_query_start_loc are intentional and left unchanged.
+
+Co-authored-by: Claude
+---
+ csrc/xpu/gdn_attn/gdn_attn_interface.cpp | 29 ++++++++++++++----------
+ 1 file changed, 17 insertions(+), 12 deletions(-)
+
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index e5e51d6..8a13801 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -202,23 +202,28 @@ GdnSpecDecodeScratch& get_gdn_spec_decode_scratch(
+   entry->local_num_v_heads = local_num_v_heads;
+   entry->head_k_dim = head_k_dim;
+   entry->head_v_dim = head_v_dim;
+-  entry->accepted_state_indices = torch::empty({num_spec_decodes}, int_options);
+-  entry->running_state_indices = torch::empty({num_spec_decodes}, int_options);
++  // Zero-initialise every persistent scratch buffer. This scratch is cached
++  // and reused across calls, so any element read before it is written returns
++  // the previous call's residue, making results depend on request history. At
++  // four verifier rows the whole region happened to be written; at five it is
++  // not. Allocation happens once per shape, so the memset is not on the hot path.
++  entry->accepted_state_indices = torch::zeros({num_spec_decodes}, int_options);
++  entry->running_state_indices = torch::zeros({num_spec_decodes}, int_options);
+   entry->base_conv_state =
+-      torch::empty({num_spec_decodes, conv_history_len, conv_dim}, options);
+-  entry->compact_qkvz = torch::empty({total_spec_tokens, qkvz_dim}, options);
+-  entry->compact_ba = torch::empty({total_spec_tokens, ba_dim}, options);
+-  entry->compact_z = torch::empty(
++      torch::zeros({num_spec_decodes, conv_history_len, conv_dim}, options);
++  entry->compact_qkvz = torch::zeros({total_spec_tokens, qkvz_dim}, options);
++  entry->compact_ba = torch::zeros({total_spec_tokens, ba_dim}, options);
++  entry->compact_z = torch::zeros(
+       {total_spec_tokens, local_num_v_heads, head_v_dim}, options);
+   entry->has_initial_state = torch::ones({num_spec_decodes}, bool_options);
+-  entry->q = torch::empty(
++  entry->q = torch::zeros(
+       {total_spec_tokens, local_num_k_heads, head_k_dim}, options);
+-  entry->k = torch::empty_like(entry->q);
+-  entry->v = torch::empty(
++  entry->k = torch::zeros_like(entry->q);
++  entry->v = torch::zeros(
+       {total_spec_tokens, local_num_v_heads, head_v_dim}, options);
+-  entry->b = torch::empty({total_spec_tokens, local_num_v_heads}, options);
+-  entry->a = torch::empty_like(entry->b);
+-  entry->exact_core = torch::empty_like(entry->compact_z);
++  entry->b = torch::zeros({total_spec_tokens, local_num_v_heads}, options);
++  entry->a = torch::zeros_like(entry->b);
++  entry->exact_core = torch::zeros_like(entry->compact_z);
+   entry->exact_query_start_loc = torch::arange(2, int_options);
+   TORCH_WARN(
+       "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH allocated on ",
+-- 
+2.43.0
+

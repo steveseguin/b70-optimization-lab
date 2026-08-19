@@ -119,3 +119,59 @@ Per-arm manifests and the complete ladder:
 3. Depth 5 — MTP4 gained about 4 tok/s and the scratch fault is now understood.
 4. Attack selection-12 at `96.627`; that subset is what any record comparison
    actually rests on.
+
+## Addendum — depth swept, and the proper scratch fix written
+
+### Depth is exhausted at MTP5
+
+Persistent scratch disabled throughout, all arms cold:
+
+| depth | all-25 | selection-12 |
+| --- | ---: | ---: |
+| MTP3 | `96.616` | `94.037` |
+| MTP4 | `100.497` | **`96.627`** |
+| **MTP5** | **`101.922`** | `95.167` |
+| MTP6 | `99.464` | `93.592` |
+
+MTP5 is the all-25 optimum and MTP6 turns over. Note the split: **MTP4 is
+better on the 12 historical prompts** (`96.627` against MTP5's `95.167`). Depth
+helps the newer holdout prompts and hurts the historical ones, so the right
+configuration depends on which suite a comparison is against. Both are
+submitted: MTP4 `cmszarna10e0nms0103hv0tve`, MTP5 `cmszbkxco0e11ms01l2rixxbt`.
+
+MTP5 was validated on three cold arms (`100.896` / `102.042` / `101.922`), all
+three pairwise comparisons 25/25 token-identical, quality passing against this
+model's own baseline.
+
+### The proper fix, written but not yet built here
+
+`get_gdn_spec_decode_scratch` allocated **every** buffer with `torch::empty`.
+The fix replaces those twelve allocations with `torch::zeros`/`zeros_like`,
+leaving the intentional `torch::ones` for `has_initial_state` and
+`torch::arange` for `exact_query_start_loc` alone.
+
+Zeroing is correct rather than disabling the scratch: allocation happens once
+per `(owner, shape, dtype)` and is cached, so it is a single memset off the hot
+path, whereas `PERSISTENT_SCRATCH=0` reallocates on **every call**. The current
+`101.922` is therefore paying an allocation per call that the fix removes.
+
+- kernel commit `0ab8205` on branch `fix/gdn-scratch-zero-init`, pushed to
+  `https://github.com/steveseguin/vllm-xpu-kernels.git`;
+- flat patch:
+  [`../experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-scratch-zero-init-20260818.patch`](../experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-scratch-zero-init-20260818.patch).
+
+**It has not been built or measured.** The kernel build path is a full
+`setup.py bdist_wheel` with SYCL ahead-of-time compilation, and this host has
+only ~4.7 GB free on `/` while a previous build tree measured 2.3 GB. There are
+7.4 GB of untracked `.so.pre-*` rollback snapshots in the kernel repo that would
+cover it, but those are deliberate rollback points and were left alone.
+
+The kernel checkout was returned to the pinned `2dd55f38` with a clean tree, so
+the validation harness still runs; the fix lives only on the branch.
+
+### Why this matters beyond speed
+
+`gdn_attention_spec_decode` hard-requires `PERSISTENT_SCRATCH=1` whenever
+`VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT` is set. Any serial-exact build
+at a depth other than 3 therefore inherits these uninitialized reads and cannot
+be trusted until this lands.
