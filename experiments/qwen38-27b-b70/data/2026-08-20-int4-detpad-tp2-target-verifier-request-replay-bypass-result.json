@@ -1,0 +1,179 @@
+{
+  "schema": "qwen38-int4-detpad-tp2-target-verifier-request-replay-bypass-result-v1",
+  "date": "2026-08-20",
+  "classification": "terminal-negative-target-verifier-replay-bypass-insufficient",
+  "promotion_eligible": false,
+  "preregistration": "../notes/2026-08-20-detpad-tp2-target-verifier-request-replay-bypass-prereg.md",
+  "result_note": "../notes/2026-08-20-detpad-tp2-target-verifier-request-replay-bypass-result.md",
+  "treatment_scope": {
+    "request_selected_target_verifier_uniform_m6_replay_bypassed": true,
+    "target_runtime_path": "compiled-non-cudagraph",
+    "ordinary_one_token_target_graph_eligible": true,
+    "drafter_graph_keys_enabled": true,
+    "drafter_geometry": "PIECEWISE-padded-M6",
+    "startup_mixed_and_uniform_capture_descriptors_retained": true,
+    "one_time_worker_tp0_marker_source_delta": true
+  },
+  "arms": {
+    "t1": {
+      "artifact_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-detpad-composite4dd-marginfree-mtp5-25-target-request-replay-bypass-t1-20260820",
+      "runner_exit_code": 0,
+      "checksum_manifest_sha256": "c4cc9c614d563ce2a253c49ab17cbdc9aa8ae8a482227bc396d825c631d0d6e7",
+      "bench_json_sha256": "f73ff8148c2152901a362b6db6491e2cee3003246cf69ebe7c4b0c57e643be59",
+      "whole_suite_token_arrays_sha256": "9fc260b5a0d81fd49768ad001a1754d2249367d37114d33c7d1ba43b78101bca",
+      "sealed_gate_json_sha256": "472d8c0354fd11eeadcde2e37a8a58703336c7f5916d31590d675b2ea1ae041a",
+      "quality_json_sha256": "04fdacebe530a6c67b88dc0ff7f0ffd8f77460987ccecbf4cf38f1d2bda3ef4d",
+      "sealed_gate_status": "passed",
+      "quality_enabled": true,
+      "quality_pass_all": true,
+      "quality_baseline_match_all": true,
+      "preferred_median_tok_s": 60.74027784177643,
+      "legacy_median_tok_s": 61.35381600179438,
+      "spec_metrics_rows": 28,
+      "aggregate_drafted": 18405,
+      "aggregate_accepted": 9174
+    },
+    "t2": {
+      "artifact_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-detpad-composite4dd-marginfree-mtp5-25-target-request-replay-bypass-t2-20260820",
+      "runner_exit_code": 14,
+      "runner_exit_classification": "preregistered-scientific-token-parity-failure",
+      "checksum_manifest_sha256": "8b24cd49b1faa4711fe3f31621d863a538d9f1dd88f2e47e42b32c2dc0c28a1d",
+      "bench_json_sha256": "5aaf250b62f1f5ad3f263a2f39984eb01ad3c22a6f8dfacbce48045f14ffa6d3",
+      "whole_suite_token_arrays_sha256": "c5163467db2a3c42589ead9a5c293a81c7955cce6928cc585a4ebf4750cea628",
+      "sealed_gate_json_sha256": "7c1e777869780eed509d2eb6fc8ef6e17999af36328c04570fb1af93c0ae1f8f",
+      "token_parity_json_sha256": "4063894c1107ce8b91bae5b783b208b18f53a6e7eb754f1759337c6161c655f6",
+      "sealed_gate_status": "passed",
+      "quality_enabled": false,
+      "quality_skipped_as_preregistered": true,
+      "preferred_median_tok_s": 61.13557334028222,
+      "legacy_median_tok_s": 61.75310438412346,
+      "spec_metrics_rows": 22,
+      "aggregate_drafted": 17475,
+      "aggregate_accepted": 8441
+    }
+  },
+  "performance": {
+    "preferred_pair_central_tok_s": 60.93792559102933,
+    "legacy_pair_central_tok_s": 61.55346019295892,
+    "t2_delta_vs_t1_preferred_percent": 0.6507963291433994,
+    "b2_preferred_median_tok_s": 101.1236430226841,
+    "preferred_pair_delta_vs_b2_percent": -39.73919078710436,
+    "promotable": false,
+    "note": "Descriptive only; the diagnostic changes target/verifier replay selection and includes a one-time marker source delta."
+  },
+  "comparisons": {
+    "t2_vs_t1": {
+      "exact_token_arrays": 24,
+      "prompt_count": 25,
+      "all_exact": false,
+      "mismatch_prompt_indexes": [24],
+      "first_difference": {
+        "prompt_index": 24,
+        "zero_based_token_index": 469,
+        "t2_token_id": 9345,
+        "t1_token_id": 3669
+      }
+    },
+    "t1_vs_target_a": {
+      "exact_token_arrays": 17,
+      "mismatch_prompt_indexes": [2, 10, 12, 16, 19, 20, 22, 24]
+    },
+    "t2_vs_target_a": {
+      "exact_token_arrays": 18,
+      "reference_bench_sha256": "045fd8b4fc9f1eda3bbc778e4b88a6ad7407ff4a50be879dc4e9780b37e0d6e8",
+      "mismatch_prompt_indexes": [2, 10, 12, 16, 19, 20, 22]
+    },
+    "t1_vs_b2": {
+      "exact_token_arrays": 23,
+      "mismatch_prompt_indexes": [6, 11]
+    },
+    "t2_vs_b2": {
+      "exact_token_arrays": 22,
+      "reference_bench_sha256": "96933a8211867479410375aaad7bd96bfb9f97d0edafc12af80dc9963805e721",
+      "mismatch_prompt_indexes": [6, 11, 24]
+    },
+    "t1_vs_combined_r1_r2": {
+      "exact_token_arrays": 24,
+      "r1_reference_bench_sha256": "857f50218528f984e1e1e78e7ded7564f5500940d315d145724b5790fe7813fa",
+      "r2_reference_bench_sha256": "ace48af9e567fc6b55c973e517492b87dc8ca823542b0ba2a5d582f872c814ab",
+      "mismatch_prompt_indexes": [24]
+    },
+    "t2_vs_combined_r1_r2": {
+      "exact_token_arrays": 25,
+      "r1_reference_bench_sha256": "857f50218528f984e1e1e78e7ded7564f5500940d315d145724b5790fe7813fa",
+      "r2_reference_bench_sha256": "ace48af9e567fc6b55c973e517492b87dc8ca823542b0ba2a5d582f872c814ab",
+      "mismatch_prompt_indexes": []
+    },
+    "t2_vs_s1": {
+      "exact_token_arrays": 23,
+      "reference_bench_sha256": "ef58255251c5e2462d8dc51da19fe9ec9e737e531116acb4b406cddc99ec61fb",
+      "mismatch_prompt_indexes": [6, 11]
+    }
+  },
+  "prompt_24": {
+    "prompt_id": "holdout--long-rollover-repository-audit",
+    "first_difference_zero_based_token_index": 469,
+    "t1": {
+      "token_count": 512,
+      "all_token_ids_zero": false,
+      "token_469": 3669,
+      "family": "B2",
+      "token_array_sha256": "e616edc891bb591457b5c410c63d09795b5023c7cc4b403052df2e57e2950407",
+      "output_sha256": "c923f52f0159d5a1a8163d77ebba9b911bd9c658efc85ef83383b0a0c0a1428b"
+    },
+    "t2": {
+      "token_count": 512,
+      "all_token_ids_zero": false,
+      "token_469": 9345,
+      "family": "R1-R2-S1-targetA",
+      "token_array_sha256": "b1ad815bceff49895fedb75552c6f7d8a4650a965f818aeb4c20fb3685c8f20b",
+      "output_sha256": "471a54e871126200a286dedbc80c6c689ce83093be06e7350b551a512cf364dd"
+    }
+  },
+  "identity_and_integrity": {
+    "repository_head": "a750f01ef2d52a8d6d8c2d53ad9850f658c182cd",
+    "vllm_head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+    "vllm_live_diff_sha256": "4193f05e8f255cf07de81360eff031fdb2e468218c2660850d69c9f750369683",
+    "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "model_file_count": 19,
+    "model_dual_view_verified": true,
+    "engine_seed": 0,
+    "request_seed": 1,
+    "tensor_parallel_size": 2,
+    "physical_gpu_indexes": [2, 3],
+    "graph_stage_manifest_sha256": "47861e8391b6b25dd9c3eb25e25c5939753aa470858b667d5bdf181344db18da",
+    "xpu_native_extension_sha256": "4dd336013d155aab004fb1c916118957cb9349b491938da65769f2d8af18ffb0",
+    "xpu_fa_extension_sha256": "33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739",
+    "compile_cache_namespace": "b99160ae76",
+    "compile_cache_manifest_sha256": "f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb0ff",
+    "compile_cache_tree_sha256": "723c1599060f5c9c82dc5731cc75b50620c79d202b34ee99b8390d3aec20acbe",
+    "compile_cache_entries": 3795,
+    "compile_cache_files": 3246,
+    "compile_cache_bytes": 395855113,
+    "compile_cache_input_output_byte_identical_both_arms": true,
+    "compile_cache_byte_delta_both_arms": 0,
+    "direct_outer_loads_each": 2,
+    "direct_aot_loads_each": 4,
+    "compile_or_aot_save_negatives": 0,
+    "pad_markers_each": 2,
+    "pad_marker_ranks_each": [0, 1],
+    "effective_selector_each": 1,
+    "independent_expected_selector_each": 1,
+    "effective_umbrella_bypass_each": 0,
+    "independent_expected_umbrella_bypass_each": 0,
+    "drafter_graph_disable_each": 0,
+    "engagement_markers_each": 1,
+    "engagement_marker_actor_and_rank": "Worker_TP0/rank0",
+    "startup_capture_records_each": 6,
+    "startup_capture_inventory_each": "mixed-prefill-decode-PIECEWISE-and-decode-PIECEWISE-each-0-of-1,1-of-1,1-of-1",
+    "graph_capture_finished_events_each": 1,
+    "cudagraph_metrics_disabled_markers_each": 1,
+    "cudagraph_metrics_rows_each": 0,
+    "checker_negative_lines_each": 0,
+    "suite_sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c",
+    "quality_baseline_sha256": "45424f1d2dcbfda0a5ed75552cf799cac0e8fb6b8c5e1ddf2aba540b95c77e95",
+    "native_gdn_prerequisite_sha256": "61b9f0031e153d4841b139263d8a7afbef6004b8a8da3491affcf8688c329d1d"
+  },
+  "conclusion": "T1 and T2 passed all arm-local gates but differed at prompt 24 token 469. The request-selected target/verifier replay bypass is insufficient for full-25 repeatability and cannot by itself explain the combined R1/R2 positive.",
+  "next_action": "No T3 or retry is authorized. Preserve T1/T2. Any future drafter-geometry or startup-history split requires a new source audit and preregistration."
+}

@@ -1,8 +1,11 @@
 # Qwen3.8 TP2 target/verifier request-selected replay-bypass preregistration
 
-Status: **preregistered; not launched**. T1 and T2 are authorized only through
-the frozen launcher and stop contract below. No GPU or service process was
-started while preparing this packet.
+Status: **completed; terminal negative**. T1 passed every arm gate, but T2
+matched T1 on only 24/25 complete token arrays, with the sole split at prompt
+24 token 469. The target/verifier request-selected replay bypass is therefore
+insufficient for full-25 repeatability under this identity. No T3 or retry is
+authorized. See the
+[result](2026-08-20-detpad-tp2-target-verifier-request-replay-bypass-result.md).
 
 ## Question and treatment boundary
 

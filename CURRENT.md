@@ -199,14 +199,17 @@ not component localization, target exactness, lane-wide determinism, or a
 promotable performance result. The preregistered campaign is complete and no
 further arm is authorized.
 
-The next target-only split is now preregistered but **not launched**. It sets
-the request-selected target/verifier replay selector to N=1 while keeping the
+The subsequent target-only split is also complete and terminal. It set the
+request-selected target/verifier replay selector to N=1 while keeping the
 umbrella bypass off, drafter graph keys enabled at PIECEWISE/M6, and both
-startup capture descriptors intact. Its sole vLLM delta is a frozen one-time
-Worker_TP0 engagement marker. T1 is quality-on and no-retry; T2 requires an
-independently supplied checksum-manifest SHA for immutable T1 and is terminal
-at either 25/25 replication or the preregistered recurrence status. This is a
-correctness localization diagnostic, not a performance candidate.
+startup capture descriptors intact. T1 passed all gates and quality; T2 passed
+all arm-local gates but failed the mandatory peer check at **24/25**, differing
+only at prompt 24 generated token 469. At prompt 24, T1 produced the sane B2
+family and T2 the sane R1/R2/S1/target-A family. The pair central value was only
+`60.938 tok/s`, 39.739% below B2. Target/verifier request-selected replay bypass alone
+is therefore insufficient for full-25 repeatability. No T3 or retry is
+authorized, and the remaining drafter-geometry/startup-history components are
+not localized.
 
 The published `101.922` MTP5 and `100.497` MTP4 LocalMaxxing rows are
 invalidated and withdrawal is recommended. Both opted into a `0.03125` greedy
@@ -238,6 +241,7 @@ manifest immediately before vLLM starts.
 - [graph-replay-bypass preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-graph-replay-bypass-prereg.md)
 - [graph-replay-bypass result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-graph-replay-bypass-result.md)
 - [target/verifier request-selected replay-bypass preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-target-verifier-request-replay-bypass-prereg.md)
+- [target/verifier request-selected replay-bypass result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-target-verifier-request-replay-bypass-result.md)
 
 ## Closed: Qwen3.6 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 
@@ -362,11 +366,13 @@ loaded service.
    [native-GDN result](experiments/qwen38-27b-b70/notes/2026-08-20-native-gdn-prefill-state-stability-result.md),
    [graph-replay-bypass preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-graph-replay-bypass-prereg.md),
    and [graph-replay-bypass result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-graph-replay-bypass-result.md).
-   The only authorized next server diagnostic is the separately
-   [preregistered target/verifier request-selected split](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-target-verifier-request-replay-bypass-prereg.md):
-   run its clean preflight, then T1 exactly once; T2 remains unauthorized
-   until T1 passes and its checksum-manifest SHA is supplied independently.
-   Do not promote or submit these speeds.
+   The separately preregistered
+   [target/verifier request-selected split](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-target-verifier-request-replay-bypass-result.md)
+   is now closed as a terminal negative: T1/T2 passed every arm-local gate but
+   matched only 24/25 complete token arrays, at the known prompt-24 token-469
+   split. Preserve both arms, run no T3 or retry, and do not promote or submit
+   these speeds. Any drafter-geometry or startup-history split needs a new
+   source audit and preregistration.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.

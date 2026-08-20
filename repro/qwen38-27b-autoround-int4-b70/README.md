@@ -29,7 +29,12 @@ require independent numerical, quality, determinism, and performance gates.
 > startup allocation history; both arms remained only 18/25 exact versus target
 > A and the pair central value was 56.363 tok/s. This is bounded diagnostic
 > evidence, not a localized fix or performance candidate. Do not use the
-> historical command below for a new promotion run.
+> historical command below for a new promotion run. A later target-only split
+> retained drafter PIECEWISE/M6 and both startup captures while bypassing only
+> request-selected uniform target/verifier replay. Its two sealed arms matched
+> only 24/25, splitting at prompt 24 token 469 between two sane historical
+> families, and averaged only 60.938 tok/s preferred. That treatment is also
+> terminal and insufficient; no retry or T3 is authorized.
 
 ## Model
 
