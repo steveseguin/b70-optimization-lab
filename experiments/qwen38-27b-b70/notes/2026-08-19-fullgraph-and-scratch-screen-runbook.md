@@ -58,6 +58,14 @@ VALIDATION_COMPILATION_CONFIG_OVERRIDE='{"use_inductor_graph_partition":true,"pa
 
 Watch items, in order of likelihood:
 
+0. **NEVER run captured/breakable GDN with PERSISTENT_SCRATCH=0.**
+   2026-08-20 measuring-host incident (`9b205b9b6`, logged in
+   DO-NOT-REPEAT.md): PIECEWISE + breakable GDN + per-call scratch
+   allocation → `UR_RESULT_ERROR_DEVICE_LOST`. Consistent with this host's
+   op-level evidence: capture requires the persistent (stable-address)
+   scratch path, and the zero-init rebuild is what makes that path
+   quality-safe. The zero-init rebuild is a hard prerequisite for any
+   captured-GDN screen, not an optimization.
 1. **Draft-side capture.** The July lane needed
    `VLLM_XPU_DRAFT_DISABLE_CUDAGRAPHS` handling; if capture fails in the
    draft path, screen again with draft graphs disabled to isolate — a
