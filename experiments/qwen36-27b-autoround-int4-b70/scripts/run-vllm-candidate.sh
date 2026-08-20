@@ -52,34 +52,26 @@ if [[ ! -e "$MODEL_DIR" ]]; then
   exit 2
 fi
 
-# Page-cache-safe model identity gate. Ordinary-read hashing shares the page
-# cache with the safetensors/mmap load, so it cannot detect cache poisoning
-# (observed 2026-08-20 on a fuseblk/NTFS-3G store: cached reads returned
-# wrong bytes, dd iflag=direct returned correct ones). When MODEL_MANIFEST is
-# set, verify via O_DIRECT/dd-direct BEFORE starting the server; fail closed
-# if the cache cannot be bypassed. VERIFY_MODEL_DIRECT=0 opts out explicitly.
-if [[ "${VERIFY_MODEL_DIRECT:-1}" != "0" ]]; then
-  if [[ -n "${MODEL_MANIFEST:-}" ]]; then
-    verify_script="${VERIFY_MODEL_SCRIPT:-}"
-    if [[ -z "$verify_script" ]]; then
-      verify_script=$(ls "$ROOT"/repro/*/scripts/verify-model-direct.py 2>/dev/null | head -1 || true)
-    fi
-    if [[ -z "$verify_script" || ! -f "$verify_script" ]]; then
-      echo "VERIFY_MODEL_DIRECT=1 but no verify-model-direct.py found under $ROOT/repro/*/scripts/" >&2
-      exit 2
-    fi
-    verify_json="$OUT_DIR/model-verify-direct-${LABEL}-${STAMP}.json"
-    echo "Verifying model identity with page-cache bypass: $MODEL_MANIFEST"
-    if ! python3 "$verify_script" "$MODEL_MANIFEST" "$MODEL_DIR" --json "$verify_json"; then
-      echo "Model identity verification FAILED or could not bypass the page cache; refusing to launch." >&2
-      echo "Evidence: $verify_json" >&2
-      exit 2
-    fi
-  else
-    echo "WARNING: MODEL_MANIFEST unset - launching WITHOUT model identity verification." >&2
-    echo "         Set MODEL_MANIFEST to the packet manifests/model.json to enable the direct-I/O gate." >&2
-  fi
+# Model identity gate for both backing-store and page-cache bytes. The observed
+# 2026-08-20 failure had correct O_DIRECT bytes but corrupt ordinary cached
+# reads, so direct-only verification is insufficient: both paths must match the
+# manifest and each other immediately before server launch.
+mkdir -p "$RUN_DIR" "$OUT_DIR"
+MODEL_VERIFY_JSON="$RUN_DIR/model-verify.json"
+MODEL_VERIFY_STATUS=pending
+MODEL_VERIFY_JSON_SHA256=
+MODEL_VERIFY_READ_MODES=
+if [[ -z "${MODEL_MANIFEST:-}" || ! -f "$MODEL_MANIFEST" ]]; then
+  echo "A readable MODEL_MANIFEST is required; refusing to launch." >&2
+  exit 2
 fi
+verify_script="${VERIFY_MODEL_SCRIPT:-}"
+if [[ -z "$verify_script" || ! -f "$verify_script" ]]; then
+  echo "A readable, explicit VERIFY_MODEL_SCRIPT is required; refusing to launch." >&2
+  exit 2
+fi
+MODEL_MANIFEST_SHA256=$(sha256sum "$MODEL_MANIFEST" | awk '{print $1}')
+VERIFY_MODEL_SCRIPT_SHA256=$(sha256sum "$verify_script" | awk '{print $1}')
 
 export MODEL_DIR GPU_INDEX TENSOR_PARALLEL_SIZE PORT HOST SERVED_MODEL_NAME
 export QWEN36_27B_AR_VENV="${QWEN36_27B_AR_VENV:-/home/steve/.venvs/vllm-xpu}"
@@ -112,8 +104,6 @@ RUN_QUALITY="${RUN_QUALITY:-1}"
 QUALITY_SKIP_LONG_CONTEXT="${QUALITY_SKIP_LONG_CONTEXT:-0}"
 QUALITY_BASELINE_JSON="${QUALITY_BASELINE_JSON:-}"
 QUALITY_REQUEST_ID_PREFIX="${QUALITY_REQUEST_ID_PREFIX:-${LABEL}-${STAMP}}"
-
-mkdir -p "$RUN_DIR" "$OUT_DIR"
 
 # Process-group supervision: the vLLM API server spawns EngineCore/Worker_TP
 # children that must never outlive this runner. Launch happens in a dedicated
@@ -191,6 +181,7 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+write_identity() {
 {
   echo "date_utc=$STAMP"
   echo "label=$LABEL"
@@ -204,6 +195,15 @@ trap 'exit 143' TERM
   echo "graph_stage_manifest=${VALIDATION_GRAPH_STAGE_MANIFEST:-historical-default}"
   echo "run_dir=$RUN_DIR"
   echo "model_dir=$MODEL_DIR"
+  echo "model_manifest=${MODEL_MANIFEST:-}"
+  echo "model_manifest_sha256=$MODEL_MANIFEST_SHA256"
+  echo "model_verification_policy=direct-and-ordinary-fail-closed"
+  echo "verify_model_script=$verify_script"
+  echo "verify_model_script_sha256=$VERIFY_MODEL_SCRIPT_SHA256"
+  echo "model_verify_status=$MODEL_VERIFY_STATUS"
+  echo "model_verify_json=$MODEL_VERIFY_JSON"
+  echo "model_verify_json_sha256=$MODEL_VERIFY_JSON_SHA256"
+  echo "model_verify_read_modes=$MODEL_VERIFY_READ_MODES"
   echo "served_model_name=$SERVED_MODEL_NAME"
   echo "gpu_index=$GPU_INDEX"
   echo "tensor_parallel_size=$TENSOR_PARALLEL_SIZE"
@@ -232,6 +232,7 @@ trap 'exit 143' TERM
   echo "draft_lm_head_int4=${VLLM_XPU_DRAFT_LM_HEAD_INT4:-}"
   echo "draft_lm_head_int4_group_size=${VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE:-}"
   echo "draft_lm_head_int4_scale_dtype=${VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE:-}"
+  echo "draft_lm_head_int4_fallback_margin=${VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN:-0}"
   echo "draft_lm_head_int4_rerank_topk=${VLLM_XPU_DRAFT_LM_HEAD_INT4_RERANK_TOPK:-}"
   echo "gdn_serial_spec_decode=${VLLM_XPU_GDN_SERIAL_SPEC_DECODE:-}"
   echo "gdn_serial_spec_conv=${VLLM_XPU_GDN_SERIAL_SPEC_CONV:-}"
@@ -267,6 +268,7 @@ trap 'exit 143' TERM
   echo "gdn_replayssm_commit_in_forward=${VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD:-}"
   echo "gdn_replayssm_fuse_commit_stage=${VLLM_XPU_GDN_REPLAYSSM_FUSE_COMMIT_STAGE:-}"
   echo "gdn_replayssm_slot_mgmt_torch_fallback=${VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK:-}"
+  echo "gdn_spec_persistent_scratch=${VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH:-0}"
   echo "draft_disable_cudagraphs=${VLLM_XPU_DRAFT_DISABLE_CUDAGRAPHS:-}"
   echo "disable_spec_decode_cudagraph_replay=${VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-}"
   echo "skip_compiled_spec_decode=${VLLM_XPU_SKIP_COMPILED_SPEC_DECODE:-}"
@@ -419,6 +421,7 @@ trap 'exit 143' TERM
   echo "low_mem_watchdog_confirm=$SUPP_WATCHDOG_CONFIRM"
   echo "allow_stale_vllm=${ALLOW_STALE_VLLM:-0}"
 } > "$RUN_DIR/identity.env"
+}
 
 # Refuse to compound a leaked earlier run: orphan EngineCore/Worker processes
 # keep holding pinned host memory on this 15 GiB machine.
@@ -440,6 +443,23 @@ fi
 if [[ -n "${SERVER_CCL_KERNEL_PATH:-}" ]]; then
   serve_env+=("CCL_KERNEL_PATH=$SERVER_CCL_KERNEL_PATH")
 fi
+
+# This is deliberately the last model-data operation before server launch.
+# The verifier first hashes every file through O_DIRECT/dd-direct, then hashes
+# every file again through the ordinary cached path that vLLM will use.
+echo "Verifying model identity through direct and ordinary reads: $MODEL_MANIFEST"
+if ! "$PYTHON" "$verify_script" "$MODEL_MANIFEST" "$MODEL_DIR" \
+    --json "$MODEL_VERIFY_JSON"; then
+  echo "Model identity verification FAILED; refusing to launch." >&2
+  echo "Evidence: $MODEL_VERIFY_JSON" >&2
+  exit 2
+fi
+MODEL_VERIFY_STATUS=verified
+MODEL_VERIFY_JSON_SHA256=$(sha256sum "$MODEL_VERIFY_JSON" | awk '{print $1}')
+MODEL_VERIFY_READ_MODES=$("$PYTHON" -c \
+  'import json,sys; print(",".join(json.load(open(sys.argv[1]))["read_modes"]))' \
+  "$MODEL_VERIFY_JSON")
+write_identity
 if ! supp_start_group "$RUN_DIR/server.stdout.log" \
     env "${serve_env[@]}" \
     experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh; then

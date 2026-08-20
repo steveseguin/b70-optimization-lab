@@ -38,6 +38,7 @@ fi
 source_root=${SOURCE_ROOT:-/home/steve/src}
 venv=${VENV:-/home/steve/.venvs/vllm-xpu}
 model_dir=${MODEL_DIR:-/mnt/usb-models/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e}
+model_manifest=${VALIDATION_MODEL_MANIFEST:-$repo/repro/qwen36-27b-autoround-int4-b70/manifests/model.json}
 base_stage=${BASE_STAGE:-$source_root/vllm-xpu-kernels}
 graph_stage=${STAGE:-$repo/experiments/qwen27_graphsafe_flash_attention/staged-package}
 oneccl=${ONECCL_INSTALL_DIR:-/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public}
@@ -238,7 +239,7 @@ verify_graph_stage() {
 }
 
 PYTHON="$venv/bin/python" MODEL_DIR="$model_dir" \
-  MODEL_MANIFEST="${VALIDATION_MODEL_MANIFEST:-$repo/repro/qwen36-27b-autoround-int4-b70/manifests/model.json}" \
+  MODEL_MANIFEST="$model_manifest" \
   "$repo/repro/qwen36-27b-autoround-int4-b70/scripts/download-model.sh" \
   > "$arm_root/model-verify.log"
 
@@ -316,6 +317,8 @@ export SOURCE_ROOT="$source_root"
 export VLLM_SOURCE_TREE="$source_root/vllm"
 export VLLM_XPU_KERNELS_SOURCE_TREE="$source_root/vllm-xpu-kernels"
 export MODEL_DIR="$model_dir"
+export MODEL_MANIFEST="$model_manifest"
+export VERIFY_MODEL_SCRIPT="${VALIDATION_MODEL_VERIFY_SCRIPT:-$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py}"
 export QWEN36_27B_AR_VENV="$venv"
 export ONECCL_INSTALL_DIR="$oneccl"
 export HF_HOME=${VALIDATION_HF_HOME:-/mnt/usb-models/llm-cache/hf}

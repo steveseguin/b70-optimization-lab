@@ -220,7 +220,7 @@ root=${BENCH_ROOT:-/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70}/
 cache=${CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache}/qwen38-mtp4-noscratch
 qbase="$repo/data/qwen38-27b-autoround-int4-b70-baselines/quality-qwen38-int4-mtp3-fast-20260818.json"
 
-VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0 \
+VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH=0 \
 MODEL_DIR=/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan \
 VALIDATION_MODEL_MANIFEST="$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json" \
 VALIDATION_VLLM_CACHE_ROOT="$cache" \
@@ -246,7 +246,7 @@ compilations produce different-but-internally-deterministic code, so a
 fresh-cache rerun will not reproduce token-for-token. The compile cache is part
 of the run identity.
 
-`VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0` is load-bearing, not incidental: with
+`VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH=0` is load-bearing, not incidental: with
 the scratch enabled this configuration fails 24/25 on
 `holdout--long-rollover-repository-audit` because of an uninitialized read at
 five verifier rows.
