@@ -258,10 +258,14 @@ PARITY_PEER_BENCH_SHA256=$(sha256_if_file \
   "${VALIDATION_PARITY_PEER_BENCH:-}")
 TARGET_TOKEN_BENCH_SHA256=$(sha256_if_file \
   "${VALIDATION_TARGET_TOKEN_BENCH:-}")
+REPORT_ONLY_B2_BENCH_SHA256=$(sha256_if_file \
+  "${VALIDATION_REPORT_ONLY_B2_BENCH:-}")
 PARITY_PEER_BENCH_SNAPSHOT_SHA256=$(sha256_if_file \
   "${VALIDATION_PARITY_PEER_BENCH_SNAPSHOT:-}")
 TARGET_TOKEN_BENCH_SNAPSHOT_SHA256=$(sha256_if_file \
   "${VALIDATION_TARGET_TOKEN_BENCH_SNAPSHOT:-}")
+REPORT_ONLY_B2_BENCH_SNAPSHOT_SHA256=$(sha256_if_file \
+  "${VALIDATION_REPORT_ONLY_B2_BENCH_SNAPSHOT:-}")
 
 server_pid=""
 cleanup() {
@@ -381,6 +385,7 @@ write_identity() {
   echo "gdn_spec_persistent_scratch=${VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH:-0}"
   echo "draft_disable_cudagraphs=${VLLM_XPU_DRAFT_DISABLE_CUDAGRAPHS:-}"
   echo "disable_spec_decode_cudagraph_replay=${VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-}"
+  echo "expected_disable_spec_decode_cudagraph_replay=${VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}"
   echo "skip_compiled_spec_decode=${VLLM_XPU_SKIP_COMPILED_SPEC_DECODE:-}"
   echo "spec_decode_verify_trace_file=${VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_FILE:-}"
   echo "spec_decode_verify_trace_max_lines=${VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_MAX_LINES:-}"
@@ -552,6 +557,7 @@ write_identity() {
   echo "expected_quality_baseline_sha256=${VALIDATION_EXPECT_QUALITY_BASELINE_SHA256:-}"
   echo "expected_parity_peer_bench_sha256=${VALIDATION_EXPECT_PARITY_PEER_BENCH_SHA256:-}"
   echo "expected_target_token_bench_sha256=${VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256:-}"
+  echo "expected_report_only_b2_bench_sha256=${VALIDATION_EXPECT_REPORT_ONLY_B2_BENCH_SHA256:-}"
   echo "parity_peer_bench=${VALIDATION_PARITY_PEER_BENCH:-}"
   echo "parity_peer_bench_sha256=$PARITY_PEER_BENCH_SHA256"
   echo "parity_peer_bench_snapshot=${VALIDATION_PARITY_PEER_BENCH_SNAPSHOT:-}"
@@ -560,6 +566,10 @@ write_identity() {
   echo "target_token_bench_sha256=$TARGET_TOKEN_BENCH_SHA256"
   echo "target_token_bench_snapshot=${VALIDATION_TARGET_TOKEN_BENCH_SNAPSHOT:-}"
   echo "target_token_bench_snapshot_sha256=$TARGET_TOKEN_BENCH_SNAPSHOT_SHA256"
+  echo "report_only_b2_bench=${VALIDATION_REPORT_ONLY_B2_BENCH:-}"
+  echo "report_only_b2_bench_sha256=$REPORT_ONLY_B2_BENCH_SHA256"
+  echo "report_only_b2_bench_snapshot=${VALIDATION_REPORT_ONLY_B2_BENCH_SNAPSHOT:-}"
+  echo "report_only_b2_bench_snapshot_sha256=$REPORT_ONLY_B2_BENCH_SNAPSHOT_SHA256"
   echo "target_token_parity_required=${VALIDATION_REQUIRE_TARGET_TOKEN_PARITY:-0}"
   echo "run_arm_script_sha256=${VALIDATION_RUN_ARM_SCRIPT_SHA256:-}"
   echo "sealed_gate_checker_sha256=${VALIDATION_SEALED_GATE_CHECKER_SHA256:-}"

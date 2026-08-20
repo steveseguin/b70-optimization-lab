@@ -34,7 +34,9 @@ SUITE_SHA = hashlib.sha256(SUITE_BYTES).hexdigest()
 TRACE_REQ_ID = f"{gates.REPLAY_MICROSCOPE_REQ_BASE}-deadbeef"
 
 
-def identity_text(fixture: "ArmGateTests", *, pad: int = 1, tp: int = 2) -> str:
+def identity_text(
+    fixture: "ArmGateTests", *, pad: int = 1, tp: int = 2, replay_bypass: int = 0
+) -> str:
     cache_root = fixture.cache_root
     graph_manifest = fixture.graph_manifest
     cache_dir = cache_root / "torch_compile_cache" / "b99160ae76"
@@ -77,6 +79,9 @@ def identity_text(fixture: "ArmGateTests", *, pad: int = 1, tp: int = 2) -> str:
             "vllm_xpu_enable_xpu_graph=1",
             "vllm_xpu_force_graph_with_comm=1",
             "vllm_xpu_graph_noop_comm_capture=1",
+            "disable_spec_decode_cudagraph_replay="
+            + ("1" if replay_bypass else ""),
+            f"expected_disable_spec_decode_cudagraph_replay={replay_bypass}",
             "max_model_len=2048",
             "max_num_batched_tokens=1024",
             "max_num_seqs=1",
@@ -159,6 +164,7 @@ def identity_text(fixture: "ArmGateTests", *, pad: int = 1, tp: int = 2) -> str:
             f"expected_aot_cache_keys={KEY_A},{KEY_B}",
             f"expected_suite_sha256={SUITE_SHA}",
             f"expected_quality_baseline_sha256={gates.sha256_file(fixture.baseline)}",
+            "expected_report_only_b2_bench_sha256=",
             "parity_peer_bench=",
             "parity_peer_bench_sha256=",
             "parity_peer_bench_snapshot=",
@@ -167,6 +173,10 @@ def identity_text(fixture: "ArmGateTests", *, pad: int = 1, tp: int = 2) -> str:
             "target_token_bench_sha256=",
             "target_token_bench_snapshot=",
             "target_token_bench_snapshot_sha256=",
+            "report_only_b2_bench=",
+            "report_only_b2_bench_sha256=",
+            "report_only_b2_bench_snapshot=",
+            "report_only_b2_bench_snapshot_sha256=",
             "",
         )
     )
@@ -178,7 +188,7 @@ def good_log(cache_root: Path) -> str:
     lines = [
         "(EngineCore pid=9) INFO config: tensor_parallel_size=2 "
         "num_spec_tokens=5 dtype=torch.float16 quantization=inc seed=0 "
-        "enable_prefix_caching=False",
+        "enable_prefix_caching=False cudagraph_metrics=False",
         "(EngineCore pid=9) INFO Asynchronous scheduling is enabled.",
         "(Worker_TP0 pid=20) INFO Prepared experimental XPU INT8 lm_head: "
         "prefix=language_model.lm_head scope=all",
@@ -208,6 +218,35 @@ def good_log(cache_root: Path) -> str:
         (
             f"[rank0]: Warning: {gates.PAD_MARKER}",
             f"[rank1]: Warning: {gates.PAD_MARKER}",
+        )
+    )
+    return "\n".join(lines) + "\n"
+
+
+def replay_bypass_log() -> str:
+    lines = []
+    for rank in (0,):
+        lines.extend(
+            (
+                f"(Worker_TP{rank} pid={20 + rank}) INFO Skipping 1 uniform "
+                "PIECEWISE speculative decode CUDA graph captures because "
+                "VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1.",
+                f"(Worker_TP{rank} pid={20 + rank}) INFO Disabling speculative "
+                "drafter CUDA graph keys on XPU because "
+                "VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1.",
+            )
+        )
+    lines.extend(
+        (
+            "Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 0% 0/1",
+            "Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100% 1/1",
+            "(Worker_TP0 pid=20) INFO Graph capturing finished in 1 secs, "
+            "took 0.42 GiB",
+            "(APIServer pid=19) INFO SpecDecoding metrics: Mean acceptance "
+            "length: 3.03, Accepted throughput: 2.98 tokens/s, Drafted "
+            "throughput: 7.34 tokens/s, Accepted: 71 tokens, Drafted: 175 "
+            "tokens, Per-position acceptance rate: 0.743, 0.571, 0.371, "
+            "0.229, 0.114, Avg Draft acceptance rate: 40.6%",
         )
     )
     return "\n".join(lines) + "\n"
@@ -299,6 +338,12 @@ def bench(path: Path, token_rows: list[list[int]], *, order: list[int] | None = 
     path.write_text(
         json.dumps(
             {
+                "run_identity": {
+                    "api_mode": "chat",
+                    "max_tokens": 512,
+                    "return_token_ids": True,
+                    "seed": 1,
+                },
                 "fresh_response_validity": {
                     "valid": True,
                     "suite_id": "fixture-suite",
@@ -428,6 +473,12 @@ class ArmGateTests(unittest.TestCase):
         (self.root / "data" / "bench.json").write_text(
             json.dumps(
                 {
+                    "run_identity": {
+                        "api_mode": "chat",
+                        "max_tokens": 512,
+                        "return_token_ids": True,
+                        "seed": 1,
+                    },
                     "fresh_response_validity": {
                         "valid": True,
                         "suite_id": SUITE_PAYLOAD["suite_id"],
@@ -457,7 +508,9 @@ class ArmGateTests(unittest.TestCase):
             expected_aot_loads=4,
             expected_pad_markers=2,
             expected_sync_after_model_forward=0,
+            expected_disable_spec_decode_cudagraph_replay=0,
             expected_parity_peer_checksum_manifest_sha256="",
+            expected_report_only_b2_bench_sha256="",
             expected_suite_sha256=SUITE_SHA,
             expected_model_dir=str(self.model_dir),
             expected_model_manifest_sha256=gates.sha256_file(self.model_manifest),
@@ -486,6 +539,192 @@ class ArmGateTests(unittest.TestCase):
         self.assertTrue(passed, result)
         self.assertEqual(result["pad"]["actual_ranks"], [0, 1])
         self.assertEqual(result["cache_loads"]["actual_aot_loads"], 4)
+        self.assertIsNone(result["graph_replay_bypass"])
+
+    def enable_replay_bypass(self) -> None:
+        (self.root / "run" / "identity.env").write_text(
+            identity_text(self, replay_bypass=1)
+        )
+        log_path = self.root / "run" / "server.stdout.log"
+        log_path.write_text(good_log(self.cache_root) + replay_bypass_log())
+        self.args.expected_disable_spec_decode_cudagraph_replay = 1
+
+    def test_replay_bypass_exact_engagement_and_metrics_pass(self) -> None:
+        self.enable_replay_bypass()
+        result, passed = self.run_gate()
+        self.assertTrue(passed, result)
+        evidence = result["graph_replay_bypass"]
+        self.assertEqual(evidence["target_skip_ranks"], [0])
+        self.assertEqual(evidence["drafter_graph_disable_ranks"], [0])
+        self.assertEqual(len(evidence["spec_metrics"]), 1)
+        self.assertEqual(evidence["capture_inventory"][0]["max_done"], 1)
+
+    def test_replay_bypass_missing_marker_or_decode_capture_fails(self) -> None:
+        self.enable_replay_bypass()
+        log_path = self.root / "run" / "server.stdout.log"
+        text = log_path.read_text()
+        log_path.write_text(
+            text.replace(
+                "(Worker_TP0 pid=20) INFO Disabling speculative drafter CUDA "
+                "graph keys on XPU because "
+                "VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1.\n",
+                "",
+            )
+        )
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any("drafter graph-disable" in error for error in result["errors"])
+        )
+
+        log_path.write_text(
+            text + "Capturing CUDA graphs (decode, PIECEWISE): 100% 1/1\n"
+        )
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("capture inventory" in error for error in result["errors"]))
+
+        log_path.write_text(
+            text.replace(
+                "(Worker_TP0 pid=20) INFO Graph capturing finished in 1 secs, "
+                "took 0.42 GiB\n",
+                "",
+            )
+        )
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any("capture completion" in error for error in result["errors"])
+        )
+
+        log_path.write_text(
+            text.replace(
+                "(Worker_TP0 pid=20) INFO Skipping 1 uniform",
+                "(EngineCore pid=9) [rank0] INFO Skipping 1 uniform",
+            )
+        )
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any("target replay-bypass marker" in error for error in result["errors"])
+        )
+
+    def test_replay_bypass_traceback_lazy_capture_and_metrics_fail(self) -> None:
+        self.enable_replay_bypass()
+        log_path = self.root / "run" / "server.stdout.log"
+        base = log_path.read_text()
+        for marker in gates.SPEC_REPLAY_NEGATIVE_MARKERS:
+            with self.subTest(marker=marker):
+                log_path.write_text(base + marker + "\n")
+                result, passed = self.run_gate()
+                self.assertFalse(passed)
+                self.assertTrue(
+                    any("traceback" in error for error in result["errors"])
+                )
+
+    def test_replay_bypass_malformed_spec_metrics_fail_closed(self) -> None:
+        self.enable_replay_bypass()
+        log_path = self.root / "run" / "server.stdout.log"
+        log_path.write_text(
+            log_path.read_text().replace(
+                "Avg Draft acceptance rate: 40.6%",
+                "Avg Draft acceptance rate: nan%",
+            )
+        )
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any("no exact SpecDecoding" in error for error in result["errors"])
+        )
+
+        self.enable_replay_bypass()
+        valid_log = log_path.read_text()
+        valid_metric = next(
+            line for line in valid_log.splitlines() if "SpecDecoding metrics:" in line
+        )
+        log_path.write_text(
+            valid_log
+            + valid_metric.replace(
+                "Avg Draft acceptance rate: 40.6%",
+                "Avg Draft acceptance rate: nan%",
+            )
+            + "\n"
+        )
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("malformed" in error for error in result["errors"]))
+
+        self.enable_replay_bypass()
+        log_path.write_text(
+            log_path.read_text().replace(
+                "Avg Draft acceptance rate: 40.6%",
+                "Avg Draft acceptance rate: 40.6% trailing-junk",
+            )
+        )
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any("malformed" in error for error in result["errors"])
+        )
+
+    def test_replay_bypass_requires_accepted_draft_tokens(self) -> None:
+        self.enable_replay_bypass()
+        log_path = self.root / "run" / "server.stdout.log"
+        log_path.write_text(
+            log_path.read_text()
+            .replace("Mean acceptance length: 3.03", "Mean acceptance length: 1.00")
+            .replace("Accepted throughput: 2.98", "Accepted throughput: 0.00")
+            .replace("Accepted: 71 tokens", "Accepted: 0 tokens")
+            .replace(
+                "Per-position acceptance rate: 0.743, 0.571, 0.371, 0.229, 0.114",
+                "Per-position acceptance rate: 0.000, 0.000, 0.000, 0.000, 0.000",
+            )
+            .replace("Avg Draft acceptance rate: 40.6%", "Avg Draft acceptance rate: 0.0%")
+        )
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any("no accepted draft tokens" in error for error in result["errors"])
+        )
+
+    def test_report_only_b2_source_and_snapshot_are_immutable(self) -> None:
+        source = Path(self.temp.name) / "b2-bench.json"
+        snapshot = self.root / "run" / "report-only-b2-bench.input.json"
+        source.write_text('{"fixture":"b2"}\n')
+        snapshot.write_bytes(source.read_bytes())
+        digest = gates.sha256_file(source)
+        identity = self.root / "run" / "identity.env"
+        identity.write_text(
+            identity.read_text()
+            .replace(
+                "expected_report_only_b2_bench_sha256=\n",
+                f"expected_report_only_b2_bench_sha256={digest}\n",
+            )
+            .replace(
+                "report_only_b2_bench=\n",
+                f"report_only_b2_bench={source}\n",
+            )
+            .replace(
+                "report_only_b2_bench_sha256=\n",
+                f"report_only_b2_bench_sha256={digest}\n",
+            )
+            .replace(
+                "report_only_b2_bench_snapshot=\n",
+                f"report_only_b2_bench_snapshot={snapshot}\n",
+            )
+            .replace(
+                "report_only_b2_bench_snapshot_sha256=\n",
+                f"report_only_b2_bench_snapshot_sha256={digest}\n",
+            )
+        )
+        self.args.expected_report_only_b2_bench_sha256 = digest
+        result, passed = self.run_gate()
+        self.assertTrue(passed, result)
+
+        source.write_text('{"fixture":"changed"}\n')
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("report_only_b2_bench" in error for error in result["errors"]))
 
     def test_real_arm_cli_happy_path(self) -> None:
         output = Path(self.temp.name) / "gate-output.json"
@@ -639,6 +878,13 @@ class ArmGateTests(unittest.TestCase):
         result, passed = self.run_gate()
         self.assertFalse(passed)
         self.assertTrue(any("suite prompt identity" in item for item in result["errors"]))
+
+        payload["rows"][3]["prompt_id"] = SUITE_PAYLOAD["prompts"][3]["id"]
+        payload["run_identity"]["seed"] = 0
+        bench_path.write_text(json.dumps(payload))
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("request identity" in item for item in result["errors"]))
 
     def test_inconsistent_expected_cardinality_is_input_error(self) -> None:
         self.args.expected_aot_loads = 2

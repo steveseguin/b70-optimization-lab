@@ -15,11 +15,13 @@ sealed_validation_allowlist=(
   VALIDATION_COMPILE_CACHE_MANIFEST VALIDATION_COMPILATION_CONFIG_OVERRIDE
   VALIDATION_DDTREE_CAPTURE_GDN_CORE VALIDATION_DDTREE_FULL_GRAPH
   VALIDATION_DETERMINISTIC_GREEDY_MARGIN
+  VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY
   VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN
   VALIDATION_ENABLE_LAYER_TRACE VALIDATION_ENABLE_PACKET_TRACE
   VALIDATION_ENABLE_XPU_GRAPH VALIDATION_EXPECT_AOT_CACHE_KEYS
   VALIDATION_EXPECT_AOT_DIRECT_LOADS VALIDATION_EXPECT_CACHE_MANIFEST_SHA256
   VALIDATION_EXPECT_CACHE_ROOT
+  VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY
   VALIDATION_EXPECT_COMPILE_CACHE_DIRECT_LOADS
   VALIDATION_EXPECT_COMPILE_CACHE_NAMESPACE
   VALIDATION_EXPECT_COMPILE_CACHE_OUTER_ROLES
@@ -34,6 +36,7 @@ sealed_validation_allowlist=(
   VALIDATION_EXPECT_SUITE_SHA256 VALIDATION_EXPECT_VERIFY_SCRIPT_SHA256
   VALIDATION_EXPECT_PARITY_PEER_BENCH_SHA256
   VALIDATION_EXPECT_PARITY_PEER_CHECKSUM_MANIFEST_SHA256
+  VALIDATION_EXPECT_REPORT_ONLY_B2_BENCH_SHA256
   VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256
   VALIDATION_EXPECT_VLLM_DIFF_SHA256 VALIDATION_EXPECT_VLLM_VERSION
   VALIDATION_EXPECT_XPU_COUNT VALIDATION_GDN_CAPTURE_NATIVE_SPEC
@@ -49,6 +52,7 @@ sealed_validation_allowlist=(
   VALIDATION_ONEDNN_INT8_COMPLETION_BARRIER
   VALIDATION_ONEDNN_INT8_INPUT_DEPENDENCY
   VALIDATION_PARITY_PEER_BENCH VALIDATION_PYTHONHASHSEED
+  VALIDATION_REPORT_ONLY_B2_BENCH
   VALIDATION_REQUIRE_COMPILE_CACHE_UNCHANGED
   VALIDATION_REQUIRE_NO_COMPILE_CACHE_WRITES
   VALIDATION_REQUIRE_REPLAY_MICROSCOPE
@@ -296,6 +300,13 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     printf 'sealed TP2 sync-after-forward identity must be explicit and self-consistent\n' >&2
     exit 2
   fi
+  if [[ ! "${VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}" =~ ^[01]$ \
+    || ! "${VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}" =~ ^[01]$ \
+    || "${VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}" \
+      != "${VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}" ]]; then
+    printf 'sealed spec-decode replay-bypass identity must be 0/1 and match its independent expectation\n' >&2
+    exit 2
+  fi
   require_replay_microscope=${VALIDATION_REQUIRE_REPLAY_MICROSCOPE:-0}
   if [[ ! "$require_replay_microscope" =~ ^[01]$ ]]; then
     printf 'VALIDATION_REQUIRE_REPLAY_MICROSCOPE must be 0 or 1\n' >&2
@@ -357,6 +368,24 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     && ! -f "$VALIDATION_TARGET_TOKEN_BENCH" ]]; then
     printf 'target token benchmark is missing: %s\n' \
       "$VALIDATION_TARGET_TOKEN_BENCH" >&2
+    exit 2
+  fi
+  if [[ -n "${VALIDATION_REPORT_ONLY_B2_BENCH:-}" \
+    && ! -f "$VALIDATION_REPORT_ONLY_B2_BENCH" ]]; then
+    printf 'report-only B2 benchmark is missing: %s\n' \
+      "$VALIDATION_REPORT_ONLY_B2_BENCH" >&2
+    exit 2
+  fi
+  if [[ -n "${VALIDATION_REPORT_ONLY_B2_BENCH:-}" \
+    && ( ! "${VALIDATION_EXPECT_REPORT_ONLY_B2_BENCH_SHA256:-}" =~ ^[0-9a-f]{64}$ \
+      || "$(sha256sum -- "$VALIDATION_REPORT_ONLY_B2_BENCH" | awk '{print $1}')" \
+        != "$VALIDATION_EXPECT_REPORT_ONLY_B2_BENCH_SHA256" ) ]]; then
+    printf 'report-only B2 benchmark does not match its sealed SHA\n' >&2
+    exit 2
+  fi
+  if [[ -n "${VALIDATION_EXPECT_REPORT_ONLY_B2_BENCH_SHA256:-}" \
+    && -z "${VALIDATION_REPORT_ONLY_B2_BENCH:-}" ]]; then
+    printf 'report-only B2 benchmark SHA requires its benchmark path\n' >&2
     exit 2
   fi
   if [[ ! "$VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256" =~ ^[0-9a-f]{64}$ \
@@ -744,6 +773,16 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
       exit 3
     fi
   fi
+  if [[ -n "${VALIDATION_REPORT_ONLY_B2_BENCH:-}" ]]; then
+    export VALIDATION_REPORT_ONLY_B2_BENCH_SNAPSHOT="$RUN_DIR/report-only-b2-bench.input.json"
+    cp -- "$VALIDATION_REPORT_ONLY_B2_BENCH" \
+      "$VALIDATION_REPORT_ONLY_B2_BENCH_SNAPSHOT"
+    if [[ "$(sha256sum -- "$VALIDATION_REPORT_ONLY_B2_BENCH_SNAPSHOT" | awk '{print $1}')" \
+      != "$VALIDATION_EXPECT_REPORT_ONLY_B2_BENCH_SHA256" ]]; then
+      printf 'report-only B2 snapshot changed during prelaunch copy\n' >&2
+      exit 3
+    fi
+  fi
 fi
 compile_cache_root="$VLLM_CACHE_ROOT/torch_compile_cache"
 if [[ -n "${VALIDATION_COMPILE_CACHE_MANIFEST:-}" ]]; then
@@ -883,6 +922,13 @@ if [[ -n "${VALIDATION_ONEDNN_INT4_DETERMINISM_PAD:-}" ]]; then
   # record it explicitly so a matched control never relies on binary-specific
   # default behavior or an ambient environment variable scrubbed above.
   export VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD="$VALIDATION_ONEDNN_INT4_DETERMINISM_PAD"
+fi
+if [[ "${VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}" == "1" ]]; then
+  # Treatment-only bypass: the target full-width speculative verifier and
+  # speculative drafter use their compiled non-cudagraph paths while ordinary
+  # target decode stays graph-eligible. This also changes startup capture and
+  # graph-memory allocation history. Inherited VLLM_* state was scrubbed above.
+  export VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1
 fi
 if [[ -n "${VALIDATION_M4_M1_ORACLE_FILE:-}" ]]; then
   export VLLM_XPU_M4_M1_ORACLE_FILE="$VALIDATION_M4_M1_ORACLE_FILE"
@@ -1375,8 +1421,12 @@ if [[ "$require_tp2_sealed_gates" == "1" && "$runner_rc" == "0" ]]; then
     --expected-pad-markers "$VALIDATION_EXPECT_ONEDNN_INT4_DETERMINISM_PAD_MARKERS"
     --expected-sync-after-model-forward \
       "${VALIDATION_EXPECT_SYNC_AFTER_MODEL_FORWARD:-0}"
+    --expected-disable-spec-decode-cudagraph-replay \
+      "${VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}"
     --expected-parity-peer-checksum-manifest-sha256 \
       "${VALIDATION_EXPECT_PARITY_PEER_CHECKSUM_MANIFEST_SHA256:-}"
+    --expected-report-only-b2-bench-sha256 \
+      "${VALIDATION_EXPECT_REPORT_ONLY_B2_BENCH_SHA256:-}"
     --expected-suite-sha256 "$VALIDATION_EXPECT_SUITE_SHA256"
     --expected-model-dir "$VALIDATION_EXPECT_MODEL_DIR"
     --expected-model-manifest-sha256 \

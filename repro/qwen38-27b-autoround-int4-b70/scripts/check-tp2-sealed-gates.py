@@ -30,6 +30,30 @@ RANK_RES = (
 )
 ACTOR_RE = re.compile(r"\((?P<actor>Worker_TP\d+|EngineCore) pid=\d+\)")
 ANSI_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+SPEC_REPLAY_SKIP_RE = re.compile(
+    r"Skipping (?P<count>\d+) uniform PIECEWISE speculative decode CUDA graph "
+    r"captures because VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1\.\s*$"
+)
+SPEC_DRAFTER_GRAPH_DISABLE_MARKER = (
+    "Disabling speculative drafter CUDA graph keys on XPU because "
+    "VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1."
+)
+GRAPH_PROFILE_RE = re.compile(
+    r"Profiling CUDA graph memory: PIECEWISE=(?P<count>\d+) "
+    r"\(largest=(?P<largest>\d+)\)"
+)
+GRAPH_CAPTURE_RE = re.compile(
+    r"Capturing CUDA graphs \((?P<kind>decode|mixed prefill-decode), "
+    r"(?P<mode>[A-Z_]+)\):.*?(?P<done>\d+)/(?P<total>\d+)"
+)
+SPEC_METRICS_RE = re.compile(
+    r"SpecDecoding metrics: Mean acceptance length: (?P<mean>\d+(?:\.\d+)?), "
+    r"Accepted throughput: (?P<accepted_throughput>\d+(?:\.\d+)?) tokens/s, "
+    r"Drafted throughput: (?P<drafted_throughput>\d+(?:\.\d+)?) tokens/s, "
+    r"Accepted: (?P<accepted>\d+) tokens, Drafted: (?P<drafted>\d+) tokens, "
+    r"Per-position acceptance rate: (?P<rates>\d+(?:\.\d+)?(?:, \d+(?:\.\d+)?){4}), "
+    r"Avg Draft acceptance rate: (?P<average>\d+(?:\.\d+)?)%\s*$"
+)
 NEGATIVE_MARKERS = (
     "Cache the graph of compile range",
     "Compiling a graph for compile range",
@@ -39,6 +63,11 @@ NEGATIVE_MARKERS = (
 NEGATIVE_GRAPH_STORE_RE = re.compile(
     r"Store the .* graph for compile range", re.IGNORECASE
 )
+SPEC_REPLAY_NEGATIVE_MARKERS = (
+    "Traceback (most recent call last):",
+    "CUDA graph capturing detected at an inappropriate time.",
+    "**CUDAGraph Stats:**",
+)
 RUNTIME_MARKERS = {
     "engine_tp2": "tensor_parallel_size=2",
     "engine_mtp5": "num_spec_tokens=5",
@@ -46,6 +75,7 @@ RUNTIME_MARKERS = {
     "engine_int4": "quantization=inc",
     "engine_seed0": "seed=0",
     "engine_no_prefix_cache": "enable_prefix_caching=False",
+    "engine_no_cudagraph_metrics": "cudagraph_metrics=False",
     "async_scheduling": "Asynchronous scheduling is enabled.",
     "target_int8_head": (
         "Prepared experimental XPU INT8 lm_head: "
@@ -210,12 +240,21 @@ def validate_expectations(args: argparse.Namespace, tp: int) -> None:
         raise InputError("pad-marker count must equal tensor parallel size")
     if args.expected_sync_after_model_forward not in (0, 1):
         raise InputError("expected sync-after-model-forward must be 0 or 1")
+    if args.expected_disable_spec_decode_cudagraph_replay not in (0, 1):
+        raise InputError(
+            "expected disable-spec-decode-cudagraph-replay must be 0 or 1"
+        )
     if args.require_replay_microscope and args.expected_sync_after_model_forward != 0:
         raise InputError("replay microscope requires sync-after-model-forward=0")
     if args.expected_parity_peer_checksum_manifest_sha256:
         require_sha256(
             args.expected_parity_peer_checksum_manifest_sha256,
             "expected parity-peer checksum-manifest SHA-256",
+        )
+    if args.expected_report_only_b2_bench_sha256:
+        require_sha256(
+            args.expected_report_only_b2_bench_sha256,
+            "expected report-only B2 benchmark SHA-256",
         )
     require_sha256(args.expected_suite_sha256, "expected suite SHA-256")
     require_sha256(
@@ -285,9 +324,24 @@ def parse_server_log(
     runtime_markers: dict[str, list[dict[str, Any]]] = {
         key: [] for key in RUNTIME_MARKERS
     }
+    replay_skip_lines: list[dict[str, Any]] = []
+    drafter_disable_lines: list[dict[str, Any]] = []
+    graph_profiles: list[dict[str, Any]] = []
+    graph_captures: list[dict[str, Any]] = []
+    spec_metrics: list[dict[str, Any]] = []
+    replay_negative_lines: list[dict[str, Any]] = []
+    graph_capture_finished_lines: list[dict[str, Any]] = []
+    graph_capture_marker_count = 0
+    spec_metrics_marker_count = 0
+    replay_flag_marker_count = 0
 
     for lineno, line in enumerate(lines, 1):
         actor = actor_from_line(line)
+        graph_capture_marker_count += line.count("Capturing CUDA graphs (")
+        spec_metrics_marker_count += line.count("SpecDecoding metrics:")
+        replay_flag_marker_count += line.count(
+            "VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1."
+        )
         cache_match = CACHE_DIR_RE.search(line)
         if cache_match:
             cache_path = normalized_path(cache_match.group("path"))
@@ -341,6 +395,74 @@ def parse_server_log(
                         "ranks": sorted(ranks_from_line(line)),
                     }
                 )
+        for match in SPEC_REPLAY_SKIP_RE.finditer(line):
+            replay_skip_lines.append(
+                {
+                    "line": lineno,
+                    "actor": actor,
+                    "ranks": sorted(ranks_from_line(line)),
+                    "count": int(match.group("count")),
+                }
+            )
+        if line.endswith(SPEC_DRAFTER_GRAPH_DISABLE_MARKER):
+            drafter_disable_lines.append(
+                {
+                    "line": lineno,
+                    "actor": actor,
+                    "ranks": sorted(ranks_from_line(line)),
+                }
+            )
+        for match in GRAPH_PROFILE_RE.finditer(line):
+            graph_profiles.append(
+                {
+                    "line": lineno,
+                    "actor": actor,
+                    "ranks": sorted(ranks_from_line(line)),
+                    "count": int(match.group("count")),
+                    "largest": int(match.group("largest")),
+                }
+            )
+        for match in GRAPH_CAPTURE_RE.finditer(line):
+            graph_captures.append(
+                {
+                    "line": lineno,
+                    "kind": match.group("kind"),
+                    "mode": match.group("mode"),
+                    "done": int(match.group("done")),
+                    "total": int(match.group("total")),
+                }
+            )
+        for match in SPEC_METRICS_RE.finditer(line):
+            spec_metrics.append(
+                {
+                    "line": lineno,
+                    "mean_acceptance_length": float(match.group("mean")),
+                    "accepted_throughput": float(
+                        match.group("accepted_throughput")
+                    ),
+                    "drafted_throughput": float(
+                        match.group("drafted_throughput")
+                    ),
+                    "accepted": int(match.group("accepted")),
+                    "drafted": int(match.group("drafted")),
+                    "per_position_acceptance_rate": [
+                        float(value) for value in match.group("rates").split(", ")
+                    ],
+                    "average_draft_acceptance_rate": float(
+                        match.group("average")
+                    ),
+                }
+            )
+        if any(marker in line for marker in SPEC_REPLAY_NEGATIVE_MARKERS):
+            replay_negative_lines.append({"line": lineno, "text": line})
+        if "Graph capturing finished in" in line:
+            graph_capture_finished_lines.append(
+                {
+                    "line": lineno,
+                    "actor": actor,
+                    "ranks": sorted(ranks_from_line(line)),
+                }
+            )
 
     cache_dir_resolved = Path(normalized_path(str(cache_dir)))
     expected_cache_dirs = [
@@ -364,6 +486,16 @@ def parse_server_log(
         "pad_lines": pad_lines,
         "negative_lines": negative_lines,
         "runtime_markers": runtime_markers,
+        "replay_skip_lines": replay_skip_lines,
+        "drafter_disable_lines": drafter_disable_lines,
+        "graph_profiles": graph_profiles,
+        "graph_captures": graph_captures,
+        "spec_metrics": spec_metrics,
+        "replay_negative_lines": replay_negative_lines,
+        "graph_capture_finished_lines": graph_capture_finished_lines,
+        "graph_capture_marker_count": graph_capture_marker_count,
+        "spec_metrics_marker_count": spec_metrics_marker_count,
+        "replay_flag_marker_count": replay_flag_marker_count,
     }
 
 
@@ -794,6 +926,12 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         "expected_sync_after_model_forward": str(
             args.expected_sync_after_model_forward
         ),
+        "disable_spec_decode_cudagraph_replay": (
+            "1" if args.expected_disable_spec_decode_cudagraph_replay else ""
+        ),
+        "expected_disable_spec_decode_cudagraph_replay": str(
+            args.expected_disable_spec_decode_cudagraph_replay
+        ),
         "expected_parity_peer_checksum_manifest_sha256": (
             args.expected_parity_peer_checksum_manifest_sha256
         ),
@@ -808,6 +946,9 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         ),
         "expected_suite_sha256": args.expected_suite_sha256,
         "expected_quality_baseline_sha256": args.expected_quality_baseline_sha256,
+        "expected_report_only_b2_bench_sha256": (
+            args.expected_report_only_b2_bench_sha256
+        ),
     }
     if args.require_replay_microscope:
         expected_identity["sync_after_model_forward"] = "0"
@@ -904,7 +1045,11 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
             errors.append(
                 f"{identity_key} does not match immutable snapshot {snapshot_path}"
             )
-    for prefix in ("parity_peer_bench", "target_token_bench"):
+    for prefix in (
+        "parity_peer_bench",
+        "target_token_bench",
+        "report_only_b2_bench",
+    ):
         source_value = identity.get(prefix, "")
         snapshot_value = identity.get(f"{prefix}_snapshot", "")
         if not source_value and not snapshot_value:
@@ -922,6 +1067,18 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         expected_sha = identity.get(f"expected_{prefix}_sha256", "")
         if expected_sha != source_sha:
             errors.append(f"{prefix} does not match its preregistered SHA")
+        if (
+            prefix == "report_only_b2_bench"
+            and expected_sha != args.expected_report_only_b2_bench_sha256
+        ):
+            errors.append(
+                "report_only_b2_bench does not match the checker CLI expectation"
+            )
+    if args.expected_report_only_b2_bench_sha256 and not (
+        identity.get("report_only_b2_bench")
+        and identity.get("report_only_b2_bench_snapshot")
+    ):
+        errors.append("required report_only_b2_bench source/snapshot is absent")
     repo_head_path = arm_root / "run" / "llm-optimizations.git-head"
     repo_head = repo_head_path.read_text().strip() if repo_head_path.is_file() else None
     if repo_head != args.expected_repo_head:
@@ -1060,6 +1217,145 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         if Counter(ranks) != Counter(range(tp)):
             errors.append(f"{key} preparation does not cover each TP rank exactly once")
 
+    graph_replay_bypass: dict[str, Any] | None = None
+    if args.expected_disable_spec_decode_cudagraph_replay == 1:
+        skip_ranks = [
+            item["ranks"][0]
+            for item in log["replay_skip_lines"]
+            if len(item["ranks"]) == 1 and item["count"] == 1
+        ]
+        drafter_ranks = [
+            item["ranks"][0]
+            for item in log["drafter_disable_lines"]
+            if len(item["ranks"]) == 1
+        ]
+        if (
+            len(log["replay_skip_lines"]) != 1
+            or skip_ranks != [0]
+            or log["replay_skip_lines"][0]["actor"] != "Worker_TP0"
+        ):
+            errors.append(
+                "speculative target replay-bypass marker is not exactly one "
+                "rank-0 event with one skipped descriptor"
+            )
+        if (
+            len(log["drafter_disable_lines"]) != 1
+            or drafter_ranks != [0]
+            or log["drafter_disable_lines"][0]["actor"] != "Worker_TP0"
+        ):
+            errors.append(
+                "speculative drafter graph-disable marker is not exactly one "
+                "rank-0 event"
+            )
+        if log["replay_flag_marker_count"] != 2:
+            errors.append(
+                "replay-bypass source marker occurrence count is not exactly "
+                "2"
+            )
+
+        capture_inventory: dict[tuple[str, str], dict[str, Any]] = {}
+        for item in log["graph_captures"]:
+            key = (item["kind"], item["mode"])
+            entry = capture_inventory.setdefault(
+                key, {"totals": set(), "max_done": -1, "lines": []}
+            )
+            entry["totals"].add(item["total"])
+            entry["max_done"] = max(entry["max_done"], item["done"])
+            entry["lines"].append(item["line"])
+        if log["graph_capture_marker_count"] != len(log["graph_captures"]):
+            errors.append("one or more CUDA-graph capture records was malformed")
+        expected_capture_key = ("mixed prefill-decode", "PIECEWISE")
+        expected_capture = capture_inventory.get(expected_capture_key)
+        if set(capture_inventory) != {expected_capture_key} or not expected_capture:
+            errors.append(
+                "CUDA-graph capture inventory is not exactly one mixed "
+                "prefill-decode PIECEWISE category"
+            )
+        elif expected_capture["totals"] != {1} or expected_capture["max_done"] != 1:
+            errors.append(
+                "mixed prefill-decode PIECEWISE capture did not complete exact 1/1"
+            )
+        if (
+            len(log["graph_capture_finished_lines"]) != 1
+            or log["graph_capture_finished_lines"][0]["ranks"] != [0]
+            or log["graph_capture_finished_lines"][0]["actor"] != "Worker_TP0"
+        ):
+            errors.append(
+                "graph-capture completion marker is not exactly one rank-0 event"
+            )
+
+        invalid_metrics: list[int] = []
+        for metric in log["spec_metrics"]:
+            rates = metric["per_position_acceptance_rate"]
+            average = metric["average_draft_acceptance_rate"]
+            accepted = metric["accepted"]
+            drafted = metric["drafted"]
+            valid = (
+                drafted > 0
+                and 0 <= accepted <= drafted
+                and 1.0 <= metric["mean_acceptance_length"] <= 6.0
+                and metric["drafted_throughput"] > 0
+                and metric["accepted_throughput"] >= 0
+                and len(rates) == 5
+                and all(0.0 <= rate <= 1.0 for rate in rates)
+                and all(left >= right for left, right in zip(rates, rates[1:]))
+                and abs(average - (100.0 * accepted / drafted)) <= 0.06
+                and abs(metric["mean_acceptance_length"] - (1.0 + sum(rates)))
+                <= 0.02
+            )
+            if not valid:
+                invalid_metrics.append(metric["line"])
+        if log["spec_metrics_marker_count"] != len(log["spec_metrics"]):
+            errors.append("one or more SpecDecoding metrics records was malformed")
+        if not log["spec_metrics"]:
+            errors.append("no exact SpecDecoding metrics record was present")
+        elif invalid_metrics:
+            errors.append(
+                "SpecDecoding metrics failed structural/arithmetic checks at lines "
+                + ",".join(map(str, invalid_metrics))
+            )
+        aggregate_accepted = sum(
+            metric["accepted"] for metric in log["spec_metrics"]
+        )
+        aggregate_drafted = sum(metric["drafted"] for metric in log["spec_metrics"])
+        if log["spec_metrics"] and (
+            aggregate_accepted <= 0 or aggregate_drafted <= 0
+        ):
+            errors.append("SpecDecoding metrics contain no accepted draft tokens")
+        if not log["runtime_markers"]["engine_no_cudagraph_metrics"]:
+            errors.append("engine did not record cudagraph_metrics=False")
+        if log["replay_negative_lines"]:
+            errors.append(
+                "traceback, lazy CUDA-graph capture, or CUDAGraph metrics output "
+                "was present"
+            )
+        graph_replay_bypass = {
+            "target_skip_markers": log["replay_skip_lines"],
+            "target_skip_ranks": skip_ranks,
+            "drafter_graph_disable_markers": log["drafter_disable_lines"],
+            "drafter_graph_disable_ranks": drafter_ranks,
+            "capture_inventory": [
+                {
+                    "kind": key[0],
+                    "mode": key[1],
+                    "totals": sorted(value["totals"]),
+                    "max_done": value["max_done"],
+                    "lines": value["lines"],
+                }
+                for key, value in sorted(capture_inventory.items())
+            ],
+            "spec_metrics": log["spec_metrics"],
+            "aggregate_accepted": aggregate_accepted,
+            "aggregate_drafted": aggregate_drafted,
+            "negative_lines": log["replay_negative_lines"],
+            "graph_capture_finished_lines": log["graph_capture_finished_lines"],
+            "raw_graph_capture_marker_count": log["graph_capture_marker_count"],
+            "raw_spec_metrics_marker_count": log["spec_metrics_marker_count"],
+            "cudagraph_metrics_disabled_marker_count": len(
+                log["runtime_markers"]["engine_no_cudagraph_metrics"]
+            ),
+        }
+
     if identity.get("onednn_int4_determinism_pad") != "1":
         errors.append("identity does not record onednn_int4_determinism_pad=1")
     if len(log["pad_lines"]) != args.expected_pad_markers:
@@ -1161,6 +1457,9 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
                 "onednn_int4_determinism_pad"
             ),
             "sync_after_model_forward": identity.get("sync_after_model_forward"),
+            "disable_spec_decode_cudagraph_replay": identity.get(
+                "disable_spec_decode_cudagraph_replay"
+            ),
             "expected_parity_peer_checksum_manifest_sha256": identity.get(
                 "expected_parity_peer_checksum_manifest_sha256"
             ),
@@ -1202,6 +1501,7 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         },
         "quality": quality,
         "quality_baseline_sha256": quality_baseline_sha256,
+        "graph_replay_bypass": graph_replay_bypass,
         "replay_microscope": replay_microscope,
         "errors": errors,
     }
@@ -1236,6 +1536,19 @@ def load_bench_rows(path: Path) -> dict[str, Any]:
     rows = data.get("rows")
     if not isinstance(rows, list) or not rows:
         raise InputError(f"benchmark rows are empty or invalid: {path}")
+    run_identity = data.get("run_identity")
+    if (
+        not isinstance(run_identity, dict)
+        or type(run_identity.get("seed")) is not int
+        or run_identity["seed"] != 1
+        or type(run_identity.get("max_tokens")) is not int
+        or run_identity["max_tokens"] != 512
+        or run_identity.get("api_mode") != "chat"
+        or run_identity.get("return_token_ids") is not True
+    ):
+        raise InputError(
+            f"benchmark request identity is not exact chat/seed1/512/token-IDs: {path}"
+        )
     parsed_rows: list[dict[str, Any]] = []
     seen: set[tuple[int, str, str]] = set()
     for position, row in enumerate(rows):
@@ -1274,6 +1587,7 @@ def load_bench_rows(path: Path) -> dict[str, Any]:
         "path": str(path.resolve()),
         "sha256": sha256_file(path),
         "suite_id": suite_id,
+        "request_seed": run_identity["seed"],
         "rows": parsed_rows,
     }
 
@@ -1385,8 +1699,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--expected-sync-after-model-forward", type=int, default=0
     )
     arm.add_argument(
+        "--expected-disable-spec-decode-cudagraph-replay", type=int, default=0
+    )
+    arm.add_argument(
         "--expected-parity-peer-checksum-manifest-sha256", default=""
     )
+    arm.add_argument("--expected-report-only-b2-bench-sha256", default="")
     arm.add_argument("--expected-suite-sha256", required=True)
     arm.add_argument("--expected-model-dir", required=True)
     arm.add_argument("--expected-model-manifest-sha256", required=True)

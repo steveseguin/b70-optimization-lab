@@ -30,6 +30,10 @@ MICROSCOPE_DRIVER = REPO / (
     "experiments/qwen38-27b-b70/scripts/"
     "run-20260820-detpad-tp2-replay-microscope.sh"
 )
+REPLAY_BYPASS_DRIVER = REPO / (
+    "experiments/qwen38-27b-b70/scripts/"
+    "run-20260820-detpad-tp2-graph-replay-bypass.sh"
+)
 
 
 class LaunchIdentityContractTest(unittest.TestCase):
@@ -112,8 +116,12 @@ class LaunchIdentityContractTest(unittest.TestCase):
             "replay_microscope_min_tokens_no_spec=",
             "replay_microscope_max_tokens_no_spec=",
             "expected_parity_peer_checksum_manifest_sha256=",
+            "disable_spec_decode_cudagraph_replay=",
+            "expected_disable_spec_decode_cudagraph_replay=",
             "parity_peer_bench_snapshot_sha256=",
             "target_token_bench_snapshot_sha256=",
+            "report_only_b2_bench_sha256=",
+            "report_only_b2_bench_snapshot_sha256=",
         ):
             self.assertIn(field, source)
 
@@ -124,6 +132,28 @@ class LaunchIdentityContractTest(unittest.TestCase):
             '"$VALIDATION_ONEDNN_INT4_DETERMINISM_PAD"',
             source,
         )
+
+    def test_arm_forwards_replay_bypass_with_independent_expectation(self) -> None:
+        source = ARM.read_text()
+        self.assertIn("VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY", source)
+        self.assertIn(
+            "VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY", source
+        )
+        self.assertIn(
+            'export VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1', source
+        )
+        self.assertIn(
+            "sealed spec-decode replay-bypass identity must be 0/1 and match",
+            source,
+        )
+        checker_arg = source.index(
+            "--expected-disable-spec-decode-cudagraph-replay"
+        )
+        expected_value = source.index(
+            "VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY",
+            checker_arg,
+        )
+        self.assertLess(checker_arg, expected_value)
 
     def test_sealed_arm_binds_sync_after_model_forward(self) -> None:
         source = ARM.read_text()
@@ -339,6 +369,37 @@ class LaunchIdentityContractTest(unittest.TestCase):
             self.assertIn(required, driver)
         self.assertLess(
             driver.index("M1 is permanently closed"), driver.index("env -i")
+        )
+
+    def test_graph_replay_bypass_campaign_is_clean_sealed_and_two_arm(self) -> None:
+        source = REPLAY_BYPASS_DRIVER.read_text()
+        for required in (
+            "exec env -i",
+            "VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1",
+            "VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1",
+            "VALIDATION_SYNC_AFTER_MODEL_FORWARD=0",
+            "VALIDATION_REQUIRE_REPLAY_MICROSCOPE=0",
+            "VALIDATION_ENABLE_PACKET_TRACE=0",
+            "VALIDATION_ENABLE_LAYER_TRACE=0",
+            "VALIDATION_RUN_QUALITY=\"$quality\"",
+            "r1_checksum_manifest_expected",
+            "VALIDATION_EXPECT_PARITY_PEER_CHECKSUM_MANIFEST_SHA256",
+            "VALIDATION_PARITY_PEER_BENCH=$peer_bench",
+            "VALIDATION_TARGET_TOKEN_BENCH=\"$target_bench\"",
+            "VALIDATION_REPORT_ONLY_B2_BENCH=\"$b2_bench\"",
+            "VALIDATION_REQUIRE_TARGET_TOKEN_PARITY=0",
+            "raw_gdn_compare_sha=61b9f0031e153",
+            "cache_manifest_sha=f3582440de9b",
+            "VALIDATION_EXPECT_COMPILE_CACHE_NAMESPACE=b99160ae76",
+            "--expected-disable-spec-decode-cudagraph-replay 1",
+            "--require-quality-pass",
+            "SHA256SUMS.pre-manifest",
+            "R1 prompt 24 is malformed or the known all-zero catastrophe",
+        ):
+            self.assertIn(required, source)
+        self.assertLess(
+            source.index("R1 did not complete its sealed quality-on arm"),
+            source.index("exec env -i"),
         )
 
 

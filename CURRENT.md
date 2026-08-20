@@ -322,17 +322,18 @@ loaded service.
    the formal sealed checker did not run. Preserve A2/B2/C1/S1/M1, run neither
    D nor S2, and do not retry M1. The distinct raw native-SYCL GDN prefill/state
    screen is now closed as a valid bounded negative after 12,528 clean calls.
-   The next source-backed candidate is a pair of full-history TP2 arms with
-   uniform speculative PIECEWISE replay and drafter graph keys disabled. It
-   must be separately preregistered before launch, remain diagnostic-only, and
-   preserve all sealed-cache, engagement, quality, and all-25-prompt token-array
-   parity gates. See the
+   The next source-backed candidate is a now-preregistered, not-yet-launched
+   pair of full-history TP2 arms with uniform speculative PIECEWISE replay
+   disabled and drafter graph keys disabled. It remains diagnostic-only and
+   must preserve all sealed-cache, engagement, quality, and all-25-prompt
+   token-array parity gates. See the
    [recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md),
    [sync result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-postforward-sync-result.md),
    [microscope preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-prereg.md),
    [invalid microscope result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-result.md),
    [native-GDN preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-native-gdn-prefill-state-stability-prereg.md),
-   and [native-GDN result](experiments/qwen38-27b-b70/notes/2026-08-20-native-gdn-prefill-state-stability-result.md).
+   [native-GDN result](experiments/qwen38-27b-b70/notes/2026-08-20-native-gdn-prefill-state-stability-result.md),
+   and [graph-replay-bypass preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-graph-replay-bypass-prereg.md).
    Do not promote or submit these speeds.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
