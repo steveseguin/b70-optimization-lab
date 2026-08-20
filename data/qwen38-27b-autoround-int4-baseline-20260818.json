@@ -721,5 +721,26 @@
     "why_required": "run-arm.sh's identity block unsets EVERY inherited VLLM_* name before installing the recorded identity. Exporting VLLM_XPU_LOCAL_ARGMAX_DECODE=1 in the caller's environment would therefore have been silently wiped - a fourth no-op trap, caught before a run was spent on it.",
     "why_now_reachable": "both paths refuse to engage while VLLM_XPU_DETERMINISTIC_GREEDY_MARGIN is set (gpu_model_runner.py:8380-8388 and :8449-8456). Removing the margin unblocked them.",
     "verification_plan": "VLLM_XPU_LOCAL_ARGMAX_DEBUG=1 makes the runner log 'disabled: <reason>' when a path declines. Absence of that marker plus a speed delta is the engagement proof."
+  },
+  "decode_fastpaths_NEGATIVE_20260820": {
+    "arm": "qwen38-marginfree-fastpaths-mtp5-25-spec-a-20260820",
+    "verdict": "NEGATIVE on both counts. This closes the lever that the margin audit called the largest remaining opportunity.",
+    "VLLM_XPU_LOCAL_ARGMAX_DECODE": {
+      "status": "STRUCTURALLY INCOMPATIBLE WITH MTP - can never engage in any speculative config.",
+      "proof": "the runner logged 'disabled: spec decode metadata is present' 10 times. gpu_model_runner.py:8393-8394 returns disabled whenever spec_decode_metadata is not None.",
+      "assume_safe_cannot_override": "VLLM_XPU_LOCAL_ARGMAX_ASSUME_SAFE is tested at :8395, AFTER the spec-decode gate, so it is unreachable while MTP is on.",
+      "where_it_could_still_matter": "only the no-speculation lane (48.757 tok/s). MTP is roughly 2x that, so this is not a route to a faster record."
+    },
+    "VLLM_XPU_SPEC_GREEDY_TOP_IDS": {
+      "status": "ENGAGED, and REGRESSES.",
+      "proof_of_engagement": "'XPU local argmax rank=0/1: spec top-token IDs enabled' logged on both TP ranks (gpu_model_runner.py:8253).",
+      "all25_median_tok_s": 98.952,
+      "sel12_median_tok_s": 92.494,
+      "delta_vs_marginfree_baseline": "-2.218 tok/s all-25 (98.952 against 101.170)",
+      "confidence": "n=1, but 98.952 sits BELOW the entire margin-free baseline range (100.455-101.394), so the regression is very unlikely to be noise."
+    },
+    "gates": "smoke_pass, realistic_gate_passed, cached_tokens_all_zero, fresh_response_valid all true - the arm is valid, the lever is simply bad.",
+    "methodological_note": "VLLM_XPU_LOCAL_ARGMAX_DEBUG=1 is what made this readable. Without it the arm would have shown a 2.2 tok/s regression with no indication that one of the two paths never ran at all, and the natural but wrong conclusion would have been 'the fast paths cost 2.2 tok/s'. Always enable a path's own debug marker when screening it.",
+    "consequence": "the margin audit's ranked step 2 - 'removing the margin unlocks two hard-disabled decode fast paths, measure this first, it is the largest single lever' - is now closed as a negative. Removing the margin is still correct, but not for this reason."
   }
 }
