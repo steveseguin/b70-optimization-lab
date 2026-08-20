@@ -423,6 +423,24 @@ fi
 if [[ "${VALIDATION_FA_SYNC_AFTER_PACKED:-0}" == "1" ]]; then
   export VLLM_XPU_FA_SYNC_AFTER_PACKED=1
 fi
+# The two XPU decode fast paths. Both refuse to engage while
+# VLLM_XPU_DETERMINISTIC_GREEDY_MARGIN is set (gpu_model_runner.py:8380-8388 and
+# :8449-8456, "deterministic greedy margin needs dense logits"), so they were
+# unreachable for as long as the margin was on. Passthrough is required because
+# the identity block above unsets every inherited VLLM_* name.
+if [[ "${VALIDATION_LOCAL_ARGMAX_DECODE:-0}" == "1" ]]; then
+  export VLLM_XPU_LOCAL_ARGMAX_DECODE=1
+fi
+if [[ "${VALIDATION_LOCAL_ARGMAX_SPEC_ONLY:-0}" == "1" ]]; then
+  export VLLM_XPU_LOCAL_ARGMAX_SPEC_ONLY=1
+fi
+if [[ "${VALIDATION_SPEC_GREEDY_TOP_IDS:-0}" == "1" ]]; then
+  export VLLM_XPU_SPEC_GREEDY_TOP_IDS=1
+fi
+if [[ "${VALIDATION_LOCAL_ARGMAX_DEBUG:-0}" == "1" ]]; then
+  export VLLM_XPU_LOCAL_ARGMAX_DEBUG=1
+  export VLLM_XPU_LOCAL_ARGMAX_DEBUG_LIMIT="${VALIDATION_LOCAL_ARGMAX_DEBUG_LIMIT:-24}"
+fi
 if [[ "${VALIDATION_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ:-0}" == "1" ]]; then
   export VLLM_XPU_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ=1
   if [[ -n "${VALIDATION_QWEN_SYNC_AFTER_FULL_ATTN_O_PROJ_LAYERS:-}" ]]; then

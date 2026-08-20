@@ -701,5 +701,25 @@
     "HONEST_MARGIN_FREE_NUMBER": "101.170 tok/s all-25 as the median of three arms, against the record's margin-ON 101.922 on GPUs 0,1. Removing the output-altering margin costs essentially nothing in speed. What it costs is the 25/25 determinism claim, which was never real.",
     "caveat": "measured on GPUs 2,3 because 0,1 are wedged. Not directly record-comparable; a margin-ON control on 2,3 is still outstanding to separate pair effects from the margin, particularly for the selection-12 subset.",
     "next": "arm D launched: identical config plus VALIDATION_RMSNORM_BATCH_INVARIANT=1, to test whether a batch-invariant RMSNorm closes the three stable divergent prompts and at what throughput cost."
+  },
+  "rmsnorm_batch_invariance_NEGATIVE_20260820": {
+    "verdict": "NEGATIVE. Batch-invariant RMSNorm does NOT fix the runtime nondeterminism. Reject it.",
+    "arms": [
+      "qwen38-marginfree-rmsnormbi-mtp5-25-spec-a-20260820",
+      "qwen38-marginfree-rmsnormbi-mtp5-25-spec-b-20260820"
+    ],
+    "flag_verified_LIVE": "yes, and this matters given three other flags were no-ops. identity.env:92 rmsnorm_batch_invariant=1, and the arm's tokens differ from the non-BI arms on 14-16 of 25 prompts, so the op genuinely changed the arithmetic rather than silently doing nothing.",
+    "self_determinism": "21/25 - identical to the no-BI baseline (21/25, 21/25, 22/25). 549 divergent tokens / 12056.",
+    "same_prompts_same_positions": "the SAME four prompts diverge, at nearly identical token positions: sql-debugging@35 (was @35), structured-extraction@225 (was @225), long-rollover-repository-audit@469 (was @469), factual-protocol@311 (was @465).",
+    "cost": "D 100.639 / D' 101.372 all-25, median ~101.0 against the no-BI median 101.170. Effectively free - but free and useless.",
+    "shared_cache_proof": "arm D compiled 132.82 s; arm D' 5.11 s.",
+    "WHAT_THIS_TELLS_US": "the divergence survives a substantial change to RMSNorm arithmetic and reappears at the SAME token positions. So RMSNorm is not the source, and more importantly those positions are where the model sits at a genuine decision boundary - near-tied logits that ANY small run-to-run perturbation will flip. Finding the culprit therefore means finding any ubiquitous source of run-to-run variation, not a prompt-specific bug.",
+    "next_hypothesis": "the TP2 allreduce is the leading candidate: oneCCL reduction order can vary run to run and it is ubiquitous across every layer. A TP1 run would be decisive - no allreduce at all. If TP1 self-determinism is 25/25, the collective is the source."
+  },
+  "fastpath_passthrough_fix_20260820": {
+    "what": "added VALIDATION_LOCAL_ARGMAX_DECODE, VALIDATION_LOCAL_ARGMAX_SPEC_ONLY, VALIDATION_SPEC_GREEDY_TOP_IDS and VALIDATION_LOCAL_ARGMAX_DEBUG passthroughs to run-arm.sh.",
+    "why_required": "run-arm.sh's identity block unsets EVERY inherited VLLM_* name before installing the recorded identity. Exporting VLLM_XPU_LOCAL_ARGMAX_DECODE=1 in the caller's environment would therefore have been silently wiped - a fourth no-op trap, caught before a run was spent on it.",
+    "why_now_reachable": "both paths refuse to engage while VLLM_XPU_DETERMINISTIC_GREEDY_MARGIN is set (gpu_model_runner.py:8380-8388 and :8449-8456). Removing the margin unblocked them.",
+    "verification_plan": "VLLM_XPU_LOCAL_ARGMAX_DEBUG=1 makes the runner log 'disabled: <reason>' when a path declines. Absence of that marker plus a speed delta is the engagement proof."
   }
 }
