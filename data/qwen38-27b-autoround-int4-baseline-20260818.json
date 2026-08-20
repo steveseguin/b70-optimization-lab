@@ -586,5 +586,32 @@
     "INTERPRETATION": "NOT A RESULT. n=2 with a 9.75 tok/s standard deviation cannot resolve a lever worth a few tok/s, the 2-prompt suite is not the 25-prompt suite, and this ran on GPUs 2,3 while the record was set on 0,1. The only conclusion supported is mechanical viability: the GDN core can be captured without faulting.",
     "caveat": "this arm inherited VALIDATION_DETERMINISTIC_GREEDY_MARGIN=0.03125 from the record config, which is now known to alter output. All further GDN-capture work is being done margin-free.",
     "next": "25-prompt margin-free control (capture OFF) and treatment (capture ON) on GPUs 2,3, compared by output_sha256s token identity rather than the 45-token quality suite."
+  },
+  "marginfree_baseline_20260820": {
+    "purpose": "first honest margin-free MTP5 measurement, after VALIDATION_DETERMINISTIC_GREEDY_MARGIN=0.03125 was shown to alter emitted tokens.",
+    "arm_a": {
+      "raw_root": "qwen38-marginfree-mtp5-25-spec-a-20260820",
+      "gpu_pair": "2,3 (0,1 are wedged)",
+      "verified_config": "identity.env:189 deterministic_greedy_margin=0 (record: 0.03125); ddtree_capture_gdn_core=0; num_speculative_tokens=5",
+      "all25_median_tok_s": 101.394,
+      "selection12_median_tok_s": 93.435,
+      "holdout13_median_tok_s": 115.43,
+      "gates": "smoke_pass true, realistic_gate_passed true, cached_tokens_all_zero true, fresh_response_valid true; quality deliberately skipped because the stored baseline is margin-ON and cannot gate a margin-free arm"
+    },
+    "comparison_to_record": {
+      "record_arm_a_margin_on_gpus01": {
+        "all25": 100.896,
+        "selection12": 95.167,
+        "holdout13": 115.395
+      },
+      "record_arm_c_margin_on_gpus01": {
+        "all25": 101.922,
+        "selection12": 95.883,
+        "holdout13": 113.101
+      },
+      "headline_finding": "margin-free all-25 of 101.394 falls BETWEEN the record's own arms (100.896 and 101.922). Removing the output-altering margin costs nothing measurable on the headline metric. Honesty is free here.",
+      "selection12_caveat": "margin-free selection-12 is 93.435 against the record's 95.167 median, about 1.7 tok/s lower. DO NOT attribute that to the margin yet: this arm is n=1 and ran on a DIFFERENT GPU pair than the record. A margin-ON 25-prompt control on 2,3 is required to separate the margin from the pair. Note the holdout-13 subset is essentially unchanged (115.430 vs 115.395), which argues against a whole-pair slowdown and leaves the selection-12 gap genuinely open."
+    },
+    "still_outstanding": "margin-free SELF-DETERMINISM is unproven - the replicate qwen38-marginfree-mtp5-25-spec-b-20260820 is running on a SHARED compile cache to test it. Until that returns, the 25/25 property claimed for the records has not been re-established without margin assistance."
   }
 }
