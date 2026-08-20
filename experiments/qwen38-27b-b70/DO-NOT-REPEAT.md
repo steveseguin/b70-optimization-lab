@@ -151,3 +151,9 @@ the exact Qwen3.8-specific source patches—including the unsafe patch so its
 design can be recognized. Large raw logs and many historical build trees remain
 under `/mnt/fast-ai`; not every raw byte or rejected historical build artifact
 is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
+
+- 2026-08-20: breakable-cudagraph GDN capture with `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0`
+  faults the device (`UR_RESULT_ERROR_DEVICE_LOST`, level_zero error 20). Per-call
+  scratch allocation inside a captured graph region cannot work — graph capture needs
+  stable addresses. GPUs self-recovered; no reset needed. Retry only with
+  `PERSISTENT_SCRATCH=1`.

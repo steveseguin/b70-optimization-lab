@@ -473,5 +473,15 @@
     "submission_defect": "both LocalMaxxing command snippets (cmszarna10e0nms0103hv0tve, cmszbkxco0e11ms01l2rixxbt) list VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0. That flag had no effect; the runs used the harness default of 1. The measured rates are unaffected, but the snippets misdescribe the configuration and should be corrected.",
     "harness_fix": "run-arm.sh:676 now honours VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH, defaulting to 1, so the axis is testable. Also added a VALIDATION_USE_BREAKABLE_CUDAGRAPH passthrough for the GDN-capture screen.",
     "process_lesson": "verify a flag reached the server before building conclusions on it. The kernel already emitted a marker that would have caught this immediately."
+  },
+  "breakable_cudagraph_device_lost_20260820": {
+    "status": "UNSAFE as configured; GPUs self-recovered, no reset or escalation required",
+    "config": "PIECEWISE with the two GDN ops removed from splitting_ops, VLLM_USE_BREAKABLE_CUDAGRAPH=1, and VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0. Two-prompt smoke.",
+    "result": "RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST) during the worker run",
+    "recovery": "all four B70s visible immediately afterwards, 43 MiB idle, no orphaned processes, no GPU reset performed",
+    "confound": "TWO variables changed at once - breakable graph capture of the GDN region AND per-call scratch allocation. Not yet attributable.",
+    "leading_hypothesis": "allocating the 12 spec-decode scratch buffers per call INSIDE a captured graph region is the classic way to fault a device; graph capture requires stable addresses. That is consistent with the other machine's op-level GRAPH_OK result, which used the PERSISTENT (cached-address) path.",
+    "next_isolation": "repeat the breakable capture with PERSISTENT_SCRATCH=1 (stable addresses). If that survives, the fault is the per-call allocation, not graph capture of GDN.",
+    "incidental_confirmation": "this run showed ZERO 'PERSISTENT_SCRATCH allocated' markers, confirming the run-arm.sh:676 passthrough added today actually works - the first time that flag has ever taken effect."
   }
 }
