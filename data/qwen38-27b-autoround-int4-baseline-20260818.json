@@ -570,5 +570,21 @@
     ],
     "required_action": "withdraw or re-measure both records with the margin unset and a margin-free quality baseline. This is the SECOND accuracy defect in the same commandSnippet; the first is the PERSISTENT_SCRATCH value.",
     "optimization_upside": "dropping the margin is free or positive: the lab's own arm measured 92.237 margin-off vs 91.926 margin-on (+0.3 tok/s). It additionally unblocks two decode fast paths that refuse to engage while it is set - VLLM_XPU_LOCAL_ARGMAX_DECODE and VLLM_XPU_SPEC_GREEDY_TOP_IDS (gpu_model_runner.py:8382, 8451, both returning disabled('deterministic greedy margin needs dense logits')). Those avoid a 248320-wide dense-logits reduction per verified position. This is now the largest identified lever."
+  },
+  "gdn_capture_viability_smoke_20260820": {
+    "raw_root": "qwen38-ddtree-gdncapture-two-spec-a-20260820",
+    "purpose": "viability only - does VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=1 run at all, and does the flag reach the server.",
+    "flag_verified_reached_server": "YES. The logged splitting_ops has 13 entries and does NOT contain vllm::gdn_attention_core_xpu (the record's list has 14 and does). This is the first time this lever has ever been executable; run-arm.sh:678 previously hard-exported 0.",
+    "outcome": "CLEAN. No device-lost, no traceback. Graph capturing finished in 3 s taking 0.38 GiB; init engine 159.45 s of which 133.59 s compilation. smoke_pass true, realistic_gate_passed true, fresh_response_valid true, cached_tokens_all_zero true.",
+    "speed_two_prompt_suite": {
+      "median_tok_s_1_100_intervals_after_ttft": 84.93,
+      "n": 2,
+      "min": 78.89,
+      "max": 92.69,
+      "stdev": 9.75
+    },
+    "INTERPRETATION": "NOT A RESULT. n=2 with a 9.75 tok/s standard deviation cannot resolve a lever worth a few tok/s, the 2-prompt suite is not the 25-prompt suite, and this ran on GPUs 2,3 while the record was set on 0,1. The only conclusion supported is mechanical viability: the GDN core can be captured without faulting.",
+    "caveat": "this arm inherited VALIDATION_DETERMINISTIC_GREEDY_MARGIN=0.03125 from the record config, which is now known to alter output. All further GDN-capture work is being done margin-free.",
+    "next": "25-prompt margin-free control (capture OFF) and treatment (capture ON) on GPUs 2,3, compared by output_sha256s token identity rather than the 45-token quality suite."
   }
 }
