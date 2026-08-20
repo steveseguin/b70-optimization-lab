@@ -47,6 +47,24 @@ thing: of the 35.3 ms step, **~18.7 ms (53%) is not weight streaming** —
 dependent-kernel latency, eager GDN-region dispatch, 128 TP2 collectives,
 sampler, draft serialization, host logic.
 
+### Collectives priced (2026-08-19, 2-rank XCCL on the rebuilt oneCCL)
+
+Script `scripts/qwen38-tp2-collective-latency.py`, data
+`data/2026-08-19-tp2-collective-latency.json`:
+
+| collective | eager us | burst us | graph-captured us |
+|---|---|---|---|
+| layer allreduce [6,5120] fp16 | 43.0 | 14.6 | **6.3** |
+| draft allreduce [1,5120] fp16 | 42.7 | 14.6 | 5.5 |
+| logits allgather [6,75968] fp16 | 44.1 | — | — |
+| draft logits allgather [1,75968] | 42.0 | — | — |
+
+Per MTP5 step (128 layer + 10 draft allreduces, 1+5 logits allgathers):
+**≈6.2 ms if each pays full eager latency, ≈2.3 ms burst-amortized,
+≈1.1 ms fully graph-captured.** The collectives alone are a ~5 ms/step
+(~14%, +10-14 tok/s) argument for the full-graph arm — before counting the
+launch-latency savings on the GDN eager regions themselves.
+
 ## The unscreened arm this points to
 
 Every prerequisite for full-graph capture of the record lane was rebuilt

@@ -1,0 +1,29 @@
+{
+ "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+ "allreduce_layer_m6": {
+  "median_us": 43.001,
+  "p10_us": 42.52,
+  "p90_us": 44.431,
+  "burst_median_us": 14.619729999999999,
+  "graph_burst_us_per_op": 6.267256
+ },
+ "allreduce_draft_m1": {
+  "median_us": 42.69,
+  "p10_us": 42.24,
+  "p90_us": 43.98,
+  "burst_median_us": 14.614840000000001,
+  "graph_burst_us_per_op": 5.522164
+ },
+ "logits_allgather_m6": {
+  "median_us": 44.11,
+  "p10_us": 42.89,
+  "p90_us": 45.36
+ },
+ "logits_allgather_m1": {
+  "median_us": 41.96,
+  "p10_us": 41.57,
+  "p90_us": 42.57
+ },
+ "step_collectives_ms": 2.27138384,
+ "note": "128 layer AR + 10 draft AR + 1 target logits AG + 5 draft logits AG per MTP5 step"
+}
