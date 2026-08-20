@@ -1,0 +1,14 @@
+{
+ "date": "2026-08-19",
+ "device": "Intel Arc Pro B70 x2, TP2-local shapes (12 q heads, 2 kv heads, head 256, block 64)",
+ "source": "qwen27_graphsafe_flash_attention staged package, flash_attn_varlen_func, VLLM_XPU_FA2_FORCE_CHUNK_DECODE",
+ "q1_decode_us": {"kv128": 9.68, "kv1024": 28.60, "kv2048": 16.58,
+   "method": "test_chunk_decode_graph_replay.py --mode baseline --bench-iters 2000"},
+ "verifier_packed_6row_causal_us": {"kv1024_eager": 110.89, "kv1024_graph": 116.90,
+   "kv2048_eager": 219.13, "kv2048_graph": 224.94,
+   "method": "500-iteration bursts; graph = XPUGraph replay; eager~=graph, so attention is device-time-bound not launch-bound"},
+ "gdn_spec_op_m1_burst_us": {"ephemeral": 42.80, "persistent_fixed": 34.09,
+   "note": "identical to M=6 within noise: the op cost is latency-fixed, row-count-independent; scratch fix saves ~8.7us on each of the 5 draft calls too"},
+ "step_attention_ms_at_kv1300_avg": 2.3,
+ "step_attention_ms_at_kv2048": 3.5
+}

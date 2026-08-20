@@ -72,6 +72,21 @@ launch-latency savings on the GDN eager regions themselves.
 (GDN dedup reuses one per layer) + 128 RMSNorm + 128 residual adds ≈
 **1.6 ms**; at eager dispatch rates roughly double that.
 
+### Attention priced (2026-08-19, staged FA package)
+
+`data/2026-08-19-attention-timing.json`. Draft-side q=1 decode: 10-29 µs.
+Verifier packed 6-row causal at 12 local q heads: **111 µs at kv=1024,
+219 µs at kv=2048** — eager ≈ graph replay, so attention is pure device
+time (not launch-bound). 16 full-attention layers: **1.8-3.5 ms/step**
+depending on context length (≈2.3 ms at kv≈1300). Note the verifier
+attention reads only ~4.2 MB of KV at kv=2048 in 219 µs (~19 GB/s): it is
+occupancy/latency-bound at these tiny grids, making it the one kernel with
+plausible headroom — a candidate only after the dispatch overhead is gone.
+
+The GDN spec op is latency-fixed (M=1 and M=6 both 42.8-42.9 µs burst), so
+the scratch fix's ~8.8 µs/call applies to the 5 draft calls too: total
+~0.47 ms/step, not just 0.44.
+
 ### Final residual accounting
 
 | block | ms/step |
@@ -79,10 +94,10 @@ launch-latency savings on the GDN eager regions themselves.
 | measured big components (GEMMs, spec op, heads) | 16.6 |
 | collectives (burst) | 2.3 |
 | small ops (quant/norm/add, burst) | 1.6 |
-| attention kernels (16 × ~40 µs est.) | ~0.6 |
-| **accounted** | **~21.1** |
+| attention kernels (measured, kv≈1300) | ~2.3 |
+| **accounted** | **~22.8** |
 | **actual step** | **35.3** |
-| **unaccounted: eager dispatch penalty, draft serialization, sampler, host** | **~14.2** |
+| **unaccounted: eager dispatch penalty, draft serialization, sampler, host** | **~12.5** |
 
 The dominant recoverable mass is the dispatch penalty itself — exactly what
 full-graph capture removes. Even capturing only the 48 GDN layer regions
@@ -122,3 +137,9 @@ door itself is viable on this fork.
 4. If the residual persists after capture: unitrace profile
    (`scripts/profile-current-recipe-unitrace.sh`) to name the remainder
    before touching anything else.
+5. Parked micro-lever (~0.2-0.3 ms/step, exactness-preserving): the 5 draft
+   logits allgathers ([1,75968] fp16 each, ~42 µs eager) exist only to feed
+   a full-vocab argmax. A per-rank local argmax + tiny (value, index)
+   allreduce with lowest-global-id tie-break is bit-identical in result and
+   ~40x less traffic. Similarly the target head's [6,75968] gather if only
+   the argmax is consumed. Screen only after the big rocks.
