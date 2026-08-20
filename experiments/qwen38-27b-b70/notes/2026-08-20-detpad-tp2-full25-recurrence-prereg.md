@@ -2,7 +2,8 @@
 
 Date: 2026-08-20
 
-Status: preregistered; C1 has not launched.
+Status: completed; C1 reproduced the catastrophic prompt-24 family and stopped
+the untraced sequence as preregistered.
 
 ## Question
 
@@ -77,3 +78,6 @@ engagement contract before use.
 
 Parent result:
 [`2026-08-20-detpad-composite-tp2-full25-result.md`](2026-08-20-detpad-composite-tp2-full25-result.md)
+
+Result:
+[`2026-08-20-detpad-tp2-full25-recurrence-result.md`](2026-08-20-detpad-tp2-full25-recurrence-result.md)

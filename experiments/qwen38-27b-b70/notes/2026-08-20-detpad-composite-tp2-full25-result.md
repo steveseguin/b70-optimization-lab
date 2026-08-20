@@ -66,17 +66,17 @@ structured-extraction flip, but it is insufficient for full-25 TP2
 determinism. Do not promote the measured speed and do not resume speed-flag
 sweeps from this pair.
 
-The narrowest recurrence test is one exact, untraced full-25 TP2 C arm that
-preserves all 24 preceding requests and gates against complete sane-B2 token
-parity. Any C/B mismatch stops untraced work and localizes the earliest
-difference. If the all-zero stream repeats, trace only the final request's
-prefill-to-first-target-logit/gather/GDN-state path while retaining the full
-history. Only a 25/25 B2-exact C authorizes one later D recurrence arm. A
-prompt-24-only test is not the first discriminator because it removes the
-request-history position that may be causal.
+The exact untraced full-25 C1 recurrence arm is complete. It again failed
+22/25 against sane B2 and reproduced A2's 512-zero prompt-24 stream exactly.
+SQL and factual-protocol each produced a third output family. The
+preregistered stop rule therefore forbids a D arm: preserve all 24 predecessor
+requests and localize the prompt-24 path without further untraced sampling.
 
 Recurrence preregistration:
 [`2026-08-20-detpad-tp2-full25-recurrence-prereg.md`](2026-08-20-detpad-tp2-full25-recurrence-prereg.md)
+
+Recurrence result:
+[`2026-08-20-detpad-tp2-full25-recurrence-result.md`](2026-08-20-detpad-tp2-full25-recurrence-result.md)
 
 Structured evidence:
 [`../data/2026-08-20-int4-detpad-tp2-full25-result.json`](../data/2026-08-20-int4-detpad-tp2-full25-result.json)

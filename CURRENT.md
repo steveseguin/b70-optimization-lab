@@ -162,9 +162,11 @@ arrays. A2's final long-rollover response was catastrophically wrong from the
 first token: all 512 token IDs were zero (rendered as exclamation marks), while
 B2 produced the sane reference-family response. Preferred medians were
 `100.916` / `101.124 tok/s`; legacy medians were `101.936` / `102.145`, but
-none is promotable. The pad fixes the scoped TP1 contrast, not full TP2
-determinism. Preserve the pair and use an exact untraced full-25 recurrence arm
-before adding a history-preserving trace around the final request.
+none is promotable. A sealed C1 recurrence arm then reproduced A2's complete
+512-zero final stream exactly, while SQL and factual-protocol each produced a
+third token family. The pad fixes the scoped TP1 contrast, not full TP2
+determinism. Untraced recurrence sampling is closed; preserve the full
+25-request history and localize the final-request execution path.
 
 The published `101.922` MTP5 and `100.497` MTP4 LocalMaxxing rows are
 invalidated and withdrawal is recommended. Both opted into a `0.03125` greedy
@@ -187,6 +189,7 @@ manifest immediately before vLLM starts.
 - [INT4 prefill-pad causal screen](experiments/qwen38-27b-b70/notes/2026-08-20-int4-detpad-tp1-causal-screen-result.md)
 - [pad-on composite TP2 full-25 preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-composite-tp2-full25-prereg.md)
 - [pad-on composite TP2 full-25 result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-composite-tp2-full25-result.md)
+- [pad-on TP2 full-25 recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md)
 
 ## Closed: Qwen3.6 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 
@@ -285,11 +288,12 @@ loaded service.
 3. Keep full Qwen3.8 AutoRound server runs off the 15-GiB host. The recovered
    four-B70 host's pad-on composite TP2 pair passed its sealed identity and
    quality gates but failed 22/25 A/B parity, including one all-zero 512-token
-   response. Preserve A2/B2. A single exact untraced C1 recurrence arm is
-   [preregistered](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-prereg.md)
-   with the same full history and explicit A2/B2 token-family binding. Any
-   C1/B2 mismatch stops untraced work; only a 25/25 B2-exact C1 authorizes one
-   later recurrence arm before tracing. Do not promote or submit these speeds.
+   response. The exact C1 recurrence arm also passed every sealed gate and
+   repeated that all-zero response byte-for-byte while producing third SQL and
+   factual families. Preserve A2/B2/C1, run no D arm, and localize prompt 24
+   while retaining all 24 predecessor requests. See the
+   [recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md).
+   Do not promote or submit these speeds.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.

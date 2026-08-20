@@ -163,9 +163,11 @@ handoff remains incomplete. See the
   cache. The follow-up pad-on composite TP2 full-25 pair passed the new
   fail-closed engagement/direct-load/cache/freshness/quality gates but agreed
   on only 22/25 token arrays. A2's long-rollover response was all-zero from the
-  first token, while B2 was sane. Its preferred medians were `100.916` /
-  `101.124 tok/s` and are nonpromotable. Preserve the pair and use one exact
-  history-preserving recurrence arm before any synchronizing trace. The cheap
+  first token, while B2 was sane. The exact C1 recurrence arm repeated A2's
+  512-zero stream and formed third SQL/factual output families under the same
+  sealed identity. Its preferred median was `101.059 tok/s`; all three arms are
+  nonpromotable. Preserve A2/B2/C1, stop untraced arms, and localize prompt 24
+  with the complete request history retained. The cheap
   draft-fallback-margin patch still needs real TP2 logit-equivalence captures
   and branch/candidate counters before any full 25-prompt throughput A/B.
 - Do not use stock `intel/llm-scaler-vllm:0.21.0-b3.1` as a substitute for the
