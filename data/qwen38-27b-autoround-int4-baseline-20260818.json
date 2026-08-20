@@ -826,5 +826,22 @@
       "the two published records need withdrawal or re-measurement",
       "GPUs 0,1 remain wedged, halving available hardware"
     ]
+  },
+  "DRAFT_HEAD_IS_ALREADY_INT4_20260820": {
+    "finding": "the MTP draft head is ALREADY INT4 in every arm, including the record. identity.env:38 draft_lm_head_int4=1, :39 group_size=128, :40 scale_dtype=bf16.",
+    "server_log_confirmation": "two distinct lm_head prep lines: 'prefix=language_model.lm_head scope=all weight_t=(5120, 124160) scale=(124160,)' - the TARGET head at INT8 - and 'prefix=lm_head weight_t=(640, 124160) stride=(1, 640) scale=(40, 124160) group_size...' - the DRAFT head in packed INT4 group layout (640 = 5120/8 packed, 40 groups = 5120/128).",
+    "mechanism": "vocab_parallel_embedding.py:94-95 - the INT8 prep returns early for the MTP head when VLLM_XPU_DRAFT_LM_HEAD_INT4 is enabled, leaving it to the INT4 path. Target INT8 + draft INT4 is the intended and actual configuration.",
+    "CORRECTS_THE_RERANK_AUDIT": "that audit claimed 'the Qwen3.8 record's draft head is INT8, not INT4' and that testing rerank K=2 would 'require first downgrading the draft head INT8 -> INT4, an unmeasured config change with its own acceptance cost'. Both are wrong. The INT4 branch the rerank patch targets is LIVE in the record lane.",
+    "CLOSES_A_LEVER_BEFORE_SPENDING_A_RUN": "I was about to screen 'switch the draft head to INT4' as a speed idea. It is already applied, so there is no gain there. Caught by reading the run's own prep log rather than assuming.",
+    "what_remains_true_about_rerank": "the patch is still NOT in the vllm tree (0 occurrences of RERANK_TOPK), so applying it would change the vllm identity the harness pins. The cross-rank +1.0 writeback cap and the absence of any measurement by its authors also still stand."
+  },
+  "draft_fallback_margin_screen_20260820": {
+    "lever": "VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN, vocab_parallel_embedding.py:341-366. In-tree, needs no patch, and never screened anywhere in the repo.",
+    "what_it_does": "for draft rows whose INT4 top1-top2 gap is below the margin, recompute those rows exactly in fp16 via F.linear against the retained weights and overwrite the logits.",
+    "output_safety": "DRAFT-SIDE ONLY. The target verifier still requires exact argmax equality (rejection_sampler.py:1774-1776), so this cannot change an emitted token - it only changes which drafts are proposed. Legitimate under the no-shortcut standard.",
+    "hypothesis": "better draft proposals raise MTP acceptance, and more accepted tokens per step raises tok/s.",
+    "cost_risk": "it runs torch.topk over the 124160-wide local vocab per draft position plus a .item() sync, and this repo already measured a wide topk at ~6x a max reduction on XPU. The topk may well cost more than the acceptance gain returns.",
+    "harness_fix": "added VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN passthrough at run-arm.sh:487. It was missing - the sixth flag found to be unreachable from the harness.",
+    "arm_running": "qwen38-marginfree-draftfallback025-mtp5-25-spec-a-20260820 at margin 0.25, one variable vs the 101.170 margin-free baseline."
   }
 }

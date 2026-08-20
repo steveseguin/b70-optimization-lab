@@ -479,6 +479,14 @@ if [[ -n "${VALIDATION_LM_HEAD_INT8:-}" ]]; then
   # W8A8 vocabulary projection without inheriting ambient process state.
   export VLLM_XPU_LM_HEAD_INT8="${VALIDATION_LM_HEAD_INT8}"
 fi
+# Draft INT4 fallback margin: recompute low-margin draft rows exactly in fp16
+# against the retained weights (vocab_parallel_embedding.py:341-366). Draft-side
+# only - the target verifier still requires exact argmax equality - so it cannot
+# change emitted tokens, only which drafts get proposed. Better drafts raise MTP
+# acceptance. In-tree and never screened; passthrough was missing.
+if [[ -n "${VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN:-}" ]]; then
+  export VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN="${VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN}"
+fi
 if [[ -n "${VALIDATION_DRAFT_LM_HEAD_INT4_RERANK_TOPK:-}" ]]; then
   # Candidate-only acceptance lever: the INT4 draft head proposes a small
   # local-vocabulary set and its retained original weights rerank that set.
