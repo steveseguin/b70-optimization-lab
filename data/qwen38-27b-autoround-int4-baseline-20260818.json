@@ -427,5 +427,31 @@
       "authoritative_number": "their op-level A/B on the BUILT fix: 42.87 us/call at PERSISTENT_SCRATCH=0 against 34.08 us/call at =1, i.e. 8.8-9.2 us/call over 48 GDN layers = ~0.42 ms/step = about +1.5 tok/s, projecting ~103.4. That is a real-op measurement and supersedes both my estimate and their original projection.",
       "still_outstanding": "the strict-25 server rerun with PERSISTENT_SCRATCH=1 on this measuring host. Their own caveat is correct: the op-level parity gate passes on the pinned build too, because a fresh process gets predictable allocator memory, so only long-lived serving residue exposes the bug."
     }
+  },
+  "no_speculation_baseline_20260819": {
+    "raw_root": "qwen38-nospec-targetonly-25-a-20260819",
+    "manifest_sha256": "a9e820882a747112d7dd7a47a3b392ea7167b718a645cf1c0e5abfee210acee8",
+    "all25_median_tok_s": 48.756537282215334,
+    "selection12_median_tok_s": 48.81478274301243,
+    "cold": true,
+    "config": "target-only, no MTP; same model/suite/dtype/TP2/INT8 LM head, staged FA package, capture [1]",
+    "speculative_speedup_vs_mtp5_record": {
+      "all25": 2.09,
+      "selection12": 1.95
+    },
+    "note": "first no-speculation measurement for this checkpoint on the vLLM/XPU lane. Note the subset split vanishes without speculation - all-25 48.757 vs selection-12 48.815 are the same within noise - whereas the speculative arms differ by 6+ tok/s between subsets. That confirms the suite-composition gap is a property of draft acceptance, not of the prompts' decode cost."
+  },
+  "environment_incident_20260819": {
+    "what_happened": "a setup.py build_ext --inplace attempt emptied /home/steve/src/vllm-xpu-kernels/build/temp, which is baked into _xpu_C.abi3.so's RUNPATH. Every server launch then failed at platform detection with 'Failed to infer device type'. Four runs were lost to this before it was diagnosed.",
+    "repair": "symlinked the package .so files into build/temp; platform detection and the record config both recovered",
+    "regression_gate": {
+      "raw_root": "qwen38-mtp5-regression-25-spec-f-20260819",
+      "manifest_sha256": "f3e0efee34557b71ab17578d0a80af90b9154c9f188d7b21cb2376d72250b333",
+      "all25_median_tok_s": 101.18046988430763,
+      "selection12_median_tok_s": 95.33567883683524,
+      "cold": true
+    },
+    "residual_damage": "58 files in the record's compile cache (vllm-cache/qwen38-mtp5-noscratch-20260818) were modified by the failed runs. The regression arm is 24/25 against all three record arms, differing on holdout--long-rollover-repository-audit at token 0. The SUBMITTED record stands on its sealed evidence, but that cache is no longer the pristine artifact and must not be reused as the pinned cache. Future determinism work needs a fresh cache and a re-established three-arm baseline.",
+    "lesson": "run the regression gate BEFORE mutating the build tree, not after"
   }
 }
