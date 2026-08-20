@@ -65,6 +65,29 @@ Per MTP5 step (128 layer + 10 draft allreduces, 1+5 logits allgathers):
 (~14%, +10-14 tok/s) argument for the full-graph arm — before counting the
 launch-latency savings on the GDN eager regions themselves.
 
+### Small ops priced (burst, 2026-08-19)
+
+`per_token_quant_int8_xpu [6,5120]`: 5.7 µs; `qwen_gemma_rms_norm_f32`
+[6,5120]: 4.8 µs. Per-step small-op totals at burst rates: ~54 quant calls
+(GDN dedup reuses one per layer) + 128 RMSNorm + 128 residual adds ≈
+**1.6 ms**; at eager dispatch rates roughly double that.
+
+### Final residual accounting
+
+| block | ms/step |
+|---|---|
+| measured big components (GEMMs, spec op, heads) | 16.6 |
+| collectives (burst) | 2.3 |
+| small ops (quant/norm/add, burst) | 1.6 |
+| attention kernels (16 × ~40 µs est.) | ~0.6 |
+| **accounted** | **~21.1** |
+| **actual step** | **35.3** |
+| **unaccounted: eager dispatch penalty, draft serialization, sampler, host** | **~14.2** |
+
+The dominant recoverable mass is the dispatch penalty itself — exactly what
+full-graph capture removes. Even capturing only the 48 GDN layer regions
+(whose graph breaks force eager dispatch today) attacks the largest slice.
+
 ## The unscreened arm this points to
 
 Every prerequisite for full-graph capture of the record lane was rebuilt
