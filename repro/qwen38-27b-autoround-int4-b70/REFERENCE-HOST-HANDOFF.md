@@ -46,6 +46,9 @@ Once those gates exist, the source-level queue for >105 tok/s, in order
    - `gdn_replayssm_commit_pending` double race (in-place shift + pending
      flag) corrupting conv state ~1/4000 calls at decode time
      (2026-08-20-replayssm-commit-pending-race-found-and-fixed.md).
+     **Inert in REPLAYSSM_SPEC=0 lanes** — the margin-free record lane runs
+     with ReplaySSM off, so this fix cannot change its 21/25; do not
+     misread a null there. It protects the ReplaySSM=1 lanes.
    Triple-fix staged build: `/home/steve/staged-xpu-commitfix-20260820`
    (manifest in `manifests/staged-xpu-commitfix-20260820.sha256`; also
    rebuild from the three patch files under

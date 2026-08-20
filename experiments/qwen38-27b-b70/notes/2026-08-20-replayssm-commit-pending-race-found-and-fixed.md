@@ -76,17 +76,31 @@ combined determinism + equivalence harness in the same file family).
 - int4 prefill band (fixed separately) explains at most
   holdout--structured-extraction (187 tokens, in the [129,448] band).
 - This race fires at decode time whenever MTP commits accepted tokens —
-  independent of prompt length. It is the first measured mechanism that can
-  flip factual-protocol (49), sql-debugging (71), and long-rollover (837).
-- Whether it accounts for the *stable* per-prompt divergence pattern
-  (same prompts diverge every pairing) is unproven: a ~1/4000 random race
-  would scatter divergences. The observed stability may reflect the
-  divergence *seeding early* in long generations and locking in, or
-  additional data dependence. A margin-free A/B on this triple-fix build
-  decides.
+  independent of prompt length.
+
+**Scope correction (2026-08-20, post-measuring-host report):** the
+margin-free 21/25 lane ran with `VLLM_XPU_GDN_REPLAYSSM_SPEC=0` (the spec
+arms disable ReplaySSM because of the latent non-power-of-two ring bug at
+MTP4/MTP5, see baseline JSON `latent_bug_replayssm_ring_length`). With
+ReplaySSM off, `gdn_replayssm_commit_pending` **never executes**, so this
+fix is inert in that lane and cannot explain any of its four divergent
+prompts. The fix still matters: the race is real (source-provable and
+measured), and ReplaySSM=1 lanes exist in this repo
+(`profile-current-recipe-*.sh`, `run-replayssm-transaction-screen-4gpu.sh`).
+Do not interpret a 25/25 in a REPLAYSSM_SPEC=0 lane as evidence for or
+against this fix — the op is not in that execution path.
+
+For the margin-free 21/25 lane the remaining live explanations are: the
+int4 prefill band (covers at most 1/4 prompts), and the measuring host's
+host-wide page-cache corruption (intermittent per-page poisoning across
+arm loads; unproven, timeline-dependent, and now their prime suspect), with
+oneCCL already weakened by this host's 400-collective cross-process
+bitwise-stability gate and their planned TP1 control decisive.
 - Remaining unswept surface: GDN chunk prefill (Triton; standalone compile
-  fails on this host — sweep server-side), cross-request history
-  dependence.
+  fails on this host: `TritonIntelStrideVersioning` pass bug in
+  `chunk_gated_delta_rule_fwd_kernel_h_blockdim64`, triton-xpu 3.7.0,
+  reproducer `scripts/qwen38-det-gdn_prefill_det.py` — sweep server-side),
+  cross-request history dependence.
 
 ## Recommended next run (measuring host)
 
