@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-18**
+Last reviewed: **2026-08-20**
 
 ## Authority And Update Rule
 
@@ -46,10 +46,12 @@ token-exact evidence.
 
 ## Active Optimization Lane
 
-Qwen3.8 27B target-only TP2 on two ASRock B70s is active. The current accepted
-Q4_K_M source adds a device-local Q4_K gate/up/SwiGLU fusion to the transferred
-Qwen3.6 exact-shape stack. DFlash, MTP, prompt reuse, and other speculation are
-separate result classes and remain outside the target-only headline.
+Qwen3.8 27B work is active. Accepted GGUF target-only results were measured on
+the two-ASRock-B70 reference host. Current AutoRound INT4 TP2 measurement uses
+a selected pair from the four-B70, 125-GiB host; the two-B70, 15-GiB host is a
+source/op-audit worker and must not run the full server. DFlash, MTP, prompt
+reuse, and other speculation are separate result classes and remain outside
+the target-only headline.
 
 All Git work is performed directly on `main`. Do not create branches or
 secondary worktrees. Use focused commits, patches, bundles, configs, and result
@@ -122,24 +124,36 @@ overlap BMG AOT compilation, a model workload, or a large download on this
 
 Opened 2026-08-18, succeeding the closed Qwen3.6 27B INT4 lane. This is a
 **separate identity** from the llama.cpp Q4_K_M target-only lane above: different
-runtime, different quantization, and MTP3 speculative decoding.
+runtime, different quantization, and native MTP speculative decoding. The
+current working anchor uses MTP5.
 
 Model `devan-carlin/Qwen3.8-27B-int4-AutoRound` at
 `/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan`, verified against
 [`repro/qwen38-27b-autoround-int4-b70/manifests/model.json`](repro/qwen38-27b-autoround-int4-b70/manifests/model.json).
 
-First baseline, cold, 25-prompt suite: **`91.926 tok/s`** (`86.720` on the 12
-historical selection prompts). MTP3 worked on the first attempt with no
-model-specific code changes because the checkpoint has the same tensor
-architecture and routes through the same INC INT4 path. This establishes
-source compatibility, not quality or performance equivalence for the new
-weights.
+The current honest working anchor is **`101.170 tok/s` all-25** and `92.851`
+on selection-12: the median of three margin-free MTP5 arms (`101.394`,
+`100.455`, `101.170`) on GPUs 2,3. It is research evidence, not a promoted
+record: pairwise token parity is only 21/25, 21/25, and 22/25, and no fresh
+margin-free target-only Qwen3.8 oracle exists yet.
 
-Not yet done: a quality baseline for this checkpoint (the Qwen3.6 baseline is a
-different model and must not be reused), and a self-determinism replicate.
+The published `101.922` MTP5 and `100.497` MTP4 LocalMaxxing rows are
+invalidated and withdrawal is recommended. Both opted into a `0.03125` greedy
+margin that changed emitted text on 18/25 prompts; their quality baseline used
+the same margin and therefore could not detect it. Their published scratch
+flag is also wrong: the historical harness silently ran with persistent
+scratch enabled. The API has no amendment/deletion method, so the upstream
+annotation/withdrawal still requires human contact with LocalMaxxing.
+
+The four-card measuring host's xe driver was recovered on 2026-08-20 without
+FLR or reboot and passed per-card compute, peer access, four-rank XCCL, and a
+known-good exact generation canary. The launch harness now fails closed unless
+the model's complete direct-I/O and ordinary cached views both match the
+manifest immediately before vLLM starts.
 
 - [lane setup and rationale](repro/qwen38-27b-autoround-int4-b70/README.md)
 - [baseline evidence](data/qwen38-27b-autoround-int4-baseline-20260818.json)
+- [measuring-host recovery](experiments/qwen38-27b-b70/notes/2026-08-20-measuring-host-xe-recovery-and-health-gate.md)
 
 ## Closed: Qwen3.6 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 
@@ -235,11 +249,13 @@ loaded service.
    `+0.342%`, and TTFT regressed `+8.311%`. Preserve its
    [packet](experiments/qwen38-27b-b70/notes/2026-08-16-q8-distributed-greedy-argmax-neutral.md)
    and only revisit if winner selection can avoid the added cross-queue sync.
-3. Keep the Qwen3.8 AutoRound INT4 TP2/MTP3 lane paused on the 15 GiB host until
-   the measuring host publishes its exact runtime bootstrap, compact raw rows,
-   measured peak-RSS/swap bound, matching B replicate, and Qwen3.8 target-only
-   quality oracle. The model and source identities are present locally; the
-   read-only preflight still fails closed on the missing runtime artifacts.
+3. Keep full Qwen3.8 AutoRound server runs off the 15-GiB host. On the recovered
+   four-B70 host, first generate a fresh margin-free target-only Qwen3.8 oracle,
+   then repeat the margin-free MTP5 anchor through the repaired dual-view model
+   gate. Run TP1 on the reduced four-prompt divergence suite to test whether
+   removing TP2 collectives restores 25/25 repeatability. Do not promote or
+   submit until target parity, self-determinism, and the fixed quality gate all
+   pass.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.
@@ -252,3 +268,13 @@ loaded service.
    experiments as patches and notes rather than branches or worktrees.
 8. Archive large ignored Qwen artifacts only through the verified manifest and
    restore procedure linked from the Qwen family map.
+9. Treat DFlash 2 as a separate future llama.cpp/GGUF lane. Upstream PR #27342
+   is still open, initial evidence is single-device and workload-sensitive, and
+   no compatibility with this vLLM AutoRound TP2 identity is established. See
+   the [intake note](experiments/qwen38-27b-b70/notes/2026-08-20-dflash2-future-lane-intake.md).
+10. The only interesting new LocalMaxxing mechanism is runtime INT4 over five
+    MTP draft linears; the draft head portion is already banked here, most of
+    this checkpoint's MTP block is already INT4, and the external patch is not
+    published. Source-audit it before any run; ignore aggregate C5/C32 rows as
+    single-stream leads. See the
+    [feed audit](experiments/qwen38-27b-b70/notes/2026-08-20-localmaxxing-qwen38-external-lever-intake.md).

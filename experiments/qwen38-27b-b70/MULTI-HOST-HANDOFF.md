@@ -1,6 +1,6 @@
 # Qwen3.8 27B multi-host handoff
 
-Last audited: 2026-08-17
+Last audited: 2026-08-20
 
 This packet lets another B70 system reproduce the accepted lanes or take an
 unclaimed optimization arm without relying on paths or uncommitted source from
@@ -14,9 +14,11 @@ From an existing clean clone:
 experiments/qwen38-27b-b70/scripts/sync-worker.sh
 ```
 
-The script refuses dirty worktrees and non-`main` branches. If an agent has
-local work, it must commit that work on an intentional branch or stash it
-manually before synchronizing; the script never discards changes.
+The script refuses dirty worktrees and any branch other than `main`. If an
+agent has local work, checkpoint it as a focused commit on `main`, or preserve
+an unready alternative as a patch/bundle before synchronizing; the script never
+discards changes. Do not create an experiment or safety branch in this
+workspace.
 
 Before starting an experiment, read the
 [do-not-repeat index](DO-NOT-REPEAT.md). It maps both Qwen3.8-specific work and

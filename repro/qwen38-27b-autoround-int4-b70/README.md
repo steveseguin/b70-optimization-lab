@@ -5,6 +5,14 @@ speculative lane. The two checkpoints have the same tensor architecture, so the
 pinned Qwen3.6 source stack is mechanically compatible. New weights still
 require independent numerical, quality, determinism, and performance gates.
 
+> **Status correction, 2026-08-20:** this lane has no promoted record. The
+> published `101.922` MTP5 and `100.497` MTP4 rows used an output-changing
+> greedy margin and a baseline with the same setting; withdrawal is
+> recommended. The honest margin-free working anchor is `101.170 tok/s`
+> all-25, but its three arms agree on only 21–22/25 prompts and no fresh
+> margin-free target-only oracle exists. Do not use the historical command
+> below for a new promotion run.
+
 ## Model
 
 `devan-carlin/Qwen3.8-27B-int4-AutoRound`, base `Qwen/Qwen3.8-27B`, Apache-2.0.
@@ -131,15 +139,20 @@ handoff remains incomplete. See the
 
 ## Open items
 
-- No quality baseline exists for this model yet. The Qwen3.6 baseline is a
-  different checkpoint and must **not** be reused as a correctness oracle; a new
-  one has to be generated before any parity or quality claim.
+- No valid margin-free target-only quality oracle exists for this model yet.
+  The old Qwen3.8 baseline used the output-changing margin; the Qwen3.6
+  baseline is a different checkpoint. Neither may be reused for a new parity
+  or quality claim.
 - The vision tower (333 tensors) is unused for text benchmarking; the config
   carries `language_model_only`.
-- The first speculative-depth candidate is a narrow
-  [MTP4 serial-exact GDN patch](../../experiments/qwen38-27b-b70/notes/2026-08-18-autoround-int4-mtp4-serial-exact-candidate.md).
-  It is source-verified but unbuilt and untested; it must not be presented as a
-  result until the quality oracle and full promotion gates pass.
+- The current margin-free MTP5 anchor is `101.170 tok/s` all-25 and `92.851`
+  selection-12, the median of three arms. Pairwise token parity is 21/25,
+  21/25, and 22/25, so it is a research baseline rather than a result.
+- Before another full speed arm: run a fresh target-only oracle, re-establish
+  the baseline through the dual-view model gate, and run the reduced TP1
+  determinism diagnostic. The cheap draft-fallback-margin patch needs real
+  TP2 logit-equivalence captures and branch/candidate counters before any
+  full 25-prompt throughput A/B.
 - Do not use stock `intel/llm-scaler-vllm:0.21.0-b3.1` as a substitute for the
   pinned source stack on a 16 GB host. An independent eager TP2 smoke first hit
   its FP8-only GDN output-projection probe on an INT4 `qweight`; disabling that
@@ -147,12 +160,13 @@ handoff remains incomplete. See the
   worker during warmup and triggered one BCS reset. See the
   [safety note](../../experiments/qwen38-27b-b70/notes/2026-08-18-autoround-int4-stock-image-lowram-unsafe.md).
 
-## Current record — 101.922 tok/s, MTP5 (2026-08-18)
+## Invalidated historical measurement — 101.922 tok/s, MTP5 (2026-08-18)
 
-LocalMaxxing `cmszbkxco0e11ms01l2rixxbt`. Median of three cold arms
+LocalMaxxing `cmszbkxco0e11ms01l2rixxbt`; withdrawal recommended. Median of three cold arms
 (`100.896` / `102.042` / `101.922`) on the 25-prompt suite; all three pairwise
-comparisons 25/25 token-identical; quality passes against this model's own
-baseline. **Selection-12 is `95.167`** — lower than the MTP4 row's `96.627`,
+comparisons were 25/25 only because a `0.03125` greedy margin masked runtime
+flips and changed output on 18/25 prompts. Its quality baseline used the same
+margin, so the quality pass is invalid. **Selection-12 was `95.167`** — lower than the MTP4 row's `96.627`,
 because depth helps the newer holdout prompts and hurts the historical ones.
 
 Identical to the MTP4 command below except:
@@ -162,8 +176,9 @@ VALIDATION_NUM_SPECULATIVE_TOKENS=5 \
 VALIDATION_COMPILATION_CONFIG_OVERRIDE='{"use_inductor_graph_partition":true,"pass_config":{"fuse_rope_kvcache_cat_mla":false},"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[6],"max_cudagraph_capture_size":6}' \
 ```
 
-Depth was swept: MTP3 `96.616`, MTP4 `100.497`, **MTP5 `101.922`**, MTP6
-`99.464`. Five is the optimum; six turns over.
+The historical depth sweep measured MTP3 `96.616`, MTP4 `100.497`, MTP5
+`101.922`, and MTP6 `99.464`, all under the invalid margin-assisted identity.
+It does not establish a valid optimum for the margin-free lane.
 
 ### What a third party cannot reproduce exactly
 
@@ -185,18 +200,21 @@ Two things are honestly out of reach without host access:
    freshness, cache-zero, determinism and quality all still apply. Runs made
    this way are reproductions, not record-identity runs, and should not be used
    to promote a submission.
-2. **The torch.compile cache.** Token-for-token determinism is only reproducible
-   against a *pinned* compile cache; fresh compilations emit
-   different-but-internally-deterministic code. The speed reproduces; the exact
-   token stream will not.
+2. **The torch.compile cache.** The historical margin-on artifact was evaluated
+   against a pinned compile cache, but that does not establish determinism for
+   the current margin-free lane. Even three arms sharing one cache agreed on
+   only 21/25, 21/25, and 22/25 prompts. Treat exact token repeatability as an
+   open runtime problem until the TP1/TP2 diagnostics close it.
 
-Everything else — model manifest, both source trees on the public forks, the
-quality baseline, and the harness — is published.
+Everything else — model manifest, both source trees on the public forks and
+the harness — is published. The historical quality baseline is published for
+audit only and is not a valid margin-free oracle.
 
-## Validated result — 100.497 tok/s (2026-08-18)
+## Invalidated historical measurement — 100.497 tok/s (2026-08-18)
 
-Median of three arms on the 25-prompt suite, 25/25 self-determinism, quality
-pass against this model's own baseline. Full analysis:
+This three-arm MTP4 measurement is invalid for the same reason as MTP5: the
+greedy margin changed emitted tokens and the quality baseline shared it. The
+historical numbers remain below for audit, not promotion. Full original analysis:
 [`../../notes/2026-08-18-qwen38-int4-100tps-uninitialized-gdn-scratch.md`](../../notes/2026-08-18-qwen38-int4-100tps-uninitialized-gdn-scratch.md).
 
 | Arm | all-25 | selection-12 |
@@ -211,7 +229,12 @@ unanimously over the line, the median is; **selection-12 at `96.627` has not
 crossed 100**, and that is the subset any record comparison rests on; and this
 is the pinned-compile-cache gate, with a fresh-compile arm still outstanding.
 
-### Command
+### Historical command identity — do not use for a new measurement
+
+This command intentionally preserves the invalid margin-assisted identity so
+the old artifact can be audited. It must not be copied into a new run. A new
+run requires margin `0`, persistent scratch `1`, and a fresh target-only
+quality oracle; those gates are not yet represented by a promoted command.
 
 ```bash
 repo=$(git -C . rev-parse --show-toplevel)
@@ -241,12 +264,12 @@ LABEL=$LABEL \
 spec-native-partition-exact-native 0,1 "$root" "$qbase"
 ```
 
-**All three arms must share one `VALIDATION_VLLM_CACHE_ROOT`.** Fresh
+Historically, all three arms shared one `VALIDATION_VLLM_CACHE_ROOT`. Fresh
 compilations produce different-but-internally-deterministic code, so a
 fresh-cache rerun will not reproduce token-for-token. The compile cache is part
 of the run identity.
 
-`VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH=0` is load-bearing, not incidental: with
-the scratch enabled this configuration fails 24/25 on
-`holdout--long-rollover-repository-audit` because of an uninitialized read at
-five verifier rows.
+The published command's `VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH=0` attribution
+was also wrong: the old harness scrubbed that value and hard-exported `1`, as
+proved by 96 scratch-allocation messages in each record arm. The harness now
+propagates the validation variable and records the effective flag.

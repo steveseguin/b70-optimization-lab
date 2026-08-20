@@ -147,3 +147,4 @@ must not be recorded the same way.
 | Collection | Contributor | Source | Evidence level | Reviewed here |
 | --- | --- | --- | --- | --- |
 | [TRX50 with Arc Pro B70/B60](field-reports/bosd/trx50-2xb70/README.md) | bosd | [PR #16](https://github.com/steveseguin/b70-optimization-lab/pull/16), [PR #17](https://github.com/steveseguin/b70-optimization-lab/pull/17) | `community-reported` | Documentation, links, semantics, and arithmetic only; benchmarks not reproduced |
+| [Qwen3.8 on Arc Pro B65](field-reports/boyter/arc-pro-b65-qwen38/README.md) | boyter | X post relayed by maintainer; source URL/raw logs not captured | `community-reported` | Hardware specifications cross-checked; benchmark not reproduced and comparison identity incomplete |

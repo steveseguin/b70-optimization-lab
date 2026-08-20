@@ -19,3 +19,4 @@ separate, fully identified result packet.
 | Collection | Contributor | Hardware | Source | Evidence |
 | --- | --- | --- | --- | --- |
 | [TRX50 with Arc Pro B70/B60](bosd/trx50-2xb70/README.md) | bosd | 2× Arc Pro B70 plus Arc Pro B60 | [PR #16](https://github.com/steveseguin/b70-optimization-lab/pull/16), [PR #17](https://github.com/steveseguin/b70-optimization-lab/pull/17) | `community-reported` |
+| [Qwen3.8 on Arc Pro B65](boyter/arc-pro-b65-qwen38/README.md) | boyter | 1× Arc Pro B65 32 GB | X post relayed by maintainer; original URL/raw logs not captured | `community-reported` |

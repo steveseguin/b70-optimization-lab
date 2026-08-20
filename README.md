@@ -82,7 +82,7 @@ These are entry points, not the whole repo:
 | Qwen3.6 27B INT4 AutoRound on 1-2x B70 | **Lane closed 2026-08-18, superseded by the Qwen3.8 INT4 lane above.** July TP2 row **`95.385 tok/s`** under its original metric/bar; LocalMaxxing `cmrh35ct50092mj01h7jgydqj`. The final fixed-RMSNorm screen matched then-sealed controls at `106.663`, but the matched 25-prompt candidate was only 12/25 exact at `93.446`; no new submission. | [final closeout](notes/2026-08-17-qwen36-int4-batch-invariant-rmsnorm-closeout.md), [independent validation](experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md), [historical repro](repro/qwen36-27b-autoround-int4-b70/README.md) |
 | Qwen3.6 27B GGUF Q8_0 target-only on 2x ASRock B70 | Active no-speculation TP2 optimization; clean-source record: **`36.604128 tok/s` conventional** (`36.973866` historical helper), full-512 after-TTFT `36.533899`; 12/12 512-token outputs exact and all cache counts zero; two-chain DP4A ILP plus recurrent/attention/collective fusions; `+17.981%` over the matched mndodd fork baseline | [handoff](results/qwen36-27b-q8-tp2-asrock-b70/HANDOFF.md), [result packet](results/qwen36-27b-q8-tp2-asrock-b70/README.md), [standalone repro](repro/qwen36-27b-q8-tp2-asrock-b70/README.md), [source patch](patches/qwen36-27b-q8-tp2-asrock-b70/README.md), [mndodd contributor packet](community/mndodd-qwen36-27b-llamacpp-sycl/README.md) |
 | **Qwen3.8 27B GGUF target-only on 2x ASRock B70** | Q4_K_M **`49.717503 tok/s` conventional** (`50.219700` historical helper; LocalMaxxing `cmsy530c70cpwms01bl1sjk6g`) and quality-conservative Q8_0 `36.772932 tok/s` single-request. A narrow fixed-prompt Q8 c2 capture sustained **`57.398122 tok/s` aggregate** (~`28.70` each), but broader prompts confirmed schedule-dependent outputs, so it is capacity evidence rather than a general quality guarantee. All are no-MTP/DFlash/speculation; aggregate and single-stream rates are kept distinct | [Q8 primary repro](repro/qwen38-27b-q8-tp2-asrock-b70/README.md), [Q8 c2 repro](repro/qwen38-27b-q8-tp2-c2-asrock-b70/README.md), [Q4_K_M repro](repro/qwen38-27b-q4km-tp2-asrock-b70/README.md), [pass-2 note](experiments/qwen38-27b-b70/notes/2026-08-15-target-only-pass2.md) |
-| **Qwen3.8 27B AutoRound INT4 speculative on 2x B70** | Current INT4 frontier and the fastest promoted decode on this model: **`101.922 tok/s`** all-25 at MTP5 (LocalMaxxing `cmszbkxco0e11ms01l2rixxbt`), with MTP4 retained at `100.497` because it is stronger on the 12 historical prompts. Three cold arms each, all pairwise comparisons 25/25 token-identical, quality passing against the model's own baseline. Determinism holds against a **pinned compile cache**; selection-12 (`95.167`/`96.627`) has not crossed 100 | [result and diagnosis](notes/2026-08-18-qwen38-int4-100tps-uninitialized-gdn-scratch.md), [repro](repro/qwen38-27b-autoround-int4-b70/README.md), [evidence](data/qwen38-27b-autoround-int4-baseline-20260818.json) |
+| **Qwen3.8 27B AutoRound INT4 speculative on 2x B70** | Active research, **not currently promoted**. Honest margin-free MTP5 anchor: **`101.170 tok/s`** all-25 (`92.851` selection-12), median of three arms; pairwise repeatability is only 21–22/25 and a fresh target-only oracle is pending. Published `101.922`/`100.497` rows used an output-changing greedy margin and should be withdrawn | [corrected evidence](data/qwen38-27b-autoround-int4-baseline-20260818.json), [repro/status](repro/qwen38-27b-autoround-int4-b70/README.md), [submission audit](results/localmaxxing-submissions.md) |
 | Gemma 4 26B A4B Q8 / INT8 on 1x B70 | Production-servable backend plus current strict fresh-response speed frontier; noisy near-record support band | [handoff](results/gemma4-26b-a4b-q8-b70/HANDOFF.md), [production service](results/gemma4-26b-a4b-q8-b70/production-service.md), [125 tok/s repro](repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md) |
 | Gemma 4 26B long-context/prompt-processing service lane | Separate from short-decode record; approved LocalMaxxing service entry `cmr47ivql0045nv011pfdjlaa`; service gates must not regress short decode | [Gemma result packet](results/gemma4-26b-a4b-q8-b70/README.md), [service gate script](repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh) |
 | Rapid one-B70 model snapshots | Quick strict/fresh decode baselines across practical GGUF/vLLM candidates; current promoted rows include Qwen3 30B-A3B `107.484 tok/s`, Qwen3-Coder 30B-A3B `108.117 tok/s`, Phi-4 mini Q4 `96.548 tok/s`, GLM-4.7-Flash `40.769 tok/s`, and Mistral Small 3.2 24B `27.297 tok/s` | [rapid result ledger](results/rapid-model-snapshots-b70/README.md), [rapid experiment notes](experiments/rapid-model-snapshots-b70/README.md) |
@@ -94,7 +94,7 @@ For the full queue and archive, use [docs/model-effort-index.md](docs/model-effo
 
 ### Qwen3.8 27B Model Board
 
-Last audited **2026-08-18**. Qwen3.8 retains Qwen3.6's exact 64-layer,
+Last audited **2026-08-20**. Qwen3.8 retains Qwen3.6's exact 64-layer,
 three-GDN-to-one-full-attention tensor geometry, so the accepted exact-shape
 TP2 stack transfers mechanically. Every new weight set is still independently
 gated. All promoted rows below are target-only and cache-zero. Other B70 hosts
@@ -108,8 +108,8 @@ and [do-not-repeat index](experiments/qwen38-27b-b70/DO-NOT-REPEAT.md).
 | GGUF Q8_0, accepted stack, two simultaneous requests | 2x ASRock B70, TP2, c2 | **`57.398122` aggregate (`28.70` per request)** | Narrow fixed-prompt capacity result, not single-stream or a general quality guarantee; broader prompt pairs confirmed schedule-dependent outputs; no speculation; [c2 repro](repro/qwen38-27b-q8-tp2-c2-asrock-b70/README.md), [capture](experiments/qwen38-27b-b70/data/2026-08-16-q8-tp2-c2-summary.json), [broader audit](experiments/qwen38-27b-b70/data/2026-08-16-q8-c2-batch-shape-audit.json) |
 | Official block-scaled FP8, vLLM/XPU `0.27.2rc1.dev77` | 2x ASRock B70, TP2 | **`21.708532 tok/s`** | Target-only, native FP16 KV, graph c1, cache-zero; all semantic/repeat/3,829-token needle hashes matched the Q8 oracle, but arbitrary continuations are not claimed token-exact and vLLM labels XPU Graph TP2 unsupported/experimental; [standalone repro](repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md), [result note](experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 | Official block-scaled FP8, older Intel vLLM `0.21.0-b3.1` | 2x ASRock B70, TP2 | Not promoted | Superseded negative: artifact loaded, but bounded initialization hit device-lost/out-of-resource errors; [bring-up note](experiments/qwen38-27b-b70/notes/2026-08-15-bringup-checkpoint.md) |
-| **AutoRound INT4 W4A16, vLLM/XPU MTP5 speculative** | 2x B70, TP2 | **`101.922 tok/s` all-25; `95.167` selection-12** | LocalMaxxing [`cmszbkxco0e11ms01l2rixxbt`](https://www.localmaxxing.com/en/runs/cmszbkxco0e11ms01l2rixxbt). Median of three cold arms (`100.896`/`102.042`/`101.922`), all three pairwise comparisons 25/25 token-identical, quality passing against this model's own baseline. **Determinism is validated under a pinned torch.compile cache** — fresh compilations emit different-but-internally-deterministic code, so the cache is part of the run identity and a fresh-compile arm is outstanding. Selection-12 has **not** crossed 100. Depth swept: MTP3 `96.616`, MTP4 `100.497`, MTP5 `101.922`, MTP6 `99.464`; [result and diagnosis](notes/2026-08-18-qwen38-int4-100tps-uninitialized-gdn-scratch.md), [repro](repro/qwen38-27b-autoround-int4-b70/README.md) |
-| AutoRound INT4 W4A16, vLLM/XPU MTP4 speculative | 2x B70, TP2 | **`100.497 tok/s` all-25; `96.627` selection-12** | LocalMaxxing [`cmszarna10e0nms0103hv0tve`](https://www.localmaxxing.com/en/runs/cmszarna10e0nms0103hv0tve). Retained alongside MTP5 because it is **better on the 12 historical prompts** (`96.627` against `95.167`) — depth helps the newer holdout prompts and hurts the historical ones. Same three-arm, 25/25, quality-passing gate; [repro](repro/qwen38-27b-autoround-int4-b70/README.md) |
+| **AutoRound INT4 W4A16, vLLM/XPU MTP5 speculative** | 2x B70, TP2 | **`101.170 tok/s` all-25; `92.851` selection-12** | Current margin-free research anchor: median of `101.394`/`100.455`/`101.170`, but only 21/25, 21/25, and 22/25 pairwise token parity. No fresh margin-free target-only oracle exists, so this is not promotable. The historical `101.922` LocalMaxxing row is invalid/withdrawal-recommended because its greedy margin changes output; [corrected evidence](data/qwen38-27b-autoround-int4-baseline-20260818.json), [repro/status](repro/qwen38-27b-autoround-int4-b70/README.md) |
+| AutoRound INT4 W4A16, vLLM/XPU MTP4 speculative | 2x B70, TP2 | historical **`100.497 tok/s` all-25; `96.627` selection-12** | **Invalid public row; do not reproduce or compare as a valid record.** It used the same output-changing greedy margin and margin-on quality baseline as MTP5. LocalMaxxing [`cmszarna10e0nms0103hv0tve`](https://www.localmaxxing.com/en/runs/cmszarna10e0nms0103hv0tve); [withdrawal audit](results/localmaxxing-submissions.md) |
 
 Community-reported alternatives are kept outside the promoted rows above:
 
@@ -129,7 +129,7 @@ accounting from the same timestamps. Relative A/B gains are unchanged.
 
 | Target and route | Hardware | Best captured decode result | Evidence boundary / pointer |
 | --- | --- | ---: | --- |
-| AutoRound INT4 W4A16, vLLM MTP3 | 2x B70, TP2 | historical **95.384868** (`94.431019` conventional) | **Lane closed 2026-08-18**; superseded by the Qwen3.8 INT4 lane, which is architecturally identical and reaches `101.922`. The July row is retained and unbeaten on its own 12-prompt suite. Two durable findings from the closeout: complete-token parity against a differently-configured reference is unsatisfiable at fp16, and XPU batch invariance is dead code behind `is_cuda_alike()` gates; [determinism/speed closeout](notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md), [source packet](patches/qwen36-27b-autoround-int4-b70/determinism-closeout-20260818/README.md), [prior closeout](notes/2026-08-17-qwen36-int4-batch-invariant-rmsnorm-closeout.md) |
+| AutoRound INT4 W4A16, vLLM MTP3 | 2x B70, TP2 | historical **95.384868** (`94.431019` conventional) | **Lane closed 2026-08-18**; superseded by the Qwen3.8 INT4 research lane, whose current honest margin-free anchor is `101.170` but is not promotable. The July row is retained and unbeaten on its own 12-prompt suite. Two durable findings from the closeout: complete-token parity against a differently-configured reference is unsatisfiable at fp16, and XPU batch invariance is dead code behind `is_cuda_alike()` gates; [determinism/speed closeout](notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md), [source packet](patches/qwen36-27b-autoround-int4-b70/determinism-closeout-20260818/README.md), [prior closeout](notes/2026-08-17-qwen36-int4-batch-invariant-rmsnorm-closeout.md) |
 | AutoRound INT4 W4A16, vLLM ReplaySSM MTP3 | 1x B70 | **68.236263** (`67.553901` conventional) | Valid quality-gated historical high; July 11 isolated reconfirmation was `65.4-66.7 tok/s`, so do not treat the high as every-run expectation; [TP1 attribution packet](results/qwen36-27b-autoround-int4-b70/tp1-draftgraph-attribution-reconfirm-20260711.json) |
 | GGUF Q4_0, DFlash5 | 1x B70 | **47.818818** (`47.340630` conventional) | Strict fixed-suite speculative record; unchanged Q4_0 target verifies accepted tokens; [closure](notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
 | GGUF Q4_K_M, intrinsic MTP2 | 1x B70 | **38.112 tok/s** | One fixed greedy 128-token request, visible bytes matched its 25.307 tok/s target-only control; not token-exact and not a fixed-suite median; [community validation](community/dominick253-qwen36-27b-llamacpp-sycl/validation/2026-08-08-reference-lab-validation.md) |
@@ -176,13 +176,13 @@ fresh-response claims.
 
 ## Hardware Scope
 
-Historical reference results in this repository were produced on four
-Intel-branded Arc Pro B70 32 GB cards. The current validation host has **two
-ASRock Arc Pro B70 32 GB cards** (`64 GB` aggregate VRAM), full-size ReBAR, and
-PCIe 5.0 x16 links. Hardware/count therefore remains part of every result
-identity. B70 is the platform on which maintainers can independently reproduce
-and verify submitted patches, but this is an Intel Arc/XPU project, not a
-B70-only repository.
+The measuring host has four Intel Arc Pro B70 32 GB cards and about 125 GiB
+system RAM. A second host has **two ASRock Arc Pro B70 32 GB cards** (`64 GB`
+aggregate VRAM), full-size ReBAR, PCIe 5.0 x16 links, and only about 15 GiB
+system RAM; it is currently restricted to source/build/op-level work. Hardware,
+count, and host identity remain part of every result. B70 is the platform on
+which maintainers can independently reproduce and verify submitted patches,
+but this is an Intel Arc/XPU project, not a B70-only repository.
 
 Results, fixes, and portability reports from Intel Arc Pro B50, B60, B65, and
 B70 owners are welcome, as are useful observations from other Intel Arc and
@@ -190,11 +190,20 @@ XPU systems. A B70 rerun verifies what a patch does on B70; it does not certify
 a contributor's score on hardware the maintainers do not possess. Hardware and
 verification status therefore stay explicit in every promoted result.
 
-The historical four-card host enabled TP4 and four independent one-GPU
-screens; the current two-card host supports TP2 or two isolated one-card
-screens. Higher-memory Intel devices would broaden model coverage, but that is
-not a prerequisite for contributing useful patches, results, failures, or
-optimization lessons.
+The four-card host enables TP4 or independent one-/two-GPU screens. The
+two-card host has enough VRAM for TP2 but not enough system RAM for the current
+Qwen3.8 AutoRound server, so GPU count alone is not a safety signal.
+
+### Arc Pro B65 orientation
+
+Intel specifies B65 and B70 with the same 32-GiB VRAM capacity and `608 GB/s`
+memory bandwidth, but B65 has 20 versus 32 Xe cores and 160 versus 256 XMX
+engines. A community report relayed from boyter claims roughly `42 tok/s` with
+MTP, `22 tok/s` without MTP, and `19 tok/s` at a 150-W limit on one B65. The
+command, prompt, metric, and exact power/MTP identity were not captured, so
+these are purchasing-orientation anecdotes rather than verified comparisons.
+Also note that this lab's `49.717503 tok/s` Qwen3.8 Q4_K_M result uses **two**
+B70s, not one. See the [B65 field report](community/field-reports/boyter/arc-pro-b65-qwen38/README.md).
 
 Steve Seguin maintains this repo and posts ongoing build notes at
 <https://x.com/xyster>.

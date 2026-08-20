@@ -1,8 +1,11 @@
-# Reference-host handoff needed for safe independent replay
+# Reference-host handoff and safe division of work
 
-The model itself is independently available and fully verified. The remaining
-gap is the exact runtime identity and a measured procedure that is safe on the
-second lab host, which has 15 GiB of system RAM.
+The model itself is independently available and fully verified. Full server
+measurement belongs on `steve-b70s` (four B70s, about 125 GiB RAM). The second
+host, `steve-TURIND8-2L2T` (two B70s, about 15 GiB RAM), is limited to source,
+build, and bounded op-level audits; a prior server warmup exceeded its memory
+cgroup and reset a GPU. Do not move a full run there merely because its GPUs
+are idle.
 
 ## Please publish from the measuring host
 
@@ -35,49 +38,46 @@ second lab host, which has 15 GiB of system RAM.
    oracle. Qwen3.6 output cannot be used as the correctness baseline for new
    Qwen3.8 weights.
 
-Once those gates exist, the source-level queue for >105 tok/s, in order
-(details in `experiments/qwen38-27b-b70/notes/`):
+The current source-level queue for >105 tok/s is now:
 
-0. **Determinism gate (blocks every promotion claim).** Two runtime races
-   were found and fixed on the second host, both with staged builds and
-   op-level gates:
-   - oneDNN int4 GEMM race for prefill chunk M in [129,448] → determinism
-     pad (2026-08-20-autoround-int4-runtime-nondeterminism-found-and-pad-fix.md);
-   - `gdn_replayssm_commit_pending` double race (in-place shift + pending
-     flag) corrupting conv state ~1/4000 calls at decode time
-     (2026-08-20-replayssm-commit-pending-race-found-and-fixed.md).
-     **Inert in REPLAYSSM_SPEC=0 lanes** — the margin-free record lane runs
-     with ReplaySSM off, so this fix cannot change its 21/25; do not
-     misread a null there. It protects the ReplaySSM=1 lanes.
-   Triple-fix staged build: `/home/steve/staged-xpu-commitfix-20260820`
-   (manifest in `manifests/staged-xpu-commitfix-20260820.sha256`; also
-   rebuild from the three patch files under
-   `experiments/qwen38-27b-b70/patches/`). Next run: margin-free +
-   PERSISTENT_SCRATCH=1 + this build, pinned shared compile cache, two
-   arms, 25-prompt suite, token-ID parity 25/25 required. Every decode-path
-   op was audited bitwise deterministic and batch/row-invariant
-   (2026-08-20-decode-path-determinism-audit.json); if divergence persists,
-   sweep GDN chunk prefill (Triton) server-side — its standalone sweep
-   fails to compile on the second host.
-1. Build and A/B the zero-init GDN scratch fix (`e34e82b05`, kernel note
-   2026-08-18). Built and op-level validated on the second host
-   (2026-08-19-autoround-int4-gdn-scratch-zero-init-built-ab.md):
-   +0.42-0.44 ms/step measured on the real op; strict-25 rerun is the
-   remaining proof.
-2. **Full-graph capture screen** — assembled but never benchmarked on the
-   Qwen3.8 MTP5 record config: graph-safe head256 stage + rebuilt oneCCL
-   graph collectives + zero-init persistent scratch are all validated, yet
-   the record runs PIECEWISE with DDTREE_FULL_GRAPH=0. The step cost model
-   (2026-08-19-autoround-int4-step-cost-model.md) shows ~53% of the 35.3 ms
-   step is NOT weight streaming (GEMMs are already at ~90% of the ~608 GB/s
-   HBM roofline — no GEMM kernel headroom; split-N is bit-exact but
-   slower). This is the largest identified lever.
-3. Screen the rerank K=2 draft-top-k candidate (audit
-   2026-08-18-autoround-int4-draft-topk-rerank-audit.md); estimated +3–6 tok/s
-   from acceptance lift at unchanged verifier cost.
-4. The M=4 residual/RMSNorm/INT4 gate-up fusion is **closed NO-GO**: its
-   fusible share measured 31.9 µs/layer, below the 0.04 ms/layer threshold;
-   see 2026-08-19-autoround-int4-fusion-gonogo-negative.md. Do not build it.
+0. **Protect result identity first.** The launcher at `c8db35513` requires an
+   explicit manifest and verifier, hashes every model file through direct I/O,
+   then hashes the complete ordinary cached view immediately before vLLM
+   starts. Both views must match the manifest and each other. It also records
+   the effective draft fallback margin and persistent-scratch value. Do not
+   run an older warning-and-continue/direct-only gate.
+1. **Create a fresh margin-free target-only oracle**, then re-run the current
+   margin-free MTP5 identity on the recovered measuring host. The working
+   anchor is `101.170 tok/s` all-25 (`92.851` selection-12), median of three
+   arms, but its pairwise parity is only 21/25, 21/25, and 22/25. It is not a
+   promotable result.
+2. **Run TP1 on the reduced four-prompt divergence suite.** Every serving op
+   has now been swept. The audit found and gated an INT4 prefill-band race and
+   a ReplaySSM commit race, but the latter is inert when `REPLAYSSM_SPEC=0`
+   and the former explains at most one of four divergent prompts. TP1 removes
+   the collective and is the cleanest discriminator before another full A/B.
+3. **Treat the cheap draft fallback margin as diagnostic-only.** The shipped
+   patch replaces costly full-vocabulary work, but its synthetic 40/40 test is
+   single-shard and does not bound real TP2 logit error. Add startup/call/row/
+   candidate counters and capture real TP2 local and gathered logits versus
+   full-FP16 before a 25-prompt performance run. A margin of `0.25` is only an
+   equivalence bound if the maximum relevant logit error is below `0.125`.
+4. **Keep DFlash 2 separate.** llama.cpp PR #27342 is still open and targets a
+   GGUF draft model. Initial reports are single-device and strongly dependent
+   on workload, context, width, and concurrency. It is not a drop-in lever for
+   the active vLLM AutoRound W4A16 TP2 identity; see the
+   [intake note](../../experiments/qwen38-27b-b70/notes/2026-08-20-dflash2-future-lane-intake.md).
+
+Closed or already-banked items:
+
+- draft LM head INT4 was already enabled in every record/baseline arm;
+- persistent scratch was already enabled historically despite the published
+  command saying `0`; zero-init is correctness work, not new speed headroom;
+- spec-greedy top IDs and engaged GDN-core capture each regressed about
+  `2.2 tok/s` versus the `101.170` anchor;
+- local argmax cannot engage under MTP, RMSNorm batch invariance did not repair
+  repeatability, and ReplaySSM fixes are inert in this lane;
+- the M=4 residual/RMSNorm/INT4 gate-up fusion remains closed NO-GO.
 
 ## Why execution is paused on the second host
 
@@ -88,6 +88,7 @@ by the memory controller and one BCS engine reset. Both GPUs recovered and
 report normal, but the stock image must not be retried or given a larger blind
 memory allowance. See the linked low-RAM safety note in the main README.
 
-The second host also has only about 12 GiB free on `/mnt/fast-ai`. A full
-source/runtime/AOT reconstruction therefore requires a deliberate storage
-plan; no protected benchmark or model material should be deleted implicitly.
+The second host also had only about 12 GiB free on `/mnt/fast-ai` at the last
+audit. A full source/runtime/AOT reconstruction therefore requires a deliberate
+storage plan; no protected benchmark or model material should be deleted
+implicitly.

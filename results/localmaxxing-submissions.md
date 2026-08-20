@@ -65,10 +65,10 @@ the conventional 99-interval field.
 > `PERSISTENT_SCRATCH allocated` kernel warnings in each record arm's
 > `run/server.stdout.log`, against 0 for a run on the since-fixed harness.
 >
-> **The measurements stand.** The tok/s, the 25/25 self-determinism and the
-> quality passes are all unaffected — only the flag attribution was wrong. A
-> third party copying the published snippet would, however, configure a
-> *different* run than the one that set the record.
+> The scratch correction alone does not alter the recorded timings, but the
+> separate greedy-margin defect above invalidates the overall promotion,
+> self-determinism, and quality claims. A third party copying the published
+> snippet would also configure a *different* run than the one measured.
 >
 > **Not amended upstream.** The LocalMaxxing API exposes only
 > `POST /api/speed-tests` and `POST /api/speed-tests/dry-run`; there is no
@@ -85,8 +85,8 @@ the conventional 99-interval field.
 | Poolside Laguna S 2.1 INT4, TP4+EP4 DFlash11 | 4x Arc Pro B70 | **125.462 conventional interval median; 126.729 historical compatibility formula**; exact cold width-12 suite with Q/K RMSNorm+RoPE and M12 shared-elementwise fusions | `cms9wuuf300cqpm01t5i285tq` | [qualified packet](laguna-s-2.1-int4-b70/README.md); [record evidence](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-shared-elementwise-m12-record.md) |
 | Qwen3.6 27B AutoRound INT4, TP2 | 2x Arc Pro B70 | 95.385 historical median under the July bar; newer strict review failed parity/determinism | `cmrh35ct50092mj01h7jgydqj` | [historical packet](qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json); [current validation](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md) |
 | Qwen3.8 27B GGUF Q4_K_M, target-only TP2 | 2x Arc Pro B70 | **49.717503 conventional interval median**, fixed cold realistic gate | `cmsy530c70cpwms01bl1sjk6g` | [repro](../repro/qwen38-27b-q4km-tp2-asrock-b70/README.md); [receipt](../data/localmaxxing-responses/qwen38-27b-q4km-tp2-target-only-20260818.json) |
-| Qwen3.8 27B AutoRound INT4, TP2 MTP5 | 2x Arc Pro B70 | **101.922 conventional interval median** (25-prompt suite; `95.167` on the 12 historical selection prompts), 25/25 self-determinism, quality pass | `cmszbkxco0e11ms01l2rixxbt` | [result](../notes/2026-08-18-qwen38-int4-100tps-uninitialized-gdn-scratch.md); [receipt](../data/localmaxxing-responses/qwen38-27b-int4-autoround-tp2-mtp5-20260818.json) |
-| Qwen3.8 27B AutoRound INT4, TP2 MTP4 | 2x Arc Pro B70 | **100.497083 conventional interval median** (25-prompt suite; `96.627` on the 12 historical selection prompts), 25/25 self-determinism, quality pass against its own baseline | `cmszarna10e0nms0103hv0tve` | [result and diagnosis](../notes/2026-08-18-qwen38-int4-100tps-uninitialized-gdn-scratch.md); [repro](../repro/qwen38-27b-autoround-int4-b70/README.md); [receipt](../data/localmaxxing-responses/qwen38-27b-int4-autoround-tp2-mtp4-20260818.json) |
+| Qwen3.8 27B AutoRound INT4, TP2 MTP5 | 2x Arc Pro B70 | **Invalid; withdrawal recommended.** Historical `101.922` used an output-changing greedy margin; claimed 25/25 determinism and quality gate do not survive margin-free review | `cmszbkxco0e11ms01l2rixxbt` | [corrected evidence](../data/qwen38-27b-autoround-int4-baseline-20260818.json); [receipt](../data/localmaxxing-responses/qwen38-27b-int4-autoround-tp2-mtp5-20260818.json) |
+| Qwen3.8 27B AutoRound INT4, TP2 MTP4 | 2x Arc Pro B70 | **Invalid; withdrawal recommended.** Historical `100.497083` used the same output-changing margin and margin-on baseline | `cmszarna10e0nms0103hv0tve` | [corrected evidence](../data/qwen38-27b-autoround-int4-baseline-20260818.json); [receipt](../data/localmaxxing-responses/qwen38-27b-int4-autoround-tp2-mtp4-20260818.json) |
 | Gemma 4 26B A4B Q8 | 1x Arc Pro B70 | 124.977 median tok/s, fixed cold realistic gate | `cmr1u77na01k2ld01kalwzs1e` | [packet](gemma4-26b-a4b-q8-b70/README.md) |
 | Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
 | Qwen3.6 27B GGUF Q4_0, native DFlash5 + Xe2 M6 | 1x Arc Pro B70 | 47.819 median tok/s, fixed cold realistic gate | `cmrjbx8bc02g8mj01yzz2v701` | [evidence](../data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r2-20260713.json) |

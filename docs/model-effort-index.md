@@ -3,11 +3,12 @@
 This page is the cross-model work queue and archive. It is meant to help the
 next agent switch models without rereading every historical note.
 
-Hardware planning note: historical lanes used four Intel-branded B70 32 GB
-cards. The current validation host has two ASRock B70 32 GB cards, so new work
-is limited to TP2 or two isolated one-card screens. Higher-VRAM Intel hardware
-would make larger future efforts, such as GLM 5.2 and DeepSeek Flash-class
-models, much more realistic to validate under the same quality rules.
+Hardware planning note: the measuring host has four Intel B70 32 GB cards and
+about 125 GiB system RAM. A second host has two ASRock B70 32 GB cards but only
+about 15 GiB system RAM and is restricted to source/build/op-level work for the
+current Qwen3.8 AutoRound lane. Higher-VRAM Intel hardware would make larger
+future efforts, such as GLM 5.2 and DeepSeek Flash-class models, much more
+realistic to validate under the same quality rules.
 
 ## How To Add A Model Effort
 
@@ -99,11 +100,12 @@ The exact public model, container, runtime flags, copied benchmark assets, two
 patches, safe launcher, reported payload, source hashes, and audit caveats are
 captured in the linked packet.
 
-The separate `devan-carlin/Qwen3.8-27B-int4-AutoRound` TP2/MTP3 lane has a
-first same-config handoff at `91.925538 tok/s` across all 25 prompts and
-`86.719870 tok/s` on the historical selection-12 subset. It is not promoted:
-the Qwen3.8 target-only quality oracle, matching B replicate, and compact raw
-rows needed for independent recomputation are still open.
+The separate `devan-carlin/Qwen3.8-27B-int4-AutoRound` lane now has an honest
+margin-free MTP5 working anchor at `101.170 tok/s` across all 25 prompts and
+`92.851 tok/s` on selection-12. It is not promoted: three pairwise comparisons
+agree on only 21–22/25 prompts, and a fresh margin-free target-only quality
+oracle is still open. The published `101.922`/`100.497` rows used an
+output-changing margin and are withdrawal-recommended.
 
 ### Qwen3.6 27B Q8_0 Target-Only On Two ASRock B70s
 
@@ -214,11 +216,13 @@ Succeeded by the Qwen3.8 27B INT4 AutoRound lane below.
 ### Qwen3.8 27B INT4 AutoRound On B70
 
 Opened 2026-08-18. `devan-carlin/Qwen3.8-27B-int4-AutoRound`, vLLM/XPU TP2 with
-MTP3 speculative decoding. Its tensor architecture is compatible with the
+native MTP speculative decoding. Its tensor architecture is compatible with the
 Qwen3.6 INT4 lane, so the pinned source stack runs without a model-specific
 code change. The new weights still require independent quality, determinism,
-and performance validation. First cold baseline `91.926 tok/s` on the 25-prompt
-suite (`86.720` on the 12 historical selection prompts).
+and performance validation. Current margin-free MTP5 anchor: `101.170 tok/s`
+on the 25-prompt suite (`92.851` selection-12), with only 21–22/25 pairwise
+repeatability and no valid target-only oracle. This is research evidence, not a
+record.
 
 Distinct from the llama.cpp Q4_K_M target-only Qwen3.8 lane: different runtime,
 quantization, and speculation class. Do not merge their rows.
@@ -227,32 +231,12 @@ Main entries:
 
 - [lane setup and model manifest](../repro/qwen38-27b-autoround-int4-b70/README.md)
 - [baseline evidence](../data/qwen38-27b-autoround-int4-baseline-20260818.json)
+- [current source/host queue](../repro/qwen38-27b-autoround-int4-b70/REFERENCE-HOST-HANDOFF.md)
 
-Status: closed historical reference. The July TP2 row is `95.384868 tok/s`
-under the historical metric convention and remains preserved as LocalMaxxing
-`cmrh35ct50092mj01h7jgydqj`. A 2026-08-15 six-start independent review used 25
-cold cache-zero prompts and conventional 99-interval accounting. Its four
-speculative arms centered at `98.766 tok/s`, but every arm diverged from the
-matching target-only control on 25/25 prompts and same-pair restarts were not
-exact. It therefore fails the current strict bar and is not a robust `>100`
-result; no new record was submitted.
-
-Graph-safe FlashAttention enables one full four-row target graph; the original
-transaction-fusion evidence remains useful, but its old exact/repeat quality
-checks are not substitutes for the newer target-only parity result.
-Start from
-`../results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json`.
-TP1 remains a separate active record class: `68.236 tok/s` is the valid
-historical high (`cmr9atqb800msqr01u760xh0t`), while July 11 isolated
-reconfirmation produced a current `65.4-66.7 tok/s` band with full quality on
-one row. Start TP1 from
-`../results/qwen36-27b-autoround-int4-b70/tp1-draftgraph-attribution-reconfirm-20260711.json`.
-The older Intel-checkpoint promote-source row (`53.522 tok/s`,
-`cmr4gokx90061nv01lhoe3ft8`) remains a baseline/reference. Separate
-service/prompt-processing work is captured in
-`../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md`,
-including a 32K-capability exact-retrieval anchor through `17706` actual prompt
-tokens with `cached_tokens=0`.
+Status: active research. The immediate queue is a fresh margin-free target-only
+oracle after dual-view model verification, followed by the TP1 determinism
+diagnostic and a repeat of the margin-free MTP5 anchor. Only after those gates
+pass should draft-acceptance changes or a record submission be considered.
 
 ### Gemma 4 26B A4B Q8 / INT8 On B70
 
