@@ -25,5 +25,6 @@
   "p90_us": 42.57
  },
  "step_collectives_ms": 2.27138384,
- "note": "128 layer AR + 10 draft AR + 1 target logits AG + 5 draft logits AG per MTP5 step"
+ "note": "128 layer AR + 10 draft AR + 1 target logits AG + 5 draft logits AG per MTP5 step",
+ "GRAPH_NUMBERS_INVALID": "2026-08-19 retraction: naive torch-XPUGraph capture of XCCL collectives bakes stale data (replay output static under input mutation, two-phase oracle with eager references). All graph_* fields measured a broken capture and do not project to vLLM, which splits collectives out of command-graph capture (vllm/distributed/device_communicators/xpu_communicator.py handoff design). Eager/burst numbers remain valid."
 }

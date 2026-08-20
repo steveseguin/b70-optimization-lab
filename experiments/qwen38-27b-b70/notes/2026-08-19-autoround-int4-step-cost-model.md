@@ -61,9 +61,19 @@ Script `scripts/qwen38-tp2-collective-latency.py`, data
 
 Per MTP5 step (128 layer + 10 draft allreduces, 1+5 logits allgathers):
 **≈6.2 ms if each pays full eager latency, ≈2.3 ms burst-amortized,
-≈1.1 ms fully graph-captured.** The collectives alone are a ~5 ms/step
-(~14%, +10-14 tok/s) argument for the full-graph arm — before counting the
-launch-latency savings on the GDN eager regions themselves.
+≈**1.1 ms fully graph-captured — RETRACTED 2026-08-19.** The 6.3 µs
+"graph" number timed a semantically broken capture: naive torch-XPUGraph
+capture of an XCCL collective bakes stale data (replays 1-3 bit-identical
+despite mutated inputs; two-phase oracle, eager references). The fork
+already knows this: `xpu_communicator.py` splits collectives OUT of
+command-graph capture via stable handoff buffers ("The mutating custom op
+is split out of command-graph capture, updates that stable allocation
+eagerly"). **Under XPU full-graph the ~6.2 ms/step eager collective latency
+stays eager.** The full-graph arm's upside is the compute-kernel dispatch
+penalty, not the collectives. Open question handed to the measuring host:
+identify the mechanism of the 2026-08-18 "command-graph replay" oneCCL
+oracle — if it captured collectives naively at torch level, its zero
+mismatches may be vacuous (static == static).
 
 ### Small ops priced (burst, 2026-08-19)
 
