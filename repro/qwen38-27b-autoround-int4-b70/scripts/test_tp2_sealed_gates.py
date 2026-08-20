@@ -231,6 +231,57 @@ def manifest_bytes(cache_root: Path, *, tree: str = "c" * 64) -> bytes:
     ).encode()
 
 
+def replay_records(*, sampled_token: int = 71093) -> list[dict]:
+    common = {
+        "tp_rank": 0,
+        "req_ids": [gates.REPLAY_MICROSCOPE_REQ_ID],
+        "matched_req_ids": [gates.REPLAY_MICROSCOPE_REQ_ID],
+        "requests": [
+            {
+                "req_id": gates.REPLAY_MICROSCOPE_REQ_ID,
+                "num_prompt_tokens_cpu": 849,
+                "num_tokens_no_spec": 849,
+            }
+        ],
+    }
+
+    def tensor() -> dict:
+        return {"shape": [1], "numel": 1, "nan": 0, "posinf": 0, "neginf": 0}
+
+    rows = []
+    for stage in gates.REPLAY_MICROSCOPE_STAGES:
+        row = dict(common)
+        row["stage"] = stage
+        tensor_name = {
+            "inputs": "input_ids",
+            "hidden_after_forward": "hidden_states",
+            "sample_hidden": "sample_hidden_states",
+            "logits_after_compute": "logits",
+            "pre_sample": "logits",
+            "sampler_output": "sampled_token_ids",
+        }[stage]
+        row["tensors"] = {tensor_name: tensor()}
+        if stage in ("logits_after_compute", "pre_sample"):
+            row["logit_rows"] = [
+                {
+                    "row": 0,
+                    "role": "sample",
+                    "req_index": 0,
+                    "req_id": gates.REPLAY_MICROSCOPE_REQ_ID,
+                    "num_tokens_no_spec_cpu": 849,
+                    "logits_topk": {
+                        "token_ids": [71093, 13102],
+                        "values": [1.0, 0.5],
+                        "top1_top2_margin": 0.5,
+                    }
+                }
+            ]
+        if stage == "sampler_output":
+            row["tensors"][tensor_name]["head"] = [sampled_token]
+        rows.append(row)
+    return rows
+
+
 def bench(path: Path, token_rows: list[list[int]], *, order: list[int] | None = None) -> None:
     order = order or list(range(len(token_rows)))
     rows = []
@@ -419,6 +470,7 @@ class ArmGateTests(unittest.TestCase):
             expected_fa_sha256=gates.sha256_file(self.fa),
             expected_repo_head="f" * 40,
             require_quality_pass=False,
+            require_replay_microscope=False,
             expected_quality_baseline_sha256=gates.sha256_file(self.baseline),
         )
 
@@ -654,6 +706,140 @@ class ArmGateTests(unittest.TestCase):
         identity.write_text(identity.read_text() + "tensor_parallel_size=2\n")
         with self.assertRaises(gates.InputError):
             self.run_gate()
+
+
+class ReplayMicroscopeTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        (self.root / "run").mkdir()
+        (self.root / "run" / "server.stdout.log").write_text("fixture server log\n")
+        self.trace = self.root / "replay-microscope.jsonl"
+        self.identity = {
+            "replay_microscope_required": "1",
+            "replay_microscope_file": str(self.trace.resolve()),
+            "replay_microscope_max_lines": "6",
+            "replay_microscope_rank": "0",
+            "replay_microscope_req_regex": gates.REPLAY_MICROSCOPE_REQ_REGEX,
+            "replay_microscope_tensor_limit": "1",
+            "replay_microscope_topk": "0",
+            "replay_microscope_min_tokens_no_spec": "849",
+            "replay_microscope_max_tokens_no_spec": "849",
+        }
+        rows = [
+            {"key": (index, f"p{index}", f"{index + 1:064x}"), "token_ids": [index]}
+            for index in range(25)
+        ]
+        rows[24] = {
+            "key": (
+                24,
+                "holdout--long-rollover-repository-audit",
+                "f" * 64,
+            ),
+            "token_ids": [71093, 13102],
+        }
+        self.bench = {"rows": rows}
+
+    def tearDown(self) -> None:
+        self.temp.cleanup()
+
+    def write_records(self, records: list[dict]) -> None:
+        self.trace.write_text(
+            "".join(json.dumps(record, separators=(",", ":")) + "\n" for record in records)
+        )
+
+    def test_exact_six_stage_trace_passes(self) -> None:
+        self.write_records(replay_records())
+        result, errors = gates.validate_replay_microscope(
+            self.root, self.identity, self.bench
+        )
+        self.assertEqual(errors, [], result)
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(result["sampled_token"], 71093)
+        self.assertEqual(
+            result["logits_after_compute"]["token_ids"], [71093, 13102]
+        )
+        self.assertEqual(
+            result["logits_after_compute"]["top1_top2_margin"], 0.5
+        )
+        self.assertTrue(result["sampled_token_matches_bench"])
+
+    def test_missing_stage_or_wrong_request_fails(self) -> None:
+        records = replay_records()[:-1]
+        records[0]["req_ids"] = ["unexpected"]
+        records[0]["matched_req_ids"] = ["wrong"]
+        self.write_records(records)
+        result, errors = gates.validate_replay_microscope(
+            self.root, self.identity, self.bench
+        )
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(any("stages" in error for error in errors))
+        self.assertTrue(any("unexpected request set" in error for error in errors))
+        self.assertTrue(any("wrong request" in error for error in errors))
+
+    def test_empty_required_tensor_fails(self) -> None:
+        records = replay_records()
+        records[0]["tensors"]["input_ids"]["numel"] = 0
+        self.write_records(records)
+        result, errors = gates.validate_replay_microscope(
+            self.root, self.identity, self.bench
+        )
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(any("required tensor" in error for error in errors))
+
+    def test_boolean_integer_fields_fail(self) -> None:
+        records = replay_records()
+        records[0]["tp_rank"] = False
+        records[1]["tensors"]["hidden_states"]["numel"] = True
+        self.write_records(records)
+        result, errors = gates.validate_replay_microscope(
+            self.root, self.identity, self.bench
+        )
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(any("tp_rank" in error for error in errors))
+        self.assertTrue(any("required tensor" in error for error in errors))
+
+    def test_nonstandard_constant_or_duplicate_key_is_malformed(self) -> None:
+        self.trace.write_text('{"stage":"inputs","value":NaN}\n')
+        with self.assertRaises(gates.InputError):
+            gates.load_jsonl(self.trace)
+        self.trace.write_text('{"stage":"inputs","stage":"inputs"}\n')
+        with self.assertRaises(gates.InputError):
+            gates.load_jsonl(self.trace)
+
+    def test_unbound_logit_row_fails(self) -> None:
+        records = replay_records()
+        records[3]["logit_rows"][0]["req_id"] = "wrong"
+        self.write_records(records)
+        result, errors = gates.validate_replay_microscope(
+            self.root, self.identity, self.bench
+        )
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(any("top-2 logit evidence" in error for error in errors))
+
+    def test_trace_error_field_fails_but_nonfinite_is_reported(self) -> None:
+        records = replay_records()
+        records[1]["tensors"]["hidden_states"]["error"] = "fixture"
+        records[2]["logit_rows"] = [{"num_tokens_no_spec_cpu": "error:fixture"}]
+        records[3]["tensors"]["logits"]["nan"] = 1
+        self.write_records(records)
+        result, errors = gates.validate_replay_microscope(
+            self.root, self.identity, self.bench
+        )
+        self.assertTrue(any("trace-error" in error for error in errors))
+        self.assertIn(
+            "$[2].logit_rows[0].num_tokens_no_spec_cpu",
+            result["trace_error_paths"],
+        )
+        self.assertTrue(result["nonfinite_paths"])
+
+    def test_sampled_bench_mismatch_is_scientific_data_not_malformed_trace(self) -> None:
+        self.write_records(replay_records(sampled_token=0))
+        result, errors = gates.validate_replay_microscope(
+            self.root, self.identity, self.bench
+        )
+        self.assertEqual(errors, [], result)
+        self.assertFalse(result["sampled_token_matches_bench"])
 
 
 class ParityTests(unittest.TestCase):

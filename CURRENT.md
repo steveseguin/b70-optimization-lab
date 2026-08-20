@@ -196,6 +196,7 @@ manifest immediately before vLLM starts.
 - [pad-on composite TP2 full-25 result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-composite-tp2-full25-result.md)
 - [pad-on TP2 full-25 recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md)
 - [post-forward synchronization result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-postforward-sync-result.md)
+- [bounded prompt-24 replay-microscope preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-prereg.md)
 
 ## Closed: Qwen3.6 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 
@@ -302,8 +303,9 @@ loaded service.
    Preserve A2/B2/C1/S1, run neither D
    nor S2, and use only the bounded request-filtered prompt-24 microscope while
    retaining all 24 predecessor requests. See the
-   [recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md)
-   and [sync result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-postforward-sync-result.md).
+   [recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md),
+   [sync result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-postforward-sync-result.md),
+   and [microscope preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-prereg.md).
    Do not promote or submit these speeds.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is

@@ -53,6 +53,19 @@ RUNTIME_MARKERS = {
     ),
     "draft_int4_head": "Prepared experimental XPU INT4 draft lm_head:",
 }
+REPLAY_MICROSCOPE_REQ_ID = (
+    "chatcmpl-bench-qwen36-27b-int4-independent-validation-20260815-v1-24-"
+    "holdout--long-rollover-repository-audit"
+)
+REPLAY_MICROSCOPE_REQ_REGEX = f"^{re.escape(REPLAY_MICROSCOPE_REQ_ID)}$"
+REPLAY_MICROSCOPE_STAGES = (
+    "inputs",
+    "hidden_after_forward",
+    "sample_hidden",
+    "logits_after_compute",
+    "pre_sample",
+    "sampler_output",
+)
 
 
 class InputError(ValueError):
@@ -74,6 +87,40 @@ def load_json(path: Path) -> Any:
         raise InputError(f"missing JSON file: {path}") from exc
     except json.JSONDecodeError as exc:
         raise InputError(f"malformed JSON file {path}: {exc}") from exc
+
+
+def load_jsonl(path: Path) -> list[dict[str, Any]]:
+    def reject_constant(value: str) -> None:
+        raise ValueError(f"non-standard JSON constant {value!r}")
+
+    def reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"duplicate JSON object key {key!r}")
+            result[key] = value
+        return result
+
+    try:
+        lines = path.read_text().splitlines()
+    except FileNotFoundError as exc:
+        raise InputError(f"missing JSONL file: {path}") from exc
+    rows: list[dict[str, Any]] = []
+    for lineno, line in enumerate(lines, 1):
+        if not line.strip():
+            raise InputError(f"blank JSONL line {path}:{lineno}")
+        try:
+            row = json.loads(
+                line,
+                parse_constant=reject_constant,
+                object_pairs_hook=reject_duplicate_keys,
+            )
+        except (json.JSONDecodeError, ValueError) as exc:
+            raise InputError(f"malformed JSONL line {path}:{lineno}: {exc}") from exc
+        if not isinstance(row, dict):
+            raise InputError(f"JSONL line is not an object {path}:{lineno}")
+        rows.append(row)
+    return rows
 
 
 def load_identity(path: Path) -> dict[str, str]:
@@ -160,6 +207,8 @@ def validate_expectations(args: argparse.Namespace, tp: int) -> None:
         raise InputError("pad-marker count must equal tensor parallel size")
     if args.expected_sync_after_model_forward not in (0, 1):
         raise InputError("expected sync-after-model-forward must be 0 or 1")
+    if args.require_replay_microscope and args.expected_sync_after_model_forward != 0:
+        raise InputError("replay microscope requires sync-after-model-forward=0")
     if args.expected_parity_peer_checksum_manifest_sha256:
         require_sha256(
             args.expected_parity_peer_checksum_manifest_sha256,
@@ -335,6 +384,262 @@ def compare_manifests(input_path: Path, output_path: Path) -> dict[str, Any]:
     }
 
 
+def find_trace_diagnostic_paths(value: Any, path: str = "$") -> dict[str, list[str]]:
+    errors: list[str] = []
+    nonfinite: list[str] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            child_path = f"{path}.{key}"
+            if key == "error" or key.endswith("_error"):
+                errors.append(child_path)
+            if key in ("nan", "posinf", "neginf") and child not in (0, None):
+                nonfinite.append(child_path)
+            nested = find_trace_diagnostic_paths(child, child_path)
+            errors.extend(nested["errors"])
+            nonfinite.extend(nested["nonfinite"])
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            nested = find_trace_diagnostic_paths(child, f"{path}[{index}]")
+            errors.extend(nested["errors"])
+            nonfinite.extend(nested["nonfinite"])
+    elif isinstance(value, str):
+        if value.startswith("error:"):
+            errors.append(path)
+        elif value in ("nan", "inf", "-inf"):
+            nonfinite.append(path)
+    return {"errors": errors, "nonfinite": nonfinite}
+
+
+def replay_logit_evidence(record: dict[str, Any]) -> dict[str, Any] | None:
+    rows = record.get("logit_rows")
+    if not isinstance(rows, list) or len(rows) != 1 or not isinstance(rows[0], dict):
+        return None
+    row = rows[0]
+    if (
+        type(row.get("row")) is not int
+        or row["row"] != 0
+        or row.get("role") != "sample"
+        or type(row.get("req_index")) is not int
+        or row["req_index"] != 0
+        or row.get("req_id") != REPLAY_MICROSCOPE_REQ_ID
+        or type(row.get("num_tokens_no_spec_cpu")) is not int
+        or row["num_tokens_no_spec_cpu"] != 849
+    ):
+        return None
+    topk = row.get("logits_topk")
+    token_ids = topk.get("token_ids") if isinstance(topk, dict) else None
+    if not isinstance(token_ids, list) or len(token_ids) != 2:
+        return None
+    if any(not isinstance(token, int) or isinstance(token, bool) for token in token_ids):
+        return None
+    if token_ids[0] == token_ids[1]:
+        return None
+    values = topk.get("values")
+    margin = topk.get("top1_top2_margin")
+
+    def is_json_number(value: Any) -> bool:
+        return (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+        ) or value in ("nan", "inf", "-inf")
+
+    if (
+        not isinstance(values, list)
+        or len(values) != 2
+        or any(not is_json_number(value) for value in values)
+        or not is_json_number(margin)
+    ):
+        return None
+    return {
+        "row": row.get("row"),
+        "role": row.get("role"),
+        "req_index": row.get("req_index"),
+        "req_id": row.get("req_id"),
+        "num_tokens_no_spec_cpu": row.get("num_tokens_no_spec_cpu"),
+        "token_ids": token_ids,
+        "values": values,
+        "top1_top2_margin": margin,
+    }
+
+
+def validate_replay_microscope(
+    arm_root: Path,
+    identity: dict[str, str],
+    bench: dict[str, Any] | None,
+) -> tuple[dict[str, Any], list[str]]:
+    expected_path = (arm_root / "replay-microscope.jsonl").resolve()
+    errors: list[str] = []
+    expected_identity = {
+        "replay_microscope_required": "1",
+        "replay_microscope_file": str(expected_path),
+        "replay_microscope_max_lines": "6",
+        "replay_microscope_rank": "0",
+        "replay_microscope_req_regex": REPLAY_MICROSCOPE_REQ_REGEX,
+        "replay_microscope_tensor_limit": "1",
+        "replay_microscope_topk": "0",
+        "replay_microscope_min_tokens_no_spec": "849",
+        "replay_microscope_max_tokens_no_spec": "849",
+    }
+    for key, expected in expected_identity.items():
+        if identity.get(key) != expected:
+            errors.append(
+                f"identity {key}={identity.get(key)!r}, expected {expected!r}"
+            )
+
+    try:
+        records = load_jsonl(expected_path)
+    except InputError as exc:
+        return {
+            "path": str(expected_path),
+            "sha256": sha256_file(expected_path) if expected_path.is_file() else None,
+            "status": "invalid",
+            "records": [],
+        }, [*errors, str(exc)]
+
+    stages = [record.get("stage") for record in records]
+    if stages != list(REPLAY_MICROSCOPE_STAGES):
+        errors.append(
+            f"replay microscope stages {stages!r} do not match "
+            f"{list(REPLAY_MICROSCOPE_STAGES)!r}"
+        )
+    diagnostics = find_trace_diagnostic_paths(records)
+    if diagnostics["errors"]:
+        errors.append(
+            "replay microscope contains trace-error fields: "
+            + ",".join(diagnostics["errors"])
+        )
+
+    expected_tensor_by_stage = {
+        "inputs": "input_ids",
+        "hidden_after_forward": "hidden_states",
+        "sample_hidden": "sample_hidden_states",
+        "logits_after_compute": "logits",
+        "pre_sample": "logits",
+        "sampler_output": "sampled_token_ids",
+    }
+    for index, record in enumerate(records):
+        if type(record.get("tp_rank")) is not int or record["tp_rank"] != 0:
+            errors.append(f"replay record {index} does not have tp_rank=0")
+        if record.get("req_ids") != [REPLAY_MICROSCOPE_REQ_ID]:
+            errors.append(f"replay record {index} contains an unexpected request set")
+        if record.get("matched_req_ids") != [REPLAY_MICROSCOPE_REQ_ID]:
+            errors.append(f"replay record {index} matched the wrong request")
+        requests = record.get("requests")
+        if not isinstance(requests, list) or len(requests) != 1:
+            errors.append(f"replay record {index} does not contain one request record")
+        else:
+            request = requests[0]
+            if (
+                not isinstance(request, dict)
+                or request.get("req_id") != REPLAY_MICROSCOPE_REQ_ID
+            ):
+                errors.append(f"replay record {index} request ID is invalid")
+            elif any(
+                type(request.get(key)) is not int or request[key] != 849
+                for key in ("num_prompt_tokens_cpu", "num_tokens_no_spec")
+            ):
+                errors.append(
+                    f"replay record {index} is outside the exact token-849 window"
+                )
+        tensors = record.get("tensors")
+        tensor_name = expected_tensor_by_stage.get(record.get("stage"))
+        tensor_record = (
+            tensors.get(tensor_name)
+            if tensor_name is not None and isinstance(tensors, dict)
+            else None
+        )
+        if (
+            tensor_name is None
+            or not isinstance(tensor_record, dict)
+            or type(tensor_record.get("numel")) is not int
+            or tensor_record["numel"] <= 0
+        ):
+            errors.append(f"replay record {index} lacks required tensor {tensor_name!r}")
+
+    logits_evidence = None
+    pre_sample_evidence = None
+    sampled_token = None
+    if len(records) == len(REPLAY_MICROSCOPE_STAGES):
+        logits_evidence = replay_logit_evidence(records[3])
+        pre_sample_evidence = replay_logit_evidence(records[4])
+        sampled = records[5].get("tensors", {}).get("sampled_token_ids", {})
+        sampled_head = sampled.get("head") if isinstance(sampled, dict) else None
+        if (
+            isinstance(sampled_head, list)
+            and len(sampled_head) == 1
+            and isinstance(sampled_head[0], int)
+            and not isinstance(sampled_head[0], bool)
+        ):
+            sampled_token = sampled_head[0]
+    if logits_evidence is None or pre_sample_evidence is None:
+        errors.append("replay microscope lacks one-row top-2 logit evidence")
+    if sampled_token is None:
+        errors.append("replay microscope lacks one sampled-token head value")
+
+    bench_first_token = None
+    if bench is None:
+        errors.append("benchmark was unavailable for replay microscope coherence")
+    else:
+        rows = bench.get("rows")
+        if not isinstance(rows, list) or len(rows) != 25:
+            errors.append("benchmark does not contain the sealed 25 rows")
+        else:
+            row = rows[24]
+            if row.get("key", (None, None))[1] != "holdout--long-rollover-repository-audit":
+                errors.append("benchmark row 24 is not the replay microscope request")
+            tokens = row.get("token_ids")
+            if (
+                isinstance(tokens, list)
+                and tokens
+                and isinstance(tokens[0], int)
+                and not isinstance(tokens[0], bool)
+            ):
+                bench_first_token = tokens[0]
+            else:
+                errors.append("benchmark row 24 has no first token")
+
+    server_log = arm_root / "run" / "server.stdout.log"
+    server_text = server_log.read_text(errors="replace") if server_log.is_file() else ""
+    trace_warning_markers = (
+        "Failed to write XPU replay microscope trace",
+        "Invalid VLLM_XPU_REPLAY_MICROSCOPE_REQ_REGEX",
+    )
+    trace_warnings = [marker for marker in trace_warning_markers if marker in server_text]
+    if trace_warnings:
+        errors.append("replay microscope emitted trace warnings: " + ",".join(trace_warnings))
+
+    return {
+        "path": str(expected_path),
+        "sha256": sha256_file(expected_path),
+        "status": "passed" if not errors else "failed",
+        "line_count": len(records),
+        "stages": stages,
+        "request_id": REPLAY_MICROSCOPE_REQ_ID,
+        "tp_rank": 0,
+        "tokens_no_spec": 849,
+        "logits_after_compute": logits_evidence,
+        "pre_sample": pre_sample_evidence,
+        "logits_after_compute_top1": (
+            logits_evidence["token_ids"][0] if logits_evidence else None
+        ),
+        "pre_sample_top1": (
+            pre_sample_evidence["token_ids"][0] if pre_sample_evidence else None
+        ),
+        "sampled_token": sampled_token,
+        "bench_first_token": bench_first_token,
+        "logits_top1_matches_pre_sample_top1": (
+            bool(logits_evidence)
+            and bool(pre_sample_evidence)
+            and logits_evidence["token_ids"][0]
+            == pre_sample_evidence["token_ids"][0]
+        ),
+        "sampled_token_matches_bench": sampled_token == bench_first_token,
+        "trace_error_paths": diagnostics["errors"],
+        "nonfinite_paths": diagnostics["nonfinite"],
+        "warning_markers": trace_warnings,
+    }, errors
+
+
 def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
     arm_root = Path(args.arm_root).resolve()
     identity = load_identity(arm_root / "run" / "identity.env")
@@ -461,6 +766,9 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         "expected_suite_sha256": args.expected_suite_sha256,
         "expected_quality_baseline_sha256": args.expected_quality_baseline_sha256,
     }
+    if args.require_replay_microscope:
+        expected_identity["sync_after_model_forward"] = "0"
+        expected_identity["expected_sync_after_model_forward"] = "0"
     for key, expected in expected_identity.items():
         actual = identity.get(key)
         if key == "model_dir" and actual:
@@ -789,6 +1097,13 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         }:
             errors.append(f"quality gate did not pass: {quality}")
 
+    replay_microscope: dict[str, Any] | None = None
+    if args.require_replay_microscope:
+        replay_microscope, replay_errors = validate_replay_microscope(
+            arm_root, identity, bench
+        )
+        errors.extend(replay_errors)
+
     result = {
         "schema": "qwen38-tp2-sealed-arm-gates-v1",
         "status": "passed" if not errors else "failed",
@@ -844,6 +1159,7 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         },
         "quality": quality,
         "quality_baseline_sha256": quality_baseline_sha256,
+        "replay_microscope": replay_microscope,
         "errors": errors,
     }
     return result, not errors
@@ -1041,6 +1357,7 @@ def build_parser() -> argparse.ArgumentParser:
     arm.add_argument("--expected-fa-sha256", required=True)
     arm.add_argument("--expected-repo-head", required=True)
     arm.add_argument("--require-quality-pass", action="store_true")
+    arm.add_argument("--require-replay-microscope", action="store_true")
     arm.add_argument("--expected-quality-baseline-sha256", required=True)
     arm.add_argument("--output", required=True)
 

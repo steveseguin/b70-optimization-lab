@@ -51,10 +51,19 @@ sealed_validation_allowlist=(
   VALIDATION_PARITY_PEER_BENCH VALIDATION_PYTHONHASHSEED
   VALIDATION_REQUIRE_COMPILE_CACHE_UNCHANGED
   VALIDATION_REQUIRE_NO_COMPILE_CACHE_WRITES
+  VALIDATION_REQUIRE_REPLAY_MICROSCOPE
   VALIDATION_REQUIRE_TARGET_TOKEN_PARITY
   VALIDATION_REQUIRE_TP2_SEALED_GATES
   VALIDATION_REQUIRE_XPU_MODULES_UNDER_STAGE
   VALIDATION_RUN_BENCH VALIDATION_RUN_QUALITY VALIDATION_RUN_SMOKE
+  VALIDATION_REPLAY_MICROSCOPE_FILE
+  VALIDATION_REPLAY_MICROSCOPE_MAX_LINES
+  VALIDATION_REPLAY_MICROSCOPE_MAX_TOKENS_NO_SPEC
+  VALIDATION_REPLAY_MICROSCOPE_MIN_TOKENS_NO_SPEC
+  VALIDATION_REPLAY_MICROSCOPE_RANK
+  VALIDATION_REPLAY_MICROSCOPE_REQ_REGEX
+  VALIDATION_REPLAY_MICROSCOPE_TENSOR_LIMIT
+  VALIDATION_REPLAY_MICROSCOPE_TOPK
   VALIDATION_SUITE_OVERRIDE VALIDATION_TARGET_TOKEN_BENCH
   VALIDATION_SYNC_AFTER_MODEL_FORWARD
   VALIDATION_TENSOR_PARALLEL_SIZE VALIDATION_VLLM_CACHE_ROOT
@@ -286,6 +295,46 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
       != "${VALIDATION_EXPECT_SYNC_AFTER_MODEL_FORWARD:-0}" ]]; then
     printf 'sealed TP2 sync-after-forward identity must be explicit and self-consistent\n' >&2
     exit 2
+  fi
+  require_replay_microscope=${VALIDATION_REQUIRE_REPLAY_MICROSCOPE:-0}
+  if [[ ! "$require_replay_microscope" =~ ^[01]$ ]]; then
+    printf 'VALIDATION_REQUIRE_REPLAY_MICROSCOPE must be 0 or 1\n' >&2
+    exit 2
+  fi
+  replay_microscope_vars=(
+    VALIDATION_REPLAY_MICROSCOPE_FILE
+    VALIDATION_REPLAY_MICROSCOPE_MAX_LINES
+    VALIDATION_REPLAY_MICROSCOPE_RANK
+    VALIDATION_REPLAY_MICROSCOPE_REQ_REGEX
+    VALIDATION_REPLAY_MICROSCOPE_TENSOR_LIMIT
+    VALIDATION_REPLAY_MICROSCOPE_TOPK
+    VALIDATION_REPLAY_MICROSCOPE_MIN_TOKENS_NO_SPEC
+    VALIDATION_REPLAY_MICROSCOPE_MAX_TOKENS_NO_SPEC
+  )
+  replay_req_regex='^chatcmpl-bench-qwen36-27b-int4-independent-validation-20260815-v1-24-holdout--long-rollover-repository-audit$'
+  if [[ "$require_replay_microscope" == "1" ]]; then
+    if [[ "$arm_root" != /* \
+      || "${VALIDATION_REPLAY_MICROSCOPE_FILE:-}" \
+        != "$arm_root/replay-microscope.jsonl" \
+      || "${VALIDATION_REPLAY_MICROSCOPE_MAX_LINES:-}" != "6" \
+      || "${VALIDATION_REPLAY_MICROSCOPE_RANK:-}" != "0" \
+      || "${VALIDATION_REPLAY_MICROSCOPE_REQ_REGEX:-}" != "$replay_req_regex" \
+      || "${VALIDATION_REPLAY_MICROSCOPE_TENSOR_LIMIT:-}" != "1" \
+      || "${VALIDATION_REPLAY_MICROSCOPE_TOPK:-}" != "0" \
+      || "${VALIDATION_REPLAY_MICROSCOPE_MIN_TOKENS_NO_SPEC:-}" != "849" \
+      || "${VALIDATION_REPLAY_MICROSCOPE_MAX_TOKENS_NO_SPEC:-}" != "849" \
+      || "${VALIDATION_SYNC_AFTER_MODEL_FORWARD:-0}" != "0" \
+      || "${VALIDATION_EXPECT_SYNC_AFTER_MODEL_FORWARD:-0}" != "0" ]]; then
+      printf 'sealed replay microscope identity does not match the bounded prompt-24 contract\n' >&2
+      exit 2
+    fi
+  else
+    for name in "${replay_microscope_vars[@]}"; do
+      if [[ -n "${!name:-}" ]]; then
+        printf '%s requires VALIDATION_REQUIRE_REPLAY_MICROSCOPE=1\n' "$name" >&2
+        exit 2
+      fi
+    done
   fi
   if [[ ! "${VALIDATION_REQUIRE_TARGET_TOKEN_PARITY:-0}" =~ ^[01]$ ]]; then
     printf 'VALIDATION_REQUIRE_TARGET_TOKEN_PARITY must be 0 or 1\n' >&2
@@ -924,6 +973,18 @@ if [[ "${VALIDATION_SYNC_AFTER_MODEL_FORWARD:-0}" == "1" ]]; then
   # and must never be used for a promoted throughput result.
   export VLLM_XPU_SYNC_AFTER_MODEL_FORWARD=1
 fi
+if [[ "${VALIDATION_REQUIRE_REPLAY_MICROSCOPE:-0}" == "1" ]]; then
+  # Diagnostic only. The request/rank/token window is deliberately narrow,
+  # but tensor reductions and host copies still perturb the traced request.
+  export VLLM_XPU_REPLAY_MICROSCOPE_FILE="$VALIDATION_REPLAY_MICROSCOPE_FILE"
+  export VLLM_XPU_REPLAY_MICROSCOPE_MAX_LINES="$VALIDATION_REPLAY_MICROSCOPE_MAX_LINES"
+  export VLLM_XPU_REPLAY_MICROSCOPE_RANK="$VALIDATION_REPLAY_MICROSCOPE_RANK"
+  export VLLM_XPU_REPLAY_MICROSCOPE_REQ_REGEX="$VALIDATION_REPLAY_MICROSCOPE_REQ_REGEX"
+  export VLLM_XPU_REPLAY_MICROSCOPE_TENSOR_LIMIT="$VALIDATION_REPLAY_MICROSCOPE_TENSOR_LIMIT"
+  export VLLM_XPU_REPLAY_MICROSCOPE_TOPK="$VALIDATION_REPLAY_MICROSCOPE_TOPK"
+  export VLLM_XPU_REPLAY_MICROSCOPE_MIN_TOKENS_NO_SPEC="$VALIDATION_REPLAY_MICROSCOPE_MIN_TOKENS_NO_SPEC"
+  export VLLM_XPU_REPLAY_MICROSCOPE_MAX_TOKENS_NO_SPEC="$VALIDATION_REPLAY_MICROSCOPE_MAX_TOKENS_NO_SPEC"
+fi
 if [[ "${VALIDATION_SKIP_COMPILED_SPEC_DECODE:-0}" == "1" ]]; then
   # Diagnostic only: execute speculative verifier forwards outside the
   # compiled wrapper while leaving the ordinary target/draft identities and
@@ -1344,6 +1405,9 @@ if [[ "$require_tp2_sealed_gates" == "1" && "$runner_rc" == "0" ]]; then
   done
   if [[ "$RUN_QUALITY" == "1" ]]; then
     sealed_args+=(--require-quality-pass)
+  fi
+  if [[ "${VALIDATION_REQUIRE_REPLAY_MICROSCOPE:-0}" == "1" ]]; then
+    sealed_args+=(--require-replay-microscope)
   fi
   set +e
   "$venv/bin/python" "$RUN_DIR/check-tp2-sealed-gates.py.snapshot" \

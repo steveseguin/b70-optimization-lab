@@ -26,6 +26,10 @@ SYNC_DRIVER = REPO / (
     "experiments/qwen38-27b-b70/scripts/"
     "run-20260820-detpad-tp2-postforward-sync.sh"
 )
+MICROSCOPE_DRIVER = REPO / (
+    "experiments/qwen38-27b-b70/scripts/"
+    "run-20260820-detpad-tp2-replay-microscope.sh"
+)
 
 
 class LaunchIdentityContractTest(unittest.TestCase):
@@ -102,6 +106,11 @@ class LaunchIdentityContractTest(unittest.TestCase):
             "validation_mode=",
             "sync_after_model_forward=",
             "expected_sync_after_model_forward=",
+            "replay_microscope_required=",
+            "replay_microscope_file=",
+            "replay_microscope_req_regex=",
+            "replay_microscope_min_tokens_no_spec=",
+            "replay_microscope_max_tokens_no_spec=",
             "expected_parity_peer_checksum_manifest_sha256=",
             "parity_peer_bench_snapshot_sha256=",
             "target_token_bench_snapshot_sha256=",
@@ -277,6 +286,55 @@ class LaunchIdentityContractTest(unittest.TestCase):
             "s1-checksum-manifest",
         ):
             self.assertIn(required, source)
+
+    def test_replay_microscope_is_bounded_recorded_and_fail_closed(self) -> None:
+        arm = ARM.read_text()
+        runner = RUNNER.read_text()
+        checker = (
+            REPO
+            / "repro/qwen38-27b-autoround-int4-b70/scripts/check-tp2-sealed-gates.py"
+        ).read_text()
+        driver = MICROSCOPE_DRIVER.read_text()
+        for required in (
+            "VALIDATION_REQUIRE_REPLAY_MICROSCOPE",
+            "VALIDATION_REPLAY_MICROSCOPE_FILE",
+            "VALIDATION_REPLAY_MICROSCOPE_MAX_LINES",
+            "VALIDATION_REPLAY_MICROSCOPE_REQ_REGEX",
+            "VALIDATION_REPLAY_MICROSCOPE_MIN_TOKENS_NO_SPEC",
+            "VALIDATION_REPLAY_MICROSCOPE_MAX_TOKENS_NO_SPEC",
+            "sealed replay microscope identity does not match",
+            "--require-replay-microscope",
+        ):
+            self.assertIn(required, arm)
+        for required in (
+            "replay_microscope_required=",
+            "replay_microscope_file=",
+            "replay_microscope_max_lines=",
+            "replay_microscope_rank=",
+            "replay_microscope_req_regex=",
+            "replay_microscope_tensor_limit=",
+            "replay_microscope_topk=",
+        ):
+            self.assertIn(required, runner)
+        for required in (
+            "REPLAY_MICROSCOPE_STAGES",
+            "validate_replay_microscope",
+            "--require-replay-microscope",
+            "sampled_token_matches_bench",
+        ):
+            self.assertIn(required, checker)
+        for required in (
+            "env -i",
+            "VALIDATION_SYNC_AFTER_MODEL_FORWARD=0",
+            "VALIDATION_EXPECT_SYNC_AFTER_MODEL_FORWARD=0",
+            "VALIDATION_REQUIRE_REPLAY_MICROSCOPE=1",
+            "VALIDATION_REPLAY_MICROSCOPE_MAX_LINES=6",
+            "VALIDATION_REPLAY_MICROSCOPE_TOPK=0",
+            "VALIDATION_REPLAY_MICROSCOPE_MIN_TOKENS_NO_SPEC=849",
+            "VALIDATION_REPLAY_MICROSCOPE_MAX_TOKENS_NO_SPEC=849",
+            "C1 no longer proves the preregistered active recurrence",
+        ):
+            self.assertIn(required, driver)
 
 
 if __name__ == "__main__":
