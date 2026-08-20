@@ -777,6 +777,26 @@
       "recommendation": "re-verify the whole model with direct I/O, and re-run any result that matters, after the cache is cleared."
     },
     "REMEDY_NEEDS_ROOT": "drop the page cache (echo 3 > /proc/sys/vm/drop_caches) or unmount and remount /mnt/usb-models, then re-verify all seven shards with dd iflag=direct. Longer term, NTFS-3G over FUSE is a poor store for multi-GB weights under sustained load; a native filesystem would be materially safer. NOT performed - privileged action, needs Steve's go-ahead.",
-    "status": "all GPU experimentation is halted. The harness will reject every run while the cached hash mismatches, which is correct behaviour."
+    "status": "all GPU experimentation is halted. The harness will reject every run while the cached hash mismatches, which is correct behaviour.",
+    "RESOLVED_WITHOUT_ROOT": {
+      "remedy": "os.posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED) on the affected file. Unprivileged, non-destructive - it drops only clean cached pages and cannot lose data. After that the ORDINARY read returned e4ac4e0b..., matching the manifest.",
+      "full_reverify": "all 7 safetensors shards plus model_extra_tensors.safetensors re-hashed clean with their page cache dropped first. The model on disk is intact; nothing needs re-downloading.",
+      "correction_to_my_own_speculation": "I floated page-cache corruption as a candidate explanation for the 21/25 margin-free divergence. It is RULED OUT for those arms: each logged 'model revision and all recorded file identities verified' at startup, and that check reads through the same page cache. A corrupt cache would have failed it, exactly as it later did. The corruption appeared after ~02:11, well after those arms ran.",
+      "standing_diagnostic": "when a model hash mismatches, re-hash with dd iflag=direct before concluding the file is damaged, then clear with fadvise. Disk-correct + cache-wrong is real and does not need root to fix."
+    }
+  },
+  "OTHER_MACHINE_FIXES_REVIEW_20260820": {
+    "reviewing": "the other host's session: two runtime-nondeterminism races found, fixed and staged as a triple-fix build, with a handoff asking this host to run margin-free + PERSISTENT_SCRATCH=1 + triple-fix build against a 25/25 target.",
+    "their_work_is_real": "both races are genuine source-level defects found by direct op sweeping, with op-level validation (0/4000 races, 60/60 bitwise equivalence vs the torch reference). Worth having. This is not a criticism of the fixes themselves.",
+    "BUT_THE_HEADLINE_FIX_IS_INERT_IN_THIS_LANE": {
+      "claim": "gdn_replayssm_commit_pending's double race is 'the first mechanism matching the other 3 divergent prompts'.",
+      "why_it_cannot_be": "the record lane runs VLLM_XPU_GDN_REPLAYSSM_SPEC=0, hard-exported at run-arm.sh:688 and captured as gdn_replayssm_spec=0 at identity.env:69 in every divergent arm.",
+      "code_path": "_ensure_gdn_replayssm_spec_state (qwen_gdn_linear_attn.py:1889), which allocates every _gdn_replayssm_* buffer, is called at :3077 ONLY under 'if xpu_replayssm_spec_decode:'. With the flag at 0 those buffers remain None, so _commit_gdn_replayssm_pending returns at its None guard (:2116-2123) and the raced kernel never executes.",
+      "consequence": "the proposed validation run would be INERT - it would return the same 21/25 and read as 'the fix did not work', when in fact the fixed code never ran. That is the same inert-arm trap that has already cost this project four times (GDN_SPEC_PERSISTENT_SCRATCH, DDTREE_CAPTURE_GDN_CORE, LINEAR_BATCH_INVARIANT, and the fast-path flags the harness silently unset).",
+      "what_they_must_do_instead": "either set VLLM_XPU_GDN_REPLAYSSM_SPEC=1 - which makes it a DIFFERENT configuration from the record lane and needs its own baseline - or accept that this fix is irrelevant to the record lane's divergence."
+    },
+    "THE_INT4_BAND_FIX_ALSO_DOES_NOT_EXPLAIN_IT": "their oneDNN int4 GEMM race covers M in [129,448], a prefill band. They concede it explains at most 1 of 4 divergent prompts. A prefill perturbation CAN surface late, since a small state difference only flips a token once a near-tie occurs, so it is not excluded for the one prompt whose prefill M lands in the band - but it cannot cover the other three.",
+    "NET": "neither fix explains the margin-free 21/25 on the record lane. The mechanism remains unidentified. Both fixes are still worth carrying for the configurations that do exercise those paths.",
+    "still_the_best_next_test": "TP1. It removes the allreduce entirely and is decisive for the remaining ubiquitous-source hypothesis, and unlike the replayssm fix it does not require changing the lane's flags to become non-inert."
   }
 }
