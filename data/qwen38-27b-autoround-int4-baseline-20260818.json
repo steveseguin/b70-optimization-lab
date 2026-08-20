@@ -742,5 +742,16 @@
     "gates": "smoke_pass, realistic_gate_passed, cached_tokens_all_zero, fresh_response_valid all true - the arm is valid, the lever is simply bad.",
     "methodological_note": "VLLM_XPU_LOCAL_ARGMAX_DEBUG=1 is what made this readable. Without it the arm would have shown a 2.2 tok/s regression with no indication that one of the two paths never ran at all, and the natural but wrong conclusion would have been 'the fast paths cost 2.2 tok/s'. Always enable a path's own debug marker when screening it.",
     "consequence": "the margin audit's ranked step 2 - 'removing the margin unlocks two hard-disabled decode fast paths, measure this first, it is the largest single lever' - is now closed as a negative. Removing the margin is still correct, but not for this reason."
+  },
+  "gdncapture_25prompt_hang_20260820": {
+    "arm": "qwen38-marginfree-gdncapture-mtp5-25-spec-a-20260820",
+    "outcome": "FAILED - hung after a successful engine init and was killed by the 900 s supervision startup timeout (05:56:19 -> 06:11:19 UTC exactly).",
+    "what_succeeded": "the model loaded, compiled and captured normally: 'init engine (profile, create kv cache, warmup model) took 155.77 s (compilation: 130.03 s)' and 'Graph capturing finished in 3 secs, took 0.38 GiB' - the same figures the earlier 2-prompt smoke produced.",
+    "what_failed": "'Application startup complete' never appeared. The hang is AFTER engine init, in API server startup, with no DEVICE_LOST, no OUT_OF_RESOURCES and no traceback anywhere in the log.",
+    "contrast": "the 2-prompt smoke qwen38-ddtree-gdncapture-two-spec-a-20260820 used the same VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=1 and passed this point cleanly, so the hang is not a deterministic consequence of the flag at startup.",
+    "concurrent_symptom": "a plain per-device health probe (torch.ones(1024)+1) launched afterwards sat at 0% CPU rather than computing - a blocked-in-driver signature, not slow first-use kernel compilation. GPU memory read 48/116/298/298 MiB while nothing should have been resident.",
+    "hypothesis": "GPUs 2,3 may have entered the same wedge state that took 0,1 earlier. The code comment on this flag warns that the captured op 'mutates layer-owned recurrent state outside its schema', so capturing it is explicitly a risk. NOT yet confirmed - the probe had not returned when this was recorded.",
+    "action_taken": "no further GPU work launched until a real per-device kernel and a real collective both pass. Following the rule established earlier today: xpu-smi visibility and idle memory are not a health gate.",
+    "status_of_the_lever": "GDN capture remains UNMEASURED at 25 prompts. Viability was shown at 2 prompts; a 25-prompt number does not exist."
   }
 }
