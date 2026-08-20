@@ -752,6 +752,9 @@
     "concurrent_symptom": "a plain per-device health probe (torch.ones(1024)+1) launched afterwards sat at 0% CPU rather than computing - a blocked-in-driver signature, not slow first-use kernel compilation. GPU memory read 48/116/298/298 MiB while nothing should have been resident.",
     "hypothesis": "GPUs 2,3 may have entered the same wedge state that took 0,1 earlier. The code comment on this flag warns that the captured op 'mutates layer-owned recurrent state outside its schema', so capturing it is explicitly a risk. NOT yet confirmed - the probe had not returned when this was recorded.",
     "action_taken": "no further GPU work launched until a real per-device kernel and a real collective both pass. Following the rule established earlier today: xpu-smi visibility and idle memory are not a health gate.",
-    "status_of_the_lever": "GDN capture remains UNMEASURED at 25 prompts. Viability was shown at 2 prompts; a 25-prompt number does not exist."
+    "status_of_the_lever": "GDN capture remains UNMEASURED at 25 prompts. Viability was shown at 2 prompts; a 25-prompt number does not exist.",
+    "hypothesis_REFUTED": "the guess that GPUs 2,3 had wedged is WRONG. The probe returned: xpu:0 FAIL DEVICE_LOST, xpu:1 FAIL DEVICE_LOST, xpu:2 OK sum=2048.0, xpu:3 OK sum=2048.0. Only 0 and 1 are wedged, unchanged from earlier. The probe's 0% CPU was simply it blocking on the two dead devices before reaching the healthy ones - devices are probed in index order, so 0 and 1 stall it first.",
+    "revised_reading": "the 25-prompt arm hung in API server startup on HEALTHY GPUs. init engine completed in 155.77 s and the API server then never logged 'Application startup complete' in the remaining ~740 s, so it is a hang rather than slowness. The identical flag passed this point in the 2-prompt smoke, so it appears intermittent rather than deterministic.",
+    "next_action": "retry once with the same config. A second hang would make it a property of the flag; a clean pass would make the first one a flake."
   }
 }
