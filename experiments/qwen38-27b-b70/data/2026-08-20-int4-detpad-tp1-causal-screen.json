@@ -1,0 +1,173 @@
+{
+  "schema": "qwen38-int4-detpad-tp1-causal-screen-v1",
+  "date": "2026-08-20",
+  "classification": "positive-causal-diagnostic",
+  "promotion_eligible": false,
+  "question": "Does the global oneDNN W4A16 determinism pad remove the structured-extraction runtime variability under the sealed TP1 MTP5 identity?",
+  "preregistration": "../notes/2026-08-20-int4-detpad-tp1-causal-screen-preregistration.md",
+  "result_note": "../notes/2026-08-20-int4-detpad-tp1-causal-screen-result.md",
+  "criterion": {
+    "pad_on": "all three structured-extraction token arrays must be identical",
+    "pad_off": "the three structured-extraction arms must contain at least two distinct token arrays",
+    "engagement": "every pad-on arm records pad=1 and a branch warning; every pad-off arm records pad=0 and no branch warning",
+    "identity": "all six arms use the same strict composite runtime and sealed compile cache, directly load both outer graphs and both AOT artifacts, and leave the cache manifest byte-identical"
+  },
+  "common_identity": {
+    "host": "steve-b70s",
+    "physical_gpu": 2,
+    "tensor_parallel_size": 1,
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "quantization": "AutoRound INT4",
+    "dtype": "float16",
+    "speculative_method": "native MTP",
+    "num_speculative_tokens": 5,
+    "greedy_margin": 0,
+    "draft_lm_head_int4_fallback_margin": 0,
+    "python_hash_seed": 0,
+    "suite_id": "qwen38-27b-int4-tp1-divergence-diagnostic-20260820-v1",
+    "suite_prompt_count": 4,
+    "smoke_enabled": true,
+    "quality_enabled": false,
+    "composite_stage": "/home/steve/staged-xpu-commitfix-graphfa-composite-20260820",
+    "xpu_native_extension_sha256": "4dd336013d155aab004fb1c916118957cb9349b491938da65769f2d8af18ffb0",
+    "xpu_fa_extension_sha256": "33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739",
+    "graph_stage_manifest_sha256": "47861e8391b6b25dd9c3eb25e25c5939753aa470858b667d5bdf181344db18da",
+    "compile_cache_namespace": "b936042a67",
+    "compile_cache_manifest_sha256": "552ddb98181fc91423372061eb1c8514566ab2dbb076af6a60c3573d555c91a5",
+    "compile_cache_tree_sha256": "02db4496a0fd1780939f86fa0856cdf6565e738de69e4c7980e38b03f0e72e1c",
+    "compile_cache_entries": 1859,
+    "compile_cache_files": 1588,
+    "compile_cache_bytes": 197507168,
+    "compilation": {
+      "use_inductor_graph_partition": true,
+      "cudagraph_mode": "PIECEWISE",
+      "cudagraph_capture_sizes": [6],
+      "max_cudagraph_capture_size": 6
+    }
+  },
+  "prompt_order": [
+    "selection--sql-debugging",
+    "holdout--factual-protocol",
+    "holdout--structured-extraction",
+    "holdout--long-rollover-repository-audit"
+  ],
+  "stable_output_sha256s": {
+    "selection--sql-debugging": "21cd401c04722b48bf7283001caf4c6aafc2e886a88ea938f38afe46e1959cba",
+    "holdout--factual-protocol": "559ce970c6c0b7b27e95eec08c535e577948a328f2efd82a543f1a4637b6559d",
+    "holdout--long-rollover-repository-audit": "c923f52f0159d5a1a8163d77ebba9b911bd9c658efc85ef83383b0a0c0a1428b"
+  },
+  "structured_variants": {
+    "G": {
+      "token_count": 419,
+      "token_array_sha256": "fd6842fe30189706f5f1a208aa79ea263e507cb37cea5b64279922efc1a95906",
+      "output_sha256": "74a860ae4c5d6261752963c658008dda2bdedea98ed171319543b87c9f0215a8"
+    },
+    "F2": {
+      "token_count": 420,
+      "token_array_sha256": "ccdab7444fc7d0b292f7dfcc214368631baae8a9e03ec00047e0b3c7213b7abc",
+      "output_sha256": "11a29b06af41ba35843394282b6b365b05dc7124a8a4c99937c2f855f59034f4"
+    }
+  },
+  "arms": [
+    {
+      "order": 1,
+      "name": "detpad0-a",
+      "pad": 0,
+      "artifact_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-tp1-sealed-b936-composite4dd-detpad0-a-20260820",
+      "runner_exit_code": 0,
+      "legacy_median_tok_s": 81.60401105187566,
+      "preferred_median_tok_s": 80.7879709413569,
+      "structured_variant": "G",
+      "output_sha256s": ["21cd401c04722b48bf7283001caf4c6aafc2e886a88ea938f38afe46e1959cba", "559ce970c6c0b7b27e95eec08c535e577948a328f2efd82a543f1a4637b6559d", "74a860ae4c5d6261752963c658008dda2bdedea98ed171319543b87c9f0215a8", "c923f52f0159d5a1a8163d77ebba9b911bd9c658efc85ef83383b0a0c0a1428b"],
+      "bench_json_sha256": "fa44496d93b70a3e6f687059c5a6433432aa96502406a5678b1be053274a9a21"
+    },
+    {
+      "order": 2,
+      "name": "detpad1-a",
+      "pad": 1,
+      "artifact_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-tp1-sealed-b936-composite4dd-detpad1-a-20260820",
+      "runner_exit_code": 0,
+      "legacy_median_tok_s": 81.67812127143482,
+      "preferred_median_tok_s": 80.86134005872047,
+      "structured_variant": "G",
+      "output_sha256s": ["21cd401c04722b48bf7283001caf4c6aafc2e886a88ea938f38afe46e1959cba", "559ce970c6c0b7b27e95eec08c535e577948a328f2efd82a543f1a4637b6559d", "74a860ae4c5d6261752963c658008dda2bdedea98ed171319543b87c9f0215a8", "c923f52f0159d5a1a8163d77ebba9b911bd9c658efc85ef83383b0a0c0a1428b"],
+      "bench_json_sha256": "287ad5c7bea5e34f73bcfb5a89c7e76a426499aca1693ed56db05f3e8075003b"
+    },
+    {
+      "order": 3,
+      "name": "detpad0-b",
+      "pad": 0,
+      "artifact_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-tp1-sealed-b936-composite4dd-detpad0-b-20260820",
+      "runner_exit_code": 0,
+      "legacy_median_tok_s": 81.60754895049902,
+      "preferred_median_tok_s": 80.79147346099403,
+      "structured_variant": "F2",
+      "output_sha256s": ["21cd401c04722b48bf7283001caf4c6aafc2e886a88ea938f38afe46e1959cba", "559ce970c6c0b7b27e95eec08c535e577948a328f2efd82a543f1a4637b6559d", "11a29b06af41ba35843394282b6b365b05dc7124a8a4c99937c2f855f59034f4", "c923f52f0159d5a1a8163d77ebba9b911bd9c658efc85ef83383b0a0c0a1428b"],
+      "bench_json_sha256": "56a5482db1658e3a737e683c5f97f93ffdd98e9d0c1ad5253cc238dc0994670f"
+    },
+    {
+      "order": 4,
+      "name": "detpad1-b",
+      "pad": 1,
+      "artifact_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-tp1-sealed-b936-composite4dd-detpad1-b-20260820",
+      "runner_exit_code": 0,
+      "legacy_median_tok_s": 81.60088783105397,
+      "preferred_median_tok_s": 80.78487895274344,
+      "structured_variant": "G",
+      "output_sha256s": ["21cd401c04722b48bf7283001caf4c6aafc2e886a88ea938f38afe46e1959cba", "559ce970c6c0b7b27e95eec08c535e577948a328f2efd82a543f1a4637b6559d", "74a860ae4c5d6261752963c658008dda2bdedea98ed171319543b87c9f0215a8", "c923f52f0159d5a1a8163d77ebba9b911bd9c658efc85ef83383b0a0c0a1428b"],
+      "bench_json_sha256": "0a480a87fe0be10067e7dc85e71dd01d09ce46999f48a6f4f02eb756afdd7ceb"
+    },
+    {
+      "order": 5,
+      "name": "detpad0-c",
+      "pad": 0,
+      "artifact_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-tp1-sealed-b936-composite4dd-detpad0-c-20260820",
+      "runner_exit_code": 0,
+      "legacy_median_tok_s": 81.69993732206244,
+      "preferred_median_tok_s": 80.88293794884181,
+      "structured_variant": "G",
+      "output_sha256s": ["21cd401c04722b48bf7283001caf4c6aafc2e886a88ea938f38afe46e1959cba", "559ce970c6c0b7b27e95eec08c535e577948a328f2efd82a543f1a4637b6559d", "74a860ae4c5d6261752963c658008dda2bdedea98ed171319543b87c9f0215a8", "c923f52f0159d5a1a8163d77ebba9b911bd9c658efc85ef83383b0a0c0a1428b"],
+      "bench_json_sha256": "d30fec8354bcb371171f52bde6e7e3c01202436cd0294a37e882245e8d0344cd"
+    },
+    {
+      "order": 6,
+      "name": "detpad1-c",
+      "pad": 1,
+      "artifact_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-tp1-sealed-b936-composite4dd-detpad1-c-20260820",
+      "runner_exit_code": 0,
+      "legacy_median_tok_s": 81.58594926208926,
+      "preferred_median_tok_s": 80.77008976946837,
+      "structured_variant": "G",
+      "output_sha256s": ["21cd401c04722b48bf7283001caf4c6aafc2e886a88ea938f38afe46e1959cba", "559ce970c6c0b7b27e95eec08c535e577948a328f2efd82a543f1a4637b6559d", "74a860ae4c5d6261752963c658008dda2bdedea98ed171319543b87c9f0215a8", "c923f52f0159d5a1a8163d77ebba9b911bd9c658efc85ef83383b0a0c0a1428b"],
+      "bench_json_sha256": "69b4ba7ba4ac5742bb1a9bd8fbd3c506096d15d120572db065be159840c5a80d"
+    }
+  ],
+  "aggregate": {
+    "pad_off_structured_variants": ["G", "F2", "G"],
+    "pad_on_structured_variants": ["G", "G", "G"],
+    "pad_off_distinct_structured_arrays": 2,
+    "pad_on_distinct_structured_arrays": 1,
+    "pad_off_legacy_median_of_arm_medians_tok_s": 81.60754895049902,
+    "pad_on_legacy_median_of_arm_medians_tok_s": 81.60088783105397,
+    "pad_on_minus_off_tok_s": -0.00666111944505,
+    "pad_on_minus_off_percent": -0.008162381459460733,
+    "pad_markers_by_arm": [0, 1, 0, 1, 0, 1],
+    "direct_outer_loads_per_arm": 2,
+    "direct_aot_loads_per_arm": 2,
+    "graph_or_aot_compile_save_markers_per_arm": 0,
+    "compile_cache_input_output_byte_identical_all_arms": true,
+    "model_dual_view_verified_all_arms": true,
+    "smoke_passed_all_arms": true,
+    "fresh_benchmark_gate_passed_all_arms": true,
+    "criterion_passed": true
+  },
+  "conclusion": "The preregistered same-binary alternating control credits global in-band oneDNN W4A16 prefill padding for eliminating the observed structured-extraction variability in this exact TP1 MTP5 diagnostic lane.",
+  "limitations": [
+    "The generic operator flag covers quantized target-backbone and MTP-layer prefills; this screen does not isolate which model side was causal.",
+    "TORCH_WARN_ONCE proves branch engagement but cannot localize every invocation to a request or module.",
+    "Six first-inference Triton kernels JIT-compiled in-process in every arm, but no graph/AOT rebuild or save occurred and the sealed cache bytes did not change.",
+    "The four-prompt TP1 diagnostic is not a full-25 TP2 correctness, quality, or promotion result.",
+    "The measured throughput delta is effectively neutral and is not a headline speed comparison."
+  ],
+  "next_action": "First add fail-closed pad-engagement, direct-cache-load, post-cache-equality, and token-parity gates. Then run two margin-free TP2 full-25 arms with pad enabled, the same composite runtime, the post-recovery b99160ae76 cache rooted at /mnt/usb-models/llm-runtime/vllm-cache/qwen38-postrecovery-marginfree-mtp5-20260820/torch_compile_cache/b99160ae76, input manifest SHA256 f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb0ff / tree 723c1599060f5c9c82dc5731cc75b50620c79d202b34ee99b8390d3aec20acbe, dual-view model verification, first-arm quality enabled, and strict token-ID self-parity and target-oracle gates."
+}

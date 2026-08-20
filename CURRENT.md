@@ -145,6 +145,16 @@ preregistered divergence prompts. The residual problem is genuine runtime
 nondeterminism; corrupted model bytes and TP2 cross-rank oneCCL/allreduce are not required
 to produce it.
 
+A preregistered six-arm, same-binary TP1 control then isolated the known
+oneDNN W4A16 dirty prefill band. Pad-off produced two structured-extraction
+token arrays (`G/F2/G`); pad-on was bit-identical in all three fresh-server
+arms (`G/G/G`). Every arm directly loaded the same sealed graph/AOT artifacts,
+left the compile-cache tree byte-identical, and passed strict model/runtime
+identity gates. This meets the preregistered criterion and supports crediting
+global in-band INT4 prefill padding for the observed six-arm structured flip,
+but three pad-on observations do not establish lane-wide determinism, identify
+target versus MTP-layer prefill, or establish full-25 TP2 determinism.
+
 The published `101.922` MTP5 and `100.497` MTP4 LocalMaxxing rows are
 invalidated and withdrawal is recommended. Both opted into a `0.03125` greedy
 margin that changed emitted text on 18/25 prompts; their quality baseline used
@@ -163,6 +173,7 @@ manifest immediately before vLLM starts.
 - [baseline evidence](data/qwen38-27b-autoround-int4-baseline-20260818.json)
 - [measuring-host recovery](experiments/qwen38-27b-b70/notes/2026-08-20-measuring-host-xe-recovery-and-health-gate.md)
 - [post-recovery TP1 result](experiments/qwen38-27b-b70/notes/2026-08-20-postrecovery-marginfree-tp1-runtime-nondeterminism.md)
+- [INT4 prefill-pad causal screen](experiments/qwen38-27b-b70/notes/2026-08-20-int4-detpad-tp1-causal-screen-result.md)
 
 ## Closed: Qwen3.6 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 
@@ -260,11 +271,13 @@ loaded service.
    and only revisit if winner selection can avoid the added cross-queue sync.
 3. Keep full Qwen3.8 AutoRound server runs off the 15-GiB host. The recovered
    four-B70 host now has a fresh target-only oracle, post-recovery TP2 replicas,
-   and a sealed-cache TP1 control. TP1 still flipped 2/4 prompts, excluding
-   cross-rank oneCCL/allreduce as a necessary cause. Trace the earliest structured-
-   extraction divergence at TP1 before another full-25 or speed arm. Do not
-   promote or submit until target parity, self-determinism, and the fixed
-   quality gate all pass.
+   and a positive sealed-cache TP1 INT4 prefill-pad control. Add fail-closed
+   engagement, direct-load, post-cache-equality, and token-parity checks, then
+   run two margin-free TP2 full-25 arms with the pad enabled, the composite
+   runtime, and the post-recovery `b99160ae76` cache (manifest `f3582440...`,
+   tree `723c1599...`); enable quality on the first arm. Do not promote or
+   submit until self-parity, target-oracle comparison, and the fixed quality
+   gate all pass.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.

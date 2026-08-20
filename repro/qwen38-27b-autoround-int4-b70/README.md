@@ -11,8 +11,12 @@ require independent numerical, quality, determinism, and performance gates.
 > recommended. The honest margin-free working anchor is `101.170 tok/s`
 > all-25, but its three arms agree on only 21–22/25 prompts. A fresh
 > margin-free target-only oracle now exists, yet target A/B agreed on 24/25
-> and a sealed-cache TP1 MTP5 pair agreed on only 2/4 diagnostic prompts. Do
-> not use the historical command below for a new promotion run.
+> and a sealed-cache TP1 MTP5 pair agreed on only 2/4 diagnostic prompts. A
+> later preregistered six-arm control produced two structured variants with
+> the oneDNN INT4 prefill pad off and one shared variant in three pad-on arms.
+> That passes the diagnostic criterion but does not establish lane-wide or
+> full-25 TP2 determinism. Do not use the historical command below for a new
+> promotion run.
 
 ## Model
 
@@ -153,8 +157,13 @@ handoff remains incomplete. See the
 - Post-recovery dual-view-verified MTP5 arms reached `102.132` and
   `102.176 tok/s`, but agreed on 21/25 and each matched target oracle A on only
   15/25. A byte-identical sealed-cache TP1 pair agreed on only 2/4. This proves
-  runtime nondeterminism without TP2 collectives; trace the earliest TP1
-  structured-extraction divergence before another full speed arm. The cheap
+  runtime nondeterminism without TP2 collectives. A preregistered six-arm TP1
+  control then produced structured variants `G/F2/G` with the global oneDNN
+  INT4 prefill pad off and `G/G/G` with it on, under the same binary and sealed
+  cache. After adding fail-closed engagement/direct-load/cache/parity gates,
+  run the pad-enabled composite runtime through two TP2 full-25 arms using the
+  post-recovery `b99160ae76` cache (manifest `f3582440...`, tree
+  `723c1599...`) before any promotion. The cheap
   draft-fallback-margin patch still needs real TP2 logit-equivalence captures
   and branch/candidate counters before any full 25-prompt throughput A/B.
 - Do not use stock `intel/llm-scaler-vllm:0.21.0-b3.1` as a substitute for the

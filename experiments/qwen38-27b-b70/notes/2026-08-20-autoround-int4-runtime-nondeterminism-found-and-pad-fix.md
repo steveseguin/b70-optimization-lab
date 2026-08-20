@@ -42,7 +42,7 @@ rate.
 
 ## The fix: determinism pad (built + gated here)
 
-`patches/vllm-xpu-kernels-qwen38-onednn-int4-determinism-pad-20260820.patch`
+`../patches/vllm-xpu-kernels-qwen38-onednn-int4-determinism-pad-20260820.patch`
 (int4_gemm_w4a16.h): for 128 < M < 512, pad src to M=512 with zeros, run,
 slice back. GEMM rows are independent — proven bitwise: real-row outputs
 identical under arbitrary padding content (including x100-magnitude junk),

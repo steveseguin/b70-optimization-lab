@@ -2,7 +2,10 @@
 
 Date: 2026-08-20
 
-Status: **preregistered; not yet run**
+Status: **completed; criterion passed**
+
+Result:
+[`2026-08-20-int4-detpad-tp1-causal-screen-result.md`](2026-08-20-int4-detpad-tp1-causal-screen-result.md)
 
 ## Question
 
