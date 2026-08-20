@@ -4,6 +4,13 @@ Date: 2026-08-20
 
 Status: preregistered; no TP2 GPU arm launched yet.
 
+Preflight attempt 0 used label
+`qwen38-detpad-composite4dd-marginfree-mtp5-25-spec-a-20260820` and stopped
+before model verification or GPU launch: a literal line-continuation character
+inside the new `jq` suite expression caused a parser error. The failed root is
+retained. The quoting fix changes no runtime identity; the measured pair uses
+fresh `a2`/`b2` labels.
+
 ## Question
 
 The six-arm sealed TP1 diagnostic credited global oneDNN W4A16 prefill

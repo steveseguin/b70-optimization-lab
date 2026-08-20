@@ -353,7 +353,7 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
   if [[ "$(sha256sum -- "$suite" | awk '{print $1}')" \
       != "$VALIDATION_EXPECT_SUITE_SHA256" ]] \
     || ! jq -e \
-      '.suite_id == "qwen36-27b-int4-independent-validation-20260815-v1" \
+      '.suite_id == "qwen36-27b-int4-independent-validation-20260815-v1"
        and .version == 1 and (.prompts | type == "array" and length == 25)' \
       "$suite" >/dev/null; then
     printf 'sealed validation suite identity/content is invalid\n' >&2
