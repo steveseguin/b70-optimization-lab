@@ -14,6 +14,7 @@ sealed_validation_allowlist=(
   VALIDATION_CAMPAIGN_DRIVER VALIDATION_CAMPAIGN_DRIVER_SHA256
   VALIDATION_COMPILE_CACHE_MANIFEST VALIDATION_COMPILATION_CONFIG_OVERRIDE
   VALIDATION_DDTREE_CAPTURE_GDN_CORE VALIDATION_DDTREE_FULL_GRAPH
+  VALIDATION_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS
   VALIDATION_DETERMINISTIC_GREEDY_MARGIN
   VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY
   VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN
@@ -21,6 +22,7 @@ sealed_validation_allowlist=(
   VALIDATION_ENABLE_XPU_GRAPH VALIDATION_EXPECT_AOT_CACHE_KEYS
   VALIDATION_EXPECT_AOT_DIRECT_LOADS VALIDATION_EXPECT_CACHE_MANIFEST_SHA256
   VALIDATION_EXPECT_CACHE_ROOT
+  VALIDATION_EXPECT_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS
   VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY
   VALIDATION_EXPECT_COMPILE_CACHE_DIRECT_LOADS
   VALIDATION_EXPECT_COMPILE_CACHE_NAMESPACE
@@ -305,6 +307,18 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     || "${VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}" \
       != "${VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}" ]]; then
     printf 'sealed spec-decode replay-bypass identity must be 0/1 and match its independent expectation\n' >&2
+    exit 2
+  fi
+  if [[ ! "${VALIDATION_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS:-0}" =~ ^[01]$ \
+    || ! "${VALIDATION_EXPECT_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS:-0}" =~ ^[01]$ \
+    || "${VALIDATION_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS:-0}" \
+      != "${VALIDATION_EXPECT_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS:-0}" ]]; then
+    printf 'sealed request-selected replay-bypass identity must be 0/1 and match its independent expectation\n' >&2
+    exit 2
+  fi
+  if [[ "${VALIDATION_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS:-0}" == "1" \
+    && "${VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}" != "0" ]]; then
+    printf 'sealed request-selected replay bypass requires umbrella replay bypass=0\n' >&2
     exit 2
   fi
   require_replay_microscope=${VALIDATION_REQUIRE_REPLAY_MICROSCOPE:-0}
@@ -930,6 +944,13 @@ if [[ "${VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}" == "1" ]]; then
   # graph-memory allocation history. Inherited VLLM_* state was scrubbed above.
   export VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1
 fi
+if [[ "${VALIDATION_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS:-0}" == "1" ]]; then
+  # Target-only diagnostic: each fresh request is selected during non-uniform
+  # prefill, and its uniform MTP5 target-verifier rows later use the compiled
+  # non-cudagraph runnable. Dispatcher padding and drafter graph keys remain
+  # PIECEWISE/M6. Inherited VLLM_* state was scrubbed above.
+  export VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS=1
+fi
 if [[ -n "${VALIDATION_M4_M1_ORACLE_FILE:-}" ]]; then
   export VLLM_XPU_M4_M1_ORACLE_FILE="$VALIDATION_M4_M1_ORACLE_FILE"
   export VLLM_XPU_M4_M1_ORACLE_FORWARD="${VALIDATION_M4_M1_ORACLE_FORWARD:-all}"
@@ -1423,6 +1444,10 @@ if [[ "$require_tp2_sealed_gates" == "1" && "$runner_rc" == "0" ]]; then
       "${VALIDATION_EXPECT_SYNC_AFTER_MODEL_FORWARD:-0}"
     --expected-disable-spec-decode-cudagraph-replay \
       "${VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}"
+    --expected-decode-cudagraph-replay-eager-every-n-requests \
+      "${VALIDATION_EXPECT_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS:-0}"
+    --expected-vllm-diff-sha256 \
+      "${VALIDATION_EXPECT_VLLM_DIFF_SHA256:-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855}"
     --expected-parity-peer-checksum-manifest-sha256 \
       "${VALIDATION_EXPECT_PARITY_PEER_CHECKSUM_MANIFEST_SHA256:-}"
     --expected-report-only-b2-bench-sha256 \

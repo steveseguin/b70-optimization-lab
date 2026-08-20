@@ -1,0 +1,12 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 59d1c9e4d4..dc89083f32 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -9085,0 +9086,7 @@ class GPUModelRunner(
++                logger.info_once(
++                    "XPU target/verifier request-selected uniform PIECEWISE "
++                    "replay bypass engaged: every_n_requests=%d "
++                    "uniform_decode_query_len=%d.",
++                    eager_every_n_requests,
++                    self.uniform_decode_query_len,
++                )

@@ -386,6 +386,8 @@ write_identity() {
   echo "draft_disable_cudagraphs=${VLLM_XPU_DRAFT_DISABLE_CUDAGRAPHS:-}"
   echo "disable_spec_decode_cudagraph_replay=${VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-}"
   echo "expected_disable_spec_decode_cudagraph_replay=${VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}"
+  echo "decode_cudagraph_replay_eager_every_n_requests=${VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS:-}"
+  echo "expected_decode_cudagraph_replay_eager_every_n_requests=${VALIDATION_EXPECT_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS:-0}"
   echo "skip_compiled_spec_decode=${VLLM_XPU_SKIP_COMPILED_SPEC_DECODE:-}"
   echo "spec_decode_verify_trace_file=${VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_FILE:-}"
   echo "spec_decode_verify_trace_max_lines=${VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_MAX_LINES:-}"

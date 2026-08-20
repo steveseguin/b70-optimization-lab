@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
 import pathlib
 import unittest
 
@@ -33,6 +34,14 @@ MICROSCOPE_DRIVER = REPO / (
 REPLAY_BYPASS_DRIVER = REPO / (
     "experiments/qwen38-27b-b70/scripts/"
     "run-20260820-detpad-tp2-graph-replay-bypass.sh"
+)
+TARGET_REQUEST_REPLAY_BYPASS_DRIVER = REPO / (
+    "experiments/qwen38-27b-b70/scripts/"
+    "run-20260820-detpad-tp2-target-verifier-request-replay-bypass.sh"
+)
+TARGET_REQUEST_REPLAY_BYPASS_PATCH = REPO / (
+    "patches/qwen38-27b-autoround-int4-b70/"
+    "vllm-target-verifier-request-replay-bypass-marker-20260820.patch"
 )
 
 
@@ -118,6 +127,8 @@ class LaunchIdentityContractTest(unittest.TestCase):
             "expected_parity_peer_checksum_manifest_sha256=",
             "disable_spec_decode_cudagraph_replay=",
             "expected_disable_spec_decode_cudagraph_replay=",
+            "decode_cudagraph_replay_eager_every_n_requests=",
+            "expected_decode_cudagraph_replay_eager_every_n_requests=",
             "parity_peer_bench_snapshot_sha256=",
             "target_token_bench_snapshot_sha256=",
             "report_only_b2_bench_sha256=",
@@ -154,6 +165,24 @@ class LaunchIdentityContractTest(unittest.TestCase):
             checker_arg,
         )
         self.assertLess(checker_arg, expected_value)
+
+    def test_arm_forwards_request_selected_replay_bypass_fail_closed(self) -> None:
+        source = ARM.read_text()
+        for required in (
+            "VALIDATION_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS",
+            "VALIDATION_EXPECT_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS",
+            "sealed request-selected replay-bypass identity must be 0/1 and match",
+            "sealed request-selected replay bypass requires umbrella replay bypass=0",
+            "export VLLM_XPU_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS=1",
+            "--expected-decode-cudagraph-replay-eager-every-n-requests",
+            "--expected-vllm-diff-sha256",
+        ):
+            self.assertIn(required, source)
+        runner = RUNNER.read_text()
+        self.assertIn("decode_cudagraph_replay_eager_every_n_requests=", runner)
+        self.assertIn(
+            "expected_decode_cudagraph_replay_eager_every_n_requests=", runner
+        )
 
     def test_sealed_arm_binds_sync_after_model_forward(self) -> None:
         source = ARM.read_text()
@@ -400,6 +429,60 @@ class LaunchIdentityContractTest(unittest.TestCase):
         self.assertLess(
             source.index("R1 did not complete its sealed quality-on arm"),
             source.index("exec env -i"),
+        )
+
+    def test_target_request_replay_campaign_is_clean_sealed_and_two_arm(self) -> None:
+        source = TARGET_REQUEST_REPLAY_BYPASS_DRIVER.read_text()
+        for required in (
+            "exec env -i",
+            "VALIDATION_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS=1",
+            "VALIDATION_EXPECT_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS=1",
+            "VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=0",
+            "VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=0",
+            "VALIDATION_SYNC_AFTER_MODEL_FORWARD=0",
+            "VALIDATION_REQUIRE_REPLAY_MICROSCOPE=0",
+            "VALIDATION_ENABLE_PACKET_TRACE=0",
+            "VALIDATION_ENABLE_LAYER_TRACE=0",
+            "VALIDATION_RUN_QUALITY=\"$quality\"",
+            "t1_checksum_manifest_expected",
+            "VALIDATION_EXPECT_PARITY_PEER_CHECKSUM_MANIFEST_SHA256",
+            "VALIDATION_PARITY_PEER_BENCH=$peer_bench",
+            "VALIDATION_TARGET_TOKEN_BENCH=\"$target_bench\"",
+            "VALIDATION_REPORT_ONLY_B2_BENCH=\"$b2_bench\"",
+            "VALIDATION_REQUIRE_TARGET_TOKEN_PARITY=0",
+            "raw_gdn_compare_sha=61b9f0031e153",
+            "cache_manifest_sha=f3582440de9b",
+            "vllm_head=44fc8fde09fc",
+            "vllm_diff_sha=4193f05e8f255",
+            "vllm_marker_patch_sha=e2185720388a",
+            "vllm-target-verifier-request-replay-bypass-marker-20260820.patch",
+            "apply --check --unidiff-zero --cached",
+            "apply --check --unidiff-zero --reverse",
+            "status --porcelain --untracked-files=normal",
+            "--expected-disable-spec-decode-cudagraph-replay 0",
+            "--expected-decode-cudagraph-replay-eager-every-n-requests 1",
+            "--expected-vllm-diff-sha256 \"$vllm_diff_sha\"",
+            "draft_disable_cudagraphs",
+            "--require-quality-pass",
+            "SHA256SUMS.pre-manifest",
+            "T1 prompt 24 is malformed or the known all-zero catastrophe",
+        ):
+            self.assertIn(required, source)
+        self.assertLess(
+            source.index("T1 did not complete its sealed quality-on arm"),
+            source.index("exec env -i"),
+        )
+
+    def test_target_request_replay_patch_is_zero_context_and_separately_pinned(self) -> None:
+        patch_bytes = TARGET_REQUEST_REPLAY_BYPASS_PATCH.read_bytes()
+        patch_text = patch_bytes.decode()
+        self.assertEqual(
+            hashlib.sha256(patch_bytes).hexdigest(),
+            "e2185720388a3f92533e41224ecf9cfa0509a49c45f12f1a10f62a8debdef4ea",
+        )
+        self.assertIn("@@ -9085,0 +9086,7 @@ class GPUModelRunner(", patch_text)
+        self.assertFalse(
+            any(line.endswith(" ") or line.endswith("\t") for line in patch_text.splitlines())
         )
 
 

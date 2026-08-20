@@ -35,7 +35,13 @@ TRACE_REQ_ID = f"{gates.REPLAY_MICROSCOPE_REQ_BASE}-deadbeef"
 
 
 def identity_text(
-    fixture: "ArmGateTests", *, pad: int = 1, tp: int = 2, replay_bypass: int = 0
+    fixture: "ArmGateTests",
+    *,
+    pad: int = 1,
+    tp: int = 2,
+    replay_bypass: int = 0,
+    request_replay_bypass: int = 0,
+    vllm_diff_sha256: str = hashlib.sha256(b"").hexdigest(),
 ) -> str:
     cache_root = fixture.cache_root
     graph_manifest = fixture.graph_manifest
@@ -82,6 +88,12 @@ def identity_text(
             "disable_spec_decode_cudagraph_replay="
             + ("1" if replay_bypass else ""),
             f"expected_disable_spec_decode_cudagraph_replay={replay_bypass}",
+            "decode_cudagraph_replay_eager_every_n_requests="
+            + ("1" if request_replay_bypass else ""),
+            "expected_decode_cudagraph_replay_eager_every_n_requests="
+            + str(request_replay_bypass),
+            "draft_disable_cudagraphs=0",
+            f"expected_vllm_diff_sha256={vllm_diff_sha256}",
             "max_model_len=2048",
             "max_num_batched_tokens=1024",
             "max_num_seqs=1",
@@ -249,6 +261,28 @@ def replay_bypass_log() -> str:
             "0.229, 0.114, Avg Draft acceptance rate: 40.6%",
         )
     )
+    return "\n".join(lines) + "\n"
+
+
+def target_request_replay_bypass_log() -> str:
+    lines = [
+        "(Worker_TP0 pid=20) INFO XPU target/verifier request-selected uniform "
+        "PIECEWISE replay bypass engaged: every_n_requests=1 "
+        "uniform_decode_query_len=6.",
+        "Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 0% 0/1",
+        "Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100% 1/1",
+        "Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100% 1/1",
+        "Capturing CUDA graphs (decode, PIECEWISE): 0% 0/1",
+        "Capturing CUDA graphs (decode, PIECEWISE): 100% 1/1",
+        "Capturing CUDA graphs (decode, PIECEWISE): 100% 1/1",
+        "(Worker_TP0 pid=20) INFO Graph capturing finished in 1 secs, "
+        "took 0.86 GiB",
+        "(APIServer pid=19) INFO SpecDecoding metrics: Mean acceptance "
+        "length: 3.03, Accepted throughput: 2.98 tokens/s, Drafted "
+        "throughput: 7.34 tokens/s, Accepted: 71 tokens, Drafted: 175 "
+        "tokens, Per-position acceptance rate: 0.743, 0.571, 0.371, "
+        "0.229, 0.114, Avg Draft acceptance rate: 40.6%",
+    ]
     return "\n".join(lines) + "\n"
 
 
@@ -509,6 +543,8 @@ class ArmGateTests(unittest.TestCase):
             expected_pad_markers=2,
             expected_sync_after_model_forward=0,
             expected_disable_spec_decode_cudagraph_replay=0,
+            expected_decode_cudagraph_replay_eager_every_n_requests=0,
+            expected_vllm_diff_sha256=hashlib.sha256(b"").hexdigest(),
             expected_parity_peer_checksum_manifest_sha256="",
             expected_report_only_b2_bench_sha256="",
             expected_suite_sha256=SUITE_SHA,
@@ -540,6 +576,17 @@ class ArmGateTests(unittest.TestCase):
         self.assertEqual(result["pad"]["actual_ranks"], [0, 1])
         self.assertEqual(result["cache_loads"]["actual_aot_loads"], 4)
         self.assertIsNone(result["graph_replay_bypass"])
+        self.assertIsNone(result["target_verifier_request_replay_bypass"])
+
+    def test_unexpected_target_request_replay_marker_fails(self) -> None:
+        marker = target_request_replay_bypass_log().splitlines()[0]
+        log_path = self.root / "run" / "server.stdout.log"
+        log_path.write_text(good_log(self.cache_root) + marker + "\n")
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any("independent expectation was 0" in error for error in result["errors"])
+        )
 
     def enable_replay_bypass(self) -> None:
         (self.root / "run" / "identity.env").write_text(
@@ -686,6 +733,115 @@ class ArmGateTests(unittest.TestCase):
         self.assertTrue(
             any("no accepted draft tokens" in error for error in result["errors"])
         )
+
+    def enable_target_request_replay_bypass(self) -> None:
+        patch = b"fixture target request replay marker patch\n"
+        patch_sha = hashlib.sha256(patch).hexdigest()
+        (self.root / "run" / "vllm.working.patch").write_bytes(patch)
+        (self.root / "run" / "identity.env").write_text(
+            identity_text(
+                self,
+                request_replay_bypass=1,
+                vllm_diff_sha256=patch_sha,
+            )
+        )
+        log_path = self.root / "run" / "server.stdout.log"
+        log_path.write_text(
+            good_log(self.cache_root) + target_request_replay_bypass_log()
+        )
+        self.args.expected_decode_cudagraph_replay_eager_every_n_requests = 1
+        self.args.expected_vllm_diff_sha256 = patch_sha
+
+    def test_target_request_replay_bypass_exact_engagement_passes(self) -> None:
+        self.enable_target_request_replay_bypass()
+        result, passed = self.run_gate()
+        self.assertTrue(passed, result)
+        evidence = result["target_verifier_request_replay_bypass"]
+        self.assertEqual(evidence["raw_marker_count"], 1)
+        self.assertEqual(
+            [(item["kind"], item["done_values"]) for item in evidence["capture_inventory"]],
+            [("decode", [0, 1]), ("mixed prefill-decode", [0, 1])],
+        )
+        self.assertEqual(evidence["aggregate_accepted"], 71)
+        self.assertEqual(evidence["aggregate_drafted"], 175)
+
+    def test_target_request_replay_bypass_marker_is_strict(self) -> None:
+        self.enable_target_request_replay_bypass()
+        log_path = self.root / "run" / "server.stdout.log"
+        base = log_path.read_text()
+        marker = next(
+            line
+            for line in base.splitlines()
+            if gates.TARGET_REQUEST_REPLAY_BYPASS_MARKER in line
+        )
+        mutations = {
+            "wrong actor": marker.replace("Worker_TP0", "EngineCore"),
+            "wrong rank": marker.replace("Worker_TP0", "Worker_TP1"),
+            "wrong interval": marker.replace("every_n_requests=1", "every_n_requests=2"),
+            "wrong query length": marker.replace(
+                "uniform_decode_query_len=6", "uniform_decode_query_len=1"
+            ),
+            "trailing junk": marker + " trailing-junk",
+            "duplicate": marker + "\n" + marker,
+        }
+        for label, replacement in mutations.items():
+            with self.subTest(label=label):
+                log_path.write_text(base.replace(marker, replacement))
+                result, passed = self.run_gate()
+                self.assertFalse(passed)
+                self.assertTrue(
+                    any(
+                        "request-selected replay-bypass marker" in error
+                        for error in result["errors"]
+                    )
+                )
+
+    def test_target_request_replay_bypass_preserves_topology_and_drafter(self) -> None:
+        self.enable_target_request_replay_bypass()
+        log_path = self.root / "run" / "server.stdout.log"
+        base = log_path.read_text()
+        log_path.write_text(
+            base.replace(
+                "Capturing CUDA graphs (decode, PIECEWISE): 0% 0/1\n",
+                "",
+            )
+        )
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("three-record" in error for error in result["errors"]))
+
+        log_path.write_text(base + replay_bypass_log())
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any("drafter graph-disable marker" in error for error in result["errors"])
+        )
+
+        identity = self.root / "run" / "identity.env"
+        identity.write_text(
+            identity.read_text().replace(
+                "draft_disable_cudagraphs=0\n", "draft_disable_cudagraphs=1\n"
+            )
+        )
+        log_path.write_text(base)
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("draft_disable_cudagraphs" in error for error in result["errors"]))
+
+    def test_target_request_replay_bypass_rejects_source_diff_mismatch(self) -> None:
+        self.enable_target_request_replay_bypass()
+        self.args.expected_vllm_diff_sha256 = "a" * 64
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("expected_vllm_diff_sha256" in error for error in result["errors"]))
+
+        self.args.expected_vllm_diff_sha256 = hashlib.sha256(
+            b"fixture target request replay marker patch\n"
+        ).hexdigest()
+        (self.root / "run" / "vllm.working.patch").write_bytes(b"changed\n")
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("vllm tracked working patch" in error for error in result["errors"]))
 
     def test_report_only_b2_source_and_snapshot_are_immutable(self) -> None:
         source = Path(self.temp.name) / "b2-bench.json"
