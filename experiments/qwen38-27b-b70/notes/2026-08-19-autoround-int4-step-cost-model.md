@@ -137,3 +137,9 @@ door itself is viable on this fork.
 4. If the residual persists after capture: unitrace profile
    (`scripts/profile-current-recipe-unitrace.sh`) to name the remainder
    before touching anything else.
+5. Parked micro-lever (~0.2-0.3 ms/step, exactness-preserving): the 5 draft
+   logits allgathers ([1,75968] fp16 each, ~42 µs eager) exist only to feed
+   a full-vocab argmax. A per-rank local argmax + tiny (value, index)
+   allreduce with lowest-global-id tie-break is bit-identical in result and
+   ~40x less traffic. Similarly the target head's [6,75968] gather if only
+   the argmax is consumed. Screen only after the big rocks.
