@@ -38,6 +38,24 @@ second lab host, which has 15 GiB of system RAM.
 Once those gates exist, the source-level queue for >105 tok/s, in order
 (details in `experiments/qwen38-27b-b70/notes/`):
 
+0. **Determinism gate (blocks every promotion claim).** Two runtime races
+   were found and fixed on the second host, both with staged builds and
+   op-level gates:
+   - oneDNN int4 GEMM race for prefill chunk M in [129,448] → determinism
+     pad (2026-08-20-autoround-int4-runtime-nondeterminism-found-and-pad-fix.md);
+   - `gdn_replayssm_commit_pending` double race (in-place shift + pending
+     flag) corrupting conv state ~1/4000 calls at decode time
+     (2026-08-20-replayssm-commit-pending-race-found-and-fixed.md).
+   Triple-fix staged build: `/home/steve/staged-xpu-commitfix-20260820`
+   (manifest in `manifests/staged-xpu-commitfix-20260820.sha256`; also
+   rebuild from the three patch files under
+   `experiments/qwen38-27b-b70/patches/`). Next run: margin-free +
+   PERSISTENT_SCRATCH=1 + this build, pinned shared compile cache, two
+   arms, 25-prompt suite, token-ID parity 25/25 required. Every decode-path
+   op was audited bitwise deterministic and batch/row-invariant
+   (2026-08-20-decode-path-determinism-audit.json); if divergence persists,
+   sweep GDN chunk prefill (Triton) server-side — its standalone sweep
+   fails to compile on the second host.
 1. Build and A/B the zero-init GDN scratch fix (`e34e82b05`, kernel note
    2026-08-18). Built and op-level validated on the second host
    (2026-08-19-autoround-int4-gdn-scratch-zero-init-built-ab.md):
