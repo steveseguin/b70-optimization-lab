@@ -532,6 +532,8 @@ write_identity() {
   echo "compile_cache_unchanged_required=${VALIDATION_REQUIRE_COMPILE_CACHE_UNCHANGED:-0}"
   echo "no_compile_cache_writes_required=${VALIDATION_REQUIRE_NO_COMPILE_CACHE_WRITES:-0}"
   echo "expected_onednn_int4_determinism_pad_markers=${VALIDATION_EXPECT_ONEDNN_INT4_DETERMINISM_PAD_MARKERS:-}"
+  echo "expected_sync_after_model_forward=${VALIDATION_EXPECT_SYNC_AFTER_MODEL_FORWARD:-0}"
+  echo "expected_parity_peer_checksum_manifest_sha256=${VALIDATION_EXPECT_PARITY_PEER_CHECKSUM_MANIFEST_SHA256:-}"
   echo "expected_compile_cache_direct_loads=${VALIDATION_EXPECT_COMPILE_CACHE_DIRECT_LOADS:-}"
   echo "expected_aot_direct_loads=${VALIDATION_EXPECT_AOT_DIRECT_LOADS:-}"
   echo "expected_compile_cache_namespace=${VALIDATION_EXPECT_COMPILE_CACHE_NAMESPACE:-}"

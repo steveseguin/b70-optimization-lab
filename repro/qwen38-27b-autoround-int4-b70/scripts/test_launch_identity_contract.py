@@ -22,6 +22,10 @@ RECURRENCE_DRIVER = REPO / (
     "experiments/qwen38-27b-b70/scripts/"
     "run-20260820-detpad-tp2-recurrence.sh"
 )
+SYNC_DRIVER = REPO / (
+    "experiments/qwen38-27b-b70/scripts/"
+    "run-20260820-detpad-tp2-postforward-sync.sh"
+)
 
 
 class LaunchIdentityContractTest(unittest.TestCase):
@@ -96,6 +100,9 @@ class LaunchIdentityContractTest(unittest.TestCase):
             "expected_parity_peer_bench_sha256=",
             "expected_target_token_bench_sha256=",
             "validation_mode=",
+            "sync_after_model_forward=",
+            "expected_sync_after_model_forward=",
+            "expected_parity_peer_checksum_manifest_sha256=",
             "parity_peer_bench_snapshot_sha256=",
             "target_token_bench_snapshot_sha256=",
         ):
@@ -108,6 +115,24 @@ class LaunchIdentityContractTest(unittest.TestCase):
             '"$VALIDATION_ONEDNN_INT4_DETERMINISM_PAD"',
             source,
         )
+
+    def test_sealed_arm_binds_sync_after_model_forward(self) -> None:
+        source = ARM.read_text()
+        self.assertIn("VALIDATION_EXPECT_SYNC_AFTER_MODEL_FORWARD", source)
+        self.assertIn("VALIDATION_SYNC_AFTER_MODEL_FORWARD", source)
+        self.assertIn(
+            "sealed TP2 sync-after-forward identity must be explicit and self-consistent",
+            source,
+        )
+        checker = (
+            REPO
+            / "repro/qwen38-27b-autoround-int4-b70/scripts/check-tp2-sealed-gates.py"
+        ).read_text()
+        self.assertIn("--expected-sync-after-model-forward", checker)
+        self.assertIn(
+            "--expected-parity-peer-checksum-manifest-sha256", checker
+        )
+        self.assertIn('"sync_after_model_forward": str(', checker)
 
     def test_runner_can_fail_closed_on_stage_module_resolution(self) -> None:
         source = RUNNER.read_text()
@@ -235,6 +260,22 @@ class LaunchIdentityContractTest(unittest.TestCase):
             source.index("prior A2/B2 runner status no longer matches 0/14"),
             source.index("exec env -i"),
         )
+
+    def test_postforward_sync_driver_retains_full_history_and_gates_s2(self) -> None:
+        source = SYNC_DRIVER.read_text()
+        for required in (
+            "env -i",
+            "C1 no longer proves the preregistered active recurrence",
+            "VALIDATION_SYNC_AFTER_MODEL_FORWARD=1",
+            "VALIDATION_EXPECT_SYNC_AFTER_MODEL_FORWARD=1",
+            "S1 prompt 24 is not the sane B2 token family; S2 is forbidden",
+            "VALIDATION_PARITY_PEER_BENCH=$peer_bench",
+            "VALIDATION_TARGET_TOKEN_BENCH=$b2/data/bench.json",
+            "s1_checksum_manifest_expected",
+            "VALIDATION_EXPECT_PARITY_PEER_CHECKSUM_MANIFEST_SHA256",
+            "s1-checksum-manifest",
+        ):
+            self.assertIn(required, source)
 
 
 if __name__ == "__main__":

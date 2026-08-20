@@ -103,6 +103,7 @@ def identity_text(fixture: "ArmGateTests", *, pad: int = 1, tp: int = 2) -> str:
             "lm_head_int8_scope=all",
             "lm_head_int8_scale_dtype=bf16",
             "deterministic_greedy_margin=0",
+            "sync_after_model_forward=0",
             "run_smoke=1",
             "run_bench=1",
             "run_quality=0",
@@ -148,6 +149,8 @@ def identity_text(fixture: "ArmGateTests", *, pad: int = 1, tp: int = 2) -> str:
             f"quality_baseline_json={fixture.baseline}",
             f"quality_baseline_json_sha256={gates.sha256_file(fixture.baseline)}",
             "expected_onednn_int4_determinism_pad_markers=2",
+            "expected_sync_after_model_forward=0",
+            "expected_parity_peer_checksum_manifest_sha256=",
             "expected_compile_cache_direct_loads=2",
             "expected_aot_direct_loads=4",
             "expected_compile_cache_namespace=b99160ae76",
@@ -401,6 +404,8 @@ class ArmGateTests(unittest.TestCase):
             expected_aot_key=[KEY_A, KEY_B],
             expected_aot_loads=4,
             expected_pad_markers=2,
+            expected_sync_after_model_forward=0,
+            expected_parity_peer_checksum_manifest_sha256="",
             expected_suite_sha256=SUITE_SHA,
             expected_model_dir=str(self.model_dir),
             expected_model_manifest_sha256=gates.sha256_file(self.model_manifest),
@@ -586,6 +591,26 @@ class ArmGateTests(unittest.TestCase):
         self.args.expected_aot_loads = 2
         with self.assertRaises(gates.InputError):
             self.run_gate()
+
+    def test_sync_after_model_forward_identity_is_fail_closed(self) -> None:
+        self.args.expected_sync_after_model_forward = 1
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any("sync_after_model_forward" in item for item in result["errors"])
+        )
+
+        identity = self.root / "run" / "identity.env"
+        identity.write_text(
+            identity.read_text()
+            .replace("sync_after_model_forward=0\n", "sync_after_model_forward=1\n")
+            .replace(
+                "expected_sync_after_model_forward=0\n",
+                "expected_sync_after_model_forward=1\n",
+            )
+        )
+        result, passed = self.run_gate()
+        self.assertTrue(passed, result)
 
     def test_quality_and_baseline_hash_are_fail_closed(self) -> None:
         baseline = self.baseline

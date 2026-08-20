@@ -290,9 +290,12 @@ loaded service.
    quality gates but failed 22/25 A/B parity, including one all-zero 512-token
    response. The exact C1 recurrence arm also passed every sealed gate and
    repeated that all-zero response byte-for-byte while producing third SQL and
-   factual families. Preserve A2/B2/C1, run no D arm, and localize prompt 24
-   while retaining all 24 predecessor requests. See the
-   [recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md).
+   factual families. Preserve A2/B2/C1, run no D arm, and first screen the
+   rank-local post-model-forward completion boundary while retaining all 24
+   predecessor requests. If that boundary is insufficient, use the bounded
+   request-filtered prompt-24 microscope. See the
+   [recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md)
+   and [sync preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-postforward-sync-prereg.md).
    Do not promote or submit these speeds.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is

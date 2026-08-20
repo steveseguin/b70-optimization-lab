@@ -158,6 +158,13 @@ def validate_expectations(args: argparse.Namespace, tp: int) -> None:
         raise InputError("AOT-load count must equal TP times the number of AOT keys")
     if args.expected_pad_markers != tp:
         raise InputError("pad-marker count must equal tensor parallel size")
+    if args.expected_sync_after_model_forward not in (0, 1):
+        raise InputError("expected sync-after-model-forward must be 0 or 1")
+    if args.expected_parity_peer_checksum_manifest_sha256:
+        require_sha256(
+            args.expected_parity_peer_checksum_manifest_sha256,
+            "expected parity-peer checksum-manifest SHA-256",
+        )
     require_sha256(args.expected_suite_sha256, "expected suite SHA-256")
     require_sha256(
         args.expected_quality_baseline_sha256,
@@ -412,6 +419,7 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         "lm_head_int8_scope": "all",
         "lm_head_int8_scale_dtype": "bf16",
         "deterministic_greedy_margin": "0",
+        "sync_after_model_forward": str(args.expected_sync_after_model_forward),
         "run_smoke": "1",
         "run_bench": "1",
         "bench_max_tokens": "512",
@@ -434,6 +442,12 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         "oneccl_libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
         "expected_onednn_int4_determinism_pad_markers": str(
             args.expected_pad_markers
+        ),
+        "expected_sync_after_model_forward": str(
+            args.expected_sync_after_model_forward
+        ),
+        "expected_parity_peer_checksum_manifest_sha256": (
+            args.expected_parity_peer_checksum_manifest_sha256
         ),
         "expected_compile_cache_direct_loads": str(args.expected_outer_loads),
         "expected_aot_direct_loads": str(args.expected_aot_loads),
@@ -788,6 +802,10 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
             "onednn_int4_determinism_pad": identity.get(
                 "onednn_int4_determinism_pad"
             ),
+            "sync_after_model_forward": identity.get("sync_after_model_forward"),
+            "expected_parity_peer_checksum_manifest_sha256": identity.get(
+                "expected_parity_peer_checksum_manifest_sha256"
+            ),
             "stage": str(stage_path) if stage_path else None,
             "staged_paths": staged_identity_paths,
             "xpu_native_extension_sha256": identity.get(
@@ -1004,6 +1022,12 @@ def build_parser() -> argparse.ArgumentParser:
     arm.add_argument("--expected-aot-key", action="append", required=True)
     arm.add_argument("--expected-aot-loads", type=int, required=True)
     arm.add_argument("--expected-pad-markers", type=int, required=True)
+    arm.add_argument(
+        "--expected-sync-after-model-forward", type=int, default=0
+    )
+    arm.add_argument(
+        "--expected-parity-peer-checksum-manifest-sha256", default=""
+    )
     arm.add_argument("--expected-suite-sha256", required=True)
     arm.add_argument("--expected-model-dir", required=True)
     arm.add_argument("--expected-model-manifest-sha256", required=True)
