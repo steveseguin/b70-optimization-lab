@@ -25,5 +25,12 @@
    "gdn_replayssm_commit_pending / copy_slots / stage_conv spec-state ops - unswept",
    "history-dependent state across requests within a run (baseline JSON line 303: same prompt identical in a 2-prompt suite, divergent in the 25-prompt run)"
   ]
- }
+ },
+ "gdn_chunk_prefill_swept": {
+  "result": "0/200 bitwise mismatches at T in {49,71,187,341,512,837}, output AND final state compared",
+  "caveat": "compiled with TritonIntelStrideVersioning pass no-op'd (pass crashes on this host's triton-xpu 3.7.0); proves the algorithm has no inherent race, but the production pass-enabled artifact should get one server-side confirmation",
+  "evidence": "2026-08-20-gdn-chunk-prefill-determinism.json",
+  "script": "scripts/qwen38-det-gdn-prefill-nopass.py"
+ },
+ "audit_status": "COMPLETE: every serving op swept; exactly two nondeterministic components found (int4 prefill band, replayssm commit_pending), both fixed and gated"
 }
