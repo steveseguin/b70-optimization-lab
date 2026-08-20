@@ -52,6 +52,35 @@ if [[ ! -e "$MODEL_DIR" ]]; then
   exit 2
 fi
 
+# Page-cache-safe model identity gate. Ordinary-read hashing shares the page
+# cache with the safetensors/mmap load, so it cannot detect cache poisoning
+# (observed 2026-08-20 on a fuseblk/NTFS-3G store: cached reads returned
+# wrong bytes, dd iflag=direct returned correct ones). When MODEL_MANIFEST is
+# set, verify via O_DIRECT/dd-direct BEFORE starting the server; fail closed
+# if the cache cannot be bypassed. VERIFY_MODEL_DIRECT=0 opts out explicitly.
+if [[ "${VERIFY_MODEL_DIRECT:-1}" != "0" ]]; then
+  if [[ -n "${MODEL_MANIFEST:-}" ]]; then
+    verify_script="${VERIFY_MODEL_SCRIPT:-}"
+    if [[ -z "$verify_script" ]]; then
+      verify_script=$(ls "$ROOT"/repro/*/scripts/verify-model-direct.py 2>/dev/null | head -1 || true)
+    fi
+    if [[ -z "$verify_script" || ! -f "$verify_script" ]]; then
+      echo "VERIFY_MODEL_DIRECT=1 but no verify-model-direct.py found under $ROOT/repro/*/scripts/" >&2
+      exit 2
+    fi
+    verify_json="$OUT_DIR/model-verify-direct-${LABEL}-${STAMP}.json"
+    echo "Verifying model identity with page-cache bypass: $MODEL_MANIFEST"
+    if ! python3 "$verify_script" "$MODEL_MANIFEST" "$MODEL_DIR" --json "$verify_json"; then
+      echo "Model identity verification FAILED or could not bypass the page cache; refusing to launch." >&2
+      echo "Evidence: $verify_json" >&2
+      exit 2
+    fi
+  else
+    echo "WARNING: MODEL_MANIFEST unset - launching WITHOUT model identity verification." >&2
+    echo "         Set MODEL_MANIFEST to the packet manifests/model.json to enable the direct-I/O gate." >&2
+  fi
+fi
+
 export MODEL_DIR GPU_INDEX TENSOR_PARALLEL_SIZE PORT HOST SERVED_MODEL_NAME
 export QWEN36_27B_AR_VENV="${QWEN36_27B_AR_VENV:-/home/steve/.venvs/vllm-xpu}"
 export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
