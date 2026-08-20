@@ -1,0 +1,223 @@
+diff --git a/csrc/xpu/gdn_attn/spec_decode.hpp b/csrc/xpu/gdn_attn/spec_decode.hpp
+index 0dbadd4..5d38f5b 100644
+--- a/csrc/xpu/gdn_attn/spec_decode.hpp
++++ b/csrc/xpu/gdn_attn/spec_decode.hpp
+@@ -6474,7 +6474,8 @@ struct gdn_replayssm_commit_pending_kernel {
+       const int rows,
+       const int conv_dim,
+       const int conv_base_len) {
+-    const int elems_per_row = std::max(1, conv_dim * conv_base_len);
++    (void)conv_base_len;
++    const int elems_per_row = std::max(1, conv_dim);
+     const int total = rows * elems_per_row;
+     sycl::range<1> local(group_size);
+     sycl::range<1> global((total + group_size - 1) / group_size);
+@@ -6518,7 +6519,14 @@ struct gdn_replayssm_commit_pending_kernel {
+   }
+ 
+   void operator()(sycl::nd_item<1> item) const {
+-    const int elems_per_row = sycl::max(1, conv_dim * conv_base_len);
++    // One work item per (row, conv_elem) column. The left-shift by
++    // `accepted` is performed serially in ascending state_pos order within
++    // the item: at step i it writes position i and reads position
++    // i + accepted (> i), which has not been written yet. This makes the
++    // in-place shift race-free. The previous per-element formulation raced:
++    // one work item's read of position j competed with another item's write
++    // of position j.
++    const int elems_per_row = sycl::max(1, conv_dim);
+     const int linear = item.get_global_linear_id();
+     const int total = rows * elems_per_row;
+     if (linear >= total) {
+@@ -6526,49 +6534,35 @@ struct gdn_replayssm_commit_pending_kernel {
+     }
+ 
+     const int row = linear / elems_per_row;
+-    const int elem = linear - row * elems_per_row;
++    const int conv_elem = linear - row * elems_per_row;
+     const int slot = slot_for_row(row);
+     const bool active = active_for_row(row, slot);
+     const int accepted = accepted_for_row(row, slot, active);
+-    if (!active) {
++    if (!active || accepted <= 0) {
+       return;
+     }
+ 
+-    if (conv_base_len > 0 && elem < conv_dim * conv_base_len) {
+-      const int state_pos = elem / conv_dim;
+-      const int conv_elem = elem - state_pos * conv_dim;
++    const int64_t slot_state_base =
++        static_cast<int64_t>(slot) * conv_stride_0 +
++        static_cast<int64_t>(conv_elem) * conv_stride_1;
++    const int64_t slot_pending_base =
++        static_cast<int64_t>(slot) * pending_stride_0 +
++        static_cast<int64_t>(conv_elem) * pending_stride_2;
++    for (int state_pos = 0; state_pos < conv_base_len; ++state_pos) {
+       const int source_pos = accepted + state_pos;
+-      T value = T(0);
++      T value;
+       if (source_pos < conv_base_len) {
+-        value = conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
+-                           static_cast<int64_t>(conv_elem) * conv_stride_1 +
++        value = conv_state[slot_state_base +
+                            static_cast<int64_t>(source_pos) * conv_stride_2];
+       } else {
+         const int pending_pos = source_pos - conv_base_len;
+-        value = conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
+-                             static_cast<int64_t>(pending_pos) * pending_stride_1 +
+-                             static_cast<int64_t>(conv_elem) * pending_stride_2];
++        value = conv_pending[slot_pending_base +
++                             static_cast<int64_t>(pending_pos) *
++                                 pending_stride_1];
+       }
+-      conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
+-                 static_cast<int64_t>(conv_elem) * conv_stride_1 +
++      conv_state[slot_state_base +
+                  static_cast<int64_t>(state_pos) * conv_stride_2] = value;
+     }
+-
+-    // Cursor update: run once per row on work item d==0.
+-    if (elem == 0) {
+-      const int old_wp = write_pos[slot];
+-      const int old_base = cache_base[slot];
+-      const bool old_flush = is_flush[slot] != 0;
+-      const bool flush_now = accepted > 0 && old_flush;
+-      const int new_base =
+-          flush_now ? (old_base + old_wp) & (max_cache_len - 1) : old_base;
+-      const int new_wp = old_flush ? accepted : old_wp + accepted;
+-      const bool next_flush = (new_wp + 2 * max_spec_len) > max_cache_len;
+-      write_pos[slot] = new_wp;
+-      cache_base[slot] = new_base;
+-      is_flush[slot] = next_flush ? int8_t(1) : int8_t(0);
+-      pending[slot] = int8_t(0);
+-    }
+   }
+ 
+  private:
+@@ -6596,6 +6590,100 @@ struct gdn_replayssm_commit_pending_kernel {
+   const int null_block_id;
+ };
+ 
++// Bookkeeping/cursor update for commit_pending, launched AFTER the shift
++// kernel on the same queue. A separate kernel is required for correctness:
++// the shift work items read pending[]/pending_len[] while the cursor update
++// writes pending[]/write_pos[]/cache_base[]/is_flush[]; doing both in one
++// kernel raced (a work item could observe pending[slot]==0 cleared by the
++// row's elem==0 item and skip its portion of the shift, corrupting
++// conv_state).
++template <typename T>
++struct gdn_replayssm_commit_cursor_kernel {
++  static constexpr int group_size = 256;
++
++  gdn_replayssm_commit_cursor_kernel(
++      int* write_pos,
++      int* cache_base,
++      int8_t* is_flush,
++      int8_t* pending,
++      const int* pending_len,
++      const int* num_accepted_tokens,
++      const int64_t* state_indices,
++      const int rows,
++      const int num_slots,
++      const int max_cache_len,
++      const int max_spec_len,
++      const int null_block_id)
++      : write_pos(write_pos),
++        cache_base(cache_base),
++        is_flush(is_flush),
++        pending(pending),
++        pending_len(pending_len),
++        num_accepted_tokens(num_accepted_tokens),
++        state_indices(state_indices),
++        rows(rows),
++        num_slots(num_slots),
++        max_cache_len(max_cache_len),
++        max_spec_len(max_spec_len),
++        null_block_id(null_block_id) {}
++
++  static inline sycl::nd_range<1> get_nd_range(const int rows) {
++    sycl::range<1> local(group_size);
++    sycl::range<1> global((rows + group_size - 1) / group_size);
++    return sycl::nd_range<1>(global * local, local);
++  }
++
++  void operator()(sycl::nd_item<1> item) const {
++    const int row = item.get_global_linear_id();
++    if (row >= rows) {
++      return;
++    }
++    const int64_t raw_slot = state_indices[row];
++    if (raw_slot <= static_cast<int64_t>(null_block_id) ||
++        raw_slot >= static_cast<int64_t>(num_slots)) {
++      return;
++    }
++    const int slot = static_cast<int>(raw_slot);
++    if (pending[slot] == 0) {
++      return;
++    }
++    int accepted = num_accepted_tokens[row];
++    if (accepted < 0) {
++      accepted = 0;
++    }
++    const int prev_len = pending_len[slot];
++    if (accepted > prev_len) {
++      accepted = prev_len;
++    }
++    const int old_wp = write_pos[slot];
++    const int old_base = cache_base[slot];
++    const bool old_flush = is_flush[slot] != 0;
++    const bool flush_now = accepted > 0 && old_flush;
++    const int new_base =
++        flush_now ? (old_base + old_wp) & (max_cache_len - 1) : old_base;
++    const int new_wp = old_flush ? accepted : old_wp + accepted;
++    const bool next_flush = (new_wp + 2 * max_spec_len) > max_cache_len;
++    write_pos[slot] = new_wp;
++    cache_base[slot] = new_base;
++    is_flush[slot] = next_flush ? int8_t(1) : int8_t(0);
++    pending[slot] = int8_t(0);
++  }
++
++ private:
++  int* write_pos;
++  int* cache_base;
++  int8_t* is_flush;
++  int8_t* pending;
++  const int* pending_len;
++  const int* num_accepted_tokens;
++  const int64_t* state_indices;
++  const int rows;
++  const int num_slots;
++  const int max_cache_len;
++  const int max_spec_len;
++  const int null_block_id;
++};
++
+ template <typename T>
+ void gdn_replayssm_commit_pending(
+     sycl::queue& queue,
+@@ -6644,6 +6732,26 @@ void gdn_replayssm_commit_pending(
+         null_block_id);
+     cgh.parallel_for(range, task);
+   });
++  // Ordered after the shift kernel on this queue: fixes the bookkeeping
++  // read/write race (see gdn_replayssm_commit_cursor_kernel comment).
++  using CURSOR_KERNEL = gdn_replayssm_commit_cursor_kernel<T>;
++  auto cursor_range = CURSOR_KERNEL::get_nd_range(rows);
++  queue.submit([&](sycl::handler& cgh) {
++    CURSOR_KERNEL task(
++        reinterpret_cast<int*>(write_pos.data_ptr()),
++        reinterpret_cast<int*>(cache_base.data_ptr()),
++        reinterpret_cast<int8_t*>(is_flush.data_ptr()),
++        reinterpret_cast<int8_t*>(pending.data_ptr()),
++        reinterpret_cast<const int*>(pending_len.data_ptr()),
++        reinterpret_cast<const int*>(num_accepted_tokens.data_ptr()),
++        reinterpret_cast<const int64_t*>(state_indices.data_ptr()),
++        rows,
++        conv_state.size(0),
++        max_cache_len,
++        max_spec_len,
++        null_block_id);
++    cgh.parallel_for(cursor_range, task);
++  });
+ }
+ 
+ }  // namespace spec_decode
