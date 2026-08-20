@@ -798,5 +798,33 @@
     "THE_INT4_BAND_FIX_ALSO_DOES_NOT_EXPLAIN_IT": "their oneDNN int4 GEMM race covers M in [129,448], a prefill band. They concede it explains at most 1 of 4 divergent prompts. A prefill perturbation CAN surface late, since a small state difference only flips a token once a near-tie occurs, so it is not excluded for the one prompt whose prefill M lands in the band - but it cannot cover the other three.",
     "NET": "neither fix explains the margin-free 21/25 on the record lane. The mechanism remains unidentified. Both fixes are still worth carrying for the configurations that do exercise those paths.",
     "still_the_best_next_test": "TP1. It removes the allreduce entirely and is decisive for the remaining ubiquitous-source hypothesis, and unlike the replayssm fix it does not require changing the lane's flags to become non-inert."
+  },
+  "gdn_capture_NEGATIVE_20260820": {
+    "arm": "qwen38-marginfree-gdncapture-mtp5-25-spec-a3-20260820",
+    "verdict": "NEGATIVE. Capturing the GDN core REGRESSES throughput. This closes the last live speed lever.",
+    "flag_verified_engaged": "logged splitting_ops has 13 entries and no vllm::gdn_attention_core_xpu, against the baseline's 14 with it; identity.env:201 ddtree_capture_gdn_core=1, :189 deterministic_greedy_margin=0.",
+    "all25_median_tok_s": 98.927,
+    "sel12_median_tok_s": 91.79,
+    "delta_vs_marginfree_baseline": "-2.243 tok/s all-25 (98.927 against 101.170); sel-12 -1.061",
+    "gates": "smoke_pass, realistic_gate_passed, cached_tokens_all_zero, fresh_response_valid all true. Model identity verified at startup, so this arm is not affected by the page-cache fault.",
+    "why_the_premise_failed": "the other machine's step-cost model attributed ~14.2 ms/step to dispatch and predicted capture would reclaim it. Measured, it costs 2.2 tok/s instead. Removing the per-layer eager boundary evidently does not pay for whatever capture imposes on this stack - consistent with their own later retraction that naive capture of collectives replays stale data and that the fork deliberately splits collectives out of capture."
+  },
+  "ALL_SPEED_LEVERS_CLOSED_20260820": {
+    "honest_best": "101.170 tok/s all-25, 92.851 sel-12 - median of three margin-free MTP5 arms on GPUs 2,3.",
+    "closed_today": {
+      "breakable_cudagraph": "dead - the flag disables torch.compile entirely (CompilationMode.NONE)",
+      "gdn_scratch_zero_init": "performance-neutral - the record already ran on the cached path, so the +1.5 tok/s was already banked",
+      "rerank_K2": "legitimate but not load-bearing - inert as scripted, wrong control, structurally capped, unmeasured by its authors",
+      "rmsnorm_batch_invariance": "neutral on speed, zero determinism benefit",
+      "local_argmax_decode": "cannot engage under MTP at all",
+      "spec_greedy_top_ids": "engages, regresses 2.2 tok/s",
+      "gdn_core_capture": "engages, regresses 2.2 tok/s"
+    },
+    "assessment": "there is no supported path to 105 tok/s from the current configuration. Every lever inherited from the earlier plan has been screened and closed, each with an engagement proof rather than an assumed effect. Further speed work needs a NEW idea, not another flag.",
+    "where_value_remains": [
+      "determinism: the margin-free lane is 21-22/25 and the mechanism is still unidentified",
+      "the two published records need withdrawal or re-measurement",
+      "GPUs 0,1 remain wedged, halving available hardware"
+    ]
   }
 }
