@@ -1,0 +1,28 @@
+{
+ "date": "2026-08-20",
+ "context": "op-level self-determinism bisection for the margin-free 21/25 runtime divergence",
+ "decode_path_all_clean": {
+  "int4_gemm_decode_widths": "M=1..6 all 0/300-1000 mismatches; batch-invariant (row0 M=6 vs M=1 bitwise equal)",
+  "int4_draft_head_5120x37984": "M=1..6, 0/100 each",
+  "int8_head": "M=1/6 0/1000; prefill widths M=49..837 0/100",
+  "fa_decode_6row_causal": "kv 84..2047, 0/300 each; row-invariant (row5 packed vs solo bitwise equal)",
+  "fa_prefill": "M=49/71/187/341/837, 0/200 each",
+  "gdn_spec_decode_m6_persistent": "0/1000 with state restore per call",
+  "tp_collectives": "400 collectives cross-process bitwise equal"
+ },
+ "prefill_dirty": "int4_gemm_w4a16 only: qkv[5120x1408] M in [129,448], down[8704x5120] M in [129,248]; fixed by determinism pad (built, gated)",
+ "prompt_length_analysis": {
+  "divergent_prompt_tokens": {
+   "holdout--structured-extraction": 187,
+   "holdout--factual-protocol": 49,
+   "selection--sql-debugging": 71,
+   "holdout--long-rollover-repository-audit": 837
+  },
+  "verdict": "only structured-extraction (187) lands in the dirty band; factual-protocol/sql-debugging (49/71) are below all measured dirty bands for every int4 shape class (M=48..128 all clean), long-rollover (837) is above. The int4 band explains AT MOST 1 of 4 divergent prompts. At least one more runtime nondeterminism source exists.",
+  "remaining_suspects": [
+   "GDN chunk prefill (fla chunk_gated_delta_rule) - UNSWEPT: standalone Triton compile fails on this host (PassManager::run make_ttir); sweep server-side",
+   "gdn_replayssm_commit_pending / copy_slots / stage_conv spec-state ops - unswept",
+   "history-dependent state across requests within a run (baseline JSON line 303: same prompt identical in a 2-prompt suite, divergent in the 25-prompt run)"
+  ]
+ }
+}

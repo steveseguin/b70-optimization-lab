@@ -84,3 +84,25 @@ Gate results on the combined build
 4. The pad adds one D2D copy + a larger GEMM for in-band prefill chunks
    (e.g. 341->512 rows). Prefill throughput impact is bounded and partly
    offset by the faster clean kernel; measure TTFT on the strict suite.
+
+## Full decode-path audit (2026-08-20, this host)
+
+`data/2026-08-20-decode-path-determinism-audit.json`; sweep scripts under
+`scripts/qwen38-det-*.py`. **Every decode-path op is bitwise deterministic
+and batch/row-invariant**: int4 GEMM M=1..6 (0 mismatches, row0 M=6 vs M=1
+bitwise equal), draft head M=1..6, int8 head M=1..837, FA decode at kv
+84..2047 (row-invariant: row 5 packed vs solo bitwise equal), FA prefill at
+the divergent prompt lengths, GDN spec op M=6 persistent with state
+restore, TP collectives cross-process. Also: all five int4 shape classes
+clean at M=48..128.
+
+**The int4 band explains at most 1 of the 4 divergent prompts** (only
+holdout--structured-extraction at 187 tokens lands in the band; 49/71-token
+prompts are below every measured band; the 837-token prompt is above).
+At least one more runtime nondeterminism source exists. Named suspects, in
+order: (a) GDN chunk prefill — UNSWEPT, standalone Triton compile fails on
+this host (`PassManager::run` in make_ttir); sweep it server-side or fix
+the standalone env; (b) the replayssm spec-state ops
+(commit_pending/copy_slots/stage_conv) — unswept; (c) cross-request history
+dependence (baseline JSON notes the same prompt is identical in a 2-prompt
+suite but diverges in the 25-prompt run).
