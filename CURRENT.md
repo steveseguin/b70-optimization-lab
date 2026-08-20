@@ -155,6 +155,14 @@ global in-band INT4 prefill padding for the observed six-arm structured flip,
 but three pad-on observations do not establish lane-wide determinism, identify
 target versus MTP-layer prefill, or establish full-25 TP2 determinism.
 
+The next pair is now preregistered but not yet launched: two pad-on composite
+runtime TP2/MTP5 full-25 arms, using the unchanged post-recovery `b99160ae76`
+outer/AOT cache. New fail-closed gates require per-rank pad engagement, exact
+direct loads, a byte-identical cache tree, frozen 25-prompt freshness, A/B
+full-token parity, and semantic quality on arm A. The historical unpadded
+target token arrays are report-only; promotion would still require a fresh
+matched pad-on target-only oracle.
+
 The published `101.922` MTP5 and `100.497` MTP4 LocalMaxxing rows are
 invalidated and withdrawal is recommended. Both opted into a `0.03125` greedy
 margin that changed emitted text on 18/25 prompts; their quality baseline used
@@ -174,6 +182,7 @@ manifest immediately before vLLM starts.
 - [measuring-host recovery](experiments/qwen38-27b-b70/notes/2026-08-20-measuring-host-xe-recovery-and-health-gate.md)
 - [post-recovery TP1 result](experiments/qwen38-27b-b70/notes/2026-08-20-postrecovery-marginfree-tp1-runtime-nondeterminism.md)
 - [INT4 prefill-pad causal screen](experiments/qwen38-27b-b70/notes/2026-08-20-int4-detpad-tp1-causal-screen-result.md)
+- [pad-on composite TP2 full-25 preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-composite-tp2-full25-prereg.md)
 
 ## Closed: Qwen3.6 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 

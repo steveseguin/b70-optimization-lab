@@ -8,6 +8,56 @@ gpu_pair=${2:-}
 arm_root=${3:-}
 quality_baseline=${4:-}
 tensor_parallel_size=${VALIDATION_TENSOR_PARALLEL_SIZE:-2}
+sealed_gate_checker="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/check-tp2-sealed-gates.py"
+require_tp2_sealed_gates=${VALIDATION_REQUIRE_TP2_SEALED_GATES:-0}
+sealed_validation_allowlist=(
+  VALIDATION_CAMPAIGN_DRIVER VALIDATION_CAMPAIGN_DRIVER_SHA256
+  VALIDATION_COMPILE_CACHE_MANIFEST VALIDATION_COMPILATION_CONFIG_OVERRIDE
+  VALIDATION_DDTREE_CAPTURE_GDN_CORE VALIDATION_DDTREE_FULL_GRAPH
+  VALIDATION_DETERMINISTIC_GREEDY_MARGIN
+  VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN
+  VALIDATION_ENABLE_LAYER_TRACE VALIDATION_ENABLE_PACKET_TRACE
+  VALIDATION_ENABLE_XPU_GRAPH VALIDATION_EXPECT_AOT_CACHE_KEYS
+  VALIDATION_EXPECT_AOT_DIRECT_LOADS VALIDATION_EXPECT_CACHE_MANIFEST_SHA256
+  VALIDATION_EXPECT_CACHE_ROOT
+  VALIDATION_EXPECT_COMPILE_CACHE_DIRECT_LOADS
+  VALIDATION_EXPECT_COMPILE_CACHE_NAMESPACE
+  VALIDATION_EXPECT_COMPILE_CACHE_OUTER_ROLES
+  VALIDATION_EXPECT_CORE_SHA256 VALIDATION_EXPECT_FA_SHA256
+  VALIDATION_EXPECT_GRAPH_MANIFEST_SHA256
+  VALIDATION_EXPECT_KERNELS_DIFF_SHA256
+  VALIDATION_EXPECT_MODEL_DIR VALIDATION_EXPECT_MODEL_MANIFEST_SHA256
+  VALIDATION_EXPECT_MOE_SHA256 VALIDATION_EXPECT_NATIVE_SHA256
+  VALIDATION_EXPECT_ONEDNN_INT4_DETERMINISM_PAD_MARKERS
+  VALIDATION_EXPECT_QUALITY_BASELINE_SHA256 VALIDATION_EXPECT_REPO_HEAD
+  VALIDATION_EXPECT_SUITE_SHA256 VALIDATION_EXPECT_VERIFY_SCRIPT_SHA256
+  VALIDATION_EXPECT_PARITY_PEER_BENCH_SHA256
+  VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256
+  VALIDATION_EXPECT_VLLM_DIFF_SHA256 VALIDATION_EXPECT_VLLM_VERSION
+  VALIDATION_EXPECT_XPU_COUNT VALIDATION_GDN_CAPTURE_NATIVE_SPEC
+  VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT
+  VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH VALIDATION_GRAPH_STAGE_MANIFEST
+  VALIDATION_HF_HOME VALIDATION_LM_HEAD_INT8
+  VALIDATION_MODEL_MANIFEST VALIDATION_MODEL_VERIFY_SCRIPT
+  VALIDATION_NUM_SPECULATIVE_TOKENS
+  VALIDATION_ONEDNN_INT4_COMPLETION_BARRIER
+  VALIDATION_ONEDNN_INT4_DETERMINISM_PAD
+  VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY
+  VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE
+  VALIDATION_ONEDNN_INT8_COMPLETION_BARRIER
+  VALIDATION_ONEDNN_INT8_INPUT_DEPENDENCY
+  VALIDATION_PARITY_PEER_BENCH VALIDATION_PYTHONHASHSEED
+  VALIDATION_REQUIRE_COMPILE_CACHE_UNCHANGED
+  VALIDATION_REQUIRE_NO_COMPILE_CACHE_WRITES
+  VALIDATION_REQUIRE_TARGET_TOKEN_PARITY
+  VALIDATION_REQUIRE_TP2_SEALED_GATES
+  VALIDATION_REQUIRE_XPU_MODULES_UNDER_STAGE
+  VALIDATION_RUN_BENCH VALIDATION_RUN_QUALITY VALIDATION_RUN_SMOKE
+  VALIDATION_SUITE_OVERRIDE VALIDATION_TARGET_TOKEN_BENCH
+  VALIDATION_TENSOR_PARALLEL_SIZE VALIDATION_VLLM_CACHE_ROOT
+  VALIDATION_VLLM_EXTRA_ARGS VALIDATION_BENCH_MAX_TOKENS
+  VALIDATION_BENCH_METRIC_TOKENS
+)
 
 if [[ "$mode" != "spec" && "$mode" != "nospec" \
   && "$mode" != "spec-native-scratch" && "$mode" != "nospec-current" \
@@ -34,6 +84,234 @@ if [[ ! "$gpu_pair" =~ $valid_gpu_selection_regex || -z "$arm_root" ]]; then
   printf 'GPU selection must contain exactly %s device(s), and arm root must be non-empty\n' \
     "$tensor_parallel_size" >&2
   exit 2
+fi
+if [[ ! "$require_tp2_sealed_gates" =~ ^[01]$ ]]; then
+  printf 'VALIDATION_REQUIRE_TP2_SEALED_GATES must be 0 or 1\n' >&2
+  exit 2
+fi
+if [[ "$require_tp2_sealed_gates" == "1" ]]; then
+  if [[ "$tensor_parallel_size" != "2" \
+    || "$mode" != "spec-native-partition-exact-native" \
+    || "$gpu_pair" != "2,3" ]]; then
+    printf 'sealed Qwen3.8 gate requires exact-native mode, TP2, and GPUs 2,3\n' >&2
+    exit 2
+  fi
+  declare -A sealed_allowed=()
+  for name in "${sealed_validation_allowlist[@]}"; do
+    sealed_allowed["$name"]=1
+  done
+  while IFS= read -r name; do
+    if [[ -z "${sealed_allowed[$name]:-}" ]]; then
+      printf 'unexpected VALIDATION_* input in sealed mode: %s\n' "$name" >&2
+      exit 2
+    fi
+  done < <(compgen -e VALIDATION_)
+  if [[ ! -f "$sealed_gate_checker" ]]; then
+    printf 'sealed gate checker is missing: %s\n' "$sealed_gate_checker" >&2
+    exit 2
+  fi
+  required_sealed_values=(
+    VALIDATION_COMPILE_CACHE_MANIFEST
+    VALIDATION_GRAPH_STAGE_MANIFEST
+    VALIDATION_EXPECT_COMPILE_CACHE_NAMESPACE
+    VALIDATION_EXPECT_COMPILE_CACHE_OUTER_ROLES
+    VALIDATION_EXPECT_AOT_CACHE_KEYS
+    VALIDATION_EXPECT_SUITE_SHA256
+    VALIDATION_EXPECT_QUALITY_BASELINE_SHA256
+    VALIDATION_EXPECT_MODEL_DIR
+    VALIDATION_EXPECT_MODEL_MANIFEST_SHA256
+    VALIDATION_EXPECT_VERIFY_SCRIPT_SHA256
+    VALIDATION_EXPECT_CACHE_MANIFEST_SHA256
+    VALIDATION_EXPECT_CACHE_ROOT
+    VALIDATION_EXPECT_GRAPH_MANIFEST_SHA256
+    VALIDATION_EXPECT_NATIVE_SHA256
+    VALIDATION_EXPECT_CORE_SHA256
+    VALIDATION_EXPECT_MOE_SHA256
+    VALIDATION_EXPECT_FA_SHA256
+    VALIDATION_EXPECT_REPO_HEAD
+    VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256
+    VALIDATION_TARGET_TOKEN_BENCH
+    VALIDATION_CAMPAIGN_DRIVER
+    VALIDATION_CAMPAIGN_DRIVER_SHA256
+  )
+  for required_name in "${required_sealed_values[@]}"; do
+    if [[ -z "${!required_name:-}" ]]; then
+      printf '%s is required by the sealed TP2 gate\n' "$required_name" >&2
+      exit 2
+    fi
+  done
+  sha_values=(
+    VALIDATION_EXPECT_SUITE_SHA256
+    VALIDATION_EXPECT_QUALITY_BASELINE_SHA256
+    VALIDATION_EXPECT_MODEL_MANIFEST_SHA256
+    VALIDATION_EXPECT_VERIFY_SCRIPT_SHA256
+    VALIDATION_EXPECT_CACHE_MANIFEST_SHA256
+    VALIDATION_EXPECT_GRAPH_MANIFEST_SHA256
+    VALIDATION_EXPECT_NATIVE_SHA256 VALIDATION_EXPECT_CORE_SHA256
+    VALIDATION_EXPECT_MOE_SHA256 VALIDATION_EXPECT_FA_SHA256
+    VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256
+  )
+  for required_name in "${sha_values[@]}"; do
+    if [[ ! "${!required_name}" =~ ^[0-9a-f]{64}$ ]]; then
+      printf '%s must be a lowercase SHA-256\n' "$required_name" >&2
+      exit 2
+    fi
+  done
+  if [[ ! -f "$VALIDATION_CAMPAIGN_DRIVER" ]]; then
+    printf 'sealed campaign driver is missing: %s\n' \
+      "$VALIDATION_CAMPAIGN_DRIVER" >&2
+    exit 2
+  fi
+  actual_campaign_driver_sha=$(sha256sum -- "$VALIDATION_CAMPAIGN_DRIVER" \
+    | awk '{print $1}')
+  if [[ "$actual_campaign_driver_sha" != "$VALIDATION_CAMPAIGN_DRIVER_SHA256" ]]; then
+    printf 'sealed campaign driver SHA mismatch: actual=%s expected=%s\n' \
+      "$actual_campaign_driver_sha" "$VALIDATION_CAMPAIGN_DRIVER_SHA256" >&2
+    exit 2
+  fi
+  required_sealed_counts=(
+    VALIDATION_EXPECT_ONEDNN_INT4_DETERMINISM_PAD_MARKERS
+    VALIDATION_EXPECT_COMPILE_CACHE_DIRECT_LOADS
+    VALIDATION_EXPECT_AOT_DIRECT_LOADS
+  )
+  for required_name in "${required_sealed_counts[@]}"; do
+    if [[ ! "${!required_name:-}" =~ ^[1-9][0-9]*$ ]]; then
+      printf '%s must be a positive integer for the sealed TP2 gate\n' \
+        "$required_name" >&2
+      exit 2
+    fi
+  done
+  IFS=',' read -r -a sealed_outer_roles \
+    <<< "$VALIDATION_EXPECT_COMPILE_CACHE_OUTER_ROLES"
+  IFS=',' read -r -a sealed_aot_keys <<< "$VALIDATION_EXPECT_AOT_CACHE_KEYS"
+  if [[ "${VALIDATION_EXPECT_COMPILE_CACHE_OUTER_ROLES}" != "backbone,eagle_head" \
+    || "${#sealed_outer_roles[@]}" != "2" \
+    || "$VALIDATION_EXPECT_COMPILE_CACHE_DIRECT_LOADS" != "2" \
+    || "${#sealed_aot_keys[@]}" != "2" \
+    || "$VALIDATION_EXPECT_AOT_DIRECT_LOADS" != "4" \
+    || "$VALIDATION_EXPECT_ONEDNN_INT4_DETERMINISM_PAD_MARKERS" != "2" ]]; then
+    printf 'sealed role/key/load/marker cardinalities are inconsistent with TP2\n' >&2
+    exit 2
+  fi
+  for key in "${sealed_aot_keys[@]}"; do
+    if [[ ! "$key" =~ ^[0-9a-f]{64}$ ]]; then
+      printf 'sealed AOT key is not a lowercase SHA-256: %s\n' "$key" >&2
+      exit 2
+    fi
+  done
+  if [[ "${VALIDATION_REQUIRE_COMPILE_CACHE_UNCHANGED:-0}" != "1" \
+    || "${VALIDATION_REQUIRE_NO_COMPILE_CACHE_WRITES:-0}" != "1" ]]; then
+    printf 'sealed TP2 gates require unchanged-cache and no-cache-write checks\n' >&2
+    exit 2
+  fi
+  if [[ "${VALIDATION_REQUIRE_XPU_MODULES_UNDER_STAGE:-0}" != "1" ]]; then
+    printf 'sealed TP2 gates require strict XPU module resolution under STAGE\n' >&2
+    exit 2
+  fi
+  if [[ "${VALIDATION_NUM_SPECULATIVE_TOKENS:-}" != "5" \
+    || "${VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-}" != "0" ]]; then
+    printf 'sealed Qwen3.8 TP2 gates require explicit MTP5 and recurrent-serial-exact=0\n' >&2
+    exit 2
+  fi
+  if [[ "${VALIDATION_RUN_SMOKE:-}" != "1" \
+    || "${VALIDATION_RUN_BENCH:-}" != "1" \
+    || ! "${VALIDATION_RUN_QUALITY:-}" =~ ^[01]$ \
+    || "${VALIDATION_BENCH_MAX_TOKENS:-}" != "512" \
+    || "${VALIDATION_BENCH_METRIC_TOKENS:-}" != "100" ]]; then
+    printf 'sealed TP2 gates require smoke+full25 bench and 512/100 token windows\n' >&2
+    exit 2
+  fi
+  if [[ "${VALIDATION_ENABLE_XPU_GRAPH:-}" != "1" \
+    || "${VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH:-}" != "1" \
+    || "${VALIDATION_GDN_CAPTURE_NATIVE_SPEC:-}" != "1" \
+    || "${VALIDATION_DDTREE_FULL_GRAPH:-}" != "0" \
+    || "${VALIDATION_DDTREE_CAPTURE_GDN_CORE:-}" != "0" \
+    || "${VALIDATION_ONEDNN_INT4_COMPLETION_BARRIER:-}" != "1" \
+    || "${VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY:-}" != "1" \
+    || "${VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE:-}" != "all_target" \
+    || "${VALIDATION_ONEDNN_INT8_COMPLETION_BARRIER:-}" != "1" \
+    || "${VALIDATION_ONEDNN_INT8_INPUT_DEPENDENCY:-}" != "1" \
+    || "${VALIDATION_LM_HEAD_INT8:-}" != "1" \
+    || "${VALIDATION_DETERMINISTIC_GREEDY_MARGIN:-}" != "0" \
+    || "${VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN:-}" != "0" \
+    || "${VALIDATION_ENABLE_PACKET_TRACE:-}" != "0" \
+    || "${VALIDATION_ENABLE_LAYER_TRACE:-}" != "0" \
+    || "${VALIDATION_VLLM_EXTRA_ARGS:-}" != "--dtype float16" \
+    || "${VALIDATION_PYTHONHASHSEED:-}" != "0" ]]; then
+    printf 'sealed TP2 flag identity does not match the preregistered campaign\n' >&2
+    exit 2
+  fi
+  expected_compilation_config=$(printf \
+    '{"cache_dir":"%s/torch_compile_cache/%s","use_inductor_graph_partition":true,"pass_config":{"fuse_rope_kvcache_cat_mla":false},"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[6],"max_cudagraph_capture_size":6}' \
+    "$VALIDATION_EXPECT_CACHE_ROOT" \
+    "$VALIDATION_EXPECT_COMPILE_CACHE_NAMESPACE")
+  if [[ "${MODEL_DIR:-}" != "$VALIDATION_EXPECT_MODEL_DIR" \
+    || "${VALIDATION_VLLM_CACHE_ROOT:-}" != "$VALIDATION_EXPECT_CACHE_ROOT" \
+    || "${VALIDATION_COMPILATION_CONFIG_OVERRIDE:-}" != "$expected_compilation_config" ]]; then
+    printf 'sealed model/cache/compilation identity does not match expectations\n' >&2
+    exit 2
+  fi
+  sealed_file_expectations=(
+    "${VALIDATION_MODEL_MANIFEST}:${VALIDATION_EXPECT_MODEL_MANIFEST_SHA256}:model manifest"
+    "${VALIDATION_MODEL_VERIFY_SCRIPT}:${VALIDATION_EXPECT_VERIFY_SCRIPT_SHA256}:model verifier"
+    "${VALIDATION_COMPILE_CACHE_MANIFEST}:${VALIDATION_EXPECT_CACHE_MANIFEST_SHA256}:cache manifest"
+    "${VALIDATION_GRAPH_STAGE_MANIFEST}:${VALIDATION_EXPECT_GRAPH_MANIFEST_SHA256}:graph manifest"
+    "${VALIDATION_SUITE_OVERRIDE}:${VALIDATION_EXPECT_SUITE_SHA256}:validation suite"
+    "${quality_baseline}:${VALIDATION_EXPECT_QUALITY_BASELINE_SHA256}:quality baseline"
+  )
+  for item in "${sealed_file_expectations[@]}"; do
+    IFS=: read -r path expected_sha description <<< "$item"
+    if [[ ! -f "$path" \
+      || "$(sha256sum -- "$path" | awk '{print $1}')" != "$expected_sha" ]]; then
+      printf 'sealed %s is missing or has the wrong SHA: %s\n' \
+        "$description" "$path" >&2
+      exit 2
+    fi
+  done
+  if [[ ! "$VALIDATION_EXPECT_REPO_HEAD" =~ ^[0-9a-f]{40}$ \
+    || "$(git -C "$repo" rev-parse HEAD)" != "$VALIDATION_EXPECT_REPO_HEAD" ]]; then
+    printf 'sealed repository HEAD does not match the preregistered driver\n' >&2
+    exit 2
+  fi
+  if [[ "${VALIDATION_ONEDNN_INT4_DETERMINISM_PAD:-}" != "1" ]]; then
+    printf 'sealed TP2 gates require VALIDATION_ONEDNN_INT4_DETERMINISM_PAD=1\n' >&2
+    exit 2
+  fi
+  if [[ ! "${VALIDATION_REQUIRE_TARGET_TOKEN_PARITY:-0}" =~ ^[01]$ ]]; then
+    printf 'VALIDATION_REQUIRE_TARGET_TOKEN_PARITY must be 0 or 1\n' >&2
+    exit 2
+  fi
+  if [[ -n "${VALIDATION_PARITY_PEER_BENCH:-}" \
+    && ! -f "$VALIDATION_PARITY_PEER_BENCH" ]]; then
+    printf 'parity peer benchmark is missing: %s\n' \
+      "$VALIDATION_PARITY_PEER_BENCH" >&2
+    exit 2
+  fi
+  if [[ -n "${VALIDATION_PARITY_PEER_BENCH:-}" \
+    && ( ! "${VALIDATION_EXPECT_PARITY_PEER_BENCH_SHA256:-}" =~ ^[0-9a-f]{64}$ \
+      || "$(sha256sum -- "$VALIDATION_PARITY_PEER_BENCH" | awk '{print $1}')" \
+        != "$VALIDATION_EXPECT_PARITY_PEER_BENCH_SHA256" ) ]]; then
+    printf 'parity peer benchmark does not match its sealed SHA\n' >&2
+    exit 2
+  fi
+  if [[ -n "${VALIDATION_TARGET_TOKEN_BENCH:-}" \
+    && ! -f "$VALIDATION_TARGET_TOKEN_BENCH" ]]; then
+    printf 'target token benchmark is missing: %s\n' \
+      "$VALIDATION_TARGET_TOKEN_BENCH" >&2
+    exit 2
+  fi
+  if [[ ! "$VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256" =~ ^[0-9a-f]{64}$ \
+    || "$(sha256sum -- "$VALIDATION_TARGET_TOKEN_BENCH" | awk '{print $1}')" \
+      != "$VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256" ]]; then
+    printf 'target token benchmark does not match its preregistered SHA\n' >&2
+    exit 2
+  fi
+  if [[ "${VALIDATION_REQUIRE_TARGET_TOKEN_PARITY:-0}" == "1" \
+    && ( -z "${VALIDATION_TARGET_TOKEN_BENCH:-}" \
+      || -z "${VALIDATION_PARITY_PEER_BENCH:-}" ) ]]; then
+    printf 'strict target parity requires both a peer and target benchmark\n' >&2
+    exit 2
+  fi
 fi
 if [[ -e "$arm_root" ]]; then
   printf 'refusing existing arm root: %s\n' "$arm_root" >&2
@@ -70,6 +348,17 @@ if [[ -n "${VALIDATION_SUITE_OVERRIDE:-}" ]]; then
 else
   "$here/build-validation-suite.py" --repo "$repo" --out "$suite" \
     > "$arm_root/suite-build.log"
+fi
+if [[ "$require_tp2_sealed_gates" == "1" ]]; then
+  if [[ "$(sha256sum -- "$suite" | awk '{print $1}')" \
+      != "$VALIDATION_EXPECT_SUITE_SHA256" ]] \
+    || ! jq -e \
+      '.suite_id == "qwen36-27b-int4-independent-validation-20260815-v1" \
+       and .version == 1 and (.prompts | type == "array" and length == 25)' \
+      "$suite" >/dev/null; then
+    printf 'sealed validation suite identity/content is invalid\n' >&2
+    exit 3
+  fi
 fi
 
 verify_tree() {
@@ -324,6 +613,7 @@ if [[ -n "${VALIDATION_GPU_MEMORY_UTILIZATION:-}" ]]; then
 fi
 
 export SOURCE_ROOT="$source_root"
+export VALIDATION_MODE="$mode"
 export VLLM_SOURCE_TREE="$source_root/vllm"
 export VLLM_XPU_KERNELS_SOURCE_TREE="$source_root/vllm-xpu-kernels"
 export MODEL_DIR="$model_dir"
@@ -347,6 +637,55 @@ export QUALITY_OUT="$arm_root/data/quality.json"
 export SMOKE_OUT="$arm_root/data/smoke.json"
 export SUMMARY_OUT="$arm_root/data/summary-legacy.json"
 export VLLM_CACHE_ROOT=${VALIDATION_VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-independent-validation-20260815}
+if [[ "$require_tp2_sealed_gates" == "1" ]]; then
+  # serve-vllm defaults this to 1 later. Set it before the common runner writes
+  # identity so the sealed record captures the effective graph identity.
+  export XPU_GRAPH=1
+fi
+mkdir -p -- "$RUN_DIR"
+export VALIDATION_RUN_ARM_SCRIPT_SHA256
+VALIDATION_RUN_ARM_SCRIPT_SHA256=$(sha256sum -- "$0" | awk '{print $1}')
+export VALIDATION_SEALED_GATE_CHECKER_SHA256
+VALIDATION_SEALED_GATE_CHECKER_SHA256=$(sha256sum -- "$sealed_gate_checker" | awk '{print $1}')
+cp -- "$0" "$RUN_DIR/run-arm.sh.snapshot"
+cp -- "$sealed_gate_checker" "$RUN_DIR/check-tp2-sealed-gates.py.snapshot"
+if [[ "$require_tp2_sealed_gates" == "1" ]]; then
+  cp -- "$VALIDATION_CAMPAIGN_DRIVER" "$RUN_DIR/campaign-driver.sh.snapshot"
+  {
+    printf 'BASE_STAGE=%s\n' "$base_stage"
+    printf 'STAGE=%s\n' "$graph_stage"
+    printf 'MODEL_DIR=%s\n' "$model_dir"
+    printf 'ONECCL_INSTALL_DIR=%s\n' "$oneccl"
+    for name in "${sealed_validation_allowlist[@]}"; do
+      if [[ -v "$name" ]]; then
+        printf '%s=%s\n' "$name" "${!name}"
+      fi
+    done
+  } > "$RUN_DIR/validation-input.env"
+  export VALIDATION_INPUT_ENV_SHA256
+  VALIDATION_INPUT_ENV_SHA256=$(sha256sum -- "$RUN_DIR/validation-input.env" \
+    | awk '{print $1}')
+  if [[ -n "${VALIDATION_PARITY_PEER_BENCH:-}" ]]; then
+    export VALIDATION_PARITY_PEER_BENCH_SNAPSHOT="$RUN_DIR/parity-peer-bench.input.json"
+    cp -- "$VALIDATION_PARITY_PEER_BENCH" \
+      "$VALIDATION_PARITY_PEER_BENCH_SNAPSHOT"
+    if [[ "$(sha256sum -- "$VALIDATION_PARITY_PEER_BENCH_SNAPSHOT" | awk '{print $1}')" \
+      != "$VALIDATION_EXPECT_PARITY_PEER_BENCH_SHA256" ]]; then
+      printf 'parity peer snapshot changed during prelaunch copy\n' >&2
+      exit 3
+    fi
+  fi
+  if [[ -n "${VALIDATION_TARGET_TOKEN_BENCH:-}" ]]; then
+    export VALIDATION_TARGET_TOKEN_BENCH_SNAPSHOT="$RUN_DIR/target-token-bench.input.json"
+    cp -- "$VALIDATION_TARGET_TOKEN_BENCH" \
+      "$VALIDATION_TARGET_TOKEN_BENCH_SNAPSHOT"
+    if [[ "$(sha256sum -- "$VALIDATION_TARGET_TOKEN_BENCH_SNAPSHOT" | awk '{print $1}')" \
+      != "$VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256" ]]; then
+      printf 'target token snapshot changed during prelaunch copy\n' >&2
+      exit 3
+    fi
+  fi
+fi
 compile_cache_root="$VLLM_CACHE_ROOT/torch_compile_cache"
 if [[ -n "${VALIDATION_COMPILE_CACHE_MANIFEST:-}" ]]; then
   "$repo/scripts/canonical-tree-manifest.py" verify \
@@ -901,23 +1240,152 @@ if [[ "$runner_rc" == "0" && "$RUN_QUALITY" == "1" && ! -s "$QUALITY_OUT" ]]; th
     "$QUALITY_OUT" >&2
   runner_rc=9
 fi
-printf '%s\n' "$runner_rc" > "$arm_root/runner.exit-code"
 
+manifest_rc=0
 if [[ -d "$compile_cache_root" ]]; then
+  set +e
   "$repo/scripts/canonical-tree-manifest.py" create \
     --root "$compile_cache_root" \
     --output "$arm_root/compile-cache-output-manifest.json" \
     > "$arm_root/compile-cache-manifest-create.json"
+  manifest_rc=$?
+  set -e
+elif [[ "$require_tp2_sealed_gates" == "1" ]]; then
+  printf 'compile-cache root is missing after the run: %s\n' \
+    "$compile_cache_root" >&2
+  manifest_rc=1
+fi
+if [[ "$runner_rc" == "0" && "$manifest_rc" != "0" ]]; then
+  printf 'post-run compile-cache manifest creation failed\n' >&2
+  runner_rc=10
 fi
 
+qualifier_rc=0
 if [[ -s "$BENCH_OUT" && "$BENCH_METRIC_TOKENS" == "100" ]]; then
+  set +e
   "$venv/bin/python" "$repo/scripts/qualify_realistic_window_metrics.py" \
     "$BENCH_OUT" --in-place > "$arm_root/qualify.log"
+  qualifier_rc=$?
+  set -e
 elif [[ -s "$BENCH_OUT" ]]; then
   printf 'diagnostic metric window (%s events); strict 100-event qualifier skipped\n' \
     "$BENCH_METRIC_TOKENS" > "$arm_root/qualify.log"
 fi
+if [[ "$runner_rc" == "0" && "$qualifier_rc" != "0" ]]; then
+  printf 'realistic-window qualification failed\n' >&2
+  runner_rc=11
+fi
+
+if [[ "$require_tp2_sealed_gates" == "1" && "$runner_rc" == "0" ]]; then
+  set +e
+  "$repo/scripts/canonical-tree-manifest.py" verify \
+    --root "$compile_cache_root" \
+    --manifest "$arm_root/compile-cache-input-manifest.json" \
+    > "$arm_root/compile-cache-postflight.json"
+  postflight_rc=$?
+  set -e
+  if [[ "$postflight_rc" != "0" ]]; then
+    printf 'post-run compile-cache verification failed\n' >&2
+    runner_rc=12
+  fi
+fi
+
+if [[ "$require_tp2_sealed_gates" == "1" && "$runner_rc" == "0" ]]; then
+  IFS=',' read -r -a expected_outer_roles \
+    <<< "$VALIDATION_EXPECT_COMPILE_CACHE_OUTER_ROLES"
+  IFS=',' read -r -a expected_aot_keys \
+    <<< "$VALIDATION_EXPECT_AOT_CACHE_KEYS"
+  sealed_args=(
+    arm
+    --arm-root "$arm_root"
+    --expected-namespace "$VALIDATION_EXPECT_COMPILE_CACHE_NAMESPACE"
+    --expected-outer-loads "$VALIDATION_EXPECT_COMPILE_CACHE_DIRECT_LOADS"
+    --expected-aot-loads "$VALIDATION_EXPECT_AOT_DIRECT_LOADS"
+    --expected-pad-markers "$VALIDATION_EXPECT_ONEDNN_INT4_DETERMINISM_PAD_MARKERS"
+    --expected-suite-sha256 "$VALIDATION_EXPECT_SUITE_SHA256"
+    --expected-model-dir "$VALIDATION_EXPECT_MODEL_DIR"
+    --expected-model-manifest-sha256 \
+      "$VALIDATION_EXPECT_MODEL_MANIFEST_SHA256"
+    --expected-verify-script-sha256 \
+      "$VALIDATION_EXPECT_VERIFY_SCRIPT_SHA256"
+    --expected-cache-root "$VALIDATION_EXPECT_CACHE_ROOT"
+    --expected-cache-manifest-sha256 \
+      "$VALIDATION_EXPECT_CACHE_MANIFEST_SHA256"
+    --expected-graph-manifest-sha256 \
+      "$VALIDATION_EXPECT_GRAPH_MANIFEST_SHA256"
+    --expected-native-sha256 "$VALIDATION_EXPECT_NATIVE_SHA256"
+    --expected-core-sha256 "$VALIDATION_EXPECT_CORE_SHA256"
+    --expected-moe-sha256 "$VALIDATION_EXPECT_MOE_SHA256"
+    --expected-fa-sha256 "$VALIDATION_EXPECT_FA_SHA256"
+    --expected-repo-head "$VALIDATION_EXPECT_REPO_HEAD"
+    --expected-quality-baseline-sha256 \
+      "$VALIDATION_EXPECT_QUALITY_BASELINE_SHA256"
+    --output "$arm_root/tp2-sealed-gates.json"
+  )
+  for role in "${expected_outer_roles[@]}"; do
+    sealed_args+=(--expected-outer-role "$role")
+  done
+  for key in "${expected_aot_keys[@]}"; do
+    sealed_args+=(--expected-aot-key "$key")
+  done
+  if [[ "$RUN_QUALITY" == "1" ]]; then
+    sealed_args+=(--require-quality-pass)
+  fi
+  set +e
+  "$venv/bin/python" "$RUN_DIR/check-tp2-sealed-gates.py.snapshot" \
+    "${sealed_args[@]}"
+  sealed_rc=$?
+  set -e
+  if [[ "$sealed_rc" != "0" ]]; then
+    printf 'sealed TP2 post-run arm gate failed (rc=%s)\n' "$sealed_rc" >&2
+    runner_rc=13
+  fi
+fi
+
+if [[ "$require_tp2_sealed_gates" == "1" && "$runner_rc" == "0" \
+  && -n "${VALIDATION_PARITY_PEER_BENCH:-}" ]]; then
+  parity_args=(
+    parity
+    --candidate "$BENCH_OUT"
+    --peer "$VALIDATION_PARITY_PEER_BENCH_SNAPSHOT"
+    --expected-peer-sha256 \
+      "$VALIDATION_EXPECT_PARITY_PEER_BENCH_SHA256"
+    --output "$arm_root/token-parity.json"
+  )
+  if [[ -n "${VALIDATION_TARGET_TOKEN_BENCH_SNAPSHOT:-}" ]]; then
+    parity_args+=(
+      --reference "$VALIDATION_TARGET_TOKEN_BENCH_SNAPSHOT"
+      --expected-reference-sha256 \
+        "$VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256"
+    )
+  fi
+  if [[ "${VALIDATION_REQUIRE_TARGET_TOKEN_PARITY:-0}" == "1" ]]; then
+    parity_args+=(--require-reference-exact)
+  fi
+  set +e
+  "$venv/bin/python" "$RUN_DIR/check-tp2-sealed-gates.py.snapshot" \
+    "${parity_args[@]}"
+  parity_rc=$?
+  set -e
+  if [[ "$parity_rc" != "0" ]]; then
+    printf 'full token-array parity gate failed (rc=%s)\n' "$parity_rc" >&2
+    runner_rc=14
+  fi
+fi
+
+printf '%s\n' "$runner_rc" > "$arm_root/runner.exit-code"
+checksum_rc=0
+set +e
 find "$arm_root" -type f ! -name SHA256SUMS.pre-manifest -print0 \
   | sort -z | xargs -0 sha256sum \
   > "$arm_root/SHA256SUMS.pre-manifest"
+checksum_rc=$?
+set -e
+if [[ "$runner_rc" == "0" && "$checksum_rc" != "0" ]]; then
+  runner_rc=15
+  printf '%s\n' "$runner_rc" > "$arm_root/runner.exit-code"
+  find "$arm_root" -type f ! -name SHA256SUMS.pre-manifest -print0 \
+    | sort -z | xargs -0 sha256sum \
+    > "$arm_root/SHA256SUMS.pre-manifest" || true
+fi
 exit "$runner_rc"

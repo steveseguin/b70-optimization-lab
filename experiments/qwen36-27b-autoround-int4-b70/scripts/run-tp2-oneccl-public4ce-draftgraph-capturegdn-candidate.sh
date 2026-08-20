@@ -9,6 +9,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 export VLLM_XPU_DDTREE_CAPTURE_GDN_CORE="${VLLM_XPU_DDTREE_CAPTURE_GDN_CORE:-1}"
-export CANDIDATE_ENTRYPOINT="$0"
+export CANDIDATE_ENTRYPOINT="${CANDIDATE_ENTRYPOINT:-$0}"
 
 exec "$ROOT/experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh"

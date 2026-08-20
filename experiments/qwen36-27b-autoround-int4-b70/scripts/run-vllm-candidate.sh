@@ -237,6 +237,32 @@ for manifest_var in VALIDATION_XPU_RUNTIME_MANIFEST \
     "$RUN_DIR/${manifest_var,,}.snapshot.sha256"
 done
 
+sha256_if_file() {
+  local path=${1:-}
+  if [[ -n "$path" && -f "$path" ]]; then
+    sha256sum -- "$path" | awk '{print $1}'
+  fi
+}
+SUITE_SHA256=$(sha256_if_file "$SUITE")
+QUALITY_BASELINE_JSON_SHA256=$(sha256_if_file "$QUALITY_BASELINE_JSON")
+COMPILE_CACHE_INPUT_MANIFEST_SHA256=$(sha256_if_file \
+  "${VALIDATION_COMPILE_CACHE_MANIFEST:-}")
+GRAPH_STAGE_MANIFEST_SHA256=$(sha256_if_file \
+  "${VALIDATION_GRAPH_STAGE_MANIFEST:-}")
+COMMON_RUNNER_SHA256=$(sha256_if_file "$0")
+CANDIDATE_ENTRYPOINT_SHA256=$(sha256_if_file \
+  "${CANDIDATE_ENTRYPOINT:-$0}")
+SERVE_VLLM_SHA256=$(sha256_if_file \
+  experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh)
+PARITY_PEER_BENCH_SHA256=$(sha256_if_file \
+  "${VALIDATION_PARITY_PEER_BENCH:-}")
+TARGET_TOKEN_BENCH_SHA256=$(sha256_if_file \
+  "${VALIDATION_TARGET_TOKEN_BENCH:-}")
+PARITY_PEER_BENCH_SNAPSHOT_SHA256=$(sha256_if_file \
+  "${VALIDATION_PARITY_PEER_BENCH_SNAPSHOT:-}")
+TARGET_TOKEN_BENCH_SNAPSHOT_SHA256=$(sha256_if_file \
+  "${VALIDATION_TARGET_TOKEN_BENCH_SNAPSHOT:-}")
+
 server_pid=""
 cleanup() {
   trap - EXIT INT TERM
@@ -251,6 +277,7 @@ write_identity() {
 {
   echo "date_utc=$STAMP"
   echo "label=$LABEL"
+  echo "validation_mode=${VALIDATION_MODE:-}"
   echo "candidate_entrypoint=${CANDIDATE_ENTRYPOINT:-$0}"
   echo "expected_vllm_diff_sha256=${VALIDATION_EXPECT_VLLM_DIFF_SHA256:-}"
   echo "expected_kernels_diff_sha256=${VALIDATION_EXPECT_KERNELS_DIFF_SHA256:-}"
@@ -259,6 +286,7 @@ write_identity() {
   echo "xpu_runtime_manifest=${VALIDATION_XPU_RUNTIME_MANIFEST:-historical-default}"
   echo "oneccl_manifest=${VALIDATION_ONECCL_MANIFEST:-historical-default}"
   echo "graph_stage_manifest=${VALIDATION_GRAPH_STAGE_MANIFEST:-historical-default}"
+  echo "graph_stage_manifest_sha256=$GRAPH_STAGE_MANIFEST_SHA256"
   echo "run_dir=$RUN_DIR"
   echo "model_dir=$MODEL_DIR"
   echo "model_manifest=${MODEL_MANIFEST:-}"
@@ -277,6 +305,7 @@ write_identity() {
   echo "hf_home=$HF_HOME"
   echo "vllm_cache_root=${VLLM_CACHE_ROOT:-}"
   echo "compile_cache_input_manifest=${VALIDATION_COMPILE_CACHE_MANIFEST:-}"
+  echo "compile_cache_input_manifest_sha256=$COMPILE_CACHE_INPUT_MANIFEST_SHA256"
   echo "torchinductor_cache_dir=${TORCHINDUCTOR_CACHE_DIR:-}"
   echo "inductor_max_autotune=${VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE:-}"
   echo "inductor_coordinate_descent_tuning=${VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING:-}"
@@ -301,6 +330,10 @@ write_identity() {
   echo "enable_mtp=$QWEN36_27B_ENABLE_MTP"
   echo "num_speculative_tokens=$NUM_SPECULATIVE_TOKENS"
   echo "enable_xpu_graph=$QWEN36_27B_ENABLE_XPU_GRAPH"
+  echo "xpu_graph=${XPU_GRAPH:-}"
+  echo "vllm_xpu_enable_xpu_graph=${VLLM_XPU_ENABLE_XPU_GRAPH:-}"
+  echo "vllm_xpu_force_graph_with_comm=${VLLM_XPU_FORCE_GRAPH_WITH_COMM:-}"
+  echo "vllm_xpu_graph_noop_comm_capture=${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE:-}"
   echo "compilation_config=$COMPILATION_CONFIG"
   echo "batch_invariant=${VLLM_BATCH_INVARIANT:-0}"
   echo "promote_accepted_spec_state=$VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE"
@@ -361,6 +394,7 @@ write_identity() {
   echo "model_input_trace_max_lines=${VLLM_XPU_MODEL_INPUT_TRACE_MAX_LINES:-}"
   echo "model_input_trace_rank=${VLLM_XPU_MODEL_INPUT_TRACE_RANK:-}"
   echo "fa_serial_spec_mode=${VLLM_XPU_FA_SERIAL_SPEC_MODE:-}"
+  echo "fa2_force_chunk_decode=${VLLM_XPU_FA2_FORCE_CHUNK_DECODE:-}"
   echo "fa_batch_invariant=${VLLM_XPU_FA_BATCH_INVARIANT:-0}"
   echo "rmsnorm_batch_invariant=${VLLM_XPU_RMSNORM_BATCH_INVARIANT:-0}"
   echo "linear_batch_invariant=${VLLM_XPU_LINEAR_BATCH_INVARIANT:-0}"
@@ -457,6 +491,7 @@ write_identity() {
   echo "xpu_spec_decode_bonus_min_margin=${VLLM_XPU_SPEC_DECODE_BONUS_MIN_MARGIN:-}"
   echo "xpu_spec_decode_recover_suppressed_replacement=${VLLM_XPU_SPEC_DECODE_RECOVER_SUPPRESSED_REPLACEMENT:-}"
   echo "lm_head_int8=$VLLM_XPU_LM_HEAD_INT8"
+  echo "lm_head_int8_scope=${VLLM_XPU_LM_HEAD_INT8_SCOPE:-}"
   echo "lm_head_int8_scale_dtype=$VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE"
   echo "lm_head_int8_serial_m1=${VLLM_XPU_LM_HEAD_INT8_SERIAL_M1:-0}"
   echo "xpu_allreduce_async_wait=${VLLM_XPU_ALLREDUCE_ASYNC_WAIT:-0}"
@@ -490,6 +525,39 @@ write_identity() {
   echo "bench_metric_tokens=$BENCH_METRIC_TOKENS"
   echo "smoke_max_tokens=$SMOKE_MAX_TOKENS"
   echo "quality_baseline_json=$QUALITY_BASELINE_JSON"
+  echo "quality_baseline_json_sha256=$QUALITY_BASELINE_JSON_SHA256"
+  echo "validation_suite=$SUITE"
+  echo "validation_suite_sha256=$SUITE_SHA256"
+  echo "tp2_sealed_gates_required=${VALIDATION_REQUIRE_TP2_SEALED_GATES:-0}"
+  echo "compile_cache_unchanged_required=${VALIDATION_REQUIRE_COMPILE_CACHE_UNCHANGED:-0}"
+  echo "no_compile_cache_writes_required=${VALIDATION_REQUIRE_NO_COMPILE_CACHE_WRITES:-0}"
+  echo "expected_onednn_int4_determinism_pad_markers=${VALIDATION_EXPECT_ONEDNN_INT4_DETERMINISM_PAD_MARKERS:-}"
+  echo "expected_compile_cache_direct_loads=${VALIDATION_EXPECT_COMPILE_CACHE_DIRECT_LOADS:-}"
+  echo "expected_aot_direct_loads=${VALIDATION_EXPECT_AOT_DIRECT_LOADS:-}"
+  echo "expected_compile_cache_namespace=${VALIDATION_EXPECT_COMPILE_CACHE_NAMESPACE:-}"
+  echo "expected_compile_cache_outer_roles=${VALIDATION_EXPECT_COMPILE_CACHE_OUTER_ROLES:-}"
+  echo "expected_aot_cache_keys=${VALIDATION_EXPECT_AOT_CACHE_KEYS:-}"
+  echo "expected_suite_sha256=${VALIDATION_EXPECT_SUITE_SHA256:-}"
+  echo "expected_quality_baseline_sha256=${VALIDATION_EXPECT_QUALITY_BASELINE_SHA256:-}"
+  echo "expected_parity_peer_bench_sha256=${VALIDATION_EXPECT_PARITY_PEER_BENCH_SHA256:-}"
+  echo "expected_target_token_bench_sha256=${VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256:-}"
+  echo "parity_peer_bench=${VALIDATION_PARITY_PEER_BENCH:-}"
+  echo "parity_peer_bench_sha256=$PARITY_PEER_BENCH_SHA256"
+  echo "parity_peer_bench_snapshot=${VALIDATION_PARITY_PEER_BENCH_SNAPSHOT:-}"
+  echo "parity_peer_bench_snapshot_sha256=$PARITY_PEER_BENCH_SNAPSHOT_SHA256"
+  echo "target_token_bench=${VALIDATION_TARGET_TOKEN_BENCH:-}"
+  echo "target_token_bench_sha256=$TARGET_TOKEN_BENCH_SHA256"
+  echo "target_token_bench_snapshot=${VALIDATION_TARGET_TOKEN_BENCH_SNAPSHOT:-}"
+  echo "target_token_bench_snapshot_sha256=$TARGET_TOKEN_BENCH_SNAPSHOT_SHA256"
+  echo "target_token_parity_required=${VALIDATION_REQUIRE_TARGET_TOKEN_PARITY:-0}"
+  echo "run_arm_script_sha256=${VALIDATION_RUN_ARM_SCRIPT_SHA256:-}"
+  echo "sealed_gate_checker_sha256=${VALIDATION_SEALED_GATE_CHECKER_SHA256:-}"
+  echo "campaign_driver=${VALIDATION_CAMPAIGN_DRIVER:-}"
+  echo "campaign_driver_sha256=${VALIDATION_CAMPAIGN_DRIVER_SHA256:-}"
+  echo "validation_input_env_sha256=${VALIDATION_INPUT_ENV_SHA256:-}"
+  echo "common_runner_sha256=$COMMON_RUNNER_SHA256"
+  echo "candidate_entrypoint_sha256=$CANDIDATE_ENTRYPOINT_SHA256"
+  echo "serve_vllm_sha256=$SERVE_VLLM_SHA256"
   echo "vllm_extra_args=${VLLM_EXTRA_ARGS:-}"
   echo "cleanup_term_grace_s=$SUPP_TERM_GRACE_S"
   echo "cleanup_kill_grace_s=$SUPP_KILL_GRACE_S"
