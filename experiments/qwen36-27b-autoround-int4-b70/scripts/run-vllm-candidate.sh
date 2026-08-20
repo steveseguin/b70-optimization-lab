@@ -97,16 +97,72 @@ export QWEN36_27B_DEFAULT_ENABLE_THINKING="${QWEN36_27B_DEFAULT_ENABLE_THINKING:
 export QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS="${QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS:-1}"
 
 PYTHON="${PYTHON:-$QWEN36_27B_AR_VENV/bin/python}"
-XPU_PYTHON_PACKAGE_PATH=$("$PYTHON" - <<'PY'
+mapfile -t XPU_RESOLVED_PATHS < <("$PYTHON" - <<'PY'
+import importlib.machinery
 import importlib.util
+import os
 from pathlib import Path
 
-spec = importlib.util.find_spec("vllm_xpu_kernels")
-if spec is None or not spec.submodule_search_locations:
-    raise SystemExit("vllm_xpu_kernels package is not resolvable")
-print(Path(next(iter(spec.submodule_search_locations))).resolve())
+package = "vllm_xpu_kernels"
+package_spec = importlib.util.find_spec(package)
+if package_spec is None or not package_spec.submodule_search_locations:
+    raise SystemExit(f"{package} package is not resolvable")
+locations = tuple(package_spec.submodule_search_locations)
+print(Path(locations[0]).resolve())
+require_selected_package = (
+    os.environ.get("VALIDATION_REQUIRE_XPU_MODULES_UNDER_STAGE", "0") == "1"
+)
+if not require_selected_package:
+    raise SystemExit(0)
+for child in ("_xpu_C", "_C", "_moe_C", "_vllm_fa2_C"):
+    name = f"{package}.{child}"
+    # Search only the selected package path. importlib.util.find_spec(name)
+    # would import/execute the parent and let an editable meta-path finder
+    # silently provide a child from a different source tree.
+    spec = importlib.machinery.PathFinder.find_spec(name, locations)
+    if spec is None or not spec.origin:
+        raise SystemExit(f"{name} is absent from selected package {locations}")
+    print(Path(spec.origin).resolve())
 PY
 )
+require_xpu_modules=${VALIDATION_REQUIRE_XPU_MODULES_UNDER_STAGE:-0}
+expected_xpu_paths=1
+if [[ "$require_xpu_modules" == "1" ]]; then
+  expected_xpu_paths=5
+fi
+if [[ "${#XPU_RESOLVED_PATHS[@]}" != "$expected_xpu_paths" ]]; then
+  echo "XPU package resolution returned ${#XPU_RESOLVED_PATHS[@]} paths, expected $expected_xpu_paths" >&2
+  exit 2
+fi
+XPU_PYTHON_PACKAGE_PATH=${XPU_RESOLVED_PATHS[0]}
+XPU_NATIVE_EXTENSION_PATH=""
+XPU_CORE_EXTENSION_PATH=""
+XPU_MOE_EXTENSION_PATH=""
+XPU_FA_EXTENSION_PATH=""
+XPU_NATIVE_EXTENSION_SHA256=""
+XPU_CORE_EXTENSION_SHA256=""
+XPU_MOE_EXTENSION_SHA256=""
+XPU_FA_EXTENSION_SHA256=""
+if [[ "$require_xpu_modules" == "1" ]]; then
+  XPU_NATIVE_EXTENSION_PATH=${XPU_RESOLVED_PATHS[1]}
+  XPU_CORE_EXTENSION_PATH=${XPU_RESOLVED_PATHS[2]}
+  XPU_MOE_EXTENSION_PATH=${XPU_RESOLVED_PATHS[3]}
+  XPU_FA_EXTENSION_PATH=${XPU_RESOLVED_PATHS[4]}
+  XPU_NATIVE_EXTENSION_SHA256=$(sha256sum "$XPU_NATIVE_EXTENSION_PATH" | awk '{print $1}')
+  XPU_CORE_EXTENSION_SHA256=$(sha256sum "$XPU_CORE_EXTENSION_PATH" | awk '{print $1}')
+  XPU_MOE_EXTENSION_SHA256=$(sha256sum "$XPU_MOE_EXTENSION_PATH" | awk '{print $1}')
+  XPU_FA_EXTENSION_SHA256=$(sha256sum "$XPU_FA_EXTENSION_PATH" | awk '{print $1}')
+  required_stage=$(realpath -- "$VLLM_XPU_KERNELS_SRC")
+  for resolved in "$XPU_PYTHON_PACKAGE_PATH" "$XPU_NATIVE_EXTENSION_PATH" \
+    "$XPU_CORE_EXTENSION_PATH" "$XPU_MOE_EXTENSION_PATH" \
+    "$XPU_FA_EXTENSION_PATH"; do
+    if [[ "$resolved" != "$required_stage" \
+      && "$resolved" != "$required_stage/"* ]]; then
+      echo "resolved XPU module escapes required stage: stage=$required_stage path=$resolved" >&2
+      exit 2
+    fi
+  done
+fi
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-900}"
 RUN_SMOKE="${RUN_SMOKE:-1}"
 RUN_BENCH="${RUN_BENCH:-1}"
@@ -233,6 +289,15 @@ write_identity() {
   echo "xpu_kernels_src=${VLLM_XPU_KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels}"
   echo "pythonpath=${PYTHONPATH:-}"
   echo "xpu_python_package_path=$XPU_PYTHON_PACKAGE_PATH"
+  echo "xpu_native_extension_path=$XPU_NATIVE_EXTENSION_PATH"
+  echo "xpu_native_extension_sha256=$XPU_NATIVE_EXTENSION_SHA256"
+  echo "xpu_core_extension_path=$XPU_CORE_EXTENSION_PATH"
+  echo "xpu_core_extension_sha256=$XPU_CORE_EXTENSION_SHA256"
+  echo "xpu_moe_extension_path=$XPU_MOE_EXTENSION_PATH"
+  echo "xpu_moe_extension_sha256=$XPU_MOE_EXTENSION_SHA256"
+  echo "xpu_fa_extension_path=$XPU_FA_EXTENSION_PATH"
+  echo "xpu_fa_extension_sha256=$XPU_FA_EXTENSION_SHA256"
+  echo "require_xpu_modules_under_stage=${VALIDATION_REQUIRE_XPU_MODULES_UNDER_STAGE:-0}"
   echo "enable_mtp=$QWEN36_27B_ENABLE_MTP"
   echo "num_speculative_tokens=$NUM_SPECULATIVE_TOKENS"
   echo "enable_xpu_graph=$QWEN36_27B_ENABLE_XPU_GRAPH"
@@ -306,6 +371,7 @@ write_identity() {
   echo "onednn_int4_completion_barrier=${VLLM_XPU_ONEDNN_INT4_COMPLETION_BARRIER:-0}"
   echo "onednn_int4_input_dependency=${VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY:-0}"
   echo "onednn_int4_input_dependency_scope=${VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE:-}"
+  echo "onednn_int4_determinism_pad=${VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD:-}"
   echo "m4_m1_oracle_file=${VLLM_XPU_M4_M1_ORACLE_FILE:-}"
   echo "m4_m1_oracle_forward=${VLLM_XPU_M4_M1_ORACLE_FORWARD:-}"
   echo "m4_m1_oracle_components=${VLLM_XPU_M4_M1_ORACLE_COMPONENTS:-}"

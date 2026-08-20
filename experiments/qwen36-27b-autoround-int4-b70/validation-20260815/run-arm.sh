@@ -476,6 +476,16 @@ if [[ "${VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY:-0}" == "1" ]]; then
   export VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY=1
   export VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE="${VALIDATION_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE:-layer0_gdn_in}"
 fi
+if [[ -n "${VALIDATION_ONEDNN_INT4_DETERMINISM_PAD:-}" ]]; then
+  if [[ ! "$VALIDATION_ONEDNN_INT4_DETERMINISM_PAD" =~ ^[01]$ ]]; then
+    printf 'VALIDATION_ONEDNN_INT4_DETERMINISM_PAD must be 0 or 1\n' >&2
+    exit 2
+  fi
+  # The patched runtime defaults this prefill-only repair on. Export and
+  # record it explicitly so a matched control never relies on binary-specific
+  # default behavior or an ambient environment variable scrubbed above.
+  export VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD="$VALIDATION_ONEDNN_INT4_DETERMINISM_PAD"
+fi
 if [[ -n "${VALIDATION_M4_M1_ORACLE_FILE:-}" ]]; then
   export VLLM_XPU_M4_M1_ORACLE_FILE="$VALIDATION_M4_M1_ORACLE_FILE"
   export VLLM_XPU_M4_M1_ORACLE_FORWARD="${VALIDATION_M4_M1_ORACLE_FORWARD:-all}"

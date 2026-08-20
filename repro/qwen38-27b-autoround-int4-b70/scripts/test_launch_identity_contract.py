@@ -57,10 +57,33 @@ class LaunchIdentityContractTest(unittest.TestCase):
             "model_verify_json_sha256=",
             "model_verify_read_modes=",
             "xpu_python_package_path=",
+            "xpu_native_extension_path=",
+            "xpu_native_extension_sha256=",
+            "xpu_core_extension_path=",
+            "xpu_core_extension_sha256=",
+            "xpu_moe_extension_path=",
+            "xpu_moe_extension_sha256=",
+            "xpu_fa_extension_path=",
+            "xpu_fa_extension_sha256=",
+            "require_xpu_modules_under_stage=",
             "draft_lm_head_int4_fallback_margin=",
             "gdn_spec_persistent_scratch=",
+            "onednn_int4_determinism_pad=",
         ):
             self.assertIn(field, source)
+
+    def test_arm_forwards_determinism_pad_explicitly(self) -> None:
+        source = ARM.read_text()
+        self.assertIn(
+            'export VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD='
+            '"$VALIDATION_ONEDNN_INT4_DETERMINISM_PAD"',
+            source,
+        )
+
+    def test_runner_can_fail_closed_on_stage_module_resolution(self) -> None:
+        source = RUNNER.read_text()
+        self.assertIn('VALIDATION_REQUIRE_XPU_MODULES_UNDER_STAGE', source)
+        self.assertIn('resolved XPU module escapes required stage', source)
 
 
 if __name__ == "__main__":
