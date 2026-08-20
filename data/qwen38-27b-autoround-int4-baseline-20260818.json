@@ -399,5 +399,26 @@
     },
     "self_determinism": "PASS 25/25",
     "verdict": "NEUTRAL. 101.737 / 101.723 against the record's 101.922, inside the +/-1 tok/s run-to-run spread we see across arms. Determinism is unaffected at 25/25. The per-step host round trip is therefore not costing measurable time at this step rate, consistent with 32 cores, one request, and ~35 ms steps. Keep the record configuration; async scheduling is neither a gain nor a risk here, and would only matter at higher concurrency or a much shorter step time."
+  },
+  "scratch_fix_projection_correction_20260819": {
+    "corrects": "experiments/qwen38-27b-b70/scripts/gdn-scratch-alloc-microbench.py projection (commit 40b7640c0)",
+    "their_claim": "scratch alloc costs 0.926 ms/step; fix alone lands 103-105; stacked with rerank K=2 reaches 106-109",
+    "what_is_right": "the microbenchmark itself is sound - correct TP2/MTP5 shapes, 48 GDN layers, 576 allocations per step - and its anti-validation of the naive zeros-per-call variant (2.435 ms/step, 2.6x worse) is a genuinely useful negative that confirms the fix is only correct because the scratch is cached once per shape.",
+    "what_is_wrong": [
+      "the benchmark calls torch.empty from PYTHON; the production path calls torch::empty from C++ inside gdn_attn_interface.cpp",
+      "its own CPU control (0.876 of 0.926 ms) shows ~93% of the measured cost is Python dispatch that does not exist in production",
+      "the quoted 'C++ lane cost ~0.3-0.9 ms/step' does not follow from that control; removing dispatch leaves ~0.05 ms",
+      "the top of the range (+3.0 tok/s) would require saving ~2.9 ms/step, which exceeds the total the benchmark measured"
+    ],
+    "end_to_end_test_already_run": {
+      "design": "MTP4, three arms each, VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH the ONLY difference",
+      "persistent_scratch_1_cached_buggy_median_tok_s": 100.2602703943657,
+      "persistent_scratch_0_alloc_per_call_median_tok_s": 100.4970825273955,
+      "delta_from_disabling_caching_tok_s": 0.237,
+      "interpretation": "disabling caching was +0.237 tok/s. If per-call allocation really cost 0.926 ms/step at a 35.3 ms step, caching would have been about 2.7 tok/s FASTER, not marginally slower. The end-to-end data puts the true cost near 0.05 ms/step, matching the microbenchmark's own control once dispatch is removed."
+    },
+    "revised_expectation": "scratch fix alone lands ~102.0-102.9, not 103-105",
+    "still_worth_building": "yes - it is the correct fix, it removes a genuine uninitialized read that caused the 24/25 MTP4 failure, and it unblocks serial-exact at depths other than 3. Just not as a route to 105 by itself.",
+    "consequence": "rerank K=2 is now the load-bearing item for 105, not a stacking bonus, and needs the same audit"
   }
 }
