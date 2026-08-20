@@ -539,5 +539,36 @@
     "recovery_procedure": "unbind all four B70s from /sys/bus/pci/drivers/xe/unbind (modprobe -r xe fails at refcount 8; the refcount comes from the bound devices, not any process), then reload xe and let all four re-probe. reset_method reports 'flr bus' for all four. The B70s are compute-only - console is the ASPEED ast - so unbinding does not disturb the display.",
     "NOT_PERFORMED": "privileged GPU recovery requires Steve's explicit go-ahead per attempt. Not done autonomously.",
     "workaround_in_use": "continuing on the healthy pair 2,3. Any result measured there is a screening result, not directly record-comparable, because the record was set on 0,1 - a matched control on 2,3 is required for every A/B."
+  },
+  "MARGIN_INVALIDATES_PUBLISHED_RECORDS_20260820": {
+    "severity": "CRITICAL. Both published Qwen3.8 LocalMaxxing records were measured with a setting that changes emitted tokens versus true greedy argmax, and the quality gate that certified them was blind to it by construction.",
+    "setting": "VALIDATION_DETERMINISTIC_GREEDY_MARGIN=0.03125, present in the commandSnippet of both records.",
+    "what_it_does": "vllm/v1/sample/sampler.py:44-66. gap = top1 - top2; if gap <= margin it emits min(first_index, second_index). There is NO equality condition on the values: for ANY gap in (0, 0.03125], if the argmax token ID is larger than the runner-up's, the RUNNER-UP is emitted. That is a low-token-ID bias over a finite band, not tie-breaking. It also governs the MTP verifier (rejection_sampler.py:649, 1248, 1440), so it applies at every verified position in the published MTP4/MTP5 configs.",
+    "DIRECT_MEASUREMENT_I_VERIFIED": {
+      "method": "compared data/bench.json output_sha256s (25 per arm) between arms whose identity.env differ in EXACTLY one substantive field - deterministic_greedy_margin 0 vs 0.03125. I diffed the full identity.env: the only other difference is the request-id prefix, which is a label.",
+      "control_margin_ON_a_vs_ON_b": "25/25 prompts byte-identical",
+      "treatment_margin_OFF_vs_ON_a": "7/25 prompts byte-identical",
+      "treatment_margin_OFF_vs_ON_b": "7/25 prompts byte-identical",
+      "conclusion": "turning the margin off changes generated text on 18 of 25 prompts. The control proves the harness is reproducible at 25/25, so the 18 divergences are attributable to the margin alone.",
+      "arms": "qwen38-nomargin-mtp3-25-spec-a-20260818 vs qwen38-baseline-mtp3-25-spec-{a,b}-20260818"
+    },
+    "QUALITY_GATE_IS_CIRCULAR": {
+      "proof": "the quality baseline run qwen38-qualitybaseline-clean-mtp3-fast-25-spec-e-20260818 has deterministic_greedy_margin=0.03125 at run/identity.env:189.",
+      "consequence": "the gate compares a margin-on candidate against a margin-on baseline by sha256 equality. It is structurally incapable of detecting this variable.",
+      "power": "the quality suite generates only ~45 tokens total. At the measured flip rate it would pass by luck most of the time even against a margin-free baseline. It cannot detect a ~1-in-360-token flip."
+    },
+    "not_a_numerical_noise_device": {
+      "logit_magnitudes": "observed median |top1| ~22.75, range ~14.7-31.75, dtype float16",
+      "ulp": "fp16 ULP is 0.015625 in [16,32) and 0.0078125 in [8,16), so 0.03125 is 2-4 ULP at the real operating point, not 1 ULP. It captures gaps of 0, 1 ULP and 2 ULP; only gap==0 is a genuine tie.",
+      "int8_head_noise": "with the INT8 LM head the per-logit quantization error is ~0.079 and the error on a top1-top2 gap is ~0.112 - roughly 2.5x to 3.6x WIDER than the margin. The margin cannot function as a noise bound in either direction."
+    },
+    "never_validated": "default is 0 (sampler.py:38), so this is an active opt-in. The value is never derived anywhere; the origin commit has an empty body. The earlier 'bit-identical over 800 sampled tokens' check compared the masked-max refactor against topk(k=2) with the margin ON in BOTH arms, so it never tested the margin. The Qwen3.8 margin A/B recorded throughput only (+0.3 tok/s) with no determinism, quality or token-diff field.",
+    "lab_already_wrote_the_refutation": "notes/2026-08-17-qwen36-int4-deterministic-greedy-closeout.md:43-45 states 'a global tie threshold is not an exactness repair. It changes the two trajectories differently.' That closeout deliberately submitted nothing. The flag was carried into both submissions the next day anyway.",
+    "records_affected": [
+      "cmszarna10e0nms0103hv0tve (MTP4, 100.497)",
+      "cmszbkxco0e11ms01l2rixxbt (MTP5, 101.922)"
+    ],
+    "required_action": "withdraw or re-measure both records with the margin unset and a margin-free quality baseline. This is the SECOND accuracy defect in the same commandSnippet; the first is the PERSISTENT_SCRATCH value.",
+    "optimization_upside": "dropping the margin is free or positive: the lab's own arm measured 92.237 margin-off vs 91.926 margin-on (+0.3 tok/s). It additionally unblocks two decode fast paths that refuse to engage while it is set - VLLM_XPU_LOCAL_ARGMAX_DECODE and VLLM_XPU_SPEC_GREEDY_TOP_IDS (gpu_model_runner.py:8382, 8451, both returning disabled('deterministic greedy margin needs dense logits')). Those avoid a 248320-wide dense-logits reduction per verified position. This is now the largest identified lever."
   }
 }

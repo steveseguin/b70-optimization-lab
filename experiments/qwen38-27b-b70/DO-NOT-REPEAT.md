@@ -187,3 +187,21 @@ is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
   - Recovery is a driver reload (unbind all four from `/sys/bus/pci/drivers/xe/unbind`,
     then reload `xe`); `modprobe -r xe` alone fails at refcount 8 because the refcount comes
     from the bound devices, not from any process. **Requires Steve's explicit go-ahead.**
+
+- 2026-08-20: **`VLLM_XPU_DETERMINISTIC_GREEDY_MARGIN` (0.03125) changes emitted tokens.
+  Do not use it, and do not treat it as "determinism insurance".** It emits the lower
+  token ID for any top1/top2 gap in `(0, 0.03125]` with no equality condition on the
+  values (`vllm/v1/sample/sampler.py:44-66`), and it governs the MTP verifier too.
+  Measured single-variable on arms differing only in this field: margin ON vs ON is
+  **25/25** byte-identical, margin OFF vs ON is **7/25** — 18 of 25 prompts change.
+  - At the real operating point (fp16, median |top-1| ~22.75) it is **2-4 ULP**, not 1,
+    and the INT8 LM head's own gap-level quantization noise (~0.11) is ~3x wider, so it
+    is not a numerical-noise bound in either direction.
+  - **The quality gate cannot detect it:** the Qwen3.8 quality baseline was generated
+    with the margin ON
+    (`qwen38-qualitybaseline-clean-mtp3-fast-25-spec-e-20260818/run/identity.env:189`).
+    Any flag that is on in both baseline and candidate is invisible to a sha256 gate.
+    **Before trusting any quality pass, check the baseline's own identity.env.**
+  - Dropping it is free or positive (+0.3 tok/s measured) and unblocks
+    `VLLM_XPU_LOCAL_ARGMAX_DECODE` and `VLLM_XPU_SPEC_GREEDY_TOP_IDS`, which refuse to
+    engage while it is set (`gpu_model_runner.py:8382, 8451`).

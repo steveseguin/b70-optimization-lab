@@ -11,7 +11,50 @@ Historical fixed-first-100-token rows used the repository's legacy
 Those approved receipts remain immutable. New submissions are required to use
 the conventional 99-interval field.
 
-> **⚠ Published-record correction, 2026-08-20 — two Qwen3.8 INT4 records carry a
+> **🛑 WITHDRAWAL RECOMMENDED, 2026-08-20 — the two Qwen3.8 INT4 records were
+> measured with a setting that changes model output.**
+>
+> Records `cmszbkxco0e11ms01l2rixxbt` (MTP5, 101.922) and
+> `cmszarna10e0nms0103hv0tve` (MTP4, 100.497) both ran with
+> `VALIDATION_DETERMINISTIC_GREEDY_MARGIN=0.03125`.
+>
+> That setting does **not** break ties — it emits the **lower token ID** whenever
+> the top-1/top-2 logit gap is anywhere in `(0, 0.03125]`, regardless of whether
+> the values are equal (`vllm/v1/sample/sampler.py:44-66`). It also governs the
+> MTP verifier, so it applies at every verified position.
+>
+> **Measured, single-variable, on arms whose `identity.env` differ only in this
+> field:**
+>
+> | comparison | prompts byte-identical |
+> | --- | ---: |
+> | margin ON vs ON (control) | **25/25** |
+> | margin OFF vs ON | **7/25** |
+> | margin OFF vs ON (2nd control arm) | **7/25** |
+>
+> Turning it off changes generated text on **18 of 25 prompts**. The control
+> proves the harness is reproducible at 25/25, so those divergences are the
+> margin's.
+>
+> **The quality gate could never have caught this.** The Qwen3.8 quality baseline
+> was itself generated with the margin on
+> (`qwen38-qualitybaseline-clean-mtp3-fast-25-spec-e-20260818/run/identity.env:189`),
+> so it compared margin-on against margin-on. The suite also generates only ~45
+> tokens, far too few to detect the measured flip rate.
+>
+> At real fp16 logit magnitudes (median |top-1| ≈ 22.75) the margin is **2–4 ULP**
+> wide, not 1, and the INT8 LM head's own quantization noise (~0.11 on a gap) is
+> ~3× **wider** than the margin — so it is not a numerical-noise device either.
+> Default is `0`; enabling it was an active opt-in that was never derived or
+> validated.
+>
+> **These two results should be withdrawn or re-measured** with the margin unset
+> and against a margin-free baseline. Full evidence:
+> `MARGIN_INVALIDATES_PUBLISHED_RECORDS_20260820` in
+> [`../data/qwen38-27b-autoround-int4-baseline-20260818.json`](../data/qwen38-27b-autoround-int4-baseline-20260818.json).
+> **Needs a human decision — nothing has been submitted or retracted upstream.**
+
+> **⚠ Published-record correction, 2026-08-20 — the same two records also carry a
 > wrong flag in their `commandSnippet`.**
 >
 > Records `cmszbkxco0e11ms01l2rixxbt` (MTP5, 101.922) and
