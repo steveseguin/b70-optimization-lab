@@ -1,0 +1,66 @@
+{
+ "date": "2026-08-19",
+ "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+ "method": "100-call bursts, production _xpu_C ops, TP2-local shapes",
+ "weights": "gate/up real (fixture v1 NT repack); rest synthetic (data-independent timing)",
+ "components": {
+  "mlp_gateup_int4_m6": {
+   "us": 84.62284,
+   "gbps": 543.0817495607569
+  },
+  "mlp_gateup_int4_m1": {
+   "us": 83.44434,
+   "gbps": 550.7517945495165
+  },
+  "mlp_down_int4_m6": {
+   "us": 21.04176,
+   "gbps": 1092.0455323128863
+  },
+  "mlp_down_int4_m1": {
+   "us": 22.85807,
+   "gbps": 1005.2712236859892
+  },
+  "target_lm_head_int8_m6": {
+   "us": 722.03605,
+   "gbps": 539.1144001743403
+  },
+  "target_lm_head_int8_m1": {
+   "us": 713.24312,
+   "gbps": 545.7606545156721
+  },
+  "draft_lm_head_int4_m1": {
+   "us": 340.79427000000004,
+   "gbps": 588.4944016224216
+  },
+  "gdn_inproj_int8_m6": {
+   "us": 81.42593,
+   "gbps": 518.5296624797531
+  },
+  "gdn_inproj_int8_m1": {
+   "us": 80.15403,
+   "gbps": 526.7577937129299
+  },
+  "gdn_outproj_int4_m6": {
+   "us": 9.12223,
+   "gbps": 889.0457706065295
+  },
+  "gdn_outproj_int4_m1": {
+   "us": 9.58343,
+   "gbps": 846.2606811966072
+  },
+  "attn_qkv_int4_m6": {
+   "us": 8.665719999999999,
+   "gbps": 1247.8409180079673
+  }
+ },
+ "step_model_us": {
+  "mlp_us": 6762.5344,
+  "gdn_us": 6429.51168,
+  "attn_us": 284.6072,
+  "target_head_us": 722.03605,
+  "draft_us": 2369.6586500000003,
+  "measured_components_total_ms": 16.56834798
+ },
+ "reference_step_ms_at_101.922tok_s": 35.3,
+ "note": "residual = attention kernels, TP2 allreduces (128/step), sampler, host overhead, draft overheads not captured here"
+}

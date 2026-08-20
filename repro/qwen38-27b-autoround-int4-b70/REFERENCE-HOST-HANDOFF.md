@@ -39,13 +39,22 @@ Once those gates exist, the source-level queue for >105 tok/s, in order
 (details in `experiments/qwen38-27b-b70/notes/`):
 
 1. Build and A/B the zero-init GDN scratch fix (`e34e82b05`, kernel note
-   2026-08-18). Measured per-call alloc cost is 0.93 ms/step Python-level
-   (true C++ ≈ 0.3–0.9 ms/step), so this is necessary but likely not
-   sufficient alone; see 2026-08-19-autoround-int4-scratch-alloc-cost-105-lever.md.
-2. Screen the rerank K=2 draft-top-k candidate (audit
+   2026-08-18). Built and op-level validated on the second host
+   (2026-08-19-autoround-int4-gdn-scratch-zero-init-built-ab.md):
+   +0.42-0.44 ms/step measured on the real op; strict-25 rerun is the
+   remaining proof.
+2. **Full-graph capture screen** — assembled but never benchmarked on the
+   Qwen3.8 MTP5 record config: graph-safe head256 stage + rebuilt oneCCL
+   graph collectives + zero-init persistent scratch are all validated, yet
+   the record runs PIECEWISE with DDTREE_FULL_GRAPH=0. The step cost model
+   (2026-08-19-autoround-int4-step-cost-model.md) shows ~53% of the 35.3 ms
+   step is NOT weight streaming (GEMMs are already at ~90% of the ~608 GB/s
+   HBM roofline — no GEMM kernel headroom; split-N is bit-exact but
+   slower). This is the largest identified lever.
+3. Screen the rerank K=2 draft-top-k candidate (audit
    2026-08-18-autoround-int4-draft-topk-rerank-audit.md); estimated +3–6 tok/s
    from acceptance lift at unchanged verifier cost.
-3. The M=4 residual/RMSNorm/INT4 gate-up fusion is **closed NO-GO**: its
+4. The M=4 residual/RMSNorm/INT4 gate-up fusion is **closed NO-GO**: its
    fusible share measured 31.9 µs/layer, below the 0.04 ms/layer threshold;
    see 2026-08-19-autoround-int4-fusion-gonogo-negative.md. Do not build it.
 
