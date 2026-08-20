@@ -205,3 +205,17 @@ is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
   - Dropping it is free or positive (+0.3 tok/s measured) and unblocks
     `VLLM_XPU_LOCAL_ARGMAX_DECODE` and `VLLM_XPU_SPEC_GREEDY_TOP_IDS`, which refuse to
     engage while it is set (`gpu_model_runner.py:8382, 8451`).
+
+- 2026-08-20: **The page cache on `/mnt/usb-models` (fuseblk / NTFS-3G) can serve
+  CORRUPTED model bytes while the disk itself is fine.** `model-00002-of-00007.safetensors`
+  hashed `ac86dfcf…` through ordinary reads but `e4ac4e0b…` — the correct, manifest-matching
+  value — through `dd iflag=direct`. The bad value was sticky: two ordinary passes agreed on
+  it, and a third ordinary read after a correct direct read still returned it. Not memory
+  pressure (90 GB free).
+  - **This is not just a gate failure.** vLLM loads safetensors through ordinary reads/mmap,
+    so a run started in this state loads corrupted weights and computes quietly wrong numbers
+    rather than failing loudly.
+  - **Diagnostic to use:** when a model hash mismatches, always re-hash with
+    `dd if=<file> bs=4M iflag=direct | sha256sum` before concluding the file is damaged.
+    Disk-correct + cache-wrong is a real and non-obvious state.
+  - Remedy needs root: drop caches or remount, then re-verify all shards with direct I/O.

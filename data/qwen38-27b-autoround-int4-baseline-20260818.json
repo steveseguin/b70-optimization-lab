@@ -756,5 +756,27 @@
     "hypothesis_REFUTED": "the guess that GPUs 2,3 had wedged is WRONG. The probe returned: xpu:0 FAIL DEVICE_LOST, xpu:1 FAIL DEVICE_LOST, xpu:2 OK sum=2048.0, xpu:3 OK sum=2048.0. Only 0 and 1 are wedged, unchanged from earlier. The probe's 0% CPU was simply it blocking on the two dead devices before reaching the healthy ones - devices are probed in index order, so 0 and 1 stall it first.",
     "revised_reading": "the 25-prompt arm hung in API server startup on HEALTHY GPUs. init engine completed in 155.77 s and the API server then never logged 'Application startup complete' in the remaining ~740 s, so it is a hang rather than slowness. The identical flag passed this point in the 2-prompt smoke, so it appears intermittent rather than deterministic.",
     "next_action": "retry once with the same config. A second hang would make it a property of the flag; a clean pass would make the first one a flake."
+  },
+  "PAGE_CACHE_CORRUPTION_20260820": {
+    "severity": "CRITICAL and BLOCKING. The host is serving corrupted model data through the normal read path. All GPU work is stopped.",
+    "discovery": "the harness model-identity guard rejected a run with 'SHA256 mismatch for model-00002-of-00007.safetensors'. That guard did its job.",
+    "the_finding": {
+      "expected_from_manifest": "e4ac4e0b6f7101cbfb1f019c46b4cfd4f4ca4d90d92760fb8f6e515f33418b37",
+      "normal_cached_read": "ac86dfcf82367e1c22169312b638b34162fbe594aa7159b9947d4697342b35fe  (WRONG)",
+      "direct_io_read": "e4ac4e0b6f7101cbfb1f019c46b4cfd4f4ca4d90d92760fb8f6e515f33418b37  (CORRECT - matches the manifest)",
+      "conclusion": "THE DISK IS FINE. The page cache is serving corrupted data. dd iflag=direct returns the correct bytes; ordinary reads return corrupt bytes.",
+      "persistent": "the corruption is sticky, not a one-off. Two ordinary hash passes agreed on the wrong value, and a third ordinary read AFTER a correct direct read still returned the wrong value.",
+      "not_memory_pressure": "125 GB total, 90 GB free, 120 GB available at the time of measurement.",
+      "filesystem": "/dev/sda2 on /mnt/usb-models, type fuseblk (NTFS-3G via FUSE), rw,relatime,blksize=4096. File mtime is unchanged since 2026-08-15 23:10 and a full sequential read completes without I/O error."
+    },
+    "WHY_THIS_MATTERS_BEYOND_THE_GUARD": "vLLM loads safetensors weights through ordinary reads/mmap, which go through the same page cache. A process starting now would load CORRUPTED WEIGHTS and would not necessarily fail loudly - it would just compute slightly wrong numbers.",
+    "NEW_HYPOTHESIS_FOR_THE_NONDETERMINISM": "this is a candidate explanation for the 21/25 margin-free self-determinism. If the page cache intermittently serves corrupt weight bytes, two runs loading the same shards can end up with slightly different weights, which would flip exactly the near-tied argmax positions that were observed to diverge. NOT yet tested - it is a hypothesis, and it competes with the TP2 allreduce hypothesis.",
+    "WHICH_RESULTS_ARE_AFFECTED": {
+      "probably_clean": "every arm run today up to and including the fast-paths arm, because each logged 'model revision and all recorded file identities verified' at startup. The margin-free baseline arms, the RMSNorm-BI arms and the fast-paths arm all passed that check.",
+      "suspect": "anything after roughly 02:11 local. The first GDN-capture 25-prompt attempt passed model-verify and then hung in API server startup at 02:11 - that hang may well be an early symptom rather than a flake.",
+      "recommendation": "re-verify the whole model with direct I/O, and re-run any result that matters, after the cache is cleared."
+    },
+    "REMEDY_NEEDS_ROOT": "drop the page cache (echo 3 > /proc/sys/vm/drop_caches) or unmount and remount /mnt/usb-models, then re-verify all seven shards with dd iflag=direct. Longer term, NTFS-3G over FUSE is a poor store for multi-GB weights under sustained load; a native filesystem would be materially safer. NOT performed - privileged action, needs Steve's go-ahead.",
+    "status": "all GPU experimentation is halted. The harness will reject every run while the cached hash mismatches, which is correct behaviour."
   }
 }
