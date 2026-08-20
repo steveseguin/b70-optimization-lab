@@ -453,5 +453,25 @@
     },
     "residual_damage": "58 files in the record's compile cache (vllm-cache/qwen38-mtp5-noscratch-20260818) were modified by the failed runs. The regression arm is 24/25 against all three record arms, differing on holdout--long-rollover-repository-audit at token 0. The SUBMITTED record stands on its sealed evidence, but that cache is no longer the pristine artifact and must not be reused as the pinned cache. Future determinism work needs a fresh cache and a re-established three-arm baseline.",
     "lesson": "run the regression gate BEFORE mutating the build tree, not after"
+  },
+  "RETRACTION_scratch_flag_never_applied_20260820": {
+    "severity": "high - invalidates my end-to-end scratch evidence and misstates two submitted command snippets",
+    "finding": "run-arm.sh:673 exported VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1 unconditionally for every spec arm. It was a hard export, not a ${VAR:-1} default, so the VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0 I passed on the command line was silently discarded.",
+    "empirical_proof": "the kernel emits a TORCH_WARN 'VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH allocated on ...' each time it allocates. That marker appears 96 times in qwen38-mtp5-noscratch-25-spec-a, 96 times in qwen38-mtp4-noscratch-25-spec-a, and 96 times in qwen38-mtp4-fast-25-spec-a. Identical. The persistent scratch was ON in every run, including every arm I labelled 'noscratch'.",
+    "what_is_retracted": [
+      "that disabling the persistent scratch fixed MTP4 determinism from 24/25 to 25/25",
+      "that disabling it was faster (+0.237 tok/s)",
+      "the end-to-end A/B I used on 2026-08-19 to argue the scratch cost was near 0.05 ms/step - both sides of that comparison had the scratch enabled"
+    ],
+    "what_actually_differed": "label and compile cache. Since fresh compilations emit different-but-internally-deterministic code, a cache difference alone explains both the determinism change and the sub-tok/s delta.",
+    "what_still_stands": [
+      "the torch::empty finding in get_gdn_spec_decode_scratch is real source, unaffected",
+      "the other machine's op-level A/B on the BUILT zero-init fix is unaffected - it toggled the real code path, not this flag",
+      "the history-dependent divergence signature (position moving 88/30/30, prompt identical in isolation) is still real evidence of an uninitialized read; the scratch was always on, so the bug was always present",
+      "both submitted records remain valid measurements - real throughput, real determinism and quality gates"
+    ],
+    "submission_defect": "both LocalMaxxing command snippets (cmszarna10e0nms0103hv0tve, cmszbkxco0e11ms01l2rixxbt) list VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0. That flag had no effect; the runs used the harness default of 1. The measured rates are unaffected, but the snippets misdescribe the configuration and should be corrected.",
+    "harness_fix": "run-arm.sh:676 now honours VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH, defaulting to 1, so the axis is testable. Also added a VALIDATION_USE_BREAKABLE_CUDAGRAPH passthrough for the GDN-capture screen.",
+    "process_lesson": "verify a flag reached the server before building conclusions on it. The kernel already emitted a marker that would have caught this immediately."
   }
 }

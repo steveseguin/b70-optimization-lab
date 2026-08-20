@@ -670,7 +670,10 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
     export VLLM_XPU_GDN_REPLAYSSM_SPEC=0
     export VLLM_XPU_GDN_NATIVE_SPEC_DECODE=1
     export VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL=0
-    export VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+    # Overridable: the persistent scratch is a real experimental axis, and a
+    # hard export here silently discarded operator intent. Runs that thought
+    # they had disabled it did not; see the 2026-08-20 correction.
+    export VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH="${VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH:-1}"
     export VLLM_XPU_DDTREE_FULL_GRAPH=0
     export VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=0
     export VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA=0
@@ -768,6 +771,11 @@ if [[ "$mode" == "nospec-latest-exact-native" \
   # contract so the ordinary GDN backend can participate in an identity-
   # matched global-invariant control.
   export VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1
+fi
+if [[ "${VALIDATION_USE_BREAKABLE_CUDAGRAPH:-0}" == "1" ]]; then
+  # Lets a piecewise cudagraph_mode omit attention ops from splitting_ops,
+  # which is the escape route cudagraph_dispatcher.py:53 checks for.
+  export VLLM_USE_BREAKABLE_CUDAGRAPH=1
 fi
 if [[ -n "${VALIDATION_COMPILATION_CONFIG_OVERRIDE:-}" ]]; then
   export COMPILATION_CONFIG="$VALIDATION_COMPILATION_CONFIG_OVERRIDE"
