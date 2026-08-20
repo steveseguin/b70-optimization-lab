@@ -8,9 +8,10 @@
   "fa_decode_6row_causal": "kv 84..2047, 0/300 each; row-invariant (row5 packed vs solo bitwise equal)",
   "fa_prefill": "M=49/71/187/341/837, 0/200 each",
   "gdn_spec_decode_m6_persistent": "0/1000 with state restore per call",
-  "tp_collectives": "400 collectives cross-process bitwise equal"
+  "tp_collectives": "400 collectives cross-process bitwise equal",
+  "gdn_draft_packed_decode_b1": "0/500 with state restore per call (fused_recurrent_gated_delta_rule_packed_decode)"
  },
- "prefill_dirty": "int4_gemm_w4a16 only: qkv[5120x1408] M in [129,448], down[8704x5120] M in [129,248]; fixed by determinism pad (built, gated)",
+ "prefill_dirty": "int4_gemm_w4a16 only: qkv[5120x1408] M in [129,448], down[8704x5120] M in [129,248]; fixed by determinism pad (built, gated); PLUS gdn_replayssm_commit_pending double race at decode time (fixed, see 2026-08-20-replayssm-commit-pending-race-found-and-fixed.md)",
  "prompt_length_analysis": {
   "divergent_prompt_tokens": {
    "holdout--structured-extraction": 187,
