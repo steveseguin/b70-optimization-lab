@@ -670,5 +670,36 @@
     },
     "also_dead_on_xpu": "vocab_parallel_embedding.py:414 gates linear_batch_invariant behind envs.VLLM_BATCH_INVARIANT and is_cuda_alike(), with no XPU opt-in at all, so the LM-head batch-invariant path is unreachable on XPU.",
     "planned_experiment": "margin-free + VALIDATION_RMSNORM_BATCH_INVARIANT=1, two arms on a shared compile cache, on GPUs 2,3. Question: does self-determinism go 21/25 -> 25/25, and what does it cost in tok/s?"
+  },
+  "marginfree_three_arm_determinism_20260820": {
+    "design": "three margin-free MTP5 arms, identical config, ALL sharing one compile cache (qwen38-marginfree-mtp5-20260820). Arm A performed the compilation (132.20 s); arms B and C started fully warm (5.13 s and 3.46 s).",
+    "pairwise": {
+      "A_vs_B": "21/25",
+      "A_vs_C": "21/25",
+      "B_vs_C": "22/25"
+    },
+    "KEY_RESULT": "the divergence is CONCENTRATED and STABLE, not uniform noise. Only 4 of 25 prompts ever diverge, and 3 of them diverge in ALL THREE pairings.",
+    "always_divergent": [
+      "holdout--factual-protocol",
+      "holdout--long-rollover-repository-audit",
+      "selection--sql-debugging"
+    ],
+    "sometimes_divergent": [
+      "holdout--structured-extraction (diverges A-vs-B and A-vs-C, but B and C AGREE on it)"
+    ],
+    "interpretation": "because the same small prompt set is implicated every time, this is data-dependent nondeterminism, not random per-token noise. That makes it bisectable: a reduced suite of those 4 prompts reproduces the whole phenomenon and would cut determinism-test cost by roughly 6x. Note B-vs-C is the cleanest comparison (both fully warm, no compilation during the run) and still shows 3 divergent prompts, so the effect is not an artifact of compiling during arm A.",
+    "speeds": {
+      "arm_a_all25": 101.394,
+      "arm_b_all25": 100.455,
+      "arm_c_all25": 101.17,
+      "arm_a_sel12": 93.435,
+      "arm_b_sel12": 92.472,
+      "arm_c_sel12": 92.851,
+      "MEDIAN_OF_THREE_all25": 101.17,
+      "MEDIAN_OF_THREE_sel12": 92.851
+    },
+    "HONEST_MARGIN_FREE_NUMBER": "101.170 tok/s all-25 as the median of three arms, against the record's margin-ON 101.922 on GPUs 0,1. Removing the output-altering margin costs essentially nothing in speed. What it costs is the 25/25 determinism claim, which was never real.",
+    "caveat": "measured on GPUs 2,3 because 0,1 are wedged. Not directly record-comparable; a margin-ON control on 2,3 is still outstanding to separate pair effects from the margin, particularly for the selection-12 subset.",
+    "next": "arm D launched: identical config plus VALIDATION_RMSNORM_BATCH_INVARIANT=1, to test whether a batch-invariant RMSNorm closes the three stable divergent prompts and at what throughput cost."
   }
 }
