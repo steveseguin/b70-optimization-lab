@@ -1,0 +1,52 @@
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index 7000db69f..7b007bb19 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -350,19 +350,38 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+                 )
+                 fallback_margin = 0.0
+             if fallback_margin > 0.0 and logits.shape[-1] >= 2:
+-                with timed_region("lm_head_int4_draft.margin_top2"):
+-                    top2 = torch.topk(logits.float(), k=2, dim=-1).values
+-                    low_margin = (top2[:, 0] - top2[:, 1]) < fallback_margin
++                flat_logits = logits.reshape(-1, logits.shape[-1])
++                with timed_region("lm_head_int4_draft.margin_gap"):
++                    # top1-top2 gap via two max reductions + scatter instead
++                    # of torch.topk: ~60 us vs ~321 us at N=124160 on B70
++                    # (torch.topk does a full sort on XPU).
++                    lf = flat_logits.float()
++                    top1v, top1i = lf.max(dim=-1)
++                    top2v = lf.scatter(
++                        1, top1i.unsqueeze(1), float("-inf")
++                    ).max(dim=-1).values
++                    low_margin = (top1v - top2v) < fallback_margin
+                 if bool(low_margin.any().item()):
+                     with timed_region("lm_head_int4_draft.exact_fallback"):
+                         flat_x = x_contiguous.reshape(
+                             -1, x_contiguous.shape[-1])
+-                        exact_logits = F.linear(
+-                            flat_x[low_margin].to(layer.weight.dtype),
+-                            layer.weight,
+-                            bias,
+-                        )
+-                        logits[low_margin] = exact_logits.to(logits.dtype)
++                        # Recompute exact fp16 logits ONLY for columns within
++                        # margin of the int4 top1 (~2 columns typically),
++                        # instead of the full-vocab F.linear per flagged row
++                        # (~2.2 ms). With margin >= 2x the max int4 logit
++                        # error, any column able to overtake the argmax is
++                        # included, so the repaired argmax equals the fp16
++                        # argmax.
++                        rows = low_margin.nonzero(as_tuple=True)[0]
++                        for r in rows.tolist():
++                            cand = (top1v[r] - lf[r]) < fallback_margin
++                            cand[top1i[r]] = True
++                            cols = cand.nonzero(as_tuple=True)[0]
++                            exact = (
++                                flat_x[r].to(layer.weight.dtype)
++                                @ layer.weight[cols].t()
++                            )
++                            flat_logits[r, cols] = exact.to(flat_logits.dtype)
+             return logits.reshape(out_shape)
+         if (
+             self._env_enabled("VLLM_XPU_LM_HEAD_INT8")
