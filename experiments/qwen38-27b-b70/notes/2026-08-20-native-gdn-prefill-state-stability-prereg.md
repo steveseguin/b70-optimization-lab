@@ -2,7 +2,10 @@
 
 Date: 2026-08-20
 
-Status: **implemented; GPU qualification and screen not started**
+Status: **completed; valid bounded negative**
+
+Result:
+[`2026-08-20-native-gdn-prefill-state-stability-result.md`](2026-08-20-native-gdn-prefill-state-stability-result.md)
 
 ## Question and scope
 
