@@ -165,8 +165,13 @@ B2 produced the sane reference-family response. Preferred medians were
 none is promotable. A sealed C1 recurrence arm then reproduced A2's complete
 512-zero final stream exactly, while SQL and factual-protocol each produced a
 third token family. The pad fixes the scoped TP1 contrast, not full TP2
-determinism. Untraced recurrence sampling is closed; preserve the full
-25-request history and localize the final-request execution path.
+determinism. A preregistered target/verifier post-forward synchronization arm
+then did not produce the zero stream, but reproduced a previously observed
+unsynchronized long-rollover family,
+matching B2 only through generated token 468 before splitting at token 469;
+SQL and factual-protocol differed from every A2/B2/C1 family. The broad
+completion boundary is insufficient and S2 is forbidden. Preserve the full
+25-request history and proceed only to the bounded prompt-24 replay microscope.
 
 The published `101.922` MTP5 and `100.497` MTP4 LocalMaxxing rows are
 invalidated and withdrawal is recommended. Both opted into a `0.03125` greedy
@@ -190,6 +195,7 @@ manifest immediately before vLLM starts.
 - [pad-on composite TP2 full-25 preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-composite-tp2-full25-prereg.md)
 - [pad-on composite TP2 full-25 result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-composite-tp2-full25-result.md)
 - [pad-on TP2 full-25 recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md)
+- [post-forward synchronization result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-postforward-sync-result.md)
 
 ## Closed: Qwen3.6 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 
@@ -290,12 +296,14 @@ loaded service.
    quality gates but failed 22/25 A/B parity, including one all-zero 512-token
    response. The exact C1 recurrence arm also passed every sealed gate and
    repeated that all-zero response byte-for-byte while producing third SQL and
-   factual families. Preserve A2/B2/C1, run no D arm, and first screen the
-   rank-local post-model-forward completion boundary while retaining all 24
-   predecessor requests. If that boundary is insufficient, use the bounded
-   request-filtered prompt-24 microscope. See the
+   factual families. With post-target-forward synchronization active, S1 did
+   not produce the zero stream, but reproduced a prior unsynchronized family,
+   still split from B2 at token 469, and produced further SQL/factual families.
+   Preserve A2/B2/C1/S1, run neither D
+   nor S2, and use only the bounded request-filtered prompt-24 microscope while
+   retaining all 24 predecessor requests. See the
    [recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md)
-   and [sync preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-postforward-sync-prereg.md).
+   and [sync result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-postforward-sync-result.md).
    Do not promote or submit these speeds.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is

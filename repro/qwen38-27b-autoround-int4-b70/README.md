@@ -15,8 +15,12 @@ require independent numerical, quality, determinism, and performance gates.
 > later preregistered six-arm control produced two structured variants with
 > the oneDNN INT4 prefill pad off and one shared variant in three pad-on arms.
 > That passes the diagnostic criterion but does not establish lane-wide or
-> full-25 TP2 determinism. Do not use the historical command below for a new
-> promotion run.
+> full-25 TP2 determinism. Pad-on TP2 subsequently remained nondeterministic,
+> including a recurring 512-zero final stream. A target/verifier post-forward
+> sync arm observed a third endpoint family that still split at generated
+> token 469; one treated arm cannot distinguish a sync effect from the lane's
+> existing run-to-run variability. It is a negative boundary diagnostic, not a
+> fix. Do not use the historical command below for a new promotion run.
 
 ## Model
 

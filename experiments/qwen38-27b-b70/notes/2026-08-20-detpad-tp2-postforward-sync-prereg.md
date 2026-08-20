@@ -2,7 +2,7 @@
 
 Date: 2026-08-20
 
-Status: preregistered; S1 has not launched.
+Status: **completed; S1 failed the primary endpoint and S2 is forbidden**.
 
 ## Question
 
@@ -78,3 +78,6 @@ prompt at index 11. Always compare complete token-ID arrays.
 
 Parent recurrence result:
 [`2026-08-20-detpad-tp2-full25-recurrence-result.md`](2026-08-20-detpad-tp2-full25-recurrence-result.md)
+
+Result:
+[`2026-08-20-detpad-tp2-postforward-sync-result.md`](2026-08-20-detpad-tp2-postforward-sync-result.md)
