@@ -103,9 +103,10 @@ captured in the linked packet.
 The separate `devan-carlin/Qwen3.8-27B-int4-AutoRound` lane now has an honest
 margin-free MTP5 working anchor at `101.170 tok/s` across all 25 prompts and
 `92.851 tok/s` on selection-12. It is not promoted: three pairwise comparisons
-agree on only 21–22/25 prompts, and a fresh margin-free target-only quality
-oracle is still open. The published `101.922`/`100.497` rows used an
-output-changing margin and are withdrawal-recommended.
+agree on only 21–22/25 prompts. A fresh target-only A/B now agrees on 24/25;
+post-recovery TP2 MTP5 remains 21/25, and a sealed-cache TP1 pair agrees on
+only 2/4. The published `101.922`/`100.497` rows used an output-changing margin
+and are withdrawal-recommended.
 
 ### Qwen3.6 27B Q8_0 Target-Only On Two ASRock B70s
 
@@ -221,8 +222,9 @@ Qwen3.6 INT4 lane, so the pinned source stack runs without a model-specific
 code change. The new weights still require independent quality, determinism,
 and performance validation. Current margin-free MTP5 anchor: `101.170 tok/s`
 on the 25-prompt suite (`92.851` selection-12), with only 21–22/25 pairwise
-repeatability and no valid target-only oracle. This is research evidence, not a
-record.
+repeatability. A valid target-only quality oracle now exists, but its A/B is
+24/25 and the sealed-cache TP1 MTP5 control is only 2/4. This is research
+evidence, not a record.
 
 Distinct from the llama.cpp Q4_K_M target-only Qwen3.8 lane: different runtime,
 quantization, and speculation class. Do not merge their rows.
@@ -231,12 +233,14 @@ Main entries:
 
 - [lane setup and model manifest](../repro/qwen38-27b-autoround-int4-b70/README.md)
 - [baseline evidence](../data/qwen38-27b-autoround-int4-baseline-20260818.json)
+- [post-recovery TP1 result](../experiments/qwen38-27b-b70/notes/2026-08-20-postrecovery-marginfree-tp1-runtime-nondeterminism.md)
 - [current source/host queue](../repro/qwen38-27b-autoround-int4-b70/REFERENCE-HOST-HANDOFF.md)
 
-Status: active research. The immediate queue is a fresh margin-free target-only
-oracle after dual-view model verification, followed by the TP1 determinism
-diagnostic and a repeat of the margin-free MTP5 anchor. Only after those gates
-pass should draft-acceptance changes or a record submission be considered.
+Status: active research. The target oracle, post-recovery TP2 repeats, and TP1
+control are complete. The immediate queue is a least-intrusive same-cache TP1
+trace of the structured-extraction flip at token 225. Only after runtime
+determinism and target parity pass should draft-acceptance changes or a record
+submission be considered.
 
 ### Gemma 4 26B A4B Q8 / INT8 On B70
 

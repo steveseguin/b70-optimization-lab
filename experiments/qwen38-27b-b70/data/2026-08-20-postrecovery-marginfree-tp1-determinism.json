@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-08-20",
+  "classification": "negative-correctness-blocker",
+  "headline": "Margin-free Qwen3.8 MTP5 remains nondeterministic at TP1 with a byte-identical sealed compile cache; TP2 cross-rank collectives/allreduce are not required for the observed flips.",
+  "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70",
+  "common_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "vllm_head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+    "vllm_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "vllm_xpu_kernels_head": "2dd55f380df753a10a88fcd9e96192561066e713",
+    "vllm_xpu_kernels_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "dtype": "float16",
+    "dual_view_model_verification": "verified-direct-odirect-and-ordinary"
+  },
+  "fresh_target_only_oracle": {
+    "identity": {
+      "enable_mtp": false,
+      "configured_num_speculative_tokens": 3,
+      "configured_num_speculative_tokens_role": "inert launcher default because MTP was disabled",
+      "gdn_native_spec_decode": "unset",
+      "gdn_replayssm_spec": 1,
+      "gdn_spec_persistent_scratch": 0,
+      "repo_working_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arm_a": {
+      "run": "qwen38-marginfree-targetoracle-25-a-20260820",
+      "median_tok_s_1_100_after_ttft": 49.758811651164464,
+      "bench_sha256": "045fd8b4fc9f1eda3bbc778e4b88a6ad7407ff4a50be879dc4e9780b37e0d6e8",
+      "quality_sha256": "45424f1d2dcbfda0a5ed75552cf799cac0e8fb6b8c5e1ddf2aba540b95c77e95",
+      "quality_pass_all": true
+    },
+    "arm_b": {
+      "run": "qwen38-marginfree-targetoracle-25-b-20260820",
+      "median_tok_s_1_100_after_ttft": 50.01585827745603,
+      "bench_sha256": "36c79f46904610bcd63a28e439c561bbfa5668257c1a32a44a56770a7dd9ec3f"
+    },
+    "pairwise_exact_prompts": 24,
+    "prompt_count": 25,
+    "divergence": {
+      "prompt_id": "holdout--long-rollover-repository-audit",
+      "first_zero_based_token_index": 469,
+      "arm_a_output_sha256": "471a54e871126200a286dedbc80c6c689ce83093be06e7350b551a512cf364dd",
+      "arm_b_output_sha256": "c923f52f0159d5a1a8163d77ebba9b911bd9c658efc85ef83383b0a0c0a1428b"
+    },
+    "conclusion": "A valid fresh margin-free quality oracle now exists, but target-only generation itself is not token-deterministic on all 25 prompts."
+  },
+  "post_recovery_tp2_mtp5": {
+    "identity": {
+      "enable_mtp": true,
+      "mtp_depth": 5,
+      "capture_size": 6,
+      "deterministic_greedy_margin": 0,
+      "draft_lm_head_int4": true,
+      "draft_lm_head_int4_fallback_margin": 0,
+      "gdn_native_spec_decode": 1,
+      "gdn_replayssm_spec": 0,
+      "gdn_spec_persistent_scratch": 1,
+      "repo_working_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "failed_arm": {
+      "run": "qwen38-postrecovery-marginfree-mtp5-25-spec-a-20260820",
+      "runner_exit_code": 2,
+      "classification": "invalid-launch-identity",
+      "reason": "The inherited serial-exact proof default rejected MTP5 verifier row width during engine initialization."
+    },
+    "arm_b": {
+      "run": "qwen38-postrecovery-marginfree-mtp5-25-spec-b-20260820",
+      "median_tok_s_1_100_after_ttft": 102.13155792774715,
+      "bench_sha256": "06e29f37d1aaeea2a24aec6c22ee264d2046cb30d1baf6d2a48eb65b589d2947",
+      "quality_sha256": "c2d5dc7d53ca925b7079e8e91f8159116e7273f5ddab740cb67392bc2c63b0ec",
+      "quality_pass_all": true,
+      "exact_prompts_vs_target_oracle_a": 15
+    },
+    "arm_c": {
+      "run": "qwen38-postrecovery-marginfree-mtp5-25-spec-c-20260820",
+      "median_tok_s_1_100_after_ttft": 102.17617421485427,
+      "bench_sha256": "7a203497517f86bd0a0b276f6bf21561b90cb28d069d87668b51abf02ddf90ea",
+      "exact_prompts_vs_target_oracle_a": 15
+    },
+    "pairwise_exact_prompts": 21,
+    "prompt_count": 25,
+    "conclusion": "The recovered host and strict dual-view model gate reproduced the speed but not determinism or target parity. Page-cache corruption is not necessary to reproduce the earlier 21-22/25 instability; this does not establish the cause of every historical divergence."
+  },
+  "tp1_diagnostic": {
+    "identity": {
+      "enable_mtp": true,
+      "mtp_depth": 5,
+      "capture_size": 6,
+      "deterministic_greedy_margin": 0,
+      "draft_lm_head_int4": true,
+      "draft_lm_head_int4_fallback_margin": 0,
+      "gdn_native_spec_decode": 1,
+      "gdn_replayssm_spec": 0,
+      "gdn_spec_persistent_scratch": 1,
+      "repo_head_during_sealed_runs": "5e5cd3098ec4d0cbc2cb30efd95c7d90e613fe10",
+      "repo_working_patch_sha256": "31cc9f12857034739f719eff8211de47c9c5f4788ab1f5725a7a5bb3bd9870a0"
+    },
+    "gpu": 2,
+    "tensor_parallel_size": 1,
+    "suite": "repro/qwen38-27b-autoround-int4-b70/tp1-divergence-suite-v1.json",
+    "suite_sha256": "dc927953d3d1b1b5ee963a468d17c7b2bb9d49478aa88e52a74dc700e84aabdc",
+    "suite_role": "four-prompt determinism diagnostic only; never a performance or promotion suite",
+    "automatic_namespace_runs": [
+      {
+        "run": "qwen38-postrecovery-marginfree-mtp5-tp1-divergence-a-20260820",
+        "pythonhashseed": null,
+        "outer_key": "b936042a67",
+        "median_tok_s_1_100_after_ttft": 81.3948959678348,
+        "bench_sha256": "baae2a6314a3be01978e8f4962c8e1c6d7490a2b6f0a7229123f1bc4c67e75d4"
+      },
+      {
+        "run": "qwen38-postrecovery-marginfree-mtp5-tp1-divergence-b-20260820",
+        "pythonhashseed": null,
+        "outer_key": "fa61497544",
+        "median_tok_s_1_100_after_ttft": 81.49906884862912,
+        "bench_sha256": "b953eefa2f5b2ff68664571833eeee3a2a25d4a2d1f06815c3b3694fcb8d534e"
+      },
+      {
+        "run": "qwen38-postrecovery-marginfree-mtp5-tp1-seed0-divergence-c-20260820",
+        "pythonhashseed": 0,
+        "outer_key": "b936042a67",
+        "median_tok_s_1_100_after_ttft": 83.54267793128093,
+        "bench_sha256": "6c399eb9904a377d8a5518d6356f703e72d007adf995d67aac7a212a2c680e28"
+      },
+      {
+        "run": "qwen38-postrecovery-marginfree-mtp5-tp1-seed0-divergence-d-20260820",
+        "pythonhashseed": 0,
+        "outer_key": "fa61497544",
+        "median_tok_s_1_100_after_ttft": 81.62437975715875,
+        "bench_sha256": "82f22f1165e676016c0a95c9e603440e3124bd28af7ad814d8125b632bb35b2d"
+      }
+    ],
+    "automatic_namespace_findings": {
+      "a_vs_b_exact_prompts": 3,
+      "c_vs_d_exact_prompts": 3,
+      "pythonhashseed_zero_stabilized_outer_key": false,
+      "outer_key_factor_difference": "code_hash only",
+      "computation_graphs_byte_identical": true,
+      "inner_inductor_keys_identical": true,
+      "classification": "cross-key results were suggestive but causally ambiguous"
+    },
+    "sealed_b936_cache": {
+      "cache_tree_sha256": "02db4496a0fd1780939f86fa0856cdf6565e738de69e4c7980e38b03f0e72e1c",
+      "manifest_file_sha256": "552ddb98181fc91423372061eb1c8514566ab2dbb076af6a60c3573d555c91a5",
+      "entry_count": 1859,
+      "file_count": 1588,
+      "total_file_bytes": 197507168,
+      "outer_artifacts": {
+        "backbone_sha256": "44cce37eeb6d82c52c64c3d67443cd63cbde90d96dbcf5403fd9e676e85bc4b3",
+        "eagle_head_sha256": "aa3ba1e8900a720ecf76b858cd7f44c0c8839836d558ff523527452c90c99e1e"
+      },
+      "aot_models": {
+        "backbone_sha256": "f67003df6a0268ead4edaf77c97a7fe97aadb3d77a1bf33ca9405c4327ec84f3",
+        "eagle_head_sha256": "59fada50cace093f5761d2756f0bd2ee3dd4443f1d6ba13a7e712b8203eb9eed"
+      },
+      "warmup_run": {
+        "run": "qwen38-postrecovery-marginfree-mtp5-tp1-sealed-b936-e-20260820",
+        "median_tok_s_1_100_after_ttft": 81.62198817396168,
+        "bench_sha256": "8ab260ac84be75dbd3e9176a44115dcf2bef41f7621db84eeb9a25946fa4bf28",
+        "note": "Loaded b936 directly, then rewrote 24 best_config timing records without changing executable artifact identities."
+      },
+      "decisive_runs": [
+        {
+          "run": "qwen38-postrecovery-marginfree-mtp5-tp1-sealed-b936-f2-20260820",
+          "median_tok_s_1_100_after_ttft": 81.54420791851902,
+          "bench_sha256": "ad574e57830c270b8f498e91ba7a4db9015c08d259bad0c98f28c959e6d0bc25",
+          "output_sha256s": [
+            "21cd401c04722b48bf7283001caf4c6aafc2e886a88ea938f38afe46e1959cba",
+            "559ce970c6c0b7b27e95eec08c535e577948a328f2efd82a543f1a4637b6559d",
+            "11a29b06af41ba35843394282b6b365b05dc7124a8a4c99937c2f855f59034f4",
+            "c923f52f0159d5a1a8163d77ebba9b911bd9c658efc85ef83383b0a0c0a1428b"
+          ]
+        },
+        {
+          "run": "qwen38-postrecovery-marginfree-mtp5-tp1-sealed-b936-g-20260820",
+          "median_tok_s_1_100_after_ttft": 83.65892243946422,
+          "bench_sha256": "3b43dd90b890dcede548718294502f84771e5d1b05517a1ec03d37935012464c",
+          "output_sha256s": [
+            "21cd401c04722b48bf7283001caf4c6aafc2e886a88ea938f38afe46e1959cba",
+            "559ce970c6c0b7b27e95eec08c535e577948a328f2efd82a543f1a4637b6559d",
+            "74a860ae4c5d6261752963c658008dda2bdedea98ed171319543b87c9f0215a8",
+            "471a54e871126200a286dedbc80c6c689ce83093be06e7350b551a512cf364dd"
+          ]
+        }
+      ],
+      "decisive_pair": {
+        "same_input_cache_tree": true,
+        "same_output_cache_tree": true,
+        "live_post_shutdown_cache_verification": "verified",
+        "direct_outer_graph_loads_per_run": 2,
+        "direct_aot_loads_per_run": 2,
+        "compile_or_save_markers_per_run": 0,
+        "exact_prompts": 2,
+        "prompt_count": 4,
+        "divergences": [
+          {
+            "prompt_id": "holdout--structured-extraction",
+            "first_zero_based_token_index": 225
+          },
+          {
+            "prompt_id": "holdout--long-rollover-repository-audit",
+            "first_zero_based_token_index": 469
+          }
+        ]
+      }
+    },
+    "invalid_invocation": {
+      "run": "qwen38-postrecovery-marginfree-mtp5-tp1-sealed-b936-f-20260820",
+      "classification": "preflight-failed-no-gpu-work",
+      "reason": "VLLM_CACHE_ROOT was supplied instead of the scrub-safe VALIDATION_VLLM_CACHE_ROOT, so the gate correctly compared the manifest to the unrelated default cache and refused launch."
+    }
+  },
+  "conclusions": [
+    "The 21-22/25 MTP5 instability is not explained by corrupted model bytes: fresh direct and ordinary model views passed before every valid run.",
+    "TP2 cross-rank oneCCL collectives/allreduce are not necessary for the output instability because a sealed, byte-identical TP1 executable/cache state still produced divergent token arrays. The TP1 process still initialized its world-size-one XCCL backend.",
+    "The target-only lane also flipped one long-rollover token, so at least one residual source is not specific to speculative verification.",
+    "The 102.13-102.18 tok/s post-recovery arms and the historical 101.170 tok/s anchor remain diagnostic research measurements, not promotable records.",
+    "The next correctness step is a bounded same-cache TP1 trace of the structured-extraction divergence, starting at the earliest layer/operator state that can be observed without changing the execution path."
+  ]
+}

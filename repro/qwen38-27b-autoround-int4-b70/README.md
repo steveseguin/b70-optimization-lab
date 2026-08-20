@@ -9,9 +9,10 @@ require independent numerical, quality, determinism, and performance gates.
 > published `101.922` MTP5 and `100.497` MTP4 rows used an output-changing
 > greedy margin and a baseline with the same setting; withdrawal is
 > recommended. The honest margin-free working anchor is `101.170 tok/s`
-> all-25, but its three arms agree on only 21–22/25 prompts and no fresh
-> margin-free target-only oracle exists. Do not use the historical command
-> below for a new promotion run.
+> all-25, but its three arms agree on only 21–22/25 prompts. A fresh
+> margin-free target-only oracle now exists, yet target A/B agreed on 24/25
+> and a sealed-cache TP1 MTP5 pair agreed on only 2/4 diagnostic prompts. Do
+> not use the historical command below for a new promotion run.
 
 ## Model
 
@@ -139,20 +140,23 @@ handoff remains incomplete. See the
 
 ## Open items
 
-- No valid margin-free target-only quality oracle exists for this model yet.
-  The old Qwen3.8 baseline used the output-changing margin; the Qwen3.6
-  baseline is a different checkpoint. Neither may be reused for a new parity
-  or quality claim.
+- A valid fresh margin-free target-only quality oracle now exists at
+  `qwen38-marginfree-targetoracle-25-a-20260820`. Its A/B throughput was
+  `49.759` / `50.016 tok/s`, but the pair agreed on only 24/25 prompts: long
+  rollover diverged at token 469. Use A for the semantic baseline while
+  retaining that target-only determinism caveat.
 - The vision tower (333 tensors) is unused for text benchmarking; the config
   carries `language_model_only`.
 - The current margin-free MTP5 anchor is `101.170 tok/s` all-25 and `92.851`
   selection-12, the median of three arms. Pairwise token parity is 21/25,
   21/25, and 22/25, so it is a research baseline rather than a result.
-- Before another full speed arm: run a fresh target-only oracle, re-establish
-  the baseline through the dual-view model gate, and run the reduced TP1
-  determinism diagnostic. The cheap draft-fallback-margin patch needs real
-  TP2 logit-equivalence captures and branch/candidate counters before any
-  full 25-prompt throughput A/B.
+- Post-recovery dual-view-verified MTP5 arms reached `102.132` and
+  `102.176 tok/s`, but agreed on 21/25 and each matched target oracle A on only
+  15/25. A byte-identical sealed-cache TP1 pair agreed on only 2/4. This proves
+  runtime nondeterminism without TP2 collectives; trace the earliest TP1
+  structured-extraction divergence before another full speed arm. The cheap
+  draft-fallback-margin patch still needs real TP2 logit-equivalence captures
+  and branch/candidate counters before any full 25-prompt throughput A/B.
 - Do not use stock `intel/llm-scaler-vllm:0.21.0-b3.1` as a substitute for the
   pinned source stack on a 16 GB host. An independent eager TP2 smoke first hit
   its FP8-only GDN output-projection probe on an INT4 `qweight`; disabling that
@@ -203,8 +207,10 @@ Two things are honestly out of reach without host access:
 2. **The torch.compile cache.** The historical margin-on artifact was evaluated
    against a pinned compile cache, but that does not establish determinism for
    the current margin-free lane. Even three arms sharing one cache agreed on
-   only 21/25, 21/25, and 22/25 prompts. Treat exact token repeatability as an
-   open runtime problem until the TP1/TP2 diagnostics close it.
+   only 21/25, 21/25, and 22/25 prompts. The later TP1 F2/G pair began and
+   ended on a byte-identical cache tree but still agreed on only 2/4 prompts,
+   so exact token repeatability is a confirmed runtime problem rather than an
+   untested cache hypothesis.
 
 Everything else — model manifest, both source trees on the public forks and
 the harness — is published. The historical quality baseline is published for

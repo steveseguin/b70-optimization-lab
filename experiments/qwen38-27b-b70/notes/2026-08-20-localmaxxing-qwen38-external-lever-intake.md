@@ -16,21 +16,29 @@ reports `112.65 tok/s` at p512/g128 on one B70 with SergiioB's GPTQ-INT4
 checkpoint and an XPU nightly. Its claimed change is runtime INT4 for both the
 draft LM head and five MTP linears, versus a matched BF16-draft `81.20` arm.
 The entry explicitly says it is speed-only with no token, KL, or task-quality
-parity, and its patch scripts are not in this repository or discoverable in the
-linked public cookbook.
+parity. The LocalMaxxing row does not attest exact executed bytes, but the
+author linked the row to public cookbook PR #2 one minute later. The frozen
+merge source is
+[`patch_draft_mtp_int4.py`](https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook/blob/cd241b27509d/patches/patch_draft_mtp_int4.py),
+SHA-256 `4df179c3e77fd7a248f9b9c0b60217c60caea14ebfd16b7860536fbff3b2a1e9`.
 
 Only part of that idea is new here:
 
 - this lane's draft LM head is already runtime INT4, so that portion is banked;
 - this AutoRound checkpoint already stores most of its MTP attention/MLP block
   as INT4, while `mtp.fc` remains BF16;
+- the public patch finds five fused runtime linears, but its `weight is None`
+  guard skips the four already-packed AutoGPTQ modules here and would quantize
+  only `mtp.fc`;
 - the external checkpoint, nightly, FP8 KV, MTP4, TP1 topology, prompt, metric,
   and source patches differ from the active AutoRound FP16-KV MTP5 TP2 lane.
 
-The remaining useful question is narrow: obtain/read the exact
-`patch_draft_mtp_int4.py`, map its five linears against this checkpoint's
-already-quantized tensors, and op-screen only genuinely BF16 survivors such as
-`mtp.fc`. Do not infer `+32.8%` or `112.65 tok/s` transferability.
+At TP2, `mtp.fc` is about 52.43 MB of BF16 weights per rank and about 13.52 MB
+as INT4 plus scales. A bandwidth ceiling suggests roughly `0.9`–`1.0 tok/s`;
+scaling the patch author's full-five-linear result suggests a more conservative
+`0.5`–`0.7 tok/s`. The current vLLM source no longer matches the patch anchor,
+so a narrow port and op-level timing/acceptance screen are required. Do not
+infer `+32.8%` or `112.65 tok/s` transferability.
 
 ## Numbers that are not single-stream optimization leads
 
@@ -54,8 +62,8 @@ boundary.
 
 ## Queue implication
 
-Do not spend a server run on any of these entries as written. After the fresh
-oracle and TP1 determinism diagnostic, the best low-cost follow-up is a source
-audit of the five-linear draft quantization patch. A run becomes justified only
-if the exact delta is available, a currently-BF16 tensor is proven hot, and a
+Do not spend a server run on any of these entries as written. The source audit
+is complete: only `mtp.fc` survives as BF16 here and cannot independently bridge
+the gap to 105 tok/s. A future run is justified only after the TP1 runtime
+nondeterminism is localized, the narrow port wins an op-level screen, and a
 target-verified acceptance/quality plan exists.

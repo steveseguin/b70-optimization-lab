@@ -12,8 +12,9 @@ follow-up measurements supplied in
 later reports supplied in
 [PR #30](https://github.com/steveseguin/b70-optimization-lab/pull/30),
 [PR #31](https://github.com/steveseguin/b70-optimization-lab/pull/31),
-[PR #33](https://github.com/steveseguin/b70-optimization-lab/pull/33), and
-[PR #32](https://github.com/steveseguin/b70-optimization-lab/pull/32). The
+[PR #33](https://github.com/steveseguin/b70-optimization-lab/pull/33),
+[PR #32](https://github.com/steveseguin/b70-optimization-lab/pull/32), and
+[PR #36](https://github.com/steveseguin/b70-optimization-lab/pull/36). The
 reported host is an ASRock TRX50 WS with a Threadripper 9960X, two Intel Arc Pro
 B70 GPUs, and an Arc Pro B60 used for some comparisons.
 
@@ -30,8 +31,10 @@ B70 GPUs, and an Arc Pro B60 used for some comparisons.
   [`96da1fe90`](https://github.com/steveseguin/b70-optimization-lab/commit/96da1fe90f7a49918e461d7165c8625a5bdc8a3b),
   [`a7a6b3eae`](https://github.com/steveseguin/b70-optimization-lab/commit/a7a6b3eae72ca49ff510e453208091fbfe34b490),
   and
-  [`ba0629aa4`](https://github.com/steveseguin/b70-optimization-lab/commit/ba0629aa43a3a7aed82a1d7f41c69b2f58a18852)
-  from PRs #30, #31, #33, and #32 respectively.
+  [`ba0629aa4`](https://github.com/steveseguin/b70-optimization-lab/commit/ba0629aa43a3a7aed82a1d7f41c69b2f58a18852),
+  and
+  [`a34d60243`](https://github.com/steveseguin/b70-optimization-lab/commit/a34d6024326bc4cd2917a0ec7fa4a99267d8157e)
+  from PRs #30, #31, #33, #32, and #36 respectively.
 - Contributor source snapshot:
   [`fda0d86c47ff02d8e36f813a8e0121a2152d4478`](https://github.com/bosd/trx50-arc-b70-benchmarks/tree/fda0d86c47ff02d8e36f813a8e0121a2152d4478).
 - Reference-lab execution: the PR #33 TP2/MTP configuration was independently
@@ -66,6 +69,7 @@ PID-scoped process management.
 - [Qwen3.8-27B MTP on Intel vLLM-XPU](qwen38-27b-mtp.md)
 - [Dual-B70 TP2 plus MTP reproduction](tp2-mtp-reproduction.md)
 - [vLLM-XPU MoE quantization observations](vllm-xpu-moe-quant-wall.md)
+- [Qwen3.6-27B DFlash single-B70 report](dflash-qwen36-27b.md)
 - [Maintainer audit of PRs #30–#33](maintainer-audit-2026-08-17.md)
 
 ## Maintainer normalization

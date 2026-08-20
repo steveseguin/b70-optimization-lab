@@ -34,9 +34,9 @@ are idle.
    and output identities, cache telemetry, environment capture, and the
    per-run relative `SHA256SUMS`. The current summary contains only a raw-root
    name and manifest hash, which cannot be independently recomputed.
-7. Run and publish a matching B replicate plus a Qwen3.8 target-only quality
-   oracle. Qwen3.6 output cannot be used as the correctness baseline for new
-   Qwen3.8 weights.
+7. Publish compact artifacts from the completed Qwen3.8 target-only A/B, two
+   valid post-recovery TP2 replicas, and the sealed-cache TP1 control. Qwen3.6
+   output cannot be used as the correctness baseline for new Qwen3.8 weights.
 
 The current source-level queue for >105 tok/s is now:
 
@@ -46,16 +46,16 @@ The current source-level queue for >105 tok/s is now:
    starts. Both views must match the manifest and each other. It also records
    the effective draft fallback margin and persistent-scratch value. Do not
    run an older warning-and-continue/direct-only gate.
-1. **Create a fresh margin-free target-only oracle**, then re-run the current
-   margin-free MTP5 identity on the recovered measuring host. The working
-   anchor is `101.170 tok/s` all-25 (`92.851` selection-12), median of three
-   arms, but its pairwise parity is only 21/25, 21/25, and 22/25. It is not a
-   promotable result.
-2. **Run TP1 on the reduced four-prompt divergence suite.** Every serving op
-   has now been swept. The audit found and gated an INT4 prefill-band race and
-   a ReplaySSM commit race, but the latter is inert when `REPLAYSSM_SPEC=0`
-   and the former explains at most one of four divergent prompts. TP1 removes
-   the collective and is the cleanest discriminator before another full A/B.
+1. **Treat the fresh server results as diagnostic, not promotable.** The
+   target-only A/B measured `49.759` / `50.016 tok/s` and agreed on 24/25. The
+   post-recovery MTP5 B/C measured `102.132` / `102.176 tok/s`, agreed on
+   21/25, and each matched target A on only 15/25.
+2. **Trace the sealed-cache TP1 runtime flip.** F2/G began and ended on the same
+   b936 cache tree, directly loaded identical outer/AOT artifacts, and agreed
+   on only 2/4 prompts. Structured extraction first diverged at token 225.
+   TP2/cross-rank oneCCL collectives are therefore not necessary causes; use the
+   least-intrusive existing TP1 layer/operator hashes to find the earliest
+   divergent state before another full A/B.
 3. **Treat the cheap draft fallback margin as diagnostic-only.** The shipped
    patch replaces costly full-vocabulary work, but its synthetic 40/40 test is
    single-shard and does not bound real TP2 logit error. Add startup/call/row/
