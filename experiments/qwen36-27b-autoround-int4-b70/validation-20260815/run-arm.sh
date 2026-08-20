@@ -7,6 +7,7 @@ mode=${1:-}
 gpu_pair=${2:-}
 arm_root=${3:-}
 quality_baseline=${4:-}
+tensor_parallel_size=${VALIDATION_TENSOR_PARALLEL_SIZE:-2}
 
 if [[ "$mode" != "spec" && "$mode" != "nospec" \
   && "$mode" != "spec-native-scratch" && "$mode" != "nospec-current" \
@@ -18,11 +19,20 @@ if [[ "$mode" != "spec" && "$mode" != "nospec" \
   && "$mode" != "nospec-latest" \
   && "$mode" != "nospec-latest-exact" \
   && "$mode" != "nospec-latest-exact-native" ]]; then
-  printf 'usage: %s spec|nospec|spec-native-scratch|nospec-current|spec-native-partition|spec-native-partition-exact|spec-native-partition-exact-native|spec-native-partition-exact-native-zero|spec-native-partition-exact-native-raw|nospec-latest|nospec-latest-exact|nospec-latest-exact-native GPU0,GPU1 ARM_ROOT [QUALITY_BASELINE]\n' "$0" >&2
+  printf 'usage: %s spec|nospec|spec-native-scratch|nospec-current|spec-native-partition|spec-native-partition-exact|spec-native-partition-exact-native|spec-native-partition-exact-native-zero|spec-native-partition-exact-native-raw|nospec-latest|nospec-latest-exact|nospec-latest-exact-native GPU0[,GPU1] ARM_ROOT [QUALITY_BASELINE]\n' "$0" >&2
   exit 2
 fi
-if [[ ! "$gpu_pair" =~ ^[0-9]+,[0-9]+$ || -z "$arm_root" ]]; then
-  printf 'invalid GPU pair or arm root\n' >&2
+if [[ "$tensor_parallel_size" == "1" ]]; then
+  valid_gpu_selection_regex='^[0-9]+$'
+elif [[ "$tensor_parallel_size" == "2" ]]; then
+  valid_gpu_selection_regex='^[0-9]+,[0-9]+$'
+else
+  printf 'VALIDATION_TENSOR_PARALLEL_SIZE must be 1 or 2\n' >&2
+  exit 2
+fi
+if [[ ! "$gpu_pair" =~ $valid_gpu_selection_regex || -z "$arm_root" ]]; then
+  printf 'GPU selection must contain exactly %s device(s), and arm root must be non-empty\n' \
+    "$tensor_parallel_size" >&2
   exit 2
 fi
 if [[ -e "$arm_root" ]]; then
@@ -323,7 +333,7 @@ export QWEN36_27B_AR_VENV="$venv"
 export ONECCL_INSTALL_DIR="$oneccl"
 export HF_HOME=${VALIDATION_HF_HOME:-/mnt/usb-models/llm-cache/hf}
 export GPU_INDEX="$gpu_pair"
-export TENSOR_PARALLEL_SIZE=2
+export TENSOR_PARALLEL_SIZE="$tensor_parallel_size"
 export PORT="$port"
 export STAMP="$stamp"
 export LABEL="$label"
@@ -827,8 +837,20 @@ if [[ -n "${VALIDATION_ENABLE_XPU_GRAPH:-}" ]]; then
   fi
 fi
 
-printf 'mode=%s\ngpu_pair=%s\narm_root=%s\nquality_baseline=%s\n' \
-  "$mode" "$gpu_pair" "$arm_root" "$quality_baseline" > "$arm_root/arm.env"
+# The historical TP2 candidate wrappers hard-code two visible devices and
+# inject oneCCL.  A TP1 determinism control must keep the exact selected model,
+# graph, MTP, and GDN identity while removing tensor-parallel collectives, so
+# launch the common strict runner directly. serve-vllm.sh derives the single
+# logical selector from GPU_INDEX and TENSOR_PARALLEL_SIZE.
+if [[ "$tensor_parallel_size" == "1" ]]; then
+  candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh"
+  export PYTHONPATH="$STAGE${PYTHONPATH:+:$PYTHONPATH}"
+  export CANDIDATE_ENTRYPOINT="$candidate"
+fi
+
+printf 'mode=%s\ngpu_pair=%s\ntensor_parallel_size=%s\narm_root=%s\nquality_baseline=%s\n' \
+  "$mode" "$gpu_pair" "$tensor_parallel_size" "$arm_root" \
+  "$quality_baseline" > "$arm_root/arm.env"
 
 exec 9>/tmp/b70-benchmark.lock
 if ! flock -n 9; then

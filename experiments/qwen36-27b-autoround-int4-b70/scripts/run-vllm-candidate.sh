@@ -97,6 +97,16 @@ export QWEN36_27B_DEFAULT_ENABLE_THINKING="${QWEN36_27B_DEFAULT_ENABLE_THINKING:
 export QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS="${QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS:-1}"
 
 PYTHON="${PYTHON:-$QWEN36_27B_AR_VENV/bin/python}"
+XPU_PYTHON_PACKAGE_PATH=$("$PYTHON" - <<'PY'
+import importlib.util
+from pathlib import Path
+
+spec = importlib.util.find_spec("vllm_xpu_kernels")
+if spec is None or not spec.submodule_search_locations:
+    raise SystemExit("vllm_xpu_kernels package is not resolvable")
+print(Path(next(iter(spec.submodule_search_locations))).resolve())
+PY
+)
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-900}"
 RUN_SMOKE="${RUN_SMOKE:-1}"
 RUN_BENCH="${RUN_BENCH:-1}"
@@ -221,6 +231,8 @@ write_identity() {
   echo "gpu_memory_utilization=$GPU_MEMORY_UTILIZATION"
   echo "vllm_target_device=${VLLM_TARGET_DEVICE:-xpu}"
   echo "xpu_kernels_src=${VLLM_XPU_KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels}"
+  echo "pythonpath=${PYTHONPATH:-}"
+  echo "xpu_python_package_path=$XPU_PYTHON_PACKAGE_PATH"
   echo "enable_mtp=$QWEN36_27B_ENABLE_MTP"
   echo "num_speculative_tokens=$NUM_SPECULATIVE_TOKENS"
   echo "enable_xpu_graph=$QWEN36_27B_ENABLE_XPU_GRAPH"

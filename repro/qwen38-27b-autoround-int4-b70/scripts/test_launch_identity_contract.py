@@ -22,6 +22,21 @@ class LaunchIdentityContractTest(unittest.TestCase):
         self.assertIn('export MODEL_MANIFEST="$model_manifest"', source)
         self.assertIn('export VERIFY_MODEL_SCRIPT="${VALIDATION_MODEL_VERIFY_SCRIPT:', source)
 
+    def test_tp1_control_keeps_strict_runner_without_tp2_wrapper(self) -> None:
+        source = ARM.read_text()
+        self.assertIn(
+            'tensor_parallel_size=${VALIDATION_TENSOR_PARALLEL_SIZE:-2}',
+            source,
+        )
+        self.assertIn('export TENSOR_PARALLEL_SIZE="$tensor_parallel_size"', source)
+        tp1 = source.index('if [[ "$tensor_parallel_size" == "1" ]]; then', 1000)
+        direct = source.index('candidate="$repo/experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh"', tp1)
+        stage = source.index('export PYTHONPATH="$STAGE${PYTHONPATH:+:$PYTHONPATH}"', direct)
+        arm_env = source.index("printf 'mode=%s\\ngpu_pair=%s\\ntensor_parallel_size=%s", direct)
+        self.assertLess(tp1, direct)
+        self.assertLess(direct, stage)
+        self.assertLess(stage, arm_env)
+
     def test_runner_is_fail_closed_and_verifies_immediately_before_launch(self) -> None:
         source = RUNNER.read_text()
         self.assertIn("A readable MODEL_MANIFEST is required", source)
@@ -41,6 +56,7 @@ class LaunchIdentityContractTest(unittest.TestCase):
             "verify_model_script_sha256=",
             "model_verify_json_sha256=",
             "model_verify_read_modes=",
+            "xpu_python_package_path=",
             "draft_lm_head_int4_fallback_margin=",
             "gdn_spec_persistent_scratch=",
         ):
