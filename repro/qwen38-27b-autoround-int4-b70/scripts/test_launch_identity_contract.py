@@ -18,6 +18,10 @@ DRIVER = REPO / (
     "experiments/qwen38-27b-b70/scripts/"
     "run-20260820-detpad-tp2-full25.sh"
 )
+RECURRENCE_DRIVER = REPO / (
+    "experiments/qwen38-27b-b70/scripts/"
+    "run-20260820-detpad-tp2-recurrence.sh"
+)
 
 
 class LaunchIdentityContractTest(unittest.TestCase):
@@ -201,6 +205,36 @@ class LaunchIdentityContractTest(unittest.TestCase):
         gate_a = source.index("arm A no longer passes the current sealed campaign contract")
         launch = source.index("exec env -i", gate_a)
         self.assertLess(gate_a, launch)
+
+    def test_recurrence_driver_binds_sane_peer_and_corrupt_reference(self) -> None:
+        source = RECURRENCE_DRIVER.read_text()
+        for required in (
+            "exec env -i",
+            "VALIDATION_PYTHONHASHSEED=0",
+            "VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0",
+            "VALIDATION_ONEDNN_INT4_DETERMINISM_PAD=1",
+            "VALIDATION_REQUIRE_TP2_SEALED_GATES=1",
+            "VALIDATION_REQUIRE_COMPILE_CACHE_UNCHANGED=1",
+            "VALIDATION_REQUIRE_NO_COMPILE_CACHE_WRITES=1",
+            "VALIDATION_PARITY_PEER_BENCH=\"$peer_bench\"",
+            "VALIDATION_TARGET_TOKEN_BENCH=\"$reference_bench\"",
+            "VALIDATION_REQUIRE_TARGET_TOKEN_PARITY=0",
+            "b2_bench_sha=96933a821186",
+            "a2_bench_sha=865ab22ef080",
+            "a2_checksum_manifest_sha=a9a162c959256",
+            "b2_checksum_manifest_sha=e7726d02dd467",
+            "run_arm_sha=e89352d7d71a",
+            "checker_sha=23ad35011198",
+            "common_runner_sha=b6ad5add4d19",
+            "top_wrapper_sha=991e21c1ddea",
+            "serve_runner_sha=f1d1503a4a16",
+            "SHA256SUMS.pre-manifest",
+        ):
+            self.assertIn(required, source)
+        self.assertLess(
+            source.index("prior A2/B2 runner status no longer matches 0/14"),
+            source.index("exec env -i"),
+        )
 
 
 if __name__ == "__main__":

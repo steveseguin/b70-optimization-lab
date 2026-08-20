@@ -127,5 +127,5 @@
     "The historical target token arrays are from an unpadded runtime and are report-only.",
     "Throughput is descriptive and non-promotable because pairwise token parity failed."
   ],
-  "next_action": "Preserve A2/B2 and do not sweep speed flags. The narrowest recurrence test is one exact, untraced full-25 TP2 C arm with identical request order and sealed identity, gating explicitly on the final prompt's all-zero stream. If it repeats, retain all 24 predecessors and trace the final request from prefill through first target logits, gather, and GDN/speculative state. If it does not repeat, use one D arm before adding perturbative traces."
+  "next_action": "Preserve A2/B2 and do not sweep speed flags. The narrowest recurrence test is one exact, untraced full-25 TP2 C arm with identical request order and sealed identity, requiring complete parity with sane B2. Any mismatch stops untraced work and localizes the earliest difference. If the all-zero final stream repeats, retain all 24 predecessors and trace the final request from prefill through first target logits, gather, and GDN/speculative state. Only a 25/25 B2-exact C authorizes one later D arm before perturbative traces."
 }

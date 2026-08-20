@@ -285,10 +285,11 @@ loaded service.
 3. Keep full Qwen3.8 AutoRound server runs off the 15-GiB host. The recovered
    four-B70 host's pad-on composite TP2 pair passed its sealed identity and
    quality gates but failed 22/25 A/B parity, including one all-zero 512-token
-   response. Preserve A2/B2. Before a perturbative trace, run at most one exact
-   untraced full-25 TP2 recurrence arm with the same history and explicitly
-   gate the final long-rollover stream; if it is sane, one final recurrence arm
-   is needed before tracing. Do not promote or submit these speeds.
+   response. Preserve A2/B2. A single exact untraced C1 recurrence arm is
+   [preregistered](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-prereg.md)
+   with the same full history and explicit A2/B2 token-family binding. Any
+   C1/B2 mismatch stops untraced work; only a 25/25 B2-exact C1 authorizes one
+   later recurrence arm before tracing. Do not promote or submit these speeds.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.

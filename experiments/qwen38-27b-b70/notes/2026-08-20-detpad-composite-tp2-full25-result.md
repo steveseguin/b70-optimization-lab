@@ -67,12 +67,16 @@ determinism. Do not promote the measured speed and do not resume speed-flag
 sweeps from this pair.
 
 The narrowest recurrence test is one exact, untraced full-25 TP2 C arm that
-preserves all 24 preceding requests and gates specifically on the final
-long-rollover token array. If the all-zero stream repeats, trace only the final
-request's prefill-to-first-target-logit/gather/GDN-state path while retaining
-the full history. If C is sane, run one D recurrence arm before adding
-synchronizing trace hooks. A prompt-24-only test is not the first discriminator
-because it removes the request-history position that may be causal.
+preserves all 24 preceding requests and gates against complete sane-B2 token
+parity. Any C/B mismatch stops untraced work and localizes the earliest
+difference. If the all-zero stream repeats, trace only the final request's
+prefill-to-first-target-logit/gather/GDN-state path while retaining the full
+history. Only a 25/25 B2-exact C authorizes one later D recurrence arm. A
+prompt-24-only test is not the first discriminator because it removes the
+request-history position that may be causal.
+
+Recurrence preregistration:
+[`2026-08-20-detpad-tp2-full25-recurrence-prereg.md`](2026-08-20-detpad-tp2-full25-recurrence-prereg.md)
 
 Structured evidence:
 [`../data/2026-08-20-int4-detpad-tp2-full25-result.json`](../data/2026-08-20-int4-detpad-tp2-full25-result.json)
