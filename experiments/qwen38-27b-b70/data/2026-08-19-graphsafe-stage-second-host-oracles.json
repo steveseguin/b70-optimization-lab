@@ -1,0 +1,18 @@
+{
+ "date": "2026-08-19",
+ "host": "second lab host (15 GiB), both B70s via ZE_AFFINITY_MASK",
+ "purpose": "independent re-validation of the graph-safe head256 stage ahead of the full-graph screen",
+ "chunk_decode_oracle": {
+   "command": "test_chunk_decode_graph_replay.py --mode chunk --replays 1000 --bench-iters 1000, VLLM_XPU_FA2_FORCE_CHUNK_DECODE=1",
+   "gpu0": "passed (1000 replays x 3 KV lengths)",
+   "gpu1": "passed (1000 replays x 3 KV lengths)"
+ },
+ "paged_graph_oracle": {
+   "command": "test_graph_replay.py, VLLM_XPU_FA2_FORCE_CHUNK_DECODE=0",
+   "gpu0": "RuntimeError: sycl_ext_oneapi_work_group_scratch_memory not available with SYCL Graph extension",
+   "gpu1": "same",
+   "interpretation": "EXPECTED boundary, not a regression: the stock paged kernel uses work-group scratch memory and is graph-incompatible by design; this is why the force-chunk-decode patch is load-bearing for the full-graph arm. The 2026-08-18 oracle set lists the paged tuples as diagnostic/reference only."
+ },
+ "post_test_gpu_state": "both GPUs enumerated, no faults observed",
+ "conclusion": "the graph-safe path (forced one-token chunk decode) replays cleanly on the second host too; nothing about the full-graph screen's prerequisites is measuring-host-specific"
+}
