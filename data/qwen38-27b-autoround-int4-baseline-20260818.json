@@ -419,6 +419,13 @@
     },
     "revised_expectation": "scratch fix alone lands ~102.0-102.9, not 103-105",
     "still_worth_building": "yes - it is the correct fix, it removes a genuine uninitialized read that caused the 24/25 MTP4 failure, and it unblocks serial-exact at depths other than 3. Just not as a route to 105 by itself.",
-    "consequence": "rerank K=2 is now the load-bearing item for 105, not a stacking bonus, and needs the same audit"
+    "consequence": "rerank K=2 is now the load-bearing item for 105, not a stacking bonus, and needs the same audit",
+    "SELF_CORRECTION": {
+      "what_I_overclaimed": "I wrote that the end-to-end MTP4 A/B 'puts the true cost near 0.05 ms/step'. It does not. It failed to DETECT a difference, which is not the same as measuring one near zero.",
+      "why": "the arms spread widely - scratch=1 [101.598, 99.849, 100.26], scratch=0 [101.653, 100.497, 99.905] - giving a per-group sd of about 0.74 and a difference standard error near 0.60 tok/s at n=3. That comparison cannot resolve a ~1.5 tok/s effect with confidence; my observed -0.24 is consistent with anything from roughly -1.7 to +1.2.",
+      "what_survives": "the directional criticism was right and the other machine reached the same conclusion independently: the 0.926 ms/step figure is a Python-dispatch-inclusive upper bound, and 105-from-scratch-fix-alone was never supported.",
+      "authoritative_number": "their op-level A/B on the BUILT fix: 42.87 us/call at PERSISTENT_SCRATCH=0 against 34.08 us/call at =1, i.e. 8.8-9.2 us/call over 48 GDN layers = ~0.42 ms/step = about +1.5 tok/s, projecting ~103.4. That is a real-op measurement and supersedes both my estimate and their original projection.",
+      "still_outstanding": "the strict-25 server rerun with PERSISTENT_SCRATCH=1 on this measuring host. Their own caveat is correct: the op-level parity gate passes on the pinned build too, because a fresh process gets predictable allocator memory, so only long-lived serving residue exposes the bug."
+    }
   }
 }
