@@ -170,8 +170,13 @@ then did not produce the zero stream, but reproduced a previously observed
 unsynchronized long-rollover family,
 matching B2 only through generated token 468 before splitting at token 469;
 SQL and factual-protocol differed from every A2/B2/C1 family. The broad
-completion boundary is insufficient and S2 is forbidden. Preserve the full
-25-request history and proceed only to the bounded prompt-24 replay microscope.
+completion boundary is insufficient and S2 is forbidden. The subsequent
+bounded prompt-24 replay microscope M1 is invalid and closed: its anchored
+filter used the unsuffixed public request ID, while the worker saw that ID plus
+an eight-hex internal suffix, so no trace file was produced. Prompt 6 also
+ended at 68 tokens, independently invalidating the strict metric window and
+preventing the formal sealed checker. M1's prompt-24 tokens matched S1 only as
+report-only recurrence evidence. Preserve M1 exactly and do not retry it.
 
 The published `101.922` MTP5 and `100.497` MTP4 LocalMaxxing rows are
 invalidated and withdrawal is recommended. Both opted into a `0.03125` greedy
@@ -197,6 +202,7 @@ manifest immediately before vLLM starts.
 - [pad-on TP2 full-25 recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md)
 - [post-forward synchronization result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-postforward-sync-result.md)
 - [bounded prompt-24 replay-microscope preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-prereg.md)
+- [bounded prompt-24 replay-microscope invalid result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-result.md)
 
 ## Closed: Qwen3.6 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 
@@ -300,12 +306,16 @@ loaded service.
    factual families. With post-target-forward synchronization active, S1 did
    not produce the zero stream, but reproduced a prior unsynchronized family,
    still split from B2 at token 469, and produced further SQL/factual families.
-   Preserve A2/B2/C1/S1, run neither D
-   nor S2, and use only the bounded request-filtered prompt-24 microscope while
-   retaining all 24 predecessor requests. See the
+   The bounded request-filtered M1 then failed engagement because vLLM's worker
+   request ID had an unaccounted eight-hex suffix; no trace was written. Prompt
+   6 also stopped at 68 tokens, so the count-24 displayed median is invalid and
+   the formal sealed checker did not run. Preserve A2/B2/C1/S1/M1, run neither
+   D nor S2, and do not retry M1. Stop GPU diagnostics until a distinct
+   source-backed hypothesis is preregistered. See the
    [recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md),
    [sync result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-postforward-sync-result.md),
-   and [microscope preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-prereg.md).
+   [microscope preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-prereg.md),
+   and [invalid microscope result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-result.md).
    Do not promote or submit these speeds.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is

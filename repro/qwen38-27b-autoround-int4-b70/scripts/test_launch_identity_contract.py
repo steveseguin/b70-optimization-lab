@@ -325,6 +325,8 @@ class LaunchIdentityContractTest(unittest.TestCase):
             self.assertIn(required, checker)
         for required in (
             "env -i",
+            'if [[ "$action" == "m1" ]]',
+            "M1 is permanently closed; preserve the original arm and do not retry",
             "VALIDATION_SYNC_AFTER_MODEL_FORWARD=0",
             "VALIDATION_EXPECT_SYNC_AFTER_MODEL_FORWARD=0",
             "VALIDATION_REQUIRE_REPLAY_MICROSCOPE=1",
@@ -335,6 +337,9 @@ class LaunchIdentityContractTest(unittest.TestCase):
             "C1 no longer proves the preregistered active recurrence",
         ):
             self.assertIn(required, driver)
+        self.assertLess(
+            driver.index("M1 is permanently closed"), driver.index("env -i")
+        )
 
 
 if __name__ == "__main__":

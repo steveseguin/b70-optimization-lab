@@ -2,7 +2,20 @@
 
 Date: 2026-08-20
 
-Status: preregistered; M1 has not launched.
+Status: **completed; invalid trace false-null; no retry**
+
+M1 did not emit a trace and separately failed the strict benchmark window when
+prompt 6 ended at 68 tokens. The source audit found a definitive request-ID
+namespace mismatch: the engine input processor appends eight random
+hexadecimal characters to the public `chatcmpl-...` ID, so the worker sees a
+suffixed ID while the launched regex below required the unsuffixed ID. The
+prompt-token gate was correct but unreachable. Preserve the
+original contract below as the historical preregistration; current generic
+harness code accepts the mandatory `-[0-9a-f]{8}` suffix for future,
+separately preregistered diagnostics. M1 itself must not be rerun.
+
+Result:
+[`2026-08-20-detpad-tp2-replay-microscope-result.md`](2026-08-20-detpad-tp2-replay-microscope-result.md)
 
 ## Question
 
@@ -62,7 +75,8 @@ MAX_TOKENS_NO_SPEC=849
 logit helper still clamps to top-2, retaining the target top-1, runner-up, and
 margin needed for diagnosis with less added work.
 
-The post-run sealed checker must parse exactly six JSONL objects in this order:
+The original post-run sealed checker was required to parse exactly six JSONL
+objects in this order:
 
 1. `inputs`;
 2. `hidden_after_forward`;
@@ -71,10 +85,13 @@ The post-run sealed checker must parse exactly six JSONL objects in this order:
 5. `pre_sample`;
 6. `sampler_output`.
 
-Every record must be rank 0, match the exact internal `chatcmpl-...` request
-ID, and contain exactly the prompt-24 token window with both prompt tokens and
-`num_tokens_no_spec` equal to 849. Required tensors, one-row top-2 logits, and
-one sampled-token head value must exist. Missing, malformed, duplicate,
+Every record was required to be rank 0, match what this preregistration
+incorrectly described as the exact internal `chatcmpl-...` request ID, and
+contain exactly the prompt-24 token window with both prompt tokens and
+`num_tokens_no_spec` equal to 849. The post-run audit proved that this was only
+the public ID and the internal ID carried an additional eight-hex suffix.
+Required tensors, one-row top-2 logits, and one sampled-token head value had to
+exist. Missing, malformed, duplicate,
 misordered, wrong-request, wrong-rank, error-bearing, or warning-bearing trace
 evidence fails closed. The checker records the raw trace SHA, top-1 values,
 sampled token, benchmark first token, non-finite paths, and coherence booleans.

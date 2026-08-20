@@ -13,6 +13,10 @@ if [[ "$action" != "check" && "$action" != "m1" ]]; then
   printf 'usage: %s check|m1\n' "$0" >&2
   exit 2
 fi
+if [[ "$action" == "m1" ]]; then
+  printf 'M1 is permanently closed; preserve the original arm and do not retry\n' >&2
+  exit 4
+fi
 
 raw=/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70
 c1="$raw/qwen38-detpad-composite4dd-marginfree-mtp5-25-spec-c1-20260820"

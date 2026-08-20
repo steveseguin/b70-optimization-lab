@@ -1,0 +1,137 @@
+{
+  "schema": "qwen38-int4-detpad-tp2-replay-microscope-result-v1",
+  "date": "2026-08-20",
+  "classification": "invalid-incomplete-trace-false-null",
+  "promotion_eligible": false,
+  "retry_authorized": false,
+  "preregistration": "../notes/2026-08-20-detpad-tp2-replay-microscope-prereg.md",
+  "result_note": "../notes/2026-08-20-detpad-tp2-replay-microscope-result.md",
+  "plan_commit": "0cfeddb59f1f0f59cb8543499e46df65a27f326d",
+  "artifact_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-detpad-composite4dd-marginfree-mtp5-25-replay-microscope-m1-20260820",
+  "runner_exit_code": 1,
+  "runner_exit_reason": "strict benchmark window failure; qualifier also failed before the formal sealed arm checker",
+  "bench_rc": 2,
+  "qualifier_rc": 1,
+  "quality_enabled": false,
+  "trace": {
+    "required": true,
+    "file_present": false,
+    "engaged": false,
+    "line_count": 0,
+    "localization_valid": false,
+    "launched_request_regex": "^chatcmpl-bench-qwen36-27b-int4-independent-validation-20260815-v1-24-holdout--long-rollover-repository-audit$",
+    "corrected_generic_request_regex": "^chatcmpl-bench-qwen36-27b-int4-independent-validation-20260815-v1-24-holdout--long-rollover-repository-audit-[0-9a-f]{8}$",
+    "tokens_no_spec_filter": 849,
+    "tokens_no_spec_filter_was_correct": true
+  },
+  "root_cause": {
+    "classification": "worker-request-id-namespace-mismatch",
+    "public_id_shape": "chatcmpl-<X-Request-Id>",
+    "worker_id_shape": "<public-id>-<8 random hex>",
+    "public_id_source": "/home/steve/src/vllm/vllm/entrypoints/openai/chat_completion/serving.py:265-267",
+    "assignment_call_source": "/home/steve/src/vllm/vllm/v1/engine/async_llm.py:368",
+    "internal_id_source": "/home/steve/src/vllm/vllm/v1/engine/input_processor.py:215-232",
+    "worker_match_source": "/home/steve/src/vllm/vllm/v1/worker/gpu_model_runner.py:5784-5814",
+    "api_process_environment_observed": true,
+    "worker_environment_propagation_observed": null,
+    "worker_environment_note": "No microscope worker-init marker or trace exists; worker propagation is not independently proven."
+  },
+  "formal_gates": {
+    "sealed_gate_json_present": false,
+    "sealed_gate_status": "not-run-prior-runner-failure",
+    "fresh_full25_gate_pass": false,
+    "failure_prompt_index": 6,
+    "failure_prompt_id": "selection--sql-debugging",
+    "failure_prompt_token_count": 68,
+    "failure_prompt_final_token": 248046,
+    "required_metric_tokens": 100
+  },
+  "performance": {
+    "raw_metric_count": 24,
+    "raw_median_tok_s_1_100_after_ttft": 102.41390039558578,
+    "valid": false,
+    "promotable": false,
+    "note": "Prompt 6 lacked the 100-token metric window; the count-24 median is invalid and non-comparable."
+  },
+  "independent_raw_integrity": {
+    "formal_sealed_gate_pass_claimed": false,
+    "checksum_set_verified": true,
+    "model_dual_view_verified_files": 19,
+    "smoke_pass": true,
+    "unique_response_count": 25,
+    "cached_tokens_all_zero": true,
+    "pad_markers": 2,
+    "pad_marker_ranks": [0, 1],
+    "direct_outer_loads": 2,
+    "direct_aot_loads": 4,
+    "graph_or_aot_compile_save_markers": 0,
+    "compile_cache_input_output_byte_identical": true,
+    "compile_cache_manifest_sha256": "f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb0ff",
+    "compile_cache_tree_sha256": "723c1599060f5c9c82dc5731cc75b50620c79d202b34ee99b8390d3aec20acbe",
+    "compile_cache_entries": 3795,
+    "compile_cache_files": 3246,
+    "compile_cache_bytes": 395855113,
+    "process_group_cleanup_pass": true
+  },
+  "artifacts": {
+    "bench_json_sha256": "533e0d2fbcd58c07d61a5f13f105069232f0af415209e0e9556e2e5e240bca2b",
+    "checksum_manifest_sha256": "1a4f4a84eb4dfaf2928242bd66248013a83a96f1e9e2700e7bb4e45cbf1468cb",
+    "trace_sha256": null,
+    "sealed_gate_json_sha256": null
+  },
+  "comparisons": {
+    "m1_vs_s1": {
+      "exact_token_arrays": 23,
+      "prompt_count": 25,
+      "mismatch_prompt_indexes": [6, 11]
+    },
+    "m1_vs_a2": {
+      "exact_token_arrays": 22,
+      "prompt_count": 25,
+      "mismatch_prompt_indexes": [6, 11, 24]
+    },
+    "m1_vs_b2": {
+      "exact_token_arrays": 22,
+      "prompt_count": 25,
+      "mismatch_prompt_indexes": [6, 11, 24]
+    },
+    "m1_vs_c1": {
+      "exact_token_arrays": 22,
+      "prompt_count": 25,
+      "mismatch_prompt_indexes": [6, 11, 24]
+    }
+  },
+  "report_only_endpoints": [
+    {
+      "prompt_index": 6,
+      "prompt_id": "selection--sql-debugging",
+      "token_count": 68,
+      "final_token": 248046,
+      "first_difference_vs_a2_c1_s1": 35,
+      "first_difference_vs_b2": 36,
+      "token_array_sha256": "2e872a8884e41227e5b71ac33552fc70aa76606b2769a51cd36c568f585fadd4",
+      "output_sha256": "1bde81845716625b00433acac17ebc5273743e18b52f1ee0bdf34f73e3ac628f"
+    },
+    {
+      "prompt_index": 11,
+      "prompt_id": "holdout--factual-protocol",
+      "token_count": 512,
+      "first_difference_vs_a2_b2_c1_s1": 311,
+      "token_array_sha256": "0454b48245d506939327d0ce8225917e9486cbff343bcb5767efdc2920f58484",
+      "output_sha256": "569801f27e495b7aee3dccbd69bca2120f396f89461de37b09908d1a0f71c943"
+    },
+    {
+      "prompt_index": 24,
+      "prompt_id": "holdout--long-rollover-repository-audit",
+      "token_count": 512,
+      "first_tokens": [71093, 13102, 198],
+      "exactly_matches_s1": true,
+      "first_difference_vs_b2": 469,
+      "first_difference_vs_a2_c1": 0,
+      "token_array_sha256": "b1ad815bceff49895fedb75552c6f7d8a4650a965f818aeb4c20fb3685c8f20b",
+      "output_sha256": "471a54e871126200a286dedbc80c6c689ce83093be06e7350b551a512cf364dd"
+    }
+  ],
+  "conclusion": "M1 is an invalid, non-engaged microscope false-null. It provides no localization and no valid throughput. Its output arrays are report-only recurrence evidence and cannot be attributed to the microscope because the worker request filter never matched.",
+  "next_action": "Preserve M1 exactly and do not retry it. Stop GPU diagnostics until a distinct source-backed hypothesis and new preregistration justify another arm."
+}

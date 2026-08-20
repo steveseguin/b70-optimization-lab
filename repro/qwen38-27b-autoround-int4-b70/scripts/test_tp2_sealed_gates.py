@@ -31,6 +31,7 @@ SUITE_PAYLOAD = {
 }
 SUITE_BYTES = (json.dumps(SUITE_PAYLOAD, sort_keys=True) + "\n").encode()
 SUITE_SHA = hashlib.sha256(SUITE_BYTES).hexdigest()
+TRACE_REQ_ID = f"{gates.REPLAY_MICROSCOPE_REQ_BASE}-deadbeef"
 
 
 def identity_text(fixture: "ArmGateTests", *, pad: int = 1, tp: int = 2) -> str:
@@ -234,11 +235,11 @@ def manifest_bytes(cache_root: Path, *, tree: str = "c" * 64) -> bytes:
 def replay_records(*, sampled_token: int = 71093) -> list[dict]:
     common = {
         "tp_rank": 0,
-        "req_ids": [gates.REPLAY_MICROSCOPE_REQ_ID],
-        "matched_req_ids": [gates.REPLAY_MICROSCOPE_REQ_ID],
+        "req_ids": [TRACE_REQ_ID],
+        "matched_req_ids": [TRACE_REQ_ID],
         "requests": [
             {
-                "req_id": gates.REPLAY_MICROSCOPE_REQ_ID,
+                "req_id": TRACE_REQ_ID,
                 "num_prompt_tokens_cpu": 849,
                 "num_tokens_no_spec": 849,
             }
@@ -267,7 +268,7 @@ def replay_records(*, sampled_token: int = 71093) -> list[dict]:
                     "row": 0,
                     "role": "sample",
                     "req_index": 0,
-                    "req_id": gates.REPLAY_MICROSCOPE_REQ_ID,
+                    "req_id": TRACE_REQ_ID,
                     "num_tokens_no_spec_cpu": 849,
                     "logits_topk": {
                         "token_ids": [71093, 13102],
@@ -755,6 +756,7 @@ class ReplayMicroscopeTests(unittest.TestCase):
         )
         self.assertEqual(errors, [], result)
         self.assertEqual(result["status"], "passed")
+        self.assertEqual(result["request_id"], TRACE_REQ_ID)
         self.assertEqual(result["sampled_token"], 71093)
         self.assertEqual(
             result["logits_after_compute"]["token_ids"], [71093, 13102]
@@ -816,6 +818,25 @@ class ReplayMicroscopeTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "failed")
         self.assertTrue(any("top-2 logit evidence" in error for error in errors))
+
+    def test_internal_request_suffix_and_consistency_are_required(self) -> None:
+        records = replay_records()
+        records[0]["req_ids"] = [gates.REPLAY_MICROSCOPE_REQ_BASE]
+        records[0]["matched_req_ids"] = [gates.REPLAY_MICROSCOPE_REQ_BASE]
+        records[0]["requests"][0]["req_id"] = gates.REPLAY_MICROSCOPE_REQ_BASE
+        other_req_id = f"{gates.REPLAY_MICROSCOPE_REQ_BASE}-cafebabe"
+        records[1]["req_ids"] = [other_req_id]
+        records[1]["matched_req_ids"] = [other_req_id]
+        records[1]["requests"][0]["req_id"] = other_req_id
+        self.write_records(records)
+        result, errors = gates.validate_replay_microscope(
+            self.root, self.identity, self.bench
+        )
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(any("unexpected request set" in error for error in errors))
+        self.assertTrue(
+            any("changed internal request ID" in error for error in errors)
+        )
 
     def test_trace_error_field_fails_but_nonfinite_is_reported(self) -> None:
         records = replay_records()

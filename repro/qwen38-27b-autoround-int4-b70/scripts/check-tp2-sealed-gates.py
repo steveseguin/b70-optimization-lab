@@ -53,11 +53,14 @@ RUNTIME_MARKERS = {
     ),
     "draft_int4_head": "Prepared experimental XPU INT4 draft lm_head:",
 }
-REPLAY_MICROSCOPE_REQ_ID = (
+REPLAY_MICROSCOPE_REQ_BASE = (
     "chatcmpl-bench-qwen36-27b-int4-independent-validation-20260815-v1-24-"
     "holdout--long-rollover-repository-audit"
 )
-REPLAY_MICROSCOPE_REQ_REGEX = f"^{re.escape(REPLAY_MICROSCOPE_REQ_ID)}$"
+REPLAY_MICROSCOPE_REQ_REGEX = (
+    f"^{re.escape(REPLAY_MICROSCOPE_REQ_BASE)}-[0-9a-f]{{8}}$"
+)
+REPLAY_MICROSCOPE_REQ_RE = re.compile(REPLAY_MICROSCOPE_REQ_REGEX)
 REPLAY_MICROSCOPE_STAGES = (
     "inputs",
     "hidden_after_forward",
@@ -410,7 +413,9 @@ def find_trace_diagnostic_paths(value: Any, path: str = "$") -> dict[str, list[s
     return {"errors": errors, "nonfinite": nonfinite}
 
 
-def replay_logit_evidence(record: dict[str, Any]) -> dict[str, Any] | None:
+def replay_logit_evidence(
+    record: dict[str, Any], expected_req_id: str | None
+) -> dict[str, Any] | None:
     rows = record.get("logit_rows")
     if not isinstance(rows, list) or len(rows) != 1 or not isinstance(rows[0], dict):
         return None
@@ -421,7 +426,8 @@ def replay_logit_evidence(record: dict[str, Any]) -> dict[str, Any] | None:
         or row.get("role") != "sample"
         or type(row.get("req_index")) is not int
         or row["req_index"] != 0
-        or row.get("req_id") != REPLAY_MICROSCOPE_REQ_ID
+        or expected_req_id is None
+        or row.get("req_id") != expected_req_id
         or type(row.get("num_tokens_no_spec_cpu")) is not int
         or row["num_tokens_no_spec_cpu"] != 849
     ):
@@ -509,6 +515,30 @@ def validate_replay_microscope(
             + ",".join(diagnostics["errors"])
         )
 
+    observed_request_id: str | None = None
+    for index, record in enumerate(records):
+        req_ids = record.get("req_ids")
+        candidate = (
+            req_ids[0]
+            if isinstance(req_ids, list)
+            and len(req_ids) == 1
+            and isinstance(req_ids[0], str)
+            else None
+        )
+        if (
+            candidate is None
+            or REPLAY_MICROSCOPE_REQ_RE.fullmatch(candidate) is None
+        ):
+            errors.append(f"replay record {index} contains an unexpected request set")
+            continue
+        if observed_request_id is None:
+            observed_request_id = candidate
+        elif candidate != observed_request_id:
+            errors.append(
+                f"replay record {index} changed internal request ID from "
+                f"{observed_request_id!r} to {candidate!r}"
+            )
+
     expected_tensor_by_stage = {
         "inputs": "input_ids",
         "hidden_after_forward": "hidden_states",
@@ -520,9 +550,21 @@ def validate_replay_microscope(
     for index, record in enumerate(records):
         if type(record.get("tp_rank")) is not int or record["tp_rank"] != 0:
             errors.append(f"replay record {index} does not have tp_rank=0")
-        if record.get("req_ids") != [REPLAY_MICROSCOPE_REQ_ID]:
-            errors.append(f"replay record {index} contains an unexpected request set")
-        if record.get("matched_req_ids") != [REPLAY_MICROSCOPE_REQ_ID]:
+        if (
+            observed_request_id is None
+            or record.get("req_ids") != [observed_request_id]
+        ):
+            if (
+                f"replay record {index} contains an unexpected request set"
+                not in errors
+            ):
+                errors.append(
+                    f"replay record {index} contains an unexpected request set"
+                )
+        if (
+            observed_request_id is None
+            or record.get("matched_req_ids") != [observed_request_id]
+        ):
             errors.append(f"replay record {index} matched the wrong request")
         requests = record.get("requests")
         if not isinstance(requests, list) or len(requests) != 1:
@@ -531,7 +573,8 @@ def validate_replay_microscope(
             request = requests[0]
             if (
                 not isinstance(request, dict)
-                or request.get("req_id") != REPLAY_MICROSCOPE_REQ_ID
+                or observed_request_id is None
+                or request.get("req_id") != observed_request_id
             ):
                 errors.append(f"replay record {index} request ID is invalid")
             elif any(
@@ -560,8 +603,8 @@ def validate_replay_microscope(
     pre_sample_evidence = None
     sampled_token = None
     if len(records) == len(REPLAY_MICROSCOPE_STAGES):
-        logits_evidence = replay_logit_evidence(records[3])
-        pre_sample_evidence = replay_logit_evidence(records[4])
+        logits_evidence = replay_logit_evidence(records[3], observed_request_id)
+        pre_sample_evidence = replay_logit_evidence(records[4], observed_request_id)
         sampled = records[5].get("tensors", {}).get("sampled_token_ids", {})
         sampled_head = sampled.get("head") if isinstance(sampled, dict) else None
         if (
@@ -614,7 +657,7 @@ def validate_replay_microscope(
         "status": "passed" if not errors else "failed",
         "line_count": len(records),
         "stages": stages,
-        "request_id": REPLAY_MICROSCOPE_REQ_ID,
+        "request_id": observed_request_id,
         "tp_rank": 0,
         "tokens_no_spec": 849,
         "logits_after_compute": logits_evidence,

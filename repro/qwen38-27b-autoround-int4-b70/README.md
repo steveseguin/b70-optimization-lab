@@ -20,7 +20,11 @@ require independent numerical, quality, determinism, and performance gates.
 > sync arm observed a third endpoint family that still split at generated
 > token 469; one treated arm cannot distinguish a sync effect from the lane's
 > existing run-to-run variability. It is a negative boundary diagnostic, not a
-> fix. Do not use the historical command below for a new promotion run.
+> fix. A bounded prompt-24 replay-microscope arm then produced no trace because
+> its anchored public request ID omitted vLLM's worker-side eight-hex suffix;
+> prompt 6 also ended at 68 tokens, invalidating the strict metric window. That
+> arm is an invalid false-null, not localization or speed evidence, and must not
+> be retried. Do not use the historical command below for a new promotion run.
 
 ## Model
 

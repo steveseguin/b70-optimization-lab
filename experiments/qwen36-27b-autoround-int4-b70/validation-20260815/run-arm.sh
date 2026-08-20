@@ -311,7 +311,7 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     VALIDATION_REPLAY_MICROSCOPE_MIN_TOKENS_NO_SPEC
     VALIDATION_REPLAY_MICROSCOPE_MAX_TOKENS_NO_SPEC
   )
-  replay_req_regex='^chatcmpl-bench-qwen36-27b-int4-independent-validation-20260815-v1-24-holdout--long-rollover-repository-audit$'
+  replay_req_regex='^chatcmpl-bench-qwen36-27b-int4-independent-validation-20260815-v1-24-holdout--long-rollover-repository-audit-[0-9a-f]{8}$'
   if [[ "$require_replay_microscope" == "1" ]]; then
     if [[ "$arm_root" != /* \
       || "${VALIDATION_REPLAY_MICROSCOPE_FILE:-}" \
