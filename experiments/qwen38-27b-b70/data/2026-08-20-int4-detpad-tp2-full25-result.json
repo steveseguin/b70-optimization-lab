@@ -1,0 +1,131 @@
+{
+  "schema": "qwen38-int4-detpad-tp2-full25-result-v1",
+  "date": "2026-08-20",
+  "classification": "negative-determinism",
+  "promotion_eligible": false,
+  "question": "Does the complete composite runtime with global oneDNN W4A16 determinism padding produce stable full-25 token streams under the production TP2/MTP5 topology?",
+  "preregistration": "../notes/2026-08-20-detpad-composite-tp2-full25-prereg.md",
+  "result_note": "../notes/2026-08-20-detpad-composite-tp2-full25-result.md",
+  "common_identity": {
+    "host": "steve-b70s",
+    "physical_gpus": [2, 3],
+    "tensor_parallel_size": 2,
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "quantization": "AutoRound INT4",
+    "dtype": "float16",
+    "speculative_method": "native MTP",
+    "num_speculative_tokens": 5,
+    "greedy_margin": 0,
+    "draft_lm_head_int4_fallback_margin": 0,
+    "python_hash_seed": 0,
+    "suite_id": "qwen36-27b-int4-independent-validation-20260815-v1",
+    "suite_sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c",
+    "suite_prompt_count": 25,
+    "composite_stage": "/home/steve/staged-xpu-commitfix-graphfa-composite-20260820",
+    "xpu_native_extension_sha256": "4dd336013d155aab004fb1c916118957cb9349b491938da65769f2d8af18ffb0",
+    "xpu_core_extension_sha256": "5717476461048b5056a92926f2a52d73c121f69bdc75de22fd52720fb65b3007",
+    "xpu_moe_extension_sha256": "ea4c20a8dff49fc07fd799d5a2a47e8b24266a256425b41e337f852492ee3c1b",
+    "xpu_fa_extension_sha256": "33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739",
+    "graph_stage_manifest_sha256": "47861e8391b6b25dd9c3eb25e25c5939753aa470858b667d5bdf181344db18da",
+    "compile_cache_namespace": "b99160ae76",
+    "compile_cache_manifest_sha256": "f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb0ff",
+    "compile_cache_tree_sha256": "723c1599060f5c9c82dc5731cc75b50620c79d202b34ee99b8390d3aec20acbe",
+    "compile_cache_entries": 3795,
+    "compile_cache_files": 3246,
+    "compile_cache_bytes": 395855113,
+    "determinism_pad": 1,
+    "expected_pad_ranks": [0, 1],
+    "expected_direct_outer_loads": 2,
+    "expected_direct_aot_loads": 4
+  },
+  "arms": [
+    {
+      "name": "a2",
+      "artifact_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-detpad-composite4dd-marginfree-mtp5-25-spec-a2-20260820",
+      "runner_exit_code": 0,
+      "arm_gate_status": "passed",
+      "bench_json_sha256": "865ab22ef080cb9823ebf8c06b262033cad45fff31cd29adf369d7257172efcb",
+      "preferred_median_tok_s": 100.91626474078802,
+      "legacy_median_tok_s": 101.93562095029093,
+      "legacy_delta_vs_101_170_anchor_tok_s": 0.7656209502909235,
+      "legacy_delta_vs_101_170_anchor_percent": 0.7567667789768917,
+      "quality_enabled": true,
+      "quality_pass_all": true,
+      "quality_baseline_match_all": true,
+      "pad_markers": 2,
+      "direct_outer_loads": 2,
+      "direct_aot_loads": 4,
+      "graph_or_aot_compile_save_markers": 0,
+      "compile_cache_input_output_byte_identical": true
+    },
+    {
+      "name": "b2",
+      "artifact_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-detpad-composite4dd-marginfree-mtp5-25-spec-b2-20260820",
+      "runner_exit_code": 14,
+      "runner_exit_reason": "fail-closed A/B token-parity rejection",
+      "arm_gate_status": "passed",
+      "bench_json_sha256": "96933a8211867479410375aaad7bd96bfb9f97d0edafc12af80dc9963805e721",
+      "preferred_median_tok_s": 101.1236430226841,
+      "legacy_median_tok_s": 102.14509396230719,
+      "legacy_delta_vs_101_170_anchor_tok_s": 0.9750939623071844,
+      "legacy_delta_vs_101_170_anchor_percent": 0.963817299898384,
+      "quality_enabled": false,
+      "pad_markers": 2,
+      "direct_outer_loads": 2,
+      "direct_aot_loads": 4,
+      "graph_or_aot_compile_save_markers": 0,
+      "compile_cache_input_output_byte_identical": true
+    }
+  ],
+  "pair": {
+    "exact_token_arrays": 22,
+    "prompt_count": 25,
+    "all_exact": false,
+    "parity_status": "failed",
+    "mismatches": [
+      {
+        "prompt_index": 6,
+        "prompt_id": "selection--sql-debugging",
+        "first_difference_index": 35,
+        "a2_token": 13,
+        "b2_token": 1058,
+        "different_positions": 468
+      },
+      {
+        "prompt_index": 11,
+        "prompt_id": "holdout--factual-protocol",
+        "first_difference_index": 343,
+        "a2_token": 54488,
+        "b2_token": 13,
+        "different_positions": 168
+      },
+      {
+        "prompt_index": 24,
+        "prompt_id": "holdout--long-rollover-repository-audit",
+        "first_difference_index": 0,
+        "a2_token": 0,
+        "b2_token": 71093,
+        "different_positions": 512,
+        "a2_all_512_token_ids_zero": true,
+        "a2_output_sha256": "aeb1da71a4ab6e3c659da3f13cfe8d51afefd31365cee129668ff91002a71a86",
+        "b2_output_sha256": "c923f52f0159d5a1a8163d77ebba9b911bd9c658efc85ef83383b0a0c0a1428b"
+      }
+    ]
+  },
+  "historical_unpadded_target_report_only": {
+    "target_bench_sha256": "045fd8b4fc9f1eda3bbc778e4b88a6ad7407ff4a50be879dc4e9780b37e0d6e8",
+    "a2_exact": 15,
+    "b2_exact": 15,
+    "prompt_count": 25,
+    "b2_long_rollover_matches_through_token_index": 468,
+    "note": "The historical target is a different unpadded runtime identity and is not a strict token oracle."
+  },
+  "conclusion": "The pad repaired the preregistered TP1 structured-extraction contrast but is insufficient for full-25 TP2 determinism. A2/B2 agreed on 22/25, and A2 produced a catastrophic all-zero 512-token long-rollover stream despite passing the separate semantic quality suite.",
+  "limitations": [
+    "The semantic quality suite passed on A2, but it did not contain the corrupted long-rollover benchmark response and therefore does not rescue the full-25 result.",
+    "The generic determinism pad covers target-backbone and quantized MTP-layer prefills; this pair does not localize the remaining race.",
+    "The historical target token arrays are from an unpadded runtime and are report-only.",
+    "Throughput is descriptive and non-promotable because pairwise token parity failed."
+  ],
+  "next_action": "Preserve A2/B2 and do not sweep speed flags. The narrowest recurrence test is one exact, untraced full-25 TP2 C arm with identical request order and sealed identity, gating explicitly on the final prompt's all-zero stream. If it repeats, retain all 24 predecessors and trace the final request from prefill through first target logits, gather, and GDN/speculative state. If it does not repeat, use one D arm before adding perturbative traces."
+}

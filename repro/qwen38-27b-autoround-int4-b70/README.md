@@ -160,10 +160,12 @@ handoff remains incomplete. See the
   runtime nondeterminism without TP2 collectives. A preregistered six-arm TP1
   control then produced structured variants `G/F2/G` with the global oneDNN
   INT4 prefill pad off and `G/G/G` with it on, under the same binary and sealed
-  cache. After adding fail-closed engagement/direct-load/cache/parity gates,
-  run the pad-enabled composite runtime through two TP2 full-25 arms using the
-  post-recovery `b99160ae76` cache (manifest `f3582440...`, tree
-  `723c1599...`) before any promotion. The cheap
+  cache. The follow-up pad-on composite TP2 full-25 pair passed the new
+  fail-closed engagement/direct-load/cache/freshness/quality gates but agreed
+  on only 22/25 token arrays. A2's long-rollover response was all-zero from the
+  first token, while B2 was sane. Its preferred medians were `100.916` /
+  `101.124 tok/s` and are nonpromotable. Preserve the pair and use one exact
+  history-preserving recurrence arm before any synchronizing trace. The cheap
   draft-fallback-margin patch still needs real TP2 logit-equivalence captures
   and branch/candidate counters before any full 25-prompt throughput A/B.
 - Do not use stock `intel/llm-scaler-vllm:0.21.0-b3.1` as a substitute for the

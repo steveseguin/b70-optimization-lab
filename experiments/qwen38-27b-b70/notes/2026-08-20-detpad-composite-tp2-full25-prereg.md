@@ -2,7 +2,8 @@
 
 Date: 2026-08-20
 
-Status: preregistered; no TP2 GPU arm launched yet.
+Status: completed; **negative at 22/25 A2/B2 token-array parity**. See the
+[result note](2026-08-20-detpad-composite-tp2-full25-result.md).
 
 Preflight attempt 0 used label
 `qwen38-detpad-composite4dd-marginfree-mtp5-25-spec-a-20260820` and stopped

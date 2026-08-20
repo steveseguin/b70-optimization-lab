@@ -155,13 +155,16 @@ global in-band INT4 prefill padding for the observed six-arm structured flip,
 but three pad-on observations do not establish lane-wide determinism, identify
 target versus MTP-layer prefill, or establish full-25 TP2 determinism.
 
-The next pair is now preregistered but not yet launched: two pad-on composite
-runtime TP2/MTP5 full-25 arms, using the unchanged post-recovery `b99160ae76`
-outer/AOT cache. New fail-closed gates require per-rank pad engagement, exact
-direct loads, a byte-identical cache tree, frozen 25-prompt freshness, A/B
-full-token parity, and semantic quality on arm A. The historical unpadded
-target token arrays are report-only; promotion would still require a fresh
-matched pad-on target-only oracle.
+The subsequent pad-on composite TP2/MTP5 full-25 A2/B2 pair passed every
+model, runtime, per-rank pad-engagement, direct-load, sealed-cache, freshness,
+cleanup, and arm-A quality gate, but failed closed at **22/25** complete token
+arrays. A2's final long-rollover response was catastrophically wrong from the
+first token: all 512 token IDs were zero (rendered as exclamation marks), while
+B2 produced the sane reference-family response. Preferred medians were
+`100.916` / `101.124 tok/s`; legacy medians were `101.936` / `102.145`, but
+none is promotable. The pad fixes the scoped TP1 contrast, not full TP2
+determinism. Preserve the pair and use an exact untraced full-25 recurrence arm
+before adding a history-preserving trace around the final request.
 
 The published `101.922` MTP5 and `100.497` MTP4 LocalMaxxing rows are
 invalidated and withdrawal is recommended. Both opted into a `0.03125` greedy
@@ -183,6 +186,7 @@ manifest immediately before vLLM starts.
 - [post-recovery TP1 result](experiments/qwen38-27b-b70/notes/2026-08-20-postrecovery-marginfree-tp1-runtime-nondeterminism.md)
 - [INT4 prefill-pad causal screen](experiments/qwen38-27b-b70/notes/2026-08-20-int4-detpad-tp1-causal-screen-result.md)
 - [pad-on composite TP2 full-25 preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-composite-tp2-full25-prereg.md)
+- [pad-on composite TP2 full-25 result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-composite-tp2-full25-result.md)
 
 ## Closed: Qwen3.6 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 
@@ -279,14 +283,12 @@ loaded service.
    [packet](experiments/qwen38-27b-b70/notes/2026-08-16-q8-distributed-greedy-argmax-neutral.md)
    and only revisit if winner selection can avoid the added cross-queue sync.
 3. Keep full Qwen3.8 AutoRound server runs off the 15-GiB host. The recovered
-   four-B70 host now has a fresh target-only oracle, post-recovery TP2 replicas,
-   and a positive sealed-cache TP1 INT4 prefill-pad control. Add fail-closed
-   engagement, direct-load, post-cache-equality, and token-parity checks, then
-   run two margin-free TP2 full-25 arms with the pad enabled, the composite
-   runtime, and the post-recovery `b99160ae76` cache (manifest `f3582440...`,
-   tree `723c1599...`); enable quality on the first arm. Do not promote or
-   submit until self-parity, target-oracle comparison, and the fixed quality
-   gate all pass.
+   four-B70 host's pad-on composite TP2 pair passed its sealed identity and
+   quality gates but failed 22/25 A/B parity, including one all-zero 512-token
+   response. Preserve A2/B2. Before a perturbative trace, run at most one exact
+   untraced full-25 TP2 recurrence arm with the same history and explicitly
+   gate the final long-rollover stream; if it is sane, one final recurrence arm
+   is needed before tracing. Do not promote or submit these speeds.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.
