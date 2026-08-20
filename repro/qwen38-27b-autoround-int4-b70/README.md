@@ -24,7 +24,12 @@ require independent numerical, quality, determinism, and performance gates.
 > its anchored public request ID omitted vLLM's worker-side eight-hex suffix;
 > prompt 6 also ended at 68 tokens, invalidating the strict metric window. That
 > arm is an invalid false-null, not localization or speed evidence, and must not
-> be retried. Do not use the historical command below for a new promotion run.
+> be retried. A later sealed graph-replay-bypass R1/R2 pair matched on 25/25
+> token arrays, but its combined treatment also changed drafter geometry and
+> startup allocation history; both arms remained only 18/25 exact versus target
+> A and the pair central value was 56.363 tok/s. This is bounded diagnostic
+> evidence, not a localized fix or performance candidate. Do not use the
+> historical command below for a new promotion run.
 
 ## Model
 
@@ -174,8 +179,13 @@ handoff remains incomplete. See the
   first token, while B2 was sane. The exact C1 recurrence arm repeated A2's
   512-zero stream and formed third SQL/factual output families under the same
   sealed identity. Its preferred median was `101.059 tok/s`; all three arms are
-  nonpromotable. Preserve A2/B2/C1, stop untraced arms, and localize prompt 24
-  with the complete request history retained. The cheap
+  nonpromotable. A sealed graph-replay-bypass R1/R2 pair subsequently matched
+  all 25 arrays and emitted the sane S1/target-A prompt-24 family, but only
+  under a combined target-verifier replay, drafter graph/geometry, and startup
+  allocation treatment. Both arms were 18/25 exact versus target A and their
+  preferred central value was `56.363 tok/s`, 44.263% below B2. Preserve the
+  pair as bounded diagnostic evidence, run no further arm under its
+  preregistration, and do not promote it. The cheap
   draft-fallback-margin patch still needs real TP2 logit-equivalence captures
   and branch/candidate counters before any full 25-prompt throughput A/B.
 - Do not use stock `intel/llm-scaler-vllm:0.21.0-b3.1` as a substitute for the

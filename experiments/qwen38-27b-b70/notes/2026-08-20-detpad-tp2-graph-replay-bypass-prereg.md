@@ -1,6 +1,9 @@
 # Qwen3.8 TP2 speculative graph-replay-bypass preregistration
 
-Status: implemented and not launched. No result exists yet.
+Status: completed. R1 and R2 passed their sealed gates and matched on all 25
+complete token arrays. The bounded combined-treatment result is recorded in
+[`2026-08-20-detpad-tp2-graph-replay-bypass-result.md`](2026-08-20-detpad-tp2-graph-replay-bypass-result.md);
+no further arm is authorized.
 
 ## Question and treatment scope
 

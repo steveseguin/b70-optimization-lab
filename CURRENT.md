@@ -186,6 +186,19 @@ for the frozen synthetic direct-op surface only; it does not clear real projecte
 server, graph, scheduler, allocation-history, TP2 interleaving, or speculative
 state paths.
 
+The preregistered graph-replay-bypass R1/R2 pair then matched on all **25/25**
+complete token arrays under the combined treatment: full-width speculative
+target-verifier replay was bypassed, drafter graph keys were disabled, drafter
+geometry changed from padded M6 to unpadded M1, and startup graph allocation
+history changed. Both arms passed the sealed cache/identity/engagement gates;
+R1 passed quality and R2 used immutable R1 as its peer. Prompt 24 matched the
+sane S1/target-A family, but each arm matched target A on only 18/25 and B2 on
+22/25. The pair's preferred central value was only `56.363 tok/s`, **44.263%**
+below B2. This is a bounded positive for the combined diagnostic treatment,
+not component localization, target exactness, lane-wide determinism, or a
+promotable performance result. The preregistered campaign is complete and no
+further arm is authorized.
+
 The published `101.922` MTP5 and `100.497` MTP4 LocalMaxxing rows are
 invalidated and withdrawal is recommended. Both opted into a `0.03125` greedy
 margin that changed emitted text on 18/25 prompts; their quality baseline used
@@ -213,6 +226,8 @@ manifest immediately before vLLM starts.
 - [bounded prompt-24 replay-microscope invalid result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-result.md)
 - [native-SYCL GDN prefill/state preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-native-gdn-prefill-state-stability-prereg.md)
 - [native-SYCL GDN prefill/state result](experiments/qwen38-27b-b70/notes/2026-08-20-native-gdn-prefill-state-stability-result.md)
+- [graph-replay-bypass preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-graph-replay-bypass-prereg.md)
+- [graph-replay-bypass result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-graph-replay-bypass-result.md)
 
 ## Closed: Qwen3.6 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 
@@ -322,18 +337,21 @@ loaded service.
    the formal sealed checker did not run. Preserve A2/B2/C1/S1/M1, run neither
    D nor S2, and do not retry M1. The distinct raw native-SYCL GDN prefill/state
    screen is now closed as a valid bounded negative after 12,528 clean calls.
-   The next source-backed candidate is a now-preregistered, not-yet-launched
-   pair of full-history TP2 arms with uniform speculative PIECEWISE replay
-   disabled and drafter graph keys disabled. It remains diagnostic-only and
-   must preserve all sealed-cache, engagement, quality, and all-25-prompt
-   token-array parity gates. See the
+   The subsequent graph-replay-bypass R1/R2 pair passed all sealed gates and
+   matched on 25/25 token arrays, but only under a combined treatment that also
+   changes drafter geometry and startup allocation history. Its preferred
+   central value was `56.363 tok/s`, 44.263% below B2, and each arm remained
+   only 18/25 exact versus target A. Treat it as bounded diagnostic evidence,
+   not a fix or performance candidate; preserve both arms and run no further
+   arm under that preregistration. See the
    [recurrence result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-full25-recurrence-result.md),
    [sync result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-postforward-sync-result.md),
    [microscope preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-prereg.md),
    [invalid microscope result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-replay-microscope-result.md),
    [native-GDN preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-native-gdn-prefill-state-stability-prereg.md),
    [native-GDN result](experiments/qwen38-27b-b70/notes/2026-08-20-native-gdn-prefill-state-stability-result.md),
-   and [graph-replay-bypass preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-graph-replay-bypass-prereg.md).
+   [graph-replay-bypass preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-graph-replay-bypass-prereg.md),
+   and [graph-replay-bypass result](experiments/qwen38-27b-b70/notes/2026-08-20-detpad-tp2-graph-replay-bypass-result.md).
    Do not promote or submit these speeds.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
