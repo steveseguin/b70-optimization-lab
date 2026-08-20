@@ -613,5 +613,43 @@
       "selection12_caveat": "margin-free selection-12 is 93.435 against the record's 95.167 median, about 1.7 tok/s lower. DO NOT attribute that to the margin yet: this arm is n=1 and ran on a DIFFERENT GPU pair than the record. A margin-ON 25-prompt control on 2,3 is required to separate the margin from the pair. Note the holdout-13 subset is essentially unchanged (115.430 vs 115.395), which argues against a whole-pair slowdown and leaves the selection-12 gap genuinely open."
     },
     "still_outstanding": "margin-free SELF-DETERMINISM is unproven - the replicate qwen38-marginfree-mtp5-25-spec-b-20260820 is running on a SHARED compile cache to test it. Until that returns, the 25/25 property claimed for the records has not been re-established without margin assistance."
+  },
+  "MARGIN_WAS_MASKING_RUNTIME_NONDETERMINISM_20260820": {
+    "severity": "CRITICAL. The '25/25 self-determinism' headline on both published records was margin-assisted. Without the margin the same comparison is 21/25.",
+    "measurement": {
+      "arm_a": "qwen38-marginfree-mtp5-25-spec-a-20260820",
+      "arm_b": "qwen38-marginfree-mtp5-25-spec-b-20260820",
+      "design": "byte-identical config, margin=0 verified at identity.env:189 in BOTH, and a SHARED compile cache (both identity.env show vllm_cache_root=.../qwen38-marginfree-mtp5-20260820).",
+      "cache_reuse_proof": "arm A compiled in 132.20 s; arm A' compiled in 5.13 s. Same compiled artifacts, so compilation is excluded as the source.",
+      "self_determinism": "21/25 prompts byte-identical",
+      "divergent_tokens": "755 / 12413",
+      "first_divergences": [
+        "selection--sql-debugging@35",
+        "holdout--structured-extraction@225",
+        "holdout--factual-protocol@465",
+        "holdout--long-rollover-repository-audit@469"
+      ],
+      "independent_flip_events": "about 4 across 12413 tokens (~1 per 3100). The 755 figure is cascade: once one token flips the rest of that generation follows.",
+      "speeds": {
+        "arm_a_all25": 101.394,
+        "arm_b_all25": 100.455,
+        "arm_a_sel12": 93.435,
+        "arm_b_sel12": 92.472
+      },
+      "gates": "both arms: smoke_pass, realistic_gate_passed, cached_tokens_all_zero, fresh_response_valid all true"
+    },
+    "WHAT_THIS_OVERTURNS": {
+      "claim": "'nondeterminism is a COMPILATION phenomenon, not arithmetic' - based on two runs sharing a compile cache agreeing 25/25 over 12,413 tokens.",
+      "why_it_was_wrong": "that shared-cache experiment ran with the margin ON. The margin collapses any top1/top2 gap in (0, 0.03125] to the lower token ID, which absorbs exactly the small runtime perturbations that would otherwise flip an argmax. Repeating it margin-free on a shared cache gives 21/25.",
+      "corrected_conclusion": "this stack has GENUINE RUNTIME nondeterminism of roughly one argmax flip per ~3000 tokens, independent of compilation. The margin was concealing it, which is why every determinism gate passed.",
+      "note": "compilation nondeterminism may still exist on TOP of this - fresh-cache arms previously agreed only 12/25 margin-ON. Both effects can be real; only the 'runtime is clean' half is refuted."
+    },
+    "answers_the_original_question": "this is the answer to why the ~95 tok/s result could never be made byte-accurate. It is not a harness artifact and not expected behaviour - it is a real nondeterminism in the serving stack, and the deterministic-greedy margin was papering over it rather than fixing it.",
+    "already_on_and_insufficient": "the record config already runs VLLM_XPU_ONEDNN_INT4/INT8_COMPLETION_BARRIER=1 and INPUT_DEPENDENCY=1, which are determinism aids. They are on in these arms too and 21/25 is the result WITH them.",
+    "next": [
+      "third margin-free arm to test whether the same 4 prompts diverge (stable) or different ones (random)",
+      "bisect the source: GDN core, oneDNN INT4/INT8 GEMM reduction order, and the TP allreduce are the candidates",
+      "note XPU batch invariance is dead code behind is_cuda_alike() gates (linear.py:237, vocab_parallel_embedding.py:414, layernorm.py:114) - enabling it is a real candidate fix"
+    ]
   }
 }
