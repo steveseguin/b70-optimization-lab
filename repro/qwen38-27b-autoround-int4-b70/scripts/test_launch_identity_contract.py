@@ -266,6 +266,7 @@ class LaunchIdentityContractTest(unittest.TestCase):
         for required in (
             "env -i",
             "C1 no longer proves the preregistered active recurrence",
+            '.schema == "qwen38-token-array-parity-v1"',
             "VALIDATION_SYNC_AFTER_MODEL_FORWARD=1",
             "VALIDATION_EXPECT_SYNC_AFTER_MODEL_FORWARD=1",
             "S1 prompt 24 is not the sane B2 token family; S2 is forbidden",

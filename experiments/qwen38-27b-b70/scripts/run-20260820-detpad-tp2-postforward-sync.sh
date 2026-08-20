@@ -79,9 +79,9 @@ verify_sha "$quality_baseline" "$quality_sha" quality-baseline
 if [[ "$(tr -d '\n' < "$c1/runner.exit-code")" != "14" ]] \
   || ! jq -e '.status == "passed" and (.errors | length == 0)' \
     "$c1/tp2-sealed-gates.json" >/dev/null \
-  || ! jq -e '.schema == "qwen38-token-array-parity-v1" \
-      and .status == "failed" \
-      and .candidate_peer.exact_count == 22 \
+  || ! jq -e '.schema == "qwen38-token-array-parity-v1"
+      and .status == "failed"
+      and .candidate_peer.exact_count == 22
       and .candidate_reference.exact_count == 23' \
     "$c1/token-parity.json" >/dev/null; then
   printf 'C1 no longer proves the preregistered active recurrence\n' >&2
