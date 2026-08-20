@@ -651,5 +651,24 @@
       "bisect the source: GDN core, oneDNN INT4/INT8 GEMM reduction order, and the TP allreduce are the candidates",
       "note XPU batch invariance is dead code behind is_cuda_alike() gates (linear.py:237, vocab_parallel_embedding.py:414, layernorm.py:114) - enabling it is a real candidate fix"
     ]
+  },
+  "batch_invariance_reopened_20260820": {
+    "why_reopened": "the 2026-08-18 GDN/batch-invariance factorial ran every cell with the deterministic greedy margin ON (that note's own line 49: 'Keep the deterministic greedy margin...'). The margin absorbs any top1/top2 gap in (0, 0.03125] - precisely the small reduction-order perturbations batch invariance exists to remove. So the factorial had almost no headroom in which to observe a determinism benefit, and its determinism readings cannot be used to close the question.",
+    "new_headroom": "margin-free self-determinism is 21/25 with ~4 independent flip events in 12,413 tokens. That is real, measurable headroom for a determinism fix to close.",
+    "LIVE_KNOB_NEEDS_NO_PATCH": {
+      "flag": "VLLM_XPU_RMSNORM_BATCH_INVARIANT=1, via VALIDATION_RMSNORM_BATCH_INVARIANT=1 (run-arm.sh:417-418)",
+      "why_it_works": "layernorm.py forward_xpu (line 122+) checks this env var directly with NO is_cuda_alike() gate, and returns rms_norm_batch_invariant(). It is reachable on XPU.",
+      "status": "never run on Qwen3.8. identity.env records rmsnorm_batch_invariant=0 for every arm so far.",
+      "cost_expectation": "the factorial measured GLOBAL VLLM_BATCH_INVARIANT=1 at 91.926 vs 98.222 tok/s, a 6.3 tok/s hit. This knob is far narrower - RMSNorm only - so it should cost much less. Must be measured, not assumed."
+    },
+    "DEAD_KNOB_NEEDS_A_ONE_LINE_FIX": {
+      "flag": "VLLM_XPU_LINEAR_BATCH_INVARIANT - provably a no-op today",
+      "bug": "linear.py:227-237. xpu_batch_invariant is computed as current_platform.is_xpu() AND the env var, but the branch is then guarded by 'if (envs.VLLM_BATCH_INVARIANT or xpu_batch_invariant) and current_platform.is_cuda_alike():'. is_cuda_alike() is defined at platforms/interface.py:191-193 as _enum in (CUDA, ROCM), and XPU's _enum is PlatformEnum.XPU (platforms/xpu.py:33). is_xpu() and is_cuda_alike() are mutually exclusive, so the XPU branch is unreachable dead code.",
+      "fix": "change the guard to '(envs.VLLM_BATCH_INVARIANT and current_platform.is_cuda_alike()) or xpu_batch_invariant'",
+      "scope_caveat": "this is UnquantizedLinearMethod.apply. The model is INT4-quantized, so most GEMMs take the quantized path and would be unaffected; expect limited reach until the quantized paths get an equivalent.",
+      "defect_class": "this is the THIRD flag found to silently do nothing, after VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH and VLLM_XPU_DDTREE_CAPTURE_GDN_CORE. Verify a flag reached AND changed behaviour before trusting any arm that sets it."
+    },
+    "also_dead_on_xpu": "vocab_parallel_embedding.py:414 gates linear_batch_invariant behind envs.VLLM_BATCH_INVARIANT and is_cuda_alike(), with no XPU opt-in at all, so the LM-head batch-invariant path is unreachable on XPU.",
+    "planned_experiment": "margin-free + VALIDATION_RMSNORM_BATCH_INVARIANT=1, two arms on a shared compile cache, on GPUs 2,3. Question: does self-determinism go 21/25 -> 25/25, and what does it cost in tok/s?"
   }
 }
