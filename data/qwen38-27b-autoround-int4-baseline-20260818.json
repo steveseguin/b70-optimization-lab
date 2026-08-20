@@ -475,13 +475,51 @@
     "process_lesson": "verify a flag reached the server before building conclusions on it. The kernel already emitted a marker that would have caught this immediately."
   },
   "breakable_cudagraph_device_lost_20260820": {
-    "status": "UNSAFE as configured; GPUs self-recovered, no reset or escalation required",
-    "config": "PIECEWISE with the two GDN ops removed from splitting_ops, VLLM_USE_BREAKABLE_CUDAGRAPH=1, and VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0. Two-prompt smoke.",
-    "result": "RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST) during the worker run",
-    "recovery": "all four B70s visible immediately afterwards, 43 MiB idle, no orphaned processes, no GPU reset performed",
-    "confound": "TWO variables changed at once - breakable graph capture of the GDN region AND per-call scratch allocation. Not yet attributable.",
-    "leading_hypothesis": "allocating the 12 spec-decode scratch buffers per call INSIDE a captured graph region is the classic way to fault a device; graph capture requires stable addresses. That is consistent with the other machine's op-level GRAPH_OK result, which used the PERSISTENT (cached-address) path.",
-    "next_isolation": "repeat the breakable capture with PERSISTENT_SCRATCH=1 (stable addresses). If that survives, the fault is the per-call allocation, not graph capture of GDN.",
-    "incidental_confirmation": "this run showed ZERO 'PERSISTENT_SCRATCH allocated' markers, confirming the run-arm.sh:676 passthrough added today actually works - the first time that flag has ever taken effect."
+    "status": "CLOSED 2026-08-20. Root cause CORRECTED; the lever itself is a dead end. GPUs healthy throughout.",
+    "ROOT_CAUSE_CORRECTION": {
+      "what_I_recorded_first": "that per-call allocation of the 12 GDN spec-decode scratch buffers inside a captured graph region faulted the device.",
+      "why_that_was_wrong": "there was no captured graph region. vllm/config/vllm.py:1047-1052 sets compilation_config.mode = CompilationMode.NONE whenever VLLM_USE_BREAKABLE_CUDAGRAPH is set, logging 'VLLM_USE_BREAKABLE_CUDAGRAPH is set, disabling vLLM's torch.compile pipeline. Equivalent to -cc.mode=none.' That warning is present at line 76 of BOTH runs' server.stdout.log. torch.compile was off and VALIDATION_COMPILATION_CONFIG_OVERRIDE was ignored.",
+      "where_it_actually_faulted": "vllm/model_executor/layers/rotary_embedding/mrope.py:386 forward_xpu -> :321 forward_native -> common.py:222 forward_native -> common.py:177 forward_static -> torch.cat((o1, o2), dim=-1). Rotary embedding on the eager path, nothing to do with GDN scratch.",
+      "when": "00:18:00, i.e. 25 s AFTER 'Application startup complete' at 00:17:42 - during the first served request, not during startup or capture."
+    },
+    "LEVER_VERDICT": {
+      "verdict": "VLLM_USE_BREAKABLE_CUDAGRAPH is NOT a route to more graph capture. It REMOVES compilation. The premise behind testing it - extending capture over the GDN region to reclaim the ~14.2 ms/step of dispatch - was inverted.",
+      "evidence": "vllm/config/vllm.py:1047-1052, quoted above.",
+      "consequence": "do not retry this flag for speed. Any real attack on GDN dispatch has to keep the torch.compile pipeline ON and change splitting_ops / capture, not disable the pipeline."
+    },
+    "isolation_attempt": {
+      "raw_root": "qwen38-breakable-persistscratch-two-spec-a-20260820",
+      "design": "identical to the faulting run except VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1",
+      "outcome": "INCONCLUSIVE - never reached the test. Hung in oneCCL initialisation: last log line 00:22:59 at CCL stream/P2P setup, both workers pinned at ~94% CPU (spin-wait on a collective) for 13 min, killed by the 15-min supervision startup timeout at 00:35:45.",
+      "likely_cause_of_the_hang": "started 00:20:44, only 2 min 40 s after the device-lost run's process group was torn down at 00:18:04. The Level Zero driver had probably not fully recovered. My earlier health check (devices visible, 43 MiB idle, no orphaned processes) was NOT sufficient to establish the driver was ready for a new TP2 job.",
+      "operational_lesson": "after a UR_RESULT_ERROR_DEVICE_LOST, wait and re-verify with an actual small GPU workload before launching a TP2 run; process/memory checks alone are not a readiness gate.",
+      "cache_note": "this run also pointed at an empty compile cache, but that turned out to be irrelevant since the flag disables compilation anyway."
+    },
+    "recovery": "all four B70s visible, 43 MiB used each, no orphaned processes, no GPU reset performed or required, at every check including after both runs.",
+    "incidental_confirmation": "the faulting run showed ZERO 'PERSISTENT_SCRATCH allocated' markers, confirming the run-arm.sh:676 passthrough added 2026-08-20 works - the first time that flag has ever taken effect.",
+    "superseded_entry": {
+      "status": "UNSAFE as configured; GPUs self-recovered, no reset or escalation required",
+      "config": "PIECEWISE with the two GDN ops removed from splitting_ops, VLLM_USE_BREAKABLE_CUDAGRAPH=1, and VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0. Two-prompt smoke.",
+      "result": "RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST) during the worker run",
+      "recovery": "all four B70s visible immediately afterwards, 43 MiB idle, no orphaned processes, no GPU reset performed",
+      "confound": "TWO variables changed at once - breakable graph capture of the GDN region AND per-call scratch allocation. Not yet attributable.",
+      "leading_hypothesis": "allocating the 12 spec-decode scratch buffers per call INSIDE a captured graph region is the classic way to fault a device; graph capture requires stable addresses. That is consistent with the other machine's op-level GRAPH_OK result, which used the PERSISTENT (cached-address) path.",
+      "next_isolation": "repeat the breakable capture with PERSISTENT_SCRATCH=1 (stable addresses). If that survives, the fault is the per-call allocation, not graph capture of GDN.",
+      "incidental_confirmation": "this run showed ZERO 'PERSISTENT_SCRATCH allocated' markers, confirming the run-arm.sh:676 passthrough added today actually works - the first time that flag has ever taken effect."
+    }
+  },
+  "rerank_topk_audit_20260820": {
+    "audits": "the other machine's 'rerank K=2' proposal, which scratch_fix_projection_correction_20260819.consequence called 'load-bearing for 105'",
+    "VERDICT_ON_CHEATING": "NOT CHEATING. It is draft-side only. The proposal changes what the MTP drafter proposes by rescoring the draft head's own local top-K in FP32 against retained FP16 weights; it does not touch the verifier. vllm/v1/sample/rejection_sampler.py:1774-1776 still accepts a draft token only on exact equality with the target argmax, so output equivalence to non-speculative greedy decoding is preserved. Changing the proposal distribution is the one thing speculative decoding is always free to do.",
+    "BUT_NOT_LOAD_BEARING": {
+      "inert_as_scripted": "the patched code sits inside a branch gated on VLLM_XPU_DRAFT_LM_HEAD_INT4 (vocab_parallel_embedding.py:319-326, default off at :74-80). run-arm.sh:464-469 exports only VLLM_XPU_DRAFT_LM_HEAD_INT4_RERANK_TOPK and has NO passthrough for VLLM_XPU_DRAFT_LM_HEAD_INT4. The scripted Screen 3 would therefore return baseline and read as a clean null - the SAME inert-arm trap as RETRACTION_scratch_flag_never_applied_20260820.",
+      "wrong_control": "the record runs VALIDATION_LM_HEAD_INT8=1 with scope 'all', so the MTP draft head is INT8, not INT4. Testing the rerank requires first downgrading the draft head INT8 -> INT4, an unmeasured config change carrying its own acceptance cost. The INT8 record is not the correct control.",
+      "cross_rank_flaw": "the winner is written back as candidate_values[:, :1] + 1.0 - the rank-local INT4 top-1 score plus a constant. Local logits are all-gathered and argmaxed globally (logits_processor.py:160-166), and every rank adds the same +1.0, so the cross-rank comparison is still decided by INT4 scores. The rerank can only repair rank1<->rank2 flips WITHIN the TP rank that already won on INT4 score. Effect is capped; their note treats the cross-rank path as neutral, which it is not.",
+      "gain_unsourced": "the '+0.1-0.2 tok/step -> +3 to +6 tok/s' figure has no measurement behind it. The candidate's own status line says 'source-only candidate; not built or measured' and their DO-NOT-REPEAT entry says 'no performance, acceptance, determinism, or quality claim exists yet'.",
+      "cost_side": "torch.topk over 75968 local vocab x5 draft positions per step, in eager Python in the hot path. sampler.py's own note records a wide topk at ~6x a max reduction on XPU - which is exactly why the deterministic-greedy path was rewritten to avoid topk. This is the same Python-dispatch overhead already identified as dominant."
+    },
+    "prior_closed_work": "the Qwen3.6 README closes top-k reranking three times (README.md:718-729, :730-738, :872-876), but that work was PREDICTIVE reranking - heuristics/learned models guessing which draft candidate the target would accept, measured flat to negative. The new proposal is dequantization-error repair and does not model the target. The old closure is adjacent, not binding.",
+    "CHEAPER_UNSCREENED_ALTERNATIVE": "VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN at vocab_parallel_embedding.py:341-365 already does the same INT4-error repair row-selectively (exact F.linear for low-margin rows) instead of candidate-selectively. It is in-tree, needs NO patch, and a grep across experiments/ and notes/ finds no result for it anywhere. Screen this first - it needs only the same missing VLLM_XPU_DRAFT_LM_HEAD_INT4 plumbing.",
+    "action": "rerank K=2 is removed as the route to 105. It is legitimate but unmeasured, mis-plumbed, mis-controlled and structurally capped."
   }
 }

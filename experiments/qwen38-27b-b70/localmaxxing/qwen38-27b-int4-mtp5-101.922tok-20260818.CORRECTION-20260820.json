@@ -1,0 +1,14 @@
+{
+  "corrects_file": "qwen38-27b-int4-mtp5-101.922tok-20260818.queue.json",
+  "record_id": "cmszbkxco0e11ms01l2rixxbt",
+  "record": "MTP5 101.922",
+  "status": "PUBLISHED PAYLOAD IS INACCURATE. The .queue.json is left byte-for-byte as submitted, as the audit trail.",
+  "wrong_field": "payload.engineFlags.commandSnippet",
+  "wrong_text": "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0",
+  "correct_text": "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1",
+  "why": "validation-20260815/run-arm.sh hard-exported the variable to 1, discarding the 0 the arm requested. The record arms ran on the cached-scratch path.",
+  "proof": "run/server.stdout.log of qwen38-mtp5-noscratch-25-spec-a-20260818 and -c-20260818 each contain 96 'PERSISTENT_SCRATCH allocated' TORCH_WARN markers. A run on the since-fixed harness genuinely at 0 contains 0 markers.",
+  "measurement_unaffected": "tok/s, 25/25 self-determinism and the quality pass all remain valid. Only the flag attribution was wrong.",
+  "amend_attempted": "No. The LocalMaxxing API documents only POST /api/speed-tests and POST /api/speed-tests/dry-run; there is no PATCH/PUT/DELETE surface, so the published record cannot be edited in place. Re-submitting would create a duplicate leaderboard entry, which is worse than the inaccuracy. Flagged for the maintainer to raise with LocalMaxxing.",
+  "corrected_snippet": "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1 VALIDATION_NUM_SPECULATIVE_TOKENS=5 cudagraph_capture_sizes=[6] VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0 VALIDATION_LM_HEAD_INT8=1 VALIDATION_DETERMINISTIC_GREEDY_MARGIN=0.03125 --dtype float16 --tensor-parallel-size 2 --max-model-len 2048 --max-num-seqs 1"
+}

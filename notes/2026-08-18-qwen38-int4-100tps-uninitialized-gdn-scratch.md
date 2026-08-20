@@ -2,6 +2,36 @@
 
 Date: 2026-08-18 (America/Toronto)
 
+> ## ⚠ CORRECTION 2026-08-20 — read before using this note
+>
+> **The persistent GDN scratch was never disabled in any run described below.**
+> Every "scratch off" / "noscratch" arm in this note in fact ran with
+> `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1`.
+>
+> Cause: `validation-20260815/run-arm.sh` hard-exported the variable to `1`,
+> silently discarding the `0` the arm requested. Proof: the kernel emits a
+> `TORCH_WARN` on each scratch allocation, and the record arms
+> `qwen38-mtp5-noscratch-25-spec-{a,c}-20260818` each contain **96** of those
+> markers in `run/server.stdout.log`. The harness has since been fixed
+> (`VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH` is now honoured) and a run with the
+> variable genuinely at `0` produces **0** markers.
+>
+> **What this retracts:**
+> - that disabling the scratch fixed MTP4 determinism (24/25 → 25/25);
+> - that disabling the scratch was faster (`+0.237 tok/s`);
+> - the "Reproduction" and depth-sweep claims that the scratch was off.
+>
+> **What survives:** the speeds themselves. `100.497` (MTP4) and `101.922`
+> (MTP5) were really measured, with real 25/25 self-determinism and real quality
+> passes. Only the *attribution* was wrong. To reproduce, use
+> `PERSISTENT_SCRATCH=1` — see the corrected Reproduction section.
+>
+> **The uninitialized read is still a real bug** (`torch::empty` in
+> `get_gdn_spec_decode_scratch`); it simply was never the thing that was toggled.
+> Both published LocalMaxxing records carry the wrong flag in their
+> `commandSnippet` and the API has no amend endpoint — see
+> [`../results/localmaxxing-submissions.md`](../results/localmaxxing-submissions.md).
+
 ## Result
 
 **`100.497 tok/s`** median across three arms on the 25-prompt suite, with
@@ -43,8 +73,13 @@ a diagnosis:
    So the fault is *history dependent*, not intrinsic to the prompt.
 3. Those two together mean state is carrying across requests and its content
    varies per process — the signature of reading memory before writing it.
-4. `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0` produced 25/25 across all three
-   pairs **and was faster**.
+4. ~~`VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0` produced 25/25 across all three
+   pairs **and was faster**.~~ **RETRACTED 2026-08-20** — the flag never took
+   effect (see the correction banner). Those arms ran with the scratch *enabled*,
+   so the 25/25 and the `+0.237 tok/s` cannot be attributed to disabling it.
+   Observations 1–3 stand and still point at history-dependent state; the
+   uninitialized read remains the leading explanation, but it is now
+   **untested**, not demonstrated.
 
 The persistent scratch is cached across calls (keyed on the conv-weight pointer)
 and a region is read before being written when `total_spec_tokens == 5`. MTP3 at
@@ -103,8 +138,9 @@ pass against a genuine Qwen3.8 baseline.
 
 Config: MTP4 (`num_speculative_tokens=4`), `cudagraph_capture_sizes [5]`,
 serial-exact GDN **off**, batch-invariant **off**, persistent GDN scratch
-**off**, tie-break margin `0.03125`, oneDNN INT4/INT8 barriers on, INT8 LM head,
-`--dtype float16`, TP2.
+**ON** (`VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1` — corrected 2026-08-20; the
+runs requested `0` but the harness forced `1`), tie-break margin `0.03125`,
+oneDNN INT4/INT8 barriers on, INT8 LM head, `--dtype float16`, TP2.
 
 Full command form and host/source identity:
 [`../repro/qwen38-27b-autoround-int4-b70/README.md`](../repro/qwen38-27b-autoround-int4-b70/README.md).
@@ -124,7 +160,10 @@ Per-arm manifests and the complete ladder:
 
 ### Depth is exhausted at MTP5
 
-Persistent scratch disabled throughout, all arms cold:
+All arms cold. (The depth sweep was labelled "persistent scratch disabled
+throughout"; **corrected 2026-08-20** — it ran with the scratch *enabled*
+throughout. Depth is the only variable that actually differed between these
+rows, so the sweep's conclusion is unaffected.)
 
 | depth | all-25 | selection-12 |
 | --- | ---: | ---: |
@@ -152,8 +191,21 @@ leaving the intentional `torch::ones` for `has_initial_state` and
 
 Zeroing is correct rather than disabling the scratch: allocation happens once
 per `(owner, shape, dtype)` and is cached, so it is a single memset off the hot
-path, whereas `PERSISTENT_SCRATCH=0` reallocates on **every call**. The current
-`101.922` is therefore paying an allocation per call that the fix removes.
+path, whereas `PERSISTENT_SCRATCH=0` reallocates on **every call**.
+
+~~The current `101.922` is therefore paying an allocation per call that the fix
+removes.~~ **RETRACTED 2026-08-20.** The record already ran on the cached path
+(`=1`), so it is *not* paying a per-call allocation and the fix has nothing to
+remove from it.
+
+This matters for the road to 105. The other machine's op-level A/B
+(`42.87 us/call` at `=0` against `34.08 us/call` at `=1`, ~`0.42 ms/step`,
+~`+1.5 tok/s`) measures the gain of moving `0 → 1`. **The record is already at
+`1`.** That `+1.5 tok/s` is therefore already banked inside `101.922` and is not
+available on top of it. Expect the zero-init fix to be roughly
+**performance-neutral** against the record — its value is correctness (removing
+a real uninitialized read) and unblocking serial-exact at depths other than 3,
+not speed. The projection of `~103.4` from this item is withdrawn.
 
 - kernel commit `0ab8205` on branch `fix/gdn-scratch-zero-init`, pushed to
   `https://github.com/steveseguin/vllm-xpu-kernels.git`;

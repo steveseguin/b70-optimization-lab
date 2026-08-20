@@ -11,6 +11,31 @@ Historical fixed-first-100-token rows used the repository's legacy
 Those approved receipts remain immutable. New submissions are required to use
 the conventional 99-interval field.
 
+> **⚠ Published-record correction, 2026-08-20 — two Qwen3.8 INT4 records carry a
+> wrong flag in their `commandSnippet`.**
+>
+> Records `cmszbkxco0e11ms01l2rixxbt` (MTP5, 101.922) and
+> `cmszarna10e0nms0103hv0tve` (MTP4, 100.497) both publish
+> `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0`. **The correct value is `1`.** The
+> validation harness hard-exported the variable to `1` and discarded the `0` the
+> arms requested, so both records ran on the cached-scratch path. Proof: 96
+> `PERSISTENT_SCRATCH allocated` kernel warnings in each record arm's
+> `run/server.stdout.log`, against 0 for a run on the since-fixed harness.
+>
+> **The measurements stand.** The tok/s, the 25/25 self-determinism and the
+> quality passes are all unaffected — only the flag attribution was wrong. A
+> third party copying the published snippet would, however, configure a
+> *different* run than the one that set the record.
+>
+> **Not amended upstream.** The LocalMaxxing API exposes only
+> `POST /api/speed-tests` and `POST /api/speed-tests/dry-run`; there is no
+> PATCH/PUT/DELETE surface. Re-submitting to fix a snippet would create a
+> duplicate leaderboard entry, which is worse than the inaccuracy, so no
+> submission was made. **This needs a human to raise with LocalMaxxing.**
+> Per-record detail:
+> [`../experiments/qwen38-27b-b70/localmaxxing/`](../experiments/qwen38-27b-b70/localmaxxing/)
+> `*.CORRECTION-20260820.json`.
+
 | Model / lane | Hardware | Representative submitted result | LocalMaxxing ID | Evidence |
 | --- | --- | ---: | --- | --- |
 | Muse-Glimmer-30B UD-Q8_K_XL, TP4 pretrained DFlash | 4x Arc Pro B70 | **161.900 conventional interval median**, frozen 15-prompt cold suite, target-verified | `cmss8515c00n0ms01n3begqgg` | [packet](muse-glimmer-30b-q8-woq-b70/README.md); [repro](../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md) |

@@ -152,8 +152,24 @@ design can be recognized. Large raw logs and many historical build trees remain
 under `/mnt/fast-ai`; not every raw byte or rejected historical build artifact
 is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
 
-- 2026-08-20: breakable-cudagraph GDN capture with `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0`
-  faults the device (`UR_RESULT_ERROR_DEVICE_LOST`, level_zero error 20). Per-call
-  scratch allocation inside a captured graph region cannot work — graph capture needs
-  stable addresses. GPUs self-recovered; no reset needed. Retry only with
-  `PERSISTENT_SCRATCH=1`.
+- 2026-08-20: **`VLLM_USE_BREAKABLE_CUDAGRAPH=1` is a dead end for speed — it DISABLES
+  torch.compile.** `vllm/config/vllm.py:1047-1052` sets
+  `compilation_config.mode = CompilationMode.NONE` whenever the flag is set
+  ("Equivalent to -cc.mode=none"), so any `--compilation-config` passed alongside it is
+  silently ignored. It removes compilation rather than extending graph capture. Do not
+  retry it as a route to reclaiming GDN dispatch cost.
+  - Running fully eager that way faulted the device
+    (`UR_RESULT_ERROR_DEVICE_LOST`, level_zero error 20) 25 s after startup, on the
+    first served request, in `rotary_embedding/mrope.py:386` →
+    `common.py:177 torch.cat` — rotary embedding, **not** GDN scratch.
+  - ~~Per-call scratch allocation inside a captured graph region cannot work.~~
+    **RETRACTED** — there was no captured region; the premise was wrong.
+  - GPUs self-recovered; no reset needed.
+  - **Operational lesson:** a follow-up TP2 run launched 2 min 40 s after the fault hung
+    in oneCCL init (both workers spin-waiting at ~94% CPU) until the 15-min supervision
+    timeout killed it. Devices-visible + idle-memory + no-orphan-processes is **not** a
+    sufficient readiness gate after a device-lost. Re-verify with a small real GPU
+    workload before launching TP2.
+  - The correct version of this experiment — which has **not** been run — keeps
+    torch.compile **ON** and removes the GDN ops from `splitting_ops` so they are
+    captured instead of broken out.
