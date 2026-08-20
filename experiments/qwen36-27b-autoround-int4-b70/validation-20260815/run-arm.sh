@@ -674,8 +674,15 @@ if [[ "$mode" == "spec" || "$mode" == "spec-native-scratch" \
     # hard export here silently discarded operator intent. Runs that thought
     # they had disabled it did not; see the 2026-08-20 correction.
     export VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH="${VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH:-1}"
-    export VLLM_XPU_DDTREE_FULL_GRAPH=0
-    export VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=0
+    export VLLM_XPU_DDTREE_FULL_GRAPH="${VALIDATION_DDTREE_FULL_GRAPH:-0}"
+    # Overridable for the same reason as the scratch flag above: hard-exporting
+    # 0 made the GDN-capture lever untestable. With this at 1, vLLM drops
+    # vllm::gdn_attention_core_xpu from splitting_ops
+    # (vllm/config/compilation.py:1170-1183) so the GDN core is captured instead
+    # of paying one eager Python boundary per GDN layer. Opt-in because that op
+    # mutates layer-owned recurrent state outside its schema, so any arm using
+    # it MUST pass determinism and quality, not just speed.
+    export VLLM_XPU_DDTREE_CAPTURE_GDN_CORE="${VALIDATION_DDTREE_CAPTURE_GDN_CORE:-0}"
     export VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA=0
     export VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=0
     if [[ "${VALIDATION_GDN_SERIAL_SPEC_IDENTITY:-0}" == "1" ]]; then

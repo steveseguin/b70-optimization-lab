@@ -521,5 +521,23 @@
     "prior_closed_work": "the Qwen3.6 README closes top-k reranking three times (README.md:718-729, :730-738, :872-876), but that work was PREDICTIVE reranking - heuristics/learned models guessing which draft candidate the target would accept, measured flat to negative. The new proposal is dequantization-error repair and does not model the target. The old closure is adjacent, not binding.",
     "CHEAPER_UNSCREENED_ALTERNATIVE": "VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN at vocab_parallel_embedding.py:341-365 already does the same INT4-error repair row-selectively (exact F.linear for low-margin rows) instead of candidate-selectively. It is in-tree, needs NO patch, and a grep across experiments/ and notes/ finds no result for it anywhere. Screen this first - it needs only the same missing VLLM_XPU_DRAFT_LM_HEAD_INT4 plumbing.",
     "action": "rerank K=2 is removed as the route to 105. It is legitimate but unmeasured, mis-plumbed, mis-controlled and structurally capped."
+  },
+  "gpu_wedge_20260820": {
+    "severity": "BLOCKING for the record GPU pair. Needs Steve's authorization to clear.",
+    "state": "GPUs 0 and 1 (PCI 0000:23:00.0 and 0000:27:00.0) are WEDGED. GPUs 2 and 3 (0000:43:00.0, 0000:47:00.0) are healthy.",
+    "proof": {
+      "minimal_op_test": "torch.ones(1024, device='xpu:N') + 1 -> .sum().item()",
+      "xpu0": "FAIL UR_RESULT_ERROR_DEVICE_LOST (20) on elementwise; OUT_OF_RESOURCES (40) on a 256x256 fp16 matmul",
+      "xpu1": "FAIL UR_RESULT_ERROR_DEVICE_LOST (20) on elementwise; OUT_OF_RESOURCES (40) on matmul",
+      "xpu2": "OK elementwise sum=2048.0; OK matmul",
+      "xpu3": "OK elementwise sum=2048.0; OK matmul",
+      "collective_gate": "XCCL all_reduce across the surviving pair (ONEAPI_DEVICE_SELECTOR=level_zero:2,3) returned the correct value 3.0 on both ranks, with every stage marker (import-done, device-set, pg-initialised, tensor-allocated, ALLREDUCE-RETURNED) printed. The pair is collective-healthy, not just per-card healthy."
+    },
+    "CORRECTS": "my earlier claim that 'all four B70s self-recovered, no reset needed' after the 2026-08-20 device-lost. That was based on xpu-smi showing all four devices visible at 43 MiB idle with no orphaned processes. Those signals are NOT a health gate - a wedged B70 still enumerates and still reports idle memory. Only executing a real kernel distinguishes them.",
+    "explains": "why the follow-up TP2 run on 0,1 hung in oneCCL init with both workers spin-waiting at ~94% CPU until the 15-min supervision timeout. It was not a cold-compile stall; it was two dead devices.",
+    "matches_known_wedge_class": "the documented B70 signature: run stops at the CCL topology warning and emits nothing further, ranks spin at ~75-95% CPU, and the bad stack persists with no process holding the render nodes, poisoning later runs until the driver is explicitly reloaded.",
+    "recovery_procedure": "unbind all four B70s from /sys/bus/pci/drivers/xe/unbind (modprobe -r xe fails at refcount 8; the refcount comes from the bound devices, not any process), then reload xe and let all four re-probe. reset_method reports 'flr bus' for all four. The B70s are compute-only - console is the ASPEED ast - so unbinding does not disturb the display.",
+    "NOT_PERFORMED": "privileged GPU recovery requires Steve's explicit go-ahead per attempt. Not done autonomously.",
+    "workaround_in_use": "continuing on the healthy pair 2,3. Any result measured there is a screening result, not directly record-comparable, because the record was set on 0,1 - a matched control on 2,3 is required for every A/B."
   }
 }

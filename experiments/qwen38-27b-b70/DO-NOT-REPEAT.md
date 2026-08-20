@@ -173,3 +173,17 @@ is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
   - The correct version of this experiment — which has **not** been run — keeps
     torch.compile **ON** and removes the GDN ops from `splitting_ops` so they are
     captured instead of broken out.
+
+- 2026-08-20: **`xpu-smi` visibility and idle memory are NOT a GPU health gate.** After the
+  device-lost above, all four B70s enumerated and reported 43 MiB idle with no orphaned
+  processes, and I wrongly recorded "self-recovered, no reset needed". GPUs 0 and 1
+  (`0000:23:00.0`, `0000:27:00.0`) were in fact wedged: `torch.ones(1024, device="xpu:0")+1`
+  fails with `DEVICE_LOST`, and a 256x256 fp16 matmul fails with `OUT_OF_RESOURCES`.
+  GPUs 2 and 3 pass both, and an XCCL `all_reduce` across the 2,3 pair returns the correct
+  value with every stage marker printed.
+  - **Health gate to use instead:** execute a real kernel per device, then a real collective
+    across the intended pair, checking the *returned value* and printing a stage marker
+    before each step. Per-card health is not collective health.
+  - Recovery is a driver reload (unbind all four from `/sys/bus/pci/drivers/xe/unbind`,
+    then reload `xe`); `modprobe -r xe` alone fails at refcount 8 because the refcount comes
+    from the bound devices, not from any process. **Requires Steve's explicit go-ahead.**
