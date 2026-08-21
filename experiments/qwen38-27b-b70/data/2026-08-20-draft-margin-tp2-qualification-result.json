@@ -1,0 +1,138 @@
+{
+  "schema": "qwen38-draft-margin-tp2-qualification-result-v1",
+  "date": "2026-08-20",
+  "classification": "terminal-bounded-negative-no-retry",
+  "qualification_passed": false,
+  "full25_authorized": false,
+  "runner_exit_code": 13,
+  "launch_commit": "ea0924f5bdd4d0237803f60e0f4de07133da6207",
+  "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-detpad-composite4dd-mtp5-draft-margin025-tp2-qualification-q1-20260820",
+  "artifacts": {
+    "checksum_manifest_sha256": "8d93682c6698be5b868024e4bd186c0a0e32c568962b4e2142f70f85b4fe111d",
+    "qualification_jsonl_sha256": "db316ff78d630f8942d0645db398e38772321c0ee2185097da49e910775cecc7",
+    "sealed_gate_json_sha256": "697641af34b7f6c290c6eb2a10e5faca8b680d130618c0843c5ca0da7b9089dc",
+    "bench_json_sha256": "f60f57940a12757c3c01f26b150ee3db06b590d2a18f889dbb31d64a69952cdf",
+    "identity_env_sha256": "62b7de800b809bf8c71303acbf7dc906b85e7da5db658c4b629e6b3d53b971be",
+    "server_log_sha256": "1591814dcc217105728fb449ef0feac4054d5c1a9c1c6039b06c2227b3ba19d4",
+    "summary_json_sha256": "c45a93d27b67e9a92d529546e61d8a3d675043960461bdd9195af57c1d975601"
+  },
+  "identity": {
+    "tensor_parallel_size": 2,
+    "physical_gpus": [2, 3],
+    "num_speculative_tokens": 5,
+    "draft_margin": 0.25,
+    "qualification_max_calls": 1024,
+    "vllm_head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+    "vllm_diff_sha256": "66f5823ca1f48545f1adef3731b165bc14975d374ff2899ce91272e94a30a852",
+    "native_extension_sha256": "4dd336013d155aab004fb1c916118957cb9349b491938da65769f2d8af18ffb0",
+    "flash_attention_sha256": "33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739"
+  },
+  "workload": {
+    "suite_id": "qwen38-draft-margin-tp2-qualification-20260820-v1",
+    "suite_sha256": "271958be5264fa095e180bd196ac82e198c6c9ae7879ef83eb3f5fa4b63a1df7",
+    "prompt_ids": [
+      "selection--sql-debugging",
+      "holdout--factual-protocol",
+      "holdout--long-rollover-repository-audit"
+    ],
+    "prompt_tokens": [83, 61, 849],
+    "generated_tokens_each": 128,
+    "cached_tokens": [0, 0, 0],
+    "fresh_gate_passed": true,
+    "nested_token_arrays_sha256": "bd0aa0d597dba44095e78844d48e92a367d49dad2dc0a020b43f6f55d629f299",
+    "nested_token_arrays_canonicalization": "SHA-256 of compact JSON for the prompt-index-ordered nested token_ids arrays",
+    "output_sha256": [
+      "22cafa2216d8807135f3e8f0cf79f853eea263ec5160549c99cbe14a2b0175b9",
+      "8cadc898e2f917a8622ee118c6ae1a8326636d2cd3105ec485e009508fae2cc1",
+      "69727b84da8b5f89d0fabc7445c08c29750d4da7fbbd888dfb08dc5a513683af"
+    ],
+    "timing_valid": false
+  },
+  "qualification": {
+    "schema": "qwen38-draft-margin-tp2-qualification-v1",
+    "record_count": 598,
+    "call_count": 598,
+    "first_call": 0,
+    "last_call": 597,
+    "repair_marker_count": 2,
+    "repair_marker_ranks": [0, 1],
+    "required_error_upper_bound": 0.125,
+    "global_max_abs_error": {
+      "min": 0.96875,
+      "median": 1.55078125,
+      "p95": 1.85576171875,
+      "max": 2.375,
+      "records_below_bound": 0
+    },
+    "per_rank_max_abs_error": {
+      "min": 0.955078125,
+      "median": 1.4736328125,
+      "p95": 1.78173828125,
+      "max": 2.375,
+      "records_below_bound": 0,
+      "record_count": 1196
+    },
+    "candidate_count": {
+      "min": 1,
+      "median": 1,
+      "p95": 2,
+      "max": 5,
+      "mean": 1.1789297658862876
+    },
+    "approximate_argmax_mismatch_count": 23,
+    "approximate_mismatches_repaired": 16,
+    "repaired_argmax_mismatch_count": 9,
+    "approximate_correct_but_repair_wrong_count": 2,
+    "transition_counts": {
+      "approximate_wrong_repaired_correct": 16,
+      "approximate_wrong_repaired_wrong": 7,
+      "approximate_correct_repaired_wrong": 2,
+      "approximate_correct_repaired_correct": 573
+    },
+    "repaired_mismatch_call_indices": [7, 49, 97, 223, 264, 269, 303, 373, 436],
+    "rank_records_where_exact_local_top_was_not_a_candidate": 38,
+    "candidate_count_histogram": {
+      "1": 1028,
+      "2": 134,
+      "3": 25,
+      "4": 6,
+      "5": 3
+    },
+    "invalid_record_count": 598,
+    "observed_sample_guarantee_would_require_margin_strictly_greater_than": 4.75
+  },
+  "speculative_metrics": {
+    "record_count": 2,
+    "accepted": 175,
+    "drafted": 420,
+    "aggregate_acceptance_rate": 0.4166666666666667,
+    "interpretation": "diagnostic only; records are interval aggregates and the qualification adds full FP16 heads, three gathers, CPU copies, and JSON writes"
+  },
+  "sealed_integrity": {
+    "status": "failed",
+    "errors": [
+      "all 598 qualification records violated at least one numerical gate",
+      "determinism-pad marker count was 0 instead of 2"
+    ],
+    "pad_gate_classification": "workload-conditioned harness expectation mismatch",
+    "pad_marker_absence_context": "The three prompt prefills were M=83,61,849, so none was inside the native pad's strict 128<M<512 band. Identity still records pad=1. Absence formally fails the preregistered arm gate but is not evidence the pad was disabled and is not relabeled away.",
+    "outer_direct_loads": 2,
+    "aot_direct_loads": 4,
+    "compile_or_save_markers": 0,
+    "cache_manifest_sha256_pre": "f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb0ff",
+    "cache_manifest_sha256_post": "f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb0ff",
+    "cache_tree_sha256": "723c1599060f5c9c82dc5731cc75b50620c79d202b34ee99b8390d3aec20acbe",
+    "cache_entry_count": 3795,
+    "cache_file_count": 3246,
+    "cache_total_file_bytes": 395855113,
+    "process_group_empty_after_stop": true
+  },
+  "decision": {
+    "draft_margin_0_25": "closed as a terminal negative",
+    "retry": false,
+    "margin_sweep": false,
+    "full25": false,
+    "localmaxxing_submission": false,
+    "next": "preserve this packet and move to a distinct source-backed optimization surface; the leading candidate is packed MTP verifier FlashAttention"
+  }
+}

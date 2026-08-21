@@ -1,6 +1,7 @@
 # Qwen3.8 TP2 draft-INT4 margin qualification preregistration
 
-Status: **preregistered; not launched**.
+Status: **completed; terminal negative**. See the
+[result](2026-08-20-draft-margin-tp2-qualification-result.md).
 
 ## Question and hard boundary
 
@@ -80,9 +81,10 @@ The historical standalone synthetic result
 is snapshotted at SHA-256
 `bc34533363beca2dce193f85403ad24e40585117f6e2e6c8d2b577aea2d192be`
 as a required supporting-context input (`40/40`, zero synthetic argmax
-mismatches). It is neither sufficient TP2 proof nor authorization. The new
-sealed real-call JSONL and passing arm-gate result are the qualification
-artifact.
+mismatches). It is neither sufficient TP2 proof nor authorization. Only the
+new sealed real-call JSONL plus a passing arm-gate result would have constituted
+an authorizing qualification artifact; Q1 instead produced failed qualification
+evidence.
 
 All model manifest, direct-plus-ordinary verifier, stage manifest, native/core/
 MoE/FA extensions, oneCCL, source HEAD/diff, lab runner/checker/wrapper, suite,

@@ -126,18 +126,18 @@ target or an acceptance gain. The INT4 head weight is derived at load time
   the determinism pad (head included — the pad rule covers all int4 GEMMs
   with 128<M<512).
 
-## Authorized next run
+## Qualification result
 
-Only the bounded TP2 qualification is authorized now: the frozen three-prompt
-subset, margin 0.25, smoke and quality disabled, diagnostic full-head/gather
-evidence enabled, and the existing sealed cache/model/runtime identity. Its
-throughput is invalid because instrumentation computes the full FP16 head,
-performs three extra full-vocabulary gathers, copies tensors to CPU, and writes
-JSONL. Any missing/malformed evidence, repaired/exact mismatch, maximum error
-of 0.125 or greater, cache/source/identity drift, or arm failure stops the
-candidate. A full-25 performance campaign requires a separate preregistration,
-the passing qualification artifact and SHA, removal of diagnostic overhead,
-and a newly frozen production-only source patch. No margin sweep is authorized.
+The bounded TP2 qualification is complete and terminally negative. Across 598
+real calls, every record exceeded the strict `max_abs_error < 0.125` proof
+bound, maximum observed error was `2.375`, and the repaired gathered argmax
+still differed from full FP16 on 9 calls. See the
+[result packet](2026-08-20-draft-margin-tp2-qualification-result.md).
+
+No margin sweep, retry, or full-25 performance campaign is authorized. The
+diagnostic timing remains invalid because it computed full FP16 heads,
+performed three extra full-vocabulary gathers, copied tensors to CPU, and
+wrote JSONL.
 
 ## Caveats
 

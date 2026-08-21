@@ -374,19 +374,20 @@ loaded service.
    these speeds. Any drafter-geometry or startup-history split needs a new
    source audit and preregistration.
 
-   The next optimization candidate is a bounded TP2 qualification of a TP-safe
-   draft-INT4 margin repair. The first cheap prototype was shard-local and is
-   not safe for TP2; its replacement repairs each shard's possible winner
-   before the ordinary logits gather and records gathered approximate,
-   repaired, and full FP16 evidence. Only the three-prompt diagnostic is
-   authorized, and its timing is invalid by construction. A full-25
-   performance arm remains forbidden until the real-call qualification passes
-   and a separate production-only patch and campaign are preregistered. Clock
-   locking is closed as neutral: the local draft-head M1 operator changed only
-   `+0.171%` at fixed 2800 MHz and M6 was flat, while the earlier endpoint
-   bracket was `-0.487%`. See the
-   [qualification preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-draft-margin-tp2-qualification-prereg.md)
+   The TP-safe draft-INT4 margin qualification is now closed as a terminal
+   negative. All 598 real TP2 records exceeded the strict `<0.125` error bound,
+   maximum observed error was `2.375`, and the repaired gathered argmax still
+   differed from full FP16 on 9 calls. Q1 also failed its preregistered pad
+   marker gate, so run no retry, margin sweep, or full-25 arm. Its timing is
+   invalid by construction. Clock locking is separately closed as neutral: the
+   local draft-head M1 operator changed only `+0.171%` at fixed 2800 MHz and M6
+   was flat, while the earlier endpoint bracket was `-0.487%`. See the
+   [qualification result](experiments/qwen38-27b-b70/notes/2026-08-20-draft-margin-tp2-qualification-result.md)
    and [clock/operator screen](experiments/qwen38-27b-b70/notes/2026-08-20-draft-head-clock-and-row-scaling-screen.md).
+   The next AutoRound research surface is the packed MTP target/verifier
+   FlashAttention block. Build and pass a bounded M6/head-256 operator
+   qualifier before changing a server binary or authorizing another full-25
+   arm; the two-B70, 15-GiB host remains op-only.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.
