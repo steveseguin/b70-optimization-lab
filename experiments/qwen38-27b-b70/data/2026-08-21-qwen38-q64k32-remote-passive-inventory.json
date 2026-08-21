@@ -1,0 +1,539 @@
+{
+  "schema": "qwen38-q64k32-remote-passive-inventory-v1",
+  "captured_at": "2026-08-21T05:32:14-04:00",
+  "classification": "passive-current-boot-inventory-launch-still-blocked",
+  "links": {
+    "chronological_note": "../notes/2026-08-21-qwen38-q64k32-remote-passive-inventory.md",
+    "remote_campaign_preregistration": "../notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-remote-clock-prereg.md"
+  },
+  "evidence_boundary": {
+    "access": "interactive SSH to the pre-existing reference host",
+    "evidence_transport": "live command stdout and stderr only",
+    "raw_remote_telemetry_files_persisted": false,
+    "remote_files_created_or_modified_by_audit": false,
+    "remote_git_fetch_pull_checkout_or_update": false,
+    "sudo_used": false,
+    "xpu_smi_configuration_mutation": false,
+    "gpu_compute_launched": false,
+    "model_or_operator_workload_launched": false,
+    "credential_data_recorded": false,
+    "read_only_command_families": [
+      "hostname and kernel/sysfs identity",
+      "/usr/bin/xpu-smi --version",
+      "ZES_ENABLE_SYSMAN=1 /usr/bin/xpu-smi discovery -j",
+      "ZES_ENABLE_SYSMAN=1 /usr/bin/xpu-smi config -d 0 -t 0 -j",
+      "ZES_ENABLE_SYSMAN=1 /usr/bin/xpu-smi config -d 1 -t 0 -j",
+      "sha256sum, readlink, ldd, ldconfig, modinfo, dpkg-query, find, rg",
+      "systemctl show/list-units/list-unit-files/list-timers",
+      "git status/rev-parse/cat-file/show/ls-remote",
+      "Python importlib.metadata without torch import"
+    ]
+  },
+  "host": {
+    "queried_address": "10.0.0.108",
+    "hostname": "steve-TURIND8-2L2T",
+    "fqdn": "steve-TURIND8-2L2T",
+    "machine_id_sha256": "3942576cd46d01417795ef1ef737db2599485bd4158cc5119f6cde9b57e5f1a7",
+    "machine_id_raw_recorded": false,
+    "boot_id": "a6cad22f-2685-43b7-8950-c0c771f73d99"
+  },
+  "kernel": {
+    "release": "7.0.0-28-generic",
+    "version": "#28~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Jul  1 15:50:57 UTC 2",
+    "machine": "x86_64",
+    "xe_srcversion_sysfs": "85B7CA089405934276CBAD3",
+    "xe_srcversion_modinfo": "85B7CA089405934276CBAD3",
+    "xe_module_version": "",
+    "xe_module_path": "/lib/modules/7.0.0-28-generic/kernel/drivers/gpu/drm/xe/xe.ko.zst",
+    "xe_module_sha256": "8fa065989f7d6c4c8d06f12fb9c52c3bab4c5a966c3abd1cc55bf5423c3c60a1",
+    "kernel_module_package": {
+      "name": "linux-modules-7.0.0-28-generic",
+      "version": "7.0.0-28.28~24.04.1"
+    },
+    "kernel_image_package": {
+      "name": "linux-image-7.0.0-28-generic",
+      "version": "7.0.0-28.28~24.04.1"
+    }
+  },
+  "xpu_smi": {
+    "binary": {
+      "path": "/usr/bin/xpu-smi",
+      "resolved_path": "/usr/bin/xpu-smi",
+      "sha256": "01c7b83881e99754642b827ba05418d263aed615933e3df35821af7733eb8d83",
+      "size_bytes": 1350056,
+      "package": "xpu-smi",
+      "package_version": "2.0.0-1~24.04~ppa1"
+    },
+    "version_stdout": "CLI:\n  Version: 2.0.0.20250225\n  Build ID: 8389eee7\n\nService:\n  Version: 2.0.0.20250225\n  Build ID: 8389eee7\n  Level Zero Version: 1.28.6",
+    "discovery": {
+      "return_code": 0,
+      "stderr": "",
+      "raw_stdout_sha256": "c67bf2f7a2592c8a6a4a1247ce6f50a26405f908802285f8fd466c15f1364742",
+      "shape_sha256": "0f88804564a392036336e3f74d61a8e613b53d6e6095ab98e0fcf41f205700cc",
+      "shape": {
+        "device_list": [
+          {
+            "device_function_type": "str",
+            "device_id": "int",
+            "device_name": "str",
+            "device_state": "str",
+            "device_type": "str",
+            "drm_device": "str",
+            "pci_bdf_address": "str",
+            "pci_device_id": "str",
+            "uuid": "str",
+            "vendor_name": "str"
+          },
+          {
+            "device_function_type": "str",
+            "device_id": "int",
+            "device_name": "str",
+            "device_state": "str",
+            "device_type": "str",
+            "drm_device": "str",
+            "pci_bdf_address": "str",
+            "pci_device_id": "str",
+            "uuid": "str",
+            "vendor_name": "str"
+          }
+        ]
+      }
+    },
+    "config_shape": {
+      "device_id": "int",
+      "fans": [],
+      "memory_ecc_current_state": "str",
+      "memory_ecc_pending_state": "str",
+      "pl_card_burst": "int",
+      "pl_card_peak": "int",
+      "pl_card_sustain": "int",
+      "pl_package_burst": "int",
+      "pl_package_peak": "int",
+      "pl_package_sustain": "int",
+      "power_valid_range": "str",
+      "tile_config_data": [
+        {
+          "compute_engine": "str",
+          "gpu_frequency_valid_options": "str",
+          "max_frequency": "int",
+          "media_engine": "str",
+          "min_frequency": "int",
+          "scheduler_mode": "str",
+          "scheduler_timeslice_interval": "int",
+          "scheduler_timeslice_yield_timeout": "int",
+          "standby_mode": "str",
+          "standby_mode_valid_options": "str",
+          "tile_id": "str"
+        }
+      ]
+    },
+    "config_shape_sha256": "d3a940db53749fb725789f891a06fd667ea1f236737a60c59be4db4a9be57143",
+    "configs": [
+      {
+        "device": 0,
+        "return_code": 0,
+        "stderr": "",
+        "raw_stdout_sha256": "a65915cfcc76ea2357e0689caa6fdee037fa3acf18ecef6c75d029cd6c86aa15"
+      },
+      {
+        "device": 1,
+        "return_code": 0,
+        "stderr": "",
+        "raw_stdout_sha256": "a2cb4837baf5e6f3654435ead2cc4393466cfdde8909d294a522a2074cf0d8e7"
+      }
+    ],
+    "combined_envelope_schema_sha256": "afb4b7fe6d1ea9847559734fae1b73241f18587f036ae3d18376c146fa6eafba",
+    "combined_envelope_schema_equal_for_devices": true,
+    "field_paths": {
+      "devices": [
+        "discovery",
+        "device_list"
+      ],
+      "entry_device_id": [
+        "device_id"
+      ],
+      "entry_uuid": [
+        "uuid"
+      ],
+      "entry_bdf": [
+        "pci_bdf_address"
+      ],
+      "entry_name": [
+        "device_name"
+      ],
+      "min_mhz": [
+        "config",
+        "tile_config_data",
+        0,
+        "min_frequency"
+      ],
+      "max_mhz": [
+        "config",
+        "tile_config_data",
+        0,
+        "max_frequency"
+      ]
+    },
+    "dependency_inventory_sha256": "466b8b66a266bfca90970072b797c6d377d07178087ed563522871f91e7c988b",
+    "dependencies": [
+      {
+        "soname": "/lib64/ld-linux-x86-64.so.2",
+        "path": "/lib64/ld-linux-x86-64.so.2",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "cd4df4f3c7b83673d61189bf2eaebd33ca4f2853ab9772b8a25e025ef99b1e81"
+      },
+      {
+        "soname": "libc.so.6",
+        "path": "/lib/x86_64-linux-gnu/libc.so.6",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "8db37cf3f2169f59a0f07ef1fea308c35656668c64c8ff294e1860f4121eb161"
+      },
+      {
+        "soname": "libcap.so.2",
+        "path": "/lib/x86_64-linux-gnu/libcap.so.2",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libcap.so.2.66",
+        "sha256": "6ac6abc86ac891c6e13486470e26f1d939f47fda9e6b5d5508a7f5ec881adc84"
+      },
+      {
+        "soname": "libgcc_s.so.1",
+        "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      },
+      {
+        "soname": "libhwloc.so.15",
+        "path": "/lib/x86_64-linux-gnu/libhwloc.so.15",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0",
+        "sha256": "86dff44a023254d997cea910b9a51f35afefe6780f4b5530f974a2009ba47487",
+        "package": "libhwloc15",
+        "package_version": "2.10.0-1build1"
+      },
+      {
+        "soname": "libigsc.so.1",
+        "path": "/lib/x86_64-linux-gnu/libigsc.so.1",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libigsc.so.1.2.0.0",
+        "sha256": "dbb8594b6fa0c5bcd0c539ba493653f1311c040eeb36a8702d0537dce43dfa31",
+        "package": "libigsc1",
+        "package_version": "1.2.0-1~24.04~ppa1"
+      },
+      {
+        "soname": "libm.so.6",
+        "path": "/lib/x86_64-linux-gnu/libm.so.6",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "e9c4b28d340e415b8137480ec442662f981e1399386c5931dae0e886e3639e91"
+      },
+      {
+        "soname": "libmetee.so.6.2.1.0",
+        "path": "/lib/x86_64-linux-gnu/libmetee.so.6.2.1.0",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libmetee.so.6.2.1.0",
+        "sha256": "fb8e372216571e293362bf3469d13b34afa558395ac06e6fdad73ddb6c860413"
+      },
+      {
+        "soname": "libpciaccess.so.0",
+        "path": "/lib/x86_64-linux-gnu/libpciaccess.so.0",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libpciaccess.so.0.11.1",
+        "sha256": "8f84e18b27f8e5808762b389667628be13076cc432d96c793daeb6fde5ee2a4b"
+      },
+      {
+        "soname": "libstdc++.so.6",
+        "path": "/lib/x86_64-linux-gnu/libstdc++.so.6",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+        "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11"
+      },
+      {
+        "soname": "libudev.so.1",
+        "path": "/lib/x86_64-linux-gnu/libudev.so.1",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libudev.so.1.7.8",
+        "sha256": "4298228175fa62a36af88b1afd4406cdd8b1bf166621f957d0dbbde45a698fe5"
+      },
+      {
+        "soname": "libxpum.so.2",
+        "path": "/lib/x86_64-linux-gnu/libxpum.so.2",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libxpum.so.2.0.0",
+        "sha256": "683d514cc266aff8e515b2f32318fcedce34c289bdfdab3cb77e3e751a74c23c",
+        "package": "libxpum2",
+        "package_version": "2.0.0-1~24.04~ppa1"
+      },
+      {
+        "soname": "libz.so.1",
+        "path": "/lib/x86_64-linux-gnu/libz.so.1",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libz.so.1.3",
+        "sha256": "9b64150b28505a33d6bc3ecf709c279f6de97a1c184dbda65d06ee4537f6d286"
+      },
+      {
+        "soname": "libze_loader.so.1",
+        "path": "/lib/x86_64-linux-gnu/libze_loader.so.1",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libze_loader.so.1.28.6",
+        "sha256": "5c156f00718f80f7e75964fa729e811c7b486778478d2fc318cc77751e1a0bbd",
+        "package": "libze1",
+        "package_version": "1.28.6-1~24.04~ppa1"
+      }
+    ]
+  },
+  "devices": [
+    {
+      "device_id": 0,
+      "device_function_type": "physical",
+      "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+      "device_state": "normal",
+      "device_type": "GPU",
+      "drm_device": "/dev/dri/card2",
+      "pci_bdf_address": "0000:03:00.0",
+      "pci_device_id": "0xe223",
+      "uuid": "00000000-0000-0003-0000-0000e2238086",
+      "vendor_name": "Intel(R) Corporation",
+      "tile_id": "0/0",
+      "min_frequency_mhz": 400,
+      "max_frequency_mhz": 2800
+    },
+    {
+      "device_id": 1,
+      "device_function_type": "physical",
+      "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+      "device_state": "normal",
+      "device_type": "GPU",
+      "drm_device": "/dev/dri/card0",
+      "pci_bdf_address": "0000:e3:00.0",
+      "pci_device_id": "0xe223",
+      "uuid": "00000000-0000-00e3-0000-0000e2238086",
+      "vendor_name": "Intel(R) Corporation",
+      "tile_id": "1/0",
+      "min_frequency_mhz": 400,
+      "max_frequency_mhz": 2800
+    }
+  ],
+  "clock_writer_inventory": {
+    "xe_b70_minfreq_service": {
+      "unit": "xe-b70-minfreq.service",
+      "load_state": "not-found",
+      "active_state": "inactive",
+      "sub_state": "dead",
+      "unit_file_state": "",
+      "fragment_path": "",
+      "drop_in_paths": "",
+      "fragment_sha256": null
+    },
+    "xe_b70_minfreq_timer": {
+      "unit": "xe-b70-minfreq.timer",
+      "load_state": "not-found",
+      "active_state": "inactive",
+      "sub_state": "dead",
+      "unit_file_state": "",
+      "fragment_path": "",
+      "drop_in_paths": "",
+      "next_elapse_usec_realtime": "",
+      "last_trigger_usec": "",
+      "fragment_sha256": null
+    },
+    "qwen36_q8_b70_service": {
+      "unit": "qwen36-q8-b70.service",
+      "load_state": "loaded",
+      "active_state": "inactive",
+      "sub_state": "dead",
+      "unit_file_state": "disabled",
+      "main_pid": 0,
+      "fragment_path": "/etc/systemd/system/qwen36-q8-b70.service",
+      "fragment_sha256": "0d3e1b19d2986f424cd06a1dc61f1ac81102a9a0621496f6794c615f89668dbf",
+      "exec_start_path": "/home/steve/bin/run-qwen36-q8-b70.sh",
+      "exec_start_sha256": "2df33b11b3e776bfbcb3eee072992da305098638f78e9e1c49c69334e4d998ba",
+      "clock_mutation_reference_found": false,
+      "device_selector_line": "export ONEAPI_DEVICE_SELECTOR=level_zero:1,0"
+    },
+    "scanned_scopes": [
+      "/etc/systemd",
+      "/etc/cron.d",
+      "/etc/cron.daily",
+      "/etc/cron.hourly",
+      "/etc/cron.weekly",
+      "/etc/cron.monthly",
+      "/home/steve/.config/systemd",
+      "/home/steve/bin",
+      "user crontab",
+      "system timer inventory"
+    ],
+    "clock_mutation_reference_matches": [],
+    "matching_timer_inventory": []
+  },
+  "caller_environment": {
+    "LD_PRELOAD": null,
+    "LD_LIBRARY_PATH": null,
+    "PYTHONPATH": null,
+    "ZE_AFFINITY_MASK": null,
+    "ONEAPI_DEVICE_SELECTOR": null,
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": null,
+    "ZES_ENABLE_SYSMAN": null,
+    "SYCL_DEVICE_FILTER": null,
+    "SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS": null
+  },
+  "python_and_xpu_runtime": {
+    "python": {
+      "requested_path": "/home/steve/.venvs/vllm-xpu/bin/python",
+      "resolved_path": "/usr/bin/python3.12",
+      "version": "Python 3.12.3",
+      "sha256": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+      "size_bytes": 8020928
+    },
+    "packages": {
+      "torch": "2.11.0+xpu",
+      "triton-xpu": "3.7.0",
+      "vllm": "0.21.1rc1.dev289+g44fc8fde0.xpu",
+      "vllm-xpu-kernels": "0.1.8",
+      "intel-sycl-rt": "2025.3.2",
+      "intel-cmplr-lib-ur": "2025.3.2",
+      "intel-extension-for-pytorch": null,
+      "oneccl_bind_pt": null
+    },
+    "torch_files": [
+      {
+        "path": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/__init__.py",
+        "sha256": "0387d8b811b289287479c8bfdf4e1dac3a71b246f938d82da1331cf2dc8bf001"
+      },
+      {
+        "path": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib/libtorch.so",
+        "sha256": "147be37e81800c47245287d4a10560a80d40790af61be33a13a4a926115ea7d6"
+      },
+      {
+        "path": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib/libtorch_xpu.so",
+        "sha256": "ee584edab22b995637c5f6ec83fc10dea5931469c86cf2ad91952bb3e1108290"
+      },
+      {
+        "path": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib/libc10.so",
+        "sha256": "a919fa044e546267eb455edc28fd55fd42e349e51b6c050a7d5484c9b05c0841"
+      }
+    ],
+    "planned_ld_path_observation": {
+      "libtorch_xpu_resolved_sycl_path": "/home/steve/.venvs/vllm-xpu/lib/libsycl.so.8",
+      "libtorch_xpu_resolved_ur_loader_path": "/home/steve/.venvs/vllm-xpu/lib/libur_loader.so.0"
+    },
+    "passive_runtime_candidate_inventory_sha256": "d2c3065435d60cc43d31a096406c98e8e5d725637ade11b70a67af2700b292d1",
+    "passive_runtime_candidates": [
+      {
+        "basename": "libsycl.so.8.0.0",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libsycl.so.8.0.0",
+        "sha256": "0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f",
+        "package": "intel-sycl-rt",
+        "package_version": "2025.3.2"
+      },
+      {
+        "basename": "libur_loader.so.0.12.0",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libur_loader.so.0.12.0",
+        "sha256": "68e273791752638dfad1ce3bb002b0ed8d00ceee21e491cd46dd0668d716bfa0",
+        "package": "intel-cmplr-lib-ur",
+        "package_version": "2025.3.2"
+      },
+      {
+        "basename": "libur_adapter_level_zero.so.0.12.0",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_level_zero.so.0.12.0",
+        "sha256": "ceecac1cb3124f15b9a319d4bfc156eed49068467564b8210f2f0330aa0911e8",
+        "package": "intel-cmplr-lib-ur",
+        "package_version": "2025.3.2"
+      },
+      {
+        "basename": "libze_loader.so.1.28.6",
+        "path": "/usr/lib/x86_64-linux-gnu/libze_loader.so.1.28.6",
+        "sha256": "5c156f00718f80f7e75964fa729e811c7b486778478d2fc318cc77751e1a0bbd",
+        "package": "libze1",
+        "package_version": "1.28.6-1~24.04~ppa1"
+      },
+      {
+        "basename": "libze_intel_gpu.so.1.15.38646",
+        "path": "/usr/lib/x86_64-linux-gnu/libze_intel_gpu.so.1.15.38646",
+        "sha256": "dff06fa9ab58a84767d4225eceb6c3225995552836b0e28b986d852a2e4e0180",
+        "package": "libze-intel-gpu1",
+        "package_version": "26.22.38646.7-1~24.04~ppa1"
+      }
+    ],
+    "mapped_worker_runtime_inventory_captured": false,
+    "passive_runtime_candidates_are_authorization_proof": false
+  },
+  "repository": {
+    "path": "/home/steve/b70-optimization-lab",
+    "branch": "main",
+    "worktree_clean": true,
+    "local_head": "6d678cccf9519414f6f3a8162f2c3f263364f842",
+    "local_origin_main_tracking_ref": "6d678cccf9519414f6f3a8162f2c3f263364f842",
+    "origin_url": "https://github.com/steveseguin/b70-optimization-lab.git",
+    "read_only_ls_remote_origin_main": "ed7c95b40f0b3c8f77977e35eed122178f7e9482",
+    "design_commit_requested": "ed7c95b40f0b3c8f77977e35eed122178f7e9482",
+    "design_commit_object_present_locally": false,
+    "design_paths_present_in_worktree": false,
+    "fetch_or_pull_performed": false,
+    "relationship": "clean local main and local origin/main tracking ref are behind the read-only network origin/main observation"
+  },
+  "remote_path_presence": {
+    "/home/steve/qwen38-m6-head256-q64k32-remote-transfer-20260821-r1": false,
+    "/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2": false,
+    "/home/steve/staged-xpu-commitfix-graphfa-composite-20260820": false,
+    "/home/steve/qwen38-mtp5-m6-fa-q64k32-remote-clock-abba-20260821-r1": false
+  },
+  "source_placeholder_assessment": {
+    "freeze_ready_static_or_same_boot": {
+      "REMOTE_HOSTNAME": "steve-TURIND8-2L2T",
+      "AUTHORIZED_XPU_SMI_PATH": "/usr/bin/xpu-smi",
+      "AUTHORIZED_XPU_SMI_SHA256": "01c7b83881e99754642b827ba05418d263aed615933e3df35821af7733eb8d83",
+      "AUTHORIZED_XPU_SMI_VERSION": "CLI:\n  Version: 2.0.0.20250225\n  Build ID: 8389eee7\n\nService:\n  Version: 2.0.0.20250225\n  Build ID: 8389eee7\n  Level Zero Version: 1.28.6",
+      "AUTHORIZED_XPU_SMI_QUERY_SCHEMA_SHA256": "afb4b7fe6d1ea9847559734fae1b73241f18587f036ae3d18376c146fa6eafba",
+      "AUTHORIZED_XPU_SMI_FIELD_PATHS": {
+        "devices": [
+          "discovery",
+          "device_list"
+        ],
+        "entry_device_id": [
+          "device_id"
+        ],
+        "entry_uuid": [
+          "uuid"
+        ],
+        "entry_bdf": [
+          "pci_bdf_address"
+        ],
+        "entry_name": [
+          "device_name"
+        ],
+        "min_mhz": [
+          "config",
+          "tile_config_data",
+          0,
+          "min_frequency"
+        ],
+        "max_mhz": [
+          "config",
+          "tile_config_data",
+          0,
+          "max_frequency"
+        ]
+      },
+      "AUTHORIZED_DEVICE_IDENTITIES_CURRENT_BOOT": {
+        "0": {
+          "uuid": "00000000-0000-0003-0000-0000e2238086",
+          "bdf": "0000:03:00.0"
+        },
+        "1": {
+          "uuid": "00000000-0000-00e3-0000-0000e2238086",
+          "bdf": "0000:e3:00.0"
+        }
+      },
+      "SAME_BOOT_KERNEL_RELEASE": "7.0.0-28-generic",
+      "SAME_BOOT_XE_SRCVERSION": "85B7CA089405934276CBAD3"
+    },
+    "boot_or_capture_dynamic_revalidate_at_launch": [
+      "boot_id",
+      "device ordinal to UUID/BDF/DRM mapping",
+      "device state",
+      "effective min/max frequency ranges",
+      "systemd service and timer state",
+      "clock-writer scan result",
+      "caller environment"
+    ],
+    "not_freezeable_from_this_inventory": {
+      "AUTHORIZED_REMOTE_REPO_HEAD": "remote worktree is still 6d678cccf9519414f6f3a8162f2c3f263364f842 and does not contain ed7c95b40f0b3c8f77977e35eed122178f7e9482",
+      "AUTHORIZED_STAGE_INVENTORY_SHA256": "incoming, control, candidate, and result roots are absent",
+      "AUTHORIZED_SYSTEM_RUNTIME_LIBRARIES": "passive file hashes do not prove the exact mapped worker basenames and paths",
+      "CAMPAIGN_LAUNCH_AUTHORIZED": false,
+      "DRIVER_SIGNAL_OWNERSHIP_AUTHORIZED": false,
+      "CLOCK_WRITER_EXCLUSION_AUTHORIZED": false,
+      "DRIVER_ENVIRONMENT_AUTHORIZED": false
+    },
+    "launch_verdict": "NOGO"
+  }
+}
