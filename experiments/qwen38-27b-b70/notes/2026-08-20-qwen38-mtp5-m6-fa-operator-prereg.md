@@ -23,6 +23,14 @@ mode/atomic-artifact contract for that filesystem, the next build and result
 roots move to the host's native ext4 filesystem and use new `-r3` names. This
 is also an infrastructure-invalid attempt, not a policy timing result.
 
+The first ext4 attempt, ending in `-r3`, again compiled both objects, but its
+private `rsync -a` copy inherited the incumbent stage's read-only directory
+mode and could not replace the device DSO. It is preserved without a candidate
+JSON or checksum manifests. The helper now opens only the private runtime
+copy's two containing directories, installs the new DSO with the incumbent
+`0555` mode, and reseals those directories. The next immutable ext4 roots use
+`-r4`; the incumbent stage remains untouched.
+
 ## Question and bounded scope
 
 The next candidate is allowed to change only the staged Intel FlashAttention
@@ -107,7 +115,7 @@ SHA-256 manifest and bind the build helper, the candidate DSO, and source patch
 `vllm-xpu-kernels-qwen38-m6-head256-q8k64-chunk-prefill-20260820.patch` at
 `06467757a7482ad0e3225c9a59ce3d2de144453a608016737c7a24dbe48b5fc1`.
 The build helper itself is pinned at
-`abf3701374d658c5d2fe1d6ef16a659c2955147eb65cd6f74f628d4f8278f4b1`.
+`1235e181bcd3ca0782d0faef9416927435564cf7eb44d0d8bcc0e6470886e445`.
 The build-input manifest must also bind its full graph manifest, whose entries
 and hashes must exactly cover every regular file under the candidate stage's
 `vllm_xpu_kernels/` tree.
@@ -239,9 +247,9 @@ The scripts are:
 - [`../scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh`](../scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh)
 
 Frozen prelaunch bytes are qualifier
-`366534989a41ee5a3823d0c897f26fc1b4bb622946e94f895ffc0141faf5c6cf`
+`d97a92aed78e44a3616a385fc84d5358483de8a99f8c5b9bd1f096da3130569c`
 and driver
-`0c05f5625d934f589bcacf0017046fc94b7fda24d117f40681315d2da8dcb95b`.
+`f4feca1ca32d79b4c0c84afde771a3414c677655efe2591b18be6bfa71839783`.
 The driver independently hardcodes the qualifier SHA; every run packet records
 both actual bytes plus the clean lab commit.
 
@@ -253,8 +261,8 @@ as a separate action:
 ```bash
 builder=experiments/qwen38-27b-b70/scripts/build-qwen38-m6-head256-q8k64-attn-override-20260820.sh
 driver=experiments/qwen38-27b-b70/scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh
-build_root=/home/steve/qwen38-m6-head256-q8k64-attn-override-20260820-r3
-root=/home/steve/qwen38-mtp5-m6-fa-candidate-abba-20260820-r3
+build_root=/home/steve/qwen38-m6-head256-q8k64-attn-override-20260820-r4
+root=/home/steve/qwen38-mtp5-m6-fa-candidate-abba-20260820-r4
 candidate_manifest="$build_root/qwen38-m6-head256-q8k64-candidate-stage.json"
 
 WORK_ROOT="$build_root" "$builder" --build

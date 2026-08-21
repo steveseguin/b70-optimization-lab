@@ -304,6 +304,17 @@ class QualifierContractTests(unittest.TestCase):
         self.assertIn('export GIT_CONFIG_VALUE_0="$stage/.deps/onednn-src"', source)
         self.assertNotIn("git config --global", source)
 
+    def test_build_reseals_only_the_private_runtime_copy(self) -> None:
+        source = HELPER_PATH.read_text(encoding="utf-8")
+        stages = (
+            'rsync -a "$base_stage/" "$runtime/"',
+            'chmod u+w "$runtime" "$runtime/vllm_xpu_kernels"',
+            "install -m 0555",
+            'chmod 0555 "$runtime/vllm_xpu_kernels" "$runtime"',
+        )
+        offsets = [source.index(stage) for stage in stages]
+        self.assertEqual(offsets, sorted(offsets))
+
     def test_strict_json_rejects_duplicate_keys_and_nan(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             duplicate = Path(directory) / "duplicate.json"

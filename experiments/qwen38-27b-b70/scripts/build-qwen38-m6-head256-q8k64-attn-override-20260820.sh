@@ -297,8 +297,13 @@ strings "$artifact" | grep -Fx \
   die 'candidate DSO does not contain the invariant engagement marker'
 
 rsync -a "$base_stage/" "$runtime/"
-install -m 0755 "$artifact" \
+# The incumbent stage is deliberately read-only.  Make only this private copy's
+# two containing directories writable long enough to replace the device DSO,
+# preserve the incumbent executable/read-only mode, then reseal the copy.
+chmod u+w "$runtime" "$runtime/vllm_xpu_kernels"
+install -m 0555 "$artifact" \
   "$runtime/vllm_xpu_kernels/libattn_kernels_xe_2.so"
+chmod 0555 "$runtime/vllm_xpu_kernels" "$runtime"
 verify_sha "$runtime/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
   "$expected_extension_sha"
 verify_sha "$runtime/vllm_xpu_kernels/flash_attn_interface.py" \
