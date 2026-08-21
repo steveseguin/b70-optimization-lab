@@ -22,6 +22,10 @@ repo_control_graph=$repo/repro/qwen38-27b-autoround-int4-b70/manifests/staged-xp
 patch=$repo/experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-m6-head256-q64k32-chunk-prefill-r2-20260821.patch
 builder=$repo/experiments/qwen38-27b-b70/scripts/build-qwen38-m6-head256-q64k32-attn-override-r2-20260821.sh
 python=/home/steve/.venvs/vllm-xpu/bin/python
+git_bin=/usr/bin/git
+mv_bin=/usr/bin/mv
+chmod_bin=/usr/bin/chmod
+rm_bin=/usr/bin/rm
 
 patch_sha=9386432015f5c9cd330dd7cfb785a16f259cce8563f44da9f812dcceb342138a
 builder_sha=11480161dce25cba56e00f2f48c95d74164bac1f5af2dbc945eddceff6d57d47
@@ -35,6 +39,12 @@ control_graph_sha=47861e8391b6b25dd9c3eb25e25c5939753aa470858b667d5bdf181344db18
 schema=qwen38-mtp5-m6-fa-q64k32-r2-stage-v1
 
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
+absent_path() {
+  [[ ! -e $1 && ! -L $1 ]]
+}
+path_identity() {
+  stat -c '%d:%i' -- "$1"
+}
 verify() {
   local path=$1 expected=$2 actual
   [[ -f $path ]] || die "missing required file: $path"
@@ -77,12 +87,26 @@ usage() {
   exit 2
 }
 
+require_clean_main() {
+  local head origin_head
+  [[ $("$git_bin" -C "$repo" branch --show-current) == main ]] || \
+    die 'stage seal requires main'
+  [[ -z $("$git_bin" -C "$repo" status --porcelain=v1 --untracked-files=normal) ]] || \
+    die 'stage seal requires a clean repository'
+  head=$("$git_bin" -C "$repo" rev-parse HEAD)
+  origin_head=$("$git_bin" -C "$repo" rev-parse origin/main)
+  [[ $head =~ ^[0-9a-f]{40}$ && $head == "$origin_head" ]] || \
+    die 'stage seal requires HEAD == origin/main'
+  printf 'authorized_repo_head=%s\n' "$head"
+}
+
 [[ $# -eq 1 ]] || usage
 mode=$1
 [[ $mode == --audit-source || $mode == --seal-transferred-stages ]] || usage
 verify "$patch" "$patch_sha"
 verify "$builder" "$builder_sha"
 verify "$repo_control_graph" "$control_graph_sha"
+require_clean_main
 if [[ $mode == --audit-source ]]; then
   printf 'PASS: remote two-stage transfer/seal source prerequisites are exact\n'
   exit 0
@@ -92,7 +116,8 @@ fi
 [[ $(realpath -e -- "$repo") == "$repo" ]] || die 'remote repo is absent/noncanonical'
 [[ $(realpath -e -- "$incoming") == "$incoming" ]] || die 'incoming transfer root is absent/noncanonical'
 [[ -x $python ]] || die "missing XPU Python: $python"
-[[ ! -e $root && ! -e $control ]] || die 'both canonical stage roots must be absent'
+absent_path "$root" && absent_path "$control" || \
+  die 'both canonical stage roots must be absent, including dangling symlinks'
 incoming_entries=$(find "$incoming" -mindepth 1 -maxdepth 1 -printf '%f\n' | LC_ALL=C sort)
 [[ $incoming_entries == $'libattn_kernels_xe_2.control.so\nqwen38-m6-head256-q64k32-r2-candidate.graph.sha256\nruntime\nstaged-xpu-commitfix-graphfa-composite-20260820.graph.sha256' ]] || \
   die 'incoming transfer packet inventory differs'
@@ -100,28 +125,51 @@ incoming_entries=$(find "$incoming" -mindepth 1 -maxdepth 1 -printf '%f\n' | LC_
   die 'incoming transfer packet contains a nonregular node'
 candidate_tmp=/home/steve/.qwen38-q64k32-candidate-stage.tmp.$$
 control_tmp=/home/steve/.qwen38-q64k32-control-stage.tmp.$$
-[[ ! -e $candidate_tmp && ! -e $control_tmp ]] || die 'private stage temporary path collision'
+absent_path "$candidate_tmp" && absent_path "$control_tmp" || \
+  die 'private stage temporary path collision'
 complete=false
 candidate_identity=
 control_identity=
-remove_private_tree() {
-  local selected=$1
-  [[ ! -e $selected ]] || {
-    chmod -R u+w -- "$selected"
-    rm -rf -- "$selected"
+remove_owned_tree() {
+  local selected=$1 expected_identity=$2 current_identity
+  [[ -n $expected_identity ]] || return 0
+  absent_path "$selected" && return 0
+  current_identity=$(path_identity "$selected" 2>/dev/null) || return 0
+  [[ $current_identity == "$expected_identity" && -d $selected && ! -L $selected ]] || \
+    return 0
+  "$chmod_bin" -R u+w -- "$selected" 2>/dev/null || true
+  "$rm_bin" -rf -- "$selected" 2>/dev/null || true
+}
+publish_owned_tree() {
+  local source=$1 destination=$2 expected_identity=$3 label=$4 current_identity
+  "$mv_bin" -T --no-clobber -- "$source" "$destination" || {
+    printf 'error: %s publish failed\n' "$label" >&2
+    return 1
+  }
+  absent_path "$source" || {
+    printf 'error: %s publish collision left source present\n' "$label" >&2
+    return 1
+  }
+  [[ -d $destination && ! -L $destination ]] || {
+    printf 'error: %s destination is not an owned directory\n' "$label" >&2
+    return 1
+  }
+  current_identity=$(path_identity "$destination" 2>/dev/null) || {
+    printf 'error: %s destination identity is unreadable\n' "$label" >&2
+    return 1
+  }
+  [[ $current_identity == "$expected_identity" ]] || {
+    printf 'error: %s destination identity differs after publish\n' "$label" >&2
+    return 1
   }
 }
 cleanup() {
   trap '' EXIT INT TERM HUP
-  remove_private_tree "$candidate_tmp"
-  remove_private_tree "$control_tmp"
+  remove_owned_tree "$candidate_tmp" "$candidate_identity"
+  remove_owned_tree "$control_tmp" "$control_identity"
   if [[ $complete != true ]]; then
-    [[ -z $candidate_identity || ! -e $root || \
-       $(stat -c '%d:%i' -- "$root") != "$candidate_identity" ]] || \
-      remove_private_tree "$root"
-    [[ -z $control_identity || ! -e $control || \
-       $(stat -c '%d:%i' -- "$control") != "$control_identity" ]] || \
-      remove_private_tree "$control"
+    remove_owned_tree "$root" "$candidate_identity"
+    remove_owned_tree "$control" "$control_identity"
   fi
 }
 trap cleanup EXIT
@@ -224,8 +272,10 @@ done < <(find "$candidate_tmp_stage/vllm_xpu_kernels" -type f -print0)
    $(stat -c '%d:%i' -- "$control_tmp/vllm_xpu_kernels/libattn_kernels_xe_2.so") ]] || \
   die 'control and candidate device DSOs share an inode'
 
-mv -- "$candidate_tmp" "$root"
-mv -- "$control_tmp" "$control"
+publish_owned_tree "$candidate_tmp" "$root" "$candidate_identity" candidate || \
+  die 'candidate canonical publication was not exclusive'
+publish_owned_tree "$control_tmp" "$control" "$control_identity" control || \
+  die 'control canonical publication was not exclusive'
 verify_tree "$control" "$repo_control_graph" "$control_graph_sha" 1
 verify_tree "$stage" "$graph" "$candidate_graph_sha" 1
 complete=true

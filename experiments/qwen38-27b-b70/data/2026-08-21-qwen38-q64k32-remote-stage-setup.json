@@ -1,0 +1,69 @@
+{
+  "canonical_roots": {
+    "candidate": {
+      "absent_by_e_test": true,
+      "absent_by_l_test": true,
+      "path": "/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2"
+    },
+    "control": {
+      "absent_by_e_test": true,
+      "absent_by_l_test": true,
+      "path": "/home/steve/staged-xpu-commitfix-graphfa-composite-20260820"
+    },
+    "incoming": {
+      "absent_by_e_test": true,
+      "absent_by_l_test": true,
+      "path": "/home/steve/qwen38-m6-head256-q64k32-remote-transfer-20260821-r1"
+    }
+  },
+  "evidence_boundary": {
+    "captured_via": "interactive SSH stdout and local source checks",
+    "remote_raw_evidence_file_persisted": false,
+    "remote_setup_receipt_persisted": false
+  },
+  "forbidden_actions_observed": {
+    "clock_change": false,
+    "gpu_compute": false,
+    "model_or_vllm_launch": false,
+    "remote_kernel_source_edit_or_build": false,
+    "seal_helper_invoked": false
+  },
+  "host": "steve-TURIND8-2L2T",
+  "relevant_remote_process_inventory_empty": true,
+  "remote_repo": {
+    "branch": "main",
+    "clean_after": true,
+    "clean_before": true,
+    "head_after": "e63d5e24a351359acfbd8a93c0429732bf7f36ea",
+    "head_before": "6d678cccf9519414f6f3a8162f2c3f263364f842",
+    "origin_main_after": "e63d5e24a351359acfbd8a93c0429732bf7f36ea",
+    "origin_main_before": "6d678cccf9519414f6f3a8162f2c3f263364f842",
+    "path": "/home/steve/b70-optimization-lab",
+    "update": "git fetch origin main followed by git merge --ff-only origin/main"
+  },
+  "schema": "qwen38-q64k32-remote-stage-setup-v1",
+  "seal": {
+    "attempted": false,
+    "blocker": "The committed helper used an existence check that admitted dangling symlinks and ordinary mv publication with a check-to-publish replacement race.",
+    "committed_helper_sha256": "e20b1f09363b3361e5a90fa868f1a8dffced87b482dc1e9ebb016e9d945a4ea8",
+    "next_action": "Commit and push the reviewed no-clobber/inode-owned helper, fetch that exact clean main on the remote host, revalidate the private transfer, publish incoming without overwrite, then run seal exactly once."
+  },
+  "status": "transfer-verified-seal-blocked",
+  "transfer": {
+    "candidate_device_library_sha256": "01a5b35b5a9c6321b436b137f95403db9e45ce4aabb44257dc7e4f45c84aecf5",
+    "candidate_graph_manifest_and_aggregate_sha256": "d662dba3927fac706ff221902f536b67178b6875f66604597a1f2fe98a4defc4",
+    "candidate_manifest_sha256_check_passed": true,
+    "candidate_runtime_regular_file_count": 20,
+    "control_device_library_sha256": "604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c",
+    "control_graph_manifest_sha256": "47861e8391b6b25dd9c3eb25e25c5939753aa470858b667d5bdf181344db18da",
+    "logical_bytes": 3439487512,
+    "private_temporary_path": "/home/steve/.qwen38-m6-head256-q64k32-remote-transfer.tmp.e63d5e24a",
+    "published": false,
+    "top_level_entries": [
+      "libattn_kernels_xe_2.control.so",
+      "qwen38-m6-head256-q64k32-r2-candidate.graph.sha256",
+      "runtime",
+      "staged-xpu-commitfix-graphfa-composite-20260820.graph.sha256"
+    ]
+  }
+}

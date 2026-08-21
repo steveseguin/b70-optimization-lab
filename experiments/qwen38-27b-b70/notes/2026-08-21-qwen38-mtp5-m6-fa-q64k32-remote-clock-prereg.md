@@ -2,13 +2,16 @@
 
 Date: 2026-08-21
 
-Status: **source-only design, blocked and not authorized to launch**. No file
-has been transferred to the reference host, no remote stage has been created,
-no clock has been changed, and no GPU/operator/model process has been started.
-This note does not authorize those actions. The overall campaign-launch and
-clock-writer-exclusion switches remain false in both the Python supervisor and
-shell driver. Driver environment and active-supervisor ownership gates now
-describe implemented CPU-tested source contracts, not launch authorization.
+Status: **transfer verified, stage seal blocked, and not authorized to
+launch**. The exact packet is present only at a private temporary path on the
+reference host; it has not been published as the canonical incoming root and
+no remote stage has been created. No clock has been changed and no
+GPU/operator/model process has been started. The setup boundary is recorded in
+[`2026-08-21-qwen38-q64k32-remote-stage-setup.md`](2026-08-21-qwen38-q64k32-remote-stage-setup.md).
+The overall campaign-launch and clock-writer-exclusion switches remain false
+in both the Python supervisor and shell driver. Driver environment and
+active-supervisor ownership gates describe implemented CPU-tested source
+contracts, not launch authorization.
 
 ## Bounded question
 
@@ -48,8 +51,10 @@ Exact fixture seed / fixture SHA / oracle SHA:
 
 ## Transfer and stage prerequisite
 
-The remote repo remains `/home/steve/b70-optimization-lab`. A later separately
-authorized transfer must place the tracked packet there and create this exact
+The remote repo remains `/home/steve/b70-optimization-lab`. The exact packet is
+checksum-verified at the private, unpublished path
+`/home/steve/.qwen38-m6-head256-q64k32-remote-transfer.tmp.e63d5e24a`. A later
+reviewed step must revalidate it and publish it without overwrite as this exact
 fresh incoming root:
 
 ```text
@@ -60,15 +65,19 @@ fresh incoming root:
   libattn_kernels_xe_2.control.so
 ```
 
-The remote seal helper does not transfer or build. It requires both canonical
-stage roots to be absent. It rejects symlinks, special nodes, extra top-level
-files/directories, and any graph other than the exact 20-file package. It
-materializes candidate files onto new inodes so the canonical stage never
-aliases the mutable incoming tree, removes every write bit, reconstructs the
-remote-canonical build-input and stage JSON, then constructs the control stage
-with hardlinks for exactly the 19 shared immutable files and a separate exact
-control DSO inode. Both final trees are sealed and revalidated. The canonical
-roots are:
+The remote seal helper does not transfer or build. Its hardened local revision
+requires a clean `main == origin/main` and reports that exact externally
+authorized HEAD. It treats dangling symlinks as collisions and publishes with
+absolute `/usr/bin/mv -T --no-clobber`, post-move source absence, and exact
+device/inode ownership. Cleanup removes only trees whose identities it owns.
+It rejects symlinks, special nodes, extra top-level files/directories, and any
+graph other than the exact 20-file package. It materializes candidate files
+onto new inodes so the canonical stage never aliases the mutable incoming tree,
+removes every write bit, reconstructs the remote-canonical build-input and
+stage JSON, then constructs the control stage with hardlinks for exactly the 19
+shared immutable files and a separate exact control DSO inode. Both final trees
+remain provisional until two no-clobber publications and both final graph
+validations pass. The canonical roots are:
 
 ```text
 /home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2
@@ -229,14 +238,14 @@ transfer cost on the limited-memory host.
   (`95c026766a6a51442766be15b7142600cb195ea00ca3590cc73dc394de2a9d31`);
 - transfer/seal helper:
   `scripts/prepare-qwen38-m6-head256-q64k32-remote-stage-20260821.sh`
-  (`e20b1f09363b3361e5a90fa868f1a8dffced87b482dc1e9ebb016e9d945a4ea8`);
+  (`feebec0a3b2ee835fcd5519b670e16f2dd9921d2db258226665cc303832bf716`);
 - blocked driver:
   `scripts/run-20260821-qwen38-mtp5-m6-fa-q64k32-remote-clock-abba.sh`
-  (`ccd54de8f0125fee8f00846ad7ee06d6b775dab5e98c718ecb77871f6f8cf0d5`,
+  (`226372cd25ebd662eb29ce79800e03e5d67819cd929aa483b119e940adad261b`,
   mode 0755);
 - CPU tests:
   `scripts/test_qwen38_mtp5_m6_fa_q64k32_remote_clock_campaign.py`
-  (`253445c6f35b39864eddd8d04b954baccd4fb03d6eb4323907b3f7e7f45721ac`).
+  (`6ac5c3981a2730211a2cc05f7559f7af0f50dc234bbf9609effb5530ec05f6c7`).
 
 Former prerequisites 7, 9, and the numeric/testing portion of 10 are now closed
 in source: active-supervisor ownership precedes restoration; cleanup is
@@ -244,16 +253,22 @@ nonthrowing and final-fence signals are durable; management uses clean-env
 re-exec plus exact paths; and live process/signal/timeout/descendant tests plus
 positive, zero, negative, nonconstant percentile, and interaction numeric
 fixtures pass. These closures do not imply launch authorization. The frozen
-packet passes 41 CPU tests plus Ruff lint/format and shell syntax checks without
-importing Torch or touching an XPU.
+packet passes 44 CPU tests plus Ruff lint/format and shell syntax checks without
+importing Torch or touching an XPU. The added stage tests cover initial dangling
+symlinks; regular, directory, dangling, and directory-symlink publish
+collisions; skipped-success `mv`; private-path replacement; a candidate publish
+followed by a control collision; signals after either publish; and successful
+two-root identity preservation.
 
 Missing prerequisites, all mandatory:
 
-1. explicit authorization to transfer the packet, candidate runtime, control
-   DSO, and both exact graph manifests;
-2. canonical remote control and candidate stages plus newly sealed remote stage
-   JSON/build-input hashes;
-3. clean remote `main == origin/main` HEAD frozen in source;
+1. independent review, commit, push, and exact remote fetch of the hardened
+   helper, with its commit HEAD and helper SHA frozen in external setup evidence;
+2. checksum revalidation and no-overwrite publication of the private incoming
+   packet, then canonical remote control/candidate stages and newly sealed
+   remote stage JSON/build-input hashes;
+3. clean remote `main == origin/main` at the externally authorized exact
+   post-hardening commit (the helper also enforces and reports this equality);
 4. same-boot recapture of the now-source-pinned UUID/BDF mapping proving exactly
    devices 0 and 1, plus dynamic boot/device-state/range evidence (the reference
    host did not undergo the measuring host's xe recovery);

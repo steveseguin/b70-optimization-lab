@@ -22,6 +22,7 @@ from unittest import mock
 HERE = Path(__file__).resolve().parent
 CAMPAIGN_PATH = HERE / "qwen38_mtp5_m6_fa_q64k32_remote_clock_campaign.py"
 DRIVER_PATH = HERE / "run-20260821-qwen38-mtp5-m6-fa-q64k32-remote-clock-abba.sh"
+HELPER_PATH = HERE / "prepare-qwen38-m6-head256-q64k32-remote-stage-20260821.sh"
 SPEC = importlib.util.spec_from_file_location("remote_clock_campaign", CAMPAIGN_PATH)
 if SPEC is None or SPEC.loader is None:
     raise RuntimeError("cannot load campaign module")
@@ -995,9 +996,7 @@ restore_pre_run_ranges 42
             self.assertIn("seal-restoration", seal_events[1])
 
     def test_preparer_constructs_both_exact_stages_without_build(self) -> None:
-        helper = (
-            HERE / "prepare-qwen38-m6-head256-q64k32-remote-stage-20260821.sh"
-        ).read_text(encoding="utf-8")
+        helper = HELPER_PATH.read_text(encoding="utf-8")
         self.assertNotIn("rsync ", helper)
         self.assertNotIn("cmake ", helper)
         self.assertNotIn("ninja ", helper)
@@ -1016,6 +1015,289 @@ restore_pre_run_ranges 42
         self.assertIn("candidate_identity=$(stat -c", helper)
         self.assertIn("control_identity=$(stat -c", helper)
         self.assertIn("exactly 20 regular package files", helper)
+        self.assertIn("[[ ! -e $1 && ! -L $1 ]]", helper)
+        self.assertIn("mv_bin=/usr/bin/mv", helper)
+        self.assertIn('"$mv_bin" -T --no-clobber', helper)
+        self.assertIn("publish collision left source present", helper)
+        self.assertIn("destination identity differs after publish", helper)
+        self.assertIn("remove_owned_tree", helper)
+        self.assertIn("stage seal requires HEAD == origin/main", helper)
+
+    def test_preparer_rejects_dangling_and_all_publish_collision_types(self) -> None:
+        source = HELPER_PATH.read_text(encoding="utf-8")
+        functions = "\n".join(
+            bash_function(source, name)
+            for name in ("absent_path", "path_identity", "publish_owned_tree")
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            dangling = root / "dangling"
+            dangling.symlink_to(root / "missing")
+            check = subprocess.run(
+                [
+                    "/usr/bin/bash",
+                    "-c",
+                    f'{functions}\nabsent_path "$1"',
+                    "bash",
+                    str(dangling),
+                ],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertNotEqual(check.returncode, 0)
+        for collision_kind in ("regular", "directory", "dangling", "directory-symlink"):
+            with (
+                self.subTest(collision_kind=collision_kind),
+                tempfile.TemporaryDirectory() as directory,
+            ):
+                root = Path(directory)
+                source_path = root / "source"
+                destination = root / "destination"
+                source_path.mkdir()
+                identity = f"{source_path.stat().st_dev}:{source_path.stat().st_ino}"
+                if collision_kind == "regular":
+                    destination.write_text("collision\n", encoding="utf-8")
+                elif collision_kind == "directory":
+                    destination.mkdir()
+                elif collision_kind == "dangling":
+                    destination.symlink_to(root / "missing")
+                else:
+                    target = root / "target"
+                    target.mkdir()
+                    destination.symlink_to(target, target_is_directory=True)
+                before = destination.lstat()
+                completed = subprocess.run(
+                    [
+                        "/usr/bin/bash",
+                        "-c",
+                        f"mv_bin=/usr/bin/mv\n{functions}\n"
+                        'publish_owned_tree "$1" "$2" "$3" fixture',
+                        "bash",
+                        str(source_path),
+                        str(destination),
+                        identity,
+                    ],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertNotEqual(completed.returncode, 0)
+                self.assertTrue(source_path.is_dir())
+                after = destination.lstat()
+                self.assertEqual(
+                    (before.st_dev, before.st_ino), (after.st_dev, after.st_ino)
+                )
+                self.assertRegex(
+                    completed.stderr,
+                    rb"publish (failed|collision left source present)",
+                )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source_path = root / "source"
+            destination = root / "destination"
+            source_path.mkdir()
+            identity = f"{source_path.stat().st_dev}:{source_path.stat().st_ino}"
+            completed = subprocess.run(
+                [
+                    "/usr/bin/bash",
+                    "-c",
+                    f"fake_mv() {{ return 0; }}\nmv_bin=fake_mv\n{functions}\n"
+                    'publish_owned_tree "$1" "$2" "$3" skipped',
+                    "bash",
+                    str(source_path),
+                    str(destination),
+                    identity,
+                ],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertTrue(source_path.is_dir())
+            self.assertFalse(destination.exists())
+            self.assertIn(b"publish collision left source present", completed.stderr)
+
+    def test_preparer_publication_and_cleanup_are_inode_owned(self) -> None:
+        source = HELPER_PATH.read_text(encoding="utf-8")
+        names = (
+            "absent_path",
+            "path_identity",
+            "remove_owned_tree",
+            "publish_owned_tree",
+            "cleanup",
+        )
+        functions = "\n".join(bash_function(source, name) for name in names)
+        with tempfile.TemporaryDirectory() as directory:
+            root_path = Path(directory)
+            candidate_tmp = root_path / "candidate.tmp"
+            control_tmp = root_path / "control.tmp"
+            candidate_root = root_path / "candidate"
+            control_root = root_path / "control"
+            candidate_tmp.mkdir()
+            control_tmp.mkdir()
+            candidate_identity = (
+                f"{candidate_tmp.stat().st_dev}:{candidate_tmp.stat().st_ino}"
+            )
+            control_identity = (
+                f"{control_tmp.stat().st_dev}:{control_tmp.stat().st_ino}"
+            )
+            script = f"""#!/usr/bin/bash
+set -euo pipefail
+mv_bin=/usr/bin/mv; chmod_bin=/usr/bin/chmod; rm_bin=/usr/bin/rm
+candidate_tmp={candidate_tmp!s}; control_tmp={control_tmp!s}
+root={candidate_root!s}; control={control_root!s}
+candidate_identity={candidate_identity}; control_identity={control_identity}; complete=false
+{functions}
+publish_owned_tree "$candidate_tmp" "$root" "$candidate_identity" candidate
+publish_owned_tree "$control_tmp" "$control" "$control_identity" control
+complete=true
+"""
+            completed = subprocess.run(
+                ["/usr/bin/bash"],
+                input=script.encode(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr.decode())
+            self.assertFalse(candidate_tmp.exists())
+            self.assertFalse(control_tmp.exists())
+            self.assertEqual(
+                f"{candidate_root.stat().st_dev}:{candidate_root.stat().st_ino}",
+                candidate_identity,
+            )
+            self.assertEqual(
+                f"{control_root.stat().st_dev}:{control_root.stat().st_ino}",
+                control_identity,
+            )
+            owned = root_path / "private-owned"
+            displaced = root_path / "private-displaced"
+            owned.mkdir()
+            owned_identity = f"{owned.stat().st_dev}:{owned.stat().st_ino}"
+            owned.rename(displaced)
+            owned.mkdir()
+            removal = subprocess.run(
+                [
+                    "/usr/bin/bash",
+                    "-c",
+                    f"chmod_bin=/usr/bin/chmod; rm_bin=/usr/bin/rm\n{functions}\n"
+                    'remove_owned_tree "$1" "$2"',
+                    "bash",
+                    str(owned),
+                    owned_identity,
+                ],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertEqual(removal.returncode, 0)
+            self.assertTrue(owned.is_dir())
+            self.assertTrue(displaced.is_dir())
+
+    def test_preparer_cleanup_preserves_collision_and_handles_publish_signals(
+        self,
+    ) -> None:
+        source = HELPER_PATH.read_text(encoding="utf-8")
+        names = (
+            "absent_path",
+            "path_identity",
+            "remove_owned_tree",
+            "publish_owned_tree",
+            "cleanup",
+        )
+        functions = "\n".join(bash_function(source, name) for name in names)
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            candidate_tmp = base / "candidate.tmp"
+            control_tmp = base / "control.tmp"
+            candidate_root = base / "candidate"
+            control_root = base / "control"
+            candidate_tmp.mkdir()
+            control_tmp.mkdir()
+            control_root.write_text("collision\n", encoding="utf-8")
+            candidate_identity = (
+                f"{candidate_tmp.stat().st_dev}:{candidate_tmp.stat().st_ino}"
+            )
+            control_identity = (
+                f"{control_tmp.stat().st_dev}:{control_tmp.stat().st_ino}"
+            )
+            collision_inode = control_root.stat().st_ino
+            script = f"""#!/usr/bin/bash
+set -u
+mv_bin=/usr/bin/mv; chmod_bin=/usr/bin/chmod; rm_bin=/usr/bin/rm
+candidate_tmp={candidate_tmp!s}; control_tmp={control_tmp!s}
+root={candidate_root!s}; control={control_root!s}
+candidate_identity={candidate_identity}; control_identity={control_identity}; complete=false
+{functions}
+trap cleanup EXIT
+publish_owned_tree "$candidate_tmp" "$root" "$candidate_identity" candidate || exit 1
+publish_owned_tree "$control_tmp" "$control" "$control_identity" control || exit 1
+"""
+            completed = subprocess.run(
+                ["/usr/bin/bash"],
+                input=script.encode(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 1)
+            self.assertFalse(candidate_root.exists())
+            self.assertFalse(candidate_tmp.exists())
+            self.assertFalse(control_tmp.exists())
+            self.assertEqual(control_root.stat().st_ino, collision_inode)
+        for signal_point in ("candidate", "control"):
+            with (
+                self.subTest(signal_point=signal_point),
+                tempfile.TemporaryDirectory() as directory,
+            ):
+                base = Path(directory)
+                candidate_tmp = base / "candidate.tmp"
+                control_tmp = base / "control.tmp"
+                candidate_root = base / "candidate"
+                control_root = base / "control"
+                candidate_tmp.mkdir()
+                control_tmp.mkdir()
+                candidate_identity = (
+                    f"{candidate_tmp.stat().st_dev}:{candidate_tmp.stat().st_ino}"
+                )
+                control_identity = (
+                    f"{control_tmp.stat().st_dev}:{control_tmp.stat().st_ino}"
+                )
+                second_publish = (
+                    'publish_owned_tree "$control_tmp" "$control" "$control_identity" control\n'
+                    if signal_point == "control"
+                    else ""
+                )
+                script = f"""#!/usr/bin/bash
+set -u
+mv_bin=/usr/bin/mv; chmod_bin=/usr/bin/chmod; rm_bin=/usr/bin/rm
+candidate_tmp={candidate_tmp!s}; control_tmp={control_tmp!s}
+root={candidate_root!s}; control={control_root!s}
+candidate_identity={candidate_identity}; control_identity={control_identity}; complete=false
+{functions}
+trap cleanup EXIT
+trap 'exit 130' INT
+publish_owned_tree "$candidate_tmp" "$root" "$candidate_identity" candidate
+{second_publish}/usr/bin/kill -INT $$
+exit 3
+"""
+                completed = subprocess.run(
+                    ["/usr/bin/bash"],
+                    input=script.encode(),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(completed.returncode, 130)
+                self.assertFalse(candidate_tmp.exists())
+                self.assertFalse(control_tmp.exists())
+                self.assertFalse(candidate_root.exists())
+                self.assertFalse(control_root.exists())
 
     def test_supervisor_and_compare_bind_runtime_and_restoration(self) -> None:
         source = CAMPAIGN_PATH.read_text(encoding="utf-8")
