@@ -157,6 +157,8 @@ policy with no same-policy retry.
 ## Commands after final freeze only
 
 ```bash
+set -euo pipefail
+cd /home/steve/llm-optimizations
 builder=/home/steve/llm-optimizations/experiments/qwen38-27b-b70/scripts/build-qwen38-m6-head256-q64k32-attn-override-r2-20260821.sh
 driver=/home/steve/llm-optimizations/experiments/qwen38-27b-b70/scripts/run-20260821-qwen38-mtp5-m6-fa-q64k32-operator-abba.sh
 build_root=/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2
