@@ -253,7 +253,10 @@ transfer cost on the limited-memory host.
 The separately bounded, no-clock A0 runtime-map diagnostic is preregistered in
 [`2026-08-21-qwen38-q64k32-remote-runtime-map-diagnostic-prereg.md`](2026-08-21-qwen38-q64k32-remote-runtime-map-diagnostic-prereg.md), using the
 [`../data/2026-08-21-qwen38-q64k32-remote-passive-enablement.json`](../data/2026-08-21-qwen38-q64k32-remote-passive-enablement.json)
-evidence packet. It can establish mapped runtime identities but cannot
+evidence packet. Its r1 attempt is a preserved
+[`invalid harness false-fail`](2026-08-21-qwen38-q64k32-remote-runtime-map-r1-invalid.md);
+the source-only r2 correction remains unrun. A valid future r2 can establish
+mapped runtime identities but cannot
 authorize this clock campaign; the launch and clock-writer gates below remain
 false.
 

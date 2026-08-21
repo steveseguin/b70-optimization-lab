@@ -1,0 +1,144 @@
+{
+  "artifact_boundary": {
+    "copied_into_repo": false,
+    "file_modes_and_sizes_captured": false,
+    "raw_files_persisted_remotely": true,
+    "remote_result_root": "/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r1"
+  },
+  "artifact_inventory": {
+    "aggregate_recipe": "SHA-256 of standard two-space sha256sum lines with trailing newlines, ordered lexically by the seven bare maxdepth-1 basenames",
+    "aggregate_sha256": "2eb9a8327ee53a5f7798caf5425643b441147bc6468e238ee3a8eedee1247bcc",
+    "files": [
+      {
+        "path": "arm-01.supervisor.log",
+        "sha256": "53a8c02434d265c7e077013aaec7325dec87af0072ad3611d3fe5353769bc464"
+      },
+      {
+        "path": "arm-01.terminal.json",
+        "sha256": "e134b8857e46a1dacdc2682cb5f11b5c218407b3255c71a9e6dfd055bf691985"
+      },
+      {
+        "path": "arm-01.terminal.json.phase-before-spawn.json",
+        "sha256": "d6998d53003cc21b7bb8f6398426412f44c227647101b10fa26cbd88b4b23eee"
+      },
+      {
+        "path": "arm-01.terminal.json.phase-preflight.json",
+        "sha256": "04095485575ca53ebae4eadcbb6bf6cb0399354ee5a1003db1fdccffa09c0080"
+      },
+      {
+        "path": "arm-01.terminal.json.phase-spawned.json",
+        "sha256": "6951686dcbfdfcceb40bb51603c124f1c2dfb2587cab0a5bce42c71610f6e4bc"
+      },
+      {
+        "path": "arm-01.terminal.json.phase-supervisor-started.json",
+        "sha256": "8db739fd5f7a7788b69e46114d5483344ab38d62a5395c890213f4a5e499013b"
+      },
+      {
+        "path": "preflight-live-scan.json",
+        "sha256": "3116e1ea97dcbb866b9ac92c3454627042ffc10ff738ce70d436dfee22e3a38d"
+      }
+    ],
+    "regular_file_count": 7
+  },
+  "classification": "invalid-harness-false-fail",
+  "driver": {
+    "returncode": 125,
+    "stderr_lines_after_worker_failure": [
+      "error: live scan: clock unit differs: xe-b70-minfreq.timer",
+      "FATAL: supervisor terminal does not prove owned worker-group absence (rc=1)"
+    ]
+  },
+  "harness_failures": [
+    {
+      "effect": "The first control worker stopped before the target operator call because an irrelevant device mapping was subjected to regular-file validation.",
+      "fix_for_r2": "Filter absolute mappings by the raw mapped basename before canonical file/stat validation; retain strict validation for every libsycl, libur_, and libze_ mapping.",
+      "name": "irrelevant-device-map-filter-order",
+      "worker_error": "error: runtime mapping is not a file: /dev/dri/renderD129"
+    },
+    {
+      "effect": "The terminal reported safe group absence, but the driver cleanup validator rejected the live-scan schema and returned 125.",
+      "fix_for_r2": "Canonicalize an omitted MainPID to the string 0 for a not-found unit while retaining the validator's exact five-field unit schema.",
+      "name": "absent-timer-mainpid-normalization"
+    }
+  ],
+  "operator_evidence": {
+    "correctness_available": false,
+    "engagement_available": false,
+    "operator_call_entered": false,
+    "performance_available": false,
+    "runtime_inventory_available": false
+  },
+  "orchestration": {
+    "end_time_ns": 1787313574026662267,
+    "run_invocation_count": 1,
+    "start_time_ns": 1787313534784273176
+  },
+  "post_run": {
+    "additional_gpu_action": false,
+    "build_invoked": false,
+    "clock_mutation_invoked": false,
+    "comparison_invoked": false,
+    "evidence_source": "external passive session observation; not sealed in the result root",
+    "full_model_invoked": false,
+    "relevant_process_scan_empty": true,
+    "remote_repo_clean": true,
+    "remote_repo_head": "048b899069b223b8b13faf2a3706049ad8790f74",
+    "remote_repo_origin_main": "048b899069b223b8b13faf2a3706049ad8790f74",
+    "retry_invoked": false,
+    "sudo_invoked": false
+  },
+  "r1_source_identity": {
+    "boot_id": "a6cad22f-2685-43b7-8950-c0c771f73d99",
+    "campaign_sha256": "7577f9313b60d4bb51b328eb63608ab8c3bf9af31b1e84e1390164f71ee1e2fb",
+    "diagnostic_sha256": "19f938ac71780648cbbce91129876025c4eb0e8646dd213209b1052bd18268e2",
+    "driver_sha256": "ed6a528d061bb7d62ed210d6250f4908eb6cadd5ee2789975e27142c0360cfcf",
+    "hostname": "steve-TURIND8-2L2T",
+    "passive_enablement_sha256": "adef0e354f4bf0b6e6f2df6d0cc363fc34ee0d41f22fe9994f9214ae87373a79",
+    "repo_commit": "048b899069b223b8b13faf2a3706049ad8790f74",
+    "stage_inventory_sha256": "0923804d40a14a19ee244ce4e38641a47d9c4327b0d5c700c7b6e2756ce1aa82"
+  },
+  "r2_source_only_correction": {
+    "diagnostic_sha256": "a78a2c1953952578ed7b63f0ec6d96f5c423e5199ad034c69cb002fe4a0191db",
+    "driver_sha256": "f35c7dd564c0e8279c706e6003fcba44bdae4922bcb94eec72b6b8a65c410c1e",
+    "focused_tests_sha256": "40a3cf207e3de994d8fbe614231fdf55fc4bc492826e8fc449850655add50b71",
+    "result_root": "/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r2",
+    "operational_launch_authorized": false
+  },
+  "schema": "qwen38-q64k32-remote-runtime-map-r1-invalid-v1",
+  "terminal_summary": {
+    "cleanup": {
+      "group_absent": true,
+      "identity_safe": true,
+      "kill_sent": false,
+      "term_sent": false,
+      "validator_certified": false
+    },
+    "error": "diagnostic worker exit/artifact state differs",
+    "grace_seconds": 10.0,
+    "plan": {
+      "device": 0,
+      "ordinal": 1,
+      "role": "control"
+    },
+    "schema": "qwen38-q64k32-remote-runtime-map-terminal-v1",
+    "signals": [],
+    "status": "invalid",
+    "supervisor_pid": 180581,
+    "timeout_seconds": 300.0,
+    "valid": false,
+    "worker_pgid": 180664,
+    "worker_pid": 180664,
+    "worker_returncode": 2,
+    "worker_start_ticks": 21426150
+  },
+  "unproduced_artifacts": [
+    "arm-01.json",
+    "arm-02.json",
+    "arm-02.terminal.json",
+    "arm-03.json",
+    "arm-03.terminal.json",
+    "arm-04.json",
+    "arm-04.terminal.json",
+    "comparison.json"
+  ]
+}

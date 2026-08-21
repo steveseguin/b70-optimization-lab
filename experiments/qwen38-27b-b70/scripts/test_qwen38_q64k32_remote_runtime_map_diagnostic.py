@@ -113,6 +113,10 @@ class DiagnosticContractTests(unittest.TestCase):
         self.assertEqual(D.KV_LENGTH, 128)
         self.assertEqual(D.TIMEOUT_SECONDS, 300.0)
         self.assertEqual(D.GRACE_SECONDS, 10.0)
+        self.assertEqual(
+            D.RESULT_ROOT,
+            Path("/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r2"),
+        )
 
     def test_static_runtime_candidate_map_is_exact(self) -> None:
         self.assertEqual(
@@ -150,7 +154,10 @@ class DiagnosticContractTests(unittest.TestCase):
             soname.symlink_to(library.name)
             stat = library.stat()
             device = f"{os.major(stat.st_dev):02x}:{os.minor(stat.st_dev):02x}"
-            maps = f"1000-2000 r-xp 00000000 {device} {stat.st_ino} {soname}\n"
+            maps = (
+                "0800-0900 rw-s 00000000 00:06 123 /dev/dri/renderD129\n"
+                f"1000-2000 r-xp 00000000 {device} {stat.st_ino} {soname}\n"
+            )
             with mock.patch.object(Path, "read_text", return_value=maps):
                 packet = D._runtime_snapshot()
             D.validate_runtime_snapshot(packet, "fixture")
@@ -166,6 +173,13 @@ class DiagnosticContractTests(unittest.TestCase):
             deleted = maps.rstrip() + " (deleted)\n"
             with mock.patch.object(Path, "read_text", return_value=deleted):
                 with self.assertRaisesRegex(D.ContractError, "deleted"):
+                    D._runtime_snapshot()
+            missing = (
+                "1000-2000 r-xp 00000000 00:00 123 "
+                f"{Path(directory) / 'libsycl-missing.so.8'}\n"
+            )
+            with mock.patch.object(Path, "read_text", return_value=missing):
+                with self.assertRaisesRegex(D.ContractError, "noncanonical"):
                     D._runtime_snapshot()
 
     def test_passive_command_allowlist_rejects_clock_mutation(self) -> None:
@@ -199,9 +213,12 @@ class DiagnosticContractTests(unittest.TestCase):
             ]
         }
         config = {"tile_config_data": [{"min_frequency": 400, "max_frequency": 2800}]}
-        unit = (
+        unit_with_pid = (
             b"LoadState=not-found\nActiveState=inactive\nSubState=dead\n"
             b"FragmentPath=\nMainPID=0\n"
+        )
+        unit_without_pid = (
+            b"LoadState=not-found\nActiveState=inactive\nSubState=dead\nFragmentPath=\n"
         )
 
         def capture(
@@ -215,7 +232,11 @@ class DiagnosticContractTests(unittest.TestCase):
             elif arguments[1:2] == ["config"]:
                 stdout = json.dumps(config).encode()
             elif arguments[0] == "/usr/bin/systemctl":
-                stdout = unit
+                stdout = (
+                    unit_without_pid
+                    if arguments[2] == "xe-b70-minfreq.timer"
+                    else unit_with_pid
+                )
             elif arguments == ["/usr/bin/crontab", "-l"]:
                 returncode = 1
                 stdout = b""
@@ -255,6 +276,7 @@ class DiagnosticContractTests(unittest.TestCase):
         ):
             scan = D.passive_live_scan()
         D.validate_live_scan(scan)
+        self.assertEqual(scan["clock_units"]["xe-b70-minfreq.timer"]["MainPID"], "0")
 
     def test_live_scan_rejects_range_and_writer_tampering(self) -> None:
         scan = self._valid_live_scan()

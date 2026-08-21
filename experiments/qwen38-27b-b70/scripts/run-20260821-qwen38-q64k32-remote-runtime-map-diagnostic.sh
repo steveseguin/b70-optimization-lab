@@ -12,9 +12,9 @@ diagnostic=$repo/experiments/qwen38-27b-b70/scripts/qwen38_q64k32_remote_runtime
 campaign=$repo/experiments/qwen38-27b-b70/scripts/qwen38_mtp5_m6_fa_q64k32_remote_clock_campaign.py
 control=/home/steve/staged-xpu-commitfix-graphfa-composite-20260820
 candidate=/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2/runtime
-result=/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r1
+result=/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r2
 
-diagnostic_sha=19f938ac71780648cbbce91129876025c4eb0e8646dd213209b1052bd18268e2
+diagnostic_sha=a78a2c1953952578ed7b63f0ec6d96f5c423e5199ad034c69cb002fe4a0191db
 campaign_sha=7577f9313b60d4bb51b328eb63608ab8c3bf9af31b1e84e1390164f71ee1e2fb
 diagnostic_authorized=true
 

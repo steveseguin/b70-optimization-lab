@@ -33,7 +33,7 @@ CAMPAIGN_SHA256 = "7577f9313b60d4bb51b328eb63608ab8c3bf9af31b1e84e1390164f71ee1e
 REMOTE_REPO = Path("/home/steve/b70-optimization-lab")
 REMOTE_PYTHON = Path("/home/steve/.venvs/vllm-xpu/bin/python")
 RESULT_ROOT = Path(
-    "/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r1"
+    "/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r2"
 )
 EXPECTED_BOOT_ID = "a6cad22f-2685-43b7-8950-c0c771f73d99"
 EXPECTED_STAGE_INVENTORY_SHA256 = (
@@ -435,6 +435,8 @@ def passive_live_scan() -> dict[str, Any]:
             line.split("=", 1)[0]: line.split("=", 1)[1]
             for line in capture["stdout"].decode("utf-8").splitlines()
         }
+        if state.get("LoadState") == "not-found" and "MainPID" not in state:
+            state["MainPID"] = "0"
         if (
             state.get("LoadState") != "not-found"
             or state.get("ActiveState") != "inactive"
@@ -729,14 +731,16 @@ def _runtime_snapshot() -> dict[str, Any]:
         mapped = Path(mapped_text)
         if not mapped.is_absolute():
             continue
+        if re.match(r"^lib(?:sycl|ur_|ze_)", mapped.name) is None:
+            continue
         try:
             canonical = mapped.resolve(strict=True)
         except (OSError, RuntimeError) as error:
             raise ContractError(f"runtime mapping is noncanonical: {mapped}") from error
         if not canonical.is_file():
             raise ContractError(f"runtime mapping is not a file: {canonical}")
-        if not re.match(r"^lib(?:sycl|ur_|ze_)", canonical.name):
-            continue
+        if re.match(r"^lib(?:sycl|ur_|ze_)", canonical.name) is None:
+            raise ContractError(f"runtime mapping canonical basename differs: {mapped}")
         try:
             mapped_inode = int(fields[4])
         except ValueError as error:

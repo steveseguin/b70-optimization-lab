@@ -2,7 +2,11 @@
 
 Date: 2026-08-21
 
-Status: **source-only A0 packet; no GPU run yet**. This diagnostic is separate
+Status: **r1 invalid and terminal; source-only r2 correction not yet run**. R1
+stopped before its first operator call on two harness false-fails documented in
+[`2026-08-21-qwen38-q64k32-remote-runtime-map-r1-invalid.md`](2026-08-21-qwen38-q64k32-remote-runtime-map-r1-invalid.md).
+R2 preserves the scientific contract below under a fresh result root. This
+diagnostic is separate
 from, and cannot authorize, the blocked 16-arm clock campaign in
 [`2026-08-21-qwen38-mtp5-m6-fa-q64k32-remote-clock-prereg.md`](2026-08-21-qwen38-mtp5-m6-fa-q64k32-remote-clock-prereg.md).
 The passive input evidence is
@@ -59,8 +63,12 @@ The source requires the same boot observed by the passive scan, clean remote
 and a fresh exact result root:
 
 ```text
-/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r1
+/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r2
 ```
+
+The immutable r1 root remains
+`/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r1`; it must
+not be repaired, reused, or retried.
 
 Before the sequence, before every supervisor, again inside every worker before
 its imports/operator call, and at comparison time, the source passively
@@ -124,23 +132,24 @@ main campaign's
 
 - diagnostic worker/supervisor:
   `scripts/qwen38_q64k32_remote_runtime_map_diagnostic.py`
-  (`19f938ac71780648cbbce91129876025c4eb0e8646dd213209b1052bd18268e2`);
+  (`a78a2c1953952578ed7b63f0ec6d96f5c423e5199ad034c69cb002fe4a0191db`);
 - no-clock driver:
   `scripts/run-20260821-qwen38-q64k32-remote-runtime-map-diagnostic.sh`
-  (`ed6a528d061bb7d62ed210d6250f4908eb6cadd5ee2789975e27142c0360cfcf`,
+  (`f35c7dd564c0e8279c706e6003fcba44bdae4922bcb94eec72b6b8a65c410c1e`,
   mode 0755);
 - CPU tests:
   `scripts/test_qwen38_q64k32_remote_runtime_map_diagnostic.py`
-  (`81e31a603b33db1e0130f101a64c826468527e5eda01fab6f261f03419649df3`).
+  (`40a3cf207e3de994d8fbe614231fdf55fc4bc492826e8fc449850655add50b71`).
 
 The diagnostic source pins the revised campaign/watchdog source at
 `7577f9313b60d4bb51b328eb63608ab8c3bf9af31b1e84e1390164f71ee1e2fb`.
 Twenty-two focused CPU tests plus the existing 48-test campaign suite must pass,
 along with Ruff lint/format, shell syntax, strict-JSON, link, and diff checks.
 
-The diagnostic remains unrun until this source packet passes independent
-review, is committed/pushed, and the reference host advances cleanly to that
-exact commit. The later A1 campaign-authority commit must freeze the resulting
-worker-map evidence and implement the strict direct-child authorization-receipt
-contract. Only a subsequent commit that adds exactly that single receipt may
-be considered for enabling the 16-arm campaign; this A0 does not do so.
+R1 is permanently invalid and closed. R2 remains unrun until this correction
+passes independent review, is committed/pushed, and the reference host advances
+cleanly to that exact commit. The later A1 campaign-authority commit must freeze
+valid resulting worker-map evidence and implement the strict direct-child
+authorization-receipt contract. Only a subsequent commit that adds exactly
+that single receipt may be considered for enabling the 16-arm campaign; this
+A0 does not do so.
