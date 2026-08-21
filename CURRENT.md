@@ -120,6 +120,23 @@ prototype inherited from Qwen3.6 work. Both caused device faults/resets. Do not
 overlap BMG AOT compilation, a model workload, or a large download on this
 15 GiB host.
 
+## Active Research: Qwen3.8 27B Q4_K_M target-only TP1
+
+Opened 2026-08-21 on the four-B70 measuring host after its second xe
+recovery: single-B70 no-speculation decode from the exact promoted TP2
+source stack (both restore patches hash-verified, byte-identical model),
+oneAPI 2026.0.0 BMG-G31 AOT build, accepted runtime-door set, GPU 0. The
+registered baseline is **`26.047863` / `26.068073 tok/s`** conventional
+median over two fresh-server cold suites with **12/12 identical complete
+output hashes across restarts** and `cached_tokens=0` on all 24 requests.
+This is a new one-GPU identity: TP2-oracle equality is 0/12 by legitimate
+reduction-order difference, and the full quality battery is still required
+before any promotion. Goal: 30+ tok/s per GPU without weight, KV, or
+quality changes.
+
+- [lane registration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-lane-open.md)
+- [baseline result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-baseline-result.md)
+
 ## Active Research: Qwen3.8 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 
 Opened 2026-08-18, succeeding the closed Qwen3.6 27B INT4 lane. This is a
