@@ -2,11 +2,13 @@
 
 Date: 2026-08-21
 
-Status: **transfer verified, stage seal blocked, and not authorized to
-launch**. The exact packet is present only at a private temporary path on the
-reference host; it has not been published as the canonical incoming root and
-no remote stage has been created. No clock has been changed and no
-GPU/operator/model process has been started. The setup boundary is recorded in
+Status: **canonical stages sealed with one documented helper warning; not
+authorized to launch**. The incoming packet and both exact canonical stages
+are present on the reference host. Their independent full-tree audit passed,
+but the setup helper emitted one write-protected-file prompt before completing
+successfully; the accepted stages must not be recreated. No clock has been
+changed and no GPU/operator/model process has been started. The exact setup
+boundary is recorded in
 [`2026-08-21-qwen38-q64k32-remote-stage-setup.md`](2026-08-21-qwen38-q64k32-remote-stage-setup.md).
 The overall campaign-launch and clock-writer-exclusion switches remain false
 in both the Python supervisor and shell driver. Driver environment and
@@ -51,11 +53,8 @@ Exact fixture seed / fixture SHA / oracle SHA:
 
 ## Transfer and stage prerequisite
 
-The remote repo remains `/home/steve/b70-optimization-lab`. The exact packet is
-checksum-verified at the private, unpublished path
-`/home/steve/.qwen38-m6-head256-q64k32-remote-transfer.tmp.e63d5e24a`. A later
-reviewed step must revalidate it and publish it without overwrite as this exact
-fresh incoming root:
+The remote repo remains `/home/steve/b70-optimization-lab`. The exact packet
+was revalidated and published without overwrite as this incoming root:
 
 ```text
 /home/steve/qwen38-m6-head256-q64k32-remote-transfer-20260821-r1/
@@ -88,6 +87,23 @@ The candidate graph is SHA-256
 `d662dba3927fac706ff221902f536b67178b6875f66604597a1f2fe98a4defc4`.
 The control graph is SHA-256
 `47861e8391b6b25dd9c3eb25e25c5939753aa470858b667d5bdf181344db18da`.
+
+The canonical candidate and control stages were sealed exactly once at remote
+repo HEAD `aae4f7f867ccc067e4f43869a1e43309767e831d` with helper SHA-256
+`feebec0a3b2ee835fcd5519b670e16f2dd9921d2db258226665cc303832bf716`.
+The helper returned zero, but its plain removal of the temporary read-only DSO
+emitted one interactive prompt. Independent validation nevertheless proved the
+two final manifests, exact tree inventories/modes, 19 shared hardlinks,
+distinct device-DSO inodes, and zero aliases to incoming. The generated
+build-input manifest is
+`70f6c6a86098dbf42722b8c601a7b238868ccb4fa23ba9ad0c9f1789083ddb5e`;
+the strict candidate-stage JSON is
+`31965ea3904cf2081df6e6ce31f93c36b65b66c120e8c3f7a12f9744a2b4b6e3`.
+The setup note binds the immutable remote receipts and log hashes. The current
+source-only helper, SHA-256
+`c3a99abb5bd401b1e6d14ad5576f7493ec7dd9e5b106e3d03892d04dcd9ae6d9`,
+adds nonprompting `rm -f` plus a PTY regression; it was not used to recreate or
+modify the accepted stages.
 
 The three shared runtime files are exact:
 
@@ -238,14 +254,14 @@ transfer cost on the limited-memory host.
   (`95c026766a6a51442766be15b7142600cb195ea00ca3590cc73dc394de2a9d31`);
 - transfer/seal helper:
   `scripts/prepare-qwen38-m6-head256-q64k32-remote-stage-20260821.sh`
-  (`feebec0a3b2ee835fcd5519b670e16f2dd9921d2db258226665cc303832bf716`);
+  (`c3a99abb5bd401b1e6d14ad5576f7493ec7dd9e5b106e3d03892d04dcd9ae6d9`);
 - blocked driver:
   `scripts/run-20260821-qwen38-mtp5-m6-fa-q64k32-remote-clock-abba.sh`
-  (`226372cd25ebd662eb29ce79800e03e5d67819cd929aa483b119e940adad261b`,
+  (`560f949fde9fa95d75c7af882fd263c042efc486052ce17ea1f15b852f94bac6`,
   mode 0755);
 - CPU tests:
   `scripts/test_qwen38_mtp5_m6_fa_q64k32_remote_clock_campaign.py`
-  (`6ac5c3981a2730211a2cc05f7559f7af0f50dc234bbf9609effb5530ec05f6c7`).
+  (`f31b855b9d69fae767907b941aebd09a5cc95aa752ebecaaf9efb99383d98a93`).
 
 Former prerequisites 7, 9, and the numeric/testing portion of 10 are now closed
 in source: active-supervisor ownership precedes restoration; cleanup is
@@ -253,34 +269,33 @@ nonthrowing and final-fence signals are durable; management uses clean-env
 re-exec plus exact paths; and live process/signal/timeout/descendant tests plus
 positive, zero, negative, nonconstant percentile, and interaction numeric
 fixtures pass. These closures do not imply launch authorization. The frozen
-packet passes 44 CPU tests plus Ruff lint/format and shell syntax checks without
+packet passes 45 CPU tests plus Ruff lint/format and shell syntax checks without
 importing Torch or touching an XPU. The added stage tests cover initial dangling
 symlinks; regular, directory, dangling, and directory-symlink publish
 collisions; skipped-success `mv`; private-path replacement; a candidate publish
 followed by a control collision; signals after either publish; and successful
-two-root identity preservation.
+two-root identity preservation. The exact nonprompting `rm -f` control-DSO
+replacement line also passes under a PTY with a read-only fixture.
 
 Missing prerequisites, all mandatory:
 
-1. independent review, commit, push, and exact remote fetch of the hardened
-   helper, with its commit HEAD and helper SHA frozen in external setup evidence;
-2. checksum revalidation and no-overwrite publication of the private incoming
-   packet, then canonical remote control/candidate stages and newly sealed
-   remote stage JSON/build-input hashes;
-3. clean remote `main == origin/main` at the externally authorized exact
-   post-hardening commit (the helper also enforces and reports this equality);
-4. same-boot recapture of the now-source-pinned UUID/BDF mapping proving exactly
+1. independent review, commit, push, and exact remote fetch of the current
+   source packet, followed by freezing that clean `main == origin/main` HEAD in
+   the driver without recreating the accepted stages;
+2. bind the accepted generated stage/build-input identities and a recomputed
+   combined stage inventory into the still-placeholder source gates;
+3. same-boot recapture of the now-source-pinned UUID/BDF mapping proving exactly
    devices 0 and 1, plus dynamic boot/device-state/range evidence (the reference
    host did not undergo the measuring host's xe recovery);
-5. launch-time composite `xpu-smi config` plus unfiltered `discovery`
+4. launch-time composite `xpu-smi config` plus unfiltered `discovery`
    revalidation against the pinned schema, two-device identities, field paths,
    binary SHA, and exact version;
-6. source-pinned mapped Level Zero/SYCL runtime basenames and SHA-256 values,
+5. source-pinned mapped Level Zero/SYCL runtime basenames and SHA-256 values,
    with the driver inventory SHA equal to the Python source-derived inventory;
-7. frozen exclusion and exact pre/post restoration of all competing clock
+6. frozen exclusion and exact pre/post restoration of all competing clock
    writers/services/timers; endpoint readbacks alone are insufficient;
-8. a final reviewed replacement of the overall literal false campaign/clock
-   gates and remaining repo/stage/runtime placeholders only after items 1--7
+7. a final reviewed replacement of the overall literal false campaign/clock
+   gates and remaining repo/stage/runtime placeholders only after items 1--6
    are evidenced.
 
 Until every item is satisfied, only CPU/static review is allowed.

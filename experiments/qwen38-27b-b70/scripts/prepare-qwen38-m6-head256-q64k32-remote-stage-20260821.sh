@@ -253,7 +253,7 @@ mkdir -- "$control_tmp"
 control_identity=$(stat -c '%d:%i' -- "$control_tmp")
 cp -al -- "$candidate_tmp_stage/." "$control_tmp/"
 chmod u+w "$control_tmp/vllm_xpu_kernels"
-rm -- "$control_tmp/vllm_xpu_kernels/libattn_kernels_xe_2.so"
+"$rm_bin" -f -- "$control_tmp/vllm_xpu_kernels/libattn_kernels_xe_2.so"
 install -m 0555 -- "$incoming_control_dso" \
   "$control_tmp/vllm_xpu_kernels/libattn_kernels_xe_2.so"
 chmod 0555 "$control_tmp/vllm_xpu_kernels" "$control_tmp"

@@ -9,6 +9,7 @@ import hashlib
 import importlib.util
 import os
 from pathlib import Path
+import pty
 import re
 import signal
 import subprocess
@@ -1022,6 +1023,69 @@ restore_pre_run_ranges 42
         self.assertIn("destination identity differs after publish", helper)
         self.assertIn("remove_owned_tree", helper)
         self.assertIn("stage seal requires HEAD == origin/main", helper)
+        self.assertIn(
+            '"$rm_bin" -f -- "$control_tmp/vllm_xpu_kernels/libattn_kernels_xe_2.so"',
+            helper,
+        )
+
+    def test_preparer_control_dso_removal_never_prompts_on_a_pty(self) -> None:
+        helper = HELPER_PATH.read_text(encoding="utf-8")
+        match = re.search(
+            r'(?m)^"\$rm_bin" -f -- '
+            r'"\$control_tmp/vllm_xpu_kernels/libattn_kernels_xe_2\.so"$',
+            helper,
+        )
+        self.assertIsNotNone(match)
+        assert match is not None
+        with tempfile.TemporaryDirectory() as directory:
+            control_tmp = Path(directory) / "control"
+            target = control_tmp / "vllm_xpu_kernels/libattn_kernels_xe_2.so"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"read-only fixture\n")
+            target.chmod(0o555)
+            script = (
+                "set -euo pipefail\n"
+                "rm_bin=/usr/bin/rm\n"
+                f"control_tmp={control_tmp!s}\n"
+                f"{match.group(0)}\n"
+            )
+            master, slave = pty.openpty()
+            process: subprocess.Popen[bytes] | None = None
+            try:
+                process = subprocess.Popen(
+                    ["/usr/bin/bash", "-c", script],
+                    stdin=slave,
+                    stdout=slave,
+                    stderr=slave,
+                    close_fds=True,
+                )
+                os.close(slave)
+                slave = -1
+                try:
+                    return_code = process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=3)
+                    self.fail("write-protected control DSO removal prompted on a PTY")
+                output = bytearray()
+                while True:
+                    try:
+                        chunk = os.read(master, 4096)
+                    except OSError:
+                        break
+                    if not chunk:
+                        break
+                    output.extend(chunk)
+                self.assertEqual(return_code, 0, bytes(output))
+                self.assertEqual(bytes(output), b"")
+                self.assertFalse(target.exists())
+            finally:
+                if process is not None and process.poll() is None:
+                    process.kill()
+                    process.wait(timeout=3)
+                os.close(master)
+                if slave >= 0:
+                    os.close(slave)
 
     def test_preparer_rejects_dangling_and_all_publish_collision_types(self) -> None:
         source = HELPER_PATH.read_text(encoding="utf-8")

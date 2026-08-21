@@ -1,64 +1,141 @@
 {
   "canonical_roots": {
     "candidate": {
-      "absent_by_e_test": true,
-      "absent_by_l_test": true,
-      "path": "/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2"
+      "device_inode": "66308:13137891",
+      "directory_mode": "0555",
+      "metadata_file_mode": "0444",
+      "path": "/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2",
+      "present_nonsymlink_directory": true,
+      "regular_file_count": 23,
+      "runtime_regular_file_count": 20
     },
     "control": {
-      "absent_by_e_test": true,
-      "absent_by_l_test": true,
-      "path": "/home/steve/staged-xpu-commitfix-graphfa-composite-20260820"
+      "device_inode": "66308:13137918",
+      "directory_mode": "0555",
+      "path": "/home/steve/staged-xpu-commitfix-graphfa-composite-20260820",
+      "present_nonsymlink_directory": true,
+      "regular_file_count": 20
     },
     "incoming": {
-      "absent_by_e_test": true,
-      "absent_by_l_test": true,
-      "path": "/home/steve/qwen38-m6-head256-q64k32-remote-transfer-20260821-r1"
+      "device_inode": "66308:13137856",
+      "path": "/home/steve/qwen38-m6-head256-q64k32-remote-transfer-20260821-r1",
+      "present_nonsymlink_directory": true
     }
   },
   "evidence_boundary": {
-    "captured_via": "interactive SSH stdout and local source checks",
-    "remote_raw_evidence_file_persisted": false,
-    "remote_setup_receipt_persisted": false
+    "captured_via": "interactive SSH stdout, immutable remote receipts, and independent read-only tree validation",
+    "helper_process_id_recorded": false,
+    "local_copy_of_remote_raw_receipts_persisted": false,
+    "remote_raw_receipts_persisted": true,
+    "remote_receipts": {
+      "incoming_publish": {
+        "mode": "0444",
+        "path": "/home/steve/qwen38-m6-head256-q64k32-remote-transfer-20260821-r1.publish-receipt.txt",
+        "sha256": "5830bea643f9e2f40ab8c416ba06e33cf950281c3e54f4377b3402b8a6e1b739"
+      },
+      "seal": {
+        "mode": "0444",
+        "path": "/home/steve/qwen38-m6-head256-q64k32-remote-stage-seal-20260821-r1.receipt.txt",
+        "sha256": "7e0fbf60143007790467d2336080e869404eee65f355f15cffdc29c1e380df5b"
+      },
+      "stderr": {
+        "path": "/home/steve/qwen38-m6-head256-q64k32-remote-stage-seal-20260821-r1.stderr.log",
+        "sha256": "d5acfa1f42eb6c820af3f40f93e3ddf8315c0defdc725c4c7b9f255b32695656"
+      },
+      "stdout": {
+        "path": "/home/steve/qwen38-m6-head256-q64k32-remote-stage-seal-20260821-r1.stdout.log",
+        "sha256": "346a3de193de20e674c1d7b90ecf3334e14fd46f015d2180435bff81887dac17"
+      }
+    }
   },
   "forbidden_actions_observed": {
     "clock_change": false,
     "gpu_compute": false,
     "model_or_vllm_launch": false,
+    "qualifier_launch": false,
     "remote_kernel_source_edit_or_build": false,
-    "seal_helper_invoked": false
+    "xpu_smi_config_invocation": false
+  },
+  "generated_artifacts": {
+    "build_inputs": {
+      "entry_checks_passed": true,
+      "path": "/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2/qwen38-m6-head256-q64k32-r2-build-inputs.sha256",
+      "sha256": "70f6c6a86098dbf42722b8c601a7b238868ccb4fa23ba9ad0c9f1789083ddb5e"
+    },
+    "candidate_stage_json": {
+      "canonical_compact_json": true,
+      "duplicate_and_nonfinite_rejection_passed": true,
+      "path": "/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2/qwen38-m6-head256-q64k32-r2-candidate-stage.json",
+      "schema": "qwen38-mtp5-m6-fa-q64k32-r2-stage-v1",
+      "sha256": "31965ea3904cf2081df6e6ce31f93c36b65b66c120e8c3f7a12f9744a2b4b6e3"
+    }
+  },
+  "helper": {
+    "command": "prepare-qwen38-m6-head256-q64k32-remote-stage-20260821.sh --seal-transferred-stages",
+    "invocation_count": 1,
+    "return_code": 0,
+    "sha256": "feebec0a3b2ee835fcd5519b670e16f2dd9921d2db258226665cc303832bf716",
+    "stderr_nonempty": true,
+    "stderr_warning": "plain rm prompted for a write-protected temporary control DSO; install subsequently produced the exact distinct control DSO and the helper returned zero",
+    "warning_classification": "setup-helper reproducibility defect; independently validated final stage identity is exact; do not rerun this setup"
+  },
+  "helper_follow_up": {
+    "change": "use absolute rm with -f for the temporary write-protected control DSO and exercise the exact line with a PTY regression",
+    "fixed_source_sha256": "c3a99abb5bd401b1e6d14ad5576f7493ec7dd9e5b106e3d03892d04dcd9ae6d9",
+    "remote_stage_recreated": false
   },
   "host": "steve-TURIND8-2L2T",
-  "relevant_remote_process_inventory_empty": true,
+  "publication": {
+    "command": "/usr/bin/mv -T --no-clobber -- PRIVATE_TEMP CANONICAL_INCOMING",
+    "destination_device_inode": "66308:13137856",
+    "published_time": "2026-08-21T06:34:12,778818347-04:00",
+    "source_absent_after_publish_by_e_and_l_tests": true,
+    "source_device_inode": "66308:13137856"
+  },
+  "relevant_remote_process_inventory_empty_after_setup": true,
   "remote_repo": {
     "branch": "main",
     "clean_after": true,
     "clean_before": true,
-    "head_after": "e63d5e24a351359acfbd8a93c0429732bf7f36ea",
-    "head_before": "6d678cccf9519414f6f3a8162f2c3f263364f842",
-    "origin_main_after": "e63d5e24a351359acfbd8a93c0429732bf7f36ea",
-    "origin_main_before": "6d678cccf9519414f6f3a8162f2c3f263364f842",
+    "head_after": "aae4f7f867ccc067e4f43869a1e43309767e831d",
+    "head_before": "e63d5e24a351359acfbd8a93c0429732bf7f36ea",
+    "origin_main_after": "aae4f7f867ccc067e4f43869a1e43309767e831d",
+    "origin_main_before": "e63d5e24a351359acfbd8a93c0429732bf7f36ea",
     "path": "/home/steve/b70-optimization-lab",
     "update": "git fetch origin main followed by git merge --ff-only origin/main"
   },
   "schema": "qwen38-q64k32-remote-stage-setup-v1",
   "seal": {
-    "attempted": false,
-    "blocker": "The committed helper used an existence check that admitted dangling symlinks and ordinary mv publication with a check-to-publish replacement race.",
-    "committed_helper_sha256": "e20b1f09363b3361e5a90fa868f1a8dffced87b482dc1e9ebb016e9d945a4ea8",
-    "next_action": "Commit and push the reviewed no-clobber/inode-owned helper, fetch that exact clean main on the remote host, revalidate the private transfer, publish incoming without overwrite, then run seal exactly once."
+    "attempted": true,
+    "candidate_and_control_manifest_checks_passed": true,
+    "completed": true,
+    "private_temporary_paths_absent": true,
+    "sealed_time": "2026-08-21T06:37:23,730431843-04:00"
   },
-  "status": "transfer-verified-seal-blocked",
-  "transfer": {
+  "stage_identity": {
     "candidate_device_library_sha256": "01a5b35b5a9c6321b436b137f95403db9e45ce4aabb44257dc7e4f45c84aecf5",
     "candidate_graph_manifest_and_aggregate_sha256": "d662dba3927fac706ff221902f536b67178b6875f66604597a1f2fe98a4defc4",
-    "candidate_manifest_sha256_check_passed": true,
-    "candidate_runtime_regular_file_count": 20,
+    "candidate_incoming_hardlink_alias_count": 0,
+    "common_control_candidate_hardlink_count": 19,
     "control_device_library_sha256": "604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c",
     "control_graph_manifest_sha256": "47861e8391b6b25dd9c3eb25e25c5939753aa470858b667d5bdf181344db18da",
+    "deleted_or_nonregular_node_count": 0,
+    "device_library_inodes_distinct": true,
+    "extension_sha256": "33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739",
+    "interface_sha256": "869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480",
+    "stock_library_sha256": "3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289",
+    "symlink_count": 0,
+    "writable_node_count": 0
+  },
+  "status": "sealed-with-helper-warning-launch-blocked",
+  "transfer": {
+    "candidate_manifest_sha256_check_passed": true,
+    "candidate_runtime_regular_file_count": 20,
     "logical_bytes": 3439487512,
     "private_temporary_path": "/home/steve/.qwen38-m6-head256-q64k32-remote-transfer.tmp.e63d5e24a",
-    "published": false,
+    "private_temporary_path_absent_after_publish": true,
+    "published": true,
+    "regular_file_count": 23,
     "top_level_entries": [
       "libattn_kernels_xe_2.control.so",
       "qwen38-m6-head256-q64k32-r2-candidate.graph.sha256",
