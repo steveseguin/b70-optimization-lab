@@ -19,7 +19,7 @@ candidate=$candidate_root/runtime
 candidate_manifest=$candidate_root/qwen38-m6-head256-q64k32-r2-candidate-stage.json
 result=/home/steve/qwen38-mtp5-m6-fa-q64k32-remote-clock-abba-20260821-r1
 
-campaign_sha=95c026766a6a51442766be15b7142600cb195ea00ca3590cc73dc394de2a9d31
+campaign_sha=7577f9313b60d4bb51b328eb63608ab8c3bf9af31b1e84e1390164f71ee1e2fb
 preparer_sha=c3a99abb5bd401b1e6d14ad5576f7493ec7dd9e5b106e3d03892d04dcd9ae6d9
 qualifier_sha=31862ea6a8b9e11a59d643e0d3500179d938261e62b93fb920439c664ce21fbc
 base_qualifier_sha=0dd7b945ef35a11ff4d0a1ec085e604920524b996d539e089d89b4a019a5de1f
@@ -267,6 +267,7 @@ parse_range() {
   minimum=$("$jq_bin" -er '.min_mhz | select(type == "number" and floor == .)' <<<"$parsed") || \
     die 'parsed minimum clock is absent/nonintegral'
   maximum=$("$jq_bin" -er '.max_mhz | select(type == "number" and floor == .)' <<<"$parsed") || \
+    die 'parsed maximum clock is absent/nonintegral'
   uuid=$("$jq_bin" -er '.uuid | select(type == "string" and length > 0)' <<<"$parsed") || \
     die 'parsed UUID is absent'
   bdf=$("$jq_bin" -er '.bdf | select(type == "string" and length > 0)' <<<"$parsed") || \

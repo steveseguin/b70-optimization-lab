@@ -117,6 +117,82 @@ class ContractTests(unittest.TestCase):
             "d662dba3927fac706ff221902f536b67178b6875f66604597a1f2fe98a4defc4",
         )
 
+    def test_stage_freeze_derivation_is_canonical_and_ungated(self) -> None:
+        qualifier = mock.Mock()
+        qualifier.ContractError = RuntimeError
+        qualifier.stage_identity.side_effect = lambda args: {"role": args.role}
+        sources = {"source": "a" * 64}
+        graphs = {
+            "control": {"graph": "control"},
+            "candidate": {"graph": "candidate"},
+        }
+        with (
+            mock.patch.object(C, "source_audit", return_value=sources),
+            mock.patch.object(C, "_load_remote_qualifier", return_value=qualifier),
+            mock.patch.object(
+                C,
+                "stage_audit",
+                side_effect=lambda _path, role: graphs[role],
+            ),
+            mock.patch.object(C, "require_launch_authorized") as launch_gate,
+        ):
+            derived = C.derive_stage_inventory(Path("/fixture"))
+        launch_gate.assert_not_called()
+        expected = {
+            "control": {"role": "control"},
+            "candidate": {"role": "candidate"},
+            "sources": sources,
+            "strict_stage_graphs": graphs,
+        }
+        encoded = C.json.dumps(
+            expected, allow_nan=False, sort_keys=True, separators=(",", ":")
+        ).encode()
+        self.assertEqual(derived["payload"], expected)
+        self.assertEqual(derived["canonical_byte_count"], len(encoded))
+        self.assertEqual(derived["sha256"], C.hashlib.sha256(encoded).hexdigest())
+
+    def test_stage_freeze_command_requires_clean_main_origin(self) -> None:
+        derived = {
+            "payload": {"fixture": True},
+            "canonical_byte_count": 16,
+            "sha256": "a" * 64,
+        }
+        outputs = {
+            ("rev-parse", "HEAD"): "1" * 40,
+            ("branch", "--show-current"): "main",
+            ("status", "--porcelain", "--untracked-files=normal"): "",
+            ("rev-parse", "origin/main"): "1" * 40,
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            with (
+                mock.patch.object(
+                    C.socket, "gethostname", return_value=C.REMOTE_HOSTNAME
+                ),
+                mock.patch.object(
+                    C, "_git_output", side_effect=lambda _repo, *args: outputs[args]
+                ),
+                mock.patch.object(C, "derive_stage_inventory", return_value=derived),
+                mock.patch.object(C, "require_launch_authorized") as launch_gate,
+            ):
+                packet = C.emit_stage_freeze_command(argparse.Namespace(repo=str(repo)))
+            launch_gate.assert_not_called()
+            self.assertEqual(packet["stage_inventory_sha256"], "a" * 64)
+            self.assertEqual(packet["repo_head"], "1" * 40)
+            self.assertFalse(packet["torch_imported"])
+            dirty = dict(outputs)
+            dirty[("status", "--porcelain", "--untracked-files=normal")] = " M file"
+            with (
+                mock.patch.object(
+                    C.socket, "gethostname", return_value=C.REMOTE_HOSTNAME
+                ),
+                mock.patch.object(
+                    C, "_git_output", side_effect=lambda _repo, *args: dirty[args]
+                ),
+            ):
+                with self.assertRaisesRegex(C.ContractError, "clean main"):
+                    C.emit_stage_freeze_command(argparse.Namespace(repo=str(repo)))
+
     def test_strict_json_rejects_duplicate_and_nonfinite(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "bad.json"
@@ -304,6 +380,39 @@ class ContractTests(unittest.TestCase):
                     C.parse_clock_command(
                         argparse.Namespace(device=0, receipt=str(bad_path))
                     )
+
+    def test_driver_parse_range_fails_on_missing_maximum_before_uuid(self) -> None:
+        source = DRIVER_PATH.read_text(encoding="utf-8")
+        parse_function = bash_function(source, "parse_range")
+        script = f"""#!/usr/bin/bash
+set -u
+jq_bin=/usr/bin/jq
+authorized_device0_uuid=uuid-0
+authorized_device0_bdf=0000:01:00.0
+authorized_device1_uuid=uuid-1
+authorized_device1_bdf=0000:02:00.0
+authorized_xpu_smi_schema_sha=schema
+management_python() {{
+  printf '%s\\n' '{{"min_mhz":400,"max_mhz":null,"uuid":"uuid-0","bdf":"0000:01:00.0","schema_sha256":"schema"}}'
+}}
+die() {{ printf 'error: %s\\n' "$*" >&2; exit 2; }}
+{parse_function}
+parse_range 0 /unused
+"""
+        completed = subprocess.run(
+            ["/usr/bin/bash"],
+            input=script.encode(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=10,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 2)
+        self.assertEqual(completed.stdout, b"")
+        self.assertEqual(
+            completed.stderr,
+            b"error: parsed maximum clock is absent/nonintegral\n",
+        )
 
     def _terminal_fixture(self, root: Path, ordinal: int = 1) -> tuple[Path, dict]:
         root.mkdir(parents=True, exist_ok=True)

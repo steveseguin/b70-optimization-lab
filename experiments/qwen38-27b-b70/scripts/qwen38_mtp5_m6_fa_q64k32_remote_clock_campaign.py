@@ -363,19 +363,9 @@ def _git_output(repo: Path, *arguments: str) -> str:
     return result.stdout.strip()
 
 
-def authorized_repo_audit(repo: Path) -> dict[str, Any]:
-    require_launch_authorized()
-    if socket.gethostname() != REMOTE_HOSTNAME:
-        raise ContractError("host is not the authorized reference host")
+def derive_stage_inventory(repo: Path) -> dict[str, Any]:
+    """Derive the exact source/stage payload without authorizing a launch."""
     sources = source_audit(repo)
-    head = _git_output(repo, "rev-parse", "HEAD")
-    if (
-        head != AUTHORIZED_REMOTE_REPO_HEAD
-        or _git_output(repo, "branch", "--show-current") != "main"
-        or _git_output(repo, "status", "--porcelain", "--untracked-files=normal")
-        or _git_output(repo, "rev-parse", "origin/main") != head
-    ):
-        raise ContractError("remote main/HEAD/clean/origin identity differs")
     qualifier = _load_remote_qualifier(repo)
     try:
         control = qualifier.stage_identity(
@@ -394,16 +384,70 @@ def authorized_repo_audit(repo: Path) -> dict[str, Any]:
         "control": stage_audit(CONTROL_STAGE, "control"),
         "candidate": stage_audit(CANDIDATE_STAGE, "candidate"),
     }
-    inventory_payload = {
+    payload = {
         "control": control,
         "candidate": candidate,
         "sources": sources,
         "strict_stage_graphs": strict_stage_graphs,
     }
     encoded = json.dumps(
-        inventory_payload, allow_nan=False, sort_keys=True, separators=(",", ":")
+        payload, allow_nan=False, sort_keys=True, separators=(",", ":")
     ).encode()
-    inventory_sha = hashlib.sha256(encoded).hexdigest()
+    return {
+        "payload": payload,
+        "canonical_byte_count": len(encoded),
+        "sha256": hashlib.sha256(encoded).hexdigest(),
+    }
+
+
+def emit_stage_freeze_command(args: argparse.Namespace) -> dict[str, Any]:
+    """Emit passive stage-freeze evidence from a clean remote main checkout."""
+    if "torch" in sys.modules:
+        raise ContractError(
+            "stage freeze refuses a process that already imported Torch"
+        )
+    repo = Path(args.repo)
+    if socket.gethostname() != REMOTE_HOSTNAME:
+        raise ContractError("stage freeze is not running on the reference host")
+    if repo.resolve(strict=True) != repo:
+        raise ContractError("stage-freeze repository is not canonical")
+    head = _git_output(repo, "rev-parse", "HEAD")
+    if (
+        _git_output(repo, "branch", "--show-current") != "main"
+        or _git_output(repo, "status", "--porcelain", "--untracked-files=normal")
+        or _git_output(repo, "rev-parse", "origin/main") != head
+    ):
+        raise ContractError("stage freeze requires clean main == origin/main")
+    derived = derive_stage_inventory(repo)
+    if "torch" in sys.modules:
+        raise ContractError("stage-freeze derivation unexpectedly imported Torch")
+    return {
+        "schema": "qwen38-q64k32-remote-stage-freeze-v1",
+        "host": REMOTE_HOSTNAME,
+        "repo": str(repo),
+        "repo_head": head,
+        "stage_inventory_sha256": derived["sha256"],
+        "stage_inventory_canonical_byte_count": derived["canonical_byte_count"],
+        "stage_inventory": derived["payload"],
+        "torch_imported": False,
+        "captured_time_ns": time.time_ns(),
+    }
+
+
+def authorized_repo_audit(repo: Path) -> dict[str, Any]:
+    require_launch_authorized()
+    if socket.gethostname() != REMOTE_HOSTNAME:
+        raise ContractError("host is not the authorized reference host")
+    head = _git_output(repo, "rev-parse", "HEAD")
+    if (
+        head != AUTHORIZED_REMOTE_REPO_HEAD
+        or _git_output(repo, "branch", "--show-current") != "main"
+        or _git_output(repo, "status", "--porcelain", "--untracked-files=normal")
+        or _git_output(repo, "rev-parse", "origin/main") != head
+    ):
+        raise ContractError("remote main/HEAD/clean/origin identity differs")
+    derived = derive_stage_inventory(repo)
+    inventory_sha = derived["sha256"]
     if inventory_sha != AUTHORIZED_STAGE_INVENTORY_SHA256:
         raise ContractError("combined source/stage inventory differs")
     return {"repo_head": head, "stage_inventory_sha256": inventory_sha}
@@ -2769,6 +2813,8 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument("--repo", default=str(REMOTE_REPO))
     audit.add_argument("--require-host", action="store_true")
     audit.add_argument("--require-stages", action="store_true")
+    stage_freeze = sub.add_parser("emit-stage-freeze")
+    stage_freeze.add_argument("--repo", default=str(REMOTE_REPO))
     validate = sub.add_parser("validate-terminal")
     validate.add_argument("packet")
     cleanup_validate = sub.add_parser("validate-cleanup-terminal")
@@ -2833,6 +2879,12 @@ def main() -> int:
     try:
         if args.command_name == "audit":
             print(json.dumps(audit_command(args), allow_nan=False, sort_keys=True))
+        elif args.command_name == "emit-stage-freeze":
+            print(
+                json.dumps(
+                    emit_stage_freeze_command(args), allow_nan=False, sort_keys=True
+                )
+            )
         elif args.command_name == "validate-terminal":
             validate_terminal(Path(args.packet))
             print("PASS")

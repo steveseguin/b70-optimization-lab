@@ -250,18 +250,25 @@ transfer cost on the limited-memory host.
 
 ## Artifacts and current blockers
 
+The separately bounded, no-clock A0 runtime-map diagnostic is preregistered in
+[`2026-08-21-qwen38-q64k32-remote-runtime-map-diagnostic-prereg.md`](2026-08-21-qwen38-q64k32-remote-runtime-map-diagnostic-prereg.md), using the
+[`../data/2026-08-21-qwen38-q64k32-remote-passive-enablement.json`](../data/2026-08-21-qwen38-q64k32-remote-passive-enablement.json)
+evidence packet. It can establish mapped runtime identities but cannot
+authorize this clock campaign; the launch and clock-writer gates below remain
+false.
+
 - campaign/supervisor: `scripts/qwen38_mtp5_m6_fa_q64k32_remote_clock_campaign.py`
-  (`95c026766a6a51442766be15b7142600cb195ea00ca3590cc73dc394de2a9d31`);
+  (`7577f9313b60d4bb51b328eb63608ab8c3bf9af31b1e84e1390164f71ee1e2fb`);
 - transfer/seal helper:
   `scripts/prepare-qwen38-m6-head256-q64k32-remote-stage-20260821.sh`
   (`c3a99abb5bd401b1e6d14ad5576f7493ec7dd9e5b106e3d03892d04dcd9ae6d9`);
 - blocked driver:
   `scripts/run-20260821-qwen38-mtp5-m6-fa-q64k32-remote-clock-abba.sh`
-  (`560f949fde9fa95d75c7af882fd263c042efc486052ce17ea1f15b852f94bac6`,
+  (`61700974abe11b8b193cdaa9acecd4bc253a9fcf6de7d92f868374612a83d6f7`,
   mode 0755);
 - CPU tests:
   `scripts/test_qwen38_mtp5_m6_fa_q64k32_remote_clock_campaign.py`
-  (`f31b855b9d69fae767907b941aebd09a5cc95aa752ebecaaf9efb99383d98a93`).
+  (`970dd515c3c92df55068d6dbec16b4a36bcc4b1ba65160b1969a0b21e21e51c3`).
 
 Former prerequisites 7, 9, and the numeric/testing portion of 10 are now closed
 in source: active-supervisor ownership precedes restoration; cleanup is
@@ -269,7 +276,7 @@ nonthrowing and final-fence signals are durable; management uses clean-env
 re-exec plus exact paths; and live process/signal/timeout/descendant tests plus
 positive, zero, negative, nonconstant percentile, and interaction numeric
 fixtures pass. These closures do not imply launch authorization. The frozen
-packet passes 45 CPU tests plus Ruff lint/format and shell syntax checks without
+packet passes 48 CPU tests plus Ruff lint/format and shell syntax checks without
 importing Torch or touching an XPU. The added stage tests cover initial dangling
 symlinks; regular, directory, dangling, and directory-symlink publish
 collisions; skipped-success `mv`; private-path replacement; a candidate publish

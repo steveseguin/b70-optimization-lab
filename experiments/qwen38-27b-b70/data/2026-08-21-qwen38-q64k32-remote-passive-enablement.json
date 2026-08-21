@@ -1,0 +1,170 @@
+{
+  "capture": {
+    "captured_time_ns": 1787309930822964001,
+    "host": "steve-TURIND8-2L2T",
+    "remote_raw_files_persisted": false,
+    "transport": "interactive SSH stdout",
+    "xpu_smi_stdout_hash_recipe": "SHA-256 over exact subprocess stdout bytes, including trailing newline"
+  },
+  "clock_writer_observation": {
+    "cron": {
+      "/etc/cron.d/.placeholder": {
+        "bytes": 102,
+        "sha256": "49674d9b1bd433cdb58f30497f6c441dc823de549160eef5c1acec4c20786810",
+        "writer_match": false
+      },
+      "/etc/cron.d/anacron": {
+        "bytes": 219,
+        "sha256": "c7176676bc1be34741993bbadd3f82b63643c59f9d8a16be0957681b554928f7",
+        "writer_match": false
+      },
+      "/etc/cron.d/e2scrub_all": {
+        "bytes": 201,
+        "sha256": "d4df081b982b23e66cac7102f9d91032f296caf13031991d90af44ee6cbf6e3b",
+        "writer_match": false
+      },
+      "/etc/cron.d/sysstat": {
+        "bytes": 396,
+        "sha256": "47a67deba0d029d43209e6e512399543a945172f2a640021a6c21422a66adb1a",
+        "writer_match": false
+      },
+      "/etc/crontab": {
+        "bytes": 1136,
+        "sha256": "ffb48ad57868ed639fad049d11ef4b9bcdd3d2d3e556754ce69b4d6b016969a3",
+        "writer_match": false
+      }
+    },
+    "matching_processes": [],
+    "named_units": {
+      "xe-b70-minfreq.service": {
+        "active_state": "inactive",
+        "fragment_path": "",
+        "load_state": "not-found",
+        "main_pid": 0,
+        "sub_state": "dead",
+        "unit_file_state": ""
+      },
+      "xe-b70-minfreq.timer": {
+        "active_state": "inactive",
+        "fragment_path": "",
+        "load_state": "not-found",
+        "sub_state": "dead",
+        "unit_file_state": ""
+      }
+    },
+    "timers_stdout_bytes": 2381,
+    "timers_stdout_sha256": "6fdd411768390e20704759dfd06d9c9504d49ee40853c9abe7107cc098895e03",
+    "unit_files_stdout_bytes": 20437,
+    "unit_files_stdout_sha256": "36202576cda8df59e00c8fd916656778eec0f48a4f486db64a1a848b995e06b7",
+    "unit_paths_absent": [
+      "/etc/systemd/system/xe-b70-minfreq.service",
+      "/etc/systemd/system/xe-b70-minfreq.timer",
+      "/usr/local/sbin/xe-b70-minfreq"
+    ],
+    "user_crontab": {
+      "return_code": 1,
+      "stderr_bytes": 21,
+      "stderr_sha256": "e9f79d01a6502f9cc14a17dd76affd70745edd75056cbebcf5f3c651d47b223e",
+      "stdout_bytes": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "device_observation": {
+    "boot_id": "a6cad22f-2685-43b7-8950-c0c771f73d99",
+    "devices": [
+      {
+        "bdf": "0000:03:00.0",
+        "device_id": 0,
+        "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "device_state": "normal",
+        "drm_device": "/dev/dri/card2",
+        "max_mhz": 2800,
+        "min_mhz": 400,
+        "uuid": "00000000-0000-0003-0000-0000e2238086"
+      },
+      {
+        "bdf": "0000:e3:00.0",
+        "device_id": 1,
+        "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+        "device_state": "normal",
+        "drm_device": "/dev/dri/card0",
+        "max_mhz": 2800,
+        "min_mhz": 400,
+        "uuid": "00000000-0000-00e3-0000-0000e2238086"
+      }
+    ],
+    "xpu_smi_config": [
+      {
+        "device": 0,
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 1113,
+        "stdout_sha256": "a65915cfcc76ea2357e0689caa6fdee037fa3acf18ecef6c75d029cd6c86aa15"
+      },
+      {
+        "device": 1,
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 1113,
+        "stdout_sha256": "a2cb4837baf5e6f3654435ead2cc4393466cfdde8909d294a522a2074cf0d8e7"
+      }
+    ],
+    "xpu_smi_discovery": {
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 976,
+      "stdout_sha256": "c67bf2f7a2592c8a6a4a1247ce6f50a26405f908802285f8fd466c15f1364742"
+    }
+  },
+  "forbidden_actions_observed": {
+    "clock_change": false,
+    "gpu_compute": false,
+    "model_or_operator_launch": false,
+    "remote_source_edit_or_build": false,
+    "xpu_smi_configuration_change": false
+  },
+  "remote_repo": {
+    "branch": "main",
+    "clean": true,
+    "head": "4484b260ddd26037ff8d1c9dafe134613471a561",
+    "origin_main": "4484b260ddd26037ff8d1c9dafe134613471a561",
+    "path": "/home/steve/b70-optimization-lab"
+  },
+  "runtime_static_derivation": {
+    "actual_worker_mapping_captured": false,
+    "candidate_libraries": {
+      "libsycl.so.8.0.0": "0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f",
+      "libur_adapter_level_zero.so.0.12.0": "ceecac1cb3124f15b9a319d4bfc156eed49068467564b8210f2f0330aa0911e8",
+      "libur_loader.so.0.12.0": "68e273791752638dfad1ce3bb002b0ed8d00ceee21e491cd46dd0668d716bfa0",
+      "libze_intel_gpu.so.1.15.38646": "dff06fa9ab58a84767d4225eceb6c3225995552836b0e28b986d852a2e4e0180",
+      "libze_loader.so.1.28.6": "5c156f00718f80f7e75964fa729e811c7b486778478d2fc318cc77751e1a0bbd"
+    },
+    "candidate_paths": {
+      "libsycl.so.8.0.0": "/home/steve/.venvs/vllm-xpu/lib/libsycl.so.8.0.0",
+      "libur_adapter_level_zero.so.0.12.0": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_level_zero.so.0.12.0",
+      "libur_loader.so.0.12.0": "/home/steve/.venvs/vllm-xpu/lib/libur_loader.so.0.12.0",
+      "libze_intel_gpu.so.1.15.38646": "/usr/lib/x86_64-linux-gnu/libze_intel_gpu.so.1.15.38646",
+      "libze_loader.so.1.28.6": "/usr/lib/x86_64-linux-gnu/libze_loader.so.1.28.6"
+    },
+    "candidate_map_sha256": "630b14d6c9f6d0cf55aceb5637d0d151b59a255f81ad0f19dca2c3a0e863d579",
+    "direct_elf_chain": [
+      "_vllm_fa2_C.abi3.so -> libsycl.so.8",
+      "libsycl.so.8 -> libur_loader.so.0"
+    ],
+    "dynamic_load_chain": [
+      "libur_loader.so.0 -> libur_adapter_level_zero.so.0",
+      "libur_adapter_level_zero.so.0 -> libze_loader.so.1",
+      "libze_loader.so.1 -> libze_intel_gpu.so.1"
+    ],
+    "interpretation": "ELF NEEDED entries, embedded loader names, SONAMEs, filesystem aliases, and hashes derive the intended five-library map. Exact occurrence and mapped path basenames in a real worker still require a separately bounded import/operator diagnostic."
+  },
+  "schema": "qwen38-q64k32-remote-passive-enablement-v1",
+  "stage_freeze": {
+    "campaign_sha256": "95c026766a6a51442766be15b7142600cb195ea00ca3590cc73dc394de2a9d31",
+    "canonical_byte_count": 5754,
+    "candidate_component_sha256": "a47e9532d882927590952f5533081005d0a089328b76fd64c20d3b15cfbfe367",
+    "control_component_sha256": "55817d33a0802b87ba63447858adb1c6c0ef2ee4ce981c1d58c7e50e33c93ae7",
+    "source_component_sha256": "e7faabb38b0bb184e4e0ba59800c8478eac10199a1bcde50b91737faa269ba48",
+    "stage_inventory_sha256": "0923804d40a14a19ee244ce4e38641a47d9c4327b0d5c700c7b6e2756ce1aa82",
+    "strict_stage_graphs_component_sha256": "12bb98d7f4674b53acfe75060d09e288908d0793811db9ea4215b0c4e2cc7054",
+    "torch_imported": false
+  },
+  "status": "passive-evidence-complete-runtime-map-diagnostic-required"
+}
