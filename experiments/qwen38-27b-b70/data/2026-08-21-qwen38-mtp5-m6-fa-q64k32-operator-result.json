@@ -1,0 +1,176 @@
+{
+  "schema": "qwen38-mtp5-m6-fa-q64k32-operator-result-v1",
+  "date": "2026-08-21",
+  "campaign_status": "stopped_pre_receipt_gpu3_control_hang",
+  "scientific_classification": "infrastructure_invalid_incomplete",
+  "qualified": false,
+  "rejected": false,
+  "comparison_authorized": false,
+  "same_root_retry_allowed": false,
+  "gpu3_subsequent_arms_run": false,
+  "comparison_written": false,
+  "model_run_authorized": false,
+  "localmaxxing_submission_authorized": false,
+  "launch_commit": "e3d38951d116625de61b635ba078f60c90fe8ca3",
+  "campaign_root": "/home/steve/qwen38-mtp5-m6-fa-q64k32-abba-20260821-r2",
+  "build_root": "/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2",
+  "frozen_identity": {
+    "qualifier_sha256": "31862ea6a8b9e11a59d643e0d3500179d938261e62b93fb920439c664ce21fbc",
+    "driver_sha256": "e7480d5768e366a5797f6c32afe8456281336238fb96e6cae4206b5257a53fb9",
+    "policy_patch_sha256": "9386432015f5c9cd330dd7cfb785a16f259cce8563f44da9f812dcceb342138a",
+    "build_helper_sha256": "11480161dce25cba56e00f2f48c95d74164bac1f5af2dbc945eddceff6d57d47",
+    "candidate_stage_manifest_sha256": "16f9f972b03cdc3a1fe041840f1061db9307af7d0ae16a6569a5ddf7200a27c2",
+    "candidate_build_inputs_sha256": "0a38d154dba9929d388d2db36e49eaeb08a663fe417915b115c3099acbde4605",
+    "candidate_graph_manifest_sha256": "d662dba3927fac706ff221902f536b67178b6875f66604597a1f2fe98a4defc4",
+    "candidate_source_identity_sha256": "36e74e5202f9aed151bca85f54997eb0c09ef93227959837f4e6c8ceb67c5f6c",
+    "candidate_device_library_sha256": "01a5b35b5a9c6321b436b137f95403db9e45ce4aabb44257dc7e4f45c84aecf5",
+    "control_device_library_sha256": "604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c",
+    "extension_sha256": "33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739",
+    "interface_sha256": "869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480",
+    "stock_library_sha256": "3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289"
+  },
+  "operator_identity": {
+    "dtype": "float16",
+    "rows": 6,
+    "mtp_depth": 5,
+    "q_heads_tp2_local": 12,
+    "kv_heads_tp2_local": 2,
+    "head_dim": 256,
+    "block_size": 64,
+    "kv_lengths": [128, 1024, 1300, 2048],
+    "causal": true,
+    "paged_kv": true,
+    "is_mix_batch": true,
+    "force_chunk_decode": true,
+    "candidate_policy": "q64-k32-d32-layout-8x1x1"
+  },
+  "gpu2": {
+    "classification": "valid_supportive_single_device_abba",
+    "physical_gpu": 2,
+    "all_packets_validate": true,
+    "all_correctness_and_mutation_gates_pass": true,
+    "all_preregistered_per_device_timing_gates_pass": true,
+    "max_oracle_abs_diff": 0.00048828125,
+    "packets": [
+      {
+        "arm": "A1",
+        "role": "control",
+        "path": "/home/steve/qwen38-mtp5-m6-fa-q64k32-abba-20260821-r2/gpu2-1-control.json",
+        "sha256": "b1f155c023f5fc310716f0cc37ee2969fe4a71dfab1ad0585864f823ecad58bb",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "arm": "B1",
+        "role": "candidate",
+        "path": "/home/steve/qwen38-mtp5-m6-fa-q64k32-abba-20260821-r2/gpu2-2-candidate.json",
+        "sha256": "338e0be18f56c324124dcafce6b8e22f32b649a02bf7598c91d402193c023c2c",
+        "stderr_sha256": "716fbc36d48ff49d214682f6b48857261378b11a99c92031fc6895141111dcc4"
+      },
+      {
+        "arm": "B2",
+        "role": "candidate",
+        "path": "/home/steve/qwen38-mtp5-m6-fa-q64k32-abba-20260821-r2/gpu2-3-candidate.json",
+        "sha256": "df2387902cd34ccb852264146ca658d1665f1463fc9c9bdc633bdf0ad98b7983",
+        "stderr_sha256": "716fbc36d48ff49d214682f6b48857261378b11a99c92031fc6895141111dcc4"
+      },
+      {
+        "arm": "A2",
+        "role": "control",
+        "path": "/home/steve/qwen38-mtp5-m6-fa-q64k32-abba-20260821-r2/gpu2-4-control.json",
+        "sha256": "a305e01605f2b7c1fcef9e886992e1cf38f1d92bf665d9d961e4ce8fa386a44f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "graph_timing_us_per_call": [
+      {
+        "kv_length": 128,
+        "control_a1": 26.97474,
+        "control_a2": 27.03922,
+        "candidate_b1": 19.58658,
+        "candidate_b2": 19.47296,
+        "central_saving": 7.47721,
+        "saving_bootstrap_95": [7.43782, 7.50035]
+      },
+      {
+        "kv_length": 1024,
+        "control_a1": 121.57028,
+        "control_a2": 121.42832,
+        "candidate_b1": 62.85396,
+        "candidate_b2": 62.93014,
+        "central_saving": 58.60725,
+        "saving_bootstrap_95": [58.54134, 58.6740765]
+      },
+      {
+        "kv_length": 1300,
+        "control_a1": 151.67568,
+        "control_a2": 151.54802,
+        "candidate_b1": 76.35264,
+        "candidate_b2": 76.51722,
+        "central_saving": 75.17692,
+        "saving_bootstrap_95": [75.02039675, 75.31030325],
+        "saving_ms_per_16_calls": 1.20283072
+      },
+      {
+        "kv_length": 2048,
+        "control_a1": 228.88918,
+        "control_a2": 228.9131,
+        "candidate_b1": 112.87562,
+        "candidate_b2": 113.25964,
+        "central_saving": 115.83351,
+        "saving_bootstrap_95": [115.7629135, 115.90345325]
+      }
+    ],
+    "projection_not_endpoint_evidence": {
+      "context_target_step_ms": 35.3,
+      "latency_reduction_percent": 3.407452464589235,
+      "research_anchor_tok_s": 101.17,
+      "mechanical_projected_tok_s": 104.73892922527088
+    }
+  },
+  "gpu3": {
+    "physical_gpu": 3,
+    "attempted_arm": "A1",
+    "attempted_role": "control",
+    "candidate_loaded": null,
+    "candidate_arm_started": false,
+    "success_packet": null,
+    "failure_receipt": null,
+    "final_stderr": null,
+    "mapping_evidence": null,
+    "correctness_evidence": null,
+    "timing_evidence": null,
+    "temporary_file": {
+      "path": "/home/steve/qwen38-mtp5-m6-fa-q64k32-abba-20260821-r2/gpu3-1-control.json.stderr.log.tmp",
+      "mode": "0664",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "external_observations_not_packet_evidence": {
+      "launch_console": "selector-off control remained in the first warmup synchronize for more than ten minutes",
+      "py_spy": "one-shot stack observation placed the process in torch.xpu.synchronize",
+      "termination": "operator sent SIGTERM and the driver returned 143",
+      "later_discovery": "one bounded discovery enumerated four devices",
+      "later_stalled_dump": "a separate xpu-smi dump was observed blocked for roughly two hours and was terminated"
+    }
+  },
+  "interpretation": {
+    "supported": "GPU2 provides exact, repeatable, large operator-level Q64xK32 headroom under a complete per-device A-B-B-A sequence",
+    "not_supported": [
+      "two-device operator qualification",
+      "candidate rejection",
+      "GPU3 compute health",
+      "endpoint or full-model throughput",
+      "full-model correctness, quality, or repeatability",
+      "a 105 tok/s result"
+    ]
+  },
+  "decision": {
+    "preserve_build_and_result_roots": true,
+    "write_comparison": false,
+    "append_gpu3_arms": false,
+    "same_root_retry": false,
+    "carry_gpu2_into_future_campaign": false,
+    "endpoint_or_full25": false,
+    "next": "fresh-root watchdog-bounded GPU3 incumbent-control-only diagnostic with atomic phase evidence; only a pass may authorize a separately preregistered full eight-arm campaign"
+  }
+}

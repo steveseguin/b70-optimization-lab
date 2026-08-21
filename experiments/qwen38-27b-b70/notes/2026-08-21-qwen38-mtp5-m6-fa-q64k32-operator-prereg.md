@@ -2,8 +2,13 @@
 
 Date: 2026-08-21
 
-Status: **corrected r2 source/build artifacts implemented; not built or
-launched**. The original r1 build is preserved as infrastructure-invalid.
+Status: **complete and stopped as infrastructure-invalid/incomplete**. The r2
+build succeeded and all four GPU2 A-B-B-A arms passed, but GPU3's first
+selector-off control stopped before publishing a packet. The candidate is
+neither qualified nor rejected. Preserve the r2 result root and run no
+same-root retry or comparison. See the
+[result](2026-08-21-qwen38-mtp5-m6-fa-q64k32-operator-result.md). The original
+r1 build remains preserved as infrastructure-invalid.
 
 This is a new campaign, not a retry of the rejected Q8xK64 policy. The previous
 candidate stopped at its first candidate eager correctness check and remains a
