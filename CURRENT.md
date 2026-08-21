@@ -132,13 +132,14 @@ output hashes across restarts** and `cached_tokens=0` on all 24 requests.
 This is a new one-GPU identity: TP2-oracle equality is 0/12 by legitimate
 reduction-order difference, and the full quality battery is still required
 before any promotion. Goal: 30+ tok/s per GPU without weight, KV, or
-quality changes. The first lever is landed: widening the accepted GDN
-state-I/O matcher to the full-model 48-head shape engages the in-place
-fusion on all 48 GDN layers and measured **`27.358865` / `27.351846
-tok/s`** (`+5.03%` / `+5.01%`) with 24/24 output hashes identical to the
-baseline oracle and `fused_gdn_state_ios=282720` per leg. Current lane
-state: **27.35 tok/s**; conv-state, conv-SILU-L2, and QK-norm-RoPE doors
-remain shape-blocked at TP1 and are the next rungs.
+quality changes. Two levers are landed, both bit-exact against the
+registered oracle with mechanism counters at 48 per decode graph:
+widening the GDN state-I/O matcher to the full-model 48-head shape
+(`27.358865`/`27.351846 tok/s`, `+5.03%`/`+5.01%`) and widening the conv
+state-I/O + SILU-L2 matcher/kernel to the 10240-channel width
+(`27.707324`/`27.712055 tok/s`, cumulative `+6.37%`/`+6.39%`). Current
+lane state: **27.71 tok/s**. The widened QK-norm-RoPE door remains inert
+at TP1 on a graph-order assumption and is under investigation.
 
 - [lane registration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-lane-open.md)
 - [baseline result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-baseline-result.md)

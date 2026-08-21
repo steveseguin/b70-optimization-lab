@@ -37,8 +37,39 @@ Validation on the TP1 lane (GPU 0, fresh server per leg, fixed cold
 - output exactness: 24/24 complete output SHA-256 hashes identical to the
   registered TP1 baseline oracle across both candidate legs;
 - mechanism: `fused_gdn_state_ios=282720` per leg (48 per decode graph);
-- build: oneAPI 2026.0.0 BMG-G31 AOT; candidate `llama-server` SHA-256
-  `55707905e7e57b7a8c4932714ba459cdbb0e11bf39b4dd3258a6c0ba0d31a477`.
+- build: oneAPI 2026.0.0 BMG-G31 AOT. Note: `bin/llama-server` is a thin
+  launcher stub (`55707905e7e57b7a8c4932714ba459cdbb0e11bf39b4dd3258a6c0ba0d31a477`)
+  that does not change with ggml-sycl edits; the compute identity is
+  `libggml-sycl.so`.
 
 Result note:
 [`2026-08-21-qwen38-q4km-tp1-gdn-state-io-result.md`](../../experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-gdn-state-io-result.md).
+
+## 2026-08-21: conv state-I/O + SILU-L2 widened; QK norm-RoPE widened (inert)
+
+- Artifact: `llama-cpp-tp1-conv-qk-widen-20260821.diff.gz.b64`
+- Decoded patch SHA-256:
+  `5b0141e3ef6be67365e638ef796247e25280b1bf1e7c11e61c77aba0657fcb7b`
+- Scope: 3 files — the conv-state matcher derives `d_inner` from the state
+  element count (`3 x {5120, 10240}`), the `silu_l2` launcher accepts both
+  widths with `qk_heads = d_inner / 640` and passes head counts to the
+  kernel (constexpr `q_heads/k_heads` made runtime; identical arithmetic),
+  and the QK norm-RoPE matchers/launcher accept 24 Q / 4 KV full-model heads
+  with derived byte strides.
+- `libggml-sycl.so` SHA-256:
+  `31d9c48813fb2f10a0b6b779d28746eb8dba391bb930fea8f4fd10ee34bc6bc6`.
+
+Validation (same protocol as above):
+
+- candidate E/F: `27.707324` / `27.712055 tok/s` (**+1.27% / +1.32%** over
+  the GDN-IO legs; cumulative **+6.37% / +6.39%** over baseline);
+- output exactness: 24/24 complete output hashes identical to the TP1
+  baseline oracle;
+- mechanism: `fused_conv_state_ios=282720` and `fused_conv_silu_l2=282720`
+  per leg (48 per decode graph);
+- `fused_qk_norm_rope` remains `0`: the widened shapes are accepted in
+  isolation, so a graph-order/adjacency assumption still rejects at TP1 —
+  under investigation; the widening is exactness-neutral while inert.
+
+Result note:
+[`2026-08-21-qwen38-q4km-tp1-conv-state-io-result.md`](../../experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-conv-state-io-result.md).
