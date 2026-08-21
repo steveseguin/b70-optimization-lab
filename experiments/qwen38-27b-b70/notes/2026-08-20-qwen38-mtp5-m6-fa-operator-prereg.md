@@ -2,9 +2,11 @@
 
 Date: 2026-08-20
 
-Status: **candidate built and sealed; operator qualification not complete**.
-This operator screen does not start vLLM, does not touch the model, and does
-not authorize a full-25 endpoint arm.
+Status: **closed as a terminal candidate-role correctness-gate rejection; no
+retry or model run**. See the
+[`r6` result](2026-08-21-qwen38-mtp5-m6-fa-operator-result.md).
+This operator screen did not start vLLM, did not touch the model, and does not
+authorize a full-25 endpoint arm.
 
 The first immutable build root, ending in
 `qwen38-m6-head256-q8k64-attn-override-20260820`, is preserved as an
@@ -57,6 +59,16 @@ non-library mappings while continuing to fail if any of the exact extension,
 candidate/control device library, or stock library basenames is mapped as
 deleted. Preserve `-r5` as infrastructure-invalid and use new result root
 `-r6`.
+
+The `-r6` control A1 then passed and wrote a complete sealed packet. Candidate
+B1 failed its first checked eager CPU-oracle replay at KV 128: 3,297 of 18,432
+elements mismatched, with greatest absolute difference
+`0.1544189453125` against `atol=0.02`. The candidate failed before atomic
+packet/stderr publication and before timing. Preserve the exact console-only
+observation and retained control artifacts in the linked result. Because no
+candidate marker or mapping record survived, this rejects qualification under
+the intended Q8 x K64 launch but does not independently prove runtime policy
+dispatch. Do not retry it, continue ABBA, or run the model.
 
 ## Question and bounded scope
 
@@ -265,7 +277,7 @@ campaign. It is not permission to run full25 and it is not evidence that the
 endpoint will exceed 105 tok/s. A failure stops this candidate; do not spend a
 model run on it.
 
-## Commands after candidate freeze
+## Historical commands after candidate freeze
 
 The scripts are:
 
@@ -300,4 +312,6 @@ candidate_manifest="$build_root/qwen38-m6-head256-q8k64-candidate-stage.json"
 The compare command returns zero only for a fully qualified candidate, returns
 14 for a scientifically valid rejection, and returns 3 for a malformed or
 incomplete contract. Raw packets and `comparison.json` remain the durable
-evidence. No command in this preregistration has been run on a GPU yet.
+evidence when they exist. In `-r6`, control A1 passed and candidate B1 failed
+correctness before atomic packet publication; no compare ran. These commands
+are retained for provenance only and must not be rerun for this policy.

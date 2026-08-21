@@ -384,12 +384,22 @@ loaded service.
    was flat, while the earlier endpoint bracket was `-0.487%`. See the
    [qualification result](experiments/qwen38-27b-b70/notes/2026-08-20-draft-margin-tp2-qualification-result.md)
    and [clock/operator screen](experiments/qwen38-27b-b70/notes/2026-08-20-draft-head-clock-and-row-scaling-screen.md).
-   The next AutoRound research surface is the packed MTP target/verifier
-   FlashAttention block. Build and pass a bounded M6/head-256 operator
-   qualifier before changing a server binary or authorizing another full-25
-   arm; the [exact-shape operator preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-qwen38-mtp5-m6-fa-operator-prereg.md)
-   is implemented but not yet launched. The two-B70, 15-GiB host remains
-   source/op-audit only under this local four-B70 contract.
+   The bounded packed MTP target/verifier FlashAttention operator screen is now
+   closed as a terminal correctness rejection. Its control A1 passed, but the
+   candidate-role launch for the intended Q8 x K64 stage failed the first
+   checked eager KV-128 CPU-oracle replay before candidate timing or packet
+   publication. Its marker/mapping record did not survive, so this rejects the
+   qualification without independently proving runtime policy dispatch or the
+   internal cause. Do not retry this policy,
+   continue its ABBA campaign, or spend a model/full-25 run on it. See the
+   [exact-shape operator preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-qwen38-mtp5-m6-fa-operator-prereg.md)
+   and [r6 result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-operator-result.md).
+   The next bounded policy hypothesis is chunk-native Q64 x K32 with eight
+   query-axis subgroups: it preserves incumbent per-subgroup Q8/K32/ReduceK1
+   arithmetic while removing 24 of the 32 out-of-range M6 subgroups. It needs a
+   distinct patch, build, result root, and correctness-first preregistration;
+   it is not yet a result or authorization for a model run. The two-B70,
+   15-GiB host remains source/op-audit only under this local four-B70 contract.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.
