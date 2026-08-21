@@ -315,6 +315,13 @@ class QualifierContractTests(unittest.TestCase):
         offsets = [source.index(stage) for stage in stages]
         self.assertEqual(offsets, sorted(offsets))
 
+    def test_graph_correctness_is_checked_only_after_replay(self) -> None:
+        source = MODULE_PATH.read_text(encoding="utf-8")
+        capture = source.index("with torch.xpu.graph(graph):")
+        replay = source.index("graph.replay()", capture)
+        graph_assert = source.index("_assert_close(", capture)
+        self.assertLess(replay, graph_assert)
+
     def test_strict_json_rejects_duplicate_keys_and_nan(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             duplicate = Path(directory) / "duplicate.json"

@@ -2,9 +2,9 @@
 
 Date: 2026-08-20
 
-Status: **implemented, CPU/static-tested, not launched**. No candidate stage or
-candidate manifest is authorized yet. This operator screen does not start
-vLLM, does not touch the model, and does not authorize a full-25 endpoint arm.
+Status: **candidate built and sealed; operator qualification not complete**.
+This operator screen does not start vLLM, does not touch the model, and does
+not authorize a full-25 endpoint arm.
 
 The first immutable build root, ending in
 `qwen38-m6-head256-q8k64-attn-override-20260820`, is preserved as an
@@ -30,6 +30,24 @@ JSON or checksum manifests. The helper now opens only the private runtime
 copy's two containing directories, installs the new DSO with the incumbent
 `0555` mode, and reseals those directories. The next immutable ext4 roots use
 `-r4`; the incumbent stage remains untouched.
+
+The `-r4` build then completed and sealed the reusable candidate stage:
+
+- candidate-stage JSON SHA-256 `ec3b31cad3c89b1bf0d4a747cb011ebea248b7c55c8766563489e09bfcde7a7e`;
+- build-input manifest SHA-256 `21ded717f108feaada2018f360c4c781cf91f5893b28478842859a429962a53b`;
+- graph manifest SHA-256 `db0f01bdf72670c119ff95e40cdf4b967f0613e0b1dd0b383d581150245fab62`;
+- candidate device DSO SHA-256 `f777decfe23efb45fe7797d16d9f6378dfef531a5ce66aab3ddee5567b65013e`.
+
+The first operator result root ending in `-r4` is empty and
+infrastructure-invalid. GPU2 control passed ten direct warmups plus all 32
+eager poison/oracle checks at KV128, and capture returned the exact static
+output pointer. The qualifier then incorrectly read the still-poisoned output
+before calling `graph.replay()`. Capture records work for later replay and is
+not itself a correctness execution. The corrected qualifier retains the
+pointer check and synchronization, then makes its existing 32
+poison-replay-synchronize-oracle iterations the only graph correctness
+evidence. The candidate was never loaded in the invalid attempt. Reuse the
+sealed build, but use a new `-r5` result root.
 
 ## Question and bounded scope
 
@@ -247,9 +265,9 @@ The scripts are:
 - [`../scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh`](../scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh)
 
 Frozen prelaunch bytes are qualifier
-`d97a92aed78e44a3616a385fc84d5358483de8a99f8c5b9bd1f096da3130569c`
+`32fcddfde2dda798daf97849183527988ddd5e1ae0f6c1786b11b25a75cf7be6`
 and driver
-`f4feca1ca32d79b4c0c84afde771a3414c677655efe2591b18be6bfa71839783`.
+`c1206cd4a30370490b339e82d48a22388fe1df29812a21e378229534b7e064df`.
 The driver independently hardcodes the qualifier SHA; every run packet records
 both actual bytes plus the clean lab commit.
 
@@ -259,13 +277,12 @@ Build first, run the non-GPU identity check, then the eight arms, then compare
 as a separate action:
 
 ```bash
-builder=experiments/qwen38-27b-b70/scripts/build-qwen38-m6-head256-q8k64-attn-override-20260820.sh
 driver=experiments/qwen38-27b-b70/scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh
 build_root=/home/steve/qwen38-m6-head256-q8k64-attn-override-20260820-r4
-root=/home/steve/qwen38-mtp5-m6-fa-candidate-abba-20260820-r4
+root=/home/steve/qwen38-mtp5-m6-fa-candidate-abba-20260820-r5
 candidate_manifest="$build_root/qwen38-m6-head256-q8k64-candidate-stage.json"
 
-WORK_ROOT="$build_root" "$builder" --build
+# Already completed and sealed above; do not rebuild or overwrite build_root.
 "$driver" check "$candidate_manifest"
 "$driver" run "$candidate_manifest" "$root"
 "$driver" compare "$root"

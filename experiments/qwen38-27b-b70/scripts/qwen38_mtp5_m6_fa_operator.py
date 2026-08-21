@@ -605,7 +605,6 @@ def _run_case(
     if captured_out.data_ptr() != graph_out.data_ptr():
         raise ContractError(f"KV {kv_len} graph capture ignored static out")
     torch.xpu.synchronize()
-    _assert_close(torch, graph_out.cpu(), expected, f"KV {kv_len} capture")
 
     graph_digests: list[str] = []
     graph_max_abs_diff = 0.0
