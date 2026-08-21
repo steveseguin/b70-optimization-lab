@@ -3,8 +3,9 @@
 
 This module is deliberately CPU/import safe.  Its source authorization switch
 is false: ``supervise`` and ``worker`` cannot start a process until a later,
-reviewed commit freezes the reference-host device identities and the captured
-xpu-smi JSON schema.  ``audit`` and ``validate-terminal`` are read-only.
+reviewed commit freezes the remote repository/stages, mapped runtime, and
+clock-writer exclusion.  Passive device and xpu-smi schema evidence is pinned
+but remains a same-boot launch-time recheck.  Validation commands are read-only.
 """
 
 from __future__ import annotations
@@ -35,6 +36,7 @@ SCHEMA_RESTORATION = "qwen38-q64k32-remote-clock-restoration-terminal-v1"
 REMOTE_HOSTNAME = "steve-TURIND8-2L2T"
 REMOTE_REPO = Path("/home/steve/b70-optimization-lab")
 REMOTE_PYTHON = Path("/home/steve/.venvs/vllm-xpu/bin/python")
+GIT_PATH = Path("/usr/bin/git")
 CONTROL_STAGE = Path("/home/steve/staged-xpu-commitfix-graphfa-composite-20260820")
 CANDIDATE_ROOT = Path("/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2")
 CANDIDATE_STAGE = CANDIDATE_ROOT / "runtime"
@@ -45,20 +47,50 @@ RESULT_ROOT = Path("/home/steve/qwen38-mtp5-m6-fa-q64k32-remote-clock-abba-20260
 # Launch authorization is intentionally source-scoped, not an environment or
 # CLI override.  A future reviewed commit must freeze every value below.
 CAMPAIGN_LAUNCH_AUTHORIZED = False
-# The shell currently waits on the supervisor in the foreground; a separately
-# reviewed driver-level ownership/cleanup state machine is required before the
-# launch gate may be enabled, so a shell-only signal cannot restore clocks
-# while a worker group is still alive.
-DRIVER_SIGNAL_OWNERSHIP_AUTHORIZED = False
+# The driver now backgrounds and owns exactly one supervisor, forwards a
+# terminating signal, waits for the supervisor terminal, and refuses clock
+# restoration unless that terminal proves the worker group absent.  This does
+# not authorize launch: the campaign and clock-writer gates remain false.
+DRIVER_SIGNAL_OWNERSHIP_AUTHORIZED = True
 CLOCK_WRITER_EXCLUSION_AUTHORIZED = False
-DRIVER_ENVIRONMENT_AUTHORIZED = False
+DRIVER_ENVIRONMENT_AUTHORIZED = True
 AUTHORIZED_REMOTE_REPO_HEAD: str | None = None
-AUTHORIZED_DEVICE_IDENTITIES: dict[int, dict[str, str]] | None = None
-AUTHORIZED_XPU_SMI_QUERY_SCHEMA_SHA256: str | None = None
-AUTHORIZED_XPU_SMI_FIELD_PATHS: dict[str, tuple[str | int, ...]] | None = None
-AUTHORIZED_XPU_SMI_PATH: str | None = None
-AUTHORIZED_XPU_SMI_SHA256: str | None = None
-AUTHORIZED_XPU_SMI_VERSION: str | None = None
+AUTHORIZED_DEVICE_IDENTITIES: dict[int, dict[str, str]] | None = {
+    0: {
+        "uuid": "00000000-0000-0003-0000-0000e2238086",
+        "bdf": "0000:03:00.0",
+    },
+    1: {
+        "uuid": "00000000-0000-00e3-0000-0000e2238086",
+        "bdf": "0000:e3:00.0",
+    },
+}
+AUTHORIZED_XPU_SMI_QUERY_SCHEMA_SHA256: str | None = (
+    "afb4b7fe6d1ea9847559734fae1b73241f18587f036ae3d18376c146fa6eafba"
+)
+AUTHORIZED_XPU_SMI_FIELD_PATHS: dict[str, tuple[str | int, ...]] | None = {
+    "devices": ("discovery", "device_list"),
+    "entry_device_id": ("device_id",),
+    "entry_uuid": ("uuid",),
+    "entry_bdf": ("pci_bdf_address",),
+    "entry_name": ("device_name",),
+    "min_mhz": ("config", "tile_config_data", 0, "min_frequency"),
+    "max_mhz": ("config", "tile_config_data", 0, "max_frequency"),
+}
+AUTHORIZED_XPU_SMI_PATH: str | None = "/usr/bin/xpu-smi"
+AUTHORIZED_XPU_SMI_SHA256: str | None = (
+    "01c7b83881e99754642b827ba05418d263aed615933e3df35821af7733eb8d83"
+)
+AUTHORIZED_XPU_SMI_VERSION: str | None = (
+    "CLI:\n"
+    "  Version: 2.0.0.20250225\n"
+    "  Build ID: 8389eee7\n"
+    "\n"
+    "Service:\n"
+    "  Version: 2.0.0.20250225\n"
+    "  Build ID: 8389eee7\n"
+    "  Level Zero Version: 1.28.6"
+)
 AUTHORIZED_STAGE_INVENTORY_SHA256: str | None = None
 AUTHORIZED_SYSTEM_RUNTIME_LIBRARIES: dict[str, str] | None = None
 EXPECTED_DEVICE_NAME = "Intel(R) Arc(TM) Pro B70 Graphics"
@@ -319,7 +351,7 @@ def source_audit(repo: Path) -> dict[str, Any]:
 def _git_output(repo: Path, *arguments: str) -> str:
     try:
         result = subprocess.run(
-            ["git", "-C", str(repo), *arguments],
+            [str(GIT_PATH), "-C", str(repo), *arguments],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -453,11 +485,10 @@ def require_launch_authorized() -> None:
         or not system_runtime_complete
     ):
         raise ContractError(
-            "launch blocked: freeze remote HEAD, both UUID/BDF identities, xpu-smi "
-            "telemetry schema, combined stage inventory, and mapped system runtime "
-            "libraries, then implement driver-level active-supervisor signal "
-            "ownership, clock-writer exclusion, and clean driver environment in "
-            "source first"
+            "launch blocked: freeze remote HEAD, combined stage inventory, mapped "
+            "system runtime libraries, and clock-writer exclusion; then revalidate "
+            "the pinned same-boot device/xpu-smi identity and explicitly authorize "
+            "the campaign"
         )
 
 
@@ -929,6 +960,12 @@ def _group_absent(pgid: int) -> bool:
 def _terminate_group(
     pgid: int, expected_start_ticks: int, grace_seconds: float
 ) -> dict[str, Any]:
+    """Best-effort, identity-checked group cleanup that never raises.
+
+    Callers must inspect both ``identity_safe`` and ``group_absent``.  In
+    particular, a permission, identity, wait, or kernel-probe failure remains
+    a durable false result rather than escaping before the terminal is written.
+    """
     result = {
         "identity_safe": False,
         "term_sent": False,
@@ -957,6 +994,8 @@ def _terminate_group(
     except ProcessLookupError:
         result["group_absent"] = True
         return result
+    except OSError:
+        return result
     deadline = time.monotonic() + grace_seconds
     while time.monotonic() < deadline:
         if _group_absent(pgid):
@@ -968,6 +1007,8 @@ def _terminate_group(
         result["kill_sent"] = True
     except ProcessLookupError:
         pass
+    except OSError:
+        return result
     deadline = time.monotonic() + grace_seconds
     while time.monotonic() < deadline and not _group_absent(pgid):
         time.sleep(0.05)
@@ -1028,6 +1069,141 @@ def _terminate_unreaped_fresh_group(
             pass
     result["group_absent"] = _group_absent(process.pid)
     return result
+
+
+def _wait_after_cleanup(
+    process: subprocess.Popen[bytes], grace_seconds: float
+) -> int | None:
+    """Reap without allowing a second timeout/OS error to escape cleanup."""
+    try:
+        return process.wait(timeout=grace_seconds)
+    except (OSError, subprocess.SubprocessError):
+        return process.poll()
+
+
+def _watch_owned_process(
+    process: subprocess.Popen[bytes],
+    start_ticks: int,
+    timeout_seconds: float,
+    grace_seconds: float,
+    interrupted: Any,
+) -> tuple[int | None, dict[str, Any], str | None]:
+    """Wait for one fresh process group and clean timeout/signal/descendants.
+
+    ``interrupted`` is a zero-argument predicate so tests can exercise the
+    exact live cleanup path without delivering a signal to the test runner.
+    The production predicate reads the supervisor's signal inventory.
+    """
+    cleanup = {
+        "identity_safe": False,
+        "term_sent": False,
+        "kill_sent": False,
+        "group_absent": False,
+    }
+    deadline = time.monotonic() + timeout_seconds
+    status: str | None = None
+    returncode: int | None = None
+    while True:
+        if interrupted():
+            status = "interrupted"
+            cleanup = _terminate_group(process.pid, start_ticks, grace_seconds)
+            returncode = _wait_after_cleanup(process, grace_seconds)
+            break
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            status = "timeout"
+            cleanup = _terminate_group(process.pid, start_ticks, grace_seconds)
+            returncode = _wait_after_cleanup(process, grace_seconds)
+            break
+        try:
+            returncode = process.wait(timeout=min(0.25, remaining))
+            cleanup["identity_safe"] = True
+            cleanup["group_absent"] = _group_absent(process.pid)
+            break
+        except subprocess.TimeoutExpired:
+            continue
+        except OSError:
+            status = "invalid"
+            cleanup = _terminate_group(process.pid, start_ticks, grace_seconds)
+            returncode = process.poll()
+            break
+    if cleanup["group_absent"] is not True:
+        retry = _terminate_group(process.pid, start_ticks, grace_seconds)
+        cleanup = {
+            key: bool(cleanup[key] or retry[key])
+            for key in ("identity_safe", "term_sent", "kill_sent", "group_absent")
+        }
+        returncode = process.poll() if returncode is None else returncode
+    return returncode, cleanup, status
+
+
+def _write_late_signal_receipt(
+    terminal: Path, late_signals: Path, signums: list[int]
+) -> None:
+    """Publish the first post-terminal signal receipt; never overwrite."""
+    if late_signals.exists() or not terminal.is_file():
+        return
+    try:
+        write_json_atomic(
+            late_signals,
+            {
+                "schema": "qwen38-q64k32-remote-clock-late-signal-v1",
+                "terminal_path": str(terminal.resolve(strict=True)),
+                "terminal_sha256": sha256_file(terminal),
+                "signals": sorted(set(signums)),
+                "time_ns": time.time_ns(),
+            },
+        )
+    except (OSError, ContractError):
+        # A concurrently delivered signal may have won the O_EXCL publication.
+        # Any existing receipt invalidates the arm.  If publication genuinely
+        # failed, terminate this dedicated supervisor nonzero; the driver still
+        # validates cleanup evidence before restoration and cannot qualify it.
+        if late_signals.exists():
+            return
+        os._exit(125)
+
+
+def _publish_terminal_with_signal_fence(
+    terminal: Path,
+    late_signals: Path,
+    terminal_payload: dict[str, Any],
+    watched_signals: tuple[signal.Signals, ...],
+    previous_mask: set[signal.Signals] | None = None,
+) -> dict[str, Any]:
+    """Publish, drain, then retain a late-signal handler through process exit.
+
+    The watched set is blocked before terminal publication.  Handlers are
+    replaced while still blocked, queued signals are drained into an immutable
+    sidecar, and the late handler remains installed for the dedicated
+    supervisor process lifetime.  Thus there is no drain-to-unmask SIG_DFL or
+    SIG_IGN window in which a signal can disappear without durable evidence.
+    """
+    if previous_mask is None:
+        previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, watched_signals)
+    try:
+        write_json_atomic(terminal, terminal_payload)
+
+        def record_late(signum: int, _frame: Any) -> None:
+            _write_late_signal_receipt(terminal, late_signals, [signum])
+
+        for item in watched_signals:
+            signal.signal(item, record_late)
+        drained: list[int] = []
+        while True:
+            caught = signal.sigtimedwait(watched_signals, 0)
+            if caught is None:
+                break
+            drained.append(int(caught.si_signo))
+        if drained:
+            _write_late_signal_receipt(terminal, late_signals, drained)
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+    returned = copy.deepcopy(terminal_payload)
+    if late_signals.exists():
+        returned["status"] = "interrupted"
+        returned["valid"] = False
+    return returned
 
 
 def _plan_row(ordinal: int) -> dict[str, Any]:
@@ -1142,7 +1318,9 @@ def supervise_command(args: argparse.Namespace) -> dict[str, Any]:
     start_ticks: int | None = None
     pending_signals: list[int] = []
     watched_signals = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
-    previous_handlers = {item: signal.getsignal(item) for item in watched_signals}
+    inherited_mask = signal.pthread_sigmask(signal.SIG_BLOCK, ())
+    if any(item in inherited_mask for item in watched_signals):
+        raise ContractError("supervisor inherited a blocked watched signal")
 
     def record_signal(signum: int, _frame: Any) -> None:
         pending_signals.append(signum)
@@ -1185,33 +1363,16 @@ def supervise_command(args: argparse.Namespace) -> dict[str, Any]:
                 },
             )
             receipt_paths.append(spawned)
-            deadline = time.monotonic() + args.timeout_seconds
-            while True:
-                if pending_signals:
-                    status = "interrupted"
-                    cleanup = _terminate_group(
-                        process.pid, start_ticks, args.grace_seconds
-                    )
-                    returncode = process.wait(timeout=args.grace_seconds)
-                    break
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    status = "timeout"
-                    cleanup = _terminate_group(
-                        process.pid, start_ticks, args.grace_seconds
-                    )
-                    returncode = process.wait(timeout=args.grace_seconds)
-                    break
-                try:
-                    returncode = process.wait(timeout=min(0.25, remaining))
-                    cleanup["identity_safe"] = True
-                    cleanup["group_absent"] = _group_absent(process.pid)
-                    break
-                except subprocess.TimeoutExpired:
-                    continue
+            returncode, cleanup, watched_status = _watch_owned_process(
+                process,
+                start_ticks,
+                args.timeout_seconds,
+                args.grace_seconds,
+                lambda: bool(pending_signals),
+            )
+            if watched_status is not None:
+                status = watched_status
         os.chmod(stderr, 0o444)
-        if returncode is not None and cleanup["group_absent"] is not True:
-            cleanup = _terminate_group(process.pid, start_ticks, args.grace_seconds)
         if pending_signals and status not in {"timeout", "interrupted"}:
             status = "interrupted"
         if status not in {"timeout", "interrupted"}:
@@ -1254,6 +1415,7 @@ def supervise_command(args: argparse.Namespace) -> dict[str, Any]:
         for item in signal.sigpending()
         if item in watched_signals and int(item) not in pending_signals
     )
+    pending_signals = sorted(set(pending_signals))
     if pending_signals and status not in {"timeout", "interrupted"}:
         status = "interrupted"
     terminal_payload = {
@@ -1291,40 +1453,17 @@ def supervise_command(args: argparse.Namespace) -> dict[str, Any]:
         "error": error,
         "signals": pending_signals,
     }
-    returned_payload = terminal_payload
-    try:
-        write_json_atomic(terminal, terminal_payload)
-        post_publication_signals: list[int] = []
-        while True:
-            caught = signal.sigtimedwait(watched_signals, 0)
-            if caught is None:
-                break
-            post_publication_signals.append(int(caught.si_signo))
-        post_publication_signals.sort()
-        if post_publication_signals:
-            write_json_atomic(
-                late_signals,
-                {
-                    "schema": "qwen38-q64k32-remote-clock-late-signal-v1",
-                    "terminal_path": str(terminal.resolve(strict=True)),
-                    "terminal_sha256": sha256_file(terminal),
-                    "signals": post_publication_signals,
-                    "time_ns": time.time_ns(),
-                },
-            )
-            returned_payload = copy.deepcopy(terminal_payload)
-            returned_payload["status"] = "interrupted"
-            returned_payload["valid"] = False
-    finally:
-        for item, handler in previous_handlers.items():
-            # Python can inherit SIG_IGN for a background job.  Never reopen a
-            # publication-fence window that silently discards a late signal:
-            # restore ignored watched signals to their terminating default.
-            signal.signal(
-                item, signal.SIG_DFL if handler == signal.SIG_IGN else handler
-            )
-        signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
-    return returned_payload
+    # Replace the early handlers while the watched set is still blocked.  The
+    # late handler intentionally remains installed through this dedicated
+    # process's exit; restoring an inherited SIG_DFL/SIG_IGN handler would
+    # recreate the drain-to-unmask loss window.
+    return _publish_terminal_with_signal_fence(
+        terminal,
+        late_signals,
+        terminal_payload,
+        watched_signals,
+        previous_mask=previous_mask,
+    )
 
 
 def _artifact(path: Path) -> dict[str, Any] | None:
@@ -1623,8 +1762,10 @@ def validate_restoration(
     return packet
 
 
-def validate_terminal(path: Path) -> dict[str, Any]:
-    if Path(f"{path}.signals-late.json").exists():
+def validate_terminal(
+    path: Path, *, allow_late_signal_for_cleanup: bool = False
+) -> dict[str, Any]:
+    if Path(f"{path}.signals-late.json").exists() and not allow_late_signal_for_cleanup:
         raise ContractError(f"{path}: signal arrived at the publication fence")
     packet = load_json(path)
     keys = {
@@ -2070,6 +2211,163 @@ def validate_arm_post_receipts(
     return evidence
 
 
+def compute_clock_effects(
+    samples_by_cell: dict[tuple[int, str, int, str], list[list[float]]],
+    bootstrap_repetitions: int = 10000,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], bool]:
+    """Compute process-stratified clock effects and policy interactions.
+
+    This pure helper is shared by the artifact comparator and adversarial CPU
+    fixtures.  It never pools the 80 values as IID: each replicate selects two
+    fresh-process arms, resamples within each selected arm, then averages the
+    two arm medians.
+    """
+    if bootstrap_repetitions != 10000:
+        raise ContractError("clock comparison requires 10000 bootstrap replicates")
+    clock_rows: list[dict[str, Any]] = []
+    bootstrap_by_cell: dict[tuple[int, str, int], list[float]] = {}
+    for device in (0, 1):
+        for role in ("control", "candidate"):
+            for kv_length in FIXTURES:
+                by_state: dict[str, list[list[float]]] = {}
+                for state in ("default", "fixed"):
+                    arms = samples_by_cell.get((device, role, kv_length, state))
+                    if (
+                        not isinstance(arms, list)
+                        or len(arms) != 2
+                        or any(
+                            not isinstance(values, list) or len(values) != 40
+                            for values in arms
+                        )
+                    ):
+                        raise ContractError(
+                            "clock comparison requires two distinct 40-sample arms per cell"
+                        )
+                    if any(
+                        type(value) not in (int, float)
+                        or not float(value) > 0
+                        or not float(value) < float("inf")
+                        for values in arms
+                        for value in values
+                    ):
+                        raise ContractError(
+                            "clock comparison found invalid graph timing"
+                        )
+                    by_state[state] = [
+                        [float(value) for value in values] for values in arms
+                    ]
+                default_arm_medians = [
+                    statistics.median(values) for values in by_state["default"]
+                ]
+                fixed_arm_medians = [
+                    statistics.median(values) for values in by_state["fixed"]
+                ]
+                default_center = statistics.mean(default_arm_medians)
+                fixed_center = statistics.mean(fixed_arm_medians)
+                point = 100.0 * (default_center - fixed_center) / default_center
+                generator = random.Random(
+                    20260821
+                    + device * 10000
+                    + (1000 if role == "candidate" else 0)
+                    + kv_length
+                )
+                bootstraps: list[float] = []
+                for _ in range(bootstrap_repetitions):
+                    centers: dict[str, float] = {}
+                    for state in ("default", "fixed"):
+                        selected_arms = [
+                            generator.choice(by_state[state]) for _ in range(2)
+                        ]
+                        arm_medians = [
+                            statistics.median(
+                                [generator.choice(arm) for _ in range(40)]
+                            )
+                            for arm in selected_arms
+                        ]
+                        centers[state] = statistics.mean(arm_medians)
+                    bootstraps.append(
+                        100.0
+                        * (centers["default"] - centers["fixed"])
+                        / centers["default"]
+                    )
+                bootstraps.sort()
+                bootstrap_by_cell[(device, role, kv_length)] = bootstraps
+                clock_rows.append(
+                    {
+                        "device": device,
+                        "role": role,
+                        "kv_length": kv_length,
+                        "fresh_process_arms_per_state": 2,
+                        "samples_per_arm": 40,
+                        "center": "mean of two fresh-process arm medians",
+                        "bootstrap": "resample arms, then samples within selected arms",
+                        "default_arm_medians_us_per_call": default_arm_medians,
+                        "fixed_arm_medians_us_per_call": fixed_arm_medians,
+                        "default_center_us_per_call": default_center,
+                        "fixed_center_us_per_call": fixed_center,
+                        "fixed_saving_percent": point,
+                        "bootstrap_95_percent_ci": [
+                            bootstraps[249],
+                            bootstraps[9749],
+                        ],
+                    }
+                )
+    if set(samples_by_cell) != {
+        (device, role, kv_length, state)
+        for device in (0, 1)
+        for role in ("control", "candidate")
+        for kv_length in FIXTURES
+        for state in ("default", "fixed")
+    }:
+        raise ContractError("clock comparison cell inventory differs")
+    interaction_rows: list[dict[str, Any]] = []
+    for device in (0, 1):
+        for kv_length in FIXTURES:
+            control = next(
+                row
+                for row in clock_rows
+                if row["device"] == device
+                and row["role"] == "control"
+                and row["kv_length"] == kv_length
+            )
+            candidate = next(
+                row
+                for row in clock_rows
+                if row["device"] == device
+                and row["role"] == "candidate"
+                and row["kv_length"] == kv_length
+            )
+            interaction_generator = random.Random(
+                2026082100 + device * 10000 + kv_length
+            )
+            interactions = sorted(
+                interaction_generator.choice(
+                    bootstrap_by_cell[(device, "candidate", kv_length)]
+                )
+                - interaction_generator.choice(
+                    bootstrap_by_cell[(device, "control", kv_length)]
+                )
+                for _ in range(bootstrap_repetitions)
+            )
+            interaction_rows.append(
+                {
+                    "device": device,
+                    "kv_length": kv_length,
+                    "fixed_clock_policy_interaction_percent": candidate[
+                        "fixed_saving_percent"
+                    ]
+                    - control["fixed_saving_percent"],
+                    "bootstrap_95_percent_ci": [
+                        interactions[249],
+                        interactions[9749],
+                    ],
+                }
+            )
+    hurdle_rows = [row for row in clock_rows if row["kv_length"] == 1300]
+    clock_gate = all(row["bootstrap_95_percent_ci"][0] > 0 for row in hurdle_rows)
+    return clock_rows, interaction_rows, clock_gate
+
+
 def compare_command(args: argparse.Namespace) -> dict[str, Any]:
     require_launch_authorized()
     result_root = require_result_root()
@@ -2288,12 +2586,10 @@ def compare_command(args: argparse.Namespace) -> dict[str, Any]:
         }
         write_json_atomic(Path(args.output), result)
         return result
-    clock_rows: list[dict[str, Any]] = []
-    bootstrap_by_cell: dict[tuple[int, str, int], list[float]] = {}
+    samples_by_cell: dict[tuple[int, str, int, str], list[list[float]]] = {}
     for device in (0, 1):
         for role in ("control", "candidate"):
             for kv_length in FIXTURES:
-                by_state: dict[str, list[list[float]]] = {}
                 for state in ("default", "fixed"):
                     arms: list[list[float]] = []
                     for terminal, packet in zip(terminals, success_packets):
@@ -2310,124 +2606,13 @@ def compare_command(args: argparse.Namespace) -> dict[str, Any]:
                             if item["kv_length"] == kv_length
                         )
                         samples = case.get("graph_samples_us_per_call")
-                        if not isinstance(samples, list) or len(samples) != 40:
+                        if not isinstance(samples, list):
                             raise ContractError(
-                                "clock comparison requires exact 40-sample graph arrays"
+                                "clock comparison requires graph timing arrays"
                             )
-                        if any(
-                            not isinstance(value, (int, float)) or value <= 0
-                            for value in samples
-                        ):
-                            raise ContractError(
-                                "clock comparison found invalid graph timing"
-                            )
-                        arms.append([float(value) for value in samples])
-                    if len(arms) != 2 or any(len(values) != 40 for values in arms):
-                        raise ContractError(
-                            "clock comparison requires two distinct 40-sample arms per cell"
-                        )
-                    by_state[state] = arms
-                default_arm_medians = [
-                    statistics.median(values) for values in by_state["default"]
-                ]
-                fixed_arm_medians = [
-                    statistics.median(values) for values in by_state["fixed"]
-                ]
-                default_center = statistics.mean(default_arm_medians)
-                fixed_center = statistics.mean(fixed_arm_medians)
-                point = 100.0 * (default_center - fixed_center) / default_center
-                generator = random.Random(
-                    20260821
-                    + device * 10000
-                    + (1000 if role == "candidate" else 0)
-                    + kv_length
-                )
-                bootstraps: list[float] = []
-                for _ in range(10000):
-                    centers: dict[str, float] = {}
-                    for state in ("default", "fixed"):
-                        selected_arms = [
-                            generator.choice(by_state[state]) for _ in range(2)
-                        ]
-                        arm_medians = [
-                            statistics.median(
-                                [generator.choice(arm) for _ in range(40)]
-                            )
-                            for arm in selected_arms
-                        ]
-                        centers[state] = statistics.mean(arm_medians)
-                    bootstraps.append(
-                        100.0
-                        * (centers["default"] - centers["fixed"])
-                        / centers["default"]
-                    )
-                bootstraps.sort()
-                bootstrap_by_cell[(device, role, kv_length)] = bootstraps
-                clock_rows.append(
-                    {
-                        "device": device,
-                        "role": role,
-                        "kv_length": kv_length,
-                        "fresh_process_arms_per_state": 2,
-                        "samples_per_arm": 40,
-                        "center": "mean of two fresh-process arm medians",
-                        "bootstrap": "resample arms, then samples within selected arms",
-                        "default_arm_medians_us_per_call": default_arm_medians,
-                        "fixed_arm_medians_us_per_call": fixed_arm_medians,
-                        "default_center_us_per_call": default_center,
-                        "fixed_center_us_per_call": fixed_center,
-                        "fixed_saving_percent": point,
-                        "bootstrap_95_percent_ci": [
-                            bootstraps[249],
-                            bootstraps[9749],
-                        ],
-                    }
-                )
-    interaction_rows: list[dict[str, Any]] = []
-    for device in (0, 1):
-        for kv_length in FIXTURES:
-            control = next(
-                row
-                for row in clock_rows
-                if row["device"] == device
-                and row["role"] == "control"
-                and row["kv_length"] == kv_length
-            )
-            candidate = next(
-                row
-                for row in clock_rows
-                if row["device"] == device
-                and row["role"] == "candidate"
-                and row["kv_length"] == kv_length
-            )
-            interaction_generator = random.Random(
-                2026082100 + device * 10000 + kv_length
-            )
-            interactions = sorted(
-                interaction_generator.choice(
-                    bootstrap_by_cell[(device, "candidate", kv_length)]
-                )
-                - interaction_generator.choice(
-                    bootstrap_by_cell[(device, "control", kv_length)]
-                )
-                for _ in range(10000)
-            )
-            interaction_rows.append(
-                {
-                    "device": device,
-                    "kv_length": kv_length,
-                    "fixed_clock_policy_interaction_percent": candidate[
-                        "fixed_saving_percent"
-                    ]
-                    - control["fixed_saving_percent"],
-                    "bootstrap_95_percent_ci": [
-                        interactions[249],
-                        interactions[9749],
-                    ],
-                }
-            )
-    hurdle_rows = [row for row in clock_rows if row["kv_length"] == 1300]
-    clock_gate = all(row["bootstrap_95_percent_ci"][0] > 0 for row in hurdle_rows)
+                        arms.append(samples)
+                    samples_by_cell[(device, role, kv_length, state)] = arms
+    clock_rows, interaction_rows, clock_gate = compute_clock_effects(samples_by_cell)
     result = {
         "schema": SCHEMA_CAMPAIGN,
         "status": "qualified" if clock_gate else "clock-treatment-rejected",
@@ -2586,6 +2771,8 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument("--require-stages", action="store_true")
     validate = sub.add_parser("validate-terminal")
     validate.add_argument("packet")
+    cleanup_validate = sub.add_parser("validate-cleanup-terminal")
+    cleanup_validate.add_argument("packet")
     supervise = sub.add_parser("supervise")
     supervise.add_argument("--ordinal", type=int, required=True)
     supervise.add_argument("--terminal", required=True)
@@ -2648,6 +2835,9 @@ def main() -> int:
             print(json.dumps(audit_command(args), allow_nan=False, sort_keys=True))
         elif args.command_name == "validate-terminal":
             validate_terminal(Path(args.packet))
+            print("PASS")
+        elif args.command_name == "validate-cleanup-terminal":
+            validate_terminal(Path(args.packet), allow_late_signal_for_cleanup=True)
             print("PASS")
         elif args.command_name == "supervise":
             result = supervise_command(args)

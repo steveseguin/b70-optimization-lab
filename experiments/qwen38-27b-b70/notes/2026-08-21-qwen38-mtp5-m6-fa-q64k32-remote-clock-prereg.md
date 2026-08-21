@@ -5,9 +5,10 @@ Date: 2026-08-21
 Status: **source-only design, blocked and not authorized to launch**. No file
 has been transferred to the reference host, no remote stage has been created,
 no clock has been changed, and no GPU/operator/model process has been started.
-This note does not authorize those actions. The literal launch switches and
-deferred-safety gates in both the Python supervisor and shell driver remain
-false.
+This note does not authorize those actions. The overall campaign-launch and
+clock-writer-exclusion switches remain false in both the Python supervisor and
+shell driver. Driver environment and active-supervisor ownership gates now
+describe implemented CPU-tested source contracts, not launch authorization.
 
 ## Bounded question
 
@@ -94,10 +95,11 @@ controls require none.
 
 ## Frozen plan
 
-Exactly two physical devices, ordinal IDs 0 and 1, participate. UUID and BDF
-must also be captured and source-pinned before authorization; ordinal identity
-alone is insufficient. Before changing either card, the driver records and
-parses both persistent-service frequency ranges. Both cards then receive a
+Exactly two physical devices, ordinal IDs 0 and 1, participate. Their passive
+UUID/BDF expectations are source-pinned and must be revalidated in every
+same-boot composite receipt; ordinal identity alone is insufficient. Before
+changing either card, the driver records and parses both persistent-service
+frequency ranges. Both cards then receive a
 recorded default 400--2800 MHz experimental precondition, and the inactive card
 remains at that default during the active card's blocks.
 
@@ -110,12 +112,22 @@ remains at that default during the active card's blocks.
   of **both cards' exact captured pre-run ranges**, which need not have been
   default; a restoration failure forces exit 97.
 
-That last property is a required launch-time contract, not a present safety
-claim. The current driver waits on its Python supervisor in the foreground and
-does not yet own/terminate that active supervisor before restoring clocks when
-the shell alone receives a signal. A second literal false source/driver gate
-keeps launch blocked until a reviewed driver-level ownership and cleanup state
-machine, including signal/descendant tests, closes that race.
+The driver now backgrounds exactly one supervisor, records its PID and expected
+terminal, and makes cleanup non-reentrant. On ordinary exit or INT/TERM/HUP it
+forwards the signal, waits a bounded 30 seconds, and accepts only the deep
+cleanup-terminal validator proving the worker group absent. If that proof is
+missing or malformed, it exits 99 **without beginning clock restoration**.
+The shell enters an explicit `spawning` state immediately before the background
+launch. A signal in the launch-to-`$!` publication interval is deferred, then
+acted on immediately after the PID becomes owned, so restoration cannot race an
+unowned supervisor. Repeated cleanup signals cannot recursively enter
+restoration. Restoration accumulates failures without shell `errexit`, always
+attempts both devices, and always attempts the immutable restoration terminal;
+restore failure and terminal failure remain distinct exits 97 and 98. This
+state machine has live CPU tests for timeout, interrupt, the critical shell PID
+publication interval, a normally exiting leader with a live descendant,
+repeated wait timeout, first-device restore failure, and the publication fence.
+It does not override the false overall launch or clock-writer gates.
 
 Here A is the stock control and B is Q64K32. Each of the 16 arms is a fresh
 one-device process. Outer arm IDs include the clock state; the inherited
@@ -129,35 +141,54 @@ spawned receipts, starts the worker in a new process group, imposes a 900-second
 hard timeout, sends TERM then KILL if needed, proves group disappearance, and
 atomically publishes a terminal packet. Interrupts observed before terminal
 publication are recorded and cannot become success. A leader that exits while
-descendants remain triggers group cleanup rather than merely being labelled
-invalid. A blocked-signal publication fence emits a separate immutable
-late-signal receipt for pending signals caught by its final drain, which makes
-the terminal unusable. A signal arriving after that drain is delivered on
-unmask rather than ignored, but can terminate the supervisor without its own
-durable late-signal receipt; overall qualification still fails through the
-nonzero shell exit/restoration binding. A deeply revalidated frozen worker
-failure is a valid scientific negative and stops the campaign; timeout and
-interruption terminals remain valid cleanup evidence. The restoration terminal
-independently proves the clocks and binds the exact contiguous prefix of arms
-that actually started, so an intended early stop is not mislabeled as a clock
-restoration failure. Full comparison separately requires all 16 success arms
-and original exit status zero. No same-root retry is permitted.
+descendants remain triggers nonthrowing TERM/KILL group cleanup rather than
+merely being labelled invalid. The watched signal set is blocked before
+terminal publication; handlers are replaced while blocked, queued signals are
+drained into a separate immutable late-signal receipt, and the late handler is
+retained through dedicated-supervisor process exit. Receipt failure exits the
+supervisor nonzero. Thus the former drain-to-unmask default/ignore window is
+removed. A deeply revalidated frozen worker failure is a valid scientific
+negative and stops the campaign; timeout and interruption terminals remain
+valid cleanup evidence. The restoration terminal independently proves the
+clocks and binds the exact contiguous prefix of arms that actually started, so
+an intended early stop is not mislabeled as a clock restoration failure. Full
+comparison separately requires all 16 success arms and original exit status
+zero. No same-root retry is permitted.
 
 The driver binds each arm terminal to a composite effective-clock receipt that
 contains both the selected device's raw `xpu-smi config -d N -t 0 -j` object and
 an unfiltered raw `xpu-smi discovery -j` object. A strict parser verifies the
 source-pinned structural hash, exact two-entry device inventory `{0,1}`, exact
-B70 name, both UUID/BDF identities, and selected min/max paths. Those paths and
-observed schema are not yet known or pinned. Each worker must also emit an
-immutable `/proc/self/maps` sidecar proving the source-pinned SHA and unique,
-non-deleted mapping for every required system Level Zero/SYCL runtime DSO. That
-runtime inventory is also not yet captured. Therefore copying files cannot
-enable launch: all field paths, both device identities, and mapped-runtime
-hashes require a reviewed source update.
+B70 name, both UUID/BDF identities, and selected min/max paths. The passive
+inventory now pins schema SHA
+`afb4b7fe6d1ea9847559734fae1b73241f18587f036ae3d18376c146fa6eafba`,
+device 0 UUID/BDF `00000000-0000-0003-0000-0000e2238086` /
+`0000:03:00.0`, and device 1 UUID/BDF
+`00000000-0000-00e3-0000-0000e2238086` / `0000:e3:00.0`. These are
+same-boot rechecked expectations: every receipt must reproduce them, while
+boot ID, ordinal state, device state, and clock ranges remain dynamic. Each
+worker must also emit an immutable `/proc/self/maps` sidecar proving the
+source-pinned SHA and unique, non-deleted mapping for every required system
+Level Zero/SYCL runtime DSO. That mapped runtime inventory is not yet captured,
+so copying files still cannot enable launch.
 
 The management binary is fixed to `/usr/bin/xpu-smi`. Its bytes and exact
 version output must be source- and driver-pinned, and every query, set, and
 restore invocation must use that absolute path (including through `sudo`).
+The passive inventory now pins SHA-256
+`01c7b83881e99754642b827ba05418d263aed615933e3df35821af7733eb8d83`
+and exact CLI/service version `2.0.0.20250225`, build `8389eee7`, Level Zero
+`1.28.6`. The driver uses an absolute `/usr/bin/bash` shebang, source-pinned
+absolute paths for Git, env, jq, timeout, sudo, hashing, and file utilities,
+and clean-env re-exec before audit/compare or any future authorized run. Every
+management Python and `xpu-smi` call receives a second `env -i` boundary;
+sysman is explicit only for `xpu-smi`. Caller library/device/order/sysman
+selectors, Python activation/startup, Bash startup/CD path, and Git
+repository/config overrides are rejected. The clean marker is not sufficient:
+the child requires the exact eleven-name exported environment, exact values,
+canonical working directory and shell level, and no exported Bash functions.
+An adversarial forged-marker test covers both an otherwise unknown exported
+variable and an imported/exported Bash function.
 Every arm has active-device pre/post readbacks; every four-arm block also has
 inactive pre/post plus active post readbacks. Comparison binds their immutable
 hashes and global chronology. These detect endpoint-persistent range drift,
@@ -195,17 +226,26 @@ transfer cost on the limited-memory host.
 ## Artifacts and current blockers
 
 - campaign/supervisor: `scripts/qwen38_mtp5_m6_fa_q64k32_remote_clock_campaign.py`
-  (`821574440cc7111f049d6188ddba69ebfd0a2e63ab08af039e0b351ea256969e`);
+  (`95c026766a6a51442766be15b7142600cb195ea00ca3590cc73dc394de2a9d31`);
 - transfer/seal helper:
   `scripts/prepare-qwen38-m6-head256-q64k32-remote-stage-20260821.sh`
   (`e20b1f09363b3361e5a90fa868f1a8dffced87b482dc1e9ebb016e9d945a4ea8`);
 - blocked driver:
   `scripts/run-20260821-qwen38-mtp5-m6-fa-q64k32-remote-clock-abba.sh`
-  (`4196e38eaf994465b4d40ba65ef67dc76c5cdb48e627c26a4b3d94073ad33453`,
+  (`ccd54de8f0125fee8f00846ad7ee06d6b775dab5e98c718ecb77871f6f8cf0d5`,
   mode 0755);
 - CPU tests:
   `scripts/test_qwen38_mtp5_m6_fa_q64k32_remote_clock_campaign.py`
-  (`338c661ed102ed0166cf9d5dd272c960699eb9e353ecdd69430eb0cede0b414d`).
+  (`253445c6f35b39864eddd8d04b954baccd4fb03d6eb4323907b3f7e7f45721ac`).
+
+Former prerequisites 7, 9, and the numeric/testing portion of 10 are now closed
+in source: active-supervisor ownership precedes restoration; cleanup is
+nonthrowing and final-fence signals are durable; management uses clean-env
+re-exec plus exact paths; and live process/signal/timeout/descendant tests plus
+positive, zero, negative, nonconstant percentile, and interaction numeric
+fixtures pass. These closures do not imply launch authorization. The frozen
+packet passes 41 CPU tests plus Ruff lint/format and shell syntax checks without
+importing Torch or touching an XPU.
 
 Missing prerequisites, all mandatory:
 
@@ -214,25 +254,18 @@ Missing prerequisites, all mandatory:
 2. canonical remote control and candidate stages plus newly sealed remote stage
    JSON/build-input hashes;
 3. clean remote `main == origin/main` HEAD frozen in source;
-4. passive current-boot UUID/BDF mapping proving exactly devices 0 and 1 (the
-   reference host did not undergo the measuring host's xe recovery);
-5. captured composite `xpu-smi config` plus unfiltered `discovery` schema,
-   exact two-device identity/min/max paths, `/usr/bin/xpu-smi` SHA/version, and
-   their source/driver bindings;
+4. same-boot recapture of the now-source-pinned UUID/BDF mapping proving exactly
+   devices 0 and 1, plus dynamic boot/device-state/range evidence (the reference
+   host did not undergo the measuring host's xe recovery);
+5. launch-time composite `xpu-smi config` plus unfiltered `discovery`
+   revalidation against the pinned schema, two-device identities, field paths,
+   binary SHA, and exact version;
 6. source-pinned mapped Level Zero/SYCL runtime basenames and SHA-256 values,
    with the driver inventory SHA equal to the Python source-derived inventory;
-7. a reviewed driver-level active-supervisor signal ownership/cleanup state
-   machine, a durable receipt for the final drain-to-unmask window, and dynamic
-   child/descendant/signal/final-fence tests (including an unkillable-child
-   path); the dedicated false gate remains mandatory until these exist;
-8. frozen exclusion and exact pre/post restoration of all competing clock
+7. frozen exclusion and exact pre/post restoration of all competing clock
    writers/services/timers; endpoint readbacks alone are insufficient;
-9. a clean-environment/re-exec or rejection contract for the management,
-   preflight, query, and compare processes, covering at least `LD_PRELOAD`,
-   `LD_LIBRARY_PATH`, `PYTHONPATH`, `ZE_AFFINITY_MASK`,
-   `ONEAPI_DEVICE_SELECTOR`, device-order, and sysman variables;
-10. numeric adversarial comparator fixtures plus reviewed replacement of every
-    literal false launch gate and driver placeholder, followed by a fresh full
-    CPU/static test pass.
+8. a final reviewed replacement of the overall literal false campaign/clock
+   gates and remaining repo/stage/runtime placeholders only after items 1--7
+   are evidenced.
 
 Until every item is satisfied, only CPU/static review is allowed.

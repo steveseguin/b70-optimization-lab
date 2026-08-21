@@ -1,9 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/bash
 set -euo pipefail
 
-# Source-only preregistered remote campaign.  The run command remains blocked
-# until the reference host identity and xpu-smi telemetry schema are frozen in
-# both this driver and its Python supervisor.
+# Source-only preregistered remote campaign.  Stable passive host/telemetry
+# values are frozen below, but launch and clock-writer gates remain false.
 
 repo=/home/steve/b70-optimization-lab
 host=steve-TURIND8-2L2T
@@ -20,32 +19,56 @@ candidate=$candidate_root/runtime
 candidate_manifest=$candidate_root/qwen38-m6-head256-q64k32-r2-candidate-stage.json
 result=/home/steve/qwen38-mtp5-m6-fa-q64k32-remote-clock-abba-20260821-r1
 
-campaign_sha=821574440cc7111f049d6188ddba69ebfd0a2e63ab08af039e0b351ea256969e
+campaign_sha=95c026766a6a51442766be15b7142600cb195ea00ca3590cc73dc394de2a9d31
 preparer_sha=e20b1f09363b3361e5a90fa868f1a8dffced87b482dc1e9ebb016e9d945a4ea8
 qualifier_sha=31862ea6a8b9e11a59d643e0d3500179d938261e62b93fb920439c664ce21fbc
 base_qualifier_sha=0dd7b945ef35a11ff4d0a1ec085e604920524b996d539e089d89b4a019a5de1f
 authorized_repo_head=REMOTE_REPO_HEAD_TO_FREEZE
 authorized_stage_json_sha=REMOTE_STAGE_JSON_SHA256_TO_FREEZE
-authorized_device0_uuid=REMOTE_GPU0_UUID_TO_FREEZE
-authorized_device0_bdf=REMOTE_GPU0_BDF_TO_FREEZE
-authorized_device1_uuid=REMOTE_GPU1_UUID_TO_FREEZE
-authorized_device1_bdf=REMOTE_GPU1_BDF_TO_FREEZE
-authorized_xpu_smi_schema_sha=REMOTE_XPU_SMI_SCHEMA_SHA256_TO_FREEZE
-authorized_xpu_smi_sha=REMOTE_XPU_SMI_BINARY_SHA256_TO_FREEZE
-authorized_xpu_smi_version=REMOTE_XPU_SMI_VERSION_TO_FREEZE
+authorized_device0_uuid=00000000-0000-0003-0000-0000e2238086
+authorized_device0_bdf=0000:03:00.0
+authorized_device1_uuid=00000000-0000-00e3-0000-0000e2238086
+authorized_device1_bdf=0000:e3:00.0
+authorized_xpu_smi_schema_sha=afb4b7fe6d1ea9847559734fae1b73241f18587f036ae3d18376c146fa6eafba
+authorized_xpu_smi_sha=01c7b83881e99754642b827ba05418d263aed615933e3df35821af7733eb8d83
+authorized_xpu_smi_version=$'CLI:\n  Version: 2.0.0.20250225\n  Build ID: 8389eee7\n\nService:\n  Version: 2.0.0.20250225\n  Build ID: 8389eee7\n  Level Zero Version: 1.28.6'
 authorized_system_runtime_inventory_sha=REMOTE_SYSTEM_RUNTIME_INVENTORY_SHA256_TO_FREEZE
 xpu_smi=/usr/bin/xpu-smi
 launch_authorized=false
-driver_signal_ownership_authorized=false
+driver_signal_ownership_authorized=true
 clock_writer_exclusion_authorized=false
-driver_environment_authorized=false
+driver_environment_authorized=true
+
+# Every management executable is addressed by an absolute source-pinned path.
+# xpu-smi additionally has frozen bytes/version above; the remaining tool-byte
+# inventory is still part of the overall false launch gate review.
+bash_bin=/usr/bin/bash
+env_bin=/usr/bin/env
+git_bin=/usr/bin/git
+hostname_bin=/usr/bin/hostname
+realpath_bin=/usr/bin/realpath
+sha256sum_bin=/usr/bin/sha256sum
+awk_bin=/usr/bin/awk
+jq_bin=/usr/bin/jq
+timeout_bin=/usr/bin/timeout
+sudo_bin=/usr/bin/sudo
+chmod_bin=/usr/bin/chmod
+mv_bin=/usr/bin/mv
+rm_bin=/usr/bin/rm
+mkdir_bin=/usr/bin/mkdir
+seq_bin=/usr/bin/seq
+sleep_bin=/usr/bin/sleep
+kill_bin=/usr/bin/kill
+true_bin=/usr/bin/true
+clean_path=/usr/bin:/bin
+clean_marker=remote-q64k32-management-v1
 
 die() { printf 'error: %s\n' "$*" >&2; exit 2; }
 verify() {
   local path=$1 expected=$2 actual
   [[ -f $path ]] || die "missing: $path"
   [[ $expected =~ ^[0-9a-f]{64}$ ]] || die "unfrozen SHA for $path"
-  actual=$(sha256sum -- "$path" | awk '{print $1}')
+  actual=$("$sha256sum_bin" -- "$path" | "$awk_bin" '{print $1}')
   [[ $actual == "$expected" ]] || die "SHA mismatch: $path"
 }
 usage() {
@@ -65,13 +88,55 @@ if [[ $action == run ]]; then
     'launch blocked pending identity, supervisor ownership, clock-writer exclusion, and clean-env gates'
 fi
 
-[[ $(hostname) == "$host" ]] || die "requires $host"
-[[ $(realpath -e -- "$repo") == "$repo" ]] || die 'repo path is absent/noncanonical'
-[[ $(git -C "$repo" branch --show-current) == main ]] || die 'requires main'
-[[ -z $(git -C "$repo" status --porcelain --untracked-files=normal) ]] || die 'requires clean repo'
-repo_head=$(git -C "$repo" rev-parse HEAD)
+# Audit, compare, and the future authorized run all re-exec before any host,
+# Git, Python, xpu-smi, sudo, filesystem, or GPU-facing operation.  The marker
+# is accepted only when the complete exported-name inventory and every value
+# match the child contract and no exported Bash function exists.  Subsequent
+# management subprocesses use exact paths or a second env -i boundary.
+if [[ ${QWEN38_REMOTE_DRIVER_CLEAN:-} != "$clean_marker" ]]; then
+  case $0 in
+    /*) clean_driver=$0 ;;
+    *) clean_driver=$PWD/$0 ;;
+  esac
+  cd -- /home/steve || die 'cannot enter canonical management working directory'
+  exec "$env_bin" -i \
+    HOME=/home/steve USER=steve LOGNAME=steve SHELL="$bash_bin" LANG=C.UTF-8 \
+    PATH="$clean_path" PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 \
+    QWEN38_REMOTE_DRIVER_CLEAN="$clean_marker" \
+    "$bash_bin" "$clean_driver" "$@"
+fi
+[[ $PATH == "$clean_path" && $PWD == /home/steve && $HOME == /home/steve && $USER == steve && \
+   $LOGNAME == steve && $SHELL == "$bash_bin" && \
+   $LANG == C.UTF-8 && $SHLVL == 1 && \
+   ${PYTHONHASHSEED:-} == 0 && ${PYTHONDONTWRITEBYTECODE:-} == 1 && \
+   $QWEN38_REMOTE_DRIVER_CLEAN == "$clean_marker" ]] || \
+  die 'management clean-environment identity differs'
+mapfile -t exported_environment_names < <(compgen -e)
+for exported_name in "${exported_environment_names[@]}"; do
+  case $exported_name in
+    HOME|LANG|LOGNAME|PATH|PWD|PYTHONDONTWRITEBYTECODE|PYTHONHASHSEED|QWEN38_REMOTE_DRIVER_CLEAN|SHELL|SHLVL|USER) ;;
+    *) die "unexpected exported management environment: $exported_name" ;;
+  esac
+done
+[[ ${#exported_environment_names[@]} -eq 11 ]] || \
+  die 'exported management environment inventory differs'
+[[ -z $(declare -Fx) ]] || die 'exported Bash function reached management shell'
+
+management_python() {
+  "$env_bin" -i \
+    HOME=/home/steve USER=steve LOGNAME=steve SHELL="$bash_bin" LANG=C.UTF-8 \
+    PATH="$clean_path" PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 \
+    QWEN38_REMOTE_DRIVER_CLEAN="$clean_marker" \
+    "$python" -B "$campaign" "$@"
+}
+
+[[ $("$hostname_bin") == "$host" ]] || die "requires $host"
+[[ $("$realpath_bin" -e -- "$repo") == "$repo" ]] || die 'repo path is absent/noncanonical'
+[[ $("$git_bin" -C "$repo" branch --show-current) == main ]] || die 'requires main'
+[[ -z $("$git_bin" -C "$repo" status --porcelain --untracked-files=normal) ]] || die 'requires clean repo'
+repo_head=$("$git_bin" -C "$repo" rev-parse HEAD)
 [[ $repo_head == "$authorized_repo_head" ]] || die 'remote repository HEAD is not frozen identity'
-[[ $repo_head == $(git -C "$repo" rev-parse origin/main) ]] || die 'requires main == origin/main'
+[[ $repo_head == $("$git_bin" -C "$repo" rev-parse origin/main) ]] || die 'requires main == origin/main'
 verify "$campaign" "$campaign_sha"
 verify "$preparer" "$preparer_sha"
 verify "$qualifier" "$qualifier_sha"
@@ -80,12 +145,12 @@ verify "$candidate_manifest" "$authorized_stage_json_sha"
 [[ -x $python ]] || die 'XPU Python is absent'
 
 if [[ $action == audit ]]; then
-  "$python" -B "$campaign" audit --repo "$repo" --require-host --require-stages
+  management_python audit --repo "$repo" --require-host --require-stages
   exit
 fi
 
-# These values are deliberately placeholders until a passive, post-recovery
-# inventory is captured and reviewed.  No ordinal-only identity is accepted.
+# Stable passive values are frozen.  Repo/stage/runtime values remain explicit
+# placeholders, and every boot-dynamic device/range/service fact is rechecked.
 for frozen in \
   "$authorized_device0_uuid" "$authorized_device0_bdf" \
   "$authorized_device1_uuid" "$authorized_device1_bdf" \
@@ -95,23 +160,24 @@ for frozen in \
   [[ $frozen != *_TO_FREEZE ]] || die 'device/telemetry identity is not frozen'
 done
 verify "$xpu_smi" "$authorized_xpu_smi_sha"
-[[ $(realpath -e -- "$xpu_smi") == "$xpu_smi" ]] || \
+[[ $("$realpath_bin" -e -- "$xpu_smi") == "$xpu_smi" ]] || \
   die 'xpu-smi path is not canonical'
-[[ $($xpu_smi --version) == "$authorized_xpu_smi_version" ]] || \
+[[ $("$env_bin" -i PATH="$clean_path" ZES_ENABLE_SYSMAN=1 \
+      "$xpu_smi" --version) == "$authorized_xpu_smi_version" ]] || \
   die 'xpu-smi version differs from frozen identity'
-audit_json=$("$python" -B "$campaign" audit --repo "$repo" --require-host --require-stages)
-[[ $(jq -er '.authorized_system_runtime_inventory_sha256' <<<"$audit_json") == \
+audit_json=$(management_python audit --repo "$repo" --require-host --require-stages)
+[[ $("$jq_bin" -er '.authorized_system_runtime_inventory_sha256' <<<"$audit_json") == \
    "$authorized_system_runtime_inventory_sha" ]] || \
   die 'driver/source system-runtime inventory binding differs'
-[[ $(jq -er '.authorized_xpu_smi.path' <<<"$audit_json") == "$xpu_smi" && \
-   $(jq -er '.authorized_xpu_smi.sha256' <<<"$audit_json") == "$authorized_xpu_smi_sha" && \
-   $(jq -er '.authorized_xpu_smi.version' <<<"$audit_json") == "$authorized_xpu_smi_version" ]] || \
+[[ $("$jq_bin" -er '.authorized_xpu_smi.path' <<<"$audit_json") == "$xpu_smi" && \
+   $("$jq_bin" -er '.authorized_xpu_smi.sha256' <<<"$audit_json") == "$authorized_xpu_smi_sha" && \
+   $("$jq_bin" -er '.authorized_xpu_smi.version' <<<"$audit_json") == "$authorized_xpu_smi_version" ]] || \
   die 'driver/source xpu-smi identity binding differs'
 
 if [[ $action == compare ]]; then
   [[ -d $result ]] || die "missing result root: $result"
   terminals=()
-  for ordinal in $(seq 1 16); do
+  for ordinal in $("$seq_bin" 1 16); do
     terminals+=("$result/arm-$(printf '%02d' "$ordinal").terminal.json")
   done
   default_packets=(
@@ -137,7 +203,7 @@ if [[ $action == compare ]]; then
     "$result/clock-0-block-4-inactive-post.json"
   )
   arm_post_receipts=()
-  for ordinal in $(seq 1 16); do
+  for ordinal in $("$seq_bin" 1 16); do
     if [[ $ordinal -le 4 || ( $ordinal -ge 9 && $ordinal -le 12 ) ]]; then
       device=0
     else
@@ -146,13 +212,13 @@ if [[ $action == compare ]]; then
     arm_post_receipts+=("$result/clock-${device}-arm-${ordinal}-post.json")
   done
   set +e
-  "$python" -B "$campaign" compare-operator --repo "$repo" --clock-state default \
+  management_python compare-operator --repo "$repo" --clock-state default \
     --output "$result/default-clock-operator-comparison.json" "${default_packets[@]}"
   default_rc=$?
-  "$python" -B "$campaign" compare-operator --repo "$repo" --clock-state fixed \
+  management_python compare-operator --repo "$repo" --clock-state fixed \
     --output "$result/fixed-clock-operator-comparison.json" "${fixed_packets[@]}"
   fixed_rc=$?
-  "$python" -B "$campaign" compare-terminals \
+  management_python compare-terminals \
     --output "$result/campaign-comparison.json" \
     --restoration-terminal "$result/campaign-restoration-terminal.json" \
     --default-operator-comparison "$result/default-clock-operator-comparison.json" \
@@ -174,8 +240,8 @@ fi
 
 [[ ! -e $result ]] || die "refusing existing result root: $result"
 [[ -x $xpu_smi ]] || die 'xpu-smi is absent'
-command -v timeout >/dev/null || die 'timeout is absent'
-sudo -n true >/dev/null 2>&1 || die 'noninteractive sudo prerequisite is not satisfied'
+[[ -x $timeout_bin && -x $sudo_bin && -x $env_bin ]] || die 'pinned management tool is absent'
+"$sudo_bin" -n "$true_bin" >/dev/null 2>&1 || die 'noninteractive sudo prerequisite is not satisfied'
 
 # Future telemetry parser must validate exact ID->UUID/BDF and effective min/max
 # from these JSON receipts before the source launch gate may be enabled.
@@ -186,25 +252,26 @@ clock_receipt() {
   [[ ! -e $output ]] || die "clock receipt collision: $output"
   [[ ! -e $config_tmp && ! -e $discovery_tmp ]] || \
     die "clock raw-receipt collision for GPU$device/$label"
-  timeout -k 5s 30s "$xpu_smi" config -d "$device" -t 0 -j >"$config_tmp"
-  timeout -k 5s 30s "$xpu_smi" discovery -j >"$discovery_tmp"
-  "$python" -B "$campaign" seal-clock-receipt --device "$device" \
+  "$timeout_bin" -k 5s 30s "$env_bin" -i PATH="$clean_path" \
+    ZES_ENABLE_SYSMAN=1 "$xpu_smi" config -d "$device" -t 0 -j >"$config_tmp"
+  "$timeout_bin" -k 5s 30s "$env_bin" -i PATH="$clean_path" \
+    ZES_ENABLE_SYSMAN=1 "$xpu_smi" discovery -j >"$discovery_tmp"
+  management_python seal-clock-receipt --device "$device" \
     --config "$config_tmp" --discovery "$discovery_tmp" --output "$output" \
     >/dev/null
-  rm -- "$config_tmp" "$discovery_tmp"
+  "$rm_bin" -- "$config_tmp" "$discovery_tmp"
 }
 parse_range() {
   local device=$1 receipt=$2 parsed minimum maximum uuid bdf schema expected_uuid expected_bdf
-  parsed=$("$python" -B "$campaign" parse-clock-receipt --device "$device" "$receipt")
-  minimum=$(jq -er '.min_mhz | select(type == "number" and floor == .)' <<<"$parsed") || \
+  parsed=$(management_python parse-clock-receipt --device "$device" "$receipt")
+  minimum=$("$jq_bin" -er '.min_mhz | select(type == "number" and floor == .)' <<<"$parsed") || \
     die 'parsed minimum clock is absent/nonintegral'
-  maximum=$(jq -er '.max_mhz | select(type == "number" and floor == .)' <<<"$parsed") || \
-    die 'parsed maximum clock is absent/nonintegral'
-  uuid=$(jq -er '.uuid | select(type == "string" and length > 0)' <<<"$parsed") || \
+  maximum=$("$jq_bin" -er '.max_mhz | select(type == "number" and floor == .)' <<<"$parsed") || \
+  uuid=$("$jq_bin" -er '.uuid | select(type == "string" and length > 0)' <<<"$parsed") || \
     die 'parsed UUID is absent'
-  bdf=$(jq -er '.bdf | select(type == "string" and length > 0)' <<<"$parsed") || \
+  bdf=$("$jq_bin" -er '.bdf | select(type == "string" and length > 0)' <<<"$parsed") || \
     die 'parsed BDF is absent'
-  schema=$(jq -er '.schema_sha256 | select(type == "string")' <<<"$parsed") || \
+  schema=$("$jq_bin" -er '.schema_sha256 | select(type == "string")' <<<"$parsed") || \
     die 'parsed telemetry schema is absent'
   if [[ $device -eq 0 ]]; then
     expected_uuid=$authorized_device0_uuid; expected_bdf=$authorized_device0_bdf
@@ -219,10 +286,11 @@ parse_range() {
 }
 set_clock() {
   local device=$1 range=$2 label=$3 effective_receipt effective
-  timeout -k 5s 30s sudo -n "$xpu_smi" config -d "$device" -t 0 --frequencyrange "$range" -j \
+  "$timeout_bin" -k 5s 30s "$sudo_bin" -n "$env_bin" -i PATH="$clean_path" \
+    ZES_ENABLE_SYSMAN=1 "$xpu_smi" config -d "$device" -t 0 --frequencyrange "$range" -j \
     >"$result/clock-${device}-${label}-set.json.tmp"
-  chmod 0444 "$result/clock-${device}-${label}-set.json.tmp"
-  mv -- "$result/clock-${device}-${label}-set.json.tmp" \
+  "$chmod_bin" 0444 "$result/clock-${device}-${label}-set.json.tmp"
+  "$mv_bin" -- "$result/clock-${device}-${label}-set.json.tmp" \
     "$result/clock-${device}-${label}-set.json"
   clock_receipt "$device" "$label-effective"
   effective_receipt="$result/clock-${device}-${label}-effective.json"
@@ -231,9 +299,9 @@ set_clock() {
     die "effective clock differs for GPU$device: $effective != $range"
 }
 
-mkdir -- "$result"
+"$mkdir_bin" -- "$result"
 arm_terminals=()
-for arm_ordinal in $(seq 1 16); do
+for arm_ordinal in $("$seq_bin" 1 16); do
   arm_terminals+=("$result/arm-$(printf '%02d' "$arm_ordinal").terminal.json")
 done
 declare -a original_ranges
@@ -244,28 +312,63 @@ original_ranges[0]=$(parse_range 0 "$result/clock-0-pre-run.json")
 clock_receipt 1 pre-run
 original_ranges[1]=$(parse_range 1 "$result/clock-1-pre-run.json")
 restore_rc=0
+cleanup_state=idle
+active_supervisor_pid=
+active_supervisor_terminal=
+active_forward_signal=TERM
+supervisor_spawn_state=idle
+deferred_signal=
+deferred_exit_code=
+
+quiesce_active_supervisor() {
+  local counter=0 supervisor_rc=0
+  [[ -n $active_supervisor_pid ]] || return 0
+  if "$kill_bin" -0 "$active_supervisor_pid" 2>/dev/null; then
+    "$kill_bin" -s "$active_forward_signal" "$active_supervisor_pid" 2>/dev/null || true
+    while "$kill_bin" -0 "$active_supervisor_pid" 2>/dev/null && [[ $counter -lt 600 ]]; do
+      "$sleep_bin" 0.05
+      counter=$((counter + 1))
+    done
+  fi
+  if "$kill_bin" -0 "$active_supervisor_pid" 2>/dev/null; then
+    printf 'FATAL: active supervisor did not quiesce; clock restoration is forbidden\n' >&2
+    return 1
+  fi
+  set +e
+  wait "$active_supervisor_pid"
+  supervisor_rc=$?
+  set -e
+  if ! management_python validate-cleanup-terminal "$active_supervisor_terminal" >/dev/null; then
+    printf 'FATAL: active supervisor terminal does not prove worker-group absence (rc=%s)\n' \
+      "$supervisor_rc" >&2
+    return 1
+  fi
+  active_supervisor_pid=
+  active_supervisor_terminal=
+  return 0
+}
+
 restore_pre_run_ranges() {
-  trap '' EXIT INT TERM HUP
   local original_rc=$1
   local terminal_rc
-  for device in 0 1; do
-    if ! timeout -k 5s 30s sudo -n "$xpu_smi" config -d "$device" -t 0 --frequencyrange "${original_ranges[$device]}" -j \
-      >"$result/clock-${device}-restore-set.json.tmp"; then
-      restore_rc=1
-      continue
-    fi
-    chmod 0444 "$result/clock-${device}-restore-set.json.tmp"
-    mv -- "$result/clock-${device}-restore-set.json.tmp" \
-      "$result/clock-${device}-restore-set.json"
-    if ! clock_receipt "$device" restore-effective; then
-      restore_rc=1
-    elif [[ $(parse_range "$device" "$result/clock-${device}-restore-effective.json") != "${original_ranges[$device]}" ]]; then
-      restore_rc=1
-    fi
-  done
+  [[ $cleanup_state == idle ]] || return
+  cleanup_state=quiescing
+  # Repeated signals cannot recurse into restoration.  The first signal is
+  # forwarded to the owned supervisor; subsequent signals are held harmless
+  # while cleanup and exact restoration complete.
+  trap '' EXIT INT TERM HUP
+  if ! quiesce_active_supervisor; then
+    printf 'FATAL: refusing clock restoration while supervisor/worker absence is unproved\n' >&2
+    exit 99
+  fi
+  cleanup_state=restoring
+  set +e
+  restore_all_devices
+  restore_rc=$?
+  set -e
   [[ $restore_rc -eq 0 ]] || printf 'FATAL: exact pre-run clock restoration was not proved\n' >&2
   set +e
-  "$python" -B "$campaign" seal-restoration \
+  management_python seal-restoration \
     --output "$result/campaign-restoration-terminal.json" \
     --original-exit-code "$original_rc" --restore-rc "$restore_rc" \
     --pre-run-0 "$result/clock-0-pre-run.json" \
@@ -280,13 +383,67 @@ restore_pre_run_ranges() {
   if [[ $terminal_rc -ne 0 ]]; then exit 98; fi
   exit "$original_rc"
 }
-trap 'restore_pre_run_ranges $?' EXIT
-trap 'restore_pre_run_ranges 130' INT
-trap 'restore_pre_run_ranges 143' TERM
-trap 'restore_pre_run_ranges 129' HUP
 
-driver=$(realpath -e -- "$0")
-driver_sha=$(sha256sum -- "$driver" | awk '{print $1}')
+restore_one_device() {
+  local device=$1 set_tmp="$result/clock-${device}-restore-set.json.tmp"
+  local set_output="$result/clock-${device}-restore-set.json" restored_range
+  if ! "$timeout_bin" -k 5s 30s "$sudo_bin" -n "$env_bin" -i PATH="$clean_path" \
+    ZES_ENABLE_SYSMAN=1 "$xpu_smi" config -d "$device" -t 0 \
+    --frequencyrange "${original_ranges[$device]}" -j >"$set_tmp"; then
+    "$rm_bin" -f -- "$set_tmp" 2>/dev/null || true
+    return 1
+  fi
+  if ! "$chmod_bin" 0444 "$set_tmp" || ! "$mv_bin" -- "$set_tmp" "$set_output"; then
+    "$rm_bin" -f -- "$set_tmp" 2>/dev/null || true
+    return 1
+  fi
+  if ! (clock_receipt "$device" restore-effective); then
+    return 1
+  fi
+  if ! restored_range=$(parse_range "$device" "$result/clock-${device}-restore-effective.json"); then
+    return 1
+  fi
+  [[ $restored_range == "${original_ranges[$device]}" ]]
+}
+
+restore_all_devices() {
+  local device aggregate_rc=0
+  for device in 0 1; do
+    restore_one_device "$device" || aggregate_rc=1
+  done
+  return "$aggregate_rc"
+}
+
+handle_driver_signal() {
+  local signal_name=$1 exit_code=$2
+  active_forward_signal=$signal_name
+  if [[ $supervisor_spawn_state == spawning ]]; then
+    deferred_signal=$signal_name
+    deferred_exit_code=$exit_code
+    return 0
+  fi
+  restore_pre_run_ranges "$exit_code"
+}
+
+claim_active_supervisor() {
+  local supervisor_pid=$1
+  [[ $supervisor_spawn_state == spawning && -n $supervisor_pid ]] || \
+    die 'supervisor ownership publication state differs'
+  active_supervisor_pid=$supervisor_pid
+  supervisor_spawn_state=owned
+  if [[ -n $deferred_signal ]]; then
+    active_forward_signal=$deferred_signal
+    restore_pre_run_ranges "$deferred_exit_code"
+  fi
+}
+
+trap 'exit_rc=$?; active_forward_signal=TERM; restore_pre_run_ranges "$exit_rc"' EXIT
+trap 'handle_driver_signal INT 130' INT
+trap 'handle_driver_signal TERM 143' TERM
+trap 'handle_driver_signal HUP 129' HUP
+
+driver=$("$realpath_bin" -e -- "$0")
+driver_sha=$("$sha256sum_bin" -- "$driver" | "$awk_bin" '{print $1}')
 run_arm() {
   local ordinal=$1 device=$2 clock=$3 slot=$4 role=$5 suffix=$6 clock_path=$7
   local stage policy outer inner terminal_path supervisor_rc
@@ -294,10 +451,11 @@ run_arm() {
   inner="gpu${device}-${suffix}"
   terminal_path="$result/arm-$(printf '%02d' "$ordinal").terminal.json"
   if [[ $role == control ]]; then stage=$control; policy=0; else stage=$candidate; policy=1; fi
-  set +e
-  env -i \
-    HOME=/home/steve USER=steve LOGNAME=steve SHELL=/bin/bash LANG=C.UTF-8 \
-    PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  active_supervisor_terminal=$terminal_path
+  supervisor_spawn_state=spawning
+  "$env_bin" -i \
+    HOME=/home/steve USER=steve LOGNAME=steve SHELL="$bash_bin" LANG=C.UTF-8 \
+    PATH="$clean_path" \
     PYTHONHASHSEED=0 PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH="$stage" LD_LIBRARY_PATH="$stage/vllm_xpu_kernels:$venv_lib:$torch_lib" \
     ZE_AFFINITY_MASK="$device" VLLM_XPU_FA2_FORCE_CHUNK_DECODE=1 \
@@ -314,10 +472,16 @@ run_arm() {
       "$python" -B "$campaign" worker --repo "$repo" --ordinal "$ordinal" \
       --physical-gpu "$device" --role "$role" --outer-arm-id "$outer" \
       --inner-arm-id "$inner" \
-      --campaign-slot "$slot" --output "$result/arm-$(printf '%02d' "$ordinal").json"
+      --campaign-slot "$slot" --output "$result/arm-$(printf '%02d' "$ordinal").json" &
+  claim_active_supervisor "$!"
+  set +e
+  wait "$active_supervisor_pid"
   supervisor_rc=$?
   set -e
-  "$python" -B "$campaign" validate-terminal "$terminal_path" || return 2
+  management_python validate-terminal "$terminal_path" >/dev/null || return 2
+  active_supervisor_pid=
+  active_supervisor_terminal=
+  supervisor_spawn_state=idle
   return "$supervisor_rc"
 }
 

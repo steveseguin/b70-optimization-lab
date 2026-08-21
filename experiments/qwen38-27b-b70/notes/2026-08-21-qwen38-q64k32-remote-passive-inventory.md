@@ -69,10 +69,17 @@ planned library ordering, `libtorch_xpu.so` resolves the venv's SYCL 2025.3.2
 and Unified Runtime 2025.3.2 libraries. The JSON records the exact Torch,
 SYCL, UR, Level Zero loader, and Intel GPU driver paths and hashes.
 
-The passive five-file runtime candidate inventory hashes to
-`d2c3065435d60cc43d31a096406c98e8e5d725637ade11b70a67af2700b292d1`.
-It is not a substitute for the required `/proc/self/maps` proof from an actual
-sealed worker, so `AUTHORIZED_SYSTEM_RUNTIME_LIBRARIES` remains blocked.
+The session reported the passive five-file runtime candidate aggregate
+`d2c3065435d60cc43d31a096406c98e8e5d725637ade11b70a67af2700b292d1`,
+but its canonical byte recipe was not retained and cannot be rederived from the
+five structured rows. It is therefore opaque session evidence, not a
+reproducible inventory hash or authorization input. The separately recorded
+`xpu-smi` dependency aggregate is reproducible: it hashes UTF-8 compact
+sorted-key JSON of the 14 rows projected to exactly `soname`, `path`,
+`resolved_path`, and `sha256`, in recorded order and without a trailing
+newline. Neither passive inventory substitutes for the required
+`/proc/self/maps` proof from an actual sealed worker, so
+`AUTHORIZED_SYSTEM_RUNTIME_LIBRARIES` remains blocked.
 
 ## Clock-writer boundary
 
