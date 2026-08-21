@@ -2,7 +2,20 @@
 
 Date: 2026-08-21
 
-Status: **implemented, CPU-tested, hash-frozen; not launched**.
+Status: **completed; terminal timeout failure. Preserve r1; no retry or
+downstream authorization.**
+
+Result:
+[`2026-08-21-qwen38-gpu3-incumbent-control-health-result.md`](2026-08-21-qwen38-gpu3-incumbent-control-health-result.md).
+
+The frozen validator returns `14` and classifies the immutable terminal packet
+as `gpu3-incumbent-control-timeout-terminated`. The stock worker published ten
+ordered FA-return receipts and `sync-enter`, but no `sync-return`; the watchdog
+terminated the verified process group and proved it empty. Passive host-journal
+evidence from the same window records repeated `xe 0000:47:00.0` job timeouts
+and resets, including one timeout naming the exact sealed worker PID. This is a
+failed incumbent-control health diagnostic, not candidate evidence. The
+decision and terminal rules below remain in force.
 
 This is the only bounded next action permitted by the stopped
 [Q64xK32 r2 operator campaign](2026-08-21-qwen38-mtp5-m6-fa-q64k32-operator-result.md).

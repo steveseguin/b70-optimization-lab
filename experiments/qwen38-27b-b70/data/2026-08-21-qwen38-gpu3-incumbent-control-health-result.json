@@ -1,0 +1,173 @@
+{
+  "schema": "qwen38-gpu3-incumbent-control-health-result-v1",
+  "date": "2026-08-21",
+  "status": "completed_timeout_terminated",
+  "classification": "valid_gpu3_stock_control_health_failure",
+  "passed": false,
+  "validator": {
+    "command": "python3 -B experiments/qwen38-27b-b70/scripts/qwen38_gpu3_incumbent_control_health_supervisor.py validate /home/steve/qwen38-gpu3-incumbent-control-health-20260821-r1",
+    "return_code": 14,
+    "classification": "gpu3-incumbent-control-timeout-terminated"
+  },
+  "result_root": "/home/steve/qwen38-gpu3-incumbent-control-health-20260821-r1",
+  "sealed_artifacts": {
+    "contract": {
+      "path": "/home/steve/qwen38-gpu3-incumbent-control-health-20260821-r1/contract.json",
+      "sha256": "7cd5bfda4e6bf90c59f8ff29cc967d39903bef8ddc256abc571a338a8b635861"
+    },
+    "terminal": {
+      "path": "/home/steve/qwen38-gpu3-incumbent-control-health-20260821-r1/terminal.json",
+      "sha256": "e91f7791278d3fb06f2e3683d3d779ea928fe1b40cebb3e35358bed29c25c76d"
+    },
+    "cleanup_state": {
+      "path": "/home/steve/qwen38-gpu3-incumbent-control-health-20260821-r1/cleanup-state.json",
+      "sha256": "fa9bb851efb4ea04d6e38c5403ae0a5d67879f5b86193069ea617e6e06d57d52"
+    },
+    "sync_enter_receipt": {
+      "path": "/home/steve/qwen38-gpu3-incumbent-control-health-20260821-r1/worker-phases/0014-sync-enter.json",
+      "sha256": "8a58f1bfb8a126d4fb3be4ed38f2a485ae67026e2001604ca4de11d5aab81e72"
+    },
+    "timeout_receipt": {
+      "path": "/home/steve/qwen38-gpu3-incumbent-control-health-20260821-r1/supervisor-phases/0002-timeout-before-term.json",
+      "sha256": "56d8a77fad13bcbbc4c2f35aa85182cd1e2040a54b6eb6231e6a4bbf3549913e"
+    },
+    "worker_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "worker_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "identity": {
+    "repo_head": "78f4185391cd03b6acc8c779105b1e871f395571",
+    "repo_origin_main": "78f4185391cd03b6acc8c779105b1e871f395571",
+    "repo_status_porcelain_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "supervisor_sha256": "eb619535786a3c7a8929b2d3b1c3848486d3edc1b96804c79831eaf8c3923375",
+    "worker_sha256": "bd8225e30e1335a3fe33e78421b1feb3cfb036ca04d0ca6738cb1eea8639b11f",
+    "base_qualifier_sha256": "0dd7b945ef35a11ff4d0a1ec085e604920524b996d539e089d89b4a019a5de1f",
+    "physical_gpu": 3,
+    "logical_device": "xpu:0",
+    "ze_affinity_mask": "3",
+    "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+    "device_uuid": "868023e2-0000-0000-4700-000000000000",
+    "pci_bdf_context": "0000:47:00.0",
+    "stage": "/home/steve/staged-xpu-commitfix-graphfa-composite-20260820",
+    "stock_graph_manifest_sha256": "47861e8391b6b25dd9c3eb25e25c5939753aa470858b667d5bdf181344db18da",
+    "stock_graph_file_count": 20,
+    "extension_sha256": "33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739",
+    "device_library_sha256": "604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c",
+    "interface_sha256": "869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480",
+    "stock_library_sha256": "3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289",
+    "proc_self_maps_sha256": "8ffa0c9de696a852e04759d40fd8bd75196cdbe653f29afa216510230a6f7944",
+    "q64k32_policy": 0,
+    "q8k64_policy": 0,
+    "force_chunk_decode": 1,
+    "candidate_loaded": false
+  },
+  "workload": {
+    "dtype": "float16",
+    "kv_length": 128,
+    "rows": 6,
+    "q_heads_tp2_local": 12,
+    "kv_heads_tp2_local": 2,
+    "head_dim": 256,
+    "block_size": 64,
+    "paged_kv": true,
+    "causal": true,
+    "is_mix_batch": true,
+    "returned_fa_launches": 10,
+    "returned_launch_span_seconds": 0.154995616,
+    "sync_enter_recorded": true,
+    "sync_return_recorded": false,
+    "worker_complete_recorded": false,
+    "worker_result_recorded": false,
+    "worker_failure_recorded": false,
+    "python_returns_are_not_device_completion_or_timing": true
+  },
+  "timeout_and_cleanup": {
+    "deadline_seconds": 60.0,
+    "elapsed_seconds_at_timeout_receipt": 60.05274560902035,
+    "sync_enter_to_timeout_receipt_seconds": 33.677614727,
+    "child": {
+      "pid": 938011,
+      "pgid": 938011,
+      "sid": 938011,
+      "boot_id": "256bc838-c015-4c91-a8f9-363d281f7555",
+      "start_ticks": 32442800,
+      "return_code": -15
+    },
+    "sigterm_sent": true,
+    "sigkill_sent": false,
+    "cleanup_errors": [],
+    "late_signals": [],
+    "final_group_scan_verified": true,
+    "final_process_group_snapshot": [],
+    "unkillable": false
+  },
+  "passive_kernel_evidence": {
+    "part_of_sealed_result_root": false,
+    "source": "existing kernel journal; no GPU probe or recovery",
+    "local_window": "2026-08-21 02:46:25 through 02:47:45 America/Toronto",
+    "timezone": "America/Toronto (-04:00)",
+    "journal_output_format": "short-iso-precise",
+    "capture_command": "sudo -S -p '' journalctl -k --since '2026-08-21 02:46:25' --until '2026-08-21 02:47:45' --no-pager -o short-iso-precise < /home/steve/SUDOPASSWORD.txt | rg 'xe 0000:47:00.0|Engine reset' | sha256sum",
+    "credential_bytes_printed_or_preserved": false,
+    "filter": "xe 0000:47:00.0|Engine reset",
+    "filtered_stream_sha256": "43b6cd71dedbe2d4bf237e0d95ab827b027eb62b5cd53247fd890993cf71e249",
+    "normalized_counts": {
+      "kernel_submitted_job_timed_out": 1863,
+      "timedout_job_flags_0x73_without_process": 1863,
+      "trying_reset": 1242,
+      "reset_queued": 1242,
+      "reset_started": 1242,
+      "reset_done": 1242,
+      "xe_coredump_created": 1,
+      "xe_coredump_path_prompt": 1,
+      "exact_worker_pid_timeout": 1,
+      "engine_reset": 1
+    },
+    "exact_worker_pid_event": {
+      "local_time": "2026-08-21 02:46:57.660090 America/Toronto",
+      "message": "Timedout job: seqno=4294967169, lrc_seqno=4294967169, guc_id=6, flags=0x20 in python [938011]",
+      "pid_matches_sealed_worker": true,
+      "precedes_first_fa_return_receipt": true
+    },
+    "engine_reset_event": {
+      "local_time": "2026-08-21 02:47:31.754952 America/Toronto",
+      "message": "Engine reset: engine_class=ccs, logical_mask: 0x1, guc_id=2, state=0x289"
+    },
+    "chronology": {
+      "xe_coredump_created_local_time": "2026-08-21 02:46:38.028384 America/Toronto",
+      "exact_worker_pid_timeout_local_time": "2026-08-21 02:46:57.660090 America/Toronto",
+      "first_fa_return_receipt_local_time": "2026-08-21 02:46:57.815687177 America/Toronto",
+      "tenth_fa_return_receipt_local_time": "2026-08-21 02:46:57.970683474 America/Toronto",
+      "sync_enter_local_time": "2026-08-21 02:46:57.986973770 America/Toronto",
+      "engine_reset_local_time": "2026-08-21 02:47:31.754952 America/Toronto",
+      "storm_overlapped_and_predated_observed_fa_prefix": true,
+      "caused_by_worker_or_stock_fa_prefix": null
+    },
+    "limitations": [
+      "journal stream is passive external host evidence rather than an immutable sealed-root artifact",
+      "timeout/reset storm began before the observed worker FA prefix",
+      "does not identify which submitted FA call or job caused the stall",
+      "does not distinguish hardware from driver, firmware, kernel, or runtime interaction",
+      "does not establish persistence beyond this run"
+    ]
+  },
+  "interpretation": {
+    "supported": "physical GPU3 failed the exact stock KV128 incumbent-control launch/synchronize health boundary in this run, with a matching worker-PID kernel timeout",
+    "not_supported": [
+      "Q64xK32 candidate qualification or rejection",
+      "candidate dispatch or correctness",
+      "operator timing",
+      "model correctness, quality, throughput, or repeatability",
+      "endpoint or full-25 authorization",
+      "fault localization to hardware, driver, firmware, kernel, runtime, or one FA call"
+    ]
+  },
+  "decision": {
+    "preserve_result_root": true,
+    "same_root_retry": false,
+    "carry_gpu2_evidence_forward": false,
+    "candidate_or_model_run_authorized": false,
+    "fresh_full_operator_campaign_may_be_preregistered": false,
+    "recovery_performed": false,
+    "next": "separately authorized host-wide all-four-B70 xe recovery under docs/local-ops.md, including prerequisite checks and the complete post-reload gate; after recovery, only a newly preregistered fresh-root stock-control health diagnostic"
+  }
+}

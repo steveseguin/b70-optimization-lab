@@ -399,17 +399,24 @@ loaded service.
    eager/graph and tolerance-bounded CPU-oracle checks, plus Q/K/V/length
    mutation gates, and saved `75.17692 us/call` at KV 1300 (`1.20283072 ms`
    across the 16 full-attention calls per target step). GPU3's first selector-off
-   control was externally observed
-   stopped at its first warmup synchronization before publishing a packet; no
-   subsequent GPU3 candidate arm ran. The campaign is therefore
-   infrastructure-invalid/incomplete, not a
-   qualification or candidate rejection. Preserve the root, run no same-root
-   retry or model/full-25 arm, and do not carry the GPU2 evidence into a future
-   pass. First run a separately preregistered, watchdog-bounded GPU3
-   incumbent-control health diagnostic with atomic phase evidence; only a clean
-   result may authorize a fresh full two-GPU operator campaign. See the
+   control stopped at its first warmup synchronization before publishing a
+   packet, so that campaign remains infrastructure-invalid/incomplete, not a
+   qualification or candidate rejection. A fresh-root watchdog diagnostic now
+   establishes a valid GPU3 stock-control health failure: exact stage/device/maps
+   gates passed, ten asynchronous FA calls returned, `sync-enter` was sealed,
+   `sync-return` never appeared, and the 60-second timeout cleanup verified an
+   empty process group. Passive same-window kernel evidence records repeated
+   `xe 0000:47:00.0` timeouts and resets, including one naming the exact sealed
+   worker PID. Preserve both roots; do not retry, carry GPU2 evidence forward,
+   run a candidate/model/full-25 arm, or infer timing/correctness. Any privileged
+   host-wide all-four-B70 `xe` recovery needs separate authorization and must
+   follow the prerequisite and post-reload gates in `docs/local-ops.md`; after
+   that, only a newly preregistered fresh-root incumbent-control health test is
+   defensible. See the
    [Q64 x K32 preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-operator-prereg.md)
-   and [stopped result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-operator-result.md).
+   and [stopped result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-operator-result.md),
+   plus the [GPU3 health preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-gpu3-incumbent-control-health-prereg.md)
+   and [terminal result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-gpu3-incumbent-control-health-result.md).
    The two-B70, 15-GiB host remains source/op-audit only under this local
    four-B70 contract.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
