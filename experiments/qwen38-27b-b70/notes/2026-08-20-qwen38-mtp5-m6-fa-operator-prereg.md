@@ -6,6 +6,15 @@ Status: **implemented, CPU/static-tested, not launched**. No candidate stage or
 candidate manifest is authorized yet. This operator screen does not start
 vLLM, does not touch the model, and does not authorize a full-25 endpoint arm.
 
+The first immutable build root, ending in
+`qwen38-m6-head256-q8k64-attn-override-20260820`, is preserved as an
+infrastructure-invalid attempt. Configuration stopped before either candidate
+object compiled because Git rejected CMake's oneDNN checkout on the
+root-owned USB mount. The helper now supplies one exact process-local
+`safe.directory` for that checkout without changing global Git configuration.
+The attempt is not a kernel result and must not be reused or overwritten; the
+next command uses a new `-r2` root.
+
 ## Question and bounded scope
 
 The next candidate is allowed to change only the staged Intel FlashAttention
@@ -90,7 +99,7 @@ SHA-256 manifest and bind the build helper, the candidate DSO, and source patch
 `vllm-xpu-kernels-qwen38-m6-head256-q8k64-chunk-prefill-20260820.patch` at
 `06467757a7482ad0e3225c9a59ce3d2de144453a608016737c7a24dbe48b5fc1`.
 The build helper itself is pinned at
-`3f564e90f816ed80efff51b3b2cf04f62f077f5daab9b59c9d2a40563d0c41e9`.
+`abf3701374d658c5d2fe1d6ef16a659c2955147eb65cd6f74f628d4f8278f4b1`.
 The build-input manifest must also bind its full graph manifest, whose entries
 and hashes must exactly cover every regular file under the candidate stage's
 `vllm_xpu_kernels/` tree.
@@ -222,9 +231,9 @@ The scripts are:
 - [`../scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh`](../scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh)
 
 Frozen prelaunch bytes are qualifier
-`0b7dcc70e8d3e65f8b27ccc39586dbddef3c0b1feebdb12d8d0b41fd84d28dee`
+`366534989a41ee5a3823d0c897f26fc1b4bb622946e94f895ffc0141faf5c6cf`
 and driver
-`6d5f7c297bafcb0657d361d195cce744c2f4e81abb0fa857467a3beac3cf573e`.
+`0c05f5625d934f589bcacf0017046fc94b7fda24d117f40681315d2da8dcb95b`.
 The driver independently hardcodes the qualifier SHA; every run packet records
 both actual bytes plus the clean lab commit.
 
@@ -236,7 +245,7 @@ as a separate action:
 ```bash
 builder=experiments/qwen38-27b-b70/scripts/build-qwen38-m6-head256-q8k64-attn-override-20260820.sh
 driver=experiments/qwen38-27b-b70/scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh
-build_root=/mnt/usb-models/llm-runtime/qwen38-m6-head256-q8k64-attn-override-20260820
+build_root=/mnt/usb-models/llm-runtime/qwen38-m6-head256-q8k64-attn-override-20260820-r2
 root=/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/diagnostics/qwen38-mtp5-m6-fa-candidate-abba-20260820
 candidate_manifest="$build_root/qwen38-m6-head256-q8k64-candidate-stage.json"
 

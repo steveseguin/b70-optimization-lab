@@ -14,6 +14,9 @@ MODULE_PATH = Path(__file__).with_name("qwen38_mtp5_m6_fa_operator.py")
 DRIVER_PATH = Path(__file__).with_name(
     "run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh"
 )
+HELPER_PATH = Path(__file__).with_name(
+    "build-qwen38-m6-head256-q8k64-attn-override-20260820.sh"
+)
 SPEC = importlib.util.spec_from_file_location("qwen38_mtp5_m6_fa_operator", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 QUALIFIER = importlib.util.module_from_spec(SPEC)
@@ -293,6 +296,13 @@ class QualifierContractTests(unittest.TestCase):
         self.assertIn(".runtime_identity.campaign_driver_sha256 == $driver_sha", source)
         self.assertIn(".runtime_identity.lab_repo_head == $repo_head", source)
         self.assertLess(source.index("jq -e"), source.index('exec "$python"'))
+
+    def test_build_uses_only_process_local_git_safety_override(self) -> None:
+        source = HELPER_PATH.read_text(encoding="utf-8")
+        self.assertIn("export GIT_CONFIG_COUNT=1", source)
+        self.assertIn("export GIT_CONFIG_KEY_0=safe.directory", source)
+        self.assertIn('export GIT_CONFIG_VALUE_0="$stage/.deps/onednn-src"', source)
+        self.assertNotIn("git config --global", source)
 
     def test_strict_json_rejects_duplicate_keys_and_nan(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

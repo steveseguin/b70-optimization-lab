@@ -206,6 +206,13 @@ fi
 export VLLM_XPU_AOT_DEVICES=$aot_devices
 export VLLM_XPU_XE2_AOT_DEVICES=$aot_devices
 export VLLM_CUTLASS_SRC_DIR="$stage/.deps/cutlass-sycl-src"
+# The USB runtime tree is mounted with root ownership even for files created by
+# this user.  CMake's oneDNN FetchContent checkout therefore needs one exact,
+# process-local safe.directory entry.  Do not mutate the user's global Git
+# configuration or admit any other directory.
+export GIT_CONFIG_COUNT=1
+export GIT_CONFIG_KEY_0=safe.directory
+export GIT_CONFIG_VALUE_0="$stage/.deps/onednn-src"
 cmake -S "$stage" -B "$build" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_TOOLCHAIN_FILE="$stage/cmake/toolchain.cmake" \
