@@ -33,7 +33,7 @@ CAMPAIGN_SHA256 = "7577f9313b60d4bb51b328eb63608ab8c3bf9af31b1e84e1390164f71ee1e
 REMOTE_REPO = Path("/home/steve/b70-optimization-lab")
 REMOTE_PYTHON = Path("/home/steve/.venvs/vllm-xpu/bin/python")
 RESULT_ROOT = Path(
-    "/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r2"
+    "/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r3"
 )
 EXPECTED_BOOT_ID = "a6cad22f-2685-43b7-8950-c0c771f73d99"
 EXPECTED_STAGE_INVENTORY_SHA256 = (
@@ -46,8 +46,11 @@ KV_LENGTH = 128
 EXPECTED_FIXTURE_SHA256 = (
     "0acb368f76405cfab88e47944437d0399bce0866fe9452096d3d5e0a2c9570cd"
 )
-EXPECTED_ORACLE_SHA256 = (
-    "5a9759d1bf2b3eeea8eb4b34ba40e259d7e356285b28f0edcd36bda4a92e2a2e"
+R2_OBSERVED_ORACLE_SHA256 = (
+    "eb71753ec76de2390e25f5bebacecf54cb63f7966311cdd6548a5ed03638364a"
+)
+R2_OBSERVED_OUTPUT_SHA256 = (
+    "c3e022a5e724574d06e2388e33e2e29c4b1f8630f2b7eb236ffc5e349fe9c403"
 )
 
 PLAN = (
@@ -85,6 +88,67 @@ STATIC_RUNTIME_CANDIDATE_PATHS = {
     ),
     "libze_loader.so.1.28.6": "/usr/lib/x86_64-linux-gnu/libze_loader.so.1.28.6",
 }
+# R2 observed these exact portable raw/canonical identities before and after
+# its first control call. Device/inode values remain live same-boot facts: each
+# arm binds them to stat(2), and comparison requires the full rows to agree.
+OBSERVED_RUNTIME_LIBRARIES = (
+    {
+        "basename": "libsycl.so.8",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libsycl.so.8",
+        "mapped_basename": "libsycl.so.8",
+        "mapped_path": "/home/steve/.venvs/vllm-xpu/lib/libsycl.so.8",
+        "sha256": "0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f",
+    },
+    {
+        "basename": "libur_adapter_level_zero.so.0",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_level_zero.so.0",
+        "mapped_basename": "libur_adapter_level_zero.so.0",
+        "mapped_path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_level_zero.so.0",
+        "sha256": "ceecac1cb3124f15b9a319d4bfc156eed49068467564b8210f2f0330aa0911e8",
+    },
+    {
+        "basename": "libur_adapter_level_zero_v2.so.0",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_level_zero_v2.so.0",
+        "mapped_basename": "libur_adapter_level_zero_v2.so.0",
+        "mapped_path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_level_zero_v2.so.0",
+        "sha256": "f3158824fcd18353570424b5ea4e1fe8b3618f052546601cef1d0d40c73d3ada",
+    },
+    {
+        "basename": "libur_adapter_opencl.so.0",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_opencl.so.0",
+        "mapped_basename": "libur_adapter_opencl.so.0",
+        "mapped_path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_opencl.so.0",
+        "sha256": "5465c59930f720ba550a7459ec4268e8d999d1f2e5992c5523510ac7aef90d05",
+    },
+    {
+        "basename": "libur_loader.so.0",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libur_loader.so.0",
+        "mapped_basename": "libur_loader.so.0",
+        "mapped_path": "/home/steve/.venvs/vllm-xpu/lib/libur_loader.so.0",
+        "sha256": "68e273791752638dfad1ce3bb002b0ed8d00ceee21e491cd46dd0668d716bfa0",
+    },
+    {
+        "basename": "libze_intel_gpu.so.1.15.38646",
+        "path": "/usr/lib/x86_64-linux-gnu/libze_intel_gpu.so.1.15.38646",
+        "mapped_basename": "libze_intel_gpu.so.1.15.38646",
+        "mapped_path": "/usr/lib/x86_64-linux-gnu/libze_intel_gpu.so.1.15.38646",
+        "sha256": "dff06fa9ab58a84767d4225eceb6c3225995552836b0e28b986d852a2e4e0180",
+    },
+    {
+        "basename": "libze_loader.so.1.28.6",
+        "path": "/usr/lib/x86_64-linux-gnu/libze_loader.so.1.28.6",
+        "mapped_basename": "libze_loader.so.1.28.6",
+        "mapped_path": "/usr/lib/x86_64-linux-gnu/libze_loader.so.1.28.6",
+        "sha256": "5c156f00718f80f7e75964fa729e811c7b486778478d2fc318cc77751e1a0bbd",
+    },
+    {
+        "basename": "libze_tracing_layer.so.1.28.6",
+        "path": "/usr/lib/x86_64-linux-gnu/libze_tracing_layer.so.1.28.6",
+        "mapped_basename": "libze_tracing_layer.so.1.28.6",
+        "mapped_path": "/usr/lib/x86_64-linux-gnu/libze_tracing_layer.so.1.28.6",
+        "sha256": "d9adf7afcd0489d8dd56078df4c6dc808e55a074d243e1d04b5fc40e1a191662",
+    },
+)
 EXPECTED_DEVICES = {
     0: {
         "uuid": "00000000-0000-0003-0000-0000e2238086",
@@ -799,6 +863,12 @@ def _runtime_snapshot() -> dict[str, Any]:
     }
 
 
+def _portable_runtime_rows(libraries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Project map rows onto the r2-observed portable identity."""
+    fields = ("basename", "path", "mapped_basename", "mapped_path", "sha256")
+    return [{field: item[field] for field in fields} for item in libraries]
+
+
 def validate_runtime_snapshot(value: Any, where: str) -> dict[str, Any]:
     snapshot = _require_exact_keys(
         value,
@@ -871,7 +941,50 @@ def validate_runtime_snapshot(value: Any, where: str) -> dict[str, Any]:
     }
     if snapshot["expected_matches"] != expected_matches:
         raise ContractError(f"{where}: static match summary differs")
+    # Equality with the r2-observed portable rows is a comparison-level
+    # question with a durable valid-negative outcome, never an arm gate.
     return snapshot
+
+
+def validate_correctness_summary(
+    value: Any, qualifier: Any, where: str
+) -> dict[str, Any]:
+    correctness = _require_exact_keys(
+        value,
+        {
+            "kv_length",
+            "fixture_seed",
+            "fixture_sha256",
+            "output_sha256",
+            "oracle_sha256",
+            "max_abs_diff",
+            "atol",
+            "rtol",
+            "passed",
+        },
+        where,
+    )
+    if (
+        correctness["kv_length"] != KV_LENGTH
+        or correctness["fixture_seed"] != 380000 + KV_LENGTH
+        or correctness["passed"] is not True
+        or not isinstance(correctness["max_abs_diff"], (int, float))
+        or isinstance(correctness["max_abs_diff"], bool)
+        or not math.isfinite(correctness["max_abs_diff"])
+        or correctness["max_abs_diff"] < 0
+        or correctness["max_abs_diff"] > qualifier.BASE.ATOL
+        or correctness["fixture_sha256"] != EXPECTED_FIXTURE_SHA256
+    ):
+        raise ContractError(f"{where}: correctness summary differs")
+    _require_sha(correctness["output_sha256"], f"{where} output")
+    _require_sha(correctness["fixture_sha256"], f"{where} fixture")
+    _require_sha(correctness["oracle_sha256"], f"{where} oracle")
+    if (
+        correctness["atol"] != qualifier.BASE.ATOL
+        or correctness["rtol"] != qualifier.BASE.RTOL
+    ):
+        raise ContractError(f"{where}: correctness tolerances differ")
+    return correctness
 
 
 def validate_arm(path: Path, ordinal: int) -> dict[str, Any]:
@@ -1009,49 +1122,18 @@ def validate_arm(path: Path, ordinal: int) -> dict[str, Any]:
         sha256_file(Path(path)) != digest for path, digest in TORCH_FILES.items()
     ):
         raise ContractError(f"arm {ordinal}: runtime files changed")
-    validate_runtime_snapshot(
+    maps_before = validate_runtime_snapshot(
         packet["runtime_maps_before_first_operator"], f"arm {ordinal}.maps_before"
     )
-    validate_runtime_snapshot(
+    maps_after = validate_runtime_snapshot(
         packet["runtime_maps_after_first_return_before_correctness"],
         f"arm {ordinal}.maps_after",
     )
-    correctness = _require_exact_keys(
-        packet["correctness"],
-        {
-            "kv_length",
-            "fixture_seed",
-            "fixture_sha256",
-            "output_sha256",
-            "oracle_sha256",
-            "max_abs_diff",
-            "atol",
-            "rtol",
-            "passed",
-        },
-        f"arm {ordinal}.correctness",
+    if maps_before["libraries"] != maps_after["libraries"]:
+        raise ContractError(f"arm {ordinal}: before/after runtime maps differ")
+    validate_correctness_summary(
+        packet["correctness"], qualifier, f"arm {ordinal}.correctness"
     )
-    if (
-        correctness["kv_length"] != KV_LENGTH
-        or correctness["fixture_seed"] != 380000 + KV_LENGTH
-        or correctness["passed"] is not True
-        or not isinstance(correctness["max_abs_diff"], (int, float))
-        or isinstance(correctness["max_abs_diff"], bool)
-        or not math.isfinite(correctness["max_abs_diff"])
-        or correctness["max_abs_diff"] < 0
-        or correctness["max_abs_diff"] > qualifier.BASE.ATOL
-        or correctness["fixture_sha256"] != EXPECTED_FIXTURE_SHA256
-        or correctness["oracle_sha256"] != EXPECTED_ORACLE_SHA256
-    ):
-        raise ContractError(f"arm {ordinal}: correctness summary differs")
-    _require_sha(correctness["output_sha256"], f"arm {ordinal} output")
-    _require_sha(correctness["fixture_sha256"], f"arm {ordinal} fixture")
-    _require_sha(correctness["oracle_sha256"], f"arm {ordinal} oracle")
-    if (
-        correctness["atol"] != qualifier.BASE.ATOL
-        or correctness["rtol"] != qualifier.BASE.RTOL
-    ):
-        raise ContractError(f"arm {ordinal}: correctness tolerances differ")
     engagement = _require_exact_keys(
         packet["engagement"],
         {
@@ -2104,42 +2186,43 @@ def compare_command(args: argparse.Namespace) -> dict[str, Any]:
         <= terminal_packets[-1]["process"]["finished_time_ns"]
     ):
         raise ContractError("diagnostic overall scan chronology differs")
-    after_maps = [
-        {
-            item["basename"]: {"path": item["path"], "sha256": item["sha256"]}
-            for item in packet["runtime_maps_after_first_return_before_correctness"][
-                "libraries"
-            ]
-        }
+    after_rows = [
+        packet["runtime_maps_after_first_return_before_correctness"]["libraries"]
         for packet in packets
     ]
-    before_maps = [
-        {
-            item["basename"]: {"path": item["path"], "sha256": item["sha256"]}
-            for item in packet["runtime_maps_before_first_operator"]["libraries"]
-        }
-        for packet in packets
+    before_rows = [
+        packet["runtime_maps_before_first_operator"]["libraries"] for packet in packets
     ]
-    common = sorted(set.intersection(*(set(mapping) for mapping in after_maps)))
-    stable_common = {
-        name: after_maps[0][name]
-        for name in common
-        if all(mapping[name] == after_maps[0][name] for mapping in after_maps[1:])
-    }
-    expected_inventory = {
-        name: {"path": STATIC_RUNTIME_CANDIDATE_PATHS[name], "sha256": digest}
+    expected_inventory = list(OBSERVED_RUNTIME_LIBRARIES)
+    portable_maps_match = all(
+        _portable_runtime_rows(rows) == expected_inventory
+        for rows in (*before_rows, *after_rows)
+    )
+    runtime_rows_consistent = all(
+        before == after_rows[0] and after == after_rows[0]
+        for before, after in zip(before_rows, after_rows, strict=True)
+    )
+    exact_map_match = portable_maps_match and runtime_rows_consistent
+    passive_static_candidate_matches = {
+        name: any(
+            item["basename"] == name
+            and item["path"] == STATIC_RUNTIME_CANDIDATE_PATHS[name]
+            and item["sha256"] == digest
+            for item in expected_inventory
+        )
         for name, digest in sorted(STATIC_RUNTIME_CANDIDATES.items())
     }
-    static_candidate_matches = {
-        name: stable_common.get(name) == identity
-        for name, identity in expected_inventory.items()
-    }
-    exact_map_match = all(mapping == expected_inventory for mapping in after_maps)
-    observed_names = set().union(*(set(mapping) for mapping in after_maps))
+    oracle_sha256 = [packet["correctness"]["oracle_sha256"] for packet in packets]
+    output_sha256 = [packet["correctness"]["output_sha256"] for packet in packets]
+    oracle_consistent = len(set(oracle_sha256)) == 1
+    output_consistent = len(set(output_sha256)) == 1
+    passed = exact_map_match and oracle_consistent and output_consistent
     map_deltas = []
-    for ordinal, (before_map, after_map) in enumerate(
-        zip(before_maps, after_maps, strict=True), 1
+    for ordinal, (before_rows_one, after_rows_one) in enumerate(
+        zip(before_rows, after_rows, strict=True), 1
     ):
+        before_map = {item["basename"]: item for item in before_rows_one}
+        after_map = {item["basename"]: item for item in after_rows_one}
         map_deltas.append(
             {
                 "ordinal": ordinal,
@@ -2159,12 +2242,16 @@ def compare_command(args: argparse.Namespace) -> dict[str, Any]:
             }
         )
     result = {
-        "schema": "qwen38-q64k32-remote-runtime-map-comparison-v1",
-        "passed": exact_map_match,
+        "schema": "qwen38-q64k32-remote-runtime-map-comparison-v2",
+        "passed": passed,
         "classification": (
             "valid-no-clock-runtime-map-match"
-            if exact_map_match
-            else "valid-no-clock-runtime-map-mismatch"
+            if passed
+            else (
+                "valid-no-clock-runtime-map-instability"
+                if not exact_map_match
+                else "valid-no-clock-correctness-instability"
+            )
         ),
         "authorization": {
             "repo_head": post_authorization["repo_head"],
@@ -2178,15 +2265,36 @@ def compare_command(args: argparse.Namespace) -> dict[str, Any]:
             sha256_file(RESULT_ROOT / f"arm-{ordinal:02d}.json")
             for ordinal in range(1, 5)
         ],
-        "stable_common_runtime_libraries": stable_common,
-        "expected_runtime_libraries": expected_inventory,
+        "runtime_libraries": {
+            "expected_r2_observed_portable_rows": expected_inventory,
+            "common_full_rows": after_rows[0] if runtime_rows_consistent else None,
+            "portable_rows_match": portable_maps_match,
+            "full_rows_same_before_after_and_across_processes": (
+                runtime_rows_consistent
+            ),
+        },
         "before_to_after_runtime_map_deltas": map_deltas,
-        "static_candidate_matches": static_candidate_matches,
-        "static_candidate_map_complete": exact_map_match,
-        "missing_expected_basenames": sorted(set(expected_inventory) - observed_names),
-        "unexpected_relevant_basenames": sorted(
-            observed_names - set(expected_inventory)
-        ),
+        "passive_static_intent": {
+            "candidate_libraries": dict(sorted(STATIC_RUNTIME_CANDIDATES.items())),
+            "candidate_paths": dict(sorted(STATIC_RUNTIME_CANDIDATE_PATHS.items())),
+            "exact_canonical_path_sha_matches": passive_static_candidate_matches,
+        },
+        "correctness_consistency": {
+            "oracle_sha256_by_ordinal": oracle_sha256,
+            "output_sha256_by_ordinal": output_sha256,
+            "oracle_sha256_consistent": oracle_consistent,
+            "output_sha256_consistent": output_consistent,
+            "common_oracle_sha256": oracle_sha256[0] if oracle_consistent else None,
+            "common_output_sha256": output_sha256[0] if output_consistent else None,
+            "common_oracle_matches_r2_observation": (
+                oracle_consistent and oracle_sha256[0] == R2_OBSERVED_ORACLE_SHA256
+            ),
+            "common_output_matches_r2_observation": (
+                output_consistent and output_sha256[0] == R2_OBSERVED_OUTPUT_SHA256
+            ),
+            "r2_observed_oracle_sha256": R2_OBSERVED_ORACLE_SHA256,
+            "r2_observed_output_sha256": R2_OBSERVED_OUTPUT_SHA256,
+        },
         "clock_mutation_commands_invoked": False,
         "absolute_timing_or_endpoint_claim_authorized": False,
     }

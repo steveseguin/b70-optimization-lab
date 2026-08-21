@@ -2,10 +2,13 @@
 
 Date: 2026-08-21
 
-Status: **r1 invalid and terminal; source-only r2 correction not yet run**. R1
-stopped before its first operator call on two harness false-fails documented in
+Status: **r1 and r2 invalid and terminal; source-only r3 correction not yet
+run**. R1 stopped before its first operator call on two harness false-fails documented in
 [`2026-08-21-qwen38-q64k32-remote-runtime-map-r1-invalid.md`](2026-08-21-qwen38-q64k32-remote-runtime-map-r1-invalid.md).
-R2 preserves the scientific contract below under a fresh result root. This
+R2 reached and passed the first control call but was rejected by a nonportable
+cross-host CPU-oracle byte pin, as documented in
+[`2026-08-21-qwen38-q64k32-remote-runtime-map-r2-invalid.md`](2026-08-21-qwen38-q64k32-remote-runtime-map-r2-invalid.md).
+R3 preserves the corrected scientific contract below under a fresh result root. This
 diagnostic is separate
 from, and cannot authorize, the blocked 16-arm clock campaign in
 [`2026-08-21-qwen38-mtp5-m6-fa-q64k32-remote-clock-prereg.md`](2026-08-21-qwen38-mtp5-m6-fa-q64k32-remote-clock-prereg.md).
@@ -51,10 +54,13 @@ The worker also binds the exact Python executable, Python/Torch versions,
 selected Torch files, clean environment, logical `xpu:0` B70 properties, and
 physical affinity index. The
 call must honor the supplied output, pass the existing independent FP16 CPU
-oracle with the frozen KV128 fixture/oracle hashes and production
+oracle with the frozen KV128 fixture and production
 `atol=0.02, rtol=0.01`, satisfy the additional conservative
 `max_abs_diff <= 0.02` gate, and produce the exact role-specific policy marker.
-There is no graph,
+The oracle and output digests must be valid per arm; comparison requires each
+digest to be bitwise identical across all four same-host fresh processes and
+reports whether the common digests equal r2. A cross-host oracle digest is not
+a per-arm correctness gate. There is no graph,
 timing, throughput, endpoint, or acceptance claim.
 
 The source requires the same boot observed by the passive scan, clean remote
@@ -63,12 +69,13 @@ The source requires the same boot observed by the passive scan, clean remote
 and a fresh exact result root:
 
 ```text
-/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r2
+/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r3
 ```
 
-The immutable r1 root remains
-`/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r1`; it must
-not be repaired, reused, or retried.
+The immutable r1 and r2 roots remain
+`/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r1` and
+`/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r2`; neither
+may be repaired, reused, or retried.
 
 Before the sequence, before every supervisor, again inside every worker before
 its imports/operator call, and at comparison time, the source passively
@@ -104,11 +111,15 @@ running the overall scan. Any timeout, signal, correctness
 failure, malformed output, source/stage mismatch, boot change, or live process
 group stops the sequence. A final comparison accepts only four valid success
 terminals, the immutable overall scan, four distinct worker processes in exact
-chronological order, and requires every post-call map to equal the exact five
-statically derived canonical path/SHA identities. It preserves every
-before-to-after map delta. A structurally valid four-arm inventory whose
-canonical path/SHA or basename set differs from the frozen five-library
-expectation is a durable valid negative and the comparison exits nonzero. A raw mapping whose
+chronological order, and requires every pre/post-call map to equal the eight
+r2-observed portable raw/canonical basename/path/SHA identities. Each arm must
+have identical before/after full rows and all four same-boot processes must
+agree on the full rows, including live device/inode evidence. It preserves every
+before-to-after map delta and separately reports the earlier five-library
+passive intent. A structurally valid four-arm inventory whose portable identity
+or same-boot full rows differ is a durable valid negative and the comparison
+exits nonzero. Oracle or output digest disagreement across the four otherwise
+valid arms is likewise a durable consistency negative. A raw mapping whose
 device/inode disagrees with its live canonical target is instead an invalid
 arm and stops before comparison. Terminal
 publication uses the frozen final signal fence and a late-signal sidecar.
@@ -132,21 +143,25 @@ main campaign's
 
 - diagnostic worker/supervisor:
   `scripts/qwen38_q64k32_remote_runtime_map_diagnostic.py`
-  (`a78a2c1953952578ed7b63f0ec6d96f5c423e5199ad034c69cb002fe4a0191db`);
+  (`11156bbdbb687cc9ecec9a58918d2c294c60721436a9ee7d1f6b11aed5a2cead`);
 - no-clock driver:
   `scripts/run-20260821-qwen38-q64k32-remote-runtime-map-diagnostic.sh`
-  (`f35c7dd564c0e8279c706e6003fcba44bdae4922bcb94eec72b6b8a65c410c1e`,
+  (`f0865bea674c4f7ac6a1affa225b694b3f81dbc7c35bf405042f1923526f50d3`,
   mode 0755);
 - CPU tests:
   `scripts/test_qwen38_q64k32_remote_runtime_map_diagnostic.py`
-  (`40a3cf207e3de994d8fbe614231fdf55fc4bc492826e8fc449850655add50b71`).
+  (`5fbd8acd6eab2c12ce2716f9c46e92cf80387e2a460249274af1d81fd8003cb9`).
 
 The diagnostic source pins the revised campaign/watchdog source at
 `7577f9313b60d4bb51b328eb63608ab8c3bf9af31b1e84e1390164f71ee1e2fb`.
-Twenty-two focused CPU tests plus the existing 48-test campaign suite must pass,
+Twenty-five focused CPU tests plus the existing 48-test campaign suite must pass,
 along with Ruff lint/format, shell syntax, strict-JSON, link, and diff checks.
+Independent review moved the frozen r2-observed portable-row equality out of
+arm-level snapshot validation: per this preregistration it is enforced only at
+comparison, where a differing portable identity is a durable valid negative
+rather than an invalid arm.
 
-R1 is permanently invalid and closed. R2 remains unrun until this correction
+R1 and r2 are permanently invalid and closed. R3 remains unrun until this correction
 passes independent review, is committed/pushed, and the reference host advances
 cleanly to that exact commit. The later A1 campaign-authority commit must freeze
 valid resulting worker-map evidence and implement the strict direct-child

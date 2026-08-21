@@ -98,6 +98,19 @@ class DiagnosticContractTests(unittest.TestCase):
             "live_scan": cls._valid_live_scan(),
         }
 
+    @staticmethod
+    def _full_runtime_rows() -> list[dict[str, object]]:
+        return [
+            dict(
+                row,
+                mapped_device="103:04",
+                mapped_inode=1000 + index,
+                canonical_device="103:04",
+                canonical_inode=1000 + index,
+            )
+            for index, row in enumerate(D.OBSERVED_RUNTIME_LIBRARIES)
+        ]
+
     def test_import_is_cpu_safe_and_plan_is_exact(self) -> None:
         self.assertNotIn("torch", D.sys.modules)
         self.assertTrue(D.DIAGNOSTIC_AUTHORIZED)
@@ -115,7 +128,7 @@ class DiagnosticContractTests(unittest.TestCase):
         self.assertEqual(D.GRACE_SECONDS, 10.0)
         self.assertEqual(
             D.RESULT_ROOT,
-            Path("/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r2"),
+            Path("/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r3"),
         )
 
     def test_static_runtime_candidate_map_is_exact(self) -> None:
@@ -132,7 +145,21 @@ class DiagnosticContractTests(unittest.TestCase):
         for digest in D.STATIC_RUNTIME_CANDIDATES.values():
             self.assertRegex(digest, r"^[0-9a-f]{64}$")
         self.assertRegex(D.EXPECTED_FIXTURE_SHA256, r"^[0-9a-f]{64}$")
-        self.assertRegex(D.EXPECTED_ORACLE_SHA256, r"^[0-9a-f]{64}$")
+        self.assertRegex(D.R2_OBSERVED_ORACLE_SHA256, r"^[0-9a-f]{64}$")
+        self.assertRegex(D.R2_OBSERVED_OUTPUT_SHA256, r"^[0-9a-f]{64}$")
+        self.assertEqual(len(D.OBSERVED_RUNTIME_LIBRARIES), 8)
+        self.assertEqual(
+            [row["basename"] for row in D.OBSERVED_RUNTIME_LIBRARIES],
+            sorted(row["basename"] for row in D.OBSERVED_RUNTIME_LIBRARIES),
+        )
+        self.assertEqual(
+            D.R2_OBSERVED_ORACLE_SHA256,
+            "eb71753ec76de2390e25f5bebacecf54cb63f7966311cdd6548a5ed03638364a",
+        )
+        self.assertEqual(
+            D.R2_OBSERVED_OUTPUT_SHA256,
+            "c3e022a5e724574d06e2388e33e2e29c4b1f8630f2b7eb236ffc5e349fe9c403",
+        )
 
     def test_strict_json_rejects_duplicate_and_nonfinite(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -146,6 +173,42 @@ class DiagnosticContractTests(unittest.TestCase):
             with self.assertRaisesRegex(D.ContractError, "nonfinite"):
                 D.load_json(nonfinite)
 
+    def test_per_arm_correctness_uses_numeric_gate_not_cross_host_oracle_pin(
+        self,
+    ) -> None:
+        qualifier = mock.Mock()
+        qualifier.BASE.ATOL = 0.02
+        qualifier.BASE.RTOL = 0.01
+        summary = {
+            "kv_length": 128,
+            "fixture_seed": 380128,
+            "fixture_sha256": D.EXPECTED_FIXTURE_SHA256,
+            "output_sha256": D.R2_OBSERVED_OUTPUT_SHA256,
+            "oracle_sha256": D.R2_OBSERVED_ORACLE_SHA256,
+            "max_abs_diff": 0.00048828125,
+            "atol": 0.02,
+            "rtol": 0.01,
+            "passed": True,
+        }
+        self.assertEqual(
+            D.validate_correctness_summary(summary, qualifier, "fixture"), summary
+        )
+        alternate_oracle = dict(summary, oracle_sha256="a" * 64)
+        self.assertEqual(
+            D.validate_correctness_summary(
+                alternate_oracle, qualifier, "alternate-host"
+            ),
+            alternate_oracle,
+        )
+        with self.assertRaisesRegex(D.ContractError, "correctness summary"):
+            D.validate_correctness_summary(
+                dict(summary, max_abs_diff=0.0200001), qualifier, "too-far"
+            )
+        with self.assertRaisesRegex(D.ContractError, "fixture"):
+            D.validate_correctness_summary(
+                dict(summary, fixture_sha256="0" * 64), qualifier, "wrong-fixture"
+            )
+
     def test_runtime_snapshot_binds_exact_basename_path_and_hash(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             library = Path(directory) / "libsycl.so.8.0.0"
@@ -158,15 +221,30 @@ class DiagnosticContractTests(unittest.TestCase):
                 "0800-0900 rw-s 00000000 00:06 123 /dev/dri/renderD129\n"
                 f"1000-2000 r-xp 00000000 {device} {stat.st_ino} {soname}\n"
             )
+            portable = {
+                "basename": library.name,
+                "path": str(library),
+                "mapped_basename": soname.name,
+                "mapped_path": str(soname),
+                "sha256": D.sha256_file(library),
+            }
             with mock.patch.object(Path, "read_text", return_value=maps):
                 packet = D._runtime_snapshot()
-            D.validate_runtime_snapshot(packet, "fixture")
+                # The snapshot differs from the frozen r2-observed rows, and
+                # arm-level validation must still accept it: portable-row
+                # drift is a comparison-level valid negative, not an arm gate.
+                self.assertNotEqual(
+                    D._portable_runtime_rows(packet["libraries"]),
+                    list(D.OBSERVED_RUNTIME_LIBRARIES),
+                )
+                D.validate_runtime_snapshot(packet, "fixture")
             self.assertEqual(len(packet["libraries"]), 1)
             self.assertEqual(packet["libraries"][0]["basename"], library.name)
             self.assertEqual(packet["libraries"][0]["path"], str(library))
             self.assertEqual(packet["libraries"][0]["mapped_path"], str(soname))
             self.assertEqual(packet["libraries"][0]["mapped_inode"], stat.st_ino)
             self.assertEqual(packet["libraries"][0]["sha256"], D.sha256_file(library))
+            self.assertEqual([portable], D._portable_runtime_rows(packet["libraries"]))
             packet["libraries"][0]["mapped_inode"] += 1
             with self.assertRaisesRegex(D.ContractError, "mapped library"):
                 D.validate_runtime_snapshot(packet, "forged")
@@ -726,18 +804,15 @@ printf 'UNREACHABLE\\n'
                     {
                         "authorization": authorization,
                         "process": {"pid": 1000 + ordinal},
-                        "runtime_maps_before_first_operator": {"libraries": []},
+                        "runtime_maps_before_first_operator": {
+                            "libraries": self._full_runtime_rows()
+                        },
                         "runtime_maps_after_first_return_before_correctness": {
-                            "libraries": [
-                                {
-                                    "basename": name,
-                                    "path": D.STATIC_RUNTIME_CANDIDATE_PATHS[name],
-                                    "sha256": digest,
-                                }
-                                for name, digest in sorted(
-                                    D.STATIC_RUNTIME_CANDIDATES.items()
-                                )
-                            ]
+                            "libraries": self._full_runtime_rows()
+                        },
+                        "correctness": {
+                            "oracle_sha256": D.R2_OBSERVED_ORACLE_SHA256,
+                            "output_sha256": D.R2_OBSERVED_OUTPUT_SHA256,
                         },
                     }
                 )
@@ -761,17 +836,17 @@ printf 'UNREACHABLE\\n'
                 )
             self.assertTrue(result["passed"])
             self.assertEqual(
-                result["stable_common_runtime_libraries"],
-                {
-                    name: {
-                        "path": D.STATIC_RUNTIME_CANDIDATE_PATHS[name],
-                        "sha256": digest,
-                    }
-                    for name, digest in sorted(D.STATIC_RUNTIME_CANDIDATES.items())
-                },
+                result["runtime_libraries"]["expected_r2_observed_portable_rows"],
+                list(D.OBSERVED_RUNTIME_LIBRARIES),
+            )
+            self.assertTrue(
+                result["correctness_consistency"]["oracle_sha256_consistent"]
+            )
+            self.assertTrue(
+                result["correctness_consistency"]["output_sha256_consistent"]
             )
 
-    def test_compare_classifies_one_path_mismatch_as_valid_negative(self) -> None:
+    def test_compare_classifies_one_live_inode_mismatch_as_valid_negative(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             terminals = [
@@ -791,23 +866,22 @@ printf 'UNREACHABLE\\n'
                         },
                     }
                 )
-                libraries = [
-                    {
-                        "basename": name,
-                        "path": D.STATIC_RUNTIME_CANDIDATE_PATHS[name],
-                        "sha256": digest,
-                    }
-                    for name, digest in sorted(D.STATIC_RUNTIME_CANDIDATES.items())
-                ]
+                libraries = self._full_runtime_rows()
                 if ordinal == 4:
-                    libraries[0] = dict(libraries[0], path="/wrong/runtime.so")
+                    libraries[0] = dict(libraries[0], mapped_inode=9999)
                 arm_packets.append(
                     {
                         "authorization": authorization,
                         "process": {"pid": 2000 + ordinal},
-                        "runtime_maps_before_first_operator": {"libraries": []},
+                        "runtime_maps_before_first_operator": {
+                            "libraries": self._full_runtime_rows()
+                        },
                         "runtime_maps_after_first_return_before_correctness": {
                             "libraries": libraries
+                        },
+                        "correctness": {
+                            "oracle_sha256": D.R2_OBSERVED_ORACLE_SHA256,
+                            "output_sha256": D.R2_OBSERVED_OUTPUT_SHA256,
                         },
                     }
                 )
@@ -831,8 +905,157 @@ printf 'UNREACHABLE\\n'
                 )
             self.assertFalse(result["passed"])
             self.assertEqual(
-                result["classification"], "valid-no-clock-runtime-map-mismatch"
+                result["classification"], "valid-no-clock-runtime-map-instability"
             )
+
+    def test_compare_classifies_portable_drift_from_r2_rows_as_valid_negative(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            terminals = [
+                root / f"arm-{ordinal:02d}.terminal.json" for ordinal in range(1, 5)
+            ]
+            terminal_packets = []
+            arm_packets = []
+
+            def _drifted_rows() -> list[dict[str, object]]:
+                rows = self._full_runtime_rows()
+                rows[0] = dict(rows[0], sha256="d" * 64)
+                return rows
+
+            for ordinal in range(1, 5):
+                authorization = self._valid_authorization()
+                authorization["live_scan"]["captured_time_ns"] = ordinal * 100
+                terminal_packets.append(
+                    {
+                        "authorization": authorization,
+                        "process": {
+                            "started_time_ns": ordinal * 100 + 10,
+                            "finished_time_ns": ordinal * 100 + 20,
+                        },
+                    }
+                )
+                arm_packets.append(
+                    {
+                        "authorization": authorization,
+                        "process": {"pid": 4000 + ordinal},
+                        "runtime_maps_before_first_operator": {
+                            "libraries": _drifted_rows()
+                        },
+                        "runtime_maps_after_first_return_before_correctness": {
+                            "libraries": _drifted_rows()
+                        },
+                        "correctness": {
+                            "oracle_sha256": D.R2_OBSERVED_ORACLE_SHA256,
+                            "output_sha256": D.R2_OBSERVED_OUTPUT_SHA256,
+                        },
+                    }
+                )
+            preflight = {"authorization": self._valid_authorization()}
+            preflight["authorization"]["live_scan"]["captured_time_ns"] = 1
+            post = self._valid_authorization()
+            post["live_scan"]["captured_time_ns"] = 1000
+            with (
+                mock.patch.object(D, "RESULT_ROOT", root),
+                mock.patch.object(D, "diagnostic_preflight", return_value=post),
+                mock.patch.object(D, "validate_preflight_scan", return_value=preflight),
+                mock.patch.object(D, "validate_terminal", side_effect=terminal_packets),
+                mock.patch.object(D, "validate_arm", side_effect=arm_packets),
+                mock.patch.object(D, "sha256_file", return_value="f" * 64),
+            ):
+                result = D.compare_command(
+                    argparse.Namespace(
+                        output=str(root / "comparison.json"),
+                        terminals=[str(path) for path in terminals],
+                    )
+                )
+            self.assertFalse(result["passed"])
+            self.assertEqual(
+                result["classification"], "valid-no-clock-runtime-map-instability"
+            )
+            self.assertFalse(result["runtime_libraries"]["portable_rows_match"])
+            self.assertTrue(
+                result["runtime_libraries"][
+                    "full_rows_same_before_after_and_across_processes"
+                ]
+            )
+            self.assertTrue(
+                result["correctness_consistency"]["oracle_sha256_consistent"]
+            )
+            self.assertTrue(
+                result["correctness_consistency"]["output_sha256_consistent"]
+            )
+
+    def test_compare_rejects_cross_process_oracle_or_output_instability(self) -> None:
+        for field in ("oracle_sha256", "output_sha256"):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                terminals = [
+                    root / f"arm-{ordinal:02d}.terminal.json" for ordinal in range(1, 5)
+                ]
+                terminal_packets = []
+                arm_packets = []
+                for ordinal in range(1, 5):
+                    authorization = self._valid_authorization()
+                    authorization["live_scan"]["captured_time_ns"] = ordinal * 100
+                    terminal_packets.append(
+                        {
+                            "authorization": authorization,
+                            "process": {
+                                "started_time_ns": ordinal * 100 + 10,
+                                "finished_time_ns": ordinal * 100 + 20,
+                            },
+                        }
+                    )
+                    correctness = {
+                        "oracle_sha256": D.R2_OBSERVED_ORACLE_SHA256,
+                        "output_sha256": D.R2_OBSERVED_OUTPUT_SHA256,
+                    }
+                    if ordinal == 4:
+                        correctness[field] = "0" * 64
+                    rows = self._full_runtime_rows()
+                    arm_packets.append(
+                        {
+                            "authorization": authorization,
+                            "process": {"pid": 3000 + ordinal},
+                            "runtime_maps_before_first_operator": {"libraries": rows},
+                            "runtime_maps_after_first_return_before_correctness": {
+                                "libraries": [dict(row) for row in rows]
+                            },
+                            "correctness": correctness,
+                        }
+                    )
+                preflight = {"authorization": self._valid_authorization()}
+                preflight["authorization"]["live_scan"]["captured_time_ns"] = 1
+                post = self._valid_authorization()
+                post["live_scan"]["captured_time_ns"] = 1000
+                with (
+                    mock.patch.object(D, "RESULT_ROOT", root),
+                    mock.patch.object(D, "diagnostic_preflight", return_value=post),
+                    mock.patch.object(
+                        D, "validate_preflight_scan", return_value=preflight
+                    ),
+                    mock.patch.object(
+                        D, "validate_terminal", side_effect=terminal_packets
+                    ),
+                    mock.patch.object(D, "validate_arm", side_effect=arm_packets),
+                    mock.patch.object(D, "sha256_file", return_value="f" * 64),
+                ):
+                    result = D.compare_command(
+                        argparse.Namespace(
+                            output=str(root / "comparison.json"),
+                            terminals=[str(path) for path in terminals],
+                        )
+                    )
+                self.assertFalse(result["passed"])
+                self.assertEqual(
+                    result["classification"],
+                    "valid-no-clock-correctness-instability",
+                )
+                self.assertFalse(
+                    result["correctness_consistency"][f"{field}_consistent"]
+                )
 
 
 if __name__ == "__main__":

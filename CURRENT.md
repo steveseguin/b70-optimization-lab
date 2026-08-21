@@ -417,8 +417,14 @@ loaded service.
    and [stopped result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-operator-result.md),
    plus the [GPU3 health preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-gpu3-incumbent-control-health-prereg.md)
    and [terminal result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-gpu3-incumbent-control-health-result.md).
-   The two-B70, 15-GiB host remains source/op-audit only under this local
-   four-B70 contract.
+   On the separate two-B70, 15-GiB reference host, the no-clock runtime-map r2
+   reached and numerically passed its first stock operator call but was
+   procedurally rejected by a nonportable measuring-host CPU-oracle byte pin.
+   Its single-arm eight-library map is report-only evidence; r3 is an
+   independently reviewed source-only correction and has not run. The remote 16-arm clock campaign
+   remains unauthorized, and the host must not run the full model. See the
+   [runtime-map preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q64k32-remote-runtime-map-diagnostic-prereg.md)
+   and [r2 invalid result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q64k32-remote-runtime-map-r2-invalid.md).
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.

@@ -255,7 +255,10 @@ The separately bounded, no-clock A0 runtime-map diagnostic is preregistered in
 [`../data/2026-08-21-qwen38-q64k32-remote-passive-enablement.json`](../data/2026-08-21-qwen38-q64k32-remote-passive-enablement.json)
 evidence packet. Its r1 attempt is a preserved
 [`invalid harness false-fail`](2026-08-21-qwen38-q64k32-remote-runtime-map-r1-invalid.md);
-the source-only r2 correction remains unrun. A valid future r2 can establish
+the separate r2 reached and numerically passed its first control operator but
+was procedurally rejected by a
+[`cross-host CPU-oracle byte-pin false-fail`](2026-08-21-qwen38-q64k32-remote-runtime-map-r2-invalid.md).
+The source-only r3 correction remains unrun. A valid future r3 can establish
 mapped runtime identities but cannot
 authorize this clock campaign; the launch and clock-writer gates below remain
 false.

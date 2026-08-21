@@ -90,6 +90,8 @@ The corrected source-only identities are:
 - CPU tests:
   `40a3cf207e3de994d8fbe614231fdf55fc4bc492826e8fc449850655add50b71`.
 
-R2 remains unrun and unauthorized pending independent review, commit/push,
-clean remote advancement to that exact commit, and a separate launch decision.
-It does not authorize the clock campaign.
+At the time this r1 packet was written, r2 was unrun and unauthorized pending
+independent review, commit/push, clean remote advancement, and a separate
+launch decision. It subsequently ran once and closed as a distinct
+[`cross-host CPU-oracle byte-pin false-fail`](2026-08-21-qwen38-q64k32-remote-runtime-map-r2-invalid.md).
+Neither result authorizes the clock campaign.

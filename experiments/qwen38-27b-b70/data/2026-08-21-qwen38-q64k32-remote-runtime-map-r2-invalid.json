@@ -1,0 +1,279 @@
+{
+  "artifact_boundary": {
+    "copied_into_repo": false,
+    "raw_files_persisted_remotely": true,
+    "remote_result_root": "/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r2",
+    "remote_result_root_aggregate_recipe": "find . -maxdepth 1 -type f -printf '%f\\0' | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum; standard DIGEST, two spaces, bare basename, newline records",
+    "remote_result_root_aggregate_sha256": "d88c90a1d6a1f252afec4bd50d9e1c88b4e7a5e6a0dcdc77fb583ce035af9632"
+  },
+  "artifact_inventory": {
+    "files": [
+      {
+        "mode": "0444",
+        "path": "arm-01.json",
+        "sha256": "23f4369ea3e73bfeb533589c7aadce596cb7cec2a071ebfe66b1565cb374f3dd",
+        "size_bytes": 15395
+      },
+      {
+        "mode": "0444",
+        "path": "arm-01.json.operator-stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_bytes": 0
+      },
+      {
+        "mode": "0444",
+        "path": "arm-01.supervisor.log",
+        "sha256": "ecbc13cc89cb41f022aec8cf9bcccf5745c60fdb2750c36faa406b003979237c",
+        "size_bytes": 16058
+      },
+      {
+        "mode": "0444",
+        "path": "arm-01.terminal.json",
+        "sha256": "a3778cd331570731d07b389f6fc8b701bb7106dc0c14d630667aa1c93b78f77d",
+        "size_bytes": 4309
+      },
+      {
+        "mode": "0444",
+        "path": "arm-01.terminal.json.phase-before-spawn.json",
+        "sha256": "d71da9afc56bce271ef234e093afe4e53b94631075b89a3859b6068315272fda",
+        "size_bytes": 265
+      },
+      {
+        "mode": "0444",
+        "path": "arm-01.terminal.json.phase-preflight.json",
+        "sha256": "6fdb8f0a693be1b609af6795e85973ebf11c16dba0d14100676fb6e1ca7cadd8",
+        "size_bytes": 2630
+      },
+      {
+        "mode": "0444",
+        "path": "arm-01.terminal.json.phase-spawned.json",
+        "sha256": "fcd2a0b967f00f89e4490883d96f44fa1d129867a1f6d172cb5bbe0a1243ea51",
+        "size_bytes": 331
+      },
+      {
+        "mode": "0444",
+        "path": "arm-01.terminal.json.phase-supervisor-started.json",
+        "sha256": "4fd648f58fbef3863446f15d9f969a70d95df4c471088fcfef5b1db9e18f0320",
+        "size_bytes": 271
+      },
+      {
+        "mode": "0444",
+        "path": "preflight-live-scan.json",
+        "sha256": "8307f2be94639d9827622c0ad72e17e8b7f5b655accbd957aa87145e86e8824a",
+        "size_bytes": 2542
+      }
+    ],
+    "regular_file_count": 9
+  },
+  "classification": "invalid-cross-host-cpu-oracle-byte-pin-false-fail",
+  "correctness_observation": {
+    "atol": 0.02,
+    "fixture_seed": 380128,
+    "fixture_sha256": "0acb368f76405cfab88e47944437d0399bce0866fe9452096d3d5e0a2c9570cd",
+    "kv_length": 128,
+    "max_abs_diff": 0.00048828125,
+    "numeric_oracle_passed": true,
+    "observed_cpu_oracle_sha256": "eb71753ec76de2390e25f5bebacecf54cb63f7966311cdd6548a5ed03638364a",
+    "output_sha256": "c3e022a5e724574d06e2388e33e2e29c4b1f8630f2b7eb236ffc5e349fe9c403",
+    "prior_local_cpu_oracle_sha256": "5a9759d1bf2b3eeea8eb4b34ba40e259d7e356285b28f0edcd36bda4a92e2a2e",
+    "rtol": 0.01,
+    "worker_packet_passed": true
+  },
+  "execution": {
+    "arm_packet_finished_time_ns": 1787314469228625833,
+    "comparison_invoked": false,
+    "driver_returncode": 1,
+    "run_invocation_count": 1,
+    "second_through_fourth_arms_started": false,
+    "worker_returncode": 0
+  },
+  "links": {
+    "chronological_note": "../notes/2026-08-21-qwen38-q64k32-remote-runtime-map-r2-invalid.md",
+    "preregistration": "../notes/2026-08-21-qwen38-q64k32-remote-runtime-map-diagnostic-prereg.md",
+    "r1_result": "2026-08-21-qwen38-q64k32-remote-runtime-map-r1-invalid.json"
+  },
+  "map_observation": {
+    "before_after_exact_within_arm_1": true,
+    "compact_portable_inventory_recipe": "jq -cS '[.runtime_maps_after_first_return_before_correctness.libraries[] | {basename,path,sha256}]' arm-01.json | sha256sum; includes jq trailing newline and preserves recorded row order",
+    "compact_portable_inventory_sha256": "ba940a22a21a030be60ae54a33cac4f31560e4745565b2dd51e91203a16bffd3",
+    "cross_arm_evidence_available": false,
+    "rows": [
+      {
+        "basename": "libsycl.so.8",
+        "canonical_device": "103:04",
+        "canonical_inode": 13403261,
+        "mapped_basename": "libsycl.so.8",
+        "mapped_device": "103:04",
+        "mapped_inode": 13403261,
+        "mapped_path": "/home/steve/.venvs/vllm-xpu/lib/libsycl.so.8",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libsycl.so.8",
+        "sha256": "0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f"
+      },
+      {
+        "basename": "libur_adapter_level_zero.so.0",
+        "canonical_device": "103:04",
+        "canonical_inode": 13402725,
+        "mapped_basename": "libur_adapter_level_zero.so.0",
+        "mapped_device": "103:04",
+        "mapped_inode": 13402725,
+        "mapped_path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_level_zero.so.0",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_level_zero.so.0",
+        "sha256": "ceecac1cb3124f15b9a319d4bfc156eed49068467564b8210f2f0330aa0911e8"
+      },
+      {
+        "basename": "libur_adapter_level_zero_v2.so.0",
+        "canonical_device": "103:04",
+        "canonical_inode": 13402728,
+        "mapped_basename": "libur_adapter_level_zero_v2.so.0",
+        "mapped_device": "103:04",
+        "mapped_inode": 13402728,
+        "mapped_path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_level_zero_v2.so.0",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_level_zero_v2.so.0",
+        "sha256": "f3158824fcd18353570424b5ea4e1fe8b3618f052546601cef1d0d40c73d3ada"
+      },
+      {
+        "basename": "libur_adapter_opencl.so.0",
+        "canonical_device": "103:04",
+        "canonical_inode": 13402731,
+        "mapped_basename": "libur_adapter_opencl.so.0",
+        "mapped_device": "103:04",
+        "mapped_inode": 13402731,
+        "mapped_path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_opencl.so.0",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libur_adapter_opencl.so.0",
+        "sha256": "5465c59930f720ba550a7459ec4268e8d999d1f2e5992c5523510ac7aef90d05"
+      },
+      {
+        "basename": "libur_loader.so.0",
+        "canonical_device": "103:04",
+        "canonical_inode": 13402734,
+        "mapped_basename": "libur_loader.so.0",
+        "mapped_device": "103:04",
+        "mapped_inode": 13402734,
+        "mapped_path": "/home/steve/.venvs/vllm-xpu/lib/libur_loader.so.0",
+        "path": "/home/steve/.venvs/vllm-xpu/lib/libur_loader.so.0",
+        "sha256": "68e273791752638dfad1ce3bb002b0ed8d00ceee21e491cd46dd0668d716bfa0"
+      },
+      {
+        "basename": "libze_intel_gpu.so.1.15.38646",
+        "canonical_device": "103:04",
+        "canonical_inode": 27661878,
+        "mapped_basename": "libze_intel_gpu.so.1.15.38646",
+        "mapped_device": "103:04",
+        "mapped_inode": 27661878,
+        "mapped_path": "/usr/lib/x86_64-linux-gnu/libze_intel_gpu.so.1.15.38646",
+        "path": "/usr/lib/x86_64-linux-gnu/libze_intel_gpu.so.1.15.38646",
+        "sha256": "dff06fa9ab58a84767d4225eceb6c3225995552836b0e28b986d852a2e4e0180"
+      },
+      {
+        "basename": "libze_loader.so.1.28.6",
+        "canonical_device": "103:04",
+        "canonical_inode": 27656352,
+        "mapped_basename": "libze_loader.so.1.28.6",
+        "mapped_device": "103:04",
+        "mapped_inode": 27656352,
+        "mapped_path": "/usr/lib/x86_64-linux-gnu/libze_loader.so.1.28.6",
+        "path": "/usr/lib/x86_64-linux-gnu/libze_loader.so.1.28.6",
+        "sha256": "5c156f00718f80f7e75964fa729e811c7b486778478d2fc318cc77751e1a0bbd"
+      },
+      {
+        "basename": "libze_tracing_layer.so.1.28.6",
+        "canonical_device": "103:04",
+        "canonical_inode": 27656778,
+        "mapped_basename": "libze_tracing_layer.so.1.28.6",
+        "mapped_device": "103:04",
+        "mapped_inode": 27656778,
+        "mapped_path": "/usr/lib/x86_64-linux-gnu/libze_tracing_layer.so.1.28.6",
+        "path": "/usr/lib/x86_64-linux-gnu/libze_tracing_layer.so.1.28.6",
+        "sha256": "d9adf7afcd0489d8dd56078df4c6dc808e55a074d243e1d04b5fc40e1a191662"
+      }
+    ]
+  },
+  "passive_static_intent_comparison": {
+    "content_sha_match_but_canonical_alias_differs": [
+      "libsycl.so.8",
+      "libur_adapter_level_zero.so.0",
+      "libur_loader.so.0"
+    ],
+    "exact_canonical_path_sha_matches": [
+      "libze_intel_gpu.so.1.15.38646",
+      "libze_loader.so.1.28.6"
+    ],
+    "unexpected_relevant_basenames": [
+      "libur_adapter_level_zero_v2.so.0",
+      "libur_adapter_opencl.so.0",
+      "libze_tracing_layer.so.1.28.6"
+    ]
+  },
+  "post_run": {
+    "additional_gpu_action": false,
+    "build_invoked": false,
+    "clock_mutation_invoked": false,
+    "full_model_invoked": false,
+    "remote_repo_clean": true,
+    "remote_repo_head": "f32d8af4c297d0fd33338706e845bd1dd2b4194f",
+    "remote_repo_origin_main": "f32d8af4c297d0fd33338706e845bd1dd2b4194f",
+    "retry_invoked": false,
+    "sudo_invoked": false
+  },
+  "r2_source_identity": {
+    "boot_identity_boundary": "expected boot was source-gated and preflight passed; no separately retained raw boot query is claimed",
+    "campaign_sha256": "7577f9313b60d4bb51b328eb63608ab8c3bf9af31b1e84e1390164f71ee1e2fb",
+    "diagnostic_sha256": "a78a2c1953952578ed7b63f0ec6d96f5c423e5199ad034c69cb002fe4a0191db",
+    "driver_sha256": "f35c7dd564c0e8279c706e6003fcba44bdae4922bcb94eec72b6b8a65c410c1e",
+    "repo_commit": "f32d8af4c297d0fd33338706e845bd1dd2b4194f",
+    "stage_inventory_sha256": "0923804d40a14a19ee244ce4e38641a47d9c4327b0d5c700c7b6e2756ce1aa82"
+  },
+  "schema": "qwen38-q64k32-remote-runtime-map-r2-invalid-v1",
+  "source_only_cpu_oracle_analysis": {
+    "inference": "The exact-byte mismatch is confined to the host CPU reference calculation; the retained evidence does not identify a narrower CPU instruction or dispatch choice.",
+    "local_cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+    "local_cpu_only_reproduction": {
+      "fixture_sha256": "0acb368f76405cfab88e47944437d0399bce0866fe9452096d3d5e0a2c9570cd",
+      "oracle_sha256": "5a9759d1bf2b3eeea8eb4b34ba40e259d7e356285b28f0edcd36bda4a92e2a2e",
+      "torch_num_threads_tested": [
+        1,
+        2,
+        4,
+        8,
+        16
+      ]
+    },
+    "torch_version_both_hosts": "2.11.0+xpu"
+  },
+  "terminal_summary": {
+    "cleanup": {
+      "group_absent": true,
+      "identity_safe": true,
+      "kill_sent": false,
+      "term_sent": false,
+      "validator_certified": true
+    },
+    "error": "ContractError: arm 1: correctness summary differs",
+    "finished_time_ns": 1787314472008021372,
+    "grace_seconds": 10.0,
+    "plan": {
+      "device": 0,
+      "ordinal": 1,
+      "role": "control"
+    },
+    "signals": [],
+    "started_time_ns": 1787314456857234804,
+    "status": "invalid",
+    "supervisor_pid": 181882,
+    "timeout_seconds": 300.0,
+    "valid": false,
+    "worker_pgid": 181965,
+    "worker_pid": 181965,
+    "worker_returncode": 0,
+    "worker_start_ticks": 21515726
+  },
+  "unproduced_artifacts": [
+    "arm-02.json",
+    "arm-02.terminal.json",
+    "arm-03.json",
+    "arm-03.terminal.json",
+    "arm-04.json",
+    "arm-04.terminal.json",
+    "comparison.json"
+  ]
+}
