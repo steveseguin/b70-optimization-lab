@@ -13,7 +13,15 @@ object compiled because Git rejected CMake's oneDNN checkout on the
 root-owned USB mount. The helper now supplies one exact process-local
 `safe.directory` for that checkout without changing global Git configuration.
 The attempt is not a kernel result and must not be reused or overwritten; the
-next command uses a new `-r2` root.
+second command used a new `-r2` root.
+
+The preserved `-r2` attempt passed configuration and compiled both intended
+objects, but the same FUSE mount then rejected the staging permission change.
+It has a partial runtime tree and candidate DSO, but no candidate JSON or
+checksum manifests and is not authorized for loading. Rather than weaken the
+mode/atomic-artifact contract for that filesystem, the next build and result
+roots move to the host's native ext4 filesystem and use new `-r3` names. This
+is also an infrastructure-invalid attempt, not a policy timing result.
 
 ## Question and bounded scope
 
@@ -245,8 +253,8 @@ as a separate action:
 ```bash
 builder=experiments/qwen38-27b-b70/scripts/build-qwen38-m6-head256-q8k64-attn-override-20260820.sh
 driver=experiments/qwen38-27b-b70/scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh
-build_root=/mnt/usb-models/llm-runtime/qwen38-m6-head256-q8k64-attn-override-20260820-r2
-root=/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/diagnostics/qwen38-mtp5-m6-fa-candidate-abba-20260820
+build_root=/home/steve/qwen38-m6-head256-q8k64-attn-override-20260820-r3
+root=/home/steve/qwen38-mtp5-m6-fa-candidate-abba-20260820-r3
 candidate_manifest="$build_root/qwen38-m6-head256-q8k64-candidate-stage.json"
 
 WORK_ROOT="$build_root" "$builder" --build
