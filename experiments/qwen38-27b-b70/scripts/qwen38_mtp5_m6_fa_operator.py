@@ -435,14 +435,21 @@ def mutation_input_digest(*tensors: Any, seqused_k: int) -> str:
     return digest.hexdigest()
 
 
-def mapped_paths() -> set[Path]:
+def mapped_paths(
+    required_basenames: set[str], lines: Iterable[str] | None = None
+) -> set[Path]:
     result: set[Path] = set()
-    for line in Path("/proc/self/maps").read_text(encoding="utf-8").splitlines():
+    if lines is None:
+        lines = Path("/proc/self/maps").read_text(encoding="utf-8").splitlines()
+    for line in lines:
         fields = line.split(maxsplit=5)
         if len(fields) != 6 or not fields[5].startswith("/"):
             continue
         if fields[5].endswith(" (deleted)"):
-            raise ContractError(f"deleted mapped object: {fields[5]}")
+            deleted_path = fields[5][: -len(" (deleted)")]
+            if Path(deleted_path).name in required_basenames:
+                raise ContractError(f"deleted required mapped object: {fields[5]}")
+            continue
         try:
             result.add(Path(fields[5]).resolve(strict=True))
         except FileNotFoundError as error:
@@ -912,12 +919,12 @@ def run_xpu(args: argparse.Namespace) -> dict[str, Any]:
         )
     os.chmod(stderr_temporary, 0o444)
     os.replace(stderr_temporary, stderr_output)
-    mappings = mapped_paths()
     required_mappings = {
         "extension": Path(identity["files"]["extension"]["path"]),
         "device_library": Path(identity["files"]["device_library"]["path"]),
         "stock_library": Path(identity["files"]["stock_library"]["path"]),
     }
+    mappings = mapped_paths({path.name for path in required_mappings.values()})
     for name, path in required_mappings.items():
         if path not in mappings:
             same_name = sorted(str(item) for item in mappings if item.name == path.name)

@@ -49,6 +49,15 @@ poison-replay-synchronize-oracle iterations the only graph correctness
 evidence. The candidate was never loaded in the invalid attempt. Reuse the
 sealed build, but use a new `-r5` result root.
 
+The corrected GPU2 control in result root `-r5` completed every operator case
+and wrote its expected empty control stderr log, but the final provenance scan
+then rejected an unrelated normal `/dev/zero (deleted)` mapping. No packet was
+written and the candidate still never loaded. The scan now ignores deleted
+non-library mappings while continuing to fail if any of the exact extension,
+candidate/control device library, or stock library basenames is mapped as
+deleted. Preserve `-r5` as infrastructure-invalid and use new result root
+`-r6`.
+
 ## Question and bounded scope
 
 The next candidate is allowed to change only the staged Intel FlashAttention
@@ -265,9 +274,9 @@ The scripts are:
 - [`../scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh`](../scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh)
 
 Frozen prelaunch bytes are qualifier
-`32fcddfde2dda798daf97849183527988ddd5e1ae0f6c1786b11b25a75cf7be6`
+`0dd7b945ef35a11ff4d0a1ec085e604920524b996d539e089d89b4a019a5de1f`
 and driver
-`c1206cd4a30370490b339e82d48a22388fe1df29812a21e378229534b7e064df`.
+`5aa23300d7e3cfd64e10964c7a395b11e8ba70099908d48d6bc8fc58f0d7b9f1`.
 The driver independently hardcodes the qualifier SHA; every run packet records
 both actual bytes plus the clean lab commit.
 
@@ -279,7 +288,7 @@ as a separate action:
 ```bash
 driver=experiments/qwen38-27b-b70/scripts/run-20260820-qwen38-mtp5-m6-fa-operator-abba.sh
 build_root=/home/steve/qwen38-m6-head256-q8k64-attn-override-20260820-r4
-root=/home/steve/qwen38-mtp5-m6-fa-candidate-abba-20260820-r5
+root=/home/steve/qwen38-mtp5-m6-fa-candidate-abba-20260820-r6
 candidate_manifest="$build_root/qwen38-m6-head256-q8k64-candidate-stage.json"
 
 # Already completed and sealed above; do not rebuild or overwrite build_root.

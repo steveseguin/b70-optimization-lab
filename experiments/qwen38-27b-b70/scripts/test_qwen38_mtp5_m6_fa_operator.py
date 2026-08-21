@@ -322,6 +322,17 @@ class QualifierContractTests(unittest.TestCase):
         graph_assert = source.index("_assert_close(", capture)
         self.assertLess(replay, graph_assert)
 
+    def test_deleted_mapping_gate_is_scoped_to_required_libraries(self) -> None:
+        irrelevant = "7f00-7f10 rw-s 00000000 00:01 1 /dev/zero (deleted)"
+        self.assertEqual(
+            QUALIFIER.mapped_paths({"librequired.so"}, [irrelevant]), set()
+        )
+        required = "7f00-7f10 r-xp 00000000 00:01 1 /tmp/librequired.so (deleted)"
+        with self.assertRaisesRegex(
+            QUALIFIER.ContractError, "deleted required mapped object"
+        ):
+            QUALIFIER.mapped_paths({"librequired.so"}, [required])
+
     def test_strict_json_rejects_duplicate_keys_and_nan(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             duplicate = Path(directory) / "duplicate.json"
