@@ -53,7 +53,7 @@ _BASE_SPEC.loader.exec_module(BASE)
 SCHEMA_RUN = "qwen38-mtp5-m6-fa-q64k32-operator-run-v1"
 SCHEMA_FAILURE = "qwen38-mtp5-m6-fa-q64k32-operator-failure-v1"
 SCHEMA_COMPARE = "qwen38-mtp5-m6-fa-q64k32-operator-compare-v1"
-SCHEMA_STAGE = "qwen38-mtp5-m6-fa-q64k32-stage-v1"
+SCHEMA_STAGE = "qwen38-mtp5-m6-fa-q64k32-r2-stage-v1"
 POLICY_ENV = "VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY"
 POLICY_MARKER = "VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY engaged"
 POLICY_IDENTITY_KEY = "m6_head256_q64k32_policy"
@@ -61,18 +61,18 @@ POLICY_IDENTITY_KEY = "m6_head256_q64k32_policy"
 # These source/build inputs are immutable prerequisites for candidate stages.
 CANDIDATE_PATCH = Path(
     "/home/steve/llm-optimizations/experiments/qwen38-27b-b70/patches/"
-    "vllm-xpu-kernels-qwen38-m6-head256-q64k32-chunk-prefill-20260821.patch"
+    "vllm-xpu-kernels-qwen38-m6-head256-q64k32-chunk-prefill-r2-20260821.patch"
 )
 CANDIDATE_PATCH_SHA256 = (
-    "8cbf00eb37faa11e803d39dc43eceabade623cb53907bc48e7a28a40f7738ef1"
+    "9386432015f5c9cd330dd7cfb785a16f259cce8563f44da9f812dcceb342138a"
 )
 BUILD_HELPER = Path(
     "/home/steve/llm-optimizations/experiments/qwen38-27b-b70/scripts/"
-    "build-qwen38-m6-head256-q64k32-attn-override-20260821.sh"
+    "build-qwen38-m6-head256-q64k32-attn-override-r2-20260821.sh"
 )
-BUILD_HELPER_SHA256 = "eba51acca318e68d176f9de859d90ff3425807cea40e67ced7e38d21fbabe74e"
-BUILD_INPUTS_BASENAME = "qwen38-m6-head256-q64k32-build-inputs.sha256"
-GRAPH_MANIFEST_BASENAME = "qwen38-m6-head256-q64k32-candidate.graph.sha256"
+BUILD_HELPER_SHA256 = "11480161dce25cba56e00f2f48c95d74164bac1f5af2dbc945eddceff6d57d47"
+BUILD_INPUTS_BASENAME = "qwen38-m6-head256-q64k32-r2-build-inputs.sha256"
+GRAPH_MANIFEST_BASENAME = "qwen38-m6-head256-q64k32-r2-candidate.graph.sha256"
 
 # Configure the separately loaded base module process-locally.  All reused
 # validators resolve these globals at call time.
@@ -811,6 +811,10 @@ def _validate_completed_cases(
             )
         ):
             raise ContractError(f"{path}: completed KV {kv} correctness mismatch")
+        if case["eager_output_sha256"] != case["graph_output_sha256"]:
+            raise ContractError(
+                f"{path}: completed KV {kv} eager/graph digest mismatch"
+            )
         if case["poison_checked_replays_per_mode"] != stability:
             raise ContractError(f"{path}: completed KV {kv} poison count mismatch")
         for name in (
@@ -1232,8 +1236,13 @@ def validate_failure_packet(packet: Any, path: Path) -> dict[str, Any]:
             or same_name != sorted(set(same_name))
         ):
             raise ContractError(f"{path}: malformed same-basename mapping {name}")
-        if mapping["matched"][name] not in (None, required_mapping[name]):
-            raise ContractError(f"{path}: false matched mapping {name}")
+        expected_match = (
+            required_mapping[name]
+            if required_mapping[name]["path"] in same_name
+            else None
+        )
+        if mapping["matched"][name] != expected_match:
+            raise ContractError(f"{path}: false matched mapping corroboration {name}")
     derived_mapping_pass = (
         mapping["mapping_error"] is None and mapping["matched"] == required_mapping
     )

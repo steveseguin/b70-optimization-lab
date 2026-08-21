@@ -1,0 +1,97 @@
+diff --git a/csrc/xpu/attn/xe_2/fmha_xe2.cpp b/csrc/xpu/attn/xe_2/fmha_xe2.cpp
+--- a/csrc/xpu/attn/xe_2/fmha_xe2.cpp
++++ b/csrc/xpu/attn/xe_2/fmha_xe2.cpp
+@@ -2,0 +3,4 @@
++#include <cstdlib>
++#include <cstring>
++#include <iostream>
++#include <mutex>
+@@ -11,0 +16,33 @@ using namespace cute;
++void qwen38_m6_head256_q64k32_chunk_prefill(
++    sycl::queue& queue, const chunk_prefill_args_t& args);
++
++namespace {
++
++constexpr char kM6Head256Q64K32Selector[] =
++    "VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY";
++constexpr char kM6Head256Q64K32Marker[] =
++    "VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY engaged";
++
++bool use_m6_head256_q64k32_policy() {
++  static const bool enabled = [] {
++    const char* value = std::getenv(kM6Head256Q64K32Selector);
++    if (value == nullptr || std::strcmp(value, "0") == 0) {
++      return false;
++    }
++    TORCH_CHECK(
++        std::strcmp(value, "1") == 0,
++        kM6Head256Q64K32Selector,
++        " must be exactly 0 or 1");
++    return true;
++  }();
++  return enabled;
++}
++
++void emit_m6_head256_q64k32_marker_once() {
++  static std::once_flag marker_once;
++  std::call_once(
++      marker_once, [] { std::cerr << kM6Head256Q64K32Marker << '\n'; });
++}
++
++}  // namespace
++
+@@ -265,0 +303,15 @@ void cutlass_chunk_prefill_impl(
++  const bool is_qwen38_m6_head256 =
++      query.scalar_type() == at::ScalarType::Half &&
++      key_cache.scalar_type() == at::ScalarType::Half &&
++      value_cache.scalar_type() == at::ScalarType::Half &&
++      out.scalar_type() == at::ScalarType::Half && is_varlen && is_paged &&
++      is_causal && !is_local && !is_sink && !is_lse &&
++      !is_prefill.has_value() && batch_size == 1 && total_seqlen_q == 6 &&
++      max_seqlen_q == 6 && num_heads_q == 12 && num_heads_kv == 2 &&
++      head_size == 256 && block_size == 64;
++  if (use_m6_head256_q64k32_policy() && is_qwen38_m6_head256) {
++    emit_m6_head256_q64k32_marker_once();
++    qwen38_m6_head256_q64k32_chunk_prefill(queue, args);
++    return;
++  }
++
+diff --git a/csrc/xpu/attn/xe_2/m6_head256_q64k32_chunk_prefill.cpp b/csrc/xpu/attn/xe_2/m6_head256_q64k32_chunk_prefill.cpp
+new file mode 100644
+--- /dev/null
++++ b/csrc/xpu/attn/xe_2/m6_head256_q64k32_chunk_prefill.cpp
+@@ -0,0 +1,34 @@
++#include "chunk_prefill.hpp"
++
++using namespace cute;
++
++namespace {
++
++struct Qwen38M6Head256Q64K32Policy {
++  using ShapeQK = Shape<_64, _32, _32>;
++  using ShapePV = Shape<_64, _32, _32>;
++  using ShapeOut = Shape<_64, _256>;
++  using SubgroupLayoutQK = Layout<Shape<_8, _1, _1>>;
++};
++
++}  // namespace
++
++void qwen38_m6_head256_q64k32_chunk_prefill(
++    sycl::queue& queue, const chunk_prefill_args_t& args) {
++  FMHAConfig<
++      typename Qwen38M6Head256Q64K32Policy::ShapeQK,
++      typename Qwen38M6Head256Q64K32Policy::ShapePV,
++      typename Qwen38M6Head256Q64K32Policy::ShapeOut,
++      typename Qwen38M6Head256Q64K32Policy::SubgroupLayoutQK,
++      void,
++      2,
++      true,
++      true,
++      false,
++      false,
++      false,
++      half_t,
++      half_t,
++      half_t,
++      half_t>::kernel_dispatch(queue, args);
++}

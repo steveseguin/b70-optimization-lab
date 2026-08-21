@@ -2,7 +2,8 @@
 
 Date: 2026-08-21
 
-Status: **implemented and hash-frozen for independent review; not launched**.
+Status: **corrected r2 source/build artifacts implemented; not built or
+launched**. The original r1 build is preserved as infrastructure-invalid.
 
 This is a new campaign, not a retry of the rejected Q8xK64 policy. The previous
 candidate stopped at its first candidate eager correctness check and remains a
@@ -46,30 +47,46 @@ source-backed policy engagement in addition to file and mapping identity.
 
 ## Candidate provenance and launch interlock
 
-The candidate source and builder are owned by the separate build lane:
+The corrected r2 candidate source and builder are owned by the separate build
+lane:
 
-- `patches/vllm-xpu-kernels-qwen38-m6-head256-q64k32-chunk-prefill-20260821.patch`;
-- `scripts/build-qwen38-m6-head256-q64k32-attn-override-20260821.sh`;
-- build-input artifact `qwen38-m6-head256-q64k32-build-inputs.sha256`;
-- graph manifest `qwen38-m6-head256-q64k32-candidate.graph.sha256`;
-- stage JSON `qwen38-m6-head256-q64k32-candidate-stage.json`, schema
-  `qwen38-mtp5-m6-fa-q64k32-stage-v1`.
+- `patches/vllm-xpu-kernels-qwen38-m6-head256-q64k32-chunk-prefill-r2-20260821.patch`;
+- `scripts/build-qwen38-m6-head256-q64k32-attn-override-r2-20260821.sh`;
+- build-input artifact `qwen38-m6-head256-q64k32-r2-build-inputs.sha256`;
+- graph manifest `qwen38-m6-head256-q64k32-r2-candidate.graph.sha256`;
+- stage JSON `qwen38-m6-head256-q64k32-r2-candidate-stage.json`, schema
+  `qwen38-mtp5-m6-fa-q64k32-r2-stage-v1`.
 
 The source patch is frozen at SHA-256
-`8cbf00eb37faa11e803d39dc43eceabade623cb53907bc48e7a28a40f7738ef1`
+`9386432015f5c9cd330dd7cfb785a16f259cce8563f44da9f812dcceb342138a`
 and the mode-`0755` build helper at
-`eba51acca318e68d176f9de859d90ff3425807cea40e67ced7e38d21fbabe74e`.
+`11480161dce25cba56e00f2f48c95d74164bac1f5af2dbc945eddceff6d57d47`.
+The corrected patch requires the exact `52/34` numstat and materialized new-TU
+SHA-256
+`fc1b9e204137794a0389daad82825d3019056e925bf21a09fde4f9aa4a62bd59`
+before either validation or compilation.
+
+The original committed r1 patch declared a 30-line new-file hunk while
+containing 34 added lines. `git apply --unidiff-zero` therefore materialized a
+truncated translation unit ending at the first `half_t,`, and the isolated r1
+build stopped at the compiler parser error. Root
+`/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r1` contains only
+the completed `fmha_xe2.cpp` object: no candidate object, device DSO, stage
+JSON, graph/build manifest, result root, or GPU run exists. Preserve that root
+and the old patch/helper as build-invalid evidence; r2 is a new immutable
+build attempt, not a repair in place.
+
 The qualifier is frozen at SHA-256
-`b390bbc9f29894c355dcb8b4a2e57a5dc0b1a4d3946f816c0e5af2bcef049b1b`.
+`31862ea6a8b9e11a59d643e0d3500179d938261e62b93fb920439c664ce21fbc`.
 The mode-`0755` driver is frozen at SHA-256
-`34e33671db7800cd31baa6552aef75f483ab0d3295fe2317c436da6618c088ed`;
+`e7480d5768e366a5797f6c32afe8456281336238fb96e6cae4206b5257a53fb9`;
 it embeds the qualifier identity and fails closed if those bytes change.
 
 Suggested immutable roots after that freeze are:
 
 ```text
-/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r1
-/home/steve/qwen38-mtp5-m6-fa-q64k32-abba-20260821-r1
+/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2
+/home/steve/qwen38-mtp5-m6-fa-q64k32-abba-20260821-r2
 ```
 
 Neither root may exist before its action, and a stopped result root is never
@@ -140,11 +157,11 @@ policy with no same-policy retry.
 ## Commands after final freeze only
 
 ```bash
-builder=/home/steve/llm-optimizations/experiments/qwen38-27b-b70/scripts/build-qwen38-m6-head256-q64k32-attn-override-20260821.sh
+builder=/home/steve/llm-optimizations/experiments/qwen38-27b-b70/scripts/build-qwen38-m6-head256-q64k32-attn-override-r2-20260821.sh
 driver=/home/steve/llm-optimizations/experiments/qwen38-27b-b70/scripts/run-20260821-qwen38-mtp5-m6-fa-q64k32-operator-abba.sh
-build_root=/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r1
-result=/home/steve/qwen38-mtp5-m6-fa-q64k32-abba-20260821-r1
-manifest="$build_root/qwen38-m6-head256-q64k32-candidate-stage.json"
+build_root=/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2
+result=/home/steve/qwen38-mtp5-m6-fa-q64k32-abba-20260821-r2
+manifest="$build_root/qwen38-m6-head256-q64k32-r2-candidate-stage.json"
 
 WORK_ROOT="$build_root" "$builder" --build
 "$driver" check "$manifest"

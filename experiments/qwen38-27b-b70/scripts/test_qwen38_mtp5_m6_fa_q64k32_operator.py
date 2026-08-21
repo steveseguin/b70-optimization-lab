@@ -40,10 +40,8 @@ def q64_packet(device: int, slot: int, role: str, latency: float) -> dict:
     )
     stage = packet["stage_identity"]
     if role == "candidate":
-        stage["artifact_path"] = "/tmp/qwen38-m6-head256-q64k32-build-inputs.sha256"
-        stage["graph_manifest_path"] = (
-            "/tmp/qwen38-m6-head256-q64k32-candidate.graph.sha256"
-        )
+        stage["artifact_path"] = f"/tmp/{QUALIFIER.BUILD_INPUTS_BASENAME}"
+        stage["graph_manifest_path"] = f"/tmp/{QUALIFIER.GRAPH_MANIFEST_BASENAME}"
     runtime = packet["runtime_identity"]
     runtime["script_path"] = str(SCRIPT.resolve())
     runtime["script_sha256"] = QUALIFIER.sha256_file(SCRIPT.resolve())
@@ -238,7 +236,32 @@ class Q64K32ContractTests(unittest.TestCase):
             packet["mapping_evidence"]["matched"]["device_library"] = None
             QUALIFIER.write_json_atomic(path, Path(f"{path}.tmp"), packet)
             with self.assertRaisesRegex(
-                QUALIFIER.ContractError, "mapping gate does not rederive"
+                QUALIFIER.ContractError, "false matched mapping corroboration"
+            ):
+                QUALIFIER.validate_failure_packet(QUALIFIER.load_json(path), path)
+
+    def test_failure_receipt_rejects_uncorroborated_mapping_match(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path, packet = self._failure_receipt(Path(temporary))
+            path.chmod(0o600)
+            packet["mapping_evidence"]["same_basename_paths"]["device_library"] = []
+            QUALIFIER.write_json_atomic(path, Path(f"{path}.tmp"), packet)
+            with self.assertRaisesRegex(
+                QUALIFIER.ContractError, "false matched mapping corroboration"
+            ):
+                QUALIFIER.validate_failure_packet(QUALIFIER.load_json(path), path)
+
+    def test_failure_receipt_rejects_false_eager_graph_digest_exactness(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path, packet = self._failure_receipt(Path(temporary))
+            path.chmod(0o600)
+            source = q64_packet(2, 1, "control", 160.0)
+            completed = copy.deepcopy(source["cases"][0])
+            completed["graph_output_sha256"] = "7" * 64
+            packet["completed_cases"] = [completed]
+            QUALIFIER.write_json_atomic(path, Path(f"{path}.tmp"), packet)
+            with self.assertRaisesRegex(
+                QUALIFIER.ContractError, "eager/graph digest mismatch"
             ):
                 QUALIFIER.validate_failure_packet(QUALIFIER.load_json(path), path)
 
