@@ -219,9 +219,14 @@ flag is also wrong: the historical harness silently ran with persistent
 scratch enabled. The API has no amendment/deletion method, so the upstream
 annotation/withdrawal still requires human contact with LocalMaxxing.
 
-The four-card measuring host's xe driver was recovered on 2026-08-20 without
-FLR or reboot and passed per-card compute, peer access, four-rank XCCL, and a
-known-good exact generation canary. The launch harness now fails closed unless
+The four-card measuring host's xe driver was recovered on 2026-08-20 and again
+on 2026-08-21 (after GPU3's health-failure storm re-lit on a passive query)
+without FLR or reboot, each time passing per-card compute, peer access,
+four-rank XCCL, a known-good exact generation canary, and a clean post-reload
+journal window; see the
+[second recovery note](experiments/qwen38-27b-b70/notes/2026-08-21-measuring-host-xe-recovery-2.md).
+GPU3 still requires a newly preregistered fresh-root stock-health pass before
+any Q64K32 use. The launch harness fails closed unless
 the model's complete direct-I/O and ordinary cached views both match the
 manifest immediately before vLLM starts.
 
