@@ -1,0 +1,171 @@
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index 7000db69fc..881e4dbfe1 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -3,0 +4,2 @@
++import json
++import os
+@@ -6 +7,0 @@ from dataclasses import dataclass
+-import os
+@@ -16,0 +18 @@ from vllm.distributed import (
++    tensor_model_parallel_all_gather,
+@@ -18,0 +21 @@ from vllm.distributed import (
++from vllm.logger import init_logger
+@@ -29 +31,0 @@ from vllm.model_executor.layers.utils import dispatch_unquantized_gemm
+-from vllm.logger import init_logger
+@@ -36,0 +39 @@ logger = init_logger(__name__)
++_XPU_DRAFT_MARGIN_QUAL_CALLS = 0
+@@ -340,0 +344,18 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
++            qualification_file = os.environ.get(
++                "VLLM_XPU_DRAFT_LM_HEAD_INT4_MARGIN_QUAL_FILE", ""
++            )
++            qualification_max_calls = int(
++                os.environ.get(
++                    "VLLM_XPU_DRAFT_LM_HEAD_INT4_MARGIN_QUAL_MAX_CALLS", "0"
++                )
++                or "0"
++            )
++            global _XPU_DRAFT_MARGIN_QUAL_CALLS
++            qualification_active = (
++                bool(qualification_file)
++                and qualification_max_calls > 0
++                and qualification_max_calls > _XPU_DRAFT_MARGIN_QUAL_CALLS
++                and not torch.compiler.is_compiling()
++                and not torch.xpu.is_current_stream_capturing()
++            )
++            approximate_logits = logits.clone() if qualification_active else None
+@@ -353,11 +374,117 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+-                with timed_region("lm_head_int4_draft.margin_top2"):
+-                    top2 = torch.topk(logits.float(), k=2, dim=-1).values
+-                    low_margin = (top2[:, 0] - top2[:, 1]) < fallback_margin
+-                if bool(low_margin.any().item()):
+-                    with timed_region("lm_head_int4_draft.exact_fallback"):
+-                        flat_x = x_contiguous.reshape(
+-                            -1, x_contiguous.shape[-1])
+-                        exact_logits = F.linear(
+-                            flat_x[low_margin].to(layer.weight.dtype),
+-                            layer.weight,
+-                            bias,
++                logger.info_once(
++                    "XPU TP-safe draft LM-head INT4 margin repair engaged: "
++                    "margin=%.8g tp_rank=%d tp_size=%d.",
++                    fallback_margin,
++                    get_tensor_model_parallel_rank(),
++                    get_tensor_model_parallel_world_size(),
++                    scope="process",
++                )
++                flat_logits = logits.reshape(-1, logits.shape[-1])
++                with timed_region("lm_head_int4_draft.margin_candidates"):
++                    # One max plus a threshold mask replaces full-vocab topk.
++                    # Each TP shard repairs its own possible winners before
++                    # the ordinary logits all-gather.
++                    lf = flat_logits.float()
++                    top1v, top1i = lf.max(dim=-1)
++                with timed_region("lm_head_int4_draft.exact_fallback"):
++                    flat_x = x_contiguous.reshape(
++                        -1, x_contiguous.shape[-1])
++                    # Repair every shard's approximate winner and every
++                    # column within the margin of it. The logits are gathered
++                    # only after this method returns, so gating on a shard's
++                    # local top1-top2 gap can miss a global near-tie split
++                    # across TP ranks. With margin >= 2x the max INT4 logit
++                    # error, the exact local winner is in this candidate set;
++                    # repairing every shard's set therefore also repairs the
++                    # gathered global argmax when margin > 2 * max_error.
++                    for r in range(flat_logits.shape[0]):
++                        cand = (top1v[r] - lf[r]) < fallback_margin
++                        cand[top1i[r]] = True
++                        cols = cand.nonzero(as_tuple=True)[0]
++                        exact = (
++                            flat_x[r].to(layer.weight.dtype)
++                            @ layer.weight[cols].t()
++                        )
++                        flat_logits[r, cols] = exact.to(flat_logits.dtype)
++            if qualification_active:
++                assert approximate_logits is not None
++                exact_local = F.linear(
++                    x_contiguous.reshape(-1, x_contiguous.shape[-1]).to(
++                        layer.weight.dtype
++                    ),
++                    layer.weight,
++                    bias,
++                ).to(logits.dtype)
++                approximate_global = tensor_model_parallel_all_gather(
++                    approximate_logits
++                )
++                repaired_global = tensor_model_parallel_all_gather(logits)
++                exact_global = tensor_model_parallel_all_gather(exact_local)
++                if get_tensor_model_parallel_rank() == 0:
++                    approximate_cpu = approximate_global.detach().float().cpu()
++                    repaired_cpu = repaired_global.detach().float().cpu()
++                    exact_cpu = exact_global.detach().float().cpu()
++                    tp_size = get_tensor_model_parallel_world_size()
++                    shard_width = approximate_cpu.shape[-1] // tp_size
++                    records = []
++                    for row in range(approximate_cpu.shape[0]):
++                        approximate_row = approximate_cpu[row]
++                        repaired_row = repaired_cpu[row]
++                        exact_row = exact_cpu[row]
++                        approximate_top = int(approximate_row.argmax().item())
++                        repaired_top = int(repaired_row.argmax().item())
++                        exact_top = int(exact_row.argmax().item())
++                        per_rank = []
++                        for rank in range(tp_size):
++                            start = rank * shard_width
++                            end = start + shard_width
++                            local_approximate = approximate_row[start:end]
++                            local_exact = exact_row[start:end]
++                            local_top_value, local_top_index = (
++                                local_approximate.max(dim=0)
++                            )
++                            candidate_mask = (
++                                local_top_value - local_approximate
++                            ) < fallback_margin
++                            exact_local_top = int(local_exact.argmax().item())
++                            per_rank.append(
++                                {
++                                    "rank": rank,
++                                    "candidate_count": int(
++                                        candidate_mask.sum().item()
++                                    ),
++                                    "approximate_top_token": (
++                                        start + int(local_top_index.item())
++                                    ),
++                                    "exact_top_token": start + exact_local_top,
++                                    "exact_top_is_candidate": bool(
++                                        candidate_mask[exact_local_top].item()
++                                    ),
++                                    "max_abs_error": float(
++                                        (local_exact - local_approximate)
++                                        .abs()
++                                        .max()
++                                        .item()
++                                    ),
++                                }
++                            )
++                        records.append(
++                            {
++                                "schema": "qwen38-draft-margin-tp2-qualification-v1",
++                                "call_index": _XPU_DRAFT_MARGIN_QUAL_CALLS,
++                                "row_index": row,
++                                "margin": fallback_margin,
++                                "tp_size": tp_size,
++                                "shard_width": shard_width,
++                                "approximate_top_token": approximate_top,
++                                "repaired_top_token": repaired_top,
++                                "exact_top_token": exact_top,
++                                "repaired_matches_exact": repaired_top == exact_top,
++                                "approximate_matches_exact": (
++                                    approximate_top == exact_top
++                                ),
++                                "max_abs_error": float(
++                                    (exact_row - approximate_row).abs().max().item()
++                                ),
++                                "per_rank": per_rank,
++                            }
+@@ -365 +492,4 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+-                        logits[low_margin] = exact_logits.to(logits.dtype)
++                    with open(qualification_file, "a", encoding="utf-8") as handle:
++                        for record in records:
++                            handle.write(json.dumps(record, sort_keys=True) + "\n")
++                _XPU_DRAFT_MARGIN_QUAL_CALLS += 1

@@ -5,8 +5,9 @@ engagement proofs (GDN capture −2.2, SPEC_GREEDY_TOP_IDS −2.2,
 LOCAL_ARGMAX_DECODE cannot engage under MTP, RMSNorm BI neutral) and
 reported the honest margin-free figure: **101.170 tok/s all-25** (median of
 three arms; 21-22/25 self-determinism outstanding). Their ranked list
-named two unscreened structural candidates: draft-head cost (INT8 today)
-and MTP acceptance. This note screens the first at op level on this host.
+named draft-head cost and MTP acceptance as unscreened structural candidates.
+This note first quantified INT8-to-INT4 head cost, then corrected the record
+identity and narrowed the live opportunity to margin-assisted acceptance.
 
 ## Status correction (same day, measuring host commit ad34b9db4)
 
@@ -20,8 +21,11 @@ audit line claiming "the draft head is INT8" was wrong.
 
 The actual unscreened variant is the **fallback margin**
 (`VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN`, default 0): exact fp16
-repair of near-tie draft rows. Its value is acceptance-side (draft argmax
-closer to fp16 ⇒ acceptance unchanged-or-better), not cost-side.
+repair of near-tie draft rows. Its intended value is acceptance-side: it
+moves the draft argmax closer to the full-FP16 draft head. That does not
+mathematically guarantee unchanged or better acceptance against the
+separately quantized target head, so real accepted/drafted counts and
+end-to-end throughput remain required evidence.
 
 **Margin-as-implemented is too slow to enable blindly** (measured on GPU 0
 at the real shape, `../data/2026-08-20-int4-fallback-margin-cost.json`):
@@ -34,19 +38,26 @@ at the real shape, `../data/2026-08-20-int4-fallback-margin-cost.json`):
 At MTP5 the topk alone is 5 × 321 ≈ 1.6 ms/step — over half of what the
 INT4 head banks (2.75 ms/step) — plus 2.2 ms per near-tie event.
 
-**Cheap-margin patch shipped**:
+**The first cheap-margin prototype is preserved but is not TP2-safe**:
 `../patches/vllm-qwen38-draft-head-int4-cheap-margin-20260820.patch`
-(vllm tree kept clean; apply to use). Gap via two `max` reductions +
-`scatter` (~60 µs, 5.3×); exact repair of ONLY the columns within margin
-of top1 (~2 columns; ~50 µs marginal) instead of full-row recompute. With
-margin ≥ 2× the int4 logit error bound this is argmax-exact vs the
-original full-row repair: validated 40/40 synthetic trials, masks
-identical, argmax identical (`qwen38-det-margin_equiv` harness). Fixed
-cost at MTP5 ≈ 5 × 60 = 300 µs/step (0.87%) + rare ~50 µs events.
+(vLLM tree was kept clean when it was recorded). It replaces the full sort
+and full-vocabulary repair with a thresholded candidate repair, but it decides
+whether to repair from each TP shard's local top-two gap before the normal
+logits all-gather. A global near tie can be split across ranks even when both
+local gaps are large, so the 40/40 synthetic single-shard proof does not
+authorize a TP2 server run.
 
-Recommended server screen: margin-free baseline vs
-`DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN=0.25` with the cheap patch — compare
-acceptance per depth and 25/25 self-determinism, not just tok/s.
+The TP-safe diagnostic successor is
+`../patches/vllm-qwen38-draft-head-int4-tp-safe-margin-qualification-20260820.patch`.
+Every TP rank repairs its approximate local winner plus all local columns
+within the margin before the ordinary gather. If every logit's absolute INT4
+error is strictly below `margin / 2`, each exact local winner is in its rank's
+candidate set; consequently the gathered repaired argmax equals the gathered
+full-FP16 argmax. The diagnostic also records gathered approximate, repaired,
+and full-FP16 token choices and per-rank candidate/error evidence. It must pass
+that real TP2 qualification before any full-25 performance screen. Its dynamic
+`nonzero` and selected-column matmul costs are not covered by the original
+`~60 + ~50 us` component estimate, so throughput remains empirical.
 
 The measurements below remain valid as the quantification of what the
 record already banks by using draft INT4 instead of INT8.
@@ -58,36 +69,52 @@ Weight-streaming dominated; both kernels sit at the HBM roofline:
 
 | head op | M=1 | M=6 | effective weight BW |
 | --- | --- | --- | --- |
-| INT8 W8A8 (current draft head; `VALIDATION_LM_HEAD_INT8=1` scope `all`) | 1103.6 µs | 1118.0 µs | 568-576 GB/s |
+| INT8 W8A8 (comparison control; the record skips it for the draft head) | 1103.6 µs | 1118.0 µs | 568-576 GB/s |
 | INT4 W4A16 (`VLLM_XPU_DRAFT_LM_HEAD_INT4`, off by default) | 553.5 µs | 565.7 µs | 562-574 GB/s |
 
 Activation quant for the INT8 pair is negligible (5.5 µs/call). Saving per
 draft head call: **~550 µs**, purely from halved weight bytes; no kernel
 risk, both at roofline.
 
-## Step-level projection (MTP5)
+For the corrected TP-safe margin repair, every rank repairs at least its own
+local winner on every draft-head call; it is not a rare-fallback path. The
+existing selected-column estimate implies an optimistic floor near
+`5 * 107.8 us = 539 us` per speculative step, before the unmeasured dynamic
+`nonzero`/indexing synchronization. At a roughly 35.3 ms step emitting about
+3.6 tokens, break-even therefore needs approximately 0.055 more accepted token
+per step (about 1.10 percentage points averaged over five draft positions).
+A genuine 1% end-to-end gain needs about 0.092 more token per step (about 1.83
+percentage points), before the extra dynamic cost. The server screen must clear
+that empirical hurdle; correctness qualification alone does not make it a win.
+Reaching `105 tok/s` from the honest `101.170` anchor with this lever alone
+would require roughly 0.19 additional accepted token per step, or about 3.9
+percentage points averaged across five draft positions, after paying the
+optimistic repair cost. This makes the qualification worth doing, but it is a
+high acceptance hurdle rather than a projected win.
+
+## Historical INT8-to-INT4 projection (already banked)
 
 - 5 sequential draft forwards per step, each running the head at M=1:
   5 × 1103.6 = **5518 µs** → 5 × 553.5 = **2768 µs**. Saving ≈
   **2.75 ms/step**.
 - Margin-free 101.170 tok/s at ~3.5 accepted+1 tokens/step ⇒ ~34.6 ms
-  step ⇒ saving is ~8% of step time ⇒ **projected ≈ +8 tok/s
-  (≈109 all-25)** if acceptance is unchanged.
+  step ⇒ the already-banked saving is about 8% of step time. It is not an
+  additional margin-path projection.
 - Target/verifier head stays INT8 (M=6, once per step) — target-visible
   logits are untouched; visible tokens remain target-verified.
 
-## Why acceptance should hold
+## Why TP2 qualification comes first
 
-`VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN`
-(vocab_parallel_embedding.py:341-365) recomputes exact fp16 logits
-row-selectively for near-tie rows (top1 − top2 < margin) via `F.linear`
-against the full-precision weight. With margin set above the int4 logit
-error bound (~0.1-0.2 at group 128; measure once server-side), draft
-argmax tokens become nearly bitwise-identical to the fp16 head — strictly
-*more* faithful than today's unrepaired INT8 head (error ~0.079 per logit,
-~0.112 on the gap, unrepaired). Acceptance rate should be unchanged or
-slightly better. The int4 head weight is derived at load time ("Prepared
-experimental XPU INT4 draft lm_head" log); no checkpoint change.
+The corrected path repairs every TP shard's approximate local winner and all
+columns within 0.25 of it, then lets the normal logits all-gather occur. The
+qualification independently computes the full local FP16 head on both ranks,
+gathers approximate/repaired/exact logits, and requires every repaired global
+argmax to match exact FP16 with observed maximum absolute error strictly below
+0.125. It also requires both rank-local repair markers and per-rank proof that
+the exact local winner was in the selected candidate set. This establishes the
+bounded TP2 argument only; it does not predict agreement with the quantized
+target or an acceptance gain. The INT4 head weight is derived at load time
+("Prepared experimental XPU INT4 draft lm_head" log); no checkpoint changes.
 
 ## Interaction with today's determinism fixes
 
@@ -99,23 +126,23 @@ experimental XPU INT4 draft lm_head" log); no checkpoint change.
   the determinism pad (head included — the pad rule covers all int4 GEMMs
   with 128<M<512).
 
-## What the measuring host should run
+## Authorized next run
 
-1. Baseline arm: margin-free MTP5, triple-fix build, direct-verified model,
-   pinned compile cache — this is the determinism reference.
-2. Treatment: same + `VLLM_XPU_DRAFT_LM_HEAD_INT4=1` +
-   `VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN=0.25` (start; sweep
-   0.1/0.25/0.5 if acceptance moves).
-3. Gates: all-25/selection-12 tok/s, acceptance rate per depth,
-   25/25 token-ID self-determinism across two arms, and the Qwen3.8
-   target-only quality oracle. Acceptance drop > noise without the margin
-   means the margin is too small; with margin ON, draft tokens should be
-   near-identical and acceptance flat.
+Only the bounded TP2 qualification is authorized now: the frozen three-prompt
+subset, margin 0.25, smoke and quality disabled, diagnostic full-head/gather
+evidence enabled, and the existing sealed cache/model/runtime identity. Its
+throughput is invalid because instrumentation computes the full FP16 head,
+performs three extra full-vocabulary gathers, copies tensors to CPU, and writes
+JSONL. Any missing/malformed evidence, repaired/exact mismatch, maximum error
+of 0.125 or greater, cache/source/identity drift, or arm failure stops the
+candidate. A full-25 performance campaign requires a separate preregistration,
+the passing qualification artifact and SHA, removal of diagnostic overhead,
+and a newly frozen production-only source patch. No margin sweep is authorized.
 
 ## Caveats
 
 - n=1 op-level screen on GPU 0; per-call times at steady state.
-- The +8 projection assumes the draft head runs once per draft token per
-  step (5×) — verify against the runner's step structure server-side.
+- The historical +8 projection described INT8-to-INT4 conversion that the
+  current anchor already uses; it is not available headroom.
 - Does not address determinism by itself; it rides on the triple-fix build
   and the page-cache resolution.

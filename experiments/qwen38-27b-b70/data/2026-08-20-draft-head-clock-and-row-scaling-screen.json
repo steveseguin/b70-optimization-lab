@@ -1,0 +1,93 @@
+{
+  "schema": "qwen38-draft-head-clock-and-row-scaling-screen-v1",
+  "date": "2026-08-20",
+  "classification": "clock-locking-neutral-row6-cheaper-op-screen",
+  "local_clock_screen": {
+    "host_role": "four-B70 measuring host",
+    "physical_gpu": 2,
+    "runtime": {
+      "torch": "2.11.0+xpu",
+      "xpu": "20250302",
+      "native_extension_sha256": "4dd336013d155aab004fb1c916118957cb9349b491938da65769f2d8af18ffb0"
+    },
+    "default_range_mhz": [400, 2800],
+    "treatment_range_mhz": [2800, 2800],
+    "restored_range_mhz": [400, 2800],
+    "raw_temp_artifacts": [
+      {
+        "path": "/tmp/q38-clock-baseline.00UBaS/head.log",
+        "sha256": "76cd1b27c2d61ec00946e576bf1ca4415176bc5bee83ca1cc6a43d2559bee6a4"
+      },
+      {
+        "path": "/tmp/q38-clock-locked.iuDGXH/head.log",
+        "sha256": "35318755fc82e2452f29eafab22d0097eaf7407f081f2fc24ca60dd62a224d80"
+      },
+      {
+        "path": "/tmp/q38-clock-locked.iuDGXH/telemetry.log",
+        "sha256": "0921db09cadcedd577babe4bd775ce6a64149b87a815cd481a2a7e3dbf5ad9ca"
+      }
+    ],
+    "measurements": {
+      "m1": {
+        "default_median_us": 555.53373,
+        "locked_median_us": 554.58296,
+        "locked_improvement_percent": 0.1711453236151897
+      },
+      "m6": {
+        "default_median_us": 568.94562,
+        "locked_median_us": 568.97229,
+        "locked_improvement_percent": -0.004687618475748353
+      }
+    }
+  },
+  "remote_row_scaling_screen": {
+    "host": "steve-TURIND8-2L2T",
+    "host_role": "two-B70 15-GiB source-and-op worker; no full model server",
+    "repository_head": "6d678cccf9519414f6f3a8162f2c3f263364f842",
+    "repository_clean_and_at_origin": true,
+    "harness": {
+      "path": "/home/steve/b70-optimization-lab/scripts/bench-qwen27-w4a16-row-scaling.py",
+      "sha256": "260933ec1c180a66c7aff0b14098ad9786c9574653dd31f333ab6b27667bbeb1",
+      "warmup": 10,
+      "iterations": 50,
+      "calls_per_sample": 16,
+      "profile": "tp2-fp16",
+      "rows": [1, 6]
+    },
+    "runtime": {
+      "torch": "2.11.0+xpu",
+      "xpu": "20250302",
+      "native_extension_sha256": "4dd336013d155aab004fb1c916118957cb9349b491938da65769f2d8af18ffb0",
+      "inc_source_sha256": "a6b0bebb59f537946c56cdeaa5b019f8cd51c25714e8a910e38969f05b954d95"
+    },
+    "measurements": [
+      {
+        "physical_gpu": 0,
+        "row1_weighted_projection_ms": 8.744298,
+        "row4_weighted_projection_ms": 8.319041,
+        "row6_weighted_projection_ms": 8.246720,
+        "row6_vs_row1_percent": -5.690313847949838,
+        "whole_process_power_w": 60.51,
+        "package_temperature_c_start_end": [36, 36],
+        "vram_temperature_c_start_end": [40, 38]
+      },
+      {
+        "physical_gpu": 1,
+        "row1_weighted_projection_ms": 8.550810,
+        "row4_weighted_projection_ms": 8.163491,
+        "row6_weighted_projection_ms": 8.066719,
+        "row6_vs_row1_percent": -5.661346702826976,
+        "whole_process_power_w": 63.95,
+        "package_temperature_c_start_end": [36, 38],
+        "vram_temperature_c_start_end": [40, 40]
+      }
+    ],
+    "raw_result_artifact_written": false,
+    "evidence_boundary": "Remote values were stdout-only; this packet records the independently reported command identity and summary, not a frozen raw remote result. Weighted projection sums are not endpoint latency."
+  },
+  "decision": {
+    "clock_locking": "closed as neutral; do not spend a full server arm",
+    "row_scaling": "M6 projection work is about 5.7% cheaper than M1 in this synthetic weighted-op profile; useful for cost modeling, not an endpoint throughput claim",
+    "next": "continue source-level and exact-TP2 qualification work under default 400-2800 MHz clocks"
+  }
+}

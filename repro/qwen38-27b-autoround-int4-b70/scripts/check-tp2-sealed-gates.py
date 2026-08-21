@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 import sys
 from collections import Counter, defaultdict, deque
@@ -61,6 +62,14 @@ SPEC_METRICS_RE = re.compile(
     r"Accepted: (?P<accepted>\d+) tokens, Drafted: (?P<drafted>\d+) tokens, "
     r"Per-position acceptance rate: (?P<rates>\d+(?:\.\d+)?(?:, \d+(?:\.\d+)?){4}), "
     r"Avg Draft acceptance rate: (?P<average>\d+(?:\.\d+)?)%\s*$"
+)
+DRAFT_MARGIN_REPAIR_MARKER = (
+    "XPU TP-safe draft LM-head INT4 margin repair engaged:"
+)
+DRAFT_MARGIN_REPAIR_RE = re.compile(
+    re.escape(DRAFT_MARGIN_REPAIR_MARKER)
+    + r" margin=(?P<margin>\d+(?:\.\d+)?) tp_rank=(?P<tp_rank>\d+) "
+    r"tp_size=(?P<tp_size>\d+)\.\s*$"
 )
 NEGATIVE_MARKERS = (
     "Cache the graph of compile range",
@@ -263,6 +272,35 @@ def validate_expectations(args: argparse.Namespace, tp: int) -> None:
         raise InputError(
             "request-selected target replay bypass requires umbrella replay bypass=0"
         )
+    if args.expected_draft_lm_head_int4_fallback_margin not in ("0", "0.25"):
+        raise InputError(
+            "expected draft INT4 fallback margin must be exactly 0 or 0.25"
+        )
+    if args.require_draft_margin_screen and (
+        args.expected_disable_spec_decode_cudagraph_replay != 0
+        or args.expected_decode_cudagraph_replay_eager_every_n_requests != 0
+        or args.expected_sync_after_model_forward != 0
+        or args.require_replay_microscope
+    ):
+        raise InputError(
+            "draft-margin screen requires both replay bypasses, sync, and replay "
+            "microscope to be disabled"
+        )
+    if args.require_draft_margin_screen:
+        if args.expected_draft_lm_head_int4_fallback_margin != "0.25":
+            raise InputError("draft-margin qualification requires expected margin=0.25")
+        require_sha256(
+            args.expected_draft_margin_synthetic_support_sha256,
+            "expected draft-margin synthetic-support SHA-256",
+        )
+    elif (
+        args.expected_draft_lm_head_int4_fallback_margin != "0"
+        or args.expected_draft_margin_synthetic_support_sha256
+    ):
+        raise InputError(
+            "margin 0.25 and its synthetic-support input are forbidden outside "
+            "the bounded draft-margin qualification"
+        )
     require_sha256(args.expected_vllm_diff_sha256, "expected vLLM diff SHA-256")
     if args.require_replay_microscope and args.expected_sync_after_model_forward != 0:
         raise InputError("replay microscope requires sync-after-model-forward=0")
@@ -294,13 +332,26 @@ def validate_expectations(args: argparse.Namespace, tp: int) -> None:
         require_sha256(value, label)
 
 
-def validate_bench_against_suite(bench_path: Path, suite_path: Path) -> dict[str, Any]:
-    bench = load_bench_rows(bench_path)
+def validate_bench_against_suite(
+    bench_path: Path,
+    suite_path: Path,
+    *,
+    expected_prompt_count: int = 25,
+    expected_max_tokens: int = 512,
+    expected_metric_tokens: int = 100,
+) -> dict[str, Any]:
+    bench = load_bench_rows(
+        bench_path,
+        expected_max_tokens=expected_max_tokens,
+        expected_metric_tokens=expected_metric_tokens,
+    )
     suite = load_json(suite_path)
     prompts = suite.get("prompts") if isinstance(suite, dict) else None
     suite_id = suite.get("suite_id") if isinstance(suite, dict) else None
-    if not isinstance(prompts, list) or len(prompts) != 25:
-        raise InputError("sealed validation suite must contain exactly 25 prompts")
+    if not isinstance(prompts, list) or len(prompts) != expected_prompt_count:
+        raise InputError(
+            f"sealed validation suite must contain exactly {expected_prompt_count} prompts"
+        )
     if not isinstance(suite_id, str) or not suite_id:
         raise InputError("sealed validation suite is missing suite_id")
     if bench["suite_id"] != suite_id or len(bench["rows"]) != len(prompts):
@@ -347,6 +398,7 @@ def parse_server_log(
     replay_skip_lines: list[dict[str, Any]] = []
     drafter_disable_lines: list[dict[str, Any]] = []
     target_request_replay_bypass_lines: list[dict[str, Any]] = []
+    draft_margin_repair_lines: list[dict[str, Any]] = []
     graph_profiles: list[dict[str, Any]] = []
     graph_captures: list[dict[str, Any]] = []
     spec_metrics: list[dict[str, Any]] = []
@@ -356,6 +408,7 @@ def parse_server_log(
     spec_metrics_marker_count = 0
     replay_flag_marker_count = 0
     target_request_replay_bypass_marker_count = 0
+    draft_margin_repair_marker_count = 0
 
     for lineno, line in enumerate(lines, 1):
         actor = actor_from_line(line)
@@ -367,6 +420,7 @@ def parse_server_log(
         target_request_replay_bypass_marker_count += line.count(
             TARGET_REQUEST_REPLAY_BYPASS_MARKER
         )
+        draft_margin_repair_marker_count += line.count(DRAFT_MARGIN_REPAIR_MARKER)
         cache_match = CACHE_DIR_RE.search(line)
         if cache_match:
             cache_path = normalized_path(cache_match.group("path"))
@@ -449,6 +503,17 @@ def parse_server_log(
                     ),
                 }
             )
+        for match in DRAFT_MARGIN_REPAIR_RE.finditer(line):
+            draft_margin_repair_lines.append(
+                {
+                    "line": lineno,
+                    "actor": actor,
+                    "ranks": sorted(ranks_from_line(line)),
+                    "margin": float(match.group("margin")),
+                    "tp_rank": int(match.group("tp_rank")),
+                    "tp_size": int(match.group("tp_size")),
+                }
+            )
         for match in GRAPH_PROFILE_RE.finditer(line):
             graph_profiles.append(
                 {
@@ -526,6 +591,7 @@ def parse_server_log(
         "replay_skip_lines": replay_skip_lines,
         "drafter_disable_lines": drafter_disable_lines,
         "target_request_replay_bypass_lines": target_request_replay_bypass_lines,
+        "draft_margin_repair_lines": draft_margin_repair_lines,
         "graph_profiles": graph_profiles,
         "graph_captures": graph_captures,
         "spec_metrics": spec_metrics,
@@ -537,7 +603,319 @@ def parse_server_log(
         "target_request_replay_bypass_marker_count": (
             target_request_replay_bypass_marker_count
         ),
+        "draft_margin_repair_marker_count": draft_margin_repair_marker_count,
     }
+
+
+def validate_spec_metrics(log: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    errors: list[str] = []
+    invalid_lines: list[int] = []
+    for metric in log["spec_metrics"]:
+        rates = metric["per_position_acceptance_rate"]
+        average = metric["average_draft_acceptance_rate"]
+        accepted = metric["accepted"]
+        drafted = metric["drafted"]
+        valid = (
+            drafted > 0
+            and 0 <= accepted <= drafted
+            and 1.0 <= metric["mean_acceptance_length"] <= 6.0
+            and metric["drafted_throughput"] > 0
+            and metric["accepted_throughput"] >= 0
+            and len(rates) == 5
+            and all(0.0 <= rate <= 1.0 for rate in rates)
+            and all(left >= right for left, right in zip(rates, rates[1:]))
+            and abs(average - (100.0 * accepted / drafted)) <= 0.06
+            and abs(metric["mean_acceptance_length"] - (1.0 + sum(rates)))
+            <= 0.02
+        )
+        if not valid:
+            invalid_lines.append(metric["line"])
+    if log["spec_metrics_marker_count"] != len(log["spec_metrics"]):
+        errors.append("one or more SpecDecoding metrics records was malformed")
+    if not log["spec_metrics"]:
+        errors.append("no exact SpecDecoding metrics record was present")
+    elif invalid_lines:
+        errors.append(
+            "SpecDecoding metrics failed structural/arithmetic checks at lines "
+            + ",".join(map(str, invalid_lines))
+        )
+    aggregate_accepted = sum(
+        metric["accepted"] for metric in log["spec_metrics"]
+    )
+    aggregate_drafted = sum(metric["drafted"] for metric in log["spec_metrics"])
+    if log["spec_metrics"] and (
+        aggregate_accepted <= 0 or aggregate_drafted <= 0
+    ):
+        errors.append("SpecDecoding metrics contain no accepted draft tokens")
+    return {
+        "records": log["spec_metrics"],
+        "record_count": len(log["spec_metrics"]),
+        "raw_marker_count": log["spec_metrics_marker_count"],
+        "aggregate_accepted": aggregate_accepted,
+        "aggregate_drafted": aggregate_drafted,
+        "aggregate_acceptance_rate": (
+            aggregate_accepted / aggregate_drafted if aggregate_drafted else None
+        ),
+        "invalid_lines": invalid_lines,
+    }, errors
+
+
+def validate_draft_margin_qualification(
+    arm_root: Path,
+    identity: dict[str, str],
+    log: dict[str, Any],
+    expected_synthetic_support_sha256: str,
+) -> tuple[dict[str, Any], list[str]]:
+    errors: list[str] = []
+    expected_output = (arm_root / "draft-margin-qualification.jsonl").resolve()
+    expected_snapshot = (
+        arm_root / "run" / "draft-margin-synthetic-support.input.json"
+    ).resolve()
+    expected_identity = {
+        "draft_margin_screen_required": "1",
+        "draft_lm_head_int4_fallback_margin": "0.25",
+        "expected_draft_lm_head_int4_fallback_margin": "0.25",
+        "draft_margin_qualification_file": str(expected_output),
+        "draft_margin_qualification_max_calls": "1024",
+        "draft_margin_synthetic_support_sha256": expected_synthetic_support_sha256,
+        "draft_margin_synthetic_support_snapshot": str(expected_snapshot),
+        "draft_margin_synthetic_support_snapshot_sha256": (
+            expected_synthetic_support_sha256
+        ),
+    }
+    for key, expected in expected_identity.items():
+        actual = identity.get(key)
+        if key.endswith("_file") or key.endswith("_snapshot"):
+            actual = normalized_path(actual) if actual else actual
+        if actual != expected:
+            errors.append(f"identity {key}={actual!r}, expected {expected!r}")
+
+    prerequisite_path = Path(identity.get("draft_margin_synthetic_support", ""))
+    source_sha = (
+        sha256_file(prerequisite_path) if prerequisite_path.is_file() else None
+    )
+    snapshot_sha = sha256_file(expected_snapshot) if expected_snapshot.is_file() else None
+    if source_sha != expected_synthetic_support_sha256:
+        errors.append("draft-margin synthetic-support source does not match expected SHA")
+    if snapshot_sha != expected_synthetic_support_sha256:
+        errors.append("draft-margin synthetic-support snapshot does not match expected SHA")
+    if source_sha == expected_synthetic_support_sha256:
+        prerequisite = load_json(prerequisite_path)
+        if prerequisite != {"trials": 40, "argmax_mismatches": 0}:
+            errors.append("draft-margin synthetic support is not the frozen 40/40 result")
+
+    repair_lines = log["draft_margin_repair_lines"]
+    if (
+        log["draft_margin_repair_marker_count"] != 2
+        or len(repair_lines) != 2
+    ):
+        errors.append(
+            "draft-margin repair marker is not exactly two fully parsed TP-rank events"
+        )
+    else:
+        marker_ranks = []
+        for item in repair_lines:
+            marker_ranks.append(item["tp_rank"])
+            if (
+                item["actor"] != f"Worker_TP{item['tp_rank']}"
+                or item["ranks"] != [item["tp_rank"]]
+                or item["tp_size"] != 2
+                or item["margin"] != 0.25
+            ):
+                errors.append(
+                    "draft-margin repair marker actor/rank/TP-size/margin is invalid"
+                )
+        if Counter(marker_ranks) != Counter({0: 1, 1: 1}):
+            errors.append("draft-margin repair markers do not cover TP ranks 0,1 once")
+
+    try:
+        records = load_jsonl(expected_output)
+    except InputError as exc:
+        return {
+            "schema": "qwen38-draft-margin-tp2-qualification-summary-v1",
+            "status": "invalid",
+            "path": str(expected_output),
+            "sha256": sha256_file(expected_output) if expected_output.is_file() else None,
+            "synthetic_support_sha256": snapshot_sha,
+            "repair_markers": repair_lines,
+            "record_count": 0,
+            "call_count": 0,
+        }, [*errors, str(exc)]
+
+    record_keys = {
+        "schema",
+        "call_index",
+        "row_index",
+        "margin",
+        "tp_size",
+        "shard_width",
+        "approximate_top_token",
+        "repaired_top_token",
+        "exact_top_token",
+        "repaired_matches_exact",
+        "approximate_matches_exact",
+        "max_abs_error",
+        "per_rank",
+    }
+    rank_keys = {
+        "rank",
+        "candidate_count",
+        "approximate_top_token",
+        "exact_top_token",
+        "exact_top_is_candidate",
+        "max_abs_error",
+    }
+
+    def exact_int(value: Any) -> bool:
+        return type(value) is int
+
+    def finite_number(value: Any) -> bool:
+        return (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+        )
+
+    invalid_records: list[int] = []
+    call_rows: dict[int, list[int]] = defaultdict(list)
+    observed_pairs: list[tuple[int, int]] = []
+    approximate_mismatches = 0
+    candidate_counts: list[int] = []
+    max_errors: list[float] = []
+    for record_index, record in enumerate(records):
+        valid = set(record) == record_keys
+        call_index = record.get("call_index")
+        row_index = record.get("row_index")
+        margin = record.get("margin")
+        tp_size = record.get("tp_size")
+        shard_width = record.get("shard_width")
+        approximate_top = record.get("approximate_top_token")
+        repaired_top = record.get("repaired_top_token")
+        exact_top = record.get("exact_top_token")
+        repaired_matches = record.get("repaired_matches_exact")
+        approximate_matches = record.get("approximate_matches_exact")
+        max_error = record.get("max_abs_error")
+        per_rank = record.get("per_rank")
+        valid = valid and record.get("schema") == (
+            "qwen38-draft-margin-tp2-qualification-v1"
+        )
+        valid = valid and exact_int(call_index) and 0 <= call_index < 1024
+        valid = valid and exact_int(row_index) and row_index >= 0
+        valid = valid and finite_number(margin) and float(margin) == 0.25
+        valid = valid and exact_int(tp_size) and tp_size == 2
+        valid = valid and exact_int(shard_width) and shard_width == 124160
+        full_width = 248320
+        valid = valid and all(
+            exact_int(token) and 0 <= token < full_width
+            for token in (approximate_top, repaired_top, exact_top)
+        )
+        valid = valid and type(repaired_matches) is bool
+        valid = valid and type(approximate_matches) is bool
+        if all(exact_int(token) for token in (approximate_top, repaired_top, exact_top)):
+            valid = valid and repaired_matches == (repaired_top == exact_top)
+            valid = valid and approximate_matches == (approximate_top == exact_top)
+        valid = valid and finite_number(max_error)
+        if finite_number(max_error):
+            valid = valid and 0.0 <= float(max_error) < 0.125
+            max_errors.append(float(max_error))
+        valid = valid and isinstance(per_rank, list) and len(per_rank) == 2
+
+        local_approximate_tops: list[int] = []
+        local_exact_tops: list[int] = []
+        local_errors: list[float] = []
+        if isinstance(per_rank, list):
+            for expected_rank, rank_record in enumerate(per_rank):
+                if not isinstance(rank_record, dict):
+                    valid = False
+                    continue
+                valid = valid and set(rank_record) == rank_keys
+                rank = rank_record.get("rank")
+                candidate_count = rank_record.get("candidate_count")
+                local_approximate = rank_record.get("approximate_top_token")
+                local_exact = rank_record.get("exact_top_token")
+                exact_is_candidate = rank_record.get("exact_top_is_candidate")
+                local_error = rank_record.get("max_abs_error")
+                start = expected_rank * 124160
+                end = start + 124160
+                valid = valid and exact_int(rank) and rank == expected_rank
+                valid = valid and exact_int(candidate_count)
+                if exact_int(candidate_count):
+                    valid = valid and 1 <= candidate_count <= 124160
+                    candidate_counts.append(candidate_count)
+                valid = valid and all(
+                    exact_int(token) and start <= token < end
+                    for token in (local_approximate, local_exact)
+                )
+                valid = valid and exact_is_candidate is True
+                valid = valid and finite_number(local_error)
+                if finite_number(local_error):
+                    valid = valid and 0.0 <= float(local_error) < 0.125
+                    local_errors.append(float(local_error))
+                if exact_int(local_approximate):
+                    local_approximate_tops.append(local_approximate)
+                if exact_int(local_exact):
+                    local_exact_tops.append(local_exact)
+        if exact_int(approximate_top):
+            valid = valid and approximate_top in local_approximate_tops
+        if exact_int(exact_top):
+            valid = valid and exact_top in local_exact_tops
+        if finite_number(max_error) and len(local_errors) == 2:
+            valid = valid and float(max_error) == max(local_errors)
+        valid = valid and repaired_matches is True
+        if approximate_matches is False:
+            approximate_mismatches += 1
+        if exact_int(call_index) and exact_int(row_index):
+            call_rows[call_index].append(row_index)
+            observed_pairs.append((call_index, row_index))
+        if not valid:
+            invalid_records.append(record_index)
+
+    if len(records) < 64:
+        errors.append("draft-margin qualification contains fewer than 64 rows")
+    observed_calls = sorted(call_rows)
+    if len(observed_calls) < 64:
+        errors.append("draft-margin qualification contains fewer than 64 calls")
+    if approximate_mismatches == 0:
+        errors.append(
+            "draft-margin qualification contains no gathered approximate argmax mismatch"
+        )
+    if observed_calls and observed_calls != list(range(observed_calls[-1] + 1)):
+        errors.append("draft-margin qualification call indices are not contiguous from 0")
+    for call_index, rows in sorted(call_rows.items()):
+        if rows != [0]:
+            errors.append(
+                f"draft-margin qualification call {call_index} is not exactly row 0"
+            )
+    if observed_pairs != sorted(observed_pairs) or len(observed_pairs) != len(
+        set(observed_pairs)
+    ):
+        errors.append("draft-margin qualification call/row records are reordered or duplicated")
+    if invalid_records:
+        errors.append(
+            "draft-margin qualification has invalid records at indices "
+            + ",".join(map(str, invalid_records[:20]))
+        )
+
+    return {
+        "schema": "qwen38-draft-margin-tp2-qualification-summary-v1",
+        "status": "passed" if not errors else "failed",
+        "path": str(expected_output),
+        "sha256": sha256_file(expected_output),
+        "synthetic_support_sha256": snapshot_sha,
+        "repair_markers": repair_lines,
+        "record_count": len(records),
+        "call_count": len(observed_calls),
+        "first_call": observed_calls[0] if observed_calls else None,
+        "last_call": observed_calls[-1] if observed_calls else None,
+        "invalid_record_indices": invalid_records,
+        "approximate_argmax_mismatch_count": approximate_mismatches,
+        "repaired_argmax_mismatch_count": sum(
+            record.get("repaired_matches_exact") is not True for record in records
+        ),
+        "max_abs_error": max(max_errors) if max_errors else None,
+        "candidate_count_min": min(candidate_counts) if candidate_counts else None,
+        "candidate_count_max": max(candidate_counts) if candidate_counts else None,
+    }, errors
 
 
 def compare_manifests(input_path: Path, output_path: Path) -> dict[str, Any]:
@@ -920,7 +1298,15 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         "draft_lm_head_int4": "1",
         "draft_lm_head_int4_group_size": "128",
         "draft_lm_head_int4_scale_dtype": "bf16",
-        "draft_lm_head_int4_fallback_margin": "0",
+        "draft_lm_head_int4_fallback_margin": (
+            args.expected_draft_lm_head_int4_fallback_margin
+        ),
+        "expected_draft_lm_head_int4_fallback_margin": (
+            args.expected_draft_lm_head_int4_fallback_margin
+        ),
+        "draft_margin_screen_required": (
+            "1" if args.require_draft_margin_screen else "0"
+        ),
         "gdn_native_spec_decode": "1",
         "gdn_native_spec_recurrent_serial_exact": "",
         "gdn_native_fallback": "0",
@@ -1001,6 +1387,20 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
             args.expected_report_only_b2_bench_sha256
         ),
     }
+    if args.require_draft_margin_screen:
+        expected_identity.update(
+            {
+                "run_smoke": "0",
+                "run_bench": "1",
+                "run_quality": "0",
+                "bench_max_tokens": "128",
+                "bench_metric_tokens": "32",
+                "target_token_parity_required": "0",
+                "parity_peer_bench": "",
+                "target_token_bench": "",
+                "report_only_b2_bench": "",
+            }
+        )
     if args.require_replay_microscope:
         expected_identity["sync_after_model_forward"] = "0"
         expected_identity["expected_sync_after_model_forward"] = "0"
@@ -1575,6 +1975,52 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
             "drafter_graph_disable_markers": log["drafter_disable_lines"],
         }
 
+    draft_margin_screen: dict[str, Any] | None = None
+    if args.require_draft_margin_screen:
+        spec_evidence, spec_errors = validate_spec_metrics(log)
+        errors.extend(spec_errors)
+        if len(log["runtime_markers"]["draft_int4_head"]) != tp:
+            errors.append(
+                "draft-margin screen did not prepare one INT4 draft head per TP rank"
+            )
+        if log["replay_skip_lines"] or log["drafter_disable_lines"]:
+            errors.append(
+                "draft-margin screen unexpectedly changed speculative graph topology"
+            )
+        draft_margin_screen, qualification_errors = (
+            validate_draft_margin_qualification(
+                arm_root,
+                identity,
+                log,
+                args.expected_draft_margin_synthetic_support_sha256,
+            )
+        )
+        errors.extend(qualification_errors)
+        draft_margin_screen.update(
+            {
+                "effective_margin": identity.get(
+                    "draft_lm_head_int4_fallback_margin"
+                ),
+                "expected_margin": identity.get(
+                    "expected_draft_lm_head_int4_fallback_margin"
+                ),
+                "engagement_basis": (
+                    "two production repair-branch markers plus strict rank-gathered "
+                    "qualification JSONL from the sole three-prompt workload"
+                ),
+                "coverage_scope": (
+                    "records bind collectively to the only benchmark workload; the "
+                    "schema has no request ID and does not prove per-prompt coverage"
+                ),
+                "draft_head_markers": log["runtime_markers"]["draft_int4_head"],
+                "spec_metrics": spec_evidence,
+            }
+        )
+    elif log["draft_margin_repair_marker_count"]:
+        errors.append(
+            "draft-margin repair marker was present when independent expectation was 0"
+        )
+
     if identity.get("onednn_int4_determinism_pad") != "1":
         errors.append("identity does not record onednn_int4_determinism_pad=1")
     if len(log["pad_lines"]) != args.expected_pad_markers:
@@ -1608,7 +2054,13 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
     if identity.get("validation_suite_sha256") != suite_sha256:
         errors.append("identity validation-suite SHA does not match the arm artifact")
     try:
-        bench = validate_bench_against_suite(arm_root / "data" / "bench.json", suite_path)
+        bench = validate_bench_against_suite(
+            arm_root / "data" / "bench.json",
+            suite_path,
+            expected_prompt_count=3 if args.require_draft_margin_screen else 25,
+            expected_max_tokens=128 if args.require_draft_margin_screen else 512,
+            expected_metric_tokens=32 if args.require_draft_margin_screen else 100,
+        )
     except InputError as exc:
         bench = None
         errors.append(str(exc))
@@ -1682,6 +2134,9 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
             "decode_cudagraph_replay_eager_every_n_requests": identity.get(
                 "decode_cudagraph_replay_eager_every_n_requests"
             ),
+            "draft_lm_head_int4_fallback_margin": identity.get(
+                "draft_lm_head_int4_fallback_margin"
+            ),
             "expected_parity_peer_checksum_manifest_sha256": identity.get(
                 "expected_parity_peer_checksum_manifest_sha256"
             ),
@@ -1727,13 +2182,19 @@ def check_arm(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         "target_verifier_request_replay_bypass": (
             target_verifier_request_replay_bypass
         ),
+        "draft_margin_screen": draft_margin_screen,
         "replay_microscope": replay_microscope,
         "errors": errors,
     }
     return result, not errors
 
 
-def load_bench_rows(path: Path) -> dict[str, Any]:
+def load_bench_rows(
+    path: Path,
+    *,
+    expected_max_tokens: int = 512,
+    expected_metric_tokens: int = 100,
+) -> dict[str, Any]:
     data = load_json(path)
     fresh = data.get("fresh_response_validity")
     if not isinstance(fresh, dict) or fresh.get("valid") is not True:
@@ -1747,7 +2208,7 @@ def load_bench_rows(path: Path) -> dict[str, Any]:
         "ngram_history_acceleration": False,
         "context_checkpoints_or_prefix_reuse": False,
         "return_token_ids_requested": True,
-        "primary_metric_tokens": 100,
+        "primary_metric_tokens": expected_metric_tokens,
     }
     for key, expected in required_fresh.items():
         if fresh.get(key) != expected:
@@ -1756,7 +2217,11 @@ def load_bench_rows(path: Path) -> dict[str, Any]:
                 f"expected {expected!r}: {path}"
             )
     realistic_gate = data.get("realistic_final_gate")
-    if not isinstance(realistic_gate, dict) or realistic_gate.get("passed") is not True:
+    if (
+        not isinstance(realistic_gate, dict)
+        or realistic_gate.get("passed") is not True
+        or realistic_gate.get("metric_tokens") != expected_metric_tokens
+    ):
         raise InputError(f"benchmark realistic_final_gate did not pass: {path}")
     rows = data.get("rows")
     if not isinstance(rows, list) or not rows:
@@ -1767,12 +2232,13 @@ def load_bench_rows(path: Path) -> dict[str, Any]:
         or type(run_identity.get("seed")) is not int
         or run_identity["seed"] != 1
         or type(run_identity.get("max_tokens")) is not int
-        or run_identity["max_tokens"] != 512
+        or run_identity["max_tokens"] != expected_max_tokens
         or run_identity.get("api_mode") != "chat"
         or run_identity.get("return_token_ids") is not True
     ):
         raise InputError(
-            f"benchmark request identity is not exact chat/seed1/512/token-IDs: {path}"
+            "benchmark request identity is not exact "
+            f"chat/seed1/{expected_max_tokens}/token-IDs: {path}"
         )
     parsed_rows: list[dict[str, Any]] = []
     seen: set[tuple[int, str, str]] = set()
@@ -1795,7 +2261,7 @@ def load_bench_rows(path: Path) -> dict[str, Any]:
         token_ids = row.get("token_ids")
         if (
             not isinstance(token_ids, list)
-            or not token_ids
+            or not 1 <= len(token_ids) <= expected_max_tokens
             or any(not isinstance(token, int) or isinstance(token, bool) for token in token_ids)
         ):
             raise InputError(f"invalid token_ids for row {key}: {path}")
@@ -1932,6 +2398,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=0,
     )
     arm.add_argument(
+        "--expected-draft-lm-head-int4-fallback-margin", default="0"
+    )
+    arm.add_argument(
+        "--expected-draft-margin-synthetic-support-sha256", default=""
+    )
+    arm.add_argument(
         "--expected-vllm-diff-sha256",
         default=hashlib.sha256(b"").hexdigest(),
     )
@@ -1953,6 +2425,7 @@ def build_parser() -> argparse.ArgumentParser:
     arm.add_argument("--expected-repo-head", required=True)
     arm.add_argument("--require-quality-pass", action="store_true")
     arm.add_argument("--require-replay-microscope", action="store_true")
+    arm.add_argument("--require-draft-margin-screen", action="store_true")
     arm.add_argument("--expected-quality-baseline-sha256", required=True)
     arm.add_argument("--output", required=True)
 

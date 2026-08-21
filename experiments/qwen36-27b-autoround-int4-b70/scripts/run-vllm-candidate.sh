@@ -249,6 +249,10 @@ COMPILE_CACHE_INPUT_MANIFEST_SHA256=$(sha256_if_file \
   "${VALIDATION_COMPILE_CACHE_MANIFEST:-}")
 GRAPH_STAGE_MANIFEST_SHA256=$(sha256_if_file \
   "${VALIDATION_GRAPH_STAGE_MANIFEST:-}")
+DRAFT_MARGIN_SYNTHETIC_SUPPORT_SHA256=$(sha256_if_file \
+  "${VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT:-}")
+DRAFT_MARGIN_SYNTHETIC_SUPPORT_SNAPSHOT_SHA256=$(sha256_if_file \
+  "${VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT_SNAPSHOT:-}")
 COMMON_RUNNER_SHA256=$(sha256_if_file "$0")
 CANDIDATE_ENTRYPOINT_SHA256=$(sha256_if_file \
   "${CANDIDATE_ENTRYPOINT:-$0}")
@@ -347,6 +351,14 @@ write_identity() {
   echo "draft_lm_head_int4_group_size=${VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE:-}"
   echo "draft_lm_head_int4_scale_dtype=${VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE:-}"
   echo "draft_lm_head_int4_fallback_margin=${VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN:-0}"
+  echo "expected_draft_lm_head_int4_fallback_margin=${VALIDATION_EXPECT_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN:-0}"
+  echo "draft_margin_screen_required=${VALIDATION_REQUIRE_DRAFT_MARGIN_SCREEN:-0}"
+  echo "draft_margin_qualification_file=${VLLM_XPU_DRAFT_LM_HEAD_INT4_MARGIN_QUAL_FILE:-}"
+  echo "draft_margin_qualification_max_calls=${VLLM_XPU_DRAFT_LM_HEAD_INT4_MARGIN_QUAL_MAX_CALLS:-0}"
+  echo "draft_margin_synthetic_support=${VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT:-}"
+  echo "draft_margin_synthetic_support_sha256=$DRAFT_MARGIN_SYNTHETIC_SUPPORT_SHA256"
+  echo "draft_margin_synthetic_support_snapshot=${VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT_SNAPSHOT:-}"
+  echo "draft_margin_synthetic_support_snapshot_sha256=$DRAFT_MARGIN_SYNTHETIC_SUPPORT_SNAPSHOT_SHA256"
   echo "draft_lm_head_int4_rerank_topk=${VLLM_XPU_DRAFT_LM_HEAD_INT4_RERANK_TOPK:-}"
   echo "gdn_serial_spec_decode=${VLLM_XPU_GDN_SERIAL_SPEC_DECODE:-}"
   echo "gdn_serial_spec_conv=${VLLM_XPU_GDN_SERIAL_SPEC_CONV:-}"

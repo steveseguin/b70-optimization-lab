@@ -373,6 +373,20 @@ loaded service.
    split. Preserve both arms, run no T3 or retry, and do not promote or submit
    these speeds. Any drafter-geometry or startup-history split needs a new
    source audit and preregistration.
+
+   The next optimization candidate is a bounded TP2 qualification of a TP-safe
+   draft-INT4 margin repair. The first cheap prototype was shard-local and is
+   not safe for TP2; its replacement repairs each shard's possible winner
+   before the ordinary logits gather and records gathered approximate,
+   repaired, and full FP16 evidence. Only the three-prompt diagnostic is
+   authorized, and its timing is invalid by construction. A full-25
+   performance arm remains forbidden until the real-call qualification passes
+   and a separate production-only patch and campaign are preregistered. Clock
+   locking is closed as neutral: the local draft-head M1 operator changed only
+   `+0.171%` at fixed 2800 MHz and M6 was flat, while the earlier endpoint
+   bracket was `-0.487%`. See the
+   [qualification preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-draft-margin-tp2-qualification-prereg.md)
+   and [clock/operator screen](experiments/qwen38-27b-b70/notes/2026-08-20-draft-head-clock-and-row-scaling-screen.md).
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.

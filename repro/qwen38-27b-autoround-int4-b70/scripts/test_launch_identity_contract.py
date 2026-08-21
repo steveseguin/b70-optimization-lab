@@ -39,6 +39,10 @@ TARGET_REQUEST_REPLAY_BYPASS_DRIVER = REPO / (
     "experiments/qwen38-27b-b70/scripts/"
     "run-20260820-detpad-tp2-target-verifier-request-replay-bypass.sh"
 )
+DRAFT_MARGIN_QUALIFICATION_DRIVER = REPO / (
+    "experiments/qwen38-27b-b70/scripts/"
+    "run-20260820-draft-margin-tp2-qualification.sh"
+)
 TARGET_REQUEST_REPLAY_BYPASS_PATCH = REPO / (
     "patches/qwen38-27b-autoround-int4-b70/"
     "vllm-target-verifier-request-replay-bypass-marker-20260820.patch"
@@ -129,12 +133,49 @@ class LaunchIdentityContractTest(unittest.TestCase):
             "expected_disable_spec_decode_cudagraph_replay=",
             "decode_cudagraph_replay_eager_every_n_requests=",
             "expected_decode_cudagraph_replay_eager_every_n_requests=",
+            "expected_draft_lm_head_int4_fallback_margin=",
+            "draft_margin_screen_required=",
+            "draft_margin_qualification_file=",
+            "draft_margin_qualification_max_calls=",
+            "draft_margin_synthetic_support_sha256=",
+            "draft_margin_synthetic_support_snapshot_sha256=",
             "parity_peer_bench_snapshot_sha256=",
             "target_token_bench_snapshot_sha256=",
             "report_only_b2_bench_sha256=",
             "report_only_b2_bench_snapshot_sha256=",
         ):
             self.assertIn(field, source)
+
+    def test_draft_margin_qualification_is_bounded_and_fail_closed(self) -> None:
+        arm = ARM.read_text()
+        driver = DRAFT_MARGIN_QUALIFICATION_DRIVER.read_text()
+        for required in (
+            "draft margin 0.25 is forbidden outside the bounded qualification",
+            "VALIDATION_REQUIRE_DRAFT_MARGIN_SCREEN",
+            "VALIDATION_DRAFT_MARGIN_QUALIFICATION_MAX_CALLS",
+            "VLLM_XPU_DRAFT_LM_HEAD_INT4_MARGIN_QUAL_FILE",
+            "VLLM_XPU_DRAFT_LM_HEAD_INT4_MARGIN_QUAL_MAX_CALLS",
+            "draft-margin qualification forbids full25 target/peer/report-only",
+            "--expected-draft-margin-synthetic-support-sha256",
+        ):
+            self.assertIn(required, arm)
+        for required in (
+            "VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN=0.25",
+            "VALIDATION_EXPECT_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN=0.25",
+            "VALIDATION_REQUIRE_DRAFT_MARGIN_SCREEN=1",
+            "VALIDATION_DRAFT_MARGIN_QUALIFICATION_MAX_CALLS=1024",
+            "VALIDATION_RUN_SMOKE=0",
+            "VALIDATION_RUN_BENCH=1",
+            "VALIDATION_RUN_QUALITY=0",
+            "VALIDATION_BENCH_MAX_TOKENS=128",
+            "VALIDATION_BENCH_METRIC_TOKENS=32",
+            "VALIDATION_REQUIRE_TARGET_TOKEN_PARITY=0",
+            "exec env -i",
+        ):
+            self.assertIn(required, driver)
+        self.assertNotIn("VALIDATION_TARGET_TOKEN_BENCH=", driver)
+        self.assertNotIn("VALIDATION_PARITY_PEER_BENCH=", driver)
+        self.assertNotIn("full25", driver.lower())
 
     def test_arm_forwards_determinism_pad_explicitly(self) -> None:
         source = ARM.read_text()

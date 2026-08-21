@@ -31,6 +31,22 @@ SUITE_PAYLOAD = {
 }
 SUITE_BYTES = (json.dumps(SUITE_PAYLOAD, sort_keys=True) + "\n").encode()
 SUITE_SHA = hashlib.sha256(SUITE_BYTES).hexdigest()
+QUAL_SUITE_PAYLOAD = {
+    "suite_id": "qwen38-draft-margin-tp2-qualification-20260820-v1",
+    "version": 1,
+    "prompts": [
+        {"id": prompt_id, "prompt": f"qualification prompt {index}"}
+        for index, prompt_id in enumerate(
+            (
+                "selection--sql-debugging",
+                "holdout--factual-protocol",
+                "holdout--long-rollover-repository-audit",
+            )
+        )
+    ],
+}
+QUAL_SUITE_BYTES = (json.dumps(QUAL_SUITE_PAYLOAD, sort_keys=True) + "\n").encode()
+QUAL_SUITE_SHA = hashlib.sha256(QUAL_SUITE_BYTES).hexdigest()
 TRACE_REQ_ID = f"{gates.REPLAY_MICROSCOPE_REQ_BASE}-deadbeef"
 
 
@@ -103,6 +119,14 @@ def identity_text(
             "draft_lm_head_int4_group_size=128",
             "draft_lm_head_int4_scale_dtype=bf16",
             "draft_lm_head_int4_fallback_margin=0",
+            "expected_draft_lm_head_int4_fallback_margin=0",
+            "draft_margin_screen_required=0",
+            "draft_margin_qualification_file=",
+            "draft_margin_qualification_max_calls=0",
+            "draft_margin_synthetic_support=",
+            "draft_margin_synthetic_support_sha256=",
+            "draft_margin_synthetic_support_snapshot=",
+            "draft_margin_synthetic_support_snapshot_sha256=",
             "gdn_native_spec_decode=1",
             "gdn_native_spec_recurrent_serial_exact=",
             "gdn_native_fallback=0",
@@ -189,6 +213,7 @@ def identity_text(
             "report_only_b2_bench_sha256=",
             "report_only_b2_bench_snapshot=",
             "report_only_b2_bench_snapshot_sha256=",
+            "target_token_parity_required=0",
             "",
         )
     )
@@ -284,6 +309,61 @@ def target_request_replay_bypass_log() -> str:
         "0.229, 0.114, Avg Draft acceptance rate: 40.6%",
     ]
     return "\n".join(lines) + "\n"
+
+
+def draft_margin_qualification_log() -> str:
+    return "\n".join(
+        (
+            "(Worker_TP0 pid=20) INFO XPU TP-safe draft LM-head INT4 margin "
+            "repair engaged: margin=0.25 tp_rank=0 tp_size=2.",
+            "(Worker_TP1 pid=21) INFO XPU TP-safe draft LM-head INT4 margin "
+            "repair engaged: margin=0.25 tp_rank=1 tp_size=2.",
+            "(APIServer pid=19) INFO SpecDecoding metrics: Mean acceptance "
+            "length: 3.03, Accepted throughput: 2.98 tokens/s, Drafted "
+            "throughput: 7.34 tokens/s, Accepted: 71 tokens, Drafted: 175 "
+            "tokens, Per-position acceptance rate: 0.743, 0.571, 0.371, "
+            "0.229, 0.114, Avg Draft acceptance rate: 40.6%",
+        )
+    ) + "\n"
+
+
+def draft_margin_record(call_index: int, *, max_abs_error: float = 0.1) -> dict:
+    record = {
+        "schema": "qwen38-draft-margin-tp2-qualification-v1",
+        "call_index": call_index,
+        "row_index": 0,
+        "margin": 0.25,
+        "tp_size": 2,
+        "shard_width": 124160,
+        "approximate_top_token": 5,
+        "repaired_top_token": 5,
+        "exact_top_token": 5,
+        "repaired_matches_exact": True,
+        "approximate_matches_exact": True,
+        "max_abs_error": max_abs_error,
+        "per_rank": [
+            {
+                "rank": 0,
+                "candidate_count": 3,
+                "approximate_top_token": 5,
+                "exact_top_token": 5,
+                "exact_top_is_candidate": True,
+                "max_abs_error": max_abs_error,
+            },
+            {
+                "rank": 1,
+                "candidate_count": 2,
+                "approximate_top_token": 124165,
+                "exact_top_token": 124165,
+                "exact_top_is_candidate": True,
+                "max_abs_error": 0.05,
+            },
+        ],
+    }
+    if call_index == 0:
+        record["approximate_top_token"] = 124165
+        record["approximate_matches_exact"] = False
+    return record
 
 
 def manifest_bytes(cache_root: Path, *, tree: str = "c" * 64) -> bytes:
@@ -393,7 +473,7 @@ def bench(path: Path, token_rows: list[list[int]], *, order: list[int] | None = 
                     "return_token_ids_requested": True,
                     "primary_metric_tokens": 100,
                 },
-                "realistic_final_gate": {"passed": True},
+                "realistic_final_gate": {"passed": True, "metric_tokens": 100},
                 "rows": rows,
             }
         )
@@ -528,7 +608,10 @@ class ArmGateTests(unittest.TestCase):
                         "return_token_ids_requested": True,
                         "primary_metric_tokens": 100,
                     },
-                    "realistic_final_gate": {"passed": True},
+                    "realistic_final_gate": {
+                        "passed": True,
+                        "metric_tokens": 100,
+                    },
                     "rows": rows,
                 }
             )
@@ -544,6 +627,8 @@ class ArmGateTests(unittest.TestCase):
             expected_sync_after_model_forward=0,
             expected_disable_spec_decode_cudagraph_replay=0,
             expected_decode_cudagraph_replay_eager_every_n_requests=0,
+            expected_draft_lm_head_int4_fallback_margin="0",
+            expected_draft_margin_synthetic_support_sha256="",
             expected_vllm_diff_sha256=hashlib.sha256(b"").hexdigest(),
             expected_parity_peer_checksum_manifest_sha256="",
             expected_report_only_b2_bench_sha256="",
@@ -561,6 +646,7 @@ class ArmGateTests(unittest.TestCase):
             expected_repo_head="f" * 40,
             require_quality_pass=False,
             require_replay_microscope=False,
+            require_draft_margin_screen=False,
             expected_quality_baseline_sha256=gates.sha256_file(self.baseline),
         )
 
@@ -570,6 +656,131 @@ class ArmGateTests(unittest.TestCase):
     def run_gate(self):
         return gates.check_arm(self.args)
 
+    def enable_draft_margin_qualification(self) -> None:
+        support = Path(self.temp.name) / "margin-synthetic-support.json"
+        support.write_text('{"argmax_mismatches":0,"trials":40}\n')
+        support_snapshot = (
+            self.root / "run" / "draft-margin-synthetic-support.input.json"
+        )
+        support_snapshot.write_bytes(support.read_bytes())
+        qualification_file = self.root / "draft-margin-qualification.jsonl"
+        qualification_file.write_text(
+            "".join(
+                json.dumps(draft_margin_record(call_index), sort_keys=True) + "\n"
+                for call_index in range(64)
+            )
+        )
+
+        identity_path = self.root / "run" / "identity.env"
+        identity = identity_path.read_text()
+        replacements = {
+            "draft_lm_head_int4_fallback_margin=0\n": (
+                "draft_lm_head_int4_fallback_margin=0.25\n"
+            ),
+            "expected_draft_lm_head_int4_fallback_margin=0\n": (
+                "expected_draft_lm_head_int4_fallback_margin=0.25\n"
+            ),
+            "draft_margin_screen_required=0\n": "draft_margin_screen_required=1\n",
+            "draft_margin_qualification_file=\n": (
+                f"draft_margin_qualification_file={qualification_file}\n"
+            ),
+            "draft_margin_qualification_max_calls=0\n": (
+                "draft_margin_qualification_max_calls=1024\n"
+            ),
+            "draft_margin_synthetic_support=\n": (
+                f"draft_margin_synthetic_support={support}\n"
+            ),
+            "draft_margin_synthetic_support_sha256=\n": (
+                "draft_margin_synthetic_support_sha256="
+                f"{gates.sha256_file(support)}\n"
+            ),
+            "draft_margin_synthetic_support_snapshot=\n": (
+                "draft_margin_synthetic_support_snapshot="
+                f"{support_snapshot}\n"
+            ),
+            "draft_margin_synthetic_support_snapshot_sha256=\n": (
+                "draft_margin_synthetic_support_snapshot_sha256="
+                f"{gates.sha256_file(support_snapshot)}\n"
+            ),
+            "run_smoke=1\n": "run_smoke=0\n",
+            "bench_max_tokens=512\n": "bench_max_tokens=128\n",
+            "bench_metric_tokens=100\n": "bench_metric_tokens=32\n",
+            f"validation_suite_sha256={SUITE_SHA}\n": (
+                f"validation_suite_sha256={QUAL_SUITE_SHA}\n"
+            ),
+            f"expected_suite_sha256={SUITE_SHA}\n": (
+                f"expected_suite_sha256={QUAL_SUITE_SHA}\n"
+            ),
+        }
+        for old, new in replacements.items():
+            self.assertIn(old, identity)
+            identity = identity.replace(old, new, 1)
+        identity_path.write_text(identity)
+
+        (self.root / "validation-suite.json").write_bytes(QUAL_SUITE_BYTES)
+        rows = []
+        for index, prompt in enumerate(QUAL_SUITE_PAYLOAD["prompts"]):
+            rows.append(
+                {
+                    "prompt_index": index,
+                    "prompt_id": prompt["id"],
+                    "prompt_sha256": hashlib.sha256(
+                        prompt["prompt"].encode()
+                    ).hexdigest(),
+                    "token_ids": [index + 1] * 32,
+                }
+            )
+        (self.root / "data" / "bench.json").write_text(
+            json.dumps(
+                {
+                    "run_identity": {
+                        "api_mode": "chat",
+                        "max_tokens": 128,
+                        "return_token_ids": True,
+                        "seed": 1,
+                    },
+                    "fresh_response_validity": {
+                        "valid": True,
+                        "suite_id": QUAL_SUITE_PAYLOAD["suite_id"],
+                        "prompt_count": 3,
+                        "cached_tokens": [0, 0, 0],
+                        "cached_tokens_all_zero": True,
+                        "each_prompt_run_once": True,
+                        "prompts_are_unique": True,
+                        "response_reuse": False,
+                        "history_acceleration": False,
+                        "ngram_history_acceleration": False,
+                        "context_checkpoints_or_prefix_reuse": False,
+                        "return_token_ids_requested": True,
+                        "primary_metric_tokens": 32,
+                    },
+                    "realistic_final_gate": {
+                        "passed": True,
+                        "metric_tokens": 32,
+                    },
+                    "rows": rows,
+                }
+            )
+        )
+        (self.root / "run" / "server.stdout.log").write_text(
+            good_log(self.cache_root) + draft_margin_qualification_log()
+        )
+        self.args.expected_draft_lm_head_int4_fallback_margin = "0.25"
+        self.args.expected_draft_margin_synthetic_support_sha256 = (
+            gates.sha256_file(support)
+        )
+        self.args.expected_suite_sha256 = QUAL_SUITE_SHA
+        self.args.require_draft_margin_screen = True
+
+    def qualification_records(self) -> list[dict]:
+        path = self.root / "draft-margin-qualification.jsonl"
+        return [json.loads(line) for line in path.read_text().splitlines()]
+
+    def write_qualification_records(self, records: list[dict]) -> None:
+        (self.root / "draft-margin-qualification.jsonl").write_text(
+            "".join(json.dumps(record, sort_keys=True) + "\n" for record in records)
+        )
+
     def test_happy_tp2(self) -> None:
         result, passed = self.run_gate()
         self.assertTrue(passed, result)
@@ -577,6 +788,104 @@ class ArmGateTests(unittest.TestCase):
         self.assertEqual(result["cache_loads"]["actual_aot_loads"], 4)
         self.assertIsNone(result["graph_replay_bypass"])
         self.assertIsNone(result["target_verifier_request_replay_bypass"])
+
+    def test_draft_margin_qualification_exact_gathered_evidence_passes(self) -> None:
+        self.enable_draft_margin_qualification()
+        result, passed = self.run_gate()
+        self.assertTrue(passed, result)
+        qualification = result["draft_margin_screen"]
+        self.assertEqual(qualification["record_count"], 64)
+        self.assertEqual(qualification["call_count"], 64)
+        self.assertEqual(qualification["repaired_argmax_mismatch_count"], 0)
+        self.assertEqual(qualification["approximate_argmax_mismatch_count"], 1)
+        self.assertIn("collectively", qualification["coverage_scope"])
+
+    def test_draft_margin_qualification_requires_strict_error_bound(self) -> None:
+        self.enable_draft_margin_qualification()
+        records = self.qualification_records()
+        records[0]["max_abs_error"] = 0.125
+        records[0]["per_rank"][0]["max_abs_error"] = 0.125
+        self.write_qualification_records(records)
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any("invalid records" in error for error in result["errors"]), result
+        )
+
+    def test_draft_margin_qualification_rejects_mismatch_or_missed_candidate(self) -> None:
+        self.enable_draft_margin_qualification()
+        records = self.qualification_records()
+        records[1]["repaired_top_token"] = 124165
+        records[1]["repaired_matches_exact"] = False
+        records[2]["per_rank"][0]["exact_top_is_candidate"] = False
+        self.write_qualification_records(records)
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertGreaterEqual(
+            result["draft_margin_screen"]["repaired_argmax_mismatch_count"], 1
+        )
+
+    def test_draft_margin_qualification_rejects_short_or_noncontiguous_calls(self) -> None:
+        self.enable_draft_margin_qualification()
+        records = self.qualification_records()[:63]
+        records[-1]["call_index"] = 63
+        self.write_qualification_records(records)
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("fewer than 64" in error for error in result["errors"]))
+        self.assertTrue(any("call indices" in error for error in result["errors"]))
+
+    def test_draft_margin_qualification_requires_an_affected_gathered_choice(self) -> None:
+        self.enable_draft_margin_qualification()
+        records = self.qualification_records()
+        records[0]["approximate_top_token"] = records[0]["exact_top_token"]
+        records[0]["approximate_matches_exact"] = True
+        self.write_qualification_records(records)
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any(
+                "no gathered approximate argmax mismatch" in error
+                for error in result["errors"]
+            )
+        )
+
+    def test_draft_margin_qualification_requires_one_selected_row_per_call(self) -> None:
+        self.enable_draft_margin_qualification()
+        records = self.qualification_records()
+        extra = dict(records[1])
+        extra["row_index"] = 1
+        records.insert(2, extra)
+        self.write_qualification_records(records)
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("not exactly row 0" in error for error in result["errors"]))
+
+    def test_draft_margin_qualification_jsonl_is_strict(self) -> None:
+        self.enable_draft_margin_qualification()
+        path = self.root / "draft-margin-qualification.jsonl"
+        first = path.read_text().splitlines()[0]
+        path.write_text(first[:-1] + ',"call_index":0}\n')
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("duplicate" in error for error in result["errors"]))
+
+    def test_draft_margin_repair_marker_is_strict_and_rank_complete(self) -> None:
+        self.enable_draft_margin_qualification()
+        log_path = self.root / "run" / "server.stdout.log"
+        log_path.write_text(log_path.read_text().replace("tp_rank=1", "tp_rank=0"))
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(any("TP ranks 0,1" in error for error in result["errors"]))
+
+    def test_control_rejects_unexpected_draft_margin_marker(self) -> None:
+        log_path = self.root / "run" / "server.stdout.log"
+        log_path.write_text(good_log(self.cache_root) + draft_margin_qualification_log())
+        result, passed = self.run_gate()
+        self.assertFalse(passed)
+        self.assertTrue(
+            any("independent expectation was 0" in error for error in result["errors"])
+        )
 
     def test_unexpected_target_request_replay_marker_fails(self) -> None:
         marker = target_request_replay_bypass_log().splitlines()[0]

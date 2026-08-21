@@ -10,6 +10,7 @@ quality_baseline=${4:-}
 tensor_parallel_size=${VALIDATION_TENSOR_PARALLEL_SIZE:-2}
 sealed_gate_checker="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/check-tp2-sealed-gates.py"
 require_tp2_sealed_gates=${VALIDATION_REQUIRE_TP2_SEALED_GATES:-0}
+draft_margin_screen=0
 sealed_validation_allowlist=(
   VALIDATION_CAMPAIGN_DRIVER VALIDATION_CAMPAIGN_DRIVER_SHA256
   VALIDATION_COMPILE_CACHE_MANIFEST VALIDATION_COMPILATION_CONFIG_OVERRIDE
@@ -17,13 +18,17 @@ sealed_validation_allowlist=(
   VALIDATION_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS
   VALIDATION_DETERMINISTIC_GREEDY_MARGIN
   VALIDATION_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY
+  VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT
+  VALIDATION_DRAFT_MARGIN_QUALIFICATION_MAX_CALLS
   VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN
+  VALIDATION_EXPECT_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN
   VALIDATION_ENABLE_LAYER_TRACE VALIDATION_ENABLE_PACKET_TRACE
   VALIDATION_ENABLE_XPU_GRAPH VALIDATION_EXPECT_AOT_CACHE_KEYS
   VALIDATION_EXPECT_AOT_DIRECT_LOADS VALIDATION_EXPECT_CACHE_MANIFEST_SHA256
   VALIDATION_EXPECT_CACHE_ROOT
   VALIDATION_EXPECT_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS
   VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY
+  VALIDATION_EXPECT_DRAFT_MARGIN_SYNTHETIC_SUPPORT_SHA256
   VALIDATION_EXPECT_COMPILE_CACHE_DIRECT_LOADS
   VALIDATION_EXPECT_COMPILE_CACHE_NAMESPACE
   VALIDATION_EXPECT_COMPILE_CACHE_OUTER_ROLES
@@ -56,6 +61,7 @@ sealed_validation_allowlist=(
   VALIDATION_PARITY_PEER_BENCH VALIDATION_PYTHONHASHSEED
   VALIDATION_REPORT_ONLY_B2_BENCH
   VALIDATION_REQUIRE_COMPILE_CACHE_UNCHANGED
+  VALIDATION_REQUIRE_DRAFT_MARGIN_SCREEN
   VALIDATION_REQUIRE_NO_COMPILE_CACHE_WRITES
   VALIDATION_REQUIRE_REPLAY_MICROSCOPE
   VALIDATION_REQUIRE_TARGET_TOKEN_PARITY
@@ -114,6 +120,11 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     printf 'sealed Qwen3.8 gate requires exact-native mode, TP2, and GPUs 2,3\n' >&2
     exit 2
   fi
+  draft_margin_screen=${VALIDATION_REQUIRE_DRAFT_MARGIN_SCREEN:-0}
+  if [[ ! "$draft_margin_screen" =~ ^[01]$ ]]; then
+    printf 'VALIDATION_REQUIRE_DRAFT_MARGIN_SCREEN must be 0 or 1\n' >&2
+    exit 2
+  fi
   declare -A sealed_allowed=()
   for name in "${sealed_validation_allowlist[@]}"; do
     sealed_allowed["$name"]=1
@@ -147,11 +158,20 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     VALIDATION_EXPECT_MOE_SHA256
     VALIDATION_EXPECT_FA_SHA256
     VALIDATION_EXPECT_REPO_HEAD
-    VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256
-    VALIDATION_TARGET_TOKEN_BENCH
     VALIDATION_CAMPAIGN_DRIVER
     VALIDATION_CAMPAIGN_DRIVER_SHA256
   )
+  if [[ "$draft_margin_screen" == "1" ]]; then
+    required_sealed_values+=(
+      VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT
+      VALIDATION_EXPECT_DRAFT_MARGIN_SYNTHETIC_SUPPORT_SHA256
+    )
+  else
+    required_sealed_values+=(
+      VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256
+      VALIDATION_TARGET_TOKEN_BENCH
+    )
+  fi
   for required_name in "${required_sealed_values[@]}"; do
     if [[ -z "${!required_name:-}" ]]; then
       printf '%s is required by the sealed TP2 gate\n' "$required_name" >&2
@@ -167,8 +187,12 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     VALIDATION_EXPECT_GRAPH_MANIFEST_SHA256
     VALIDATION_EXPECT_NATIVE_SHA256 VALIDATION_EXPECT_CORE_SHA256
     VALIDATION_EXPECT_MOE_SHA256 VALIDATION_EXPECT_FA_SHA256
-    VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256
   )
+  if [[ "$draft_margin_screen" == "1" ]]; then
+    sha_values+=(VALIDATION_EXPECT_DRAFT_MARGIN_SYNTHETIC_SUPPORT_SHA256)
+  else
+    sha_values+=(VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256)
+  fi
   for required_name in "${sha_values[@]}"; do
     if [[ ! "${!required_name}" =~ ^[0-9a-f]{64}$ ]]; then
       printf '%s must be a lowercase SHA-256\n' "$required_name" >&2
@@ -231,13 +255,22 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     printf 'sealed Qwen3.8 TP2 gates require explicit MTP5 and recurrent-serial-exact=0\n' >&2
     exit 2
   fi
-  if [[ "${VALIDATION_RUN_SMOKE:-}" != "1" \
+  if [[ "$draft_margin_screen" == "1" ]]; then
+    if [[ "${VALIDATION_RUN_SMOKE:-}" != "0" \
+      || "${VALIDATION_RUN_BENCH:-}" != "1" \
+      || "${VALIDATION_RUN_QUALITY:-}" != "0" \
+      || "${VALIDATION_BENCH_MAX_TOKENS:-}" != "128" \
+      || "${VALIDATION_BENCH_METRIC_TOKENS:-}" != "32" ]]; then
+      printf 'sealed draft-margin qualification requires bench-only 3-prompt 128/32 diagnostic workload\n' >&2
+      exit 2
+    fi
+  elif [[ "${VALIDATION_RUN_SMOKE:-}" != "1" \
     || "${VALIDATION_RUN_BENCH:-}" != "1" \
     || ! "${VALIDATION_RUN_QUALITY:-}" =~ ^[01]$ \
     || "${VALIDATION_BENCH_MAX_TOKENS:-}" != "512" \
     || "${VALIDATION_BENCH_METRIC_TOKENS:-}" != "100" ]]; then
-    printf 'sealed TP2 gates require smoke+full25 bench and 512/100 token windows\n' >&2
-    exit 2
+      printf 'sealed TP2 gates require smoke+full25 bench and 512/100 token windows\n' >&2
+      exit 2
   fi
   if [[ "${VALIDATION_ENABLE_XPU_GRAPH:-}" != "1" \
     || "${VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH:-}" != "1" \
@@ -251,12 +284,29 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     || "${VALIDATION_ONEDNN_INT8_INPUT_DEPENDENCY:-}" != "1" \
     || "${VALIDATION_LM_HEAD_INT8:-}" != "1" \
     || "${VALIDATION_DETERMINISTIC_GREEDY_MARGIN:-}" != "0" \
-    || "${VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN:-}" != "0" \
     || "${VALIDATION_ENABLE_PACKET_TRACE:-}" != "0" \
     || "${VALIDATION_ENABLE_LAYER_TRACE:-}" != "0" \
     || "${VALIDATION_VLLM_EXTRA_ARGS:-}" != "--dtype float16" \
     || "${VALIDATION_PYTHONHASHSEED:-}" != "0" ]]; then
     printf 'sealed TP2 flag identity does not match the preregistered campaign\n' >&2
+    exit 2
+  fi
+  effective_draft_margin=${VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN:-0}
+  expected_draft_margin=${VALIDATION_EXPECT_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN:-0}
+  if [[ "$effective_draft_margin" != "0" && "$effective_draft_margin" != "0.25" ]] \
+    || [[ "$expected_draft_margin" != "0" && "$expected_draft_margin" != "0.25" ]] \
+    || [[ "$effective_draft_margin" != "$expected_draft_margin" ]]; then
+    printf 'sealed draft INT4 fallback margin must be 0 or 0.25 and match its independent expectation\n' >&2
+    exit 2
+  fi
+  if [[ "$draft_margin_screen" == "1" \
+    && ( "$effective_draft_margin" != "0.25" \
+      || "${VALIDATION_DRAFT_MARGIN_QUALIFICATION_MAX_CALLS:-}" != "1024" ) ]]; then
+    printf 'sealed draft-margin qualification requires margin=0.25 and a 1024-call diagnostic ceiling\n' >&2
+    exit 2
+  fi
+  if [[ "$draft_margin_screen" == "0" && "$effective_draft_margin" != "0" ]]; then
+    printf 'draft margin 0.25 is forbidden outside the bounded qualification; full25 is not authorized\n' >&2
     exit 2
   fi
   expected_compilation_config=$(printf \
@@ -277,6 +327,11 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     "${VALIDATION_SUITE_OVERRIDE}:${VALIDATION_EXPECT_SUITE_SHA256}:validation suite"
     "${quality_baseline}:${VALIDATION_EXPECT_QUALITY_BASELINE_SHA256}:quality baseline"
   )
+  if [[ "$draft_margin_screen" == "1" ]]; then
+    sealed_file_expectations+=(
+      "${VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT}:${VALIDATION_EXPECT_DRAFT_MARGIN_SYNTHETIC_SUPPORT_SHA256}:draft-margin synthetic support"
+    )
+  fi
   for item in "${sealed_file_expectations[@]}"; do
     IFS=: read -r path expected_sha description <<< "$item"
     if [[ ! -f "$path" \
@@ -402,7 +457,21 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     printf 'report-only B2 benchmark SHA requires its benchmark path\n' >&2
     exit 2
   fi
-  if [[ ! "$VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256" =~ ^[0-9a-f]{64}$ \
+  if [[ "$draft_margin_screen" == "1" ]]; then
+    if [[ -n "${VALIDATION_TARGET_TOKEN_BENCH:-}" \
+      || -n "${VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256:-}" \
+      || -n "${VALIDATION_PARITY_PEER_BENCH:-}" \
+      || -n "${VALIDATION_REPORT_ONLY_B2_BENCH:-}" \
+      || "${VALIDATION_REQUIRE_TARGET_TOKEN_PARITY:-0}" != "0" ]]; then
+      printf 'draft-margin qualification forbids full25 target/peer/report-only authorization inputs\n' >&2
+      exit 2
+    fi
+    if ! jq -e '.trials == 40 and .argmax_mismatches == 0' \
+      "$VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT" >/dev/null; then
+      printf 'draft-margin synthetic support does not preserve the frozen 40/40 result\n' >&2
+      exit 2
+    fi
+  elif [[ ! "$VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256" =~ ^[0-9a-f]{64}$ \
     || "$(sha256sum -- "$VALIDATION_TARGET_TOKEN_BENCH" | awk '{print $1}')" \
       != "$VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256" ]]; then
     printf 'target token benchmark does not match its preregistered SHA\n' >&2
@@ -453,11 +522,26 @@ else
 fi
 if [[ "$require_tp2_sealed_gates" == "1" ]]; then
   if [[ "$(sha256sum -- "$suite" | awk '{print $1}')" \
-      != "$VALIDATION_EXPECT_SUITE_SHA256" ]] \
-    || ! jq -e \
-      '.suite_id == "qwen36-27b-int4-independent-validation-20260815-v1"
-       and .version == 1 and (.prompts | type == "array" and length == 25)' \
+      != "$VALIDATION_EXPECT_SUITE_SHA256" ]]; then
+    printf 'sealed validation suite SHA is invalid\n' >&2
+    exit 3
+  fi
+  if [[ "$draft_margin_screen" == "1" ]]; then
+    if ! jq -e \
+      '.suite_id == "qwen38-draft-margin-tp2-qualification-20260820-v1"
+       and .version == 1
+       and .source_suite.suite_id == "qwen36-27b-int4-independent-validation-20260815-v1"
+       and .source_suite.sha256 == "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c"
+       and .source_suite.full_suite_indices == [6, 11, 24]
+       and [.prompts[].id] == ["selection--sql-debugging", "holdout--factual-protocol", "holdout--long-rollover-repository-audit"]' \
       "$suite" >/dev/null; then
+      printf 'sealed draft-margin qualification suite identity/content is invalid\n' >&2
+      exit 3
+    fi
+  elif ! jq -e \
+    '.suite_id == "qwen36-27b-int4-independent-validation-20260815-v1"
+     and .version == 1 and (.prompts | type == "array" and length == 25)' \
+    "$suite" >/dev/null; then
     printf 'sealed validation suite identity/content is invalid\n' >&2
     exit 3
   fi
@@ -797,6 +881,16 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
       exit 3
     fi
   fi
+  if [[ "$draft_margin_screen" == "1" ]]; then
+    export VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT_SNAPSHOT="$RUN_DIR/draft-margin-synthetic-support.input.json"
+    cp -- "$VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT" \
+      "$VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT_SNAPSHOT"
+    if [[ "$(sha256sum -- "$VALIDATION_DRAFT_MARGIN_SYNTHETIC_SUPPORT_SNAPSHOT" | awk '{print $1}')" \
+      != "$VALIDATION_EXPECT_DRAFT_MARGIN_SYNTHETIC_SUPPORT_SHA256" ]]; then
+      printf 'draft-margin synthetic-support snapshot changed during prelaunch copy\n' >&2
+      exit 3
+    fi
+  fi
 fi
 compile_cache_root="$VLLM_CACHE_ROOT/torch_compile_cache"
 if [[ -n "${VALIDATION_COMPILE_CACHE_MANIFEST:-}" ]]; then
@@ -814,6 +908,15 @@ export QUALITY_LONG_CONTEXT_TOKENS=1024
 export RUN_SMOKE=${VALIDATION_RUN_SMOKE:-1}
 export RUN_BENCH=${VALIDATION_RUN_BENCH:-1}
 export RUN_QUALITY=${VALIDATION_RUN_QUALITY:-1}
+if [[ "$require_tp2_sealed_gates" == "1" && "$draft_margin_screen" == "1" ]]; then
+  export VLLM_XPU_DRAFT_LM_HEAD_INT4_MARGIN_QUAL_FILE="$arm_root/draft-margin-qualification.jsonl"
+  export VLLM_XPU_DRAFT_LM_HEAD_INT4_MARGIN_QUAL_MAX_CALLS="$VALIDATION_DRAFT_MARGIN_QUALIFICATION_MAX_CALLS"
+  if [[ -e "$VLLM_XPU_DRAFT_LM_HEAD_INT4_MARGIN_QUAL_FILE" ]]; then
+    printf 'draft-margin qualification output already exists: %s\n' \
+      "$VLLM_XPU_DRAFT_LM_HEAD_INT4_MARGIN_QUAL_FILE" >&2
+    exit 3
+  fi
+fi
 if [[ -n "${VALIDATION_REQUEST_EXTRA_JSON:-}" ]]; then
   export REQUEST_EXTRA_JSON="${VALIDATION_REQUEST_EXTRA_JSON}"
 else
@@ -967,11 +1070,11 @@ if [[ -n "${VALIDATION_LM_HEAD_INT8:-}" ]]; then
   # W8A8 vocabulary projection without inheriting ambient process state.
   export VLLM_XPU_LM_HEAD_INT8="${VALIDATION_LM_HEAD_INT8}"
 fi
-# Draft INT4 fallback margin: recompute low-margin draft rows exactly in fp16
-# against the retained weights (vocab_parallel_embedding.py:341-366). Draft-side
-# only - the target verifier still requires exact argmax equality - so it cannot
-# change emitted tokens, only which drafts get proposed. Better drafts raise MTP
-# acceptance. In-tree and never screened; passthrough was missing.
+# Draft INT4 margin: on each TP shard, recompute its approximate winner and
+# near-margin candidates in FP16 before the ordinary gathered draft logits.
+# This moves the draft result toward its retained FP16 head, but need not improve
+# agreement with the separately quantized target. The sealed gate below confines
+# margin 0.25 to the bounded qualification and forbids it in a full-25 arm.
 if [[ -n "${VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN:-}" ]]; then
   export VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN="${VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN}"
 fi
@@ -1446,6 +1549,10 @@ if [[ "$require_tp2_sealed_gates" == "1" && "$runner_rc" == "0" ]]; then
       "${VALIDATION_EXPECT_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-0}"
     --expected-decode-cudagraph-replay-eager-every-n-requests \
       "${VALIDATION_EXPECT_DECODE_CUDAGRAPH_REPLAY_EAGER_EVERY_N_REQUESTS:-0}"
+    --expected-draft-lm-head-int4-fallback-margin \
+      "${VALIDATION_EXPECT_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN:-0}"
+    --expected-draft-margin-synthetic-support-sha256 \
+      "${VALIDATION_EXPECT_DRAFT_MARGIN_SYNTHETIC_SUPPORT_SHA256:-}"
     --expected-vllm-diff-sha256 \
       "${VALIDATION_EXPECT_VLLM_DIFF_SHA256:-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855}"
     --expected-parity-peer-checksum-manifest-sha256 \
@@ -1483,6 +1590,9 @@ if [[ "$require_tp2_sealed_gates" == "1" && "$runner_rc" == "0" ]]; then
   fi
   if [[ "${VALIDATION_REQUIRE_REPLAY_MICROSCOPE:-0}" == "1" ]]; then
     sealed_args+=(--require-replay-microscope)
+  fi
+  if [[ "${VALIDATION_REQUIRE_DRAFT_MARGIN_SCREEN:-0}" == "1" ]]; then
+    sealed_args+=(--require-draft-margin-screen)
   fi
   set +e
   "$venv/bin/python" "$RUN_DIR/check-tp2-sealed-gates.py.snapshot" \
