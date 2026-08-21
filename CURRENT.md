@@ -438,7 +438,15 @@ loaded service.
 10. The only interesting new LocalMaxxing mechanism is runtime INT4 over five
     MTP draft linears. The author-linked patch is public, but four of its five
     runtime linears are already packed INT4 in this checkpoint; only `mtp.fc`
-    remains BF16. Its likely TP2/MTP5 headroom is roughly `0.5`–`1.0 tok/s`, so
-    op-screen the narrow port before considering a server arm. Ignore aggregate
-    C5/C32 rows as single-stream leads. See the
-    [feed audit](experiments/qwen38-27b-b70/notes/2026-08-20-localmaxxing-qwen38-external-lever-intake.md).
+    is serialized BF16 and loaded as FP16 in this lane. A narrow eager-operator
+    screen is now drafted and CPU-validated, but deliberately nonlaunchable:
+    both its driver and Python qualifier fail closed. Before any arm it still
+    requires separately authorized host-wide recovery, a fresh same-boot GPU3
+    stock-health pass, a bounded process-group watchdog, exact post-recovery
+    device binding, an enclosing campaign terminal, independent review, and
+    refrozen hashes. Its strict primary gate is more than `17.092 us/call` at
+    M6 on each TP weight shard; even a pass would authorize only a later
+    integration experiment, not a server/full-25 run or a claim of 105 tok/s.
+    Ignore aggregate C5/C32 rows as single-stream leads. See the
+    [feed audit](experiments/qwen38-27b-b70/notes/2026-08-20-localmaxxing-qwen38-external-lever-intake.md)
+    and [blocked operator design](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp-fc-int4-operator-prereg.md).
