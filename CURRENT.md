@@ -137,9 +137,12 @@ registered oracle with mechanism counters at 48 per decode graph:
 widening the GDN state-I/O matcher to the full-model 48-head shape
 (`27.358865`/`27.351846 tok/s`, `+5.03%`/`+5.01%`) and widening the conv
 state-I/O + SILU-L2 matcher/kernel to the 10240-channel width
-(`27.707324`/`27.712055 tok/s`, cumulative `+6.37%`/`+6.39%`). Current
-lane state: **27.71 tok/s**. The widened QK-norm-RoPE door remains inert
-at TP1 on a graph-order assumption and is under investigation.
+(`27.707324`/`27.712055 tok/s`, cumulative `+6.37%`/`+6.39%`). The third
+lever landed the QK-norm-RoPE fusion after widening two remaining
+RMS-input shape pins (`27.843898`/`27.863806 tok/s`, cumulative
+`+6.90%`/`+6.97%`, `fused_qk_norm_rope=94240` per leg, 24/24 hashes
+exact). Current lane state: **27.86 tok/s**; every previously
+shape-blocked accepted fusion now engages at TP1.
 
 - [lane registration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-lane-open.md)
 - [baseline result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-baseline-result.md)

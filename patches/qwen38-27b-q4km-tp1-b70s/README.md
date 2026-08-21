@@ -73,3 +73,30 @@ Validation (same protocol as above):
 
 Result note:
 [`2026-08-21-qwen38-q4km-tp1-conv-state-io-result.md`](../../experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-conv-state-io-result.md).
+
+## 2026-08-21: QK norm-RoPE source-shape pins widened; fusion engages at TP1
+
+- Artifact: `llama-cpp-tp1-qk-norm-rope-src-widen-20260821.diff.gz.b64`
+- Decoded patch SHA-256:
+  `8299e77c2186bc2d024c1a9030ed69aafcad26442296a68523dde1a1b6d46c7e`
+- Scope: 1 file. The prior increment's widening was insufficient because two
+  further pins deep in `ggml_sycl_find_qk_norm_rope` fixed the RMS-input
+  shapes (`q_src->ne[1] == 12`, `k_src->ne[1] == 2`). Widened to the
+  full-model heads with derived consistency
+  (`q_src->ne[1] == q_rope->ne[1]`, `k_src->ne[1] == q_src->ne[1] / 6`); the
+  fused SIMD16 kernel already takes runtime row counts from the prior
+  increment. Diagnosed with temporary env-gated matcher instrumentation,
+  removed before this freeze.
+- `libggml-sycl.so` SHA-256:
+  `1ceb63bbb370cadfdcf224c20536df491ce8f6d0eda032c1469ac9ece3481174`.
+
+Validation (same protocol):
+
+- candidate G/H: `27.843898` / `27.863806 tok/s` (**+0.50% / +0.55%** over
+  E/F; cumulative **+6.90% / +6.97%** over baseline);
+- output exactness: 24/24 complete output hashes identical to the TP1
+  baseline oracle;
+- mechanism: `fused_qk_norm_rope=94240` per leg (16 per decode graph, all
+  full-attention layers), GDN/conv counters unchanged at `282720`.
+
+Lane state after three landed levers: **`27.86 tok/s`**.
