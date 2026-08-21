@@ -387,7 +387,9 @@ loaded service.
    The next AutoRound research surface is the packed MTP target/verifier
    FlashAttention block. Build and pass a bounded M6/head-256 operator
    qualifier before changing a server binary or authorizing another full-25
-   arm; the two-B70, 15-GiB host remains op-only.
+   arm; the [exact-shape operator preregistration](experiments/qwen38-27b-b70/notes/2026-08-20-qwen38-mtp5-m6-fa-operator-prereg.md)
+   is implemented but not yet launched. The two-B70, 15-GiB host remains
+   source/op-audit only under this local four-B70 contract.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.
