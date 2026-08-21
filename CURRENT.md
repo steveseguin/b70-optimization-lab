@@ -420,11 +420,17 @@ loaded service.
    On the separate two-B70, 15-GiB reference host, the no-clock runtime-map r2
    reached and numerically passed its first stock operator call but was
    procedurally rejected by a nonportable measuring-host CPU-oracle byte pin.
-   Its single-arm eight-library map is report-only evidence; r3 is an
-   independently reviewed source-only correction and has not run. The remote 16-arm clock campaign
-   remains unauthorized, and the host must not run the full model. See the
-   [runtime-map preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q64k32-remote-runtime-map-diagnostic-prereg.md)
-   and [r2 invalid result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q64k32-remote-runtime-map-r2-invalid.md).
+   The independently reviewed r3 correction then ran once and closed the
+   diagnostic as a valid positive: all four fresh same-boot workers on both
+   B70s reproduced the eight frozen portable library rows with one common
+   oracle digest equal to r2's, conclusively classifying r2 as a cross-host
+   pin false-fail and establishing the mapped runtime identities that clock
+   prerequisite 5 requires. The remote 16-arm clock campaign
+   remains unauthorized pending the A1 authority commit and the remaining
+   prerequisites, and the host must not run the full model. See the
+   [runtime-map preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q64k32-remote-runtime-map-diagnostic-prereg.md),
+   [r2 invalid result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q64k32-remote-runtime-map-r2-invalid.md),
+   and [r3 valid result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q64k32-remote-runtime-map-r3-result.md).
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.

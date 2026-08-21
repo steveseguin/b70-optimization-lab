@@ -258,8 +258,11 @@ evidence packet. Its r1 attempt is a preserved
 the separate r2 reached and numerically passed its first control operator but
 was procedurally rejected by a
 [`cross-host CPU-oracle byte-pin false-fail`](2026-08-21-qwen38-q64k32-remote-runtime-map-r2-invalid.md).
-The source-only r3 correction remains unrun. A valid future r3 can establish
-mapped runtime identities but cannot
+The reviewed r3 correction then ran once and closed as a
+[`valid positive runtime-map match`](2026-08-21-qwen38-q64k32-remote-runtime-map-r3-result.md):
+all four fresh same-boot workers reproduced the eight frozen portable rows
+with one common oracle and output digest each. That establishes the mapped
+runtime identities prerequisite 5 needs, but it cannot
 authorize this clock campaign; the launch and clock-writer gates below remain
 false.
 

@@ -1,0 +1,40 @@
+{
+  "schema": "qwen38-q64k32-remote-runtime-map-r3-result-v1",
+  "date": "2026-08-21",
+  "classification": "valid-no-clock-runtime-map-match",
+  "passed": true,
+  "reference_host": "steve-TURIND8-2L2T",
+  "boot_id": "a6cad22f-2685-43b7-8950-c0c771f73d99",
+  "repo_head": "7a2363f03e6f816ba8ebd34d824c38f9a9357ca4",
+  "result_root": "/home/steve/qwen38-q64k32-remote-runtime-map-diagnostic-20260821-r3",
+  "result_root_file_count": 34,
+  "result_root_file_mode": "0444",
+  "result_root_aggregate_sha256": "dcf563a9fed00be1aaf640f8249a4a26c9cacad52bb395f67e590c3e973caea1",
+  "result_root_aggregate_recipe": "find . -maxdepth 1 -type f -printf '%f\\0' | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum",
+  "arms": [
+    {"ordinal": 1, "device": 0, "role": "control", "arm_sha256": "9e02fcdeaa13afd021a700edc3771351bef3bc703f61be75eacade66c0b81009", "terminal_sha256": "7ae29a12b38637af1a7c1f4cc8de89608a1b70157651d4874a3f93568d1640c9"},
+    {"ordinal": 2, "device": 0, "role": "candidate", "arm_sha256": "9fe1480fa514546306e3d8f33ea6d174be43597ad2ab0c71629c458ad1342f09", "terminal_sha256": "d92d8e375ab6748b5846edb0bcc27af27663e00429d9a091524e3fe7523c5061"},
+    {"ordinal": 3, "device": 1, "role": "candidate", "arm_sha256": "53006e5f5109054eb8b6f083b8e633129e5df8cd131eadf68efc3e8d310e8bdb", "terminal_sha256": "0a23b2258ddfad45dc2673e8f11cd01172e00fdb79b7f2ef661516447476f72e"},
+    {"ordinal": 4, "device": 1, "role": "control", "arm_sha256": "e9b7fbf0d78b0767ed86f43112b3db1fd12d98de8291e2b1dcf7ce8e34da7a7f", "terminal_sha256": "ee43fb9dfb096053877eeef31d627cdc5d659ed4cd643152c83d1d7a9bde0d1a"}
+  ],
+  "comparison_sha256": "e7ad85d4fcd37b21e57a79aa770a433277c19c90abe2d287c6471b17d0f72c4a",
+  "preflight_live_scan_sha256": "f35d70e2da7a644684b2bc6faac306fbb49afd82401666020d5cbb21a4aaa620",
+  "runtime_libraries": {
+    "portable_rows_match": true,
+    "full_rows_same_before_after_and_across_processes": true,
+    "before_to_after_map_deltas": "empty for all four arms",
+    "expected_r2_observed_portable_rows_projection_sha256": "ba940a22a21a030be60ae54a33cac4f31560e4745565b2dd51e91203a16bffd3"
+  },
+  "correctness_consistency": {
+    "oracle_sha256_consistent": true,
+    "output_sha256_consistent": true,
+    "common_oracle_sha256": "eb71753ec76de2390e25f5bebacecf54cb63f7966311cdd6548a5ed03638364a",
+    "common_output_sha256": "c3e022a5e724574d06e2388e33e2e29c4b1f8630f2b7eb236ffc5e349fe9c403",
+    "common_oracle_matches_r2_observation": true,
+    "common_output_matches_r2_observation": true
+  },
+  "clock_mutation_commands_invoked": false,
+  "absolute_timing_or_endpoint_claim_authorized": false,
+  "raw_artifacts_location": "remote-only; not copied into Git",
+  "notes": "All four fresh same-boot processes on both B70s mapped exactly the eight frozen r2-observed libraries with identical full rows and zero before-to-after deltas. The four CPU-oracle digests are bitwise identical and equal r2's observation, conclusively classifying r2's rejection as a nonportable cross-host pin rather than remote CPU instability. Stock control and Q64K32 candidate produced byte-identical outputs on the frozen KV128 fixture on both devices. No timing, throughput, endpoint, acceptance, or clock claim is made, and this result does not authorize the 16-arm clock campaign."
+}

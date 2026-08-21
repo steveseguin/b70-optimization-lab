@@ -2,8 +2,10 @@
 
 Date: 2026-08-21
 
-Status: **r1 and r2 invalid and terminal; source-only r3 correction not yet
-run**. R1 stopped before its first operator call on two harness false-fails documented in
+Status: **complete: r1 and r2 invalid and terminal; r3 ran once and closed as
+a valid positive
+[`valid-no-clock-runtime-map-match`](2026-08-21-qwen38-q64k32-remote-runtime-map-r3-result.md)**.
+R1 stopped before its first operator call on two harness false-fails documented in
 [`2026-08-21-qwen38-q64k32-remote-runtime-map-r1-invalid.md`](2026-08-21-qwen38-q64k32-remote-runtime-map-r1-invalid.md).
 R2 reached and passed the first control call but was rejected by a nonportable
 cross-host CPU-oracle byte pin, as documented in
