@@ -23,8 +23,8 @@ driver=$(realpath -- "$0")
 action=${1:-}
 
 case "$action" in
-  check|d2|d4|d5) ;;
-  *) printf 'usage: %s check|d2|d4|d5\n' "$0" >&2; exit 2 ;;
+  check|d2|d3|d4|d5) ;;
+  *) printf 'usage: %s check|d2|d3|d4|d5\n' "$0" >&2; exit 2 ;;
 esac
 
 raw=/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70
@@ -33,6 +33,8 @@ sealed="$raw/qwen38-postrecovery-marginfree-mtp5-25-spec-c-20260820/compile-cach
 suite="$raw/qwen38-longkv-chunk-diag-suite-20260822/validation-suite.json"
 if [[ "${1:-}" == d4 || "${1:-}" == d5 ]]; then
   suite="$raw/qwen38-longkv-chunk-diag-d4-suite-20260822/validation-suite.json"
+elif [[ "${1:-}" == d3 ]]; then
+  suite="$raw/qwen38-longkv-chunk-diag-d3-4row-suite-20260822/validation-suite.json"
 fi
 quality_baseline="$raw/qwen38-marginfree-targetoracle-25-a-20260820/data/quality.json"
 target_bench="$raw/qwen38-marginfree-targetoracle-25-a-20260820/data/bench.json"
@@ -52,6 +54,8 @@ cache_manifest_sha=f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb
 suite_sha=0b66d5a6711a981480f09ba5956042a391da3082d3eb470d091fc89f2a37c6fc
 if [[ "${1:-}" == d4 || "${1:-}" == d5 ]]; then
   suite_sha=6e51726f56bbb99ce86e2cf95f4e5d22ed4c141ce3a546d508cc03ae6fb37b6a
+elif [[ "${1:-}" == d3 ]]; then
+  suite_sha=6eafd43627337f698b5e662e197827993215ba578e7b9379161e6cd2ed229db4
 fi
 # d5: identical exposure to d4 with the GDN spec persistent scratch OFF -
 # a runtime allocation-strategy door (per-call scratch instead of a
