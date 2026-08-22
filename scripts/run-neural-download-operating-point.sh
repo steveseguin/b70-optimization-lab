@@ -21,7 +21,7 @@ mkdir -p "$out_root"
 set +u
 [[ -r /opt/intel/oneapi/setvars.sh ]] && source /opt/intel/oneapi/setvars.sh --force >/dev/null 2>&1
 set -u
-export ONEAPI_DEVICE_SELECTOR=level_zero:0
+export ONEAPI_DEVICE_SELECTOR="${GPU_SELECTOR:-level_zero:0}"
 
 server_pid=
 cleanup() {
