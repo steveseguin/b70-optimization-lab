@@ -2,12 +2,13 @@
 
 Date: 2026-08-21
 
-Status: **complete and stopped terminal at b1**: arm a1 (stock control)
-passed everything at `100.928359 tok/s` conventional, but the candidate
-server failed engine-core initialization — the operator-qualified DSO lacks
-the full chunk-prefill configuration farm (0.6 MB versus the stock 1.5 GB)
-and is not endpoint-deployable as built. No b2/a2 ran; no same-root retry.
-See the [endpoint2 result](2026-08-21-qwen38-mtp5-q64k32-endpoint2-result.md).
+Status: **closed 2026-08-22 per the bounded-relaunch rule** after three
+stochastic prompt-6 metric refusals; the integration DSO proved
+deployable and engaged with `+0.53%`/`+0.33%` on the two completed A-B
+pairs (report-only, short-KV suite). Full chronicle and disposition:
+[campaign closure](2026-08-22-qwen38-mtp5-q64k32-endpoint-campaign-closure.md);
+the original endpoint2 stop is in the
+[endpoint2 result](2026-08-21-qwen38-mtp5-q64k32-endpoint2-result.md).
 
 ## Bounded question
 

@@ -464,10 +464,16 @@ loaded service.
    conventional, all sealed and quality gates passed), but the candidate
    arm stopped terminal at engine-core init — the operator build lacks
    the full chunk-prefill kernel farm (0.6 MB vs 1.5 GB stock) and is
-   not endpoint-deployable as built. The policy qualification stands;
-   deployment now requires an integration build (full composite farm +
-   Q64xK32 TU), a fresh sealed stage, a cheap operator requalification
-   on the new DSO identity, and an endpoint3 preregistration. See the
+   not endpoint-deployable as built. The integration build then closed that gap (config `all`, coverage
+   proven at link and by zero compiled-in miss branches), the r4
+   requalification reproduced the operator savings on the new DSO, and
+   the endpoint campaign series established the artifact as deployable
+   and engaged with a small consistent short-KV effect (`+0.53%`/`+0.33%`
+   on two completed pairs, report-only) before closing per its
+   preregistered bounded-relaunch rule on the lane's own stochastic
+   prompt-6 early-EOS family (three metric refusals, ~30% per-arm rate).
+   Serving realization of the ~75 us/call KV1300 saving now needs a
+   preregistered long-KV endpoint suite or a prompt-6-robust metric. See the
    [endpoint prereg/result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-q64k32-endpoint-prereg.md),
    [endpoint2 result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-q64k32-endpoint2-result.md), and the
    [r3 preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-abba-r3-prereg.md)
