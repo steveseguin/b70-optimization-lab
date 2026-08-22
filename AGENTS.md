@@ -65,6 +65,12 @@ inputs or provenance records; they are never the primary guide for a lab lane.
   `patches/`, or `data/` in this repository. Link externally only where needed
   to credit the specific contribution being discussed.
 
+When reviewing an outside patch, recipe, result, model lead, or pull request,
+use the repository-local `$review-model-contribution` skill. It connects
+intake, safe review, matched validation, boost calculation, guide/package
+updates, and durable contributor acknowledgement without changing the evidence
+boundaries above.
+
 ## Local Secrets
 
 Never print, paste, or commit local credentials. The Hugging Face access token
