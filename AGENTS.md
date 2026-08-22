@@ -71,6 +71,13 @@ intake, safe review, matched validation, boost calculation, guide/package
 updates, and durable contributor acknowledgement without changing the evidence
 boundaries above.
 
+When creating or updating a model package, public guide, deployment variant,
+featured benchmark, or context-performance graph, use the repository-local
+`$publish-model-package` skill. It requires closed in-repository dependencies,
+exactly scoped measurements, honest pending states, and live-site verification.
+In particular, never extrapolate or interpolate performance curves or invent
+unmeasured context points.
+
 ## Local Secrets
 
 Never print, paste, or commit local credentials. The Hugging Face access token

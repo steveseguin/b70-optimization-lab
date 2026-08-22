@@ -174,6 +174,11 @@ uses it:
 - `repro/guide-catalog.json` classification or dependencies;
 - public model row only when its evidence and guide classification qualify.
 
+When adoption creates or changes a public package, deployment guide, featured
+metric, or context-performance profile, also use `$publish-model-package`. Its
+measurement-integrity rules apply in addition to this contribution review;
+especially, never extrapolate a curve or fill unmeasured context points.
+
 At the point of use, include a compact credit record:
 
 ```text

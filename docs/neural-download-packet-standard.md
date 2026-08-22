@@ -5,6 +5,10 @@ benchmarks, any required patches, and a reproducible recipe — so users get
 wide variety with honest, measured expectations. Packets inherit the lab's
 evidence standards; nothing on the page is a guess.
 
+Agents creating or updating these surfaces must use the repository-local
+`$publish-model-package` skill. Outside submissions first use
+`$review-model-contribution`; adopted work then follows the same package rules.
+
 ## Packet contents (one directory per entry, `repro/neural-download/<slug>/`)
 
 1. **Identity** (`README.md` header + `manifest.sha256`)
