@@ -63,68 +63,51 @@ Current no-spec control:
 
 ## 1. Build llama.cpp with SYCL
 
-The current strict `124.977 tok/s` cold-suite recipe is not plain upstream
-llama.cpp. It uses the local Gemma research stack based on upstream commit
-`c926ad098`; apply the current cumulative stack plus the Q8 MoE-ID reorder
-patch snapshot, selected-down VDR2 source snapshot, and VDR compile-knob patch.
-The older `176.216 tok/s` synthetic recipe used the same general research
-lineage, but it is diagnostic only and is not the promoted build target.
+The strict `124.977 tok/s` cold-suite recipe is not plain upstream llama.cpp.
+It uses our Gemma research stack based on upstream commit `c926ad098`. The
+canonical record-source aggregate and its verification receipt are now indexed
+in `../../patches/gemma4-26b-a4b-q8-b70/README.md`; do not reconstruct the
+record by guessing an order for the older incremental experiment patches.
 
-- `../../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
-- `../../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.md`
-- `../../patches/gemma4-26b-a4b-q8-b70/20260627T0704-llamacpp-gemma4-moe-reuse-attn-rms-incremental.patch`
-- `../../patches/gemma4-26b-a4b-q8-b70/20260627-llamacpp-gemma4-moe-reuse-attn-rms-record.md`
-- `../../patches/gemma4-26b-a4b-q8-b70/q8-moe-id-reorder-positive-20260627.md`
-- `../../patches/gemma4-26b-a4b-q8-b70/q8-reorder-vdr-compile-knob-20260627.patch`
-- Current full local worktree capture for the selected-down record:
-  `../../patches/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-reordervdr2-source.patch`
-  plus the harness identity patch
-  `../../patches/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-reordervdr2-harness.patch`.
+The aggregate is the complete pre-next-experiment source snapshot. It includes
+default-off diagnostics and rejected experiment paths that coexisted with the
+accepted code. Only the runtime flags in the 125 tok/s reproduction guide are
+part of the record identity.
+
+- canonical encoded aggregate:
+  `../../patches/gemma4-26b-a4b-q8-b70/llama-cpp-c926ad098-gemma4-q8-record-source-20260701.diff.gz.b64`;
+- decoded SHA-256:
+  `2dab9dce3d6a41cba8edad559eb754088c6f5ca1de6531f408c069e45b7f727a`;
+- base commit: `c926ad09857517978575d6a74d225b463f7417a0` / tag `b9769`;
+- restore/build helper:
+  `../../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/restore-and-build.sh`.
+
 - Optional service/prefill source patch:
   `../../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch`.
   This adds `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8` for the Gemma DV512/GQA8
   FlashAttention tile path. It is a validated long-context service/prefill
   optimization, not a short-decode LocalMaxxing record change.
 
-The `20260626T2225` patch is intentionally cumulative and includes default-off
-rejected experiment paths. The RMS patch is the small incremental source change
-for the superseded `104.309` micro-record. The Q8 MoE-ID reorder snapshot
-documents the `170-171` path. The VDR compile-knob patch is default-preserving;
-the current promoted realistic-suite build explicitly sets
-`-DGGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2`.
-
-To reconstruct the current local source snapshot from clean llama.cpp:
+To reconstruct the record source and build without modifying an existing
+checkout:
 
 ```bash
-cd /home/steve/src/llama.cpp-gemma-record-repro-c926
-git checkout c926ad098
-git apply /home/steve/llm-optimizations/patches/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-reordervdr2-source.patch
-# Optional, for the current service/prefill lane:
-git apply /home/steve/llm-optimizations/patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch
+cd /path/to/b70-optimization-lab
+SOURCE_DIR=/path/to/new/llama.cpp-gemma4-record \
+  repro/gemma4-26b-a4b-q8-b70-125tps-20260701/restore-and-build.sh
 ```
 
-This full-worktree patch is for recovery and review. It includes default-off
-negative experiments as well as promoted paths, so do not enable every flag
-blindly.
+The helper verifies the base and decoded patch identities before applying,
+refuses to overwrite an existing directory, and writes a build receipt. The
+historical binary hash was not retained, so a rebuilt binary remains a source
+reconstruction until it passes the full semantic and performance gates.
+
+For manual review, the helper's essential record build options are below. The
+helper is authoritative and also disables remote/prebuilt UI assets so the API
+server does not depend on a changing web bundle:
 
 ```bash
-cd /home/steve/llm-optimizations
-scripts/build-llama-cpp-sycl-b70.sh
-```
-
-Default output:
-
-```text
-/home/steve/src/llama.cpp/build-sycl-b70/bin/llama-server
-/home/steve/src/llama.cpp/build-sycl-b70/bin/llama-cli
-/home/steve/src/llama.cpp/build-sycl-b70/bin/llama-bench
-```
-
-For the current strict VDR=2 record build, use a dedicated build directory so
-the default VDR=4 binary remains available for comparison:
-
-```bash
-cd /home/steve/src/llama.cpp-gemma-record-repro-c926
+cd /path/to/new/llama.cpp-gemma4-record
 source /opt/intel/oneapi/setvars.sh
 cmake -S . -B build-sycl-b70-aot-bmg-g31-q8reorder-vdr2 -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
@@ -134,9 +117,10 @@ cmake -S . -B build-sycl-b70-aot-bmg-g31-q8reorder-vdr2 -G Ninja \
   -DGGML_SYCL=ON -DGGML_SYCL_TARGET=INTEL \
   -DGGML_SYCL_DEVICE_ARCH=bmg-g31 \
   -DGGML_SYCL_F16=ON -DGGML_SYCL_GRAPH=ON -DGGML_SYCL_DNN=ON \
-  -DGGML_SYCL_HOST_MEM_FALLBACK=ON
+  -DGGML_SYCL_HOST_MEM_FALLBACK=ON \
+  -DLLAMA_BUILD_UI=OFF -DLLAMA_USE_PREBUILT_UI=OFF
 cmake --build build-sycl-b70-aot-bmg-g31-q8reorder-vdr2 \
-  --target llama-server -j 8
+  --target llama-server llama-quantize -j 2
 ```
 
 ## 2. Download Q8 GGUF
@@ -204,7 +188,11 @@ scripts/run-gemma4-26b-first-baseline.sh
 The promoted record can be reproduced with the standalone wrapper:
 
 ```bash
-cd /home/steve/llm-optimizations
+cd /path/to/b70-optimization-lab
+LLAMA_SERVER=/path/to/build/bin/llama-server \
+MODEL=/models/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf \
+MTP_DRAFT_MODEL=/models/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf \
+DRAFT_SHA256=<sha256-printed-by-prepare-draft> \
 GPU_INDEX=0 PORT=19350 \
   LABEL=gemma4-q8-gpu0-125repro-$(date -u +%Y%m%dT%H%M%SZ) \
   bash repro/gemma4-26b-a4b-q8-b70-125tps-20260701/run.sh

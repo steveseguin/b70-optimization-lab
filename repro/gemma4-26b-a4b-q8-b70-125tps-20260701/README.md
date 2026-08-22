@@ -3,6 +3,12 @@
 This is the standalone promoted reproduction packet for the current Gemma 4
 26B A4B Q8/INT8-quality short-decode record on one Intel Arc Pro B70.
 
+> **Reconstruction status (2026-08-22):** the exact aggregate source snapshot
+> now applies cleanly to its pinned base, but the historical server binary hash
+> and local Q4_0 draft hash were not retained. This packet is therefore a
+> source-verified reconstruction candidate, not yet a clean-host beginner
+> install or a byte-identical historical replay.
+
 Use the active script packet for day-to-day reruns:
 
 - `../gemma4-26b-a4b-q8-b70/run-vdr2-selecteddown-record.sh`
@@ -12,6 +18,8 @@ Use the active script packet for day-to-day reruns:
   `../../results/gemma4-26b-a4b-q8-b70/README.md`
 - detailed reproduction notes:
   `../../results/gemma4-26b-a4b-q8-b70/reproduce.md`
+- [canonical aggregate patch and verification receipt](../../patches/gemma4-26b-a4b-q8-b70/README.md);
+- [pinned model identities](model-manifest.json).
 
 ## Headline Result
 
@@ -80,6 +88,54 @@ Latest reproducibility check while creating this packet:
 - VMM: on.
 - Speculation: draft-MTP, `n_max=3`, `n_min=2`, `p_min=0.0475`.
 
+## Restore The Record Source
+
+The old lab checkout paths below document history; new users should not create
+or edit those paths. Restore a new source directory from the in-repository
+aggregate instead:
+
+```bash
+cd /path/to/b70-optimization-lab
+SOURCE_DIR=/path/to/new/llama.cpp-gemma4-record \
+  repro/gemma4-26b-a4b-q8-b70-125tps-20260701/restore-and-build.sh
+```
+
+The helper clones official llama.cpp tag `b9769`, verifies full base commit
+`c926ad09857517978575d6a74d225b463f7417a0`, decodes and hash-checks our
+canonical aggregate patch, applies it, runs `git diff --check`, and builds with
+the record's VDR2 compile definition. The embedded browser UI and its remote
+prebuilt-asset fetch are disabled so a changed web bundle cannot break or
+silently alter the API-server reconstruction; the record workload used the
+HTTP API, not that UI. The helper refuses to overwrite an existing source
+directory and defaults to the historical oneAPI 2026.0 compiler paths.
+
+The downloadable target and F16 MTP source are pinned in
+`model-manifest.json`. Download them from revision
+`3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a` of
+`unsloth/gemma-4-26B-A4B-it-GGUF`, verify their manifest hashes, then reconstruct
+the local record draft:
+
+- [UD-Q8_K_XL target/verifier](https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF/resolve/3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf?download=true)
+- [F16 MTP draft source](https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF/resolve/3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a/MTP/gemma-4-26B-A4B-it-F16-MTP.gguf?download=true)
+
+Both are large-file objects; use a resumable downloader and keep the exact
+filenames. `preflight.sh` checks the target SHA-256, while `prepare-draft.sh`
+checks the F16 source SHA-256 before quantizing it.
+
+```bash
+F16_DRAFT=/models/MTP/gemma-4-26B-A4B-it-F16-MTP.gguf \
+MTP_DRAFT_MODEL=/models/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf \
+LLAMA_QUANTIZE=/path/to/new/llama.cpp-gemma4-record/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-quantize \
+  repro/gemma4-26b-a4b-q8-b70-125tps-20260701/prepare-draft.sh
+```
+
+Save the printed `DRAFT_SHA256`. It pins the reconstructed draft for a run,
+but it does not retroactively prove byte identity with the lost historical
+local draft. The 2026.1.1 compatibility build produced a repeat-stable
+reference (`3/3` byte-identical quantizations): `321126560` bytes,
+SHA-256 `1f6706e4a09524c7aa83cea45eec637cd3e2aa7ccfa80c2dbef7a092ec0fddbd`.
+The helper reports whether a new output matches that reference.
+
 Important flags:
 
 ```text
@@ -109,7 +165,11 @@ LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1
 The wrapper below runs the strict final gate. Pick a free GPU/port pair.
 
 ```bash
-cd /home/steve/llm-optimizations
+cd /path/to/b70-optimization-lab
+LLAMA_SERVER=/path/to/build/bin/llama-server \
+MODEL=/models/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf \
+MTP_DRAFT_MODEL=/models/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf \
+DRAFT_SHA256=<sha256-printed-by-prepare-draft> \
 GPU_INDEX=0 PORT=19350 \
   CTX_SIZE=32768 FLASH_ATTN=on GGML_SYCL_ENABLE_VMM=1 \
   CANARY_REPEATS=128 MAX_TOKENS=512 \
@@ -121,7 +181,12 @@ GPU_INDEX=0 PORT=19350 \
 Equivalent local helper:
 
 ```bash
-GPU_INDEX=0 PORT=19350 bash repro/gemma4-26b-a4b-q8-b70-125tps-20260701/run.sh
+LLAMA_SERVER=/path/to/build/bin/llama-server \
+MODEL=/models/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf \
+MTP_DRAFT_MODEL=/models/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf \
+DRAFT_SHA256=<sha256-printed-by-prepare-draft> \
+GPU_INDEX=0 PORT=19350 \
+  bash repro/gemma4-26b-a4b-q8-b70-125tps-20260701/run.sh
 ```
 
 The run writes:

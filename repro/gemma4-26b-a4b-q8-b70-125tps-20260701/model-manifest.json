@@ -1,0 +1,36 @@
+{
+  "schema": "b70-model-manifest-v1",
+  "repository": "unsloth/gemma-4-26B-A4B-it-GGUF",
+  "revision": "3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a",
+  "files": [
+    {
+      "role": "target_verifier",
+      "path": "gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
+      "size_bytes": 27636230944,
+      "sha256": "50e180d69641e017d7e08a6f602988effde8232ff6bc0231e839636fdcc03d8f",
+      "source": "pinned Hugging Face LFS object"
+    },
+    {
+      "role": "draft_source",
+      "path": "MTP/gemma-4-26B-A4B-it-F16-MTP.gguf",
+      "size_bytes": 855228576,
+      "sha256": "36bf2f6710cf06ff1a5d026cca49ba88bd3451d8588a484ca5a79c5e30aa45f2",
+      "source": "pinned Hugging Face LFS object"
+    },
+    {
+      "role": "record_draft",
+      "path": "MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf",
+      "source": "locally quantized from the pinned F16 MTP file with llama-quantize Q4_0",
+      "historical_sha256": null,
+      "historical_size_bytes": null,
+      "reconstructed_reference": {
+        "size_bytes": 321126560,
+        "sha256": "1f6706e4a09524c7aa83cea45eec637cd3e2aa7ccfa80c2dbef7a092ec0fddbd",
+        "quantizer_source": "record aggregate at c926ad09857517978575d6a74d225b463f7417a0",
+        "quantizer_build": "IntelLLVM 2026.1.1 compatibility build",
+        "repeat_byte_identity": "3/3"
+      },
+      "status": "historical byte identity was not retained; the reconstructed reference is repeat-stable but still requires target-verified gates"
+    }
+  ]
+}

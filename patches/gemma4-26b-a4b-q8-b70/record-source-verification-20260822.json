@@ -1,0 +1,46 @@
+{
+  "schema": "b70-source-patch-verification-v1",
+  "checked_at_utc": "2026-08-22T14:06:57Z",
+  "upstream": "https://github.com/ggml-org/llama.cpp.git",
+  "upstream_tag": "b9769",
+  "base_commit": "c926ad09857517978575d6a74d225b463f7417a0",
+  "artifact": "patches/gemma4-26b-a4b-q8-b70/llama-cpp-c926ad098-gemma4-q8-record-source-20260701.diff.gz.b64",
+  "artifact_sha256": "9cdb1b03a173489e295cc95ac35f66afb40cac96c4c8b5ffbd99f938ddc0a87c",
+  "decoded_sha256": "2dab9dce3d6a41cba8edad559eb754088c6f5ca1de6531f408c069e45b7f727a",
+  "original_snapshot": "patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260701-direct-sampled-egress-preedit-source.patch",
+  "original_snapshot_sha256": "2dab9dce3d6a41cba8edad559eb754088c6f5ca1de6531f408c069e45b7f727a",
+  "changed_files": 36,
+  "insertions": 13546,
+  "deletions": 856,
+  "checks": {
+    "decoded_matches_original_snapshot": true,
+    "git_apply_check": "pass",
+    "git_apply": "pass",
+    "git_diff_check": "pass",
+    "accepted_runtime_flag_symbols_present": "18/18",
+    "oneapi_2026_1_compatibility_configure": "pass",
+    "oneapi_2026_1_compatibility_build": "pass"
+  },
+  "compatibility_build": {
+    "compiler": "IntelLLVM 2026.1.1",
+    "ui_embedded": false,
+    "llama_server_sha256": "725c6ede92d71b03cfc940ed22d8bbfe8d25192bdc9a64b12f4f7b6f44bd7708",
+    "llama_quantize_sha256": "bdd7baf824f57a35a6438b2342e86b41010f28392da1b72c551dc8f0d0beb92c",
+    "scope": "compile/link compatibility only; no model load or GPU performance claim"
+  },
+  "reconstructed_q4_0_draft": {
+    "source_sha256": "36bf2f6710cf06ff1a5d026cca49ba88bd3451d8588a484ca5a79c5e30aa45f2",
+    "source_size_bytes": 855228576,
+    "output_sha256": "1f6706e4a09524c7aa83cea45eec637cd3e2aa7ccfa80c2dbef7a092ec0fddbd",
+    "output_size_bytes": 321126560,
+    "repeat_byte_identity": "3/3",
+    "historical_identity": false
+  },
+  "record_evidence": "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json",
+  "record_metric_toks_per_second": 124.97714084813418,
+  "limitations": [
+    "The historical record binary has no retained byte hash.",
+    "The aggregate contains default-off diagnostic and rejected experiment code in addition to the accepted runtime paths.",
+    "A reconstructed build needs a fresh semantic and performance replay before promotion."
+  ]
+}

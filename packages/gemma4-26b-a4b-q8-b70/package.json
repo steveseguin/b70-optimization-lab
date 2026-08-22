@@ -1,0 +1,61 @@
+{
+  "format": "b70-model-package-v1",
+  "id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
+  "name": "Gemma 4 26B A4B UD-Q8_K_XL on one Intel Arc Pro B70",
+  "status": "candidate",
+  "audience": "expert",
+  "guide": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md",
+  "clean_host_tested": false,
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 1,
+    "target_model_bytes": 27636230944
+  },
+  "model": {
+    "repository": "unsloth/gemma-4-26B-A4B-it-GGUF",
+    "revision": "3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a",
+    "manifest": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/model-manifest.json"
+  },
+  "runtime": {
+    "kind": "native",
+    "project": "ggml-org/llama.cpp",
+    "revision": "c926ad09857517978575d6a74d225b463f7417a0",
+    "build": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/restore-and-build.sh"
+  },
+  "project_patches": {
+    "required": true,
+    "items": [
+      "patches/gemma4-26b-a4b-q8-b70/llama-cpp-c926ad098-gemma4-q8-record-source-20260701.diff.gz.b64"
+    ],
+    "decoded_sha256": "2dab9dce3d6a41cba8edad559eb754088c6f5ca1de6531f408c069e45b7f727a"
+  },
+  "commands": {
+    "preflight": "LLAMA_SERVER=/path/to/build/bin/llama-server MODEL=/models/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf MTP_DRAFT_MODEL=/models/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf DRAFT_SHA256=<local-digest> repro/gemma4-26b-a4b-q8-b70-125tps-20260701/preflight.sh",
+    "launch": "Run the foreground full-gate command documented in repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md",
+    "health": "The full-gate wrapper waits for the local llama-server health endpoint before testing",
+    "benchmark": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/run.sh performs the 512-row canary and 12-prompt cold benchmark",
+    "stop": "The wrapper stops its server; otherwise Ctrl-C and verify pgrep -x llama-server returns no process"
+  },
+  "dependencies": [
+    "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md",
+    "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/model-manifest.json",
+    "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/restore-and-build.sh",
+    "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/prepare-draft.sh",
+    "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/preflight.sh",
+    "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/run.sh",
+    "patches/gemma4-26b-a4b-q8-b70/README.md",
+    "patches/gemma4-26b-a4b-q8-b70/record-source-verification-20260822.json",
+    "results/gemma4-26b-a4b-q8-b70/README.md"
+  ],
+  "evidence": [
+    "patches/gemma4-26b-a4b-q8-b70/record-source-verification-20260822.json",
+    "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json"
+  ],
+  "missing": [
+    "historical llama-server binary SHA-256",
+    "historical locally quantized Q4_0 MTP draft SHA-256 and byte size",
+    "tested clean-host Intel driver and oneAPI 2026.0 installation",
+    "clean one-B70 rebuild and endpoint replay",
+    "beginner recovery flow"
+  ]
+}

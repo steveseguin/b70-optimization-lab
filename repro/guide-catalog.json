@@ -1,6 +1,6 @@
 {
   "format": "b70-reproduction-guide-catalog-v1",
-  "reviewed_at": "2026-08-21",
+  "reviewed_at": "2026-08-22",
   "certification_standard": "docs/reproduction-guide-certification.md",
   "guides": [
     {
@@ -20,18 +20,19 @@
       "audience": "expert",
       "clean_host_tested": false,
       "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": false, "launch": true, "validation": true, "patch_links": true, "hashes": false},
-      "dependency_links": ["results/gemma4-26b-a4b-q8-b70/README.md"],
-      "missing": ["canonical aggregate positive patch and patch index", "platform installation", "model acquisition and direct verification", "source restore/build"]
+      "dependency_links": ["patches/gemma4-26b-a4b-q8-b70/README.md", "results/gemma4-26b-a4b-q8-b70/README.md"],
+      "missing": ["platform installation", "self-contained model acquisition and direct verification", "self-contained source restore/build"]
     },
     {
       "id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
       "guide": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md",
-      "classification": "lab-replay",
+      "classification": "candidate-portable-repro",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": false, "launch": true, "validation": true, "patch_links": false, "hashes": false},
-      "dependency_links": ["repro/gemma4-26b-a4b-q8-b70/README.md", "results/gemma4-26b-a4b-q8-b70/README.md"],
-      "missing": ["canonical aggregate patch link", "platform installation", "model acquisition and verification", "source restore/build", "removal of lab-path defaults"]
+      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["patches/gemma4-26b-a4b-q8-b70/README.md", "repro/gemma4-26b-a4b-q8-b70/README.md", "results/gemma4-26b-a4b-q8-b70/README.md"],
+      "missing": ["tested clean-host platform installation", "historical local Q4_0 draft and server binary hashes", "clean one-B70 rebuild and endpoint replay"],
+      "package": "packages/gemma4-26b-a4b-q8-b70/package.json"
     },
     {
       "id": "gemma4-26b-a4b-q8-b70-95tps-20260624",
