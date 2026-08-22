@@ -73,7 +73,7 @@ campaign under the lane's full standards.
 
 - endpoint driver
   `scripts/run-20260821-qwen38-mtp5-q64k32-endpoint-abba.sh`:
-  `ecaf541ec924e34d4fbfc233b4ab5d1ca1c3114eb5dddcdd2f86b008843a47cd`
+  `849d4b6cc4287b7cb392ef983598c1fd930b8f7566edcb90bb09d9243093d5c8`
   (mode 0755). It verifies both stage trees per-file each invocation,
   refuses existing arm roots, requires clean `main == origin/main`, and
   regates every predecessor: runner exit 0, sealed-gate pass (with
@@ -94,7 +94,13 @@ campaign under the lane's full standards.
   names was demonstrated live before any arm root existed (the a1 label
   was not burned: no root was created).
 - result roots (must not exist before launch):
-  `/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-q64k32-endpoint-{a1,b1,b2,a2}-20260821/`.
+  `/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-q64k32-endpoint2-{a1,b1,b2,a2}-20260821/`.
+  The original `endpoint-a1` label burned on a pre-launch false start: the
+  sealed identity gate refused a non-empty vLLM source diff
+  (`66f5823c...`, two uncommitted Codex-era WIP files, preserved to
+  `patches/vllm-codex-wip-preserved-20260821/` and stashed in-tree before
+  the tree was restored to an empty diff). That root contains only
+  pre-launch scaffolding, no GPU or model work, and is preserved unused.
 
 Launch requires: clean `main == origin/main` including the frozen revision
 of this note; quiet kernel journal; no other model workload, benchmark, or

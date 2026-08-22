@@ -52,7 +52,9 @@ stock_dep_sha=3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289
 interface_sha=869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480
 policy_marker='VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY engaged'
 
-arm_label() { printf 'qwen38-q64k32-endpoint-%s-20260821' "$1"; }
+# endpoint2: the first a1 label burned on a pre-launch identity-gate refusal
+# (preserved uncommitted vLLM WIP; no GPU work); fresh labels per prereg.
+arm_label() { printf 'qwen38-q64k32-endpoint2-%s-20260821' "$1"; }
 arm_root_for() { printf '%s/%s' "$raw" "$(arm_label "$1")"; }
 
 case "$action" in
