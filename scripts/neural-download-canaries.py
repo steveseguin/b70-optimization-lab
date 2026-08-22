@@ -69,14 +69,22 @@ def main() -> int:
     js = chat(a.base_url, a.model,
               'Output only a JSON object with keys "name" (string) and "count"'
               ' (integer), for three apples named Fuji.', 512)
+    # Models may quote candidate JSON inside prose before the final answer;
+    # accept the LAST parseable object in the text.
     ok = False
-    try:
-        start, end = js.index("{"), js.rindex("}") + 1
-        parsed = json.loads(js[start:end])
-        ok = isinstance(parsed.get("name"), str) and isinstance(
-            parsed.get("count"), int)
-    except (ValueError, KeyError):
-        ok = False
+    opens = [i for i, c in enumerate(js) if c == "{"]
+    closes = [i for i, c in enumerate(js) if c == "}"]
+    for i in reversed(opens):
+        for j in reversed([c for c in closes if c > i]):
+            try:
+                parsed = json.loads(js[i:j + 1])
+            except ValueError:
+                continue
+            ok = isinstance(parsed.get("name"), str) and isinstance(
+                parsed.get("count"), int)
+            break
+        if ok:
+            break
     results["json_schema"] = {"raw": js.strip()[:100], "pass": ok}
 
     results["pass_all"] = all(v["pass"] for v in results.values()

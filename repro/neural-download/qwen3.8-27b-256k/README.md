@@ -67,4 +67,4 @@ conventional 99-interval median computed from raw event offsets,
 
 Evidence: `qwen38-256k-package.benchA.json` / `qwen38-256k-package.benchB.json` under
 `bench-results/neural-download/operating-points-20260822/`.
-Canary battery: reasoning-off redo in progress; recorded when it lands.
+Canary battery (reasoning off, temp 0, objective checks): 8x repeat hash-stability PASS, arithmetic PASS, exact copy PASS, JSON schema PASS — **pass_all=True** (`qwen38-256k-package.canaries.json`).

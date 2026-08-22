@@ -52,4 +52,5 @@ conventional 99-interval median computed from raw event offsets,
 
 Evidence: `nemotron-35-lightning-std.benchA.json` / `nemotron-35-lightning-std.benchB.json` under
 `bench-results/neural-download/operating-points-20260822/`.
-Canary battery: reasoning-off redo in progress; recorded when it lands.
+Canary battery (reasoning off, temp 0, objective checks): 8x repeat hash-stability PASS, arithmetic PASS, exact copy PASS, JSON schema PASS — **pass_all=True** (`nemotron-35-lightning-std.canaries.json`).
+Known behavior: with reasoning ON, 8x repeat outputs were not hash-stable (thinking-channel sampling); with reasoning off the model is deterministic. Recipe defaults to reasoning off for reproducibility-sensitive use.
