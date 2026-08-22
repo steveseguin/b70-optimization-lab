@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Intel Arc B70 LLM Optimization Lab — Recipes, Benchmarks, and Reproducible Inference</title>
 <meta name="description" content="Community optimization lab for local AI on Intel Arc Pro B-series GPUs: reproducible vLLM XPU and llama.cpp SYCL recipes, verified benchmark records, and contribution guides.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230f62e8'/%3E%3Crect x='10' y='34' width='12' height='20' fill='%23f6f1e5'/%3E%3Crect x='26' y='22' width='12' height='32' fill='%23f6f1e5'/%3E%3Crect x='42' y='10' width='12' height='44' fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
 <link rel="canonical" href="https://neural.download/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://neural.download/">
@@ -58,8 +58,37 @@ Style genome (duotone-hixffp):
   abbr[title] { text-decoration: none; border-bottom: 1px dotted var(--muted); cursor: help; }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 18px; }
   .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
-  .skip { position: absolute; left: 9px; top: -54px; background: var(--ink); color: var(--paper); padding: 9px 14px; font-family: var(--mono); font-size: 12px; z-index: 10; }
+  .skip { position: absolute; left: 9px; top: -54px; background: var(--ink); color: var(--paper); padding: 9px 14px; font-family: var(--mono); font-size: 12px; z-index: 100; }
   .skip:focus-visible { top: 9px; outline: 2px solid var(--paper); }
+
+  /* persistent primary navigation */
+  .site-nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(246, 241, 229, .97); border-bottom: 2px solid var(--ink);
+  }
+  .site-nav .wrap { display: flex; align-items: stretch; min-height: 56px; }
+  .brand {
+    display: flex; align-items: center; flex: 0 0 auto; padding-right: 25px;
+    font-family: var(--display); font-size: 16px; text-transform: uppercase;
+    letter-spacing: -.02em; border-bottom: 0;
+  }
+  .brand-mark { color: var(--spot); margin-right: 8px; letter-spacing: -3px; }
+  .site-nav nav {
+    display: flex; align-items: stretch; margin-left: auto; overflow-x: auto;
+    scrollbar-width: none; font-family: var(--mono); font-size: 11.5px;
+    font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  }
+  .site-nav nav::-webkit-scrollbar { display: none; }
+  .site-nav nav a {
+    display: flex; align-items: center; flex: 0 0 auto; padding: 0 13px;
+    border-bottom: 4px solid transparent;
+  }
+  .site-nav nav a:hover { color: var(--spot-dark); border-bottom-color: var(--spot); }
+  .site-nav nav .github-link {
+    align-self: center; min-height: 32px; margin-left: 8px; padding: 0 10px;
+    border: 2px solid var(--ink);
+  }
+  .site-nav nav .github-link:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
   /* masthead — full-bleed spot slab */
   .masthead { background: var(--spot); color: #fff; padding: 54px 0 36px; }
@@ -70,11 +99,24 @@ Style genome (duotone-hixffp):
     font-size: clamp(30px, 4.8vw, 54px); margin: 0;
   }
   .masthead .sub { margin: 14px 0 0; font-size: 15px; max-width: 68ch; color: #fff; }
-  .masthead nav { margin-top: 27px; font-family: var(--mono); font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em; }
-  .masthead nav a { margin-right: 18px; display: inline-block; padding: 6px 0; }
   .masthead a:focus-visible { outline-color: #fff; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+  .button {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 38px; padding: 8px 13px; border: 2px solid var(--ink);
+    background: var(--ink); color: var(--paper); font-family: var(--mono);
+    font-size: 11px; font-weight: 700; line-height: 1.2;
+    letter-spacing: .05em; text-transform: uppercase;
+  }
+  .button:hover { background: var(--spot); color: #fff; border-color: var(--spot); }
+  .button.light { background: #fff; color: var(--spot-dark); border-color: #fff; }
+  .button.light:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .button.outline-light { background: transparent; color: #fff; border-color: #fff; }
+  .button.outline-light:hover { background: #fff; color: var(--spot-dark); border-color: #fff; }
+  .button.secondary { background: transparent; color: var(--ink); }
+  .button.secondary:hover { background: var(--ink); color: var(--paper); }
 
-  main section { padding: 36px 0 9px; }
+  main section { padding: 36px 0 9px; scroll-margin-top: 70px; }
   h2 {
     font-family: var(--display); font-weight: 900; text-transform: uppercase;
     letter-spacing: -0.005em; font-size: 20px; margin: 0 0 9px;
@@ -102,6 +144,14 @@ Style genome (duotone-hixffp):
   td.lnk a { border-bottom: 2px solid var(--ink); }
   td.lnk a:hover { border-bottom-color: var(--spot-dark); color: var(--spot-dark); }
   .guide-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; white-space: normal; }
+  .guide-actions a.open-guide {
+    padding: 5px 8px; border: 2px solid var(--ink); background: var(--ink);
+    color: var(--paper); font-family: var(--mono); font-size: 10px;
+    font-weight: 700; letter-spacing: .04em; line-height: 1.2;
+    text-transform: uppercase;
+  }
+  .guide-actions a.open-guide:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .guide-actions a.submit-improvement { font-family: var(--mono); font-size: 10px; border-bottom-width: 1px; }
   .copy-md {
     appearance: none; border: 2px solid var(--ink); border-radius: 0;
     background: transparent; color: var(--ink); padding: 4px 7px;
@@ -114,23 +164,51 @@ Style genome (duotone-hixffp):
   .copy-md:disabled { cursor: wait; opacity: .72; }
   .copy-md.copied { background: var(--spot); border-color: var(--spot); color: #fff; }
   .copy-md.failed { border-color: #a12820; color: #a12820; }
+  .status {
+    display: inline-block; margin-top: 5px; padding: 2px 5px;
+    border: 1px solid currentColor; color: var(--muted); font-family: var(--mono);
+    font-size: 9px; font-weight: 700; line-height: 1.2; letter-spacing: .05em;
+    text-transform: uppercase; white-space: nowrap;
+  }
+  .status.candidate { color: var(--spot-dark); }
+  .status.research { color: #8b3b14; }
+  .model-picker td.num { min-width: 82px; }
   .r { text-align: right; }
   th.r { text-align: right; }
   .dot { color: var(--spot); font-size: 11px; }
-  .dot.hollow { color: var(--ink); font-size: 13px; }
 
-  .note {
-    margin-top: 18px; padding: 9px 18px; border: 2px solid var(--ink);
-    background: var(--surface2); color: var(--muted); font-size: 12.5px; max-width: 760px;
+  .start-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .start-card { border: 2px solid var(--ink); padding: 16px; background: var(--paper); }
+  .start-card .eyebrow, .contribute-panel .eyebrow {
+    margin: 0 0 6px; color: var(--spot-dark); font-family: var(--mono);
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
   }
-  .note a { color: var(--ink); border-bottom: 2px solid var(--ink); }
-  .note a:hover { color: var(--spot-dark); border-bottom-color: var(--spot-dark); }
+  .start-card h3 { margin: 0 0 7px; font-family: var(--display); font-size: 16px; text-transform: uppercase; }
+  .start-card p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+  .start-card a:not(.button) { border-bottom: 1px solid currentColor; }
+  .research-links {
+    margin: 13px 0 0; padding: 11px 13px; background: var(--surface2);
+    color: var(--muted); font-size: 12.5px;
+  }
+  .research-links a { color: var(--ink); border-bottom: 1px solid currentColor; }
 
-  ul.tight { margin: 0; padding-left: 20px; color: var(--muted); font-size: 13.5px; }
-  ul.tight li { margin-bottom: 6px; }
-  ul.tight b { color: var(--ink); }
-  ul.tight a { color: var(--ink); border-bottom: 2px solid var(--ink); }
-  ul.tight a:hover { color: var(--spot-dark); border-bottom-color: var(--spot-dark); }
+  .contribute-panel {
+    display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, .8fr);
+    gap: 24px; padding: 22px; border: 2px solid var(--ink); background: var(--surface2);
+  }
+  .contribute-panel h2 { margin-bottom: 8px; }
+  .contribute-panel .lead { margin: 0; max-width: 66ch; color: var(--muted); font-size: 14px; }
+  .contribute-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px 12px; margin-top: 17px; }
+  .contribute-actions .plain-link { font-family: var(--mono); font-size: 10.5px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid currentColor; }
+  .contribute-steps { margin: 0; padding: 0; list-style: none; counter-reset: steps; }
+  .contribute-steps li { counter-increment: steps; position: relative; padding: 0 0 11px 33px; color: var(--muted); font-size: 12.5px; }
+  .contribute-steps li:last-child { padding-bottom: 0; }
+  .contribute-steps li::before {
+    content: counter(steps); position: absolute; left: 0; top: 0; width: 22px; height: 22px;
+    display: grid; place-items: center; background: var(--spot); color: #fff;
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+  }
+  .contribute-steps strong { display: block; color: var(--ink); }
 
   footer { margin-top: 54px; border-top: 2px solid var(--ink); padding: 18px 0 45px; font-family: var(--mono); font-size: 11.5px; }
   footer .wrap { display: flex; flex-wrap: wrap; gap: 9px 18px; }
@@ -139,9 +217,49 @@ Style genome (duotone-hixffp):
   footer span a { border-bottom: 1px solid currentColor; }
 
   @media (max-width: 780px) {
+    .site-nav .wrap { padding-right: 0; }
+    .site-nav .wrap, .site-nav nav { min-height: 51px; }
+    .brand { padding-right: 13px; font-size: 13px; }
+    .brand-mark { margin-right: 6px; }
+    .site-nav nav a { padding: 0 10px; }
+    .site-nav nav .github-link { margin-right: 12px; }
+    .masthead { padding: 38px 0 31px; }
+    .masthead .kicker { font-size: 10px; }
+    .masthead .sub { font-size: 14px; }
+    .hero-actions .button { flex: 1 1 150px; }
     td .ratebar { display: none; }
     th.hide-s, td.hide-s { display: none; }
-    .scroller table { min-width: 640px; }
+    .benchmark-scroller table { min-width: 760px; }
+    .model-scroller { overflow: visible; }
+    .model-picker { display: block; min-width: 0; border: 0; }
+    .model-picker thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .model-picker tbody { display: grid; gap: 12px; }
+    .model-picker tr {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 9px 14px;
+      padding: 14px; border: 2px solid var(--ink); background: var(--paper);
+    }
+    .model-picker th.model { grid-column: 1 / -1; padding: 0; white-space: normal; font-size: 15px; }
+    .model-picker th.model small { font-size: 11px; }
+    .model-picker td { display: block; padding: 0; min-width: 0; text-align: left; }
+    .model-picker td.model-use, .model-picker td.model-actions { grid-column: 1 / -1; }
+    .model-picker td.model-use { font-size: 13px; }
+    .model-picker td.model-cards::before, .model-picker td.model-speed::before {
+      content: attr(data-label); display: block; margin-bottom: 2px; color: var(--muted);
+      font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .06em;
+    }
+    .model-picker td.model-speed { font-size: 16px; font-weight: 700; }
+    .guide-actions { gap: 7px; }
+    .guide-actions a.open-guide, .copy-md { min-height: 34px; display: inline-flex; align-items: center; }
+    .guide-actions a.submit-improvement { flex-basis: 100%; width: max-content; }
+    .start-grid, .contribute-panel { grid-template-columns: 1fr; }
+    .start-card { padding: 14px; }
+    .contribute-panel { padding: 17px; gap: 21px; }
+    h2 .key { margin-left: 0; flex-basis: 100%; }
+  }
+
+  @media (max-width: 430px) {
+    .brand { font-family: var(--mono); font-size: 11px; letter-spacing: -.03em; }
+    .site-nav nav { font-size: 10.5px; }
   }
 </style>
 </head>
@@ -149,23 +267,32 @@ Style genome (duotone-hixffp):
 
 <a class="skip" href="#main">Skip to content</a>
 
-<header class="masthead">
+<div class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-current="page"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+    <nav aria-label="Primary">
+      <a href="#pick">Models &amp; guides</a>
+      <a href="#start">Start here</a>
+      <a href="#lab-speeds">Benchmarks</a>
+      <a href="#contribute">Contribute</a>
+      <a class="github-link" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+    </nav>
+  </div>
+</div>
+
+<header class="masthead" id="top">
   <div class="wrap">
     <p class="kicker">Unofficial Intel XPU Optimization Lab &middot; community-run, not affiliated with Intel</p>
     <h1>Run AI at home.<br>We measure how fast.</h1>
     <p class="sub">
       Free, open AI models can chat, help with writing and homework, and write code —
-      privately, on your own PC with an Intel Arc Pro graphics card. We time every model on
+      privately, on your own PC with an Intel Arc Pro B70 graphics card. We time every model on
       real hardware and link the proof behind every number.
     </p>
-    <nav aria-label="Primary">
-      <a href="#pick">Pick a model</a>
-      <a href="#start">What you need</a>
-      <a href="#lab-speeds">Lab speeds</a>
-      <a href="#community-speeds">Community speeds</a>
-      <a href="#contribute">Contribute</a>
-      <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
-    </nav>
+    <div class="hero-actions">
+      <a class="button light" href="#pick">Choose a deployment</a>
+      <a class="button outline-light" href="#contribute">Submit an optimization</a>
+    </div>
   </div>
 </header>
 
@@ -176,38 +303,50 @@ Style genome (duotone-hixffp):
     <h2 id="t0">Which model should I try?</h2>
     <p class="sub">
       Speeds are in <abbr title="tokens per second">tok/s</abbr>: a token is about &frac34; of a
-      word, so 100 tok/s is roughly 75 words a second — answers appear faster than you can read.
-      &#9679; means checked on our own machines; &#9675; means reported by a community member.
+      word, so 100 tok/s is roughly 75 words a second. Each row is one specific deployment;
+      different card counts, compression, and measurement windows are kept separate.
     </p>
-    <div class="scroller">
-    <table aria-labelledby="t0">
+    <div class="scroller model-scroller">
+    <table class="model-picker" aria-labelledby="t0">
       <thead>
-        <tr><th scope="col">Model</th><th scope="col">Good for</th><th scope="col" class="r">Cards</th><th scope="col" class="r">Speed</th><th scope="col">Guide</th></tr>
+        <tr><th scope="col">Model and deployment</th><th scope="col">Good for</th><th scope="col" class="r">Cards</th><th scope="col" class="r">Measured rate</th><th scope="col">Actions</th></tr>
       </thead>
       <tbody>
         <tr>
-          <th scope="row" class="model">Gemma-4-26B <small>Google &middot; Apr 2026</small></th>
-          <td class="mut">Strong one-card all-rounder, also reads pictures; starter packaging is still in progress</td>
-          <td class="num r">1</td><td class="num r">125</td>
-          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">Lab report</a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy Gemma-4-26B lab report Markdown" aria-live="polite">Copy Markdown</button></div></td>
+          <th scope="row" class="model">Gemma-4-26B <small>1&times; B70 &middot; Q8 + MTP3 &middot; Google &middot; Apr 2026</small><span class="status">Lab result</span></th>
+          <td class="mut model-use">Strong one-card all-rounder that also reads pictures; self-contained starter packaging is still in progress</td>
+          <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate">124.98</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy Gemma-4-26B lab report Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Gemma-4-26B%201xB70">Submit improvement</a></div></td>
         </tr>
         <tr>
-          <th scope="row" class="model">Qwen3.8-27B <small>Alibaba &middot; Aug 2026</small></th>
-          <td class="mut">Newest all-rounder, also reads pictures. One card: 27.8 tok/s, quality-checked. Our two-card INT4 + MTP5 research lane reaches 101.17 tok/s; run-to-run determinism is still open</td>
-          <td class="num r">1&ndash;2</td><td class="num r">27.8&ndash;101.17</td>
-          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-q4km-tp1-b70/README.md">1-B70 candidate</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-q4km-tp1-b70/README.md" aria-label="Copy Qwen3.8-27B one-B70 candidate package Markdown" aria-live="polite">Copy Markdown</button><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">2-B70 FP8</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">INT4 research</a></div></td>
+          <th scope="row" class="model">Qwen3.8-27B <small>1&times; B70 &middot; Q4_K_M &middot; Alibaba &middot; Aug 2026</small><span class="status candidate">Candidate package</span></th>
+          <td class="mut model-use">Newest one-card all-rounder here; cache-zero and exact across the registered 12-prompt oracle</td>
+          <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate">27.82</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-q4km-tp1-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-q4km-tp1-b70/README.md" aria-label="Copy Qwen3.8-27B one-B70 candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.8-27B%20Q4%201xB70">Submit improvement</a></div></td>
         </tr>
         <tr>
-          <th scope="row" class="model">Laguna-S-2.1 <small>Poolside &middot; Jul 2026</small></th>
-          <td class="mut">Coding assistant work; fastest speed we have verified</td>
-          <td class="num r">4</td><td class="num r">125</td>
-          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/laguna-s-2.1-int4-b70/README.md">Read report</a><button type="button" class="copy-md" data-copy-markdown="results/laguna-s-2.1-int4-b70/README.md" aria-label="Copy Laguna-S-2.1 report Markdown" aria-live="polite">Copy Markdown</button></div></td>
+          <th scope="row" class="model">Qwen3.8-27B <small>2&times; B70 &middot; official FP8 &middot; Docker/vLLM &middot; Aug 2026</small><span class="status candidate">Candidate package</span></th>
+          <td class="mut model-use">A digest-pinned, unpatched official-model route with semantic, repeat, and long-context gates</td>
+          <td class="num r model-cards" data-label="Cards">2</td><td class="num r model-speed" data-label="Measured rate">21.71</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp2-b70/README.md" aria-label="Copy Qwen3.8-27B two-B70 FP8 candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.8-27B%20FP8%202xB70">Submit improvement</a></div></td>
         </tr>
         <tr>
-          <th scope="row" class="model">Muse-Glimmer-30B <small>Meta &middot; Aug 2026</small></th>
-          <td class="mut">Meta's newest open model; reads pictures; long answers stay fast</td>
-          <td class="num r">4</td><td class="num r">100&ndash;162</td>
-          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">Expert repro</a><button type="button" class="copy-md" data-copy-markdown="repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md" aria-label="Copy Muse-Glimmer-30B expert reproduction Markdown" aria-live="polite">Copy Markdown</button></div></td>
+          <th scope="row" class="model">Qwen3.8-27B <small>2&times; B70 &middot; INT4 + MTP5 &middot; research lane &middot; Aug 2026</small><span class="status research">Research only</span></th>
+          <td class="mut model-use">Our fastest Qwen3.8 experiment; run-to-run determinism remains unresolved, so this is not an install recommendation</td>
+          <td class="num r model-cards" data-label="Cards">2</td><td class="num r model-speed" data-label="Research rate">101.17</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="repro/qwen38-27b-autoround-int4-b70/README.md" aria-label="Copy Qwen3.8-27B INT4 research status Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.8-27B%20INT4%20MTP5%202xB70">Submit improvement</a></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model">Laguna-S-2.1 <small>4&times; B70 &middot; INT4 + DFlash &middot; Poolside &middot; Jul 2026</small><span class="status">Lab result</span></th>
+          <td class="mut model-use">Coding-assistant work and the fastest conventional rate currently verified in the lab</td>
+          <td class="num r model-cards" data-label="Cards">4</td><td class="num r model-speed" data-label="Measured rate">125.46</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/laguna-s-2.1-int4-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="results/laguna-s-2.1-int4-b70/README.md" aria-label="Copy Laguna-S-2.1 report Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Laguna-S-2.1%204xB70">Submit improvement</a></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model">Muse-Glimmer-30B <small>4&times; B70 &middot; Q8/WOQ + DFlash &middot; Meta &middot; Aug 2026</small><span class="status">Expert repro</span></th>
+          <td class="mut model-use">Multimodal model with a 100.37 tok/s canonical repeat mean; its separately measured first-100 median was 161.90</td>
+          <td class="num r model-cards" data-label="Cards">4</td><td class="num r model-speed" data-label="Measured rate">100.37</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md" aria-label="Copy Muse-Glimmer-30B expert reproduction Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Muse-Glimmer-30B%204xB70">Submit improvement</a></div></td>
         </tr>
       </tbody>
     </table>
@@ -217,17 +356,29 @@ Style genome (duotone-hixffp):
 
 <section id="start">
   <div class="wrap">
-    <h2>What you need</h2>
-    <ul class="tight">
-      <li><b>The card:</b> a PC with at least one Intel Arc Pro B70 graphics card (32&nbsp;GB). One card runs most models on this page; the biggest are split across 2&ndash;4 cards working together.</li>
-      <li><b>One card:</b> start with our <a href="packages/qwen38-27b-q4km-tp1-b70/README.md">Qwen3.8 Q4_K_M candidate package</a>. Our faster <a href="results/gemma4-26b-a4b-q8-b70/README.md">Gemma-4-26B lab result</a> is still being converted into a self-contained package.</li>
-      <li><b>Two to four cards:</b> start with the digest-pinned <a href="packages/qwen38-27b-fp8-tp2-b70/README.md">Qwen3.8 FP8 two-card candidate package</a>, or browse expert artifacts in the <a href="results/README.md">results index</a>. Candidate and lab material is not yet a clean-machine installer.</li>
-      <li><b>Guide status is explicit:</b> lab reports and expert reproductions preserve results without pretending to be clean-machine installers. A future “Install guide” label requires every dependency, immutable identity, validation gate, and a clean-host replay under the <a href="docs/reproduction-guide-certification.md">guide certification standard</a>.</li>
-      <li><b>Making a new model fast:</b> the <a href="docs/model-optimization-guide.md">optimization guide</a> is the playbook; the <a href="optimization-timeline.html">timeline</a> shows how each setup improved.</li>
-      <li><b>Models we are preparing next:</b> our <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/model-intake/README.md">model intake queue</a> records exact revisions, sizes, checksums, B70 fit, and why each download is worth keeping. Popularity starts an investigation; it does not make a model or outside performance claim verified.</li>
-      <li><b>Docker and Windows:</b> digest-pinned Linux packages come first; Windows packets stay preview-only until they are replayed on a real Windows B70 machine. Follow the <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/model-distribution-and-packaging-roadmap.md">packaging roadmap</a>.</li>
-      <li><b>For AI assistants:</b> <a href="llms.txt">llms.txt</a> is a machine-readable map of this site, then <a href="AGENTS.md">AGENTS.md</a>.</li>
-    </ul>
+    <h2>Start here</h2>
+    <p class="sub">A B70 has 32&nbsp;GB of graphics memory. Some deployments fit on one card; larger or faster research configurations use two to four.</p>
+    <div class="start-grid">
+      <article class="start-card">
+        <p class="eyebrow">I have one B70</p>
+        <h3>Start with Qwen</h3>
+        <p>The Qwen3.8 Q4 package is our most complete one-card candidate. Gemma is faster in this lab, but its self-contained package is still being finished.</p>
+        <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-q4km-tp1-b70/README.md">Open one-card package</a>
+      </article>
+      <article class="start-card">
+        <p class="eyebrow">I have two to four B70s</p>
+        <h3>Choose a pinned lane</h3>
+        <p>Use the official Qwen3.8 FP8 two-card candidate, or browse the expert result packets for larger four-card deployments.</p>
+        <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Open two-card package</a>
+      </article>
+      <article class="start-card">
+        <p class="eyebrow">Understand the labels</p>
+        <h3>Guides earn their status</h3>
+        <p>Candidate, lab result, and research labels expose what remains. “Install guide” is reserved for a complete clean-host replay.</p>
+        <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/reproduction-guide-certification.md">Guide status rules</a>
+      </article>
+    </div>
+    <p class="research-links">Going deeper? Browse the <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/README.md">results library</a>, see <a href="optimization-timeline.html">how deployments improved</a>, inspect the <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/model-intake/README.md">model intake queue</a>, or read the <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/model-distribution-and-packaging-roadmap.md">Docker and Windows roadmap</a>.</p>
   </div>
 </section>
 
@@ -240,7 +391,7 @@ Style genome (duotone-hixffp):
       rate for the first hundred words of a fresh answer, unless noted. Bars are scaled to the
       fastest row on this page.
     </p>
-    <div class="scroller">
+    <div class="scroller benchmark-scroller" role="region" tabindex="0" aria-label="Lab benchmark table; scroll horizontally on narrow screens">
     <table aria-labelledby="t1">
       <thead>
         <tr>
@@ -257,58 +408,58 @@ Style genome (duotone-hixffp):
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Laguna-S-2.1 <small>coding assistant &middot; Jul 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">INT4 W4A16 + DFlash d11</td><td class="num r">4&times;</td>
-          <td class="num r">125.46<div class="ratebar max" style="width:67%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
+          <td class="num r">125.46<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
           <td class="mut hide-s" title="conventional median">typical</td>
-          <td class="lnk"><a href="results/laguna-s-2.1-int4-b70/README.md">test report</a></td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/laguna-s-2.1-int4-b70/README.md">test report</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Gemma-4-26B-A4B <small>all-rounder &middot; uses ~4B of 26B per word &middot; Apr 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + MTP3</td><td class="num r">1&times;</td>
-          <td class="num r">124.98<div class="ratebar" style="width:67%" aria-hidden="true"></div></td>
+          <td class="num r">124.98<div class="ratebar" style="width:99.6%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="median; ctx 32,768">typical &middot; remembers ~24K words</td>
-          <td class="lnk"><a href="results/gemma4-26b-a4b-q8-b70/README.md">test report</a></td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">test report</a></td>
         </tr>
         <tr>
-          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span>Qwen3.8-27B <small>newest all-rounder &middot; reads pictures &middot; Aug 2026 &middot; one card, no tricks: 27.8</small></th>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span>Qwen3.8-27B <small>newest all-rounder &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">INT4 + MTP5</td><td class="num r">2&times;</td>
-          <td class="num r">101.17<div class="ratebar" style="width:55%" aria-hidden="true"></div></td>
+          <td class="num r">101.17<div class="ratebar" style="width:80.6%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="honest margin-free all-25 median; three arms agree on only 21 to 22 of 25 token arrays">research &middot; determinism open</td>
-          <td class="lnk"><a href="repro/qwen38-27b-autoround-int4-b70/README.md">lab status</a></td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">lab status</a></td>
         </tr>
         <tr>
-          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Muse-Glimmer-30B <small>Meta &middot; reads pictures &middot; Aug 2026 &middot; long answers: 161.9</small></th>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Muse-Glimmer-30B <small>Meta &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash n15</td><td class="num r">4&times;</td>
-          <td class="num r">100.37<div class="ratebar" style="width:54%" aria-hidden="true"></div></td>
+          <td class="num r">100.37<div class="ratebar" style="width:80%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="canonical pooled mean">average across repeat runs</td>
-          <td class="lnk"><a href="repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">full report</a></td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">full report</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-27B <small>general assistant &middot; uses all 27B per word &middot; Apr 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 + MTP3</td><td class="num r">2&times;</td>
-          <td class="num r">98.77<div class="ratebar" style="width:53%" aria-hidden="true"></div></td>
+          <td class="num r">98.77<div class="ratebar" style="width:78.7%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="four-arm central estimate">average across 4 setups</td>
-          <td class="lnk"><a href="results/scoreboard.md">full rankings</a></td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/scoreboard.md">full rankings</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-35B-A3B <small>long documents &middot; uses ~3B of 35B per word &middot; Apr 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">Quark W8A8 INT8</td><td class="num r">4&times;</td>
-          <td class="num r">93.55<div class="ratebar" style="width:50%" aria-hidden="true"></div></td>
+          <td class="num r">93.55<div class="ratebar" style="width:74.6%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="output, strict deep gate">typical, strictest quality gate</td>
-          <td class="lnk"><a href="results/qwen36-35b-quark-int8-b70/README.md">test report</a></td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen36-35b-quark-int8-b70/README.md">test report</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>MiniMax-M2.7 <small>remembers long conversations (32K) &middot; Mar 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 W4A16</td><td class="num r">4&times;</td>
-          <td class="num r">89.31<div class="ratebar" style="width:48%" aria-hidden="true"></div></td>
+          <td class="num r">89.31<div class="ratebar" style="width:71.2%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="mean of four clean long repeats">average of 4 clean runs</td>
-          <td class="lnk"><a href="repro/minimax-m27-b70-89tps-20260520/README.md">full report</a></td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/README.md">full report</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>DeepSeek-V4-Flash-180B <small>experimental community-trimmed copy &middot; research only</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">FP8 + FP4 experts + DSpark7</td><td class="num r">4&times;</td>
-          <td class="num r">80.82<div class="ratebar" style="width:43%" aria-hidden="true"></div></td>
+          <td class="num r">80.82<div class="ratebar" style="width:64.4%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="median high, 24/24 exact canaries">typical high &middot; all 24 checks passed</td>
-          <td class="lnk"><a href="results/scoreboard.md">full rankings</a></td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/scoreboard.md">full rankings</a></td>
         </tr>
       </tbody>
     </table>
@@ -318,15 +469,14 @@ Style genome (duotone-hixffp):
 
 <section id="community-speeds">
   <div class="wrap">
-    <h2 id="t2">Community-reported speeds <span class="key"><span class="dot">&#9679;</span> re-run here and confirmed &nbsp; <span class="dot hollow">&#9675;</span> reported by a member, not yet re-checked</span></h2>
+    <h2 id="t2">Community work we validated <span class="key"><span class="dot">&#9679;</span> B70-tested in this lab</span></h2>
     <p class="sub">
-      Sent in by contributors on their own machines — promising, not proven, unless marked
-      confirmed. These rows are counted a little differently (middle value of 5 tries, measured
-      by the client), so don&rsquo;t compare numbers across the two tables. The
-      complete intake and attribution ledger lives under <a href="community/README.md">community/</a>;
-      this landing page only highlights runnable work that was actually re-run here.
+      This runnable setup came from a contributor and was independently exercised here. The
+      complete intake, attribution, and validation history lives under
+      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/community/README.md">community/</a>; unverified reports stay there instead of
+      appearing as homepage recommendations.
     </p>
-    <div class="scroller">
+    <div class="scroller benchmark-scroller" role="region" tabindex="0" aria-label="Validated community contribution table; scroll horizontally on narrow screens">
     <table aria-labelledby="t2">
       <thead>
         <tr>
@@ -342,8 +492,8 @@ Style genome (duotone-hixffp):
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">B70-tested: </span>Qwen3.6-27B <small>community setup we re-ran and confirmed</small></th>
           <td class="mut">Docker / vLLM</td><td class="mut">FP8, split across 2 cards</td><td class="num r">2&times;</td>
-          <td class="num r">30.17<div class="ratebar" style="width:16%" aria-hidden="true"></div></td>
-          <td class="lnk"><a href="community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md">lab check</a></td>
+          <td class="num r">30.17<div class="ratebar" style="width:24%" aria-hidden="true"></div></td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md">lab check</a></td>
         </tr>
       </tbody>
     </table>
@@ -353,15 +503,23 @@ Style genome (duotone-hixffp):
 
 <section id="contribute">
   <div class="wrap">
-    <h2>Contribute</h2>
-    <ul class="tight">
-      <li>Record-setting results are not required — careful negative results and quality checks are valuable too.</li>
-      <li>Bring the evidence: hardware, software versions, model revision, exact command, how you measured, result files. Full checklist in <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.</li>
-      <li>Runnable setups land in <a href="community/README.md">community/</a> with a filled <a href="community/STATUS-TEMPLATE.md">STATUS.md</a>; measurements alone go to <a href="community/field-reports/README.md">field-reports</a>. Propose changes on <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>.</li>
-      <li>Entries enter as community-reported and are promoted only after we reproduce them — see <a href="docs/contribution-verification.md">the eight-step validation</a>. Negative results are recorded as evidence, not deleted.</li>
-      <li>Tracked claims keep the exact recipe identity, submitter, evidence, and dated lab outcome in the <a href="claims/README.md">claims registry</a>. Contributor credit stays attached to concrete work; lab measurements stay attached to lab lanes.</li>
-      <li>When a contributed patch survives a matched quality and performance test, its author and exact patch identity remain attached to the promoted result. A model tip or outside report is acknowledged as a lead without reassigning the lab's existing recipes or optimization history.</li>
-    </ul>
+    <div class="contribute-panel">
+      <div>
+        <p class="eyebrow">Community optimization</p>
+        <h2>Made a model faster?</h2>
+        <p class="lead">Submit the patch, recipe, measurement, correction, or model lead. We review contributions manually and reproduce performance claims when the evidence and hardware allow. When your concrete contribution produces a verified improvement, we publish the measured boost and keep your name attached everywhere the work is used. Useful negative results receive acknowledgement too.</p>
+        <div class="contribute-actions">
+          <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20">Submit an optimization</a>
+          <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/contribution-verification.md">How validation works</a>
+          <a class="plain-link" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/community/README.md">Contributors &amp; validation ledger</a>
+        </div>
+      </div>
+      <ol class="contribute-steps" aria-label="Contribution process">
+        <li><strong>Submit the exact delta</strong>Include hardware, model revision, commands, result files, baseline, and what should receive credit.</li>
+        <li><strong>We review and reproduce</strong>Claims remain community-reported until the relevant correctness and benchmark gates run here.</li>
+        <li><strong>Credit follows the work</strong>Validated patches retain the contributor, evidence, measured effect, and links when integrated into a guide or package.</li>
+      </ol>
+    </div>
   </div>
 </section>
 
@@ -369,10 +527,11 @@ Style genome (duotone-hixffp):
 
 <footer>
   <div class="wrap">
-    <span>Unofficial community lab — not affiliated with or endorsed by Intel. Experimental research; use under the repo <a href="LICENSE">LICENSE</a> and <a href="DISCLAIMER.md">DISCLAIMER.md</a> at your own risk.</span>
+    <span>Unofficial community lab — not affiliated with or endorsed by Intel. Experimental research; use under the repo <a href="LICENSE">LICENSE</a> and <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/DISCLAIMER.md">DISCLAIMER.md</a> at your own risk.</span>
     <span class="right">
-      <a href="CURRENT.md">Current work</a>
-      <a href="docs/README.md">Docs</a>
+      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/CURRENT.md">Current work</a>
+      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/README.md">Docs</a>
+      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/community/README.md">Contributors</a>
       <a href="llms.txt">For AI agents</a>
       <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
     </span>
