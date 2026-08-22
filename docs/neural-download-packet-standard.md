@@ -58,6 +58,24 @@ evidence standards; nothing on the page is a guess.
   packet IS a speculation package (then both target-only and assisted rates
   appear, labeled).
 
+## Pipeline position (one pipeline, two layers)
+
+Packets are the **publication layer** on top of the lab's
+[model-intake pipeline](../model-intake/README.md) and its
+[first-wave bring-up protocol](../model-intake/bringup-protocol.md)
+(intake states: queued -> downloaded -> bring-up -> baseline -> optimized
+-> packaged). A packet is produced only from a model that has passed
+intake verification (direct + ordinary I/O hashes at the catalog
+destination) and the preregistered bring-up/baseline runner
+(`scripts/run-model-intake-baseline.sh` +
+`scripts/bench-model-intake-baseline.sh`, 1 B70, f16 KV, 8K, target-only
+diagnostic). Bring-up order follows the protocol's preregistered table
+(Ornith 9B first), not this document's lane table. The packet then adds
+the fuller published benchmarks (512-token windows, operating points,
+canaries) per this standard. The Qwen3.8-27B flagship package is a
+manager-directed addition outside the intake catalog; it follows the same
+verification and packet rules.
+
 ## First wave (2026-08-22) and the question each packet answers
 
 | Slug | Model | Lane | Question |
