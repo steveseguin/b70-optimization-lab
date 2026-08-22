@@ -1,0 +1,90 @@
+{
+  "format": "b70-model-package-v1",
+  "id": "muse-glimmer-30b-q8-woq-b70-100tps-20260813",
+  "name": "Muse-Glimmer 30B Q8/WOQ with DFlash on four Intel Arc Pro B70 cards",
+  "status": "candidate",
+  "audience": "expert",
+  "guide": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md",
+  "clean_host_tested": false,
+  "library": {
+    "model_family": "Muse-Glimmer",
+    "publisher": "Meta Models",
+    "variant": "30B UD-Q8_K_XL target plus BF16 DFlash assistant",
+    "summary": "Four-card native SYCL candidate with the lab's oneDNN Q8 WOQ, distributed argmax, DFlash, and target-verified gates.",
+    "quantization": "UD-Q8_K_XL / BF16 draft",
+    "runtime_label": "llama.cpp SYCL",
+    "operating_systems": ["Linux"],
+    "delivery": ["native"],
+    "modalities": ["text"],
+    "use_cases": ["general", "coding", "structured output"],
+    "tags": ["four cards", "TP4", "DFlash", "oneDNN WOQ", "target verified"],
+    "published_at": "2026-08-22",
+    "featured_metric": {
+      "value": 100.3685,
+      "unit": "tok/s",
+      "label": "pooled canonical mean",
+      "scope": "Pooled arithmetic mean across two fresh canonical full-256 three-prompt runs; individual prompts and full natural completions can be slower.",
+      "evidence": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/expected-result.json"
+    }
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "B70/SYCL bring-up, fixed-width oneDNN Q8 WOQ, distributed argmax/local-winner reuse, DFlash integration, quality gates, and reproduction packaging.",
+      "status": "integrated",
+      "validated_effect": "Two independent canonical runs measured 100.088 and 100.649 tok/s; the cold 15-prompt first-100 median was 161.900 tok/s with the documented target-verification boundary.",
+      "evidence": "results/muse-glimmer-30b-q8-woq-b70/README.md"
+    }
+  ],
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 4,
+    "model_weight_bytes": 37425857088
+  },
+  "model": {
+    "repository": "unsloth/Muse-Glimmer-30B-GGUF",
+    "revision": "faa5b025c584459c13febfa5c59883516710ae39",
+    "manifest": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/models.json"
+  },
+  "runtime": {
+    "kind": "native",
+    "repository": "ggml-org/llama.cpp",
+    "revision": "030ebb558a5820b444a8f836ed5cdd46c9b4bd7a",
+    "build": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/build.sh"
+  },
+  "project_patches": {
+    "required": true,
+    "items": [
+      "patches/muse-glimmer-30b-b70/llama.cpp-030ebb558-to-q8-woq-century-20260813.patch"
+    ],
+    "reason": "The record path depends on the lab's complete base-to-record llama.cpp/SYCL patch."
+  },
+  "commands": {
+    "preflight": "python3 repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/verify-evidence.py && (cd repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813 && sha256sum -c SHA256SUMS)",
+    "launch": "MUSE_TARGET_MODEL=/path/to/Muse-Glimmer-30B-UD-Q8_K_XL.gguf MUSE_DRAFT_MODEL=/path/to/dflash-bf16.gguf LLAMA_CPP_ROOT=/path/to/llama.cpp-muse repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/run-realistic-suite.sh /new/results/muse-realistic",
+    "health": "curl -fsS http://127.0.0.1:19494/health",
+    "benchmark": "Inspect /new/results/muse-realistic/qualification.txt and bootstrap.json after the combined fail-closed runner exits.",
+    "stop": "The runner stops its server automatically; on interruption, verify with pgrep -af llama-server before another run."
+  },
+  "dependencies": [
+    "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md",
+    "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/download-models.sh",
+    "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/restore-source.sh",
+    "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/build.sh",
+    "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/run-realistic-suite.sh",
+    "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/models.json",
+    "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/source.json",
+    "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/expected-result.json",
+    "patches/muse-glimmer-30b-b70/README.md",
+    "results/muse-glimmer-30b-q8-woq-b70/README.md"
+  ],
+  "missing": [
+    "tested platform installer",
+    "original download-time complete draft input identity",
+    "independent clean-host replay",
+    "beginner recovery flow"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "format": "b70-model-package-v1",
+  "id": "qwen38-27b-q8-tp2-asrock-b70",
+  "name": "Qwen3.8 27B Q8_0 target-only on two Intel Arc Pro B70 cards",
+  "status": "candidate",
+  "audience": "expert",
+  "guide": "repro/qwen38-27b-q8-tp2-asrock-b70/README.md",
+  "clean_host_tested": false,
+  "library": {
+    "model_family": "Qwen3.8",
+    "publisher": "Alibaba / Qwen",
+    "variant": "27B Q8_0 target-only",
+    "summary": "Quality-conservative two-card llama.cpp/SYCL service with the lab's TP2, DP4A2, and recurrent-quad SG24 stack.",
+    "quantization": "Q8_0 / F16 KV",
+    "runtime_label": "llama.cpp SYCL",
+    "operating_systems": ["Linux"],
+    "delivery": ["native"],
+    "modalities": ["text"],
+    "use_cases": ["general", "coding", "long context", "quality conservative"],
+    "tags": ["two cards", "TP2", "target only", "no speculation", "quality gated"],
+    "published_at": "2026-08-22",
+    "featured_metric": {
+      "value": 36.772932224864405,
+      "unit": "tok/s",
+      "label": "conventional decode median",
+      "scope": "Historical reasoning-enabled 99-interval median across the accepted 12-prompt cache-zero suite; the packaged launcher defaults to reasoning off and is a distinct identity.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json"
+    }
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "Qwen3.8 transfer, full B70 TP2 patch stack, DP4A2 by SG24 optimization, semantic and repeat gates, benchmarking, and packaging.",
+      "status": "integrated",
+      "validated_effect": "The accepted Qwen3.8 optimized lane measured 36.772932 versus 31.353431 tok/s for its matched runtime-base control (+17.285%), with 12/12 exact output hashes and cache-zero gates.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json"
+    },
+    {
+      "id": "mndodd",
+      "name": "mndodd",
+      "kind": "external",
+      "profile": "https://github.com/mndodd",
+      "contribution": "Provided the optimized Intel SYCL llama.cpp fork used as the runtime base for the lab's Qwen Q8 TP2 work.",
+      "status": "integrated",
+      "validated_effect": "A separate matched Qwen3.6 Q8 TP2 A/B measured 31.338765 versus 29.610651 tok/s (+5.836%) for that base; this does not assign the later Qwen3.8 result to the fork.",
+      "evidence": "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+    }
+  ],
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 2,
+    "model_weight_bytes": 28595763552
+  },
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "manifest": "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json"
+  },
+  "runtime": {
+    "kind": "native",
+    "repository": "mndodd/llama.cpp",
+    "revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "build": "patches/qwen38-27b-q8-tp2-asrock-b70/README.md"
+  },
+  "project_patches": {
+    "required": true,
+    "items": [
+      "patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64",
+      "patches/qwen38-27b-q8-tp2-asrock-b70/recurrent-quad-sg16-20260817.diff",
+      "patches/qwen38-27b-q8-tp2-asrock-b70/recurrent-quad-sg24-20260817.diff"
+    ],
+    "reason": "The service and record depend on the lab's complete TP2/DP4A2 patch plus the Qwen3.8 recurrent-quad SG16 and SG24 increments."
+  },
+  "commands": {
+    "preflight": "repro/qwen38-27b-q8-tp2-asrock-b70/verify-artifacts.sh",
+    "launch": "QWEN38_SOURCE_DIR=/path/to/source QWEN38_BUILD_DIR=/path/to/build QWEN38_MODEL=/path/to/Qwen3.8-27B-Q8_0.gguf repro/qwen38-27b-q8-tp2-asrock-b70/run-server.sh",
+    "health": "curl -fsS http://127.0.0.1:18088/health",
+    "benchmark": "OUT=/path/to/result.json repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh",
+    "stop": "Stop the foreground server with Ctrl-C, then verify clean teardown with pgrep -af llama-server."
+  },
+  "dependencies": [
+    "repro/qwen38-27b-q8-tp2-asrock-b70/README.md",
+    "repro/qwen38-27b-q8-tp2-asrock-b70/config.env",
+    "repro/qwen38-27b-q8-tp2-asrock-b70/runtime-common.sh",
+    "repro/qwen38-27b-q8-tp2-asrock-b70/run-server.sh",
+    "repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh",
+    "repro/qwen38-27b-q8-tp2-asrock-b70/verify-artifacts.sh",
+    "patches/qwen38-27b-q8-tp2-asrock-b70/README.md",
+    "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json",
+    "experiments/qwen38-27b-b70/data/2026-08-17-q8-dp4a2-sg24-accepted.json",
+    "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+  ],
+  "missing": [
+    "tested platform installation",
+    "model download helper with direct-read verification",
+    "clean-host replay",
+    "beginner recovery flow"
+  ]
+}

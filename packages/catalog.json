@@ -112,6 +112,341 @@
       ]
     },
     {
+      "manifest": "packages/laguna-s-2.1-int4-b70-125tps/package.json",
+      "format": "b70-model-package-v1",
+      "id": "laguna-s-2.1-int4-b70-125tps-20260731",
+      "name": "Laguna S 2.1 INT4 with DFlash on four Intel Arc Pro B70 cards",
+      "status": "candidate",
+      "audience": "expert",
+      "guide": "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md",
+      "clean_host_tested": false,
+      "library": {
+        "model_family": "Laguna S 2.1",
+        "publisher": "Poolside",
+        "variant": "INT4 target plus INT4 DFlash draft",
+        "summary": "Artifact-exact four-card lab replay of the current BF16-KV Laguna record, with sealed quality and idle-host gates.",
+        "quantization": "INT4 / BF16 KV",
+        "runtime_label": "vLLM XPU",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "text"
+        ],
+        "use_cases": [
+          "general",
+          "coding",
+          "speculative decoding research"
+        ],
+        "tags": [
+          "four cards",
+          "TP4",
+          "EP4",
+          "DFlash",
+          "lab replay",
+          "originating host"
+        ],
+        "published_at": "2026-08-22",
+        "featured_metric": {
+          "value": 125.4619731637751,
+          "unit": "tok/s",
+          "label": "conventional decode median",
+          "scope": "Conventional 99-interval median across the sealed 13-prompt, one-start, cache-zero record gate.",
+          "evidence": "data/laguna-shared-elementwise-m12-record-20260731.json"
+        }
+      },
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab",
+          "contribution": "Laguna B70 bring-up, exact M12 verifier and DFlash path, shared-elementwise optimization, runtime provenance, fail-closed quality gates, and record packaging.",
+          "status": "integrated",
+          "validated_effect": "The shared-elementwise M12 record measured 125.461973 tok/s, 0.6575% above the preceding 124.642413 tok/s record, with 13/13 exact prompts and cache-zero evidence.",
+          "evidence": "data/laguna-shared-elementwise-m12-record-20260731.json"
+        }
+      ],
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 4
+      },
+      "model": {
+        "repository": "poolside/Laguna-S-2.1-INT4",
+        "revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+        "manifest": "repro/laguna-s-2.1-int4-b70-102tps-20260726/manifests/model-release-files.sha256"
+      },
+      "runtime": {
+        "kind": "native",
+        "repository": "vllm-project/vllm",
+        "revision": "1a7f61feffbc61b21b73f812d231c7426386ccdc",
+        "build": "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md"
+      },
+      "project_patches": {
+        "required": true,
+        "items": [
+          "patches/laguna-s-2.1-xpu-b70/vllm-laguna-shared-elementwise-m12-1a7f61fef-20260731.bundle",
+          "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-shared-elementwise-m12-99886d783-20260731.bundle"
+        ],
+        "reason": "The record is tied to the lab's exact vLLM and XPU-kernel experiment commits and native artifact lock."
+      },
+      "commands": {
+        "preflight": "repro/laguna-s-2.1-int4-b70-102tps-20260726/verify-record.sh && git bundle verify patches/laguna-s-2.1-xpu-b70/vllm-laguna-shared-elementwise-m12-1a7f61fef-20260731.bundle && git bundle verify patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-shared-elementwise-m12-99886d783-20260731.bundle",
+        "launch": "repro/laguna-s-2.1-int4-b70-125tps-20260731/run-record-gate.sh",
+        "health": "curl -fsS http://127.0.0.1:18080/health",
+        "benchmark": "The formal gate sends exactly one cold 13-prompt suite and writes the timestamped run directory.",
+        "stop": "The formal gate performs clean teardown; verify no vLLM worker or listener on port 18080 remains."
+      },
+      "dependencies": [
+        "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md",
+        "repro/laguna-s-2.1-int4-b70-125tps-20260731/run-record-gate.sh",
+        "repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md",
+        "repro/laguna-s-2.1-int4-b70-102tps-20260726/restore-models.sh",
+        "repro/laguna-s-2.1-int4-b70-102tps-20260726/restore-sources.sh",
+        "repro/laguna-s-2.1-int4-b70-102tps-20260726/manifests/model-release-files.sha256",
+        "patches/laguna-s-2.1-xpu-b70/README.md",
+        "results/laguna-s-2.1-int4-b70/README.md",
+        "data/laguna-shared-elementwise-m12-record-20260731.json"
+      ],
+      "missing": [
+        "portable runtime rebuild",
+        "tested platform installation",
+        "record-specific model acquisition helper",
+        "non-originating-host replay",
+        "beginner recovery flow"
+      ]
+    },
+    {
+      "manifest": "packages/minimax-m27-int4-autoround-b70/package.json",
+      "format": "b70-model-package-v1",
+      "id": "minimax-m27-b70-89tps-20260520",
+      "name": "MiniMax M2.7 AutoRound INT4 on four Intel Arc Pro B70 cards",
+      "status": "candidate",
+      "audience": "expert",
+      "guide": "repro/minimax-m27-b70-89tps-20260520/README.md",
+      "clean_host_tested": false,
+      "library": {
+        "model_family": "MiniMax M2.7",
+        "publisher": "MiniMax AI",
+        "variant": "AutoRound W4A16 INT4",
+        "summary": "Four-card native vLLM/XPU candidate with strict token-hash quality gates and retained vLLM plus llm-scaler patch snapshots.",
+        "quantization": "AutoRound W4A16 INT4",
+        "runtime_label": "vLLM XPU + llm-scaler",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "text"
+        ],
+        "use_cases": [
+          "general",
+          "coding",
+          "long generation"
+        ],
+        "tags": [
+          "four cards",
+          "TP4",
+          "AutoRound",
+          "2K benchmark",
+          "quality gated"
+        ],
+        "published_at": "2026-08-22",
+        "featured_metric": {
+          "value": 89.31419538094708,
+          "unit": "tok/s",
+          "label": "mean output throughput",
+          "scope": "Mean output throughput across four promoted warm p512/n1536, batch-one, 2K-context runs after the strict quality gate.",
+          "evidence": "repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json"
+        }
+      },
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab",
+          "contribution": "B70/XPU integration, MiniMax MoE work-sharing and custom-op optimizations, graph/runtime fixes, exact-token quality gates, benchmarking, and packaging.",
+          "status": "integrated",
+          "validated_effect": "The promoted four-run mean was 89.314195 output tok/s, 0.4343% above the preceding promoted result, with exact-token and semantic gates passing.",
+          "evidence": "repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json"
+        },
+        {
+          "id": "lasimeri",
+          "name": "Lasimeri",
+          "kind": "external",
+          "profile": "https://huggingface.co/Lasimeri",
+          "contribution": "Published the MiniMax M2.7 AutoRound W4A16 INT4 checkpoint used by this lane.",
+          "status": "acknowledged",
+          "validated_effect": "The checkpoint is the model dependency used in the validated lab result; no separate quantization-vs-base speed or quality uplift is assigned here.",
+          "evidence": "repro/minimax-m27-b70-89tps-20260520/manifests/model-pin.json"
+        }
+      ],
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 4,
+        "host_ram_min_bytes": 17179869184,
+        "host_ram_plus_swap_min_bytes": 85899345920
+      },
+      "model": {
+        "repository": "Lasimeri/MiniMax-M2.7-int4-AutoRound",
+        "revision": "1afac074ecf7c3c4504c68b83d127506f8a7e5a4",
+        "manifest": "repro/minimax-m27-b70-89tps-20260520/manifests/model-pin.json"
+      },
+      "runtime": {
+        "kind": "native",
+        "repository": "vllm-project/vllm",
+        "revision": "c51df43005726a09c6eb7348e8c1b00501c70a8e",
+        "secondary_repository": "intel/llm-scaler@4bfc0070090cc54afdb2d46b8e57882359141568",
+        "build": "repro/minimax-m27-b70-89tps-20260520/scripts/02-build-stack.sh"
+      },
+      "project_patches": {
+        "required": true,
+        "items": [
+          "repro/minimax-m27-b70-89tps-20260520/patches/vllm-active-promoted-minimax-89tps-20260520.patch.gz.b64",
+          "repro/minimax-m27-b70-89tps-20260520/patches/llm-scaler-active-promoted-minimax-89tps-20260520.patch.gz.b64"
+        ],
+        "reason": "The result depends on the retained broad vLLM and llm-scaler active-source snapshots."
+      },
+      "commands": {
+        "preflight": "bash repro/minimax-m27-b70-89tps-20260520/scripts/03-verify-runtime.sh",
+        "launch": "bash repro/minimax-m27-b70-89tps-20260520/scripts/04-run-quality-gate.sh",
+        "health": "bash repro/minimax-m27-b70-89tps-20260520/scripts/03-verify-runtime.sh",
+        "benchmark": "bash repro/minimax-m27-b70-89tps-20260520/scripts/05-run-benchmark.sh",
+        "stop": "After either runner exits, verify no vLLM worker remains with pgrep -af 'vllm|multiprocessing.spawn'."
+      },
+      "dependencies": [
+        "repro/minimax-m27-b70-89tps-20260520/README.md",
+        "repro/minimax-m27-b70-89tps-20260520/scripts/00-install-system-deps.sh",
+        "repro/minimax-m27-b70-89tps-20260520/scripts/01-download-model.sh",
+        "repro/minimax-m27-b70-89tps-20260520/scripts/02-build-stack.sh",
+        "repro/minimax-m27-b70-89tps-20260520/scripts/03-verify-runtime.sh",
+        "repro/minimax-m27-b70-89tps-20260520/scripts/04-run-quality-gate.sh",
+        "repro/minimax-m27-b70-89tps-20260520/scripts/05-run-benchmark.sh",
+        "repro/minimax-m27-b70-89tps-20260520/manifests/model-pin.json",
+        "repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json",
+        "results/minimax-m27-int4-autoround-b70/README.md"
+      ],
+      "missing": [
+        "current clean-host replay",
+        "historical run-time full model payload manifest",
+        "beginner recovery and platform compatibility boundary",
+        "persistent OpenAI-compatible service wrapper for this exact 89 tok/s lane"
+      ]
+    },
+    {
+      "manifest": "packages/muse-glimmer-30b-q8-woq-b70/package.json",
+      "format": "b70-model-package-v1",
+      "id": "muse-glimmer-30b-q8-woq-b70-100tps-20260813",
+      "name": "Muse-Glimmer 30B Q8/WOQ with DFlash on four Intel Arc Pro B70 cards",
+      "status": "candidate",
+      "audience": "expert",
+      "guide": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md",
+      "clean_host_tested": false,
+      "library": {
+        "model_family": "Muse-Glimmer",
+        "publisher": "Meta Models",
+        "variant": "30B UD-Q8_K_XL target plus BF16 DFlash assistant",
+        "summary": "Four-card native SYCL candidate with the lab's oneDNN Q8 WOQ, distributed argmax, DFlash, and target-verified gates.",
+        "quantization": "UD-Q8_K_XL / BF16 draft",
+        "runtime_label": "llama.cpp SYCL",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "text"
+        ],
+        "use_cases": [
+          "general",
+          "coding",
+          "structured output"
+        ],
+        "tags": [
+          "four cards",
+          "TP4",
+          "DFlash",
+          "oneDNN WOQ",
+          "target verified"
+        ],
+        "published_at": "2026-08-22",
+        "featured_metric": {
+          "value": 100.3685,
+          "unit": "tok/s",
+          "label": "pooled canonical mean",
+          "scope": "Pooled arithmetic mean across two fresh canonical full-256 three-prompt runs; individual prompts and full natural completions can be slower.",
+          "evidence": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/expected-result.json"
+        }
+      },
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab",
+          "contribution": "B70/SYCL bring-up, fixed-width oneDNN Q8 WOQ, distributed argmax/local-winner reuse, DFlash integration, quality gates, and reproduction packaging.",
+          "status": "integrated",
+          "validated_effect": "Two independent canonical runs measured 100.088 and 100.649 tok/s; the cold 15-prompt first-100 median was 161.900 tok/s with the documented target-verification boundary.",
+          "evidence": "results/muse-glimmer-30b-q8-woq-b70/README.md"
+        }
+      ],
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 4,
+        "model_weight_bytes": 37425857088
+      },
+      "model": {
+        "repository": "unsloth/Muse-Glimmer-30B-GGUF",
+        "revision": "faa5b025c584459c13febfa5c59883516710ae39",
+        "manifest": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/models.json"
+      },
+      "runtime": {
+        "kind": "native",
+        "repository": "ggml-org/llama.cpp",
+        "revision": "030ebb558a5820b444a8f836ed5cdd46c9b4bd7a",
+        "build": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/build.sh"
+      },
+      "project_patches": {
+        "required": true,
+        "items": [
+          "patches/muse-glimmer-30b-b70/llama.cpp-030ebb558-to-q8-woq-century-20260813.patch"
+        ],
+        "reason": "The record path depends on the lab's complete base-to-record llama.cpp/SYCL patch."
+      },
+      "commands": {
+        "preflight": "python3 repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/verify-evidence.py && (cd repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813 && sha256sum -c SHA256SUMS)",
+        "launch": "MUSE_TARGET_MODEL=/path/to/Muse-Glimmer-30B-UD-Q8_K_XL.gguf MUSE_DRAFT_MODEL=/path/to/dflash-bf16.gguf LLAMA_CPP_ROOT=/path/to/llama.cpp-muse repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/run-realistic-suite.sh /new/results/muse-realistic",
+        "health": "curl -fsS http://127.0.0.1:19494/health",
+        "benchmark": "Inspect /new/results/muse-realistic/qualification.txt and bootstrap.json after the combined fail-closed runner exits.",
+        "stop": "The runner stops its server automatically; on interruption, verify with pgrep -af llama-server before another run."
+      },
+      "dependencies": [
+        "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md",
+        "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/download-models.sh",
+        "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/restore-source.sh",
+        "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/build.sh",
+        "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/scripts/run-realistic-suite.sh",
+        "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/models.json",
+        "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/source.json",
+        "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/expected-result.json",
+        "patches/muse-glimmer-30b-b70/README.md",
+        "results/muse-glimmer-30b-q8-woq-b70/README.md"
+      ],
+      "missing": [
+        "tested platform installer",
+        "original download-time complete draft input identity",
+        "independent clean-host replay",
+        "beginner recovery flow"
+      ]
+    },
+    {
       "manifest": "packages/qwen38-27b-fp8-tp2-b70/package.json",
       "format": "b70-model-package-v1",
       "id": "qwen38-27b-fp8-vllm-tp2-asrock-b70",
@@ -334,6 +669,126 @@
       "missing": [
         "tested clean-host Intel driver and oneAPI installation",
         "clean-host source build and endpoint replay",
+        "beginner recovery flow"
+      ]
+    },
+    {
+      "manifest": "packages/qwen38-27b-q8-tp2-b70/package.json",
+      "format": "b70-model-package-v1",
+      "id": "qwen38-27b-q8-tp2-asrock-b70",
+      "name": "Qwen3.8 27B Q8_0 target-only on two Intel Arc Pro B70 cards",
+      "status": "candidate",
+      "audience": "expert",
+      "guide": "repro/qwen38-27b-q8-tp2-asrock-b70/README.md",
+      "clean_host_tested": false,
+      "library": {
+        "model_family": "Qwen3.8",
+        "publisher": "Alibaba / Qwen",
+        "variant": "27B Q8_0 target-only",
+        "summary": "Quality-conservative two-card llama.cpp/SYCL service with the lab's TP2, DP4A2, and recurrent-quad SG24 stack.",
+        "quantization": "Q8_0 / F16 KV",
+        "runtime_label": "llama.cpp SYCL",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "text"
+        ],
+        "use_cases": [
+          "general",
+          "coding",
+          "long context",
+          "quality conservative"
+        ],
+        "tags": [
+          "two cards",
+          "TP2",
+          "target only",
+          "no speculation",
+          "quality gated"
+        ],
+        "published_at": "2026-08-22",
+        "featured_metric": {
+          "value": 36.772932224864405,
+          "unit": "tok/s",
+          "label": "conventional decode median",
+          "scope": "Historical reasoning-enabled 99-interval median across the accepted 12-prompt cache-zero suite; the packaged launcher defaults to reasoning off and is a distinct identity.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json"
+        }
+      },
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab",
+          "contribution": "Qwen3.8 transfer, full B70 TP2 patch stack, DP4A2 by SG24 optimization, semantic and repeat gates, benchmarking, and packaging.",
+          "status": "integrated",
+          "validated_effect": "The accepted Qwen3.8 optimized lane measured 36.772932 versus 31.353431 tok/s for its matched runtime-base control (+17.285%), with 12/12 exact output hashes and cache-zero gates.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json"
+        },
+        {
+          "id": "mndodd",
+          "name": "mndodd",
+          "kind": "external",
+          "profile": "https://github.com/mndodd",
+          "contribution": "Provided the optimized Intel SYCL llama.cpp fork used as the runtime base for the lab's Qwen Q8 TP2 work.",
+          "status": "integrated",
+          "validated_effect": "A separate matched Qwen3.6 Q8 TP2 A/B measured 31.338765 versus 29.610651 tok/s (+5.836%) for that base; this does not assign the later Qwen3.8 result to the fork.",
+          "evidence": "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+        }
+      ],
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 2,
+        "model_weight_bytes": 28595763552
+      },
+      "model": {
+        "repository": "ggml-org/Qwen3.8-27B-GGUF",
+        "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+        "manifest": "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json"
+      },
+      "runtime": {
+        "kind": "native",
+        "repository": "mndodd/llama.cpp",
+        "revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+        "build": "patches/qwen38-27b-q8-tp2-asrock-b70/README.md"
+      },
+      "project_patches": {
+        "required": true,
+        "items": [
+          "patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64",
+          "patches/qwen38-27b-q8-tp2-asrock-b70/recurrent-quad-sg16-20260817.diff",
+          "patches/qwen38-27b-q8-tp2-asrock-b70/recurrent-quad-sg24-20260817.diff"
+        ],
+        "reason": "The service and record depend on the lab's complete TP2/DP4A2 patch plus the Qwen3.8 recurrent-quad SG16 and SG24 increments."
+      },
+      "commands": {
+        "preflight": "repro/qwen38-27b-q8-tp2-asrock-b70/verify-artifacts.sh",
+        "launch": "QWEN38_SOURCE_DIR=/path/to/source QWEN38_BUILD_DIR=/path/to/build QWEN38_MODEL=/path/to/Qwen3.8-27B-Q8_0.gguf repro/qwen38-27b-q8-tp2-asrock-b70/run-server.sh",
+        "health": "curl -fsS http://127.0.0.1:18088/health",
+        "benchmark": "OUT=/path/to/result.json repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh",
+        "stop": "Stop the foreground server with Ctrl-C, then verify clean teardown with pgrep -af llama-server."
+      },
+      "dependencies": [
+        "repro/qwen38-27b-q8-tp2-asrock-b70/README.md",
+        "repro/qwen38-27b-q8-tp2-asrock-b70/config.env",
+        "repro/qwen38-27b-q8-tp2-asrock-b70/runtime-common.sh",
+        "repro/qwen38-27b-q8-tp2-asrock-b70/run-server.sh",
+        "repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh",
+        "repro/qwen38-27b-q8-tp2-asrock-b70/verify-artifacts.sh",
+        "patches/qwen38-27b-q8-tp2-asrock-b70/README.md",
+        "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json",
+        "experiments/qwen38-27b-b70/data/2026-08-17-q8-dp4a2-sg24-accepted.json",
+        "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+      ],
+      "missing": [
+        "tested platform installation",
+        "model download helper with direct-read verification",
+        "clean-host replay",
         "beginner recovery flow"
       ]
     }

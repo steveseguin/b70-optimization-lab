@@ -1,0 +1,90 @@
+{
+  "format": "b70-model-package-v1",
+  "id": "laguna-s-2.1-int4-b70-125tps-20260731",
+  "name": "Laguna S 2.1 INT4 with DFlash on four Intel Arc Pro B70 cards",
+  "status": "candidate",
+  "audience": "expert",
+  "guide": "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md",
+  "clean_host_tested": false,
+  "library": {
+    "model_family": "Laguna S 2.1",
+    "publisher": "Poolside",
+    "variant": "INT4 target plus INT4 DFlash draft",
+    "summary": "Artifact-exact four-card lab replay of the current BF16-KV Laguna record, with sealed quality and idle-host gates.",
+    "quantization": "INT4 / BF16 KV",
+    "runtime_label": "vLLM XPU",
+    "operating_systems": ["Linux"],
+    "delivery": ["native"],
+    "modalities": ["text"],
+    "use_cases": ["general", "coding", "speculative decoding research"],
+    "tags": ["four cards", "TP4", "EP4", "DFlash", "lab replay", "originating host"],
+    "published_at": "2026-08-22",
+    "featured_metric": {
+      "value": 125.4619731637751,
+      "unit": "tok/s",
+      "label": "conventional decode median",
+      "scope": "Conventional 99-interval median across the sealed 13-prompt, one-start, cache-zero record gate.",
+      "evidence": "data/laguna-shared-elementwise-m12-record-20260731.json"
+    }
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "Laguna B70 bring-up, exact M12 verifier and DFlash path, shared-elementwise optimization, runtime provenance, fail-closed quality gates, and record packaging.",
+      "status": "integrated",
+      "validated_effect": "The shared-elementwise M12 record measured 125.461973 tok/s, 0.6575% above the preceding 124.642413 tok/s record, with 13/13 exact prompts and cache-zero evidence.",
+      "evidence": "data/laguna-shared-elementwise-m12-record-20260731.json"
+    }
+  ],
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 4
+  },
+  "model": {
+    "repository": "poolside/Laguna-S-2.1-INT4",
+    "revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "manifest": "repro/laguna-s-2.1-int4-b70-102tps-20260726/manifests/model-release-files.sha256"
+  },
+  "runtime": {
+    "kind": "native",
+    "repository": "vllm-project/vllm",
+    "revision": "1a7f61feffbc61b21b73f812d231c7426386ccdc",
+    "build": "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md"
+  },
+  "project_patches": {
+    "required": true,
+    "items": [
+      "patches/laguna-s-2.1-xpu-b70/vllm-laguna-shared-elementwise-m12-1a7f61fef-20260731.bundle",
+      "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-shared-elementwise-m12-99886d783-20260731.bundle"
+    ],
+    "reason": "The record is tied to the lab's exact vLLM and XPU-kernel experiment commits and native artifact lock."
+  },
+  "commands": {
+    "preflight": "repro/laguna-s-2.1-int4-b70-102tps-20260726/verify-record.sh && git bundle verify patches/laguna-s-2.1-xpu-b70/vllm-laguna-shared-elementwise-m12-1a7f61fef-20260731.bundle && git bundle verify patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-shared-elementwise-m12-99886d783-20260731.bundle",
+    "launch": "repro/laguna-s-2.1-int4-b70-125tps-20260731/run-record-gate.sh",
+    "health": "curl -fsS http://127.0.0.1:18080/health",
+    "benchmark": "The formal gate sends exactly one cold 13-prompt suite and writes the timestamped run directory.",
+    "stop": "The formal gate performs clean teardown; verify no vLLM worker or listener on port 18080 remains."
+  },
+  "dependencies": [
+    "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md",
+    "repro/laguna-s-2.1-int4-b70-125tps-20260731/run-record-gate.sh",
+    "repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md",
+    "repro/laguna-s-2.1-int4-b70-102tps-20260726/restore-models.sh",
+    "repro/laguna-s-2.1-int4-b70-102tps-20260726/restore-sources.sh",
+    "repro/laguna-s-2.1-int4-b70-102tps-20260726/manifests/model-release-files.sha256",
+    "patches/laguna-s-2.1-xpu-b70/README.md",
+    "results/laguna-s-2.1-int4-b70/README.md",
+    "data/laguna-shared-elementwise-m12-record-20260731.json"
+  ],
+  "missing": [
+    "portable runtime rebuild",
+    "tested platform installation",
+    "record-specific model acquisition helper",
+    "non-originating-host replay",
+    "beginner recovery flow"
+  ]
+}

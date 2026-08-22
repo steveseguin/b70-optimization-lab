@@ -3,6 +3,7 @@
 This folder records the reproducible path for the current quality-clean 4x B70 MiniMax result:
 
 - Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`
+- Package download pin: `1afac074ecf7c3c4504c68b83d127506f8a7e5a4`
 - Engine: `vLLM 0.20.1-local`, XPU/Level Zero, tensor parallel 4
 - Hardware: 4x Intel Arc Pro B70 32 GB
 - Benchmark shape: prompt 512, output 1536, context 2048, batch 1
@@ -10,6 +11,12 @@ This folder records the reproducible path for the current quality-clean 4x B70 M
 - Post-reboot sanity on 2026-05-20: `88.72 output tok/s`, `118.30 total tok/s`
 
 The result did not use speculative decoding, expert dropping, a smaller model, a different quantization, or GPU power-limit changes. Quality was gated with exact token hashes and semantic canaries before the promoted benchmark was submitted to LocalMaxxing.
+
+The historical run retained the model repository name but not its Hugging
+Face snapshot revision or a complete payload manifest. The download helper now
+pins the immutable revision above for future package replays; this is a
+reconstruction pin, not a claim that the historical payload has been proven
+byte-identical. See `manifests/model-pin.json`.
 
 This is the older speed-focused 2K-context repro. For the newer OpenAI-compatible server recipe that defaults to a `32768` token context window, see `../minimax-m27-b70-110tps-ubuntu24-20260523/README.md`.
 

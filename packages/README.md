@@ -28,6 +28,14 @@ Current packages:
   benchmark gate, and a complete restore/build script;
 - [`Qwen3.8 27B official FP8 two-B70 candidate`](qwen38-27b-fp8-tp2-b70/):
   digest-pinned vLLM XPU baseline.
+- [`Muse-Glimmer 30B Q8/WOQ four-B70 candidate`](muse-glimmer-30b-q8-woq-b70/):
+  oneDNN WOQ, DFlash, distributed argmax, and target-verified gates;
+- [`Laguna S 2.1 INT4 four-B70 record replay`](laguna-s-2.1-int4-b70-125tps/):
+  artifact-exact originating-host replay of the 125.462 tok/s record;
+- [`MiniMax M2.7 AutoRound INT4 four-B70 candidate`](minimax-m27-int4-autoround-b70/):
+  retained vLLM/llm-scaler patches and strict token-hash quality gates;
+- [`Qwen3.8 27B Q8_0 two-B70 candidate`](qwen38-27b-q8-tp2-b70/):
+  quality-conservative target-only TP2 service and exact patch chain.
 
 None is a starter package yet because its host platform path has not been
 rebuilt and tested from a clean OS. Gemma additionally lacks the retained
