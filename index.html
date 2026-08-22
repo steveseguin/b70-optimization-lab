@@ -38,6 +38,7 @@ Style genome (duotone-hixffp):
     --ink: #14120e;
     --muted: #43403a;
     --spot: #0f62e8;
+    --spot-dark: #0c4fb4;
     --display: "Archivo Black", "Arial Black", "Haettenschweiler", Impact, sans-serif;
     --body: Inter, Roboto, "Helvetica Neue", "Arial Nova", Helvetica, Arial, sans-serif;
     --mono: "American Typewriter", "Courier Prime", "Courier New", Courier, monospace;
@@ -53,249 +54,347 @@ Style genome (duotone-hixffp):
   }
   a { color: inherit; text-decoration: none; border-bottom: 2px solid transparent; }
   a:hover { border-bottom-color: currentColor; }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+  a:focus-visible { outline: 2px solid var(--spot); outline-offset: 2px; border-bottom-color: transparent; }
+  abbr[title] { text-decoration: none; border-bottom: 1px dotted var(--muted); cursor: help; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 18px; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  .skip { position: absolute; left: 9px; top: -54px; background: var(--ink); color: var(--paper); padding: 9px 14px; font-family: var(--mono); font-size: 12px; z-index: 10; }
+  .skip:focus-visible { top: 9px; outline: 2px solid var(--paper); }
 
   /* masthead — full-bleed spot slab */
-  .masthead { background: var(--spot); color: #fff; padding: 54px 0 40px; }
+  .masthead { background: var(--spot); color: #fff; padding: 54px 0 36px; }
+  .masthead .kicker { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 9px; }
   .masthead h1 {
     font-family: var(--display); font-weight: 900; text-transform: uppercase;
     letter-spacing: -0.005em; line-height: 1.05;
-    font-size: clamp(30px, 4.8vw, 54px); margin: 0; max-width: 20ch;
+    font-size: clamp(30px, 4.8vw, 54px); margin: 0;
   }
-  .masthead .sub { margin: 14px 0 0; font-size: 15px; max-width: 66ch; color: #fff; }
-  .masthead nav { margin-top: 22px; font-family: var(--mono); font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em; }
-  .masthead nav a { margin-right: 20px; display: inline-block; padding: 2px 0; }
+  .masthead .sub { margin: 14px 0 0; font-size: 15px; max-width: 68ch; color: #fff; }
+  .masthead nav { margin-top: 27px; font-family: var(--mono); font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em; }
+  .masthead nav a { margin-right: 18px; display: inline-block; padding: 6px 0; }
+  .masthead a:focus-visible { outline-color: #fff; }
 
-  section { padding: 34px 0 6px; }
+  main section { padding: 36px 0 9px; }
   h2 {
     font-family: var(--display); font-weight: 900; text-transform: uppercase;
-    letter-spacing: -0.005em; font-size: 17px; margin: 0 0 6px;
-    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+    letter-spacing: -0.005em; font-size: 20px; margin: 0 0 9px;
+    display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
   }
   h2 .key { margin-left: auto; font-family: var(--mono); font-size: 11px; font-weight: 400; letter-spacing: .04em; text-transform: none; color: var(--ink); }
-  p.sub { margin: 0 0 16px; color: var(--muted); max-width: 80ch; font-size: 13px; }
+  p.sub { margin: 0 0 18px; color: var(--muted); max-width: 80ch; font-size: 13px; }
 
+  .scroller { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
-  th {
+  th[scope="col"] {
     font-family: var(--mono); text-align: left; font-size: 11px; text-transform: uppercase;
-    letter-spacing: .08em; font-weight: 700; padding: 8px 12px 8px 0;
+    letter-spacing: .08em; font-weight: 700; padding: 9px 9px 9px 0;
     border-bottom: 2px solid var(--ink); white-space: nowrap;
   }
-  td { padding: 8px 12px 8px 0; vertical-align: middle; }
-  tbody tr:hover td { background: var(--surface2); }
-  td.model { font-weight: 700; white-space: nowrap; }
-  td.model small { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
-  td.num { font-family: var(--mono); white-space: nowrap; font-size: 13px; }
+  td, th.model { padding: 9px 9px 9px 0; vertical-align: middle; position: relative; }
+  tbody tr:hover td, tbody tr:hover th.model, tbody tr:focus-within td, tbody tr:focus-within th.model { background: var(--surface2); }
+  th.model { font-family: var(--body); font-weight: 700; font-size: 13.5px; text-transform: none; letter-spacing: 0; text-align: left; white-space: nowrap; border-bottom: none; }
+  th.model small { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
+  td.num { font-family: var(--mono); white-space: nowrap; font-size: 13px; min-width: 130px; }
   td .ratebar { height: 6px; background: var(--ink); margin-top: 4px; }
   td .ratebar.max { background: var(--spot); }
   td.mut { color: var(--muted); }
   td.lnk { white-space: nowrap; font-size: 12.5px; }
   td.lnk a { border-bottom: 2px solid var(--ink); }
-  td.lnk a:hover { border-bottom-color: var(--spot); color: var(--spot); }
-  .dot { font-size: 11px; }
-  .dot.hollow { font-size: 13px; }
+  td.lnk a:hover { border-bottom-color: var(--spot-dark); color: var(--spot-dark); }
+  .r { text-align: right; }
+  th.r { text-align: right; }
+  .dot { color: var(--spot); font-size: 11px; }
+  .dot.hollow { color: var(--ink); font-size: 13px; }
 
   .note {
-    margin-top: 16px; padding: 12px 16px; border: 2px solid var(--ink);
-    background: var(--surface2); color: var(--muted); font-size: 12.5px; max-width: 720px;
+    margin-top: 18px; padding: 9px 18px; border: 2px solid var(--ink);
+    background: var(--surface2); color: var(--muted); font-size: 12.5px; max-width: 760px;
   }
   .note a { color: var(--ink); border-bottom: 2px solid var(--ink); }
-  .note a:hover { color: var(--spot); border-bottom-color: var(--spot); }
+  .note a:hover { color: var(--spot-dark); border-bottom-color: var(--spot-dark); }
 
   ul.tight { margin: 0; padding-left: 20px; color: var(--muted); font-size: 13.5px; }
   ul.tight li { margin-bottom: 6px; }
   ul.tight b { color: var(--ink); }
   ul.tight a { color: var(--ink); border-bottom: 2px solid var(--ink); }
-  ul.tight a:hover { color: var(--spot); border-bottom-color: var(--spot); }
+  ul.tight a:hover { color: var(--spot-dark); border-bottom-color: var(--spot-dark); }
 
-  footer { margin-top: 48px; border-top: 2px solid var(--ink); padding: 18px 0 44px; font-family: var(--mono); font-size: 11.5px; }
-  footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  footer { margin-top: 54px; border-top: 2px solid var(--ink); padding: 18px 0 45px; font-family: var(--mono); font-size: 11.5px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 9px 18px; }
   footer .right { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; text-transform: uppercase; letter-spacing: .06em; }
+  footer .right a { display: inline-block; padding: 4px 0; }
+  footer span a { border-bottom: 1px solid currentColor; }
 
   @media (max-width: 780px) {
     td .ratebar { display: none; }
-    .hide-s { display: none; }
+    th.hide-s, td.hide-s { display: none; }
+    .scroller table { min-width: 640px; }
   }
 </style>
 </head>
 <body>
 
+<a class="skip" href="#main">Skip to content</a>
+
 <header class="masthead">
   <div class="wrap">
-    <h1>Unofficial Intel XPU Optimization Lab</h1>
+    <p class="kicker">Unofficial Intel XPU Optimization Lab &middot; community-run, not affiliated with Intel</p>
+    <h1>Run AI at home.<br>We measure how fast.</h1>
     <p class="sub">
-      Local LLM inference on Intel Arc Pro B-series GPUs, measured and reproduced in the open.
-      Every number on this page carries an evidence label. Source of truth:
-      github.com/steveseguin/b70-optimization-lab.
+      Free, open AI models can chat, help with writing and homework, and write code —
+      privately, on your own PC with an Intel Arc Pro graphics card. We time every model on
+      real hardware and link the proof behind every number.
     </p>
-    <nav>
-      <a href="results/scoreboard.md">Performance index</a>
-      <a href="results/README.md">Result packets</a>
-      <a href="optimization-timeline.html">Timeline</a>
-      <a href="docs/model-recipes.md">Recipes</a>
-      <a href="CONTRIBUTING.md">Contribute</a>
-      <a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">Cookbook</a>
-      <a href="llms.txt">llms.txt</a>
+    <nav aria-label="Primary">
+      <a href="#pick">Pick a model</a>
+      <a href="#start">What you need</a>
+      <a href="#lab-speeds">Lab speeds</a>
+      <a href="#community-speeds">Community speeds</a>
+      <a href="#contribute">Contribute</a>
+      <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
     </nav>
   </div>
 </header>
 
-<section>
+<main id="main">
+
+<section id="pick">
   <div class="wrap">
-    <h2>Verified results — reference lab <span class="key">&#9679; B70-verified</span></h2>
+    <h2 id="t0">Which model should I try?</h2>
     <p class="sub">
-      Produced and quality-gated on the lab's own Arc Pro B70 hosts: pinned commits, frozen
-      prompt suites, result packets in-repo. Rate is median generated tok/s for tokens
-      1&ndash;100 after TTFT on cold prompts unless noted.
+      Speeds are in <abbr title="tokens per second">tok/s</abbr>: a token is about &frac34; of a
+      word, so 100 tok/s is roughly 75 words a second — answers appear faster than you can read.
+      &#9679; means checked on our own machines; &#9675; means reported by a community member.
     </p>
-    <table>
+    <div class="scroller">
+    <table aria-labelledby="t0">
       <thead>
-        <tr><th>Model</th><th>Engine</th><th>Quant + speculation</th><th>GPUs</th><th>tok/s</th><th class="hide-s">Metric</th><th class="hide-s">Packet</th></tr>
+        <tr><th scope="col">Model</th><th scope="col">Good for</th><th scope="col" class="r">Cards</th><th scope="col" class="r">Speed</th><th scope="col">Guide</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td class="model">Muse-Glimmer-30B <small>realistic median 161.9</small></td>
-          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash n15</td><td class="num">4&times;</td>
-          <td class="num">100.37<div class="ratebar" style="width:80%"></div></td>
-          <td class="mut hide-s">canonical pooled mean</td>
-          <td class="lnk hide-s"><a href="repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">repro</a></td>
+          <th scope="row" class="model">Gemma-4-26B <small>Google &middot; Apr 2026</small></th>
+          <td class="mut">The easiest start — friendly all-rounder, also reads pictures</td>
+          <td class="num r">1</td><td class="num r">125</td>
+          <td class="lnk"><a href="results/gemma4-26b-a4b-q8-b70/README.md">step-by-step guide</a></td>
         </tr>
         <tr>
-          <td class="model">Laguna-S-2.1</td>
-          <td class="mut">vLLM XPU</td><td class="mut">INT4 W4A16 + DFlash d11</td><td class="num">4&times;</td>
-          <td class="num">125.46<div class="ratebar max" style="width:100%"></div></td>
-          <td class="mut hide-s">conventional median</td>
-          <td class="lnk hide-s"><a href="results/laguna-s-2.1-int4-b70/README.md">packet</a></td>
+          <th scope="row" class="model">Qwen3-30B <small>Alibaba &middot; Jul 2025</small></th>
+          <td class="mut">Fastest one-card result we checked ourselves; strong at math</td>
+          <td class="num r">1</td><td class="num r">107</td>
+          <td class="lnk"><a href="results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">test report</a></td>
         </tr>
         <tr>
-          <td class="model">Gemma-4-26B-A4B</td>
-          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + MTP3</td><td class="num">1&times;</td>
-          <td class="num">124.98<div class="ratebar" style="width:99%"></div></td>
-          <td class="mut hide-s">median, ctx 32,768</td>
-          <td class="lnk hide-s"><a href="results/gemma4-26b-a4b-q8-b70/README.md">packet</a></td>
+          <th scope="row" class="model">Qwen3.8-27B <small>Alibaba &middot; Aug 2026</small></th>
+          <td class="mut">Newest all-rounder, also reads pictures; most setup guides exist</td>
+          <td class="num r">1</td><td class="num r">88&ndash;107</td>
+          <td class="lnk"><a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">cookbook</a></td>
         </tr>
         <tr>
-          <td class="model">Qwen3-30B-A3B-2507</td>
-          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q4_K_XL, no spec</td><td class="num">1&times;</td>
-          <td class="num">107.48<div class="ratebar" style="width:86%"></div></td>
-          <td class="mut hide-s">rapid snapshot</td>
-          <td class="lnk hide-s"><a href="results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">packet</a></td>
+          <th scope="row" class="model">Nemotron-Lightning-30B <small>NVIDIA &middot; 2026</small></th>
+          <td class="mut">Fastest one-card speed reported anywhere (not yet re-checked)</td>
+          <td class="num r">1</td><td class="num r">187</td>
+          <td class="lnk"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">report</a></td>
         </tr>
         <tr>
-          <td class="model">Qwen3.6-27B <small>dense</small></td>
-          <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 + MTP3</td><td class="num">2&times;</td>
-          <td class="num">98.77<div class="ratebar" style="width:79%"></div></td>
-          <td class="mut hide-s">four-arm central estimate</td>
-          <td class="lnk hide-s"><a href="results/scoreboard.md">scoreboard</a></td>
+          <th scope="row" class="model">Laguna-S-2.1 <small>Poolside &middot; Jul 2026</small></th>
+          <td class="mut">Coding assistant work; fastest speed we have verified</td>
+          <td class="num r">4</td><td class="num r">125</td>
+          <td class="lnk"><a href="results/laguna-s-2.1-int4-b70/README.md">test report</a></td>
         </tr>
         <tr>
-          <td class="model">Qwen3.6-35B-A3B <small>MoE</small></td>
-          <td class="mut">vLLM XPU</td><td class="mut">Quark W8A8 INT8</td><td class="num">4&times;</td>
-          <td class="num">93.55<div class="ratebar" style="width:75%"></div></td>
-          <td class="mut hide-s">output, strict deep gate</td>
-          <td class="lnk hide-s"><a href="results/qwen36-35b-quark-int8-b70/README.md">packet</a></td>
-        </tr>
-        <tr>
-          <td class="model">MiniMax-M2.7</td>
-          <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 W4A16</td><td class="num">4&times;</td>
-          <td class="num">89.31<div class="ratebar" style="width:71%"></div></td>
-          <td class="mut hide-s">mean of four clean repeats</td>
-          <td class="lnk hide-s"><a href="repro/minimax-m27-b70-89tps-20260520/README.md">repro</a></td>
-        </tr>
-        <tr>
-          <td class="model">DeepSeek-V4-Flash-180B</td>
-          <td class="mut">vLLM XPU</td><td class="mut">FP8 + FP4 experts + DSpark7</td><td class="num">4&times;</td>
-          <td class="num">80.82<div class="ratebar" style="width:64%"></div></td>
-          <td class="mut hide-s">median high, 24/24 canaries</td>
-          <td class="lnk hide-s"><a href="results/scoreboard.md">scoreboard</a></td>
+          <th scope="row" class="model">Muse-Glimmer-30B <small>Meta &middot; Aug 2026</small></th>
+          <td class="mut">Meta's newest open model; reads pictures; long answers stay fast</td>
+          <td class="num r">4</td><td class="num r">100&ndash;162</td>
+          <td class="lnk"><a href="repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">full report</a></td>
         </tr>
       </tbody>
     </table>
-    <div class="note">
-      Rows differ in quantization, GPU count, suite, and metric window — a bigger number in a
-      different row is not automatically a faster stack.
-      <a href="results/scoreboard.md">Ground rules for comparison</a>.
     </div>
   </div>
 </section>
 
-<section>
+<section id="start">
   <div class="wrap">
-    <h2>Community lanes — contributor hosts <span class="key"><span class="dot">&#9679;</span> B70-tested &nbsp; <span class="dot hollow">&#9675;</span> community-reported</span></h2>
-    <p class="sub">
-      Measured by contributors on their own hardware; not re-run in the reference lab unless the
-      row is marked B70-tested. Cookbook lanes report client post-first tok/s, median of n=5 —
-      a different metric than the lab rows above.
-    </p>
-    <table>
-      <thead>
-        <tr><th>Model</th><th>Engine</th><th>Quant + speculation</th><th>GPUs</th><th>tok/s</th><th class="hide-s">Source</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="model"><span class="dot hollow">&#9675;</span> Nemotron-3.5-Lightning-30B</td>
-          <td class="mut">vLLM XPU</td><td class="mut">DFlash n=7</td><td class="num">1&times;</td>
-          <td class="num">186.61<div class="ratebar max" style="width:100%"></div></td>
-          <td class="lnk hide-s"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">field report</a></td>
-        </tr>
-        <tr>
-          <td class="model"><span class="dot hollow">&#9675;</span> Qwen3.6-35B-A3B <small>MoE</small></td>
-          <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP4</td><td class="num">1&times;</td>
-          <td class="num">170.91<div class="ratebar" style="width:92%"></div></td>
-          <td class="lnk hide-s"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">field report</a></td>
-        </tr>
-        <tr>
-          <td class="model"><span class="dot hollow">&#9675;</span> Qwen3.8-27B <small>dense; lab-tested variant 87.6</small></td>
-          <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP4</td><td class="num">1&times;</td>
-          <td class="num">106.7<div class="ratebar" style="width:57%"></div></td>
-          <td class="lnk hide-s"><a href="community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md">validation</a></td>
-        </tr>
-        <tr>
-          <td class="model"><span class="dot hollow">&#9675;</span> Ornith-1.5-35B-A3B</td>
-          <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP</td><td class="num">1&times;</td>
-          <td class="num">106.64<div class="ratebar" style="width:57%"></div></td>
-          <td class="lnk hide-s"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">field report</a></td>
-        </tr>
-        <tr>
-          <td class="model"><span class="dot">&#9679;</span> Qwen3.6-27B <small>native FP8</small></td>
-          <td class="mut">Docker / vLLM</td><td class="mut">FP8, TP2</td><td class="num">2&times;</td>
-          <td class="num">30.17<div class="ratebar" style="width:16%"></div></td>
-          <td class="lnk hide-s"><a href="community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md">validation</a></td>
-        </tr>
-        <tr>
-          <td class="model"><span class="dot hollow">&#9675;</span> Muse-Glimmer-30B <small>GGUF lane</small></td>
-          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q4_K_XL + DFlash n2</td><td class="num">1&times;</td>
-          <td class="num">26.8<div class="ratebar" style="width:14%"></div></td>
-          <td class="lnk hide-s"><a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">cookbook</a></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <h2>Start here</h2>
+    <h2>What you need</h2>
     <ul class="tight">
-      <li><b>One B70:</b> the <a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">community cookbook</a> — pinned vLLM XPU image, Qwen3.6/Qwen3.8 launchers, Windows 11 kits. Or a single-card llama.cpp lane like <a href="results/gemma4-26b-a4b-q8-b70/README.md">Gemma-4-26B</a>.</li>
-      <li><b>Two to four B70s:</b> TP2/TP4 recipes in the <a href="results/README.md">results index</a> and <a href="docs/model-recipes.md">model recipes</a> — MiniMax INT4 TP4, Laguna INT4 + DFlash, DeepSeek-V4 FP4/FP8, Qwen3.6 dense TP2.</li>
-      <li><b>Optimizing a new model:</b> the <a href="docs/model-optimization-guide.md">model optimization guide</a> is the playbook; the <a href="optimization-timeline.html">timeline</a> shows how existing lanes got fast.</li>
-      <li><b>AI agents:</b> read <a href="llms.txt">llms.txt</a> for the machine-readable site map, then <a href="AGENTS.md">AGENTS.md</a>.</li>
+      <li><b>The card:</b> a PC with at least one Intel Arc Pro B70 graphics card (24&nbsp;GB). One card runs most models on this page; the biggest are split across 2&ndash;4 cards working together.</li>
+      <li><b>One card:</b> start with the <a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">community cookbook</a> — a ready-made installer with start scripts, including Windows 11 kits — or the step-by-step <a href="results/gemma4-26b-a4b-q8-b70/README.md">Gemma-4-26B guide</a>.</li>
+      <li><b>Two to four cards:</b> the multi-card setups in the <a href="results/README.md">results index</a> and <a href="docs/model-recipes.md">model recipes</a>.</li>
+      <li><b>Making a new model fast:</b> the <a href="docs/model-optimization-guide.md">optimization guide</a> is the playbook; the <a href="optimization-timeline.html">timeline</a> shows how each setup improved.</li>
+      <li><b>For AI assistants:</b> <a href="llms.txt">llms.txt</a> is a machine-readable map of this site, then <a href="AGENTS.md">AGENTS.md</a>.</li>
     </ul>
   </div>
 </section>
 
-<section>
+<section id="lab-speeds">
+  <div class="wrap">
+    <h2 id="t1">Lab-tested speeds <span class="key"><span class="dot">&#9679;</span> checked on our own machines</span></h2>
+    <p class="sub">
+      Run and re-checked on the lab's own Arc Pro B70 machines; every number links to a proof
+      folder with the exact settings, logs, and quality checks behind it. Speed is the typical
+      rate for the first hundred words of a fresh answer, unless noted. Bars are scaled to the
+      fastest row on this page.
+    </p>
+    <div class="scroller">
+    <table aria-labelledby="t1">
+      <thead>
+        <tr>
+          <th scope="col">Model</th>
+          <th scope="col"><abbr title="the program that loads and runs the model">Software</abbr></th>
+          <th scope="col"><abbr title="compression shrinks the model so it fits on fewer cards; speed-up tricks let a small helper draft ahead while the big model checks">Compression &amp; speed-up</abbr></th>
+          <th scope="col" class="r">Cards</th>
+          <th scope="col" class="r">Speed (tok/s)</th>
+          <th scope="col" class="hide-s">How measured</th>
+          <th scope="col">Proof</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Laguna-S-2.1 <small>coding assistant &middot; Jul 2026</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">INT4 W4A16 + DFlash d11</td><td class="num r">4&times;</td>
+          <td class="num r">125.46<div class="ratebar max" style="width:67%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
+          <td class="mut hide-s" title="conventional median">typical</td>
+          <td class="lnk"><a href="results/laguna-s-2.1-int4-b70/README.md">test report</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Gemma-4-26B-A4B <small>all-rounder &middot; uses ~4B of 26B per word &middot; Apr 2026</small></th>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + MTP3</td><td class="num r">1&times;</td>
+          <td class="num r">124.98<div class="ratebar" style="width:67%" aria-hidden="true"></div></td>
+          <td class="mut hide-s" title="median; ctx 32,768">typical &middot; remembers ~24K words</td>
+          <td class="lnk"><a href="results/gemma4-26b-a4b-q8-b70/README.md">test report</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3-30B-A3B-2507 <small>fast all-rounder &middot; uses ~3B of 30B per word &middot; Jul 2025</small></th>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q4_K_XL, no speed-up</td><td class="num r">1&times;</td>
+          <td class="num r">107.48<div class="ratebar" style="width:58%" aria-hidden="true"></div></td>
+          <td class="mut hide-s" title="rapid snapshot">quick one-off test</td>
+          <td class="lnk"><a href="results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">test report</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Muse-Glimmer-30B <small>Meta &middot; reads pictures &middot; Aug 2026 &middot; long answers: 161.9</small></th>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash n15</td><td class="num r">4&times;</td>
+          <td class="num r">100.37<div class="ratebar" style="width:54%" aria-hidden="true"></div></td>
+          <td class="mut hide-s" title="canonical pooled mean">average across repeat runs</td>
+          <td class="lnk"><a href="repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">full report</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-27B <small>general assistant &middot; uses all 27B per word &middot; Apr 2026</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 + MTP3</td><td class="num r">2&times;</td>
+          <td class="num r">98.77<div class="ratebar" style="width:53%" aria-hidden="true"></div></td>
+          <td class="mut hide-s" title="four-arm central estimate">average across 4 setups</td>
+          <td class="lnk"><a href="results/scoreboard.md">full rankings</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-35B-A3B <small>long documents &middot; uses ~3B of 35B per word &middot; Apr 2026</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">Quark W8A8 INT8</td><td class="num r">4&times;</td>
+          <td class="num r">93.55<div class="ratebar" style="width:50%" aria-hidden="true"></div></td>
+          <td class="mut hide-s" title="output, strict deep gate">typical, strictest quality gate</td>
+          <td class="lnk"><a href="results/qwen36-35b-quark-int8-b70/README.md">test report</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>MiniMax-M2.7 <small>remembers long conversations (32K) &middot; Mar 2026</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 W4A16</td><td class="num r">4&times;</td>
+          <td class="num r">89.31<div class="ratebar" style="width:48%" aria-hidden="true"></div></td>
+          <td class="mut hide-s" title="mean of four clean long repeats">average of 4 clean runs</td>
+          <td class="lnk"><a href="repro/minimax-m27-b70-89tps-20260520/README.md">full report</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>DeepSeek-V4-Flash-180B <small>experimental community-trimmed copy &middot; research only</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">FP8 + FP4 experts + DSpark7</td><td class="num r">4&times;</td>
+          <td class="num r">80.82<div class="ratebar" style="width:43%" aria-hidden="true"></div></td>
+          <td class="mut hide-s" title="median high, 24/24 exact canaries">typical high &middot; all 24 checks passed</td>
+          <td class="lnk"><a href="results/scoreboard.md">full rankings</a></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="note">
+      Rows use different compression, card counts, and measurements — a bigger number in another
+      row is not automatically a faster setup.
+      <a href="results/scoreboard.md">Ground rules for comparing</a>.
+      &ldquo;DFlash&rdquo;, &ldquo;MTP&rdquo;, and &ldquo;DSpark&rdquo; are speed-up tricks where a
+      small helper drafts ahead and the big model checks; codes like Q8/INT4 name the compression.
+    </div>
+  </div>
+</section>
+
+<section id="community-speeds">
+  <div class="wrap">
+    <h2 id="t2">Community-reported speeds <span class="key"><span class="dot">&#9679;</span> re-run here and confirmed &nbsp; <span class="dot hollow">&#9675;</span> reported by a member, not yet re-checked</span></h2>
+    <p class="sub">
+      Sent in by contributors on their own machines — promising, not proven, unless marked
+      confirmed. These rows are counted a little differently (middle value of 5 tries, measured
+      by the client), so don&rsquo;t compare numbers across the two tables.
+    </p>
+    <div class="scroller">
+    <table aria-labelledby="t2">
+      <thead>
+        <tr>
+          <th scope="col">Model</th>
+          <th scope="col"><abbr title="the program that loads and runs the model">Software</abbr></th>
+          <th scope="col"><abbr title="compression shrinks the model so it fits on fewer cards; speed-up tricks let a small helper draft ahead while the big model checks">Compression &amp; speed-up</abbr></th>
+          <th scope="col" class="r">Cards</th>
+          <th scope="col" class="r">Speed (tok/s)</th>
+          <th scope="col">Proof</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Nemotron-3.5-Lightning-30B <small>fastest one-card report so far &middot; NVIDIA &middot; 2026</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">DFlash n=7</td><td class="num r">1&times;</td>
+          <td class="num r">186.61<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
+          <td class="lnk"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">report</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Qwen3.6-35B-A3B <small>long documents &middot; Apr 2026</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP4</td><td class="num r">1&times;</td>
+          <td class="num r">170.91<div class="ratebar" style="width:92%" aria-hidden="true"></div></td>
+          <td class="lnk"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">report</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Qwen3.8-27B <small>newest all-rounder &middot; Aug 2026 &middot; our lab&rsquo;s version: 87.6</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP4</td><td class="num r">1&times;</td>
+          <td class="num r">106.7<div class="ratebar" style="width:57%" aria-hidden="true"></div></td>
+          <td class="lnk"><a href="community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md">lab check</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Ornith-1.5-35B-A3B <small>brand-new entry &middot; self-reported, unverified</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP</td><td class="num r">1&times;</td>
+          <td class="num r">106.64<div class="ratebar" style="width:57%" aria-hidden="true"></div></td>
+          <td class="lnk"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">report</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">B70-tested: </span>Qwen3.6-27B <small>community setup we re-ran and confirmed</small></th>
+          <td class="mut">Docker / vLLM</td><td class="mut">FP8, split across 2 cards</td><td class="num r">2&times;</td>
+          <td class="num r">30.17<div class="ratebar" style="width:16%" aria-hidden="true"></div></td>
+          <td class="lnk"><a href="community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md">lab check</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Muse-Glimmer-30B <small>same Meta model, smaller file (GGUF)</small></th>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q4_K_XL + DFlash n2</td><td class="num r">1&times;</td>
+          <td class="num r">26.8<div class="ratebar" style="width:14%" aria-hidden="true"></div></td>
+          <td class="lnk"><a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">cookbook</a></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<section id="contribute">
   <div class="wrap">
     <h2>Contribute</h2>
     <ul class="tight">
       <li>Record-setting results are not required — careful negative results and quality checks are valuable too.</li>
-      <li>Bring the evidence: hardware, software pins, model revision, exact command, metric definition, result JSON/logs. Full checklist in <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.</li>
-      <li>Runnable work lands in <a href="community/README.md">community/</a> with a filled <a href="community/STATUS-TEMPLATE.md">STATUS.md</a>; measurements alone go to <a href="community/field-reports/README.md">field-reports</a>. PRs against <a href="https://github.com/steveseguin/b70-optimization-lab">steveseguin/b70-optimization-lab</a>.</li>
-      <li>Entries enter as community-reported and are promoted only after reference-lab reproduction — see <a href="docs/contribution-verification.md">the eight-step validation</a>. Negative results are recorded as evidence, not deleted.</li>
+      <li>Bring the evidence: hardware, software versions, model revision, exact command, how you measured, result files. Full checklist in <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.</li>
+      <li>Runnable setups land in <a href="community/README.md">community/</a> with a filled <a href="community/STATUS-TEMPLATE.md">STATUS.md</a>; measurements alone go to <a href="community/field-reports/README.md">field-reports</a>. Propose changes on <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>.</li>
+      <li>Entries enter as community-reported and are promoted only after we reproduce them — see <a href="docs/contribution-verification.md">the eight-step validation</a>. Negative results are recorded as evidence, not deleted.</li>
     </ul>
   </div>
 </section>
+
+</main>
 
 <footer>
   <div class="wrap">
@@ -303,7 +402,7 @@ Style genome (duotone-hixffp):
     <span class="right">
       <a href="CURRENT.md">Current work</a>
       <a href="docs/README.md">Docs</a>
-      <a href="llms.txt">llms.txt</a>
+      <a href="llms.txt">For AI agents</a>
       <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
     </span>
   </div>
