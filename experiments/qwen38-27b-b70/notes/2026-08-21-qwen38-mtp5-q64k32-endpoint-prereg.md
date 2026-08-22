@@ -82,14 +82,17 @@ campaign under the lane's full standards.
   own role marker count before any successor may start.
 - underlying arm runner
   `experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-arm.sh`
-  at `75d733e72eaf357941c3902f4d21da701ad8c7e8f41835c15cd0918c29b5d01e`:
-  extended by exactly one reviewed hunk that maps
+  at `49ee2736420f0287fb72bc71a00c9a363a8487ce14555c623bbdc0dc13c6eff7`:
+  extended by two reviewed hunks: the first maps
   `VALIDATION_FA2_M6_HEAD256_Q64K32_POLICY` to an explicit
   `VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY={0,1}` export (controls receive
   an explicit `0`), so the `env -i` whitelist cannot silently drop
   operator intent; engagement is separately proven by the marker gate
   (candidates: exactly two `... engaged` server-log lines; controls:
-  zero).
+  zero); the second adds the two new `VALIDATION_` names to the runner's
+  sealed-mode allowlist, whose fail-closed rejection of the unlisted
+  names was demonstrated live before any arm root existed (the a1 label
+  was not burned: no root was created).
 - result roots (must not exist before launch):
   `/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-q64k32-endpoint-{a1,b1,b2,a2}-20260821/`.
 
