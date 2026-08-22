@@ -225,11 +225,13 @@ Style genome (duotone-hixffp):
   <div class="wrap">
     <h2>What you need</h2>
     <ul class="tight">
-      <li><b>The card:</b> a PC with at least one Intel Arc Pro B70 graphics card (24&nbsp;GB). One card runs most models on this page; the biggest are split across 2&ndash;4 cards working together.</li>
+      <li><b>The card:</b> a PC with at least one Intel Arc Pro B70 graphics card (32&nbsp;GB). One card runs most models on this page; the biggest are split across 2&ndash;4 cards working together.</li>
       <li><b>One card:</b> follow our step-by-step <a href="results/gemma4-26b-a4b-q8-b70/README.md">Gemma-4-26B guide</a> (125 tok/s, checked in this lab). More single-card setups are indexed in <a href="docs/model-recipes.md">our model recipes</a>.</li>
       <li><b>Two to four cards:</b> complete recipes in the <a href="results/README.md">results index</a> — MiniMax INT4, Laguna-S + DFlash, DeepSeek-V4 FP4/FP8, Qwen3.8 dense split across 2 cards.</li>
       <li><b>Promoted guides are complete:</b> pinned software versions, exact commands, and a proof folder with logs and quality checks. Research rows explicitly identify unresolved gates or unavailable artifacts.</li>
       <li><b>Making a new model fast:</b> the <a href="docs/model-optimization-guide.md">optimization guide</a> is the playbook; the <a href="optimization-timeline.html">timeline</a> shows how each setup improved.</li>
+      <li><b>Models we are preparing next:</b> our <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/model-intake/README.md">model intake queue</a> records exact revisions, sizes, checksums, B70 fit, and why each download is worth keeping. Popularity starts an investigation; it does not make a model or outside performance claim verified.</li>
+      <li><b>Docker and Windows:</b> digest-pinned Linux packages come first; Windows packets stay preview-only until they are replayed on a real Windows B70 machine. Follow the <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/model-distribution-and-packaging-roadmap.md">packaging roadmap</a>.</li>
       <li><b>For AI assistants:</b> <a href="llms.txt">llms.txt</a> is a machine-readable map of this site, then <a href="AGENTS.md">AGENTS.md</a>.</li>
     </ul>
   </div>
@@ -385,6 +387,7 @@ Style genome (duotone-hixffp):
       <li>Runnable setups land in <a href="community/README.md">community/</a> with a filled <a href="community/STATUS-TEMPLATE.md">STATUS.md</a>; measurements alone go to <a href="community/field-reports/README.md">field-reports</a>. Propose changes on <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>.</li>
       <li>Entries enter as community-reported and are promoted only after we reproduce them — see <a href="docs/contribution-verification.md">the eight-step validation</a>. Negative results are recorded as evidence, not deleted.</li>
       <li>Tracked claims keep the exact recipe identity, submitter, evidence, and dated lab outcome in the <a href="claims/README.md">claims registry</a>. Contributor credit stays attached to concrete work; lab measurements stay attached to lab lanes.</li>
+      <li>When a contributed patch survives a matched quality and performance test, its author and exact patch identity remain attached to the promoted result. A model tip or outside report is acknowledged as a lead without reassigning the lab's existing recipes or optimization history.</li>
     </ul>
   </div>
 </section>

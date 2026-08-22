@@ -82,6 +82,27 @@ licensed, missing essential identity, impractical to test, or outside current
 capacity. Such work can remain community-reported if it is still useful and
 clearly labeled.
 
+## Contributor Recognition
+
+Recognition follows the concrete contribution rather than being inferred from
+a similar result or a repackaged recipe:
+
+- A submitted entry retains its contributor, source PR, commits, and original
+  artifacts under `community/` and in Git history.
+- An adopted patch is credited by exact identity where the patch is used, with
+  the matched local A/B and quality result beside it.
+- A promoted result or scoreboard row names the contributor when their
+  concrete delta is part of that measured row.
+- A report that identifies a useful model or experiment is acknowledged as an
+  intake lead. It is not credited with independent lab patches or performance
+  merely because the resulting numbers are similar.
+- Independent review, corrections, and additional lab optimization remain
+  separately attributable in commits and the validation packet.
+
+This policy is deliberately symmetric: it prevents useful outside work from
+losing credit and prevents the lab's existing work from being reassigned to an
+external compilation.
+
 ## Scoreboard And Publication
 
 A repository scoreboard is a compact map of expected performance and evidence,

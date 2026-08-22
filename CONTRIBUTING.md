@@ -39,7 +39,10 @@ Include, or link to, all of the following:
 - quality gate, its outcome, and any known quality tradeoff;
 - output metric definition, score, variance/repeats, and TTFT where available;
 - result JSON and log paths or durable public links;
-- the closest known-good run and exactly what changed.
+- the closest known-good run and exactly what changed;
+- the exact original contribution that should receive credit: a patch/commit,
+  recipe delta, measurement packet, or model/intake lead. Keep pre-existing
+  project work and third-party material separate.
 
 Never include model weights, API keys, access tokens, passwords, private user
 data, or other secrets.
@@ -104,6 +107,10 @@ Results must say which of these descriptions applies:
 See [docs/contribution-verification.md](docs/contribution-verification.md) for
 the review procedure. LocalMaxxing is a downstream publication target for
 eligible, verified records; it is not the source of truth for this repository.
+When a concrete contributed delta is adopted, its contributor and exact source
+remain attached to the promoted result. Similar performance or an outside
+compilation of existing project work does not transfer authorship of the lab's
+recipe or optimization history.
 
 ## Risk
 

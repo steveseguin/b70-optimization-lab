@@ -34,6 +34,8 @@ Use these common folders consistently:
   reasonable to track.
 - `results/` for promoted or summarized model result packets.
 - `scripts/` for reusable harnesses and submission helpers.
+- `model-intake/` for revision-pinned candidate artifacts, external-store
+  planning, and the discovery-to-validation queue.
 - `experiments/` for active research lanes that are not production recipes.
 - `repro/` for runnable promoted reproduction recipes.
 - `community/` for outside contributions at any evidence level. Contributed

@@ -13,7 +13,7 @@ where the weights happen to live.
 **For the maintainer:** this is the map of what sits where, and which storage
 has to be mounted before a lane will run.
 
-Last verified: 2026-08-08.
+Last verified: 2026-08-21.
 
 ## Internal NVMe
 
@@ -51,6 +51,11 @@ about 1.8 TB free. The pre-repair inventory and key-model checksums are under
 maintenance window, cleanly unmount the drive, attach it to Windows, run
 `chkdsk /f`, and reboot Windows twice before considering the NTFS metadata
 fully checked.
+
+On 2026-08-21 the drive was **not visible in `lsblk`**, not merely unmounted.
+Do not redirect queued downloads to the internal NVMe: it had only about
+12 GiB free. After reconnecting the drive, repeat the mount and health checks,
+then use the revision-pinned [model intake queue](../model-intake/README.md).
 
 **This drive does not auto-mount.** If it is not mounted, every path below
 fails with a "no such file or directory" error that looks like missing data

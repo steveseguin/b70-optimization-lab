@@ -29,6 +29,8 @@ at your own risk.
 | See every active, paused, and archived model lane | [Model effort index](docs/model-effort-index.md) |
 | Reproduce promoted results | [Results index](results/README.md) and [model recipes](docs/model-recipes.md) |
 | Start optimizing a new model | [Model optimization guide](docs/model-optimization-guide.md) |
+| See or prepare the next model downloads | [Model intake queue](model-intake/README.md) |
+| Follow the Docker and Windows packaging path | [Distribution and packaging roadmap](docs/model-distribution-and-packaging-roadmap.md) |
 | Plan PCIe slots, risers, or external GPUs | [PCIe topology and local-LLM inference](docs/pcie-topology-and-llm-inference.md) |
 | Compare expected model performance | [Performance scoreboard](results/scoreboard.md) |
 | Contribute a result, patch, or correction | [Contribution guide](CONTRIBUTING.md) and [verification policy](docs/contribution-verification.md) |
@@ -55,6 +57,8 @@ rows. A serious lane should leave behind:
   experiments worth preserving.
 - `data/`: compact structured benchmark records, payloads, responses, and logs.
 - `scripts/`: reusable harnesses, analyzers, launchers, and submission helpers.
+- `model-intake/`: revision-pinned candidate catalog, storage budget, and the
+  boundary between discovery, download, validation, and promotion.
 - `community/<contributor>-...`: runnable work contributed from outside the
   reference lab, with explicit evidence status and validation history.
 - `community/field-reports/`: unverified measurements and observations from

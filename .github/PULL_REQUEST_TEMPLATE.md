@@ -26,6 +26,7 @@ or result packet where applicable.
 - Result JSON/log paths:
 - Closest known-good result:
 - Exact delta from that baseline:
+- Exact contribution to credit (patch, recipe delta, measurement, or intake lead):
 
 If a field does not apply, explain why rather than deleting it.
 

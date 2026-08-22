@@ -1,0 +1,203 @@
+{
+  "format": "b70-model-intake-v1",
+  "captured_at_utc": "2026-08-22T02:47:17Z",
+  "discovery": {
+    "source": "https://huggingface.co/api/models?pipeline_tag=text-generation&sort=trendingScore&direction=-1&limit=60&full=true",
+    "window_start_utc": "2026-08-08T00:00:00Z",
+    "policy": "Official publisher artifacts are preferred. A derived quant is identified separately from its base model. Popularity is an intake signal, not validation."
+  },
+  "entries": [
+    {
+      "id": "ornith-15-35b-a3b-q4km",
+      "model": "Ornith-1.5-35B-A3B",
+      "repo_id": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
+      "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
+      "publisher_relation": "official-publisher-quant",
+      "license": "mit",
+      "license_status": "recorded",
+      "created_at": "2026-08-18T06:38:41Z",
+      "popularity_snapshot": {
+        "downloads": 123237,
+        "likes": 208,
+        "trending_score": 199
+      },
+      "artifact": {
+        "filename": "Ornith-1.5-35B-Q4_K_M.gguf",
+        "size_bytes": 21713462848,
+        "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+      },
+      "destination": "llm-models/ornith-1.5-35b-a3b-q4km",
+      "status": "queued",
+      "priority": 1,
+      "target_cards": [1, 2],
+      "runtime_candidates": ["llama.cpp/SYCL"],
+      "external_report_overlap": true,
+      "reason": "New high-trending official family and the same family as an unverified one-B70 external performance claim."
+    },
+    {
+      "id": "ornith-15-9b-q8",
+      "model": "Ornith-1.5-9B",
+      "repo_id": "ornith-ai/Ornith-1.5-9B-GGUF",
+      "revision": "85bf2b98cdcbad4291cb4f46943526cc089f75a0",
+      "publisher_relation": "official-publisher-quant",
+      "license": "mit",
+      "license_status": "recorded",
+      "created_at": "2026-08-19T00:02:44Z",
+      "popularity_snapshot": {
+        "downloads": 115365,
+        "likes": 139,
+        "trending_score": 130
+      },
+      "artifact": {
+        "filename": "Ornith-1.5-9B-Q8_0.gguf",
+        "size_bytes": 9527501248,
+        "sha256": "6874eeb25c71081dc8f0bbe88f3ebb786312447132745371cd980bce95d259b9"
+      },
+      "destination": "llm-models/ornith-1.5-9b-q8",
+      "status": "queued",
+      "priority": 2,
+      "target_cards": [1],
+      "runtime_candidates": ["llama.cpp/SYCL"],
+      "external_report_overlap": false,
+      "reason": "Recent popular official release and a high-quality single-card beginner target."
+    },
+    {
+      "id": "nemotron-35-lightning-30b-a3b-udq4km",
+      "model": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B",
+      "repo_id": "unsloth/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
+      "base_repo_id": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "revision": "f2d3fe3694501008786e81e5f20360cbf715496a",
+      "publisher_relation": "third-party-quant-of-official-base",
+      "license": "nvidia-open-model-license",
+      "license_status": "review-required-before-redistribution",
+      "created_at": "2026-08-12T13:25:37Z",
+      "popularity_snapshot": {
+        "downloads": 107161,
+        "likes": 80,
+        "official_nvfp4_trending_score": 66
+      },
+      "artifact": {
+        "filename": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-UD-Q4_K_M.gguf",
+        "size_bytes": 25266255936,
+        "sha256": "edcb5d4650796ed2fb412498de6f83b585862312c747ddb74f0ea04b22206181"
+      },
+      "destination": "llm-models/nemotron-3.5-lightning-30b-a3b-udq4km",
+      "status": "queued",
+      "priority": 3,
+      "target_cards": [1, 2],
+      "runtime_candidates": ["llama.cpp/SYCL"],
+      "external_report_overlap": true,
+      "reason": "Directly enables independent testing of a currently unverified external one-B70 family claim; GGUF avoids assuming NVIDIA NVFP4 support on Intel."
+    },
+    {
+      "id": "lfm25-26b-q8",
+      "model": "LFM2.5-2.6B",
+      "repo_id": "LiquidAI/LFM2.5-2.6B-GGUF",
+      "revision": "f4a289c8a200a5ca71005ba7abc2dad33058a450",
+      "publisher_relation": "official-publisher-quant",
+      "license": "lfm-open-license-v1.0",
+      "license_status": "review-required-before-redistribution",
+      "created_at": "2026-08-01T22:42:15Z",
+      "popularity_snapshot": {
+        "downloads": 456769,
+        "likes": 279,
+        "trending_score": 56
+      },
+      "artifact": {
+        "filename": "LFM2.5-2.6B-Q8_0.gguf",
+        "size_bytes": 2874779648,
+        "sha256": "1e22128dfa128bdfb684da167e74e072d0a056baa7d06d9f280291e2839b0fc9"
+      },
+      "destination": "llm-models/lfm2.5-2.6b-q8",
+      "status": "queued",
+      "priority": 4,
+      "target_cards": [1],
+      "runtime_candidates": ["llama.cpp/SYCL"],
+      "external_report_overlap": false,
+      "reason": "Small, popular, inexpensive to retain, and suitable for a low-friction single-card starter packet."
+    },
+    {
+      "id": "ling-30-tiny-bf16",
+      "model": "Ling-3.0-tiny",
+      "repo_id": "inclusionAI/Ling-3.0-tiny",
+      "revision": "b61f4338de3e68ffc9c0bc1ed5e902981a4a929e",
+      "publisher_relation": "official-publisher-base",
+      "license": "mit",
+      "license_status": "recorded",
+      "created_at": "2026-08-10T02:44:06Z",
+      "popularity_snapshot": {
+        "downloads": 13635,
+        "likes": 345,
+        "trending_score": 94
+      },
+      "repository_size_bytes": 15801179226,
+      "status": "watch-runtime-support",
+      "priority": 5,
+      "target_cards": [1, 2],
+      "runtime_candidates": ["vLLM/XPU"],
+      "external_report_overlap": false,
+      "reason": "Recent official architecture with strong interest, but BailingHybrid XPU loader support must be established before downloading a full snapshot."
+    },
+    {
+      "id": "deepseek-v4-pro-0813",
+      "model": "DeepSeek-V4-Pro-0813",
+      "repo_id": "deepseek-ai/DeepSeek-V4-Pro-0813",
+      "revision": "72e1d3230f6c080a530b0a1d46f8eb4602340597",
+      "publisher_relation": "official-publisher-base",
+      "license": "mit",
+      "license_status": "recorded",
+      "created_at": "2026-08-13T03:05:06Z",
+      "popularity_snapshot": {
+        "downloads": 49601,
+        "likes": 709,
+        "trending_score": 215
+      },
+      "repository_size_bytes": 892762497859,
+      "status": "watch-storage-and-fit",
+      "priority": 90,
+      "target_cards": [4],
+      "runtime_candidates": ["vLLM/XPU"],
+      "external_report_overlap": false,
+      "reason": "Highly visible current release, but the base snapshot is roughly 893 GB and is not a responsible first-wave B70 download."
+    },
+    {
+      "id": "qwen38-24t-a95b",
+      "model": "Qwen3.8-2.4T-A95B",
+      "repo_id": "Qwen/Qwen3.8-2.4T-A95B",
+      "revision": "207bd685a7e3696cfaff12ded7c6a7ea0f88c996",
+      "publisher_relation": "official-publisher-base",
+      "license": "qwen-research",
+      "license_status": "review-required-before-redistribution",
+      "created_at": "2026-08-08T01:50:52Z",
+      "popularity_snapshot": {
+        "downloads": 15702,
+        "likes": 1141,
+        "trending_score": 197
+      },
+      "repository_size_bytes": 4892388741252,
+      "status": "watch-storage-and-fit",
+      "priority": 99,
+      "target_cards": [],
+      "runtime_candidates": [],
+      "external_report_overlap": false,
+      "reason": "Popular current release but approximately 4.89 TB at the repository level; unsuitable for this B70 intake store."
+    }
+  ],
+  "already_covered": [
+    {
+      "model": "Qwen3.6-35B-A3B",
+      "evidence": "community/dominick253-qwen36-35b-llamacpp-sycl/STATUS.md",
+      "disposition": "B70-tested; do not redownload merely because another repository reports it."
+    },
+    {
+      "model": "Muse-Glimmer-30B",
+      "evidence": "results/muse-glimmer-30b-q8-woq-b70/README.md",
+      "disposition": "B70-verified and deeply optimized; retain its existing artifacts and recipes."
+    },
+    {
+      "model": "Qwen3.8-27B",
+      "evidence": "experiments/qwen38-27b-b70/README.md",
+      "disposition": "Active lab family with multiple local quantizations; do not duplicate external cookbook artifacts."
+    }
+  ]
+}

@@ -355,6 +355,14 @@ loaded service.
 
 ## Immediate Manager Actions
 
+0. The external 3.6 TB USB model store was not visible in `lsblk` on
+   2026-08-21, while the internal NVMe had only about 12 GiB free. Do not place
+   new model downloads on NVMe. After reconnecting and mounting the USB drive,
+   run [`scripts/model-intake.py`](scripts/model-intake.py) against the
+   [55.30 GiB first-wave queue](model-intake/README.md): Ornith 1.5 35B Q4,
+   Ornith 1.5 9B Q8, Nemotron 3.5 Lightning 30B Q4, and LFM2.5 2.6B Q8.
+   The downloader is revision-pinned, capacity-gated, and direct-I/O verified.
+
 1. Preserve the inactive Muse fleet and its source; verify service/process state
    again before every GPU launch.
 2. Continue Qwen3.8 Q8_0 target-only TP2 from the accepted source snapshot,

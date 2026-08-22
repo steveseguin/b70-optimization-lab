@@ -16,6 +16,12 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Results Index](../results/README.md): promoted model-specific result packets and how to promote a lane.
 - [Model Recipes](model-recipes.md): which recipe folder to use for each model/build target.
 - [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
+- [Model Intake Queue](../model-intake/README.md): revision-pinned candidate
+  downloads, USB safety checks, popularity snapshot, and already-covered
+  families that should not be duplicated.
+- [Model Distribution And Packaging Roadmap](model-distribution-and-packaging-roadmap.md):
+  novice one/two-GPU packets, contributor recognition, digest-pinned Docker
+  packaging, and the bounded Windows path.
 
 ## Model Lane Entry Points
 
@@ -81,6 +87,8 @@ The community build guide includes example B70 photos and explains what details 
 - `data/`: structured benchmark records, payloads, and LocalMaxxing responses. See [../data/README.md](../data/README.md).
 - `patches/`: patch records and source-level optimization deltas. See [../patches/README.md](../patches/README.md).
 - `scripts/`: shared harnesses used by repro folders and lab runs.
+- `model-intake/`: curated model discovery, immutable artifact identities, and
+  the external-store download queue.
 - `experiments/`: active research lanes that are not production recipes yet.
 - `prompts/`: quality canaries and reusable prompt templates. See [../prompts/README.md](../prompts/README.md).
 
