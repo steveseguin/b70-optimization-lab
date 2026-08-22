@@ -542,9 +542,12 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
       exit 3
     fi
   elif ! jq -e \
-    '.suite_id == "qwen36-27b-int4-independent-validation-20260815-v1"
+    '(.suite_id == "qwen36-27b-int4-independent-validation-20260815-v1"
+      or .suite_id == "qwen38-longkv-q64k32-20260822-v1")
      and .version == 1 and (.prompts | type == "array" and length == 25)' \
     "$suite" >/dev/null; then
+    # The long-KV suite id is admitted alongside the historical id; content
+    # is already bound by the exact suite SHA gate immediately above.
     printf 'sealed validation suite identity/content is invalid\n' >&2
     exit 3
   fi

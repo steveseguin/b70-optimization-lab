@@ -58,9 +58,10 @@ stock_dep_sha=3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289
 interface_sha=869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480
 policy_marker='VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY engaged'
 
-# longkv1: first long-KV campaign on the r4-qualified integration DSO
-# (979e91c1...), succeeding the closed short-KV endpoint series.
-arm_label() { printf 'qwen38-q64k32-longkv1-%s-20260822' "$1"; }
+# longkv2: relabeled after longkv1-a1 burned at the runner's sealed
+# suite-id pin before any server or GPU work (root preserved; the
+# preregistered single relaunch budget is hereby consumed).
+arm_label() { printf 'qwen38-q64k32-longkv2-%s-20260822' "$1"; }
 request_extra_json='{"chat_template_kwargs":{"enable_thinking":false},"ignore_eos":true}'
 arm_root_for() { printf '%s/%s' "$raw" "$(arm_label "$1")"; }
 

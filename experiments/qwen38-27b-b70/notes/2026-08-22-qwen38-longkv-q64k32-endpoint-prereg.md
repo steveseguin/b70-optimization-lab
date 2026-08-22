@@ -107,6 +107,24 @@ measured effect remains small.
   reappearance (any row with fewer than 512 completion tokens) would be an
   identity-class stop, since it would mean ignore_eos was not in effect.
 
+## Addendum — longkv1-a1 pre-launch refusal and relabel to longkv2
+
+Before any server start or GPU work, arm longkv1-a1 was refused by the
+sealed runner's suite-identity jq, which pinned the historical
+`suite_id` string in full mode; the long-KV suite carries its own id. The
+root `qwen38-q64k32-longkv1-a1-20260822` (containing only the copied suite
+and suite-build log) is preserved and never reused. Fix: the runner's gate
+now admits the long-KV suite id alongside the historical one — content
+remains bound by the exact suite-SHA gate on the line above — and the
+campaign is relabeled **longkv2** on entirely fresh roots
+(`qwen38-q64k32-longkv2-{a1,b1,b2,a2}-20260822`). This consumes the
+preregistered single relaunch: any further stop of any class closes the
+design. Refrozen identities: runner `run-arm.sh`
+`522b0954ef752ff05f3afad29ab3c47378f22201bfeb5ee912edd7efb24ed2a3`,
+campaign driver
+`8dd3b57edbfd8f68f06036694fc1630c30c9221a82c7569227d19ffe51c01d71`.
+All other pins, the metric, and the decision rule are unchanged.
+
 ## What this campaign cannot show
 
 It measures one integration lever on one suite at KV 1.3-2.0k with MTP5 on
