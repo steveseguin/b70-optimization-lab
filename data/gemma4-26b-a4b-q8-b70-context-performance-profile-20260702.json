@@ -1,0 +1,20 @@
+{
+  "schema": "b70-context-performance-profile-v1",
+  "package_id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
+  "status": "validated-service-sweep",
+  "source": "data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json",
+  "source_sha256": "6a886c3eb64a713d7cb9352b7c61cc60c861bbc3ed9065a61fd3968e3d323f20",
+  "aggregation": "Arithmetic mean by actual_prompt_tokens across four independent one-B70 lanes; four samples per point.",
+  "measurement_contract": "Fixed deterministic long-context suite; every prompt used once; cached_tokens=0; exact JSON retrieval passed; one active request; 128-token output ceiling; target-verified MTP service stack.",
+  "warning": "This service sweep is a different operating profile from the short-context 123.727 tok/s package headline. Prefill is approximated as actual prompt tokens divided by TTFT.",
+  "points": [
+    {"context_tokens": 741, "samples": 4, "decode_tok_s": 161.89843663684636, "prefill_tok_s": 847.9619132833765, "ttft_ms": 873.9445414976217},
+    {"context_tokens": 2806, "samples": 4, "decode_tok_s": 144.8662058096366, "prefill_tok_s": 1401.0150752344389, "ttft_ms": 2002.938948746305},
+    {"context_tokens": 5643, "samples": 4, "decode_tok_s": 141.11391660033576, "prefill_tok_s": 1469.4385849395155, "ttft_ms": 3840.5072987661697},
+    {"context_tokens": 10976, "samples": 4, "decode_tok_s": 135.93492558486764, "prefill_tok_s": 1330.3881630879202, "ttft_ms": 8250.644568965072},
+    {"context_tokens": 16213, "samples": 4, "decode_tok_s": 127.63665710590647, "prefill_tok_s": 1256.9527613956354, "ttft_ms": 12899.11724528065},
+    {"context_tokens": 22730, "samples": 4, "decode_tok_s": 120.48241930243164, "prefill_tok_s": 1128.9763236685953, "ttft_ms": 20134.24033729825},
+    {"context_tokens": 30400, "samples": 4, "decode_tok_s": 114.00353788462567, "prefill_tok_s": 1028.1957534609096, "ttft_ms": 29567.641104455106},
+    {"context_tokens": 32571, "samples": 4, "decode_tok_s": 114.8486529751413, "prefill_tok_s": 1001.687171893108, "ttft_ms": 32517.333841737127}
+  ]
+}

@@ -39,6 +39,65 @@
       "evidence": "results/gemma4-26b-a4b-q8-b70/README.md"
     }
   ],
+  "performance_profiles": [
+    {
+      "id": "decode-vs-context",
+      "label": "Decode over active context",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Actual prompt / active context tokens",
+      "scope": "Mean after-TTFT decode rate across four independent one-B70 lanes; unique cache-zero prompts and exact JSON gates.",
+      "evidence": "data/gemma4-26b-a4b-q8-b70-context-performance-profile-20260702.json",
+      "points": [
+        {"context_tokens": 741, "value": 161.89843663684636, "samples": 4},
+        {"context_tokens": 2806, "value": 144.8662058096366, "samples": 4},
+        {"context_tokens": 5643, "value": 141.11391660033576, "samples": 4},
+        {"context_tokens": 10976, "value": 135.93492558486764, "samples": 4},
+        {"context_tokens": 16213, "value": 127.63665710590647, "samples": 4},
+        {"context_tokens": 22730, "value": 120.48241930243164, "samples": 4},
+        {"context_tokens": 30400, "value": 114.00353788462567, "samples": 4},
+        {"context_tokens": 32571, "value": 114.8486529751413, "samples": 4}
+      ]
+    },
+    {
+      "id": "prefill-vs-context",
+      "label": "Prefill over prompt length",
+      "metric": "prefill",
+      "unit": "tok/s",
+      "x_label": "Actual prompt tokens",
+      "scope": "Approximate prompt tokens divided by TTFT, averaged across four independent one-B70 lanes.",
+      "evidence": "data/gemma4-26b-a4b-q8-b70-context-performance-profile-20260702.json",
+      "points": [
+        {"context_tokens": 741, "value": 847.9619132833765, "samples": 4},
+        {"context_tokens": 2806, "value": 1401.0150752344389, "samples": 4},
+        {"context_tokens": 5643, "value": 1469.4385849395155, "samples": 4},
+        {"context_tokens": 10976, "value": 1330.3881630879202, "samples": 4},
+        {"context_tokens": 16213, "value": 1256.9527613956354, "samples": 4},
+        {"context_tokens": 22730, "value": 1128.9763236685953, "samples": 4},
+        {"context_tokens": 30400, "value": 1028.1957534609096, "samples": 4},
+        {"context_tokens": 32571, "value": 1001.687171893108, "samples": 4}
+      ]
+    },
+    {
+      "id": "ttft-vs-context",
+      "label": "Time to first token",
+      "metric": "ttft",
+      "unit": "ms",
+      "x_label": "Actual prompt tokens",
+      "scope": "Mean TTFT across four independent one-B70 lanes under the same cache-zero service sweep.",
+      "evidence": "data/gemma4-26b-a4b-q8-b70-context-performance-profile-20260702.json",
+      "points": [
+        {"context_tokens": 741, "value": 873.9445414976217, "samples": 4},
+        {"context_tokens": 2806, "value": 2002.938948746305, "samples": 4},
+        {"context_tokens": 5643, "value": 3840.5072987661697, "samples": 4},
+        {"context_tokens": 10976, "value": 8250.644568965072, "samples": 4},
+        {"context_tokens": 16213, "value": 12899.11724528065, "samples": 4},
+        {"context_tokens": 22730, "value": 20134.24033729825, "samples": 4},
+        {"context_tokens": 30400, "value": 29567.641104455106, "samples": 4},
+        {"context_tokens": 32571, "value": 32517.333841737127, "samples": 4}
+      ]
+    }
+  ],
   "hardware": {
     "accelerator": "Intel Arc Pro B70 32 GiB",
     "cards": 1,
@@ -78,7 +137,9 @@
     "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/run.sh",
     "patches/gemma4-26b-a4b-q8-b70/README.md",
     "patches/gemma4-26b-a4b-q8-b70/record-source-verification-20260822.json",
-    "results/gemma4-26b-a4b-q8-b70/README.md"
+    "results/gemma4-26b-a4b-q8-b70/README.md",
+    "data/gemma4-26b-a4b-q8-b70-context-performance-profile-20260702.json",
+    "data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json"
   ],
   "evidence": [
     "patches/gemma4-26b-a4b-q8-b70/record-source-verification-20260822.json",

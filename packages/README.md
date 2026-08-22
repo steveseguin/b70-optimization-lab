@@ -10,6 +10,12 @@ and measured metric). The `contributors` block records the exact work and
 evidence carried into that package; upstream dependencies are not treated as
 contributors unless a concrete contribution was adopted.
 
+An optional `performance_profiles` list carries measured context curves. Each
+curve names one metric (`decode`, `prefill`, or `ttft`), uses actual context
+tokens on the x-axis, links in-repository evidence, and contains at least two
+ordered measured points. A package with only a headline omits the list; the
+guide library then displays “sweep pending” instead of inventing a curve.
+
 A package status matters:
 
 - `candidate`: useful on a matching expert-managed host, but one or more

@@ -67,6 +67,21 @@
   .metric { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; padding: 11px 12px; border: 2px solid var(--ink); }
   .metric strong { font: 900 24px/1 var(--display); white-space: nowrap; }
   .metric span { color: var(--muted); font-size: 11px; }
+  .performance { margin-top: 12px; padding: 0; border: 1px solid var(--ink); background: var(--surface); }
+  .performance summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; list-style-position: inside; }
+  .performance summary span { color: var(--muted); font-weight: 400; text-transform: none; }
+  .profiles { display: grid; gap: 10px; padding: 0 10px 10px; }
+  .profile-chart { padding: 9px; border: 1px solid var(--ink); background: var(--paper); }
+  .profile-chart h4 { margin: 0; font: 700 11px var(--mono); text-transform: uppercase; }
+  .profile-chart svg { display: block; width: 100%; height: auto; margin-top: 7px; overflow: visible; }
+  .profile-chart .axis { stroke: var(--ink); stroke-width: 1; }
+  .profile-chart .gridline { stroke: #c7c0b2; stroke-width: 1; stroke-dasharray: 3 4; }
+  .profile-chart .curve { fill: none; stroke: var(--spot); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+  .profile-chart .point { fill: var(--paper); stroke: var(--spot-dark); stroke-width: 2; }
+  .profile-chart text { fill: var(--muted); font: 9px var(--mono); }
+  .profile-chart .profile-note { margin: 7px 0 0; color: var(--muted); font-size: 10px; }
+  .profile-chart .profile-note a { color: var(--ink); border-bottom: 1px solid currentColor; }
+  .profile-empty { margin: 0; padding: 0 10px 10px; color: var(--muted); font-size: 11px; }
   .credit { margin: 13px 0 0; color: var(--muted); font-size: 12px; }
   .credit strong { color: var(--ink); }
   .credit a { border-bottom: 1px solid currentColor; }
@@ -128,7 +143,7 @@
 <header><div class="wrap">
   <p class="kicker">Models · quants · card counts · Linux · Docker · future Windows</p>
   <h1>Find the deployment that fits your machine.</h1>
-  <p>The homepage stays curated. This library scales: every card is generated from a validated package manifest, links the human guide and exact patches, and states what still needs testing.</p>
+  <p>The homepage stays curated. This library scales: every card is generated from a validated package manifest, links the human guide and exact patches, and states what still needs testing. Open a package's performance curves for measured decode, prefill, and TTFT behavior over context.</p>
 </div></header>
 
 <main id="main"><div class="wrap">
@@ -170,6 +185,38 @@
 
   const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[char]);
   const packageReadme = item => item.manifest.replace(/package\.json$/, "README.md");
+  const shortNumber = value => value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K` : Number(value).toFixed(value >= 100 ? 0 : 1);
+  const profileChart = profile => {
+    const width = 440, height = 160, left = 47, right = 10, top = 10, bottom = 34;
+    const innerWidth = width - left - right, innerHeight = height - top - bottom;
+    const xMax = Math.max(...profile.points.map(point => point.context_tokens));
+    const yMax = Math.max(...profile.points.map(point => point.value)) * 1.08;
+    const x = value => left + (value / xMax) * innerWidth;
+    const y = value => top + innerHeight - (value / yMax) * innerHeight;
+    const points = profile.points.map(point => `${x(point.context_tokens).toFixed(1)},${y(point.value).toFixed(1)}`).join(" ");
+    const dots = profile.points.map(point => `<circle class="point" cx="${x(point.context_tokens).toFixed(1)}" cy="${y(point.value).toFixed(1)}" r="3.5"><title>${escapeHtml(point.context_tokens.toLocaleString())} tokens · ${escapeHtml(Number(point.value).toFixed(2))} ${escapeHtml(profile.unit)}${point.samples ? ` · ${escapeHtml(point.samples)} samples` : ""}</title></circle>`).join("");
+    const evidence = `${GITHUB}${encodeURI(profile.evidence)}`;
+    return `<section class="profile-chart"><h4>${escapeHtml(profile.label)}</h4>
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(profile.label)} from zero to ${escapeHtml(xMax.toLocaleString())} context tokens">
+        <line class="gridline" x1="${left}" y1="${top}" x2="${width - right}" y2="${top}" />
+        <line class="gridline" x1="${left}" y1="${top + innerHeight / 2}" x2="${width - right}" y2="${top + innerHeight / 2}" />
+        <line class="axis" x1="${left}" y1="${top + innerHeight}" x2="${width - right}" y2="${top + innerHeight}" />
+        <line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + innerHeight}" />
+        <text x="${left - 5}" y="${top + 3}" text-anchor="end">${escapeHtml(shortNumber(yMax))} ${escapeHtml(profile.unit)}</text>
+        <text x="${left - 5}" y="${top + innerHeight + 3}" text-anchor="end">0</text>
+        <text x="${left}" y="${height - 9}" text-anchor="middle">0</text>
+        <text x="${left + innerWidth / 2}" y="${height - 9}" text-anchor="middle">${escapeHtml(shortNumber(xMax / 2))}</text>
+        <text x="${width - right}" y="${height - 9}" text-anchor="end">${escapeHtml(shortNumber(xMax))} tokens</text>
+        <polyline class="curve" points="${points}" />${dots}
+      </svg>
+      <p class="profile-note">${escapeHtml(profile.scope)} <a href="${evidence}">Evidence</a></p></section>`;
+  };
+  const performanceBlock = item => {
+    const profiles = item.performance_profiles || [];
+    if (!profiles.length) return `<details class="performance"><summary>Context performance <span>sweep pending</span></summary><p class="profile-empty">No comparable decode, prefill, and TTFT context sweep is packaged yet. The headline above remains valid only for its stated benchmark shape.</p></details>`;
+    const maxContext = Math.max(...profiles.flatMap(profile => profile.points.map(point => point.context_tokens)));
+    return `<details class="performance"><summary>Performance curves <span>${profiles.length} measured · to ${escapeHtml(shortNumber(maxContext))} tokens</span></summary><div class="profiles">${profiles.map(profileChart).join("")}</div></details>`;
+  };
   const copyText = async value => {
     if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(value);
     const area = document.createElement("textarea");
@@ -196,6 +243,7 @@
       <div class="package-body"><p class="package-summary">${escapeHtml(lib.summary)}</p>
       <div class="facts">${facts.map(value => `<span class="fact">${escapeHtml(value)}</span>`).join("")}</div>
       <div class="metric"><strong>${escapeHtml(Number(metric.value).toFixed(metric.value >= 100 ? 2 : 3))} ${escapeHtml(metric.unit)}</strong><span>${escapeHtml(metric.scope)}</span></div>
+      ${performanceBlock(item)}
       <p class="credit"><strong>Built with:</strong> ${people}</p>
       <details><summary>${item.missing.length} remaining package gate${item.missing.length === 1 ? "" : "s"}</summary><ul>${missing}</ul></details>
       <div class="actions"><a class="button" href="${GITHUB}${encodeURI(readme)}">Open guide</a><button class="copy" type="button" data-copy="${escapeHtml(readme)}">Copy Markdown</button><a class="submit" href="${ISSUE}${encodeURIComponent(title)}">Submit an optimization</a></div>

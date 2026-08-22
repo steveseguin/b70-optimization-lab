@@ -42,6 +42,7 @@ PACKAGE_OPERATING_SYSTEMS = {"Linux", "Windows"}
 PACKAGE_DELIVERY = {"native", "container"}
 CONTRIBUTOR_KINDS = {"lab", "external"}
 CONTRIBUTOR_STATUSES = {"acknowledged", "credited", "validated-boost", "integrated"}
+PERFORMANCE_METRICS = {"decode": "tok/s", "prefill": "tok/s", "ttft": "ms"}
 
 
 class GuideAnchorParser(HTMLParser):
@@ -358,6 +359,10 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
                 _validate_internal_dependency(repo, contributor_label, contributor.get("evidence"))
             )
 
+    errors.extend(
+        _validate_performance_profiles(repo, label, package.get("performance_profiles"))
+    )
+
     hardware = package.get("hardware")
     if not isinstance(hardware, dict) or not isinstance(hardware.get("cards"), int) or hardware["cards"] < 1:
         errors.append(f"{label}: hardware.cards must be a positive integer")
@@ -418,6 +423,86 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
         or any(not isinstance(item, str) or not item for item in missing)
     ):
         errors.append(f"{label}: non-starter package must state missing gates")
+    return errors
+
+
+def _validate_performance_profiles(
+    repo: Path, label: str, profiles: object
+) -> list[str]:
+    """Validate optional, evidence-linked context performance curves."""
+    if profiles is None:
+        return []
+    if not isinstance(profiles, list) or not profiles:
+        return [f"{label}: performance_profiles must be a non-empty list when present"]
+
+    errors: list[str] = []
+    profile_ids: set[str] = set()
+    for index, profile in enumerate(profiles):
+        profile_label = f"{label}: performance_profiles[{index}]"
+        if not isinstance(profile, dict):
+            errors.append(f"{profile_label} must be an object")
+            continue
+
+        profile_id = profile.get("id")
+        if (
+            not isinstance(profile_id, str)
+            or re.fullmatch(r"[a-z0-9][a-z0-9-]*", profile_id) is None
+        ):
+            errors.append(f"{profile_label}.id must be lowercase and hyphenated")
+        elif profile_id in profile_ids:
+            errors.append(f"{label}: duplicate performance profile id {profile_id!r}")
+        else:
+            profile_ids.add(profile_id)
+
+        for field in ("label", "x_label", "scope"):
+            if not isinstance(profile.get(field), str) or not profile[field].strip():
+                errors.append(f"{profile_label}.{field} must be a non-empty string")
+
+        metric = profile.get("metric")
+        if metric not in PERFORMANCE_METRICS:
+            errors.append(
+                f"{profile_label}.metric must be in {sorted(PERFORMANCE_METRICS)}"
+            )
+        elif profile.get("unit") != PERFORMANCE_METRICS[metric]:
+            errors.append(
+                f"{profile_label}.unit must be {PERFORMANCE_METRICS[metric]!r} "
+                f"for metric {metric!r}"
+            )
+        errors.extend(
+            _validate_internal_dependency(repo, profile_label, profile.get("evidence"))
+        )
+
+        points = profile.get("points")
+        if not isinstance(points, list) or len(points) < 2:
+            errors.append(f"{profile_label}.points must contain at least two measurements")
+            continue
+        contexts: list[int] = []
+        for point_index, point in enumerate(points):
+            point_label = f"{profile_label}.points[{point_index}]"
+            if not isinstance(point, dict):
+                errors.append(f"{point_label} must be an object")
+                continue
+            context_tokens = point.get("context_tokens")
+            value = point.get("value")
+            samples = point.get("samples")
+            if (
+                isinstance(context_tokens, bool)
+                or not isinstance(context_tokens, int)
+                or context_tokens < 1
+            ):
+                errors.append(f"{point_label}.context_tokens must be a positive integer")
+            else:
+                contexts.append(context_tokens)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+                errors.append(f"{point_label}.value must be a positive number")
+            if samples is not None and (
+                isinstance(samples, bool) or not isinstance(samples, int) or samples < 1
+            ):
+                errors.append(f"{point_label}.samples must be a positive integer")
+        if len(contexts) == len(points) and contexts != sorted(set(contexts)):
+            errors.append(
+                f"{profile_label}.points must use unique, increasing context_tokens"
+            )
     return errors
 
 

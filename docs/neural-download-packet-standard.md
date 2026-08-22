@@ -60,6 +60,17 @@ evidence standards; nothing on the page is a guess.
    - Regenerate `packages/catalog.json` from the manifests; the public library
      consumes that derived file, never a second hand-maintained list.
 
+7. **Context performance profile** (optional until measured)
+   - Record decode after TTFT, prompt-processing/prefill rate, and TTFT at
+     several actual prompt/context lengths, ideally from short context through
+     the package's supported maximum.
+   - Keep concurrency, output length, cache state, sampler, quantization,
+     runtime flags, and service profile fixed across the curve. If an operating
+     profile differs from the headline lane, label that difference directly.
+   - Store measured points and aggregation in repository evidence, then expose
+     them through `performance_profiles`; never interpolate a one-point
+     headline or mix unrelated experiments into a line.
+
 ## Integrity rules (inherited from the lab standard)
 
 - Every input pinned by SHA-256; model files sealed 0444 after verification

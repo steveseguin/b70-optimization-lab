@@ -104,6 +104,26 @@ class ReproGuideValidationTest(unittest.TestCase):
             errors, _ = MODULE.validate(repo)
             self.assertTrue(any("catalog.json is stale" in error for error in errors))
 
+    def test_rejects_unordered_or_unlinked_performance_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            profiles = [{
+                "id": "decode-context",
+                "label": "Decode over context",
+                "metric": "decode",
+                "unit": "tok/s",
+                "x_label": "Active context tokens",
+                "scope": "Two measured rows",
+                "evidence": "data/missing.json",
+                "points": [
+                    {"context_tokens": 4096, "value": 10.0, "samples": 1},
+                    {"context_tokens": 2048, "value": 11.0, "samples": 1},
+                ],
+            }]
+            errors = MODULE._validate_performance_profiles(repo, "example", profiles)
+            self.assertTrue(any("does not resolve" in error for error in errors))
+            self.assertTrue(any("unique, increasing" in error for error in errors))
+
     @staticmethod
     def _entry(guide: str) -> dict[str, object]:
         return {
