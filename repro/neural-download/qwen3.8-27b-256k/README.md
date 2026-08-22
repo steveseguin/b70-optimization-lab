@@ -55,3 +55,16 @@ only as reduced-context operating points, never as the 256K headline.
 | 32,768 | 10.32 (±0.00) | 678.9 (±0.5) |
 
 Raw engine rates run above server-suite medians by design (no HTTP/sampling); use the suite median as the serving expectation and this curve for the depth trend. Evidence: `qwen38-27b-q5ks-flagship.sweep.json` + `qwen38-27b-q5ks-flagship.meta.json` (model/bench shas inside).
+
+## Published operating point: shipped package (262144 ctx, q8_0 KV, vision + MTP draft resident; MTP-assisted)
+
+Two fresh-server runs, 12-prompt suite, 512-token responses,
+conventional 99-interval median computed from raw event offsets,
+`cached_tokens=0` verified per request:
+
+- run A: **`26.668277 tok/s`**
+- run B: **`26.640510 tok/s`**
+
+Evidence: `qwen38-256k-package.benchA.json` / `qwen38-256k-package.benchB.json` under
+`bench-results/neural-download/operating-points-20260822/`.
+Canary battery: reasoning-off redo in progress; recorded when it lands.

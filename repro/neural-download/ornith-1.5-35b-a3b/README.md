@@ -41,3 +41,16 @@ not evidence; only matched local runs are published.
 | 32,768 | 80.42 (±0.16) | 920.1 (±7.4) |
 
 Raw engine rates run above server-suite medians by design (no HTTP/sampling); use the suite median as the serving expectation and this curve for the depth trend. Evidence: `ornith-15-35b-a3b-q4km.sweep.json` + `ornith-15-35b-a3b-q4km.meta.json` (model/bench shas inside).
+
+## Published operating point: standard (8K ctx, f16 KV, target-only)
+
+Two fresh-server runs, 12-prompt suite, 512-token responses,
+conventional 99-interval median computed from raw event offsets,
+`cached_tokens=0` verified per request:
+
+- run A: **`104.839983 tok/s`**
+- run B: **`104.810772 tok/s`**
+
+Evidence: `ornith-15-35b-a3b-std.benchA.json` / `ornith-15-35b-a3b-std.benchB.json` under
+`bench-results/neural-download/operating-points-20260822/`.
+Canary battery: reasoning-off redo in progress; recorded when it lands.

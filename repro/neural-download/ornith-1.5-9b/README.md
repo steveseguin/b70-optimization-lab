@@ -45,3 +45,16 @@ operating points (2 fresh-server runs each) -> canary battery.
 | 32,768 | 39.84 (±0.01) | 1313.7 (±3.4) |
 
 Raw engine rates run above server-suite medians by design (no HTTP/sampling); use the suite median as the serving expectation and this curve for the depth trend. Evidence: `ornith-15-9b-q8.sweep.json` + `ornith-15-9b-q8.meta.json` (model/bench shas inside).
+
+## Published operating point: standard (8K ctx, f16 KV, target-only)
+
+Two fresh-server runs, 12-prompt suite, 512-token responses,
+conventional 99-interval median computed from raw event offsets,
+`cached_tokens=0` verified per request:
+
+- run A: **`49.588381 tok/s`**
+- run B: **`49.573292 tok/s`**
+
+Evidence: `ornith-15-9b-q8-std.benchA.json` / `ornith-15-9b-q8-std.benchB.json` under
+`bench-results/neural-download/operating-points-20260822/`.
+Canary battery: reasoning-off redo in progress; recorded when it lands.

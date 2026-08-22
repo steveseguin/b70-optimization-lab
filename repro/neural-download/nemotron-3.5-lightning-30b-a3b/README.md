@@ -40,3 +40,16 @@ assuming NVIDIA's NVFP4 runtime works there.
 | 32,768 | 64.62 (±0.01) | 1018.9 (±2.1) |
 
 Raw engine rates run above server-suite medians by design (no HTTP/sampling); use the suite median as the serving expectation and this curve for the depth trend. Evidence: `nemotron-35-lightning.sweep.json` + `nemotron-35-lightning.meta.json` (model/bench shas inside).
+
+## Published operating point: standard (8K ctx, f16 KV, target-only)
+
+Two fresh-server runs, 12-prompt suite, 512-token responses,
+conventional 99-interval median computed from raw event offsets,
+`cached_tokens=0` verified per request:
+
+- run A: **`72.169452 tok/s`**
+- run B: **`72.035976 tok/s`**
+
+Evidence: `nemotron-35-lightning-std.benchA.json` / `nemotron-35-lightning-std.benchB.json` under
+`bench-results/neural-download/operating-points-20260822/`.
+Canary battery: reasoning-off redo in progress; recorded when it lands.

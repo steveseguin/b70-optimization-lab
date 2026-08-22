@@ -38,3 +38,16 @@ Question this packet answers: smallest honest single-command B70 recipe.
 | 32,768 | 89.94 (±0.02) | 2824.9 (±4.8) |
 
 Raw engine rates run above server-suite medians by design (no HTTP/sampling); use the suite median as the serving expectation and this curve for the depth trend. Evidence: `lfm25-26b-q8.sweep.json` + `lfm25-26b-q8.meta.json` (model/bench shas inside).
+
+## Published operating point: standard (8K ctx, f16 KV, target-only)
+
+Two fresh-server runs, 12-prompt suite, 512-token responses,
+conventional 99-interval median computed from raw event offsets,
+`cached_tokens=0` verified per request:
+
+- run A: **`132.351606 tok/s`**
+- run B: **`132.467576 tok/s`**
+
+Evidence: `lfm25-26b-q8-std.benchA.json` / `lfm25-26b-q8-std.benchB.json` under
+`bench-results/neural-download/operating-points-20260822/`.
+Canary battery: reasoning-off redo in progress; recorded when it lands.
