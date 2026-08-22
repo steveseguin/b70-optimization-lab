@@ -157,6 +157,30 @@ report ran fp8 KV by default on the newer 0.27.1 XPU path, where the tradeoff
 may differ; our pinned vLLM cannot serve single-card yet - see the
 [vLLM TP1 bring-up finding](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-tp1-vllm-bringup-finding.md).)
 
+#### TP1 weight-quant ladder (Q4_K_M vs UD-Q4_K_XL vs UD-Q5_K_S, f16 KV)
+
+Same lane, same config, f16 KV, three weight files. Decode tg128 (tok/s):
+
+| context | **Q4_K_M** (17.67 GiB) | UD-Q5_K_S (17.38 GiB) | UD-Q4_K_XL (16.35 GiB) |
+| ---: | ---: | ---: | ---: |
+| 0 | **24.81** | 22.72 | 21.81 |
+| 8192 | **23.83** | 21.79 | 21.06 |
+| 16384 | **23.10** | 21.19 | 20.49 |
+| 32768 | **21.77** | 20.09 | 19.45 |
+
+**Counter-intuitive result:** decode speed is *inverse* to file size here -
+the smallest file (UD-Q4_K_XL, 16.35 GiB) is the **slowest** decoder, and the
+largest (plain Q4_K_M) is the **fastest** at every depth. Decode is therefore
+not purely bandwidth-bound on this build: it is Q4_K-tuned (Q4_K reorder +
+MMVQ), so uniform Q4_K_M hits the fast path while the unsloth UD mixed-precision
+dynamic quants do not. This ordering is a property of the tuned lane build, not
+a universal ranking of the formats. **Takeaway:** on this lane, prefer Q4_K_M
+for speed (it is also the quality-validated promoted lane); pick a UD quant only
+for its quality/size, accepting slower decode here.
+[data](experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.json),
+[chart](experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.svg),
+[finding](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-q4km-tp1-context-kv-sweep-finding.md).
+
 ### Qwen3.6 27B Model Board
 
 Last audited **2026-08-15**. These rows share a model family, not a quality,

@@ -1,0 +1,39 @@
+{
+  "format": "qwen38-tp1-weight-ladder-v1",
+  "date": "2026-08-22",
+  "hardware": "1x Intel Arc Pro B70 32 GiB (steve-b70s, gpu0)",
+  "engine": "llama.cpp SYCL, TP1 lane build build-sycl-aot-bmg-g31 (Q4_K-tuned: Q4_K reorder + MMVQ path)",
+  "protocol": "llama-bench pp2048 + tg128 at each depth, flash-attn on, 5 reps, KV f16, raw engine rates",
+  "note_metric": "raw-engine tg128/pp2048, NOT the 27.82 conventional realistic-suite metric; use for weight-quant SHAPE comparison at fixed config",
+  "depths": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+  "variants": {
+    "Q4_K_M": {
+      "file": "Qwen3.8-27B-Q4_K_M.gguf",
+      "size_gib": 17.67,
+      "sha256_16": "31629f53165ab6a7",
+      "decode_tg128": [24.81, 24.46, 24.25, 23.83, 23.10, 22.42, 21.77],
+      "prefill_pp2048": [825.24, 919.67, 892.64, 850.97, 779.50, 719.39, 667.83]
+    },
+    "UD-Q5_K_S": {
+      "file": "Qwen3.8-27B-UD-Q5_K_S.gguf",
+      "size_gib": 17.38,
+      "sha256_16": "d8d62ffcf84d4265",
+      "decode_tg128": [22.72, 22.37, 22.13, 21.79, 21.19, 20.61, 20.09],
+      "prefill_pp2048": [849.30, 778.35, 759.39, 726.59, 671.59, 625.83, 588.21]
+    },
+    "UD-Q4_K_XL": {
+      "file": "Qwen3.8-27B-UD-Q4_K_XL.gguf",
+      "size_gib": 16.35,
+      "sha256_16": "3f227079003add25",
+      "decode_tg128": [21.81, 21.53, 21.37, 21.06, 20.49, 19.95, 19.45],
+      "prefill_pp2048": [762.57, 735.45, 719.47, 689.58, 639.46, 596.49, 564.86]
+    }
+  },
+  "findings": [
+    "Decode speed order at every depth: Q4_K_M > UD-Q5_K_S > UD-Q4_K_XL.",
+    "This is INVERSE to file size: UD-Q4_K_XL is the smallest (16.35 GiB) yet the slowest decoder; Q4_K_M is the largest (17.67 GiB) yet fastest. So decode here is NOT purely bandwidth-bound.",
+    "Cause is lane-specific: this build is tuned for uniform Q4_K (Q4_K reorder + MMVQ). Plain Q4_K_M hits the tuned path; the mixed-precision unsloth UD dynamic quants (per-tensor mixed block types) do not, so their smaller size does not translate to faster decode on THIS build.",
+    "Caveat: the ordering is a property of the Q4_K-tuned lane build, not a universal ranking of the quant formats. On an untuned/upstream SYCL build the UD quants could rank differently.",
+    "Recommendation for this lane: use Q4_K_M for speed (and it is the quality-validated promoted lane). Choose a UD quant only for its quality/size properties, accepting slower decode here."
+  ]
+}

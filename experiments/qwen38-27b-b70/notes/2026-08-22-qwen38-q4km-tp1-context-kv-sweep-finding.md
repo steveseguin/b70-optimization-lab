@@ -66,10 +66,32 @@ the TP1 context+KV question on our quality-accepted lane in the meantime, and
 gives a concrete KV-dtype recommendation the vLLM fp8-KV numbers cannot (they
 never had an f16-KV control at depth on single card here).
 
+## Weight-quant ladder (same lane, f16 KV): Q4_K_M vs UD-Q4_K_XL vs UD-Q5_K_S
+
+Ran the identical sweep for two unsloth UD dynamic quants. Decode tg128:
+
+| depth | Q4_K_M (17.67G) | UD-Q5_K_S (17.38G) | UD-Q4_K_XL (16.35G) |
+| ---: | ---: | ---: | ---: |
+| 0 | 24.81 | 22.72 | 21.81 |
+| 8192 | 23.83 | 21.79 | 21.06 |
+| 32768 | 21.77 | 20.09 | 19.45 |
+
+**Decode is inverse to file size:** the smallest file (UD-Q4_K_XL) is the
+slowest, the largest (Q4_K_M) the fastest, at every depth. So decode is not
+purely bandwidth-bound on this build. Cause: the lane build is **Q4_K-tuned**
+(Q4_K reorder + MMVQ), so uniform Q4_K_M hits the fast path while the UD
+mixed-precision per-tensor quants do not. This is a lane-build property, not a
+universal format ranking - an untuned upstream SYCL build could rank them
+differently. Practical: on this lane, Q4_K_M is fastest *and* the
+quality-validated promoted weight; use a UD quant only for its quality/size.
+Data: `data/2026-08-22-qwen38-tp1-weight-ladder-sweep.json`, chart
+`...-weight-ladder-sweep.svg`.
+
 ## Next
 
 - Extend the same sweep to **Q8_0** target (higher-quality weight) for the
-  paired weight-vs-KV picture, if a TP1 Q8_0 row is wanted for the board.
+  paired weight-vs-KV picture, if a TP1 Q8_0 row is wanted for the board
+  (no Q8_0 GGUF is currently staged on this host).
 - MTP/DFlash TP1 ladder needs the llama.cpp *server* (speculation), not
   llama-bench; separate driver.
 - Fold the decode/prefill-vs-context curves into the TP1 package README that
