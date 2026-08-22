@@ -533,6 +533,15 @@ loaded service.
     refrozen hashes. Its strict primary gate is more than `17.092 us/call` at
     M6 on each TP weight shard; even a pass would authorize only a later
     integration experiment, not a server/full-25 run or a claim of 105 tok/s.
+    The Q1 eager mtp.fc INT4 operator screen then ran (user-authorized
+    2026-08-22, GPU2, eight-arm A-B-B-A under the bounded watchdog) and
+    **passed** `qualified-only-for-default-off-integration-design`: W4A16
+    ~33 vs FP16 ~92 us/call, ~58-60 us/call saved on both shards, all
+    correctness/mutation/stability gates green, CI lowers far above the
+    17.092 hurdle. This is operator-isolated eager evidence, not endpoint
+    tok/s and not authorization to integrate; a default-off integration
+    patch is a separate preregistered, separately authorized experiment.
+    See the [mtp.fc result](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-mtp-fc-int4-operator-result.md).
     Ignore aggregate C5/C32 rows as single-stream leads. See the
     [feed audit](experiments/qwen38-27b-b70/notes/2026-08-20-localmaxxing-qwen38-external-lever-intake.md)
     and [blocked operator design](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp-fc-int4-operator-prereg.md).

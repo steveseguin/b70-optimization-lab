@@ -1,0 +1,205 @@
+{
+  "authorization": "pass permits only a separately reviewed default-off integration patch and compiled/graph/TP2 model qualification; no endpoint run or submission",
+  "bootstrap_iterations": 10000,
+  "classification": "qualified-only-for-default-off-integration-design",
+  "minimum_m6_saving_us_per_call_each_rank_strict": 17.092,
+  "order": [
+    "rank0-a1",
+    "rank0-b1",
+    "rank0-b2",
+    "rank0-a2",
+    "rank1-a1",
+    "rank1-b1",
+    "rank1-b2",
+    "rank1-a2"
+  ],
+  "packet_paths": [
+    "/home/steve/qwen38-mtp-fc-int4-abba-20260822-r2/rank0-1-control.json",
+    "/home/steve/qwen38-mtp-fc-int4-abba-20260822-r2/rank0-2-candidate.json",
+    "/home/steve/qwen38-mtp-fc-int4-abba-20260822-r2/rank0-3-candidate.json",
+    "/home/steve/qwen38-mtp-fc-int4-abba-20260822-r2/rank0-4-control.json",
+    "/home/steve/qwen38-mtp-fc-int4-abba-20260822-r2/rank1-1-control.json",
+    "/home/steve/qwen38-mtp-fc-int4-abba-20260822-r2/rank1-2-candidate.json",
+    "/home/steve/qwen38-mtp-fc-int4-abba-20260822-r2/rank1-3-candidate.json",
+    "/home/steve/qwen38-mtp-fc-int4-abba-20260822-r2/rank1-4-control.json"
+  ],
+  "packet_sha256": [
+    "2f297a3d8aaa3fc3192464634805aa889f9ca9b58f554ca09b3aeb36866a8ba1",
+    "aa1fa453ee582a79ba72e6bcbfccf537bc41fb647f2bcd73858b74682d8c4e1e",
+    "9fb9b20006e77529ad33bde20966c7a86c77f6062d6acb48013d1000d190a8ae",
+    "705c516118ac29ee713701a38770cb5675c80d06b9bbc8a464d565540cf34f3f",
+    "ca2d851e10706d4a8339707f1d5806643a784f8051d0e1b2e18f15006bf63d57",
+    "883ba9e1a3fe6ffc37c03ac9c8c333f15e626649d7631edb87a99a2d7b4a3a43",
+    "8dc23cf79251f57fd90253c46396268a01446718ccc459efae3fb8e704f9c130",
+    "4ce1d114419453b7badc8b685f58f4e7c891b127d566135e0a6467a81801992d"
+  ],
+  "passed": true,
+  "process_count": 8,
+  "rank_results": [
+    {
+      "passed": true,
+      "shape_results": [
+        {
+          "all_pair_and_combined_ci_lowers_pass": true,
+          "bootstrap": {
+            "combined_95_ci_saving_us_per_call": [
+              59.90970375,
+              60.088993249999994
+            ],
+            "iterations": 10000,
+            "pair_1_95_ci_saving_us_per_call": [
+              60.133840000000006,
+              60.47001999999999
+            ],
+            "pair_2_95_ci_saving_us_per_call": [
+              59.62268000000002,
+              59.74046
+            ],
+            "seed": 38500001
+          },
+          "candidate_arm_medians_us_per_call": [
+            32.5663,
+            33.322379999999995
+          ],
+          "central_saving_us_per_call": 60.04375,
+          "combined_ci_lower_clears_m6_hurdle": null,
+          "control_arm_medians_us_per_call": [
+            92.96248,
+            93.0137
+          ],
+          "m6_strict_hurdle_us_per_call": null,
+          "paired_abba_savings_us_per_call": [
+            60.39618,
+            59.691320000000005
+          ],
+          "paired_point_estimates_clear_m6_hurdle": null,
+          "passed": true,
+          "rows": 1
+        },
+        {
+          "all_pair_and_combined_ci_lowers_pass": true,
+          "bootstrap": {
+            "combined_95_ci_saving_us_per_call": [
+              58.659639999999996,
+              58.76610999999998
+            ],
+            "iterations": 10000,
+            "pair_1_95_ci_saving_us_per_call": [
+              58.89415999999999,
+              59.053539999999984
+            ],
+            "pair_2_95_ci_saving_us_per_call": [
+              58.36558,
+              58.501819999999995
+            ],
+            "seed": 38500006
+          },
+          "candidate_arm_medians_us_per_call": [
+            32.7483,
+            33.370999999999995
+          ],
+          "central_saving_us_per_call": 58.72763,
+          "combined_ci_lower_clears_m6_hurdle": true,
+          "control_arm_medians_us_per_call": [
+            91.75113999999999,
+            91.82342
+          ],
+          "m6_strict_hurdle_us_per_call": 17.092,
+          "paired_abba_savings_us_per_call": [
+            59.00283999999999,
+            58.452420000000004
+          ],
+          "paired_point_estimates_clear_m6_hurdle": true,
+          "passed": true,
+          "rows": 6
+        }
+      ],
+      "tp_rank": 0
+    },
+    {
+      "passed": true,
+      "shape_results": [
+        {
+          "all_pair_and_combined_ci_lowers_pass": true,
+          "bootstrap": {
+            "combined_95_ci_saving_us_per_call": [
+              60.08443349999999,
+              60.2472
+            ],
+            "iterations": 10000,
+            "pair_1_95_ci_saving_us_per_call": [
+              60.18350000000001,
+              60.376166500000004
+            ],
+            "pair_2_95_ci_saving_us_per_call": [
+              59.918813499999985,
+              60.15178
+            ],
+            "seed": 38500101
+          },
+          "candidate_arm_medians_us_per_call": [
+            32.65886,
+            32.88558
+          ],
+          "central_saving_us_per_call": 60.19117,
+          "combined_ci_lower_clears_m6_hurdle": null,
+          "control_arm_medians_us_per_call": [
+            92.9357,
+            92.99108
+          ],
+          "m6_strict_hurdle_us_per_call": null,
+          "paired_abba_savings_us_per_call": [
+            60.27684,
+            60.1055
+          ],
+          "paired_point_estimates_clear_m6_hurdle": null,
+          "passed": true,
+          "rows": 1
+        },
+        {
+          "all_pair_and_combined_ci_lowers_pass": true,
+          "bootstrap": {
+            "combined_95_ci_saving_us_per_call": [
+              58.01003,
+              58.855940000000004
+            ],
+            "iterations": 10000,
+            "pair_1_95_ci_saving_us_per_call": [
+              58.9659135,
+              59.11334
+            ],
+            "pair_2_95_ci_saving_us_per_call": [
+              56.987827,
+              58.65548650000001
+            ],
+            "seed": 38500106
+          },
+          "candidate_arm_medians_us_per_call": [
+            32.70774,
+            33.928439999999995
+          ],
+          "central_saving_us_per_call": 58.43799,
+          "combined_ci_lower_clears_m6_hurdle": true,
+          "control_arm_medians_us_per_call": [
+            91.7501,
+            91.76205999999999
+          ],
+          "m6_strict_hurdle_us_per_call": 17.092,
+          "paired_abba_savings_us_per_call": [
+            59.04236,
+            57.833619999999996
+          ],
+          "paired_point_estimates_clear_m6_hurdle": true,
+          "passed": true,
+          "rows": 6
+        }
+      ],
+      "tp_rank": 1
+    }
+  ],
+  "requires_both_m6_pairs_above_strict_hurdle": true,
+  "requires_cross_process_bit_stability": true,
+  "requires_nonnegative_both_m1_pairs": true,
+  "requires_pair_and_combined_bootstrap_95_ci_lower": "M1 all >= 0; M6 pair CIs > 0 and combined CI > strict hurdle",
+  "schema": "qwen38-mtp-fc-int4-operator-compare-v1"
+}

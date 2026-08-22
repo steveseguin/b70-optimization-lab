@@ -2,8 +2,7 @@
 
 Date: 2026-08-21
 
-Status: **Q1 AUTHORIZED 2026-08-22** by explicit user go-ahead recorded this
-session, after every drafted prerequisite was satisfied and frozen. The four
+Status: **Q1 COMPLETE 2026-08-22 — PASS** (`qualified-only-for-default-off-integration-design`); see the [result](2026-08-22-qwen38-mtp-fc-int4-operator-result.md). Authorized by explicit user go-ahead this session, after every drafted prerequisite was satisfied and frozen. The four
 launch-dependency conditions below are all met: (1) the authorized host-wide
 `xe` recovery completed with its full post-recovery gate
 ([recovery note](2026-08-22-measuring-host-xe-recovery-2.md)); (2) the
