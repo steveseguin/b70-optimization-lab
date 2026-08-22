@@ -1,0 +1,65 @@
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index e5e51d6..f67390c 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -2,6 +2,7 @@
+ #include <array>
+ #include <cctype>
+ #include <cstdlib>
++#include <limits>
+ #include <memory>
+ #include <mutex>
+ #include <string>
+@@ -1031,6 +1032,52 @@ void gdn_attention_spec_decode(
+     b = torch::empty({total_spec_tokens, local_num_v_heads}, options);
+     a = torch::empty_like(b);
+   }
++  // Diagnostic-only write-before-read contract probe (poison build; never
++  // deployable). When VLLM_XPU_GDN_SPEC_SCRATCH_POISON names a field group
++  // (or "all"), the named spec scratch buffers are filled with hostile
++  // sentinels BEFORE the spec kernels run, in both the persistent and
++  // per-call branches. If every field honors write-before-read, outputs are
++  // unaffected; any read of a poisoned value produces NaN garbage (float)
++  // or an invalid state slot (int), localizing the violating field group.
++  // has_initial_state and exact_query_start_loc are excluded: their
++  // contract is initialize-once, const thereafter.
++  if (const char* poison_env =
++          std::getenv("VLLM_XPU_GDN_SPEC_SCRATCH_POISON")) {
++    const std::string poison(poison_env);
++    if (!poison.empty()) {
++      auto want = [&](const char* name) {
++        return poison == "all" || poison.find(name) != std::string::npos;
++      };
++      const double fnan = std::numeric_limits<double>::quiet_NaN();
++      if (want("indices")) {
++        accepted_state_indices.fill_(2139062143);
++        running_state_indices.fill_(2139062143);
++      }
++      if (want("conv")) {
++        base_conv_state.fill_(fnan);
++      }
++      if (want("compact")) {
++        compact_qkvz.fill_(fnan);
++        compact_ba.fill_(fnan);
++        compact_z.fill_(fnan);
++      }
++      if (want("qkvba")) {
++        q.fill_(fnan);
++        k.fill_(fnan);
++        v.fill_(fnan);
++        b.fill_(fnan);
++        a.fill_(fnan);
++      }
++      if (want("exact") && exact_core.defined()) {
++        exact_core.fill_(fnan);
++      }
++      static std::once_flag poison_marker_once;
++      std::call_once(poison_marker_once, [&poison] {
++        TORCH_WARN(
++            "VLLM_XPU_GDN_SPEC_SCRATCH_POISON active: ", poison);
++      });
++    }
++  }
+ 
+ #define SPEC_LAUNCHER(scalar_t)                                           \
+   do {                                                                    \

@@ -178,3 +178,42 @@ Operational guidance recorded in CURRENT.md: long-context serving on
 this lane must run `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0` until the
 root cause is fixed; the sealed short-KV record identity (scratch=1,
 single-chunk-only traffic) is unaffected.
+
+## Poison-probe preregistration (p-series; longkv3's 31/32 forced this)
+
+longkv3's a1 then showed the scratch=0 environment is not clean either
+(31/32 same-boot repeat divergence; see the longkv3 prereg result),
+unifying both presentations as one suspected **write-before-read** in
+the GDN spec scratch path. The p-series tests that contract directly:
+
+- Instrumented source: worktree of the kernels repo at the pinned head
+  `2dd55f38…` + the tracked poison door
+  ([patch](../data/2026-08-22-gdn-scratch-poison-door.patch), SHA-256
+  `38267202813ee14beeafef217a62c9a1d5f9855d238ce7f6c1d76ae3813db63e`) —
+  an env-gated NaN/sentinel prefill of the 12 rewritable spec scratch
+  fields before every spec call, both allocation branches, excluding
+  the two initialize-once fields. Built with the stock-matching flag
+  set (MoE/FA2/basic/MQA off, GDN on, icpx 2025.3, Release); the stock
+  `_xpu_C` exports were used to reverse those flags.
+- Poison stage: composite stage with only `_xpu_C.abi3.so` replaced
+  (new sha `169bcbdd4db1578c0fcc35414231f88fe824e03534e866302a1f71d1049c29ac`),
+  20-file graph manifest regenerated
+  (`c6801a90a43d56f2861c7ba00ba97328d6d18ea0d713b831b9e4aecf7897abd0`).
+  NEVER deployable; diagnostics only.
+- Driver: [`run-20260822-qwen38-chunk-poison-diag.sh`](../scripts/run-20260822-qwen38-chunk-poison-diag.sh),
+  SHA-256 `e9d8a684db4b74f79ad51e42f2a887cab25369f3abc9015c923117cb9ffdc681`;
+  all arms on the frozen 8-row d4 suite, persistent pool ON, stock
+  policy, fresh roots, evidence from quality/bench JSON.
+
+Arms and frozen interpretations:
+
+- **p0** (poison unset): must reproduce the d4 needle failure. If it
+  does not, the rebuild differs materially from the stock binary and
+  every later p-arm is invalid for attribution (stop; document).
+- **p1** (`all`): catastrophic garbage on the rows themselves =>
+  write-before-read proven; proceed to bisect. Outputs equivalent to
+  p0 (needle failure included) => the 12 poisoned fields all honor the
+  contract and the defect lies outside them (pool-neighbor scribble or
+  KV recycling next).
+- **p2..p5** (`qkvba` | `compact` | `indices,conv` | `exact`): bisect
+  the violating group; run only groups implicated by p1.
