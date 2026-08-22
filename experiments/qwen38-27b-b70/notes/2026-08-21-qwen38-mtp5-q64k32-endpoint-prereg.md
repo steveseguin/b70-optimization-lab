@@ -162,3 +162,17 @@ same exact-output parity report itself after each successor arm. Labels
 `qwen38-q64k32-endpoint5-{a1,b1,b2,a2}-20260822`; driver refrozen at
 `3a997e0dc1a4b6d8058f9863b1934834bc9a1412622268799d5dd9168384db10`.
 All other gates, order, and stop rules unchanged.
+
+## endpoint5 stop and final budgeted relaunch endpoint6 (2026-08-22)
+
+endpoint5 completed a1 (`101.073229` conventional, prompt-6 168-token
+valid family) and b1 in full (markers 2/2, battery passed, 22/25
+report-only parity, `101.405016` = `+0.33%`), then stopped at b2 on the
+same stochastic prompt-6 short-family metric refusal as endpoint3 (second
+stochastic occurrence; b2's partial candidate median `101.487486` is not
+quotable); a2 refused per the predecessor gate. Per the preregistered
+bounded rule this authorizes the second and **final** relaunch,
+endpoint6 (`qwen38-q64k32-endpoint6-{a1,b1,b2,a2}-20260822`, driver
+`326e07aa799758bfaa63bad620f8cc6ae8ab8d3b72b08d7229aa2b4b44e5648e`); a further stochastic stop closes this design as blocked on
+prompt-6 nondeterminism. Report-only evidence so far: two completed A-B
+pairs, endpoint4 `+0.53%` and endpoint5 `+0.33%`.
