@@ -186,8 +186,8 @@ Style genome (duotone-hixffp):
         </tr>
         <tr>
           <th scope="row" class="model">Qwen3.8-27B <small>Alibaba &middot; Aug 2026</small></th>
-          <td class="mut">Newest all-rounder, also reads pictures; one card gives 84 tok/s here, ~100+ needs 2 cards (INT4)</td>
-          <td class="num r">1&ndash;2</td><td class="num r">84&ndash;107</td>
+          <td class="mut">Newest all-rounder, also reads pictures. One card: 27.8 tok/s, quality-checked. Two cards with our INT4 + MTP5 setup: 101.9 tok/s, lab-verified — but 3 of 25 long test prompts can come out different run-to-run</td>
+          <td class="num r">1&ndash;2</td><td class="num r">27.8&ndash;101.9</td>
           <td class="lnk"><a href="community/sergiiob-qwen38-27b-vllm-xpu/README.md">our setup</a></td>
         </tr>
         <tr>
@@ -271,6 +271,13 @@ Style genome (duotone-hixffp):
           <td class="num r">107.48<div class="ratebar" style="width:58%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="rapid snapshot">quick one-off test</td>
           <td class="lnk"><a href="results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">test report</a></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.8-27B <small>newest all-rounder &middot; reads pictures &middot; Aug 2026 &middot; one card, no tricks: 27.8</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">INT4 + MTP5</td><td class="num r">2&times;</td>
+          <td class="num r">101.92<div class="ratebar" style="width:55%" aria-hidden="true"></div></td>
+          <td class="mut hide-s" title="preferred median, 99-interval; TP2 full-25 determinism campaign: 22/25 token-exact">verified &middot; 3/25 long prompts not token-stable</td>
+          <td class="lnk"><a href="experiments/qwen38-27b-b70/notes/2026-08-20-detpad-composite-tp2-full25-result.md">test report</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Muse-Glimmer-30B <small>Meta &middot; reads pictures &middot; Aug 2026 &middot; long answers: 161.9</small></th>
@@ -357,10 +364,10 @@ Style genome (duotone-hixffp):
           <td class="lnk"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">report</a></td>
         </tr>
         <tr>
-          <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Qwen3.8-27B <small>newest all-rounder &middot; Aug 2026 &middot; 2-card INT4 claim &middot; our one-card check: 83.7 &middot; quality gate open</small></th>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">B70-tested: </span>Qwen3.8-27B <small>newest all-rounder &middot; Aug 2026 &middot; claimed 106.7 on 2 cards; we confirmed the lane at 101.9 &middot; one-card GPTQ variant failed our quality gate</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP4</td><td class="num r">2&times;</td>
-          <td class="num r">106.7<div class="ratebar" style="width:57%" aria-hidden="true"></div></td>
-          <td class="lnk"><a href="community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md">lab check</a></td>
+          <td class="num r">101.92<div class="ratebar" style="width:55%" aria-hidden="true"></div></td>
+          <td class="lnk"><a href="claims/sergiiob-qwen38-27b-gptq-int4-mtp4-tp2.json">claim log</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Ornith-1.5-35B-A3B <small>brand-new entry &middot; self-reported, unverified</small></th>

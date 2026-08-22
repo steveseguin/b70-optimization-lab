@@ -23,11 +23,19 @@
     },
     {
       "date": "2026-08-16",
-      "event": "lab re-ran on one B70: 83.70 tok/s MTP4, matching the contributor's one-card 83.7 claim; 106.7 is the two-card INT4 figure, not yet re-run here; FP16-KV variant reached 87.61 but is not the no-quality-loss deployment; GPTQ target quality gate open"
+      "event": "lab re-ran on one B70: 83.70 tok/s MTP4, matching the contributor's one-card 83.7 claim; 106.7 is the two-card INT4 figure, not yet re-run here; FP16-KV variant reached 87.61 but is not the no-quality-loss deployment; GPTQ target quality-REJECTED (deterministic canary: returned 30, correct is 14)"
     },
     {
       "date": "2026-08-21",
       "event": "site row corrected: 106.7 displayed as a 2-card claim, was mislabeled 1 card"
+    },
+    {
+      "date": "2026-08-21",
+      "event": "quality status corrected on site: the one-card 83.7/87.6 GPTQ-target configs are quality-rejected (deterministic canary failed), not merely ungated; quality-passing one-card lanes run ~23 tok/s"
+    },
+    {
+      "date": "2026-08-21",
+      "event": "lab owner confirmed the TP2 INT4 lane is verified at >100 tok/s (MTP4 100.497 / MTP5 101.922, 2026-08-18); caveat: full-25 determinism campaign 22/25 token-exact, recorded on the site row"
     }
   ],
   "submitter": {
@@ -38,9 +46,9 @@
     "author": "SergiioB"
   },
   "verification": {
-    "tok_s": 83.7,
-    "metric": "lab re-run on ONE B70, native MTP4, p512/g128 n=5; matches the contributor's one-card 83.7 claim",
-    "date": "2026-08-16",
-    "evidence": "community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md"
+    "tok_s": 101.922,
+    "metric": "lab TP2 INT4 MTP5, submitted 2026-08-18, launch-config text corrected 2026-08-20; full-25 arms reproduced ~100.9-101.1",
+    "date": "2026-08-18",
+    "evidence": "experiments/qwen38-27b-b70/localmaxxing/qwen38-27b-int4-mtp5-101.922tok-20260818.CORRECTION-20260820.json"
   }
 }

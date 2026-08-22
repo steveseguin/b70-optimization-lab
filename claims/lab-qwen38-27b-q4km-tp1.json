@@ -1,0 +1,30 @@
+{
+  "id": "lab-qwen38-27b-q4km-tp1",
+  "model": "Qwen3.8-27B",
+  "recipe": {
+    "engine": "llama.cpp-sycl",
+    "quant": "Q4_K_M",
+    "speedup": null,
+    "cards": 1,
+    "tp": 1
+  },
+  "claimed": {
+    "tok_s": 27.81,
+    "metric": "final-binary capture 27.813/27.825, no speculation",
+    "date": "2026-08-21",
+    "by": "lab"
+  },
+  "status": "lab-verified",
+  "verification": {
+    "tok_s": 27.81,
+    "metric": "quality battery pass_all (seven exact canaries, 8/8 repeats, needle); 24/24 oracle-exact",
+    "date": "2026-08-21",
+    "evidence": "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-quality-battery-result.md"
+  },
+  "history": [
+    {
+      "date": "2026-08-21",
+      "event": "measured in lab; one-card no-speculation baseline for the Qwen3.8 lane"
+    }
+  ]
+}
