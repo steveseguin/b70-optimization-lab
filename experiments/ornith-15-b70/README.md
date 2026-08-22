@@ -1,0 +1,80 @@
+# Ornith 1.5 decode optimization lab
+
+This directory owns the lab's decode-focused optimization work for the
+official Ornith 1.5 GGUF models. The maintained recipes remain in
+`repro/ornith-15-*/`; outside reports are inputs to validation, not the source
+of truth for a published recipe.
+
+## In-scope models
+
+- Ornith 1.5 9B dense, Q8_0, one B70.
+- Ornith 1.5 35B-A3B MoE, Q4_K_M, one B70.
+
+The inspected 35B GGUF has 41 layers, hidden width 2048, expert width 512,
+256 routed experts, and 8 active experts per token. Its routed gate/up tensors
+are Q4_K while routed down tensors are Q6_K. Optimization tests must cover both
+real single-token `MUL_MAT_ID` shapes rather than a nearby Qwen proxy.
+
+## Measured starting points
+
+The fresh target-only intake diagnostic on the four-B70 measuring host (one
+visible B70 per process) reported:
+
+| Model | Decode median | p10 | Evidence |
+| --- | ---: | ---: | --- |
+| 9B Q8_0 | 50.109 tok/s | 50.061 | `../qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json` |
+| 35B-A3B Q4_K_M | 105.782 tok/s | 105.284 | `../qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json` |
+
+These are diagnostic serving medians, not a promise that a different host,
+binary, driver, or benchmark protocol will reproduce them.
+
+## Decode campaign rules
+
+1. Compare a candidate with a matched control: same model identity, binary
+   base, device visibility, context, KV types, prompt/decode sizes, repetitions,
+   and host state.
+2. Record raw repetitions and identities. Do not interpolate or extrapolate a
+   context point that was not measured.
+3. A throughput result is not promotable until deterministic token/logit checks
+   and the model's canary battery pass.
+4. Preserve negative and neutral candidates so they are not rediscovered.
+5. Credit an outside contributor only for the concrete patch or idea that
+   survives our matched validation. The integrated patch and user recipe live
+   here.
+
+## First candidates
+
+- **Dense command-graph A/B — CLOSED NEUTRAL:** matched local-file runs measured
+  50.149 tok/s graph-off versus 50.169 graph-on (+0.0388%). The earlier apparent
+  2x was a slow-NFS mmap confound, documented in
+  `notes/2026-08-22-decode-first-screen.md`.
+- **MoE graph eligibility — CLOSED NEGATIVE:** the eligibility correction from
+  llama.cpp PR 25089 was useful as a concrete test input, with credit to
+  Captain-Tripps for that idea. Our maintained port added exact dispatch gates
+  and fixed a first-capture dependency by running the persistent expert reorder
+  eagerly. Both real Ornith Q4_K/Q6_K shapes passed CPU equivalence, but the
+  full model fell from a `101.846 tok/s` graph-off control mean to
+  `48.805 tok/s` graph-on (`-52.08%`). Preserve the patch as a negative; do not
+  enable `GGML_SYCL_ENABLE_GRAPH=1` for this lane. Evidence is in
+  `data/2026-08-22-ornith35b-moe-command-graph-screen.json`.
+- **Ordered MoE add reduction — ACCEPTED +4.85% serving:** the real graph
+  reduces eight weighted expert rows with seven serial FP32 `ADD` launches in
+  each of 40 layers. The strict default-off lab patch preserves the weighted
+  multiplication and performs those seven ordered additions in one kernel,
+  removing 240 launches/token. Raw-engine means improved `103.048 -> 108.098`
+  tok/s (+4.90%); two-fresh-server means improved `99.664 -> 104.499` tok/s
+  (+4.85%). The forced 400-token door-off/on output was byte-identical and the
+  candidate canary battery passed. See
+  `notes/2026-08-22-ornith35b-moe-add-reduce-positive.md`.
+- **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
+  tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
+  the tuned dispatch and beat the now-promoted ordered reduction.
+- **Speculative decode:** investigate separately if kernel/graph work cannot
+  approach the requested 2x user-visible rate. Label target-only and assisted
+  results separately.
+
+## Promotion gate
+
+A candidate must have a reproducible matched A/B, exact runtime and model
+identity, target-only versus assisted labeling, deterministic output evidence,
+and two fresh-server serving measurements before it changes a public package.

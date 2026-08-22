@@ -167,7 +167,7 @@
   "items": []
  },
  "commands": {
-  "preflight": "sha256sum -c <(awk '{print $0}' repro/lfm25-26b-q8-b70/model-manifest.json >/dev/null); source /opt/intel/oneapi/setvars.sh --force; export ONEAPI_DEVICE_SELECTOR=level_zero:0",
+  "preflight": "python3 scripts/verify-neural-download-model.py repro/lfm25-26b-q8-b70/model-manifest.json \"$MODEL_DIR\" && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
   "launch": "BUILD_DIR/bin/llama-server --model $MODEL_DIR/LFM2.5-2.6B-Q8_0.gguf --alias lfm25 --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
   "health": "curl -fsS http://127.0.0.1:18100/health",
   "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model lfm25 --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
@@ -180,6 +180,7 @@
   "repro/lfm25-26b-q8-b70/lfm25-26b-q8.meta.json",
   "repro/lfm25-26b-q8-b70/depth-sweep.svg",
   "data/neural-download-audit-host-depth-sweeps-20260822/README.md",
+  "scripts/verify-neural-download-model.py",
   "docs/neural-download-packet-standard.md"
  ],
  "missing": [

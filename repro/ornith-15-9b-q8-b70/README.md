@@ -22,6 +22,18 @@ Status: **intake verified (direct+ordinary I/O) and baseline PASSED**
 Question this packet answers: recent official one-card model as a beginner
 package candidate.
 
+## Storage requirement
+
+Keep the GGUF on a local NVMe/SATA SSD or a sufficiently fast direct-attached
+USB SSD while serving. Do not benchmark this packet from a slow network mmap.
+On the independent audit host, the exact Q8_0 file decoded at
+`50.149 tok/s` from internal NVMe but only `25.642 tok/s` from the current
+100 Mb/s NFS mount under the same graph-off command; the remote samples also
+ramped as pages arrived. That is an I/O placement failure, not a model or
+kernel baseline. Verify the copied file against the SHA-256 above before use.
+Raw matched evidence is in
+`../../experiments/ornith-15-b70/notes/2026-08-22-decode-first-screen.md`.
+
 ## Recipe, benchmarks, quality — TBD
 
 Filled only from measured runs per

@@ -1,0 +1,55 @@
+{
+  "date": "2026-08-22",
+  "status": "rejected",
+  "reason": "Full-model decode regressed by 52.08% versus the mean of matched graph-off controls.",
+  "model": {
+    "path": "/home/steve/.cache/b70-optimization-lab/models/ornith-1.5-35b-a3b-q4km/Ornith-1.5-35B-Q4_K_M.gguf",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+    "direct_and_ordinary_verified": true
+  },
+  "runtime": {
+    "llama_cpp_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "llama_bench_sha256": "9bdd7033e50e22af9b05ec2c30742b5248f6708a89080974b0f0c491963c6e70",
+    "libggml_sycl_sha256": "25a4340c323e7ff65143bbbe5d9ea0a19ce77f2f7d504d626db56493c52cdfc5",
+    "compiler": "Intel oneAPI 2026.1 icpx",
+    "sycl_aot_target": "bmg_g31"
+  },
+  "candidate": {
+    "input": "llama.cpp PR 25089 command-graph eligibility idea",
+    "input_patch_sha256": "bcdeee99e3362af4329de348c76f1556b237c562035690ae74731ae60b01a519",
+    "maintained_port": "Fail-closed fused-dispatch predicate plus an eager first call for persistent K-quant expert reorder.",
+    "archived_patch": "../patches/llamacpp-ornith15-moe-command-graph-negative-20260822.patch"
+  },
+  "correctness": {
+    "q4k_gate_up_256_experts_8_used_cpu_vs_sycl": "pass",
+    "q6k_down_256_experts_8_used_cpu_vs_sycl": "pass",
+    "graph_capture_after_eager_reorder": "pass",
+    "multi_token_mul_mat_id_remains_eager": "pass",
+    "concat_dim0_graph_case": "pass",
+    "concat_dim3_contiguous_remains_eager": "pass"
+  },
+  "microseconds_per_call": {
+    "graph_off": {
+      "q4k_gate_or_up": 10.05,
+      "q6k_down": 12.82
+    },
+    "graph_on": {
+      "q4k_gate_or_up": 22.84,
+      "q6k_down": 30.40
+    },
+    "note": "A single-node command graph cannot amortize graph update overhead; full-model throughput is the decisive gate."
+  },
+  "full_model_tg128_tok_s": {
+    "graph_off_a": 102.155356,
+    "graph_on": 48.805097,
+    "graph_off_b": 101.536577,
+    "graph_off_mean": 101.8459665,
+    "graph_on_delta_percent": -52.07949938793108
+  },
+  "raw_files": [
+    "2026-08-22-ornith35b-local-graph0.json",
+    "2026-08-22-ornith35b-local-graph1.json",
+    "2026-08-22-ornith35b-local-graph0-reverse.json",
+    "2026-08-22-ornith35b-local-direct-verification.json"
+  ]
+}

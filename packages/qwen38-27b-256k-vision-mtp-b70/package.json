@@ -181,7 +181,7 @@
   "items": []
  },
  "commands": {
-  "preflight": "sha256sum -c <(awk '{print $0}' repro/qwen38-27b-256k-vision-mtp-b70/model-manifest.json >/dev/null); source /opt/intel/oneapi/setvars.sh --force; export ONEAPI_DEVICE_SELECTOR=level_zero:0",
+  "preflight": "python3 scripts/verify-neural-download-model.py repro/qwen38-27b-256k-vision-mtp-b70/model-manifest.json \"$MODEL_DIR\" && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
   "launch": "BUILD_DIR/bin/llama-server --model $MODEL_DIR/Qwen3.8-27B-UD-Q5_K_S.gguf --alias qwen38pkg --mmproj $MODEL_DIR/mmproj-F16.gguf --model-draft $MODEL_DIR/MTP/mtp-Qwen3.8-27B-Q4_0.gguf --device-draft SYCL0 --gpu-layers-draft 99 --ctx-size 262144 --cache-type-k q8_0 --cache-type-v q8_0 --cache-type-k-draft q8_0 --cache-type-v-draft q8_0 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
   "health": "curl -fsS http://127.0.0.1:18100/health",
   "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model qwen38pkg --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
@@ -193,6 +193,7 @@
   "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json",
   "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.meta.json",
   "repro/qwen38-27b-256k-vision-mtp-b70/depth-sweep.svg",
+  "scripts/verify-neural-download-model.py",
   "docs/neural-download-packet-standard.md"
  ],
  "missing": [

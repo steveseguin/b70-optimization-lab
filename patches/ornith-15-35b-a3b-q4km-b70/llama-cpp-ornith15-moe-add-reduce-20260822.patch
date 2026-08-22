@@ -1,0 +1,146 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 3f82020..7dd50bb 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -5567,6 +5567,126 @@ static bool ggml_sycl_is_view_or_noop(const ggml_tensor * t) {
+            t->op == GGML_OP_VIEW || t->op == GGML_OP_PERMUTE || t->op == GGML_OP_NONE;
+ }
+ 
++struct ggml_sycl_moe_add_reduce_match {
++    ggml_tensor * weighted;
++    ggml_tensor * dst;
++    int           nodes_to_skip;
++};
++
++static bool ggml_sycl_moe_add_reduce_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_MOE_ADD_REDUCE");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return enabled;
++}
++
++// Qwen3.5-MoE / Ornith decode materializes eight weighted expert rows, then
++// reduces them through seven serial ADD launches. Match that exact chain and
++// perform the same ordered FP32 additions in one launch. The weighted MUL is
++// intentionally left separate so its rounded outputs remain graph-visible and
++// the fused kernel contains no multiply-add contraction opportunity.
++static bool ggml_sycl_find_moe_add_reduce(
++        const ggml_cgraph * cgraph, int node_idx, ggml_sycl_moe_add_reduce_match & match) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_moe_add_reduce_enabled() ||
++        node_idx < 0 || node_idx >= cgraph->n_nodes) {
++        return false;
++    }
++
++    constexpr int n_experts = 8;
++    constexpr int n_adds = n_experts - 1;
++    int add_idxs[n_adds];
++    int found = 0;
++    int last_idx = node_idx - 1;
++
++    for (int j = node_idx; j < cgraph->n_nodes && found < n_adds; ++j) {
++        ggml_tensor * node = cgraph->nodes[j];
++        if (ggml_sycl_is_view_or_noop(node) || (node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
++            continue;
++        }
++        if (node->op != GGML_OP_ADD) {
++            return false;
++        }
++        add_idxs[found++] = j;
++        last_idx = j;
++    }
++    if (found != n_adds || add_idxs[0] != node_idx) {
++        return false;
++    }
++
++    const ggml_op ops[n_adds] = {
++        GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD,
++        GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD,
++    };
++    if (!ggml_can_fuse_ext(cgraph, add_idxs, ops, n_adds)) {
++        return false;
++    }
++
++    ggml_tensor * first = cgraph->nodes[add_idxs[0]];
++    ggml_tensor * weighted = first->src[0] != nullptr ? first->src[0]->view_src : nullptr;
++    if (weighted == nullptr || weighted->type != GGML_TYPE_F32 ||
++        weighted->ne[1] != n_experts || weighted->ne[2] != 1 || weighted->ne[3] != 1 ||
++        !ggml_is_contiguous(weighted)) {
++        return false;
++    }
++
++    const int64_t row_len = weighted->ne[0];
++    const auto is_expert_row = [weighted, row_len](const ggml_tensor * view, int expert) {
++        return view != nullptr && view->op == GGML_OP_VIEW && view->view_src == weighted &&
++               view->view_offs == (size_t) expert * weighted->nb[1] &&
++               view->type == GGML_TYPE_F32 && ggml_nelements(view) == row_len &&
++               view->ne[0] == row_len && view->ne[1] == 1 && view->ne[2] == 1 && view->ne[3] == 1 &&
++               ggml_is_contiguous(view);
++    };
++
++    if (!is_expert_row(first->src[0], 0) || !is_expert_row(first->src[1], 1)) {
++        return false;
++    }
++    for (int expert = 2; expert < n_experts; ++expert) {
++        ggml_tensor * add = cgraph->nodes[add_idxs[expert - 1]];
++        ggml_tensor * prev = cgraph->nodes[add_idxs[expert - 2]];
++        if (add->src[0] != prev || !is_expert_row(add->src[1], expert)) {
++            return false;
++        }
++    }
++
++    ggml_tensor * dst = cgraph->nodes[add_idxs[n_adds - 1]];
++    if (dst->type != GGML_TYPE_F32 || !ggml_is_contiguous(dst) ||
++        dst->ne[0] != row_len || dst->ne[1] != 1 || dst->ne[2] != 1 || dst->ne[3] != 1) {
++        return false;
++    }
++
++    match.weighted = weighted;
++    match.dst = dst;
++    match.nodes_to_skip = last_idx - node_idx;
++    return true;
++}
++
++static void ggml_sycl_moe_add_reduce(
++        ggml_backend_sycl_context & ctx, const ggml_sycl_moe_add_reduce_match & match) {
++    constexpr int n_experts = 8;
++    const float * src = static_cast<const float *>(match.weighted->data);
++    float * dst = static_cast<float *>(match.dst->data);
++    const int64_t row_len = match.weighted->ne[0];
++    const int64_t row_stride = match.weighted->nb[1] / sizeof(float);
++    const bool poison = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_MOE_ADD_REDUCE_POISON");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++
++    GGML_SYCL_DEBUG("[SYCL][OP] call %s: row_len=%lld experts=%d\n",
++                    __func__, (long long) row_len, n_experts);
++    ctx.stream()->parallel_for(sycl::range<1>((size_t) row_len), [=](sycl::id<1> id) {
++        const int64_t col = (int64_t) id[0];
++        float sum = src[col];
++#pragma unroll
++        for (int expert = 1; expert < n_experts; ++expert) {
++            sum = sum + src[(int64_t) expert * row_stride + col];
++        }
++        dst[col] = poison && col == 0 ? sum + 1.0f : sum;
++    });
++}
++
+ // match gated_delta_net + the strided cpy that scatters its state snapshots into the cache
+ // (slot i -> rollback group i, slot 0 newest), so the kernel can write them and skip the cpy.
+ // returns the number of following nodes to skip (0 = no fusion)
+@@ -5675,6 +5795,14 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+                 continue;
+             }
+         }
++        if (node->op == GGML_OP_ADD) {
++            ggml_sycl_moe_add_reduce_match moe_add_reduce;
++            if (ggml_sycl_find_moe_add_reduce(cgraph, i, moe_add_reduce)) {
++                ggml_sycl_moe_add_reduce(*sycl_ctx, moe_add_reduce);
++                i += moe_add_reduce.nodes_to_skip;
++                continue;
++            }
++        }
+         if (node->op == GGML_OP_RMS_NORM &&
+             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL }, {})) {
+             ggml_sycl_op_rms_norm_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);

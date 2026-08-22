@@ -169,7 +169,7 @@
   "items": []
  },
  "commands": {
-  "preflight": "sha256sum -c <(awk '{print $0}' repro/nemotron-35-lightning-30b-a3b-b70/model-manifest.json >/dev/null); source /opt/intel/oneapi/setvars.sh --force; export ONEAPI_DEVICE_SELECTOR=level_zero:0",
+  "preflight": "python3 scripts/verify-neural-download-model.py repro/nemotron-35-lightning-30b-a3b-b70/model-manifest.json \"$MODEL_DIR\" && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
   "launch": "BUILD_DIR/bin/llama-server --model $MODEL_DIR/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-UD-Q4_K_M.gguf --alias nemotron --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
   "health": "curl -fsS http://127.0.0.1:18100/health",
   "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model nemotron --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
@@ -181,6 +181,7 @@
   "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.sweep.json",
   "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.meta.json",
   "repro/nemotron-35-lightning-30b-a3b-b70/depth-sweep.svg",
+  "scripts/verify-neural-download-model.py",
   "docs/neural-download-packet-standard.md"
  ],
  "missing": [

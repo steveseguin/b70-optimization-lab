@@ -1,0 +1,61 @@
+{
+  "date": "2026-08-22",
+  "classification": "accepted target-only package increment",
+  "model": {
+    "name": "Ornith 1.5 35B-A3B Q4_K_M",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "runtime": {
+    "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "candidate_libggml_sycl_sha256": "c61854c35ddb405d8e7f0ff525cb8266520d7af9ffb6a5081dbf1fdba44d575f",
+    "patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-reduce-20260822.patch",
+    "patch_sha256": "2b289bb527484b40207200abdc1d188a4e460e5d6b9c45ae53912dc9c4236e09",
+    "door": "GGML_SYCL_FUSED_MOE_ADD_REDUCE=1"
+  },
+  "mechanism": {
+    "layers_per_token": 40,
+    "experts_per_layer": 8,
+    "baseline_add_launches_over_warmup_plus_measurement": 860,
+    "candidate_add_launches_over_warmup_plus_measurement": 300,
+    "candidate_fused_launches_over_warmup_plus_measurement": 80,
+    "net_launches_removed_per_token": 240
+  },
+  "engine": {
+    "protocol": "llama-bench p0/n128/d0/r7, F16 KV, flash attention, one B70, local verified GGUF",
+    "control_tok_s": [
+      102.626849,
+      103.468639
+    ],
+    "candidate_tok_s": [
+      107.855830,
+      108.339891
+    ],
+    "control_mean_tok_s": 103.047744,
+    "candidate_mean_tok_s": 108.0978605,
+    "delta_percent": 4.900754062117074
+  },
+  "serving": {
+    "protocol": "two fresh servers per arm; fixed 12-prompt suite; 512-token responses; tokens 1-100 after TTFT; cache_prompt=false",
+    "control_median_tok_s": [
+      100.2399817775511,
+      99.0881820251991
+    ],
+    "candidate_median_tok_s": [
+      104.0157171719253,
+      104.9832576444538
+    ],
+    "control_mean_tok_s": 99.6640819013751,
+    "candidate_mean_tok_s": 104.49948740818955,
+    "delta_percent": 4.851703256143414,
+    "all_freshness_gates_passed": true
+  },
+  "correctness": {
+    "cli_forced_greedy_tokens": 400,
+    "cli_control_sha256": "08f2d1834e42656c85768beef340dda43f35a81924d24a4483613466e99056bb",
+    "cli_candidate_sha256": "08f2d1834e42656c85768beef340dda43f35a81924d24a4483613466e99056bb",
+    "cli_byte_identical": true,
+    "candidate_canaries_pass_all": true,
+    "stock_cross_process_complete_hash_matches": 0,
+    "stock_cross_process_hash_note": "Fresh stock servers matched 0/12 complete hashes, so cross-process hash equality is not a candidate attribution gate for this lane; within-process 8x stability and same-binary door-off/on CLI exactness passed."
+  }
+}
