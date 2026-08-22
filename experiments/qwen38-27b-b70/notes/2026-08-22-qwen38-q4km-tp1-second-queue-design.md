@@ -87,10 +87,23 @@ a normal decode already report this; if a large fraction of the 240 are
 policy-evictable, a memo-policy tweak is the simpler 90% change and this
 subsystem is unnecessary. That check gates whether the arc proceeds.
 
+## Kill-check RESULT (2026-08-22): irreducible; arc justified
+
+Ran a normal GPU0 decode on the promoted TP1 build (100 tokens, door set
+as promoted, `GGML_SYCL_QDEDUP_STATS=1`). `[Q8-DEDUP]` over 103 graphs:
+`quantize_launches=24631` (239.1/graph), `dedup_hits=26064` (253.0/graph),
+`bypass=0`. The memo already removes 51.4% of would-be quantizes and had
+ZERO capacity/OOM misses, so the residual ~239 launches/graph are
+genuinely distinct activations with no prior identical quantize to reuse.
+The simpler memo-policy-tweak alternative is therefore DEAD - there are
+no policy misses left to recover. The only lever that removes this tax
+from the critical path is overlapping the (irreducible) quantizes, i.e.
+the second-queue design above. Arc confirmed justified.
+
 ## Disposition
 
-Opportunity real and large; implementation is a reviewed future arc with
-the gates above. Not implemented autonomously against the submission-ready
-lane. Next concrete step is the cheap kill-check, then - if it confirms
-irreducibility - a default-off prototype behind gate 1-2 on a scratch
-build, never on the promoted binary until all five gates pass.
+Opportunity real, large, and now confirmed irreducible by the cheap
+kill-check. Implementation is a reviewed future arc behind the five
+frozen gates, on a scratch build, never on the promoted binary until all
+gates pass. Not implemented autonomously against the submission-ready
+lane. This is the largest remaining decode-tok/s lever on the bench.
