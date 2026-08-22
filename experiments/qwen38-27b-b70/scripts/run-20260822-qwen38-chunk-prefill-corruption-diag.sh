@@ -23,15 +23,15 @@ driver=$(realpath -- "$0")
 action=${1:-}
 
 case "$action" in
-  check|d2|d4) ;;
-  *) printf 'usage: %s check|d2|d4\n' "$0" >&2; exit 2 ;;
+  check|d2|d4|d5) ;;
+  *) printf 'usage: %s check|d2|d4|d5\n' "$0" >&2; exit 2 ;;
 esac
 
 raw=/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70
 cache=/mnt/usb-models/llm-runtime/vllm-cache/qwen38-postrecovery-marginfree-mtp5-20260820
 sealed="$raw/qwen38-postrecovery-marginfree-mtp5-25-spec-c-20260820/compile-cache-output-manifest.json"
 suite="$raw/qwen38-longkv-chunk-diag-suite-20260822/validation-suite.json"
-if [[ "${1:-}" == d4 ]]; then
+if [[ "${1:-}" == d4 || "${1:-}" == d5 ]]; then
   suite="$raw/qwen38-longkv-chunk-diag-d4-suite-20260822/validation-suite.json"
 fi
 quality_baseline="$raw/qwen38-marginfree-targetoracle-25-a-20260820/data/quality.json"
@@ -50,8 +50,15 @@ sealed_checker="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/check-tp2-seal
 
 cache_manifest_sha=f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb0ff
 suite_sha=0b66d5a6711a981480f09ba5956042a391da3082d3eb470d091fc89f2a37c6fc
-if [[ "${1:-}" == d4 ]]; then
+if [[ "${1:-}" == d4 || "${1:-}" == d5 ]]; then
   suite_sha=6e51726f56bbb99ce86e2cf95f4e5d22ed4c141ce3a546d508cc03ae6fb37b6a
+fi
+# d5: identical exposure to d4 with the GDN spec persistent scratch OFF -
+# a runtime allocation-strategy door (per-call scratch instead of a
+# capture-time persistent pool), same compiled graphs and cache identity.
+gdn_spec_persistent_scratch=1
+if [[ "${1:-}" == d5 ]]; then
+  gdn_spec_persistent_scratch=0
 fi
 quality_sha=45424f1d2dcbfda0a5ed75552cf799cac0e8fb6b8c5e1ddf2aba540b95c77e95
 model_manifest_sha=731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8
@@ -313,7 +320,7 @@ launch_env=(
   VALIDATION_PYTHONHASHSEED=0
   VALIDATION_NUM_SPECULATIVE_TOKENS=5
   VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0
-  VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH=1
+  VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH="$gdn_spec_persistent_scratch"
   VALIDATION_GDN_CAPTURE_NATIVE_SPEC=1
   VALIDATION_DDTREE_FULL_GRAPH=0
   VALIDATION_DDTREE_CAPTURE_GDN_CORE=0

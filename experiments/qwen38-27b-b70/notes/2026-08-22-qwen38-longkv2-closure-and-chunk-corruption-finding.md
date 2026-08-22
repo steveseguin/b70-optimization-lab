@@ -113,3 +113,26 @@ corruption reproduced cleanly. Needle PASS => the delta narrows to the
 400-rejection path (or a non-history trigger), and the next
 preregistered addendum (d4b) would append a deliberate over-length
 request before the battery.
+
+## d4 result (2026-08-22): REPRODUCED — dose-dependent, 400 exonerated
+
+All eight 2-chunk rows were individually healthy (coherent previews, 512
+completions, 0 cached; per-row conventional rates 59.33-103.31, row1
+72.59 vs d2's 71.59 on the same content), and the subsequent needle
+probe degenerated to the byte-identical `B70_QWEN3!!!!…` with
+`baseline_match_all=false`. One multi-chunk request is clean (d2); eight
+corrupt the engine's cross-request state (d4 = a1 without the 400). The
+tier-2 rejection plays no role. Server-log audit: all 96 GDN persistent
+scratch allocations occur inside the graph-capture window, none during
+serving — no dynamic growth; the pool's *reuse* remains the suspect, not
+its allocation.
+
+**d5 addendum (preregistered before running):** identical exposure to
+d4 (same 8-row suite, same everything) with
+`VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH=0` — a runtime
+allocation-strategy door (per-call scratch instead of the capture-time
+persistent pool) that leaves compiled graphs and the cache identity
+untouched. Needle PASS => the persistent-scratch reuse path is the
+mechanism locus. Needle FAIL => the locus moves to the GDN chunked
+conv/recurrent state path or KV block recycling, and the next addendum
+would titrate dose (2 and 4 rows) to extract the threshold arithmetic.
