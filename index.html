@@ -186,9 +186,9 @@ Style genome (duotone-hixffp):
         </tr>
         <tr>
           <th scope="row" class="model">Qwen3.8-27B <small>Alibaba &middot; Aug 2026</small></th>
-          <td class="mut">Newest all-rounder, also reads pictures; most setup guides exist</td>
+          <td class="mut">Newest all-rounder, also reads pictures; one-card setup checked here</td>
           <td class="num r">1</td><td class="num r">88&ndash;107</td>
-          <td class="lnk"><a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">cookbook</a></td>
+          <td class="lnk"><a href="community/sergiiob-qwen38-27b-vllm-xpu/README.md">our setup</a></td>
         </tr>
         <tr>
           <th scope="row" class="model">Nemotron-Lightning-30B <small>NVIDIA &middot; 2026</small></th>
@@ -219,8 +219,9 @@ Style genome (duotone-hixffp):
     <h2>What you need</h2>
     <ul class="tight">
       <li><b>The card:</b> a PC with at least one Intel Arc Pro B70 graphics card (24&nbsp;GB). One card runs most models on this page; the biggest are split across 2&ndash;4 cards working together.</li>
-      <li><b>One card:</b> start with the <a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">community cookbook</a> — a ready-made installer with start scripts, including Windows 11 kits — or the step-by-step <a href="results/gemma4-26b-a4b-q8-b70/README.md">Gemma-4-26B guide</a>.</li>
-      <li><b>Two to four cards:</b> the multi-card setups in the <a href="results/README.md">results index</a> and <a href="docs/model-recipes.md">model recipes</a>.</li>
+      <li><b>One card:</b> follow our step-by-step <a href="results/gemma4-26b-a4b-q8-b70/README.md">Gemma-4-26B guide</a> (125 tok/s, checked in this lab) or the one-card <a href="community/sergiiob-qwen38-27b-vllm-xpu/README.md">Qwen3.8-27B setup</a>. More single-card setups in <a href="docs/model-recipes.md">model recipes</a>.</li>
+      <li><b>Two to four cards:</b> complete recipes in the <a href="results/README.md">results index</a> — MiniMax INT4, Laguna-S + DFlash, DeepSeek-V4 FP4/FP8, Qwen3.6 dense split across 2 cards.</li>
+      <li><b>Every guide here is complete:</b> pinned software versions, exact commands, and a proof folder with logs and quality checks behind each number.</li>
       <li><b>Making a new model fast:</b> the <a href="docs/model-optimization-guide.md">optimization guide</a> is the playbook; the <a href="optimization-timeline.html">timeline</a> shows how each setup improved.</li>
       <li><b>For AI assistants:</b> <a href="llms.txt">llms.txt</a> is a machine-readable map of this site, then <a href="AGENTS.md">AGENTS.md</a>.</li>
     </ul>
@@ -326,6 +327,9 @@ Style genome (duotone-hixffp):
       Sent in by contributors on their own machines — promising, not proven, unless marked
       confirmed. These rows are counted a little differently (middle value of 5 tries, measured
       by the client), so don&rsquo;t compare numbers across the two tables.
+      Several lanes were first published in a member&rsquo;s upstream
+      <a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">cookbook repo</a>;
+      this page links our own catalog and re-checks of that work.
     </p>
     <div class="scroller">
     <table aria-labelledby="t2">
@@ -374,7 +378,7 @@ Style genome (duotone-hixffp):
           <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Muse-Glimmer-30B <small>same Meta model, smaller file (GGUF)</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q4_K_XL + DFlash n2</td><td class="num r">1&times;</td>
           <td class="num r">26.8<div class="ratebar" style="width:14%" aria-hidden="true"></div></td>
-          <td class="lnk"><a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">cookbook</a></td>
+          <td class="lnk"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">report</a></td>
         </tr>
       </tbody>
     </table>
