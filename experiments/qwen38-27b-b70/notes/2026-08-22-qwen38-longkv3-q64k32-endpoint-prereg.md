@@ -87,6 +87,41 @@ degeneration in a1's battery) is a **finding, not an infrastructure
 failure**: it closes this design and routes back to the corruption
 investigation with the dose bound tightened.
 
+## Result — CLOSED at a1 (2026-08-22): 31/32 repeat divergence
+
+a1 ran to completion with a perfect bench (25/25 rows, all gates,
+cached 0, conventional suite median **85.63 tok/s** at KV ~1300-1610 —
+the first complete incumbent long-KV baseline, under scratch=0) and a
+**passing needle at dose 25** (the mitigation scales to 25 multi-chunk
+rows). But the quality battery's 32x same-boot repeat-stability probe
+failed **31/32**: repeat #1 emitted `blue,green,red` (6 tokens) against
+31 identical `blue, green, red, yellow` (8 tokens). Under the frozen
+rule this is a numerical-class stop: **longkv3 is closed**; root
+preserved; no candidate ran; no A-B evidence exists.
+
+Unified mechanism theory (now with two presentations of one bug): some
+GDN spec-decode scratch field is **read before it is written** in a
+code path exercised after multi-chunk prefills. With the persistent
+pool (scratch=1), stale poison accumulates deterministically across
+requests — the dose-dependent needle kill. With per-call allocation
+(scratch=0), buffers usually recycle clean but occasionally land on
+memory churned by 1024-token chunk tensors — the rare transient
+divergence, observed at the first probe after the long-row bench.
+Neither environment is quality-clean for long-context serving; the env
+door mitigates the persistent presentation only.
+
+Consequence: **the critical path to any long-KV campaign is a C++ fix**
+in the GDN spec path, not another environment permutation. Bounded
+source audit so far: `select_accepted_state_indices`,
+`select_state_column`, and `copy_conv_base` write unconditionally
+(clean); remaining suspects are the fixed-shape (graph-captured,
+6-token) gather/recurrent/store kernels reading tail rows or fields the
+gathers conditionally skip. Next preregistered step: a poison-fill
+instrumented debug build (never deployable) that fills every spec
+scratch buffer with NaN/sentinel per call in both branches — the
+write-before-read contract test — then bisects the violating field via
+chunkdiag-style arms.
+
 ## What this campaign cannot show
 
 One lever, one suite, KV 1.23-1.6k, MTP5, GPUs 2,3, scratch=0
