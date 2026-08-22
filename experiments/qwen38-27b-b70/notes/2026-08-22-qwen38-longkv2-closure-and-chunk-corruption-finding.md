@@ -224,3 +224,31 @@ Arms and frozen interpretations:
   KV recycling next).
 - **p2..p5** (`qkvba` | `compact` | `indices,conv` | `exact`): bisect
   the violating group; run only groups implicated by p1.
+
+## p-series results (2026-08-22)
+
+- **p0b** (poison unset): needle failed byte-identically — the rebuilt
+  DSO reproduces the defect (third independent scratch-on dose-8
+  reproduction; instrument validated). The original `p0` label burned
+  on the so.9 link failure (pre-server; root preserved).
+- **p1** (`all`): all eight rows healthy under full NaN/sentinel poison
+  of the 12 per-call fields; needle failed identically.
+  **Field-content read-before-write is refuted** — every poisoned field
+  is rewritten before use on every executed path. Combined with d5
+  (allocation *mode* cures the needle), the mechanism class narrows to
+  an **address/layout-coupled writer** on the multi-chunk-prefill path:
+  contents of the pool do not matter, but its presence (stable
+  allocator layout) determines the victim.
+- **c0** (1MiB 0x5A canary after the pool, checked before every spec
+  call): canary intact through the full exposure while the needle still
+  failed (fourth reproduction). Pool-tail-adjacent OOB is excluded.
+- **s0 addendum (preregistered before running):** foreign-slot state
+  fingerprint. The victim the needle reads through is its own
+  conv/ssm state or KV; s0 checksums every conv/ssm cache slot per spec
+  call and warns on the first change to a slot not named by the current
+  spec indices and not legitimately written by the prefill path since
+  the last fingerprint (a shared registry fed by both entries prevents
+  new-request false positives). A trip names the corrupting call and
+  victim slot; no trip moves the victim to the KV cache pages and the
+  program hands off to a device-ASan or KV-checksum session. **The
+  p-series is capped at s0 for tonight regardless of outcome.**

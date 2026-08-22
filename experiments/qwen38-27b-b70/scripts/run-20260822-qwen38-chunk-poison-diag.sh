@@ -25,9 +25,16 @@ action=${1:-}
 # p0b replaces p0: the p0 label was consumed by the so.9 link-failure
 # attempt (pre-server infra failure; root preserved, never reused).
 case "$action" in
-  check|p0b|p1|p2|p3|p4|p5|c0) ;;
-  *) printf 'usage: %s check|p0b|p1|p2|p3|p4|p5|c0\n' "$0" >&2; exit 2 ;;
+  check|p0b|p1|p2|p3|p4|p5|c0|s0) ;;
+  *) printf 'usage: %s check|p0b|p1|p2|p3|p4|p5|c0|s0\n' "$0" >&2; exit 2 ;;
 esac
+# s0: foreign-slot state fingerprint arm - conv/ssm cache slots not named
+# by spec indices or the prefill path must be bit-stable between spec
+# calls; the first foreign change warns with call index and slot.
+state_checksum_value=
+if [[ "$action" == s0 ]]; then
+  state_checksum_value=1
+fi
 # c0: canary-bracket arm - patterned guard tensor allocated after the pool,
 # integrity-checked before every spec call; poison off.
 canary_value=
@@ -69,10 +76,10 @@ gdn_spec_persistent_scratch=1
 quality_sha=45424f1d2dcbfda0a5ed75552cf799cac0e8fb6b8c5e1ddf2aba540b95c77e95
 model_manifest_sha=731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8
 verifier_sha=5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9
-stock_graph_manifest_sha=3f622553160257dabde121568783da42a16ec379a21c5e0bac14ce2d20a2c6b7
+stock_graph_manifest_sha=9806071aa32fb1aa58f3839948c051d65e1bd725874aa469a8f62ee2f6f37fc9
 candidate_graph_manifest_sha=0642e0290a8c97f2b29b826ab3b8aee693d444df09cea7048d5d6f8da0fd98a9
 target_bench_sha=045fd8b4fc9f1eda3bbc778e4b88a6ad7407ff4a50be879dc4e9780b37e0d6e8
-native_sha=676408238610e2c24bfcd1d641507bf7a0359d1b7b7a8231454707908040e7be
+native_sha=df6fcdb431ab7a6a0c3861aa8b3ae6f1839d00a4c98ea0985dc5a42b4c52d9e6
 core_sha=5717476461048b5056a92926f2a52d73c121f69bdc75de22fd52720fb65b3007
 moe_sha=ea4c20a8dff49fc07fd799d5a2a47e8b24266a256425b41e337f852492ee3c1b
 fa_sha=33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739
@@ -329,6 +336,7 @@ launch_env=(
   VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH="$gdn_spec_persistent_scratch"
   VLLM_XPU_GDN_SPEC_SCRATCH_POISON="$poison_value"
   VLLM_XPU_GDN_SPEC_SCRATCH_CANARY="$canary_value"
+  VLLM_XPU_GDN_STATE_CHECKSUM="$state_checksum_value"
   VALIDATION_GDN_CAPTURE_NATIVE_SPEC=1
   VALIDATION_DDTREE_FULL_GRAPH=0
   VALIDATION_DDTREE_CAPTURE_GDN_CORE=0

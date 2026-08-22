@@ -1,5 +1,5 @@
 diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
-index e5e51d6..56318a2 100644
+index e5e51d6..a27e25a 100644
 --- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
 +++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
 @@ -2,6 +2,8 @@
@@ -38,7 +38,59 @@ index e5e51d6..56318a2 100644
    TORCH_WARN(
        "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH allocated on ",
        device,
-@@ -1031,6 +1046,89 @@ void gdn_attention_spec_decode(
+@@ -239,6 +254,42 @@ GdnSpecDecodeScratch& get_gdn_spec_decode_scratch(
+ 
+ }  // namespace
+ 
++namespace gdn_state_checksum_diag {
++// Diagnostic-only (poison build): registry of state slots legitimately
++// written since the last spec-call fingerprint, fed by both the non-spec
++// (prefill/decode) and spec entries.
++inline std::mutex& mutex() {
++  static auto* m = new std::mutex();
++  return *m;
++}
++inline std::vector<char>& touched() {
++  static auto* t = new std::vector<char>();
++  return *t;
++}
++inline bool enabled() {
++  const char* e = std::getenv("VLLM_XPU_GDN_STATE_CHECKSUM");
++  return e != nullptr && e[0] != '\0' && e[0] != '0';
++}
++inline void register_indices(const torch::Tensor& indices, int64_t slots) {
++  if (!enabled()) {
++    return;
++  }
++  std::lock_guard<std::mutex> lock(mutex());
++  auto& t = touched();
++  if ((int64_t)t.size() != slots) {
++    t.assign(slots, 0);
++  }
++  auto idx_cpu = indices.cpu();
++  const auto* ptr = idx_cpu.data_ptr<int>();
++  for (int64_t i = 0; i < idx_cpu.numel(); ++i) {
++    const int v = ptr[i];
++    if (v >= 0 && v < slots) {
++      t[v] = 1;
++    }
++  }
++}
++}  // namespace gdn_state_checksum_diag
++
+ void gdn_attention(
+     torch::Tensor&
+         core_attn_out,  // [total_seqlen, num_v_heads / tp_size, head_v_dim]
+@@ -277,6 +328,8 @@ void gdn_attention(
+     const int64_t num_actual_tokens,
+     const int64_t tp_size,
+     const bool reorder_input) {
++  gdn_state_checksum_diag::register_indices(
++      non_spec_state_indices_tensor, conv_state.size(0));
+   TORCH_CHECK(
+       core_attn_out.is_contiguous(), "core_attn_out must be contiguous");
+   TORCH_CHECK(z.is_contiguous(), "z must be contiguous");
+@@ -1031,6 +1084,154 @@ void gdn_attention_spec_decode(
      b = torch::empty({total_spec_tokens, local_num_v_heads}, options);
      a = torch::empty_like(b);
    }
@@ -87,6 +139,71 @@ index e5e51d6..56318a2 100644
 +            "VLLM_XPU_GDN_SPEC_SCRATCH_POISON active: ", poison);
 +      });
 +    }
++  }
++  // Diagnostic-only foreign-slot state fingerprint (poison build). A slot
++  // may change between consecutive spec calls only if it was named by this
++  // or an intervening call's spec indices, or written by the non-spec
++  // (prefill/decode) path since the last fingerprint. Any other change is
++  // a foreign-slot write: warn with call index and slot.
++  if (gdn_state_checksum_diag::enabled()) {
++    static std::mutex ck_mutex;
++    static std::vector<double> prev_conv;
++    static std::vector<double> prev_ssm;
++    static int64_t ck_call = -1;
++    std::lock_guard<std::mutex> ck_lock(ck_mutex);
++    ck_call += 1;
++    const int64_t slots = conv_state.size(0);
++    auto conv_sums =
++        conv_state.to(torch::kFloat64).abs().sum({1, 2}).cpu();
++    auto ssm_sums =
++        ssm_state.to(torch::kFloat64).abs().sum({1, 2, 3}).cpu();
++    std::vector<char> touched(slots, 0);
++    {
++      std::lock_guard<std::mutex> reg_lock(gdn_state_checksum_diag::mutex());
++      auto& reg = gdn_state_checksum_diag::touched();
++      if ((int64_t)reg.size() == slots) {
++        touched = reg;
++        std::fill(reg.begin(), reg.end(), 0);
++      }
++    }
++    {
++      auto idx_cpu = spec_state_indices_tensor.cpu();
++      const auto* idx_ptr = idx_cpu.data_ptr<int>();
++      for (int64_t i = 0; i < idx_cpu.numel(); ++i) {
++        const int v = idx_ptr[i];
++        if (v >= 0 && v < slots) {
++          touched[(size_t)v] = 1;
++        }
++      }
++    }
++    const auto* conv_ptr = conv_sums.data_ptr<double>();
++    const auto* ssm_ptr = ssm_sums.data_ptr<double>();
++    if ((int64_t)prev_conv.size() == slots) {
++      for (int64_t slot = 0; slot < slots; ++slot) {
++        if (touched[(size_t)slot]) {
++          continue;
++        }
++        const bool conv_moved = conv_ptr[slot] != prev_conv[slot];
++        const bool ssm_moved = ssm_ptr[slot] != prev_ssm[slot];
++        if (conv_moved || ssm_moved) {
++          TORCH_WARN(
++              "VLLM_XPU_GDN_STATE_CHECKSUM foreign-slot change at spec call ",
++              ck_call,
++              ": slot ",
++              slot,
++              " conv ",
++              prev_conv[slot],
++              " -> ",
++              conv_ptr[slot],
++              ", ssm ",
++              prev_ssm[slot],
++              " -> ",
++              ssm_ptr[slot]);
++        }
++      }
++    }
++    prev_conv.assign(conv_ptr, conv_ptr + slots);
++    prev_ssm.assign(ssm_ptr, ssm_ptr + slots);
 +  }
 +  if (persistent_scratch) {
 +    auto& canary_scratch = get_gdn_spec_decode_scratch(
