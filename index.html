@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Intel Arc B70 LLM Optimization Lab — Recipes, Benchmarks, and Reproducible Inference</title>
 <meta name="description" content="Community optimization lab for local AI on Intel Arc Pro B-series GPUs: reproducible vLLM XPU and llama.cpp SYCL recipes, verified benchmark records, and contribution guides.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230f62e8'/%3E%3Crect x='10' y='34' width='12' height='20' fill='%23f6f1e5'/%3E%3Crect x='26' y='22' width='12' height='32' fill='%23f6f1e5'/%3E%3Crect x='42' y='10' width='12' height='44' fill='%23f6f1e5'/%3E%3C/svg%3E">
 <link rel="canonical" href="https://neural.download/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://neural.download/">
@@ -12,8 +13,12 @@
 <meta property="og:description" content="Reproducible LLM inference on Intel Arc Pro B-series GPUs: exact pins, kernel patches, speculative-decoding lanes, and verified benchmark records.">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#f6f1e5">
 <!-- Machine-readable site index for AI agents: /llms.txt -->
+<!--
+Style genome (duotone-hixffp):
+{"archetype":"duotone","p":{"bg":"#f6f1e5","ink":"#14120e","accent":"#0f62e8","accent2":"#14120e","border":"#14120e","surface":"#f6f1e5","muted":"#43403a","dark":false,"surface2":"#ece7db"},"fonts":{"display":"black","body":"grotesk","mono":"typewriter"},"radius":0,"ctl":0,"bw":2,"shadow":"none","texture":"none","density":"normal","case":"upper","hw":900,"track":-0.005,"chart":"bars"}
+-->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -28,80 +33,86 @@
 </script>
 <style>
   :root {
-    --ink: #1b1b18;
-    --muted: #57534a;
-    --faint: #8a857a;
-    --rule: #d9d5cc;
-    --paper: #fbfaf7;
-    --row: #f4f2ec;
-    --link: #0057a8;
-    --bar: #b9d3ea;
-    --verified: #1a7f37;
-    --tested: #0969da;
-    --community: #9a6700;
-    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --paper: #f6f1e5;
+    --surface2: #ece7db;
+    --ink: #14120e;
+    --muted: #43403a;
+    --spot: #0f62e8;
+    --display: "Archivo Black", "Arial Black", "Haettenschweiler", Impact, sans-serif;
+    --body: Inter, Roboto, "Helvetica Neue", "Arial Nova", Helvetica, Arial, sans-serif;
+    --mono: "American Typewriter", "Courier Prime", "Courier New", Courier, monospace;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     background: var(--paper);
     color: var(--ink);
-    font-family: "Segoe UI", -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--body);
     font-size: 14px;
     line-height: 1.5;
   }
-  a { color: var(--link); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+  a { color: inherit; text-decoration: none; border-bottom: 2px solid transparent; }
+  a:hover { border-bottom-color: currentColor; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
 
-  header.top { padding: 34px 0 0; }
-  header.top h1 { font-size: 19px; margin: 0; letter-spacing: .2px; }
-  header.top .tag { color: var(--muted); margin: 6px 0 0; max-width: 72ch; }
-  header.top nav { margin-top: 12px; font-size: 13px; color: var(--faint); }
-  header.top nav a { margin-right: 16px; }
-  hr.sep { border: 0; border-top: 2px solid var(--ink); margin: 18px 0 0; }
+  /* masthead — full-bleed spot slab */
+  .masthead { background: var(--spot); color: #fff; padding: 54px 0 40px; }
+  .masthead h1 {
+    font-family: var(--display); font-weight: 900; text-transform: uppercase;
+    letter-spacing: -0.005em; line-height: 1.05;
+    font-size: clamp(30px, 4.8vw, 54px); margin: 0; max-width: 20ch;
+  }
+  .masthead .sub { margin: 14px 0 0; font-size: 15px; max-width: 66ch; color: #fff; }
+  .masthead nav { margin-top: 22px; font-family: var(--mono); font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em; }
+  .masthead nav a { margin-right: 20px; display: inline-block; padding: 2px 0; }
 
-  section { padding: 30px 0 4px; }
+  section { padding: 34px 0 6px; }
   h2 {
-    font-size: 13px; text-transform: uppercase; letter-spacing: 1.4px;
-    color: var(--muted); margin: 0 0 4px; font-weight: 700;
+    font-family: var(--display); font-weight: 900; text-transform: uppercase;
+    letter-spacing: -0.005em; font-size: 17px; margin: 0 0 6px;
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
   }
-  h2 .ev-key { float: right; text-transform: none; letter-spacing: 0; font-weight: 400; }
-  p.sub { margin: 0 0 14px; color: var(--muted); max-width: 78ch; font-size: 13px; }
+  h2 .key { margin-left: auto; font-family: var(--mono); font-size: 11px; font-weight: 400; letter-spacing: .04em; text-transform: none; color: var(--ink); }
+  p.sub { margin: 0 0 16px; color: var(--muted); max-width: 80ch; font-size: 13px; }
 
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
   th {
-    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .8px;
-    color: var(--faint); font-weight: 600; padding: 6px 10px 6px 0;
-    border-bottom: 1px solid var(--ink); white-space: nowrap;
+    font-family: var(--mono); text-align: left; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .08em; font-weight: 700; padding: 8px 12px 8px 0;
+    border-bottom: 2px solid var(--ink); white-space: nowrap;
   }
-  td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--rule); vertical-align: middle; }
-  tbody tr:hover td { background: var(--row); }
-  td.model { font-weight: 600; white-space: nowrap; }
-  td.model small { display: block; font-weight: 400; color: var(--faint); font-size: 11.5px; }
+  td { padding: 8px 12px 8px 0; vertical-align: middle; }
+  tbody tr:hover td { background: var(--surface2); }
+  td.model { font-weight: 700; white-space: nowrap; }
+  td.model small { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
   td.num { font-family: var(--mono); white-space: nowrap; font-size: 13px; }
-  td .ratebar { height: 4px; background: var(--bar); margin-top: 3px; }
+  td .ratebar { height: 6px; background: var(--ink); margin-top: 4px; }
+  td .ratebar.max { background: var(--spot); }
   td.mut { color: var(--muted); }
-  .ev { font-size: 11px; font-weight: 700; white-space: nowrap; }
-  .ev.verified { color: var(--verified); }
-  .ev.tested { color: var(--tested); }
-  .ev.community { color: var(--community); }
   td.lnk { white-space: nowrap; font-size: 12.5px; }
+  td.lnk a { border-bottom: 2px solid var(--ink); }
+  td.lnk a:hover { border-bottom-color: var(--spot); color: var(--spot); }
+  .dot { font-size: 11px; }
+  .dot.hollow { font-size: 13px; }
 
   .note {
-    margin-top: 14px; padding: 10px 14px; border-left: 3px solid var(--rule);
-    color: var(--muted); font-size: 12.5px;
+    margin-top: 16px; padding: 12px 16px; border: 2px solid var(--ink);
+    background: var(--surface2); color: var(--muted); font-size: 12.5px; max-width: 720px;
   }
+  .note a { color: var(--ink); border-bottom: 2px solid var(--ink); }
+  .note a:hover { color: var(--spot); border-bottom-color: var(--spot); }
 
-  ul.tight { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; }
-  ul.tight li { margin-bottom: 5px; }
-  ul.tight b { color: var(--ink); font-weight: 600; }
+  ul.tight { margin: 0; padding-left: 20px; color: var(--muted); font-size: 13.5px; }
+  ul.tight li { margin-bottom: 6px; }
+  ul.tight b { color: var(--ink); }
+  ul.tight a { color: var(--ink); border-bottom: 2px solid var(--ink); }
+  ul.tight a:hover { color: var(--spot); border-bottom-color: var(--spot); }
 
-  footer { margin-top: 46px; border-top: 1px solid var(--rule); padding: 16px 0 40px; color: var(--faint); font-size: 12px; }
-  footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 18px; }
-  footer .right { margin-left: auto; display: flex; gap: 16px; flex-wrap: wrap; }
+  footer { margin-top: 48px; border-top: 2px solid var(--ink); padding: 18px 0 44px; font-family: var(--mono); font-size: 11.5px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  footer .right { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; text-transform: uppercase; letter-spacing: .06em; }
 
-  @media (max-width: 760px) {
+  @media (max-width: 780px) {
     td .ratebar { display: none; }
     .hide-s { display: none; }
   }
@@ -109,35 +120,33 @@
 </head>
 <body>
 
-<header class="top">
+<header class="masthead">
   <div class="wrap">
     <h1>Unofficial Intel XPU Optimization Lab</h1>
-    <p class="tag">
+    <p class="sub">
       Local LLM inference on Intel Arc Pro B-series GPUs, measured and reproduced in the open.
-      Exact software pins, kernel patches, and speculative-decoding lanes — every number below
-      carries an evidence label. Source of truth is the
-      <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub repository</a>.
+      Every number on this page carries an evidence label. Source of truth:
+      github.com/steveseguin/b70-optimization-lab.
     </p>
     <nav>
       <a href="results/scoreboard.md">Performance index</a>
       <a href="results/README.md">Result packets</a>
-      <a href="optimization-timeline.html">Optimization timeline</a>
-      <a href="docs/model-recipes.md">Model recipes</a>
+      <a href="optimization-timeline.html">Timeline</a>
+      <a href="docs/model-recipes.md">Recipes</a>
       <a href="CONTRIBUTING.md">Contribute</a>
-      <a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">Community cookbook</a>
+      <a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">Cookbook</a>
       <a href="llms.txt">llms.txt</a>
     </nav>
-    <hr class="sep">
   </div>
 </header>
 
 <section>
   <div class="wrap">
-    <h2>Verified results — reference lab, Arc Pro B70 <span class="ev-key"><span class="ev verified">&#9679; B70-verified</span></span></h2>
+    <h2>Verified results — reference lab <span class="key">&#9679; B70-verified</span></h2>
     <p class="sub">
-      Produced and quality-gated on the lab's own hosts: pinned commits, frozen prompt suites,
-      result packets in-repo. Rate is median generated tok/s for tokens 1&ndash;100 after TTFT on
-      cold prompts unless noted.
+      Produced and quality-gated on the lab's own Arc Pro B70 hosts: pinned commits, frozen
+      prompt suites, result packets in-repo. Rate is median generated tok/s for tokens
+      1&ndash;100 after TTFT on cold prompts unless noted.
     </p>
     <table>
       <thead>
@@ -147,56 +156,56 @@
         <tr>
           <td class="model">Muse-Glimmer-30B <small>realistic median 161.9</small></td>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash n15</td><td class="num">4&times;</td>
-          <td class="num">100.37<div class="ratebar" style="width:54%"></div></td>
+          <td class="num">100.37<div class="ratebar" style="width:80%"></div></td>
           <td class="mut hide-s">canonical pooled mean</td>
           <td class="lnk hide-s"><a href="repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">repro</a></td>
         </tr>
         <tr>
           <td class="model">Laguna-S-2.1</td>
           <td class="mut">vLLM XPU</td><td class="mut">INT4 W4A16 + DFlash d11</td><td class="num">4&times;</td>
-          <td class="num">125.46<div class="ratebar" style="width:67%"></div></td>
+          <td class="num">125.46<div class="ratebar max" style="width:100%"></div></td>
           <td class="mut hide-s">conventional median</td>
           <td class="lnk hide-s"><a href="results/laguna-s-2.1-int4-b70/README.md">packet</a></td>
         </tr>
         <tr>
           <td class="model">Gemma-4-26B-A4B</td>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + MTP3</td><td class="num">1&times;</td>
-          <td class="num">124.98<div class="ratebar" style="width:67%"></div></td>
+          <td class="num">124.98<div class="ratebar" style="width:99%"></div></td>
           <td class="mut hide-s">median, ctx 32,768</td>
           <td class="lnk hide-s"><a href="results/gemma4-26b-a4b-q8-b70/README.md">packet</a></td>
         </tr>
         <tr>
           <td class="model">Qwen3-30B-A3B-2507</td>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q4_K_XL, no spec</td><td class="num">1&times;</td>
-          <td class="num">107.48<div class="ratebar" style="width:58%"></div></td>
+          <td class="num">107.48<div class="ratebar" style="width:86%"></div></td>
           <td class="mut hide-s">rapid snapshot</td>
           <td class="lnk hide-s"><a href="results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">packet</a></td>
         </tr>
         <tr>
           <td class="model">Qwen3.6-27B <small>dense</small></td>
           <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 + MTP3</td><td class="num">2&times;</td>
-          <td class="num">98.77<div class="ratebar" style="width:53%"></div></td>
+          <td class="num">98.77<div class="ratebar" style="width:79%"></div></td>
           <td class="mut hide-s">four-arm central estimate</td>
           <td class="lnk hide-s"><a href="results/scoreboard.md">scoreboard</a></td>
         </tr>
         <tr>
           <td class="model">Qwen3.6-35B-A3B <small>MoE</small></td>
           <td class="mut">vLLM XPU</td><td class="mut">Quark W8A8 INT8</td><td class="num">4&times;</td>
-          <td class="num">93.55<div class="ratebar" style="width:50%"></div></td>
+          <td class="num">93.55<div class="ratebar" style="width:75%"></div></td>
           <td class="mut hide-s">output, strict deep gate</td>
           <td class="lnk hide-s"><a href="results/qwen36-35b-quark-int8-b70/README.md">packet</a></td>
         </tr>
         <tr>
           <td class="model">MiniMax-M2.7</td>
           <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 W4A16</td><td class="num">4&times;</td>
-          <td class="num">89.31<div class="ratebar" style="width:48%"></div></td>
+          <td class="num">89.31<div class="ratebar" style="width:71%"></div></td>
           <td class="mut hide-s">mean of four clean repeats</td>
           <td class="lnk hide-s"><a href="repro/minimax-m27-b70-89tps-20260520/README.md">repro</a></td>
         </tr>
         <tr>
           <td class="model">DeepSeek-V4-Flash-180B</td>
           <td class="mut">vLLM XPU</td><td class="mut">FP8 + FP4 experts + DSpark7</td><td class="num">4&times;</td>
-          <td class="num">80.82<div class="ratebar" style="width:43%"></div></td>
+          <td class="num">80.82<div class="ratebar" style="width:64%"></div></td>
           <td class="mut hide-s">median high, 24/24 canaries</td>
           <td class="lnk hide-s"><a href="results/scoreboard.md">scoreboard</a></td>
         </tr>
@@ -212,11 +221,11 @@
 
 <section>
   <div class="wrap">
-    <h2>Community lanes — contributor hosts <span class="ev-key"><span class="ev community">&#9679; community-reported</span> &nbsp;<span class="ev tested">&#9679; B70-tested</span></span></h2>
+    <h2>Community lanes — contributor hosts <span class="key"><span class="dot">&#9679;</span> B70-tested &nbsp; <span class="dot hollow">&#9675;</span> community-reported</span></h2>
     <p class="sub">
       Measured by contributors on their own hardware; not re-run in the reference lab unless the
-      row says B70-tested. Cookbook lanes report client post-first tok/s, median of n=5 — a
-      different metric than the lab rows above.
+      row is marked B70-tested. Cookbook lanes report client post-first tok/s, median of n=5 —
+      a different metric than the lab rows above.
     </p>
     <table>
       <thead>
@@ -224,37 +233,37 @@
       </thead>
       <tbody>
         <tr>
-          <td class="model">Nemotron-3.5-Lightning-30B</td>
+          <td class="model"><span class="dot hollow">&#9675;</span> Nemotron-3.5-Lightning-30B</td>
           <td class="mut">vLLM XPU</td><td class="mut">DFlash n=7</td><td class="num">1&times;</td>
-          <td class="num">186.61<div class="ratebar" style="width:100%"></div></td>
+          <td class="num">186.61<div class="ratebar max" style="width:100%"></div></td>
           <td class="lnk hide-s"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">field report</a></td>
         </tr>
         <tr>
-          <td class="model">Qwen3.6-35B-A3B <small>MoE</small></td>
+          <td class="model"><span class="dot hollow">&#9675;</span> Qwen3.6-35B-A3B <small>MoE</small></td>
           <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP4</td><td class="num">1&times;</td>
           <td class="num">170.91<div class="ratebar" style="width:92%"></div></td>
           <td class="lnk hide-s"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">field report</a></td>
         </tr>
         <tr>
-          <td class="model">Qwen3.8-27B <small>dense; lab-tested variant 87.6</small></td>
+          <td class="model"><span class="dot hollow">&#9675;</span> Qwen3.8-27B <small>dense; lab-tested variant 87.6</small></td>
           <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP4</td><td class="num">1&times;</td>
           <td class="num">106.7<div class="ratebar" style="width:57%"></div></td>
           <td class="lnk hide-s"><a href="community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md">validation</a></td>
         </tr>
         <tr>
-          <td class="model">Ornith-1.5-35B-A3B</td>
+          <td class="model"><span class="dot hollow">&#9675;</span> Ornith-1.5-35B-A3B</td>
           <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP</td><td class="num">1&times;</td>
           <td class="num">106.64<div class="ratebar" style="width:57%"></div></td>
           <td class="lnk hide-s"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">field report</a></td>
         </tr>
         <tr>
-          <td class="model">Qwen3.6-27B <small>native FP8</small> <span class="ev tested">&#9679; B70-tested</span></td>
+          <td class="model"><span class="dot">&#9679;</span> Qwen3.6-27B <small>native FP8</small></td>
           <td class="mut">Docker / vLLM</td><td class="mut">FP8, TP2</td><td class="num">2&times;</td>
           <td class="num">30.17<div class="ratebar" style="width:16%"></div></td>
           <td class="lnk hide-s"><a href="community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md">validation</a></td>
         </tr>
         <tr>
-          <td class="model">Muse-Glimmer-30B <small>GGUF lane</small></td>
+          <td class="model"><span class="dot hollow">&#9675;</span> Muse-Glimmer-30B <small>GGUF lane</small></td>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q4_K_XL + DFlash n2</td><td class="num">1&times;</td>
           <td class="num">26.8<div class="ratebar" style="width:14%"></div></td>
           <td class="lnk hide-s"><a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">cookbook</a></td>
@@ -294,7 +303,7 @@
     <span class="right">
       <a href="CURRENT.md">Current work</a>
       <a href="docs/README.md">Docs</a>
-      <a href="llms.txt">llms.txt (AI agents)</a>
+      <a href="llms.txt">llms.txt</a>
       <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
     </span>
   </div>
