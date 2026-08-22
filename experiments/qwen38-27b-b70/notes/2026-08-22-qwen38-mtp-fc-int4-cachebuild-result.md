@@ -52,9 +52,41 @@ representative config, isolating the op effect:
    median, bootstrap 95% lower bound > 0 to accept as a speed lever;
    acceptance-rate non-regression; quality battery (already green).
 
-## Disposition
+## Equal-config A-B (2026-08-22)
+
+Ran the door-OFF control on the IDENTICAL simplified config (fresh namespace
+`7e3affed0c`), isolating the mtp.fc op effect:
+
+- door-OFF (FP16 mtp.fc): conventional median **31.47 tok/s** (23/25 valid)
+- door-ON (INT4 mtp.fc): conventional median **31.21 tok/s** (22/25 valid)
+
+Delta **-0.26 tok/s (-0.8%)**, within this config's noise floor (door-OFF min
+row 20.33; the metric is bursty under MTP + prompt-6). So the INT4 mtp.fc op
+is **neutral vs FP16 at equal config** - no measurable benefit. Both are ~31
+because this fresh cache is ~3x off the marginfree production config; the 3x
+is the config, not the op (door-OFF is equally slow).
+
+Correction to the build-run note above: the "2 int4 input-dependency markers"
+appear in BOTH door states, so they are the lane's other INT4 usage (draft
+head, etc.), NOT mtp.fc-specific engagement. The marker count does not confirm
+mtp.fc routing; the patch emits no mtp.fc-specific marker. Engagement is
+established by the code path + the fail-closed buffer load succeeding, not by
+that count.
+
+## Disposition (verdict)
 
 mtp.fc INT4 integration is **functionally validated and quality-clean**
-(gates 1/2/5). It is not yet a measured speed win: the representative A-B on
-the marginfree config with prompt-6 handled is the remaining step. The patch,
-buffers, fresh-cache mechanism, and driver are all proven and reusable.
+(boots, fail-closed load OK, full quality battery pass with baseline match,
+MTP5 acceptance 3.82), and its isolated rate effect is **neutral (-0.8%,
+within noise)**. This matches the operator prereg's prediction: mtp.fc is one
+small linear called 5x/target-step, so even the ~290 us/step operator saving
+is sub-1% end-to-end and cannot be a standalone speed lever.
+
+Recommendation: do NOT promote mtp.fc INT4 as a speed lever. It is a
+validated, quality-clean, default-off option that stacks negligibly. A
+representative marginfree-config endpoint A-B would need sub-1% measurement
+resolution to detect any effect and is low-value unless combined with a
+larger lever (e.g. Q64xK32, itself blocked on the chunk-prefill fix). The
+patch/buffers/driver remain on record, default-off, for any future stacking
+study. The VRAM cost (retained FP16 + packed buffers) argues further against
+enabling it for a null rate benefit.

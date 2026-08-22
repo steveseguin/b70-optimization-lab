@@ -44,6 +44,19 @@ The closed no-training Muse Q8/WOQ record remains approved by LocalMaxxing as
 It is a Q8/WOQ target-verified result, not BF16/lossless or universally
 token-exact evidence.
 
+## mtp.fc INT4 integration: validated, quality-clean, rate-neutral (2026-08-22)
+
+The default-off vLLM patch (VLLM_XPU_MTP_FC_INT4, tracked in
+patches/qwen38-27b-mtp-fc-int4-b70/) was built and run on GPUs 2,3: it
+boots, fail-closed loads the frozen packed buffers, passes the full
+quality battery with baseline match, and runs MTP5 (acceptance 3.82).
+Equal-config door A-B isolates the op effect at **-0.8% (neutral, within
+noise)** - matching the operator prereg's prediction that one small
+linear x5/step is sub-1% end-to-end. Verdict: NOT a standalone speed
+lever; kept default-off for possible future stacking. Patch/buffers/
+driver on record. See the
+[cachebuild+A-B result](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-mtp-fc-int4-cachebuild-result.md).
+
 ## Active Product Track: neural.download packets
 
 **Model store network share (2026-08-22):** `/mnt/usb-models/llm-models`
