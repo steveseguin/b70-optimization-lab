@@ -9,9 +9,25 @@
       "classification": "lab-replay",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": false, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["patches/deepseek-v4-flash-reap-xpu-b70/README.md", "results/deepseek-v4-flash-k160-b70/README.md"],
-      "missing": ["clean-host platform installation", "self-contained model and DSpark acquisition", "self-contained runtime build path"]
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/deepseek-v4-flash-reap-xpu-b70/README.md",
+        "results/deepseek-v4-flash-k160-b70/README.md"
+      ],
+      "missing": [
+        "clean-host platform installation",
+        "self-contained model and DSpark acquisition",
+        "self-contained runtime build path"
+      ]
     },
     {
       "id": "gemma4-26b-a4b-q8-b70",
@@ -19,9 +35,25 @@
       "classification": "lab-replay",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": false, "launch": true, "validation": true, "patch_links": true, "hashes": false},
-      "dependency_links": ["patches/gemma4-26b-a4b-q8-b70/README.md", "results/gemma4-26b-a4b-q8-b70/README.md"],
-      "missing": ["platform installation", "self-contained model acquisition and direct verification", "self-contained source restore/build"]
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": false
+      },
+      "dependency_links": [
+        "patches/gemma4-26b-a4b-q8-b70/README.md",
+        "results/gemma4-26b-a4b-q8-b70/README.md"
+      ],
+      "missing": [
+        "platform installation",
+        "self-contained model acquisition and direct verification",
+        "self-contained source restore/build"
+      ]
     },
     {
       "id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
@@ -29,9 +61,26 @@
       "classification": "candidate-portable-repro",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["patches/gemma4-26b-a4b-q8-b70/README.md", "repro/gemma4-26b-a4b-q8-b70/README.md", "results/gemma4-26b-a4b-q8-b70/README.md"],
-      "missing": ["tested clean-host platform installation", "historical local Q4_0 draft and server binary hashes", "clean one-B70 rebuild and endpoint replay"],
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/gemma4-26b-a4b-q8-b70/README.md",
+        "repro/gemma4-26b-a4b-q8-b70/README.md",
+        "results/gemma4-26b-a4b-q8-b70/README.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "historical local Q4_0 draft and server binary hashes",
+        "clean one-B70 rebuild and endpoint replay"
+      ],
       "package": "packages/gemma4-26b-a4b-q8-b70/package.json"
     },
     {
@@ -40,9 +89,22 @@
       "classification": "archived",
       "audience": "historical",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": false},
-      "dependency_links": ["repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md"],
-      "missing": ["superseded; not eligible for starter certification"]
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": false
+      },
+      "dependency_links": [
+        "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md"
+      ],
+      "missing": [
+        "superseded; not eligible for starter certification"
+      ]
     },
     {
       "id": "laguna-s-2.1-int4-b70-102tps-20260726",
@@ -50,9 +112,24 @@
       "classification": "candidate-portable-repro",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["patches/laguna-s-2.1-xpu-b70/README.md", "results/laguna-s-2.1-int4-b70/README.md"],
-      "missing": ["tested host-platform installation", "independent clean-host replay"]
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/laguna-s-2.1-xpu-b70/README.md",
+        "results/laguna-s-2.1-int4-b70/README.md"
+      ],
+      "missing": [
+        "tested host-platform installation",
+        "independent clean-host replay"
+      ]
     },
     {
       "id": "laguna-s-2.1-int4-b70-125tps-20260731",
@@ -60,9 +137,26 @@
       "classification": "lab-replay",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": false, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["patches/laguna-s-2.1-xpu-b70/README.md", "results/laguna-s-2.1-int4-b70/README.md"],
-      "missing": ["portable runtime rebuild", "platform installation", "model acquisition", "non-originating-host replay"],
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/laguna-s-2.1-xpu-b70/README.md",
+        "results/laguna-s-2.1-int4-b70/README.md"
+      ],
+      "missing": [
+        "portable runtime rebuild",
+        "platform installation",
+        "model acquisition",
+        "non-originating-host replay"
+      ],
       "package": "packages/laguna-s-2.1-int4-b70-125tps/package.json"
     },
     {
@@ -71,9 +165,24 @@
       "classification": "candidate-portable-repro",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": true, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": false},
-      "dependency_links": ["results/minimax-m27-int4-autoround-b70/README.md"],
-      "missing": ["immutable driver package lock", "complete patch manifest with checksums", "fresh clean-host replay of current package availability"]
+      "components": {
+        "platform_install": true,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": false
+      },
+      "dependency_links": [
+        "results/minimax-m27-int4-autoround-b70/README.md"
+      ],
+      "missing": [
+        "immutable driver package lock",
+        "complete patch manifest with checksums",
+        "fresh clean-host replay of current package availability"
+      ]
     },
     {
       "id": "minimax-m27-b70-89tps-20260520",
@@ -81,9 +190,23 @@
       "classification": "candidate-portable-repro",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": true, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["results/minimax-m27-int4-autoround-b70/README.md"],
-      "missing": ["current clean-host replay", "beginner recovery and platform compatibility boundary"],
+      "components": {
+        "platform_install": true,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "results/minimax-m27-int4-autoround-b70/README.md"
+      ],
+      "missing": [
+        "current clean-host replay",
+        "beginner recovery and platform compatibility boundary"
+      ],
       "package": "packages/minimax-m27-int4-autoround-b70/package.json"
     },
     {
@@ -92,9 +215,22 @@
       "classification": "record-capsule",
       "audience": "historical",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": false, "launch": true, "validation": true, "patch_links": true, "hashes": false},
-      "dependency_links": ["notes/2026-05-22-minimax-structured-fast-lane-regex2.md"],
-      "missing": ["complete unconstrained deployment path; this is a constrained-task record"]
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": false
+      },
+      "dependency_links": [
+        "notes/2026-05-22-minimax-structured-fast-lane-regex2.md"
+      ],
+      "missing": [
+        "complete unconstrained deployment path; this is a constrained-task record"
+      ]
     },
     {
       "id": "muse-glimmer-30b-q8-woq-b70-100tps-20260813",
@@ -102,9 +238,25 @@
       "classification": "candidate-portable-repro",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["patches/muse-glimmer-30b-b70/README.md", "results/muse-glimmer-30b-q8-woq-b70/README.md"],
-      "missing": ["tested platform installer", "original download-time complete target identity", "independent clean-host replay"],
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/muse-glimmer-30b-b70/README.md",
+        "results/muse-glimmer-30b-q8-woq-b70/README.md"
+      ],
+      "missing": [
+        "tested platform installer",
+        "original download-time complete target identity",
+        "independent clean-host replay"
+      ],
       "package": "packages/muse-glimmer-30b-q8-woq-b70/package.json"
     },
     {
@@ -113,9 +265,24 @@
       "classification": "candidate-portable-repro",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["results/qwen36-27b-autoround-int4-b70/README.md"],
-      "missing": ["tested platform installer", "clean-host replay", "simplified canonical positive patch index"]
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "results/qwen36-27b-autoround-int4-b70/README.md"
+      ],
+      "missing": [
+        "tested platform installer",
+        "clean-host replay",
+        "simplified canonical positive patch index"
+      ]
     },
     {
       "id": "qwen36-27b-autoround-int4-b70-determinism-20260818",
@@ -123,9 +290,24 @@
       "classification": "lab-replay",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["repro/qwen36-27b-autoround-int4-b70/README.md", "notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md"],
-      "missing": ["inherits historical source/model/platform dependencies", "clean-host replay"]
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen36-27b-autoround-int4-b70/README.md",
+        "notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md"
+      ],
+      "missing": [
+        "inherits historical source/model/platform dependencies",
+        "clean-host replay"
+      ]
     },
     {
       "id": "qwen36-27b-q8-tp2-asrock-b70",
@@ -133,9 +315,25 @@
       "classification": "lab-replay",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["patches/qwen36-27b-q8-tp2-asrock-b70/README.md", "results/qwen36-27b-q8-tp2-asrock-b70/README.md"],
-      "missing": ["OMIX driver installation and verification", "model download helper", "clean-host replay"]
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen36-27b-q8-tp2-asrock-b70/README.md",
+        "results/qwen36-27b-q8-tp2-asrock-b70/README.md"
+      ],
+      "missing": [
+        "OMIX driver installation and verification",
+        "model download helper",
+        "clean-host replay"
+      ]
     },
     {
       "id": "qwen38-27b-autoround-int4-b70",
@@ -143,9 +341,26 @@
       "classification": "research-status",
       "audience": "researcher",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": true, "launch": true, "validation": true, "patch_links": false, "hashes": true},
-      "dependency_links": ["experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md", "experiments/qwen38-27b-b70/DO-NOT-REPEAT.md"],
-      "missing": ["promoted deterministic lane", "published AOT binaries or portable rebuild", "portable compile-cache identity", "clean-host replay"]
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md",
+        "experiments/qwen38-27b-b70/DO-NOT-REPEAT.md"
+      ],
+      "missing": [
+        "promoted deterministic lane",
+        "published AOT binaries or portable rebuild",
+        "portable compile-cache identity",
+        "clean-host replay"
+      ]
     },
     {
       "id": "qwen38-27b-fp8-vllm-tp2-asrock-b70",
@@ -154,9 +369,28 @@
       "classification": "candidate-portable-repro",
       "audience": "intermediate",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json", "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json", "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py", "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md", "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json"],
-      "missing": ["tested Intel driver and Docker host guide", "clean-host replay", "beginner recovery flow"]
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
+        "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
+        "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
+        "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json"
+      ],
+      "missing": [
+        "tested Intel driver and Docker host guide",
+        "clean-host replay",
+        "beginner recovery flow"
+      ]
     },
     {
       "id": "qwen38-27b-q4km-tp1-b70",
@@ -165,9 +399,30 @@
       "classification": "candidate-portable-repro",
       "audience": "intermediate",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["repro/qwen38-27b-q4km-tp1-b70/model-direct.json", "repro/qwen38-27b-q4km-tp1-b70/model-verification-20260822.json", "patches/qwen38-27b-q4km-tp1-b70s/README.md", "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-quality-battery-result.md", "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-i.json", "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json", "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-quality-battery.json"],
-      "missing": ["tested clean-host Intel driver and oneAPI installation", "clean-host source build and endpoint replay", "beginner recovery flow"]
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
+        "repro/qwen38-27b-q4km-tp1-b70/model-verification-20260822.json",
+        "patches/qwen38-27b-q4km-tp1-b70s/README.md",
+        "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-quality-battery-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-i.json",
+        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json",
+        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-quality-battery.json"
+      ],
+      "missing": [
+        "tested clean-host Intel driver and oneAPI installation",
+        "clean-host source build and endpoint replay",
+        "beginner recovery flow"
+      ]
     },
     {
       "id": "qwen38-27b-q4km-tp2-asrock-b70",
@@ -175,9 +430,24 @@
       "classification": "lab-replay",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["patches/qwen38-27b-q4km-tp2-asrock-b70/README.md"],
-      "missing": ["platform installation", "model download/verification", "clean-host replay"]
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen38-27b-q4km-tp2-asrock-b70/README.md"
+      ],
+      "missing": [
+        "platform installation",
+        "model download/verification",
+        "clean-host replay"
+      ]
     },
     {
       "id": "qwen38-27b-q8-tp2-asrock-b70",
@@ -185,9 +455,24 @@
       "classification": "lab-replay",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
-      "dependency_links": ["patches/qwen38-27b-q8-tp2-asrock-b70/README.md"],
-      "missing": ["platform installation", "model download/verification", "clean-host replay"],
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen38-27b-q8-tp2-asrock-b70/README.md"
+      ],
+      "missing": [
+        "platform installation",
+        "model download/verification",
+        "clean-host replay"
+      ],
       "package": "packages/qwen38-27b-q8-tp2-b70/package.json"
     },
     {
@@ -196,9 +481,153 @@
       "classification": "lab-replay",
       "audience": "expert",
       "clean_host_tested": false,
-      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": false, "launch": true, "validation": true, "patch_links": true, "hashes": false},
-      "dependency_links": ["repro/qwen38-27b-q8-tp2-asrock-b70/README.md"],
-      "missing": ["inherits every dependency from the single-request Q8 lab replay", "broad schedule-invariance validation"]
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": false
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-q8-tp2-asrock-b70/README.md"
+      ],
+      "missing": [
+        "inherits every dependency from the single-request Q8 lab replay",
+        "broad schedule-invariance validation"
+      ]
+    },
+    {
+      "id": "lfm25-26b-q8-b70",
+      "guide": "repro/lfm25-26b-q8-b70/README.md",
+      "classification": "research-status",
+      "audience": "beginner",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "docs/neural-download-packet-standard.md",
+        "model-intake/bringup-protocol.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "additional operating points"
+      ],
+      "package": "packages/lfm25-26b-q8-b70/package.json"
+    },
+    {
+      "id": "ornith-15-9b-q8-b70",
+      "guide": "repro/ornith-15-9b-q8-b70/README.md",
+      "classification": "research-status",
+      "audience": "beginner",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "docs/neural-download-packet-standard.md",
+        "model-intake/bringup-protocol.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "additional operating points"
+      ],
+      "package": "packages/ornith-15-9b-q8-b70/package.json"
+    },
+    {
+      "id": "ornith-15-35b-a3b-q4km-b70",
+      "guide": "repro/ornith-15-35b-a3b-q4km-b70/README.md",
+      "classification": "research-status",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "docs/neural-download-packet-standard.md",
+        "model-intake/bringup-protocol.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "two-card comparison operating point"
+      ],
+      "package": "packages/ornith-15-35b-a3b-q4km-b70/package.json"
+    },
+    {
+      "id": "nemotron-35-lightning-30b-a3b-b70",
+      "guide": "repro/nemotron-35-lightning-30b-a3b-b70/README.md",
+      "classification": "research-status",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "docs/neural-download-packet-standard.md",
+        "model-intake/bringup-protocol.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "two-card comparison operating point"
+      ],
+      "package": "packages/nemotron-35-lightning-30b-a3b-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-256k-vision-mtp-b70",
+      "guide": "repro/qwen38-27b-256k-vision-mtp-b70/README.md",
+      "classification": "research-status",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": false,
+        "hashes": true
+      },
+      "dependency_links": [
+        "docs/neural-download-packet-standard.md",
+        "model-intake/bringup-protocol.md"
+      ],
+      "missing": [
+        "tested clean-host platform installation",
+        "additional operating points"
+      ],
+      "package": "packages/qwen38-27b-256k-vision-mtp-b70/package.json"
     }
   ]
 }

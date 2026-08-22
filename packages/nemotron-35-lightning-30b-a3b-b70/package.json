@@ -1,0 +1,121 @@
+{
+ "format": "b70-model-package-v1",
+ "id": "nemotron-35-lightning-30b-a3b-b70",
+ "name": "Nemotron 3.5 Lightning 30B-A3B UD-Q4_K_M on one Intel Arc Pro B70",
+ "status": "candidate",
+ "audience": "intermediate",
+ "guide": "repro/nemotron-35-lightning-30b-a3b-b70/README.md",
+ "clean_host_tested": false,
+ "library": {
+  "model_family": "Nemotron 3.5",
+  "publisher": "NVIDIA (GGUF by unsloth)",
+  "variant": "Lightning 30B-A3B",
+  "summary": "Hybrid Mamba MoE (arch nemotron_h_moe, 1M native context) confirmed running on Intel with no NVFP4 runtime; flattest decode-vs-depth curve of the first wave.",
+  "quantization": "UD-Q4_K_M",
+  "runtime_label": "llama.cpp SYCL",
+  "operating_systems": [
+   "Linux"
+  ],
+  "delivery": [
+   "native"
+  ],
+  "modalities": [
+   "text"
+  ],
+  "use_cases": [
+   "general",
+   "long context",
+   "chat"
+  ],
+  "tags": [
+   "one card",
+   "moe",
+   "hybrid mamba",
+   "target only",
+   "cache zero",
+   "stock upstream"
+  ],
+  "published_at": "2026-08-22",
+  "featured_metric": {
+   "value": 72.169452,
+   "unit": "tok/s",
+   "label": "decode (3B active parameters)",
+   "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 72.035976.",
+   "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/README.md"
+  },
+  "context_curve": {
+   "decode_tok_s": {
+    "0": 73.01,
+    "8192": 70.7,
+    "32768": 64.62
+   },
+   "prefill_tok_s": {
+    "0": 1260.03,
+    "8192": 1145.65,
+    "32768": 1018.93
+   },
+   "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps); only -11% decode from 0 to 32K depth.",
+   "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.sweep.json"
+  }
+ },
+ "contributors": [
+  {
+   "id": "b70-optimization-lab",
+   "name": "neural.download lab",
+   "kind": "lab",
+   "profile": "https://github.com/steveseguin/b70-optimization-lab",
+   "contribution": "Intake verification, bring-up, baselines, depth sweep, operating point, canary battery, package.",
+   "status": "integrated",
+   "validated_effect": "Stock-upstream characterization; no lab patches in this package.",
+   "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+  }
+ ],
+ "known_limitations": [
+  "With reasoning ON, repeated identical requests are not hash-stable (thinking-channel sampling); deterministic with reasoning off - the recipe default.",
+  "MoE rate reflects ~3B active parameters.",
+  "Two-card comparison unlocked but not yet run.",
+  "1M native context not exercised beyond 32K here."
+ ],
+ "hardware": {
+  "accelerator": "Intel Arc Pro B70 32 GiB",
+  "cards": 1,
+  "host_ram_min_bytes": 34359738368,
+  "host_ram_plus_swap_min_bytes": 34359738368,
+  "model_weight_bytes": 25272338336
+ },
+ "model": {
+  "repository": "unsloth/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
+  "revision": "f2d3fe3694501008786e81e5f20360cbf715496a",
+  "manifest": "repro/nemotron-35-lightning-30b-a3b-b70/model-manifest.json"
+ },
+ "runtime": {
+  "kind": "native",
+  "project": "ggml-org/llama.cpp",
+  "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "build": "cmake -G Ninja -B build-sycl-aot-bmg-g31 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=icpx -DCMAKE_C_COMPILER=icx -DGGML_SYCL=ON -DGGML_SYCL_F16=ON -DGGML_SYCL_DEVICE_ARCH=bmg_g31 -DGGML_SYCL_MAX_PARALLEL_LINK_JOBS=32 -DLLAMA_CURL=OFF && cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j 24"
+ },
+ "project_patches": {
+  "required": false,
+  "items": []
+ },
+ "commands": {
+  "preflight": "sha256sum -c <(awk '{print $0}' repro/nemotron-35-lightning-30b-a3b-b70/model-manifest.json >/dev/null); source /opt/intel/oneapi/setvars.sh --force; export ONEAPI_DEVICE_SELECTOR=level_zero:0",
+  "launch": "BUILD_DIR/bin/llama-server --model $MODEL_DIR/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-UD-Q4_K_M.gguf --alias nemotron --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
+  "health": "curl -fsS http://127.0.0.1:18100/health",
+  "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model nemotron --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
+  "stop": "pkill -x llama-server"
+ },
+ "dependencies": [
+  "repro/nemotron-35-lightning-30b-a3b-b70/README.md",
+  "repro/nemotron-35-lightning-30b-a3b-b70/model-manifest.json",
+  "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.sweep.json",
+  "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.meta.json",
+  "repro/nemotron-35-lightning-30b-a3b-b70/depth-sweep.svg",
+  "docs/neural-download-packet-standard.md"
+ ],
+ "missing": [
+  "tested clean-host platform installation",
+  "two-card comparison operating point",
+  "context beyond 32K of the 1M native window"
+ ]
+}

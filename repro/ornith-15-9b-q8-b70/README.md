@@ -25,7 +25,7 @@ package candidate.
 ## Recipe, benchmarks, quality — TBD
 
 Filled only from measured runs per
-[the packet standard](../../../docs/neural-download-packet-standard.md):
+[the packet standard](../../docs/neural-download-packet-standard.md):
 intake `verify` (direct+ordinary) -> `run-model-intake-baseline.sh`
 (1 B70, f16 KV, 8K, target-only) + diagnostic bench gate -> packet
 operating points (2 fresh-server runs each) -> canary battery.

@@ -9,7 +9,7 @@ Agents creating or updating these surfaces must use the repository-local
 `$publish-model-package` skill. Outside submissions first use
 `$review-model-contribution`; adopted work then follows the same package rules.
 
-## Packet contents (one directory per entry, `repro/neural-download/<slug>/`)
+## Packet contents (one directory per entry, `repro/<package-id>/`)
 
 1. **Identity** (`README.md` header + `manifest.sha256`)
    - Model family, size, quant(s); exact GGUF file name(s), byte size,

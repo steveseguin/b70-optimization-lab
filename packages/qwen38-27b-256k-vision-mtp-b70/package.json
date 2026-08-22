@@ -1,0 +1,133 @@
+{
+ "format": "b70-model-package-v1",
+ "id": "qwen38-27b-256k-vision-mtp-b70",
+ "name": "Qwen3.8 27B 256K + vision + MTP draft on one Intel Arc Pro B70",
+ "status": "candidate",
+ "audience": "expert",
+ "guide": "repro/qwen38-27b-256k-vision-mtp-b70/README.md",
+ "clean_host_tested": false,
+ "library": {
+  "model_family": "Qwen3.8",
+  "publisher": "Alibaba / Qwen (GGUF by unsloth)",
+  "variant": "27B flagship package",
+  "summary": "Full 262144-token context, vision projector, and MTP speculative draft resident together on one 32 GiB card. Fit-off decided on hardware: UD-Q5_K_S ships (2.86 GiB free); UD-Q4_K_XL is the measured speed alternative (+3%).",
+  "quantization": "UD-Q5_K_S (shipped) / UD-Q4_K_XL (alternative)",
+  "runtime_label": "llama.cpp SYCL",
+  "operating_systems": [
+   "Linux"
+  ],
+  "delivery": [
+   "native"
+  ],
+  "modalities": [
+   "text",
+   "vision"
+  ],
+  "use_cases": [
+   "long context",
+   "vision",
+   "general",
+   "coding"
+  ],
+  "tags": [
+   "one card",
+   "256k context",
+   "vision",
+   "speculative decode",
+   "q8_0 kv",
+   "stock upstream"
+  ],
+  "published_at": "2026-08-22",
+  "featured_metric": {
+   "value": 26.668277,
+   "unit": "tok/s",
+   "label": "decode (MTP-assisted, full package resident)",
+   "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, cache-zero, at 262144 ctx with q8_0 K/V, vision mmproj, and MTP draft loaded; second fresh-server run 26.640510. Speculation-assisted and labeled as such; target-only tg128 at depth 0 is 22.64 tok/s (raw engine).",
+   "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/README.md"
+  },
+  "context_curve": {
+   "decode_tok_s": {
+    "0": 22.64,
+    "8192": 17.63,
+    "32768": 10.32
+   },
+   "prefill_tok_s": {
+    "0": 915.08,
+    "8192": 807.56,
+    "32768": 678.87
+   },
+   "scope": "llama-bench raw engine rates, TARGET-ONLY Q5_K_S with q8_0 KV (no draft; llama-bench has no speculation). The MTP-assisted serving rate above is the package headline.",
+   "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json"
+  }
+ },
+ "contributors": [
+  {
+   "id": "b70-optimization-lab",
+   "name": "neural.download lab",
+   "kind": "lab",
+   "profile": "https://github.com/steveseguin/b70-optimization-lab",
+   "contribution": "Package design, KV budget arithmetic, hardware fit-off, vision smoke, operating points for both quants, canary battery.",
+   "status": "integrated",
+   "validated_effect": "Fit-off on hardware overturned the conservative paper margin: Q5_K_S completes the suite at 262144 with 2.86 GiB free; Q4_K_XL measures 27.510236/27.493910 tok/s (+3.2%) at the identical config.",
+   "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+  },
+  {
+   "id": "unsloth",
+   "name": "unsloth",
+   "kind": "external",
+   "profile": "https://huggingface.co/unsloth",
+   "contribution": "Published the pinned GGUF quantizations, vision projector, and MTP draft artifacts used verbatim.",
+   "status": "integrated",
+   "validated_effect": "Artifact provider; no runtime delta adopted.",
+   "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/README.md"
+  }
+ ],
+ "known_limitations": [
+  "256K KV requires q8_0 K/V on one card; f16 KV limits context to roughly 96K at these quants.",
+  "MTP-assisted rate varies with content (p10 24.08 vs median 26.67); target-only numbers published alongside.",
+  "Vision verified by objective two-question smoke (dominant color, corner color) on a deterministic test image; broader multimodal quality untested.",
+  "Above ~1024-token prompts this package relies on multi-chunk prefill paths that the lab's separate vLLM lane found corruption-prone; the llama.cpp path here passed its canaries but has not had equivalent deep validation at depth."
+ ],
+ "hardware": {
+  "accelerator": "Intel Arc Pro B70 32 GiB",
+  "cards": 1,
+  "host_ram_min_bytes": 34359738368,
+  "host_ram_plus_swap_min_bytes": 34359738368,
+  "model_weight_bytes": 18665753504
+ },
+ "model": {
+  "repository": "unsloth/Qwen3.8-27B-GGUF",
+  "revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502",
+  "manifest": "repro/qwen38-27b-256k-vision-mtp-b70/model-manifest.json"
+ },
+ "runtime": {
+  "kind": "native",
+  "project": "ggml-org/llama.cpp",
+  "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "build": "cmake -G Ninja -B build-sycl-aot-bmg-g31 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=icpx -DCMAKE_C_COMPILER=icx -DGGML_SYCL=ON -DGGML_SYCL_F16=ON -DGGML_SYCL_DEVICE_ARCH=bmg_g31 -DGGML_SYCL_MAX_PARALLEL_LINK_JOBS=32 -DLLAMA_CURL=OFF && cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j 24"
+ },
+ "project_patches": {
+  "required": false,
+  "items": []
+ },
+ "commands": {
+  "preflight": "sha256sum -c <(awk '{print $0}' repro/qwen38-27b-256k-vision-mtp-b70/model-manifest.json >/dev/null); source /opt/intel/oneapi/setvars.sh --force; export ONEAPI_DEVICE_SELECTOR=level_zero:0",
+  "launch": "BUILD_DIR/bin/llama-server --model $MODEL_DIR/Qwen3.8-27B-UD-Q5_K_S.gguf --alias qwen38pkg --mmproj $MODEL_DIR/mmproj-F16.gguf --model-draft $MODEL_DIR/MTP/mtp-Qwen3.8-27B-Q4_0.gguf --device-draft SYCL0 --gpu-layers-draft 99 --ctx-size 262144 --cache-type-k q8_0 --cache-type-v q8_0 --cache-type-k-draft q8_0 --cache-type-v-draft q8_0 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
+  "health": "curl -fsS http://127.0.0.1:18100/health",
+  "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model qwen38pkg --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
+  "stop": "pkill -x llama-server"
+ },
+ "dependencies": [
+  "repro/qwen38-27b-256k-vision-mtp-b70/README.md",
+  "repro/qwen38-27b-256k-vision-mtp-b70/model-manifest.json",
+  "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json",
+  "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.meta.json",
+  "repro/qwen38-27b-256k-vision-mtp-b70/depth-sweep.svg",
+  "docs/neural-download-packet-standard.md"
+ ],
+ "missing": [
+  "tested clean-host platform installation",
+  "broader multimodal quality beyond the objective smoke",
+  "deep-context validation beyond canaries on the multi-chunk prefill path"
+ ]
+}

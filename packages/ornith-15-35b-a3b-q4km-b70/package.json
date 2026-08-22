@@ -1,0 +1,129 @@
+{
+ "format": "b70-model-package-v1",
+ "id": "ornith-15-35b-a3b-q4km-b70",
+ "name": "Ornith 1.5 35B-A3B Q4_K_M on one Intel Arc Pro B70",
+ "status": "candidate",
+ "audience": "intermediate",
+ "guide": "repro/ornith-15-35b-a3b-q4km-b70/README.md",
+ "clean_host_tested": false,
+ "library": {
+  "model_family": "Ornith 1.5",
+  "publisher": "Ornith AI",
+  "variant": "35B-A3B",
+  "summary": "35B-class MoE (256 experts / 8 active, arch qwen35moe) topping 100 tok/s on a single card, stock pinned upstream; independent local numbers for the family's external one-card claims.",
+  "quantization": "Q4_K_M",
+  "runtime_label": "llama.cpp SYCL",
+  "operating_systems": [
+   "Linux"
+  ],
+  "delivery": [
+   "native"
+  ],
+  "modalities": [
+   "text"
+  ],
+  "use_cases": [
+   "general",
+   "coding",
+   "chat"
+  ],
+  "tags": [
+   "one card",
+   "moe",
+   "target only",
+   "cache zero",
+   "stock upstream"
+  ],
+  "published_at": "2026-08-22",
+  "featured_metric": {
+   "value": 104.839983,
+   "unit": "tok/s",
+   "label": "decode (3B active parameters)",
+   "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 104.810772.",
+   "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
+  },
+  "context_curve": {
+   "decode_tok_s": {
+    "0": 108.91,
+    "8192": 98.76,
+    "32768": 80.42
+   },
+   "prefill_tok_s": {
+    "0": 1171.25,
+    "8192": 1049.31,
+    "32768": 920.08
+   },
+   "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps).",
+   "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.sweep.json"
+  }
+ },
+ "contributors": [
+  {
+   "id": "b70-optimization-lab",
+   "name": "neural.download lab",
+   "kind": "lab",
+   "profile": "https://github.com/steveseguin/b70-optimization-lab",
+   "contribution": "Intake verification, bring-up, baselines, depth sweep, operating point, canary battery, package.",
+   "status": "integrated",
+   "validated_effect": "Stock-upstream characterization; no lab patches in this package.",
+   "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+  },
+  {
+   "id": "external-one-b70-report",
+   "name": "unverified external one-B70 performance report",
+   "kind": "external",
+   "contribution": "Discovery lead that prompted independent local testing of this family.",
+   "status": "acknowledged",
+   "validated_effect": "None adopted; all published numbers are local measurements.",
+   "evidence": "model-intake/README.md",
+   "profile": "https://github.com/steveseguin/b70-optimization-lab/blob/main/model-intake/README.md"
+  }
+ ],
+ "known_limitations": [
+  "MoE rate reflects ~3B active parameters; not comparable to dense 35B expectations.",
+  "Two-card comparison unlocked but not yet run.",
+  "Canary battery is objective self-consistency only; no cross-model oracle."
+ ],
+ "hardware": {
+  "accelerator": "Intel Arc Pro B70 32 GiB",
+  "cards": 1,
+  "host_ram_min_bytes": 34359738368,
+  "host_ram_plus_swap_min_bytes": 34359738368,
+  "model_weight_bytes": 21713462848
+ },
+ "model": {
+  "repository": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
+  "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
+  "manifest": "repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json"
+ },
+ "runtime": {
+  "kind": "native",
+  "project": "ggml-org/llama.cpp",
+  "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "build": "cmake -G Ninja -B build-sycl-aot-bmg-g31 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=icpx -DCMAKE_C_COMPILER=icx -DGGML_SYCL=ON -DGGML_SYCL_F16=ON -DGGML_SYCL_DEVICE_ARCH=bmg_g31 -DGGML_SYCL_MAX_PARALLEL_LINK_JOBS=32 -DLLAMA_CURL=OFF && cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j 24"
+ },
+ "project_patches": {
+  "required": false,
+  "items": []
+ },
+ "commands": {
+  "preflight": "sha256sum -c <(awk '{print $0}' repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json >/dev/null); source /opt/intel/oneapi/setvars.sh --force; export ONEAPI_DEVICE_SELECTOR=level_zero:0",
+  "launch": "BUILD_DIR/bin/llama-server --model $MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf --alias ornith35b --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
+  "health": "curl -fsS http://127.0.0.1:18100/health",
+  "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model ornith35b --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
+  "stop": "pkill -x llama-server"
+ },
+ "dependencies": [
+  "repro/ornith-15-35b-a3b-q4km-b70/README.md",
+  "repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json",
+  "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.sweep.json",
+  "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.meta.json",
+  "repro/ornith-15-35b-a3b-q4km-b70/depth-sweep.svg",
+  "docs/neural-download-packet-standard.md"
+ ],
+ "missing": [
+  "tested clean-host platform installation",
+  "two-card comparison operating point",
+  "beginner recovery flow"
+ ]
+}

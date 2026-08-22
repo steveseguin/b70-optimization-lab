@@ -6,9 +6,16 @@ Status: **FIT-OFF DECIDED — UD-Q5_K_S ships as the flagship quant**
 all resident, with **2.86 GiB VRAM still free**. Package suite rate
 (**MTP-assisted**, 128/100 window, cache-zero): `27.004 tok/s` median /
 `24.084` p10 (spread is content-dependent draft acceptance). UD-Q4_K_XL
-becomes the documented headroom alternative. Target-only companion
-number, canaries, and vision smoke still pending for the published
-packet.
+becomes the documented headroom alternative. Since completed:
+- **Vision smoke PASS** at the full 256K config: deterministic 173-byte
+  test image (red field, blue corner), answers "Red" / "Blue" exactly
+  (`qwen38-vision-smoke.json`).
+- **Target-only companion**: tg128 22.64 tok/s at depth 0 (raw engine,
+  q8_0 KV; see the depth sweep) vs 26.67 MTP-assisted suite median.
+- **UD-Q4_K_XL alternative point** at the identical package config:
+  `27.510236` / `27.493910 tok/s` (two fresh servers, canaries 5/5) —
+  about +3% over the shipped Q5_K_S, for users preferring speed and
+  headroom over the highest-fitting quant.
 
 ## Identity (all from `unsloth/Qwen3.8-27B-GGUF` @ `4ca720788d1e01f1bff70c033e0d0028fd02e502`)
 
