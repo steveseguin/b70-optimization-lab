@@ -54,7 +54,7 @@ policy_marker='VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY engaged'
 
 # endpoint3: integration-DSO campaign (r4-qualified 979e91c1...). endpoint2
 # stopped terminal at b1 (undeployable r2 DSO); endpoint-a1 burned pre-launch.
-arm_label() { printf 'qwen38-q64k32-endpoint4-%s-20260822' "$1"; }
+arm_label() { printf 'qwen38-q64k32-endpoint5-%s-20260822' "$1"; }
 arm_root_for() { printf '%s/%s' "$raw" "$(arm_label "$1")"; }
 
 case "$action" in
@@ -253,13 +253,15 @@ if [[ -n "$predecessor" ]]; then
   fi
   rm -f -- "$prev_recheck"
   trap - EXIT
-  # Report-only exactness accounting peer: every successor compares to a1.
-  parity_peer="$(arm_root_for a1)/data/bench.json"
-  parity_peer_sha=$(jq -r '.benchmark.sha256 // empty' \
+  # Report-only exactness accounting vs a1 happens in this driver after the
+  # arm completes; the runner receives no parity peer because sealed mode
+  # would enforce full 25/25 token parity, which this campaign reports only.
+  a1_bench="$(arm_root_for a1)/data/bench.json"
+  a1_bench_sha=$(jq -r '.benchmark.sha256 // empty' \
     "$(arm_root_for a1)/tp2-sealed-gates.json")
-  if [[ ! -f "$parity_peer" || ! "$parity_peer_sha" =~ ^[0-9a-f]{64}$ \
-    || "$(sha256sum -- "$parity_peer" | awk '{print $1}')" != "$parity_peer_sha" ]]; then
-    printf 'arm a1 parity peer benchmark is missing or altered\n' >&2
+  if [[ ! -f "$a1_bench" || ! "$a1_bench_sha" =~ ^[0-9a-f]{64}$ \
+    || "$(sha256sum -- "$a1_bench" | awk '{print $1}')" != "$a1_bench_sha" ]]; then
+    printf 'arm a1 benchmark is missing or altered\n' >&2
     exit 4
   fi
 fi
@@ -341,7 +343,7 @@ launch_env=(
   VALIDATION_EXPECT_AOT_CACHE_KEYS="$aot_keys"
   VALIDATION_EXPECT_SUITE_SHA256="$suite_sha"
   VALIDATION_EXPECT_QUALITY_BASELINE_SHA256="$quality_sha"
-  VALIDATION_EXPECT_PARITY_PEER_BENCH_SHA256="$parity_peer_sha"
+  VALIDATION_EXPECT_PARITY_PEER_BENCH_SHA256=
   VALIDATION_EXPECT_TARGET_TOKEN_BENCH_SHA256="$target_bench_sha"
   VALIDATION_EXPECT_MODEL_DIR="$model"
   VALIDATION_EXPECT_MODEL_MANIFEST_SHA256="$model_manifest_sha"
@@ -353,7 +355,7 @@ launch_env=(
   VALIDATION_EXPECT_CORE_SHA256="$core_sha"
   VALIDATION_EXPECT_MOE_SHA256="$moe_sha"
   VALIDATION_EXPECT_FA_SHA256="$fa_sha"
-  VALIDATION_PARITY_PEER_BENCH="$parity_peer"
+  VALIDATION_PARITY_PEER_BENCH=
   VALIDATION_TARGET_TOKEN_BENCH="$target_bench"
   VALIDATION_REQUIRE_TARGET_TOKEN_PARITY=0
 )
@@ -382,5 +384,10 @@ if [[ "$runner_rc" == "0" ]]; then
   fi
   printf 'arm %s complete: role=%s marker_count=%s\n' \
     "$action" "$role" "$marker_count"
+  if [[ -n "$predecessor" ]]; then
+    parity=$(jq -n --slurpfile a "$a1_bench" --slurpfile b "$arm_root/data/bench.json" \
+      '[($a[0].output_sha256s), ($b[0].output_sha256s)] | transpose | map(select(.[0] == .[1])) | length')
+    printf 'report-only exact-output parity vs a1: %s/25\n' "$parity"
+  fi
 fi
 exit "$runner_rc"

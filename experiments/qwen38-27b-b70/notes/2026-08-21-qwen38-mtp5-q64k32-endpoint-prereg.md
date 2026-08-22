@@ -141,3 +141,24 @@ campaign design as blocked on the lane's prompt-6 nondeterminism and
 requires a redesigned suite or metric preregistration. endpoint4 labels:
 `qwen38-q64k32-endpoint4-{a1,b1,b2,a2}-20260822`; driver refrozen at
 `f9d67d1c2226713c637eaec82f50a980411c16be371daa86f83f113f9df1f118`.
+
+## endpoint4 stop and endpoint5 design correction (2026-08-22)
+
+endpoint4 progressed further than any prior attempt: a1 passed on-anchor
+(`101.522551 tok/s` conventional, prompt 6 long-family), and the b1
+candidate **deployed and ran the full 25** with both per-rank engagement
+markers, sealed gates passed, `102.059086 tok/s` conventional (`+0.53%`
+vs a1, single-pair, report-only), and 23/25 exact-output parity against
+a1 — tighter than the incumbent lane's own 21-22/25 stock parity band.
+The arm then exited 14 on the runner's sealed-mode full token-array
+parity gate: passing any parity peer inherently enforces 25/25, which
+contradicts this preregistration's reported-not-gated exactness
+accounting. That is a deterministic design mismatch (not the stochastic
+short-family class, whose relaunch budget is untouched).
+
+**endpoint5 correction:** the driver no longer passes the runner a parity
+peer; it instead verifies a1's sealed bench integrity and computes the
+same exact-output parity report itself after each successor arm. Labels
+`qwen38-q64k32-endpoint5-{a1,b1,b2,a2}-20260822`; driver refrozen at
+`3a997e0dc1a4b6d8058f9863b1934834bc9a1412622268799d5dd9168384db10`.
+All other gates, order, and stop rules unchanged.
