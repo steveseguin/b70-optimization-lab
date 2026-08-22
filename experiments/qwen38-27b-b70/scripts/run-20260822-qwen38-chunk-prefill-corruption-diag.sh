@@ -23,8 +23,8 @@ driver=$(realpath -- "$0")
 action=${1:-}
 
 case "$action" in
-  check|d2|d3|d6|d4|d5) ;;
-  *) printf 'usage: %s check|d2|d3|d6|d4|d5\n' "$0" >&2; exit 2 ;;
+  check|d2|d3|d6|d7|d4|d5) ;;
+  *) printf 'usage: %s check|d2|d3|d6|d7|d4|d5\n' "$0" >&2; exit 2 ;;
 esac
 
 raw=/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70
@@ -37,6 +37,8 @@ elif [[ "${1:-}" == d3 ]]; then
   suite="$raw/qwen38-longkv-chunk-diag-d3-4row-suite-20260822/validation-suite.json"
 elif [[ "${1:-}" == d6 ]]; then
   suite="$raw/qwen38-longkv-chunk-diag-d6-6row-suite-20260822/validation-suite.json"
+elif [[ "${1:-}" == d7 ]]; then
+  suite="$raw/qwen38-longkv-chunk-diag-d7-7row-suite-20260822/validation-suite.json"
 fi
 quality_baseline="$raw/qwen38-marginfree-targetoracle-25-a-20260820/data/quality.json"
 target_bench="$raw/qwen38-marginfree-targetoracle-25-a-20260820/data/bench.json"
@@ -60,6 +62,8 @@ elif [[ "${1:-}" == d3 ]]; then
   suite_sha=6eafd43627337f698b5e662e197827993215ba578e7b9379161e6cd2ed229db4
 elif [[ "${1:-}" == d6 ]]; then
   suite_sha=16fec1abab2c85ac2c621c28fb6c582381b81ee357c1bf3152d1f2df4f4c81d1
+elif [[ "${1:-}" == d7 ]]; then
+  suite_sha=28849c558c569dcf1eeaf314c5db2ea8f3e3e855c69e17b65cb26c6cadfa36dd
 fi
 # d5: identical exposure to d4 with the GDN spec persistent scratch OFF -
 # a runtime allocation-strategy door (per-call scratch instead of a
