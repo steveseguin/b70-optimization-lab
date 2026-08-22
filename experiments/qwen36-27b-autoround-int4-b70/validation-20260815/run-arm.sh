@@ -84,6 +84,7 @@ sealed_validation_allowlist=(
   VALIDATION_VLLM_EXTRA_ARGS VALIDATION_BENCH_MAX_TOKENS
   VALIDATION_BENCH_METRIC_TOKENS
   VALIDATION_REQUEST_EXTRA_JSON
+  VALIDATION_EXPECT_GDN_SPEC_PERSISTENT_SCRATCH
 )
 
 if [[ "$mode" != "spec" && "$mode" != "nospec" \
@@ -275,8 +276,16 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
       printf 'sealed TP2 gates require smoke+full25 bench and 512/100 token windows\n' >&2
       exit 2
   fi
+  # The persistent-scratch flag became campaign-pinned (default 1) after
+  # the 2026-08-22 chunked-prefill corruption finding: long-KV campaigns
+  # run the scratch=0 mitigation and must declare it explicitly.
+  if [[ ! "${VALIDATION_EXPECT_GDN_SPEC_PERSISTENT_SCRATCH:-1}" =~ ^[01]$ ]]; then
+    printf 'VALIDATION_EXPECT_GDN_SPEC_PERSISTENT_SCRATCH must be 0 or 1\n' >&2
+    exit 2
+  fi
   if [[ "${VALIDATION_ENABLE_XPU_GRAPH:-}" != "1" \
-    || "${VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH:-}" != "1" \
+    || "${VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH:-}" \
+      != "${VALIDATION_EXPECT_GDN_SPEC_PERSISTENT_SCRATCH:-1}" \
     || "${VALIDATION_GDN_CAPTURE_NATIVE_SPEC:-}" != "1" \
     || "${VALIDATION_DDTREE_FULL_GRAPH:-}" != "0" \
     || "${VALIDATION_DDTREE_CAPTURE_GDN_CORE:-}" != "0" \

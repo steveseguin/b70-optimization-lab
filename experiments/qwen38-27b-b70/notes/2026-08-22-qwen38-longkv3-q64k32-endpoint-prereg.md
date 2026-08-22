@@ -45,6 +45,19 @@ Deployed suite:
 Arm roots `qwen38-q64k32-longkv3-{a1,b1,b2,a2}-20260822`, all fresh.
 Stage/cache/model/quality/target pins unchanged from longkv2.
 
+## Addendum — pre-root flag-identity refusal and the scratch pin
+
+The first a1 invocation was refused pre-root (rc=2, no arm root
+created, no GPU work) by the sealed flag-identity gate, which hardcoded
+`GDN_SPEC_PERSISTENT_SCRATCH=1`. Rather than loosening the gate, the
+flag became an explicit campaign pin:
+`VALIDATION_EXPECT_GDN_SPEC_PERSISTENT_SCRATCH` (allowlisted, must be
+0/1, defaults to 1 so every historical campaign's identity is
+preserved), and the actual flag must equal it. This driver pins 0.
+Since no root existed, the a1 label is unburned and reused. Refrozen:
+runner `db0f910c4a1cafa3621bbddf30179b40fa8a49892bbeff68a6c0b876fe0c42a5`,
+driver `162fc6bc5177083568aad3506cafa72c0e596562eefd73acbd2e1e64d509b00c`.
+
 ## Metric and decision rule (frozen before launch; identical to longkv2)
 
 Primary: `summary.tok_s_1_100_intervals_after_ttft` per arm; per-tier
