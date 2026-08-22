@@ -72,7 +72,14 @@ finding: Ornith 1.5 is `qwen35moe` (256 experts/8 used, 41 layers, GQA
 upstream llama.cpp `9fee29e9435f` SYCL AOT bmg-g31 build at
 `/home/steve/src/llama.cpp-neural-download-20260822`. Watchlist (not
 approved): Ling 3.0 Tiny (needs BailingHybrid vLLM/XPU first), DeepSeek V4
-Pro 0813 (893 GB), Qwen3.8 2.4T-A95B (4.89 TB).
+Pro 0813 (893 GB), Qwen3.8 2.4T-A95B (4.89 TB). **All four preregistered
+bring-ups passed on 2026-08-22** (1xB70, cache-zero, 128/100 diagnostic):
+LFM2.5 `133.328`, Ornith 35B-A3B `105.782`, Nemotron Lightning `72.873`
+(hybrid Mamba MoE confirmed running on Intel), Ornith 9B `50.109` tok/s;
+flagship fit-off decided — **UD-Q5_K_S serves 262144 ctx + vision + MTP
+draft on one B70 with 2.86 GiB free** (`27.004` tok/s MTP-assisted
+package rate; Q4_K_XL is the headroom alternative). See the
+[baseline data](experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json).
 
 Publication architecture: keep `index.html` curated and put the growing set
 of model/quant/card/OS/native-container variants in `guides.html`. That page
