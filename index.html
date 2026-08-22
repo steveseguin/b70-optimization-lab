@@ -101,6 +101,19 @@ Style genome (duotone-hixffp):
   td.lnk { white-space: nowrap; font-size: 12.5px; }
   td.lnk a { border-bottom: 2px solid var(--ink); }
   td.lnk a:hover { border-bottom-color: var(--spot-dark); color: var(--spot-dark); }
+  .guide-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; white-space: normal; }
+  .copy-md {
+    appearance: none; border: 2px solid var(--ink); border-radius: 0;
+    background: transparent; color: var(--ink); padding: 4px 7px;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    letter-spacing: .04em; line-height: 1.2; text-transform: uppercase;
+    cursor: pointer;
+  }
+  .copy-md:hover { background: var(--ink); color: var(--paper); }
+  .copy-md:focus-visible { outline: 2px solid var(--spot); outline-offset: 2px; }
+  .copy-md:disabled { cursor: wait; opacity: .72; }
+  .copy-md.copied { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .copy-md.failed { border-color: #a12820; color: #a12820; }
   .r { text-align: right; }
   th.r { text-align: right; }
   .dot { color: var(--spot); font-size: 11px; }
@@ -176,31 +189,31 @@ Style genome (duotone-hixffp):
           <th scope="row" class="model">Gemma-4-26B <small>Google &middot; Apr 2026</small></th>
           <td class="mut">The easiest start — friendly all-rounder, also reads pictures</td>
           <td class="num r">1</td><td class="num r">125</td>
-          <td class="lnk"><a href="results/gemma4-26b-a4b-q8-b70/README.md">step-by-step guide</a></td>
+          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">Read guide</a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy Gemma-4-26B guide Markdown" aria-live="polite">Copy Markdown</button></div></td>
         </tr>
         <tr>
           <th scope="row" class="model">Qwen3-30B <small>Alibaba &middot; Jul 2025</small></th>
           <td class="mut">Fastest one-card result we checked ourselves; strong at math</td>
           <td class="num r">1</td><td class="num r">107</td>
-          <td class="lnk"><a href="results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">test report</a></td>
+          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">Read report</a><button type="button" class="copy-md" data-copy-markdown="results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md" aria-label="Copy Qwen3-30B report Markdown" aria-live="polite">Copy Markdown</button></div></td>
         </tr>
         <tr>
           <th scope="row" class="model">Qwen3.8-27B <small>Alibaba &middot; Aug 2026</small></th>
           <td class="mut">Newest all-rounder, also reads pictures. One card: 27.8 tok/s, quality-checked. Our two-card INT4 + MTP5 research lane reaches 101.17 tok/s; run-to-run determinism is still open</td>
           <td class="num r">1&ndash;2</td><td class="num r">27.8&ndash;101.17</td>
-          <td class="lnk"><a href="repro/qwen38-27b-autoround-int4-b70/README.md">our research setup</a></td>
+          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">Read status</a><button type="button" class="copy-md" data-copy-markdown="repro/qwen38-27b-autoround-int4-b70/README.md" aria-label="Copy Qwen3.8-27B research setup Markdown" aria-live="polite">Copy Markdown</button></div></td>
         </tr>
         <tr>
           <th scope="row" class="model">Laguna-S-2.1 <small>Poolside &middot; Jul 2026</small></th>
           <td class="mut">Coding assistant work; fastest speed we have verified</td>
           <td class="num r">4</td><td class="num r">125</td>
-          <td class="lnk"><a href="results/laguna-s-2.1-int4-b70/README.md">test report</a></td>
+          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/laguna-s-2.1-int4-b70/README.md">Read report</a><button type="button" class="copy-md" data-copy-markdown="results/laguna-s-2.1-int4-b70/README.md" aria-label="Copy Laguna-S-2.1 report Markdown" aria-live="polite">Copy Markdown</button></div></td>
         </tr>
         <tr>
           <th scope="row" class="model">Muse-Glimmer-30B <small>Meta &middot; Aug 2026</small></th>
           <td class="mut">Meta's newest open model; reads pictures; long answers stay fast</td>
           <td class="num r">4</td><td class="num r">100&ndash;162</td>
-          <td class="lnk"><a href="repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">full report</a></td>
+          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">Read guide</a><button type="button" class="copy-md" data-copy-markdown="repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md" aria-label="Copy Muse-Glimmer-30B guide Markdown" aria-live="polite">Copy Markdown</button></div></td>
         </tr>
       </tbody>
     </table>
@@ -389,6 +402,55 @@ Style genome (duotone-hixffp):
     </span>
   </div>
 </footer>
+
+<script>
+  (() => {
+    const copyText = async (value) => {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+        return;
+      }
+
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      if (!copied) throw new Error("Clipboard copy was rejected");
+    };
+
+    document.querySelectorAll("[data-copy-markdown]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const original = button.textContent;
+        button.disabled = true;
+        button.classList.remove("copied", "failed");
+        button.textContent = "Copying…";
+
+        try {
+          const response = await fetch(button.dataset.copyMarkdown, { cache: "no-store" });
+          if (!response.ok) throw new Error(`Markdown fetch failed: ${response.status}`);
+          await copyText(await response.text());
+          button.textContent = "Copied";
+          button.classList.add("copied");
+        } catch (error) {
+          button.textContent = "Copy failed";
+          button.classList.add("failed");
+          console.error(error);
+        }
+
+        window.setTimeout(() => {
+          button.textContent = original;
+          button.classList.remove("copied", "failed");
+          button.disabled = false;
+        }, 1800);
+      });
+    });
+  })();
+</script>
 
 </body>
 </html>
