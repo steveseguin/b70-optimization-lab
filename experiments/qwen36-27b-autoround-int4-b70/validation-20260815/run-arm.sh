@@ -543,7 +543,8 @@ if [[ "$require_tp2_sealed_gates" == "1" ]]; then
     fi
   elif ! jq -e \
     '(.suite_id == "qwen36-27b-int4-independent-validation-20260815-v1"
-      or .suite_id == "qwen38-longkv-q64k32-20260822-v1")
+      or .suite_id == "qwen38-longkv-q64k32-20260822-v1"
+      or .suite_id == "qwen38-longkv3-q64k32-20260822-v1")
      and .version == 1 and (.prompts | type == "array" and length == 25)' \
     "$suite" >/dev/null; then
     # The long-KV suite id is admitted alongside the historical id; content

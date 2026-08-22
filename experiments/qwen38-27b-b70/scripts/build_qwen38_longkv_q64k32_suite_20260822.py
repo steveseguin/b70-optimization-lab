@@ -62,7 +62,20 @@ def sha256_file(path: Path) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", required=True)
+    parser.add_argument(
+        "--tier-targets",
+        default=",".join(str(t) for t in TIER_TARGETS),
+        help="comma-separated chat-templated token targets, one per tier",
+    )
+    parser.add_argument(
+        "--band-half-width", type=int, default=BAND_HALF_WIDTH
+    )
+    parser.add_argument("--suite-id", default=SUITE_ID)
     args = parser.parse_args()
+    tier_targets = tuple(int(t) for t in args.tier_targets.split(","))
+    if len(tier_targets) != len(TIER_SIZES):
+        raise SystemExit("need exactly one target per tier")
+    band_half_width = args.band_half_width
 
     actual = sha256_file(SOURCE_SUITE)
     if actual != SOURCE_SUITE_SHA256:
@@ -102,8 +115,8 @@ def main() -> int:
     rows = []
     for j in range(sum(TIER_SIZES)):
         tier = tier_of_row[j]
-        target = TIER_TARGETS[tier]
-        lo, hi = target - BAND_HALF_WIDTH, target + BAND_HALF_WIDTH
+        target = tier_targets[tier]
+        lo, hi = target - band_half_width, target + band_half_width
         row_id = f"longkv--tier{tier + 1}-row{row_in_tier[j] + 1}"
 
         header = (
@@ -185,7 +198,7 @@ def main() -> int:
                 "sha256": SOURCE_SUITE_SHA256,
             }
         ],
-        "suite_id": SUITE_ID,
+        "suite_id": args.suite_id,
         "version": 1,
         "tokenizer_identity": {
             "model_dir": str(MODEL_DIR),
