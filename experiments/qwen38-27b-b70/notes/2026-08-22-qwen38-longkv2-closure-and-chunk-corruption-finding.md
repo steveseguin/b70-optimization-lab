@@ -281,6 +281,21 @@ allocation; without it, wandering mostly-harmless hits). Battery
 pattern (tiny probes pass, ~1000-token probe dies) hints the victim is
 position- or length-indexed state rather than weights.
 
+## Dose threshold pinned: EXACTLY 8 (2026-08-22)
+
+Dose titration on the real marginfree lane (stock stage, clean tree,
+needle probe after N multi-chunk prefills): N=1 (d2), 4 (d3), 6 (d6),
+7 (d7) all CLEAN; N=8 (d4/a1) CORRUPT. The trigger is precisely the
+**8th** multi-chunk prefill - a sharp fingerprint pointing at an
+8-deep structure (ring buffer / slot table / an accumulator or index
+that overflows or wraps at 8), consistent with the established
+persistent-scratch-pool dependency (scratch=1 required; scratch=0
+mitigates). Not a gradual degradation and not an early small-buffer
+overrun (would trip by 4). The mechanism instrumentation should look
+for a size-8 structure on the multi-chunk-prefill path whose 8th write
+lands out of bounds onto a stable victim (the p-series excluded the
+scratch fields, pool tail, and conv/ssm slots).
+
 Next-session menu (in rough order of decisiveness per hour): head-side
 and interleaved canary brackets sized over tens of MiB; KV-cache page
 checksums between requests; device AddressSanitizer JIT build of the
