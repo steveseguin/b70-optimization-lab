@@ -29,3 +29,19 @@ Filled only from measured runs per
 intake `verify` (direct+ordinary) -> `run-model-intake-baseline.sh`
 (1 B70, f16 KV, 8K, target-only) + diagnostic bench gate -> packet
 operating points (2 fresh-server runs each) -> canary battery.
+
+## Context-depth sweep (llama-bench raw engine rates, fa on, 5 reps)
+
+![depth sweep](depth-sweep.svg)
+
+| Depth | decode tg128 tok/s (±σ) | prefill pp2048 tok/s (±σ) |
+|---:|---:|---:|
+| 0 | 50.29 (±0.00) | 3184.5 (±10.0) |
+| 2,048 | 49.34 (±0.01) | 1623.0 (±3.2) |
+| 4,096 | 48.55 (±0.01) | 1601.2 (±2.4) |
+| 8,192 | 47.04 (±0.01) | 1568.6 (±2.1) |
+| 16,384 | 44.35 (±0.01) | 1489.2 (±2.8) |
+| 24,576 | 41.96 (±0.00) | 1448.8 (±20.3) |
+| 32,768 | 39.84 (±0.01) | 1313.7 (±3.4) |
+
+Raw engine rates run above server-suite medians by design (no HTTP/sampling); use the suite median as the serving expectation and this curve for the depth trend. Evidence: `ornith-15-9b-q8.sweep.json` + `ornith-15-9b-q8.meta.json` (model/bench shas inside).

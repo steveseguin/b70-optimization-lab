@@ -39,3 +39,19 @@ point at whatever context it supports. f16-KV variants are published
 only as reduced-context operating points, never as the 256K headline.
 
 ## Recipe, benchmarks, quality — TBD (per the packet standard)
+
+## Context-depth sweep (llama-bench raw engine rates, fa on, 5 reps)
+
+![depth sweep](depth-sweep.svg)
+
+| Depth | decode tg128 tok/s (±σ) | prefill pp2048 tok/s (±σ) |
+|---:|---:|---:|
+| 0 | 22.64 (±0.05) | 915.1 (±1.5) |
+| 2,048 | 21.01 (±0.01) | 831.4 (±1.0) |
+| 4,096 | 19.76 (±0.01) | 822.3 (±1.1) |
+| 8,192 | 17.63 (±0.01) | 807.6 (±0.7) |
+| 16,384 | 14.14 (±0.01) | 760.4 (±1.3) |
+| 24,576 | 11.90 (±0.00) | 751.0 (±1.1) |
+| 32,768 | 10.32 (±0.00) | 678.9 (±0.5) |
+
+Raw engine rates run above server-suite medians by design (no HTTP/sampling); use the suite median as the serving expectation and this curve for the depth trend. Evidence: `qwen38-27b-q5ks-flagship.sweep.json` + `qwen38-27b-q5ks-flagship.meta.json` (model/bench shas inside).

@@ -22,3 +22,19 @@ Status: **intake verified (direct+ordinary I/O) and baseline PASSED**
 Question this packet answers: smallest honest single-command B70 recipe.
 
 ## Recipe, benchmarks, quality — TBD (per the packet standard)
+
+## Context-depth sweep (llama-bench raw engine rates, fa on, 5 reps)
+
+![depth sweep](depth-sweep.svg)
+
+| Depth | decode tg128 tok/s (±σ) | prefill pp2048 tok/s (±σ) |
+|---:|---:|---:|
+| 0 | 135.20 (±0.05) | 9130.9 (±11.4) |
+| 2,048 | 131.26 (±0.05) | 4699.4 (±11.9) |
+| 4,096 | 127.21 (±0.06) | 4584.9 (±13.1) |
+| 8,192 | 120.20 (±0.03) | 4399.7 (±12.1) |
+| 16,384 | 107.98 (±0.04) | 3752.4 (±10.9) |
+| 24,576 | 98.14 (±0.11) | 3698.2 (±141.4) |
+| 32,768 | 89.94 (±0.02) | 2824.9 (±4.8) |
+
+Raw engine rates run above server-suite medians by design (no HTTP/sampling); use the suite median as the serving expectation and this curve for the depth trend. Evidence: `lfm25-26b-q8.sweep.json` + `lfm25-26b-q8.meta.json` (model/bench shas inside).

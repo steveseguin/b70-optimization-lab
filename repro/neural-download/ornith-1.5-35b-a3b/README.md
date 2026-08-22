@@ -25,3 +25,19 @@ one-B70 performance claim independently. The external report is a lead,
 not evidence; only matched local runs are published.
 
 ## Recipe, benchmarks, quality — TBD (per the packet standard)
+
+## Context-depth sweep (llama-bench raw engine rates, fa on, 5 reps)
+
+![depth sweep](depth-sweep.svg)
+
+| Depth | decode tg128 tok/s (±σ) | prefill pp2048 tok/s (±σ) |
+|---:|---:|---:|
+| 0 | 108.91 (±0.06) | 1171.2 (±9.1) |
+| 2,048 | 105.15 (±0.25) | 1082.7 (±4.1) |
+| 4,096 | 102.85 (±0.19) | 1065.1 (±5.3) |
+| 8,192 | 98.76 (±0.16) | 1049.3 (±6.9) |
+| 16,384 | 91.92 (±0.03) | 1008.5 (±4.6) |
+| 24,576 | 85.79 (±0.03) | 1002.6 (±8.3) |
+| 32,768 | 80.42 (±0.16) | 920.1 (±7.4) |
+
+Raw engine rates run above server-suite medians by design (no HTTP/sampling); use the suite median as the serving expectation and this curve for the depth trend. Evidence: `ornith-15-35b-a3b-q4km.sweep.json` + `ornith-15-35b-a3b-q4km.meta.json` (model/bench shas inside).

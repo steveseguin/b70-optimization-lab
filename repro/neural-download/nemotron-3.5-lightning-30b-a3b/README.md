@@ -24,3 +24,19 @@ Question this packet answers: does the family run on Intel B70 without
 assuming NVIDIA's NVFP4 runtime works there.
 
 ## Recipe, benchmarks, quality — TBD (per the packet standard)
+
+## Context-depth sweep (llama-bench raw engine rates, fa on, 5 reps)
+
+![depth sweep](depth-sweep.svg)
+
+| Depth | decode tg128 tok/s (±σ) | prefill pp2048 tok/s (±σ) |
+|---:|---:|---:|
+| 0 | 73.01 (±0.01) | 1260.0 (±5.7) |
+| 2,048 | 72.42 (±0.01) | 1166.9 (±3.2) |
+| 4,096 | 71.85 (±0.01) | 1153.1 (±2.0) |
+| 8,192 | 70.70 (±0.01) | 1145.6 (±3.8) |
+| 16,384 | 68.56 (±0.02) | 1106.1 (±4.6) |
+| 24,576 | 66.55 (±0.02) | 1102.6 (±1.3) |
+| 32,768 | 64.62 (±0.01) | 1018.9 (±2.1) |
+
+Raw engine rates run above server-suite medians by design (no HTTP/sampling); use the suite median as the serving expectation and this curve for the depth trend. Evidence: `nemotron-35-lightning.sweep.json` + `nemotron-35-lightning.meta.json` (model/bench shas inside).
