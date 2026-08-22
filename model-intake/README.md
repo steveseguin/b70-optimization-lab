@@ -66,6 +66,12 @@ Drive-local manifests and verification reports are written under
 each promoted model file. Tokens are read from the existing private Hugging
 Face token file and are never placed on the command line.
 
+After download and verification, follow the
+[`first-wave bring-up protocol`](bringup-protocol.md). Its shared runner and
+benchmark preserve the exact model/runtime identities, server log, cache-zero
+control, and fixed diagnostic result so the first baseline is not an ad hoc
+terminal session.
+
 ## From Download To Project Recipe
 
 Downloading is not validation. Each new model proceeds through these states:
@@ -84,4 +90,3 @@ An external patch receives precise credit when its identifiable delta survives
 that process and improves the matched lab lane. An external performance report
 that merely prompted the test remains an acknowledged lead, not the source of
 the lab's recipe or optimization history.
-

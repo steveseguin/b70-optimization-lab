@@ -364,6 +364,13 @@ def command_plan(catalog: dict[str, Any], root: Path) -> int:
     return 0
 
 
+def command_path(catalog: dict[str, Any], root: Path, entry_id: str) -> int:
+    """Print the expected artifact path without weakening store verification."""
+    entry = selected_entries(catalog, [entry_id], False)[0]
+    print(local_path(root.resolve(), entry))
+    return 0
+
+
 def command_init_store(root: Path, allow_non_usb: bool) -> int:
     info, transport = validate_store(root, require_marker=False, allow_non_usb=allow_non_usb)
     identity = storage_identity(info["source"])
@@ -462,6 +469,11 @@ def parse_args() -> argparse.Namespace:
     subparsers.add_parser("list")
     plan = subparsers.add_parser("plan")
     plan.add_argument("--root", type=Path, default=DEFAULT_ROOT)
+    path = subparsers.add_parser(
+        "path", help="print the expected local path for one downloadable artifact"
+    )
+    path.add_argument("--root", type=Path, default=DEFAULT_ROOT)
+    path.add_argument("--id", required=True)
     init_store = subparsers.add_parser("init-store")
     init_store.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     init_store.add_argument("--allow-non-usb", action="store_true")
@@ -492,6 +504,8 @@ def main() -> int:
             return command_list(catalog)
         if args.command == "plan":
             return command_plan(catalog, args.root)
+        if args.command == "path":
+            return command_path(catalog, args.root, args.id)
         if args.command == "init-store":
             return command_init_store(args.root, args.allow_non_usb)
         entries = selected_entries(catalog, args.id, args.all_queued)

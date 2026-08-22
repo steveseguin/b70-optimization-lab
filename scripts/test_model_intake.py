@@ -78,6 +78,13 @@ class ModelIntakeTests(unittest.TestCase):
         self.assertEqual(manifest["lfs_files"][0]["sha256"], entry["artifact"]["sha256"])
         self.assertEqual(manifest["small_files"], [])
 
+    def test_expected_artifact_path(self) -> None:
+        entry = MODEL_INTAKE.selected_entries(
+            self.catalog, ["lfm25-26b-q8"], False
+        )[0]
+        expected = Path("/models") / entry["destination"] / entry["artifact"]["filename"]
+        self.assertEqual(MODEL_INTAKE.local_path(Path("/models"), entry), expected)
+
 
 if __name__ == "__main__":
     unittest.main()
