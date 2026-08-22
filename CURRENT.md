@@ -44,6 +44,25 @@ The closed no-training Muse Q8/WOQ record remains approved by LocalMaxxing as
 It is a Q8/WOQ target-verified result, not BF16/lossless or universally
 token-exact evidence.
 
+## Active Product Track: neural.download packets
+
+Opened 2026-08-22. Goal: publish a variety of B70-characterized model
+packages (benchmarks + patches where needed + reproducible recipes) on the
+neural.download page, per the
+[packet standard](docs/neural-download-packet-standard.md). First wave
+(pinned + SHA-verified into `/mnt/usb-models/llm-models/`): LFM2.5 2.6B
+Q8_0 (novice), Ornith 1.5 9B Q8_0 (beginner-plus), Nemotron 3.5 Lightning
+30B-A3B UD-Q4_K_M (mid MoE, Intel-without-NVFP4 question), Ornith 1.5
+35B-A3B Q4_K_M (enthusiast MoE, outside one-B70 claim validation), and the
+Qwen3.8-27B flagship 256K package (UD-Q4_K_XL vs UD-Q5_K_S fit-off +
+mmproj-F16 vision + MTP draft, unsloth repo @ `4ca720788d1e`). Intake
+finding: Ornith 1.5 is `qwen35moe` (256 experts/8 used, 41 layers, GQA
+16/2, 262144 native) — supported by pinned upstream. Packet base:
+upstream llama.cpp `9fee29e9435f` SYCL AOT bmg-g31 build at
+`/home/steve/src/llama.cpp-neural-download-20260822`. Watchlist (not
+approved): Ling 3.0 Tiny (needs BailingHybrid vLLM/XPU first), DeepSeek V4
+Pro 0813 (893 GB), Qwen3.8 2.4T-A95B (4.89 TB).
+
 ## Active Optimization Lane
 
 Qwen3.8 27B work is active. Accepted GGUF target-only results were measured on
