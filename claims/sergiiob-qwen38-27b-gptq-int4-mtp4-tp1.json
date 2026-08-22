@@ -1,0 +1,42 @@
+{
+  "id": "sergiiob-qwen38-27b-gptq-int4-mtp4-tp1",
+  "model": "Qwen3.8-27B",
+  "recipe": {
+    "engine": "vllm-xpu",
+    "quant": "GPTQ-INT4",
+    "speedup": "MTP4",
+    "cards": 1,
+    "tp": 1
+  },
+  "claimed": {
+    "tok_s": 106.7,
+    "metric": "community report, middle value of 5 tries, client-measured",
+    "date": "2026-08",
+    "by": "SergiioB",
+    "evidence": "community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md"
+  },
+  "status": "confirmed-adjusted",
+  "history": [
+    {
+      "date": "2026-08",
+      "event": "submitted"
+    },
+    {
+      "date": "2026-08-16",
+      "event": "lab re-run confirmed the recipe at 87.6 tok/s (claimed 106.7)"
+    }
+  ],
+  "submitter": {
+    "url": "https://github.com/SergiioB"
+  },
+  "upstream": {
+    "repo": "https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook",
+    "author": "SergiioB"
+  },
+  "verification": {
+    "tok_s": 87.6,
+    "metric": "lab re-run of the same recipe",
+    "date": "2026-08-16",
+    "evidence": "community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md"
+  }
+}

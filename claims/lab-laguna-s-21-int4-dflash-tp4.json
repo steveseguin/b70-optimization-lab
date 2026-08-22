@@ -1,0 +1,30 @@
+{
+  "id": "lab-laguna-s-21-int4-dflash-tp4",
+  "model": "Laguna-S-2.1",
+  "recipe": {
+    "engine": "vllm-xpu",
+    "quant": "INT4 W4A16",
+    "speedup": "DFlash d11",
+    "cards": 4,
+    "tp": 4
+  },
+  "claimed": {
+    "tok_s": 125.46,
+    "metric": "typical decode rate, first 100 words of a fresh answer",
+    "date": "2026-08",
+    "by": "lab"
+  },
+  "status": "lab-verified",
+  "verification": {
+    "tok_s": 125.46,
+    "metric": "typical decode rate, first 100 words of a fresh answer",
+    "date": "2026-08",
+    "evidence": "results/laguna-s-2.1-int4-b70/"
+  },
+  "history": [
+    {
+      "date": "2026-08",
+      "event": "measured in lab"
+    }
+  ]
+}

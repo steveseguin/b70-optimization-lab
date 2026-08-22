@@ -5,6 +5,9 @@ limited to the currently active model. Use it for model-specific outcome
 packets, record summaries, validity gates, reproduction commands, and links to
 evidence.
 
+Per-claim status — who submitted each number, its upstream source, and what the
+lab measured when re-running it — lives in the [claims registry](../claims/README.md).
+
 Keep active experiments in `../experiments/`, chronological investigation notes
 in `../notes/`, patch snapshots in `../patches/`, compact run evidence in
 `../data/`, and copy-ready recipes in `../repro/`.

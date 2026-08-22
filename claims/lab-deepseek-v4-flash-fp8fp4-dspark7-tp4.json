@@ -1,0 +1,30 @@
+{
+  "id": "lab-deepseek-v4-flash-fp8fp4-dspark7-tp4",
+  "model": "DeepSeek-V4-Flash-180B",
+  "recipe": {
+    "engine": "vllm-xpu",
+    "quant": "FP8 + FP4 experts",
+    "speedup": "DSpark7",
+    "cards": 4,
+    "tp": 4
+  },
+  "claimed": {
+    "tok_s": 80.82,
+    "metric": "typical high - all 24 checks passed",
+    "date": "2026-08",
+    "by": "lab"
+  },
+  "status": "lab-verified",
+  "verification": {
+    "tok_s": 80.82,
+    "metric": "typical high - all 24 checks passed",
+    "date": "2026-08",
+    "evidence": "results/scoreboard.md"
+  },
+  "history": [
+    {
+      "date": "2026-08",
+      "event": "measured in lab"
+    }
+  ]
+}

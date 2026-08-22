@@ -1,0 +1,15 @@
+name: claims
+
+on:
+  pull_request:
+    paths: ["claims/**", "tools/validate-claims.py"]
+  push:
+    branches: [main]
+    paths: ["claims/**", "tools/validate-claims.py"]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/validate-claims.py

@@ -1,0 +1,38 @@
+{
+  "id": "dominick253-qwen36-27b-fp8-tp2",
+  "model": "Qwen3.6-27B",
+  "recipe": {
+    "engine": "docker-vllm",
+    "quant": "FP8",
+    "speedup": null,
+    "cards": 2,
+    "tp": 2
+  },
+  "claimed": {
+    "tok_s": 34.7,
+    "metric": "contributor report, top of their 28.3-34.7 range",
+    "date": "2026-07",
+    "by": "dominick253",
+    "evidence": "community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md"
+  },
+  "status": "confirmed-adjusted",
+  "history": [
+    {
+      "date": "2026-07",
+      "event": "submitted"
+    },
+    {
+      "date": "2026-07-25",
+      "event": "lab re-ran recipe: 30.17 tok/s median, inside reported range; cite this rather than top-of-range 34"
+    }
+  ],
+  "submitter": {
+    "url": "https://github.com/dominick253"
+  },
+  "verification": {
+    "tok_s": 30.17,
+    "metric": "lab median decode, 15 rows over 3 passes, 256-token outputs",
+    "date": "2026-07-25",
+    "evidence": "community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md"
+  }
+}
