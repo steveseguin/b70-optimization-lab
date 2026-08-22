@@ -2,8 +2,9 @@
 
 Date: 2026-08-21
 
-Status: **preregistered; single launch authorized after commit/push and hash
-recheck; not yet run.**
+Status: **complete: ran once and qualified on both GPUs**
+(`q64k32-candidate-qualified-for-endpoint-campaign`); see the
+[r3 result](2026-08-21-qwen38-mtp5-m6-fa-q64k32-abba-r3-result.md).
 
 ## Basis and authorization
 
