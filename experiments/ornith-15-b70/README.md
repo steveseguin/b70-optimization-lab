@@ -66,6 +66,14 @@ binary, driver, or benchmark protocol will reproduce them.
   (+4.85%). The forced 400-token door-off/on output was byte-identical and the
   candidate canary battery passed. See
   `notes/2026-08-22-ornith35b-moe-add-reduce-positive.md`.
+- **Recurrent convolution + SiLU — ACCEPTED +2.10% incremental serving:** the
+  exact one-token `SSM_CONV -> SILU` pairs in 30 recurrent layers collapse to
+  one kernel while stock state handling and Q/K L2 remain unchanged. Engine
+  means improved `107.467 -> 108.740 tok/s` (+1.18%); fresh-server means
+  improved `103.012 -> 105.171 tok/s` (+2.10%). Forced 400-token output was
+  byte-identical and all canaries passed. The wider direct-state candidate is
+  archived as a correctness negative. See
+  `notes/2026-08-22-ornith35b-conv-silu-positive.md`.
 - **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
   tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
   the tuned dispatch and beat the now-promoted ordered reduction.

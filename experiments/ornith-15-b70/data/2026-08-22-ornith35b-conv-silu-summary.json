@@ -1,0 +1,42 @@
+{
+  "date": "2026-08-22",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "llama_cpp_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "patch_sha256": "8e780b0f4c43a69bd18d0d8d66087d65813cb83353437c3443898231b94c0f9c",
+  "libggml_sycl_sha256": "d478e4ca7c84faef34e6acf8b1bcf3bdfd8b6e37abe884ea9e0b2826f0dfe883",
+  "door": "GGML_SYCL_FUSED_ORNITH_CONV_SILU=1",
+  "mechanism": {
+    "recurrent_layers": 30,
+    "stock_ops_replaced": ["SSM_CONV", "SILU"],
+    "fused_hits_warmup_plus_one_token": 60,
+    "launches_removed_per_token": 30
+  },
+  "engine": {
+    "protocol": "llama-bench p0/n128/d0/r7, F16 KV, flash attention, one B70, ordered-MoE patch enabled",
+    "controls_tok_s": [107.480637, 107.453365],
+    "candidates_tok_s": [108.695561, 108.785273],
+    "control_mean_tok_s": 107.467001,
+    "candidate_mean_tok_s": 108.740417,
+    "delta_percent": 1.184937
+  },
+  "server": {
+    "protocol": "two fresh processes per arm; 12 unique prompts once each; 512 generated tokens; median tokens 1-100 after TTFT; cached_tokens=0",
+    "controls_tok_s": [103.289809, 102.734504],
+    "candidates_tok_s": [105.688482, 104.653313],
+    "control_mean_tok_s": 103.012156,
+    "candidate_mean_tok_s": 105.170898,
+    "delta_percent": 2.095618,
+    "freshness_gates_passed": 4
+  },
+  "correctness": {
+    "same_binary_forced_400_token_output_exact": true,
+    "response_sha256": "5cb5ad6254e0560e624e4ee9712658b341dcc462030789d17e1e7a3143326f0e",
+    "objective_canaries_passed": true,
+    "poison_diverged": true
+  },
+  "rejected_direct_state_variant": {
+    "status": "negative_correctness",
+    "patch_sha256": "87e65ebc65a28805422c61a28101f35297d5e3f3d61e8a185f69481161e89090",
+    "reason": "Deterministic CLI output diverged after the first few generated tokens; no speed result promoted."
+  }
+}

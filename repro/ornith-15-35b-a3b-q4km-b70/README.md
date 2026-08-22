@@ -44,8 +44,8 @@ git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-ornith15
 cd llama.cpp-ornith15
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
 
-PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-reduce-20260822.patch
-echo "2b289bb527484b40207200abdc1d188a4e460e5d6b9c45ae53912dc9c4236e09  $PATCH" | sha256sum -c -
+PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-20260822.patch
+echo "8e780b0f4c43a69bd18d0d8d66087d65813cb83353437c3443898231b94c0f9c  $PATCH" | sha256sum -c -
 git apply --check "$PATCH"
 git apply "$PATCH"
 git diff --check
@@ -71,7 +71,7 @@ cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2
 ```
 
 The validated compute library SHA-256 was
-`c61854c35ddb405d8e7f0ff525cb8266520d7af9ffb6a5081dbf1fdba44d575f`.
+`d478e4ca7c84faef34e6acf8b1bcf3bdfd8b6e37abe884ea9e0b2826f0dfe883`.
 AOT output can vary with the compiler installation, so the source revision,
 patch hash, build settings, and validation gates are the durable identity.
 
@@ -90,6 +90,7 @@ source /opt/intel/oneapi/setvars.sh --force
 export ONEAPI_DEVICE_SELECTOR=level_zero:0
 export GGML_SYCL_ENABLE_GRAPH=0
 export GGML_SYCL_FUSED_MOE_ADD_REDUCE=1
+export GGML_SYCL_FUSED_ORNITH_CONV_SILU=1
 
 build-sycl-aot-bmg-g31/bin/llama-server \
   --model "$MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf" \
@@ -151,6 +152,14 @@ Patch instructions and evidence:
 [`patches/ornith-15-35b-a3b-q4km-b70/`](../../patches/ornith-15-35b-a3b-q4km-b70/)
 and
 [`experiments/ornith-15-b70/`](../../experiments/ornith-15-b70/).
+
+The current complete patch also fuses each of the 30 recurrent
+`SSM_CONV -> SILU` pairs, removing another 30 launches/token. Against the
+ordered-MoE stack, matched engine means improved `107.467 -> 108.740 tok/s`
+(**+1.18%**) and fresh-server means improved `103.012 -> 105.171 tok/s`
+(**+2.10%**). The forced 400-token same-binary output was byte-identical and
+all objective canaries passed. Evidence:
+[`2026-08-22-ornith35b-conv-silu-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md).
 
 ## Stock two-card comparison (patch off; layer split, GPUs 0+1)
 

@@ -114,10 +114,16 @@ ordered seven-`ADD` reduction into one SYCL kernel, removing 240 launches per
 token. Matched one-B70 tests improved raw engine decode by **4.90%** and the
 fresh 12-prompt server-suite mean by **4.85%** (`99.664` to `104.499 tok/s`),
 with byte-identical 400-token same-binary door-off/on output and all objective
-canaries passing. The package remains a candidate pending clean-host replay;
-see the [guide](repro/ornith-15-35b-a3b-q4km-b70/README.md),
+canaries passing. A second accepted increment fuses the 30 exact recurrent
+`SSM_CONV -> SILU` pairs, removing another 30 launches/token. Against the
+ordered-MoE stack it improved engine decode by **1.18%** and fresh serving by
+**2.10%** (`103.012` to `105.171 tok/s` mean), again with exact 400-token
+door-off/on output and passing canaries. A wider direct-state form is archived
+as a correctness negative. The package remains a candidate pending clean-host
+replay; see the [guide](repro/ornith-15-35b-a3b-q4km-b70/README.md),
 [patch packet](patches/ornith-15-35b-a3b-q4km-b70/README.md), and
-[matched evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md).
+[MoE evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md)
+plus [recurrent-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md).
 
 Publication architecture: keep `index.html` curated and put the growing set
 of model/quant/card/OS/native-container variants in `guides.html`. That page

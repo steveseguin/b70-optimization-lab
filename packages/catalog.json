@@ -1003,7 +1003,7 @@
         "model_family": "Ornith 1.5",
         "publisher": "Ornith AI",
         "variant": "35B-A3B",
-        "summary": "35B-class MoE (256 experts / 8 active, arch qwen35moe) topping 100 tok/s on a single card with the lab's validated ordered expert-reduction patch.",
+        "summary": "35B-class MoE (256 experts / 8 active, arch qwen35moe) topping 105 tok/s on a single card with the lab's validated expert-reduction and recurrent convolution patches.",
         "quantization": "Q4_K_M",
         "runtime_label": "llama.cpp SYCL",
         "operating_systems": [
@@ -1029,10 +1029,10 @@
         ],
         "published_at": "2026-08-22",
         "featured_metric": {
-          "value": 104.499487,
+          "value": 105.170898,
           "unit": "tok/s",
           "label": "decode (3B active parameters)",
-          "scope": "Mean of two fresh-server suite medians (104.016 and 104.983 tok/s), 512-token responses, target-only, cache-zero; +4.85% versus two matched controls.",
+          "scope": "Mean of two fresh-server suite medians (105.688 and 104.653 tok/s), 512-token responses, target-only, cache-zero; +2.10% incremental versus the ordered-MoE stack.",
           "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
         }
       },
@@ -1042,10 +1042,10 @@
           "name": "neural.download lab",
           "kind": "lab",
           "profile": "https://github.com/steveseguin/b70-optimization-lab",
-          "contribution": "Intake verification, bring-up, baselines, depth sweep, ordered MoE add-reduction patch, operating point, canary battery, and package.",
+          "contribution": "Intake verification, bring-up, baselines, depth sweep, ordered MoE add-reduction and recurrent convolution-SiLU patches, operating point, canary battery, and package.",
           "status": "integrated",
-          "validated_effect": "+4.85% matched fresh-server decode from the ordered eight-expert FP32 add reduction (99.664 to 104.499 tok/s mean).",
-          "evidence": "experiments/ornith-15-b70/data/2026-08-22-ornith35b-moe-add-reduce-summary.json"
+          "validated_effect": "+4.85% matched fresh-server decode from ordered expert reduction, then +2.10% incremental from recurrent convolution-SiLU fusion (103.012 to 105.171 tok/s mean).",
+          "evidence": "experiments/ornith-15-b70/data/2026-08-22-ornith35b-conv-silu-summary.json"
         }
       ],
       "known_limitations": [
@@ -1076,14 +1076,14 @@
       "project_patches": {
         "required": true,
         "items": [
-          "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-reduce-20260822.patch"
+          "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-20260822.patch"
         ],
-        "decoded_sha256": "2b289bb527484b40207200abdc1d188a4e460e5d6b9c45ae53912dc9c4236e09",
-        "reason": "The validated +4.85% one-card serving increment depends on the lab's strict ordered eight-expert FP32 reduction."
+        "decoded_sha256": "8e780b0f4c43a69bd18d0d8d66087d65813cb83353437c3443898231b94c0f9c",
+        "reason": "The validated one-card serving stack depends on the lab's strict ordered eight-expert FP32 reduction and Ornith-shape recurrent convolution-SiLU fusion."
       },
       "commands": {
-        "preflight": "python3 scripts/verify-neural-download-model.py repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json \"$MODEL_DIR\" && echo '2b289bb527484b40207200abdc1d188a4e460e5d6b9c45ae53912dc9c4236e09  patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-reduce-20260822.patch' | sha256sum -c - && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
-        "launch": "GGML_SYCL_ENABLE_GRAPH=0 GGML_SYCL_FUSED_MOE_ADD_REDUCE=1 BUILD_DIR/bin/llama-server --model $MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf --alias ornith35b --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
+        "preflight": "python3 scripts/verify-neural-download-model.py repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json \"$MODEL_DIR\" && echo '8e780b0f4c43a69bd18d0d8d66087d65813cb83353437c3443898231b94c0f9c  patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-20260822.patch' | sha256sum -c - && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
+        "launch": "GGML_SYCL_ENABLE_GRAPH=0 GGML_SYCL_FUSED_MOE_ADD_REDUCE=1 GGML_SYCL_FUSED_ORNITH_CONV_SILU=1 BUILD_DIR/bin/llama-server --model $MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf --alias ornith35b --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
         "health": "curl -fsS http://127.0.0.1:18100/health",
         "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model ornith35b --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
         "stop": "pkill -x llama-server"
@@ -1096,10 +1096,13 @@
         "repro/ornith-15-35b-a3b-q4km-b70/depth-sweep.svg",
         "scripts/verify-neural-download-model.py",
         "patches/ornith-15-35b-a3b-q4km-b70/README.md",
-        "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-reduce-20260822.patch",
+        "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-20260822.patch",
         "experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md",
         "experiments/ornith-15-b70/data/2026-08-22-ornith35b-moe-add-reduce-summary.json",
         "experiments/ornith-15-b70/data/2026-08-22-ornith35b-moe-add-reduce-canaries.json",
+        "experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md",
+        "experiments/ornith-15-b70/data/2026-08-22-ornith35b-conv-silu-summary.json",
+        "experiments/ornith-15-b70/data/2026-08-22-ornith35b-conv-silu-canaries.json",
         "docs/neural-download-packet-standard.md"
       ],
       "missing": [
