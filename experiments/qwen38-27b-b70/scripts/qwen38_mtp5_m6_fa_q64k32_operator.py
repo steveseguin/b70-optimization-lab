@@ -70,7 +70,7 @@ BUILD_HELPER = Path(
     "/home/steve/llm-optimizations/experiments/qwen38-27b-b70/scripts/"
     "build-qwen38-m6-head256-q64k32-attn-override-r3-20260821.sh"
 )
-BUILD_HELPER_SHA256 = "11480161dce25cba56e00f2f48c95d74164bac1f5af2dbc945eddceff6d57d47"
+BUILD_HELPER_SHA256 = "1e86bed65c4f757aa01eee540119a48e4e505526f8f66eb0ebe7099160318af9"
 BUILD_INPUTS_BASENAME = "qwen38-m6-head256-q64k32-r3-build-inputs.sha256"
 GRAPH_MANIFEST_BASENAME = "qwen38-m6-head256-q64k32-r3-candidate.graph.sha256"
 

@@ -36,11 +36,11 @@ the `21.844 us/call` KV1300 hurdle and `+2.0 us/call` KV128 cap — with two
 recorded identity updates:
 
 - qualifier `scripts/qwen38_mtp5_m6_fa_q64k32_operator.py` at
-  `4ad6fd360b1969f3e56a6658a61436bec5bf9d580e88602ea1583cebb3bde557`
-  (schema, builder-name, build-inputs, and graph-manifest basename pins
+  `7dadd5d1c6e911e3c75056a5621cf27552640d52c5b6c5eac839368bd180149e`
+  (schema, builder-name, builder-hash, build-inputs, and graph-manifest pins
   updated from r2 to r3 stage identities; no gate logic changed);
 - driver `scripts/run-20260821-qwen38-mtp5-m6-fa-q64k32-operator-abba.sh` at
-  `b257e650fbc4230d229c33235e7e8a4b4389ed637b8c830d7c0ed3e4ee159288`
+  `b1f5cea8b28004ad3509640eb87be30a972ab0b9db47c5f1f262a5064e6ba49f`
   (embedded qualifier identity refreshed; fails closed on byte drift).
 
 Fresh immutable result root (must not exist before launch; never reused):
