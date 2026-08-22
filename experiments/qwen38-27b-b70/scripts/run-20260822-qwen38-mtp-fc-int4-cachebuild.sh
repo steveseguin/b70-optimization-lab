@@ -15,8 +15,9 @@ repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
 driver=$(realpath -- "$0")
 action=${1:-}
 output_root=${2:-}
-[[ "$action" == build && -n "$output_root" ]] || {
-  printf 'usage: %s build OUTPUT_ROOT\n' "$0" >&2; exit 2; }
+door=${3:-1}
+[[ "$action" == build && -n "$output_root" && ( "$door" == 0 || "$door" == 1 ) ]] || {
+  printf 'usage: %s build OUTPUT_ROOT [door=0|1]\n' "$0" >&2; exit 2; }
 
 raw=/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70
 fresh_cache=/mnt/usb-models/llm-runtime/vllm-cache/qwen38-mtpfc-int4-20260822
@@ -99,7 +100,7 @@ launch_env=(
   VALIDATION_DETERMINISTIC_GREEDY_MARGIN=0
   VALIDATION_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN=0
   VALIDATION_ENABLE_XPU_GRAPH=1
-  VLLM_XPU_MTP_FC_INT4=1
+  VLLM_XPU_MTP_FC_INT4="$door"
   'VALIDATION_VLLM_EXTRA_ARGS=--dtype float16'
   VALIDATION_VLLM_CACHE_ROOT="$fresh_cache"
   VALIDATION_COMPILE_CACHE_MANIFEST=
