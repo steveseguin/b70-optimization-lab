@@ -53,7 +53,7 @@ _BASE_SPEC.loader.exec_module(BASE)
 SCHEMA_RUN = "qwen38-mtp5-m6-fa-q64k32-operator-run-v1"
 SCHEMA_FAILURE = "qwen38-mtp5-m6-fa-q64k32-operator-failure-v1"
 SCHEMA_COMPARE = "qwen38-mtp5-m6-fa-q64k32-operator-compare-v1"
-SCHEMA_STAGE = "qwen38-mtp5-m6-fa-q64k32-r2-stage-v1"
+SCHEMA_STAGE = "qwen38-mtp5-m6-fa-q64k32-r3-stage-v1"
 POLICY_ENV = "VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY"
 POLICY_MARKER = "VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY engaged"
 POLICY_IDENTITY_KEY = "m6_head256_q64k32_policy"
