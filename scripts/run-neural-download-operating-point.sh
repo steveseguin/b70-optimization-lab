@@ -23,6 +23,15 @@ set +u
 set -u
 export ONEAPI_DEVICE_SELECTOR=level_zero:0
 
+server_pid=
+cleanup() {
+  [[ -n "${server_pid}" ]] && kill "$server_pid" 2>/dev/null
+  sleep 2
+  pgrep -x llama-server >/dev/null && pkill -9 -x llama-server
+  true
+}
+trap cleanup EXIT
+
 boot_and_wait() {
   local log=$1
   bash -c "exec $server_cmd --host 127.0.0.1 --port $port" > "$log" 2>&1 &
@@ -51,12 +60,21 @@ run_suite() {
     --max-tokens 512 --metric-tokens 100 --seed 1 --timeout 900 --out "$out" \
     --request-extra-json '{"cache_prompt":false,"seed":42,"temperature":0}'
   python3 - "$out" <<'PY'
-import json, sys
+import json, statistics, sys
 d = json.load(open(sys.argv[1]))
 assert d["fresh_response_validity"]["valid"], "fresh-response validity failed"
 assert d["realistic_final_gate"]["cached_tokens_all_zero"], "cached tokens nonzero"
-m = d["summary"]["tok_s_1_100_intervals_after_ttft"]
-print(f"conv_median={m['median']:.6f} p10={m['p10']:.6f}")
+# Conventional 99-interval rate computed directly from raw event offsets
+# (this script version's summary only carries the legacy 100-event form).
+rates = []
+for r in d["rows"]:
+    o = r["chunk_offsets_s"]
+    assert len(o) >= 100, f"row {r['prompt_id']} has <100 events"
+    rates.append(99.0 / (o[99] - o[0]))
+rates.sort()
+med = statistics.median(rates)
+p10 = rates[max(0, int(len(rates) * 0.1) - 0)]
+print(f"conv_median={med:.6f} conv_p10={p10:.6f} rows={len(rates)}")
 PY
 }
 
