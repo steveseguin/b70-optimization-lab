@@ -41,6 +41,28 @@ Use these common folders consistently:
   contribution into `results/` or `repro/`, and never record a contributor's
   claim as a lab measurement.
 
+## Source of Truth and Attribution
+
+This repository is the source of truth for the lab's recipes, patches,
+measurements, and optimization history. External repositories are research
+inputs or provenance records; they are never the primary guide for a lab lane.
+
+- Ingest useful knowledge into this repository as a pinned patch, focused
+  note, runnable recipe, or result packet with local evidence.
+- Credit an external author at the exact point where a concrete original
+  patch or technique is adopted. Name the delta, pin its identity, and record
+  the measured effect on the lab lane. Do not give broad recipe or performance
+  provenance when the external material repackages work already present here.
+- Keep intake snapshots and unverified reports under `community/`. Do not put
+  them on the landing page as recommended setup paths or imply that they are
+  authoritative for lab-developed lanes.
+- Never use a lab measurement to confirm an outside claim unless model,
+  checkpoint, quantization, runtime, patch set, GPU topology, metric, and
+  quality gate match. A similar speed on a different lane is not confirmation.
+- Public pages should link lab rows to `results/`, `repro/`, `experiments/`,
+  `patches/`, or `data/` in this repository. Link externally only where needed
+  to credit the specific contribution being discussed.
+
 ## Local Secrets
 
 Never print, paste, or commit local credentials. The Hugging Face access token

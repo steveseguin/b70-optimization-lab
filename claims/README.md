@@ -1,17 +1,17 @@
 # Claims registry — who claimed what, and what the lab verified
 
-One JSON file per performance claim. This is the canonical record behind the
-tables on the site: every "claimed vs verified" number, who submitted it, which
-upstream repo it came from, and the full dated history of what happened to it.
+One JSON file per accepted performance claim. This registry records the exact
+recipe identity, evidence, submitter, and dated lab outcome. It does not make an
+outside repository authoritative for a lab-developed lane.
 
 ## Why this exists
 
 - **Claimed vs verified, side by side.** A claim enters with the number its
   author measured. It leaves the queue only when the lab re-runs it and records
   its own number next to the original.
-- **Credit that survives.** Every claim names its submitter and, when pulled
-  from someone's repo, the upstream repo and author. Contributors can point at
-  a permanent record of what they added and how it held up over time.
+- **Credit that survives.** A concrete contributed patch or recipe keeps its
+  author and pinned source identity. Broad collections of numbers are not
+  imported as claims merely because they mention B70.
 - **Progress over time.** `history[]` appends an event at every state change,
   so a lane's arc — submitted → reproduced → confirmed, or adjusted, or
   refuted — is visible instead of silently edited.
@@ -29,8 +29,14 @@ submitted ──► queued ──► reproducing ──► confirmed
 lab-verified   (claim originates from the lab itself; number is the lab's own measurement)
 ```
 
-Nothing is deleted. Refuted and stale claims stay in the registry with their
-evidence — a negative result is still a result.
+Accepted claims are not silently deleted. Refuted and stale claims stay in the
+registry with their evidence — a negative result is still a result. Intake
+records created without an accepted submission or runnable evidence may be
+removed during review; Git history preserves that correction.
+
+Confirmation requires the same model/checkpoint, quantization, runtime and
+patch identity, GPU topology, metric, and quality gate. Similar throughput on
+a different lab lane is not confirmation and must be recorded separately.
 
 ## Schema (one file per claim, `claims/<id>.json`)
 
@@ -44,7 +50,7 @@ evidence — a negative result is still a result.
 | `claimed.date` | yes | `YYYY-MM` or `YYYY-MM-DD` |
 | `claimed.by` | yes | submitter handle (use `"lab"` for the lab's own claims) |
 | `submitter.url` | for outside claims | submitter's profile/home link |
-| `upstream` | when pulled from a repo | `{repo, author}` — full credit to the source |
+| `upstream` | for a concrete imported contribution | `{repo, author}` — pin and credit the exact source |
 | `status` | yes | one of the lifecycle states above |
 | `verification` | for confirmed/adjusted/refuted/lab-verified | `{tok_s, metric, date, evidence}` — `evidence` is a repo path that MUST exist |
 | `history[]` | yes | `{date, event}` per state change, oldest first |
@@ -60,8 +66,9 @@ Two ways in:
   `community/<handle>-<model>-<engine>/` (see CONTRIBUTING.md).
 
 The validator runs on every PR touching `claims/`; a maintainer moves the claim
-through the lifecycle as the lab re-runs it. Bench numbers without a claim file
-don't make the site tables.
+through the lifecycle as the lab re-runs it. Unverified claim files do not make
+the landing-page tables. Public highlights need a runnable in-repo packet and a
+matching lab evidence identity.
 
 ## The bench queue
 

@@ -10,16 +10,16 @@
   },
   "claimed": {
     "tok_s": 101.922,
-    "metric": "preferred 99-interval median, p512/g128",
+    "metric": "invalidated historical preferred 99-interval median, p512/g128; output-changing greedy margin enabled",
     "date": "2026-08-18",
     "by": "lab"
   },
-  "status": "lab-verified",
+  "status": "refuted",
   "verification": {
-    "tok_s": 101.922,
-    "metric": "reproduced across full-25 A2/B2/C1 arms at 100.9-102.1; 22/25 token-exact (3 unstable long prompts, one degenerate all-zero stream)",
+    "tok_s": 101.17,
+    "metric": "honest margin-free all-25 research anchor; three arms pairwise agree on only 21-22/25 prompts, so it is not promotable",
     "date": "2026-08-20",
-    "evidence": "experiments/qwen38-27b-b70/notes/2026-08-20-detpad-composite-tp2-full25-result.md"
+    "evidence": "repro/qwen38-27b-autoround-int4-b70/README.md"
   },
   "history": [
     {
@@ -28,7 +28,11 @@
     },
     {
       "date": "2026-08-20",
-      "event": "published launch-config text corrected; determinism campaign found 3/25 unstable prompts - speed stands, caveat published with it"
+      "event": "101.922 row invalidated: greedy margin changed output and its baseline used the same margin; withdrawal recommended"
+    },
+    {
+      "date": "2026-08-20",
+      "event": "margin-free working anchor established at 101.170 tok/s; repeatability remains only 21-22/25, so the lane stays research-only"
     }
   ]
 }

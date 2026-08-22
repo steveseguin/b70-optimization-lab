@@ -358,6 +358,46 @@
         </tr>
 
         <tr class="section">
+          <td colspan="7">Qwen dense B70 program, Q8 baseline to AutoRound/MTP research (different lane identities)</td>
+        </tr>
+        <tr class="qwen">
+          <td>Qwen dense</td>
+          <td class="num">Aug 8</td>
+          <td><span class="action">Establish the one-B70 Qwen3.6 Q8 decode baseline.</span></td>
+          <td class="num">15.550 tok/s</td>
+          <td>Program baseline</td>
+          <td>Created the measured starting point for the later Qwen kernel and runtime program.</td>
+          <td><a href="experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md">result</a></td>
+        </tr>
+        <tr class="qwen">
+          <td>Qwen dense</td>
+          <td class="num">Aug 18</td>
+          <td><span class="action">Transfer the lab's AutoRound, XPU runtime, graph, sampler, and MTP stack to Qwen3.8.</span></td>
+          <td class="num">91.926 tok/s</td>
+          <td>New lane</td>
+          <td>Reused the lab's Qwen3.6 engineering on the architecture-compatible Qwen3.8 checkpoint.</td>
+          <td><a href="experiments/qwen38-27b-b70/notes/2026-08-18-autoround-int4-transition-handoff-audit.md">audit</a></td>
+        </tr>
+        <tr class="note">
+          <td>Qwen dense</td>
+          <td class="num">Aug 18</td>
+          <td><span class="action">Increase MTP depth and tune the two-B70 lane past 100 tok/s.</span></td>
+          <td class="num">100.497 / 101.922</td>
+          <td>Invalidated</td>
+          <td>The speed was measured here, but an output-changing greedy margin contaminated candidate and baseline; withdrawal is recommended.</td>
+          <td><a href="repro/qwen38-27b-autoround-int4-b70/README.md">audit</a></td>
+        </tr>
+        <tr class="qwen">
+          <td>Qwen dense</td>
+          <td class="num">Aug 20</td>
+          <td><span class="action">Disable the margin and rerun the full 25-prompt lane across three arms.</span></td>
+          <td class="num">101.170 tok/s</td>
+          <td>Research anchor</td>
+          <td>Honest margin-free result; not promoted because pairwise token repeatability is only 21&ndash;22/25.</td>
+          <td><a href="repro/qwen38-27b-autoround-int4-b70/README.md">status</a></td>
+        </tr>
+
+        <tr class="section">
           <td colspan="7">MiniMax M2.7, GGUF/RPC and AutoRound/vLLM</td>
         </tr>
         <tr class="minimax">
@@ -493,7 +533,10 @@
 
   <p class="tight">
     Short share version: Qwen taught the B70 playbook: split carefully, keep data local,
-    fuse repeated work, and verify clean runtime. Qwen Q4 went from 24.2 to 50.1 tok/s.
+    fuse repeated work, and verify clean runtime. Qwen Q4 went from 24.2 to 50.1 tok/s;
+    the broader dense-Qwen lab program went from a 15.55 tok/s one-card Q8 baseline to
+    an honest 101.17 tok/s two-card AutoRound/MTP research anchor. Those are different
+    model, quantization, and card identities, not a like-for-like percentage speedup.
     MiniMax then moved from early 101 GB GGUF bring-up to 17.7 tok/s on GGUF/RPC and
     37.1 tok/s on vLLM AutoRound with the llm-scaler u4 decode path.
   </p>

@@ -79,7 +79,7 @@ JSON, factual, logic, Python-result, repeat-stability, and 3,829-token needle
 canaries. Q8 is the primary quality-conservative service identity; Q4_K_M is
 the explicitly lower-precision speed lane.
 
-A separate one-B70 SergioB GPTQ INT4 route was validated on 2026-08-16. Native
+An archived contributed one-B70 GPTQ INT4 route was validated on 2026-08-16. Native
 FP16 KV reached `34.160467 tok/s` target-only and `87.605425 tok/s` MTP4 at
 p512/g128 and 8K; both beat the FP8-KV rows. MTP4 accepted 511/540 drafts,
 matched the GPTQ target on the semantic suite, and its loaded draft parameters
@@ -108,7 +108,7 @@ Resume and evidence:
 - [Q8 quality-conservative standalone reproduction](repro/qwen38-27b-q8-tp2-asrock-b70/README.md)
 - [Q8 c2 cache-row fusion result](experiments/qwen38-27b-b70/notes/2026-08-16-q8-c2-cache-row-fusion-neutral.md)
 - [Q8 distributed greedy argmax result](experiments/qwen38-27b-b70/notes/2026-08-16-q8-distributed-greedy-argmax-neutral.md)
-- [community GPTQ/MTP vLLM idea](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
+- [archived contributed GPTQ/MTP route and lab status](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 - [one-B70 GPTQ target-only graph validation](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-target-only-graph-validation.md)
 - [one-B70 GPTQ native-MTP matrix](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-local-mtp-matrix-validation.md)
 - [GPTQ quality/KV/runtime-dtype decision](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-quality-kv-dtype-decision.md)
@@ -494,7 +494,7 @@ loaded service.
 4. Use the official FP8 graph repro as the vLLM control and target its Triton
    GDN/state-I/O and TP2 synchronization path; simple oneCCL P2P access is
    already closed as neutral. Preserve the 9/12 GiB host cgroup.
-5. Keep SergiioB's single-card GPTQ/MTP vLLM recipe experimental: it is fast,
+5. Keep the archived single-card GPTQ/MTP vLLM contribution experimental: it is fast,
    but the checkpoint failed the no-quality-loss semantic gate. Never stop a
    vLLM XPU container before `/health` during graph initialization.
 6. The 49.717503 tok/s Q4_K_M target-only result is submitted and approved as

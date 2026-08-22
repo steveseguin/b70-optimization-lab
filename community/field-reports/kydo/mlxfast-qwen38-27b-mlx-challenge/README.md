@@ -20,6 +20,6 @@ informational only; do not treat any number here as a B70 expectation.
 
 ## Lab-authored synthesis
 
-The B70-focused ideas mined from this source (and from the SergiioB cookbook
-hub) live in
+The intake outcome and the gate required before any cross-platform idea can
+affect a B70 result live in
 [`notes/2026-08-21-b70-optimization-ideas-from-community-sources.md`](../../../../notes/2026-08-21-b70-optimization-ideas-from-community-sources.md).

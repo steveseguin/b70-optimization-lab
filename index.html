@@ -186,15 +186,9 @@ Style genome (duotone-hixffp):
         </tr>
         <tr>
           <th scope="row" class="model">Qwen3.8-27B <small>Alibaba &middot; Aug 2026</small></th>
-          <td class="mut">Newest all-rounder, also reads pictures. One card: 27.8 tok/s, quality-checked. Two cards with our INT4 + MTP5 setup: 101.9 tok/s, lab-verified — but 3 of 25 long test prompts can come out different run-to-run</td>
-          <td class="num r">1&ndash;2</td><td class="num r">27.8&ndash;101.9</td>
-          <td class="lnk"><a href="community/sergiiob-qwen38-27b-vllm-xpu/README.md">our setup</a></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model">Nemotron-Lightning-30B <small>NVIDIA &middot; 2026</small></th>
-          <td class="mut">Fastest one-card speed reported anywhere (not yet re-checked)</td>
-          <td class="num r">1</td><td class="num r">187</td>
-          <td class="lnk"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">report</a></td>
+          <td class="mut">Newest all-rounder, also reads pictures. One card: 27.8 tok/s, quality-checked. Our two-card INT4 + MTP5 research lane reaches 101.17 tok/s; run-to-run determinism is still open</td>
+          <td class="num r">1&ndash;2</td><td class="num r">27.8&ndash;101.17</td>
+          <td class="lnk"><a href="repro/qwen38-27b-autoround-int4-b70/README.md">our research setup</a></td>
         </tr>
         <tr>
           <th scope="row" class="model">Laguna-S-2.1 <small>Poolside &middot; Jul 2026</small></th>
@@ -219,9 +213,9 @@ Style genome (duotone-hixffp):
     <h2>What you need</h2>
     <ul class="tight">
       <li><b>The card:</b> a PC with at least one Intel Arc Pro B70 graphics card (24&nbsp;GB). One card runs most models on this page; the biggest are split across 2&ndash;4 cards working together.</li>
-      <li><b>One card:</b> follow our step-by-step <a href="results/gemma4-26b-a4b-q8-b70/README.md">Gemma-4-26B guide</a> (125 tok/s, checked in this lab) or the one-card <a href="community/sergiiob-qwen38-27b-vllm-xpu/README.md">Qwen3.8-27B setup</a>. More single-card setups in <a href="docs/model-recipes.md">model recipes</a>.</li>
+      <li><b>One card:</b> follow our step-by-step <a href="results/gemma4-26b-a4b-q8-b70/README.md">Gemma-4-26B guide</a> (125 tok/s, checked in this lab). More single-card setups are indexed in <a href="docs/model-recipes.md">our model recipes</a>.</li>
       <li><b>Two to four cards:</b> complete recipes in the <a href="results/README.md">results index</a> — MiniMax INT4, Laguna-S + DFlash, DeepSeek-V4 FP4/FP8, Qwen3.8 dense split across 2 cards.</li>
-      <li><b>Every guide here is complete:</b> pinned software versions, exact commands, and a proof folder with logs and quality checks behind each number.</li>
+      <li><b>Promoted guides are complete:</b> pinned software versions, exact commands, and a proof folder with logs and quality checks. Research rows explicitly identify unresolved gates or unavailable artifacts.</li>
       <li><b>Making a new model fast:</b> the <a href="docs/model-optimization-guide.md">optimization guide</a> is the playbook; the <a href="optimization-timeline.html">timeline</a> shows how each setup improved.</li>
       <li><b>For AI assistants:</b> <a href="llms.txt">llms.txt</a> is a machine-readable map of this site, then <a href="AGENTS.md">AGENTS.md</a>.</li>
     </ul>
@@ -273,11 +267,11 @@ Style genome (duotone-hixffp):
           <td class="lnk"><a href="results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">test report</a></td>
         </tr>
         <tr>
-          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.8-27B <small>newest all-rounder &middot; reads pictures &middot; Aug 2026 &middot; one card, no tricks: 27.8</small></th>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span>Qwen3.8-27B <small>newest all-rounder &middot; reads pictures &middot; Aug 2026 &middot; one card, no tricks: 27.8</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">INT4 + MTP5</td><td class="num r">2&times;</td>
-          <td class="num r">101.92<div class="ratebar" style="width:55%" aria-hidden="true"></div></td>
-          <td class="mut hide-s" title="preferred median, 99-interval; TP2 full-25 determinism campaign: 22/25 token-exact">verified &middot; 3/25 long prompts not token-stable</td>
-          <td class="lnk"><a href="experiments/qwen38-27b-b70/notes/2026-08-20-detpad-composite-tp2-full25-result.md">test report</a></td>
+          <td class="num r">101.17<div class="ratebar" style="width:55%" aria-hidden="true"></div></td>
+          <td class="mut hide-s" title="honest margin-free all-25 median; three arms agree on only 21 to 22 of 25 token arrays">research &middot; determinism open</td>
+          <td class="lnk"><a href="repro/qwen38-27b-autoround-int4-b70/README.md">lab status</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Muse-Glimmer-30B <small>Meta &middot; reads pictures &middot; Aug 2026 &middot; long answers: 161.9</small></th>
@@ -318,6 +312,13 @@ Style genome (duotone-hixffp):
     </table>
     </div>
     <div class="note">
+      The Qwen optimization lineage is this lab&rsquo;s work: a 15.55 tok/s
+      one-card Q8 starting point grew through our kernels, runtime fixes, and
+      speculative-decoding work to the 101.17 tok/s two-card research anchor
+      above. Those endpoints use different quantization and card counts, so
+      they are history, not a like-for-like percentage claim.
+      <a href="README.md#qwen38-27b-model-board">Qwen model board and evidence</a>.
+      <br>
       Rows use different compression, card counts, and measurements — a bigger number in another
       row is not automatically a faster setup.
       <a href="results/scoreboard.md">Ground rules for comparing</a>.
@@ -333,10 +334,9 @@ Style genome (duotone-hixffp):
     <p class="sub">
       Sent in by contributors on their own machines — promising, not proven, unless marked
       confirmed. These rows are counted a little differently (middle value of 5 tries, measured
-      by the client), so don&rsquo;t compare numbers across the two tables.
-      Several lanes were first published in a member&rsquo;s upstream
-      <a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">cookbook repo</a>;
-      this page links our own catalog and re-checks of that work.
+      by the client), so don&rsquo;t compare numbers across the two tables. The
+      complete intake and attribution ledger lives under <a href="community/README.md">community/</a>;
+      this landing page only highlights runnable work that was actually re-run here.
     </p>
     <div class="scroller">
     <table aria-labelledby="t2">
@@ -352,40 +352,10 @@ Style genome (duotone-hixffp):
       </thead>
       <tbody>
         <tr>
-          <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Nemotron-3.5-Lightning-30B <small>fastest one-card report so far &middot; NVIDIA &middot; 2026</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">DFlash n=7</td><td class="num r">1&times;</td>
-          <td class="num r">186.61<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
-          <td class="lnk"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">report</a></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Qwen3.6-35B-A3B <small>long documents &middot; Apr 2026</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP4</td><td class="num r">1&times;</td>
-          <td class="num r">170.91<div class="ratebar" style="width:92%" aria-hidden="true"></div></td>
-          <td class="lnk"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">report</a></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">B70-tested: </span>Qwen3.8-27B <small>newest all-rounder &middot; Aug 2026 &middot; claimed 106.7 on 2 cards; we confirmed the lane at 101.9 &middot; one-card GPTQ variant failed our quality gate</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP4</td><td class="num r">2&times;</td>
-          <td class="num r">101.92<div class="ratebar" style="width:55%" aria-hidden="true"></div></td>
-          <td class="lnk"><a href="claims/sergiiob-qwen38-27b-gptq-int4-mtp4-tp2.json">claim log</a></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Ornith-1.5-35B-A3B <small>brand-new entry &middot; self-reported, unverified</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">GPTQ-INT4 + MTP</td><td class="num r">1&times;</td>
-          <td class="num r">106.64<div class="ratebar" style="width:57%" aria-hidden="true"></div></td>
-          <td class="lnk"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">report</a></td>
-        </tr>
-        <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">B70-tested: </span>Qwen3.6-27B <small>community setup we re-ran and confirmed</small></th>
           <td class="mut">Docker / vLLM</td><td class="mut">FP8, split across 2 cards</td><td class="num r">2&times;</td>
           <td class="num r">30.17<div class="ratebar" style="width:16%" aria-hidden="true"></div></td>
           <td class="lnk"><a href="community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md">lab check</a></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><span class="dot hollow" aria-hidden="true">&#9675;</span><span class="visually-hidden">Community-reported: </span>Muse-Glimmer-30B <small>same Meta model, smaller file (GGUF)</small></th>
-          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q4_K_XL + DFlash n2</td><td class="num r">1&times;</td>
-          <td class="num r">26.8<div class="ratebar" style="width:14%" aria-hidden="true"></div></td>
-          <td class="lnk"><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">report</a></td>
         </tr>
       </tbody>
     </table>
@@ -401,7 +371,7 @@ Style genome (duotone-hixffp):
       <li>Bring the evidence: hardware, software versions, model revision, exact command, how you measured, result files. Full checklist in <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.</li>
       <li>Runnable setups land in <a href="community/README.md">community/</a> with a filled <a href="community/STATUS-TEMPLATE.md">STATUS.md</a>; measurements alone go to <a href="community/field-reports/README.md">field-reports</a>. Propose changes on <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>.</li>
       <li>Entries enter as community-reported and are promoted only after we reproduce them — see <a href="docs/contribution-verification.md">the eight-step validation</a>. Negative results are recorded as evidence, not deleted.</li>
-      <li>Every number on this page is a tracked claim in the <a href="claims/README.md">claims registry</a>: who submitted it, the upstream repo it came from, what we measured when we re-ran it, and the dated history in between. Your name stays on your work.</li>
+      <li>Tracked claims keep the exact recipe identity, submitter, evidence, and dated lab outcome in the <a href="claims/README.md">claims registry</a>. Contributor credit stays attached to concrete work; lab measurements stay attached to lab lanes.</li>
     </ul>
   </div>
 </section>

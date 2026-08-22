@@ -72,7 +72,7 @@ Main entries:
 - [target-only optimization ledger](../experiments/qwen38-27b-b70/notes/2026-08-15-target-only-pass2.md)
 - [c2 cache-row fusion result](../experiments/qwen38-27b-b70/notes/2026-08-16-q8-c2-cache-row-fusion-neutral.md)
 - [distributed greedy argmax result](../experiments/qwen38-27b-b70/notes/2026-08-16-q8-distributed-greedy-argmax-neutral.md)
-- [community GPTQ INT4/MTP vLLM idea](../community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
+- [archived contributed GPTQ INT4/MTP route](../community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 - [AutoRound INT4/MTP3 lane and replay gates](../repro/qwen38-27b-autoround-int4-b70/README.md)
 
 Status: active as of 2026-08-16. The current lab record is target-only
@@ -89,7 +89,7 @@ mechanism result, not enabled in the reproduction package. The replay also
 clarified that the earlier accepted Q8 speed capture was reasoning-enabled,
 whereas the current service launcher and quality oracle use reasoning off.
 
-SergiioB's separate one-card GPTQ INT4 vLLM route is locally B70-tested at 8K.
+The separate contributed one-card GPTQ INT4 vLLM route is locally B70-tested at 8K.
 Native FP16 KV reached `34.160467 tok/s` target-only and `87.605425` MTP4,
 faster than the corresponding FP8-KV rows. MTP matched its target and the
 loaded draft parameters were verified FP16, but the GPTQ target failed a

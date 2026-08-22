@@ -190,9 +190,11 @@ handoff remains incomplete. See the
   allocation treatment. Both arms were 18/25 exact versus target A and their
   preferred central value was `56.363 tok/s`, 44.263% below B2. Preserve the
   pair as bounded diagnostic evidence, run no further arm under its
-  preregistration, and do not promote it. The cheap
-  draft-fallback-margin patch still needs real TP2 logit-equivalence captures
-  and branch/candidate counters before any full 25-prompt throughput A/B.
+  preregistration, and do not promote it. The draft-fallback-margin path is
+  also closed: its real 598-call TP2 qualification exceeded the required error
+  bound on every call and left 9 repaired argmax mismatches versus full FP16.
+  Do not retry it or run a full-25 throughput A/B; see the
+  [terminal result](../../experiments/qwen38-27b-b70/notes/2026-08-20-draft-margin-tp2-qualification-result.md).
 - Do not use stock `intel/llm-scaler-vllm:0.21.0-b3.1` as a substitute for the
   pinned source stack on a 16 GB host. An independent eager TP2 smoke first hit
   its FP8-only GDN output-projection probe on an INT4 `qweight`; disabling that

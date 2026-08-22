@@ -56,12 +56,12 @@ The current source-level queue for >105 tok/s is now:
    TP2/cross-rank oneCCL collectives are therefore not necessary causes; use the
    least-intrusive existing TP1 layer/operator hashes to find the earliest
    divergent state before another full A/B.
-3. **Treat the cheap draft fallback margin as diagnostic-only.** The shipped
-   patch replaces costly full-vocabulary work, but its synthetic 40/40 test is
-   single-shard and does not bound real TP2 logit error. Add startup/call/row/
-   candidate counters and capture real TP2 local and gathered logits versus
-   full-FP16 before a 25-prompt performance run. A margin of `0.25` is only an
-   equivalence bound if the maximum relevant logit error is below `0.125`.
+3. **Close the draft fallback margin path.** The real TP2 qualification
+   captured 598 calls and terminally failed: every call exceeded the required
+   `max_abs_error < 0.125` bound, observed error reached `2.375`, and repaired
+   argmax still differed from full FP16 on 9 calls. Do not retry, sweep the
+   margin, or launch a 25-prompt performance arm. See the
+   [qualification result](../../experiments/qwen38-27b-b70/notes/2026-08-20-draft-margin-tp2-qualification-result.md).
 4. **Keep DFlash 2 separate.** llama.cpp PR #27342 is still open and targets a
    GGUF draft model. Initial reports are single-device and strongly dependent
    on workload, context, width, and concurrency. It is not a drop-in lever for
