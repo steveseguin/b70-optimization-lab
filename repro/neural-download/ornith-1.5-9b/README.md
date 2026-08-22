@@ -1,8 +1,11 @@
 # Ornith 1.5 9B — neural.download packet (DRAFT: benchmarks pending)
 
-Status: **intake verified pending; no published numbers yet.** This file
-carries only pinned identity until the preregistered bring-up and packet
-benchmarks complete. Lane: beginner-plus single-card.
+Status: **intake verified (direct+ordinary I/O) and baseline PASSED**
+(2026-08-22). Lane: beginner-plus single-card.
+
+**Intake diagnostic baseline (1x B70, 8K ctx, f16 KV, target-only,
+128/100 window, cache-zero verified): `50.109 tok/s` median /
+`50.061` p10.** Full packet operating points still pending.
 
 ## Identity
 

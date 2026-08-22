@@ -1,6 +1,12 @@
 # Nemotron 3.5 Lightning 30B-A3B — neural.download packet (DRAFT: benchmarks pending)
 
-Status: **downloading; no published numbers yet.** Lane: mid MoE.
+Status: **intake verified (direct+ordinary I/O) and baseline PASSED**
+(2026-08-22) — the family runs on Intel B70 with no NVFP4 assumption.
+Lane: mid MoE.
+
+**Intake diagnostic baseline (1x B70, 8K ctx, f16 KV, target-only,
+128/100 window, cache-zero verified): `72.873 tok/s` median /
+`72.712` p10.** Full packet operating points still pending.
 
 ## Identity
 

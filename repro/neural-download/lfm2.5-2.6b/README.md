@@ -1,7 +1,11 @@
 # LFM2.5 2.6B — neural.download packet (DRAFT: benchmarks pending)
 
-Status: **downloading; no published numbers yet.** Identity pinned; all
-numbers arrive only from measured runs. Lane: novice single-card.
+Status: **intake verified (direct+ordinary I/O) and baseline PASSED**
+(2026-08-22). Lane: novice single-card.
+
+**Intake diagnostic baseline (1x B70, 8K ctx, f16 KV, target-only,
+128/100 window, cache-zero verified): `133.328 tok/s` median /
+`132.988` p10.** Full packet operating points still pending.
 
 ## Identity
 

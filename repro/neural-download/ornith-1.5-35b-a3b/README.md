@@ -1,8 +1,12 @@
 # Ornith 1.5 35B-A3B — neural.download packet (DRAFT: benchmarks pending)
 
-Status: **intake verified pending; no published numbers yet.** Lane:
-enthusiast MoE, one card first, two-card comparison only after a valid
-one-card baseline (preregistered order).
+Status: **intake verified (direct+ordinary I/O) and one-card baseline
+PASSED** (2026-08-22). Lane: enthusiast MoE; two-card comparison now
+unlocked by the valid one-card baseline.
+
+**Intake diagnostic baseline (1x B70, 8K ctx, f16 KV, target-only,
+128/100 window, cache-zero verified): `105.782 tok/s` median /
+`105.284` p10.** Full packet operating points still pending.
 
 ## Identity
 

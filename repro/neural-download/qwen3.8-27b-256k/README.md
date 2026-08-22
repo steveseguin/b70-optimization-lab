@@ -1,8 +1,14 @@
 # Qwen3.8-27B 256K flagship package — neural.download packet (DRAFT: fit-off pending)
 
-Status: **downloading; no published numbers yet.** Lane: flagship —
-~256K context + vision + MTP draft on one B70. Manager-directed addition
-outside the intake catalog; same verification and packet rules.
+Status: **FIT-OFF DECIDED — UD-Q5_K_S ships as the flagship quant**
+(2026-08-22). It loaded and completed the diagnostic suite on one B70 at
+`--ctx-size 262144` with q8_0 K/V, the vision mmproj, and the MTP draft
+all resident, with **2.86 GiB VRAM still free**. Package suite rate
+(**MTP-assisted**, 128/100 window, cache-zero): `27.004 tok/s` median /
+`24.084` p10 (spread is content-dependent draft acceptance). UD-Q4_K_XL
+becomes the documented headroom alternative. Target-only companion
+number, canaries, and vision smoke still pending for the published
+packet.
 
 ## Identity (all from `unsloth/Qwen3.8-27B-GGUF` @ `4ca720788d1e01f1bff70c033e0d0028fd02e502`)
 
