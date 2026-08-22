@@ -6,6 +6,39 @@
   "audience": "expert",
   "guide": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md",
   "clean_host_tested": false,
+  "library": {
+    "model_family": "Gemma 4",
+    "publisher": "Google",
+    "variant": "26B A4B",
+    "summary": "One-card Q8 target with target-verified MTP; preserved as a source reconstruction candidate.",
+    "quantization": "UD-Q8_K_XL + Q4_0 MTP",
+    "runtime_label": "llama.cpp SYCL",
+    "operating_systems": ["Linux"],
+    "delivery": ["native"],
+    "modalities": ["text"],
+    "use_cases": ["general", "coding", "long context"],
+    "tags": ["one card", "speculative decoding", "source reconstruction"],
+    "published_at": "2026-08-22",
+    "featured_metric": {
+      "value": 123.72736943965285,
+      "unit": "tok/s",
+      "label": "decode",
+      "scope": "Conventional 99-interval median on the fixed cold suite; the historical 100-event compatibility figure is 124.977141 tok/s.",
+      "evidence": "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json"
+    }
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "Gemma 4 B70 bring-up, llama.cpp/SYCL and MoE optimization, target-verified MTP work, source reconstruction, and package validation.",
+      "status": "integrated",
+      "validated_effect": "The lane's roughly 15.55 tok/s early one-card Q8 starting point and 124.977 tok/s high use different configurations, so they document lab history and are not presented as one like-for-like boost.",
+      "evidence": "results/gemma4-26b-a4b-q8-b70/README.md"
+    }
+  ],
   "hardware": {
     "accelerator": "Intel Arc Pro B70 32 GiB",
     "cards": 1,

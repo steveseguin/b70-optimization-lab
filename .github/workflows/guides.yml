@@ -1,0 +1,28 @@
+name: guides-and-packages
+
+on:
+  pull_request:
+    paths:
+      - "packages/**"
+      - "repro/guide-catalog.json"
+      - "index.html"
+      - "guides.html"
+      - "tools/validate-repro-guides.py"
+      - "tools/test_validate_repro_guides.py"
+  push:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "repro/guide-catalog.json"
+      - "index.html"
+      - "guides.html"
+      - "tools/validate-repro-guides.py"
+      - "tools/test_validate_repro_guides.py"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/validate-repro-guides.py
+      - run: python3 -m unittest tools/test_validate_repro_guides.py

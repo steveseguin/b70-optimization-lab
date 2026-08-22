@@ -6,6 +6,49 @@
   "audience": "intermediate",
   "guide": "repro/qwen38-27b-q4km-tp1-b70/README.md",
   "clean_host_tested": false,
+  "library": {
+    "model_family": "Qwen3.8",
+    "publisher": "Alibaba / Qwen",
+    "variant": "27B",
+    "summary": "Validated one-card target-only route with an exact pinned source-and-patch rebuild.",
+    "quantization": "Q4_K_M",
+    "runtime_label": "llama.cpp SYCL",
+    "operating_systems": ["Linux"],
+    "delivery": ["native"],
+    "modalities": ["text"],
+    "use_cases": ["general", "coding", "long context"],
+    "tags": ["one card", "target only", "cache zero", "source build"],
+    "published_at": "2026-08-22",
+    "featured_metric": {
+      "value": 27.82479,
+      "unit": "tok/s",
+      "label": "decode",
+      "scope": "Conventional 99-interval median on the fixed cold 12-prompt suite; target-only and cache-zero.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json"
+    }
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "Qwen3.8 Q4_K_M bring-up, the complete lab kernel stack, TP1 fusion increments, package, and validation.",
+      "status": "integrated",
+      "validated_effect": "The TP1 matcher and fusion ladder moved the registered 26.047863/26.068073 tok/s baseline to 27.813629/27.824790 tok/s (+6.8% to +7.0%) with 24/24 oracle-exact outputs and the full quality battery passing.",
+      "evidence": "patches/qwen38-27b-q4km-tp1-b70s/README.md"
+    },
+    {
+      "id": "mndodd",
+      "name": "mndodd",
+      "kind": "external",
+      "profile": "https://github.com/mndodd",
+      "contribution": "Optimized Intel SYCL llama.cpp fork used as the pinned runtime base beneath the lab's Qwen3.8 patch stack.",
+      "status": "integrated",
+      "validated_effect": "On the separate matched Qwen3.6 Q8 TP2 control, the fork measured 31.338765 vs 29.610651 tok/s (+5.836%); that A/B does not assign the later Qwen3.8 package result to the fork.",
+      "evidence": "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+    }
+  ],
   "hardware": {
     "accelerator": "Intel Arc Pro B70 32 GiB",
     "cards": 1,

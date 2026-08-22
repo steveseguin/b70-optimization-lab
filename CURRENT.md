@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-21**
+Last reviewed: **2026-08-22**
 
 ## Authority And Update Rule
 
@@ -57,7 +57,6 @@ advertises up to 1000 (runtime + NetworkManager profile fixed from
 `auto-negotiate: no`). Swapping the cable/switch port restores gigabit
 automatically; until then remote model reads cap at ~11 MB/s.
 
-
 Opened 2026-08-22. Goal: publish a variety of B70-characterized model
 packages (benchmarks + patches where needed + reproducible recipes) on the
 neural.download page, per the
@@ -74,6 +73,14 @@ upstream llama.cpp `9fee29e9435f` SYCL AOT bmg-g31 build at
 `/home/steve/src/llama.cpp-neural-download-20260822`. Watchlist (not
 approved): Ling 3.0 Tiny (needs BailingHybrid vLLM/XPU first), DeepSeek V4
 Pro 0813 (893 GB), Qwen3.8 2.4T-A95B (4.89 TB).
+
+Publication architecture: keep `index.html` curated and put the growing set
+of model/quant/card/OS/native-container variants in `guides.html`. That page
+reads generated `packages/catalog.json`; canonical discovery, evidence, and
+exact-contributor metadata live in each `packages/*/package.json`. Regenerate
+and validate with `python3 tools/validate-repro-guides.py
+--write-package-catalog` after package changes. Research guides remain outside
+the public install library until they have a registered package.
 
 ## Active Optimization Lane
 

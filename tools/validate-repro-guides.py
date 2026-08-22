@@ -35,8 +35,13 @@ COMPONENTS = {
     "hashes",
 }
 PACKAGE_FORMAT = "b70-model-package-v1"
+PACKAGE_CATALOG_FORMAT = "b70-model-package-catalog-v1"
 PACKAGE_STATUSES = {"candidate", "starter", "preview"}
 PACKAGE_COMMANDS = {"preflight", "launch", "health", "benchmark", "stop"}
+PACKAGE_OPERATING_SYSTEMS = {"Linux", "Windows"}
+PACKAGE_DELIVERY = {"native", "container"}
+CONTRIBUTOR_KINDS = {"lab", "external"}
+CONTRIBUTOR_STATUSES = {"acknowledged", "credited", "validated-boost", "integrated"}
 
 
 class GuideAnchorParser(HTMLParser):
@@ -206,6 +211,9 @@ def validate(repo: Path, catalog_path: Path | None = None) -> tuple[list[str], C
     for stale_path in sorted(package_paths - discovered_packages):
         errors.append(f"registered model package does not exist: {stale_path}")
 
+    if (repo / "packages/README.md").is_file():
+        errors.extend(_validate_package_catalog(repo))
+
     index_path = repo / "index.html"
     try:
         parser = GuideAnchorParser()
@@ -263,6 +271,93 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
     if status == "starter" and package.get("clean_host_tested") is not True:
         errors.append(f"{label}: starter package requires clean_host_tested=true")
 
+    library = package.get("library")
+    if not isinstance(library, dict):
+        errors.append(f"{label}: library must be an object")
+    else:
+        for field in (
+            "model_family",
+            "publisher",
+            "variant",
+            "summary",
+            "quantization",
+            "runtime_label",
+        ):
+            if not isinstance(library.get(field), str) or not library[field].strip():
+                errors.append(f"{label}: library.{field} must be a non-empty string")
+        for field in ("operating_systems", "delivery", "modalities", "use_cases", "tags"):
+            values = library.get(field)
+            if (
+                not isinstance(values, list)
+                or not values
+                or any(not isinstance(value, str) or not value.strip() for value in values)
+            ):
+                errors.append(f"{label}: library.{field} must be a non-empty string list")
+        operating_systems = library.get("operating_systems")
+        if isinstance(operating_systems, list) and any(
+            value not in PACKAGE_OPERATING_SYSTEMS for value in operating_systems
+        ):
+            errors.append(
+                f"{label}: library.operating_systems values must be in {sorted(PACKAGE_OPERATING_SYSTEMS)}"
+            )
+        delivery = library.get("delivery")
+        if isinstance(delivery, list) and any(value not in PACKAGE_DELIVERY for value in delivery):
+            errors.append(f"{label}: library.delivery values must be in {sorted(PACKAGE_DELIVERY)}")
+        published_at = library.get("published_at")
+        if not isinstance(published_at, str) or re.fullmatch(r"\d{4}-\d{2}-\d{2}", published_at) is None:
+            errors.append(f"{label}: library.published_at must be YYYY-MM-DD")
+        metric = library.get("featured_metric")
+        if not isinstance(metric, dict):
+            errors.append(f"{label}: library.featured_metric must be an object")
+        else:
+            value = metric.get("value")
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+                errors.append(f"{label}: library.featured_metric.value must be a positive number")
+            for field in ("unit", "label", "scope"):
+                if not isinstance(metric.get(field), str) or not metric[field].strip():
+                    errors.append(
+                        f"{label}: library.featured_metric.{field} must be a non-empty string"
+                    )
+            errors.extend(_validate_internal_dependency(repo, label, metric.get("evidence")))
+
+    contributors = package.get("contributors")
+    if not isinstance(contributors, list) or not contributors:
+        errors.append(f"{label}: contributors must be a non-empty list")
+    else:
+        contributor_ids: set[str] = set()
+        for index, contributor in enumerate(contributors):
+            contributor_label = f"{label}: contributors[{index}]"
+            if not isinstance(contributor, dict):
+                errors.append(f"{contributor_label} must be an object")
+                continue
+            contributor_id = contributor.get("id")
+            if not isinstance(contributor_id, str) or re.fullmatch(r"[a-z0-9][a-z0-9-]*", contributor_id) is None:
+                errors.append(f"{contributor_label}.id must be lowercase and hyphenated")
+            elif contributor_id in contributor_ids:
+                errors.append(f"{label}: duplicate contributor id {contributor_id!r}")
+            else:
+                contributor_ids.add(contributor_id)
+            for field in ("name", "contribution", "validated_effect"):
+                if not isinstance(contributor.get(field), str) or not contributor[field].strip():
+                    errors.append(f"{contributor_label}.{field} must be a non-empty string")
+            if contributor.get("kind") not in CONTRIBUTOR_KINDS:
+                errors.append(f"{contributor_label}.kind must be in {sorted(CONTRIBUTOR_KINDS)}")
+            if contributor.get("status") not in CONTRIBUTOR_STATUSES:
+                errors.append(
+                    f"{contributor_label}.status must be in {sorted(CONTRIBUTOR_STATUSES)}"
+                )
+            profile = contributor.get("profile")
+            parsed_profile = urlparse(profile) if isinstance(profile, str) else None
+            if (
+                parsed_profile is None
+                or parsed_profile.scheme not in {"http", "https"}
+                or not parsed_profile.netloc
+            ):
+                errors.append(f"{contributor_label}.profile must be an HTTP(S) URL")
+            errors.extend(
+                _validate_internal_dependency(repo, contributor_label, contributor.get("evidence"))
+            )
+
     hardware = package.get("hardware")
     if not isinstance(hardware, dict) or not isinstance(hardware.get("cards"), int) or hardware["cards"] < 1:
         errors.append(f"{label}: hardware.cards must be a positive integer")
@@ -283,6 +378,10 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
         image = runtime.get("image")
         if not isinstance(image, str) or re.fullmatch(r".+@sha256:[0-9a-f]{64}", image) is None:
             errors.append(f"{label}: container image must be pinned by sha256 digest")
+    if isinstance(runtime, dict) and isinstance(library, dict):
+        delivery = library.get("delivery")
+        if isinstance(delivery, list) and runtime.get("kind") not in delivery:
+            errors.append(f"{label}: library.delivery must include runtime.kind")
 
     patches = package.get("project_patches")
     if not isinstance(patches, dict) or type(patches.get("required")) is not bool:
@@ -322,6 +421,38 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
     return errors
 
 
+def build_package_catalog(repo: Path) -> dict[str, Any]:
+    """Build the deterministic browser catalog from canonical package manifests."""
+    packages: list[dict[str, Any]] = []
+    for path in sorted((repo / "packages").glob("*/package.json")):
+        try:
+            package = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        packages.append({"manifest": path.relative_to(repo).as_posix(), **package})
+    packages.sort(key=lambda package: str(package.get("id", "")))
+    return {
+        "format": PACKAGE_CATALOG_FORMAT,
+        "source": "packages/*/package.json",
+        "packages": packages,
+    }
+
+
+def _validate_package_catalog(repo: Path) -> list[str]:
+    path = repo / "packages/catalog.json"
+    try:
+        actual = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        return [f"cannot read generated package catalog {path}: {exc}"]
+    expected = build_package_catalog(repo)
+    if actual != expected:
+        return [
+            "packages/catalog.json is stale; run "
+            "python3 tools/validate-repro-guides.py --write-package-catalog"
+        ]
+    return []
+
+
 def _validate_internal_dependency(repo: Path, owner: str, value: object) -> list[str]:
     if not isinstance(value, str):
         return [f"{owner}: dependency must be a repository-relative string"]
@@ -337,8 +468,20 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--catalog", type=Path)
+    parser.add_argument(
+        "--write-package-catalog",
+        action="store_true",
+        help="regenerate packages/catalog.json from canonical package manifests before validation",
+    )
     args = parser.parse_args(argv)
-    errors, counts = validate(args.repo.resolve(), args.catalog)
+    repo = args.repo.resolve()
+    if args.write_package_catalog:
+        package_catalog = repo / "packages/catalog.json"
+        package_catalog.write_text(
+            json.dumps(build_package_catalog(repo), indent=2, ensure_ascii=False) + "\n"
+        )
+        print(f"wrote {package_catalog}")
+    errors, counts = validate(repo, args.catalog)
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)

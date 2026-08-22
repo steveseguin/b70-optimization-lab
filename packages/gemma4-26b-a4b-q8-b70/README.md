@@ -23,6 +23,16 @@ Every required project artifact is linked inside our repository:
 - [record evidence](../../data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json);
 - [full result packet](../../results/gemma4-26b-a4b-q8-b70/README.md).
 
+## Who built what
+
+**neural.download lab — integrated:** Gemma 4 B70 bring-up, llama.cpp/SYCL and
+MoE optimization, target-verified MTP work, source reconstruction, and package
+validation. The roughly `15.55 tok/s` early one-card Q8 starting point and the
+`124.977 tok/s` high use different configurations, so they document this
+lab's development history and are not presented as one like-for-like boost.
+The exact identities and matched increments remain in the
+[result packet](../../results/gemma4-26b-a4b-q8-b70/README.md).
+
 The next promotion step is a clean one-B70 rebuild with oneAPI 2026.0, a newly
 recorded Q4_0 draft digest, `512/512` canary pass, 12/12 cache-zero cold suite,
 and retained source/model/binary receipts.

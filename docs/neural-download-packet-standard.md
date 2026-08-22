@@ -48,6 +48,18 @@ evidence standards; nothing on the page is a guess.
      to the pinned commit, and is a candidate for upstreaming. Packets say
      whether their numbers are stock or patched.
 
+6. **Discovery and credit** (`packages/<id>/package.json`)
+   - Normalize model family, variant, quantization, card count, runtime, OS,
+     native/container delivery, modalities, use cases, and one evidence-linked
+     featured metric so a generated library can filter dozens of deployments.
+   - Record every integrated contributor by the exact delta, recognition
+     status, validated effect (or explicitly unmeasured effect), and in-repo
+     evidence. A runtime or model dependency is not contributor credit by
+     itself, and a repackaged collection is never made the source of a
+     lab-developed recipe.
+   - Regenerate `packages/catalog.json` from the manifests; the public library
+     consumes that derived file, never a second hand-maintained list.
+
 ## Integrity rules (inherited from the lab standard)
 
 - Every input pinned by SHA-256; model files sealed 0444 after verification

@@ -6,6 +6,39 @@
   "audience": "intermediate",
   "guide": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
   "clean_host_tested": false,
+  "library": {
+    "model_family": "Qwen3.8",
+    "publisher": "Alibaba / Qwen",
+    "variant": "27B official FP8",
+    "summary": "Digest-pinned two-card Docker route using the official FP8 model and vLLM XPU image.",
+    "quantization": "FP8",
+    "runtime_label": "vLLM XPU",
+    "operating_systems": ["Linux"],
+    "delivery": ["container"],
+    "modalities": ["text"],
+    "use_cases": ["general", "coding", "long context"],
+    "tags": ["two cards", "Docker", "official checkpoint", "target only"],
+    "published_at": "2026-08-22",
+    "featured_metric": {
+      "value": 21.708532,
+      "unit": "tok/s",
+      "label": "decode",
+      "scope": "Median decode after TTFT on five unique cache-zero p512/g128 requests using the size-one graph route.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json"
+    }
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "B70/XPU integration, graph and quality validation, direct-I/O model verification, and the digest-pinned package.",
+      "status": "integrated",
+      "validated_effect": "The packaged graph route measured 21.708532 tok/s and passed the recorded semantic, repeat, and long-context gates; no project patch is applied.",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md"
+    }
+  ],
   "hardware": {
     "accelerator": "Intel Arc Pro B70 32 GiB",
     "cards": 2,

@@ -1,0 +1,341 @@
+{
+  "format": "b70-model-package-catalog-v1",
+  "source": "packages/*/package.json",
+  "packages": [
+    {
+      "manifest": "packages/gemma4-26b-a4b-q8-b70/package.json",
+      "format": "b70-model-package-v1",
+      "id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
+      "name": "Gemma 4 26B A4B UD-Q8_K_XL on one Intel Arc Pro B70",
+      "status": "candidate",
+      "audience": "expert",
+      "guide": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md",
+      "clean_host_tested": false,
+      "library": {
+        "model_family": "Gemma 4",
+        "publisher": "Google",
+        "variant": "26B A4B",
+        "summary": "One-card Q8 target with target-verified MTP; preserved as a source reconstruction candidate.",
+        "quantization": "UD-Q8_K_XL + Q4_0 MTP",
+        "runtime_label": "llama.cpp SYCL",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "text"
+        ],
+        "use_cases": [
+          "general",
+          "coding",
+          "long context"
+        ],
+        "tags": [
+          "one card",
+          "speculative decoding",
+          "source reconstruction"
+        ],
+        "published_at": "2026-08-22",
+        "featured_metric": {
+          "value": 123.72736943965285,
+          "unit": "tok/s",
+          "label": "decode",
+          "scope": "Conventional 99-interval median on the fixed cold suite; the historical 100-event compatibility figure is 124.977141 tok/s.",
+          "evidence": "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json"
+        }
+      },
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab",
+          "contribution": "Gemma 4 B70 bring-up, llama.cpp/SYCL and MoE optimization, target-verified MTP work, source reconstruction, and package validation.",
+          "status": "integrated",
+          "validated_effect": "The lane's roughly 15.55 tok/s early one-card Q8 starting point and 124.977 tok/s high use different configurations, so they document lab history and are not presented as one like-for-like boost.",
+          "evidence": "results/gemma4-26b-a4b-q8-b70/README.md"
+        }
+      ],
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 1,
+        "target_model_bytes": 27636230944
+      },
+      "model": {
+        "repository": "unsloth/gemma-4-26B-A4B-it-GGUF",
+        "revision": "3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a",
+        "manifest": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/model-manifest.json"
+      },
+      "runtime": {
+        "kind": "native",
+        "project": "ggml-org/llama.cpp",
+        "revision": "c926ad09857517978575d6a74d225b463f7417a0",
+        "build": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/restore-and-build.sh"
+      },
+      "project_patches": {
+        "required": true,
+        "items": [
+          "patches/gemma4-26b-a4b-q8-b70/llama-cpp-c926ad098-gemma4-q8-record-source-20260701.diff.gz.b64"
+        ],
+        "decoded_sha256": "2dab9dce3d6a41cba8edad559eb754088c6f5ca1de6531f408c069e45b7f727a"
+      },
+      "commands": {
+        "preflight": "LLAMA_SERVER=/path/to/build/bin/llama-server MODEL=/models/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf MTP_DRAFT_MODEL=/models/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf DRAFT_SHA256=<local-digest> repro/gemma4-26b-a4b-q8-b70-125tps-20260701/preflight.sh",
+        "launch": "Run the foreground full-gate command documented in repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md",
+        "health": "The full-gate wrapper waits for the local llama-server health endpoint before testing",
+        "benchmark": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/run.sh performs the 512-row canary and 12-prompt cold benchmark",
+        "stop": "The wrapper stops its server; otherwise Ctrl-C and verify pgrep -x llama-server returns no process"
+      },
+      "dependencies": [
+        "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md",
+        "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/model-manifest.json",
+        "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/restore-and-build.sh",
+        "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/prepare-draft.sh",
+        "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/preflight.sh",
+        "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/run.sh",
+        "patches/gemma4-26b-a4b-q8-b70/README.md",
+        "patches/gemma4-26b-a4b-q8-b70/record-source-verification-20260822.json",
+        "results/gemma4-26b-a4b-q8-b70/README.md"
+      ],
+      "evidence": [
+        "patches/gemma4-26b-a4b-q8-b70/record-source-verification-20260822.json",
+        "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json"
+      ],
+      "missing": [
+        "historical llama-server binary SHA-256",
+        "historical locally quantized Q4_0 MTP draft SHA-256 and byte size",
+        "tested clean-host Intel driver and oneAPI 2026.0 installation",
+        "clean one-B70 rebuild and endpoint replay",
+        "beginner recovery flow"
+      ]
+    },
+    {
+      "manifest": "packages/qwen38-27b-fp8-tp2-b70/package.json",
+      "format": "b70-model-package-v1",
+      "id": "qwen38-27b-fp8-vllm-tp2-asrock-b70",
+      "name": "Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards",
+      "status": "candidate",
+      "audience": "intermediate",
+      "guide": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
+      "clean_host_tested": false,
+      "library": {
+        "model_family": "Qwen3.8",
+        "publisher": "Alibaba / Qwen",
+        "variant": "27B official FP8",
+        "summary": "Digest-pinned two-card Docker route using the official FP8 model and vLLM XPU image.",
+        "quantization": "FP8",
+        "runtime_label": "vLLM XPU",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "container"
+        ],
+        "modalities": [
+          "text"
+        ],
+        "use_cases": [
+          "general",
+          "coding",
+          "long context"
+        ],
+        "tags": [
+          "two cards",
+          "Docker",
+          "official checkpoint",
+          "target only"
+        ],
+        "published_at": "2026-08-22",
+        "featured_metric": {
+          "value": 21.708532,
+          "unit": "tok/s",
+          "label": "decode",
+          "scope": "Median decode after TTFT on five unique cache-zero p512/g128 requests using the size-one graph route.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json"
+        }
+      },
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab",
+          "contribution": "B70/XPU integration, graph and quality validation, direct-I/O model verification, and the digest-pinned package.",
+          "status": "integrated",
+          "validated_effect": "The packaged graph route measured 21.708532 tok/s and passed the recorded semantic, repeat, and long-context gates; no project patch is applied.",
+          "evidence": "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md"
+        }
+      ],
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 2,
+        "host_ram_min_bytes": 16106127360,
+        "host_ram_plus_swap_min_bytes": 21474836480,
+        "model_weight_bytes": 30866866928
+      },
+      "model": {
+        "repository": "Qwen/Qwen3.8-27B-FP8",
+        "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+        "manifest": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json"
+      },
+      "runtime": {
+        "kind": "container",
+        "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f"
+      },
+      "project_patches": {
+        "required": false,
+        "items": [],
+        "reason": "Pinned official vLLM XPU image baseline; no project patch is applied."
+      },
+      "commands": {
+        "preflight": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
+        "launch": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/vllm-cache repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh",
+        "health": "curl -fsS http://127.0.0.1:18087/health",
+        "benchmark": "OUT=/path/to/result.json repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
+        "stop": "docker stop -t 20 qwen38-fp8-tp2"
+      },
+      "dependencies": [
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
+        "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
+        "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json"
+      ],
+      "missing": [
+        "tested clean-host Intel driver and Docker installation",
+        "clean-host endpoint replay",
+        "beginner recovery flow"
+      ]
+    },
+    {
+      "manifest": "packages/qwen38-27b-q4km-tp1-b70/package.json",
+      "format": "b70-model-package-v1",
+      "id": "qwen38-27b-q4km-tp1-b70",
+      "name": "Qwen3.8 27B Q4_K_M on one Intel Arc Pro B70",
+      "status": "candidate",
+      "audience": "intermediate",
+      "guide": "repro/qwen38-27b-q4km-tp1-b70/README.md",
+      "clean_host_tested": false,
+      "library": {
+        "model_family": "Qwen3.8",
+        "publisher": "Alibaba / Qwen",
+        "variant": "27B",
+        "summary": "Validated one-card target-only route with an exact pinned source-and-patch rebuild.",
+        "quantization": "Q4_K_M",
+        "runtime_label": "llama.cpp SYCL",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "text"
+        ],
+        "use_cases": [
+          "general",
+          "coding",
+          "long context"
+        ],
+        "tags": [
+          "one card",
+          "target only",
+          "cache zero",
+          "source build"
+        ],
+        "published_at": "2026-08-22",
+        "featured_metric": {
+          "value": 27.82479,
+          "unit": "tok/s",
+          "label": "decode",
+          "scope": "Conventional 99-interval median on the fixed cold 12-prompt suite; target-only and cache-zero.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json"
+        }
+      },
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab",
+          "contribution": "Qwen3.8 Q4_K_M bring-up, the complete lab kernel stack, TP1 fusion increments, package, and validation.",
+          "status": "integrated",
+          "validated_effect": "The TP1 matcher and fusion ladder moved the registered 26.047863/26.068073 tok/s baseline to 27.813629/27.824790 tok/s (+6.8% to +7.0%) with 24/24 oracle-exact outputs and the full quality battery passing.",
+          "evidence": "patches/qwen38-27b-q4km-tp1-b70s/README.md"
+        },
+        {
+          "id": "mndodd",
+          "name": "mndodd",
+          "kind": "external",
+          "profile": "https://github.com/mndodd",
+          "contribution": "Optimized Intel SYCL llama.cpp fork used as the pinned runtime base beneath the lab's Qwen3.8 patch stack.",
+          "status": "integrated",
+          "validated_effect": "On the separate matched Qwen3.6 Q8 TP2 control, the fork measured 31.338765 vs 29.610651 tok/s (+5.836%); that A/B does not assign the later Qwen3.8 package result to the fork.",
+          "evidence": "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+        }
+      ],
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 1,
+        "host_ram_min_bytes": 68719476736,
+        "host_ram_plus_swap_min_bytes": 68719476736,
+        "model_weight_bytes": 18973870432
+      },
+      "model": {
+        "repository": "ggml-org/Qwen3.8-27B-GGUF",
+        "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+        "manifest": "repro/qwen38-27b-q4km-tp1-b70/model-direct.json"
+      },
+      "runtime": {
+        "kind": "native",
+        "project": "mndodd/llama.cpp",
+        "revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+        "build": "repro/qwen38-27b-q4km-tp1-b70/restore-and-build.sh"
+      },
+      "project_patches": {
+        "required": true,
+        "items": [
+          "patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64",
+          "patches/qwen38-27b-q4km-tp2-asrock-b70/llama-cpp-q4k-mmvq-swiglu-tp2-20260815.diff.gz.b64",
+          "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-gdn-state-io-widen-20260821.diff.gz.b64",
+          "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-conv-qk-widen-20260821.diff.gz.b64",
+          "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-qk-norm-rope-src-widen-20260821.diff.gz.b64",
+          "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-q8out-rejected-memo320-20260821.diff.gz.b64"
+        ],
+        "reason": "The one-card speed and exactness identity depends on the lab's complete source stack and TP1 matcher increments."
+      },
+      "commands": {
+        "preflight": "MODEL_DIR=/path/to/qwen3.8-27b-q4km BUILD_DIR=/path/to/llama.cpp/build-sycl-aot-bmg-g31 repro/qwen38-27b-q4km-tp1-b70/preflight.sh",
+        "launch": "MODEL_DIR=/path/to/qwen3.8-27b-q4km BUILD_DIR=/path/to/llama.cpp/build-sycl-aot-bmg-g31 repro/qwen38-27b-q4km-tp1-b70/run-server.sh",
+        "health": "curl -fsS http://127.0.0.1:18088/health",
+        "benchmark": "OUT=/path/to/result.json repro/qwen38-27b-q4km-tp1-b70/bench.sh",
+        "stop": "Ctrl-C in the foreground server terminal; then pgrep -x llama-server must return no process"
+      },
+      "dependencies": [
+        "repro/qwen38-27b-q4km-tp1-b70/README.md",
+        "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
+        "repro/qwen38-27b-q4km-tp1-b70/model-verification-20260822.json",
+        "repro/qwen38-27b-q4km-tp1-b70/verify-model-direct.sh",
+        "repro/qwen38-27b-q4km-tp1-b70/restore-and-build.sh",
+        "repro/qwen38-27b-q4km-tp1-b70/preflight.sh",
+        "repro/qwen38-27b-q4km-tp1-b70/run-server.sh",
+        "repro/qwen38-27b-q4km-tp1-b70/bench.sh",
+        "patches/qwen38-27b-q4km-tp1-b70s/README.md",
+        "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-quality-battery-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-i.json",
+        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json",
+        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-quality-battery.json"
+      ],
+      "missing": [
+        "tested clean-host Intel driver and oneAPI installation",
+        "clean-host source build and endpoint replay",
+        "beginner recovery flow"
+      ]
+    }
+  ]
+}

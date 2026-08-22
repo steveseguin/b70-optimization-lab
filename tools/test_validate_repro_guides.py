@@ -90,6 +90,20 @@ class ReproGuideValidationTest(unittest.TestCase):
             errors, _ = MODULE.validate(repo)
             self.assertTrue(any("pinned by sha256 digest" in error for error in errors))
 
+    def test_rejects_stale_generated_package_catalog(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            (repo / "repro").mkdir()
+            (repo / "packages").mkdir()
+            (repo / "packages/README.md").write_text("# Packages\n")
+            (repo / "packages/catalog.json").write_text("{}\n")
+            (repo / "index.html").write_text("")
+            (repo / "repro/guide-catalog.json").write_text(
+                json.dumps({"format": MODULE.FORMAT, "guides": []})
+            )
+            errors, _ = MODULE.validate(repo)
+            self.assertTrue(any("catalog.json is stale" in error for error in errors))
+
     @staticmethod
     def _entry(guide: str) -> dict[str, object]:
         return {

@@ -14,6 +14,15 @@ The technical source of truth is the
 [`reproduction guide`](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md).
 The machine-readable front door is [`package.json`](package.json).
 
+## Who built what
+
+**neural.download lab — integrated:** B70/XPU integration, graph and quality
+validation, direct-I/O model verification, and this digest-pinned package. The
+packaged route measured `21.708532 tok/s` and passed the recorded semantic,
+repeat, and long-context gates. No project patch is applied; the model and
+container remain the pinned upstream artifacts. See the
+[lab evidence](../../experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md).
+
 ## What you need
 
 - x86-64 Ubuntu 24.04;

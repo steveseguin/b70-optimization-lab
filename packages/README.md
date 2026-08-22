@@ -4,6 +4,11 @@ This directory is the user-facing packaging layer over verified material in
 `repro/`, `results/`, and `patches/`. A package is a small, machine-readable
 front door: it names exact hardware, model, runtime, patches, commands,
 evidence, and any remaining gates without duplicating their source of truth.
+The `library` block supplies normalized discovery fields for the public guide
+browser (family, quant, card count, OS, native/container delivery, use cases,
+and measured metric). The `contributors` block records the exact work and
+evidence carried into that package; upstream dependencies are not treated as
+contributors unless a concrete contribution was adopted.
 
 A package status matters:
 
@@ -30,6 +35,13 @@ historical server and local Q4_0 draft hashes, so it is explicitly a source
 reconstruction candidate.
 
 Package manifests are checked by `python3 tools/validate-repro-guides.py`.
+The browser reads the generated [`catalog.json`](catalog.json), which must not
+be edited by hand. After adding or changing a package, rebuild and validate it:
+
+```bash
+python3 tools/validate-repro-guides.py --write-package-catalog
+```
+
 The linked reproduction guide remains authoritative for technical details and
 evidence; package files must point inward to it rather than becoming a second,
 drifting recipe.

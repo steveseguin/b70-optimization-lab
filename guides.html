@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Guide Library — neural.download</title>
+<meta name="description" content="Search reproducible Intel Arc Pro B70 model packages by model, quantization, GPU count, operating system, runtime, and package maturity.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/guides.html">
+<meta name="theme-color" content="#f6f1e5">
+<style>
+  :root {
+    --paper: #f6f1e5; --surface: #ece7db; --ink: #14120e; --muted: #4a463f;
+    --spot: #0f62e8; --spot-dark: #0c4fb4; --warn: #8b3b14;
+    --display: "Archivo Black", "Arial Black", Impact, sans-serif;
+    --body: Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: "American Typewriter", "Courier New", Courier, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.5 var(--body); }
+  a { color: inherit; text-decoration: none; border-bottom: 2px solid transparent; }
+  a:hover { border-bottom-color: currentColor; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--spot); outline-offset: 2px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 18px; }
+  .skip { position: absolute; left: 9px; top: -60px; z-index: 100; padding: 9px 14px; background: var(--ink); color: var(--paper); font: 12px var(--mono); }
+  .skip:focus { top: 9px; }
+  .site-nav { position: sticky; top: 0; z-index: 20; background: rgba(246,241,229,.97); border-bottom: 2px solid var(--ink); }
+  .site-nav .wrap { min-height: 56px; display: flex; align-items: stretch; }
+  .brand { display: flex; align-items: center; flex: 0 0 auto; border: 0; font: 16px var(--display); text-transform: uppercase; letter-spacing: -.02em; }
+  .brand-mark { margin-right: 8px; color: var(--spot); letter-spacing: -3px; }
+  nav { display: flex; align-items: stretch; margin-left: auto; overflow-x: auto; scrollbar-width: none; font: 700 11.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  nav::-webkit-scrollbar { display: none; }
+  nav a { display: flex; align-items: center; flex: 0 0 auto; padding: 0 13px; border-bottom: 4px solid transparent; }
+  nav a:hover, nav a[aria-current="page"] { color: var(--spot-dark); border-bottom-color: var(--spot); }
+  nav .github { align-self: center; min-height: 32px; margin-left: 8px; border: 2px solid var(--ink); }
+  nav .github:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  header { padding: 50px 0 35px; background: var(--spot); color: #fff; }
+  .kicker, .eyebrow { margin: 0 0 7px; font: 700 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+  h1 { max-width: 900px; margin: 0; font: 900 clamp(31px,5vw,54px)/1.04 var(--display); text-transform: uppercase; letter-spacing: -.01em; }
+  header p:last-child { max-width: 72ch; margin: 14px 0 0; font-size: 15px; }
+  main { padding: 30px 0 20px; }
+  .library-intro { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: end; }
+  h2 { margin: 0 0 7px; font: 900 21px var(--display); text-transform: uppercase; }
+  .sub { max-width: 76ch; margin: 0; color: var(--muted); }
+  .summary { padding: 8px 10px; border: 2px solid var(--ink); font: 700 11px var(--mono); text-transform: uppercase; white-space: nowrap; }
+  .filters { display: grid; grid-template-columns: minmax(220px,2fr) repeat(6,minmax(105px,1fr)); gap: 10px; margin: 22px 0 14px; padding: 15px; border: 2px solid var(--ink); background: var(--surface); }
+  label { display: grid; gap: 4px; color: var(--muted); font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+  input, select { width: 100%; min-height: 40px; border: 2px solid var(--ink); border-radius: 0; background: var(--paper); color: var(--ink); padding: 8px 9px; font: 13px var(--body); }
+  input::placeholder { color: #777168; }
+  .filter-footer { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; color: var(--muted); }
+  #result-count { font: 700 11px var(--mono); text-transform: uppercase; }
+  .reset { margin-left: auto; padding: 4px 0; border: 0; border-bottom: 1px solid currentColor; background: transparent; color: var(--ink); cursor: pointer; font: 700 10px var(--mono); text-transform: uppercase; }
+  .grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+  .package { display: flex; flex-direction: column; min-width: 0; border: 2px solid var(--ink); background: var(--paper); }
+  .package-head { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 17px 17px 13px; border-bottom: 1px solid var(--ink); }
+  .package h3 { margin: 0; font: 900 19px/1.12 var(--display); text-transform: uppercase; }
+  .variant { margin: 5px 0 0; color: var(--muted); font: 11px var(--mono); }
+  .status { align-self: start; padding: 3px 6px; border: 1px solid currentColor; color: var(--spot-dark); font: 700 9px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .status.preview { color: var(--warn); }
+  .status.starter { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .package-body { display: flex; flex: 1; flex-direction: column; padding: 14px 17px 17px; }
+  .package-summary { min-height: 42px; margin: 0 0 12px; color: var(--muted); }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .fact { padding: 3px 6px; background: var(--surface); font: 10px var(--mono); }
+  .metric { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; padding: 11px 12px; border: 2px solid var(--ink); }
+  .metric strong { font: 900 24px/1 var(--display); white-space: nowrap; }
+  .metric span { color: var(--muted); font-size: 11px; }
+  .credit { margin: 13px 0 0; color: var(--muted); font-size: 12px; }
+  .credit strong { color: var(--ink); }
+  .credit a { border-bottom: 1px solid currentColor; }
+  details { margin-top: 12px; border-top: 1px solid var(--ink); padding-top: 10px; }
+  summary { cursor: pointer; font: 700 10px var(--mono); text-transform: uppercase; }
+  details ul { margin: 8px 0 0; padding-left: 19px; color: var(--muted); font-size: 12px; }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 10px; margin-top: auto; padding-top: 16px; }
+  .button, .copy { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; padding: 7px 10px; border: 2px solid var(--ink); border-radius: 0; background: var(--ink); color: var(--paper); cursor: pointer; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .04em; }
+  .button:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .copy { background: transparent; color: var(--ink); }
+  .copy:hover { background: var(--ink); color: var(--paper); }
+  .copy:disabled { opacity: .65; cursor: wait; }
+  .submit { font: 700 10px var(--mono); text-transform: uppercase; border-bottom: 1px solid currentColor; }
+  .empty, .load-error { grid-column: 1/-1; padding: 30px; border: 2px solid var(--ink); background: var(--surface); text-align: center; }
+  .boundary { margin-top: 25px; padding: 17px; border: 2px solid var(--ink); background: var(--surface); }
+  .boundary p { margin: 0; color: var(--muted); }
+  .boundary a { color: var(--ink); border-bottom: 1px solid currentColor; }
+  footer { margin-top: 42px; border-top: 2px solid var(--ink); padding: 18px 0 42px; color: var(--muted); font: 11px var(--mono); }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px 18px; }
+  footer a { color: var(--ink); border-bottom: 1px solid currentColor; }
+  @media (max-width: 900px) {
+    .filters { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .filters label:first-child { grid-column: span 2; }
+  }
+  @media (max-width: 720px) {
+    .site-nav .wrap { padding-right: 0; min-height: 51px; }
+    .brand { font: 700 11px var(--mono); }
+    nav { font-size: 10px; }
+    nav a { padding: 0 9px; }
+    nav .github { display: none; }
+    header { padding: 37px 0 30px; }
+    .library-intro { grid-template-columns: 1fr; }
+    .summary { width: max-content; }
+    .grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .filters { grid-template-columns: 1fr 1fr; padding: 12px; }
+    .filters label:first-child { grid-column: 1/-1; }
+    .package-head { grid-template-columns: 1fr; }
+    .status { width: max-content; }
+    .actions .button, .actions .copy { flex: 1 1 130px; }
+    .actions .submit { flex-basis: 100%; width: max-content; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="index.html">Home</a>
+    <a href="guides.html" aria-current="page">Guide library</a>
+    <a href="index.html#lab-speeds">Benchmarks</a>
+    <a href="index.html#contribute">Contribute</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header><div class="wrap">
+  <p class="kicker">Models · quants · card counts · Linux · Docker · future Windows</p>
+  <h1>Find the deployment that fits your machine.</h1>
+  <p>The homepage stays curated. This library scales: every card is generated from a validated package manifest, links the human guide and exact patches, and states what still needs testing.</p>
+</div></header>
+
+<main id="main"><div class="wrap">
+  <div class="library-intro">
+    <div><h2>Model guide library</h2><p class="sub">A model can appear more than once because a quant, GPU count, operating system, or native/container route is a different deployment. Speeds are never compared as if those identities were interchangeable.</p></div>
+    <div class="summary" id="catalog-summary">Loading catalog…</div>
+  </div>
+
+  <form class="filters" id="filters" role="search">
+    <label>Search<input id="search" name="q" type="search" placeholder="Qwen, coding, FP8, contributor…" autocomplete="off"></label>
+    <label>Cards<select id="cards" name="cards"><option value="">Any</option></select></label>
+    <label>Quantization<select id="quant" name="quant"><option value="">Any</option></select></label>
+    <label>Operating system<select id="os" name="os"><option value="">Any</option></select></label>
+    <label>Delivery<select id="delivery" name="delivery"><option value="">Any</option></select></label>
+    <label>Status<select id="status" name="status"><option value="">Any</option><option value="starter">Starter</option><option value="candidate">Candidate</option><option value="preview">Preview</option></select></label>
+    <label>Sort<select id="sort" name="sort"><option value="newest">Newest</option><option value="name">Model name</option><option value="speed">Measured rate</option><option value="cards">Fewest cards</option></select></label>
+  </form>
+  <div class="filter-footer"><span id="result-count" aria-live="polite">Loading packages…</span><button class="reset" type="button" id="reset">Clear filters</button></div>
+  <section class="grid" id="package-grid" aria-label="Available model packages">
+    <noscript><p class="load-error">This searchable view needs JavaScript. Browse the <a href="https://github.com/steveseguin/b70-optimization-lab/tree/main/packages">package directory on GitHub</a>.</p></noscript>
+  </section>
+
+  <aside class="boundary">
+    <h2>Why some experiments are absent</h2>
+    <p>The repository contains many more lab replays, records, archived routes, and research lanes. They stay in the <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/guide-catalog.json">evidence catalog</a> until a user-facing package closes the required identity and dependency links. A high research number alone does not make an install recommendation.</p>
+  </aside>
+</div></main>
+
+<footer><div class="wrap"><span>Unofficial community lab — not affiliated with or endorsed by Intel.</span><span><a href="packages/catalog.json">Machine-readable package catalog</a> · <a href="llms.txt">For AI agents</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span></div></footer>
+
+<script>
+(() => {
+  const GITHUB = "https://github.com/steveseguin/b70-optimization-lab/blob/main/";
+  const ISSUE = "https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title=";
+  const controls = ["search", "cards", "quant", "os", "delivery", "status", "sort"].map(id => document.getElementById(id));
+  const grid = document.getElementById("package-grid");
+  const count = document.getElementById("result-count");
+  let packages = [];
+
+  const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[char]);
+  const packageReadme = item => item.manifest.replace(/package\.json$/, "README.md");
+  const copyText = async value => {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(value);
+    const area = document.createElement("textarea");
+    area.value = value; area.readOnly = true; area.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(area); area.select();
+    const copied = document.execCommand("copy"); area.remove();
+    if (!copied) throw new Error("Clipboard copy was rejected");
+  };
+
+  const card = item => {
+    const lib = item.library;
+    const metric = lib.featured_metric;
+    const people = item.contributors.map(person => `<a href="${escapeHtml(person.profile)}"><strong>${escapeHtml(person.name)}</strong></a> · ${escapeHtml(person.contribution)}`).join("<br>");
+    const facts = [
+      `${item.hardware.cards}× B70`, lib.quantization, lib.runtime_label,
+      ...lib.operating_systems, ...lib.delivery.map(value => value === "container" ? "Docker / container" : "native"),
+      item.audience
+    ];
+    const missing = item.missing.map(value => `<li>${escapeHtml(value)}</li>`).join("");
+    const readme = packageReadme(item);
+    const title = `[result] ${lib.model_family} ${lib.variant} ${lib.quantization} ${item.hardware.cards}xB70`;
+    return `<article class="package" data-id="${escapeHtml(item.id)}">
+      <div class="package-head"><div><h3>${escapeHtml(lib.model_family)}</h3><p class="variant">${escapeHtml(lib.variant)} · ${escapeHtml(lib.publisher)}</p></div><span class="status ${escapeHtml(item.status)}">${escapeHtml(item.status)} package</span></div>
+      <div class="package-body"><p class="package-summary">${escapeHtml(lib.summary)}</p>
+      <div class="facts">${facts.map(value => `<span class="fact">${escapeHtml(value)}</span>`).join("")}</div>
+      <div class="metric"><strong>${escapeHtml(Number(metric.value).toFixed(metric.value >= 100 ? 2 : 3))} ${escapeHtml(metric.unit)}</strong><span>${escapeHtml(metric.scope)}</span></div>
+      <p class="credit"><strong>Built with:</strong> ${people}</p>
+      <details><summary>${item.missing.length} remaining package gate${item.missing.length === 1 ? "" : "s"}</summary><ul>${missing}</ul></details>
+      <div class="actions"><a class="button" href="${GITHUB}${encodeURI(readme)}">Open guide</a><button class="copy" type="button" data-copy="${escapeHtml(readme)}">Copy Markdown</button><a class="submit" href="${ISSUE}${encodeURIComponent(title)}">Submit an optimization</a></div>
+      </div></article>`;
+  };
+
+  const render = () => {
+    const [search, cards, quant, os, delivery, status, sort] = controls.map(control => control.value);
+    const query = search.trim().toLowerCase();
+    let visible = packages.filter(item => {
+      const lib = item.library;
+      const haystack = [item.name, lib.model_family, lib.publisher, lib.variant, lib.summary, lib.quantization, lib.runtime_label, ...lib.modalities, ...lib.use_cases, ...lib.tags, ...item.contributors.flatMap(person => [person.name, person.contribution])].join(" ").toLowerCase();
+      return (!query || haystack.includes(query)) &&
+        (!cards || String(item.hardware.cards) === cards) &&
+        (!quant || lib.quantization === quant) &&
+        (!os || lib.operating_systems.includes(os)) &&
+        (!delivery || lib.delivery.includes(delivery)) &&
+        (!status || item.status === status);
+    });
+    const statusRank = {starter: 0, candidate: 1, preview: 2};
+    visible.sort((a, b) => {
+      if (sort === "name") return a.name.localeCompare(b.name);
+      if (sort === "speed") return b.library.featured_metric.value - a.library.featured_metric.value;
+      if (sort === "cards") return a.hardware.cards - b.hardware.cards || a.name.localeCompare(b.name);
+      return b.library.published_at.localeCompare(a.library.published_at) || statusRank[a.status] - statusRank[b.status] || a.name.localeCompare(b.name);
+    });
+    count.textContent = `${visible.length} of ${packages.length} deployment${packages.length === 1 ? "" : "s"}`;
+    grid.innerHTML = visible.length ? visible.map(card).join("") : `<p class="empty"><strong>No package matches those filters.</strong><br>Clear a filter or submit the deployment you want us to validate.</p>`;
+    const params = new URLSearchParams();
+    controls.forEach(control => { if (control.value && !(control.id === "sort" && control.value === "newest")) params.set(control.name, control.value); });
+    history.replaceState(null, "", `${location.pathname}${params.size ? `?${params}` : ""}`);
+  };
+
+  grid.addEventListener("click", async event => {
+    const button = event.target.closest("[data-copy]");
+    if (!button) return;
+    const original = button.textContent; button.disabled = true; button.textContent = "Copying…";
+    try {
+      const response = await fetch(button.dataset.copy, {cache: "no-store"});
+      if (!response.ok) throw new Error(`Markdown fetch failed: ${response.status}`);
+      await copyText(await response.text()); button.textContent = "Copied";
+    } catch (error) { button.textContent = "Copy failed"; console.error(error); }
+    window.setTimeout(() => { button.textContent = original; button.disabled = false; }, 1800);
+  });
+
+  controls.forEach(control => control.addEventListener(control.tagName === "INPUT" ? "input" : "change", render));
+  document.getElementById("reset").addEventListener("click", () => { controls.forEach(control => control.value = control.id === "sort" ? "newest" : ""); render(); });
+
+  const restoreParams = () => {
+    const params = new URLSearchParams(location.search);
+    controls.forEach(control => {
+      const value = params.get(control.name);
+      const validSelect = control.tagName === "SELECT" && [...control.options].some(option => option.value === value);
+      if (value !== null && (control.tagName === "INPUT" || validSelect)) control.value = value;
+    });
+  };
+  const populate = (id, values, label = value => value) => {
+    const select = document.getElementById(id);
+    [...new Set(values)].sort((a, b) => String(a).localeCompare(String(b), undefined, {numeric: true})).forEach(value => {
+      const option = document.createElement("option"); option.value = value; option.textContent = label(value); select.appendChild(option);
+    });
+  };
+
+  fetch("packages/catalog.json", {cache: "no-store"}).then(response => {
+    if (!response.ok) throw new Error(`Catalog fetch failed: ${response.status}`);
+    return response.json();
+  }).then(catalog => {
+    if (catalog.format !== "b70-model-package-catalog-v1" || !Array.isArray(catalog.packages)) throw new Error("Unexpected package catalog format");
+    packages = catalog.packages;
+    populate("cards", packages.map(item => item.hardware.cards), value => `${value} card${value === 1 ? "" : "s"}`);
+    populate("quant", packages.map(item => item.library.quantization));
+    populate("os", packages.flatMap(item => item.library.operating_systems));
+    populate("delivery", packages.flatMap(item => item.library.delivery), value => value === "container" ? "Docker / container" : value[0].toUpperCase() + value.slice(1));
+    restoreParams();
+    document.getElementById("catalog-summary").textContent = `${packages.length} structured package${packages.length === 1 ? "" : "s"} · generated from manifests`;
+    render();
+  }).catch(error => {
+    console.error(error); count.textContent = "Catalog unavailable";
+    grid.innerHTML = `<p class="load-error">The package catalog could not be loaded. <a href="https://github.com/steveseguin/b70-optimization-lab/tree/main/packages">Browse packages on GitHub</a>.</p>`;
+  });
+})();
+</script>
+</body>
+</html>
