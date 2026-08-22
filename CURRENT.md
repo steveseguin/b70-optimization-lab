@@ -451,8 +451,17 @@ loaded service.
    both GPUs** (`q64k32-candidate-qualified-for-endpoint-campaign`):
    KV1300 paired savings `74.676`/`74.964 us/call` on GPU2/GPU3 against
    the `21.844` hurdle, ~1.2 ms per MTP5 target step, KV128 a saving
-   rather than a regression, devices within 0.4%. Only a separately
-   preregistered endpoint campaign is authorized next; see the
+   rather than a regression, devices within 0.4%. The separately preregistered endpoint2 campaign then ran: its stock
+   control arm reproduced the lane anchor (`100.928359 tok/s`
+   conventional, all sealed and quality gates passed), but the candidate
+   arm stopped terminal at engine-core init — the operator build lacks
+   the full chunk-prefill kernel farm (0.6 MB vs 1.5 GB stock) and is
+   not endpoint-deployable as built. The policy qualification stands;
+   deployment now requires an integration build (full composite farm +
+   Q64xK32 TU), a fresh sealed stage, a cheap operator requalification
+   on the new DSO identity, and an endpoint3 preregistration. See the
+   [endpoint prereg/result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-q64k32-endpoint-prereg.md),
+   [endpoint2 result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-q64k32-endpoint2-result.md), and the
    [r3 preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-abba-r3-prereg.md)
    and [r3 qualification](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-abba-r3-result.md). That authorized host-wide `xe` recovery completed on
    2026-08-21 with the full post-reload gate green, and the newly

@@ -2,8 +2,12 @@
 
 Date: 2026-08-21
 
-Status: **frozen; single sequential launch (a1, b1, b2, a2) authorized
-after this commit is pushed and the driver's own gates pass.**
+Status: **complete and stopped terminal at b1**: arm a1 (stock control)
+passed everything at `100.928359 tok/s` conventional, but the candidate
+server failed engine-core initialization — the operator-qualified DSO lacks
+the full chunk-prefill configuration farm (0.6 MB versus the stock 1.5 GB)
+and is not endpoint-deployable as built. No b2/a2 ran; no same-root retry.
+See the [endpoint2 result](2026-08-21-qwen38-mtp5-q64k32-endpoint2-result.md).
 
 ## Bounded question
 
