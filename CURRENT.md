@@ -166,7 +166,16 @@ repeats, long-context needle, `pass_all=true`) and the final-binary
 official capture is **`27.813629`/`27.824790 tok/s`** with 24/24
 oracle-exact hashes: quality-validated at `+6.8-7.0%` over the day-open
 baseline, submission pending only a LocalMaxxing 1-GPU category check
-and the provenance snapshot.
+and the provenance snapshot. The cold-weight GEMV diagnostic then
+closed the z-row question: the m=6144 kernel is healthy standalone
+(536.7 GB/s cold vs 381.7 in-graph), and the in-graph tax is
+per-activation quantize + dispatch gap (~25 us inside each 62 us
+window; the bench's shared activation is memo-deduped, in-graph's 48
+distinct activations are not). The remaining 27.8->30 pool (~2-3
+ms/token) is therefore runtime-level (second-queue overlap or
+command-list batching), not shape widening; producer-side Q8 emission
+stays rejected for exactness. See the
+[z-row verdict](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-q4km-tp1-zrow-cold-verdict.md).
 
 - [lane registration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-lane-open.md)
 - [baseline result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-baseline-result.md)
