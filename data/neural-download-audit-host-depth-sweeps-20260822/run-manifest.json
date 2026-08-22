@@ -1,0 +1,41 @@
+{
+  "format": "neural-download-audit-host-benchmark-manifest-v1",
+  "date": "2026-08-22",
+  "host": "steve-TURIND8-2L2T",
+  "kernel": "7.0.0-28-generic",
+  "host_ram_bytes": 16326594560,
+  "accelerators": {
+    "model": "Intel Arc Pro B70",
+    "count": 2,
+    "memory_mib_each": 32656,
+    "benchmark_device": 0,
+    "operator_device": 1
+  },
+  "model_store": {
+    "path": "/mnt/lab-models",
+    "kind": "read-only NFSv4.2",
+    "source": "10.0.0.65:/mnt/usb-models/llm-models",
+    "known_link_ceiling_mbit_s": 100
+  },
+  "llama_cpp": {
+    "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "build_type": "Release",
+    "cxx_flags_release": "-O3 -DNDEBUG",
+    "sycl_device_arch": "bmg-g31",
+    "sycl_f16": true,
+    "compiler": "IntelLLVM 2026.1.1",
+    "llama_bench_sha256": "598cb811537c16c07ec702c3f698dc1ebaa79ca2f7b2424539cf06a10df6fb96",
+    "libggml_sycl_sha256": "5f0b9ed040737c1629bd4b4968347244c3d4dced88a12a0b80d6f529d7d810e4",
+    "libllama_sha256": "03af889304acd9df10f5bd36db9f65ae99de525de81f69eddf90ef011827fa8e"
+  },
+  "protocol": {
+    "depths": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "prefill_tokens": 2048,
+    "decode_tokens": 128,
+    "repetitions": 5,
+    "flash_attention": true,
+    "kv_type": "f16",
+    "gpu_layers": 99
+  },
+  "comparison_limit": "The measuring host used IntelLLVM 2026.0.0 and a different llama-bench binary. These are cross-host replications, not like-for-like replacements."
+}

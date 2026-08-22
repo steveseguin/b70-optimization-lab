@@ -42,20 +42,6 @@
    "label": "decode (3B active parameters)",
    "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 72.035976.",
    "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/README.md"
-  },
-  "context_curve": {
-   "decode_tok_s": {
-    "0": 73.01,
-    "8192": 70.7,
-    "32768": 64.62
-   },
-   "prefill_tok_s": {
-    "0": 1260.03,
-    "8192": 1145.65,
-    "32768": 1018.93
-   },
-   "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps); only -11% decode from 0 to 32K depth.",
-   "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.sweep.json"
   }
  },
  "contributors": [
@@ -68,6 +54,90 @@
    "status": "integrated",
    "validated_effect": "Stock-upstream characterization; no lab patches in this package.",
    "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+  }
+ ],
+ "performance_profiles": [
+  {
+   "id": "decode-vs-context-depth",
+   "label": "Raw decode over existing context depth",
+   "metric": "decode",
+   "unit": "tok/s",
+   "x_label": "Existing context depth before tg128",
+   "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps); only -11% decode from 0 to 32K depth. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+   "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.sweep.json",
+   "points": [
+    {
+     "context_tokens": 2048,
+     "value": 72.420657,
+     "samples": 5
+    },
+    {
+     "context_tokens": 4096,
+     "value": 71.846756,
+     "samples": 5
+    },
+    {
+     "context_tokens": 8192,
+     "value": 70.6952,
+     "samples": 5
+    },
+    {
+     "context_tokens": 16384,
+     "value": 68.557408,
+     "samples": 5
+    },
+    {
+     "context_tokens": 24576,
+     "value": 66.552475,
+     "samples": 5
+    },
+    {
+     "context_tokens": 32768,
+     "value": 64.622975,
+     "samples": 5
+    }
+   ]
+  },
+  {
+   "id": "prefill-vs-context-depth",
+   "label": "Raw pp2048 over existing context depth",
+   "metric": "prefill",
+   "unit": "tok/s",
+   "x_label": "Existing context depth before pp2048",
+   "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps); only -11% decode from 0 to 32K depth. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+   "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.sweep.json",
+   "points": [
+    {
+     "context_tokens": 2048,
+     "value": 1166.922303,
+     "samples": 5
+    },
+    {
+     "context_tokens": 4096,
+     "value": 1153.135384,
+     "samples": 5
+    },
+    {
+     "context_tokens": 8192,
+     "value": 1145.645326,
+     "samples": 5
+    },
+    {
+     "context_tokens": 16384,
+     "value": 1106.136083,
+     "samples": 5
+    },
+    {
+     "context_tokens": 24576,
+     "value": 1102.582316,
+     "samples": 5
+    },
+    {
+     "context_tokens": 32768,
+     "value": 1018.926677,
+     "samples": 5
+    }
+   ]
   }
  ],
  "known_limitations": [

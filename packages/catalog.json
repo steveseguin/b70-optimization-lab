@@ -421,20 +421,6 @@
           "label": "decode",
           "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 132.467576.",
           "evidence": "repro/lfm25-26b-q8-b70/README.md"
-        },
-        "context_curve": {
-          "decode_tok_s": {
-            "0": 135.2,
-            "8192": 120.2,
-            "32768": 89.94
-          },
-          "prefill_tok_s": {
-            "0": 9130.85,
-            "8192": 4399.72,
-            "32768": 2824.91
-          },
-          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps); see depth-sweep.svg and sweep JSON in the guide directory.",
-          "evidence": "repro/lfm25-26b-q8-b70/lfm25-26b-q8.sweep.json"
         }
       },
       "contributors": [
@@ -447,6 +433,90 @@
           "status": "integrated",
           "validated_effect": "Stock-upstream characterization; no lab patches in this package.",
           "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+        }
+      ],
+      "performance_profiles": [
+        {
+          "id": "decode-vs-context-depth",
+          "label": "Raw decode over existing context depth",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_label": "Existing context depth before tg128",
+          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps); see depth-sweep.svg and sweep JSON in the guide directory. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "evidence": "repro/lfm25-26b-q8-b70/lfm25-26b-q8.sweep.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 131.259551,
+              "samples": 5
+            },
+            {
+              "context_tokens": 4096,
+              "value": 127.211224,
+              "samples": 5
+            },
+            {
+              "context_tokens": 8192,
+              "value": 120.195857,
+              "samples": 5
+            },
+            {
+              "context_tokens": 16384,
+              "value": 107.980065,
+              "samples": 5
+            },
+            {
+              "context_tokens": 24576,
+              "value": 98.138413,
+              "samples": 5
+            },
+            {
+              "context_tokens": 32768,
+              "value": 89.93812,
+              "samples": 5
+            }
+          ]
+        },
+        {
+          "id": "prefill-vs-context-depth",
+          "label": "Raw pp2048 over existing context depth",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_label": "Existing context depth before pp2048",
+          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps); see depth-sweep.svg and sweep JSON in the guide directory. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "evidence": "repro/lfm25-26b-q8-b70/lfm25-26b-q8.sweep.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 4699.373204,
+              "samples": 5
+            },
+            {
+              "context_tokens": 4096,
+              "value": 4584.945629,
+              "samples": 5
+            },
+            {
+              "context_tokens": 8192,
+              "value": 4399.719712,
+              "samples": 5
+            },
+            {
+              "context_tokens": 16384,
+              "value": 3752.42491,
+              "samples": 5
+            },
+            {
+              "context_tokens": 24576,
+              "value": 3698.15006,
+              "samples": 5
+            },
+            {
+              "context_tokens": 32768,
+              "value": 2824.910192,
+              "samples": 5
+            }
+          ]
         }
       ],
       "known_limitations": [
@@ -489,6 +559,7 @@
         "repro/lfm25-26b-q8-b70/lfm25-26b-q8.sweep.json",
         "repro/lfm25-26b-q8-b70/lfm25-26b-q8.meta.json",
         "repro/lfm25-26b-q8-b70/depth-sweep.svg",
+        "data/neural-download-audit-host-depth-sweeps-20260822/README.md",
         "docs/neural-download-packet-standard.md"
       ],
       "missing": [
@@ -771,20 +842,6 @@
           "label": "decode (3B active parameters)",
           "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 72.035976.",
           "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/README.md"
-        },
-        "context_curve": {
-          "decode_tok_s": {
-            "0": 73.01,
-            "8192": 70.7,
-            "32768": 64.62
-          },
-          "prefill_tok_s": {
-            "0": 1260.03,
-            "8192": 1145.65,
-            "32768": 1018.93
-          },
-          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps); only -11% decode from 0 to 32K depth.",
-          "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.sweep.json"
         }
       },
       "contributors": [
@@ -797,6 +854,90 @@
           "status": "integrated",
           "validated_effect": "Stock-upstream characterization; no lab patches in this package.",
           "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+        }
+      ],
+      "performance_profiles": [
+        {
+          "id": "decode-vs-context-depth",
+          "label": "Raw decode over existing context depth",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_label": "Existing context depth before tg128",
+          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps); only -11% decode from 0 to 32K depth. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.sweep.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 72.420657,
+              "samples": 5
+            },
+            {
+              "context_tokens": 4096,
+              "value": 71.846756,
+              "samples": 5
+            },
+            {
+              "context_tokens": 8192,
+              "value": 70.6952,
+              "samples": 5
+            },
+            {
+              "context_tokens": 16384,
+              "value": 68.557408,
+              "samples": 5
+            },
+            {
+              "context_tokens": 24576,
+              "value": 66.552475,
+              "samples": 5
+            },
+            {
+              "context_tokens": 32768,
+              "value": 64.622975,
+              "samples": 5
+            }
+          ]
+        },
+        {
+          "id": "prefill-vs-context-depth",
+          "label": "Raw pp2048 over existing context depth",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_label": "Existing context depth before pp2048",
+          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps); only -11% decode from 0 to 32K depth. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.sweep.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 1166.922303,
+              "samples": 5
+            },
+            {
+              "context_tokens": 4096,
+              "value": 1153.135384,
+              "samples": 5
+            },
+            {
+              "context_tokens": 8192,
+              "value": 1145.645326,
+              "samples": 5
+            },
+            {
+              "context_tokens": 16384,
+              "value": 1106.136083,
+              "samples": 5
+            },
+            {
+              "context_tokens": 24576,
+              "value": 1102.582316,
+              "samples": 5
+            },
+            {
+              "context_tokens": 32768,
+              "value": 1018.926677,
+              "samples": 5
+            }
+          ]
         }
       ],
       "known_limitations": [
@@ -892,20 +1033,6 @@
           "label": "decode (3B active parameters)",
           "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 104.810772.",
           "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
-        },
-        "context_curve": {
-          "decode_tok_s": {
-            "0": 108.91,
-            "8192": 98.76,
-            "32768": 80.42
-          },
-          "prefill_tok_s": {
-            "0": 1171.25,
-            "8192": 1049.31,
-            "32768": 920.08
-          },
-          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps).",
-          "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.sweep.json"
         }
       },
       "contributors": [
@@ -928,6 +1055,90 @@
           "validated_effect": "None adopted; all published numbers are local measurements.",
           "evidence": "model-intake/README.md",
           "profile": "https://github.com/steveseguin/b70-optimization-lab/blob/main/model-intake/README.md"
+        }
+      ],
+      "performance_profiles": [
+        {
+          "id": "decode-vs-context-depth",
+          "label": "Raw decode over existing context depth",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_label": "Existing context depth before tg128",
+          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps). The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.sweep.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 105.147123,
+              "samples": 5
+            },
+            {
+              "context_tokens": 4096,
+              "value": 102.847723,
+              "samples": 5
+            },
+            {
+              "context_tokens": 8192,
+              "value": 98.75854,
+              "samples": 5
+            },
+            {
+              "context_tokens": 16384,
+              "value": 91.917465,
+              "samples": 5
+            },
+            {
+              "context_tokens": 24576,
+              "value": 85.787267,
+              "samples": 5
+            },
+            {
+              "context_tokens": 32768,
+              "value": 80.416982,
+              "samples": 5
+            }
+          ]
+        },
+        {
+          "id": "prefill-vs-context-depth",
+          "label": "Raw pp2048 over existing context depth",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_label": "Existing context depth before pp2048",
+          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps). The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.sweep.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 1082.701797,
+              "samples": 5
+            },
+            {
+              "context_tokens": 4096,
+              "value": 1065.063721,
+              "samples": 5
+            },
+            {
+              "context_tokens": 8192,
+              "value": 1049.314461,
+              "samples": 5
+            },
+            {
+              "context_tokens": 16384,
+              "value": 1008.512008,
+              "samples": 5
+            },
+            {
+              "context_tokens": 24576,
+              "value": 1002.576038,
+              "samples": 5
+            },
+            {
+              "context_tokens": 32768,
+              "value": 920.076316,
+              "samples": 5
+            }
+          ]
         }
       ],
       "known_limitations": [
@@ -1022,20 +1233,6 @@
           "label": "decode",
           "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 49.573292.",
           "evidence": "repro/ornith-15-9b-q8-b70/README.md"
-        },
-        "context_curve": {
-          "decode_tok_s": {
-            "0": 50.29,
-            "8192": 47.04,
-            "32768": 39.84
-          },
-          "prefill_tok_s": {
-            "0": 3184.49,
-            "8192": 1568.6,
-            "32768": 1313.74
-          },
-          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps).",
-          "evidence": "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.sweep.json"
         }
       },
       "contributors": [
@@ -1048,6 +1245,90 @@
           "status": "integrated",
           "validated_effect": "Stock-upstream characterization; no lab patches in this package.",
           "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+        }
+      ],
+      "performance_profiles": [
+        {
+          "id": "decode-vs-context-depth",
+          "label": "Raw decode over existing context depth",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_label": "Existing context depth before tg128",
+          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps). The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "evidence": "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.sweep.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 49.338288,
+              "samples": 5
+            },
+            {
+              "context_tokens": 4096,
+              "value": 48.554943,
+              "samples": 5
+            },
+            {
+              "context_tokens": 8192,
+              "value": 47.044737,
+              "samples": 5
+            },
+            {
+              "context_tokens": 16384,
+              "value": 44.349773,
+              "samples": 5
+            },
+            {
+              "context_tokens": 24576,
+              "value": 41.957791,
+              "samples": 5
+            },
+            {
+              "context_tokens": 32768,
+              "value": 39.83848,
+              "samples": 5
+            }
+          ]
+        },
+        {
+          "id": "prefill-vs-context-depth",
+          "label": "Raw pp2048 over existing context depth",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_label": "Existing context depth before pp2048",
+          "scope": "llama-bench raw engine rates (pp2048/tg128, fa on, 5 reps). The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "evidence": "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.sweep.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 1623.026366,
+              "samples": 5
+            },
+            {
+              "context_tokens": 4096,
+              "value": 1601.167744,
+              "samples": 5
+            },
+            {
+              "context_tokens": 8192,
+              "value": 1568.596728,
+              "samples": 5
+            },
+            {
+              "context_tokens": 16384,
+              "value": 1489.240859,
+              "samples": 5
+            },
+            {
+              "context_tokens": 24576,
+              "value": 1448.815985,
+              "samples": 5
+            },
+            {
+              "context_tokens": 32768,
+              "value": 1313.738568,
+              "samples": 5
+            }
+          ]
         }
       ],
       "known_limitations": [
@@ -1089,6 +1370,7 @@
         "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.sweep.json",
         "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.meta.json",
         "repro/ornith-15-9b-q8-b70/depth-sweep.svg",
+        "data/neural-download-audit-host-depth-sweeps-20260822/README.md",
         "docs/neural-download-packet-standard.md"
       ],
       "missing": [
@@ -1144,20 +1426,6 @@
           "label": "decode (MTP-assisted, full package resident)",
           "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, cache-zero, at 262144 ctx with q8_0 K/V, vision mmproj, and MTP draft loaded; second fresh-server run 26.640510. Speculation-assisted and labeled as such; target-only tg128 at depth 0 is 22.64 tok/s (raw engine).",
           "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/README.md"
-        },
-        "context_curve": {
-          "decode_tok_s": {
-            "0": 22.64,
-            "8192": 17.63,
-            "32768": 10.32
-          },
-          "prefill_tok_s": {
-            "0": 915.08,
-            "8192": 807.56,
-            "32768": 678.87
-          },
-          "scope": "llama-bench raw engine rates, TARGET-ONLY Q5_K_S with q8_0 KV (no draft; llama-bench has no speculation). The MTP-assisted serving rate above is the package headline.",
-          "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json"
         }
       },
       "contributors": [
@@ -1180,6 +1448,90 @@
           "status": "integrated",
           "validated_effect": "Artifact provider; no runtime delta adopted.",
           "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/README.md"
+        }
+      ],
+      "performance_profiles": [
+        {
+          "id": "decode-vs-context-depth",
+          "label": "Raw decode over existing context depth",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_label": "Existing context depth before tg128",
+          "scope": "llama-bench raw engine rates, TARGET-ONLY Q5_K_S with q8_0 KV (no draft; llama-bench has no speculation). The MTP-assisted serving rate above is the package headline. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 21.013731,
+              "samples": 5
+            },
+            {
+              "context_tokens": 4096,
+              "value": 19.763244,
+              "samples": 5
+            },
+            {
+              "context_tokens": 8192,
+              "value": 17.627474,
+              "samples": 5
+            },
+            {
+              "context_tokens": 16384,
+              "value": 14.139247,
+              "samples": 5
+            },
+            {
+              "context_tokens": 24576,
+              "value": 11.904055,
+              "samples": 5
+            },
+            {
+              "context_tokens": 32768,
+              "value": 10.32272,
+              "samples": 5
+            }
+          ]
+        },
+        {
+          "id": "prefill-vs-context-depth",
+          "label": "Raw pp2048 over existing context depth",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_label": "Existing context depth before pp2048",
+          "scope": "llama-bench raw engine rates, TARGET-ONLY Q5_K_S with q8_0 KV (no draft; llama-bench has no speculation). The MTP-assisted serving rate above is the package headline. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 831.413858,
+              "samples": 5
+            },
+            {
+              "context_tokens": 4096,
+              "value": 822.288881,
+              "samples": 5
+            },
+            {
+              "context_tokens": 8192,
+              "value": 807.562129,
+              "samples": 5
+            },
+            {
+              "context_tokens": 16384,
+              "value": 760.357526,
+              "samples": 5
+            },
+            {
+              "context_tokens": 24576,
+              "value": 750.98526,
+              "samples": 5
+            },
+            {
+              "context_tokens": 32768,
+              "value": 678.867511,
+              "samples": 5
+            }
+          ]
         }
       ],
       "known_limitations": [

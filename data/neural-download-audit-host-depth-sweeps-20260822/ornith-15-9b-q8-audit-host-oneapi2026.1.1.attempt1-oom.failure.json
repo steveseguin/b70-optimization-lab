@@ -1,0 +1,17 @@
+{
+  "format": "neural-download-benchmark-failure-v1",
+  "date": "2026-08-22",
+  "model": "Ornith 1.5 9B Q8_0",
+  "model_bytes": 9527501248,
+  "model_sha256": "6874eeb25c71081dc8f0bbe88f3ebb786312447132745371cd980bce95d259b9",
+  "benchmark_binary_sha256": "598cb811537c16c07ec702c3f698dc1ebaa79ca2f7b2424539cf06a10df6fb96",
+  "scope_memory_max": "13G",
+  "scope_swap_max": "12G",
+  "result": "systemd-oomd killed the scope during final model staging",
+  "journal_time": "2026-08-22 13:34:54 local",
+  "rows_produced": 0,
+  "stderr_bytes": 0,
+  "gpu_fault": false,
+  "ecc_errors_observed_after": 0,
+  "interpretation": "The ordinary SHA-256 read and model load shared one cgroup. Cached model pages plus loader staging exceeded the 13 GiB scope boundary. This is an operational workflow failure, not model performance evidence."
+}

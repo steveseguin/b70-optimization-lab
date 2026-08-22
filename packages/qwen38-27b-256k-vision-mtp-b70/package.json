@@ -44,20 +44,6 @@
    "label": "decode (MTP-assisted, full package resident)",
    "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, cache-zero, at 262144 ctx with q8_0 K/V, vision mmproj, and MTP draft loaded; second fresh-server run 26.640510. Speculation-assisted and labeled as such; target-only tg128 at depth 0 is 22.64 tok/s (raw engine).",
    "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/README.md"
-  },
-  "context_curve": {
-   "decode_tok_s": {
-    "0": 22.64,
-    "8192": 17.63,
-    "32768": 10.32
-   },
-   "prefill_tok_s": {
-    "0": 915.08,
-    "8192": 807.56,
-    "32768": 678.87
-   },
-   "scope": "llama-bench raw engine rates, TARGET-ONLY Q5_K_S with q8_0 KV (no draft; llama-bench has no speculation). The MTP-assisted serving rate above is the package headline.",
-   "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json"
   }
  },
  "contributors": [
@@ -80,6 +66,90 @@
    "status": "integrated",
    "validated_effect": "Artifact provider; no runtime delta adopted.",
    "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/README.md"
+  }
+ ],
+ "performance_profiles": [
+  {
+   "id": "decode-vs-context-depth",
+   "label": "Raw decode over existing context depth",
+   "metric": "decode",
+   "unit": "tok/s",
+   "x_label": "Existing context depth before tg128",
+   "scope": "llama-bench raw engine rates, TARGET-ONLY Q5_K_S with q8_0 KV (no draft; llama-bench has no speculation). The MTP-assisted serving rate above is the package headline. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+   "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json",
+   "points": [
+    {
+     "context_tokens": 2048,
+     "value": 21.013731,
+     "samples": 5
+    },
+    {
+     "context_tokens": 4096,
+     "value": 19.763244,
+     "samples": 5
+    },
+    {
+     "context_tokens": 8192,
+     "value": 17.627474,
+     "samples": 5
+    },
+    {
+     "context_tokens": 16384,
+     "value": 14.139247,
+     "samples": 5
+    },
+    {
+     "context_tokens": 24576,
+     "value": 11.904055,
+     "samples": 5
+    },
+    {
+     "context_tokens": 32768,
+     "value": 10.32272,
+     "samples": 5
+    }
+   ]
+  },
+  {
+   "id": "prefill-vs-context-depth",
+   "label": "Raw pp2048 over existing context depth",
+   "metric": "prefill",
+   "unit": "tok/s",
+   "x_label": "Existing context depth before pp2048",
+   "scope": "llama-bench raw engine rates, TARGET-ONLY Q5_K_S with q8_0 KV (no draft; llama-bench has no speculation). The MTP-assisted serving rate above is the package headline. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+   "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json",
+   "points": [
+    {
+     "context_tokens": 2048,
+     "value": 831.413858,
+     "samples": 5
+    },
+    {
+     "context_tokens": 4096,
+     "value": 822.288881,
+     "samples": 5
+    },
+    {
+     "context_tokens": 8192,
+     "value": 807.562129,
+     "samples": 5
+    },
+    {
+     "context_tokens": 16384,
+     "value": 760.357526,
+     "samples": 5
+    },
+    {
+     "context_tokens": 24576,
+     "value": 750.98526,
+     "samples": 5
+    },
+    {
+     "context_tokens": 32768,
+     "value": 678.867511,
+     "samples": 5
+    }
+   ]
   }
  ],
  "known_limitations": [

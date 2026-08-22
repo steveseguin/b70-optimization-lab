@@ -81,6 +81,14 @@ draft on one B70 with 2.86 GiB free** (`27.004` tok/s MTP-assisted
 package rate; Q4_K_XL is the headroom alternative). See the
 [baseline data](experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json).
 
+Independent two-B70 audit-host raw-engine replication on 2026-08-22 closely
+matched the measuring-host LFM2.5 decode curve (all depths within 0.64%). Ornith
+9B stable decode points also matched, but its prefill run was contaminated by
+the audit host's 15 GiB RAM + 100 Mb/s NFS paging and is not publication
+evidence. Raw rows, the 13 GiB OOM negative, memory guidance, and operator
+diagnostics are in
+[`data/neural-download-audit-host-depth-sweeps-20260822/`](data/neural-download-audit-host-depth-sweeps-20260822/README.md).
+
 Publication architecture: keep `index.html` curated and put the growing set
 of model/quant/card/OS/native-container variants in `guides.html`. That page
 reads generated `packages/catalog.json`; canonical discovery, evidence, and

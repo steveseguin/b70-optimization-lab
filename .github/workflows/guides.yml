@@ -9,6 +9,8 @@ on:
       - "guides.html"
       - "tools/validate-repro-guides.py"
       - "tools/test_validate_repro_guides.py"
+      - "tools/sync-depth-sweep-profiles.py"
+      - "tools/test_sync_depth_sweep_profiles.py"
   push:
     branches: [main]
     paths:
@@ -18,6 +20,8 @@ on:
       - "guides.html"
       - "tools/validate-repro-guides.py"
       - "tools/test_validate_repro_guides.py"
+      - "tools/sync-depth-sweep-profiles.py"
+      - "tools/test_sync_depth_sweep_profiles.py"
 
 jobs:
   validate:
@@ -25,4 +29,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 tools/validate-repro-guides.py
-      - run: python3 -m unittest tools/test_validate_repro_guides.py
+      - run: python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py
