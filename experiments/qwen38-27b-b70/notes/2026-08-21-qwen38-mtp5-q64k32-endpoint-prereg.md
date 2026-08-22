@@ -123,3 +123,21 @@ candidate stage `…attn-override-20260821-r3/runtime`, candidate device DSO
 candidate graph manifest sha `0642e029…`, labels
 `qwen38-q64k32-endpoint3-{a1,b1,b2,a2}-20260822`. Same gates, same order,
 same stop rules; single sequential launch authorized after push.
+
+## endpoint3 stop and endpoint4 relaunch rule (2026-08-22)
+
+endpoint3 stopped invalid at its stock control a1: bench row 6
+(`selection--sql-debugging`) generated only 58 tokens — the lane's
+documented stochastic early-EOS family on that prompt (the M1 microscope
+saw 68) — so the strict 100-token metric window correctly refused the arm.
+This is a data-validity stop, not a performance or correctness result; the
+24 valid rows medianed on-anchor and are not quotable. Root preserved.
+
+**Bounded relaunch rule, preregistered now:** a campaign attempt stopped
+solely by this known stochastic short-family data-invalid may be relaunched
+once as a fresh campaign with fresh labels and unchanged bytes. At most two
+such relaunches total (endpoint4, endpoint5); a third occurrence closes the
+campaign design as blocked on the lane's prompt-6 nondeterminism and
+requires a redesigned suite or metric preregistration. endpoint4 labels:
+`qwen38-q64k32-endpoint4-{a1,b1,b2,a2}-20260822`; driver refrozen at
+`f9d67d1c2226713c637eaec82f50a980411c16be371daa86f83f113f9df1f118`.

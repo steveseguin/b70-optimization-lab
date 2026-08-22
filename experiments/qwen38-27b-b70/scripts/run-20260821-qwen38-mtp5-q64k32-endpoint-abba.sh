@@ -54,7 +54,7 @@ policy_marker='VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY engaged'
 
 # endpoint3: integration-DSO campaign (r4-qualified 979e91c1...). endpoint2
 # stopped terminal at b1 (undeployable r2 DSO); endpoint-a1 burned pre-launch.
-arm_label() { printf 'qwen38-q64k32-endpoint3-%s-20260822' "$1"; }
+arm_label() { printf 'qwen38-q64k32-endpoint4-%s-20260822' "$1"; }
 arm_root_for() { printf '%s/%s' "$raw" "$(arm_label "$1")"; }
 
 case "$action" in
