@@ -195,11 +195,18 @@ the GDN spec scratch path. The p-series tests that contract directly:
   the two initialize-once fields. Built with the stock-matching flag
   set (MoE/FA2/basic/MQA off, GDN on, icpx 2025.3, Release); the stock
   `_xpu_C` exports were used to reverse those flags.
-- Poison stage: composite stage with only `_xpu_C.abi3.so` replaced
-  (new sha `169bcbdd4db1578c0fcc35414231f88fe824e03534e866302a1f71d1049c29ac`),
-  20-file graph manifest regenerated
-  (`c6801a90a43d56f2861c7ba00ba97328d6d18ea0d713b831b9e4aecf7897abd0`).
-  NEVER deployable; diagnostics only.
+- Poison stage: composite stage with only `_xpu_C.abi3.so` replaced,
+  20-file graph manifest regenerated. NEVER deployable; diagnostics
+  only. The first build (`169bcbdd…`) linked `libsycl.so.9` because the
+  project's `SYCL_LIBRARY` find resolves through `compiler/latest`,
+  which now points at 2026.0 — under the runner's clean environment the
+  so.9 runtime cannot resolve and vLLM failed platform detection (p0
+  first attempt: pre-server infra failure, root preserved). Relinked
+  with `SYCL_LIBRARY` pinned to 2025.3 (so.8, matching the stock
+  binary): final `_xpu_C` sha
+  `653388e040498db3b4d505ade001850ecae166f0b82071095828c99c6e9b470b`,
+  manifest
+  `2159f537e01fcfcad0623d63255c72185a7e8b7901f1004a95f7f181742eca08`.
 - Driver: [`run-20260822-qwen38-chunk-poison-diag.sh`](../scripts/run-20260822-qwen38-chunk-poison-diag.sh),
   SHA-256 `e9d8a684db4b74f79ad51e42f2a887cab25369f3abc9015c923117cb9ffdc681`;
   all arms on the frozen 8-row d4 suite, persistent pool ON, stock
