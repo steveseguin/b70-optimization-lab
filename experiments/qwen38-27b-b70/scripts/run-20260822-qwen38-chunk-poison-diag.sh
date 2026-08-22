@@ -22,9 +22,11 @@ action=${1:-}
 #        follows); outputs matching p0 => poisoned fields all honor
 #        write-before-read and the defect lies elsewhere.
 #   p2/p3/... - bisect field groups (indices|conv|compact|qkvba|exact).
+# p0b replaces p0: the p0 label was consumed by the so.9 link-failure
+# attempt (pre-server infra failure; root preserved, never reused).
 case "$action" in
-  check|p0|p1|p2|p3|p4|p5) ;;
-  *) printf 'usage: %s check|p0|p1|p2|p3|p4|p5\n' "$0" >&2; exit 2 ;;
+  check|p0b|p1|p2|p3|p4|p5) ;;
+  *) printf 'usage: %s check|p0b|p1|p2|p3|p4|p5\n' "$0" >&2; exit 2 ;;
 esac
 poison_value=
 case "$action" in
