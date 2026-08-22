@@ -440,7 +440,16 @@ loaded service.
    empty process group. Passive same-window kernel evidence records repeated
    `xe 0000:47:00.0` timeouts and resets, including one naming the exact sealed
    worker PID. Preserve both roots; do not retry, carry GPU2 evidence forward,
-   run a candidate/model/full-25 arm, or infer timing/correctness. That authorized host-wide `xe` recovery completed on
+   run a candidate/model/full-25 arm, or infer timing/correctness. After
+   the recovery and GPU3 health r2 pass, the freshly preregistered
+   two-GPU eight-arm r3 then ran once and **qualified the candidate on
+   both GPUs** (`q64k32-candidate-qualified-for-endpoint-campaign`):
+   KV1300 paired savings `74.676`/`74.964 us/call` on GPU2/GPU3 against
+   the `21.844` hurdle, ~1.2 ms per MTP5 target step, KV128 a saving
+   rather than a regression, devices within 0.4%. Only a separately
+   preregistered endpoint campaign is authorized next; see the
+   [r3 preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-abba-r3-prereg.md)
+   and [r3 qualification](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-abba-r3-result.md). That authorized host-wide `xe` recovery completed on
    2026-08-21 with the full post-reload gate green, and the newly
    preregistered fresh-root incumbent-control health r2 then **passed**
    (`gpu3-incumbent-control-health-pass`, complete receipt chain including
