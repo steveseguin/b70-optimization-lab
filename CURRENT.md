@@ -483,12 +483,21 @@ loaded service.
    needle probe degenerated to `B70_QWEN3!!!!…`** while
    arithmetic/copy/json/32x-repeat stayed green — the same probe that
    passed on the same stack under all-single-chunk history in endpoint5.
-   Until this cross-request corruption is isolated and fixed, **the
-   incumbent MTP5 lane must be treated as unsafe for prompts above
-   ~1024 tokens**, and no long-KV campaign can produce valid evidence on
-   it. All prior records/quality claims were single-chunk and stand. A
-   report-only chunkdiag preregistration (one 2-chunk row, then the
-   battery) is isolating dose; see the
+   The chunkdiag series then **isolated the mechanism locus**: dose 1
+   is clean (d2), dose 8 reproduces the byte-identical degeneration
+   with the 400 exonerated (d4), and the identical dose-8 exposure with
+   `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0` is fully green (d5) — the
+   persistent-scratch **reuse** path is the locus, and scratch=0 is a
+   working mitigation at the tested dose (root-cause attribution in the
+   C++ needs an instrumented build; `has_initial_state` is const in all
+   kernels and is excluded). Operational guidance: **long-context
+   serving on this lane must run scratch=0 until the root cause is
+   fixed**; the sealed short-KV record identity (scratch=1,
+   single-chunk-only traffic) is unaffected, and all prior
+   records/quality claims stand. First true long-KV incumbent data:
+   ~71.6-109 tok/s conventional per row at KV~1250-1750 (content-
+   dependent spread; cross-boot row nondeterminism is the known
+   21-23/25 parity family, so only suite medians are usable). See the
    [closure + finding note](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-longkv2-closure-and-chunk-corruption-finding.md)
    and [longkv prereg](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-longkv-q64k32-endpoint-prereg.md).
    Serving realization of the ~75 us/call KV1300 saving therefore now

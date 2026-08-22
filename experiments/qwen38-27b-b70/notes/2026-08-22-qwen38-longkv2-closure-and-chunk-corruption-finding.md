@@ -136,3 +136,45 @@ untouched. Needle PASS => the persistent-scratch reuse path is the
 mechanism locus. Needle FAIL => the locus moves to the GDN chunked
 conv/recurrent state path or KV block recycling, and the next addendum
 would titrate dose (2 and 4 rows) to extract the threshold arithmetic.
+
+## d5 result (2026-08-22): MECHANISM LOCUS — persistent-scratch reuse
+
+d5 ran **fully green**: eight healthy rows, needle exact,
+`baseline_match_all=true`, runner rc=0. Discriminator table (four
+consistent observations):
+
+| Arm | Scratch | Multi-chunk dose | Needle |
+|---|---|---|---|
+| endpoint5-a1/b1 (control history) | 1 | 0 | pass |
+| d2 | 1 | 1 | pass |
+| a1, d4 (independent) | 1 | 8 | **fail (byte-identical degeneration)** |
+| d5 | 0 | 8 | pass |
+
+Conclusion: the corruption requires the persistent scratch pool AND a
+multi-chunk-prefill request history above some dose threshold in (1, 8].
+`VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0` is a working mitigation at the
+tested dose.
+
+**Retraction:** the earlier suggestion that d4-vs-d5 row-content
+differences showed "subtle mid-suite corruption" was wrong — row 1
+outputs differ across all three boots (d2/d4/d5) including between the
+two scratch-on runs, which matches the lane's known cross-boot
+nondeterminism (the 21-23/25 parity family). Row content and per-row
+rates are not usable evidence here; only the needle discriminator is.
+
+Source audit (bounded): the pool
+(`csrc/xpu/gdn_attn/gdn_attn_interface.cpp`,
+`get_gdn_spec_decode_scratch`) is keyed by `conv_weights.data_ptr()` +
+shapes and lives for the process; `has_initial_state` is consumed
+`const bool*` everywhere (kernels cannot write it), so the naive
+poisoned-flag theory is out. Remaining root-cause shapes: a
+read-before-write of some reused field under a code path only taken
+after chunked prefills, or an out-of-bounds write from the chunk-prefill
+path scribbling the stationary pool (fresh per-call allocations would
+mask either). Root-cause attribution needs an instrumented build; it is
+follow-up work, not a blocker for mitigated operation.
+
+Operational guidance recorded in CURRENT.md: long-context serving on
+this lane must run `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0` until the
+root cause is fixed; the sealed short-KV record identity (scratch=1,
+single-chunk-only traffic) is unaffected.
