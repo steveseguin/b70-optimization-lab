@@ -27,7 +27,8 @@ at your own risk.
 | --- | --- |
 | Understand the repo structure | [Docs index](docs/README.md) |
 | See every active, paused, and archived model lane | [Model effort index](docs/model-effort-index.md) |
-| Reproduce promoted results | [Results index](results/README.md) and [model recipes](docs/model-recipes.md) |
+| Find a tested result or reproduction artifact | [Results index](results/README.md), [classified reproduction catalog](repro/README.md), and [certification standard](docs/reproduction-guide-certification.md) |
+| Try the first packaged candidate | [Qwen3.8 FP8 two-B70 package](packages/qwen38-27b-fp8-tp2-b70/README.md) — expert candidate, not yet a starter install |
 | Start optimizing a new model | [Model optimization guide](docs/model-optimization-guide.md) |
 | See or prepare the next model downloads | [Model intake queue](model-intake/README.md) |
 | Follow the Docker and Windows packaging path | [Distribution and packaging roadmap](docs/model-distribution-and-packaging-roadmap.md) |
@@ -48,7 +49,11 @@ rows. A serious lane should leave behind:
 
 - `results/<model>-<quant>-<hardware>/`: promoted or closed-out result packet,
   validity gates, best commands, invalid fast lanes, and lessons.
-- `repro/<model>-.../`: copy-ready runnable recipe for a promoted result.
+- `repro/<model>-.../`: classified reproduction artifacts, ranging from
+  portable candidates to originating-host lab replays and archived records;
+  the catalog, not the directory name, states portability.
+- `packages/<model>-.../`: user-facing, machine-readable front doors over
+  exact in-repository guides, commands, dependencies, and evidence.
 - `experiments/<model>-.../`: active research lanes that are not production
   recipes yet.
 - `notes/`: chronological lab notebook entries, including negative results and
@@ -119,7 +124,7 @@ Community-reported alternatives are kept outside the promoted rows above:
 
 | Target and route | Hardware | Best captured result | Evidence boundary / pointer |
 | --- | --- | ---: | --- |
-| GGUF Q4_K_M, oneAPI 2025.3-family JIT Docker using the lab TP2 patches | 1x/2x B70 on contributor host | Contributor reports **33.4 TP1 / 51.1 TP2 tok/s** target-only | `community-reported`; no raw benchmark data, fixed-suite evidence, cache telemetry, output hashes, or reference-lab execution. The container disables the lab's Q4K fusion under JIT after reported corruption. No files vendored because the source has no explicit license; [status and review](community/0xsero-qwen38-27b-q4km-docker/STATUS.md), [pinned external source](https://github.com/0xSero/qwen38-b70/tree/17323a6b8948a7b4483633e24ba796df0fdb43a9) |
+| GGUF Q4_K_M, oneAPI 2025.3-family JIT Docker using the lab TP2 patches | 1x/2x B70 on contributor host | Contributor reports **33.4 TP1 / 51.1 TP2 tok/s** target-only | `community-reported`; no raw benchmark data, fixed-suite evidence, cache telemetry, output hashes, or reference-lab execution. The container disables the lab's Q4K fusion under JIT after reported corruption. No files were vendored because the source has no explicit license; provenance and the useful packaging delta are retained in our [internal status and review](community/0xsero-qwen38-27b-q4km-docker/STATUS.md). |
 | GPTQ INT4 G128, vLLM XPU target-only / native MTP4 | 1x ASRock B70 local; 1x Intel B70 contributor | **34.160467 / 87.605425 tok/s local** with native FP16 KV | Experimental performance only: native FP16 KV beat FP8 at 8K, MTP4 accepted 511/540 drafts and matched its target, and loaded MTP parameters were verified FP16. The GPTQ target failed a deterministic code-result canary (`30` versus correct Q8/Q4 result `14`), so this is not the no-quality-loss default or a promoted headline; [decision](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-quality-kv-dtype-decision.md), [community packet](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md) |
 
 ### Qwen3.6 27B Model Board

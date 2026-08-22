@@ -1,6 +1,11 @@
 # Model Recipes
 
-This page is the community-facing index for reproducible model deployments. Each recipe should make clear what it proves: installation, quality, benchmark speed, serving, or all of the above.
+This is the historical community-facing recipe index. The repository now
+distinguishes clean-host starter guides from expert candidates, lab replays,
+records, research, and archives. Consult the machine-readable
+[`repro/guide-catalog.json`](../repro/guide-catalog.json) and
+[`reproduction-guide certification standard`](reproduction-guide-certification.md)
+before treating any entry as an installer. No current entry is starter-certified.
 
 ## How To Read A Recipe
 
@@ -23,15 +28,15 @@ Do not compare two results unless their model, quantization, prompt length, outp
 
 | Recipe | Status | What It Is For |
 | --- | --- | --- |
-| `../repro/qwen36-27b-q8-tp2-asrock-b70/` | Promoted target-only TP2 repro | Complete mndodd-based source patch, bounded build/server launchers, pinned Q8_0 model, fixed cold suite, and exact-output gates for `35.699 tok/s` conventional on two ASRock B70s with no speculation. |
-| `../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/` | Closed-result exact repro | Four-B70 Muse UD-Q8_K_XL plus pretrained BF16 DFlash: public-base source restore, fixed-N16 oneDNN WOQ, ARGMAX, raw evidence, two canonical century runs, frozen cold suite, and explicit Q8/quality limits. |
-| `../repro/laguna-s-2.1-int4-b70-102tps-20260726/` | Qualified closed-result repro | Portable sealed-evidence audit, exact source bundles, model-at-revision restore and manifest, native loader verification, and one-cold-suite replay for the four-B70 Laguna row: `102.971` under the submitted legacy convention, `101.942` conventionally. |
-| `../repro/deepseek-v4-flash-k160-b70-80tps-20260718/` | Closed-frontier strict speed repro | Exact source bundles, fail-closed launcher, validity gates, and evidence for the 80.820 tok/s target-verified DSpark7 result on four B70s. |
+| `../repro/qwen36-27b-q8-tp2-asrock-b70/` | `lab-replay` | Complete mndodd-based source patch, bounded build/server launchers, pinned Q8_0 model, fixed cold suite, and exact-output gates for `35.699 tok/s` conventional on two ASRock B70s with no speculation. Platform installation, model acquisition, and clean-host replay remain open. |
+| `../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/` | `candidate-portable-repro` | Four-B70 Muse UD-Q8_K_XL plus pretrained BF16 DFlash: public-base source restore, fixed-N16 oneDNN WOQ, ARGMAX, raw evidence, two canonical century runs, frozen cold suite, and explicit Q8/quality limits. |
+| `../repro/laguna-s-2.1-int4-b70-102tps-20260726/` | `candidate-portable-repro` | Portable sealed-evidence audit, exact source bundles, model-at-revision restore and manifest, native loader verification, and one-cold-suite replay for the four-B70 Laguna row. |
+| `../repro/deepseek-v4-flash-k160-b70-80tps-20260718/` | `lab-replay` | Exact source bundles, fail-closed launcher, validity gates, and evidence for the 80.820 tok/s target-verified DSpark7 result on four B70s. |
 | `../results/gemma4-26b-a4b-q8-b70/` | Result packet | Gemma 4 26B A4B Q8/INT8 one-B70 speed frontier, long-context service lane, older baselines, failed paths, validity gates, vLLM comparison lanes, and LocalMaxxing evidence. |
-| `../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/` | Copy-ready strict speed repro | Standalone Gemma 4 26B A4B Q8 target recipe for the `124.977 tok/s` strict cold-suite result on one B70. |
-| `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | Archived prior speed repro | Superseded standalone Gemma 4 26B A4B Q8 target recipe for the older `95.264 tok/s` pre-final-gate result. |
-| `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
-| `../repro/minimax-m27-b70-89tps-20260520/` | Strict speed baseline | Older strict quality-passed MiniMax M2.7 INT4 lane with higher output-token throughput. Useful for optimization comparisons. |
+| `../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/` | `lab-replay` | Originating-host Gemma 4 26B A4B Q8 target material for the `124.977 tok/s` strict cold-suite result on one B70; not a clean-machine installer. |
+| `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | `archived` | Superseded Gemma 4 26B A4B Q8 target material retained for history. |
+| `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | `candidate-portable-repro` | The closest historical Ubuntu deployment candidate, but mutable package/toolchain dependencies and its current clean-host replay remain open. |
+| `../repro/minimax-m27-b70-89tps-20260520/` | `candidate-portable-repro` | Older strict quality-passed MiniMax M2.7 INT4 lane retained for expert optimization comparisons. |
 | `../results/qwen36-35b-quark-int8-b70/` | Closed reference packet | Qwen3.6 35B A3B Quark W8A8 INT8 on 2x/4x B70. Best strict 4x baseline, invalid fast lanes, reproduction commands, and carryover notes. |
 | `../experiments/minimax_xpu_kv_offload/` | Experimental | Session-cache c2/c4/c8, TurboQuant, and CPU-paged attention research. Use for review and experiments, not as the production recipe. |
 | `../experiments/gemma4-12b-int4-autoround-vllm/` | Production slot plus research profiles | Gemma 4 12B IT INT4 AutoRound image+text endpoint on vLLM/XPU. Current production is c8 with 32K context and 8 active generations; c10/c12/c16/c64 are documented research or rejected profiles. |
@@ -42,7 +47,12 @@ recipe was promoted." Use [model-effort-index.md](model-effort-index.md) and
 
 ## MiniMax M2.7 INT4 AutoRound
 
-Start with:
+This section is an **expert candidate**, not a starter workflow. Its scripts
+perform system changes with `sudo`; review them before use. The package sources
+available in 2026 have not yet been replayed on a clean host with immutable
+driver-package locks.
+
+After that review, the historical sequence starts with:
 
 ```bash
 cd repro/minimax-m27-b70-110tps-ubuntu24-20260523

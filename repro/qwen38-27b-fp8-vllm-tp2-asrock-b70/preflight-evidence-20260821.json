@@ -1,0 +1,38 @@
+{
+  "format": "b70-repro-preflight-evidence-v1",
+  "captured_at_utc": "2026-08-22T03:40:31Z",
+  "local_date": "2026-08-21",
+  "repository_base_commit": "43b3c68b1ebb6d1db480dff23fdc3b770cec42b2",
+  "guide": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
+  "classification": "candidate-portable-repro",
+  "host": {
+    "os": "Ubuntu 24.04.4 LTS",
+    "kernel": "7.0.0-28-generic",
+    "architecture": "x86_64",
+    "docker_server": "29.1.3",
+    "intel_opencl_icd": "26.22.38646.7-1~24.04~ppa1",
+    "libze1": "1.28.6-1~24.04~ppa1",
+    "render_devices": ["/dev/dri/renderD128", "/dev/dri/renderD129"]
+  },
+  "runtime_image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "weight_files": 66,
+    "weight_bytes": 30866866928,
+    "manifest_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb",
+    "verifier_sha256": "5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9",
+    "direct_mode": "odirect",
+    "direct_all_matched": true,
+    "ordinary_all_matched": true,
+    "direct_and_ordinary_coherent": true
+  },
+  "checks": {
+    "publisher_api_manifest_match": true,
+    "host_preflight": "pass",
+    "missing_model_negative_control": "pass",
+    "container_started_in_this_replay": false,
+    "clean_host_replay": false
+  },
+  "status": "candidate prerequisites verified; serving result not replayed in this change"
+}

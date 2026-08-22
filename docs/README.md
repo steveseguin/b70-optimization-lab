@@ -1,7 +1,7 @@
 # B70 Optimization Lab Docs
 
 This docs folder is the navigation layer for a multi-model Intel XPU
-optimization lab. Executable recipes live under `../repro/`, promoted or
+optimization lab. Classified reproduction artifacts live under `../repro/`, promoted or
 closed-out model packets live under `../results/`, active research lanes live
 under `../experiments/`, and chronological evidence lives under `../notes/`.
 Docs should point to those artifacts instead of duplicating every script.
@@ -15,6 +15,11 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Reproducibility Map](current-reproducibility-map.md): stable promoted reproduction catalog; `CURRENT.md` owns live state.
 - [Results Index](../results/README.md): promoted model-specific result packets and how to promote a lane.
 - [Model Recipes](model-recipes.md): which recipe folder to use for each model/build target.
+- [Reproduction Guide Certification](reproduction-guide-certification.md):
+  starter, candidate, lab-replay, record, research, and archive definitions;
+  no current repro is starter-certified.
+- [Model Packages](../packages/README.md): user-facing machine-readable package
+  front doors, beginning with the two-B70 Qwen3.8 FP8 candidate.
 - [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
 - [Model Intake Queue](../model-intake/README.md): revision-pinned candidate
   downloads, USB safety checks, popularity snapshot, and already-covered
@@ -43,7 +48,7 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
 - [DeepSeek V4 Flash Investment Plan](../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md): gated four-B70 vLLM/XPU bring-up, exact-shape kernel tests, K160-first capacity selection, and quality controls.
 - [DeepSeek V4 Flash K160 Result Packet](../results/deepseek-v4-flash-k160-b70/README.md): paused-lane 80.820 tok/s target-verified record, standalone pinned repro, source bundles, validity caveats, and reopen conditions.
-- [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): deploy an OpenAI-compatible vLLM endpoint.
+- [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): historical expert deployment candidate; review its mutable system dependencies before use.
 - [MiniMax Production C1 Service](minimax-production-c1-service.md): run the 32K MiniMax endpoint under systemd with health and benchmark checks.
 - [Gemma 4 12B INT4 AutoRound profile](../experiments/gemma4-12b-int4-autoround-vllm/README.md): current model-slot production profile and related research profiles.
 
@@ -81,7 +86,8 @@ The community build guide includes example B70 photos and explains what details 
 ## Repository Layout
 
 - `docs/`: narrative guides, FAQ, community-facing summaries, comparison notes.
-- `repro/`: runnable install/build/benchmark/serve recipes and pinned artifacts.
+- `repro/`: classified candidates, lab replays, records, research status, and archives; see [`../repro/guide-catalog.json`](../repro/guide-catalog.json).
+- `packages/`: user-facing manifests and concise entry points over verified in-repository dependencies.
 - `results/`: promoted result packets and closed-out model efforts. See [../results/README.md](../results/README.md).
 - `notes/`: lab notebook entries, including negative results. See [../notes/README.md](../notes/README.md).
 - `data/`: structured benchmark records, payloads, and LocalMaxxing responses. See [../data/README.md](../data/README.md).

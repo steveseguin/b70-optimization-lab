@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+"""Focused tests for validate-repro-guides.py."""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+from pathlib import Path
+import tempfile
+import unittest
+
+
+SCRIPT = Path(__file__).with_name("validate-repro-guides.py")
+SPEC = importlib.util.spec_from_file_location("validate_repro_guides", SCRIPT)
+assert SPEC and SPEC.loader
+MODULE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+
+
+class ReproGuideValidationTest(unittest.TestCase):
+    def test_repository_catalog_is_valid(self) -> None:
+        repo = Path(__file__).resolve().parents[1]
+        errors, counts = MODULE.validate(repo)
+        self.assertEqual(errors, [])
+        self.assertEqual(sum(counts.values()), 18)
+
+    def test_rejects_uncertified_read_guide_promotion(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            guide = "repro/example/README.md"
+            (repo / "repro/example").mkdir(parents=True)
+            (repo / guide).write_text("# Example\n")
+            (repo / "index.html").write_text(f'<a href="{guide}">Read guide</a>')
+            catalog = {
+                "format": MODULE.FORMAT,
+                "guides": [self._entry(guide)],
+            }
+            (repo / "repro/guide-catalog.json").write_text(json.dumps(catalog))
+            errors, _ = MODULE.validate(repo)
+            self.assertTrue(any("not a certified starter-guide" in error for error in errors))
+
+    def test_rejects_missing_internal_dependency(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            guide = "repro/example/README.md"
+            (repo / "repro/example").mkdir(parents=True)
+            (repo / guide).write_text("# Example\n")
+            (repo / "index.html").write_text("")
+            entry = self._entry(guide)
+            entry["dependency_links"] = ["patches/missing.patch"]
+            (repo / "repro/guide-catalog.json").write_text(
+                json.dumps({"format": MODULE.FORMAT, "guides": [entry]})
+            )
+            errors, _ = MODULE.validate(repo)
+            self.assertTrue(any("does not resolve" in error for error in errors))
+
+    def test_rejects_mutable_container_package(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            guide = "repro/example/README.md"
+            package_path = "packages/example/package.json"
+            (repo / "repro/example").mkdir(parents=True)
+            (repo / "packages/example").mkdir(parents=True)
+            (repo / guide).write_text("# Example\n")
+            (repo / "index.html").write_text("")
+            manifest = repo / "repro/example/model.json"
+            manifest.write_text("{}")
+            entry = self._entry(guide)
+            entry["package"] = package_path
+            package = {
+                "format": MODULE.PACKAGE_FORMAT,
+                "id": "example",
+                "name": "Example",
+                "status": "candidate",
+                "audience": "expert",
+                "guide": guide,
+                "clean_host_tested": False,
+                "hardware": {"cards": 1},
+                "model": {"revision": "0" * 40, "manifest": manifest.relative_to(repo).as_posix()},
+                "runtime": {"kind": "container", "image": "example:latest"},
+                "project_patches": {"required": False, "items": []},
+                "commands": {name: "true" for name in MODULE.PACKAGE_COMMANDS},
+                "dependencies": [guide],
+                "missing": ["clean-host replay"],
+            }
+            (repo / package_path).write_text(json.dumps(package))
+            (repo / "repro/guide-catalog.json").write_text(
+                json.dumps({"format": MODULE.FORMAT, "guides": [entry]})
+            )
+            errors, _ = MODULE.validate(repo)
+            self.assertTrue(any("pinned by sha256 digest" in error for error in errors))
+
+    @staticmethod
+    def _entry(guide: str) -> dict[str, object]:
+        return {
+            "id": "example",
+            "guide": guide,
+            "classification": "lab-replay",
+            "audience": "expert",
+            "clean_host_tested": False,
+            "components": {name: False for name in MODULE.COMPONENTS},
+            "dependency_links": [],
+            "missing": ["clean-host replay"],
+        }
+
+
+if __name__ == "__main__":
+    unittest.main()

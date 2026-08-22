@@ -1,5 +1,13 @@
 # Reproduce official Qwen3.8 27B FP8 TP2 on two B70s
 
+> **Certification: `candidate-portable-repro`, not a starter guide.** The
+> model, image, launch, and validation identities are pinned and the model has
+> been verified on this host. The remaining gates are a tested Intel
+> driver/Docker installation path, beginner recovery guidance, and a replay
+> from a clean supported host. See the
+> [guide catalog](../guide-catalog.json) and
+> [certification standard](../../docs/reproduction-guide-certification.md).
+
 This is a quality-gated, target-only vLLM/XPU service snapshot for two ASRock
 Intel Arc Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8
 weights, native FP16 KV, TP2, one graph-captured decode size, and no MTP,
@@ -48,6 +56,24 @@ The image selected `XPUFp8BlockScaledMMKernel`. It used Qwen Triton kernels
 for the Qwen3.8 GDN path; that fallback is the principal source-level
 optimization opportunity.
 
+## Dependency closure
+
+| Component | Status and exact dependency |
+| --- | --- |
+| Host platform | **Incomplete.** Observed on Ubuntu 24.04.4, kernel `7.0.0-28-generic`, Docker `29.1.3`, `intel-opencl-icd 26.22.38646.7-1~24.04~ppa1`, and `libze1 1.28.6-1~24.04~ppa1`. This records the working host; it is not yet a tested clean-host installer. |
+| Accelerator toolchain | Supplied inside the digest-pinned vLLM XPU image named below; host Level Zero compatibility is still part of the missing platform gate. |
+| Runtime source/image | `vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f`; vLLM and Torch versions are recorded below. |
+| Project patches | **None.** This baseline intentionally uses the pinned upstream image without a repository patch. |
+| Model | Publisher repository and immutable revision below; all 66 weight files are pinned in [`model-direct.json`](model-direct.json). |
+| Configuration | [`run-server.sh`](run-server.sh) pins the two-card topology, precision, KV policy, graph size, context, cache behavior, memory bounds, and collective settings. |
+| Execution | Run [`preflight.sh`](preflight.sh), launch with [`run-server.sh`](run-server.sh), exercise with [`bench.sh`](bench.sh), and stop with the command below. The image must already be pulled. |
+| Validation | The [experiment note](../../experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md) and [structured result](../../experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json) preserve the fixed quality and benchmark boundaries. Clean-host replay remains open. |
+
+The 2026-08-21 host/model preflight is preserved as
+[`preflight-evidence-20260821.json`](preflight-evidence-20260821.json). It is
+evidence for prerequisites and model identity only; it does not claim that the
+container was relaunched or that clean-host certification passed.
+
 ## Download and verify
 
 Download the exact Hugging Face revision into one directory. For example,
@@ -62,8 +88,26 @@ repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model.sh \
   /mnt/fast-ai/llm-models/qwen3.8-27b-fp8
 ```
 
-Verification reads all 30.9 GB and fails on any file-count, byte-count, or
-aggregate checksum mismatch.
+First pull the exact runtime image if it is not already present:
+
+```bash
+docker pull vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f
+```
+
+Run the non-mutating preflight before serving:
+
+```bash
+MODEL_DIR=/mnt/fast-ai/llm-models/qwen3.8-27b-fp8 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh
+```
+
+The preflight checks the observed OS boundary, Docker access, groups, two DRM
+render devices, memory, pinned image, and model. Model verification reads all
+30.9 GB twice: once with `O_DIRECT` (or `dd iflag=direct`) and once through the
+ordinary page-cache path. Every publisher LFS SHA-256, byte size, and the two
+read paths must agree. It fails closed if cache bypass is unavailable. The
+older [`verify-model.sh`](verify-model.sh) aggregate check remains for
+diagnostics, but the launcher now requires direct verification.
 
 ## Start and benchmark
 

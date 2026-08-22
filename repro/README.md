@@ -1,22 +1,67 @@
-# Reproduction Recipes
+# Reproduction Artifacts
 
-This directory holds promoted reproduction recipes for benchmark results that
-are worth preserving as standalone, shareable artifacts.
+This directory preserves several kinds of reproduction material. A directory
+under `repro/` is **not automatically a beginner install guide**: some entries
+are portable candidates, while others deliberately depend on lab source trees,
+binaries, caches, models, or topology.
 
-Each recipe should include enough detail to rebuild the runtime, prepare the
-models, run the same benchmark shape, and inspect the result record without
-depending on transient local notes.
+The authoritative classification is
+[`guide-catalog.json`](guide-catalog.json). Its policy and promotion gates are
+defined in the
+[`reproduction-guide certification standard`](../docs/reproduction-guide-certification.md).
+Run `python3 tools/validate-repro-guides.py` before changing a guide, its
+dependencies, or a public “Read guide” link.
 
-## Recipes
+No entry is currently certified as a `starter-guide`. The website therefore
+labels the current material as lab reports, expert reproductions, record
+capsules, or research status. A starter label will appear only after the exact
+instructions pass on a clean supported machine.
 
-| Recipe | Use It For |
+## Portable Candidates
+
+These have substantial acquisition, restoration, launch, and validation
+material. Their README and catalog entry list the remaining certification
+gaps.
+
+| Reproduction | Cards | Main remaining gate |
+| --- | ---: | --- |
+| [Qwen3.8 27B official FP8 vLLM/XPU TP2](qwen38-27b-fp8-vllm-tp2-asrock-b70/) | 2 | Tested host-platform install and clean-host replay; [candidate package](../packages/qwen38-27b-fp8-tp2-b70/) |
+| [Laguna S 2.1 INT4, 102 tok/s](laguna-s-2.1-int4-b70-102tps-20260726/) | 4 | Tested host-platform install and independent replay |
+| [MiniMax M2.7, 110 tok/s](minimax-m27-b70-110tps-ubuntu24-20260523/) | multi-card | Immutable platform package lock and current clean-host replay |
+| [MiniMax M2.7, 89 tok/s](minimax-m27-b70-89tps-20260520/) | multi-card | Current clean-host replay and beginner recovery path |
+| [Muse-Glimmer-30B Q8, 100 tok/s](muse-glimmer-30b-q8-woq-b70-100tps-20260813/) | 4 | Platform installer, complete original model identity, independent replay |
+| [Qwen3.6 27B AutoRound INT4](qwen36-27b-autoround-int4-b70/) | 2 | Platform installer, clean-host replay, simplified positive patch index |
+
+## Lab Replays
+
+These are useful to experienced developers restoring a known lab environment.
+They are not clean-machine installation instructions.
+
+| Reproduction | Preserved purpose |
 | --- | --- |
-| [Qwen3.8 27B official FP8 target-only vLLM/XPU TP2 on 2x ASRock Arc Pro B70, 21.709 tok/s, 2026-08-16](qwen38-27b-fp8-vllm-tp2-asrock-b70/) | Restore the pinned official FP8 artifact and container, replay the experimental graph-c1 TP2 service under a 16 GB-safe host cgroup, and enforce cache-zero and semantic/long-context quality boundaries. |
-| [Qwen3.6 27B Q8_0 target-only TP2 on 2x ASRock Arc Pro B70, 35.832 tok/s, 2026-08-14](qwen36-27b-q8-tp2-asrock-b70/) | Restore the complete mndodd-based lab source patch, exact runtime doors, bounded server, model identity, fixed cold suite, and 12/12 output-hash gate for the no-speculation Q8 record. |
-| [Muse-Glimmer-30B UD-Q8_K_XL on 4x Intel Arc Pro B70, canonical mean 100.3685 tok/s, 2026-08-13](muse-glimmer-30b-q8-woq-b70-100tps-20260813/) | Restore the private llama.cpp record source from a public base, verify hash-pinned target/draft identities and raw evidence, and replay the two canonical full-256 and frozen 15-prompt cold gates. |
-| [Laguna S 2.1 INT4 on 4x Intel Arc Pro B70, published 102.971 / conventional 101.942 tok/s, 2026-07-26](laguna-s-2.1-int4-b70-102tps-20260726/) | Verify the approved LocalMaxxing receipt, restore the exact width-12 DFlash11 source/runtime identity, and run one fail-closed cold suite with token, text, cache, treatment, topology, and dual-accounting gates. |
-| [DeepSeek V4 Flash uniform-K160 on 4x Intel Arc Pro B70, 80.820 tok/s, 2026-07-18](deepseek-v4-flash-k160-b70-80tps-20260718/) | Restore the exact vLLM/XPU/oneCCL source history and launch the closed-lane target-verified DSpark7 record with its pinned M7/M8, PIECEWISE, and sharded-target-argmax identity. |
-| [Gemma 4 26B A4B Q8 on 1x Intel Arc Pro B70, 125 tok/s, 2026-07-01](gemma4-26b-a4b-q8-b70-125tps-20260701/) | Copy the current strict cold-suite Gemma 26B Q8 target plus Q4_0 MTP draft settings, 32K/FA/VMM command line, validity rules, and LocalMaxxing evidence. |
-| [Gemma 4 26B A4B Q8 on 1x Intel Arc Pro B70, 95 tok/s, 2026-06-24](gemma4-26b-a4b-q8-b70-95tps-20260624/) | Prior/superseded Gemma 26B Q8 target plus Q4_0 MTP draft packet retained for history and patch archaeology. |
-| [MiniMax M2.7 on B70, 110 tok/s, 2026-05-23](minimax-m27-b70-110tps-ubuntu24-20260523/) | Fresh Ubuntu 24 deployable MiniMax baseline with 32K OpenAI-compatible endpoint. |
-| [MiniMax M2.7 on B70, 89 tok/s, 2026-05-20](minimax-m27-b70-89tps-20260520/) | Older strict-speed MiniMax packet retained for optimization comparisons. |
+| [DeepSeek V4 Flash K160, 80 tok/s](deepseek-v4-flash-k160-b70-80tps-20260718/) | Exact closed-lane source history, endpoint, and result gates |
+| [Gemma 4 26B A4B Q8](gemma4-26b-a4b-q8-b70/) | Current result-family replay material |
+| [Gemma 4 26B A4B Q8, 125 tok/s](gemma4-26b-a4b-q8-b70-125tps-20260701/) | Originating-host command, validity rules, and evidence |
+| [Laguna S 2.1 INT4, 125 tok/s](laguna-s-2.1-int4-b70-125tps-20260731/) | Exact originating-host record gate |
+| [Qwen3.6 AutoRound INT4 determinism](qwen36-27b-autoround-int4-b70-determinism-20260818/) | Determinism-specific rebuild and replay |
+| [Qwen3.6 27B Q8 TP2](qwen36-27b-q8-tp2-asrock-b70/) | Source/patch restore and strict no-speculation gate |
+| [Qwen3.8 27B Q4_K_M TP2](qwen38-27b-q4km-tp2-asrock-b70/) | Exact llama.cpp lab replay |
+| [Qwen3.8 27B Q8 TP2](qwen38-27b-q8-tp2-asrock-b70/) | Exact single-request llama.cpp lab replay |
+| [Qwen3.8 27B Q8 TP2 C2](qwen38-27b-q8-tp2-c2-asrock-b70/) | Concurrency-two extension of the Q8 replay |
+
+## Research, Records, and Archive
+
+| Artifact | Classification | Purpose |
+| --- | --- | --- |
+| [Qwen3.8 27B AutoRound INT4](qwen38-27b-autoround-int4-b70/) | `research-status` | Active lane with unpublished AOT/cache dependencies and an unresolved promoted identity |
+| [MiniMax M2.7 structured 94 tok/s](minimax-m27-b70-94tps-structured-20260522/) | `record-capsule` | Constrained-task result retained for audit, not general deployment |
+| [Gemma 4 26B A4B Q8, 95 tok/s](gemma4-26b-a4b-q8-b70-95tps-20260624/) | `archived` | Superseded record retained for history and patch archaeology |
+
+## Promotion Workflow
+
+To promote a candidate, close every `missing` item in
+`guide-catalog.json`, replay the written path from a clean supported OS, retain
+the evidence in this repository, and then change the classification. If a
+runtime is containerized, the host driver, kernel, device permissions, image
+digest, model manifest, smoke test, quality gate, benchmark, and stop/recovery
+path still have to be explicit.

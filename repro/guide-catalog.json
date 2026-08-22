@@ -1,0 +1,188 @@
+{
+  "format": "b70-reproduction-guide-catalog-v1",
+  "reviewed_at": "2026-08-21",
+  "certification_standard": "docs/reproduction-guide-certification.md",
+  "guides": [
+    {
+      "id": "deepseek-v4-flash-k160-b70-80tps-20260718",
+      "guide": "repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": false, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["patches/deepseek-v4-flash-reap-xpu-b70/README.md", "results/deepseek-v4-flash-k160-b70/README.md"],
+      "missing": ["clean-host platform installation", "self-contained model and DSpark acquisition", "self-contained runtime build path"]
+    },
+    {
+      "id": "gemma4-26b-a4b-q8-b70",
+      "guide": "repro/gemma4-26b-a4b-q8-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": false, "launch": true, "validation": true, "patch_links": true, "hashes": false},
+      "dependency_links": ["results/gemma4-26b-a4b-q8-b70/README.md"],
+      "missing": ["canonical aggregate positive patch and patch index", "platform installation", "model acquisition and direct verification", "source restore/build"]
+    },
+    {
+      "id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
+      "guide": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": false, "launch": true, "validation": true, "patch_links": false, "hashes": false},
+      "dependency_links": ["repro/gemma4-26b-a4b-q8-b70/README.md", "results/gemma4-26b-a4b-q8-b70/README.md"],
+      "missing": ["canonical aggregate patch link", "platform installation", "model acquisition and verification", "source restore/build", "removal of lab-path defaults"]
+    },
+    {
+      "id": "gemma4-26b-a4b-q8-b70-95tps-20260624",
+      "guide": "repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md",
+      "classification": "archived",
+      "audience": "historical",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": false},
+      "dependency_links": ["repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md"],
+      "missing": ["superseded; not eligible for starter certification"]
+    },
+    {
+      "id": "laguna-s-2.1-int4-b70-102tps-20260726",
+      "guide": "repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["patches/laguna-s-2.1-xpu-b70/README.md", "results/laguna-s-2.1-int4-b70/README.md"],
+      "missing": ["tested host-platform installation", "independent clean-host replay"]
+    },
+    {
+      "id": "laguna-s-2.1-int4-b70-125tps-20260731",
+      "guide": "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": false, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["patches/laguna-s-2.1-xpu-b70/README.md", "results/laguna-s-2.1-int4-b70/README.md"],
+      "missing": ["portable runtime rebuild", "platform installation", "model acquisition", "non-originating-host replay"]
+    },
+    {
+      "id": "minimax-m27-b70-110tps-ubuntu24-20260523",
+      "guide": "repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": true, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": false},
+      "dependency_links": ["results/minimax-m27-int4-autoround-b70/README.md"],
+      "missing": ["immutable driver package lock", "complete patch manifest with checksums", "fresh clean-host replay of current package availability"]
+    },
+    {
+      "id": "minimax-m27-b70-89tps-20260520",
+      "guide": "repro/minimax-m27-b70-89tps-20260520/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": true, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["results/minimax-m27-int4-autoround-b70/README.md"],
+      "missing": ["current clean-host replay", "beginner recovery and platform compatibility boundary"]
+    },
+    {
+      "id": "minimax-m27-b70-94tps-structured-20260522",
+      "guide": "repro/minimax-m27-b70-94tps-structured-20260522/README.md",
+      "classification": "record-capsule",
+      "audience": "historical",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": false, "launch": true, "validation": true, "patch_links": true, "hashes": false},
+      "dependency_links": ["notes/2026-05-22-minimax-structured-fast-lane-regex2.md"],
+      "missing": ["complete unconstrained deployment path; this is a constrained-task record"]
+    },
+    {
+      "id": "muse-glimmer-30b-q8-woq-b70-100tps-20260813",
+      "guide": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["patches/muse-glimmer-30b-b70/README.md", "results/muse-glimmer-30b-q8-woq-b70/README.md"],
+      "missing": ["tested platform installer", "original download-time complete target identity", "independent clean-host replay"]
+    },
+    {
+      "id": "qwen36-27b-autoround-int4-b70",
+      "guide": "repro/qwen36-27b-autoround-int4-b70/README.md",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["results/qwen36-27b-autoround-int4-b70/README.md"],
+      "missing": ["tested platform installer", "clean-host replay", "simplified canonical positive patch index"]
+    },
+    {
+      "id": "qwen36-27b-autoround-int4-b70-determinism-20260818",
+      "guide": "repro/qwen36-27b-autoround-int4-b70-determinism-20260818/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["repro/qwen36-27b-autoround-int4-b70/README.md", "notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md"],
+      "missing": ["inherits historical source/model/platform dependencies", "clean-host replay"]
+    },
+    {
+      "id": "qwen36-27b-q8-tp2-asrock-b70",
+      "guide": "repro/qwen36-27b-q8-tp2-asrock-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["patches/qwen36-27b-q8-tp2-asrock-b70/README.md", "results/qwen36-27b-q8-tp2-asrock-b70/README.md"],
+      "missing": ["OMIX driver installation and verification", "model download helper", "clean-host replay"]
+    },
+    {
+      "id": "qwen38-27b-autoround-int4-b70",
+      "guide": "repro/qwen38-27b-autoround-int4-b70/README.md",
+      "classification": "research-status",
+      "audience": "researcher",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": true, "launch": true, "validation": true, "patch_links": false, "hashes": true},
+      "dependency_links": ["experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md", "experiments/qwen38-27b-b70/DO-NOT-REPEAT.md"],
+      "missing": ["promoted deterministic lane", "published AOT binaries or portable rebuild", "portable compile-cache identity", "clean-host replay"]
+    },
+    {
+      "id": "qwen38-27b-fp8-vllm-tp2-asrock-b70",
+      "guide": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
+      "package": "packages/qwen38-27b-fp8-tp2-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": true, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json", "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json", "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py", "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md", "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json"],
+      "missing": ["tested Intel driver and Docker host guide", "clean-host replay", "beginner recovery flow"]
+    },
+    {
+      "id": "qwen38-27b-q4km-tp2-asrock-b70",
+      "guide": "repro/qwen38-27b-q4km-tp2-asrock-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["patches/qwen38-27b-q4km-tp2-asrock-b70/README.md"],
+      "missing": ["platform installation", "model download/verification", "clean-host replay"]
+    },
+    {
+      "id": "qwen38-27b-q8-tp2-asrock-b70",
+      "guide": "repro/qwen38-27b-q8-tp2-asrock-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": true, "build": true, "launch": true, "validation": true, "patch_links": true, "hashes": true},
+      "dependency_links": ["patches/qwen38-27b-q8-tp2-asrock-b70/README.md"],
+      "missing": ["platform installation", "model download/verification", "clean-host replay"]
+    },
+    {
+      "id": "qwen38-27b-q8-tp2-c2-asrock-b70",
+      "guide": "repro/qwen38-27b-q8-tp2-c2-asrock-b70/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {"platform_install": false, "model_download": false, "source_restore": false, "build": false, "launch": true, "validation": true, "patch_links": true, "hashes": false},
+      "dependency_links": ["repro/qwen38-27b-q8-tp2-asrock-b70/README.md"],
+      "missing": ["inherits every dependency from the single-request Q8 lab replay", "broad schedule-invariance validation"]
+    }
+  ]
+}

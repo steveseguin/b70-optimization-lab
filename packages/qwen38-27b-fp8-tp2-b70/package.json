@@ -1,0 +1,52 @@
+{
+  "format": "b70-model-package-v1",
+  "id": "qwen38-27b-fp8-vllm-tp2-asrock-b70",
+  "name": "Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards",
+  "status": "candidate",
+  "audience": "intermediate",
+  "guide": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
+  "clean_host_tested": false,
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 2,
+    "host_ram_min_bytes": 16106127360,
+    "host_ram_plus_swap_min_bytes": 21474836480,
+    "model_weight_bytes": 30866866928
+  },
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "manifest": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json"
+  },
+  "runtime": {
+    "kind": "container",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f"
+  },
+  "project_patches": {
+    "required": false,
+    "items": [],
+    "reason": "Pinned official vLLM XPU image baseline; no project patch is applied."
+  },
+  "commands": {
+    "preflight": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
+    "launch": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/vllm-cache repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh",
+    "health": "curl -fsS http://127.0.0.1:18087/health",
+    "benchmark": "OUT=/path/to/result.json repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
+    "stop": "docker stop -t 20 qwen38-fp8-tp2"
+  },
+  "dependencies": [
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
+    "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json"
+  ],
+  "missing": [
+    "tested clean-host Intel driver and Docker installation",
+    "clean-host endpoint replay",
+    "beginner recovery flow"
+  ]
+}

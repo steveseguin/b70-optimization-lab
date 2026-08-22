@@ -32,6 +32,12 @@ class ModelIntakeTests(unittest.TestCase):
         self.assertEqual(sum(entry["artifact"]["size_bytes"] for entry in queued), 59381999680)
         self.assertEqual([entry["priority"] for entry in queued], [1, 2, 3, 4])
 
+    def test_already_covered_evidence_resolves_inside_repository(self) -> None:
+        for entry in self.catalog["already_covered"]:
+            evidence = entry["evidence"]
+            self.assertTrue(MODEL_INTAKE.safe_relative(evidence), evidence)
+            self.assertTrue((MODEL_INTAKE.REPO_ROOT / evidence).is_file(), evidence)
+
     def test_relative_path_rejection(self) -> None:
         for value in ("../model.gguf", "/tmp/model.gguf", "dir\\model.gguf", ""):
             self.assertFalse(MODEL_INTAKE.safe_relative(value))

@@ -9,7 +9,7 @@ port="${PORT:-18087}"
 max_num_seqs="${MAX_NUM_SEQS:-4}"
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-"${script_dir}/verify-model.sh" "${model_dir}"
+"${script_dir}/verify-model-direct.sh" "${model_dir}"
 command -v docker >/dev/null || { printf 'docker is required\n' >&2; exit 1; }
 
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${container}"; then
