@@ -100,6 +100,21 @@ no policy misses left to recover. The only lever that removes this tax
 from the critical path is overlapping the (irreducible) quantizes, i.e.
 the second-queue design above. Arc confirmed justified.
 
+## Feasibility finding (2026-08-22)
+
+`ggml_backend_sycl_context::qptrs[dev][stream]` every entry resolves to
+`dpct::get_device(dev).default_queue()` - the multi-stream array is
+vestigial; all indices alias ONE queue. So there is no existing
+concurrent queue to reuse: the overlap requires a genuinely new
+`sycl::queue` (lifetime + events = new subsystem, not infra reuse).
+Further, a lookahead-free version (quantize on q2, main queue waits
+immediately) serializes and wins nothing; the win requires graph-level
+lookahead to quantize node N+1 while node N's GEMV runs. That is a
+multi-session, correctness-critical restructuring, and a bad cross-queue
+dependency can hang the device (recovery needs sudo). It is the right
+work, but supervised - not a single-turn autonomous edit on the
+submission-ready lane.
+
 ## Disposition
 
 Opportunity real, large, and now confirmed irreducible by the cheap
