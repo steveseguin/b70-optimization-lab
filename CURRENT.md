@@ -472,8 +472,28 @@ loaded service.
    on two completed pairs, report-only) before closing per its
    preregistered bounded-relaunch rule on the lane's own stochastic
    prompt-6 early-EOS family (three metric refusals, ~30% per-arm rate).
-   Serving realization of the ~75 us/call KV1300 saving now needs a
-   preregistered long-KV endpoint suite or a prompt-6-robust metric. See the
+   The successor long-KV campaign (longkv1/longkv2, 25-row suite at KV
+   ~1300/1600/1900 with bench-only ignore_eos) then **closed at its a1
+   control** with two exposures and a major finding: (a) the sealed
+   `max_model_len=2048` identity makes prompts above ~1535 tokens
+   unservable with the mandatory 512-token window, so KV windows beyond
+   ~1585 are unreachable in this lane as sealed; (b) **after the lane's
+   first-ever multi-chunk prefills (eight ~1250-token rows vs
+   `max_num_batched_tokens=1024`), the stock control's long-context
+   needle probe degenerated to `B70_QWEN3!!!!…`** while
+   arithmetic/copy/json/32x-repeat stayed green — the same probe that
+   passed on the same stack under all-single-chunk history in endpoint5.
+   Until this cross-request corruption is isolated and fixed, **the
+   incumbent MTP5 lane must be treated as unsafe for prompts above
+   ~1024 tokens**, and no long-KV campaign can produce valid evidence on
+   it. All prior records/quality claims were single-chunk and stand. A
+   report-only chunkdiag preregistration (one 2-chunk row, then the
+   battery) is isolating dose; see the
+   [closure + finding note](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-longkv2-closure-and-chunk-corruption-finding.md)
+   and [longkv prereg](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-longkv-q64k32-endpoint-prereg.md).
+   Serving realization of the ~75 us/call KV1300 saving therefore now
+   needs the corruption fixed first, then a redesigned <=KV1585 suite or
+   an unsealed-identity long-context lane. See the
    [endpoint prereg/result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-q64k32-endpoint-prereg.md),
    [endpoint2 result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-q64k32-endpoint2-result.md), and the
    [r3 preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-abba-r3-prereg.md)
