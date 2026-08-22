@@ -110,3 +110,16 @@ Launch requires: clean `main == origin/main` including the frozen revision
 of this note; quiet kernel journal; no other model workload, benchmark, or
 AOT build on any card; all frozen hashes rechecked immediately before
 the single launch; stop on first arm failure with no same-root retry.
+
+## endpoint3 addendum (2026-08-22)
+
+The [r4 requalification](2026-08-22-qwen38-mtp5-m6-fa-q64k32-abba-r4-result.md)
+qualified the integration DSO. This preregistration's design carries over
+unchanged for **endpoint3** with only these recorded identity updates in the
+same driver (now
+`d9a8409f10f17814f3203ec300cd9b6129de37391f0476f78174253d9b1b570e`):
+candidate stage `…attn-override-20260821-r3/runtime`, candidate device DSO
+`979e91c1f11d9e6ede77c494803889e9f47dd881c2d02e1c290c5246c0dbb616`,
+candidate graph manifest sha `0642e029…`, labels
+`qwen38-q64k32-endpoint3-{a1,b1,b2,a2}-20260822`. Same gates, same order,
+same stop rules; single sequential launch authorized after push.

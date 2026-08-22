@@ -26,10 +26,10 @@ runner="$repo/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-
 model=/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan
 base_stage=/home/steve/src/vllm-xpu-kernels
 stock_stage=/home/steve/staged-xpu-commitfix-graphfa-composite-20260820
-candidate_stage=/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2/runtime
+candidate_stage=/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r3/runtime
 oneccl=/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public
 stock_graph_manifest="$repo/repro/qwen38-27b-autoround-int4-b70/manifests/staged-xpu-commitfix-graphfa-composite-20260820.graph.sha256"
-candidate_graph_manifest=/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2/qwen38-m6-head256-q64k32-r2-candidate.graph.sha256
+candidate_graph_manifest=/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r3/qwen38-m6-head256-q64k32-r3-candidate.graph.sha256
 model_manifest="$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json"
 model_verifier="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py"
 sealed_checker="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/check-tp2-sealed-gates.py"
@@ -40,21 +40,21 @@ quality_sha=45424f1d2dcbfda0a5ed75552cf799cac0e8fb6b8c5e1ddf2aba540b95c77e95
 model_manifest_sha=731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8
 verifier_sha=5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9
 stock_graph_manifest_sha=47861e8391b6b25dd9c3eb25e25c5939753aa470858b667d5bdf181344db18da
-candidate_graph_manifest_sha=d662dba3927fac706ff221902f536b67178b6875f66604597a1f2fe98a4defc4
+candidate_graph_manifest_sha=0642e0290a8c97f2b29b826ab3b8aee693d444df09cea7048d5d6f8da0fd98a9
 target_bench_sha=045fd8b4fc9f1eda3bbc778e4b88a6ad7407ff4a50be879dc4e9780b37e0d6e8
 native_sha=4dd336013d155aab004fb1c916118957cb9349b491938da65769f2d8af18ffb0
 core_sha=5717476461048b5056a92926f2a52d73c121f69bdc75de22fd52720fb65b3007
 moe_sha=ea4c20a8dff49fc07fd799d5a2a47e8b24266a256425b41e337f852492ee3c1b
 fa_sha=33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739
 stock_device_sha=604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c
-candidate_device_sha=01a5b35b5a9c6321b436b137f95403db9e45ce4aabb44257dc7e4f45c84aecf5
+candidate_device_sha=979e91c1f11d9e6ede77c494803889e9f47dd881c2d02e1c290c5246c0dbb616
 stock_dep_sha=3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289
 interface_sha=869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480
 policy_marker='VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY engaged'
 
-# endpoint2: the first a1 label burned on a pre-launch identity-gate refusal
-# (preserved uncommitted vLLM WIP; no GPU work); fresh labels per prereg.
-arm_label() { printf 'qwen38-q64k32-endpoint2-%s-20260821' "$1"; }
+# endpoint3: integration-DSO campaign (r4-qualified 979e91c1...). endpoint2
+# stopped terminal at b1 (undeployable r2 DSO); endpoint-a1 burned pre-launch.
+arm_label() { printf 'qwen38-q64k32-endpoint3-%s-20260822' "$1"; }
 arm_root_for() { printf '%s/%s' "$raw" "$(arm_label "$1")"; }
 
 case "$action" in
