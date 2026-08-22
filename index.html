@@ -192,16 +192,10 @@ Style genome (duotone-hixffp):
           <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">Lab report</a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy Gemma-4-26B lab report Markdown" aria-live="polite">Copy Markdown</button></div></td>
         </tr>
         <tr>
-          <th scope="row" class="model">Qwen3-30B <small>Alibaba &middot; Jul 2025</small></th>
-          <td class="mut">Fastest one-card result we checked ourselves; strong at math</td>
-          <td class="num r">1</td><td class="num r">107</td>
-          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">Read report</a><button type="button" class="copy-md" data-copy-markdown="results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md" aria-label="Copy Qwen3-30B report Markdown" aria-live="polite">Copy Markdown</button></div></td>
-        </tr>
-        <tr>
           <th scope="row" class="model">Qwen3.8-27B <small>Alibaba &middot; Aug 2026</small></th>
           <td class="mut">Newest all-rounder, also reads pictures. One card: 27.8 tok/s, quality-checked. Our two-card INT4 + MTP5 research lane reaches 101.17 tok/s; run-to-run determinism is still open</td>
           <td class="num r">1&ndash;2</td><td class="num r">27.8&ndash;101.17</td>
-          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">FP8 candidate</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp2-b70/README.md" aria-label="Copy Qwen3.8-27B FP8 candidate package Markdown" aria-live="polite">Copy Markdown</button><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">INT4 research</a></div></td>
+          <td class="lnk"><div class="guide-actions"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-q4km-tp1-b70/README.md">1-B70 candidate</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-q4km-tp1-b70/README.md" aria-label="Copy Qwen3.8-27B one-B70 candidate package Markdown" aria-live="polite">Copy Markdown</button><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">2-B70 FP8</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">INT4 research</a></div></td>
         </tr>
         <tr>
           <th scope="row" class="model">Laguna-S-2.1 <small>Poolside &middot; Jul 2026</small></th>
@@ -226,7 +220,7 @@ Style genome (duotone-hixffp):
     <h2>What you need</h2>
     <ul class="tight">
       <li><b>The card:</b> a PC with at least one Intel Arc Pro B70 graphics card (32&nbsp;GB). One card runs most models on this page; the biggest are split across 2&ndash;4 cards working together.</li>
-      <li><b>One card:</b> our checked <a href="results/gemma4-26b-a4b-q8-b70/README.md">Gemma-4-26B lab report</a> reaches 125 tok/s, but it is still expert-oriented. We are converting the material in <a href="docs/model-recipes.md">our model recipes</a> into clean-host-tested starter guides.</li>
+      <li><b>One card:</b> start with our <a href="packages/qwen38-27b-q4km-tp1-b70/README.md">Qwen3.8 Q4_K_M candidate package</a>. Our faster <a href="results/gemma4-26b-a4b-q8-b70/README.md">Gemma-4-26B lab result</a> is still being converted into a self-contained package.</li>
       <li><b>Two to four cards:</b> start with the digest-pinned <a href="packages/qwen38-27b-fp8-tp2-b70/README.md">Qwen3.8 FP8 two-card candidate package</a>, or browse expert artifacts in the <a href="results/README.md">results index</a>. Candidate and lab material is not yet a clean-machine installer.</li>
       <li><b>Guide status is explicit:</b> lab reports and expert reproductions preserve results without pretending to be clean-machine installers. A future “Install guide” label requires every dependency, immutable identity, validation gate, and a clean-host replay under the <a href="docs/reproduction-guide-certification.md">guide certification standard</a>.</li>
       <li><b>Making a new model fast:</b> the <a href="docs/model-optimization-guide.md">optimization guide</a> is the playbook; the <a href="optimization-timeline.html">timeline</a> shows how each setup improved.</li>
@@ -273,13 +267,6 @@ Style genome (duotone-hixffp):
           <td class="num r">124.98<div class="ratebar" style="width:67%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="median; ctx 32,768">typical &middot; remembers ~24K words</td>
           <td class="lnk"><a href="results/gemma4-26b-a4b-q8-b70/README.md">test report</a></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3-30B-A3B-2507 <small>fast all-rounder &middot; uses ~3B of 30B per word &middot; Jul 2025</small></th>
-          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q4_K_XL, no speed-up</td><td class="num r">1&times;</td>
-          <td class="num r">107.48<div class="ratebar" style="width:58%" aria-hidden="true"></div></td>
-          <td class="mut hide-s" title="rapid snapshot">quick one-off test</td>
-          <td class="lnk"><a href="results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">test report</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span>Qwen3.8-27B <small>newest all-rounder &middot; reads pictures &middot; Aug 2026 &middot; one card, no tricks: 27.8</small></th>

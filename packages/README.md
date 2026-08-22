@@ -13,10 +13,16 @@ A package status matters:
 - `preview`: intentionally unverified on the named platform, such as future
   Windows work.
 
-The first package is the
-[`Qwen3.8 27B official FP8 two-B70 candidate`](qwen38-27b-fp8-tp2-b70/).
-It is not yet a starter package because the host Intel driver/Docker install
-path has not been rebuilt and tested from a clean OS.
+Current packages:
+
+- [`Qwen3.8 27B Q4_K_M one-B70 candidate`](qwen38-27b-q4km-tp1-b70/):
+  our patched llama.cpp/SYCL source stack, direct-verified GGUF, exact-output
+  benchmark gate, and a complete restore/build script;
+- [`Qwen3.8 27B official FP8 two-B70 candidate`](qwen38-27b-fp8-tp2-b70/):
+  digest-pinned vLLM XPU baseline.
+
+Neither is a starter package yet because its host platform path has not been
+rebuilt and tested from a clean OS.
 
 Package manifests are checked by `python3 tools/validate-repro-guides.py`.
 The linked reproduction guide remains authoritative for technical details and

@@ -1,0 +1,66 @@
+{
+  "format": "b70-model-package-v1",
+  "id": "qwen38-27b-q4km-tp1-b70",
+  "name": "Qwen3.8 27B Q4_K_M on one Intel Arc Pro B70",
+  "status": "candidate",
+  "audience": "intermediate",
+  "guide": "repro/qwen38-27b-q4km-tp1-b70/README.md",
+  "clean_host_tested": false,
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 1,
+    "host_ram_min_bytes": 68719476736,
+    "host_ram_plus_swap_min_bytes": 68719476736,
+    "model_weight_bytes": 18973870432
+  },
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "manifest": "repro/qwen38-27b-q4km-tp1-b70/model-direct.json"
+  },
+  "runtime": {
+    "kind": "native",
+    "project": "mndodd/llama.cpp",
+    "revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "build": "repro/qwen38-27b-q4km-tp1-b70/restore-and-build.sh"
+  },
+  "project_patches": {
+    "required": true,
+    "items": [
+      "patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp2-asrock-b70/llama-cpp-q4k-mmvq-swiglu-tp2-20260815.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-gdn-state-io-widen-20260821.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-conv-qk-widen-20260821.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-qk-norm-rope-src-widen-20260821.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-q8out-rejected-memo320-20260821.diff.gz.b64"
+    ],
+    "reason": "The one-card speed and exactness identity depends on the lab's complete source stack and TP1 matcher increments."
+  },
+  "commands": {
+    "preflight": "MODEL_DIR=/path/to/qwen3.8-27b-q4km BUILD_DIR=/path/to/llama.cpp/build-sycl-aot-bmg-g31 repro/qwen38-27b-q4km-tp1-b70/preflight.sh",
+    "launch": "MODEL_DIR=/path/to/qwen3.8-27b-q4km BUILD_DIR=/path/to/llama.cpp/build-sycl-aot-bmg-g31 repro/qwen38-27b-q4km-tp1-b70/run-server.sh",
+    "health": "curl -fsS http://127.0.0.1:18088/health",
+    "benchmark": "OUT=/path/to/result.json repro/qwen38-27b-q4km-tp1-b70/bench.sh",
+    "stop": "Ctrl-C in the foreground server terminal; then pgrep -x llama-server must return no process"
+  },
+  "dependencies": [
+    "repro/qwen38-27b-q4km-tp1-b70/README.md",
+    "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
+    "repro/qwen38-27b-q4km-tp1-b70/model-verification-20260822.json",
+    "repro/qwen38-27b-q4km-tp1-b70/verify-model-direct.sh",
+    "repro/qwen38-27b-q4km-tp1-b70/restore-and-build.sh",
+    "repro/qwen38-27b-q4km-tp1-b70/preflight.sh",
+    "repro/qwen38-27b-q4km-tp1-b70/run-server.sh",
+    "repro/qwen38-27b-q4km-tp1-b70/bench.sh",
+    "patches/qwen38-27b-q4km-tp1-b70s/README.md",
+    "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-quality-battery-result.md",
+    "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-i.json",
+    "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json",
+    "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-quality-battery.json"
+  ],
+  "missing": [
+    "tested clean-host Intel driver and oneAPI installation",
+    "clean-host source build and endpoint replay",
+    "beginner recovery flow"
+  ]
+}
