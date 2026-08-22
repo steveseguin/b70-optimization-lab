@@ -1,0 +1,49 @@
+{
+ "description": "Single-row chunked-prefill corruption diagnostic: one 2-chunk prompt (row longkv--tier1-row1 of the frozen long-KV suite, ~1244 chat-templated tokens vs the lane's 1024-token chunk budget), followed by the runner's standard quality battery whose long-context needle probe is the corruption detector.",
+ "metric": "99 inter-token intervals between generated events 1 and 100 after TTFT",
+ "prompts": [
+  {
+   "builder_measured_prompt_tokens": 1244,
+   "document_source_ids": [
+    "holdout--python-lru-cache",
+    "selection--customer-email",
+    "holdout--concurrency-review",
+    "selection--benchmark-analysis",
+    "holdout--typescript-cancellation",
+    "selection--technical-guide",
+    "holdout--shell-safety-review",
+    "selection--decision-memo",
+    "selection--incident-retrospective",
+    "holdout--python-debug-window",
+    "selection--sql-debugging",
+    "holdout--arithmetic-reasoning",
+    "selection--architecture-tradeoff"
+   ],
+   "filler_repeats": 3,
+   "group": "longkv-tier1",
+   "id": "longkv--tier1-row1",
+   "original_id": "longkv--tier1-row1",
+   "prompt": "Long-context evaluation row longkv--tier1-row1. The numbered background documents below precede a single synthesis task.\n\nDocument 1 (source id holdout--python-lru-cache):\nImplement a production-quality Python LRUCache class with get and put in O(1), capacity validation, type hints, and a short unittest example. Explain the invariants briefly. Include enough implementation and review detail for a maintainer to use the answer directly.\n\nDocument 2 (source id selection--customer-email):\nDraft a customer-facing email explaining that a requested export feature is delayed by one week because the team found a data-integrity issue during validation. The tone should be accountable and calm. Include what happened, what is being done, what customers should expect next, and how support will handle urgent cases. Do not use marketing language.\n\nDocument 3 (source id holdout--concurrency-review):\nReview a service design where multiple workers read a job row, call an external API, then mark the row complete. Describe a concrete PostgreSQL transaction pattern that prevents duplicate work, how retries and idempotency keys interact, and what failures still need monitoring. Include SQL or pseudocode and an actionable test plan.\n\nDocument 4 (source id selection--benchmark-analysis):\nAnalyze a benchmark result where a model server shows high tokens per second on repeated prompts but much lower speed on unique prompts. Explain plausible causes, how to separate valid fresh-response throughput from warmed or cached throughput, and what measurements should be recorded before publishing a result.\n\nDocument 5 (source id holdout--typescript-cancellation):\nReview and repair this TypeScript helper:\n\nasync function fetchJson(url: string, timeoutMs = 1000) {\n  const controller = new AbortController();\n  setTimeout(() => controller.abort(), timeoutMs);\n  const response = await fetch(url, { signal: controller.signal });\n  return response.json();\n}\n\nAddress timer cleanup, non-2xx responses, JSON typing, abort-versus-network error reporting, and caller cancellation. Provide production-quality code plus focused tests or test pseudocode.\n\nDocument 6 (source id selection--technical-guide):\nWrite a short technical guide for adding a new benchmark to an existing optimization repo. Include where to put scripts, data, notes, patches, result summaries, how to name run directories, what to record for reproducibility, and how to decide whether a result is valid enough to promote.\n\nDocument 7 (source id holdout--shell-safety-review):\nAudit this deployment fragment for correctness and security:\n\nset -e\nfor f in $(find $RELEASE_DIR -name '*.json'); do\n  jq . $f > /tmp/validated.json\n  cp $f $DEST/\ndone\ncurl -H \"Authorization: Bearer $TOKEN\" $HEALTH_URL\n\nIdentify quoting, filename, temporary-file, secret-exposure, error-handling, atomicity, and rollback problems. Supply a safer Bash implementation and a small test matrix.\n\nDocument 8 (source id selection--decision-memo):\nWrite a decision memo about whether to keep optimizing the current model or switch to a different model family. Include current evidence, opportunity cost, criteria for stopping, expected next experiments, quality constraints, and what artifacts should be preserved for future work.\n\nDocument 9 (source id selection--incident-retrospective):\nYou are advising an infrastructure team after a service incident. Write a concise but complete incident retrospective for a production API outage caused by a bad cache invalidation rule. Include impact, timeline, contributing factors, detection gaps, remediation, prevention work, and owner handoff. Use practical language for engineers and managers. Aim for about 450-550 words.\n\nDocument 10 (source id holdout--python-debug-window):\nDebug this function so it returns the maximum sum of exactly k consecutive values and handles invalid k cleanly:\n\ndef max_window(xs, k):\n    best = 0\n    for i in range(len(xs) - k):\n        best = max(best, sum(xs[i:i+k]))\n    return best\n\nProvide corrected Python, tests for negative values and boundary cases, and a concise explanation. Include computational complexity and any numeric-type assumptions.\n\nDocument 11 (source id selection--sql-debugging):\nA reporting query became slow after a schema migration. The query joins orders, customers, invoices, and refunds, filters by tenant_id and created_at, and groups by customer segment. Explain a debugging plan for PostgreSQL. Cover EXPLAIN ANALYZE, indexes, statistics, join order, row estimates, partial indexes, materialized views, and rollout safety.\n\nDocument 12 (source id holdout--arithmetic-reasoning):\nA warehouse has 137 cartons with 29 components each. It ships 845 components, then divides the remainder equally among 23 repair teams. Calculate the original total, the remainder, the quotient and any leftover, showing each check clearly. Then state the final allocation in one unambiguous sentence and identify one common arithmetic mistake.\n\nDocument 13 (source id selection--architecture-tradeoff):\nCompare two deployment options for a local inference service: tensor parallel across four GPUs versus four independent one-GPU replicas behind a router. Discuss latency, throughput, PCIe traffic, memory pressure, failure isolation, scheduling, model-loading time, and when each option is the right choice.\n\nThis paragraph is deterministic length-normalization text for the long-context evaluation harness and adds no task content. This paragraph is deterministic length-normalization text for the long-context evaluation harness and adds no task content. This paragraph is deterministic length-normalization text for the long-context evaluation harness and adds no task content. Task: using only the numbered background documents above, write one prioritized action plan of at most twelve bullet points that addresses the most critical work items across all documents together. Cite the relevant document numbers inline in each bullet.",
+   "prompt_token_band": [
+    1175,
+    1325
+   ]
+  }
+ ],
+ "source_suites": [
+  {
+   "group": "qwen38-longkv-q64k32-suite-20260822",
+   "path": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-longkv-q64k32-suite-20260822/validation-suite.json",
+   "sha256": "abacf86537446f503b683e60bcf690aede9efd12234e6e2b318a9b4860bd2082"
+  }
+ ],
+ "suite_id": "qwen38-longkv-chunk-diag-20260822-v1",
+ "tokenizer_identity": {
+  "chat_template_kwargs": {
+   "enable_thinking": false
+  },
+  "model_dir": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+  "tokenizer_json_sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+ },
+ "version": 1
+}
