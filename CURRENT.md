@@ -433,18 +433,23 @@ loaded service.
    across the 16 full-attention calls per target step). GPU3's first selector-off
    control stopped at its first warmup synchronization before publishing a
    packet, so that campaign remains infrastructure-invalid/incomplete, not a
-   qualification or candidate rejection. A fresh-root watchdog diagnostic now
-   establishes a valid GPU3 stock-control health failure: exact stage/device/maps
+   qualification or candidate rejection. A fresh-root watchdog diagnostic first
+   established a valid GPU3 stock-control health failure: exact stage/device/maps
    gates passed, ten asynchronous FA calls returned, `sync-enter` was sealed,
    `sync-return` never appeared, and the 60-second timeout cleanup verified an
    empty process group. Passive same-window kernel evidence records repeated
    `xe 0000:47:00.0` timeouts and resets, including one naming the exact sealed
    worker PID. Preserve both roots; do not retry, carry GPU2 evidence forward,
-   run a candidate/model/full-25 arm, or infer timing/correctness. Any privileged
-   host-wide all-four-B70 `xe` recovery needs separate authorization and must
-   follow the prerequisite and post-reload gates in `docs/local-ops.md`; after
-   that, only a newly preregistered fresh-root incumbent-control health test is
-   defensible. See the
+   run a candidate/model/full-25 arm, or infer timing/correctness. That authorized host-wide `xe` recovery completed on
+   2026-08-21 with the full post-reload gate green, and the newly
+   preregistered fresh-root incumbent-control health r2 then **passed**
+   (`gpu3-incumbent-control-health-pass`, complete receipt chain including
+   `sync-return`, quiet journal): GPU3 stock-control health is
+   re-established, and writing a fresh two-GPU eight-arm Q64xK32 operator
+   campaign preregistration is now authorized (launch still requires that
+   new preregistration's own gates). See the
+   [r2 health preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-gpu3-incumbent-control-health-r2-prereg.md)
+   and [r2 pass result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-gpu3-incumbent-control-health-r2-result.md). See the
    [Q64 x K32 preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-operator-prereg.md)
    and [stopped result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-operator-result.md),
    plus the [GPU3 health preregistration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-gpu3-incumbent-control-health-prereg.md)
