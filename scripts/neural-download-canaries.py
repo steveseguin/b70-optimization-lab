@@ -15,7 +15,7 @@ import sys
 import urllib.request
 
 
-def chat(base, model, prompt, max_tokens=64):
+def chat(base, model, prompt, max_tokens=512):
     body = json.dumps({
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
@@ -29,7 +29,10 @@ def chat(base, model, prompt, max_tokens=64):
         headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=300) as r:
         d = json.load(r)
-    return d["choices"][0]["message"]["content"]
+    msg = d["choices"][0]["message"]
+    # Reasoning-style models may put everything in reasoning_content and
+    # leave content empty; the objective checks scan the combined text.
+    return (msg.get("reasoning_content") or "") + (msg.get("content") or "")
 
 
 def main() -> int:
@@ -47,7 +50,7 @@ def main() -> int:
     hashes = sorted({hashlib.sha256(o.encode()).hexdigest() for o in outs})
     results["repeat_8x"] = {
         "unique_outputs": len(hashes),
-        "pass": len(hashes) == 1,
+        "pass": len(hashes) == 1 and bool(outs[0].strip()),
         "sample": outs[0][:80],
     }
 
@@ -65,7 +68,7 @@ def main() -> int:
 
     js = chat(a.base_url, a.model,
               'Output only a JSON object with keys "name" (string) and "count"'
-              ' (integer), for three apples named Fuji.', 96)
+              ' (integer), for three apples named Fuji.', 512)
     ok = False
     try:
         start, end = js.index("{"), js.rindex("}") + 1
