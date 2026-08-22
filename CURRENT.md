@@ -141,8 +141,13 @@ state-I/O + SILU-L2 matcher/kernel to the 10240-channel width
 lever landed the QK-norm-RoPE fusion after widening two remaining
 RMS-input shape pins (`27.843898`/`27.863806 tok/s`, cumulative
 `+6.90%`/`+6.97%`, `fused_qk_norm_rope=94240` per leg, 24/24 hashes
-exact). Current lane state: **27.86 tok/s**; every previously
-shape-blocked accepted fusion now engages at TP1.
+exact). Every previously shape-blocked accepted fusion now engages at
+TP1. The full quality battery then passed (seven exact canaries, 8/8
+repeats, long-context needle, `pass_all=true`) and the final-binary
+official capture is **`27.813629`/`27.824790 tok/s`** with 24/24
+oracle-exact hashes: quality-validated at `+6.8-7.0%` over the day-open
+baseline, submission pending only a LocalMaxxing 1-GPU category check
+and the provenance snapshot.
 
 - [lane registration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-lane-open.md)
 - [baseline result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-baseline-result.md)
