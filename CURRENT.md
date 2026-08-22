@@ -77,8 +77,14 @@ bring-ups passed on 2026-08-22** (1xB70, cache-zero, 128/100 diagnostic):
 LFM2.5 `133.328`, Ornith 35B-A3B `105.782`, Nemotron Lightning `72.873`
 (hybrid Mamba MoE confirmed running on Intel), Ornith 9B `50.109` tok/s;
 flagship fit-off decided — **UD-Q5_K_S serves 262144 ctx + vision + MTP
-draft on one B70 with 2.86 GiB free** (`27.004` tok/s MTP-assisted
-package rate; Q4_K_XL is the headroom alternative). See the
+draft on one B70 with 2.86 GiB free** (published package point
+`26.668`/`26.641` tok/s MTP-assisted; Q4_K_XL alternative
+`27.510`/`27.494`, +3%; vision smoke PASS). The wave is **page-ready**:
+five full-schema packages registered, validator zero-error, 512-token
+operating points (bands <=0.18%), 0-32K depth sweeps with SVG charts
+and prefill rates, 5/5 canary batteries, and measured two-card
+verdicts — one card BEATS layer-split TP2 for both A3B MoEs (Ornith 35B
+-2.6%, Nemotron -3.7%), recorded as package guidance. See the
 [baseline data](experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json).
 
 Independent two-B70 audit-host raw-engine replication on 2026-08-22 closely

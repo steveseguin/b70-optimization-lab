@@ -54,3 +54,11 @@ Evidence: `nemotron-35-lightning-std.benchA.json` / `nemotron-35-lightning-std.b
 `bench-results/neural-download/operating-points-20260822/`.
 Canary battery (reasoning off, temp 0, objective checks): 8x repeat hash-stability PASS, arithmetic PASS, exact copy PASS, JSON schema PASS — **pass_all=True** (`nemotron-35-lightning-std.canaries.json`).
 Known behavior: with reasoning ON, 8x repeat outputs were not hash-stable (thinking-channel sampling); with reasoning off the model is deterministic. Recipe defaults to reasoning off for reproducibility-sensitive use.
+
+## Two-card comparison (layer split, GPUs 0+1)
+
+Same protocol, `--split-mode layer` across two B70s:
+run A **`69.445407 tok/s`**, run B **`69.485984 tok/s`** (canaries 5/5).
+That is ~3.7% BELOW the one-card point (72.17/72.04). **Recommendation:
+one card** for single-stream serving. Evidence:
+`nemotron-35-lightning-tp2.bench{A,B}.json`.

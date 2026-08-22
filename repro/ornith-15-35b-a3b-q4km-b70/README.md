@@ -54,3 +54,12 @@ conventional 99-interval median computed from raw event offsets,
 Evidence: `ornith-15-35b-a3b-std.benchA.json` / `ornith-15-35b-a3b-std.benchB.json` under
 `bench-results/neural-download/operating-points-20260822/`.
 Canary battery (reasoning off, temp 0, objective checks): 8x repeat hash-stability PASS, arithmetic PASS, exact copy PASS, JSON schema PASS — **pass_all=True** (`ornith-15-35b-a3b-std.canaries.json`).
+
+## Two-card comparison (layer split, GPUs 0+1)
+
+Same protocol, `--split-mode layer` across two B70s:
+run A **`102.011447 tok/s`**, run B **`102.200045 tok/s`** (canaries 5/5).
+That is ~2.6% BELOW the one-card point (104.84/104.81): the 3B-active MoE
+already fits on one card, so the second card only adds inter-GPU latency
+for single-stream decode. **Recommendation: one card.** Evidence:
+`ornith-15-35b-a3b-tp2.bench{A,B}.json`.

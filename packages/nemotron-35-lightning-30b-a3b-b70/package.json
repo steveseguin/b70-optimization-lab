@@ -143,8 +143,8 @@
  "known_limitations": [
   "With reasoning ON, repeated identical requests are not hash-stable (thinking-channel sampling); deterministic with reasoning off - the recipe default.",
   "MoE rate reflects ~3B active parameters.",
-  "Two-card comparison unlocked but not yet run.",
-  "1M native context not exercised beyond 32K here."
+  "1M native context not exercised beyond 32K here.",
+  "Two-card layer split measured 69.45/69.49 tok/s vs 72.17/72.04 on one card (-3.7%): use one card for single-stream decode."
  ],
  "hardware": {
   "accelerator": "Intel Arc Pro B70 32 GiB",
@@ -185,7 +185,6 @@
  ],
  "missing": [
   "tested clean-host platform installation",
-  "two-card comparison operating point",
   "context beyond 32K of the 1M native window"
  ]
 }
