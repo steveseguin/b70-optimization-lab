@@ -405,9 +405,11 @@ class FrozenLaunchBoundaryTests(unittest.TestCase):
         self.assertIn("arm_deadline_seconds=900", source)
         self.assertIn("kill_active_group", source)
         self.assertIn("timeout-before-term", source)
-        # live GPU2 identity rederivation and UUID binding
+        # live GPU2 identity rederivation, UUID binding (discovery form), and
+        # explicit BDF value-check
         self.assertIn("xpu-smi discovery -j", source)
-        self.assertIn("expected_gpu2_uuid=868023e2-0000-0000-4300-000000000000", source)
+        self.assertIn("expected_gpu2_uuid=00000000-0000-0043-0000-0000e2238086", source)
+        self.assertIn("expected_gpu2_bdf=0000:43:00.0", source)
         # enclosing campaign terminal on complete/failed/interrupted
         self.assertIn("qwen38-mtp-fc-int4-campaign-terminal-v1", source)
         for outcome in ("complete", "failed", "interrupted"):

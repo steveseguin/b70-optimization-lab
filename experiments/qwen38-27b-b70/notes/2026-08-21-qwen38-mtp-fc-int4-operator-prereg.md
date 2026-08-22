@@ -53,9 +53,9 @@ The only current implementation inputs are:
   `5aff20b03aa520b76d8a204003416831cb5318c47df4aa794533844c2dd591b9`;
 - [driver](../scripts/run-20260821-qwen38-mtp-fc-int4-operator-abba.sh),
   mode `0755`, SHA-256
-  `05954b6af06e235393902a79f96e8c31109cd605c13ac3c77bab721dd2a7ce85`;
+  `96f19ffc90265313530409a53cbd90b74e372fd6b3ef056e320f6e9bc25a72dc`;
 - [CPU tests](../scripts/test_qwen38_mtp_fc_int4_operator.py), SHA-256
-  `5422dbab8a94922466f54ad16cd0daf0e40c9b5d0443c9a715bf55a08650eca0`.
+  `eea95a55b3c4f8e81117e441030129c4911c9c7f6ecbe4c8f862a74b20ee1f14`.
 
 The pre-authorization frozen bytes were qualifier
 `228da7aa46b6521e253a8507265192a529b786a09c3f885cd4d63a50c17beca9`, driver

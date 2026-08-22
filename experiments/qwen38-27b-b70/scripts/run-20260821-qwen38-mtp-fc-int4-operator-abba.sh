@@ -25,7 +25,11 @@ health_supervisor_sha=eb619535786a3c7a8929b2d3b1c3848486d3edc1b96804c79831eaf8c3
 extension_sha=4dd336013d155aab004fb1c916118957cb9349b491938da65769f2d8af18ffb0
 stage_manifest_sha=47861e8391b6b25dd9c3eb25e25c5939753aa470858b667d5bdf181344db18da
 physical_gpu=2
-expected_gpu2_uuid=868023e2-0000-0000-4300-000000000000
+# xpu-smi discovery -j reports the BDF-encoded UUID form; the level-zero form
+# (868023e2-0000-0000-4300-000000000000) is separately enforced inside the
+# worker by the qualifier. Both encode physical GPU2 at 0000:43:00.0.
+expected_gpu2_uuid=00000000-0000-0043-0000-0000e2238086
+expected_gpu2_bdf=0000:43:00.0
 # Source-pinned same-boot GPU3 health authorization (Q1). Never a caller input.
 health_terminal=/home/steve/qwen38-gpu3-incumbent-control-health-20260821-r2/terminal.json
 health_terminal_sha=7c04155e969dbbc97b00268fe7bcbefda0b232feabdd47db817d26aa5a631ae2
@@ -150,6 +154,8 @@ discover_four_b70s() {
     <<<"$discovery_json")
   [[ "$gpu2_live_bdf" =~ ^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]$ ]] || \
     fail "GPU$physical_gpu live BDF is malformed: $gpu2_live_bdf"
+  [[ "$gpu2_live_bdf" == "$expected_gpu2_bdf" ]] || \
+    fail "GPU$physical_gpu live BDF $gpu2_live_bdf is not the expected $expected_gpu2_bdf"
 }
 
 validate_packet() {
