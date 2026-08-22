@@ -50,12 +50,12 @@ identity diagnostic and `run` must fail before creating a result root.
 The only current implementation inputs are:
 
 - [qualifier](../scripts/qwen38_mtp_fc_int4_operator.py), SHA-256
-  `5aff20b03aa520b76d8a204003416831cb5318c47df4aa794533844c2dd591b9`;
+  `47f7a627c82354780b7f19452bbad397bd39cca0a5167308c379101817b57269`;
 - [driver](../scripts/run-20260821-qwen38-mtp-fc-int4-operator-abba.sh),
   mode `0755`, SHA-256
-  `96f19ffc90265313530409a53cbd90b74e372fd6b3ef056e320f6e9bc25a72dc`;
+  `a60e9a97236c1982cd6d735e3696122671db9fb613d23a12bf05014970591b4c`;
 - [CPU tests](../scripts/test_qwen38_mtp_fc_int4_operator.py), SHA-256
-  `eea95a55b3c4f8e81117e441030129c4911c9c7f6ecbe4c8f862a74b20ee1f14`.
+  `06035ad81b1cb7e732caacccbe65e0cf9358331740f9c12d1a60ecb92e34d3ff`.
 
 The pre-authorization frozen bytes were qualifier
 `228da7aa46b6521e253a8507265192a529b786a09c3f885cd4d63a50c17beca9`, driver

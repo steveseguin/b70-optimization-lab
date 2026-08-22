@@ -489,7 +489,28 @@ def _health_identity(
     worker_success = packet.get("worker_success")
     if not isinstance(worker_success, dict):
         raise ContractError("health terminal lacks validated worker success")
-    device = worker_success.get("device")
+    # The r2 terminal records worker_success as an immutable pointer
+    # (path/sha256/phase_count); the device identity lives in the referenced
+    # worker-result.json. Follow that pointer, verify its sha256, and confirm
+    # it resides in this terminal's own health root before reading .device.
+    worker_result_path = worker_success.get("path")
+    worker_result_sha = worker_success.get("sha256")
+    if not isinstance(worker_result_path, str) or not isinstance(
+        worker_result_sha, str
+    ):
+        raise ContractError("health terminal worker success lacks path/sha256")
+    worker_result = _canonical(Path(worker_result_path), "health worker result")
+    if worker_result.parent != path.parent:
+        raise ContractError("health worker result is outside the health root")
+    if worker_result.name != "worker-result.json" or (
+        worker_result.stat().st_mode & 0o222
+    ):
+        raise ContractError("health worker result must be immutable worker-result.json")
+    if _sha256_file(worker_result) != _require_sha(
+        worker_result_sha, "health worker result SHA"
+    ):
+        raise ContractError("health worker result SHA mismatch")
+    device = load_json(worker_result).get("device")
     if (
         not isinstance(device, dict)
         or device.get("physical_gpu") != 3

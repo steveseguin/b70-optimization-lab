@@ -707,22 +707,44 @@ class CacheSnapshotTests(unittest.TestCase):
 
 
 class HealthIdentityTests(unittest.TestCase):
-    def _packet(self) -> dict[str, object]:
+    _UNSET = object()
+
+    def _packet(
+        self,
+        directory: Path,
+        *,
+        device: dict[str, object] | None = None,
+        worker_success: object = _UNSET,
+    ) -> dict[str, object]:
+        # The real r2 terminal stores worker_success as an immutable pointer;
+        # the device identity lives in a sibling worker-result.json.
         boot_id = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+        device_dict = {
+            "physical_gpu": 3,
+            "logical_device": "xpu:0",
+            "name": QUALIFIER.EXPECTED_DEVICE_NAME,
+            "uuid": QUALIFIER.HEALTH_GPU_UUID,
+        }
+        if device is not None:
+            device_dict.update(device)
+        worker_result = directory / "worker-result.json"
+        worker_result.write_text(
+            json.dumps({"device": device_dict}) + "\n", encoding="utf-8"
+        )
+        worker_result.chmod(0o444)
+        if worker_success is self._UNSET:
+            worker_success = {
+                "path": str(worker_result),
+                "sha256": QUALIFIER._sha256_file(worker_result),
+                "phase_count": 17,
+            }
         return {
             "schema": "qwen38-gpu3-incumbent-control-health-terminal-v1",
             "passed": True,
             "classification": "gpu3-incumbent-control-health-pass",
             "child_process": {"boot_id": boot_id},
             "supervisor_process": {"boot_id": boot_id},
-            "worker_success": {
-                "device": {
-                    "physical_gpu": 3,
-                    "logical_device": "xpu:0",
-                    "name": QUALIFIER.EXPECTED_DEVICE_NAME,
-                    "uuid": QUALIFIER.HEALTH_GPU_UUID,
-                }
-            },
+            "worker_success": worker_success,
         }
 
     def _validate_with_mocked_supervisor(
@@ -764,7 +786,8 @@ class HealthIdentityTests(unittest.TestCase):
             terminal = Path(directory) / "terminal.json"
             terminal.write_text("{}\n", encoding="utf-8")
             terminal.chmod(0o444)
-            result = self._validate_with_mocked_supervisor(terminal, self._packet())
+            packet = self._packet(Path(directory))
+            result = self._validate_with_mocked_supervisor(terminal, packet)
             self.assertTrue(result["supervisor_validation_passed"])
             self.assertEqual(result["worker_device"]["physical_gpu"], 3)
             self.assertEqual(result["operator_physical_gpu"], 2)
@@ -772,6 +795,23 @@ class HealthIdentityTests(unittest.TestCase):
                 result["boot_id"],
                 Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
             )
+
+    def test_worker_result_pointer_sha_mismatch_is_rejected(self) -> None:
+        # Swapping the referenced worker-result.json bytes after the pointer is
+        # frozen must fail the sha check, not silently pass.
+        with tempfile.TemporaryDirectory() as directory:
+            terminal = Path(directory) / "terminal.json"
+            terminal.write_text("{}\n", encoding="utf-8")
+            terminal.chmod(0o444)
+            packet = self._packet(Path(directory))
+            worker_result = Path(directory) / "worker-result.json"
+            worker_result.chmod(0o644)
+            worker_result.write_text(
+                json.dumps({"device": {"physical_gpu": 3}}) + "\n", encoding="utf-8"
+            )
+            worker_result.chmod(0o444)
+            with self.assertRaisesRegex(QUALIFIER.ContractError, "SHA mismatch"):
+                self._validate_with_mocked_supervisor(terminal, packet)
 
     def test_nested_terminal_failures_are_not_hidden_by_top_level_pass(self) -> None:
         mutations = (
@@ -785,21 +825,23 @@ class HealthIdentityTests(unittest.TestCase):
             ("uuid", "wrong"),
             ("boot_id", "wrong-boot"),
         )
-        with tempfile.TemporaryDirectory() as directory:
-            terminal = Path(directory) / "terminal.json"
-            terminal.write_text("{}\n", encoding="utf-8")
-            terminal.chmod(0o444)
-            for field, value in mutations:
-                with self.subTest(field=field):
-                    packet = self._packet()
-                    if field in {"physical_gpu", "logical_device", "name", "uuid"}:
-                        packet["worker_success"]["device"][field] = value
-                    elif field == "boot_id":
+        for field, value in mutations:
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+                terminal = Path(directory) / "terminal.json"
+                terminal.write_text("{}\n", encoding="utf-8")
+                terminal.chmod(0o444)
+                if field in {"physical_gpu", "logical_device", "name", "uuid"}:
+                    packet = self._packet(Path(directory), device={field: value})
+                elif field == "worker_success":
+                    packet = self._packet(Path(directory), worker_success=None)
+                else:
+                    packet = self._packet(Path(directory))
+                    if field == "boot_id":
                         packet["child_process"]["boot_id"] = value
                     else:
                         packet[field] = value
-                    with self.assertRaises(QUALIFIER.ContractError):
-                        self._validate_with_mocked_supervisor(terminal, packet)
+                with self.assertRaises(QUALIFIER.ContractError):
+                    self._validate_with_mocked_supervisor(terminal, packet)
 
     def test_health_binding_rejects_wrong_operator_gpu_before_import(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
