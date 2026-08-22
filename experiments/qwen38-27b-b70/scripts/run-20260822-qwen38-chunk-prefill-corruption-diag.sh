@@ -23,14 +23,17 @@ driver=$(realpath -- "$0")
 action=${1:-}
 
 case "$action" in
-  check|d2) ;;
-  *) printf 'usage: %s check|d2\n' "$0" >&2; exit 2 ;;
+  check|d2|d4) ;;
+  *) printf 'usage: %s check|d2|d4\n' "$0" >&2; exit 2 ;;
 esac
 
 raw=/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70
 cache=/mnt/usb-models/llm-runtime/vllm-cache/qwen38-postrecovery-marginfree-mtp5-20260820
 sealed="$raw/qwen38-postrecovery-marginfree-mtp5-25-spec-c-20260820/compile-cache-output-manifest.json"
 suite="$raw/qwen38-longkv-chunk-diag-suite-20260822/validation-suite.json"
+if [[ "${1:-}" == d4 ]]; then
+  suite="$raw/qwen38-longkv-chunk-diag-d4-suite-20260822/validation-suite.json"
+fi
 quality_baseline="$raw/qwen38-marginfree-targetoracle-25-a-20260820/data/quality.json"
 target_bench="$raw/qwen38-marginfree-targetoracle-25-a-20260820/data/bench.json"
 runner="$repo/experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-arm.sh"
@@ -47,6 +50,9 @@ sealed_checker="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/check-tp2-seal
 
 cache_manifest_sha=f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb0ff
 suite_sha=0b66d5a6711a981480f09ba5956042a391da3082d3eb470d091fc89f2a37c6fc
+if [[ "${1:-}" == d4 ]]; then
+  suite_sha=6e51726f56bbb99ce86e2cf95f4e5d22ed4c141ce3a546d508cc03ae6fb37b6a
+fi
 quality_sha=45424f1d2dcbfda0a5ed75552cf799cac0e8fb6b8c5e1ddf2aba540b95c77e95
 model_manifest_sha=731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8
 verifier_sha=5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9

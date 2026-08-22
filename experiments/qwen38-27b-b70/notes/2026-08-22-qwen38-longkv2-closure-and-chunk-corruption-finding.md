@@ -89,3 +89,27 @@ Interpretation boundary: chunkdiag establishes reproduction and dose
 only. Mechanism attribution (GDN chunk state vs persistent scratch vs
 other) needs its own instrumented preregistration. Nothing here is a
 record run; no rate from chunkdiag is comparable to anything.
+
+## d2 result (2026-08-22): dose 1 does NOT corrupt
+
+Arm `qwen38-chunkdiag-d2-20260822` ran fully green (runner rc=0): the
+2-chunk row itself produced a coherent plan (512 completions, 0 cached,
+prompt 1244, conventional rate **71.59 tok/s** — the first true long-KV
+incumbent rate datum, vs ~101.9 short-KV), and the subsequent needle
+probe returned the exact needle with `baseline_match_all=true`. One
+multi-chunk request is insufficient. The a1-vs-d2 differential is now:
+eight rows (dose) and/or the tier-2 HTTP-400 rejection between bench and
+battery. Server-config suspects noted for later mechanism work:
+`compile_ranges_endpoints=[1024]` places a full prefill chunk exactly on
+a compiled-range boundary; GDN attention core runs as a splitting op.
+
+**d4 addendum (preregistered before running):** the exact eight tier-1
+rows from a1's exposure, no over-length request, then the battery.
+Suite deployed 0444 with tracked copy
+[`2026-08-22-qwen38-longkv-chunk-diag-d4-suite.json`](../data/2026-08-22-qwen38-longkv-chunk-diag-d4-suite.json),
+SHA-256 `6e51726f56bbb99ce86e2cf95f4e5d22ed4c141ce3a546d508cc03ae6fb37b6a`;
+driver gains the `d4` action selecting it. Needle FAIL => dose-dependent
+corruption reproduced cleanly. Needle PASS => the delta narrows to the
+400-rejection path (or a non-history trigger), and the next
+preregistered addendum (d4b) would append a deliberate over-length
+request before the battery.
