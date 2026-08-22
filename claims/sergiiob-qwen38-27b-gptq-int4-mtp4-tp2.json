@@ -1,16 +1,16 @@
 {
-  "id": "sergiiob-qwen38-27b-gptq-int4-mtp4-tp1",
+  "id": "sergiiob-qwen38-27b-gptq-int4-mtp4-tp2",
   "model": "Qwen3.8-27B",
   "recipe": {
     "engine": "vllm-xpu",
     "quant": "GPTQ-INT4",
     "speedup": "MTP4",
-    "cards": 1,
-    "tp": 1
+    "cards": 2,
+    "tp": 2
   },
   "claimed": {
     "tok_s": 106.7,
-    "metric": "community report, middle value of 5 tries, client-measured",
+    "metric": "contributor's two-card INT4 figure, community-reported",
     "date": "2026-08",
     "by": "SergiioB",
     "evidence": "community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md"
@@ -23,7 +23,11 @@
     },
     {
       "date": "2026-08-16",
-      "event": "lab re-run confirmed the recipe at 87.6 tok/s (claimed 106.7)"
+      "event": "lab re-ran on one B70: 83.70 tok/s MTP4, matching the contributor's one-card 83.7 claim; 106.7 is the two-card INT4 figure, not yet re-run here; FP16-KV variant reached 87.61 but is not the no-quality-loss deployment; GPTQ target quality gate open"
+    },
+    {
+      "date": "2026-08-21",
+      "event": "site row corrected: 106.7 displayed as a 2-card claim, was mislabeled 1 card"
     }
   ],
   "submitter": {
@@ -34,8 +38,8 @@
     "author": "SergiioB"
   },
   "verification": {
-    "tok_s": 87.6,
-    "metric": "lab re-run of the same recipe",
+    "tok_s": 83.7,
+    "metric": "lab re-run on ONE B70, native MTP4, p512/g128 n=5; matches the contributor's one-card 83.7 claim",
     "date": "2026-08-16",
     "evidence": "community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md"
   }
