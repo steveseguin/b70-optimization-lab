@@ -68,11 +68,11 @@ CANDIDATE_PATCH_SHA256 = (
 )
 BUILD_HELPER = Path(
     "/home/steve/llm-optimizations/experiments/qwen38-27b-b70/scripts/"
-    "build-qwen38-m6-head256-q64k32-attn-override-r2-20260821.sh"
+    "build-qwen38-m6-head256-q64k32-attn-override-r3-20260821.sh"
 )
 BUILD_HELPER_SHA256 = "11480161dce25cba56e00f2f48c95d74164bac1f5af2dbc945eddceff6d57d47"
-BUILD_INPUTS_BASENAME = "qwen38-m6-head256-q64k32-r2-build-inputs.sha256"
-GRAPH_MANIFEST_BASENAME = "qwen38-m6-head256-q64k32-r2-candidate.graph.sha256"
+BUILD_INPUTS_BASENAME = "qwen38-m6-head256-q64k32-r3-build-inputs.sha256"
+GRAPH_MANIFEST_BASENAME = "qwen38-m6-head256-q64k32-r3-candidate.graph.sha256"
 
 # Configure the separately loaded base module process-locally.  All reused
 # validators resolve these globals at call time.

@@ -12,7 +12,7 @@ python=/home/steve/.venvs/vllm-xpu/bin/python
 control_stage=/home/steve/staged-xpu-commitfix-graphfa-composite-20260820
 torch_lib=/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib
 venv_lib=/home/steve/.venvs/vllm-xpu/lib
-operator_sha=06133f2d4b20dc5a3f4a8c1ce56970c4fe494221932f408934b595b8eb3e0971
+operator_sha=4ad6fd360b1969f3e56a6658a61436bec5bf9d580e88602ea1583cebb3bde557
 base_operator_sha=0dd7b945ef35a11ff4d0a1ec085e604920524b996d539e089d89b4a019a5de1f
 action=${1:-}
 
