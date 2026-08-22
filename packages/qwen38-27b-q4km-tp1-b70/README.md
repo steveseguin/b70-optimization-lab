@@ -12,6 +12,27 @@ Use the [reproduction guide](../../repro/qwen38-27b-q4km-tp1-b70/README.md)
 for the complete procedure. It includes every required repository patch and
 its decoded SHA-256, rather than sending users to a detached recipe.
 
+## Context length and KV-cache dtype (measured 2026-08-22)
+
+A single-card `llama-bench` sweep (raw-engine tg128/pp2048, flash-attn on,
+5 reps; different metric from the `27.82` headline) maps how this lane behaves
+as context grows and whether to use an 8-bit KV cache:
+
+| context | decode KV f16 | decode KV q8_0 | prefill KV f16 |
+| ---: | ---: | ---: | ---: |
+| 0 | 24.81 | 24.27 | 825 |
+| 8K | 23.83 | 18.68 | 851 |
+| 16K | 23.10 | 14.86 | 780 |
+| 32K | 21.77 | **10.66** | 668 |
+
+**Keep the KV cache at f16 for speed.** Decode with f16 KV stays nearly flat
+out to 32K (−12%), but the q8_0-KV decode penalty grows with context (~2% at
+0 → **−51% at 32K**) because per-token KV dequant scales with cached length.
+Prefill is unaffected by KV dtype (<1.5%). Use q8_0 KV only to fit longer
+context into 32 GiB. Full data:
+[sweep JSON](../../experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json),
+[chart](../../experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.svg).
+
 ## Who built what
 
 - **neural.download lab — integrated:** Qwen3.8 Q4_K_M bring-up, the complete

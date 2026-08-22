@@ -126,6 +126,36 @@ Community-reported alternatives are kept outside the promoted rows above:
 | --- | --- | ---: | --- |
 | GGUF Q4_K_M, oneAPI 2025.3-family JIT Docker using the lab TP2 patches | 1x/2x B70 on contributor host | Contributor reports **33.4 TP1 / 51.1 TP2 tok/s** target-only | `community-reported`; no raw benchmark data, fixed-suite evidence, cache telemetry, output hashes, or reference-lab execution. The container disables the lab's Q4K fusion under JIT after reported corruption. No files were vendored because the source has no explicit license; provenance and the useful packaging delta are retained in our [internal status and review](community/0xsero-qwen38-27b-q4km-docker/STATUS.md). |
 | GPTQ INT4 G128, vLLM XPU target-only / native MTP4 | 1x ASRock B70 local; 1x Intel B70 contributor | **34.160467 / 87.605425 tok/s local** with native FP16 KV | Experimental performance only: native FP16 KV beat FP8 at 8K, MTP4 accepted 511/540 drafts and matched its target, and loaded MTP parameters were verified FP16. The GPTQ target failed a deterministic code-result canary (`30` versus correct Q8/Q4 result `14`), so this is not the no-quality-loss default or a promoted headline; [decision](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-quality-kv-dtype-decision.md), [community packet](community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md) |
+| GPTQ INT4 G128, vLLM **0.27.1** XPU Docker, fp8 KV, MTP ladder | 1x Arc Pro B70 32 GB (Reddit poster, single-card = TP1) | Reddit report **33.2 off / 47.1 MTP1 / 52.2 MTP2 tok/s**, 128K context | `community-reported` field report; poster's numbers, raw logs not captured, not reference-lab run. fp8 KV, prefix-caching, PLAIN eager+inductor, `--max-num-seqs 1` (MTP + concurrent requests crash the engine on this hybrid model). Newer 0.27.1 image than our pinned lane; our archived GPTQ A/B measured higher (`68.23` MTP2) but the GPTQ target fails our code-result quality canary, so GPTQ stays quality-rejected as a default; [field report](community/field-reports/reddit-arc-b70-vllm-52tps/README.md) |
+
+#### TP1 single-card context + KV-cache sweep (Q4_K_M, llama.cpp)
+
+Measured 2026-08-22 on one Arc Pro B70 with the accepted llama.cpp SYCL TP1
+lane build, Q4_K_M target-only, flash-attn on, `llama-bench` pp2048 + tg128,
+5 reps per depth. These are **raw-engine** rates for the decode/prefill *shape*
+and the KV-dtype delta - not the promoted `27.82 tok/s` conventional
+realistic-suite metric (depth-0 tg128 here is `24.81`; different harness, both
+real). Raw data and chart: [sweep JSON](experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json),
+[chart SVG](experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.svg),
+[finding](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-q4km-tp1-context-kv-sweep-finding.md).
+
+| context depth | decode KV **f16** | decode KV **q8_0** | q8 vs f16 | prefill KV f16 | prefill KV q8_0 |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 24.81 | 24.27 | -2.2% | 825 | 818 |
+| 4096 | 24.25 | 21.05 | -13.2% | 893 | 887 |
+| 8192 | 23.83 | 18.68 | -21.6% | 851 | 843 |
+| 16384 | 23.10 | 14.86 | -35.7% | 780 | 772 |
+| 32768 | 21.77 | 10.66 | **-51.0%** | 668 | 663 |
+
+**KV8-vs-KV16 finding:** the q8_0-KV decode penalty *grows with context* -
+~2% at 0 ctx to **-51% at 32K** - because the per-token KV dequant scales with
+cached length. f16-KV decode stays nearly flat (`24.81 -> 21.77`, -12% to 32K).
+Prefill is KV-dtype-independent (<1.5% at every depth). **Practical rule:**
+keep KV at **f16 for speed** on this lane; use q8_0 KV only to fit longer
+context in 32 GiB, accepting a large long-context decode hit. (The Reddit vLLM
+report ran fp8 KV by default on the newer 0.27.1 XPU path, where the tradeoff
+may differ; our pinned vLLM cannot serve single-card yet - see the
+[vLLM TP1 bring-up finding](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-tp1-vllm-bringup-finding.md).)
 
 ### Qwen3.6 27B Model Board
 

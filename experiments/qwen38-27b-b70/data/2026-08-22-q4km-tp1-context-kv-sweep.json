@@ -1,0 +1,28 @@
+{
+  "format": "qwen38-tp1-context-kv-sweep-v1",
+  "date": "2026-08-22",
+  "model": "Qwen3.8-27B-Q4_K_M.gguf",
+  "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+  "engine": "llama.cpp SYCL, TP1 lane build build-sycl-aot-bmg-g31",
+  "bench_sha256": "908b78b77fc28ad23b2924b7f32f56f4a8415eac9c2a79a244dee85b49b19030",
+  "hardware": "1x Intel Arc Pro B70 32 GiB (steve-b70s, gpu0)",
+  "protocol": "llama-bench pp2048 + tg128 at each context depth, flash-attn on, 5 reps, raw engine rates (NOT the conventional realistic-suite metric)",
+  "note_metric": "tg128 raw-engine decode differs from the promoted 27.82 tok/s conventional first-100 median; use this sweep for SHAPE (decode/prefill vs depth, KV f16 vs q8_0), not as the headline package number",
+  "depths": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+  "decode_tg128_tok_s": {
+    "kv_f16":  [24.81, 24.46, 24.25, 23.83, 23.10, 22.42, 21.77],
+    "kv_q8_0": [24.27, 22.45, 21.05, 18.68, 14.86, 12.40, 10.66],
+    "q8_vs_f16_pct": [-2.18, -8.22, -13.20, -21.61, -35.67, -44.69, -51.03]
+  },
+  "prefill_pp2048_tok_s": {
+    "kv_f16":  [825.24, 919.67, 892.64, 850.97, 779.50, 719.39, 667.83],
+    "kv_q8_0": [817.78, 912.17, 887.17, 843.21, 772.01, 711.48, 662.56],
+    "q8_vs_f16_pct": [-0.90, -0.82, -0.61, -0.91, -0.96, -1.10, -0.79]
+  },
+  "findings": [
+    "KV q8_0 decode penalty GROWS with context: ~2% at 0 ctx to ~51% at 32K. The per-token KV dequant cost scales with cached length and dominates decode at long context on this SYCL backend.",
+    "Prefill is essentially KV-dtype-independent (<1.5% across all depths) - prefill is compute-bound, KV dtype barely matters.",
+    "Decode with KV f16 is remarkably flat: 24.81 -> 21.77 (-12.3%) across 0->32K. f16 KV is the speed choice unless memory-bound.",
+    "Practical rule for Q4_K_M TP1 on B70: keep KV at f16 for speed; use q8_0 KV only to fit longer context in 32 GiB, accepting a large long-context decode hit."
+  ]
+}
