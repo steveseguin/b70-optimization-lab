@@ -34,14 +34,21 @@ SCHEMA_RUN = "qwen38-mtp-fc-int4-operator-run-v1"
 SCHEMA_INVALID = "qwen38-mtp-fc-int4-operator-invalid-v1"
 SCHEMA_COMPARE = "qwen38-mtp-fc-int4-operator-compare-v1"
 
-# This source snapshot is a CPU-validated design artifact, not a launchable
-# campaign.  A future preregistered source edit must deliberately change this
-# literal together with the driver, exact health-terminal binding, watchdog,
-# and campaign-terminal contract.  There is intentionally no environment or
-# command-line override.
-CAMPAIGN_LAUNCH_AUTHORIZED = False
-AUTHORIZED_HEALTH_TERMINAL_PATH: str | None = None
-AUTHORIZED_HEALTH_TERMINAL_SHA256: str | None = None
+# Q1 authorization (2026-08-22): every drafted prerequisite is satisfied and
+# frozen — the authorized host-wide xe recovery completed with its full gate,
+# the fresh-root GPU3 stock-health r2 published a supervisor-validated
+# immutable pass terminal on the same boot, and the launch driver now carries
+# the bounded per-arm process-group watchdog, live GPU2 BDF/UUID binding, and
+# enclosing campaign terminal. Authorized by the tracked Q1 preregistration
+# note committed together with this edit.  There is intentionally no
+# environment or command-line override.
+CAMPAIGN_LAUNCH_AUTHORIZED = True
+AUTHORIZED_HEALTH_TERMINAL_PATH: str | None = (
+    "/home/steve/qwen38-gpu3-incumbent-control-health-20260821-r2/terminal.json"
+)
+AUTHORIZED_HEALTH_TERMINAL_SHA256: str | None = (
+    "7c04155e969dbbc97b00268fe7bcbefda0b232feabdd47db817d26aa5a631ae2"
+)
 
 MODEL_FILE = Path(
     "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan/"

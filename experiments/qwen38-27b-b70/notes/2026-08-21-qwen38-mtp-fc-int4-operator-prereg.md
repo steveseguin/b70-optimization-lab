@@ -2,14 +2,25 @@
 
 Date: 2026-08-21
 
-Status: **drafted and CPU-validated, but deliberately nonlaunchable**. The
-qualifier, blocked launch-driver skeleton, and CPU test suite exist and are
-frozen below. They are not a launch-ready campaign. No operator arm is
-authorized now. Both the driver's unconditional `run` block and the qualifier's
-literal `CAMPAIGN_LAUNCH_AUTHORIZED = False` are intentional interlocks; neither
-has an argument or environment-variable override.
+Status: **Q1 AUTHORIZED 2026-08-22** by explicit user go-ahead recorded this
+session, after every drafted prerequisite was satisfied and frozen. The four
+launch-dependency conditions below are all met: (1) the authorized host-wide
+`xe` recovery completed with its full post-recovery gate
+([recovery note](2026-08-22-measuring-host-xe-recovery-2.md)); (2) the
+fresh-root GPU3 stock-health r2 published a supervisor-validated immutable
+`gpu3-incumbent-control-health-pass` terminal on boot
+`256bc838-c015-4c91-a8f9-363d281f7555`
+([r2 pass](2026-08-22-qwen38-gpu3-incumbent-control-health-r2-result.md));
+(3) the driver now carries the bounded per-arm process-group watchdog, live
+GPU2 BDF/UUID rederivation, same-boot binding, immutable per-arm receipts, and
+an enclosing campaign terminal; (4) the qualifier's
+`CAMPAIGN_LAUNCH_AUTHORIZED` literal and the driver's unconditional `run`
+block were deliberately edited out together, source-pinning the health
+terminal (never a caller input), with the block tests rewritten to assert the
+authorized contract. There is still no argument or environment-variable
+override; authorization is a property of these exact frozen bytes.
 
-The launch dependency order is strict:
+The launch dependency order (all satisfied) was:
 
 1. A separately authorized, host-wide recovery of the `xe` driver for all four
    B70s must complete under the prerequisites and post-recovery gates in
@@ -39,12 +50,18 @@ identity diagnostic and `run` must fail before creating a result root.
 The only current implementation inputs are:
 
 - [qualifier](../scripts/qwen38_mtp_fc_int4_operator.py), SHA-256
-  `228da7aa46b6521e253a8507265192a529b786a09c3f885cd4d63a50c17beca9`;
+  `5aff20b03aa520b76d8a204003416831cb5318c47df4aa794533844c2dd591b9`;
 - [driver](../scripts/run-20260821-qwen38-mtp-fc-int4-operator-abba.sh),
   mode `0755`, SHA-256
-  `d62878ef573b136b7e8b1e6e5cbe199ccd04dea3a8ea6d12d021732c84af48f3`;
+  `05954b6af06e235393902a79f96e8c31109cd605c13ac3c77bab721dd2a7ce85`;
 - [CPU tests](../scripts/test_qwen38_mtp_fc_int4_operator.py), SHA-256
-  `4f0a3faadffe819c3038fedd91a927bbcb0a1a58e5212f7f8cf5a3b126f7e190`.
+  `5422dbab8a94922466f54ad16cd0daf0e40c9b5d0443c9a715bf55a08650eca0`.
+
+The pre-authorization frozen bytes were qualifier
+`228da7aa46b6521e253a8507265192a529b786a09c3f885cd4d63a50c17beca9`, driver
+`d62878ef573b136b7e8b1e6e5cbe199ccd04dea3a8ea6d12d021732c84af48f3`, and CPU
+tests `4f0a3faadffe819c3038fedd91a927bbcb0a1a58e5212f7f8cf5a3b126f7e190`;
+those three are the design-artifact identity and no longer authorize a run.
 
 CPU validation covers import isolation, strict JSON and packet schemas, cache
 inventory corruption, same-boot health-terminal binding, exact marker suffixes,
@@ -291,4 +308,18 @@ The following is deliberately non-executable. It records order, not commands:
 # DISABLED: stop on the first invalid/nonzero arm; otherwise compare all eight
 ```
 
-No shell launch block belongs in this note while status remains **BLOCKED**.
+## Q1 launch commands (authorized 2026-08-22)
+
+```bash
+cd /home/steve/llm-optimizations
+d=experiments/qwen38-27b-b70/scripts/run-20260821-qwen38-mtp-fc-int4-operator-abba.sh
+"$d" check
+"$d" run /home/steve/qwen38-mtp-fc-int4-abba-20260822-r1
+"$d" compare /home/steve/qwen38-mtp-fc-int4-abba-20260822-r1
+```
+
+The health terminal is source-pinned in the driver and qualifier; `run` and
+`check` take no health argument. Same-boot binding, four-B70 discovery, GPU2
+UUID, and the 900s per-arm watchdog are enforced at launch. On the first
+invalid or nonzero arm the campaign stops, preserves its fresh root, writes a
+`failed` campaign terminal, and performs no same-root retry.

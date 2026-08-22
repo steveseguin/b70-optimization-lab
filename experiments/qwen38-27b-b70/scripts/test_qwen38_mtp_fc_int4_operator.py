@@ -351,35 +351,67 @@ class FrozenLaunchBoundaryTests(unittest.TestCase):
         driver = DRIVER_PATH.read_text(encoding="utf-8")
         self.assertIn(f"operator_sha={operator_sha}", driver)
 
-    def test_direct_preflight_and_run_are_blocked_before_side_effects(self) -> None:
-        self.assertIs(QUALIFIER.CAMPAIGN_LAUNCH_AUTHORIZED, False)
-        self.assertIsNone(QUALIFIER.AUTHORIZED_HEALTH_TERMINAL_PATH)
-        self.assertIsNone(QUALIFIER.AUTHORIZED_HEALTH_TERMINAL_SHA256)
-        with self.assertRaisesRegex(QUALIFIER.ContractError, "blocked in this frozen"):
-            QUALIFIER.preflight_command(SimpleNamespace())
-        with self.assertRaisesRegex(QUALIFIER.ContractError, "blocked in this frozen"):
-            QUALIFIER.run_command(SimpleNamespace())
+    def test_q1_authorization_binds_the_frozen_health_terminal(self) -> None:
+        # Q1 authorized 2026-08-22: the launch is enabled, and the enabling
+        # constants must be a well-formed, source-pinned health-terminal
+        # binding (not None, not a caller input).
+        self.assertIs(QUALIFIER.CAMPAIGN_LAUNCH_AUTHORIZED, True)
+        self.assertEqual(
+            QUALIFIER.AUTHORIZED_HEALTH_TERMINAL_PATH,
+            "/home/steve/qwen38-gpu3-incumbent-control-health-20260821-r2/terminal.json",
+        )
+        self.assertRegex(
+            str(QUALIFIER.AUTHORIZED_HEALTH_TERMINAL_SHA256), r"^[0-9a-f]{64}$"
+        )
+        # The authorization helper must still fail closed if the binding is
+        # ever blanked, so the interlock cannot silently become a no-op.
+        for blanked in (None, "not-a-sha"):
+            with mock.patch.object(
+                QUALIFIER, "AUTHORIZED_HEALTH_TERMINAL_SHA256", blanked
+            ):
+                with self.assertRaisesRegex(
+                    QUALIFIER.ContractError, "frozen health terminal"
+                ):
+                    QUALIFIER._require_campaign_launch_authorized("preflight")
+        with mock.patch.object(QUALIFIER, "CAMPAIGN_LAUNCH_AUTHORIZED", False):
+            with self.assertRaisesRegex(QUALIFIER.ContractError, "blocked"):
+                QUALIFIER._require_campaign_launch_authorized("run")
 
-    def test_driver_run_interlock_precedes_root_creation(self) -> None:
-        self.assertTrue(DRIVER_PATH.is_file())
+    def test_driver_run_requires_same_boot_and_pinned_health(self) -> None:
+        # With Q1 authorized, run is no longer statically blocked; it is gated
+        # on same-boot binding. A wrong-boot invocation must fail (rc 3) before
+        # creating the output root, and the health terminal is source-pinned
+        # (run takes only OUTPUT_ROOT now, never a caller health path).
+        source = DRIVER_PATH.read_text(encoding="utf-8")
+        self.assertNotIn("LAUNCH BLOCKED", source)
+        self.assertIn("require_same_boot", source)
+        self.assertIn("health_boot_id=", source)
+        self.assertIn("usage: %s check | run OUTPUT_ROOT | compare OUTPUT_ROOT", source)
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "must-not-exist"
             result = subprocess.run(
-                [
-                    "bash",
-                    str(DRIVER_PATH),
-                    "run",
-                    "/tmp/nonexistent-health-terminal.json",
-                    _digest("health"),
-                    str(root),
-                ],
+                ["bash", str(DRIVER_PATH), "run", str(root)],
                 check=False,
                 capture_output=True,
                 text=True,
+                env={**os.environ},
             )
             self.assertEqual(result.returncode, 3)
-            self.assertIn("LAUNCH BLOCKED", result.stderr)
             self.assertFalse(root.exists())
+
+    def test_driver_binds_watchdog_discovery_and_campaign_terminal(self) -> None:
+        source = DRIVER_PATH.read_text(encoding="utf-8")
+        # bounded per-arm watchdog with escalation and absence verification
+        self.assertIn("arm_deadline_seconds=900", source)
+        self.assertIn("kill_active_group", source)
+        self.assertIn("timeout-before-term", source)
+        # live GPU2 identity rederivation and UUID binding
+        self.assertIn("xpu-smi discovery -j", source)
+        self.assertIn("expected_gpu2_uuid=868023e2-0000-0000-4300-000000000000", source)
+        # enclosing campaign terminal on complete/failed/interrupted
+        self.assertIn("qwen38-mtp-fc-int4-campaign-terminal-v1", source)
+        for outcome in ("complete", "failed", "interrupted"):
+            self.assertIn(outcome, source)
 
     def test_driver_carries_phase_specific_schema_and_root_gates(self) -> None:
         source = DRIVER_PATH.read_text(encoding="utf-8")
