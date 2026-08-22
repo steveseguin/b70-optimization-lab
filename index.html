@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intel Arc B70 LLM Optimization Lab — Recipes, Benchmarks, and Reproducible Inference</title>
+<meta name="description" content="Community optimization lab for local AI on Intel Arc Pro B-series GPUs: reproducible vLLM XPU and llama.cpp SYCL recipes, verified benchmark records, and contribution guides.">
+<link rel="canonical" href="https://neural.download/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://neural.download/">
+<meta property="og:title" content="Intel Arc B70 LLM Optimization Lab">
+<meta property="og:description" content="Reproducible LLM inference on Intel Arc Pro B-series GPUs: exact pins, kernel patches, speculative-decoding lanes, and verified benchmark records.">
+<meta property="og:image" content="https://neural.download/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b1220"><style>
+  :root {
+    --bg: #0b1220;
+    --bg2: #0f1a2e;
+    --card: #131f36;
+    --card-edge: #223354;
+    --ink: #e8eef9;
+    --muted: #9db0cc;
+    --faint: #6b7fa0;
+    --intel: #00c7fd;
+    --intel-deep: #0068b5;
+    --teal: #2dd4bf;
+    --green: #34d399;
+    --blue: #60a5fa;
+    --amber: #fbbf24;
+    --violet: #a78bfa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 500px at 85% -10%, rgba(0,199,253,.12), transparent 60%),
+      radial-gradient(900px 480px at -10% 0%, rgba(167,139,250,.10), transparent 55%),
+      var(--bg);
+    font-family: "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+  }
+  a { color: var(--intel); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
+
+  /* nav */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: blur(10px);
+    background: rgba(11,18,32,.78);
+    border-bottom: 1px solid rgba(34,51,84,.7);
+  }
+  nav .wrap { display: flex; align-items: center; gap: 18px; height: 56px; }
+  nav .brand { font-weight: 700; letter-spacing: .2px; display: flex; align-items: center; gap: 10px; }
+  nav .links { margin-left: auto; display: flex; gap: 18px; font-size: 14px; flex-wrap: wrap; }
+  nav .links a { color: var(--muted); }
+  nav .links a:hover { color: var(--ink); }
+
+  /* hero */
+  header.hero { padding: 84px 0 54px; }
+  .eyebrow { color: var(--intel); font-weight: 600; font-size: 13px; letter-spacing: 1.6px; text-transform: uppercase; }
+  h1 { font-size: clamp(30px, 4.6vw, 52px); line-height: 1.08; margin: 14px 0 18px; max-width: 16ch; }
+  h1 .grad { background: linear-gradient(90deg, var(--intel), var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lede { color: var(--muted); font-size: 17px; max-width: 62ch; margin: 0 0 28px; }
+  .cta-row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 11px 20px; border-radius: 10px; font-weight: 600; font-size: 15px;
+    border: 1px solid var(--card-edge); color: var(--ink); background: var(--card);
+  }
+  .btn:hover { text-decoration: none; border-color: var(--intel); }
+  .btn.primary { background: linear-gradient(90deg, var(--intel-deep), #0a84c7); border: none; }
+  .btn.primary:hover { filter: brightness(1.12); }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin: 46px 0 0; }
+  .stat { background: var(--card); border: 1px solid var(--card-edge); border-radius: 12px; padding: 16px 18px; }
+  .stat .n { font-size: 26px; font-weight: 700; color: var(--ink); }
+  .stat .l { color: var(--faint); font-size: 12.5px; margin-top: 2px; }
+
+  section { padding: 54px 0 8px; }
+  h2 { font-size: 26px; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 26px; max-width: 75ch; font-size: 15px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 18px; }
+  .card {
+    background: linear-gradient(180deg, var(--card), var(--bg2));
+    border: 1px solid var(--card-edge); border-radius: 14px; padding: 20px;
+    display: flex; flex-direction: column; gap: 12px;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .card:hover { transform: translateY(-3px); border-color: #31517f; }
+  .card h3 { margin: 0; font-size: 17.5px; line-height: 1.3; }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag { font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--card-edge); color: var(--muted); }
+  .tag.engine { color: var(--teal); border-color: rgba(45,212,191,.4); }
+  .tag.quant { color: var(--violet); border-color: rgba(167,139,250,.4); }
+  .ev { font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+  .ev.verified { color: #052e1b; background: var(--green); }
+  .ev.tested { color: #0b1e3a; background: var(--blue); }
+  .ev.community { color: #3a2c05; background: var(--amber); }
+  .rate { display: flex; align-items: baseline; gap: 8px; }
+  .rate .v { font-size: 34px; font-weight: 750; color: var(--ink); }
+  .rate .u { color: var(--faint); font-size: 13px; }
+  .meta { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
+  .meta b { color: var(--ink); font-weight: 600; }
+  .gpu-line { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  .card .links { margin-top: auto; padding-top: 6px; font-size: 13.5px; display: flex; gap: 14px; flex-wrap: wrap; }
+
+  /* chart */
+  .chartbox { background: var(--card); border: 1px solid var(--card-edge); border-radius: 14px; padding: 22px; overflow-x: auto; }
+  .chartbox svg { display: block; min-width: 640px; width: 100%; height: auto; }
+
+  .note { background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.35); border-radius: 12px; padding: 14px 18px; color: var(--muted); font-size: 14px; margin: 22px 0 0; }
+  .note b { color: var(--amber); }
+
+  ol.steps { color: var(--muted); padding-left: 22px; display: grid; gap: 10px; font-size: 15px; }
+  ol.steps b { color: var(--ink); }
+  .contrib-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .mini { background: var(--card); border: 1px solid var(--card-edge); border-radius: 12px; padding: 18px; }
+  .mini h4 { margin: 0 0 8px; font-size: 15.5px; }
+  .mini p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  footer { margin-top: 70px; border-top: 1px solid var(--card-edge); padding: 28px 0 44px; color: var(--faint); font-size: 13px; }
+  footer .wrap { display: flex; gap: 22px; flex-wrap: wrap; align-items: center; }
+  footer .right { margin-left: auto; display: flex; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <span class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3" y="6" width="18" height="12" rx="2.5" stroke="#00c7fd" stroke-width="1.6"/>
+        <rect x="7" y="9.5" width="6" height="5" rx="1" fill="#00c7fd" opacity=".85"/>
+        <path d="M6 3v3M12 3v3M18 3v3M6 18v3M12 18v3M18 18v3" stroke="#2dd4bf" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      Unofficial Intel XPU Optimization Lab
+    </span>
+    <span class="links">
+      <a href="#recipes">Recipes</a>
+      <a href="#community-lanes">Community lanes</a>
+      <a href="#cookbooks">Cookbooks</a>
+      <a href="#contribute">Contribute</a>
+      <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+    </span>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Intel Arc Pro B-series &middot; local inference, optimized in the open</div>
+    <h1>Fast, <span class="grad">reproducible</span> LLM inference on Intel Arc GPUs.</h1>
+    <p class="lede">
+      A working lab notebook for squeezing real speed out of Intel Arc Pro B70 cards:
+      exact software pins, kernel patches, speculative-decoding lanes, and benchmark
+      evidence you can rerun yourself. Every number carries its evidence label — no
+      leaderboard fog.
+    </p>
+    <div class="cta-row">
+      <a class="btn primary" href="#recipes">Browse the recipes</a>
+      <a class="btn" href="#contribute">How to contribute</a>
+      <a class="btn" href="results/scoreboard.md">Full performance index</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n">10+</div><div class="l">model lanes with verified records</div></div>
+      <div class="stat"><div class="n">1&ndash;4&times;</div><div class="l">Arc Pro B70 per recipe (TP1&ndash;TP4)</div></div>
+      <div class="stat"><div class="n">161.9</div><div class="l">tok/s — fastest lab-verified realistic decode (Muse-Glimmer-30B, 4&times;B70)</div></div>
+      <div class="stat"><div class="n">186.6</div><div class="l">tok/s — fastest community-reported single-card lane (Nemotron DFlash)</div></div>
+    </div>
+  </div>
+</header>
+
+<section id="recipes">
+  <div class="wrap">
+    <h2>Verified in the reference lab</h2>
+    <p class="sub">
+      Produced and quality-gated on the lab's Arc Pro B70 hosts, with pinned commits,
+      frozen prompt suites, and result packets in the repo. Rates are the median
+      generated-token rate for tokens 1&ndash;100 after TTFT on cold prompts unless a
+      card says otherwise.
+    </p>
+    <div class="grid">
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">llama.cpp SYCL</span><span class="tag quant">UD-Q8_K_XL + DFlash</span><span class="ev verified">B70-verified</span></div>
+        <h3>Muse-Glimmer-30B</h3>
+        <div class="rate"><span class="v">100.37</span><span class="u">tok/s canonical mean &middot; 161.9 realistic median</span></div>
+        <div class="meta">
+          <span><b>4&times; Arc Pro B70</b> (TP4), one generation</span>
+          <span>Pretrained BF16 DFlash draft, n15; fixed 15-prompt cold suite</span>
+        </div>
+        <div class="links"><a href="results/scoreboard.md">Scoreboard row</a><a href="docs/model-effort-index.md">Lane notes</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">llama.cpp SYCL</span><span class="tag quant">UD-Q8_K_XL + MTP3</span><span class="ev verified">B70-verified</span></div>
+        <h3>Gemma-4-26B-A4B</h3>
+        <div class="rate"><span class="v">124.98</span><span class="u">tok/s median</span></div>
+        <div class="meta">
+          <span><b>1&times; Arc Pro B70</b>, ctx 32,768</span>
+          <span>Q4_0 MTP draft, f16 KV, target-verified speculation</span>
+        </div>
+        <div class="links"><a href="results/gemma4-26b-a4b-q8-b70/README.md">Result packet</a><a href="results/scoreboard.md">Scoreboard row</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">vLLM XPU</span><span class="tag quant">INT4 W4A16 + DFlash d11</span><span class="ev verified">B70-verified</span></div>
+        <h3>Laguna-S-2.1</h3>
+        <div class="rate"><span class="v">125.46</span><span class="u">tok/s conventional median</span></div>
+        <div class="meta">
+          <span><b>4&times; Arc Pro B70</b> (TP4+EP4), greedy exactness gate</span>
+          <span>Segmented inline DFlash graph; matched INT4 draft</span>
+        </div>
+        <div class="links"><a href="results/scoreboard.md">Scoreboard row</a><a href="optimization-timeline.html">Optimization timeline</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">vLLM XPU</span><span class="tag quant">AutoRound INT4 + MTP3</span><span class="ev verified">B70-verified</span></div>
+        <h3>Qwen3.6-27B (dense)</h3>
+        <div class="rate"><span class="v">98.77</span><span class="u">tok/s four-arm central estimate</span></div>
+        <div class="meta">
+          <span><b>2&times; Arc Pro B70</b> (TP2), ctx 2,048, output 512</span>
+          <span>Graph-safe FlashAttention full target graph; runtime INT4 draft head</span>
+        </div>
+        <div class="links"><a href="results/scoreboard.md">Scoreboard row</a><a href="docs/model-recipes.md">Model recipes</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">vLLM XPU</span><span class="tag quant">FP8 + FP4 experts + DSpark</span><span class="ev verified">B70-verified</span></div>
+        <h3>DeepSeek-V4-Flash-180B</h3>
+        <div class="rate"><span class="v">80.82</span><span class="u">tok/s median high</span></div>
+        <div class="meta">
+          <span><b>4&times; Arc Pro B70</b> (TP4+EP), ctx 2,048</span>
+          <span>Target-verified DSpark7; 24/24 exact canaries</span>
+        </div>
+        <div class="links"><a href="results/scoreboard.md">Scoreboard row</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">vLLM XPU</span><span class="tag quant">Quark W8A8 INT8</span><span class="ev verified">B70-verified</span></div>
+        <h3>Qwen3.6-35B-A3B (MoE)</h3>
+        <div class="rate"><span class="v">93.55</span><span class="u">tok/s output, strict deep gate</span></div>
+        <div class="meta">
+          <span><b>4&times; Arc Pro B70</b> (TP4), PIECEWISE graph</span>
+          <span>p512/n512 strict gate; quality gate passed</span>
+        </div>
+        <div class="links"><a href="results/qwen36-35b-quark-int8-b70/README.md">Result packet</a><a href="results/scoreboard.md">Scoreboard row</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">vLLM XPU</span><span class="tag quant">AutoRound INT4 W4A16</span><span class="ev verified">B70-verified</span></div>
+        <h3>MiniMax-M2.7</h3>
+        <div class="rate"><span class="v">89.31</span><span class="u">output tok/s, strict lane</span></div>
+        <div class="meta">
+          <span><b>4&times; Arc Pro B70</b> (TP4), deployable 32K variant at 83.17</span>
+          <span>Mean of four clean long repeats, p512/n1536</span>
+        </div>
+        <div class="links"><a href="repro/minimax-m27-b70-89tps-20260520/README.md">Repro recipe</a><a href="results/scoreboard.md">Scoreboard row</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">llama.cpp SYCL</span><span class="tag quant">UD-Q4_K_XL, no spec</span><span class="ev verified">B70-verified snapshot</span></div>
+        <h3>Qwen3-30B-A3B-Instruct-2507</h3>
+        <div class="rate"><span class="v">107.48</span><span class="u">tok/s median, rapid snapshot</span></div>
+        <div class="meta">
+          <span><b>1&times; Arc Pro B70</b>, ctx 4,096, output 128</span>
+          <span>First-pass baseline — less optimization depth than dedicated lanes</span>
+        </div>
+        <div class="links"><a href="results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">Result packet</a></div>
+      </div>
+
+    </div>
+
+    <div class="chartbox" style="margin-top:26px">
+      <svg viewBox="0 0 760 322" role="img" aria-label="Bar chart of lab-verified decode rates">
+        <style>
+          .lbl { fill: #9db0cc; font: 12.5px "Segoe UI", Arial, sans-serif; }
+          .val { fill: #e8eef9; font: 600 12.5px "Segoe UI", Arial, sans-serif; }
+          .bar { fill: url(#g); }
+          .axis { stroke: #223354; stroke-width: 1; }
+        </style>
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#0068b5"/><stop offset="1" stop-color="#00c7fd"/>
+          </linearGradient>
+        </defs>
+        <!-- scale: 180 tok/s = 500px, x0=210 -->
+        <!-- 100.37 -> 279px -->
+        <text class="lbl" x="8" y="30">Muse-Glimmer-30B &middot; 4&times;B70 &middot; DFlash</text>
+        <rect class="bar" x="210" y="16" width="279" height="18" rx="4"/><text class="val" x="497" y="30">100.37 (161.9 realistic)</text>
+        <!-- 125.46 -> 348 -->
+        <text class="lbl" x="8" y="68">Laguna-S-2.1 &middot; 4&times;B70 &middot; DFlash d11</text>
+        <rect class="bar" x="210" y="54" width="348" height="18" rx="4"/><text class="val" x="566" y="68">125.46</text>
+        <!-- 124.98 -> 347 -->
+        <text class="lbl" x="8" y="106">Gemma-4-26B-A4B &middot; 1&times;B70 &middot; MTP3</text>
+        <rect class="bar" x="210" y="92" width="347" height="18" rx="4"/><text class="val" x="565" y="106">124.98</text>
+        <!-- 107.48 -> 298 -->
+        <text class="lbl" x="8" y="144">Qwen3-30B-A3B &middot; 1&times;B70 &middot; no spec</text>
+        <rect class="bar" x="210" y="130" width="298" height="18" rx="4"/><text class="val" x="516" y="144">107.48</text>
+        <!-- 98.77 -> 274 -->
+        <text class="lbl" x="8" y="182">Qwen3.6-27B INT4 &middot; 2&times;B70 &middot; MTP3</text>
+        <rect class="bar" x="210" y="168" width="274" height="18" rx="4"/><text class="val" x="492" y="182">98.77</text>
+        <!-- 93.55 -> 260 -->
+        <text class="lbl" x="8" y="220">Qwen3.6-35B-A3B INT8 &middot; 4&times;B70</text>
+        <rect class="bar" x="210" y="206" width="260" height="18" rx="4"/><text class="val" x="478" y="220">93.55</text>
+        <!-- 89.31 -> 248 -->
+        <text class="lbl" x="8" y="258">MiniMax-M2.7 INT4 &middot; 4&times;B70</text>
+        <rect class="bar" x="210" y="244" width="248" height="18" rx="4"/><text class="val" x="466" y="258">89.31</text>
+        <!-- 80.82 -> 224 -->
+        <text class="lbl" x="8" y="296">DeepSeek-V4-Flash-180B &middot; 4&times;B70</text>
+        <rect class="bar" x="210" y="282" width="224" height="18" rx="4"/><text class="val" x="442" y="296">80.82</text>
+        <line class="axis" x1="210" y1="8" x2="210" y2="310"/>
+      </svg>
+    </div>
+    <div class="note">
+      <b>Compare carefully.</b> Rows differ in quantization, GPU count, suite, and metric
+      window — a bigger number in a different row is not automatically a faster stack.
+      Read the <a href="results/scoreboard.md">performance index ground rules</a> before
+      ranking anything.
+    </div>
+  </div>
+</section>
+
+<section id="community-lanes">
+  <div class="wrap">
+    <h2>Community cookbook lanes</h2>
+    <p class="sub">
+      Measured by community contributors on their own hosts (one Arc Pro B70, client
+      post-first tok/s, median of n=5). Not re-run in the reference lab — evidence label
+      <span class="ev community">community-reported</span> applies. Great starting points;
+      treat the exact numbers as orientation.
+    </p>
+    <div class="grid">
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">vLLM XPU</span><span class="tag quant">GPTQ-INT4 + MTP4</span><span class="ev community">community-reported</span></div>
+        <h3>Qwen3.6-35B-A3B (MoE)</h3>
+        <div class="rate"><span class="v">170.91</span><span class="u">tok/s client post-first, p512/g128</span></div>
+        <div class="meta">
+          <span><b>1&times; Arc Pro B70</b>, ctx 131,072, fp8 KV</span>
+          <span>Native MTP preserved checkpoints; pinned nightly digest image</span>
+        </div>
+        <div class="links"><a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">Cookbook</a><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">Field report</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">vLLM XPU</span><span class="tag quant">DFlash n=7</span><span class="ev community">community-reported</span></div>
+        <h3>Nemotron-3.5-Lightning-30B-A3B</h3>
+        <div class="rate"><span class="v">186.61</span><span class="u">tok/s client post-first, p2048/g128</span></div>
+        <div class="meta">
+          <span><b>1&times; Arc Pro B70</b>, cold input 7,160 tok/s at p8192</span>
+          <span>Fastest reported single-card B70 lane to date</span>
+        </div>
+        <div class="links"><a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">Cookbook</a><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">Field report</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">vLLM XPU</span><span class="tag quant">GPTQ-INT4 + MTP4 / draft-INT4</span><span class="ev community">community-reported</span></div>
+        <h3>Qwen3.8-27B (dense)</h3>
+        <div class="rate"><span class="v">106.7</span><span class="u">tok/s C1 &middot; concurrent C5 127.4 &Sigma;-streams</span></div>
+        <div class="meta">
+          <span><b>1&times; Arc Pro B70</b>; Windows 11 kits available</span>
+          <span>Lab-tested variant: 87.6 tok/s MTP4 with native FP16 KV</span>
+        </div>
+        <div class="links"><a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook/blob/master/docs/qwen38-27/QWEN38-VLLM-XPU.md">Cookbook page</a><a href="community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md">Lab validation</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">vLLM XPU</span><span class="tag quant">GPTQ-INT4 + MTP</span><span class="ev community">community-reported</span></div>
+        <h3>Ornith-1.5-35B-A3B</h3>
+        <div class="rate"><span class="v">106.64</span><span class="u">tok/s host measure, p512/g128</span></div>
+        <div class="meta">
+          <span><b>1&times; Arc Pro B70</b>, 262K context at C1</span>
+          <span>MixedCal-v2 local quant; 150&ndash;230 W power A/B documented</span>
+        </div>
+        <div class="links"><a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">Cookbook</a><a href="community/field-reports/sergiiob/b70-cookbook-family-hub/family-hub-2026-08-21.md">Field report</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">llama.cpp SYCL</span><span class="tag quant">UD-Q4_K_XL + DFlash n2</span><span class="ev community">community-reported</span></div>
+        <h3>Muse-Glimmer-30B (GGUF lane)</h3>
+        <div class="rate"><span class="v">26.8</span><span class="u">engine tok/s, p512/g128 at 128K</span></div>
+        <div class="meta">
+          <span><b>1&times; Arc Pro B70</b>, vision + DFlash via kquant drafts</span>
+          <span>Contrast with the lab's 4&times;B70 DFlash record above</span>
+        </div>
+        <div class="links"><a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">Cookbook</a></div>
+      </div>
+
+      <div class="card">
+        <div class="tags"><span class="tag engine">Docker / vLLM</span><span class="tag quant">FP8 TP2</span><span class="ev tested">B70-tested</span></div>
+        <h3>Qwen3.6-27B native FP8</h3>
+        <div class="rate"><span class="v">30.17</span><span class="u">tok/s median decode, 15-row bench</span></div>
+        <div class="meta">
+          <span><b>2&times; Arc Pro B70</b> (TP2), contributor Docker recipe</span>
+          <span>Reproduced in-lab; different prompt-length benchmark than fixed-suite rows</span>
+        </div>
+        <div class="links"><a href="community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md">Validation history</a></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="cookbooks">
+  <div class="wrap">
+    <h2>Cookbooks and where to start</h2>
+    <p class="sub">Pick your card count and model family. Every link lands on exact pins — image digests, commits, patch order — not vibes.</p>
+    <div class="contrib-grid">
+      <div class="mini">
+        <h4>One B70, quick win</h4>
+        <p>Start with the <a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">intel-arc-pro-b70-inference-cookbook</a>: pinned vLLM XPU image, Qwen3.6/Qwen3.8 launchers, tool-calling flags included. Or a single-card llama.cpp lane like <a href="results/gemma4-26b-a4b-q8-b70/README.md">Gemma-4-26B at 124.98 tok/s</a>.</p>
+      </div>
+      <div class="mini">
+        <h4>Two to four B70s</h4>
+        <p>TP2/TP4 lanes live in the lab's <a href="results/README.md">results index</a> and <a href="docs/model-recipes.md">model recipes</a> — MiniMax INT4 TP4, Laguna INT4 + DFlash, DeepSeek-V4 FP4/FP8, Qwen3.6 dense TP2.</p>
+      </div>
+      <div class="mini">
+        <h4>Understand before you run</h4>
+        <p>The <a href="optimization-timeline.html">optimization timeline</a> shows how each lane got fast; the <a href="results/scoreboard.md">performance index</a> explains the metrics; the <a href="docs/model-optimization-guide.md">model optimization guide</a> is the playbook for a new model.</p>
+      </div>
+      <div class="mini">
+        <h4>Adjacent ecosystems</h4>
+        <p>Apple Silicon users: the <a href="community/field-reports/kydo/mlxfast-qwen38-27b-mlx-challenge/challenge-results-2026-08-21.md">mlx.fast Qwen3.8-27B challenge</a> ran 26 &rarr; 87.9 tok/s on MLX with editable MTP heads — methodology and ideas tracked in our field reports.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contribute">
+  <div class="wrap">
+    <h2>Contribute</h2>
+    <p class="sub">
+      Record-setting results are not required — careful negative results and quality
+      checks are valuable too. Contributions enter as <b>community-reported</b> and are
+      promoted only after reference-lab reproduction. That boundary is about evidence
+      provenance, not trust.
+    </p>
+    <ol class="steps">
+      <li><b>Pick up the checklist.</b> GPU model/count/VRAM and PCIe details; OS, kernel, driver, runtime versions; exact model revision and quantization; engine commits; full command and environment; prompt/output lengths, batch, concurrency; cache and speculative policy; quality gate outcome; metric definition with repeats/variance; result JSON/logs or durable links; closest known-good run and exactly what changed. The full list is in <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.</li>
+      <li><b>Choose the right lane.</b> Runnable recipes, patches, and configs go to <a href="community/README.md">community/</a> with a filled <a href="community/STATUS-TEMPLATE.md">STATUS.md</a>. Measurements or observations without runnable assets belong in <a href="community/field-reports/README.md">community/field-reports/</a>.</li>
+      <li><b>Open a pull request</b> against <a href="https://github.com/steveseguin/b70-optimization-lab">steveseguin/b70-optimization-lab</a>. Keep changes focused, preserve failed-experiment evidence, and never silently replace an old result.</li>
+      <li><b>Expect the eight-step validation.</b> The lab reruns runnable entries on reference hardware when GPUs are free, per <a href="docs/contribution-verification.md">docs/contribution-verification.md</a>. Evidence labels (<span class="ev verified">B70-verified</span> <span class="ev tested">B70-tested</span> <span class="ev community">community-reported</span>) track exactly what was checked. Negative results are recorded as evidence, not deleted.</li>
+    </ol>
+    <div class="note">
+      <b>Never submit</b> model weights, API keys, access tokens, or private data.
+      Absolute paths like <code>/mnt/fast-ai/...</code> in recipes are the lab host's
+      layout — substitute your own; see
+      <a href="docs/reference-lab-storage.md">reference lab storage</a>.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Unofficial community lab — not affiliated with or endorsed by Intel. Experimental research; use everything under the repo <a href="LICENSE">LICENSE</a> and <a href="DISCLAIMER.md">DISCLAIMER.md</a> at your own risk.</span>
+    <span class="right">
+      <a href="README.md">Repo README</a>
+      <a href="docs/README.md">Docs</a>
+      <a href="CURRENT.md">Current work</a>
+      <a href="https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook">Community cookbook</a>
+      <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+    </span>
+  </div>
+</footer>
+
+</body>
+</html>
