@@ -46,6 +46,18 @@ token-exact evidence.
 
 ## Active Product Track: neural.download packets
 
+**Model store network share (2026-08-22):** `/mnt/usb-models/llm-models`
+is exported read-only over NFS to `10.0.0.0/24`
+(`ro,no_subtree_check,all_squash`; nothing else on the drive is shared —
+bench-results stays private). The two-B70 host mounts it persistently at
+`/mnt/lab-models` (`ro,soft,nofail`); write-refusal verified. Known
+limit: this host's `eth1` links at **100 Mb/s because the link partner
+(switch port or cable) only advertises 10/100** — our side now correctly
+advertises up to 1000 (runtime + NetworkManager profile fixed from
+`auto-negotiate: no`). Swapping the cable/switch port restores gigabit
+automatically; until then remote model reads cap at ~11 MB/s.
+
+
 Opened 2026-08-22. Goal: publish a variety of B70-characterized model
 packages (benchmarks + patches where needed + reproducible recipes) on the
 neural.download page, per the
