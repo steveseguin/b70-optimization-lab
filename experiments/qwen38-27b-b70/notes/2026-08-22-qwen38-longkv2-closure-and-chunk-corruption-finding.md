@@ -252,3 +252,39 @@ Arms and frozen interpretations:
   victim slot; no trip moves the victim to the KV cache pages and the
   program hands off to a device-ASan or KV-checksum session. **The
   p-series is capped at s0 for tonight regardless of outcome.**
+
+## s0 result and program handoff state (2026-08-22, capped)
+
+s0: **zero foreign-slot warnings** through the full eight-row exposure
+and battery, needle failed byte-identically (fifth reproduction). The
+conv/ssm state caches are exonerated as the victim.
+
+Established by the five-arm program (a1/d2/d4/d5 + p0b/p1/c0/s0):
+
+| Excluded | By |
+|---|---|
+| scratch field contents (read-before-write of the 12 per-call fields) | p1 |
+| pool-tail-adjacent memory (1MiB) | c0 |
+| conv/ssm cache foreign-slot writes | s0 |
+| the tier-2 HTTP-400 path | d4 |
+| dose 1 | d2 |
+
+Still standing: the corruption requires the persistent pool's presence
+(d5 cures the needle at dose 8) and multi-chunk-prefill dose in (1, 8];
+it kills a later short request's logits while the long rows stay
+coherent; and under per-call allocation it degrades to a rare transient
+(longkv3 a1, 31/32). Best-supported remaining shape: a writer on the
+multi-chunk-prefill path whose target address is layout-coupled to the
+pool region (with the pool, a stable victim outside the tested
+brackets — KV cache pages, a positional table, or another fixed
+allocation; without it, wandering mostly-harmless hits). Battery
+pattern (tiny probes pass, ~1000-token probe dies) hints the victim is
+position- or length-indexed state rather than weights.
+
+Next-session menu (in rough order of decisiveness per hour): head-side
+and interleaved canary brackets sized over tens of MiB; KV-cache page
+checksums between requests; device AddressSanitizer JIT build of the
+GDN + chunk-prefill kernels; targeted source audit of the xe_2 chunk
+kernels' tail/boundary writes with the exact d4 shapes. The poison
+worktree, stage, driver (p/c/s actions), and frozen 8-row suite are all
+in place and reusable; every arm root is preserved.

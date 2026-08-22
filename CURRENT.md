@@ -488,9 +488,17 @@ loaded service.
    with the 400 exonerated (d4), and the identical dose-8 exposure with
    `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=0` is fully green (d5) — the
    persistent-scratch **reuse** path is the locus, and scratch=0 is a
-   working mitigation at the tested dose (root-cause attribution in the
-   C++ needs an instrumented build; `has_initial_state` is const in all
-   kernels and is excluded). Operational guidance: **long-context
+   working mitigation at the tested dose — though longkv3-a1 later
+   showed scratch=0 carries its own rare transient (31/32 same-boot
+   repeat divergence), so neither mode is quality-clean for
+   long-context serving. The instrumented p-series then excluded
+   scratch field contents (full NaN poison changed nothing), pool-tail
+   OOB (canary intact), and conv/ssm foreign-slot writes (per-call
+   fingerprints clean) across five byte-identical reproductions; the
+   remaining shape is a layout-coupled writer on the multi-chunk
+   prefill path with a stable victim when the pool pins the allocator
+   arena. Handoff menu and reusable instrumented harness are recorded
+   in the finding note. Operational guidance: **long-context
    serving on this lane must run scratch=0 until the root cause is
    fixed**; the sealed short-KV record identity (scratch=1,
    single-chunk-only traffic) is unaffected, and all prior
