@@ -802,6 +802,14 @@ export SOURCE_ROOT="$source_root"
 export VALIDATION_MODE="$mode"
 export VLLM_SOURCE_TREE="$source_root/vllm"
 export VLLM_XPU_KERNELS_SOURCE_TREE="$source_root/vllm-xpu-kernels"
+# Q64xK32 endpoint campaign door (2026-08-21): explicit 0 for controls,
+# 1 only when the campaign driver asks. Engagement is separately proven by
+# the per-rank stderr marker gate in that driver; identity.env records both.
+if [[ "${VALIDATION_FA2_M6_HEAD256_Q64K32_POLICY:-0}" == "1" ]]; then
+  export VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY=1
+else
+  export VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY=0
+fi
 export MODEL_DIR="$model_dir"
 export MODEL_MANIFEST="$model_manifest"
 export VERIFY_MODEL_SCRIPT="${VALIDATION_MODEL_VERIFY_SCRIPT:-$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py}"

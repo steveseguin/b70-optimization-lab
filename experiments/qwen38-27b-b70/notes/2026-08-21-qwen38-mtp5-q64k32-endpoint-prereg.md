@@ -2,9 +2,8 @@
 
 Date: 2026-08-21
 
-Status: **draft / source-only; placeholders present; launch is not
-authorized until the driver derivative and its frozen hashes pass review,
-are committed and pushed, and every placeholder below is replaced.**
+Status: **frozen; single sequential launch (a1, b1, b2, a2) authorized
+after this commit is pushed and the driver's own gates pass.**
 
 ## Bounded question
 
@@ -72,16 +71,29 @@ campaign under the lane's full standards.
 
 ## Frozen artifacts (placeholders until the driver derivative is reviewed)
 
-- endpoint driver derivative
+- endpoint driver
   `scripts/run-20260821-qwen38-mtp5-q64k32-endpoint-abba.sh`:
-  `PLACEHOLDER-DRIVER-SHA`;
-- underlying arm runner: the incumbent
+  `ecaf541ec924e34d4fbfc233b4ab5d1ca1c3114eb5dddcdd2f86b008843a47cd`
+  (mode 0755). It verifies both stage trees per-file each invocation,
+  refuses existing arm roots, requires clean `main == origin/main`, and
+  regates every predecessor: runner exit 0, sealed-gate pass (with
+  `--require-quality-pass` for the a1->b1 and b1->b2 edges), artifact
+  checksum set intact, produced-by-current-bytes, and the predecessor's
+  own role marker count before any successor may start.
+- underlying arm runner
   `experiments/qwen36-27b-autoround-int4-b70/validation-20260815/run-arm.sh`
-  at its committed identity, invoked with per-arm `STAGE`;
+  at `75d733e72eaf357941c3902f4d21da701ad8c7e8f41835c15cd0918c29b5d01e`:
+  extended by exactly one reviewed hunk that maps
+  `VALIDATION_FA2_M6_HEAD256_Q64K32_POLICY` to an explicit
+  `VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY={0,1}` export (controls receive
+  an explicit `0`), so the `env -i` whitelist cannot silently drop
+  operator intent; engagement is separately proven by the marker gate
+  (candidates: exactly two `... engaged` server-log lines; controls:
+  zero).
 - result roots (must not exist before launch):
   `/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-q64k32-endpoint-{a1,b1,b2,a2}-20260821/`.
 
 Launch requires: clean `main == origin/main` including the frozen revision
 of this note; quiet kernel journal; no other model workload, benchmark, or
-AOT build on any card; all four frozen hashes rechecked immediately before
+AOT build on any card; all frozen hashes rechecked immediately before
 the single launch; stop on first arm failure with no same-root retry.
