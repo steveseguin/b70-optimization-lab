@@ -1,16 +1,44 @@
 diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
-index e5e51d6..f67390c 100644
+index e5e51d6..56318a2 100644
 --- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
 +++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
-@@ -2,6 +2,7 @@
+@@ -2,6 +2,8 @@
  #include <array>
  #include <cctype>
  #include <cstdlib>
++#include <atomic>
 +#include <limits>
  #include <memory>
  #include <mutex>
  #include <string>
-@@ -1031,6 +1032,52 @@ void gdn_attention_spec_decode(
+@@ -115,6 +117,7 @@ struct GdnSpecDecodeScratch {
+   torch::Tensor a;
+   torch::Tensor exact_core;
+   torch::Tensor exact_query_start_loc;
++  torch::Tensor canary_tail;
+ 
+   bool matches(
+       const void* candidate_owner_key,
+@@ -220,6 +223,18 @@ GdnSpecDecodeScratch& get_gdn_spec_decode_scratch(
+   entry->a = torch::empty_like(entry->b);
+   entry->exact_core = torch::empty_like(entry->compact_z);
+   entry->exact_query_start_loc = torch::arange(2, int_options);
++  // Diagnostic-only canary brackets (poison build): when
++  // VLLM_XPU_GDN_SPEC_SCRATCH_CANARY is set, allocate patterned guard
++  // tensors around the pool allocations so an out-of-bounds writer whose
++  // victim is layout-coupled to the pool trips a per-call integrity check.
++  if (const char* canary_env =
++          std::getenv("VLLM_XPU_GDN_SPEC_SCRATCH_CANARY")) {
++    if (canary_env[0] != '\0' && canary_env[0] != '0') {
++      auto canary_options =
++          torch::dtype(at::kByte).device(device).requires_grad(false);
++      entry->canary_tail = torch::full({1 << 20}, 0x5A, canary_options);
++    }
++  }
+   TORCH_WARN(
+       "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH allocated on ",
+       device,
+@@ -1031,6 +1046,89 @@ void gdn_attention_spec_decode(
      b = torch::empty({total_spec_tokens, local_num_v_heads}, options);
      a = torch::empty_like(b);
    }
@@ -58,6 +86,43 @@ index e5e51d6..f67390c 100644
 +        TORCH_WARN(
 +            "VLLM_XPU_GDN_SPEC_SCRATCH_POISON active: ", poison);
 +      });
++    }
++  }
++  if (persistent_scratch) {
++    auto& canary_scratch = get_gdn_spec_decode_scratch(
++        conv_weights.data_ptr(),
++        device,
++        dtype,
++        num_spec_decodes,
++        total_spec_tokens,
++        conv_history_len,
++        conv_weights.size(0),
++        projected_states_qkvz.size(1),
++        projected_states_ba.size(1),
++        local_num_k_heads,
++        local_num_v_heads,
++        head_k_dim,
++        head_v_dim);
++    if (canary_scratch.canary_tail.defined()) {
++      static std::atomic<int64_t> canary_call_count{0};
++      static std::atomic<bool> canary_tripped{false};
++      const int64_t call_index = canary_call_count.fetch_add(1);
++      if (!canary_tripped.load()) {
++        const bool intact =
++            canary_scratch.canary_tail.eq(0x5A).all().item<bool>();
++        if (!intact) {
++          canary_tripped.store(true);
++          const int64_t corrupted =
++              canary_scratch.canary_tail.ne(0x5A).sum().item<int64_t>();
++          TORCH_WARN(
++              "VLLM_XPU_GDN_SPEC_SCRATCH_CANARY TRIPPED at spec call ",
++              call_index,
++              ": ",
++              corrupted,
++              " corrupted bytes of ",
++              canary_scratch.canary_tail.numel());
++        }
++      }
 +    }
 +  }
  

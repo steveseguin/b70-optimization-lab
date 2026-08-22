@@ -25,9 +25,15 @@ action=${1:-}
 # p0b replaces p0: the p0 label was consumed by the so.9 link-failure
 # attempt (pre-server infra failure; root preserved, never reused).
 case "$action" in
-  check|p0b|p1|p2|p3|p4|p5) ;;
-  *) printf 'usage: %s check|p0b|p1|p2|p3|p4|p5\n' "$0" >&2; exit 2 ;;
+  check|p0b|p1|p2|p3|p4|p5|c0) ;;
+  *) printf 'usage: %s check|p0b|p1|p2|p3|p4|p5|c0\n' "$0" >&2; exit 2 ;;
 esac
+# c0: canary-bracket arm - patterned guard tensor allocated after the pool,
+# integrity-checked before every spec call; poison off.
+canary_value=
+if [[ "$action" == c0 ]]; then
+  canary_value=1
+fi
 poison_value=
 case "$action" in
   p1) poison_value=all ;;
@@ -63,10 +69,10 @@ gdn_spec_persistent_scratch=1
 quality_sha=45424f1d2dcbfda0a5ed75552cf799cac0e8fb6b8c5e1ddf2aba540b95c77e95
 model_manifest_sha=731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8
 verifier_sha=5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9
-stock_graph_manifest_sha=2159f537e01fcfcad0623d63255c72185a7e8b7901f1004a95f7f181742eca08
+stock_graph_manifest_sha=3f622553160257dabde121568783da42a16ec379a21c5e0bac14ce2d20a2c6b7
 candidate_graph_manifest_sha=0642e0290a8c97f2b29b826ab3b8aee693d444df09cea7048d5d6f8da0fd98a9
 target_bench_sha=045fd8b4fc9f1eda3bbc778e4b88a6ad7407ff4a50be879dc4e9780b37e0d6e8
-native_sha=653388e040498db3b4d505ade001850ecae166f0b82071095828c99c6e9b470b
+native_sha=676408238610e2c24bfcd1d641507bf7a0359d1b7b7a8231454707908040e7be
 core_sha=5717476461048b5056a92926f2a52d73c121f69bdc75de22fd52720fb65b3007
 moe_sha=ea4c20a8dff49fc07fd799d5a2a47e8b24266a256425b41e337f852492ee3c1b
 fa_sha=33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739
@@ -322,6 +328,7 @@ launch_env=(
   VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0
   VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH="$gdn_spec_persistent_scratch"
   VLLM_XPU_GDN_SPEC_SCRATCH_POISON="$poison_value"
+  VLLM_XPU_GDN_SPEC_SCRATCH_CANARY="$canary_value"
   VALIDATION_GDN_CAPTURE_NATIVE_SPEC=1
   VALIDATION_DDTREE_FULL_GRAPH=0
   VALIDATION_DDTREE_CAPTURE_GDN_CORE=0
