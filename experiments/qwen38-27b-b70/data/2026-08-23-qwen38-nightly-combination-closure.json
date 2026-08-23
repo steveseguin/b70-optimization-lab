@@ -1,0 +1,120 @@
+{
+  "campaign": "Qwen3.8 AutoRound INT4 XPU-nightly TP/MTP/graph/KV combination closure",
+  "date": "2026-08-23",
+  "image_digest": "sha256:bc979d1ba312dc8a666c57a40205f35d7fc5d96b2f7450c2c77f5b3d5243f0e0",
+  "scope": {
+    "tp": [1, 2, 3, 4],
+    "mtp_tokens": [0, 1, 2, 3],
+    "graph": [false, true],
+    "kv": ["f16", "fp8_e4m3", "fp8_e5m2"],
+    "max_model_len": 32768,
+    "cartesian_cells": 96,
+    "interpretation": "Every cell is decision-classified. Closed-by-gate cells are deliberately not all benchmarked."
+  },
+  "topology_closures": [
+    {
+      "tp": 3,
+      "covers_cells": 24,
+      "status": "architecturally_impossible",
+      "reason": "16 GDN K heads are not divisible by 3; worker-init assertion",
+      "retry_condition": "model architecture or tensor-parallel head partitioning changes"
+    }
+  ],
+  "kv_family_closures": [
+    {
+      "kv": "fp8_e5m2",
+      "valid_tp_cells_covered": 24,
+      "status": "runtime_unsupported",
+      "reason": "FlashAttention on this XPU/device stack rejects fp8_e5m2 KV cache at engine init",
+      "retry_condition": "attention backend adds fp8_e5m2 support"
+    },
+    {
+      "kv": "fp8_e4m3",
+      "valid_tp_cells_covered": 24,
+      "status": "quality_gate_failed_no_expansion",
+      "measured_anchor": "TP1, MTP0, eager: 24.1009 tok/s, only 3/20 stable-set oracle matches",
+      "reason": "The least-compounded target-only anchor is output-divergent; graph, TP2/4, and speculative products are not promotion candidates",
+      "retry_condition": "new quantization calibration/scale path passes a preregistered oracle"
+    }
+  ],
+  "f16_cells": [
+    {
+      "mtp": 0,
+      "graph": false,
+      "tp1": "measured 23.7163/24.2459",
+      "tp2": "measured 16.7699",
+      "tp4": "measured 17.3761",
+      "status": "complete_diagnostic_eager_column"
+    },
+    {
+      "mtp": 0,
+      "graph": true,
+      "tp1": "strict qualified 30.3107 natural-EOS",
+      "tp2": "strict qualified 49.0197 natural-EOS",
+      "tp4": "strict qualified 71.2933/71.3984 natural-EOS",
+      "status": "complete_strict_graph_column"
+    },
+    {
+      "mtp": 1,
+      "graph": false,
+      "tp1": "measured 4.5112, mean acceptance length 1.91",
+      "tp2": "closed by TP4 MTP2 expansion gate and TP1 speculation collapse",
+      "tp4": "closed by TP4 MTP2 expansion gate; lower speculative dose has no preregistered path to the 60.8175 floor",
+      "status": "tp1_measured_multi_tp_closed_by_gate"
+    },
+    {
+      "mtp": 1,
+      "graph": true,
+      "tp1": "measured 7.6266 with 0% draft acceptance and 0/25 oracle match",
+      "tp2": "quarantined by graph-plus-MTP correctness bug and unsupported multi-GPU graph",
+      "tp4": "quarantined by graph-plus-MTP correctness bug and unsupported multi-GPU graph",
+      "status": "correctness_quarantine"
+    },
+    {
+      "mtp": 2,
+      "graph": false,
+      "tp1": "measured 4.4067, mean acceptance length 2.70",
+      "tp2": "fresh isolated-cache boot and code-14 canary pass; no full run after TP4 gate failure",
+      "tp4": "boot/canary pass; two-prompt exact-cache screen 31.1680 tok/s and implied acceptance 2.419/3, below both expansion floors",
+      "status": "boots_multi_tp_full_expansion_rejected"
+    },
+    {
+      "mtp": 2,
+      "graph": true,
+      "tp1": "covered by TP1 graph-plus-MTP corruption anchor",
+      "tp2": "quarantined",
+      "tp4": "quarantined",
+      "status": "correctness_quarantine"
+    },
+    {
+      "mtp": 3,
+      "graph": false,
+      "tp1": "measured 4.3037, mean acceptance length 3.47",
+      "tp2": "closed after MTP2 multi-TP screen missed expansion gate",
+      "tp4": "closed after MTP2 screen missed expansion gate; deeper ladder explicitly unauthorized",
+      "status": "tp1_measured_multi_tp_closed_by_gate"
+    },
+    {
+      "mtp": 3,
+      "graph": true,
+      "tp1": "covered by TP1 graph-plus-MTP corruption anchor",
+      "tp2": "quarantined",
+      "tp4": "quarantined",
+      "status": "correctness_quarantine"
+    }
+  ],
+  "decision_summary": {
+    "cells_decision_classified": 96,
+    "strict_promoted_family": "f16, MTP0, graph on, TP1/2/4",
+    "diagnostic_complete_family": "f16, MTP0, graph off, TP1/2/4",
+    "nightly_speculative_family": "boots at TP2/4 but fails performance/acceptance expansion; graph combination quarantined",
+    "fp8_family": "e4m3 quality-rejected; e5m2 unsupported",
+    "remaining_nightly_gpu_runs_authorized": [],
+    "next_reopen_conditions": [
+      "upstream fixes graph-plus-MTP correctness",
+      "a materially newer runtime changes MTP verification cost or acceptance",
+      "a KV quantization path passes the target oracle",
+      "a model/runtime supports TP3 head partitioning"
+    ]
+  }
+}

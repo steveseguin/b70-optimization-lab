@@ -70,6 +70,12 @@ token nondeterminism; the disclosure remains mandatory. The runtime also
 labels multi-GPU XPU Graph unsupported/experimental. No submission was made.
 See the [strict graph-column note](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-nightly-graph-column-final-gates.md).
 
+The bounded nightly Cartesian matrix (TP 1/2/3/4 × MTP 0/1/2/3 × graph
+off/on × F16/e4m3/e5m2 KV) is now 96/96 decision-classified. Closed-by-gate
+cells were not burned after a parent correctness, quality, architecture, or
+expansion failure. The only strict promoted family is F16 KV, MTP off, graph
+on at TP1/2/4. See the [combination closure](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-nightly-combination-closure.md).
+
 The bounded TP1 determinism program is now closed. Exact replay of one sealed
 cache matched 2/2 sensitive prompts with an unchanged cache manifest, but a
 second fresh default cache diverged at token 18. Disabling Inductor max

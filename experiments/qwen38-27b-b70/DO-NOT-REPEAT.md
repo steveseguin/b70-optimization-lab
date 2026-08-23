@@ -1,6 +1,6 @@
 # Qwen3.8 27B do-not-repeat index
 
-Last audited: 2026-08-18
+Last audited: 2026-08-23
 
 This is the first stop before creating another Qwen3.8 27B optimization arm.
 Do not rerun a closed experiment unchanged. A retry needs a materially different
@@ -103,6 +103,8 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 | Second-queue q8 quantize overlap (any compute/compute second-queue scheme) | **Closed negative with hardware root cause: the B70 has ONE compute command streamer**, so all SYCL queues serialize; the full prefetch door was bit-exact and fully engaged yet `-2.37%` (pure orchestration overhead), and the poison control could not go red because a cross-queue race is physically impossible. Do not re-attempt on single-CCS devices | [closure](notes/2026-08-23-qwen38-q4km-tp1-second-queue-closure.md), [patch](patches/llamacpp-q8-quant-prefetch-second-queue-candidate-20260823.patch) |
 | Gating a lane rebuild against the promoted binary's registered output oracle | Unsatisfiable by construction: `fp-model=fast` rebuild of the exact promoted commit scores 0/12 vs the oracle while matching a sibling rebuild 12/12. Gate source arcs within-binary (off-vs-on + clean-rebuild identity + stress + battery); re-oracle at promotion | [closure](notes/2026-08-23-qwen38-q4km-tp1-second-queue-closure.md) |
 | TP3 (three cards) for Qwen3.8-27B in vLLM | Architecturally impossible: 16 GDN K heads are not divisible by 3 (`AssertionError: 16 is not divisible by 3` at worker init). TP sizes for this model: 1, 2, 4 | [TP-scale note](notes/2026-08-23-qwen38-tpscale-nightly-finding.md) |
+| Deeper nightly TP2/TP4 MTP ladder after the isolated MTP2 screen | Closed by frozen expansion gates, not by boot failure. TP2 and TP4 MTP2 boot; TP4 measured `31.1680 tok/s` with implied acceptance `2.419/3`, below the `60.8175` and `2.5/3` floors. Do not run MTP1/3 or full suites unchanged | [matrix closure](notes/2026-08-23-qwen38-nightly-combination-closure.md) |
+| Nightly `fp8_e4m3` KV expansion to graph, TP2/4, or MTP | Closed by the least-compounded TP1/MTP0/eager quality anchor: `24.1009 tok/s` but only 3/20 stable oracle matches. Reopen only with a materially different quantization/calibration path that first passes the oracle | [matrix closure](notes/2026-08-23-qwen38-nightly-combination-closure.md) |
 
 ## Transferred Q8 search history
 
