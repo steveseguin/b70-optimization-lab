@@ -7,7 +7,7 @@ the recipe and validation evidence in this repository are the source of truth.
 ## Identity
 
 - Base: llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`.
-- Current complete patch: `llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch`.
+- Current complete patch: `llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch`.
 - Patch SHA-256:
   `d8c95e4d0cbe0be91c0890f4e5d3c6b4f2bfb22b5daedd12a560910f954c915e`.
 - Runtime doors: `GGML_SYCL_FUSED_MOE_ADD_REDUCE=1` and
@@ -19,17 +19,18 @@ the recipe and validation evidence in this repository are the source of truth.
   `GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1` and
   `GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1` and
   `GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1` and
-  `GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO=1` (all default off).
+  `GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO=1` and
+  `GGML_SYCL_FUSED_ORNITH_QK_NORM_ROPE=1` (all default off).
 - Validated `libggml-sycl.so` SHA-256:
-  `cb401a22996aac4d482e5721aad0364f0462ec5522aefa05dc035cb002467259`.
+  `060484479736f7cb7b6f55aacc38b9fdf162fb702fc3d73b1a1ce9750301fdcf`.
 
 Apply only to the pinned clean base:
 
 ```bash
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
-sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch
-git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch
-git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch
+echo "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1  /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch" | sha256sum -c -
+git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch
+git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch
 git diff --check
 ```
 
@@ -47,7 +48,7 @@ The full-model trace observed 40 ordered-reduction matches, 30 recurrent
 convolution/SiLU matches, 80 residual/RMSNorm matches, and 30 recurrent
 concat/state matches per token. The direct state-materialization path replaces
 the latter boundary and also removes 30 recurrent `GET_ROWS` launches. Together
-the complete stack removes 660 launches/token.
+the complete stack removes 700 launches/token.
 
 The second fusion accepts only the exact one-token `[4,8192]` FP32 convolution
 whose sole consumer is a full-width SiLU. It preserves stock state handling,
@@ -112,6 +113,15 @@ contiguous layout, and non-overlap with the GDN activation output are required;
 otherwise the stock gather path executes. It removes one launch in each of 30
 recurrent layers.
 
+The eleventh fusion transfers the Qwen-derived one-token full-attention Q/K
+path to Ornith's exact 16-Q-head, 2-KV-head, 256-dimension IMRoPE layout. It
+uses the stock SIMD16 RMS reduction and FP32 normalization/weight arithmetic,
+applies the existing interleaved RoPE expression, leaves Q in its original
+FP32 flash-attention buffer, and writes K directly to the F16 cache. Exact op
+parameters, named layer weights, sole-consumer chains, shapes, types, cache
+layout, and storage non-overlap fail closed. Replacing five operations with
+one in each of 10 full-attention layers removes another 40 launches/token.
+
 ## Validation
 
 - Raw engine A/B/B/A-style means: `103.047744` control versus
@@ -165,6 +175,12 @@ recurrent layers.
   Every candidate exceeded every control; forced 128-token output was
   byte-identical, exactly 3,810 recurrent hits were recorded, and the objective
   canary battery passed.
+- The added full-attention Q/K RMSNorm-IMRoPE and direct K-cache fusion
+  improved mirrored raw-engine decode by **+2.32%** and matched fresh-server
+  decode by **+1.87%** over the prior stack, reaching a directly measured
+  `128.832195 tok/s` two-server mean. Every candidate exceeded every control;
+  forced 128-token output was byte-identical, exactly 1,270 full-attention hits
+  were recorded, and the objective canary battery passed.
 
 Fresh stock servers matched `0/12` complete response hashes with each other on
 the long realistic suite. A new realistic same-process repeat probe also
@@ -193,3 +209,5 @@ The GDN RMSNorm/SiLU-gate increment is in
 [`2026-08-23-ornith35b-gdn-rms-silu-gate-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-gdn-rms-silu-gate-positive.md).
 The in-place GDN state increment is in
 [`2026-08-23-ornith35b-gdn-state-io-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-gdn-state-io-positive.md).
+The full-attention Q/K increment is in
+[`2026-08-23-ornith35b-qk-norm-rope-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-qk-norm-rope-positive.md).

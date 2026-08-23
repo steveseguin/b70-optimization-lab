@@ -1,0 +1,484 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index a1660ba..917574a 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -6112,6 +6112,23 @@ static std::atomic<uint64_t> g_ggml_sycl_ornith_conv_silu_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_direct_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_alpha_gate_hits{0};
++static std::atomic<uint64_t> g_ggml_sycl_ornith_qk_norm_rope_hits{0};
++
++static bool ggml_sycl_ornith_qk_norm_rope_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_QK_NORM_ROPE");
++        const bool on = value != nullptr && std::strcmp(value, "0") != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_qk_norm_rope: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_qk_norm_rope_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
+ 
+ static bool ggml_sycl_ornith_alpha_gate_enabled() {
+     static const bool enabled = [] {
+@@ -6559,6 +6576,207 @@ static ggml_tensor * ggml_sycl_find_ornith_conv_silu(const ggml_cgraph * cgraph,
+     return silu;
+ }
+ 
++struct ggml_sycl_ornith_qk_norm_rope_match {
++    ggml_tensor * q_rms;
++    ggml_tensor * q_mul;
++    ggml_tensor * q_rope;
++    ggml_tensor * k_rms;
++    ggml_tensor * k_mul;
++    ggml_tensor * k_rope;
++    ggml_tensor * k_set_rows;
++    int           k_nodes_consumed;
++};
++
++static int ggml_sycl_tensor_use_count(const ggml_cgraph * cgraph, const ggml_tensor * tensor) {
++    int uses = 0;
++    for (int i = 0; i < cgraph->n_nodes; ++i) {
++        const ggml_tensor * node = cgraph->nodes[i];
++        if (node == nullptr) {
++            continue;
++        }
++        for (int s = 0; s < GGML_MAX_SRC; ++s) {
++            uses += node->src[s] == tensor;
++        }
++    }
++    return uses;
++}
++
++static bool ggml_sycl_tensor_ranges_overlap(const ggml_tensor * a, const ggml_tensor * b) {
++    const uintptr_t a0 = (uintptr_t) a->data;
++    const uintptr_t b0 = (uintptr_t) b->data;
++    return a0 < b0 + ggml_nbytes(b) && b0 < a0 + ggml_nbytes(a);
++}
++
++// Match only Ornith 1.5's one-token Qwen3.5 full-attention closure. Q is
++// deferred until K normalization, then one kernel preserves the stock SIMD16
++// RMS reduction, FP32 RMS+weight materialization, and IMRoPE arithmetic. K is
++// written directly to the F16 cache; all elided intermediates must have one
++// exact consumer and no exposed output flag.
++static bool ggml_sycl_find_ornith_qk_norm_rope(
++        const ggml_cgraph * cgraph, int i,
++        ggml_sycl_ornith_qk_norm_rope_match & match) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_qk_norm_rope_enabled() ||
++        cgraph == nullptr || i < 0 || i + 2 >= cgraph->n_nodes) {
++        return false;
++    }
++
++    ggml_tensor * q_rms = cgraph->nodes[i];
++    ggml_tensor * q_mul = cgraph->nodes[i + 1];
++    ggml_tensor * q_rope = cgraph->nodes[i + 2];
++    if (q_rms == nullptr || q_mul == nullptr || q_rope == nullptr ||
++        q_rms->op != GGML_OP_RMS_NORM || q_mul->op != GGML_OP_MUL ||
++        q_rope->op != GGML_OP_ROPE || q_rope->src[0] != q_mul ||
++        !ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL }, {}) ||
++        !ggml_node_has_n_uses(cgraph, i, 1) || !ggml_node_has_n_uses(cgraph, i + 1, 1) ||
++        ggml_sycl_tensor_use_count(cgraph, q_rope) != 1 ||
++        (q_rms->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        (q_mul->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        (q_rope->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        std::strstr(q_rope->name, "Qcur-") == nullptr) {
++        return false;
++    }
++
++    const ggml_tensor * q_src = q_rms->src[0];
++    const ggml_tensor * q_weight = q_mul->src[0] == q_rms ? q_mul->src[1] : q_mul->src[0];
++    int layer = -1;
++    if (q_src == nullptr || q_weight == nullptr ||
++        std::sscanf(q_weight->name, "blk.%d.attn_q_norm.weight", &layer) != 1 ||
++        layer < 0 || layer >= 40 || q_src->type != GGML_TYPE_F32 ||
++        q_src->ne[0] != 256 || q_src->ne[1] != 16 || q_src->ne[2] != 1 || q_src->ne[3] != 1 ||
++        q_src->nb[0] != sizeof(float) || q_weight->type != GGML_TYPE_F32 ||
++        q_weight->ne[0] != 256 || ggml_nelements(q_weight) != 256 ||
++        q_weight->nb[0] != sizeof(float) || q_rope->type != GGML_TYPE_F32 ||
++        q_rope->ne[0] != 256 || q_rope->ne[1] != 16 || q_rope->ne[2] != 1 || q_rope->ne[3] != 1 ||
++        q_rope->data != q_mul->data || q_rope->src[1] == nullptr ||
++        q_rope->src[1]->type != GGML_TYPE_I32 || q_rope->src[2] != nullptr ||
++        q_rope->src[1]->ne[0] != 4 || ggml_nelements(q_rope->src[1]) != 4) {
++        return false;
++    }
++
++    const int32_t * q_ip = (const int32_t *) q_rope->op_params;
++    float q_fp[6];
++    memcpy(q_fp, q_ip + 5, sizeof(q_fp));
++    if (q_ip[1] != 64 || q_ip[2] != GGML_ROPE_TYPE_IMROPE || q_ip[4] != 262144 ||
++        q_fp[0] != 10000000.0f || q_fp[1] != 1.0f || q_fp[2] != 0.0f || q_fp[3] != 1.0f ||
++        q_fp[4] != 32.0f || q_fp[5] != 1.0f ||
++        q_ip[11] != 11 || q_ip[12] != 11 || q_ip[13] != 10 || q_ip[14] != 0) {
++        return false;
++    }
++
++    ggml_tensor * q_view = nullptr;
++    ggml_tensor * q_permute = nullptr;
++    ggml_tensor * fattn = nullptr;
++    for (int j = i + 3; j < cgraph->n_nodes; ++j) {
++        ggml_tensor * candidate = cgraph->nodes[j];
++        if (candidate == nullptr || candidate->op != GGML_OP_FLASH_ATTN_EXT ||
++            candidate->src[0] == nullptr || candidate->src[0]->op != GGML_OP_PERMUTE ||
++            candidate->src[0]->src[0] == nullptr || candidate->src[0]->src[0]->op != GGML_OP_VIEW ||
++            candidate->src[0]->src[0]->src[0] != q_rope) {
++            continue;
++        }
++        if (fattn != nullptr) {
++            return false;
++        }
++        fattn = candidate;
++        q_permute = candidate->src[0];
++        q_view = q_permute->src[0];
++    }
++    if (fattn == nullptr || q_view == nullptr || q_permute == nullptr ||
++        ggml_sycl_tensor_use_count(cgraph, q_view) != 1 ||
++        ggml_sycl_tensor_use_count(cgraph, q_permute) != 1 ||
++        q_permute->type != GGML_TYPE_F32 || q_view->type != GGML_TYPE_F32 ||
++        q_permute->ne[0] != 256 || q_permute->ne[1] != 1 ||
++        q_permute->ne[2] != 16 || q_permute->ne[3] != 1 ||
++        q_view->ne[0] != 256 || q_view->ne[1] != 16 || q_view->ne[2] != 1 || q_view->ne[3] != 1 ||
++        q_permute->data != q_rope->data || q_view->data != q_rope->data ||
++        (q_view->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        (q_permute->flags & GGML_TENSOR_FLAG_OUTPUT) != 0) {
++        return false;
++    }
++
++    ggml_sycl_ornith_qk_norm_rope_match found{};
++    int matches = 0;
++    for (int k_i = i + 3; k_i + 2 < cgraph->n_nodes && cgraph->nodes[k_i] != fattn; ++k_i) {
++        ggml_tensor * k_rms = cgraph->nodes[k_i];
++        ggml_tensor * k_mul = cgraph->nodes[k_i + 1];
++        ggml_tensor * k_rope = cgraph->nodes[k_i + 2];
++        if (k_rms == nullptr || k_mul == nullptr || k_rope == nullptr ||
++            k_rms->op != GGML_OP_RMS_NORM || k_mul->op != GGML_OP_MUL ||
++            k_rope->op != GGML_OP_ROPE || k_rope->src[0] != k_mul ||
++            k_rope->src[1] != q_rope->src[1] || k_rope->src[2] != nullptr ||
++            std::memcmp(k_rope->op_params, q_rope->op_params, GGML_MAX_OP_PARAMS) != 0 ||
++            std::strstr(k_rope->name, "Kcur-") == nullptr) {
++            continue;
++        }
++
++        const ggml_tensor * k_src = k_rms->src[0];
++        const ggml_tensor * k_weight = k_mul->src[0] == k_rms ? k_mul->src[1] : k_mul->src[0];
++        int k_layer = -1;
++        if (k_src == nullptr || k_weight == nullptr ||
++            std::sscanf(k_weight->name, "blk.%d.attn_k_norm.weight", &k_layer) != 1 ||
++            k_layer != layer || k_src->type != GGML_TYPE_F32 ||
++            k_src->ne[0] != 256 || k_src->ne[1] != 2 || k_src->ne[2] != 1 || k_src->ne[3] != 1 ||
++            k_src->nb[0] != sizeof(float) || k_weight->type != GGML_TYPE_F32 ||
++            k_weight->ne[0] != 256 || ggml_nelements(k_weight) != 256 ||
++            k_weight->nb[0] != sizeof(float) || k_rope->type != GGML_TYPE_F32 ||
++            k_rope->ne[0] != 256 || k_rope->ne[1] != 2 || k_rope->ne[2] != 1 || k_rope->ne[3] != 1 ||
++            !ggml_sycl_can_fuse(cgraph, k_i, { GGML_OP_RMS_NORM, GGML_OP_MUL }, {}) ||
++            !ggml_node_has_n_uses(cgraph, k_i, 1) || !ggml_node_has_n_uses(cgraph, k_i + 1, 1) ||
++            ggml_sycl_tensor_use_count(cgraph, k_rope) != 1 ||
++            (k_rms->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++            (k_mul->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++            (k_rope->flags & GGML_TENSOR_FLAG_OUTPUT) != 0) {
++            continue;
++        }
++
++        ggml_tensor * view = nullptr;
++        ggml_tensor * set_rows = nullptr;
++        int nodes_consumed = 0;
++        if (k_i + 4 < cgraph->n_nodes && cgraph->nodes[k_i + 3]->op == GGML_OP_VIEW &&
++            cgraph->nodes[k_i + 4]->op == GGML_OP_SET_ROWS) {
++            view = cgraph->nodes[k_i + 3];
++            set_rows = cgraph->nodes[k_i + 4];
++            nodes_consumed = 2;
++        } else if (k_i + 3 < cgraph->n_nodes && cgraph->nodes[k_i + 3]->op == GGML_OP_SET_ROWS &&
++            cgraph->nodes[k_i + 3]->src[0] != nullptr &&
++            cgraph->nodes[k_i + 3]->src[0]->op == GGML_OP_VIEW) {
++            view = cgraph->nodes[k_i + 3]->src[0];
++            set_rows = cgraph->nodes[k_i + 3];
++            nodes_consumed = 1;
++        }
++        if (view == nullptr || set_rows == nullptr || view->src[0] != k_rope ||
++            set_rows->src[0] != view || ggml_sycl_tensor_use_count(cgraph, view) != 1 ||
++            (view->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++            set_rows->type != GGML_TYPE_F16 || set_rows->src[1] == nullptr ||
++            set_rows->src[1]->type != GGML_TYPE_I64 || !ggml_is_contiguous(view) ||
++            view->ne[0] != 512 || ggml_nelements(view) != 512 ||
++            ggml_sycl_tensor_ranges_overlap(set_rows, q_src) ||
++            ggml_sycl_tensor_ranges_overlap(set_rows, k_src) ||
++            ggml_sycl_tensor_ranges_overlap(set_rows, q_weight) ||
++            ggml_sycl_tensor_ranges_overlap(set_rows, k_weight) ||
++            ggml_sycl_tensor_ranges_overlap(set_rows, q_rope)) {
++            continue;
++        }
++
++        float q_eps = 0.0f;
++        float k_eps = 0.0f;
++        memcpy(&q_eps, q_rms->op_params, sizeof(float));
++        memcpy(&k_eps, k_rms->op_params, sizeof(float));
++        if (q_eps < 0.0f || q_eps != k_eps) {
++            continue;
++        }
++
++        found = { q_rms, q_mul, q_rope, k_rms, k_mul, k_rope, set_rows, nodes_consumed };
++        ++matches;
++    }
++
++    if (matches != 1) {
++        return false;
++    }
++    match = found;
++    return true;
++}
++
+ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
+     ggml_sycl_set_main_device(sycl_ctx->device);
+ 
+@@ -6570,6 +6788,8 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+     pending_ornith_gdn_rms_gate.reserve(40);
+     std::vector<ggml_sycl_ornith_gdn_state_io_match> pending_ornith_gdn_state_io;
+     pending_ornith_gdn_state_io.reserve(40);
++    std::vector<ggml_sycl_ornith_qk_norm_rope_match> pending_ornith_qk_norm_rope;
++    pending_ornith_qk_norm_rope.reserve(10);
+ 
+     for (int i = 0; i < cgraph->n_nodes; i++) {
+         ggml_tensor * node = cgraph->nodes[i];
+@@ -6585,6 +6805,33 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             continue;
+         }
+ 
++        const auto qk_pending = std::find_if(
++            pending_ornith_qk_norm_rope.begin(), pending_ornith_qk_norm_rope.end(),
++            [node](const ggml_sycl_ornith_qk_norm_rope_match & candidate) {
++                return candidate.k_rms == node;
++            });
++        if (qk_pending != pending_ornith_qk_norm_rope.end()) {
++            const int nodes_consumed = qk_pending->k_nodes_consumed;
++            ggml_sycl_ornith_rms_mul_rope_qk_fused(
++                *sycl_ctx,
++                qk_pending->q_rms, qk_pending->q_mul, qk_pending->q_rope,
++                qk_pending->k_rms, qk_pending->k_mul, qk_pending->k_rope,
++                qk_pending->k_set_rows);
++            g_ggml_sycl_ornith_qk_norm_rope_hits.fetch_add(1, std::memory_order_relaxed);
++            pending_ornith_qk_norm_rope.erase(qk_pending);
++            i += 2 + nodes_consumed;
++            continue;
++        }
++
++        if (node->op == GGML_OP_RMS_NORM) {
++            ggml_sycl_ornith_qk_norm_rope_match match;
++            if (ggml_sycl_find_ornith_qk_norm_rope(cgraph, i, match)) {
++                pending_ornith_qk_norm_rope.push_back(match);
++                i += 2;
++                continue;
++            }
++        }
++
+         if (node->op == GGML_OP_GET_ROWS) {
+             ggml_sycl_ornith_gdn_state_io_match gdn_state_io;
+             if (ggml_sycl_find_ornith_gdn_state_io(cgraph, i, gdn_state_io)) {
+diff --git a/ggml/src/ggml-sycl/rope.cpp b/ggml/src/ggml-sycl/rope.cpp
+index b6d2255..9907d41 100644
+--- a/ggml/src/ggml-sycl/rope.cpp
++++ b/ggml/src/ggml-sycl/rope.cpp
+@@ -649,3 +649,182 @@ void ggml_sycl_rope_fused(ggml_backend_sycl_context &ctx, ggml_tensor *rope,
+     scope_op_debug_print scope_dbg_print(__func__, rope, /*num_src=*/3);
+     ggml_sycl_op_rope_impl<true>(ctx, rope, set_rows);
+ }
++
++void ggml_sycl_ornith_rms_mul_rope_qk_fused(
++        ggml_backend_sycl_context & ctx,
++        ggml_tensor * q_rms, ggml_tensor * q_mul, ggml_tensor * q_rope,
++        ggml_tensor * k_rms, ggml_tensor * k_mul, ggml_tensor * k_rope,
++        ggml_tensor * k_set_rows) {
++    GGML_ASSERT(q_rms != nullptr && q_mul != nullptr && q_rope != nullptr);
++    GGML_ASSERT(k_rms != nullptr && k_mul != nullptr && k_rope != nullptr && k_set_rows != nullptr);
++    GGML_ASSERT(q_rms->op == GGML_OP_RMS_NORM && q_mul->op == GGML_OP_MUL && q_rope->op == GGML_OP_ROPE);
++    GGML_ASSERT(k_rms->op == GGML_OP_RMS_NORM && k_mul->op == GGML_OP_MUL && k_rope->op == GGML_OP_ROPE);
++    GGML_ASSERT(q_rope->src[0] == q_mul && k_rope->src[0] == k_mul);
++    GGML_ASSERT((q_mul->src[0] == q_rms) != (q_mul->src[1] == q_rms));
++    GGML_ASSERT((k_mul->src[0] == k_rms) != (k_mul->src[1] == k_rms));
++
++    const ggml_tensor * q_src_tensor = q_rms->src[0];
++    const ggml_tensor * k_src_tensor = k_rms->src[0];
++    const ggml_tensor * q_weight_tensor = q_mul->src[0] == q_rms ? q_mul->src[1] : q_mul->src[0];
++    const ggml_tensor * k_weight_tensor = k_mul->src[0] == k_rms ? k_mul->src[1] : k_mul->src[0];
++    GGML_ASSERT(q_src_tensor != nullptr && k_src_tensor != nullptr);
++    GGML_ASSERT(q_weight_tensor != nullptr && k_weight_tensor != nullptr);
++    GGML_ASSERT(q_src_tensor->type == GGML_TYPE_F32 && k_src_tensor->type == GGML_TYPE_F32);
++    GGML_ASSERT(q_weight_tensor->type == GGML_TYPE_F32 && k_weight_tensor->type == GGML_TYPE_F32);
++    GGML_ASSERT(q_rope->type == GGML_TYPE_F32 && k_rope->type == GGML_TYPE_F32);
++    GGML_ASSERT(q_src_tensor->ne[0] == 256 && q_src_tensor->ne[1] == 16 &&
++                q_src_tensor->ne[2] == 1 && q_src_tensor->ne[3] == 1);
++    GGML_ASSERT(k_src_tensor->ne[0] == 256 && k_src_tensor->ne[1] == 2 &&
++                k_src_tensor->ne[2] == 1 && k_src_tensor->ne[3] == 1);
++    GGML_ASSERT(q_weight_tensor->ne[0] == 256 && ggml_nelements(q_weight_tensor) == 256);
++    GGML_ASSERT(k_weight_tensor->ne[0] == 256 && ggml_nelements(k_weight_tensor) == 256);
++    GGML_ASSERT(q_src_tensor->nb[0] == sizeof(float) && k_src_tensor->nb[0] == sizeof(float));
++    GGML_ASSERT(q_weight_tensor->nb[0] == sizeof(float) && k_weight_tensor->nb[0] == sizeof(float));
++    GGML_ASSERT(q_rope->nb[0] == sizeof(float));
++    GGML_ASSERT(k_set_rows->type == GGML_TYPE_F16 && k_set_rows->src[1] != nullptr &&
++                k_set_rows->src[1]->type == GGML_TYPE_I64);
++    GGML_ASSERT(q_rope->src[1] != nullptr && q_rope->src[1] == k_rope->src[1] &&
++                q_rope->src[1]->type == GGML_TYPE_I32);
++
++    float q_eps = 0.0f;
++    float k_eps = 0.0f;
++    memcpy(&q_eps, q_rms->op_params, sizeof(float));
++    memcpy(&k_eps, k_rms->op_params, sizeof(float));
++    GGML_ASSERT(q_eps >= 0.0f && q_eps == k_eps);
++
++    const int32_t * ip = (const int32_t *) q_rope->op_params;
++    GGML_ASSERT(memcmp(q_rope->op_params, k_rope->op_params, GGML_MAX_OP_PARAMS) == 0);
++    GGML_ASSERT(ip[1] == 64 && ip[2] == GGML_ROPE_TYPE_IMROPE && ip[4] == 262144);
++
++    float freq_base;
++    float freq_scale;
++    float ext_factor;
++    float attn_factor;
++    float beta_fast;
++    float beta_slow;
++    memcpy(&freq_base,   ip + 5,  sizeof(float));
++    memcpy(&freq_scale,  ip + 6,  sizeof(float));
++    memcpy(&ext_factor,  ip + 7,  sizeof(float));
++    memcpy(&attn_factor, ip + 8,  sizeof(float));
++    memcpy(&beta_fast,   ip + 9,  sizeof(float));
++    memcpy(&beta_slow,   ip + 10, sizeof(float));
++    GGML_ASSERT(freq_base == 10000000.0f && freq_scale == 1.0f &&
++                ext_factor == 0.0f && attn_factor == 1.0f);
++
++    mrope_sections sections;
++    memcpy(&sections.v, ip + 11, sizeof(sections.v));
++    GGML_ASSERT(sections.v[0] == 11 && sections.v[1] == 11 &&
++                sections.v[2] == 10 && sections.v[3] == 0);
++
++    rope_corr_dims corr_dims;
++    ggml_rope_yarn_corr_dims(ip[1], ip[4], freq_base, beta_fast, beta_slow, corr_dims.v);
++    const float theta_scale = powf(freq_base, -2.0f / ip[1]);
++
++    const float * q_src = (const float *) q_src_tensor->data;
++    const float * k_src = (const float *) k_src_tensor->data;
++    const float * q_weight = (const float *) q_weight_tensor->data;
++    const float * k_weight = (const float *) k_weight_tensor->data;
++    float * q_dst = (float *) q_rope->data;
++    sycl::half * k_dst = (sycl::half *) k_set_rows->data;
++    const int32_t * pos = (const int32_t *) q_rope->src[1]->data;
++    const int64_t * row_indices = (const int64_t *) k_set_rows->src[1]->data;
++
++    const int q_s01 = q_src_tensor->nb[1] / sizeof(float);
++    const int k_s01 = k_src_tensor->nb[1] / sizeof(float);
++    const int q_d01 = q_rope->nb[1] / sizeof(float);
++    const int k_set_rows_stride = k_set_rows->nb[1] / sizeof(sycl::half);
++    static const bool poison_q = [] {
++        const char * value = getenv("GGML_SYCL_FUSED_ORNITH_QK_NORM_ROPE_POISON");
++        return value != nullptr && atoi(value) != 0;
++    }();
++    const bool poison_q_kernel = poison_q;
++
++    constexpr int q_rows = 16;
++    constexpr int k_rows = 2;
++    constexpr int rms_lanes = WARP_SIZE;
++    constexpr int rope_pairs = 128;
++    const dpct::dim3 block_dims(1, rms_lanes, 1);
++    const dpct::dim3 block_nums(q_rows + k_rows, 1, 1);
++    dpct::queue_ptr stream = ctx.stream();
++    stream->submit([&](sycl::handler & cgh) {
++        sycl::local_accessor<float, 1> rms_mul_acc(sycl::range<1>(256), cgh);
++        cgh.parallel_for(
++            sycl::nd_range<3>(block_nums * block_dims, block_dims),
++            [=](sycl::nd_item<3> item_ct1)
++            [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                const int row = item_ct1.get_group(2);
++                const int tid = item_ct1.get_local_id(1);
++                const bool is_q = row < q_rows;
++                const int local_row = is_q ? row : row - q_rows;
++                const float * src = is_q ? q_src + local_row * q_s01 : k_src + local_row * k_s01;
++                const float * weight = is_q ? q_weight : k_weight;
++
++                float sum = 0.0f;
++                for (int col = tid; col < 256; col += rms_lanes) {
++                    const float value = src[col];
++                    sum += value * value;
++                }
++                sum = warp_reduce_sum(sum, item_ct1);
++                const float scale = sycl::rsqrt(sum / 256.0f + q_eps);
++
++                for (int col = tid; col < 256; col += rms_lanes) {
++                    rms_mul_acc[col] = scale * src[col] * weight[col];
++                }
++                item_ct1.barrier(sycl::access::fence_space::local_space);
++
++                for (int pair = tid; pair < rope_pairs; pair += rms_lanes) {
++                    const int i0 = 2 * pair;
++                    int col0;
++                    int col1;
++                    int out0;
++                    int out1;
++                    if (i0 < 64) {
++                        col0 = i0 / 2;
++                        col1 = col0 + 32;
++                        out0 = col0;
++                        out1 = col1;
++                    } else {
++                        col0 = i0;
++                        col1 = i0 + 1;
++                        out0 = col0;
++                        out1 = col1;
++                    }
++
++                    const float x0 = rms_mul_acc[col0];
++                    const float x1 = rms_mul_acc[col1];
++                    float y0 = x0;
++                    float y1 = x1;
++
++                    if (i0 < 64) {
++                        const int sect_dims = sections.v[0] + sections.v[1] + sections.v[2] + sections.v[3];
++                        const int sector = (i0 / 2) % sect_dims;
++                        float theta_base;
++                        if (sector % 3 == 1 && sector < 3 * sections.v[1]) {
++                            theta_base = pos[1] * dpct::pow(theta_scale, i0 / 2.0f);
++                        } else if (sector % 3 == 2 && sector < 3 * sections.v[2]) {
++                            theta_base = pos[2] * dpct::pow(theta_scale, i0 / 2.0f);
++                        } else if (sector % 3 == 0 && sector < 3 * sections.v[0]) {
++                            theta_base = pos[0] * dpct::pow(theta_scale, i0 / 2.0f);
++                        } else {
++                            theta_base = pos[3] * dpct::pow(theta_scale, i0 / 2.0f);
++                        }
++                        float cos_theta;
++                        float sin_theta;
++                        rope_yarn<true>(theta_base, freq_scale, corr_dims, i0,
++                                        ext_factor, attn_factor, cos_theta, sin_theta);
++                        y0 = x0 * cos_theta - x1 * sin_theta;
++                        y1 = x0 * sin_theta + x1 * cos_theta;
++                    }
++
++                    if (is_q) {
++                        q_dst[local_row * q_d01 + out0] = poison_q_kernel ? 0.0f : y0;
++                        q_dst[local_row * q_d01 + out1] = poison_q_kernel ? 0.0f : y1;
++                    } else {
++                        const int base = row_indices[0] * k_set_rows_stride + local_row * 256;
++                        k_dst[base + out0] = ggml_sycl_cast<sycl::half>(y0);
++                        k_dst[base + out1] = ggml_sycl_cast<sycl::half>(y1);
++                    }
++                }
++            });
++    });
++}
+diff --git a/ggml/src/ggml-sycl/rope.hpp b/ggml/src/ggml-sycl/rope.hpp
+index b95a585..771876d 100644
+--- a/ggml/src/ggml-sycl/rope.hpp
++++ b/ggml/src/ggml-sycl/rope.hpp
+@@ -23,4 +23,13 @@ void ggml_sycl_rope_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ 
+ void ggml_sycl_rope_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * set_rows);
+ 
++// Ornith/Qwen3.5 one-token full attention: preserve the stock SIMD16 RMS
++// reduction and FP32 RMS+weight materialization while joining Q/K IMRoPE and
++// writing K directly to the F16 cache.
++void ggml_sycl_ornith_rms_mul_rope_qk_fused(
++        ggml_backend_sycl_context & ctx,
++        ggml_tensor * q_rms, ggml_tensor * q_mul, ggml_tensor * q_rope,
++        ggml_tensor * k_rms, ggml_tensor * k_mul, ggml_tensor * k_rope,
++        ggml_tensor * k_set_rows);
++
+ #endif // GGML_SYCL_ROPE_HPP

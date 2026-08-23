@@ -4,8 +4,8 @@ Status: **model verified, one-card operating point validated, and lab decode
 patch promoted** (2026-08-23). Lane: enthusiast MoE; the measured stock
 two-card comparison was slower than one card for single-stream decode.
 
-**Current directly measured target-only serving mean: `126.179443 tok/s`**
-(fresh-suite medians `126.362074` and `125.996811`, one B70, cache-zero).
+**Current directly measured target-only serving mean: `128.832195 tok/s`**
+(fresh-suite medians `129.754844` and `127.909546`, one B70, cache-zero).
 
 **Intake diagnostic baseline (1x B70, 8K ctx, f16 KV, target-only,
 128/100 window, cache-zero verified): `105.782 tok/s` median /
@@ -47,8 +47,8 @@ git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-ornith15
 cd llama.cpp-ornith15
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
 
-PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch
-echo "d8c95e4d0cbe0be91c0890f4e5d3c6b4f2bfb22b5daedd12a560910f954c915e  $PATCH" | sha256sum -c -
+PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch
+echo "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1  $PATCH" | sha256sum -c -
 git apply --check "$PATCH"
 git apply "$PATCH"
 git diff --check
@@ -74,7 +74,7 @@ cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2
 ```
 
 The validated compute library SHA-256 was
-`cb401a22996aac4d482e5721aad0364f0462ec5522aefa05dc035cb002467259`.
+`060484479736f7cb7b6f55aacc38b9fdf162fb702fc3d73b1a1ce9750301fdcf`.
 AOT output can vary with the compiler installation, so the source revision,
 patch hash, build settings, and validation gates are the durable identity.
 
@@ -102,6 +102,7 @@ export GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1
 export GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1
 export GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1
 export GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO=1
+export GGML_SYCL_FUSED_ORNITH_QK_NORM_ROPE=1
 
 build-sycl-aot-bmg-g31/bin/llama-server \
   --model "$MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf" \
@@ -115,27 +116,27 @@ build-sycl-aot-bmg-g31/bin/llama-server \
 Do not enable SYCL command graphs for this model on the pinned stack; the
 matched model-level experiment regressed decode by 52%.
 
-## Current ten-feature context-depth profile (llama-bench, FA on, 5 reps)
+## Current eleven-feature context-depth profile (llama-bench, FA on, 5 reps)
 
-![optimized depth sweep](optimized-depth-sweep-ten-feature.svg)
+![optimized depth sweep](optimized-depth-sweep-eleven-feature.svg)
 
 | Depth | decode tg128 tok/s (±σ) | prefill pp2048 tok/s (±σ) |
 |---:|---:|---:|
-| 0 | 135.35 (±0.54) | 1400.7 (±37.9) |
-| 2,048 | 130.74 (±0.31) | 1324.7 (±8.1) |
-| 4,096 | 127.71 (±0.14) | 1316.8 (±4.5) |
-| 8,192 | 121.26 (±0.08) | 1283.6 (±9.1) |
-| 16,384 | 110.94 (±0.10) | 1219.3 (±7.0) |
-| 24,576 | 102.29 (±0.12) | 1196.4 (±8.4) |
-| 32,768 | 95.02 (±0.08) | 1102.1 (±3.2) |
+| 0 | 138.98 (±0.49) | 1397.3 (±37.9) |
+| 2,048 | 133.77 (±0.35) | 1326.7 (±7.4) |
+| 4,096 | 130.62 (±0.10) | 1312.2 (±5.0) |
+| 8,192 | 124.21 (±0.09) | 1284.8 (±5.8) |
+| 16,384 | 113.31 (±0.10) | 1220.2 (±6.1) |
+| 24,576 | 104.32 (±0.05) | 1196.7 (±5.8) |
+| 32,768 | 97.00 (±0.06) | 1101.6 (±3.9) |
 
 These are directly measured raw engine rates from the exact current
-ten-feature stack with command graphs off, F16 KV, and five samples at every
+eleven-feature stack with command graphs off, F16 KV, and five samples at every
 displayed depth. They are not inferred from the 8K server result and no missing
 depth is interpolated. Raw engine rates exclude HTTP and sampling overhead, so
 use the current fresh-server suite median below as the serving headline.
-Evidence: `ornith-15-35b-a3b-q4km-ten-feature.sweep.json` plus
-`ornith-15-35b-a3b-q4km-ten-feature.meta.json` (model and benchmark hashes
+Evidence: `ornith-15-35b-a3b-q4km-eleven-feature.sweep.json` plus
+`ornith-15-35b-a3b-q4km-eleven-feature.meta.json` (model and benchmark hashes
 inside).
 
 ## Historical stock context-depth reference (patch off; llama-bench, FA on, 5 reps)
@@ -182,7 +183,7 @@ Correctness gates:
   open runtime limitation rather than a patch acceptance gate.
 
 Patch instructions and evidence:
-[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch),
+[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch),
 [patch packet](../../patches/ornith-15-35b-a3b-q4km-b70/README.md), and
 [`experiments/ornith-15-b70/`](../../experiments/ornith-15-b70/).
 
@@ -295,6 +296,18 @@ recorded, and all objective canaries passed. The realistic same-process repeat
 probe retained the separately documented stock-runtime prose variability, so
 it is disclosed rather than presented as a determinism pass. Evidence:
 [`2026-08-23-ornith35b-gdn-state-io-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-gdn-state-io-positive.md).
+
+The eleventh increment transfers this lab's Qwen full-attention Q/K path to
+Ornith's 10 exact full-attention layers. One kernel preserves the stock SIMD16
+RMS reduction, learned scale, and IMRoPE arithmetic for Q and K, leaves Q in
+FP32 for flash attention, and writes K directly to its F16 cache. It replaces
+five operations with one per matching layer, removing another 40 launches per
+token and bringing the complete stack to 700. Mirrored engine means improved
+`130.397 -> 133.424 tok/s` (**+2.32%**) and fresh-server means improved
+`126.470 -> 128.832 tok/s` (**+1.87%**). Both candidates exceeded both
+controls; forced 128-token output was byte-identical, exactly 1,270 hits were
+recorded, and every objective canary passed. Evidence:
+[`2026-08-23-ornith35b-qk-norm-rope-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-qk-norm-rope-positive.md).
 
 ## Stock two-card comparison (patch off; layer split, GPUs 0+1)
 

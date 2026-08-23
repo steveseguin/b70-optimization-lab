@@ -169,13 +169,23 @@ binary, driver, or benchmark protocol will reproduce them.
   exactly 3,810 hits were recorded, and objective canaries passed. The
   complete ten-feature stack removes 660 launches/token. See
   `notes/2026-08-23-ornith35b-gdn-state-io-positive.md`.
+- **Full-attention Q/K RMSNorm-IMRoPE — ACCEPTED +1.87% incremental
+  serving:** following Ornith's Qwen lineage, the exact one-token
+  normalization/scale/IMRoPE chain is fused in all 10 full-attention layers,
+  with K written directly to the F16 cache. Mirrored engine means improved
+  `130.397 -> 133.424 tok/s` (+2.32%); fresh-server means improved
+  `126.470 -> 128.832 tok/s` (+1.87%). Every candidate exceeded every
+  control, forced 128-token output was byte-identical, exactly 1,270 hits were
+  recorded, and all objective canaries passed. The complete eleven-feature
+  stack removes 700 launches/token. See
+  `notes/2026-08-23-ornith35b-qk-norm-rope-positive.md`.
 - **Optimized 0-32K context profile — PUBLISHED, MEASURED ONLY:** the exact
-  ten-feature package stack was swept at seven explicit depths with
+  eleven-feature package stack was swept at seven explicit depths with
   `pp2048`, `tg128`, five repetitions, flash attention on, F16 KV, and graphs
-  off. Decode measured `135.348` tok/s at depth zero, `121.263` at 8K, and
-  `95.022` at 32K; prefill measured `1400.713`, `1283.591`, and `1102.085`
+  off. Decode measured `138.978` tok/s at depth zero, `124.210` at 8K, and
+  `96.996` at 32K; prefill measured `1397.348`, `1284.796`, and `1101.625`
   tok/s at those same depths. No point is interpolated or extrapolated. See
-  `notes/2026-08-23-ornith35b-ten-feature-depth-sweep.md` and the package guide.
+  `notes/2026-08-23-ornith35b-eleven-feature-depth-sweep.md` and the package guide.
 - **Current-stack serialized profile — DIAGNOSTIC ONLY:** temporary device
   barriers ranked dense projections first and routed projections second after
   the eight accepted optimizations. These serialized values are never

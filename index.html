@@ -318,8 +318,8 @@ Style genome (duotone-hixffp):
       <tbody>
         <tr>
           <th scope="row" class="model">Ornith 1.5 35B-A3B <small>1&times; B70 &middot; Q4_K_M &middot; Ornith AI &middot; Aug 2026</small><span class="status candidate">Candidate package</span></th>
-          <td class="mut model-use">Fast Qwen-derived one-card MoE; our ten-kernel stack is target-only, cache-zero tested, and includes measured decode/prefill curves through 32K</td>
-          <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate">126.18</td>
+          <td class="mut model-use">Fast Qwen-derived one-card MoE; our eleven-feature stack is target-only, cache-zero tested, and includes measured decode/prefill curves through 32K</td>
+          <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate">128.83</td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="repro/ornith-15-35b-a3b-q4km-b70/README.md" aria-label="Copy Ornith 1.5 35B one-B70 candidate guide Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Ornith%201.5%2035B-A3B%201xB70">Submit improvement</a></div></td>
         </tr>
         <tr>
@@ -417,15 +417,15 @@ Style genome (duotone-hixffp):
       <tbody>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Ornith 1.5 35B-A3B <small>Qwen-derived MoE &middot; uses ~3B of 35B per word &middot; Aug 2026</small></th>
-          <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M + lab ten-feature stack</td><td class="num r">1&times;</td>
-          <td class="num r">126.18<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M + lab eleven-feature stack</td><td class="num r">1&times;</td>
+          <td class="num r">128.83<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
           <td class="mut hide-s" title="mean of two fresh cache-zero suite medians">average of 2 fresh servers</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">full guide</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Laguna-S-2.1 <small>coding assistant &middot; Jul 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">INT4 W4A16 + DFlash d11</td><td class="num r">4&times;</td>
-          <td class="num r">125.46<div class="ratebar" style="width:99.4%" aria-hidden="true"></div></td>
+          <td class="num r">125.46<div class="ratebar" style="width:97.4%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="conventional median">typical</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/laguna-s-2.1-int4-b70/README.md">test report</a></td>
         </tr>

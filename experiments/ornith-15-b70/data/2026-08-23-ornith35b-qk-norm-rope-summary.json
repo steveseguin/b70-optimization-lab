@@ -1,0 +1,49 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "candidate_library_sha256": "060484479736f7cb7b6f55aacc38b9fdf162fb702fc3d73b1a1ce9750301fdcf",
+  "complete_patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch",
+  "complete_patch_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+  "incremental_patch": "experiments/ornith-15-b70/patches/llamacpp-ornith15-qk-norm-rope-positive-20260823.patch",
+  "incremental_patch_sha256": "d54420d97abeb6842c0c248bbabc2e3b86f9d61294a173d3bbb185339024f7b5",
+  "candidate_door": "GGML_SYCL_FUSED_ORNITH_QK_NORM_ROPE=1",
+  "removed_launches_per_decoded_token_incremental": 40,
+  "removed_launches_per_decoded_token_complete_stack": 700,
+  "engine": {
+    "protocol": "llama-bench p0/n128/d0/r7, same maintained final binary, mirrored A/B/B/A sequence",
+    "controls_tok_s": [130.338305, 130.456676],
+    "candidates_tok_s": [133.521063, 133.326313],
+    "control_mean_tok_s": 130.3974905,
+    "candidate_mean_tok_s": 133.423688,
+    "delta_percent": 2.3207482662,
+    "each_candidate_exceeded_each_control": true,
+    "candidate_fused_hits_each_run": 8970
+  },
+  "fresh_server": {
+    "protocol": "two fresh controls and two fresh candidates in A/B/B/A order; fixed 12-prompt suite; each prompt once; 512-token maximum; median tokens 1-100 after TTFT; cached_tokens=0",
+    "controls_tok_s": [126.09529170062483, 126.84532455002113],
+    "candidates_tok_s": [129.75484448102156, 127.90954627672699],
+    "control_mean_tok_s": 126.47030812532298,
+    "candidate_mean_tok_s": 128.83219537887428,
+    "delta_percent": 1.8675428949,
+    "all_freshness_gates_passed": true,
+    "all_final_gates_passed": true,
+    "each_candidate_exceeded_each_control": true,
+    "candidate_fused_hits_each_run": 61320
+  },
+  "correctness": {
+    "canonical_128_token_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "same_binary_control_candidate_byte_identical": true,
+    "candidate_fused_hits_128_tokens": 1270,
+    "expected_fused_hits_128_tokens": 1270,
+    "objective_canaries_passed": true,
+    "repeat_8x_unique_outputs": 1,
+    "arithmetic_answer": "4183",
+    "copy_exact": true,
+    "json_schema_valid": true
+  },
+  "scratch_build_caveat": "An isolated scratch build produced a different transcript hash because its AOT/build configuration differed. Its positive timing was treated only as mechanism evidence; every promoted number and exactness decision comes from the maintained oracle-matching build above.",
+  "result": "accepted incremental optimization"
+}
