@@ -1051,82 +1051,82 @@
       "performance_profiles": [
         {
           "id": "decode-vs-context-depth",
-          "label": "Optimized raw decode over existing context depth",
+          "label": "Current-stack raw decode over existing context depth",
           "metric": "decode",
           "unit": "tok/s",
           "x_label": "Existing context depth before tg128",
-          "scope": "Historical llama-bench raw engine rates using the exact prior eight-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions. These are not relabeled as measurements of the newer ninth feature. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "scope": "llama-bench raw engine rates using the exact current nine-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
           "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-optimized.sweep.json",
           "points": [
             {
               "context_tokens": 2048,
-              "value": 121.198575,
+              "value": 121.664112,
               "samples": 5
             },
             {
               "context_tokens": 4096,
-              "value": 118.309092,
+              "value": 118.8141,
               "samples": 5
             },
             {
               "context_tokens": 8192,
-              "value": 113.113549,
+              "value": 113.570291,
               "samples": 5
             },
             {
               "context_tokens": 16384,
-              "value": 104.097194,
+              "value": 104.505272,
               "samples": 5
             },
             {
               "context_tokens": 24576,
-              "value": 96.56276,
+              "value": 96.803311,
               "samples": 5
             },
             {
               "context_tokens": 32768,
-              "value": 90.323869,
+              "value": 90.497879,
               "samples": 5
             }
           ]
         },
         {
           "id": "prefill-vs-context-depth",
-          "label": "Optimized raw pp2048 over existing context depth",
+          "label": "Current-stack raw pp2048 over existing context depth",
           "metric": "prefill",
           "unit": "tok/s",
           "x_label": "Existing context depth before pp2048",
-          "scope": "Historical llama-bench raw engine rates using the exact prior eight-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions. These are not relabeled as measurements of the newer ninth feature. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+          "scope": "llama-bench raw engine rates using the exact current nine-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
           "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-optimized.sweep.json",
           "points": [
             {
               "context_tokens": 2048,
-              "value": 1323.205093,
+              "value": 1324.481215,
               "samples": 5
             },
             {
               "context_tokens": 4096,
-              "value": 1317.981075,
+              "value": 1314.983919,
               "samples": 5
             },
             {
               "context_tokens": 8192,
-              "value": 1286.06894,
+              "value": 1283.781607,
               "samples": 5
             },
             {
               "context_tokens": 16384,
-              "value": 1220.103629,
+              "value": 1220.137027,
               "samples": 5
             },
             {
               "context_tokens": 24576,
-              "value": 1197.532516,
+              "value": 1195.816978,
               "samples": 5
             },
             {
               "context_tokens": 32768,
-              "value": 1100.398253,
+              "value": 1101.523036,
               "samples": 5
             }
           ]
