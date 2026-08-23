@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ornith 1.5 35B-A3B Q4_K_M on one Intel Arc Pro B70 — 129 tok/s measured — neural.download</title>
+<meta name="description" content="35B-class Qwen-derived MoE (256 experts / 8 active, arch qwen35moe) reaching a directly measured 128.8 tok/s current-patch mean on one card with the lab&#x27;s validated expert-reduction, recurrent, state-materialization, alpha-gate, routed gate/up, residual/RMSNorm, GDN, and full-attention Q/K normaliza">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/models/ornith-15-35b-a3b-q4km-b70.html">
+<meta name="theme-color" content="#f6f1e5">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://neural.download/models/ornith-15-35b-a3b-q4km-b70.html">
+<meta property="og:title" content="Ornith 1.5 35B-A3B Q4_K_M on one Intel Arc Pro B70 — 129 tok/s on Intel Arc Pro B70">
+<meta property="og:description" content="35B-class Qwen-derived MoE (256 experts / 8 active, arch qwen35moe) reaching a directly measured 128.8 tok/s current-patch mean on one card with the lab&#x27;s validated expert-reduction, recurrent, state-materialization, alpha-gate, routed gate/up, residual/RMSNorm, GDN, and full-attention Q/K normaliza">
+<meta property="og:image" content="https://neural.download/og-image.png">
+<meta property="og:site_name" content="neural.download">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Ornith 1.5 35B-A3B Q4_K_M on one Intel Arc Pro B70", "description": "35B-class Qwen-derived MoE (256 experts / 8 active, arch qwen35moe) reaching a directly measured 128.8 tok/s current-patch mean on one card with the lab's validated expert-reduction, recurrent, state-materialization, alpha-gate, routed gate/up, residual/RMSNorm, GDN, and full-attention Q/K normaliza", "url": "https://neural.download/models/ornith-15-35b-a3b-q4km-b70.html", "dateModified": "2026-08-22", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["Ornith 1.5", "Intel Arc Pro B70", "local LLM inference"]}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "Ornith 1.5 35B-A3B Q4_K_M on one Intel Arc Pro B70", "item": "https://neural.download/models/ornith-15-35b-a3b-q4km-b70.html"}]}
+</script>
+<link rel="stylesheet" href="../learn/learn.css">
+<link rel="preconnect" href="https://mlbottleneck.com">
+<style>
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 16px; margin: 14px 0 22px; padding: 14px 16px; border: 2px solid var(--ink); background: var(--paper); }
+  .facts div { min-width: 0; }
+  .facts dt { font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .facts dd { margin: 2px 0 0; font-size: 13.5px; overflow-wrap: anywhere; }
+  .missing { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--ink); background: var(--surface); }
+  .missing-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); }
+  .missing ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .measured { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 8px 0 6px; }
+  .measured .big { font: 900 44px/1 var(--display); color: var(--spot-dark); }
+  .measured .unit { font: 700 13px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .scope { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 9px 12px; margin: 14px 0 22px; align-items: center; }
+  .actions .button { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper); font: 700 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .actions .button:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .actions .button.secondary { background: transparent; color: var(--ink); }
+  .actions .button.secondary:hover { background: var(--ink); color: var(--paper); }
+  .copy-md { appearance: none; border: 2px solid var(--ink); border-radius: 0; background: transparent; color: var(--ink); min-height: 36px; padding: 6px 10px; font: 700 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; cursor: pointer; }
+  .copy-md:hover { background: var(--ink); color: var(--paper); }
+  .copy-md.copied { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .copy-md.failed { border-color: #a12820; color: #a12820; }
+  .hr-card { border: 2px solid var(--ink); background: var(--paper); padding: 13px 14px 11px; margin: 0 0 12px; }
+  .hr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .hr-card h3 { margin: 0; font: 900 15px var(--display); text-transform: uppercase; }
+  .hr-deploy { margin: 3px 0 0; color: var(--muted); font: 10.5px var(--mono); }
+  .hr-grade { flex: 0 0 auto; text-align: right; }
+  .hr-grade-letter { display: block; font: 900 26px/1 var(--display); color: var(--spot-dark); }
+  .hr-grade-note { display: block; margin-top: 3px; color: var(--muted); font: 700 9.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-bar-row { display: grid; grid-template-columns: 108px 1fr 78px; align-items: center; gap: 8px; margin: 5px 0; font: 10.5px var(--mono); }
+  .hr-bar-label { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .hr-bar-track { display: block; height: 9px; background: var(--surface); border: 1px solid var(--ink); }
+  .hr-bar { display: block; height: 100%; background: var(--ink); }
+  .hr-bar.is-measured { background: var(--spot); }
+  .hr-bar.is-stock { background: var(--ink); opacity: .45; }
+  .hr-bar.is-physical { background: var(--muted); opacity: .55; }
+  .hr-bar-value { text-align: right; font-weight: 700; white-space: nowrap; }
+  .hr-bar-value small { font-weight: 400; color: var(--muted); }
+  .hr-why { margin: 9px 0 0; color: var(--muted); font-size: 12px; }
+  .hr-links { margin: 7px 0 0; font: 10.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-links a { border-bottom: 1px solid currentColor; }
+  @media (max-width: 520px) { .hr-bar-row { grid-template-columns: 92px 1fr 70px; } .measured .big { font-size: 36px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../index.html">Home</a>
+    <a href="index.html" aria-current="page">Models</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Guide library</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Ornith 1.5</p>
+  <p class="eyebrow">Candidate package · llama.cpp SYCL · 1× Intel Arc Pro B70</p>
+  <h1>Ornith 1.5 35B-A3B Q4_K_M on one Intel Arc Pro B70</h1>
+  <p>35B-class Qwen-derived MoE (256 experts / 8 active, arch qwen35moe) reaching a directly measured 128.8 tok/s current-patch mean on one card with the lab&#x27;s validated expert-reduction, recurrent, state-materialization, alpha-gate, routed gate/up, residual/RMSNorm, GDN, and full-attention Q/K normalization-RoPE patches.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose" id="package-page" data-ml-model="ornith_1.5_35b_a3b" data-ml-quant="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="128.832195" data-ml-quant-label="Q4_K_M" data-ml-runtime-label="llama.cpp SYCL">
+
+  <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2>
+  <div class="measured"><span class="big">129</span><span class="unit">tok/s decode (3B active parameters)</span></div>
+  <p class="scope">Mean of two fresh-server suite medians (129.755 and 127.910 tok/s), up-to-512-token responses, target-only, cache-zero; the current eleven-feature patch&#x27;s Q/K normalization-RoPE increment was +1.87% against matched controls. This value is directly measured, not extrapolated from the prior operating point. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">proof file</a></p>
+  <div class="actions">
+    <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">Open the full guide</a>
+    <button type="button" class="copy-md" data-copy-markdown="../repro/ornith-15-35b-a3b-q4km-b70/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
+    <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title=Ornith%201.5%2035B-A3B%20Q4_K_M%20on%20one%20Intel%20Arc%20Pro%20B70">Submit an improvement</a>
+  </div>
+
+  <dl class="facts"><div><dt>Model</dt><dd>Ornith 1.5 35B-A3B</dd></div><div><dt>Publisher</dt><dd>Ornith AI</dd></div><div><dt>Checkpoint</dt><dd>ornith-ai/Ornith-1.5-35B-A3B-GGUF</dd></div><div><dt>Compression</dt><dd>Q4_K_M</dd></div><div><dt>Software</dt><dd>llama.cpp SYCL</dd></div><div><dt>Cards</dt><dd>1× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model weight bytes</dt><dd>21.7 GB</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd>general, coding, chat</dd></div><div><dt>Published</dt><dd>2026-08-22</dd></div><div><dt>Clean-host replay</dt><dd>not yet</dd></div></dl>
+  <div class="missing"><p class="missing-tag">Still missing before this becomes an install guide</p><ul><li>tested clean-host platform installation</li><li>beginner recovery flow</li></ul></div>
+  <h2 id="profiles">Measured across context depth <span class="badge lab">Lab-measured</span></h2><figure class="chart"><h4>Current-stack raw decode over existing context depth <span class="badge lab">Lab-measured</span></h4><svg viewBox="0 0 640 260" width="100%" role="img" aria-label="Current-stack raw decode over existing context depth" xmlns="http://www.w3.org/2000/svg"><line x1="64" y1="216.0" x2="620" y2="216.0" stroke="var(--ink)" stroke-width="2"></line><path d="M64.0,37.8 L471.7,44.5 L508.8,48.5 L545.9,56.8 L582.9,70.7 L604.6,82.3 L620.0,91.6" fill="none" stroke="var(--spot)" stroke-width="3"></path><circle cx="64.0" cy="37.8" r="4" fill="var(--spot)"></circle><text x="64.0" y="28.8" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">139</text><circle cx="471.7" cy="44.5" r="4" fill="var(--spot)"></circle><text x="471.7" y="35.5" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">134</text><circle cx="508.8" cy="48.5" r="4" fill="var(--spot)"></circle><text x="508.8" y="39.5" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">131</text><circle cx="545.9" cy="56.8" r="4" fill="var(--spot)"></circle><text x="545.9" y="47.8" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">124</text><circle cx="582.9" cy="70.7" r="4" fill="var(--spot)"></circle><text x="582.9" y="61.7" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">113</text><circle cx="604.6" cy="82.3" r="4" fill="var(--spot)"></circle><text x="604.6" y="73.3" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">104</text><circle cx="620.0" cy="91.6" r="4" fill="var(--spot)"></circle><text x="620.0" y="82.6" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">97.0</text><text x="64.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">0</text><text x="471.7" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">2K</text><text x="508.8" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">4K</text><text x="545.9" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">8K</text><text x="582.9" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">16K</text><text x="604.6" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">24K</text><text x="620.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">32K</text><text x="64" y="254" font-size="11" font-family="var(--mono)" fill="var(--muted)">Existing context depth before tg128 (tok/s)</text></svg><figcaption>llama-bench raw engine rates using the exact current eleven-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions at every displayed depth. No missing depth is interpolated. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-eleven-feature.sweep.json">evidence</a></figcaption></figure><figure class="chart"><h4>Current-stack raw pp2048 over existing context depth <span class="badge lab">Lab-measured</span></h4><svg viewBox="0 0 640 260" width="100%" role="img" aria-label="Current-stack raw pp2048 over existing context depth" xmlns="http://www.w3.org/2000/svg"><line x1="64" y1="216.0" x2="620" y2="216.0" stroke="var(--ink)" stroke-width="2"></line><path d="M64.0,37.8 L471.7,46.8 L508.8,48.7 L545.9,52.2 L582.9,60.4 L604.6,63.4 L620.0,75.5" fill="none" stroke="var(--spot)" stroke-width="3"></path><circle cx="64.0" cy="37.8" r="4" fill="var(--spot)"></circle><text x="64.0" y="28.8" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">1,397</text><circle cx="471.7" cy="46.8" r="4" fill="var(--spot)"></circle><text x="471.7" y="37.8" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">1,327</text><circle cx="508.8" cy="48.7" r="4" fill="var(--spot)"></circle><text x="508.8" y="39.7" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">1,312</text><circle cx="545.9" cy="52.2" r="4" fill="var(--spot)"></circle><text x="545.9" y="43.2" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">1,285</text><circle cx="582.9" cy="60.4" r="4" fill="var(--spot)"></circle><text x="582.9" y="51.4" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">1,220</text><circle cx="604.6" cy="63.4" r="4" fill="var(--spot)"></circle><text x="604.6" y="54.4" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">1,197</text><circle cx="620.0" cy="75.5" r="4" fill="var(--spot)"></circle><text x="620.0" y="66.5" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">1,102</text><text x="64.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">0</text><text x="471.7" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">2K</text><text x="508.8" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">4K</text><text x="545.9" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">8K</text><text x="582.9" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">16K</text><text x="604.6" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">24K</text><text x="620.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">32K</text><text x="64" y="254" font-size="11" font-family="var(--mono)" fill="var(--muted)">Existing context depth before pp2048 (tok/s)</text></svg><figcaption>llama-bench raw engine rates using the exact current eleven-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions at every displayed depth. No missing depth is interpolated. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-eleven-feature.sweep.json">evidence</a></figcaption></figure>
+  
+  <h2 id="projection">How much faster could this get? <span class="badge spec">Projected — not measured</span></h2>
+  <p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects what stock software, a tuned run, and the physical ceiling look like for this exact model, compression, card count, and software. The grade is optimization headroom against the tuned-run target, not model quality.</p>
+  <div id="package-projection" class="projection" hidden>
+    <p class="projection-status" data-projection-status>Loading projections from mlbottleneck.com…</p>
+    <div data-package-card></div>
+    <div data-package-charts></div>
+  </div>
+  <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="ornith-15-9b-q8-b70.html"><b>Ornith 1.5 9B Q8_0 on one Intel Arc Pro B70</b><span>49.6 tok/s · llama.cpp SYCL</span></a>
+      <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
+      <a href="../guides.html"><b>Guide library</b><span>Every package, filterable</span></a>
+      <a href="../index.html#contribute"><b>Contribute</b><span>Made it faster? Send it in</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel. Measured numbers link to their proof; projections are labeled and come from a physics model.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
+</div></footer>
+<script defer src="../learn/assets/mlbottleneck-bridge.js"></script>
+<script>
+(() => {
+  document.querySelectorAll("[data-copy-markdown]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const original = button.textContent; button.disabled = true; button.textContent = "Copying…";
+      try {
+        const response = await fetch(button.dataset.copyMarkdown, { cache: "no-store" });
+        if (!response.ok) throw new Error("fetch failed");
+        await navigator.clipboard.writeText(await response.text());
+        button.textContent = "Copied"; button.classList.add("copied");
+      } catch (error) { button.textContent = "Copy failed"; button.classList.add("failed"); }
+      window.setTimeout(() => { button.textContent = original; button.classList.remove("copied", "failed"); button.disabled = false; }, 1800);
+    });
+  });
+})();
+</script>
+</body>
+</html>

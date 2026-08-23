@@ -98,6 +98,8 @@
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 10px; margin-top: auto; padding-top: 16px; }
   .button, .copy { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; padding: 7px 10px; border: 2px solid var(--ink); border-radius: 0; background: var(--ink); color: var(--paper); cursor: pointer; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .04em; }
   .button:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .button.secondary { background: transparent; color: var(--ink); }
+  .button.secondary:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
   .copy { background: transparent; color: var(--ink); }
   .copy:hover { background: var(--ink); color: var(--paper); }
   .copy:disabled { opacity: .65; cursor: wait; }
@@ -254,7 +256,7 @@
       ${performanceBlock(item)}
       <p class="credit"><strong>Built with:</strong> ${people}</p>
       <details><summary>${item.missing.length} remaining package gate${item.missing.length === 1 ? "" : "s"}</summary><ul>${missing}</ul></details>
-      <div class="actions"><a class="button" href="${GITHUB}${encodeURI(readme)}">Open guide</a><button class="copy" type="button" data-copy="${escapeHtml(readme)}">Copy Markdown</button><a class="submit" href="${ISSUE}${encodeURIComponent(title)}">Submit an optimization</a></div>
+      <div class="actions"><a class="button" href="models/${encodeURIComponent(item.id)}.html">Details page</a><a class="button secondary" href="${GITHUB}${encodeURI(readme)}">Open guide</a><button class="copy" type="button" data-copy="${escapeHtml(readme)}">Copy Markdown</button><a class="submit" href="${ISSUE}${encodeURIComponent(title)}">Submit an optimization</a></div>
       </div></article>`;
   };
 

@@ -115,6 +115,61 @@
       + '</div>';
   }
 
+  function requestFromDataset(data) {
+    const request = {
+      model: data.mlModel,
+      hardware: { template: data.mlHardware || 'Intel Arc Pro B70', count: parseInt(data.mlCards, 10) || 1 },
+      quantization: data.mlQuant || 'q4',
+      runtime: data.mlRuntime || 'auto',
+      promptTokens: parseInt(data.mlPrompt, 10) || 1024,
+      outputTokens: parseInt(data.mlOutput, 10) || 256,
+      speculation: parseSpec(data.mlSpec)
+    };
+    if (data.mlStrategy) request.strategy = data.mlStrategy;
+    if (data.mlCpuMoe) request.cpuMoeLayers = parseInt(data.mlCpuMoe, 10);
+    return request;
+  }
+
+  function deploymentLabel(data) {
+    return [data.mlCards + '× ' + (data.mlHardwareLabel || 'B70'), data.mlQuantLabel || data.mlQuant, data.mlRuntimeLabel || data.mlRuntime].filter(Boolean).join(' · ');
+  }
+
+  // Measured vs stock projection vs tuned target vs physical ceiling, plus the grade.
+  function buildHeadroomCard(engine, request, measured, title, deployment) {
+    let result;
+    try {
+      result = engine.predict(request);
+    } catch (error) {
+      return null;
+    }
+    const target = result.ceiling ? result.ceiling.optimizedTokensPerSecond : null;
+    const physical = result.ceiling ? result.ceiling.physicalTokensPerSecond : null;
+    const stock = result.ceiling ? result.ceiling.expectedTokensPerSecond : result.decode.perUserTokensPerSecond;
+    const ratio = target ? measured / target : NaN;
+    const vsStock = stock > 0 ? measured / stock : NaN;
+    const g = grade(ratio);
+    const max = Math.max(measured, stock || 0, target || 0, physical || 0);
+    const withoutSpec = result.decode.withoutSpeculation;
+    const provenance = result.ceiling && result.ceiling.peers > 0
+      ? 'calibrated on ' + result.ceiling.peers + ' community run' + (result.ceiling.peers === 1 ? '' : 's') + ' of this stack'
+      : 'physics only — no comparable community runs yet';
+    const html = '<article class="hr-card" aria-label="' + esc(title) + ' headroom">'
+      + '<div class="hr-head"><div><h3>' + esc(title) + '</h3><p class="hr-deploy">' + esc(deployment) + '</p></div>'
+      + '<div class="hr-grade" title="' + esc(g.note) + '"><span class="hr-grade-letter">' + esc(g.letter) + '</span><span class="hr-grade-note">' + esc(Number.isFinite(ratio) ? Math.round(ratio * 100) + '% of target' : g.note) + '</span></div></div>'
+      + barRow('Measured here', measured, max, 'is-measured', 'tok/s')
+      + barRow('Stock software', stock, max, 'is-stock', 'projected')
+      + barRow('Tuned-run target', target, max, 'is-target', 'projected')
+      + barRow('Physical ceiling', physical, max, 'is-physical', 'projected')
+      + '<p class="hr-why">'
+      + (Number.isFinite(vsStock) ? '<strong>' + esc(vsStock.toFixed(2)) + '×</strong> the stock-software projection · ' : '')
+      + 'projected limiter: <strong>' + esc(limiterText(result)) + '</strong>'
+      + (withoutSpec && result.decode.speculationMultiplier ? ' · speculation modeled at ×' + esc(result.decode.speculationMultiplier.toFixed(2)) : '')
+      + ' · ' + esc(provenance) + '.</p>'
+      + '<p class="hr-links"><a href="' + esc(plannerLink(request)) + '" target="_blank" rel="noopener noreferrer">Open this setup in ML Bottleneck</a></p>'
+      + '</article>';
+    return { html, result };
+  }
+
   // ---- index.html: headroom cards from the lab tables -------------------
   async function renderHeadroom() {
     const section = document.getElementById('headroom');
@@ -133,33 +188,9 @@
     const cards = [];
     for (const row of rows) {
       const data = row.dataset;
-      // The measured rate is read from the row's own speed cell (the last
-      // numeric cell), so a re-measured row never drifts from its card.
       const numericCells = Array.from(row.querySelectorAll('td.num')).map(cell => parseFloat(cell.textContent)).filter(Number.isFinite);
       const measured = numericCells.length ? numericCells[numericCells.length - 1] : parseFloat(data.mlMeasured);
       if (!Number.isFinite(measured)) continue;
-      const request = {
-        model: data.mlModel,
-        hardware: { template: data.mlHardware || 'Intel Arc Pro B70', count: parseInt(data.mlCards, 10) || 1 },
-        quantization: data.mlQuant || 'q4',
-        runtime: data.mlRuntime || 'auto',
-        promptTokens: parseInt(data.mlPrompt, 10) || 1024,
-        outputTokens: parseInt(data.mlOutput, 10) || 256,
-        speculation: parseSpec(data.mlSpec)
-      };
-      if (data.mlCpuMoe) request.cpuMoeLayers = parseInt(data.mlCpuMoe, 10);
-      let result;
-      try {
-        result = engine.predict(request);
-      } catch (error) {
-        continue;
-      }
-      const target = result.ceiling ? result.ceiling.optimizedTokensPerSecond : null;
-      const physical = result.ceiling ? result.ceiling.physicalTokensPerSecond : null;
-      const stock = result.ceiling ? result.ceiling.expectedTokensPerSecond : result.decode.perUserTokensPerSecond;
-      const ratio = target ? measured / target : NaN;
-      const vsStock = stock > 0 ? measured / stock : NaN;
-      const g = grade(ratio);
       const label = row.querySelector('th.model');
       let title = data.mlModel;
       if (label) {
@@ -167,28 +198,8 @@
         clone.querySelectorAll('small, .dot, .visually-hidden, .status').forEach(node => node.remove());
         title = clone.textContent.replace(/\s+/g, ' ').trim() || data.mlModel;
       }
-      const deployment = [data.mlCards + '× ' + (data.mlHardwareLabel || 'B70'), data.mlQuantLabel || data.mlQuant, data.mlRuntimeLabel || data.mlRuntime].filter(Boolean).join(' · ');
-      const max = Math.max(measured, stock || 0, target || 0, physical || 0);
-      const withoutSpec = result.decode.withoutSpeculation;
-      const provenance = result.ceiling && result.ceiling.peers > 0
-        ? 'calibrated on ' + result.ceiling.peers + ' community run' + (result.ceiling.peers === 1 ? '' : 's') + ' of this stack'
-        : 'physics only — no comparable community runs yet';
-      cards.push(
-        '<article class="hr-card" aria-label="' + esc(title) + ' headroom">'
-        + '<div class="hr-head"><div><h3>' + esc(title) + '</h3><p class="hr-deploy">' + esc(deployment) + '</p></div>'
-        + '<div class="hr-grade" title="' + esc(g.note) + '"><span class="hr-grade-letter">' + esc(g.letter) + '</span><span class="hr-grade-note">' + esc(Number.isFinite(ratio) ? Math.round(ratio * 100) + '% of target' : g.note) + '</span></div></div>'
-        + barRow('Measured here', measured, max, 'is-measured', 'tok/s')
-        + barRow('Stock software', stock, max, 'is-stock', 'projected')
-        + barRow('Tuned-run target', target, max, 'is-target', 'projected')
-        + barRow('Physical ceiling', physical, max, 'is-physical', 'projected')
-        + '<p class="hr-why">'
-        + (Number.isFinite(vsStock) ? '<strong>' + esc(vsStock.toFixed(2)) + '×</strong> the stock-software projection · ' : '')
-        + 'projected limiter: <strong>' + esc(limiterText(result)) + '</strong>'
-        + (withoutSpec && result.decode.speculationMultiplier ? ' · speculation modeled at ×' + esc(result.decode.speculationMultiplier.toFixed(2)) : '')
-        + ' · ' + esc(provenance) + '.</p>'
-        + '<p class="hr-links"><a href="' + esc(plannerLink(request)) + '" target="_blank" rel="noopener noreferrer">Open this setup in ML Bottleneck</a></p>'
-        + '</article>'
-      );
+      const card = buildHeadroomCard(engine, requestFromDataset(data), measured, title, deploymentLabel(data));
+      if (card) cards.push(card.html);
     }
     grid.innerHTML = cards.join('');
     if (status) {
@@ -381,10 +392,79 @@
     root.hidden = false;
   }
 
+  function svgLine(points, title, unit, xLabel) {
+    const width = 640, height = 250, left = 64, top = 22, right = 20, bottom = 44;
+    const xs = points.map(p => Math.max(1, p.x));
+    const ys = points.map(p => p.y);
+    const lx = xs.map(x => Math.log2(x));
+    const x0 = Math.min.apply(null, lx), x1 = Math.max.apply(null, lx);
+    const yMax = Math.max.apply(null, ys.concat([1])) * 1.1;
+    const sx = x => left + ((Math.log2(Math.max(1, x)) - x0) / Math.max(1e-9, x1 - x0)) * (width - left - right);
+    const sy = y => top + (1 - y / yMax) * (height - top - bottom);
+    const path = points.map((p, i) => (i ? 'L' : 'M') + sx(p.x).toFixed(1) + ',' + sy(p.y).toFixed(1)).join(' ');
+    const dots = points.map(p => '<circle cx="' + sx(p.x).toFixed(1) + '" cy="' + sy(p.y).toFixed(1) + '" r="3.5" fill="var(--ink)"></circle>'
+      + '<text x="' + sx(p.x).toFixed(1) + '" y="' + (sy(p.y) - 8).toFixed(1) + '" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">' + esc(fmt(p.y)) + '</text>'
+      + '<text x="' + sx(p.x).toFixed(1) + '" y="' + (height - 24) + '" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">' + esc(p.label) + '</text>').join('');
+    return '<svg viewBox="0 0 ' + width + ' ' + height + '" width="100%" role="img" aria-label="' + esc(title) + '" xmlns="http://www.w3.org/2000/svg">'
+      + '<text x="0" y="14" font-size="12" font-weight="700" font-family="var(--mono)" fill="var(--ink)">' + esc(title) + ' (' + esc(unit) + ')</text>'
+      + '<line x1="' + left + '" y1="' + sy(0).toFixed(1) + '" x2="' + (width - right) + '" y2="' + sy(0).toFixed(1) + '" stroke="var(--ink)" stroke-width="2"></line>'
+      + '<path d="' + path + '" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-dasharray="6 4"></path>' + dots
+      + '<text x="' + left + '" y="' + (height - 6) + '" font-size="11" font-family="var(--mono)" fill="var(--muted)">' + esc(xLabel) + '</text></svg>';
+  }
+
+  const kTokens = value => value >= 1024 ? (value / 1024).toFixed(value % 1024 ? 1 : 0) + 'K' : String(value);
+
+  // ---- models/<id>.html: package projection card + projected scaling ----
+  async function renderPackagePage() {
+    const root = document.getElementById('package-page');
+    const block = document.getElementById('package-projection');
+    if (!root || !block || !root.dataset.mlModel) return;
+    const status = block.querySelector('[data-projection-status]');
+    const cardHost = block.querySelector('[data-package-card]');
+    const charts = block.querySelector('[data-package-charts]');
+    let engine;
+    try {
+      engine = await loadEngine();
+    } catch (error) {
+      if (status) status.textContent = 'Projections could not be loaded from mlbottleneck.com right now; the measured numbers above stand on their own.';
+      return;
+    }
+    const data = root.dataset;
+    const measured = parseFloat(data.mlMeasured);
+    const request = requestFromDataset(data);
+    const title = (document.querySelector('header.hero h1') || {}).textContent || data.mlModel;
+    const card = buildHeadroomCard(engine, request, measured, title.trim(), deploymentLabel(data));
+    if (!card) {
+      if (status) status.textContent = 'This package could not be projected (unknown preset or quantization).';
+      return;
+    }
+    cardHost.innerHTML = card.html;
+    try {
+      const sweep = engine.sweep(request, { levels: [1, 2, 4, 8, 16, 32] });
+      const ctxPoints = sweep.context.points.filter(p => p.decodeTokS > 0).map(p => ({ x: p.promptTokens, y: p.expectedDecodeTokS || p.decodeTokS, label: kTokens(p.promptTokens) }));
+      const userPoints = sweep.concurrency.points.filter(p => p.fits !== false).map(p => {
+        const users = p.concurrency || p.users || p.batchSize || 1;
+        const aggregate = p.expectedAggregateTokS || p.aggregateTokS || ((p.expectedPerUserTokS || p.perUserTokS || 0) * users);
+        return { x: users, y: aggregate, label: String(users) };
+      });
+      charts.innerHTML = '<figure class="chart">' + svgLine(ctxPoints, 'Projected decode vs input length (stock software)', 'tok/s', 'prompt tokens · dashed = projection') + '</figure>'
+        + (userPoints.length > 1 ? '<figure class="chart">' + svgLine(userPoints, 'Projected combined throughput vs concurrent users', 'tok/s', 'concurrent users · dashed = projection') + '</figure>' : '');
+    } catch (error) {
+      charts.innerHTML = '';
+    }
+    if (status) {
+      status.textContent = 'Projected by the ML Bottleneck physics engine v' + engine.version
+        + (engine.__hasEvidence ? ', calibrated against community benchmark evidence' : ' without its benchmark evidence (uncalibrated)')
+        + '. The lab measurement above is the only measured number here; the stock projection, tuned-run target, ceiling, and curves are estimates.';
+    }
+    block.hidden = false;
+  }
+
   function boot() {
     renderHeadroom();
     renderMiniPlanner();
     renderHardwareComparison();
+    renderPackagePage();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

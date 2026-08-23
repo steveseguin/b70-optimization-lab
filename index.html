@@ -153,6 +153,8 @@ Style genome (duotone-hixffp):
     text-transform: uppercase;
   }
   .guide-actions a.open-guide:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .guide-actions a.open-guide.secondary-guide { background: transparent; color: var(--ink); }
+  .guide-actions a.open-guide.secondary-guide:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
   .guide-actions a.submit-improvement { font-family: var(--mono); font-size: 10px; border-bottom-width: 1px; }
   .copy-md {
     appearance: none; border: 2px solid var(--ink); border-radius: 0;
@@ -315,6 +317,7 @@ Style genome (duotone-hixffp):
     <a class="brand" href="#top" aria-current="page"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
     <nav aria-label="Primary">
       <a href="#pick">Models</a>
+      <a href="models/">Deployments</a>
       <a href="learn.html">Learn</a>
       <a href="guides.html">Guide library</a>
       <a href="#start">Start here</a>
@@ -363,25 +366,25 @@ Style genome (duotone-hixffp):
           <th scope="row" class="model">Ornith 1.5 35B-A3B <small>1&times; B70 &middot; Q4_K_M &middot; Ornith AI &middot; Aug 2026</small><span class="status candidate">Candidate package</span></th>
           <td class="mut model-use">Fast Qwen-derived one-card MoE; our eleven-feature stack is target-only, cache-zero tested, and includes measured decode/prefill curves through 32K</td>
           <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate">128.83</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="repro/ornith-15-35b-a3b-q4km-b70/README.md" aria-label="Copy Ornith 1.5 35B one-B70 candidate guide Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Ornith%201.5%2035B-A3B%201xB70">Submit improvement</a></div></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/ornith-15-35b-a3b-q4km-b70.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="repro/ornith-15-35b-a3b-q4km-b70/README.md" aria-label="Copy Ornith 1.5 35B one-B70 candidate guide Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Ornith%201.5%2035B-A3B%201xB70">Submit improvement</a></div></td>
         </tr>
         <tr>
           <th scope="row" class="model">Gemma-4-26B <small>1&times; B70 &middot; Q8 + MTP3 &middot; Google &middot; Apr 2026</small><span class="status">Lab result</span></th>
           <td class="mut model-use">Strong one-card all-rounder that also reads pictures; self-contained starter packaging is still in progress</td>
           <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate">124.98</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy Gemma-4-26B lab report Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Gemma-4-26B%201xB70">Submit improvement</a></div></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy Gemma-4-26B lab report Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Gemma-4-26B%201xB70">Submit improvement</a></div></td>
         </tr>
         <tr>
           <th scope="row" class="model">Qwen3.8-27B <small>1&times; B70 &middot; Q4_K_M &middot; Alibaba &middot; Aug 2026</small><span class="status candidate">Candidate package</span></th>
           <td class="mut model-use">Newest one-card all-rounder here; cache-zero and exact across the registered 12-prompt oracle. Decode stays near-flat to 32K context &mdash; keep the KV cache at f16 for speed</td>
           <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate">27.82</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-q4km-tp1-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-q4km-tp1-b70/README.md" aria-label="Copy Qwen3.8-27B one-B70 candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.8-27B%20Q4%201xB70">Submit improvement</a></div></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-q4km-tp1-b70.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-q4km-tp1-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-q4km-tp1-b70/README.md" aria-label="Copy Qwen3.8-27B one-B70 candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.8-27B%20Q4%201xB70">Submit improvement</a></div></td>
         </tr>
         <tr>
           <th scope="row" class="model">Qwen3.8-27B <small>2&times; B70 &middot; official FP8 &middot; Docker/vLLM &middot; Aug 2026</small><span class="status candidate">Candidate package</span></th>
           <td class="mut model-use">A digest-pinned, unpatched official-model route with semantic, repeat, and long-context gates</td>
           <td class="num r model-cards" data-label="Cards">2</td><td class="num r model-speed" data-label="Measured rate">21.71</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp2-b70/README.md" aria-label="Copy Qwen3.8-27B two-B70 FP8 candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.8-27B%20FP8%202xB70">Submit improvement</a></div></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp2-b70/README.md" aria-label="Copy Qwen3.8-27B two-B70 FP8 candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.8-27B%20FP8%202xB70">Submit improvement</a></div></td>
         </tr>
         <tr>
           <th scope="row" class="model">Qwen3.8-27B <small>2&times; B70 &middot; INT4 + MTP5 &middot; research lane &middot; Aug 2026</small><span class="status research">Research only</span></th>
@@ -393,13 +396,13 @@ Style genome (duotone-hixffp):
           <th scope="row" class="model">Laguna-S-2.1 <small>4&times; B70 &middot; INT4 + DFlash &middot; Poolside &middot; Jul 2026</small><span class="status">Lab result</span></th>
           <td class="mut model-use">Coding-assistant work with a validated four-card DFlash deployment and a complete result packet</td>
           <td class="num r model-cards" data-label="Cards">4</td><td class="num r model-speed" data-label="Measured rate">125.46</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/laguna-s-2.1-int4-b70-125tps/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="packages/laguna-s-2.1-int4-b70-125tps/README.md" aria-label="Copy Laguna-S-2.1 record replay package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Laguna-S-2.1%204xB70">Submit improvement</a></div></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/laguna-s-2.1-int4-b70-125tps-20260731.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/laguna-s-2.1-int4-b70-125tps/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="packages/laguna-s-2.1-int4-b70-125tps/README.md" aria-label="Copy Laguna-S-2.1 record replay package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Laguna-S-2.1%204xB70">Submit improvement</a></div></td>
         </tr>
         <tr>
           <th scope="row" class="model">Muse-Glimmer-30B <small>4&times; B70 &middot; Q8/WOQ + DFlash &middot; Meta &middot; Aug 2026</small><span class="status">Expert repro</span></th>
           <td class="mut model-use">Multimodal model with a 100.37 tok/s canonical repeat mean; its separately measured first-100 median was 161.90</td>
           <td class="num r model-cards" data-label="Cards">4</td><td class="num r model-speed" data-label="Measured rate">100.37</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/muse-glimmer-30b-q8-woq-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="packages/muse-glimmer-30b-q8-woq-b70/README.md" aria-label="Copy Muse-Glimmer-30B candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Muse-Glimmer-30B%204xB70">Submit improvement</a></div></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/muse-glimmer-30b-q8-woq-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="packages/muse-glimmer-30b-q8-woq-b70/README.md" aria-label="Copy Muse-Glimmer-30B candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Muse-Glimmer-30B%204xB70">Submit improvement</a></div></td>
         </tr>
       </tbody>
     </table>
@@ -486,7 +489,7 @@ Style genome (duotone-hixffp):
           <td class="mut hide-s" title="honest margin-free all-25 median; three arms agree on only 21 to 22 of 25 token arrays">research &middot; determinism open</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">lab status</a></td>
         </tr>
-        <tr data-ml-model="muse_glimmer_30b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dflash:15">
+        <tr data-ml-model="muse_glimmer_30b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="draft_model:15" data-ml-strategy="tensor">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Muse-Glimmer-30B <small>Meta &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash n15</td><td class="num r">4&times;</td>
           <td class="num r">100.37<div class="ratebar" style="width:79.5%" aria-hidden="true"></div></td>

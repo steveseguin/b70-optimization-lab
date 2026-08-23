@@ -94,6 +94,12 @@ speed cell, so only the attributes need updating when a row's setup changes.
 Deep links into the planner use
 `https://mlbottleneck.com/?model=&hardware=&count=&format=&runtime=&spec=`.
 
+`models/<id>.html` (one page per package) and `models/index.html` are generated
+by `python3 tools/build-model-pages.py` from `packages/catalog.json`; rerun it
+whenever the catalog changes and commit the output. The generator's
+`PACKAGE_ML` map ties a package to its ML Bottleneck preset/quant/runtime; a
+package without an entry simply gets no projection block.
+
 ## Local Secrets
 
 Never print, paste, or commit local credentials. The Hugging Face access token
