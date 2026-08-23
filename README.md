@@ -209,7 +209,9 @@ characterization-only): eager multi-GPU decode is FLAT (~17 tok/s at both
 TP2 and TP4, below single-card - per-step container collective tax), while
 **XPU graph restores scaling: 30.2 / 48.8 / 71.7 tok/s at TP1 / TP2 / TP4**
 - the 71.7 TP4 target-only is the fastest conventional decode measured on
-any lane (promoted llama.cpp TP2: 50.2), pending quality battery. Prefill
+any lane (promoted llama.cpp TP2: 50.2); all three graph configs are
+quality-battery certified. MTP at TP4 does not boot (worker init deadlock;
+see finding). Prefill
 scales even in eager (281 -> ~500 -> ~860 tok/s); TTFT drops to 0.09 s at
 TP4. TP3 is architecturally impossible (16 GDN K heads % 3). TP4 needs
 `gpu-memory-utilization <= 0.6` (XPU single-allocation cap).

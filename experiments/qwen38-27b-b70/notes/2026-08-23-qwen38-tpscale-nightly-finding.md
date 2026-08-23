@@ -45,9 +45,16 @@ f16 KV, `--max-num-seqs 1`.
 **TP4-graph is certified (2026-08-23):** full quality battery pass on the
 exact config (code canary `14`, arithmetic/factual/logic/JSON/copy exact,
 8-run repeat stability, 8K needle, `baseline_match_all`) and a repeat boot
-at **71.5488** (pair 71.67 / 71.55, 0.17% spread). TP2-graph has cache-zero
-and 25/25-row validity but no battery yet. The lane's cross-boot
-nondeterminism caveat (autotune) applies to all configs, so no cross-boot
-token-exactness claim. Remaining follow-ups: TP2-graph battery, and an MTP
-probe at TP4 (the verify-step collapse is TP1-measured; verify GEMM shapes
-change with TP, worth one arm).
+at **71.5488** (pair 71.67 / 71.55, 0.17% spread). **TP2-graph is also
+battery-certified** (2026-08-23, pass_all on the exact config), so the whole
+graph column 30.2 / 48.8 / 71.7 carries a quality battery pass. The lane's
+cross-boot nondeterminism caveat (autotune) applies to all configs, so no
+cross-boot token-exactness claim.
+
+**MTP at TP4: does not boot.** The probe arm (MTP2, eager, util 0.60) hung
+at worker init - all ranks repeating the shm_broadcast "No available shared
+memory broadcast block ... processes hanging" starvation message until the
+health timeout killed it (root `tp4-mtp2-f16-a`). Spec decode at TP>1 on
+this container stack is unavailable pending an upstream fix, so the TP1
+verify-step question stays TP1-scoped and 71.7 target-only is the multi-card
+ceiling for now.

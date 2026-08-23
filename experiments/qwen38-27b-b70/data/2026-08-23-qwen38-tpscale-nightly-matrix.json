@@ -16,10 +16,11 @@
  "negatives": {
   "tp3": "impossible: 16 GDN K heads not divisible by 3 (AssertionError at worker init)",
   "tp4_at_util_0.90": "XPU single-allocation cap: 20.13 GiB KV block fails with 24.66 GiB free; fixed with gpu-memory-utilization 0.60 (GPU_MEM_UTIL env in driver)",
-  "selector_mask_compose": "ONEAPI_DEVICE_SELECTOR must NOT be combined with ZE_AFFINITY_MASK for multi-GPU: the mask renumbers devices, the selector then filters the renumbered list (works only for gpu list 0..k prefixes); driver now sets ZE_AFFINITY_MASK only"
+  "selector_mask_compose": "ONEAPI_DEVICE_SELECTOR must NOT be combined with ZE_AFFINITY_MASK for multi-GPU: the mask renumbers devices, the selector then filters the renumbered list (works only for gpu list 0..k prefixes); driver now sets ZE_AFFINITY_MASK only",
+  "tp4_mtp2_eager": "worker deadlock at init: repeating shm_broadcast \"No available shared memory broadcast block\" from all ranks; killed by health timeout. Spec decode at TP4 does not boot on this container stack (probe 2026-08-23, root tp4-mtp2-f16-a)"
  },
  "finding": "eager multi-GPU is flat (~17 tok/s at TP2 and TP4; container oneCCL/collective per-step tax); VLLM_XPU_ENABLE_XPU_GRAPH=1 restores scaling: 30.2/48.8/71.7 at TP1/2/4",
- "quality_status": "characterization-only: quality battery + oracle certification run for TP1 configs only so far",
+ "quality_status": "TP1, TP2-graph, and TP4-graph configs battery-certified (pass_all); cross-boot autotune caveat applies to all",
  "arms": {
   "tp2-mtp0-f16-a": {
    "tp": 2,
