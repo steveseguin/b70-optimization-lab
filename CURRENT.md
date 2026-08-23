@@ -54,28 +54,21 @@ AutoRound INT4 W4A16, F16 KV, one request, cache zero, and XPU Graph:
 - TP2: `48.8301 / 48.9505 tok/s` conventional;
 - TP4: `71.6741 / 71.5488 tok/s` conventional.
 
-TP4 also passed the natural-EOS LocalMaxxing timing gate from a fresh isolated
-cache at `71.2933 tok/s` conventional: 25/25 cold rows covered the strict
-100-event/99-interval window, cached tokens were zero, and two rows stopped
-naturally at 220/419 while 23 reached the honest 512 cap. This closes the
-natural-EOS methodology gap without lowering the 71.7 diagnostic ceiling. No
-submission was made; a real-baseline battery plus the cross-boot and
-unsupported multi-GPU graph disclosures remain. See the [final-gate note](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tp4-natural-eos-final-gate.md).
+The graph column is now strict-gate qualified at every valid TP size:
 
-An exact-cache TP4 replay passed again at `71.3984 tok/s`, and its objective
-battery passed all 24 nonempty comparisons against the prior known-good TP4
-quality JSON. The 4,421-file cache stayed byte-identical. Full outputs still
-matched only 21/25, so cache sealing does not eliminate runtime token
-nondeterminism; that disclosure remains mandatory alongside upstream's
-unsupported multi-GPU graph warning.
+- TP1: `30.3107 tok/s` natural-EOS conventional;
+- TP2: `49.0197 tok/s` natural-EOS conventional;
+- TP4: `71.2933 / 71.3984 tok/s` natural-EOS conventional.
 
-All three graph topologies passed seven objective canaries, an 8-run
-same-server repeat, cache-zero checks, and an 8K needle. The battery runs did
-not supply a baseline JSON, so their empty-comparison
-`baseline_match_all=true` field is not oracle evidence. TP4's two boots matched
-21/25 complete outputs. The runtime explicitly warns that multi-GPU XPU Graph
-is unsupported/experimental. The existing runs also used `ignore_eos=true` and
-are diagnostic captures, not natural-EOS LocalMaxxing final gates.
+Each topology has 25/25 eligible cold rows under 100-event/99-interval
+accounting, cached tokens zero, full token IDs, 24/24 nonempty baseline
+comparisons, seven objective canaries, an 8-run same-server repeat, and an 8K
+needle. Replay cache manifests stayed unchanged. The earlier ignore-EOS rows
+remain diagnostic ceilings and are not rewritten. TP4 fresh/replay full
+outputs still match only 21/25, so cache sealing does not eliminate runtime
+token nondeterminism; the disclosure remains mandatory. The runtime also
+labels multi-GPU XPU Graph unsupported/experimental. No submission was made.
+See the [strict graph-column note](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-nightly-graph-column-final-gates.md).
 
 The bounded TP1 determinism program is now closed. Exact replay of one sealed
 cache matched 2/2 sensitive prompts with an unchanged cache manifest, but a

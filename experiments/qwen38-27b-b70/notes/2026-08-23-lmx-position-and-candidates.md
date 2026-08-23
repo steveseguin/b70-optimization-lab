@@ -4,11 +4,11 @@ Date: 2026-08-23. Documentation only - NOTHING here submits, amends, or
 withdraws anything. Prepared so the leaderboard decisions can be made with
 everything in one place.
 
-## Submission candidates (certified this week, not yet sealed)
+## Submission candidates (strict-gate qualified; human decision pending)
 
 | Lane | Number | Status | What sealing still needs |
 | --- | ---: | --- | --- |
-| vLLM XPU nightly, TP1, MTP off, XPU graph | 30.22 / 30.26 conventional | Objective battery PASS; cache-zero; fresh-compile determinism candidate closed negative | Natural-EOS final gate; battery with an actual baseline; exact-cache replay/sealing; mandatory cross-boot disclosure |
+| vLLM XPU nightly, TP1, MTP off, XPU graph | 30.3107 natural-EOS final; 30.22 / 30.26 diagnostic pair | Natural-EOS strict gate PASS; 24/24 baseline comparisons; cache immutable; determinism candidate closed negative | Human submission decision; mandatory runtime-nondeterminism disclosure |
 | vLLM XPU nightly, TP4, MTP off, XPU graph | 71.293 / 71.398 natural-EOS final; 71.67 / 71.55 diagnostic ceiling | Fresh + exact-replay strict gates PASS; non-vacuous baseline battery PASS; cache immutable; full outputs 21/25 | Human submission decision; mandatory runtime-nondeterminism and unsupported/experimental multi-GPU XPU Graph disclosures; fastest target-only Qwen3.8 result for this AutoRound/nightly identity, not the lab-wide target-only record |
 | llama.cpp Q4_K_M TP1 (promoted) | 27.81/27.82 conventional | 24/24 bit-exact, full battery, submission-ready since 2026-08-21 | Nothing - submit-ready; user previously declined ("the 27 is lame") |
 
@@ -21,10 +21,8 @@ this. A bounded `PYTHONHASHSEED=0` plus tuner-disabled program preserved
 is closed. TP4 exact-cache replay kept all cache bytes fixed but still matched
 only 21/25 full outputs, so sealing does not remove runtime nondeterminism.
 
-The TP4 candidate now has two passing natural-EOS, 99-interval final gates at
-71.2933/71.3984 and a battery with 24/24 real baseline comparisons. TP1 still
-needs its natural-EOS final gate and real-baseline battery. No submission has
-been made.
+TP1 and TP4 now have passing natural-EOS, 99-interval final gates and 24/24
+real baseline comparisons. No submission has been made.
 
 ## The margin question (user decision pending)
 

@@ -53,11 +53,17 @@ against the original 48.8301, with 25/25 complete rows, cache zero, and full
 token IDs. The boots match 19/25 complete outputs. TP2 speed replication is
 therefore closed while the cross-boot token caveat remains. The whole graph
 column 30.2 / 48.8 / 71.7 has objective-canary evidence. The
-quality runs did not pass `--baseline-json`; `baseline_comparisons={}` means
-their `baseline_match_all=true` compatibility field is vacuous, not an oracle
-comparison. The lane's cross-boot nondeterminism caveat applies to all configs.
-In addition, the nightly logs explicitly warn that multi-GPU XPU Graph is
-unsupported/experimental even though these TP2/TP4 runs completed and passed.
+original quality runs did not pass `--baseline-json`; their compatibility
+field was vacuous. New strict TP1/TP2/TP4 runs now each pass 24/24 nonempty
+comparisons against the respective prior known-good quality JSON. The lane's
+runtime nondeterminism caveat still applies. In addition, the nightly logs
+explicitly warn that multi-GPU XPU Graph is unsupported/experimental even
+though these TP2/TP4 runs completed and passed.
+
+**Strict graph column (natural EOS):** TP1 `30.3107`, TP2 `49.0197`, and TP4
+`71.2933 / 71.3984 tok/s` conventional. Each topology has 25/25 eligible
+cold rows, cached tokens zero, strict event/interval accounting, and the real-
+baseline battery above. See the [combined final-gate note](2026-08-23-qwen38-nightly-graph-column-final-gates.md).
 
 **TP4 natural-EOS final gate passed (2026-08-23):** a fresh isolated-cache
 run produced 25/25 eligible cold rows at **71.2933 tok/s** conventional under
