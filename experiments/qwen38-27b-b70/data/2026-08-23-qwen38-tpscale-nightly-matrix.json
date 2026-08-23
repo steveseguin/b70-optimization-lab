@@ -26,6 +26,7 @@
  "quality_status": "TP1, TP2-graph, and TP4-graph passed seven objective canaries, 8-run same-server repeat, cache-zero checks, and an 8K needle. No --baseline-json was supplied: baseline_comparisons is empty and baseline_match_all=true is vacuous. Cross-boot autotune caveat applies to all.",
  "submission_status": "diagnostic only: benchmark request payload used ignore_eos=true; a natural-EOS strict 100-event/99-interval final gate is still required",
  "replication_status": "TP2 graph has one 25-prompt performance capture; TP4 graph has two independent 25-prompt captures with 21/25 complete-output agreement. TP2 needs a fresh-cache repeat before promotion.",
+ "determinism_status": "TP1 exact sealed-cache replay matched 2/2 sensitive prompts and left the cache byte-identical. Independent fresh default caches differed 1/2. PYTHONHASHSEED=0 plus all three autotune controls disabled preserved 30.2312/30.2565 tok/s on two full runs but matched only 19/25 complete outputs, so the candidate is rejected and the cross-boot caveat remains.",
  "speculative_status": "TP2 and TP4 eager MTP2 both boot from separate fresh ext4 caches and pass the exact code-14/cache-zero canary. A TP4 two-prompt replay screen measured 31.1680 conventional tok/s with 149/210 draft tokens accepted (70.95%, implied mean 2.419/3 including target). This works but misses both preregistered expansion gates, so no full nightly MTP suite is authorized. The old TP4 failure is superseded as infrastructure-invalid.",
  "arms": {
   "tp2-mtp0-f16-a": {

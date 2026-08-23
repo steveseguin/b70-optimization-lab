@@ -1,0 +1,66 @@
+{
+  "campaign": "Qwen3.8 AutoRound INT4 nightly TP1 graph fresh-cache determinism screen",
+  "date": "2026-08-23",
+  "image_digest": "sha256:bc979d1ba312dc8a666c57a40205f35d7fc5d96b2f7450c2c77f5b3d5243f0e0",
+  "identity": "TP1, MTP off, f16 KV, max_model_len 32768, max_num_seqs 1, XPU Graph on, GPU0, gpu_memory_utilization 0.90, PYTHONHASHSEED=0",
+  "speed_gate_conventional_tok_s": 29.31,
+  "metric": "median of 99 inter-token intervals between generated events 1 and 100 after TTFT",
+  "default_autotune_screen": {
+    "controls": "nightly defaults: Inductor max autotune, coordinate descent, and Triton cache autotuning enabled",
+    "prompts": ["selection--technical-guide", "selection--performance-hypotheses"],
+    "max_tokens": 128,
+    "fresh_a_conventional_tok_s": 30.841751310663618,
+    "replay_a_conventional_tok_s": 30.724885753036045,
+    "fresh_b_conventional_tok_s": 30.802485654986413,
+    "fresh_a_vs_replay_a_token_match": "2/2 exact",
+    "fresh_a_vs_replay_a_cache_manifest": "unchanged",
+    "fresh_a_vs_fresh_b_token_match": "1/2",
+    "first_divergence": {
+      "prompt_id": "selection--technical-guide",
+      "token_index_zero_based": 18
+    },
+    "classification": "sealed-cache deterministic; fresh-compile nondeterministic"
+  },
+  "no_autotune_candidate": {
+    "controls": {
+      "VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE": 0,
+      "VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING": 0,
+      "TRITON_CACHE_AUTOTUNING": 0
+    },
+    "two_prompt_fresh_a_conventional_tok_s": 30.840001769927582,
+    "two_prompt_fresh_b_conventional_tok_s": 30.87047208710803,
+    "two_prompt_token_match": "2/2 exact",
+    "full25_replay_a_conventional_tok_s": 30.231159972736155,
+    "full25_replay_b_conventional_tok_s": 30.256521694191044,
+    "full25_rows_each": 25,
+    "full25_completion_tokens_each_row": 512,
+    "full25_cached_tokens_all_zero": true,
+    "full25_replay_cache_manifests_unchanged": true,
+    "full25_complete_token_match": "19/25",
+    "mismatches": [
+      {"prompt_id": "selection--customer-email", "first_diff_zero_based": 307},
+      {"prompt_id": "selection--release-plan", "first_diff_zero_based": 166},
+      {"prompt_id": "selection--bug-report-synthesis", "first_diff_zero_based": 135},
+      {"prompt_id": "selection--technical-guide", "first_diff_zero_based": 338},
+      {"prompt_id": "holdout--repository-refactor-plan", "first_diff_zero_based": 386},
+      {"prompt_id": "selection--decision-memo", "first_diff_zero_based": 118}
+    ],
+    "classification": "bounded negative: preserves 30.2-class speed but does not seal fresh-compile determinism",
+    "promotion": "rejected"
+  },
+  "raw_roots_parent": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823",
+  "raw_evidence_sha256": {
+    "default_fresh_a_bench": "06659399fc6bec29ca8326ab6d53c239b2a276850b3df362e57fc786529b26c3",
+    "default_replay_a_bench": "0bf1ae1ffffd7ff8ea9fb2dd06c573b6cc6ff8eee5c182458b8fb37749f69e02",
+    "default_fresh_b_bench": "cec3371cbfe134f5f9feef842314915d72640f18104b30c5fdb23e86a2a2c2be",
+    "noautotune_two_prompt_fresh_a_bench": "99c6f70d6d300b2e30c1d9468e184cd68a292d5cf5e93c4362f2b9074288e91e",
+    "noautotune_two_prompt_fresh_b_bench": "f3a2e9646e58c16a6fa005df3c10f332bfeefe9fc517bf9b008cc2db1bb0dd66",
+    "noautotune_full25_replay_a_bench": "5703983dd6bc227ca2c388a20ed45c6c9ea826143c3dfff18972cbbc84374fe6",
+    "noautotune_full25_replay_b_bench": "1d93ab34885ae1c9cf7456dc8bfa14a81945d32dcbba9247dde32c0454f5eaaf",
+    "default_cache_a_manifest": "79935f111059bcfe4917182e910fd5d7b27c08a291063fcfac5ba32dc0642c1e",
+    "default_cache_b_manifest": "2e69c900cf4d00795d7a3940c21e17e888d0bf2da1ea6846b045a650a91b7330",
+    "noautotune_cache_a_manifest": "72585bc0ef07f466761e6cae7d053ee3ba2232df73205c4556bdb6a483ab9d17",
+    "noautotune_cache_b_manifest": "42645526b4b060024d1462876f23ae16d8f6ff2f6d7299ad3a15aabbff8804ba"
+  },
+  "conclusion": "Do not change or lower the historical 30.2178/30.2569 captures. Exact cache replay is deterministic, but independent fresh compiles remain nondeterministic. Keep the cross-boot disclosure and do not promote the no-autotune candidate."
+}

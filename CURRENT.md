@@ -62,6 +62,15 @@ not supply a baseline JSON, so their empty-comparison
 is unsupported/experimental. The existing runs also used `ignore_eos=true` and
 are diagnostic captures, not natural-EOS LocalMaxxing final gates.
 
+The bounded TP1 determinism program is now closed. Exact replay of one sealed
+cache matched 2/2 sensitive prompts with an unchanged cache manifest, but a
+second fresh default cache diverged at token 18. Disabling Inductor max
+autotune, coordinate descent, and Triton cache autotuning preserved speed
+(`30.2312 / 30.2565 tok/s` conventional on two full runs) but still matched
+only 19/25 complete 512-token outputs across independent fresh compiles. Do
+not promote that candidate or lower the historical speed pair; keep the
+cross-boot disclosure. See the [determinism screen](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-nightly-tp1-determinism-screen.md).
+
 The old TP4 MTP2 attempt is infrastructure-invalid, not a speculative-decode
 deadlock result: three workers failed concurrent compilation after shared
 Triton-cache artifacts disappeared. Corrected fresh-ext4-cache smokes now boot
@@ -90,9 +99,11 @@ the [incident and recovery note](experiments/qwen38-27b-b70/notes/2026-08-23-qwe
 Immediate order:
 
 1. preserve the nightly image and all existing raw roots;
-2. add isolated-cache, determinism, natural-EOS, and real-baseline gates
-   without changing the historical driver's defaults;
-3. screen TP1 fresh-cache determinism;
+2. add isolated-cache, natural-EOS, and real-baseline gates without changing
+   the historical driver's defaults; TP1 fresh-cache determinism is a bounded
+   negative and exact-cache replay is the only sealed path currently shown;
+3. repeat the TP2 graph performance cell from a fresh isolated cache before
+   promotion, then use qualified cells to fill the remaining TP matrix;
 4. preregister any replacement dose-8 trace on an isolated writable cache,
    then advance higher-upside native TP4 only after it closes, keeping GPU2
    explicitly in scope;
