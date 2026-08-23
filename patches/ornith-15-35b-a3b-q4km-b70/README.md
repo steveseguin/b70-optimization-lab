@@ -7,9 +7,9 @@ the recipe and validation evidence in this repository are the source of truth.
 ## Identity
 
 - Base: llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`.
-- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch`.
+- Current complete patch: `llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch`.
 - Patch SHA-256:
-  `762becc20a4ce1d82017bdb7d73485ff892eb26b9cf141dd9b74a9707fe1cf9a`.
+  `d8c95e4d0cbe0be91c0890f4e5d3c6b4f2bfb22b5daedd12a560910f954c915e`.
 - Runtime doors: `GGML_SYCL_FUSED_MOE_ADD_REDUCE=1` and
   `GGML_SYCL_FUSED_ORNITH_CONV_SILU=1` and
   `GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1` and
@@ -18,17 +18,18 @@ the recipe and validation evidence in this repository are the source of truth.
   `GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1` and
   `GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1` and
   `GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1` and
-  `GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1` (all default off).
+  `GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1` and
+  `GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO=1` (all default off).
 - Validated `libggml-sycl.so` SHA-256:
-  `d75d5f1d07b6ac64421bbc9ae3cda7b916584f0422d512f57843a50427478e8c`.
+  `cb401a22996aac4d482e5721aad0364f0462ec5522aefa05dc035cb002467259`.
 
 Apply only to the pinned clean base:
 
 ```bash
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
-sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch
-git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch
-git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch
+sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch
+git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch
+git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch
 git diff --check
 ```
 
@@ -46,7 +47,7 @@ The full-model trace observed 40 ordered-reduction matches, 30 recurrent
 convolution/SiLU matches, 80 residual/RMSNorm matches, and 30 recurrent
 concat/state matches per token. The direct state-materialization path replaces
 the latter boundary and also removes 30 recurrent `GET_ROWS` launches. Together
-the complete stack removes 630 launches/token.
+the complete stack removes 660 launches/token.
 
 The second fusion accepts only the exact one-token `[4,8192]` FP32 convolution
 whose sole consumer is a full-width SiLU. It preserves stock state handling,
@@ -102,6 +103,15 @@ boundary. Exact layer names, shapes, graph edges, opcodes, use counts, types,
 and contiguous layouts fail closed. It removes one launch in each of 30
 recurrent layers.
 
+The tenth fusion completes the Qwen-derived GDN state transfer. It removes the
+remaining one-row `GET_ROWS` temporary, directs GDN to read the sole persistent
+state row, and reuses the established fused cache output to update that row in
+place. Each workgroup loads its complete owned state column before writing.
+Exact state/value shapes, K=1, source/output identity, sole compute consumer,
+contiguous layout, and non-overlap with the GDN activation output are required;
+otherwise the stock gather path executes. It removes one launch in each of 30
+recurrent layers.
+
 ## Validation
 
 - Raw engine A/B/B/A-style means: `103.047744` control versus
@@ -149,11 +159,19 @@ recurrent layers.
   Every candidate exceeded every control; forced 128-token output was
   byte-identical, exactly 3,810 recurrent hits were recorded, and all canaries
   passed.
+- The added in-place GDN state I/O fusion improved mirrored raw-engine decode
+  by **+6.39%** and matched fresh-server decode by **+6.80%** over the prior
+  stack, reaching a directly measured `126.179443 tok/s` two-server mean.
+  Every candidate exceeded every control; forced 128-token output was
+  byte-identical, exactly 3,810 recurrent hits were recorded, and the objective
+  canary battery passed.
 
 Fresh stock servers matched `0/12` complete response hashes with each other on
-the long realistic suite. That pre-existing cross-process instability is
-recorded but is not attributed to this patch; within-process stability and the
-same-binary door-off/on exact comparison passed.
+the long realistic suite. A new realistic same-process repeat probe also
+produced four hashes across eight requests, while the short 8x exact-answer
+canary passed. That pre-existing runtime variability is recorded but is not
+attributed to this patch; exactness is established by the same-frozen-binary
+door-off/on comparison and exact activation counts.
 
 Full evidence and limitations are in the
 [matched experiment note](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md).
@@ -173,3 +191,5 @@ The MoE shared-branch residual/RMSNorm increment is in
 [`2026-08-23-ornith35b-moe-shared-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-shared-residual-rms-positive.md).
 The GDN RMSNorm/SiLU-gate increment is in
 [`2026-08-23-ornith35b-gdn-rms-silu-gate-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-gdn-rms-silu-gate-positive.md).
+The in-place GDN state increment is in
+[`2026-08-23-ornith35b-gdn-state-io-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-gdn-state-io-positive.md).

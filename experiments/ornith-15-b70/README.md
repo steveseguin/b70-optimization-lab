@@ -152,13 +152,30 @@ binary, driver, or benchmark protocol will reproduce them.
   every control. Forced output was byte-identical and all canaries passed. The
   complete eight-feature stack removes 600 launches/token. See
   `notes/2026-08-23-ornith35b-moe-shared-residual-rms-positive.md`.
+- **GDN RMSNorm/SiLU gate — ACCEPTED +0.78% incremental serving:** the
+  Qwen3.5-derived recurrent boundary combines the existing per-head RMS/weight
+  and SiLU/gate kernels while preserving the rounded FP32 normalization value.
+  Mirrored engine means improved `121.287 -> 121.698 tok/s` (+0.34%);
+  fresh-server means improved `116.535 -> 117.446 tok/s` (+0.78%). The
+  complete nine-feature stack removes 630 launches/token. See
+  `notes/2026-08-23-ornith35b-gdn-rms-silu-gate-positive.md`.
+- **In-place GDN state I/O — ACCEPTED +6.80% incremental serving:** this
+  transfer from our Qwen work removes the remaining recurrent state
+  `GET_ROWS` by reading and writing the sole persistent state row in place.
+  Exact shape, identity, ownership, non-overlap, and consumer gates fail
+  closed. Mirrored engine means improved `122.074 -> 129.870 tok/s` (+6.39%);
+  fresh-server means improved `118.148 -> 126.179 tok/s` (+6.80%). Every
+  candidate exceeded every control, forced 128-token output was byte-identical,
+  exactly 3,810 hits were recorded, and objective canaries passed. The
+  complete ten-feature stack removes 660 launches/token. See
+  `notes/2026-08-23-ornith35b-gdn-state-io-positive.md`.
 - **Optimized 0-32K context profile — PUBLISHED, MEASURED ONLY:** the exact
-  nine-feature package stack was swept at seven explicit depths with
+  ten-feature package stack was swept at seven explicit depths with
   `pp2048`, `tg128`, five repetitions, flash attention on, F16 KV, and graphs
-  off. Decode measured `126.278` tok/s at depth zero, `113.570` at 8K, and
-  `90.498` at 32K; prefill measured `1393.095`, `1283.782`, and `1101.523`
+  off. Decode measured `135.348` tok/s at depth zero, `121.263` at 8K, and
+  `95.022` at 32K; prefill measured `1400.713`, `1283.591`, and `1102.085`
   tok/s at those same depths. No point is interpolated or extrapolated. See
-  `notes/2026-08-23-ornith35b-optimized-depth-sweep.md` and the package guide.
+  `notes/2026-08-23-ornith35b-ten-feature-depth-sweep.md` and the package guide.
 - **Current-stack serialized profile — DIAGNOSTIC ONLY:** temporary device
   barriers ranked dense projections first and routed projections second after
   the eight accepted optimizations. These serialized values are never
@@ -265,7 +282,8 @@ binary, driver, or benchmark protocol will reproduce them.
   `notes/2026-08-23-ornith35b-ornith9b-draft-suitability.md`.
 - **Embedded MTP verifier fusions — RESEARCH ONLY:** the model's Qwen-derived
   embedded predictor works, but MTP1 and MTP3 remain much slower than the
-  117.446 tok/s target-only package. Extending residual/RMS fusions to 2-4
+  then-accepted 117.446 tok/s target-only package (the later ten-feature target
+  reaches 126.179). Extending residual/RMS fusions to 2-4
   verifier rows was exact and improved the mirrored MTP1 grand prompt mean by
   1.97%; extending the GDN RMS/gate fusion was exact but neutral. Both remain
   default-off research artifacts and do not enter the user recipe. This work

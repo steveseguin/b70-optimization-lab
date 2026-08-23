@@ -1,0 +1,199 @@
+--- a/ggml/src/ggml-sycl/gated_delta_net.hpp
++++ b/ggml/src/ggml-sycl/gated_delta_net.hpp
+@@ -9,6 +9,7 @@
+ struct ggml_sycl_gated_delta_net_fused_cache {
+     float * data;        // rollback slot 0
+     int64_t slot_stride; // between rollback slots (0 when K==1)
++    const float * input_data = nullptr; // optional persistent state read in place
+ };
+ 
+ void ggml_sycl_op_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+--- a/ggml/src/ggml-sycl/gated_delta_net.cpp
++++ b/ggml/src/ggml-sycl/gated_delta_net.cpp
+@@ -288,7 +288,8 @@
+     const float * g_d = (const float *) src_g->data;
+     const float * b_d = (const float *) src_beta->data;
+ 
+-    const float * s_d   = (const float *) src_state->data;
++    const float * s_d   = cache != nullptr && cache->input_data != nullptr
++        ? cache->input_data : (const float *) src_state->data;
+     float *       dst_d = (float *) dst->data;
+ 
+     GGML_ASSERT(ggml_is_contiguous_rows(src_q));
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -5983,9 +5983,131 @@
+ 
+     fused_state_cpy.data        = (float *) dst->data; // rollback group 0 (newest)
+     fused_state_cpy.slot_stride = K > 1 ? (int64_t) (dst->nb[2] / sizeof(float)) : 0;
++    fused_state_cpy.input_data  = nullptr;
+     return skip;
+ }
+ 
++struct ggml_sycl_ornith_gdn_state_io_match {
++    ggml_tensor * gdn;
++    ggml_sycl_gated_delta_net_fused_cache cache;
++    int nodes_to_skip;
++};
++
++static std::atomic<uint64_t> g_ggml_sycl_ornith_gdn_state_io_hits{0};
++
++static bool ggml_sycl_ornith_gdn_state_io_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO");
++        const bool on = value != nullptr && std::strcmp(value, "0") != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_gdn_state_io: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_gdn_state_io_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++// Ornith's one-token Qwen-derived GDN path gathers the sole persistent state
++// row into a temporary before the recurrent kernel. The existing cache fusion
++// already writes the updated state back to that same persistent buffer. Each
++// GDN workgroup owns one state column and loads it fully before writing, so the
++// kernel can safely read and write the persistent buffer in place and elide
++// the GET_ROWS launch as well.
++static bool ggml_sycl_find_ornith_gdn_state_io(
++        const ggml_cgraph * cgraph, int node_idx,
++        ggml_sycl_ornith_gdn_state_io_match & match) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_gdn_state_io_enabled() ||
++        node_idx < 0 || node_idx >= cgraph->n_nodes) {
++        return false;
++    }
++
++    ggml_tensor * get = cgraph->nodes[node_idx];
++    constexpr int64_t state_elems = 128LL * 128 * 32;
++    if (get == nullptr || get->op != GGML_OP_GET_ROWS ||
++        get->src[0] == nullptr || get->src[1] == nullptr ||
++        get->type != GGML_TYPE_F32 || get->src[0]->type != GGML_TYPE_F32 ||
++        get->src[1]->type != GGML_TYPE_I32 || !ggml_is_contiguous(get) ||
++        !ggml_is_contiguous(get->src[0]) || ggml_nrows(get) != 1 ||
++        ggml_nrows(get->src[0]) != 1 || ggml_nelements(get) != state_elems ||
++        ggml_nelements(get->src[0]) != state_elems ||
++        ggml_nelements(get->src[1]) != 1 || get->data == get->src[0]->data) {
++        return false;
++    }
++
++    const auto unwrap = [](const ggml_tensor * tensor) {
++        while (tensor != nullptr && tensor->src[0] != nullptr &&
++               (tensor->op == GGML_OP_RESHAPE || tensor->op == GGML_OP_VIEW ||
++                tensor->op == GGML_OP_PERMUTE || tensor->op == GGML_OP_TRANSPOSE)) {
++            tensor = tensor->src[0];
++        }
++        return tensor;
++    };
++
++    ggml_tensor * gdn = nullptr;
++    int gdn_idx = -1;
++    for (int j = node_idx + 1; j < cgraph->n_nodes && j <= node_idx + 32; ++j) {
++        ggml_tensor * candidate = cgraph->nodes[j];
++        if (candidate != nullptr && candidate->op == GGML_OP_GATED_DELTA_NET &&
++            candidate->src[5] != nullptr && unwrap(candidate->src[5]) == get) {
++            if (gdn != nullptr) {
++                return false;
++            }
++            gdn = candidate;
++            gdn_idx = j;
++        }
++    }
++    if (gdn == nullptr || gdn_idx < 0 || gdn->src[2] == nullptr ||
++        gdn->src[2]->type != GGML_TYPE_F32 || gdn->src[2]->ne[0] != 128 ||
++        gdn->src[2]->ne[1] != 32 || gdn->src[2]->ne[2] != 1 ||
++        gdn->src[2]->ne[3] != 1 || ggml_get_op_params_i32(gdn, 0) != 1) {
++        return false;
++    }
++
++    ggml_sycl_gated_delta_net_fused_cache cache{};
++    const int nodes_to_skip = ggml_sycl_try_gdn_cache_fusion(cgraph, gdn_idx, cache);
++    if (nodes_to_skip <= 0 || cache.data != get->src[0]->data || cache.slot_stride != 0) {
++        return false;
++    }
++
++    const uintptr_t state_begin = reinterpret_cast<uintptr_t>(cache.data);
++    const uintptr_t state_end = state_begin + (size_t) state_elems * sizeof(float);
++    const uintptr_t gdn_begin = reinterpret_cast<uintptr_t>(gdn->data);
++    const uintptr_t gdn_end = gdn_begin + ggml_nbytes(gdn);
++    if (state_begin < gdn_end && gdn_begin < state_end) {
++        return false;
++    }
++
++    // Shape-only aliases are harmless. The sole compute consumer of the
++    // gathered temporary must be the matched GDN state input.
++    for (int j = node_idx + 1; j < cgraph->n_nodes; ++j) {
++        ggml_tensor * consumer = cgraph->nodes[j];
++        if (consumer == nullptr) {
++            continue;
++        }
++        for (int s = 0; s < GGML_MAX_SRC; ++s) {
++            const ggml_tensor * src = consumer->src[s];
++            if (src == nullptr || unwrap(src) != get) {
++                continue;
++            }
++            const bool shape_only = consumer->op == GGML_OP_RESHAPE ||
++                                    consumer->op == GGML_OP_VIEW ||
++                                    consumer->op == GGML_OP_PERMUTE ||
++                                    consumer->op == GGML_OP_TRANSPOSE;
++            if (!shape_only && !(consumer == gdn && s == 5)) {
++                return false;
++            }
++        }
++    }
++
++    cache.input_data = cache.data;
++    match = { gdn, cache, nodes_to_skip };
++    return true;
++}
++
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_conv_silu_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_direct_hits{0};
+@@ -6446,6 +6568,8 @@
+     pending_ornith_concat_state_direct.reserve(64);
+     std::vector<ggml_sycl_ornith_gdn_rms_gate_match> pending_ornith_gdn_rms_gate;
+     pending_ornith_gdn_rms_gate.reserve(40);
++    std::vector<ggml_sycl_ornith_gdn_state_io_match> pending_ornith_gdn_state_io;
++    pending_ornith_gdn_state_io.reserve(40);
+ 
+     for (int i = 0; i < cgraph->n_nodes; i++) {
+         ggml_tensor * node = cgraph->nodes[i];
+@@ -6462,6 +6586,11 @@
+         }
+ 
+         if (node->op == GGML_OP_GET_ROWS) {
++            ggml_sycl_ornith_gdn_state_io_match gdn_state_io;
++            if (ggml_sycl_find_ornith_gdn_state_io(cgraph, i, gdn_state_io)) {
++                pending_ornith_gdn_state_io.push_back(gdn_state_io);
++                continue;
++            }
+             ggml_sycl_ornith_concat_state_direct_match match;
+             if (ggml_sycl_find_ornith_concat_state_direct(cgraph, i, match)) {
+                 pending_ornith_concat_state_direct.push_back(match);
+@@ -6501,6 +6630,21 @@
+                 continue;
+             }
+         }
++
++        if (node->op == GGML_OP_GATED_DELTA_NET) {
++            auto state_io = std::find_if(
++                pending_ornith_gdn_state_io.begin(), pending_ornith_gdn_state_io.end(),
++                [node](const ggml_sycl_ornith_gdn_state_io_match & candidate) {
++                    return candidate.gdn == node;
++                });
++            if (state_io != pending_ornith_gdn_state_io.end()) {
++                ggml_sycl_op_gated_delta_net_fused_cache(*sycl_ctx, node, state_io->cache);
++                g_ggml_sycl_ornith_gdn_state_io_hits.fetch_add(1, std::memory_order_relaxed);
++                i += state_io->nodes_to_skip;
++                pending_ornith_gdn_state_io.erase(state_io);
++                continue;
++            }
++        }
+ 
+         const int nodes_to_skip = ggml_sycl_fuse(*sycl_ctx, cgraph, i);
+         if (nodes_to_skip != 0) {

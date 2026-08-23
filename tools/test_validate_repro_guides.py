@@ -124,6 +124,28 @@ class ReproGuideValidationTest(unittest.TestCase):
             self.assertTrue(any("does not resolve" in error for error in errors))
             self.assertTrue(any("unique, increasing" in error for error in errors))
 
+    def test_performance_profile_accepts_measured_zero_depth(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            (repo / "data").mkdir()
+            (repo / "data/measured.json").write_text("{}\n")
+            profiles = [{
+                "id": "decode-context",
+                "label": "Decode over context",
+                "metric": "decode",
+                "unit": "tok/s",
+                "x_label": "Existing context depth",
+                "scope": "Measured zero and 2K depths",
+                "evidence": "data/measured.json",
+                "points": [
+                    {"context_tokens": 0, "value": 12.0, "samples": 5},
+                    {"context_tokens": 2048, "value": 11.0, "samples": 5},
+                ],
+            }]
+            self.assertEqual(
+                MODULE._validate_performance_profiles(repo, "example", profiles), []
+            )
+
     @staticmethod
     def _entry(guide: str) -> dict[str, object]:
         return {

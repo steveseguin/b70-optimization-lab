@@ -10,7 +10,7 @@
     "model_family": "Ornith 1.5",
     "publisher": "Ornith AI",
     "variant": "35B-A3B",
-    "summary": "35B-class Qwen-derived MoE (256 experts / 8 active, arch qwen35moe) reaching a directly measured 117.4 tok/s current-patch mean on one card with the lab's validated expert-reduction, recurrent, state-materialization, alpha-gate, routed gate/up, residual/RMSNorm, and GDN normalization/gate patches.",
+    "summary": "35B-class Qwen-derived MoE (256 experts / 8 active, arch qwen35moe) reaching a directly measured 126.2 tok/s current-patch mean on one card with the lab's validated expert-reduction, recurrent, state-materialization, alpha-gate, routed gate/up, residual/RMSNorm, GDN normalization/gate, and in-place GDN state I/O patches.",
     "quantization": "Q4_K_M",
     "runtime_label": "llama.cpp SYCL",
     "operating_systems": [
@@ -36,10 +36,10 @@
     ],
     "published_at": "2026-08-22",
     "featured_metric": {
-      "value": 117.446154,
+      "value": 126.179443,
       "unit": "tok/s",
       "label": "decode (3B active parameters)",
-      "scope": "Mean of two fresh-server suite medians (117.856 and 117.036 tok/s), up-to-512-token responses, target-only, cache-zero; the current nine-feature patch was +0.78% against its matched controls. This value is directly measured, not extrapolated from the prior operating point.",
+      "scope": "Mean of two fresh-server suite medians (126.362 and 125.997 tok/s), up-to-512-token responses, target-only, cache-zero; the current ten-feature patch's in-place GDN state increment was +6.80% against its matched controls. This value is directly measured, not extrapolated from the prior operating point.",
       "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
     }
   },
@@ -49,10 +49,10 @@
       "name": "neural.download lab",
       "kind": "lab",
       "profile": "https://github.com/steveseguin/b70-optimization-lab",
-      "contribution": "Intake verification, bring-up, baselines, depth sweep, ordered MoE add-reduction, recurrent convolution-SiLU, residual-RMSNorm, recurrent concat/state, direct gather/state, recurrent alpha-gate, routed-expert gate/up, MoE shared-branch residual/RMSNorm, and GDN RMSNorm/SiLU-gate patches, operating point, canary battery, and package.",
+      "contribution": "Intake verification, bring-up, baselines, depth sweeps, ordered MoE add-reduction, recurrent convolution-SiLU, residual-RMSNorm, recurrent concat/state, direct gather/state, recurrent alpha-gate, routed-expert gate/up, MoE shared-branch residual/RMSNorm, GDN RMSNorm/SiLU-gate, and in-place GDN state I/O patches, operating point, canary battery, and package.",
       "status": "integrated",
-      "validated_effect": "+4.85% matched fresh-server decode from ordered expert reduction, +2.10% incremental from recurrent convolution-SiLU, +1.37% incremental from residual-RMSNorm, +2.74% incremental from recurrent concat/state, +1.12% incremental from direct recurrent gather, +2.04% incremental from recurrent alpha-gate, +2.33% incremental from routed gate/up, +1.41% incremental from MoE shared-branch residual/RMSNorm, then +0.78% incremental from GDN RMSNorm/SiLU-gate fusion (116.535 to 117.446 tok/s in its matched current-library suite).",
-      "evidence": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-gdn-rms-gate-summary.json"
+      "validated_effect": "+4.85% matched fresh-server decode from ordered expert reduction, +2.10% incremental from recurrent convolution-SiLU, +1.37% incremental from residual-RMSNorm, +2.74% incremental from recurrent concat/state, +1.12% incremental from direct recurrent gather, +2.04% incremental from recurrent alpha-gate, +2.33% incremental from routed gate/up, +1.41% incremental from MoE shared-branch residual/RMSNorm, +0.78% incremental from GDN RMSNorm/SiLU-gate, then +6.80% incremental from in-place GDN state I/O (118.148 to 126.179 tok/s in its matched current-library suite).",
+      "evidence": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-gdn-state-io-summary.json"
     }
   ],
   "performance_profiles": [
@@ -62,15 +62,16 @@
       "metric": "decode",
       "unit": "tok/s",
       "x_label": "Existing context depth before tg128",
-      "scope": "llama-bench raw engine rates using the exact current nine-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
-      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-optimized.sweep.json",
+      "scope": "llama-bench raw engine rates using the exact current ten-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions at every displayed depth. No missing depth is interpolated.",
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-ten-feature.sweep.json",
       "points": [
-        { "context_tokens": 2048, "value": 121.664112, "samples": 5 },
-        { "context_tokens": 4096, "value": 118.814100, "samples": 5 },
-        { "context_tokens": 8192, "value": 113.570291, "samples": 5 },
-        { "context_tokens": 16384, "value": 104.505272, "samples": 5 },
-        { "context_tokens": 24576, "value": 96.803311, "samples": 5 },
-        { "context_tokens": 32768, "value": 90.497879, "samples": 5 }
+        { "context_tokens": 0, "value": 135.347557, "samples": 5 },
+        { "context_tokens": 2048, "value": 130.735400, "samples": 5 },
+        { "context_tokens": 4096, "value": 127.705931, "samples": 5 },
+        { "context_tokens": 8192, "value": 121.263474, "samples": 5 },
+        { "context_tokens": 16384, "value": 110.938268, "samples": 5 },
+        { "context_tokens": 24576, "value": 102.288946, "samples": 5 },
+        { "context_tokens": 32768, "value": 95.021893, "samples": 5 }
       ]
     },
     {
@@ -79,15 +80,16 @@
       "metric": "prefill",
       "unit": "tok/s",
       "x_label": "Existing context depth before pp2048",
-      "scope": "llama-bench raw engine rates using the exact current nine-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
-      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-optimized.sweep.json",
+      "scope": "llama-bench raw engine rates using the exact current ten-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions at every displayed depth. No missing depth is interpolated.",
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-ten-feature.sweep.json",
       "points": [
-        { "context_tokens": 2048, "value": 1324.481215, "samples": 5 },
-        { "context_tokens": 4096, "value": 1314.983919, "samples": 5 },
-        { "context_tokens": 8192, "value": 1283.781607, "samples": 5 },
-        { "context_tokens": 16384, "value": 1220.137027, "samples": 5 },
-        { "context_tokens": 24576, "value": 1195.816978, "samples": 5 },
-        { "context_tokens": 32768, "value": 1101.523036, "samples": 5 }
+        { "context_tokens": 0, "value": 1400.713008, "samples": 5 },
+        { "context_tokens": 2048, "value": 1324.708989, "samples": 5 },
+        { "context_tokens": 4096, "value": 1316.755210, "samples": 5 },
+        { "context_tokens": 8192, "value": 1283.591011, "samples": 5 },
+        { "context_tokens": 16384, "value": 1219.310576, "samples": 5 },
+        { "context_tokens": 24576, "value": 1196.442256, "samples": 5 },
+        { "context_tokens": 32768, "value": 1102.085345, "samples": 5 }
       ]
     }
   ],
@@ -95,7 +97,7 @@
     "MoE rate reflects ~3B active parameters; not comparable to dense 35B expectations.",
     "Canary battery is objective self-consistency only; no cross-model oracle.",
     "Stock two-card layer split measured 102.01/102.20 tok/s versus 104.84/104.81 on one card (-2.6%): use one card for single-stream decode.",
-    "Fresh stock servers matched 0/12 complete realistic-suite hashes across processes on this runtime; same-binary door-off/on 400-token output and within-server 8x stability passed.",
+    "Fresh stock servers matched 0/12 complete realistic-suite hashes across processes on this runtime. A realistic same-process repeat also produced four hashes across eight requests; use same-frozen-binary door-off/on exactness and activation counts for patch validation, while the short exact-answer 8x canary remains a narrower check.",
     "Stage the GGUF on local or sufficiently fast direct-attached storage; optimized first-token setup rereads roughly 20.0 GB of expert tensors, making a 100 Mb/s NFS mmap unsuitable for cold benchmarking."
   ],
   "hardware": {
@@ -119,14 +121,14 @@
   "project_patches": {
     "required": true,
     "items": [
-      "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch"
+      "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch"
     ],
-    "decoded_sha256": "762becc20a4ce1d82017bdb7d73485ff892eb26b9cf141dd9b74a9707fe1cf9a",
-    "reason": "The validated one-card serving stack depends on the lab's strict ordered eight-expert FP32 reduction, Ornith-shape recurrent convolution-SiLU fusion, graph-visible residual-RMSNorm fusion, Qwen-derived recurrent concat/state fusion, direct gathered-state materialization, recurrent alpha-gate fusion, tuned routed-expert gate/up/SWIGLU fusion, MoE shared-branch residual/RMSNorm extension, and exact GDN RMSNorm/SiLU-gate fusion."
+    "decoded_sha256": "d8c95e4d0cbe0be91c0890f4e5d3c6b4f2bfb22b5daedd12a560910f954c915e",
+    "reason": "The validated one-card serving stack depends on the lab's strict ordered eight-expert FP32 reduction, Ornith-shape recurrent convolution-SiLU fusion, graph-visible residual-RMSNorm fusion, Qwen-derived recurrent concat/state fusion, direct gathered-state materialization, recurrent alpha-gate fusion, tuned routed-expert gate/up/SWIGLU fusion, MoE shared-branch residual/RMSNorm extension, exact GDN RMSNorm/SiLU-gate fusion, and in-place GDN persistent-state I/O."
   },
   "commands": {
-    "preflight": "python3 scripts/verify-neural-download-model.py repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json \"$MODEL_DIR\" && echo '762becc20a4ce1d82017bdb7d73485ff892eb26b9cf141dd9b74a9707fe1cf9a  patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch' | sha256sum -c - && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
-    "launch": "GGML_SYCL_ENABLE_GRAPH=0 GGML_SYCL_FUSED_MOE_ADD_REDUCE=1 GGML_SYCL_FUSED_ORNITH_CONV_SILU=1 GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1 GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1 GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1 GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1 GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1 GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1 GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1 BUILD_DIR/bin/llama-server --model $MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf --alias ornith35b --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
+    "preflight": "python3 scripts/verify-neural-download-model.py repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json \"$MODEL_DIR\" && echo 'd8c95e4d0cbe0be91c0890f4e5d3c6b4f2bfb22b5daedd12a560910f954c915e  patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch' | sha256sum -c - && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
+    "launch": "GGML_SYCL_ENABLE_GRAPH=0 GGML_SYCL_FUSED_MOE_ADD_REDUCE=1 GGML_SYCL_FUSED_ORNITH_CONV_SILU=1 GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1 GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1 GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1 GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1 GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1 GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1 GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1 GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO=1 BUILD_DIR/bin/llama-server --model $MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf --alias ornith35b --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
     "health": "curl -fsS http://127.0.0.1:18100/health",
     "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model ornith35b --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
     "stop": "pkill -x llama-server"
@@ -137,12 +139,12 @@
     "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.sweep.json",
     "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.meta.json",
     "repro/ornith-15-35b-a3b-q4km-b70/depth-sweep.svg",
-    "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-optimized.sweep.json",
-    "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-optimized.meta.json",
-    "repro/ornith-15-35b-a3b-q4km-b70/optimized-depth-sweep.svg",
+    "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-ten-feature.sweep.json",
+    "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-ten-feature.meta.json",
+    "repro/ornith-15-35b-a3b-q4km-b70/optimized-depth-sweep-ten-feature.svg",
     "scripts/verify-neural-download-model.py",
     "patches/ornith-15-35b-a3b-q4km-b70/README.md",
-    "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch",
+    "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch",
     "experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md",
     "experiments/ornith-15-b70/data/2026-08-22-ornith35b-moe-add-reduce-summary.json",
     "experiments/ornith-15-b70/data/2026-08-22-ornith35b-moe-add-reduce-canaries.json",
@@ -175,6 +177,10 @@
     "experiments/ornith-15-b70/data/2026-08-23-ornith35b-gdn-rms-gate-summary.json",
     "experiments/ornith-15-b70/data/2026-08-23-ornith35b-gdn-rms-gate-canaries.json",
     "experiments/ornith-15-b70/data/2026-08-23-ornith35b-gdn-rms-gate-exactness.json",
+    "experiments/ornith-15-b70/notes/2026-08-23-ornith35b-gdn-state-io-positive.md",
+    "experiments/ornith-15-b70/data/2026-08-23-ornith35b-gdn-state-io-summary.json",
+    "experiments/ornith-15-b70/data/2026-08-23-ornith35b-gdn-state-io-exactness.json",
+    "experiments/ornith-15-b70/notes/2026-08-23-ornith35b-ten-feature-depth-sweep.md",
     "experiments/ornith-15-b70/notes/2026-08-23-ornith35b-optimized-depth-sweep.md",
     "docs/neural-download-packet-standard.md"
   ],

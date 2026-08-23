@@ -1,8 +1,11 @@
 # Ornith 1.5 35B-A3B — one-B70 neural.download guide
 
 Status: **model verified, one-card operating point validated, and lab decode
-patch promoted** (2026-08-22). Lane: enthusiast MoE; the measured stock
+patch promoted** (2026-08-23). Lane: enthusiast MoE; the measured stock
 two-card comparison was slower than one card for single-stream decode.
+
+**Current directly measured target-only serving mean: `126.179443 tok/s`**
+(fresh-suite medians `126.362074` and `125.996811`, one B70, cache-zero).
 
 **Intake diagnostic baseline (1x B70, 8K ctx, f16 KV, target-only,
 128/100 window, cache-zero verified): `105.782 tok/s` median /
@@ -44,8 +47,8 @@ git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-ornith15
 cd llama.cpp-ornith15
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
 
-PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch
-echo "762becc20a4ce1d82017bdb7d73485ff892eb26b9cf141dd9b74a9707fe1cf9a  $PATCH" | sha256sum -c -
+PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch
+echo "d8c95e4d0cbe0be91c0890f4e5d3c6b4f2bfb22b5daedd12a560910f954c915e  $PATCH" | sha256sum -c -
 git apply --check "$PATCH"
 git apply "$PATCH"
 git diff --check
@@ -71,7 +74,7 @@ cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2
 ```
 
 The validated compute library SHA-256 was
-`d75d5f1d07b6ac64421bbc9ae3cda7b916584f0422d512f57843a50427478e8c`.
+`cb401a22996aac4d482e5721aad0364f0462ec5522aefa05dc035cb002467259`.
 AOT output can vary with the compiler installation, so the source revision,
 patch hash, build settings, and validation gates are the durable identity.
 
@@ -98,6 +101,7 @@ export GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1
 export GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1
 export GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1
 export GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1
+export GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO=1
 
 build-sycl-aot-bmg-g31/bin/llama-server \
   --model "$MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf" \
@@ -111,27 +115,27 @@ build-sycl-aot-bmg-g31/bin/llama-server \
 Do not enable SYCL command graphs for this model on the pinned stack; the
 matched model-level experiment regressed decode by 52%.
 
-## Current nine-feature context-depth profile (llama-bench, FA on, 5 reps)
+## Current ten-feature context-depth profile (llama-bench, FA on, 5 reps)
 
-![optimized depth sweep](optimized-depth-sweep.svg)
+![optimized depth sweep](optimized-depth-sweep-ten-feature.svg)
 
 | Depth | decode tg128 tok/s (±σ) | prefill pp2048 tok/s (±σ) |
 |---:|---:|---:|
-| 0 | 126.28 (±0.45) | 1393.1 (±42.8) |
-| 2,048 | 121.66 (±0.34) | 1324.5 (±9.8) |
-| 4,096 | 118.81 (±0.07) | 1315.0 (±4.7) |
-| 8,192 | 113.57 (±0.08) | 1283.8 (±8.9) |
-| 16,384 | 104.51 (±0.12) | 1220.1 (±5.7) |
-| 24,576 | 96.80 (±0.09) | 1195.8 (±6.2) |
-| 32,768 | 90.50 (±0.08) | 1101.5 (±3.7) |
+| 0 | 135.35 (±0.54) | 1400.7 (±37.9) |
+| 2,048 | 130.74 (±0.31) | 1324.7 (±8.1) |
+| 4,096 | 127.71 (±0.14) | 1316.8 (±4.5) |
+| 8,192 | 121.26 (±0.08) | 1283.6 (±9.1) |
+| 16,384 | 110.94 (±0.10) | 1219.3 (±7.0) |
+| 24,576 | 102.29 (±0.12) | 1196.4 (±8.4) |
+| 32,768 | 95.02 (±0.08) | 1102.1 (±3.2) |
 
 These are directly measured raw engine rates from the exact current
-nine-feature stack with command graphs off, F16 KV, and five samples at every
+ten-feature stack with command graphs off, F16 KV, and five samples at every
 displayed depth. They are not inferred from the 8K server result and no missing
 depth is interpolated. Raw engine rates exclude HTTP and sampling overhead, so
 use the current fresh-server suite median below as the serving headline.
-Evidence: `ornith-15-35b-a3b-q4km-optimized.sweep.json` plus
-`ornith-15-35b-a3b-q4km-optimized.meta.json` (model and benchmark hashes
+Evidence: `ornith-15-35b-a3b-q4km-ten-feature.sweep.json` plus
+`ornith-15-35b-a3b-q4km-ten-feature.meta.json` (model and benchmark hashes
 inside).
 
 ## Historical stock context-depth reference (patch off; llama-bench, FA on, 5 reps)
@@ -178,7 +182,7 @@ Correctness gates:
   open runtime limitation rather than a patch acceptance gate.
 
 Patch instructions and evidence:
-[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch),
+[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch),
 [patch packet](../../patches/ornith-15-35b-a3b-q4km-b70/README.md), and
 [`experiments/ornith-15-b70/`](../../experiments/ornith-15-b70/).
 
@@ -272,10 +276,25 @@ stack to 630 removed launches/token. Mirrored engine means improved
 `121.287 -> 121.698 tok/s` (**+0.34%**) and fresh-server means improved
 `116.535 -> 117.446 tok/s` (**+0.78%**). Both candidates exceeded both
 controls, forced 128-token output was byte-identical, all freshness gates
-passed, and the full canary battery passed. The `117.446` current-patch mean is
+passed, and the full canary battery passed. The `117.446` then-current mean is
 directly measured rather than extrapolated from the prior 118.048 point.
 Evidence:
 [`2026-08-23-ornith35b-gdn-rms-silu-gate-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-gdn-rms-silu-gate-positive.md).
+
+The tenth package increment completes the Qwen-derived recurrent-state
+transfer. The existing cache fusion already writes the updated GDN state to
+its persistent buffer; the new strict matcher also reads that sole state row
+in place and skips the temporary `GET_ROWS`. It requires exact state/value
+shapes, K=1, identical persistent input/output storage, non-overlap with GDN
+activations, and no other compute consumer. This removes another 30 launches
+per token, bringing the complete stack to 660. Mirrored engine means improved
+`122.074 -> 129.870 tok/s` (**+6.39%**) and fresh-server means improved
+`118.148 -> 126.179 tok/s` (**+6.80%**). Both candidates exceeded both
+controls; forced 128-token output was byte-identical, exactly 3,810 hits were
+recorded, and all objective canaries passed. The realistic same-process repeat
+probe retained the separately documented stock-runtime prose variability, so
+it is disclosed rather than presented as a determinism pass. Evidence:
+[`2026-08-23-ornith35b-gdn-state-io-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-gdn-state-io-positive.md).
 
 ## Stock two-card comparison (patch off; layer split, GPUs 0+1)
 

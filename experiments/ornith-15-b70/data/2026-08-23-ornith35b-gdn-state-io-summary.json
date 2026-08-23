@@ -1,0 +1,48 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "candidate_library_sha256": "cb401a22996aac4d482e5721aad0364f0462ec5522aefa05dc035cb002467259",
+  "complete_patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-ten-feature-stack-gdn-state-io-20260823.patch",
+  "complete_patch_sha256": "d8c95e4d0cbe0be91c0890f4e5d3c6b4f2bfb22b5daedd12a560910f954c915e",
+  "incremental_patch": "experiments/ornith-15-b70/patches/llamacpp-ornith15-gdn-state-io-positive-20260823.patch",
+  "incremental_patch_sha256": "cc8f16283ea02705798bbc52780083c49e132c6b2a135b824ad159824b8625cf",
+  "candidate_door": "GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO=1",
+  "removed_launches_per_decoded_token_incremental": 30,
+  "removed_launches_per_decoded_token_complete_stack": 660,
+  "engine": {
+    "protocol": "llama-bench p0/n128/d0/r7, same final binary, mirrored A/B/B/A sequence",
+    "controls_tok_s": [122.181649, 121.967034],
+    "candidates_tok_s": [130.451175, 129.288972],
+    "control_mean_tok_s": 122.0743415,
+    "candidate_mean_tok_s": 129.8700735,
+    "delta_percent": 6.3860528791,
+    "each_candidate_exceeded_each_control": true,
+    "candidate_fused_hits_each_run": 26910
+  },
+  "fresh_server": {
+    "protocol": "two fresh controls and two fresh candidates in A/B/B/A order; fixed 12-prompt suite; each prompt once; 512-token maximum; median tokens 1-100 after TTFT; cached_tokens=0",
+    "controls_tok_s": [118.39777626919499, 117.89771817348921],
+    "candidates_tok_s": [126.36207449569935, 125.99681128502252],
+    "control_mean_tok_s": 118.1477472213421,
+    "candidate_mean_tok_s": 126.17944289036093,
+    "delta_percent": 6.7980099984,
+    "all_freshness_gates_passed": true,
+    "all_final_gates_passed": true,
+    "each_candidate_exceeded_each_control": true,
+    "candidate_fused_hits_each_run": 183960
+  },
+  "correctness": {
+    "canonical_128_token_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "same_binary_control_candidate_byte_identical": true,
+    "candidate_fused_hits_128_tokens": 3810,
+    "expected_fused_hits_128_tokens": 3810,
+    "objective_canaries_passed": true,
+    "realistic_same_process_repeat_requests": 8,
+    "realistic_same_process_unique_hashes": 4,
+    "realistic_same_process_dominant_hash_count": 5,
+    "realistic_repeat_interpretation": "The stock SYCL runtime is already prose-nondeterministic. This probe is disclosed as a runtime limitation, not treated as a candidate-specific exactness oracle."
+  },
+  "result": "accepted incremental optimization"
+}

@@ -317,6 +317,12 @@ Style genome (duotone-hixffp):
       </thead>
       <tbody>
         <tr>
+          <th scope="row" class="model">Ornith 1.5 35B-A3B <small>1&times; B70 &middot; Q4_K_M &middot; Ornith AI &middot; Aug 2026</small><span class="status candidate">Candidate package</span></th>
+          <td class="mut model-use">Fast Qwen-derived one-card MoE; our ten-kernel stack is target-only, cache-zero tested, and includes measured decode/prefill curves through 32K</td>
+          <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate">126.18</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="repro/ornith-15-35b-a3b-q4km-b70/README.md" aria-label="Copy Ornith 1.5 35B one-B70 candidate guide Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Ornith%201.5%2035B-A3B%201xB70">Submit improvement</a></div></td>
+        </tr>
+        <tr>
           <th scope="row" class="model">Gemma-4-26B <small>1&times; B70 &middot; Q8 + MTP3 &middot; Google &middot; Apr 2026</small><span class="status">Lab result</span></th>
           <td class="mut model-use">Strong one-card all-rounder that also reads pictures; self-contained starter packaging is still in progress</td>
           <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate">124.98</td>
@@ -342,7 +348,7 @@ Style genome (duotone-hixffp):
         </tr>
         <tr>
           <th scope="row" class="model">Laguna-S-2.1 <small>4&times; B70 &middot; INT4 + DFlash &middot; Poolside &middot; Jul 2026</small><span class="status">Lab result</span></th>
-          <td class="mut model-use">Coding-assistant work and the fastest conventional rate currently verified in the lab</td>
+          <td class="mut model-use">Coding-assistant work with a validated four-card DFlash deployment and a complete result packet</td>
           <td class="num r model-cards" data-label="Cards">4</td><td class="num r model-speed" data-label="Measured rate">125.46</td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/laguna-s-2.1-int4-b70-125tps/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="packages/laguna-s-2.1-int4-b70-125tps/README.md" aria-label="Copy Laguna-S-2.1 record replay package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Laguna-S-2.1%204xB70">Submit improvement</a></div></td>
         </tr>
@@ -410,58 +416,65 @@ Style genome (duotone-hixffp):
       </thead>
       <tbody>
         <tr>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Ornith 1.5 35B-A3B <small>Qwen-derived MoE &middot; uses ~3B of 35B per word &middot; Aug 2026</small></th>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M + lab ten-feature stack</td><td class="num r">1&times;</td>
+          <td class="num r">126.18<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
+          <td class="mut hide-s" title="mean of two fresh cache-zero suite medians">average of 2 fresh servers</td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">full guide</a></td>
+        </tr>
+        <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Laguna-S-2.1 <small>coding assistant &middot; Jul 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">INT4 W4A16 + DFlash d11</td><td class="num r">4&times;</td>
-          <td class="num r">125.46<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
+          <td class="num r">125.46<div class="ratebar" style="width:99.4%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="conventional median">typical</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/laguna-s-2.1-int4-b70/README.md">test report</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Gemma-4-26B-A4B <small>all-rounder &middot; uses ~4B of 26B per word &middot; Apr 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + MTP3</td><td class="num r">1&times;</td>
-          <td class="num r">124.98<div class="ratebar" style="width:99.6%" aria-hidden="true"></div></td>
+          <td class="num r">124.98<div class="ratebar" style="width:99.0%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="median; ctx 32,768">typical &middot; remembers ~24K words</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">test report</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span>Qwen3.8-27B <small>newest all-rounder &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">INT4 + MTP5</td><td class="num r">2&times;</td>
-          <td class="num r">101.17<div class="ratebar" style="width:80.6%" aria-hidden="true"></div></td>
+          <td class="num r">101.17<div class="ratebar" style="width:80.2%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="honest margin-free all-25 median; three arms agree on only 21 to 22 of 25 token arrays">research &middot; determinism open</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">lab status</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Muse-Glimmer-30B <small>Meta &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash n15</td><td class="num r">4&times;</td>
-          <td class="num r">100.37<div class="ratebar" style="width:80%" aria-hidden="true"></div></td>
+          <td class="num r">100.37<div class="ratebar" style="width:79.5%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="canonical pooled mean">average across repeat runs</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">full report</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-27B <small>general assistant &middot; uses all 27B per word &middot; Apr 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 + MTP3</td><td class="num r">2&times;</td>
-          <td class="num r">98.77<div class="ratebar" style="width:78.7%" aria-hidden="true"></div></td>
+          <td class="num r">98.77<div class="ratebar" style="width:78.3%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="four-arm central estimate">average across 4 setups</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/scoreboard.md">full rankings</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-35B-A3B <small>long documents &middot; uses ~3B of 35B per word &middot; Apr 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">Quark W8A8 INT8</td><td class="num r">4&times;</td>
-          <td class="num r">93.55<div class="ratebar" style="width:74.6%" aria-hidden="true"></div></td>
+          <td class="num r">93.55<div class="ratebar" style="width:74.1%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="output, strict deep gate">typical, strictest quality gate</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen36-35b-quark-int8-b70/README.md">test report</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>MiniMax-M2.7 <small>remembers long conversations (32K) &middot; Mar 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 W4A16</td><td class="num r">4&times;</td>
-          <td class="num r">89.31<div class="ratebar" style="width:71.2%" aria-hidden="true"></div></td>
+          <td class="num r">89.31<div class="ratebar" style="width:70.8%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="mean of four clean long repeats">average of 4 clean runs</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/README.md">full report</a></td>
         </tr>
         <tr>
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>DeepSeek-V4-Flash-180B <small>experimental community-trimmed copy &middot; research only</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">FP8 + FP4 experts + DSpark7</td><td class="num r">4&times;</td>
-          <td class="num r">80.82<div class="ratebar" style="width:64.4%" aria-hidden="true"></div></td>
+          <td class="num r">80.82<div class="ratebar" style="width:64.1%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="median high, 24/24 exact canaries">typical high &middot; all 24 checks passed</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/scoreboard.md">full rankings</a></td>
         </tr>

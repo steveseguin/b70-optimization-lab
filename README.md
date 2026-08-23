@@ -28,7 +28,7 @@ at your own risk.
 | Understand the repo structure | [Docs index](docs/README.md) |
 | See every active, paused, and archived model lane | [Model effort index](docs/model-effort-index.md) |
 | Find a tested result or reproduction artifact | [Results index](results/README.md), [classified reproduction catalog](repro/README.md), and [certification standard](docs/reproduction-guide-certification.md) |
-| Try a packaged candidate | Browse the [model guide library](guides.html) or its [machine-readable package catalog](packages/catalog.json) — seven candidates/replays, none yet starter-certified |
+| Try a packaged candidate | Browse the [model guide library](guides.html) or its [machine-readable package catalog](packages/catalog.json) — twelve candidates/replays, none yet starter-certified |
 | Start optimizing a new model | [Model optimization guide](docs/model-optimization-guide.md) |
 | See or prepare the next model downloads | [Model intake queue](model-intake/README.md) |
 | Follow the Docker and Windows packaging path | [Distribution and packaging roadmap](docs/model-distribution-and-packaging-roadmap.md) |

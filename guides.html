@@ -185,7 +185,7 @@
   let packages = [];
 
   const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[char]);
-  const packageReadme = item => item.manifest.replace(/package\.json$/, "README.md");
+  const packageReadme = item => item.guide || item.manifest.replace(/package\.json$/, "README.md");
   const shortNumber = value => value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K` : Number(value).toFixed(value >= 100 ? 0 : 1);
   const profileChart = profile => {
     const width = 440, height = 160, left = 47, right = 10, top = 10, bottom = 34;

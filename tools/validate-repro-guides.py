@@ -488,9 +488,9 @@ def _validate_performance_profiles(
             if (
                 isinstance(context_tokens, bool)
                 or not isinstance(context_tokens, int)
-                or context_tokens < 1
+                or context_tokens < 0
             ):
-                errors.append(f"{point_label}.context_tokens must be a positive integer")
+                errors.append(f"{point_label}.context_tokens must be a non-negative integer")
             else:
                 contexts.append(context_tokens)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
