@@ -1,0 +1,214 @@
+{
+  "campaign": "Qwen3.8-27B AutoRound INT4 rolling-XPU-nightly TP-scale qualification",
+  "date": "2026-08-23",
+  "status": "quality-qualified at TP1/TP2/TP4; not a wholesale performance replacement",
+  "scope": "MTP0, F16 KV, 32K maximum context, one request, XPU Graph, TP1/TP2/TP4",
+  "rolling_runtime": {
+    "source_tag": "vllm/vllm-openai-xpu:nightly",
+    "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+    "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+    "oci_config_digest": "sha256:cb9c19dfac25837b09d6f5529df4d81fe55d7b9052dda0025ccc223b79889187",
+    "created": "2026-08-23T05:09:33.938169411Z",
+    "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124",
+    "vllm_version": "0.26.1rc1.dev1120+ga3561ef8e.xpu",
+    "torch": "2.13.0+xpu",
+    "triton": "3.7.2+xpu",
+    "transformers": "5.15.0",
+    "vllm_xpu_kernels": "0.1.13.2"
+  },
+  "historical_frontier": {
+    "runtime_digest": "sha256:bc979d1ba312dc8a666c57a40205f35d7fc5d96b2f7450c2c77f5b3d5243f0e0",
+    "vllm_source": "e9d1398d9edfd90fcc1cf783805240e3effec013",
+    "diagnostic_conventional_tok_s": {
+      "tp1": [30.2178, 30.2569],
+      "tp2": [48.8301, 48.950458800865434],
+      "tp4": [71.6741, 71.5488]
+    },
+    "strict_natural_eos_conventional_tok_s": {
+      "tp1": [30.31067504052998],
+      "tp2": [49.01965141150585],
+      "tp4": [71.29326283364946, 71.39843006187554]
+    },
+    "do_not_overwrite": true
+  },
+  "benchmark_identity": {
+    "model": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16 group-128 symmetric; runtime quantization=inc",
+    "mtp": 0,
+    "kv_cache_dtype": "f16",
+    "max_model_len": 32768,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "prefix_caching": false,
+    "graph": "FULL_AND_PIECEWISE",
+    "graph_flag": "VLLM_XPU_ENABLE_XPU_GRAPH=1",
+    "gpu_memory_utilization": {
+      "tp1": 0.9,
+      "tp2": 0.9,
+      "tp4": 0.6
+    },
+    "gpus": {
+      "tp1": "0",
+      "tp2": "2,3",
+      "tp4": "0,1,2,3"
+    },
+    "pythonhashseed": {
+      "tp1": 0,
+      "tp2": "unset",
+      "tp4": "unset"
+    },
+    "suite_sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c",
+    "metric": "median tok/s over the 99 intervals between streamed token events 1 and 100 after TTFT",
+    "source_patch_overlay": "none; stock image plus the preserved launcher/runtime contract",
+    "effective_identity_diff": "runtime image/source/package versions and served-model alias only"
+  },
+  "topologies": {
+    "tp1": {
+      "diagnostic_fresh": {
+        "median_tok_s": 30.329809361830037,
+        "relative_to_old_diagnostic_best_percent": 0.2409677191980597,
+        "rows_valid": 25,
+        "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/rolling-nightly-a3561ef8e/tp1-graph-seed0-diagnostic-fresh"
+      },
+      "strict_replays": [
+        {
+          "median_tok_s": 30.241645123711923,
+          "relative_to_old_strict_percent": -0.22774127176564685,
+          "quality_battery": "pass",
+          "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/rolling-nightly-a3561ef8e/tp1-graph-seed0-strict-quality-replay"
+        },
+        {
+          "median_tok_s": 30.243714296955797,
+          "relative_to_old_strict_percent": -0.22091472223777497,
+          "quality_battery": "not repeated",
+          "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/rolling-nightly-a3561ef8e/tp1-graph-seed0-strict-replay-b"
+        }
+      ],
+      "paired_strict_vs_old": {
+        "replay_a_faster_prompts": "0/25",
+        "replay_a_median_ratio": 0.9985112649515481,
+        "replay_b_faster_prompts": "2/25",
+        "replay_b_median_ratio": 0.998083098641382
+      },
+      "strict_a_vs_b_complete_token_match": "19/25",
+      "cache": {
+        "file_count": 1097,
+        "manifest_file_sha256": "fd397d219af8a9e0a098e19744ce286913eeef16da29fd8c48bd0958f5ef5bf9",
+        "replay_immutable": true
+      },
+      "verdict": "diagnostic new high; repeat-confirmed bounded strict regression; historical strict frontier retained"
+    },
+    "tp2": {
+      "diagnostic_fresh": {
+        "median_tok_s": 48.64759224153825,
+        "relative_to_old_diagnostic_floor_percent": -0.37376077145399034,
+        "relative_to_old_diagnostic_best_percent": -0.6187205733030443,
+        "rows_valid": 25,
+        "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/rolling-nightly-a3561ef8e/tp2-graph-diagnostic-fresh"
+      },
+      "strict_replay": {
+        "median_tok_s": 48.49048978038331,
+        "relative_to_old_strict_percent": -1.0794887680460663,
+        "paired_faster_prompts": "0/25",
+        "paired_median_ratio": 0.9892213875753241,
+        "quality_battery": "pass",
+        "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/rolling-nightly-a3561ef8e/tp2-graph-strict-quality-replay"
+      },
+      "fresh_vs_replay_complete_token_match": "19/25",
+      "cache": {
+        "file_count": 2277,
+        "manifest_file_sha256": "f9ec035fee46d360bb1297a5736704b067aa044c9f6b7e0490bb43b24def1eb7",
+        "replay_immutable": true
+      },
+      "verdict": "quality-qualified bounded performance regression; historical diagnostic and strict frontiers retained"
+    },
+    "tp4": {
+      "diagnostic_fresh": {
+        "median_tok_s": 71.34404937397696,
+        "relative_to_old_diagnostic_floor_percent": -0.28616919644081085,
+        "relative_to_old_diagnostic_best_percent": -0.4604879949982488,
+        "rows_valid": 25,
+        "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/rolling-nightly-a3561ef8e/tp4-graph-diagnostic-fresh"
+      },
+      "strict_replays": [
+        {
+          "median_tok_s": 71.9001988117144,
+          "relative_to_old_strict_best_percent": 0.7027728052339643,
+          "quality_battery": "pass",
+          "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/rolling-nightly-a3561ef8e/tp4-graph-strict-quality-replay"
+        },
+        {
+          "median_tok_s": 71.2457420049019,
+          "relative_to_old_strict_best_percent": -0.21385352148685088,
+          "relative_to_first_new_strict_percent": -0.910229481459901,
+          "quality_battery": "not repeated",
+          "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/rolling-nightly-a3561ef8e/tp4-graph-strict-replay-b"
+        }
+      ],
+      "strict_a_vs_b": {
+        "complete_token_match": "19/25",
+        "first_100_token_match": "24/25",
+        "paired_median_ratio_b_over_a": 0.9906648067145211,
+        "classification": "71.9002 is a captured high but not a replicated record"
+      },
+      "cache": {
+        "file_count": 4421,
+        "manifest_file_sha256": "86273698225e57c89f3f8ab26e4ab346985f468141515c34f9164f2f294ffd1c",
+        "replay_immutable": true
+      },
+      "verdict": "quality-qualified but performance-variable; historical replicated frontiers retained"
+    }
+  },
+  "quality_contract": {
+    "tp1_tp2_tp4": "pass",
+    "exact_cases_each": "7/7",
+    "same_server_repeat_each": "8/8 one hash",
+    "long_context_requested_tokens": 8192,
+    "long_context_actual_prompt_tokens": 7617,
+    "long_context_each": "pass",
+    "baseline_comparisons_each": "24/24 true",
+    "quality_requests_cached_tokens": "16/16 zero"
+  },
+  "autotune_investigation": {
+    "compiled_graph_change": false,
+    "code_hash_match": true,
+    "compiler_hash_match": true,
+    "candidate_config_hash_match": {
+      "tp1": "38/38",
+      "tp2": "78/78",
+      "tp4": "152/152"
+    },
+    "different_best_config_selections": {
+      "tp1": "20/38",
+      "tp2": "46/78",
+      "tp4": "78/152"
+    },
+    "cause": "vLLM package version participates in the compile-cache hash, forcing a fresh autotune despite byte-identical computation graphs",
+    "next_test": "fail-closed transfer of historical TP2 best_config selections into a fresh latest-runtime compile; compile binaries fresh and rerun speed plus quality"
+  },
+  "decision": {
+    "active_development_base": "rolling nightly a3561ef8",
+    "quality_qualified_topologies": [1, 2, 4],
+    "whole_column_performance_promoted": false,
+    "historical_frontier_replaced": false,
+    "historical_values_preserved": true,
+    "old_96_cell_matrix_mutated": false,
+    "xpu_graph_multi_gpu_disclosure_required": true,
+    "cross_run_token_nondeterminism_disclosure_required": true,
+    "submission_status": "none"
+  },
+  "raw_evidence_sha256": {
+    "tp1_diagnostic_bench": "e29f662b5ad48af9911a838b0651d7b05bf177de174297afda177a2e6e58a380",
+    "tp1_strict_a_bench": "755272b017ba9875a5fd1903e48878ec4bb6342c1b2078c77adc56d5aefcc60d",
+    "tp1_quality": "06dc28a83baf6fafdfc0184945aca4ad24455a0224ac325df880303d8031b436",
+    "tp1_strict_b_bench": "bba7ef739514aaff2871982e8c546ea3a8833165b862cbc0da7a3c08e1151a00",
+    "tp2_diagnostic_bench": "1132c5ba22da9727ccbbc6ab376aaf202f1ec169f924d0d3b03b7e2b6fc7257b",
+    "tp2_strict_bench": "d24de153140cdcaf18a193f8151b0875d046801f9fd5198bdddf8790b8de9317",
+    "tp2_quality": "89ca6a9782cec5ee0fc7a416c973ac5825d15118914722b1630984d9a33e2a55",
+    "tp4_diagnostic_bench": "7f93729700509639112735f9b58f47043b2175a1e649bd68faa2f384ef068ea6",
+    "tp4_strict_a_bench": "c448e2ae3d83d6eea768940095c86db0e65901b9679fc0e894283f73d742647c",
+    "tp4_quality": "e1b35106fbc6106c52692f3fee3cdd06cb7b1c47e3d906e8359fd200b88862bc",
+    "tp4_strict_b_bench": "f33f48516d39f63a1df4190330d7fb50f4a5822b0f153350e89ca37f3caf0dd6"
+  }
+}

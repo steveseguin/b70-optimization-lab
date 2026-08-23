@@ -58,14 +58,25 @@ The image was created `2026-08-23T05:09:33.938169411Z` and contains:
   vLLM XPU kernels `0.1.13.2`;
 - 18 vLLM commits after the certified `e9d1398d9` image below.
 
-This is the current code base, but it is not yet a performance-qualified
-replacement for the pinned frontier below. The old `30.2 / 48.9 / 71.7`
+This remains the current development base. Its complete MTP0/F16/graph column
+is now correctness- and quality-qualified at TP1/2/4, but it is not a wholesale
+performance replacement for the pinned frontier below. TP1 strict repeated
+about 0.22% slower, TP2 strict was 1.08% slower, and a TP4 strict 71.9002 high
+fell to 71.2457 on an exact same-cache repeat. The old `30.2 / 48.9 / 71.7`
 graph column used an unmodified official image: no local vLLM patch, XPU-kernel
 patch, source mount, DSO overlay, or image mutation was hidden in that result.
 Its optimization overlay is the exact graph, container IPC, device-selection,
 cache-isolation, model, memory, and benchmark contract. Carry that contract
 forward first; do not lower or relabel any historical speed while the rolling
 base is being qualified.
+
+The old/new compiled Qwen graphs and autotune candidate sets are identical,
+but the nightly package version changed the compile-cache namespace and a fresh
+tune selected different winners. The active preservation test transfers only
+hash-matched historical `.best_config` decisions into a fresh newest-runtime
+compile; it does not copy compiled binaries or revert upstream. See the
+[rolling qualification](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-rolling-nightly-a3561ef8-qualification.md)
+and [structured packet](experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json).
 
 The separate Qwen3.6-derived native MTP source stack remains preserved as a
 patch/source research identity. It is not part of the stock target-only graph
@@ -151,21 +162,24 @@ and the earlier
 
 Immediate order:
 
-1. qualify the resolved rolling nightly at TP1 MTP0/F16/graph with the exact
-   old identity contract and speed floors; proceed to TP2 and TP4 only after
-   the prior topology passes;
+1. run the fail-closed historical-autotune-winner overlay at TP2 on freshly
+   compiled newest-runtime binaries; if speed and quality recover, extend it to
+   TP1/TP4 and make it part of the maintained rolling optimization recipe;
 2. preserve the old pinned image identity, isolated-cache manifests, every raw
    root, and all captured speed values as the rollback/comparison frontier;
-3. make the human outward-submission decision for the strict TP1/TP4
-   target-only cells; retain the cross-boot and unsupported-graph disclosures;
-4. do not burn more cells on the old pinned Cartesian matrix unchanged: all 96
+3. run the minimal newest-code matrix sentinels only after the optimized graph
+   column is sealed: graph+MTP, eager-MTP cost, and KV backend support/quality;
+4. publish the pinned and rolling runtime profiles separately for
+   neural.download; represent TP3 structurally and preserve captured highs
+   separately from replicated floors;
+5. do not burn more cells on the old pinned Cartesian matrix unchanged: all 96
    are already decision-classified and TP4 MTP2 missed its frozen expansion
    gates;
-5. after the stock rolling comparison, inventory accepted native-stack
+6. after the stock rolling comparison, inventory accepted native-stack
    functionality against upstream and reapply only changes still needed;
-6. preregister the next dose-8 mechanism door around KV-page checksums or
+7. preregister the next dose-8 mechanism door around KV-page checksums or
    tens-of-MiB layout-adjacent canaries, keeping GPU2 explicitly in scope;
-7. separately decide whether to file the upstream graph+MTP corruption report
+8. separately decide whether to file the upstream graph+MTP corruption report
    and run the digest-swapped v0.27.1 TP1 MTP cross-check.
 
 Evidence and correction:

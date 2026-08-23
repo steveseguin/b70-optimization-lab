@@ -137,3 +137,20 @@ For neural.download, the old and new runtime identities remain separate
 measured/versioned profiles. The current rolling profile replaces the active
 recipe only after qualification; it never erases the certified historical
 curve or an optimization-grade record.
+
+## Qualification update
+
+The full MTP0/F16/graph column was characterized on the resolved `a3561ef8`
+runtime. Correctness, quality, graph, model-identity, and cache-replay gates
+passed at TP1, TP2, and TP4. Performance did not justify wholesale replacement:
+TP1 strict repeated about 0.22% below the pinned result, TP2 strict was 1.08%
+below it, and a TP4 strict 71.9002 high fell to 71.2457 on exact same-cache
+repeat. The old frontiers remain unchanged.
+
+The compiled graphs and candidate autotune sets are identical across old and
+new images, but the package-version cache key forced fresh tuning and changed
+many `.best_config` winners. The active recovery lane is a fail-closed transfer
+of matching historical winner decisions onto freshly compiled newest-runtime
+binaries. See the
+[qualification note](2026-08-23-qwen38-rolling-nightly-a3561ef8-qualification.md)
+and [structured packet](../data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json).
