@@ -1,0 +1,39 @@
+{
+  "date": "2026-08-23",
+  "status": "closed_before_full_load",
+  "classification": "analytical_suitability_rejection_not_a_throughput_run",
+  "target": {
+    "model": "Ornith 1.5 35B-A3B Q4_K_M",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+    "accepted_fresh_server_mean_toks_per_second": 115.680,
+    "milliseconds_per_token": 8.6445
+  },
+  "draft": {
+    "model": "Ornith 1.5 9B Q8_0",
+    "sha256": "6874eeb25c71081dc8f0bbe88f3ebb786312447132745371cd980bce95d259b9",
+    "measured_target_only_decode_toks_per_second": 50.109,
+    "milliseconds_per_token": 19.9565,
+    "evidence": "../qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+  },
+  "perfect_acceptance_upper_bound": {
+    "draft_tokens_per_cycle": 4,
+    "maximum_emitted_tokens_per_cycle": 5,
+    "ignored_costs": [
+      "all target verification",
+      "draft/target synchronization",
+      "sampling and control overhead"
+    ],
+    "upper_bound_toks_per_second": 62.6363,
+    "versus_target_percent": -45.855
+  },
+  "load_probe": {
+    "completed": false,
+    "terminated_intentionally": true,
+    "target_resident_vram_mib_before_stop": 20370.918,
+    "host_memory_peak_limit_gib": 15,
+    "gpu_fault": false,
+    "performance_evidence": false
+  },
+  "decision": "Do not use the 9B Q8 model as the 35B draft. Screen a substantially smaller and faster vocabulary-compatible draft instead.",
+  "promotion": false
+}

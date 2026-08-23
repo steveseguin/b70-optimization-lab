@@ -194,8 +194,13 @@ binary, driver, or benchmark protocol will reproduce them.
   to finalize its first HTTP response and was terminated. Keep the general
   recipe target-only. See
   `notes/2026-08-23-ornith35b-ngram-speculation-negative.md`.
-- **Speculative decode:** investigate separately if kernel/graph work cannot
-  approach the requested 2x user-visible rate. Label target-only and assisted
+- **Ornith 9B Q8 draft for 35B — CLOSED BEFORE FULL LOAD:** the measured draft
+  is only 50.109 tok/s while the accepted target serves at 115.680 tok/s. Even
+  perfect four-token acceptance with a free verifier is bounded at 62.64 tok/s,
+  so the slow NFS load was stopped without claiming a run. See
+  `notes/2026-08-23-ornith35b-ornith9b-draft-suitability.md`.
+- **Speculative decode:** investigate a substantially smaller and faster
+  vocabulary-compatible draft separately. Label target-only and assisted
   results separately.
 
 ## Promotion gate
