@@ -62,21 +62,26 @@ not supply a baseline JSON, so their empty-comparison
 is unsupported/experimental. The existing runs also used `ignore_eos=true` and
 are diagnostic captures, not natural-EOS LocalMaxxing final gates.
 
-The only TP4 MTP2 attempt is infrastructure-invalid, not a speculative-decode
+The old TP4 MTP2 attempt is infrastructure-invalid, not a speculative-decode
 deadlock result: three workers failed concurrent compilation after shared
-Triton-cache artifacts disappeared, and `shm_broadcast` starvation followed.
-First run a fresh isolated-cache TP2 eager-MTP2 boot plus one correctness
-canary; only a pass authorizes a TP4 retry. Do not file a TP>1 deadlock report
-from the old root. The `71.7` row is the fastest target-only Qwen3.8 result for
-this AutoRound/nightly identity, not the lab-wide target-only record.
+Triton-cache artifacts disappeared. Corrected fresh-ext4-cache smokes now boot
+MTP2 at both TP2 and TP4 and pass the exact code-14/cache-zero canary. A TP4
+two-prompt screen measured `31.1680 tok/s` conventional with 149/210 drafted
+tokens accepted (implied 2.419/3 including target). That proves TP4 speculation
+works, but misses the frozen speed and acceptance expansion gates, so no full
+nightly MTP suite or deeper nightly ladder is warranted. Do not file a TP>1
+deadlock report from the old root. The `71.7` row remains the fastest
+target-only Qwen3.8 result for this AutoRound/nightly identity, not the lab-wide
+target-only record.
 
 Immediate order:
 
 1. preserve the nightly image and all existing raw roots;
 2. add isolated-cache, determinism, natural-EOS, and real-baseline gates
    without changing the historical driver's defaults;
-3. screen TP1 fresh-cache determinism, then TP2 eager MTP boot;
-4. retry TP4 only after those gates, with GPU2 explicitly in scope;
+3. screen TP1 fresh-cache determinism;
+4. advance higher-upside native TP4 only after the preregistered dose-8 D1/D2
+   corruption trace, keeping GPU2 explicitly in scope;
 5. keep the dose-8 long-context corruption D1/D2 program separate from the
    nightly graph+MTP correctness bug.
 

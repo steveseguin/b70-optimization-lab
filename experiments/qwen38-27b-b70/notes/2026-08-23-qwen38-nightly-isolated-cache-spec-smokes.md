@@ -67,6 +67,39 @@ win or promotion candidate. The next qualified door is a replay-cache,
 two-prompt, 128-token performance/acceptance screen. A full 25-prompt arm is
 forbidden unless the screen is competitive and correct.
 
+## TP4 MTP2 two-prompt screen: works, expansion gate FAIL
+
+The exact TP4 cache was replayed with the same seed and server identity for two
+prompts at 128 forced tokens, using returned token IDs for timing. The complete
+5,534-file cache content manifest was byte-identical before and after.
+
+- conventional 99-interval median: **31.1680 tok/s**;
+- historical 100-event compatibility median: 31.4828 tok/s;
+- row rates: 31.7803 and 30.5557 conventional tok/s;
+- both rows: 128 token IDs, `cached_tokens=0`, `finish_reason=length`;
+- speculative metrics delta: 210 drafted, 149 accepted;
+- draft acceptance: 70.95%; implied mean acceptance including the target:
+  2.419/3.
+
+This beats the graph-off TP4 target-only characterization (`17.38 tok/s`) but
+is only 43.6% of the 71.55 graph target control. It misses the frozen expansion
+requirements of at least 60.8175 tok/s and roughly 2.5/3 acceptance. Therefore
+the nightly MTP2 cell is closed after the bounded screen: no full 25-prompt
+run, no deeper nightly MTP sweep, and no graph+MTP retry.
+
+This screen is diagnostic (`ignore_eos=true`) and has no target-oracle or full
+quality-battery claim.
+
+Raw root:
+`/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp4-mtp2-f16-replay-seed0-2prompt-a`.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `bench.json` | `d491976a31214f58697a58ff9c8f7e93b25f4923912c0454c7096be76dc5dddc` |
+| `server.log` | `be45f84c8679ac788231cfa206d2c14f8d44bfdd779ff338a5e00d6fd9911738` |
+| `metrics.before.prom` | `d1412e3a4b6169fe43667164a6d72eaaa6fd1819fa2364adaca678f6d681bdaa` |
+| `metrics.after.prom` | `c3e3c985957848c57f4defdf6753bb2b93fd29cbbaf3e7305686cf7ffe7a1063` |
+
 ## Runner-only preflight miss
 
 The first runner invocation used a results parent that had not yet been

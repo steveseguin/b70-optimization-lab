@@ -26,7 +26,7 @@
  "quality_status": "TP1, TP2-graph, and TP4-graph passed seven objective canaries, 8-run same-server repeat, cache-zero checks, and an 8K needle. No --baseline-json was supplied: baseline_comparisons is empty and baseline_match_all=true is vacuous. Cross-boot autotune caveat applies to all.",
  "submission_status": "diagnostic only: benchmark request payload used ignore_eos=true; a natural-EOS strict 100-event/99-interval final gate is still required",
  "replication_status": "TP2 graph has one 25-prompt performance capture; TP4 graph has two independent 25-prompt captures with 21/25 complete-output agreement. TP2 needs a fresh-cache repeat before promotion.",
- "speculative_status": "TP2 and TP4 eager MTP2 both boot from separate fresh ext4 caches and pass the exact code-14/cache-zero canary. The old TP4 failure is superseded as an infrastructure-invalid shared-cache arm, not a capability limit. No MTP performance, acceptance, full-battery, or determinism claim is made yet.",
+ "speculative_status": "TP2 and TP4 eager MTP2 both boot from separate fresh ext4 caches and pass the exact code-14/cache-zero canary. A TP4 two-prompt replay screen measured 31.1680 conventional tok/s with 149/210 draft tokens accepted (70.95%, implied mean 2.419/3 including target). This works but misses both preregistered expansion gates, so no full nightly MTP suite is authorized. The old TP4 failure is superseded as infrastructure-invalid.",
  "arms": {
   "tp2-mtp0-f16-a": {
    "tp": 2,
@@ -115,6 +115,33 @@
    "performance_run": false,
    "full_quality_battery": false,
    "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp4-mtp2-f16-isolated-seed0-smoke-a"
+  },
+  "tp4-mtp2-f16-replay-seed0-2prompt-a": {
+   "tp": 4,
+   "gpus": "0,1,2,3",
+   "graph": false,
+   "mtp": 2,
+   "kv": "f16",
+   "gpu_mem_util": 0.6,
+   "pythonhashseed": 0,
+   "cache_policy": "exact replay; 5,534-file content manifest unchanged before/after",
+   "prompt_count": 2,
+   "max_tokens": 128,
+   "ignore_eos": true,
+   "return_token_ids": true,
+   "cached_tokens_all_zero": true,
+   "decode_median_tok_s_legacy_inclusive_events": 31.48282238281002,
+   "decode_median_tok_s_conventional_intervals": 31.16799415898192,
+   "draft_tokens_delta": 210,
+   "accepted_draft_tokens_delta": 149,
+   "draft_acceptance_rate": 0.7095238095238096,
+   "implied_mean_acceptance_length_including_target": 2.419047619047619,
+   "expansion_speed_floor_tok_s": 60.8175,
+   "expansion_acceptance_floor": 2.5,
+   "expansion_gate": "fail; stop nightly MTP full-suite expansion",
+   "full_quality_battery": false,
+   "target_oracle_comparison": false,
+   "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp4-mtp2-f16-replay-seed0-2prompt-a"
   }
  },
  "raw_evidence_sha256": {
@@ -133,6 +160,10 @@
   "tp4_mtp2_canary_json": "e6b6b8f4c6e3c29f137ccc13c95b50f7c89778695bfebaaea3081cb13fa8926a",
   "tp4_mtp2_server_log": "46c0edc9c82a8410adcb120ca48681e862bdbe5ee89ceaaf10f864347d7b142a",
   "tp4_mtp2_identity_env": "749f67e33442a2f0957e6da253e8a66ccaecd99b70ee62364c8119102b044a23",
-  "tp4_mtp2_complete_cache_manifest": "6fcf6486096d18460f6da06f7d0290efad2ed951d72d622cb45924102e93a691"
+  "tp4_mtp2_complete_cache_manifest": "6fcf6486096d18460f6da06f7d0290efad2ed951d72d622cb45924102e93a691",
+  "tp4_mtp2_2prompt_bench_json": "d491976a31214f58697a58ff9c8f7e93b25f4923912c0454c7096be76dc5dddc",
+  "tp4_mtp2_2prompt_server_log": "be45f84c8679ac788231cfa206d2c14f8d44bfdd779ff338a5e00d6fd9911738",
+  "tp4_mtp2_2prompt_metrics_before": "d1412e3a4b6169fe43667164a6d72eaaa6fd1819fa2364adaca678f6d681bdaa",
+  "tp4_mtp2_2prompt_metrics_after": "c3e3c985957848c57f4defdf6753bb2b93fd29cbbaf3e7305686cf7ffe7a1063"
  }
 }
