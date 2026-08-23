@@ -1,0 +1,56 @@
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -99,6 +99,7 @@
+ int g_ggml_sycl_enable_fusion = 1;
+ int g_ggml_sycl_enable_esimd = 1;
+ int g_ggml_sycl_prioritize_dmmv = 0;
++int g_ggml_sycl_ornith_final_mmvq = 0;
+ int g_ggml_sycl_use_async_mem_op = 0;
+ int g_ggml_sycl_use_async_mem_op_requested = 1;
+ int g_ggml_sycl_use_level_zero_api = 0;
+@@ -316,6 +317,7 @@
+         g_ggml_sycl_enable_fusion = ggml_sycl_get_env("GGML_SYCL_ENABLE_FUSION", 1);
+         g_ggml_sycl_enable_esimd = ggml_sycl_get_env("GGML_SYCL_ENABLE_ESIMD", 1);
+         g_ggml_sycl_prioritize_dmmv = ggml_sycl_get_env("GGML_SYCL_PRIORITIZE_DMMV", 0);
++        g_ggml_sycl_ornith_final_mmvq = ggml_sycl_get_env("GGML_SYCL_ORNITH_FINAL_MMVQ", 0);
+ 
+         g_ggml_sycl_dev2dev_memcpy = ggml_sycl_get_env("GGML_SYCL_DEV2DEV_MEMCPY", DEV2DEV_MEMCPY_SYCL);
+         if (g_ggml_sycl_use_level_zero_api == 0) {
+@@ -418,6 +420,9 @@
+ #endif
+ 
+         GGML_LOG_INFO("  GGML_SYCL_PRIORITIZE_DMMV: %d\n", g_ggml_sycl_prioritize_dmmv);
++        if (g_ggml_sycl_ornith_final_mmvq) {
++            std::fprintf(stderr, "GGML_SYCL_ORNITH_FINAL_MMVQ=1\n");
++        }
+ 
+         g_ggml_sycl_use_async_mem_op_requested = ggml_sycl_get_env("GGML_SYCL_USE_ASYNC_MEM_OP", 1);
+         GGML_LOG_INFO("  GGML_SYCL_USE_ASYNC_MEM_OP: %d\n", g_ggml_sycl_use_async_mem_op_requested);
+@@ -4530,6 +4535,27 @@
+ 
+     bool use_mul_mat_vec_q = can_use_mul_mat_vec_q(src0, src1, dst);
+ 
++    // Lab-only transfer screen: the Qwen-derived Ornith output head is an
++    // unusually wide Q6_K projection. Route only this exact one-token boundary
++    // through the incumbent reordered MMVQ implementation to test whether its
++    // Q8_1 activation compression beats the default direct-F32 ESIMD DMMV.
++    // Every other tensor and every multi-token graph retains stock dispatch.
++    const bool ornith_final_mmvq = g_ggml_sycl_ornith_final_mmvq &&
++        src0->type == GGML_TYPE_Q6_K && src0->ne[0] == 2048 && src0->ne[1] == 248320 &&
++        src0->ne[2] == 1 && src0->ne[3] == 1 &&
++        src1->type == GGML_TYPE_F32 && src1->ne[0] == 2048 && src1->ne[1] == 1 &&
++        src1->ne[2] == 1 && src1->ne[3] == 1 &&
++        dst->type == GGML_TYPE_F32 && dst->ne[0] == 248320 && dst->ne[1] == 1 &&
++        std::strcmp(dst->name, "result_output") == 0;
++    if (ornith_final_mmvq) {
++        use_dequantize_mul_mat_vec = false;
++        static std::atomic<uint64_t> hits{0};
++        const uint64_t hit = hits.fetch_add(1, std::memory_order_relaxed) + 1;
++        if (hit == 1 || hit % 127 == 0) {
++            std::fprintf(stderr, "ggml_sycl_ornith_final_mmvq: hits=%" PRIu64 "\n", hit);
++        }
++    }
++
+     bool use_mul_mat_q =  ggml_sycl_supports_mmq(src0->type)
+         && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32;
+ 

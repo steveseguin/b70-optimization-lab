@@ -324,6 +324,14 @@ binary, driver, or benchmark protocol will reproduce them.
   one launch/token, but mirrored engine means moved only
   `133.600 -> 133.655 tok/s` (+0.041%). No server test was justified. See
   `notes/2026-08-23-ornith35b-final-getrows-direct-neutral.md`.
+- **Q6_K output head through Q8_1 MMVQ — CLOSED ENGINE NEUTRAL:** the remaining
+  Qwen-derived dispatch transfer routed only exact one-token `result_output`
+  from direct-FP32 ESIMD to the incumbent reordered MMVQ path. The forced
+  transcript was byte-identical with all 127 hits, but this is not a
+  logit-identity claim because MMVQ quantizes the activation. Mirrored engine
+  means moved only `133.402 -> 133.580 tok/s` (+0.134%) and the arms crossed.
+  No server test was justified; keep direct-FP32 ESIMD. See
+  `notes/2026-08-23-ornith35b-final-q6k-mmvq-neutral.md`.
 - **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
   accepted only 22/336 reported draft tokens and reduced the fresh-suite median
   from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed
