@@ -120,6 +120,7 @@ and [do-not-repeat index](experiments/qwen38-27b-b70/DO-NOT-REPEAT.md).
 | **AutoRound INT4 W4A16, vLLM/XPU MTP5 speculative** | 2x B70, TP2 | **`101.170 tok/s` all-25; `92.851` selection-12** | Current margin-free research anchor: median of `101.394`/`100.455`/`101.170`, but only 21/25, 21/25, and 22/25 pairwise token parity. A fresh target-only oracle exists; its A/B was 24/25. Post-recovery MTP5 remained 21/25 and a byte-identical sealed-cache TP1 pair was 2/4, so this is not promotable. The historical `101.922` LocalMaxxing row is invalid/withdrawal-recommended because its greedy margin changes output; [TP1 result](experiments/qwen38-27b-b70/notes/2026-08-20-postrecovery-marginfree-tp1-runtime-nondeterminism.md), [repro/status](repro/qwen38-27b-autoround-int4-b70/README.md) |
 | AutoRound INT4 W4A16, vLLM/XPU MTP4 speculative | 2x B70, TP2 | historical **`100.497 tok/s` all-25; `96.627` selection-12** | **Invalid public row; do not reproduce or compare as a valid record.** It used the same output-changing greedy margin and margin-on quality baseline as MTP5. LocalMaxxing [`cmszarna10e0nms0103hv0tve`](https://www.localmaxxing.com/en/runs/cmszarna10e0nms0103hv0tve); [withdrawal audit](results/localmaxxing-submissions.md) |
 | **AutoRound INT4 W4A16, vLLM XPU nightly, target-only, XPU graph on** | 1x B70, TP1 | **`30.22 / 30.26 tok/s` conventional (boot pair)** | Fastest single-card lane for this model (llama.cpp Q4_K_M TP1 is `27.82`). No speculation, cache-zero gated, full quality battery pass (code canary `14`, repeats, 8K needle) on the exact config. Caveat: deterministic within a boot but NOT across boots (autotuned kernels; 19-20/25 cross-boot output agreement), so no cross-boot token-exactness claim and no sealed record/LMX submission yet; [finding](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-tp1-vllm-nightly-bringup-finding.md), [data](experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-vllm-nightly-matrix.json) |
+| AutoRound INT4 W4A16, vLLM XPU nightly, target-only, XPU graph on | 4x B70, TP4 | **`71.67 tok/s` conventional** | Fastest target-only conventional decode measured on any lane; characterization-only (cache-zero, 25/25 rows, but no quality battery on this config yet; cross-boot caveat applies). Eager mode collapses to `17.4` (container per-step collective tax); TP3 impossible (16 GDN K heads % 3); needs `gpu-memory-utilization <= 0.6`; [TP-scale finding](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tpscale-nightly-finding.md), [data](experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json) |
 
 Community-reported alternatives are kept outside the promoted rows above:
 
@@ -202,6 +203,18 @@ graph-off AND graph-on.
 | MTP1 / MTP2 / MTP3 | 4.51 / 4.41 / 4.30 | 1.91 / 2.70 / 3.47 | faithful (23-24/25) |
 | MTP1 + XPU graph | 7.63 | **0.00** | **corrupt (0/25) - do not use** |
 | any MTP, fp8_e5m2 KV | fails to boot | - | `NotImplementedError` |
+
+**TP scaling on the same container** (2026-08-23, same suite/metric,
+characterization-only): eager multi-GPU decode is FLAT (~17 tok/s at both
+TP2 and TP4, below single-card - per-step container collective tax), while
+**XPU graph restores scaling: 30.2 / 48.8 / 71.7 tok/s at TP1 / TP2 / TP4**
+- the 71.7 TP4 target-only is the fastest conventional decode measured on
+any lane (promoted llama.cpp TP2: 50.2), pending quality battery. Prefill
+scales even in eager (281 -> ~500 -> ~860 tok/s); TTFT drops to 0.09 s at
+TP4. TP3 is architecturally impossible (16 GDN K heads % 3). TP4 needs
+`gpu-memory-utilization <= 0.6` (XPU single-allocation cap).
+[TP-scale data](experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json),
+[TP-scale finding](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tpscale-nightly-finding.md).
 
 Key findings: **XPU graph** (`VLLM_XPU_ENABLE_XPU_GRAPH=1`, default off on the
 nightly) is worth **+25%** MTP-off and is output-faithful. **MTP at TP1

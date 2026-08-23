@@ -1,0 +1,329 @@
+diff --git a/ggml/src/ggml-sycl/common.hpp b/ggml/src/ggml-sycl/common.hpp
+index 3638bcdb3..552c0bd3e 100644
+--- a/ggml/src/ggml-sycl/common.hpp
++++ b/ggml/src/ggml-sycl/common.hpp
+@@ -630,12 +630,42 @@ struct ggml_backend_sycl_context {
+         int64_t  ne10 = 0, nrows1 = 0, padded = 0;
+         char *   buf = nullptr;
+         size_t   cap = 0;
++        // door GGML_SYCL_Q8_QUANT_PREFETCH: completion of a quantize submitted on the prefetch
++        // queue; every reader/writer of buf on another queue must wait on it while pending
++        sycl::event ev;
++        bool        ev_pending = false;
+     };
+     uint64_t                   q8_memo_generation = 0;
+     size_t                     q8_memo_cursor     = 0;
+     std::vector<q8_memo_entry> q8_memo;
+ 
++    // door GGML_SYCL_Q8_QUANT_PREFETCH: a real second in-order queue per device (qptrs all alias
++    // the default queue, so overlap needs this) plus per-eval producer completion events keyed by
++    // src1 identity.  The dispatch site quantizes on the prefetch queue gated only on its
++    // producer's event, so the quantize runs while earlier GEMVs drain on the main queue.
++    std::unique_ptr<sycl::queue> q8_prefetch_qs[GGML_SYCL_MAX_DEVICES];
++    std::vector<std::pair<int, const struct ggml_tensor *>> q8_prefetch_producers;
++    size_t q8_prefetch_cursor = 0;
++    std::unordered_map<const struct ggml_tensor *, sycl::event> q8_prefetch_ev;
++
++    sycl::queue * q8_prefetch_queue(int dev_idx) {
++        if (!q8_prefetch_qs[dev_idx]) {
++            queue_ptr main_q = stream(dev_idx, 0);
++            q8_prefetch_qs[dev_idx] = std::make_unique<sycl::queue>(
++                main_q->get_context(), main_q->get_device(), sycl::property::queue::in_order());
++        }
++        return q8_prefetch_qs[dev_idx].get();
++    }
++
+     ~ggml_backend_sycl_context() {
++        for (auto & q : q8_prefetch_qs) {
++            if (q) {
++                try {
++                    q->wait();   // drain prefetch writes before freeing memo buffers
++                } catch (const std::exception &) {
++                }
++            }
++        }
+         for (auto & e : q8_memo) {
+             if (e.buf != nullptr) {
+                 try {
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 4d635a0df..eed672f0b 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -170,6 +170,9 @@ int g_ggml_sycl_mmvq_phase     = -1;  // GGML_SYCL_MMVQ_PHASE
+ //   bit-identical off-vs-on on both cards.  A dedup is a pure launch-count transform; it reorders
+ //   nothing on the in-order queue.
+ int g_ggml_sycl_q8_quant_dedup = 1;   // GGML_SYCL_Q8_QUANT_DEDUP
++// B86 candidate: overlap memo-miss quantizes with prior GEMVs on a second in-order queue.
++// Default OFF until the five preregistered gates pass (second-queue design note, 2026-08-22).
++int g_ggml_sycl_q8_quant_prefetch = 0;   // GGML_SYCL_Q8_QUANT_PREFETCH
+ // f373 (B82): cross-op fusion pattern bitmask, see common.hpp.  Gates earned per pattern before
+ // default-ON; the doors banner prints the resolved mask.
+ int g_ggml_sycl_fuse_ext = 0xF;       // GGML_SYCL_FUSE_EXT (bit4 is experimental/default-off)
+@@ -585,6 +588,11 @@ static void ggml_check_sycl() try {
+         g_ggml_sycl_q8_quant_dedup = ggml_sycl_get_env("GGML_SYCL_Q8_QUANT_DEDUP", 1);
+         if (g_ggml_sycl_q8_quant_dedup < 0) { g_ggml_sycl_q8_quant_dedup = 0; }
+         if (g_ggml_sycl_q8_quant_dedup > 2) { g_ggml_sycl_q8_quant_dedup = 2; }
++        g_ggml_sycl_q8_quant_prefetch = ggml_sycl_get_env("GGML_SYCL_Q8_QUANT_PREFETCH", 0) != 0;
++        // prefetch rides the memo's buffers and the eager submit order; both doors must hold
++        if (g_ggml_sycl_q8_quant_dedup == 0 || g_ggml_sycl_enable_graph) {
++            g_ggml_sycl_q8_quant_prefetch = 0;
++        }
+         g_ggml_sycl_fuse_ext = ggml_sycl_get_env("GGML_SYCL_FUSE_EXT", 0xF) & 0x1F;
+         // Raising the MMVQ cap past the widest instantiated ncols_dst would hit `default: GGML_ABORT`
+         // in mul_mat_vec_q's switch.  Clamp loudly rather than crash deep in a kernel launch.
+@@ -3943,6 +3951,9 @@ static void ggml_sycl_set_peer_access(const int n_tokens, int main_device) {
+ // GGML_SYCL_QDEDUP_STATS=1 and prints graph_computes so launches/graph is self-normalizing.
+ static std::atomic<uint64_t> g_q8_quant_launches{0};   // quantize kernels actually launched (ALL sites)
+ static std::atomic<uint64_t> g_q8_dedup_hits{0};       // launches skipped by the memo
++static std::atomic<uint64_t> g_q8_prefetch_launches{0};    // quantizes issued on the prefetch queue
++static std::atomic<uint64_t> g_q8_prefetch_no_producer{0}; // eligible miss but src1 had no producer event
++static std::atomic<uint64_t> g_q8_prefetch_stalls{0};      // prefetch event still running when a consumer needed it
+ static std::atomic<uint64_t> g_q8_dedup_bypass{0};     // memo refused (mmid scope / split / full)
+ static std::atomic<uint64_t> g_q8_dedup_verified{0};   // door=2: hits byte-compared against a shadow
+ static std::atomic<uint64_t> g_q8_dedup_verify_bad{0}; // door=2: comparisons that DIFFERED
+@@ -3983,6 +3994,7 @@ static void ggml_sycl_q8_dedup_stats_dump() {
+                     "fused_rope_set_rows=%llu "
+                     "fused_qk_rope=%llu "
+                     "fused_qk_norm_rope=%llu "
++                    "prefetch_launches=%llu prefetch_no_producer=%llu prefetch_stalls=%llu "
+                     "verified=%llu VERIFY_MISMATCH=%llu (door=%d)\n",
+             (unsigned long long) g_q8_graph_computes.load(),
+             (unsigned long long) g_q8_quant_launches.load(),
+@@ -4008,6 +4020,9 @@ static void ggml_sycl_q8_dedup_stats_dump() {
+             (unsigned long long) g_q8_fused_rope_set_rows.load(),
+             (unsigned long long) g_q8_fused_qk_rope.load(),
+             (unsigned long long) g_q8_fused_qk_norm_rope.load(),
++            (unsigned long long) g_q8_prefetch_launches.load(),
++            (unsigned long long) g_q8_prefetch_no_producer.load(),
++            (unsigned long long) g_q8_prefetch_stalls.load(),
+             (unsigned long long) g_q8_dedup_verified.load(),
+             (unsigned long long) g_q8_dedup_verify_bad.load(),
+             g_ggml_sycl_q8_quant_dedup);
+@@ -4036,6 +4051,44 @@ static bool ggml_sycl_q8_dedup_poison_on() {
+     return p;
+ }
+ 
++static bool ggml_sycl_prof_on();
++
++// B86: quantize memo misses on a second in-order queue, gated on the producer's completion event,
++// so the quantize overlaps earlier GEMVs still draining on the main queue.  The consumer barrier
++// orders the GEMV after the prefetch; buffer reuse stays safe because every rewrite of a pending
++// slot is ordered behind the pending event inside the memo lookup.
++static bool ggml_sycl_q8_prefetch_on() {
++    return g_ggml_sycl_q8_quant_prefetch != 0 && !ggml_sycl_prof_on();
++}
++
++// Red control: drop BOTH the producer dependency and the consumer barrier, and stall the prefetch
++// queue first, so a consumer must observe unquantized bytes.  A gate that cannot go red is a
++// spelling test.
++static bool ggml_sycl_q8_prefetch_poison_on() {
++    static const bool p = [] {
++        const char * e = getenv("GGML_SYCL_Q8_QUANT_PREFETCH_POISON");
++        return e && atoi(e) != 0;
++    }();
++    return p;
++}
++
++static void ggml_sycl_q8_prefetch_poison_delay(sycl::queue & q) {
++    // delay every 8th prefetch a few ms; enough to expose a dropped dependency
++    // without making warmup unbootable
++    static std::atomic<uint64_t> n{0};
++    if ((n.fetch_add(1, std::memory_order_relaxed) & 7) != 0) {
++        return;
++    }
++    q.submit([&](sycl::handler & h) {
++        h.single_task([]() {
++            volatile int sink = 0;
++            for (int i = 0; i < 2000000; i++) {
++                sink += i;
++            }
++        });
++    });
++}
++
+ // Returns the memo-owned buffer for this (src1, variant, geometry), or nullptr when it cannot be
+ // served (device OOM on the memo's own allocation -- caller falls back to the stock op-scope path).
+ // `hit` = true means the buffer already holds this generation's quantized bytes: skip the launch.
+@@ -4051,12 +4104,16 @@ static constexpr size_t GGML_SYCL_Q8_MEMO_SLOTS = 320;
+ static char * ggml_sycl_q8_dedup_lookup_generation(
+         ggml_backend_sycl_context & ctx, const ggml_tensor * src1,
+         int variant, int64_t ne10, int64_t nrows1, int64_t padded,
+-        size_t size, uint64_t gen, bool & hit) {
++        size_t size, uint64_t gen, bool & hit,
++        ggml_backend_sycl_context::q8_memo_entry ** entry_out = nullptr) {
+     hit = false;
+     for (auto & e : ctx.q8_memo) {
+         if (e.generation == gen && e.src1 == src1 && e.variant == variant &&
+             e.ne10 == ne10 && e.nrows1 == nrows1 && e.padded == padded) {
+             hit = true;
++            if (entry_out != nullptr) {
++                *entry_out = &e;
++            }
+             return e.buf;
+         }
+     }
+@@ -4076,11 +4133,18 @@ static char * ggml_sycl_q8_dedup_lookup_generation(
+             ctx.q8_memo_cursor = (ctx.q8_memo_cursor + 1) % ctx.q8_memo.size();
+         }
+     }
++    if (slot->ev_pending) {
++        // A prefetch quantize may still be writing this slot on the second queue; order every
++        // rewrite (main-queue serial quantize or fused producer) behind it.
++        ctx.stream()->ext_oneapi_submit_barrier({ slot->ev });
++        slot->ev_pending = false;
++    }
+     if (slot->cap < size) {
+         queue_ptr q = ctx.stream();
+         if (slot->buf != nullptr) {
+             // Rare (geometry growth only).  The old buffer may still be read by in-flight kernels
+             // from an earlier eval on this in-order queue: drain before freeing.
++            slot->ev.wait();
+             q->wait();
+             sycl::free(slot->buf, *q);
+             slot->buf = nullptr;
+@@ -4098,14 +4162,18 @@ static char * ggml_sycl_q8_dedup_lookup_generation(
+     slot->ne10       = ne10;
+     slot->nrows1     = nrows1;
+     slot->padded     = padded;
++    if (entry_out != nullptr) {
++        *entry_out = slot;
++    }
+     return slot->buf;
+ }
+ 
+ static char * ggml_sycl_q8_dedup_lookup(ggml_backend_sycl_context & ctx, const ggml_tensor * src1,
+                                         int variant, int64_t ne10, int64_t nrows1, int64_t padded,
+-                                        size_t size, bool & hit) {
++                                        size_t size, bool & hit,
++                                        ggml_backend_sycl_context::q8_memo_entry ** entry_out = nullptr) {
+     return ggml_sycl_q8_dedup_lookup_generation(
+-            ctx, src1, variant, ne10, nrows1, padded, size, ctx.q8_memo_generation, hit);
++            ctx, src1, variant, ne10, nrows1, padded, size, ctx.q8_memo_generation, hit, entry_out);
+ }
+ 
+ static void ggml_sycl_q8_dedup_forget_generation(
+@@ -4321,10 +4389,12 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
+                 std::is_same_v<quantize_f<QK8_1 / WARP_SIZE>, quantize_and_reorder_q8_1_soa<QK8_1 / WARP_SIZE>> ? 1 : 0;
+             char * dedup_buf = nullptr;
+             bool   dedup_hit = false;
++            ggml_backend_sycl_context::q8_memo_entry * memo_entry = nullptr;
+             if (g_ggml_sycl_q8_quant_dedup != 0 && !split && src1_on_device && src1_is_contiguous &&
+                 !ggml_sycl_in_mul_mat_id()) {
+                 dedup_buf = ggml_sycl_q8_dedup_lookup(ctx, src1, dedup_variant, ne10, nrows1,
+-                                                      src1_padded_col_size, src1_q8_size, dedup_hit);
++                                                      src1_padded_col_size, src1_q8_size, dedup_hit,
++                                                      &memo_entry);
+                 if (dedup_buf == nullptr) {
+                     g_q8_dedup_bypass.fetch_add(1, std::memory_order_relaxed);
+                 }
+@@ -4338,7 +4408,37 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
+             if (src1_on_device && src1_is_contiguous && !dedup_hit) {
+                 scope_op_debug_print scope_dbg_print(__func__, "/quantize_row_q8_1_sycl", dst,
+                                                      /*num_src=*/2, " : converting src1 to Q8_1");
+-                try {
++                bool prefetched = false;
++                if (dedup_buf != nullptr && memo_entry != nullptr && ggml_sycl_q8_prefetch_on()) {
++                    const auto pe = ctx.q8_prefetch_ev.find(src1);
++                    if (pe == ctx.q8_prefetch_ev.end()) {
++                        g_q8_prefetch_no_producer.fetch_add(1, std::memory_order_relaxed);
++                    } else {
++                        try {
++                            sycl::queue * pq = ctx.q8_prefetch_queue(i);
++                            if (ggml_sycl_q8_prefetch_poison_on()) {
++                                ggml_sycl_q8_prefetch_poison_delay(*pq);
++                            } else {
++                                pq->ext_oneapi_submit_barrier({ pe->second });
++                            }
++                            quantize_row_q8_1_sycl<quantize_f>(dev[i].src1_ddf, dev[i].src1_ddq, ne10, nrows1,
++                                                               src1_padded_col_size, pq);
++                            memo_entry->ev         = pq->ext_oneapi_submit_barrier();
++                            memo_entry->ev_pending = true;
++                            if (!ggml_sycl_q8_prefetch_poison_on()) {
++                                stream->ext_oneapi_submit_barrier({ memo_entry->ev });
++                            }
++                            g_q8_quant_launches.fetch_add(1, std::memory_order_relaxed);
++                            g_q8_prefetch_launches.fetch_add(1, std::memory_order_relaxed);
++                            prefetched = true;
++                        } catch (sycl::exception const &exc) {
++                            std::cerr << "q8 prefetch quantize error" << exc.what() << "Exception caught at file:"
++                                      << __FILE__ << ", line:" << __LINE__ << std::endl;
++                            std::exit(1);
++                        }
++                    }
++                }
++                if (!prefetched) try {
+                     quantize_row_q8_1_sycl<quantize_f>(dev[i].src1_ddf, dev[i].src1_ddq, ne10, nrows1, src1_padded_col_size, stream);
+                     g_q8_quant_launches.fetch_add(1, std::memory_order_relaxed);
+                     if (dedup_buf != nullptr && ggml_sycl_q8_dedup_poison_on()) {
+@@ -4354,6 +4454,14 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
+             }
+             if (dedup_hit) {
+                 g_q8_dedup_hits.fetch_add(1, std::memory_order_relaxed);
++                if (memo_entry != nullptr && memo_entry->ev_pending && !ggml_sycl_q8_prefetch_poison_on()) {
++                    // consumer of a prefetched buffer: order this stream behind the second-queue write
++                    if (memo_entry->ev.get_info<sycl::info::event::command_execution_status>() !=
++                        sycl::info::event_command_status::complete) {
++                        g_q8_prefetch_stalls.fetch_add(1, std::memory_order_relaxed);
++                    }
++                    stream->ext_oneapi_submit_barrier({ memo_entry->ev });
++                }
+                 if (g_ggml_sycl_q8_quant_dedup == 2) {
+                     // Verify mode (gate instrument, not a perf arm): a hit's bytes must equal a
+                     // fresh quantize of the same src1.  Shadow-quantize and byte-compare on host.
+@@ -8822,6 +8930,38 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+ 
+     const bool prof = ggml_sycl_prof_on();
+ 
++    // B86 prefetch: map each quantizable mul_mat src1 to its producer node index, so the dispatch
++    // site can gate a second-queue quantize on just that producer instead of the whole main queue.
++    const bool q8_prefetch = ggml_sycl_q8_prefetch_on();
++    if (q8_prefetch) {
++        sycl_ctx->q8_prefetch_producers.clear();
++        sycl_ctx->q8_prefetch_ev.clear();
++        sycl_ctx->q8_prefetch_cursor = 0;
++        std::unordered_map<const ggml_tensor *, int> node_pos;
++        node_pos.reserve(cgraph->n_nodes);
++        for (int i = 0; i < cgraph->n_nodes; i++) {
++            node_pos[cgraph->nodes[i]] = i;
++        }
++        for (int i = 0; i < cgraph->n_nodes; i++) {
++            const ggml_tensor * n = cgraph->nodes[i];
++            if (n->op != GGML_OP_MUL_MAT || n->src[0] == nullptr || n->src[1] == nullptr) {
++                continue;
++            }
++            if (!ggml_is_quantized(n->src[0]->type) || n->src[1]->type != GGML_TYPE_F32) {
++                continue;
++            }
++            const auto it = node_pos.find(n->src[1]);
++            if (it == node_pos.end() || it->second >= i) {
++                continue;
++            }
++            sycl_ctx->q8_prefetch_producers.push_back({ it->second, n->src[1] });
++        }
++        std::sort(sycl_ctx->q8_prefetch_producers.begin(), sycl_ctx->q8_prefetch_producers.end());
++        sycl_ctx->q8_prefetch_producers.erase(
++            std::unique(sycl_ctx->q8_prefetch_producers.begin(), sycl_ctx->q8_prefetch_producers.end()),
++            sycl_ctx->q8_prefetch_producers.end());
++    }
++
+     std::vector<sycl::event>   prof_ev;
+     std::vector<ggml_tensor *> prof_node;
+     std::chrono::steady_clock::time_point prof_t0;
+@@ -8852,6 +8992,17 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+ 
+     for (int i = 0; i < cgraph->n_nodes; i++) {
+         ggml_tensor * node = cgraph->nodes[i];
++        if (q8_prefetch && sycl_ctx->q8_prefetch_cursor < sycl_ctx->q8_prefetch_producers.size() &&
++            sycl_ctx->q8_prefetch_producers[sycl_ctx->q8_prefetch_cursor].first < i) {
++            // every producer with index < i is already submitted on the in-order main queue, so one
++            // barrier event stands in for each of their completions (later than exact, never earlier)
++            sycl::event e = sycl_ctx->stream()->ext_oneapi_submit_barrier();
++            do {
++                sycl_ctx->q8_prefetch_ev[sycl_ctx->q8_prefetch_producers[sycl_ctx->q8_prefetch_cursor].second] = e;
++                sycl_ctx->q8_prefetch_cursor++;
++            } while (sycl_ctx->q8_prefetch_cursor < sycl_ctx->q8_prefetch_producers.size() &&
++                     sycl_ctx->q8_prefetch_producers[sycl_ctx->q8_prefetch_cursor].first < i);
++        }
+         if (ggml_is_empty(node) || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE || node->op == GGML_OP_VIEW || node->op == GGML_OP_PERMUTE || node->op == GGML_OP_NONE) {
+             continue;
+         }

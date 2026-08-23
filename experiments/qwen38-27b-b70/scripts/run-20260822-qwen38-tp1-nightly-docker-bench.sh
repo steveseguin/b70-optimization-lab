@@ -8,8 +8,10 @@ set -euo pipefail
 # OFF; harness gates cached_tokens=0 every row). Diagnostic benchmark, not a
 # sealed record.
 #
-# Usage: run-20260822-qwen38-tp1-nightly-docker-bench.sh MTP KV MAXLEN GPU PORT OUT_DIR SUITE
+# Usage: run-20260822-qwen38-tp1-nightly-docker-bench.sh MTP KV MAXLEN GPUS PORT OUT_DIR SUITE
 #   MTP: 0 (off) | 1 | 2 | 3      KV: f16 | fp8_e5m2 | fp8_e4m3
+#   GPUS: comma list, e.g. "0" (TP1) | "2,3" (TP2) | "1,2,3" (TP3) | "0,1,2,3" (TP4);
+#         tensor-parallel size = number of listed devices
 #   SUITE: path to a validation-suite.json
 # Env:
 #   SUDO_PASS_FILE  if set, docker runs via `sudo -S` reading this file
@@ -19,6 +21,7 @@ set -euo pipefail
 IMAGE=vllm/vllm-openai-xpu:nightly-e9d1398d9edfd90fcc1cf783805240e3effec013
 
 mtp=${1:?}; kv=${2:?}; maxlen=${3:?}; gpu=${4:?}; port=${5:?}; out=${6:?}; suite=${7:?}
+tp=$(( $(tr -dc ',' <<< "$gpu" | wc -c) + 1 ))
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
 model=/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan
 venv=/home/steve/.venvs/vllm-xpu
@@ -46,9 +49,9 @@ dockerc image inspect --format '{{.Id}} {{join .RepoDigests ","}}' "$IMAGE" > "$
 
 # image entrypoint is `vllm serve`, so args begin with the model path
 args=( "$model" --host 0.0.0.0 --port 8000 --trust-remote-code
-  --served-model-name "$alias" --tensor-parallel-size 1
+  --served-model-name "$alias" --tensor-parallel-size "$tp"
   --max-model-len "$maxlen" --max-num-seqs 1 --max-num-batched-tokens 1024
-  --gpu-memory-utilization 0.90 --dtype float16 --reasoning-parser qwen3
+  --gpu-memory-utilization "${GPU_MEM_UTIL:-0.90}" --dtype float16 --reasoning-parser qwen3
   --default-chat-template-kwargs '{"enable_thinking": false}'
   --enable-prompt-tokens-details
   --no-enable-prefix-caching )
@@ -56,7 +59,7 @@ args=( "$model" --host 0.0.0.0 --port 8000 --trust-remote-code
 [[ "$mtp" != "0" ]] && args+=( --speculative-config "{\"method\":\"qwen3_next_mtp\",\"num_speculative_tokens\":$mtp}" )
 [[ -n "${EXTRA_VLLM_ARGS:-}" ]] && args+=( ${EXTRA_VLLM_ARGS} )
 
-echo "TP1 nightly bench: MTP=$mtp KV=$kv maxlen=$maxlen gpu=$gpu suite=$(basename "$suite")"
+echo "TP$tp nightly bench: MTP=$mtp KV=$kv maxlen=$maxlen gpus=$gpu suite=$(basename "$suite")"
 printf '%s\n' "${args[@]}" > "$out/server-args.txt"
 
 dockerc run -d --name "$name" \
@@ -66,7 +69,7 @@ dockerc run -d --name "$name" \
   -p "127.0.0.1:$port:8000" \
   -e CCL_ZE_IPC_EXCHANGE=sockets \
   ${VLLM_XPU_GRAPH:+-e VLLM_XPU_ENABLE_XPU_GRAPH="$VLLM_XPU_GRAPH"} \
-  -e ZE_AFFINITY_MASK="$gpu" -e ONEAPI_DEVICE_SELECTOR="level_zero:$gpu" \
+  -e ZE_AFFINITY_MASK="$gpu" \
   -e VLLM_NO_USAGE_STATS=1 -e VLLM_CACHE_ROOT="$cache_root" \
   -e TORCHINDUCTOR_CACHE_DIR="$cache_root/inductor" \
   -e TRITON_CACHE_DIR="$cache_root/triton" \

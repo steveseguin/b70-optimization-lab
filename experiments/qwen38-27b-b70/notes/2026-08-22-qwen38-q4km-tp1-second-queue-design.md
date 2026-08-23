@@ -122,3 +122,8 @@ kill-check. Implementation is a reviewed future arc behind the five
 frozen gates, on a scratch build, never on the promoted binary until all
 gates pass. Not implemented autonomously against the submission-ready
 lane. This is the largest remaining decode-tok/s lever on the bench.
+
+**CLOSED 2026-08-23:** the arc ran under supervision and the candidate was
+rejected at the win gate with a hardware root cause - the B70 has a single
+compute command streamer, so a second queue cannot overlap compute at all.
+See [the closure note](2026-08-23-qwen38-q4km-tp1-second-queue-closure.md).
