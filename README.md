@@ -181,6 +181,11 @@ for its quality/size, accepting slower decode here.
 [chart](experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.svg),
 [finding](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-q4km-tp1-context-kv-sweep-finding.md).
 
+Plain-language explainers for these results live in the Learn library:
+[Quantization vs decode speed](https://neural.download/learn/quantization-and-speed.html),
+[KV cache precision](https://neural.download/learn/kv-cache-precision.html),
+[Context length](https://neural.download/learn/context-length.html).
+
 ### Qwen3.6 27B Model Board
 
 Last audited **2026-08-15**. These rows share a model family, not a quality,
