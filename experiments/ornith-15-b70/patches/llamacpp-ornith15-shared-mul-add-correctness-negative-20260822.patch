@@ -1,0 +1,513 @@
+diff --git a/ggml/src/ggml-sycl/element_wise.cpp b/ggml/src/ggml-sycl/element_wise.cpp
+index 9591487..725e4eb 100644
+--- a/ggml/src/ggml-sycl/element_wise.cpp
++++ b/ggml/src/ggml-sycl/element_wise.cpp
+@@ -1041,6 +1041,79 @@ void ggml_sycl_op_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor *
+     }
+ }
+ 
++template<bool poison>
++static void ornith_shared_mul_add_kernel(
++        const float * gate_src,
++        const float * shared,
++        const float * routed,
++        volatile float * weighted_out,
++        float * dst,
++        const int64_t n,
++        const sycl::nd_item<1> item) {
++    const float gate = gate_src[0];
++
++    SYCL_GLOBAL_ID_LOOP(n, item) {
++        // Preserve the graph-visible rounded MUL in its actual destination
++        // before consuming it in the following ADD.
++        weighted_out[i] = shared[i] * gate;
++        const float weighted = weighted_out[i];
++        float value = routed[i] + weighted;
++        if constexpr (poison) {
++            if (i == 0) {
++                value += 1.0f;
++            }
++        }
++        dst[i] = value;
++    }
++}
++
++void ggml_sycl_op_ornith_shared_mul_add(
++        ggml_backend_sycl_context & ctx, ggml_tensor * mul, ggml_tensor * add) {
++    GGML_ASSERT(mul != nullptr && add != nullptr);
++    GGML_ASSERT(mul->op == GGML_OP_MUL && add->op == GGML_OP_ADD);
++    GGML_ASSERT(mul->type == GGML_TYPE_F32 && add->type == GGML_TYPE_F32);
++    GGML_ASSERT(ggml_is_contiguous(mul) && ggml_is_contiguous(add));
++    GGML_ASSERT(ggml_are_same_shape(mul, add) && ggml_nelements(add) == 2048);
++
++    const ggml_tensor * gate = ggml_nelements(mul->src[0]) == 1 ? mul->src[0] : mul->src[1];
++    const ggml_tensor * shared = gate == mul->src[0] ? mul->src[1] : mul->src[0];
++    const ggml_tensor * routed = add->src[0] == mul ? add->src[1] : add->src[0];
++    GGML_ASSERT(gate != nullptr && shared != nullptr && routed != nullptr);
++    GGML_ASSERT(gate->op == GGML_OP_UNARY && ggml_get_unary_op(gate) == GGML_UNARY_OP_SIGMOID);
++    GGML_ASSERT(gate->type == GGML_TYPE_F32 && ggml_nelements(gate) == 1 && ggml_is_contiguous(gate));
++    GGML_ASSERT(shared->type == GGML_TYPE_F32 && routed->type == GGML_TYPE_F32);
++    GGML_ASSERT(ggml_are_same_shape(shared, mul) && ggml_are_same_shape(routed, add));
++    GGML_ASSERT(ggml_is_contiguous(shared) && ggml_is_contiguous(routed));
++
++    constexpr size_t block_size = 256;
++    const int64_t n = ggml_nelements(add);
++    const size_t blocks = ceil_div((size_t) n, block_size);
++    const sycl::nd_range<1> range(blocks * block_size, block_size);
++    const float * gate_src = static_cast<const float *>(gate->data);
++    const float * shared_data = static_cast<const float *>(shared->data);
++    const float * routed_data = static_cast<const float *>(routed->data);
++    volatile float * weighted_data = static_cast<float *>(mul->data);
++    float * dst_data = static_cast<float *>(add->data);
++    GGML_ASSERT(gate_src != nullptr && shared_data != nullptr && routed_data != nullptr &&
++                weighted_data != nullptr && dst_data != nullptr);
++    static const bool poison_enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_SHARED_MUL_ADD_POISON");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++
++    if (poison_enabled) {
++        ctx.stream()->parallel_for(range, [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++            ornith_shared_mul_add_kernel<true>(
++                gate_src, shared_data, routed_data, weighted_data, dst_data, n, item);
++        });
++    } else {
++        ctx.stream()->parallel_for(range, [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++            ornith_shared_mul_add_kernel<false>(
++                gate_src, shared_data, routed_data, weighted_data, dst_data, n, item);
++        });
++    }
++}
++
+ __dpct_inline__ float ggml_sycl_op_swiglu_oai_single(float x, float g, float alpha = 1.702f, float limit = 7.0f) {
+     x = sycl::fmin(x, limit);
+     g = sycl::fmax(sycl::fmin(g, limit), -limit);
+diff --git a/ggml/src/ggml-sycl/element_wise.hpp b/ggml/src/ggml-sycl/element_wise.hpp
+index 67bf422..8bea88f 100644
+--- a/ggml/src/ggml-sycl/element_wise.hpp
++++ b/ggml/src/ggml-sycl/element_wise.hpp
+@@ -131,4 +131,7 @@ void ggml_sycl_arange(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ // fused UNARY(silu|sigmoid|softplus) + MUL; see ggml_sycl_can_fuse() for the accepted shapes
+ void ggml_sycl_op_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor * unary_node, ggml_tensor * mul_node);
+ 
++void ggml_sycl_op_ornith_shared_mul_add(
++    ggml_backend_sycl_context & ctx, ggml_tensor * mul, ggml_tensor * add);
++
+ #endif // GGML_SYCL_ELEMENTWISE_HPP
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 3f82020..7e99185 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -5567,6 +5567,126 @@ static bool ggml_sycl_is_view_or_noop(const ggml_tensor * t) {
+            t->op == GGML_OP_VIEW || t->op == GGML_OP_PERMUTE || t->op == GGML_OP_NONE;
+ }
+ 
++struct ggml_sycl_moe_add_reduce_match {
++    ggml_tensor * weighted;
++    ggml_tensor * dst;
++    int           nodes_to_skip;
++};
++
++static bool ggml_sycl_moe_add_reduce_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_MOE_ADD_REDUCE");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    return enabled;
++}
++
++// Qwen3.5-MoE / Ornith decode materializes eight weighted expert rows, then
++// reduces them through seven serial ADD launches. Match that exact chain and
++// perform the same ordered FP32 additions in one launch. The weighted MUL is
++// intentionally left separate so its rounded outputs remain graph-visible and
++// the fused kernel contains no multiply-add contraction opportunity.
++static bool ggml_sycl_find_moe_add_reduce(
++        const ggml_cgraph * cgraph, int node_idx, ggml_sycl_moe_add_reduce_match & match) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_moe_add_reduce_enabled() ||
++        node_idx < 0 || node_idx >= cgraph->n_nodes) {
++        return false;
++    }
++
++    constexpr int n_experts = 8;
++    constexpr int n_adds = n_experts - 1;
++    int add_idxs[n_adds];
++    int found = 0;
++    int last_idx = node_idx - 1;
++
++    for (int j = node_idx; j < cgraph->n_nodes && found < n_adds; ++j) {
++        ggml_tensor * node = cgraph->nodes[j];
++        if (ggml_sycl_is_view_or_noop(node) || (node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
++            continue;
++        }
++        if (node->op != GGML_OP_ADD) {
++            return false;
++        }
++        add_idxs[found++] = j;
++        last_idx = j;
++    }
++    if (found != n_adds || add_idxs[0] != node_idx) {
++        return false;
++    }
++
++    const ggml_op ops[n_adds] = {
++        GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD,
++        GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD,
++    };
++    if (!ggml_can_fuse_ext(cgraph, add_idxs, ops, n_adds)) {
++        return false;
++    }
++
++    ggml_tensor * first = cgraph->nodes[add_idxs[0]];
++    ggml_tensor * weighted = first->src[0] != nullptr ? first->src[0]->view_src : nullptr;
++    if (weighted == nullptr || weighted->type != GGML_TYPE_F32 ||
++        weighted->ne[1] != n_experts || weighted->ne[2] != 1 || weighted->ne[3] != 1 ||
++        !ggml_is_contiguous(weighted)) {
++        return false;
++    }
++
++    const int64_t row_len = weighted->ne[0];
++    const auto is_expert_row = [weighted, row_len](const ggml_tensor * view, int expert) {
++        return view != nullptr && view->op == GGML_OP_VIEW && view->view_src == weighted &&
++               view->view_offs == (size_t) expert * weighted->nb[1] &&
++               view->type == GGML_TYPE_F32 && ggml_nelements(view) == row_len &&
++               view->ne[0] == row_len && view->ne[1] == 1 && view->ne[2] == 1 && view->ne[3] == 1 &&
++               ggml_is_contiguous(view);
++    };
++
++    if (!is_expert_row(first->src[0], 0) || !is_expert_row(first->src[1], 1)) {
++        return false;
++    }
++    for (int expert = 2; expert < n_experts; ++expert) {
++        ggml_tensor * add = cgraph->nodes[add_idxs[expert - 1]];
++        ggml_tensor * prev = cgraph->nodes[add_idxs[expert - 2]];
++        if (add->src[0] != prev || !is_expert_row(add->src[1], expert)) {
++            return false;
++        }
++    }
++
++    ggml_tensor * dst = cgraph->nodes[add_idxs[n_adds - 1]];
++    if (dst->type != GGML_TYPE_F32 || !ggml_is_contiguous(dst) ||
++        dst->ne[0] != row_len || dst->ne[1] != 1 || dst->ne[2] != 1 || dst->ne[3] != 1) {
++        return false;
++    }
++
++    match.weighted = weighted;
++    match.dst = dst;
++    match.nodes_to_skip = last_idx - node_idx;
++    return true;
++}
++
++static void ggml_sycl_moe_add_reduce(
++        ggml_backend_sycl_context & ctx, const ggml_sycl_moe_add_reduce_match & match) {
++    constexpr int n_experts = 8;
++    const float * src = static_cast<const float *>(match.weighted->data);
++    float * dst = static_cast<float *>(match.dst->data);
++    const int64_t row_len = match.weighted->ne[0];
++    const int64_t row_stride = match.weighted->nb[1] / sizeof(float);
++    const bool poison = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_MOE_ADD_REDUCE_POISON");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++
++    GGML_SYCL_DEBUG("[SYCL][OP] call %s: row_len=%lld experts=%d\n",
++                    __func__, (long long) row_len, n_experts);
++    ctx.stream()->parallel_for(sycl::range<1>((size_t) row_len), [=](sycl::id<1> id) {
++        const int64_t col = (int64_t) id[0];
++        float sum = src[col];
++#pragma unroll
++        for (int expert = 1; expert < n_experts; ++expert) {
++            sum = sum + src[(int64_t) expert * row_stride + col];
++        }
++        dst[col] = poison && col == 0 ? sum + 1.0f : sum;
++    });
++}
++
+ // match gated_delta_net + the strided cpy that scatters its state snapshots into the cache
+ // (slot i -> rollback group i, slot 0 newest), so the kernel can write them and skip the cpy.
+ // returns the number of following nodes to skip (0 = no fusion)
+@@ -5640,9 +5760,135 @@ static int ggml_sycl_try_gdn_cache_fusion(const ggml_cgraph * cgraph, int node_i
+     return skip;
+ }
+ 
++static std::atomic<uint64_t> g_ggml_sycl_ornith_conv_silu_hits{0};
++
++static bool ggml_sycl_ornith_conv_silu_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_CONV_SILU");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr, "ggml_sycl_ornith_conv_silu: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_conv_silu_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++static ggml_tensor * ggml_sycl_find_ornith_conv_silu(const ggml_cgraph * cgraph, int node_idx) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_conv_silu_enabled()) {
++        return nullptr;
++    }
++    ggml_tensor * conv = cgraph->nodes[node_idx];
++    if (conv == nullptr || conv->op != GGML_OP_SSM_CONV || conv->src[0] == nullptr || conv->src[1] == nullptr ||
++        conv->type != GGML_TYPE_F32 || std::strstr(conv->name, "conv_output_raw-") == nullptr ||
++        conv->ne[0] != 8192 || conv->ne[1] != 1 || conv->ne[2] != 1 || conv->ne[3] != 1 ||
++        conv->src[0]->type != GGML_TYPE_F32 || conv->src[0]->ne[0] != 4 || conv->src[0]->ne[1] != 8192 ||
++        conv->src[0]->ne[2] != 1 || conv->src[0]->ne[3] != 1 || conv->src[0]->nb[0] != sizeof(float) ||
++        conv->src[0]->nb[1] != 4 * sizeof(float) || conv->src[1]->type != GGML_TYPE_F32 ||
++        conv->src[1]->ne[0] != 4 || conv->src[1]->ne[1] != 8192 ||
++        conv->src[1]->nb[0] != sizeof(float) || conv->src[1]->nb[1] != 4 * sizeof(float) ||
++        (conv->flags & GGML_TENSOR_FLAG_OUTPUT) != 0) {
++        return nullptr;
++    }
++
++    ggml_tensor * silu = nullptr;
++    for (int j = node_idx + 1; j < cgraph->n_nodes; ++j) {
++        ggml_tensor * consumer = cgraph->nodes[j];
++        if (consumer == nullptr) {
++            continue;
++        }
++        for (int s = 0; s < GGML_MAX_SRC; ++s) {
++            if (consumer->src[s] != conv) {
++                continue;
++            }
++            if (s != 0 || silu != nullptr || consumer->op != GGML_OP_UNARY ||
++                ggml_get_unary_op(consumer) != GGML_UNARY_OP_SILU || consumer->type != GGML_TYPE_F32 ||
++                !ggml_are_same_shape(conv, consumer) || !ggml_is_contiguous(consumer) ||
++                std::strstr(consumer->name, "conv_output_silu-") == nullptr ||
++                (consumer->flags & GGML_TENSOR_FLAG_OUTPUT) != 0) {
++                return nullptr;
++            }
++            silu = consumer;
++        }
++    }
++    return silu;
++}
++
++struct ggml_sycl_ornith_shared_mul_add_match {
++    ggml_tensor * add;
++};
++
++static std::atomic<uint64_t> g_ggml_sycl_ornith_shared_mul_add_hits{0};
++
++static bool ggml_sycl_ornith_shared_mul_add_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_SHARED_MUL_ADD");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr, "ggml_sycl_ornith_shared_mul_add: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_shared_mul_add_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++static bool ggml_sycl_find_ornith_shared_mul_add(
++        const ggml_cgraph * cgraph,
++        int node_idx,
++        ggml_sycl_ornith_shared_mul_add_match & match) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_shared_mul_add_enabled() ||
++        node_idx < 0 || node_idx + 1 >= cgraph->n_nodes) {
++        return false;
++    }
++
++    ggml_tensor * mul = cgraph->nodes[node_idx];
++    ggml_tensor * add = cgraph->nodes[node_idx + 1];
++    if (mul == nullptr || add == nullptr || mul->src[0] == nullptr || mul->src[1] == nullptr ||
++        add->src[0] == nullptr || add->src[1] == nullptr ||
++        mul->op != GGML_OP_MUL || add->op != GGML_OP_ADD ||
++        std::strstr(mul->name, "ffn_shexp_gated-") == nullptr ||
++        std::strstr(add->name, "ffn_out-") == nullptr ||
++        mul->type != GGML_TYPE_F32 || add->type != GGML_TYPE_F32 ||
++        ggml_nelements(mul) != 2048 || !ggml_are_same_shape(mul, add) ||
++        !ggml_is_contiguous(mul) || !ggml_is_contiguous(add) ||
++        (mul->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        (add->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        ggml_node_get_use_count(cgraph, node_idx) != 1) {
++        return false;
++    }
++
++    const ggml_tensor * sigmoid = ggml_nelements(mul->src[0]) == 1 ? mul->src[0] : mul->src[1];
++    const ggml_tensor * shared = sigmoid == mul->src[0] ? mul->src[1] : mul->src[0];
++    const ggml_tensor * routed = add->src[0] == mul ? add->src[1] :
++                                 add->src[1] == mul ? add->src[0] : nullptr;
++    if (sigmoid == nullptr || shared == nullptr || routed == nullptr ||
++        sigmoid->op != GGML_OP_UNARY || ggml_get_unary_op(sigmoid) != GGML_UNARY_OP_SIGMOID ||
++        sigmoid->type != GGML_TYPE_F32 || ggml_nelements(sigmoid) != 1 ||
++        std::strstr(sigmoid->name, "shared_expert_gate_sigmoid-") == nullptr ||
++        !ggml_is_contiguous(sigmoid) || shared->type != GGML_TYPE_F32 ||
++        routed->type != GGML_TYPE_F32 || !ggml_are_same_shape(shared, mul) ||
++        !ggml_are_same_shape(routed, add) || !ggml_is_contiguous(shared) ||
++        !ggml_is_contiguous(routed) || std::strstr(shared->name, "ffn_shexp-") == nullptr ||
++        std::strstr(routed->name, "ffn_moe_out-") == nullptr) {
++        return false;
++    }
++
++    match.add = add;
++    return true;
++}
++
+ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
+     ggml_sycl_set_main_device(sycl_ctx->device);
+ 
++    std::vector<ggml_tensor *> precomputed_ornith_silu;
++    precomputed_ornith_silu.reserve(64);
++
+     for (int i = 0; i < cgraph->n_nodes; i++) {
+         ggml_tensor * node = cgraph->nodes[i];
+         if (ggml_sycl_is_view_or_noop(node)) {
+@@ -5652,6 +5898,21 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             continue;
+         }
+ 
++        if (std::find(precomputed_ornith_silu.begin(), precomputed_ornith_silu.end(), node) !=
++            precomputed_ornith_silu.end()) {
++            continue;
++        }
++
++        if (node->op == GGML_OP_SSM_CONV) {
++            ggml_tensor * silu = ggml_sycl_find_ornith_conv_silu(cgraph, i);
++            if (silu != nullptr) {
++                ggml_sycl_ornith_conv_silu(*sycl_ctx, node, silu);
++                precomputed_ornith_silu.push_back(silu);
++                g_ggml_sycl_ornith_conv_silu_hits.fetch_add(1, std::memory_order_relaxed);
++                continue;
++            }
++        }
++
+         const int nodes_to_skip = ggml_sycl_fuse(*sycl_ctx, cgraph, i);
+         if (nodes_to_skip != 0) {
+             i += nodes_to_skip;
+@@ -5675,12 +5936,29 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+                 continue;
+             }
+         }
++        if (node->op == GGML_OP_ADD) {
++            ggml_sycl_moe_add_reduce_match moe_add_reduce;
++            if (ggml_sycl_find_moe_add_reduce(cgraph, i, moe_add_reduce)) {
++                ggml_sycl_moe_add_reduce(*sycl_ctx, moe_add_reduce);
++                i += moe_add_reduce.nodes_to_skip;
++                continue;
++            }
++        }
+         if (node->op == GGML_OP_RMS_NORM &&
+             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL }, {})) {
+             ggml_sycl_op_rms_norm_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
+             i++;
+             continue;
+         }
++        if (node->op == GGML_OP_MUL) {
++            ggml_sycl_ornith_shared_mul_add_match shared_mul_add;
++            if (ggml_sycl_find_ornith_shared_mul_add(cgraph, i, shared_mul_add)) {
++                ggml_sycl_op_ornith_shared_mul_add(*sycl_ctx, node, shared_mul_add.add);
++                g_ggml_sycl_ornith_shared_mul_add_hits.fetch_add(1, std::memory_order_relaxed);
++                i += 1;
++                continue;
++            }
++        }
+         if (node->op == GGML_OP_UNARY &&
+             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_UNARY, GGML_OP_MUL }, { ggml_get_unary_op(node) })) {
+             ggml_sycl_op_unary_mul_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
+diff --git a/ggml/src/ggml-sycl/ssm_conv.cpp b/ggml/src/ggml-sycl/ssm_conv.cpp
+index 3eafa1a..f6b4ded 100644
+--- a/ggml/src/ggml-sycl/ssm_conv.cpp
++++ b/ggml/src/ggml-sycl/ssm_conv.cpp
+@@ -2,6 +2,7 @@
+ #include "common.hpp"
+ 
+ #include <cstdio>
++#include <cstdlib>
+ 
+ using namespace sycl;
+ 
+@@ -67,6 +68,41 @@ static void kernel_ssm_conv(
+     });
+ }
+ 
++template <bool poison>
++static void kernel_ornith_conv_silu(
++        queue & q,
++        const float * src,
++        const float * weights,
++        float * dst,
++        int d_conv,
++        int d_inner,
++        int src_stride_inner) {
++    constexpr size_t work_group_size = 256;
++    const size_t num_work_groups =
++        (static_cast<size_t>(d_inner) + work_group_size - 1) / work_group_size;
++
++    q.submit([&](handler & h) {
++        h.parallel_for(
++            nd_range<1>(range<1>(num_work_groups * work_group_size), range<1>(work_group_size)),
++            [=](nd_item<1> item) {
++                const size_t channel = item.get_global_id(0);
++                if (channel >= static_cast<size_t>(d_inner)) {
++                    return;
++                }
++                const float * s = src + channel * static_cast<size_t>(src_stride_inner);
++                const float * c = weights + channel * static_cast<size_t>(d_conv);
++                float sumf = 0.0f;
++                for (int tap = 0; tap < d_conv; ++tap) {
++                    sumf += s[tap] * c[tap];
++                }
++                if constexpr (poison) {
++                    sumf += 1000.0f;
++                }
++                dst[channel] = sumf / (1.0f + sycl::exp(-sumf));
++            });
++    });
++}
++
+ inline void ggml_sycl_op_ssm_conv(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+     ggml_tensor * src0 = dst->src[0];
+     ggml_tensor * src1 = dst->src[1];
+@@ -134,3 +170,30 @@ void ggml_sycl_ssm_conv(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+     ggml_sycl_op_ssm_conv(ctx, dst);
+ }
++
++void ggml_sycl_ornith_conv_silu(
++        ggml_backend_sycl_context & ctx,
++        ggml_tensor * conv,
++        ggml_tensor * silu) {
++    GGML_ASSERT(conv != nullptr && silu != nullptr && conv->src[0] != nullptr && conv->src[1] != nullptr);
++    GGML_ASSERT(conv->op == GGML_OP_SSM_CONV && silu->op == GGML_OP_UNARY);
++    GGML_ASSERT(ggml_get_unary_op(silu) == GGML_UNARY_OP_SILU && silu->src[0] == conv);
++    GGML_ASSERT(conv->type == GGML_TYPE_F32 && silu->type == GGML_TYPE_F32);
++    GGML_ASSERT(conv->ne[0] == 8192 && conv->ne[1] == 1 && conv->ne[2] == 1 && conv->ne[3] == 1);
++    GGML_ASSERT(ggml_are_same_shape(conv, silu) && ggml_is_contiguous(silu));
++    GGML_ASSERT(conv->src[1]->ne[0] == 4 && conv->src[1]->ne[1] == 8192);
++    GGML_ASSERT(conv->src[0]->nb[0] == sizeof(float) && conv->src[0]->nb[1] == 4 * sizeof(float));
++    GGML_ASSERT(conv->src[1]->nb[0] == sizeof(float) && conv->src[1]->nb[1] == 4 * sizeof(float));
++
++    static const bool poison = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_CONV_SILU_POISON");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    if (poison) {
++        kernel_ornith_conv_silu<true>(*ctx.stream(), static_cast<const float *>(conv->src[0]->data),
++            static_cast<const float *>(conv->src[1]->data), static_cast<float *>(silu->data), 4, 8192, 4);
++    } else {
++        kernel_ornith_conv_silu<false>(*ctx.stream(), static_cast<const float *>(conv->src[0]->data),
++            static_cast<const float *>(conv->src[1]->data), static_cast<float *>(silu->data), 4, 8192, 4);
++    }
++}
+diff --git a/ggml/src/ggml-sycl/ssm_conv.hpp b/ggml/src/ggml-sycl/ssm_conv.hpp
+index 1a8ad05..0004eec 100644
+--- a/ggml/src/ggml-sycl/ssm_conv.hpp
++++ b/ggml/src/ggml-sycl/ssm_conv.hpp
+@@ -3,3 +3,8 @@
+ #include "common.hpp"
+ 
+ void ggml_sycl_ssm_conv(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
++
++void ggml_sycl_ornith_conv_silu(
++        ggml_backend_sycl_context & ctx,
++        ggml_tensor * conv,
++        ggml_tensor * silu);

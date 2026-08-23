@@ -1,0 +1,83 @@
+{
+  "date": "2026-08-22",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "llama_cpp_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "accepted_stack": [
+    "GGML_SYCL_FUSED_MOE_ADD_REDUCE=1",
+    "GGML_SYCL_FUSED_ORNITH_CONV_SILU=1"
+  ],
+  "raw_trace": {
+    "path": "experiments/ornith-15-b70/data/2026-08-22-ornith35b-effective-graph-trace.log.gz",
+    "sha256": "484c11be76c3eda1a2a6bc0d54bd69cc951e01072f6c28c6bf2aa32e0c838750"
+  },
+  "decode_graph": {
+    "total_graph_nodes_including_views": 3726,
+    "compute_nodes": 2234,
+    "compute_op_counts": {
+      "ADD": 430,
+      "ARGSORT": 40,
+      "CLAMP": 40,
+      "CONCAT": 30,
+      "CONT": 10,
+      "CPY": 60,
+      "DIV": 40,
+      "FLASH_ATTN_EXT": 10,
+      "GATED_DELTA_NET": 30,
+      "GET_ROWS": 101,
+      "GLU": 80,
+      "L2_NORM": 60,
+      "MUL": 281,
+      "MUL_MAT": 391,
+      "MUL_MAT_ID": 120,
+      "RMS_NORM": 131,
+      "ROPE": 20,
+      "SCALE": 60,
+      "SET_ROWS": 20,
+      "SOFT_MAX": 40,
+      "SSM_CONV": 30,
+      "SUM_ROWS": 40,
+      "UNARY": 170
+    },
+    "backend_fusion_matches_per_graph": {
+      "stock_topk_moe": 40,
+      "stock_gdn_cache": 30,
+      "stock_mul_mat_glu": 40,
+      "stock_rms_norm_mul": 131,
+      "stock_unary_mul": 70,
+      "accepted_ordered_moe_add": 40,
+      "accepted_ornith_conv_silu": 30
+    },
+    "warning": "Graph-node counts are not kernel timings and must not be converted into performance estimates."
+  },
+  "rejected_candidates": [
+    {
+      "name": "paired recurrent Q/K L2 normalization",
+      "door": "GGML_SYCL_FUSED_ORNITH_QK_L2=1",
+      "matches_per_graph": 30,
+      "attempts": [
+        "combined 32-row kernel",
+        "single kernel calling the exact stock L2 helper twice"
+      ],
+      "door_off_cli_sha256": "e38c46d2d9c68451a3745612fbea15496a9726e64b277ef6b3bb0457b2a50c2d",
+      "door_on_cli_sha256": "5d80f55e9d797937eb8494c9ea05dde498f566e3c84fb7569f91bcc63880bdee",
+      "status": "negative_correctness",
+      "speed_result_promoted": false,
+      "patch_sha256": "5fd93e7408bf61cfe7d7d9c09acdb7c33f9d0e646ddfa96933090c2af421a5f6"
+    },
+    {
+      "name": "shared-expert gate tail fusion",
+      "door": "GGML_SYCL_FUSED_ORNITH_SHARED_MUL_ADD=1",
+      "matches_per_graph": 40,
+      "attempts": [
+        "sigmoid plus broadcast multiply plus routed/shared add",
+        "stored sigmoid plus multiply/add with volatile private product",
+        "stored sigmoid plus multiply/add through the graph's volatile global intermediate"
+      ],
+      "door_off_cli_sha256": "49915ec3740fab76f406e78ff7a7aa31fb3c8de3612355d95cb53483638d5a75",
+      "door_on_cli_sha256": "7d2e4190e8d5e4b38c368efb33aa834085e7a5a2d060de9c48aaa466652acb32",
+      "status": "negative_correctness",
+      "speed_result_promoted": false,
+      "patch_sha256": "5b360a0650d0a8eef8762d11329cc344132659046ac8f74ba3934c23729c03f1"
+    }
+  ]
+}

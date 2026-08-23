@@ -74,6 +74,12 @@ binary, driver, or benchmark protocol will reproduce them.
   byte-identical and all canaries passed. The wider direct-state candidate is
   archived as a correctness negative. See
   `notes/2026-08-22-ornith35b-conv-silu-positive.md`.
+- **Launch-census follow-up — TWO CORRECTNESS NEGATIVES:** the backend already
+  absorbs all 40 MoE router chains plus its norm, unary, GDN-cache, and
+  matmul/GLU opportunities. Paired recurrent Q/K L2 and shared-expert-tail
+  fusions both hit every intended layer but changed fixed-seed generation, even
+  in their strictest stock-intermediate forms. No speed result was promoted.
+  See `notes/2026-08-22-ornith35b-launch-census-and-fusion-negatives.md`.
 - **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
   tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
   the tuned dispatch and beat the now-promoted ordered reduction.
