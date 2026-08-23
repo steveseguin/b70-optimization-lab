@@ -23,8 +23,8 @@ driver=$(realpath -- "$0")
 action=${1:-}
 
 case "$action" in
-  check|d2|d3|d6|d7|d4|d5) ;;
-  *) printf 'usage: %s check|d2|d3|d6|d7|d4|d5\n' "$0" >&2; exit 2 ;;
+  check|probe|d2|d3|d6|d7|d4|d5) ;;
+  *) printf 'usage: %s check|probe|d2|d3|d6|d7|d4|d5\n' "$0" >&2; exit 2 ;;
 esac
 
 raw=/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70
@@ -53,6 +53,7 @@ candidate_graph_manifest=/home/steve/qwen38-m6-head256-q64k32-attn-override-2026
 model_manifest="$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json"
 model_verifier="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py"
 sealed_checker="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/check-tp2-sealed-gates.py"
+d1d2_validator="$repo/experiments/qwen38-27b-b70/scripts/validate-qwen38-chunkdiag-d1d2.py"
 
 cache_manifest_sha=${CHUNKDIAG_CACHE_MANIFEST_SHA256:-f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb0ff}
 suite_sha=0b66d5a6711a981480f09ba5956042a391da3082d3eb470d091fc89f2a37c6fc
@@ -300,7 +301,7 @@ fi
 
 driver_sha=$(sha256sum -- "$driver" | awk '{print $1}')
 empty_diff=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-vllm_instrument_diff=${CHUNKDIAG_EXPECT_VLLM_DIFF_SHA256:-9d5450d485578d5075d3945f1284580934aac0981da484603149ef70bf4bc55a}
+vllm_instrument_diff=${CHUNKDIAG_EXPECT_VLLM_DIFF_SHA256:-e1efc89e3c239b8b890c0d0e868b290e788f8477708a935f7c0fae1d3258788d}
 compilation_config=$(printf '{"cache_dir":"%s/torch_compile_cache/b99160ae76","use_inductor_graph_partition":true,"pass_config":{"fuse_rope_kvcache_cat_mla":false},"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[6],"max_cudagraph_capture_size":6}' "$cache")
 aot_keys=dc9285c2585e6107e3a84c9b8339e3865a2930a77e21245f0d2e76b04b7d0ee6,fc5b3e495f3d13b586de6fb38840cdf8917f296f8a22b4133caadfa24369ce62
 diagnostic_instrument=${CHUNKDIAG_ENABLE_INSTRUMENT:-1}
@@ -350,6 +351,7 @@ launch_env=(
   VALIDATION_GDN_INITSTATE_AUDIT="$diagnostic_instrument"
   VALIDATION_GDN_INITSTATE_AUDIT_LAYERS=0
   VALIDATION_GDN_INITSTATE_AUDIT_RANK=0
+  VALIDATION_GDN_INITSTATE_AUDIT_REQ_REGEX='^chatcmpl-bench-qwen38-longkv'
   VALIDATION_DDTREE_FULL_GRAPH=0
   VALIDATION_DDTREE_CAPTURE_GDN_CORE=0
   VALIDATION_ONEDNN_INT4_COMPLETION_BARRIER=1
@@ -425,6 +427,22 @@ if (( runner_rc > 1 )); then
   printf 'DIAG INFRA FAILURE: runner rc=%s despite quality evidence\n' \
     "$runner_rc" >&2
   exit "$runner_rc"
+fi
+if [[ "$diagnostic_instrument" == "1" ]]; then
+  expected_dose_rows=1
+  case "$action" in
+    d3) expected_dose_rows=4 ;;
+    d6) expected_dose_rows=6 ;;
+    d7) expected_dose_rows=7 ;;
+    d4|d5) expected_dose_rows=8 ;;
+  esac
+  if ! /home/steve/.venvs/vllm-xpu/bin/python "$d1d2_validator" \
+    --arm-root "$arm_root" \
+    --expected-dose-rows "$expected_dose_rows" \
+    --output "$arm_root/d1d2-validation.json"; then
+    printf 'DIAG INFRA FAILURE: D1/D2 trace validation failed\n' >&2
+    exit 15
+  fi
 fi
 marker_count=$(grep -Fc "$policy_marker" "$server_log" || true)
 printf 'diagnostic arm %s: stock stage, policy markers=%s (expect 0)\n' \

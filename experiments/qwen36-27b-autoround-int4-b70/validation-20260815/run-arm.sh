@@ -50,7 +50,7 @@ sealed_validation_allowlist=(
   VALIDATION_EXPECT_VLLM_DIFF_SHA256 VALIDATION_EXPECT_VLLM_VERSION
   VALIDATION_EXPECT_XPU_COUNT VALIDATION_GDN_CAPTURE_NATIVE_SPEC
   VALIDATION_GDN_INITSTATE_AUDIT VALIDATION_GDN_INITSTATE_AUDIT_LAYERS
-  VALIDATION_GDN_INITSTATE_AUDIT_RANK
+  VALIDATION_GDN_INITSTATE_AUDIT_RANK VALIDATION_GDN_INITSTATE_AUDIT_REQ_REGEX
   VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT
   VALIDATION_GDN_STATE_SLOT_TRACE
   VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH VALIDATION_GRAPH_STAGE_MANIFEST
@@ -957,12 +957,23 @@ if [[ "${VALIDATION_GDN_STATE_SLOT_TRACE:-0}" == "1" ]]; then
   export VLLM_XPU_GDN_STATE_SLOT_TRACE_MAX_LINES=20000
 fi
 if [[ "${VALIDATION_GDN_INITSTATE_AUDIT:-0}" == "1" ]]; then
-  # D2 report-only trace: exact continuation flag at the prefill kernel call.
-  export VLLM_XPU_GDN_INITSTATE_AUDIT=1
-  export VLLM_XPU_GDN_INITSTATE_AUDIT_FILE="$arm_root/gdn-initstate-audit.jsonl"
-  export VLLM_XPU_GDN_INITSTATE_AUDIT_LAYERS="${VALIDATION_GDN_INITSTATE_AUDIT_LAYERS:-0}"
-  export VLLM_XPU_GDN_INITSTATE_AUDIT_RANK="${VALIDATION_GDN_INITSTATE_AUDIT_RANK:-0}"
-  export VLLM_XPU_GDN_INITSTATE_AUDIT_MAX_LINES=20000
+  # D2 report-only trace: reuse the clean runtime's existing GDN custom-op
+  # trace. This path executes outside the compiled model and records the
+  # continuation flag immediately before causal_conv1d_fn consumes it. The
+  # earlier bespoke model-source hook silently produced no records and also
+  # invalidated the protected AOT archive.
+  if [[ "${VALIDATION_GDN_INITSTATE_AUDIT_LAYERS:-0}" != "0" ]]; then
+    printf 'D2 initstate audit currently requires GDN layer 0 only\n' >&2
+    exit 3
+  fi
+  export VLLM_XPU_GDN_TRACE_FILE="$arm_root/gdn-initstate-audit.jsonl"
+  export VLLM_XPU_GDN_TRACE_LAYER_REGEX='layers\.0\.linear_attn'
+  export VLLM_XPU_GDN_TRACE_REQ_REGEX="${VALIDATION_GDN_INITSTATE_AUDIT_REQ_REGEX:-^chatcmpl-bench-qwen38-longkv}"
+  export VLLM_XPU_GDN_TRACE_RANK="${VALIDATION_GDN_INITSTATE_AUDIT_RANK:-0}"
+  export VLLM_XPU_GDN_TRACE_PREFILL_ONLY=1
+  export VLLM_XPU_GDN_TRACE_MAX_LINES=512
+  export VLLM_XPU_GDN_TRACE_TENSOR_LIMIT=2
+  export VLLM_XPU_GDN_TRACE_STATE_LIMIT=1
 fi
 if [[ "${VALIDATION_ENABLE_PACKET_TRACE:-0}" == "1" ]]; then
   # Bounded correctness trace. These files distinguish a wrong target row
