@@ -46,8 +46,8 @@ Current packages:
   pinned model and llama.cpp base, the lab's ordered expert-reduction,
   recurrent convolution-SiLU, residual-RMSNorm, recurrent concat/state, and
   direct gathered-state, alpha-gate, routed-expert gate/up, and MoE
-  shared-branch residual/RMSNorm SYCL patch stack, matched incremental serving
-  evidence, and exact apply/build/launch steps.
+  shared-branch residual/RMSNorm plus GDN RMSNorm/SiLU-gate SYCL patch stack,
+  matched incremental serving evidence, and exact apply/build/launch steps.
 
 None is a starter package yet because its host platform path has not been
 rebuilt and tested from a clean OS. Gemma additionally lacks the retained

@@ -7,9 +7,9 @@ the recipe and validation evidence in this repository are the source of truth.
 ## Identity
 
 - Base: llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`.
-- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch`.
+- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch`.
 - Patch SHA-256:
-  `9022e13f8372b03c0ae47fc07229f0a3e1b7e5da8dcb3d54cd4050e7db852624`.
+  `762becc20a4ce1d82017bdb7d73485ff892eb26b9cf141dd9b74a9707fe1cf9a`.
 - Runtime doors: `GGML_SYCL_FUSED_MOE_ADD_REDUCE=1` and
   `GGML_SYCL_FUSED_ORNITH_CONV_SILU=1` and
   `GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1` and
@@ -17,17 +17,18 @@ the recipe and validation evidence in this repository are the source of truth.
   `GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1` and
   `GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1` and
   `GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1` and
-  `GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1` (all default off).
+  `GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1` and
+  `GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1` (all default off).
 - Validated `libggml-sycl.so` SHA-256:
-  `78047ec2562261ee3481c6a91d65059af10501e1016ebcc3bdc48cd210934007`.
+  `d75d5f1d07b6ac64421bbc9ae3cda7b916584f0422d512f57843a50427478e8c`.
 
 Apply only to the pinned clean base:
 
 ```bash
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
-sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch
-git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch
-git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch
+sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch
+git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch
+git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch
 git diff --check
 ```
 
@@ -45,7 +46,7 @@ The full-model trace observed 40 ordered-reduction matches, 30 recurrent
 convolution/SiLU matches, 80 residual/RMSNorm matches, and 30 recurrent
 concat/state matches per token. The direct state-materialization path replaces
 the latter boundary and also removes 30 recurrent `GET_ROWS` launches. Together
-the complete stack removes 600 launches/token.
+the complete stack removes 630 launches/token.
 
 The second fusion accepts only the exact one-token `[4,8192]` FP32 convolution
 whose sole consumer is a full-width SiLU. It preserves stock state handling,
@@ -92,6 +93,15 @@ graph-visible rounding and other consumers. Exact tensor names, node order,
 shape, stride, type, and ownership checks fail closed. It removes one launch
 per MoE layer, or another 40 launches/token.
 
+The ninth fusion recognizes Ornith's exact Qwen3.5-derived 128x32 recurrent
+gated-normalization subgraph. It delays the existing RMSNorm/weight operation
+until the parallel `z` projection is ready, then performs the stock SIMD16 XOR
+reduction, weight multiplication, SiLU, and final gate multiply in one kernel.
+A volatile FP32 normalized value preserves the original graph materialization
+boundary. Exact layer names, shapes, graph edges, opcodes, use counts, types,
+and contiguous layouts fail closed. It removes one launch in each of 30
+recurrent layers.
+
 ## Validation
 
 - Raw engine A/B/B/A-style means: `103.047744` control versus
@@ -133,6 +143,12 @@ per MoE layer, or another 40 launches/token.
   over the prior stack, reaching a `118.048489 tok/s` two-server mean. Every
   candidate exceeded every control; forced 128-token output was byte-identical
   and all canaries passed.
+- The added GDN RMSNorm/SiLU-gate fusion improved mirrored raw-engine decode by
+  **+0.34%** and matched fresh-server decode by **+0.78%** over the prior
+  stack, reaching a directly measured `117.446154 tok/s` two-server mean.
+  Every candidate exceeded every control; forced 128-token output was
+  byte-identical, exactly 3,810 recurrent hits were recorded, and all canaries
+  passed.
 
 Fresh stock servers matched `0/12` complete response hashes with each other on
 the long realistic suite. That pre-existing cross-process instability is
@@ -155,3 +171,5 @@ The routed-expert gate/up increment is in
 [`2026-08-23-ornith35b-moe-gate-up-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-gate-up-positive.md).
 The MoE shared-branch residual/RMSNorm increment is in
 [`2026-08-23-ornith35b-moe-shared-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-shared-residual-rms-positive.md).
+The GDN RMSNorm/SiLU-gate increment is in
+[`2026-08-23-ornith35b-gdn-rms-silu-gate-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-gdn-rms-silu-gate-positive.md).

@@ -1,0 +1,42 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "candidate_library_sha256": "d75d5f1d07b6ac64421bbc9ae3cda7b916584f0422d512f57843a50427478e8c",
+  "complete_patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch",
+  "complete_patch_sha256": "762becc20a4ce1d82017bdb7d73485ff892eb26b9cf141dd9b74a9707fe1cf9a",
+  "incremental_patch": "experiments/ornith-15-b70/patches/llamacpp-ornith15-gdn-rms-silu-gate-positive-20260823.patch",
+  "incremental_patch_sha256": "623080f1612196fcbf392ff9d91553b09fcc9aec2153cfe7ebfa177bc998413f",
+  "candidate_door": "GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1",
+  "removed_launches_per_decoded_token_incremental": 30,
+  "removed_launches_per_decoded_token_complete_stack": 630,
+  "engine": {
+    "protocol": "llama-bench p0/n128/d0/r7, same final binary, mirrored A/B/B/A sequence",
+    "controls_tok_s": [121.283795, 121.291096],
+    "candidates_tok_s": [121.576013, 121.820801],
+    "control_mean_tok_s": 121.2874455,
+    "candidate_mean_tok_s": 121.698407,
+    "delta_percent": 0.3388326783,
+    "each_candidate_exceeded_each_control": true
+  },
+  "fresh_server": {
+    "protocol": "two fresh controls and two fresh candidates in A/B/B/A order; fixed 12-prompt suite; each prompt once; 512-token maximum; median tokens 1-100 after TTFT; cached_tokens=0",
+    "controls_tok_s": [116.69222787113486, 116.37853000841775],
+    "candidates_tok_s": [117.85645305351258, 117.03585466715572],
+    "control_mean_tok_s": 116.53537893977631,
+    "candidate_mean_tok_s": 117.44615386033415,
+    "delta_percent": 0.7815437070,
+    "all_freshness_gates_passed": true,
+    "all_final_gates_passed": true,
+    "each_candidate_exceeded_each_control": true
+  },
+  "correctness": {
+    "canonical_128_token_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "same_binary_control_candidate_byte_identical": true,
+    "candidate_fused_hits_128_tokens": 3810,
+    "expected_fused_hits_128_tokens": 3810,
+    "canaries_passed": true
+  },
+  "result": "accepted incremental optimization"
+}

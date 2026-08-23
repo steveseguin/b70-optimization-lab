@@ -1,0 +1,246 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index e6c3c80..1ea00c2 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -6108,6 +6108,105 @@ static const ggml_tensor * ggml_sycl_unwrap_shape_view(const ggml_tensor * tenso
+     return tensor;
+ }
+ 
++struct ggml_sycl_ornith_gdn_rms_gate_match {
++    ggml_tensor * rms_norm;
++    ggml_tensor * weight_mul;
++    ggml_tensor * silu;
++    ggml_tensor * gate_mul;
++    int           weight_mul_idx;
++};
++
++static std::atomic<uint64_t> g_ggml_sycl_ornith_gdn_rms_gate_hits{0};
++
++static bool ggml_sycl_ornith_gdn_rms_gate_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE");
++        const bool on = value != nullptr && std::strcmp(value, "0") != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_gdn_rms_gate: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_gdn_rms_gate_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++static bool ggml_sycl_find_ornith_gdn_rms_gate(
++        const ggml_cgraph * cgraph, int node_idx,
++        ggml_sycl_ornith_gdn_rms_gate_match & match) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_gdn_rms_gate_enabled() ||
++        node_idx < 0 || node_idx + 5 >= cgraph->n_nodes) {
++        return false;
++    }
++
++    ggml_tensor * rms_norm = cgraph->nodes[node_idx];
++    ggml_tensor * weight_mul = cgraph->nodes[node_idx + 1];
++    if (rms_norm == nullptr || weight_mul == nullptr ||
++        rms_norm->op != GGML_OP_RMS_NORM || weight_mul->op != GGML_OP_MUL ||
++        !ggml_node_has_n_uses(cgraph, node_idx, 1) ||
++        !ggml_node_has_n_uses(cgraph, node_idx + 1, 1) ||
++        (weight_mul->src[0] != rms_norm && weight_mul->src[1] != rms_norm)) {
++        return false;
++    }
++
++    int compute_idxs[3] = { -1, -1, -1 };
++    int found = 0;
++    for (int j = node_idx + 2; j < cgraph->n_nodes && found < 3; ++j) {
++        ggml_tensor * candidate = cgraph->nodes[j];
++        if (ggml_sycl_is_view_or_noop(candidate) ||
++            (candidate->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
++            continue;
++        }
++        compute_idxs[found++] = j;
++    }
++    if (found != 3) {
++        return false;
++    }
++
++    ggml_tensor * z_projection = cgraph->nodes[compute_idxs[0]];
++    ggml_tensor * silu = cgraph->nodes[compute_idxs[1]];
++    ggml_tensor * gate_mul = cgraph->nodes[compute_idxs[2]];
++    if (z_projection->op != GGML_OP_MUL_MAT || silu->op != GGML_OP_UNARY ||
++        ggml_get_unary_op(silu) != GGML_UNARY_OP_SILU || gate_mul->op != GGML_OP_MUL ||
++        !ggml_node_has_n_uses(cgraph, compute_idxs[1], 1) ||
++        (gate_mul->src[0] != weight_mul && gate_mul->src[1] != weight_mul) ||
++        (gate_mul->src[0] != silu && gate_mul->src[1] != silu) ||
++        ggml_sycl_unwrap_shape_view(silu->src[0]) != z_projection) {
++        return false;
++    }
++
++    const ggml_tensor * x = rms_norm->src[0];
++    const ggml_tensor * weight = weight_mul->src[0] == rms_norm
++        ? weight_mul->src[1] : weight_mul->src[0];
++    int layer = -1;
++    if (x == nullptr || weight == nullptr ||
++        std::sscanf(weight->name, "blk.%d.ssm_norm.weight", &layer) != 1 ||
++        layer < 0 || layer >= 40 ||
++        x->type != GGML_TYPE_F32 || x->ne[0] != 128 || x->ne[1] != 32 ||
++        x->ne[2] != 1 || x->ne[3] != 1 || !ggml_is_contiguous(x) ||
++        weight->type != GGML_TYPE_F32 || ggml_nelements(weight) != 128 ||
++        !ggml_is_contiguous(weight) ||
++        z_projection->type != GGML_TYPE_F32 || ggml_nelements(z_projection) != 4096 ||
++        gate_mul->type != GGML_TYPE_F32 || !ggml_are_same_shape(gate_mul, x) ||
++        !ggml_is_contiguous(gate_mul)) {
++        return false;
++    }
++
++    char x_name[64];
++    char z_name[64];
++    std::snprintf(x_name, sizeof(x_name), "attn_output-%d", layer);
++    std::snprintf(z_name, sizeof(z_name), "z-%d", layer);
++    if (std::strcmp(x->name, x_name) != 0 || std::strcmp(z_projection->name, z_name) != 0) {
++        return false;
++    }
++
++    match = { rms_norm, weight_mul, silu, gate_mul, node_idx + 1 };
++    return true;
++}
++
+ static int ggml_sycl_find_ornith_concat_state(const ggml_cgraph * cgraph, int node_idx) {
+     if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_concat_state_enabled() ||
+         node_idx < 0 || node_idx >= cgraph->n_nodes) {
+@@ -6345,6 +6444,8 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+     precomputed_ornith_silu.reserve(64);
+     std::vector<ggml_sycl_ornith_concat_state_direct_match> pending_ornith_concat_state_direct;
+     pending_ornith_concat_state_direct.reserve(64);
++    std::vector<ggml_sycl_ornith_gdn_rms_gate_match> pending_ornith_gdn_rms_gate;
++    pending_ornith_gdn_rms_gate.reserve(40);
+ 
+     for (int i = 0; i < cgraph->n_nodes; i++) {
+         ggml_tensor * node = cgraph->nodes[i];
+@@ -6454,6 +6555,30 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+                 continue;
+             }
+         }
++        if (node->op == GGML_OP_RMS_NORM) {
++            ggml_sycl_ornith_gdn_rms_gate_match match;
++            if (ggml_sycl_find_ornith_gdn_rms_gate(cgraph, i, match)) {
++                pending_ornith_gdn_rms_gate.push_back(match);
++                i = match.weight_mul_idx;
++                continue;
++            }
++        }
++        if (node->op == GGML_OP_UNARY) {
++            auto pending = std::find_if(
++                pending_ornith_gdn_rms_gate.begin(), pending_ornith_gdn_rms_gate.end(),
++                [node](const ggml_sycl_ornith_gdn_rms_gate_match & candidate) {
++                    return candidate.silu == node;
++                });
++            if (pending != pending_ornith_gdn_rms_gate.end()) {
++                ggml_sycl_op_ornith_gdn_rms_silu_gate_fused(
++                    *sycl_ctx, pending->rms_norm, pending->weight_mul,
++                    pending->silu, pending->gate_mul);
++                g_ggml_sycl_ornith_gdn_rms_gate_hits.fetch_add(1, std::memory_order_relaxed);
++                i++;
++                pending_ornith_gdn_rms_gate.erase(pending);
++                continue;
++            }
++        }
+         if (node->op == GGML_OP_RMS_NORM &&
+             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL }, {})) {
+             ggml_sycl_op_rms_norm_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
+diff --git a/ggml/src/ggml-sycl/norm.cpp b/ggml/src/ggml-sycl/norm.cpp
+index ff76f07..6595e73 100644
+--- a/ggml/src/ggml-sycl/norm.cpp
++++ b/ggml/src/ggml-sycl/norm.cpp
+@@ -1,5 +1,6 @@
+ #include "norm.hpp"
+ #include "ggml-sycl/common.hpp"
++#include "ggml-sycl/element_wise.hpp"
+ #include "ggml-sycl/presets.hpp"
+ 
+ static void norm_f32(const float* x, float* dst, const int ncols,
+@@ -740,6 +741,69 @@ void ggml_sycl_op_rms_norm_fused(ggml_backend_sycl_context & ctx, ggml_tensor *
+         mul_s01, mul_s02, mul_s03, mul_nrows, mul_nchannels, mul_nsamples, eps, main_stream, ctx.device);
+ }
+ 
++void ggml_sycl_op_ornith_gdn_rms_silu_gate_fused(
++        ggml_backend_sycl_context & ctx, ggml_tensor * rms_norm,
++        ggml_tensor * weight_mul, ggml_tensor * silu, ggml_tensor * gate_mul) {
++    const ggml_tensor * x = rms_norm->src[0];
++    const ggml_tensor * weight = weight_mul->src[0] == rms_norm
++        ? weight_mul->src[1] : weight_mul->src[0];
++    const ggml_tensor * z = silu->src[0];
++
++    GGML_ASSERT(x != nullptr && weight != nullptr && z != nullptr);
++    GGML_ASSERT(x->type == GGML_TYPE_F32 && rms_norm->type == GGML_TYPE_F32 &&
++                weight_mul->type == GGML_TYPE_F32 && silu->type == GGML_TYPE_F32 &&
++                gate_mul->type == GGML_TYPE_F32);
++    GGML_ASSERT(x->ne[0] == 128 && x->ne[1] == 32 &&
++                x->ne[2] == 1 && x->ne[3] == 1);
++    GGML_ASSERT(ggml_is_contiguous(x) && ggml_is_contiguous(weight) &&
++                ggml_is_contiguous(z) && ggml_is_contiguous(gate_mul));
++    GGML_ASSERT(ggml_nelements(weight) == 128 && ggml_nelements(z) == 4096 &&
++                ggml_nelements(gate_mul) == 4096);
++
++    float eps = 0.0f;
++    std::memcpy(&eps, rms_norm->op_params, sizeof(float));
++    GGML_ASSERT(eps >= 0.0f);
++
++    const float * x_d = static_cast<const float *>(x->data);
++    const float * w_d = static_cast<const float *>(weight->data);
++    const float * z_d = static_cast<const float *>(z->data);
++    float * dst_d = static_cast<float *>(gate_mul->data);
++    queue_ptr stream = ctx.stream();
++    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
++
++    constexpr int ncols = 128;
++    constexpr int nheads = 32;
++    constexpr int block_size = WARP_SIZE;
++    const sycl::range<1> block(block_size);
++    stream->parallel_for(
++        sycl::nd_range<1>(sycl::range<1>(nheads * block_size), block),
++        [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++            const int head = item.get_group(0);
++            const int tid = item.get_local_id(0);
++            const int base = head * ncols;
++
++            float sum_sq = 0.0f;
++            for (int col = tid; col < ncols; col += block_size) {
++                const float xi = x_d[base + col];
++                sum_sq += xi * xi;
++            }
++            // Match rms_norm_f32()'s XOR-tree reduction order exactly.
++#pragma unroll
++            for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++                sum_sq += dpct::permute_sub_group_by_xor(item.get_sub_group(), sum_sq, mask);
++            }
++            const float scale = sycl::rsqrt(sum_sq / ncols + eps);
++
++            for (int col = tid; col < ncols; col += block_size) {
++                const int idx = base + col;
++                // Preserve the graph's FP32 materialization boundary between
++                // RMS*weight and SiLU(z)*normalized.
++                volatile float normalized = scale * x_d[idx] * w_d[col];
++                dst_d[idx] = op_silu(z_d[idx]) * normalized;
++            }
++        });
++}
++
+ void ggml_sycl_op_residual_rms_norm_fused(
+         ggml_backend_sycl_context & ctx, ggml_tensor * add, ggml_tensor * rms_norm, ggml_tensor * mul_tensor) {
+     GGML_ASSERT(add->src[0] != nullptr && add->src[1] != nullptr && rms_norm->src[0] == add);
+diff --git a/ggml/src/ggml-sycl/norm.hpp b/ggml/src/ggml-sycl/norm.hpp
+index 768f465..095b17a 100644
+--- a/ggml/src/ggml-sycl/norm.hpp
++++ b/ggml/src/ggml-sycl/norm.hpp
+@@ -21,6 +21,10 @@ void ggml_sycl_op_rms_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
+ 
+ void ggml_sycl_op_rms_norm_fused(ggml_backend_sycl_context& ctx, ggml_tensor* dst, ggml_tensor* mul);
+ 
++void ggml_sycl_op_ornith_gdn_rms_silu_gate_fused(
++        ggml_backend_sycl_context& ctx, ggml_tensor* rms_norm,
++        ggml_tensor* weight_mul, ggml_tensor* silu, ggml_tensor* gate_mul);
++
+ void ggml_sycl_op_residual_rms_norm_fused(
+         ggml_backend_sycl_context& ctx, ggml_tensor* add, ggml_tensor* rms_norm, ggml_tensor* mul);
+ 

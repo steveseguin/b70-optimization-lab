@@ -44,8 +44,8 @@ git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-ornith15
 cd llama.cpp-ornith15
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
 
-PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch
-echo "9022e13f8372b03c0ae47fc07229f0a3e1b7e5da8dcb3d54cd4050e7db852624  $PATCH" | sha256sum -c -
+PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch
+echo "762becc20a4ce1d82017bdb7d73485ff892eb26b9cf141dd9b74a9707fe1cf9a  $PATCH" | sha256sum -c -
 git apply --check "$PATCH"
 git apply "$PATCH"
 git diff --check
@@ -71,7 +71,7 @@ cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2
 ```
 
 The validated compute library SHA-256 was
-`78047ec2562261ee3481c6a91d65059af10501e1016ebcc3bdc48cd210934007`.
+`d75d5f1d07b6ac64421bbc9ae3cda7b916584f0422d512f57843a50427478e8c`.
 AOT output can vary with the compiler installation, so the source revision,
 patch hash, build settings, and validation gates are the durable identity.
 
@@ -97,6 +97,7 @@ export GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1
 export GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1
 export GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1
 export GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1
+export GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1
 
 build-sycl-aot-bmg-g31/bin/llama-server \
   --model "$MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf" \
@@ -110,7 +111,7 @@ build-sycl-aot-bmg-g31/bin/llama-server \
 Do not enable SYCL command graphs for this model on the pinned stack; the
 matched model-level experiment regressed decode by 52%.
 
-## Optimized context-depth profile (complete patch; llama-bench, FA on, 5 reps)
+## Prior eight-feature context-depth profile (llama-bench, FA on, 5 reps)
 
 ![optimized depth sweep](optimized-depth-sweep.svg)
 
@@ -124,11 +125,12 @@ matched model-level experiment regressed decode by 52%.
 | 24,576 | 96.56 (±0.06) | 1197.5 (±5.3) |
 | 32,768 | 90.32 (±0.07) | 1100.4 (±3.9) |
 
-These are directly measured raw engine rates from the exact complete
-eight-feature package stack with command graphs off, F16 KV, and five samples
-at every displayed depth. They are not inferred from the 8K server result and
-no missing depth is interpolated. Raw engine rates exclude HTTP and sampling
-overhead, so use the fresh-server suite median above as the serving headline.
+These are directly measured raw engine rates from the exact prior
+eight-feature stack with command graphs off, F16 KV, and five samples at every
+displayed depth. They are not relabeled as ninth-feature measurements, are not
+inferred from the 8K server result, and no missing depth is interpolated. Raw
+engine rates exclude HTTP and sampling overhead, so use the current
+fresh-server suite median below as the serving headline.
 Evidence: `ornith-15-35b-a3b-q4km-optimized.sweep.json` plus
 `ornith-15-35b-a3b-q4km-optimized.meta.json` (model and benchmark hashes
 inside).
@@ -177,7 +179,7 @@ Correctness gates:
   open runtime limitation rather than a patch acceptance gate.
 
 Patch instructions and evidence:
-[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch),
+[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-gdn-rms-gate-20260823.patch),
 [patch packet](../../patches/ornith-15-35b-a3b-q4km-b70/README.md), and
 [`experiments/ornith-15-b70/`](../../experiments/ornith-15-b70/).
 
@@ -260,6 +262,21 @@ fresh-server means improved `116.406 -> 118.048 tok/s` (**+1.41%**). Every
 candidate exceeded every control, forced 128-token output was byte-identical,
 and the full canary battery passed. Evidence:
 [`2026-08-23-ornith35b-moe-shared-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-shared-residual-rms-positive.md).
+
+The ninth package increment transfers the Qwen3.5 recurrent gated-normalization
+boundary directly to Ornith's exact graph. Once the parallel `z` projection is
+ready, one kernel now performs the existing per-head RMS reduction, learned
+weight multiply, SiLU, and final gate multiply while preserving the original
+FP32 rounding boundary. It replaces the established RMS/weight and SiLU/gate
+kernels with one launch in each of 30 recurrent layers, bringing the complete
+stack to 630 removed launches/token. Mirrored engine means improved
+`121.287 -> 121.698 tok/s` (**+0.34%**) and fresh-server means improved
+`116.535 -> 117.446 tok/s` (**+0.78%**). Both candidates exceeded both
+controls, forced 128-token output was byte-identical, all freshness gates
+passed, and the full canary battery passed. The `117.446` current-patch mean is
+directly measured rather than extrapolated from the prior 118.048 point.
+Evidence:
+[`2026-08-23-ornith35b-gdn-rms-silu-gate-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-gdn-rms-silu-gate-positive.md).
 
 ## Stock two-card comparison (patch off; layer split, GPUs 0+1)
 
