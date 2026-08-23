@@ -258,7 +258,30 @@
       "cards": 2,
       "status": "historical-record-retained-under-original-narrow-quality-scope",
       "evidence_level": "B70-verified history",
-      "coverage": ["decode", "MTP", "quality", "determinism"],
+      "coverage": ["decode", "MTP", "TP1/2", "quality", "determinism"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Qwen3.6 AutoRound TP1/TP2 MTP3 historical records and dated current support",
+          "basis": "the historical 12-prompt records retain exact runtime and cache-zero quality evidence, while later deterministic/current bands use different prompt suites and accounting and therefore remain separately labeled rather than treated as direct repeats",
+          "reviewed_at": "2026-08-23",
+          "evidence": [
+            "results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json",
+            "data/qwen36-27b-autoround-int4-determinism-speed-20260818.json",
+            "results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json",
+            "results/qwen36-27b-autoround-int4-b70/tp1-draftgraph-attribution-reconfirm-20260711.json"
+          ]
+        }
+      },
+      "featured_metric": {
+        "metric": "decode_tok_s",
+        "measurement_id": "q36-autoround-tp2-mtp3-historical",
+        "sample_index": 0,
+        "value": 95.384867741895,
+        "unit": "tok/s",
+        "workload": "12 unique cold prompts, up to 512 output tokens, cached_tokens=0; historical 100-event compatibility decode accounting",
+        "evidence": "results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json"
+      },
       "manifest": "results/qwen36-27b-autoround-int4-b70/README.md"
     },
     {
@@ -770,11 +793,117 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
     },
     {
+      "id": "q36-autoround-tp2-mtp3-historical",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU e7213ba8 + XPU kernels 3b4effee + oneCCL 4ceafd15",
+      "profile_id": "q36-webhie-int4-tp2-mtp3-historical-v1",
+      "measurement_class": "historical-100-event-compatibility",
+      "promotion_status": "retained-historical-record",
+      "quality_scope": "strict fresh 12-prompt cache-zero suite, exact cases, repeat128, baseline parity, and 1K needle",
+      "identity": {
+        "model_repository_revision": "webhie/Qwen3.6-27B-int4-AutoRound@f5750c90b3776db658594df5fe8051098226dd8e",
+        "vllm_source": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+        "xpu_kernels_source": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171",
+        "oneccl_source_top_commit": "b52f40c07f0b140e6aba87548c80720a350a9827",
+        "oneccl_libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf"
+      },
+      "config": {"tp": 2, "mtp": 3, "graph": "on", "graph_mode": "FULL_AND_PIECEWISE", "graph_capture_size": 4, "kv": "f16"},
+      "workload": "12 unique cold prompts, up to 512 output tokens, cached_tokens=0; historical 100-event compatibility decode accounting",
+      "metrics": {"decode_tok_s": [95.384867741895], "ttft_ms": [742.3079368891194]},
+      "quality": "Strict fresh gate passed: all 12 prompts unique and cache zero; exact cases, repeat128, baseline comparisons, and 1K needle passed. This retained high predates the later determinism suite.",
+      "evidence": "results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json"
+    },
+    {
+      "id": "q36-autoround-tp2-mtp3-current-deterministic",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU 44fc8fde + XPU kernels 2dd55f38 + oneCCL 4ceafd15",
+      "profile_id": "q36-webhie-int4-tp2-mtp3-deterministic-v1",
+      "measurement_class": "conventional-99-interval-25-prompt",
+      "promotion_status": "current-deterministic-support-no-new-record",
+      "quality_scope": "25-prompt cache-zero quality suite and same-configuration determinism assessment",
+      "identity": {
+        "model_repository_revision": "webhie/Qwen3.6-27B-int4-AutoRound@f5750c90b3776db658594df5fe8051098226dd8e",
+        "vllm_source": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+        "xpu_kernels_source": "2dd55f380df753a10a88fcd9e96192561066e713",
+        "oneccl_source_top_commit": "b52f40c07f0b140e6aba87548c80720a350a9827",
+        "oneccl_libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf"
+      },
+      "config": {"tp": 2, "mtp": 3, "graph": "on", "kv": "f16"},
+      "workload": "25-prompt cache-zero suite, up to 512 output tokens; conventional 99-interval decode accounting",
+      "metrics": {"decode_tok_s": [94.32115209029722, 94.7910539713551, 94.7104973610472]},
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 94.32115209029722, "label": "replicate A; quality pass; differs from B/C on one known bistable prompt"},
+        {"metric": "decode_tok_s", "index": 1, "value": 94.7910539713551, "label": "replicate B; quality pass; B/C token-identical"},
+        {"metric": "decode_tok_s", "index": 2, "value": 94.7104973610472, "label": "replicate C; quality pass; B/C token-identical"}
+      ],
+      "quality": "Quality passed on all three replicates. B/C matched 25/25; A differed on one known bistable prompt. The comparable historical-suite subset was 89.766 tok/s, so this is support rather than a replacement record.",
+      "evidence": "data/qwen36-27b-autoround-int4-determinism-speed-20260818.json"
+    },
+    {
+      "id": "q36-autoround-tp1-mtp3-historical",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU e7213ba8 + XPU kernels 3b4effee",
+      "profile_id": "q36-webhie-int4-tp1-mtp3-historical-v1",
+      "measurement_class": "historical-100-event-compatibility",
+      "promotion_status": "retained-historical-record",
+      "quality_scope": "strict fresh 12-prompt cache-zero suite with exact cases, repeat64, and baseline parity",
+      "identity": {
+        "model_repository_revision": "webhie/Qwen3.6-27B-int4-AutoRound@f5750c90b3776db658594df5fe8051098226dd8e",
+        "vllm_source": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+        "xpu_kernels_source": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171"
+      },
+      "config": {"tp": 1, "mtp": 3, "graph": "on", "graph_capture_size": 8, "kv": "f16"},
+      "workload": "12 unique cold prompts, 11×512 and one natural-EOS 186-token completion, cached_tokens=0; historical 100-event compatibility decode accounting",
+      "metrics": {"decode_tok_s": [68.23626314761921], "ttft_ms": [479.1464500594884]},
+      "quality": "Strict fresh gate passed; cache zero; exact cases, repeat64, and baseline parity passed. A long-context gate was not recorded for this historical row.",
+      "evidence": "results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json"
+    },
+    {
+      "id": "q36-autoround-tp1-mtp3-current-support",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU e7213ba8 + XPU kernels 3b4effee",
+      "profile_id": "q36-webhie-int4-tp1-mtp3-current-isolated-v1",
+      "measurement_class": "historical-100-event-compatibility-current-isolated",
+      "promotion_status": "current-support-band-no-new-record",
+      "quality_scope": "three isolated cache-zero rows; full repeat64 and long-context quality on the first row",
+      "identity": {
+        "model_repository_revision": "webhie/Qwen3.6-27B-int4-AutoRound@f5750c90b3776db658594df5fe8051098226dd8e",
+        "vllm_source": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+        "xpu_kernels_source": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171"
+      },
+      "config": {"tp": 1, "mtp": 3, "graph": "on", "graph_capture_size": 8, "kv": "f16"},
+      "workload": "three isolated cache-zero rows on the historical suite; historical 100-event compatibility decode accounting",
+      "metrics": {"decode_tok_s": [65.35866669031512, 66.71558804214723, 65.42008634854352]},
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 65.35866669031512, "label": "full quality, repeat64, baseline, and long-context pass"},
+        {"metric": "decode_tok_s", "index": 1, "value": 66.71558804214723, "label": "strict cache-zero support row; quality not repeated"},
+        {"metric": "decode_tok_s", "index": 2, "value": 65.42008634854352, "label": "strict cache-zero support row; quality not repeated"}
+      ],
+      "quality": "All three rows passed strict cache-zero validity. The first row passed the full quality, baseline, repeat64, and long-context gates; quality was intentionally not repeated on the two support rows. The 68.236 historical high remains retained.",
+      "evidence": "results/qwen36-27b-autoround-int4-b70/tp1-draftgraph-attribution-reconfirm-20260711.json"
+    },
+    {
       "id": "q36-webhie-tp1-mtp1",
       "state": "lab-measured",
       "revision": "qwen3.6-27b",
       "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime_family": "vLLM XPU",
       "runtime": "vLLM XPU source stack",
+      "profile_id": "q36-webhie-tp1-mtp-depth-same-window-cg8-v1",
+      "measurement_class": "historical-100-event-compatibility",
+      "promotion_status": "strict-valid-depth-screen-no-win",
       "config": {"tp": 1, "mtp": 1, "graph": "on", "graph_capture_size": 8, "kv": "f16"},
       "workload": "same-window fixed realistic cold suite, cache zero",
       "metrics": {"decode_tok_s": [51.24613704631071], "ttft_ms": [298.7594275036827]},
@@ -786,7 +915,11 @@
       "state": "lab-measured",
       "revision": "qwen3.6-27b",
       "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime_family": "vLLM XPU",
       "runtime": "vLLM XPU source stack",
+      "profile_id": "q36-webhie-tp1-mtp-depth-same-window-cg8-v1",
+      "measurement_class": "historical-100-event-compatibility",
+      "promotion_status": "strict-valid-depth-screen-no-win",
       "config": {"tp": 1, "mtp": 2, "graph": "on", "graph_capture_size": 8, "kv": "f16"},
       "workload": "same-window fixed realistic cold suite, cache zero",
       "metrics": {"decode_tok_s": [59.589096936159876], "ttft_ms": [437.3506020056084]},
@@ -798,7 +931,11 @@
       "state": "lab-measured",
       "revision": "qwen3.6-27b",
       "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime_family": "vLLM XPU",
       "runtime": "vLLM XPU source stack",
+      "profile_id": "q36-webhie-tp1-mtp-depth-same-window-cg8-v1",
+      "measurement_class": "historical-100-event-compatibility",
+      "promotion_status": "same-window-depth-screen-control",
       "config": {"tp": 1, "mtp": 3, "graph": "on", "graph_capture_size": 8, "kv": "f16"},
       "workload": "same-window fixed realistic cold suite, cache zero",
       "metrics": {"decode_tok_s": [64.72972570060101], "ttft_ms": [610.369234578684]},
@@ -810,12 +947,50 @@
       "state": "lab-measured",
       "revision": "qwen3.6-27b",
       "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime_family": "vLLM XPU",
       "runtime": "vLLM XPU source stack",
+      "profile_id": "q36-webhie-tp1-mtp-depth-same-window-cg8-v1",
+      "measurement_class": "historical-100-event-compatibility",
+      "promotion_status": "strict-valid-depth-screen-no-win",
       "config": {"tp": 1, "mtp": 4, "graph": "on", "graph_capture_size": 8, "kv": "f16"},
       "workload": "same-window fixed realistic cold suite, cache zero",
       "metrics": {"decode_tok_s": [59.88620742185209], "ttft_ms": [779.4782184064388]},
       "quality": "registered gate pass; deeper draft did not win",
       "evidence": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-mtp1-mtp2-depth-coverage-no-win.md"
+    },
+    {
+      "id": "q36-webhie-tp1-mtp5-cg8",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU source stack",
+      "profile_id": "q36-webhie-tp1-mtp5-capture-screen-v1",
+      "measurement_class": "historical-100-event-compatibility",
+      "promotion_status": "strict-valid-depth-screen-no-win",
+      "quality_scope": "strict fresh-response gate with every request cache zero; no separate full quality battery",
+      "config": {"tp": 1, "mtp": 5, "graph": "on", "graph_mode": "PIECEWISE", "graph_capture_size": 8, "kv": "f16"},
+      "workload": "same-window fixed realistic cold suite, cached_tokens=0; generated tokens 1–100 after TTFT",
+      "metrics": {"decode_tok_s": [59.256808975767214], "ttft_ms": [985.8371954178438]},
+      "quality": "Strict fresh-response gate passed and cached_tokens=0 for every request. This was a depth/config screen, not a full quality-battery repeat; MTP5 did not beat MTP3.",
+      "evidence": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-depth-screen-no-win.md"
+    },
+    {
+      "id": "q36-webhie-tp1-mtp5-cg16",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU source stack",
+      "profile_id": "q36-webhie-tp1-mtp5-capture-screen-v1",
+      "measurement_class": "historical-100-event-compatibility",
+      "promotion_status": "strict-valid-capture-screen-no-win",
+      "quality_scope": "strict fresh-response gate with every request cache zero; no separate full quality battery",
+      "config": {"tp": 1, "mtp": 5, "graph": "on", "graph_mode": "PIECEWISE", "graph_capture_size": 16, "kv": "f16"},
+      "workload": "same-window fixed realistic cold suite, cached_tokens=0; generated tokens 1–100 after TTFT",
+      "metrics": {"decode_tok_s": [59.816562920681044], "ttft_ms": [986.620420939289]},
+      "quality": "Strict fresh-response gate passed and cached_tokens=0 for every request. This was a capture-size screen, not a full quality-battery repeat; MTP5 did not beat MTP3.",
+      "evidence": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-depth-screen-no-win.md"
     },
     {
       "id": "q38-source-tp2-mtp0",
@@ -1083,11 +1258,34 @@
     {
       "id": "mtp-q36-webhie-tp1",
       "title": "Qwen3.6 MTP ladder",
-      "subtitle": "Webhie AutoRound · TP1 · graph capture 8 · same-window strict gate; MTP0 was not rerun in this window",
+      "subtitle": "Webhie AutoRound · TP1 · graph capture 8 · same-window strict gate · historical generated-tokens-1–100 accounting; MTP0 was not rerun in this window",
       "x_label": "draft tokens",
       "metrics": ["decode_tok_s", "ttft_ms"],
       "series": [
         {"label": "Qwen3.6 same-window", "measurement_ids": ["q36-webhie-tp1-mtp1", "q36-webhie-tp1-mtp2", "q36-webhie-tp1-mtp3", "q36-webhie-tp1-mtp4"], "x_from": "config.mtp"}
+      ]
+    },
+    {
+      "id": "q36-autoround-mtp5-capture-screen",
+      "title": "Qwen3.6 MTP5 capture screen",
+      "subtitle": "Webhie AutoRound · TP1 · MTP5 · PIECEWISE graph · same-window strict/cache-zero screen · historical generated-tokens-1–100 accounting; neither capture size beat MTP3.",
+      "x_label": "max graph capture size",
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "MTP5", "measurement_ids": ["q36-webhie-tp1-mtp5-cg8", "q36-webhie-tp1-mtp5-cg16"], "x_from": "config.graph_capture_size"}
+      ]
+    },
+    {
+      "id": "q36-autoround-mtp3-history-current",
+      "title": "Qwen3.6 MTP3 historical vs current",
+      "subtitle": "AutoRound · TP1/TP2 · graph on · f16 KV. Historical highs and dated current support use disclosed different suites/accounting; whiskers are captured support bands, not a regression claim.",
+      "x_label": "tensor parallel cards",
+      "metrics": ["decode_tok_s"],
+      "discrete": true,
+      "unsupported_x": [3],
+      "series": [
+        {"label": "historical 12-prompt highs", "measurement_ids": ["q36-autoround-tp1-mtp3-historical", "q36-autoround-tp2-mtp3-historical"], "x_from": "config.tp"},
+        {"label": "dated current support", "measurement_ids": ["q36-autoround-tp1-mtp3-current-support", "q36-autoround-tp2-mtp3-current-deterministic"], "x_from": "config.tp"}
       ]
     },
     {
@@ -1147,6 +1345,50 @@
     }
   ],
   "coverage_views": [
+    {
+      "id": "q36-autoround-mtp-by-tp",
+      "label": "Qwen3.6 AutoRound MTP × TP",
+      "row_axis": {"key": "mtp", "label": "MTP", "prefix": "MTP"},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.6-27b",
+        "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+        "runtime_family": "vLLM XPU",
+        "graph": "on",
+        "kv": "f16"
+      },
+      "fixed": "Qwen3.6 Webhie AutoRound INT4 with the BF16-scale INT8 target LM-head, graph enabled, and f16 KV. Cells show normalized historical evidence already in the lab; they do not imply that dated runtimes and suites are directly rankable.",
+      "decision_note": "This is a coverage map, not a same-workload leaderboard. MTP1/2/4 TP1 values come from one same-window ladder; MTP3 historical highs use their separately recorded strict suites. Current support bands stay in the measured graph above. TP3 is architecturally unsupported by the 16 GDN key-head split.",
+      "evidence": "results/qwen36-27b-autoround-int4-b70/README.md",
+      "rows": [0, 1, 2, 3, 4, 5],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "0:1": {"state": "missing", "label": "no normalized route"},
+        "0:2": {"state": "missing", "label": "no normalized route"},
+        "0:3": {"state": "unsupported", "label": "16 heads cannot split by 3", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "reason": "Qwen3.6 and Qwen3.8 share this architecture; the vLLM tensor-parallel route cannot evenly partition 16 GDN key heads across TP3."},
+        "0:4": {"state": "missing", "label": "no normalized route"},
+        "1:1": {"state": "lab-measured", "label": "51.246 same-window", "evidence_id": "q36-webhie-tp1-mtp1"},
+        "1:2": {"state": "missing", "label": "no normalized route"},
+        "1:3": {"state": "unsupported", "label": "16 heads cannot split by 3", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "reason": "Qwen3.6 and Qwen3.8 share this architecture; the vLLM tensor-parallel route cannot evenly partition 16 GDN key heads across TP3."},
+        "1:4": {"state": "missing", "label": "no normalized route"},
+        "2:1": {"state": "lab-measured", "label": "59.589 same-window", "evidence_id": "q36-webhie-tp1-mtp2"},
+        "2:2": {"state": "missing", "label": "no normalized route"},
+        "2:3": {"state": "unsupported", "label": "16 heads cannot split by 3", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "reason": "Qwen3.6 and Qwen3.8 share this architecture; the vLLM tensor-parallel route cannot evenly partition 16 GDN key heads across TP3."},
+        "2:4": {"state": "missing", "label": "no normalized route"},
+        "3:1": {"state": "lab-measured", "label": "68.236 historical", "evidence_id": "q36-autoround-tp1-mtp3-historical"},
+        "3:2": {"state": "lab-measured", "label": "95.385 historical", "evidence_id": "q36-autoround-tp2-mtp3-historical"},
+        "3:3": {"state": "unsupported", "label": "16 heads cannot split by 3", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "reason": "Qwen3.6 and Qwen3.8 share this architecture; the vLLM tensor-parallel route cannot evenly partition 16 GDN key heads across TP3."},
+        "3:4": {"state": "missing", "label": "no normalized route"},
+        "4:1": {"state": "lab-measured", "label": "59.886 same-window", "evidence_id": "q36-webhie-tp1-mtp4"},
+        "4:2": {"state": "missing", "label": "no normalized route"},
+        "4:3": {"state": "unsupported", "label": "16 heads cannot split by 3", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "reason": "Qwen3.6 and Qwen3.8 share this architecture; the vLLM tensor-parallel route cannot evenly partition 16 GDN key heads across TP3."},
+        "4:4": {"state": "missing", "label": "no normalized route"},
+        "5:1": {"state": "lab-measured", "label": "59.257 cg8 / 59.817 cg16 · no-win", "evidence_id": "q36-webhie-tp1-mtp5-cg16", "reason": "Both strict/cache-zero MTP5 capture-size arms are recorded; neither beat the MTP3 control, so the depth/config-only lane is closed."},
+        "5:2": {"state": "missing", "label": "no normalized route"},
+        "5:3": {"state": "unsupported", "label": "16 heads cannot split by 3", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "reason": "Qwen3.6 and Qwen3.8 share this architecture; the vLLM tensor-parallel route cannot evenly partition 16 GDN key heads across TP3."},
+        "5:4": {"state": "missing", "label": "no normalized route"}
+      }
+    },
     {
       "id": "e9d1398-eager-f16",
       "label": "pinned e9d1398 · graph off",
