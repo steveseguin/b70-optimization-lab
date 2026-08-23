@@ -300,6 +300,7 @@ fi
 
 driver_sha=$(sha256sum -- "$driver" | awk '{print $1}')
 empty_diff=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+vllm_instrument_diff=9d5450d485578d5075d3945f1284580934aac0981da484603149ef70bf4bc55a
 compilation_config='{"cache_dir":"/mnt/usb-models/llm-runtime/vllm-cache/qwen38-postrecovery-marginfree-mtp5-20260820/torch_compile_cache/b99160ae76","use_inductor_graph_partition":true,"pass_config":{"fuse_rope_kvcache_cat_mla":false},"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[6],"max_cudagraph_capture_size":6}'
 aot_keys=dc9285c2585e6107e3a84c9b8339e3865a2930a77e21245f0d2e76b04b7d0ee6,fc5b3e495f3d13b586de6fb38840cdf8917f296f8a22b4133caadfa24369ce62
 
@@ -325,7 +326,7 @@ launch_env=(
   VALIDATION_REQUIRE_XPU_MODULES_UNDER_STAGE=1
   VALIDATION_EXPECT_XPU_COUNT=4
   VALIDATION_EXPECT_VLLM_VERSION=0.20.2rc1.dev13+g9557d9108.d20260620
-  VALIDATION_EXPECT_VLLM_DIFF_SHA256="$empty_diff"
+  VALIDATION_EXPECT_VLLM_DIFF_SHA256="$vllm_instrument_diff"
   VALIDATION_EXPECT_KERNELS_DIFF_SHA256="$empty_diff"
   VALIDATION_EXPECT_REPO_HEAD="$repo_head"
   VALIDATION_HF_HOME=/mnt/usb-models/llm-cache/hf
@@ -335,6 +336,10 @@ launch_env=(
   VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0
   VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH="$gdn_spec_persistent_scratch"
   VALIDATION_GDN_CAPTURE_NATIVE_SPEC=1
+  VALIDATION_GDN_STATE_SLOT_TRACE=1
+  VALIDATION_GDN_INITSTATE_AUDIT=1
+  VALIDATION_GDN_INITSTATE_AUDIT_LAYERS=0
+  VALIDATION_GDN_INITSTATE_AUDIT_RANK=0
   VALIDATION_DDTREE_FULL_GRAPH=0
   VALIDATION_DDTREE_CAPTURE_GDN_CORE=0
   VALIDATION_ONEDNN_INT4_COMPLETION_BARRIER=1
