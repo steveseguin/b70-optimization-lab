@@ -303,3 +303,20 @@ GDN + chunk-prefill kernels; targeted source audit of the xe_2 chunk
 kernels' tail/boundary writes with the exact d4 shapes. The poison
 worktree, stage, driver (p/c/s actions), and frozen 8-row suite are all
 in place and reusable; every arm root is preserved.
+
+## Reproduction check (2026-08-23): boundary still exact
+
+Before any mechanism instrumentation, the dose boundary was re-reproduced on
+the unchanged pinned lane (vLLM tree verified clean `e3b0c442`, HEAD
+`44fc8fde`): `d7` (dose 7, arm `qwen38-chunkdiag-d7-20260823-repro2`) ran
+green (needle `B70_QWEN36_NEEDLE_20260609`, `baseline_match_all=true`);
+`d4` (dose 8, arm `qwen38-chunkdiag-d4-20260823-repro2`) went red with the
+identical degeneration signature (`B70_QWEN3!!!!...`,
+`baseline_match_all=false`). The phenomenon is current and the boundary is
+stable at exactly the 8th multi-chunk prefill. Mechanism attribution remains
+open and needs its own preregistered instrumented program (one contract per
+door, capped in advance). Driver now takes `CHUNKDIAG_STAMP` for dated
+reproduction roots. Launch traps hit and preserved:
+`*-20260823-repro.fail-nsimport` roots came from a launcher cwd under
+`/home/steve/src`, where `import vllm` binds the source repo as a namespace
+package and the identity probe fails - launch the diag from a neutral cwd.
