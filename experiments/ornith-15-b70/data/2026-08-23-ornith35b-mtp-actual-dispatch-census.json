@@ -1,0 +1,67 @@
+{
+  "date": "2026-08-23",
+  "classification": "diagnostic-only",
+  "model": {
+    "path": "/home/steve/.cache/b70-optimization-lab/models/ornith-1.5-35b-a3b-q4km/Ornith-1.5-35B-Q4_K_M.gguf",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "source": {
+    "base_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+    "diagnostic_patch": "../patches/llamacpp-ornith15-mtp-actual-census-diagnostic-20260823.patch"
+  },
+  "protocol": {
+    "speculation": "embedded MTP",
+    "spec_draft_n_max": 1,
+    "graphs_captured": 12,
+    "steady_target_graph_indices": [4, 6, 8, 10],
+    "steady_draft_graph_indices": [5, 7, 9, 11],
+    "counting_point": "final generic SYCL dispatch after accepted fusion and skip rules",
+    "throughput_inferred": false
+  },
+  "steady_target_verifier": {
+    "logical_nodes": 3816,
+    "result_rows": 2,
+    "recurrent_rows": 2,
+    "generic_launches": 1442,
+    "ops": {
+      "ADD": 430,
+      "MUL_MAT": 311,
+      "UNARY": 130,
+      "MUL_MAT_ID": 120,
+      "MUL": 110,
+      "GET_ROWS": 61,
+      "CPY": 60,
+      "L2_NORM": 60,
+      "GLU": 40,
+      "CONCAT": 30,
+      "SSM_CONV": 30,
+      "ROPE": 20,
+      "SET_ROWS": 20,
+      "FLASH_ATTN_EXT": 10,
+      "CONT": 10
+    }
+  },
+  "steady_embedded_draft": {
+    "logical_nodes": 91,
+    "result_rows": 1,
+    "generic_launches": 29,
+    "ops": {
+      "MUL_MAT": 9,
+      "MUL_MAT_ID": 3,
+      "ROPE": 2,
+      "SET_ROWS": 2,
+      "MUL": 2,
+      "ADD": 2,
+      "GET_ROWS": 2,
+      "CONCAT": 1,
+      "FLASH_ATTN_EXT": 1,
+      "CONT": 1,
+      "GLU": 1,
+      "UNARY": 1,
+      "PAD": 1,
+      "TOP_K": 1
+    }
+  },
+  "conclusion": "At MTP1 the dominant launch surface is the two-row target verifier, not the embedded draft. Exact one-row matchers fail closed on this shape, so Qwen-derived multi-row ports are the highest-confidence next boundary."
+}

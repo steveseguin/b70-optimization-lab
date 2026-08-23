@@ -363,6 +363,21 @@ binary, driver, or benchmark protocol will reproduce them.
   also strengthens future validation: a realistic repeated-prompt canary is
   required in addition to short exact-answer canaries. See
   `notes/2026-08-23-ornith35b-embedded-mtp-verifier-fusions.md`.
+- **MTP1 actual dispatch census — DIAGNOSTIC ONLY:** the steady two-row target
+  verifier dispatches 1,442 generic kernels while the alternating embedded
+  draft dispatches only 29. The verifier still contains 430 additions,
+  including 280 ordered routed-expert reductions. This confirms that exact
+  multi-row transfers of this lab's Qwen/Ornith fusions are the primary MTP
+  opportunity; no throughput is inferred from counts. See
+  `notes/2026-08-23-ornith35b-mtp-actual-dispatch-census.md`.
+- **Two-row MTP ordered expert reduction — RESEARCH POSITIVE:** extending the
+  accepted ordered FP32 expert reduction to exactly two verifier rows removed
+  240 launches/cycle and preserved all four fixed-seed transcripts. Mirrored
+  CLI arm means improved `64.45 -> 66.40 tok/s` (+3.03%). Fresh-server pooled
+  rows were also positive (median +1.53%, mean +2.11%, 8/12 prompt wins), but
+  the last control rebounded to the candidate range, so it remains a
+  default-off stackable research patch rather than a package default. See
+  `notes/2026-08-23-ornith35b-mtp2row-moe-add-reduce-research.md`.
 - **Speculative decode:** investigate a substantially smaller and faster
   vocabulary-compatible draft separately. Label target-only and assisted
   results separately.

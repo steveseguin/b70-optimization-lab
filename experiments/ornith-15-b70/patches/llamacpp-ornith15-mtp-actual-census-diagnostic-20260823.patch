@@ -1,0 +1,64 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -6780,6 +6780,36 @@
+ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
+     ggml_sycl_set_main_device(sycl_ctx->device);
+ 
++    static const bool mtp_census = [] {
++        const char * value = std::getenv("GGML_SYCL_ORNITH_MTP_CENSUS");
++        return value != nullptr && std::strcmp(value, "0") != 0;
++    }();
++    static std::atomic<uint64_t> mtp_census_graphs{0};
++    int64_t result_output_rows = -1;
++    int64_t recurrent_rows = -1;
++    if (mtp_census) {
++        for (int j = 0; j < cgraph->n_nodes; ++j) {
++            const ggml_tensor * candidate = cgraph->nodes[j];
++            if (candidate != nullptr && std::strcmp(candidate->name, "result_output") == 0) {
++                result_output_rows = candidate->ne[1];
++            }
++            if (candidate != nullptr && std::strcmp(candidate->name, "linear_attn_out-0") == 0) {
++                recurrent_rows = candidate->ne[1];
++            }
++        }
++    }
++    const uint64_t mtp_graph_id =
++        result_output_rows >= 1 && result_output_rows <= 4
++            ? mtp_census_graphs.fetch_add(1, std::memory_order_relaxed)
++            : UINT64_MAX;
++    const bool census_this_graph = mtp_graph_id < 12;
++    if (census_this_graph) {
++        std::fprintf(stderr,
++            "[ORNITH-MTP-ACTUAL-BEGIN] graph=%" PRIu64 " n_nodes=%d result_rows=%" PRId64
++            " recurrent_rows=%" PRId64 "\n",
++            mtp_graph_id, cgraph->n_nodes, result_output_rows, recurrent_rows);
++    }
++
+     std::vector<ggml_tensor *> precomputed_ornith_silu;
+     precomputed_ornith_silu.reserve(64);
+     std::vector<ggml_sycl_ornith_concat_state_direct_match> pending_ornith_concat_state_direct;
+@@ -6994,12 +7024,23 @@
+             continue;
+         }
+ 
++        if (census_this_graph) {
++            std::fprintf(stderr,
++                "[ORNITH-MTP-ACTUAL] graph=%" PRIu64 " op=%s name=%s ne=%" PRId64
++                "x%" PRId64 "x%" PRId64 "x%" PRId64 "\n",
++                mtp_graph_id, ggml_op_name(node->op), node->name,
++                node->ne[0], node->ne[1], node->ne[2], node->ne[3]);
++        }
++
+         bool ok = ggml_sycl_compute_forward(*sycl_ctx, node);
+         if (!ok) {
+             GGML_LOG_ERROR("%s: error: op not supported %s (%s)\n", __func__, node->name, ggml_op_name(node->op));
+         }
+         GGML_ASSERT(ok);
+     }
++    if (census_this_graph) {
++        std::fprintf(stderr, "[ORNITH-MTP-ACTUAL-END] graph=%" PRIu64 "\n", mtp_graph_id);
++    }
+ }
+ 
+ #ifdef GGML_SYCL_GRAPH

@@ -1,0 +1,46 @@
+{
+  "date": "2026-08-23",
+  "classification": "research-positive-not-package-default",
+  "candidate": {
+    "environment": "GGML_SYCL_FUSED_ORNITH_SPEC_MOE_ADD_REDUCE=1",
+    "patch": "../patches/llamacpp-ornith15-mtp2row-moe-add-reduce-research-20260823.patch",
+    "scope": "exactly two verifier rows",
+    "generic_launches_removed_per_verifier_cycle": 240,
+    "method": "replace each layer's seven serial ordered FP32 expert ADD launches with one kernel while preserving graph-visible weighted products and the original addition order independently for each token"
+  },
+  "identity": {
+    "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+    "source_base_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_source_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1"
+  },
+  "mirrored_cli": {
+    "protocol": "A/B/B/A, fixed seed 42, temperature 0, 128 predicted tokens, embedded MTP1",
+    "canonical_transcript_sha256": "6a91ba76bb2f032ca38f80f31561b84f111172795d47772927942bba427ff0d4",
+    "all_transcripts_identical": true,
+    "control_generation_tok_s": [65.2, 63.7],
+    "candidate_generation_tok_s": [66.5, 66.3],
+    "control_mean_tok_s": 64.45,
+    "candidate_mean_tok_s": 66.4,
+    "relative_mean_percent": 3.025601241272305,
+    "candidate_fused_hits_each": 3402,
+    "candidate_beats_both_controls": true
+  },
+  "fresh_server": {
+    "protocol": "A/B/B/A, 12 unique cold prompts per arm, 512-token responses, median tokens 1-100 after TTFT",
+    "all_freshness_and_finality_gates_passed": true,
+    "arms": [
+      {"name": "control1", "median_tok_s": 76.91072487538474, "mean_tok_s": 77.99799670874498, "drafts": 3908, "accepted": 2219, "acceptance_percent": 56.78096212896623},
+      {"name": "candidate1", "median_tok_s": 83.50705071176594, "mean_tok_s": 81.7296479697409, "drafts": 3914, "accepted": 2209, "acceptance_percent": 56.43842616249361},
+      {"name": "candidate2", "median_tok_s": 83.1975431820334, "mean_tok_s": 80.94151278767059, "drafts": 3860, "accepted": 2263, "acceptance_percent": 58.626943005181345},
+      {"name": "control2", "median_tok_s": 83.3244754705388, "mean_tok_s": 81.30475435979436, "drafts": 3853, "accepted": 2271, "acceptance_percent": 58.9410848689333}
+    ],
+    "pooled_control": {"rows": 24, "median_tok_s": 81.94468652556176, "mean_tok_s": 79.65137553426966},
+    "pooled_candidate": {"rows": 24, "median_tok_s": 83.1975431820334, "mean_tok_s": 81.33558037870574},
+    "pooled_relative_median_percent": 1.5289053013593845,
+    "pooled_relative_mean_percent": 2.1144705074320536,
+    "prompt_paired_wins": 8,
+    "prompt_count": 12,
+    "interpretation": "suggestive pooled gain, but control2 rebounded to the candidate range; server evidence is not independently decisive"
+  },
+  "decision": "Retain as a default-off research patch and stack with other exact two-row verifier fusions. Do not change the target-only user package or claim a promoted serving gain from this experiment."
+}
