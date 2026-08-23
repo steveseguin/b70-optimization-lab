@@ -195,6 +195,11 @@ binary, driver, or benchmark protocol will reproduce them.
   means regressed 0.11%. Prompt-matched means regressed 0.46% and the candidate
   won only 3/12 prompts. Keep it unset. See
   `notes/2026-08-23-ornith35b-ur-single-thread-serving-negative.md`.
+- **Legacy copy-engine disable — CLOSED ENGINE NEGATIVE:** adding
+  `UR_L0_USE_COPY_ENGINE=0` on top of the accepted V2 copy-offload setting was
+  byte-exact but regressed mirrored engine means by 0.54%. It did not earn a
+  server test and remains unset. See
+  `notes/2026-08-23-ornith35b-ur-old-copy-engine-negative.md`.
 - **GDN output-projection Q8 fusion — CLOSED CORRECTNESS NEGATIVE:** the
   Qwen-derived candidate tried to emit reordered Q8_1 directly from the
   accepted gated-normalization producer before each recurrent Q4_K output

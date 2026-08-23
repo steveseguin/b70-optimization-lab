@@ -1,0 +1,35 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "llama_cpp_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "stack": "accepted 11-feature Ornith source stack plus UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1",
+  "candidate": "UR_L0_USE_COPY_ENGINE=0",
+  "control": "UR_L0_USE_COPY_ENGINE unset",
+  "exactness": {
+    "control_transcript_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "candidate_transcript_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "byte_identical": true,
+    "qk_norm_rope_hits_each": 1270,
+    "transcript_gzip_sha256_each": "0f3a973bd616608dcb8a0a7e97b156a17fd2c08f2b737835ab185a2be2631cf6"
+  },
+  "engine_tg128": {
+    "repetitions_per_run": 7,
+    "order": ["control", "candidate", "candidate", "control"],
+    "control_run_avg_tok_s": [132.410556, 134.656296],
+    "candidate_run_avg_tok_s": [131.773324, 133.844406],
+    "control_mean_tok_s": 133.533426,
+    "candidate_mean_tok_s": 132.808865,
+    "delta_percent": -0.5426064631937288
+  },
+  "raw_artifact_sha256": {
+    "A1_control_bench_json": "b458961e03ebc1adc4ebcf8a900d6f69902f5d2cd7c155aa3f39bc92be32dc60",
+    "A2_control_bench_json": "4bfbf819b7ddc7ad4ef031b5e84825d6f1e302fc9d82af9981538d6dc6607090",
+    "B1_zero_bench_json": "bf9d63261c1a5b5c60050f82e5a550b6f4fee5b1b4860aead8024bec6b6b5eb5",
+    "B2_zero_bench_json": "c8cacd982491706dbc20b8ad110badf68604780a302c110110b845b73be7d68b"
+  },
+  "decision": "closed engine negative; do not add UR_L0_USE_COPY_ENGINE=0 to the accepted V2 copy-offload setting",
+  "server_test_run": false,
+  "no_extrapolation": true
+}
