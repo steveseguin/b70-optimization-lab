@@ -75,6 +75,8 @@
     "cards": [4],
     "tp": [4],
     "ep": [4],
+    "prompt_tokens": [1024, 4096, 8192, 16384, 24576, 32640],
+    "configured_max_context_tokens": [32768],
     "speculative_method": ["DFlash"],
     "draft_depth": [11],
     "verifier_width": [12],
@@ -108,6 +110,28 @@
       "evidence_level": "B70-verified sealed history",
       "coverage": ["decode", "TTFT", "DFlash acceptance", "quality", "portable evidence audit", "recipe"],
       "manifest": "repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md"
+    },
+    {
+      "id": "laguna-s-2.1-int4-b70-long-context-screen-20260802",
+      "label": "Laguna S 2.1 INT4 · TP4+EP4 long-context screen",
+      "revision": "laguna-s-2.1-int4-4bbfc28",
+      "draft_revision": "laguna-s-2.1-dflash-int4-5e07c24",
+      "quantization": "INT4 target + INT4 DFlash draft / BF16 KV",
+      "runtime": "vLLM XPU 1a7f61feffbc61b21b73f812d231c7426386ccdc + XPU kernels 99886d783372e621941228250091dc8ebdc1595d",
+      "cards": 4,
+      "status": "bounded-research-screen-not-q1-exact",
+      "evidence_level": "B70-screened retrieval evidence; not promotion-grade",
+      "coverage": ["1K through 32,640 prompt tokens", "decode", "prefill", "TTFT", "DFlash acceptance", "retrieval", "q1 exactness audit"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "composed TP4+EP4 long-context retrieval screen from 1,024 through 32,640 prompt tokens",
+          "basis": "exact prompt lengths, cache-zero, 128-token completions, retrieval, and post-32K sentinels passed, but the profile was composed from three runs and q1 output equality failed at every 4K-and-longer point",
+          "reviewed_at": "2026-08-23",
+          "evidence": ["data/laguna-s-2.1-xpu-b70/long-context-baseline-gpu080-swap24g-20260802.json"]
+        }
+      },
+      "manifest": "data/laguna-s-2.1-xpu-b70/long-context-baseline-gpu080-swap24g-20260802.json"
     }
   ],
   "run_measurements": [
@@ -144,6 +168,47 @@
       "evidence": "data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json"
     }
   ],
+  "series_measurements": [
+    {
+      "id": "laguna-s-tp4-dflash11-long-context-screen",
+      "state": "lab-screened",
+      "revision": "laguna-s-2.1-int4-4bbfc28",
+      "variant": "INT4 target + INT4 DFlash draft / BF16 KV",
+      "runtime": "vLLM XPU 1a7f61feffbc61b21b73f812d231c7426386ccdc + XPU kernels 99886d783372e621941228250091dc8ebdc1595d",
+      "profile_id": "laguna-q12-long-context-gpu080-composed",
+      "measurement_class": "composed-long-context-retrieval-screen",
+      "promotion_status": "not-promotable-q1-mismatch-from-4k",
+      "quality_scope": "intrinsic retrieval and cache-zero passed at every depth; target-only q1 output equality passed only at 1K",
+      "config": {
+        "cards": 4,
+        "tp": 4,
+        "ep": 4,
+        "speculative_method": "DFlash",
+        "draft_depth": 11,
+        "verifier_width": 12,
+        "graph": "PIECEWISE 146/145 target + 14/13 draft",
+        "kv": "bfloat16",
+        "configured_max_context_tokens": 32768,
+        "output_tokens": 128,
+        "max_num_batched_tokens": 8192,
+        "gpu_memory_utilization": 0.8,
+        "prefix_caching": false,
+        "cache_state": "cached_tokens=0"
+      },
+      "workload": "exact input-token arrays at six prompt lengths, 128 generated tokens, one active request, BF16 KV, prefix caching off; medians across early/middle/late retrieval placements except the 1K first-live capture/JIT row was excluded and two rows remained; the profile is composed from three sealed service runs",
+      "axis": "prompt_tokens",
+      "points": [
+        {"x": 1024, "decode_tok_s": 153.6043924981438, "prefill_tok_s": 5171.877711197638, "ttft_ms": 201.77322600011393, "draft_acceptance_rate": 0.23564213564213565},
+        {"x": 4096, "decode_tok_s": 80.24333572713317, "prefill_tok_s": 7331.793132902693, "ttft_ms": 564.3018349996964, "draft_acceptance_rate": 0.11363636363636363},
+        {"x": 8192, "decode_tok_s": 46.80992228390887, "prefill_tok_s": 4129.893501143041, "ttft_ms": 1993.1577850002213, "draft_acceptance_rate": 0.023402340234023402},
+        {"x": 16384, "decode_tok_s": 40.413761445523036, "prefill_tok_s": 5111.21405464208, "ttft_ms": 3227.641733999917, "draft_acceptance_rate": 0.008620689655172414},
+        {"x": 24576, "decode_tok_s": 39.782690532944315, "prefill_tok_s": 5053.232558316487, "ttft_ms": 4882.659674000024, "draft_acceptance_rate": 0.008547008547008548},
+        {"x": 32640, "decode_tok_s": 39.58863491052164, "prefill_tok_s": 7345.07048562943, "ttft_ms": 4477.591568999742, "draft_acceptance_rate": 0.0047430830039525695}
+      ],
+      "quality": "All 18 long rows returned exact prompt IDs, cached_tokens=0, 128 completion tokens, and the requested retrieval fact. Target-only q1 comparison matched all three 1K outputs but mismatched all 15 outputs from 4K through 32,640 after 67–107 common tokens; the 1K aggregate excludes the first-live capture/JIT row. This is screened evidence, not an exact or promotion-grade context curve.",
+      "evidence": "data/laguna-s-2.1-xpu-b70/long-context-baseline-gpu080-swap24g-20260802.json"
+    }
+  ],
   "views": [
     {
       "id": "laguna-s-record-progression",
@@ -168,6 +233,69 @@
       ]
     }
   ],
+  "coverage_views": [
+    {
+      "id": "laguna-context-by-tp",
+      "label": "long context · screened",
+      "row_axis": {
+        "key": "prompt_tokens",
+        "label": "prompt",
+        "prefix": "",
+        "value_labels": {
+          "1024": "1K",
+          "4096": "4K",
+          "8192": "8K",
+          "16384": "16K",
+          "24576": "24K",
+          "32640": "32,640"
+        }
+      },
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "laguna-s-2.1-int4-4bbfc28",
+        "variant": "INT4 target + INT4 DFlash draft / BF16 KV",
+        "runtime": "vLLM XPU 1a7f61feffbc61b21b73f812d231c7426386ccdc + XPU kernels 99886d783372e621941228250091dc8ebdc1595d",
+        "profile_id": "laguna-q12-long-context-gpu080-composed",
+        "ep": 4,
+        "speculative_method": "DFlash",
+        "draft_depth": 11,
+        "verifier_width": 12,
+        "kv": "bfloat16",
+        "configured_max_context_tokens": 32768,
+        "output_tokens": 128
+      },
+      "fixed": "Pinned INT4 target and DFlash draft · BF16 KV · q12 verifier · one request · cache zero. TP4 points are bounded retrieval-screen medians, not exact-output measurements; TP1, TP2, and TP3 were not run.",
+      "decision_note": "Every depth passed intrinsic retrieval, but target-only q1 equality passed only at 1K and failed from 4K onward. Screened points are excluded from measured graphs and do not replace the 125.462 short-context record.",
+      "rows": [1024, 4096, 8192, 16384, 24576, 32640],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "1024:1": {"state": "missing", "label": "not measured"},
+        "1024:2": {"state": "missing", "label": "not measured"},
+        "1024:3": {"state": "missing", "label": "not measured"},
+        "1024:4": {"state": "lab-screened", "label": "D153.6 · P5,172 · T201.77 · AR0.24", "evidence_id": "laguna-s-tp4-dflash11-long-context-screen", "point_x": 1024, "reason": "Two-row median after excluding the first-live capture/JIT row; retrieval and q1 output equality passed; DFlash acceptance 23.56%."},
+        "4096:1": {"state": "missing", "label": "not measured"},
+        "4096:2": {"state": "missing", "label": "not measured"},
+        "4096:3": {"state": "missing", "label": "not measured"},
+        "4096:4": {"state": "lab-screened", "label": "D80.24 · P7,332 · T564.3 · AR0.11", "evidence_id": "laguna-s-tp4-dflash11-long-context-screen", "point_x": 4096, "reason": "Three-row median; retrieval passed but q1 output equality failed; DFlash acceptance 11.36%."},
+        "8192:1": {"state": "missing", "label": "not measured"},
+        "8192:2": {"state": "missing", "label": "not measured"},
+        "8192:3": {"state": "missing", "label": "not measured"},
+        "8192:4": {"state": "lab-screened", "label": "D46.81 · P4,130 · T1,993 · AR0.02", "evidence_id": "laguna-s-tp4-dflash11-long-context-screen", "point_x": 8192, "reason": "Three-row median; retrieval passed but q1 output equality failed; DFlash acceptance 2.34%."},
+        "16384:1": {"state": "missing", "label": "not measured"},
+        "16384:2": {"state": "missing", "label": "not measured"},
+        "16384:3": {"state": "missing", "label": "not measured"},
+        "16384:4": {"state": "lab-screened", "label": "D40.41 · P5,111 · T3,228 · AR0.01", "evidence_id": "laguna-s-tp4-dflash11-long-context-screen", "point_x": 16384, "reason": "Three-row median; retrieval passed but q1 output equality failed; DFlash acceptance 0.86%."},
+        "24576:1": {"state": "missing", "label": "not measured"},
+        "24576:2": {"state": "missing", "label": "not measured"},
+        "24576:3": {"state": "missing", "label": "not measured"},
+        "24576:4": {"state": "lab-screened", "label": "D39.78 · P5,053 · T4,883 · AR0.01", "evidence_id": "laguna-s-tp4-dflash11-long-context-screen", "point_x": 24576, "reason": "Three-row median; retrieval passed but q1 output equality failed; DFlash acceptance 0.85%."},
+        "32640:1": {"state": "missing", "label": "not measured"},
+        "32640:2": {"state": "missing", "label": "not measured"},
+        "32640:3": {"state": "missing", "label": "not measured"},
+        "32640:4": {"state": "lab-screened", "label": "D39.59 · P7,345 · T4,478 · AR0", "evidence_id": "laguna-s-tp4-dflash11-long-context-screen", "point_x": 32640, "reason": "Three-row median; retrieval passed but q1 output equality failed; DFlash acceptance 0.47%."}
+      }
+    }
+  ],
   "family_closures": [
     {
       "selectors": {"revision": "laguna-s-2.1-int4-4bbfc28", "cards": [1, 2, 3]},
@@ -176,10 +304,10 @@
       "evidence": "packages/laguna-s-2.1-int4-b70-125tps/package.json"
     },
     {
-      "selectors": {"revision": "laguna-s-2.1-int4-4bbfc28", "profile": "context-sweep"},
+      "selectors": {"revision": "laguna-s-2.1-int4-4bbfc28", "profile": "q1-exact-context-sweep"},
       "state": "missing",
-      "reason": "The package stores headline decode and TTFT, but no decode, prefill, or TTFT curve over context length.",
-      "evidence": "packages/laguna-s-2.1-int4-b70-125tps/package.json"
+      "reason": "A bounded TP4 retrieval screen covers 1K through 32,640, but every 4K-and-longer output diverged from the target-only q1 oracle; no promotion-grade exact context curve is stored.",
+      "evidence": "data/laguna-s-2.1-xpu-b70/long-context-baseline-gpu080-swap24g-20260802.json"
     },
     {
       "selectors": {"packet": "laguna-s-2.1-int4-b70-125tps-20260731", "replay": "portable-runtime-build"},
