@@ -88,7 +88,8 @@ stock_dep_sha=3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289
 interface_sha=869c79f5f678252c341cfb8fb5cf9ee34f95c3d2debf4d169b759510da432480
 policy_marker='VLLM_XPU_FA2_M6_HEAD256_Q64K32_POLICY engaged'
 
-arm_label() { printf 'qwen38-chunkdiag-%s-20260822' "$1"; }
+# CHUNKDIAG_STAMP overrides the arm-date suffix for later reproduction runs
+arm_label() { printf 'qwen38-chunkdiag-%s-%s' "$1" "${CHUNKDIAG_STAMP:-20260822}"; }
 request_extra_json='{"chat_template_kwargs":{"enable_thinking":false},"ignore_eos":true}'
 arm_root_for() { printf '%s/%s' "$raw" "$(arm_label "$1")"; }
 

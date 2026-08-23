@@ -42,11 +42,12 @@ f16 KV, `--max-num-seqs 1`.
 
 ## Status and caveats
 
-Characterization-only: the full quality battery and oracle certification
-have run for the TP1 configs; TP2-graph and TP4-graph have cache-zero and
-25/25-row validity but no battery yet, and the lane's cross-boot
-nondeterminism caveat (autotune) applies. Certifying TP4-graph (battery +
-repeat boot) is the top follow-up: a reproducible containerized 71.7
-target-only single-stream is a publishable headline for 4-card owners, and
-the MTP verify-step problem is TP1-scoped (untested at TP4 - the verify
-GEMM shapes change with TP, worth one probe arm).
+**TP4-graph is certified (2026-08-23):** full quality battery pass on the
+exact config (code canary `14`, arithmetic/factual/logic/JSON/copy exact,
+8-run repeat stability, 8K needle, `baseline_match_all`) and a repeat boot
+at **71.5488** (pair 71.67 / 71.55, 0.17% spread). TP2-graph has cache-zero
+and 25/25-row validity but no battery yet. The lane's cross-boot
+nondeterminism caveat (autotune) applies to all configs, so no cross-boot
+token-exactness claim. Remaining follow-ups: TP2-graph battery, and an MTP
+probe at TP4 (the verify-step collapse is TP1-measured; verify GEMM shapes
+change with TP, worth one arm).
