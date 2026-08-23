@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "candidate_library_sha256": "60ef52155a2540708a95c8ba9ae20067ffe561e1ac4ed75611576bb2c968e556",
+  "candidate_door": "GGML_SYCL_FUSED_ORNITH_SHARED_Q8=1",
+  "protocol": "same final binary; deterministic 128-token llama-cli generation; --single-turn; dynamic timing footer removed before hashing",
+  "control_canonical_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+  "qkv_only_candidate_sha256": "29fc65b4e67ba6d584ba7fb3baf55af049a062ad213c1a41b829216ddf0a9acb",
+  "byte_identical": false,
+  "qkv_only_quantized_inputs": 1778,
+  "qkv_only_projection_hits": 1778,
+  "full_candidate_sha256_before_final_dispatch_isolation": "abff4af0c6f9a1633cbc7cbeefaa0ab1ce1a69e585d3229b676bda31d2153284",
+  "full_candidate_quantized_inputs_before_final_dispatch_isolation": 1778,
+  "full_candidate_projection_hits_before_final_dispatch_isolation": 7112,
+  "initial_design_failure": "Per-layer retained VMM-pool allocations violated reverse-order deallocation and aborted at graph teardown.",
+  "timed": false,
+  "timing_omitted_reason": "The QKV-only form failed byte-exact output validation after restoring the complete stock MMVQ dispatch and operation ordering.",
+  "canaries_run": false,
+  "canaries_omitted_reason": "The deterministic correctness gate failed before performance screening."
+}

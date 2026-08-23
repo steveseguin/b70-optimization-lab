@@ -146,6 +146,13 @@ binary, driver, or benchmark protocol will reproduce them.
   only `113.383 -> 113.792 tok/s` (+0.36%) and the arms crossed. The candidate
   is archived and not shipped. See
   `notes/2026-08-23-ornith35b-attn-gate-cont-neutral.md`.
+- **Shared recurrent Q8 input — CLOSED CORRECTNESS NEGATIVE:** Ornith's four
+  recurrent projections share one FP32 activation, suggesting a direct
+  Qwen-derived transfer that could remove 90 Q8-quantization launches/token.
+  Retaining one quantization changed deterministic output even in a QKV-only
+  diagnostic routed through the complete stock MMVQ wrapper. The candidate was
+  not timed or shipped. See
+  `notes/2026-08-23-ornith35b-shared-q8-correctness-negative.md`.
 - **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
   accepted only 22/336 reported draft tokens and reduced the fresh-suite median
   from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed
