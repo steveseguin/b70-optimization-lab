@@ -395,6 +395,26 @@ def compare_to_baseline(current: dict[str, Any], baseline_path: Path | None) -> 
     return comparisons
 
 
+def baseline_result(
+    comparisons: dict[str, Any], baseline_requested: bool
+) -> tuple[str, bool | None]:
+    """Return an explicit baseline status without treating an empty set as a pass."""
+    if not baseline_requested:
+        return "not_run", None
+    matched = bool(comparisons) and all(comparisons.values())
+    return ("passed" if matched else "failed"), matched
+
+
+def quality_exit_code(
+    pass_all: bool, baseline_match_all: bool | None, require_baseline: bool
+) -> int:
+    if not pass_all:
+        return 1
+    if require_baseline:
+        return 0 if baseline_match_all is True else 1
+    return 0 if baseline_match_all is not False else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
@@ -418,12 +438,19 @@ def main() -> int:
     parser.add_argument("--skip-long-context", action="store_true")
     parser.add_argument("--baseline-json", type=Path, default=None)
     parser.add_argument(
+        "--require-baseline",
+        action="store_true",
+        help="Fail unless --baseline-json is supplied and every comparison matches.",
+    )
+    parser.add_argument(
         "--chat-template-kwargs-json",
         default=None,
         help='JSON object passed as chat_template_kwargs, e.g. {"enable_thinking": false}',
     )
     parser.add_argument("--output-json", type=Path, required=True)
     args = parser.parse_args()
+    if args.require_baseline and args.baseline_json is None:
+        parser.error("--require-baseline requires --baseline-json")
 
     base_url = args.base_url.rstrip("/")
     model = args.model
@@ -484,7 +511,9 @@ def main() -> int:
         checks.append(output["long_context_case"]["pass"])
     output["pass_all"] = all(checks)
     output["baseline_comparisons"] = compare_to_baseline(output, args.baseline_json)
-    output["baseline_match_all"] = all(output["baseline_comparisons"].values())
+    output["baseline_status"], output["baseline_match_all"] = baseline_result(
+        output["baseline_comparisons"], args.baseline_json is not None
+    )
 
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
     args.output_json.write_text(json.dumps(output, indent=2) + "\n")
@@ -495,6 +524,7 @@ def main() -> int:
                 "base_url": base_url,
                 "model": model,
                 "pass_all": output["pass_all"],
+                "baseline_status": output["baseline_status"],
                 "baseline_match_all": output["baseline_match_all"],
                 "exact": {item["name"]: item["pass"] for item in output["exact_cases"]},
                 "repeat_pass": output["repeat_case"]["pass"],
@@ -508,7 +538,9 @@ def main() -> int:
             sort_keys=True,
         )
     )
-    return 0 if output["pass_all"] and output["baseline_match_all"] else 1
+    return quality_exit_code(
+        output["pass_all"], output["baseline_match_all"], args.require_baseline
+    )
 
 
 if __name__ == "__main__":
