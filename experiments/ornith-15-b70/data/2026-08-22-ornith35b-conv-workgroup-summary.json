@@ -1,0 +1,36 @@
+{
+  "date": "2026-08-22",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "llama_cpp_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "candidate_patch_sha256": "4c35ad4d4057b8d425b25888f4169cce3751d14dcd4255dd876169b2c4dc2209",
+  "protocol": "llama-bench p0/n128/d0; one B70; F16 KV; flash attention; accepted ordered-MoE and convolution-SiLU doors enabled",
+  "initial_screen_r5": {
+    "wg64_tok_s": 109.570251,
+    "wg128_tok_s": 108.179645,
+    "wg256_tok_s": 109.145019,
+    "wg512_tok_s": 109.242443
+  },
+  "mirrored_repeat_r7": {
+    "order": [
+      "wg256-a",
+      "wg64-a",
+      "wg64-b",
+      "wg256-b"
+    ],
+    "wg256_tok_s": [
+      110.010011,
+      109.971844
+    ],
+    "wg64_tok_s": [
+      109.940571,
+      109.345045
+    ],
+    "wg256_mean_tok_s": 109.990928,
+    "wg64_mean_tok_s": 109.642808,
+    "wg64_delta_percent": -0.316498
+  },
+  "verdict": "neutral_negative",
+  "promoted_work_group_size": 256,
+  "server_screen_run": false,
+  "reason": "The apparent WG64 screen advantage disappeared under mirrored repetition; WG64 was 0.32% slower than the current WG256 setting."
+}

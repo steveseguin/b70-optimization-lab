@@ -80,6 +80,11 @@ binary, driver, or benchmark protocol will reproduce them.
   fusions both hit every intended layer but changed fixed-seed generation, even
   in their strictest stock-intermediate forms. No speed result was promoted.
   See `notes/2026-08-22-ornith35b-launch-census-and-fusion-negatives.md`.
+- **Convolution/SiLU work-group sweep — CLOSED NEUTRAL:** WG64 initially looked
+  slightly faster than the accepted WG256, but the mirrored seven-sample repeat
+  measured `109.643` versus `109.991 tok/s` (**-0.32%**). WG128 and WG512 also
+  produced no screen win. Keep WG256; no server run was justified. See
+  `notes/2026-08-22-ornith35b-conv-workgroup-neutral.md`.
 - **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
   tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
   the tuned dispatch and beat the now-promoted ordered reduction.
