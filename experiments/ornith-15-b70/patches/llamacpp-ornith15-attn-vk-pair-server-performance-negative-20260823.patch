@@ -1,0 +1,298 @@
+diff --git a/ggml/src/ggml-sycl/dmmv.cpp b/ggml/src/ggml-sycl/dmmv.cpp
+index d47d683..1f4733d 100644
+--- a/ggml/src/ggml-sycl/dmmv.cpp
++++ b/ggml/src/ggml-sycl/dmmv.cpp
+@@ -1877,7 +1877,8 @@ ESIMD_INLINE void dequantize_mul_mat_vec_reorder_esimd(
+         const void * vx, const float * y, float * dst,
+         const int ncols, const int nrows,
+         sycl::local_accessor<float, 1> lmem,
+-        const sycl::nd_item<1> & it) {
++        const sycl::nd_item<1> & it,
++        const int group_offset = 0) {
+     using namespace sycl::ext::intel::esimd;
+     using traits = ggml_sycl_esimd::esimd_reorder_q_traits<T>;
+
+@@ -1886,7 +1887,7 @@ ESIMD_INLINE void dequantize_mul_mat_vec_reorder_esimd(
+     const auto   ps = traits::make_ptrs(vx, nb);
+
+     const int  tid      = it.get_local_id(0);
+-    const int  row_pair = it.get_group(0);
++    const int  row_pair = it.get_group(0) - group_offset;
+     const int  row0     = row_pair * 2; // two consecutive output rows
+     const bool has_row1 = row0 + 1 < nrows;
+
+@@ -1921,6 +1922,54 @@ ESIMD_INLINE void dequantize_mul_mat_vec_reorder_esimd(
+     }
+ }
+
++template <ggml_type V_TYPE>
++static bool ggml_sycl_dmmv_attn_vk_pair_reorder_esimd_impl(
++        const void * v_weight, float * v_dst,
++        const void * k_weight, float * k_dst,
++        const float * activation, int ncols, int nrows,
++        dpct::queue_ptr stream) {
++    if (ncols % QK_K != 0 || nrows <= 0) {
++        return false;
++    }
++
++    const int groups = (nrows + 1) / 2;
++    stream->submit([&](sycl::handler & h) {
++        sycl::local_accessor<float, 1> lmem(
++            sycl::range<1>(GGML_SYCL_DMMV_ESIMD_WG_SIZE * 2), h);
++        h.parallel_for(
++            sycl::nd_range<1>(
++                sycl::range<1>((size_t) groups * 2 * GGML_SYCL_DMMV_ESIMD_WG_SIZE),
++                sycl::range<1>(GGML_SYCL_DMMV_ESIMD_WG_SIZE)),
++            [=](sycl::nd_item<1> it) [[intel::sycl_explicit_simd]] {
++                if (it.get_group(0) < (size_t) groups) {
++                    dequantize_mul_mat_vec_reorder_esimd<V_TYPE>(
++                        v_weight, activation, v_dst, ncols, nrows, lmem, it);
++                } else {
++                    dequantize_mul_mat_vec_reorder_esimd<GGML_TYPE_Q4_K>(
++                        k_weight, activation, k_dst, ncols, nrows, lmem, it, groups);
++                }
++            });
++    });
++    return true;
++}
++
++bool ggml_sycl_dmmv_attn_vk_pair_reorder_esimd(
++        ggml_type v_type, const void * v_weight, float * v_dst,
++        const void * k_weight, float * k_dst,
++        const float * activation, int ncols, int nrows,
++        dpct::queue_ptr stream) {
++    switch (v_type) {
++        case GGML_TYPE_Q4_K:
++            return ggml_sycl_dmmv_attn_vk_pair_reorder_esimd_impl<GGML_TYPE_Q4_K>(
++                v_weight, v_dst, k_weight, k_dst, activation, ncols, nrows, stream);
++        case GGML_TYPE_Q6_K:
++            return ggml_sycl_dmmv_attn_vk_pair_reorder_esimd_impl<GGML_TYPE_Q6_K>(
++                v_weight, v_dst, k_weight, k_dst, activation, ncols, nrows, stream);
++        default:
++            return false;
++    }
++}
++
+ static void dequantize_mul_mat_vec_q2_K_sycl_reorder_esimd(const void *vx, const float *y,
+                                                            float *dst, const int ncols,
+                                                            const int nrows,
+@@ -2008,6 +2057,25 @@ static void dequantize_mul_mat_vec_q6_K_sycl_reorder_esimd(const void *vx, const
+
+ #endif // GGML_SYCL_DMMV_HAS_ESIMD
+
++#ifndef GGML_SYCL_DMMV_HAS_ESIMD
++bool ggml_sycl_dmmv_attn_vk_pair_reorder_esimd(
++        ggml_type v_type, const void * v_weight, float * v_dst,
++        const void * k_weight, float * k_dst,
++        const float * activation, int ncols, int nrows,
++        dpct::queue_ptr stream) {
++    GGML_UNUSED(v_type);
++    GGML_UNUSED(v_weight);
++    GGML_UNUSED(v_dst);
++    GGML_UNUSED(k_weight);
++    GGML_UNUSED(k_dst);
++    GGML_UNUSED(activation);
++    GGML_UNUSED(ncols);
++    GGML_UNUSED(nrows);
++    GGML_UNUSED(stream);
++    return false;
++}
++#endif
++
+ static void dequantize_mul_mat_vec_q4_K_sycl_reorder(const void *vx, const float *y,
+                                                      float *dst, const int ncols,
+                                                      const int nrows,
+diff --git a/ggml/src/ggml-sycl/dmmv.hpp b/ggml/src/ggml-sycl/dmmv.hpp
+index bd83735..ada022e 100644
+--- a/ggml/src/ggml-sycl/dmmv.hpp
++++ b/ggml/src/ggml-sycl/dmmv.hpp
+@@ -24,4 +24,12 @@ void ggml_sycl_op_dequantize_mul_mat_vec(
+     const int64_t src1_ncols, const int64_t src1_padded_row_size,
+     const dpct::queue_ptr &stream);
+
++// Submit Ornith/Qwen full-attention V and K projections as one reordered-ESIMD
++// grid while retaining the incumbent dot-product implementation for each row.
++bool ggml_sycl_dmmv_attn_vk_pair_reorder_esimd(
++    ggml_type v_type, const void * v_weight, float * v_dst,
++    const void * k_weight, float * k_dst,
++    const float * activation, int ncols, int nrows,
++    dpct::queue_ptr stream);
++
+ #endif // GGML_SYCL_DMMV_HPP
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 917574a..f8e1fb8 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -58,6 +58,7 @@
+ #include "ggml-sycl/backend.hpp"
+ #include "ggml-sycl/common.hpp"
+ #include "ggml-sycl/concat.hpp"
++#include "ggml-sycl/dmmv.hpp"
+ #include "ggml-sycl/element_wise.hpp"
+ #include "ggml-sycl/fwht.hpp"
+ #include "ggml-sycl/gemm.hpp"
+@@ -4593,6 +4594,134 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
+     }
+ }
+
++struct ggml_sycl_ornith_attn_vk_pair_match {
++    ggml_tensor * v = nullptr;
++    ggml_tensor * k = nullptr;
++};
++
++static std::atomic<uint64_t> g_ggml_sycl_ornith_attn_vk_pair_hits{0};
++
++static bool ggml_sycl_ornith_attn_vk_pair_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_ATTN_VK_PAIR");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr, "ggml_sycl_ornith_attn_vk_pair: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_attn_vk_pair_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++static bool ggml_sycl_ornith_attn_vk_projection(
++        const ggml_tensor * projection, const ggml_tensor * input,
++        const char * output_name, const char * weight_name, bool allow_q6_k) {
++    const ggml_tensor * weight = projection != nullptr ? projection->src[0] : nullptr;
++    return projection != nullptr && projection->op == GGML_OP_MUL_MAT &&
++           (projection->flags & GGML_TENSOR_FLAG_COMPUTE) != 0 &&
++           (projection->flags & GGML_TENSOR_FLAG_OUTPUT) == 0 &&
++           projection->src[1] == input && projection->type == GGML_TYPE_F32 &&
++           projection->ne[0] == 512 && projection->ne[1] == 1 &&
++           projection->ne[2] == 1 && projection->ne[3] == 1 &&
++           ggml_is_contiguous(projection) && std::strcmp(projection->name, output_name) == 0 &&
++           weight != nullptr && std::strcmp(weight->name, weight_name) == 0 &&
++           (weight->type == GGML_TYPE_Q4_K || (allow_q6_k && weight->type == GGML_TYPE_Q6_K)) &&
++           weight->ne[0] == 2048 && weight->ne[1] == 512 &&
++           weight->ne[2] == 1 && weight->ne[3] == 1 && ggml_is_contiguous(weight) &&
++           !ggml_backend_buffer_is_sycl_split(weight->buffer);
++}
++
++static bool ggml_sycl_find_ornith_attn_vk_pair(
++        ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int node_idx,
++        ggml_sycl_ornith_attn_vk_pair_match & match) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_attn_vk_pair_enabled() ||
++        !g_ggml_sycl_enable_optimize || !ctx.opt_feature.reorder || !g_ggml_sycl_enable_esimd ||
++        node_idx < 0 || node_idx >= cgraph->n_nodes) {
++        return false;
++    }
++
++    ggml_tensor * v = cgraph->nodes[node_idx];
++    const ggml_tensor * input = v != nullptr ? v->src[1] : nullptr;
++    int layer = -1;
++    int consumed = 0;
++    if (v == nullptr || input == nullptr ||
++        std::sscanf(v->name, "Vcur-%d%n", &layer, &consumed) != 1 ||
++        consumed <= 0 || v->name[consumed] != '\0' ||
++        layer < 3 || layer >= 40 || layer % 4 != 3 ||
++        input->type != GGML_TYPE_F32 || input->ne[0] != 2048 || input->ne[1] != 1 ||
++        input->ne[2] != 1 || input->ne[3] != 1 || !ggml_is_contiguous(input)) {
++        return false;
++    }
++
++    char input_name[64];
++    char v_output[64];
++    char k_output[64];
++    char v_weight[64];
++    char k_weight[64];
++    std::snprintf(input_name, sizeof(input_name), "attn_norm-%d", layer);
++    std::snprintf(v_output, sizeof(v_output), "Vcur-%d", layer);
++    std::snprintf(k_output, sizeof(k_output), "Kcur-%d", layer);
++    std::snprintf(v_weight, sizeof(v_weight), "blk.%d.attn_v.weight", layer);
++    std::snprintf(k_weight, sizeof(k_weight), "blk.%d.attn_k.weight", layer);
++    if (std::strcmp(input->name, input_name) != 0 ||
++        !ggml_sycl_ornith_attn_vk_projection(v, input, v_output, v_weight, true) ||
++        !should_reorder_tensor(ctx, v) ||
++        !ggml_sycl_supports_reorder_esimd(v->src[0]->type)) {
++        return false;
++    }
++
++    ggml_tensor * k = nullptr;
++    const int search_end = std::min(cgraph->n_nodes, node_idx + 8);
++    for (int i = node_idx + 1; i < search_end; ++i) {
++        ggml_tensor * candidate = cgraph->nodes[i];
++        if (candidate == nullptr || candidate->op != GGML_OP_MUL_MAT ||
++            std::strcmp(candidate->name, k_output) != 0) {
++            continue;
++        }
++        if (k != nullptr) {
++            return false;
++        }
++        k = candidate;
++    }
++    if (!ggml_sycl_ornith_attn_vk_projection(k, input, k_output, k_weight, false) ||
++        !should_reorder_tensor(ctx, k) || !ggml_sycl_supports_reorder_esimd(k->src[0]->type) ||
++        v->data == k->data) {
++        return false;
++    }
++
++    if (const char * poison = std::getenv("GGML_SYCL_FUSED_ORNITH_ATTN_VK_PAIR_POISON");
++        poison != nullptr && std::atoi(poison) != 0) {
++        GGML_ABORT("Ornith attention V/K pair strict matcher fired");
++    }
++
++    match = { v, k };
++    return true;
++}
++
++static bool ggml_sycl_run_ornith_attn_vk_pair(
++        ggml_backend_sycl_context & ctx, const ggml_sycl_ornith_attn_vk_pair_match & match) {
++    const ggml_tensor * input = match.v->src[1];
++    opt_for_reorder(&ctx, match.v->src[0], input, match.v, mul_mat_algo::DMMV);
++    opt_for_reorder(&ctx, match.k->src[0], input, match.k, mul_mat_algo::DMMV);
++
++    const auto * v_extra = static_cast<const ggml_tensor_extra_gpu *>(match.v->src[0]->extra);
++    const auto * k_extra = static_cast<const ggml_tensor_extra_gpu *>(match.k->src[0]->extra);
++    if (v_extra == nullptr || k_extra == nullptr ||
++        !v_extra->optimized_feature.reorder || !k_extra->optimized_feature.reorder) {
++        return false;
++    }
++
++    scope_op_debug_print scope_dbg_print(
++        __func__, match.v, /*num_src=*/2, " : paired with full-attention K projection");
++    return ggml_sycl_dmmv_attn_vk_pair_reorder_esimd(
++        match.v->src[0]->type, match.v->src[0]->data, (float *) match.v->data,
++        match.k->src[0]->data, (float *) match.k->data,
++        (const float *) input->data, 2048, 512, ctx.stream());
++}
++
+ // Fused dense-FFN mat-vec for the {mul_mat(gate), mul_mat(up), GLU} subgraph at node_idx.
+ // Returns false if it declined, in which case the caller runs the three nodes normally.
+ static bool ggml_sycl_mul_mat_glu_mmvq_fused(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int node_idx) {
+@@ -6790,6 +6919,8 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+     pending_ornith_gdn_state_io.reserve(40);
+     std::vector<ggml_sycl_ornith_qk_norm_rope_match> pending_ornith_qk_norm_rope;
+     pending_ornith_qk_norm_rope.reserve(10);
++    std::vector<ggml_tensor *> precomputed_ornith_attn_vk;
++    precomputed_ornith_attn_vk.reserve(10);
+
+     for (int i = 0; i < cgraph->n_nodes; i++) {
+         ggml_tensor * node = cgraph->nodes[i];
+@@ -6804,6 +6935,20 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             precomputed_ornith_silu.end()) {
+             continue;
+         }
++        if (std::find(precomputed_ornith_attn_vk.begin(), precomputed_ornith_attn_vk.end(), node) !=
++            precomputed_ornith_attn_vk.end()) {
++            continue;
++        }
++
++        if (node->op == GGML_OP_MUL_MAT) {
++            ggml_sycl_ornith_attn_vk_pair_match match;
++            if (ggml_sycl_find_ornith_attn_vk_pair(*sycl_ctx, cgraph, i, match) &&
++                ggml_sycl_run_ornith_attn_vk_pair(*sycl_ctx, match)) {
++                precomputed_ornith_attn_vk.push_back(match.k);
++                g_ggml_sycl_ornith_attn_vk_pair_hits.fetch_add(1, std::memory_order_relaxed);
++                continue;
++            }
++        }
+
+         const auto qk_pending = std::find_if(
+             pending_ornith_qk_norm_rope.begin(), pending_ornith_qk_norm_rope.end(),

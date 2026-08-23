@@ -1,0 +1,52 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "llama_cpp_base_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "accepted_baseline": "11-feature Ornith stack with Q/K norm+RoPE fusion",
+  "candidate": "one reordered-ESIMD work-group grid for full-attention V and K projections",
+  "candidate_env": "GGML_SYCL_FUSED_ORNITH_ATTN_VK_PAIR=1",
+  "candidate_poison_env": "GGML_SYCL_FUSED_ORNITH_ATTN_VK_PAIR_POISON=1",
+  "candidate_patch": "../patches/llamacpp-ornith15-attn-vk-pair-server-performance-negative-20260823.patch",
+  "candidate_patch_sha256": "30d88f66dd2a9840947f6ea8493c638db9da6996da4c83168780c85c223857cb",
+  "candidate_libggml_sycl_sha256": "eac4f658039eacd9b391844680b202ad32eb69bd5ba4e78c8786e20ce036c4aa",
+  "correctness": {
+    "canonical_transcript_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "candidate_transcript_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "exact_match": true,
+    "poison_matcher_aborted": true,
+    "candidate_hits_128_token_run": 1270,
+    "candidate_hits_each_server_suite": 61320
+  },
+  "engine_mirrored_abba": {
+    "unit": "tok/s",
+    "control_a": 132.712193,
+    "candidate_a": 132.922421,
+    "candidate_b": 133.014196,
+    "control_b": 132.810833,
+    "control_mean": 132.761513,
+    "candidate_mean": 132.9683085,
+    "delta_tok_s": 0.2067955,
+    "delta_percent": 0.155759,
+    "interpretation": "small positive microbenchmark signal; requires serving validation"
+  },
+  "fresh_server_mirrored_abba": {
+    "unit": "tok/s",
+    "metric": "median_tok_s_1_100_after_ttft",
+    "control_a": 129.77103205818162,
+    "candidate_a": 130.70454128232223,
+    "candidate_b": 129.2686323627071,
+    "control_b": 130.5789693261928,
+    "control_mean": 130.1750006921872,
+    "candidate_mean": 129.98658682251467,
+    "delta_tok_s": -0.18841386967253,
+    "delta_percent": -0.144738904,
+    "prompt_count_each_arm": 12,
+    "cached_tokens_all_zero_each_arm": true,
+    "fresh_response_valid_each_arm": true,
+    "final_gate_passed_each_arm": true
+  },
+  "decision": "closed performance negative; do not ship or add to the accepted stack",
+  "no_extrapolation": true
+}
