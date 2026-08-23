@@ -1,0 +1,44 @@
+{
+  "date": "2026-08-23",
+  "topology": "TP2 GPUs 2,3",
+  "model": "Qwen3.8-27B AutoRound INT4 W4A16",
+  "source_runtime": {
+    "vllm_source": "e9d1398d9edfd90fcc1cf783805240e3effec013",
+    "runtime_config_hash": "91652fb104",
+    "aot_namespace": "b7e46aa67ec02f7fad88de0d5e97c6a7a082575e9f603883e36d61fecedc4dc9",
+    "cache_root": "/var/tmp/qwen38-nightly-strict-cache/tp2-mtp0-f16-graph-isolated-repeat-b"
+  },
+  "target_runtime": {
+    "image_id": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+    "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+    "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124",
+    "vllm_version": "0.26.1rc1.dev1120+ga3561ef8e.xpu",
+    "outer_cache_namespace": "960928a3a2",
+    "runtime_config_hash": "1a5f4b8e61",
+    "aot_namespace": "6c4068168dd6c78f99626fb8a564532e4c66736e11b3fe5bf3d94b37e6e221d2"
+  },
+  "shared_identity_gates": {
+    "code_hash": "a855541ceda97900a2a4d8a4ce14bd76e348a01bc2d9a29c0001cc8b7b8cf2fa",
+    "compiler_hash": "ddcad03736",
+    "environment_sha256": "3ea9c4136b7c8c83187ccad333e60c84e931340e1b5cbd308725b0e89f1d5f1d",
+    "rank_0_computation_graph_sha256": "5af6d45fbb1a676f8e8606800d2153daed6d43d826b96212d8e104a516ee6b82",
+    "rank_1_computation_graph_sha256": "2410abd8643255686155cecb16881b23d9b20075b745cb5f62e34bf77a2dcb6f",
+    "matching_best_config_basenames": "78/78",
+    "matching_embedded_configs_hash": "78/78",
+    "different_selected_configs": "46/78"
+  },
+  "bundle": {
+    "file_count": 78,
+    "total_bytes": 20619,
+    "manifest": "manifest.sha256",
+    "manifest_file_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757"
+  },
+  "excluded_artifacts": [
+    "compiled AOT models",
+    "generated Python",
+    "Triton binaries/cache objects",
+    ".kernel_perf files",
+    "outer vLLM cache files"
+  ],
+  "status": "experimental; diagnostic and strict/quality gates required"
+}

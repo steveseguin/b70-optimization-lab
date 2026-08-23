@@ -8,8 +8,11 @@ set -uo pipefail
 #   MTP KV MAXLEN GPUS PORT OUT_DIR SUITE CACHE_DIR
 #
 # Required CACHE_POLICY:
-#   fresh  CACHE_DIR must not exist and must live on ext4.
-#   replay CACHE_DIR must exist; EXPECTED_CACHE_MANIFEST_SHA256 is required.
+#   fresh        CACHE_DIR must not exist and must live on ext4.
+#   seeded-fresh CACHE_DIR must not exist; only a validated .best_config
+#                 bundle is copied in before a genuinely fresh compilation.
+#   replay       CACHE_DIR must exist; EXPECTED_CACHE_MANIFEST_SHA256 is
+#                 required.
 #
 # Image acquisition:
 #   SOURCE_IMAGE_TAG defaults to vllm/vllm-openai-xpu:nightly.
@@ -27,6 +30,11 @@ set -uo pipefail
 #   CANARY (default 1), NATURAL_EOS (default 0), RETURN_TOKEN_IDS (default 1)
 #   QUALITY (default 0), QUALITY_BASELINE_JSON, QUALITY_REQUIRE_BASELINE
 #   REQUIRE_GRAPH_CAPTURE (default 0; set to 1 for graph promotion work)
+#   BEST_CONFIG_SEED_DIR, EXPECTED_BEST_CONFIG_SEED_COUNT,
+#   EXPECTED_BEST_CONFIG_SEED_MANIFEST_SHA256, BEST_CONFIG_TARGET_AOT_NAMESPACE,
+#   EXPECTED_CACHE_OUTER_NAMESPACE, EXPECTED_CACHE_CODE_HASH,
+#   EXPECTED_CACHE_COMPILER_HASH, EXPECTED_CACHE_CONFIG_HASH,
+#   EXPECTED_CACHE_ENV_SHA256, EXPECTED_COMPUTATION_GRAPH_SHA256S
 
 readonly image_repository="vllm/vllm-openai-xpu"
 source_image_tag=${SOURCE_IMAGE_TAG:-vllm/vllm-openai-xpu:nightly}
@@ -42,7 +50,17 @@ model_verifier="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-d
 venv=/home/steve/.venvs/vllm-xpu
 alias=qwen38-rolling-nightly-strict
 name="qwen38-rolling-nightly-strict-${port}"
-cache_policy=${CACHE_POLICY:?set CACHE_POLICY=fresh or replay}
+cache_policy=${CACHE_POLICY:?set CACHE_POLICY=fresh, seeded-fresh, or replay}
+best_config_seed_dir=${BEST_CONFIG_SEED_DIR:-}
+expected_best_config_seed_count=${EXPECTED_BEST_CONFIG_SEED_COUNT:-}
+expected_best_config_seed_manifest_sha256=${EXPECTED_BEST_CONFIG_SEED_MANIFEST_SHA256:-}
+best_config_target_aot_namespace=${BEST_CONFIG_TARGET_AOT_NAMESPACE:-}
+expected_cache_outer_namespace=${EXPECTED_CACHE_OUTER_NAMESPACE:-}
+expected_cache_code_hash=${EXPECTED_CACHE_CODE_HASH:-}
+expected_cache_compiler_hash=${EXPECTED_CACHE_COMPILER_HASH:-}
+expected_cache_config_hash=${EXPECTED_CACHE_CONFIG_HASH:-}
+expected_cache_env_sha256=${EXPECTED_CACHE_ENV_SHA256:-}
+expected_computation_graph_sha256s=${EXPECTED_COMPUTATION_GRAPH_SHA256S:-}
 
 dockerc() {
   if [[ -n "${SUDO_PASS_FILE:-}" ]]; then
@@ -72,12 +90,50 @@ cache_manifest() {
   fi
 }
 
+best_config_manifest() {
+  local source_dir=$1 destination=$2
+  if [[ -n "${SUDO_PASS_FILE:-}" ]]; then
+    sudo -S -p '' bash -c '
+      cd "$1" || exit 1
+      find . -type f -name "*.best_config" -print0 | sort -z |
+        xargs -0 -r sha256sum
+    ' bash "$source_dir" < "$SUDO_PASS_FILE" > "$destination"
+  else
+    (
+      cd "$source_dir" || exit 1
+      find . -type f -name '*.best_config' -print0 | sort -z |
+        xargs -0 -r sha256sum
+    ) > "$destination"
+  fi
+}
+
+cache_jq() {
+  if [[ -n "${SUDO_PASS_FILE:-}" ]]; then
+    sudo -S -p '' jq "$@" < "$SUDO_PASS_FILE"
+  else
+    jq "$@"
+  fi
+}
+
+cache_file_sha256() {
+  if [[ -n "${SUDO_PASS_FILE:-}" ]]; then
+    sudo -S -p '' sha256sum "$1" < "$SUDO_PASS_FILE" | awk '{print $1}'
+  else
+    sha256sum "$1" | awk '{print $1}'
+  fi
+}
+
 valid_sha256_ref() {
   [[ $1 =~ ^sha256:[0-9a-f]{64}$ ]]
 }
 
-[[ "$cache_policy" == "fresh" || "$cache_policy" == "replay" ]] || \
-  fail "CACHE_POLICY must be fresh or replay"
+valid_sha256() {
+  [[ $1 =~ ^[0-9a-f]{64}$ ]]
+}
+
+[[ "$cache_policy" == "fresh" || "$cache_policy" == "seeded-fresh" || \
+   "$cache_policy" == "replay" ]] || \
+  fail "CACHE_POLICY must be fresh, seeded-fresh, or replay"
 [[ "$pull_source_image" == "0" || "$pull_source_image" == "1" ]] || \
   fail "PULL_SOURCE_IMAGE must be 0 or 1"
 [[ "$source_image_tag" == "$image_repository:"* ]] || \
@@ -91,6 +147,32 @@ if [[ "$pull_source_image" == "0" ]]; then
     fail "offline replay requires EXPECTED_RESOLVED_IMAGE_DIGEST"
   [[ -n "${EXPECTED_IMAGE_ID:-}" ]] || \
     fail "offline replay requires EXPECTED_IMAGE_ID"
+fi
+if [[ "$cache_policy" == "seeded-fresh" ]]; then
+  [[ -n "${EXPECTED_RESOLVED_IMAGE_DIGEST:-}" ]] || \
+    fail "seeded-fresh requires EXPECTED_RESOLVED_IMAGE_DIGEST"
+  [[ -n "${EXPECTED_IMAGE_ID:-}" ]] || \
+    fail "seeded-fresh requires EXPECTED_IMAGE_ID"
+  [[ -d "$best_config_seed_dir" ]] || \
+    fail "seeded-fresh requires BEST_CONFIG_SEED_DIR"
+  [[ "$expected_best_config_seed_count" =~ ^[1-9][0-9]*$ ]] || \
+    fail "seeded-fresh requires a positive EXPECTED_BEST_CONFIG_SEED_COUNT"
+  valid_sha256 "$expected_best_config_seed_manifest_sha256" || \
+    fail "seeded-fresh requires EXPECTED_BEST_CONFIG_SEED_MANIFEST_SHA256"
+  [[ "$best_config_target_aot_namespace" =~ ^[0-9a-f]{64}$ ]] || \
+    fail "seeded-fresh requires a 64-hex BEST_CONFIG_TARGET_AOT_NAMESPACE"
+  [[ "$expected_cache_outer_namespace" =~ ^[0-9a-f]{10}$ ]] || \
+    fail "seeded-fresh requires a 10-hex EXPECTED_CACHE_OUTER_NAMESPACE"
+  valid_sha256 "$expected_cache_code_hash" || \
+    fail "seeded-fresh requires EXPECTED_CACHE_CODE_HASH"
+  [[ "$expected_cache_compiler_hash" =~ ^[0-9a-f]{10}$ ]] || \
+    fail "seeded-fresh requires a 10-hex EXPECTED_CACHE_COMPILER_HASH"
+  [[ "$expected_cache_config_hash" =~ ^[0-9a-f]{10}$ ]] || \
+    fail "seeded-fresh requires a 10-hex EXPECTED_CACHE_CONFIG_HASH"
+  valid_sha256 "$expected_cache_env_sha256" || \
+    fail "seeded-fresh requires EXPECTED_CACHE_ENV_SHA256"
+  [[ -n "$expected_computation_graph_sha256s" ]] || \
+    fail "seeded-fresh requires EXPECTED_COMPUTATION_GRAPH_SHA256S"
 fi
 if [[ -n "${EXPECTED_RESOLVED_IMAGE_DIGEST:-}" ]]; then
   valid_sha256_ref "$EXPECTED_RESOLVED_IMAGE_DIGEST" || \
@@ -122,7 +204,7 @@ cache_parent=$(dirname -- "$cache_dir")
 mkdir -p "$cache_parent"
 cache_fstype=$(findmnt -n -o FSTYPE -T "$cache_parent")
 [[ "$cache_fstype" == "ext4" ]] || fail "strict cache must be on ext4, got $cache_fstype"
-if [[ "$cache_policy" == "fresh" ]]; then
+if [[ "$cache_policy" == "fresh" || "$cache_policy" == "seeded-fresh" ]]; then
   [[ ! -e "$cache_dir" ]] || fail "fresh cache already exists: $cache_dir"
   mkdir "$cache_dir"
 else
@@ -185,6 +267,49 @@ printf '%s\n' "$source_image_tag" > "$out/image-source-tag.txt"
 printf '%s\n' "$resolved_image_ref" > "$out/image-resolved-ref.txt"
 printf '%s\n' "$resolved_image_digest" > "$out/image-registry-digest.txt"
 printf '%s\n' "$tag_image_id" > "$out/image-id.txt"
+
+best_config_seed_target=
+if [[ "$cache_policy" == "seeded-fresh" ]]; then
+  [[ ! -L "$best_config_seed_dir" ]] || fail "seed directory must not be a symlink"
+  [[ -z "$(find "$best_config_seed_dir" -type l -print -quit)" ]] || \
+    fail "seed directory contains a symlink"
+  seed_total_files=$(find "$best_config_seed_dir" -type f | wc -l)
+  seed_best_config_files=$(find "$best_config_seed_dir" -type f \
+    -name '*.best_config' | wc -l)
+  [[ "$seed_total_files" == "$expected_best_config_seed_count" ]] || \
+    fail "seed bundle has unexpected total file count: $seed_total_files"
+  [[ "$seed_best_config_files" == "$expected_best_config_seed_count" ]] || \
+    fail "seed bundle has unexpected .best_config count: $seed_best_config_files"
+  invalid_seed_path=$(find "$best_config_seed_dir" -type f -printf '%P\n' |
+    grep -Ev '^[0-9a-z]{2}/[0-9a-f]{64}\.best_config$' | head -n 1 || true)
+  [[ -z "$invalid_seed_path" ]] || fail "invalid seed relative path: $invalid_seed_path"
+  best_config_manifest "$best_config_seed_dir" \
+    "$out/best-config-seed.source.sha256" || fail "could not manifest seed bundle"
+  actual_seed_manifest_sha=$(sha256sum "$out/best-config-seed.source.sha256" |
+    awk '{print $1}')
+  [[ "$actual_seed_manifest_sha" == \
+     "$expected_best_config_seed_manifest_sha256" ]] || \
+    fail "seed bundle manifest mismatch: $actual_seed_manifest_sha"
+
+  best_config_seed_target="$cache_dir/vllm/torch_compile_cache/torch_aot_compile/$best_config_target_aot_namespace/inductor_cache"
+  mkdir -p "$best_config_seed_target"
+  while IFS= read -r -d '' seed_file; do
+    relative_seed_file=${seed_file#"$best_config_seed_dir"/}
+    mkdir -p "$best_config_seed_target/$(dirname -- "$relative_seed_file")"
+    cp --reflink=never -- "$seed_file" \
+      "$best_config_seed_target/$relative_seed_file"
+  done < <(find "$best_config_seed_dir" -type f -name '*.best_config' \
+    -print0 | sort -z)
+  best_config_manifest "$best_config_seed_target" \
+    "$out/best-config-seed.precompile.sha256" || \
+    fail "could not manifest precompiled seed target"
+  cmp -s "$out/best-config-seed.source.sha256" \
+    "$out/best-config-seed.precompile.sha256" || \
+    fail "seed target differs before compilation"
+  preseed_total_files=$(find "$cache_dir" -type f | wc -l)
+  [[ "$preseed_total_files" == "$expected_best_config_seed_count" ]] || \
+    fail "seeded fresh cache contains unexpected precompile artifacts"
+fi
 
 "$model_verifier" "$model_manifest" "$model" \
   --json "$out/model-direct-and-ordinary-verify.json" \
@@ -250,6 +375,16 @@ done
   echo "expected_image_id=${EXPECTED_IMAGE_ID:-unset}"
   echo "cache_policy=$cache_policy"
   echo "cache_dir=$cache_dir"
+  echo "best_config_seed_dir=${best_config_seed_dir:-unset}"
+  echo "expected_best_config_seed_count=${expected_best_config_seed_count:-unset}"
+  echo "expected_best_config_seed_manifest_sha256=${expected_best_config_seed_manifest_sha256:-unset}"
+  echo "best_config_target_aot_namespace=${best_config_target_aot_namespace:-unset}"
+  echo "expected_cache_outer_namespace=${expected_cache_outer_namespace:-unset}"
+  echo "expected_cache_code_hash=${expected_cache_code_hash:-unset}"
+  echo "expected_cache_compiler_hash=${expected_cache_compiler_hash:-unset}"
+  echo "expected_cache_config_hash=${expected_cache_config_hash:-unset}"
+  echo "expected_cache_env_sha256=${expected_cache_env_sha256:-unset}"
+  echo "expected_computation_graph_sha256s=${expected_computation_graph_sha256s:-unset}"
   echo "tp=$tp"
   echo "gpus=$gpu"
   echo "mtp=$mtp"
@@ -334,6 +469,59 @@ if [[ "${REQUIRE_GRAPH_CAPTURE:-0}" == "1" ]]; then
     "$out/server-startup.log" || fail "FULL decode graph capture marker missing"
   grep -Fq 'Graph capturing finished' "$out/server-startup.log" || \
     fail "graph completion marker missing"
+fi
+
+if [[ "$cache_policy" == "seeded-fresh" ]]; then
+  grep -Fq 'Compiling a graph for compile range' "$out/server-startup.log" || \
+    fail "seeded-fresh did not perform a fresh graph compilation"
+  grep -Fq 'saved AOT compiled function' "$out/server-startup.log" || \
+    fail "seeded-fresh did not save a fresh AOT compilation"
+  grep -Fq "/torch_aot_compile/$best_config_target_aot_namespace/" \
+    "$out/server-startup.log" || \
+    fail "seeded-fresh compiled into an unexpected AOT namespace"
+  if grep -Fq 'Directly load AOT compilation' "$out/server-startup.log"; then
+    fail "seeded-fresh unexpectedly loaded an existing AOT model"
+  fi
+
+  IFS=',' read -r -a expected_graph_hashes <<< \
+    "$expected_computation_graph_sha256s"
+  [[ "${#expected_graph_hashes[@]}" == "$tp" ]] || \
+    fail "expected graph hash count does not match TP size"
+  for rank in $(seq 0 $((tp - 1))); do
+    factors="$cache_dir/vllm/torch_compile_cache/$expected_cache_outer_namespace/rank_${rank}_0/backbone/cache_key_factors.json"
+    graph="$cache_dir/vllm/torch_compile_cache/$expected_cache_outer_namespace/rank_${rank}_0/backbone/computation_graph.py"
+    [[ -f "$factors" && -f "$graph" ]] || \
+      fail "missing rank-$rank cache identity files"
+    [[ "$(cache_jq -r '.code_hash' "$factors")" == \
+       "$expected_cache_code_hash" ]] || fail "rank-$rank code hash mismatch"
+    [[ "$(cache_jq -r '.compiler_hash' "$factors")" == \
+       "$expected_cache_compiler_hash" ]] || \
+      fail "rank-$rank compiler hash mismatch"
+    [[ "$(cache_jq -r '.config_hash' "$factors")" == \
+       "$expected_cache_config_hash" ]] || fail "rank-$rank config hash mismatch"
+    actual_env_sha=$(cache_jq -S '.env' "$factors" | sha256sum | awk '{print $1}')
+    [[ "$actual_env_sha" == "$expected_cache_env_sha256" ]] || \
+      fail "rank-$rank cache environment hash mismatch"
+    [[ "$(cache_file_sha256 "$graph")" == "${expected_graph_hashes[$rank]}" ]] || \
+      fail "rank-$rank computation graph hash mismatch"
+  done
+
+  best_config_manifest "$best_config_seed_target" \
+    "$out/best-config-seed.postcompile.sha256" || \
+    fail "could not manifest postcompile seed target"
+  cmp -s "$out/best-config-seed.source.sha256" \
+    "$out/best-config-seed.postcompile.sha256" || \
+    fail "compiler changed the seeded .best_config bundle"
+  if [[ -n "${SUDO_PASS_FILE:-}" ]]; then
+    postcompile_best_config_count=$(sudo -S -p '' find "$cache_dir" -type f \
+      -name '*.best_config' < "$SUDO_PASS_FILE" | wc -l)
+  else
+    postcompile_best_config_count=$(find "$cache_dir" -type f \
+      -name '*.best_config' | wc -l)
+  fi
+  [[ "$postcompile_best_config_count" == \
+     "$expected_best_config_seed_count" ]] || \
+    fail "compiler added unexpected .best_config records"
 fi
 
 if [[ "${CANARY:-1}" == "1" ]]; then
@@ -424,6 +612,24 @@ if [[ "${QUALITY:-0}" == "1" ]]; then
   quality_rc=$?
   echo "quality_rc=$quality_rc" > "$out/quality.status"
   [[ "$quality_rc" == "0" ]] || exit "$quality_rc"
+fi
+
+if [[ "$cache_policy" == "seeded-fresh" ]]; then
+  best_config_manifest "$best_config_seed_target" \
+    "$out/best-config-seed.final.sha256" || \
+    fail "could not manifest final seed target"
+  cmp -s "$out/best-config-seed.source.sha256" \
+    "$out/best-config-seed.final.sha256" || \
+    fail "workload changed the seeded .best_config bundle"
+  if [[ -n "${SUDO_PASS_FILE:-}" ]]; then
+    final_best_config_count=$(sudo -S -p '' find "$cache_dir" -type f \
+      -name '*.best_config' < "$SUDO_PASS_FILE" | wc -l)
+  else
+    final_best_config_count=$(find "$cache_dir" -type f \
+      -name '*.best_config' | wc -l)
+  fi
+  [[ "$final_best_config_count" == "$expected_best_config_seed_count" ]] || \
+    fail "workload added unexpected .best_config records"
 fi
 
 if [[ "$cache_policy" == "replay" ]]; then
