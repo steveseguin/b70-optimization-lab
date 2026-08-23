@@ -1,7 +1,7 @@
 {
   "campaign": "Qwen3.8-27B AutoRound INT4 rolling-XPU-nightly TP-scale qualification",
   "date": "2026-08-23",
-  "status": "quality-qualified at TP1/TP2/TP4; not a wholesale performance replacement",
+  "status": "quality-qualified at TP1/TP2/TP4; TP4 historical-winner overlay accepted as a stable versioned profile; stock runtime not a wholesale performance replacement",
   "scope": "MTP0, F16 KV, 32K maximum context, one request, XPU Graph, TP1/TP2/TP4",
   "rolling_runtime": {
     "source_tag": "vllm/vllm-openai-xpu:nightly",
@@ -169,7 +169,23 @@
         "manifest_file_sha256": "86273698225e57c89f3f8ab26e4ab346985f468141515c34f9164f2f294ffd1c",
         "replay_immutable": true
       },
-      "verdict": "quality-qualified but performance-variable; historical replicated frontiers retained"
+      "historical_winner_overlay_experiment": {
+        "diagnostic_median_tok_s": 71.72254506718171,
+        "diagnostic_speed_gate": "pass",
+        "strict_replays_tok_s": [
+          71.35287190161719,
+          71.45427094575045
+        ],
+        "strict_historical_floor_tok_s": 71.29326283364946,
+        "strict_historical_high_bar_tok_s": 71.39843006187554,
+        "stable_full_recovery_gate": "pass",
+        "quality_battery": "pass on strict replay A",
+        "cache_immutable_across_fresh_and_both_replays": true,
+        "classification": "accepted stable newest-runtime overlay profile; report 71.352872-71.454271 range; do not call the upper endpoint independently replicated",
+        "stock_71_900199_captured_high_preserved": true,
+        "packet": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp4-autotune-winner-overlay-result.json"
+      },
+      "verdict": "stock profile quality-qualified but performance-variable; historical replicated frontiers retained; exact TP4 winner overlay accepted separately"
     }
   },
   "quality_contract": {
@@ -190,6 +206,14 @@
       "entries": 5270,
       "sha256": "805ef3bbe8089ec929e4fd38eaa1fad7d1fa1b749d279fd6cf7453649fd2f0f9",
       "verification": "tar --compare passed before removal; archive entry count matched; sha256sum -c passed"
+    },
+    "tp4_historical_winner_overlay": {
+      "status": "verified and recoverable; live ext4 directory removed after the capped experiment",
+      "archive": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/cache-archives/rolling-nightly-a3561ef8e/tp4-autotune-winner-cache.tar",
+      "bytes": 635105280,
+      "entries": 2678,
+      "sha256": "0a768ca0050521663f465dcf2d7d0fca321f44a57be0507eac742758a0a33ae1",
+      "verification": "GNU tar --compare passed before removal; archive entry count matched; post-removal checksum matched"
     }
   },
   "autotune_investigation": {
@@ -207,18 +231,23 @@
       "tp4": "78/152"
     },
     "cause": "vLLM package version participates in the compile-cache hash, forcing a fresh autotune despite byte-identical computation graphs",
-    "next_test": "fail-closed transfer of historical TP2 best_config selections into a fresh latest-runtime compile; compile binaries fresh and rerun speed plus quality",
+    "next_test": "remap accepted overlays onto each newer nightly, compile binaries fresh, and rerun TP1/TP2/TP4 sentinels before matrix expansion",
     "followup": {
-      "status": "completed",
-      "result": "diagnostic recovered to 49.058940 and passed; strict recovered to 49.009352 with full quality but missed the frozen 49.019651 gate by 0.021%; preserve, do not promote",
-      "packet": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.json",
-      "next": "separately preregister TP1/TP4 overlays; resolve floating nightly and remap identities before each run if upstream advanced"
+      "status": "TP2 and TP4 completed",
+      "tp2_result": "diagnostic recovered to 49.058940 and passed; strict recovered to 49.009352 with full quality but missed the frozen 49.019651 gate by 0.021%; preserve, do not promote",
+      "tp2_packet": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.json",
+      "tp4_result": "diagnostic reached 71.722545; strict exact-cache pair 71.352872 / 71.454271 passed the frozen stable-full-recovery rule with replay-A full quality",
+      "tp4_packet": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp4-autotune-winner-overlay-result.json",
+      "next": "treat TP1 as a lower-priority separate overlay candidate; on any nightly advance remap all compatible decisions before running"
     }
   },
   "decision": {
     "active_development_base": "rolling nightly a3561ef8",
     "quality_qualified_topologies": [1, 2, 4],
     "whole_column_performance_promoted": false,
+    "accepted_versioned_performance_overlays": [
+      "TP4 a3561ef8 plus 152 historical best_config decisions"
+    ],
     "historical_frontier_replaced": false,
     "historical_values_preserved": true,
     "old_96_cell_matrix_mutated": false,
@@ -237,6 +266,10 @@
     "tp4_diagnostic_bench": "7f93729700509639112735f9b58f47043b2175a1e649bd68faa2f384ef068ea6",
     "tp4_strict_a_bench": "c448e2ae3d83d6eea768940095c86db0e65901b9679fc0e894283f73d742647c",
     "tp4_quality": "e1b35106fbc6106c52692f3fee3cdd06cb7b1c47e3d906e8359fd200b88862bc",
-    "tp4_strict_b_bench": "f33f48516d39f63a1df4190330d7fb50f4a5822b0f153350e89ca37f3caf0dd6"
+    "tp4_strict_b_bench": "f33f48516d39f63a1df4190330d7fb50f4a5822b0f153350e89ca37f3caf0dd6",
+    "tp4_overlay_fresh_bench": "d97f7dd13b8888525e09ae84735241fadbd76069aea021ca8fa29b7653dc6b91",
+    "tp4_overlay_strict_a_bench": "9947ac16612912ca6bfd6eb82dd9a6708f1c6949a24733a3f6f8850d501ebbc4",
+    "tp4_overlay_strict_a_quality": "de263a989231b13f1160125bd5ee385ee473c030ba785c1f99ddffd10bbd8fe2",
+    "tp4_overlay_strict_b_bench": "be04554ba30d3885667c9937f6a8bab1286503257d3a20dc158ddde61dfc8f08"
   }
 }

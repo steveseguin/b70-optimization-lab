@@ -29,3 +29,15 @@ Use
 The fresh diagnostic arm is allowed first. Strict replay A is conditional on
 its speed gate, and exact-cache replay B is conditional on replay A's quality
 and lower historical floor.
+
+The bounded program is now closed and passed: fresh diagnostic measured
+`71.722545 tok/s`, and exact-cache strict A/B measured
+`71.352872 / 71.454271 tok/s` with full replay-A quality and an immutable
+2,117-file current-runtime cache. The accepted claim is the exact
+`a3561ef8`-plus-overlay profile and observed strict range, not a claim that the
+upper value replicated. See the
+[result note](../../notes/2026-08-23-qwen38-tp4-autotune-winner-overlay-result.md).
+
+This mapping remains target-runtime-specific. When the rolling nightly moves,
+remap the decisions and rerun all gates on the newer source; do not retain the
+older base merely to keep this result.

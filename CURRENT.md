@@ -83,10 +83,19 @@ frozen 49.0197 historical gate by 0.0103 tok/s (0.021%). Preserve it as a
 quality-qualified partial recovery, not a promoted replacement. See the
 [rolling qualification](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-rolling-nightly-a3561ef8-qualification.md)
 and [overlay result](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.md).
-The next bounded preservation arm is the separately preregistered
-[TP4 winner overlay](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tp4-autotune-winner-overlay-prereg.md),
-with one fresh compile and two conditional strict replays. It must abort and
-remap if the floating nightly advances.
+
+The separately preregistered TP4 winner overlay is also closed. It seeded only
+152 hash-matched historical `.best_config` decisions into a fresh current-code
+compile. Diagnostic speed reached **71.722545 tok/s**; exact-cache strict A/B
+reached **71.352872 / 71.454271 tok/s**. Both strict arms cleared the frozen
+historical floor and B cleared the high bar, with full replay-A quality and an
+unchanged 2,117-file cache. Accept this as an exact, versioned
+`a3561ef8`-plus-overlay stable profile, reported as a range with a 71.352872
+lower observed replay endpoint. Do not call either endpoint independently
+replicated or erase the stock 71.900199 captured high. See the
+[TP4 overlay result](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tp4-autotune-winner-overlay-result.md).
+Any newer nightly requires remapping and requalification, not retention of this
+older base.
 
 The separate Qwen3.6-derived native MTP source stack remains preserved as a
 patch/source research identity. It is not part of the stock target-only graph
@@ -172,26 +181,32 @@ and the earlier
 
 Immediate order:
 
-1. preserve the closed TP2 winner-overlay result without lowering its speed
-   gate; separately preregister TP1 and TP4 overlays, resolve the floating
-   nightly before each run, and remap instead of running if upstream advanced;
-2. preserve the old pinned image identity, isolated-cache manifests, every raw
-   root, and all captured speed values as the rollback/comparison frontier;
-3. after the optimized newest-code graph sentinels are classified, resume the
-   versioned coverage matrix: graph+MTP, eager-MTP cost, KV backend
-   support/quality, MTP depth, context scale, and TP scale;
-4. publish the pinned and rolling runtime profiles separately for
-   neural.download; represent TP3 structurally and preserve captured highs
-   separately from replicated floors;
-5. do not burn more cells on the old pinned Cartesian matrix unchanged: all 96
-   are already decision-classified and TP4 MTP2 missed its frozen expansion
-   gates;
-6. after the stock rolling comparison, inventory accepted native-stack
-   functionality against upstream and reapply only changes still needed;
-7. preregister the next dose-8 mechanism door around KV-page checksums or
-   tens-of-MiB layout-adjacent canaries, keeping GPU2 explicitly in scope;
-8. separately decide whether to file the upstream graph+MTP corruption report
-   and run the digest-swapped v0.27.1 TP1 MTP cross-check.
+1. before every runtime campaign, resolve the absolute newest rolling nightly;
+   if it moved, remap accepted overlays and rerun TP1/2/4 graph sentinels before
+   matrix work. Never use v0.27.1 or an older nightly as the active base;
+2. preserve the pinned image, stock rolling results, accepted overlay packets,
+   isolated-cache manifests, raw roots, and every captured high as distinct
+   rollback/comparison identities;
+3. make neural.download coverage complete before optional mechanism research:
+   publish pinned, stock rolling, and rolling-plus-overlay profiles separately;
+   add explicit measured/estimated/closed/quarantined/unsupported/missing cell
+   states and import already-valid evidence that is absent from family pages;
+4. expand the primary newest-code Qwen coverage slice across TP1/2/4 and
+   context 0/2K/4K/8K/16K/24K/32K, recording decode, prefill, TTFT, VRAM,
+   quality, and uncertainty rather than ranking by decode alone;
+5. represent MTP4, TP3, quantization subsets, model weight revisions, KV modes,
+   and runtime/overlay selectors structurally. Spend GPU time only where a real
+   measurement changes guidance; use labeled versioned estimates for unknown
+   lower-value gaps, and closures only where an actual architecture or frozen
+   experiment gate supports them;
+6. do not rerun the old pinned 96-cell Cartesian matrix unchanged. Its
+   graph+MTP corruption and eager-MTP underperformance closures apply only to
+   that pinned profile. For each new rolling digest, run one bounded parent
+   sentinel before expanding those families; until then, label rolling cells
+   missing rather than inheriting the pinned closure;
+7. defer dose-8 KV-page instrumentation, upstream bug filing, the v0.27.1
+   diagnostic cross-check, and other side research unless they unblock a
+   high-value coverage cell or receive an explicit decision.
 
 Evidence and correction:
 [TP-scale packet](experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json),
