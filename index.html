@@ -14,6 +14,8 @@
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#f6f1e5">
+<link rel="preconnect" href="https://mlbottleneck.com">
+<link rel="alternate" type="text/plain" href="https://neural.download/llms.txt" title="llms.txt">
 <!-- Machine-readable site index for AI agents: /llms.txt -->
 <!--
 Style genome (duotone-hixffp):
@@ -210,6 +212,44 @@ Style genome (duotone-hixffp):
   }
   .contribute-steps strong { display: block; color: var(--ink); }
 
+  /* projections (ML Bottleneck bridge) */
+  .dot.hollow { color: var(--muted); }
+  .projection-status { margin: 0 0 14px; color: var(--muted); font-family: var(--mono); font-size: 11px; }
+  .hr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .hr-card { border: 2px solid var(--ink); background: var(--paper); padding: 13px 14px 11px; }
+  .hr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .hr-card h3 { margin: 0; font-family: var(--display); font-size: 15px; text-transform: uppercase; letter-spacing: -.005em; }
+  .hr-deploy { margin: 3px 0 0; color: var(--muted); font-family: var(--mono); font-size: 10.5px; }
+  .hr-grade { flex: 0 0 auto; text-align: right; }
+  .hr-grade-letter { display: block; font-family: var(--display); font-size: 26px; line-height: 1; color: var(--spot-dark); }
+  .hr-grade-note { display: block; margin-top: 3px; color: var(--muted); font-family: var(--mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; }
+  .hr-bar-row { display: grid; grid-template-columns: 108px 1fr 78px; align-items: center; gap: 8px; margin: 5px 0; font-family: var(--mono); font-size: 10.5px; }
+  .hr-bar-label { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .hr-bar-track { display: block; height: 9px; background: var(--surface2); border: 1px solid var(--ink); }
+  .hr-bar { display: block; height: 100%; background: var(--ink); }
+  .hr-bar.is-measured { background: var(--spot); }
+  .hr-bar.is-stock { background: var(--ink); opacity: .45; }
+  .hr-bar.is-target { background: var(--ink); }
+  .hr-bar.is-physical { background: var(--muted); opacity: .55; }
+  .hr-bar-value { text-align: right; font-weight: 700; white-space: nowrap; }
+  .hr-bar-value small { font-weight: 400; color: var(--muted); }
+  .hr-why { margin: 9px 0 0; color: var(--muted); font-size: 12px; }
+  .hr-links { margin: 7px 0 0; font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; }
+  .hr-links a { border-bottom: 1px solid currentColor; }
+  .mini-panel { border: 2px solid var(--ink); background: var(--surface2); padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .9fr); gap: 18px; }
+  .mini-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+  .mini-form label { display: grid; gap: 4px; font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .mini-form select, .mini-form input { width: 100%; min-height: 34px; padding: 5px 7px; border: 2px solid var(--ink); border-radius: 0; background: var(--paper); color: var(--ink); font: 13px var(--body); }
+  .mini-form select:focus-visible, .mini-form input:focus-visible { outline: 2px solid var(--spot); outline-offset: 2px; }
+  .mini-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .mini-stats > div { border: 2px solid var(--ink); background: var(--paper); padding: 9px 10px; min-width: 0; }
+  .mini-k { display: block; color: var(--muted); font-family: var(--mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; }
+  .mini-v { display: block; margin-top: 2px; font-family: var(--display); font-size: 22px; line-height: 1.1; }
+  .mini-u { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+  .mini-note { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
+  .mini-links { margin: 8px 0 0; font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; }
+  .mini-links a, .mini-note a { border-bottom: 1px solid currentColor; }
+
   footer { margin-top: 54px; border-top: 2px solid var(--ink); padding: 18px 0 45px; font-family: var(--mono); font-size: 11.5px; }
   footer .wrap { display: flex; flex-wrap: wrap; gap: 9px 18px; }
   footer .right { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; text-transform: uppercase; letter-spacing: .06em; }
@@ -255,6 +295,9 @@ Style genome (duotone-hixffp):
     .start-card { padding: 14px; }
     .contribute-panel { padding: 17px; gap: 21px; }
     h2 .key { margin-left: 0; flex-basis: 100%; }
+    .mini-panel { grid-template-columns: 1fr; padding: 13px; }
+    .mini-stats { grid-template-columns: 1fr; }
+    .hr-bar-row { grid-template-columns: 92px 1fr 70px; }
   }
 
   @media (max-width: 430px) {
@@ -415,7 +458,7 @@ Style genome (duotone-hixffp):
         </tr>
       </thead>
       <tbody>
-        <tr>
+        <tr data-ml-model="ornith_1.5_35b_a3b" data-ml-quant="Q4_K_M" data-ml-quant-label="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="126.18">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Ornith 1.5 35B-A3B <small>Qwen-derived MoE &middot; uses ~3B of 35B per word &middot; Aug 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M + lab eleven-feature stack</td><td class="num r">1&times;</td>
           <td class="num r">128.83<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
@@ -429,49 +472,49 @@ Style genome (duotone-hixffp):
           <td class="mut hide-s" title="conventional median">typical</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/laguna-s-2.1-int4-b70/README.md">test report</a></td>
         </tr>
-        <tr>
+        <tr data-ml-model="gemma4_26b_a4b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:3" data-ml-measured="124.98">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Gemma-4-26B-A4B <small>all-rounder &middot; uses ~4B of 26B per word &middot; Apr 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + MTP3</td><td class="num r">1&times;</td>
           <td class="num r">124.98<div class="ratebar" style="width:99.0%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="median; ctx 32,768">typical &middot; remembers ~24K words</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">test report</a></td>
         </tr>
-        <tr>
+        <tr data-ml-model="qwen3.8_27b" data-ml-quant="AutoRound INT4" data-ml-quant-label="INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:5" data-ml-measured="101.17">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span>Qwen3.8-27B <small>newest all-rounder &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">INT4 + MTP5</td><td class="num r">2&times;</td>
           <td class="num r">101.17<div class="ratebar" style="width:80.2%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="honest margin-free all-25 median; three arms agree on only 21 to 22 of 25 token arrays">research &middot; determinism open</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">lab status</a></td>
         </tr>
-        <tr>
+        <tr data-ml-model="muse_glimmer_30b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dflash:15" data-ml-measured="100.37">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Muse-Glimmer-30B <small>Meta &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash n15</td><td class="num r">4&times;</td>
           <td class="num r">100.37<div class="ratebar" style="width:79.5%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="canonical pooled mean">average across repeat runs</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">full report</a></td>
         </tr>
-        <tr>
+        <tr data-ml-model="qwen3.6_27b" data-ml-quant="AutoRound INT4" data-ml-quant-label="AutoRound INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:3" data-ml-measured="98.77">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-27B <small>general assistant &middot; uses all 27B per word &middot; Apr 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 + MTP3</td><td class="num r">2&times;</td>
           <td class="num r">98.77<div class="ratebar" style="width:78.3%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="four-arm central estimate">average across 4 setups</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/scoreboard.md">full rankings</a></td>
         </tr>
-        <tr>
+        <tr data-ml-model="qwen3.6_35b_a3b" data-ml-quant="Quark W8A8 INT8" data-ml-quant-label="W8A8 INT8" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="93.55">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-35B-A3B <small>long documents &middot; uses ~3B of 35B per word &middot; Apr 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">Quark W8A8 INT8</td><td class="num r">4&times;</td>
           <td class="num r">93.55<div class="ratebar" style="width:74.1%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="output, strict deep gate">typical, strictest quality gate</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen36-35b-quark-int8-b70/README.md">test report</a></td>
         </tr>
-        <tr>
+        <tr data-ml-model="minimax_m2.7" data-ml-quant="AutoRound INT4" data-ml-quant-label="AutoRound INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="89.31">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>MiniMax-M2.7 <small>remembers long conversations (32K) &middot; Mar 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 W4A16</td><td class="num r">4&times;</td>
           <td class="num r">89.31<div class="ratebar" style="width:70.8%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="mean of four clean long repeats">average of 4 clean runs</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/README.md">full report</a></td>
         </tr>
-        <tr>
+        <tr data-ml-model="deepseek_v4_flash_reap_180b" data-ml-quant="q4" data-ml-quant-label="FP8 + FP4 experts" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dspark:7" data-ml-measured="80.82">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>DeepSeek-V4-Flash-180B <small>experimental community-trimmed copy &middot; research only</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">FP8 + FP4 experts + DSpark7</td><td class="num r">4&times;</td>
           <td class="num r">80.82<div class="ratebar" style="width:64.1%" aria-hidden="true"></div></td>
@@ -480,6 +523,38 @@ Style genome (duotone-hixffp):
         </tr>
       </tbody>
     </table>
+    </div>
+  </div>
+</section>
+
+<section id="headroom" hidden>
+  <div class="wrap">
+    <h2 id="t-headroom">How much faster could these get? <span class="key"><span class="dot hollow" aria-hidden="true">&#9675;</span> projected, not measured</span></h2>
+    <p class="sub">
+      Each measured row above is compared with what the <a href="https://mlbottleneck.com/">ML Bottleneck</a>
+      physics engine projects for the same model, compression, card count, and software: what
+      <strong>stock software</strong> is expected to do, a <strong>tuned-run target</strong> (the
+      best-demonstrated kernel efficiency on that stack), and the <strong>physical ceiling</strong>
+      (memory bandwidth and compute with zero overhead). The grade is optimization headroom against
+      the tuned-run target, not model quality: A+ is at or beyond the target, D means most of the
+      projected headroom is still on the table.
+    </p>
+    <p class="projection-status" data-headroom-status>Loading projections from mlbottleneck.com…</p>
+    <div class="hr-grid" data-headroom-grid aria-live="polite"></div>
+  </div>
+</section>
+
+<section id="mini-planner" hidden>
+  <div class="wrap">
+    <h2 id="t-mini">Predict another Intel setup <span class="key"><span class="dot hollow" aria-hidden="true">&#9675;</span> projection</span></h2>
+    <p class="sub">
+      Not on the table yet? Pick a model, card, compression, and software to get a projected decode
+      and prompt-processing rate for Intel Arc Pro cards, plus whether it fits. The full planner on
+      mlbottleneck.com adds memory maps, scaling charts, and every other GPU.
+    </p>
+    <div class="mini-panel">
+      <form class="mini-form" aria-label="Predict an Intel Arc deployment"></form>
+      <div class="mini-output" data-mini-output aria-live="polite"></div>
     </div>
   </div>
 </section>
@@ -506,7 +581,7 @@ Style genome (duotone-hixffp):
         </tr>
       </thead>
       <tbody>
-        <tr>
+        <tr data-ml-model="qwen3.6_27b" data-ml-quant="FP8" data-ml-quant-label="FP8" data-ml-runtime="vllm" data-ml-runtime-label="vLLM (Docker)" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="30.17">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">B70-tested: </span>Qwen3.6-27B <small>community setup we re-ran and confirmed</small></th>
           <td class="mut">Docker / vLLM</td><td class="mut">FP8, split across 2 cards</td><td class="num r">2&times;</td>
           <td class="num r">30.17<div class="ratebar" style="width:24%" aria-hidden="true"></div></td>
@@ -551,6 +626,8 @@ Style genome (duotone-hixffp):
       <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/community/README.md">Contributors</a>
       <a href="llms.txt">For AI agents</a>
       <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+      <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a>
+      <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a>
     </span>
   </div>
 </footer>
@@ -604,5 +681,6 @@ Style genome (duotone-hixffp):
   })();
 </script>
 
+<script defer src="learn/assets/mlbottleneck-bridge.js"></script>
 </body>
 </html>

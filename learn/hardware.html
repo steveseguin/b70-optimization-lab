@@ -8,7 +8,21 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
 <link rel="canonical" href="https://neural.download/learn/hardware.html">
 <meta name="theme-color" content="#f6f1e5">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://neural.download/learn/hardware.html">
+<meta property="og:title" content="Hardware: B65 vs B70 vs Max 1100 vs R9700 Pro vs GB10 — neural.download">
+<meta property="og:description" content="How to compare GPUs for local LLMs — VRAM, memory bandwidth, compute, and software support — across Intel Arc Pro B65/B70, Intel Max 1100, AMD Radeon Pro R9700, and NVIDIA GB10 (DGX Spark). Only B70 is lab-measured; the rest are vendor specs.">
+<meta property="og:image" content="https://neural.download/og-image.png">
+<meta property="og:site_name" content="neural.download">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"Hardware: B65 vs B70 vs Max 1100 vs R9700 Pro vs GB10","description":"How to compare GPUs for local LLMs \u2014 VRAM, memory bandwidth, compute, and software support \u2014 across Intel Arc Pro B65/B70, Intel Max 1100, AMD Radeon Pro R9700, and NVIDIA GB10 (DGX Spark). Only B70 is lab-measured; the rest are vendor specs.","url":"https://neural.download/learn/hardware.html","dateModified":"2026-08-22","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","tokens per second"]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"Learn","item":"https://neural.download/learn.html"},{"@type":"ListItem","position":3,"name":"Hardware: B65 vs B70 vs Max 1100 vs R9700 Pro vs GB10","item":"https://neural.download/learn/hardware.html"}]}
+</script>
 <link rel="stylesheet" href="learn.css">
+<link rel="preconnect" href="https://mlbottleneck.com">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -81,6 +95,23 @@
     </tbody>
   </table></div>
 
+  <h2 id="projected">Projected comparison <span class="badge spec">Model projection — not measured</span></h2>
+  <p>
+    We will not invent benchmark numbers for cards we have not run. What we can show is what a
+    physics model projects for them: the <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a>
+    engine (built by this lab's author) takes each card's published memory bandwidth and compute,
+    the runtime's measured kernel efficiency, and a model's architecture, and projects decode,
+    prompt-processing, and multi-user throughput. It is calibrated against hundreds of community
+    runs — including this lab's B70 measurements — and states its own confidence. Use the bars to
+    compare cards, not to quote a speed.
+  </p>
+  <div id="projected-comparison" class="projection" hidden>
+    <p class="projection-status" data-projection-status>Loading projections from mlbottleneck.com…</p>
+    <div data-projection-charts></div>
+    <p class="projection-foot">Want a different model, quantization, or card count? <a class="inline" href="https://mlbottleneck.com/?hardware=Intel%20Arc%20Pro%20B70&amp;model=qwen3.8_27b&amp;format=Q4_K_M#plan">Open the full planner on mlbottleneck.com</a> (every GPU, memory maps, scaling charts).</p>
+  </div>
+  <noscript><p class="projection-status">Projections need JavaScript; the spec table above is static.</p></noscript>
+
   <h3>How to read that table</h3>
   <ul>
     <li><strong>B70 / B65</strong> — 32 GB GDDR6 desktop cards on Intel's stack. This lab's home turf; everything in these guides was tuned here. B70 is the stronger of the two.</li>
@@ -118,7 +149,8 @@
 
 <footer><div class="wrap">
   <span>Unofficial community lab — not affiliated with or endorsed by Intel, AMD, or NVIDIA.</span>
-  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
 </div></footer>
+<script defer src="assets/mlbottleneck-bridge.js"></script>
 </body>
 </html>

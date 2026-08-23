@@ -78,6 +78,21 @@ exactly scoped measurements, honest pending states, and live-site verification.
 In particular, never extrapolate or interpolate performance curves or invent
 unmeasured context points.
 
+## External Projections (ML Bottleneck bridge)
+
+`learn/assets/mlbottleneck-bridge.js` loads the ML Bottleneck physics engine
+(https://mlbottleneck.com/, same author) at page load and renders projections
+next to lab measurements: the landing page's "How much faster could these
+get?" headroom cards and Intel mini-planner, and the Hardware guide's projected
+cross-card comparison. Those numbers are model projections, never lab
+measurements: keep them in their labeled sections, never copy one into a
+benchmark table, result packet, README, or LocalMaxxing submission, and keep
+the "projected, not measured" wording. The measured rows feed the bridge through
+`data-ml-*` attributes on `<tr>` elements (model preset key, quant label,
+runtime, card count, speed-up, measured tok/s); update them when a row changes.
+Deep links into the planner use
+`https://mlbottleneck.com/?model=&hardware=&count=&format=&runtime=&spec=`.
+
 ## Local Secrets
 
 Never print, paste, or commit local credentials. The Hugging Face access token
