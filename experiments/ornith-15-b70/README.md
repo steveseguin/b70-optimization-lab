@@ -183,6 +183,11 @@ binary, driver, or benchmark protocol will reproduce them.
   in a mirrored engine screen. No server run was justified and the accepted
   stack is unchanged. See
   `notes/2026-08-23-ornith35b-dmmv-esimd-quad-negative-neutral.md`.
+- **Four-row reuse at the large `2048→8192` projections — CLOSED NEGATIVE:**
+  restricting the exact candidate to 30 recurrent QKV plus 10 full-attention Q
+  calls removed the smaller shapes but still regressed a mirrored engine screen
+  by 0.786%. The accepted pair kernel remains faster. See
+  `notes/2026-08-23-ornith35b-dmmv-esimd-quad-large-negative.md`.
 - **Direct FP32 router GEMV — CLOSED CORRECTNESS NEGATIVE:** the exact
   Qwen-derived `[256,2048] × [2048,1]` router boundary currently uses oneMKL
   GEMM. A narrow GEMV replacement hit all 5,080 intended calls but changed the

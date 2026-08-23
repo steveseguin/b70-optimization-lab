@@ -1,0 +1,43 @@
+{
+  "date": "2026-08-23",
+  "status": "closed_performance_negative",
+  "model": {
+    "name": "Ornith 1.5 35B-A3B Q4_K_M",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "runtime": {
+    "source_base": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_library_sha256": "cbe101e6573100e10877ee059f326b23580cc7c15161a132608c771d34840671"
+  },
+  "candidate": {
+    "door": "GGML_SYCL_DMMV_ESIMD_ROWS=4",
+    "scope": "reordered Q4_K/Q6_K DMMV with ncols=2048 and nrows=8192",
+    "active_projection_families": [
+      "30 recurrent QKV projections per token",
+      "10 full-attention Q projections per token"
+    ],
+    "activation_hits_in_forced_128_token_run": 5080
+  },
+  "correctness": {
+    "protocol": "same frozen binary, forced greedy 128-token generation, door off versus on",
+    "control_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "candidate_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "byte_identical": true
+  },
+  "engine_screen": {
+    "ordering": ["control_a", "candidate_a", "candidate_b", "control_b"],
+    "control_toks_per_second": [120.052828, 119.358832],
+    "candidate_toks_per_second": [118.654766, 118.874610],
+    "control_mean_toks_per_second": 119.705830,
+    "candidate_mean_toks_per_second": 118.764688,
+    "delta_percent": -0.7862
+  },
+  "server_screen_run": false,
+  "canary_replay_run": false,
+  "promotion": false,
+  "accepted_stack_changed": false,
+  "patch": {
+    "path": "../patches/llamacpp-ornith15-dmmv-esimd-quad-large-projections-negative-20260823.patch",
+    "sha256": "e5d8dad995847cc1708a16fa08a8126d78522774ed113143537debf115cad8ff"
+  }
+}
