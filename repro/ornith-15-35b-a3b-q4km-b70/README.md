@@ -110,7 +110,30 @@ build-sycl-aot-bmg-g31/bin/llama-server \
 Do not enable SYCL command graphs for this model on the pinned stack; the
 matched model-level experiment regressed decode by 52%.
 
-## Stock context-depth reference (patch off; llama-bench, FA on, 5 reps)
+## Optimized context-depth profile (complete patch; llama-bench, FA on, 5 reps)
+
+![optimized depth sweep](optimized-depth-sweep.svg)
+
+| Depth | decode tg128 tok/s (±σ) | prefill pp2048 tok/s (±σ) |
+|---:|---:|---:|
+| 0 | 125.83 (±0.41) | 1403.0 (±43.9) |
+| 2,048 | 121.20 (±0.38) | 1323.2 (±8.4) |
+| 4,096 | 118.31 (±0.27) | 1318.0 (±4.2) |
+| 8,192 | 113.11 (±0.09) | 1286.1 (±6.8) |
+| 16,384 | 104.10 (±0.18) | 1220.1 (±5.3) |
+| 24,576 | 96.56 (±0.06) | 1197.5 (±5.3) |
+| 32,768 | 90.32 (±0.07) | 1100.4 (±3.9) |
+
+These are directly measured raw engine rates from the exact complete
+eight-feature package stack with command graphs off, F16 KV, and five samples
+at every displayed depth. They are not inferred from the 8K server result and
+no missing depth is interpolated. Raw engine rates exclude HTTP and sampling
+overhead, so use the fresh-server suite median above as the serving headline.
+Evidence: `ornith-15-35b-a3b-q4km-optimized.sweep.json` plus
+`ornith-15-35b-a3b-q4km-optimized.meta.json` (model and benchmark hashes
+inside).
+
+## Historical stock context-depth reference (patch off; llama-bench, FA on, 5 reps)
 
 ![depth sweep](depth-sweep.svg)
 
@@ -125,9 +148,8 @@ matched model-level experiment regressed decode by 52%.
 | 32,768 | 80.42 (±0.16) | 920.1 (±7.4) |
 
 This sweep predates the ordered-add patch and is retained only as a measured
-stock reference. It is not published as the optimized package's context curve;
-that patch-on sweep remains pending. Raw engine rates also run above
-server-suite medians by design (no HTTP/sampling). Evidence:
+stock reference. It is not the optimized package's context curve. Raw engine
+rates also run above server-suite medians by design (no HTTP/sampling). Evidence:
 `ornith-15-35b-a3b-q4km.sweep.json` +
 `ornith-15-35b-a3b-q4km.meta.json` (model/bench SHAs inside).
 

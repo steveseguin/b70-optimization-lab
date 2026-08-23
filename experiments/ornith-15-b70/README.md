@@ -152,9 +152,16 @@ binary, driver, or benchmark protocol will reproduce them.
   every control. Forced output was byte-identical and all canaries passed. The
   complete eight-feature stack removes 600 launches/token. See
   `notes/2026-08-23-ornith35b-moe-shared-residual-rms-positive.md`.
+- **Optimized 0-32K context profile — PUBLISHED, MEASURED ONLY:** the exact
+  eight-feature package stack was swept at seven explicit depths with
+  `pp2048`, `tg128`, five repetitions, flash attention on, F16 KV, and graphs
+  off. Decode measured `125.831` tok/s at depth zero, `113.114` at 8K, and
+  `90.324` at 32K; prefill measured `1402.997`, `1286.069`, and `1100.398`
+  tok/s at those same depths. No point is interpolated or extrapolated. See
+  `notes/2026-08-23-ornith35b-optimized-depth-sweep.md` and the package guide.
 - **Current-stack serialized profile — DIAGNOSTIC ONLY:** temporary device
   barriers ranked dense projections first and routed projections second after
-  the seven accepted optimizations. These serialized values are never
+  the eight accepted optimizations. These serialized values are never
   extrapolated to tok/s. They selected routed down plus its
   weighting/ordered-reduction tail for the next exactness-first test. See
   `notes/2026-08-23-ornith35b-current-stack-op-profile.md`.

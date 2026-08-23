@@ -55,6 +55,42 @@
       "evidence": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-moe-shared-residual-rms-summary.json"
     }
   ],
+  "performance_profiles": [
+    {
+      "id": "decode-vs-context-depth",
+      "label": "Optimized raw decode over existing context depth",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Existing context depth before tg128",
+      "scope": "llama-bench raw engine rates using the exact complete eight-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-optimized.sweep.json",
+      "points": [
+        { "context_tokens": 2048, "value": 121.198575, "samples": 5 },
+        { "context_tokens": 4096, "value": 118.309092, "samples": 5 },
+        { "context_tokens": 8192, "value": 113.113549, "samples": 5 },
+        { "context_tokens": 16384, "value": 104.097194, "samples": 5 },
+        { "context_tokens": 24576, "value": 96.562760, "samples": 5 },
+        { "context_tokens": 32768, "value": 90.323869, "samples": 5 }
+      ]
+    },
+    {
+      "id": "prefill-vs-context-depth",
+      "label": "Optimized raw pp2048 over existing context depth",
+      "metric": "prefill",
+      "unit": "tok/s",
+      "x_label": "Existing context depth before pp2048",
+      "scope": "llama-bench raw engine rates using the exact complete eight-feature patch, graph off, pp2048/tg128, flash attention on, F16 KV, and 5 repetitions. The directly measured zero-depth point remains in the linked raw evidence; no missing depth is interpolated.",
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-optimized.sweep.json",
+      "points": [
+        { "context_tokens": 2048, "value": 1323.205093, "samples": 5 },
+        { "context_tokens": 4096, "value": 1317.981075, "samples": 5 },
+        { "context_tokens": 8192, "value": 1286.068940, "samples": 5 },
+        { "context_tokens": 16384, "value": 1220.103629, "samples": 5 },
+        { "context_tokens": 24576, "value": 1197.532516, "samples": 5 },
+        { "context_tokens": 32768, "value": 1100.398253, "samples": 5 }
+      ]
+    }
+  ],
   "known_limitations": [
     "MoE rate reflects ~3B active parameters; not comparable to dense 35B expectations.",
     "Canary battery is objective self-consistency only; no cross-model oracle.",
@@ -101,6 +137,9 @@
     "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.sweep.json",
     "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.meta.json",
     "repro/ornith-15-35b-a3b-q4km-b70/depth-sweep.svg",
+    "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-optimized.sweep.json",
+    "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-optimized.meta.json",
+    "repro/ornith-15-35b-a3b-q4km-b70/optimized-depth-sweep.svg",
     "scripts/verify-neural-download-model.py",
     "patches/ornith-15-35b-a3b-q4km-b70/README.md",
     "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch",
@@ -132,11 +171,11 @@
     "experiments/ornith-15-b70/data/2026-08-23-ornith35b-moe-shared-residual-rms-summary.json",
     "experiments/ornith-15-b70/data/2026-08-23-ornith35b-moe-shared-residual-rms-canaries.json",
     "experiments/ornith-15-b70/data/2026-08-23-ornith35b-moe-shared-residual-rms-exactness.json",
+    "experiments/ornith-15-b70/notes/2026-08-23-ornith35b-optimized-depth-sweep.md",
     "docs/neural-download-packet-standard.md"
   ],
   "missing": [
     "tested clean-host platform installation",
-    "optimized patch-on context-depth sweep",
     "beginner recovery flow"
   ]
 }

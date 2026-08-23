@@ -1,0 +1,26 @@
+{
+ "format": "neural-download-depth-sweep-meta-v1",
+ "sweep_id": "ornith-15-35b-a3b-q4km-b70-optimized-20260823",
+ "model_path": "/home/steve/.cache/b70-optimization-lab/models/ornith-1.5-35b-a3b-q4km/Ornith-1.5-35B-Q4_K_M.gguf",
+ "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+ "bench_path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31-ornith-moe-graph/bin/llama-bench",
+ "bench_sha256": "9bdd7033e50e22af9b05ec2c30742b5248f6708a89080974b0f0c491963c6e70",
+ "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+ "project_patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch",
+ "project_patch_sha256": "9022e13f8372b03c0ae47fc07229f0a3e1b7e5da8dcb3d54cd4050e7db852624",
+ "ggml_sycl_library_sha256": "78047ec2562261ee3481c6a91d65059af10501e1016ebcc3bdc48cd210934007",
+ "environment": {
+  "GGML_SYCL_ENABLE_GRAPH": "0",
+  "GGML_SYCL_FUSED_MOE_ADD_REDUCE": "1",
+  "GGML_SYCL_FUSED_ORNITH_CONV_SILU": "1",
+  "GGML_SYCL_FUSED_RESIDUAL_RMS_NORM": "1",
+  "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE": "1",
+  "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT": "1",
+  "GGML_SYCL_FUSED_ORNITH_ALPHA_GATE": "1",
+  "GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP": "1",
+  "GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS": "1"
+ },
+ "kv_type": "f16",
+ "depths": "0,2048,4096,8192,16384,24576,32768",
+ "protocol": "llama-bench pp2048+tg128 at each depth, 5 reps, fa=on, raw engine rates"
+}
