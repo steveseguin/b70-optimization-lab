@@ -1,0 +1,45 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "candidate_library_sha256": "2bc3f8e28baef5fc4402f57eb629103ff6b4813577ca4414a035584f60219099",
+  "candidate_patch_sha256": "8a0fb5d26650cf4f87b0ff7a32aa7cae5e3c5cb83b074465d77c5e54675306b0",
+  "candidate_door": "GGML_SYCL_FUSED_ORNITH_BETA_GDN=1",
+  "parent_stack": [
+    "GGML_SYCL_FUSED_MOE_ADD_REDUCE=1",
+    "GGML_SYCL_FUSED_ORNITH_CONV_SILU=1",
+    "GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1",
+    "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1",
+    "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1",
+    "GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1"
+  ],
+  "removed_launches_per_decoded_token_incremental": 30,
+  "engine": {
+    "protocol": "llama-bench p0/n128/d0/r7, same final binary, mirrored control/candidate order",
+    "controls_tok_s": [117.971221, 118.072975],
+    "candidates_tok_s": [119.618176, 118.877559],
+    "control_mean_tok_s": 118.022098,
+    "candidate_mean_tok_s": 119.2478675,
+    "delta_percent": 1.0385932133
+  },
+  "fresh_server": {
+    "protocol": "mirrored fresh control/candidate processes; fixed 12-prompt suite; each prompt once; 512-token responses; median tokens 1-100 after TTFT; cached_tokens=0",
+    "controls_tok_s": [113.63513517253966, 112.16418055683754],
+    "candidates_tok_s": [113.44712788768703, 113.23630567706314],
+    "control_mean_tok_s": 112.8996578646886,
+    "candidate_mean_tok_s": 113.34171678237509,
+    "delta_percent": 0.3915502722,
+    "all_freshness_gates_passed": true,
+    "all_final_gates_passed": true,
+    "each_candidate_exceeded_each_control": false,
+    "ordering_dominated_effect": true
+  },
+  "correctness": {
+    "canonical_128_token_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "same_binary_control_candidate_byte_identical": true,
+    "candidate_beta_gdn_hits_128_tokens": 3810
+  },
+  "result": "closed neutral; not promoted or packaged",
+  "reason": "The isolated engine loop improved, but the realistic server effect was smaller than process-order variation and both candidate runs lost to control A."
+}
