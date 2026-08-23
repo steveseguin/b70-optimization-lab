@@ -41,11 +41,33 @@ This result disproves the blanket claim that speculative decode at TP greater
 than one cannot boot on this container stack. It does not establish TP2 MTP
 speed, acceptance, full-suite quality, or determinism.
 
-## Next qualified door
+## TP4 MTP2 door: PASS
 
-Run the identical graph-off MTP2 boot/canary at TP4, memory utilization 0.60,
-all four cards, and a different fresh ext4 cache. Stop before a performance
-suite. Only a clean TP4 canary pass permits a bounded performance screen.
+The identical graph-off MTP2 boot/canary also passed at TP4 on GPUs 0,1,2,3,
+memory utilization 0.60, seed 0, and a separate fresh ext4 cache. Engine
+initialization took 117.72 seconds, including 101.59 seconds of compilation.
+All four ranks produced distinct AOT artifacts. The canary returned exactly
+`14` with `cached_tokens=0` and `finish_reason=stop`. As at TP2, one 60-second
+shared-memory warning occurred during live compilation and was followed by a
+healthy service; there was no worker exception or missing artifact.
+
+Raw root:
+`/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp4-mtp2-f16-isolated-seed0-smoke-a`.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `canary.json` | `e6b6b8f4c6e3c29f137ccc13c95b50f7c89778695bfebaaea3081cb13fa8926a` |
+| `server.log` | `46c0edc9c82a8410adcb120ca48681e862bdbe5ee89ceaaf10f864347d7b142a` |
+| `identity.env` | `749f67e33442a2f0957e6da253e8a66ccaecd99b70ee62364c8119102b044a23` |
+| complete 5,534-file cache manifest | `6fcf6486096d18460f6da06f7d0290efad2ed951d72d622cb45924102e93a691` |
+
+This closes the TP4 boot goal at smoke depth and supersedes the old blanket
+"TP greater than one does not boot" conclusion. It does not make MTP2 a speed
+win or promotion candidate. The next qualified door is a replay-cache,
+two-prompt, 128-token performance/acceptance screen. A full 25-prompt arm is
+forbidden unless the screen is competitive and correct.
+
+## Runner-only preflight miss
 
 The first runner invocation used a results parent that had not yet been
 created and stopped before Docker launch; its empty cache directory is retained
