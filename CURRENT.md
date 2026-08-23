@@ -130,9 +130,15 @@ fresh serving by **2.74%** (`105.767` to `108.662 tok/s` mean), with exact
 forced output and passing canaries. A fifth, safer direct-state transfer folds
 the exact one-row recurrent gather into that boundary while materializing every
 graph-visible output and leaving the convolution separate. The complete stack
-now removes 410 launches/token. It improved matched engine decode by **1.97%**
+then removes 410 launches/token. It improved matched engine decode by **1.97%**
 and fresh serving by **1.12%** (`110.646` to `111.883 tok/s` mean), again with
-byte-identical forced output and passing canaries. The earlier wider direct-state
+byte-identical forced output and passing canaries. A sixth Qwen-derived transfer
+fuses each recurrent 32-element `alpha + bias -> softplus -> gate` chain while
+preserving the rounded ADD tensor, bringing the stack to 440 removed
+launches/token. Pooled engine decode improved **1.18%** and fresh serving
+improved **2.04%** (`112.030` to `114.314 tok/s` mean); both candidate servers
+beat both controls, forced output was byte-identical, and all canaries passed.
+The earlier wider direct-state
 form remains archived as a correctness negative. The package remains a
 candidate pending clean-host replay; see the [guide](repro/ornith-15-35b-a3b-q4km-b70/README.md),
 [patch packet](patches/ornith-15-35b-a3b-q4km-b70/README.md), and
@@ -140,7 +146,8 @@ candidate pending clean-host replay; see the [guide](repro/ornith-15-35b-a3b-q4k
 [recurrent-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md),
 [residual-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-residual-rms-positive.md),
 [state-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-positive.md),
-and [direct-state evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-direct-positive.md).
+[direct-state evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-direct-positive.md),
+and [alpha-gate evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-alpha-gate-positive.md).
 
 Publication architecture: keep `index.html` curated and put the growing set
 of model/quant/card/OS/native-container variants in `guides.html`. That page

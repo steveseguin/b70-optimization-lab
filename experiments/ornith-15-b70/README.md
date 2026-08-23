@@ -122,6 +122,16 @@ binary, driver, or benchmark protocol will reproduce them.
   `110.646 -> 111.883 tok/s` (+1.12%). Forced 128-token output was
   byte-identical before and after matcher hardening, and all canaries passed.
   See `notes/2026-08-22-ornith35b-concat-state-direct-positive.md`.
+- **Recurrent alpha-gate — ACCEPTED +2.04% incremental serving:** the exact
+  32-element FP32 `alpha + ssm_dt.bias -> softplus -> ssm_a` chain appears in
+  all 30 recurrent layers. The strict fusion materializes the original rounded
+  ADD output and requires exact adjacency, names, shapes, layout, source order,
+  output flags, and sole-consumer proofs. Pooled engine means improved
+  `116.657 -> 118.040 tok/s` (+1.18%); fresh-server means improved
+  `112.030 -> 114.314 tok/s` (+2.04%). Both candidate servers beat both
+  controls, forced 128-token output was byte-identical, and all canaries
+  passed. The complete stack removes 440 launches/token. See
+  `notes/2026-08-22-ornith35b-alpha-gate-positive.md`.
 - **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
   tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
   the tuned dispatch and beat the now-promoted ordered reduction.

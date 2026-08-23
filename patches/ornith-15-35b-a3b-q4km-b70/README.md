@@ -7,24 +7,25 @@ the recipe and validation evidence in this repository are the source of truth.
 ## Identity
 
 - Base: llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`.
-- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-20260822.patch`.
+- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch`.
 - Patch SHA-256:
-  `8ade7f2bcb4410c7e3a69e9e673fc0b2f30dae6c2b85896ebe52883c4e731bcf`.
+  `006d90f144058fb0ae1eb0477cbda6355f748716c760f0f094ce8b2dbec12501`.
 - Runtime doors: `GGML_SYCL_FUSED_MOE_ADD_REDUCE=1` and
   `GGML_SYCL_FUSED_ORNITH_CONV_SILU=1` and
   `GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1` and
   `GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1` and
-  `GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1` (all default off).
+  `GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1` and
+  `GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1` (all default off).
 - Validated `libggml-sycl.so` SHA-256:
-  `7b9735458dcfdc94b71a3eeb7e9a00cbe349a93242f03d6f8639996c87a7152d`.
+  `3887af763ac560ca277dd224ded611b083798dd27f149b7caf886c831460f637`.
 
 Apply only to the pinned clean base:
 
 ```bash
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
-sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-20260822.patch
-git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-20260822.patch
-git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-20260822.patch
+sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch
+git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch
+git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch
 git diff --check
 ```
 
@@ -42,7 +43,7 @@ The full-model trace observed 40 ordered-reduction matches, 30 recurrent
 convolution/SiLU matches, 80 residual/RMSNorm matches, and 30 recurrent
 concat/state matches per token. The direct state-materialization path replaces
 the latter boundary and also removes 30 recurrent `GET_ROWS` launches. Together
-the complete stack removes 410 launches/token.
+the complete stack removes 440 launches/token.
 
 The second fusion accepts only the exact one-token `[4,8192]` FP32 convolution
 whose sole consumer is a full-width SiLU. It preserves stock state handling,
@@ -66,6 +67,13 @@ old state values before any write, then materializes the original `GET_ROWS`
 output, complete concat output, and shifted persistent state. It leaves the
 convolution separate. Exact source identity, sole-consumer, node-order, shape,
 stride, and non-overlap gates fall back to the fourth fusion on any mismatch.
+
+The sixth fusion recognizes only Ornith's recurrent 32-element FP32
+`alpha + ssm_dt.bias -> softplus -> multiply by ssm_a` chain. It materializes
+and rereads the original rounded ADD tensor before applying the existing SYCL
+softplus expression and gate multiplication. Exact node adjacency, names,
+shapes, source order, layout, output flags, and sole-consumer checks fail closed
+to the prior stack.
 
 ## Validation
 
@@ -94,6 +102,11 @@ stride, and non-overlap gates fall back to the fourth fusion on any mismatch.
   reaching a `111.882513 tok/s` two-server mean. Its forced 128-token output
   was byte-identical before and after matcher hardening, and all candidate
   canaries passed.
+- The added recurrent alpha-gate fusion improved pooled matched raw-engine
+  decode by **+1.18%** and two-fresh-server decode by **+2.04%** over the prior
+  stack, reaching a `114.314270 tok/s` two-server mean. Each candidate server
+  exceeded each control; forced 128-token output was byte-identical and all
+  candidate canaries passed.
 
 Fresh stock servers matched `0/12` complete response hashes with each other on
 the long realistic suite. That pre-existing cross-process instability is
@@ -110,3 +123,5 @@ The incremental recurrent-state result is in
 [`2026-08-22-ornith35b-concat-state-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-positive.md).
 The direct gathered-state increment is in
 [`2026-08-22-ornith35b-concat-state-direct-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-direct-positive.md).
+The recurrent alpha-gate increment is in
+[`2026-08-22-ornith35b-alpha-gate-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-alpha-gate-positive.md).

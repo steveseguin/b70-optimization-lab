@@ -1,0 +1,43 @@
+{
+  "date": "2026-08-22",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "candidate_library_sha256": "3887af763ac560ca277dd224ded611b083798dd27f149b7caf886c831460f637",
+  "candidate_door": "GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1",
+  "parent_stack": [
+    "GGML_SYCL_FUSED_MOE_ADD_REDUCE=1",
+    "GGML_SYCL_FUSED_ORNITH_CONV_SILU=1",
+    "GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1",
+    "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1",
+    "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1"
+  ],
+  "removed_launches_per_decoded_token_incremental": 30,
+  "removed_launches_per_decoded_token_complete_stack": 440,
+  "engine": {
+    "protocol": "llama-bench p0/n128/d0/r7, same final binary",
+    "controls_tok_s": [118.216793, 116.266630, 116.228967, 115.917604],
+    "candidates_tok_s": [118.014641, 118.093770, 118.739004, 117.311448],
+    "control_mean_tok_s": 116.6574985,
+    "candidate_mean_tok_s": 118.03971575,
+    "delta_percent": 1.1848507535
+  },
+  "fresh_server": {
+    "protocol": "two fresh controls and two fresh candidates; fixed 12-prompt suite; each prompt once; 512-token responses; median tokens 1-100 after TTFT; cached_tokens=0",
+    "controls_tok_s": [112.63641619130209, 111.42306524680754],
+    "candidates_tok_s": [113.95174038323276, 114.67679958242812],
+    "control_mean_tok_s": 112.02974071905481,
+    "candidate_mean_tok_s": 114.31426998283044,
+    "delta_percent": 2.0392167733,
+    "all_freshness_gates_passed": true,
+    "all_final_gates_passed": true,
+    "each_candidate_exceeded_each_control": true
+  },
+  "correctness": {
+    "canonical_128_token_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "same_binary_control_candidate_byte_identical": true,
+    "candidate_alpha_gate_hits_128_tokens": 3810,
+    "canaries_passed": true
+  },
+  "result": "accepted incremental optimization"
+}
