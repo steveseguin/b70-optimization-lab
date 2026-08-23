@@ -1,0 +1,60 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-A3B-Q4_K_M",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "llama_cpp_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "stack": "accepted eleven-feature Ornith source stack plus UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1",
+  "candidate": "direct result_norm row into the Q6_K result_output projection, bypassing the final one-row F32 GET_ROWS copy",
+  "candidate_door": "GGML_SYCL_FUSED_ORNITH_FINAL_GET_ROWS=1",
+  "control": "candidate door unset",
+  "launch_audit": {
+    "generated_tokens": 127,
+    "generic_get_rows_total": 450,
+    "generic_conv_state": 120,
+    "generic_gdn_state": 120,
+    "accepted_concat_state_direct_hits": 3810,
+    "accepted_gdn_state_io_hits": 3810,
+    "accepted_qk_norm_rope_hits": 1270,
+    "interpretation": "the generic recurrent state gathers occur in prompt/setup graphs; all 30 recurrent state gathers are already suppressed in one-token decode. Serialized profiler GET_ROWS time was deferred-work attribution, not recurrent decode execution."
+  },
+  "mechanism": {
+    "strict_shape": "F32 [2048,1] result_norm -> one-row GET_ROWS -> Q6_K [2048,248320] result_output",
+    "candidate_hits": 127,
+    "expected_hits": 127,
+    "launches_removed_per_decoded_token": 1,
+    "qwen_transfer_distinction": "unlike the rejected Qwen Q8 output-head fusion, this Q6_K path consumes FP32 directly and adds no activation quantization"
+  },
+  "exactness": {
+    "control_transcript_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "candidate_transcript_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "byte_identical": true,
+    "control_transcript_gzip_sha256": "0f3a973bd616608dcb8a0a7e97b156a17fd2c08f2b737835ab185a2be2631cf6",
+    "candidate_transcript_gzip_sha256": "0f3a973bd616608dcb8a0a7e97b156a17fd2c08f2b737835ab185a2be2631cf6"
+  },
+  "engine_tg128": {
+    "protocol": "llama-bench p0/n128/d0/r7, same binary, mirrored control/candidate/candidate/control",
+    "control_run_avg_tok_s": [133.737208, 133.462892],
+    "candidate_run_avg_tok_s": [133.698322, 133.612547],
+    "control_mean_tok_s": 133.60005,
+    "candidate_mean_tok_s": 133.6554345,
+    "delta_percent": 0.04145544855709282
+  },
+  "raw_artifact_sha256": {
+    "A1_control_bench_json": "7f21f6cc1a15fa827626871060b98a2a8c33063a0e7f7ee290a1872a3ee2fc03",
+    "A2_control_bench_json": "c84a44c300ce46ba121ac703bb0dfeac0d28acd4b02ee94b5a303f6fba49d5ff",
+    "B1_candidate_bench_json": "2b6a3a6806d154677b96d811d49bda947110468bc5cced9ecef2de17e06ae3f3",
+    "B2_candidate_bench_json": "d2413643e703d5394c3b3bb3e9c1b18c4c627598f60314d25c5e412621ac1e84",
+    "launch_audit_log_gzip": "ddc8922701aa7b9da0e1e7216118e1e47db75e980fd063ceb17a89bad630308c",
+    "candidate_incremental_patch": "15fc05bce8a5234eef1ad647aa6d5538438363743be6ed8d0d410b56b555fd7c"
+  },
+  "server_test_run": false,
+  "accepted_stack_changed": false,
+  "restored_source_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+  "restored_server_sha256": "08bc580449dbc781fedd63db8039eed624817f07535a3f8a023280451f0c6e6f",
+  "restored_bench_sha256": "9bdd7033e50e22af9b05ec2c30742b5248f6708a89080974b0f0c491963c6e70",
+  "restored_cli_sha256": "b791b681d42ad4d6862bf94798bbaff97ead195fb4fb67e7f5c0be2bf7a80135",
+  "restored_library_sha256": "060484479736f7cb7b6f55aacc38b9fdf162fb702fc3d73b1a1ce9750301fdcf",
+  "decision": "closed engine-neutral; preserve as a negative/neutral transfer result and do not ship",
+  "no_extrapolation": true
+}

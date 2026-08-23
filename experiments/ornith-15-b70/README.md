@@ -316,6 +316,14 @@ binary, driver, or benchmark protocol will reproduce them.
   reduced engine rate (`121.576 -> 121.233 -> 121.087 tok/s`). No server test
   was justified. See
   `notes/2026-08-23-ornith35b-lmhead-subgroups-negative.md`.
+- **Final output-head `GET_ROWS` bypass — CLOSED ENGINE NEUTRAL:** an execution
+  audit first confirmed that accepted recurrent fusions already suppress every
+  generic state gather in one-token decode; their serialized profile time was
+  deferred-work attribution. A strict direct-FP32 bypass for the one remaining
+  `result_norm` gather was byte-exact, hit all 127 generated tokens, and removed
+  one launch/token, but mirrored engine means moved only
+  `133.600 -> 133.655 tok/s` (+0.041%). No server test was justified. See
+  `notes/2026-08-23-ornith35b-final-getrows-direct-neutral.md`.
 - **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
   accepted only 22/336 reported draft tokens and reduced the fresh-suite median
   from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed

@@ -1,0 +1,84 @@
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -6777,6 +6777,68 @@
+     return true;
+ }
+ 
++static std::atomic<uint64_t> g_ggml_sycl_ornith_final_get_rows_hits{0};
++
++static bool ggml_sycl_ornith_final_get_rows_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_FINAL_GET_ROWS");
++        const bool on = value != nullptr && std::strcmp(value, "0") != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_final_get_rows: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_final_get_rows_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++// A one-token decode graph has a final F32 GET_ROWS named result_norm whose
++// source also has exactly one row. Its sole valid index is therefore zero and
++// the copy cannot change any bits. Let the immediately following Q6_K output
++// head read that source row directly, removing one launch and an 8 KiB copy.
++static ggml_tensor * ggml_sycl_find_ornith_final_get_rows(
++        const ggml_cgraph * cgraph, int node_idx) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_final_get_rows_enabled() ||
++        node_idx < 0 || node_idx + 1 >= cgraph->n_nodes) {
++        return nullptr;
++    }
++
++    ggml_tensor * get = cgraph->nodes[node_idx];
++    ggml_tensor * out = cgraph->nodes[node_idx + 1];
++    if (get == nullptr || out == nullptr || get->op != GGML_OP_GET_ROWS ||
++        out->op != GGML_OP_MUL_MAT || std::strcmp(get->name, "result_norm") != 0 ||
++        std::strcmp(out->name, "result_output") != 0 || get->src[0] == nullptr ||
++        get->src[1] == nullptr || out->src[0] == nullptr || out->src[1] != get ||
++        get->type != GGML_TYPE_F32 || get->src[0]->type != GGML_TYPE_F32 ||
++        get->src[1]->type != GGML_TYPE_I32 || out->src[0]->type != GGML_TYPE_Q6_K ||
++        out->type != GGML_TYPE_F32 || !ggml_is_contiguous(get) ||
++        !ggml_is_contiguous(get->src[0]) || ggml_nrows(get) != 1 ||
++        ggml_nrows(get->src[0]) != 1 || ggml_nelements(get) != 2048 ||
++        ggml_nelements(get->src[0]) != 2048 || ggml_nelements(get->src[1]) != 1 ||
++        out->ne[0] != 248320 || out->ne[1] != 1 || out->ne[2] != 1 || out->ne[3] != 1 ||
++        out->src[0]->ne[0] != 2048 || out->src[0]->ne[1] != 248320 ||
++        get->data == get->src[0]->data) {
++        return nullptr;
++    }
++
++    // The skipped graph-visible row may not feed any other compute node.
++    for (int j = node_idx + 1; j < cgraph->n_nodes; ++j) {
++        ggml_tensor * consumer = cgraph->nodes[j];
++        if (consumer == nullptr) {
++            continue;
++        }
++        for (int s = 0; s < GGML_MAX_SRC; ++s) {
++            if (consumer->src[s] == get && !(consumer == out && s == 1)) {
++                return nullptr;
++            }
++        }
++    }
++    return out;
++}
++
+ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
+     ggml_sycl_set_main_device(sycl_ctx->device);
+ 
+@@ -6833,6 +6895,12 @@
+         }
+ 
+         if (node->op == GGML_OP_GET_ROWS) {
++            if (ggml_tensor * out = ggml_sycl_find_ornith_final_get_rows(cgraph, i)) {
++                ggml_sycl_mul_mat(*sycl_ctx, out->src[0], node->src[0], out);
++                g_ggml_sycl_ornith_final_get_rows_hits.fetch_add(1, std::memory_order_relaxed);
++                i++;
++                continue;
++            }
+             ggml_sycl_ornith_gdn_state_io_match gdn_state_io;
+             if (ggml_sycl_find_ornith_gdn_state_io(cgraph, i, gdn_state_io)) {
+                 pending_ornith_gdn_state_io.push_back(gdn_state_io);

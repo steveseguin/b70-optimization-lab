@@ -53,3 +53,16 @@ The default-off profiler is archived at
 The compressed raw log, CLI transcript, and structured ranking are adjacent
 under `../data/`. After capture, the complete source diff and all four
 published binaries were restored byte-exact to the accepted package.
+
+## Follow-up correction
+
+A later execution-counter audit confirmed that the 120 convolution-state and
+120 GDN-state generic gathers belong to prompt/setup graphs. In the 127-token
+decode interval, the accepted direct concat/state and in-place GDN state paths
+each fired all 3,810 expected times, leaving no generic recurrent state gather
+in one-token decode. The large serialized `GET_ROWS` family value above is
+therefore deferred-work attribution, not a count or cost of recurrent decode
+gathers. The actual remaining one-token `result_norm` gather was bypassed by an
+exact Q6_K output-head candidate, but the matched engine moved only +0.0415%,
+so it was closed neutral. See
+`2026-08-23-ornith35b-final-getrows-direct-neutral.md`.
