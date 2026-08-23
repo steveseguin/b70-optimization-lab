@@ -1,0 +1,280 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 917574a..5b22058 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -4654,6 +4654,147 @@ static bool ggml_sycl_mul_mat_glu_mmvq_fused(ggml_backend_sycl_context & ctx, gg
+                                                /*stride_col_dst=*/(int) glu->ne[0], stream);
+ }
+ 
++static std::atomic<uint64_t> g_ggml_sycl_ornith_beta_sigmoid_mmvq_hits{0};
++
++static bool ggml_sycl_ornith_beta_sigmoid_mmvq_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_SPEC_BETA_SIGMOID_MMVQ");
++        const bool on = value != nullptr && std::strcmp(value, "0") != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_beta_sigmoid_mmvq: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_beta_sigmoid_mmvq_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++// Ornith 1.5 inherits Qwen3.5's 32-value recurrent beta projection. For the
++// two-token speculative verifier, preserve the stock Q4_K reordered MMVQ
++// reduction and apply the stock FP32 sigmoid expression only at its store.
++// The sigmoid output remains the graph-visible allocation consumed by GDN;
++// no pre-sigmoid temporary is kept live beyond its planned lifetime.
++static bool ggml_sycl_ornith_beta_sigmoid_mmvq_fused(
++        ggml_backend_sycl_context & ctx, const ggml_cgraph * cgraph, int node_idx,
++        ggml_tensor *& sigmoid_out) {
++    sigmoid_out = nullptr;
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_beta_sigmoid_mmvq_enabled() ||
++        cgraph == nullptr || node_idx < 0 || node_idx >= cgraph->n_nodes ||
++        g_ggml_sycl_prioritize_dmmv) {
++        return false;
++    }
++
++    ggml_tensor * mm = cgraph->nodes[node_idx];
++    if (mm == nullptr || mm->op != GGML_OP_MUL_MAT || mm->src[0] == nullptr ||
++        mm->src[1] == nullptr || mm->src[0]->type != GGML_TYPE_Q4_K ||
++        mm->src[1]->type != GGML_TYPE_F32 || mm->type != GGML_TYPE_F32 ||
++        std::strstr(mm->src[0]->name, "ssm_beta.weight") == nullptr ||
++        mm->src[0]->ne[0] != 2048 || mm->src[0]->ne[1] != 32 ||
++        mm->src[1]->ne[0] != 2048 || mm->src[1]->ne[1] != 2 ||
++        mm->src[1]->ne[2] != 1 || mm->src[1]->ne[3] != 1 ||
++        mm->ne[0] != 32 || mm->ne[1] != 2 || mm->ne[2] != 1 || mm->ne[3] != 1 ||
++        !ggml_is_contiguous(mm) ||
++        ggml_backend_buffer_is_sycl_split(mm->src[0]->buffer)) {
++        return false;
++    }
++
++    const auto use_count = [cgraph](const ggml_tensor * tensor) {
++        int uses = 0;
++        for (int i = 0; i < cgraph->n_nodes; ++i) {
++            const ggml_tensor * consumer = cgraph->nodes[i];
++            if (consumer == nullptr) {
++                continue;
++            }
++            for (int s = 0; s < GGML_MAX_SRC; ++s) {
++                uses += consumer->src[s] == tensor;
++            }
++        }
++        return uses;
++    };
++    if (use_count(mm) != 1 || (mm->flags & GGML_TENSOR_FLAG_OUTPUT) != 0) {
++        return false;
++    }
++
++    ggml_tensor * found = nullptr;
++    for (int j = node_idx + 1; j < cgraph->n_nodes; ++j) {
++        ggml_tensor * candidate = cgraph->nodes[j];
++        if (candidate == nullptr || candidate->op != GGML_OP_UNARY ||
++            ggml_get_unary_op(candidate) != GGML_UNARY_OP_SIGMOID ||
++            candidate->src[0] == nullptr) {
++            continue;
++        }
++        const ggml_tensor * cur = candidate->src[0];
++        bool chain_ok = true;
++        while (cur != mm && cur != nullptr &&
++               (cur->op == GGML_OP_RESHAPE || cur->op == GGML_OP_VIEW ||
++                cur->op == GGML_OP_PERMUTE || cur->op == GGML_OP_TRANSPOSE)) {
++            if (use_count(cur) != 1 || (cur->flags & GGML_TENSOR_FLAG_OUTPUT) != 0) {
++                chain_ok = false;
++                break;
++            }
++            cur = cur->src[0];
++        }
++        if (!chain_ok || cur != mm) {
++            continue;
++        }
++        if (found != nullptr) {
++            return false;
++        }
++        found = candidate;
++    }
++    if (found == nullptr || use_count(found) != 1 ||
++        (found->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        found->type != GGML_TYPE_F32 || ggml_nelements(found) != 64 ||
++        found->ne[0] != 1 || found->ne[1] != 32 || found->ne[2] != 2 || found->ne[3] != 1 ||
++        !ggml_is_contiguous(found) || std::strstr(found->name, "beta_sigmoid-") == nullptr) {
++        return false;
++    }
++
++    bool feeds_gdn = false;
++    for (int j = node_idx + 1; j < cgraph->n_nodes; ++j) {
++        const ggml_tensor * consumer = cgraph->nodes[j];
++        if (consumer != nullptr && consumer->op == GGML_OP_GATED_DELTA_NET &&
++            consumer->src[4] == found && consumer->src[2] != nullptr &&
++            consumer->src[2]->ne[0] == 128 && consumer->src[2]->ne[1] == 32 &&
++            consumer->src[2]->ne[2] == 2 && consumer->src[2]->ne[3] == 1) {
++            feeds_gdn = true;
++            break;
++        }
++    }
++    if (!feeds_gdn) {
++        return false;
++    }
++
++    opt_for_reorder(&ctx, mm->src[0], mm->src[1], mm, mul_mat_algo::MMVQ);
++    const auto * extra = static_cast<const ggml_tensor_extra_gpu *>(mm->src[0]->extra);
++    if (extra == nullptr || !extra->optimized_feature.reorder) {
++        return false;
++    }
++
++    scope_op_debug_print scope_dbg_print(__func__, mm, /*num_src=*/2,
++                                         " : fused with beta sigmoid");
++    const int src1_padded_cols = GGML_PAD((int) mm->src[0]->ne[0], MATRIX_ROW_PADDING);
++    ggml_sycl_pool_alloc<char> src1_q8_alloc(
++        ctx.pool(), (size_t) 2 * src1_padded_cols * sizeof(block_q8_1) / QK8_1);
++    char * src1_ddq = src1_q8_alloc.get();
++    quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>(
++        (const float *) mm->src[1]->data, src1_ddq, (int) mm->src[0]->ne[0], 2,
++        src1_padded_cols, ctx.stream());
++
++    if (!ggml_sycl_mul_mat_vec_q_sigmoid_2_reorder(
++            mm->src[0]->type, mm->src[0]->data, src1_ddq, (float *) found->data,
++            (int) mm->src[0]->ne[0], (int) mm->src[0]->ne[1],
++            src1_padded_cols * (int) sizeof(block_q8_1) / QK8_1,
++            /*stride_col_dst=*/32, ctx.stream())) {
++        return false;
++    }
++    sigmoid_out = found;
++    return true;
++}
++
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_moe_gate_up_hits{0};
+ 
+ static bool ggml_sycl_ornith_moe_gate_up_enabled() {
+@@ -6782,6 +6923,8 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+ 
+     std::vector<ggml_tensor *> precomputed_ornith_silu;
+     precomputed_ornith_silu.reserve(64);
++    std::vector<ggml_tensor *> precomputed_ornith_beta_sigmoid;
++    precomputed_ornith_beta_sigmoid.reserve(40);
+     std::vector<ggml_sycl_ornith_concat_state_direct_match> pending_ornith_concat_state_direct;
+     pending_ornith_concat_state_direct.reserve(64);
+     std::vector<ggml_sycl_ornith_gdn_rms_gate_match> pending_ornith_gdn_rms_gate;
+@@ -6804,6 +6947,10 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             precomputed_ornith_silu.end()) {
+             continue;
+         }
++        if (std::find(precomputed_ornith_beta_sigmoid.begin(), precomputed_ornith_beta_sigmoid.end(), node) !=
++            precomputed_ornith_beta_sigmoid.end()) {
++            continue;
++        }
+ 
+         const auto qk_pending = std::find_if(
+             pending_ornith_qk_norm_rope.begin(), pending_ornith_qk_norm_rope.end(),
+@@ -6983,9 +7130,18 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             continue;
+         }
+ 
+-        if (node->op == GGML_OP_MUL_MAT && ggml_sycl_mul_mat_glu_mmvq_fused(*sycl_ctx, cgraph, i)) {
+-            i += 2;
+-            continue;
++        if (node->op == GGML_OP_MUL_MAT) {
++            ggml_tensor * beta_sigmoid = nullptr;
++            if (ggml_sycl_ornith_beta_sigmoid_mmvq_fused(
++                    *sycl_ctx, cgraph, i, beta_sigmoid)) {
++                precomputed_ornith_beta_sigmoid.push_back(beta_sigmoid);
++                g_ggml_sycl_ornith_beta_sigmoid_mmvq_hits.fetch_add(1, std::memory_order_relaxed);
++                continue;
++            }
++            if (ggml_sycl_mul_mat_glu_mmvq_fused(*sycl_ctx, cgraph, i)) {
++                i += 2;
++                continue;
++            }
+         }
+ 
+         if (node->op == GGML_OP_MUL_MAT_ID &&
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+index 3f09854..30dc393 100644
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -59,7 +59,7 @@ static void mul_mat_vec_q_reorder(const void * __restrict__ vx, const void * __r
+ 
+ // With has_fusion, `vgate` is a second weight matrix sharing vx's shape, stride and reorder
+ // layout: one pass computes both row dot products and the epilogue writes glu(gate, up).
+-template <typename reorder_vec_dot_q_sycl, int ncols_dst, bool has_fusion = false>
++template <typename reorder_vec_dot_q_sycl, int ncols_dst, bool has_fusion = false, bool has_sigmoid = false>
+ static void mul_mat_vec_q_reorder_ncols(const void * __restrict__ vx, const void * __restrict__ vgate,
+                                         const void * __restrict__ vy, float * __restrict__ dst, const int ncols,
+                                         const int nrows, const int stride_col_y_bytes, const int stride_col_dst,
+@@ -132,6 +132,12 @@ static void mul_mat_vec_q_reorder_ncols(const void * __restrict__ vx, const void
+         }
+ 
+         if (sg.leader()) {
++            if constexpr (has_sigmoid) {
++                // Only the subgroup leader stores this row. Keeping sigmoid
++                // here avoids evaluating the expensive exp redundantly in
++                // every lane after the subgroup reduction.
++                sum = 1.0f / (1.0f + op_exp(-sum));
++            }
+             dst[j * stride_col_dst + row] = sum;
+         }
+     }
+@@ -3010,3 +3016,38 @@ bool ggml_sycl_mul_mat_vec_q_glu_reorder(enum ggml_type src0_type, enum ggml_glu
+             return false;
+     }
+ }
++
++template <typename reorder_vec_dot_q_sycl>
++static void launch_mul_mat_vec_q_reorder_sigmoid_2(const void * vx, const void * vy, float * dst,
++                                                   const int ncols, const int nrows,
++                                                   const int stride_col_y_bytes,
++                                                   const int stride_col_dst,
++                                                   dpct::queue_ptr stream) {
++    GGML_ASSERT(ncols % QK_K == 0);
++    constexpr size_t num_subgroups = WARP_SIZE;
++    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
++    const sycl::range<3> block_nums(1, 1, block_num_y);
++    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
++
++    stream->submit([&](sycl::handler & cgh) {
++        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                             mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl, 2,
++                                 /*has_fusion=*/ false, /*has_sigmoid=*/ true>(
++                                 vx, nullptr, vy, dst, ncols, nrows, stride_col_y_bytes,
++                                 stride_col_dst, GGML_GLU_OP_SWIGLU, nd_item);
++                         });
++    });
++}
++
++bool ggml_sycl_mul_mat_vec_q_sigmoid_2_reorder(enum ggml_type src0_type, const void * vx,
++                                                const void * vy, float * dst, int ncols,
++                                                int nrows, int stride_col_y_bytes,
++                                                int stride_col_dst, dpct::queue_ptr stream) {
++    if (src0_type != GGML_TYPE_Q4_K) {
++        return false;
++    }
++    launch_mul_mat_vec_q_reorder_sigmoid_2<reorder_vec_dot_q_sycl<GGML_TYPE_Q4_K>>(
++        vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream);
++    return true;
++}
+diff --git a/ggml/src/ggml-sycl/mmvq.hpp b/ggml/src/ggml-sycl/mmvq.hpp
+index 5787870..3fda9c4 100644
+--- a/ggml/src/ggml-sycl/mmvq.hpp
++++ b/ggml/src/ggml-sycl/mmvq.hpp
+@@ -91,4 +91,16 @@ bool ggml_sycl_mul_mat_vec_q_glu_reorder(
+     int                stride_col_dst,       // floats between output columns in dst
+     dpct::queue_ptr    stream);
+ 
++// Q4_K two-column MMVQ with the stock FP32 sigmoid as its write epilogue.
++bool ggml_sycl_mul_mat_vec_q_sigmoid_2_reorder(
++    enum ggml_type  src0_type,
++    const void *    vx,
++    const void *    vy,
++    float *         dst,
++    int             ncols,
++    int             nrows,
++    int             stride_col_y_bytes,
++    int             stride_col_dst,
++    dpct::queue_ptr stream);
++
+ #endif // GGML_SYCL_MMVQ_HPP

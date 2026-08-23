@@ -1,0 +1,32 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-A3B-Q4_K_M",
+  "device": "Intel Arc Pro B70 GPU 0",
+  "protocol": "fresh-process llama-cli, fixed seed 42, greedy, MTP1, 128 generated tokens",
+  "accepted_source_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+  "candidate_patch_sha256": "26847b9f8785daea9b09207b6d42cb2c243be4b179e7b6edf42934c4c74d5fcd",
+  "runs": [
+    {
+      "arm": "control",
+      "generation_tokens_per_second": 65.2,
+      "fused_hits": 0,
+      "transcript_matches_control": true
+    },
+    {
+      "arm": "candidate_all_lanes",
+      "generation_tokens_per_second": 58.9,
+      "delta_percent_vs_control": -9.662576687116564,
+      "fused_hits": 2490,
+      "transcript_matches_control": true
+    },
+    {
+      "arm": "candidate_leader_masked",
+      "generation_tokens_per_second": 59.4,
+      "delta_percent_vs_control": -8.895705521472386,
+      "fused_hits": 2490,
+      "transcript_matches_control": true
+    }
+  ],
+  "decision": "closed_negative",
+  "reason": "The exact sigmoid epilogue is issued at MMVQ subgroup granularity. It is substantially slower than the compact standalone elementwise sigmoid, even when masked to subgroup leaders. Full position-balanced and server screens were stopped after both bounded candidates were far below control."
+}
