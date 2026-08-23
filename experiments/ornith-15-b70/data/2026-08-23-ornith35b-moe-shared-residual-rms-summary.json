@@ -1,0 +1,62 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "candidate_library_sha256": "78047ec2562261ee3481c6a91d65059af10501e1016ebcc3bdc48cd210934007",
+  "candidate_patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch",
+  "candidate_patch_sha256": "9022e13f8372b03c0ae47fc07229f0a3e1b7e5da8dcb3d54cd4050e7db852624",
+  "candidate_door": "GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1",
+  "parent_stack": [
+    "GGML_SYCL_FUSED_MOE_ADD_REDUCE=1",
+    "GGML_SYCL_FUSED_ORNITH_CONV_SILU=1",
+    "GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1",
+    "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1",
+    "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1",
+    "GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1",
+    "GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1"
+  ],
+  "removed_launches_per_decoded_token_incremental": 40,
+  "removed_launches_per_decoded_token_complete_stack": 600,
+  "engine": {
+    "protocol": "llama-bench p0/n128/d0/r7, same final binary, mirrored sequence",
+    "controls_tok_s": [
+      120.113696,
+      120.406444
+    ],
+    "candidates_tok_s": [
+      121.084735,
+      121.82709
+    ],
+    "control_mean_tok_s": 120.26007,
+    "candidate_mean_tok_s": 121.4559125,
+    "delta_percent": 0.9943803459,
+    "each_candidate_exceeded_each_control": true
+  },
+  "fresh_server": {
+    "protocol": "two fresh controls and two fresh candidates; fixed 12-prompt suite; each prompt once; 512-token maximum; median tokens 1-100 after TTFT; cached_tokens=0",
+    "controls_tok_s": [
+      116.79053494102706,
+      116.02243149823434
+    ],
+    "candidates_tok_s": [
+      118.59247744448996,
+      117.50450141074327
+    ],
+    "control_mean_tok_s": 116.4064832196307,
+    "candidate_mean_tok_s": 118.04848942761662,
+    "delta_percent": 1.4105796882,
+    "all_freshness_gates_passed": true,
+    "all_final_gates_passed": true,
+    "each_candidate_exceeded_each_control": true
+  },
+  "correctness": {
+    "canonical_128_token_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "same_binary_control_candidate_byte_identical": true,
+    "candidate_new_fused_hits_128_tokens": 5080,
+    "candidate_prior_residual_fused_hits_128_tokens": 5080,
+    "control_prior_residual_fused_hits_128_tokens": 10160,
+    "canaries_passed": true
+  },
+  "result": "accepted incremental optimization"
+}

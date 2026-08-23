@@ -7,26 +7,27 @@ the recipe and validation evidence in this repository are the source of truth.
 ## Identity
 
 - Base: llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`.
-- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch`.
+- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch`.
 - Patch SHA-256:
-  `3734ebf7b4e09c4d1f7e85b75f040dc450202c4f3dfd73a21d9ba90ff634536b`.
+  `9022e13f8372b03c0ae47fc07229f0a3e1b7e5da8dcb3d54cd4050e7db852624`.
 - Runtime doors: `GGML_SYCL_FUSED_MOE_ADD_REDUCE=1` and
   `GGML_SYCL_FUSED_ORNITH_CONV_SILU=1` and
   `GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1` and
   `GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1` and
   `GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1` and
   `GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1` and
-  `GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1` (all default off).
+  `GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1` and
+  `GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1` (all default off).
 - Validated `libggml-sycl.so` SHA-256:
-  `cbe101e6573100e10877ee059f326b23580cc7c15161a132608c771d34840671`.
+  `78047ec2562261ee3481c6a91d65059af10501e1016ebcc3bdc48cd210934007`.
 
 Apply only to the pinned clean base:
 
 ```bash
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
-sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch
-git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch
-git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch
+sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch
+git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch
+git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-shared-residual-rms-20260823.patch
 git diff --check
 ```
 
@@ -44,7 +45,7 @@ The full-model trace observed 40 ordered-reduction matches, 30 recurrent
 convolution/SiLU matches, 80 residual/RMSNorm matches, and 30 recurrent
 concat/state matches per token. The direct state-materialization path replaces
 the latter boundary and also removes 30 recurrent `GET_ROWS` launches. Together
-the complete stack removes 560 launches/token.
+the complete stack removes 600 launches/token.
 
 The second fusion accepts only the exact one-token `[4,8192]` FP32 convolution
 whose sole consumer is a full-width SiLU. It preserves stock state handling,
@@ -84,6 +85,13 @@ sole-use, strides, quantization, layout, and device checks fail closed. It
 removes one duplicate input quantization, one routed GEMV, and one GLU launch
 per MoE layer, or 120 launches/token.
 
+The eighth fusion extends the Qwen-derived residual/RMSNorm path across the
+preceding routed-plus-shared-expert ADD. It writes and reloads both original
+FP32 ADD destinations before the unchanged RMS reduction, preserving their
+graph-visible rounding and other consumers. Exact tensor names, node order,
+shape, stride, type, and ownership checks fail closed. It removes one launch
+per MoE layer, or another 40 launches/token.
+
 ## Validation
 
 - Raw engine A/B/B/A-style means: `103.047744` control versus
@@ -120,6 +128,11 @@ per MoE layer, or 120 launches/token.
   **+2.09%** and two-fresh-server decode by **+2.33%** over the prior stack,
   reaching a `115.680299 tok/s` two-server mean. Every candidate exceeded every
   control; forced 128-token output was byte-identical and all canaries passed.
+- The added MoE shared-branch residual/RMSNorm fusion improved mirrored
+  raw-engine decode by **+0.99%** and two-fresh-server decode by **+1.41%**
+  over the prior stack, reaching a `118.048489 tok/s` two-server mean. Every
+  candidate exceeded every control; forced 128-token output was byte-identical
+  and all canaries passed.
 
 Fresh stock servers matched `0/12` complete response hashes with each other on
 the long realistic suite. That pre-existing cross-process instability is
@@ -140,3 +153,5 @@ The recurrent alpha-gate increment is in
 [`2026-08-22-ornith35b-alpha-gate-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-alpha-gate-positive.md).
 The routed-expert gate/up increment is in
 [`2026-08-23-ornith35b-moe-gate-up-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-gate-up-positive.md).
+The MoE shared-branch residual/RMSNorm increment is in
+[`2026-08-23-ornith35b-moe-shared-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-shared-residual-rms-positive.md).

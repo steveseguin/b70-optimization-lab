@@ -142,6 +142,16 @@ binary, driver, or benchmark protocol will reproduce them.
   control. Forced output was byte-identical and all canaries passed. The
   complete stack removes 560 launches/token. See
   `notes/2026-08-23-ornith35b-moe-gate-up-positive.md`.
+- **MoE shared-branch residual/RMSNorm — ACCEPTED +1.41% incremental
+  serving:** the exact Qwen-derived `routed + shared -> ffn_out`, then
+  `ffn_out + residual -> l_out -> RMSNorm -> weight` boundary appears in all
+  40 MoE layers. The extended fusion preserves both rounded FP32 ADD outputs
+  in their graph buffers before the unchanged RMS reduction. Mirrored engine
+  means improved `120.260 -> 121.456 tok/s` (+0.99%); fresh-server means
+  improved `116.406 -> 118.048 tok/s` (+1.41%), with every candidate above
+  every control. Forced output was byte-identical and all canaries passed. The
+  complete eight-feature stack removes 600 launches/token. See
+  `notes/2026-08-23-ornith35b-moe-shared-residual-rms-positive.md`.
 - **Current-stack serialized profile — DIAGNOSTIC ONLY:** temporary device
   barriers ranked dense projections first and routed projections second after
   the seven accepted optimizations. These serialized values are never

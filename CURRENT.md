@@ -145,6 +145,13 @@ improved **2.09%** and fresh serving improved **2.33%** (`113.043` to
 `115.680 tok/s` mean); all four freshness/finality gates passed, both
 candidates beat both controls, forced output was byte-identical, and all
 canaries passed.
+An eighth Qwen-derived transfer extends the residual/RMSNorm path over the
+preceding routed-plus-shared-expert ADD while preserving both graph-visible
+FP32 rounding boundaries. It removes another 40 launches/token, bringing the
+complete stack to 600. Mirrored engine decode improved **0.99%** and fresh
+serving improved **1.41%** (`116.406` to `118.048 tok/s` mean); both
+candidates beat both controls, forced output was byte-identical, and all
+canaries passed.
 The earlier wider direct-state
 form remains archived as a correctness negative. The package remains a
 candidate pending clean-host replay; see the [guide](repro/ornith-15-35b-a3b-q4km-b70/README.md),
@@ -157,6 +164,8 @@ candidate pending clean-host replay; see the [guide](repro/ornith-15-35b-a3b-q4k
 and [alpha-gate evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-alpha-gate-positive.md).
 The latest routed gate/up evidence is
 [here](experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-gate-up-positive.md).
+The latest MoE shared-branch residual/RMSNorm evidence is
+[here](experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-shared-residual-rms-positive.md).
 
 Publication architecture: keep `index.html` curated and put the growing set
 of model/quant/card/OS/native-container variants in `guides.html`. That page
