@@ -189,6 +189,12 @@ binary, driver, or benchmark protocol will reproduce them.
   averages, forced output was byte-identical, and all freshness/finality gates
   passed. This is recipe-only and is not promoted globally. See
   `notes/2026-08-23-ornith35b-copy-offload-positive.md`.
+- **Unified Runtime single-thread mode — CLOSED SERVING NEGATIVE:** layered on
+  the accepted copy-offload setting, `UR_L0_SINGLE_THREAD_MODE=1` was
+  byte-exact and improved mirrored raw-engine means by 0.31%, but fresh-server
+  means regressed 0.11%. Prompt-matched means regressed 0.46% and the candidate
+  won only 3/12 prompts. Keep it unset. See
+  `notes/2026-08-23-ornith35b-ur-single-thread-serving-negative.md`.
 - **GDN output-projection Q8 fusion — CLOSED CORRECTNESS NEGATIVE:** the
   Qwen-derived candidate tried to emit reordered Q8_1 directly from the
   accepted gated-normalization producer before each recurrent Q4_K output
