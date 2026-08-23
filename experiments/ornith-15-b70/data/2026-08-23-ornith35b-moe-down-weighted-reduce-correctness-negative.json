@@ -1,0 +1,42 @@
+{
+  "date": "2026-08-23",
+  "classification": "correctness negative; no performance screen",
+  "model": {
+    "name": "Ornith 1.5 35B-A3B Q4_K_M",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "runtime": {
+    "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_library_sha256": "cbe101e6573100e10877ee059f326b23580cc7c15161a132608c771d34840671",
+    "candidate_door": "GGML_SYCL_FUSED_ORNITH_MOE_DOWN_REDUCE=1",
+    "candidate_complete_patch": "experiments/ornith-15-b70/patches/llamacpp-ornith15-moe-down-weighted-reduce-correctness-negative-20260823.patch",
+    "candidate_complete_patch_sha256": "d47a2ce61336ff794dd8366a070a74c0ca44a4e2b93b38b72e0dc10ce91a33a6"
+  },
+  "protocol": "same final binary for each variant's door-off/door-on pair; fixed seed 42; temperature 0; forced 128-token single-turn CLI; dynamic timing footer removed before hashing",
+  "control_canonical_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+  "variants": [
+    {
+      "name": "single-kernel local FP32 dot and product boundaries",
+      "candidate_library_sha256": "bca104ad4199050141d0cd0dafd77f511f44a4f9453ced16525564a35b7af0f0",
+      "candidate_canonical_sha256": "df9725e4adb4e34ddcfdf1b822b0b8465d150e35cf5fe8a0d9740e7a81a88023",
+      "candidate_fused_hits": 2540,
+      "byte_identical": false
+    },
+    {
+      "name": "single-kernel graph-visible global FP32 dot and product boundaries",
+      "candidate_library_sha256": "537edf4c4391cd591cb935a32cb3a33c12d18807e62fcda1096cb2e9febebcee",
+      "candidate_canonical_sha256": "9f594c8cb829449a99863d2fa3ab3742b7b40403ae5538f1d47435b53bb04340",
+      "candidate_fused_hits": 2540,
+      "byte_identical": false
+    },
+    {
+      "name": "stock reordered down projection plus graph-visible weighted ordered reduction",
+      "candidate_library_sha256": "611ccbd41d75de3132137972b2c6c130e7c40ff21babd0a0d7569856a7081009",
+      "candidate_canonical_sha256": "4e55ff45d4ed00396b0ae54a07669c9a3df5c5df9b09dcc2b4ef8f46ed79ede6",
+      "candidate_fused_hits": 2540,
+      "byte_identical": false
+    }
+  ],
+  "performance_screen_run": false,
+  "decision": "reject all variants; retain the accepted routed-down projection, stock graph-visible weighted MUL, and accepted ordered add reduction"
+}

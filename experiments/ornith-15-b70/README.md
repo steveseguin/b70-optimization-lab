@@ -142,6 +142,19 @@ binary, driver, or benchmark protocol will reproduce them.
   control. Forced output was byte-identical and all canaries passed. The
   complete stack removes 560 launches/token. See
   `notes/2026-08-23-ornith35b-moe-gate-up-positive.md`.
+- **Current-stack serialized profile — DIAGNOSTIC ONLY:** temporary device
+  barriers ranked dense projections first and routed projections second after
+  the seven accepted optimizations. These serialized values are never
+  extrapolated to tok/s. They selected routed down plus its
+  weighting/ordered-reduction tail for the next exactness-first test. See
+  `notes/2026-08-23-ornith35b-current-stack-op-profile.md`.
+- **Routed-down weighted reduction reinvestigation — CLOSED CORRECTNESS
+  NEGATIVE:** three variants ranged from a fully fused reordered-Q4_K kernel
+  to the stock down projection plus a graph-visible weighted reduction. All
+  fired 2,540 times but changed the forced deterministic output, including the
+  most conservative global-intermediate form. No speed test was run and the
+  accepted stack is unchanged. See
+  `notes/2026-08-23-ornith35b-moe-down-weighted-reduce-correctness-negative.md`.
 - **Beta-sigmoid/GDN fusion — CLOSED NEUTRAL:** folding the 32-element beta
   sigmoid into GDN removed 30 launches/token and preserved byte-exact
   generation. The engine loop improved 1.04%, but fresh-server means moved
@@ -169,9 +182,6 @@ binary, driver, or benchmark protocol will reproduce them.
   to finalize its first HTTP response and was terminated. Keep the general
   recipe target-only. See
   `notes/2026-08-23-ornith35b-ngram-speculation-negative.md`.
-- **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
-  tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
-  the tuned dispatch and beat the now-promoted ordered reduction.
 - **Speculative decode:** investigate separately if kernel/graph work cannot
   approach the requested 2x user-visible rate. Label target-only and assisted
   results separately.

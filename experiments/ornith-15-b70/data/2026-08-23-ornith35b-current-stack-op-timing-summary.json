@@ -1,0 +1,58 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "stack": "seven accepted default-off optimizations through routed gate/up/SWIGLU",
+  "method": "diagnostic barriers around each logical graph-loop iteration; third warmed decode graph only",
+  "production_throughput_evidence": false,
+  "logical_rows": 1203,
+  "operation_family_us": {
+    "MUL_MAT": 5032.174,
+    "MUL_MAT_ID": 2042.292,
+    "ADD": 1483.023,
+    "GET_ROWS": 1194.482,
+    "UNARY": 596.670,
+    "SOFT_MAX": 468.957,
+    "MUL": 421.040,
+    "SSM_CONV": 406.456,
+    "RMS_NORM": 405.417,
+    "L2_NORM": 346.669,
+    "GATED_DELTA_NET": 252.082,
+    "FLASH_ATTN_EXT": 246.978,
+    "CONCAT": 165.729,
+    "ROPE": 144.797,
+    "SET_ROWS": 117.292,
+    "CONT": 54.584
+  },
+  "projection_family_us": {
+    "routed_gate_up_fused": 1165.625,
+    "routed_down": 876.667,
+    "recurrent_qkv": 844.060,
+    "lm_head": 705.208,
+    "router_logits": 651.975,
+    "shared_gate_up_fused": 469.789,
+    "recurrent_z": 447.288,
+    "recurrent_output": 436.458,
+    "recurrent_alpha_beta": 368.755,
+    "shared_down": 331.037,
+    "attention_q": 249.791,
+    "shared_gate_scalar": 238.753,
+    "attention_output": 149.480,
+    "attention_v": 71.457,
+    "attention_k": 68.123
+  },
+  "next_boundary_diagnostic_us": {
+    "routed_down": 876.667,
+    "expert_weight_multiply": 217.289,
+    "ordered_eight_expert_reduce": 200.313,
+    "total": 1294.269
+  },
+  "raw_log_gzip": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-current-stack-op-timing.log.gz",
+  "raw_log_gzip_sha256": "5af5f7b86c95c027887ba63a87c900c2db135eb5c522afd7d346c9af5ad346cc",
+  "warnings": [
+    "The timer serializes logical operations and changes queue behavior.",
+    "Barrier and dispatch overhead is included, including skipped logical nodes.",
+    "These values rank boundaries only and must not be extrapolated into throughput."
+  ]
+}
