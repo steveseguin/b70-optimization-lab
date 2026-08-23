@@ -1,0 +1,383 @@
+diff --git a/ggml/src/ggml-sycl/concat.cpp b/ggml/src/ggml-sycl/concat.cpp
+index 5eab279..7f79c83 100644
+--- a/ggml/src/ggml-sycl/concat.cpp
++++ b/ggml/src/ggml-sycl/concat.cpp
+@@ -661,5 +661,93 @@ void ggml_sycl_concat_state_update_direct(
+             persistent_out[old_base + 0] = old1;
+             persistent_out[old_base + 1] = old2;
+             persistent_out[old_base + 2] = value;
++    });
++}
++
++void ggml_sycl_concat_state_update_direct_two_snapshot(
++        ggml_backend_sycl_context & ctx, ggml_tensor * get_rows,
++        ggml_tensor * concat, ggml_tensor * cpy_slot1, ggml_tensor * cpy_slot0) {
++    GGML_ASSERT(get_rows != nullptr && concat != nullptr &&
++                cpy_slot1 != nullptr && cpy_slot0 != nullptr);
++    GGML_ASSERT(get_rows->op == GGML_OP_GET_ROWS && concat->op == GGML_OP_CONCAT);
++    GGML_ASSERT(cpy_slot1->op == GGML_OP_CPY && cpy_slot0->op == GGML_OP_CPY);
++    GGML_ASSERT(get_rows->src[0] != nullptr && get_rows->src[1] != nullptr);
++    GGML_ASSERT(concat->src[0] != nullptr && concat->src[1] != nullptr);
++    GGML_ASSERT(cpy_slot1->src[1] != nullptr && cpy_slot0->src[1] != nullptr);
++    GGML_ASSERT(get_rows->type == GGML_TYPE_F32 &&
++                get_rows->src[0]->type == GGML_TYPE_F32 &&
++                get_rows->src[1]->type == GGML_TYPE_I32);
++    GGML_ASSERT(concat->type == GGML_TYPE_F32 &&
++                concat->src[0]->type == GGML_TYPE_F32 &&
++                concat->src[1]->type == GGML_TYPE_F32);
++    GGML_ASSERT(ggml_nelements(get_rows) == 3 * 8192);
++    GGML_ASSERT(get_rows->src[0]->ne[0] == 3 * 8192 &&
++                get_rows->src[0]->ne[1] == 2);
++    GGML_ASSERT(ggml_nelements(get_rows->src[1]) == 1);
++    GGML_ASSERT(concat->ne[0] == 5 && concat->ne[1] == 8192 &&
++                concat->ne[2] == 1 && concat->ne[3] == 1);
++    GGML_ASSERT(concat->src[0]->ne[0] == 3 && concat->src[0]->ne[1] == 8192);
++    GGML_ASSERT(concat->src[1]->ne[0] == 2 && concat->src[1]->ne[1] == 8192);
++    GGML_ASSERT(ggml_is_contiguous(get_rows) &&
++                ggml_is_contiguous(get_rows->src[0]) &&
++                ggml_is_contiguous(concat) &&
++                ggml_is_contiguous(cpy_slot1->src[1]) &&
++                ggml_is_contiguous(cpy_slot0->src[1]));
++    GGML_ASSERT(concat->src[0]->data == get_rows->data);
++
++    const char * persistent_all = (const char *) get_rows->src[0]->data;
++    const int32_t * state_index = (const int32_t *) get_rows->src[1]->data;
++    float * get_rows_out = (float *) get_rows->data;
++    const char * current = (const char *) concat->src[1]->data;
++    char * concat_out = (char *) concat->data;
++    float * slot1_out = (float *) cpy_slot1->src[1]->data;
++    float * slot0_out = (float *) cpy_slot0->src[1]->data;
++
++    const uint64_t persistent_nb1 = get_rows->src[0]->nb[1];
++    const uint64_t current_nb0 = concat->src[1]->nb[0];
++    const uint64_t current_nb1 = concat->src[1]->nb[1];
++    const uint64_t concat_nb0 = concat->nb[0];
++    const uint64_t concat_nb1 = concat->nb[1];
++    constexpr size_t channels = 8192;
++    constexpr size_t wg = 256;
++
++    ctx.stream()->parallel_for(
++        sycl::nd_range<1>(sycl::range<1>(channels), sycl::range<1>(wg)),
++        [=](sycl::nd_item<1> item) {
++            const size_t channel = item.get_global_id(0);
++            const int32_t selected = state_index[0];
++            const float * persistent_in =
++                (const float *) (persistent_all + (size_t) selected * persistent_nb1);
++            const size_t old_base = 3 * channel;
++
++            // One work-item owns the channel. Load the selected old state before
++            // either rollback slot is overwritten, including when selected aliases
++            // one of those destinations.
++            const float old0 = persistent_in[old_base + 0];
++            const float old1 = persistent_in[old_base + 1];
++            const float old2 = persistent_in[old_base + 2];
++            const float cur0 = *(const float *) (
++                current + 0 * current_nb0 + channel * current_nb1);
++            const float cur1 = *(const float *) (
++                current + 1 * current_nb0 + channel * current_nb1);
++
++            get_rows_out[old_base + 0] = old0;
++            get_rows_out[old_base + 1] = old1;
++            get_rows_out[old_base + 2] = old2;
++
++            *(float *) (concat_out + channel * concat_nb1 + 0 * concat_nb0) = old0;
++            *(float *) (concat_out + channel * concat_nb1 + 1 * concat_nb0) = old1;
++            *(float *) (concat_out + channel * concat_nb1 + 2 * concat_nb0) = old2;
++            *(float *) (concat_out + channel * concat_nb1 + 3 * concat_nb0) = cur0;
++            *(float *) (concat_out + channel * concat_nb1 + 4 * concat_nb0) = cur1;
++
++            // view offset 4 bytes -> [old1, old2, cur0] in rollback slot 1.
++            slot1_out[old_base + 0] = old1;
++            slot1_out[old_base + 1] = old2;
++            slot1_out[old_base + 2] = cur0;
++            // view offset 8 bytes -> [old2, cur0, cur1] in rollback slot 0.
++            slot0_out[old_base + 0] = old2;
++            slot0_out[old_base + 1] = cur0;
++            slot0_out[old_base + 2] = cur1;
+         });
+ }
+diff --git a/ggml/src/ggml-sycl/concat.hpp b/ggml/src/ggml-sycl/concat.hpp
+index dd2b8e6..609e5bc 100644
+--- a/ggml/src/ggml-sycl/concat.hpp
++++ b/ggml/src/ggml-sycl/concat.hpp
+@@ -24,4 +24,8 @@ void ggml_sycl_concat_state_update_direct(
+         ggml_backend_sycl_context & ctx, ggml_tensor * get_rows,
+         ggml_tensor * concat, ggml_tensor * cpy);
+ 
++void ggml_sycl_concat_state_update_direct_two_snapshot(
++        ggml_backend_sycl_context & ctx, ggml_tensor * get_rows,
++        ggml_tensor * concat, ggml_tensor * cpy_slot1, ggml_tensor * cpy_slot0);
++
+ #endif // GGML_SYCL_CONCAT_HPP
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 917574a..24ed0a3 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -6111,6 +6111,7 @@ static bool ggml_sycl_find_ornith_gdn_state_io(
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_conv_silu_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_direct_hits{0};
++static std::atomic<uint64_t> g_ggml_sycl_ornith_spec_concat_state_direct_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_alpha_gate_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_qk_norm_rope_hits{0};
+ 
+@@ -6238,6 +6239,22 @@ static bool ggml_sycl_ornith_concat_state_direct_enabled() {
+     return enabled;
+ }
+ 
++static bool ggml_sycl_ornith_spec_concat_state_direct_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_SPEC_CONCAT_STATE_DIRECT");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_spec_concat_state_direct: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_spec_concat_state_direct_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
+ static const ggml_tensor * ggml_sycl_unwrap_shape_view(const ggml_tensor * tensor) {
+     while (tensor != nullptr && tensor->src[0] != nullptr &&
+            (tensor->op == GGML_OP_RESHAPE || tensor->op == GGML_OP_VIEW ||
+@@ -6440,6 +6457,191 @@ struct ggml_sycl_ornith_concat_state_direct_match {
+     int cpy_idx    = -1;
+ };
+ 
++struct ggml_sycl_ornith_spec_concat_state_direct_match {
++    ggml_tensor * get_rows = nullptr;
++    ggml_tensor * concat = nullptr;
++    ggml_tensor * cpy_slot1 = nullptr;
++    ggml_tensor * cpy_slot0 = nullptr;
++    int concat_idx = -1;
++    int last_cpy_idx = -1;
++};
++
++static bool ggml_sycl_find_ornith_spec_concat_state_direct(
++        const ggml_cgraph * cgraph, int node_idx,
++        ggml_sycl_ornith_spec_concat_state_direct_match & match) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_concat_state_enabled() ||
++        !ggml_sycl_ornith_concat_state_direct_enabled() ||
++        !ggml_sycl_ornith_spec_concat_state_direct_enabled() ||
++        node_idx < 0 || node_idx >= cgraph->n_nodes) {
++        return false;
++    }
++
++    ggml_tensor * get_rows = cgraph->nodes[node_idx];
++    if (get_rows == nullptr || get_rows->op != GGML_OP_GET_ROWS ||
++        std::strstr(get_rows->name, "conv_states-") == nullptr ||
++        get_rows->src[0] == nullptr || get_rows->src[1] == nullptr ||
++        get_rows->type != GGML_TYPE_F32 || get_rows->src[0]->type != GGML_TYPE_F32 ||
++        get_rows->src[1]->type != GGML_TYPE_I32 ||
++        !ggml_is_contiguous(get_rows) || !ggml_is_contiguous(get_rows->src[0]) ||
++        get_rows->ne[0] != 3 * 8192 || get_rows->ne[1] != 1 ||
++        get_rows->ne[2] != 1 || get_rows->ne[3] != 1 ||
++        get_rows->src[0]->ne[0] != 3 * 8192 || get_rows->src[0]->ne[1] != 2 ||
++        get_rows->src[0]->ne[2] != 1 || get_rows->src[0]->ne[3] != 1 ||
++        get_rows->src[0]->nb[0] != sizeof(float) ||
++        get_rows->src[0]->nb[1] != 3 * 8192 * sizeof(float) ||
++        ggml_nelements(get_rows->src[1]) != 1 ||
++        (get_rows->flags & GGML_TENSOR_FLAG_OUTPUT) != 0) {
++        return false;
++    }
++
++    ggml_tensor * concat = nullptr;
++    int concat_idx = -1;
++    for (int j = node_idx + 1; j < cgraph->n_nodes; ++j) {
++        ggml_tensor * consumer = cgraph->nodes[j];
++        if (consumer == nullptr) {
++            continue;
++        }
++        for (int s = 0; s < GGML_MAX_SRC; ++s) {
++            if (consumer->src[s] == nullptr ||
++                ggml_sycl_unwrap_shape_view(consumer->src[s]) != get_rows) {
++                continue;
++            }
++            const bool shape_only = consumer->op == GGML_OP_RESHAPE ||
++                                    consumer->op == GGML_OP_VIEW ||
++                                    consumer->op == GGML_OP_PERMUTE ||
++                                    consumer->op == GGML_OP_TRANSPOSE;
++            if (shape_only) {
++                continue;
++            }
++            if (s == 0 && consumer->op == GGML_OP_CONCAT && concat == nullptr &&
++                std::strstr(consumer->name, "conv_input-") != nullptr) {
++                concat = consumer;
++                concat_idx = j;
++            } else {
++                return false;
++            }
++        }
++    }
++    if (concat == nullptr || concat_idx < 0 || concat->src[0] == nullptr ||
++        concat->src[1] == nullptr ||
++        ggml_sycl_unwrap_shape_view(concat->src[0]) != get_rows ||
++        concat->src[0]->data != get_rows->data ||
++        concat->type != GGML_TYPE_F32 || concat->src[0]->type != GGML_TYPE_F32 ||
++        concat->src[1]->type != GGML_TYPE_F32 ||
++        concat->ne[0] != 5 || concat->ne[1] != 8192 ||
++        concat->ne[2] != 1 || concat->ne[3] != 1 ||
++        concat->src[0]->ne[0] != 3 || concat->src[0]->ne[1] != 8192 ||
++        concat->src[1]->ne[0] != 2 || concat->src[1]->ne[1] != 8192 ||
++        concat->src[1]->ne[2] != 1 || concat->src[1]->ne[3] != 1 ||
++        !ggml_is_contiguous(concat) ||
++        ((const int32_t *) concat->op_params)[0] != 0 ||
++        (concat->flags & GGML_TENSOR_FLAG_OUTPUT) != 0) {
++        return false;
++    }
++
++    ggml_tensor * view_slot1 = nullptr;
++    ggml_tensor * view_slot0 = nullptr;
++    ggml_tensor * conv = nullptr;
++    for (int j = concat_idx + 1; j < cgraph->n_nodes; ++j) {
++        ggml_tensor * consumer = cgraph->nodes[j];
++        if (consumer == nullptr) {
++            continue;
++        }
++        for (int s = 0; s < GGML_MAX_SRC; ++s) {
++            if (consumer->src[s] != concat) {
++                continue;
++            }
++            if (s == 0 && consumer->op == GGML_OP_VIEW &&
++                consumer->type == GGML_TYPE_F32 &&
++                consumer->ne[0] == 3 && consumer->ne[1] == 8192 &&
++                consumer->ne[2] == 1 && consumer->ne[3] == 1 &&
++                consumer->nb[0] == concat->nb[0] &&
++                consumer->nb[1] == concat->nb[1] &&
++                consumer->nb[2] == concat->nb[2] &&
++                consumer->nb[3] == concat->nb[3] &&
++                (consumer->flags & GGML_TENSOR_FLAG_OUTPUT) == 0) {
++                if (consumer->view_offs == sizeof(float) && view_slot1 == nullptr) {
++                    view_slot1 = consumer;
++                } else if (consumer->view_offs == 2 * sizeof(float) && view_slot0 == nullptr) {
++                    view_slot0 = consumer;
++                } else {
++                    return false;
++                }
++            } else if (s == 0 && consumer->op == GGML_OP_SSM_CONV && conv == nullptr &&
++                       std::strstr(consumer->name, "conv_output_raw-") != nullptr) {
++                conv = consumer;
++            } else {
++                return false;
++            }
++        }
++    }
++    if (view_slot1 == nullptr || view_slot0 == nullptr || conv == nullptr ||
++        conv->src[0] != concat || conv->src[1] == nullptr ||
++        conv->src[1]->type != GGML_TYPE_F32 ||
++        conv->src[1]->ne[0] != 4 || conv->src[1]->ne[1] != 8192) {
++        return false;
++    }
++
++    ggml_tensor * cpy_slot1 = nullptr;
++    ggml_tensor * cpy_slot0 = nullptr;
++    int cpy_slot1_idx = -1;
++    int cpy_slot0_idx = -1;
++    for (int j = concat_idx + 1; j < cgraph->n_nodes; ++j) {
++        ggml_tensor * consumer = cgraph->nodes[j];
++        if (consumer == nullptr) {
++            continue;
++        }
++        for (int s = 0; s < GGML_MAX_SRC; ++s) {
++            if (consumer->src[s] != view_slot1 && consumer->src[s] != view_slot0) {
++                continue;
++            }
++            if (s != 0 || consumer->op != GGML_OP_CPY ||
++                consumer->src[1] == nullptr ||
++                std::strstr(consumer->name, "copy of conv_input-") == nullptr) {
++                return false;
++            }
++            if (consumer->src[0] == view_slot1 && cpy_slot1 == nullptr) {
++                cpy_slot1 = consumer;
++                cpy_slot1_idx = j;
++            } else if (consumer->src[0] == view_slot0 && cpy_slot0 == nullptr) {
++                cpy_slot0 = consumer;
++                cpy_slot0_idx = j;
++            } else {
++                return false;
++            }
++        }
++    }
++    if (cpy_slot1 == nullptr || cpy_slot0 == nullptr ||
++        cpy_slot1_idx <= concat_idx || cpy_slot0_idx <= cpy_slot1_idx ||
++        cpy_slot1->src[1]->type != GGML_TYPE_F32 ||
++        cpy_slot0->src[1]->type != GGML_TYPE_F32 ||
++        !ggml_is_contiguous(cpy_slot1->src[1]) ||
++        !ggml_is_contiguous(cpy_slot0->src[1]) ||
++        ggml_nelements(cpy_slot1->src[1]) != 3 * 8192 ||
++        ggml_nelements(cpy_slot0->src[1]) != 3 * 8192) {
++        return false;
++    }
++
++    const char * cache_base = (const char *) get_rows->src[0]->data;
++    const size_t cache_row_bytes = get_rows->src[0]->nb[1];
++    if (cpy_slot1->src[1]->data != cache_base + cache_row_bytes ||
++        cpy_slot0->src[1]->data != cache_base) {
++        return false;
++    }
++    const auto overlaps = [](const ggml_tensor * a, const ggml_tensor * b) {
++        const uintptr_t a0 = (uintptr_t) a->data;
++        const uintptr_t b0 = (uintptr_t) b->data;
++        return a0 < b0 + ggml_nbytes(b) && b0 < a0 + ggml_nbytes(a);
++    };
++    if (overlaps(get_rows, concat) || overlaps(get_rows, concat->src[1]) ||
++        overlaps(concat, concat->src[1])) {
++        return false;
++    }
++
++    match = { get_rows, concat, cpy_slot1, cpy_slot0, concat_idx, cpy_slot0_idx };
++    return true;
++}
++
+ static bool ggml_sycl_find_ornith_concat_state_direct(
+         const ggml_cgraph * cgraph, int node_idx,
+         ggml_sycl_ornith_concat_state_direct_match & match) {
+@@ -6784,6 +6986,9 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+     precomputed_ornith_silu.reserve(64);
+     std::vector<ggml_sycl_ornith_concat_state_direct_match> pending_ornith_concat_state_direct;
+     pending_ornith_concat_state_direct.reserve(64);
++    std::vector<ggml_sycl_ornith_spec_concat_state_direct_match>
++        pending_ornith_spec_concat_state_direct;
++    pending_ornith_spec_concat_state_direct.reserve(40);
+     std::vector<ggml_sycl_ornith_gdn_rms_gate_match> pending_ornith_gdn_rms_gate;
+     pending_ornith_gdn_rms_gate.reserve(40);
+     std::vector<ggml_sycl_ornith_gdn_state_io_match> pending_ornith_gdn_state_io;
+@@ -6833,6 +7038,11 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+         }
+ 
+         if (node->op == GGML_OP_GET_ROWS) {
++            ggml_sycl_ornith_spec_concat_state_direct_match spec_concat_state;
++            if (ggml_sycl_find_ornith_spec_concat_state_direct(cgraph, i, spec_concat_state)) {
++                pending_ornith_spec_concat_state_direct.push_back(spec_concat_state);
++                continue;
++            }
+             ggml_sycl_ornith_gdn_state_io_match gdn_state_io;
+             if (ggml_sycl_find_ornith_gdn_state_io(cgraph, i, gdn_state_io)) {
+                 pending_ornith_gdn_state_io.push_back(gdn_state_io);
+@@ -6856,6 +7066,22 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+         }
+ 
+         if (node->op == GGML_OP_CONCAT) {
++            auto spec_direct = std::find_if(
++                pending_ornith_spec_concat_state_direct.begin(),
++                pending_ornith_spec_concat_state_direct.end(),
++                [node](const ggml_sycl_ornith_spec_concat_state_direct_match & candidate) {
++                    return candidate.concat == node;
++                });
++            if (spec_direct != pending_ornith_spec_concat_state_direct.end()) {
++                ggml_sycl_concat_state_update_direct_two_snapshot(
++                    *sycl_ctx, spec_direct->get_rows, spec_direct->concat,
++                    spec_direct->cpy_slot1, spec_direct->cpy_slot0);
++                g_ggml_sycl_ornith_spec_concat_state_direct_hits.fetch_add(
++                    1, std::memory_order_relaxed);
++                i = spec_direct->last_cpy_idx;
++                pending_ornith_spec_concat_state_direct.erase(spec_direct);
++                continue;
++            }
+             auto direct = std::find_if(
+                 pending_ornith_concat_state_direct.begin(), pending_ornith_concat_state_direct.end(),
+                 [node](const ggml_sycl_ornith_concat_state_direct_match & candidate) {

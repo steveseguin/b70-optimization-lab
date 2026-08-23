@@ -1,0 +1,38 @@
+{
+  "date": "2026-08-23",
+  "status": "exact_isolated_positive_preferred_stack_neutral",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "runtime_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "accepted_source_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+  "protocol": "fixed-seed 128-token llama-cli MTP1 A/B/B/A",
+  "trace": {
+    "cache_shape": [24576, 2, 1, 1],
+    "concat_shape": [5, 8192, 1, 1],
+    "slot1_view_offset_bytes": 4,
+    "slot0_view_offset_bytes": 8,
+    "cpy_nodes_per_recurrent_layer": 2
+  },
+  "isolated": {
+    "control_tps": [65.1, 65.1],
+    "candidate_tps": [65.6, 65.7],
+    "control_mean_tps": 65.1,
+    "candidate_mean_tps": 65.65,
+    "mean_delta_percent": 0.8448540706605276,
+    "both_candidates_beat_both_controls": true
+  },
+  "preferred_stack_marginal": {
+    "control_tps": [66.9, 67.5],
+    "candidate_tps": [67.2, 66.9],
+    "control_mean_tps": 67.2,
+    "candidate_mean_tps": 67.05,
+    "mean_delta_percent": -0.22321428571429417,
+    "both_candidates_beat_both_controls": false
+  },
+  "all_transcript_sha256": "0f162aebc81f0a28ffd82704b20729ca4dc71b929644c5803639a3ad40828a2e",
+  "candidate_hits_each": 2490,
+  "generic_launches_removed_per_two_row_verifier_cycle": 120,
+  "fresh_server_run": false,
+  "decision": "retain as exact research; do not add to preferred stack or promote"
+}
+

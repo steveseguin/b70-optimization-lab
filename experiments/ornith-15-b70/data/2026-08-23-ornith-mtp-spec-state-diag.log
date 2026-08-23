@@ -1,0 +1,281 @@
+ornith_spec_state_diag get_rows idx=6 ne=24576,1,1,1 src0_ne=24576,2,1,1 src1_ne=1,1,1,1
+ornith_spec_state_diag node=6 op=GET_ROWS name=conv_states-0 ne=24576,1,1,1 data=0xffff80b11b404100 view=(nil) offs=0 src0=cache_r_l0 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=11 op=RESHAPE name=conv_states_reshaped-0 ne=3,8192,1,1 data=0xffff80b11b404100 view=0x79faf8c291c0 offs=0 src0=conv_states-0 src1=-
+ornith_spec_state_diag node=15 op=CONCAT name=conv_input-0 ne=5,8192,1,1 data=0xffff80b11c41c100 view=(nil) offs=0 src0=conv_states_reshaped-0 src1=qkv_mixed_transposed-0
+ornith_spec_state_diag node=16 op=VIEW name=conv_input-0 (view) ne=3,8192,1,1 data=0xffff80b11c41c104 view=0x79faf8c29a60 offs=4 src0=conv_input-0 src1=-
+ornith_spec_state_diag node=18 op=CPY name=cache_r_l0 (view) (copy of conv_input-0 (view)) ne=24576,1,1,1 data=0xffff80b112618000 view=0x79fb200bb1e0 offs=98304 src0=conv_input-0 (view) src1=cache_r_l0 (view)
+ornith_spec_state_diag node=19 op=VIEW name=conv_input-0 (view) ne=3,8192,1,1 data=0xffff80b11c41c108 view=0x79faf8c29a60 offs=8 src0=conv_input-0 src1=-
+ornith_spec_state_diag node=21 op=CPY name=cache_r_l0 (view) (copy of conv_input-0 (view)) ne=24576,1,1,1 data=0xffff80b112600000 view=0x79fb200bb1e0 offs=0 src0=conv_input-0 (view) src1=cache_r_l0 (view)
+ornith_spec_state_diag node=29 op=SSM_CONV name=conv_output_raw-0 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_input-0 src1=blk.0.ssm_conv1d.weight
+ornith_spec_state_diag node=30 op=UNARY name=conv_output_silu-0 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_output_raw-0 src1=-
+ornith_spec_state_diag node=109 op=GET_ROWS name=conv_states-1 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l1 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=113 op=RESHAPE name=conv_states_reshaped-1 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8c32460 offs=0 src0=conv_states-1 src1=-
+ornith_spec_state_diag node=117 op=CONCAT name=conv_input-1 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-1 src1=qkv_mixed_transposed-1
+ornith_spec_state_diag node=118 op=VIEW name=conv_input-1 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8c32d00 offs=4 src0=conv_input-1 src1=-
+ornith_spec_state_diag node=120 op=CPY name=cache_r_l1 (view) (copy of conv_input-1 (view)) ne=24576,1,1,1 data=0xffff80b112a48000 view=0x79fb200bb4c0 offs=98304 src0=conv_input-1 (view) src1=cache_r_l1 (view)
+ornith_spec_state_diag node=121 op=VIEW name=conv_input-1 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8c32d00 offs=8 src0=conv_input-1 src1=-
+ornith_spec_state_diag node=123 op=CPY name=cache_r_l1 (view) (copy of conv_input-1 (view)) ne=24576,1,1,1 data=0xffff80b112a30000 view=0x79fb200bb4c0 offs=0 src0=conv_input-1 (view) src1=cache_r_l1 (view)
+ornith_spec_state_diag node=131 op=SSM_CONV name=conv_output_raw-1 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-1 src1=blk.1.ssm_conv1d.weight
+ornith_spec_state_diag node=132 op=UNARY name=conv_output_silu-1 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-1 src1=-
+ornith_spec_state_diag node=211 op=GET_ROWS name=conv_states-2 ne=24576,1,1,1 data=0xffff80b11b404100 view=(nil) offs=0 src0=cache_r_l2 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=215 op=RESHAPE name=conv_states_reshaped-2 ne=3,8192,1,1 data=0xffff80b11b404100 view=0x79faf8c3b700 offs=0 src0=conv_states-2 src1=-
+ornith_spec_state_diag node=219 op=CONCAT name=conv_input-2 ne=5,8192,1,1 data=0xffff80b11c41c100 view=(nil) offs=0 src0=conv_states_reshaped-2 src1=qkv_mixed_transposed-2
+ornith_spec_state_diag node=220 op=VIEW name=conv_input-2 (view) ne=3,8192,1,1 data=0xffff80b11c41c104 view=0x79faf8c3bfa0 offs=4 src0=conv_input-2 src1=-
+ornith_spec_state_diag node=222 op=CPY name=cache_r_l2 (view) (copy of conv_input-2 (view)) ne=24576,1,1,1 data=0xffff80b112e78000 view=0x79fb200bb7a0 offs=98304 src0=conv_input-2 (view) src1=cache_r_l2 (view)
+ornith_spec_state_diag node=223 op=VIEW name=conv_input-2 (view) ne=3,8192,1,1 data=0xffff80b11c41c108 view=0x79faf8c3bfa0 offs=8 src0=conv_input-2 src1=-
+ornith_spec_state_diag node=225 op=CPY name=cache_r_l2 (view) (copy of conv_input-2 (view)) ne=24576,1,1,1 data=0xffff80b112e60000 view=0x79fb200bb7a0 offs=0 src0=conv_input-2 (view) src1=cache_r_l2 (view)
+ornith_spec_state_diag node=233 op=SSM_CONV name=conv_output_raw-2 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_input-2 src1=blk.2.ssm_conv1d.weight
+ornith_spec_state_diag node=234 op=UNARY name=conv_output_silu-2 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_output_raw-2 src1=-
+ornith_spec_state_diag node=388 op=GET_ROWS name=conv_states-4 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l4 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=392 op=RESHAPE name=conv_states_reshaped-4 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8c4b570 offs=0 src0=conv_states-4 src1=-
+ornith_spec_state_diag node=396 op=CONCAT name=conv_input-4 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-4 src1=qkv_mixed_transposed-4
+ornith_spec_state_diag node=397 op=VIEW name=conv_input-4 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8c4be10 offs=4 src0=conv_input-4 src1=-
+ornith_spec_state_diag node=399 op=CPY name=cache_r_l4 (view) (copy of conv_input-4 (view)) ne=24576,1,1,1 data=0xffff80b1132a8000 view=0x79fb200bba80 offs=98304 src0=conv_input-4 (view) src1=cache_r_l4 (view)
+ornith_spec_state_diag node=400 op=VIEW name=conv_input-4 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8c4be10 offs=8 src0=conv_input-4 src1=-
+ornith_spec_state_diag node=402 op=CPY name=cache_r_l4 (view) (copy of conv_input-4 (view)) ne=24576,1,1,1 data=0xffff80b113290000 view=0x79fb200bba80 offs=0 src0=conv_input-4 (view) src1=cache_r_l4 (view)
+ornith_spec_state_diag node=410 op=SSM_CONV name=conv_output_raw-4 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-4 src1=blk.4.ssm_conv1d.weight
+ornith_spec_state_diag node=411 op=UNARY name=conv_output_silu-4 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-4 src1=-
+ornith_spec_state_diag node=490 op=GET_ROWS name=conv_states-5 ne=24576,1,1,1 data=0xffff80b11b404100 view=(nil) offs=0 src0=cache_r_l5 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=494 op=RESHAPE name=conv_states_reshaped-5 ne=3,8192,1,1 data=0xffff80b11b404100 view=0x79faf8c54810 offs=0 src0=conv_states-5 src1=-
+ornith_spec_state_diag node=498 op=CONCAT name=conv_input-5 ne=5,8192,1,1 data=0xffff80b11c41c100 view=(nil) offs=0 src0=conv_states_reshaped-5 src1=qkv_mixed_transposed-5
+ornith_spec_state_diag node=499 op=VIEW name=conv_input-5 (view) ne=3,8192,1,1 data=0xffff80b11c41c104 view=0x79faf8c550b0 offs=4 src0=conv_input-5 src1=-
+ornith_spec_state_diag node=501 op=CPY name=cache_r_l5 (view) (copy of conv_input-5 (view)) ne=24576,1,1,1 data=0xffff80b1136d8000 view=0x79fb200bbd60 offs=98304 src0=conv_input-5 (view) src1=cache_r_l5 (view)
+ornith_spec_state_diag node=502 op=VIEW name=conv_input-5 (view) ne=3,8192,1,1 data=0xffff80b11c41c108 view=0x79faf8c550b0 offs=8 src0=conv_input-5 src1=-
+ornith_spec_state_diag node=504 op=CPY name=cache_r_l5 (view) (copy of conv_input-5 (view)) ne=24576,1,1,1 data=0xffff80b1136c0000 view=0x79fb200bbd60 offs=0 src0=conv_input-5 (view) src1=cache_r_l5 (view)
+ornith_spec_state_diag node=512 op=SSM_CONV name=conv_output_raw-5 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_input-5 src1=blk.5.ssm_conv1d.weight
+ornith_spec_state_diag node=513 op=UNARY name=conv_output_silu-5 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_output_raw-5 src1=-
+ornith_spec_state_diag node=592 op=GET_ROWS name=conv_states-6 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l6 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=596 op=RESHAPE name=conv_states_reshaped-6 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8c5dab0 offs=0 src0=conv_states-6 src1=-
+ornith_spec_state_diag node=600 op=CONCAT name=conv_input-6 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-6 src1=qkv_mixed_transposed-6
+ornith_spec_state_diag node=601 op=VIEW name=conv_input-6 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8c5e350 offs=4 src0=conv_input-6 src1=-
+ornith_spec_state_diag node=603 op=CPY name=cache_r_l6 (view) (copy of conv_input-6 (view)) ne=24576,1,1,1 data=0xffff80b113b08000 view=0x79fb200bc040 offs=98304 src0=conv_input-6 (view) src1=cache_r_l6 (view)
+ornith_spec_state_diag node=604 op=VIEW name=conv_input-6 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8c5e350 offs=8 src0=conv_input-6 src1=-
+ornith_spec_state_diag node=606 op=CPY name=cache_r_l6 (view) (copy of conv_input-6 (view)) ne=24576,1,1,1 data=0xffff80b113af0000 view=0x79fb200bc040 offs=0 src0=conv_input-6 (view) src1=cache_r_l6 (view)
+ornith_spec_state_diag node=614 op=SSM_CONV name=conv_output_raw-6 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-6 src1=blk.6.ssm_conv1d.weight
+ornith_spec_state_diag node=615 op=UNARY name=conv_output_silu-6 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-6 src1=-
+ornith_spec_state_diag node=769 op=GET_ROWS name=conv_states-8 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l8 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=773 op=RESHAPE name=conv_states_reshaped-8 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8c6d920 offs=0 src0=conv_states-8 src1=-
+ornith_spec_state_diag node=777 op=CONCAT name=conv_input-8 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-8 src1=qkv_mixed_transposed-8
+ornith_spec_state_diag node=778 op=VIEW name=conv_input-8 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8c6e1c0 offs=4 src0=conv_input-8 src1=-
+ornith_spec_state_diag node=780 op=CPY name=cache_r_l8 (view) (copy of conv_input-8 (view)) ne=24576,1,1,1 data=0xffff80b113f38000 view=0x79fb200bc320 offs=98304 src0=conv_input-8 (view) src1=cache_r_l8 (view)
+ornith_spec_state_diag node=781 op=VIEW name=conv_input-8 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8c6e1c0 offs=8 src0=conv_input-8 src1=-
+ornith_spec_state_diag node=783 op=CPY name=cache_r_l8 (view) (copy of conv_input-8 (view)) ne=24576,1,1,1 data=0xffff80b113f20000 view=0x79fb200bc320 offs=0 src0=conv_input-8 (view) src1=cache_r_l8 (view)
+ornith_spec_state_diag node=791 op=SSM_CONV name=conv_output_raw-8 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-8 src1=blk.8.ssm_conv1d.weight
+ornith_spec_state_diag node=792 op=UNARY name=conv_output_silu-8 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-8 src1=-
+ornith_spec_state_diag node=871 op=GET_ROWS name=conv_states-9 ne=24576,1,1,1 data=0xffff80b11b404100 view=(nil) offs=0 src0=cache_r_l9 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=875 op=RESHAPE name=conv_states_reshaped-9 ne=3,8192,1,1 data=0xffff80b11b404100 view=0x79faf8c76bc0 offs=0 src0=conv_states-9 src1=-
+ornith_spec_state_diag node=879 op=CONCAT name=conv_input-9 ne=5,8192,1,1 data=0xffff80b11c41c100 view=(nil) offs=0 src0=conv_states_reshaped-9 src1=qkv_mixed_transposed-9
+ornith_spec_state_diag node=880 op=VIEW name=conv_input-9 (view) ne=3,8192,1,1 data=0xffff80b11c41c104 view=0x79faf8c77460 offs=4 src0=conv_input-9 src1=-
+ornith_spec_state_diag node=882 op=CPY name=cache_r_l9 (view) (copy of conv_input-9 (view)) ne=24576,1,1,1 data=0xffff80b114368000 view=0x79fb200bc600 offs=98304 src0=conv_input-9 (view) src1=cache_r_l9 (view)
+ornith_spec_state_diag node=883 op=VIEW name=conv_input-9 (view) ne=3,8192,1,1 data=0xffff80b11c41c108 view=0x79faf8c77460 offs=8 src0=conv_input-9 src1=-
+ornith_spec_state_diag node=885 op=CPY name=cache_r_l9 (view) (copy of conv_input-9 (view)) ne=24576,1,1,1 data=0xffff80b114350000 view=0x79fb200bc600 offs=0 src0=conv_input-9 (view) src1=cache_r_l9 (view)
+ornith_spec_state_diag node=893 op=SSM_CONV name=conv_output_raw-9 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_input-9 src1=blk.9.ssm_conv1d.weight
+ornith_spec_state_diag node=894 op=UNARY name=conv_output_silu-9 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_output_raw-9 src1=-
+ornith_spec_state_diag node=973 op=GET_ROWS name=conv_states-10 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l10 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=977 op=RESHAPE name=conv_states_reshaped-10 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8c7fe60 offs=0 src0=conv_states-10 src1=-
+ornith_spec_state_diag node=981 op=CONCAT name=conv_input-10 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-10 src1=qkv_mixed_transposed-10
+ornith_spec_state_diag node=982 op=VIEW name=conv_input-10 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8c80700 offs=4 src0=conv_input-10 src1=-
+ornith_spec_state_diag node=984 op=CPY name=cache_r_l10 (view) (copy of conv_input-10 (view)) ne=24576,1,1,1 data=0xffff80b114798000 view=0x79fb200bc8e0 offs=98304 src0=conv_input-10 (view) src1=cache_r_l10 (view)
+ornith_spec_state_diag node=985 op=VIEW name=conv_input-10 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8c80700 offs=8 src0=conv_input-10 src1=-
+ornith_spec_state_diag node=987 op=CPY name=cache_r_l10 (view) (copy of conv_input-10 (view)) ne=24576,1,1,1 data=0xffff80b114780000 view=0x79fb200bc8e0 offs=0 src0=conv_input-10 (view) src1=cache_r_l10 (view)
+ornith_spec_state_diag node=995 op=SSM_CONV name=conv_output_raw-10 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-10 src1=blk.10.ssm_conv1d.weight
+ornith_spec_state_diag node=996 op=UNARY name=conv_output_silu-10 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-10 src1=-
+ornith_spec_state_diag node=1150 op=GET_ROWS name=conv_states-12 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l12 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=1154 op=RESHAPE name=conv_states_reshaped-12 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8c8fcd0 offs=0 src0=conv_states-12 src1=-
+ornith_spec_state_diag node=1158 op=CONCAT name=conv_input-12 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-12 src1=qkv_mixed_transposed-12
+ornith_spec_state_diag node=1159 op=VIEW name=conv_input-12 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8c90570 offs=4 src0=conv_input-12 src1=-
+ornith_spec_state_diag node=1161 op=CPY name=cache_r_l12 (view) (copy of conv_input-12 (view)) ne=24576,1,1,1 data=0xffff80b114bc8000 view=0x79fb200bcbc0 offs=98304 src0=conv_input-12 (view) src1=cache_r_l12 (view)
+ornith_spec_state_diag node=1162 op=VIEW name=conv_input-12 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8c90570 offs=8 src0=conv_input-12 src1=-
+ornith_spec_state_diag node=1164 op=CPY name=cache_r_l12 (view) (copy of conv_input-12 (view)) ne=24576,1,1,1 data=0xffff80b114bb0000 view=0x79fb200bcbc0 offs=0 src0=conv_input-12 (view) src1=cache_r_l12 (view)
+ornith_spec_state_diag node=1172 op=SSM_CONV name=conv_output_raw-12 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-12 src1=blk.12.ssm_conv1d.weight
+ornith_spec_state_diag node=1173 op=UNARY name=conv_output_silu-12 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-12 src1=-
+ornith_spec_state_diag node=1252 op=GET_ROWS name=conv_states-13 ne=24576,1,1,1 data=0xffff80b11b404100 view=(nil) offs=0 src0=cache_r_l13 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=1256 op=RESHAPE name=conv_states_reshaped-13 ne=3,8192,1,1 data=0xffff80b11b404100 view=0x79faf8c98f70 offs=0 src0=conv_states-13 src1=-
+ornith_spec_state_diag node=1260 op=CONCAT name=conv_input-13 ne=5,8192,1,1 data=0xffff80b11c41c100 view=(nil) offs=0 src0=conv_states_reshaped-13 src1=qkv_mixed_transposed-13
+ornith_spec_state_diag node=1261 op=VIEW name=conv_input-13 (view) ne=3,8192,1,1 data=0xffff80b11c41c104 view=0x79faf8c99810 offs=4 src0=conv_input-13 src1=-
+ornith_spec_state_diag node=1263 op=CPY name=cache_r_l13 (view) (copy of conv_input-13 (view)) ne=24576,1,1,1 data=0xffff80b114ff8000 view=0x79fb200bcea0 offs=98304 src0=conv_input-13 (view) src1=cache_r_l13 (view)
+ornith_spec_state_diag node=1264 op=VIEW name=conv_input-13 (view) ne=3,8192,1,1 data=0xffff80b11c41c108 view=0x79faf8c99810 offs=8 src0=conv_input-13 src1=-
+ornith_spec_state_diag node=1266 op=CPY name=cache_r_l13 (view) (copy of conv_input-13 (view)) ne=24576,1,1,1 data=0xffff80b114fe0000 view=0x79fb200bcea0 offs=0 src0=conv_input-13 (view) src1=cache_r_l13 (view)
+ornith_spec_state_diag node=1274 op=SSM_CONV name=conv_output_raw-13 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_input-13 src1=blk.13.ssm_conv1d.weight
+ornith_spec_state_diag node=1275 op=UNARY name=conv_output_silu-13 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_output_raw-13 src1=-
+ornith_spec_state_diag node=1354 op=GET_ROWS name=conv_states-14 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l14 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=1358 op=RESHAPE name=conv_states_reshaped-14 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8ca2210 offs=0 src0=conv_states-14 src1=-
+ornith_spec_state_diag node=1362 op=CONCAT name=conv_input-14 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-14 src1=qkv_mixed_transposed-14
+ornith_spec_state_diag node=1363 op=VIEW name=conv_input-14 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8ca2ab0 offs=4 src0=conv_input-14 src1=-
+ornith_spec_state_diag node=1365 op=CPY name=cache_r_l14 (view) (copy of conv_input-14 (view)) ne=24576,1,1,1 data=0xffff80b115428000 view=0x79fb200bd180 offs=98304 src0=conv_input-14 (view) src1=cache_r_l14 (view)
+ornith_spec_state_diag node=1366 op=VIEW name=conv_input-14 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8ca2ab0 offs=8 src0=conv_input-14 src1=-
+ornith_spec_state_diag node=1368 op=CPY name=cache_r_l14 (view) (copy of conv_input-14 (view)) ne=24576,1,1,1 data=0xffff80b115410000 view=0x79fb200bd180 offs=0 src0=conv_input-14 (view) src1=cache_r_l14 (view)
+ornith_spec_state_diag node=1376 op=SSM_CONV name=conv_output_raw-14 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-14 src1=blk.14.ssm_conv1d.weight
+ornith_spec_state_diag node=1377 op=UNARY name=conv_output_silu-14 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-14 src1=-
+ornith_spec_state_diag node=1531 op=GET_ROWS name=conv_states-16 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l16 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=1535 op=RESHAPE name=conv_states_reshaped-16 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8cb2080 offs=0 src0=conv_states-16 src1=-
+ornith_spec_state_diag node=1539 op=CONCAT name=conv_input-16 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-16 src1=qkv_mixed_transposed-16
+ornith_spec_state_diag node=1540 op=VIEW name=conv_input-16 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8cb2920 offs=4 src0=conv_input-16 src1=-
+ornith_spec_state_diag node=1542 op=CPY name=cache_r_l16 (view) (copy of conv_input-16 (view)) ne=24576,1,1,1 data=0xffff80b115858000 view=0x79fb200bd460 offs=98304 src0=conv_input-16 (view) src1=cache_r_l16 (view)
+ornith_spec_state_diag node=1543 op=VIEW name=conv_input-16 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8cb2920 offs=8 src0=conv_input-16 src1=-
+ornith_spec_state_diag node=1545 op=CPY name=cache_r_l16 (view) (copy of conv_input-16 (view)) ne=24576,1,1,1 data=0xffff80b115840000 view=0x79fb200bd460 offs=0 src0=conv_input-16 (view) src1=cache_r_l16 (view)
+ornith_spec_state_diag node=1553 op=SSM_CONV name=conv_output_raw-16 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-16 src1=blk.16.ssm_conv1d.weight
+ornith_spec_state_diag node=1554 op=UNARY name=conv_output_silu-16 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-16 src1=-
+ornith_spec_state_diag node=1633 op=GET_ROWS name=conv_states-17 ne=24576,1,1,1 data=0xffff80b11b404100 view=(nil) offs=0 src0=cache_r_l17 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=1637 op=RESHAPE name=conv_states_reshaped-17 ne=3,8192,1,1 data=0xffff80b11b404100 view=0x79faf8cbb320 offs=0 src0=conv_states-17 src1=-
+ornith_spec_state_diag node=1641 op=CONCAT name=conv_input-17 ne=5,8192,1,1 data=0xffff80b11c41c100 view=(nil) offs=0 src0=conv_states_reshaped-17 src1=qkv_mixed_transposed-17
+ornith_spec_state_diag node=1642 op=VIEW name=conv_input-17 (view) ne=3,8192,1,1 data=0xffff80b11c41c104 view=0x79faf8cbbbc0 offs=4 src0=conv_input-17 src1=-
+ornith_spec_state_diag node=1644 op=CPY name=cache_r_l17 (view) (copy of conv_input-17 (view)) ne=24576,1,1,1 data=0xffff80b115c88000 view=0x79fb200bd740 offs=98304 src0=conv_input-17 (view) src1=cache_r_l17 (view)
+ornith_spec_state_diag node=1645 op=VIEW name=conv_input-17 (view) ne=3,8192,1,1 data=0xffff80b11c41c108 view=0x79faf8cbbbc0 offs=8 src0=conv_input-17 src1=-
+ornith_spec_state_diag node=1647 op=CPY name=cache_r_l17 (view) (copy of conv_input-17 (view)) ne=24576,1,1,1 data=0xffff80b115c70000 view=0x79fb200bd740 offs=0 src0=conv_input-17 (view) src1=cache_r_l17 (view)
+ornith_spec_state_diag node=1655 op=SSM_CONV name=conv_output_raw-17 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_input-17 src1=blk.17.ssm_conv1d.weight
+ornith_spec_state_diag node=1656 op=UNARY name=conv_output_silu-17 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_output_raw-17 src1=-
+ornith_spec_state_diag node=1735 op=GET_ROWS name=conv_states-18 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l18 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=1739 op=RESHAPE name=conv_states_reshaped-18 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8cc45c0 offs=0 src0=conv_states-18 src1=-
+ornith_spec_state_diag node=1743 op=CONCAT name=conv_input-18 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-18 src1=qkv_mixed_transposed-18
+ornith_spec_state_diag node=1744 op=VIEW name=conv_input-18 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8cc4e60 offs=4 src0=conv_input-18 src1=-
+ornith_spec_state_diag node=1746 op=CPY name=cache_r_l18 (view) (copy of conv_input-18 (view)) ne=24576,1,1,1 data=0xffff80b1160b8000 view=0x79fb200bda20 offs=98304 src0=conv_input-18 (view) src1=cache_r_l18 (view)
+ornith_spec_state_diag node=1747 op=VIEW name=conv_input-18 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8cc4e60 offs=8 src0=conv_input-18 src1=-
+ornith_spec_state_diag node=1749 op=CPY name=cache_r_l18 (view) (copy of conv_input-18 (view)) ne=24576,1,1,1 data=0xffff80b1160a0000 view=0x79fb200bda20 offs=0 src0=conv_input-18 (view) src1=cache_r_l18 (view)
+ornith_spec_state_diag node=1757 op=SSM_CONV name=conv_output_raw-18 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-18 src1=blk.18.ssm_conv1d.weight
+ornith_spec_state_diag node=1758 op=UNARY name=conv_output_silu-18 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-18 src1=-
+ornith_spec_state_diag node=1912 op=GET_ROWS name=conv_states-20 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l20 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=1916 op=RESHAPE name=conv_states_reshaped-20 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8cd4430 offs=0 src0=conv_states-20 src1=-
+ornith_spec_state_diag node=1920 op=CONCAT name=conv_input-20 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-20 src1=qkv_mixed_transposed-20
+ornith_spec_state_diag node=1921 op=VIEW name=conv_input-20 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8cd4cd0 offs=4 src0=conv_input-20 src1=-
+ornith_spec_state_diag node=1923 op=CPY name=cache_r_l20 (view) (copy of conv_input-20 (view)) ne=24576,1,1,1 data=0xffff80b1164e8000 view=0x79fb200bdd00 offs=98304 src0=conv_input-20 (view) src1=cache_r_l20 (view)
+ornith_spec_state_diag node=1924 op=VIEW name=conv_input-20 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8cd4cd0 offs=8 src0=conv_input-20 src1=-
+ornith_spec_state_diag node=1926 op=CPY name=cache_r_l20 (view) (copy of conv_input-20 (view)) ne=24576,1,1,1 data=0xffff80b1164d0000 view=0x79fb200bdd00 offs=0 src0=conv_input-20 (view) src1=cache_r_l20 (view)
+ornith_spec_state_diag node=1934 op=SSM_CONV name=conv_output_raw-20 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-20 src1=blk.20.ssm_conv1d.weight
+ornith_spec_state_diag node=1935 op=UNARY name=conv_output_silu-20 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-20 src1=-
+ornith_spec_state_diag node=2014 op=GET_ROWS name=conv_states-21 ne=24576,1,1,1 data=0xffff80b11b404100 view=(nil) offs=0 src0=cache_r_l21 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=2018 op=RESHAPE name=conv_states_reshaped-21 ne=3,8192,1,1 data=0xffff80b11b404100 view=0x79faf8cdd6d0 offs=0 src0=conv_states-21 src1=-
+ornith_spec_state_diag node=2022 op=CONCAT name=conv_input-21 ne=5,8192,1,1 data=0xffff80b11c41c100 view=(nil) offs=0 src0=conv_states_reshaped-21 src1=qkv_mixed_transposed-21
+ornith_spec_state_diag node=2023 op=VIEW name=conv_input-21 (view) ne=3,8192,1,1 data=0xffff80b11c41c104 view=0x79faf8cddf70 offs=4 src0=conv_input-21 src1=-
+ornith_spec_state_diag node=2025 op=CPY name=cache_r_l21 (view) (copy of conv_input-21 (view)) ne=24576,1,1,1 data=0xffff80b116918000 view=0x79fb200bdfe0 offs=98304 src0=conv_input-21 (view) src1=cache_r_l21 (view)
+ornith_spec_state_diag node=2026 op=VIEW name=conv_input-21 (view) ne=3,8192,1,1 data=0xffff80b11c41c108 view=0x79faf8cddf70 offs=8 src0=conv_input-21 src1=-
+ornith_spec_state_diag node=2028 op=CPY name=cache_r_l21 (view) (copy of conv_input-21 (view)) ne=24576,1,1,1 data=0xffff80b116900000 view=0x79fb200bdfe0 offs=0 src0=conv_input-21 (view) src1=cache_r_l21 (view)
+ornith_spec_state_diag node=2036 op=SSM_CONV name=conv_output_raw-21 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_input-21 src1=blk.21.ssm_conv1d.weight
+ornith_spec_state_diag node=2037 op=UNARY name=conv_output_silu-21 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_output_raw-21 src1=-
+ornith_spec_state_diag node=2116 op=GET_ROWS name=conv_states-22 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l22 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=2120 op=RESHAPE name=conv_states_reshaped-22 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8ce6970 offs=0 src0=conv_states-22 src1=-
+ornith_spec_state_diag node=2124 op=CONCAT name=conv_input-22 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-22 src1=qkv_mixed_transposed-22
+ornith_spec_state_diag node=2125 op=VIEW name=conv_input-22 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8ce7210 offs=4 src0=conv_input-22 src1=-
+ornith_spec_state_diag node=2127 op=CPY name=cache_r_l22 (view) (copy of conv_input-22 (view)) ne=24576,1,1,1 data=0xffff80b116d48000 view=0x79fb200be2c0 offs=98304 src0=conv_input-22 (view) src1=cache_r_l22 (view)
+ornith_spec_state_diag node=2128 op=VIEW name=conv_input-22 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8ce7210 offs=8 src0=conv_input-22 src1=-
+ornith_spec_state_diag node=2130 op=CPY name=cache_r_l22 (view) (copy of conv_input-22 (view)) ne=24576,1,1,1 data=0xffff80b116d30000 view=0x79fb200be2c0 offs=0 src0=conv_input-22 (view) src1=cache_r_l22 (view)
+ornith_spec_state_diag node=2138 op=SSM_CONV name=conv_output_raw-22 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-22 src1=blk.22.ssm_conv1d.weight
+ornith_spec_state_diag node=2139 op=UNARY name=conv_output_silu-22 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-22 src1=-
+ornith_spec_state_diag node=2293 op=GET_ROWS name=conv_states-24 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l24 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=2297 op=RESHAPE name=conv_states_reshaped-24 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8cf67e0 offs=0 src0=conv_states-24 src1=-
+ornith_spec_state_diag node=2301 op=CONCAT name=conv_input-24 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-24 src1=qkv_mixed_transposed-24
+ornith_spec_state_diag node=2302 op=VIEW name=conv_input-24 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8cf7080 offs=4 src0=conv_input-24 src1=-
+ornith_spec_state_diag node=2304 op=CPY name=cache_r_l24 (view) (copy of conv_input-24 (view)) ne=24576,1,1,1 data=0xffff80b117178000 view=0x79fb200be5a0 offs=98304 src0=conv_input-24 (view) src1=cache_r_l24 (view)
+ornith_spec_state_diag node=2305 op=VIEW name=conv_input-24 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8cf7080 offs=8 src0=conv_input-24 src1=-
+ornith_spec_state_diag node=2307 op=CPY name=cache_r_l24 (view) (copy of conv_input-24 (view)) ne=24576,1,1,1 data=0xffff80b117160000 view=0x79fb200be5a0 offs=0 src0=conv_input-24 (view) src1=cache_r_l24 (view)
+ornith_spec_state_diag node=2315 op=SSM_CONV name=conv_output_raw-24 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-24 src1=blk.24.ssm_conv1d.weight
+ornith_spec_state_diag node=2316 op=UNARY name=conv_output_silu-24 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-24 src1=-
+ornith_spec_state_diag node=2395 op=GET_ROWS name=conv_states-25 ne=24576,1,1,1 data=0xffff80b11b404100 view=(nil) offs=0 src0=cache_r_l25 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=2399 op=RESHAPE name=conv_states_reshaped-25 ne=3,8192,1,1 data=0xffff80b11b404100 view=0x79faf8cffa80 offs=0 src0=conv_states-25 src1=-
+ornith_spec_state_diag node=2403 op=CONCAT name=conv_input-25 ne=5,8192,1,1 data=0xffff80b11c41c100 view=(nil) offs=0 src0=conv_states_reshaped-25 src1=qkv_mixed_transposed-25
+ornith_spec_state_diag node=2404 op=VIEW name=conv_input-25 (view) ne=3,8192,1,1 data=0xffff80b11c41c104 view=0x79faf8d00320 offs=4 src0=conv_input-25 src1=-
+ornith_spec_state_diag node=2406 op=CPY name=cache_r_l25 (view) (copy of conv_input-25 (view)) ne=24576,1,1,1 data=0xffff80b1175a8000 view=0x79fb200be880 offs=98304 src0=conv_input-25 (view) src1=cache_r_l25 (view)
+ornith_spec_state_diag node=2407 op=VIEW name=conv_input-25 (view) ne=3,8192,1,1 data=0xffff80b11c41c108 view=0x79faf8d00320 offs=8 src0=conv_input-25 src1=-
+ornith_spec_state_diag node=2409 op=CPY name=cache_r_l25 (view) (copy of conv_input-25 (view)) ne=24576,1,1,1 data=0xffff80b117590000 view=0x79fb200be880 offs=0 src0=conv_input-25 (view) src1=cache_r_l25 (view)
+ornith_spec_state_diag node=2417 op=SSM_CONV name=conv_output_raw-25 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_input-25 src1=blk.25.ssm_conv1d.weight
+ornith_spec_state_diag node=2418 op=UNARY name=conv_output_silu-25 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_output_raw-25 src1=-
+ornith_spec_state_diag node=2497 op=GET_ROWS name=conv_states-26 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l26 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=2501 op=RESHAPE name=conv_states_reshaped-26 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8d08d20 offs=0 src0=conv_states-26 src1=-
+ornith_spec_state_diag node=2505 op=CONCAT name=conv_input-26 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-26 src1=qkv_mixed_transposed-26
+ornith_spec_state_diag node=2506 op=VIEW name=conv_input-26 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8d095c0 offs=4 src0=conv_input-26 src1=-
+ornith_spec_state_diag node=2508 op=CPY name=cache_r_l26 (view) (copy of conv_input-26 (view)) ne=24576,1,1,1 data=0xffff80b1179d8000 view=0x79fb200beb60 offs=98304 src0=conv_input-26 (view) src1=cache_r_l26 (view)
+ornith_spec_state_diag node=2509 op=VIEW name=conv_input-26 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8d095c0 offs=8 src0=conv_input-26 src1=-
+ornith_spec_state_diag node=2511 op=CPY name=cache_r_l26 (view) (copy of conv_input-26 (view)) ne=24576,1,1,1 data=0xffff80b1179c0000 view=0x79fb200beb60 offs=0 src0=conv_input-26 (view) src1=cache_r_l26 (view)
+ornith_spec_state_diag node=2519 op=SSM_CONV name=conv_output_raw-26 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-26 src1=blk.26.ssm_conv1d.weight
+ornith_spec_state_diag node=2520 op=UNARY name=conv_output_silu-26 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-26 src1=-
+ornith_spec_state_diag node=2674 op=GET_ROWS name=conv_states-28 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l28 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=2678 op=RESHAPE name=conv_states_reshaped-28 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8d18b90 offs=0 src0=conv_states-28 src1=-
+ornith_spec_state_diag node=2682 op=CONCAT name=conv_input-28 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-28 src1=qkv_mixed_transposed-28
+ornith_spec_state_diag node=2683 op=VIEW name=conv_input-28 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8d19430 offs=4 src0=conv_input-28 src1=-
+ornith_spec_state_diag node=2685 op=CPY name=cache_r_l28 (view) (copy of conv_input-28 (view)) ne=24576,1,1,1 data=0xffff80b117e08000 view=0x79fb200bee40 offs=98304 src0=conv_input-28 (view) src1=cache_r_l28 (view)
+ornith_spec_state_diag node=2686 op=VIEW name=conv_input-28 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8d19430 offs=8 src0=conv_input-28 src1=-
+ornith_spec_state_diag node=2688 op=CPY name=cache_r_l28 (view) (copy of conv_input-28 (view)) ne=24576,1,1,1 data=0xffff80b117df0000 view=0x79fb200bee40 offs=0 src0=conv_input-28 (view) src1=cache_r_l28 (view)
+ornith_spec_state_diag node=2696 op=SSM_CONV name=conv_output_raw-28 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-28 src1=blk.28.ssm_conv1d.weight
+ornith_spec_state_diag node=2697 op=UNARY name=conv_output_silu-28 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-28 src1=-
+ornith_spec_state_diag node=2776 op=GET_ROWS name=conv_states-29 ne=24576,1,1,1 data=0xffff80b11b404100 view=(nil) offs=0 src0=cache_r_l29 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=2780 op=RESHAPE name=conv_states_reshaped-29 ne=3,8192,1,1 data=0xffff80b11b404100 view=0x79faf8d21e30 offs=0 src0=conv_states-29 src1=-
+ornith_spec_state_diag node=2784 op=CONCAT name=conv_input-29 ne=5,8192,1,1 data=0xffff80b11c41c100 view=(nil) offs=0 src0=conv_states_reshaped-29 src1=qkv_mixed_transposed-29
+ornith_spec_state_diag node=2785 op=VIEW name=conv_input-29 (view) ne=3,8192,1,1 data=0xffff80b11c41c104 view=0x79faf8d226d0 offs=4 src0=conv_input-29 src1=-
+ornith_spec_state_diag node=2787 op=CPY name=cache_r_l29 (view) (copy of conv_input-29 (view)) ne=24576,1,1,1 data=0xffff80b118238000 view=0x79fb200bf120 offs=98304 src0=conv_input-29 (view) src1=cache_r_l29 (view)
+ornith_spec_state_diag node=2788 op=VIEW name=conv_input-29 (view) ne=3,8192,1,1 data=0xffff80b11c41c108 view=0x79faf8d226d0 offs=8 src0=conv_input-29 src1=-
+ornith_spec_state_diag node=2790 op=CPY name=cache_r_l29 (view) (copy of conv_input-29 (view)) ne=24576,1,1,1 data=0xffff80b118220000 view=0x79fb200bf120 offs=0 src0=conv_input-29 (view) src1=cache_r_l29 (view)
+ornith_spec_state_diag node=2798 op=SSM_CONV name=conv_output_raw-29 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_input-29 src1=blk.29.ssm_conv1d.weight
+ornith_spec_state_diag node=2799 op=UNARY name=conv_output_silu-29 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_output_raw-29 src1=-
+ornith_spec_state_diag node=2878 op=GET_ROWS name=conv_states-30 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l30 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=2882 op=RESHAPE name=conv_states_reshaped-30 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8d2b0d0 offs=0 src0=conv_states-30 src1=-
+ornith_spec_state_diag node=2886 op=CONCAT name=conv_input-30 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-30 src1=qkv_mixed_transposed-30
+ornith_spec_state_diag node=2887 op=VIEW name=conv_input-30 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8d2b970 offs=4 src0=conv_input-30 src1=-
+ornith_spec_state_diag node=2889 op=CPY name=cache_r_l30 (view) (copy of conv_input-30 (view)) ne=24576,1,1,1 data=0xffff80b118668000 view=0x79fb200bf400 offs=98304 src0=conv_input-30 (view) src1=cache_r_l30 (view)
+ornith_spec_state_diag node=2890 op=VIEW name=conv_input-30 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8d2b970 offs=8 src0=conv_input-30 src1=-
+ornith_spec_state_diag node=2892 op=CPY name=cache_r_l30 (view) (copy of conv_input-30 (view)) ne=24576,1,1,1 data=0xffff80b118650000 view=0x79fb200bf400 offs=0 src0=conv_input-30 (view) src1=cache_r_l30 (view)
+ornith_spec_state_diag node=2900 op=SSM_CONV name=conv_output_raw-30 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-30 src1=blk.30.ssm_conv1d.weight
+ornith_spec_state_diag node=2901 op=UNARY name=conv_output_silu-30 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-30 src1=-
+ornith_spec_state_diag node=3055 op=GET_ROWS name=conv_states-32 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l32 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=3059 op=RESHAPE name=conv_states_reshaped-32 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8d3af40 offs=0 src0=conv_states-32 src1=-
+ornith_spec_state_diag node=3063 op=CONCAT name=conv_input-32 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-32 src1=qkv_mixed_transposed-32
+ornith_spec_state_diag node=3064 op=VIEW name=conv_input-32 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8d3b7e0 offs=4 src0=conv_input-32 src1=-
+ornith_spec_state_diag node=3066 op=CPY name=cache_r_l32 (view) (copy of conv_input-32 (view)) ne=24576,1,1,1 data=0xffff80b118a98000 view=0x79fb200bf6e0 offs=98304 src0=conv_input-32 (view) src1=cache_r_l32 (view)
+ornith_spec_state_diag node=3067 op=VIEW name=conv_input-32 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8d3b7e0 offs=8 src0=conv_input-32 src1=-
+ornith_spec_state_diag node=3069 op=CPY name=cache_r_l32 (view) (copy of conv_input-32 (view)) ne=24576,1,1,1 data=0xffff80b118a80000 view=0x79fb200bf6e0 offs=0 src0=conv_input-32 (view) src1=cache_r_l32 (view)
+ornith_spec_state_diag node=3077 op=SSM_CONV name=conv_output_raw-32 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-32 src1=blk.32.ssm_conv1d.weight
+ornith_spec_state_diag node=3078 op=UNARY name=conv_output_silu-32 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-32 src1=-
+ornith_spec_state_diag node=3157 op=GET_ROWS name=conv_states-33 ne=24576,1,1,1 data=0xffff80b11b404100 view=(nil) offs=0 src0=cache_r_l33 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=3161 op=RESHAPE name=conv_states_reshaped-33 ne=3,8192,1,1 data=0xffff80b11b404100 view=0x79faf8d441e0 offs=0 src0=conv_states-33 src1=-
+ornith_spec_state_diag node=3165 op=CONCAT name=conv_input-33 ne=5,8192,1,1 data=0xffff80b11c41c100 view=(nil) offs=0 src0=conv_states_reshaped-33 src1=qkv_mixed_transposed-33
+ornith_spec_state_diag node=3166 op=VIEW name=conv_input-33 (view) ne=3,8192,1,1 data=0xffff80b11c41c104 view=0x79faf8d44a80 offs=4 src0=conv_input-33 src1=-
+ornith_spec_state_diag node=3168 op=CPY name=cache_r_l33 (view) (copy of conv_input-33 (view)) ne=24576,1,1,1 data=0xffff80b118ec8000 view=0x79fb200bf9c0 offs=98304 src0=conv_input-33 (view) src1=cache_r_l33 (view)
+ornith_spec_state_diag node=3169 op=VIEW name=conv_input-33 (view) ne=3,8192,1,1 data=0xffff80b11c41c108 view=0x79faf8d44a80 offs=8 src0=conv_input-33 src1=-
+ornith_spec_state_diag node=3171 op=CPY name=cache_r_l33 (view) (copy of conv_input-33 (view)) ne=24576,1,1,1 data=0xffff80b118eb0000 view=0x79fb200bf9c0 offs=0 src0=conv_input-33 (view) src1=cache_r_l33 (view)
+ornith_spec_state_diag node=3179 op=SSM_CONV name=conv_output_raw-33 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_input-33 src1=blk.33.ssm_conv1d.weight
+ornith_spec_state_diag node=3180 op=UNARY name=conv_output_silu-33 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_output_raw-33 src1=-
+ornith_spec_state_diag node=3259 op=GET_ROWS name=conv_states-34 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l34 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=3263 op=RESHAPE name=conv_states_reshaped-34 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8d4d480 offs=0 src0=conv_states-34 src1=-
+ornith_spec_state_diag node=3267 op=CONCAT name=conv_input-34 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-34 src1=qkv_mixed_transposed-34
+ornith_spec_state_diag node=3268 op=VIEW name=conv_input-34 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8d4dd20 offs=4 src0=conv_input-34 src1=-
+ornith_spec_state_diag node=3270 op=CPY name=cache_r_l34 (view) (copy of conv_input-34 (view)) ne=24576,1,1,1 data=0xffff80b1192f8000 view=0x79fb200bfca0 offs=98304 src0=conv_input-34 (view) src1=cache_r_l34 (view)
+ornith_spec_state_diag node=3271 op=VIEW name=conv_input-34 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8d4dd20 offs=8 src0=conv_input-34 src1=-
+ornith_spec_state_diag node=3273 op=CPY name=cache_r_l34 (view) (copy of conv_input-34 (view)) ne=24576,1,1,1 data=0xffff80b1192e0000 view=0x79fb200bfca0 offs=0 src0=conv_input-34 (view) src1=cache_r_l34 (view)
+ornith_spec_state_diag node=3281 op=SSM_CONV name=conv_output_raw-34 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-34 src1=blk.34.ssm_conv1d.weight
+ornith_spec_state_diag node=3282 op=UNARY name=conv_output_silu-34 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-34 src1=-
+ornith_spec_state_diag node=3436 op=GET_ROWS name=conv_states-36 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l36 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=3440 op=RESHAPE name=conv_states_reshaped-36 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8d5d2f0 offs=0 src0=conv_states-36 src1=-
+ornith_spec_state_diag node=3444 op=CONCAT name=conv_input-36 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-36 src1=qkv_mixed_transposed-36
+ornith_spec_state_diag node=3445 op=VIEW name=conv_input-36 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8d5db90 offs=4 src0=conv_input-36 src1=-
+ornith_spec_state_diag node=3447 op=CPY name=cache_r_l36 (view) (copy of conv_input-36 (view)) ne=24576,1,1,1 data=0xffff80b119728000 view=0x79fb200bff80 offs=98304 src0=conv_input-36 (view) src1=cache_r_l36 (view)
+ornith_spec_state_diag node=3448 op=VIEW name=conv_input-36 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8d5db90 offs=8 src0=conv_input-36 src1=-
+ornith_spec_state_diag node=3450 op=CPY name=cache_r_l36 (view) (copy of conv_input-36 (view)) ne=24576,1,1,1 data=0xffff80b119710000 view=0x79fb200bff80 offs=0 src0=conv_input-36 (view) src1=cache_r_l36 (view)
+ornith_spec_state_diag node=3458 op=SSM_CONV name=conv_output_raw-36 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-36 src1=blk.36.ssm_conv1d.weight
+ornith_spec_state_diag node=3459 op=UNARY name=conv_output_silu-36 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-36 src1=-
+ornith_spec_state_diag node=3538 op=GET_ROWS name=conv_states-37 ne=24576,1,1,1 data=0xffff80b11b404100 view=(nil) offs=0 src0=cache_r_l37 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=3542 op=RESHAPE name=conv_states_reshaped-37 ne=3,8192,1,1 data=0xffff80b11b404100 view=0x79faf8d66590 offs=0 src0=conv_states-37 src1=-
+ornith_spec_state_diag node=3546 op=CONCAT name=conv_input-37 ne=5,8192,1,1 data=0xffff80b11c41c100 view=(nil) offs=0 src0=conv_states_reshaped-37 src1=qkv_mixed_transposed-37
+ornith_spec_state_diag node=3547 op=VIEW name=conv_input-37 (view) ne=3,8192,1,1 data=0xffff80b11c41c104 view=0x79faf8d66e30 offs=4 src0=conv_input-37 src1=-
+ornith_spec_state_diag node=3549 op=CPY name=cache_r_l37 (view) (copy of conv_input-37 (view)) ne=24576,1,1,1 data=0xffff80b119b58000 view=0x79fb200c0260 offs=98304 src0=conv_input-37 (view) src1=cache_r_l37 (view)
+ornith_spec_state_diag node=3550 op=VIEW name=conv_input-37 (view) ne=3,8192,1,1 data=0xffff80b11c41c108 view=0x79faf8d66e30 offs=8 src0=conv_input-37 src1=-
+ornith_spec_state_diag node=3552 op=CPY name=cache_r_l37 (view) (copy of conv_input-37 (view)) ne=24576,1,1,1 data=0xffff80b119b40000 view=0x79fb200c0260 offs=0 src0=conv_input-37 (view) src1=cache_r_l37 (view)
+ornith_spec_state_diag node=3560 op=SSM_CONV name=conv_output_raw-37 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_input-37 src1=blk.37.ssm_conv1d.weight
+ornith_spec_state_diag node=3561 op=UNARY name=conv_output_silu-37 ne=8192,2,1,1 data=0xffff80b11d434100 view=(nil) offs=0 src0=conv_output_raw-37 src1=-
+ornith_spec_state_diag node=3640 op=GET_ROWS name=conv_states-38 ne=24576,1,1,1 data=0xffff80b11a400000 view=(nil) offs=0 src0=cache_r_l38 (reshaped) src1=SYCL0# (view)#0
+ornith_spec_state_diag node=3644 op=RESHAPE name=conv_states_reshaped-38 ne=3,8192,1,1 data=0xffff80b11a400000 view=0x79faf8d6f830 offs=0 src0=conv_states-38 src1=-
+ornith_spec_state_diag node=3648 op=CONCAT name=conv_input-38 ne=5,8192,1,1 data=0xffff80b11c804100 view=(nil) offs=0 src0=conv_states_reshaped-38 src1=qkv_mixed_transposed-38
+ornith_spec_state_diag node=3649 op=VIEW name=conv_input-38 (view) ne=3,8192,1,1 data=0xffff80b11c804104 view=0x79faf8d700d0 offs=4 src0=conv_input-38 src1=-
+ornith_spec_state_diag node=3651 op=CPY name=cache_r_l38 (view) (copy of conv_input-38 (view)) ne=24576,1,1,1 data=0xffff80b119f88000 view=0x79fb200c0540 offs=98304 src0=conv_input-38 (view) src1=cache_r_l38 (view)
+ornith_spec_state_diag node=3652 op=VIEW name=conv_input-38 (view) ne=3,8192,1,1 data=0xffff80b11c804108 view=0x79faf8d700d0 offs=8 src0=conv_input-38 src1=-
+ornith_spec_state_diag node=3654 op=CPY name=cache_r_l38 (view) (copy of conv_input-38 (view)) ne=24576,1,1,1 data=0xffff80b119f70000 view=0x79fb200c0540 offs=0 src0=conv_input-38 (view) src1=cache_r_l38 (view)
+ornith_spec_state_diag node=3662 op=SSM_CONV name=conv_output_raw-38 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_input-38 src1=blk.38.ssm_conv1d.weight
+ornith_spec_state_diag node=3663 op=UNARY name=conv_output_silu-38 ne=8192,2,1,1 data=0xffff80b11b804100 view=(nil) offs=0 src0=conv_output_raw-38 src1=-
+ggml_sycl_ornith_moe_gate_up: fused_hits=0
+ggml_sycl_ornith_moe_shared_residual_rms: fused_hits=0
+ggml_sycl_residual_rms_norm: fused_hits=2
+ggml_sycl_ornith_alpha_gate: fused_hits=0
+ggml_sycl_ornith_conv_silu: fused_hits=0
+ggml_sycl_ornith_concat_state_direct: fused_hits=0
+ggml_sycl_ornith_concat_state: fused_hits=0
+ggml_sycl_ornith_gdn_state_io: fused_hits=0
+ggml_sycl_ornith_gdn_rms_gate: fused_hits=0
+ggml_sycl_ornith_qk_norm_rope: fused_hits=0

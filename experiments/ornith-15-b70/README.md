@@ -413,6 +413,15 @@ binary, driver, or benchmark protocol will reproduce them.
   so it remains default-off research and did not advance to fresh-server
   testing. See
   `notes/2026-08-23-ornith35b-mtp2row-conv-silu-research.md`.
+- **Two-row rollback-state fusion — EXACT RESEARCH:** a purpose-built kernel
+  materializes the selected gather, five-row convolution input, and both
+  rollback snapshots while removing 120 GET_ROWS/CONCAT/CPY launches per
+  verifier cycle. It preserved eight canonical transcripts and improved the
+  isolated mirrored mean `65.10 -> 65.65 tok/s` (+0.84%), with both candidates
+  beating both controls. On the preferred verifier stack, however, means were
+  `67.20 -> 67.05 tok/s` (-0.22%). Retain the exact component and structural
+  trace, but do not add it to the preferred stack; see
+  `notes/2026-08-23-ornith35b-mtp2row-two-snapshot-state-research.md`.
 - **Speculative decode:** investigate a substantially smaller and faster
   vocabulary-compatible draft separately. Label target-only and assisted
   results separately.
