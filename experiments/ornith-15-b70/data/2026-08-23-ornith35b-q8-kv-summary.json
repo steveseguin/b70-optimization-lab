@@ -1,0 +1,37 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "accepted_kv_type": "f16",
+  "candidate_kv_type": "q8_0",
+  "correctness": {
+    "canonical_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "candidate_transcript_sha256": "7a8f2fb116ea7ecbde336462865c4ac0d15a8fcbd8efee33ba2536456393e012",
+    "exact_match": false
+  },
+  "depth_screen": {
+    "protocol": "explicit pp2048+tg128, five repetitions at each measured depth",
+    "candidate_sweep_sha256": "04f5dafe08f6756dc5f36078d8b5c6c1fc22dfd934109d7a298fb08ec19e37cf",
+    "f16_reference_sweep_sha256": "6716b6e28842e3a81ee2befd9db5d0ef6f821dae7bbafd78babc0b48518a09c1",
+    "interleaved_matched_ab": false,
+    "points": [
+      {
+        "existing_context_tokens": 8192,
+        "f16_decode_tok_s": 124.209778,
+        "q8_0_decode_tok_s": 82.198718,
+        "delta_percent": -33.82266732656104,
+        "q8_0_prefill_tok_s": 1347.119425
+      },
+      {
+        "existing_context_tokens": 32768,
+        "f16_decode_tok_s": 96.995532,
+        "q8_0_decode_tok_s": 39.868771,
+        "delta_percent": -58.89628091322804,
+        "q8_0_prefill_tok_s": 1133.645145
+      }
+    ]
+  },
+  "decision": "closed; keep F16 KV and do not create a Q8_0 Ornith B70 packet",
+  "no_extrapolation": true
+}

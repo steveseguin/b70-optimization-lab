@@ -59,6 +59,11 @@ binary, driver, or benchmark protocol will reproduce them.
   with both native runs below both controls. Keep the oneDNN backend at the
   measured depth-zero point; see
   `notes/2026-08-23-ornith35b-native-flash-attention-negative.md`.
+- **Q8_0 KV cache — CLOSED QUALITY/PERFORMANCE NEGATIVE:** Q8_0 changed the
+  canonical transcript and measured only 82.20 tok/s at 8K and 39.87 tok/s at
+  32K, versus the published F16 points of 124.21 and 97.00. Keep F16 K/V; do
+  not publish a Q8_0 Ornith B70 variant. See
+  `notes/2026-08-23-ornith35b-q8-kv-negative.md`.
 - **MoE graph eligibility — CLOSED NEGATIVE:** the eligibility correction from
   llama.cpp PR 25089 was useful as a concrete test input, with credit to
   Captain-Tripps for that idea. Our maintained port added exact dispatch gates

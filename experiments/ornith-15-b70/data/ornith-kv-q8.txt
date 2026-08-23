@@ -1,0 +1,11 @@
+# Why Deterministic Validation Matters for GPU Inference Kernels
+
+When optimizing GPU kernels, you're making trade-offs that can subtly change numerical results. Deterministic validation is the safety net that lets you trust those optimizations. Here's why it matters:
+
+## 1. Distinguishing Bugs from Expected Numerical Variation
+
+GPU optimizations often reorder floating-point operations (via different loop unrolling, reduction orders, or fused operations). Since floating-point addition isn't associative, these reordering changes produce *slightly different* results.
+
+Without deterministic validation, you can't tell:
+- **A genuine bug** (wrong answer) from
+
