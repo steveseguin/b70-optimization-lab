@@ -17,6 +17,7 @@ set -uo pipefail
 #   VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING, TRITON_CACHE_AUTOTUNING
 #   PROMPT_IDS (comma-separated), MAX_TOKENS (default 128), BENCH (default 1)
 #   CANARY (default 1), NATURAL_EOS (default 0), RETURN_TOKEN_IDS (default 1)
+#   QUALITY (default 0), QUALITY_BASELINE_JSON, QUALITY_REQUIRE_BASELINE
 
 readonly image_tag="vllm/vllm-openai-xpu:nightly-e9d1398d9edfd90fcc1cf783805240e3effec013"
 readonly image_digest="sha256:bc979d1ba312dc8a666c57a40205f35d7fc5d96b2f7450c2c77f5b3d5243f0e0"
@@ -153,6 +154,14 @@ done
   echo "natural_eos=${NATURAL_EOS:-0}"
   echo "return_token_ids=${RETURN_TOKEN_IDS:-1}"
   echo "prompt_ids=${PROMPT_IDS:-all}"
+  echo "quality=${QUALITY:-0}"
+  echo "quality_require_baseline=${QUALITY_REQUIRE_BASELINE:-0}"
+  echo "quality_baseline_json=${QUALITY_BASELINE_JSON:-unset}"
+  if [[ -n "${QUALITY_BASELINE_JSON:-}" && -f "$QUALITY_BASELINE_JSON" ]]; then
+    echo "quality_baseline_sha256=$(sha256sum "$QUALITY_BASELINE_JSON" | awk '{print $1}')"
+  else
+    echo "quality_baseline_sha256=unset"
+  fi
   echo "lab_git_head=$(git -C "$repo" rev-parse HEAD)"
 } > "$out/identity.env"
 
@@ -259,6 +268,32 @@ if [[ "${BENCH:-1}" == "1" ]]; then
   echo "bench_rc=$bench_rc" > "$out/bench.status"
   [[ "$bench_rc" == "0" ]] || exit "$bench_rc"
   curl -fsS "http://127.0.0.1:$port/metrics" > "$out/metrics.after.prom"
+fi
+
+if [[ "${QUALITY:-0}" == "1" ]]; then
+  quality_args=(
+    --base-url "http://127.0.0.1:$port" --model "$alias"
+    --tokenizer "$model" --timeout 900 --repeat-runs 8
+    --long-context-tokens 8192
+    --request-id-prefix "qwen38-nightly-strict-${port}"
+    --chat-template-kwargs-json '{"enable_thinking":false}'
+    --output-json "$out/quality.json"
+  )
+  if [[ -n "${QUALITY_BASELINE_JSON:-}" ]]; then
+    [[ -f "$QUALITY_BASELINE_JSON" ]] || \
+      fail "missing quality baseline: $QUALITY_BASELINE_JSON"
+    quality_args+=( --baseline-json "$QUALITY_BASELINE_JSON" )
+  fi
+  if [[ "${QUALITY_REQUIRE_BASELINE:-0}" == "1" ]]; then
+    [[ -n "${QUALITY_BASELINE_JSON:-}" ]] || \
+      fail "QUALITY_REQUIRE_BASELINE=1 requires QUALITY_BASELINE_JSON"
+    quality_args+=( --require-baseline )
+  fi
+  "$venv/bin/python" "$repo/scripts/qwen38-text-quality-suite.py" \
+    "${quality_args[@]}" > "$out/quality.stdout.log" 2>&1
+  quality_rc=$?
+  echo "quality_rc=$quality_rc" > "$out/quality.status"
+  [[ "$quality_rc" == "0" ]] || exit "$quality_rc"
 fi
 
 if [[ "$cache_policy" == "replay" ]]; then
