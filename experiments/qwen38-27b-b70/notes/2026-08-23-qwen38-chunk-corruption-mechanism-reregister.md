@@ -66,6 +66,12 @@ It proves:
 If any item fails, stop without D7 or D4. Repairing the instrument requires a
 new implementation identity and another explicitly registered probe.
 
+**Completed:** v2b passed all five gates at
+`qwen38-chunkdiag-probe-20260823-d1d2-v2b`. Its input and output cache
+manifests are byte-identical (SHA-256
+`8ce2ed4646f6fa33563c20619d382e5d13b3a7b60e609b03230e968c608b55b3`).
+That manifest is now the sealed input for the two mechanism arms.
+
 ## D1/D2 mechanism pair and frozen interpretations
 
 After D0i passes, exactly two fresh-server arms are authorized, in order:
