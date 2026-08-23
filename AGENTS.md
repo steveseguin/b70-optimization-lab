@@ -218,6 +218,39 @@ The previous Gemma 4 26B A4B Q8 one-B70 diagnostic best is:
 
 ## Working Rules
 
+### Rolling Upstream And Optimization Overlay Policy
+
+Active development starts from the newest available upstream code. A mutable
+tag such as `nightly` must be pulled and resolved again at the start of active
+runtime work; an older digest-pinned image is a historical reproduction anchor,
+not the current nightly merely because its tag contains that word. Record the
+source tag, registry manifest digest, local image ID, image creation time,
+upstream source commit, and runtime package versions before launching a model.
+
+Treat the lab's accepted optimizations as a maintained overlay on that moving
+upstream base:
+
+- inventory source patches separately from environment, launcher, topology,
+  cache, and compilation settings;
+- check whether upstream already contains each accepted change before applying
+  it again;
+- rebase or reapply still-needed accepted patches onto the newest base and
+  rerun their mechanism, correctness, and performance gates;
+- never silently drop a useful patch because it conflicts. Preserve the patch
+  and record whether upstream superseded it, it was ported, it is temporarily
+  blocked, or it failed a new gate;
+- keep negative, unsafe, diagnostic-only, and default-off patches as historical
+  artifacts, but do not promote them into the current overlay without a new
+  qualification;
+- preserve every prior high score under its exact old identity. A slower run on
+  newer code is regression evidence, not permission to lower or overwrite the
+  captured frontier.
+
+Promotion on a refreshed base requires a full benchmark-identity diff against
+the last known-good run, the same quality/canary bar, and matched performance
+checks. Run by the resolved immutable digest after the pull so a moving tag
+cannot change during a campaign.
+
 ### Main-Only Git Policy
 
 Work directly on `main` only. Never create or maintain feature, experiment,

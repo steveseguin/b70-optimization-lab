@@ -44,9 +44,46 @@ The closed no-training Muse Q8/WOQ record remains approved by LocalMaxxing as
 It is a Q8/WOQ target-verified result, not BF16/lossless or universally
 token-exact evidence.
 
-## Current Qwen3.8 Nightly TP-Scale Frontier (2026-08-23)
+## Active Rolling XPU Nightly Development Base (2026-08-23)
 
-The active short-decode target-only frontier uses the digest-pinned XPU
+The active development base is now the rolling upstream tag
+`vllm/vllm-openai-xpu:nightly`, pulled and resolved on 2026-08-23 to the
+immutable repository digest
+`sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35`.
+The image was created `2026-08-23T05:09:33.938169411Z` and contains:
+
+- vLLM source `a3561ef8e49d3545c4078df43444beb4c98ae124`, package
+  `0.26.1rc1.dev1120+ga3561ef8e.xpu`;
+- Torch `2.13.0+xpu`, Triton `3.7.2+xpu`, transformers `5.15.0`, and
+  vLLM XPU kernels `0.1.13.2`;
+- 18 vLLM commits after the certified `e9d1398d9` image below.
+
+This is the current code base, but it is not yet a performance-qualified
+replacement for the pinned frontier below. The old `30.2 / 48.9 / 71.7`
+graph column used an unmodified official image: no local vLLM patch, XPU-kernel
+patch, source mount, DSO overlay, or image mutation was hidden in that result.
+Its optimization overlay is the exact graph, container IPC, device-selection,
+cache-isolation, model, memory, and benchmark contract. Carry that contract
+forward first; do not lower or relabel any historical speed while the rolling
+base is being qualified.
+
+The separate Qwen3.6-derived native MTP source stack remains preserved as a
+patch/source research identity. It is not part of the stock target-only graph
+column and must be ported selectively after the stock rolling-nightly
+comparison, not discarded or applied wholesale. The default-off `mtp.fc` INT4
+patch was quality-clean but rate-neutral, and the D1/D2 state audit was
+diagnostic-only; neither is a mandatory performance overlay.
+
+Use the
+[rolling strict runner](experiments/qwen38-27b-b70/scripts/run-20260823-qwen38-rolling-nightly-strict-smoke.sh).
+It pulls the floating tag, resolves and launches only its immutable digest,
+checks the model through direct and ordinary reads, uses a fresh ext4 cache,
+and retains the strict canary, token-ID, natural-EOS, quality-baseline, and
+cache-replay gates. The dated pinned-image runners remain unchanged.
+
+## Pinned Certified Qwen3.8 TP-Scale Frontier (2026-08-23)
+
+The certified short-decode target-only frontier uses the digest-pinned XPU
 nightly image `sha256:bc979d1ba312dc8a666c57a40205f35d7fc5d96b2f7450c2c77f5b3d5243f0e0`,
 AutoRound INT4 W4A16, F16 KV, one request, cache zero, and XPU Graph:
 
@@ -114,14 +151,21 @@ and the earlier
 
 Immediate order:
 
-1. preserve the nightly image, isolated cache, and every raw root;
-2. make the human outward-submission decision for the strict TP1/TP4
+1. qualify the resolved rolling nightly at TP1 MTP0/F16/graph with the exact
+   old identity contract and speed floors; proceed to TP2 and TP4 only after
+   the prior topology passes;
+2. preserve the old pinned image identity, isolated-cache manifests, every raw
+   root, and all captured speed values as the rollback/comparison frontier;
+3. make the human outward-submission decision for the strict TP1/TP4
    target-only cells; retain the cross-boot and unsupported-graph disclosures;
-3. do not burn more nightly Cartesian cells unchanged: all 96 are already
-   decision-classified and TP4 MTP2 missed its frozen expansion gates;
-4. preregister the next dose-8 mechanism door around KV-page checksums or
+4. do not burn more cells on the old pinned Cartesian matrix unchanged: all 96
+   are already decision-classified and TP4 MTP2 missed its frozen expansion
+   gates;
+5. after the stock rolling comparison, inventory accepted native-stack
+   functionality against upstream and reapply only changes still needed;
+6. preregister the next dose-8 mechanism door around KV-page checksums or
    tens-of-MiB layout-adjacent canaries, keeping GPU2 explicitly in scope;
-5. separately decide whether to file the upstream graph+MTP corruption report
+7. separately decide whether to file the upstream graph+MTP corruption report
    and run the digest-swapped v0.27.1 TP1 MTP cross-check.
 
 Evidence and correction:
