@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quantization vs decode speed — neural.download</title>
+<meta name="description" content="What Q4/Q5/Q8/INT4/FP8 mean for a local LLM, how quantization trades size for quality, and the measured surprise that a smaller file can decode slower on a tuned backend.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/learn/quantization-and-speed.html">
+<meta name="theme-color" content="#f6f1e5">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../index.html">Home</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Guide library</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 02</p>
+  <p class="eyebrow">Pick your setup</p>
+  <h1>Quantization vs decode speed</h1>
+  <p>Quantization shrinks a model so it fits your card. The usual assumption is "smaller = faster." We measured a case where the smallest file was the slowest — because speed depends on which kernel the format hits, not just how many bytes it is.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li>Quantization stores each weight in fewer bits (16 → 8 → 5 → 4). Smaller file, a little less accuracy.</li>
+      <li>Decode is <strong>mostly</strong> limited by how many bytes of weights the GPU reads per token — so smaller <em>usually</em> means faster.</li>
+      <li><strong>But not always.</strong> On our Q4_K-tuned lane, plain <strong>Q4_K_M</strong> (the largest of three files) decoded fastest, and the smallest file decoded slowest — because Q4_K_M hits a hand-tuned kernel the others miss.</li>
+      <li>Quantization can also change answers. Always check quality, not just speed.</li>
+    </ul>
+  </div>
+
+  <h2>What quantization is</h2>
+  <p>A model's "weights" are billions of numbers. Stored at full 16-bit precision, Qwen3.8-27B is about 54 GB — too big for a 32 GiB card. Quantization rounds those numbers into fewer bits so the model fits and loads faster. The trade is a small loss of precision, which <em>usually</em> costs a little quality.</p>
+
+  <h3>Decoding the names</h3>
+  <ul>
+    <li><strong>Q4_K_M, Q5_K_S, Q6_K, Q8_0</strong> — llama.cpp GGUF formats. The number is roughly bits per weight (4, 5, 6, 8). <code>_K</code> means k-quant (smart per-block scaling); <code>_S/_M/_L</code> is small/medium/large within that. <strong>UD-</strong> prefixes (unsloth "dynamic") mix precisions per-tensor — more bits on the tensors that matter.</li>
+    <li><strong>INT4 (AutoRound / GPTQ)</strong> — 4-bit integer formats used by GPU runtimes like vLLM. Great size, but the recipe matters for quality.</li>
+    <li><strong>FP8</strong> — an 8-bit floating format, often used for the official weights on the vLLM XPU path.</li>
+  </ul>
+  <p>Rule of thumb for quality: <strong>Q8 ≈ lossless</strong>, <strong>Q5/Q6</strong> are a very safe middle, <strong>Q4</strong> is the popular size/quality sweet spot, and below Q4 you start to feel it.</p>
+
+  <h2>The surprise: smaller isn't always faster</h2>
+  <p>We ran three Qwen3.8-27B files through the exact same single-card B70 lane, same settings, KV f16, context 0 → 32K. <span class="badge lab">Lab-measured</span></p>
+
+  <figure class="chart">
+    <h4>Decode rate by weight quant</h4>
+    <img src="assets/quant-decode.svg" alt="Line chart of decode tokens per second versus context for three weight quants. Q4_K_M is highest at every point, UD-Q5_K_S is in the middle, and UD-Q4_K_XL is lowest, despite being the smallest file.">
+    <figcaption>Q4_K_M (blue) leads everywhere. UD-Q4_K_XL (dashed) is last — even though it is the smallest file of the three. <a href="../experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.json">Raw data</a>.</figcaption>
+  </figure>
+
+  <figure class="chart">
+    <h4>The inversion, at a glance</h4>
+    <img src="assets/quant-inversion.svg" alt="Bar chart of decode tokens per second at empty context for three files. The largest file Q4_K_M is fastest at 24.8, and the smallest file UD-Q4_K_XL is slowest at 21.8.">
+    <figcaption>Ordered by file size. If decode only tracked bytes, the shortest bar would be on the left. It's on the right.</figcaption>
+  </figure>
+
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Weight file</th><th class="num">Size</th><th class="num">Decode @ 0</th><th class="num">Decode @ 32K</th></tr></thead>
+    <tbody>
+      <tr><td class="best">Q4_K_M (plain)</td><td class="num">17.67 GiB</td><td class="num best">24.81</td><td class="num best">21.77</td></tr>
+      <tr><td>UD-Q5_K_S</td><td class="num">17.38 GiB</td><td class="num">22.72</td><td class="num">20.09</td></tr>
+      <tr><td>UD-Q4_K_XL <span class="muted">(smallest)</span></td><td class="num">16.35 GiB</td><td class="num">21.81</td><td class="num">19.45</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout key">
+    <span class="tag">Why the smallest file lost</span>
+    <p>Decode speed isn't <em>only</em> about bytes read — it's about how fast the kernel that reads them runs. Our lane is specifically tuned for <strong>uniform Q4_K</strong> (a reordered, fused fast path). Plain Q4_K_M is uniform, so it rides that path. The unsloth UD "dynamic" quants mix several block types per tensor, so they fall back to more general, slower code. The smaller download didn't help because the bottleneck moved from memory to the kernel.</p>
+  </div>
+
+  <div class="callout warn">
+    <span class="tag">This ordering is lane-specific</span>
+    <p>This is a property of <em>our tuned build</em>, not a universal ranking of the formats. On a stock upstream backend the UD quants might rank differently, and on a card with less memory bandwidth the size difference would matter more. The transferable lesson is the mechanism: <strong>match your quant to the kernel your runtime has optimized.</strong> When in doubt, the widely-supported plain Q4_K_M is a safe, fast default here.</p>
+  </div>
+
+  <h2>Speed is not the only axis — check the answer</h2>
+  <p>A quant can be fast and still be wrong. We keep a tiny code-result canary (a prompt whose correct answer is <code>14</code>). Our Q8 and Q4_K weights answer it correctly; a GPTQ INT4 build we tested answered <code>30</code> — fast, but wrong on a deterministic task. That's why our leaderboard treats such a route as experimental, not a default, no matter its tok/s.</p>
+  <div class="callout good">
+    <span class="tag">Recommendation</span>
+    <p>For a single B70, <strong>Q4_K_M is the sweet spot</strong>: it fits comfortably, it's the fastest on our lane, and it passes our full quality battery (it's the promoted 27.8 tok/s package). Step up to Q5/Q6/Q8 if you want extra quality headroom and can spare the memory — just don't assume the bigger file is slower until you've measured it, and never adopt a quant on speed alone without a quality check.</p>
+  </div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="kv-cache-precision.html"><b>KV precision</b><span>The same size-vs-speed trade, for the cache</span></a>
+      <a href="models.html"><b>Models</b><span>Pick the model before the quant</span></a>
+      <a href="hardware.html"><b>Hardware</b><span>When memory bandwidth is the real limit</span></a>
+      <a href="../learn.html"><b>All guides</b><span>Back to the Learn index</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>

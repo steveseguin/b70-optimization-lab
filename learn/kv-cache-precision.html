@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KV cache precision: KV8 vs KV16 vs FP8 — neural.download</title>
+<meta name="description" content="What the KV cache is, and why an 8-bit KV cache saves memory but its decode-speed cost grows with context — measured 0 to 32K on an Intel Arc Pro B70.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/learn/kv-cache-precision.html">
+<meta name="theme-color" content="#f6f1e5">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../index.html">Home</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Guide library</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 03</p>
+  <p class="eyebrow">Tune for speed</p>
+  <h1>KV cache precision: KV8 vs KV16</h1>
+  <p>An 8-bit KV cache is sold as free memory savings. It is not free — on our lane its decode cost is invisible at short context and brutal at long context. Here's the measured shape and how to choose.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li><strong>KV16 (f16)</strong> is the speed choice. Decode barely drops as context grows.</li>
+      <li><strong>KV8 (q8_0)</strong> roughly halves KV memory, but its decode penalty <strong>grows with context</strong>: ~2% slower at an empty prompt, <strong>~51% slower at 32K</strong> on our Q4_K_M B70 lane.</li>
+      <li>Prefill (reading your prompt) barely cares about KV precision either way.</li>
+      <li><strong>Use KV8 only when you need the memory</strong> to fit a long context on the card — not as a default speed setting.</li>
+    </ul>
+  </div>
+
+  <h2>What the KV cache actually is</h2>
+  <p>When a model reads your prompt, every token produces two vectors per attention layer — a <em>key</em> and a <em>value</em>. The model keeps them so that when it writes the next word it can "look back" at everything so far without recomputing it. That stored pile of keys and values is the <strong>KV cache</strong>, and it grows by one slot per token, forever, until the request ends.</p>
+  <p>Two things follow. First, the cache gets big — it is usually the main thing eating your spare VRAM at long context. Second, on every single decoded token the GPU has to <em>read the entire cache back</em> out of memory. That second fact is the whole story of this guide.</p>
+
+  <h2>The knob: how each KV slot is stored</h2>
+  <ul>
+    <li><strong>KV16 / f16</strong> — 16 bits per number. The default. Biggest, but stored exactly as the model produced it.</li>
+    <li><strong>KV8 / q8_0</strong> — 8-bit quantized. Roughly half the size. Each slot must be <em>de-quantized</em> back to a real number every time it's read.</li>
+    <li><strong>FP8</strong> — an 8-bit floating format used by vLLM's XPU path (a different runtime; see <a href="runtimes.html">Runtimes</a>). Same memory idea, different backend and dequant path, so its speed tradeoff can differ from llama.cpp's q8_0.</li>
+  </ul>
+
+  <h2>What we measured</h2>
+  <p>Single Arc Pro B70, Qwen3.8-27B Q4_K_M, one card (TP1), context filled from empty to 32K, everything identical except the KV format. <span class="badge lab">Lab-measured</span></p>
+
+  <figure class="chart">
+    <h4>Decode: the penalty grows with context</h4>
+    <img src="assets/kv-decode.svg" alt="Line chart of decode tokens per second versus context length. KV f16 stays near flat from 24.8 at 0 to 21.8 at 32K. KV q8_0 starts at 24.3 but falls steeply to 10.7 at 32K.">
+    <figcaption>KV f16 barely sags. KV q8_0 tracks it at first, then falls off a cliff as the cache fills. <a href="../experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json">Raw data</a>.</figcaption>
+  </figure>
+
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Context</th><th class="num">Decode KV f16</th><th class="num">Decode KV q8_0</th><th class="num">q8 vs f16</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td class="num">24.81</td><td class="num">24.27</td><td class="num">−2.2%</td></tr>
+      <tr><td>4K</td><td class="num">24.25</td><td class="num">21.05</td><td class="num">−13.2%</td></tr>
+      <tr><td>8K</td><td class="num">23.83</td><td class="num">18.68</td><td class="num">−21.6%</td></tr>
+      <tr><td>16K</td><td class="num">23.10</td><td class="num">14.86</td><td class="num">−35.7%</td></tr>
+      <tr><td>32K</td><td class="num best">21.77</td><td class="num">10.66</td><td class="num">−51.0%</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout key">
+    <span class="tag">Why it grows</span>
+    <p>Every decoded token reads the whole KV cache. With q8_0, every one of those reads also has to un-pack an 8-bit number back into a real one. At an empty prompt there's almost nothing to unpack, so the two are tied. By 32K the GPU is de-quantizing a huge cache on <em>every</em> token, and that work — not the memory saving — dominates. The cost scales with how full your context is.</p>
+  </div>
+
+  <h2>Prefill doesn't care</h2>
+  <p>Reading the prompt (prefill) is limited by raw math, not by re-reading the cache, so KV precision barely touches it — the two lines sit on top of each other.</p>
+  <figure class="chart">
+    <h4>Prefill: KV format is almost irrelevant</h4>
+    <img src="assets/kv-prefill.svg" alt="Line chart of prefill tokens per second versus context. KV f16 and KV q8_0 overlap closely across all context lengths, both declining gently from about 900 to about 660.">
+    <figcaption>Under 1.5% apart at every depth. The entire q8_0 cost lands on decode, not prefill.</figcaption>
+  </figure>
+
+  <h2>So why would anyone use KV8?</h2>
+  <p>Memory. The KV cache is often what stops a long context from fitting. For Qwen3.8-27B a full 256K-token context needs about <strong>16 GiB</strong> of KV cache at f16 — half your 32 GiB card, on top of the weights. Switching to q8_0 drops that to roughly <strong>8.5 GiB</strong>, which can be the difference between "fits" and "out of memory."</p>
+  <div class="metrics">
+    <div class="metric"><b>~16 GiB</b><span>f16 KV cache at 256K context (Qwen3.8-27B)</span></div>
+    <div class="metric"><b>~8.5 GiB</b><span>q8_0 KV cache, same context</span></div>
+    <div class="metric"><b>−51%</b><span>q8_0 decode cost at 32K on our lane</span></div>
+  </div>
+  <p>That's the real trade: KV8 buys headroom for longer context, and you pay for it in decode speed that gets worse the longer the context runs.</p>
+
+  <h2>What to pick</h2>
+  <div class="callout good">
+    <span class="tag">Recommendation</span>
+    <p>On the llama.cpp SYCL B70 lane, <strong>keep KV at f16</strong> for everyday use — it's faster and, at 32K, nearly twice as fast. Reach for <strong>q8_0 only when a long context won't otherwise fit in VRAM</strong>, and expect the decode hit to deepen as the conversation grows. If you're on vLLM's XPU path, its FP8 KV is a separate mechanism — measure it yourself rather than assuming it behaves like q8_0 here.</p>
+  </div>
+
+  <div class="callout warn">
+    <span class="tag">What to be aware of</span>
+    <p>The exact percentages are specific to our Q4_K-tuned build and this model's attention shape; a different model or backend will have a different curve. But the <em>direction</em> is robust and worth internalizing: <strong>any</strong> quantized KV cache pays a per-token dequant tax that compounds with context length. Short chats: barely matters. Long documents and agents: it matters a lot. Community reports on the newer vLLM XPU stack run FP8 KV by default and still hit good rates, which is a reminder that the backend's dequant path matters as much as the format.</p>
+  </div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="context-length.html"><b>Context length</b><span>How everything changes from 0 to 32K</span></a>
+      <a href="quantization-and-speed.html"><b>Quantization</b><span>The same story for the model weights</span></a>
+      <a href="runtimes.html"><b>Runtimes</b><span>Where FP8 KV lives: vLLM vs llama.cpp</span></a>
+      <a href="../learn.html"><b>All guides</b><span>Back to the Learn index</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>
