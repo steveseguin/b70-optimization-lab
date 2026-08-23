@@ -418,6 +418,25 @@ set -e
 server_log="$arm_root/run/server.stdout.log"
 quality_json="$arm_root/data/quality.json"
 bench_json="$arm_root/data/bench.json"
+if [[ "$allow_cache_writes" == "0" ]]; then
+  if ! "$repo/scripts/canonical-tree-manifest.py" verify \
+    --root "$cache/torch_compile_cache" \
+    --manifest "$sealed" \
+    > "$arm_root/chunkdiag-cache-postflight.json"; then
+    printf 'DIAG INFRA FAILURE: isolated cache changed during arm\n' >&2
+    exit 16
+  fi
+  if [[ ! -f "$server_log" ]]; then
+    printf 'DIAG INFRA FAILURE: server log missing for cache-write audit\n' >&2
+    exit 17
+  fi
+  if grep -Eq \
+    'saved AOT compiled function|Compiling model again|Writing.*compile cache|cache.*write' \
+    "$server_log"; then
+    printf 'DIAG INFRA FAILURE: compile-cache write marker found\n' >&2
+    exit 18
+  fi
+fi
 if [[ ! -f "$quality_json" ]]; then
   printf 'DIAG INFRA FAILURE: no quality evidence (runner rc=%s)\n' \
     "$runner_rc" >&2

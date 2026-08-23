@@ -80,6 +80,10 @@ After D0i passes, exactly two fresh-server arms are authorized, in order:
 2. D4: eight two-chunk dose rows, expected needle red with the known
    `B70_QWEN3!!!!...` signature.
 
+**D7 completed:** validator, quality, and cache gates passed at
+`qwen38-chunkdiag-d7-20260823-d1d2-v2b`. D4 is the only remaining authorized
+mechanism arm.
+
 The interpretations remain those registered originally:
 
 - a state slot allocated while still live for another request, monotone
