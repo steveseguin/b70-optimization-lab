@@ -239,6 +239,12 @@ binary, driver, or benchmark protocol will reproduce them.
   serving moved `117.754 -> 117.559 tok/s` (-0.17%); both candidates lost to
   control A. Do not ship. See
   `notes/2026-08-23-ornith35b-moe-rowpack-server-neutral.md`.
+- **Q6_K output-head workgroup occupancy — CLOSED ENGINE NEGATIVE:** reducing
+  the exact `[248320,2048]` decode kernel from 32 independent row subgroups per
+  workgroup to 16 or 8 preserved the canonical transcript but monotonically
+  reduced engine rate (`121.576 -> 121.233 -> 121.087 tok/s`). No server test
+  was justified. See
+  `notes/2026-08-23-ornith35b-lmhead-subgroups-negative.md`.
 - **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
   accepted only 22/336 reported draft tokens and reduced the fresh-suite median
   from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed

@@ -1,0 +1,27 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "parent_library_sha256": "78047ec2562261ee3481c6a91d65059af10501e1016ebcc3bdc48cd210934007",
+  "candidate_library_sha256": "011d063bc7eec5c9305054517c4f9224d8689506990ef31636df24b4438f79b9",
+  "candidate_patch": "experiments/ornith-15-b70/patches/llamacpp-ornith15-lmhead-subgroups-negative-20260823.patch.gz.b64",
+  "candidate_patch_decoded_sha256": "2fb2d0fe57df20a91374857a1ed46b09528881770bf7bfcd1b90187625a452cc",
+  "candidate_patch_encoded_sha256": "941732154d676eb8a6b0aa9db88a5edf7f8419b023ea79e7b38361b29fbb0a06",
+  "candidate_door": "GGML_SYCL_ORNITH_LM_HEAD_SUBGROUPS",
+  "scope": "decode-only reordered Q6_K matrix shape [248320,2048]",
+  "engine": {
+    "protocol": "sequential llama-bench p0/n128/d0/r7 geometry ladder; same final binary",
+    "subgroups_per_workgroup": [32, 16, 8],
+    "tok_s": [121.575727, 121.233438, 121.087152],
+    "stddev_tok_s": [0.921494, 1.096587, 1.016793],
+    "best_candidate_delta_percent_vs_control": -0.2815438644
+  },
+  "correctness": {
+    "subgroups_tested": 8,
+    "canonical_128_token_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "byte_identical_to_parent": true
+  },
+  "server_test_run": false,
+  "result": "closed engine-negative; do not ship"
+}
