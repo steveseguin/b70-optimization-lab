@@ -331,7 +331,7 @@ def page(pkg, all_pkgs):
 </div></div></main>
 
 <footer><div class="wrap">
-  <span>Unofficial community lab — not affiliated with or endorsed by Intel. Measured numbers link to their proof; projections are labeled and come from a physics model.</span>
+  <span>Unofficial lab, not affiliated with Intel. Measured numbers link to proof; projections are labeled.</span>
   <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
 </div></footer>
 <script defer src="../learn/assets/mlbottleneck-bridge.js?v={bridge_version()}"></script>
@@ -412,7 +412,7 @@ def index_page(pkgs):
   <div class="guide-cards">{rows}</div>
 </div></main>
 <footer><div class="wrap">
-  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span>Unofficial lab, not affiliated with Intel.</span>
   <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
 </div></footer>
 </body>
