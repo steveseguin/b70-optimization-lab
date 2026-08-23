@@ -115,6 +115,18 @@
         "quality_battery": "pass",
         "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/rolling-nightly-a3561ef8e/tp2-graph-strict-quality-replay"
       },
+      "historical_winner_overlay_experiment": {
+        "diagnostic_median_tok_s": 49.05894025767351,
+        "diagnostic_speed_gate": "pass",
+        "strict_median_tok_s": 49.00935245117815,
+        "strict_historical_gate_tok_s": 49.01965141150585,
+        "strict_relative_to_historical_gate_percent": -0.021009860395049262,
+        "strict_speed_gate": "fail",
+        "quality_battery": "pass",
+        "cache_immutable": true,
+        "classification": "quality-qualified partial performance recovery; not promoted",
+        "packet": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.json"
+      },
       "fresh_vs_replay_complete_token_match": "19/25",
       "cache": {
         "file_count": 2277,
@@ -185,7 +197,13 @@
       "tp4": "78/152"
     },
     "cause": "vLLM package version participates in the compile-cache hash, forcing a fresh autotune despite byte-identical computation graphs",
-    "next_test": "fail-closed transfer of historical TP2 best_config selections into a fresh latest-runtime compile; compile binaries fresh and rerun speed plus quality"
+    "next_test": "fail-closed transfer of historical TP2 best_config selections into a fresh latest-runtime compile; compile binaries fresh and rerun speed plus quality",
+    "followup": {
+      "status": "completed",
+      "result": "diagnostic recovered to 49.058940 and passed; strict recovered to 49.009352 with full quality but missed the frozen 49.019651 gate by 0.021%; preserve, do not promote",
+      "packet": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.json",
+      "next": "separately preregister TP1/TP4 overlays; resolve floating nightly and remap identities before each run if upstream advanced"
+    }
   },
   "decision": {
     "active_development_base": "rolling nightly a3561ef8",

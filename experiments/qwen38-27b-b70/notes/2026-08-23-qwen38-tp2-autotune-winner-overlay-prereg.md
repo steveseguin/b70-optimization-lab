@@ -57,3 +57,8 @@ fresh compile is allowed inside this experiment.
 
 The preserved bundle and identity gates are under
 [`autotune-winner-overlays/tp2-e9d1398-best-config`](../autotune-winner-overlays/tp2-e9d1398-best-config/README.md).
+
+Closed by the
+[two-arm result](2026-08-23-qwen38-tp2-autotune-winner-overlay-result.md):
+diagnostic pass/new high; strict quality pass but frozen speed near-miss; no
+full promotion.

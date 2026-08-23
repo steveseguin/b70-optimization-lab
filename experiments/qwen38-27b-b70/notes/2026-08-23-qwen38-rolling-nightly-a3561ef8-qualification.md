@@ -94,12 +94,17 @@ TP1 records, 46/78 TP2 records, and 78/152 TP4 records.
 
 `VllmConfig.compute_hash()` includes the vLLM package version, so the routine
 nightly version bump invalidated the outer compile namespace and forced a new
-autotune even though the graph-relevant inputs were unchanged. The next bounded
-test therefore keeps newest upstream and carries forward only the historical
+autotune even though the graph-relevant inputs were unchanged. The subsequent
+bounded test kept newest upstream and carried forward only the 78 historical
 TP2 `.best_config` decisions under fail-closed graph/compiler/environment and
-candidate-hash gates. Compiled binaries and outer/AOT artifacts will not be
-copied. If TP2 speed recovers with quality intact, the winner overlay extends
-to TP1/TP4 and becomes part of the maintained optimization recipe.
+candidate-hash gates. It compiled all binaries and AOT artifacts fresh.
+
+That overlay raised the newest-runtime diagnostic from 48.647592 to 49.058940
+tok/s and the strict result from 48.490490 to 49.009352 tok/s. Full quality and
+cache immutability passed. The strict result nevertheless missed the frozen
+49.019651 historical gate by 0.010299 tok/s, so the result is a
+quality-qualified partial recovery rather than a promoted replacement. See the
+[overlay closure](2026-08-23-qwen38-tp2-autotune-winner-overlay-result.md).
 
 ## Frozen disposition
 

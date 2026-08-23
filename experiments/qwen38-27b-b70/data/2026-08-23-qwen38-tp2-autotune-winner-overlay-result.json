@@ -1,0 +1,137 @@
+{
+  "campaign": "Qwen3.8-27B AutoRound INT4 TP2 historical autotune-winner overlay",
+  "date": "2026-08-23",
+  "status": "quality-qualified partial performance recovery; strict historical speed gate missed; not promoted",
+  "preregistration": "experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tp2-autotune-winner-overlay-prereg.md",
+  "runtime": {
+    "source_tag": "vllm/vllm-openai-xpu:nightly",
+    "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+    "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+    "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124",
+    "vllm_version": "0.26.1rc1.dev1120+ga3561ef8e.xpu",
+    "torch": "2.13.0+xpu",
+    "triton": "3.7.2+xpu"
+  },
+  "benchmark_identity": {
+    "model": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16 group-128 symmetric; runtime quantization=inc",
+    "topology": "TP2 on GPUs 2,3",
+    "mtp": 0,
+    "kv_cache_dtype": "f16",
+    "max_model_len": 32768,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "prefix_caching": false,
+    "graph": "FULL_AND_PIECEWISE",
+    "graph_flag": "VLLM_XPU_ENABLE_XPU_GRAPH=1",
+    "gpu_memory_utilization": 0.9,
+    "pythonhashseed": "unset",
+    "suite_sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c",
+    "quality_baseline_sha256": "0ba49be19bbb081023259ce290f87990d3e26038e461d136862631442a63bc48",
+    "lab_git_head": "6bd1e0c635857c3cab834771e35abf13a2b8ce73",
+    "metric": "median tok/s over the 99 intervals between streamed token events 1 and 100 after TTFT"
+  },
+  "overlay": {
+    "source_runtime": "e9d1398d9edfd90fcc1cf783805240e3effec013",
+    "artifact_type": "Triton .best_config decisions only",
+    "seed_file_count": 78,
+    "seed_bytes": 20619,
+    "seed_manifest_file_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757",
+    "matching_relative_keys": "78/78",
+    "matching_embedded_configs_hash": "78/78",
+    "different_selected_configs": "46/78",
+    "excluded": [
+      "compiled AOT models",
+      "generated Python",
+      "Triton binaries and cache objects",
+      ".kernel_perf files",
+      "outer vLLM cache artifacts"
+    ],
+    "fresh_current_runtime_compile_required": true
+  },
+  "arms": {
+    "seeded_fresh_diagnostic": {
+      "median_tok_s": 49.05894025767351,
+      "default_current_runtime_control_tok_s": 48.64759224153825,
+      "relative_to_default_control_percent": 0.8455670613519706,
+      "historical_floor_tok_s": 48.8301,
+      "relative_to_historical_floor_percent": 0.46864589192632256,
+      "historical_best_tok_s": 48.950458800865434,
+      "relative_to_historical_best_percent": 0.2216147906792587,
+      "paired_faster_prompts_vs_historical_best": "23/25",
+      "paired_faster_prompts_vs_default_control": "25/25",
+      "speed_gate": "pass",
+      "runner_final_status": "pass",
+      "outer_promotion_gate": "pass",
+      "outer_exit_code": 0,
+      "canary": "pass",
+      "rows_valid": "25/25",
+      "cached_tokens": "25/25 zero",
+      "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/rolling-nightly-a3561ef8e/tp2-graph-autotune-winner-seeded-fresh"
+    },
+    "exact_cache_strict_quality_replay": {
+      "median_tok_s": 49.00935245117815,
+      "default_current_runtime_control_tok_s": 48.49048978038331,
+      "relative_to_default_control_percent": 1.0700297587110663,
+      "historical_gate_tok_s": 49.01965141150585,
+      "absolute_shortfall_tok_s": 0.010298960327695283,
+      "relative_to_historical_gate_percent": -0.021009860395049262,
+      "paired_faster_prompts_vs_historical": "11/25",
+      "first_100_token_match_vs_historical": "25/25",
+      "complete_output_match_vs_historical": "19/25",
+      "paired_faster_prompts_vs_default_control": "25/25",
+      "speed_gate": "fail",
+      "runner_final_status": "pass",
+      "outer_promotion_gate": "fail",
+      "outer_exit_code": 5,
+      "canary": "pass",
+      "rows_valid": "25/25",
+      "cached_tokens": "25/25 zero",
+      "quality_battery": "pass",
+      "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/rolling-nightly-a3561ef8e/tp2-graph-autotune-winner-strict-quality-replay"
+    }
+  },
+  "quality": {
+    "pass_all": true,
+    "exact_cases": "7/7",
+    "same_server_repeat": "8/8 one hash",
+    "long_context": "requested 8192 tokens; 7617-token constructed prompt; 7629 actual API prompt tokens; pass",
+    "baseline_comparisons": "24/24 true",
+    "quality_requests_cached_tokens": "16/16 zero"
+  },
+  "integrity": {
+    "model_direct_and_ordinary_verify": "19/19 files pass",
+    "pinned_namespace_code_compiler_config_env_and_rank_graph_gates": "pass; exact values in overlay metadata",
+    "fresh_compile_direct_aot_load_rejected": true,
+    "fresh_compile_saved_new_aot": true,
+    "seed_manifest_precompile_postcompile_postworkload_identical": true,
+    "sealed_cache_manifest_entries": 1061,
+    "sealed_cache_manifest_file_sha256": "75215310993cb84cfece6643086be025b97f4f419ba0f72f7e9007396399c74b",
+    "replay_cache_pre_post_final_identical": true
+  },
+  "output_stability": {
+    "fresh_ignore_eos_vs_strict_natural_eos_complete_match": "20/25",
+    "fresh_ignore_eos_vs_strict_natural_eos_common_prefix_match": "21/25",
+    "fresh_ignore_eos_vs_strict_natural_eos_first_100_match": "24/25",
+    "interpretation": "EOS policy differs, so full-output comparison is confounded; existing cross-boot nondeterminism disclosure remains"
+  },
+  "decision": {
+    "simple_winner_overlay_hypothesis": "supported: newest strict performance improved by 1.07% with quality and cache integrity intact",
+    "diagnostic_disposition": "valid current-overlay diagnostic high; preserve separately from strict promotion",
+    "full_recovery_under_frozen_gate": false,
+    "historical_frontier_replaced": false,
+    "current_default_control_replaced": false,
+    "overlay_preserved_for_future_newest_runtime_remapping": true,
+    "additional_arms_authorized_by_this_preregistration": false,
+    "experiment_disposition": "closed_not_promoted",
+    "next": "map and separately preregister TP1/TP4 candidates; before every run resolve the floating nightly and remap if it advanced"
+  },
+  "raw_evidence_sha256": {
+    "fresh_bench": "5000e52ca4646348ab0ed280b81a8a114b45d1a7333ec1d898ae09de01fa7002",
+    "fresh_canary": "b7cfc567e3358597d87fd76f5049a1da310ddbabda963a635f163050c9cfc4be",
+    "strict_bench": "9136e1900aba7a6c0009deac9f80079d57543e924147377fcba01f59ba4712b2",
+    "strict_quality": "9b678dee516810dcc11adb45d2e83e79d75854801909f349a3453f1e850e4d61",
+    "strict_canary": "58ae417df9154a127cf68c5c719fc04b9463051a946b5b44148df08283888700"
+  }
+}

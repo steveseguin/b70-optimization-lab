@@ -72,11 +72,17 @@ base is being qualified.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
-tune selected different winners. The active preservation test transfers only
-hash-matched historical `.best_config` decisions into a fresh newest-runtime
-compile; it does not copy compiled binaries or revert upstream. See the
+tune selected different winners. The capped TP2 preservation test transferred
+only 78 hash-matched historical `.best_config` decisions into a fresh
+newest-runtime compile; it did not copy compiled binaries or revert upstream.
+The diagnostic arm recovered from 48.6476 to **49.0589 tok/s**, a new
+overlay-identity diagnostic high, and passed its gate. The strict replay
+recovered from 48.4905 to **49.0094 tok/s**, passed the
+full quality battery, and left the sealed cache byte-identical, but missed the
+frozen 49.0197 historical gate by 0.0103 tok/s (0.021%). Preserve it as a
+quality-qualified partial recovery, not a promoted replacement. See the
 [rolling qualification](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-rolling-nightly-a3561ef8-qualification.md)
-and [structured packet](experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json).
+and [overlay result](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.md).
 
 The separate Qwen3.6-derived native MTP source stack remains preserved as a
 patch/source research identity. It is not part of the stock target-only graph
@@ -162,13 +168,14 @@ and the earlier
 
 Immediate order:
 
-1. run the fail-closed historical-autotune-winner overlay at TP2 on freshly
-   compiled newest-runtime binaries; if speed and quality recover, extend it to
-   TP1/TP4 and make it part of the maintained rolling optimization recipe;
+1. preserve the closed TP2 winner-overlay result without lowering its speed
+   gate; separately preregister TP1 and TP4 overlays, resolve the floating
+   nightly before each run, and remap instead of running if upstream advanced;
 2. preserve the old pinned image identity, isolated-cache manifests, every raw
    root, and all captured speed values as the rollback/comparison frontier;
-3. run the minimal newest-code matrix sentinels only after the optimized graph
-   column is sealed: graph+MTP, eager-MTP cost, and KV backend support/quality;
+3. after the optimized newest-code graph sentinels are classified, resume the
+   versioned coverage matrix: graph+MTP, eager-MTP cost, KV backend
+   support/quality, MTP depth, context scale, and TP scale;
 4. publish the pinned and rolling runtime profiles separately for
    neural.download; represent TP3 structurally and preserve captured highs
    separately from replicated floors;
