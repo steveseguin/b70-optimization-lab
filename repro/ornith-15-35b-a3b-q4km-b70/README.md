@@ -44,8 +44,8 @@ git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-ornith15
 cd llama.cpp-ornith15
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
 
-PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch
-echo "006d90f144058fb0ae1eb0477cbda6355f748716c760f0f094ce8b2dbec12501  $PATCH" | sha256sum -c -
+PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch
+echo "3734ebf7b4e09c4d1f7e85b75f040dc450202c4f3dfd73a21d9ba90ff634536b  $PATCH" | sha256sum -c -
 git apply --check "$PATCH"
 git apply "$PATCH"
 git diff --check
@@ -71,7 +71,7 @@ cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2
 ```
 
 The validated compute library SHA-256 was
-`3887af763ac560ca277dd224ded611b083798dd27f149b7caf886c831460f637`.
+`cbe101e6573100e10877ee059f326b23580cc7c15161a132608c771d34840671`.
 AOT output can vary with the compiler installation, so the source revision,
 patch hash, build settings, and validation gates are the durable identity.
 
@@ -95,6 +95,7 @@ export GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1
 export GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1
 export GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1
 export GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1
+export GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1
 
 build-sycl-aot-bmg-g31/bin/llama-server \
   --model "$MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf" \
@@ -153,7 +154,7 @@ Correctness gates:
   open runtime limitation rather than a patch acceptance gate.
 
 Patch instructions and evidence:
-[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch),
+[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch),
 [patch packet](../../patches/ornith-15-35b-a3b-q4km-b70/README.md), and
 [`experiments/ornith-15-b70/`](../../experiments/ornith-15-b70/).
 
@@ -214,6 +215,17 @@ bringing the complete stack to 440. Pooled matched engine means improved
 both controls, forced 128-token output was byte-identical, and the full canary
 battery passed. Evidence:
 [`2026-08-22-ornith35b-alpha-gate-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-alpha-gate-positive.md).
+
+The seventh package increment retains the tuned reordered-Q4_K routed-expert
+dispatcher while computing each layer's gate and up projections in one
+subgroup kernel and writing SWIGLU directly. It removes a duplicate input
+quantization, the second routed GEMV launch, and the standalone GLU launch in
+all 40 MoE layers: 120 launches/token, bringing the complete stack to 560.
+Mirrored engine means improved `118.229 -> 120.695 tok/s` (**+2.09%**) and
+fresh-server means improved `113.043 -> 115.680 tok/s` (**+2.33%**). Every
+candidate exceeded every control, forced 128-token output was byte-identical,
+and the full canary battery passed. Evidence:
+[`2026-08-23-ornith35b-moe-gate-up-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-gate-up-positive.md).
 
 ## Stock two-card comparison (patch off; layer split, GPUs 0+1)
 

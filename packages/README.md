@@ -45,8 +45,9 @@ Current packages:
 - [`Ornith 1.5 35B-A3B Q4_K_M one-B70 candidate`](ornith-15-35b-a3b-q4km-b70/):
   pinned model and llama.cpp base, the lab's ordered expert-reduction,
   recurrent convolution-SiLU, residual-RMSNorm, recurrent concat/state, and
-  direct gathered-state plus alpha-gate SYCL patch stack, matched incremental
-  serving evidence, and exact apply/build/launch steps.
+  direct gathered-state, alpha-gate, and routed-expert gate/up SYCL patch
+  stack, matched incremental serving evidence, and exact apply/build/launch
+  steps.
 
 None is a starter package yet because its host platform path has not been
 rebuilt and tested from a clean OS. Gemma additionally lacks the retained

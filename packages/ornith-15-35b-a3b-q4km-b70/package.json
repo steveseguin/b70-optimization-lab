@@ -1,114 +1,114 @@
 {
- "format": "b70-model-package-v1",
- "id": "ornith-15-35b-a3b-q4km-b70",
- "name": "Ornith 1.5 35B-A3B Q4_K_M on one Intel Arc Pro B70",
- "status": "candidate",
- "audience": "intermediate",
- "guide": "repro/ornith-15-35b-a3b-q4km-b70/README.md",
- "clean_host_tested": false,
- "library": {
-  "model_family": "Ornith 1.5",
-  "publisher": "Ornith AI",
-  "variant": "35B-A3B",
-    "summary": "35B-class MoE (256 experts / 8 active, arch qwen35moe) reaching 114.3 tok/s on a single card with the lab's validated expert-reduction, recurrent convolution, residual-norm, direct state-materialization, and alpha-gate patches.",
-  "quantization": "Q4_K_M",
-  "runtime_label": "llama.cpp SYCL",
-  "operating_systems": [
-   "Linux"
+  "format": "b70-model-package-v1",
+  "id": "ornith-15-35b-a3b-q4km-b70",
+  "name": "Ornith 1.5 35B-A3B Q4_K_M on one Intel Arc Pro B70",
+  "status": "candidate",
+  "audience": "intermediate",
+  "guide": "repro/ornith-15-35b-a3b-q4km-b70/README.md",
+  "clean_host_tested": false,
+  "library": {
+    "model_family": "Ornith 1.5",
+    "publisher": "Ornith AI",
+    "variant": "35B-A3B",
+    "summary": "35B-class MoE (256 experts / 8 active, arch qwen35moe) reaching 115.7 tok/s on a single card with the lab's validated expert-reduction, recurrent, state-materialization, alpha-gate, and routed gate/up patches.",
+    "quantization": "Q4_K_M",
+    "runtime_label": "llama.cpp SYCL",
+    "operating_systems": [
+      "Linux"
+    ],
+    "delivery": [
+      "native"
+    ],
+    "modalities": [
+      "text"
+    ],
+    "use_cases": [
+      "general",
+      "coding",
+      "chat"
+    ],
+    "tags": [
+      "one card",
+      "moe",
+      "target only",
+      "cache zero",
+      "lab optimized"
+    ],
+    "published_at": "2026-08-22",
+    "featured_metric": {
+      "value": 115.680299,
+      "unit": "tok/s",
+      "label": "decode (3B active parameters)",
+      "scope": "Mean of two fresh-server suite medians (115.232 and 116.128 tok/s), up-to-512-token responses, target-only, cache-zero; +2.33% incremental from routed-expert gate/up/SWIGLU fusion.",
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
+    }
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "Intake verification, bring-up, baselines, depth sweep, ordered MoE add-reduction, recurrent convolution-SiLU, residual-RMSNorm, recurrent concat/state, direct gather/state, recurrent alpha-gate, and routed-expert gate/up patches, operating point, canary battery, and package.",
+      "status": "integrated",
+      "validated_effect": "+4.85% matched fresh-server decode from ordered expert reduction, +2.10% incremental from recurrent convolution-SiLU, +1.37% incremental from residual-RMSNorm, +2.74% incremental from recurrent concat/state, +1.12% incremental from direct recurrent gather, +2.04% incremental from recurrent alpha-gate, then +2.33% incremental from routed gate/up fusion (113.043 to 115.680 tok/s in the final-library matched suite).",
+      "evidence": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-moe-gate-up-summary.json"
+    }
   ],
-  "delivery": [
-   "native"
+  "known_limitations": [
+    "MoE rate reflects ~3B active parameters; not comparable to dense 35B expectations.",
+    "Canary battery is objective self-consistency only; no cross-model oracle.",
+    "Stock two-card layer split measured 102.01/102.20 tok/s versus 104.84/104.81 on one card (-2.6%): use one card for single-stream decode.",
+    "Fresh stock servers matched 0/12 complete realistic-suite hashes across processes on this runtime; same-binary door-off/on 400-token output and within-server 8x stability passed.",
+    "Stage the GGUF on local or sufficiently fast direct-attached storage; optimized first-token setup rereads roughly 20.0 GB of expert tensors, making a 100 Mb/s NFS mmap unsuitable for cold benchmarking."
   ],
-  "modalities": [
-   "text"
-  ],
-  "use_cases": [
-   "general",
-   "coding",
-   "chat"
-  ],
-  "tags": [
-   "one card",
-   "moe",
-   "target only",
-   "cache zero",
-   "lab optimized"
-  ],
-  "published_at": "2026-08-22",
-  "featured_metric": {
-      "value": 114.31427,
-   "unit": "tok/s",
-   "label": "decode (3B active parameters)",
-      "scope": "Mean of two fresh-server suite medians (113.952 and 114.677 tok/s), 512-token responses, target-only, cache-zero; +2.04% incremental from recurrent alpha/bias-softplus-gate fusion.",
-   "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
-  }
- },
- "contributors": [
-  {
-   "id": "b70-optimization-lab",
-   "name": "neural.download lab",
-   "kind": "lab",
-   "profile": "https://github.com/steveseguin/b70-optimization-lab",
-      "contribution": "Intake verification, bring-up, baselines, depth sweep, ordered MoE add-reduction, recurrent convolution-SiLU, residual-RMSNorm, recurrent concat/state, direct gather/state, and recurrent alpha-gate patches, operating point, canary battery, and package.",
-   "status": "integrated",
-      "validated_effect": "+4.85% matched fresh-server decode from ordered expert reduction, +2.10% incremental from recurrent convolution-SiLU, +1.37% incremental from residual-RMSNorm, +2.74% incremental from recurrent concat/state, +1.12% incremental from direct recurrent gather fusion, then +2.04% incremental from recurrent alpha-gate fusion (112.030 to 114.314 tok/s in the final-library matched suite).",
-      "evidence": "experiments/ornith-15-b70/data/2026-08-22-ornith35b-alpha-gate-summary.json"
-  }
- ],
- "known_limitations": [
-  "MoE rate reflects ~3B active parameters; not comparable to dense 35B expectations.",
-  "Canary battery is objective self-consistency only; no cross-model oracle.",
-  "Stock two-card layer split measured 102.01/102.20 tok/s versus 104.84/104.81 on one card (-2.6%): use one card for single-stream decode.",
-  "Fresh stock servers matched 0/12 complete realistic-suite hashes across processes on this runtime; same-binary door-off/on 400-token output and within-server 8x stability passed.",
-  "Stage the GGUF on local or sufficiently fast direct-attached storage; optimized first-token setup rereads roughly 20.0 GB of expert tensors, making a 100 Mb/s NFS mmap unsuitable for cold benchmarking."
- ],
- "hardware": {
-  "accelerator": "Intel Arc Pro B70 32 GiB",
-  "cards": 1,
-  "host_ram_min_bytes": 34359738368,
-  "host_ram_plus_swap_min_bytes": 34359738368,
-  "model_weight_bytes": 21713462848
- },
- "model": {
-  "repository": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
-  "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
-  "manifest": "repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json"
- },
- "runtime": {
-  "kind": "native",
-  "project": "ggml-org/llama.cpp",
-  "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
-  "build": "cmake -G Ninja -B build-sycl-aot-bmg-g31 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=icpx -DCMAKE_C_COMPILER=icx -DBUILD_SHARED_LIBS=ON -DGGML_NATIVE=ON -DGGML_SYCL=ON -DGGML_SYCL_F16=ON -DGGML_SYCL_GRAPH=ON -DGGML_SYCL_DNN=ON -DGGML_SYCL_HOST_MEM_FALLBACK=ON -DGGML_SYCL_DEVICE_ARCH=bmg_g31 -DGGML_SYCL_MAX_PARALLEL_LINK_JOBS=8 -DLLAMA_CURL=OFF && cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2"
- },
- "project_patches": {
-  "required": true,
-  "items": [
-      "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch"
-  ],
-    "decoded_sha256": "006d90f144058fb0ae1eb0477cbda6355f748716c760f0f094ce8b2dbec12501",
-    "reason": "The validated one-card serving stack depends on the lab's strict ordered eight-expert FP32 reduction, Ornith-shape recurrent convolution-SiLU fusion, graph-visible residual-RMSNorm fusion, Qwen-derived recurrent concat/state fusion, direct gathered-state materialization, and recurrent alpha-gate fusion."
- },
- "commands": {
-    "preflight": "python3 scripts/verify-neural-download-model.py repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json \"$MODEL_DIR\" && echo '006d90f144058fb0ae1eb0477cbda6355f748716c760f0f094ce8b2dbec12501  patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch' | sha256sum -c - && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
-    "launch": "GGML_SYCL_ENABLE_GRAPH=0 GGML_SYCL_FUSED_MOE_ADD_REDUCE=1 GGML_SYCL_FUSED_ORNITH_CONV_SILU=1 GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1 GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1 GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1 GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1 BUILD_DIR/bin/llama-server --model $MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf --alias ornith35b --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
-  "health": "curl -fsS http://127.0.0.1:18100/health",
-  "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model ornith35b --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
-  "stop": "pkill -x llama-server"
- },
- "dependencies": [
-  "repro/ornith-15-35b-a3b-q4km-b70/README.md",
-  "repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json",
-  "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.sweep.json",
-  "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.meta.json",
-  "repro/ornith-15-35b-a3b-q4km-b70/depth-sweep.svg",
-  "scripts/verify-neural-download-model.py",
-  "patches/ornith-15-35b-a3b-q4km-b70/README.md",
-    "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch",
-  "experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md",
-  "experiments/ornith-15-b70/data/2026-08-22-ornith35b-moe-add-reduce-summary.json",
-  "experiments/ornith-15-b70/data/2026-08-22-ornith35b-moe-add-reduce-canaries.json",
-  "experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md",
-  "experiments/ornith-15-b70/data/2026-08-22-ornith35b-conv-silu-summary.json",
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 1,
+    "host_ram_min_bytes": 34359738368,
+    "host_ram_plus_swap_min_bytes": 34359738368,
+    "model_weight_bytes": 21713462848
+  },
+  "model": {
+    "repository": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
+    "revision": "fbbaed45c2f0e200276ffa51701a24d45dc7f57e",
+    "manifest": "repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json"
+  },
+  "runtime": {
+    "kind": "native",
+    "project": "ggml-org/llama.cpp",
+    "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "build": "cmake -G Ninja -B build-sycl-aot-bmg-g31 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=icpx -DCMAKE_C_COMPILER=icx -DBUILD_SHARED_LIBS=ON -DGGML_NATIVE=ON -DGGML_SYCL=ON -DGGML_SYCL_F16=ON -DGGML_SYCL_GRAPH=ON -DGGML_SYCL_DNN=ON -DGGML_SYCL_HOST_MEM_FALLBACK=ON -DGGML_SYCL_DEVICE_ARCH=bmg_g31 -DGGML_SYCL_MAX_PARALLEL_LINK_JOBS=8 -DLLAMA_CURL=OFF && cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2"
+  },
+  "project_patches": {
+    "required": true,
+    "items": [
+      "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch"
+    ],
+    "decoded_sha256": "3734ebf7b4e09c4d1f7e85b75f040dc450202c4f3dfd73a21d9ba90ff634536b",
+    "reason": "The validated one-card serving stack depends on the lab's strict ordered eight-expert FP32 reduction, Ornith-shape recurrent convolution-SiLU fusion, graph-visible residual-RMSNorm fusion, Qwen-derived recurrent concat/state fusion, direct gathered-state materialization, recurrent alpha-gate fusion, and tuned routed-expert gate/up/SWIGLU fusion."
+  },
+  "commands": {
+    "preflight": "python3 scripts/verify-neural-download-model.py repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json \"$MODEL_DIR\" && echo '3734ebf7b4e09c4d1f7e85b75f040dc450202c4f3dfd73a21d9ba90ff634536b  patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch' | sha256sum -c - && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
+    "launch": "GGML_SYCL_ENABLE_GRAPH=0 GGML_SYCL_FUSED_MOE_ADD_REDUCE=1 GGML_SYCL_FUSED_ORNITH_CONV_SILU=1 GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1 GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1 GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1 GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1 GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1 BUILD_DIR/bin/llama-server --model $MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf --alias ornith35b --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
+    "health": "curl -fsS http://127.0.0.1:18100/health",
+    "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model ornith35b --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
+    "stop": "pkill -x llama-server"
+  },
+  "dependencies": [
+    "repro/ornith-15-35b-a3b-q4km-b70/README.md",
+    "repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json",
+    "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.sweep.json",
+    "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km.meta.json",
+    "repro/ornith-15-35b-a3b-q4km-b70/depth-sweep.svg",
+    "scripts/verify-neural-download-model.py",
+    "patches/ornith-15-35b-a3b-q4km-b70/README.md",
+    "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch",
+    "experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md",
+    "experiments/ornith-15-b70/data/2026-08-22-ornith35b-moe-add-reduce-summary.json",
+    "experiments/ornith-15-b70/data/2026-08-22-ornith35b-moe-add-reduce-canaries.json",
+    "experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md",
+    "experiments/ornith-15-b70/data/2026-08-22-ornith35b-conv-silu-summary.json",
     "experiments/ornith-15-b70/data/2026-08-22-ornith35b-conv-silu-canaries.json",
     "experiments/ornith-15-b70/notes/2026-08-22-ornith35b-residual-rms-positive.md",
     "experiments/ornith-15-b70/data/2026-08-22-ornith35b-residual-rms-summary.json",
@@ -124,11 +124,15 @@
     "experiments/ornith-15-b70/data/2026-08-22-ornith35b-alpha-gate-summary.json",
     "experiments/ornith-15-b70/data/2026-08-22-ornith35b-alpha-gate-canaries.json",
     "experiments/ornith-15-b70/data/2026-08-22-ornith35b-alpha-gate-exactness.json",
-  "docs/neural-download-packet-standard.md"
- ],
- "missing": [
-  "tested clean-host platform installation",
-  "optimized patch-on context-depth sweep",
-  "beginner recovery flow"
- ]
+    "experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-gate-up-positive.md",
+    "experiments/ornith-15-b70/data/2026-08-23-ornith35b-moe-gate-up-summary.json",
+    "experiments/ornith-15-b70/data/2026-08-23-ornith35b-moe-gate-up-canaries.json",
+    "experiments/ornith-15-b70/data/2026-08-23-ornith35b-moe-gate-up-exactness.json",
+    "docs/neural-download-packet-standard.md"
+  ],
+  "missing": [
+    "tested clean-host platform installation",
+    "optimized patch-on context-depth sweep",
+    "beginner recovery flow"
+  ]
 }

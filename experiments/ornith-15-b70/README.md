@@ -132,6 +132,16 @@ binary, driver, or benchmark protocol will reproduce them.
   controls, forced 128-token output was byte-identical, and all canaries
   passed. The complete stack removes 440 launches/token. See
   `notes/2026-08-22-ornith35b-alpha-gate-positive.md`.
+- **Routed-expert gate/up — ACCEPTED +2.33% incremental serving:** the tuned
+  reordered-Q4_K `MUL_MAT_ID` kernel now computes gate and up together and
+  writes SWIGLU directly for all 40 MoE layers. It preserves each dot-product
+  reduction order while removing a duplicate input quantization, a second
+  routed GEMV, and a GLU launch per layer (120 launches/token). Engine means
+  improved `118.229 -> 120.695 tok/s` (+2.09%); fresh-server means improved
+  `113.043 -> 115.680 tok/s` (+2.33%), with every candidate above every
+  control. Forced output was byte-identical and all canaries passed. The
+  complete stack removes 560 launches/token. See
+  `notes/2026-08-23-ornith35b-moe-gate-up-positive.md`.
 - **Beta-sigmoid/GDN fusion — CLOSED NEUTRAL:** folding the 32-element beta
   sigmoid into GDN removed 30 launches/token and preserved byte-exact
   generation. The engine loop improved 1.04%, but fresh-server means moved

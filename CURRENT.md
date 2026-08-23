@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-22**
+Last reviewed: **2026-08-23**
 
 ## Authority And Update Rule
 
@@ -138,6 +138,13 @@ preserving the rounded ADD tensor, bringing the stack to 440 removed
 launches/token. Pooled engine decode improved **1.18%** and fresh serving
 improved **2.04%** (`112.030` to `114.314 tok/s` mean); both candidate servers
 beat both controls, forced output was byte-identical, and all canaries passed.
+The seventh Qwen-derived transfer keeps the tuned reordered-Q4_K routed-expert
+dispatcher while fusing gate, up, and SWIGLU. It removes another 120
+launches/token, bringing the complete stack to 560. Mirrored engine decode
+improved **2.09%** and fresh serving improved **2.33%** (`113.043` to
+`115.680 tok/s` mean); all four freshness/finality gates passed, both
+candidates beat both controls, forced output was byte-identical, and all
+canaries passed.
 The earlier wider direct-state
 form remains archived as a correctness negative. The package remains a
 candidate pending clean-host replay; see the [guide](repro/ornith-15-35b-a3b-q4km-b70/README.md),
@@ -148,6 +155,8 @@ candidate pending clean-host replay; see the [guide](repro/ornith-15-35b-a3b-q4k
 [state-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-positive.md),
 [direct-state evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-direct-positive.md),
 and [alpha-gate evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-alpha-gate-positive.md).
+The latest routed gate/up evidence is
+[here](experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-gate-up-positive.md).
 
 Publication architecture: keep `index.html` curated and put the growing set
 of model/quant/card/OS/native-container variants in `guides.html`. That page

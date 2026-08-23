@@ -7,25 +7,26 @@ the recipe and validation evidence in this repository are the source of truth.
 ## Identity
 
 - Base: llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`.
-- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch`.
+- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch`.
 - Patch SHA-256:
-  `006d90f144058fb0ae1eb0477cbda6355f748716c760f0f094ce8b2dbec12501`.
+  `3734ebf7b4e09c4d1f7e85b75f040dc450202c4f3dfd73a21d9ba90ff634536b`.
 - Runtime doors: `GGML_SYCL_FUSED_MOE_ADD_REDUCE=1` and
   `GGML_SYCL_FUSED_ORNITH_CONV_SILU=1` and
   `GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1` and
   `GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1` and
   `GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1` and
-  `GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1` (all default off).
+  `GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1` and
+  `GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1` (all default off).
 - Validated `libggml-sycl.so` SHA-256:
-  `3887af763ac560ca277dd224ded611b083798dd27f149b7caf886c831460f637`.
+  `cbe101e6573100e10877ee059f326b23580cc7c15161a132608c771d34840671`.
 
 Apply only to the pinned clean base:
 
 ```bash
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
-sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch
-git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch
-git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-20260822.patch
+sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch
+git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch
+git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch
 git diff --check
 ```
 
@@ -43,7 +44,7 @@ The full-model trace observed 40 ordered-reduction matches, 30 recurrent
 convolution/SiLU matches, 80 residual/RMSNorm matches, and 30 recurrent
 concat/state matches per token. The direct state-materialization path replaces
 the latter boundary and also removes 30 recurrent `GET_ROWS` launches. Together
-the complete stack removes 440 launches/token.
+the complete stack removes 560 launches/token.
 
 The second fusion accepts only the exact one-token `[4,8192]` FP32 convolution
 whose sole consumer is a full-width SiLU. It preserves stock state handling,
@@ -74,6 +75,14 @@ and rereads the original rounded ADD tensor before applying the existing SYCL
 softplus expression and gate multiplication. Exact node adjacency, names,
 shapes, source order, layout, output flags, and sole-consumer checks fail closed
 to the prior stack.
+
+The seventh fusion keeps Ornith's routed-expert gate/up work on the tuned
+reordered-Q4_K `MUL_MAT_ID` path. Each subgroup computes both original dot
+products in their prior reduction order and writes SWIGLU directly to the
+graph's GLU destination. Exact model names, shapes, route ids, adjacency,
+sole-use, strides, quantization, layout, and device checks fail closed. It
+removes one duplicate input quantization, one routed GEMV, and one GLU launch
+per MoE layer, or 120 launches/token.
 
 ## Validation
 
@@ -107,6 +116,10 @@ to the prior stack.
   stack, reaching a `114.314270 tok/s` two-server mean. Each candidate server
   exceeded each control; forced 128-token output was byte-identical and all
   candidate canaries passed.
+- The added routed-expert gate/up fusion improved mirrored raw-engine decode by
+  **+2.09%** and two-fresh-server decode by **+2.33%** over the prior stack,
+  reaching a `115.680299 tok/s` two-server mean. Every candidate exceeded every
+  control; forced 128-token output was byte-identical and all canaries passed.
 
 Fresh stock servers matched `0/12` complete response hashes with each other on
 the long realistic suite. That pre-existing cross-process instability is
@@ -125,3 +138,5 @@ The direct gathered-state increment is in
 [`2026-08-22-ornith35b-concat-state-direct-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-direct-positive.md).
 The recurrent alpha-gate increment is in
 [`2026-08-22-ornith35b-alpha-gate-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-alpha-gate-positive.md).
+The routed-expert gate/up increment is in
+[`2026-08-23-ornith35b-moe-gate-up-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-gate-up-positive.md).

@@ -1,0 +1,47 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "candidate_library_sha256": "cbe101e6573100e10877ee059f326b23580cc7c15161a132608c771d34840671",
+  "candidate_patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-alpha-moe-gate-up-20260823.patch",
+  "candidate_patch_sha256": "3734ebf7b4e09c4d1f7e85b75f040dc450202c4f3dfd73a21d9ba90ff634536b",
+  "candidate_door": "GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP=1",
+  "parent_stack": [
+    "GGML_SYCL_FUSED_MOE_ADD_REDUCE=1",
+    "GGML_SYCL_FUSED_ORNITH_CONV_SILU=1",
+    "GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1",
+    "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1",
+    "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1",
+    "GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1"
+  ],
+  "removed_launches_per_decoded_token_incremental": 120,
+  "removed_launches_per_decoded_token_complete_stack": 560,
+  "engine": {
+    "protocol": "llama-bench p0/n128/d0/r7, same final binary, mirrored sequence",
+    "controls_tok_s": [118.673822, 116.966600, 118.535025, 118.740883],
+    "candidates_tok_s": [120.609682, 120.852637, 120.724780, 120.591165],
+    "control_mean_tok_s": 118.2290825,
+    "candidate_mean_tok_s": 120.694566,
+    "delta_percent": 2.0853443568,
+    "each_candidate_exceeded_each_control": true
+  },
+  "fresh_server": {
+    "protocol": "two fresh controls and two fresh candidates; fixed 12-prompt suite; each prompt once; 512-token maximum; median tokens 1-100 after TTFT; cached_tokens=0",
+    "controls_tok_s": [113.45320594312611, 112.63250859199746],
+    "candidates_tok_s": [115.23221778343891, 116.12838014508279],
+    "control_mean_tok_s": 113.04285726756179,
+    "candidate_mean_tok_s": 115.68029896426086,
+    "delta_percent": 2.3331343178,
+    "all_freshness_gates_passed": true,
+    "all_final_gates_passed": true,
+    "each_candidate_exceeded_each_control": true
+  },
+  "correctness": {
+    "canonical_128_token_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "same_binary_control_candidate_byte_identical": true,
+    "candidate_fused_hits_128_tokens": 5080,
+    "canaries_passed": true
+  },
+  "result": "accepted incremental optimization"
+}
