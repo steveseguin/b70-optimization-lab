@@ -9,7 +9,7 @@ the recipe and validation evidence in this repository are the source of truth.
 - Base: llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`.
 - Current complete patch: `llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch`.
 - Patch SHA-256:
-  `d8c95e4d0cbe0be91c0890f4e5d3c6b4f2bfb22b5daedd12a560910f954c915e`.
+  `b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1`.
 - Runtime doors: `GGML_SYCL_FUSED_MOE_ADD_REDUCE=1` and
   `GGML_SYCL_FUSED_ORNITH_CONV_SILU=1` and
   `GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1` and
@@ -23,6 +23,9 @@ the recipe and validation evidence in this repository are the source of truth.
   `GGML_SYCL_FUSED_ORNITH_QK_NORM_ROPE=1` (all default off).
 - Validated `libggml-sycl.so` SHA-256:
   `060484479736f7cb7b6f55aacc38b9fdf162fb702fc3d73b1a1ce9750301fdcf`.
+- Validated recipe-only runtime setting:
+  `UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1`; keep
+  `UR_L0_USE_IMMEDIATE_COMMANDLISTS` unset.
 
 Apply only to the pinned clean base:
 
@@ -181,6 +184,12 @@ one in each of 10 full-attention layers removes another 40 launches/token.
   `128.832195 tok/s` two-server mean. Every candidate exceeded every control;
   forced 128-token output was byte-identical, exactly 1,270 full-attention hits
   were recorded, and the objective canary battery passed.
+- Disabling Level Zero copy offload on the unchanged eleven-feature stack
+  improved mirrored raw-engine decode by **+1.26%** and matched fresh-server
+  decode by **+1.09%**, reaching a directly measured `129.568467 tok/s`
+  two-server mean. The candidate won 9/12 prompt-matched averages, the forced
+  transcript was byte-identical, and all freshness/finality gates passed.
+  This is a launch-recipe setting rather than a twelfth source feature.
 
 Fresh stock servers matched `0/12` complete response hashes with each other on
 the long realistic suite. A new realistic same-process repeat probe also
@@ -211,3 +220,5 @@ The in-place GDN state increment is in
 [`2026-08-23-ornith35b-gdn-state-io-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-gdn-state-io-positive.md).
 The full-attention Q/K increment is in
 [`2026-08-23-ornith35b-qk-norm-rope-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-qk-norm-rope-positive.md).
+The copy-offload runtime increment is in
+[`2026-08-23-ornith35b-copy-offload-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-copy-offload-positive.md).

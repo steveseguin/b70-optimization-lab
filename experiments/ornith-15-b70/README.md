@@ -179,6 +179,16 @@ binary, driver, or benchmark protocol will reproduce them.
   recorded, and all objective canaries passed. The complete eleven-feature
   stack removes 700 launches/token. See
   `notes/2026-08-23-ornith35b-qk-norm-rope-positive.md`.
+- **Level Zero copy-offload setting — ACCEPTED +1.09% incremental serving:**
+  screening another setting from this lab's Qwen B70 work found that
+  `UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1` transfers to Ornith, while the
+  separately tested immediate-command-list setting does not. On the unchanged
+  eleven-feature source stack, mirrored engine means improved
+  `131.535 -> 133.188 tok/s` (+1.26%) and fresh-server means improved
+  `128.166 -> 129.568 tok/s` (+1.09%). The candidate won 9/12 prompt-matched
+  averages, forced output was byte-identical, and all freshness/finality gates
+  passed. This is recipe-only and is not promoted globally. See
+  `notes/2026-08-23-ornith35b-copy-offload-positive.md`.
 - **GDN output-projection Q8 fusion — CLOSED CORRECTNESS NEGATIVE:** the
   Qwen-derived candidate tried to emit reordered Q8_1 directly from the
   accepted gated-normalization producer before each recurrent Q4_K output

@@ -1,0 +1,72 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "llama_cpp_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "stack": "accepted 11-feature Ornith source stack",
+  "candidate": "UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1",
+  "control": "UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD unset",
+  "interaction_control": "UR_L0_USE_IMMEDIATE_COMMANDLISTS unset in both arms",
+  "exactness": {
+    "unset_transcript_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "candidate_transcript_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "byte_identical": true,
+    "qk_norm_rope_hits_each": 1270,
+    "unset_transcript_gzip_sha256": "0f3a973bd616608dcb8a0a7e97b156a17fd2c08f2b737835ab185a2be2631cf6",
+    "candidate_transcript_gzip_sha256": "0f3a973bd616608dcb8a0a7e97b156a17fd2c08f2b737835ab185a2be2631cf6"
+  },
+  "engine_tg128": {
+    "repetitions_per_run": 7,
+    "order": ["control", "candidate", "candidate", "control"],
+    "control_run_avg_tok_s": [132.201931, 130.868828],
+    "candidate_run_avg_tok_s": [133.157095, 133.219630],
+    "control_mean_tok_s": 131.5353795,
+    "candidate_mean_tok_s": 133.1883625,
+    "delta_percent": 1.2566831876590134
+  },
+  "fresh_server": {
+    "order": ["control", "candidate", "candidate", "control"],
+    "prompts_per_run": 12,
+    "generated_tokens_per_prompt": 512,
+    "metric": "median_tok_s_1_100_after_ttft",
+    "control_run_medians_tok_s": [128.6234948138142, 127.7081655540783],
+    "candidate_run_medians_tok_s": [130.1596389909618, 128.97729405671106],
+    "control_mean_of_run_medians_tok_s": 128.16583018394624,
+    "candidate_mean_of_run_medians_tok_s": 129.56846652383643,
+    "delta_percent": 1.09439180308597,
+    "control_grand_prompt_mean_tok_s": 124.29852627507591,
+    "candidate_grand_prompt_mean_tok_s": 125.72785471451442,
+    "grand_prompt_mean_delta_percent": 1.1499158375179341,
+    "candidate_prompt_wins": 9,
+    "prompt_count": 12,
+    "pooled_control_median_tok_s": 128.33815546206262,
+    "pooled_candidate_median_tok_s": 129.3732003254291,
+    "all_cached_tokens_zero": true,
+    "all_fresh_response_gates_passed": true,
+    "all_final_gates_passed": true,
+    "informational_chunk_count_mismatches": {
+      "A1_unset": 1,
+      "A2_unset": 0,
+      "B1_disabled": 0,
+      "B2_disabled": 1,
+      "note": "Both mismatches still emitted more than the 100-event metric window and passed the final gate."
+    }
+  },
+  "raw_artifact_sha256": {
+    "A1_unset_bench_json": "afdb0f50534bb4930e9dab4f681eb3f93d0077c6d64d3c69e9c51b77cbf294c7",
+    "A2_unset_bench_json": "70843f2a1694ee673c3570079f80db61ad1fed0c2a41fb0e50dee78df9c2e5c3",
+    "B1_disabled_bench_json": "659d93dd4c9e9b4efcbcc7e35272b4b887398cb161d48024e8e027cc010cb0ed",
+    "B2_disabled_bench_json": "7ce67e10f06b132a8365634c57922932047849c809e78fe5fb74c296759e1e76",
+    "A1_unset_server_json": "2882ec5987ebe40d88d2951857bde903e76ea894e88a5b7add5762c4e72f14ac",
+    "A2_unset_server_json": "67c13feb6fe1d1a4f2906c0e7323323dc1ef07300983c79a810cc3d2b9991dc9",
+    "B1_disabled_server_json": "78c4c4e86503f781b36430fdec19e3c154b7717b1f148b9ed078cf675afdb665",
+    "B2_disabled_server_json": "e63c8f2ab9b2baaaffb431af4e7e3081d581af02e6e897984c0c9c6ccf8718dd",
+    "A1_unset_server_log_gzip": "e0fe5b347013069f004613672874779d035c64ee78abd5249314645b0add0d84",
+    "A2_unset_server_log_gzip": "a773905d965bbbf345c6255fdc654fc4948bd488f6b38b56f8b223015564b00c",
+    "B1_disabled_server_log_gzip": "9e5082512e277beab29ea689690d72bd6ac3193ad3e8ad278152a800d67ba0e5",
+    "B2_disabled_server_log_gzip": "24d0a269dbb21cbd60412af0fbdb8c08e77827b57fc88fb0a1c8b203524be898"
+  },
+  "decision": "accepted for this exact Ornith one-B70 recipe; set UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1 and keep UR_L0_USE_IMMEDIATE_COMMANDLISTS unset",
+  "no_extrapolation": true
+}

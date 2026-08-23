@@ -239,6 +239,18 @@ complete stack to 600. Mirrored engine decode improved **0.99%** and fresh
 serving improved **1.41%** (`116.406` to `118.048 tok/s` mean); both
 candidates beat both controls, forced output was byte-identical, and all
 canaries passed.
+Three later Qwen-lineage transfers complete the current source stack: recurrent
+GDN RMSNorm/SiLU gating, in-place persistent GDN state I/O, and full-attention
+Q/K RMSNorm-IMRoPE with direct K-cache output. Together the eleven-feature
+patch removes 700 launches/token and reached a directly measured
+`128.832 tok/s` fresh-server mean before runtime tuning. An independent
+Ornith screen then accepted `UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1`: exact
+output was unchanged, mirrored engine decode improved **1.26%**, and fresh
+serving improved **1.09%** (`128.166` to `129.568 tok/s`), with 9/12
+prompt-matched averages favoring the candidate. The immediate-command-list
+setting used by some Qwen recipes was separately rejected for Ornith serving,
+so it remains unset. No context-depth points were extrapolated from the runtime
+win.
 The earlier wider direct-state
 form remains archived as a correctness negative. The package remains a
 candidate pending clean-host replay; see the [guide](repro/ornith-15-35b-a3b-q4km-b70/README.md),
@@ -253,6 +265,8 @@ The latest routed gate/up evidence is
 [here](experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-gate-up-positive.md).
 The latest MoE shared-branch residual/RMSNorm evidence is
 [here](experiments/ornith-15-b70/notes/2026-08-23-ornith35b-moe-shared-residual-rms-positive.md).
+The latest runtime-setting evidence is
+[here](experiments/ornith-15-b70/notes/2026-08-23-ornith35b-copy-offload-positive.md).
 
 Publication architecture: keep `index.html` curated and put the growing set
 of model/quant/card/OS/native-container variants in `guides.html`. That page

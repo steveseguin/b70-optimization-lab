@@ -4,8 +4,8 @@ Status: **model verified, one-card operating point validated, and lab decode
 patch promoted** (2026-08-23). Lane: enthusiast MoE; the measured stock
 two-card comparison was slower than one card for single-stream decode.
 
-**Current directly measured target-only serving mean: `128.832195 tok/s`**
-(fresh-suite medians `129.754844` and `127.909546`, one B70, cache-zero).
+**Current directly measured target-only serving mean: `129.568467 tok/s`**
+(fresh-suite medians `130.159639` and `128.977294`, one B70, cache-zero).
 
 **Intake diagnostic baseline (1x B70, 8K ctx, f16 KV, target-only,
 128/100 window, cache-zero verified): `105.782 tok/s` median /
@@ -91,6 +91,7 @@ python3 /path/to/b70-optimization-lab/scripts/verify-neural-download-model.py \
 
 source /opt/intel/oneapi/setvars.sh --force
 export ONEAPI_DEVICE_SELECTOR=level_zero:0
+export UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1
 export GGML_SYCL_ENABLE_GRAPH=0
 export GGML_SYCL_FUSED_MOE_ADD_REDUCE=1
 export GGML_SYCL_FUSED_ORNITH_CONV_SILU=1
@@ -115,6 +116,9 @@ build-sycl-aot-bmg-g31/bin/llama-server \
 
 Do not enable SYCL command graphs for this model on the pinned stack; the
 matched model-level experiment regressed decode by 52%.
+Keep `UR_L0_USE_IMMEDIATE_COMMANDLISTS` unset: its independent matched server
+screen regressed serving. The copy-offload setting above is validated only for
+this exact one-B70 recipe and is not a global default for other models.
 
 ## Current eleven-feature context-depth profile (llama-bench, FA on, 5 reps)
 
@@ -130,11 +134,13 @@ matched model-level experiment regressed decode by 52%.
 | 24,576 | 104.32 (±0.05) | 1196.7 (±5.8) |
 | 32,768 | 97.00 (±0.06) | 1101.6 (±3.9) |
 
-These are directly measured raw engine rates from the exact current
-eleven-feature stack with command graphs off, F16 KV, and five samples at every
-displayed depth. They are not inferred from the 8K server result and no missing
-depth is interpolated. Raw engine rates exclude HTTP and sampling overhead, so
-use the current fresh-server suite median below as the serving headline.
+These are directly measured raw engine rates from the exact eleven-feature
+source stack with command graphs off, F16 KV, and five samples at every
+displayed depth. This sweep predates the accepted copy-offload runtime setting;
+its points have not been scaled. They are not inferred from the 8K server
+result and no missing depth is interpolated. Raw engine rates exclude HTTP and
+sampling overhead, so use the current fresh-server suite median below as the
+serving headline.
 Evidence: `ornith-15-35b-a3b-q4km-eleven-feature.sweep.json` plus
 `ornith-15-35b-a3b-q4km-eleven-feature.meta.json` (model and benchmark hashes
 inside).
@@ -308,6 +314,18 @@ token and bringing the complete stack to 700. Mirrored engine means improved
 controls; forced 128-token output was byte-identical, exactly 1,270 hits were
 recorded, and every objective canary passed. Evidence:
 [`2026-08-23-ornith35b-qk-norm-rope-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-qk-norm-rope-positive.md).
+
+The current runtime increment also comes from screening this lab's Qwen B70
+work against Ornith rather than assuming that every Qwen setting transfers.
+With `UR_L0_USE_IMMEDIATE_COMMANDLISTS` unset in both arms, setting
+`UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1` improved mirrored seven-repetition
+engine means from `131.535 -> 133.188 tok/s` (**+1.26%**) and fresh-server
+means from `128.166 -> 129.568 tok/s` (**+1.09%**). The candidate won 9/12
+prompt-matched averages, every response was uncached and passed the final
+gate, and the forced 128-token transcript remained byte-identical. This is a
+recipe-only runtime setting: the eleven-feature source patch and its binary
+hashes are unchanged. Evidence:
+[`2026-08-23-ornith35b-copy-offload-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-copy-offload-positive.md).
 
 ## Stock two-card comparison (patch off; layer split, GPUs 0+1)
 
