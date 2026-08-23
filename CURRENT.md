@@ -54,6 +54,14 @@ AutoRound INT4 W4A16, F16 KV, one request, cache zero, and XPU Graph:
 - TP2: `48.8301 / 48.9505 tok/s` conventional;
 - TP4: `71.6741 / 71.5488 tok/s` conventional.
 
+TP4 also passed the natural-EOS LocalMaxxing timing gate from a fresh isolated
+cache at `71.2933 tok/s` conventional: 25/25 cold rows covered the strict
+100-event/99-interval window, cached tokens were zero, and two rows stopped
+naturally at 220/419 while 23 reached the honest 512 cap. This closes the
+natural-EOS methodology gap without lowering the 71.7 diagnostic ceiling. No
+submission was made; a real-baseline battery plus the cross-boot and
+unsupported multi-GPU graph disclosures remain. See the [final-gate note](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tp4-natural-eos-final-gate.md).
+
 All three graph topologies passed seven objective canaries, an 8-run
 same-server repeat, cache-zero checks, and an 8K needle. The battery runs did
 not supply a baseline JSON, so their empty-comparison

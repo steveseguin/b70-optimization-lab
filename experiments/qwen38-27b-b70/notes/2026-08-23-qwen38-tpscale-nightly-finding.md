@@ -59,6 +59,14 @@ comparison. The lane's cross-boot nondeterminism caveat applies to all configs.
 In addition, the nightly logs explicitly warn that multi-GPU XPU Graph is
 unsupported/experimental even though these TP2/TP4 runs completed and passed.
 
+**TP4 natural-EOS final gate passed (2026-08-23):** a fresh isolated-cache
+run produced 25/25 eligible cold rows at **71.2933 tok/s** conventional under
+strict 100-event/99-interval accounting. Cached tokens were zero throughout;
+23 rows hit the honest 512-token cap and two stopped naturally at 220/419.
+This closes the timing-methodology gate without changing the 71.7 diagnostic
+ceiling. A real-baseline battery and the cross-boot/unsupported-graph
+disclosures remain; no submission was made.
+
 **The old TP4 MTP2 root is infrastructure-invalid, but the topology now boots.**
 In `tp4-mtp2-f16-a`, three ranks lost shared compile artifacts and the later
 `shm_broadcast` warnings were downstream peer starvation. Corrected fresh

@@ -8,25 +8,24 @@ everything in one place.
 
 | Lane | Number | Status | What sealing still needs |
 | --- | ---: | --- | --- |
-| vLLM XPU nightly, TP1, MTP off, XPU graph | 30.22 / 30.26 conventional | Objective battery PASS on exact config; cache-zero; boot pair 0.13% | Fresh isolated-cache determinism gates; sealed cache/AOT/Triton manifests; natural-EOS final gate; a battery run with an actual baseline; strict 100-event/99-interval fields; cross-boot disclosure if unresolved |
-| vLLM XPU nightly, TP4, MTP off, XPU graph | 71.67 / 71.55 conventional | Objective battery PASS on exact config; cache-zero; boot pair 0.17%; 21/25 complete-output peer match | Same as above, plus the mandatory unsupported/experimental multi-GPU XPU Graph disclosure; fastest target-only Qwen3.8 result for this AutoRound/nightly identity, not the lab-wide target-only record |
+| vLLM XPU nightly, TP1, MTP off, XPU graph | 30.22 / 30.26 conventional | Objective battery PASS; cache-zero; fresh-compile determinism candidate closed negative | Natural-EOS final gate; battery with an actual baseline; exact-cache replay/sealing; mandatory cross-boot disclosure |
+| vLLM XPU nightly, TP4, MTP off, XPU graph | 71.293 natural-EOS final; 71.67 / 71.55 diagnostic ceiling | Natural-EOS strict gate PASS; objective battery PASS; cache-zero; cross-boot speed stable | Battery with an actual baseline; exact-cache replay/sealing; mandatory cross-boot and unsupported/experimental multi-GPU XPU Graph disclosures; fastest target-only Qwen3.8 result for this AutoRound/nightly identity, not the lab-wide target-only record |
 | llama.cpp Q4_K_M TP1 (promoted) | 27.81/27.82 conventional | 24/24 bit-exact, full battery, submission-ready since 2026-08-21 | Nothing - submit-ready; user previously declined ("the 27 is lame") |
 
 **Mandatory disclosure for the two nightly lanes:** deterministic within a
 boot (8/8 stress on TP1-class config), NOT across boots (autotuned kernel
 selection; 19-20/25 cross-boot output agreement). Rates are stable across
 boots (0.17% pairs); outputs are not byte-pinned. Any submission must say
-this. Sealing the inductor/autotune artifacts (the existing
-`PYTHONHASHSEED`/tuner-isolation candidate in DO-NOT-REPEAT) is the path to
-removing the caveat entirely.
+this. A bounded `PYTHONHASHSEED=0` plus tuner-disabled program preserved
+30.2-class speed but still matched only 19/25 full outputs, so that candidate
+is closed. Exact-cache replay is the only sealed deterministic path shown.
 
-The existing benchmark driver is explicitly diagnostic and passed
-`ignore_eos=true`. That preserves a complete timing window for research but
-does not satisfy the repository's current LocalMaxxing natural-EOS policy.
-Also, the battery files have `baseline_comparisons={}` because no
+The TP4 candidate now has a passing natural-EOS, 99-interval final gate at
+71.2933. TP1 still needs its natural-EOS final gate. The battery files have
+`baseline_comparisons={}` because no
 `--baseline-json` was supplied; their objective canaries pass, but the
 compatibility field `baseline_match_all=true` is not oracle evidence. Neither
-candidate is submission-ready until those two gates are rerun correctly.
+candidate is submission-ready until its remaining gates are rerun correctly.
 
 ## The margin question (user decision pending)
 
