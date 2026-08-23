@@ -183,6 +183,11 @@ binary, driver, or benchmark protocol will reproduce them.
   in a mirrored engine screen. No server run was justified and the accepted
   stack is unchanged. See
   `notes/2026-08-23-ornith35b-dmmv-esimd-quad-negative-neutral.md`.
+- **Direct FP32 router GEMV — CLOSED CORRECTNESS NEGATIVE:** the exact
+  Qwen-derived `[256,2048] × [2048,1]` router boundary currently uses oneMKL
+  GEMM. A narrow GEMV replacement hit all 5,080 intended calls but changed the
+  forced deterministic transcript at byte 456. It was not timed or shipped.
+  See `notes/2026-08-23-ornith35b-router-gemv-correctness-negative.md`.
 - **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
   accepted only 22/336 reported draft tokens and reduced the fresh-suite median
   from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed

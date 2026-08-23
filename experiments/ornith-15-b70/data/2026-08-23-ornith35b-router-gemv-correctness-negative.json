@@ -1,0 +1,36 @@
+{
+  "date": "2026-08-23",
+  "status": "closed_correctness_negative",
+  "model": {
+    "path": "/home/steve/.cache/b70-optimization-lab/models/ornith-1.5-35b-a3b-q4km/Ornith-1.5-35B-Q4_K_M.gguf",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+    "quantization": "Q4_K_M"
+  },
+  "runtime": {
+    "source_base": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_library_sha256": "cbe101e6573100e10877ee059f326b23580cc7c15161a132608c771d34840671",
+    "candidate_library_sha256": "ee6e3af3a0b51373571112904af037584a189535dda2fc2ff341c0a166ac8b5e"
+  },
+  "candidate": {
+    "door": "GGML_SYCL_ORNITH_ROUTER_GEMV=1",
+    "scope": "named FP32 Ornith ffn_moe_logits projection, ncols=2048, nrows=256, one input column, contiguous unsplit buffers",
+    "change": "oneMKL column-major GEMV in place of the stock one-column GEMM call",
+    "activation_hits": 5080
+  },
+  "correctness": {
+    "protocol": "same frozen binary, forced greedy 128-token generation, door off versus on",
+    "control_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "candidate_output_sha256": "8036dc4c82762b8e87c7f91d07b7766c117124e4cb0be6144badeee4d805c224",
+    "byte_identical": false,
+    "first_byte_difference_one_based": 456
+  },
+  "performance_screen_run": false,
+  "server_screen_run": false,
+  "canary_replay_run": false,
+  "promotion": false,
+  "accepted_stack_changed": false,
+  "patch": {
+    "path": "../patches/llamacpp-ornith15-router-gemv-correctness-negative-20260823.patch",
+    "sha256": "bde5b0b61f1fea456321eeda5c0cd562ad3aeb0fff43984939f824cf619ebed2"
+  }
+}
