@@ -106,6 +106,7 @@ def post_stream(
     usage: dict[str, Any] = {}
     response_x_request_id: str | None = None
     logprob_content: list[dict[str, Any]] = []
+    finish_reasons: list[str] = []
 
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         response_x_request_id = resp.headers.get("X-Request-Id")
@@ -175,6 +176,9 @@ def post_stream(
                     [now - started] * len(verbose_token_ids)
                 )
             for choice in event.get("choices", []):
+                finish_reason = choice.get("finish_reason")
+                if isinstance(finish_reason, str):
+                    finish_reasons.append(finish_reason)
                 choice_logprobs = choice.get("logprobs")
                 if isinstance(choice_logprobs, dict):
                     content_logprobs = choice_logprobs.get("content")
@@ -246,6 +250,7 @@ def post_stream(
         "token_id_offsets_s": token_id_offsets,
         "token_ids": token_ids,
         "logprob_content": logprob_content,
+        "finish_reasons": finish_reasons,
         "usage": usage,
         "prompt_tokens": prompt_tokens,
         "completion_tokens": completion_tokens,
@@ -306,6 +311,18 @@ def cached_tokens(row: dict[str, Any]) -> int | None:
     return value if isinstance(value, int) else None
 
 
+def event_window_rates(
+    offsets: list[float], event_count: int
+) -> tuple[float | None, float | None]:
+    """Return legacy inclusive-event and conventional interval rates."""
+    if event_count <= 1 or len(offsets) < event_count:
+        return None, None
+    duration = offsets[event_count - 1] - offsets[0]
+    if duration <= 0:
+        return None, None
+    return event_count / duration, (event_count - 1) / duration
+
+
 def load_suite(path: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
     suite = json.loads(path.read_text())
     if isinstance(suite, list):
@@ -340,6 +357,12 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--out", type=Path)
     parser.add_argument(
+        "--prompt-id",
+        action="append",
+        default=[],
+        help="Run only this suite prompt ID; repeat for a bounded subset.",
+    )
+    parser.add_argument(
         "--return-token-ids",
         action="store_true",
         help=(
@@ -357,12 +380,27 @@ def main() -> int:
             "'{\"chat_template_kwargs\":{\"enable_thinking\":false}}'."
         ),
     )
+    parser.add_argument(
+        "--require-natural-eos",
+        action="store_true",
+        help="Reject ignore_eos=true and require a recorded stop/length reason.",
+    )
     args = parser.parse_args()
     request_extra = json.loads(args.request_extra_json)
     if not isinstance(request_extra, dict):
         raise SystemExit("--request-extra-json must decode to a JSON object")
+    if args.require_natural_eos and request_extra.get("ignore_eos") is True:
+        raise SystemExit("--require-natural-eos rejects ignore_eos=true")
 
     suite_meta, prompts = load_suite(args.suite)
+    if args.prompt_id:
+        requested = set(args.prompt_id)
+        selected = [item for item in prompts if item["id"] in requested]
+        found = {item["id"] for item in selected}
+        missing = sorted(requested - found)
+        if missing:
+            raise SystemExit(f"unknown --prompt-id values: {', '.join(missing)}")
+        prompts = selected
     system_prompt = suite_meta.get("system_prompt")
     if system_prompt is not None and not isinstance(system_prompt, str):
         raise SystemExit("suite system_prompt must be a string when present")
@@ -395,13 +433,10 @@ def main() -> int:
         else:
             offsets = row["chunk_offsets_s"]
             timing_source = "openai_stream_content_or_reasoning_delta"
-        if len(offsets) >= args.metric_tokens:
-            duration = offsets[args.metric_tokens - 1] - offsets[0]
-            row["tok_s_1_100_after_ttft"] = (
-                None if duration <= 0 else args.metric_tokens / duration
-            )
-        else:
-            row["tok_s_1_100_after_ttft"] = None
+        legacy_rate, interval_rate = event_window_rates(offsets, args.metric_tokens)
+        row["tok_s_1_100_after_ttft"] = legacy_rate
+        row["tok_s_1_100_after_ttft_legacy_inclusive_events"] = legacy_rate
+        row["tok_s_1_100_intervals_after_ttft"] = interval_rate
         row["chunk_count_equals_completion_tokens"] = (
             row.get("chunk_count") == row.get("completion_tokens")
         )
@@ -419,6 +454,13 @@ def main() -> int:
         float(row["tok_s_1_100_after_ttft"])
         for row in rows
         if isinstance(row.get("tok_s_1_100_after_ttft"), (int, float))
+    ]
+    interval_metric_values = [
+        float(row["tok_s_1_100_intervals_after_ttft"])
+        for row in rows
+        if isinstance(
+            row.get("tok_s_1_100_intervals_after_ttft"), (int, float)
+        )
     ]
     full_values = [
         float(row["tok_s_after_ttft_full"])
@@ -440,6 +482,13 @@ def main() -> int:
     completion_counts = [row.get("completion_tokens") for row in rows]
     chunk_counts = [row.get("chunk_count") for row in rows]
     token_id_counts = [row.get("stream_token_id_count") for row in rows]
+    finish_reasons = [row.get("finish_reasons") for row in rows]
+    finish_reasons_known = [
+        isinstance(values, list)
+        and bool(values)
+        and all(value in ("stop", "length") for value in values)
+        for values in finish_reasons
+    ]
     chunk_counts_match = [bool(row.get("chunk_count_equals_completion_tokens")) for row in rows]
     chunks_cover_metric = [
         isinstance(v, int) and v >= args.metric_tokens for v in chunk_counts
@@ -464,10 +513,14 @@ def main() -> int:
             and len(set(prompt_hashes)) == len(prompt_hashes)
             and all(metric_events_cover)
             and all(isinstance(v, int) and v >= args.metric_tokens for v in completion_counts)
+            and (not args.require_natural_eos or all(finish_reasons_known))
         ),
         "required_policy": "fixed realistic prompt suite; each prompt once; cached_tokens=0 every row; no repeated/warmed prompt averaging; metric is median tokens 1-100 after TTFT",
         "metric_name": "median_tok_s_1_100_after_ttft",
+        "preferred_metric_name": "median_tok_s_1_100_intervals_after_ttft",
         "metric_tokens": args.metric_tokens,
+        "metric_events": args.metric_tokens,
+        "metric_intervals": args.metric_tokens - 1,
         "token_timing_source": token_timing_source,
         "return_token_ids_requested": args.return_token_ids,
         "cached_tokens_all_zero": all(isinstance(v, int) and v == 0 for v in cached_values),
@@ -486,9 +539,15 @@ def main() -> int:
         "completion_tokens_at_least_metric_window": all(
             isinstance(v, int) and v >= args.metric_tokens for v in completion_counts
         ),
+        "natural_eos_required": args.require_natural_eos,
+        "ignore_eos": request_extra.get("ignore_eos") is True,
+        "finish_reasons_known_all": all(finish_reasons_known),
+        "finish_reasons": finish_reasons,
     }
     summary = {
         "tok_s_1_100_after_ttft": stats(metric_values),
+        "tok_s_1_100_after_ttft_legacy_inclusive_events": stats(metric_values),
+        "tok_s_1_100_intervals_after_ttft": stats(interval_metric_values),
         "tok_s_after_ttft_full": stats(full_values),
         "tok_s_wall_full": stats(wall_values),
         "ttft_ms": stats(ttft_values),
@@ -509,6 +568,11 @@ def main() -> int:
         "context_checkpoints_or_prefix_reuse": False,
         "primary_metric_name": gate["metric_name"],
         "primary_metric_tokens": args.metric_tokens,
+        "preferred_metric_name": gate["preferred_metric_name"],
+        "primary_metric_accounting": "legacy-inclusive-events",
+        "preferred_metric_accounting": "inter-token-intervals",
+        "metric_window_generated_events": args.metric_tokens,
+        "metric_window_intervals": args.metric_tokens - 1,
         "token_timing_source": gate["token_timing_source"],
         "return_token_ids_requested": args.return_token_ids,
         "chat_reasoning_delta_counts": [
@@ -534,6 +598,8 @@ def main() -> int:
             "request_extra": request_extra,
             "system_prompt": system_prompt,
             "return_token_ids": args.return_token_ids,
+            "selected_prompt_ids": args.prompt_id,
+            "require_natural_eos": args.require_natural_eos,
         },
         "realistic_final_gate": gate,
         "fresh_response_validity": fresh_response_validity,
