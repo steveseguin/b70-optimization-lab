@@ -1,0 +1,70 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "llama_cpp_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "stack": "accepted 11-feature Ornith stack",
+  "method": "host monotonic timing with queue wait-and-throw before and after each logical SYCL graph-loop iteration",
+  "production_throughput_evidence": false,
+  "captured_graph_submissions": 7,
+  "warmed_one_token_graphs": 2,
+  "selected_graph": "final warmed one-token graph",
+  "logical_rows": 1103,
+  "serialized_total_us": 14349.956,
+  "operation_family_us": {
+    "MUL_MAT": 5584.920,
+    "MUL_MAT_ID": 2113.271,
+    "ADD": 1481.651,
+    "GET_ROWS": 999.941,
+    "RMS_NORM": 705.183,
+    "UNARY": 659.311,
+    "SOFT_MAX_fused_router_topk_attribution": 520.177,
+    "MUL": 513.604,
+    "L2_NORM": 420.083,
+    "SSM_CONV": 378.875,
+    "GATED_DELTA_NET": 351.706,
+    "FLASH_ATTN_EXT": 271.887,
+    "CONCAT": 205.088,
+    "SET_ROWS": 75.279,
+    "CONT": 68.980
+  },
+  "projection_family_us": {
+    "routed_gate_up_fused": 1171.193,
+    "routed_down": 942.078,
+    "recurrent_qkv": 897.537,
+    "router_logits": 717.631,
+    "lm_head": 707.522,
+    "shared_gate_up_fused": 525.816,
+    "router_topk_fused": 520.177,
+    "recurrent_z": 508.923,
+    "recurrent_output": 489.493,
+    "recurrent_alpha_beta": 452.734,
+    "shared_down": 389.896,
+    "shared_gate_scalar": 284.656,
+    "attention_q": 262.247,
+    "attention_output": 163.647,
+    "attention_v": 102.828,
+    "attention_k": 81.990
+  },
+  "artifacts": {
+    "raw_log_gzip": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-eleven-stack-op-profile.log.gz",
+    "raw_log_gzip_sha256": "093645a4761bf674ba37e0bc7dca5c78dd353c510475c30b9b55ee614c43986d",
+    "stdout_gzip_sha256": "a2d66be312ea0e533a1745e66f84ca80dd80a7232ac4cf934bad3334ead18f6e",
+    "diagnostic_patch_sha256": "317b4005f72966686d9918a1e4d78f0cdcbb05115d27d136a1bd0b19eecd3a87"
+  },
+  "restored_accepted_artifacts": {
+    "complete_source_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+    "libggml_sycl_sha256": "060484479736f7cb7b6f55aacc38b9fdf162fb702fc3d73b1a1ce9750301fdcf",
+    "llama_cli_sha256": "b791b681d42ad4d6862bf94798bbaff97ead195fb4fb67e7f5c0be2bf7a80135",
+    "llama_bench_sha256": "9bdd7033e50e22af9b05ec2c30742b5248f6708a89080974b0f0c491963c6e70",
+    "llama_server_sha256": "08bc580449dbc781fedd63db8039eed624817f07535a3f8a023280451f0c6e6f"
+  },
+  "warnings": [
+    "The profiler serializes every logical row and changes queue behavior.",
+    "Barrier and host dispatch overhead are included.",
+    "Deferred and fused work may be attributed to the graph node where its matcher fires.",
+    "No value may be extrapolated into token throughput or a projected speedup."
+  ],
+  "no_extrapolation": true
+}

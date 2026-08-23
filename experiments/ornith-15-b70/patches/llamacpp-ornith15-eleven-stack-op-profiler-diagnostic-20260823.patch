@@ -1,0 +1,65 @@
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -14,6 +14,7 @@
+ #include <array>
+ #include <assert.h>
+ #include <atomic>
++#include <chrono>
+ #include <cinttypes>
+ #include <cstddef>
+ #include <cstdint>
+@@ -6777,6 +6778,45 @@
+     return true;
+ }
+ 
++// Diagnostic-only logical-op timer. Barriers deliberately serialize the graph
++// and make these rows unsuitable for throughput comparisons.
++class ornith_sycl_op_timer {
++public:
++    ornith_sycl_op_timer(ggml_backend_sycl_context * ctx, const ggml_tensor * node, int index) :
++        enabled(std::getenv("GGML_SYCL_ORNITH_OP_PROFILE") != nullptr),
++        queue(ctx->stream()), node(node), index(index) {
++        if (!enabled) {
++            return;
++        }
++        queue->wait_and_throw();
++        begin = std::chrono::steady_clock::now();
++    }
++
++    ~ornith_sycl_op_timer() noexcept {
++        if (!enabled) {
++            return;
++        }
++        try {
++            queue->wait_and_throw();
++            const auto end = std::chrono::steady_clock::now();
++            const double device_us = std::chrono::duration<double, std::micro>(end - begin).count();
++            std::fprintf(stderr, "[ORNITH-SYCL-OP] index=%d op=%s name=%s ne=%" PRId64 "x%" PRId64 "x%" PRId64
++                                 "x%" PRId64 " device_us=%.3f\n",
++                                 index, ggml_op_name(node->op), node->name, node->ne[0], node->ne[1],
++                                 node->ne[2], node->ne[3], device_us);
++        } catch (const sycl::exception & e) {
++            std::fprintf(stderr, "[ORNITH-SYCL-OP] index=%d op=%s error=%s\n", index, ggml_op_name(node->op), e.what());
++        }
++    }
++
++private:
++    bool enabled;
++    queue_ptr queue;
++    const ggml_tensor * node;
++    int index;
++    std::chrono::steady_clock::time_point begin;
++};
++
+ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
+     ggml_sycl_set_main_device(sycl_ctx->device);
+ 
+@@ -6805,6 +6845,8 @@
+             continue;
+         }
+ 
++        ornith_sycl_op_timer op_timer(sycl_ctx, node, i);
++
+         const auto qk_pending = std::find_if(
+             pending_ornith_qk_norm_rope.begin(), pending_ornith_qk_norm_rope.end(),
+             [node](const ggml_sycl_ornith_qk_norm_rope_match & candidate) {
