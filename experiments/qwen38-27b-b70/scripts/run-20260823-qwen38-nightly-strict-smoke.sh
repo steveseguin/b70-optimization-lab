@@ -76,6 +76,7 @@ else
   [[ -n "${EXPECTED_CACHE_MANIFEST_SHA256:-}" ]] || \
     fail "replay requires EXPECTED_CACHE_MANIFEST_SHA256"
 fi
+mkdir -p "$(dirname -- "$out")"
 mkdir "$out"
 cp "$suite" "$out/validation-suite.json"
 
