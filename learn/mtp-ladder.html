@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTP 1·2·3·4: the multi-token-prediction ladder — neural.download</title>
+<meta name="description" content="What multi-token prediction (MTP) is, how the 1/2/3/4 draft-depth ladder trades cost for acceptance, and why 2 is often the knee — with measured B70 numbers.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/learn/mtp-ladder.html">
+<meta name="theme-color" content="#f6f1e5">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../index.html">Home</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Guide library</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 06</p>
+  <p class="eyebrow">Tune for speed</p>
+  <h1>MTP 1·2·3·4</h1>
+  <p>Multi-token prediction is the single biggest decode speed-up available on this hardware — often <strong>1.5×</strong> or more, for free, with no quality loss. Here's how the draft-depth ladder works and where it stops paying off.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li><strong>MTP</strong> lets the model guess several next tokens at once, then verify them in one pass. Accepted guesses are free speed.</li>
+      <li>The number (1/2/3/4/5) is how many tokens it drafts ahead. More drafts = more potential speed, but also more wasted work when guesses miss.</li>
+      <li>On a single B70 the curve typically goes <strong>off &lt; 1 &lt; 2 ≈ 3 ≈ 4</strong> — <strong>MTP 2 is the usual knee</strong>.</li>
+      <li>Done right, MTP is <strong>lossless</strong>: the output is exactly what the model would have produced anyway.</li>
+      <li>Catch: on this model family, MTP + multiple simultaneous requests can crash the engine — run one request at a time.</li>
+    </ul>
+  </div>
+
+  <h2>How it works</h2>
+  <p>Normal decoding writes one token per pass through the model — and each pass is <a href="prefill-vs-clockrate.html">bandwidth-bound</a>, so the GPU spends most of it waiting on memory. MTP puts that idle time to use: a small, cheap "draft" head proposes the next few tokens, and then the full model checks them <em>all in a single pass</em>. Every draft token the full model agrees with is a token you got almost for free.</p>
+  <p>The key number is <strong>acceptance length</strong> — how many drafted tokens survive verification on average. High acceptance means MTP is winning; low acceptance means you're paying to draft tokens that get thrown away.</p>
+
+  <div class="callout key">
+    <span class="tag">Why it's free quality</span>
+    <p>MTP only <em>accepts</em> a drafted token if it matches what the full model would have chosen. Rejected guesses are discarded. So a correct MTP implementation produces the <strong>same output</strong> as plain decoding — it just gets there faster. That's the difference between speculation (this) and a smaller/worse model (not this).</p>
+  </div>
+
+  <h2>The ladder, measured</h2>
+  <p>A community single-B70 run swept the whole ladder on Qwen3.8-27B (vLLM XPU, fp8 KV): <span class="badge comm">Community</span></p>
+  <figure class="chart">
+    <h4>Decode tok/s vs MTP depth</h4>
+    <img src="assets/mtp-ladder.svg" alt="Bar chart of decode tokens per second: MTP off 33.2, MTP1 47.1, MTP2 52.2, MTP3 51.6, MTP4 51.9.">
+    <figcaption>Off → 1 is a big jump, 1 → 2 a solid one, then 3 and 4 flatten out (and can dip). MTP 2 = +57% over off. <a href="../community/field-reports/reddit-arc-b70-vllm-52tps/README.md">Field report</a>.</figcaption>
+  </figure>
+
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Setting</th><th class="num">tok/s</th><th class="num">vs off</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>MTP off</td><td class="num">33.2</td><td class="num">—</td><td><span class="badge comm">Community</span> Reddit, GPTQ</td></tr>
+      <tr><td>MTP 1</td><td class="num">47.1</td><td class="num">+42%</td><td><span class="badge comm">Community</span></td></tr>
+      <tr><td class="best">MTP 2</td><td class="num best">52.2</td><td class="num">+57%</td><td><span class="badge comm">Community</span></td></tr>
+      <tr><td>MTP 3 / 4</td><td class="num">51.6 / 51.9</td><td class="num">+55%</td><td><span class="badge comm">Community</span></td></tr>
+      <tr><td>AutoRound INT4, MTP 5, two cards</td><td class="num">101.2</td><td class="num">research</td><td><span class="badge lab">Lab</span> not promoted (determinism open)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Why the knee moves</h2>
+  <p>The sweet spot isn't always 2. It depends on <strong>acceptance length</strong>, which depends on the model, the weights, and the prompt. The same-family GPTQ weights in one archived run kept climbing to MTP 4 (54 → 68 → 84 tok/s) because their drafts were accepted more often; the Reddit run plateaued at 2. The rule isn't "always pick 2" — it's:</p>
+  <ul>
+    <li>Each extra draft token adds cost whether or not it's accepted.</li>
+    <li>It pays off only while the <em>added</em> acceptance outweighs that cost.</li>
+    <li>Predictable text (code, structured output) accepts more, pushing the knee higher; creative text accepts less, pulling it lower.</li>
+  </ul>
+  <p><strong>Sweep it once for your workload.</strong> Try off, 2, and 4; keep whichever wins. It's a two-minute test with a big payoff.</p>
+
+  <div class="callout warn">
+    <span class="tag">What to be aware of</span>
+    <ul>
+      <li><strong>MTP lives in vLLM here, not llama.cpp.</strong> Our llama.cpp SYCL lane has no speculative path and our Qwen3.8 GGUF has no draft head, so MTP is a vLLM-XPU feature on this hardware. See <a href="runtimes.html">Runtimes</a>.</li>
+      <li><strong>Concurrency can crash it.</strong> On this hybrid model, MTP plus several simultaneous requests crashed the engine; the fix was to serve one request at a time (<code>--max-num-seqs 1</code>). With MTP off, normal concurrency works.</li>
+      <li><strong>Verify it's actually lossless.</strong> A broken speculative setup can change output. Check your MTP result against a plain-decode answer on a known prompt before trusting it — that's exactly why our own high MTP numbers stay in the research lane until determinism is nailed down.</li>
+    </ul>
+  </div>
+
+  <div class="callout good">
+    <span class="tag">Recommendation</span>
+    <p>If your runtime supports it, <strong>turn MTP on</strong> — it's the highest-leverage decode setting on this hardware. Start at <strong>MTP 2</strong>, then try 4 for predictable workloads. Keep concurrency at one request while MTP is on, and confirm the output matches plain decoding before you rely on it.</p>
+  </div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="speculative-methods.html"><b>Spec methods</b><span>MTP vs DFlash vs draft-model vs none</span></a>
+      <a href="runtimes.html"><b>Runtimes</b><span>Which backend gives you MTP</span></a>
+      <a href="prefill-vs-clockrate.html"><b>Prefill vs clock</b><span>The idle time MTP fills</span></a>
+      <a href="../learn.html"><b>All guides</b><span>Back to the Learn index</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>

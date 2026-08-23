@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DFlash vs MTP vs no speculation vs draft-model — neural.download</title>
+<meta name="description" content="A plain comparison of decode acceleration methods: no speculation, MTP/nextn, DFlash, separate draft-model speculation, and ReplaySSM — what each buys and what it can cost in determinism.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/learn/speculative-methods.html">
+<meta name="theme-color" content="#f6f1e5">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../index.html">Home</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Guide library</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 06b</p>
+  <p class="eyebrow">Tune for speed</p>
+  <h1>DFlash vs MTP vs no speculation</h1>
+  <p>Speculative decoding is how this lab's fastest records got fast. But "speculation" is a family of methods, not one switch. This is the map: what each one is, when it wins, and the determinism cost you must watch.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li><strong>No speculation</strong> (target-only): one token per pass. The slowest, but the gold standard for determinism and quality checks.</li>
+      <li><strong>MTP / nextn</strong>: a draft head built into the model. The easiest big win when the model ships it. See the <a href="mtp-ladder.html">MTP ladder</a>.</li>
+      <li><strong>DFlash</strong>: a fast pretrained draft mechanism run at depth — behind our highest multi-card records.</li>
+      <li><strong>Draft-model</strong>: a separate small model does the guessing. Flexible; needs a matching drafter.</li>
+      <li>All speculative methods should be <strong>lossless</strong> if implemented correctly — but a broken one silently changes output, so verify.</li>
+    </ul>
+  </div>
+
+  <h2>The core idea, one more time</h2>
+  <p>Plain decoding writes one token per pass through the model, and each pass wastes most of its time <a href="prefill-vs-clockrate.html">waiting on memory</a>. Every speculative method fills that idle time the same way: something cheap <em>guesses</em> the next few tokens, the full model <em>verifies</em> them in a single pass, and correct guesses become near-free tokens. The methods differ only in <strong>who does the guessing</strong>.</p>
+
+  <figure class="chart">
+    <h4>Speculation vs none — same model, same card</h4>
+    <img src="assets/spec-none.svg" alt="Bar chart: no speculation 33.2 tokens per second versus MTP 2 at 52.2 tokens per second on the same model and card.">
+    <figcaption>The clean apples-to-apples: turning on speculation (here MTP 2) lifted the same model on the same card from 33.2 to 52.2 tok/s (+57%). <a href="../community/field-reports/reddit-arc-b70-vllm-52tps/README.md">Field report</a> <span class="badge comm">Community</span></figcaption>
+  </figure>
+
+  <h2>The methods</h2>
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Method</th><th>Who guesses</th><th>Best for</th><th>Watch out for</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="best">None (target-only)</td>
+        <td>nobody — one token/pass</td>
+        <td>Determinism, quality baselines, quantization checks; any runtime without speculation</td>
+        <td>Slowest option; it's the reference, not the race car</td>
+      </tr>
+      <tr>
+        <td>MTP / nextn</td>
+        <td>a draft head trained <em>inside</em> the model</td>
+        <td>Models that ship MTP heads (Qwen3-Next family); the easiest single-knob win</td>
+        <td>Only where the runtime + weights support it; concurrency crash on some hybrids</td>
+      </tr>
+      <tr>
+        <td>DFlash</td>
+        <td>a fast pretrained draft, run several tokens deep</td>
+        <td>Squeezing the ceiling on tuned multi-card lanes</td>
+        <td>Setup-heavy; depth must be tuned; part of our expert records, not a one-click toggle</td>
+      </tr>
+      <tr>
+        <td>Draft-model</td>
+        <td>a separate small model</td>
+        <td>Base models with no built-in draft head but a good small sibling</td>
+        <td>Needs a well-matched, aligned drafter; two models to fit in VRAM</td>
+      </tr>
+      <tr>
+        <td>ReplaySSM</td>
+        <td>a replay/state-space draft variant</td>
+        <td>Research configurations; historical Qwen3.6 lane</td>
+        <td>Specialized; results are config-specific</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h2>What each reached in this lab</h2>
+  <p>These are <strong>not</strong> comparable to each other — different models, different card counts. They show the <em>ceiling</em> each method reached on its own lane, not a head-to-head. <span class="badge lab">Lab</span></p>
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Record</th><th>Method</th><th class="num">Cards</th><th class="num">tok/s</th></tr></thead>
+    <tbody>
+      <tr><td>Poolside Laguna S 2.1 INT4</td><td>DFlash (depth 11)</td><td class="num">4× B70</td><td class="num best">121.3</td></tr>
+      <tr><td>Muse-Glimmer-30B Q8/WOQ</td><td>pretrained DFlash</td><td class="num">4× B70</td><td class="num">100.6</td></tr>
+      <tr><td>DeepSeek-V4-Flash</td><td>DSpark7 (flash draft)</td><td class="num">4× B70</td><td class="num">80.8</td></tr>
+      <tr><td>Qwen3.8-27B AutoRound INT4</td><td>MTP 5</td><td class="num">2× B70</td><td class="num">101.2 <span class="muted">(research)</span></td></tr>
+      <tr><td>Qwen3.8-27B Q4_K_M</td><td>none (target-only)</td><td class="num">1× B70</td><td class="num">27.8</td></tr>
+    </tbody>
+  </table></div>
+  <p>The pattern that <em>does</em> transfer: the fastest results in this lab all lean on speculation, and the very top ones use a tuned <strong>DFlash</strong> at depth on multiple cards. But that ceiling comes with the most setup and the most careful verification.</p>
+
+  <div class="callout key">
+    <span class="tag">Lossless — if you check</span>
+    <p>A correct speculative method returns exactly what plain decoding would. That's the whole appeal: speed with no quality tax. The risk is subtle — a mismatched margin, an off-by-one draft, or a runtime bug can make speculation quietly change the output. Our own highest Qwen3.8 speculative number sits in the <em>research</em> lane precisely because its run-to-run token parity isn't yet nailed down. Treat "lossless" as a claim you verify, not one you assume.</p>
+  </div>
+
+  <div class="callout warn">
+    <span class="tag">What to be aware of</span>
+    <p>More speculation depth is not always more speed — acceptance has to keep up with the added draft cost (the <a href="mtp-ladder.html">MTP ladder</a> shows the plateau). And speculation interacts badly with some features: concurrency crashes on certain hybrid models, and it can conflict with structured-output/grammar backends. Enable one accelerator at a time and re-check output each time.</p>
+  </div>
+
+  <div class="callout good">
+    <span class="tag">Recommendation</span>
+    <p>Ranked by effort-to-reward for most people: <strong>1)</strong> if your model+runtime has <strong>MTP</strong>, turn it on (start at depth 2). <strong>2)</strong> If not, keep <strong>no speculation</strong> and win speed elsewhere (smaller quant, f16 KV, more bandwidth). <strong>3)</strong> Reach for <strong>DFlash or a draft-model</strong> only when you're chasing the ceiling and willing to tune and verify. Whatever you pick, keep a target-only run around as your quality reference.</p>
+  </div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="mtp-ladder.html"><b>MTP 1·2·3·4</b><span>The most accessible speculative win</span></a>
+      <a href="runtimes.html"><b>Runtimes</b><span>Which backend supports which method</span></a>
+      <a href="models.html"><b>Models</b><span>Which models ship a draft head</span></a>
+      <a href="../learn.html"><b>All guides</b><span>Back to the Learn index</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>
