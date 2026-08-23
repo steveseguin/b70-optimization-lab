@@ -26,7 +26,8 @@ write to that recovered cache.
 - D2 uses the clean runtime's existing `VLLM_XPU_GDN_TRACE_FILE` path. That
   trace executes in the GDN custom op outside the compiled model and records
   `has_initial_state`, request identity, computed-token count, query starts,
-  and consumed state indices at `fallback_pre_conv`.
+  and consumed state indices at `pre_native`, immediately before
+  `torch.ops._xpu_C.gdn_attention` consumes the metadata.
 - Both traces remain report-only and default-off. These are diagnostic runs,
   never promoted throughput captures.
 - A fail-closed validator must join the benchmark request IDs to D1 lifecycle
@@ -58,7 +59,7 @@ It proves:
 2. D1 and D2 JSONL files are nonempty and parse completely;
 3. the benchmark request has three D1 cache groups with allocate/free
    coverage and no live-slot collision;
-4. layer 0 / rank 0 has exactly one D2 `fallback_pre_conv` record for each
+4. layer 0 / rank 0 has exactly one D2 `pre_native` record for each
    prompt chunk: computed tokens 0 then 1024, flags false then true;
 5. the validator passes and the isolated output manifest is captured.
 

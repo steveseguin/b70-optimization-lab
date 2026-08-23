@@ -14,7 +14,8 @@ Date: 2026-08-23. Implements the isolated-cache re-registration in
 - vLLM XPU kernels remain at
   `2dd55f380df753a10a88fcd9e96192561066e713` with no tracked diff.
 - D1/D2 validator SHA-256:
-  `59c2a42f322e23dcf54671a77229c28d18c0da5cab4da2e8b3dbdc32ccd6ed16`.
+  `0c9dcf18f02bd3dfaa5bc745e8a68fc82bd2ccd22048321dc30eb9a7ba35a4eb`
+  (v2b, native call-site stage correction).
 
 ## What changed from v1
 
@@ -24,10 +25,12 @@ caused the protected AOT model to be rebuilt. Only scheduler metadata and
 Mamba state-block lifecycle reporting remain patched.
 
 D2 now enables the clean source tree's existing detailed GDN trace at rank 0,
-layer 0, prefill only, filtered to benchmark request IDs. Its
-`fallback_pre_conv` record is the call-site evidence: it contains the exact
-`has_initial_state` tensor immediately before `causal_conv1d_fn`, plus
-request-indexed prompt and computed-token counts.
+layer 0, prefill only, filtered to benchmark request IDs. Its `pre_native`
+record is the call-site evidence: it contains the exact `has_initial_state`
+tensor immediately before `torch.ops._xpu_C.gdn_attention`, plus
+request-indexed prompt and computed-token counts. The first infrastructure
+probe established that this native lane does not enter the fallback call
+site; the v2b validator therefore keys on `pre_native`.
 
 The new validator fails closed unless each dose row has:
 

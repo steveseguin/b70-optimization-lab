@@ -959,7 +959,7 @@ fi
 if [[ "${VALIDATION_GDN_INITSTATE_AUDIT:-0}" == "1" ]]; then
   # D2 report-only trace: reuse the clean runtime's existing GDN custom-op
   # trace. This path executes outside the compiled model and records the
-  # continuation flag immediately before causal_conv1d_fn consumes it. The
+  # continuation flag immediately before the native GDN op consumes it. The
   # earlier bespoke model-source hook silently produced no records and also
   # invalidated the protected AOT archive.
   if [[ "${VALIDATION_GDN_INITSTATE_AUDIT_LAYERS:-0}" != "0" ]]; then

@@ -222,7 +222,7 @@ def validate_d2(
     callsite_records = [
         record
         for record in records
-        if record.get("stage") == "fallback_pre_conv"
+        if record.get("stage") == "pre_native"
         and int(record.get("tp_rank") or 0) == 0
         and re.search(r"layers\.0\.linear_attn$", str(record.get("layer") or ""))
     ]
@@ -262,7 +262,7 @@ def validate_d2(
         )
     return {
         "record_count": len(records),
-        "fallback_pre_conv_rank0_layer0_records": len(callsite_records),
+        "pre_native_rank0_layer0_records": len(callsite_records),
         "rows": row_summaries,
     }
 
