@@ -1,9 +1,6 @@
 --- a/ggml/src/ggml-sycl/mmvq.cpp
 +++ b/ggml/src/ggml-sycl/mmvq.cpp
-@@ -6,6 +6,17 @@
- #include "quants.hpp"
- #include "vecdotq.hpp"
- 
+@@ -8,0 +9,11 @@
 +#include <cstdlib>
 +
 +static int ggml_sycl_ornith_moe_rows_per_workgroup() {
@@ -15,32 +12,17 @@
 +    return rows;
 +}
 +
- template <typename reorder_vec_dot_q_sycl>
- static void mul_mat_vec_q_reorder(const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-                                   const int ncols, const int nrows, const sycl::nd_item<3> & nd_item) {
-@@ -2791,9 +2802,10 @@
-     const size_t expert_weight_stride, const size_t dst_row_stride,
-     const size_t src1_row_stride,
-     dpct::queue_ptr stream) {
+@@ -2794 +2805,2 @@
 -    const int            block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
 +    const int            rows_per_wg = ggml_sycl_ornith_moe_rows_per_workgroup();
 +    const int            block_num_y = (nrows + rows_per_wg - 1) / rows_per_wg;
-     const sycl::range<3> block_nums(1, (unsigned) n_experts_used, (unsigned) block_num_y);
+@@ -2796 +2808 @@
 -    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
 +    const sycl::range<3> block_dims(1, (unsigned) rows_per_wg, WARP_SIZE);
-     stream->submit([&](sycl::handler & cgh) {
-         cgh.parallel_for(
-             sycl::nd_range<3>(block_nums * block_dims, block_dims),
-@@ -2906,9 +2918,10 @@
-     const int nrows, const int n_experts_used, const size_t expert_weight_stride,
-     const size_t dst_row_stride, const size_t src1_row_stride,
-     const ggml_glu_op glu_op, dpct::queue_ptr stream) {
+@@ -2909 +2921,2 @@
 -    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
 +    const int rows_per_wg = ggml_sycl_ornith_moe_rows_per_workgroup();
 +    const int block_num_y = (nrows + rows_per_wg - 1) / rows_per_wg;
-     const sycl::range<3> block_nums(1, (unsigned) n_experts_used, (unsigned) block_num_y);
+@@ -2911 +2924 @@
 -    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
 +    const sycl::range<3> block_dims(1, (unsigned) rows_per_wg, WARP_SIZE);
-     stream->submit([&](sycl::handler & cgh) {
-         cgh.parallel_for(
-             sycl::nd_range<3>(block_nums * block_dims, block_dims),
