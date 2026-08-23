@@ -1,0 +1,83 @@
+{
+  "date": "2026-08-23",
+  "status": "diagnostic_only",
+  "model": {
+    "path": "/home/steve/.cache/b70-optimization-lab/models/ornith-1.5-35b-a3b-q4km/Ornith-1.5-35B-Q4_K_M.gguf",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "source": {
+    "base_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+    "diagnostic_patch": "../patches/llamacpp-ornith15-actual-one-token-census-diagnostic-20260823.patch",
+    "diagnostic_patch_sha256": "3424d9961ab0183d4596502002af81e0f6649887cf18c1d5a331950d2ff932d5"
+  },
+  "selector": {
+    "result_output": [248320, 1],
+    "linear_attn_out_0": [2048, 1],
+    "reason": "result_output alone can be one row while the internal graph still processes multiple tokens"
+  },
+  "logical_graph_nodes": 3726,
+  "actual_generic_dispatches": 592,
+  "dispatches_by_op": {
+    "MUL_MAT": 311,
+    "MUL": 80,
+    "UNARY": 70,
+    "L2_NORM": 60,
+    "MUL_MAT_ID": 40,
+    "SET_ROWS": 10,
+    "FLASH_ATTN_EXT": 10,
+    "CONT": 10,
+    "GET_ROWS": 1
+  },
+  "absent_after_accepted_fusions": [
+    "ADD",
+    "SCALE",
+    "CONCAT",
+    "CPY",
+    "SSM_CONV",
+    "RMS_NORM",
+    "ROPE",
+    "GLU"
+  ],
+  "mul_mat_families": {
+    "recurrent_qkv_8192": 30,
+    "recurrent_alpha_beta_32": 60,
+    "recurrent_z_4096": 30,
+    "recurrent_output_2048": 30,
+    "attention_q_8192": 10,
+    "attention_v_512": 10,
+    "attention_k_512": 10,
+    "attention_output_2048": 10,
+    "moe_router_256": 40,
+    "shared_expert_2048": 40,
+    "shared_gate_scalar": 40,
+    "output_head_248320": 1
+  },
+  "other_named_families": {
+    "routed_expert_down": 40,
+    "routed_expert_weight": 40,
+    "shared_expert_weight": 40,
+    "shared_gate_sigmoid": 40,
+    "beta_sigmoid": 30,
+    "recurrent_qk_l2_norm": 60,
+    "attention_v_cache_set_rows": 10,
+    "attention_flash": 10,
+    "attention_gate_contiguous": 10,
+    "final_result_norm_get_rows": 1
+  },
+  "accepted_fusion_hits": {
+    "moe_gate_up": 40,
+    "moe_shared_residual_rms": 40,
+    "residual_rms": 40,
+    "alpha_gate": 30,
+    "conv_silu": 30,
+    "concat_state_direct": 30,
+    "gdn_state_io": 30,
+    "gdn_rms_gate": 30,
+    "qk_norm_rope": 10
+  },
+  "raw_log": "2026-08-23-ornith35b-actual-one-token-census.log.gz",
+  "raw_log_uncompressed_sha256": "b6a7e7eaf32b7d2765eb3b4d641b5e487af6c6ec7f454463e839d80b74ac08b7",
+  "throughput_claim": null,
+  "conclusion": "The accepted stack already suppresses every launch-only family it claims; remaining work is dominated by projection kernels and already-screened small boundaries. Serialized logical-op timings must not be interpreted as actual surviving launches or converted to throughput."
+}

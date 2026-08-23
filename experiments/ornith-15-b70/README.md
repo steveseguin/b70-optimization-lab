@@ -332,6 +332,16 @@ binary, driver, or benchmark protocol will reproduce them.
   means moved only `133.402 -> 133.580 tok/s` (+0.134%) and the arms crossed.
   No server test was justified; keep direct-FP32 ESIMD. See
   `notes/2026-08-23-ornith35b-final-q6k-mmvq-neutral.md`.
+- **Post-fusion actual dispatch census — DIAGNOSTIC ONLY:** instrumentation at
+  the final generic SYCL dispatch point captured the true one-token graph after
+  every accepted fusion and skip rule. It contains 592 launches: 311
+  projections, 80 multiplies, 70 unary kernels, 60 Q/K L2 norms, 40 routed-down
+  projections, and 31 attention/output support launches. No `ADD`, `SCALE`,
+  `CONCAT`, `CPY`, `SSM_CONV`, `RMS_NORM`, `ROPE`, or `GLU` launch survives.
+  This validates the accepted launch-removal claims and prevents serialized
+  logical-op attribution from being mistaken for an actual launch census. No
+  throughput is inferred. See
+  `notes/2026-08-23-ornith35b-actual-one-token-census.md`.
 - **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
   accepted only 22/336 reported draft tokens and reduced the fresh-suite median
   from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed
