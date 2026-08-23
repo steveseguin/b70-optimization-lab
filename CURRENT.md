@@ -51,7 +51,7 @@ nightly image `sha256:bc979d1ba312dc8a666c57a40205f35d7fc5d96b2f7450c2c77f5b3d52
 AutoRound INT4 W4A16, F16 KV, one request, cache zero, and XPU Graph:
 
 - TP1: `30.2178 / 30.2569 tok/s` conventional;
-- TP2: `48.8301 tok/s` conventional;
+- TP2: `48.8301 / 48.9505 tok/s` conventional;
 - TP4: `71.6741 / 71.5488 tok/s` conventional.
 
 All three graph topologies passed seven objective canaries, an 8-run
@@ -102,8 +102,9 @@ Immediate order:
 2. add isolated-cache, natural-EOS, and real-baseline gates without changing
    the historical driver's defaults; TP1 fresh-cache determinism is a bounded
    negative and exact-cache replay is the only sealed path currently shown;
-3. repeat the TP2 graph performance cell from a fresh isolated cache before
-   promotion, then use qualified cells to fill the remaining TP matrix;
+3. TP2 graph fresh-cache speed replication is closed at `48.8301 / 48.9505`;
+   use the qualified target-only cells to fill remaining promotion gates and
+   matrix rows without expanding failed speculative candidates;
 4. preregister any replacement dose-8 trace on an isolated writable cache,
    then advance higher-upside native TP4 only after it closes, keeping GPU2
    explicitly in scope;
