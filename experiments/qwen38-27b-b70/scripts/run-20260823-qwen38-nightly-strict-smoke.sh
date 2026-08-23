@@ -47,10 +47,17 @@ fail() {
 
 cache_manifest() {
   local destination=$1
-  (
-    cd "$cache_dir" || exit 1
-    find . -type f -print0 | sort -z | xargs -0 -r sha256sum
-  ) > "$destination"
+  if [[ -n "${SUDO_PASS_FILE:-}" ]]; then
+    sudo -S -p '' bash -c '
+      cd "$1" || exit 1
+      find . -type f -print0 | sort -z | xargs -0 -r sha256sum
+    ' bash "$cache_dir" < "$SUDO_PASS_FILE" > "$destination"
+  else
+    (
+      cd "$cache_dir" || exit 1
+      find . -type f -print0 | sort -z | xargs -0 -r sha256sum
+    ) > "$destination"
+  fi
 }
 
 [[ "$cache_policy" == "fresh" || "$cache_policy" == "replay" ]] || \
