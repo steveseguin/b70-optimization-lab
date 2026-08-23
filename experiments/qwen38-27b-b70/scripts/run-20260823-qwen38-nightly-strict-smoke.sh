@@ -232,6 +232,7 @@ PY
 fi
 
 if [[ "${BENCH:-1}" == "1" ]]; then
+  curl -fsS "http://127.0.0.1:$port/metrics" > "$out/metrics.before.prom"
   bench_args=(
     --base-url "http://127.0.0.1:$port" --model "$alias" --api-mode chat
     --suite "$suite" --max-tokens "${MAX_TOKENS:-128}" --metric-tokens 100
@@ -257,6 +258,7 @@ if [[ "${BENCH:-1}" == "1" ]]; then
   bench_rc=$?
   echo "bench_rc=$bench_rc" > "$out/bench.status"
   [[ "$bench_rc" == "0" ]] || exit "$bench_rc"
+  curl -fsS "http://127.0.0.1:$port/metrics" > "$out/metrics.after.prom"
 fi
 
 if [[ "$cache_policy" == "replay" ]]; then
