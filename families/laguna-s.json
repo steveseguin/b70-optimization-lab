@@ -1,0 +1,198 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "laguna-s",
+  "name": "Laguna S",
+  "display_name": "Laguna S · 2.1",
+  "publisher": "Poolside",
+  "updated_at": "2026-08-23",
+  "summary": "A four-card Intel Arc Pro B70 deployment family for the pinned Laguna S 2.1 INT4 target and its separately pinned INT4 DFlash draft, measured with TP4+EP4 and an exact width-12 verifier.",
+  "architecture": {
+    "target_class": "LagunaForCausalLM",
+    "draft_class": "DFlashLagunaForCausalLM",
+    "deployment_modalities": ["text"],
+    "evidence": "repro/laguna-s-2.1-int4-b70-102tps-20260726/evidence/record-run/server.log"
+  },
+  "weight_revisions": [
+    {
+      "id": "laguna-s-2.1-int4-4bbfc28",
+      "label": "Laguna S 2.1 INT4",
+      "role": "target/verifier checkpoint",
+      "repository": "poolside/Laguna-S-2.1-INT4",
+      "revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+      "model_manifest": "repro/laguna-s-2.1-int4-b70-102tps-20260726/manifests/model-release-files.sha256"
+    }
+  ],
+  "auxiliary_artifacts": [
+    {
+      "id": "laguna-s-2.1-dflash-int4-5e07c24",
+      "label": "Laguna S 2.1 DFlash INT4",
+      "role": "speculative draft checkpoint; not a family weight revision or target model",
+      "repository": "poolside/Laguna-S-2.1-DFlash-INT4",
+      "revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+      "model_manifest": "repro/laguna-s-2.1-int4-b70-102tps-20260726/manifests/model-release-files.sha256"
+    }
+  ],
+  "transfer_scope": {
+    "status": "single pinned target/draft pair with revision-specific runtime and native artifacts",
+    "transfers": [
+      "The exact target/draft pairing, width-12 verifier contract, DFlash depth, and fail-closed quality methodology transfer only when their pinned identities are preserved.",
+      "The current 125.46 tok/s lane is an evolution of the earlier sealed four-card packet, not a replacement for its independently pinned runtime provenance."
+    ],
+    "does_not_transfer": [
+      "performance to other Laguna checkpoints or quantizations",
+      "performance to other GPU counts, TP/EP layouts, or KV dtypes",
+      "the draft FP8 W8A16 projection treatment to the INT4 target label",
+      "the historical 100-event submission convention to conventional interval throughput",
+      "the originating-host result to a portable or non-originating-host replay"
+    ],
+    "evidence": "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "high",
+      "scope": "four-card text deployment on Intel Arc Pro B70",
+      "basis": "The pinned target/draft pair has exact-output, cache-zero, one-start records on TP4+EP4.",
+      "reviewed_at": "2026-08-23"
+    },
+    "quality_evidence": {
+      "band": "strong-deployment-evidence",
+      "scope": "sealed 13-prompt teacher exactness, cache-zero, graph/treatment markers, and idle-host gates; not a general intelligence score",
+      "evidence": [
+        "data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json",
+        "data/laguna-shared-elementwise-m12-record-20260731.json"
+      ]
+    },
+    "popularity": {
+      "state": "not-scored",
+      "reason": "No dated family-level popularity snapshot is stored for the exact target/draft pair."
+    }
+  },
+  "dimensions": {
+    "weight_revision": ["laguna-s-2.1-int4-4bbfc28"],
+    "target_quantization": ["INT4 compressed-tensors"],
+    "draft_quantization": ["INT4 checkpoint with runtime E4M3FN W8A16 draft projections"],
+    "runtime": ["vLLM XPU"],
+    "cards": [4],
+    "tp": [4],
+    "ep": [4],
+    "speculative_method": ["DFlash"],
+    "draft_depth": [11],
+    "verifier_width": [12],
+    "graph": ["PIECEWISE capture size 12"],
+    "kv": ["bfloat16"]
+  },
+  "packets": [
+    {
+      "id": "laguna-s-2.1-int4-b70-125tps-20260731",
+      "label": "Laguna S 2.1 INT4 · TP4+EP4 + DFlash11",
+      "revision": "laguna-s-2.1-int4-4bbfc28",
+      "draft_revision": "laguna-s-2.1-dflash-int4-5e07c24",
+      "quantization": "INT4 target + INT4 DFlash draft / BF16 KV",
+      "runtime": "vLLM XPU 1a7f61feffbc61b21b73f812d231c7426386ccdc",
+      "cards": 4,
+      "status": "candidate",
+      "evidence_level": "B70-verified originating-host replay",
+      "coverage": ["decode", "TTFT", "quality", "runtime provenance", "recipe"],
+      "projection": {"model": "laguna_s_2.1", "quant": "AutoRound INT4", "runtime": "vllm", "spec": "dflash:11"},
+      "manifest": "packages/laguna-s-2.1-int4-b70-125tps/package.json"
+    },
+    {
+      "id": "laguna-s-2.1-int4-b70-102tps-20260726",
+      "label": "Laguna S 2.1 INT4 · historical TP4+EP4 + DFlash11",
+      "revision": "laguna-s-2.1-int4-4bbfc28",
+      "draft_revision": "laguna-s-2.1-dflash-int4-5e07c24",
+      "quantization": "INT4 target + INT4 DFlash draft / BF16 KV",
+      "runtime": "vLLM XPU e596ef1543466ae1a05e5bb8091f58872e2b18ba",
+      "cards": 4,
+      "status": "superseded-approved-record",
+      "evidence_level": "B70-verified sealed history",
+      "coverage": ["decode", "TTFT", "DFlash acceptance", "quality", "portable evidence audit", "recipe"],
+      "manifest": "repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md"
+    }
+  ],
+  "run_measurements": [
+    {
+      "id": "laguna-s-current-width12-dflash11-record",
+      "state": "lab-measured",
+      "revision": "laguna-s-2.1-int4-4bbfc28",
+      "variant": "INT4 target + INT4 DFlash draft with runtime E4M3FN W8A16 draft projections",
+      "runtime": "vLLM XPU 1a7f61feffbc61b21b73f812d231c7426386ccdc + XPU kernels 99886d783372e621941228250091dc8ebdc1595d",
+      "config": {"record_order": 2, "cards": 4, "tp": 4, "ep": 4, "dflash": 11, "verifier_width": 12, "graph": "PIECEWISE", "capture_size": 12, "kv": "bfloat16"},
+      "workload": "sealed 13-prompt, one-start, cache-zero record gate with one active generation; conventional 99-interval metric",
+      "metrics": {
+        "decode_tok_s": [125.4619731637751],
+        "ttft_ms": [5953.834546999133]
+      },
+      "quality": "13/13 exact prompts and cached_tokens=0; historical 100-event compatibility figure 126.72926582199506 tok/s is not used as conventional decode",
+      "evidence": "data/laguna-shared-elementwise-m12-record-20260731.json"
+    },
+    {
+      "id": "laguna-s-historical-width12-dflash11-record",
+      "state": "lab-measured",
+      "revision": "laguna-s-2.1-int4-4bbfc28",
+      "variant": "INT4 target + INT4 DFlash draft with runtime E4M3FN W8A16 draft projections",
+      "runtime": "vLLM XPU e596ef1543466ae1a05e5bb8091f58872e2b18ba + XPU kernels 6f9dd3c3a7b1b677a992ca4f431a968408f9c816",
+      "config": {"record_order": 1, "cards": 4, "tp": 4, "ep": 4, "dflash": 11, "verifier_width": 12, "graph": "PIECEWISE", "capture_size": 12, "kv": "bfloat16"},
+      "workload": "sealed 13-prompt, one-start, cache-zero historical record gate with one active generation; conventional 99-interval metric",
+      "metrics": {
+        "decode_tok_s": [101.94172124017027],
+        "ttft_ms": [5758.738295000512],
+        "draft_acceptance_rate": [0.26820724334708174],
+        "effective_tokens_per_verification": [3.950279676817899]
+      },
+      "quality": "13/13 token and output-text equality and cached_tokens=0; approved 102.97143559613157 tok/s receipt used a legacy 100-event/99-interval convention and is not the plotted conventional value",
+      "evidence": "data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json"
+    }
+  ],
+  "views": [
+    {
+      "id": "laguna-s-record-progression",
+      "title": "Qualified record progression",
+      "subtitle": "Same pinned INT4 target and DFlash draft, TP4+EP4, DFlash11, width-12 verifier, BF16 KV; runtime revisions differ and values use conventional 99-interval accounting",
+      "x_label": "qualified record generation",
+      "discrete": true,
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "qualified records", "measurement_ids": ["laguna-s-historical-width12-dflash11-record", "laguna-s-current-width12-dflash11-record"], "x_from": "config.record_order"}
+      ]
+    },
+    {
+      "id": "laguna-s-historical-dflash-efficiency",
+      "title": "Historical DFlash efficiency evidence",
+      "subtitle": "The sealed 2026-07-26 packet is the only stored family measurement with aggregate acceptance and emitted tokens per draft cycle",
+      "x_label": "draft tokens",
+      "discrete": true,
+      "metrics": ["draft_acceptance_rate", "effective_tokens_per_verification"],
+      "series": [
+        {"label": "historical sealed packet", "measurement_ids": ["laguna-s-historical-width12-dflash11-record"], "x_from": "config.dflash"}
+      ]
+    }
+  ],
+  "family_closures": [
+    {
+      "selectors": {"revision": "laguna-s-2.1-int4-4bbfc28", "cards": [1, 2, 3]},
+      "state": "missing",
+      "reason": "No qualified performance or quality profile is stored for this exact target/draft pair outside the four-card TP4+EP4 topology.",
+      "evidence": "packages/laguna-s-2.1-int4-b70-125tps/package.json"
+    },
+    {
+      "selectors": {"revision": "laguna-s-2.1-int4-4bbfc28", "profile": "context-sweep"},
+      "state": "missing",
+      "reason": "The package stores headline decode and TTFT, but no decode, prefill, or TTFT curve over context length.",
+      "evidence": "packages/laguna-s-2.1-int4-b70-125tps/package.json"
+    },
+    {
+      "selectors": {"packet": "laguna-s-2.1-int4-b70-125tps-20260731", "replay": "portable-runtime-build"},
+      "state": "missing",
+      "reason": "The current record remains tied to exact originating-host runtime and native artifacts; a portable runtime rebuild is not stored.",
+      "evidence": "packages/laguna-s-2.1-int4-b70-125tps/package.json"
+    },
+    {
+      "selectors": {"packet": "laguna-s-2.1-int4-b70-125tps-20260731", "replay": "non-originating-host"},
+      "state": "missing",
+      "reason": "No non-originating-host replay has completed the full record gate.",
+      "evidence": "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md"
+    }
+  ],
+  "estimates": []
+}

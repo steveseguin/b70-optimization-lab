@@ -19,7 +19,11 @@ Docs should point to those artifacts instead of duplicating every script.
   starter, candidate, lab-replay, record, research, and archive definitions;
   no current repro is starter-certified.
 - [Model Packages](../packages/README.md): user-facing machine-readable package
-  front doors, beginning with the two-B70 Qwen3.8 FP8 candidate.
+  front doors for promoted deployment and research recipes.
+- [Model Family Coverage](../families/README.md): normalized lineage,
+  quantization variants, TP/MTP/context axes, and explicit
+  measured/screened/closed/estimated coverage states behind the public model
+  family pages.
 - [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
 - [Model Intake Queue](../model-intake/README.md): revision-pinned candidate
   downloads, USB safety checks, popularity snapshot, and already-covered

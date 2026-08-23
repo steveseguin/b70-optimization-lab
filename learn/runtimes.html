@@ -16,7 +16,7 @@
 <meta property="og:site_name" content="neural.download">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"Runtimes: vLLM vs llama.cpp SYCL vs IPEX/XPU","description":"How the main Intel-GPU LLM runtimes differ \u2014 llama.cpp SYCL, vLLM XPU, and IPEX-LLM \u2014 on speed, features like MTP, single-card support, and version sensitivity.","url":"https://neural.download/learn/runtimes.html","dateModified":"2026-08-22","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","tokens per second"]}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"Runtimes: vLLM vs llama.cpp SYCL vs IPEX/XPU","description":"How the main Intel-GPU LLM runtimes differ \u2014 llama.cpp SYCL, vLLM XPU, and IPEX-LLM \u2014 on speed, features like MTP, single-card support, and version sensitivity.","url":"https://neural.download/learn/runtimes.html","dateModified":"2026-08-23","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","tokens per second"]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"Learn","item":"https://neural.download/learn.html"},{"@type":"ListItem","position":3,"name":"Runtimes: vLLM vs llama.cpp SYCL vs IPEX/XPU","item":"https://neural.download/learn/runtimes.html"}]}
@@ -29,6 +29,7 @@
   <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
   <nav aria-label="Primary">
     <a href="../index.html">Home</a>
+    <a href="../models/">Models</a>
     <a href="../learn.html">Learn</a>
     <a href="../guides.html">Guide library</a>
     <a href="../index.html#lab-speeds">Benchmarks</a>
@@ -48,7 +49,7 @@
   <div class="tldr">
     <h2>The short version</h2>
     <ul>
-      <li><strong>llama.cpp (SYCL)</strong> — simplest, rock-solid on one card, deterministic, GGUF quants. Our single-card lane. No MTP for these weights.</li>
+      <li><strong>llama.cpp (SYCL)</strong> — simplest one-card path, GGUF quants, and validated target-only plus model-specific speculative lanes.</li>
       <li><strong>vLLM (XPU)</strong> — fastest ceiling, has <a href="mtp-ladder.html">MTP</a> and multi-card, but heavier and <strong>very</strong> version-sensitive.</li>
       <li><strong>IPEX-LLM</strong> — Intel's PyTorch acceleration layer that other tools (Ollama, portable llama.cpp) build on for Arc.</li>
       <li>The community's own same-card test put vLLM at roughly <strong>1.8×</strong> llama.cpp — but at the cost of setup and stability quirks.</li>
@@ -57,7 +58,7 @@
 
   <h2>The three you'll meet</h2>
   <h3>llama.cpp (SYCL backend)</h3>
-  <p>A single, self-contained engine that runs GGUF-quantized models. On Intel it uses the SYCL backend. It's the easiest to get working, it's happy on <strong>one card</strong>, and it's <strong>deterministic</strong> — the same prompt gives the same bytes, which is why our reproducible records and quality checks run here. It's also what tools like Ollama use under the hood. The catch: it has fewer of the aggressive throughput features, and on our current build it has <em>no speculative decoding path</em> for the Qwen3.8 GGUF, so no MTP there.</p>
+  <p>A single, self-contained engine that runs GGUF-quantized models. On Intel it uses the SYCL backend. It's the easiest to get working and is happy on <strong>one card</strong>. Several pinned lab lanes are byte-reproducible, which makes them strong quality controls, but determinism still belongs to the exact build and recipe. llama.cpp now has validated Qwen MTP and draft-model lanes too; support is model- and artifact-specific.</p>
 
   <h3>vLLM (XPU backend)</h3>
   <p>A production-grade serving engine. It brings the high-end features: <a href="mtp-ladder.html">MTP speculative decoding</a>, tensor-parallel across cards, continuous batching, FP8 KV. It's how we reach the 100+ tok/s research numbers. The costs are real: it's a bigger install (usually Docker), and it is <strong>strongly tied to its exact version</strong> — see the warning below.</p>
@@ -79,9 +80,9 @@
     <tbody>
       <tr><td>Ease of setup</td><td class="best">Easiest (one binary)</td><td>Heavier (usually Docker)</td></tr>
       <tr><td>One card</td><td class="best">Excellent</td><td>Can be rough (see below)</td></tr>
-      <tr><td>Multi-card</td><td>Limited</td><td class="best">Tensor-parallel</td></tr>
-      <tr><td>MTP / speculative</td><td>Not on our Qwen3.8 GGUF</td><td class="best">Yes (MTP ladder)</td></tr>
-      <tr><td>Determinism</td><td class="best">Bit-exact, reproducible</td><td>Needs care at TP2/spec</td></tr>
+      <tr><td>Multi-card</td><td>Yes; split strategy varies</td><td class="best">Tensor-parallel</td></tr>
+      <tr><td>MTP / speculative</td><td>Yes on compatible GGUF/draft lanes</td><td class="best">Yes on compatible model lanes</td></tr>
+      <tr><td>Determinism</td><td class="best">Bit-exact on pinned recipes</td><td>Needs care at graph/TP/spec</td></tr>
       <tr><td>Peak speed</td><td>Good</td><td class="best">Higher ceiling</td></tr>
       <tr><td>Quant formats</td><td>GGUF (Q4/Q5/Q8…)</td><td>INT4 (AutoRound/GPTQ), FP8</td></tr>
     </tbody>
@@ -89,12 +90,12 @@
 
   <div class="callout warn">
     <span class="tag">What to be aware of: vLLM version sensitivity</span>
-    <p>This bit us directly. Our pinned vLLM (<code>0.20.2rc1</code>) runs Qwen3.8-27B fine on <strong>two</strong> cards but <strong>crashes on one card</strong> — the engine dies mid-inference in a KV-cache kernel, or fails at startup. The community's working single-card setup used a <em>newer</em> image (<code>0.27.1</code>). Same runtime family, completely different single-card behavior. With vLLM XPU, the exact version and image are part of the recipe — treat "it works" as version-specific until proven otherwise. llama.cpp, by contrast, just worked on one card across our testing.</p>
+    <p>The digest-pinned nightly reports <code>0.26.1rc1.dev1102+ge9d1398d9</code>. Its commit is dated 11 days after the <code>0.27.1</code> image used in a community report, but the release tag is not its ancestor, so they are non-descendant comparators. The nightly boots Qwen3.8 target-only at TP1/2/4; its TP1 MTP verify path is slow, and graph + MTP is corrupt. The local <code>0.27.1</code> cross-check is still unrun. Pin the image digest and treat every model, quant, TP, graph, and MTP combination as version-specific. See the <a href="../models/qwen-27b.html">Qwen coverage map</a>.</p>
   </div>
 
   <div class="callout good">
     <span class="tag">Recommendation</span>
-    <p><strong>Starting out, on one card: use llama.cpp (SYCL)</strong> — or a tool built on it like Ollama. It's the shortest path to a working, deterministic setup, and it's our fastest quality-validated single-card lane. <strong>Chasing maximum throughput, MTP, or multi-card: use vLLM (XPU)</strong>, pin a known-good image, and verify output determinism before trusting the numbers. Many people run both: llama.cpp for everyday reliability, vLLM when they need the ceiling.</p>
+    <p><strong>Starting out, on one card: use llama.cpp (SYCL)</strong> — or a tool built on it like Ollama. It is the shortest path to the established target-only packages. <strong>Chasing a validated vLLM configuration or tensor parallelism: use vLLM (XPU)</strong>, pin a known-good image, and verify output determinism before trusting the numbers. Many people run both.</p>
   </div>
 
   <div class="related">

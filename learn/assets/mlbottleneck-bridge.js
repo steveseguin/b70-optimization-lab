@@ -460,11 +460,41 @@
     block.hidden = false;
   }
 
+  // ---- models/<family>.html: compact projected optimization grades ------
+  async function renderFamilyHeadroomGrades() {
+    const cards = Array.from(document.querySelectorAll('[data-family-headroom]'));
+    if (!cards.length) return;
+    let engine;
+    try {
+      engine = await loadEngine();
+    } catch (error) {
+      return; // Static evidence and packet maturity remain visible.
+    }
+    for (const card of cards) {
+      const measured = parseFloat(card.dataset.mlMeasured);
+      const badge = card.querySelector('[data-family-headroom-value]');
+      if (!badge || !Number.isFinite(measured)) continue;
+      try {
+        const result = engine.predict(requestFromDataset(card.dataset));
+        const target = result.ceiling && result.ceiling.optimizedTokensPerSecond;
+        const g = grade(target > 0 ? measured / target : NaN);
+        badge.textContent = 'OPT ' + g.letter;
+        badge.title = 'Projected optimization headroom: ' + g.note
+          + (target > 0 ? ' · measured ' + fmt(measured) + ' / projected tuned target ' + fmt(target) + ' tok/s' : '')
+          + '. This is not model quality or packet evidence.';
+        badge.dataset.ready = 'true';
+      } catch (error) {
+        badge.textContent = 'OPT —';
+      }
+    }
+  }
+
   function boot() {
     renderHeadroom();
     renderMiniPlanner();
     renderHardwareComparison();
     renderPackagePage();
+    renderFamilyHeadroomGrades();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

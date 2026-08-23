@@ -1,0 +1,475 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "ornith-1-5",
+  "name": "Ornith 1.5",
+  "display_name": "Ornith 1.5 · dense 9B + MoE 35B-A3B",
+  "publisher": "Ornith AI",
+  "updated_at": "2026-08-23",
+  "summary": "Two measured Ornith 1.5 siblings on one Intel Arc Pro B70: a stock dense 9B Q8_0 deployment and a separately optimized 35B-A3B Q4_K_M MoE deployment. They share a publisher release line, not a transferable architecture or performance identity.",
+  "architecture": {
+    "class": "Qwen3.5-derived sibling architectures",
+    "model_type": "qwen35 (dense 9B) / qwen35moe (35B-A3B MoE)",
+    "variants": [
+      {
+        "id": "ornith-1.5-9b",
+        "class": "qwen35",
+        "design": "dense",
+        "layers": 32,
+        "hidden_size": 4096,
+        "native_context_tokens": 262144,
+        "evidence": "repro/ornith-15-9b-q8-b70/README.md"
+      },
+      {
+        "id": "ornith-1.5-35b-a3b",
+        "class": "qwen35moe",
+        "design": "mixture of experts",
+        "layers": 41,
+        "hidden_size": 2048,
+        "attention_heads": 16,
+        "kv_heads": 2,
+        "experts": 256,
+        "experts_used": 8,
+        "native_context_tokens": 262144,
+        "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
+      }
+    ],
+    "evidence": "packages/README.md"
+  },
+  "weight_revisions": [
+    {
+      "id": "ornith-1.5",
+      "label": "Ornith 1.5",
+      "role": "publisher release line containing architecture-distinct siblings",
+      "model_manifest": "packages/README.md"
+    }
+  ],
+  "model_variants": [
+    {
+      "id": "ornith-1.5-9b",
+      "label": "Ornith 1.5 9B",
+      "role": "dense sibling",
+      "model_manifest": "repro/ornith-15-9b-q8-b70/model-manifest.json"
+    },
+    {
+      "id": "ornith-1.5-35b-a3b",
+      "label": "Ornith 1.5 35B-A3B",
+      "role": "MoE sibling",
+      "model_manifest": "repro/ornith-15-35b-a3b-q4km-b70/model-manifest.json"
+    }
+  ],
+  "transfer_scope": {
+    "status": "Publisher/version grouping only: the dense qwen35 9B and qwen35moe 35B-A3B variants are architecture-distinct, so no model-specific kernel, speed, output, or quality transfer is implied.",
+    "transfers": [
+      "the generic artifact-verification workflow",
+      "the fixed cache-zero serving benchmark and objective-canary protocol"
+    ],
+    "does_not_transfer": [
+      "the 35B-A3B MoE patch stack to the dense 9B graph",
+      "benchmark speed between the Q8_0 dense and Q4_K_M MoE variants",
+      "output or quality decisions between artifacts",
+      "two-card behavior or context performance between architectures"
+    ],
+    "evidence": "packages/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "high",
+      "scope": "local-llm-on-b70",
+      "basis": "Both measured artifacts fit and serve target-only on one 32 GiB B70; the 9B packet is stock upstream and the 35B-A3B packet carries its own model-specific patch stack.",
+      "reviewed_at": "2026-08-23"
+    },
+    "quality_evidence": {
+      "band": "strong-scoped-deployment-evidence",
+      "scope": "objective self-consistency and canary evidence for each exact model/quant/runtime packet; not cross-model oracle equality or a general intelligence score",
+      "evidence": [
+        "repro/ornith-15-9b-q8-b70/README.md",
+        "repro/ornith-15-35b-a3b-q4km-b70/README.md",
+        "experiments/ornith-15-b70/data/2026-08-23-ornith35b-copy-offload-summary.json"
+      ]
+    },
+    "popularity": {
+      "state": "repository-snapshots-only",
+      "captured_at": "2026-08-22T02:47:17Z",
+      "reason": "The two official-publisher quant repositories have separate snapshots; they are not summed into a family popularity score.",
+      "snapshots": [
+        {
+          "repo_id": "ornith-ai/Ornith-1.5-35B-A3B-GGUF",
+          "downloads": 123237,
+          "likes": 208,
+          "trending_score": 199
+        },
+        {
+          "repo_id": "ornith-ai/Ornith-1.5-9B-GGUF",
+          "downloads": 115365,
+          "likes": 139,
+          "trending_score": 130
+        }
+      ],
+      "evidence": "model-intake/catalog.json"
+    }
+  },
+  "dimensions": {
+    "model_variant": [
+      "Ornith 1.5 9B dense",
+      "Ornith 1.5 35B-A3B MoE"
+    ],
+    "weight_quantization": [
+      "Q8_0",
+      "Q4_K_M"
+    ],
+    "runtime": [
+      "llama.cpp SYCL"
+    ],
+    "cards": [
+      1,
+      2
+    ],
+    "split_mode": [
+      "single device",
+      "layer"
+    ],
+    "mtp": [
+      0
+    ],
+    "active_context_tokens": [
+      0,
+      2048,
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "configured_max_context_tokens": [
+      8192
+    ],
+    "native_context_tokens": [
+      262144
+    ],
+    "graph": [
+      "off"
+    ],
+    "kv": [
+      "f16"
+    ]
+  },
+  "packets": [
+    {
+      "id": "ornith-15-9b-q8-b70",
+      "label": "Ornith 1.5 9B dense · Q8_0 · one B70",
+      "revision": "ornith-1.5-9b",
+      "quantization": "Q8_0",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "candidate",
+      "evidence_level": "B70-verified",
+      "coverage": [
+        "decode",
+        "prefill",
+        "context through 32K",
+        "quality",
+        "recipe"
+      ],
+      "projection": {
+        "model": "ornith_1.5_9b",
+        "quant": "Q8_0",
+        "runtime": "llama_cpp",
+        "spec": "none"
+      },
+      "manifest": "packages/ornith-15-9b-q8-b70/package.json"
+    },
+    {
+      "id": "ornith-15-35b-a3b-q4km-b70",
+      "label": "Ornith 1.5 35B-A3B MoE · Q4_K_M · one B70",
+      "revision": "ornith-1.5-35b-a3b",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "candidate",
+      "evidence_level": "B70-verified",
+      "coverage": [
+        "decode",
+        "prefill",
+        "context through 32K",
+        "quality",
+        "patched recipe"
+      ],
+      "projection": {
+        "model": "ornith_1.5_35b_a3b",
+        "quant": "Q4_K_M",
+        "runtime": "llama_cpp",
+        "spec": "none"
+      },
+      "manifest": "packages/ornith-15-35b-a3b-q4km-b70/package.json"
+    }
+  ],
+  "run_measurements": [
+    {
+      "id": "ornith-9b-standard-one-card",
+      "state": "lab-measured",
+      "revision": "ornith-1.5-9b",
+      "variant": "Q8_0 dense",
+      "runtime": "llama.cpp SYCL 9fee29e",
+      "config": {
+        "model_size_b": 9,
+        "cards": 1,
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16",
+        "configured_max_context_tokens": 8192
+      },
+      "workload": "two fresh-server runs of the 12-prompt suite, up-to-512-token responses, conventional 99-interval median, target-only, cache zero",
+      "metrics": {
+        "decode_tok_s": [
+          49.588381,
+          49.573292
+        ]
+      },
+      "quality": "reasoning-off 8x repeat stability, arithmetic, exact copy, and JSON-schema canaries passed",
+      "evidence": "repro/ornith-15-9b-q8-b70/README.md"
+    },
+    {
+      "id": "ornith-35b-optimized-one-card",
+      "state": "lab-measured",
+      "revision": "ornith-1.5-35b-a3b",
+      "variant": "Q4_K_M MoE eleven-feature stack plus copy-offload setting",
+      "runtime": "llama.cpp SYCL 9fee29e plus lab patch",
+      "config": {
+        "model_size_b": 35,
+        "cards": 1,
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16",
+        "configured_max_context_tokens": 8192
+      },
+      "workload": "two fresh-server runs of the 12-prompt suite, up-to-512-token responses, conventional 99-interval median, target-only, cache zero",
+      "metrics": {
+        "decode_tok_s": [
+          130.159639,
+          128.977294
+        ]
+      },
+      "quality": "same-frozen-binary patch exactness and objective canary gates passed; stock fresh processes were already output-nondeterministic",
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
+    },
+    {
+      "id": "ornith-35b-stock-one-card",
+      "state": "lab-measured",
+      "revision": "ornith-1.5-35b-a3b",
+      "variant": "Q4_K_M MoE stock",
+      "runtime": "llama.cpp SYCL 9fee29e",
+      "config": {
+        "cards": 1,
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16",
+        "configured_max_context_tokens": 8192
+      },
+      "workload": "stock one-card comparison under the same serving protocol as the stock layer-split screen",
+      "metrics": {
+        "decode_tok_s": [
+          104.839983,
+          104.810772
+        ]
+      },
+      "quality": "stock comparison anchor",
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
+    },
+    {
+      "id": "ornith-35b-stock-layer-split-two-card",
+      "state": "lab-measured",
+      "revision": "ornith-1.5-35b-a3b",
+      "variant": "Q4_K_M MoE stock",
+      "runtime": "llama.cpp SYCL 9fee29e",
+      "config": {
+        "cards": 2,
+        "split_mode": "layer",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16",
+        "configured_max_context_tokens": 8192
+      },
+      "workload": "stock two-card split-mode-layer comparison on GPUs 0 and 1",
+      "metrics": {
+        "decode_tok_s": [
+          102.011447,
+          102.200045
+        ]
+      },
+      "quality": "5/5 canaries passed; topology characterization only",
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
+    }
+  ],
+  "series_measurements": [
+    {
+      "id": "ornith-9b-context-depth",
+      "state": "lab-measured",
+      "revision": "ornith-1.5-9b",
+      "variant": "Q8_0 dense",
+      "runtime": "llama.cpp SYCL 9fee29e",
+      "config": {
+        "cards": 1,
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16"
+      },
+      "workload": "llama-bench pp2048 plus tg128 at each depth, flash attention on, five repetitions; raw-engine shape metric",
+      "axis": "active_context_tokens",
+      "points": [
+        {
+          "x": 0,
+          "decode_tok_s": 50.291618,
+          "prefill_tok_s": 3184.490007
+        },
+        {
+          "x": 2048,
+          "decode_tok_s": 49.338288,
+          "prefill_tok_s": 1623.026366
+        },
+        {
+          "x": 4096,
+          "decode_tok_s": 48.554943,
+          "prefill_tok_s": 1601.167744
+        },
+        {
+          "x": 8192,
+          "decode_tok_s": 47.044737,
+          "prefill_tok_s": 1568.596728
+        },
+        {
+          "x": 16384,
+          "decode_tok_s": 44.349773,
+          "prefill_tok_s": 1489.240859
+        },
+        {
+          "x": 24576,
+          "decode_tok_s": 41.957791,
+          "prefill_tok_s": 1448.815985
+        },
+        {
+          "x": 32768,
+          "decode_tok_s": 39.83848,
+          "prefill_tok_s": 1313.738568
+        }
+      ],
+      "evidence": "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.sweep.json"
+    },
+    {
+      "id": "ornith-35b-context-depth",
+      "state": "lab-measured",
+      "revision": "ornith-1.5-35b-a3b",
+      "variant": "Q4_K_M MoE eleven-feature stack",
+      "runtime": "llama.cpp SYCL 9fee29e plus lab patch",
+      "config": {
+        "cards": 1,
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16"
+      },
+      "workload": "llama-bench pp2048 plus tg128 at each depth, flash attention on, five repetitions; exact eleven-feature raw-engine profile predating the accepted copy-offload setting",
+      "axis": "active_context_tokens",
+      "points": [
+        {
+          "x": 0,
+          "decode_tok_s": 138.97752,
+          "prefill_tok_s": 1397.348168
+        },
+        {
+          "x": 2048,
+          "decode_tok_s": 133.765934,
+          "prefill_tok_s": 1326.651018
+        },
+        {
+          "x": 4096,
+          "decode_tok_s": 130.620489,
+          "prefill_tok_s": 1312.167851
+        },
+        {
+          "x": 8192,
+          "decode_tok_s": 124.209778,
+          "prefill_tok_s": 1284.796086
+        },
+        {
+          "x": 16384,
+          "decode_tok_s": 113.31086,
+          "prefill_tok_s": 1220.200931
+        },
+        {
+          "x": 24576,
+          "decode_tok_s": 104.315441,
+          "prefill_tok_s": 1196.724116
+        },
+        {
+          "x": 32768,
+          "decode_tok_s": 96.995532,
+          "prefill_tok_s": 1101.625369
+        }
+      ],
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-eleven-feature.sweep.json"
+    }
+  ],
+  "views": [
+    {
+      "id": "ornith-context",
+      "title": "Measured context profiles",
+      "subtitle": "Separate dense Q8_0 and MoE Q4_K_M architectures on one B70; shared axes do not imply transferable speed",
+      "x_label": "active context tokens",
+      "metrics": [
+        "decode_tok_s",
+        "prefill_tok_s"
+      ],
+      "series": [
+        {
+          "label": "9B dense · Q8_0",
+          "measurement_ids": [
+            "ornith-9b-context-depth"
+          ]
+        },
+        {
+          "label": "35B-A3B MoE · Q4_K_M",
+          "measurement_ids": [
+            "ornith-35b-context-depth"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ornith-35b-stock-card-count",
+      "title": "35B stock card count",
+      "subtitle": "Q4_K_M stock serving comparison; the optimized one-card packet is a separate patched identity",
+      "x_label": "B70 cards",
+      "discrete": true,
+      "metrics": [
+        "decode_tok_s"
+      ],
+      "series": [
+        {
+          "label": "stock layer placement",
+          "measurement_ids": [
+            "ornith-35b-stock-one-card",
+            "ornith-35b-stock-layer-split-two-card"
+          ],
+          "x_from": "config.cards"
+        }
+      ]
+    }
+  ],
+  "coverage_views": [],
+  "family_closures": [
+    {
+      "selectors": {
+        "model_variant": "Ornith 1.5 9B and 35B-A3B",
+        "active_context_tokens": ">32768"
+      },
+      "state": "missing",
+      "reason": "Both artifacts declare a 262,144-token native window, but these two packet profiles have measured active-context evidence only through 32,768 tokens.",
+      "evidence": "packages/README.md"
+    }
+  ],
+  "estimates": []
+}

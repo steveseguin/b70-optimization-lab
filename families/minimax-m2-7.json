@@ -1,0 +1,307 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "minimax-m2-7",
+  "name": "MiniMax M2.7",
+  "display_name": "MiniMax M2.7",
+  "publisher": "MiniMax AI",
+  "updated_at": "2026-08-23",
+  "summary": "A sparse-MoE family with a four-card AutoRound deployment packet, separate strict-speed and 32K serving identities, exact-token gates, and measured decode, prefill, TTFT, and long-context service profiles.",
+  "architecture": {
+    "class": "MiniMaxM2ForCausalLM",
+    "model_type": "minimax_m2",
+    "type": "sparse mixture of experts",
+    "layers": 62,
+    "hidden_size": 3072,
+    "evidence": "repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md"
+  },
+  "weight_revisions": [
+    {
+      "id": "minimax-m2.7-lasimeri",
+      "label": "MiniMax M2.7 · Lasimeri AutoRound export",
+      "role": "measured deployment weights",
+      "model_manifest": "repro/minimax-m27-b70-89tps-20260520/manifests/model-pin.json",
+      "identity_limit": "The immutable revision pins future downloads but is not proven byte-identical to the historical May run because that run did not retain a complete model payload manifest."
+    }
+  ],
+  "transfer_scope": {
+    "status": "one packaged AutoRound revision; workload and runtime identities remain separate",
+    "transfers": [
+      "MiniMax M2 vLLM/XPU model integration",
+      "AutoRound W4A16 routing",
+      "the retained MoE, graph, collective, and output-path source snapshots"
+    ],
+    "does_not_transfer": [
+      "the historical model payload identity beyond the recorded repository and configuration hashes",
+      "89 tok/s strict-speed performance to the fresh 32K service stack",
+      "constrained-output speed to free-form generation",
+      "short-prompt decode to near-32K requests",
+      "AutoRound quality or speed to GGUF IQ4 or compressed-KV research"
+    ],
+    "evidence": "results/minimax-m27-int4-autoround-b70/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "four-card",
+      "scope": "single active generation on four B70 cards",
+      "basis": "The maintained native vLLM/XPU lane is TP4 and the deployable service reaches a configured 32K context only after reclaiming display VRAM.",
+      "reviewed_at": "2026-08-23"
+    },
+    "quality_evidence": {
+      "band": "strong-scoped-evidence",
+      "scope": "exact token hashes, deterministic repeats, semantic, arithmetic, and extended canaries for the packaged AutoRound lane; not a general capability score",
+      "evidence": [
+        "repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json",
+        "repro/minimax-m27-b70-110tps-ubuntu24-20260523/results/summary-20260523.json"
+      ]
+    },
+    "popularity": {
+      "state": "not-scored",
+      "reason": "No dated family-level popularity snapshot is stored."
+    }
+  },
+  "dimensions": {
+    "weight_revision": ["minimax-m2.7-lasimeri"],
+    "weight_quantization": ["AutoRound W4A16 INT4"],
+    "runtime": ["vLLM XPU 0.20.1-local", "vLLM XPU c51df430 deployable stack"],
+    "deployment_profile": ["historical strict 2K", "deployable 32K", "production c1 32K", "constrained structured output"],
+    "tp": [1, 2, 4],
+    "mtp": [0],
+    "active_context_tokens": [372, 510, 512, 2036, 8144, 16288, 18924, 32264, 32408],
+    "configured_max_context_tokens": [2048, 32768, 33792],
+    "graph": ["on"],
+    "kv": ["f16-family"]
+  },
+  "packets": [
+    {
+      "id": "minimax-m27-b70-89tps-20260520",
+      "label": "MiniMax M2.7 AutoRound · strict TP4",
+      "revision": "minimax-m2.7-lasimeri",
+      "quantization": "AutoRound W4A16 INT4",
+      "runtime": "vLLM XPU 0.20.1-local",
+      "cards": 4,
+      "status": "historical-strict-speed-candidate",
+      "evidence_level": "B70-verified historical",
+      "coverage": ["decode", "exact-token quality", "semantic quality", "retained source"],
+      "projection": {
+        "model": "minimax_m2.7",
+        "quant": "AutoRound INT4",
+        "runtime": "vllm",
+        "spec": "none"
+      },
+      "manifest": "packages/minimax-m27-int4-autoround-b70/package.json"
+    },
+    {
+      "id": "minimax-m27-b70-110tps-ubuntu24-20260523",
+      "label": "MiniMax M2.7 AutoRound · deployable TP4",
+      "revision": "minimax-m2.7-lasimeri",
+      "quantization": "AutoRound W4A16 INT4",
+      "runtime": "vLLM XPU c51df430 deployable stack",
+      "cards": 4,
+      "status": "qualified-deployment-reference",
+      "evidence_level": "B70-verified",
+      "coverage": ["decode", "prefill", "TTFT", "configured 32K", "quality", "OpenAI endpoint"],
+      "manifest": "repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md"
+    },
+    {
+      "id": "minimax-m27-production-c1-service",
+      "label": "MiniMax M2.7 · production c1 profile",
+      "revision": "minimax-m2.7-lasimeri",
+      "quantization": "AutoRound W4A16 INT4",
+      "runtime": "vLLM XPU service",
+      "cards": 4,
+      "status": "banked-service-profile",
+      "evidence_level": "B70-measured operations",
+      "coverage": ["decode", "TTFT", "near-32K", "serialized concurrency", "operations"],
+      "manifest": "docs/minimax-production-c1-service.md"
+    },
+    {
+      "id": "minimax-m27-structured-html",
+      "label": "MiniMax M2.7 · constrained HTML",
+      "revision": "minimax-m2.7-lasimeri",
+      "quantization": "AutoRound W4A16 INT4",
+      "runtime": "vLLM XPU constrained output",
+      "cards": 4,
+      "status": "research-only-task-specific",
+      "evidence_level": "B70-measured scoped task",
+      "coverage": ["constrained decode", "30/30 accepted", "zero rejects", "not free-form comparable"],
+      "manifest": "notes/2026-05-22-minimax-structured-fast-lane-regex2.md"
+    }
+  ],
+  "run_measurements": [
+    {
+      "id": "minimax-strict-tp4-2k-four-repeat",
+      "state": "lab-measured",
+      "revision": "minimax-m2.7-lasimeri",
+      "variant": "AutoRound W4A16 INT4",
+      "runtime": "vLLM XPU 0.20.1-local; base c51df430; llm-scaler 4bfc007",
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16-family", "active_context_tokens": 512, "configured_max_context_tokens": 2048},
+      "workload": "four clean warm p512/n1536 batch-one runs at 2K context after the strict quality gate",
+      "metrics": {
+        "decode_tok_s": [88.92723924469661, 89.39667728272477, 89.52732050585546, 89.40554449051147]
+      },
+      "reported_total_tok_s": [118.56965232626214, 119.19556971029968, 119.36976067447394, 119.2073926540153],
+      "quality": "exact n64/n256 hashes, semantic suite, arithmetic repeat, and extended sixpack passed; deterministic; no quality-reducing changes",
+      "evidence": "repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json"
+    },
+    {
+      "id": "minimax-deployable-tp4-2k-four-repeat",
+      "state": "lab-measured",
+      "revision": "minimax-m2.7-lasimeri",
+      "variant": "AutoRound W4A16 INT4",
+      "runtime": "vLLM XPU c51df430 deployable Ubuntu 24 stack",
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16-family", "active_context_tokens": 512, "configured_max_context_tokens": 32768},
+      "workload": "four p512/n1536 batch-one comparison runs at 2K active context; endpoint configured to serve 32K",
+      "metrics": {
+        "decode_tok_s": [82.36975887624021, 83.47327548262813, 83.29957230411637, 83.5461306449009]
+      },
+      "reported_total_tok_s": [109.82634516832029, 111.29770064350417, 111.0660964054885, 111.39484085986787],
+      "quality": "quality gate passed; the 32K configured capacity is not the active context of this speed gate",
+      "evidence": "repro/minimax-m27-b70-110tps-ubuntu24-20260523/results/summary-20260523.json"
+    },
+    {
+      "id": "minimax-deployable-tp4-32k-endpoint-metrics",
+      "state": "lab-measured",
+      "revision": "minimax-m2.7-lasimeri",
+      "variant": "AutoRound W4A16 INT4",
+      "runtime": "vLLM XPU c51df430 OpenAI-compatible endpoint",
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16-family", "active_context_tokens": 510, "configured_max_context_tokens": 32768},
+      "workload": "one warm streamed p510/n1536 endpoint request at the 32K served setting",
+      "metrics": {
+        "decode_tok_s": [85.45305752948855],
+        "prefill_tok_s": [1445.6338234567852],
+        "ttft_ms": [351.06825828552246]
+      },
+      "quality": "prefill is a conservative prompt_tokens/TTFT lower bound that includes scheduling and first-token work; single performance observation, not a repeat distribution",
+      "evidence": "data/minimax-m27-openai-endpoint-metrics-32k-20260524.json"
+    },
+    {
+      "id": "minimax-structured-html-tp4",
+      "state": "lab-measured",
+      "revision": "minimax-m2.7-lasimeri",
+      "variant": "AutoRound W4A16 INT4",
+      "runtime": "vLLM XPU constrained regex lane",
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16-family"},
+      "workload": "short constrained structured-HTML output; task-specific accepted-output accounting",
+      "metrics": {"decode_tok_s": [94.406]},
+      "quality": "30/30 accepted with zero rejects; not comparable to unconstrained p512/n1536 generation",
+      "evidence": "notes/2026-05-22-minimax-structured-fast-lane-regex2.md"
+    }
+  ],
+  "series_measurements": [
+    {
+      "id": "minimax-production-c1-context-observations",
+      "state": "lab-measured",
+      "revision": "minimax-m2.7-lasimeri",
+      "variant": "AutoRound W4A16 INT4",
+      "runtime": "vLLM XPU production c1 service",
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16-family", "configured_max_context_tokens": 32768},
+      "workload": "three production service scenarios with different prompt and output lengths; discrete observations, not a controlled context curve",
+      "points": [
+        {"x": 372, "decode_tok_s": 96.82, "ttft_ms": 227},
+        {"x": 18924, "decode_tok_s": 77.89, "ttft_ms": 13085},
+        {"x": 32264, "decode_tok_s": 63.91, "ttft_ms": 23336}
+      ],
+      "point_workloads": {
+        "372": "512 output tokens",
+        "18924": "16 output tokens",
+        "32264": "64 output tokens"
+      },
+      "quality": "operational service observations; near-32K request was accepted by LocalMaxxing, but the three rows are different workload classes",
+      "evidence": "docs/minimax-production-c1-service.md"
+    },
+    {
+      "id": "minimax-deployable-prefill-lower-bounds",
+      "state": "lab-measured",
+      "revision": "minimax-m2.7-lasimeri",
+      "variant": "AutoRound W4A16 INT4",
+      "runtime": "vLLM XPU OpenAI-compatible endpoint",
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16-family", "configured_max_context_tokens": 32768},
+      "workload": "warm /v1/completions calls with max_tokens=1; conservative prompt-processing lower bounds including HTTP and one generated token",
+      "points": [
+        {"x": 510, "prefill_tok_s": 1607.9},
+        {"x": 2036, "prefill_tok_s": 1750.1},
+        {"x": 8144, "prefill_tok_s": 1830.3},
+        {"x": 16288, "prefill_tok_s": 1810.3}
+      ],
+      "quality": "prompt-processing characterization only",
+      "evidence": "notes/2026-05-23-current-host-pcie4-prefill-check.md"
+    }
+  ],
+  "views": [
+    {
+      "id": "minimax-deployment-profiles",
+      "title": "Deployment profiles",
+      "subtitle": "TP4 · p512/n1536 comparison gate · active context 2K; x is configured service capacity, not active prompt length",
+      "x_label": "configured max context tokens",
+      "discrete": true,
+      "metrics": ["decode_tok_s"],
+      "series": [
+        {"label": "historical strict stack", "measurement_ids": ["minimax-strict-tp4-2k-four-repeat"], "x_from": "config.configured_max_context_tokens"},
+        {"label": "deployable 32K stack", "measurement_ids": ["minimax-deployable-tp4-2k-four-repeat"], "x_from": "config.configured_max_context_tokens"}
+      ]
+    },
+    {
+      "id": "minimax-endpoint-metrics",
+      "title": "32K endpoint observation",
+      "subtitle": "TP4 · configured 32K · warm p510/n1536 request; prefill is a conservative lower bound",
+      "x_label": "active prompt tokens",
+      "discrete": true,
+      "metrics": ["decode_tok_s", "prefill_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "OpenAI endpoint", "measurement_ids": ["minimax-deployable-tp4-32k-endpoint-metrics"], "x_from": "config.active_context_tokens"}
+      ]
+    },
+    {
+      "id": "minimax-production-context",
+      "title": "Production service observations",
+      "subtitle": "TP4 production c1 · different output lengths at each prompt size; discrete capacity observations, not an interpolated context curve",
+      "x_label": "prompt tokens",
+      "discrete": true,
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "production c1", "measurement_ids": ["minimax-production-c1-context-observations"]}
+      ]
+    },
+    {
+      "id": "minimax-prefill-depth",
+      "title": "Prompt processing",
+      "subtitle": "TP4 OpenAI endpoint · max_tokens=1 · includes HTTP and first-token work, so values are conservative lower bounds",
+      "x_label": "prompt tokens",
+      "metrics": ["prefill_tok_s"],
+      "series": [
+        {"label": "warm lower bound", "measurement_ids": ["minimax-deployable-prefill-lower-bounds"]}
+      ]
+    }
+  ],
+  "coverage_views": [
+    {
+      "id": "minimax-autoround-target-only",
+      "label": "AutoRound · target only",
+      "fixed": "MiniMax M2.7 AutoRound W4A16 · vLLM XPU · graph on · f16-family KV · MTP/speculation off. Only TP4 is measured in the maintained family packet.",
+      "decision_note": "Missing TP1/TP2 cells are unknown, not failed or zero.",
+      "evidence": "results/minimax-m27-int4-autoround-b70/README.md",
+      "rows": [0],
+      "columns": [1, 2, 4],
+      "cells": {
+        "0:1": {"state": "missing", "label": "not measured", "reason": "No comparable TP1 AutoRound result is stored."},
+        "0:2": {"state": "missing", "label": "not measured", "reason": "No comparable TP2 AutoRound result is stored."},
+        "0:4": {"state": "lab-measured", "label": "strict + service", "evidence_id": "minimax-strict-tp4-2k-four-repeat"}
+      }
+    }
+  ],
+  "family_closures": [
+    {
+      "selectors": {"revision": "minimax-m2.7-lasimeri", "variant": "AutoRound W4A16 INT4", "runtime": "vLLM XPU c51df430 deployable stack", "tp": 4, "configured_max_context_tokens": 33792},
+      "state": "closed",
+      "reason": "The 33,792-token startup loaded and entered compile/warmup but did not expose /v1/models within the wait window; 32,768 is the promoted service setting.",
+      "evidence": "repro/minimax-m27-b70-110tps-ubuntu24-20260523/results/context-window-32768-20260523.json"
+    },
+    {
+      "selectors": {"revision": "minimax-m2.7-lasimeri", "variant": "AutoRound W4A16 INT4", "runtime": "vLLM XPU c51df430 deployable stack", "tp": 4, "max_num_batched_tokens": 1024},
+      "state": "closed",
+      "reason": "The larger prefill chunk triggered the documented PIECEWISE compile-range/startup failure; 512 remains the stable service setting.",
+      "evidence": "repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md"
+    }
+  ],
+  "estimates": []
+}

@@ -266,13 +266,27 @@ The latest MoE shared-branch residual/RMSNorm evidence is
 The latest runtime-setting evidence is
 [here](experiments/ornith-15-b70/notes/2026-08-23-ornith35b-copy-offload-positive.md).
 
-Publication architecture: keep `index.html` curated and put the growing set
-of model/quant/card/OS/native-container variants in `guides.html`. That page
-reads generated `packages/catalog.json`; canonical discovery, evidence, and
-exact-contributor metadata live in each `packages/*/package.json`. Regenerate
-and validate with `python3 tools/validate-repro-guides.py
---write-package-catalog` after package changes. Research guides remain outside
-the public install library until they have a registered package.
+Publication architecture is now family-first. Keep `index.html` curated;
+`models/` owns compact family coverage and measured deployment pages, while
+`guides.html` remains the filterable package browser. Eight family manifests
+currently assign all 13 public packages exactly once. The generator fails if
+a package is unassigned, multiply assigned, or mismatched with its manifest.
+Qwen 27B has the deepest bounded TP/MTP/context/graph/KV map; the other seven
+families expose every existing packet/profile slice plus explicit gaps without
+invented estimates. Canonical family data lives in `families/*.json`, package
+discovery in `packages/catalog.json`, and exact contributor metadata in each
+`packages/*/package.json`. See the
+[coverage-foundation note](notes/2026-08-23-neural-download-family-coverage-foundation.md).
+Regenerate with `python3 -B tools/build-family-pages.py`,
+`python3 -B tools/validate-repro-guides.py --write-package-catalog`, then
+`python3 -B tools/build-model-pages.py`. Research-only packets can appear on a
+family page at their honest maturity without entering the install catalog.
+
+The next product work is to deepen non-Qwen combination classifications from
+existing ledgers, store dated popularity/recency snapshots where available,
+add typed versioned estimates with uncertainty for true gaps, and promote more
+already-measured blanks before burning GPUs. Never replace a captured high
+score with a projection or a different accounting convention.
 
 ## Active Optimization Lane
 

@@ -23,6 +23,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CATALOG = os.path.join(ROOT, "packages", "catalog.json")
+FAMILY_CATALOG = os.path.join(ROOT, "families", "catalog.json")
 OUT_DIR = os.path.join(ROOT, "models")
 GITHUB = "https://github.com/steveseguin/b70-optimization-lab/blob/main/"
 ISSUE = "https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title="
@@ -56,10 +57,13 @@ PACKAGE_ML = {
     "nemotron-35-lightning-30b-a3b-b70": {"model": "nemotron3.5_lightning_30b_a3b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none"},
     "ornith-15-35b-a3b-q4km-b70": {"model": "ornith_1.5_35b_a3b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none"},
     "ornith-15-9b-q8-b70": {"model": "ornith_1.5_9b", "quant": "Q8_0", "runtime": "llama_cpp", "spec": "none"},
-    "qwen38-27b-256k-vision-mtp-b70": {"model": "qwen3.8_27b", "quant": "Q5_K_S", "runtime": "llama_cpp", "spec": "mtp:3"},
+    # The Q5 flagship and Q8 TP2 packets are intentionally omitted. The former
+    # does not encode its draft depth; the latter's measured rate and launcher
+    # do not share the reasoning/workload identity expected by the projection.
+    # Their measured 26.7 and 36.8 tok/s headlines remain shown unchanged.
     "qwen38-27b-fp8-vllm-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "FP8", "runtime": "vllm", "spec": "none"},
     "qwen38-27b-q4km-tp1-b70": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none"},
-    "qwen38-27b-q8-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "Q8_0", "runtime": "llama_cpp", "spec": "none", "strategy": "tensor"},
+    "qwen38-27b-q4km-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "strategy": "tensor"},
 }
 
 STATUS_LABEL = {"candidate": "Candidate package", "lab": "Lab result", "research": "Research", "starter": "Starter guide", "record": "Record replay"}
@@ -76,6 +80,39 @@ def fmt(value):
     if value >= 1000:
         return f"{value:,.0f}"
     return f"{value:.1f}" if value < 100 else f"{value:.0f}"
+
+
+def axis_span(values):
+    values = list(values or [])
+    if not values:
+        return "—"
+    if len(values) == 1:
+        return str(values[0])
+    return f"{values[0]}–{values[-1]}"
+
+
+def family_topology(family):
+    dimensions = family.get("dimensions") or {}
+    tp = dimensions.get("tp") or []
+    if tp:
+        return "TP " + " / ".join(str(value) for value in tp)
+    cards = dimensions.get("cards") or []
+    return "Cards " + (" / ".join(str(value) for value in cards) if cards else "—")
+
+
+def family_speedup(family):
+    dimensions = family.get("dimensions") or {}
+    mtp = dimensions.get("mtp") or []
+    methods = [str(value) for value in dimensions.get("speculative_method") or []]
+    if mtp and max(mtp) > 0:
+        return "MTP " + axis_span(mtp)
+    if any("MTP" in method.upper() for method in methods):
+        return f'{" / ".join(methods)} {axis_span(dimensions.get("draft_depth"))}'
+    if any(method.lower() != "none" for method in methods):
+        depth = dimensions.get("draft_depth") or dimensions.get("dflash_n_max") or []
+        suffix = f" {axis_span(depth)}" if depth else ""
+        return " / ".join(methods) + suffix
+    return "target only"
 
 
 def gb(value):
@@ -127,7 +164,7 @@ def svg_profile(profile):
     )
 
 
-def page(pkg, all_pkgs):
+def page(pkg, all_pkgs, family=None):
     lib = pkg["library"]
     fm = lib.get("featured_metric") or {}
     hw = pkg.get("hardware") or {}
@@ -179,6 +216,13 @@ def page(pkg, all_pkgs):
         f'<a href="{esc(p["id"])}.html"><b>{esc(p["name"])}</b><span>{esc(fmt((p["library"].get("featured_metric") or {}).get("value")))} tok/s · {esc(p["library"].get("runtime_label", ""))}</span></a>'
         for p in related
     )
+    family_href = f'{esc(family["id"])}.html' if family else ""
+    family_label = (family.get("display_name") or family.get("name")) if family else lib.get("model_family", "")
+    family_related = (
+        f'<a href="{family_href}"><b>{esc(family_label)} coverage</b><span>Variants, evidence, gaps, and recipes</span></a>'
+        if family
+        else ""
+    )
     ld = {
         "@context": "https://schema.org",
         "@type": "TechArticle",
@@ -193,14 +237,26 @@ def page(pkg, all_pkgs):
         "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": SITE},
         "about": [lib.get("model_family", ""), "Intel Arc Pro B70", "local LLM inference"],
     }
+    crumb_items = [
+        {"@type": "ListItem", "position": 1, "name": "neural.download", "item": SITE},
+        {"@type": "ListItem", "position": 2, "name": "Models", "item": f"{SITE}models/"},
+    ]
+    if family:
+        crumb_items.append(
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": family_label,
+                "item": f'{SITE}models/{family["id"]}.html',
+            }
+        )
+    crumb_items.append(
+        {"@type": "ListItem", "position": len(crumb_items) + 1, "name": name, "item": url}
+    )
     crumbs = {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
-        "itemListElement": [
-            {"@type": "ListItem", "position": 1, "name": "neural.download", "item": SITE},
-            {"@type": "ListItem", "position": 2, "name": "Models", "item": f"{SITE}models/"},
-            {"@type": "ListItem", "position": 3, "name": name, "item": url},
-        ],
+        "itemListElement": crumb_items,
     }
     projection_html = ""
     if ml:
@@ -296,7 +352,7 @@ def page(pkg, all_pkgs):
 </div></div>
 
 <header class="hero"><div class="wrap">
-  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / {esc(lib.get('model_family', ''))}</p>
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / {f'<a href="{family_href}">{esc(family_label)}</a> / ' if family else ''}{esc(lib.get('variant') or lib.get('model_family', ''))}</p>
   <p class="eyebrow">{esc(status)} · {esc(lib.get('runtime_label', ''))} · {esc(hw.get('cards', 1))}× Intel Arc Pro B70</p>
   <h1>{esc(name)}</h1>
   <p>{esc(lib.get('summary', ''))}</p>
@@ -314,13 +370,14 @@ def page(pkg, all_pkgs):
   </div>
 
   <dl class="facts">{facts_html}</dl>
-  {missing_html}
-  {('<h2 id="profiles">Measured across context depth <span class="badge lab">Lab-measured</span></h2>' + profiles_html) if profiles_html else ''}
-  {projection_html}
+{missing_html}
+{('<h2 id="profiles">Measured across context depth <span class="badge lab">Lab-measured</span></h2>' + profiles_html) if profiles_html else ''}
+{projection_html}
 
   <div class="related">
     <h2>Keep going</h2>
     <div class="related-grid">
+      {family_related}
       {related_html}
       <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
       <a href="../guides.html"><b>Guide library</b><span>Every package, filterable</span></a>
@@ -356,37 +413,57 @@ def page(pkg, all_pkgs):
 """
 
 
-def index_page(pkgs):
+def index_page(pkgs, families):
+    family_rows = "".join(
+        f'<a class="guide-card family-card" href="{esc(f["id"])}.html"><div class="gc-top"><div class="gc-n">Model family · {esc(len(f.get("weight_revisions") or []))} revision{"s" if len(f.get("weight_revisions") or []) != 1 else ""} · {esc(len(f.get("packets") or []))} packet{"s" if len(f.get("packets") or []) != 1 else ""}</div><h3>{esc(f.get("display_name") or f.get("name"))}</h3></div>'
+        f'<div class="gc-body"><p>{esc(f.get("summary", ""))}</p><p class="gc-meta"><strong>{esc(family_topology(f))}</strong> · {esc(family_speedup(f))} · context, KV, graph, quant, prefill, TTFT, quality</p></div><div class="gc-go">Open family coverage →</div></a>'
+        for f in sorted(families, key=lambda item: (item.get("display_name") or item.get("name", "")).casefold())
+    )
+    display_pkgs = sorted(
+        pkgs,
+        key=lambda p: (
+            p["library"].get("model_family", "").casefold(),
+            p["library"].get("variant", "").casefold(),
+            int((p.get("hardware") or {}).get("cards", 1)),
+            p["library"].get("quantization", "").casefold(),
+        ),
+    )
     rows = "".join(
         f'<a class="guide-card" href="{esc(p["id"])}.html"><div class="gc-top"><div class="gc-n">{esc(STATUS_LABEL.get(p.get("status"), p.get("status", "")))} · {esc(p["library"].get("runtime_label", ""))}</div><h3>{esc(p["name"])}</h3></div>'
         f'<div class="gc-body"><p>{esc(p["library"].get("summary", ""))}</p><p class="gc-meta"><strong>{esc(fmt((p["library"].get("featured_metric") or {}).get("value")))} tok/s</strong> measured · {esc((p.get("hardware") or {}).get("cards", 1))}× B70 · {esc(p["library"].get("quantization", ""))}</p></div></a>'
-        for p in pkgs
+        for p in display_pkgs
     )
     return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Model deployments on Intel Arc Pro B70 — measured speeds, proofs, and projected headroom — neural.download</title>
-<meta name="description" content="Every reproducible model package this lab has measured on Intel Arc Pro B70 cards: decode speed with proof links, exact pins and patches, measured context-depth curves, and a projected optimization headroom from the ML Bottleneck physics engine.">
+<title>Model families on Intel Arc Pro B70 — coverage, packets, and measured deployments — neural.download</title>
+<meta name="description" content="Model-family coverage across weight revisions, variants, quantizations, TP, MTP, context, KV cache, runtime, prefill, TTFT, quality, and measured deployment packets on Intel Arc Pro B70.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
 <link rel="canonical" href="{SITE}models/">
 <meta name="theme-color" content="#f6f1e5">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{SITE}models/">
-<meta property="og:title" content="Model deployments on Intel Arc Pro B70 — neural.download">
-<meta property="og:description" content="Measured speeds with proofs, exact pins, and projected headroom for every package.">
+<meta property="og:title" content="Model families on Intel Arc Pro B70 — neural.download">
+<meta property="og:description" content="Family-level coverage with measured packets, honest gaps, and exact proof.">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta property="og:site_name" content="neural.download">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{json.dumps({"@context": "https://schema.org", "@type": "CollectionPage", "name": "Model deployments on Intel Arc Pro B70", "url": f"{SITE}models/", "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": SITE}, "inLanguage": "en", "isAccessibleForFree": True})}
+{json.dumps({"@context": "https://schema.org", "@type": "CollectionPage", "name": "Model families on Intel Arc Pro B70", "url": f"{SITE}models/", "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": SITE}, "inLanguage": "en", "isAccessibleForFree": True})}
 </script>
 <link rel="stylesheet" href="../learn/learn.css">
 <style>
   .guide-card .gc-body {{ padding: 12px 16px 14px; }}
   .guide-card .gc-body p {{ margin: 0 0 8px; color: var(--muted); font-size: 13px; }}
   .guide-card .gc-meta {{ font: 11px var(--mono); color: var(--ink); }}
+  .family-card {{ grid-column: span 2; }}
+  .family-card .gc-top {{ background: var(--spot); color: #fff; }}
+  .family-card .gc-top .gc-n {{ color: rgba(255,255,255,.82); }}
+  .section-title {{ margin: 30px 0 10px; font: 900 22px/1.1 var(--display); text-transform: uppercase; }}
+  .section-note {{ max-width: 72ch; margin: -3px 0 14px; color: var(--muted); font-size: 13px; }}
+  @media (max-width: 720px) {{ .family-card {{ grid-column: span 1; }} }}
 </style>
 </head>
 <body>
@@ -404,11 +481,16 @@ def index_page(pkgs):
 </div></div>
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / Models</p>
-  <p class="eyebrow">One page per measured deployment</p>
-  <h1>Model deployments</h1>
-  <p>Each page carries the lab's measured speed with its proof, the exact pins and patches, the measured context-depth curves where we swept them, and a clearly labeled projection of how much faster the setup could get.</p>
+  <p class="eyebrow">Families first · quantizations are deployment variants</p>
+  <h1>Model coverage</h1>
+  <p>Start with the model family, then choose weights, quantization, cards, context, runtime, and speed-up. Mini graphs show decode, prefill, TTFT, quality, and gaps without turning every permutation into another model.</p>
 </div></header>
 <main id="main"><div class="wrap">
+  <h2 class="section-title">Model families</h2>
+  <p class="section-note">Shape-compatible weight updates share implementation work, while every measurement stays pinned to its exact checkpoint and runtime.</p>
+  <div class="guide-cards">{family_rows}</div>
+  <h2 class="section-title">Deployment packets</h2>
+  <p class="section-note">Measured quantized variants, recipes, and research packets at their honest maturity. Speed is one field, not the sorting rule.</p>
   <div class="guide-cards">{rows}</div>
 </div></main>
 <footer><div class="wrap">
@@ -423,17 +505,38 @@ def index_page(pkgs):
 def main():
     with open(CATALOG, encoding="utf-8") as handle:
         catalog = json.load(handle)
-    pkgs = sorted(catalog["packages"], key=lambda p: -float(((p["library"].get("featured_metric") or {}).get("value") or 0)))
+    pkgs = sorted(
+        catalog["packages"],
+        key=lambda p: (
+            p["library"].get("model_family", "").casefold(),
+            p["library"].get("variant", "").casefold(),
+            p["id"],
+        ),
+    )
+    with open(FAMILY_CATALOG, encoding="utf-8") as handle:
+        family_catalog = json.load(handle)
+    families = []
+    for entry in family_catalog.get("families", []):
+        with open(os.path.join(ROOT, entry["manifest"]), encoding="utf-8") as handle:
+            families.append(json.load(handle))
     os.makedirs(OUT_DIR, exist_ok=True)
     stamp_bridge_includes(bridge_version())
     written = []
     for pkg in pkgs:
         path = os.path.join(OUT_DIR, f"{pkg['id']}.html")
         with open(path, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(page(pkg, pkgs))
+            packet_family = next(
+                (
+                    family
+                    for family in families
+                    if any(packet.get("id") == pkg["id"] for packet in family.get("packets") or [])
+                ),
+                None,
+            )
+            handle.write(page(pkg, pkgs, packet_family))
         written.append(path)
     with open(os.path.join(OUT_DIR, "index.html"), "w", encoding="utf-8", newline="\n") as handle:
-        handle.write(index_page(pkgs))
+        handle.write(index_page(pkgs, families))
     unmapped = [p["id"] for p in pkgs if p["id"] not in PACKAGE_ML]
     print(f"wrote {len(written)} package pages + models/index.html")
     if unmapped:

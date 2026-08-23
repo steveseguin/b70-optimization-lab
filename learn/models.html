@@ -16,7 +16,7 @@
 <meta property="og:site_name" content="neural.download">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"TechArticle","headline":"Models: which one to run and why","description":"Dense vs mixture-of-experts, active vs total parameters, VRAM math, and how to pick a local LLM for your Intel Arc card and your job \u2014 with the lab's measured model board.","url":"https://neural.download/learn/models.html","dateModified":"2026-08-22","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","tokens per second"]}
+{"@context":"https://schema.org","@type":"TechArticle","headline":"Models: which one to run and why","description":"Dense vs mixture-of-experts, active vs total parameters, VRAM math, and how to pick a local LLM for your Intel Arc card and your job \u2014 with the lab's measured model board.","url":"https://neural.download/learn/models.html","dateModified":"2026-08-23","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["local LLM inference","Intel Arc Pro B70","tokens per second"]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"Learn","item":"https://neural.download/learn.html"},{"@type":"ListItem","position":3,"name":"Models: which one to run and why","item":"https://neural.download/learn/models.html"}]}
@@ -29,6 +29,7 @@
   <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
   <nav aria-label="Primary">
     <a href="../index.html">Home</a>
+    <a href="../models/">Models</a>
     <a href="../learn.html">Learn</a>
     <a href="../guides.html">Guide library</a>
     <a href="../index.html#lab-speeds">Benchmarks</a>
@@ -40,7 +41,7 @@
   <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 01</p>
   <p class="eyebrow">Pick your setup</p>
   <h1>Models</h1>
-  <p>Before you tune anything, you pick a model — and that choice sets your ceiling. The single most important thing to understand: a model's <em>speed</em> is set by its <strong>active</strong> parameters, not its total size. That's why a "26B" model can be five times faster than a "27B" one.</p>
+  <p>Before you tune anything, you pick a model — and that choice sets the quality and capability ceiling. Active parameters set an important speed baseline, but quantization, runtime, card count, graph mode, and speculation can move the observed rate substantially.</p>
 </div></header>
 
 <main id="main"><div class="wrap"><div class="col prose">
@@ -48,10 +49,10 @@
   <div class="tldr">
     <h2>The short version</h2>
     <ul>
-      <li><strong>Total parameters</strong> decide how much VRAM the model needs. <strong>Active parameters</strong> decide how fast it decodes.</li>
+      <li><strong>Total parameters</strong> decide how much VRAM the model needs. <strong>Active parameters</strong> strongly influence decode speed.</li>
       <li><strong>Dense</strong> models use all their weights per token. <strong>Mixture-of-Experts (MoE)</strong> models use only a slice — so they're fast for their size.</li>
       <li>A name like <strong>A4B</strong> or <strong>A3B</strong> tells you the active size (≈4B or 3B active) — that's your speed hint.</li>
-      <li>Fit first (does it load with room for context?), then speed, then quality and features (vision, tools).</li>
+      <li>Fit first, then quality/capability and packet evidence; compare decode, prefill, TTFT, memory, and context only inside that viable set.</li>
     </ul>
   </div>
 
@@ -67,7 +68,7 @@
 
   <div class="callout key">
     <span class="tag">Reading a model name</span>
-    <p><strong>Qwen3.8-27B-A3B</strong>: 27B total (VRAM), ~3B active (speed). <strong>Gemma-4-26B-A4B</strong>: 26B total, ~4B active. <strong>Nemotron-30B-A3B</strong>: 30B total, ~3B active. When you see <code>A#B</code>, that's the number that predicts how fast it will feel. No <code>A#B</code>? Assume dense — total = active.</p>
+    <p><strong>Qwen3.8-27B</strong> is a dense hybrid model: it has no <code>A3B</code> suffix and does not get MoE-style 3B-active decode. <strong>Gemma-4-26B-A4B</strong> is about 4B active; <strong>Nemotron-30B-A3B</strong> is about 3B active. When a model really has an <code>A#B</code> suffix, that active size is the better speed hint.</p>
   </div>
 
   <h2>The VRAM math</h2>
@@ -78,36 +79,36 @@
     <li><strong>Rule of thumb:</strong> keep weights + expected KV under ~30 GB on a 32 GiB card. If a Q8 model is tight, drop to Q4 or add a card.</li>
   </ul>
 
-  <h2>The lab's model board</h2>
+  <h2>Selected lab measurements</h2>
   <p>What we've actually measured on B70s. Rates are for different card counts and methods — read the columns, don't compare rows blindly. <span class="badge lab">Lab-measured</span></p>
   <div class="scroller"><table class="data">
     <thead><tr><th>Model</th><th>Design</th><th class="num">Cards</th><th class="num">Decode tok/s</th><th>Note</th></tr></thead>
     <tbody>
-      <tr><td class="best">Gemma-4-26B A4B</td><td>MoE (~4B active)</td><td class="num">1</td><td class="num best">124.98</td><td>Fastest single-card all-rounder</td></tr>
-      <tr><td>Qwen3.8-27B</td><td>hybrid, Q4_K_M</td><td class="num">1</td><td class="num">27.82</td><td>Vision + tools, 256K context, quality-validated</td></tr>
-      <tr><td>Qwen3.8-27B</td><td>Q8_0</td><td class="num">2</td><td class="num">36.77</td><td>Quality-conservative deployment</td></tr>
-      <tr><td>Qwen3.8-27B</td><td>INT4 + MTP 5</td><td class="num">2</td><td class="num">101.2</td><td>Research lane (determinism open)</td></tr>
-      <tr><td>Laguna S 2.1</td><td>INT4 + DFlash</td><td class="num">4</td><td class="num">121.3</td><td>Closed record</td></tr>
-      <tr><td>Muse-Glimmer-30B</td><td>Q8/WOQ + DFlash</td><td class="num">4</td><td class="num">100.6</td><td>Closed record</td></tr>
+      <tr><td><a href="../models/gemma-4.html">Gemma-4-26B A4B</a></td><td>MoE (~4B active)</td><td class="num">1</td><td class="num">124.98</td><td>Measured one-card MoE lane</td></tr>
+      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>hybrid, Q4_K_M</td><td class="num">1</td><td class="num">27.82</td><td>Quality-validated; measured context curve through 32K</td></tr>
+      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>Q8_0</td><td class="num">2</td><td class="num">36.77</td><td>Quality-conservative deployment</td></tr>
+      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>INT4 + MTP 5</td><td class="num">2</td><td class="num">101.2</td><td>Research lane (determinism open)</td></tr>
+      <tr><td><a href="../models/laguna-s.html">Laguna S 2.1</a></td><td>INT4 + DFlash</td><td class="num">4</td><td class="num">125.46</td><td>Closed record</td></tr>
+      <tr><td><a href="../models/muse-glimmer.html">Muse-Glimmer-30B</a></td><td>Q8/WOQ + DFlash</td><td class="num">4</td><td class="num">100.37</td><td>Canonical repeat mean</td></tr>
     </tbody>
   </table></div>
-  <p>The full, filterable list — with quant, OS, runtime, and maturity — lives in the <a href="../guides.html">Guide library</a>.</p>
+  <p>The <a href="../models/qwen-27b.html">Qwen 27B family page</a> keeps weights, quantizations, TP, MTP, context, prefill, TTFT, quality, and gaps together. The full filterable packet list lives in the <a href="../guides.html">Guide library</a>.</p>
 
   <h2>How to choose</h2>
   <ol>
     <li><strong>Match to your cards.</strong> One B70? A fast MoE (Gemma-4-26B) or a Q4 27B. More cards unlock bigger models and speculative records.</li>
-    <li><strong>Match to your job.</strong> Coding and agents want <a href="speculative-methods.html">tools</a> and speed; document work wants long <a href="context-length.html">context</a>; image tasks need a vision model (Qwen3.8 reads pictures).</li>
+    <li><strong>Match to your job.</strong> Coding and agents need tool behavior and responsiveness; document work needs long <a href="context-length.html">context</a>; image tasks need a vision-enabled packet such as the Qwen3.8 Q5_K_S flagship.</li>
     <li><strong>Then optimize.</strong> Once the model fits and runs, the other eight guides are how you make it faster.</li>
   </ol>
 
   <div class="callout warn">
     <span class="tag">What to be aware of</span>
-    <p>A high headline number can hide caveats: it may be a research lane with unresolved determinism, a narrow benchmark shape, or a different card count than yours. It may also be a model that's fast but weaker at your task. And new weights we're still bringing to the board (e.g. Ornith, Nemotron, LFM2.5) have <strong>no B70 numbers yet</strong> — we don't guess them. Always check the evidence link and the card count behind a rate before believing it applies to you.</p>
+    <p>A high headline number can hide caveats: it may be a research lane with unresolved determinism, a narrow benchmark shape, or a different card count than yours. It may also be a model that's fast but weaker at your task. We now have B70 measurements for Ornith, Nemotron, and LFM2.5, but their packets still carry different maturity and quality boundaries. Always check the evidence label and exact configuration behind a rate.</p>
   </div>
 
   <div class="callout good">
     <span class="tag">Recommendation</span>
-    <p>For most people on a single B70: start with <strong>Gemma-4-26B</strong> if you want raw speed, or <strong>Qwen3.8-27B Q4_K_M</strong> if you want vision, tools, long context, and a fully quality-checked package. Get it running, then come back and tune.</p>
+    <p>For most people on a single B70: start with <strong>Gemma-4-26B</strong> for a fast multimodal lane, <strong>Qwen3.8-27B Q4_K_M</strong> for the validated text package and measured 32K curve, or the separate <strong>Q5_K_S 256K + vision</strong> packet when those capabilities matter more than decode. Get one exact packet running, then tune.</p>
   </div>
 
   <div class="related">

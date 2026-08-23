@@ -1,0 +1,188 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "lfm-2-5",
+  "name": "LFM2.5 2.6B",
+  "display_name": "LFM2.5 2.6B",
+  "publisher": "Liquid AI",
+  "updated_at": "2026-08-23",
+  "summary": "A compact hybrid convolution-and-attention model with a stock-upstream, one-card B70 package and measured serving, decode-depth, and prefill-depth profiles through 32K active context.",
+  "architecture": {
+    "class": "LFM2ForCausalLM",
+    "model_type": "lfm2",
+    "type": "hybrid convolution and attention",
+    "layers": 30,
+    "hidden_size": 2048,
+    "native_context_tokens": 131072,
+    "evidence": "repro/lfm25-26b-q8-b70/README.md"
+  },
+  "weight_revisions": [
+    {
+      "id": "lfm2.5-2.6b",
+      "label": "LFM2.5 2.6B",
+      "role": "current measured weights",
+      "model_manifest": "repro/lfm25-26b-q8-b70/model-manifest.json"
+    }
+  ],
+  "transfer_scope": {
+    "status": "one measured weight revision; quantization and runtime paths require independent gates",
+    "transfers": [
+      "stock llama.cpp LFM2 registration and SYCL execution path",
+      "the package's model-file verification and one-card launch procedure"
+    ],
+    "does_not_transfer": [
+      "Q8_0 quality or speed to another quantization",
+      "the raw llama-bench depth curve to HTTP serving throughput",
+      "the 32K measured depth trend to the model's unmeasured 131K native limit",
+      "multi-card scaling"
+    ],
+    "evidence": "repro/lfm25-26b-q8-b70/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "high",
+      "scope": "small local model on one B70",
+      "basis": "The measured Q8_0 file is 2.88 GB and the stock-upstream package leaves substantial memory headroom on one 32 GiB B70.",
+      "reviewed_at": "2026-08-23"
+    },
+    "quality_evidence": {
+      "band": "scoped-deployment-evidence",
+      "scope": "Q8_0 objective canaries and repeat stability; not a cross-model capability score",
+      "evidence": [
+        "repro/lfm25-26b-q8-b70/README.md",
+        "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+      ]
+    },
+    "popularity": {
+      "state": "not-scored",
+      "reason": "No dated family-level popularity snapshot is stored."
+    }
+  },
+  "dimensions": {
+    "weight_revision": ["lfm2.5-2.6b"],
+    "weight_quantization": ["Q8_0"],
+    "runtime": ["llama.cpp SYCL"],
+    "tp": [1, 2, 4],
+    "mtp": [0],
+    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "configured_max_context_tokens": [8192, 32768, 131072],
+    "graph": ["not separately varied"],
+    "kv": ["f16"]
+  },
+  "packets": [
+    {
+      "id": "lfm25-26b-q8-b70",
+      "label": "LFM2.5 2.6B Q8_0 · TP1",
+      "revision": "lfm2.5-2.6b",
+      "quantization": "Q8_0",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "candidate",
+      "evidence_level": "B70-verified",
+      "coverage": ["decode", "prefill", "active context through 32K", "quality", "stock upstream"],
+      "projection": {
+        "model": "lfm2.5_2.6b",
+        "quant": "Q8_0",
+        "runtime": "llama_cpp",
+        "spec": "none"
+      },
+      "manifest": "packages/lfm25-26b-q8-b70/package.json"
+    }
+  ],
+  "run_measurements": [
+    {
+      "id": "lfm25-q8-tp1-serving-standard",
+      "state": "lab-measured",
+      "revision": "lfm2.5-2.6b",
+      "variant": "Q8_0",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "config": {
+        "tp": 1,
+        "mtp": 0,
+        "graph": "not separately varied",
+        "kv": "f16",
+        "configured_max_context_tokens": 8192
+      },
+      "workload": "two fresh servers; cold 12-prompt suite; 512-token responses; conventional 99-interval median; target-only; cache-zero",
+      "metrics": {
+        "decode_tok_s": [132.351606, 132.467576]
+      },
+      "quality": "8-repeat hash stability, arithmetic, exact-copy, and JSON-schema canaries passed; answers were correct but the model emitted untagged reasoning prose",
+      "evidence": "repro/lfm25-26b-q8-b70/README.md"
+    }
+  ],
+  "series_measurements": [
+    {
+      "id": "lfm25-q8-tp1-f16-depth-sweep",
+      "state": "lab-measured",
+      "revision": "lfm2.5-2.6b",
+      "variant": "Q8_0",
+      "runtime": "llama.cpp bench 9fee29e",
+      "config": {
+        "tp": 1,
+        "mtp": 0,
+        "graph": "not separately varied",
+        "kv": "f16"
+      },
+      "workload": "raw llama-bench pp2048 plus tg128 at each existing-context depth; FlashAttention on; five repetitions",
+      "points": [
+        {"x": 0, "decode_tok_s": 135.198135, "prefill_tok_s": 9130.854812},
+        {"x": 2048, "decode_tok_s": 131.259551, "prefill_tok_s": 4699.373204},
+        {"x": 4096, "decode_tok_s": 127.211224, "prefill_tok_s": 4584.945629},
+        {"x": 8192, "decode_tok_s": 120.195857, "prefill_tok_s": 4399.719712},
+        {"x": 16384, "decode_tok_s": 107.980065, "prefill_tok_s": 3752.42491},
+        {"x": 24576, "decode_tok_s": 98.138413, "prefill_tok_s": 3698.15006},
+        {"x": 32768, "decode_tok_s": 89.93812, "prefill_tok_s": 2824.910192}
+      ],
+      "quality": "raw engine shape characterization, not a language-quality gate or HTTP serving result",
+      "evidence": "repro/lfm25-26b-q8-b70/lfm25-26b-q8.sweep.json"
+    }
+  ],
+  "views": [
+    {
+      "id": "lfm-serving-operating-point",
+      "title": "Serving repeat",
+      "subtitle": "Q8_0 · TP1 · 8K configured · f16 KV · cold 12-prompt cache-zero suite",
+      "x_label": "tensor parallel cards",
+      "discrete": true,
+      "metrics": ["decode_tok_s"],
+      "series": [
+        {
+          "label": "fresh-server repeats",
+          "measurement_ids": ["lfm25-q8-tp1-serving-standard"],
+          "x_from": "config.tp"
+        }
+      ]
+    },
+    {
+      "id": "lfm-context-depth",
+      "title": "Active context depth",
+      "subtitle": "Q8_0 · TP1 · f16 KV · raw llama-bench pp2048/tg128; raw engine rates are not serving medians",
+      "x_label": "existing context tokens",
+      "metrics": ["decode_tok_s", "prefill_tok_s"],
+      "series": [
+        {
+          "label": "Q8_0",
+          "measurement_ids": ["lfm25-q8-tp1-f16-depth-sweep"]
+        }
+      ]
+    }
+  ],
+  "coverage_views": [
+    {
+      "id": "lfm-q8-target-only",
+      "label": "Q8_0 · target only",
+      "fixed": "LFM2.5 2.6B Q8_0 · llama.cpp SYCL · f16 KV · MTP is not used. TP1 has serving and raw-depth evidence; TP2/TP4 have not been measured.",
+      "decision_note": "Missing topologies are unknown, not zero or unsupported.",
+      "evidence": "repro/lfm25-26b-q8-b70/README.md",
+      "rows": [0],
+      "columns": [1, 2, 4],
+      "cells": {
+        "0:1": {"state": "lab-measured", "label": "serving + depth", "evidence_id": "lfm25-q8-tp1-serving-standard"},
+        "0:2": {"state": "missing", "label": "not measured", "reason": "No TP2 LFM2.5 Q8_0 result is stored."},
+        "0:4": {"state": "missing", "label": "not measured", "reason": "No TP4 LFM2.5 Q8_0 result is stored."}
+      }
+    }
+  ],
+  "family_closures": [],
+  "estimates": []
+}

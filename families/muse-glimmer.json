@@ -1,0 +1,375 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "muse-glimmer",
+  "name": "Muse-Glimmer 30B",
+  "display_name": "Muse-Glimmer 30B",
+  "publisher": "Meta Models",
+  "updated_at": "2026-08-23",
+  "summary": "A dense multimodal family with banked BF16 service evidence, a closed four-card Q8/WOQ plus DFlash record, and separate measured quantization, topology, metric-accounting, and quality boundaries.",
+  "architecture": {
+    "class": "dense causal transformer plus perception encoder",
+    "model_type": "Muse-Glimmer",
+    "layers": 52,
+    "hidden_size": 6656,
+    "vocab_size": 202048,
+    "attention_heads": 32,
+    "kv_heads": 2,
+    "head_dim": 128,
+    "attention_pattern": ["local", "local", "local", "global"],
+    "local_window_tokens": 2048,
+    "native_context_tokens": 131072,
+    "draft": "DFlash assistant: 5 layers, block size 16, target-verified proposals",
+    "evidence": "experiments/muse-glimmer-30b-b70/README.md"
+  },
+  "weight_revisions": [
+    {
+      "id": "muse-glimmer-30b",
+      "label": "Muse-Glimmer 30B",
+      "role": "current measured weights",
+      "model_manifest": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/manifests/models.json"
+    }
+  ],
+  "transfer_scope": {
+    "status": "shared architecture; each target quantization, draft artifact, topology, and modality requires its own gate",
+    "transfers": [
+      "Muse-Glimmer llama.cpp model registration and tensor geometry",
+      "DFlash target-verification semantics",
+      "the family-specific attention, vision, and draft-feature plumbing where the same tensor path is independently exercised"
+    ],
+    "does_not_transfer": [
+      "BF16 exactness to Q8 or kquant target weights",
+      "Q8/WOQ speed to the BF16 service",
+      "text-only Q8 record quality to vision/mmproj",
+      "first-100 throughput to full-natural completion throughput",
+      "fleet aggregate throughput to single-request latency"
+    ],
+    "evidence": "results/muse-glimmer-30b-q8-woq-b70/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "multi-card",
+      "scope": "BF16 and near-lossless local deployment",
+      "basis": "BF16 service uses two two-card replicas; the promoted UD-Q8_K_XL plus BF16 draft record uses TP4. Single-card near-lossless plus draft is fit-blocked on the measured envelope.",
+      "reviewed_at": "2026-08-23"
+    },
+    "quality_evidence": {
+      "band": "strong-but-variant-scoped",
+      "scope": "BF16 deterministic controls and target-verified Q8/DFlash task gates; Q8 is not lossless or universally token-exact, and the kquant quality tier is external rather than a lab quality gate",
+      "evidence": [
+        "results/muse-glimmer-30b-q8-woq-b70/validity-gates.md",
+        "experiments/muse-glimmer-30b-b70/CAMPAIGN-100.md"
+      ]
+    },
+    "popularity": {
+      "state": "not-scored",
+      "reason": "No dated family-level popularity snapshot is stored."
+    }
+  },
+  "dimensions": {
+    "weight_revision": ["muse-glimmer-30b"],
+    "weight_quantization": ["BF16", "UD-Q8_K_XL", "UD-Q6_K_XL", "kquant-dynamic"],
+    "runtime": ["llama.cpp SYCL upstream", "llama.cpp SYCL patched Muse stack"],
+    "tp": [1, 2, 4],
+    "mtp": [0],
+    "speculative_method": ["none", "DFlash"],
+    "dflash_n_max": [0, 4, 5, 6, 15],
+    "draft_quantization": ["BF16", "kquant"],
+    "active_context_tokens": [0, 32768, 65536, 131072],
+    "configured_max_context_tokens": [32768, 65536, 131072],
+    "graph": ["off"],
+    "kv": ["f16"]
+  },
+  "packets": [
+    {
+      "id": "muse-glimmer-30b-q8-woq-b70-100tps-20260813",
+      "label": "Muse-Glimmer 30B Q8/WOQ + DFlash · TP4",
+      "revision": "muse-glimmer-30b",
+      "quantization": "UD-Q8_K_XL target / BF16 draft",
+      "runtime": "llama.cpp SYCL patched Muse stack",
+      "cards": 4,
+      "status": "closed-banked-record",
+      "evidence_level": "B70-verified",
+      "coverage": ["decode", "DFlash", "target verification", "quality", "repeat statistics", "recipe"],
+      "projection": {
+        "model": "muse_glimmer_30b",
+        "quant": "UD-Q8_K_XL",
+        "runtime": "llama_cpp",
+        "spec": "draft_model:15",
+        "strategy": "tensor"
+      },
+      "manifest": "packages/muse-glimmer-30b-q8-woq-b70/package.json"
+    },
+    {
+      "id": "muse-glimmer-30b-bf16-fleet",
+      "label": "Muse-Glimmer 30B BF16 + DFlash fleet",
+      "revision": "muse-glimmer-30b",
+      "quantization": "BF16 target",
+      "runtime": "llama.cpp SYCL patched Muse stack",
+      "cards": 4,
+      "status": "banked-service-runbook-inactive-at-last-workspace-check",
+      "evidence_level": "B70-verified operations",
+      "coverage": ["text", "vision", "65K service", "two replicas", "quality caveats", "operations"],
+      "manifest": "docs/muse-glimmer-bf16-service-runbook.md"
+    },
+    {
+      "id": "muse-glimmer-30b-kquant-fleet-research",
+      "label": "Muse-Glimmer 30B kquant-dynamic fleet",
+      "revision": "muse-glimmer-30b",
+      "quantization": "kquant-dynamic target",
+      "runtime": "llama.cpp SYCL upstream",
+      "cards": 4,
+      "status": "research-only-external-quality-tier",
+      "evidence_level": "B70 speed measured; quality tier external",
+      "coverage": ["decode", "DFlash", "fleet topology", "no lab quality equivalence"],
+      "manifest": "experiments/muse-glimmer-30b-b70/sweeps/20260810-fleet-frontier-decision.md"
+    }
+  ],
+  "run_measurements": [
+    {
+      "id": "muse-q8-woq-tp4-canonical-256",
+      "state": "lab-measured",
+      "revision": "muse-glimmer-30b",
+      "variant": "UD-Q8_K_XL target + fixed-N16 Q8 WOQ + BF16 DFlash",
+      "runtime": "llama.cpp SYCL 030ebb558 plus record patch; head 1ff6bcb6c",
+      "config": {"tp": 4, "mtp": 0, "speculative_method": "DFlash", "dflash_n_max": 15, "dflash_p_min": 0, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "two fresh canonical three-prompt runs; prose, code, and JSON; 256 generated tokens; arithmetic mean across prompts",
+      "metrics": {"decode_tok_s": [100.08833333333332, 100.64866666666667]},
+      "quality": "both means exceeded 100; code and JSON target/spec token-exact at 256; prose used a target-approved near-tie branch; not BF16, lossless, or universally exact",
+      "evidence": "data/muse-q8-woq-argmax-century-20260813.json"
+    },
+    {
+      "id": "muse-q8-woq-tp4-realistic-first100",
+      "state": "lab-measured",
+      "revision": "muse-glimmer-30b",
+      "variant": "UD-Q8_K_XL target + fixed-N16 Q8 WOQ + BF16 DFlash",
+      "runtime": "llama.cpp SYCL record stack",
+      "config": {"tp": 4, "mtp": 0, "speculative_method": "DFlash", "dflash_n_max": 15, "dflash_p_min": 0, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "frozen 15-prompt cold suite; conventional timestamps 1-100 / 99 intervals; all cache-zero",
+      "metrics": {"decode_tok_s": [161.89958040164998]},
+      "distribution": {"p10_tok_s": 108.57350121634562, "mean_tok_s": 175.8127692044467, "minimum_tok_s": 82.46992218829477, "bootstrap_95_lower_tok_s": 127.08191057486525},
+      "quality": "15/15 measurable and cache-zero; first-100 accounting is distinct from full-natural completion and does not imply every prompt exceeds 100",
+      "evidence": "data/muse-q8-woq-argmax-century-20260813.json"
+    },
+    {
+      "id": "muse-q8-woq-tp4-realistic-full-natural",
+      "state": "lab-measured",
+      "revision": "muse-glimmer-30b",
+      "variant": "UD-Q8_K_XL target + fixed-N16 Q8 WOQ + BF16 DFlash",
+      "runtime": "llama.cpp SYCL record stack",
+      "config": {"tp": 4, "mtp": 0, "speculative_method": "DFlash", "dflash_n_max": 15, "dflash_p_min": 0, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "same frozen 15-prompt cold suite; full natural completion median after TTFT",
+      "metrics": {"decode_tok_s": [68.58553673881232]},
+      "quality": "same target-verification boundary as the promoted Q8 packet; stored separately from the first-100 metric",
+      "evidence": "data/muse-q8-woq-argmax-century-20260813.json"
+    },
+    {
+      "id": "muse-q8-upstream-tp2-dflash-n5",
+      "state": "lab-measured",
+      "revision": "muse-glimmer-30b",
+      "variant": "UD-Q8_K_XL target + kquant DFlash",
+      "runtime": "llama.cpp SYCL upstream 030ebb558",
+      "config": {"tp": 2, "mtp": 0, "speculative_method": "DFlash", "dflash_n_max": 5, "dflash_p_min": 0.1, "graph": "off", "kv": "f16"},
+      "workload": "fresh-server greedy 256-token three-class frontier; per-replica arithmetic mean",
+      "metrics": {"decode_tok_s": [38.0]},
+      "quality": "near-lossless Q8 research profile; upstream quant kernels were nondeterministic and this is not the later promoted TP4 Q8/WOQ identity",
+      "evidence": "experiments/muse-glimmer-30b-b70/sweeps/20260810-fleet-frontier-decision.md"
+    },
+    {
+      "id": "muse-bf16-upstream-tp2-target-only",
+      "state": "lab-measured",
+      "revision": "muse-glimmer-30b",
+      "variant": "BF16 target",
+      "runtime": "llama.cpp SYCL upstream 030ebb558",
+      "config": {"tp": 2, "mtp": 0, "speculative_method": "none", "graph": "off", "kv": "f16"},
+      "workload": "fresh-server greedy 256-token three-class frontier; per-replica arithmetic mean",
+      "metrics": {"decode_tok_s": [9.847]},
+      "quality": "fully deterministic across repeats on all three classes",
+      "evidence": "experiments/muse-glimmer-30b-b70/sweeps/20260810-fleet-frontier-decision.md"
+    },
+    {
+      "id": "muse-bf16-upstream-tp2-dflash-n5",
+      "state": "lab-measured",
+      "revision": "muse-glimmer-30b",
+      "variant": "BF16 target + kquant DFlash",
+      "runtime": "llama.cpp SYCL upstream 030ebb558",
+      "config": {"tp": 2, "mtp": 0, "speculative_method": "DFlash", "dflash_n_max": 5, "dflash_p_min": 0.1, "graph": "off", "kv": "f16"},
+      "workload": "fresh-server greedy 256-token three-class frontier; per-replica arithmetic mean",
+      "metrics": {"decode_tok_s": [28.7]},
+      "quality": "lossless target; code and JSON byte-exact versus no-spec at every tested depth; prose remained a near-tie variant with the kquant drafter in the loop",
+      "evidence": "experiments/muse-glimmer-30b-b70/sweeps/20260810-fleet-frontier-decision.md"
+    },
+    {
+      "id": "muse-dynamic-upstream-tp1-target-only",
+      "state": "lab-measured",
+      "revision": "muse-glimmer-30b",
+      "variant": "kquant-dynamic target",
+      "runtime": "llama.cpp SYCL upstream 030ebb558",
+      "config": {"tp": 1, "mtp": 0, "speculative_method": "none", "graph": "off", "kv": "f16"},
+      "workload": "fresh-server greedy 256-token three-class frontier; per-replica arithmetic mean",
+      "metrics": {"decode_tok_s": [24.2]},
+      "quality": "speed measured in the lab; the stated 0.2% degradation tier comes from Meta, not a matching lab quality gate; repeats diverged on all three classes",
+      "evidence": "experiments/muse-glimmer-30b-b70/sweeps/20260810-fleet-frontier-decision.md"
+    },
+    {
+      "id": "muse-dynamic-upstream-tp1-dflash-n4",
+      "state": "lab-measured",
+      "revision": "muse-glimmer-30b",
+      "variant": "kquant-dynamic target + kquant DFlash",
+      "runtime": "llama.cpp SYCL upstream 030ebb558",
+      "config": {"tp": 1, "mtp": 0, "speculative_method": "DFlash", "dflash_n_max": 4, "dflash_p_min": 0.1, "graph": "off", "kv": "f16"},
+      "workload": "fresh-server greedy 256-token three-class frontier; per-replica arithmetic mean; four independent replicas produce 109.2 tok/s aggregate",
+      "metrics": {"decode_tok_s": [27.3]},
+      "quality": "speed measured in the lab; the stated 0.2% degradation tier comes from Meta, not a matching lab quality gate",
+      "evidence": "experiments/muse-glimmer-30b-b70/sweeps/20260810-fleet-frontier-decision.md"
+    }
+  ],
+  "series_measurements": [
+    {
+      "id": "muse-q8-woq-canonical-run1-classes",
+      "state": "lab-measured",
+      "revision": "muse-glimmer-30b",
+      "variant": "UD-Q8_K_XL target + fixed-N16 Q8 WOQ + BF16 DFlash",
+      "runtime": "llama.cpp SYCL record stack",
+      "config": {"tp": 4, "mtp": 0, "speculative_method": "DFlash", "dflash_n_max": 15, "graph": "off", "kv": "f16"},
+      "workload": "canonical full-256 fresh run 1; x=1 prose, 2 code, 3 JSON",
+      "points": [
+        {"x": 1, "decode_tok_s": 71.583},
+        {"x": 2, "decode_tok_s": 106.436},
+        {"x": 3, "decode_tok_s": 122.246}
+      ],
+      "quality": "code and JSON exact; prose target-approved near-tie divergent",
+      "evidence": "data/muse-q8-woq-argmax-century-20260813.json"
+    },
+    {
+      "id": "muse-q8-woq-canonical-run2-classes",
+      "state": "lab-measured",
+      "revision": "muse-glimmer-30b",
+      "variant": "UD-Q8_K_XL target + fixed-N16 Q8 WOQ + BF16 DFlash",
+      "runtime": "llama.cpp SYCL record stack",
+      "config": {"tp": 4, "mtp": 0, "speculative_method": "DFlash", "dflash_n_max": 15, "graph": "off", "kv": "f16"},
+      "workload": "canonical full-256 fresh run 2; x=1 prose, 2 code, 3 JSON",
+      "points": [
+        {"x": 1, "decode_tok_s": 72.487},
+        {"x": 2, "decode_tok_s": 106.673},
+        {"x": 3, "decode_tok_s": 122.786}
+      ],
+      "quality": "code and JSON exact; prose target-approved near-tie divergent",
+      "evidence": "data/muse-q8-woq-argmax-century-20260813.json"
+    },
+    {
+      "id": "muse-bf16-final-kernel-stack-classes",
+      "state": "lab-measured",
+      "revision": "muse-glimmer-30b",
+      "variant": "BF16 target + BF16 DFlash research stack",
+      "runtime": "llama.cpp SYCL patched Muse kernel campaign",
+      "config": {"tp": 4, "mtp": 0, "speculative_method": "DFlash", "dflash_n_max": 15, "dflash_p_min": 0.15, "graph": "off", "kv": "f16"},
+      "workload": "fixed cold three-class general suite; x=1 prose, 2 code, 3 JSON; arithmetic mean 64.012 tok/s",
+      "points": [
+        {"x": 1, "decode_tok_s": 45.728},
+        {"x": 2, "decode_tok_s": 66.028},
+        {"x": 3, "decode_tok_s": 80.281}
+      ],
+      "quality": "canonical hashes and accepted counts unchanged; optimizations remained default-off pending a production-quality gate; BF16 century objective closed",
+      "evidence": "experiments/muse-glimmer-30b-b70/CAMPAIGN-100.md"
+    }
+  ],
+  "views": [
+    {
+      "id": "muse-q8-canonical-classes",
+      "title": "Q8 canonical classes",
+      "subtitle": "TP4 · full 256 tokens · x=1 prose, 2 code, 3 JSON · two fresh servers; prompt arithmetic means are stored separately",
+      "x_label": "prompt class index",
+      "discrete": true,
+      "metrics": ["decode_tok_s"],
+      "series": [
+        {"label": "fresh run 1", "measurement_ids": ["muse-q8-woq-canonical-run1-classes"]},
+        {"label": "fresh run 2", "measurement_ids": ["muse-q8-woq-canonical-run2-classes"]}
+      ]
+    },
+    {
+      "id": "muse-research-frontier",
+      "title": "Quantization and topology profiles",
+      "subtitle": "Older upstream 256-token three-class per-replica means; distinct quantization and speculation identities, shown as discrete points",
+      "x_label": "tensor parallel cards per replica",
+      "discrete": true,
+      "metrics": ["decode_tok_s"],
+      "series": [
+        {"label": "Q8 + DFlash n5", "measurement_ids": ["muse-q8-upstream-tp2-dflash-n5"], "x_from": "config.tp"},
+        {"label": "BF16 target-only", "measurement_ids": ["muse-bf16-upstream-tp2-target-only"], "x_from": "config.tp"},
+        {"label": "BF16 + DFlash n5", "measurement_ids": ["muse-bf16-upstream-tp2-dflash-n5"], "x_from": "config.tp"},
+        {"label": "dynamic target-only", "measurement_ids": ["muse-dynamic-upstream-tp1-target-only"], "x_from": "config.tp"},
+        {"label": "dynamic + DFlash n4", "measurement_ids": ["muse-dynamic-upstream-tp1-dflash-n4"], "x_from": "config.tp"}
+      ]
+    },
+    {
+      "id": "muse-bf16-final-classes",
+      "title": "BF16 kernel-campaign closeout",
+      "subtitle": "TP4 · fixed cold prose/code/JSON classes · arithmetic mean 64.012; default-off research stack, not the banked service identity",
+      "x_label": "prompt class index",
+      "discrete": true,
+      "metrics": ["decode_tok_s"],
+      "series": [
+        {"label": "BF16 closeout", "measurement_ids": ["muse-bf16-final-kernel-stack-classes"]}
+      ]
+    }
+  ],
+  "coverage_views": [
+    {
+      "id": "muse-q8-dflash",
+      "label": "UD-Q8_K_XL · DFlash",
+      "fixed": "Muse-Glimmer UD-Q8_K_XL · f16 KV · DFlash target verification · MTP is not used. TP2 is older upstream research; TP4 is the separate promoted Q8/WOQ record stack.",
+      "decision_note": "Do not compare the TP2 and TP4 rates as a scaling curve: runtime, DFlash depth, and WOQ implementation differ.",
+      "evidence": "results/muse-glimmer-30b-q8-woq-b70/README.md",
+      "rows": [0],
+      "columns": [1, 2, 4],
+      "cells": {
+        "0:1": {"state": "closed", "label": "fit blocked", "reason": "The near-lossless target plus drafter exceeds the measured one-card envelope."},
+        "0:2": {"state": "lab-measured", "label": "upstream research", "evidence_id": "muse-q8-upstream-tp2-dflash-n5"},
+        "0:4": {"state": "lab-measured", "label": "promoted record", "evidence_id": "muse-q8-woq-tp4-canonical-256"}
+      }
+    },
+    {
+      "id": "muse-bf16-dflash",
+      "label": "BF16 · DFlash",
+      "fixed": "Muse-Glimmer BF16 target · f16 KV · DFlash · MTP is not used. TP2 covers the upstream/fleet-shaped profile; TP4 is a default-off kernel-campaign closeout, not the banked two-replica service identity.",
+      "decision_note": "The original BF16-only 100 tok/s single-request objective is closed; BF16 remains supported for service and exact-reference use.",
+      "evidence": "experiments/muse-glimmer-30b-b70/CAMPAIGN-100.md",
+      "rows": [0],
+      "columns": [1, 2, 4],
+      "cells": {
+        "0:1": {"state": "unsupported", "label": "target does not fit", "reason": "The 55.7 GB BF16 target requires at least two 32 GiB cards in the tested layouts."},
+        "0:2": {"state": "lab-measured", "label": "service/research", "evidence_id": "muse-bf16-upstream-tp2-dflash-n5"},
+        "0:4": {"state": "lab-measured", "label": "64.012 closeout", "evidence_id": "muse-bf16-final-kernel-stack-classes"}
+      }
+    },
+    {
+      "id": "muse-dynamic-dflash",
+      "label": "kquant-dynamic · DFlash",
+      "fixed": "Muse-Glimmer kquant-dynamic · one-card replicas · DFlash n4 · MTP is not used. The four-card fleet figure is four independent TP1 replicas, not TP4.",
+      "decision_note": "Speed was measured in the lab; the 0.2% quality tier is externally reported and is not a matching lab quality result.",
+      "evidence": "experiments/muse-glimmer-30b-b70/sweeps/20260810-fleet-frontier-decision.md",
+      "rows": [0],
+      "columns": [1, 2, 4],
+      "cells": {
+        "0:1": {"state": "lab-measured", "label": "27.3 / replica", "evidence_id": "muse-dynamic-upstream-tp1-dflash-n4"},
+        "0:2": {"state": "missing", "label": "not measured", "reason": "No comparable TP2 kquant-dynamic DFlash result is stored."},
+        "0:4": {"state": "missing", "label": "not TP4", "reason": "The 109.2 tok/s fleet observation is four TP1 replicas, not one TP4 request."}
+      }
+    }
+  ],
+  "family_closures": [
+    {
+      "selectors": {"revision": "muse-glimmer-30b", "variant": "UD-Q8_K_XL target + DFlash", "tp": 1},
+      "state": "closed",
+      "reason": "The near-lossless target and DFlash buffers exceed the measured single-card memory envelope; reopening requires a source-level memory reduction.",
+      "evidence": "experiments/muse-glimmer-30b-b70/README.md"
+    },
+    {
+      "selectors": {"revision": "muse-glimmer-30b", "variant": "BF16 target", "objective": "single-request three-class mean >=100 tok/s"},
+      "state": "closed",
+      "reason": "The final exact kernel stack reached a 64.012 tok/s three-class mean. The original lossless BF16 century objective remained unmet and was not retroactively satisfied by the Q8 successor.",
+      "evidence": "experiments/muse-glimmer-30b-b70/CAMPAIGN-100.md"
+    }
+  ],
+  "estimates": []
+}

@@ -1,0 +1,223 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "gemma-4",
+  "name": "Gemma 4",
+  "display_name": "Gemma 4 · 26B A4B",
+  "publisher": "Google",
+  "updated_at": "2026-08-23",
+  "summary": "A one-card Intel Arc Pro B70 deployment family for the Gemma 4 26B A4B MoE target, with a UD-Q8_K_XL verifier and a separately quantized Q4_0 MTP draft.",
+  "architecture": {
+    "class": "Gemma 4 26B A4B MoE",
+    "design": "sparse mixture of experts",
+    "total_parameters_approx": 25200000000,
+    "active_parameters_approx": 3800000000,
+    "layers": 30,
+    "vocab_size": 262144,
+    "experts": 128,
+    "active_experts": 8,
+    "shared_experts": 1,
+    "trained_context_tokens": 262144,
+    "architecture_modalities": ["text", "image"],
+    "packaged_modalities": ["text"],
+    "evidence": "results/gemma4-26b-a4b-q8-b70/model-options.md"
+  },
+  "weight_revisions": [
+    {
+      "id": "gemma4-26b-a4b-it-gguf-3bb10d5",
+      "label": "Gemma 4 26B A4B IT · UD-Q8_K_XL target",
+      "role": "target/verifier checkpoint",
+      "repository": "unsloth/gemma-4-26B-A4B-it-GGUF",
+      "revision": "3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a",
+      "model_manifest": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/model-manifest.json"
+    }
+  ],
+  "auxiliary_artifacts": [
+    {
+      "id": "gemma4-26b-a4b-it-mtp-q4-local",
+      "label": "Gemma 4 26B A4B IT · locally derived Q4_0 MTP draft",
+      "role": "speculative draft checkpoint; not a family weight revision or target quantization",
+      "repository": "unsloth/gemma-4-26B-A4B-it-GGUF",
+      "source_revision": "3bb10d594514ef4edb7f3a65d41a7e4eb8c5767a",
+      "identity_status": "reconstructed reference is repeat-stable; historical local draft hash and byte identity were not retained",
+      "model_manifest": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/model-manifest.json"
+    }
+  ],
+  "transfer_scope": {
+    "status": "single pinned target revision and reconstructed auxiliary draft path",
+    "transfers": [
+      "The source reconstruction, target-verified MTP path, and B70-specific llama.cpp/SYCL patch stack transfer only when the pinned target revision, draft preparation, runtime revision, and gate identity are preserved.",
+      "The context profile describes the same package family but a different operating profile from the short-context headline."
+    ],
+    "does_not_transfer": [
+      "performance to other Gemma 4 sizes or target quantizations",
+      "performance to multimodal requests",
+      "the package headline to the long-context service profile",
+      "historical local draft binary identity from the reconstructed reference",
+      "the 262K trained context limit as a measured 262K service result"
+    ],
+    "evidence": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "high",
+      "scope": "one-card text deployment on Intel Arc Pro B70",
+      "basis": "The pinned UD-Q8_K_XL target plus Q4_0 MTP draft has a qualified one-card lane and a measured cache-zero service profile through 32,571 active tokens.",
+      "reviewed_at": "2026-08-23"
+    },
+    "quality_evidence": {
+      "band": "strong-deployment-evidence",
+      "scope": "fixed-suite target-verified MTP output integrity and service-ladder exact JSON retrieval; not a general intelligence or multimodal score",
+      "evidence": [
+        "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json",
+        "data/gemma4-26b-a4b-q8-b70-context-performance-profile-20260702.json"
+      ]
+    },
+    "popularity": {
+      "state": "not-scored",
+      "reason": "No dated family-level popularity snapshot is stored for this exact checkpoint and deployment variant."
+    }
+  },
+  "dimensions": {
+    "weight_revision": ["gemma4-26b-a4b-it-gguf-3bb10d5"],
+    "target_quantization": ["UD-Q8_K_XL"],
+    "draft_quantization": ["Q4_0 MTP"],
+    "runtime": ["llama.cpp SYCL"],
+    "cards": [1],
+    "tp": [1],
+    "speculative_method": ["target-verified MTP"],
+    "draft_depth": [3, 7],
+    "active_context_tokens": [741, 2806, 5643, 10976, 16213, 22730, 30400, 32571],
+    "configured_max_context_tokens": [8192, 32768],
+    "kv": ["f16"]
+  },
+  "packets": [
+    {
+      "id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
+      "label": "Gemma 4 26B A4B UD-Q8_K_XL · TP1 + MTP3",
+      "revision": "gemma4-26b-a4b-it-gguf-3bb10d5",
+      "quantization": "UD-Q8_K_XL target + Q4_0 MTP draft",
+      "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0",
+      "cards": 1,
+      "status": "candidate",
+      "evidence_level": "B70-verified source reconstruction",
+      "coverage": ["decode", "TTFT", "active context", "prefill approximation", "quality", "recipe"],
+      "projection": {"model": "gemma4_26b_a4b", "quant": "UD-Q8_K_XL", "runtime": "llama_cpp", "spec": "mtp:3"},
+      "manifest": "packages/gemma4-26b-a4b-q8-b70/package.json"
+    },
+    {
+      "id": "gemma4-26b-a4b-q8-b70-95tps-20260624",
+      "label": "Gemma 4 26B A4B UD-Q8_K_XL · historical TP1 + MTP7",
+      "revision": "gemma4-26b-a4b-it-gguf-3bb10d5",
+      "quantization": "UD-Q8_K_XL target + Q4_0 MTP draft",
+      "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0",
+      "cards": 1,
+      "status": "superseded-historical-reproduction",
+      "evidence_level": "B70-verified history",
+      "coverage": ["decode", "quality", "recipe"],
+      "manifest": "repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md"
+    }
+  ],
+  "run_measurements": [
+    {
+      "id": "gemma4-q8-tp1-mtp3-short-record",
+      "state": "lab-measured",
+      "revision": "gemma4-26b-a4b-it-gguf-3bb10d5",
+      "variant": "UD-Q8_K_XL target + locally derived Q4_0 MTP draft",
+      "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0",
+      "config": {"cards": 1, "tp": 1, "mtp": 3, "kv": "f16", "flash_attention": "on", "configured_max_context_tokens": 32768},
+      "workload": "12 unique cold prompts, 512-token output ceiling, cache zero; conventional 99-interval headline",
+      "metrics": {
+        "decode_tok_s": [123.72736943965285],
+        "ttft_ms": [178.6938319564797]
+      },
+      "quality": "512/512 canary passed; the historical 100-event compatibility figure is 124.97714084813418 tok/s and is not used as the conventional metric",
+      "evidence": "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json"
+    },
+    {
+      "id": "gemma4-q8-tp1-mtp7-historical-record",
+      "state": "lab-measured",
+      "revision": "gemma4-26b-a4b-it-gguf-3bb10d5",
+      "variant": "UD-Q8_K_XL target + locally derived Q4_0 MTP draft",
+      "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0",
+      "config": {"cards": 1, "tp": 1, "mtp": 7, "kv": "f16", "configured_max_context_tokens": 8192},
+      "workload": "historical filled-long prompt, 588 actual prompt tokens, 512 output tokens; first fresh response",
+      "metrics": {"decode_tok_s": [95.26352416631231]},
+      "quality": "384/384 chat canary passed and cached_tokens=0; superseded by the current package",
+      "evidence": "repro/gemma4-26b-a4b-q8-b70-95tps-20260624/results/summary-20260624T081218Z.json"
+    }
+  ],
+  "series_measurements": [
+    {
+      "id": "gemma4-q8-tp1-mtp-service-context",
+      "state": "lab-measured",
+      "revision": "gemma4-26b-a4b-it-gguf-3bb10d5",
+      "variant": "UD-Q8_K_XL target + locally derived Q4_0 MTP draft",
+      "runtime": "llama.cpp SYCL service stack",
+      "config": {"cards": 1, "tp": 1, "kv": "f16", "configured_max_context_tokens": 32768, "samples_per_point": 4},
+      "workload": "fixed deterministic long-context suite; each prompt once; cache zero; exact JSON retrieval; one active request; 128-token output ceiling; arithmetic mean across four independent one-B70 lanes; prefill approximated as prompt tokens divided by TTFT",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 741, "decode_tok_s": 161.89843663684636, "prefill_tok_s": 847.9619132833765, "ttft_ms": 873.9445414976217},
+        {"x": 2806, "decode_tok_s": 144.8662058096366, "prefill_tok_s": 1401.0150752344389, "ttft_ms": 2002.938948746305},
+        {"x": 5643, "decode_tok_s": 141.11391660033576, "prefill_tok_s": 1469.4385849395155, "ttft_ms": 3840.5072987661697},
+        {"x": 10976, "decode_tok_s": 135.93492558486764, "prefill_tok_s": 1330.3881630879202, "ttft_ms": 8250.644568965072},
+        {"x": 16213, "decode_tok_s": 127.63665710590647, "prefill_tok_s": 1256.9527613956354, "ttft_ms": 12899.11724528065},
+        {"x": 22730, "decode_tok_s": 120.48241930243164, "prefill_tok_s": 1128.9763236685953, "ttft_ms": 20134.24033729825},
+        {"x": 30400, "decode_tok_s": 114.00353788462567, "prefill_tok_s": 1028.1957534609096, "ttft_ms": 29567.641104455106},
+        {"x": 32571, "decode_tok_s": 114.8486529751413, "prefill_tok_s": 1001.687171893108, "ttft_ms": 32517.333841737127}
+      ],
+      "quality": "validated service sweep; this is a different operating profile from the short-context package headline",
+      "evidence": "data/gemma4-26b-a4b-q8-b70-context-performance-profile-20260702.json"
+    }
+  ],
+  "views": [
+    {
+      "id": "gemma4-context-profile",
+      "title": "Active-context service profile",
+      "subtitle": "Gemma 4 UD-Q8_K_XL target + Q4_0 MTP draft · TP1 llama.cpp · four-lane arithmetic means; prefill is prompt tokens / TTFT",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "prefill_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "measured service profile", "measurement_ids": ["gemma4-q8-tp1-mtp-service-context"]}
+      ]
+    },
+    {
+      "id": "gemma4-record-history",
+      "title": "Qualified short-record history",
+      "subtitle": "Distinct MTP depths and context contracts; values are shown as historical operating points, not a controlled depth comparison",
+      "x_label": "draft tokens",
+      "discrete": true,
+      "metrics": ["decode_tok_s"],
+      "series": [
+        {"label": "qualified records", "measurement_ids": ["gemma4-q8-tp1-mtp3-short-record", "gemma4-q8-tp1-mtp7-historical-record"], "x_from": "config.mtp"}
+      ]
+    }
+  ],
+  "family_closures": [
+    {
+      "selectors": {"revision": "gemma4-26b-a4b-it-gguf-3bb10d5", "cards": [2, 3, 4]},
+      "state": "missing",
+      "reason": "No qualified multi-card performance profile is stored for this exact target, draft, runtime, and gate identity.",
+      "evidence": "packages/gemma4-26b-a4b-q8-b70/package.json"
+    },
+    {
+      "selectors": {"revision": "gemma4-26b-a4b-it-gguf-3bb10d5", "active_context_tokens_above": 32571},
+      "state": "missing",
+      "reason": "The architecture's trained context capacity is not a measurement; the stored service sweep ends at 32,571 active tokens.",
+      "evidence": "data/gemma4-26b-a4b-q8-b70-context-performance-profile-20260702.json"
+    },
+    {
+      "selectors": {"revision": "gemma4-26b-a4b-it-gguf-3bb10d5", "modalities": "image"},
+      "state": "missing",
+      "reason": "The packaged and measured deployment is text-only; no multimodal package result is stored.",
+      "evidence": "packages/gemma4-26b-a4b-q8-b70/package.json"
+    },
+    {
+      "selectors": {"packet": "gemma4-26b-a4b-q8-b70-125tps-20260701", "replay": "clean-host"},
+      "state": "missing",
+      "reason": "The current package has not completed a clean-host rebuild and endpoint replay, and the historical local Q4_0 draft identity was not retained.",
+      "evidence": "packages/gemma4-26b-a4b-q8-b70/package.json"
+    }
+  ],
+  "estimates": []
+}

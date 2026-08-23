@@ -1,0 +1,785 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "qwen-27b",
+  "name": "Qwen 27B",
+  "display_name": "Qwen 27B · 3.6 → 3.8",
+  "publisher": "Qwen / Alibaba",
+  "updated_at": "2026-08-23",
+  "summary": "One architecture family, two measured weight revisions, and deployment variants spanning llama.cpp and vLLM on one, two, and four Intel Arc Pro B70 cards.",
+  "architecture": {
+    "class": "Qwen3_5ForConditionalGeneration",
+    "model_type": "qwen3_5_text",
+    "layers": 64,
+    "hidden_size": 5120,
+    "vocab_size": 248320,
+    "attention_heads": 24,
+    "kv_heads": 4,
+    "linear_key_heads": 16,
+    "linear_value_heads": 48,
+    "full_attention_interval": 4,
+    "mtp_hidden_layers": 1,
+    "evidence": "repro/qwen38-27b-autoround-int4-b70/README.md"
+  },
+  "weight_revisions": [
+    {
+      "id": "qwen3.6-27b",
+      "label": "Qwen3.6 27B",
+      "role": "previous weights",
+      "model_manifest": "repro/qwen36-27b-autoround-int4-b70/manifests/model.json"
+    },
+    {
+      "id": "qwen3.8-27b",
+      "label": "Qwen3.8 27B",
+      "role": "current weight update",
+      "model_manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model.json"
+    }
+  ],
+  "transfer_scope": {
+    "status": "architecture-matched; individual runtime paths require revision-specific exercise",
+    "transfers": [
+      "Qwen3.5-family model registration and MTP loading",
+      "AutoRound INC W4A16 routing and graph-safe XPU fixes",
+      "GDN state, recurrence, sampler, and vocabulary-shape optimizations",
+      "llama.cpp Qwen3.5-family SYCL kernels only where tensor type and runtime path also match and are independently gated"
+    ],
+    "does_not_transfer": [
+      "benchmark speed",
+      "output tokens or quality decisions",
+      "artifact hashes",
+      "quantization-specific performance",
+      "runtime support without an independent boot or path marker"
+    ],
+    "evidence": "repro/qwen38-27b-autoround-int4-b70/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "high",
+      "scope": "local-llm-on-b70",
+      "basis": "Current dense 27B weight update with validated one-, two-, and four-card lanes plus one-card long-context variants.",
+      "reviewed_at": "2026-08-23"
+    },
+    "quality_evidence": {
+      "band": "strong-deployment-evidence",
+      "scope": "current Qwen3.8 deployment integrity, quant/runtime correctness, repeat stability, and long-context canaries; not a Qwen3.6-wide or general intelligence score",
+      "evidence": [
+        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-quality-battery.json",
+        "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
+      ]
+    },
+    "popularity": {
+      "state": "not-scored",
+      "reason": "No dated family-level popularity snapshot is stored for the official Qwen3.8 base and its derived quant repositories yet."
+    }
+  },
+  "dimensions": {
+    "weight_revision": ["qwen3.6-27b", "qwen3.8-27b"],
+    "weight_quantization": ["AutoRound INT4", "Q4_K_M", "UD-Q5_K_S", "UD-Q4_K_XL", "Q8_0", "FP8"],
+    "runtime": ["vLLM XPU", "llama.cpp SYCL"],
+    "tp": [1, 2, 3, 4],
+    "mtp": [0, 1, 2, 3, 4, 5],
+    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "configured_max_context_tokens": [32768, 262144],
+    "graph": ["off", "on"],
+    "kv": ["f16", "q8_0", "fp8_e4m3", "fp8_e5m2"]
+  },
+  "packets": [
+    {
+      "id": "qwen38-27b-q4km-tp1-b70",
+      "label": "Qwen3.8 Q4_K_M · TP1",
+      "revision": "qwen3.8-27b",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "candidate",
+      "evidence_level": "B70-verified",
+      "coverage": ["decode", "context", "prefill", "quality"],
+      "projection": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none"},
+      "manifest": "packages/qwen38-27b-q4km-tp1-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-q4km-tp2-asrock-b70",
+      "label": "Qwen3.8 Q4_K_M · TP2",
+      "revision": "qwen3.8-27b",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL",
+      "cards": 2,
+      "status": "candidate",
+      "evidence_level": "B70-verified",
+      "coverage": ["decode", "TTFT", "quality", "recipe"],
+      "projection": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "strategy": "tensor"},
+      "manifest": "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-q8-tp2-asrock-b70",
+      "label": "Qwen3.8 Q8_0 · TP2",
+      "revision": "qwen3.8-27b",
+      "quantization": "Q8_0",
+      "runtime": "llama.cpp SYCL",
+      "cards": 2,
+      "status": "candidate-with-identity-caveat",
+      "evidence_level": "B70-verified measurement",
+      "coverage": ["decode", "quality"],
+      "manifest": "packages/qwen38-27b-q8-tp2-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-fp8-vllm-tp2-asrock-b70",
+      "label": "Qwen3.8 FP8 · TP2",
+      "revision": "qwen3.8-27b",
+      "quantization": "FP8",
+      "runtime": "vLLM XPU",
+      "cards": 2,
+      "status": "candidate",
+      "evidence_level": "B70-verified",
+      "coverage": ["decode", "quality"],
+      "projection": {"model": "qwen3.8_27b", "quant": "FP8", "runtime": "vllm", "spec": "none"},
+      "manifest": "packages/qwen38-27b-fp8-tp2-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-256k-vision-mtp-b70",
+      "label": "Qwen3.8 Q5_K_S · 256K + vision + MTP",
+      "revision": "qwen3.8-27b",
+      "quantization": "UD-Q5_K_S",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "candidate",
+      "evidence_level": "B70-verified operating points",
+      "coverage": ["decode", "configured 256K capacity", "prefill", "vision", "MTP"],
+      "manifest": "packages/qwen38-27b-256k-vision-mtp-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-autoround-int4-mtp5-research",
+      "label": "Qwen3.8 AutoRound INT4 · TP2 + MTP5",
+      "revision": "qwen3.8-27b",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU source stack",
+      "cards": 2,
+      "status": "research-only-margin-free-with-determinism-caveat",
+      "evidence_level": "B70-measured research",
+      "coverage": ["decode", "MTP", "quality caveat", "determinism"],
+      "manifest": "repro/qwen38-27b-autoround-int4-b70/README.md"
+    },
+    {
+      "id": "qwen36-27b-autoround-int4-tp2",
+      "label": "Qwen3.6 AutoRound INT4 · TP2 + MTP3",
+      "revision": "qwen3.6-27b",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU",
+      "cards": 2,
+      "status": "historical-record-retained-under-original-narrow-quality-scope",
+      "evidence_level": "B70-verified history",
+      "coverage": ["decode", "MTP", "quality", "determinism"],
+      "manifest": "results/qwen36-27b-autoround-int4-b70/README.md"
+    },
+    {
+      "id": "qwen36-27b-q8-tp2",
+      "label": "Qwen3.6 Q8_0 · TP2",
+      "revision": "qwen3.6-27b",
+      "quantization": "Q8_0",
+      "runtime": "llama.cpp SYCL",
+      "cards": 2,
+      "status": "qualified-result",
+      "evidence_level": "B70-verified",
+      "coverage": ["decode", "quality", "recipe"],
+      "manifest": "results/qwen36-27b-q8-tp2-asrock-b70/README.md"
+    },
+    {
+      "id": "qwen36-27b-q8-mtp3-tp1",
+      "label": "Qwen3.6 Q8_0 · TP1 + integrated MTP3",
+      "revision": "qwen3.6-27b",
+      "quantization": "Q8_0",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "qualified-scoped-result-with-long-context-support-evidence",
+      "evidence_level": "B70-verified",
+      "coverage": ["decode", "MTP acceptance", "active context", "quality", "memory"],
+      "manifest": "experiments/qwen36-27b-q8-gguf-b70/README.md"
+    },
+    {
+      "id": "qwen36-27b-q4-mtp-ladder",
+      "label": "Qwen3.6 Q4 · intrinsic MTP ladder",
+      "revision": "qwen3.6-27b",
+      "quantization": "Q4",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "research-result",
+      "evidence_level": "B70-tested",
+      "coverage": ["decode", "TTFT", "MTP acceptance"],
+      "manifest": "results/qwen36-27b-mtp-gguf-q4-b70/README.md"
+    }
+  ],
+  "run_measurements": [
+    {
+      "id": "q38-nightly-tp1-eager-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "25-prompt cache-zero fixed-output diagnostic",
+      "metrics": {
+        "decode_tok_s": [23.7163, 24.2459],
+        "prefill_tok_s": [281.5, 281.7],
+        "ttft_ms": [274.6, 274.5]
+      },
+      "quality": "objective battery pass; fresh boots differed on 5/25 outputs",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-vllm-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp1-graph-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "25-prompt cache-zero fixed-output diagnostic",
+      "metrics": {
+        "decode_tok_s": [30.2178, 30.2569],
+        "prefill_tok_s": [277.9, 276.3],
+        "ttft_ms": [277.5, 278.6]
+      },
+      "quality": "objective battery pass; graph boot pair matched 19/25 outputs",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-vllm-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp2-eager-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 2, "mtp": 0, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "25-prompt cache-zero fixed-output diagnostic",
+      "metrics": {"decode_tok_s": [16.7699], "prefill_tok_s": [495.3], "ttft_ms": [162.0]},
+      "quality": "diagnostic performance arm",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp2-graph-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 2, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "25-prompt cache-zero fixed-output diagnostic",
+      "metrics": {"decode_tok_s": [48.8301, 48.950458800865434], "prefill_tok_s": [509.0], "ttft_ms": [152.2, 150.3093639621511]},
+      "quality": "objective battery pass; independent captures matched 19/25 complete outputs",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp4-eager-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 4, "mtp": 0, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.6},
+      "workload": "25-prompt cache-zero fixed-output diagnostic",
+      "metrics": {"decode_tok_s": [17.3761], "prefill_tok_s": [865.5], "ttft_ms": [89.8]},
+      "quality": "diagnostic performance arm",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp4-graph-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.6},
+      "workload": "25-prompt cache-zero fixed-output diagnostic",
+      "metrics": {"decode_tok_s": [71.6741, 71.5488], "prefill_tok_s": [849.5, 864.8], "ttft_ms": [90.8, 91.1]},
+      "quality": "objective battery pass; independent captures matched 21/25 complete outputs",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp1-graph-strict",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "25-prompt cache-zero natural-EOS strict 99-interval",
+      "metrics": {"decode_tok_s": [30.31067504052998]},
+      "quality": "full objective battery pass; 24/24 baseline comparisons",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp2-graph-strict",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 2, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "25-prompt cache-zero natural-EOS strict 99-interval",
+      "metrics": {"decode_tok_s": [49.01965141150585]},
+      "quality": "full objective battery pass; 24/24 baseline comparisons",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp4-graph-strict",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.6},
+      "workload": "25-prompt cache-zero natural-EOS strict 99-interval",
+      "metrics": {"decode_tok_s": [71.29326283364946, 71.39843006187554]},
+      "quality": "full objective battery pass; fresh/replay outputs matched 21/25",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp1-mtp1-eager",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 1, "mtp": 1, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "25-prompt cache-zero fixed-output diagnostic",
+      "metrics": {"decode_tok_s": [4.5112], "prefill_tok_s": [168.2], "ttft_ms": [487.5], "mean_acceptance_length": [1.91]},
+      "quality": "18/20 stable-set oracle matches",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-vllm-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp1-mtp2-eager",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 1, "mtp": 2, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "25-prompt cache-zero fixed-output diagnostic",
+      "metrics": {"decode_tok_s": [4.4067], "prefill_tok_s": [199.4], "ttft_ms": [411.8], "mean_acceptance_length": [2.7]},
+      "quality": "18/20 stable-set oracle matches",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-vllm-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp1-mtp3-eager",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 1, "mtp": 3, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "25-prompt cache-zero fixed-output diagnostic",
+      "metrics": {"decode_tok_s": [4.3037], "prefill_tok_s": [161.3], "ttft_ms": [518.7], "mean_acceptance_length": [3.47]},
+      "quality": "19/20 stable-set oracle matches",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-vllm-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp1-mtp1-graph-corrupt",
+      "state": "quarantined",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 1, "mtp": 1, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "25-prompt cache-zero fixed-output diagnostic",
+      "metrics": {"decode_tok_s": [7.6266], "prefill_tok_s": [268.9], "ttft_ms": [286.6], "mean_acceptance_length": [1.0]},
+      "quality": "0/25 oracle matches; graph plus MTP correctness quarantine",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-vllm-nightly-matrix.json"
+    },
+    {
+      "id": "q38-nightly-tp1-fp8e4m3-kv",
+      "state": "quarantined",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "fp8_e4m3", "configured_max_context_tokens": 32768},
+      "workload": "25-prompt cache-zero fixed-output diagnostic",
+      "metrics": {"decode_tok_s": [24.1009], "prefill_tok_s": [280.5], "ttft_ms": [274.2]},
+      "quality": "3/20 stable-set oracle matches; quality gate failed",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json"
+    },
+    {
+      "id": "q38-nightly-tp4-mtp2-screen",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "config": {"tp": 4, "mtp": 2, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.6},
+      "workload": "two-prompt 128-token cache-zero expansion screen",
+      "metrics": {"decode_tok_s": [31.16799415898192], "draft_acceptance_rate": [0.7095238095238096], "effective_tokens_per_verification": [2.419047619047619]},
+      "quality": "boot and code-14 canary pass; no full battery; failed speed and acceptance expansion floors",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
+    },
+    {
+      "id": "q36-webhie-tp1-mtp1",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime": "vLLM XPU source stack",
+      "config": {"tp": 1, "mtp": 1, "graph": "on", "graph_capture_size": 8, "kv": "f16"},
+      "workload": "same-window fixed realistic cold suite, cache zero",
+      "metrics": {"decode_tok_s": [51.24613704631071], "ttft_ms": [298.7594275036827]},
+      "quality": "registered gate pass; MTP1 was slower than the MTP3 control",
+      "evidence": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-mtp1-mtp2-depth-coverage-no-win.md"
+    },
+    {
+      "id": "q36-webhie-tp1-mtp2",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime": "vLLM XPU source stack",
+      "config": {"tp": 1, "mtp": 2, "graph": "on", "graph_capture_size": 8, "kv": "f16"},
+      "workload": "same-window fixed realistic cold suite, cache zero",
+      "metrics": {"decode_tok_s": [59.589096936159876], "ttft_ms": [437.3506020056084]},
+      "quality": "registered gate pass; strict-valid but slower than MTP3",
+      "evidence": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-mtp1-mtp2-depth-coverage-no-win.md"
+    },
+    {
+      "id": "q36-webhie-tp1-mtp3",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime": "vLLM XPU source stack",
+      "config": {"tp": 1, "mtp": 3, "graph": "on", "graph_capture_size": 8, "kv": "f16"},
+      "workload": "same-window fixed realistic cold suite, cache zero",
+      "metrics": {"decode_tok_s": [64.72972570060101], "ttft_ms": [610.369234578684]},
+      "quality": "registered gate pass; same-window winning control",
+      "evidence": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-mtp1-mtp2-depth-coverage-no-win.md"
+    },
+    {
+      "id": "q36-webhie-tp1-mtp4",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "AutoRound INT4 webhie BF16-scale INT8 LM-head",
+      "runtime": "vLLM XPU source stack",
+      "config": {"tp": 1, "mtp": 4, "graph": "on", "graph_capture_size": 8, "kv": "f16"},
+      "workload": "same-window fixed realistic cold suite, cache zero",
+      "metrics": {"decode_tok_s": [59.88620742185209], "ttft_ms": [779.4782184064388]},
+      "quality": "registered gate pass; deeper draft did not win",
+      "evidence": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-mtp1-mtp2-depth-coverage-no-win.md"
+    },
+    {
+      "id": "q38-source-tp2-mtp0",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4 source stack",
+      "runtime": "vLLM XPU source stack 2026-08-19",
+      "config": {"tp": 2, "mtp": 0, "graph": "on", "kv": "f16"},
+      "workload": "25-prompt fixed realistic cold suite, cache zero",
+      "metrics": {"decode_tok_s": [48.756537282215334]},
+      "quality": "target-only source-stack baseline",
+      "evidence": "data/qwen38-27b-autoround-int4-baseline-20260818.json"
+    },
+    {
+      "id": "q38-source-tp2-mtp5-margin-free",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4 source stack",
+      "runtime": "vLLM XPU source stack 2026-08-20",
+      "config": {"tp": 2, "mtp": 5, "graph": "mixed target/draft capture", "kv": "f16"},
+      "workload": "three-arm 25-prompt fixed realistic cold suite, cache zero, shared compile cache",
+      "metrics": {"decode_tok_s": [101.394, 100.455, 101.17]},
+      "quality": "honest margin-free median 101.170 tok/s; pairwise complete-output agreement only 21–22/25; research only",
+      "evidence": "data/qwen38-27b-autoround-int4-baseline-20260818.json"
+    }
+  ],
+  "series_measurements": [
+    {
+      "id": "q38-q4km-tp1-kv-f16-context",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "Q4_K_M",
+      "runtime": "llama.cpp SYCL",
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16"},
+      "workload": "llama-bench tg128/pp2048, five reps; raw engine shape metric",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 24.81, "prefill_tok_s": 825.24},
+        {"x": 2048, "decode_tok_s": 24.46, "prefill_tok_s": 919.67},
+        {"x": 4096, "decode_tok_s": 24.25, "prefill_tok_s": 892.64},
+        {"x": 8192, "decode_tok_s": 23.83, "prefill_tok_s": 850.97},
+        {"x": 16384, "decode_tok_s": 23.1, "prefill_tok_s": 779.5},
+        {"x": 24576, "decode_tok_s": 22.42, "prefill_tok_s": 719.39},
+        {"x": 32768, "decode_tok_s": 21.77, "prefill_tok_s": 667.83}
+      ],
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json"
+    },
+    {
+      "id": "q38-q4km-tp1-kv-q8-context",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "Q4_K_M",
+      "runtime": "llama.cpp SYCL",
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "q8_0"},
+      "workload": "llama-bench tg128/pp2048, five reps; raw engine shape metric",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 24.27, "prefill_tok_s": 817.78},
+        {"x": 2048, "decode_tok_s": 22.45, "prefill_tok_s": 912.17},
+        {"x": 4096, "decode_tok_s": 21.05, "prefill_tok_s": 887.17},
+        {"x": 8192, "decode_tok_s": 18.68, "prefill_tok_s": 843.21},
+        {"x": 16384, "decode_tok_s": 14.86, "prefill_tok_s": 772.01},
+        {"x": 24576, "decode_tok_s": 12.4, "prefill_tok_s": 711.48},
+        {"x": 32768, "decode_tok_s": 10.66, "prefill_tok_s": 662.56}
+      ],
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json"
+    },
+    {
+      "id": "q38-q5ks-tp1-kv-f16-context",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "UD-Q5_K_S",
+      "runtime": "llama.cpp SYCL",
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16"},
+      "workload": "llama-bench tg128/pp2048, five reps; raw engine shape metric",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 22.72, "prefill_tok_s": 849.3},
+        {"x": 2048, "decode_tok_s": 22.37, "prefill_tok_s": 778.35},
+        {"x": 4096, "decode_tok_s": 22.13, "prefill_tok_s": 759.39},
+        {"x": 8192, "decode_tok_s": 21.79, "prefill_tok_s": 726.59},
+        {"x": 16384, "decode_tok_s": 21.19, "prefill_tok_s": 671.59},
+        {"x": 24576, "decode_tok_s": 20.61, "prefill_tok_s": 625.83},
+        {"x": 32768, "decode_tok_s": 20.09, "prefill_tok_s": 588.21}
+      ],
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.json"
+    },
+    {
+      "id": "q38-q4kxl-tp1-kv-f16-context",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL",
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16"},
+      "workload": "llama-bench tg128/pp2048, five reps; raw engine shape metric",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 21.81, "prefill_tok_s": 762.57},
+        {"x": 2048, "decode_tok_s": 21.53, "prefill_tok_s": 735.45},
+        {"x": 4096, "decode_tok_s": 21.37, "prefill_tok_s": 719.47},
+        {"x": 8192, "decode_tok_s": 21.06, "prefill_tok_s": 689.58},
+        {"x": 16384, "decode_tok_s": 20.49, "prefill_tok_s": 639.46},
+        {"x": 24576, "decode_tok_s": 19.95, "prefill_tok_s": 596.49},
+        {"x": 32768, "decode_tok_s": 19.45, "prefill_tok_s": 564.86}
+      ],
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.json"
+    },
+    {
+      "id": "q38-q5ks-flagship-tp1-kv-q8-context",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "UD-Q5_K_S flagship with vision and MTP draft resident",
+      "runtime": "llama.cpp SYCL 9fee29e",
+      "config": {"tp": 1, "mtp": "resident but inactive in raw sweep", "graph": "off", "kv": "q8_0", "configured_max_context_tokens": 262144},
+      "workload": "llama-bench tg128/pp2048, five reps; raw-engine shape metric",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 22.641875, "prefill_tok_s": 915.077622},
+        {"x": 2048, "decode_tok_s": 21.013731, "prefill_tok_s": 831.413858},
+        {"x": 4096, "decode_tok_s": 19.763244, "prefill_tok_s": 822.288881},
+        {"x": 8192, "decode_tok_s": 17.627474, "prefill_tok_s": 807.562129},
+        {"x": 16384, "decode_tok_s": 14.139247, "prefill_tok_s": 760.357526},
+        {"x": 24576, "decode_tok_s": 11.904055, "prefill_tok_s": 750.98526},
+        {"x": 32768, "decode_tok_s": 10.32272, "prefill_tok_s": 678.867511}
+      ],
+      "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json"
+    },
+    {
+      "id": "q36-q8-tp1-control-long-context",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "Q8_0 target with integrated draft disabled",
+      "runtime": "llama.cpp SYCL VDR2",
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "two-wave same-card middle/near-32K full-512 retention screen",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 17274, "decode_tok_s": 15.016411985013098},
+        {"x": 31846, "decode_tok_s": 13.662820064556456}
+      ],
+      "quality": "full token/content exact; cache zero; parallel functional screen, not an official isolated score",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json"
+    },
+    {
+      "id": "q36-q8-tp1-mtp3-long-context",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "Q8_0 target with integrated publisher MTP3",
+      "runtime": "llama.cpp SYCL VDR2",
+      "config": {"tp": 1, "mtp": 3, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "workload": "two-wave same-card middle/near-32K full-512 retention screen",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 17274, "decode_tok_s": 44.485166750615846, "draft_acceptance_rate": 0.9718670076726342},
+        {"x": 31846, "decode_tok_s": 41.491242761811996, "draft_acceptance_rate": 0.9743918053777209}
+      ],
+      "quality": "same-card control/candidate full token and content exact; cache zero; parallel functional screen, not an official isolated score",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json"
+    }
+  ],
+  "views": [
+    {
+      "id": "tp-strict",
+      "title": "TP scaling",
+      "subtitle": "Qwen3.8 AutoRound · vLLM nightly · MTP0 · f16 KV · graph on · strict natural-EOS; TP2/TP4 XPU Graph is runtime-labeled unsupported/experimental",
+      "x_label": "tensor parallel cards",
+      "discrete": true,
+      "unsupported_x": [3],
+      "metrics": ["decode_tok_s"],
+      "series": [
+        {"label": "strict graph", "measurement_ids": ["q38-nightly-tp1-graph-strict", "q38-nightly-tp2-graph-strict", "q38-nightly-tp4-graph-strict"], "x_from": "config.tp"}
+      ]
+    },
+    {
+      "id": "tp-phase",
+      "title": "TP changes more than decode",
+      "subtitle": "Qwen3.8 AutoRound · vLLM nightly · MTP0 · f16 KV · fixed-output diagnostic; TP2/TP4 XPU Graph is runtime-labeled unsupported/experimental",
+      "x_label": "tensor parallel cards",
+      "discrete": true,
+      "unsupported_x": [3],
+      "metrics": ["decode_tok_s", "prefill_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "eager", "measurement_ids": ["q38-nightly-tp1-eager-diagnostic", "q38-nightly-tp2-eager-diagnostic", "q38-nightly-tp4-eager-diagnostic"], "x_from": "config.tp"},
+        {"label": "graph", "measurement_ids": ["q38-nightly-tp1-graph-diagnostic", "q38-nightly-tp2-graph-diagnostic", "q38-nightly-tp4-graph-diagnostic"], "x_from": "config.tp"}
+      ]
+    },
+    {
+      "id": "mtp-nightly-tp1",
+      "title": "MTP depth",
+      "subtitle": "Qwen3.8 AutoRound · TP1 eager · f16 KV · nightly; preregistered ladder ended at MTP3",
+      "x_label": "draft tokens",
+      "metrics": ["decode_tok_s", "mean_acceptance_length", "prefill_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "eager", "measurement_ids": ["q38-nightly-tp1-eager-diagnostic", "q38-nightly-tp1-mtp1-eager", "q38-nightly-tp1-mtp2-eager", "q38-nightly-tp1-mtp3-eager"], "x_from": "config.mtp"}
+      ]
+    },
+    {
+      "id": "mtp-q36-webhie-tp1",
+      "title": "Qwen3.6 MTP ladder",
+      "subtitle": "Webhie AutoRound · TP1 · graph capture 8 · same-window strict gate; MTP0 was not rerun in this window",
+      "x_label": "draft tokens",
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "Qwen3.6 same-window", "measurement_ids": ["q36-webhie-tp1-mtp1", "q36-webhie-tp1-mtp2", "q36-webhie-tp1-mtp3", "q36-webhie-tp1-mtp4"], "x_from": "config.mtp"}
+      ]
+    },
+    {
+      "id": "mtp-q38-source-research",
+      "title": "Qwen3.8 source-stack anchors",
+      "subtitle": "Separate older TP2 runtime family · honest MTP5 three-arm median 101.17 (100.46–101.39) · only 21–22/25 self-agreement; MTP1–4 omitted, not interpolated",
+      "x_label": "draft tokens",
+      "metrics": ["decode_tok_s"],
+      "discrete": true,
+      "series": [
+        {"label": "older source stack", "measurement_ids": ["q38-source-tp2-mtp0", "q38-source-tp2-mtp5-margin-free"], "x_from": "config.mtp"}
+      ]
+    },
+    {
+      "id": "context-kv",
+      "title": "Context × KV cache",
+      "subtitle": "Qwen3.8 Q4_K_M · TP1 llama.cpp · raw-engine shape sweep",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "prefill_tok_s"],
+      "series": [
+        {"label": "KV f16", "measurement_ids": ["q38-q4km-tp1-kv-f16-context"]},
+        {"label": "KV q8_0", "measurement_ids": ["q38-q4km-tp1-kv-q8-context"]}
+      ]
+    },
+    {
+      "id": "context-quant",
+      "title": "Context × weight quant",
+      "subtitle": "Qwen3.8 · TP1 llama.cpp · f16 KV · Q4_K-tuned runtime · raw-engine shape sweep",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "prefill_tok_s"],
+      "series": [
+        {"label": "Q4_K_M", "measurement_ids": ["q38-q4km-tp1-kv-f16-context"]},
+        {"label": "UD-Q5_K_S", "measurement_ids": ["q38-q5ks-tp1-kv-f16-context"]},
+        {"label": "UD-Q4_K_XL", "measurement_ids": ["q38-q4kxl-tp1-kv-f16-context"]}
+      ]
+    },
+    {
+      "id": "context-flagship-q8",
+      "title": "Flagship active context",
+      "subtitle": "Qwen3.8 Q5_K_S + vision + draft resident · TP1 llama.cpp · q8_0 KV · 256K configured capacity, active sweep measured only through 32K",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "prefill_tok_s"],
+      "series": [
+        {"label": "flagship Q8 KV", "measurement_ids": ["q38-q5ks-flagship-tp1-kv-q8-context"]}
+      ]
+    },
+    {
+      "id": "context-q36-q8-mtp3",
+      "title": "Qwen3.6 Q8 long context",
+      "subtitle": "TP1 llama.cpp VDR2 · exact control/MTP3 full outputs · two-wave functional screen, not an isolated headline",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "draft_acceptance_rate"],
+      "series": [
+        {"label": "target only", "measurement_ids": ["q36-q8-tp1-control-long-context"]},
+        {"label": "integrated MTP3", "measurement_ids": ["q36-q8-tp1-mtp3-long-context"]}
+      ]
+    }
+  ],
+  "coverage_views": [
+    {
+      "id": "nightly-eager-f16",
+      "label": "graph off · diagnostic",
+      "fixed": "Qwen3.8 AutoRound · vLLM nightly · f16 KV · short fixed-output diagnostic. TP2/TP4 MTP1/3 were closed by the frozen MTP2 expansion gate.",
+      "decision_note": "Decision-classified by the bounded nightly combination program; closed cells were not burned after their parent gate failed.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json",
+      "rows": [0, 1, 2, 3],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "0:1": {"state": "lab-measured", "label": "23.72–24.25", "evidence_id": "q38-nightly-tp1-eager-diagnostic"},
+        "0:2": {"state": "lab-measured", "label": "16.77", "evidence_id": "q38-nightly-tp2-eager-diagnostic"},
+        "0:3": {"state": "unsupported", "label": "head split"},
+        "0:4": {"state": "lab-measured", "label": "17.38", "evidence_id": "q38-nightly-tp4-eager-diagnostic"},
+        "1:1": {"state": "lab-measured", "label": "4.51", "evidence_id": "q38-nightly-tp1-mtp1-eager"},
+        "1:2": {"state": "closed", "label": "gate"},
+        "1:3": {"state": "unsupported", "label": "head split"},
+        "1:4": {"state": "closed", "label": "gate"},
+        "2:1": {"state": "lab-measured", "label": "4.41", "evidence_id": "q38-nightly-tp1-mtp2-eager"},
+        "2:2": {"state": "lab-screened", "label": "boot+canary only"},
+        "2:3": {"state": "unsupported", "label": "head split"},
+        "2:4": {"state": "lab-measured", "label": "31.17 screen", "evidence_id": "q38-nightly-tp4-mtp2-screen"},
+        "3:1": {"state": "lab-measured", "label": "4.30", "evidence_id": "q38-nightly-tp1-mtp3-eager"},
+        "3:2": {"state": "closed", "label": "MTP2 gate"},
+        "3:3": {"state": "unsupported", "label": "head split"},
+        "3:4": {"state": "closed", "label": "MTP2 gate"}
+      }
+    },
+    {
+      "id": "nightly-graph-f16",
+      "label": "graph on · diagnostic",
+      "fixed": "Qwen3.8 AutoRound · vLLM nightly · f16 KV · short fixed-output diagnostic. Multi-GPU XPU Graph is runtime-labeled unsupported/experimental; the TP1 MTP1 corruption anchor quarantines every graph+MTP cell.",
+      "decision_note": "Graph+MTP correctness quarantine is inherited from the least-compounded TP1 MTP1 anchor; multi-GPU graph rows are unsupported-stack characterization.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json",
+      "rows": [0, 1, 2, 3],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "0:1": {"state": "lab-measured", "label": "30.22–30.26", "evidence_id": "q38-nightly-tp1-graph-diagnostic"},
+        "0:2": {"state": "lab-measured", "label": "48.83–48.95", "evidence_id": "q38-nightly-tp2-graph-diagnostic"},
+        "0:3": {"state": "unsupported", "label": "head split"},
+        "0:4": {"state": "lab-measured", "label": "71.55–71.67", "evidence_id": "q38-nightly-tp4-graph-diagnostic"},
+        "1:1": {"state": "quarantined", "label": "0/25", "evidence_id": "q38-nightly-tp1-mtp1-graph-corrupt"},
+        "1:2": {"state": "quarantined", "label": "graph+MTP"},
+        "1:3": {"state": "unsupported", "label": "head split"},
+        "1:4": {"state": "quarantined", "label": "graph+MTP"},
+        "2:1": {"state": "quarantined", "label": "MTP1 anchor"},
+        "2:2": {"state": "quarantined", "label": "graph+MTP"},
+        "2:3": {"state": "unsupported", "label": "head split"},
+        "2:4": {"state": "quarantined", "label": "graph+MTP"},
+        "3:1": {"state": "quarantined", "label": "MTP1 anchor"},
+        "3:2": {"state": "quarantined", "label": "graph+MTP"},
+        "3:3": {"state": "unsupported", "label": "head split"},
+        "3:4": {"state": "quarantined", "label": "graph+MTP"}
+      }
+    }
+  ],
+  "family_closures": [
+    {
+      "selectors": {"revision": "qwen3.8-27b", "variant": "AutoRound INT4", "runtime": "vLLM XPU nightly", "tp": 3},
+      "state": "unsupported",
+      "reason": "The model has 16 GDN key heads, which cannot be evenly partitioned across TP3.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json"
+    },
+    {
+      "selectors": {"revision": "qwen3.8-27b", "variant": "AutoRound INT4", "kv": "fp8_e5m2", "runtime": "vLLM XPU nightly"},
+      "state": "unsupported",
+      "reason": "The XPU FlashAttention backend rejects fp8_e5m2 KV cache at engine initialization.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json"
+    },
+    {
+      "selectors": {"revision": "qwen3.8-27b", "variant": "AutoRound INT4", "kv": "fp8_e4m3", "runtime": "vLLM XPU nightly"},
+      "state": "quarantined",
+      "reason": "The least-compounded TP1 target-only anchor matched only 3/20 stable-set oracle outputs.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json"
+    }
+  ],
+  "estimates": []
+}

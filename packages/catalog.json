@@ -1874,6 +1874,134 @@
       ]
     },
     {
+      "manifest": "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json",
+      "format": "b70-model-package-v1",
+      "id": "qwen38-27b-q4km-tp2-asrock-b70",
+      "name": "Qwen3.8 27B Q4_K_M target-only on two Intel Arc Pro B70 cards",
+      "status": "candidate",
+      "audience": "expert",
+      "guide": "repro/qwen38-27b-q4km-tp2-asrock-b70/README.md",
+      "clean_host_tested": false,
+      "library": {
+        "model_family": "Qwen3.8",
+        "publisher": "Alibaba / Qwen",
+        "variant": "27B Q4_K_M target-only TP2",
+        "summary": "Two-card target-only Q4_K_M lane with the complete lab TP2 stack and a quality-gated dense gate/up SwiGLU fusion.",
+        "quantization": "Q4_K_M / F16 KV",
+        "runtime_label": "llama.cpp SYCL",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "text"
+        ],
+        "use_cases": [
+          "general",
+          "coding",
+          "long context",
+          "two-card throughput"
+        ],
+        "tags": [
+          "two cards",
+          "TP2",
+          "target only",
+          "no speculation",
+          "quality gated"
+        ],
+        "published_at": "2026-08-23",
+        "featured_metric": {
+          "value": 49.71750333219927,
+          "unit": "tok/s",
+          "label": "conventional decode median",
+          "scope": "99-interval median across the fixed 12-prompt cache-zero suite; target-only, reasoning off, 12/12 exact output hashes.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json"
+        }
+      },
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab",
+          "contribution": "Qwen3.8 Q4_K_M transfer, complete B70 TP2 patch stack, Q4_K gate/up SwiGLU fusion, quality gates, benchmarking, and packaging.",
+          "status": "integrated",
+          "validated_effect": "The Q4_K fusion measured 50.271708 versus 49.460273 tok/s in a same-binary llama-bench A/B (+1.6406%); the final endpoint measured 49.717503 tok/s with 12/12 exact output hashes.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json"
+        },
+        {
+          "id": "mndodd",
+          "name": "mndodd",
+          "kind": "external",
+          "profile": "https://github.com/mndodd",
+          "contribution": "Provided the optimized Intel SYCL llama.cpp fork used as the clean public base beneath the lab's TP2 patch stack.",
+          "status": "integrated",
+          "validated_effect": "A separate matched Qwen3.6 Q8 TP2 A/B measured 31.338765 versus 29.610651 tok/s (+5.836%) for that base; the Qwen3.8 Q4 result remains a separately measured lab lane.",
+          "evidence": "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+        }
+      ],
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 2,
+        "model_weight_bytes": 18973870432
+      },
+      "model": {
+        "repository": "ggml-org/Qwen3.8-27B-GGUF",
+        "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+        "manifest": "repro/qwen38-27b-q4km-tp1-b70/model-direct.json"
+      },
+      "runtime": {
+        "kind": "native",
+        "repository": "mndodd/llama.cpp",
+        "revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+        "build": "patches/qwen38-27b-q4km-tp2-asrock-b70/README.md"
+      },
+      "project_patches": {
+        "required": true,
+        "items": [
+          "patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64",
+          "patches/qwen38-27b-q4km-tp2-asrock-b70/llama-cpp-q4k-mmvq-swiglu-tp2-20260815.diff.gz.b64"
+        ],
+        "reason": "The result depends on the complete lab TP2 source stack and the Q4_K dense-FFN fusion increment."
+      },
+      "commands": {
+        "preflight": "QWEN38_SOURCE_DIR=/path/to/patched/source QWEN38_BUILD_DIR=/path/to/build QWEN38_MODEL=/path/to/Qwen3.8-27B-Q4_K_M.gguf repro/qwen38-27b-q4km-tp2-asrock-b70/preflight.sh",
+        "launch": "QWEN38_SOURCE_DIR=/path/to/patched/source QWEN38_BUILD_DIR=/path/to/build QWEN38_MODEL=/path/to/Qwen3.8-27B-Q4_K_M.gguf repro/qwen38-27b-q4km-tp2-asrock-b70/run-server.sh",
+        "health": "curl -fsS http://127.0.0.1:18087/health",
+        "benchmark": "OUT=/path/to/result.json repro/qwen38-27b-q4km-tp2-asrock-b70/bench.sh",
+        "stop": "Stop the foreground server with Ctrl-C, then verify clean teardown with pgrep -af llama-server."
+      },
+      "dependencies": [
+        "repro/qwen38-27b-q4km-tp2-asrock-b70/README.md",
+        "repro/qwen38-27b-q4km-tp2-asrock-b70/preflight.sh",
+        "repro/qwen38-27b-q4km-tp2-asrock-b70/config.env",
+        "repro/qwen38-27b-q4km-tp2-asrock-b70/runtime-common.sh",
+        "repro/qwen38-27b-q4km-tp2-asrock-b70/run-server.sh",
+        "repro/qwen38-27b-q4km-tp2-asrock-b70/bench.sh",
+        "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
+        "repro/qwen38-27b-q4km-tp1-b70/verify-model-direct.sh",
+        "patches/qwen36-27b-q8-tp2-asrock-b70/README.md",
+        "patches/qwen38-27b-q4km-tp2-asrock-b70/README.md",
+        "experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json",
+        "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+      ],
+      "known_limitations": [
+        "The package has not been replayed from a clean host and is not a beginner install guide; source-rebuilt binaries require an explicit preflight override and the full output-oracle gate.",
+        "The 49.717503 tok/s headline is a TP2 target-only reasoning-off result and must not be compared as a TP1, speculative, or alternate-accounting row.",
+        "The optional large-batch mode improves prefill on a short probe while slightly reducing decode; it is not the headline configuration.",
+        "No full active-context, VRAM, or power curve has been captured for this TP2 identity."
+      ],
+      "missing": [
+        "tested platform installation",
+        "self-contained model download helper",
+        "clean-host replay",
+        "beginner recovery flow",
+        "active-context prefill, TTFT, memory, and power profiles"
+      ]
+    },
+    {
       "manifest": "packages/qwen38-27b-q8-tp2-b70/package.json",
       "format": "b70-model-package-v1",
       "id": "qwen38-27b-q8-tp2-asrock-b70",

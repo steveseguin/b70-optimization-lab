@@ -24,31 +24,24 @@ A package status matters:
 - `preview`: intentionally unverified on the named platform, such as future
   Windows work.
 
-Current packages:
+Current packages (all are candidates; the linked manifest owns the exact
+evidence and remaining gates):
 
-- [`Gemma 4 26B A4B Q8 one-B70 reconstruction candidate`](gemma4-26b-a4b-q8-b70/):
-  our exact aggregate record-source snapshot, pinned target/F16-draft objects,
-  local Q4_0 draft reconstruction, and strict target-verified replay gate;
-- [`Qwen3.8 27B Q4_K_M one-B70 candidate`](qwen38-27b-q4km-tp1-b70/):
-  our patched llama.cpp/SYCL source stack, direct-verified GGUF, exact-output
-  benchmark gate, and a complete restore/build script;
-- [`Qwen3.8 27B official FP8 two-B70 candidate`](qwen38-27b-fp8-tp2-b70/):
-  digest-pinned vLLM XPU baseline.
-- [`Muse-Glimmer 30B Q8/WOQ four-B70 candidate`](muse-glimmer-30b-q8-woq-b70/):
-  oneDNN WOQ, DFlash, distributed argmax, and target-verified gates;
-- [`Laguna S 2.1 INT4 four-B70 record replay`](laguna-s-2.1-int4-b70-125tps/):
-  artifact-exact originating-host replay of the 125.462 tok/s record;
-- [`MiniMax M2.7 AutoRound INT4 four-B70 candidate`](minimax-m27-int4-autoround-b70/):
-  retained vLLM/llm-scaler patches and strict token-hash quality gates;
-- [`Qwen3.8 27B Q8_0 two-B70 candidate`](qwen38-27b-q8-tp2-b70/):
-  quality-conservative target-only TP2 service and exact patch chain.
-- [`Ornith 1.5 35B-A3B Q4_K_M one-B70 candidate`](ornith-15-35b-a3b-q4km-b70/):
-  pinned model and llama.cpp base, the lab's ordered expert-reduction,
-  recurrent convolution-SiLU, residual-RMSNorm, recurrent concat/state, and
-  direct gathered-state, alpha-gate, routed-expert gate/up, and MoE
-  shared-branch residual/RMSNorm plus GDN RMSNorm/SiLU-gate and in-place GDN
-  state I/O SYCL patch stack, matched incremental serving evidence, a measured
-  0-32K context curve, and exact apply/build/launch steps.
+| Family | Deployment packet |
+| --- | --- |
+| Gemma 4 26B A4B | [Q8 one-B70 reconstruction](gemma4-26b-a4b-q8-b70/) |
+| Laguna S 2.1 | [INT4 four-B70 record replay](laguna-s-2.1-int4-b70-125tps/) |
+| LFM2.5 2.6B | [Q8_0 one-B70](lfm25-26b-q8-b70/) |
+| MiniMax M2.7 | [AutoRound INT4 four-B70](minimax-m27-int4-autoround-b70/) |
+| Muse-Glimmer 30B | [Q8/WOQ four-B70](muse-glimmer-30b-q8-woq-b70/) |
+| Nemotron 3.5 Lightning 30B-A3B | [UD-Q4_K_M one-B70](nemotron-35-lightning-30b-a3b-b70/) |
+| Ornith 1.5 35B-A3B | [Q4_K_M one-B70](ornith-15-35b-a3b-q4km-b70/) |
+| Ornith 1.5 9B | [Q8_0 one-B70](ornith-15-9b-q8-b70/) |
+| Qwen3.8 27B | [Q5_K_S 256K + vision + MTP one-B70](qwen38-27b-256k-vision-mtp-b70/) |
+| Qwen3.8 27B | [official FP8 vLLM two-B70](qwen38-27b-fp8-tp2-b70/) |
+| Qwen3.8 27B | [Q4_K_M one-B70](qwen38-27b-q4km-tp1-b70/) |
+| Qwen3.8 27B | [Q4_K_M two-B70](qwen38-27b-q4km-tp2-asrock-b70/) |
+| Qwen3.8 27B | [Q8_0 two-B70](qwen38-27b-q8-tp2-b70/) |
 
 None is a starter package yet because its host platform path has not been
 rebuilt and tested from a clean OS. Gemma additionally lacks the retained

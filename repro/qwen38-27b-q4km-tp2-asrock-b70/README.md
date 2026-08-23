@@ -49,6 +49,22 @@ loaded model on a 15–16 GiB host; retain `-j2` and the 6/8 GiB build scope.
 
 ## Run
 
+Check the host, two-card access, decoded patch identities, matching binaries,
+and model hash before launching:
+
+```bash
+cd /path/to/b70-optimization-lab
+QWEN38_SOURCE_DIR=/path/to/patched/llama.cpp \
+QWEN38_BUILD_DIR=/path/to/patched/llama.cpp/build-sycl-aot-bmg-g31-oneapi-2026.1.1 \
+QWEN38_MODEL=/path/to/Qwen3.8-27B-Q4_K_M.gguf \
+repro/qwen38-27b-q4km-tp2-asrock-b70/preflight.sh
+```
+
+By default the preflight requires the exact evidence binary hashes. A clean
+source rebuild may set `QWEN38_ALLOW_REBUILT_BINARIES=1`, but that explicitly
+changes the binary identity and therefore requires the complete benchmark and
+12/12 output-oracle gate before its speed is compared with the headline.
+
 Start the endpoint:
 
 ```bash
@@ -76,11 +92,12 @@ this build and improved a p64 probe by `20.68%`, while reducing decode by
 `0.28%`. They are optional and are not the decode record:
 
 ```bash
-export GGML_SYCL_REORDER_IN_GEMM=1
-export GGML_SYCL_FORCE_REORDER=1
-QWEN38_BATCH=8192 QWEN38_UBATCH=2048 \
+QWEN38_PREFILL_MODE=1 QWEN38_BATCH=8192 QWEN38_UBATCH=2048 \
   repro/qwen38-27b-q4km-tp2-asrock-b70/run-server.sh
 ```
+
+The launcher unsets both prefill exports unless `QWEN38_PREFILL_MODE=1`, so a
+previous shell cannot silently lower a later decode-record run.
 
 The structured promoted result and exact output oracle are in
 [`2026-08-15-q4km-tp2-q4k-glu-summary.json`](../../experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json).

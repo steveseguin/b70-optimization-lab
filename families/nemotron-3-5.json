@@ -1,0 +1,292 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "nemotron-3-5",
+  "name": "Nemotron 3.5",
+  "display_name": "Nemotron 3.5 Lightning 30B-A3B",
+  "publisher": "NVIDIA (tested GGUF by unsloth)",
+  "updated_at": "2026-08-23",
+  "summary": "One measured hybrid-Mamba MoE deployment on a single Intel Arc Pro B70, with a stock llama.cpp/SYCL recipe, a measured 0–32K context profile, and a slower measured two-card layer split.",
+  "architecture": {
+    "class": "nemotron_h_moe",
+    "model_type": "nemotron_h_moe",
+    "layers": 53,
+    "hidden_size": 2688,
+    "experts": 128,
+    "experts_used": 6,
+    "native_context_tokens": 1048576,
+    "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/README.md"
+  },
+  "weight_revisions": [
+    {
+      "id": "nemotron-3.5-lightning-30b-a3b",
+      "label": "Nemotron 3.5 Lightning 30B-A3B",
+      "role": "measured model",
+      "model_manifest": "repro/nemotron-35-lightning-30b-a3b-b70/model-manifest.json"
+    }
+  ],
+  "transfer_scope": {
+    "status": "Only one model artifact and quantization are measured; no cross-quantization, cross-runtime, or later-weight transfer is claimed.",
+    "transfers": [
+      "the pinned model verification and stock llama.cpp/SYCL one-card recipe",
+      "the fixed benchmark and objective-canary protocol"
+    ],
+    "does_not_transfer": [
+      "speed or quality to NVIDIA NVFP4 or another quantization",
+      "the one-card result to another runtime or card topology",
+      "the measured 0–32K trend to the untested remainder of the native 1M context window"
+    ],
+    "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "high",
+      "scope": "local-llm-on-b70",
+      "basis": "The tested UD-Q4_K_M artifact fits and serves target-only on one 32 GiB B70; the measured two-card layer split is slower for single-stream decode.",
+      "reviewed_at": "2026-08-23"
+    },
+    "quality_evidence": {
+      "band": "scoped-deployment-evidence",
+      "scope": "reasoning-off, temperature-zero repeat stability plus arithmetic, copy, and JSON canaries for the exact UD-Q4_K_M llama.cpp/SYCL deployment; not a general model-quality score",
+      "evidence": [
+        "repro/nemotron-35-lightning-30b-a3b-b70/README.md",
+        "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+      ]
+    },
+    "popularity": {
+      "downloads": 107161,
+      "likes": 80,
+      "captured_at": "2026-08-22T02:47:17Z",
+      "repo_id": "unsloth/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
+      "scope": "third-party GGUF repository snapshot; popularity is a discovery signal, not validation",
+      "evidence": "model-intake/catalog.json"
+    }
+  },
+  "dimensions": {
+    "model_variant": [
+      "Nemotron 3.5 Lightning 30B-A3B"
+    ],
+    "weight_quantization": [
+      "UD-Q4_K_M"
+    ],
+    "runtime": [
+      "llama.cpp SYCL"
+    ],
+    "cards": [
+      1,
+      2
+    ],
+    "split_mode": [
+      "single device",
+      "layer"
+    ],
+    "mtp": [
+      0
+    ],
+    "active_context_tokens": [
+      0,
+      2048,
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "configured_max_context_tokens": [
+      8192
+    ],
+    "native_context_tokens": [
+      1048576
+    ],
+    "graph": [
+      "off"
+    ],
+    "kv": [
+      "f16"
+    ]
+  },
+  "packets": [
+    {
+      "id": "nemotron-35-lightning-30b-a3b-b70",
+      "label": "Nemotron 3.5 Lightning 30B-A3B · UD-Q4_K_M · one B70",
+      "revision": "nemotron-3.5-lightning-30b-a3b",
+      "quantization": "UD-Q4_K_M",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "candidate",
+      "evidence_level": "B70-verified",
+      "coverage": [
+        "decode",
+        "prefill",
+        "context through 32K",
+        "quality",
+        "recipe"
+      ],
+      "projection": {
+        "model": "nemotron3.5_lightning_30b_a3b",
+        "quant": "Q4_K_M",
+        "runtime": "llama_cpp",
+        "spec": "none"
+      },
+      "manifest": "packages/nemotron-35-lightning-30b-a3b-b70/package.json"
+    }
+  ],
+  "run_measurements": [
+    {
+      "id": "nemotron-standard-one-card",
+      "state": "lab-measured",
+      "revision": "nemotron-3.5-lightning-30b-a3b",
+      "variant": "UD-Q4_K_M",
+      "runtime": "llama.cpp SYCL 9fee29e",
+      "config": {
+        "cards": 1,
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16",
+        "configured_max_context_tokens": 8192
+      },
+      "workload": "two fresh-server runs of the 12-prompt suite, up-to-512-token responses, conventional 99-interval median, target-only, cache zero",
+      "metrics": {
+        "decode_tok_s": [
+          72.169452,
+          72.035976
+        ]
+      },
+      "quality": "reasoning-off 8x repeat stability, arithmetic, exact copy, and JSON-schema canaries passed",
+      "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/README.md"
+    },
+    {
+      "id": "nemotron-layer-split-two-card",
+      "state": "lab-measured",
+      "revision": "nemotron-3.5-lightning-30b-a3b",
+      "variant": "UD-Q4_K_M",
+      "runtime": "llama.cpp SYCL 9fee29e",
+      "config": {
+        "cards": 2,
+        "split_mode": "layer",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16",
+        "configured_max_context_tokens": 8192
+      },
+      "workload": "same serving protocol as the one-card operating point, split-mode layer on two B70 cards",
+      "metrics": {
+        "decode_tok_s": [
+          69.445407,
+          69.485984
+        ]
+      },
+      "quality": "5/5 canaries passed; measured only as a topology comparison",
+      "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/README.md"
+    }
+  ],
+  "series_measurements": [
+    {
+      "id": "nemotron-context-depth",
+      "state": "lab-measured",
+      "revision": "nemotron-3.5-lightning-30b-a3b",
+      "variant": "UD-Q4_K_M",
+      "runtime": "llama.cpp SYCL 9fee29e",
+      "config": {
+        "cards": 1,
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16"
+      },
+      "workload": "llama-bench pp2048 plus tg128 at each depth, flash attention on, five repetitions; raw-engine shape metric",
+      "axis": "active_context_tokens",
+      "points": [
+        {
+          "x": 0,
+          "decode_tok_s": 73.008586,
+          "prefill_tok_s": 1260.029381
+        },
+        {
+          "x": 2048,
+          "decode_tok_s": 72.420657,
+          "prefill_tok_s": 1166.922303
+        },
+        {
+          "x": 4096,
+          "decode_tok_s": 71.846756,
+          "prefill_tok_s": 1153.135384
+        },
+        {
+          "x": 8192,
+          "decode_tok_s": 70.6952,
+          "prefill_tok_s": 1145.645326
+        },
+        {
+          "x": 16384,
+          "decode_tok_s": 68.557408,
+          "prefill_tok_s": 1106.136083
+        },
+        {
+          "x": 24576,
+          "decode_tok_s": 66.552475,
+          "prefill_tok_s": 1102.582316
+        },
+        {
+          "x": 32768,
+          "decode_tok_s": 64.622975,
+          "prefill_tok_s": 1018.926677
+        }
+      ],
+      "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.sweep.json"
+    }
+  ],
+  "views": [
+    {
+      "id": "nemotron-card-count",
+      "title": "One card beats layer split",
+      "subtitle": "Same UD-Q4_K_M serving protocol; the two-card layer split is measured, not estimated",
+      "x_label": "B70 cards",
+      "discrete": true,
+      "metrics": [
+        "decode_tok_s"
+      ],
+      "series": [
+        {
+          "label": "serving median",
+          "measurement_ids": [
+            "nemotron-standard-one-card",
+            "nemotron-layer-split-two-card"
+          ],
+          "x_from": "config.cards"
+        }
+      ]
+    },
+    {
+      "id": "nemotron-context",
+      "title": "Context-depth profile",
+      "subtitle": "One B70 · UD-Q4_K_M · f16 KV · raw llama-bench; native context beyond 32K remains unmeasured",
+      "x_label": "active context tokens",
+      "metrics": [
+        "decode_tok_s",
+        "prefill_tok_s"
+      ],
+      "series": [
+        {
+          "label": "UD-Q4_K_M",
+          "measurement_ids": [
+            "nemotron-context-depth"
+          ]
+        }
+      ]
+    }
+  ],
+  "coverage_views": [],
+  "family_closures": [
+    {
+      "selectors": {
+        "revision": "nemotron-3.5-lightning-30b-a3b",
+        "active_context_tokens": ">32768"
+      },
+      "state": "missing",
+      "reason": "The artifact declares a 1,048,576-token native window, but this package has measured context-depth evidence only through 32,768 tokens.",
+      "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/README.md"
+    }
+  ],
+  "estimates": []
+}
