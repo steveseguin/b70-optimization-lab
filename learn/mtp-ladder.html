@@ -68,6 +68,8 @@
       <tr><td class="best">MTP 2</td><td class="num best">52.2</td><td class="num">+57%</td><td><span class="badge comm">Community</span></td></tr>
       <tr><td>MTP 3 / 4</td><td class="num">51.6 / 51.9</td><td class="num">+55%</td><td><span class="badge comm">Community</span></td></tr>
       <tr><td>AutoRound INT4, MTP 5, two cards</td><td class="num">101.2</td><td class="num">research</td><td><span class="badge lab">Lab</span> not promoted (determinism open)</td></tr>
+      <tr><td>AutoRound INT4, one card, MTP off (XPU graph on)</td><td class="num">30.2</td><td class="num">—</td><td><span class="badge lab">Lab-measured</span> vLLM XPU nightly, TP1</td></tr>
+      <tr><td>AutoRound INT4, one card, MTP 1 / 2 / 3</td><td class="num">4.5 / 4.4 / 4.3</td><td class="num">−81%</td><td><span class="badge lab">Lab-measured</span> drafts accepted fine; the <em>verify step</em> is what's slow</td></tr>
     </tbody>
   </table></div>
 
@@ -78,7 +80,8 @@
     <li>It pays off only while the <em>added</em> acceptance outweighs that cost.</li>
     <li>Predictable text (code, structured output) accepts more, pushing the knee higher; creative text accepts less, pulling it lower.</li>
   </ul>
-  <p><strong>Sweep it once for your workload.</strong> Try off, 2, and 4; keep whichever wins. It's a two-minute test with a big payoff.</p>
+  <p>And the knee can sit <em>below</em> "off" entirely. Our own lab sweep of the same ladder — same model family, one card, but AutoRound INT4 weights instead of GPTQ — measured MTP <strong>losing</strong> to plain decode five-fold (24 → 4.5 tok/s) even though 91% of drafts were accepted. The drafting was fine; the <em>verification</em> forward pass was hitting a slow kernel path for that quant format. Speculative decoding multiplies whatever your verify step costs, so one slow kernel can flip the whole ladder negative.</p>
+  <p><strong>Sweep it once for your workload — including "off".</strong> Try off, 2, and 4; keep whichever wins. It's a two-minute test with a big payoff, and "off wins" is a real possible answer.</p>
 
   <div class="callout warn">
     <span class="tag">What to be aware of</span>
@@ -86,12 +89,14 @@
       <li><strong>MTP lives in vLLM here, not llama.cpp.</strong> Our llama.cpp SYCL lane has no speculative path and our Qwen3.8 GGUF has no draft head, so MTP is a vLLM-XPU feature on this hardware. See <a href="runtimes.html">Runtimes</a>.</li>
       <li><strong>Concurrency can crash it.</strong> On this hybrid model, MTP plus several simultaneous requests crashed the engine; the fix was to serve one request at a time (<code>--max-num-seqs 1</code>). With MTP off, normal concurrency works.</li>
       <li><strong>Verify it's actually lossless.</strong> A broken speculative setup can change output. Check your MTP result against a plain-decode answer on a known prompt before trusting it — that's exactly why our own high MTP numbers stay in the research lane until determinism is nailed down.</li>
+      <li><strong>Don't combine MTP with XPU graph mode.</strong> On the current vLLM XPU nightly, graph capture plus MTP produced zero accepted drafts <em>and</em> wrong outputs on every test prompt. Graph mode without MTP was fast and faithful; the combination is the bug.</li>
+      <li><strong>The ladder depends on your quant format's kernels, not just the model.</strong> GPTQ weights climbed the ladder on one card; AutoRound INT4 weights collapsed on the identical ladder because their verify kernels are slow at speculative batch shapes. Measure on <em>your</em> weights.</li>
     </ul>
   </div>
 
   <div class="callout good">
     <span class="tag">Recommendation</span>
-    <p>If your runtime supports it, <strong>turn MTP on</strong> — it's the highest-leverage decode setting on this hardware. Start at <strong>MTP 2</strong>, then try 4 for predictable workloads. Keep concurrency at one request while MTP is on, and confirm the output matches plain decoding before you rely on it.</p>
+    <p>If your runtime supports it, <strong>try MTP first</strong> — when it works it's the highest-leverage decode setting on this hardware. Start at <strong>MTP 2</strong>, then try 4 for predictable workloads — but benchmark against MTP <em>off</em> on your own weights, because a slow verify path can flip the whole ladder negative (our AutoRound INT4 single-card lane currently runs fastest with MTP off and XPU graph on). Keep concurrency at one request while MTP is on, and confirm the output matches plain decoding before you rely on it.</p>
   </div>
 
   <div class="related">

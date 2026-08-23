@@ -1,0 +1,157 @@
+{
+ "campaign": "qwen38-27b-autoround-int4 vLLM TP1 bring-up on XPU nightly image",
+ "date": "2026-08-22",
+ "image": "vllm/vllm-openai-xpu:nightly-e9d1398d9edfd90fcc1cf783805240e3effec013",
+ "image_digest": "sha256:bc979d1ba312dc8a666c57a40205f35d7fc5d96b2f7450c2c77f5b3d5243f0e0",
+ "vllm_version": "0.26.1rc1.dev1102+ge9d1398d9 (main nightly 2026-08-22)",
+ "torch": "2.13.0+xpu",
+ "host": "steve-b70s, 1x Arc Pro B70 (GPU0)",
+ "model": "qwen3.8-27b-int4-autoround-devan (quantization=inc)",
+ "suite": "qwen36-27b-int4-independent-validation-20260815-v1 (25 prompts)",
+ "metric": "conventional decode = median over rows of 99/(t[99]-t[0]) after TTFT; cache-zero enforced",
+ "server_config": "TP1, max_model_len 32768, max_num_seqs 1, max_num_batched_tokens 1024, gpu_mem_util 0.90, dtype float16, prefix caching OFF",
+ "container_fixes": [
+  "CCL_ZE_IPC_EXCHANGE=sockets",
+  "/dev/dri/by-path ro mount",
+  "--ipc=host"
+ ],
+ "boot_divergent_prompts_between_mtp0_boots": [
+  "holdout--concurrency-review",
+  "holdout--prose-decision-memo",
+  "holdout--shell-safety-review",
+  "holdout--typescript-cancellation",
+  "selection--performance-hypotheses"
+ ],
+ "arms": {
+  "mtp0-f16-a2": {
+   "mtp": 0,
+   "kv": "f16",
+   "graph": false,
+   "decode_median_tok_s": 23.7163,
+   "ttft_median_s": 0.2746,
+   "prefill_tok_s_median": 281.5,
+   "rows_valid": 25,
+   "cached_tokens_all_zero": true,
+   "oracle_match_either": 25,
+   "oracle_match_stable_set": "20/20"
+  },
+  "mtp0-f16-b": {
+   "mtp": 0,
+   "kv": "f16",
+   "graph": false,
+   "decode_median_tok_s": 24.2459,
+   "ttft_median_s": 0.2745,
+   "prefill_tok_s_median": 281.7,
+   "rows_valid": 25,
+   "cached_tokens_all_zero": true,
+   "oracle_match_either": 25,
+   "oracle_match_stable_set": "20/20"
+  },
+  "mtp0-f16-graph-a": {
+   "mtp": 0,
+   "kv": "f16",
+   "graph": true,
+   "decode_median_tok_s": 30.2178,
+   "ttft_median_s": 0.2775,
+   "prefill_tok_s_median": 277.9,
+   "rows_valid": 25,
+   "cached_tokens_all_zero": true,
+   "oracle_match_either": 23,
+   "oracle_match_stable_set": "19/20"
+  },
+  "mtp0-fp8e4m3-a": {
+   "mtp": 0,
+   "kv": "fp8_e4m3",
+   "graph": false,
+   "decode_median_tok_s": 24.1009,
+   "ttft_median_s": 0.2742,
+   "prefill_tok_s_median": 280.5,
+   "rows_valid": 25,
+   "cached_tokens_all_zero": true,
+   "oracle_match_either": 3,
+   "oracle_match_stable_set": "3/20"
+  },
+  "mtp1-f16-a": {
+   "mtp": 1,
+   "kv": "f16",
+   "graph": false,
+   "decode_median_tok_s": 4.5112,
+   "ttft_median_s": 0.4875,
+   "prefill_tok_s_median": 168.2,
+   "rows_valid": 25,
+   "cached_tokens_all_zero": true,
+   "oracle_match_either": 23,
+   "oracle_match_stable_set": "18/20",
+   "mean_acceptance_length_final": 1.91
+  },
+  "mtp2-f16-a": {
+   "mtp": 2,
+   "kv": "f16",
+   "graph": false,
+   "decode_median_tok_s": 4.4067,
+   "ttft_median_s": 0.4118,
+   "prefill_tok_s_median": 199.4,
+   "rows_valid": 25,
+   "cached_tokens_all_zero": true,
+   "oracle_match_either": 23,
+   "oracle_match_stable_set": "18/20",
+   "mean_acceptance_length_final": 2.7
+  },
+  "mtp3-f16-a": {
+   "mtp": 3,
+   "kv": "f16",
+   "graph": false,
+   "decode_median_tok_s": 4.3037,
+   "ttft_median_s": 0.5187,
+   "prefill_tok_s_median": 161.3,
+   "rows_valid": 25,
+   "cached_tokens_all_zero": true,
+   "oracle_match_either": 24,
+   "oracle_match_stable_set": "19/20",
+   "mean_acceptance_length_final": 3.47
+  },
+  "mtp1-f16-graph-a": {
+   "mtp": 1,
+   "kv": "f16",
+   "graph": true,
+   "decode_median_tok_s": 7.6266,
+   "ttft_median_s": 0.2866,
+   "prefill_tok_s_median": 268.9,
+   "rows_valid": 25,
+   "cached_tokens_all_zero": true,
+   "oracle_match_either": 0,
+   "oracle_match_stable_set": "0/20",
+   "mean_acceptance_length_final": 1.0
+  },
+  "mtp0-f16-graph-b": {
+   "mtp": 0,
+   "kv": "f16",
+   "graph": true,
+   "decode_median_tok_s": 30.2569,
+   "ttft_median_s": 0.2786,
+   "prefill_tok_s_median": 276.3,
+   "rows_valid": 25,
+   "cached_tokens_all_zero": true,
+   "oracle_match_either": 20,
+   "oracle_match_stable_set": "16/20",
+   "graph_boot_pair_match": "19/25"
+  }
+ },
+ "negatives": {
+  "kv_fp8_e5m2": "NotImplementedError: FlashAttention does not support fp8_e5m2 kv-cache on this device (all 4 arms)",
+  "xpu_graph_plus_mtp": "0% draft acceptance AND wholesale output corruption (0/25 oracle match); correctness bug",
+  "pinned_image_tp1": "0.20.2rc1.dev13 crashes TP1 both graph modes (prior finding); nightly does not"
+ },
+ "quality_batteries": {
+  "mtp0-f16 (graph off)": "pass_all: canary 14, arithmetic/factual/logic/json/copy exact, 8-run repeat stable, 8K needle pass",
+  "mtp0-f16 graph ON": "pass_all: same battery, baseline_match_all true"
+ },
+ "certified_headline": {
+  "config": "TP1 MTP-off f16 KV VLLM_XPU_ENABLE_XPU_GRAPH=1",
+  "decode_median_tok_s_boot_pair": [
+   30.2178,
+   30.2569
+  ],
+  "vs_llamacpp_q4km_tp1_conventional_27_82": "+8.7%"
+ }
+}

@@ -119,6 +119,7 @@ and [do-not-repeat index](experiments/qwen38-27b-b70/DO-NOT-REPEAT.md).
 | Official block-scaled FP8, older Intel vLLM `0.21.0-b3.1` | 2x ASRock B70, TP2 | Not promoted | Superseded negative: artifact loaded, but bounded initialization hit device-lost/out-of-resource errors; [bring-up note](experiments/qwen38-27b-b70/notes/2026-08-15-bringup-checkpoint.md) |
 | **AutoRound INT4 W4A16, vLLM/XPU MTP5 speculative** | 2x B70, TP2 | **`101.170 tok/s` all-25; `92.851` selection-12** | Current margin-free research anchor: median of `101.394`/`100.455`/`101.170`, but only 21/25, 21/25, and 22/25 pairwise token parity. A fresh target-only oracle exists; its A/B was 24/25. Post-recovery MTP5 remained 21/25 and a byte-identical sealed-cache TP1 pair was 2/4, so this is not promotable. The historical `101.922` LocalMaxxing row is invalid/withdrawal-recommended because its greedy margin changes output; [TP1 result](experiments/qwen38-27b-b70/notes/2026-08-20-postrecovery-marginfree-tp1-runtime-nondeterminism.md), [repro/status](repro/qwen38-27b-autoround-int4-b70/README.md) |
 | AutoRound INT4 W4A16, vLLM/XPU MTP4 speculative | 2x B70, TP2 | historical **`100.497 tok/s` all-25; `96.627` selection-12** | **Invalid public row; do not reproduce or compare as a valid record.** It used the same output-changing greedy margin and margin-on quality baseline as MTP5. LocalMaxxing [`cmszarna10e0nms0103hv0tve`](https://www.localmaxxing.com/en/runs/cmszarna10e0nms0103hv0tve); [withdrawal audit](results/localmaxxing-submissions.md) |
+| **AutoRound INT4 W4A16, vLLM XPU nightly, target-only, XPU graph on** | 1x B70, TP1 | **`30.22 / 30.26 tok/s` conventional (boot pair)** | Fastest single-card lane for this model (llama.cpp Q4_K_M TP1 is `27.82`). No speculation, cache-zero gated, full quality battery pass (code canary `14`, repeats, 8K needle) on the exact config. Caveat: deterministic within a boot but NOT across boots (autotuned kernels; 19-20/25 cross-boot output agreement), so no cross-boot token-exactness claim and no sealed record/LMX submission yet; [finding](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-tp1-vllm-nightly-bringup-finding.md), [data](experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-vllm-nightly-matrix.json) |
 
 Community-reported alternatives are kept outside the promoted rows above:
 
@@ -153,9 +154,10 @@ cached length. f16-KV decode stays nearly flat (`24.81 -> 21.77`, -12% to 32K).
 Prefill is KV-dtype-independent (<1.5% at every depth). **Practical rule:**
 keep KV at **f16 for speed** on this lane; use q8_0 KV only to fit longer
 context in 32 GiB, accepting a large long-context decode hit. (The Reddit vLLM
-report ran fp8 KV by default on the newer 0.27.1 XPU path, where the tradeoff
-may differ; our pinned vLLM cannot serve single-card yet - see the
-[vLLM TP1 bring-up finding](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-tp1-vllm-bringup-finding.md).)
+report ran fp8 KV by default on the newer 0.27.1 XPU path. Our own vLLM TP1 is
+now unblocked on the XPU nightly image - see the matrix below; there,
+fp8_e4m3 KV measured decode-neutral at short context but output-divergent,
+and fp8_e5m2 is refused outright by FlashAttention on this device.)
 
 #### TP1 weight-quant ladder (Q4_K_M vs UD-Q4_K_XL vs UD-Q5_K_S, f16 KV)
 
@@ -181,10 +183,45 @@ for its quality/size, accepting slower decode here.
 [chart](experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.svg),
 [finding](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-q4km-tp1-context-kv-sweep-finding.md).
 
+#### TP1 vLLM on the XPU nightly image (AutoRound INT4): unblocked; graph +25%; MTP verify-bound
+
+Measured 2026-08-22/23 on one B70 (GPU0), same 25-prompt realistic suite and
+conventional metric as the promoted lanes, cache-zero gated, prefix caching
+off, `--max-num-seqs 1`. Image: `vllm-openai-xpu` nightly `e9d1398d9`
+(post-0.27.1 main, torch 2.13+xpu). The pinned `0.20.2rc1` TP1 crashes do not
+reproduce here; container bring-up needs `CCL_ZE_IPC_EXCHANGE=sockets` + a
+read-only `/dev/dri/by-path` mount. The full quality battery (code canary
+`14`, repeats, 8K needle) passed on both certified configs: MTP-off f16
+graph-off AND graph-on.
+
+| Config (f16 KV unless noted) | conventional decode tok/s | acceptance | outputs vs MTP-off oracle |
+| --- | ---: | ---: | --- |
+| MTP off (two boots) | **23.72 / 24.25** | - | oracle pair (20/25 cross-boot agreement) |
+| MTP off, **XPU graph on** (two boots) | **30.22 / 30.26** | - | faithful (23/25, within boot envelope) |
+| MTP off, fp8_e4m3 KV | 24.10 | - | **divergent (3/25)** - capacity lever only |
+| MTP1 / MTP2 / MTP3 | 4.51 / 4.41 / 4.30 | 1.91 / 2.70 / 3.47 | faithful (23-24/25) |
+| MTP1 + XPU graph | 7.63 | **0.00** | **corrupt (0/25) - do not use** |
+| any MTP, fp8_e5m2 KV | fails to boot | - | `NotImplementedError` |
+
+Key findings: **XPU graph** (`VLLM_XPU_ENABLE_XPU_GRAPH=1`, default off on the
+nightly) is worth **+25%** MTP-off and is output-faithful. **MTP at TP1
+works and is output-faithful with excellent acceptance, but the verify step
+costs ~190-200 ms per extra verify token** (~4-5x a whole MTP-off step), so
+net decode collapses ~5x and deeper drafts cannot amortize it - opposite to
+the community GPTQ result, pointing at the INC/AutoRound W4A16 small-batch
+verify path or GDN serial verify. **Graph + MTP corrupts outputs** (0%
+acceptance and 0/25 oracle match) - quarantined. The lane is deterministic
+within a boot but not across boots (autotuned kernel selection), so it makes
+no cross-boot token-exactness claim yet.
+[data](experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-vllm-nightly-matrix.json),
+[finding](experiments/qwen38-27b-b70/notes/2026-08-22-qwen38-tp1-vllm-nightly-bringup-finding.md),
+[driver](experiments/qwen38-27b-b70/scripts/run-20260822-qwen38-tp1-nightly-docker-bench.sh).
+
 Plain-language explainers for these results live in the Learn library:
 [Quantization vs decode speed](https://neural.download/learn/quantization-and-speed.html),
 [KV cache precision](https://neural.download/learn/kv-cache-precision.html),
-[Context length](https://neural.download/learn/context-length.html).
+[Context length](https://neural.download/learn/context-length.html),
+[The MTP ladder](https://neural.download/learn/mtp-ladder.html).
 
 ### Qwen3.6 27B Model Board
 

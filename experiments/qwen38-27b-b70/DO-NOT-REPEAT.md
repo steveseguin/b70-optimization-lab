@@ -98,6 +98,8 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 | Official FP8 `max_num_seqs=1` | Exact output and cache-zero, but neutral at `21.717535 tok/s` (`+0.041%`); retain the more useful captured capacity of 4 | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 | Official FP8 greedy requests without a per-request seed | Exact output and cache-zero, but `21.659428 tok/s`, `-0.268%` versus the same loaded seeded server; retain explicit seeds | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
 | Official FP8 cached graph restart in an 8 GiB host cgroup | OOM-killed one worker while reloading AOT artifacts; use the validated 9/12 GiB bounds | [result](notes/2026-08-16-official-fp8-vllm-graph-tp2.md) |
+| XPU graph + `qwen3_next_mtp` on the XPU nightly (TP1) | **Correctness bug - quarantined.** 0% draft acceptance AND wholesale output corruption (0/25 oracle match); the verify forward under graph capture produces wrong logits. Do not combine `VLLM_XPU_ENABLE_XPU_GRAPH=1` with any speculative config on this image family until upstream-fixed. Graph-on target-only is faithful and fast | [finding](notes/2026-08-22-qwen38-tp1-vllm-nightly-bringup-finding.md), [data](data/2026-08-22-qwen38-tp1-vllm-nightly-matrix.json) |
+| `fp8_e5m2` KV cache on XPU nightly TP1 | Hard refusal at engine init: `NotImplementedError: FlashAttention does not support fp8_e5m2 kv-cache on this device` (all four arms). Use `fp8` (e4m3) for capacity - it boots and is speed-neutral at short context but output-divergent (3/25), quality-uncertified | [finding](notes/2026-08-22-qwen38-tp1-vllm-nightly-bringup-finding.md) |
 
 ## Transferred Q8 search history
 
