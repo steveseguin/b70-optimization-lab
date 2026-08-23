@@ -1,0 +1,35 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "baseline_stack": "accepted eleven-feature stack",
+  "candidate_door": "GGML_SYCL_FUSED_ORNITH_GDN_OUTPROJ=1",
+  "candidate_patch": "experiments/ornith-15-b70/patches/llamacpp-ornith15-gdn-outproj-q8-correctness-negative-20260823.patch",
+  "candidate_patch_sha256": "09565cd394d02a649365a3e822475dcdd630d6727c9d18667e0bd19225f39656",
+  "intended_removed_launches_per_decoded_token": 30,
+  "canonical_control_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+  "variants": [
+    {
+      "name": "fused producer plus fused Q8 emitter",
+      "sha256": "123013a31b283b7c7c3f5ee87a28c04567551d3ef3364e1c1f49fe72011ddd70",
+      "fused_hits": 270,
+      "interpretation": "severe divergence and early termination; Q8 emitter invalid"
+    },
+    {
+      "name": "fused producer plus stock Q8 overwrite",
+      "sha256": "b2580dd3d6b57e07fa8691184d623941c4ab9f411f36174a8780279233dc760b",
+      "fused_hits": 3810,
+      "interpretation": "full activation count but producer remained non-exact"
+    },
+    {
+      "name": "accepted producer loop plus global barrier plus stock Q8 overwrite",
+      "sha256": "8d6da0d6d5767e5d9f58b54adaf874861b6de715e675b9d168b1ed3a4827bc40",
+      "fused_hits": 3810,
+      "interpretation": "full activation count but still failed canonical transcript"
+    }
+  ],
+  "performance_benchmark_run": false,
+  "result": "closed correctness negative",
+  "restored_stack": "accepted eleven-feature source and binaries"
+}

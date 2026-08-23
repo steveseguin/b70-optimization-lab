@@ -179,6 +179,15 @@ binary, driver, or benchmark protocol will reproduce them.
   recorded, and all objective canaries passed. The complete eleven-feature
   stack removes 700 launches/token. See
   `notes/2026-08-23-ornith35b-qk-norm-rope-positive.md`.
+- **GDN output-projection Q8 fusion — CLOSED CORRECTNESS NEGATIVE:** the
+  Qwen-derived candidate tried to emit reordered Q8_1 directly from the
+  accepted gated-normalization producer before each recurrent Q4_K output
+  projection, which would remove 30 launches/token. Its poison matcher hit the
+  intended node, but three increasingly conservative forms produced hashes
+  different from the canonical transcript; even a global-barrier form followed
+  by the stock quantizer failed with all 3,810 expected activations. No speed
+  test was run, and the eleven-feature stack was restored. See
+  `notes/2026-08-23-ornith35b-gdn-outproj-q8-correctness-negative.md`.
 - **Optimized 0-32K context profile — PUBLISHED, MEASURED ONLY:** the exact
   eleven-feature package stack was swept at seven explicit depths with
   `pp2048`, `tg128`, five repetitions, flash attention on, F16 KV, and graphs

@@ -1,0 +1,350 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 917574a..6f9cc81 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -6252,10 +6252,12 @@ struct ggml_sycl_ornith_gdn_rms_gate_match {
+     ggml_tensor * weight_mul;
+     ggml_tensor * silu;
+     ggml_tensor * gate_mul;
++    ggml_tensor * projection;
+     int           weight_mul_idx;
+ };
+ 
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_gdn_rms_gate_hits{0};
++static std::atomic<uint64_t> g_ggml_sycl_ornith_gdn_outproj_hits{0};
+ 
+ static bool ggml_sycl_ornith_gdn_rms_gate_enabled() {
+     static const bool enabled = [] {
+@@ -6273,6 +6275,30 @@ static bool ggml_sycl_ornith_gdn_rms_gate_enabled() {
+     return enabled;
+ }
+ 
++static bool ggml_sycl_ornith_gdn_outproj_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_GDN_OUTPROJ");
++        const bool on = value != nullptr && std::strcmp(value, "0") != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_gdn_outproj: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_gdn_outproj_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++static bool ggml_sycl_ornith_gdn_outproj_poisoned() {
++    static const bool poisoned = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_GDN_OUTPROJ_POISON");
++        return value != nullptr && std::strcmp(value, "0") != 0;
++    }();
++    return poisoned;
++}
++
+ static bool ggml_sycl_find_ornith_gdn_rms_gate(
+         const ggml_cgraph * cgraph, int node_idx,
+         ggml_sycl_ornith_gdn_rms_gate_match & match) {
+@@ -6317,6 +6343,19 @@ static bool ggml_sycl_find_ornith_gdn_rms_gate(
+         return false;
+     }
+ 
++    ggml_tensor * projection = nullptr;
++    int projection_idx = -1;
++    for (int j = compute_idxs[2] + 1; j < cgraph->n_nodes; ++j) {
++        ggml_tensor * candidate = cgraph->nodes[j];
++        if (ggml_sycl_is_view_or_noop(candidate) ||
++            (candidate->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
++            continue;
++        }
++        projection = candidate;
++        projection_idx = j;
++        break;
++    }
++
+     const ggml_tensor * x = rms_norm->src[0];
+     const ggml_tensor * weight = weight_mul->src[0] == rms_norm
+         ? weight_mul->src[1] : weight_mul->src[0];
+@@ -6330,22 +6369,82 @@ static bool ggml_sycl_find_ornith_gdn_rms_gate(
+         !ggml_is_contiguous(weight) ||
+         z_projection->type != GGML_TYPE_F32 || ggml_nelements(z_projection) != 4096 ||
+         gate_mul->type != GGML_TYPE_F32 || !ggml_are_same_shape(gate_mul, x) ||
+-        !ggml_is_contiguous(gate_mul)) {
++        !ggml_is_contiguous(gate_mul) || !ggml_node_has_n_uses(cgraph, compute_idxs[2], 1) ||
++        projection == nullptr || projection_idx < 0 || projection->op != GGML_OP_MUL_MAT ||
++        projection->type != GGML_TYPE_F32 || projection->ne[0] != 2048 ||
++        projection->ne[1] != 1 || projection->ne[2] != 1 || projection->ne[3] != 1 ||
++        projection->src[0] == nullptr || projection->src[0]->type != GGML_TYPE_Q4_K ||
++        projection->src[0]->ne[0] != 4096 || projection->src[0]->ne[1] != 2048 ||
++        projection->src[0]->ne[2] != 1 || projection->src[0]->ne[3] != 1 ||
++        ggml_backend_buffer_is_sycl_split(projection->src[0]->buffer) ||
++        ggml_sycl_unwrap_shape_view(projection->src[1]) != gate_mul) {
+         return false;
+     }
+ 
+     char x_name[64];
+     char z_name[64];
++    char projection_name[64];
++    char weight_name[64];
+     std::snprintf(x_name, sizeof(x_name), "attn_output-%d", layer);
+     std::snprintf(z_name, sizeof(z_name), "z-%d", layer);
+-    if (std::strcmp(x->name, x_name) != 0 || std::strcmp(z_projection->name, z_name) != 0) {
++    std::snprintf(projection_name, sizeof(projection_name), "linear_attn_out-%d", layer);
++    std::snprintf(weight_name, sizeof(weight_name), "blk.%d.ssm_out.weight", layer);
++    if (std::strcmp(x->name, x_name) != 0 || std::strcmp(z_projection->name, z_name) != 0 ||
++        std::strcmp(projection->name, projection_name) != 0 ||
++        std::strcmp(projection->src[0]->name, weight_name) != 0) {
+         return false;
+     }
+ 
+-    match = { rms_norm, weight_mul, silu, gate_mul, node_idx + 1 };
++    match = { rms_norm, weight_mul, silu, gate_mul, projection, node_idx + 1 };
+     return true;
+ }
+ 
++static bool ggml_sycl_prepare_ornith_gdn_outproj(
++        ggml_backend_sycl_context & ctx,
++        const ggml_sycl_ornith_gdn_rms_gate_match & match) {
++    if (!ggml_sycl_ornith_gdn_outproj_enabled() || match.projection == nullptr) {
++        return false;
++    }
++    const ggml_tensor * weight = match.projection->src[0];
++    opt_for_reorder(&ctx, weight, match.gate_mul, match.projection, mul_mat_algo::MMVQ);
++    const auto * extra = static_cast<const ggml_tensor_extra_gpu *>(weight->extra);
++    return extra != nullptr && extra->optimized_feature.reorder;
++}
++
++static bool ggml_sycl_ornith_gdn_outproj_fused(
++        ggml_backend_sycl_context & ctx,
++        const ggml_sycl_ornith_gdn_rms_gate_match & match) {
++    if (ggml_sycl_ornith_gdn_outproj_poisoned()) {
++        GGML_ABORT("GGML_SYCL_FUSED_ORNITH_GDN_OUTPROJ_POISON matched %s", match.projection->name);
++    }
++    const ggml_tensor * weight = match.projection->src[0];
++    const auto * extra = static_cast<const ggml_tensor_extra_gpu *>(weight->extra);
++    if (extra == nullptr || !extra->optimized_feature.reorder) {
++        return false;
++    }
++
++    scope_op_debug_print scope_dbg_print(
++        __func__, match.projection, /*num_src=*/2,
++        " : fused GDN gate quantization + output projection");
++    constexpr int ncols = 4096;
++    constexpr int padded = GGML_PAD(ncols, MATRIX_ROW_PADDING);
++    const queue_ptr stream = ctx.stream();
++    ggml_sycl_pool_alloc<char> q8_alloc(
++        ctx.pool(), (size_t) padded * sizeof(block_q8_1) / QK8_1);
++    ggml_sycl_op_ornith_gdn_rms_silu_gate_q8_fused(
++        ctx, match.rms_norm, match.weight_mul, match.silu, match.gate_mul,
++        q8_alloc.get(), padded);
++    // Diagnostic overwrite: isolate the fused FP32 producer from the new Q8
++    // emitter. Remove after exactness attribution.
++    quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>(
++        static_cast<const float *>(match.gate_mul->data), q8_alloc.get(),
++        ncols, 1, padded, stream);
++    return ggml_sycl_mul_mat_vec_q_reorder(
++        weight->type, weight->data, q8_alloc.get(),
++        static_cast<float *>(match.projection->data), ncols, 2048, 1,
++        padded * (int) sizeof(block_q8_1) / QK8_1, 2048, stream);
++}
++
+ static int ggml_sycl_find_ornith_concat_state(const ggml_cgraph * cgraph, int node_idx) {
+     if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_concat_state_enabled() ||
+         node_idx < 0 || node_idx >= cgraph->n_nodes) {
+@@ -6961,6 +7060,12 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+                     return candidate.silu == node;
+                 });
+             if (pending != pending_ornith_gdn_rms_gate.end()) {
++                if (ggml_sycl_prepare_ornith_gdn_outproj(*sycl_ctx, *pending)) {
++                    // Skip SILU and gate MUL now; the following strict
++                    // projection match consumes their fused Q8_1 output.
++                    i++;
++                    continue;
++                }
+                 ggml_sycl_op_ornith_gdn_rms_silu_gate_fused(
+                     *sycl_ctx, pending->rms_norm, pending->weight_mul,
+                     pending->silu, pending->gate_mul);
+@@ -6970,6 +7075,21 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+                 continue;
+             }
+         }
++        if (node->op == GGML_OP_MUL_MAT) {
++            auto pending = std::find_if(
++                pending_ornith_gdn_rms_gate.begin(), pending_ornith_gdn_rms_gate.end(),
++                [node](const ggml_sycl_ornith_gdn_rms_gate_match & candidate) {
++                    return candidate.projection == node;
++                });
++            if (pending != pending_ornith_gdn_rms_gate.end()) {
++                const bool ok = ggml_sycl_ornith_gdn_outproj_fused(*sycl_ctx, *pending);
++                GGML_ASSERT(ok);
++                g_ggml_sycl_ornith_gdn_rms_gate_hits.fetch_add(1, std::memory_order_relaxed);
++                g_ggml_sycl_ornith_gdn_outproj_hits.fetch_add(1, std::memory_order_relaxed);
++                pending_ornith_gdn_rms_gate.erase(pending);
++                continue;
++            }
++        }
+         if (node->op == GGML_OP_RMS_NORM &&
+             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL }, {})) {
+             ggml_sycl_op_rms_norm_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+index 3f09854..9a71804 100644
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -2568,6 +2568,19 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+     GGML_UNUSED(ctx);
+ }
+ 
++bool ggml_sycl_mul_mat_vec_q_reorder(
++        enum ggml_type src0_type, const void * vx, const void * vy, float * dst,
++        int ncols, int nrows, int ncols_dst, int stride_col_y_bytes,
++        int stride_col_dst, dpct::queue_ptr stream) {
++    if (src0_type != GGML_TYPE_Q4_K || ncols_dst < 1 || ncols_dst > MMVQ_MAX_BATCH_SIZE) {
++        return false;
++    }
++    reorder_mul_mat_vec_q4_k_q8_1_sycl_switch_ncols(
++        vx, vy, dst, ncols, nrows, ncols_dst,
++        stride_col_y_bytes, stride_col_dst, stream);
++    return true;
++}
++
+ // src1_row_stride: 0 for shared src1 (gate/up proj), else per-expert stride (down proj).
+ template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
+ static void mul_mat_vec_q_moe(
+diff --git a/ggml/src/ggml-sycl/mmvq.hpp b/ggml/src/ggml-sycl/mmvq.hpp
+index 5787870..500fc2b 100644
+--- a/ggml/src/ggml-sycl/mmvq.hpp
++++ b/ggml/src/ggml-sycl/mmvq.hpp
+@@ -24,6 +24,14 @@ void ggml_sycl_op_mul_mat_vec_q(
+     const int64_t src1_ncols, const int64_t src1_padded_row_size,
+     const dpct::queue_ptr &stream);
+ 
++// Dense Q4_K GEMV consuming an already reordered one-row Q8_1 activation.
++// This is the same kernel selected by the ordinary reordered MMVQ path, minus
++// its separate activation-quantization launch.
++bool ggml_sycl_mul_mat_vec_q_reorder(
++    enum ggml_type src0_type, const void * vx, const void * vy, float * dst,
++    int ncols, int nrows, int ncols_dst, int stride_col_y_bytes,
++    int stride_col_dst, dpct::queue_ptr stream);
++
+ // Requires standard (non-reorder) block layout for src0.
+ // Returns false if src0_type isn't handled; caller should fall back.
+ bool ggml_sycl_mul_mat_vec_q_id(
+diff --git a/ggml/src/ggml-sycl/norm.cpp b/ggml/src/ggml-sycl/norm.cpp
+index 6595e73..630ac14 100644
+--- a/ggml/src/ggml-sycl/norm.cpp
++++ b/ggml/src/ggml-sycl/norm.cpp
+@@ -804,6 +804,95 @@ void ggml_sycl_op_ornith_gdn_rms_silu_gate_fused(
+         });
+ }
+ 
++void ggml_sycl_op_ornith_gdn_rms_silu_gate_q8_fused(
++        ggml_backend_sycl_context & ctx, ggml_tensor * rms_norm,
++        ggml_tensor * weight_mul, ggml_tensor * silu, ggml_tensor * gate_mul,
++        void * q8_dst, int q8_padded_cols) {
++    const ggml_tensor * x = rms_norm->src[0];
++    const ggml_tensor * weight = weight_mul->src[0] == rms_norm
++        ? weight_mul->src[1] : weight_mul->src[0];
++    const ggml_tensor * z = silu->src[0];
++
++    GGML_ASSERT(x != nullptr && weight != nullptr && z != nullptr && q8_dst != nullptr);
++    GGML_ASSERT(x->type == GGML_TYPE_F32 && rms_norm->type == GGML_TYPE_F32 &&
++                weight_mul->type == GGML_TYPE_F32 && silu->type == GGML_TYPE_F32 &&
++                gate_mul->type == GGML_TYPE_F32);
++    GGML_ASSERT(x->ne[0] == 128 && x->ne[1] == 32 &&
++                x->ne[2] == 1 && x->ne[3] == 1);
++    GGML_ASSERT(ggml_is_contiguous(x) && ggml_is_contiguous(weight) &&
++                ggml_is_contiguous(z) && ggml_is_contiguous(gate_mul));
++    GGML_ASSERT(ggml_nelements(weight) == 128 && ggml_nelements(z) == 4096 &&
++                ggml_nelements(gate_mul) == 4096 && q8_padded_cols == 4096);
++
++    float eps = 0.0f;
++    std::memcpy(&eps, rms_norm->op_params, sizeof(float));
++    GGML_ASSERT(eps >= 0.0f);
++
++    const float * x_d = static_cast<const float *>(x->data);
++    const float * w_d = static_cast<const float *>(weight->data);
++    const float * z_d = static_cast<const float *>(z->data);
++    float * dst_d = static_cast<float *>(gate_mul->data);
++    char * q8_d = static_cast<char *>(q8_dst);
++    queue_ptr stream = ctx.stream();
++    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
++
++    constexpr int ncols = 128;
++    constexpr int nheads = 32;
++    constexpr int qblocks_per_head = ncols / QK8_1;
++    constexpr int block_size = WARP_SIZE;
++    const sycl::range<1> block(block_size);
++    stream->parallel_for(
++        sycl::nd_range<1>(sycl::range<1>(nheads * block_size), block),
++        [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++            const int head = item.get_group(0);
++            const int tid = item.get_local_id(0);
++            const int base = head * ncols;
++
++            float sum_sq = 0.0f;
++            for (int col = tid; col < ncols; col += block_size) {
++                const float xi = x_d[base + col];
++                sum_sq += xi * xi;
++            }
++#pragma unroll
++            for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++                sum_sq += dpct::permute_sub_group_by_xor(item.get_sub_group(), sum_sq, mask);
++            }
++            const float scale = sycl::rsqrt(sum_sq / ncols + eps);
++
++            // Keep this producer loop instruction-for-instruction equivalent
++            // to the accepted standalone GDN gate kernel.
++            for (int col = tid; col < ncols; col += block_size) {
++                const int idx = base + col;
++                volatile float normalized = scale * x_d[idx] * w_d[col];
++                dst_d[idx] = op_silu(z_d[idx]) * normalized;
++            }
++            item.barrier(sycl::access::fence_space::global_space);
++
++            // The barrier above makes the original graph-visible FP32 buffer
++            // the source of truth, matching the standalone quantizer's load.
++#pragma unroll
++            for (int qblock = 0; qblock < qblocks_per_head; ++qblock) {
++                const int idx = base + qblock * QK8_1 + tid;
++                const float value = dst_d[idx];
++                float sum = value;
++                float amax = sycl::fabs(value);
++                sum = sycl::reduce_over_group(item.get_sub_group(), sum, sycl::plus<float>());
++                amax = sycl::reduce_over_group(item.get_sub_group(), amax, sycl::maximum<float>());
++                float d = amax == 0.0f ? 1.0f : amax / 127.0f;
++                const int8_t quantized = sycl::round(value / d);
++                d = amax == 0.0f ? 0.0f : d;
++
++                const int global_block = head * qblocks_per_head + qblock;
++                reinterpret_cast<int8_t *>(q8_d)[global_block * QK8_1 + tid] = quantized;
++                if (tid == 0) {
++                    auto * ds = reinterpret_cast<sycl::half2 *>(
++                        q8_d + q8_padded_cols + global_block * sizeof(sycl::half2));
++                    *ds = sycl::half2(sycl::half(d), sycl::half(sum));
++                }
++            }
++        });
++}
++
+ void ggml_sycl_op_residual_rms_norm_fused(
+         ggml_backend_sycl_context & ctx, ggml_tensor * add, ggml_tensor * rms_norm, ggml_tensor * mul_tensor) {
+     GGML_ASSERT(add->src[0] != nullptr && add->src[1] != nullptr && rms_norm->src[0] == add);
+diff --git a/ggml/src/ggml-sycl/norm.hpp b/ggml/src/ggml-sycl/norm.hpp
+index 095b17a..1923181 100644
+--- a/ggml/src/ggml-sycl/norm.hpp
++++ b/ggml/src/ggml-sycl/norm.hpp
+@@ -25,6 +25,13 @@ void ggml_sycl_op_ornith_gdn_rms_silu_gate_fused(
+         ggml_backend_sycl_context& ctx, ggml_tensor* rms_norm,
+         ggml_tensor* weight_mul, ggml_tensor* silu, ggml_tensor* gate_mul);
+ 
++// Same arithmetic and FP32 materialization as the function above, while also
++// emitting the one-row reordered Q8_1 representation consumed by MMVQ.
++void ggml_sycl_op_ornith_gdn_rms_silu_gate_q8_fused(
++        ggml_backend_sycl_context& ctx, ggml_tensor* rms_norm,
++        ggml_tensor* weight_mul, ggml_tensor* silu, ggml_tensor* gate_mul,
++        void* q8_dst, int q8_padded_cols);
++
+ void ggml_sycl_op_residual_rms_norm_fused(
+         ggml_backend_sycl_context& ctx, ggml_tensor* add, ggml_tensor* rms_norm, ggml_tensor* mul);
+ 
