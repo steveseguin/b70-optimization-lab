@@ -1,0 +1,37 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "library_sha256": "3887af763ac560ca277dd224ded611b083798dd27f149b7caf886c831460f637",
+  "accepted_target_only_stack_enabled": true,
+  "protocol": "fresh process per arm; fixed 12-prompt suite; each prompt once; 512-token responses; median tokens 1-100 after TTFT; cached_tokens=0",
+  "control": {
+    "spec_type": "none",
+    "median_tok_s": 113.0002423671047,
+    "freshness_gate_passed": true,
+    "final_gate_passed": true
+  },
+  "ngram_simple_default": {
+    "spec_type": "ngram-simple",
+    "size_n": 12,
+    "size_m": 48,
+    "median_tok_s": 96.4237195628323,
+    "delta_percent": -14.6694577437,
+    "freshness_gate_passed": true,
+    "final_gate_passed": true,
+    "reported_proposals": 7,
+    "draft_tokens_generated_in_reported_proposals": 336,
+    "draft_tokens_accepted_in_reported_proposals": 22,
+    "reported_acceptance_fraction": 0.0654761905
+  },
+  "ngram_simple_short8": {
+    "spec_type": "ngram-simple",
+    "size_n": 4,
+    "size_m": 8,
+    "status": "invalid_server_hang",
+    "observation": "The first response reported n_gen=241 at 79.86 tok/s, but the HTTP stream/task did not finalize and request two never began. The still-active process was terminated after 3m44s.",
+    "performance_result_promoted": false
+  },
+  "result": "closed negative; do not enable ngram speculation for the general Ornith serving recipe"
+}

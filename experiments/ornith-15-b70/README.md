@@ -146,6 +146,12 @@ binary, driver, or benchmark protocol will reproduce them.
   only `113.383 -> 113.792 tok/s` (+0.36%) and the arms crossed. The candidate
   is archived and not shipped. See
   `notes/2026-08-23-ornith35b-attn-gate-cont-neutral.md`.
+- **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
+  accepted only 22/336 reported draft tokens and reduced the fresh-suite median
+  from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed
+  to finalize its first HTTP response and was terminated. Keep the general
+  recipe target-only. See
+  `notes/2026-08-23-ornith35b-ngram-speculation-negative.md`.
 - **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
   tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
   the tuned dispatch and beat the now-promoted ordered reduction.

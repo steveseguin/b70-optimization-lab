@@ -1,0 +1,45 @@
+0.00.301.038 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.301.546 I srv          init: The UI is disabled
+0.00.301.548 I srv          init: Use --ui/--no-ui (or deprecated --webui/--no-webui) to enable/disable
+0.00.301.598 W srv  llama_server: -----------------
+0.00.301.599 W srv  llama_server: CORS is set to allow all origins ('*') and no API key is set
+0.00.301.600 W srv  llama_server: this can be a security risk (cross-origin attacks)
+0.00.301.600 W srv  llama_server: more info: https://github.com/ggml-org/llama.cpp/pull/25655
+0.00.301.600 W srv  llama_server: -----------------
+0.00.302.915 I srv    load_model: loading model '/home/steve/.cache/b70-optimization-lab/models/ornith-1.5-35b-a3b-q4km/Ornith-1.5-35B-Q4_K_M.gguf'
+0.00.538.022 W model has unused tensor blk.40.attn_norm.weight (size = 8192 bytes) -- ignoring
+0.00.538.034 W model has unused tensor blk.40.post_attention_norm.weight (size = 8192 bytes) -- ignoring
+0.00.538.039 W model has unused tensor blk.40.attn_q.weight (size = 9437184 bytes) -- ignoring
+0.00.538.041 W model has unused tensor blk.40.attn_k.weight (size = 589824 bytes) -- ignoring
+0.00.538.042 W model has unused tensor blk.40.attn_v.weight (size = 860160 bytes) -- ignoring
+0.00.538.048 W model has unused tensor blk.40.attn_output.weight (size = 4718592 bytes) -- ignoring
+0.00.538.050 W model has unused tensor blk.40.attn_q_norm.weight (size = 1024 bytes) -- ignoring
+0.00.538.052 W model has unused tensor blk.40.attn_k_norm.weight (size = 1024 bytes) -- ignoring
+0.00.538.054 W model has unused tensor blk.40.ffn_gate_inp.weight (size = 2097152 bytes) -- ignoring
+0.00.538.056 W model has unused tensor blk.40.ffn_down_exps.weight (size = 220200960 bytes) -- ignoring
+0.00.538.060 W model has unused tensor blk.40.ffn_gate_exps.weight (size = 150994944 bytes) -- ignoring
+0.00.538.062 W model has unused tensor blk.40.ffn_up_exps.weight (size = 150994944 bytes) -- ignoring
+0.00.538.067 W model has unused tensor blk.40.ffn_gate_inp_shexp.weight (size = 8192 bytes) -- ignoring
+0.00.538.069 W model has unused tensor blk.40.ffn_gate_shexp.weight (size = 589824 bytes) -- ignoring
+0.00.538.071 W model has unused tensor blk.40.ffn_up_shexp.weight (size = 589824 bytes) -- ignoring
+0.00.538.073 W model has unused tensor blk.40.ffn_down_shexp.weight (size = 860160 bytes) -- ignoring
+0.00.538.076 W model has unused tensor blk.40.nextn.eh_proj.weight (size = 4718592 bytes) -- ignoring
+0.00.538.078 W model has unused tensor blk.40.nextn.enorm.weight (size = 8192 bytes) -- ignoring
+0.00.538.081 W model has unused tensor blk.40.nextn.hnorm.weight (size = 8192 bytes) -- ignoring
+0.00.538.087 W model has unused tensor blk.40.nextn.shared_head_norm.weight (size = 8192 bytes) -- ignoring
+0.32.810.819 I cmn          init: llama threadpool init, n_threads = 8
+0.33.099.207 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 8192, kv_unified = 'false'
+0.33.100.024 W srv          init: --cache-idle-slots requires --cache-ram, disabling
+0.33.110.412 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve
+0.33.110.640 I srv  llama_server: model loaded
+0.33.110.645 I srv  llama_server: listening on http://127.0.0.1:18100
+0.33.553.246 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1
+0.33.553.277 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.37.183.705 I slot print_timing: id  0 | task 0 | n_gen =    241, tg =  79.86 t/s, tg_3s =  80.19 t/s
+Received second interrupt, terminating immediately.
+ggml_sycl_residual_rms_norm: fused_hits=26000
+ggml_sycl_ornith_alpha_gate: fused_hits=9750
+ggml_sycl_ornith_conv_silu: fused_hits=9750
+ggml_sycl_ornith_concat_state_direct: fused_hits=9750
+ggml_sycl_ornith_concat_state: fused_hits=0
+3.44.497.668 W srv          stop: cancel task, id_task = 0
