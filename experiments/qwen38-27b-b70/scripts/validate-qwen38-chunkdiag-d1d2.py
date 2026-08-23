@@ -119,6 +119,21 @@ def validate_d1(
             int(record["group_id"]): [int(value) for value in record["new_block_ids"]]
             for record in allocations
         }
+        released_slots = {
+            int(record["group_id"]): [
+                int(value) for value in record.get("released_block_ids") or []
+            ]
+            for record in frees
+        }
+        for group_id in (0, 1, 2):
+            if set(released_slots.get(group_id, [])) != set(
+                allocated_slots.get(group_id, [])
+            ):
+                errors.append(
+                    f"D1 {benchmark_id}: released group {group_id} slots "
+                    f"{released_slots.get(group_id, [])}, expected "
+                    f"{allocated_slots.get(group_id, [])}"
+                )
         if lifecycle:
             start_ts = min(float(record.get("ts", 0)) for record in lifecycle)
             end_ts = max(float(record.get("ts", 0)) for record in lifecycle)
@@ -164,24 +179,28 @@ def validate_d1(
                 "allocation_groups": allocation_groups,
                 "free_groups": free_groups,
                 "allocated_slots": allocated_slots,
+                "released_slots": released_slots,
                 "prefill_metadata_records": len(prefill_metadata),
                 "prefill_sizes": dict(sorted(prefill_sizes.items())),
                 "observed_state_slots": sorted(observed_state_slots),
             }
         )
 
+    slots_still_live = {
+        str(group_id): sorted(blocks)
+        for group_id, blocks in live_by_group.items()
+        if blocks
+    }
     if collisions:
         errors.append(f"D1 live-slot collisions observed: {len(collisions)}")
+    if slots_still_live:
+        errors.append(f"D1 slots remain live after trace: {slots_still_live}")
     return {
         "record_count": len(records),
         "event_counts": dict(sorted(event_counts.items())),
         "rows": row_summaries,
         "live_slot_collisions": collisions,
-        "slots_still_live_after_trace": {
-            str(group_id): sorted(blocks)
-            for group_id, blocks in live_by_group.items()
-            if blocks
-        },
+        "slots_still_live_after_trace": slots_still_live,
     }
 
 

@@ -97,34 +97,32 @@ deadlock report from the old root. The `71.7` row remains the fastest
 target-only Qwen3.8 result for this AutoRound/nightly identity, not the lab-wide
 target-only record.
 
-The first native dose-8 D1/D2 instrumentation arm (D7) stayed quality-green
-and captured state-slot lifecycle data, but is not a completed mechanism
-result. Its dedicated D2 file was empty, and the source change caused vLLM to
-rewrite two AOT archives in a protected cache because the unchanged-cache
-postflight was incorrectly conditional on the sealed-gate mode. That gate now
-fails independently and the diagnostic wrapper propagates infrastructure
-codes. Exact historical archive bytes were not reproducible; the original
-101.17 result remains recorded unchanged, while future cache replay carries
-an archive-identity-break disclosure. A quality-green clean-source recovery
-tree and every intervening variant are manifested and preserved. D4 was not
-run; native TP4 remains gated on a fresh isolated-cache preregistration. See
-the [incident and recovery note](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-chunkdiag-d7-instrumentation-incident.md).
+The isolated-cache native dose-8 D1/D2 mechanism program is now closed. D7
+stayed quality-green; D4 reproduced the exact `B70_QWEN3!!!!...` corruption.
+Across all eight dose rows, every state block allocated in groups 0/1/2 was
+released exactly, no block remained live, no live-slot collision occurred,
+and the native GDN call observed `has_initial_state=false` at computed tokens
+0 then true at 1024. The frozen verdict is that both state-slot lifecycle and
+stale/missing continuation-flag mechanisms are **dead**. The isolated cache
+manifest remained byte-identical and the recovered source cache was never
+used as a runtime cache. The corruption is still unfixed; any next mechanism
+door needs a fresh preregistration, with KV-page checksums or large
+layout-adjacent canaries the highest-information next move. See the
+[mechanism closure](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-chunk-corruption-d1d2-v2b-closure.md)
+and the earlier
+[incident/recovery note](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-chunkdiag-d7-instrumentation-incident.md).
 
 Immediate order:
 
-1. preserve the nightly image and all existing raw roots;
-2. add isolated-cache, natural-EOS, and real-baseline gates without changing
-   the historical driver's defaults; TP1 fresh-cache determinism is a bounded
-   negative, and TP4 full-suite evidence shows that exact-cache replay still
-   permits runtime token divergence;
-3. TP2 graph fresh-cache speed replication is closed at `48.8301 / 48.9505`;
-   use the qualified target-only cells to fill remaining promotion gates and
-   matrix rows without expanding failed speculative candidates;
-4. preregister any replacement dose-8 trace on an isolated writable cache,
-   then advance higher-upside native TP4 only after it closes, keeping GPU2
-   explicitly in scope;
-5. keep the dose-8 long-context corruption D1/D2 program separate from the
-   nightly graph+MTP correctness bug.
+1. preserve the nightly image, isolated cache, and every raw root;
+2. make the human outward-submission decision for the strict TP1/TP4
+   target-only cells; retain the cross-boot and unsupported-graph disclosures;
+3. do not burn more nightly Cartesian cells unchanged: all 96 are already
+   decision-classified and TP4 MTP2 missed its frozen expansion gates;
+4. preregister the next dose-8 mechanism door around KV-page checksums or
+   tens-of-MiB layout-adjacent canaries, keeping GPU2 explicitly in scope;
+5. separately decide whether to file the upstream graph+MTP corruption report
+   and run the digest-swapped v0.27.1 TP1 MTP cross-check.
 
 Evidence and correction:
 [TP-scale packet](experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json),
@@ -742,8 +740,13 @@ loaded service.
    fingerprints clean) across five byte-identical reproductions; the
    remaining shape is a layout-coupled writer on the multi-chunk
    prefill path with a stable victim when the pool pins the allocator
-   arena. Handoff menu and reusable instrumented harness are recorded
-   in the finding note. Operational guidance: **long-context
+   arena. The later isolated-cache D1/D2 program then killed two more
+   mechanisms without perturbing the exact boundary: all eight requests
+   released every state block with no live collision, while the native call
+   saw correct fresh/continuation flags on all sixteen chunks. State-slot
+   lifecycle and stale `has_initial_state` are closed; KV-page checksum or
+   large adjacency-canary localization is next. Operational guidance:
+   **long-context
    serving on this lane must run scratch=0 until the root cause is
    fixed**; the sealed short-KV record identity (scratch=1,
    single-chunk-only traffic) is unaffected, and all prior

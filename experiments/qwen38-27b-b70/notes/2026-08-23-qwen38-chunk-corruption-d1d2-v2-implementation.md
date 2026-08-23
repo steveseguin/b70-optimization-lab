@@ -14,8 +14,9 @@ Date: 2026-08-23. Implements the isolated-cache re-registration in
 - vLLM XPU kernels remain at
   `2dd55f380df753a10a88fcd9e96192561066e713` with no tracked diff.
 - D1/D2 validator SHA-256:
-  `0c9dcf18f02bd3dfaa5bc745e8a68fc82bd2ccd22048321dc30eb9a7ba35a4eb`
-  (v2b, native call-site stage correction).
+  `5cc48ab0b71cd88704747c199dca92b94f4ce5e1aa7db4be689a004ab3ec2409`
+  (v2c, post-run stricter exact-release audit; it passes the preserved
+  probe, D7, and D4 traces without new GPU work).
 
 ## What changed from v1
 

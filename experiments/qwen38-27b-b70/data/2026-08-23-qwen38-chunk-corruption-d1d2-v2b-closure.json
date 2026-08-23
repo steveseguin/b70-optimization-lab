@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-23",
+  "status": "closed_both_mechanisms_dead_corruption_unfixed",
+  "lane": {
+    "model": "Qwen3.8-27B AutoRound INT4",
+    "tensor_parallel_size": 2,
+    "gpu_selection": [2, 3],
+    "num_speculative_tokens": 5,
+    "max_num_batched_tokens": 1024,
+    "persistent_gdn_spec_scratch": true,
+    "vllm_head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+    "vllm_diff_sha256": "e1efc89e3c239b8b890c0d0e868b290e788f8477708a935f7c0fae1d3258788d"
+  },
+  "sealed_isolated_cache": {
+    "root": "/var/tmp/qwen38-chunkdiag-d1d2-v2-cache-20260823/torch_compile_cache",
+    "manifest_sha256": "8ce2ed4646f6fa33563c20619d382e5d13b3a7b60e609b03230e968c608b55b3",
+    "entry_count": 3795,
+    "total_file_bytes": 395835376,
+    "tree_sha256": "846aabb53b0da546de9ff76b8f0acfb827b37d4bf75792d3b9fbe82803b587b2",
+    "d7_input_output_manifest_identical": true,
+    "d4_input_output_manifest_identical": true,
+    "protected_recovered_source_unchanged": true,
+    "live_vllm_source_restored_clean_after_program": true
+  },
+  "arms": {
+    "d7": {
+      "root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-chunkdiag-d7-20260823-d1d2-v2b",
+      "dose_rows": 7,
+      "needle_pass": true,
+      "needle_content": "B70_QWEN36_NEEDLE_20260609",
+      "validator_pass": true,
+      "d1_record_count": 15537,
+      "d2_record_count": 28,
+      "benchmark_sha256": "a6eed7f3209e25711a72285b35d699abd96f8824313c292801365a12a49e9c67",
+      "quality_sha256": "2d213ce58aecd5f454a460287051d957daffe0167e2e64f7325758f2b6f6bea1",
+      "d1_sha256": "afd0a18766e6e9d99abaa74478c312d422e2ed8e1c920e1e6bb375a00f4edcc7",
+      "d2_sha256": "8744a38fc881c314abc7c0f83d970c09da9c817756f2d7d350f1a5f70c6cfb01"
+    },
+    "d4": {
+      "root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/qwen38-chunkdiag-d4-20260823-d1d2-v2b",
+      "dose_rows": 8,
+      "needle_pass": false,
+      "needle_content": "B70_QWEN3!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+      "needle_sha256": "6adc0d19ec254cf2a44809d54638c1fc03871fde7a714fa4d54227a4a14e0ed9",
+      "validator_pass": true,
+      "d1_record_count": 18144,
+      "d2_record_count": 32,
+      "benchmark_sha256": "d70eaf30ed0f6c39246dd485b749eb9aed3a8683974fecba61854a911ed02509",
+      "quality_sha256": "2fa9751f5bf6cb9f29314a2d8424b1fcd6e1231d9ac3cfdc6ed5dfde72ad46a3",
+      "d1_sha256": "71149df83721b008312dd740d43b1b7b546373693faca6c7b6744e89271fb8ce",
+      "d2_sha256": "7b6721fb109501293e76a3bc95716ff800fb1e39bbb7010ed76dcbec86bcff2e"
+    }
+  },
+  "mechanism_verdicts": {
+    "allocation_churn_or_pointer_reuse": "dead_from_existing_96_allocation_census",
+    "state_slot_leak_or_live_reuse": "dead",
+    "stale_or_missing_has_initial_state": "dead",
+    "observation_perturbation": "excluded_d4_reproduced_red"
+  },
+  "strict_lifecycle_audit": {
+    "validator_sha256": "5cc48ab0b71cd88704747c199dca92b94f4ce5e1aa7db4be689a004ab3ec2409",
+    "probe_validation_sha256": "0f27db3f2e3269c8d6d4ab637ea688d3400df151b68727536d9b22114f5a5ecf",
+    "d7_validation_sha256": "f76ed6edfac650a0fb5b28f930347801d1c817ee688adec68bdd531262588301",
+    "d4_validation_sha256": "98a3b6431288c74c5dc37b6f756c336743cac787f32f68343603d1c9ea485487",
+    "allocated_blocks_equal_released_blocks_for_every_dose_row": true,
+    "live_slot_collisions": 0,
+    "slots_live_after_trace": 0,
+    "all_fresh_flags_false": true,
+    "all_continuation_flags_true": true
+  },
+  "next_authorized_state": "no_more_runs_in_this_program_new_preregistration_required"
+}

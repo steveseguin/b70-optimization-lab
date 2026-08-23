@@ -320,3 +320,25 @@ reproduction roots. Launch traps hit and preserved:
 `*-20260823-repro.fail-nsimport` roots came from a launcher cwd under
 `/home/steve/src`, where `import vllm` binds the source repo as a namespace
 package and the identity probe fails - launch the diag from a neutral cwd.
+
+## D1/D2 mechanism closure (2026-08-23): both doors dead
+
+The replacement report-only program ran from an isolated ext4 cache after a
+fail-closed one-row probe. D7 stayed green and D4 reproduced the exact
+`B70_QWEN3!!!!...` needle degeneration, so observation did not suppress the
+defect. The complete traces show:
+
+- every benchmark request allocated six blocks in each of cache groups 0, 1,
+  and 2, and its free event released those exact eighteen blocks;
+- no state block was allocated while live for another request, and no blocks
+  remained live at trace end;
+- the rank-0/layer-0 native GDN call observed `has_initial_state=[false]` at
+  computed tokens 0 and `[true]` at 1024 for every dose row, including row 8.
+
+Frozen verdict: the state-slot leak/live-reuse mechanism (D1) and stale or
+missing continuation flags (D2) are **dead**. The exact eighth-dose corruption
+remains. Next attribution must be a new preregistered program; the highest
+information doors are KV-page checksums across requests or much larger
+layout-adjacent canary brackets around the persistent scratch arena, followed
+by device AddressSanitizer if those do not localize the victim. See the
+[closure note](2026-08-23-qwen38-chunk-corruption-d1d2-v2b-closure.md).
