@@ -1,0 +1,30 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "runtime_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "accepted_source_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+  "protocol": "fixed-seed 128-token llama-cli MTP1 A/B/B/A",
+  "aggressive_q8_mmvq": {
+    "status": "correctness_negative",
+    "control_tps": 65.2,
+    "candidate_tps": 81.6,
+    "control_transcript_sha256": "0f162aebc81f0a28ffd82704b20729ca4dc71b929644c5803639a3ad40828a2e",
+    "candidate_transcript_sha256": "7d8012316f06b5b9eeeca11379c6bde9a16ad604598110afdb9d577bc25c5289",
+    "candidate_hits": 3400,
+    "cause": "forced two-row routed projections from stock expert-sorted direct-FP32 DMMV/MMVQ selection onto the one-row Q8 MMVQ arithmetic"
+  },
+  "exact_glu_scatter": {
+    "status": "performance_neutral",
+    "control_tps": [65.5, 63.7],
+    "candidate_tps": [64.4, 65.9],
+    "control_mean_tps": 64.6,
+    "candidate_mean_tps": 65.15,
+    "mean_delta_percent": 0.8513931888544838,
+    "all_transcript_sha256": "0f162aebc81f0a28ffd82704b20729ca4dc71b929644c5803639a3ad40828a2e",
+    "candidate_hits_each": 3320,
+    "fresh_server_run": false
+  },
+  "decision": "retain as negative research; do not promote or enable by default"
+}
+

@@ -1,0 +1,201 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 917574a..80e8ec8 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -4655,6 +4655,7 @@ static bool ggml_sycl_mul_mat_glu_mmvq_fused(ggml_backend_sycl_context & ctx, gg
+ }
+ 
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_moe_gate_up_hits{0};
++static std::atomic<uint64_t> g_ggml_sycl_ornith_spec_moe_gate_up_hits{0};
+ 
+ static bool ggml_sycl_ornith_moe_gate_up_enabled() {
+     static const bool enabled = [] {
+@@ -4671,9 +4672,24 @@ static bool ggml_sycl_ornith_moe_gate_up_enabled() {
+     return enabled;
+ }
+ 
++static bool ggml_sycl_ornith_spec_moe_gate_up_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_SPEC_MOE_GATE_UP");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr, "ggml_sycl_ornith_spec_moe_gate_up: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_spec_moe_gate_up_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
+ static bool ggml_sycl_ornith_moe_projection(
+         const ggml_tensor * projection, const ggml_tensor * input,
+-        const ggml_tensor * ids, const char * weight_name) {
++        const ggml_tensor * ids, const char * weight_name, int n_tokens) {
+     const ggml_tensor * weight = projection != nullptr ? projection->src[0] : nullptr;
+     return projection != nullptr && projection->op == GGML_OP_MUL_MAT_ID &&
+            (projection->flags & GGML_TENSOR_FLAG_COMPUTE) != 0 &&
+@@ -4681,7 +4697,7 @@ static bool ggml_sycl_ornith_moe_projection(
+            projection->src[1] == input && projection->src[2] == ids &&
+            projection->type == GGML_TYPE_F32 &&
+            projection->ne[0] == 512 && projection->ne[1] == 8 &&
+-           projection->ne[2] == 1 && projection->ne[3] == 1 &&
++           projection->ne[2] == n_tokens && projection->ne[3] == 1 &&
+            ggml_is_contiguous(projection) && weight != nullptr &&
+            std::strcmp(weight->name, weight_name) == 0 &&
+            weight->type == GGML_TYPE_Q4_K && weight->ne[0] == 2048 &&
+@@ -4689,6 +4705,10 @@ static bool ggml_sycl_ornith_moe_projection(
+            ggml_is_contiguous(weight) && !ggml_backend_buffer_is_sycl_split(weight->buffer);
+ }
+ 
++static void ggml_sycl_mul_mat_id(
++    ggml_backend_sycl_context & ctx, ggml_tensor * dst,
++    const ggml_tensor * gate_for_glu = nullptr, ggml_tensor * glu_dst = nullptr);
++
+ static bool ggml_sycl_ornith_moe_gate_up_fused(
+         ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int node_idx) {
+     if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_moe_gate_up_enabled() ||
+@@ -4702,9 +4722,12 @@ static bool ggml_sycl_ornith_moe_gate_up_fused(
+     ggml_tensor * first = cgraph->nodes[node_idx];
+     ggml_tensor * second = cgraph->nodes[node_idx + 1];
+     ggml_tensor * glu = cgraph->nodes[node_idx + 2];
++    const int n_tokens = glu != nullptr ? (int) glu->ne[2] : 0;
+     if (glu == nullptr || ggml_get_glu_op(glu) != GGML_GLU_OP_SWIGLU ||
+         ggml_get_op_params_i32(glu, 1) != 0 || glu->type != GGML_TYPE_F32 ||
+-        glu->ne[0] != 512 || glu->ne[1] != 8 || glu->ne[2] != 1 || glu->ne[3] != 1 ||
++        glu->ne[0] != 512 || glu->ne[1] != 8 ||
++        (n_tokens != 1 && (n_tokens != 2 || !ggml_sycl_ornith_spec_moe_gate_up_enabled())) ||
++        glu->ne[3] != 1 ||
+         !ggml_is_contiguous(glu)) {
+         return false;
+     }
+@@ -4718,9 +4741,10 @@ static bool ggml_sycl_ornith_moe_gate_up_fused(
+     const ggml_tensor * ids = up->src[2];
+     if (input == nullptr || ids == nullptr || gate->src[1] != input || gate->src[2] != ids ||
+         input->type != GGML_TYPE_F32 || input->ne[0] != 2048 || input->ne[1] != 1 ||
+-        input->ne[2] != 1 || input->ne[3] != 1 || !ggml_is_contiguous(input) ||
+-        ids->type != GGML_TYPE_I32 || ids->ne[0] != 8 || ids->ne[1] != 1 ||
+-        !ggml_is_contiguous(ids)) {
++        input->ne[2] != n_tokens || input->ne[3] != 1 || !ggml_is_contiguous(input) ||
++        ids->type != GGML_TYPE_I32 || ids->ne[0] != 8 || ids->ne[1] != n_tokens ||
++        ids->ne[2] != 1 || ids->ne[3] != 1 ||
++        ids->nb[0] != sizeof(int32_t) || ids->nb[1] < 8 * sizeof(int32_t)) {
+         return false;
+     }
+ 
+@@ -4735,13 +4759,25 @@ static bool ggml_sycl_ornith_moe_gate_up_fused(
+     char up_name[64];
+     std::snprintf(gate_name, sizeof(gate_name), "blk.%d.ffn_gate_exps.weight", layer);
+     std::snprintf(up_name, sizeof(up_name), "blk.%d.ffn_up_exps.weight", layer);
+-    if (!ggml_sycl_ornith_moe_projection(gate, input, ids, gate_name) ||
+-        !ggml_sycl_ornith_moe_projection(up, input, ids, up_name) ||
++    if (!ggml_sycl_ornith_moe_projection(gate, input, ids, gate_name, n_tokens) ||
++        !ggml_sycl_ornith_moe_projection(up, input, ids, up_name, n_tokens) ||
+         !ggml_are_same_shape(gate->src[0], up->src[0]) ||
+         !ggml_are_same_stride(gate->src[0], up->src[0])) {
+         return false;
+     }
+ 
++    if (n_tokens == 2) {
++        // Preserve the stock verifier arithmetic and routing: execute both
++        // MUL_MAT_ID projections unchanged, then fold SWIGLU into the up
++        // projection's existing final scatter. This removes only the GLU
++        // launch and does not force the verifier onto the one-row Q8 path.
++        ggml_sycl_mul_mat_id(ctx, gate);
++        ggml_sycl_mul_mat_id(ctx, up, gate, glu);
++        g_ggml_sycl_ornith_moe_gate_up_hits.fetch_add(1, std::memory_order_relaxed);
++        g_ggml_sycl_ornith_spec_moe_gate_up_hits.fetch_add(1, std::memory_order_relaxed);
++        return true;
++    }
++
+     opt_for_reorder_id(&ctx, gate->src[0]);
+     opt_for_reorder_id(&ctx, up->src[0]);
+     const auto * gate_extra = static_cast<const ggml_tensor_extra_gpu *>(gate->src[0]->extra);
+@@ -4797,7 +4833,9 @@ __dpct_inline__ static void k_copy_src1_to_contiguous(
+ __dpct_inline__ static void k_copy_dst_from_contiguous(
+     char *__restrict__ dst_original, const char *__restrict__ dst_contiguous,
+     const mmid_row_mapping *__restrict__ row_mapping, int64_t ne0, size_t nb1,
+-    size_t nb2, const sycl::nd_item<3> &item_ct1) {
++    size_t nb2, const char *__restrict__ gate_original,
++    char *__restrict__ glu_original, size_t gate_nb1, size_t gate_nb2,
++    size_t glu_nb1, size_t glu_nb2, const sycl::nd_item<3> &item_ct1) {
+     int32_t i = item_ct1.get_group(2);
+ 
+     const int32_t i1 = row_mapping[i].i1;
+@@ -4805,11 +4843,19 @@ __dpct_inline__ static void k_copy_dst_from_contiguous(
+ 
+     const float * dst_row_contiguous = (const float *)(dst_contiguous + i*nb1);
+     float * dst_row_original = (float *)(dst_original + i1*nb1 + i2*nb2);
++    const float * gate_row = gate_original != nullptr
++        ? (const float *)(gate_original + i1*gate_nb1 + i2*gate_nb2) : nullptr;
++    float * glu_row = glu_original != nullptr
++        ? (float *)(glu_original + i1*glu_nb1 + i2*glu_nb2) : nullptr;
+ 
+ #pragma unroll
+     for (int j = item_ct1.get_local_id(2); j < ne0;
+          j += item_ct1.get_local_range(2)) {
+-        dst_row_original[j] = dst_row_contiguous[j];
++        const float up = dst_row_contiguous[j];
++        dst_row_original[j] = up;
++        if (glu_row != nullptr) {
++            glu_row[j] = up * op_silu(gate_row[j]);
++        }
+     }
+ }
+ 
+@@ -4915,8 +4961,9 @@ static void mmid_counting_sort_rows(
+     }
+ }
+ 
+-static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
+-                                 ggml_tensor *dst) try {
++static void ggml_sycl_mul_mat_id(
++    ggml_backend_sycl_context & ctx, ggml_tensor * dst,
++    const ggml_tensor * gate_for_glu, ggml_tensor * glu_dst) try {
+     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
+     const ggml_tensor *src0 = dst->src[0];
+     const ggml_tensor *src1 = dst->src[1];
+@@ -4925,6 +4972,16 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
+     const ggml_tensor *ids = dst->src[2];
+     GGML_TENSOR_BINARY_OP_LOCALS
+ 
++    const bool fuse_glu_scatter = gate_for_glu != nullptr || glu_dst != nullptr;
++    GGML_ASSERT((gate_for_glu == nullptr) == (glu_dst == nullptr));
++    if (fuse_glu_scatter) {
++        GGML_ASSERT(ne12 == 2 && gate_for_glu->type == GGML_TYPE_F32 &&
++                    glu_dst->type == GGML_TYPE_F32 &&
++                    ggml_are_same_shape(dst, gate_for_glu) &&
++                    ggml_are_same_shape(dst, glu_dst) &&
++                    ggml_is_contiguous(gate_for_glu) && ggml_is_contiguous(glu_dst));
++    }
++
+     const queue_ptr stream = ctx.stream();
+ 
+     const int64_t n_as = ne02;
+@@ -5065,6 +5122,13 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
+         {
+             sycl::range<3> block_dims(1, 1, std::min((unsigned int)ne0, max_work_group_size));
+             sycl::range<3> grid_dims(1, 1, n_routed_rows);
++            const char * gate_original = gate_for_glu != nullptr
++                ? (const char *) gate_for_glu->data : nullptr;
++            char * glu_original = glu_dst != nullptr ? (char *) glu_dst->data : nullptr;
++            const size_t gate_nb1 = gate_for_glu != nullptr ? gate_for_glu->nb[1] : 0;
++            const size_t gate_nb2 = gate_for_glu != nullptr ? gate_for_glu->nb[2] : 0;
++            const size_t glu_nb1 = glu_dst != nullptr ? glu_dst->nb[1] : 0;
++            const size_t glu_nb2 = glu_dst != nullptr ? glu_dst->nb[2] : 0;
+             stream->submit([&](sycl::handler &cgh) {
+                 const char *__restrict dst_contiguous_get =
+                     dst_contiguous.get();
+@@ -5077,7 +5141,10 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
+                         k_copy_dst_from_contiguous(dst_original,
+                                                    dst_contiguous_get,
+                                                    dev_row_mapping_get,
+-                                                   ne0, nb1, nb2, item_ct1);
++                                                   ne0, nb1, nb2,
++                                                   gate_original, glu_original,
++                                                   gate_nb1, gate_nb2, glu_nb1, glu_nb2,
++                                                   item_ct1);
+                     });
+             });
+         }

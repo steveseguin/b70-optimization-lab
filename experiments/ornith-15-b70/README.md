@@ -388,6 +388,15 @@ binary, driver, or benchmark protocol will reproduce them.
   preferred MTP1 research base, but remains far below target-only and does not
   enter the user recipe. See
   `notes/2026-08-23-ornith35b-mtp1-verifier-stack-positive.md`.
+- **Two-row routed gate/up + GLU — DO NOT PROMOTE:** forcing the accepted
+  one-row Q8 MMVQ fusion onto the verifier looked fast (`65.2 -> 81.6 tok/s`)
+  but changed the canonical transcript because stock two-row routing uses a
+  different expert-sorted DMMV/MMVQ arithmetic mix. An exact alternative that
+  folded SWIGLU into the stock output scatter preserved all four transcripts
+  and removed 3,320 launches/run, but mirrored means were only
+  `64.60 -> 65.15 tok/s` (+0.85%) with split pairwise outcomes. Retain both as
+  negative evidence; see
+  `notes/2026-08-23-ornith35b-mtp2row-gate-up-glu-negative.md`.
 - **Speculative decode:** investigate a substantially smaller and faster
   vocabulary-compatible draft separately. Label target-only and assisted
   results separately.
