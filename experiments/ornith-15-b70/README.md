@@ -80,6 +80,13 @@ binary, driver, or benchmark protocol will reproduce them.
   fusions both hit every intended layer but changed fixed-seed generation, even
   in their strictest stock-intermediate forms. No speed result was promoted.
   See `notes/2026-08-22-ornith35b-launch-census-and-fusion-negatives.md`.
+- **Repaired recurrent Q/K L2 batching — CLOSED PERFORMANCE NEGATIVE:** a
+  range diagnostic disproved allocator aliasing, and a new two-grid-sample
+  form preserved one stock reduction per work-group. It was byte-exact and
+  fused all 3,810 pairs, but mirrored decode means moved
+  `84.50 -> 84.35 tok/s` (-0.18%). It did not earn a server test and remains
+  disabled. See
+  `notes/2026-08-23-ornith35b-qk-l2-batched-performance-negative.md`.
 - **Convolution/SiLU work-group sweep — CLOSED NEUTRAL:** WG64 initially looked
   slightly faster than the accepted WG256, but the mirrored seven-sample repeat
   measured `109.643` versus `109.991 tok/s` (**-0.32%**). WG128 and WG512 also

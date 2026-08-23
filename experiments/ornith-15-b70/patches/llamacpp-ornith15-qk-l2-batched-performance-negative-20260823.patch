@@ -1,0 +1,259 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 917574a..39be2db 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -6113,6 +6113,7 @@ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_direct_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_alpha_gate_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_qk_norm_rope_hits{0};
++static std::atomic<uint64_t> g_ggml_sycl_ornith_qk_l2_batched_hits{0};
+ 
+ static bool ggml_sycl_ornith_qk_norm_rope_enabled() {
+     static const bool enabled = [] {
+@@ -6607,6 +6608,146 @@ static bool ggml_sycl_tensor_ranges_overlap(const ggml_tensor * a, const ggml_te
+     return a0 < b0 + ggml_nbytes(b) && b0 < a0 + ggml_nbytes(a);
+ }
+ 
++static bool ggml_sycl_ornith_qk_l2_batched_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_QK_L2_BATCHED");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr, "ggml_sycl_ornith_qk_l2_batched: fused_pairs=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_qk_l2_batched_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++static ggml_tensor * ggml_sycl_find_ornith_qk_l2_batched(
++        const ggml_cgraph * cgraph, int node_idx) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_qk_l2_batched_enabled() ||
++        cgraph == nullptr || node_idx < 0 || node_idx >= cgraph->n_nodes) {
++        return nullptr;
++    }
++    ggml_tensor * q = cgraph->nodes[node_idx];
++    if (q == nullptr || q->op != GGML_OP_L2_NORM || q->src[0] == nullptr ||
++        std::strstr(q->name, "q_conv_predelta-") == nullptr ||
++        q->type != GGML_TYPE_F32 || q->src[0]->type != GGML_TYPE_F32 ||
++        q->ne[0] != 128 || q->ne[1] != 16 || q->ne[2] != 1 || q->ne[3] != 1 ||
++        !ggml_is_contiguous(q) || !ggml_is_contiguous(q->src[0]) ||
++        (q->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        ggml_sycl_tensor_use_count(cgraph, q) != 1) {
++        return nullptr;
++    }
++
++    ggml_tensor * k = nullptr;
++    for (int j = node_idx + 1; j < cgraph->n_nodes; ++j) {
++        ggml_tensor * candidate = cgraph->nodes[j];
++        if (candidate == nullptr || ggml_sycl_is_view_or_noop(candidate) ||
++            (candidate->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
++            continue;
++        }
++        if (candidate->op == GGML_OP_L2_NORM && candidate->src[0] != nullptr &&
++            std::strstr(candidate->name, "k_conv_predelta-") != nullptr) {
++            k = candidate;
++        }
++        break;
++    }
++    if (k == nullptr || k->src[0] == nullptr || !ggml_are_same_shape(q, k) ||
++        k->type != GGML_TYPE_F32 || k->src[0]->type != GGML_TYPE_F32 ||
++        !ggml_is_contiguous(k) || !ggml_is_contiguous(k->src[0]) ||
++        (k->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        ggml_sycl_tensor_use_count(cgraph, k) != 1 ||
++        std::memcmp(q->op_params, k->op_params, sizeof(float)) != 0) {
++        return nullptr;
++    }
++    const ggml_tensor * tensors[] = { q->src[0], q, k->src[0], k };
++    for (int a = 0; a < 4; ++a) {
++        for (int b = a + 1; b < 4; ++b) {
++            if (ggml_sycl_tensor_ranges_overlap(tensors[a], tensors[b])) {
++                return nullptr;
++            }
++        }
++    }
++    return k;
++}
++
++static int ggml_sycl_ornith_qk_l2_alias_diagnostic_tokens() {
++    static const int tokens = [] {
++        const char * value = std::getenv("GGML_SYCL_ORNITH_QK_L2_ALIAS_DIAGNOSTIC");
++        const int requested = value != nullptr ? std::atoi(value) : 0;
++        return requested == 1 || requested == 2 ? requested : 0;
++    }();
++    return tokens;
++}
++
++// Diagnostic only: explain why the earlier exact-helper Q/K L2 pair changed
++// generation. The graph allocator may legally reuse a dead Q-side allocation
++// for K before the second stock launch. A combined launch would make those
++// lifetimes overlap and can introduce an inter-workgroup read/write race.
++static void ggml_sycl_ornith_qk_l2_alias_diagnostic(const ggml_cgraph * cgraph, int node_idx) {
++    static std::atomic<int> reports{0};
++    const int diagnostic_tokens = ggml_sycl_ornith_qk_l2_alias_diagnostic_tokens();
++    if (diagnostic_tokens == 0 || cgraph == nullptr ||
++        reports.load(std::memory_order_relaxed) != 0 || node_idx < 0 || node_idx >= cgraph->n_nodes) {
++        return;
++    }
++
++    const ggml_tensor * q = cgraph->nodes[node_idx];
++    if (q == nullptr || q->op != GGML_OP_L2_NORM || q->src[0] == nullptr ||
++        std::strstr(q->name, "q_conv_predelta-") == nullptr || q->type != GGML_TYPE_F32 ||
++        q->src[0]->type != GGML_TYPE_F32 || q->ne[0] != 128 || q->ne[1] != 16 ||
++        q->ne[2] != diagnostic_tokens || q->ne[3] != 1 ||
++        !ggml_is_contiguous(q) || !ggml_is_contiguous(q->src[0])) {
++        return;
++    }
++
++    const ggml_tensor * k = nullptr;
++    int k_idx = -1;
++    for (int j = node_idx + 1; j < cgraph->n_nodes; ++j) {
++        const ggml_tensor * candidate = cgraph->nodes[j];
++        if (candidate == nullptr || ggml_sycl_is_view_or_noop(candidate) ||
++            (candidate->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
++            continue;
++        }
++        if (candidate->op == GGML_OP_L2_NORM && candidate->src[0] != nullptr &&
++            std::strstr(candidate->name, "k_conv_predelta-") != nullptr) {
++            k = candidate;
++            k_idx = j;
++        }
++        break;
++    }
++    if (k == nullptr || k->src[0] == nullptr || !ggml_are_same_shape(q, k) ||
++        k->type != GGML_TYPE_F32 || k->src[0]->type != GGML_TYPE_F32 ||
++        !ggml_is_contiguous(k) || !ggml_is_contiguous(k->src[0])) {
++        return;
++    }
++
++    int expected = 0;
++    if (!reports.compare_exchange_strong(expected, 1, std::memory_order_relaxed)) {
++        return;
++    }
++
++    const auto p = [](const ggml_tensor * t) { return reinterpret_cast<uintptr_t>(t->data); };
++    std::fprintf(stderr,
++        "ornith_qk_l2_alias_diag: q_idx=%d k_idx=%d tokens=%" PRId64
++        " q_src=%p+%zu q_dst=%p+%zu k_src=%p+%zu k_dst=%p+%zu"
++        " overlap_qs_qd=%d overlap_qs_ks=%d overlap_qs_kd=%d"
++        " overlap_qd_ks=%d overlap_qd_kd=%d overlap_ks_kd=%d"
++        " equal_qs_kd=%d equal_qd_ks=%d q_uses=%d k_uses=%d\n",
++        node_idx, k_idx, q->ne[2], q->src[0]->data, ggml_nbytes(q->src[0]),
++        q->data, ggml_nbytes(q), k->src[0]->data, ggml_nbytes(k->src[0]),
++        k->data, ggml_nbytes(k),
++        (int) ggml_sycl_tensor_ranges_overlap(q->src[0], q),
++        (int) ggml_sycl_tensor_ranges_overlap(q->src[0], k->src[0]),
++        (int) ggml_sycl_tensor_ranges_overlap(q->src[0], k),
++        (int) ggml_sycl_tensor_ranges_overlap(q, k->src[0]),
++        (int) ggml_sycl_tensor_ranges_overlap(q, k),
++        (int) ggml_sycl_tensor_ranges_overlap(k->src[0], k),
++        (int) (p(q->src[0]) == p(k)), (int) (p(q) == p(k->src[0])),
++        ggml_sycl_tensor_use_count(cgraph, q), ggml_sycl_tensor_use_count(cgraph, k));
++}
++
+ // Match only Ornith 1.5's one-token Qwen3.5 full-attention closure. Q is
+ // deferred until K normalization, then one kernel preserves the stock SIMD16
+ // RMS reduction, FP32 RMS+weight materialization, and IMRoPE arithmetic. K is
+@@ -6790,6 +6931,8 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+     pending_ornith_gdn_state_io.reserve(40);
+     std::vector<ggml_sycl_ornith_qk_norm_rope_match> pending_ornith_qk_norm_rope;
+     pending_ornith_qk_norm_rope.reserve(10);
++    std::vector<ggml_tensor *> precomputed_ornith_k_l2;
++    precomputed_ornith_k_l2.reserve(40);
+ 
+     for (int i = 0; i < cgraph->n_nodes; i++) {
+         ggml_tensor * node = cgraph->nodes[i];
+@@ -6804,6 +6947,10 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             precomputed_ornith_silu.end()) {
+             continue;
+         }
++        if (std::find(precomputed_ornith_k_l2.begin(), precomputed_ornith_k_l2.end(), node) !=
++            precomputed_ornith_k_l2.end()) {
++            continue;
++        }
+ 
+         const auto qk_pending = std::find_if(
+             pending_ornith_qk_norm_rope.begin(), pending_ornith_qk_norm_rope.end(),
+@@ -6832,6 +6979,17 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             }
+         }
+ 
++        if (node->op == GGML_OP_L2_NORM) {
++            ggml_tensor * k_l2 = ggml_sycl_find_ornith_qk_l2_batched(cgraph, i);
++            if (k_l2 != nullptr) {
++                ggml_sycl_op_ornith_qk_l2_batched(*sycl_ctx, node, k_l2);
++                precomputed_ornith_k_l2.push_back(k_l2);
++                g_ggml_sycl_ornith_qk_l2_batched_hits.fetch_add(1, std::memory_order_relaxed);
++                continue;
++            }
++            ggml_sycl_ornith_qk_l2_alias_diagnostic(cgraph, i);
++        }
++
+         if (node->op == GGML_OP_GET_ROWS) {
+             ggml_sycl_ornith_gdn_state_io_match gdn_state_io;
+             if (ggml_sycl_find_ornith_gdn_state_io(cgraph, i, gdn_state_io)) {
+diff --git a/ggml/src/ggml-sycl/norm.cpp b/ggml/src/ggml-sycl/norm.cpp
+index 6595e73..df6e6c9 100644
+--- a/ggml/src/ggml-sycl/norm.cpp
++++ b/ggml/src/ggml-sycl/norm.cpp
+@@ -1050,3 +1050,45 @@ void ggml_sycl_op_l2_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+     l2_norm_f32_sycl<WARP_SIZE>(src0_d, dst_d, ne00, ne01, ne02, ne03,
+             ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, stream, ctx.device);
+ }
++
++void ggml_sycl_op_ornith_qk_l2_batched(
++        ggml_backend_sycl_context& ctx, ggml_tensor* q_dst, ggml_tensor* k_dst) {
++    GGML_ASSERT(q_dst != nullptr && k_dst != nullptr);
++    GGML_ASSERT(q_dst->op == GGML_OP_L2_NORM && k_dst->op == GGML_OP_L2_NORM);
++    GGML_ASSERT(q_dst->src[0] != nullptr && k_dst->src[0] != nullptr);
++    GGML_ASSERT(q_dst->type == GGML_TYPE_F32 && k_dst->type == GGML_TYPE_F32);
++    GGML_ASSERT(q_dst->src[0]->type == GGML_TYPE_F32 && k_dst->src[0]->type == GGML_TYPE_F32);
++    GGML_ASSERT(q_dst->ne[0] == 128 && q_dst->ne[1] == 16 &&
++                q_dst->ne[2] == 1 && q_dst->ne[3] == 1);
++    GGML_ASSERT(ggml_are_same_shape(q_dst, k_dst));
++    GGML_ASSERT(ggml_is_contiguous(q_dst) && ggml_is_contiguous(k_dst));
++    GGML_ASSERT(ggml_is_contiguous(q_dst->src[0]) && ggml_is_contiguous(k_dst->src[0]));
++
++    float q_eps;
++    float k_eps;
++    memcpy(&q_eps, q_dst->op_params, sizeof(float));
++    memcpy(&k_eps, k_dst->op_params, sizeof(float));
++    GGML_ASSERT(q_eps >= 0.0f && q_eps == k_eps);
++
++    const float * q = static_cast<const float *>(q_dst->src[0]->data);
++    const float * k = static_cast<const float *>(k_dst->src[0]->data);
++    float * q_out = static_cast<float *>(q_dst->data);
++    float * k_out = static_cast<float *>(k_dst->data);
++
++    // Keep the stock helper's one-reduction-per-work-group code shape. The
++    // leading grid dimension merely batches Q and K into one queue submission.
++    const sycl::range<3> block_dims(1, 1, WARP_SIZE);
++    const sycl::range<3> grid_dims(2, 1, 16);
++    ctx.stream()->submit([&](sycl::handler& cgh) {
++        cgh.parallel_for(
++            sycl::nd_range<3>(grid_dims * block_dims, block_dims),
++            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                const bool use_k = item.get_group(0) != 0;
++                const float * src = use_k ? k : q;
++                float * dst = use_k ? k_out : q_out;
++                l2_norm_f32<WARP_SIZE>(src, dst, 128,
++                    1, 128, 0, 0, 1, 128, 0, 0,
++                    q_eps, item, nullptr, WARP_SIZE);
++            });
++    });
++}
+diff --git a/ggml/src/ggml-sycl/norm.hpp b/ggml/src/ggml-sycl/norm.hpp
+index 095b17a..083fbab 100644
+--- a/ggml/src/ggml-sycl/norm.hpp
++++ b/ggml/src/ggml-sycl/norm.hpp
+@@ -38,4 +38,7 @@ void ggml_sycl_op_group_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
+ 
+ void ggml_sycl_op_l2_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
+ 
++void ggml_sycl_op_ornith_qk_l2_batched(
++        ggml_backend_sycl_context& ctx, ggml_tensor* q_dst, ggml_tensor* k_dst);
++
+ #endif // GGML_SYCL_NORM_HPP

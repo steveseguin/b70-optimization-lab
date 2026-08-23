@@ -1,0 +1,41 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-A3B-Q4_K_M",
+  "device": "Intel Arc Pro B70 GPU 0",
+  "decision": "closed_performance_negative",
+  "promoted": false,
+  "diagnostic": {
+    "shape": [128, 16, 1, 1],
+    "bytes_per_tensor": 8192,
+    "q_source_q_destination_overlap": false,
+    "q_source_k_source_overlap": false,
+    "q_source_k_destination_overlap": false,
+    "q_destination_k_source_overlap": false,
+    "q_destination_k_destination_overlap": false,
+    "k_source_k_destination_overlap": false,
+    "q_output_use_count": 1,
+    "k_output_use_count": 1,
+    "conclusion": "allocator cross-aliasing did not cause the earlier correctness failure"
+  },
+  "candidate": {
+    "flag": "GGML_SYCL_FUSED_ORNITH_QK_L2_BATCHED=1",
+    "method": "two grid samples, one unchanged stock L2 helper call per work-group",
+    "launches_removed_per_decoded_token": 30,
+    "fused_pairs_in_128_token_run": 3810
+  },
+  "correctness": {
+    "control_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "candidate_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "byte_identical": true
+  },
+  "mirrored_cli_generation_tok_s": {
+    "order": ["control_a", "candidate_a", "candidate_b", "control_b"],
+    "control": [84.6, 84.4],
+    "candidate": [83.5, 85.2],
+    "control_mean": 84.5,
+    "candidate_mean": 84.35,
+    "measured_delta_percent": -0.1775147928994083
+  },
+  "server_test_run": false,
+  "reason": "candidate mean was lower and candidate samples straddled controls"
+}
