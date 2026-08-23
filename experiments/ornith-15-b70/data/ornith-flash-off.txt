@@ -1,0 +1,12 @@
+# Why Deterministic Validation Matters for GPU Inference Kernels
+
+When optimizing GPU kernels, determinism in validation isn't just a nice-to-have—it's foundational to trusting your optimizations. Here's why.
+
+## The Core Problem: Optimizations Introduce Non-Determinism
+
+GPU optimizations frequently trade determinism for performance:
+
+- **Floating-point reassociation**: Fusing operations or changing summation order (e.g., using `__fmaf_rn` or tensor core matmuls) changes rounding behavior
+- **Parallel reduction ordering**: The order in which threads sum partial results varies, producing bit-level differences
+- **Non
+

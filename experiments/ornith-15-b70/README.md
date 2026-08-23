@@ -48,6 +48,11 @@ binary, driver, or benchmark protocol will reproduce them.
   50.149 tok/s graph-off versus 50.169 graph-on (+0.0388%). The earlier apparent
   2x was a slow-NFS mmap confound, documented in
   `notes/2026-08-22-decode-first-screen.md`.
+- **Flash attention off — CLOSED CORRECTNESS/PERFORMANCE NEGATIVE:** an explicit
+  fixed-seed screen changed the canonical transcript and observed only 83.3
+  tok/s in the candidate run. It did not qualify for matched timing. Keep
+  `--flash-attn auto`; see
+  `notes/2026-08-23-ornith35b-flash-attention-off-negative.md`.
 - **MoE graph eligibility — CLOSED NEGATIVE:** the eligibility correction from
   llama.cpp PR 25089 was useful as a concrete test input, with credit to
   Captain-Tripps for that idea. Our maintained port added exact dispatch gates
