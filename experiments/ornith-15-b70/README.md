@@ -176,6 +176,13 @@ binary, driver, or benchmark protocol will reproduce them.
   diagnostic routed through the complete stock MMVQ wrapper. The candidate was
   not timed or shipped. See
   `notes/2026-08-23-ornith35b-shared-q8-correctness-negative.md`.
+- **Four-row reordered ESIMD dense reuse — BROAD NEGATIVE / OUTPUT-HEAD
+  NEUTRAL:** a Qwen-derived four-row activation-reuse candidate was byte-exact
+  and hit the intended dense K-quant path, but regressed the broad Q2_K-Q6_K
+  screen by 2.03%. Restricting it to the Q6_K output head produced only +0.087%
+  in a mirrored engine screen. No server run was justified and the accepted
+  stack is unchanged. See
+  `notes/2026-08-23-ornith35b-dmmv-esimd-quad-negative-neutral.md`.
 - **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
   accepted only 22/336 reported draft tokens and reduced the fresh-suite median
   from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed

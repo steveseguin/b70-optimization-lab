@@ -1,0 +1,53 @@
+{
+  "date": "2026-08-23",
+  "status": "closed_negative_and_neutral",
+  "model": {
+    "path": "/home/steve/.cache/b70-optimization-lab/models/ornith-1.5-35b-a3b-q4km/Ornith-1.5-35B-Q4_K_M.gguf",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+    "quantization": "Q4_K_M"
+  },
+  "runtime": {
+    "source_base": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_library_sha256": "cbe101e6573100e10877ee059f326b23580cc7c15161a132608c771d34840671",
+    "broad_candidate_library_sha256": "c848b02cc344461f06cd1673fb23303b7f67a89ba444274002fd9408432cc575",
+    "output_head_candidate_library_sha256": "f61ea617ad839f8d6d5f30d6b2f8a9191f67cf57970f42763ed1e63ae6f40bb8"
+  },
+  "correctness": {
+    "protocol": "same frozen binary, forced greedy 128-token generation, door off versus on",
+    "canonical_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "broad_control_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "broad_candidate_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "broad_candidate_hits": 29340,
+    "output_head_control_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "output_head_candidate_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "output_head_candidate_hits": 130
+  },
+  "broad_engine_screen": {
+    "scope": "reordered Q2_K/Q3_K/Q4_K/Q5_K/Q6_K dense single-token projections",
+    "ordering": ["control_a", "candidate_a", "candidate_b", "control_b"],
+    "control_toks_per_second": [119.816232, 120.330762],
+    "candidate_toks_per_second": [117.969641, 117.310932],
+    "control_mean_toks_per_second": 120.073497,
+    "candidate_mean_toks_per_second": 117.6402865,
+    "delta_percent": -2.0265,
+    "decision": "negative"
+  },
+  "output_head_engine_screen": {
+    "scope": "Q6_K output head only, ncols=2048 and nrows=248320",
+    "ordering": ["control_a", "candidate_a", "candidate_b", "control_b"],
+    "control_toks_per_second": [120.450051, 120.563346],
+    "candidate_toks_per_second": [120.553517, 120.669067],
+    "control_mean_toks_per_second": 120.5066985,
+    "candidate_mean_toks_per_second": 120.611292,
+    "delta_percent": 0.0868,
+    "decision": "neutral"
+  },
+  "server_screen_run": false,
+  "canary_replay_run": false,
+  "promotion": false,
+  "accepted_stack_changed": false,
+  "patch": {
+    "path": "../patches/llamacpp-ornith15-dmmv-esimd-quad-output-head-neutral-20260823.patch",
+    "sha256": "aa4da86ece22b7fc1e54a34f17c12892e695efbd43e8c061985c69aa92dca414"
+  }
+}
