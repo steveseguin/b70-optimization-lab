@@ -1,0 +1,33 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "llama_cpp_base_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "accepted_source_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+  "accepted_geometry": {
+    "work_items_per_output_row_pair": 4,
+    "canonical_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18"
+  },
+  "candidates": [
+    {
+      "work_items_per_output_row_pair": 8,
+      "transcript_sha256": "97dcf80af46eadbb5b0bef866913f27c320afb0970028c1719bc4066650acf20",
+      "exact_match": false,
+      "coarse_observed_generation_tok_s": 82.5,
+      "patch": "../patches/llamacpp-ornith15-esimd-wg8-correctness-negative-20260823.patch",
+      "patch_sha256": "c3a48d2907347a3fb2082369c35d12109c0ad89f3cc1a19d553cce7adbf35998"
+    },
+    {
+      "work_items_per_output_row_pair": 2,
+      "transcript_sha256": "57019c28e5c9b2d3e4f2e2af56e6ca4576912411ac780d372dbfd382aaff0407",
+      "exact_match": false,
+      "coarse_observed_generation_tok_s": 84.5,
+      "patch": "../patches/llamacpp-ornith15-esimd-wg2-correctness-negative-20260823.patch",
+      "patch_sha256": "50c45352025636982ed90aee9b4a7197bcc4019f879ce8c399109a5dda46785f"
+    }
+  ],
+  "matched_performance_comparison_performed": false,
+  "decision": "closed correctness negative; keep accepted WG4 geometry",
+  "no_extrapolation": true
+}

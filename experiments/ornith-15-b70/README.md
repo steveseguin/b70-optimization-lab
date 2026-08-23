@@ -283,6 +283,12 @@ binary, driver, or benchmark protocol will reproduce them.
   calls removed the smaller shapes but still regressed a mirrored engine screen
   by 0.786%. The accepted pair kernel remains faster. See
   `notes/2026-08-23-ornith35b-dmmv-esimd-quad-large-negative.md`.
+- **Reordered-ESIMD work-group endpoints — CLOSED CORRECTNESS NEGATIVE:**
+  changing the dominant K-quant matvec from four workers per output-row pair to
+  either two or eight changed FP32 reduction grouping and failed the canonical
+  128-token transcript gate. Neither endpoint received matched timing. Keep
+  WG4; see
+  `notes/2026-08-23-ornith35b-esimd-workgroup-correctness-negative.md`.
 - **Direct FP32 router GEMV — CLOSED CORRECTNESS NEGATIVE:** the exact
   Qwen-derived `[256,2048] × [2048,1]` router boundary currently uses oneMKL
   GEMM. A narrow GEMV replacement hit all 5,080 intended calls but changed the
