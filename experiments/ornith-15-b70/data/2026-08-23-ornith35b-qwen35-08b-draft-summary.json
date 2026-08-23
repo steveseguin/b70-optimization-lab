@@ -1,0 +1,41 @@
+{
+  "date": "2026-08-23",
+  "target_model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "target_model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "draft_model": "Qwen3.5-0.8B-Q8_0.gguf",
+  "draft_model_sha256": "37ae482d336108d23516fa35e8e0c4126688d81018b87178a18d752a1357814f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "llama_cpp_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "target_stack": "accepted 11-feature Ornith stack",
+  "tokenizer_probe": {
+    "target_ids_sha256": "8155177ac5beea26ae2239c079e89ae0009b3980a0f46b0f396dd0b184313705",
+    "draft_ids_sha256": "8155177ac5beea26ae2239c079e89ae0009b3980a0f46b0f396dd0b184313705",
+    "byte_identical": true,
+    "token_count": 22
+  },
+  "draft_standalone_tg128": {
+    "repetitions": 7,
+    "avg_tok_s": 270.750869,
+    "stddev_tok_s": 0.200258,
+    "raw_json_sha256": "d44138bb25791cdac6b6e4b7d62dc7cdca7604794983bdb55c4c8d7e9b5dc1e1"
+  },
+  "combined_probe": {
+    "spec_type": "draft-simple",
+    "draft_n_max": 3,
+    "draft_n_min": 1,
+    "temperature": 0,
+    "context_size": 2048,
+    "n_drafted": 360,
+    "n_accepted": 8,
+    "acceptance_percent": 2.222,
+    "mrope_position_errors": true,
+    "decode_errors": true,
+    "output_quality_valid": false,
+    "throughput_evidence_valid": false,
+    "stdout_sha256": "8bdfbb1dff283e7aa9b58362f0aadb8587686e7f460dd3c37a3c2d63ce655554",
+    "log_sha256": "61e8b1407f2c66cd04e17a44873114d44f2aa8d63293115f21f88eac76bcc9e6"
+  },
+  "decision": "closed compatibility/correctness negative; do not use Qwen3.5-0.8B as an Ornith 1.5 35B draft",
+  "no_combined_throughput_claim": true,
+  "no_extrapolation": true
+}
