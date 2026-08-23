@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prefill speed vs clock rate & power — neural.download</title>
+<meta name="description" content="Why prefill is compute-bound (scales with GPU clock and power) while decode is memory-bandwidth-bound — and what that means for tuning a local LLM on Intel Arc.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/learn/prefill-vs-clockrate.html">
+<meta name="theme-color" content="#f6f1e5">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../index.html">Home</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Guide library</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 05</p>
+  <p class="eyebrow">Tune for speed</p>
+  <h1>Prefill speed vs clock rate</h1>
+  <p>The two halves of a request are limited by two different things. Prefill is starved for <strong>compute</strong> — it loves clock speed and power. Decode is starved for <strong>memory bandwidth</strong> — more clock barely helps it. Knowing which is which tells you what to tune and what to buy.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li><strong>Prefill = compute-bound.</strong> It scales with the GPU's clock and power budget. A faster or higher-power card reads your prompt faster.</li>
+      <li><strong>Decode = memory-bandwidth-bound.</strong> It's waiting on memory, not math, so raising the clock does little. This is why decode draws <em>less</em> power than prefill.</li>
+      <li>To speed up <strong>prefill</strong>: more compute / clock / power headroom.</li>
+      <li>To speed up <strong>decode</strong>: more memory bandwidth, a smaller model, or a <a href="speculative-methods.html">speculative trick</a> that does more per memory read.</li>
+    </ul>
+  </div>
+
+  <h2>Two phases, two bottlenecks</h2>
+  <p>Prefill reads your whole prompt in parallel — thousands of multiply-adds firing at once. The GPU's arithmetic units are the limit, so prefill behaves like a classic compute benchmark: give it more clock and more power and it goes faster.</p>
+  <p>Decode is the opposite. To write each new token the GPU must read the entire model (and the growing <a href="kv-cache-precision.html">KV cache</a>) out of memory, do a relatively small amount of math, and repeat. It spends most of each token <em>waiting for memory</em>. Cranking the clock speeds up math that wasn't the bottleneck, so decode barely moves.</p>
+
+  <div class="callout key">
+    <span class="tag">The mental model</span>
+    <p>Prefill is like <strong>how fast you can read a page</strong> — more brainpower helps. Decode is like <strong>how fast pages arrive in the mail</strong> — thinking faster doesn't make the mail truck quicker. For local LLMs, "the mail truck" is memory bandwidth.</p>
+  </div>
+
+  <h2>The evidence: decode isn't compute-starved</h2>
+  <p>A telling clue is power draw. If decode were compute-bound it would pin the card at its power limit. It doesn't — and it draws <em>less</em> power as it becomes more efficient. A community B70 run recorded GPU power across multi-token-prediction settings while decode throughput went <em>up</em>: <span class="badge comm">Community</span></p>
+  <figure class="chart">
+    <h4>GPU power during decode, by MTP setting</h4>
+    <img src="assets/power-mtp.svg" alt="Bar chart of GPU watts during decode: 230 W with MTP off, dropping to 186, 174, 174, and 176 W as MTP increases.">
+    <figcaption>Power falls from 230 W to ~174 W as MTP raises throughput — the card is doing more useful work with less power because decode was never compute-limited. <a href="../community/field-reports/reddit-arc-b70-vllm-52tps/README.md">Field report</a>.</figcaption>
+  </figure>
+  <p>If throughput and power both fell, you'd suspect throttling. Here throughput <em>rose</em> while power fell — the signature of a workload that was waiting on memory, not on the clock.</p>
+
+  <h2>Prefill, measured</h2>
+  <p>Prefill throughput on our single-B70 Q4_K_M lane, as context grows: <span class="badge lab">Lab-measured</span></p>
+  <figure class="chart">
+    <h4>Prefill rate vs context</h4>
+    <img src="assets/ctx-prefill.svg" alt="Line chart of prefill tokens per second peaking near 890 around 4K context then easing to about 670 by 32K.">
+    <figcaption>Hundreds of tokens per second — an order of magnitude above the decode rate, because it's compute-parallel. It's this number that a faster clock or a beefier card would lift most. <a href="../experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json">Raw data</a>.</figcaption>
+  </figure>
+
+  <div class="callout warn">
+    <span class="tag">What to be aware of</span>
+    <p>We have <strong>not</strong> run a controlled clock/frequency sweep on the B70, so we're not quoting a "tok/s per MHz" curve — the clock relationship above is the <em>physical</em> behavior of compute-bound vs bandwidth-bound work, corroborated by the power evidence, not a measured lab line. Two practical consequences hold regardless: a <strong>power or thermal cap</strong> hits prefill first (the community run noted a B65 losing throughput at a 150 W limit), and <strong>underclocking to save power</strong> costs you prefill and first-token latency far more than it costs decode.</p>
+  </div>
+
+  <div class="callout good">
+    <span class="tag">Recommendation</span>
+    <p>If your pain is <strong>long-prompt first-token latency</strong>, that's a prefill/compute problem — give the card headroom (power, cooling, clocks) or add compute. If your pain is <strong>slow word-by-word output</strong>, that's a decode/bandwidth problem — clocks won't fix it; reach for a smaller model, keep <a href="kv-cache-precision.html">KV at f16</a>, or use <a href="mtp-ladder.html">MTP</a>. Buying decisions follow the same split: for chat and code, prioritize memory bandwidth; for heavy document ingestion, prioritize compute.</p>
+  </div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="context-length.html"><b>Context length</b><span>Where prefill and TTFT come from</span></a>
+      <a href="mtp-ladder.html"><b>MTP 1·2·3·4</b><span>Beating the bandwidth wall on decode</span></a>
+      <a href="hardware.html"><b>Hardware</b><span>Bandwidth vs compute across cards</span></a>
+      <a href="../learn.html"><b>All guides</b><span>Back to the Learn index</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context length: decode & prefill as the prompt fills — neural.download</title>
+<meta name="description" content="How decode speed, prefill speed, and time-to-first-token change as a local LLM's context fills from empty to 32K — measured on an Intel Arc Pro B70 — plus the VRAM ceiling to watch.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/learn/context-length.html">
+<meta name="theme-color" content="#f6f1e5">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../index.html">Home</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Guide library</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 04</p>
+  <p class="eyebrow">Tune for speed</p>
+  <h1>Context length</h1>
+  <p>"How fast is it?" has a hidden asterisk: <em>at what context length?</em> A model that flies on a one-line prompt can crawl through a 100-page document. Here's what actually changes as the context fills — and what stays surprisingly steady.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li>Every request has two phases: <strong>prefill</strong> (read your prompt) and <strong>decode</strong> (write the reply, one token at a time).</li>
+      <li><strong>Decode</strong> holds up well: only ~12% slower from empty to 32K on our lane (with f16 KV).</li>
+      <li><strong>Prefill</strong> peaks a couple thousand tokens in, then eases off as context grows.</li>
+      <li><strong>Time-to-first-token</strong> is the one that hurts: a cold, long prompt can take <em>tens of seconds</em> before the first word appears.</li>
+      <li>The real ceiling at long context is <strong>VRAM</strong>, spent by the KV cache.</li>
+    </ul>
+  </div>
+
+  <h2>Two phases, two very different speeds</h2>
+  <p>When you send a prompt, the GPU first <strong>reads all of it at once</strong> — that's prefill, and it's fast and parallel (hundreds to thousands of tokens per second). Then it <strong>writes the answer one token at a time</strong> — that's decode, and it's the slower per-token number you usually see quoted (tens of tokens per second). The "tok/s" people brag about is almost always the decode rate.</p>
+  <p>Context length pushes on both, but differently.</p>
+
+  <h2>Decode holds up</h2>
+  <p>Single B70, Qwen3.8-27B Q4_K_M, f16 KV cache, context filled from empty to 32K. <span class="badge lab">Lab-measured</span></p>
+  <figure class="chart">
+    <h4>Decode rate vs context</h4>
+    <img src="assets/ctx-decode.svg" alt="Line chart of decode tokens per second declining gently from 24.8 at empty context to 21.8 at 32K.">
+    <figcaption>From 24.8 to 21.8 tok/s across 0→32K — about a 12% drop. Long context is cheap for decode, as long as the KV cache stays f16. <a href="../experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json">Raw data</a>.</figcaption>
+  </figure>
+  <p>That gentle slope has a big caveat: it depends on keeping the KV cache at full precision. Switch to an 8-bit KV cache and this line falls off a cliff at long context — see the <a href="kv-cache-precision.html">KV precision guide</a> for the −51%-at-32K story.</p>
+
+  <h2>Prefill peaks, then eases</h2>
+  <figure class="chart">
+    <h4>Prefill rate vs context</h4>
+    <img src="assets/ctx-prefill.svg" alt="Line chart of prefill tokens per second rising to about 890 near 4K then declining to about 670 by 32K.">
+    <figcaption>Prefill is fastest a few thousand tokens in (batches fill nicely), then tapers as there's more history to attend over. <a href="../experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json">Raw data</a>.</figcaption>
+  </figure>
+  <p>Prefill is limited by raw compute, so it also tracks the card's clock and power — that's its own <a href="prefill-vs-clockrate.html">separate guide</a>.</p>
+
+  <h2>The one that hurts: time-to-first-token</h2>
+  <p>Prefill throughput is high, but a <em>long</em> prompt is still a lot of tokens to chew before the first reply word appears — and if nothing is cached, that wait grows fast. A community B70 run on the newer vLLM XPU stack reported the shape below. <span class="badge comm">Community</span></p>
+  <figure class="chart">
+    <h4>Cold time-to-first-token vs prompt size</h4>
+    <img src="assets/ctx-ttft.svg" alt="Line chart of cold time to first token in seconds: 0.18 seconds for a short prompt, about 49 seconds at 64K, and about 146 seconds at 128K.">
+    <figcaption>0.18 s for a short prompt, ~49 s cold at 64K, ~146 s at 128K. Reported by a community poster; not re-measured here. <a href="../community/field-reports/reddit-arc-b70-vllm-52tps/README.md">Field report</a>.</figcaption>
+  </figure>
+  <div class="callout key">
+    <span class="tag">What this means in practice</span>
+    <p>For chat and coding with short-to-medium prompts, first-token latency is a non-issue. For "paste a whole codebase / long PDF and ask" workflows, budget real seconds (or more) before the reply starts — and lean on <strong>prompt caching</strong> so a big shared prefix only pays that cost once.</p>
+  </div>
+
+  <h2>The real ceiling: VRAM</h2>
+  <p>Speed isn't what stops most long-context runs — memory is. The <a href="kv-cache-precision.html">KV cache</a> grows with every token and, for a 27B model, a full 256K context needs roughly <strong>16 GiB</strong> at f16 on top of the weights. On a 32 GiB card that's the wall you hit first. Options, in order of preference:</p>
+  <ul>
+    <li>Only ask for the context you need — a 32K limit is plenty for most work and keeps you in the fast, comfortable zone.</li>
+    <li>Use an 8-bit KV cache to roughly halve KV memory (accepting the long-context decode hit).</li>
+    <li>Add a second card (tensor parallel) for more combined VRAM and bandwidth — see <a href="hardware.html">Hardware</a>.</li>
+  </ul>
+
+  <div class="callout good">
+    <span class="tag">Recommendation</span>
+    <p>For a single B70, <strong>32K context is the comfortable sweet spot</strong>: decode is still ~90% of its peak, prefill is healthy, and you're well clear of the VRAM wall. Go bigger only when the task truly needs it, and when you do, expect first-token latency and memory — not decode rate — to be your limits.</p>
+  </div>
+
+  <div class="callout warn">
+    <span class="tag">What to be aware of</span>
+    <p>Vendors quote context <em>capacity</em> (e.g. "128K"), not context <em>comfort</em>. A card can technically hold 128K and still be painful to use there because of first-token latency and tight memory headroom. Always look at the rate <em>at the context you'll actually use</em>, not just the peak or the maximum.</p>
+  </div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="kv-cache-precision.html"><b>KV precision</b><span>Why 8-bit KV punishes long context</span></a>
+      <a href="prefill-vs-clockrate.html"><b>Prefill vs clock</b><span>What sets the prefill number</span></a>
+      <a href="hardware.html"><b>Hardware</b><span>VRAM and bandwidth ceilings</span></a>
+      <a href="../learn.html"><b>All guides</b><span>Back to the Learn index</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>
