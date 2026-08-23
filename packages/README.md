@@ -43,9 +43,9 @@ Current packages:
 - [`Qwen3.8 27B Q8_0 two-B70 candidate`](qwen38-27b-q8-tp2-b70/):
   quality-conservative target-only TP2 service and exact patch chain.
 - [`Ornith 1.5 35B-A3B Q4_K_M one-B70 candidate`](ornith-15-35b-a3b-q4km-b70/):
-  pinned model and llama.cpp base, the lab's ordered expert-reduction plus
-  recurrent convolution-SiLU SYCL patch, matched incremental serving evidence,
-  and exact apply/build/launch steps.
+  pinned model and llama.cpp base, the lab's ordered expert-reduction,
+  recurrent convolution-SiLU, and residual-RMSNorm SYCL patch stack, matched
+  incremental serving evidence, and exact apply/build/launch steps.
 
 None is a starter package yet because its host platform path has not been
 rebuilt and tested from a clean OS. Gemma additionally lacks the retained

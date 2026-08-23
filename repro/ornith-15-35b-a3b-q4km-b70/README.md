@@ -44,8 +44,8 @@ git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-ornith15
 cd llama.cpp-ornith15
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
 
-PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-20260822.patch
-echo "8e780b0f4c43a69bd18d0d8d66087d65813cb83353437c3443898231b94c0f9c  $PATCH" | sha256sum -c -
+PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-20260822.patch
+echo "75d5ad4a37037fd3c33670bd4242a03789f42cbda8a653dbfd01465626ec448b  $PATCH" | sha256sum -c -
 git apply --check "$PATCH"
 git apply "$PATCH"
 git diff --check
@@ -71,7 +71,7 @@ cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2
 ```
 
 The validated compute library SHA-256 was
-`d478e4ca7c84faef34e6acf8b1bcf3bdfd8b6e37abe884ea9e0b2826f0dfe883`.
+`cbc7b5d0d629dfb1a7be82570535e95274a505ed88af62d4ffd48457107f6481`.
 AOT output can vary with the compiler installation, so the source revision,
 patch hash, build settings, and validation gates are the durable identity.
 
@@ -91,6 +91,7 @@ export ONEAPI_DEVICE_SELECTOR=level_zero:0
 export GGML_SYCL_ENABLE_GRAPH=0
 export GGML_SYCL_FUSED_MOE_ADD_REDUCE=1
 export GGML_SYCL_FUSED_ORNITH_CONV_SILU=1
+export GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1
 
 build-sycl-aot-bmg-g31/bin/llama-server \
   --model "$MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf" \
@@ -160,6 +161,17 @@ ordered-MoE stack, matched engine means improved `107.467 -> 108.740 tok/s`
 (**+2.10%**). The forced 400-token same-binary output was byte-identical and
 all objective canaries passed. Evidence:
 [`2026-08-22-ornith35b-conv-silu-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md).
+
+The third package increment uses Ornith's Qwen-derived residual layout. It
+materializes each `attn_residual-*` and `l_out-*` tensor in its original
+volatile FP32 graph buffer, then executes the stock RMS reduction order and
+fused norm-weight multiply in the same kernel. This removes another 80
+launches/token, bringing the complete stack to 350 removed launches/token.
+Matched engine means improved `109.629 -> 111.826 tok/s` (**+2.00%**) and
+fresh-server means improved `106.319 -> 107.776 tok/s` (**+1.37%**). All four
+freshness gates passed, forced 128-token output was byte-identical, and the
+canary battery passed. Evidence:
+[`2026-08-22-ornith35b-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-residual-rms-positive.md).
 
 ## Stock two-card comparison (patch off; layer split, GPUs 0+1)
 

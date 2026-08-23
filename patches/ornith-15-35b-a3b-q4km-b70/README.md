@@ -7,21 +7,22 @@ the recipe and validation evidence in this repository are the source of truth.
 ## Identity
 
 - Base: llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`.
-- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-20260822.patch`.
+- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-20260822.patch`.
 - Patch SHA-256:
-  `8e780b0f4c43a69bd18d0d8d66087d65813cb83353437c3443898231b94c0f9c`.
+  `75d5ad4a37037fd3c33670bd4242a03789f42cbda8a653dbfd01465626ec448b`.
 - Runtime doors: `GGML_SYCL_FUSED_MOE_ADD_REDUCE=1` and
-  `GGML_SYCL_FUSED_ORNITH_CONV_SILU=1` (both default off).
+  `GGML_SYCL_FUSED_ORNITH_CONV_SILU=1` and
+  `GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1` (all default off).
 - Validated `libggml-sycl.so` SHA-256:
-  `d478e4ca7c84faef34e6acf8b1bcf3bdfd8b6e37abe884ea9e0b2826f0dfe883`.
+  `cbc7b5d0d629dfb1a7be82570535e95274a505ed88af62d4ffd48457107f6481`.
 
 Apply only to the pinned clean base:
 
 ```bash
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
-sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-20260822.patch
-git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-20260822.patch
-git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-20260822.patch
+sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-20260822.patch
+git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-20260822.patch
+git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-20260822.patch
 git diff --check
 ```
 
@@ -35,13 +36,19 @@ separate, preventing fused-multiply-add contraction and preserving its rounded
 graph-visible outputs. Any shape, order, use-count, type, or layout mismatch
 falls back to stock execution.
 
-The full-model trace observed 40 ordered-reduction matches and 30 recurrent
-convolution/SiLU matches per token. Together they remove 270 launches/token.
+The full-model trace observed 40 ordered-reduction matches, 30 recurrent
+convolution/SiLU matches, and 80 residual/RMSNorm matches per token. Together
+they remove 350 launches/token.
 
 The second fusion accepts only the exact one-token `[4,8192]` FP32 convolution
 whose sole consumer is a full-width SiLU. It preserves stock state handling,
 convolution accumulation order, and SiLU expression. Any shape, stride, name,
 type, or ownership mismatch uses the stock path.
+
+The third fusion recognizes the Qwen-derived 2048-wide `attn_residual-*` and
+`l_out-*` chains. It writes and rereads the original residual tensor through a
+volatile FP32 pointer, preserving later skip-connection consumers, then uses
+the stock RMS reduction order and fused norm-weight expression.
 
 ## Validation
 
@@ -57,6 +64,10 @@ type, or ownership mismatch uses the stock path.
 - The added convolution/SiLU fusion improved matched raw-engine decode by
   **+1.18%** and two-fresh-server decode by **+2.10%** over the ordered-MoE
   stack. Its forced 400-token response was byte-identical door-off/on.
+- The added residual/RMSNorm fusion improved matched raw-engine decode by
+  **+2.00%** and two-fresh-server decode by **+1.37%** over the prior stack,
+  reaching a `107.775961 tok/s` two-server mean. Its forced 128-token canonical
+  output was byte-identical and all candidate canaries passed.
 
 Fresh stock servers matched `0/12` complete response hashes with each other on
 the long realistic suite. That pre-existing cross-process instability is
@@ -67,3 +78,5 @@ Full evidence and limitations are in the
 [matched experiment note](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md).
 The incremental convolution result is in
 [`2026-08-22-ornith35b-conv-silu-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md).
+The incremental residual result is in
+[`2026-08-22-ornith35b-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-residual-rms-positive.md).

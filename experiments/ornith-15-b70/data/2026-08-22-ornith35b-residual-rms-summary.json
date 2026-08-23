@@ -1,0 +1,48 @@
+{
+  "date": "2026-08-22",
+  "classification": "accepted target-only package increment",
+  "model": {
+    "name": "Ornith 1.5 35B-A3B Q4_K_M",
+    "architecture": "qwen35moe",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "runtime": {
+    "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "candidate_library_sha256": "cbc7b5d0d629dfb1a7be82570535e95274a505ed88af62d4ffd48457107f6481",
+    "complete_patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-20260822.patch",
+    "complete_patch_sha256": "75d5ad4a37037fd3c33670bd4242a03789f42cbda8a653dbfd01465626ec448b",
+    "door": "GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1"
+  },
+  "mechanism": {
+    "matched_boundaries_per_token": 80,
+    "launches_removed_per_token": 80,
+    "cumulative_launches_removed_per_token_with_package_stack": 350,
+    "description": "materialize each 2048-wide residual in its original volatile FP32 graph buffer, then perform the stock RMS reduction order and fused norm-weight multiply in the same kernel"
+  },
+  "engine": {
+    "protocol": "same binary, mirrored control/candidate/candidate/control; llama-bench p0/n128/d0/r7, F16 KV, flash attention, one B70",
+    "control_tok_s": [109.849552, 109.407959],
+    "candidate_tok_s": [111.982239, 111.670318],
+    "control_mean_tok_s": 109.6287555,
+    "candidate_mean_tok_s": 111.8262785,
+    "delta_percent": 2.0045133140273563
+  },
+  "serving": {
+    "protocol": "four fresh servers in control/candidate/candidate/control order; fixed 12-prompt suite; 512-token responses; tokens 1-100 after TTFT; cache_prompt=false",
+    "control_median_tok_s": [106.16208872299347, 106.47635826398152],
+    "candidate_median_tok_s": [107.18232625064852, 108.36959669806974],
+    "control_mean_tok_s": 106.3192234934875,
+    "candidate_mean_tok_s": 107.77596147435912,
+    "delta_percent": 1.3701548346624737,
+    "all_freshness_gates_passed": true,
+    "cached_tokens_all_zero": true
+  },
+  "correctness": {
+    "protocol": "same binary, fixed seed 424242, temperature 0, forced 128-token single-turn CLI; dynamic timing footer excluded",
+    "candidate_fused_hits": 10160,
+    "control_canonical_sha256": "0143ca510271d95d859b69427824e56c4c502c9a41ccadac28d5726547e31ce0",
+    "candidate_canonical_sha256": "0143ca510271d95d859b69427824e56c4c502c9a41ccadac28d5726547e31ce0",
+    "byte_identical": true,
+    "candidate_canaries_pass_all": true
+  }
+}

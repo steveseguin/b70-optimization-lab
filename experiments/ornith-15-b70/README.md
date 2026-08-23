@@ -97,6 +97,14 @@ binary, driver, or benchmark protocol will reproduce them.
   was only 0.29% above the accepted implicit-range kernel and remained within
   sample noise; WG64 regressed 1.10%. Keep implicit scheduling. See
   `notes/2026-08-22-ornith35b-moe-add-workgroup-neutral.md`.
+- **Residual + RMSNorm fusion — ACCEPTED +1.37% incremental serving:** the
+  Qwen-derived graph has 80 residual additions/token immediately before fused
+  RMSNorm/weight kernels. The new path preserves each graph-visible volatile
+  FP32 residual and the stock reduction order while removing those launches.
+  Engine means improved `109.629 -> 111.826 tok/s` (+2.00%); fresh-server
+  means improved `106.319 -> 107.776 tok/s` (+1.37%). Forced 128-token output
+  was byte-identical and all canaries passed. See
+  `notes/2026-08-22-ornith35b-residual-rms-positive.md`.
 - **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
   tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
   the tuned dispatch and beat the now-promoted ordered reduction.

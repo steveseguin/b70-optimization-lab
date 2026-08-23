@@ -118,12 +118,17 @@ canaries passing. A second accepted increment fuses the 30 exact recurrent
 `SSM_CONV -> SILU` pairs, removing another 30 launches/token. Against the
 ordered-MoE stack it improved engine decode by **1.18%** and fresh serving by
 **2.10%** (`103.012` to `105.171 tok/s` mean), again with exact 400-token
-door-off/on output and passing canaries. A wider direct-state form is archived
-as a correctness negative. The package remains a candidate pending clean-host
-replay; see the [guide](repro/ornith-15-35b-a3b-q4km-b70/README.md),
+door-off/on output and passing canaries. A third Qwen-derived increment fuses
+80 graph-visible residual additions into the following RMSNorm/weight kernels,
+bringing the stack to 350 removed launches/token. It improved matched engine
+decode by **2.00%** and fresh serving by **1.37%** (`106.319` to `107.776
+tok/s` mean), with exact forced output and passing canaries. A wider
+direct-state form is archived as a correctness negative. The package remains a
+candidate pending clean-host replay; see the [guide](repro/ornith-15-35b-a3b-q4km-b70/README.md),
 [patch packet](patches/ornith-15-35b-a3b-q4km-b70/README.md), and
-[MoE evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md)
-plus [recurrent-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md).
+[MoE evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md),
+[recurrent-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md),
+and [residual-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-residual-rms-positive.md).
 
 Publication architecture: keep `index.html` curated and put the growing set
 of model/quant/card/OS/native-container variants in `guides.html`. That page
