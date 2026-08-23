@@ -1,0 +1,20 @@
+{
+  "date": "2026-08-22",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "protocol": "one isolated 128-token single-turn CLI run; final six-fusion stack; graph disabled; opt-in backend counters",
+  "scale_operations": {
+    "cache_r_calls": 90,
+    "cache_r_nonzero": 90,
+    "cache_s_calls": 90,
+    "cache_s_nonzero": 90
+  },
+  "steady_state_reference": {
+    "recurrent_layers": 30,
+    "alpha_gate_hits": 3810,
+    "conv_silu_hits": 3810,
+    "direct_state_hits": 3810,
+    "decoded_graph_iterations_inferred_from_30_hits_each": 127
+  },
+  "interpretation": "The static decode graph contains 60 state-zero SCALE nodes, but the backend executed each 30-layer SCALE family only 90 times over the whole invocation, versus 3810 steady-state fusion hits. These are state initialization/rebuild operations, not 60 launches per decoded token.",
+  "decision": "Do not pursue SCALE-plus-gather as a decode-rate optimization."
+}

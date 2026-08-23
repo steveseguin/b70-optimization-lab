@@ -23,6 +23,23 @@ The structured census is in
 `../data/2026-08-22-ornith35b-launch-census-negatives.json`; the compressed raw
 diagnostic trace is beside it.
 
+## Closed: recurrent cache-zero SCALE nodes are not per-token launches
+
+The static graph contains 30 `cache_r` and 30 `cache_s` SCALE nodes. They come
+from llama.cpp's required state-initialization logic: one unused recurrent row
+is zeroed before selected states are gathered. A later runtime counter on the
+complete six-fusion stack distinguished graph presence from execution.
+
+Across one isolated forced 128-token run, each SCALE family executed only 90
+times total (all nonzero), while the established per-token alpha, convolution,
+and direct-state fusions each fired 3,810 times. Thus the SCALE work occurs in
+three 30-layer initialization/rebuild phases, not on every decoded token.
+Fusing SCALE with the following gather would target setup latency, not the
+requested steady-state decode rate, so no kernel candidate was written.
+
+Structured runtime counts:
+`../data/2026-08-22-ornith35b-state-zero-scale-runtime-census.json`.
+
 ## Rejected: paired Q/K L2 normalization
 
 The 30 recurrent layers each have independent `[128,16]` FP32 Q and K L2
