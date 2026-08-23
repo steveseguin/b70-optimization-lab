@@ -116,6 +116,14 @@
     "fresh_ignore_eos_vs_strict_natural_eos_first_100_match": "24/25",
     "interpretation": "EOS policy differs, so full-output comparison is confounded; existing cross-boot nondeterminism disclosure remains"
   },
+  "compiled_cache_archive": {
+    "status": "verified and recoverable; live ext4 directory removed after the capped experiment closed",
+    "archive": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/cache-archives/rolling-nightly-a3561ef8e/tp2-autotune-winner-cache.tar",
+    "bytes": 278241280,
+    "entries": 1354,
+    "sha256": "adef16d217aeaf7e7549217e324c32aa30d68b7aaecaee061f6a96b4b1171aa7",
+    "verification": "tar --compare passed before removal; archive entry count matched; post-removal sha256sum -c passed"
+  },
   "decision": {
     "simple_winner_overlay_hypothesis": "supported: newest strict performance improved by 1.07% with quality and cache integrity intact",
     "diagnostic_disposition": "valid current-overlay diagnostic high; preserve separately from strict promotion",

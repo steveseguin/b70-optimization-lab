@@ -79,6 +79,15 @@ complete outputs matched on 20/25 prompts, common prefixes on 21/25, and the
 first 100 tokens on 24/25. The EOS policies differ, so this is not a clean
 determinism A/B; the existing cross-boot nondeterminism disclosure remains.
 
+After the capped experiment closed, the 276 MB live ext4 compile cache was
+archived to the USB evidence store as `tp2-autotune-winner-cache.tar`. GNU tar
+comparison passed before removal, source and archive both contained 1,354
+entries, and the 278,241,280-byte archive verifies as SHA-256
+`adef16d217aeaf7e7549217e324c32aa30d68b7aaecaee061f6a96b4b1171aa7`.
+Only the exact live cache directory was removed to make room for TP4; the
+archive, raw result roots, tracked winner bundle, and image make it
+recoverable.
+
 ## Frozen disposition
 
 - Preserve both measured rates and the overlay packet.

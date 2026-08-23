@@ -66,6 +66,14 @@ The replay manifests were byte-identical before and after benchmark/quality:
 | 2 | 2,277 | `f9ec035fee46d360bb1297a5736704b067aa044c9f6b7e0490bb43b24def1eb7` |
 | 4 | 4,421 | `86273698225e57c89f3f8ab26e4ab346985f468141515c34f9164f2f294ffd1c` |
 
+After the stock qualification and TP4 winner mapping were sealed, the live
+TP4 compile cache was archived to the USB evidence store as
+`tp4-default-cache.tar`. GNU tar comparison passed, source and archive both
+contained 5,270 entries, and the 648,949,760-byte archive verifies as SHA-256
+`805ef3bbe8089ec929e4fd38eaa1fad7d1fa1b749d279fd6cf7453649fd2f0f9`.
+Only the exact live cache was then removed to create safe headroom for the
+separate TP4 overlay compile; raw roots and the manifest above remain intact.
+
 ## Performance and output stability
 
 TP1 strict A/B were nearly identical in speed, and the old run was faster on

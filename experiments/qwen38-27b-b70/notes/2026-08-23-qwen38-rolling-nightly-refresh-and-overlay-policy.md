@@ -149,8 +149,10 @@ repeat. The old frontiers remain unchanged.
 
 The compiled graphs and candidate autotune sets are identical across old and
 new images, but the package-version cache key forced fresh tuning and changed
-many `.best_config` winners. The active recovery lane is a fail-closed transfer
-of matching historical winner decisions onto freshly compiled newest-runtime
-binaries. See the
+many `.best_config` winners. The capped TP2 transfer recovered the newest
+strict rate from 48.4905 to 49.0094 tok/s with full quality and immutable cache,
+but missed the frozen 49.0197 promotion gate by 0.021%. It is preserved as a
+quality-certified near-recovery, not promoted. TP4 is a separate preregistered
+mapping with a mandatory same-cache stability repeat. See the
 [qualification note](2026-08-23-qwen38-rolling-nightly-a3561ef8-qualification.md)
-and [structured packet](../data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json).
+and [TP2 overlay closure](2026-08-23-qwen38-tp2-autotune-winner-overlay-result.md).

@@ -1,0 +1,50 @@
+{
+  "date": "2026-08-23",
+  "topology": "TP4 GPUs 0,1,2,3",
+  "model": "Qwen3.8-27B AutoRound INT4 W4A16",
+  "source_runtime": {
+    "vllm_source": "e9d1398d9edfd90fcc1cf783805240e3effec013",
+    "runtime_config_hash": "69fa123153",
+    "outer_cache_namespace": "91f6f74b6a",
+    "aot_namespace": "f920b3a530a7a2fb4040f3e48676e4c37cc17a1d680a7cbf7e82efbcd86974fd",
+    "cache_root": "/var/tmp/qwen38-nightly-strict-cache/tp4-mtp0-f16-graph-natural-eos-a",
+    "full_cache_manifest_file_sha256": "83aaef6468d0071077b1df100052bce77a34a91d0bff5f8c20b0f45fa8bb828d"
+  },
+  "target_runtime": {
+    "image_id": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+    "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+    "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124",
+    "vllm_version": "0.26.1rc1.dev1120+ga3561ef8e.xpu",
+    "outer_cache_namespace": "b9937c3e95",
+    "runtime_config_hash": "97d85f2a6f",
+    "aot_namespace": "38ae410d48b6f2f743b9745c8fe56b918c015ce7f60eeff9f979681a8f50d900",
+    "reference_full_cache_manifest_file_sha256": "86273698225e57c89f3f8ab26e4ab346985f468141515c34f9164f2f294ffd1c"
+  },
+  "shared_identity_gates": {
+    "code_hash": "a855541ceda97900a2a4d8a4ce14bd76e348a01bc2d9a29c0001cc8b7b8cf2fa",
+    "compiler_hash": "ddcad03736",
+    "environment_sha256": "3ea9c4136b7c8c83187ccad333e60c84e931340e1b5cbd308725b0e89f1d5f1d",
+    "rank_0_computation_graph_sha256": "57ea9a3bfd4fe1500c8d43d51b539a39c97f26613d620fb9a713c3fd13fb7bb2",
+    "rank_1_computation_graph_sha256": "bcf7af786a4f7dbcc0a574f21e2e175e36e82a0b1418752417dc528543593f41",
+    "rank_2_computation_graph_sha256": "7999515793c588efdc955ab12a9e2fafe5c4b67bbc7203e0dde19f53196144ef",
+    "rank_3_computation_graph_sha256": "72a292416c8cf7904e2faa9b24e09f8545f7fa8bd028cb0967a7ea6a99673e0a",
+    "matching_best_config_relative_paths": "152/152",
+    "matching_embedded_configs_hash": "152/152",
+    "different_selected_configs": "78/152",
+    "source_found_by_coordesc_false": "152/152"
+  },
+  "bundle": {
+    "file_count": 152,
+    "total_bytes": 40158,
+    "manifest": "manifest.sha256",
+    "manifest_file_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2"
+  },
+  "excluded_artifacts": [
+    "compiled AOT models",
+    "generated Python",
+    "Triton binaries/cache objects",
+    ".kernel_perf files",
+    "outer vLLM cache files"
+  ],
+  "status": "experimental; fresh plus two strict replay gates required"
+}

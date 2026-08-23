@@ -83,6 +83,10 @@ frozen 49.0197 historical gate by 0.0103 tok/s (0.021%). Preserve it as a
 quality-qualified partial recovery, not a promoted replacement. See the
 [rolling qualification](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-rolling-nightly-a3561ef8-qualification.md)
 and [overlay result](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.md).
+The next bounded preservation arm is the separately preregistered
+[TP4 winner overlay](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tp4-autotune-winner-overlay-prereg.md),
+with one fresh compile and two conditional strict replays. It must abort and
+remap if the floating nightly advances.
 
 The separate Qwen3.6-derived native MTP source stack remains preserved as a
 patch/source research identity. It is not part of the stock target-only graph
