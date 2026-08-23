@@ -1,0 +1,49 @@
+{
+  "date": "2026-08-23",
+  "classification": "correctness-exact, engine-positive, fresh-server-neutral; rejected",
+  "model": {
+    "name": "Ornith 1.5 35B-A3B Q4_K_M",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "runtime": {
+    "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_parent_library_sha256": "d75d5f1d07b6ac64421bbc9ae3cda7b916584f0422d512f57843a50427478e8c",
+    "candidate_library_sha256": "82a495bb87c65e7a69fb6a3562d6675087067ee3d7fed7b3b755e06a981043ce",
+    "candidate_complete_patch": "experiments/ornith-15-b70/patches/llamacpp-ornith15-beta-gdn-nine-stack-server-neutral-20260823.patch",
+    "candidate_complete_patch_sha256": "b0cf3187cec063c5bd64a9aed526eb86a018c5a35ee0047c3d45e93c699382b0",
+    "candidate_door": "GGML_SYCL_FUSED_ORNITH_BETA_GDN=1",
+    "required_parent_door": "GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1"
+  },
+  "correctness": {
+    "protocol": "same final binary; deterministic 128-token llama-cli generation; --single-turn; dynamic timing footer removed before hashing",
+    "control_canonical_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "candidate_canonical_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "byte_identical": true,
+    "candidate_beta_gdn_hits": 3810,
+    "candidate_gdn_rms_gate_hits": 3810,
+    "expected_hits_each": 3810
+  },
+  "removed_launches_per_decoded_token_if_enabled": 30,
+  "removed_launches_per_decoded_token_with_parent_boundary": 60,
+  "engine": {
+    "protocol": "llama-bench p0/n128/d0/r7, same final binary, mirrored A/B/B/A sequence",
+    "controls_tok_s": [119.666769, 121.158678],
+    "candidates_tok_s": [122.123470, 121.741812],
+    "control_mean_tok_s": 120.4127235,
+    "candidate_mean_tok_s": 121.932641,
+    "delta_percent": 1.2622565588,
+    "each_candidate_exceeded_each_control": true
+  },
+  "fresh_server": {
+    "protocol": "two fresh controls and two fresh candidates in A/B/B/A order; fixed 12-prompt suite; each prompt once; 512-token maximum; median tokens 1-100 after TTFT; cached_tokens=0",
+    "controls_tok_s": [117.48088610265047, 117.77969935470664],
+    "candidates_tok_s": [117.33144349250895, 117.81428478896109],
+    "control_mean_tok_s": 117.63029272867855,
+    "candidate_mean_tok_s": 117.57286414073502,
+    "delta_percent": -0.0488212574,
+    "all_freshness_gates_passed": true,
+    "all_final_gates_passed": true,
+    "each_candidate_exceeded_each_control": false
+  },
+  "decision": "reject and restore the accepted nine-feature stack; do not promote an engine-only gain"
+}

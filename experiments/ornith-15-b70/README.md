@@ -153,10 +153,10 @@ binary, driver, or benchmark protocol will reproduce them.
   complete eight-feature stack removes 600 launches/token. See
   `notes/2026-08-23-ornith35b-moe-shared-residual-rms-positive.md`.
 - **Optimized 0-32K context profile — PUBLISHED, MEASURED ONLY:** the exact
-  eight-feature package stack was swept at seven explicit depths with
+  nine-feature package stack was swept at seven explicit depths with
   `pp2048`, `tg128`, five repetitions, flash attention on, F16 KV, and graphs
-  off. Decode measured `125.831` tok/s at depth zero, `113.114` at 8K, and
-  `90.324` at 32K; prefill measured `1402.997`, `1286.069`, and `1100.398`
+  off. Decode measured `126.278` tok/s at depth zero, `113.570` at 8K, and
+  `90.498` at 32K; prefill measured `1393.095`, `1283.782`, and `1101.523`
   tok/s at those same depths. No point is interpolated or extrapolated. See
   `notes/2026-08-23-ornith35b-optimized-depth-sweep.md` and the package guide.
 - **Current-stack serialized profile — DIAGNOSTIC ONLY:** temporary device
@@ -179,6 +179,13 @@ binary, driver, or benchmark protocol will reproduce them.
   and beat control B. Ordering noise dominated the effect, so the fusion is
   archived and not shipped. See
   `notes/2026-08-23-ornith35b-beta-gdn-neutral.md`.
+- **Beta-sigmoid/GDN interaction on the nine-feature stack — CLOSED
+  SERVER-NEUTRAL:** both the beta/GDN and downstream GDN RMS/gate fusions fired
+  exactly and preserved the canonical transcript. Mirrored engine means rose
+  `120.413 -> 121.933 tok/s` (+1.26%), but fresh-server means moved
+  `117.630 -> 117.573 tok/s` (-0.05%). All freshness/final gates passed, so the
+  engine-only gain is rejected. See
+  `notes/2026-08-23-ornith35b-beta-gdn-nine-stack-server-neutral.md`.
 - **Attention-gate copy bypass — CLOSED NEUTRAL:** the Qwen-derived attention
   path's ten strided gate copies were bypassed inside the already-fused
   sigmoid/multiply kernel. Exact output and the expected 10 launches/token
