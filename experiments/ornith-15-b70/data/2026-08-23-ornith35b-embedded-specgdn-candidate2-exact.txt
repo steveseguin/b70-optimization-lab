@@ -1,0 +1,14 @@
+> Explain why deterministic validation matters when optimizing a GPU inference kernel.
+# Why Deterministic Validation Matters for GPU Inference Kernels
+
+When optimizing GPU kernels, determinism in your validation process isn't just a nice-to-have—it's foundational to trusting your optimizations. Here's why:
+
+## 1. Isolating Correctness from Variance
+
+GPU execution involves inherently non-deterministic elements:
+- **Thread scheduling** and ordering in reductions/atomics
+- **Floating-point associativity** (a+b+c ≠ c+b+a in general)
+- **Non-deterministic kernels** from libraries like cuBLAS
+
+If your validation itself is non-deterministic, you can't tell
+

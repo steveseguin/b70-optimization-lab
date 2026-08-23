@@ -263,6 +263,15 @@ binary, driver, or benchmark protocol will reproduce them.
   perfect four-token acceptance with a free verifier is bounded at 62.64 tok/s,
   so the slow NFS load was stopped without claiming a run. See
   `notes/2026-08-23-ornith35b-ornith9b-draft-suitability.md`.
+- **Embedded MTP verifier fusions — RESEARCH ONLY:** the model's Qwen-derived
+  embedded predictor works, but MTP1 and MTP3 remain much slower than the
+  117.446 tok/s target-only package. Extending residual/RMS fusions to 2-4
+  verifier rows was exact and improved the mirrored MTP1 grand prompt mean by
+  1.97%; extending the GDN RMS/gate fusion was exact but neutral. Both remain
+  default-off research artifacts and do not enter the user recipe. This work
+  also strengthens future validation: a realistic repeated-prompt canary is
+  required in addition to short exact-answer canaries. See
+  `notes/2026-08-23-ornith35b-embedded-mtp-verifier-fusions.md`.
 - **Speculative decode:** investigate a substantially smaller and faster
   vocabulary-compatible draft separately. Label target-only and assisted
   results separately.

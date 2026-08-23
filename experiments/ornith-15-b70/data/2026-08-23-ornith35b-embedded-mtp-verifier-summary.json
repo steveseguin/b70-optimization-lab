@@ -1,0 +1,53 @@
+{
+  "date": "2026-08-23",
+  "status": "research_only_not_packaged",
+  "model": {
+    "name": "Ornith-1.5-35B-A3B-Q4_K_M",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "runtime": {
+    "llama_cpp_base": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_nine_feature_library_sha256": "d75d5f1d07b6ac64421bbc9ae3cda7b916584f0422d512f57843a50427478e8c",
+    "residual_candidate_library_sha256": "7a1a92be21b2663c737ecbd982a8d27320eb19ad579d0af1b6f4d67014658a83",
+    "residual_plus_gdn_candidate_library_sha256": "75a07395ca6c9d91a7691759bda4e8e4b13a344a7ee49d693c90b632ce7039a0"
+  },
+  "target_only_reference_tok_s": 117.446154,
+  "embedded_mtp": {
+    "mtp3": {
+      "median_tok_s": 52.42682440982118,
+      "draft_tokens": 10976,
+      "accepted_tokens": 2462,
+      "acceptance_percent": 22.43075801749271,
+      "decision": "reject"
+    },
+    "mtp1_residual_rms": {
+      "control_run_medians_tok_s": [74.65196756357722, 78.42933612658052],
+      "candidate_run_medians_tok_s": [80.62152690862165, 77.35535404369506],
+      "control_run_means_tok_s": [75.18812674958279, 78.06535791998078],
+      "candidate_run_means_tok_s": [79.37301969082932, 76.8954037182502],
+      "control_grand_prompt_mean_tok_s": 76.62674233478178,
+      "candidate_grand_prompt_mean_tok_s": 78.13421170453976,
+      "grand_prompt_mean_delta_percent": 1.967288865252637,
+      "mean_of_run_medians_delta_percent": 3.198024281311196,
+      "paired_prompt_wins": 8,
+      "paired_prompt_count": 12,
+      "exact_output_sha256": "6a91ba76bb2f032ca38f80f31561b84f111172795d47772927942bba427ff0d4",
+      "control_residual_rms_hits": 81,
+      "candidate_residual_rms_hits": 3524,
+      "control_shared_residual_rms_hits": 0,
+      "candidate_shared_residual_rms_hits": 3360,
+      "decision": "performance_positive_research_only"
+    },
+    "mtp1_spec_gdn_rms_gate": {
+      "control_generation_tok_s": [64.3, 64.2],
+      "candidate_generation_tok_s": [64.4, 64.1],
+      "control_mean_tok_s": 64.25,
+      "candidate_mean_tok_s": 64.25,
+      "candidate_hits_per_128_token_run": 2520,
+      "exact_output_sha256": "6a91ba76bb2f032ca38f80f31561b84f111172795d47772927942bba427ff0d4",
+      "decision": "exact_neutral_reject"
+    }
+  },
+  "validation_caveat": "The stock SYCL lane is not cross-process transcript-stable on realistic prompts. Candidate exactness uses same-frozen-binary forced-greedy on/off checks; realistic throughput uses mirrored fresh-process arms. A stronger realistic repeat canary is required in future gates.",
+  "package_decision": "Do not enable embedded MTP or either speculative-only fusion in the user package. The measured MTP1 lane remains substantially slower than target-only serving."
+}
