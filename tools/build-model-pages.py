@@ -14,6 +14,7 @@ The ML mapping (which ML Bottleneck preset / quant / runtime / speed-up a
 package corresponds to) lives in PACKAGE_ML below; add an entry when a new
 package lands, or the page simply omits the projection block.
 """
+import hashlib
 import html
 import json
 import os
@@ -26,6 +27,24 @@ OUT_DIR = os.path.join(ROOT, "models")
 GITHUB = "https://github.com/steveseguin/b70-optimization-lab/blob/main/"
 ISSUE = "https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title="
 SITE = "https://neural.download/"
+BRIDGE = os.path.join(ROOT, "learn", "assets", "mlbottleneck-bridge.js")
+
+
+def bridge_version():
+    with open(BRIDGE, "rb") as handle:
+        return hashlib.sha1(handle.read()).hexdigest()[:10]
+
+
+def stamp_bridge_includes(version):
+    """Cache-bust the bridge script on the hand-written pages that load it."""
+    for rel in ("index.html", os.path.join("learn", "hardware.html")):
+        path = os.path.join(ROOT, rel)
+        with open(path, encoding="utf-8") as handle:
+            source = handle.read()
+        updated = re.sub(r'(mlbottleneck-bridge\.js)(\?v=[0-9a-f]+)?"', lambda m: f'{m.group(1)}?v={version}"', source)
+        if updated != source:
+            with open(path, "w", encoding="utf-8", newline="\n") as handle:
+                handle.write(updated)
 
 # package id -> ML Bottleneck request (preset key, exact quant label, runtime, speed-up, strategy)
 PACKAGE_ML = {
@@ -315,7 +334,7 @@ def page(pkg, all_pkgs):
   <span>Unofficial community lab — not affiliated with or endorsed by Intel. Measured numbers link to their proof; projections are labeled and come from a physics model.</span>
   <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
 </div></footer>
-<script defer src="../learn/assets/mlbottleneck-bridge.js"></script>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v={bridge_version()}"></script>
 <script>
 (() => {{
   document.querySelectorAll("[data-copy-markdown]").forEach((button) => {{
@@ -406,6 +425,7 @@ def main():
         catalog = json.load(handle)
     pkgs = sorted(catalog["packages"], key=lambda p: -float(((p["library"].get("featured_metric") or {}).get("value") or 0)))
     os.makedirs(OUT_DIR, exist_ok=True)
+    stamp_bridge_includes(bridge_version())
     written = []
     for pkg in pkgs:
         path = os.path.join(OUT_DIR, f"{pkg['id']}.html")
