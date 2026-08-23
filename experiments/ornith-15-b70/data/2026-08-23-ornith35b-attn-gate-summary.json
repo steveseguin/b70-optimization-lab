@@ -1,0 +1,50 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "llama_cpp_base_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "accepted_source_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+  "accepted_baseline": "11-feature Ornith target-only stack",
+  "candidate": "read the strided full-attention gate view directly in fused sigmoid-times-attention, bypassing CONT",
+  "candidate_env": "GGML_SYCL_FUSED_ORNITH_ATTN_GATE=1",
+  "candidate_patch": "../patches/llamacpp-ornith15-attn-gate-server-performance-negative-20260823.patch",
+  "candidate_patch_sha256": "aabcc8e69974086ea075953869e8f3839d2a16d4a9507cf323f5a2bc6a5a93a4",
+  "correctness": {
+    "canonical_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "candidate_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "exact_match": true,
+    "candidate_hits_128_token_run": 1270,
+    "candidate_hits_each_server_suite": 61320
+  },
+  "engine_mirrored_abba": {
+    "unit": "tok/s",
+    "control_a": 133.663784,
+    "candidate_a": 133.930232,
+    "candidate_b": 133.666972,
+    "control_b": 133.254532,
+    "control_mean": 133.459158,
+    "candidate_mean": 133.798602,
+    "delta_tok_s": 0.339444,
+    "delta_percent": 0.2543429803445907,
+    "interpretation": "small positive microbenchmark signal; requires serving validation"
+  },
+  "fresh_server_mirrored_abba": {
+    "unit": "tok/s",
+    "metric": "median_tok_s_1_100_after_ttft",
+    "control_a": 133.44324015087358,
+    "candidate_a": 132.62520982592793,
+    "candidate_b": 132.46665138090577,
+    "control_b": 132.34788353430298,
+    "control_mean": 132.89556184258828,
+    "candidate_mean": 132.54593060341685,
+    "delta_tok_s": -0.34963123917143,
+    "delta_percent": -0.26308722001232576,
+    "prompt_count_each_arm": 12,
+    "cached_tokens_all_zero_each_arm": true,
+    "fresh_response_valid_each_arm": true,
+    "final_gate_passed_each_arm": true
+  },
+  "decision": "closed performance negative; do not ship or add to the accepted stack",
+  "no_extrapolation": true
+}

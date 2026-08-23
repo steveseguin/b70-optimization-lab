@@ -1,0 +1,182 @@
+diff --git a/ggml/src/ggml-sycl/element_wise.cpp b/ggml/src/ggml-sycl/element_wise.cpp
+index 16eb5db..9c89ee2 100644
+--- a/ggml/src/ggml-sycl/element_wise.cpp
++++ b/ggml/src/ggml-sycl/element_wise.cpp
+@@ -1041,6 +1041,35 @@ void ggml_sycl_op_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor *
+     }
+ }
+ 
++void ggml_sycl_op_ornith_attn_gate_fused(
++        ggml_backend_sycl_context & ctx, const ggml_tensor * gate_view,
++        const ggml_tensor * attention, ggml_tensor * dst) {
++    GGML_ASSERT(gate_view != nullptr && attention != nullptr && dst != nullptr);
++    GGML_ASSERT(gate_view->type == GGML_TYPE_F32 && attention->type == GGML_TYPE_F32 &&
++                dst->type == GGML_TYPE_F32);
++    GGML_ASSERT(gate_view->ne[0] == 256 && gate_view->ne[1] == 16 &&
++                gate_view->ne[2] == 1 && gate_view->ne[3] == 1);
++    GGML_ASSERT(ggml_nelements(attention) == 4096 && ggml_nelements(dst) == 4096);
++    GGML_ASSERT(gate_view->nb[0] == sizeof(float) && gate_view->nb[1] % sizeof(float) == 0);
++    GGML_ASSERT(ggml_is_contiguous(attention) && ggml_is_contiguous(dst));
++
++    const float * gate = (const float *) gate_view->data;
++    const float * attn = (const float *) attention->data;
++    float * out = (float *) dst->data;
++    const size_t gate_row_stride = gate_view->nb[1] / sizeof(float);
++    constexpr int n = 4096;
++    constexpr int block = 256;
++    ctx.stream()->parallel_for(
++        sycl::nd_range<1>(n, block),
++        [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++            const int i = (int) item.get_global_linear_id();
++            const int i0 = i & 255;
++            const int i1 = i >> 8;
++            const float gate_value = gate[(size_t) i1 * gate_row_stride + i0];
++            out[i] = attn[i] * op_sigmoid(gate_value);
++        });
++}
++
+ void ggml_sycl_op_add_softplus_mul_fused(
+         ggml_backend_sycl_context & ctx, ggml_tensor * add_node,
+         ggml_tensor * softplus_node, ggml_tensor * mul_node) {
+diff --git a/ggml/src/ggml-sycl/element_wise.hpp b/ggml/src/ggml-sycl/element_wise.hpp
+index bb7505a..afbf65d 100644
+--- a/ggml/src/ggml-sycl/element_wise.hpp
++++ b/ggml/src/ggml-sycl/element_wise.hpp
+@@ -131,6 +131,10 @@ void ggml_sycl_arange(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ // fused UNARY(silu|sigmoid|softplus) + MUL; see ggml_sycl_can_fuse() for the accepted shapes
+ void ggml_sycl_op_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor * unary_node, ggml_tensor * mul_node);
+ 
++void ggml_sycl_op_ornith_attn_gate_fused(
++        ggml_backend_sycl_context & ctx, const ggml_tensor * gate_view,
++        const ggml_tensor * attention, ggml_tensor * dst);
++
+ void ggml_sycl_op_add_softplus_mul_fused(
+         ggml_backend_sycl_context & ctx, ggml_tensor * add_node,
+         ggml_tensor * softplus_node, ggml_tensor * mul_node);
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 917574a..ff76585 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -6113,6 +6113,7 @@ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_direct_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_alpha_gate_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_qk_norm_rope_hits{0};
++static std::atomic<uint64_t> g_ggml_sycl_ornith_attn_gate_hits{0};
+ 
+ static bool ggml_sycl_ornith_qk_norm_rope_enabled() {
+     static const bool enabled = [] {
+@@ -6607,6 +6608,96 @@ static bool ggml_sycl_tensor_ranges_overlap(const ggml_tensor * a, const ggml_te
+     return a0 < b0 + ggml_nbytes(b) && b0 < a0 + ggml_nbytes(a);
+ }
+ 
++struct ggml_sycl_ornith_attn_gate_match {
++    ggml_tensor * cont;
++    ggml_tensor * unary;
++    ggml_tensor * mul;
++    ggml_tensor * gate_view;
++    ggml_tensor * attention;
++};
++
++static bool ggml_sycl_ornith_attn_gate_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_ATTN_GATE");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr, "ggml_sycl_ornith_attn_gate: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_attn_gate_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++static bool ggml_sycl_find_ornith_attn_gate(
++        const ggml_cgraph * cgraph, int node_idx, ggml_sycl_ornith_attn_gate_match & match) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_attn_gate_enabled() ||
++        cgraph == nullptr || node_idx < 0 || node_idx + 2 >= cgraph->n_nodes) {
++        return false;
++    }
++    ggml_tensor * cont = cgraph->nodes[node_idx];
++    ggml_tensor * unary = cgraph->nodes[node_idx + 1];
++    ggml_tensor * mul = cgraph->nodes[node_idx + 2];
++    ggml_tensor * view = cont != nullptr ? cont->src[0] : nullptr;
++    ggml_tensor * q_full = view != nullptr ? view->src[0] : nullptr;
++    int layer = -1;
++    int consumed = 0;
++    if (cont == nullptr || unary == nullptr || mul == nullptr || view == nullptr || q_full == nullptr ||
++        cont->op != GGML_OP_CONT || unary->op != GGML_OP_UNARY || mul->op != GGML_OP_MUL ||
++        ggml_get_unary_op(unary) != GGML_UNARY_OP_SIGMOID || unary->src[0] != cont ||
++        std::sscanf(cont->name, "gate_reshaped-%d%n", &layer, &consumed) != 1 ||
++        consumed <= 0 || cont->name[consumed] != '\0' ||
++        layer < 3 || layer >= 40 || layer % 4 != 3 ||
++        cont->type != GGML_TYPE_F32 || cont->ne[0] != 4096 || cont->ne[1] != 1 ||
++        cont->ne[2] != 1 || cont->ne[3] != 1 || !ggml_is_contiguous(cont) ||
++        view->op != GGML_OP_VIEW || view->type != GGML_TYPE_F32 ||
++        view->ne[0] != 256 || view->ne[1] != 16 || view->ne[2] != 1 || view->ne[3] != 1 ||
++        view->nb[0] != sizeof(float) || view->nb[1] % sizeof(float) != 0 ||
++        q_full->op != GGML_OP_MUL_MAT || q_full->type != GGML_TYPE_F32 ||
++        q_full->ne[0] != 8192 || q_full->ne[1] != 1 ||
++        ggml_sycl_tensor_use_count(cgraph, view) != 1 ||
++        (cont->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        (unary->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        !ggml_sycl_can_fuse(cgraph, node_idx + 1,
++            { GGML_OP_UNARY, GGML_OP_MUL }, { GGML_UNARY_OP_SIGMOID })) {
++        return false;
++    }
++
++    char q_name[64];
++    char view_name[64];
++    char unary_name[64];
++    char mul_name[64];
++    std::snprintf(q_name, sizeof(q_name), "Qcur_full-%d", layer);
++    std::snprintf(view_name, sizeof(view_name), "Qcur_full-%d (view)", layer);
++    std::snprintf(unary_name, sizeof(unary_name), "gate_sigmoid-%d", layer);
++    std::snprintf(mul_name, sizeof(mul_name), "attn_gated-%d", layer);
++    if (std::strcmp(q_full->name, q_name) != 0 || std::strcmp(view->name, view_name) != 0 ||
++        std::strcmp(unary->name, unary_name) != 0 || std::strcmp(mul->name, mul_name) != 0) {
++        return false;
++    }
++
++    ggml_tensor * attention = mul->src[0] == unary ? mul->src[1] : mul->src[0];
++    if (attention == nullptr || attention == unary || attention->type != GGML_TYPE_F32 ||
++        attention->ne[0] != 4096 || attention->ne[1] != 1 ||
++        attention->ne[2] != 1 || attention->ne[3] != 1 ||
++        !ggml_is_contiguous(attention) || mul->type != GGML_TYPE_F32 ||
++        !ggml_are_same_shape(attention, mul) || !ggml_is_contiguous(mul) ||
++        ggml_sycl_tensor_ranges_overlap(mul, view) ||
++        ggml_sycl_tensor_ranges_overlap(mul, attention)) {
++        return false;
++    }
++
++    char attention_name[64];
++    std::snprintf(attention_name, sizeof(attention_name), "attn_pregate-%d", layer);
++    if (std::strcmp(attention->name, attention_name) != 0) {
++        return false;
++    }
++    match = { cont, unary, mul, view, attention };
++    return true;
++}
++
+ // Match only Ornith 1.5's one-token Qwen3.5 full-attention closure. Q is
+ // deferred until K normalization, then one kernel preserves the stock SIMD16
+ // RMS reduction, FP32 RMS+weight materialization, and IMRoPE arithmetic. K is
+@@ -6832,6 +6923,17 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             }
+         }
+ 
++        if (node->op == GGML_OP_CONT) {
++            ggml_sycl_ornith_attn_gate_match attn_gate;
++            if (ggml_sycl_find_ornith_attn_gate(cgraph, i, attn_gate)) {
++                ggml_sycl_op_ornith_attn_gate_fused(
++                    *sycl_ctx, attn_gate.gate_view, attn_gate.attention, attn_gate.mul);
++                g_ggml_sycl_ornith_attn_gate_hits.fetch_add(1, std::memory_order_relaxed);
++                i += 2;
++                continue;
++            }
++        }
++
+         if (node->op == GGML_OP_GET_ROWS) {
+             ggml_sycl_ornith_gdn_state_io_match gdn_state_io;
+             if (ggml_sycl_find_ornith_gdn_state_io(cgraph, i, gdn_state_io)) {

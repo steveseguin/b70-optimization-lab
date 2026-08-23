@@ -309,6 +309,13 @@ binary, driver, or benchmark protocol will reproduce them.
   ten launches/token, but repeated engine means regressed
   `133.452 -> 133.075 tok/s` (-0.282%). No server test was justified. See
   `notes/2026-08-23-ornith35b-attn-v-cache-performance-negative.md`.
+- **Full-attention gate CONT bypass — CLOSED SERVING NEGATIVE:** this exact
+  Qwen-derived transfer read the strided gate view directly in the existing
+  fused sigmoid-times-attention operation, removing ten launches/token. It
+  preserved the canonical transcript and improved mirrored engine means
+  `133.459 -> 133.799 tok/s` (+0.254%), but valid fresh-server means regressed
+  `132.896 -> 132.546 tok/s` (-0.263%). It does not ship. See
+  `notes/2026-08-23-ornith35b-attn-gate-server-performance-negative.md`.
 - **Shared-expert scalar gate — CLOSED CORRECTNESS/PERFORMANCE NEGATIVE:** an
   aggressive one-kernel FP32 dot/sigmoid/broadcast form hit all 5,080 sites
   but changed deterministic output and was not timed. A conservative form kept
