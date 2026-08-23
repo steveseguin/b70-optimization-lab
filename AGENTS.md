@@ -89,7 +89,8 @@ measurements: keep them in their labeled sections, never copy one into a
 benchmark table, result packet, README, or LocalMaxxing submission, and keep
 the "projected, not measured" wording. The measured rows feed the bridge through
 `data-ml-*` attributes on `<tr>` elements (model preset key, quant label,
-runtime, card count, speed-up, measured tok/s); update them when a row changes.
+runtime, card count, speed-up); the measured tok/s is read from the row's own
+speed cell, so only the attributes need updating when a row's setup changes.
 Deep links into the planner use
 `https://mlbottleneck.com/?model=&hardware=&count=&format=&runtime=&spec=`.
 

@@ -458,7 +458,7 @@ Style genome (duotone-hixffp):
         </tr>
       </thead>
       <tbody>
-        <tr data-ml-model="ornith_1.5_35b_a3b" data-ml-quant="Q4_K_M" data-ml-quant-label="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="126.18">
+        <tr data-ml-model="ornith_1.5_35b_a3b" data-ml-quant="Q4_K_M" data-ml-quant-label="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Ornith 1.5 35B-A3B <small>Qwen-derived MoE &middot; uses ~3B of 35B per word &middot; Aug 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M + lab eleven-feature stack</td><td class="num r">1&times;</td>
           <td class="num r">128.83<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
@@ -472,49 +472,49 @@ Style genome (duotone-hixffp):
           <td class="mut hide-s" title="conventional median">typical</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/laguna-s-2.1-int4-b70/README.md">test report</a></td>
         </tr>
-        <tr data-ml-model="gemma4_26b_a4b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:3" data-ml-measured="124.98">
+        <tr data-ml-model="gemma4_26b_a4b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:3">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Gemma-4-26B-A4B <small>all-rounder &middot; uses ~4B of 26B per word &middot; Apr 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + MTP3</td><td class="num r">1&times;</td>
           <td class="num r">124.98<div class="ratebar" style="width:99.0%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="median; ctx 32,768">typical &middot; remembers ~24K words</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">test report</a></td>
         </tr>
-        <tr data-ml-model="qwen3.8_27b" data-ml-quant="AutoRound INT4" data-ml-quant-label="INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:5" data-ml-measured="101.17">
+        <tr data-ml-model="qwen3.8_27b" data-ml-quant="AutoRound INT4" data-ml-quant-label="INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:5">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span>Qwen3.8-27B <small>newest all-rounder &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">INT4 + MTP5</td><td class="num r">2&times;</td>
           <td class="num r">101.17<div class="ratebar" style="width:80.2%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="honest margin-free all-25 median; three arms agree on only 21 to 22 of 25 token arrays">research &middot; determinism open</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">lab status</a></td>
         </tr>
-        <tr data-ml-model="muse_glimmer_30b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dflash:15" data-ml-measured="100.37">
+        <tr data-ml-model="muse_glimmer_30b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dflash:15">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Muse-Glimmer-30B <small>Meta &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash n15</td><td class="num r">4&times;</td>
           <td class="num r">100.37<div class="ratebar" style="width:79.5%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="canonical pooled mean">average across repeat runs</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">full report</a></td>
         </tr>
-        <tr data-ml-model="qwen3.6_27b" data-ml-quant="AutoRound INT4" data-ml-quant-label="AutoRound INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:3" data-ml-measured="98.77">
+        <tr data-ml-model="qwen3.6_27b" data-ml-quant="AutoRound INT4" data-ml-quant-label="AutoRound INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:3">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-27B <small>general assistant &middot; uses all 27B per word &middot; Apr 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 + MTP3</td><td class="num r">2&times;</td>
           <td class="num r">98.77<div class="ratebar" style="width:78.3%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="four-arm central estimate">average across 4 setups</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/scoreboard.md">full rankings</a></td>
         </tr>
-        <tr data-ml-model="qwen3.6_35b_a3b" data-ml-quant="Quark W8A8 INT8" data-ml-quant-label="W8A8 INT8" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="93.55">
+        <tr data-ml-model="qwen3.6_35b_a3b" data-ml-quant="Quark W8A8 INT8" data-ml-quant-label="W8A8 INT8" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-35B-A3B <small>long documents &middot; uses ~3B of 35B per word &middot; Apr 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">Quark W8A8 INT8</td><td class="num r">4&times;</td>
           <td class="num r">93.55<div class="ratebar" style="width:74.1%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="output, strict deep gate">typical, strictest quality gate</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen36-35b-quark-int8-b70/README.md">test report</a></td>
         </tr>
-        <tr data-ml-model="minimax_m2.7" data-ml-quant="AutoRound INT4" data-ml-quant-label="AutoRound INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="89.31">
+        <tr data-ml-model="minimax_m2.7" data-ml-quant="AutoRound INT4" data-ml-quant-label="AutoRound INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>MiniMax-M2.7 <small>remembers long conversations (32K) &middot; Mar 2026</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 W4A16</td><td class="num r">4&times;</td>
           <td class="num r">89.31<div class="ratebar" style="width:70.8%" aria-hidden="true"></div></td>
           <td class="mut hide-s" title="mean of four clean long repeats">average of 4 clean runs</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/README.md">full report</a></td>
         </tr>
-        <tr data-ml-model="deepseek_v4_flash_reap_180b" data-ml-quant="q4" data-ml-quant-label="FP8 + FP4 experts" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dspark:7" data-ml-measured="80.82">
+        <tr data-ml-model="deepseek_v4_flash_reap_180b" data-ml-quant="q4" data-ml-quant-label="FP8 + FP4 experts" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dspark:7">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>DeepSeek-V4-Flash-180B <small>experimental community-trimmed copy &middot; research only</small></th>
           <td class="mut">vLLM XPU</td><td class="mut">FP8 + FP4 experts + DSpark7</td><td class="num r">4&times;</td>
           <td class="num r">80.82<div class="ratebar" style="width:64.1%" aria-hidden="true"></div></td>
@@ -581,7 +581,7 @@ Style genome (duotone-hixffp):
         </tr>
       </thead>
       <tbody>
-        <tr data-ml-model="qwen3.6_27b" data-ml-quant="FP8" data-ml-quant-label="FP8" data-ml-runtime="vllm" data-ml-runtime-label="vLLM (Docker)" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="30.17">
+        <tr data-ml-model="qwen3.6_27b" data-ml-quant="FP8" data-ml-quant-label="FP8" data-ml-runtime="vllm" data-ml-runtime-label="vLLM (Docker)" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">B70-tested: </span>Qwen3.6-27B <small>community setup we re-ran and confirmed</small></th>
           <td class="mut">Docker / vLLM</td><td class="mut">FP8, split across 2 cards</td><td class="num r">2&times;</td>
           <td class="num r">30.17<div class="ratebar" style="width:24%" aria-hidden="true"></div></td>

@@ -133,7 +133,11 @@
     const cards = [];
     for (const row of rows) {
       const data = row.dataset;
-      const measured = parseFloat(data.mlMeasured);
+      // The measured rate is read from the row's own speed cell (the last
+      // numeric cell), so a re-measured row never drifts from its card.
+      const numericCells = Array.from(row.querySelectorAll('td.num')).map(cell => parseFloat(cell.textContent)).filter(Number.isFinite);
+      const measured = numericCells.length ? numericCells[numericCells.length - 1] : parseFloat(data.mlMeasured);
+      if (!Number.isFinite(measured)) continue;
       const request = {
         model: data.mlModel,
         hardware: { template: data.mlHardware || 'Intel Arc Pro B70', count: parseInt(data.mlCards, 10) || 1 },
