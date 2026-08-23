@@ -1,0 +1,13 @@
+> Explain why deterministic validation matters when optimizing a GPU inference kernel.
+# Why Deterministic Validation Matters for GPU Inference Kernels
+
+When optimizing GPU kernels, determinism in validation isn't just a nice-to-have—it's foundational to trusting your optimizations. Here's why:
+
+## 1. Isolating Correctness from Optimizations
+
+GPU optimizations introduce many sources of nondeterminism:
+
+- **Floating-point reordering**: FMA contraction, different reduction orders, and loop unrolling change summation order, producing slightly different results
+- **Parallel execution order**: Thread scheduling means reductions/aggregations can accumulate in varying orders across runs
+- **Non-deterministic kernels**: `torch.unique`, certain
+

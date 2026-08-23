@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "device": "Intel Arc Pro B70, SYCL0",
+  "candidate": "full-attention Q/V/K shared Q8 activation",
+  "status": "closed_structural_correctness_negative",
+  "canonical_transcript_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+  "triple_candidate": {
+    "transcript_sha256": "5a2b1fa6d2693339b2cbd0a3d28a04b56d7fb8e6b029ec08f073ac2c1ac1de57",
+    "fused_hits": 1270,
+    "exact": false
+  },
+  "q_only_diagnostic": {
+    "transcript_sha256": "aac03629ce958e8c8a214ca44f4544fc4fac058a99296b3dd740ebb3a267ca44",
+    "fused_hits": 1270,
+    "exact": false
+  },
+  "poison_exit_code": 134,
+  "throughput_measured": false,
+  "root_cause": "The stock one-token path selects reordered ESIMD DMMV and consumes FP32 directly; the candidate changed the algorithm to Q8-MMVQ, so no stock Q8 quantization launches existed to share."
+}
+

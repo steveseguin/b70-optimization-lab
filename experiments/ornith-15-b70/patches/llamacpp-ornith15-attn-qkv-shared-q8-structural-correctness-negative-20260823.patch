@@ -1,0 +1,202 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 917574a..25c7ef9 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -4771,6 +4771,161 @@ static bool ggml_sycl_ornith_moe_gate_up_fused(
+     return ok;
+ }
+ 
++struct ggml_sycl_ornith_attn_qkv_match {
++    ggml_tensor * q = nullptr;
++    ggml_tensor * v = nullptr;
++    ggml_tensor * k = nullptr;
++};
++
++static std::atomic<uint64_t> g_ggml_sycl_ornith_attn_qkv_shared_q8_hits{0};
++
++static bool ggml_sycl_ornith_attn_qkv_shared_q8_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_ATTN_QKV_SHARED_Q8");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr, "ggml_sycl_ornith_attn_qkv_shared_q8: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_attn_qkv_shared_q8_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++static int ggml_sycl_ornith_attn_qkv_shared_q8_projections() {
++    static const int count = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_ATTN_QKV_SHARED_Q8_PROJECTIONS");
++        return value != nullptr ? std::clamp(std::atoi(value), 1, 3) : 3;
++    }();
++    return count;
++}
++
++static bool ggml_sycl_ornith_attn_projection(
++        const ggml_tensor * projection, const ggml_tensor * input,
++        const char * output_name, const char * weight_name,
++        int64_t output_rows, bool allow_q6_k) {
++    const ggml_tensor * weight = projection != nullptr ? projection->src[0] : nullptr;
++    return projection != nullptr && projection->op == GGML_OP_MUL_MAT &&
++           (projection->flags & GGML_TENSOR_FLAG_COMPUTE) != 0 &&
++           (projection->flags & GGML_TENSOR_FLAG_OUTPUT) == 0 &&
++           projection->src[1] == input && projection->type == GGML_TYPE_F32 &&
++           projection->ne[0] == output_rows && projection->ne[1] == 1 &&
++           projection->ne[2] == 1 && projection->ne[3] == 1 &&
++           ggml_is_contiguous(projection) && std::strcmp(projection->name, output_name) == 0 &&
++           weight != nullptr && std::strcmp(weight->name, weight_name) == 0 &&
++           (weight->type == GGML_TYPE_Q4_K || (allow_q6_k && weight->type == GGML_TYPE_Q6_K)) &&
++           weight->ne[0] == 2048 && weight->ne[1] == output_rows &&
++           weight->ne[2] == 1 && weight->ne[3] == 1 && ggml_is_contiguous(weight) &&
++           !ggml_backend_buffer_is_sycl_split(weight->buffer);
++}
++
++static bool ggml_sycl_find_ornith_attn_qkv_shared_q8(
++        ggml_cgraph * cgraph, int node_idx, ggml_sycl_ornith_attn_qkv_match & match) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_attn_qkv_shared_q8_enabled() ||
++        !g_ggml_sycl_enable_optimize || node_idx < 0 || node_idx >= cgraph->n_nodes) {
++        return false;
++    }
++
++    ggml_tensor * q = cgraph->nodes[node_idx];
++    const ggml_tensor * input = q != nullptr ? q->src[1] : nullptr;
++    int layer = -1;
++    if (q == nullptr || input == nullptr ||
++        std::sscanf(q->name, "Qcur_full-%d", &layer) != 1 ||
++        layer < 3 || layer >= 40 || layer % 4 != 3 ||
++        input->type != GGML_TYPE_F32 || input->ne[0] != 2048 || input->ne[1] != 1 ||
++        input->ne[2] != 1 || input->ne[3] != 1 || !ggml_is_contiguous(input)) {
++        return false;
++    }
++
++    char q_output[64];
++    char v_output[64];
++    char k_output[64];
++    char q_weight[64];
++    char v_weight[64];
++    char k_weight[64];
++    char input_name[64];
++    std::snprintf(q_output, sizeof(q_output), "Qcur_full-%d", layer);
++    std::snprintf(v_output, sizeof(v_output), "Vcur-%d", layer);
++    std::snprintf(k_output, sizeof(k_output), "Kcur-%d", layer);
++    std::snprintf(q_weight, sizeof(q_weight), "blk.%d.attn_q.weight", layer);
++    std::snprintf(v_weight, sizeof(v_weight), "blk.%d.attn_v.weight", layer);
++    std::snprintf(k_weight, sizeof(k_weight), "blk.%d.attn_k.weight", layer);
++    std::snprintf(input_name, sizeof(input_name), "attn_norm-%d", layer);
++    if (std::strcmp(input->name, input_name) != 0 ||
++        !ggml_sycl_ornith_attn_projection(q, input, q_output, q_weight, 8192, false)) {
++        return false;
++    }
++
++    ggml_tensor * v = nullptr;
++    ggml_tensor * k = nullptr;
++    const int search_end = std::min(cgraph->n_nodes, node_idx + 10);
++    for (int i = node_idx + 1; i < search_end; ++i) {
++        ggml_tensor * candidate = cgraph->nodes[i];
++        if (candidate == nullptr || candidate->op != GGML_OP_MUL_MAT) {
++            continue;
++        }
++        if (std::strcmp(candidate->name, v_output) == 0) {
++            if (v != nullptr) {
++                return false;
++            }
++            v = candidate;
++        } else if (std::strcmp(candidate->name, k_output) == 0) {
++            if (k != nullptr) {
++                return false;
++            }
++            k = candidate;
++        }
++    }
++    if (!ggml_sycl_ornith_attn_projection(v, input, v_output, v_weight, 512, true) ||
++        !ggml_sycl_ornith_attn_projection(k, input, k_output, k_weight, 512, false) ||
++        q->data == v->data || q->data == k->data || v->data == k->data) {
++        return false;
++    }
++
++    if (const char * poison = std::getenv("GGML_SYCL_FUSED_ORNITH_ATTN_QKV_SHARED_Q8_POISON");
++        poison != nullptr && std::atoi(poison) != 0) {
++        GGML_ABORT("Ornith attention Q/K/V shared-Q8 strict matcher fired");
++    }
++
++    match = { q, v, k };
++    return true;
++}
++
++static void ggml_sycl_ornith_attn_qkv_shared_q8(
++        ggml_backend_sycl_context & ctx, const ggml_sycl_ornith_attn_qkv_match & match) {
++    const ggml_tensor * input = match.q->src[1];
++    constexpr int ncols = 2048;
++    const int padded = GGML_PAD(ncols, MATRIX_ROW_PADDING);
++    const queue_ptr stream = ctx.stream();
++
++    const std::array<ggml_tensor *, 3> projections = { match.q, match.v, match.k };
++    const int projection_count = ggml_sycl_ornith_attn_qkv_shared_q8_projections();
++    for (int i = 0; i < projection_count; ++i) {
++        ggml_tensor * projection = projections[i];
++        opt_for_reorder(&ctx, projection->src[0], input, projection, mul_mat_algo::MMVQ);
++        const auto * extra = static_cast<const ggml_tensor_extra_gpu *>(projection->src[0]->extra);
++        GGML_ASSERT(extra != nullptr && extra->optimized_feature.reorder);
++    }
++
++    ggml_sycl_pool_alloc<char> input_q8(ctx.pool(),
++        (size_t) padded * sizeof(block_q8_1) / QK8_1);
++    quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>(
++        (const float *) input->data, input_q8.get(), ncols, 1, padded, stream);
++
++    for (int i = 0; i < projection_count; ++i) {
++        ggml_tensor * projection = projections[i];
++        const ggml_tensor * weight = projection->src[0];
++        scope_op_debug_print scope_dbg_print(__func__, projection, /*num_src=*/2,
++            " : shared Q8 with attention Q/K/V");
++        ggml_sycl_op_mul_mat_vec_q(
++            ctx, weight, input, projection,
++            (const char *) weight->data, (const float *) input->data, input_q8.get(),
++            (float *) projection->data, 0, weight->ne[1], 1, padded, stream);
++    }
++}
++
+ __dpct_inline__ static void k_copy_src1_to_contiguous(
+     const char *__restrict__ src1_original, char *__restrict__ src1_contiguous,
+     const mmid_row_mapping *__restrict__ row_mapping,
+@@ -6790,6 +6945,8 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+     pending_ornith_gdn_state_io.reserve(40);
+     std::vector<ggml_sycl_ornith_qk_norm_rope_match> pending_ornith_qk_norm_rope;
+     pending_ornith_qk_norm_rope.reserve(10);
++    std::vector<ggml_tensor *> precomputed_ornith_attn_qkv;
++    precomputed_ornith_attn_qkv.reserve(20);
+ 
+     for (int i = 0; i < cgraph->n_nodes; i++) {
+         ggml_tensor * node = cgraph->nodes[i];
+@@ -6804,6 +6961,26 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             precomputed_ornith_silu.end()) {
+             continue;
+         }
++        if (std::find(precomputed_ornith_attn_qkv.begin(), precomputed_ornith_attn_qkv.end(), node) !=
++            precomputed_ornith_attn_qkv.end()) {
++            continue;
++        }
++
++        if (node->op == GGML_OP_MUL_MAT) {
++            ggml_sycl_ornith_attn_qkv_match match;
++            if (ggml_sycl_find_ornith_attn_qkv_shared_q8(cgraph, i, match)) {
++                ggml_sycl_ornith_attn_qkv_shared_q8(*sycl_ctx, match);
++                const int projection_count = ggml_sycl_ornith_attn_qkv_shared_q8_projections();
++                if (projection_count >= 2) {
++                    precomputed_ornith_attn_qkv.push_back(match.v);
++                }
++                if (projection_count >= 3) {
++                    precomputed_ornith_attn_qkv.push_back(match.k);
++                }
++                g_ggml_sycl_ornith_attn_qkv_shared_q8_hits.fetch_add(1, std::memory_order_relaxed);
++                continue;
++            }
++        }
+ 
+         const auto qk_pending = std::find_if(
+             pending_ornith_qk_norm_rope.begin(), pending_ornith_qk_norm_rope.end(),

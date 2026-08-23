@@ -236,6 +236,13 @@ binary, driver, or benchmark protocol will reproduce them.
   diagnostic routed through the complete stock MMVQ wrapper. The candidate was
   not timed or shipped. See
   `notes/2026-08-23-ornith35b-shared-q8-correctness-negative.md`.
+- **Full-attention Q/K/V shared Q8 — CLOSED STRUCTURAL/CORRECTNESS NEGATIVE:**
+  the ten Qwen-derived attention layers share an FP32 activation across Q, V,
+  and K, but their one-token B70 path is reordered ESIMD DMMV, not Q8-MMVQ.
+  A Q-only isolation already changed the deterministic transcript because the
+  candidate changed algorithms; there are no incumbent Q8 launches to share.
+  No throughput run was performed. See
+  `notes/2026-08-23-ornith35b-attn-qkv-shared-q8-structural-correctness-negative.md`.
 - **Four-row reordered ESIMD dense reuse — BROAD NEGATIVE / OUTPUT-HEAD
   NEUTRAL:** a Qwen-derived four-row activation-reuse candidate was byte-exact
   and hit the intended dense K-quant path, but regressed the broad Q2_K-Q6_K
