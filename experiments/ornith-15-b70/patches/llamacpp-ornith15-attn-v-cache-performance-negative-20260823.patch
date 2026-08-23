@@ -1,0 +1,292 @@
+diff --git a/ggml/src/ggml-sycl/dmmv.cpp b/ggml/src/ggml-sycl/dmmv.cpp
+index d47d683..51f2777 100644
+--- a/ggml/src/ggml-sycl/dmmv.cpp
++++ b/ggml/src/ggml-sycl/dmmv.cpp
+@@ -2006,8 +2006,79 @@ static void dequantize_mul_mat_vec_q6_K_sycl_reorder_esimd(const void *vx, const
+     });
+ }
+ 
++template <ggml_type T>
++static bool ggml_sycl_dmmv_attn_v_cache_reorder_esimd_impl(
++        const void * weight, const float * activation, float * v_dst,
++        sycl::half * cache, const int64_t * cache_index,
++        size_t cache_row_stride, int ncols, int nrows, dpct::queue_ptr stream) {
++    if (ncols % QK_K != 0 || nrows != 512 || cache_row_stride < 512 * sizeof(sycl::half)) {
++        return false;
++    }
++    const int workgroups = (nrows + 1) / 2;
++    stream->submit([&](sycl::handler & h) {
++        sycl::local_accessor<float, 1> lmem(
++            sycl::range<1>(GGML_SYCL_DMMV_ESIMD_WG_SIZE * 2), h);
++        h.parallel_for(
++            sycl::nd_range<1>(
++                sycl::range<1>((size_t) workgroups * GGML_SYCL_DMMV_ESIMD_WG_SIZE),
++                sycl::range<1>(GGML_SYCL_DMMV_ESIMD_WG_SIZE)),
++            [=](sycl::nd_item<1> it) [[intel::sycl_explicit_simd]] {
++                dequantize_mul_mat_vec_reorder_esimd<T>(
++                    weight, activation, v_dst, ncols, nrows, lmem, it);
++                if (it.get_local_id(0) == 0) {
++                    const int row0 = (int) it.get_group(0) * 2;
++                    const int64_t dst_row = cache_index[0];
++                    sycl::half * cache_row = reinterpret_cast<sycl::half *>(
++                        reinterpret_cast<char *>(cache) + (size_t) dst_row * cache_row_stride);
++                    cache_row[row0] = (sycl::half) v_dst[row0];
++                    if (row0 + 1 < nrows) {
++                        cache_row[row0 + 1] = (sycl::half) v_dst[row0 + 1];
++                    }
++                }
++            });
++    });
++    return true;
++}
++
++bool ggml_sycl_dmmv_attn_v_cache_reorder_esimd(
++        ggml_type weight_type, const void * weight, const float * activation,
++        float * v_dst, sycl::half * cache, const int64_t * cache_index,
++        size_t cache_row_stride, int ncols, int nrows, dpct::queue_ptr stream) {
++    switch (weight_type) {
++        case GGML_TYPE_Q4_K:
++            return ggml_sycl_dmmv_attn_v_cache_reorder_esimd_impl<GGML_TYPE_Q4_K>(
++                weight, activation, v_dst, cache, cache_index,
++                cache_row_stride, ncols, nrows, stream);
++        case GGML_TYPE_Q6_K:
++            return ggml_sycl_dmmv_attn_v_cache_reorder_esimd_impl<GGML_TYPE_Q6_K>(
++                weight, activation, v_dst, cache, cache_index,
++                cache_row_stride, ncols, nrows, stream);
++        default:
++            return false;
++    }
++}
++
+ #endif // GGML_SYCL_DMMV_HAS_ESIMD
+ 
++#ifndef GGML_SYCL_DMMV_HAS_ESIMD
++bool ggml_sycl_dmmv_attn_v_cache_reorder_esimd(
++        ggml_type weight_type, const void * weight, const float * activation,
++        float * v_dst, sycl::half * cache, const int64_t * cache_index,
++        size_t cache_row_stride, int ncols, int nrows, dpct::queue_ptr stream) {
++    GGML_UNUSED(weight_type);
++    GGML_UNUSED(weight);
++    GGML_UNUSED(activation);
++    GGML_UNUSED(v_dst);
++    GGML_UNUSED(cache);
++    GGML_UNUSED(cache_index);
++    GGML_UNUSED(cache_row_stride);
++    GGML_UNUSED(ncols);
++    GGML_UNUSED(nrows);
++    GGML_UNUSED(stream);
++    return false;
++}
++#endif
++
+ static void dequantize_mul_mat_vec_q4_K_sycl_reorder(const void *vx, const float *y,
+                                                      float *dst, const int ncols,
+                                                      const int nrows,
+diff --git a/ggml/src/ggml-sycl/dmmv.hpp b/ggml/src/ggml-sycl/dmmv.hpp
+index bd83735..08b1fbc 100644
+--- a/ggml/src/ggml-sycl/dmmv.hpp
++++ b/ggml/src/ggml-sycl/dmmv.hpp
+@@ -24,4 +24,11 @@ void ggml_sycl_op_dequantize_mul_mat_vec(
+     const int64_t src1_ncols, const int64_t src1_padded_row_size,
+     const dpct::queue_ptr &stream);
+ 
++// Ornith/Qwen one-token full-attention V projection with an identical F16
++// cache-row epilogue. Returns false when the ESIMD/type contract is unavailable.
++bool ggml_sycl_dmmv_attn_v_cache_reorder_esimd(
++    ggml_type weight_type, const void * weight, const float * activation,
++    float * v_dst, sycl::half * cache, const int64_t * cache_index,
++    size_t cache_row_stride, int ncols, int nrows, dpct::queue_ptr stream);
++
+ #endif // GGML_SYCL_DMMV_HPP
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 917574a..becfb4c 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -6113,6 +6113,7 @@ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_direct_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_alpha_gate_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_qk_norm_rope_hits{0};
++static std::atomic<uint64_t> g_ggml_sycl_ornith_attn_v_cache_hits{0};
+ 
+ static bool ggml_sycl_ornith_qk_norm_rope_enabled() {
+     static const bool enabled = [] {
+@@ -6607,6 +6608,148 @@ static bool ggml_sycl_tensor_ranges_overlap(const ggml_tensor * a, const ggml_te
+     return a0 < b0 + ggml_nbytes(b) && b0 < a0 + ggml_nbytes(a);
+ }
+ 
++struct ggml_sycl_ornith_attn_v_cache_match {
++    ggml_tensor * v;
++    ggml_tensor * view;
++    ggml_tensor * set_rows;
++};
++
++static bool ggml_sycl_ornith_attn_v_cache_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_ATTN_V_CACHE");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr, "ggml_sycl_ornith_attn_v_cache: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_attn_v_cache_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
++static bool ggml_sycl_find_ornith_attn_v_cache(
++        ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int node_idx,
++        ggml_sycl_ornith_attn_v_cache_match & match) {
++    if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_attn_v_cache_enabled() ||
++        !g_ggml_sycl_enable_optimize || !ctx.opt_feature.reorder || !g_ggml_sycl_enable_esimd ||
++        cgraph == nullptr || node_idx < 0 || node_idx >= cgraph->n_nodes) {
++        return false;
++    }
++
++    ggml_tensor * v = cgraph->nodes[node_idx];
++    const ggml_tensor * weight = v != nullptr ? v->src[0] : nullptr;
++    const ggml_tensor * input = v != nullptr ? v->src[1] : nullptr;
++    int layer = -1;
++    int consumed = 0;
++    if (v == nullptr || weight == nullptr || input == nullptr || v->op != GGML_OP_MUL_MAT ||
++        std::sscanf(v->name, "Vcur-%d%n", &layer, &consumed) != 1 ||
++        consumed <= 0 || v->name[consumed] != '\0' ||
++        layer < 3 || layer >= 40 || layer % 4 != 3 ||
++        (weight->type != GGML_TYPE_Q4_K && weight->type != GGML_TYPE_Q6_K) ||
++        weight->ne[0] != 2048 || weight->ne[1] != 512 ||
++        weight->ne[2] != 1 || weight->ne[3] != 1 || !ggml_is_contiguous(weight) ||
++        ggml_backend_buffer_is_sycl_split(weight->buffer) ||
++        input->type != GGML_TYPE_F32 || input->ne[0] != 2048 || input->ne[1] != 1 ||
++        input->ne[2] != 1 || input->ne[3] != 1 || !ggml_is_contiguous(input) ||
++        v->type != GGML_TYPE_F32 || v->ne[0] != 512 || v->ne[1] != 1 ||
++        v->ne[2] != 1 || v->ne[3] != 1 || !ggml_is_contiguous(v) ||
++        (v->flags & GGML_TENSOR_FLAG_OUTPUT) != 0 ||
++        ggml_sycl_tensor_use_count(cgraph, v) != 1) {
++        return false;
++    }
++
++    char weight_name[64];
++    char input_name[64];
++    std::snprintf(weight_name, sizeof(weight_name), "blk.%d.attn_v.weight", layer);
++    std::snprintf(input_name, sizeof(input_name), "attn_norm-%d", layer);
++    if (std::strcmp(weight->name, weight_name) != 0 || std::strcmp(input->name, input_name) != 0) {
++        return false;
++    }
++
++    ggml_tensor * view = nullptr;
++    ggml_tensor * set_rows = nullptr;
++    for (int j = node_idx + 1; j < cgraph->n_nodes; ++j) {
++        ggml_tensor * candidate = cgraph->nodes[j];
++        if (candidate == nullptr || candidate->op != GGML_OP_SET_ROWS ||
++            candidate->src[0] == nullptr) {
++            continue;
++        }
++        ggml_tensor * candidate_view = nullptr;
++        if (candidate->src[0] == v) {
++            candidate_view = nullptr;
++        } else if (candidate->src[0]->op == GGML_OP_VIEW &&
++                   candidate->src[0]->src[0] != nullptr &&
++                   (candidate->src[0]->src[0] == v ||
++                    (candidate->src[0]->src[0]->op == GGML_OP_RESHAPE &&
++                     candidate->src[0]->src[0]->src[0] == v))) {
++            candidate_view = candidate->src[0];
++        } else {
++            continue;
++        }
++        if (set_rows != nullptr) {
++            return false;
++        }
++        view = candidate_view;
++        set_rows = candidate;
++    }
++    if (set_rows == nullptr || set_rows->src[1] == nullptr ||
++        set_rows->type != GGML_TYPE_F16 || set_rows->src[1]->type != GGML_TYPE_I64 ||
++        set_rows->src[1]->ne[0] != 1 || ggml_nelements(set_rows->src[1]) != 1 ||
++        set_rows->ne[0] != 512 || set_rows->nb[0] != sizeof(sycl::half) ||
++        set_rows->nb[1] < 512 * sizeof(sycl::half) ||
++        ggml_sycl_tensor_ranges_overlap(set_rows, weight) ||
++        ggml_sycl_tensor_ranges_overlap(set_rows, input) ||
++        ggml_sycl_tensor_ranges_overlap(set_rows, v)) {
++        return false;
++    }
++    if (view != nullptr &&
++        (ggml_sycl_tensor_use_count(cgraph, view) != 1 ||
++         view->type != GGML_TYPE_F32 || view->ne[0] != 512 || ggml_nelements(view) != 512 ||
++         !ggml_is_contiguous(view) || view->data != v->data ||
++         (view->flags & GGML_TENSOR_FLAG_OUTPUT) != 0)) {
++        return false;
++    }
++    if (view != nullptr && view->src[0] != v) {
++        const ggml_tensor * reshape = view->src[0];
++        if (reshape == nullptr || reshape->op != GGML_OP_RESHAPE || reshape->src[0] != v ||
++            reshape->type != GGML_TYPE_F32 || reshape->ne[0] != 256 || reshape->ne[1] != 2 ||
++            reshape->ne[2] != 1 || reshape->ne[3] != 1 || reshape->data != v->data ||
++            ggml_sycl_tensor_use_count(cgraph, reshape) != 1 ||
++            (reshape->flags & GGML_TENSOR_FLAG_OUTPUT) != 0) {
++            return false;
++        }
++    }
++
++    // The cache index must already exist when Vcur is submitted. A graph leaf
++    // is ready; a computed node is safe only when it precedes Vcur.
++    for (int j = 0; j < cgraph->n_nodes; ++j) {
++        if (cgraph->nodes[j] == set_rows->src[1] && j >= node_idx) {
++            return false;
++        }
++    }
++    match = { v, view, set_rows };
++    return true;
++}
++
++static bool ggml_sycl_run_ornith_attn_v_cache(
++        ggml_backend_sycl_context & ctx, const ggml_sycl_ornith_attn_v_cache_match & match) {
++    const ggml_tensor * weight = match.v->src[0];
++    const ggml_tensor * input = match.v->src[1];
++    opt_for_reorder(&ctx, weight, input, match.v, mul_mat_algo::DMMV);
++    const auto * extra = static_cast<const ggml_tensor_extra_gpu *>(weight->extra);
++    if (extra == nullptr || !extra->optimized_feature.reorder) {
++        return false;
++    }
++    scope_op_debug_print scope_dbg_print(
++        __func__, match.v, /*num_src=*/2, " : writes full-attention V cache row");
++    return ggml_sycl_dmmv_attn_v_cache_reorder_esimd(
++        weight->type, weight->data, (const float *) input->data, (float *) match.v->data,
++        (sycl::half *) match.set_rows->data, (const int64_t *) match.set_rows->src[1]->data,
++        match.set_rows->nb[1], 2048, 512, ctx.stream());
++}
++
+ // Match only Ornith 1.5's one-token Qwen3.5 full-attention closure. Q is
+ // deferred until K normalization, then one kernel preserves the stock SIMD16
+ // RMS reduction, FP32 RMS+weight materialization, and IMRoPE arithmetic. K is
+@@ -6790,6 +6933,8 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+     pending_ornith_gdn_state_io.reserve(40);
+     std::vector<ggml_sycl_ornith_qk_norm_rope_match> pending_ornith_qk_norm_rope;
+     pending_ornith_qk_norm_rope.reserve(10);
++    std::vector<ggml_tensor *> precomputed_ornith_v_cache_set_rows;
++    precomputed_ornith_v_cache_set_rows.reserve(16);
+ 
+     for (int i = 0; i < cgraph->n_nodes; i++) {
+         ggml_tensor * node = cgraph->nodes[i];
+@@ -6804,6 +6949,21 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+             precomputed_ornith_silu.end()) {
+             continue;
+         }
++        if (std::find(precomputed_ornith_v_cache_set_rows.begin(),
++                      precomputed_ornith_v_cache_set_rows.end(), node) !=
++            precomputed_ornith_v_cache_set_rows.end()) {
++            continue;
++        }
++
++        if (node->op == GGML_OP_MUL_MAT) {
++            ggml_sycl_ornith_attn_v_cache_match v_cache_match;
++            if (ggml_sycl_find_ornith_attn_v_cache(*sycl_ctx, cgraph, i, v_cache_match) &&
++                ggml_sycl_run_ornith_attn_v_cache(*sycl_ctx, v_cache_match)) {
++                precomputed_ornith_v_cache_set_rows.push_back(v_cache_match.set_rows);
++                g_ggml_sycl_ornith_attn_v_cache_hits.fetch_add(1, std::memory_order_relaxed);
++                continue;
++            }
++        }
+ 
+         const auto qk_pending = std::find_if(
+             pending_ornith_qk_norm_rope.begin(), pending_ornith_qk_norm_rope.end(),

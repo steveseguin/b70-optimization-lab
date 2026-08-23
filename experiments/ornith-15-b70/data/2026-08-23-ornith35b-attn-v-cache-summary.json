@@ -1,0 +1,49 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-A3B-Q4_K_M",
+  "device": "Intel Arc Pro B70 GPU 0",
+  "decision": "closed_performance_negative",
+  "promoted": false,
+  "graph_contract": {
+    "layers": 10,
+    "chain": [
+      "Vcur f32 [512,1]",
+      "RESHAPE f32 [256,2]",
+      "VIEW f32 [512,1]",
+      "SET_ROWS f16 [512,8192]"
+    ],
+    "cache_index": "one-element I64 graph leaf",
+    "launches_removed_per_decoded_token": 10
+  },
+  "candidate": {
+    "flag": "GGML_SYCL_FUSED_ORNITH_ATTN_V_CACHE=1",
+    "method": "retain incumbent reordered-ESIMD FP32 V projection and write the stock-equivalent indexed F16 cache row in its epilogue",
+    "supported_weight_types": ["Q4_K", "Q6_K"],
+    "fused_hits_128_token": 1270,
+    "fused_hits_per_engine_run": 8970
+  },
+  "correctness": {
+    "control_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "candidate_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "byte_identical": true
+  },
+  "cli_generation_tok_s": {
+    "order": ["control_a", "candidate_a", "candidate_b", "control_b"],
+    "control": [84.6, 83.7],
+    "candidate": [84.4, 84.8],
+    "control_mean": 84.15,
+    "candidate_mean": 84.6,
+    "interpretation": "crossed arms at one-decimal resolution; advanced to repeated engine gate"
+  },
+  "engine_tg128_tok_s": {
+    "order": ["control_a", "candidate_a", "candidate_b", "control_b"],
+    "repetitions_per_run": 7,
+    "control": [133.399053, 133.504375],
+    "candidate": [132.645912, 133.503679],
+    "control_mean": 133.451714,
+    "candidate_mean": 133.0747955,
+    "measured_delta_percent": -0.2824381109110541
+  },
+  "server_test_run": false,
+  "reason": "higher-resolution candidate mean regressed and did not satisfy the ordered promotion gate"
+}

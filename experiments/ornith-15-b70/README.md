@@ -302,6 +302,13 @@ binary, driver, or benchmark protocol will reproduce them.
   Mirrored engine means nevertheless regressed `120.599 -> 119.585 tok/s`
   (-0.841%). It was not server-tested or shipped. See
   `notes/2026-08-23-ornith35b-qkv-gate-paired-performance-negative.md`.
+- **Full-attention V projection/cache epilogue — CLOSED PERFORMANCE
+  NEGATIVE:** the exact Qwen-derived `Vcur -> reshape -> view -> F16 SET_ROWS`
+  chain was folded into the incumbent reordered-ESIMD projection epilogue.
+  It preserved the canonical transcript, fired all 1,270 times, and removed
+  ten launches/token, but repeated engine means regressed
+  `133.452 -> 133.075 tok/s` (-0.282%). No server test was justified. See
+  `notes/2026-08-23-ornith35b-attn-v-cache-performance-negative.md`.
 - **Shared-expert scalar gate — CLOSED CORRECTNESS/PERFORMANCE NEGATIVE:** an
   aggressive one-kernel FP32 dot/sigmoid/broadcast form hit all 5,080 sites
   but changed deterministic output and was not timed. A conservative form kept
