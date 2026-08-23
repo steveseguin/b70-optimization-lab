@@ -53,6 +53,12 @@ binary, driver, or benchmark protocol will reproduce them.
   tok/s in the candidate run. It did not qualify for matched timing. Keep
   `--flash-attn auto`; see
   `notes/2026-08-23-ornith35b-flash-attention-off-negative.md`.
+- **Native SYCL flash backend — CLOSED DEPTH-ZERO NEGATIVE:** keeping flash
+  enabled but bypassing oneDNN preserved the canonical transcript. Mirrored
+  `tg128` means nevertheless regressed `133.418 -> 132.909 tok/s` (-0.381%),
+  with both native runs below both controls. Keep the oneDNN backend at the
+  measured depth-zero point; see
+  `notes/2026-08-23-ornith35b-native-flash-attention-negative.md`.
 - **MoE graph eligibility — CLOSED NEGATIVE:** the eligibility correction from
   llama.cpp PR 25089 was useful as a concrete test input, with credit to
   Captain-Tripps for that idea. Our maintained port added exact dispatch gates

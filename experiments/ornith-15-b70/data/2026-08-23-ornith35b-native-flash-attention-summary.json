@@ -1,0 +1,29 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "control": "oneDNN flash attention, GGML_SYCL_FA_ONEDNN=1",
+  "candidate": "native SYCL flash attention, GGML_SYCL_FA_ONEDNN=0",
+  "correctness": {
+    "canonical_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "candidate_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "exact_match": true
+  },
+  "engine_mirrored_abba": {
+    "depth_tokens": 0,
+    "generated_tokens": 128,
+    "repetitions_per_run": 7,
+    "unit": "tok/s",
+    "control_a": 133.510948,
+    "candidate_a": 133.243139,
+    "candidate_b": 132.575595,
+    "control_b": 133.324520,
+    "control_mean": 133.417734,
+    "candidate_mean": 132.909367,
+    "delta_tok_s": -0.508367,
+    "delta_percent": -0.38103405353893116
+  },
+  "decision": "closed performance negative at measured depth zero; retain oneDNN flash attention",
+  "no_extrapolation": true
+}
