@@ -67,8 +67,27 @@
       ]
     },
     "popularity": {
-      "state": "not-scored",
-      "reason": "No dated family-level popularity snapshot is stored for the official Qwen3.8 base and its derived quant repositories yet."
+      "state": "dated-revision-snapshots",
+      "primary_revision": "qwen3.8-27b",
+      "captured_at": "2026-08-23T22:51:38Z",
+      "scope": "Official base-model repositories only; revision-level discovery signal, not quality or packet evidence. Revisions are not summed.",
+      "evidence": "data/neural-download-popularity/2026-08-23-qwen-27b-huggingface.json",
+      "snapshots": [
+        {
+          "revision": "qwen3.8-27b",
+          "repository": "Qwen/Qwen3.8-27B",
+          "downloads": 2358347,
+          "likes": 12306,
+          "repository_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
+        },
+        {
+          "revision": "qwen3.6-27b",
+          "repository": "Qwen/Qwen3.6-27B",
+          "downloads": 6348356,
+          "likes": 2279,
+          "repository_revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9"
+        }
+      ]
     }
   },
   "dimensions": {
@@ -83,6 +102,69 @@
     "kv": ["f16", "q8_0", "fp8_e4m3", "fp8_e5m2"]
   },
   "packets": [
+    {
+      "id": "qwen38-27b-autoround-int4-stock-a3561ef8-tpscale",
+      "label": "Qwen3.8 AutoRound INT4 · stock a3561ef8 TP scale",
+      "revision": "qwen3.8-27b",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 stock",
+      "topologies": [1, 2, 4],
+      "status": "quality-qualified-stock-profile-performance-variable",
+      "evidence_level": "B70-measured",
+      "coverage": ["TP1/2/4", "decode", "quality", "determinism"],
+      "grades": {
+        "evidence": {
+          "grade": "B",
+          "scope": "exact a3561ef8 stock TP1/2/4 graph profile",
+          "basis": "full applicable quality batteries with exact runtime identity; disclosed cross-boot output differences and TP4 performance variability remain",
+          "reviewed_at": "2026-08-23",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json"
+    },
+    {
+      "id": "qwen38-27b-autoround-int4-tp4-overlay-a3561ef8",
+      "label": "Qwen3.8 AutoRound INT4 · TP4 a3561ef8 winner overlay",
+      "revision": "qwen3.8-27b",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 + TP4 historical-winner overlay",
+      "cards": 4,
+      "status": "accepted-versioned-overlay",
+      "evidence_level": "B70-measured and quality-qualified",
+      "coverage": ["decode", "TP4", "quality", "cache integrity", "overlay identity"],
+      "grades": {
+        "evidence": {
+          "grade": "B",
+          "scope": "exact a3561ef8 TP4 152-decision winner overlay",
+          "basis": "accepted stable recovery, full replay-A quality, strict A/B speed evidence, and sealed cache integrity; neither range endpoint is independently replicated",
+          "reviewed_at": "2026-08-23",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp4-autotune-winner-overlay-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp4-autotune-winner-overlay-result.json"
+    },
+    {
+      "id": "qwen38-27b-autoround-int4-tp2-overlay-a3561ef8",
+      "label": "Qwen3.8 AutoRound INT4 · TP2 a3561ef8 winner overlay",
+      "revision": "qwen3.8-27b",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 + TP2 historical-winner overlay",
+      "cards": 2,
+      "status": "quality-qualified-partial-not-promoted",
+      "evidence_level": "B70-measured experimental",
+      "coverage": ["decode", "TP2", "quality", "cache integrity", "overlay identity"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "exact a3561ef8 TP2 winner overlay screen",
+          "basis": "full quality and cache gates passed, but the strict arm missed its frozen promotion floor and the overlay remains partial research",
+          "reviewed_at": "2026-08-23",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.json"
+    },
     {
       "id": "qwen38-27b-q4km-tp1-b70",
       "label": "Qwen3.8 Q4_K_M · TP1",
@@ -131,7 +213,7 @@
       "status": "candidate",
       "evidence_level": "B70-verified",
       "coverage": ["decode", "quality"],
-      "projection": {"model": "qwen3.8_27b", "quant": "FP8", "runtime": "vllm", "spec": "none"},
+      "projection": {"model": "qwen3.8_27b", "quant": "FP8", "runtime": "vllm", "spec": "none", "prompt_tokens": 512, "output_tokens": 128},
       "manifest": "packages/qwen38-27b-fp8-tp2-b70/package.json"
     },
     {
@@ -323,6 +405,288 @@
       "metrics": {"decode_tok_s": [71.29326283364946, 71.39843006187554]},
       "quality": "full objective battery pass; fresh/replay outputs matched 21/25",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
+    },
+    {
+      "id": "q38-a3561ef8-stock-tp1-graph-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 stock",
+      "runtime_family": "vLLM XPU",
+      "profile_id": "a3561ef8-stock",
+      "measurement_class": "diagnostic-ignore-eos",
+      "promotion_status": "diagnostic-new-high-not-strict-promoted",
+      "runtime_identity": {
+        "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+        "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+        "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.9, "natural_eos": false},
+      "workload": "25-prompt cache-zero ignore-EOS fixed-output diagnostic, 99-interval median",
+      "metrics": {"decode_tok_s": [30.329809361830037]},
+      "quality": "25/25 valid cache-zero rows; diagnostic capture only; strict quality belongs to the separate replay",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json"
+    },
+    {
+      "id": "q38-a3561ef8-stock-tp2-graph-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 stock",
+      "runtime_family": "vLLM XPU",
+      "profile_id": "a3561ef8-stock",
+      "measurement_class": "diagnostic-ignore-eos",
+      "promotion_status": "diagnostic-bounded-regression",
+      "runtime_identity": {
+        "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+        "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+        "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124"
+      },
+      "config": {"tp": 2, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.9, "natural_eos": false},
+      "workload": "25-prompt cache-zero ignore-EOS fixed-output diagnostic, 99-interval median",
+      "metrics": {"decode_tok_s": [48.64759224153825]},
+      "quality": "25/25 valid cache-zero rows; diagnostic capture only; strict quality belongs to the separate replay",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json"
+    },
+    {
+      "id": "q38-a3561ef8-stock-tp4-graph-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 stock",
+      "runtime_family": "vLLM XPU",
+      "profile_id": "a3561ef8-stock",
+      "measurement_class": "diagnostic-ignore-eos",
+      "promotion_status": "diagnostic-bounded-regression",
+      "runtime_identity": {
+        "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+        "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+        "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124"
+      },
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.6, "natural_eos": false},
+      "workload": "25-prompt cache-zero ignore-EOS fixed-output diagnostic, 99-interval median",
+      "metrics": {"decode_tok_s": [71.34404937397696]},
+      "quality": "25/25 valid cache-zero rows; diagnostic capture only; strict quality belongs to the separate replay",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json"
+    },
+    {
+      "id": "q38-a3561ef8-stock-tp1-graph-strict",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 stock",
+      "runtime_family": "vLLM XPU",
+      "profile_id": "a3561ef8-stock",
+      "measurement_class": "strict-natural-eos",
+      "promotion_status": "repeat-confirmed-bounded-regression-historical-frontier-retained",
+      "runtime_identity": {
+        "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+        "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+        "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.9, "natural_eos": true},
+      "workload": "25-prompt cache-zero natural-EOS strict, 99-interval median",
+      "metrics": {"decode_tok_s": [30.241645123711923, 30.243714296955797]},
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 30.241645123711923, "label": "strict replay A", "quality_battery": "pass"},
+        {"metric": "decode_tok_s", "index": 1, "value": 30.243714296955797, "label": "strict replay B", "quality_battery": "not repeated"}
+      ],
+      "quality": "replay A full objective battery pass; replay B battery not repeated; A/B complete-token match 19/25",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json"
+    },
+    {
+      "id": "q38-a3561ef8-stock-tp2-graph-strict",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 stock",
+      "runtime_family": "vLLM XPU",
+      "profile_id": "a3561ef8-stock",
+      "measurement_class": "strict-natural-eos",
+      "promotion_status": "quality-qualified-bounded-regression-historical-frontier-retained",
+      "runtime_identity": {
+        "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+        "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+        "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124"
+      },
+      "config": {"tp": 2, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.9, "natural_eos": true},
+      "workload": "25-prompt cache-zero natural-EOS strict, 99-interval median",
+      "metrics": {"decode_tok_s": [48.49048978038331]},
+      "quality": "full objective battery pass; 24/24 nonempty baseline comparisons; cached tokens zero",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json"
+    },
+    {
+      "id": "q38-a3561ef8-stock-tp4-graph-strict",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 stock",
+      "runtime_family": "vLLM XPU",
+      "profile_id": "a3561ef8-stock",
+      "measurement_class": "strict-natural-eos",
+      "promotion_status": "quality-qualified-performance-variable-captured-high-not-promoted",
+      "runtime_identity": {
+        "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+        "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+        "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124"
+      },
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.6, "natural_eos": true},
+      "workload": "25-prompt cache-zero natural-EOS strict, 99-interval median",
+      "metrics": {"decode_tok_s": [71.9001988117144, 71.2457420049019]},
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 71.9001988117144, "label": "strict replay A captured high", "quality_battery": "pass", "promotion": "not replicated and not promoted"},
+        {"metric": "decode_tok_s", "index": 1, "value": 71.2457420049019, "label": "same-cache strict replay B", "quality_battery": "not repeated", "promotion": "repeat evidence for performance variability"}
+      ],
+      "quality": "replay A full objective battery pass; replay B battery not repeated; A/B complete-token match 19/25 and first-100 match 24/25",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json"
+    },
+    {
+      "id": "q38-a3561ef8-tp2-winner-overlay-graph-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 + TP2 historical-winner overlay",
+      "profile_id": "a3561ef8-tp2-e9d1398-best-config-overlay-v1",
+      "measurement_class": "diagnostic-ignore-eos",
+      "promotion_status": "diagnostic-high-only",
+      "runtime_identity": {
+        "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+        "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+        "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124",
+        "overlay_manifest_file_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757"
+      },
+      "config": {"tp": 2, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.9, "natural_eos": false},
+      "workload": "25-prompt cache-zero ignore-EOS fixed-output diagnostic, 99-interval median",
+      "metrics": {"decode_tok_s": [49.05894025767351]},
+      "quality": "25/25 valid rows, exact code-14 canary, cached tokens zero; diagnostic high only",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.json"
+    },
+    {
+      "id": "q38-a3561ef8-tp2-winner-overlay-graph-strict",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 + TP2 historical-winner overlay",
+      "profile_id": "a3561ef8-tp2-e9d1398-best-config-overlay-v1",
+      "measurement_class": "strict-natural-eos",
+      "promotion_status": "quality-qualified-partial-not-promoted",
+      "runtime_identity": {
+        "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+        "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+        "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124",
+        "overlay_manifest_file_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757"
+      },
+      "config": {"tp": 2, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.9, "natural_eos": true},
+      "workload": "25-prompt cache-zero natural-EOS strict, 99-interval median",
+      "metrics": {"decode_tok_s": [49.00935245117815]},
+      "quality": "full objective battery pass: 7/7 exact cases, 8/8 one-hash repeat, 8K needle pass, 24/24 baseline comparisons, cached tokens zero; missed the frozen 49.019651 gate by 0.021%",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.json"
+    },
+    {
+      "id": "q38-a3561ef8-tp4-winner-overlay-graph-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 + TP4 historical-winner overlay",
+      "profile_id": "a3561ef8-tp4-e9d1398-best-config-overlay-v1",
+      "measurement_class": "diagnostic-ignore-eos",
+      "promotion_status": "diagnostic-high-only",
+      "runtime_identity": {
+        "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+        "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+        "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124",
+        "overlay_manifest_file_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2"
+      },
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.6, "natural_eos": false},
+      "workload": "25-prompt cache-zero ignore-EOS fixed-output diagnostic, 99-interval median",
+      "metrics": {"decode_tok_s": [71.72254506718171]},
+      "quality": "25/25 valid rows, exact code-14 canary, cached tokens zero; diagnostic high only",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp4-autotune-winner-overlay-result.json"
+    },
+    {
+      "id": "q38-a3561ef8-tp4-winner-overlay-graph-strict",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU nightly a3561ef8 + TP4 historical-winner overlay",
+      "profile_id": "a3561ef8-tp4-e9d1398-best-config-overlay-v1",
+      "measurement_class": "strict-natural-eos",
+      "promotion_status": "accepted-versioned-overlay",
+      "runtime_identity": {
+        "repository_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+        "linux_amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+        "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124",
+        "overlay_manifest_file_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2"
+      },
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.6, "natural_eos": true},
+      "workload": "25-prompt cache-zero natural-EOS strict, 99-interval median",
+      "metrics": {"decode_tok_s": [71.35287190161719, 71.45427094575045]},
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 71.35287190161719, "label": "exact-cache strict replay A", "quality_battery": "pass", "promotion": "lower observed endpoint, not an independently replicated floor"},
+        {"metric": "decode_tok_s", "index": 1, "value": 71.45427094575045, "label": "exact-cache strict replay B", "quality_battery": "not repeated", "promotion": "upper observed endpoint, not independently replicated"}
+      ],
+      "quality": "replay A full battery pass: 7/7 exact cases, 8/8 one-hash repeat, 8K needle pass, 24/24 baseline comparisons, cached tokens zero; replay B battery not repeated; A/B complete-token match 20/25 and first-100 match 24/25",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp4-autotune-winner-overlay-result.json"
+    },
+    {
+      "id": "q38-q4km-tp2-conventional",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "Q4_K_M",
+      "runtime": "llama.cpp SYCL",
+      "profile_id": "qwen38-q4km-tp2-lab-patch-stack",
+      "measurement_class": "conventional-99-interval-target-only",
+      "promotion_status": "quality-cleared-package-headline",
+      "runtime_identity": {
+        "repository": "https://github.com/mndodd/llama.cpp/tree/intel-sycl-optimization",
+        "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+        "full_lab_patch_sha256": "f21e9b557c3d024527ac98d5f189cf7ea72fa8c38a5faf2a22ee339fd1988998",
+        "llama_server_sha256": "6ae782c7e8f7a992e0eeced10ade2a84b3cbb9ba65c65cbb917e52d1ce09777d"
+      },
+      "config": {"tp": 2, "mtp": 0, "graph": "off", "kv": "f16"},
+      "workload": "12-prompt cache-zero realistic suite, target-only, reasoning off, conventional 99-interval median",
+      "metrics": {"decode_tok_s": [49.71750333219927]},
+      "quality": "realistic and fresh-response gates passed; cached tokens zero; 12/12 complete output hashes exact",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json"
+    },
+    {
+      "id": "q38-q8-tp2-conventional",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "Q8_0",
+      "runtime": "llama.cpp SYCL",
+      "profile_id": "qwen38-q8-tp2-quality-cleared-transfer",
+      "measurement_class": "conventional-99-interval-target-only",
+      "promotion_status": "quality-cleared-historical-package-headline",
+      "runtime_identity": {
+        "repository": "mndodd/llama.cpp",
+        "base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126"
+      },
+      "config": {"tp": 2, "mtp": 0, "graph": "off", "kv": "f16", "reasoning_enabled": true},
+      "workload": "12-prompt cache-zero realistic suite, target-only, reasoning enabled, conventional 99-interval median",
+      "metrics": {"decode_tok_s": [36.772932224864405]},
+      "quality": "optimized and control gates passed; cached tokens zero; 12/12 complete output hashes exact",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json"
+    },
+    {
+      "id": "q38-fp8-vllm-tp2-graph",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "FP8",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "runtime_family": "vLLM XPU",
+      "profile_id": "qwen38-official-fp8-vllm-tp2-graph-size1",
+      "measurement_class": "five-prompt-fixed-line-target-only",
+      "promotion_status": "quality-cleared-package-headline",
+      "runtime_identity": {
+        "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+        "vllm_source": "ac7509e2b"
+      },
+      "config": {"tp": 2, "mtp": 0, "graph": "on", "kv": "f16"},
+      "workload": "five unique p512/g128 fixed-line cache-zero completions after one warmup, median after TTFT",
+      "metrics": {"decode_tok_s": [21.708532114978812]},
+      "quality": "full recorded battery passed: seven exact cases, deterministic 8-run repeat, long-context needle, and oracle checks; free-form graph/eager outputs are not universally exact",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json"
     },
     {
       "id": "q38-nightly-tp1-mtp1-eager",
@@ -606,37 +970,53 @@
   "views": [
     {
       "id": "tp-strict",
-      "title": "TP scaling",
-      "subtitle": "Qwen3.8 AutoRound · vLLM nightly · MTP0 · f16 KV · graph on · strict natural-EOS; TP2/TP4 XPU Graph is runtime-labeled unsupported/experimental",
+      "title": "TP strict runtime profiles",
+      "subtitle": "Qwen3.8 AutoRound · MTP0 · f16 KV · graph on · strict natural-EOS. Pinned e9d1398, stock a3561ef8, and a3561ef8 winner overlays remain separate; stock TP4 71.900 is a captured high, not a replicated promotion; TP2 overlay is partial and TP4 overlay is accepted.",
       "x_label": "tensor parallel cards",
       "discrete": true,
       "unsupported_x": [3],
       "metrics": ["decode_tok_s"],
       "series": [
-        {"label": "strict graph", "measurement_ids": ["q38-nightly-tp1-graph-strict", "q38-nightly-tp2-graph-strict", "q38-nightly-tp4-graph-strict"], "x_from": "config.tp"}
+        {"label": "pinned e9d1398 strict", "measurement_ids": ["q38-nightly-tp1-graph-strict", "q38-nightly-tp2-graph-strict", "q38-nightly-tp4-graph-strict"], "x_from": "config.tp"},
+        {"label": "stock a3561ef8 strict", "measurement_ids": ["q38-a3561ef8-stock-tp1-graph-strict", "q38-a3561ef8-stock-tp2-graph-strict", "q38-a3561ef8-stock-tp4-graph-strict"], "x_from": "config.tp"},
+        {"label": "a3561ef8 overlay · TP2 partial / TP4 accepted", "measurement_ids": ["q38-a3561ef8-tp2-winner-overlay-graph-strict", "q38-a3561ef8-tp4-winner-overlay-graph-strict"], "x_from": "config.tp"}
+      ]
+    },
+    {
+      "id": "tp-runtime-diagnostic",
+      "title": "TP diagnostic runtime profiles",
+      "subtitle": "Qwen3.8 AutoRound · MTP0 · f16 KV · graph on · fixed-output ignore-EOS diagnostic. These are measured diagnostic captures, not strict deployment headlines; the overlay was measured only at TP2/TP4.",
+      "x_label": "tensor parallel cards",
+      "discrete": true,
+      "unsupported_x": [3],
+      "metrics": ["decode_tok_s"],
+      "series": [
+        {"label": "pinned e9d1398 diagnostic", "measurement_ids": ["q38-nightly-tp1-graph-diagnostic", "q38-nightly-tp2-graph-diagnostic", "q38-nightly-tp4-graph-diagnostic"], "x_from": "config.tp"},
+        {"label": "stock a3561ef8 diagnostic", "measurement_ids": ["q38-a3561ef8-stock-tp1-graph-diagnostic", "q38-a3561ef8-stock-tp2-graph-diagnostic", "q38-a3561ef8-stock-tp4-graph-diagnostic"], "x_from": "config.tp"},
+        {"label": "a3561ef8 overlay diagnostic", "measurement_ids": ["q38-a3561ef8-tp2-winner-overlay-graph-diagnostic", "q38-a3561ef8-tp4-winner-overlay-graph-diagnostic"], "x_from": "config.tp"}
       ]
     },
     {
       "id": "tp-phase",
       "title": "TP changes more than decode",
-      "subtitle": "Qwen3.8 AutoRound · vLLM nightly · MTP0 · f16 KV · fixed-output diagnostic; TP2/TP4 XPU Graph is runtime-labeled unsupported/experimental",
+      "subtitle": "Qwen3.8 AutoRound · pinned vLLM XPU e9d1398 · MTP0 · f16 KV · fixed-output diagnostic; TP2/TP4 XPU Graph is runtime-labeled unsupported/experimental. No a3561ef8 eager, prefill, or TTFT values are inferred here.",
       "x_label": "tensor parallel cards",
       "discrete": true,
       "unsupported_x": [3],
       "metrics": ["decode_tok_s", "prefill_tok_s", "ttft_ms"],
       "series": [
-        {"label": "eager", "measurement_ids": ["q38-nightly-tp1-eager-diagnostic", "q38-nightly-tp2-eager-diagnostic", "q38-nightly-tp4-eager-diagnostic"], "x_from": "config.tp"},
-        {"label": "graph", "measurement_ids": ["q38-nightly-tp1-graph-diagnostic", "q38-nightly-tp2-graph-diagnostic", "q38-nightly-tp4-graph-diagnostic"], "x_from": "config.tp"}
+        {"label": "pinned e9d1398 eager", "measurement_ids": ["q38-nightly-tp1-eager-diagnostic", "q38-nightly-tp2-eager-diagnostic", "q38-nightly-tp4-eager-diagnostic"], "x_from": "config.tp"},
+        {"label": "pinned e9d1398 graph", "measurement_ids": ["q38-nightly-tp1-graph-diagnostic", "q38-nightly-tp2-graph-diagnostic", "q38-nightly-tp4-graph-diagnostic"], "x_from": "config.tp"}
       ]
     },
     {
       "id": "mtp-nightly-tp1",
-      "title": "MTP depth",
-      "subtitle": "Qwen3.8 AutoRound · TP1 eager · f16 KV · nightly; preregistered ladder ended at MTP3",
+      "title": "Pinned e9d1398 MTP depth",
+      "subtitle": "Qwen3.8 AutoRound · TP1 eager · f16 KV · pinned vLLM XPU e9d1398; preregistered ladder ended at MTP3. No a3561ef8 MTP value is inferred.",
       "x_label": "draft tokens",
       "metrics": ["decode_tok_s", "mean_acceptance_length", "prefill_tok_s", "ttft_ms"],
       "series": [
-        {"label": "eager", "measurement_ids": ["q38-nightly-tp1-eager-diagnostic", "q38-nightly-tp1-mtp1-eager", "q38-nightly-tp1-mtp2-eager", "q38-nightly-tp1-mtp3-eager"], "x_from": "config.mtp"}
+        {"label": "pinned e9d1398 eager", "measurement_ids": ["q38-nightly-tp1-eager-diagnostic", "q38-nightly-tp1-mtp1-eager", "q38-nightly-tp1-mtp2-eager", "q38-nightly-tp1-mtp3-eager"], "x_from": "config.mtp"}
       ]
     },
     {
@@ -707,12 +1087,12 @@
   ],
   "coverage_views": [
     {
-      "id": "nightly-eager-f16",
-      "label": "graph off · diagnostic",
-      "fixed": "Qwen3.8 AutoRound · vLLM nightly · f16 KV · short fixed-output diagnostic. TP2/TP4 MTP1/3 were closed by the frozen MTP2 expansion gate.",
-      "decision_note": "Decision-classified by the bounded nightly combination program; closed cells were not burned after their parent gate failed.",
+      "id": "e9d1398-eager-f16",
+      "label": "pinned e9d1398 · graph off",
+      "fixed": "Qwen3.8 AutoRound · pinned vLLM XPU e9d1398 · f16 KV · short fixed-output diagnostic. TP2/TP4 MTP1/3 were closed by the frozen MTP2 expansion gate; MTP4/5 were outside the 96-cell program and remain missing.",
+      "decision_note": "Decision-classified only for the pinned e9d1398 bounded combination program; these closures do not transfer to a3561ef8.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json",
-      "rows": [0, 1, 2, 3],
+      "rows": [0, 1, 2, 3, 4, 5],
       "columns": [1, 2, 3, 4],
       "cells": {
         "0:1": {"state": "lab-measured", "label": "23.72–24.25", "evidence_id": "q38-nightly-tp1-eager-diagnostic"},
@@ -730,16 +1110,24 @@
         "3:1": {"state": "lab-measured", "label": "4.30", "evidence_id": "q38-nightly-tp1-mtp3-eager"},
         "3:2": {"state": "closed", "label": "MTP2 gate"},
         "3:3": {"state": "unsupported", "label": "head split"},
-        "3:4": {"state": "closed", "label": "MTP2 gate"}
+        "3:4": {"state": "closed", "label": "MTP2 gate"},
+        "4:1": {"state": "missing", "label": "outside program"},
+        "4:2": {"state": "missing", "label": "outside program"},
+        "4:3": {"state": "unsupported", "label": "head split"},
+        "4:4": {"state": "missing", "label": "outside program"},
+        "5:1": {"state": "missing", "label": "outside program"},
+        "5:2": {"state": "missing", "label": "outside program"},
+        "5:3": {"state": "unsupported", "label": "head split"},
+        "5:4": {"state": "missing", "label": "outside program"}
       }
     },
     {
-      "id": "nightly-graph-f16",
-      "label": "graph on · diagnostic",
-      "fixed": "Qwen3.8 AutoRound · vLLM nightly · f16 KV · short fixed-output diagnostic. Multi-GPU XPU Graph is runtime-labeled unsupported/experimental; the TP1 MTP1 corruption anchor quarantines every graph+MTP cell.",
-      "decision_note": "Graph+MTP correctness quarantine is inherited from the least-compounded TP1 MTP1 anchor; multi-GPU graph rows are unsupported-stack characterization.",
+      "id": "e9d1398-graph-f16",
+      "label": "pinned e9d1398 · graph on",
+      "fixed": "Qwen3.8 AutoRound · pinned vLLM XPU e9d1398 · f16 KV · short fixed-output diagnostic. Multi-GPU XPU Graph is runtime-labeled unsupported/experimental; the e9d1398 TP1 MTP1 corruption anchor quarantined MTP1/2/3 in the bounded program. MTP4/5 remain missing.",
+      "decision_note": "Graph+MTP quarantine is scoped to the pinned e9d1398 program and does not transfer to a3561ef8; multi-GPU graph rows are unsupported-stack characterization.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json",
-      "rows": [0, 1, 2, 3],
+      "rows": [0, 1, 2, 3, 4, 5],
       "columns": [1, 2, 3, 4],
       "cells": {
         "0:1": {"state": "lab-measured", "label": "30.22–30.26", "evidence_id": "q38-nightly-tp1-graph-diagnostic"},
@@ -757,7 +1145,278 @@
         "3:1": {"state": "quarantined", "label": "MTP1 anchor"},
         "3:2": {"state": "quarantined", "label": "graph+MTP"},
         "3:3": {"state": "unsupported", "label": "head split"},
-        "3:4": {"state": "quarantined", "label": "graph+MTP"}
+        "3:4": {"state": "quarantined", "label": "graph+MTP"},
+        "4:1": {"state": "missing", "label": "outside program"},
+        "4:2": {"state": "missing", "label": "outside program"},
+        "4:3": {"state": "unsupported", "label": "head split"},
+        "4:4": {"state": "missing", "label": "outside program"},
+        "5:1": {"state": "missing", "label": "outside program"},
+        "5:2": {"state": "missing", "label": "outside program"},
+        "5:3": {"state": "unsupported", "label": "head split"},
+        "5:4": {"state": "missing", "label": "outside program"}
+      }
+    },
+    {
+      "id": "rolling-a3561ef8-stock-graph-f16",
+      "label": "stock a3561ef8 · graph on",
+      "row_axis": {"key": "mtp", "label": "MTP", "prefix": "MTP"},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.8-27b",
+        "variant": "AutoRound INT4",
+        "runtime": "vLLM XPU nightly a3561ef8 stock",
+        "profile_id": "a3561ef8-stock",
+        "measurement_class": "strict-natural-eos",
+        "graph": "on",
+        "kv": "f16",
+        "configured_max_context_tokens": 32768,
+        "natural_eos": true
+      },
+      "fixed": "Qwen3.8 AutoRound · stock vLLM XPU a3561ef8 · strict natural-EOS profile · f16 KV · graph on. No MTP1–5 value is inferred from e9d1398; diagnostic captures remain in their separate graph.",
+      "decision_note": "All displayed speeds are measured. TP4 stock strict 71.900 is a captured high that did not replicate; 71.246 is its same-cache repeat, so the stock profile is not promoted.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json",
+      "rows": [0, 1, 2, 3, 4, 5],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "0:1": {"state": "lab-measured", "label": "30.242–30.244 strict", "evidence_id": "q38-a3561ef8-stock-tp1-graph-strict"},
+        "0:2": {"state": "lab-measured", "label": "48.490 strict", "evidence_id": "q38-a3561ef8-stock-tp2-graph-strict"},
+        "0:3": {"state": "unsupported", "label": "head split"},
+        "0:4": {"state": "lab-measured", "label": "71.900 captured / 71.246 repeat", "evidence_id": "q38-a3561ef8-stock-tp4-graph-strict", "reason": "The 71.900 strict capture passed quality but did not replicate and is not a promoted record."},
+        "1:1": {"state": "missing", "label": "not retested"},
+        "1:2": {"state": "missing", "label": "not retested"},
+        "1:3": {"state": "unsupported", "label": "head split"},
+        "1:4": {"state": "missing", "label": "not retested"},
+        "2:1": {"state": "missing", "label": "not retested"},
+        "2:2": {"state": "missing", "label": "not retested"},
+        "2:3": {"state": "unsupported", "label": "head split"},
+        "2:4": {"state": "missing", "label": "not retested"},
+        "3:1": {"state": "missing", "label": "not retested"},
+        "3:2": {"state": "missing", "label": "not retested"},
+        "3:3": {"state": "unsupported", "label": "head split"},
+        "3:4": {"state": "missing", "label": "not retested"},
+        "4:1": {"state": "missing", "label": "not retested"},
+        "4:2": {"state": "missing", "label": "not retested"},
+        "4:3": {"state": "unsupported", "label": "head split"},
+        "4:4": {"state": "missing", "label": "not retested"},
+        "5:1": {"state": "missing", "label": "not retested"},
+        "5:2": {"state": "missing", "label": "not retested"},
+        "5:3": {"state": "unsupported", "label": "head split"},
+        "5:4": {"state": "missing", "label": "not retested"}
+      }
+    },
+    {
+      "id": "rolling-a3561ef8-tp2-winner-overlay-graph-f16",
+      "label": "a3561ef8 TP2 overlay · graph on",
+      "row_axis": {"key": "mtp", "label": "MTP", "prefix": "MTP"},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.8-27b",
+        "variant": "AutoRound INT4",
+        "runtime": "vLLM XPU nightly a3561ef8 + TP2 historical-winner overlay",
+        "profile_id": "a3561ef8-tp2-e9d1398-best-config-overlay-v1",
+        "measurement_class": "strict-natural-eos",
+        "graph": "on",
+        "kv": "f16",
+        "configured_max_context_tokens": 32768,
+        "natural_eos": true
+      },
+      "fixed": "Qwen3.8 AutoRound · vLLM XPU a3561ef8 plus the TP2 historical-winner decisions · strict natural-EOS profile · MTP0 · f16 KV · graph on. This is measured partial recovery and not promoted.",
+      "decision_note": "This overlay is exact-runtime and TP2-specific. MTP1–5 were not tested, and a newer nightly requires remapping and requalification.",
+      "rows": [0, 1, 2, 3, 4, 5],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "0:1": {"state": "missing", "label": "not this profile"},
+        "0:2": {"state": "lab-measured", "label": "49.009 strict · partial", "evidence_id": "q38-a3561ef8-tp2-winner-overlay-graph-strict", "reason": "Full quality passed, but strict speed missed the frozen 49.019651 gate by 0.021%; not promoted."},
+        "0:3": {"state": "unsupported", "label": "head split"},
+        "0:4": {"state": "missing", "label": "not this profile"},
+        "1:1": {"state": "missing", "label": "no overlay evidence"},
+        "1:2": {"state": "missing", "label": "no overlay evidence"},
+        "1:3": {"state": "unsupported", "label": "head split"},
+        "1:4": {"state": "missing", "label": "no overlay evidence"},
+        "2:1": {"state": "missing", "label": "no overlay evidence"},
+        "2:2": {"state": "missing", "label": "no overlay evidence"},
+        "2:3": {"state": "unsupported", "label": "head split"},
+        "2:4": {"state": "missing", "label": "no overlay evidence"},
+        "3:1": {"state": "missing", "label": "no overlay evidence"},
+        "3:2": {"state": "missing", "label": "no overlay evidence"},
+        "3:3": {"state": "unsupported", "label": "head split"},
+        "3:4": {"state": "missing", "label": "no overlay evidence"},
+        "4:1": {"state": "missing", "label": "no overlay evidence"},
+        "4:2": {"state": "missing", "label": "no overlay evidence"},
+        "4:3": {"state": "unsupported", "label": "head split"},
+        "4:4": {"state": "missing", "label": "no overlay evidence"},
+        "5:1": {"state": "missing", "label": "no overlay evidence"},
+        "5:2": {"state": "missing", "label": "no overlay evidence"},
+        "5:3": {"state": "unsupported", "label": "head split"},
+        "5:4": {"state": "missing", "label": "no overlay evidence"}
+      }
+    },
+    {
+      "id": "rolling-a3561ef8-tp4-winner-overlay-graph-f16",
+      "label": "a3561ef8 TP4 overlay · graph on",
+      "row_axis": {"key": "mtp", "label": "MTP", "prefix": "MTP"},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.8-27b",
+        "variant": "AutoRound INT4",
+        "runtime": "vLLM XPU nightly a3561ef8 + TP4 historical-winner overlay",
+        "profile_id": "a3561ef8-tp4-e9d1398-best-config-overlay-v1",
+        "measurement_class": "strict-natural-eos",
+        "graph": "on",
+        "kv": "f16",
+        "configured_max_context_tokens": 32768,
+        "natural_eos": true
+      },
+      "fixed": "Qwen3.8 AutoRound · vLLM XPU a3561ef8 plus the TP4 historical-winner decisions · strict natural-EOS profile · MTP0 · f16 KV · graph on. This is the accepted versioned overlay.",
+      "decision_note": "This overlay is exact-runtime and TP4-specific. MTP1–5 were not tested, and a newer nightly requires remapping and requalification.",
+      "rows": [0, 1, 2, 3, 4, 5],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "0:1": {"state": "missing", "label": "not this profile"},
+        "0:2": {"state": "missing", "label": "not this profile"},
+        "0:3": {"state": "unsupported", "label": "head split"},
+        "0:4": {"state": "lab-measured", "label": "71.353–71.454 strict · accepted", "evidence_id": "q38-a3561ef8-tp4-winner-overlay-graph-strict", "reason": "Accepted observed strict range; neither endpoint is independently replicated."},
+        "1:1": {"state": "missing", "label": "no overlay evidence"},
+        "1:2": {"state": "missing", "label": "no overlay evidence"},
+        "1:3": {"state": "unsupported", "label": "head split"},
+        "1:4": {"state": "missing", "label": "no overlay evidence"},
+        "2:1": {"state": "missing", "label": "no overlay evidence"},
+        "2:2": {"state": "missing", "label": "no overlay evidence"},
+        "2:3": {"state": "unsupported", "label": "head split"},
+        "2:4": {"state": "missing", "label": "no overlay evidence"},
+        "3:1": {"state": "missing", "label": "no overlay evidence"},
+        "3:2": {"state": "missing", "label": "no overlay evidence"},
+        "3:3": {"state": "unsupported", "label": "head split"},
+        "3:4": {"state": "missing", "label": "no overlay evidence"},
+        "4:1": {"state": "missing", "label": "no overlay evidence"},
+        "4:2": {"state": "missing", "label": "no overlay evidence"},
+        "4:3": {"state": "unsupported", "label": "head split"},
+        "4:4": {"state": "missing", "label": "no overlay evidence"},
+        "5:1": {"state": "missing", "label": "no overlay evidence"},
+        "5:2": {"state": "missing", "label": "no overlay evidence"},
+        "5:3": {"state": "unsupported", "label": "head split"},
+        "5:4": {"state": "missing", "label": "no overlay evidence"}
+      }
+    },
+    {
+      "id": "q38-q4km-f16-context-by-tp",
+      "label": "Q4_K_M context × TP",
+      "row_axis": {
+        "key": "active_context_tokens",
+        "label": "active context",
+        "prefix": "",
+        "value_labels": {"2048": "2K", "4096": "4K", "8192": "8K", "16384": "16K", "24576": "24K", "32768": "32K"}
+      },
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.8-27b",
+        "variant": "Q4_K_M",
+        "runtime": "llama.cpp SYCL",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16"
+      },
+      "fixed": "Qwen3.8 Q4_K_M · llama.cpp SYCL · target only · f16 KV. Exact raw-engine decode/prefill sweep points are shown from 2K through 32K; zero depth is deliberately not synthesized into this coverage table.",
+      "decision_note": "Only TP1 has a measured active-context curve. TP2/TP3/TP4 remain explicit gaps; no TP scaling is inferred from the TP1 curve.",
+      "rows": [2048, 4096, 8192, 16384, 24576, 32768],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "2048:1": {"state": "lab-measured", "label": "D24.46 · P919.67", "evidence_id": "q38-q4km-tp1-kv-f16-context", "point_x": 2048, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "2048:2": {"state": "missing", "label": "no curve"},
+        "2048:3": {"state": "missing", "label": "no curve"},
+        "2048:4": {"state": "missing", "label": "no curve"},
+        "4096:1": {"state": "lab-measured", "label": "D24.25 · P892.64", "evidence_id": "q38-q4km-tp1-kv-f16-context", "point_x": 4096, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "4096:2": {"state": "missing", "label": "no curve"},
+        "4096:3": {"state": "missing", "label": "no curve"},
+        "4096:4": {"state": "missing", "label": "no curve"},
+        "8192:1": {"state": "lab-measured", "label": "D23.83 · P850.97", "evidence_id": "q38-q4km-tp1-kv-f16-context", "point_x": 8192, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "8192:2": {"state": "missing", "label": "no curve"},
+        "8192:3": {"state": "missing", "label": "no curve"},
+        "8192:4": {"state": "missing", "label": "no curve"},
+        "16384:1": {"state": "lab-measured", "label": "D23.1 · P779.5", "evidence_id": "q38-q4km-tp1-kv-f16-context", "point_x": 16384, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "16384:2": {"state": "missing", "label": "no curve"},
+        "16384:3": {"state": "missing", "label": "no curve"},
+        "16384:4": {"state": "missing", "label": "no curve"},
+        "24576:1": {"state": "lab-measured", "label": "D22.42 · P719.39", "evidence_id": "q38-q4km-tp1-kv-f16-context", "point_x": 24576, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "24576:2": {"state": "missing", "label": "no curve"},
+        "24576:3": {"state": "missing", "label": "no curve"},
+        "24576:4": {"state": "missing", "label": "no curve"},
+        "32768:1": {"state": "lab-measured", "label": "D21.77 · P667.83", "evidence_id": "q38-q4km-tp1-kv-f16-context", "point_x": 32768, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "32768:2": {"state": "missing", "label": "no curve"},
+        "32768:3": {"state": "missing", "label": "no curve"},
+        "32768:4": {"state": "missing", "label": "no curve"}
+      }
+    },
+    {
+      "id": "q38-llamacpp-quant-by-tp",
+      "label": "llama.cpp quant × TP",
+      "row_axis": {
+        "key": "variant",
+        "label": "weight quantization",
+        "prefix": "",
+        "value_labels": {"Q4_K_M": "Q4_K_M", "UD-Q5_K_S": "UD-Q5_K_S", "UD-Q4_K_XL": "UD-Q4_K_XL", "Q8_0": "Q8_0"}
+      },
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.8-27b",
+        "runtime": "llama.cpp SYCL",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16"
+      },
+      "fixed": "Qwen3.8 target-only llama.cpp/SYCL routes with f16 KV. Cells retain their recorded workload identity: TP1 quant rows expose measured raw context curves, while TP2 Q4_K_M/Q8_0 expose conventional suite headlines.",
+      "decision_note": "This is a coverage map, not a same-workload speed leaderboard. Missing cells have no normalized measured record and are not estimated.",
+      "rows": ["Q4_K_M", "UD-Q5_K_S", "UD-Q4_K_XL", "Q8_0"],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "Q4_K_M:1": {"state": "lab-measured", "label": "measured context curve", "evidence_id": "q38-q4km-tp1-kv-f16-context", "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "Q4_K_M:2": {"state": "lab-measured", "label": "49.718 conventional", "evidence_id": "q38-q4km-tp2-conventional", "packet_id": "qwen38-27b-q4km-tp2-asrock-b70"},
+        "Q4_K_M:3": {"state": "missing", "label": "no measured route"},
+        "Q4_K_M:4": {"state": "missing", "label": "no measured route"},
+        "UD-Q5_K_S:1": {"state": "lab-measured", "label": "measured context curve", "evidence_id": "q38-q5ks-tp1-kv-f16-context"},
+        "UD-Q5_K_S:2": {"state": "missing", "label": "no measured route"},
+        "UD-Q5_K_S:3": {"state": "missing", "label": "no measured route"},
+        "UD-Q5_K_S:4": {"state": "missing", "label": "no measured route"},
+        "UD-Q4_K_XL:1": {"state": "lab-measured", "label": "measured context curve", "evidence_id": "q38-q4kxl-tp1-kv-f16-context"},
+        "UD-Q4_K_XL:2": {"state": "missing", "label": "no measured route"},
+        "UD-Q4_K_XL:3": {"state": "missing", "label": "no measured route"},
+        "UD-Q4_K_XL:4": {"state": "missing", "label": "no measured route"},
+        "Q8_0:1": {"state": "missing", "label": "no normalized route"},
+        "Q8_0:2": {"state": "lab-measured", "label": "36.773 conventional", "evidence_id": "q38-q8-tp2-conventional", "packet_id": "qwen38-27b-q8-tp2-asrock-b70"},
+        "Q8_0:3": {"state": "missing", "label": "no measured route"},
+        "Q8_0:4": {"state": "missing", "label": "no measured route"}
+      }
+    },
+    {
+      "id": "q38-vllm-quant-by-tp",
+      "label": "vLLM quant × TP",
+      "row_axis": {
+        "key": "variant",
+        "label": "weight quantization",
+        "prefix": "",
+        "value_labels": {"AutoRound INT4": "AutoRound INT4", "FP8": "FP8"}
+      },
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.8-27b",
+        "runtime_family": "vLLM XPU",
+        "mtp": 0,
+        "graph": "on",
+        "kv": "f16"
+      },
+      "fixed": "Qwen3.8 target-only vLLM XPU routes with f16 KV and graph enabled. AutoRound cells use the stock a3561ef8 strict profile; FP8 uses its separately pinned official-model runtime.",
+      "decision_note": "This is runtime-family coverage, not a same-image or same-workload leaderboard. TP3 is architecturally unsupported; missing cells are not estimated.",
+      "rows": ["AutoRound INT4", "FP8"],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "AutoRound INT4:1": {"state": "lab-measured", "label": "S30.242–30.244 stock", "evidence_id": "q38-a3561ef8-stock-tp1-graph-strict", "packet_id": "qwen38-27b-autoround-int4-stock-a3561ef8-tpscale"},
+        "AutoRound INT4:2": {"state": "lab-measured", "label": "S48.490 stock", "evidence_id": "q38-a3561ef8-stock-tp2-graph-strict", "packet_id": "qwen38-27b-autoround-int4-stock-a3561ef8-tpscale"},
+        "AutoRound INT4:3": {"state": "unsupported", "label": "head split"},
+        "AutoRound INT4:4": {"state": "lab-measured", "label": "S71.900 captured / 71.246 repeat", "evidence_id": "q38-a3561ef8-stock-tp4-graph-strict", "packet_id": "qwen38-27b-autoround-int4-stock-a3561ef8-tpscale", "reason": "The 71.900 capture did not replicate and is not promoted."},
+        "FP8:1": {"state": "missing", "label": "no measured route"},
+        "FP8:2": {"state": "lab-measured", "label": "21.709 package route", "evidence_id": "q38-fp8-vllm-tp2-graph", "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70"},
+        "FP8:3": {"state": "unsupported", "label": "head split"},
+        "FP8:4": {"state": "missing", "label": "no measured route"}
       }
     }
   ],
@@ -769,13 +1428,13 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json"
     },
     {
-      "selectors": {"revision": "qwen3.8-27b", "variant": "AutoRound INT4", "kv": "fp8_e5m2", "runtime": "vLLM XPU nightly"},
+      "selectors": {"revision": "qwen3.8-27b", "variant": "AutoRound INT4", "kv": "fp8_e5m2", "runtime": "vLLM XPU nightly e9d1398d9"},
       "state": "unsupported",
       "reason": "The XPU FlashAttention backend rejects fp8_e5m2 KV cache at engine initialization.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json"
     },
     {
-      "selectors": {"revision": "qwen3.8-27b", "variant": "AutoRound INT4", "kv": "fp8_e4m3", "runtime": "vLLM XPU nightly"},
+      "selectors": {"revision": "qwen3.8-27b", "variant": "AutoRound INT4", "kv": "fp8_e4m3", "runtime": "vLLM XPU nightly e9d1398d9"},
       "state": "quarantined",
       "reason": "The least-compounded TP1 target-only anchor matched only 3/20 stable-set oracle outputs.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json"

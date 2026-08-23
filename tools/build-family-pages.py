@@ -15,6 +15,7 @@ import html
 import json
 import math
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -47,6 +48,24 @@ ALLOWED_STATES = {
     "unsupported",
     "missing",
 }
+OBSERVED_STATES = {
+    "lab-measured",
+    "lab-screened",
+    "community-measured",
+    "quarantined",
+}
+CURVE_STATES = {"lab-measured", "community-measured"}
+ALLOWED_GRADES = {"A", "B", "C", "D"}
+SLUG_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
+SELECTOR_KEY_RE = re.compile(r"[a-z][a-z0-9_]*\Z")
+POINT_METRIC_PREFIX = {
+    "decode_tok_s": "D",
+    "prefill_tok_s": "P",
+    "ttft_ms": "T",
+    "mean_acceptance_length": "A",
+    "draft_acceptance_rate": "AR",
+    "effective_tokens_per_verification": "EV",
+}
 
 
 def esc(value: Any) -> str:
@@ -54,7 +73,7 @@ def esc(value: Any) -> str:
 
 
 def fmt(value: float | int | None, digits: int = 2) -> str:
-    if value is None:
+    if not is_finite_number(value):
         return "—"
     number = float(value)
     if abs(number) >= 1000:
@@ -74,6 +93,16 @@ def fmt_x(value: float | int) -> str:
     return fmt(number, 0)
 
 
+def compact_count(value: Any) -> str:
+    if not is_finite_number(value):
+        return "Pending"
+    number = float(value)
+    for divisor, suffix in ((1_000_000_000, "B"), (1_000_000, "M"), (1_000, "K")):
+        if abs(number) >= divisor:
+            return f"{number / divisor:.2f}".rstrip("0").rstrip(".") + suffix
+    return fmt(number, 0)
+
+
 def nested(item: dict[str, Any], dotted: str) -> Any:
     current: Any = item
     for part in dotted.split("."):
@@ -81,6 +110,247 @@ def nested(item: dict[str, Any], dotted: str) -> Any:
             return None
         current = current.get(part)
     return current
+
+
+def is_finite_number(value: Any) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )
+
+
+def is_selector_scalar(value: Any) -> bool:
+    if isinstance(value, str):
+        return bool(value)
+    if isinstance(value, bool):
+        return True
+    return is_finite_number(value)
+
+
+def is_axis_scalar(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and bool(value)
+        and ":" not in value
+    ) or (is_finite_number(value) and ":" not in str(value))
+
+
+def is_selector_scope(value: Any) -> bool:
+    return is_selector_scalar(value) or (
+        isinstance(value, list)
+        and bool(value)
+        and all(is_selector_scalar(item) for item in value)
+    )
+
+
+def object_list(
+    value: Any, label: str, errors: list[str]
+) -> list[dict[str, Any]]:
+    """Return valid object entries while recording every malformed container."""
+
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        errors.append(f"{label} must be a list")
+        return []
+    output = []
+    for index, item in enumerate(value):
+        if not isinstance(item, dict):
+            errors.append(f"{label}[{index}] must be an object")
+        else:
+            output.append(item)
+    return output
+
+
+def safe_repo_path(value: Any) -> Path | None:
+    """Resolve a repository-relative path without permitting traversal/symlink escape."""
+
+    if not isinstance(value, str) or not value:
+        return None
+    candidate = Path(value)
+    if candidate.is_absolute() or ".." in candidate.parts:
+        return None
+    resolved = (ROOT / candidate).resolve()
+    try:
+        resolved.relative_to(ROOT.resolve())
+    except ValueError:
+        return None
+    return resolved
+
+
+def source_label(source: Path) -> str:
+    try:
+        return str(source.resolve().relative_to(ROOT.resolve()))
+    except ValueError:
+        return str(source)
+
+
+def json_for_html_script(value: Any) -> str:
+    """Serialize JSON-LD without allowing an HTML script end-tag breakout."""
+
+    return (
+        json.dumps(value, ensure_ascii=False)
+        .replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+    )
+
+
+def point_metric_label(point: dict[str, Any]) -> str:
+    return " · ".join(
+        f"{POINT_METRIC_PREFIX[metric]}{fmt(point[metric])}"
+        for metric in METRICS
+        if is_finite_number(point.get(metric))
+    )
+
+
+def records(family: dict[str, Any]) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    for key in ("run_measurements", "series_measurements"):
+        value = family.get(key)
+        if isinstance(value, list):
+            output.extend(item for item in value if isinstance(item, dict))
+    return output
+
+
+def coverage_axis(view: dict[str, Any], side: str) -> dict[str, Any]:
+    """Return an additive named-axis spec, with the original MTP/TP defaults."""
+
+    if side not in {"row", "column"}:
+        raise ValueError(f"unknown coverage axis side: {side}")
+    legacy_values = view.get("rows" if side == "row" else "columns")
+    if not isinstance(legacy_values, list):
+        legacy_values = []
+    defaults = (
+        {"key": "mtp", "label": "MTP", "prefix": "MTP"}
+        if side == "row"
+        else {"key": "tp", "label": "TP", "prefix": "TP"}
+    )
+    spec = dict(defaults)
+    supplied = view.get(f"{side}_axis")
+    if isinstance(supplied, dict):
+        spec.update(supplied)
+    spec["values"] = legacy_values
+    return spec
+
+
+def axis_value_label(axis: dict[str, Any], value: Any) -> str:
+    labels = axis.get("value_labels") or {}
+    explicit = labels.get(str(value))
+    if explicit is not None:
+        return str(explicit)
+    return f'{axis.get("prefix", "")}{value}'
+
+
+def record_selector_value(record: dict[str, Any], key: str) -> Any:
+    if key in record:
+        return record[key]
+    for container_name in ("config", "identity"):
+        container = record.get(container_name)
+        if isinstance(container, dict) and key in container:
+            return container[key]
+    return None
+
+
+def effective_cell_selectors(
+    view: dict[str, Any], row: Any, column: Any
+) -> dict[str, Any]:
+    selectors = dict(view.get("fixed_selectors") or {})
+    selectors[coverage_axis(view, "row")["key"]] = row
+    selectors[coverage_axis(view, "column")["key"]] = column
+    return selectors
+
+
+def validate_grade(value: Any, label: str) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, dict):
+        return [f"{label} must be an object"]
+    errors = []
+    if value.get("grade") not in ALLOWED_GRADES:
+        errors.append(f"{label}.grade must be one of {sorted(ALLOWED_GRADES)}")
+    for field in ("scope", "basis", "reviewed_at"):
+        if not isinstance(value.get(field), str) or not value.get(field):
+            errors.append(f"{label}.{field} is required")
+    evidence = value.get("evidence")
+    if (
+        not isinstance(evidence, list)
+        or not evidence
+        or any(not isinstance(item, str) or not item for item in evidence)
+    ):
+        errors.append(f"{label}.evidence must be a non-empty list of strings")
+    return errors
+
+
+def validate_featured_metric(
+    value: Any,
+    label: str,
+    measurements: dict[str, dict[str, Any]],
+    package_backed: bool,
+) -> list[str]:
+    """Bind a family-only headline to one exact normalized measurement sample."""
+
+    if value is None:
+        return []
+    if not isinstance(value, dict):
+        return [f"{label} must be an object"]
+    errors = []
+    if package_backed:
+        errors.append(f"{label} is only allowed on family-only research packets")
+    metric = value.get("metric")
+    if metric not in METRICS:
+        errors.append(f"{label}.metric must be one of {sorted(METRICS)}")
+    measurement_id = value.get("measurement_id")
+    if not isinstance(measurement_id, str) or measurement_id not in measurements:
+        errors.append(f"{label}.measurement_id must reference a known measurement")
+        return errors
+    measurement = measurements[measurement_id]
+    if measurement.get("state") not in CURVE_STATES:
+        errors.append(f"{label}.measurement_id must reference measured curve evidence")
+    sample_index = value.get("sample_index")
+    point_x = value.get("point_x")
+    if (sample_index is None) == (point_x is None):
+        errors.append(f"{label} must set exactly one of sample_index or point_x")
+    if sample_index is not None:
+        values = (measurement.get("metrics") or {}).get(metric)
+        if (
+            not isinstance(sample_index, int)
+            or isinstance(sample_index, bool)
+            or not isinstance(values, list)
+            or not 0 <= sample_index < len(values)
+        ):
+            errors.append(f"{label}.sample_index does not select the declared metric")
+        else:
+            selected_value = values[sample_index]
+            if not is_finite_number(value.get("value")) or value.get("value") != selected_value:
+                errors.append(
+                    f"{label}.value must match {measurement_id} sample {sample_index}"
+                )
+    if point_x is not None:
+        points = measurement.get("points") or []
+        if not is_finite_number(point_x) or not any(
+            point.get("x") == point_x and is_finite_number(point.get(metric))
+            for point in points
+            if isinstance(point, dict)
+        ):
+            errors.append(f"{label}.point_x does not select the declared metric")
+        else:
+            selected_point = next(
+                point
+                for point in points
+                if isinstance(point, dict) and point.get("x") == point_x
+            )
+            if not is_finite_number(value.get("value")) or value.get("value") != selected_point[metric]:
+                errors.append(
+                    f"{label}.value must match {measurement_id} point {point_x}"
+                )
+    if metric in METRICS and value.get("unit") != METRICS[metric][1]:
+        errors.append(f"{label}.unit must equal {METRICS[metric][1]}")
+    for field in ("workload", "evidence"):
+        if value.get(field) != measurement.get(field):
+            errors.append(f"{label}.{field} must match {measurement_id}")
+    return errors
 
 
 def evidence_href(path: str) -> str:
@@ -95,7 +365,12 @@ def bridge_version() -> str:
 
 def load_json(path: Path) -> dict[str, Any]:
     with path.open(encoding="utf-8") as handle:
-        value = json.load(handle)
+        value = json.load(
+            handle,
+            parse_constant=lambda token: (_ for _ in ()).throw(
+                ValueError(f"non-finite JSON number {token}")
+            ),
+        )
     if not isinstance(value, dict):
         raise ValueError(f"{path.relative_to(ROOT)}: root must be an object")
     return value
@@ -108,32 +383,240 @@ def local_evidence_paths(value: Any, key: str | None = None):
     elif isinstance(value, list):
         for child in value:
             yield from local_evidence_paths(child, key)
-    elif key in {"evidence", "manifest", "model_manifest"} and isinstance(value, str):
+    elif key in {"evidence", "manifest", "model_manifest", "record"} and isinstance(value, str):
         if not value.startswith(("https://", "http://")):
             yield value
 
 
+def curve_identity(record: dict[str, Any], x_from: str) -> dict[str, Any]:
+    """Identity fields that must stay fixed along one connected measured curve."""
+
+    identity = {
+        key: record.get(key)
+        for key in (
+            "revision",
+            "variant",
+            "quantization",
+            "runtime",
+            "runtime_family",
+            "profile_id",
+            "measurement_class",
+            "workload",
+            "model_revision",
+            "identity",
+            "runtime_identity",
+        )
+        if key in record
+    }
+    config = record.get("config")
+    if isinstance(config, dict):
+        identity["config"] = dict(config)
+    parts = x_from.split(".")
+    if len(parts) == 1:
+        identity.pop(parts[0], None)
+    elif len(parts) == 2 and isinstance(identity.get(parts[0]), dict):
+        identity[parts[0]].pop(parts[1], None)
+    return identity
+
+
 def validate_family(family: dict[str, Any], source: Path) -> list[str]:
-    label = str(source.relative_to(ROOT))
+    label = source_label(source)
     errors: list[str] = []
     if family.get("format") != "neural-download-model-family-v1":
         errors.append(f"{label}: unsupported format")
-    if not family.get("id") or not family.get("name"):
-        errors.append(f"{label}: id and name are required")
+    family_id = family.get("id")
+    if not isinstance(family_id, str) or not SLUG_RE.fullmatch(family_id):
+        errors.append(f"{label}: id must be a lowercase hyphenated slug")
+    if not isinstance(family.get("name"), str) or not family.get("name"):
+        errors.append(f"{label}: name is required")
+
+    revisions = object_list(family.get("weight_revisions"), f"{label}: weight_revisions", errors)
+    model_variants = object_list(
+        family.get("model_variants"), f"{label}: model_variants", errors
+    )
+    packets = object_list(family.get("packets"), f"{label}: packets", errors)
+    run_measurements = object_list(
+        family.get("run_measurements"), f"{label}: run_measurements", errors
+    )
+    series_measurements = object_list(
+        family.get("series_measurements"), f"{label}: series_measurements", errors
+    )
+    estimates = object_list(family.get("estimates"), f"{label}: estimates", errors)
+    views = object_list(family.get("views"), f"{label}: views", errors)
+    coverage_views = object_list(
+        family.get("coverage_views"), f"{label}: coverage_views", errors
+    )
+    closures = object_list(
+        family.get("family_closures"), f"{label}: family_closures", errors
+    )
+
+    revision_ids: set[str] = set()
+    for revision in revisions:
+        revision_id = revision.get("id")
+        if not isinstance(revision_id, str) or not revision_id:
+            errors.append(f"{label}: weight revision without id")
+            continue
+        if revision_id in revision_ids:
+            errors.append(f"{label}: duplicate weight revision id {revision_id}")
+        revision_ids.add(revision_id)
+        grades = revision.get("grades")
+        if grades is not None and not isinstance(grades, dict):
+            errors.append(f"{label}: revision {revision_id} grades must be an object")
+            grades = {}
+        errors.extend(
+            validate_grade(
+                (grades or {}).get("capability"),
+                f"{label}: revision {revision_id} capability grade",
+            )
+        )
+
+    declared_revision_ids = set(revision_ids)
+    for variant in model_variants:
+        variant_id = variant.get("id")
+        if not isinstance(variant_id, str) or not variant_id:
+            errors.append(f"{label}: model variant without id")
+            continue
+        if variant_id in declared_revision_ids:
+            errors.append(f"{label}: duplicate revision/model variant id {variant_id}")
+        declared_revision_ids.add(variant_id)
+
+    all_measurements = run_measurements + series_measurements
+    measurement_ids: set[str] = set()
+    measurements: dict[str, dict[str, Any]] = {}
+    for measurement in all_measurements:
+        mid = measurement.get("id")
+        if not isinstance(mid, str) or not mid:
+            errors.append(f"{label}: measurement without id")
+            continue
+        if mid in measurement_ids:
+            errors.append(f"{label}: duplicate measurement id {mid}")
+        measurement_ids.add(mid)
+        measurements.setdefault(mid, measurement)
+        if measurement.get("state") not in OBSERVED_STATES:
+            errors.append(
+                f"{label}: {mid} must use an observed state, got {measurement.get('state')}"
+            )
+        if measurement.get("revision") not in declared_revision_ids:
+            errors.append(f"{label}: {mid} references unknown revision {measurement.get('revision')}")
+        if not isinstance(measurement.get("evidence"), str) or not measurement.get("evidence"):
+            errors.append(f"{label}: {mid} lacks evidence")
+        for field in ("profile_id", "measurement_class", "promotion_status", "quality_scope"):
+            if field in measurement and not isinstance(measurement.get(field), str):
+                errors.append(f"{label}: {mid}.{field} must be a string")
+
+        raw_metrics = measurement.get("metrics")
+        raw_points = measurement.get("points")
+        metrics: dict[str, Any] = {}
+        points: list[Any] = []
+        if raw_metrics is not None:
+            if not isinstance(raw_metrics, dict):
+                errors.append(f"{label}: {mid}.metrics must be an object")
+            else:
+                metrics = raw_metrics
+        if raw_points is not None:
+            if not isinstance(raw_points, list):
+                errors.append(f"{label}: {mid}.points must be a list")
+            else:
+                points = raw_points
+        if not metrics and not points:
+            errors.append(f"{label}: {mid} has no metrics or points")
+        for metric, values in metrics.items():
+            if metric not in METRICS:
+                errors.append(f"{label}: {mid} uses unknown metric {metric}")
+            if (
+                not isinstance(values, list)
+                or not values
+                or any(not is_finite_number(value) for value in values)
+            ):
+                errors.append(f"{label}: {mid}.{metric} must be a non-empty finite numeric list")
+        for index, point in enumerate(points):
+            if not isinstance(point, dict):
+                errors.append(f"{label}: {mid}.points[{index}] must be an object")
+                continue
+            if not is_finite_number(point.get("x")):
+                errors.append(f"{label}: {mid}.points[{index}] needs finite numeric x")
+            point_metrics = [metric for metric in METRICS if metric in point]
+            if not point_metrics:
+                errors.append(f"{label}: {mid}.points[{index}] has no recognized metric")
+            for metric in point_metrics:
+                if not is_finite_number(point.get(metric)):
+                    errors.append(f"{label}: {mid}.points[{index}].{metric} must be finite numeric")
+
+        annotations = measurement.get("sample_annotations")
+        if annotations is None:
+            annotations = []
+        elif not isinstance(annotations, list):
+            errors.append(f"{label}: {mid}.sample_annotations must be a list")
+            annotations = []
+        for index, annotation in enumerate(annotations):
+            metric = annotation.get("metric") if isinstance(annotation, dict) else None
+            sample_index = annotation.get("index") if isinstance(annotation, dict) else None
+            if (
+                metric not in metrics
+                or not isinstance(sample_index, int)
+                or isinstance(sample_index, bool)
+            ):
+                errors.append(f"{label}: {mid}.sample_annotations[{index}] has invalid metric/index")
+                continue
+            values = metrics.get(metric)
+            if (
+                not isinstance(values, list)
+                or not 0 <= sample_index < len(values)
+                or not isinstance(annotation.get("label"), str)
+                or not annotation.get("label")
+            ):
+                errors.append(f"{label}: {mid}.sample_annotations[{index}] is out of range or unlabeled")
+            elif "value" in annotation and annotation.get("value") != values[sample_index]:
+                errors.append(
+                    f"{label}: {mid}.sample_annotations[{index}].value does not match the indexed sample"
+                )
 
     packet_ids: set[str] = set()
-    for packet in family.get("packets") or []:
+    packet_by_id: dict[str, dict[str, Any]] = {}
+    for packet in packets:
         packet_id = packet.get("id")
-        if not packet_id:
+        if not isinstance(packet_id, str) or not packet_id:
             errors.append(f"{label}: packet without id")
             continue
         if packet_id in packet_ids:
             errors.append(f"{label}: duplicate packet id {packet_id}")
         packet_ids.add(packet_id)
-        manifest = packet.get("manifest", "")
-        if str(manifest).startswith("packages/") and str(manifest).endswith("package.json"):
+        packet_by_id.setdefault(packet_id, packet)
+        revision = packet.get("revision")
+        if not isinstance(revision, str) or revision not in declared_revision_ids:
+            errors.append(f"{label}: packet {packet_id} references unknown revision {revision}")
+        grades = packet.get("grades")
+        if grades is not None and not isinstance(grades, dict):
+            errors.append(f"{label}: packet {packet_id} grades must be an object")
+            grades = {}
+        for grade_name in ("capability", "evidence"):
+            errors.extend(
+                validate_grade(
+                    (grades or {}).get(grade_name),
+                    f"{label}: packet {packet_id} {grade_name} grade",
+                )
+            )
+
+        manifest = packet.get("manifest")
+        manifest_path = safe_repo_path(manifest)
+        package_backed = (
+            isinstance(manifest, str)
+            and manifest.startswith("packages/")
+            and manifest.endswith("package.json")
+        )
+        if manifest_path is None:
+            errors.append(f"{label}: packet {packet_id} manifest must stay inside the repository")
+        errors.extend(
+            validate_featured_metric(
+                packet.get("featured_metric"),
+                f"{label}: packet {packet_id} featured_metric",
+                measurements,
+                package_backed,
+            )
+        )
+        if package_backed and manifest_path is not None:
             try:
-                package = load_json(ROOT / manifest)
+                package = load_json(manifest_path)
             except (OSError, ValueError, json.JSONDecodeError) as error:
                 errors.append(str(error))
             else:
@@ -142,97 +625,405 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                         f"{label}: packet {packet_id} does not match manifest id {package.get('id')}"
                     )
 
-    all_measurements = list(family.get("run_measurements") or []) + list(
-        family.get("series_measurements") or []
-    )
-    measurement_ids: set[str] = set()
-    for measurement in all_measurements:
-        mid = measurement.get("id")
-        if not mid:
-            errors.append(f"{label}: measurement without id")
-            continue
-        if mid in measurement_ids:
-            errors.append(f"{label}: duplicate measurement id {mid}")
-        measurement_ids.add(mid)
-        if measurement.get("state") not in ALLOWED_STATES:
-            errors.append(f"{label}: {mid} has invalid state {measurement.get('state')}")
-        if not measurement.get("evidence"):
-            errors.append(f"{label}: {mid} lacks evidence")
-        metrics = measurement.get("metrics")
-        points = measurement.get("points")
-        if not metrics and not points:
-            errors.append(f"{label}: {mid} has no metrics or points")
-        if isinstance(metrics, dict):
-            for metric, values in metrics.items():
-                if metric not in METRICS:
-                    errors.append(f"{label}: {mid} uses unknown metric {metric}")
-                if not isinstance(values, list) or not values or any(
-                    not isinstance(value, (int, float)) for value in values
-                ):
-                    errors.append(f"{label}: {mid}.{metric} must be a non-empty numeric list")
-        if isinstance(points, list):
-            for index, point in enumerate(points):
-                if not isinstance(point, dict) or not isinstance(point.get("x"), (int, float)):
-                    errors.append(f"{label}: {mid}.points[{index}] needs numeric x")
-                    continue
-                if not any(metric in point for metric in METRICS):
-                    errors.append(f"{label}: {mid}.points[{index}] has no recognized metric")
+        projection = packet.get("projection")
+        if projection is not None:
+            projection_label = f"{label}: packet {packet_id} projection"
+            if not isinstance(projection, dict):
+                errors.append(f"{projection_label} must be an object")
+            else:
+                for field in ("model", "quant", "runtime"):
+                    if not isinstance(projection.get(field), str) or not projection.get(field):
+                        errors.append(f"{projection_label}.{field} is required")
+                prompt = projection.get("prompt_tokens")
+                output = projection.get("output_tokens")
+                if (prompt is None) != (output is None):
+                    errors.append(
+                        f"{projection_label} must set prompt_tokens and output_tokens together"
+                    )
+                for field, value in (("prompt_tokens", prompt), ("output_tokens", output)):
+                    if value is not None and (
+                        not isinstance(value, int) or isinstance(value, bool) or value <= 0
+                    ):
+                        errors.append(f"{projection_label}.{field} must be a positive integer")
 
-    for view in family.get("views") or []:
-        for metric in view.get("metrics") or []:
+    estimate_ids: set[str] = set()
+    estimate_by_id: dict[str, dict[str, Any]] = {}
+    for estimate in estimates:
+        estimate_id = estimate.get("id")
+        estimate_label = f"{label}: estimate {estimate_id or '<missing>'}"
+        if not isinstance(estimate_id, str) or not estimate_id:
+            errors.append(f"{label}: estimate without id")
+            continue
+        if estimate_id in estimate_ids or estimate_id in measurement_ids:
+            errors.append(f"{label}: duplicate estimate id {estimate_id}")
+        estimate_ids.add(estimate_id)
+        estimate_by_id.setdefault(estimate_id, estimate)
+        if estimate.get("state") != "estimated":
+            errors.append(f"{estimate_label} must have state estimated")
+        selectors = estimate.get("selectors")
+        if not isinstance(selectors, dict) or not selectors:
+            errors.append(f"{estimate_label} needs non-empty selectors")
+        elif any(
+            not isinstance(key, str)
+            or not SELECTOR_KEY_RE.fullmatch(key)
+            or not is_selector_scalar(value)
+            for key, value in selectors.items()
+        ):
+            errors.append(f"{estimate_label}.selectors must be scalar selector key/value pairs")
+        metric = estimate.get("metric")
+        if metric not in METRICS:
+            errors.append(f"{estimate_label} uses unknown metric {metric}")
+        elif estimate.get("unit") != METRICS[metric][1]:
+            errors.append(f"{estimate_label}.unit must equal {METRICS[metric][1]}")
+        value = estimate.get("value")
+        interval = estimate.get("interval")
+        if not is_finite_number(value):
+            errors.append(f"{estimate_label}.value must be finite numeric")
+        if not isinstance(interval, dict) or not all(
+            is_finite_number(interval.get(bound)) for bound in ("low", "high")
+        ):
+            errors.append(f"{estimate_label} needs finite numeric interval.low/high")
+        elif interval["low"] > interval["high"]:
+            errors.append(f"{estimate_label}.interval low must not exceed high")
+        elif is_finite_number(value) and not interval["low"] <= value <= interval["high"]:
+            errors.append(f"{estimate_label}.value must fall within its interval")
+        engine = estimate.get("engine")
+        if not isinstance(engine, dict) or not all(
+            isinstance(engine.get(field), str) and engine.get(field)
+            for field in ("name", "version", "snapshot_sha256")
+        ):
+            errors.append(f"{estimate_label} needs engine name/version/snapshot_sha256")
+        elif not re.fullmatch(r"(?:sha256:)?[0-9a-f]{64}", engine["snapshot_sha256"]):
+            errors.append(
+                f"{estimate_label}.engine.snapshot_sha256 must be a lowercase SHA-256"
+            )
+        if not isinstance(estimate.get("generated_at"), str) or not estimate.get("generated_at"):
+            errors.append(f"{estimate_label} needs generated_at")
+        if safe_repo_path(estimate.get("record")) is None:
+            errors.append(f"{estimate_label}.record must stay inside the repository")
+        basis = estimate.get("basis_measurement_ids")
+        if not isinstance(basis, list) or not basis:
+            errors.append(f"{estimate_label} needs basis_measurement_ids")
+        else:
+            for mid in basis:
+                if not isinstance(mid, str) or mid not in measurement_ids:
+                    errors.append(f"{estimate_label} references missing basis {mid}")
+        if estimate.get("not_for_promotion") is not True:
+            errors.append(f"{estimate_label}.not_for_promotion must be true")
+        if not isinstance(estimate.get("limitations"), str) or not estimate.get("limitations"):
+            errors.append(f"{estimate_label} needs limitations")
+        supersedes = estimate.get("supersedes")
+        if supersedes and supersedes not in estimate_ids:
+            errors.append(f"{estimate_label} supersedes unknown or later estimate {supersedes}")
+
+    view_ids: set[str] = set()
+    for view in views:
+        view_id = view.get("id")
+        if not isinstance(view_id, str) or not SLUG_RE.fullmatch(view_id):
+            errors.append(f"{label}: view id must be a lowercase hyphenated slug")
+            view_id = str(view_id)
+        if view_id in view_ids:
+            errors.append(f"{label}: duplicate view id {view_id}")
+        view_ids.add(view_id)
+        view_metrics = view.get("metrics")
+        if not isinstance(view_metrics, list) or not view_metrics:
+            errors.append(f"{label}: view {view_id} metrics must be a non-empty list")
+            view_metrics = []
+        for metric in view_metrics:
             if metric not in METRICS:
-                errors.append(f"{label}: view {view.get('id')} uses unknown metric {metric}")
-        for series in view.get("series") or []:
+                errors.append(f"{label}: view {view_id} uses unknown metric {metric}")
+        for field in ("missing_x", "unsupported_x"):
+            values = view.get(field)
+            if values is not None and (
+                not isinstance(values, list)
+                or any(not is_finite_number(value) for value in values)
+            ):
+                errors.append(f"{label}: view {view_id}.{field} must be a finite numeric list")
+        view_series = object_list(view.get("series"), f"{label}: view {view_id} series", errors)
+        for series in view_series:
+            mids = series.get("measurement_ids")
+            if not isinstance(mids, list) or not mids:
+                errors.append(f"{label}: view {view_id} series needs measurement_ids")
+                continue
             states = set()
-            for mid in series.get("measurement_ids") or []:
-                if mid not in measurement_ids:
-                    errors.append(f"{label}: view {view.get('id')} references missing {mid}")
+            selected = []
+            for mid in mids:
+                if not isinstance(mid, str) or mid not in measurements:
+                    errors.append(f"{label}: view {view_id} references missing {mid}")
                 else:
-                    states.add(next(item.get("state") for item in all_measurements if item.get("id") == mid))
+                    selected.append(measurements[mid])
+                    states.add(measurements[mid].get("state"))
+            if states - CURVE_STATES:
+                errors.append(
+                    f"{label}: view {view_id} series {series.get('label')} uses non-curve states {sorted(states - CURVE_STATES)}"
+                )
             if len(states) > 1:
                 errors.append(
-                    f"{label}: view {view.get('id')} series {series.get('label')} mixes states {sorted(states)}"
+                    f"{label}: view {view_id} series {series.get('label')} mixes states {sorted(states)}"
+                )
+            if not view.get("discrete") and len(selected) > 1:
+                x_from = series.get("x_from", "config.tp")
+                if not isinstance(x_from, str) or not x_from:
+                    errors.append(f"{label}: view {view_id} series x_from must be a string")
+                else:
+                    identities = [curve_identity(item, x_from) for item in selected]
+                    if any(identity != identities[0] for identity in identities[1:]):
+                        errors.append(
+                            f"{label}: view {view_id} series {series.get('label')} mixes identities along a connected curve"
+                        )
+
+    coverage_ids: set[str] = set()
+    for coverage in coverage_views:
+        coverage_id = coverage.get("id")
+        if not isinstance(coverage_id, str) or not SLUG_RE.fullmatch(coverage_id):
+            errors.append(f"{label}: coverage view id must be a lowercase hyphenated slug")
+            coverage_id = str(coverage_id)
+        if coverage_id in coverage_ids:
+            errors.append(f"{label}: duplicate coverage view id {coverage_id}")
+        coverage_ids.add(coverage_id)
+        for side, values_key in (("row", "rows"), ("column", "columns")):
+            supplied = coverage.get(f"{side}_axis")
+            if supplied is not None and not isinstance(supplied, dict):
+                errors.append(f"{label}: coverage {coverage_id} {side}_axis must be an object")
+            if not isinstance(coverage.get(values_key), list):
+                errors.append(f"{label}: coverage {coverage_id} {values_key} must be a list")
+        row_axis = coverage_axis(coverage, "row")
+        column_axis = coverage_axis(coverage, "column")
+        axes_valid = True
+        for side, axis in (("row", row_axis), ("column", column_axis)):
+            values = axis["values"]
+            key = axis.get("key")
+            if not isinstance(key, str) or not SELECTOR_KEY_RE.fullmatch(key):
+                errors.append(f"{label}: coverage {coverage_id} {side}_axis needs a selector key")
+                axes_valid = False
+            if not isinstance(axis.get("label"), str) or not axis.get("label"):
+                errors.append(f"{label}: coverage {coverage_id} {side}_axis needs a label")
+                axes_valid = False
+            if "prefix" in axis and not isinstance(axis.get("prefix"), str):
+                errors.append(f"{label}: coverage {coverage_id} {side}_axis prefix must be a string")
+            if not values or any(not is_axis_scalar(value) for value in values):
+                errors.append(
+                    f"{label}: coverage {coverage_id} {side} values must be non-empty finite scalars without ':'"
+                )
+                axes_valid = False
+            if len({str(value) for value in values}) != len(values):
+                errors.append(f"{label}: coverage {coverage_id} {side} values must be unique")
+                axes_valid = False
+            value_labels = axis.get("value_labels")
+            if value_labels is not None and (
+                not isinstance(value_labels, dict)
+                or set(value_labels) - {str(value) for value in values}
+                or any(not isinstance(value, str) for value in value_labels.values())
+            ):
+                errors.append(f"{label}: coverage {coverage_id} {side}_axis has invalid value_labels")
+        if row_axis.get("key") == column_axis.get("key"):
+            errors.append(f"{label}: coverage {coverage_id} axes must use different keys")
+            axes_valid = False
+        named_axes = "row_axis" in coverage or "column_axis" in coverage
+        fixed_selectors = coverage.get("fixed_selectors")
+        if named_axes and (not isinstance(fixed_selectors, dict) or not fixed_selectors):
+            errors.append(
+                f"{label}: coverage {coverage_id} named axes need fixed_selectors (a non-empty object)"
+            )
+        if fixed_selectors is not None and not isinstance(fixed_selectors, dict):
+            errors.append(f"{label}: coverage {coverage_id} fixed_selectors must be an object")
+            fixed_selectors = {}
+        if isinstance(fixed_selectors, dict):
+            if row_axis.get("key") in fixed_selectors or column_axis.get("key") in fixed_selectors:
+                errors.append(f"{label}: coverage {coverage_id} fixed_selectors cannot repeat an axis key")
+            if any(
+                not isinstance(key, str)
+                or not SELECTOR_KEY_RE.fullmatch(key)
+                or not is_selector_scalar(value)
+                for key, value in fixed_selectors.items()
+            ):
+                errors.append(
+                    f"{label}: coverage {coverage_id} fixed_selectors must be scalar selector key/value pairs"
                 )
 
-    for coverage in family.get("coverage_views") or []:
         expected = {
             f"{row}:{column}"
-            for row in coverage.get("rows") or []
-            for column in coverage.get("columns") or []
-        }
-        cells = coverage.get("cells") or {}
-        if set(cells) != expected:
-            errors.append(
-                f"{label}: coverage {coverage.get('id')} cells do not exactly match rows×columns"
-            )
+            for row in row_axis["values"]
+            for column in column_axis["values"]
+        } if axes_valid else set()
+        cells = coverage.get("cells")
+        if not isinstance(cells, dict):
+            errors.append(f"{label}: coverage {coverage_id} cells must be an object")
+            cells = {}
+        if axes_valid and set(cells) != expected:
+            errors.append(f"{label}: coverage {coverage_id} cells do not exactly match rows×columns")
         for cell_id, cell in cells.items():
-            if cell.get("state") not in ALLOWED_STATES:
-                errors.append(
-                    f"{label}: coverage {coverage.get('id')} cell {cell_id} has invalid state"
-                )
+            if not isinstance(cell_id, str):
+                errors.append(f"{label}: coverage {coverage_id} cell keys must be strings")
+                continue
+            if not isinstance(cell, dict):
+                errors.append(f"{label}: coverage {coverage_id} cell {cell_id} must be an object")
+                continue
+            state = cell.get("state")
+            if state not in ALLOWED_STATES:
+                errors.append(f"{label}: coverage {coverage_id} cell {cell_id} has invalid state")
             evidence_id = cell.get("evidence_id")
-            if evidence_id and evidence_id not in measurement_ids:
+            estimate_id = cell.get("estimate_id")
+            packet_id = cell.get("packet_id")
+            point_x = cell.get("point_x")
+            observed = measurements.get(evidence_id) if isinstance(evidence_id, str) else None
+            if evidence_id is not None and observed is None:
                 errors.append(
-                    f"{label}: coverage {coverage.get('id')} cell {cell_id} references missing {evidence_id}"
+                    f"{label}: coverage {coverage_id} cell {cell_id} references missing {evidence_id}"
                 )
-            if cell.get("state") in {"lab-measured", "community-measured", "estimated"} and not evidence_id:
+            if observed is not None and state != observed.get("state"):
                 errors.append(
-                    f"{label}: coverage {coverage.get('id')} cell {cell_id} needs a measurement evidence_id"
+                    f"{label}: coverage {coverage_id} cell {cell_id} state {state} does not match {evidence_id} state {observed.get('state')}"
                 )
-            if cell.get("state") == "lab-screened" and not (evidence_id or cell.get("evidence") or coverage.get("evidence")):
+            if packet_id is not None and packet_id not in packet_by_id:
                 errors.append(
-                    f"{label}: coverage {coverage.get('id')} screened cell {cell_id} lacks evidence"
+                    f"{label}: coverage {coverage_id} cell {cell_id} references missing packet {packet_id}"
                 )
+            if state in CURVE_STATES and observed is None:
+                errors.append(
+                    f"{label}: coverage {coverage_id} cell {cell_id} needs a measurement evidence_id"
+                )
+            if state == "estimated":
+                if not isinstance(estimate_id, str) or estimate_id not in estimate_by_id:
+                    errors.append(
+                        f"{label}: coverage {coverage_id} cell {cell_id} needs a known estimate_id"
+                    )
+                if evidence_id:
+                    errors.append(
+                        f"{label}: coverage {coverage_id} cell {cell_id} cannot use evidence_id for an estimate"
+                    )
+            elif estimate_id is not None:
+                errors.append(
+                    f"{label}: coverage {coverage_id} cell {cell_id} uses estimate_id outside estimated state"
+                )
+            if state in {"lab-screened", "quarantined"} and not (
+                evidence_id or cell.get("evidence") or coverage.get("evidence")
+            ):
+                errors.append(f"{label}: coverage {coverage_id} {state} cell {cell_id} lacks evidence")
 
-    for closure in family.get("family_closures") or []:
+            row_value = column_value = None
+            if axes_valid and cell_id in expected:
+                row_text, column_text = cell_id.split(":", 1)
+                row_value = next(
+                    value for value in row_axis["values"] if str(value) == row_text
+                )
+                column_value = next(
+                    value for value in column_axis["values"] if str(value) == column_text
+                )
+            expected_selectors = (
+                effective_cell_selectors(coverage, row_value, column_value)
+                if row_value is not None and column_value is not None
+                else {}
+            )
+            if isinstance(packet_id, str) and packet_id in packet_by_id:
+                packet = packet_by_id[packet_id]
+                packet_claims = {
+                    "revision": packet.get("revision"),
+                    "variant": packet.get("quantization"),
+                    "runtime": packet.get("runtime"),
+                }
+                for key, actual in packet_claims.items():
+                    wanted = expected_selectors.get(key)
+                    if wanted is not None and actual is not None and actual != wanted:
+                        errors.append(
+                            f"{label}: coverage {coverage_id} cell {cell_id} packet {packet_id} {key}={actual} mismatches selector {wanted}"
+                        )
+                wanted_tp = expected_selectors.get("tp")
+                packet_cards = packet.get("cards")
+                packet_topologies = packet.get("topologies")
+                if wanted_tp is not None and (
+                    (packet_cards is not None and packet_cards != wanted_tp)
+                    or (
+                        packet_cards is None
+                        and isinstance(packet_topologies, list)
+                        and wanted_tp not in packet_topologies
+                    )
+                ):
+                    errors.append(
+                        f"{label}: coverage {coverage_id} cell {cell_id} packet {packet_id} does not cover TP{wanted_tp}"
+                    )
+            if point_x is not None:
+                if not is_finite_number(point_x):
+                    errors.append(f"{label}: coverage {coverage_id} cell {cell_id}.point_x must be finite numeric")
+                elif observed is None:
+                    errors.append(f"{label}: coverage {coverage_id} cell {cell_id}.point_x needs measurement evidence")
+                else:
+                    point = next(
+                        (
+                            item
+                            for item in (observed.get("points") or [])
+                            if isinstance(item, dict) and item.get("x") == point_x
+                        ),
+                        None,
+                    )
+                    if point is None:
+                        errors.append(
+                            f"{label}: coverage {coverage_id} cell {cell_id}.point_x is absent from {evidence_id}"
+                        )
+                    axis_key = observed.get("axis")
+                    axis_matches = [
+                        wanted
+                        for key, wanted in expected_selectors.items()
+                        if key == axis_key and wanted == point_x
+                    ]
+                    if not isinstance(axis_key, str) or len(axis_matches) != 1:
+                        errors.append(
+                            f"{label}: coverage {coverage_id} cell {cell_id}.point_x must bind {evidence_id} measurement axis"
+                        )
+                    derived_label = point_metric_label(point) if point is not None else ""
+                    if cell.get("label") != derived_label:
+                        errors.append(
+                            f"{label}: coverage {coverage_id} cell {cell_id} label must match {evidence_id} point ({derived_label})"
+                        )
+
+            selector_strict = named_axes or bool(fixed_selectors)
+            if observed is not None:
+                for key, wanted in expected_selectors.items():
+                    actual = record_selector_value(observed, key)
+                    point_selector_match = (
+                        point_x is not None
+                        and observed.get("axis") == key
+                        and point_x == wanted
+                    )
+                    if selector_strict and actual is None and not point_selector_match:
+                        errors.append(
+                            f"{label}: coverage {coverage_id} cell {cell_id} selector {key}={wanted} is absent from {evidence_id}"
+                        )
+                    elif actual is not None and actual != wanted:
+                        errors.append(
+                            f"{label}: coverage {coverage_id} cell {cell_id} selector {key}={wanted} mismatches {evidence_id} value {actual}"
+                        )
+            if isinstance(estimate_id, str) and estimate_id in estimate_by_id:
+                estimate = estimate_by_id[estimate_id]
+                for key, wanted in expected_selectors.items():
+                    actual = (estimate.get("selectors") or {}).get(key)
+                    if actual != wanted:
+                        errors.append(
+                            f"{label}: coverage {coverage_id} cell {cell_id} selector {key}={wanted} mismatches {estimate_id} value {actual}"
+                        )
+
+    for closure in closures:
         if closure.get("state") not in ALLOWED_STATES:
             errors.append(f"{label}: family closure has invalid state {closure.get('state')}")
-        if not closure.get("selectors") or not closure.get("reason") or not closure.get("evidence"):
-            errors.append(f"{label}: family closure needs selectors, reason, and evidence")
+        selectors = closure.get("selectors")
+        if not isinstance(selectors, dict) or not selectors or any(
+            not isinstance(key, str)
+            or not SELECTOR_KEY_RE.fullmatch(key)
+            or not is_selector_scope(value)
+            for key, value in (selectors or {}).items()
+        ):
+            errors.append(f"{label}: family closure needs scalar selectors")
+        if not isinstance(closure.get("reason"), str) or not closure.get("reason"):
+            errors.append(f"{label}: family closure needs a reason")
+        if not isinstance(closure.get("evidence"), str) or not closure.get("evidence"):
+            errors.append(f"{label}: family closure needs evidence")
 
     for rel in local_evidence_paths(family):
-        if not (ROOT / rel).exists():
-            errors.append(f"{label}: evidence path does not exist: {rel}")
+        path = safe_repo_path(rel)
+        if path is None:
+            errors.append(f"{label}: evidence path must stay inside the repository: {rel}")
+        elif not path.is_file():
+            errors.append(f"{label}: evidence path is not a file: {rel}")
     return errors
 
 
@@ -241,8 +1032,7 @@ def collect_view_series(
 ) -> list[dict[str, Any]]:
     by_id = {
         measurement["id"]: measurement
-        for measurement in list(family.get("run_measurements") or [])
-        + list(family.get("series_measurements") or [])
+        for measurement in records(family)
     }
     output: list[dict[str, Any]] = []
     for index, spec in enumerate(view.get("series") or []):
@@ -252,6 +1042,8 @@ def collect_view_series(
         for mid in spec.get("measurement_ids") or []:
             measurement = by_id[mid]
             states.add(measurement.get("state", "lab-measured"))
+            if measurement.get("state") not in CURVE_STATES:
+                continue
             evidence.append(measurement["evidence"])
             if measurement.get("points"):
                 for point in measurement["points"]:
@@ -339,10 +1131,9 @@ def chart_svg(
             f'{"M" if index == 0 else "L"}{sx(x):.1f},{sy(mean):.1f}'
             for index, (x, mean, _low, _high) in enumerate(drawable)
         )
-        dash = ' stroke-dasharray="7 5"' if item["state"] == "estimated" else ""
         if not view.get("discrete") and len(drawable) > 1:
             lines.append(
-                f'<path d="{path}" fill="none" stroke="{item["color"]}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"{dash}></path>'
+                f'<path d="{path}" fill="none" stroke="{item["color"]}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>'
             )
         for x, mean, low, high in drawable:
             if high > low:
@@ -396,8 +1187,7 @@ def view_card(family: dict[str, Any], view: dict[str, Any]) -> str:
     evidence = []
     by_id = {
         measurement["id"]: measurement
-        for measurement in list(family.get("run_measurements") or [])
-        + list(family.get("series_measurements") or [])
+        for measurement in records(family)
     }
     for series in view.get("series") or []:
         for mid in series.get("measurement_ids") or []:
@@ -425,11 +1215,9 @@ def view_card(family: dict[str, Any], view: dict[str, Any]) -> str:
 
 
 def coverage_tables(family: dict[str, Any]) -> str:
-    by_id = {
-        measurement["id"]: measurement
-        for measurement in list(family.get("run_measurements") or [])
-        + list(family.get("series_measurements") or [])
-    }
+    by_id = {measurement["id"]: measurement for measurement in records(family)}
+    estimates = {estimate["id"]: estimate for estimate in family.get("estimates") or []}
+    packets = {packet["id"]: packet for packet in family.get("packets") or []}
     buttons = []
     tables = []
     state_labels = {
@@ -443,37 +1231,87 @@ def coverage_tables(family: dict[str, Any]) -> str:
         "missing": "○ missing",
     }
     for index, view in enumerate(family.get("coverage_views") or []):
+        row_axis = coverage_axis(view, "row")
+        column_axis = coverage_axis(view, "column")
+        tab_id = f'coverage-tab-{view.get("id")}'
+        panel_id = f'coverage-panel-{view.get("id")}'
         buttons.append(
-            f'<button type="button" data-coverage-button="{esc(view.get("id"))}" aria-pressed="{"true" if index == 0 else "false"}">{esc(view.get("label"))}</button>'
+            f'<button type="button" role="tab" id="{esc(tab_id)}" aria-controls="{esc(panel_id)}" data-coverage-button="{esc(view.get("id"))}" aria-selected="{"true" if index == 0 else "false"}" tabindex="{0 if index == 0 else -1}">{esc(view.get("label"))}</button>'
         )
-        head = "".join(f"<th scope=\"col\">TP{column}</th>" for column in view["columns"])
+        head = "".join(
+            f'<th scope="col">{esc(axis_value_label(column_axis, column))}</th>'
+            for column in column_axis["values"]
+        )
         rows = []
-        for row in view["rows"]:
+        for row in row_axis["values"]:
             cells = []
-            for column in view["columns"]:
+            for column in column_axis["values"]:
                 cell = view["cells"][f"{row}:{column}"]
                 state = cell["state"]
                 title = state_labels[state]
                 evidence_id = cell.get("evidence_id")
+                estimate_id = cell.get("estimate_id")
                 evidence = (
                     by_id[evidence_id].get("evidence")
                     if evidence_id
                     else cell.get("evidence") or view.get("evidence")
                 )
-                body = f'<span class="state">{esc(title)}</span><b>{esc(cell.get("label", ""))}</b>'
+                label_text = str(cell.get("label", ""))
+                if evidence_id and cell.get("point_x") is not None:
+                    observed = by_id[evidence_id]
+                    point = next(
+                        point
+                        for point in observed.get("points") or []
+                        if point.get("x") == cell["point_x"]
+                    )
+                    label_text = point_metric_label(point)
+                estimate_note = ""
+                if estimate_id:
+                    estimate = estimates[estimate_id]
+                    interval = estimate["interval"]
+                    label_text = (
+                        f'≈ {fmt(estimate["value"])} {estimate["unit"]} '
+                        f'({fmt(interval["low"])}–{fmt(interval["high"])})'
+                    )
+                    evidence = estimate["record"]
+                    estimate_note = (
+                        f'{estimate["engine"]["name"]} {estimate["engine"]["version"]}; '
+                        f'snapshot {estimate["engine"]["snapshot_sha256"]}'
+                    )
+                body = f'<span class="state">{esc(title)}</span><b>{esc(label_text)}</b>'
                 if evidence:
-                    body = f'<a href="{esc(evidence_href(evidence))}" aria-label="{esc(title)}: {esc(cell.get("label", ""))}; open evidence">{body}</a>'
+                    body = f'<a href="{esc(evidence_href(evidence))}" aria-label="{esc(title)}: {esc(label_text)}; open record">{body}</a>'
+                packet_link = ""
+                packet_id = cell.get("packet_id")
+                if packet_id:
+                    packet = packets[packet_id]
+                    manifest = str(packet.get("manifest", ""))
+                    href = (
+                        f"{packet_id}.html"
+                        if manifest.startswith("packages/") and manifest.endswith("package.json")
+                        else evidence_href(manifest)
+                    )
+                    packet_link = f'<a class="cell-packet" href="{esc(href)}">packet</a>'
                 cells.append(
-                    f'<td class="coverage-cell is-{esc(state)}" title="{esc(cell.get("reason") or view.get("decision_note") or "")}">{body}</td>'
+                    f'<td class="coverage-cell is-{esc(state)}" title="{esc(cell.get("reason") or estimate_note or view.get("decision_note") or "")}">{body}{packet_link}</td>'
                 )
-            rows.append(f'<tr><th scope="row">MTP{row}</th>{"".join(cells)}</tr>')
+            rows.append(
+                f'<tr><th scope="row">{esc(axis_value_label(row_axis, row))}</th>{"".join(cells)}</tr>'
+            )
+        selectors = " · ".join(
+            f"{key}={value}" for key, value in (view.get("fixed_selectors") or {}).items()
+        )
+        scope = str(view.get("fixed") or "")
+        if selectors:
+            scope = f"{scope} Fixed: {selectors}."
+        table_label = f'{view.get("label")} {row_axis["label"]} by {column_axis["label"]} coverage'
         tables.append(
-            f'<div class="coverage-panel" data-coverage-panel="{esc(view.get("id"))}"{"" if index == 0 else " hidden"}><p>{esc(view.get("fixed"))}</p><div class="scroller" tabindex="0" role="region" aria-label="{esc(view.get("label"))} TP and MTP coverage"><table class="data coverage-table"><thead><tr><th>MTP / TP</th>{head}</tr></thead><tbody>{"".join(rows)}</tbody></table></div></div>'
+            f'<div class="coverage-panel" role="tabpanel" id="{esc(panel_id)}" aria-labelledby="{esc(tab_id)}" data-coverage-panel="{esc(view.get("id"))}"{"" if index == 0 else " hidden"}><p>{esc(scope)}</p><div class="scroller" tabindex="0" role="region" aria-label="{esc(table_label)}"><table class="data coverage-table"><thead><tr><th>{esc(row_axis["label"])} / {esc(column_axis["label"])}</th>{head}</tr></thead><tbody>{"".join(rows)}</tbody></table></div></div>'
         )
     legend = "".join(
         f'<span class="is-{esc(state)}">{esc(label)}</span>' for state, label in state_labels.items()
     )
-    return f'<div class="coverage-switch">{"".join(buttons)}</div>{"".join(tables)}<div class="coverage-legend">{legend}</div>'
+    return f'<div class="coverage-switch" role="tablist" aria-label="Coverage slices">{"".join(buttons)}</div>{"".join(tables)}<div class="coverage-legend">{legend}</div>'
 
 
 def closure_cards(family: dict[str, Any]) -> str:
@@ -487,40 +1325,112 @@ def closure_cards(family: dict[str, Any]) -> str:
     return "".join(cards)
 
 
-def package_metric(packet: dict[str, Any]) -> tuple[str, str, str, float | None]:
+def package_metric(
+    family: dict[str, Any], packet: dict[str, Any]
+) -> tuple[str, str, str, float | None, str, bool]:
     manifest = packet.get("manifest", "")
+    direct = packet.get("featured_metric")
+    if isinstance(direct, dict):
+        measurement = next(
+            item
+            for item in records(family)
+            if item.get("id") == direct.get("measurement_id")
+        )
+        metric_key = direct["metric"]
+        if direct.get("sample_index") is not None:
+            raw_value = measurement["metrics"][metric_key][direct["sample_index"]]
+        else:
+            point = next(
+                item
+                for item in measurement["points"]
+                if item.get("x") == direct.get("point_x")
+            )
+            raw_value = point[metric_key]
+        return (
+            fmt(raw_value),
+            METRICS[metric_key][1],
+            evidence_href(measurement["evidence"]),
+            float(raw_value),
+            str(measurement.get("workload", "")),
+            metric_key == "decode_tok_s",
+        )
     if not str(manifest).startswith("packages/") or not str(manifest).endswith("package.json"):
-        return "—", "", evidence_href(str(manifest)), None
+        return "—", "", evidence_href(str(manifest)), None, "", False
     package = load_json(ROOT / manifest)
     metric = ((package.get("library") or {}).get("featured_metric") or {})
     raw_value = metric.get("value")
     value = fmt(raw_value)
     unit = metric.get("unit", "tok/s")
-    return value, unit, f"{packet['id']}.html", float(raw_value) if isinstance(raw_value, (int, float)) else None
+    return (
+        value,
+        unit,
+        f"{packet['id']}.html",
+        float(raw_value) if is_finite_number(raw_value) else None,
+        str(metric.get("scope", "")),
+        metric.get("unit") == "tok/s",
+    )
+
+
+def grade_badge(label: str, value: Any) -> str:
+    if not isinstance(value, dict):
+        return f'<span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="{esc(label)} not graded yet">{esc(label)} —</span>'
+    title = f'{value.get("scope", "")} · {value.get("basis", "")}'
+    return (
+        f'<span class="curated-grade" tabindex="0" title="{esc(title)}" aria-label="{esc(label)} grade {esc(value.get("grade"))}: {esc(title)}">'
+        f'{esc(label)} {esc(value.get("grade"))}</span>'
+    )
 
 
 def packet_cards(family: dict[str, Any]) -> str:
     cards = []
+    revisions = {
+        revision.get("id"): revision for revision in family.get("weight_revisions") or []
+    }
     for packet in family.get("packets") or []:
-        value, unit, href, raw_value = package_metric(packet)
+        value, unit, href, raw_value, workload, opt_eligible = package_metric(family, packet)
         coverage = "".join(f"<span>{esc(item)}</span>" for item in packet.get("coverage") or [])
         projection = packet.get("projection") or {}
         attrs = ""
         headroom = ""
-        if projection and value != "—":
+        projection_workload_pinned = all(
+            isinstance(projection.get(field), int)
+            and not isinstance(projection.get(field), bool)
+            and projection.get(field) > 0
+            for field in ("prompt_tokens", "output_tokens")
+        )
+        if projection and value != "—" and projection_workload_pinned and opt_eligible:
             attrs = (
                 f' data-family-headroom data-ml-model="{esc(projection.get("model"))}"'
                 f' data-ml-quant="{esc(projection.get("quant"))}" data-ml-runtime="{esc(projection.get("runtime"))}"'
                 f' data-ml-spec="{esc(projection.get("spec", "none"))}" data-ml-cards="{esc(packet.get("cards", 1))}"'
                 f' data-ml-hardware="Intel Arc Pro B70" data-ml-measured="{esc(raw_value)}"'
+                f' data-ml-prompt="{esc(projection.get("prompt_tokens"))}" data-ml-output="{esc(projection.get("output_tokens"))}"'
                 + (f' data-ml-strategy="{esc(projection.get("strategy"))}"' if projection.get("strategy") else "")
             )
-            headroom = '<span class="opt-grade" data-family-headroom-value title="Projected optimization headroom is loading; this is not model quality or packet evidence.">OPT …</span>'
+            headroom = '<span class="opt-grade" data-family-headroom-value title="Projected optimization grade is loading; this compares measured speed with the modeled tuned target, not model quality or packet evidence.">OPT …</span>'
+        elif projection and value != "—":
+            headroom = '<span class="opt-grade" title="OPT is withheld until this measured workload has explicit prompt and output token selectors.">OPT —</span>'
+        grades = packet.get("grades") or {}
+        revision = revisions.get(packet.get("revision")) or {}
+        capability = grades.get("capability") or (revision.get("grades") or {}).get("capability")
+        grade_rail = "".join(
+            (
+                grade_badge("CAP", capability),
+                grade_badge("EVID", grades.get("evidence")),
+            )
+        )
+        metric_text = f"{value} {unit}".strip()
+        workload_html = (
+            f'\n  <small class="packet-workload">{esc(workload)}</small>'
+            if workload
+            else ""
+        )
         cards.append(
             f'''<a class="packet-card" href="{esc(href)}"{attrs}>
   <div class="packet-top"><span>{esc(packet.get('revision'))}</span><span class="packet-badges"><b>{esc(packet.get('evidence_level'))}</b>{headroom}</span></div>
   <h3>{esc(packet.get('label'))}</h3>
-  <p><strong>{esc(value)} {esc(unit)}</strong>{" measured headline" if value != "—" else " evidence packet"} · {esc(packet.get('status'))}</p>
+  <p><strong>{esc(metric_text)}</strong>{" measured headline" if value != "—" else " evidence packet"} · {esc(packet.get('status'))}</p>{workload_html}
+  <div class="grade-rail">{grade_rail}</div>
   <div class="coverage-rail">{coverage}</div>
 </a>'''
         )
@@ -555,14 +1465,40 @@ def family_page(family: dict[str, Any]) -> str:
     if architecture.get("hidden_size") is not None:
         architecture_bits.append(f'{architecture["hidden_size"]} hidden')
     architecture_summary = ", ".join(architecture_bits)
-    boundary = transfer.get("status") or "Measurements remain revision- and artifact-specific"
+    boundary = str(
+        transfer.get("status")
+        or "Measurements remain revision- and artifact-specific"
+    ).rstrip(". ")
     popularity_value = popularity.get("downloads")
-    if popularity_value is None and popularity.get("snapshots"):
-        popularity_value = f'{len(popularity["snapshots"])} repo snapshots'
+    popularity_scope = popularity.get("scope") or popularity.get("reason") or "not scored"
+    if popularity_value is not None:
+        popularity_value = compact_count(popularity_value)
+    elif popularity.get("snapshots"):
+        snapshots = popularity["snapshots"]
+        primary_revision = popularity.get("primary_revision")
+        primary = next(
+            (
+                snapshot
+                for snapshot in snapshots
+                if snapshot.get("revision") == primary_revision
+            ),
+            snapshots[0],
+        )
+        popularity_value = compact_count(primary.get("downloads"))
+        popularity_scope = (
+            f'{primary.get("repository") or primary.get("repo_id") or primary.get("revision")}; '
+            f'{fmt(primary.get("likes"), 0)} likes. {popularity_scope}'
+        )
     if popularity_value is None:
         popularity_value = "Pending"
     if architecture_summary:
         boundary = f"{architecture_summary}. {boundary}"
+    popularity_date = popularity.get("captured_at")
+    popularity_detail = (
+        f"{popularity_date} · {popularity_scope}"
+        if popularity_date
+        else str(popularity_scope)
+    )
     coverage_section = ""
     if coverage_views:
         coverage_section = f'''
@@ -608,7 +1544,7 @@ def family_page(family: dict[str, Any]) -> str:
 <meta property="og:description" content="Measured deployment coverage across the axes users actually choose.">
 <meta property="og:image" content="{SITE}og-image.png">
 <meta name="theme-color" content="#f6f1e5">
-<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>
+<script type="application/ld+json">{json_for_html_script(ld)}</script>
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
 <style>
@@ -631,7 +1567,7 @@ def family_page(family: dict[str, Any]) -> str:
   .metric-switch, .coverage-switch {{ display:flex; flex-wrap:wrap; gap:4px; }}
   .metric-switch {{ justify-content:end; }}
   .metric-switch button, .coverage-switch button {{ appearance:none; border:1px solid var(--ink); padding:4px 7px; background:transparent; color:var(--ink); font:700 9px var(--mono); text-transform:uppercase; cursor:pointer; }}
-  .metric-switch button[aria-pressed="true"], .coverage-switch button[aria-pressed="true"] {{ background:var(--ink); color:var(--paper); }}
+  .metric-switch button[aria-pressed="true"], .coverage-switch button[aria-selected="true"] {{ background:var(--ink); color:var(--paper); }}
   .family-chart {{ min-height:210px; }}
   .gap-line {{ height:0!important; border-top:2px dashed var(--muted); background:transparent!important; }}
   .proof-links {{ display:block; margin-top:5px; }}
@@ -639,6 +1575,7 @@ def family_page(family: dict[str, Any]) -> str:
   .coverage-panel > p {{ margin:8px 0 0; color:var(--muted); font:11px var(--mono); }}
   .coverage-table td {{ min-width:130px; white-space:normal; }}
   .coverage-cell > a {{ display:block; color:inherit; text-decoration:none; }}
+  .coverage-cell .cell-packet {{ display:inline-block; margin-top:5px; border-bottom:1px solid currentColor; color:var(--muted); font:700 8.5px var(--mono); text-transform:uppercase; }}
   .coverage-cell .state {{ display:block; font:700 9px var(--mono); text-transform:uppercase; }}
   .coverage-cell b {{ display:block; margin-top:3px; font:12px var(--mono); }}
   .is-lab-measured .state, .coverage-legend .is-lab-measured {{ color:var(--good); }}
@@ -663,6 +1600,10 @@ def family_page(family: dict[str, Any]) -> str:
   .opt-grade[data-ready="true"] {{ background:var(--spot); color:#fff; }}
   .packet-card h3 {{ margin:7px 0 5px; font:900 15px/1.15 var(--display); text-transform:uppercase; }}
   .packet-card p {{ margin:0; color:var(--muted); font-size:12px; }}
+  .packet-workload {{ display:block; margin-top:5px; color:var(--muted); font:9.5px/1.35 var(--mono); }}
+  .grade-rail {{ display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }}
+  .curated-grade {{ padding:2px 5px; border:1px solid var(--ink); font:800 8.5px var(--mono); text-transform:uppercase; }}
+  .curated-grade.is-pending {{ border-color:var(--line); color:var(--muted); }}
   .coverage-rail {{ display:flex; flex-wrap:wrap; gap:3px; margin-top:9px; }}
   .coverage-rail span {{ padding:2px 5px; background:var(--surface); border:1px solid var(--line); font:8.5px var(--mono); text-transform:uppercase; }}
   .scope-note {{ margin:12px 0 0; padding:10px 12px; border-left:5px solid var(--spot); background:var(--surface); font-size:12.5px; }}
@@ -687,13 +1628,13 @@ def family_page(family: dict[str, Any]) -> str:
   <div class="signals" aria-label="Family signals">
     <div class="signal"><span>B70 fit</span><b>{esc(fit.get('band') or 'Pending')}</b><small>{esc(fit.get('scope') or 'local deployment fit')}, reviewed {esc(fit.get('reviewed_at') or family.get('updated_at'))}</small></div>
     <div class="signal"><span>Quality evidence</span><b>{esc(str(quality.get('band') or 'Pending').replace('-', ' '))}</b><small>{esc(quality.get('scope') or 'No family-wide quality score is inferred from speed evidence.')}</small></div>
-    <div class="signal"><span>Interest snapshot</span><b>{esc(popularity_value)}</b><small>{esc(popularity.get('captured_at') or popularity.get('reason') or 'not scored')}</small></div>
+    <div class="signal"><span>Interest snapshot</span><b>{esc(popularity_value)}</b><small>{esc(popularity_detail)}</small></div>
     <div class="signal"><span>Evidence slices</span><b>{measured_count}</b><small>run arms and measured series; every point links to proof</small></div>
     <div class="signal"><span>Stored estimates</span><b>{estimate_count}</b><small>versioned gap estimates only; live OPT grades stay separate</small></div>
   </div>
   <p class="scope-note"><strong>Transfer boundary:</strong> {esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p>
 
-  <div class="section-head"><div><h2>Measured slices</h2><p>Metric switches change the question without changing the configuration. Whiskers retain every captured repeat; no missing point is interpolated.</p></div><a class="inline" href="{source}">family data</a></div>
+  <div class="section-head"><div><h2>Measured slices</h2><p>Metric switches change the question without changing the configuration. Whiskers retain every captured repeat; no missing point is interpolated.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
   <div class="views-grid">{views}</div>
 
 {coverage_section}{closures_section}
@@ -701,7 +1642,7 @@ def family_page(family: dict[str, Any]) -> str:
   <div class="section-head"><div><h2>Packets and recipes</h2><p>Quantizations are deployment variants inside this family. Lower-maturity packets stay visible with their evidence boundary instead of disappearing.</p></div></div>
   <div class="packet-grid">{packets}</div>
 
-  <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="{source}"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
+  <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="{esc(source)}"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>
 <footer><div class="wrap"><span>Unofficial lab, not affiliated with Intel. Measurements link to proof; estimates are labeled.</span><span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span></div></footer>
 <script defer src="../learn/assets/mlbottleneck-bridge.js?v={bridge_version()}"></script>
@@ -715,11 +1656,27 @@ def family_page(family: dict[str, Any]) -> str:
       view.querySelectorAll('[data-family-summary]').forEach(summary => summary.hidden = summary.dataset.familySummary !== metric);
     }}));
   }});
-  document.querySelectorAll('[data-coverage-button]').forEach(button => button.addEventListener('click', () => {{
+  const coverageTabs = Array.from(document.querySelectorAll('[data-coverage-button]'));
+  const activateCoverageTab = (button, moveFocus = false) => {{
     const panel = button.dataset.coverageButton;
-    document.querySelectorAll('[data-coverage-button]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+    coverageTabs.forEach(item => {{
+      item.setAttribute('aria-selected', String(item === button));
+      item.tabIndex = item === button ? 0 : -1;
+    }});
     document.querySelectorAll('[data-coverage-panel]').forEach(item => item.hidden = item.dataset.coveragePanel !== panel);
-  }}));
+    if (moveFocus) button.focus();
+  }};
+  coverageTabs.forEach((button, index) => {{
+    button.addEventListener('click', () => activateCoverageTab(button));
+    button.addEventListener('keydown', event => {{
+      let target = null;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') target = coverageTabs[(index + 1) % coverageTabs.length];
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') target = coverageTabs[(index - 1 + coverageTabs.length) % coverageTabs.length];
+      if (event.key === 'Home') target = coverageTabs[0];
+      if (event.key === 'End') target = coverageTabs[coverageTabs.length - 1];
+      if (target) {{ event.preventDefault(); activateCoverageTab(target, true); }}
+    }});
+  }});
 }})();
 </script>
 </body>
@@ -739,25 +1696,44 @@ def generate(check: bool) -> int:
     expected: list[tuple[Path, str]] = []
     family_ids: set[str] = set()
     packet_owners: dict[str, list[str]] = {}
-    for entry in catalog.get("families") or []:
-        source = ROOT / entry.get("manifest", "")
+    entries = catalog.get("families")
+    if not isinstance(entries, list):
+        errors.append("families/catalog.json: families must be a list")
+        entries = []
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            errors.append(f"families/catalog.json: families[{index}] must be an object")
+            continue
+        source = safe_repo_path(entry.get("manifest"))
+        if source is None:
+            errors.append(
+                f"families/catalog.json: families[{index}] manifest must stay inside the repository"
+            )
+            continue
         try:
             family = load_json(source)
         except (OSError, ValueError, json.JSONDecodeError) as error:
             errors.append(str(error))
             continue
-        errors.extend(validate_family(family, source))
+        family_errors = validate_family(family, source)
+        errors.extend(family_errors)
         family_id = family.get("id")
-        if family_id != entry.get("id"):
+        id_matches = family_id == entry.get("id")
+        if not id_matches:
             errors.append(
-                f"{source.relative_to(ROOT)}: family id {family_id} does not match catalog id {entry.get('id')}"
+                f"{source_label(source)}: family id {family_id} does not match catalog id {entry.get('id')}"
             )
-        if family_id in family_ids:
+        duplicate = isinstance(family_id, str) and family_id in family_ids
+        if duplicate:
             errors.append(f"families/catalog.json: duplicate family id {family_id}")
-        family_ids.add(family_id)
+        if isinstance(family_id, str):
+            family_ids.add(family_id)
+        if family_errors or not id_matches or duplicate or not isinstance(family_id, str):
+            continue
         for packet in family.get("packets") or []:
-            packet_owners.setdefault(packet.get("id"), []).append(family_id)
-        output = OUT_DIR / f"{family['id']}.html"
+            if isinstance(packet, dict) and isinstance(packet.get("id"), str):
+                packet_owners.setdefault(packet["id"], []).append(family_id)
+        output = OUT_DIR / f"{family_id}.html"
         rendered = family_page(family)
         expected.append((output, rendered))
     try:
@@ -765,7 +1741,15 @@ def generate(check: bool) -> int:
     except (OSError, ValueError, json.JSONDecodeError) as error:
         errors.append(str(error))
     else:
-        published_ids = {package.get("id") for package in package_catalog.get("packages") or []}
+        package_entries = package_catalog.get("packages")
+        if not isinstance(package_entries, list):
+            errors.append("packages/catalog.json: packages must be a list")
+            package_entries = []
+        published_ids = {
+            package.get("id")
+            for package in package_entries
+            if isinstance(package, dict) and isinstance(package.get("id"), str)
+        }
         missing = sorted(published_ids - packet_owners.keys())
         duplicated = sorted(
             packet_id

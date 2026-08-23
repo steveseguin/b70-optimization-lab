@@ -35,7 +35,7 @@
   .metric-switch, .coverage-switch { display:flex; flex-wrap:wrap; gap:4px; }
   .metric-switch { justify-content:end; }
   .metric-switch button, .coverage-switch button { appearance:none; border:1px solid var(--ink); padding:4px 7px; background:transparent; color:var(--ink); font:700 9px var(--mono); text-transform:uppercase; cursor:pointer; }
-  .metric-switch button[aria-pressed="true"], .coverage-switch button[aria-pressed="true"] { background:var(--ink); color:var(--paper); }
+  .metric-switch button[aria-pressed="true"], .coverage-switch button[aria-selected="true"] { background:var(--ink); color:var(--paper); }
   .family-chart { min-height:210px; }
   .gap-line { height:0!important; border-top:2px dashed var(--muted); background:transparent!important; }
   .proof-links { display:block; margin-top:5px; }
@@ -43,6 +43,7 @@
   .coverage-panel > p { margin:8px 0 0; color:var(--muted); font:11px var(--mono); }
   .coverage-table td { min-width:130px; white-space:normal; }
   .coverage-cell > a { display:block; color:inherit; text-decoration:none; }
+  .coverage-cell .cell-packet { display:inline-block; margin-top:5px; border-bottom:1px solid currentColor; color:var(--muted); font:700 8.5px var(--mono); text-transform:uppercase; }
   .coverage-cell .state { display:block; font:700 9px var(--mono); text-transform:uppercase; }
   .coverage-cell b { display:block; margin-top:3px; font:12px var(--mono); }
   .is-lab-measured .state, .coverage-legend .is-lab-measured { color:var(--good); }
@@ -67,6 +68,10 @@
   .opt-grade[data-ready="true"] { background:var(--spot); color:#fff; }
   .packet-card h3 { margin:7px 0 5px; font:900 15px/1.15 var(--display); text-transform:uppercase; }
   .packet-card p { margin:0; color:var(--muted); font-size:12px; }
+  .packet-workload { display:block; margin-top:5px; color:var(--muted); font:9.5px/1.35 var(--mono); }
+  .grade-rail { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .curated-grade { padding:2px 5px; border:1px solid var(--ink); font:800 8.5px var(--mono); text-transform:uppercase; }
+  .curated-grade.is-pending { border-color:var(--line); color:var(--muted); }
   .coverage-rail { display:flex; flex-wrap:wrap; gap:3px; margin-top:9px; }
   .coverage-rail span { padding:2px 5px; background:var(--surface); border:1px solid var(--line); font:8.5px var(--mono); text-transform:uppercase; }
   .scope-note { margin:12px 0 0; padding:10px 12px; border-left:5px solid var(--spot); background:var(--surface); font-size:12.5px; }
@@ -122,39 +127,44 @@
 
 
   <div class="section-head"><div><h2>Combination coverage</h2><p>A compact decision map replaces near-duplicate result rows. Closed and quarantined cells are coverage, not blanks.</p></div></div>
-  <div class="coverage-switch"><button type="button" data-coverage-button="minimax-autoround-target-only" aria-pressed="true">AutoRound · target only</button></div><div class="coverage-panel" data-coverage-panel="minimax-autoround-target-only"><p>MiniMax M2.7 AutoRound W4A16 · vLLM XPU · graph on · f16-family KV · MTP/speculation off. Only TP4 is measured in the maintained family packet.</p><div class="scroller" tabindex="0" role="region" aria-label="AutoRound · target only TP and MTP coverage"><table class="data coverage-table"><thead><tr><th>MTP / TP</th><th scope="col">TP1</th><th scope="col">TP2</th><th scope="col">TP4</th></tr></thead><tbody><tr><th scope="row">MTP0</th><td class="coverage-cell is-missing" title="No comparable TP1 AutoRound result is stored."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/minimax-m27-int4-autoround-b70/README.md" aria-label="○ missing: not measured; open evidence"><span class="state">○ missing</span><b>not measured</b></a></td><td class="coverage-cell is-missing" title="No comparable TP2 AutoRound result is stored."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/minimax-m27-int4-autoround-b70/README.md" aria-label="○ missing: not measured; open evidence"><span class="state">○ missing</span><b>not measured</b></a></td><td class="coverage-cell is-lab-measured" title="Missing TP1/TP2 cells are unknown, not failed or zero."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json" aria-label="● measured: strict + service; open evidence"><span class="state">● measured</span><b>strict + service</b></a></td></tr></tbody></table></div></div><div class="coverage-legend"><span class="is-lab-measured">● measured</span><span class="is-lab-screened">△ screened</span><span class="is-community-measured">◐ community</span><span class="is-estimated">≈ estimate</span><span class="is-closed">■ closed</span><span class="is-quarantined">! quarantine</span><span class="is-unsupported">× unsupported</span><span class="is-missing">○ missing</span></div>
+  <div class="coverage-switch" role="tablist" aria-label="Coverage slices"><button type="button" role="tab" id="coverage-tab-minimax-autoround-target-only" aria-controls="coverage-panel-minimax-autoround-target-only" data-coverage-button="minimax-autoround-target-only" aria-selected="true" tabindex="0">AutoRound · target only</button></div><div class="coverage-panel" role="tabpanel" id="coverage-panel-minimax-autoround-target-only" aria-labelledby="coverage-tab-minimax-autoround-target-only" data-coverage-panel="minimax-autoround-target-only"><p>MiniMax M2.7 AutoRound W4A16 · vLLM XPU · graph on · f16-family KV · MTP/speculation off. Only TP4 is measured in the maintained family packet.</p><div class="scroller" tabindex="0" role="region" aria-label="AutoRound · target only MTP by TP coverage"><table class="data coverage-table"><thead><tr><th>MTP / TP</th><th scope="col">TP1</th><th scope="col">TP2</th><th scope="col">TP4</th></tr></thead><tbody><tr><th scope="row">MTP0</th><td class="coverage-cell is-missing" title="No comparable TP1 AutoRound result is stored."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/minimax-m27-int4-autoround-b70/README.md" aria-label="○ missing: not measured; open record"><span class="state">○ missing</span><b>not measured</b></a></td><td class="coverage-cell is-missing" title="No comparable TP2 AutoRound result is stored."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/minimax-m27-int4-autoround-b70/README.md" aria-label="○ missing: not measured; open record"><span class="state">○ missing</span><b>not measured</b></a></td><td class="coverage-cell is-lab-measured" title="Missing TP1/TP2 cells are unknown, not failed or zero."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json" aria-label="● measured: strict + service; open record"><span class="state">● measured</span><b>strict + service</b></a></td></tr></tbody></table></div></div><div class="coverage-legend"><span class="is-lab-measured">● measured</span><span class="is-lab-screened">△ screened</span><span class="is-community-measured">◐ community</span><span class="is-estimated">≈ estimate</span><span class="is-closed">■ closed</span><span class="is-quarantined">! quarantine</span><span class="is-unsupported">× unsupported</span><span class="is-missing">○ missing</span></div>
 
   <div class="section-head"><div><h2>Scoped closures</h2><p>Impossible and rejected combinations apply only to the exact selectors shown.</p></div></div>
   <div class="closure-grid"><a class="closure-card is-closed" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-110tps-ubuntu24-20260523/results/context-window-32768-20260523.json"><span>closed · revision=minimax-m2.7-lasimeri · variant=AutoRound W4A16 INT4 · runtime=vLLM XPU c51df430 deployable stack · tp=4 · configured_max_context_tokens=33792</span><b>The 33,792-token startup loaded and entered compile/warmup but did not expose /v1/models within the wait window; 32,768 is the promoted service setting.</b></a><a class="closure-card is-closed" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md"><span>closed · revision=minimax-m2.7-lasimeri · variant=AutoRound W4A16 INT4 · runtime=vLLM XPU c51df430 deployable stack · tp=4 · max_num_batched_tokens=1024</span><b>The larger prefill chunk triggered the documented PIECEWISE compile-range/startup failure; 512 remains the stable service setting.</b></a></div>
 
 
   <div class="section-head"><div><h2>Packets and recipes</h2><p>Quantizations are deployment variants inside this family. Lower-maturity packets stay visible with their evidence boundary instead of disappearing.</p></div></div>
-  <div class="packet-grid"><a class="packet-card" href="minimax-m27-b70-89tps-20260520.html" data-family-headroom data-ml-model="minimax_m2.7" data-ml-quant="AutoRound INT4" data-ml-runtime="vllm" data-ml-spec="none" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-measured="89.31419538094708">
-  <div class="packet-top"><span>minimax-m2.7-lasimeri</span><span class="packet-badges"><b>B70-verified historical</b><span class="opt-grade" data-family-headroom-value title="Projected optimization headroom is loading; this is not model quality or packet evidence.">OPT …</span></span></div>
+  <div class="packet-grid"><a class="packet-card" href="minimax-m27-b70-89tps-20260520.html" data-family-headroom data-ml-model="minimax_m2.7" data-ml-quant="AutoRound INT4" data-ml-runtime="vllm" data-ml-spec="none" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-measured="89.31419538094708" data-ml-prompt="512" data-ml-output="1536">
+  <div class="packet-top"><span>minimax-m2.7-lasimeri</span><span class="packet-badges"><b>B70-verified historical</b><span class="opt-grade" data-family-headroom-value title="Projected optimization grade is loading; this compares measured speed with the modeled tuned target, not model quality or packet evidence.">OPT …</span></span></div>
   <h3>MiniMax M2.7 AutoRound · strict TP4</h3>
   <p><strong>89.31 tok/s</strong> measured headline · historical-strict-speed-candidate</p>
+  <small class="packet-workload">Mean output throughput across four promoted warm p512/n1536, batch-one, 2K-context runs after the strict quality gate.</small>
+  <div class="grade-rail"><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="CAP not graded yet">CAP —</span><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="EVID not graded yet">EVID —</span></div>
   <div class="coverage-rail"><span>decode</span><span>exact-token quality</span><span>semantic quality</span><span>retained source</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md">
   <div class="packet-top"><span>minimax-m2.7-lasimeri</span><span class="packet-badges"><b>B70-verified</b></span></div>
   <h3>MiniMax M2.7 AutoRound · deployable TP4</h3>
-  <p><strong>— </strong> evidence packet · qualified-deployment-reference</p>
+  <p><strong>—</strong> evidence packet · qualified-deployment-reference</p>
+  <div class="grade-rail"><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="CAP not graded yet">CAP —</span><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="EVID not graded yet">EVID —</span></div>
   <div class="coverage-rail"><span>decode</span><span>prefill</span><span>TTFT</span><span>configured 32K</span><span>quality</span><span>OpenAI endpoint</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/minimax-production-c1-service.md">
   <div class="packet-top"><span>minimax-m2.7-lasimeri</span><span class="packet-badges"><b>B70-measured operations</b></span></div>
   <h3>MiniMax M2.7 · production c1 profile</h3>
-  <p><strong>— </strong> evidence packet · banked-service-profile</p>
+  <p><strong>—</strong> evidence packet · banked-service-profile</p>
+  <div class="grade-rail"><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="CAP not graded yet">CAP —</span><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="EVID not graded yet">EVID —</span></div>
   <div class="coverage-rail"><span>decode</span><span>TTFT</span><span>near-32K</span><span>serialized concurrency</span><span>operations</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-05-22-minimax-structured-fast-lane-regex2.md">
   <div class="packet-top"><span>minimax-m2.7-lasimeri</span><span class="packet-badges"><b>B70-measured scoped task</b></span></div>
   <h3>MiniMax M2.7 · constrained HTML</h3>
-  <p><strong>— </strong> evidence packet · research-only-task-specific</p>
+  <p><strong>—</strong> evidence packet · research-only-task-specific</p>
+  <div class="grade-rail"><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="CAP not graded yet">CAP —</span><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="EVID not graded yet">EVID —</span></div>
   <div class="coverage-rail"><span>constrained decode</span><span>30/30 accepted</span><span>zero rejects</span><span>not free-form comparable</span></div>
 </a></div>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="../families/minimax-m2-7.json"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>
 <footer><div class="wrap"><span>Unofficial lab, not affiliated with Intel. Measurements link to proof; estimates are labeled.</span><span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span></div></footer>
-<script defer src="../learn/assets/mlbottleneck-bridge.js?v=effc3dbac6"></script>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=6f2fa39f70"></script>
 <script>
 (() => {
   document.querySelectorAll('[data-family-view]').forEach(view => {
@@ -165,11 +175,27 @@
       view.querySelectorAll('[data-family-summary]').forEach(summary => summary.hidden = summary.dataset.familySummary !== metric);
     }));
   });
-  document.querySelectorAll('[data-coverage-button]').forEach(button => button.addEventListener('click', () => {
+  const coverageTabs = Array.from(document.querySelectorAll('[data-coverage-button]'));
+  const activateCoverageTab = (button, moveFocus = false) => {
     const panel = button.dataset.coverageButton;
-    document.querySelectorAll('[data-coverage-button]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+    coverageTabs.forEach(item => {
+      item.setAttribute('aria-selected', String(item === button));
+      item.tabIndex = item === button ? 0 : -1;
+    });
     document.querySelectorAll('[data-coverage-panel]').forEach(item => item.hidden = item.dataset.coveragePanel !== panel);
-  }));
+    if (moveFocus) button.focus();
+  };
+  coverageTabs.forEach((button, index) => {
+    button.addEventListener('click', () => activateCoverageTab(button));
+    button.addEventListener('keydown', event => {
+      let target = null;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') target = coverageTabs[(index + 1) % coverageTabs.length];
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') target = coverageTabs[(index - 1 + coverageTabs.length) % coverageTabs.length];
+      if (event.key === 'Home') target = coverageTabs[0];
+      if (event.key === 'End') target = coverageTabs[coverageTabs.length - 1];
+      if (target) { event.preventDefault(); activateCoverageTab(target, true); }
+    });
+  });
 })();
 </script>
 </body>

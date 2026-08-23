@@ -35,7 +35,7 @@
   .metric-switch, .coverage-switch { display:flex; flex-wrap:wrap; gap:4px; }
   .metric-switch { justify-content:end; }
   .metric-switch button, .coverage-switch button { appearance:none; border:1px solid var(--ink); padding:4px 7px; background:transparent; color:var(--ink); font:700 9px var(--mono); text-transform:uppercase; cursor:pointer; }
-  .metric-switch button[aria-pressed="true"], .coverage-switch button[aria-pressed="true"] { background:var(--ink); color:var(--paper); }
+  .metric-switch button[aria-pressed="true"], .coverage-switch button[aria-selected="true"] { background:var(--ink); color:var(--paper); }
   .family-chart { min-height:210px; }
   .gap-line { height:0!important; border-top:2px dashed var(--muted); background:transparent!important; }
   .proof-links { display:block; margin-top:5px; }
@@ -43,6 +43,7 @@
   .coverage-panel > p { margin:8px 0 0; color:var(--muted); font:11px var(--mono); }
   .coverage-table td { min-width:130px; white-space:normal; }
   .coverage-cell > a { display:block; color:inherit; text-decoration:none; }
+  .coverage-cell .cell-packet { display:inline-block; margin-top:5px; border-bottom:1px solid currentColor; color:var(--muted); font:700 8.5px var(--mono); text-transform:uppercase; }
   .coverage-cell .state { display:block; font:700 9px var(--mono); text-transform:uppercase; }
   .coverage-cell b { display:block; margin-top:3px; font:12px var(--mono); }
   .is-lab-measured .state, .coverage-legend .is-lab-measured { color:var(--good); }
@@ -67,6 +68,10 @@
   .opt-grade[data-ready="true"] { background:var(--spot); color:#fff; }
   .packet-card h3 { margin:7px 0 5px; font:900 15px/1.15 var(--display); text-transform:uppercase; }
   .packet-card p { margin:0; color:var(--muted); font-size:12px; }
+  .packet-workload { display:block; margin-top:5px; color:var(--muted); font:9.5px/1.35 var(--mono); }
+  .grade-rail { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .curated-grade { padding:2px 5px; border:1px solid var(--ink); font:800 8.5px var(--mono); text-transform:uppercase; }
+  .curated-grade.is-pending { border-color:var(--line); color:var(--muted); }
   .coverage-rail { display:flex; flex-wrap:wrap; gap:3px; margin-top:9px; }
   .coverage-rail span { padding:2px 5px; background:var(--surface); border:1px solid var(--line); font:8.5px var(--mono); text-transform:uppercase; }
   .scope-note { margin:12px 0 0; padding:10px 12px; border-left:5px solid var(--spot); background:var(--surface); font-size:12.5px; }
@@ -91,11 +96,11 @@
   <div class="signals" aria-label="Family signals">
     <div class="signal"><span>B70 fit</span><b>high</b><small>local-llm-on-b70, reviewed 2026-08-23</small></div>
     <div class="signal"><span>Quality evidence</span><b>scoped deployment evidence</b><small>reasoning-off, temperature-zero repeat stability plus arithmetic, copy, and JSON canaries for the exact UD-Q4_K_M llama.cpp/SYCL deployment; not a general model-quality score</small></div>
-    <div class="signal"><span>Interest snapshot</span><b>107161</b><small>2026-08-22T02:47:17Z</small></div>
+    <div class="signal"><span>Interest snapshot</span><b>107.16K</b><small>2026-08-22T02:47:17Z · third-party GGUF repository snapshot; popularity is a discovery signal, not validation</small></div>
     <div class="signal"><span>Evidence slices</span><b>3</b><small>run arms and measured series; every point links to proof</small></div>
     <div class="signal"><span>Stored estimates</span><b>0</b><small>versioned gap estimates only; live OPT grades stay separate</small></div>
   </div>
-  <p class="scope-note"><strong>Transfer boundary:</strong> nemotron_h_moe, 53 layers, 2688 hidden. Only one model artifact and quantization are measured; no cross-quantization, cross-runtime, or later-weight transfer is claimed.. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p>
+  <p class="scope-note"><strong>Transfer boundary:</strong> nemotron_h_moe, 53 layers, 2688 hidden. Only one model artifact and quantization are measured; no cross-quantization, cross-runtime, or later-weight transfer is claimed. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p>
 
   <div class="section-head"><div><h2>Measured slices</h2><p>Metric switches change the question without changing the configuration. Whiskers retain every captured repeat; no missing point is interpolated.</p></div><a class="inline" href="../families/nemotron-3-5.json">family data</a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="nemotron-card-count">
@@ -116,17 +121,19 @@
 
 
   <div class="section-head"><div><h2>Packets and recipes</h2><p>Quantizations are deployment variants inside this family. Lower-maturity packets stay visible with their evidence boundary instead of disappearing.</p></div></div>
-  <div class="packet-grid"><a class="packet-card" href="nemotron-35-lightning-30b-a3b-b70.html" data-family-headroom data-ml-model="nemotron3.5_lightning_30b_a3b" data-ml-quant="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-spec="none" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-measured="72.169452">
-  <div class="packet-top"><span>nemotron-3.5-lightning-30b-a3b</span><span class="packet-badges"><b>B70-verified</b><span class="opt-grade" data-family-headroom-value title="Projected optimization headroom is loading; this is not model quality or packet evidence.">OPT …</span></span></div>
+  <div class="packet-grid"><a class="packet-card" href="nemotron-35-lightning-30b-a3b-b70.html">
+  <div class="packet-top"><span>nemotron-3.5-lightning-30b-a3b</span><span class="packet-badges"><b>B70-verified</b><span class="opt-grade" title="OPT is withheld until this measured workload has explicit prompt and output token selectors.">OPT —</span></span></div>
   <h3>Nemotron 3.5 Lightning 30B-A3B · UD-Q4_K_M · one B70</h3>
   <p><strong>72.17 tok/s</strong> measured headline · candidate</p>
+  <small class="packet-workload">Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 72.035976.</small>
+  <div class="grade-rail"><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="CAP not graded yet">CAP —</span><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="EVID not graded yet">EVID —</span></div>
   <div class="coverage-rail"><span>decode</span><span>prefill</span><span>context through 32K</span><span>quality</span><span>recipe</span></div>
 </a></div>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="../families/nemotron-3-5.json"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>
 <footer><div class="wrap"><span>Unofficial lab, not affiliated with Intel. Measurements link to proof; estimates are labeled.</span><span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span></div></footer>
-<script defer src="../learn/assets/mlbottleneck-bridge.js?v=effc3dbac6"></script>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=6f2fa39f70"></script>
 <script>
 (() => {
   document.querySelectorAll('[data-family-view]').forEach(view => {
@@ -137,11 +144,27 @@
       view.querySelectorAll('[data-family-summary]').forEach(summary => summary.hidden = summary.dataset.familySummary !== metric);
     }));
   });
-  document.querySelectorAll('[data-coverage-button]').forEach(button => button.addEventListener('click', () => {
+  const coverageTabs = Array.from(document.querySelectorAll('[data-coverage-button]'));
+  const activateCoverageTab = (button, moveFocus = false) => {
     const panel = button.dataset.coverageButton;
-    document.querySelectorAll('[data-coverage-button]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+    coverageTabs.forEach(item => {
+      item.setAttribute('aria-selected', String(item === button));
+      item.tabIndex = item === button ? 0 : -1;
+    });
     document.querySelectorAll('[data-coverage-panel]').forEach(item => item.hidden = item.dataset.coveragePanel !== panel);
-  }));
+    if (moveFocus) button.focus();
+  };
+  coverageTabs.forEach((button, index) => {
+    button.addEventListener('click', () => activateCoverageTab(button));
+    button.addEventListener('keydown', event => {
+      let target = null;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') target = coverageTabs[(index + 1) % coverageTabs.length];
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') target = coverageTabs[(index - 1 + coverageTabs.length) % coverageTabs.length];
+      if (event.key === 'Home') target = coverageTabs[0];
+      if (event.key === 'End') target = coverageTabs[coverageTabs.length - 1];
+      if (target) { event.preventDefault(); activateCoverageTab(target, true); }
+    });
+  });
 })();
 </script>
 </body>

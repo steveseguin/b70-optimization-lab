@@ -116,13 +116,17 @@
   }
 
   function requestFromDataset(data) {
+    const promptTokens = Number(data.mlPrompt);
+    const outputTokens = Number(data.mlOutput);
+    if (!Number.isInteger(promptTokens) || promptTokens <= 0
+        || !Number.isInteger(outputTokens) || outputTokens <= 0) return null;
     const request = {
       model: data.mlModel,
       hardware: { template: data.mlHardware || 'Intel Arc Pro B70', count: parseInt(data.mlCards, 10) || 1 },
       quantization: data.mlQuant || 'q4',
       runtime: data.mlRuntime || 'auto',
-      promptTokens: parseInt(data.mlPrompt, 10) || 1024,
-      outputTokens: parseInt(data.mlOutput, 10) || 256,
+      promptTokens,
+      outputTokens,
       speculation: parseSpec(data.mlSpec)
     };
     if (data.mlStrategy) request.strategy = data.mlStrategy;
@@ -176,7 +180,9 @@
     if (!section) return;
     const grid = section.querySelector('[data-headroom-grid]');
     const status = section.querySelector('[data-headroom-status]');
-    const rows = Array.from(document.querySelectorAll('tr[data-ml-model]'));
+    const rows = Array.from(document.querySelectorAll('tr[data-ml-model]')).filter(
+      row => requestFromDataset(row.dataset)
+    );
     if (!grid || !rows.length) return;
     let engine;
     try {
@@ -198,10 +204,13 @@
         clone.querySelectorAll('small, .dot, .visually-hidden, .status').forEach(node => node.remove());
         title = clone.textContent.replace(/\s+/g, ' ').trim() || data.mlModel;
       }
-      const card = buildHeadroomCard(engine, requestFromDataset(data), measured, title, deploymentLabel(data));
+      const request = requestFromDataset(data);
+      if (!request) continue;
+      const card = buildHeadroomCard(engine, request, measured, title, deploymentLabel(data));
       if (card) cards.push(card.html);
     }
     grid.innerHTML = cards.join('');
+    if (!cards.length) return;
     if (status) {
       status.textContent = engine.__hasEvidence
         ? 'Projections by the ML Bottleneck physics engine (v' + engine.version + '), calibrated against community benchmark evidence. Grades compare the lab measurement with the projected tuned-run target; they are estimates, not measurements.'
@@ -432,6 +441,7 @@
     const data = root.dataset;
     const measured = parseFloat(data.mlMeasured);
     const request = requestFromDataset(data);
+    if (!request) return;
     const title = (document.querySelector('header.hero h1') || {}).textContent || data.mlModel;
     const card = buildHeadroomCard(engine, request, measured, title.trim(), deploymentLabel(data));
     if (!card) {
@@ -474,8 +484,13 @@
       const measured = parseFloat(card.dataset.mlMeasured);
       const badge = card.querySelector('[data-family-headroom-value]');
       if (!badge || !Number.isFinite(measured)) continue;
+      const request = requestFromDataset(card.dataset);
+      if (!request) {
+        badge.textContent = 'OPT —';
+        continue;
+      }
       try {
-        const result = engine.predict(requestFromDataset(card.dataset));
+        const result = engine.predict(request);
         const target = result.ceiling && result.ceiling.optimizedTokensPerSecond;
         const g = grade(target > 0 ? measured / target : NaN);
         badge.textContent = 'OPT ' + g.letter;

@@ -52,7 +52,7 @@ PACKAGE_ML = {
     "gemma4-26b-a4b-q8-b70-125tps-20260701": {"model": "gemma4_26b_a4b", "quant": "UD-Q8_K_XL", "runtime": "llama_cpp", "spec": "mtp:3"},
     "laguna-s-2.1-int4-b70-125tps-20260731": {"model": "laguna_s_2.1", "quant": "AutoRound INT4", "runtime": "vllm", "spec": "dflash:11"},
     "lfm25-26b-q8-b70": {"model": "lfm2.5_2.6b", "quant": "Q8_0", "runtime": "llama_cpp", "spec": "none"},
-    "minimax-m27-b70-89tps-20260520": {"model": "minimax_m2.7", "quant": "AutoRound INT4", "runtime": "vllm", "spec": "none"},
+    "minimax-m27-b70-89tps-20260520": {"model": "minimax_m2.7", "quant": "AutoRound INT4", "runtime": "vllm", "spec": "none", "prompt_tokens": 512, "output_tokens": 1536},
     "muse-glimmer-30b-q8-woq-b70-100tps-20260813": {"model": "muse_glimmer_30b", "quant": "UD-Q8_K_XL", "runtime": "llama_cpp", "spec": "draft_model:15", "strategy": "tensor"},
     "nemotron-35-lightning-30b-a3b-b70": {"model": "nemotron3.5_lightning_30b_a3b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none"},
     "ornith-15-35b-a3b-q4km-b70": {"model": "ornith_1.5_35b_a3b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none"},
@@ -61,7 +61,7 @@ PACKAGE_ML = {
     # does not encode its draft depth; the latter's measured rate and launcher
     # do not share the reasoning/workload identity expected by the projection.
     # Their measured 26.7 and 36.8 tok/s headlines remain shown unchanged.
-    "qwen38-27b-fp8-vllm-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "FP8", "runtime": "vllm", "spec": "none"},
+    "qwen38-27b-fp8-vllm-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "FP8", "runtime": "vllm", "spec": "none", "prompt_tokens": 512, "output_tokens": 128},
     "qwen38-27b-q4km-tp1-b70": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none"},
     "qwen38-27b-q4km-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "strategy": "tensor"},
 }
@@ -71,6 +71,13 @@ STATUS_LABEL = {"candidate": "Candidate package", "lab": "Lab result", "research
 
 def esc(value):
     return html.escape(str(value if value is not None else ""), quote=True)
+
+
+def json_for_html_script(value):
+    return (json.dumps(value, ensure_ascii=False)
+            .replace("&", "\\u0026")
+            .replace("<", "\\u003c")
+            .replace(">", "\\u003e"))
 
 
 def fmt(value):
@@ -179,10 +186,18 @@ def page(pkg, all_pkgs, family=None):
     status = STATUS_LABEL.get(pkg.get("status"), pkg.get("status", "").title())
     ml = PACKAGE_ML.get(pid)
     ml_attrs = ""
-    if ml:
+    exact_projection_workload = bool(
+        ml
+        and isinstance(ml.get("prompt_tokens"), int)
+        and ml["prompt_tokens"] > 0
+        and isinstance(ml.get("output_tokens"), int)
+        and ml["output_tokens"] > 0
+    )
+    if exact_projection_workload:
         ml_attrs = (f' data-ml-model="{esc(ml["model"])}" data-ml-quant="{esc(ml["quant"])}" data-ml-runtime="{esc(ml["runtime"])}"'
                     f' data-ml-cards="{esc(hw.get("cards", 1))}" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="{esc(ml.get("spec", "none"))}"'
                     f' data-ml-measured="{esc(fm.get("value", ""))}" data-ml-quant-label="{esc(lib.get("quantization", ""))}" data-ml-runtime-label="{esc(lib.get("runtime_label", ""))}"'
+                    f' data-ml-prompt="{esc(ml["prompt_tokens"])}" data-ml-output="{esc(ml["output_tokens"])}"'
                     + (f' data-ml-strategy="{esc(ml["strategy"])}"' if ml.get("strategy") else ""))
     facts = [
         ("Model", f"{lib.get('model_family', '')} {lib.get('variant', '')}".strip()),
@@ -259,7 +274,7 @@ def page(pkg, all_pkgs, family=None):
         "itemListElement": crumb_items,
     }
     projection_html = ""
-    if ml:
+    if exact_projection_workload:
         projection_html = f"""
   <h2 id="projection">How much faster could this get? <span class="badge spec">Projected — not measured</span></h2>
   <p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects what stock software, a tuned run, and the physical ceiling look like for this exact model, compression, card count, and software. The grade is optimization headroom against the tuned-run target, not model quality.</p>
@@ -269,6 +284,10 @@ def page(pkg, all_pkgs, family=None):
     <div data-package-charts></div>
   </div>
   <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript>"""
+    elif ml:
+        projection_html = """
+  <h2 id="projection">Optimization grade <span class="badge spec">OPT —</span></h2>
+  <p>The measured headline aggregates more than one prompt or completion shape, so a like-for-like tuned-run projection is withheld. The measured speed above is unchanged.</p>"""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -287,10 +306,10 @@ def page(pkg, all_pkgs, family=None):
 <meta property="og:site_name" content="neural.download">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{json.dumps(ld, ensure_ascii=False)}
+{json_for_html_script(ld)}
 </script>
 <script type="application/ld+json">
-{json.dumps(crumbs, ensure_ascii=False)}
+{json_for_html_script(crumbs)}
 </script>
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
@@ -451,7 +470,7 @@ def index_page(pkgs, families):
 <meta property="og:site_name" content="neural.download">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{json.dumps({"@context": "https://schema.org", "@type": "CollectionPage", "name": "Model families on Intel Arc Pro B70", "url": f"{SITE}models/", "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": SITE}, "inLanguage": "en", "isAccessibleForFree": True})}
+{json_for_html_script({"@context": "https://schema.org", "@type": "CollectionPage", "name": "Model families on Intel Arc Pro B70", "url": f"{SITE}models/", "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": SITE}, "inLanguage": "en", "isAccessibleForFree": True})}
 </script>
 <link rel="stylesheet" href="../learn/learn.css">
 <style>

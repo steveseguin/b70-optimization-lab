@@ -87,7 +87,7 @@
   <p>Validated one-card target-only route with an exact pinned source-and-patch rebuild.</p>
 </div></header>
 
-<main id="main"><div class="wrap"><div class="col prose" id="package-page" data-ml-model="qwen3.8_27b" data-ml-quant="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="27.82479" data-ml-quant-label="Q4_K_M" data-ml-runtime-label="llama.cpp SYCL">
+<main id="main"><div class="wrap"><div class="col prose" id="package-page">
 
   <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2>
   <div class="measured"><span class="big">27.8</span><span class="unit">tok/s decode</span></div>
@@ -102,14 +102,8 @@
 <div class="missing"><p class="missing-tag">Still missing before this becomes an install guide</p><ul><li>tested clean-host Intel driver and oneAPI installation</li><li>clean-host source build and endpoint replay</li><li>beginner recovery flow</li><li>decode, prefill, and TTFT context sweep</li></ul></div>
 
 
-  <h2 id="projection">How much faster could this get? <span class="badge spec">Projected — not measured</span></h2>
-  <p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects what stock software, a tuned run, and the physical ceiling look like for this exact model, compression, card count, and software. The grade is optimization headroom against the tuned-run target, not model quality.</p>
-  <div id="package-projection" class="projection" hidden>
-    <p class="projection-status" data-projection-status>Loading projections from mlbottleneck.com…</p>
-    <div data-package-card></div>
-    <div data-package-charts></div>
-  </div>
-  <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript>
+  <h2 id="projection">Optimization grade <span class="badge spec">OPT —</span></h2>
+  <p>The measured headline aggregates more than one prompt or completion shape, so a like-for-like tuned-run projection is withheld. The measured speed above is unchanged.</p>
 
   <div class="related">
     <h2>Keep going</h2>
@@ -128,7 +122,7 @@
   <span>Unofficial lab, not affiliated with Intel. Measured numbers link to proof; projections are labeled.</span>
   <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
 </div></footer>
-<script defer src="../learn/assets/mlbottleneck-bridge.js?v=effc3dbac6"></script>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=6f2fa39f70"></script>
 <script>
 (() => {
   document.querySelectorAll("[data-copy-markdown]").forEach((button) => {
