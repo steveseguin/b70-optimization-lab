@@ -1,0 +1,33 @@
+{
+  "date": "2026-08-22",
+  "classification": "correctness negative; no performance screen",
+  "model": {
+    "name": "Ornith 1.5 35B-A3B Q4_K_M",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "runtime": {
+    "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_stack_doors": [
+      "GGML_SYCL_FUSED_MOE_ADD_REDUCE=1",
+      "GGML_SYCL_FUSED_ORNITH_CONV_SILU=1"
+    ],
+    "candidate_door": "GGML_SYCL_FUSED_MOE_WEIGHTED_REDUCE=1",
+    "candidate_patch": "experiments/ornith-15-b70/patches/llamacpp-ornith15-weighted-reduce-correctness-negative-20260822.patch",
+    "candidate_patch_sha256": "30d81d1f6b25007e0e5b7332e57da5b5ffec5213f0c760cf335dcc1f77e42529"
+  },
+  "candidate": {
+    "intended_launches_removed_per_token": 40,
+    "intended_temporary_traffic_removed_bytes_per_token": 5242880,
+    "matched_layers_per_token": 40,
+    "implementation": "multiply each routed expert row by its scalar weight, force a volatile FP32 product, then reduce the eight products in stock expert order"
+  },
+  "correctness": {
+    "protocol": "same binary, door off/on, fixed seed 424242, temperature 0, forced 128-token single-turn CLI",
+    "candidate_fused_hits": 5080,
+    "control_output_sha256": "c6fe7cb03197eb3bb04c65ee6558f1f908f5da08cb6eb15166ab724d49fd427f",
+    "candidate_output_sha256": "e37dbe4d92e5e5a268389da87ef19cbf1ba0f7f8b30901a4c501220e931450f4",
+    "byte_identical": false,
+    "first_observed_difference": "the hidden reasoning text diverged within the first generated paragraph"
+  },
+  "decision": "reject before timing and keep the graph-visible weighted multiplication"
+}

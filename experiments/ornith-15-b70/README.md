@@ -85,6 +85,13 @@ binary, driver, or benchmark protocol will reproduce them.
   measured `109.643` versus `109.991 tok/s` (**-0.32%**). WG128 and WG512 also
   produced no screen win. Keep WG256; no server run was justified. See
   `notes/2026-08-22-ornith35b-conv-workgroup-neutral.md`.
+- **Weighted routed-expert reduction — CLOSED CORRECTNESS NEGATIVE:** absorbing
+  the remaining expert-weight `MUL` into the ordered reduction would remove 40
+  more launches/token and about 5 MiB/token of temporary traffic. The narrow
+  candidate matched every intended layer, but a same-binary forced 128-token
+  greedy run diverged despite volatile FP32 products. Keep the weighted
+  multiplication graph-visible; no timing result was promoted. See
+  `notes/2026-08-22-ornith35b-weighted-reduce-correctness-negative.md`.
 - **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
   tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
   the tuned dispatch and beat the now-promoted ordered reduction.
