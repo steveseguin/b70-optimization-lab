@@ -127,14 +127,20 @@ from the lab's Qwen work combines each recurrent convolution-input concat with
 its persistent-state copy while preserving both outputs, bringing the stack to
 380 removed launches/token. It improved matched engine decode by **3.53%** and
 fresh serving by **2.74%** (`105.767` to `108.662 tok/s` mean), with exact
-forced output and passing canaries. A wider
-direct-state form is archived as a correctness negative. The package remains a
+forced output and passing canaries. A fifth, safer direct-state transfer folds
+the exact one-row recurrent gather into that boundary while materializing every
+graph-visible output and leaving the convolution separate. The complete stack
+now removes 410 launches/token. It improved matched engine decode by **1.97%**
+and fresh serving by **1.12%** (`110.646` to `111.883 tok/s` mean), again with
+byte-identical forced output and passing canaries. The earlier wider direct-state
+form remains archived as a correctness negative. The package remains a
 candidate pending clean-host replay; see the [guide](repro/ornith-15-35b-a3b-q4km-b70/README.md),
 [patch packet](patches/ornith-15-35b-a3b-q4km-b70/README.md), and
 [MoE evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md),
 [recurrent-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md),
 [residual-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-residual-rms-positive.md),
-and [state-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-positive.md).
+[state-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-positive.md),
+and [direct-state evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-direct-positive.md).
 
 Publication architecture: keep `index.html` curated and put the growing set
 of model/quant/card/OS/native-container variants in `guides.html`. That page

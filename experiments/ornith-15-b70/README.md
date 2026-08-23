@@ -113,6 +113,15 @@ binary, driver, or benchmark protocol will reproduce them.
   (+3.53%); fresh-server means improved `105.767 -> 108.662 tok/s` (+2.74%).
   Forced 128-token output was byte-identical and all canaries passed. See
   `notes/2026-08-22-ornith35b-concat-state-positive.md`.
+- **Direct recurrent gather + concat/state — ACCEPTED +1.12% incremental
+  serving:** the strict one-row Ornith path now materializes the original
+  `GET_ROWS` output, full `[4,8192]` convolution input, and shifted persistent
+  state in one channel-owned kernel. It leaves `SSM_CONV` separate and loads
+  every old state value before the in-place update. Engine means improved
+  `114.559 -> 116.818 tok/s` (+1.97%); fresh-server means improved
+  `110.646 -> 111.883 tok/s` (+1.12%). Forced 128-token output was
+  byte-identical before and after matcher hardening, and all canaries passed.
+  See `notes/2026-08-22-ornith35b-concat-state-direct-positive.md`.
 - **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
   tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
   the tuned dispatch and beat the now-promoted ordered reduction.

@@ -44,8 +44,8 @@ git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-ornith15
 cd llama.cpp-ornith15
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
 
-PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-20260822.patch
-echo "63b6ded253abdeec62f210bed71ed5640f1abe330e6c43b08338890674cf188b  $PATCH" | sha256sum -c -
+PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-20260822.patch
+echo "8ade7f2bcb4410c7e3a69e9e673fc0b2f30dae6c2b85896ebe52883c4e731bcf  $PATCH" | sha256sum -c -
 git apply --check "$PATCH"
 git apply "$PATCH"
 git diff --check
@@ -71,7 +71,7 @@ cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2
 ```
 
 The validated compute library SHA-256 was
-`0fad7ec2345084bbbdad40e5da388d80d58fa9532034753547cf06de5f804929`.
+`7b9735458dcfdc94b71a3eeb7e9a00cbe349a93242f03d6f8639996c87a7152d`.
 AOT output can vary with the compiler installation, so the source revision,
 patch hash, build settings, and validation gates are the durable identity.
 
@@ -93,6 +93,7 @@ export GGML_SYCL_FUSED_MOE_ADD_REDUCE=1
 export GGML_SYCL_FUSED_ORNITH_CONV_SILU=1
 export GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1
 export GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1
+export GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1
 
 build-sycl-aot-bmg-g31/bin/llama-server \
   --model "$MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf" \
@@ -151,7 +152,7 @@ Correctness gates:
   open runtime limitation rather than a patch acceptance gate.
 
 Patch instructions and evidence:
-[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-20260822.patch),
+[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-20260822.patch),
 [patch packet](../../patches/ornith-15-35b-a3b-q4km-b70/README.md), and
 [`experiments/ornith-15-b70/`](../../experiments/ornith-15-b70/).
 
@@ -186,6 +187,19 @@ fresh-server means improved `105.767 -> 108.662 tok/s` (**+2.74%**). The
 forced 128-token output was byte-identical and the full canary battery passed.
 Evidence:
 [`2026-08-22-ornith35b-concat-state-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-positive.md).
+
+The fifth package increment uses the same Qwen lineage but tightens the
+transfer to Ornith's exact one-row persistent-state layout. One channel-owned
+kernel now materializes the original gathered-state tensor, full convolution
+input, and shifted persistent state, while leaving `SSM_CONV` separate. It
+loads all old values before the in-place state write and requires exact source
+identity, sole-consumer, node-order, shape, stride, and non-overlap proofs.
+This removes another 30 launches/token, bringing the complete stack to 410.
+Matched engine means improved `114.559 -> 116.818 tok/s` (**+1.97%**) and
+fresh-server means improved `110.646 -> 111.883 tok/s` (**+1.12%**). The
+forced 128-token output was byte-identical, the hardened matcher retained all
+3,810 expected hits, and the full canary battery passed. Evidence:
+[`2026-08-22-ornith35b-concat-state-direct-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-direct-positive.md).
 
 ## Stock two-card comparison (patch off; layer split, GPUs 0+1)
 

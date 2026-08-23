@@ -1,0 +1,63 @@
+{
+  "date": "2026-08-22",
+  "classification": "accepted target-only package increment",
+  "model": {
+    "name": "Ornith 1.5 35B-A3B Q4_K_M",
+    "architecture": "qwen35moe",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "runtime": {
+    "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "candidate_library_sha256": "7b9735458dcfdc94b71a3eeb7e9a00cbe349a93242f03d6f8639996c87a7152d",
+    "complete_patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-direct-20260822.patch",
+    "complete_patch_sha256": "8ade7f2bcb4410c7e3a69e9e673fc0b2f30dae6c2b85896ebe52883c4e731bcf",
+    "door": "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1",
+    "required_parent_door": "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1"
+  },
+  "mechanism": {
+    "matched_boundaries_per_token": 30,
+    "launches_removed_per_token": 30,
+    "cumulative_launches_removed_per_token_with_package_stack": 410,
+    "description": "materialize the recurrent GET_ROWS result, full [4,8192] FP32 convolution input, and shifted persistent state in one channel-owned kernel; leave SSM_CONV separate"
+  },
+  "engine": {
+    "protocol": "same binary, mirrored control/candidate/candidate/control; llama-bench p0/n128/d0/r7, F16 KV, flash attention, one B70",
+    "control_tok_s": [
+      113.744265,
+      115.373665
+    ],
+    "candidate_tok_s": [
+      116.710918,
+      116.925465
+    ],
+    "control_mean_tok_s": 114.558965,
+    "candidate_mean_tok_s": 116.81819150000001,
+    "delta_percent": 1.9721079882312198
+  },
+  "serving": {
+    "protocol": "four fresh servers in control/candidate/candidate/control order; fixed 12-prompt suite; 512 requested output tokens; tokens 1-100 after TTFT; cache_prompt=false",
+    "control_median_tok_s": [
+      110.03481729039723,
+      111.25729796282194
+    ],
+    "candidate_median_tok_s": [
+      111.43147625759562,
+      112.33354985884657
+    ],
+    "control_mean_tok_s": 110.64605762660958,
+    "candidate_mean_tok_s": 111.8825130582211,
+    "delta_percent": 1.117487109919546,
+    "all_freshness_gates_passed": true,
+    "cached_tokens_all_zero": true
+  },
+  "correctness": {
+    "protocol": "same binary, fixed seed 42, temperature 0, forced 128-token single-turn CLI",
+    "candidate_direct_fused_hits": 3810,
+    "candidate_parent_fused_hits": 0,
+    "control_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "candidate_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "byte_identical": true,
+    "post_hardening_candidate_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "candidate_canaries_pass_all": true
+  }
+}
