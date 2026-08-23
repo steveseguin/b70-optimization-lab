@@ -1,0 +1,46 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "candidate_library_sha256": "7fa7eab5cbd15d4f48b3ac189d83e59b9f5b3480b03bc280200f2b7ea07b251e",
+  "candidate_patch_sha256": "d658127bee5f7e109af9c30abdebcc84053e0957420e12664d7283688961edc9",
+  "candidate_door": "GGML_SYCL_FUSED_ORNITH_ATTN_GATE_CONT=1",
+  "parent_stack": [
+    "GGML_SYCL_FUSED_MOE_ADD_REDUCE=1",
+    "GGML_SYCL_FUSED_ORNITH_CONV_SILU=1",
+    "GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1",
+    "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1",
+    "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT=1",
+    "GGML_SYCL_FUSED_ORNITH_ALPHA_GATE=1"
+  ],
+  "removed_launches_per_decoded_token_incremental": 10,
+  "engine": {
+    "protocol": "llama-bench p0/n128/d0/r7, same final binary, two mirrored four-process pairs",
+    "controls_tok_s": [117.001050, 117.877584, 116.287503, 118.446956],
+    "candidates_tok_s": [117.209415, 118.625178, 119.059512, 119.167630],
+    "control_mean_tok_s": 117.40327325,
+    "candidate_mean_tok_s": 118.51543375,
+    "delta_percent": 0.9472993974
+  },
+  "fresh_server": {
+    "protocol": "mirrored fresh control/candidate processes; fixed 12-prompt suite; each prompt once; 512-token responses; median tokens 1-100 after TTFT; cached_tokens=0",
+    "controls_tok_s": [114.02589810094442, 112.73910933305211],
+    "candidates_tok_s": [114.2887969458387, 113.2943025070145],
+    "control_mean_tok_s": 113.38250371699826,
+    "candidate_mean_tok_s": 113.79154972642661,
+    "delta_percent": 0.3607664287,
+    "all_freshness_gates_passed": true,
+    "all_final_gates_passed": true,
+    "each_candidate_exceeded_each_control": false,
+    "ordering_dominated_effect": true
+  },
+  "correctness": {
+    "canonical_128_token_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "same_binary_control_candidate_byte_identical": true,
+    "candidate_fused_hits_128_tokens": 1270,
+    "candidate_fused_hits_server_process": 61320
+  },
+  "result": "closed neutral; not promoted or packaged",
+  "reason": "Ten steady-state copies were removed exactly and the engine loop improved, but the realistic-server effect was smaller than process variation and candidate B lost to control A."
+}

@@ -139,6 +139,13 @@ binary, driver, or benchmark protocol will reproduce them.
   and beat control B. Ordering noise dominated the effect, so the fusion is
   archived and not shipped. See
   `notes/2026-08-23-ornith35b-beta-gdn-neutral.md`.
+- **Attention-gate copy bypass — CLOSED NEUTRAL:** the Qwen-derived attention
+  path's ten strided gate copies were bypassed inside the already-fused
+  sigmoid/multiply kernel. Exact output and the expected 10 launches/token
+  were confirmed. The engine mean improved 0.95%, but fresh-server means moved
+  only `113.383 -> 113.792 tok/s` (+0.36%) and the arms crossed. The candidate
+  is archived and not shipped. See
+  `notes/2026-08-23-ornith35b-attn-gate-cont-neutral.md`.
 - **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
   tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
   the tuned dispatch and beat the now-promoted ordered reduction.
