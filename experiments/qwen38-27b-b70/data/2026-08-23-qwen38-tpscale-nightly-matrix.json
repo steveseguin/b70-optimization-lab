@@ -26,6 +26,7 @@
  "quality_status": "TP1, TP2-graph, and TP4-graph passed seven objective canaries, 8-run same-server repeat, cache-zero checks, and an 8K needle. No --baseline-json was supplied: baseline_comparisons is empty and baseline_match_all=true is vacuous. Cross-boot autotune caveat applies to all.",
  "submission_status": "diagnostic only: benchmark request payload used ignore_eos=true; a natural-EOS strict 100-event/99-interval final gate is still required",
  "replication_status": "TP2 graph has one 25-prompt performance capture; TP4 graph has two independent 25-prompt captures with 21/25 complete-output agreement. TP2 needs a fresh-cache repeat before promotion.",
+ "speculative_status": "TP2 eager MTP2 now boots from a fresh ext4 cache and passes the exact code-14/cache-zero canary. The old TP4 failure remains infrastructure-invalid; an equivalent TP4 isolated-cache smoke is the next qualified cell. No TP2 MTP performance or full-battery claim is made.",
  "arms": {
   "tp2-mtp0-f16-a": {
    "tp": 2,
@@ -80,6 +81,23 @@
    "rows_valid": 25,
    "cached_tokens_all_zero": true,
    "complete_output_match_vs_a3": "21/25"
+  },
+  "tp2-mtp2-f16-isolated-seed0-smoke-b": {
+   "tp": 2,
+   "gpus": "2,3",
+   "graph": false,
+   "mtp": 2,
+   "kv": "f16",
+   "gpu_mem_util": 0.6,
+   "pythonhashseed": 0,
+   "cache_policy": "fresh ext4; VLLM_CACHE_ROOT and XDG_CACHE_HOME only; no shared TORCHINDUCTOR_CACHE_DIR or TRITON_CACHE_DIR override",
+   "service_boot": "pass",
+   "code_14_canary": "pass",
+   "cached_tokens": 0,
+   "finish_reason": "stop",
+   "performance_run": false,
+   "full_quality_battery": false,
+   "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp2-mtp2-f16-isolated-seed0-smoke-b"
   }
  },
  "raw_evidence_sha256": {
@@ -89,5 +107,11 @@
   "tp2_graph_quality_json": "e51d506f12d30004ec55354fbbe40080c096ce5309939a79ccbdac340d900075",
   "tp4_graph_quality_json": "4d1b126823464ef72fd57cacb9a47f1ef405c86fa6c707e698e93237d1ff50d0",
   "tp4_mtp2_server_log": "b229f25b3f605e03be773859a0a504d3b70300b4ef8804bbadc608f2bc34a007"
+ },
+ "isolated_cache_evidence_sha256": {
+  "tp2_mtp2_canary_json": "e9345b337d665361ee37691d59d1e84813b9308bcae791379a587ba91e773368",
+  "tp2_mtp2_server_log": "b06b0f89975edb97131dd81c085f74013eb156c779174c840c1fc48c91bfc9cb",
+  "tp2_mtp2_identity_env": "1d5a14f8e1064c360f97896c6efacb7a7922f973621b71e3166ecbbd8f89b107",
+  "tp2_mtp2_complete_cache_manifest": "8e348fce5faf203e09455defa4ade36925135177eebda3decfcfbfa4e4ff0929"
  }
 }
