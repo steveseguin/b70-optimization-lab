@@ -1,0 +1,38 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "lineage_rationale": "Ornith is Qwen-derived; profile first, then correctness-gate transferred optimization ideas",
+  "profile": {
+    "generic_reordered_dmmv_calls_per_steady_decode_graph": 231,
+    "ncols_2048_calls": 151,
+    "ncols_2048_fraction": 0.6536796537,
+    "ncols_2048_q4_k_calls": 131,
+    "ncols_2048_q6_k_calls": 20
+  },
+  "candidate": "default-off Q4_K/Q6_K reordered ESIMD specialization with fixed_num_blocks=8 and accepted WG4 arithmetic order",
+  "activation": {
+    "smoke_hits": 456,
+    "canonical_128_hits": 19180
+  },
+  "correctness": {
+    "control_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "candidate_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "accepted_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+    "exact": true
+  },
+  "protocol": "same-binary flag-off/flag-on; depth-zero tg128; seven repetitions; A/B/B/A",
+  "points": [
+    {"order": 1, "arm": "control", "avg_tok_s": 133.788793, "stddev_tok_s": 1.786234},
+    {"order": 2, "arm": "fixed_2048", "avg_tok_s": 133.511399, "stddev_tok_s": 2.026809},
+    {"order": 3, "arm": "fixed_2048", "avg_tok_s": 132.310094, "stddev_tok_s": 1.392879},
+    {"order": 4, "arm": "control", "avg_tok_s": 132.799828, "stddev_tok_s": 2.086472}
+  ],
+  "control_mean_tok_s": 133.2943105,
+  "candidate_mean_tok_s": 132.9107465,
+  "delta_percent": -0.2877572183,
+  "decision": "closed performance negative; retain generic WG4 kernel",
+  "fresh_server_escalated": false,
+  "no_extrapolation": true
+}

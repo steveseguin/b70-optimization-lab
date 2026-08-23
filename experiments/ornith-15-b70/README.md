@@ -476,6 +476,12 @@ binary, driver, or benchmark protocol will reproduce them.
   `67.20 -> 67.05 tok/s` (-0.22%). Retain the exact component and structural
   trace, but do not add it to the preferred stack; see
   `notes/2026-08-23-ornith35b-mtp2row-two-snapshot-state-research.md`.
+- **Qwen-shaped fixed-2048 DMMV transfer — PERFORMANCE NEGATIVE:** profiling
+  confirmed that 151/231 steady reordered DMMV calls use the 2,048-column
+  Q4_K/Q6_K shape. A compile-time eight-block specialization preserved the
+  accepted WG4 arithmetic order and the canonical transcript, but mirrored
+  means regressed `133.294 -> 132.911 tok/s` (-0.288%). Retain the generic
+  kernel; see `notes/2026-08-23-ornith35b-dmmv-fixed2048-negative.md`.
 - **Speculative decode:** investigate a substantially smaller and faster
   vocabulary-compatible draft separately. Label target-only and assisted
   results separately.
