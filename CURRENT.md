@@ -74,14 +74,28 @@ deadlock report from the old root. The `71.7` row remains the fastest
 target-only Qwen3.8 result for this AutoRound/nightly identity, not the lab-wide
 target-only record.
 
+The first native dose-8 D1/D2 instrumentation arm (D7) stayed quality-green
+and captured state-slot lifecycle data, but is not a completed mechanism
+result. Its dedicated D2 file was empty, and the source change caused vLLM to
+rewrite two AOT archives in a protected cache because the unchanged-cache
+postflight was incorrectly conditional on the sealed-gate mode. That gate now
+fails independently and the diagnostic wrapper propagates infrastructure
+codes. Exact historical archive bytes were not reproducible; the original
+101.17 result remains recorded unchanged, while future cache replay carries
+an archive-identity-break disclosure. A quality-green clean-source recovery
+tree and every intervening variant are manifested and preserved. D4 was not
+run; native TP4 remains gated on a fresh isolated-cache preregistration. See
+the [incident and recovery note](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-chunkdiag-d7-instrumentation-incident.md).
+
 Immediate order:
 
 1. preserve the nightly image and all existing raw roots;
 2. add isolated-cache, determinism, natural-EOS, and real-baseline gates
    without changing the historical driver's defaults;
 3. screen TP1 fresh-cache determinism;
-4. advance higher-upside native TP4 only after the preregistered dose-8 D1/D2
-   corruption trace, keeping GPU2 explicitly in scope;
+4. preregister any replacement dose-8 trace on an isolated writable cache,
+   then advance higher-upside native TP4 only after it closes, keeping GPU2
+   explicitly in scope;
 5. keep the dose-8 long-context corruption D1/D2 program separate from the
    nightly graph+MTP correctness bug.
 

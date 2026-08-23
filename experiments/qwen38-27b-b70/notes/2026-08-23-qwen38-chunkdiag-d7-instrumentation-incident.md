@@ -44,3 +44,42 @@ The mutated complete cache was preserved at
 The protected cache must be restored to its manifest exactly before another
 campaign run. D4 is stopped until that recovery succeeds; no result from D7
 is a promoted speed capture.
+
+## Recovery outcome
+
+Two clean-source recovery boots were made against copies, never against the
+visible underlying protected tree: first at a private ext4 path, then through
+a bind mount at the exact historical path. Both boots were quality-green, but
+PyTorch's regenerated AOT archives were not byte-identical to the 2026-08-20
+archives. The historical two hashes could not be reproduced and were not
+silently redefined.
+
+After unmounting, the underlying D7-instrumented pair was backed up and
+replaced with the clean-source, exact-path pair that had just served the
+quality-green recovery arm:
+
+- rank 0: `f306010249d47e52e867211649a633d1b25f3274001180d90e5d4cd47e8a3c1e`;
+- rank 1: `c7dc51e7180864814d7dc0df59c949f9d811d3505def48f1bd36a2d380b5d484`.
+
+The recovered clean tree has 3,795 entries, 395,835,376 file bytes, and tree
+SHA-256 `41467a0d835657d50e6fa701c5b011cf6228a68f77109953486032f56b9095ad`.
+Its manifest is
+`/mnt/usb-models/llm-runtime/vllm-cache/qwen38-postrecovery-marginfree-mtp5-20260820/recovered-clean-output-manifest-20260823.json`
+(file SHA-256
+`98b2ac9397021c21c2124d1ee1327b9fab6c14aee4145eb2fffd0a195c193dcf`).
+It is functional recovery evidence, **not** the original sealed identity.
+
+All cache variants, both recovery-arm roots, and both model-pair backups were
+copied content-identically (3,254 files, 449,245,240 bytes; NTFS mode bits
+differ) to
+`/mnt/usb-models/llm-runtime/vllm-cache/qwen38-chunkdiag-recovery-20260823`.
+The target-side canonical manifest is
+`/mnt/usb-models/llm-runtime/vllm-cache/qwen38-chunkdiag-recovery-20260823.manifest.json`
+(SHA-256
+`d354a6b51497402de8e7a31db715940f5251e479b6fe8dd178298706c389a9fc`).
+
+D4 was not run. The preregistered mechanism program is stopped as
+instrumentation-invalid: D2 had no D7 records, and the protected cache
+contract was broken. D1's D7 trace remains evidence that seven doses recycle
+cleanly while quality stays green, but neither D1 nor D2 receives a final
+confirmed/dead verdict without a fresh preregistration on an isolated cache.
