@@ -1,0 +1,57 @@
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+index 3f09854..d09322c 100644
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -6,6 +6,11 @@
+ #include "quants.hpp"
+ #include "vecdotq.hpp"
+ 
++#include <atomic>
++#include <cinttypes>
++#include <cstdio>
++#include <cstdlib>
++
+ template <typename reorder_vec_dot_q_sycl>
+ static void mul_mat_vec_q_reorder(const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
+                                   const int ncols, const int nrows, const sycl::nd_item<3> & nd_item) {
+@@ -1671,6 +1676,26 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl(const void * vx, const void * vy,
+     });
+ }
+ 
++static std::atomic<uint64_t> g_ornith_q4k_32row_geometry_hits{0};
++
++static int ornith_q4k_32row_subgroups() {
++    static const int subgroups = [] {
++        const char * value = std::getenv("GGML_SYCL_ORNITH_SPEC_Q4K_32ROW_SUBGROUPS");
++        const int requested = value != nullptr ? std::atoi(value) : WARP_SIZE;
++        const int selected = requested == 4 || requested == 8 ? requested : WARP_SIZE;
++        if (selected != WARP_SIZE) {
++            std::atexit([] {
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_q4k_32row_geometry: subgroups=%d hits=%" PRIu64 "\n",
++                    ornith_q4k_32row_subgroups(),
++                    g_ornith_q4k_32row_geometry_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return selected;
++    }();
++    return subgroups;
++}
++
+ template <int ncols_dst>
+ static void reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols(
+         const void * vx, const void * vy, float * dst,
+@@ -1679,7 +1704,12 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols(
+         dpct::queue_ptr stream) {
+     GGML_ASSERT(ncols % QK_K == 0);
+ 
+-    constexpr size_t num_subgroups = WARP_SIZE;
++    const bool exact_ornith_shape = ncols_dst == 2 && ncols == 2048 && nrows == 32;
++    const size_t num_subgroups = exact_ornith_shape
++        ? (size_t) ornith_q4k_32row_subgroups() : (size_t) WARP_SIZE;
++    if (exact_ornith_shape && num_subgroups != WARP_SIZE) {
++        g_ornith_q4k_32row_geometry_hits.fetch_add(1, std::memory_order_relaxed);
++    }
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);

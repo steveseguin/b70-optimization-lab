@@ -1,0 +1,16 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-A3B-Q4_K_M",
+  "scope": "two-token Q4_K MMVQ projections with weight shape [2048,32]",
+  "protocol": "fresh-process llama-cli, fixed seed 42, greedy, MTP1, 128 generated tokens",
+  "accepted_source_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+  "candidate_patch_sha256": "4f93e5c13dbf4075a30d4f7b7a5262870e160db35217013f53918a3fbda7bc7c",
+  "results": [
+    { "subgroups_per_workgroup": 16, "generation_tokens_per_second": 65.1, "hits": 0 },
+    { "subgroups_per_workgroup": 8, "generation_tokens_per_second": 65.2, "hits": 4980 },
+    { "subgroups_per_workgroup": 4, "generation_tokens_per_second": 64.9, "hits": 4980 }
+  ],
+  "all_transcripts_identical": true,
+  "decision": "closed_neutral",
+  "reason": "Eight subgroups changed the measured rate by only +0.1 tok/s and four subgroups regressed by 0.2 tok/s. No server screen or throughput extrapolation was justified."
+}
