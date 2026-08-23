@@ -37,7 +37,8 @@ candidate fails the promotion rule. Every freshness and final-response gate
 passed; this is a valid neutral/slight negative, not a malformed run.
 
 The incremental source is preserved at
-`../patches/llamacpp-ornith15-moe-rowpack-server-neutral-20260823.patch`.
+`../patches/llamacpp-ornith15-moe-rowpack-server-neutral-20260823.patch.gz.b64`;
+decode with `base64 -d | gzip -dc` before applying.
 Raw ladder, mirrored engine, fresh-server records, and the structured summary
 are under `../data/2026-08-23-ornith35b-moe-rowpack-*`. The accepted package
 remains unchanged.
