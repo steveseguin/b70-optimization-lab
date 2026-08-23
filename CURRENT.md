@@ -122,13 +122,19 @@ door-off/on output and passing canaries. A third Qwen-derived increment fuses
 80 graph-visible residual additions into the following RMSNorm/weight kernels,
 bringing the stack to 350 removed launches/token. It improved matched engine
 decode by **2.00%** and fresh serving by **1.37%** (`106.319` to `107.776
-tok/s` mean), with exact forced output and passing canaries. A wider
+tok/s` mean), with exact forced output and passing canaries. A fourth transfer
+from the lab's Qwen work combines each recurrent convolution-input concat with
+its persistent-state copy while preserving both outputs, bringing the stack to
+380 removed launches/token. It improved matched engine decode by **3.53%** and
+fresh serving by **2.74%** (`105.767` to `108.662 tok/s` mean), with exact
+forced output and passing canaries. A wider
 direct-state form is archived as a correctness negative. The package remains a
 candidate pending clean-host replay; see the [guide](repro/ornith-15-35b-a3b-q4km-b70/README.md),
 [patch packet](patches/ornith-15-35b-a3b-q4km-b70/README.md), and
 [MoE evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-moe-add-reduce-positive.md),
 [recurrent-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md),
-and [residual-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-residual-rms-positive.md).
+[residual-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-residual-rms-positive.md),
+and [state-fusion evidence](experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-positive.md).
 
 Publication architecture: keep `index.html` curated and put the growing set
 of model/quant/card/OS/native-container variants in `guides.html`. That page

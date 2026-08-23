@@ -1,0 +1,48 @@
+{
+  "date": "2026-08-22",
+  "classification": "accepted target-only package increment",
+  "model": {
+    "name": "Ornith 1.5 35B-A3B Q4_K_M",
+    "architecture": "qwen35moe",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "runtime": {
+    "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "candidate_library_sha256": "0fad7ec2345084bbbdad40e5da388d80d58fa9532034753547cf06de5f804929",
+    "complete_patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-20260822.patch",
+    "complete_patch_sha256": "63b6ded253abdeec62f210bed71ed5640f1abe330e6c43b08338890674cf188b",
+    "door": "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1"
+  },
+  "mechanism": {
+    "matched_boundaries_per_token": 30,
+    "launches_removed_per_token": 30,
+    "cumulative_launches_removed_per_token_with_package_stack": 380,
+    "description": "materialize the exact Qwen-derived [4,8192] FP32 recurrent convolution input and mirror rows 1-3 into the persistent state in the same kernel"
+  },
+  "engine": {
+    "protocol": "same binary, mirrored control/candidate/candidate/control; llama-bench p0/n128/d0/r7, F16 KV, flash attention, one B70",
+    "control_tok_s": [111.374584, 111.670956],
+    "candidate_tok_s": [115.793704, 115.120218],
+    "control_mean_tok_s": 111.52277,
+    "candidate_mean_tok_s": 115.456961,
+    "delta_percent": 3.5277020109884205
+  },
+  "serving": {
+    "protocol": "four fresh servers in control/candidate/candidate/control order; fixed 12-prompt suite; up to 512 requested output tokens; tokens 1-100 after TTFT; cache_prompt=false",
+    "control_median_tok_s": [106.39795814020354, 105.13663090554581],
+    "candidate_median_tok_s": [108.36874016397795, 108.95467473441064],
+    "control_mean_tok_s": 105.76729452287468,
+    "candidate_mean_tok_s": 108.6617074491943,
+    "delta_percent": 2.7365859544546067,
+    "all_freshness_gates_passed": true,
+    "cached_tokens_all_zero": true
+  },
+  "correctness": {
+    "protocol": "same binary, fixed seed 1, temperature 0, forced 128-token single-turn CLI",
+    "candidate_fused_hits": 3810,
+    "control_sha256": "d6e037cde42571a97f0a8bd03dba5fbf9a6db32fa7362c973864b1159880f790",
+    "candidate_sha256": "d6e037cde42571a97f0a8bd03dba5fbf9a6db32fa7362c973864b1159880f790",
+    "byte_identical": true,
+    "candidate_canaries_pass_all": true
+  }
+}

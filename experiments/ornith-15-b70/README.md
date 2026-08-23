@@ -105,6 +105,14 @@ binary, driver, or benchmark protocol will reproduce them.
   means improved `106.319 -> 107.776 tok/s` (+1.37%). Forced 128-token output
   was byte-identical and all canaries passed. See
   `notes/2026-08-22-ornith35b-residual-rms-positive.md`.
+- **Recurrent concat + state update — ACCEPTED +2.74% incremental serving:**
+  Ornith's Qwen-derived recurrent path materializes a `[4,8192]` FP32
+  convolution input and then copies rows 1-3 into persistent state. The narrow
+  fusion preserves both graph-visible destinations in one launch across all 30
+  recurrent layers. Engine means improved `111.523 -> 115.457 tok/s`
+  (+3.53%); fresh-server means improved `105.767 -> 108.662 tok/s` (+2.74%).
+  Forced 128-token output was byte-identical and all canaries passed. See
+  `notes/2026-08-22-ornith35b-concat-state-positive.md`.
 - **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
   tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
   the tuned dispatch and beat the now-promoted ordered reduction.

@@ -7,22 +7,23 @@ the recipe and validation evidence in this repository are the source of truth.
 ## Identity
 
 - Base: llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`.
-- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-20260822.patch`.
+- Current complete patch: `llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-20260822.patch`.
 - Patch SHA-256:
-  `75d5ad4a37037fd3c33670bd4242a03789f42cbda8a653dbfd01465626ec448b`.
+  `63b6ded253abdeec62f210bed71ed5640f1abe330e6c43b08338890674cf188b`.
 - Runtime doors: `GGML_SYCL_FUSED_MOE_ADD_REDUCE=1` and
   `GGML_SYCL_FUSED_ORNITH_CONV_SILU=1` and
-  `GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1` (all default off).
+  `GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1` and
+  `GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1` (all default off).
 - Validated `libggml-sycl.so` SHA-256:
-  `cbc7b5d0d629dfb1a7be82570535e95274a505ed88af62d4ffd48457107f6481`.
+  `0fad7ec2345084bbbdad40e5da388d80d58fa9532034753547cf06de5f804929`.
 
 Apply only to the pinned clean base:
 
 ```bash
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
-sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-20260822.patch
-git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-20260822.patch
-git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-20260822.patch
+sha256sum /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-20260822.patch
+git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-20260822.patch
+git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-20260822.patch
 git diff --check
 ```
 
@@ -37,8 +38,8 @@ graph-visible outputs. Any shape, order, use-count, type, or layout mismatch
 falls back to stock execution.
 
 The full-model trace observed 40 ordered-reduction matches, 30 recurrent
-convolution/SiLU matches, and 80 residual/RMSNorm matches per token. Together
-they remove 350 launches/token.
+convolution/SiLU matches, 80 residual/RMSNorm matches, and 30 recurrent
+concat/state matches per token. Together they remove 380 launches/token.
 
 The second fusion accepts only the exact one-token `[4,8192]` FP32 convolution
 whose sole consumer is a full-width SiLU. It preserves stock state handling,
@@ -49,6 +50,12 @@ The third fusion recognizes the Qwen-derived 2048-wide `attn_residual-*` and
 `l_out-*` chains. It writes and rereads the original residual tensor through a
 volatile FP32 pointer, preserving later skip-connection consumers, then uses
 the stock RMS reduction order and fused norm-weight expression.
+
+The fourth fusion recognizes only the Qwen-derived one-token `[4,8192]` FP32
+recurrent convolution input. It materializes the full concat output and mirrors
+rows 1-3 into the original persistent-state destination in the same kernel.
+The state copy must be the next real compute node, and exact shape, stride,
+consumer, name, type, and non-overlap checks fail closed to stock execution.
 
 ## Validation
 
@@ -68,6 +75,10 @@ the stock RMS reduction order and fused norm-weight expression.
   **+2.00%** and two-fresh-server decode by **+1.37%** over the prior stack,
   reaching a `107.775961 tok/s` two-server mean. Its forced 128-token canonical
   output was byte-identical and all candidate canaries passed.
+- The added recurrent concat/state fusion improved matched raw-engine decode by
+  **+3.53%** and two-fresh-server decode by **+2.74%** over the prior stack,
+  reaching a `108.661707 tok/s` two-server mean. Its forced 128-token output
+  was byte-identical and all candidate canaries passed.
 
 Fresh stock servers matched `0/12` complete response hashes with each other on
 the long realistic suite. That pre-existing cross-process instability is
@@ -80,3 +91,5 @@ The incremental convolution result is in
 [`2026-08-22-ornith35b-conv-silu-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-conv-silu-positive.md).
 The incremental residual result is in
 [`2026-08-22-ornith35b-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-residual-rms-positive.md).
+The incremental recurrent-state result is in
+[`2026-08-22-ornith35b-concat-state-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-positive.md).

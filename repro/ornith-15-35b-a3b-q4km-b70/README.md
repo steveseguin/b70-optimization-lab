@@ -44,8 +44,8 @@ git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-ornith15
 cd llama.cpp-ornith15
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
 
-PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-20260822.patch
-echo "75d5ad4a37037fd3c33670bd4242a03789f42cbda8a653dbfd01465626ec448b  $PATCH" | sha256sum -c -
+PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-20260822.patch
+echo "63b6ded253abdeec62f210bed71ed5640f1abe330e6c43b08338890674cf188b  $PATCH" | sha256sum -c -
 git apply --check "$PATCH"
 git apply "$PATCH"
 git diff --check
@@ -71,7 +71,7 @@ cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2
 ```
 
 The validated compute library SHA-256 was
-`cbc7b5d0d629dfb1a7be82570535e95274a505ed88af62d4ffd48457107f6481`.
+`0fad7ec2345084bbbdad40e5da388d80d58fa9532034753547cf06de5f804929`.
 AOT output can vary with the compiler installation, so the source revision,
 patch hash, build settings, and validation gates are the durable identity.
 
@@ -92,6 +92,7 @@ export GGML_SYCL_ENABLE_GRAPH=0
 export GGML_SYCL_FUSED_MOE_ADD_REDUCE=1
 export GGML_SYCL_FUSED_ORNITH_CONV_SILU=1
 export GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1
+export GGML_SYCL_FUSED_ORNITH_CONCAT_STATE=1
 
 build-sycl-aot-bmg-g31/bin/llama-server \
   --model "$MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf" \
@@ -150,8 +151,8 @@ Correctness gates:
   open runtime limitation rather than a patch acceptance gate.
 
 Patch instructions and evidence:
-[`patches/ornith-15-35b-a3b-q4km-b70/`](../../patches/ornith-15-35b-a3b-q4km-b70/)
-and
+[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-moe-add-conv-silu-residual-rms-concat-state-20260822.patch),
+[patch packet](../../patches/ornith-15-35b-a3b-q4km-b70/README.md), and
 [`experiments/ornith-15-b70/`](../../experiments/ornith-15-b70/).
 
 The current complete patch also fuses each of the 30 recurrent
@@ -172,6 +173,19 @@ fresh-server means improved `106.319 -> 107.776 tok/s` (**+1.37%**). All four
 freshness gates passed, forced 128-token output was byte-identical, and the
 canary battery passed. Evidence:
 [`2026-08-22-ornith35b-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-residual-rms-positive.md).
+
+The fourth package increment transfers another narrowly matched optimization
+from this lab's Qwen work. Each recurrent layer normally materializes a
+`[4,8192]` FP32 convolution input and then copies rows 1-3 into persistent
+state. The fused kernel preserves both destinations while removing the second
+launch, and the matcher fails closed unless the state copy is the next real
+compute node with exact names, shapes, strides, consumers, and non-overlap.
+This removes another 30 launches/token, bringing the complete stack to 380.
+Matched engine means improved `111.523 -> 115.457 tok/s` (**+3.53%**) and
+fresh-server means improved `105.767 -> 108.662 tok/s` (**+2.74%**). The
+forced 128-token output was byte-identical and the full canary battery passed.
+Evidence:
+[`2026-08-22-ornith35b-concat-state-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-22-ornith35b-concat-state-positive.md).
 
 ## Stock two-card comparison (patch off; layer split, GPUs 0+1)
 
