@@ -8,8 +8,8 @@ everything in one place.
 
 | Lane | Number | Status | What sealing still needs |
 | --- | ---: | --- | --- |
-| vLLM XPU nightly, TP1, MTP off, XPU graph | 30.22 / 30.26 conventional | Quality battery PASS on exact config; cache-zero; boot pair 0.17% | A sealed-identity run (pinned image digest recorded; compile-cache namespace sealing not yet done for the nightly lane) + the cross-boot disclosure below |
-| vLLM XPU nightly, TP4, MTP off, XPU graph | 71.67 / 71.55 conventional | Quality battery PASS on exact config; cache-zero; boot pair 0.17% | Same as above; fastest target-only number the lab has measured |
+| vLLM XPU nightly, TP1, MTP off, XPU graph | 30.22 / 30.26 conventional | Objective battery PASS on exact config; cache-zero; boot pair 0.13% | Fresh isolated-cache determinism gates; sealed cache/AOT/Triton manifests; natural-EOS final gate; a battery run with an actual baseline; strict 100-event/99-interval fields; cross-boot disclosure if unresolved |
+| vLLM XPU nightly, TP4, MTP off, XPU graph | 71.67 / 71.55 conventional | Objective battery PASS on exact config; cache-zero; boot pair 0.17%; 21/25 complete-output peer match | Same as above, plus the mandatory unsupported/experimental multi-GPU XPU Graph disclosure; fastest target-only Qwen3.8 result for this AutoRound/nightly identity, not the lab-wide target-only record |
 | llama.cpp Q4_K_M TP1 (promoted) | 27.81/27.82 conventional | 24/24 bit-exact, full battery, submission-ready since 2026-08-21 | Nothing - submit-ready; user previously declined ("the 27 is lame") |
 
 **Mandatory disclosure for the two nightly lanes:** deterministic within a
@@ -19,6 +19,14 @@ boots (0.17% pairs); outputs are not byte-pinned. Any submission must say
 this. Sealing the inductor/autotune artifacts (the existing
 `PYTHONHASHSEED`/tuner-isolation candidate in DO-NOT-REPEAT) is the path to
 removing the caveat entirely.
+
+The existing benchmark driver is explicitly diagnostic and passed
+`ignore_eos=true`. That preserves a complete timing window for research but
+does not satisfy the repository's current LocalMaxxing natural-EOS policy.
+Also, the battery files have `baseline_comparisons={}` because no
+`--baseline-json` was supplied; their objective canaries pass, but the
+compatibility field `baseline_match_all=true` is not oracle evidence. Neither
+candidate is submission-ready until those two gates are rerun correctly.
 
 ## The margin question (user decision pending)
 

@@ -44,6 +44,47 @@ The closed no-training Muse Q8/WOQ record remains approved by LocalMaxxing as
 It is a Q8/WOQ target-verified result, not BF16/lossless or universally
 token-exact evidence.
 
+## Current Qwen3.8 Nightly TP-Scale Frontier (2026-08-23)
+
+The active short-decode target-only frontier uses the digest-pinned XPU
+nightly image `sha256:bc979d1ba312dc8a666c57a40205f35d7fc5d96b2f7450c2c77f5b3d5243f0e0`,
+AutoRound INT4 W4A16, F16 KV, one request, cache zero, and XPU Graph:
+
+- TP1: `30.2178 / 30.2569 tok/s` conventional;
+- TP2: `48.8301 tok/s` conventional;
+- TP4: `71.6741 / 71.5488 tok/s` conventional.
+
+All three graph topologies passed seven objective canaries, an 8-run
+same-server repeat, cache-zero checks, and an 8K needle. The battery runs did
+not supply a baseline JSON, so their empty-comparison
+`baseline_match_all=true` field is not oracle evidence. TP4's two boots matched
+21/25 complete outputs. The runtime explicitly warns that multi-GPU XPU Graph
+is unsupported/experimental. The existing runs also used `ignore_eos=true` and
+are diagnostic captures, not natural-EOS LocalMaxxing final gates.
+
+The only TP4 MTP2 attempt is infrastructure-invalid, not a speculative-decode
+deadlock result: three workers failed concurrent compilation after shared
+Triton-cache artifacts disappeared, and `shm_broadcast` starvation followed.
+First run a fresh isolated-cache TP2 eager-MTP2 boot plus one correctness
+canary; only a pass authorizes a TP4 retry. Do not file a TP>1 deadlock report
+from the old root. The `71.7` row is the fastest target-only Qwen3.8 result for
+this AutoRound/nightly identity, not the lab-wide target-only record.
+
+Immediate order:
+
+1. preserve the nightly image and all existing raw roots;
+2. add isolated-cache, determinism, natural-EOS, and real-baseline gates
+   without changing the historical driver's defaults;
+3. screen TP1 fresh-cache determinism, then TP2 eager MTP boot;
+4. retry TP4 only after those gates, with GPU2 explicitly in scope;
+5. keep the dose-8 long-context corruption D1/D2 program separate from the
+   nightly graph+MTP correctness bug.
+
+Evidence and correction:
+[TP-scale packet](experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json),
+[finding](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tpscale-nightly-finding.md),
+and [audit correction](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-nightly-audit-correction.md).
+
 ## mtp.fc INT4 integration: validated, quality-clean, rate-neutral (2026-08-22)
 
 The default-off vLLM patch (VLLM_XPU_MTP_FC_INT4, tracked in

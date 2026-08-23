@@ -143,9 +143,11 @@
   "pinned_image_tp1": "0.20.2rc1.dev13 crashes TP1 both graph modes (prior finding); nightly does not"
  },
  "quality_batteries": {
+  "status": "objective pass only; neither run supplied --baseline-json, so the empty-comparison baseline_match_all=true field is vacuous",
   "mtp0-f16 (graph off)": "pass_all: canary 14, arithmetic/factual/logic/json/copy exact, 8-run repeat stable, 8K needle pass",
-  "mtp0-f16 graph ON": "pass_all: same battery, baseline_match_all true"
+  "mtp0-f16 graph ON": "pass_all: same objective battery; baseline not run"
  },
+ "submission_status": "diagnostic only: benchmark request payload used ignore_eos=true; a natural-EOS strict 100-event/99-interval final gate is outstanding",
  "certified_headline": {
   "config": "TP1 MTP-off f16 KV VLLM_XPU_ENABLE_XPU_GRAPH=1",
   "decode_median_tok_s_boot_pair": [

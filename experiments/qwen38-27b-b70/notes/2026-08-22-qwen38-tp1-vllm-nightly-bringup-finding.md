@@ -10,7 +10,9 @@ Raw runs: `bench-results/.../tp1-nightly-20260822/`. Driver:
 
 - Image: `vllm/vllm-openai-xpu:nightly-e9d1398d9edfd90fcc1cf783805240e3effec013`
   (main-branch nightly 2026-08-22, reports `vllm 0.26.1rc1.dev1102+ge9d1398d9`,
-  torch 2.13.0+xpu; digest `bc979d1ba312…`). 11 days of commits past v0.27.1.
+  torch 2.13.0+xpu; digest `bc979d1ba312…`). Its commit is dated 11
+  calendar days after v0.27.1, but the release tag is not its ancestor; treat
+  the two as non-descendant comparators rather than a linear newer/older pair.
 - Model: our quality-default AutoRound INT4 W4A16 (`quantization=inc`), single
   B70 (GPU0), TP1, 32K maxlen, `--max-num-seqs 1`, chunked prefill 1024,
   prefix caching OFF (cache-zero policy), f16 dtype.
@@ -44,9 +46,10 @@ Raw runs: `bench-results/.../tp1-nightly-20260822/`. Driver:
    worth +25 % MTP-off** — 24.25 → 30.22 tok/s — and its outputs match the
    graph-off oracles within the lane's own boot-to-boot envelope. **30.22
    beats the promoted llama.cpp Q4_K_M TP1 conventional record (27.82).**
-   Certification complete: the full quality battery on the graph config
-   passed (`pass_all`, code canary `14`, 8-run repeat stable, 8K needle,
-   `baseline_match_all`), and a repeat boot measured **30.2569** (pair
+   The objective battery on the graph config passed (`pass_all`, code canary
+   `14`, 8-run repeat stable, 8K needle). No `--baseline-json` was supplied,
+   so its empty-comparison `baseline_match_all=true` field is not oracle
+   evidence. A repeat boot measured **30.2569** (pair
    30.2178 / 30.2569, 0.13 % spread; +8.7 % over llama.cpp TP1). Cross-boot
    sha drift on the graph pair (19/25) matches the graph-off envelope, so the
    nondeterminism caveat in (6) applies to this config equally.
@@ -90,8 +93,9 @@ regression vs model-path), (b) GPTQ checkpoint on the nightly (quant-path),
 
 ## Disposition
 
-- Record path: graph-on MTP-off TP1 is certified (battery pass + 0.13 %
-  repeat) — **the single-card conventional leader at ~30.2 tok/s**. A sealed
+- Record path: graph-on MTP-off TP1 has an objective battery pass + 0.13 %
+  speed repeat — **the single-card diagnostic conventional leader at ~30.2
+  tok/s** for this model. The speed captures used `ignore_eos=true`. A sealed
   record run + LMX submission are separate, user-gated steps; the cross-boot
   token-exactness caveat must be disclosed in any submission.
 - MTP at TP1 stays OFF until the verify-step cost is understood; the drafting

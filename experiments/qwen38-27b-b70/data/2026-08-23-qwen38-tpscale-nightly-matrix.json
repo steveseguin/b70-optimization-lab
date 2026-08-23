@@ -2,6 +2,7 @@
  "campaign": "qwen38-27b-autoround-int4 TP scaling on the vLLM XPU nightly container",
  "date": "2026-08-23",
  "image": "vllm/vllm-openai-xpu:nightly-e9d1398d9edfd90fcc1cf783805240e3effec013",
+ "image_digest": "sha256:bc979d1ba312dc8a666c57a40205f35d7fc5d96b2f7450c2c77f5b3d5243f0e0",
  "reference_tp1": {
   "eager": [
    23.7163,
@@ -17,10 +18,14 @@
   "tp3": "impossible: 16 GDN K heads not divisible by 3 (AssertionError at worker init)",
   "tp4_at_util_0.90": "XPU single-allocation cap: 20.13 GiB KV block fails with 24.66 GiB free; fixed with gpu-memory-utilization 0.60 (GPU_MEM_UTIL env in driver)",
   "selector_mask_compose": "ONEAPI_DEVICE_SELECTOR must NOT be combined with ZE_AFFINITY_MASK for multi-GPU: the mask renumbers devices, the selector then filters the renumbered list (works only for gpu list 0..k prefixes); driver now sets ZE_AFFINITY_MASK only",
-  "tp4_mtp2_eager": "worker deadlock at init: repeating shm_broadcast \"No available shared memory broadcast block\" from all ranks; killed by health timeout. Spec decode at TP4 does not boot on this container stack (probe 2026-08-23, root tp4-mtp2-f16-a)"
+  "tp4_mtp2_eager": "infrastructure-invalid compile/cache arm: ranks 1 and 3 lost a shared Triton .zebin during Inductor autotuning; rank 2 lost an autotune JSON; rank 0 then waited and EngineCore emitted downstream shm_broadcast starvation warnings. This does not establish an intrinsic TP4 or TP>1 speculative-decode deadlock (root tp4-mtp2-f16-a)."
  },
  "finding": "eager multi-GPU is flat (~17 tok/s at TP2 and TP4; container oneCCL/collective per-step tax); VLLM_XPU_ENABLE_XPU_GRAPH=1 restores scaling: 30.2/48.8/71.7 at TP1/2/4",
- "quality_status": "TP1, TP2-graph, and TP4-graph configs battery-certified (pass_all); cross-boot autotune caveat applies to all",
+ "scope": "71.7 is the fastest target-only Qwen3.8 result for this AutoRound/nightly identity, not the lab-wide target-only record",
+ "xpu_graph_support": "The nightly emits: XPU Graph support is experimental and currently only supports single-GPU execution. TP2/TP4 results are therefore unsupported/experimental characterization evidence.",
+ "quality_status": "TP1, TP2-graph, and TP4-graph passed seven objective canaries, 8-run same-server repeat, cache-zero checks, and an 8K needle. No --baseline-json was supplied: baseline_comparisons is empty and baseline_match_all=true is vacuous. Cross-boot autotune caveat applies to all.",
+ "submission_status": "diagnostic only: benchmark request payload used ignore_eos=true; a natural-EOS strict 100-event/99-interval final gate is still required",
+ "replication_status": "TP2 graph has one 25-prompt performance capture; TP4 graph has two independent 25-prompt captures with 21/25 complete-output agreement. TP2 needs a fresh-cache repeat before promotion.",
  "arms": {
   "tp2-mtp0-f16-a": {
    "tp": 2,
@@ -63,6 +68,26 @@
    "prefill_tok_s_median": 849.5,
    "rows_valid": 25,
    "cached_tokens_all_zero": true
+  },
+  "tp4-mtp0-f16-graph-b": {
+   "tp": 4,
+   "gpus": "0,1,2,3",
+   "graph": true,
+   "gpu_mem_util": 0.6,
+   "decode_median_tok_s": 71.5488,
+   "ttft_median_s": 0.0911,
+   "prefill_tok_s_median": 864.8,
+   "rows_valid": 25,
+   "cached_tokens_all_zero": true,
+   "complete_output_match_vs_a3": "21/25"
   }
+ },
+ "raw_evidence_sha256": {
+  "tp2_graph_bench_json": "e0acf134286db1180931daad3841bfa2ca880c4ae44b5d5c660bd7f231d246ec",
+  "tp4_graph_a3_bench_json": "404c6fe5d2c8071a41fba159a11cf8e1044d330b282da4b07d38e4c631baebc5",
+  "tp4_graph_b_bench_json": "8f30b6e80c087291673bde34775fe1e3c9798afd4d83f0158848b75353f73715",
+  "tp2_graph_quality_json": "e51d506f12d30004ec55354fbbe40080c096ce5309939a79ccbdac340d900075",
+  "tp4_graph_quality_json": "4d1b126823464ef72fd57cacb9a47f1ef405c86fa6c707e698e93237d1ff50d0",
+  "tp4_mtp2_server_log": "b229f25b3f605e03be773859a0a504d3b70300b4ef8804bbadc608f2bc34a007"
  }
 }

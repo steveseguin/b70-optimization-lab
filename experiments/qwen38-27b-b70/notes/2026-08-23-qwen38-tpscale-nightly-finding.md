@@ -25,8 +25,9 @@ f16 KV, `--max-num-seqs 1`.
 2. **`VLLM_XPU_ENABLE_XPU_GRAPH=1` (nightly default OFF) restores decode
    scaling**: 30.2 -> 48.8 -> 71.7 at TP1 -> 2 -> 4. Graph capture folds the
    per-step launch/collective orchestration out of the critical path.
-   **71.7 tok/s is the fastest target-only conventional decode the lab has
-   measured on any lane** (promoted llama.cpp TP2 target-only: 50.2).
+   **71.7 tok/s is the fastest target-only Qwen3.8 result measured in this
+   lab for this AutoRound/nightly identity** (promoted llama.cpp Qwen3.8 TP2
+   target-only: 50.2). It is not the lab-wide target-only record.
 3. **TP3 is architecturally impossible** for Qwen3.8-27B: 16 GDN K heads are
    not divisible by 3 (worker init assertion). Valid TP sizes: 1, 2, 4.
 4. **TP4 needs `gpu-memory-utilization <= ~0.6`** on 32 GiB cards: at 0.90
@@ -42,19 +43,24 @@ f16 KV, `--max-num-seqs 1`.
 
 ## Status and caveats
 
-**TP4-graph is certified (2026-08-23):** full quality battery pass on the
-exact config (code canary `14`, arithmetic/factual/logic/JSON/copy exact,
-8-run repeat stability, 8K needle, `baseline_match_all`) and a repeat boot
-at **71.5488** (pair 71.67 / 71.55, 0.17% spread). **TP2-graph is also
-battery-certified** (2026-08-23, pass_all on the exact config), so the whole
-graph column 30.2 / 48.8 / 71.7 carries a quality battery pass. The lane's
-cross-boot nondeterminism caveat (autotune) applies to all configs, so no
-cross-boot token-exactness claim.
+**TP4-graph is objective-battery certified (2026-08-23):** code canary `14`,
+arithmetic/factual/logic/JSON/copy exact, 8-run repeat stability, cache zero,
+and the 8K needle all passed. A repeat boot measured **71.5488** (pair 71.67 /
+71.55, 0.17% speed spread) and the two boots matched 21/25 complete outputs.
+**TP2-graph passed the same objective battery** (2026-08-23, `pass_all`), so
+the whole graph column 30.2 / 48.8 / 71.7 has objective-canary evidence. The
+quality runs did not pass `--baseline-json`; `baseline_comparisons={}` means
+their `baseline_match_all=true` compatibility field is vacuous, not an oracle
+comparison. The lane's cross-boot nondeterminism caveat applies to all configs.
+In addition, the nightly logs explicitly warn that multi-GPU XPU Graph is
+unsupported/experimental even though these TP2/TP4 runs completed and passed.
 
-**MTP at TP4: does not boot.** The probe arm (MTP2, eager, util 0.60) hung
-at worker init - all ranks repeating the shm_broadcast "No available shared
-memory broadcast block ... processes hanging" starvation message until the
-health timeout killed it (root `tp4-mtp2-f16-a`). Spec decode at TP>1 on
-this container stack is unavailable pending an upstream fix, so the TP1
-verify-step question stays TP1-scoped and 71.7 target-only is the multi-card
-ceiling for now.
+**TP4 MTP2 probe: infrastructure-invalid, not a deadlock result.** In root
+`tp4-mtp2-f16-a`, ranks 1 and 3 failed Inductor autotuning after a shared
+Triton-cache `.zebin` disappeared, rank 2 failed on a missing Triton autotune
+JSON, and rank 0 then waited for failed peers. The EngineCore's repeated
+`shm_broadcast` starvation warnings are downstream symptoms. The runner gave
+all ranks the same writable `TRITON_CACHE_DIR` on NTFS. This one arm does not
+show that TP4 or all TP>1 speculation intrinsically fails. A fresh isolated-
+cache TP2 boot/canary is required before any full run or upstream report; TP4
+follows only after that passes.
