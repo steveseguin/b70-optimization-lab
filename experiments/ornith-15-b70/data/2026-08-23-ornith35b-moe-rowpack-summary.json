@@ -1,0 +1,44 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "parent_library_sha256": "78047ec2562261ee3481c6a91d65059af10501e1016ebcc3bdc48cd210934007",
+  "candidate_library_sha256": "0104fa3780c025db9f8ec31a5974a6189f321c1576d8531a50d510e4f163d0ab",
+  "candidate_patch": "experiments/ornith-15-b70/patches/llamacpp-ornith15-moe-rowpack-server-neutral-20260823.patch",
+  "candidate_patch_sha256": "452539eb9cc1fa021682ea31e8247e7b77e718212277c1c0c6433cd5d511522d",
+  "candidate_door": "GGML_SYCL_ORNITH_MOE_ROWS_PER_WG=2",
+  "geometry_ladder": {
+    "protocol": "single sequential llama-bench p0/n128/d0/r7 screen; candidate selection only",
+    "rows_per_workgroup": [1, 2, 4, 8],
+    "tok_s": [120.308755, 120.997053, 120.513473, 120.424177]
+  },
+  "engine": {
+    "protocol": "same final binary; mirrored 1/2/2/1 rows-per-workgroup sequence; llama-bench p0/n128/d0/r7",
+    "controls_tok_s": [119.631285, 121.352565],
+    "candidates_tok_s": [121.472751, 121.738769],
+    "control_mean_tok_s": 120.491925,
+    "candidate_mean_tok_s": 121.60576,
+    "delta_percent": 0.9244063451,
+    "each_candidate_exceeded_each_control": true
+  },
+  "fresh_server": {
+    "protocol": "fresh 1/2/2/1 rows-per-workgroup sequence; fixed 12-prompt suite; each prompt once; up to 512 tokens; median tokens 1-100 after TTFT; cached_tokens=0",
+    "controls_tok_s": [118.23729536403354, 117.27119174542489],
+    "candidates_tok_s": [117.38560150065314, 117.73158415789078],
+    "control_mean_tok_s": 117.75424355472921,
+    "candidate_mean_tok_s": 117.55859282927196,
+    "delta_percent": -0.1661517407,
+    "all_freshness_gates_passed": true,
+    "all_final_gates_passed": true,
+    "each_candidate_exceeded_each_control": false
+  },
+  "correctness": {
+    "rows_per_workgroup_tested": [2, 8],
+    "canonical_128_token_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "byte_identical_to_parent": true,
+    "candidate_gate_up_hits_128_tokens": 5080,
+    "candidate_shared_residual_rms_hits_128_tokens": 5080
+  },
+  "result": "closed server-neutral/slight-negative; do not ship"
+}

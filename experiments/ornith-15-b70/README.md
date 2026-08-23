@@ -232,6 +232,13 @@ binary, driver, or benchmark protocol will reproduce them.
   regressed valid fresh serving by 0.94% (`118.801 -> 117.686 tok/s`). Neither
   variant ships. See
   `notes/2026-08-23-ornith35b-shared-gate-fusions-negative.md`.
+- **Routed-MoE row packing — CLOSED SERVER-NEUTRAL/SLIGHT-NEGATIVE:** a
+  Qwen-transfer candidate packed two independent output-row subgroups into
+  each routed gate/up and down workgroup without changing per-row arithmetic.
+  It was byte-exact and improved mirrored engine means by 0.92%, but fresh
+  serving moved `117.754 -> 117.559 tok/s` (-0.17%); both candidates lost to
+  control A. Do not ship. See
+  `notes/2026-08-23-ornith35b-moe-rowpack-server-neutral.md`.
 - **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
   accepted only 22/336 reported draft tokens and reduced the fresh-suite median
   from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed
