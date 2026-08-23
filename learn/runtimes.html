@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Runtimes: vLLM vs llama.cpp SYCL vs IPEX/XPU — neural.download</title>
+<meta name="description" content="How the main Intel-GPU LLM runtimes differ — llama.cpp SYCL, vLLM XPU, and IPEX-LLM — on speed, features like MTP, single-card support, and version sensitivity.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/learn/runtimes.html">
+<meta name="theme-color" content="#f6f1e5">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../index.html">Home</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Guide library</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 07</p>
+  <p class="eyebrow">Pick your setup</p>
+  <h1>Runtimes: vLLM vs llama.cpp vs XPU</h1>
+  <p>The same model, same card, and same quant can run at very different speeds depending on the software you serve it with. The runtime decides whether you get MTP, whether one card works, and how much setup you sign up for.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li><strong>llama.cpp (SYCL)</strong> — simplest, rock-solid on one card, deterministic, GGUF quants. Our single-card lane. No MTP for these weights.</li>
+      <li><strong>vLLM (XPU)</strong> — fastest ceiling, has <a href="mtp-ladder.html">MTP</a> and multi-card, but heavier and <strong>very</strong> version-sensitive.</li>
+      <li><strong>IPEX-LLM</strong> — Intel's PyTorch acceleration layer that other tools (Ollama, portable llama.cpp) build on for Arc.</li>
+      <li>The community's own same-card test put vLLM at roughly <strong>1.8×</strong> llama.cpp — but at the cost of setup and stability quirks.</li>
+    </ul>
+  </div>
+
+  <h2>The three you'll meet</h2>
+  <h3>llama.cpp (SYCL backend)</h3>
+  <p>A single, self-contained engine that runs GGUF-quantized models. On Intel it uses the SYCL backend. It's the easiest to get working, it's happy on <strong>one card</strong>, and it's <strong>deterministic</strong> — the same prompt gives the same bytes, which is why our reproducible records and quality checks run here. It's also what tools like Ollama use under the hood. The catch: it has fewer of the aggressive throughput features, and on our current build it has <em>no speculative decoding path</em> for the Qwen3.8 GGUF, so no MTP there.</p>
+
+  <h3>vLLM (XPU backend)</h3>
+  <p>A production-grade serving engine. It brings the high-end features: <a href="mtp-ladder.html">MTP speculative decoding</a>, tensor-parallel across cards, continuous batching, FP8 KV. It's how we reach the 100+ tok/s research numbers. The costs are real: it's a bigger install (usually Docker), and it is <strong>strongly tied to its exact version</strong> — see the warning below.</p>
+
+  <h3>IPEX-LLM / Intel XPU</h3>
+  <p>"XPU" is Intel's name for its GPU compute target in PyTorch. <strong>IPEX-LLM</strong> (Intel Extension for PyTorch, LLM) is the acceleration layer many PyTorch-based tools use to run on Arc — it underpins parts of the vLLM XPU path and portable Ollama/llama.cpp builds for Intel. You rarely pick it directly; you pick a tool built on it. We call it out so the "XPU" label in other guides isn't a mystery.</p>
+
+  <h2>The same-card comparison</h2>
+  <p>A community poster ran both engines on one B70 with Qwen3.8-27B and reported vLLM ~1.8× faster: <span class="badge comm">Community</span></p>
+  <figure class="chart">
+    <h4>llama.cpp vs vLLM on one card</h4>
+    <img src="assets/runtime-1card.svg" alt="Bar chart: llama.cpp SYCL about 29 tokens per second versus vLLM XPU about 52 tokens per second on the same single card.">
+    <figcaption>~29 tok/s (llama.cpp SYCL, Q5_K_M) vs 52.2 tok/s (vLLM XPU, GPTQ + MTP2). Quants differ, so it's not perfectly clean, but the ~1.8× gap — driven largely by vLLM having MTP — is the poster's own measurement. <a href="../community/field-reports/reddit-arc-b70-vllm-52tps/README.md">Field report</a>.</figcaption>
+  </figure>
+
+  <h2>Which does what</h2>
+  <div class="scroller"><table class="data">
+    <thead><tr><th>&nbsp;</th><th>llama.cpp SYCL</th><th>vLLM XPU</th></tr></thead>
+    <tbody>
+      <tr><td>Ease of setup</td><td class="best">Easiest (one binary)</td><td>Heavier (usually Docker)</td></tr>
+      <tr><td>One card</td><td class="best">Excellent</td><td>Can be rough (see below)</td></tr>
+      <tr><td>Multi-card</td><td>Limited</td><td class="best">Tensor-parallel</td></tr>
+      <tr><td>MTP / speculative</td><td>Not on our Qwen3.8 GGUF</td><td class="best">Yes (MTP ladder)</td></tr>
+      <tr><td>Determinism</td><td class="best">Bit-exact, reproducible</td><td>Needs care at TP2/spec</td></tr>
+      <tr><td>Peak speed</td><td>Good</td><td class="best">Higher ceiling</td></tr>
+      <tr><td>Quant formats</td><td>GGUF (Q4/Q5/Q8…)</td><td>INT4 (AutoRound/GPTQ), FP8</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout warn">
+    <span class="tag">What to be aware of: vLLM version sensitivity</span>
+    <p>This bit us directly. Our pinned vLLM (<code>0.20.2rc1</code>) runs Qwen3.8-27B fine on <strong>two</strong> cards but <strong>crashes on one card</strong> — the engine dies mid-inference in a KV-cache kernel, or fails at startup. The community's working single-card setup used a <em>newer</em> image (<code>0.27.1</code>). Same runtime family, completely different single-card behavior. With vLLM XPU, the exact version and image are part of the recipe — treat "it works" as version-specific until proven otherwise. llama.cpp, by contrast, just worked on one card across our testing.</p>
+  </div>
+
+  <div class="callout good">
+    <span class="tag">Recommendation</span>
+    <p><strong>Starting out, on one card: use llama.cpp (SYCL)</strong> — or a tool built on it like Ollama. It's the shortest path to a working, deterministic setup, and it's our fastest quality-validated single-card lane. <strong>Chasing maximum throughput, MTP, or multi-card: use vLLM (XPU)</strong>, pin a known-good image, and verify output determinism before trusting the numbers. Many people run both: llama.cpp for everyday reliability, vLLM when they need the ceiling.</p>
+  </div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="mtp-ladder.html"><b>MTP 1·2·3·4</b><span>The feature that sets the runtimes apart</span></a>
+      <a href="kv-cache-precision.html"><b>KV precision</b><span>FP8 KV lives on the vLLM path</span></a>
+      <a href="hardware.html"><b>Hardware</b><span>One card vs many</span></a>
+      <a href="../learn.html"><b>All guides</b><span>Back to the Learn index</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>

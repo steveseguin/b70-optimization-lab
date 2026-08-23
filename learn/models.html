@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Models: which one to run and why — neural.download</title>
+<meta name="description" content="Dense vs mixture-of-experts, active vs total parameters, VRAM math, and how to pick a local LLM for your Intel Arc card and your job — with the lab's measured model board.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/learn/models.html">
+<meta name="theme-color" content="#f6f1e5">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../index.html">Home</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Guide library</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 01</p>
+  <p class="eyebrow">Pick your setup</p>
+  <h1>Models</h1>
+  <p>Before you tune anything, you pick a model — and that choice sets your ceiling. The single most important thing to understand: a model's <em>speed</em> is set by its <strong>active</strong> parameters, not its total size. That's why a "26B" model can be five times faster than a "27B" one.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li><strong>Total parameters</strong> decide how much VRAM the model needs. <strong>Active parameters</strong> decide how fast it decodes.</li>
+      <li><strong>Dense</strong> models use all their weights per token. <strong>Mixture-of-Experts (MoE)</strong> models use only a slice — so they're fast for their size.</li>
+      <li>A name like <strong>A4B</strong> or <strong>A3B</strong> tells you the active size (≈4B or 3B active) — that's your speed hint.</li>
+      <li>Fit first (does it load with room for context?), then speed, then quality and features (vision, tools).</li>
+    </ul>
+  </div>
+
+  <h2>Dense vs mixture-of-experts</h2>
+  <p>A <strong>dense</strong> model runs every one of its weights for every token. A 27B dense model does ~27B parameters' worth of work per token — accurate, but heavy on the memory reads that set <a href="prefill-vs-clockrate.html">decode speed</a>.</p>
+  <p>A <strong>mixture-of-experts</strong> model is split into many "experts," and a router picks only a few per token. It might hold 30B parameters total but activate just 3–4B on any given token. You pay the <em>VRAM</em> of the big model but the <em>speed</em> of a small one. That's the trick behind the fastest models on modest hardware.</p>
+
+  <figure class="chart">
+    <h4>Same card, two designs</h4>
+    <img src="assets/models-1card.svg" alt="Bar chart: Gemma-4-26B A4B mixture-of-experts at about 125 tokens per second versus Qwen3.8-27B at about 28 tokens per second, both on one B70.">
+    <figcaption>Both on one B70. Gemma-4-26B is a sparse MoE (~4B active); Qwen3.8-27B activates far more per token. Decode tracks <em>active</em> size — total parameters (26B vs 27B) barely differ. (Quant also differs, Q8 vs Q4; the design gap is the dominant factor.) <span class="badge lab">Lab-measured</span></figcaption>
+  </figure>
+
+  <div class="callout key">
+    <span class="tag">Reading a model name</span>
+    <p><strong>Qwen3.8-27B-A3B</strong>: 27B total (VRAM), ~3B active (speed). <strong>Gemma-4-26B-A4B</strong>: 26B total, ~4B active. <strong>Nemotron-30B-A3B</strong>: 30B total, ~3B active. When you see <code>A#B</code>, that's the number that predicts how fast it will feel. No <code>A#B</code>? Assume dense — total = active.</p>
+  </div>
+
+  <h2>The VRAM math</h2>
+  <p>Whatever the design, the model's weights must fit in memory, and you need room left for the <a href="kv-cache-precision.html">KV cache</a> (your context) on top. A rough single-card budget on a 32 GiB B70:</p>
+  <ul>
+    <li><strong>Weights:</strong> total params × bits-per-weight ÷ 8. A 27B model at 4-bit (Q4) ≈ 15–18 GB; at 8-bit (Q8) ≈ 27–30 GB. See <a href="quantization-and-speed.html">Quantization</a>.</li>
+    <li><strong>KV cache:</strong> grows with context; can be several GB to 16 GB at very long context.</li>
+    <li><strong>Rule of thumb:</strong> keep weights + expected KV under ~30 GB on a 32 GiB card. If a Q8 model is tight, drop to Q4 or add a card.</li>
+  </ul>
+
+  <h2>The lab's model board</h2>
+  <p>What we've actually measured on B70s. Rates are for different card counts and methods — read the columns, don't compare rows blindly. <span class="badge lab">Lab-measured</span></p>
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Model</th><th>Design</th><th class="num">Cards</th><th class="num">Decode tok/s</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td class="best">Gemma-4-26B A4B</td><td>MoE (~4B active)</td><td class="num">1</td><td class="num best">124.98</td><td>Fastest single-card all-rounder</td></tr>
+      <tr><td>Qwen3.8-27B</td><td>hybrid, Q4_K_M</td><td class="num">1</td><td class="num">27.82</td><td>Vision + tools, 256K context, quality-validated</td></tr>
+      <tr><td>Qwen3.8-27B</td><td>Q8_0</td><td class="num">2</td><td class="num">36.77</td><td>Quality-conservative deployment</td></tr>
+      <tr><td>Qwen3.8-27B</td><td>INT4 + MTP 5</td><td class="num">2</td><td class="num">101.2</td><td>Research lane (determinism open)</td></tr>
+      <tr><td>Laguna S 2.1</td><td>INT4 + DFlash</td><td class="num">4</td><td class="num">121.3</td><td>Closed record</td></tr>
+      <tr><td>Muse-Glimmer-30B</td><td>Q8/WOQ + DFlash</td><td class="num">4</td><td class="num">100.6</td><td>Closed record</td></tr>
+    </tbody>
+  </table></div>
+  <p>The full, filterable list — with quant, OS, runtime, and maturity — lives in the <a href="../guides.html">Guide library</a>.</p>
+
+  <h2>How to choose</h2>
+  <ol>
+    <li><strong>Match to your cards.</strong> One B70? A fast MoE (Gemma-4-26B) or a Q4 27B. More cards unlock bigger models and speculative records.</li>
+    <li><strong>Match to your job.</strong> Coding and agents want <a href="speculative-methods.html">tools</a> and speed; document work wants long <a href="context-length.html">context</a>; image tasks need a vision model (Qwen3.8 reads pictures).</li>
+    <li><strong>Then optimize.</strong> Once the model fits and runs, the other eight guides are how you make it faster.</li>
+  </ol>
+
+  <div class="callout warn">
+    <span class="tag">What to be aware of</span>
+    <p>A high headline number can hide caveats: it may be a research lane with unresolved determinism, a narrow benchmark shape, or a different card count than yours. It may also be a model that's fast but weaker at your task. And new weights we're still bringing to the board (e.g. Ornith, Nemotron, LFM2.5) have <strong>no B70 numbers yet</strong> — we don't guess them. Always check the evidence link and the card count behind a rate before believing it applies to you.</p>
+  </div>
+
+  <div class="callout good">
+    <span class="tag">Recommendation</span>
+    <p>For most people on a single B70: start with <strong>Gemma-4-26B</strong> if you want raw speed, or <strong>Qwen3.8-27B Q4_K_M</strong> if you want vision, tools, long context, and a fully quality-checked package. Get it running, then come back and tune.</p>
+  </div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="quantization-and-speed.html"><b>Quantization</b><span>Make the model fit your card</span></a>
+      <a href="hardware.html"><b>Hardware</b><span>How many cards you need</span></a>
+      <a href="mtp-ladder.html"><b>MTP 1·2·3·4</b><span>Make your model faster</span></a>
+      <a href="../learn.html"><b>All guides</b><span>Back to the Learn index</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>

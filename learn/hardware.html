@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hardware: B65 vs B70 vs Max 1100 vs R9700 Pro vs GB10 — neural.download</title>
+<meta name="description" content="How to compare GPUs for local LLMs — VRAM, memory bandwidth, compute, and software support — across Intel Arc Pro B65/B70, Intel Max 1100, AMD Radeon Pro R9700, and NVIDIA GB10 (DGX Spark). Only B70 is lab-measured; the rest are vendor specs.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/learn/hardware.html">
+<meta name="theme-color" content="#f6f1e5">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../index.html">Home</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Guide library</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 08</p>
+  <p class="eyebrow">Pick your setup</p>
+  <h1>Hardware</h1>
+  <p>Which card should you buy? For local LLMs it comes down to four numbers — how much fits, how fast memory moves, how much compute, and whether the software actually runs. Here's how the contenders line up, and an honest note on which we've truly tested.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li><strong>VRAM</strong> decides what <em>fits</em> (model + context). <strong>Memory bandwidth</strong> decides <em>decode</em> speed. <strong>Compute</strong> decides <em>prefill</em> speed. <strong>Software support</strong> decides whether it works at all.</li>
+      <li>We have only benchmarked the <strong>Arc Pro B70</strong> ourselves. B65 numbers are community. The rest are <strong>vendor specs we have not run.</strong></li>
+      <li>More VRAM ≠ faster. A big-capacity card with slow memory can decode slower than a smaller card with fast memory.</li>
+      <li>On non-Intel cards the ecosystem changes (ROCm for AMD, CUDA for NVIDIA) — plan for a different software path.</li>
+    </ul>
+  </div>
+
+  <h2>The four numbers that matter</h2>
+  <ul>
+    <li><strong>VRAM (capacity)</strong> — can the model's weights plus your <a href="context-length.html">context</a> fit? This is the hard gate: too little and it won't run at all.</li>
+    <li><strong>Memory bandwidth (GB/s)</strong> — how fast the GPU reads memory. Because <a href="prefill-vs-clockrate.html">decode is bandwidth-bound</a>, this is your <em>decode tok/s</em> predictor. HBM &gt; GDDR6 &gt; LPDDR for speed.</li>
+    <li><strong>Compute (TFLOPS)</strong> — sets <a href="prefill-vs-clockrate.html">prefill</a> and first-token latency.</li>
+    <li><strong>Software support</strong> — Intel (oneAPI/SYCL, XPU), AMD (ROCm/Vulkan), NVIDIA (CUDA). This determines which <a href="runtimes.html">runtimes</a> and features (like <a href="mtp-ladder.html">MTP</a>) you actually get.</li>
+  </ul>
+
+  <h2>What we've actually measured</h2>
+  <p>Be clear-eyed about provenance. Only the B70 is a lab result; the B65 is a contributor's report; we have <em>not</em> benchmarked the other three cards at all. <span class="badge lab">Lab</span> <span class="badge comm">Community</span></p>
+  <figure class="chart">
+    <h4>B70 vs B65 — the only tok/s we can stand behind</h4>
+    <img src="assets/hw-b65-b70.svg" alt="Bar chart: Arc Pro B70 about 27.8 tokens per second versus Arc Pro B65 about 22 tokens per second, Qwen3.8 no speculation, one card.">
+    <figcaption>Qwen3.8-27B, no speculation, one card. B70 27.8 tok/s <span class="badge lab">Lab</span>; B65 ~22 tok/s <span class="badge comm">Community</span> (the same B65 reportedly reached ~42 with MTP, ~19 at a 150 W power cap). <a href="../community/field-reports/boyter/arc-pro-b65-qwen38/README.md">B65 field report</a>.</figcaption>
+  </figure>
+
+  <h2>The contenders, by spec</h2>
+  <p>VRAM and memory <em>type</em> are the most decision-relevant specs. Figures below are <strong>vendor/spec</strong> unless a lab or community badge says otherwise — we do not publish invented benchmark numbers for cards we haven't run. <span class="badge spec">Spec / vendor</span></p>
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Card</th><th class="num">VRAM</th><th>Memory type</th><th>Ecosystem</th><th>Form factor</th><th>LLM status here</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="best">Intel Arc Pro B70</td><td class="num">32 GB</td><td>GDDR6 (fast)</td><td>Intel oneAPI / XPU</td><td>Desktop GPU</td><td><span class="badge lab">Lab-measured</span> our main lane</td>
+      </tr>
+      <tr>
+        <td>Intel Arc Pro B65</td><td class="num">32 GB</td><td>GDDR6 (fast)</td><td>Intel oneAPI / XPU</td><td>Desktop GPU</td><td><span class="badge comm">Community</span> reported</td>
+      </tr>
+      <tr>
+        <td>Intel Data Center GPU Max 1100</td><td class="num">48 GB</td><td>HBM2e (very fast)</td><td>Intel oneAPI</td><td>Data-center PCIe</td><td><span class="badge spec">Spec only</span> not tested</td>
+      </tr>
+      <tr>
+        <td>AMD Radeon AI PRO R9700</td><td class="num">32 GB</td><td>GDDR6 (fast)</td><td>AMD ROCm / Vulkan</td><td>Workstation GPU</td><td><span class="badge spec">Spec only</span> not tested</td>
+      </tr>
+      <tr>
+        <td>NVIDIA GB10 (DGX Spark)</td><td class="num">128 GB</td><td>Unified LPDDR5X (large, moderate BW)</td><td>NVIDIA CUDA</td><td>Mini desktop system</td><td><span class="badge spec">Spec only</span> not tested</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3>How to read that table</h3>
+  <ul>
+    <li><strong>B70 / B65</strong> — 32 GB GDDR6 desktop cards on Intel's stack. This lab's home turf; everything in these guides was tuned here. B70 is the stronger of the two.</li>
+    <li><strong>Max 1100</strong> — 48 GB of <em>HBM2e</em>, the fastest memory here, so it should decode very well and fits bigger contexts — but it's a data-center PCIe card (cooling, power, availability, and driver setup are not consumer-friendly).</li>
+    <li><strong>R9700 Pro</strong> — 32 GB GDDR6 like the B70, but AMD: you'd run the <a href="runtimes.html">ROCm or Vulkan</a> path instead of oneAPI, so the software story (and MTP availability) differs.</li>
+    <li><strong>GB10 / DGX Spark</strong> — a different animal: a small CUDA system with <em>128 GB unified memory</em>. That huge capacity fits very large models, but unified LPDDR has lower bandwidth than HBM/GDDR, so raw decode tok/s per model may trail a GDDR/HBM card even though far more <em>fits</em>. Great for big-model experimentation, not necessarily for peak tok/s.</li>
+  </ul>
+
+  <div class="callout key">
+    <span class="tag">Capacity vs speed — don't conflate them</span>
+    <p>The GB10's 128 GB is the biggest number on the page, but it's a <em>capacity</em> number. Decode speed follows <em>bandwidth</em>. A card that fits a model 4× bigger will not decode that model 4× faster — often the opposite. Match the spec to your goal: capacity to run huge models, bandwidth to run a given model fast.</p>
+  </div>
+
+  <div class="callout warn">
+    <span class="tag">What to be aware of</span>
+    <p>Three honest caveats. <strong>1)</strong> We have not benchmarked the Max 1100, R9700 Pro, or GB10 — treat their rows as a spec-shaped starting point, not a verdict, and expect the software path to be the real work on non-Intel cards. <strong>2)</strong> Vendor specs are capacity/peak figures; sustained LLM tok/s depends on the runtime and tuning as much as the silicon (see how much our own numbers moved with software alone). <strong>3)</strong> Multiple smaller cards (two B70s) can beat one big card for both VRAM and bandwidth if your runtime does tensor-parallel — that's how our multi-card records exist.</p>
+  </div>
+
+  <div class="callout good">
+    <span class="tag">Recommendation</span>
+    <p>For a tuned, documented, consumer-friendly local-LLM box today, the <strong>Arc Pro B70</strong> is what this lab can actually vouch for — 32 GB, fast GDDR6, and a working oneAPI/vLLM/llama.cpp path. If you're eyeing the others, buy for the axis you need: <strong>Max 1100</strong> for HBM bandwidth + 48 GB (if you can host a data-center card), <strong>R9700 Pro</strong> if you're committed to AMD/ROCm, and <strong>GB10/DGX Spark</strong> if fitting very large models matters more than peak tok/s. Then measure it yourself — and send us the numbers.</p>
+  </div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="models.html"><b>Models</b><span>What fits on the card you pick</span></a>
+      <a href="prefill-vs-clockrate.html"><b>Prefill vs clock</b><span>Why bandwidth vs compute matters</span></a>
+      <a href="../index.html#contribute"><b>Contribute</b><span>Tested another card? Send it in</span></a>
+      <a href="../learn.html"><b>All guides</b><span>Back to the Learn index</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel, AMD, or NVIDIA.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>
