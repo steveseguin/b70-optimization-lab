@@ -92,6 +92,11 @@ binary, driver, or benchmark protocol will reproduce them.
   greedy run diverged despite volatile FP32 products. Keep the weighted
   multiplication graph-visible; no timing result was promoted. See
   `notes/2026-08-22-ornith35b-weighted-reduce-correctness-negative.md`.
+- **Ordered-reduction work-group sweep — CLOSED NEUTRAL:** explicit WG64,
+  WG128, WG256, and WG512 scheduling preserved exact output, but the best arm
+  was only 0.29% above the accepted implicit-range kernel and remained within
+  sample noise; WG64 regressed 1.10%. Keep implicit scheduling. See
+  `notes/2026-08-22-ornith35b-moe-add-workgroup-neutral.md`.
 - **MoE gate/up fusion:** still possible, but prior lab attempts that bypassed
   tuned `MUL_MAT_ID` dispatch were negative. Any future version must preserve
   the tuned dispatch and beat the now-promoted ordered reduction.
