@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learn: the levers that set your tok/s — neural.download</title>
+<meta name="description" content="Plain-language guides to every variable that changes local-LLM speed on Intel Arc and friends: models, quantization, KV cache precision, context length, prefill, MTP, speculative decoding, runtimes, and hardware — each backed by measured benchmarks.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://neural.download/learn.html">
+<meta name="theme-color" content="#f6f1e5">
+<link rel="stylesheet" href="learn/learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="index.html">Home</a>
+    <a href="learn.html" aria-current="page">Learn</a>
+    <a href="guides.html">Guide library</a>
+    <a href="index.html#lab-speeds">Benchmarks</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="eyebrow">Learn · concept guides</p>
+  <h1>The levers that set your tokens per second</h1>
+  <p>Nine plain-language guides to the variables that actually move local-LLM speed. Each one explains what the knob is, shows what we measured when we turned it, tells you what to pick, and warns you where it bites. Numbers are labelled by where they came from.</p>
+</div></header>
+
+<main id="main"><div class="wrap">
+
+  <div class="col">
+    <div class="tldr">
+      <h2>How to read these</h2>
+      <p>Every figure carries a source badge:
+      <span class="badge lab">Lab-measured</span> we ran it on our own B70s;
+      <span class="badge comm">Community</span> reported by a contributor, checked for consistency but not re-run here;
+      <span class="badge spec">Spec / vendor</span> a published number we have <em>not</em> benchmarked. We never present a spec figure as a measured result.</p>
+    </div>
+    <p class="lede">Speed comes from a stack of choices — the model, how it's quantized, how the KV cache is stored, how long your context is, which decoding trick you use, which runtime, and which card. Pull the wrong lever and you can halve your rate without noticing. Start anywhere; they cross-link.</p>
+  </div>
+
+  <h2 class="prose" style="margin-top:30px">Pick your setup</h2>
+  <div class="guide-cards">
+    <a class="guide-card" href="learn/models.html"><div class="gc-top"><span class="gc-n">Guide 01</span><h3>Models</h3></div><div class="gc-body">Dense vs mixture-of-experts, parameters vs VRAM, and which model on our board fits your card and job.</div><div class="gc-go">Read guide →</div></a>
+    <a class="guide-card" href="learn/quantization-and-speed.html"><div class="gc-top"><span class="gc-n">Guide 02</span><h3>Quantization</h3></div><div class="gc-body">Q4/Q5/Q8/INT4/FP8 explained — and the surprise that a smaller file can decode <em>slower</em>.</div><div class="gc-go">Read guide →</div></a>
+    <a class="guide-card" href="learn/hardware.html"><div class="gc-top"><span class="gc-n">Guide 08</span><h3>Hardware</h3></div><div class="gc-body">B65 vs B70 vs Intel Max 1100 vs AMD R9700 Pro vs GB10 Spark — VRAM, bandwidth, and what we've actually tested.</div><div class="gc-go">Read guide →</div></a>
+    <a class="guide-card" href="learn/runtimes.html"><div class="gc-top"><span class="gc-n">Guide 07</span><h3>Runtimes</h3></div><div class="gc-body">vLLM vs llama.cpp SYCL vs IPEX/XPU — which one gives you MTP, which one just works on one card.</div><div class="gc-go">Read guide →</div></a>
+  </div>
+
+  <h2 class="prose" style="margin-top:34px">Tune for speed</h2>
+  <div class="guide-cards">
+    <a class="guide-card" href="learn/kv-cache-precision.html"><div class="gc-top"><span class="gc-n">Guide 03</span><h3>KV precision</h3></div><div class="gc-body">KV8 vs KV16 vs FP8 — why an 8-bit KV cache saves memory but its decode cost <em>grows</em> with context.</div><div class="gc-go">Read guide →</div></a>
+    <a class="guide-card" href="learn/context-length.html"><div class="gc-top"><span class="gc-n">Guide 04</span><h3>Context length</h3></div><div class="gc-body">How decode, prefill, and time-to-first-token change as the prompt fills from 0 to 32K.</div><div class="gc-go">Read guide →</div></a>
+    <a class="guide-card" href="learn/prefill-vs-clockrate.html"><div class="gc-top"><span class="gc-n">Guide 05</span><h3>Prefill vs clock</h3></div><div class="gc-body">Why prefill scales with clock and power but decode scales with memory bandwidth — and what that means for tuning.</div><div class="gc-go">Read guide →</div></a>
+    <a class="guide-card" href="learn/mtp-ladder.html"><div class="gc-top"><span class="gc-n">Guide 06</span><h3>MTP 1·2·3·4</h3></div><div class="gc-body">Multi-token prediction: how the draft-depth ladder trades cost for acceptance, and why 2 is usually the sweet spot.</div><div class="gc-go">Read guide →</div></a>
+    <a class="guide-card" href="learn/speculative-methods.html"><div class="gc-top"><span class="gc-n">Guide 06b</span><h3>Spec methods</h3></div><div class="gc-body">DFlash vs MTP vs draft-model vs no speculation — what each buys you and what it can cost in determinism.</div><div class="gc-go">Read guide →</div></a>
+  </div>
+
+  <div class="col">
+    <div class="callout warn">
+      <span class="tag">What to be aware of</span>
+      <p>These guides describe our lab's Intel Arc Pro B70 lane and the community reports around it. The <em>directions</em> (bigger KV precision costs more at long context, MTP2 is usually the knee, prefill tracks clock) generalize well; the <em>exact numbers</em> are specific to our tuned build and hardware. Re-measure on your own machine before treating any figure as a guarantee.</p>
+    </div>
+  </div>
+
+</div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel, AMD, or NVIDIA.</span>
+  <span><a href="index.html">Home</a> · <a href="guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>
