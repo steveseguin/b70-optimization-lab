@@ -397,6 +397,13 @@ binary, driver, or benchmark protocol will reproduce them.
   `64.60 -> 65.15 tok/s` (+0.85%) with split pairwise outcomes. Retain both as
   negative evidence; see
   `notes/2026-08-23-ornith35b-mtp2row-gate-up-glu-negative.md`.
+- **Two-row recurrent alpha-gate — EXACT, PERFORMANCE NEUTRAL:** the direct
+  Qwen3.5-MoE graph transfer fused the exact 64-value `ADD -> softplus -> MUL`
+  chain, fired 2,490 times in each candidate, and preserved all four canonical
+  transcripts. Mirrored means were `65.05 -> 64.95 tok/s` (-0.15%) with split
+  pairwise outcomes, so removing 60 launches per verifier cycle was not
+  measurable end to end. Retain as default-off research; see
+  `notes/2026-08-23-ornith35b-mtp2row-alpha-gate-neutral.md`.
 - **Speculative decode:** investigate a substantially smaller and faster
   vocabulary-compatible draft separately. Label target-only and assisted
   results separately.

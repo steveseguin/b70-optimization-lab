@@ -1,0 +1,107 @@
+diff --git a/ggml/src/ggml-sycl/element_wise.cpp b/ggml/src/ggml-sycl/element_wise.cpp
+index 16eb5db..769ab0b 100644
+--- a/ggml/src/ggml-sycl/element_wise.cpp
++++ b/ggml/src/ggml-sycl/element_wise.cpp
+@@ -1062,7 +1062,11 @@ void ggml_sycl_op_add_softplus_mul_fused(
+     GGML_ASSERT(add_node->src[1]->type == GGML_TYPE_F32);
+     GGML_ASSERT(softplus_node->type == GGML_TYPE_F32);
+     GGML_ASSERT(other->type == GGML_TYPE_F32 && mul_node->type == GGML_TYPE_F32);
+-    GGML_ASSERT(ggml_nelements(add_node) == 32);
++    const size_t n = ggml_nelements(add_node);
++    const size_t rhs_n = ggml_nelements(add_node->src[1]);
++    const size_t gate_n = ggml_nelements(other);
++    GGML_ASSERT((n == 32 || n == 64) && rhs_n > 0 && gate_n > 0);
++    GGML_ASSERT(n % rhs_n == 0 && n % gate_n == 0);
+ 
+     queue_ptr stream = ctx.stream();
+     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+@@ -1073,11 +1077,11 @@ void ggml_sycl_op_add_softplus_mul_fused(
+     volatile float * add_out = (volatile float *) add_node->data;
+     float * mul_out = (float *) mul_node->data;
+ 
+-    stream->parallel_for(sycl::range<1>(32), [=](sycl::id<1> item) {
++    stream->parallel_for(sycl::range<1>(n), [=](sycl::id<1> item) {
+         const size_t i = item[0];
+-        add_out[i] = lhs[i] + rhs[i];
++        add_out[i] = lhs[i] + rhs[i % rhs_n];
+         const float rounded_sum = add_out[i];
+-        mul_out[i] = op_softplus(rounded_sum) * gate[i];
++        mul_out[i] = op_softplus(rounded_sum) * gate[i % gate_n];
+     });
+ }
+ 
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 917574a..3734944 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -6112,6 +6112,7 @@ static std::atomic<uint64_t> g_ggml_sycl_ornith_conv_silu_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_concat_state_direct_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_alpha_gate_hits{0};
++static std::atomic<uint64_t> g_ggml_sycl_ornith_spec_alpha_gate_hits{0};
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_qk_norm_rope_hits{0};
+ 
+ static bool ggml_sycl_ornith_qk_norm_rope_enabled() {
+@@ -6145,6 +6146,21 @@ static bool ggml_sycl_ornith_alpha_gate_enabled() {
+     return enabled;
+ }
+ 
++static bool ggml_sycl_ornith_spec_alpha_gate_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_SPEC_ALPHA_GATE");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr, "ggml_sycl_ornith_spec_alpha_gate: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_spec_alpha_gate_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
+ static bool ggml_sycl_find_ornith_alpha_gate(const ggml_cgraph * cgraph, int node_idx) {
+     if (!g_ggml_sycl_enable_fusion || !ggml_sycl_ornith_alpha_gate_enabled() ||
+         node_idx < 0 || node_idx + 2 >= cgraph->n_nodes) {
+@@ -6154,6 +6170,7 @@ static bool ggml_sycl_find_ornith_alpha_gate(const ggml_cgraph * cgraph, int nod
+     ggml_tensor * add = cgraph->nodes[node_idx];
+     ggml_tensor * softplus = cgraph->nodes[node_idx + 1];
+     ggml_tensor * mul = cgraph->nodes[node_idx + 2];
++    const int64_t n = add != nullptr ? ggml_nelements(add) : 0;
+     if (add == nullptr || softplus == nullptr || mul == nullptr ||
+         add->op != GGML_OP_ADD || softplus->op != GGML_OP_UNARY || mul->op != GGML_OP_MUL ||
+         ggml_get_unary_op(softplus) != GGML_UNARY_OP_SOFTPLUS || softplus->src[0] != add ||
+@@ -6164,8 +6181,10 @@ static bool ggml_sycl_find_ornith_alpha_gate(const ggml_cgraph * cgraph, int nod
+         std::strstr(add->src[1]->name, "ssm_dt.bias") == nullptr ||
+         add->type != GGML_TYPE_F32 || add->src[0]->type != GGML_TYPE_F32 ||
+         add->src[1]->type != GGML_TYPE_F32 || softplus->type != GGML_TYPE_F32 ||
+-        mul->type != GGML_TYPE_F32 || ggml_nelements(add) != 32 ||
+-        !ggml_are_same_shape(add, add->src[0]) || !ggml_are_same_shape(add, add->src[1]) ||
++        mul->type != GGML_TYPE_F32 ||
++        (n != 32 && (n != 64 || !ggml_sycl_ornith_spec_alpha_gate_enabled())) ||
++        !ggml_are_same_shape(add, add->src[0]) || !ggml_can_repeat(add->src[1], add) ||
++        ggml_nelements(add->src[1]) != 32 ||
+         !ggml_are_same_shape(add, softplus) || !ggml_are_same_shape(add, mul) ||
+         !ggml_is_contiguous(add) || !ggml_is_contiguous(add->src[0]) ||
+         !ggml_is_contiguous(add->src[1]) || !ggml_is_contiguous(mul) ||
+@@ -6179,7 +6198,8 @@ static bool ggml_sycl_find_ornith_alpha_gate(const ggml_cgraph * cgraph, int nod
+                               : mul->src[1] == softplus ? mul->src[0] : nullptr;
+     if (other == nullptr || other->type != GGML_TYPE_F32 ||
+         std::strstr(other->name, "ssm_a") == nullptr ||
+-        !ggml_are_same_shape(add, other) || !ggml_is_contiguous(other)) {
++        !ggml_can_repeat(other, add) || ggml_nelements(other) != 32 ||
++        !ggml_is_contiguous(other)) {
+         return false;
+     }
+ 
+@@ -6921,6 +6941,9 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+                 ggml_sycl_op_add_softplus_mul_fused(
+                     *sycl_ctx, node, cgraph->nodes[i + 1], cgraph->nodes[i + 2]);
+                 g_ggml_sycl_ornith_alpha_gate_hits.fetch_add(1, std::memory_order_relaxed);
++                if (ggml_nelements(node) == 64) {
++                    g_ggml_sycl_ornith_spec_alpha_gate_hits.fetch_add(1, std::memory_order_relaxed);
++                }
+                 i += 2;
+                 continue;
+             }
