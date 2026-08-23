@@ -23,10 +23,10 @@
  "finding": "eager multi-GPU is flat (~17 tok/s at TP2 and TP4; container oneCCL/collective per-step tax); VLLM_XPU_ENABLE_XPU_GRAPH=1 restores scaling: 30.2/48.8/71.7 at TP1/2/4",
  "scope": "71.7 is the fastest target-only Qwen3.8 result for this AutoRound/nightly identity, not the lab-wide target-only record",
  "xpu_graph_support": "The nightly emits: XPU Graph support is experimental and currently only supports single-GPU execution. TP2/TP4 results are therefore unsupported/experimental characterization evidence.",
- "quality_status": "TP1, TP2-graph, and TP4-graph passed seven objective canaries, 8-run same-server repeat, cache-zero checks, and an 8K needle. No --baseline-json was supplied: baseline_comparisons is empty and baseline_match_all=true is vacuous. Cross-boot autotune caveat applies to all.",
- "submission_status": "TP4 target-only graph passed a fresh-cache natural-EOS final gate at 71.2933 tok/s conventional with 25/25 rows covering the strict 100-event/99-interval window and cached_tokens=0. No submission was made. A non-vacuous baseline battery and mandatory cross-boot/unsupported-graph disclosures remain; TP1 and TP2 natural-EOS gates are still open.",
+ "quality_status": "TP1, TP2-graph, and TP4-graph passed seven objective canaries, 8-run same-server repeat, cache-zero checks, and an 8K needle. The original batteries had no baseline JSON. TP4 exact-cache replay now additionally passes all 24 nonempty comparisons against the prior known-good TP4 quality JSON. TP1/TP2 still lack non-vacuous baseline batteries. Runtime token nondeterminism remains.",
+ "submission_status": "TP4 target-only graph passed fresh and exact-replay natural-EOS final gates at 71.2933/71.3984 tok/s conventional with 25/25 rows covering the strict 100-event/99-interval window and cached_tokens=0. Its real-baseline battery also passed. No submission was made. Mandatory 21/25 sealed-replay token-parity and unsupported-graph disclosures remain; TP1 and TP2 natural-EOS gates are still open.",
  "replication_status": "TP2 graph now has two fresh-compile 25-prompt captures at 48.8301/48.9505 tok/s with 19/25 complete-output agreement. TP4 graph has two independent 25-prompt captures at 71.6741/71.5488 with 21/25 agreement. Speed replication is closed for both; cross-boot token nondeterminism remains.",
- "determinism_status": "TP1 exact sealed-cache replay matched 2/2 sensitive prompts and left the cache byte-identical. Independent fresh default caches differed 1/2. PYTHONHASHSEED=0 plus all three autotune controls disabled preserved 30.2312/30.2565 tok/s on two full runs but matched only 19/25 complete outputs, so the candidate is rejected and the cross-boot caveat remains.",
+ "determinism_status": "TP1 exact sealed-cache replay matched 2/2 screened prompts, but that was not a full-suite claim. Independent TP1 fresh default caches differed 1/2, and a tuner-disabled full pair matched only 19/25. At TP4, exact replay left all 4,421 cache files unchanged yet the natural-EOS full runs matched only 21/25. Cache sealing therefore does not remove runtime token nondeterminism.",
  "speculative_status": "TP2 and TP4 eager MTP2 both boot from separate fresh ext4 caches and pass the exact code-14/cache-zero canary. A TP4 two-prompt replay screen measured 31.1680 conventional tok/s with 149/210 draft tokens accepted (70.95%, implied mean 2.419/3 including target). This works but misses both preregistered expansion gates, so no full nightly MTP suite is authorized. The old TP4 failure is superseded as infrastructure-invalid.",
  "arms": {
   "tp2-mtp0-f16-a": {
@@ -123,6 +123,28 @@
    "strict_final_gate": "pass",
    "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp4-mtp0-f16-graph-natural-eos-fresh-a"
   },
+  "tp4-mtp0-f16-graph-natural-eos-replay-a-baseline-quality": {
+   "tp": 4,
+   "gpus": "0,1,2,3",
+   "graph": true,
+   "mtp": 0,
+   "kv": "f16",
+   "gpu_mem_util": 0.6,
+   "cache_policy": "exact replay; 4,421-file manifest unchanged before/after benchmark and quality battery",
+   "natural_eos": true,
+   "ignore_eos": false,
+   "max_tokens": 512,
+   "decode_median_tok_s_conventional_intervals": 71.39843006187554,
+   "rows_valid": 25,
+   "completion_token_distribution": {"220": 1, "419": 1, "512": 23},
+   "cached_tokens_all_zero": true,
+   "strict_final_gate": "pass",
+   "complete_output_match_vs_fresh": "21/25",
+   "quality_pass_all": true,
+   "quality_baseline_status": "passed",
+   "quality_baseline_comparisons_true": "24/24",
+   "raw_root": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp4-mtp0-f16-graph-natural-eos-replay-a-baseline-quality"
+  },
   "tp2-mtp2-f16-isolated-seed0-smoke-b": {
    "tp": 2,
    "gpus": "2,3",
@@ -197,6 +219,10 @@
   "tp4_graph_natural_eos_identity_env": "da9cbf355f6522a964e19a358554ffb5ccc4f47d9018564e2c6782c2b50825be",
   "tp4_graph_natural_eos_server_log": "05a7843c785848a965500b897a7b64d4f475049353d443d07517bbf30cee7fbe",
   "tp4_graph_natural_eos_cache_manifest": "83aaef6468d0071077b1df100052bce77a34a91d0bff5f8c20b0f45fa8bb828d",
+  "tp4_graph_natural_eos_replay_bench_json": "6884fc5f0e014f30b6251d8558783ce2a6d9d8424191a4d0980f2f3c4e4d7872",
+  "tp4_graph_natural_eos_replay_quality_json": "8215fb791e11b3e4c09056b4979c4739d3d855f2086c4786d45f2053c0342488",
+  "tp4_graph_natural_eos_replay_identity_env": "a0b0930f2c24fb9a1e02cc133b1cf2c4c877fefd707cddc5cf96adaece3ca1c3",
+  "tp4_graph_natural_eos_replay_server_log": "a92a44b57d21239874772ed63315da4982b1f335b24d6320e52bc234e68406a5",
   "tp2_graph_quality_json": "e51d506f12d30004ec55354fbbe40080c096ce5309939a79ccbdac340d900075",
   "tp4_graph_quality_json": "4d1b126823464ef72fd57cacb9a47f1ef405c86fa6c707e698e93237d1ff50d0",
   "tp4_mtp2_server_log": "b229f25b3f605e03be773859a0a504d3b70300b4ef8804bbadc608f2bc34a007"

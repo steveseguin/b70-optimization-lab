@@ -63,9 +63,14 @@ unsupported/experimental even though these TP2/TP4 runs completed and passed.
 run produced 25/25 eligible cold rows at **71.2933 tok/s** conventional under
 strict 100-event/99-interval accounting. Cached tokens were zero throughout;
 23 rows hit the honest 512-token cap and two stopped naturally at 220/419.
-This closes the timing-methodology gate without changing the 71.7 diagnostic
-ceiling. A real-baseline battery and the cross-boot/unsupported-graph
-disclosures remain; no submission was made.
+An exact-cache replay then passed at **71.3984 tok/s** and left its 4,421-file
+cache manifest unchanged. Its objective battery passed all 24 nonempty
+comparisons against the prior known-good TP4 quality JSON. Fresh/replay full
+outputs still matched only 21/25, proving cache sealing does not eliminate
+runtime token divergence. This closes the timing and real-baseline battery
+gates without changing the 71.7 diagnostic ceiling; the runtime-
+nondeterminism and unsupported-graph disclosures remain. No submission was
+made.
 
 **The old TP4 MTP2 root is infrastructure-invalid, but the topology now boots.**
 In `tp4-mtp2-f16-a`, three ranks lost shared compile artifacts and the later

@@ -39,8 +39,32 @@ Raw root:
 
 ## Remaining caveats
 
-This closes the natural-EOS and strict-accounting gate for TP4. It does not
-remove cross-boot token nondeterminism, supply the missing real baseline to
-the objective battery, or make multi-GPU XPU Graph supported by upstream.
-Those caveats remain mandatory. No LocalMaxxing submission was made.
+An exact-cache replay then passed again at `71.39843006187554 tok/s`
+conventional. The 4,421-file cache manifest remained byte-identical. On the
+same boot, the seven canaries, 8-run repeat, and 8K needle passed, and all 24
+nonempty comparisons against the prior known-good TP4 quality JSON were true.
+This closes the non-vacuous baseline battery gap.
 
+Cache immutability did **not** make full outputs deterministic: fresh and
+replay natural-EOS runs matched 21/25 complete token streams. The four first
+divergences were at token indices 172 (`selection--incident-retrospective`),
+482 (`holdout--typescript-cancellation`), 34
+(`holdout--rust-stream-parser`), and 462
+(`holdout--prose-decision-memo`). The identical completion-length distribution
+and stable rate do not erase that output divergence.
+
+This closes the natural-EOS, strict-accounting, exact-cache replay, and real-
+baseline battery gates for TP4. It does not remove runtime token
+nondeterminism or make multi-GPU XPU Graph supported by upstream. Both
+disclosures remain mandatory. No LocalMaxxing submission was made.
+
+Replay root:
+`/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp4-mtp0-f16-graph-natural-eos-replay-a-baseline-quality`.
+
+| Replay artifact | SHA-256 |
+| --- | --- |
+| `bench.json` | `6884fc5f0e014f30b6251d8558783ce2a6d9d8424191a4d0980f2f3c4e4d7872` |
+| `quality.json` | `8215fb791e11b3e4c09056b4979c4739d3d855f2086c4786d45f2053c0342488` |
+| `identity.env` | `a0b0930f2c24fb9a1e02cc133b1cf2c4c877fefd707cddc5cf96adaece3ca1c3` |
+| `server.log` | `a92a44b57d21239874772ed63315da4982b1f335b24d6320e52bc234e68406a5` |
+| unchanged cache manifest | `83aaef6468d0071077b1df100052bce77a34a91d0bff5f8c20b0f45fa8bb828d` |

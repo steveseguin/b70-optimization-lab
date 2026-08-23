@@ -9,7 +9,7 @@ everything in one place.
 | Lane | Number | Status | What sealing still needs |
 | --- | ---: | --- | --- |
 | vLLM XPU nightly, TP1, MTP off, XPU graph | 30.22 / 30.26 conventional | Objective battery PASS; cache-zero; fresh-compile determinism candidate closed negative | Natural-EOS final gate; battery with an actual baseline; exact-cache replay/sealing; mandatory cross-boot disclosure |
-| vLLM XPU nightly, TP4, MTP off, XPU graph | 71.293 natural-EOS final; 71.67 / 71.55 diagnostic ceiling | Natural-EOS strict gate PASS; objective battery PASS; cache-zero; cross-boot speed stable | Battery with an actual baseline; exact-cache replay/sealing; mandatory cross-boot and unsupported/experimental multi-GPU XPU Graph disclosures; fastest target-only Qwen3.8 result for this AutoRound/nightly identity, not the lab-wide target-only record |
+| vLLM XPU nightly, TP4, MTP off, XPU graph | 71.293 / 71.398 natural-EOS final; 71.67 / 71.55 diagnostic ceiling | Fresh + exact-replay strict gates PASS; non-vacuous baseline battery PASS; cache immutable; full outputs 21/25 | Human submission decision; mandatory runtime-nondeterminism and unsupported/experimental multi-GPU XPU Graph disclosures; fastest target-only Qwen3.8 result for this AutoRound/nightly identity, not the lab-wide target-only record |
 | llama.cpp Q4_K_M TP1 (promoted) | 27.81/27.82 conventional | 24/24 bit-exact, full battery, submission-ready since 2026-08-21 | Nothing - submit-ready; user previously declined ("the 27 is lame") |
 
 **Mandatory disclosure for the two nightly lanes:** deterministic within a
@@ -18,14 +18,13 @@ selection; 19-20/25 cross-boot output agreement). Rates are stable across
 boots (0.17% pairs); outputs are not byte-pinned. Any submission must say
 this. A bounded `PYTHONHASHSEED=0` plus tuner-disabled program preserved
 30.2-class speed but still matched only 19/25 full outputs, so that candidate
-is closed. Exact-cache replay is the only sealed deterministic path shown.
+is closed. TP4 exact-cache replay kept all cache bytes fixed but still matched
+only 21/25 full outputs, so sealing does not remove runtime nondeterminism.
 
-The TP4 candidate now has a passing natural-EOS, 99-interval final gate at
-71.2933. TP1 still needs its natural-EOS final gate. The battery files have
-`baseline_comparisons={}` because no
-`--baseline-json` was supplied; their objective canaries pass, but the
-compatibility field `baseline_match_all=true` is not oracle evidence. Neither
-candidate is submission-ready until its remaining gates are rerun correctly.
+The TP4 candidate now has two passing natural-EOS, 99-interval final gates at
+71.2933/71.3984 and a battery with 24/24 real baseline comparisons. TP1 still
+needs its natural-EOS final gate and real-baseline battery. No submission has
+been made.
 
 ## The margin question (user decision pending)
 

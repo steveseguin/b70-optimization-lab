@@ -62,6 +62,13 @@ natural-EOS methodology gap without lowering the 71.7 diagnostic ceiling. No
 submission was made; a real-baseline battery plus the cross-boot and
 unsupported multi-GPU graph disclosures remain. See the [final-gate note](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tp4-natural-eos-final-gate.md).
 
+An exact-cache TP4 replay passed again at `71.3984 tok/s`, and its objective
+battery passed all 24 nonempty comparisons against the prior known-good TP4
+quality JSON. The 4,421-file cache stayed byte-identical. Full outputs still
+matched only 21/25, so cache sealing does not eliminate runtime token
+nondeterminism; that disclosure remains mandatory alongside upstream's
+unsupported multi-GPU graph warning.
+
 All three graph topologies passed seven objective canaries, an 8-run
 same-server repeat, cache-zero checks, and an 8K needle. The battery runs did
 not supply a baseline JSON, so their empty-comparison
@@ -109,7 +116,8 @@ Immediate order:
 1. preserve the nightly image and all existing raw roots;
 2. add isolated-cache, natural-EOS, and real-baseline gates without changing
    the historical driver's defaults; TP1 fresh-cache determinism is a bounded
-   negative and exact-cache replay is the only sealed path currently shown;
+   negative, and TP4 full-suite evidence shows that exact-cache replay still
+   permits runtime token divergence;
 3. TP2 graph fresh-cache speed replication is closed at `48.8301 / 48.9505`;
    use the qualified target-only cells to fill remaining promotion gates and
    matrix rows without expanding failed speculative candidates;
