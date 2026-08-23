@@ -28,8 +28,8 @@ case "$action" in
 esac
 
 raw=/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70
-cache=/mnt/usb-models/llm-runtime/vllm-cache/qwen38-postrecovery-marginfree-mtp5-20260820
-sealed="$raw/qwen38-postrecovery-marginfree-mtp5-25-spec-c-20260820/compile-cache-output-manifest.json"
+cache=${CHUNKDIAG_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen38-postrecovery-marginfree-mtp5-20260820}
+sealed=${CHUNKDIAG_CACHE_MANIFEST:-$raw/qwen38-postrecovery-marginfree-mtp5-25-spec-c-20260820/compile-cache-output-manifest.json}
 suite="$raw/qwen38-longkv-chunk-diag-suite-20260822/validation-suite.json"
 if [[ "${1:-}" == d4 || "${1:-}" == d5 ]]; then
   suite="$raw/qwen38-longkv-chunk-diag-d4-suite-20260822/validation-suite.json"
@@ -54,7 +54,7 @@ model_manifest="$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json"
 model_verifier="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py"
 sealed_checker="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/check-tp2-sealed-gates.py"
 
-cache_manifest_sha=f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb0ff
+cache_manifest_sha=${CHUNKDIAG_CACHE_MANIFEST_SHA256:-f3582440de9b252cc738648aa5b690fd324bec9afeb8d89e4b73d295071cb0ff}
 suite_sha=0b66d5a6711a981480f09ba5956042a391da3082d3eb470d091fc89f2a37c6fc
 if [[ "${1:-}" == d4 || "${1:-}" == d5 ]]; then
   suite_sha=6e51726f56bbb99ce86e2cf95f4e5d22ed4c141ce3a546d508cc03ae6fb37b6a
@@ -300,9 +300,19 @@ fi
 
 driver_sha=$(sha256sum -- "$driver" | awk '{print $1}')
 empty_diff=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-vllm_instrument_diff=9d5450d485578d5075d3945f1284580934aac0981da484603149ef70bf4bc55a
-compilation_config='{"cache_dir":"/mnt/usb-models/llm-runtime/vllm-cache/qwen38-postrecovery-marginfree-mtp5-20260820/torch_compile_cache/b99160ae76","use_inductor_graph_partition":true,"pass_config":{"fuse_rope_kvcache_cat_mla":false},"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[6],"max_cudagraph_capture_size":6}'
+vllm_instrument_diff=${CHUNKDIAG_EXPECT_VLLM_DIFF_SHA256:-9d5450d485578d5075d3945f1284580934aac0981da484603149ef70bf4bc55a}
+compilation_config=$(printf '{"cache_dir":"%s/torch_compile_cache/b99160ae76","use_inductor_graph_partition":true,"pass_config":{"fuse_rope_kvcache_cat_mla":false},"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[6],"max_cudagraph_capture_size":6}' "$cache")
 aot_keys=dc9285c2585e6107e3a84c9b8339e3865a2930a77e21245f0d2e76b04b7d0ee6,fc5b3e495f3d13b586de6fb38840cdf8917f296f8a22b4133caadfa24369ce62
+diagnostic_instrument=${CHUNKDIAG_ENABLE_INSTRUMENT:-1}
+allow_cache_writes=${CHUNKDIAG_ALLOW_CACHE_WRITES:-0}
+if [[ "$diagnostic_instrument" != 0 && "$diagnostic_instrument" != 1 ]]; then
+  printf 'CHUNKDIAG_ENABLE_INSTRUMENT must be 0 or 1\n' >&2
+  exit 3
+fi
+if [[ "$allow_cache_writes" != 0 && "$allow_cache_writes" != 1 ]]; then
+  printf 'CHUNKDIAG_ALLOW_CACHE_WRITES must be 0 or 1\n' >&2
+  exit 3
+fi
 
 launch_env=(
   HOME=/home/steve
@@ -336,8 +346,8 @@ launch_env=(
   VALIDATION_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0
   VALIDATION_GDN_SPEC_PERSISTENT_SCRATCH="$gdn_spec_persistent_scratch"
   VALIDATION_GDN_CAPTURE_NATIVE_SPEC=1
-  VALIDATION_GDN_STATE_SLOT_TRACE=1
-  VALIDATION_GDN_INITSTATE_AUDIT=1
+  VALIDATION_GDN_STATE_SLOT_TRACE="$diagnostic_instrument"
+  VALIDATION_GDN_INITSTATE_AUDIT="$diagnostic_instrument"
   VALIDATION_GDN_INITSTATE_AUDIT_LAYERS=0
   VALIDATION_GDN_INITSTATE_AUDIT_RANK=0
   VALIDATION_DDTREE_FULL_GRAPH=0
@@ -366,8 +376,8 @@ launch_env=(
   VALIDATION_ENABLE_PACKET_TRACE=0
   VALIDATION_ENABLE_LAYER_TRACE=0
   VALIDATION_REQUIRE_TP2_SEALED_GATES=0
-  VALIDATION_REQUIRE_COMPILE_CACHE_UNCHANGED=1
-  VALIDATION_REQUIRE_NO_COMPILE_CACHE_WRITES=1
+  VALIDATION_REQUIRE_COMPILE_CACHE_UNCHANGED="$((1 - allow_cache_writes))"
+  VALIDATION_REQUIRE_NO_COMPILE_CACHE_WRITES="$((1 - allow_cache_writes))"
   VALIDATION_EXPECT_ONEDNN_INT4_DETERMINISM_PAD_MARKERS=2
   VALIDATION_EXPECT_COMPILE_CACHE_DIRECT_LOADS=2
   VALIDATION_EXPECT_AOT_DIRECT_LOADS=4
@@ -408,6 +418,11 @@ quality_json="$arm_root/data/quality.json"
 bench_json="$arm_root/data/bench.json"
 if [[ ! -f "$quality_json" ]]; then
   printf 'DIAG INFRA FAILURE: no quality evidence (runner rc=%s)\n' \
+    "$runner_rc" >&2
+  exit "$runner_rc"
+fi
+if (( runner_rc > 1 )); then
+  printf 'DIAG INFRA FAILURE: runner rc=%s despite quality evidence\n' \
     "$runner_rc" >&2
   exit "$runner_rc"
 fi

@@ -1558,7 +1558,8 @@ if [[ "$runner_rc" == "0" && "$qualifier_rc" != "0" ]]; then
   runner_rc=11
 fi
 
-if [[ "$require_tp2_sealed_gates" == "1" && "$runner_rc" == "0" ]]; then
+if [[ "${VALIDATION_REQUIRE_COMPILE_CACHE_UNCHANGED:-0}" == "1" \
+  && "$runner_rc" == "0" ]]; then
   set +e
   "$repo/scripts/canonical-tree-manifest.py" verify \
     --root "$compile_cache_root" \
@@ -1569,6 +1570,17 @@ if [[ "$require_tp2_sealed_gates" == "1" && "$runner_rc" == "0" ]]; then
   if [[ "$postflight_rc" != "0" ]]; then
     printf 'post-run compile-cache verification failed\n' >&2
     runner_rc=12
+  fi
+fi
+
+if [[ "${VALIDATION_REQUIRE_NO_COMPILE_CACHE_WRITES:-0}" == "1" \
+  && "$runner_rc" == "0" \
+  && -f "$RUN_DIR/server.stdout.log" ]]; then
+  if grep -Eq \
+    'saved AOT compiled function|Writing.*compile cache|cache.*write' \
+    "$RUN_DIR/server.stdout.log"; then
+    printf 'compile-cache write marker found in server log\n' >&2
+    runner_rc=14
   fi
 fi
 
