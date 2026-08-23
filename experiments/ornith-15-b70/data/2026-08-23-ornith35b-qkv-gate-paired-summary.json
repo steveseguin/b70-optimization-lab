@@ -1,0 +1,29 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-A3B-Q4_K_M",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "candidate": "paired recurrent QKV and gate/Z reordered ESIMD grids",
+  "status": "closed_performance_negative",
+  "candidate_library_sha256": "aff597f6054530f980c9833b3a070dc799f85907c86ef81ddc87bd48e5873b1a",
+  "candidate_complete_patch_sha256": "dff044cd0b564c1a90fbb9dcd173d8a02bcd449912e4eeb1c432bee93746d240",
+  "canonical_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+  "candidate_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+  "candidate_fused_hits": 3810,
+  "expected_fused_hits": 3810,
+  "recurrent_layers": 30,
+  "qkv_quantization": {
+    "Q4_K_layers": 16,
+    "Q6_K_layers": 14
+  },
+  "gate_quantization": "Q4_K",
+  "launches_removed_per_token": 30,
+  "engine_tok_s": {
+    "control": [120.721246, 120.476032],
+    "candidate": [119.117286, 120.052148],
+    "control_mean": 120.598639,
+    "candidate_mean": 119.584717,
+    "relative_percent": -0.840741
+  },
+  "server_measured": false,
+  "accepted_stack_changed": false
+}

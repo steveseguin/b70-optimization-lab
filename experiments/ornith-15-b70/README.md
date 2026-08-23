@@ -200,6 +200,13 @@ binary, driver, or benchmark protocol will reproduce them.
   would overwrite alpha before its consumers run. The alias guard rejected all
   pairs, no timing was performed, and the accepted stack is unchanged. See
   `notes/2026-08-23-ornith35b-alpha-beta-paired-buffer-alias-negative.md`.
+- **Paired recurrent QKV/gate projection — CLOSED PERFORMANCE NEGATIVE:** the
+  Qwen-derived projections safely have distinct overlapping outputs, and the
+  mixed Q4_K/Q6_K candidate preserved exact dot arithmetic, matched the
+  canonical transcript, hit all 3,810 calls, and removed 30 launches/token.
+  Mirrored engine means nevertheless regressed `120.599 -> 119.585 tok/s`
+  (-0.841%). It was not server-tested or shipped. See
+  `notes/2026-08-23-ornith35b-qkv-gate-paired-performance-negative.md`.
 - **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
   accepted only 22/336 reported draft tokens and reduced the fresh-suite median
   from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed
