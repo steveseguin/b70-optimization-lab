@@ -370,6 +370,13 @@ binary, driver, or benchmark protocol will reproduce them.
   multi-row transfers of this lab's Qwen/Ornith fusions are the primary MTP
   opportunity; no throughput is inferred from counts. See
   `notes/2026-08-23-ornith35b-mtp-actual-dispatch-census.md`.
+- **Preferred-MTP1-stack census — DIAGNOSTIC ONLY:** enabling the exact
+  two-row residual/RMS and ordered-MoE research fusions reduces the steady
+  verifier from 1,442 to **1,042** actual generic dispatches (-400), while the
+  embedded draft remains 29. The remaining surface is led by 311 MUL_MAT, 130
+  UNARY, 120 MUL_MAT_ID, 110 MUL, and the recurrent state/L2 boundaries. No
+  throughput is inferred from counts; see
+  `notes/2026-08-23-ornith35b-mtp1-preferred-stack-dispatch-census.md`.
 - **Two-row MTP ordered expert reduction — RESEARCH POSITIVE:** extending the
   accepted ordered FP32 expert reduction to exactly two verifier rows removed
   240 launches/cycle and preserved all four fixed-seed transcripts. Mirrored

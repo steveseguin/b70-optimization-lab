@@ -1,0 +1,42 @@
+{
+  "date": "2026-08-23",
+  "classification": "diagnostic_only",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "runtime_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "accepted_source_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+  "enabled_research_stack": [
+    "GGML_SYCL_FUSED_ORNITH_SPEC_RESIDUAL_RMS=1",
+    "GGML_SYCL_FUSED_ORNITH_SPEC_MOE_ADD_REDUCE=1"
+  ],
+  "steady_target_verifier": {
+    "logical_nodes": 3816,
+    "generic_launches_before": 1442,
+    "generic_launches_after": 1042,
+    "generic_launches_removed": 400,
+    "ops_after": {
+      "MUL_MAT": 311,
+      "UNARY": 130,
+      "MUL_MAT_ID": 120,
+      "MUL": 110,
+      "GET_ROWS": 61,
+      "CPY": 60,
+      "L2_NORM": 60,
+      "GLU": 40,
+      "ADD": 30,
+      "CONCAT": 30,
+      "SSM_CONV": 30,
+      "ROPE": 20,
+      "SET_ROWS": 20,
+      "FLASH_ATTN_EXT": 10,
+      "CONT": 10
+    },
+    "steady_graphs_checked": [5, 7, 9, 11],
+    "counts_identical_across_checked_graphs": true
+  },
+  "steady_embedded_draft": {
+    "generic_launches_before": 29,
+    "generic_launches_after": 29
+  },
+  "throughput_inferred": false
+}
+
