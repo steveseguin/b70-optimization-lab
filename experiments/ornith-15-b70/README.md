@@ -378,6 +378,16 @@ binary, driver, or benchmark protocol will reproduce them.
   the last control rebounded to the candidate range, so it remains a
   default-off stackable research patch rather than a package default. See
   `notes/2026-08-23-ornith35b-mtp2row-moe-add-reduce-research.md`.
+- **MTP1 verifier fusion stack — RESEARCH POSITIVE:** combining the exact
+  multi-row residual/RMS path with the two-row MoE reduction improved mirrored
+  CLI means `65.10 -> 67.30 tok/s` (+3.38%) with identical transcripts. Fresh
+  serving pooled medians improved `79.422 -> 82.483` (+3.85%) and means
+  `77.723 -> 81.624` (+5.02%); both candidates beat both controls and 11/12
+  prompt-paired averages won. Candidate acceptance was also 1.16 percentage
+  points higher, so some server gain may come from accepted work. This is the
+  preferred MTP1 research base, but remains far below target-only and does not
+  enter the user recipe. See
+  `notes/2026-08-23-ornith35b-mtp1-verifier-stack-positive.md`.
 - **Speculative decode:** investigate a substantially smaller and faster
   vocabulary-compatible draft separately. Label target-only and assisted
   results separately.

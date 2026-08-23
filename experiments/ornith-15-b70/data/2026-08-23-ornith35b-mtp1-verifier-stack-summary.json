@@ -1,0 +1,54 @@
+{
+  "date": "2026-08-23",
+  "classification": "research-positive-not-package-default",
+  "stack": {
+    "flags": [
+      "GGML_SYCL_FUSED_ORNITH_SPEC_RESIDUAL_RMS=1",
+      "GGML_SYCL_FUSED_ORNITH_SPEC_MOE_ADD_REDUCE=1"
+    ],
+    "patch": "../patches/llamacpp-ornith15-mtp1-verifier-stack-research-positive-20260823.patch",
+    "scope": "small-row embedded-MTP target verifier only"
+  },
+  "identity": {
+    "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+    "source_base_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_source_diff_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1"
+  },
+  "mirrored_cli": {
+    "order": "A/B/B/A",
+    "canonical_extracted_transcript_sha256": "0f162aebc81f0a28ffd82704b20729ca4dc71b929644c5803639a3ad40828a2e",
+    "all_transcripts_identical": true,
+    "control_generation_tok_s": [64.9, 65.3],
+    "candidate_generation_tok_s": [67.5, 67.1],
+    "control_mean_tok_s": 65.1,
+    "candidate_mean_tok_s": 67.3,
+    "relative_mean_percent": 3.3794162826420893,
+    "candidate_hits_each": {
+      "spec_moe_add_reduce": 3402,
+      "residual_rms_total": 3524,
+      "moe_shared_residual_rms": 3360
+    },
+    "both_candidates_beat_both_controls": true
+  },
+  "fresh_server": {
+    "order": "A/B/B/A",
+    "protocol": "12 unique cold prompts per arm, 512-token responses, median tokens 1-100 after TTFT",
+    "all_freshness_and_finality_gates_passed": true,
+    "arms": [
+      {"name": "control1", "median_tok_s": 78.50224601301701, "mean_tok_s": 77.8071917643429, "drafts": 3890, "accepted": 2234, "acceptance_percent": 57.4293059125964},
+      {"name": "candidate1", "median_tok_s": 80.60385673480867, "mean_tok_s": 81.16499562170397, "drafts": 3882, "accepted": 2242, "acceptance_percent": 57.7537351880474},
+      {"name": "candidate2", "median_tok_s": 83.3024266696097, "mean_tok_s": 82.08389349045807, "drafts": 3881, "accepted": 2243, "acceptance_percent": 57.79438289100747},
+      {"name": "control2", "median_tok_s": 79.42225091169648, "mean_tok_s": 77.63951637040746, "drafts": 3931, "accepted": 2194, "acceptance_percent": 55.81277028745866}
+    ],
+    "pooled_control": {"rows": 24, "median_tok_s": 79.42225091169648, "mean_tok_s": 77.72335406737518, "acceptance_percent": 56.616800920598386},
+    "pooled_candidate": {"rows": 24, "median_tok_s": 82.48336506861432, "mean_tok_s": 81.62444455608102, "acceptance_percent": 57.77405642148654},
+    "pooled_relative_median_percent": 3.854227400733401,
+    "pooled_relative_mean_percent": 5.019199873083369,
+    "prompt_paired_wins": 11,
+    "prompt_count": 12,
+    "both_candidates_beat_both_controls_on_median_and_mean": true,
+    "acceptance_delta_percentage_points": 1.157255500888155
+  },
+  "interpretation": "The exact same-binary CLI result independently supports a kernel gain. Fresh serving is strongly positive, but its 1.16-point pooled acceptance increase may explain part of the measured 5.02% mean improvement and is disclosed rather than subtracted or extrapolated.",
+  "decision": "Retain as the preferred default-off MTP1 research stack. It remains far slower than the accepted target-only package, so no public deployment recipe changes."
+}
