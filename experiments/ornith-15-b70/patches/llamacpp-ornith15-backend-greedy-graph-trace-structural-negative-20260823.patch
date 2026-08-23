@@ -1,0 +1,33 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 917574a..f917ae6 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -6780,6 +6780,28 @@ static bool ggml_sycl_find_ornith_qk_norm_rope(
+ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
+     ggml_sycl_set_main_device(sycl_ctx->device);
+
++    if (std::getenv("GGML_SYCL_ORNITH_LMHEAD_GRAPH_TRACE") != nullptr) {
++        bool has_greedy_argmax = false;
++        for (int j = 0; j < cgraph->n_nodes; ++j) {
++            if (cgraph->nodes[j]->op == GGML_OP_ARGMAX) {
++                has_greedy_argmax = true;
++                break;
++            }
++        }
++        if (has_greedy_argmax) {
++            GGML_LOG_INFO("[ORNITH-LMHEAD-GRAPH] nodes=%d\n", cgraph->n_nodes);
++            for (int j = 0; j < cgraph->n_nodes; ++j) {
++                const ggml_tensor * t = cgraph->nodes[j];
++                GGML_LOG_INFO(
++                    "[ORNITH-LMHEAD-GRAPH] i=%d op=%s name=%s type=%s ne=%" PRId64 "x%" PRId64 "x%" PRId64 "x%" PRId64
++                    " data=%p src0=%p src1=%p flags=%d\n",
++                    j, ggml_op_name(t->op), t->name, ggml_type_name(t->type),
++                    t->ne[0], t->ne[1], t->ne[2], t->ne[3], t->data,
++                    (void *) t->src[0], (void *) t->src[1], t->flags);
++            }
++        }
++    }
++
+     std::vector<ggml_tensor *> precomputed_ornith_silu;
+     precomputed_ornith_silu.reserve(64);
+     std::vector<ggml_sycl_ornith_concat_state_direct_match> pending_ornith_concat_state_direct;

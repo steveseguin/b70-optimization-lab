@@ -1,0 +1,47 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "llama_cpp_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "target_stack": "accepted 11-feature Ornith stack",
+  "hypothesis": "stock backend-greedy ARGMAX shares the SYCL graph with the Q6_K output projection and permits an exact local fusion",
+  "exactness_gate": {
+    "backend_sampling": true,
+    "temperature": 0,
+    "canonical_transcript_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "accepted_oracle_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "byte_exact": true,
+    "repository_normalized_transcript_sha256": "9cd2e622a3756a2816051bcee7941f74a3d0045090a0575dd64a48043f803834",
+    "repository_normalization": "trailing blank line removed after the byte-exact comparison",
+    "stdout_sha256": "fb94fd2938c897d355100290d5c7c042b5037e45f61714f5d2e69ac6f5732c9a",
+    "log_sha256": "ae53731be0dc61b0279f083ad73e71f8b449497ccc250b86a421213ca6123d09"
+  },
+  "graph_trace": {
+    "environment_variable": "GGML_SYCL_ORNITH_LMHEAD_GRAPH_TRACE",
+    "trigger": "any GGML_OP_ARGMAX node in a graph submitted to ggml_backend_sycl_graph_compute_impl",
+    "argmax_graph_trace_lines": 0,
+    "accepted_qk_norm_rope_hits": 30,
+    "accepted_moe_gate_up_hits": 120,
+    "model_execution_confirmed": true,
+    "stdout_sha256": "eac5bbdc17e928d67adde9818f59ed02fec0dc343c71371bcab7ea64c6851c05",
+    "log_sha256": "7d48534e7c99f342caed0366ee22232702a2a89b04c5ce69eb6a5da982d1d484"
+  },
+  "diagnostic_patch": {
+    "path": "experiments/ornith-15-b70/patches/llamacpp-ornith15-backend-greedy-graph-trace-structural-negative-20260823.patch",
+    "sha256": "cada7137ecc965ad86036b97254cfcabfca5b1ef5cb5a7b33f37319f3ee3a6cb",
+    "default_off": true,
+    "performance_patch": false
+  },
+  "restored_accepted_artifacts": {
+    "complete_patch_sha256": "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1",
+    "libggml_sycl_sha256": "060484479736f7cb7b6f55aacc38b9fdf162fb702fc3d73b1a1ce9750301fdcf",
+    "llama_cli_sha256": "b791b681d42ad4d6862bf94798bbaff97ead195fb4fb67e7f5c0be2bf7a80135",
+    "llama_bench_sha256": "9bdd7033e50e22af9b05ec2c30742b5248f6708a89080974b0f0c491963c6e70",
+    "llama_server_sha256": "08bc580449dbc781fedd63db8039eed624817f07535a3f8a023280451f0c6e6f"
+  },
+  "decision": "closed structural negative; current SYCL graph does not contain the output-head-to-ARGMAX edge",
+  "required_for_revisit": "llama.cpp runtime/output/sampler plumbing redesign that keeps exact greedy selection on device",
+  "no_throughput_claim": true,
+  "no_extrapolation": true
+}
