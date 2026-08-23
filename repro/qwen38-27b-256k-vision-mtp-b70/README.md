@@ -65,7 +65,8 @@ Raw engine rates run above server-suite medians by design (no HTTP/sampling); us
 
 ## Published operating point: shipped package (262144 ctx, q8_0 KV, vision + MTP draft resident; MTP-assisted)
 
-Two fresh-server runs, 12-prompt suite, 512-token responses,
+Two fresh-server runs, 12-prompt suite, up to 512-token responses
+(actual prompts 48--78 tokens; one natural-EOS row per run ended early),
 conventional 99-interval median computed from raw event offsets,
 `cached_tokens=0` verified per request:
 

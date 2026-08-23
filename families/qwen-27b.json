@@ -226,6 +226,15 @@
       "status": "candidate",
       "evidence_level": "B70-verified operating points",
       "coverage": ["decode", "configured 256K capacity", "prefill", "vision", "MTP"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "TP1 full-package Q5_K_S/Q4_K_XL operating points at 262144 configured capacity",
+          "basis": "two fresh serving runs per quant, cache-zero checks, objective canaries, exact artifact identity, and Q5 vision smoke are recorded; active prompts were short, cross-server hashes matched only 8/12, token IDs were not captured, and raw serving JSONs remain external with tracked checksums",
+          "reviewed_at": "2026-08-23",
+          "evidence": ["data/qwen38-27b-256k-package-operating-points-20260822.json"]
+        }
+      },
       "manifest": "packages/qwen38-27b-256k-vision-mtp-b70/package.json"
     },
     {
@@ -831,6 +840,52 @@
       "metrics": {"decode_tok_s": [101.394, 100.455, 101.17]},
       "quality": "honest margin-free median 101.170 tok/s; pairwise complete-output agreement only 21–22/25; research only",
       "evidence": "data/qwen38-27b-autoround-int4-baseline-20260818.json"
+    },
+    {
+      "id": "q38-q5ks-flagship-tp1-256k-mtp3-serving",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "UD-Q5_K_S",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-256k-vision-mtp3-q8kv-v1",
+      "measurement_class": "conventional-99-interval-cold-realistic-suite",
+      "promotion_status": "shipped-highest-fitting-quant",
+      "identity": {
+        "model_repository_revision": "unsloth/Qwen3.8-27B-GGUF@4ca720788d1e01f1bff70c033e0d0028fd02e502",
+        "model_sha256": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe",
+        "mmproj_sha256": "cbb841a9ee0636b2ec172f5bb8df2ea8dfeb01e90fe7c6126581d662a0b4e43e",
+        "mtp_draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e"
+      },
+      "config": {"tp": 1, "mtp": 3, "spec_draft_n_max": 3, "spec_draft_n_min": 0, "spec_draft_p_min": 0, "graph": "off", "kv": "q8_0", "draft_kv": "q8_0", "configured_max_context_tokens": 262144, "vision": "mmproj-F16 resident", "cache_prompt": false, "ctx_checkpoints": 0, "concurrency": 1},
+      "workload": "two fresh servers; fixed 12-prompt suite; actual prompts 48–78 tokens; up to 512 output tokens; temperature 0, seed 42; cached_tokens=0; conventional 99-interval rate",
+      "metrics": {"decode_tok_s": [26.668277361723614, 26.64050971102404], "ttft_ms": [373.1489949859679, 372.7790010161698]},
+      "quality": "Both fresh runs passed the final fresh-response gate; objective repeat/arithmetic/copy/JSON canaries pass_all=true; deterministic red/blue vision smoke passed. Suite output hashes matched only 8/12 across fresh servers and token IDs were not captured.",
+      "caveat": "262144 is configured capacity, not active benchmark depth. The serving suite used short prompts. No deep-context needle at or near 256K was run.",
+      "evidence": "data/qwen38-27b-256k-package-operating-points-20260822.json"
+    },
+    {
+      "id": "q38-q4kxl-flagship-tp1-256k-mtp3-serving",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "UD-Q4_K_XL",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-256k-vision-mtp3-q8kv-v1",
+      "measurement_class": "conventional-99-interval-cold-realistic-suite",
+      "promotion_status": "measured-speed-and-headroom-alternative",
+      "identity": {
+        "model_repository_revision": "unsloth/Qwen3.8-27B-GGUF@4ca720788d1e01f1bff70c033e0d0028fd02e502",
+        "model_sha256": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e",
+        "mmproj_sha256": "cbb841a9ee0636b2ec172f5bb8df2ea8dfeb01e90fe7c6126581d662a0b4e43e",
+        "mtp_draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e"
+      },
+      "config": {"tp": 1, "mtp": 3, "spec_draft_n_max": 3, "spec_draft_n_min": 0, "spec_draft_p_min": 0, "graph": "off", "kv": "q8_0", "draft_kv": "q8_0", "configured_max_context_tokens": 262144, "vision": "mmproj-F16 resident", "cache_prompt": false, "ctx_checkpoints": 0, "concurrency": 1},
+      "workload": "two fresh servers; fixed 12-prompt suite; actual prompts 48–78 tokens; up to 512 output tokens; temperature 0, seed 42; cached_tokens=0; conventional 99-interval rate",
+      "metrics": {"decode_tok_s": [27.510235918075423, 27.493910387807432], "ttft_ms": [416.16007903940044, 416.3693230075296]},
+      "quality": "Both fresh runs passed the fresh-response gate and objective canaries pass_all=true. Suite output hashes matched only 8/12 across fresh servers; no Q4-specific vision smoke or deep-context needle was recorded.",
+      "caveat": "Configured 262144 capacity with companions resident; serving speed was measured on short prompts, not at 256K active depth.",
+      "evidence": "data/qwen38-27b-256k-package-operating-points-20260822.json"
     }
   ],
   "series_measurements": [
@@ -918,10 +973,14 @@
       "id": "q38-q5ks-flagship-tp1-kv-q8-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
-      "variant": "UD-Q5_K_S flagship with vision and MTP draft resident",
-      "runtime": "llama.cpp SYCL 9fee29e",
-      "config": {"tp": 1, "mtp": "resident but inactive in raw sweep", "graph": "off", "kv": "q8_0", "configured_max_context_tokens": 262144},
-      "workload": "llama-bench tg128/pp2048, five reps; raw-engine shape metric",
+      "variant": "UD-Q5_K_S",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-q5ks-q8-raw-target-only-depth-v1",
+      "measurement_class": "llama-bench-raw-depth-sweep",
+      "identity": {"model_sha256": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe", "bench_sha256": "0ffeba4bca13262ae7c1648dff81235e7fe2ad4513d12f6c2b717ccde44e0275"},
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "q8_0", "vision": "not loaded", "speculation": "none"},
+      "workload": "llama-bench pp2048 plus tg128 at each existing-depth point, five repetitions, fa=on; raw-engine shape metric",
       "axis": "active_context_tokens",
       "points": [
         {"x": 0, "decode_tok_s": 22.641875, "prefill_tok_s": 915.077622},
@@ -932,6 +991,8 @@
         {"x": 24576, "decode_tok_s": 11.904055, "prefill_tok_s": 750.98526},
         {"x": 32768, "decode_tok_s": 10.32272, "prefill_tok_s": 678.867511}
       ],
+      "quality": "Performance-only raw-engine sweep; no quality gate. The x=0 marker is a real n_depth=0 measurement, not an invented graph origin.",
+      "caveat": "Not the full package: mmproj and MTP draft were not loaded, and no 262144 configured-capacity selector is supported by this evidence.",
       "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json"
     },
     {
@@ -1065,12 +1126,12 @@
     },
     {
       "id": "context-flagship-q8",
-      "title": "Flagship active context",
-      "subtitle": "Qwen3.8 Q5_K_S + vision + draft resident · TP1 llama.cpp · q8_0 KV · 256K configured capacity, active sweep measured only through 32K",
+      "title": "Q5_K_S raw active context",
+      "subtitle": "Qwen3.8 Q5_K_S target-only · TP1 llama-bench · q8_0 KV · no vision projector or MTP draft loaded · measured only through 32K",
       "x_label": "active context tokens",
       "metrics": ["decode_tok_s", "prefill_tok_s"],
       "series": [
-        {"label": "flagship Q8 KV", "measurement_ids": ["q38-q5ks-flagship-tp1-kv-q8-context"]}
+        {"label": "target-only Q8 KV", "measurement_ids": ["q38-q5ks-flagship-tp1-kv-q8-context"]}
       ]
     },
     {
@@ -1345,6 +1406,37 @@
         "32768:2": {"state": "missing", "label": "no curve"},
         "32768:3": {"state": "missing", "label": "no curve"},
         "32768:4": {"state": "missing", "label": "no curve"}
+      }
+    },
+    {
+      "id": "q38-256k-package-quant-by-tp",
+      "label": "256K package quant × TP",
+      "row_axis": {"key": "variant", "label": "weight quantization", "prefix": ""},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.8-27b",
+        "runtime_family": "llama.cpp SYCL",
+        "profile_id": "q38-256k-vision-mtp3-q8kv-v1",
+        "measurement_class": "conventional-99-interval-cold-realistic-suite",
+        "mtp": 3,
+        "graph": "off",
+        "kv": "q8_0",
+        "configured_max_context_tokens": 262144,
+        "vision": "mmproj-F16 resident"
+      },
+      "fixed": "Qwen3.8 full-package TP1 serving profile with q8_0 target/draft KV, MTP3, and mmproj-F16 resident. 262144 is configured capacity; the measured serving prompts were 48–78 tokens, not 256K active context.",
+      "decision_note": "Only TP1 has measured full-package operating points. TP2/TP3/TP4 remain explicit gaps; no topology scaling or deep-context speed is inferred.",
+      "rows": ["UD-Q5_K_S", "UD-Q4_K_XL"],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "UD-Q5_K_S:1": {"state": "lab-measured", "label": "26.668 / 26.641 · shipped", "evidence_id": "q38-q5ks-flagship-tp1-256k-mtp3-serving", "packet_id": "qwen38-27b-256k-vision-mtp-b70"},
+        "UD-Q5_K_S:2": {"state": "missing", "label": "no measured route"},
+        "UD-Q5_K_S:3": {"state": "missing", "label": "no measured route"},
+        "UD-Q5_K_S:4": {"state": "missing", "label": "no measured route"},
+        "UD-Q4_K_XL:1": {"state": "lab-measured", "label": "27.510 / 27.494 · alternative", "evidence_id": "q38-q4kxl-flagship-tp1-256k-mtp3-serving"},
+        "UD-Q4_K_XL:2": {"state": "missing", "label": "no measured route"},
+        "UD-Q4_K_XL:3": {"state": "missing", "label": "no measured route"},
+        "UD-Q4_K_XL:4": {"state": "missing", "label": "no measured route"}
       }
     },
     {

@@ -1,0 +1,98 @@
+{
+  "format": "neural-download-normalized-operating-points-v1",
+  "captured_at": "2026-08-22",
+  "normalized_at": "2026-08-23",
+  "family": "qwen-27b",
+  "revision": "qwen3.8-27b",
+  "purpose": "Durable normalization of the full-package Q5_K_S and Q4_K_XL TP1 serving runs whose raw artifacts remain outside Git.",
+  "shared_identity": {
+    "repository_revision": "unsloth/Qwen3.8-27B-GGUF@4ca720788d1e01f1bff70c033e0d0028fd02e502",
+    "runtime_revision": "ggml-org/llama.cpp@9fee29e9435f865ec0b811a783a6471a136d9317",
+    "mmproj_sha256": "cbb841a9ee0636b2ec172f5bb8df2ea8dfeb01e90fe7c6126581d662a0b4e43e",
+    "mtp_draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+    "cards": 1,
+    "tensor_parallel_size": 1,
+    "configured_max_context_tokens": 262144,
+    "target_kv": "q8_0",
+    "draft_kv": "q8_0",
+    "mtp_depth": 3,
+    "vision": "mmproj-F16 resident",
+    "cache_prompt": false,
+    "ctx_checkpoints": 0,
+    "concurrency": 1
+  },
+  "workload": {
+    "suite": "fixed 12-prompt realistic suite on two fresh servers per quant",
+    "actual_prompt_tokens": [48, 49, 52, 53, 55, 56, 57, 59, 65, 71, 75, 78],
+    "requested_output_tokens": 512,
+    "observed_output_tokens": {
+      "minimum": 223,
+      "maximum": 512
+    },
+    "sampling": "temperature=0, seed=42",
+    "cached_tokens": 0,
+    "metric": "conventional 99-interval decode rate computed from raw event offsets"
+  },
+  "operating_points": [
+    {
+      "variant": "UD-Q5_K_S",
+      "role": "shipped highest-fitting quant",
+      "model_sha256": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe",
+      "decode_tok_s": [26.668277361723614, 26.64050971102404],
+      "ttft_ms": [373.1489949859679, 372.7790010161698],
+      "raw_artifacts": [
+        {
+          "path": "/mnt/usb-models/bench-results/neural-download/operating-points-20260822/qwen38-256k-package.benchA.json",
+          "sha256": "bc42d8ce65c8571147954bab5e91bd2e82238ea60446db6d808a32bc99976d99"
+        },
+        {
+          "path": "/mnt/usb-models/bench-results/neural-download/operating-points-20260822/qwen38-256k-package.benchB.json",
+          "sha256": "01bb09efceb5c5cceb3fb0666ba3a50530a71f2936387b2b9c4b4054b1aab13b"
+        }
+      ],
+      "canaries": {
+        "path": "/mnt/usb-models/bench-results/neural-download/operating-points-20260822/qwen38-256k-package.canaries.json",
+        "sha256": "d8d78af5f02073fd235955c0a2f05c2b64240303dda22550a7d6a0ba065fc130",
+        "pass_all": true
+      },
+      "vision_smoke": {
+        "path": "/mnt/usb-models/bench-results/neural-download/operating-points-20260822/qwen38-vision-smoke.json",
+        "sha256": "0b7d6cf782b3227862a2de535ee41914ec6d859a247d20c843a171b3f193589e",
+        "pass_all": true
+      },
+      "quality": "Both fresh runs passed the final fresh-response gate and objective canaries. Output hashes matched 8/12 across fresh servers; token IDs were not captured."
+    },
+    {
+      "variant": "UD-Q4_K_XL",
+      "role": "measured speed and memory-headroom alternative",
+      "model_sha256": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e",
+      "decode_tok_s": [27.510235918075423, 27.493910387807432],
+      "ttft_ms": [416.16007903940044, 416.3693230075296],
+      "raw_artifacts": [
+        {
+          "path": "/mnt/usb-models/bench-results/neural-download/operating-points-20260822/qwen38-256k-q4kxl-alt.benchA.json",
+          "sha256": "d45149cbc1217a05f2d6cfcaee04ed417092db416c0c734fe0111128012beca4"
+        },
+        {
+          "path": "/mnt/usb-models/bench-results/neural-download/operating-points-20260822/qwen38-256k-q4kxl-alt.benchB.json",
+          "sha256": "7b770b3c0c5dbbcfa4ee804c1ac26574a349993f82d76db5493baf0656143f3d"
+        }
+      ],
+      "canaries": {
+        "path": "/mnt/usb-models/bench-results/neural-download/operating-points-20260822/qwen38-256k-q4kxl-alt.canaries.json",
+        "sha256": "f172eae78e0344e8b9dbbaf7f98b62636c9d2eba8c6d681ef2d73e6878d56d9c",
+        "pass_all": true
+      },
+      "quality": "Both fresh runs passed the final fresh-response gate and objective canaries. Output hashes matched 8/12 across fresh servers; no Q4-specific vision smoke was recorded."
+    }
+  ],
+  "limitations": [
+    "262144 is configured service capacity, not active benchmark depth; measured prompts were 48 to 78 tokens.",
+    "No deep-context needle at or near 256K was run.",
+    "The raw benchmark and canary files are retained outside Git at the recorded paths and checksums; this file is the tracked normalized summary."
+  ],
+  "durable_sources": [
+    "repro/qwen38-27b-256k-vision-mtp-b70/README.md",
+    "packages/qwen38-27b-256k-vision-mtp-b70/package.json"
+  ]
+}
