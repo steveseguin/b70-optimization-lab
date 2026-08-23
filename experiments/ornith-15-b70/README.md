@@ -404,6 +404,15 @@ binary, driver, or benchmark protocol will reproduce them.
   pairwise outcomes, so removing 60 launches per verifier cycle was not
   measurable end to end. Retain as default-off research; see
   `notes/2026-08-23-ornith35b-mtp2row-alpha-gate-neutral.md`.
+- **Two-row convolution + SiLU — EXACT RESEARCH SIGNAL:** extending the
+  accepted recurrent fusion to the exact five-value/two-token convolution
+  window preserved eight canonical transcripts and fired 2,490 times per
+  candidate. Isolated mirrored means improved `64.35 -> 65.00 tok/s` (+1.01%);
+  marginal means on the preferred verifier stack improved
+  `67.10 -> 67.45 tok/s` (+0.52%). Pairwise outcomes split in both screens,
+  so it remains default-off research and did not advance to fresh-server
+  testing. See
+  `notes/2026-08-23-ornith35b-mtp2row-conv-silu-research.md`.
 - **Speculative decode:** investigate a substantially smaller and faster
   vocabulary-compatible draft separately. Label target-only and assisted
   results separately.
