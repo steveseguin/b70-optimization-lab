@@ -1,0 +1,53 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith 1.5 35B-A3B Q4_K_M",
+  "device": "one Intel Arc Pro B70",
+  "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "accepted_stack_changed": false,
+  "aggressive_dot_sigmoid_broadcast": {
+    "door": "GGML_SYCL_FUSED_ORNITH_SHARED_GATE=1",
+    "patch": "experiments/ornith-15-b70/patches/llamacpp-ornith15-shared-gate-dot-correctness-negative-20260823.patch",
+    "patch_sha256": "a6a5176e6de9193cfca0717a4ec7002f04e507772b4761efb8f248fc3f08d395",
+    "candidate_fused_hits_128_tokens": 5080,
+    "expected_fused_hits_128_tokens": 5080,
+    "control_canonical_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "candidate_canonical_sha256": "7f1a99473ffc6cfce7e313051a36fa8575dc2cad82140fcf4c1db7b5cfeb9181",
+    "byte_identical": false,
+    "timed": false,
+    "result": "correctness negative"
+  },
+  "conservative_sigmoid_broadcast": {
+    "door": "GGML_SYCL_FUSED_ORNITH_SHARED_GATE_BROADCAST=1",
+    "candidate_library_sha256": "04601bc6a0c67200f0be22bada3455840c582e9b9440cf4362023579654a5fe9",
+    "patch": "experiments/ornith-15-b70/patches/llamacpp-ornith15-shared-gate-broadcast-performance-negative-20260823.patch",
+    "patch_sha256": "69f24a023d1ca25fa289acd1ac52501bc8b059768c6cc39494616d6f0d5b92ec",
+    "removed_launches_per_decoded_token": 40,
+    "candidate_fused_hits_128_tokens": 5080,
+    "expected_fused_hits_128_tokens": 5080,
+    "control_canonical_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "candidate_canonical_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+    "byte_identical": true,
+    "engine": {
+      "protocol": "llama-bench p0/n128/d0/r7, same final binary, mirrored sequence",
+      "controls_tok_s": [121.979737, 121.507184],
+      "candidates_tok_s": [122.802105, 122.571852],
+      "control_mean_tok_s": 121.7434605,
+      "candidate_mean_tok_s": 122.6869785,
+      "delta_percent": 0.7750050772,
+      "each_candidate_exceeded_each_control": true
+    },
+    "fresh_server": {
+      "protocol": "two fresh controls and two fresh candidates; fixed 12-prompt suite; each prompt once; 512-token maximum; median tokens 1-100 after TTFT; cached_tokens=0",
+      "controls_tok_s": [118.81297691062267, 118.78852142945743],
+      "candidates_tok_s": [117.51350426375399, 117.85757520439927],
+      "control_mean_tok_s": 118.80074917004005,
+      "candidate_mean_tok_s": 117.68553973407663,
+      "delta_percent": -0.9387225617,
+      "all_freshness_gates_passed": true,
+      "all_final_gates_passed": true,
+      "each_candidate_exceeded_each_control": false,
+      "each_candidate_lost_to_each_control": true
+    },
+    "result": "performance negative"
+  }
+}

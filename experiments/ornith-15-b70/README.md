@@ -217,6 +217,14 @@ binary, driver, or benchmark protocol will reproduce them.
   Mirrored engine means nevertheless regressed `120.599 -> 119.585 tok/s`
   (-0.841%). It was not server-tested or shipped. See
   `notes/2026-08-23-ornith35b-qkv-gate-paired-performance-negative.md`.
+- **Shared-expert scalar gate — CLOSED CORRECTNESS/PERFORMANCE NEGATIVE:** an
+  aggressive one-kernel FP32 dot/sigmoid/broadcast form hit all 5,080 sites
+  but changed deterministic output and was not timed. A conservative form kept
+  the stock dot and fused only sigmoid+broadcast multiply; it was byte-exact,
+  removed 40 launches/token, and improved the mirrored engine by 0.78%, but
+  regressed valid fresh serving by 0.94% (`118.801 -> 117.686 tok/s`). Neither
+  variant ships. See
+  `notes/2026-08-23-ornith35b-shared-gate-fusions-negative.md`.
 - **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
   accepted only 22/336 reported draft tokens and reduced the fresh-suite median
   from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed
