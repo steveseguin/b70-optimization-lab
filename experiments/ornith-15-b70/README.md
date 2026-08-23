@@ -193,6 +193,13 @@ binary, driver, or benchmark protocol will reproduce them.
   GEMM. A narrow GEMV replacement hit all 5,080 intended calls but changed the
   forced deterministic transcript at byte 456. It was not timed or shipped.
   See `notes/2026-08-23-ornith35b-router-gemv-correctness-negative.md`.
+- **Paired recurrent alpha/beta projection — CLOSED STRUCTURAL NEGATIVE:**
+  both Q4_K `[2048,32]` projections share the same activation and otherwise
+  satisfy the exact reordered-DMMV matcher, but llama.cpp intentionally assigns
+  their non-overlapping outputs the same allocation. Computing them together
+  would overwrite alpha before its consumers run. The alias guard rejected all
+  pairs, no timing was performed, and the accepted stack is unchanged. See
+  `notes/2026-08-23-ornith35b-alpha-beta-paired-buffer-alias-negative.md`.
 - **No-model n-gram speculation — CLOSED NEGATIVE:** default `ngram-simple`
   accepted only 22/336 reported draft tokens and reduced the fresh-suite median
   from `113.000` to `96.424 tok/s` (-14.67%). A shorter N=4/M=8 profile failed

@@ -1,0 +1,32 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-A3B-Q4_K_M",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "candidate": "paired recurrent alpha/beta Q4_K reordered ESIMD DMMV",
+  "status": "closed_structural_negative",
+  "candidate_enabled": true,
+  "candidate_fused_hits": 0,
+  "canonical_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+  "candidate_output_sha256": "d25039a7a21fccc7eaf5f9414803f80c1e3b58cc900ad8034448df8edb57e38c",
+  "output_interpretation": "canonical only because the alias guard rejected every candidate pair",
+  "live_graph": {
+    "recurrent_layers": 30,
+    "alpha_weight_shape": [2048, 32],
+    "beta_weight_shape": [2048, 32],
+    "weight_type": "Q4_K",
+    "graph_node_distance": 6,
+    "same_activation_object": true,
+    "alpha_contiguous": true,
+    "beta_contiguous": true,
+    "alpha_use_count": 1,
+    "beta_use_count": 1,
+    "alpha_reorder_eligible": true,
+    "beta_reorder_eligible": true,
+    "alpha_beta_output_data_alias": true
+  },
+  "rejection_reason": "alpha and beta outputs share the same planner allocation because their ordinary lifetimes do not overlap; simultaneous materialization would overwrite alpha before its consumers",
+  "performance_measured": false,
+  "launch_reduction_if_graph_lifetimes_changed": 30,
+  "accepted_stack_changed": false,
+  "candidate_complete_patch_sha256": "67d6c5547dd9086268bc289b4cabf3cd05f0501b325361cacea5b19eae6322f3"
+}
