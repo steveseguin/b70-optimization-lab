@@ -1,0 +1,113 @@
+{
+  "schema": "neural-download-qwen38-current-main-stale-before-launch-v1",
+  "date": "2026-08-24",
+  "checked_utc": "2026-08-24T18:51:31Z",
+  "classification": "closed-stale-before-launch-vllm-main-advanced",
+  "qualification": "not_launched",
+  "performance_evidence": false,
+  "quality_evidence": false,
+  "protected_performance_changed": false,
+  "frozen_identity": {
+    "lab_commit": "6f133e653b033618c068e1c8f8ef7a660a19045b",
+    "vllm_head": "342b8ebd8bd4595826f29ff95dfc48679a03a95a",
+    "vllm_tree": "7b60b566f69b2d158016082486b0ed4f3c430715",
+    "xpu_kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "xpu_kernel_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "nightly_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "control_image": "sha256:23fe2e1c88e2c0f5c69b00370687a07c2c49aa1f4fea903ff9416b0223690c37",
+    "both_current_image": "sha256:6dbd46c8d22c3fdb425dfe343e759a89c5aa443eb99f411b4f6d923eae2e54ae",
+    "build_receipt_sha256": "ad856716714af8893d0ce47416d0efab4e9cb014505e6deeed3b3545ea82141c"
+  },
+  "r2_packet": {
+    "preregistration": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-342b8ebd8b-untreated-tp1-r2-prereg.md",
+    "preregistration_sha256": "679b4ce8c305dca2a14decb8eda36e834f4ed3dec3366c7bf6be7dfcf5448d65",
+    "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-342b8ebd8b-untreated-tp1-r2-qualification.sh",
+    "wrapper_sha256": "1005a4c4b4a8dd89188526e05bd7722bd0eddfc63734c111ac2b24f48075bfdc",
+    "classifier_sha256": "fef74bdb90b82fdf543be6ea36320b308aff0d0c146a3c92bcbfff334b70d1b0",
+    "classifier_test_sha256": "b21befd70003b710027303e093915c36ce88d8fcd4eda66facfd549057e5474b",
+    "strict_runner_sha256": "5647c9af599fb4a3bc31b8cf8118c986f8895842de9cd657c037e4ea099925da",
+    "hardware_runner_sha256": "8038015b179048662f53d7d41ead6cddc95671081942444f394c6e48ed57a6f7",
+    "offline_classifier_tests": 14,
+    "static_and_safety_audits_passed": true,
+    "freshness_audits_vetoed_launch": true
+  },
+  "stale_observation": {
+    "component": "vllm_upstream_main",
+    "frozen_head": "342b8ebd8bd4595826f29ff95dfc48679a03a95a",
+    "live_head": "6a9c69fa851389dcf1ee5d3a2363e27af665d26d",
+    "xpu_kernel_live_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "nightly_live_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "lab_live_origin_main": "6f133e653b033618c068e1c8f8ef7a660a19045b",
+    "stage": "precommit prelaunch independent freshness audit",
+    "result": "qualification wrapper not invoked; rebuild literal-current successor"
+  },
+  "upstream_delta_assessment": {
+    "range_commit_count": 1,
+    "successor_is_direct_child": true,
+    "successor_tree": "baf2301fb3f993537b07b6132b4d980efca2e7e4",
+    "commit_subject": "[Attention][Spec Decode] Support varlen trtllm-gen decode for adaptive verification (#52157)",
+    "changed_paths": [
+      "tests/kernels/attention/test_flashinfer_trtllm_attention.py",
+      "vllm/v1/attention/backends/flashinfer.py"
+    ],
+    "insertions": 138,
+    "deletions": 7,
+    "qwen_named_path_changed": false,
+    "xpu_named_path_changed": false,
+    "spec_decode_adjacent": true,
+    "accepted_decision_payload_changed": false,
+    "rebuild_still_required": true
+  },
+  "nonlaunch_evidence": {
+    "wrapper_invoked": false,
+    "hardware_gate_root": "/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-342b8ebd8b-20260824-086de284-venvlib-r2",
+    "hardware_gate_root_absent": true,
+    "campaign_root": "/home/steve/qwen38-current-main-runs/tp1-untreated-342b8ebd8b-20260824-r2",
+    "campaign_root_absent": true,
+    "ports_19773_19774_19775_unbound": true,
+    "running_containers": 0,
+    "model_servers": 0,
+    "render_holders": 0,
+    "hardware_gate_ran": false,
+    "model_loaded": false,
+    "canary_ran": false,
+    "benchmark_ran": false,
+    "quality_battery_ran": false,
+    "gpu_work_ran": false,
+    "performance_or_quality_result_created": false
+  },
+  "preservation": {
+    "r1_remains_sealed": true,
+    "r1_hardware_manifest": "70-of-70",
+    "r1_campaign_manifest": "178-of-178",
+    "r1_inputs_manifest": "21-of-21",
+    "r1_diagnostic_tok_s": 30.337988469031558,
+    "r1_strict_a_tok_s": 30.295550825778708,
+    "r1_strict_a_quality": "pass",
+    "r1_strict_b": null,
+    "tp2_authorized": false,
+    "tp4_authorized": false,
+    "tp2_decision_files_preserved": 78,
+    "tp2_overlay_manifest_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757",
+    "tp4_decision_files_preserved": 152,
+    "tp4_overlay_manifest_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2",
+    "accepted_overlays_applied_to_342b": 0,
+    "historical_floors_or_highs_lowered": 0
+  },
+  "protected_floors_tok_s": {
+    "tp1_diagnostic": 30.2178,
+    "tp1_strict": 30.31067504052998,
+    "tp2_diagnostic": 48.8301,
+    "tp2_strict": 49.01965141150585,
+    "tp4_diagnostic": 71.5488,
+    "tp4_strict_floor": 71.29326283364946,
+    "tp4_strict_high_bar": 71.39843006187554
+  },
+  "disposition": {
+    "r2_packet": "retain byte-exact as audited stale provenance; never invoke, repin, resume, or relabel",
+    "342b_images": "dated static-preflight and r1 evidence only",
+    "next_action": "build 6a9c69f or its newer successor from literal-current vLLM main with exact-current XPU kernels and live official nightly, zero source overlay",
+    "topology_gate": "only a full current TP1 qualification pass authorizes TP2; only then proceed to TP4",
+    "overlay_policy": "preserve accepted decisions versioned; remap only compatible paths and config hashes into fresh caches after zero-overlay qualification"
+  }
+}

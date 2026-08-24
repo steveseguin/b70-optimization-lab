@@ -342,13 +342,27 @@ ports are free, and the 1,097-file cache stayed byte-identical. See the
 and original
 [preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-342b8ebd8b-untreated-tp1-r1-prereg.md).
 
-An independent check at `2026-08-24T18:28:03Z` still resolved literal-current
-vLLM 342b, XPU kernels baaa, and nightly digest 3ee0. If they remain exact,
-preregister a fresh-root r2 with identical performance/quality gates and a
-repository-quiet atomic GPU window. If any engine identity moves first, archive
-342b as dated evidence and rebuild the successor. Do not authorize TP2 until
-TP1 closes; then qualify TP2 zero-overlay plus the preserved 78-decision
-remap, followed by TP4 zero-overlay plus the accepted 152-decision remap.
+The fresh-root 342b r2 packet passed static and preservation audits, but the
+final precommit freshness audit resolved vLLM `main` to its direct child
+`6a9c69fa851389dcf1ee5d3a2363e27af665d26d`. R2 was therefore closed stale
+before launch: its roots remain absent, ports `19773`-`19775` remain unbound,
+and no hardware, model, benchmark, quality, cache, or GPU work ran. Preserve
+the exact packet and wrapper as stale provenance; never invoke or relabel them.
+See the [r2 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-342b8ebd8b-r2-stale-before-launch.md)
+and original
+[preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-342b8ebd8b-untreated-tp1-r2-prereg.md).
+
+The successor is one direct commit adding variable-length TRT-LLM/FlashInfer
+decode support for adaptive verification. It changes two FlashInfer attention
+and test paths, not a Qwen- or XPU-named path or any preserved decision
+payload, but it is speculative-decode-adjacent and must not be waived. Build
+6a9c69f or any newer successor from literal-current vLLM, exact-current XPU
+kernels, and the live nightly digest, with zero source overlay. Re-resolve all
+three before and after the build.
+
+Do not authorize TP2 until TP1 passes full qualification. Then qualify TP2
+zero-overlay plus the preserved 78-decision remap, followed by TP4 zero-overlay
+plus the accepted 152-decision remap.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
