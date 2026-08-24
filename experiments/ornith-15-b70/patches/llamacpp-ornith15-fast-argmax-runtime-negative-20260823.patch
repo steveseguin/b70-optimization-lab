@@ -1,0 +1,142 @@
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -2556,6 +2556,117 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
+             });
+     });
+ }
++
++static std::atomic<uint64_t> g_ggml_sycl_ornith_fast_argmax_hits{0};
++
++static bool ggml_sycl_ornith_fast_argmax_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_ORNITH_FAST_ARGMAX");
++        const bool result = value != nullptr && std::strcmp(value, "0") != 0;
++        if (result) {
++            std::atexit([] {
++                std::fprintf(stderr, "ggml_sycl_ornith_fast_argmax: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_fast_argmax_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return result;
++    }();
++    return enabled;
++}
++
++static void argmax_f32_i32_large_sycl(
++        const float * x, int * dst, int ncols,
++        float * partial_values, int * partial_indices,
++        int n_partials, queue_ptr stream) {
++    constexpr int block_size = SYCL_ARGMAX_BLOCK_SIZE;
++    const size_t shared_mem = block_size * sizeof(float);
++
++    stream->submit([&](sycl::handler & cgh) {
++        sycl::local_accessor<float, 1> shared_data(
++            sycl::range<1>(shared_mem / sizeof(float)), cgh);
++        sycl::local_accessor<int, 1> shared_indices(
++            sycl::range<1>(shared_mem / sizeof(float)), cgh);
++
++        cgh.parallel_for(
++            sycl::nd_range<1>(n_partials * block_size, block_size),
++            [=](sycl::nd_item<1> item) {
++                const int tid = item.get_local_id(0);
++                const int group = item.get_group(0);
++                const int global_size = item.get_global_range(0);
++
++                float max_val = -INFINITY;
++                int max_idx = -1;
++                for (int col = group * block_size + tid; col < ncols; col += global_size) {
++                    const float val = x[col];
++                    if (val > max_val) {
++                        max_val = val;
++                        max_idx = col;
++                    }
++                }
++
++                shared_data[tid] = max_val;
++                shared_indices[tid] = max_idx;
++                item.barrier(sycl::access::fence_space::local_space);
++
++                for (int stride = block_size / 2; stride > 0; stride >>= 1) {
++                    if (tid < stride) {
++                        const float other_val = shared_data[tid + stride];
++                        const int other_idx = shared_indices[tid + stride];
++                        const int own_idx = shared_indices[tid];
++                        if (other_val > shared_data[tid] ||
++                            (other_val == shared_data[tid] && other_idx >= 0 &&
++                             (own_idx < 0 || other_idx < own_idx))) {
++                            shared_data[tid] = other_val;
++                            shared_indices[tid] = other_idx;
++                        }
++                    }
++                    item.barrier(sycl::access::fence_space::local_space);
++                }
++
++                if (tid == 0) {
++                    partial_values[group] = shared_data[0];
++                    partial_indices[group] = shared_indices[0];
++                }
++            });
++    });
++
++    stream->submit([&](sycl::handler & cgh) {
++        sycl::local_accessor<float, 1> shared_data(
++            sycl::range<1>(shared_mem / sizeof(float)), cgh);
++        sycl::local_accessor<int, 1> shared_indices(
++            sycl::range<1>(shared_mem / sizeof(float)), cgh);
++
++        cgh.parallel_for(
++            sycl::nd_range<1>(block_size, block_size),
++            [=](sycl::nd_item<1> item) {
++                const int tid = item.get_local_id(0);
++                float max_val = tid < n_partials ? partial_values[tid] : -INFINITY;
++                int max_idx = tid < n_partials ? partial_indices[tid] : -1;
++                shared_data[tid] = max_val;
++                shared_indices[tid] = max_idx;
++                item.barrier(sycl::access::fence_space::local_space);
++
++                for (int stride = block_size / 2; stride > 0; stride >>= 1) {
++                    if (tid < stride) {
++                        const float other_val = shared_data[tid + stride];
++                        const int other_idx = shared_indices[tid + stride];
++                        const int own_idx = shared_indices[tid];
++                        if (other_val > shared_data[tid] ||
++                            (other_val == shared_data[tid] && other_idx >= 0 &&
++                             (own_idx < 0 || other_idx < own_idx))) {
++                            shared_data[tid] = other_val;
++                            shared_indices[tid] = other_idx;
++                        }
++                    }
++                    item.barrier(sycl::access::fence_space::local_space);
++                }
++
++                if (tid == 0) {
++                    dst[0] = shared_indices[0];
++                }
++            });
++    });
++}
+ static void diag_mask_inf_f32_sycl(const float *x, float *dst,
+                                    const int ncols_x, const int nrows_x,
+                                    const int rows_per_channel, const int n_past,
+@@ -2915,6 +3026,21 @@ inline void ggml_sycl_op_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * d
+     const int64_t ncols = dst->src[0]->ne[0];
+     const int64_t nrows = ggml_nrows(dst->src[0]);
+ 
++    if (ggml_sycl_ornith_fast_argmax_enabled() && nrows == 1 && ncols == 248320) {
++        constexpr int values_per_work_item = 4;
++        const int n_partials = std::min<int64_t>(
++            SYCL_ARGMAX_BLOCK_SIZE,
++            (ncols + SYCL_ARGMAX_BLOCK_SIZE * values_per_work_item - 1) /
++                (SYCL_ARGMAX_BLOCK_SIZE * values_per_work_item));
++        ggml_sycl_pool_alloc<float> partial_values(ctx.pool(), n_partials);
++        ggml_sycl_pool_alloc<int> partial_indices(ctx.pool(), n_partials);
++        argmax_f32_i32_large_sycl(
++            src0_dd, dst_dd, ncols, partial_values.get(), partial_indices.get(),
++            n_partials, main_stream);
++        g_ggml_sycl_ornith_fast_argmax_hits.fetch_add(1, std::memory_order_relaxed);
++        return;
++    }
++
+     argmax_f32_i32_sycl(src0_dd, dst_dd, ncols, nrows, main_stream);
+ }
+ 
