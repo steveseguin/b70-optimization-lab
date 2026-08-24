@@ -690,6 +690,8 @@ class FamilyCoverageTest(unittest.TestCase):
             (root / "families").mkdir()
             (root / "packages").mkdir()
             (root / "models").mkdir()
+            (root / "repro").mkdir()
+            (root / "results").mkdir()
             bad_manifest = {
                 "format": "neural-download-model-family-v1",
                 "name": "Missing id",
@@ -716,16 +718,70 @@ class FamilyCoverageTest(unittest.TestCase):
             (root / "packages/catalog.json").write_text(
                 json.dumps({"packages": []})
             )
+            (root / "repro/guide-catalog.json").write_text(
+                json.dumps({"guides": []})
+            )
+            (root / "families/coverage-registry.json").write_text(
+                json.dumps(
+                    {
+                        "format": "neural-download-coverage-registry-v1",
+                        "planned_families": [],
+                        "lanes": [],
+                    }
+                )
+            )
 
             with (
                 patch.object(MODULE, "ROOT", root),
                 patch.object(MODULE, "CATALOG", root / "families/catalog.json"),
                 patch.object(
+                    MODULE,
+                    "COVERAGE_REGISTRY",
+                    root / "families/coverage-registry.json",
+                ),
+                patch.object(
                     MODULE, "PACKAGE_CATALOG", root / "packages/catalog.json"
+                ),
+                patch.object(
+                    MODULE, "GUIDE_CATALOG", root / "repro/guide-catalog.json"
                 ),
                 patch.object(MODULE, "OUT_DIR", root / "models"),
             ):
                 self.assertEqual(MODULE.generate(check=True), 1)
+
+    def test_public_coverage_registry_is_complete_and_lane_based(self) -> None:
+        registry = json.loads(MODULE.COVERAGE_REGISTRY.read_text())
+        catalog = json.loads(MODULE.CATALOG.read_text())
+        family_ids = {entry["id"] for entry in catalog["families"]}
+        expected, inventory_errors = MODULE.public_evidence_inventory()
+        self.assertEqual(inventory_errors, [])
+
+        errors, summary = MODULE.validate_coverage_registry(
+            registry, family_ids, expected
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(summary["artifacts"], len(expected))
+        self.assertLess(
+            summary["lanes"],
+            summary["artifacts"],
+            "aliases across package/repro/result surfaces must count as one lane",
+        )
+
+        new_public_evidence = dict(expected)
+        new_public_evidence["results/new-public-lane/README.md"] = "result"
+        errors, _ = MODULE.validate_coverage_registry(
+            registry, family_ids, new_public_evidence
+        )
+        self._assert_error(errors, "unmapped public evidence", "new-public-lane")
+
+        duplicate = deepcopy(registry)
+        duplicate["lanes"][1]["artifacts"].append(
+            deepcopy(duplicate["lanes"][0]["artifacts"][0])
+        )
+        errors, _ = MODULE.validate_coverage_registry(
+            duplicate, family_ids, expected
+        )
+        self._assert_error(errors, "assigned to both")
 
     def test_family_id_is_a_safe_slug_and_json_ld_cannot_break_out(self) -> None:
         unsafe_id = self._family()

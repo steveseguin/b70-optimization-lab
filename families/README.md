@@ -78,6 +78,22 @@ measurement IDs, limitations, and a durable record path. They are always
 `not_for_promotion`, never enter measured curves or featured metrics, and are
 replaced by adding a superseding record rather than rewriting history.
 
+`coverage-registry.json` is the fail-closed inventory of public evidence. One
+canonical lane groups every package manifest, repro guide, promoted result,
+and rapid snapshot that describes the same public deployment lane. A result
+index spanning materially different profiles remains its own canonical
+family-assigned lane instead of being attached to one profile. A lane maps to
+either a published family, an explicitly named planned family, or an explicit
+`archive`/`excluded` disposition with a reason. Planned-family assignment is a
+coverage backlog marker only: it creates no measurement, estimate, packet, or
+public family page.
+
+The validator discovers package and repro artifacts from their catalogs and
+result/snapshot entry points from `results/`. It rejects unmapped files,
+duplicate artifact assignments, unknown families, and artifact-kind drift.
+Coverage accounting uses canonical registry lanes; it never totals repeated
+rendered cells from overlapping family matrix views.
+
 The generator also enforces site-wide assignment: every package in
 `packages/catalog.json` must belong to exactly one family, and its family
 packet ID must match the referenced package manifest. Research-only packets

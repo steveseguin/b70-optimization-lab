@@ -23,7 +23,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / "families" / "catalog.json"
+COVERAGE_REGISTRY = ROOT / "families" / "coverage-registry.json"
 PACKAGE_CATALOG = ROOT / "packages" / "catalog.json"
+GUIDE_CATALOG = ROOT / "repro" / "guide-catalog.json"
 OUT_DIR = ROOT / "models"
 BRIDGE = ROOT / "learn" / "assets" / "mlbottleneck-bridge.js"
 SITE = "https://neural.download/"
@@ -66,6 +68,15 @@ POINT_METRIC_PREFIX = {
     "draft_acceptance_rate": "AR",
     "effective_tokens_per_verification": "EV",
 }
+PUBLIC_ARTIFACT_KINDS = {
+    "package",
+    "repro",
+    "result",
+    "result-index",
+    "rapid-snapshot",
+    "rapid-snapshot-index",
+}
+REGISTRY_DISPOSITIONS = {"family", "archive", "excluded"}
 
 
 def esc(value: Any) -> str:
@@ -374,6 +385,157 @@ def load_json(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"{path.relative_to(ROOT)}: root must be an object")
     return value
+
+
+def public_evidence_inventory() -> tuple[dict[str, str], list[str]]:
+    """Discover every public package, repro, result, and rapid-snapshot entry."""
+
+    expected: dict[str, str] = {}
+    errors: list[str] = []
+
+    def add(path: Any, kind: str, label: str) -> None:
+        if not isinstance(path, str) or not path:
+            errors.append(f"{label}: path must be a non-empty string")
+            return
+        prior = expected.get(path)
+        if prior is not None:
+            errors.append(f"{label}: duplicate public evidence path {path} ({prior}, {kind})")
+            return
+        expected[path] = kind
+
+    try:
+        package_catalog = load_json(PACKAGE_CATALOG)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        errors.append(str(error))
+    else:
+        for index, package in enumerate(
+            object_list(package_catalog.get("packages"), "packages/catalog.json: packages", errors)
+        ):
+            add(package.get("manifest"), "package", f"packages/catalog.json: packages[{index}]")
+
+    try:
+        guide_catalog = load_json(GUIDE_CATALOG)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        errors.append(str(error))
+    else:
+        for index, guide in enumerate(
+            object_list(guide_catalog.get("guides"), "repro/guide-catalog.json: guides", errors)
+        ):
+            add(guide.get("guide"), "repro", f"repro/guide-catalog.json: guides[{index}]")
+
+    results_root = ROOT / "results"
+    result_index = results_root / "README.md"
+    if result_index.exists():
+        add("results/README.md", "result-index", "results index")
+    for readme in sorted(results_root.glob("*/README.md")):
+        relative = str(readme.relative_to(ROOT))
+        kind = (
+            "rapid-snapshot-index"
+            if readme.parent.name == "rapid-model-snapshots-b70"
+            else "result"
+        )
+        add(relative, kind, "results discovery")
+    rapid_root = results_root / "rapid-model-snapshots-b70"
+    for readme in sorted(rapid_root.glob("*/README.md")):
+        add(str(readme.relative_to(ROOT)), "rapid-snapshot", "rapid snapshot discovery")
+    return expected, errors
+
+
+def validate_coverage_registry(
+    registry: dict[str, Any], published_family_ids: set[str], expected: dict[str, str]
+) -> tuple[list[str], dict[str, int]]:
+    """Validate one canonical lane assignment for every public evidence artifact."""
+
+    label = "families/coverage-registry.json"
+    errors: list[str] = []
+    if registry.get("format") != "neural-download-coverage-registry-v1":
+        errors.append(f"{label}: unsupported format")
+
+    planned_ids: set[str] = set()
+    for index, family in enumerate(
+        object_list(registry.get("planned_families"), f"{label}: planned_families", errors)
+    ):
+        prefix = f"{label}: planned_families[{index}]"
+        family_id = family.get("id")
+        if not isinstance(family_id, str) or not SLUG_RE.fullmatch(family_id):
+            errors.append(f"{prefix}.id must be a lowercase hyphenated slug")
+            continue
+        if family_id in planned_ids or family_id in published_family_ids:
+            errors.append(f"{prefix}.id duplicates a declared family: {family_id}")
+        planned_ids.add(family_id)
+        if not isinstance(family.get("label"), str) or not family["label"]:
+            errors.append(f"{prefix}.label must be a non-empty string")
+
+    lane_ids: set[str] = set()
+    seen_artifacts: dict[str, str] = {}
+    disposition_counts = {state: 0 for state in REGISTRY_DISPOSITIONS}
+    lanes = object_list(registry.get("lanes"), f"{label}: lanes", errors)
+    for index, lane in enumerate(lanes):
+        prefix = f"{label}: lanes[{index}]"
+        lane_id = lane.get("id")
+        valid_lane_id = isinstance(lane_id, str) and bool(SLUG_RE.fullmatch(lane_id))
+        if not valid_lane_id:
+            errors.append(f"{prefix}.id must be a lowercase hyphenated slug")
+            lane_label = f"lane[{index}]"
+        else:
+            lane_label = lane_id
+            if lane_id in lane_ids:
+                errors.append(f"{prefix}.id duplicates canonical lane {lane_id}")
+            lane_ids.add(lane_id)
+
+        disposition = lane.get("disposition")
+        if disposition not in REGISTRY_DISPOSITIONS:
+            errors.append(f"{prefix}.disposition must be one of {sorted(REGISTRY_DISPOSITIONS)}")
+        else:
+            disposition_counts[disposition] += 1
+        family_id = lane.get("family_id")
+        if disposition == "family":
+            if family_id not in published_family_ids | planned_ids:
+                errors.append(f"{prefix}.family_id must name a published or planned family")
+        else:
+            if family_id is not None:
+                errors.append(f"{prefix}.family_id is only valid for family disposition")
+            if not isinstance(lane.get("reason"), str) or not lane["reason"]:
+                errors.append(f"{prefix}.reason is required for {disposition} disposition")
+
+        artifacts = object_list(lane.get("artifacts"), f"{prefix}.artifacts", errors)
+        if not artifacts:
+            errors.append(f"{prefix}.artifacts must contain at least one public artifact")
+        for artifact_index, artifact in enumerate(artifacts):
+            artifact_prefix = f"{prefix}.artifacts[{artifact_index}]"
+            kind = artifact.get("kind")
+            path = artifact.get("path")
+            if kind not in PUBLIC_ARTIFACT_KINDS:
+                errors.append(f"{artifact_prefix}.kind must be a public artifact kind")
+            if not isinstance(path, str) or not path:
+                errors.append(f"{artifact_prefix}.path must be a non-empty string")
+                continue
+            source = safe_repo_path(path)
+            if source is None or not source.is_file():
+                errors.append(f"{artifact_prefix}.path must name an existing repository file")
+            prior_lane = seen_artifacts.get(path)
+            if prior_lane is not None:
+                errors.append(
+                    f"{artifact_prefix}.path is assigned to both {prior_lane} and {lane_label}"
+                )
+            else:
+                seen_artifacts[path] = lane_label
+            expected_kind = expected.get(path)
+            if expected_kind is None:
+                errors.append(f"{artifact_prefix}.path is not discovered public evidence: {path}")
+            elif kind != expected_kind:
+                errors.append(
+                    f"{artifact_prefix}.kind must be {expected_kind} for {path}, got {kind}"
+                )
+
+    missing = sorted(set(expected) - set(seen_artifacts))
+    if missing:
+        errors.append(f"{label}: unmapped public evidence: " + ", ".join(missing))
+    return errors, {
+        "lanes": len(lane_ids),
+        "artifacts": len(seen_artifacts),
+        **disposition_counts,
+    }
 
 
 def local_evidence_paths(value: Any, key: str | None = None):
@@ -1765,6 +1927,18 @@ def generate(check: bool) -> int:
                 "families/catalog.json: published packages assigned to multiple families: "
                 + ", ".join(duplicated)
             )
+    registry_summary = {"lanes": 0, "artifacts": 0}
+    expected_artifacts, inventory_errors = public_evidence_inventory()
+    errors.extend(inventory_errors)
+    try:
+        coverage_registry = load_json(COVERAGE_REGISTRY)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        errors.append(str(error))
+    else:
+        registry_errors, registry_summary = validate_coverage_registry(
+            coverage_registry, family_ids, expected_artifacts
+        )
+        errors.extend(registry_errors)
     if errors:
         for error in errors:
             print(error, file=sys.stderr)
@@ -1778,7 +1952,11 @@ def generate(check: bool) -> int:
         if drift:
             print("family page drift: " + ", ".join(drift), file=sys.stderr)
             return 1
-        print(f"family pages current: {len(expected)}")
+        print(
+            f"family pages current: {len(expected)}; coverage registry: "
+            f"{registry_summary['lanes']} canonical lanes / "
+            f"{registry_summary['artifacts']} public artifacts"
+        )
         return 0
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     for output, rendered in expected:
