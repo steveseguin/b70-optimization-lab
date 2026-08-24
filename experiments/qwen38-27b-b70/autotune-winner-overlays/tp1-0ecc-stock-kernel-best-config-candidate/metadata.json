@@ -1,0 +1,90 @@
+{
+  "schema": "neural-download-qwen38-autotune-decision-overlay-v1",
+  "state": "stale-before-launch",
+  "created_utc": "2026-08-24T09:18:00Z",
+  "purpose": "Qualify whether the stock-kernel TP1 autotune decisions preserve the protected TP1 strict speed floor on the literal-current code and post-reboot host without copying compiled artifacts or reverting source.",
+  "source": {
+    "campaign_root": "/home/steve/qwen38-current-main-runs/tp1-20260824T081055Z",
+    "lab_head": "fc6b3ac722f4edc7c0e570a3698696ad25c3785a",
+    "vllm_head": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
+    "lane": "control",
+    "kernel": "stock-from-base 0.1.13.2",
+    "cache_manifest_sha256": "33f9fbf4823296c7f05b05023c6253139fd9b3a10255113f614c06e6cb8e565e",
+    "campaign_result_sha256": "9bfd231dd971460917361d469acd50d5f72db83eefdd49e031edf34ee20f313e",
+    "diagnostic_median_tok_s": 30.282672968694783,
+    "strict_a_median_tok_s": 30.324297716696414,
+    "strict_b_median_tok_s": 30.325970521145816,
+    "all_qualification_gates_pass": true
+  },
+  "target": {
+    "lane": "both-current",
+    "vllm_head": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
+    "kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "kernel_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "failed_cache_manifest_sha256": "c8f8df8e2fa33851d5c096564e77c11c1e8fc824699220b0eb2dcf6d26228375",
+    "failed_diagnostic_median_tok_s": 30.293320491708876,
+    "failed_strict_a_median_tok_s": 30.27919625650121,
+    "failed_strict_b_median_tok_s": 30.261661472495938,
+    "strict_floor_tok_s": 30.31067504052998
+  },
+  "host_transition": {
+    "source_campaign_kernel": "7.0.0-28-generic",
+    "qualification_kernel": "7.0.0-30-generic",
+    "reboot_classification": "unclean hard reboot after source campaign; no candidate-overlay arm had started",
+    "scope": "cross-boot overlay qualification, not a same-boot causal attribution",
+    "postreboot_hardware_gate_required": true,
+    "same_boot_untreated_control_required": true,
+    "overlay_forbidden_if_untreated_control_passes": true,
+    "same_boot_required_across_candidate_arms": true
+  },
+  "compatibility": {
+    "outer_cache_namespace": "d65565f7e2",
+    "aot_namespace": "68fc8c632858eb7c65d6de5b3d4f347cb96e1b18357ec6468847d6c7010adc9d",
+    "code_hash": "fb13d4aa1ef8a386c76ab56d39925ff4de083895d9dcbd136e778046e78bb118",
+    "compiler_hash": "ddcad03736",
+    "config_hash": "7fd9f3bcb2",
+    "environment_sha256": "58a8631879b3855c3c1a408d3dad33d48f66b17f7541f08d51d3f1030d7baceb",
+    "computation_graph_sha256": "f493f62d98181193e6760136123c70511e9a0a7f1d91cbf3243008a619553339",
+    "source_best_config_files": 38,
+    "target_best_config_files": 38,
+    "common_relative_paths": 38,
+    "configs_hash_mismatches": 0,
+    "normalized_decisions_equal": 21,
+    "normalized_decisions_different": 17,
+    "byte_identical_files": 1,
+    "byte_different_files": 37,
+    "byte_difference_note": "Most byte-only differences are time_taken_ms metadata; 17 files select a different normalized kernel configuration."
+  },
+  "bundle": {
+    "root": "source",
+    "file_count": 38,
+    "allowed_file_type": ".best_config JSON decisions only",
+    "manifest": "manifest.sha256",
+    "manifest_sha256": "b941bb71c1d264dcd55104b106b2dff6a85c686776b072e0ef6cc18a8354c928",
+    "compiled_binaries_included": false,
+    "generated_kernels_included": false,
+    "aot_model_included": false,
+    "outer_cache_included": false
+  },
+  "qualification_rule": {
+    "compile_policy": "Seed the 38 decisions into an otherwise empty ext4 cache, then require a fresh current-kernel compilation in the exact expected namespaces.",
+    "diagnostic_floor_tok_s": 30.2178,
+    "strict_floor_tok_s": 30.31067504052998,
+    "strict_replays_required": 2,
+    "quality_battery_required": true,
+    "cache_immutability_required": true,
+    "source_recency_required": true,
+    "exact_host_kernel_required": "7.0.0-30-generic",
+    "single_boot_required": true,
+    "same_boot_untreated_control_arms": 3,
+    "decision_overlay_arms_only_after_control_speed_miss": 3,
+    "promotion_before_result": false,
+    "historical_replacement_allowed": false
+  },
+  "closure": {
+    "closed_utc": "2026-08-24T12:07:44Z",
+    "reason": "vLLM main advanced to e239947777e18071c8053195ce599b6511717f67 before the post-reboot hardware gate or any decision-overlay arm ran",
+    "executed_arms": 0,
+    "reuse_rule": "Preserve this exact 0ecc packet as historical source evidence. Derive a separately versioned e239 packet only after fresh graph, namespace, path, and configs_hash compatibility mapping."
+  }
+}

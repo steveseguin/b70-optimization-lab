@@ -11,7 +11,9 @@ set -euo pipefail
 #     LANE MTP KV MAXLEN GPUS PORT OUT_DIR SUITE CACHE_DIR
 #
 # LANE: control (current vLLM + stock base kernel) or both (both current).
-# CACHE_POLICY: fresh or replay. Replay additionally requires
+# CACHE_POLICY: fresh, seeded-fresh, or replay. Seeded-fresh copies only a
+# validated `.best_config` decision bundle into an otherwise empty cache and
+# then requires a new AOT compilation. Replay additionally requires
 # EXPECTED_CACHE_MANIFEST_SHA256.
 # PYTHONHASHSEED_MODE: zero (default) or unset. The unset mode requires the
 # host variable to be absent and omits it from the container environment.
@@ -47,7 +49,17 @@ bench_helper=${CURRENT_MAIN_BENCH_HELPER:-$repo/scripts/bench-openai-realistic-s
 quality_helper=${CURRENT_MAIN_QUALITY_HELPER:-$repo/scripts/qwen38-text-quality-suite.py}
 venv=/home/steve/.venvs/vllm-xpu
 expected_suite_sha256=292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c
-cache_policy=${CACHE_POLICY:?set CACHE_POLICY=fresh or replay}
+cache_policy=${CACHE_POLICY:?set CACHE_POLICY=fresh, seeded-fresh, or replay}
+best_config_seed_dir=${BEST_CONFIG_SEED_DIR:-}
+expected_best_config_seed_count=${EXPECTED_BEST_CONFIG_SEED_COUNT:-}
+expected_best_config_seed_manifest_sha256=${EXPECTED_BEST_CONFIG_SEED_MANIFEST_SHA256:-}
+best_config_target_aot_namespace=${BEST_CONFIG_TARGET_AOT_NAMESPACE:-}
+expected_cache_outer_namespace=${EXPECTED_CACHE_OUTER_NAMESPACE:-}
+expected_cache_code_hash=${EXPECTED_CACHE_CODE_HASH:-}
+expected_cache_compiler_hash=${EXPECTED_CACHE_COMPILER_HASH:-}
+expected_cache_config_hash=${EXPECTED_CACHE_CONFIG_HASH:-}
+expected_cache_env_sha256=${EXPECTED_CACHE_ENV_SHA256:-}
+expected_computation_graph_sha256s=${EXPECTED_COMPUTATION_GRAPH_SHA256S:-}
 max_tokens=${MAX_TOKENS:-512}
 bench=${BENCH:-1}
 canary=${CANARY:-1}
@@ -63,9 +75,11 @@ legacy_lock_file=/tmp/b70-benchmark.lock
 muse_lock_file=/run/lock/muse-glimmer-gpu-exclusive.lock
 expected_gpu0_bdf=0000:23:00.0
 expected_gpu0_uuid=00000000-0000-0023-0000-0000e2238086
+kernel_reject_pattern='Timedout job:|Kernel-submitted job timed out|VM job timed out|device coredump|GT.*reset|reset (queued|started|done)|TLB.*timeout|GuC.*(fail|error|timeout)|CT.*(fail|error|timeout)|xe.*(device.?lost|fault|reset|hung|hang[: ]|tim(e|ed)[ -]?out)|AER:.*(error|fatal|nonfatal)|Hardware Error|aer_status|RxErr|NonFatalErr|nvme.*(timeout|reset|I/O error)|EXT4-fs error|WARNING:|BUG:|Oops:'
 created_container_id=
 container_id_file=
 container_removal_complete=0
+journal_cursor=
 
 die() {
   printf 'error: %s\n' "$*" >&2
@@ -74,6 +88,41 @@ die() {
 
 dockerc() {
   sudo -S -p '' docker "$@" <"$sudo_pass_file"
+}
+
+capture_kernel_delta() {
+  local label=$1 journal_rc rg_rc
+  [[ -n $journal_cursor ]] || return 2
+  if timeout --signal=TERM --kill-after=5s 30s \
+      journalctl -b -k --after-cursor "$journal_cursor" --no-pager \
+      -o short-iso >"$out/kernel-delta.$label.log"; then
+    journal_rc=0
+  else
+    journal_rc=$?
+  fi
+  [[ $journal_rc -eq 0 ]] || return "$journal_rc"
+  if rg -i "$kernel_reject_pattern" "$out/kernel-delta.$label.log" \
+      >"$out/kernel-reject-events.$label.log"; then
+    return 1
+  else
+    rg_rc=$?
+  fi
+  [[ $rg_rc -eq 1 ]] || return "$rg_rc"
+  : >"$out/kernel-reject-events.$label.log"
+}
+
+check_render_idle() {
+  local label=$1 rc
+  if timeout --signal=TERM --kill-after=5s 20s sudo -S -p '' fuser \
+      "${render_nodes[@]}" >"$out/render-holders.$label.stdout" \
+      2>"$out/render-holders.$label.stderr" <"$sudo_pass_file"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  printf '%s\n' "$rc" >"$out/render-holders.$label.rc"
+  [[ $rc -eq 1 && ! -s $out/render-holders.$label.stdout &&
+     ! -s $out/render-holders.$label.stderr ]]
 }
 
 container_id_present() {
@@ -110,6 +159,24 @@ cache_manifest() {
   ' bash "$cache_dir" <"$sudo_pass_file" >"$destination"
 }
 
+best_config_manifest() {
+  local source_dir=$1 destination=$2
+  sudo -S -p '' bash -c '
+    set -euo pipefail
+    cd "$1"
+    find . -type f -name "*.best_config" -print0 | sort -z |
+      xargs -0 -r sha256sum
+  ' bash "$source_dir" <"$sudo_pass_file" >"$destination"
+}
+
+cache_jq() {
+  sudo -S -p '' jq "$@" <"$sudo_pass_file"
+}
+
+cache_file_sha256() {
+  sudo -S -p '' sha256sum "$1" <"$sudo_pass_file" | awk '{print $1}'
+}
+
 check_label() {
   local key=$1
   local expected=$2
@@ -123,12 +190,25 @@ check_label() {
 validate_inherited_lock() {
   local fd=$1
   local expected_path=$2
+  local competing_fd competing_rc
   [[ $fd =~ ^[0-9]+$ ]] || die "invalid inherited lock descriptor: $fd"
   [[ -e /proc/$$/fd/$fd ]] || die "inherited lock descriptor $fd is closed"
   local actual_path
   actual_path=$(readlink -f -- "/proc/$$/fd/$fd")
   [[ $actual_path == "$(readlink -f -- "$expected_path")" ]] ||
     die "inherited lock path mismatch: $actual_path != $expected_path"
+  exec {competing_fd}<>"$expected_path"
+  if flock -n "$competing_fd"; then
+    competing_rc=0
+  else
+    competing_rc=$?
+  fi
+  exec {competing_fd}>&-
+  [[ $competing_rc -eq 1 ]] || {
+    [[ $competing_rc -ne 0 ]] ||
+      die "inherited descriptor was not pre-locked by its parent: $expected_path"
+    die "could not verify inherited lock ownership: $expected_path"
+  }
   flock -n "$fd" || die "inherited lock is not exclusively held: $expected_path"
 }
 
@@ -139,8 +219,32 @@ validate_inherited_lock() {
 [[ $maxlen =~ ^[1-9][0-9]*$ ]] || die 'MAXLEN must be a positive integer'
 [[ $gpu =~ ^[0-3](,[0-3])*$ ]] || die 'GPUS must be a comma-separated subset of 0..3'
 [[ $port =~ ^[1-9][0-9]*$ && $port -le 65535 ]] || die 'invalid PORT'
-[[ $cache_policy == fresh || $cache_policy == replay ]] ||
-  die 'CACHE_POLICY must be fresh or replay'
+[[ $cache_policy == fresh || $cache_policy == seeded-fresh ||
+   $cache_policy == replay ]] ||
+  die 'CACHE_POLICY must be fresh, seeded-fresh, or replay'
+if [[ $cache_policy == seeded-fresh ]]; then
+  [[ $lane == both ]] || die 'seeded-fresh is scoped to the both-current lane'
+  [[ -d $best_config_seed_dir ]] ||
+    die 'seeded-fresh requires BEST_CONFIG_SEED_DIR'
+  [[ $expected_best_config_seed_count =~ ^[1-9][0-9]*$ ]] ||
+    die 'seeded-fresh requires a positive EXPECTED_BEST_CONFIG_SEED_COUNT'
+  valid_sha256 "$expected_best_config_seed_manifest_sha256" ||
+    die 'seeded-fresh requires EXPECTED_BEST_CONFIG_SEED_MANIFEST_SHA256'
+  [[ $best_config_target_aot_namespace =~ ^[0-9a-f]{64}$ ]] ||
+    die 'seeded-fresh requires a 64-hex BEST_CONFIG_TARGET_AOT_NAMESPACE'
+  [[ $expected_cache_outer_namespace =~ ^[0-9a-f]{10}$ ]] ||
+    die 'seeded-fresh requires a 10-hex EXPECTED_CACHE_OUTER_NAMESPACE'
+  valid_sha256 "$expected_cache_code_hash" ||
+    die 'seeded-fresh requires EXPECTED_CACHE_CODE_HASH'
+  [[ $expected_cache_compiler_hash =~ ^[0-9a-f]{10}$ ]] ||
+    die 'seeded-fresh requires a 10-hex EXPECTED_CACHE_COMPILER_HASH'
+  [[ $expected_cache_config_hash =~ ^[0-9a-f]{10}$ ]] ||
+    die 'seeded-fresh requires a 10-hex EXPECTED_CACHE_CONFIG_HASH'
+  valid_sha256 "$expected_cache_env_sha256" ||
+    die 'seeded-fresh requires EXPECTED_CACHE_ENV_SHA256'
+  [[ -n $expected_computation_graph_sha256s ]] ||
+    die 'seeded-fresh requires EXPECTED_COMPUTATION_GRAPH_SHA256S'
+fi
 [[ $max_tokens == 512 ]] || die 'current strict qualification requires MAX_TOKENS=512'
 [[ $bench == 1 && $canary == 1 && $return_token_ids == 1 ]] ||
   die 'BENCH, CANARY, and RETURN_TOKEN_IDS must all equal 1'
@@ -170,12 +274,16 @@ case $pythonhashseed_mode in
 esac
 [[ -z ${EXTRA_VLLM_ARGS:-} ]] || die 'EXTRA_VLLM_ARGS is forbidden in zero-overlay qualification'
 [[ -z ${PROMPT_IDS:-} ]] || die 'strict qualification requires the complete suite'
-[[ -z ${ONEAPI_DEVICE_SELECTOR:-} ]] || die 'ONEAPI_DEVICE_SELECTOR must be unset'
-[[ -z ${ZE_AFFINITY_MASK:-} ]] || die 'inherited ZE_AFFINITY_MASK must be unset'
+[[ ! -v ONEAPI_DEVICE_SELECTOR ]] || die 'ONEAPI_DEVICE_SELECTOR must be unset'
+[[ ! -v ZE_AFFINITY_MASK ]] || die 'inherited ZE_AFFINITY_MASK must be unset'
+[[ ! -v SYCL_DEVICE_FILTER ]] || die 'inherited SYCL_DEVICE_FILTER must be unset'
+[[ ! -v SYCL_DEVICE_ALLOWLIST ]] || die 'inherited SYCL_DEVICE_ALLOWLIST must be unset'
+[[ ! -v UR_DEVICE_SELECTORS ]] || die 'inherited UR_DEVICE_SELECTORS must be unset'
 [[ -z ${XPU_GRAPH:-} ]] || die 'inherited XPU_GRAPH must be unset'
 [[ -z ${COMPILATION_CONFIG:-} ]] || die 'inherited COMPILATION_CONFIG must be unset'
 [[ -z ${PYTHONPATH:-} ]] || die 'inherited PYTHONPATH must be unset'
 [[ -z ${LD_PRELOAD:-} ]] || die 'inherited LD_PRELOAD must be unset'
+[[ -z ${LD_LIBRARY_PATH:-} ]] || die 'inherited LD_LIBRARY_PATH must be unset'
 [[ -z ${VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE:-} ]] ||
   die 'autotune isolation flags are forbidden in zero-overlay qualification'
 [[ -z ${VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING:-} ]] ||
@@ -186,16 +294,19 @@ esac
 while IFS='=' read -r variable _; do
   case $variable in
     VLLM_XPU_GRAPH) ;;
-    VLLM_XPU_*|VLLM_INTEL_*|VLLM_USE_*|VLLM_FORCE_*|CCL_*|ONECCL_*)
+    VLLM_XPU_*|VLLM_INTEL_*|VLLM_USE_*|VLLM_FORCE_*|ONEAPI_*|ZE_*|ZES_*|SYCL_*|UR_*|XPU_*|CCL_*|ONECCL_*|FI_*|TORCH_XCCL_*)
       die "inherited experiment variable is forbidden: $variable"
       ;;
   esac
 done < <(env)
 
 [[ -r $sudo_pass_file ]] || die "sudo password file is unreadable: $sudo_pass_file"
-for command_name in curl find findmnt flock fuser git jq realpath sha256sum ss tr xpu-smi; do
+for command_name in curl docker find findmnt flock fuser git jq journalctl \
+  pgrep realpath rg sed sha256sum ss sync tail timeout tr xpu-smi; do
   command -v "$command_name" >/dev/null || die "$command_name is required"
 done
+timeout --signal=TERM --kill-after=5s 20s sudo -S -p '' -v \
+  <"$sudo_pass_file" || die 'sudo authentication preflight failed'
 [[ -f $receipt ]] || die "missing build receipt: $receipt"
 [[ -f $suite ]] || die "missing suite: $suite"
 [[ $(sha256sum "$suite" | awk '{print $1}') == "$expected_suite_sha256" ]] ||
@@ -207,7 +318,9 @@ done
 [[ -x $venv/bin/python ]] || die "missing validation Python: $venv/bin/python"
 [[ -d $model ]] || die "missing model: $model"
 [[ ! -e $out ]] || die "output already exists: $out"
-[[ -z $(git -C "$repo" status --porcelain=v1 --untracked-files=all) ]] ||
+lab_status=$(git -C "$repo" status --porcelain=v1 --untracked-files=all) ||
+  die 'lab repository status check failed'
+[[ -z $lab_status ]] ||
   die 'lab repository must be completely clean'
 [[ $(git -C "$repo" branch --show-current) == main ]] || die 'lab repository must be on main'
 [[ $(git -C "$repo" rev-parse HEAD) == "$(git -C "$repo" rev-parse origin/main)" ]] ||
@@ -272,13 +385,32 @@ mkdir -p -- "$port_lease_dir"
 exec {port_lease_fd}>"$port_lease_dir/port${port}.lock"
 flock -n "$port_lease_fd" || die "port $port is leased"
 
-[[ -z $(dockerc ps -q) ]] || die 'a Docker container is already running'
-if dockerc container inspect "$name" >/dev/null 2>&1; then
-  die "refusing to replace pre-existing container: $name"
+if running_container_ids=$(dockerc ps -q); then
+  :
+else
+  die 'Docker running-container scan failed'
 fi
-pgrep -af 'EngineCore|vllm serve|llama-server' | grep -v pgrep >/dev/null &&
+[[ -z $running_container_ids ]] || die 'a Docker container is already running'
+if existing_container_ids=$(dockerc ps -aq --no-trunc \
+    --filter "name=^/${name}$"); then
+  :
+else
+  die 'Docker container-name scan failed'
+fi
+[[ -z $existing_container_ids ]] ||
+  die "refusing to replace pre-existing container: $name"
+if model_processes=$(pgrep -af '[E]ngineCore|[v]llm serve|[l]lama-server'); then
   die 'a model server process is already running'
-ss -ltnH "sport = :$port" | grep -q . && die "port $port already has a listener"
+else
+  model_pgrep_rc=$?
+fi
+[[ $model_pgrep_rc -eq 1 ]] || die 'model-process scan failed'
+if port_listeners=$(ss -ltnH "sport = :$port"); then
+  :
+else
+  die "port $port listener scan failed"
+fi
+[[ -z $port_listeners ]] || die "port $port already has a listener"
 
 jq -e '
   .schema == "neural-download-absolute-current-main-build-v1" and
@@ -375,6 +507,7 @@ printf '%s\n' "$remote_base_pre" >"$out/upstream-nightly-base.pre.txt"
 prelaunch_cleanup() {
   local rc=$?
   trap - EXIT
+  trap '' INT TERM HUP
   [[ -f $out/final.status ]] || printf 'fail-prelaunch rc=%s\n' "$rc" >"$out/final.status"
   exit "$rc"
 }
@@ -387,6 +520,13 @@ tag_id=$(dockerc image inspect "$image_tag" --format '{{.Id}}')
 dockerc image inspect "$image_id" >"$out/image-inspect.json"
 [[ $(jq -r '.[0].Id' "$out/image-inspect.json") == "$image_id" ]] ||
   die 'immutable image inspection returned the wrong ID'
+jq -e '
+  .[0].Config.Entrypoint == ["vllm", "serve"] and
+  ([.[0].Config.Env[] |
+    select(test("^(ONEAPI_DEVICE_SELECTOR|ZE_AFFINITY_MASK|SYCL_DEVICE_FILTER|SYCL_DEVICE_ALLOWLIST|UR_DEVICE_SELECTORS)="))] |
+  length == 0)
+' "$out/image-inspect.json" >/dev/null ||
+  die 'immutable image bakes a device selector or affinity mask'
 check_label neural.download.base.digest "$base_digest"
 check_label neural.download.build.lane "$expected_lane"
 check_label neural.download.overlay none
@@ -463,7 +603,9 @@ sha256sum "$model_manifest" "$suite" \
 uname -a >"$out/host-uname.txt"
 ls -l /dev/dri/by-path >"$out/host-dri-by-path.txt"
 
-discovery_json=$(xpu-smi discovery -j 2>/dev/null) || die 'xpu-smi discovery failed'
+discovery_json=$(env -u ONEAPI_DEVICE_SELECTOR -u ZE_AFFINITY_MASK \
+  -u SYCL_DEVICE_FILTER -u SYCL_DEVICE_ALLOWLIST -u UR_DEVICE_SELECTORS \
+  xpu-smi discovery -j 2>/dev/null) || die 'xpu-smi discovery failed'
 printf '%s\n' "$discovery_json" >"$out/xpu-smi-discovery.json"
 jq -e --arg bdf "$expected_gpu0_bdf" --arg uuid "$expected_gpu0_uuid" '
   ([.device_list[] | select(.device_name | contains("Arc(TM) Pro B70"))] | length) == 4 and
@@ -473,22 +615,15 @@ jq -e --arg bdf "$expected_gpu0_bdf" --arg uuid "$expected_gpu0_uuid" '
 ' "$out/xpu-smi-discovery.json" >/dev/null || die 'GPU0 BDF/UUID identity changed'
 mapfile -t render_nodes < <(find /dev/dri -maxdepth 1 -type c -name 'renderD*' -print | sort)
 [[ ${#render_nodes[@]} -eq 4 ]] || die 'expected exactly four render nodes'
-set +e
-render_holders=$(sudo -S -p '' fuser "${render_nodes[@]}" 2>/dev/null <"$sudo_pass_file")
-render_fuser_rc=$?
-set -e
-[[ $render_fuser_rc -eq 1 ]] || {
-  [[ $render_fuser_rc -ne 0 ]] || die 'a process already holds a render node'
-  die "render-node holder scan failed with rc=$render_fuser_rc"
-}
-[[ -z $render_holders ]] || die 'render-node holder scan returned unexpected output'
+check_render_idle pre || die 'render-node occupancy scan failed or found a holder'
 gpu0_render_node=$(realpath -e -- "/dev/dri/by-path/pci-$expected_gpu0_bdf-render")
 [[ $gpu0_render_node == /dev/dri/renderD* ]] || die 'GPU0 render-node mapping changed'
 printf 'ordinal=0\nbdf=%s\nuuid=%s\nrender_node=%s\n' \
   "$expected_gpu0_bdf" "$expected_gpu0_uuid" "$gpu0_render_node" \
   >"$out/gpu0-device-identity.env"
 
-if [[ $cache_policy == fresh ]]; then
+best_config_seed_target=
+if [[ $cache_policy == fresh || $cache_policy == seeded-fresh ]]; then
   [[ ! -e $cache_dir ]] || die "fresh cache already exists: $cache_dir"
   mkdir -- "$cache_dir"
 else
@@ -498,6 +633,67 @@ else
   cache_manifest "$out/cache-manifest.pre.sha256"
   [[ $(sha256sum "$out/cache-manifest.pre.sha256" | awk '{print $1}') == \
      "$EXPECTED_CACHE_MANIFEST_SHA256" ]] || die 'replay cache manifest mismatch'
+fi
+
+if [[ $cache_policy == seeded-fresh ]]; then
+  seed_real=$(realpath -e -- "$best_config_seed_dir")
+  cache_real=$(realpath -m -- "$cache_dir")
+  out_real=$(realpath -m -- "$out")
+  if [[ $seed_real == "$cache_real" || $seed_real == "$cache_real"/* ||
+        $cache_real == "$seed_real"/* ]]; then
+    die 'seed and cache paths must be disjoint'
+  fi
+  if [[ $seed_real == "$out_real" || $seed_real == "$out_real"/* ||
+        $out_real == "$seed_real"/* ]]; then
+    die 'seed and output paths must be disjoint'
+  fi
+  [[ ! -L $best_config_seed_dir ]] || die 'seed directory must not be a symlink'
+  [[ -z $(find "$best_config_seed_dir" -type l -print -quit) ]] ||
+    die 'seed directory contains a symlink'
+  seed_total_files=$(find "$best_config_seed_dir" -type f | wc -l)
+  seed_best_config_files=$(find "$best_config_seed_dir" -type f \
+    -name '*.best_config' | wc -l)
+  [[ $seed_total_files == "$expected_best_config_seed_count" ]] ||
+    die "seed bundle has unexpected total file count: $seed_total_files"
+  [[ $seed_best_config_files == "$expected_best_config_seed_count" ]] ||
+    die "seed bundle has unexpected .best_config count: $seed_best_config_files"
+  invalid_seed_path=$(find "$best_config_seed_dir" -type f -printf '%P\n' |
+    grep -Ev '^[0-9a-z]{2}/[0-9a-f]{64}\.best_config$' | head -n 1 || true)
+  [[ -z $invalid_seed_path ]] || die "invalid seed relative path: $invalid_seed_path"
+  while IFS= read -r -d '' seed_file; do
+    jq -e '
+      type == "object" and
+      (.configs_hash | type == "string" and test("^[0-9a-f]{64}$")) and
+      (.triton_cache_hash | type == "string" and length > 0) and
+      (.num_warps | type == "number") and
+      (.num_stages | type == "number")
+    ' "$seed_file" >/dev/null || die "invalid best-config JSON: $seed_file"
+  done < <(find "$best_config_seed_dir" -type f -name '*.best_config' \
+    -print0 | sort -z)
+  best_config_manifest "$best_config_seed_dir" \
+    "$out/best-config-seed.source.sha256"
+  actual_seed_manifest_sha=$(sha256sum "$out/best-config-seed.source.sha256" |
+    awk '{print $1}')
+  [[ $actual_seed_manifest_sha == "$expected_best_config_seed_manifest_sha256" ]] ||
+    die "seed bundle manifest mismatch: $actual_seed_manifest_sha"
+
+  best_config_seed_target="$cache_dir/vllm/torch_compile_cache/torch_aot_compile/$best_config_target_aot_namespace/inductor_cache"
+  mkdir -p -- "$best_config_seed_target"
+  while IFS= read -r -d '' seed_file; do
+    relative_seed_file=${seed_file#"$best_config_seed_dir"/}
+    mkdir -p -- "$best_config_seed_target/$(dirname -- "$relative_seed_file")"
+    cp --reflink=never -- "$seed_file" \
+      "$best_config_seed_target/$relative_seed_file"
+  done < <(find "$best_config_seed_dir" -type f -name '*.best_config' \
+    -print0 | sort -z)
+  best_config_manifest "$best_config_seed_target" \
+    "$out/best-config-seed.precompile.sha256"
+  cmp -s "$out/best-config-seed.source.sha256" \
+    "$out/best-config-seed.precompile.sha256" ||
+    die 'seed target differs before compilation'
+  preseed_total_files=$(find "$cache_dir" -type f | wc -l)
+  [[ $preseed_total_files == "$expected_best_config_seed_count" ]] ||
+    die "seeded fresh cache contains unexpected precompile artifacts: $preseed_total_files"
 fi
 
 compilation_config='{"cudagraph_mode":"FULL_AND_PIECEWISE","cudagraph_capture_sizes":[1,2],"max_cudagraph_capture_size":2}'
@@ -527,6 +723,17 @@ printf '%s\n' "${args[@]}" >"$out/server-args.txt"
   printf 'tp=%s\ngpus=%s\nmtp=%s\nkv=%s\nmax_model_len=%s\n' \
     "$tp" "$gpu" "$mtp" "$kv" "$maxlen"
   printf 'cache_policy=%s\ncache_dir=%s\n' "$cache_policy" "$cache_dir"
+  if [[ $cache_policy == seeded-fresh ]]; then
+    printf 'best_config_seed_dir=%s\n' "$best_config_seed_dir"
+    printf 'best_config_seed_count=%s\n' "$expected_best_config_seed_count"
+    printf 'best_config_seed_manifest_sha256=%s\n' \
+      "$expected_best_config_seed_manifest_sha256"
+    printf 'best_config_target_aot_namespace=%s\n' \
+      "$best_config_target_aot_namespace"
+    printf 'source_overlay=none\ndecision_overlay=best_config_only\n'
+  else
+    printf 'source_overlay=none\ndecision_overlay=none\n'
+  fi
   printf 'max_tokens=%s\nbench=%s\ncanary=%s\nnatural_eos=%s\n' \
     "$max_tokens" "$bench" "$canary" "$natural_eos"
   printf 'return_token_ids=%s\nquality=%s\nquality_require_baseline=%s\n' \
@@ -592,8 +799,17 @@ cleanup() {
   local rc=$?
   local cleanup_failed=0
   local cleanup_manifest_sha256
-  trap - EXIT INT TERM HUP
+  trap - EXIT
+  trap '' INT TERM HUP
   remove_owned_container || cleanup_failed=1
+  if [[ -n $journal_cursor ]]; then
+    capture_kernel_delta cleanup || cleanup_failed=1
+    kernel_taint_cleanup=$(</proc/sys/kernel/tainted)
+    printf '%s\n' "$kernel_taint_cleanup" >"$out/kernel-taint.cleanup.txt" ||
+      cleanup_failed=1
+    [[ $kernel_taint_cleanup == 0 ]] || cleanup_failed=1
+    check_render_idle cleanup || cleanup_failed=1
+  fi
   if [[ -d $cache_dir ]]; then
     cache_manifest "$out/cache-manifest.post.sha256" || cleanup_failed=1
     if [[ -f $out/cache-manifest.post.sha256 ]]; then
@@ -613,16 +829,33 @@ cleanup() {
     printf 'fail-cleanup body_rc=%s\n' "$rc" >"$out/final.status"
     exit 7
   fi
+  if [[ $rc -ne 0 && -f $out/final.status &&
+        $(<"$out/final.status") == pass ]]; then
+    printf 'fail-after-pass body_rc=%s\n' "$rc" >"$out/final.status"
+  fi
   if [[ ! -f $out/final.status ]]; then
     [[ $rc -ne 0 ]] || rc=1
     printf 'fail rc=%s\n' "$rc" >"$out/final.status"
   fi
+  sync "$out" || {
+    printf 'fail-sync body_rc=%s\n' "$rc" >"$out/final.status"
+    exit 8
+  }
   exit "$rc"
 }
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 trap 'exit 129' HUP
+
+kernel_taint_pre=$(</proc/sys/kernel/tainted)
+printf '%s\n' "$kernel_taint_pre" >"$out/kernel-taint.pre.txt"
+[[ $kernel_taint_pre == 0 ]] || die 'kernel is tainted before model launch'
+timeout --signal=TERM --kill-after=5s 30s \
+  journalctl -b -k -n 1 --show-cursor --no-pager -o short-iso \
+  >"$out/kernel-baseline.log"
+journal_cursor=$(sed -n 's/^-- cursor: //p' "$out/kernel-baseline.log" | tail -1)
+[[ -n $journal_cursor ]] || die 'failed to capture prelaunch kernel cursor'
 
 container_id_file=$out/container-id.txt
 [[ ! -e $container_id_file ]] || die "container ID file already exists: $container_id_file"
@@ -655,15 +888,18 @@ dockerc exec "$created_container_id" /usr/bin/env | sort >"$out/container-enviro
 dockerc exec "$created_container_id" /bin/bash -c \
   "tr '\\0' '\\n' </proc/1/environ | sort" \
   >"$out/container-init-environment.txt"
-for expected_env in \
-  CCL_ZE_IPC_EXCHANGE=sockets \
-  VLLM_CACHE_ROOT=/run-cache/vllm \
-  VLLM_NO_USAGE_STATS=1 \
-  VLLM_XPU_ENABLE_XPU_GRAPH=1 \
-  XDG_CACHE_HOME=/run-cache/xdg \
-  ZE_AFFINITY_MASK=0; do
-  grep -Fx "$expected_env" "$out/container-environment.txt" >/dev/null ||
-    die "required container environment is absent: $expected_env"
+for environment_evidence in container-environment.txt \
+    container-init-environment.txt; do
+  for expected_env in \
+    CCL_ZE_IPC_EXCHANGE=sockets \
+    VLLM_CACHE_ROOT=/run-cache/vllm \
+    VLLM_NO_USAGE_STATS=1 \
+    VLLM_XPU_ENABLE_XPU_GRAPH=1 \
+    XDG_CACHE_HOME=/run-cache/xdg \
+    ZE_AFFINITY_MASK=0; do
+    grep -Fx "$expected_env" "$out/$environment_evidence" >/dev/null ||
+      die "required container environment is absent from $environment_evidence: $expected_env"
+  done
 done
 case $pythonhashseed_mode in
   zero)
@@ -698,15 +934,19 @@ esac
 printf 'requested_mode=%s\ncontainer_variable_present=%s\ncontainer_effective=%s\n' \
   "$pythonhashseed_mode" "$container_pythonhashseed_present" \
   "$container_pythonhashseed_effective" >"$out/pythonhashseed-mode.env"
-awk -F= '
-  {reject=0}
-  $1 ~ /^VLLM_XPU_/ && $1 != "VLLM_XPU_ENABLE_XPU_GRAPH" {reject=1}
-  $1 ~ /^(VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE|VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING|TRITON_CACHE_AUTOTUNING)$/ {reject=1}
-  $1 ~ /^(ONEAPI_DEVICE_SELECTOR|XPU_GRAPH|COMPILATION_CONFIG|PYTHONPATH|LD_PRELOAD)$/ {reject=1}
-  $1 ~ /^(CCL_|ONECCL_)/ && $1 != "CCL_ZE_IPC_EXCHANGE" {reject=1}
-  reject {print > "/dev/stderr"; bad=1}
-  END {exit bad ? 1 : 0}
-' "$out/container-environment.txt" || die 'forbidden experiment environment reached the container'
+for environment_evidence in container-environment.txt \
+    container-init-environment.txt; do
+  awk -F= '
+    {reject=0}
+    $1 ~ /^VLLM_XPU_/ && $1 != "VLLM_XPU_ENABLE_XPU_GRAPH" {reject=1}
+    $1 ~ /^(VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE|VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING|TRITON_CACHE_AUTOTUNING)$/ {reject=1}
+    $1 ~ /^(ONEAPI_DEVICE_SELECTOR|SYCL_DEVICE_FILTER|SYCL_DEVICE_ALLOWLIST|UR_DEVICE_SELECTORS|XPU_GRAPH|COMPILATION_CONFIG|PYTHONPATH|LD_PRELOAD)$/ {reject=1}
+    $1 ~ /^(CCL_|ONECCL_)/ && $1 != "CCL_ZE_IPC_EXCHANGE" {reject=1}
+    reject {print > "/dev/stderr"; bad=1}
+    END {exit bad ? 1 : 0}
+  ' "$out/$environment_evidence" ||
+    die "forbidden experiment environment reached $environment_evidence"
+done
 
 healthy=0
 for _ in $(seq 1 240); do
@@ -775,6 +1015,55 @@ grep -Fq 'Capturing CUDA graphs (decode, FULL)' "$out/server-startup.log" ||
 grep -Fq 'Graph capturing finished' "$out/server-startup.log" ||
   die 'graph capture completion marker is absent'
 
+if [[ $cache_policy == seeded-fresh ]]; then
+  grep -Fq 'Compiling a graph for compile range' "$out/server-startup.log" ||
+    die 'seeded-fresh did not perform a fresh graph compilation'
+  grep -Fq 'saved AOT compiled function' "$out/server-startup.log" ||
+    die 'seeded-fresh did not save a fresh AOT compilation'
+  grep -Fq "/torch_aot_compile/$best_config_target_aot_namespace/" \
+    "$out/server-startup.log" ||
+    die 'seeded-fresh compiled into an unexpected AOT namespace'
+  if grep -Fq 'Directly load AOT compilation' "$out/server-startup.log"; then
+    die 'seeded-fresh unexpectedly loaded an existing AOT model'
+  fi
+
+  IFS=',' read -r -a expected_graph_hashes <<< \
+    "$expected_computation_graph_sha256s"
+  [[ ${#expected_graph_hashes[@]} -eq $tp ]] ||
+    die 'expected graph hash count does not match TP size'
+  for rank in $(seq 0 $((tp - 1))); do
+    factors="$cache_dir/vllm/torch_compile_cache/$expected_cache_outer_namespace/rank_${rank}_0/backbone/cache_key_factors.json"
+    computation_graph="$cache_dir/vllm/torch_compile_cache/$expected_cache_outer_namespace/rank_${rank}_0/backbone/computation_graph.py"
+    [[ -f $factors && -f $computation_graph ]] ||
+      die "missing rank-$rank cache identity files"
+    [[ $(cache_jq -r '.code_hash' "$factors") == "$expected_cache_code_hash" ]] ||
+      die "rank-$rank code hash mismatch"
+    [[ $(cache_jq -r '.compiler_hash' "$factors") == \
+       "$expected_cache_compiler_hash" ]] ||
+      die "rank-$rank compiler hash mismatch"
+    [[ $(cache_jq -r '.config_hash' "$factors") == \
+       "$expected_cache_config_hash" ]] ||
+      die "rank-$rank config hash mismatch"
+    actual_env_sha=$(cache_jq -S '.env' "$factors" | sha256sum |
+      awk '{print $1}')
+    [[ $actual_env_sha == "$expected_cache_env_sha256" ]] ||
+      die "rank-$rank cache environment hash mismatch"
+    [[ $(cache_file_sha256 "$computation_graph") == \
+       "${expected_graph_hashes[$rank]}" ]] ||
+      die "rank-$rank computation graph hash mismatch"
+  done
+
+  best_config_manifest "$best_config_seed_target" \
+    "$out/best-config-seed.postcompile.sha256"
+  cmp -s "$out/best-config-seed.source.sha256" \
+    "$out/best-config-seed.postcompile.sha256" ||
+    die 'compiler changed the seeded .best_config bundle'
+  postcompile_best_config_count=$(sudo -S -p '' find "$cache_dir" -type f \
+    -name '*.best_config' <"$sudo_pass_file" | wc -l)
+  [[ $postcompile_best_config_count == "$expected_best_config_seed_count" ]] ||
+    die "compiler added unexpected .best_config records: $postcompile_best_config_count"
+fi
+
 "$venv/bin/python" - "http://127.0.0.1:$port" "$alias" "$out/canary.json" <<'PY'
 import json
 import sys
@@ -811,6 +1100,10 @@ if content != "14" or cached != 0:
     raise SystemExit(3)
 PY
 printf 'canary_rc=0\n' >"$out/canary.status"
+capture_kernel_delta post-canary ||
+  die 'kernel rejected model startup or canary before timing'
+[[ $(</proc/sys/kernel/tainted) == 0 ]] ||
+  die 'kernel became tainted during model startup or canary'
 
 curl -fsS "http://127.0.0.1:$port/metrics" >"$out/metrics.before.prom"
 bench_args=(
@@ -882,7 +1175,39 @@ if [[ $quality == 1 ]]; then
   fi
 fi
 
+capture_kernel_delta post-workload || die 'kernel rejected the timed or quality workload'
+[[ $(</proc/sys/kernel/tainted) == 0 ]] ||
+  die 'kernel became tainted during the timed or quality workload'
+
+if [[ $cache_policy == seeded-fresh ]]; then
+  best_config_manifest "$best_config_seed_target" \
+    "$out/best-config-seed.final.sha256"
+  cmp -s "$out/best-config-seed.source.sha256" \
+    "$out/best-config-seed.final.sha256" ||
+    die 'workload changed the seeded .best_config bundle'
+  final_best_config_count=$(sudo -S -p '' find "$cache_dir" -type f \
+    -name '*.best_config' <"$sudo_pass_file" | wc -l)
+  [[ $final_best_config_count == "$expected_best_config_seed_count" ]] ||
+    die "workload added unexpected .best_config records: $final_best_config_count"
+fi
+
 remove_owned_container || die 'failed to remove the invocation-owned server container'
+capture_kernel_delta post-shutdown || die 'kernel rejected the model arm or shutdown'
+kernel_taint_post=$(</proc/sys/kernel/tainted)
+printf '%s\n' "$kernel_taint_post" >"$out/kernel-taint.post.txt"
+[[ $kernel_taint_post == 0 ]] || die 'kernel became tainted during the model arm'
+check_render_idle post || die 'render node remains held after container shutdown'
+if [[ $cache_policy == seeded-fresh ]]; then
+  best_config_manifest "$best_config_seed_target" \
+    "$out/best-config-seed.postshutdown.sha256"
+  cmp -s "$out/best-config-seed.source.sha256" \
+    "$out/best-config-seed.postshutdown.sha256" ||
+    die 'container shutdown changed the seeded .best_config bundle'
+  postshutdown_best_config_count=$(sudo -S -p '' find "$cache_dir" -type f \
+    -name '*.best_config' <"$sudo_pass_file" | wc -l)
+  [[ $postshutdown_best_config_count == "$expected_best_config_seed_count" ]] ||
+    die "container shutdown left unexpected .best_config records: $postshutdown_best_config_count"
+fi
 cache_manifest "$out/cache-manifest.post.sha256"
 post_cache_manifest_sha256=$(sha256sum "$out/cache-manifest.post.sha256" | awk '{print $1}')
 printf '%s\n' "$post_cache_manifest_sha256" >"$out/cache-manifest.post.sha256.digest"

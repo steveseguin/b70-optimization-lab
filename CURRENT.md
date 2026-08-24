@@ -87,7 +87,11 @@ including all quality, model, source, benchmark-shape, and sealed-cache gates.
 Treat this as a qualified dated 0ecc profile, not as proof that 0ecc remains
 literal current after the run. Independent remote ref and registry checks at
 `2026-08-24T09:14:47Z` still resolved 0ecc, `baaa05bb4e`, and the same
-official digest, so no newer source base is presently waiting to be built.
+official digest. A later mandatory freshness gate resolved vLLM `main` to
+`e239947777e18071c8053195ce599b6511717f67`; XPU-kernel main and the official
+nightly digest remained unchanged. The one new vLLM commit only changes the
+OpenAI batch-output upload path, but e239 must still be rebuilt and qualified
+as the active literal-current base.
 
 The paired vLLM-0ecc/current-kernel-`baaa05bb4e` candidate passed correctness
 and quality but missed both strict speed gates at
@@ -98,6 +102,20 @@ order was fixed. Preserve the complete failed candidate and the qualified
 stock-kernel control; resolve newest upstream again, forward-port the explicit
 runtime/decision overlays, and requalify without lowering any historical
 floor. See the [structured campaign evidence](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-0ecc-tp1-qualification-attempts.json).
+
+Attribution found identical graph/code/compiler/config/environment identities
+and 38/38 compatible decision paths, but 17 different normalized autotune
+winners. Before the decision-only program ran, the host hard-rebooted from
+`7.0.0-28-generic` into `7.0.0-30-generic`; no overlay arm was active. The
+0ecc packet program then closed stale before launch when vLLM advanced to
+e239; the hardware gate and all overlay arms remain unrun. Its exact 38
+decisions are preserved as historical source evidence and must not be
+relabeled as e239. Build e239 first, derive a separately versioned
+compatibility packet, then run the bounded atomic hardware-gate plus untreated
+three-arm control. Only a speed-only control miss may permit a new e239
+decision-overlay campaign. No binary or generated kernel is transferred, and
+no result may lower a protected historical speed. See the
+[frozen preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-0ecc-tp1-control-decision-overlay-prereg.md).
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
