@@ -1,0 +1,43 @@
+{
+  "date": "2026-08-23",
+  "status": "diagnostic_only",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "base_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "accepted_diff_sha256": "7b9204f8f44608fc5b1858a15498b3cf9bf52b4f02c27c0f91a1807af5b5d15d",
+  "selector": {
+    "name": "linear_attn_out-0",
+    "shape": [2048, 1],
+    "reason": "internal one-row recurrent execution marker"
+  },
+  "logical_graph_nodes": 3726,
+  "actual_generic_dispatches": 512,
+  "dispatches_by_op": {
+    "MUL_MAT": 311,
+    "MUL": 40,
+    "UNARY": 30,
+    "L2_NORM": 60,
+    "MUL_MAT_ID": 40,
+    "SET_ROWS": 10,
+    "FLASH_ATTN_EXT": 10,
+    "CONT": 10,
+    "GET_ROWS": 1
+  },
+  "change_from_eleven_feature_census": {
+    "actual_generic_dispatches": -80,
+    "MUL": -40,
+    "UNARY": -40,
+    "other_operations": 0
+  },
+  "remaining_named_non_projection_families": {
+    "routed_expert_weight": 40,
+    "beta_sigmoid": 30,
+    "recurrent_qk_l2_norm": 60,
+    "attention_v_cache_set_rows": 10,
+    "attention_flash": 10,
+    "attention_gate_contiguous": 10,
+    "final_result_norm_get_rows": 1
+  },
+  "throughput_claim": null,
+  "raw_log": "2026-08-23-ornith35b-twelve-feature-actual-one-token-census.stderr.log",
+  "conclusion": "The twelfth fusion removed exactly its predicted sigmoid and broadcast-multiply dispatches. The remaining graph is projection dominated; launch counts are not converted to throughput."
+}
