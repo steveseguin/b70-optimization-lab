@@ -59,6 +59,8 @@ kernel_delta_classifier=${KERNEL_DELTA_CLASSIFIER:?set KERNEL_DELTA_CLASSIFIER t
 venv=/home/steve/.venvs/vllm-xpu
 expected_suite_sha256=292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c
 expected_kernel_delta_classifier_sha256=fef74bdb90b82fdf543be6ea36320b308aff0d0c146a3c92bcbfff334b70d1b0
+expected_batch_invariant_config_path=vllm/model_executor/determinism/batch_invariant_configs.py
+expected_batch_invariant_config_sha256=e47b18d9394c61fd105e4db51108d72fe1e68d4a2043a8ba62c0af0237453128
 cache_policy=${CACHE_POLICY:?set CACHE_POLICY=fresh, seeded-fresh, or replay}
 lab_remote_freshness_policy=${LAB_REMOTE_FRESHNESS_POLICY:-continuous}
 expected_lab_head=${EXPECTED_LAB_HEAD:-}
@@ -350,6 +352,8 @@ esac
   die 'autotune isolation flags are forbidden in zero-overlay qualification'
 [[ -z ${TRITON_CACHE_AUTOTUNING:-} ]] ||
   die 'autotune isolation flags are forbidden in zero-overlay qualification'
+[[ ! -v VLLM_BATCH_INVARIANT ]] ||
+  die 'VLLM_BATCH_INVARIANT must be absent in zero-overlay qualification'
 case $lab_remote_freshness_policy in
   continuous)
     [[ -z $expected_lab_head ]] ||
@@ -373,7 +377,7 @@ done < <(env)
 
 [[ -r $sudo_pass_file ]] || die "sudo password file is unreadable: $sudo_pass_file"
 for command_name in curl docker find findmnt flock fuser git jq journalctl mv \
-  pgrep realpath rg sed sha256sum ss sync tail timeout tr xpu-smi; do
+  pgrep realpath rg sed sha256sum ss sync tail timeout tr unzip xpu-smi; do
   command -v "$command_name" >/dev/null || die "$command_name is required"
 done
 timeout --signal=TERM --kill-after=5s 20s sudo -S -p '' -v \
@@ -499,11 +503,15 @@ else
 fi
 [[ -z $port_listeners ]] || die "port $port already has a listener"
 
-jq -e '
+jq -e \
+  --arg batch_path "$expected_batch_invariant_config_path" \
+  --arg batch_sha "$expected_batch_invariant_config_sha256" '
   .schema == "neural-download-absolute-current-main-build-v1" and
   .state == "static-preflight-passed-for-built-images-gpu-qualification-pending" and
   .mode == "--build-all" and .overlay == "none" and
-  .promotion.qualified == false
+  .promotion.qualified == false and
+  .preserved_upstream_optimization_assets.batch_invariant_config.path == $batch_path and
+  .preserved_upstream_optimization_assets.batch_invariant_config.sha256 == $batch_sha
 ' "$receipt" >/dev/null || die 'invalid or already-promoted build receipt'
 
 archive_dir=$(jq -r .external_archive "$receipt")
@@ -520,6 +528,41 @@ cmp -s "$receipt" "$archive_dir/build-receipt.json" ||
 [[ $(sha256sum "$archive_dir/Dockerfile.absolute-current-main" | awk '{print $1}') == \
    "$(jq -r .build_inputs.dockerfile_sha256 "$receipt")" ]] ||
   die 'archived Dockerfile hash differs from the build receipt'
+mapfile -t archived_vllm_wheels < <(
+  find "$archive_dir" -maxdepth 1 -type f -name 'vllm-*.whl' -print |
+    LC_ALL=C sort
+)
+[[ ${#archived_vllm_wheels[@]} -eq 1 ]] ||
+  die 'external build archive must contain exactly one vLLM wheel'
+archived_vllm_wheel=${archived_vllm_wheels[0]}
+[[ $(sha256sum "$archived_vllm_wheel" | awk '{print $1}') == \
+   "$(jq -r .vllm.wheel_sha256 "$receipt")" ]] ||
+  die 'archived vLLM wheel hash differs from the build receipt'
+wheel_members=$(unzip -Z1 "$archived_vllm_wheel") ||
+  die 'could not inventory the archived vLLM wheel'
+for required_member in \
+    vllm/model_executor/determinism/__init__.py \
+    vllm/model_executor/determinism/batch_invariant.py \
+    "$expected_batch_invariant_config_path"; do
+  required_member_count=$(awk -v target="$required_member" \
+    '$0 == target {count++} END {print count + 0}' <<<"$wheel_members") ||
+    die 'archived vLLM wheel required-member count failed'
+  [[ $required_member_count -eq 1 ]] ||
+    die "archived vLLM wheel member count changed: $required_member"
+done
+[[ $(unzip -p "$archived_vllm_wheel" \
+      "$expected_batch_invariant_config_path" | sha256sum | awk '{print $1}') == \
+   "$expected_batch_invariant_config_sha256" ]] ||
+  die 'archived vLLM wheel batch-invariant config hash mismatch'
+for legacy_member in \
+    vllm/model_executor/layers/batch_invariant.py \
+    vllm/model_executor/layers/batch_invariant_configs.py; do
+  legacy_member_count=$(awk -v target="$legacy_member" \
+    '$0 == target {count++} END {print count + 0}' <<<"$wheel_members") ||
+    die 'archived vLLM wheel legacy-member count failed'
+  [[ $legacy_member_count -eq 0 ]] ||
+    die "archived vLLM wheel retains a legacy batch-invariant member: $legacy_member"
+done
 
 case $lane in
   control)
@@ -559,6 +602,13 @@ kernel_tree=$(jq -r .kernel.tree "$receipt")
 base_digest=$(jq -r .base_digest "$receipt")
 source_identity=$archive_dir/source-identity.json
 [[ -f $source_identity ]] || die "missing archived source identity: $source_identity"
+jq -e \
+  --arg batch_path "$expected_batch_invariant_config_path" \
+  --arg batch_sha "$expected_batch_invariant_config_sha256" '
+  .preserved_upstream_optimization_assets.batch_invariant_config.path == $batch_path and
+  .preserved_upstream_optimization_assets.batch_invariant_config.sha256 == $batch_sha
+' "$source_identity" >/dev/null ||
+  die 'archived source identity lost the batch-invariant optimization asset'
 rust_extension_sha256=$(jq -r .reused_rust.extension_sha256 "$source_identity")
 rust_frontend_sha256=$(jq -r .reused_rust.frontend_sha256 "$source_identity")
 expected_static_preflight_sha256=$(jq -r --arg key "$image_key" \
@@ -590,6 +640,9 @@ mkdir -p -- "$out_parent" "$cache_parent"
 mkdir -- "$out"
 cp -- "$suite" "$out/validation-suite.json"
 cp -- "$receipt" "$out/build-receipt.json"
+printf '%s\n' "$wheel_members" >"$out/archived-vllm-wheel-members.txt"
+printf '%s  %s\n' "$(sha256sum "$archived_vllm_wheel" | awk '{print $1}')" \
+  "${archived_vllm_wheel##*/}" >"$out/archived-vllm-wheel.sha256"
 printf '%s\n' "$remote_vllm_pre" >"$out/upstream-vllm.pre.txt"
 printf '%s\n' "$remote_kernel_pre" >"$out/upstream-kernel.pre.txt"
 printf '%s\n' "$remote_base_pre" >"$out/upstream-nightly-base.pre.txt"
@@ -614,9 +667,11 @@ jq -e '
   .[0].Config.Entrypoint == ["vllm", "serve"] and
   ([.[0].Config.Env[] |
     select(test("^(ONEAPI_DEVICE_SELECTOR|ZE_AFFINITY_MASK|SYCL_DEVICE_FILTER|SYCL_DEVICE_ALLOWLIST|UR_DEVICE_SELECTORS)="))] |
+  length == 0) and
+  ([.[0].Config.Env[] | select(startswith("VLLM_BATCH_INVARIANT="))] |
   length == 0)
 ' "$out/image-inspect.json" >/dev/null ||
-  die 'immutable image bakes a device selector or affinity mask'
+  die 'immutable image bakes a forbidden selector, affinity mask, or batch-invariant mode'
 check_label neural.download.base.digest "$base_digest"
 check_label neural.download.build.lane "$expected_lane"
 check_label neural.download.overlay none
@@ -635,6 +690,10 @@ check_label neural.download.rust.extension.sha256 "$rust_extension_sha256"
 check_label neural.download.rust.frontend.sha256 "$rust_frontend_sha256"
 check_label neural.download.vllm.archive.sha256 "$(jq -r .vllm.source_archive_sha256 "$receipt")"
 check_label neural.download.vllm.wheel.sha256 "$(jq -r .vllm.wheel_sha256 "$receipt")"
+check_label neural.download.vllm.batch_invariant_config.path \
+  "$expected_batch_invariant_config_path"
+check_label neural.download.vllm.batch_invariant_config.sha256 \
+  "$expected_batch_invariant_config_sha256"
 check_label org.opencontainers.image.revision "$vllm_head"
 
 dockerc run --rm --network=none --entrypoint /bin/bash "$image_id" -lc \
@@ -650,10 +709,59 @@ dockerc run --rm --network=none --entrypoint /bin/bash "$image_id" -lc \
   'cat /opt/neural-download/import-receipt.json' >"$out/in-image-import-receipt.json"
 dockerc run --rm --network=none --entrypoint /bin/bash "$image_id" -lc \
   'cat /opt/neural-download/pip-check.txt' >"$out/in-image-pip-check.txt"
+dockerc run --rm --network=none --entrypoint /opt/venv/bin/python "$image_id" \
+  -c '
+import hashlib
+import importlib.util
+import json
+import pathlib
+import sys
+
+relative = pathlib.PurePosixPath(sys.argv[1])
+expected_sha256 = sys.argv[2]
+if not relative.parts or relative.parts[0] != "vllm":
+    raise SystemExit("invalid batch-invariant package-relative path")
+spec = importlib.util.find_spec("vllm")
+if spec is None or not spec.submodule_search_locations:
+    raise SystemExit("installed vLLM package is not discoverable")
+package_root = pathlib.Path(next(iter(spec.submodule_search_locations))).resolve()
+required = [
+    package_root / "model_executor/determinism/__init__.py",
+    package_root / "model_executor/determinism/batch_invariant.py",
+    package_root.joinpath(*relative.parts[1:]),
+]
+for member in required:
+    if not member.is_file() or member.is_symlink():
+        raise SystemExit(f"installed batch-invariant asset is absent or linked: {member}")
+config = required[-1]
+actual_sha256 = hashlib.sha256(config.read_bytes()).hexdigest()
+if actual_sha256 != expected_sha256:
+    raise SystemExit("installed batch-invariant config hash mismatch")
+legacy = [
+    package_root / "model_executor/layers/batch_invariant.py",
+    package_root / "model_executor/layers/batch_invariant_configs.py",
+]
+for member in legacy:
+    if member.exists() or member.is_symlink():
+        raise SystemExit(f"installed package retains a legacy batch-invariant member: {member}")
+print(json.dumps({
+    "package_root": str(package_root),
+    "path": str(relative),
+    "sha256": actual_sha256,
+    "required_members": [str(member.relative_to(package_root)) for member in required],
+    "legacy_members_absent": [str(member.relative_to(package_root)) for member in legacy],
+}, sort_keys=True))
+' "$expected_batch_invariant_config_path" \
+  "$expected_batch_invariant_config_sha256" \
+  >"$out/in-image-batch-invariant-asset.json"
 cmp -s "$source_identity" "$out/in-image-source-identity.json" ||
   die 'in-image and archived source identities differ'
-jq -e --arg head "$vllm_head" --arg tree "$vllm_tree" '
-  .overlay == "none" and .vllm.head == $head and .vllm.tree == $tree
+jq -e --arg head "$vllm_head" --arg tree "$vllm_tree" \
+  --arg batch_path "$expected_batch_invariant_config_path" \
+  --arg batch_sha "$expected_batch_invariant_config_sha256" '
+  .overlay == "none" and .vllm.head == $head and .vllm.tree == $tree and
+  .preserved_upstream_optimization_assets.batch_invariant_config.path == $batch_path and
+  .preserved_upstream_optimization_assets.batch_invariant_config.sha256 == $batch_sha
 ' "$out/in-image-source-identity.json" >/dev/null || die 'in-image source identity mismatch'
 jq -e \
   --arg lane "$expected_lane" \
@@ -662,13 +770,33 @@ jq -e \
   --arg kernel_head "$expected_kernel_head" \
   --arg kernel_version "$expected_kernel_version" \
   --arg rust_extension "$rust_extension_sha256" \
-  --arg rust_frontend "$rust_frontend_sha256" '
+  --arg rust_frontend "$rust_frontend_sha256" \
+  --arg batch_path "$expected_batch_invariant_config_path" \
+  --arg batch_sha "$expected_batch_invariant_config_sha256" '
   .build_lane == $lane and .vllm_head == $head and .vllm_version == $version and
   .kernel_head == $kernel_head and .kernel_version == $kernel_version and
   .rust_extension_sha256 == $rust_extension and
   .rust_frontend_sha256 == $rust_frontend and
+  .batch_invariant_config_path == $batch_path and
+  .batch_invariant_config_sha256 == $batch_sha and
   (.vllm_file | startswith("/opt/venv/lib/python3.12/site-packages/vllm/"))
 ' "$out/in-image-import-receipt.json" >/dev/null || die 'in-image import receipt mismatch'
+jq -e \
+  --arg batch_path "$expected_batch_invariant_config_path" \
+  --arg batch_sha "$expected_batch_invariant_config_sha256" '
+  .package_root == "/opt/venv/lib/python3.12/site-packages/vllm" and
+  .path == $batch_path and .sha256 == $batch_sha and
+  .required_members == [
+    "model_executor/determinism/__init__.py",
+    "model_executor/determinism/batch_invariant.py",
+    "model_executor/determinism/batch_invariant_configs.py"
+  ] and
+  .legacy_members_absent == [
+    "model_executor/layers/batch_invariant.py",
+    "model_executor/layers/batch_invariant_configs.py"
+  ]
+' "$out/in-image-batch-invariant-asset.json" >/dev/null ||
+  die 'direct installed-package batch-invariant asset validation changed'
 expected_pip_issues=1
 [[ $lane == both ]] && expected_pip_issues=2
 [[ $(grep -c '^The package ' "$out/in-image-pip-check.txt") -eq $expected_pip_issues ]] ||
@@ -1056,6 +1184,7 @@ for environment_evidence in container-environment.txt \
   awk -F= '
     {reject=0}
     $1 ~ /^VLLM_XPU_/ && $1 != "VLLM_XPU_ENABLE_XPU_GRAPH" {reject=1}
+    $1 == "VLLM_BATCH_INVARIANT" {reject=1}
     $1 ~ /^(VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE|VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING|TRITON_CACHE_AUTOTUNING)$/ {reject=1}
     $1 ~ /^(ONEAPI_DEVICE_SELECTOR|SYCL_DEVICE_FILTER|SYCL_DEVICE_ALLOWLIST|UR_DEVICE_SELECTORS|XPU_GRAPH|COMPILATION_CONFIG|PYTHONPATH|LD_PRELOAD)$/ {reject=1}
     $1 ~ /^(CCL_|ONECCL_)/ && $1 != "CCL_ZE_IPC_EXCHANGE" {reject=1}
@@ -1275,6 +1404,9 @@ if jq -e --argjson count "$prompt_count" '
   .realistic_final_gate.passed == true and
   .realistic_final_gate.metric_events == 100 and
   .realistic_final_gate.metric_intervals == 99 and
+  .summary.tok_s_1_100_intervals_after_ttft.count == $count and
+  (.summary.tok_s_1_100_intervals_after_ttft.median |
+    type == "number" and isfinite and (isnan | not) and . > 0) and
   all(.rows[]; .cached_tokens == 0 and .metric_chunk_events_at_least_window == true and
       .metric_token_id_events_at_least_window == true and (.token_ids | length) >= 100)
 ' "$out/bench.json" >/dev/null; then
