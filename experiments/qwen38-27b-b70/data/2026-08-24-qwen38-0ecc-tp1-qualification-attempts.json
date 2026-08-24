@@ -1,0 +1,181 @@
+{
+  "schema": "neural-download-current-main-tp1-attempts-v1",
+  "state": "literal-current-diagnostic-passed-strict-campaign-pending",
+  "created_utc": "2026-08-24T08:06:21Z",
+  "source_identity": {
+    "vllm_head": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
+    "vllm_tree": "942cc5fd4d0ae008499926a1949630f627b87f71",
+    "vllm_version": "0.26.1rc1.dev1141+g0ecc28479.xpu",
+    "kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "kernel_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "kernel_version": "0.1.dev1+gbaaa05bb4",
+    "official_nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "image_id": "sha256:b44e0658393e5a57f8af7173e9f42c7498763b9b581a57cba0f5ce5b8a597728",
+    "build_receipt_sha256": "275029980b9c1b59b341ca8a2e2ca1d8845505f74e700cc9e653635c1bb96947"
+  },
+  "model_identity": {
+    "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "architecture_family": "Qwen3.6/Qwen3.8 qwen3_5_text",
+    "quantization": "AutoRound INT4 W4A16 group-128 symmetric",
+    "model_path": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan"
+  },
+  "primary_metric": "median tok_s_1_100_intervals_after_ttft across 25 sequential 512-token rows",
+  "protected_floors_tok_s": {
+    "diagnostic": 30.2178,
+    "strict": 30.31067504052998
+  },
+  "history_policy": "New measurements append under their exact source/runtime/cache identity; no result may replace, relabel, or lower protected diagnostic or strict history.",
+  "attempts": [
+    {
+      "name": "both-current-hash-unset-diagnostic",
+      "run_root": "/home/steve/qwen38-current-main-runs/tp1-hash-unset-20260824T075527Z",
+      "lab_head": "539cac5328c4fdd9cb7da3d24270448c9f774dbc",
+      "state": "passed-diagnostic-only",
+      "classification": "valid-literal-current-performance-preservation-diagnostic-not-strict-qualification",
+      "promotion_eligible": false,
+      "historical_replacement_allowed": false,
+      "topology": {
+        "tensor_parallel": 1,
+        "gpu": 0,
+        "gpu_bdf": "0000:23:00.0",
+        "gpu_uuid": "00000000-0000-0023-0000-0000e2238086",
+        "mtp": 0,
+        "model_and_kv_dtype": "float16",
+        "max_model_len": 32768,
+        "gpu_memory_utilization": 0.9,
+        "max_num_seqs": 1,
+        "max_num_batched_tokens": 1024,
+        "async_scheduling": true,
+        "prefix_caching": false,
+        "chunked_prefill": true,
+        "graph_mode": "FULL_AND_PIECEWISE",
+        "graph_capture_sizes": [
+          1,
+          2
+        ]
+      },
+      "pythonhashseed": {
+        "mode": "unset",
+        "container_variable_present": false,
+        "container_init_variable_present": false,
+        "mode_evidence_sha256": "bf6d18493b2bdc12e3d3001131abbe536f7a9edbe25724cf9f1ba1589cc5c4f8",
+        "container_environment_sha256": "09f19af04363443636a974e358b76b9250b649f80157beeeaa669525e5f0c1e2"
+      },
+      "benchmark": {
+        "bench_sha256": "ab947f3c0d78bf584bd04aa211c6b617805446c8241999013b87ae698678698d",
+        "rows": 25,
+        "unique_prompts": 25,
+        "output_tokens_per_row": 512,
+        "returned_token_ids": true,
+        "cached_tokens_all_zero": true,
+        "finish_reason_all": "length",
+        "metric_token_events": 100,
+        "metric_intervals": 99,
+        "conventional_99_interval_median_tok_s": 30.265258667943765,
+        "conventional_99_interval_p10_tok_s": 30.173796820876674,
+        "conventional_99_interval_mean_tok_s": 30.29772460691972,
+        "full_decode_median_tok_s": 30.18195136981867,
+        "wall_full_median_tok_s": 29.694907274153575,
+        "ttft_median_ms": 280.5814939783886,
+        "diagnostic_floor_delta_tok_s": 0.047458667943764965,
+        "older_captured_high_delta_tok_s": 0.00835866794376372,
+        "a047_dated_diagnostic_delta_tok_s": -0.0024322205159990062,
+        "diagnostic_speed_gate_pass": true,
+        "strict_qualification_run": false,
+        "realistic_final_gate_pass": true,
+        "fresh_response_valid": true
+      },
+      "canary": {
+        "pass": true,
+        "content": "14",
+        "cached_tokens": 0,
+        "prompt_tokens": 36,
+        "completion_tokens": 3,
+        "reasoning_tokens": 0,
+        "sha256": "397f558ae03dd69e66ed4558c4d0152f3ece58709b14a86afd688a938cf1570e"
+      },
+      "model_direct_and_ordinary_verify": {
+        "status": "verified",
+        "files": 19,
+        "direct_ok": 19,
+        "ordinary_ok": 19,
+        "paths_coherent": true,
+        "sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+      },
+      "cache": {
+        "policy": "fresh",
+        "files": 1097,
+        "directories": 213,
+        "best_config_files": 38,
+        "bytes": 161721482,
+        "post_manifest_sha256": "9a2c35df96078eed2c31f0ad3377df443b820fc36735be3130791235c3487d3d",
+        "outer_cache_key": "d65565f7e2",
+        "aot_model_key": "68fc8c632858eb7c65d6de5b3d4f347cb96e1b18357ec6468847d6c7010adc9d",
+        "code_hash": "fb13d4aa1ef8a386c76ab56d39925ff4de083895d9dcbd136e778046e78bb118",
+        "config_hash": "7fd9f3bcb2",
+        "compiler_hash": "ddcad03736",
+        "replay_verified": false,
+        "cross_version_reuse_allowed": false
+      },
+      "source_recency": {
+        "vllm_pre_post_unchanged": true,
+        "kernel_pre_post_unchanged": true,
+        "nightly_base_pre_post_unchanged": true
+      },
+      "cross_build_output_comparison": {
+        "a047_complete_sequences_equal": 21,
+        "a047_total": 25,
+        "a047_different_prompt_indices_zero_based": [
+          1,
+          4,
+          12,
+          15
+        ],
+        "a047_earliest_differing_token_index_zero_based": 279,
+        "a4d_complete_sequences_equal": 19,
+        "a4d_total": 25,
+        "a4d_different_prompt_indices_zero_based": [
+          4,
+          7,
+          8,
+          12,
+          14,
+          16
+        ],
+        "a4d_earliest_differing_token_index_zero_based": 18,
+        "disposition": "fresh-compile/cross-boot determinism remains unresolved; speed and objective validity are not relabeled as deterministic"
+      },
+      "integrity": {
+        "generated_diagnostic_result_sha256": "1100cb8d16b20cd7925c6d2e9a7a7466d193753669610fd6431f761aee2a31df",
+        "wrapper_input_manifest_sha256": "b9e9d9e02eb93e4c8b7e88e749adb2467b63298b0e4787e48ae9f2802e308992",
+        "arm_input_manifest_sha256": "d0b2c5b5f652d268389ee9d38f46325f67831403d029842953827cc328fcd206"
+      },
+      "external_archive": {
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-hash-unset-20260824T075527Z-0ecc284790-current-diagnostic.tar.zst",
+        "sha256": "9c760f97ddac5ff9434f201ded337bc8f6ba24babb21ce00e1dfbb90363353f9",
+        "compressed_bytes": 8465835,
+        "uncompressed_bytes": 166553600,
+        "entries": 1360,
+        "zstd_verified": true,
+        "tar_traversal_verified": true
+      },
+      "disposition": "The exact-current diagnostic passed and authorizes the separately preregistered seed-zero strict/quality campaign if all identities remain current. It does not itself promote 0ecc."
+    }
+  ],
+  "claim_policy": {
+    "may_claim": [
+      "the exact 0ecc both-current TP1 hash-seed-unset diagnostic cleared the protected diagnostic floor",
+      "the diagnostic exceeded the older 30.2569 capture by 0.00835866794376372 tok/s",
+      "the full token/cache/canary/model/source-recency contract for this diagnostic passed"
+    ],
+    "must_not_claim": [
+      "strict or full-quality qualification",
+      "fresh-compile or cross-boot determinism",
+      "TP2, TP4, or MTP qualification on 0ecc",
+      "promotion or replacement of any historical result"
+    ],
+    "next": "run the frozen seed-zero six-arm TP1 campaign on the same exact-current images; preserve all protected floors and stop stale on any upstream movement"
+  }
+}

@@ -878,3 +878,43 @@ TP2 78-file and accepted TP4 152-file decision overlays remain explicit.
 compatible decision bytes may later be remapped, followed by full TP2/TP4
 qualification at their original floors. Historical diagnostics and strict
 captures remain append-only.
+
+## 2026-08-24 `0ecc284790` TP1 hash-seed-unset diagnostic
+
+The exact-current both-current diagnostic passed at
+`30.265258667943765 tok/s` on the conventional 99-interval metric, with p10
+`30.173796820876674` and mean `30.29772460691972`. This is
+`0.047458667943764965 tok/s` above the protected `30.2178` floor and
+`0.00835866794376372 tok/s` above the older `30.2569` captured high. It is
+`0.0024322205159990062 tok/s` below the dated a047 diagnostic. Every value is
+retained under its exact identity; none replaces or lowers another.
+
+The arm used TP1/GPU0, MTP0, F16 model/KV, 32K maximum context, graph mode
+`FULL_AND_PIECEWISE` with capture sizes `[1,2]`, async scheduling, 0.90 memory
+utilization, and a new ext4 cache. `PYTHONHASHSEED` was absent in both Docker
+configuration and PID-1 environment. All 25 prompts were unique; each returned
+512 token IDs with zero cached tokens and a length finish. The code-14 canary,
+GPU identity, and direct-plus-ordinary verification of all 19 model files
+passed. vLLM 0ecc, kernel `baaa05bb4e`, and the official nightly base digest
+were identical before and after the arm.
+
+The new cache has 1,097 files and 38 `.best_config` decisions. Its outer cache
+key is `d65565f7e2`; AOT key
+`68fc8c632858eb7c65d6de5b3d4f347cb96e1b18357ec6468847d6c7010adc9d`;
+code/config/compiler hashes are
+`fb13d4aa1ef8a386c76ab56d39925ff4de083895d9dcbd136e778046e78bb118`,
+`7fd9f3bcb2`, and `ddcad03736`. It was not replayed and is not a portable
+overlay. Compared with a047, 21/25 complete token sequences match; compared
+with a4d, 19/25 match. Fresh-compile/cross-boot determinism therefore remains
+unresolved.
+
+Structured evidence is in
+`experiments/qwen38-27b-b70/data/2026-08-24-qwen38-0ecc-tp1-qualification-attempts.json`.
+The full 1,360-entry run and cache are archived at
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-hash-unset-20260824T075527Z-0ecc284790-current-diagnostic.tar.zst`,
+SHA-256
+`9c760f97ddac5ff9434f201ded337bc8f6ba24babb21ce00e1dfbb90363353f9`.
+The diagnostic authorizes the separately preregistered six-arm seed-zero
+campaign if 0ecc remains literal current. It is not strict, natural-EOS, or
+full quality-battery qualification and does not promote the current profile by
+itself.
