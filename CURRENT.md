@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-23**
+Last reviewed: **2026-08-24**
 
 ## Authority And Update Rule
 
@@ -78,6 +78,26 @@ image mutation was hidden in that result. Its optimization overlay is the
 exact graph, container IPC, device-selection, cache-isolation, model, memory,
 and benchmark contract. Carry that contract forward first; do not lower or
 relabel any historical speed while current main is being qualified.
+
+The most recent completed custom-source qualification used vLLM
+`0ecc284790e5403f74b899524ef82ecb69f83cb3` on the official base. Its
+stock-base-kernel control passed the full TP1 contract at
+`30.282673 / 30.324298 / 30.325971 tok/s` (diagnostic / strict A / strict B),
+including all quality, model, source, benchmark-shape, and sealed-cache gates.
+Treat this as a qualified dated 0ecc profile, not as proof that 0ecc remains
+literal current after the run. Independent remote ref and registry checks at
+`2026-08-24T09:14:47Z` still resolved 0ecc, `baaa05bb4e`, and the same
+official digest, so no newer source base is presently waiting to be built.
+
+The paired vLLM-0ecc/current-kernel-`baaa05bb4e` candidate passed correctness
+and quality but missed both strict speed gates at
+`30.293320 / 30.279196 / 30.261661 tok/s`. It is not promoted and does not
+authorize TP2/TP4. The small stock/current-kernel difference is not yet causal
+proof because each lane had an independent fresh autotune realization and the
+order was fixed. Preserve the complete failed candidate and the qualified
+stock-kernel control; resolve newest upstream again, forward-port the explicit
+runtime/decision overlays, and requalify without lowering any historical
+floor. See the [structured campaign evidence](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-0ecc-tp1-qualification-attempts.json).
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh

@@ -918,3 +918,77 @@ The diagnostic authorizes the separately preregistered six-arm seed-zero
 campaign if 0ecc remains literal current. It is not strict, natural-EOS, or
 full quality-battery qualification and does not promote the current profile by
 itself.
+
+## 2026-08-24 `0ecc284790` frozen six-arm TP1 result
+
+The preregistered seed-zero campaign completed all six arms between
+`2026-08-24T08:10:55Z` and `2026-08-24T09:10:41Z`. vLLM
+`0ecc284790e5403f74b899524ef82ecb69f83cb3`, kernel
+`baaa05bb4e92901219a5a072dd63f2474896f6d1`, the official nightly base
+digest, and lab commit `fc6b3ac722f4edc7c0e570a3698696ad25c3785a`
+were unchanged across the campaign. Every arm passed its canary, benchmark
+shape, direct-plus-ordinary 19-file model verification, and source/image
+identity checks.
+
+Independent remote ref and registry checks at `2026-08-24T09:14:47Z` still
+resolved vLLM `main` to 0ecc, XPU-kernel `main` to `baaa05bb4e`, and the
+official tag to the same immutable digest. The campaign therefore remained
+literal-current through completion and postflight; no newer source base was
+skipped.
+
+The current-vLLM/stock-base-kernel control passed the complete frozen contract:
+
+- fresh diagnostic: `30.282672968694783 tok/s`;
+- natural-EOS strict replay A: `30.324297716696414 tok/s`;
+- natural-EOS strict replay B: `30.325970521145816 tok/s`;
+- strict margins above the protected `30.31067504052998` floor:
+  `+0.013622676166434644` and `+0.015295480615836965 tok/s`;
+- seven exact cases, eight repeat requests, the 8K/7,617-token needle, and all
+  24 baseline comparisons passed;
+- both replay cache manifests were byte-identical to the fresh control cache;
+- all 25 first-100-token arrays matched across strict replays, while 20/25
+  complete arrays matched, retaining the existing runtime-nondeterminism
+  disclosure.
+
+This is a complete qualified **dated 0ecc stock-kernel control profile**. It
+appends two strict measurements above the prior floor but does not erase or
+rename any historical capture.
+
+The current-vLLM/current-kernel candidate remained objective-quality clean but
+failed both frozen strict speed gates:
+
+- fresh diagnostic: `30.293320491708876 tok/s` (diagnostic gate pass);
+- natural-EOS strict replay A: `30.27919625650121 tok/s`, or
+  `-0.03147878402877069` below the strict floor;
+- natural-EOS strict replay B: `30.261661472495938 tok/s`, or
+  `-0.049013568034041555` below the strict floor;
+- the full quality battery, 19-file model verification, and sealed-cache
+  immutability all passed;
+- 23/25 first-100-token arrays and 21/25 complete arrays matched across its
+  two strict replays.
+
+The campaign therefore ends `complete-regression-attribution-required` and
+does not advance the both-current candidate. The control/current-kernel deltas
+were `+0.010647523014092997` on the diagnostic, `-0.045101460195205334` on
+strict A, and `-0.06430904864987852 tok/s` on strict B. These two lanes used
+independent fresh autotune realizations in fixed control-first order, so the
+small delta is not causal proof that the kernel change alone is responsible.
+It is sufficient to reject this candidate under the frozen promotion rule.
+
+The complete 2,933-entry campaign, including both fresh caches and all six raw
+response streams, is archived at
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-20260824T081055Z-0ecc284790-current-campaign.tar.zst`,
+SHA-256
+`37cc1bbe12de0f5fb47bf9ea713898bdfc62f981737f2f234941d48a93f5b2ba`.
+It is 20,192,469 bytes compressed and 342,108,160 bytes uncompressed and
+passed `zstd -t` plus safe-path traversal. The generated campaign result has
+SHA-256
+`9bfd231dd971460917361d469acd50d5f72db83eefdd49e031edf34ee20f313e`.
+
+No TP2/TP4 work is authorized on the failed both-current candidate. Literal
+newest upstream is unchanged, so the next step is a bounded decision-overlay
+attribution on the same current source, retaining the stock-kernel control as
+a known-good fallback. Only after current-kernel TP1 passes do the TP2
+78-decision and TP4 152-decision overlays get exact-path/`configs_hash`
+remapping and their original speed/quality gates. This preserves the 48.95 and
+71.7 classes instead of letting a forward update silently lower them.

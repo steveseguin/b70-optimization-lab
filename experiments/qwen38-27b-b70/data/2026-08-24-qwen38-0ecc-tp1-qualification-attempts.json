@@ -1,7 +1,8 @@
 {
   "schema": "neural-download-current-main-tp1-attempts-v1",
-  "state": "literal-current-diagnostic-passed-strict-campaign-pending",
+  "state": "complete-control-qualified-both-current-strict-regression",
   "created_utc": "2026-08-24T08:06:21Z",
+  "completed_utc": "2026-08-24T09:10:41Z",
   "source_identity": {
     "vllm_head": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
     "vllm_tree": "942cc5fd4d0ae008499926a1949630f627b87f71",
@@ -161,21 +162,157 @@
         "zstd_verified": true,
         "tar_traversal_verified": true
       },
-      "disposition": "The exact-current diagnostic passed and authorizes the separately preregistered seed-zero strict/quality campaign if all identities remain current. It does not itself promote 0ecc."
+      "disposition": "The exact-current diagnostic passed and authorized the separately preregistered seed-zero strict/quality campaign. It did not itself promote 0ecc."
+    },
+    {
+      "name": "seed-zero-six-arm-control-versus-both-current-campaign",
+      "run_root": "/home/steve/qwen38-current-main-runs/tp1-20260824T081055Z",
+      "lab_head": "fc6b3ac722f4edc7c0e570a3698696ad25c3785a",
+      "started_utc": "2026-08-24T08:10:55Z",
+      "completed_utc": "2026-08-24T09:10:41Z",
+      "state": "complete-regression-attribution-required",
+      "classification": "stock-kernel-control-qualified-both-current-kernel-candidate-missed-strict-speed-floor",
+      "active_candidate": "both-current",
+      "promotion_eligible": false,
+      "historical_replacement_allowed": false,
+      "pythonhashseed": {
+        "mode": "zero",
+        "value": 0,
+        "scope": "frozen six-arm campaign identity; not claimed as a determinism fix"
+      },
+      "topology": {
+        "tensor_parallel": 1,
+        "gpu": 0,
+        "gpu_bdf": "0000:23:00.0",
+        "gpu_uuid": "00000000-0000-0023-0000-0000e2238086",
+        "mtp": 0,
+        "model_and_kv_dtype": "float16",
+        "max_model_len": 32768,
+        "gpu_memory_utilization": 0.9,
+        "max_num_seqs": 1,
+        "max_num_batched_tokens": 1024,
+        "async_scheduling": true,
+        "prefix_caching": false,
+        "chunked_prefill": true,
+        "graph_mode": "FULL_AND_PIECEWISE",
+        "graph_capture_sizes": [
+          1,
+          2
+        ]
+      },
+      "control_lane": {
+        "kernel": "stock-from-base 0.1.13.2",
+        "diagnostic_median_tok_s": 30.282672968694783,
+        "strict_a_median_tok_s": 30.324297716696414,
+        "strict_b_median_tok_s": 30.325970521145816,
+        "strict_a_floor_margin_tok_s": 0.013622676166434644,
+        "strict_b_floor_margin_tok_s": 0.015295480615836965,
+        "diagnostic_speed_gate_pass": true,
+        "strict_a_speed_gate_pass": true,
+        "strict_b_speed_gate_pass": true,
+        "benchmark_shape_gates_pass": true,
+        "quality_gates_pass": true,
+        "all_qualification_gates_pass": true,
+        "replay_full_token_arrays_equal": 20,
+        "replay_first_100_token_arrays_equal": 25,
+        "replay_prompt_count": 25,
+        "cache_manifest_sha256": "33f9fbf4823296c7f05b05023c6253139fd9b3a10255113f614c06e6cb8e565e",
+        "cache_files": 1097,
+        "best_config_files": 38,
+        "strict_replay_cache_immutable": true
+      },
+      "both_current_lane": {
+        "kernel": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+        "diagnostic_median_tok_s": 30.293320491708876,
+        "strict_a_median_tok_s": 30.27919625650121,
+        "strict_b_median_tok_s": 30.261661472495938,
+        "strict_a_floor_margin_tok_s": -0.03147878402877069,
+        "strict_b_floor_margin_tok_s": -0.049013568034041555,
+        "diagnostic_speed_gate_pass": true,
+        "strict_a_speed_gate_pass": false,
+        "strict_b_speed_gate_pass": false,
+        "benchmark_shape_gates_pass": true,
+        "quality_gates_pass": true,
+        "all_qualification_gates_pass": false,
+        "replay_full_token_arrays_equal": 21,
+        "replay_first_100_token_arrays_equal": 23,
+        "replay_prompt_count": 25,
+        "cache_manifest_sha256": "c8f8df8e2fa33851d5c096564e77c11c1e8fc824699220b0eb2dcf6d26228375",
+        "cache_files": 1097,
+        "best_config_files": 38,
+        "strict_replay_cache_immutable": true
+      },
+      "quality": {
+        "control_pass_all": true,
+        "both_current_pass_all": true,
+        "baseline_match_all": true,
+        "exact_cases": 7,
+        "repeat_runs": 8,
+        "long_context_requested_tokens": 8192,
+        "long_context_actual_prompt_tokens": 7617,
+        "baseline_comparisons": 24,
+        "cached_tokens_all_zero": true
+      },
+      "model_direct_and_ordinary_verify": {
+        "status": "verified-in-all-six-arms",
+        "files": 19,
+        "paths_coherent": true,
+        "sha256": "c9733954224b7e828856178c01774078a8036a46cf8438f661ce55366ca50c56"
+      },
+      "source_recency": {
+        "vllm_head": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
+        "kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+        "official_nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+        "vllm_pre_post_unchanged": true,
+        "kernel_pre_post_unchanged": true,
+        "nightly_base_pre_post_unchanged": true,
+        "lab_pre_post_unchanged": true,
+        "post_campaign_live_recheck_utc": "2026-08-24T09:14:47Z",
+        "post_campaign_vllm_head_still_current": true,
+        "post_campaign_kernel_head_still_current": true,
+        "post_campaign_official_digest_unchanged": true
+      },
+      "kernel_comparison": {
+        "diagnostic_delta_both_minus_control_tok_s": 0.010647523014092997,
+        "strict_a_delta_both_minus_control_tok_s": -0.045101460195205334,
+        "strict_b_delta_both_minus_control_tok_s": -0.06430904864987852,
+        "causal_attribution": "not proven: the lanes used independent fresh autotune realizations and a fixed control-first order",
+        "decision": "do not advance the both-current kernel candidate; retain the qualified stock-kernel control and forward-port only after attribution"
+      },
+      "integrity": {
+        "campaign_result_sha256": "9bfd231dd971460917361d469acd50d5f72db83eefdd49e031edf34ee20f313e",
+        "final_status_sha256": "bdef88af29f3008a03bf2915d8347f32028bfafbf85d246014f5c2203096bbd7",
+        "control_result_sha256": "4f27a204dbbab4c796809b75b1a3e5d3c230fd0b5235bffed7589499f957bc5c",
+        "both_result_sha256": "71f8e99e8a3840d319117f6e28e09534a1c6dd1acf07deb4fe94c31394a0886b",
+        "input_manifest_sha256": "962e88b6d4ac98d14e6b7400ab3809a10e24180205af67072a58358dc7b121da"
+      },
+      "external_archive": {
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-20260824T081055Z-0ecc284790-current-campaign.tar.zst",
+        "sha256": "37cc1bbe12de0f5fb47bf9ea713898bdfc62f981737f2f234941d48a93f5b2ba",
+        "compressed_bytes": 20192469,
+        "uncompressed_bytes": 342108160,
+        "entries": 2933,
+        "zstd_verified": true,
+        "tar_traversal_verified": true
+      },
+      "disposition": "The stock-kernel control is a complete qualified dated 0ecc profile. The active both-current kernel candidate is quality-clean but misses both frozen strict speed gates and is not promoted. No historical value is lowered or replaced."
     }
   ],
   "claim_policy": {
     "may_claim": [
       "the exact 0ecc both-current TP1 hash-seed-unset diagnostic cleared the protected diagnostic floor",
       "the diagnostic exceeded the older 30.2569 capture by 0.00835866794376372 tok/s",
-      "the full token/cache/canary/model/source-recency contract for this diagnostic passed"
+      "the full token/cache/canary/model/source-recency contract for this diagnostic passed",
+      "the exact 0ecc stock-kernel control passed the frozen diagnostic, both strict speed gates, benchmark shape, cache immutability, model verification, and complete quality battery",
+      "the exact 0ecc both-current kernel candidate passed correctness and quality but missed both frozen strict speed gates"
     ],
     "must_not_claim": [
-      "strict or full-quality qualification",
+      "strict or full-quality qualification for the both-current kernel candidate",
       "fresh-compile or cross-boot determinism",
       "TP2, TP4, or MTP qualification on 0ecc",
-      "promotion or replacement of any historical result"
+      "promotion or replacement of any historical result",
+      "causal proof that the current kernel alone caused the small speed delta"
     ],
-    "next": "run the frozen seed-zero six-arm TP1 campaign on the same exact-current images; preserve all protected floors and stop stale on any upstream movement"
+    "next": "preserve the qualified 0ecc stock-kernel profile and failed both-current candidate; resolve literal newest upstream heads, rebase the zero-source base, reapply versioned runtime/decision overlays, and qualify TP1 before TP2/TP4"
   }
 }
