@@ -60,6 +60,9 @@ supports the accepted runtime layer.
 The accepted TP2/TP4 `.best_config` decision overlays are not copied into this
 TP1 source-attribution run. They remain versioned artifacts and must be
 graph/config-hash remapped and requalified before judging TP2/TP4 preservation.
+There is no accepted TP1 decision bundle. The build receipt's legacy
+`both-current accepted-overlay TP1` order label names a possible pipeline
+stage, not an artifact that may be applied or a completed qualification.
 Compiled binaries and outer caches are never copied across code identities.
 
 Two historical source behaviors remain absent upstream and are retained as
@@ -72,6 +75,26 @@ separate default-off forward ports after the target-only TP curve is gated:
 They are not silently abandoned, and they are not mixed into this control.
 Rejected persistent GDN scratch, global force-chunk behavior, and obsolete
 collective flags are preserved as evidence but are not accepted overlays.
+
+## Pre-campaign hash-seed-unset performance-preservation arm
+
+Before the frozen six-arm qualification, run one separate both-current TP1,
+MTP0, F16, graph-enabled fresh-cache diagnostic with `PYTHONHASHSEED` truly
+absent from the container. The bounded wrapper is
+`experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-absolute-current-main-tp1-hash-unset-diagnostic.sh`.
+It selects the tracked both-current image through the ordinary current-main
+runner, so the exact receipt/archive/image labels, model, GPU, clean-main, and
+live upstream freshness checks remain fail-closed.
+
+This arm uses `PYTHONHASHSEED_MODE=unset`, EOS ignored, 25 cold prompts, 512
+tokens, the conventional 100-event/99-interval metric, and its own new ext4
+cache. It must reach the replicated diagnostic floor `30.2178 tok/s`; the
+result also reports its signed and percentage difference from the protected
+`30.2569 tok/s` captured high, which is not a single-run gate. A miss stops
+before the six-arm campaign for attribution. A pass is diagnostic evidence
+only: it does not satisfy strict qualification, make a result promotion
+eligible, authorize replacement of either historical capture, or supply a
+cache to any later arm.
 
 ## Frozen six arms
 
@@ -91,11 +114,13 @@ upstream defaults for the protected TP1 configuration; the runner makes them
 explicit and verifies the effective engine log so a default change cannot
 silently alter the lane.
 
-This TP1 campaign uses `PYTHONHASHSEED=0`, matching the protected strict TP1
-and latest TP1 current-refresh identity. The older diagnostic `30.2178` floor
-originated with the variable unset, so it is a protected speed threshold here,
-not mislabeled as an exact diagnostic-identity replay. Seed 0 is not claimed
-to solve fresh-compile or runtime token nondeterminism.
+This TP1 campaign explicitly uses `PYTHONHASHSEED_MODE=zero` and
+`PYTHONHASHSEED=0`, matching the protected strict TP1 and latest TP1
+current-refresh identity. The older diagnostic `30.2178` floor originated with
+the variable unset, so it is a protected speed threshold here, not mislabeled
+as an exact diagnostic-identity replay. The separate pre-campaign arm above
+preserves that unset identity. Seed 0 is not claimed to solve fresh-compile or
+runtime token nondeterminism.
 
 The stock-kernel control is a coarse comparison screen. Its speed result is
 always recorded, but independent fresh autotune realizations and fixed

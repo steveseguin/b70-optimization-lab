@@ -13,6 +13,8 @@ set -euo pipefail
 # LANE: control (current vLLM + stock base kernel) or both (both current).
 # CACHE_POLICY: fresh or replay. Replay additionally requires
 # EXPECTED_CACHE_MANIFEST_SHA256.
+# PYTHONHASHSEED_MODE: zero (default) or unset. The unset mode requires the
+# host variable to be absent and omits it from the container environment.
 
 [[ $# -eq 9 ]] || {
   printf 'usage: %s LANE MTP KV MAXLEN GPUS PORT OUT_DIR SUITE CACHE_DIR\n' \
@@ -55,7 +57,7 @@ quality=${QUALITY:-0}
 quality_require_baseline=${QUALITY_REQUIRE_BASELINE:-0}
 quality_baseline_json=${QUALITY_BASELINE_JSON:-}
 graph=${VLLM_XPU_GRAPH:-1}
-pythonhashseed=${PYTHONHASHSEED:-0}
+pythonhashseed_mode=${PYTHONHASHSEED_MODE:-zero}
 sudo_pass_file=${SUDO_PASS_FILE:-/home/steve/SUDOPASSWORD.txt}
 legacy_lock_file=/tmp/b70-benchmark.lock
 muse_lock_file=/run/lock/muse-glimmer-gpu-exclusive.lock
@@ -149,7 +151,23 @@ validate_inherited_lock() {
 [[ $quality_require_baseline == 0 || $quality == 1 ]] ||
   die 'QUALITY_REQUIRE_BASELINE=1 requires QUALITY=1'
 [[ $graph == 1 ]] || die 'this strict promotion runner requires VLLM_XPU_GRAPH=1'
-[[ $pythonhashseed == 0 ]] || die 'this strict promotion runner requires PYTHONHASHSEED=0'
+[[ $pythonhashseed_mode == zero || $pythonhashseed_mode == unset ]] ||
+  die 'PYTHONHASHSEED_MODE must be zero or unset'
+declare -a pythonhashseed_docker_args=()
+case $pythonhashseed_mode in
+  zero)
+    if [[ -n ${PYTHONHASHSEED-} && ${PYTHONHASHSEED-} != 0 ]]; then
+      die 'PYTHONHASHSEED_MODE=zero forbids an inherited value other than 0'
+    fi
+    pythonhashseed_effective=0
+    pythonhashseed_docker_args=(-e PYTHONHASHSEED=0)
+    ;;
+  unset)
+    [[ ! -v PYTHONHASHSEED ]] ||
+      die 'PYTHONHASHSEED_MODE=unset requires PYTHONHASHSEED to be absent'
+    pythonhashseed_effective=unset
+    ;;
+esac
 [[ -z ${EXTRA_VLLM_ARGS:-} ]] || die 'EXTRA_VLLM_ARGS is forbidden in zero-overlay qualification'
 [[ -z ${PROMPT_IDS:-} ]] || die 'strict qualification requires the complete suite'
 [[ -z ${ONEAPI_DEVICE_SELECTOR:-} ]] || die 'ONEAPI_DEVICE_SELECTOR must be unset'
@@ -518,7 +536,10 @@ printf '%s\n' "${args[@]}" >"$out/server-args.txt"
     printf 'quality_baseline_sha256=%s\n' \
       "$(sha256sum "$quality_baseline_json" | awk '{print $1}')"
   fi
-  printf 'vllm_xpu_enable_xpu_graph=%s\npythonhashseed=%s\n' "$graph" "$pythonhashseed"
+  printf 'vllm_xpu_enable_xpu_graph=%s\n' "$graph"
+  printf 'pythonhashseed=%s\n' "$pythonhashseed_effective"
+  printf 'pythonhashseed_mode=%s\npythonhashseed_effective=%s\n' \
+    "$pythonhashseed_mode" "$pythonhashseed_effective"
   printf 'compilation_config=%s\nasync_scheduling=true\n' "$compilation_config"
   printf 'gpu_memory_utilization=0.90\nmax_num_seqs=1\nmax_num_batched_tokens=1024\n'
   printf 'prefix_caching=false\nchunked_prefill=true\n'
@@ -617,7 +638,7 @@ dockerc run -d --cidfile "$container_id_file" --name "$name" \
   -e VLLM_CACHE_ROOT=/run-cache/vllm \
   -e XDG_CACHE_HOME=/run-cache/xdg \
   -e VLLM_XPU_ENABLE_XPU_GRAPH=1 \
-  -e PYTHONHASHSEED=0 \
+  "${pythonhashseed_docker_args[@]}" \
   --shm-size 16g "$image_id" "${args[@]}" >"$out/docker-run.stdout"
 [[ -f $container_id_file ]] || die 'Docker did not write the required container ID file'
 created_container_id=$(<"$container_id_file")
@@ -631,9 +652,11 @@ container_image_id=$(dockerc inspect "$created_container_id" --format '{{.Image}
 printf '%s\n' "$container_image_id" >"$out/container-image-id.txt"
 dockerc inspect "$created_container_id" >"$out/container-inspect.running.json"
 dockerc exec "$created_container_id" /usr/bin/env | sort >"$out/container-environment.txt"
+dockerc exec "$created_container_id" /bin/bash -c \
+  "tr '\\0' '\\n' </proc/1/environ | sort" \
+  >"$out/container-init-environment.txt"
 for expected_env in \
   CCL_ZE_IPC_EXCHANGE=sockets \
-  PYTHONHASHSEED=0 \
   VLLM_CACHE_ROOT=/run-cache/vllm \
   VLLM_NO_USAGE_STATS=1 \
   VLLM_XPU_ENABLE_XPU_GRAPH=1 \
@@ -642,6 +665,39 @@ for expected_env in \
   grep -Fx "$expected_env" "$out/container-environment.txt" >/dev/null ||
     die "required container environment is absent: $expected_env"
 done
+case $pythonhashseed_mode in
+  zero)
+    jq -e '
+      [.[0].Config.Env[] | select(startswith("PYTHONHASHSEED="))] ==
+      ["PYTHONHASHSEED=0"]
+    ' "$out/container-inspect.running.json" >/dev/null ||
+      die 'PYTHONHASHSEED_MODE=zero is wrong in Docker Config.Env'
+    for environment_evidence in container-environment.txt \
+      container-init-environment.txt; do
+      grep -Fx 'PYTHONHASHSEED=0' "$out/$environment_evidence" >/dev/null ||
+        die "PYTHONHASHSEED_MODE=zero is absent from $environment_evidence"
+    done
+    container_pythonhashseed_present=true
+    container_pythonhashseed_effective=0
+    ;;
+  unset)
+    jq -e '
+      [.[0].Config.Env[] | select(startswith("PYTHONHASHSEED="))] | length == 0
+    ' "$out/container-inspect.running.json" >/dev/null ||
+      die 'PYTHONHASHSEED_MODE=unset leaked into Docker Config.Env'
+    for environment_evidence in container-environment.txt \
+      container-init-environment.txt; do
+      if grep -q '^PYTHONHASHSEED=' "$out/$environment_evidence"; then
+        die "PYTHONHASHSEED_MODE=unset leaked into $environment_evidence"
+      fi
+    done
+    container_pythonhashseed_present=false
+    container_pythonhashseed_effective=unset
+    ;;
+esac
+printf 'requested_mode=%s\ncontainer_variable_present=%s\ncontainer_effective=%s\n' \
+  "$pythonhashseed_mode" "$container_pythonhashseed_present" \
+  "$container_pythonhashseed_effective" >"$out/pythonhashseed-mode.env"
 awk -F= '
   {reject=0}
   $1 ~ /^VLLM_XPU_/ && $1 != "VLLM_XPU_ENABLE_XPU_GRAPH" {reject=1}

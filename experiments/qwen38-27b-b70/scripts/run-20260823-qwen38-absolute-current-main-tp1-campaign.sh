@@ -273,7 +273,7 @@ run_lane() {
   CURRENT_MAIN_MODEL_VERIFIER=$frozen_model_verifier \
   CURRENT_MAIN_BENCH_HELPER=$frozen_bench_helper \
   CURRENT_MAIN_QUALITY_HELPER=$frozen_quality_helper \
-  VLLM_XPU_GRAPH=1 PYTHONHASHSEED=0 \
+  VLLM_XPU_GRAPH=1 PYTHONHASHSEED_MODE=zero PYTHONHASHSEED=0 \
   MAX_TOKENS=512 BENCH=1 CANARY=1 RETURN_TOKEN_IDS=1 \
   NATURAL_EOS=0 QUALITY=0 QUALITY_REQUIRE_BASELINE=0 \
     "$frozen_runner" "$lane" 0 f16 32768 0 "$port" \
@@ -294,7 +294,7 @@ run_lane() {
   CURRENT_MAIN_MODEL_VERIFIER=$frozen_model_verifier \
   CURRENT_MAIN_BENCH_HELPER=$frozen_bench_helper \
   CURRENT_MAIN_QUALITY_HELPER=$frozen_quality_helper \
-  VLLM_XPU_GRAPH=1 PYTHONHASHSEED=0 \
+  VLLM_XPU_GRAPH=1 PYTHONHASHSEED_MODE=zero PYTHONHASHSEED=0 \
   MAX_TOKENS=512 BENCH=1 CANARY=1 RETURN_TOKEN_IDS=1 \
   NATURAL_EOS=1 QUALITY=1 QUALITY_REQUIRE_BASELINE=1 \
   QUALITY_BASELINE_JSON=$frozen_baseline \
@@ -310,7 +310,7 @@ run_lane() {
   CURRENT_MAIN_MODEL_VERIFIER=$frozen_model_verifier \
   CURRENT_MAIN_BENCH_HELPER=$frozen_bench_helper \
   CURRENT_MAIN_QUALITY_HELPER=$frozen_quality_helper \
-  VLLM_XPU_GRAPH=1 PYTHONHASHSEED=0 \
+  VLLM_XPU_GRAPH=1 PYTHONHASHSEED_MODE=zero PYTHONHASHSEED=0 \
   MAX_TOKENS=512 BENCH=1 CANARY=1 RETURN_TOKEN_IDS=1 \
   NATURAL_EOS=1 QUALITY=0 QUALITY_REQUIRE_BASELINE=0 \
     "$frozen_runner" "$lane" 0 f16 32768 0 "$port" \
@@ -474,6 +474,7 @@ jq -n \
       strict_floor_tp1_tok_s: 30.31067504052998,
       diagnostic_floor_origin_pythonhashseed: "unset",
       strict_floor_origin_pythonhashseed: 0,
+      current_campaign_pythonhashseed_mode: "zero",
       current_campaign_pythonhashseed: 0,
       comparison_scope: "The diagnostic value is a protected speed floor, not an exact hash-seed identity replay.",
       rule: "A slower current result is diagnostic evidence and never replaces the certified historical high."
