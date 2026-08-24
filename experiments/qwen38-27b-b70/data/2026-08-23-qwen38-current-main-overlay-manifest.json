@@ -14,7 +14,7 @@
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
       "vllm_source": "f94666b60d4c58ec0807d22c837cfae322a1dde9"
     },
-    "vllm_upstream_main": "a047e2543da570a64d1bbfeac4fe44eff3e87a81",
+    "vllm_upstream_main": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
     "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
   },
@@ -164,14 +164,11 @@
       "root_free_after": "14G"
     },
     "policy": "The diagnostic preserved the protected TP1 speed class but was neither strict nor quality-battery qualification. Keep it append-only; rebuild fresh on the next head without lowering any historical value or discarding any accepted runtime or decision overlay."
-  }],
-  "absolute_current_build": {
+  }, {
     "built_utc": "2026-08-24T07:00:08Z",
-    "status": "static-preflight-passed-gpu-qualification-pending",
-    "receipt": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json",
+    "status": "dated-stale-during-qualification-vllm-main-advanced",
+    "receipt_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T070008Z-a047e2543d-baaa05bb4e/build-receipt.json",
     "receipt_sha256": "4c389b109e36021d4603873d441ac81766e4982be6c204405801303c465b810d",
-    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T070008Z-a047e2543d-baaa05bb4e",
-    "archive_sha256s_sha256": "b420e9c5182271539bb4b27d62705521a0cd91868655750ac13fd70bab34151e",
     "vllm_head": "a047e2543da570a64d1bbfeac4fe44eff3e87a81",
     "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
@@ -188,6 +185,82 @@
       "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
       "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "status": "passed"
+    },
+    "completed_diagnostics": [
+      {
+        "lane": "both-current hash-seed-unset",
+        "status": "passed-diagnostic-only",
+        "conventional_99_interval_median_tok_s": 30.267690888459764,
+        "diagnostic_floor_tok_s": 30.2178,
+        "prior_captured_high_tok_s": 30.2569,
+        "strict_or_quality_qualification": false,
+        "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-a047-tp1-qualification-attempts.json",
+        "raw_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-hash-unset-20260824T071159Z-a047e2543d-current-diagnostic.tar.zst",
+        "raw_archive_sha256": "95cdcb82fde92d815e4fd88099ef8b0f2cfde6a84fc8201acf688d65ae731359"
+      },
+      {
+        "lane": "current-vllm stock-kernel control seed-zero",
+        "status": "valid-diagnostic-then-stale-before-promotion",
+        "conventional_99_interval_median_tok_s": 30.322439318579008,
+        "strict_or_quality_qualification": false,
+        "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-a047-tp1-qualification-attempts.json",
+        "raw_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-20260824T072449Z-a047e2543d-stale-control-diagnostic.tar.zst",
+        "raw_archive_sha256": "14ae21e3c5fc15ef44910088ab44b57afa0a17aa3a423a3f9f53c462247426c7"
+      }
+    ],
+    "stale_observation": {
+      "checked_utc": "2026-08-24T07:35:45Z",
+      "component": "vllm_upstream_main",
+      "built_head": "a047e2543da570a64d1bbfeac4fe44eff3e87a81",
+      "live_head": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
+      "during": "control TP1 fresh-cache diagnostic postflight",
+      "result": "valid dated control diagnostic; strict and both-current campaign arms not run; promotion vetoed"
+    },
+    "runnable_image_archive": {
+      "image_id": "sha256:a63ed5c5e19b639813ba47e94e13fb739c3467ef74cc8ba4beaa9d99a5e6241c",
+      "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T070008Z-a047e2543d-baaa05bb4e/both-current-image-a63ed5c5e19b.docker.tar.zst",
+      "sha256": "25774fb4a2ca9d6868dc3ee1cd26468ff1a76a65636981921f726b5f7c329f32",
+      "compressed_bytes": 5692597315,
+      "uncompressed_bytes": 5713474560,
+      "entries": 38,
+      "zstd_verified": true,
+      "tar_traversal_verified": true,
+      "build_archive_sha256s_sha256": "7675ee4b0e6c871c391f3d88635907de5f08d9ca527b89635a2bb6473eb605d8"
+    },
+    "local_cleanup_after_runnable_archive": {
+      "removed_image_ids": [
+        "sha256:4ca9cb9063ddd662e8cdd3f2901bab31d67ea71bba3e0f3611e12039f444ba72",
+        "sha256:a63ed5c5e19b639813ba47e94e13fb739c3467ef74cc8ba4beaa9d99a5e6241c"
+      ],
+      "recoverability": "The measured both-current image is Docker-loadable from the verified archive; both exact image lanes are reproducible from preserved source, wheel, receipt, base, and kernel artifacts.",
+      "current_0ecc_images_retained": true,
+      "root_free_after": "21G"
+    },
+    "policy": "Append the 30.267690888459764 diagnostic as a dated high without replacing historical identities. The valid control diagnostic is not a strict result. Roll forward fresh to 0ecc and preserve every accepted runtime and decision overlay."
+  }],
+  "absolute_current_build": {
+    "built_utc": "2026-08-24T07:38:55Z",
+    "status": "static-preflight-passed-gpu-qualification-pending",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json",
+    "receipt_sha256": "275029980b9c1b59b341ca8a2e2ca1d8845505f74e700cc9e653635c1bb96947",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T073855Z-0ecc284790-baaa05bb4e",
+    "archive_sha256s_sha256": "7f15b12105d3c5617a2c9e59a093567810d79aa9bbf2402812d2f633212b5788",
+    "vllm_head": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "source_archive_sha256": "4067d0f3a1b700e23c1f2e7aae73efa725e2cdd8c8dac9341da97add9f8ce6bc",
+    "wheel_sha256": "12c09824dc11491368046428420c03b0d20dad6d6a86768d71b60d406ea162fc",
+    "images": {
+      "current_vllm_stock_kernel": "sha256:22a03a3db5ce34419562706d4a95394d67bd788c6d7eb63916ba436927e0845e",
+      "both_current_zero_overlay": "sha256:b44e0658393e5a57f8af7173e9f42c7498763b9b581a57cba0f5ce5b8a597728"
+    },
+    "post_build_freshness_seal": {
+      "checked_utc": "2026-08-24T07:47:18Z",
+      "vllm_head": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
+      "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+      "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "status": "manual-live-identities-passed-full-clean-tree-validation-pending"
     },
     "accepted_overlay_disposition": "The accepted model, launch, topology, graph, cache, quality, and TP2/TP4 decision overlays remain versioned and mandatory. Build fresh caches; remap only exact relative-path plus embedded-configs_hash-compatible decision bytes; never copy compiled outputs across versions.",
     "policy": "Qualification remains fail-closed on live source/base movement and protected speed, quality, cache, and token-accounting gates. Historical builds and highs remain append-only."
@@ -266,7 +339,9 @@
     "a356_tp2_decision_overlay_diagnostic": [49.05894025767351],
     "a356_tp2_decision_overlay_strict": [49.00935245117815],
     "a356_tp4_decision_overlay_diagnostic": [71.72254506718171],
-    "a356_tp4_decision_overlay_strict": [71.35287190161719, 71.45427094575045]
+    "a356_tp4_decision_overlay_strict": [71.35287190161719, 71.45427094575045],
+    "a047_dated_both_current_hash_unset_diagnostic": [30.267690888459764],
+    "a047_dated_stock_kernel_control_diagnostic": [30.322439318579008]
   },
   "overlays": {
     "target_only_accepted": {

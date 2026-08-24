@@ -1,0 +1,233 @@
+{
+  "schema": "neural-download-current-main-tp1-attempts-v1",
+  "state": "dated-partial-evidence-vllm-main-advanced",
+  "created_utc": "2026-08-24T07:35:45Z",
+  "source_identity": {
+    "vllm_head": "a047e2543da570a64d1bbfeac4fe44eff3e87a81",
+    "vllm_tree": "2c2bce17a3e5897184edfa66e26715965a1e9f22",
+    "vllm_version": "0.26.1rc1.dev1140+ga047e2543.xpu",
+    "comparison_kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "official_nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "model": {
+      "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+      "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+      "architecture_family": "Qwen3.6/Qwen3.8 qwen3_5_text",
+      "quantization": "AutoRound INT4 W4A16",
+      "group_size": 128,
+      "symmetric": true,
+      "model_verifier_files": 19
+    },
+    "topology": {
+      "tensor_parallel": 1,
+      "gpu": 0,
+      "gpu_bdf": "0000:23:00.0",
+      "gpu_uuid": "00000000-0000-0023-0000-0000e2238086",
+      "mtp": 0,
+      "model_and_kv_dtype": "float16",
+      "max_model_len": 32768,
+      "gpu_memory_utilization": 0.9,
+      "max_num_seqs": 1,
+      "max_num_batched_tokens": 1024,
+      "async_scheduling": true,
+      "prefix_caching": false,
+      "chunked_prefill": true,
+      "graph_mode": "FULL_AND_PIECEWISE",
+      "graph_capture_sizes": [
+        1,
+        2
+      ]
+    }
+  },
+  "primary_metric": "median tok_s_1_100_intervals_after_ttft across 25 sequential 512-token rows",
+  "protected_floors_tok_s": {
+    "diagnostic": 30.2178,
+    "strict": 30.31067504052998
+  },
+  "protected_history_tok_s": {
+    "diagnostic_floor": 30.2178,
+    "diagnostic_captured_high": 30.2569,
+    "strict_floor": 30.31067504052998,
+    "append_only": true
+  },
+  "history_policy": "New dated measurements append to their exact identity; they never replace, relabel, or lower pinned diagnostic or strict history.",
+  "attempts": [
+    {
+      "name": "both-current-hash-unset-diagnostic",
+      "run_root": "/home/steve/qwen38-current-main-runs/tp1-hash-unset-20260824T071159Z",
+      "lab_head": "8b2846301b1036c68e6b6ba7dec237b26981920e",
+      "state": "passed-diagnostic-only-then-dated",
+      "classification": "valid-performance-preservation-diagnostic-not-strict-qualification",
+      "pythonhashseed": {
+        "mode": "unset",
+        "container_variable_present": false,
+        "container_init_variable_present": false,
+        "mode_evidence_sha256": "bf6d18493b2bdc12e3d3001131abbe536f7a9edbe25724cf9f1ba1589cc5c4f8",
+        "container_environment_sha256": "c4ad86444026b342431fab4e17cbc91f3ddfb90d9d46c6dffbd52dd36515b47b"
+      },
+      "image": {
+        "lane": "both-current",
+        "id": "sha256:a63ed5c5e19b639813ba47e94e13fb739c3467ef74cc8ba4beaa9d99a5e6241c",
+        "kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+        "kernel_version": "0.1.dev1+gbaaa05bb4"
+      },
+      "benchmark": {
+        "bench_sha256": "3465f9b2d28d0b795367dd5a3daed611ad031e3c363dfb531f1f32f2ab160f38",
+        "rows": 25,
+        "unique_prompts": 25,
+        "output_tokens_per_row": 512,
+        "returned_token_ids": true,
+        "cached_tokens_all_zero": true,
+        "finish_reason_all": "length",
+        "metric_token_events": 100,
+        "metric_intervals": 99,
+        "conventional_99_interval_median_tok_s": 30.267690888459764,
+        "conventional_99_interval_p10_tok_s": 30.23479995632769,
+        "conventional_99_interval_mean_tok_s": 30.311271833920163,
+        "full_decode_median_tok_s": 30.156869150201523,
+        "wall_full_median_tok_s": 29.667939501621714,
+        "ttft_median_ms": 280.98572499584407,
+        "diagnostic_floor_delta_tok_s": 0.04989088845976397,
+        "captured_high_delta_tok_s": 0.010790888459762726,
+        "diagnostic_speed_gate_pass": true,
+        "new_dated_diagnostic_high": true,
+        "strict_qualification_run": false
+      },
+      "canary": {
+        "pass": true,
+        "content": "14",
+        "cached_tokens": 0,
+        "sha256": "f84316a5056d0443aacfcff053cac971d0ceb2fbed0cc948611024a02829742a"
+      },
+      "model_direct_and_ordinary_verify": {
+        "status": "verified",
+        "files": 19,
+        "direct_ok": 19,
+        "ordinary_ok": 19,
+        "paths_coherent": true,
+        "sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+      },
+      "cache": {
+        "policy": "fresh",
+        "files": 1097,
+        "directories": 213,
+        "best_config_files": 38,
+        "bytes": 151484046,
+        "post_manifest_sha256": "5d4b36aa0b1b4a2a558b377e09050e7f4a170fa054e1f26e9094de33e504e1b3",
+        "outer_cache_key": "9903ff08c2",
+        "aot_model_key": "8b857c7109b855ffd2b215f3eef7492d6c8345e080eba0d3a789faeea036fcac",
+        "code_hash": "fb13d4aa1ef8a386c76ab56d39925ff4de083895d9dcbd136e778046e78bb118",
+        "config_hash": "93957a4369",
+        "compiler_hash": "ddcad03736",
+        "replay_verified": false,
+        "cross_version_reuse_allowed": false
+      },
+      "cross_build_output_comparison": {
+        "comparison": "a4d70bef hash-unset diagnostic",
+        "complete_output_sequences_equal": 18,
+        "complete_output_sequences_total": 25,
+        "different_prompt_indices_zero_based": [
+          1,
+          4,
+          7,
+          8,
+          14,
+          15,
+          16
+        ],
+        "earliest_differing_token_index_zero_based": 18,
+        "disposition": "cross-boot/fresh-compile determinism remains unresolved; speed and objective validity are not relabeled as deterministic"
+      },
+      "integrity": {
+        "generated_diagnostic_result_sha256": "57569f1154da6235fa7a32573ff79be253405b9820d5b8a9a915f1ba99b0a9ef",
+        "wrapper_input_manifest_sha256": "3aa3d5e19c5fd59762fd970ce1078f7dfe1a639875088d96a20f3a7f8f8fec70",
+        "arm_input_manifest_sha256": "d0b2c5b5f652d268389ee9d38f46325f67831403d029842953827cc328fcd206",
+        "build_receipt_sha256": "4c389b109e36021d4603873d441ac81766e4982be6c204405801303c465b810d"
+      },
+      "external_archive": {
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-hash-unset-20260824T071159Z-a047e2543d-current-diagnostic.tar.zst",
+        "sha256": "95cdcb82fde92d815e4fd88099ef8b0f2cfde6a84fc8201acf688d65ae731359",
+        "compressed_bytes": 2263329,
+        "uncompressed_bytes": 156313600,
+        "entries": 1360,
+        "zstd_verified": true,
+        "tar_traversal_verified": true
+      },
+      "promotion_eligible": false,
+      "historical_replacement_allowed": false,
+      "disposition": "append as a dated diagnostic point; it exceeded the older diagnostic high but did not run natural-EOS strict or full quality arms"
+    },
+    {
+      "name": "seed-zero-six-arm-campaign",
+      "run_root": "/home/steve/qwen38-current-main-runs/tp1-20260824T072449Z",
+      "lab_head": "8b2846301b1036c68e6b6ba7dec237b26981920e",
+      "state": "stale-before-promotion-after-valid-control-diagnostic",
+      "campaign_exit_code": 5,
+      "exit_reason_scope": "source-recency-only",
+      "failure": "vLLM main advanced from a047e2543d to 0ecc284790 during the first control diagnostic",
+      "control_diagnostic": {
+        "image_id": "sha256:4ca9cb9063ddd662e8cdd3f2901bab31d67ea71bba3e0f3611e12039f444ba72",
+        "effective_kernel": "stock 0.1.13.2 from official base",
+        "pythonhashseed": 0,
+        "bench_sha256": "cac82701ece556f1f804d91dbce2b967f6027a74560564e60a9adb6f16b15497",
+        "rows": 25,
+        "output_tokens_per_row": 512,
+        "returned_token_ids": true,
+        "cached_tokens_all_zero": true,
+        "finish_reason_all": "length",
+        "conventional_99_interval_median_tok_s": 30.322439318579008,
+        "conventional_99_interval_p10_tok_s": 30.2721141679398,
+        "conventional_99_interval_mean_tok_s": 30.357364273568688,
+        "diagnostic_speed_gate_pass": true,
+        "strict_threshold_numeric_delta_tok_s": 0.011764278049027243,
+        "strict_qualification_run": false,
+        "canary_content": "14",
+        "canary_sha256": "04bed473d8709879d58917b0f23e8e2a7d9fcca4eb928da3d612356591ba0cf8",
+        "model_verify_files": 19,
+        "model_verify_sha256": "48403f084cb90408c66bfdd7a40d5d2eeb694fda2a287d7e648eb1e40c17302a",
+        "cache_files": 1097,
+        "cache_best_config_files": 38,
+        "cache_manifest_sha256": "80ca9109f45c8ca6e48a51efb91ea7ae06eb02d82caa7cfd0d19d76810077988",
+        "upstream_vllm_pre": "a047e2543da570a64d1bbfeac4fe44eff3e87a81",
+        "upstream_vllm_post": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
+        "upstream_kernel_unchanged": true,
+        "upstream_nightly_base_unchanged": true
+      },
+      "not_run": [
+        "control strict replay A",
+        "control strict replay B",
+        "both-current diagnostic",
+        "both-current strict replay A",
+        "both-current strict replay B"
+      ],
+      "quality_arms_run": false,
+      "promotion_eligible": false,
+      "historical_replacement_allowed": false,
+      "external_archive": {
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-20260824T072449Z-a047e2543d-stale-control-diagnostic.tar.zst",
+        "sha256": "14ae21e3c5fc15ef44910088ab44b57afa0a17aa3a423a3f9f53c462247426c7",
+        "compressed_bytes": 2280307,
+        "uncompressed_bytes": 153364480,
+        "entries": 1375,
+        "zstd_verified": true,
+        "tar_traversal_verified": true
+      },
+      "disposition": "valid dated control diagnostic only; no strict or both-current arm ran"
+    }
+  ],
+  "claim_policy": {
+    "may_claim": [
+      "the a047 both-current hash-unset diagnostic cleared the protected diagnostic floor and exceeded the prior 30.2569 diagnostic capture",
+      "the a047 stock-kernel control diagnostic also cleared the diagnostic floor before the source-recency veto",
+      "both completed benchmarks used 25 unique 512-token responses, returned token IDs, zero cached tokens, exact canaries, and direct-plus-ordinary model verification"
+    ],
+    "must_not_claim": [
+      "completed a047 strict or full-quality qualification",
+      "fresh-compile or cross-boot determinism",
+      "promotion of a047 as absolute-current after vLLM main advanced",
+      "TP2, TP4, or MTP qualification on a047",
+      "replacement or lowering of any protected historical result"
+    ],
+    "next": "qualify the rebuilt 0ecc284790 image pair with fresh caches and the unchanged protected speed, quality, cache, model, and source-recency gates"
+  }
+}

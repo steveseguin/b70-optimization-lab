@@ -775,3 +775,106 @@ removed. The current a047 images, official base, every result and patch, and
 both decision overlays remain local; the measured a4d image can be loaded
 directly from USB, while both a4d lanes are also rebuildable from the exact
 preserved source/wheel/base/kernel receipts.
+
+## 2026-08-24 `a047e2543` TP1 diagnostics and preservation
+
+The separate both-current hash-seed-unset arm completed while a047 was still
+literal current. Its conventional 99-interval median was
+`30.267690888459764 tok/s`, with p10 `30.23479995632769` and mean
+`30.311271833920163`. That is `0.04989088845976397 tok/s` above the protected
+`30.2178` diagnostic floor and `0.010790888459762726 tok/s` above the older
+`30.2569` diagnostic capture. It is appended as a new dated diagnostic point;
+it does not replace the older capture and is not strict, natural-EOS, or full
+quality-battery qualification.
+
+All 25 unique rows returned 512 token IDs with `cached_tokens=0` and a length
+finish. The code-14 canary, exact GPU identity, and direct-plus-ordinary reads
+of all 19 model files passed. The fresh cache has 1,097 files and 38
+`.best_config` decisions. Its outer compile key is `9903ff08c2`; AOT key
+`8b857c7109b855ffd2b215f3eef7492d6c8345e080eba0d3a789faeea036fcac`;
+code/config/compiler hashes are respectively
+`fb13d4aa1ef8a386c76ab56d39925ff4de083895d9dcbd136e778046e78bb118`,
+`93957a4369`, and `ddcad03736`. No replay occurred, so this cache does not
+prove determinism and none of its compiled artifacts is portable.
+
+Only 18 of 25 complete token sequences match the preceding a4d fresh compile.
+The seven differing zero-based rows are `1, 4, 7, 8, 14, 15, 16`; the earliest
+divergence is token index 18. The cross-boot/fresh-compile nondeterminism
+disclosure therefore remains mandatory. The complete 1,360-entry run and
+cache are archived at
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-hash-unset-20260824T071159Z-a047e2543d-current-diagnostic.tar.zst`,
+SHA-256
+`95cdcb82fde92d815e4fd88099ef8b0f2cfde6a84fc8201acf688d65ae731359`.
+
+The frozen seed-zero six-arm campaign then began on a047. Its first
+current-vLLM/stock-kernel control diagnostic completed validly at
+`30.322439318579008 tok/s` (p10 `30.2721141679398`, mean
+`30.357364273568688`) with the same 25-row token/cache shape, canary, and
+19-file model verification. This was still an ignore-EOS diagnostic; its
+numeric position above the strict floor is not a strict result. The postflight
+gate observed vLLM advance to `0ecc284790e5403f74b899524ef82ecb69f83cb3`
+and stopped before both strict control replays and all three both-current arms.
+The 1,375-entry partial campaign is archived at
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-20260824T072449Z-a047e2543d-stale-control-diagnostic.tar.zst`,
+SHA-256
+`14ae21e3c5fc15ef44910088ab44b57afa0a17aa3a423a3f9f53c462247426c7`.
+Both a047 attempts are summarized without promotion in
+`experiments/qwen38-27b-b70/data/2026-08-24-qwen38-a047-tp1-qualification-attempts.json`.
+
+Before removing the superseded a047 tags, the exact measured both-current
+image was exported as a Docker-loadable archive at
+`current-main-builds/20260824T070008Z-a047e2543d-baaa05bb4e/both-current-image-a63ed5c5e19b.docker.tar.zst`.
+Its SHA-256 is
+`25774fb4a2ca9d6868dc3ee1cd26468ff1a76a65636981921f726b5f7c329f32`;
+it is 5,692,597,315 bytes compressed and 5,713,474,560 bytes uncompressed,
+contains 38 entries, and passed compression and safe-traversal checks. The
+a047 build archive now has 16 verified payloads and `SHA256SUMS` SHA-256
+`7675ee4b0e6c871c391f3d88635907de5f08d9ca527b89635a2bb6473eb605d8`.
+Only after verification were the local a047 control and both-current images
+removed. Exact source, wheel, receipt, logs, measured run caches, and a
+loadable measured image remain externally recoverable.
+
+## 2026-08-24 `0ecc284790` literal-current roll-forward
+
+The direct a047 child is
+`0ecc284790e5403f74b899524ef82ecb69f83cb3` (tree
+`942cc5fd4d0ae008499926a1949630f627b87f71`). Its sole upstream commit fixes
+Model Runner V2 DCP slot mapping by separating logical and physical kernel KV
+block sizes. The exact delta is 73 insertions and 15 deletions in
+`vllm/v1/worker/gpu/block_table.py` plus its CUDA test. Qwen3.5/MTP, INC,
+XPU platform and legacy runner, graph/compilation/cache framework, packaging,
+native sources, and Rust are byte-identical to a047. The changed V2 object and
+Triton mapping kernel are not instantiated or compiled in the protected V1,
+DCP1 Qwen XPU lane. This predicts no speed change but does not waive fresh
+qualification.
+
+The exact zero-source-overlay 0ecc build has:
+
+- package `0.26.1rc1.dev1141+g0ecc28479.xpu`;
+- source-tar SHA-256
+  `4067d0f3a1b700e23c1f2e7aae73efa725e2cdd8c8dac9341da97add9f8ce6bc`;
+- wheel SHA-256
+  `12c09824dc11491368046428420c03b0d20dad6d6a86768d71b60d406ea162fc`;
+- current-vLLM/stock-kernel image
+  `sha256:22a03a3db5ce34419562706d4a95394d67bd788c6d7eb63916ba436927e0845e`;
+- current-vLLM/exact-`baaa05bb4e`-kernel image
+  `sha256:b44e0658393e5a57f8af7173e9f42c7498763b9b581a57cba0f5ce5b8a597728`.
+
+Its immutable archive is
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T073855Z-0ecc284790-baaa05bb4e`.
+The tracked and archived receipts are byte-identical at SHA-256
+`275029980b9c1b59b341ca8a2e2ca1d8845505f74e700cc9e653635c1bb96947`.
+All 15 payload hashes pass; `SHA256SUMS` has SHA-256
+`7f15b12105d3c5617a2c9e59a093567810d79aa9bbf2402812d2f633212b5788`;
+the source tar has 7,582 safe entries and independently matches the Git archive
+identity. Live checks at `2026-08-24T07:47:18Z` still resolved vLLM 0ecc,
+kernel `baaa05bb4e`, and the unchanged official nightly digest.
+
+No accepted optimization was dropped during this fast-forward. The active
+source base is fresh upstream, while the protected model/quant identity,
+launch/topology/graph settings, quality and recency gates, and the immutable
+TP2 78-file and accepted TP4 152-file decision overlays remain explicit.
+0ecc must compile fresh. Only exact relative-path and embedded-`configs_hash`
+compatible decision bytes may later be remapped, followed by full TP2/TP4
+qualification at their original floors. Historical diagnostics and strict
+captures remain append-only.

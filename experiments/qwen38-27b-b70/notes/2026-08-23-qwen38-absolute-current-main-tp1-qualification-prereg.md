@@ -15,14 +15,14 @@ to tracked receipt
 `experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json`
 and its byte-identical archived copy, currently:
 
-- vLLM `a047e2543da570a64d1bbfeac4fe44eff3e87a81`;
+- vLLM `0ecc284790e5403f74b899524ef82ecb69f83cb3`;
 - XPU kernels `baaa05bb4e92901219a5a072dd63f2474896f6d1`;
 - official nightly base index
   `sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876`;
 - current-vLLM/stock-kernel image
-  `sha256:4ca9cb9063ddd662e8cdd3f2901bab31d67ea71bba3e0f3611e12039f444ba72`;
+  `sha256:22a03a3db5ce34419562706d4a95394d67bd788c6d7eb63916ba436927e0845e`;
 - both-current image
-  `sha256:a63ed5c5e19b639813ba47e94e13fb739c3467ef74cc8ba4beaa9d99a5e6241c`.
+  `sha256:b44e0658393e5a57f8af7173e9f42c7498763b9b581a57cba0f5ce5b8a597728`.
 
 The older identities in the original goal section below are historical
 preregistration evidence, not authorization to launch stale images. If any of
