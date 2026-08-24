@@ -1,0 +1,99 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "glm-4-7",
+  "name": "GLM 4.7",
+  "display_name": "GLM 4.7 · Flash 30B-A3B",
+  "summary": "A strict one-B70 UD-Q4_K_XL rapid snapshot for GLM-4.7-Flash, retaining its MLA-style MoE identity and conservative standalone result without promoting faster concurrent-screen artifacts.",
+  "updated_at": "2026-08-24",
+  "architecture": {
+    "class": "Glm4MoeLiteForCausalLM",
+    "design": "MLA-style sparse MoE",
+    "total_parameters_approx": 30000000000,
+    "active_parameters_approx": 3000000000,
+    "experts": 64,
+    "active_experts": 4,
+    "shared_experts": 1,
+    "evidence": "results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md"
+  },
+  "dimensions": {
+    "weight_revision": ["glm-4.7-flash-0d32489"],
+    "weight_quantization": ["UD-Q4_K_XL"],
+    "runtime": ["llama.cpp SYCL fdb1db877"],
+    "tp": [1, 2, 4],
+    "mtp": [0],
+    "configured_max_context_tokens": [4096],
+    "kv": ["f16"]
+  },
+  "weight_revisions": [
+    {"id": "glm-4.7-flash-0d32489", "label": "GLM-4.7-Flash", "role": "measured GGUF weights", "repository": "unsloth/GLM-4.7-Flash-GGUF", "revision": "0d32489ecb9db6d2a4fc93bd27ef01519f95474d", "model_manifest": "results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md"}
+  ],
+  "model_variants": [],
+  "transfer_scope": {
+    "status": "one measured GLM-4.7-Flash GGUF revision",
+    "transfers": ["the stock llama.cpp GLM path and exact one-B70 launch controls"],
+    "does_not_transfer": ["performance to Qwen 30B-A3B despite the similar active-parameter label", "speed or quality to Q8, KV-quantized cache, TP2/4, or longer context"],
+    "evidence": "results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {"band": "one-card measured", "scope": "UD-Q4_K_XL short-context rapid lane", "basis": "The verified 17,520,169,312-byte GGUF completed the strict suite on one B70; Q8 was not treated as a fit.", "reviewed_at": "2026-08-24"},
+    "quality_evidence": {"band": "rapid snapshot only", "scope": "12 unique cache-zero deterministic prompts; no token IDs or broad model-quality evaluation", "evidence": ["data/rapid-model-snapshots-b70/glm-4.7-flash-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T221455Z.json"]},
+    "popularity": {"state": "not-scored", "reason": "No dated popularity snapshot is stored."}
+  },
+  "run_measurements": [
+    {
+      "id": "glm-4.7-flash-udq4-tp1-rapid",
+      "state": "lab-measured",
+      "revision": "glm-4.7-flash-0d32489",
+      "variant": "UD-Q4_K_XL",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "config": {"tp": 1, "mtp": 0, "kv": "f16", "configured_max_context_tokens": 4096},
+      "profile_id": "rapid-model-snapshots-b70-realistic-v1",
+      "measurement_class": "strict rapid snapshot",
+      "promotion_status": "promoted conservative standalone row",
+      "quality_scope": "12/12 cached_tokens=0 and realistic final gate passed; streamed text deltas, no token IDs",
+      "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled",
+      "metrics": {"decode_tok_s": [40.7691297367011], "ttft_ms": [206.20633498765528]},
+      "evidence": "data/rapid-model-snapshots-b70/glm-4.7-flash-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T221455Z.json"
+    }
+  ],
+  "series_measurements": [],
+  "estimates": [],
+  "packets": [
+    {
+      "id": "rapid-glm-4-7-flash-udq4",
+      "label": "GLM-4.7-Flash UD-Q4_K_XL · TP1",
+      "revision": "glm-4.7-flash-0d32489",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "cards": 1,
+      "status": "rapid research snapshot",
+      "evidence_level": "B70-measured narrow baseline",
+      "coverage": ["decode", "TTFT", "TP1", "cache-zero strict suite"],
+      "grades": {"evidence": {"grade": "D", "scope": "exact UD-Q4_K_XL TP1 rapid row", "basis": "valid measured snapshot with a narrow workload and no clean-host or broad quality packet", "reviewed_at": "2026-08-24", "evidence": ["results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md"]}},
+      "featured_metric": {"metric": "decode_tok_s", "measurement_id": "glm-4.7-flash-udq4-tp1-rapid", "sample_index": 0, "value": 40.7691297367011, "unit": "tok/s", "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled", "evidence": "data/rapid-model-snapshots-b70/glm-4.7-flash-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T221455Z.json"},
+      "manifest": "results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md"
+    }
+  ],
+  "views": [
+    {"id": "glm-4-7-rapid-tp", "title": "Strict rapid operating point", "subtitle": "UD-Q4_K_XL · one B70 · f16 KV · ctx=4096 configured; faster concurrent-screen rows are not promoted", "x_label": "tensor parallel cards", "discrete": true, "missing_x": [2, 4], "metrics": ["decode_tok_s", "ttft_ms"], "series": [{"label": "UD-Q4_K_XL", "measurement_ids": ["glm-4.7-flash-udq4-tp1-rapid"], "x_from": "config.tp"}]}
+  ],
+  "coverage_views": [
+    {
+      "id": "glm-4-7-quant-by-tp",
+      "label": "quant × TP",
+      "fixed": "Exact measured revision and rapid runtime; TP2/4 are unmeasured gaps.",
+      "row_axis": {"key": "variant", "label": "Quantization", "prefix": ""},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {"revision": "glm-4.7-flash-0d32489", "runtime": "llama.cpp SYCL fdb1db877", "mtp": 0},
+      "rows": ["UD-Q4_K_XL"],
+      "columns": [1, 2, 4],
+      "cells": {
+        "UD-Q4_K_XL:1": {"state": "lab-measured", "label": "D40.769 · T206.206", "evidence_id": "glm-4.7-flash-udq4-tp1-rapid", "packet_id": "rapid-glm-4-7-flash-udq4"},
+        "UD-Q4_K_XL:2": {"state": "missing", "label": "no stored lane"},
+        "UD-Q4_K_XL:4": {"state": "missing", "label": "no stored lane"}
+      }
+    }
+  ],
+  "family_closures": []
+}

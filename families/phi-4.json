@@ -1,0 +1,120 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "phi-4",
+  "name": "Phi-4",
+  "display_name": "Phi-4 Mini · Instruct",
+  "summary": "Phi-4 coverage currently means Phi-4 Mini Instruct only: one measured weight revision with Q4_K_M and Q8_0 one-B70 rapid variants, and no implied result for full-size Phi-4.",
+  "updated_at": "2026-08-24",
+  "architecture": {"class": "Phi-4 Mini Instruct", "evidence": "results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md"},
+  "dimensions": {
+    "weight_revision": ["phi4-mini-instruct-7ff82c2"],
+    "weight_quantization": ["Q4_K_M", "Q8_0"],
+    "runtime": ["llama.cpp SYCL fdb1db877"],
+    "tp": [1, 2, 4],
+    "mtp": [0],
+    "configured_max_context_tokens": [4096],
+    "kv": ["f16"]
+  },
+  "weight_revisions": [
+    {"id": "phi4-mini-instruct-7ff82c2", "label": "Phi-4 Mini Instruct", "role": "only measured Phi-4-family weights", "repository": "bartowski/microsoft_Phi-4-mini-instruct-GGUF", "revision": "7ff82c2aaa4dde30121698a973765f39be5288c0", "model_manifest": "results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md"}
+  ],
+  "model_variants": [],
+  "transfer_scope": {
+    "status": "Mini Instruct only; Q4 and Q8 are deployment variants of one measured revision",
+    "transfers": ["the stock llama.cpp Phi-4 Mini path and exact one-B70 launch controls"],
+    "does_not_transfer": ["any speed, quality, fit, or support claim to full-size Phi-4", "Q4 speed or quality to Q8", "either short-context row to TP2/4 or a context curve"],
+    "evidence": "results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {"band": "one-card measured", "scope": "Phi-4 Mini Q4_K_M and Q8_0 rapid lanes", "basis": "Both compact GGUF variants completed the strict rapid suite on one B70.", "reviewed_at": "2026-08-24"},
+    "quality_evidence": {"band": "rapid snapshot only", "scope": "12 unique cache-zero deterministic prompts per quant; no token IDs or broad model-quality evaluation", "evidence": ["data/rapid-model-snapshots-b70/phi4-mini-instruct-q4km-llamacpp-faon-cacheoff-confirm-ctx4096-realistic128-20260704T224303Z.json", "data/rapid-model-snapshots-b70/phi4-mini-instruct-q8-llamacpp-faon-cacheoff-confirm2-ctx4096-realistic128-20260704T224430Z.json"]},
+    "popularity": {"state": "not-scored", "reason": "No dated popularity snapshot is stored."}
+  },
+  "run_measurements": [
+    {
+      "id": "phi4-mini-q4km-tp1-rapid",
+      "state": "lab-measured",
+      "revision": "phi4-mini-instruct-7ff82c2",
+      "variant": "Q4_K_M",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "config": {"tp": 1, "mtp": 0, "kv": "f16", "configured_max_context_tokens": 4096, "quant_index": 1},
+      "profile_id": "rapid-model-snapshots-b70-realistic-v1",
+      "measurement_class": "strict rapid snapshot",
+      "promotion_status": "promoted speed row",
+      "quality_scope": "12/12 cached_tokens=0 and realistic final gate passed; streamed text deltas, no token IDs",
+      "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled",
+      "metrics": {"decode_tok_s": [96.54834088986573], "ttft_ms": [69.93722857441753]},
+      "evidence": "data/rapid-model-snapshots-b70/phi4-mini-instruct-q4km-llamacpp-faon-cacheoff-confirm-ctx4096-realistic128-20260704T224303Z.json"
+    },
+    {
+      "id": "phi4-mini-q8-tp1-rapid",
+      "state": "lab-measured",
+      "revision": "phi4-mini-instruct-7ff82c2",
+      "variant": "Q8_0",
+      "quantization": "Q8_0",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "config": {"tp": 1, "mtp": 0, "kv": "f16", "configured_max_context_tokens": 4096, "quant_index": 2},
+      "profile_id": "rapid-model-snapshots-b70-realistic-v1",
+      "measurement_class": "strict rapid snapshot",
+      "promotion_status": "measured higher-quality-quant reference",
+      "quality_scope": "12/12 cached_tokens=0 and realistic final gate passed; streamed text deltas, no token IDs",
+      "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled",
+      "metrics": {"decode_tok_s": [72.24629337909391], "ttft_ms": [119.45722799282521]},
+      "evidence": "data/rapid-model-snapshots-b70/phi4-mini-instruct-q8-llamacpp-faon-cacheoff-confirm2-ctx4096-realistic128-20260704T224430Z.json"
+    }
+  ],
+  "series_measurements": [],
+  "estimates": [],
+  "packets": [
+    {
+      "id": "rapid-phi4-mini-instruct-gguf",
+      "label": "Phi-4 Mini Instruct · Q4_K_M and Q8_0",
+      "revision": "phi4-mini-instruct-7ff82c2",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "cards": 1,
+      "status": "rapid research snapshot",
+      "evidence_level": "B70-measured narrow baseline",
+      "coverage": ["Q4", "Q8", "decode", "TTFT", "TP1", "cache-zero strict suite"],
+      "grades": {"evidence": {"grade": "D", "scope": "exact Phi-4 Mini Q4/Q8 TP1 rapid rows", "basis": "valid measured snapshots with a narrow workload and no clean-host or broad quality packet", "reviewed_at": "2026-08-24", "evidence": ["results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md"]}},
+      "featured_metric": {"metric": "decode_tok_s", "measurement_id": "phi4-mini-q4km-tp1-rapid", "sample_index": 0, "value": 96.54834088986573, "unit": "tok/s", "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled", "evidence": "data/rapid-model-snapshots-b70/phi4-mini-instruct-q4km-llamacpp-faon-cacheoff-confirm-ctx4096-realistic128-20260704T224303Z.json"},
+      "manifest": "results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md"
+    }
+  ],
+  "views": [
+    {
+      "id": "phi4-mini-quant",
+      "title": "Measured Mini quantization variants",
+      "subtitle": "1 = Q4_K_M; 2 = Q8_0. Same Mini weights and rapid suite; full-size Phi-4 is not represented.",
+      "x_label": "quantization variant",
+      "discrete": true,
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "Q4_K_M", "measurement_ids": ["phi4-mini-q4km-tp1-rapid"], "x_from": "config.quant_index"},
+        {"label": "Q8_0", "measurement_ids": ["phi4-mini-q8-tp1-rapid"], "x_from": "config.quant_index"}
+      ]
+    }
+  ],
+  "coverage_views": [
+    {
+      "id": "phi4-mini-quant-by-tp",
+      "label": "quant × TP",
+      "fixed": "Phi-4 Mini Instruct only; exact measured revision and rapid runtime.",
+      "row_axis": {"key": "variant", "label": "Quantization", "prefix": ""},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {"revision": "phi4-mini-instruct-7ff82c2", "runtime": "llama.cpp SYCL fdb1db877", "mtp": 0},
+      "rows": ["Q4_K_M", "Q8_0"],
+      "columns": [1, 2, 4],
+      "cells": {
+        "Q4_K_M:1": {"state": "lab-measured", "label": "D96.548 · T69.937", "evidence_id": "phi4-mini-q4km-tp1-rapid", "packet_id": "rapid-phi4-mini-instruct-gguf"},
+        "Q4_K_M:2": {"state": "missing", "label": "no stored lane"},
+        "Q4_K_M:4": {"state": "missing", "label": "no stored lane"},
+        "Q8_0:1": {"state": "lab-measured", "label": "D72.246 · T119.457", "evidence_id": "phi4-mini-q8-tp1-rapid"},
+        "Q8_0:2": {"state": "missing", "label": "no stored lane"},
+        "Q8_0:4": {"state": "missing", "label": "no stored lane"}
+      }
+    }
+  ],
+  "family_closures": []
+}

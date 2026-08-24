@@ -1,0 +1,102 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "deepseek-coder-v2",
+  "name": "DeepSeek Coder V2",
+  "display_name": "DeepSeek Coder V2 · Lite Instruct",
+  "summary": "A strict one-B70 Q4_K_M rapid snapshot for the 16B-total, 2.4B-active DeepSeek-Coder-V2 Lite Instruct MoE, published as a narrow measured baseline rather than a complete deployment curve.",
+  "updated_at": "2026-08-24",
+  "architecture": {
+    "class": "DeepSeek-Coder-V2 Lite sparse MoE",
+    "total_parameters_approx": 16000000000,
+    "active_parameters_approx": 2400000000,
+    "evidence": "results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md"
+  },
+  "dimensions": {
+    "weight_revision": ["deepseek-coder-v2-lite-instruct-8f248fa"],
+    "weight_quantization": ["Q4_K_M"],
+    "runtime": ["llama.cpp SYCL fdb1db877"],
+    "tp": [1, 2, 4],
+    "mtp": [0],
+    "configured_max_context_tokens": [2048],
+    "kv": ["f16"]
+  },
+  "weight_revisions": [
+    {
+      "id": "deepseek-coder-v2-lite-instruct-8f248fa",
+      "label": "DeepSeek-Coder-V2 Lite Instruct",
+      "role": "measured GGUF weights",
+      "repository": "bartowski/DeepSeek-Coder-V2-Lite-Instruct-GGUF",
+      "revision": "8f248fa2072348f77a8bc37754e470de1f61866e",
+      "model_manifest": "results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md"
+    }
+  ],
+  "model_variants": [],
+  "transfer_scope": {
+    "status": "one measured Lite Instruct GGUF revision",
+    "transfers": ["the stock llama.cpp model path and exact one-B70 launch controls"],
+    "does_not_transfer": ["speed or quality to full DeepSeek Coder V2, another quantization, TP2/4, or longer context"],
+    "evidence": "results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {"band": "one-card measured", "scope": "Q4_K_M short-context rapid lane", "basis": "The verified 10,364,416,768-byte GGUF completed the strict suite on one B70.", "reviewed_at": "2026-08-24"},
+    "quality_evidence": {"band": "rapid snapshot only", "scope": "12 unique cache-zero deterministic prompts; no token IDs or broad model-quality evaluation", "evidence": ["data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json"]},
+    "popularity": {"state": "not-scored", "reason": "No dated popularity snapshot is stored."}
+  },
+  "run_measurements": [
+    {
+      "id": "deepseek-coder-v2-lite-q4km-tp1-rapid",
+      "state": "lab-measured",
+      "revision": "deepseek-coder-v2-lite-instruct-8f248fa",
+      "variant": "Q4_K_M",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "config": {"tp": 1, "mtp": 0, "kv": "f16", "configured_max_context_tokens": 2048},
+      "profile_id": "rapid-model-snapshots-b70-realistic-v1",
+      "measurement_class": "strict rapid snapshot",
+      "promotion_status": "promoted conservative standalone row",
+      "quality_scope": "12/12 cached_tokens=0 and realistic final gate passed; streamed text deltas, no token IDs",
+      "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled",
+      "metrics": {"decode_tok_s": [57.09651439511314], "ttft_ms": [139.8265556199476]},
+      "evidence": "data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json"
+    }
+  ],
+  "series_measurements": [],
+  "estimates": [],
+  "packets": [
+    {
+      "id": "rapid-deepseek-coder-v2-lite-q4km",
+      "label": "DeepSeek-Coder-V2 Lite Q4_K_M · TP1",
+      "revision": "deepseek-coder-v2-lite-instruct-8f248fa",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "cards": 1,
+      "status": "rapid research snapshot",
+      "evidence_level": "B70-measured narrow baseline",
+      "coverage": ["decode", "TTFT", "TP1", "cache-zero strict suite"],
+      "grades": {"evidence": {"grade": "D", "scope": "exact Q4_K_M TP1 rapid row", "basis": "valid measured snapshot with a narrow workload and no clean-host or broad quality packet", "reviewed_at": "2026-08-24", "evidence": ["results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md"]}},
+      "featured_metric": {"metric": "decode_tok_s", "measurement_id": "deepseek-coder-v2-lite-q4km-tp1-rapid", "sample_index": 0, "value": 57.09651439511314, "unit": "tok/s", "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled", "evidence": "data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json"},
+      "manifest": "results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md"
+    }
+  ],
+  "views": [
+    {"id": "deepseek-coder-v2-rapid-tp", "title": "Strict rapid operating point", "subtitle": "Q4_K_M · one B70 · f16 KV · ctx=2048 configured; this one point is not a context curve", "x_label": "tensor parallel cards", "discrete": true, "missing_x": [2, 4], "metrics": ["decode_tok_s", "ttft_ms"], "series": [{"label": "Q4_K_M", "measurement_ids": ["deepseek-coder-v2-lite-q4km-tp1-rapid"], "x_from": "config.tp"}]}
+  ],
+  "coverage_views": [
+    {
+      "id": "deepseek-coder-v2-quant-by-tp",
+      "label": "quant × TP",
+      "fixed": "Exact measured revision and rapid runtime; TP2/4 are unmeasured gaps.",
+      "row_axis": {"key": "variant", "label": "Quantization", "prefix": ""},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {"revision": "deepseek-coder-v2-lite-instruct-8f248fa", "runtime": "llama.cpp SYCL fdb1db877", "mtp": 0},
+      "rows": ["Q4_K_M"],
+      "columns": [1, 2, 4],
+      "cells": {
+        "Q4_K_M:1": {"state": "lab-measured", "label": "D57.097 · T139.827", "evidence_id": "deepseek-coder-v2-lite-q4km-tp1-rapid", "packet_id": "rapid-deepseek-coder-v2-lite-q4km"},
+        "Q4_K_M:2": {"state": "missing", "label": "no stored lane"},
+        "Q4_K_M:4": {"state": "missing", "label": "no stored lane"}
+      }
+    }
+  ],
+  "family_closures": []
+}

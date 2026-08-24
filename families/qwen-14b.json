@@ -1,0 +1,90 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "qwen-14b",
+  "name": "Qwen 14B",
+  "display_name": "Qwen3 14B · Instruct",
+  "summary": "A strict one-B70 Q4_K_M rapid snapshot for Qwen3 14B Instruct, keeping the measured short-context row separate from unmeasured TP, quantization, and context combinations.",
+  "updated_at": "2026-08-24",
+  "architecture": {"class": "Qwen3 dense 14B", "evidence": "results/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km/README.md"},
+  "dimensions": {
+    "weight_revision": ["qwen3-14b-instruct-f723b4e"],
+    "weight_quantization": ["Q4_K_M"],
+    "runtime": ["llama.cpp SYCL fdb1db877"],
+    "tp": [1, 2, 4],
+    "mtp": [0],
+    "configured_max_context_tokens": [2048],
+    "kv": ["f16"]
+  },
+  "weight_revisions": [
+    {"id": "qwen3-14b-instruct-f723b4e", "label": "Qwen3 14B Instruct", "role": "measured GGUF weights", "repository": "lm-kit/qwen-3-14b-instruct-gguf", "revision": "f723b4e01f20538b1c1e719ee83331cf2231e4ef", "model_manifest": "results/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km/README.md"}
+  ],
+  "model_variants": [],
+  "transfer_scope": {
+    "status": "one measured Qwen3 14B Instruct GGUF revision",
+    "transfers": ["the stock llama.cpp Qwen3 dense path and exact one-B70 launch controls"],
+    "does_not_transfer": ["performance to Qwen 27B/30B/35B, another quantization, TP2/4, KV quantization, or longer context"],
+    "evidence": "results/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {"band": "one-card measured", "scope": "Q4_K_M short-context rapid lane", "basis": "The verified 9,001,753,408-byte GGUF completed the strict suite on one B70.", "reviewed_at": "2026-08-24"},
+    "quality_evidence": {"band": "rapid snapshot only", "scope": "12 unique cache-zero prompts and visible non-thinking output; no token IDs or broad model-quality evaluation", "evidence": ["data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json"]},
+    "popularity": {"state": "not-scored", "reason": "No dated popularity snapshot is stored."}
+  },
+  "run_measurements": [
+    {
+      "id": "qwen3-14b-instruct-q4km-tp1-rapid",
+      "state": "lab-measured",
+      "revision": "qwen3-14b-instruct-f723b4e",
+      "variant": "Q4_K_M",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "config": {"tp": 1, "mtp": 0, "kv": "f16", "configured_max_context_tokens": 2048, "ubatch": 512, "threads": 12},
+      "profile_id": "rapid-model-snapshots-b70-realistic-v1",
+      "measurement_class": "strict rapid snapshot",
+      "promotion_status": "promoted conservative standalone row",
+      "quality_scope": "12/12 cached_tokens=0 and realistic final gate passed; streamed text deltas, no token IDs",
+      "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled",
+      "metrics": {"decode_tok_s": [38.249019008891544], "ttft_ms": [240.0411400012672]},
+      "evidence": "data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json"
+    }
+  ],
+  "series_measurements": [],
+  "estimates": [],
+  "packets": [
+    {
+      "id": "rapid-qwen3-14b-instruct-q4km",
+      "label": "Qwen3 14B Instruct Q4_K_M · TP1",
+      "revision": "qwen3-14b-instruct-f723b4e",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "cards": 1,
+      "status": "rapid research snapshot",
+      "evidence_level": "B70-measured narrow baseline",
+      "coverage": ["decode", "TTFT", "TP1", "cache-zero strict suite"],
+      "grades": {"evidence": {"grade": "D", "scope": "exact Q4_K_M TP1 rapid row", "basis": "valid measured snapshot with a narrow workload and no clean-host or broad quality packet", "reviewed_at": "2026-08-24", "evidence": ["results/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km/README.md"]}},
+      "featured_metric": {"metric": "decode_tok_s", "measurement_id": "qwen3-14b-instruct-q4km-tp1-rapid", "sample_index": 0, "value": 38.249019008891544, "unit": "tok/s", "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled", "evidence": "data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json"},
+      "manifest": "results/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km/README.md"
+    }
+  ],
+  "views": [
+    {"id": "qwen-14b-rapid-tp", "title": "Strict rapid operating point", "subtitle": "Q4_K_M · one B70 · f16 KV · ctx=2048 configured; this one point is not a context curve", "x_label": "tensor parallel cards", "discrete": true, "missing_x": [2, 4], "metrics": ["decode_tok_s", "ttft_ms"], "series": [{"label": "Q4_K_M", "measurement_ids": ["qwen3-14b-instruct-q4km-tp1-rapid"], "x_from": "config.tp"}]}
+  ],
+  "coverage_views": [
+    {
+      "id": "qwen-14b-quant-by-tp",
+      "label": "quant × TP",
+      "fixed": "Exact measured revision and rapid runtime; TP2/4 are unmeasured gaps.",
+      "row_axis": {"key": "variant", "label": "Quantization", "prefix": ""},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {"revision": "qwen3-14b-instruct-f723b4e", "runtime": "llama.cpp SYCL fdb1db877", "mtp": 0},
+      "rows": ["Q4_K_M"],
+      "columns": [1, 2, 4],
+      "cells": {
+        "Q4_K_M:1": {"state": "lab-measured", "label": "D38.249 · T240.041", "evidence_id": "qwen3-14b-instruct-q4km-tp1-rapid", "packet_id": "rapid-qwen3-14b-instruct-q4km"},
+        "Q4_K_M:2": {"state": "missing", "label": "no stored lane"},
+        "Q4_K_M:4": {"state": "missing", "label": "no stored lane"}
+      }
+    }
+  ],
+  "family_closures": []
+}

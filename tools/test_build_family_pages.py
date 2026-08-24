@@ -236,6 +236,163 @@ class FamilyCoverageTest(unittest.TestCase):
                     runs[measurement_id]["metrics"]["decode_tok_s"], expected
                 )
 
+    def test_nine_family_backlog_is_published_without_invented_curves(self) -> None:
+        expected = {
+            "deepseek-v4",
+            "deepseek-coder-v2",
+            "glm-4-7",
+            "mistral-small-3-2",
+            "nemotron-cascade-2",
+            "phi-4",
+            "qwen-14b",
+            "qwen-30b-a3b",
+            "qwen-35b",
+        }
+        catalog = json.loads(MODULE.CATALOG.read_text())
+        family_ids = {entry["id"] for entry in catalog["families"]}
+        self.assertEqual(len(family_ids), 17)
+        self.assertLessEqual(expected, family_ids)
+        model_index = (MODULE.ROOT / "models/index.html").read_text()
+        for family_id in expected:
+            self.assertIn(f'href="{family_id}.html"', model_index)
+
+        registry = json.loads(MODULE.COVERAGE_REGISTRY.read_text())
+        self.assertEqual(registry["planned_families"], [])
+        coder_lane = next(
+            lane
+            for lane in registry["lanes"]
+            if lane["id"] == "rapid-qwen3-coder-30b-a3b-udq4"
+        )
+        self.assertEqual(coder_lane["family_id"], "qwen-30b-a3b")
+
+        for family_id in expected:
+            with self.subTest(family_id=family_id):
+                family = json.loads(
+                    (MODULE.ROOT / f"families/{family_id}.json").read_text()
+                )
+                self.assertEqual(family.get("estimates"), [])
+                self.assertFalse(family.get("series_measurements"))
+                self.assertEqual(
+                    (family.get("model_signals", {}).get("popularity") or {}).get(
+                        "state"
+                    ),
+                    "not-scored",
+                )
+
+    def test_new_family_measurements_and_qwen_sibling_boundary_are_exact(self) -> None:
+        expected = {
+            "deepseek-coder-v2": {
+                "deepseek-coder-v2-lite-q4km-tp1-rapid": (
+                    [57.09651439511314],
+                    [139.8265556199476],
+                )
+            },
+            "glm-4-7": {
+                "glm-4.7-flash-udq4-tp1-rapid": (
+                    [40.7691297367011],
+                    [206.20633498765528],
+                )
+            },
+            "mistral-small-3-2": {
+                "mistral-small-3.2-udq4-tp1-rapid": (
+                    [27.29674347655439],
+                    [1501.7739470349625],
+                ),
+                "mistral-small-3.2-udq8-tp1-rapid": (
+                    [16.380395177161446],
+                    [2686.1701778834686],
+                ),
+            },
+            "nemotron-cascade-2": {
+                "nemotron-cascade-2-q4km-tp1-rapid": (
+                    [50.90422891211857],
+                    [449.1593260318041],
+                )
+            },
+            "phi-4": {
+                "phi4-mini-q4km-tp1-rapid": (
+                    [96.54834088986573],
+                    [69.93722857441753],
+                ),
+                "phi4-mini-q8-tp1-rapid": (
+                    [72.24629337909391],
+                    [119.45722799282521],
+                ),
+            },
+            "qwen-14b": {
+                "qwen3-14b-instruct-q4km-tp1-rapid": (
+                    [38.249019008891544],
+                    [240.0411400012672],
+                )
+            },
+            "qwen-30b-a3b": {
+                "qwen3-30b-a3b-instruct-2507-udq4-tp1-rapid": (
+                    [107.48388363267362],
+                    [166.9534610118717],
+                ),
+                "qwen3-coder-30b-a3b-udq4-tp1-rapid": (
+                    [108.1165394591524],
+                    [164.12943904288113],
+                ),
+            },
+        }
+        for family_id, measurements in expected.items():
+            family = json.loads(
+                (MODULE.ROOT / f"families/{family_id}.json").read_text()
+            )
+            by_id = {item["id"]: item for item in family["run_measurements"]}
+            for measurement_id, (decode, ttft) in measurements.items():
+                with self.subTest(measurement_id=measurement_id):
+                    self.assertEqual(
+                        by_id[measurement_id]["metrics"]["decode_tok_s"], decode
+                    )
+                    self.assertEqual(by_id[measurement_id]["metrics"]["ttft_ms"], ttft)
+
+        deepseek = json.loads((MODULE.ROOT / "families/deepseek-v4.json").read_text())
+        deepseek_run = deepseek["run_measurements"][0]
+        self.assertEqual(
+            deepseek_run["metrics"]["decode_tok_s"],
+            [80.82005189243556, 76.90017809136465, 78.28722593298039],
+        )
+        self.assertEqual(deepseek["packets"][0]["featured_metric"]["value"], 78.28722593298039)
+
+        qwen35 = json.loads((MODULE.ROOT / "families/qwen-35b.json").read_text())
+        qwen35_runs = {item["id"]: item for item in qwen35["run_measurements"]}
+        self.assertEqual(
+            qwen35_runs["qwen35-quark-tp4-strict-current"]["metrics"]["decode_tok_s"],
+            [93.55054235558917],
+        )
+        self.assertEqual(
+            qwen35_runs["qwen35-quark-tp4-legacy-approved"]["metrics"]["decode_tok_s"],
+            [99.42835812273452],
+        )
+        self.assertEqual(qwen35_runs["qwen35-quark-tp2-screen"]["state"], "lab-screened")
+        self.assertEqual(
+            qwen35_runs["qwen35-quark-tp4-mtp1-quarantined"]["state"],
+            "quarantined",
+        )
+
+        qwen30 = json.loads((MODULE.ROOT / "families/qwen-30b-a3b.json").read_text())
+        variants = {item["id"]: item for item in qwen30["model_variants"]}
+        self.assertEqual(set(variants), {
+            "qwen3-30b-a3b-instruct-2507",
+            "qwen3-coder-30b-a3b-instruct",
+        })
+        self.assertEqual(variants["qwen3-30b-a3b-instruct-2507"]["intermediate_size"], 6144)
+        self.assertEqual(variants["qwen3-coder-30b-a3b-instruct"]["intermediate_size"], 5472)
+        self.assertIn("partial transfer", qwen30["transfer_scope"]["status"])
+        identity = json.loads(
+            (
+                MODULE.ROOT
+                / "data/rapid-model-snapshots-b70/qwen3-30b-a3b-family-identity-20260824.json"
+            ).read_text()
+        )
+        self.assertEqual(identity["shared_core_geometry"]["num_hidden_layers"], 48)
+        self.assertEqual(identity["shared_core_geometry"]["num_experts"], 128)
+
+        phi = json.loads((MODULE.ROOT / "families/phi-4.json").read_text())
+        self.assertEqual([item["id"] for item in phi["weight_revisions"]], ["phi4-mini-instruct-7ff82c2"])
+
     def test_legacy_mtp_tp_view_keeps_defaults(self) -> None:
         family = self._family()
 

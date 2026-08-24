@@ -1,0 +1,167 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "qwen-30b-a3b",
+  "name": "Qwen 30B-A3B",
+  "display_name": "Qwen3 30B-A3B · General + Coder",
+  "summary": "One Qwen3 MoE family with separately measured General Instruct 2507 and Coder siblings. Their core geometry transfers implementation work, but their weights and dense FFN details are not interchangeable.",
+  "updated_at": "2026-08-24",
+  "architecture": {
+    "class": "Qwen3MoeForCausalLM",
+    "model_type": "qwen3_moe",
+    "layers": 48,
+    "hidden_size": 2048,
+    "attention_heads": 32,
+    "kv_heads": 4,
+    "experts": 128,
+    "active_experts": 8,
+    "moe_intermediate_size": 768,
+    "native_context_tokens": 262144,
+    "evidence": "data/rapid-model-snapshots-b70/qwen3-30b-a3b-family-identity-20260824.json"
+  },
+  "dimensions": {
+    "weight_revision": ["qwen3-30b-a3b-family-generation"],
+    "model_variant": ["qwen3-30b-a3b-instruct-2507", "qwen3-coder-30b-a3b-instruct"],
+    "weight_quantization": ["UD-Q4_K_XL"],
+    "runtime": ["llama.cpp SYCL fdb1db877"],
+    "tp": [1, 2, 4],
+    "mtp": [0],
+    "configured_max_context_tokens": [4096],
+    "kv": ["f16"]
+  },
+  "weight_revisions": [
+    {"id": "qwen3-30b-a3b-family-generation", "label": "Qwen3 30B-A3B generation", "role": "shared publisher/architecture family", "model_manifest": "data/rapid-model-snapshots-b70/qwen3-30b-a3b-family-identity-20260824.json"}
+  ],
+  "model_variants": [
+    {
+      "id": "qwen3-30b-a3b-instruct-2507",
+      "label": "Qwen3 30B-A3B Instruct 2507",
+      "role": "general instruct sibling",
+      "repository": "unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF",
+      "revision": "eea7b2be5805a5f151f8847ede8e5f9a9284bf77",
+      "intermediate_size": 6144,
+      "model_manifest": "data/rapid-model-snapshots-b70/qwen3-30b-a3b-family-identity-20260824.json"
+    },
+    {
+      "id": "qwen3-coder-30b-a3b-instruct",
+      "label": "Qwen3-Coder 30B-A3B Instruct",
+      "role": "coder-tuned sibling",
+      "repository": "unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF",
+      "revision": "b17cb02dd882d5b6ab62fc777ad2995f19668350",
+      "intermediate_size": 5472,
+      "shared_expert_intermediate_size": 0,
+      "model_manifest": "data/rapid-model-snapshots-b70/qwen3-30b-a3b-family-identity-20260824.json"
+    }
+  ],
+  "transfer_scope": {
+    "status": "partial transfer only; General Instruct 2507 and Coder are sibling model variants, not interchangeable revisions",
+    "transfers": ["qwen3_moe registration and backend work guarded by the shared 48-layer, 32/4-head, 128/8-expert core geometry"],
+    "does_not_transfer": ["measured speed, TTFT, output tokens, quality decisions, or artifact hashes", "dense FFN assumptions: General measured config uses 6144 while the measured Coder config uses 5472", "support for a newer repository revision without a new identity check"],
+    "evidence": "data/rapid-model-snapshots-b70/qwen3-30b-a3b-family-identity-20260824.json"
+  },
+  "model_signals": {
+    "b70_fit": {"band": "two siblings one-card measured", "scope": "UD-Q4_K_XL rapid lanes", "basis": "Each sibling independently completed the strict one-B70 rapid suite.", "reviewed_at": "2026-08-24"},
+    "quality_evidence": {"band": "rapid snapshot only", "scope": "12 unique cache-zero prompts per sibling; no token IDs or cross-sibling quality equivalence claim", "evidence": ["data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json", "data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json"]},
+    "popularity": {"state": "not-scored", "reason": "No dated, revision-scoped popularity snapshot is stored for both measured siblings."}
+  },
+  "run_measurements": [
+    {
+      "id": "qwen3-30b-a3b-instruct-2507-udq4-tp1-rapid",
+      "state": "lab-measured",
+      "revision": "qwen3-30b-a3b-instruct-2507",
+      "variant": "UD-Q4_K_XL",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "config": {"tp": 1, "mtp": 0, "kv": "f16", "configured_max_context_tokens": 4096, "sibling_index": 1},
+      "profile_id": "rapid-model-snapshots-b70-realistic-v1",
+      "measurement_class": "strict rapid snapshot",
+      "promotion_status": "promoted representative row",
+      "quality_scope": "12/12 cached_tokens=0 and realistic final gate passed; streamed text deltas, no token IDs",
+      "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, request prompt cache disabled",
+      "metrics": {"decode_tok_s": [107.48388363267362], "ttft_ms": [166.9534610118717]},
+      "evidence": "data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json"
+    },
+    {
+      "id": "qwen3-coder-30b-a3b-udq4-tp1-rapid",
+      "state": "lab-measured",
+      "revision": "qwen3-coder-30b-a3b-instruct",
+      "variant": "UD-Q4_K_XL",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "config": {"tp": 1, "mtp": 0, "kv": "f16", "configured_max_context_tokens": 4096, "sibling_index": 2},
+      "profile_id": "rapid-model-snapshots-b70-realistic-v1",
+      "measurement_class": "strict rapid snapshot",
+      "promotion_status": "promoted representative row",
+      "quality_scope": "12/12 cached_tokens=0 and realistic final gate passed; streamed text deltas, no token IDs",
+      "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled",
+      "metrics": {"decode_tok_s": [108.1165394591524], "ttft_ms": [164.12943904288113]},
+      "evidence": "data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json"
+    }
+  ],
+  "series_measurements": [],
+  "estimates": [],
+  "packets": [
+    {
+      "id": "rapid-qwen3-30b-a3b-instruct-udq4",
+      "label": "Qwen3 30B-A3B Instruct 2507 UD-Q4_K_XL",
+      "revision": "qwen3-30b-a3b-instruct-2507",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "cards": 1,
+      "status": "rapid research snapshot",
+      "evidence_level": "B70-measured narrow baseline",
+      "coverage": ["General Instruct", "decode", "TTFT", "TP1", "cache-zero strict suite"],
+      "grades": {"evidence": {"grade": "D", "scope": "exact General Instruct 2507 UD-Q4_K_XL TP1 row", "basis": "valid measured snapshot with a narrow workload and no clean-host or broad quality packet", "reviewed_at": "2026-08-24", "evidence": ["results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md"]}},
+      "featured_metric": {"metric": "decode_tok_s", "measurement_id": "qwen3-30b-a3b-instruct-2507-udq4-tp1-rapid", "sample_index": 0, "value": 107.48388363267362, "unit": "tok/s", "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, request prompt cache disabled", "evidence": "data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json"},
+      "manifest": "results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md"
+    },
+    {
+      "id": "rapid-qwen3-coder-30b-a3b-udq4",
+      "label": "Qwen3-Coder 30B-A3B Instruct UD-Q4_K_XL",
+      "revision": "qwen3-coder-30b-a3b-instruct",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "cards": 1,
+      "status": "rapid research snapshot",
+      "evidence_level": "B70-measured narrow baseline",
+      "coverage": ["Coder sibling", "decode", "TTFT", "TP1", "cache-zero strict suite"],
+      "grades": {"evidence": {"grade": "D", "scope": "exact Coder UD-Q4_K_XL TP1 row", "basis": "valid measured snapshot with a narrow workload and no clean-host or broad quality packet", "reviewed_at": "2026-08-24", "evidence": ["results/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4/README.md"]}},
+      "featured_metric": {"metric": "decode_tok_s", "measurement_id": "qwen3-coder-30b-a3b-udq4-tp1-rapid", "sample_index": 0, "value": 108.1165394591524, "unit": "tok/s", "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled", "evidence": "data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json"},
+      "manifest": "results/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4/README.md"
+    }
+  ],
+  "views": [
+    {
+      "id": "qwen-30b-a3b-siblings",
+      "title": "Separately measured sibling variants",
+      "subtitle": "1 = General Instruct 2507; 2 = Coder. Shared core geometry does not make these speed or quality results transferable.",
+      "x_label": "model sibling",
+      "discrete": true,
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "General Instruct 2507", "measurement_ids": ["qwen3-30b-a3b-instruct-2507-udq4-tp1-rapid"], "x_from": "config.sibling_index"},
+        {"label": "Coder", "measurement_ids": ["qwen3-coder-30b-a3b-udq4-tp1-rapid"], "x_from": "config.sibling_index"}
+      ]
+    }
+  ],
+  "coverage_views": [
+    {
+      "id": "qwen-30b-a3b-sibling-by-tp",
+      "label": "sibling × TP",
+      "fixed": "UD-Q4_K_XL, exact measured GGUF revisions and rapid runtime; sibling measurements never substitute for one another.",
+      "row_axis": {"key": "revision", "label": "Model variant", "prefix": "", "value_labels": {"qwen3-30b-a3b-instruct-2507": "General 2507", "qwen3-coder-30b-a3b-instruct": "Coder"}},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {"variant": "UD-Q4_K_XL", "runtime": "llama.cpp SYCL fdb1db877", "mtp": 0},
+      "rows": ["qwen3-30b-a3b-instruct-2507", "qwen3-coder-30b-a3b-instruct"],
+      "columns": [1, 2, 4],
+      "cells": {
+        "qwen3-30b-a3b-instruct-2507:1": {"state": "lab-measured", "label": "D107.484 · T166.953", "evidence_id": "qwen3-30b-a3b-instruct-2507-udq4-tp1-rapid", "packet_id": "rapid-qwen3-30b-a3b-instruct-udq4"},
+        "qwen3-30b-a3b-instruct-2507:2": {"state": "missing", "label": "no stored lane"},
+        "qwen3-30b-a3b-instruct-2507:4": {"state": "missing", "label": "no stored lane"},
+        "qwen3-coder-30b-a3b-instruct:1": {"state": "lab-measured", "label": "D108.117 · T164.129", "evidence_id": "qwen3-coder-30b-a3b-udq4-tp1-rapid", "packet_id": "rapid-qwen3-coder-30b-a3b-udq4"},
+        "qwen3-coder-30b-a3b-instruct:2": {"state": "missing", "label": "no stored lane"},
+        "qwen3-coder-30b-a3b-instruct:4": {"state": "missing", "label": "no stored lane"}
+      }
+    }
+  ],
+  "family_closures": []
+}

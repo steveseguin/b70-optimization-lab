@@ -1,0 +1,175 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "deepseek-v4",
+  "name": "DeepSeek V4",
+  "display_name": "DeepSeek V4 · Flash 180B",
+  "summary": "A closed four-B70 TP4+EP research frontier for the experimental DeepSeek V4 Flash uniform-K160 checkpoint, with target-verified DSpark7 decode and its provenance caveat kept attached.",
+  "updated_at": "2026-08-24",
+  "architecture": {
+    "class": "DeepSeek V4 Flash 180B sparse MoE",
+    "design": "experimental uniform-K160 target with DSpark7 draft",
+    "evidence": "results/deepseek-v4-flash-k160-b70/README.md"
+  },
+  "dimensions": {
+    "weight_revision": ["deepseek-v4-flash-180b-k160-7c360e1"],
+    "weight_quantization": ["experimental uniform-K160 FP8/MXFP4 target"],
+    "runtime": ["vLLM XPU record stack 264c7f2/3131567/48fda4f"],
+    "tp": [1, 2, 4],
+    "ep": [4],
+    "speculative_method": ["DSpark7"],
+    "draft_depth": [7],
+    "kv": ["fp8"]
+  },
+  "weight_revisions": [
+    {
+      "id": "deepseek-v4-flash-180b-k160-7c360e1",
+      "label": "DeepSeek V4 Flash 180B · experimental uniform-K160",
+      "role": "measured target checkpoint",
+      "repository": "0xSero/DeepSeek-V4-Flash-180B",
+      "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+      "model_manifest": "experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json"
+    }
+  ],
+  "model_variants": [],
+  "transfer_scope": {
+    "status": "exact experimental checkpoint and record stack only",
+    "transfers": [
+      "the archived vLLM, XPU-kernel, and oneCCL source bundles and the target-verified DSpark7 mechanism",
+      "the fail-closed launcher and ordered exact-gate workflow"
+    ],
+    "does_not_transfer": [
+      "performance to an official REAP construction, another K value, or another runtime revision",
+      "the unavailable K160 pruning calibration or ranking provenance",
+      "the single-active-generation result to aggregate serving throughput"
+    ],
+    "evidence": "repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "four-card measured",
+      "scope": "TP4 plus expert parallelism on four 32 GiB B70 cards",
+      "basis": "The exact experimental target and DSpark7 record stack completed three strict suites on four B70s.",
+      "reviewed_at": "2026-08-24"
+    },
+    "quality_evidence": {
+      "band": "target-verified exact gates",
+      "scope": "36/36 cache-zero realistic requests and 24/24 ordered exact canaries; checkpoint-construction provenance remains incomplete",
+      "evidence": [
+        "experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json"
+      ]
+    },
+    "popularity": {
+      "state": "not-scored",
+      "reason": "No dated popularity snapshot is stored for this exact experimental checkpoint."
+    }
+  },
+  "run_measurements": [
+    {
+      "id": "deepseek-v4-k160-tp4-ep-dspark7-strict",
+      "state": "lab-measured",
+      "revision": "deepseek-v4-flash-180b-k160-7c360e1",
+      "variant": "experimental uniform-K160 FP8/MXFP4 target",
+      "quantization": "experimental uniform-K160 FP8/MXFP4 target",
+      "runtime": "vLLM XPU record stack 264c7f2/3131567/48fda4f",
+      "runtime_identity": {
+        "vllm": "264c7f2f7df21ddeeab32ecca0353133344f1ac9",
+        "xpu_kernels": "31315673737d95da0f79179c8f755260ef02c1d6",
+        "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+      },
+      "speculative_method": "DSpark7",
+      "config": {"tp": 4, "ep": 4, "draft_depth": 7, "graph": "piecewise", "kv": "fp8"},
+      "profile_id": "deepseek-v4-k160-dspark7-tp4-record-v1",
+      "measurement_class": "three independent strict suites",
+      "promotion_status": "closed-frontier record",
+      "quality_scope": "target-verified accepted tokens; 36/36 cache-zero rows and 24/24 exact canaries",
+      "workload": "12 unique cold prompts per suite, 128 output tokens, median generated tokens 1-100 after TTFT; three strict suites",
+      "metrics": {
+        "decode_tok_s": [80.82005189243556, 76.90017809136465, 78.28722593298039],
+        "ttft_ms": [342.77765700244345]
+      },
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 80.82005189243556, "label": "record strict suite"},
+        {"metric": "decode_tok_s", "index": 2, "value": 78.28722593298039, "label": "third strict suite and median-of-medians"}
+      ],
+      "aggregation": {"decode_tok_s": "median-of-medians 78.28722593298039; record high retained separately"},
+      "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json"
+    }
+  ],
+  "series_measurements": [],
+  "estimates": [],
+  "packets": [
+    {
+      "id": "deepseek-v4-flash-k160-b70-80tps-20260718",
+      "label": "DeepSeek V4 Flash K160 · TP4+EP DSpark7",
+      "revision": "deepseek-v4-flash-180b-k160-7c360e1",
+      "quantization": "experimental uniform-K160 FP8/MXFP4 target",
+      "runtime": "vLLM XPU record stack 264c7f2/3131567/48fda4f",
+      "cards": 4,
+      "status": "closed research frontier",
+      "evidence_level": "B70-verified experimental record",
+      "coverage": ["TP4+EP", "DSpark7", "decode", "TTFT", "exact canaries", "reproduction"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "exact experimental uniform-K160 TP4+EP DSpark7 lane",
+          "basis": "strong exact lab and replay material, but the public K160 checkpoint lacks calibration/ranking provenance and is not an official REAP construction",
+          "reviewed_at": "2026-08-24",
+          "evidence": ["results/deepseek-v4-flash-k160-b70/README.md"]
+        }
+      },
+      "featured_metric": {
+        "metric": "decode_tok_s",
+        "measurement_id": "deepseek-v4-k160-tp4-ep-dspark7-strict",
+        "sample_index": 2,
+        "value": 78.28722593298039,
+        "unit": "tok/s",
+        "workload": "12 unique cold prompts per suite, 128 output tokens, median generated tokens 1-100 after TTFT; three strict suites",
+        "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json"
+      },
+      "manifest": "results/deepseek-v4-flash-k160-b70/README.md"
+    }
+  ],
+  "views": [
+    {
+      "id": "deepseek-v4-strict-tp4",
+      "title": "Strict TP4+EP DSpark7 suites",
+      "subtitle": "Decode retains three independent suite medians (76.900178–80.820052); the packet headline is the 78.287226 median-of-medians, while TTFT is the 342.777657 record-suite observation",
+      "x_label": "tensor parallel cards",
+      "discrete": true,
+      "missing_x": [1, 2],
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "experimental K160 + DSpark7", "measurement_ids": ["deepseek-v4-k160-tp4-ep-dspark7-strict"], "x_from": "config.tp"}
+      ]
+    }
+  ],
+  "coverage_views": [
+    {
+      "id": "deepseek-v4-spec-by-tp",
+      "label": "speculation × TP",
+      "fixed": "Exact experimental K160 target and record runtime; missing cells have no inherited result.",
+      "row_axis": {"key": "speculative_method", "label": "Method", "prefix": ""},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "deepseek-v4-flash-180b-k160-7c360e1",
+        "variant": "experimental uniform-K160 FP8/MXFP4 target",
+        "runtime": "vLLM XPU record stack 264c7f2/3131567/48fda4f"
+      },
+      "rows": ["DSpark7"],
+      "columns": [1, 2, 4],
+      "cells": {
+        "DSpark7:1": {"state": "missing", "label": "no stored lane"},
+        "DSpark7:2": {"state": "missing", "label": "no stored lane"},
+        "DSpark7:4": {"state": "lab-measured", "label": "78.287 MoM; 80.820 high", "evidence_id": "deepseek-v4-k160-tp4-ep-dspark7-strict", "packet_id": "deepseek-v4-flash-k160-b70-80tps-20260718"}
+      }
+    }
+  ],
+  "family_closures": [
+    {
+      "selectors": {"revision": "deepseek-v4-flash-180b-k160-7c360e1", "frontier": "configuration-sweeps"},
+      "state": "closed",
+      "reason": "The configuration frontier is paused; reopen only for a substantial EAGLE capture/training effort or a genuinely new mechanism, not another generic flag sweep.",
+      "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md"
+    }
+  ]
+}

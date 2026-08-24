@@ -1,0 +1,100 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "nemotron-cascade-2",
+  "name": "Nemotron Cascade 2",
+  "display_name": "Nemotron Cascade 2 · 30B-A3B",
+  "summary": "A strict one-B70 Q4_K_M rapid snapshot for the hybrid attention/Mamba Nemotron-Cascade-2 30B-A3B MoE, with only the measured short-context operating point promoted.",
+  "updated_at": "2026-08-24",
+  "architecture": {
+    "class": "Nemotron Cascade hybrid attention/Mamba MoE",
+    "total_parameters_approx": 30000000000,
+    "active_parameters_approx": 3000000000,
+    "layers": 52,
+    "experts": 128,
+    "active_experts": 6,
+    "shared_experts": 1,
+    "kv_heads": 2,
+    "evidence": "results/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km/README.md"
+  },
+  "dimensions": {
+    "weight_revision": ["nemotron-cascade-2-30b-a3b-931b595"],
+    "weight_quantization": ["Q4_K_M"],
+    "runtime": ["llama.cpp SYCL fdb1db877"],
+    "tp": [1, 2, 4],
+    "mtp": [0],
+    "configured_max_context_tokens": [2048],
+    "kv": ["f16"]
+  },
+  "weight_revisions": [
+    {"id": "nemotron-cascade-2-30b-a3b-931b595", "label": "Nemotron-Cascade-2 30B-A3B", "role": "measured GGUF weights", "repository": "bartowski/nvidia_Nemotron-Cascade-2-30B-A3B-GGUF", "revision": "931b595fc71b7ca14fb9d935af011f69f7c0434c", "model_manifest": "results/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km/README.md"}
+  ],
+  "model_variants": [],
+  "transfer_scope": {
+    "status": "one measured Cascade 2 GGUF revision",
+    "transfers": ["the stock llama.cpp hybrid/Mamba path and exact one-B70 launch controls"],
+    "does_not_transfer": ["performance to Nemotron 3.5, another quantization, a vLLM Mamba cache mode, TP2/4, or longer context"],
+    "evidence": "results/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {"band": "one-card measured", "scope": "Q4_K_M short-context rapid lane", "basis": "The verified 24,725,740,992-byte GGUF completed the strict suite on one B70.", "reviewed_at": "2026-08-24"},
+    "quality_evidence": {"band": "rapid snapshot only", "scope": "12 unique cache-zero prompts and clean visible output; no token IDs or broad model-quality evaluation", "evidence": ["data/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T235714Z.json"]},
+    "popularity": {"state": "not-scored", "reason": "No dated popularity snapshot is stored."}
+  },
+  "run_measurements": [
+    {
+      "id": "nemotron-cascade-2-q4km-tp1-rapid",
+      "state": "lab-measured",
+      "revision": "nemotron-cascade-2-30b-a3b-931b595",
+      "variant": "Q4_K_M",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "config": {"tp": 1, "mtp": 0, "kv": "f16", "configured_max_context_tokens": 2048},
+      "profile_id": "rapid-model-snapshots-b70-realistic-v1",
+      "measurement_class": "strict rapid snapshot",
+      "promotion_status": "promoted standalone row",
+      "quality_scope": "12/12 cached_tokens=0 and realistic final gate passed; streamed text deltas, no token IDs",
+      "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled",
+      "metrics": {"decode_tok_s": [50.90422891211857], "ttft_ms": [449.1593260318041]},
+      "evidence": "data/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T235714Z.json"
+    }
+  ],
+  "series_measurements": [],
+  "estimates": [],
+  "packets": [
+    {
+      "id": "rapid-nemotron-cascade-2-30b-a3b-q4km",
+      "label": "Nemotron Cascade 2 30B-A3B Q4_K_M · TP1",
+      "revision": "nemotron-cascade-2-30b-a3b-931b595",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "cards": 1,
+      "status": "rapid research snapshot",
+      "evidence_level": "B70-measured narrow baseline",
+      "coverage": ["decode", "TTFT", "TP1", "cache-zero strict suite"],
+      "grades": {"evidence": {"grade": "D", "scope": "exact Q4_K_M TP1 rapid row", "basis": "valid measured snapshot with a narrow workload and no clean-host or broad quality packet", "reviewed_at": "2026-08-24", "evidence": ["results/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km/README.md"]}},
+      "featured_metric": {"metric": "decode_tok_s", "measurement_id": "nemotron-cascade-2-q4km-tp1-rapid", "sample_index": 0, "value": 50.90422891211857, "unit": "tok/s", "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled", "evidence": "data/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T235714Z.json"},
+      "manifest": "results/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km/README.md"
+    }
+  ],
+  "views": [
+    {"id": "nemotron-cascade-2-rapid-tp", "title": "Strict rapid operating point", "subtitle": "Q4_K_M · one B70 · f16 KV · ctx=2048 configured; this one point is not a context curve", "x_label": "tensor parallel cards", "discrete": true, "missing_x": [2, 4], "metrics": ["decode_tok_s", "ttft_ms"], "series": [{"label": "Q4_K_M", "measurement_ids": ["nemotron-cascade-2-q4km-tp1-rapid"], "x_from": "config.tp"}]}
+  ],
+  "coverage_views": [
+    {
+      "id": "nemotron-cascade-2-quant-by-tp",
+      "label": "quant × TP",
+      "fixed": "Exact measured revision and rapid runtime; TP2/4 are unmeasured gaps.",
+      "row_axis": {"key": "variant", "label": "Quantization", "prefix": ""},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {"revision": "nemotron-cascade-2-30b-a3b-931b595", "runtime": "llama.cpp SYCL fdb1db877", "mtp": 0},
+      "rows": ["Q4_K_M"],
+      "columns": [1, 2, 4],
+      "cells": {
+        "Q4_K_M:1": {"state": "lab-measured", "label": "D50.904 · T449.159", "evidence_id": "nemotron-cascade-2-q4km-tp1-rapid", "packet_id": "rapid-nemotron-cascade-2-30b-a3b-q4km"},
+        "Q4_K_M:2": {"state": "missing", "label": "no stored lane"},
+        "Q4_K_M:4": {"state": "missing", "label": "no stored lane"}
+      }
+    }
+  ],
+  "family_closures": []
+}

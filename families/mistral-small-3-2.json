@@ -1,0 +1,125 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "mistral-small-3-2",
+  "name": "Mistral Small 3.2",
+  "display_name": "Mistral Small 3.2 · 24B Instruct 2506",
+  "summary": "One dense 24B weight revision with two measured one-B70 GGUF quantization variants: UD-Q4_K_XL for the representative rapid row and a slower strict-valid UD-Q8_K_XL reference.",
+  "updated_at": "2026-08-24",
+  "architecture": {
+    "class": "Mistral Small 3.2 dense 24B",
+    "design": "dense transformer",
+    "total_parameters_approx": 24000000000,
+    "evidence": "results/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4/README.md"
+  },
+  "dimensions": {
+    "weight_revision": ["mistral-small-3.2-24b-instruct-2506-b750ec2"],
+    "weight_quantization": ["UD-Q4_K_XL", "UD-Q8_K_XL"],
+    "runtime": ["llama.cpp SYCL fdb1db877"],
+    "tp": [1, 2, 4],
+    "mtp": [0],
+    "configured_max_context_tokens": [4096],
+    "kv": ["f16"]
+  },
+  "weight_revisions": [
+    {"id": "mistral-small-3.2-24b-instruct-2506-b750ec2", "label": "Mistral Small 3.2 24B Instruct 2506", "role": "measured weights", "repository": "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF", "revision": "b750ec2299225e492f1bd27cab88a0a595fa848f", "model_manifest": "results/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4/README.md"}
+  ],
+  "model_variants": [],
+  "transfer_scope": {
+    "status": "one weight revision; Q4 and Q8 are deployment variants with separate measurements",
+    "transfers": ["the stock llama.cpp model path and exact one-B70 launch controls"],
+    "does_not_transfer": ["Q4 speed or quality to Q8", "either short-context row to TP2/4 or a context curve", "performance to another Mistral Small revision"],
+    "evidence": "results/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {"band": "one-card measured", "scope": "UD-Q4_K_XL and UD-Q8_K_XL short-context rapid lanes", "basis": "Both variants completed the strict rapid suite on one B70; fit alone does not make the Q8 row preferable.", "reviewed_at": "2026-08-24"},
+    "quality_evidence": {"band": "rapid snapshot only", "scope": "12 unique cache-zero deterministic prompts per quant; no token IDs or broad model-quality evaluation", "evidence": ["data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json", "data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq8-llamacpp-faon-ctx4096-realistic128-20260704T201848Z.json"]},
+    "popularity": {"state": "not-scored", "reason": "No dated popularity snapshot is stored."}
+  },
+  "run_measurements": [
+    {
+      "id": "mistral-small-3.2-udq4-tp1-rapid",
+      "state": "lab-measured",
+      "revision": "mistral-small-3.2-24b-instruct-2506-b750ec2",
+      "variant": "UD-Q4_K_XL",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "config": {"tp": 1, "mtp": 0, "kv": "f16", "configured_max_context_tokens": 4096, "quant_index": 1},
+      "profile_id": "rapid-model-snapshots-b70-realistic-v1",
+      "measurement_class": "strict rapid snapshot",
+      "promotion_status": "promoted representative row",
+      "quality_scope": "12/12 cached_tokens=0 and realistic final gate passed; streamed text deltas, no token IDs",
+      "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled",
+      "metrics": {"decode_tok_s": [27.29674347655439], "ttft_ms": [1501.7739470349625]},
+      "evidence": "data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json"
+    },
+    {
+      "id": "mistral-small-3.2-udq8-tp1-rapid",
+      "state": "lab-measured",
+      "revision": "mistral-small-3.2-24b-instruct-2506-b750ec2",
+      "variant": "UD-Q8_K_XL",
+      "quantization": "UD-Q8_K_XL",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "config": {"tp": 1, "mtp": 0, "kv": "f16", "configured_max_context_tokens": 4096, "quant_index": 2},
+      "profile_id": "rapid-model-snapshots-b70-realistic-v1",
+      "measurement_class": "strict rapid snapshot",
+      "promotion_status": "measured higher-precision reference",
+      "quality_scope": "12/12 cached_tokens=0 and realistic final gate passed; streamed text deltas, no token IDs",
+      "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, request prompt cache disabled",
+      "metrics": {"decode_tok_s": [16.380395177161446], "ttft_ms": [2686.1701778834686]},
+      "evidence": "data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq8-llamacpp-faon-ctx4096-realistic128-20260704T201848Z.json"
+    }
+  ],
+  "series_measurements": [],
+  "estimates": [],
+  "packets": [
+    {
+      "id": "rapid-mistral-small-3-2-24b-udq4",
+      "label": "Mistral Small 3.2 24B · Q4/Q8 rapid snapshot",
+      "revision": "mistral-small-3.2-24b-instruct-2506-b750ec2",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL fdb1db877",
+      "cards": 1,
+      "status": "rapid research snapshot",
+      "evidence_level": "B70-measured narrow baseline",
+      "coverage": ["Q4", "Q8", "decode", "TTFT", "TP1", "cache-zero strict suite"],
+      "grades": {"evidence": {"grade": "D", "scope": "exact Q4/Q8 TP1 rapid rows", "basis": "valid measured snapshots with a narrow workload and no clean-host or broad quality packet", "reviewed_at": "2026-08-24", "evidence": ["results/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4/README.md"]}},
+      "featured_metric": {"metric": "decode_tok_s", "measurement_id": "mistral-small-3.2-udq4-tp1-rapid", "sample_index": 0, "value": 27.29674347655439, "unit": "tok/s", "workload": "12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled", "evidence": "data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json"},
+      "manifest": "results/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4/README.md"
+    }
+  ],
+  "views": [
+    {
+      "id": "mistral-small-3-2-quant",
+      "title": "Measured quantization variants",
+      "subtitle": "1 = UD-Q4_K_XL; 2 = UD-Q8_K_XL. Same weight revision and rapid suite; each quant retains its own measured decode and TTFT.",
+      "x_label": "quantization variant",
+      "discrete": true,
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "UD-Q4_K_XL", "measurement_ids": ["mistral-small-3.2-udq4-tp1-rapid"], "x_from": "config.quant_index"},
+        {"label": "UD-Q8_K_XL", "measurement_ids": ["mistral-small-3.2-udq8-tp1-rapid"], "x_from": "config.quant_index"}
+      ]
+    }
+  ],
+  "coverage_views": [
+    {
+      "id": "mistral-small-3-2-quant-by-tp",
+      "label": "quant × TP",
+      "fixed": "Exact measured revision and rapid runtime; only TP1 has stored rows.",
+      "row_axis": {"key": "variant", "label": "Quantization", "prefix": ""},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {"revision": "mistral-small-3.2-24b-instruct-2506-b750ec2", "runtime": "llama.cpp SYCL fdb1db877", "mtp": 0},
+      "rows": ["UD-Q4_K_XL", "UD-Q8_K_XL"],
+      "columns": [1, 2, 4],
+      "cells": {
+        "UD-Q4_K_XL:1": {"state": "lab-measured", "label": "D27.297 · T1501.774", "evidence_id": "mistral-small-3.2-udq4-tp1-rapid", "packet_id": "rapid-mistral-small-3-2-24b-udq4"},
+        "UD-Q4_K_XL:2": {"state": "missing", "label": "no stored lane"},
+        "UD-Q4_K_XL:4": {"state": "missing", "label": "no stored lane"},
+        "UD-Q8_K_XL:1": {"state": "lab-measured", "label": "D16.380 · T2686.170", "evidence_id": "mistral-small-3.2-udq8-tp1-rapid"},
+        "UD-Q8_K_XL:2": {"state": "missing", "label": "no stored lane"},
+        "UD-Q8_K_XL:4": {"state": "missing", "label": "no stored lane"}
+      }
+    }
+  ],
+  "family_closures": []
+}
