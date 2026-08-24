@@ -92,12 +92,13 @@
   },
   "dimensions": {
     "weight_revision": ["qwen3.6-27b", "qwen3.8-27b"],
-    "weight_quantization": ["AutoRound INT4", "Q4_K_M", "UD-Q5_K_S", "UD-Q4_K_XL", "Q8_0", "FP8"],
+    "weight_quantization": ["AutoRound INT4", "Q4_0", "Q4_K_M", "UD-Q5_K_S", "UD-Q4_K_XL", "Q8_0", "FP8"],
     "runtime": ["vLLM XPU", "llama.cpp SYCL"],
     "tp": [1, 2, 3, 4],
-    "mtp": [0, 1, 2, 3, 4, 5],
+    "mtp": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "dflash": [0, 5],
     "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768],
-    "configured_max_context_tokens": [32768, 262144],
+    "configured_max_context_tokens": [4096, 32768, 262144],
     "graph": ["off", "on"],
     "kv": ["f16", "q8_0", "fp8_e4m3", "fp8_e5m2"]
   },
@@ -405,15 +406,105 @@
     },
     {
       "id": "qwen36-27b-q4-mtp-ladder",
-      "label": "Qwen3.6 Q4 · intrinsic MTP ladder",
+      "label": "Qwen3.6 UD-Q4_K_XL · intrinsic and policy-tuned MTP",
       "revision": "qwen3.6-27b",
-      "quantization": "Q4",
+      "quantization": "UD-Q4_K_XL",
       "runtime": "llama.cpp SYCL",
       "cards": 1,
-      "status": "research-result",
+      "status": "closed-portability-result",
       "evidence_level": "B70-tested",
-      "coverage": ["decode", "TTFT", "MTP acceptance"],
+      "coverage": ["MTP0/3/4/5 matched depth", "MTP5/7/9 policy closure", "decode", "TTFT", "cache-zero quality gate"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Qwen3.6 UD-Q4_K_XL TP1 intrinsic and policy-tuned MTP",
+          "basis": "fixed 12-prompt cache-zero suites preserve the exact model hash, runtime build identity, and a matched MTP0/3/4/5 wave; the best deeper-policy row is separately identified, but no pinned Hugging Face revision, token-ID A/B, or clean-host replay was retained",
+          "reviewed_at": "2026-08-23",
+          "evidence": [
+            "results/qwen36-27b-mtp-gguf-q4-b70/README.md",
+            "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-07-05-pmin-screen-and-harness-fix.md"
+          ]
+        }
+      },
+      "featured_metric": {
+        "metric": "decode_tok_s",
+        "measurement_id": "q36-udq4kxl-tp1-mtp7-pmin065",
+        "sample_index": 0,
+        "value": 31.1652489904295,
+        "unit": "tok/s",
+        "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+        "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-mtp7-pmin065-nmin1-cacheoff-fixed-20260705T230230Z.json"
+      },
       "manifest": "results/qwen36-27b-mtp-gguf-q4-b70/README.md"
+    },
+    {
+      "id": "qwen36-27b-q4-0-intrinsic-mtp3",
+      "label": "Qwen3.6 Q4_0 · intrinsic MTP3",
+      "revision": "qwen3.6-27b",
+      "quantization": "Q4_0",
+      "runtime": "llama.cpp SYCL e3546c794 + preserved local stack",
+      "cards": 1,
+      "status": "qualified-scoped-result",
+      "evidence_level": "B70-tested",
+      "coverage": ["matched target-only control", "MTP3", "decode", "TTFT", "acceptance", "cache-zero quality gate"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Qwen3.6 Q4_0 target-only and intrinsic-MTP3 TP1 comparison",
+          "basis": "the exact Q4_0 hash, llama.cpp base, cold/cache-zero suite, timeline artifacts, and acceptance counters are retained; the protected SYCL source tree was dirty and token IDs were not captured for an output-exact A/B",
+          "reviewed_at": "2026-08-23",
+          "evidence": [
+            "data/qwen27-cycle-timeline/no-spec-normal-20260712T160033Z/qwen27-q4_0-kv8-no-spec-graph0-strict128-20260712T160033Z.json",
+            "data/qwen27-cycle-timeline/mtp3-normal-20260712T160205Z/qwen27-q4_0-kv8-mtp3-graph0-strict128-20260712T160205Z.json"
+          ]
+        }
+      },
+      "featured_metric": {
+        "metric": "decode_tok_s",
+        "measurement_id": "q36-q4-0-tp1-intrinsic-mtp3",
+        "sample_index": 0,
+        "value": 48.434052141079085,
+        "unit": "tok/s",
+        "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+        "evidence": "data/qwen27-cycle-timeline/mtp3-normal-20260712T160205Z/qwen27-q4_0-kv8-mtp3-graph0-strict128-20260712T160205Z.json"
+      },
+      "manifest": "experiments/qwen27-dflash-sycl-b70/notes/2026-07-12-cycle-timeline-tooling.md"
+    },
+    {
+      "id": "qwen36-27b-q4-0-dflash5-q6-top1",
+      "label": "Qwen3.6 Q4_0 · native DFlash5 Q6_K top-1 fusion",
+      "revision": "qwen3.6-27b",
+      "quantization": "Q4_0 target / Q8_0 DFlash draft",
+      "runtime": "llama.cpp SYCL e3546c794 + preserved local stack",
+      "cards": 1,
+      "status": "closed-record-patch-preserved",
+      "evidence_level": "B70-verified",
+      "coverage": ["exact configuration A/B", "two strict candidates", "decode", "TTFT", "target verification", "mechanism exactness", "fail-closed safety", "source patch"],
+      "grades": {
+        "evidence": {
+          "grade": "B",
+          "scope": "Qwen3.6 Q4_0 target plus native Q8_0 DFlash5 draft on one B70",
+          "basis": "two strict cache-zero candidates, a same-configuration fusion-off DFlash5 control, target/draft hashes, target verification, 15/15 real-fixture token-ID comparison, finite-tie oracles, fail-closed recovery tests, a preserved source patch, and LocalMaxxing approval support the mechanism; candidate/control suite hashes matched only 6/12 and returned no token IDs, and the complete dirty overlay was not reconstructed on a clean host",
+          "reviewed_at": "2026-08-23",
+          "evidence": [
+            "data/qwen27-q6k-m6-fused-top1-record-20260713.json",
+            "data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r2-20260713.json",
+            "data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-control-realistic128-r1-20260713.json",
+            "experiments/qwen27-dflash-sycl-b70/notes/2026-07-13-q6k-m6-fused-top1-production-record.md",
+            "patches/qwen27-q6k-m6-fused-top1-20260713.patch"
+          ]
+        }
+      },
+      "featured_metric": {
+        "metric": "decode_tok_s",
+        "measurement_id": "q36-q4-0-dflash5-q6-top1-candidate",
+        "sample_index": 0,
+        "value": 47.34062984948743,
+        "unit": "tok/s",
+        "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+        "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r2-20260713.json"
+      },
+      "manifest": "notes/2026-07-13-qwen27-dflash-sycl-closure.md"
     }
   ],
   "run_measurements": [
@@ -1313,6 +1404,272 @@
       "evidence": "data/qwen38-27b-autoround-int4-baseline-20260818.json"
     },
     {
+      "id": "q36-q4-0-tp1-target-only",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "Q4_0",
+      "variant": "Q4_0 target",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9976 (e3546c794) + preserved local stack",
+      "profile_id": "q36-q4-0-tp1-intrinsic-mtp-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "promotion_status": "matched-target-only-control",
+      "identity": {
+        "model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+        "model_sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+        "runtime_commit": "e3546c7948e3af463d0b401e6421d5a4c2faf565",
+        "result_sha256": "1a72aeda183a7cb8f3b9cfb1d705e2cd64d47f887c9fab342be91e7bad78c49f"
+      },
+      "config": {"tp": 1, "mtp": 0, "dflash": 0, "speculation_profile": "target only", "graph": "off", "kv": "q8_0", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "threads": 8, "poll": 50, "flash_attention": true, "dnn": true, "sycl_opt": true, "vmm": true, "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [25.677641189061972], "ttft_ms": [1146.5011414838955]},
+      "quality": "All 12 unique prompts passed the realistic fresh-response gate with cached_tokens=0, reasoning disabled, and no prompt, context-checkpoint, response, or history reuse.",
+      "caveat": "The retained historical helper reported 25.9370113020828 tok/s using 100 divided by the span of 99 token intervals. The rankable value is recomputed as 99 over that same span. Token IDs were not retained.",
+      "evidence": "data/qwen27-cycle-timeline/no-spec-normal-20260712T160033Z/qwen27-q4_0-kv8-no-spec-graph0-strict128-20260712T160033Z.json",
+      "supporting_evidence": [
+        "data/qwen27-cycle-timeline/no-spec-normal-20260712T160033Z/timeline-summary.json",
+        "experiments/qwen27-dflash-sycl-b70/notes/2026-07-12-cycle-timeline-tooling.md"
+      ]
+    },
+    {
+      "id": "q36-q4-0-tp1-intrinsic-mtp3",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "Q4_0",
+      "variant": "Q4_0 target",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9976 (e3546c794) + preserved local stack",
+      "profile_id": "q36-q4-0-tp1-intrinsic-mtp-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "promotion_status": "qualified-intrinsic-mtp3-result",
+      "identity": {
+        "model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+        "model_sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+        "runtime_commit": "e3546c7948e3af463d0b401e6421d5a4c2faf565",
+        "result_sha256": "640f9086533a0626a6a6fab06c2a248fa43e3769954ba3bbeb49ec70b9322dde"
+      },
+      "config": {"tp": 1, "mtp": 3, "dflash": 0, "speculation_profile": "intrinsic MTP3", "spec_draft_n_max": 3, "spec_draft_n_min": 0, "spec_draft_p_min": 0, "graph": "off", "kv": "q8_0", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "threads": 8, "poll": 50, "flash_attention": true, "dnn": true, "sycl_opt": true, "vmm": true, "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [48.434052141079085], "ttft_ms": [1178.5369194112718], "draft_acceptance_rate": [0.5865209471766849], "mean_acceptance_length": [2.76]},
+      "quality": "All 12 unique prompts passed the realistic fresh-response gate with cached_tokens=0. The unchanged Q4_0 target verified 966 accepted draft tokens out of 1,647; no prompt, context-checkpoint, response, or history reuse was enabled.",
+      "caveat": "The retained historical helper reported 48.923284990988975 tok/s using 100 divided by the span of 99 token intervals. The rankable value is recomputed as 99 over that same span. Token IDs were not retained, so this is not an output-exact A/B against target-only.",
+      "evidence": "data/qwen27-cycle-timeline/mtp3-normal-20260712T160205Z/qwen27-q4_0-kv8-mtp3-graph0-strict128-20260712T160205Z.json",
+      "supporting_evidence": [
+        "data/qwen27-cycle-timeline/mtp3-normal-20260712T160205Z/timeline-summary.json",
+        "experiments/qwen27-dflash-sycl-b70/notes/2026-07-12-cycle-timeline-tooling.md"
+      ]
+    },
+    {
+      "id": "q36-q4-0-dflash5-q6-top1-control",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "Q4_0",
+      "variant": "Q4_0 target + Q8_0 native DFlash draft",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9976 (e3546c794) + preserved local stack",
+      "profile_id": "q36-q4-0-dflash5-q6-top1-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "promotion_status": "same-config-dflash5-fusion-off-control",
+      "identity": {
+        "target_model_sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+        "draft_model_sha256": "c37b84724fa58cc5c6b545d8b96f8617a8c3bd7f018bf608feef4d3460e0575e",
+        "runtime_commit": "e3546c7948e3af463d0b401e6421d5a4c2faf565",
+        "source_patch_sha256": "38e28748b7f75d5a1f0fd24463cdfe01a623f376207eb631284e2b72a38573fc",
+        "result_sha256": "ca39d32ebaf70bcce117dcdec93c1741324dededf4ddd7e443707c24ab6323f0"
+      },
+      "config": {"tp": 1, "mtp": 0, "dflash": 5, "speculation_profile": "native DFlash5", "spec_draft_n_max": 5, "spec_draft_n_min": 0, "spec_draft_p_min": 0, "q6_draft_lmhead_top1_fusion": false, "q6_top1_fusion_axis": 0, "graph": "off", "kv": "q8_0", "draft_kv": "f16", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "flash_attention": true, "cache_prompt": false, "ctx_checkpoints": 0, "xe2_packed_projection_count": 187, "joint_gate_up": true, "gdn_snapshot_cache": true},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [43.77829940838165], "ttft_ms": [1153.5825345199555]},
+      "quality": "The same-configuration DFlash5 control passed the realistic fresh-response and cache-zero gates with target verification; only the Q6_K draft-head top-1 fusion was disabled.",
+      "caveat": "This is not MTP0 or target-only. The retained helper reported 44.22050445291076 tok/s; 43.77829940838165 is the conventional 99-interval recomputation.",
+      "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-control-realistic128-r1-20260713.json",
+      "supporting_evidence": [
+        "data/qwen27-q6k-m6-fused-top1-record-20260713.json",
+        "patches/qwen27-q6k-m6-fused-top1-20260713.patch"
+      ]
+    },
+    {
+      "id": "q36-q4-0-dflash5-q6-top1-candidate",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "Q4_0",
+      "variant": "Q4_0 target + Q8_0 native DFlash draft",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9976 (e3546c794) + preserved local stack",
+      "profile_id": "q36-q4-0-dflash5-q6-top1-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "promotion_status": "confirmed-dflash5-fusion-record",
+      "identity": {
+        "target_model_sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+        "draft_model_sha256": "c37b84724fa58cc5c6b545d8b96f8617a8c3bd7f018bf608feef4d3460e0575e",
+        "runtime_commit": "e3546c7948e3af463d0b401e6421d5a4c2faf565",
+        "source_patch_sha256": "38e28748b7f75d5a1f0fd24463cdfe01a623f376207eb631284e2b72a38573fc",
+        "protected_overlay_diff_sha256": "bee7b62a0aeda711f4ef9d3ff4b102b87c11908b4b67539960be34a4edfe553f",
+        "confirmed_result_sha256": "fd0b1419b649a25c35cc7335f8217cbd675cf8802085cc47a26106d0876af44e",
+        "support_result_sha256": "cb3784b076b7fd295d3124dd252adeccd74b678d76d6f942606c47678ccb9abb"
+      },
+      "config": {"tp": 1, "mtp": 0, "dflash": 5, "speculation_profile": "native DFlash5", "spec_draft_n_max": 5, "spec_draft_n_min": 0, "spec_draft_p_min": 0, "q6_draft_lmhead_top1_fusion": true, "q6_top1_fusion_axis": 1, "graph": "off", "kv": "q8_0", "draft_kv": "f16", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "flash_attention": true, "cache_prompt": false, "ctx_checkpoints": 0, "xe2_packed_projection_count": 187, "joint_gate_up": true, "gdn_snapshot_cache": true, "q6_pack_bytes": 1360793600},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [47.34062984948743, 46.6431464045719], "ttft_ms": [1156.511059962213]},
+      "quality": "Both strict candidates passed the realistic fresh-response and cache-zero gates. The unchanged Q4_0 target verified accepted DFlash tokens; finite-tie oracles and a forced compact-read failure also passed the fail-closed recovery contract.",
+      "caveat": "The confirmed retained helper reported 47.81881802978528 tok/s and the first candidate reported 47.11428929754737; rankable values are conventional 99-interval recomputations. Candidate/control suite hashes matched only 6/12 and token IDs were not returned, so the A/B is configuration-exact, not output-exact. Mechanism exactness is separately supported by the 15/15 real-fixture token-ID comparator, finite-tie oracles, target verification, and fail-closed recovery. The complete dirty overlay has not been reconstructed on a clean host. Intrinsic Q4_0 MTP3 is separately faster at 48.434052 conventional tok/s, so this is the DFlash record, not the overall Q4_0 speculation record.",
+      "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r2-20260713.json",
+      "supporting_evidence": [
+        "data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r1-20260713.json",
+        "data/qwen27-q6k-m6-fused-top1-record-20260713.json",
+        "experiments/qwen27-dflash-sycl-b70/notes/2026-07-13-q6k-m6-fused-top1-production-record.md",
+        "patches/qwen27-q6k-m6-fused-top1-20260713.patch"
+      ]
+    },
+    {
+      "id": "q36-udq4kxl-tp1-mtp0",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9860 (fdb1db877)",
+      "profile_id": "q36-udq4kxl-tp1-intrinsic-mtp-depth-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "identity": {"model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF", "model_sha256": "4085665ee36d82a672a238a43f0e5643f2f0e39f2d7bd5d373f0ef10ecf53095", "runtime_commit": "fdb1db877"},
+      "config": {"tp": 1, "mtp": 0, "graph": "requested-not-proven-replay", "kv": "f16", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "flash_attention": true, "cache_prompt": false, "cache_ram_mib": 0, "ctx_checkpoints": 0},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [23.437914478618438], "ttft_ms": [411.0360319027677]},
+      "quality": "Fresh-response gate passed for every unique prompt and cached_tokens=0 throughout the matched four-service wave.",
+      "caveat": "All four arms were independent TP1 services, not TP4. GGML_SYCL_DISABLE_GRAPH=0 requested graph use but does not prove persistent capture/replay. The retained helper value was 23.674661089513574 tok/s.",
+      "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-llamacpp-mtp-depth-screen-cacheoff-qwensuite128-nospec-20260705T224725Z.json"
+    },
+    {
+      "id": "q36-udq4kxl-tp1-mtp3",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9860 (fdb1db877)",
+      "profile_id": "q36-udq4kxl-tp1-intrinsic-mtp-depth-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "identity": {"model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF", "model_sha256": "4085665ee36d82a672a238a43f0e5643f2f0e39f2d7bd5d373f0ef10ecf53095", "runtime_commit": "fdb1db877"},
+      "config": {"tp": 1, "mtp": 3, "spec_draft_n_max": 3, "spec_draft_n_min": 0, "spec_draft_p_min": 0, "graph": "requested-not-proven-replay", "kv": "f16", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "flash_attention": true, "cache_prompt": false, "cache_ram_mib": 0, "ctx_checkpoints": 0},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [29.219352576812313], "ttft_ms": [423.1553884455934], "draft_acceptance_rate": [0.588557516738]},
+      "quality": "Fresh-response gate passed for every unique prompt and cached_tokens=0; aggregate tracked-log acceptance was 967/1,643.",
+      "caveat": "Independent TP1 service; graph replay was requested but not proven. The retained helper value was 29.51449755233567 tok/s.",
+      "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-llamacpp-mtp-depth-screen-cacheoff-qwensuite128-mtp3-20260705T224725Z.json"
+    },
+    {
+      "id": "q36-udq4kxl-tp1-mtp4",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9860 (fdb1db877)",
+      "profile_id": "q36-udq4kxl-tp1-intrinsic-mtp-depth-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "identity": {"model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF", "model_sha256": "4085665ee36d82a672a238a43f0e5643f2f0e39f2d7bd5d373f0ef10ecf53095", "runtime_commit": "fdb1db877"},
+      "config": {"tp": 1, "mtp": 4, "spec_draft_n_max": 4, "spec_draft_n_min": 0, "spec_draft_p_min": 0, "graph": "requested-not-proven-replay", "kv": "f16", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "flash_attention": true, "cache_prompt": false, "cache_ram_mib": 0, "ctx_checkpoints": 0},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [28.313083350548313], "ttft_ms": [422.71748650819063], "draft_acceptance_rate": [0.508270676692]},
+      "quality": "Fresh-response gate passed for every unique prompt and cached_tokens=0; aggregate tracked-log acceptance was 1,014/1,995.",
+      "caveat": "Independent TP1 service; graph replay was requested but not proven. The retained helper value was 28.599074091462942 tok/s.",
+      "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-llamacpp-mtp-depth-screen-cacheoff-qwensuite128-mtp4-20260705T224725Z.json"
+    },
+    {
+      "id": "q36-udq4kxl-tp1-mtp5",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9860 (fdb1db877)",
+      "profile_id": "q36-udq4kxl-tp1-intrinsic-mtp-depth-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "identity": {"model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF", "model_sha256": "4085665ee36d82a672a238a43f0e5643f2f0e39f2d7bd5d373f0ef10ecf53095", "runtime_commit": "fdb1db877"},
+      "config": {"tp": 1, "mtp": 5, "spec_draft_n_max": 5, "spec_draft_n_min": 0, "spec_draft_p_min": 0, "graph": "requested-not-proven-replay", "kv": "f16", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "flash_attention": true, "cache_prompt": false, "cache_ram_mib": 0, "ctx_checkpoints": 0},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [24.655020587295312], "ttft_ms": [423.87354152742773], "draft_acceptance_rate": [0.428096425603]},
+      "quality": "Fresh-response gate passed for every unique prompt and cached_tokens=0; aggregate tracked-log acceptance was 1,030/2,406.",
+      "caveat": "Independent TP1 service; graph replay was requested but not proven. The retained helper value was 24.904061199288194 tok/s.",
+      "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-llamacpp-mtp-depth-screen-cacheoff-qwensuite128-mtp5-20260705T224725Z.json"
+    },
+    {
+      "id": "q36-udq4kxl-tp1-mtp5-pmin075",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9860 (fdb1db877)",
+      "profile_id": "q36-udq4kxl-tp1-policy-tuned-deep-mtp-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "promotion_status": "closed-policy-screen",
+      "identity": {"model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF", "model_sha256": "4085665ee36d82a672a238a43f0e5643f2f0e39f2d7bd5d373f0ef10ecf53095", "runtime_commit": "fdb1db877"},
+      "config": {"tp": 1, "mtp": 5, "spec_draft_n_max": 5, "spec_draft_n_min": 1, "spec_draft_p_min": 0.75, "graph": "requested-not-proven-replay", "kv": "f16", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "flash_attention": true, "cache_prompt": false, "cache_ram_mib": 0, "ctx_checkpoints": 0},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [30.729199375766307], "ttft_ms": [420.99562752991915]},
+      "quality": "Fresh-response gate passed for all 12 unique prompts and cached_tokens=0.",
+      "caveat": "Policy-tuned closure row; do not merge into the p_min=0 depth curve. Retained helper value: 31.039595329056876 tok/s.",
+      "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-mtp5-pmin075-nmin1-cacheoff-fixed-20260705T230230Z.json"
+    },
+    {
+      "id": "q36-udq4kxl-tp1-mtp7-pmin075",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9860 (fdb1db877)",
+      "profile_id": "q36-udq4kxl-tp1-policy-tuned-deep-mtp-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "promotion_status": "closed-policy-screen",
+      "identity": {"model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF", "model_sha256": "4085665ee36d82a672a238a43f0e5643f2f0e39f2d7bd5d373f0ef10ecf53095", "runtime_commit": "fdb1db877"},
+      "config": {"tp": 1, "mtp": 7, "spec_draft_n_max": 7, "spec_draft_n_min": 1, "spec_draft_p_min": 0.75, "graph": "requested-not-proven-replay", "kv": "f16", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "flash_attention": true, "cache_prompt": false, "cache_ram_mib": 0, "ctx_checkpoints": 0},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [30.680442093103016], "ttft_ms": [427.96773056034]},
+      "quality": "Fresh-response gate passed for all 12 unique prompts and cached_tokens=0.",
+      "caveat": "Policy-tuned closure row; do not merge into the p_min=0 depth curve. Retained helper value: 30.990345548588905 tok/s.",
+      "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-mtp7-pmin075-nmin1-cacheoff-fixed-20260705T230230Z.json"
+    },
+    {
+      "id": "q36-udq4kxl-tp1-mtp7-pmin065",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9860 (fdb1db877)",
+      "profile_id": "q36-udq4kxl-tp1-policy-tuned-deep-mtp-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "promotion_status": "best-validated-policy-tuned-support",
+      "identity": {"model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF", "model_sha256": "4085665ee36d82a672a238a43f0e5643f2f0e39f2d7bd5d373f0ef10ecf53095", "runtime_commit": "fdb1db877"},
+      "config": {"tp": 1, "mtp": 7, "spec_draft_n_max": 7, "spec_draft_n_min": 1, "spec_draft_p_min": 0.65, "graph": "requested-not-proven-replay", "kv": "f16", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "flash_attention": true, "cache_prompt": false, "cache_ram_mib": 0, "ctx_checkpoints": 0},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [31.1652489904295], "ttft_ms": [424.65411801822484]},
+      "quality": "Fresh-response gate passed for all 12 unique prompts and cached_tokens=0.",
+      "caveat": "Best policy-tuned deep-MTP support row, not a point on the p_min=0 depth curve. Retained helper value: 31.480049485282322 tok/s.",
+      "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-mtp7-pmin065-nmin1-cacheoff-fixed-20260705T230230Z.json"
+    },
+    {
+      "id": "q36-udq4kxl-tp1-mtp9-pmin075",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9860 (fdb1db877)",
+      "profile_id": "q36-udq4kxl-tp1-policy-tuned-deep-mtp-v1",
+      "measurement_class": "conventional-99-interval-recomputed-from-historical-helper",
+      "promotion_status": "closed-policy-screen-regression",
+      "identity": {"model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF", "model_sha256": "4085665ee36d82a672a238a43f0e5643f2f0e39f2d7bd5d373f0ef10ecf53095", "runtime_commit": "fdb1db877"},
+      "config": {"tp": 1, "mtp": 9, "spec_draft_n_max": 9, "spec_draft_n_min": 2, "spec_draft_p_min": 0.75, "graph": "requested-not-proven-replay", "kv": "f16", "configured_max_context_tokens": 4096, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 256, "flash_attention": true, "cache_prompt": false, "cache_ram_mib": 0, "ctx_checkpoints": 0},
+      "workload": "fixed 12-prompt cold realistic suite, 128 output tokens, cached_tokens=0; conventional 99-interval median recomputed from the retained historical helper",
+      "metrics": {"decode_tok_s": [27.039108087931767], "ttft_ms": [427.31963261030614]},
+      "quality": "Fresh-response gate passed for all 12 unique prompts and cached_tokens=0.",
+      "caveat": "Policy-tuned closure regression; do not merge into the p_min=0 depth curve. Retained helper value: 27.31223039185027 tok/s.",
+      "evidence": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-mtp9-pmin075-nmin2-cacheoff-fixed-20260705T230230Z.json"
+    },
+    {
       "id": "q38-q5ks-flagship-tp1-256k-mtp3-serving",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -1650,6 +2007,56 @@
       ]
     },
     {
+      "id": "q36-q4-0-intrinsic-mtp3",
+      "title": "Qwen3.6 Q4_0 intrinsic MTP",
+      "subtitle": "TP1 llama.cpp SYCL · exact Q4_0 artifact · graph off · q8_0 KV · fixed 12-prompt cold/cache-zero suite · MTP3 is 48.434 conventional (48.923285 retained helper); MTP1/2/4/5 remain gaps",
+      "x_label": "draft tokens",
+      "metrics": ["decode_tok_s", "draft_acceptance_rate", "mean_acceptance_length", "ttft_ms"],
+      "discrete": true,
+      "missing_x": [1, 2, 4, 5],
+      "series": [
+        {"label": "target only → intrinsic MTP3", "measurement_ids": ["q36-q4-0-tp1-target-only", "q36-q4-0-tp1-intrinsic-mtp3"], "x_from": "config.mtp"}
+      ]
+    },
+    {
+      "id": "q36-q4-0-dflash5-q6-top1-ab",
+      "title": "Qwen3.6 Q4_0 DFlash5 top-1 fusion",
+      "subtitle": "TP1 native DFlash5 · Q4_0 target + Q8_0 draft · configuration-exact fusion-off/on A/B, not output-exact · confirmed candidate is +8.14% versus control at 47.341 conventional (47.818818 retained helper)",
+      "x_label": "Q6_K draft-head top-1 fusion (0 off · 1 on)",
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "discrete": true,
+      "series": [
+        {"label": "same-config DFlash5 A/B", "measurement_ids": ["q36-q4-0-dflash5-q6-top1-control", "q36-q4-0-dflash5-q6-top1-candidate"], "x_from": "config.q6_top1_fusion_axis"}
+      ]
+    },
+    {
+      "id": "q36-udq4kxl-intrinsic-mtp-depth",
+      "title": "Qwen3.6 UD-Q4_K_XL intrinsic MTP depth",
+      "subtitle": "Four independent TP1 services in one matched wave · MTP0/3/4/5 · n_min=0 · p_min=0 · fixed 12-prompt cold/cache-zero suite · graph requested but replay unproven · conventional 99-interval accounting",
+      "x_label": "draft tokens",
+      "metrics": ["decode_tok_s", "draft_acceptance_rate", "ttft_ms"],
+      "discrete": true,
+      "missing_x": [1, 2],
+      "series": [
+        {"label": "matched p_min=0 depth wave", "measurement_ids": ["q36-udq4kxl-tp1-mtp0", "q36-udq4kxl-tp1-mtp3", "q36-udq4kxl-tp1-mtp4", "q36-udq4kxl-tp1-mtp5"], "x_from": "config.mtp"}
+      ]
+    },
+    {
+      "id": "q36-udq4kxl-policy-tuned-deep-mtp",
+      "title": "Qwen3.6 UD-Q4_K_XL deep-MTP policy closure",
+      "subtitle": "TP1 policy screen · each point changes n_min and/or p_min as labeled · discrete closure, not a pure depth curve · best is 31.165 conventional (31.480049 retained helper) · fixed cold/cache-zero suite",
+      "x_label": "draft tokens",
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "discrete": true,
+      "missing_x": [6, 8],
+      "series": [
+        {"label": "MTP5 · n1 · p.75", "measurement_ids": ["q36-udq4kxl-tp1-mtp5-pmin075"], "x_from": "config.mtp"},
+        {"label": "MTP7 · n1 · p.75", "measurement_ids": ["q36-udq4kxl-tp1-mtp7-pmin075"], "x_from": "config.mtp"},
+        {"label": "MTP7 · n1 · p.65", "measurement_ids": ["q36-udq4kxl-tp1-mtp7-pmin065"], "x_from": "config.mtp"},
+        {"label": "MTP9 · n2 · p.75", "measurement_ids": ["q36-udq4kxl-tp1-mtp9-pmin075"], "x_from": "config.mtp"}
+      ]
+    },
+    {
       "id": "mtp-q38-source-research",
       "title": "Qwen3.8 source-stack anchors",
       "subtitle": "Separate older TP2 runtime family · honest MTP5 three-arm median 101.17 (100.46–101.39) · only 21–22/25 self-agreement; MTP1–4 omitted, not interpolated",
@@ -1729,6 +2136,128 @@
     }
   ],
   "coverage_views": [
+    {
+      "id": "q36-q4-0-mtp-by-tp",
+      "label": "Qwen3.6 Q4_0 MTP × TP",
+      "row_axis": {"key": "mtp", "label": "MTP", "prefix": "MTP"},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.6-27b",
+        "quantization": "Q4_0",
+        "runtime_family": "llama.cpp SYCL",
+        "profile_id": "q36-q4-0-tp1-intrinsic-mtp-v1",
+        "graph": "off",
+        "kv": "q8_0"
+      },
+      "fixed": "Qwen3.6 Q4_0 intrinsic-MTP artifact · llama.cpp SYCL · graph off · q8_0 target KV · fixed cold/cache-zero suite. Every MTP0–5 × TP1/2/3/4 cell is explicit.",
+      "decision_note": "Only MTP0 and MTP3 at TP1 have normalized matched evidence. MTP1/2/4/5 and all multi-card routes remain gaps; TP3 is not called unsupported for llama.cpp without a direct architectural or boot result.",
+      "evidence": "experiments/qwen27-dflash-sycl-b70/notes/2026-07-12-cycle-timeline-tooling.md",
+      "rows": [0, 1, 2, 3, 4, 5],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "0:1": {"state": "lab-measured", "label": "D25.678 · target only", "evidence_id": "q36-q4-0-tp1-target-only", "packet_id": "qwen36-27b-q4-0-intrinsic-mtp3"},
+        "0:2": {"state": "missing", "label": "no measured route"},
+        "0:3": {"state": "missing", "label": "no measured route"},
+        "0:4": {"state": "missing", "label": "no measured route"},
+        "1:1": {"state": "missing", "label": "no measured route"},
+        "1:2": {"state": "missing", "label": "no measured route"},
+        "1:3": {"state": "missing", "label": "no measured route"},
+        "1:4": {"state": "missing", "label": "no measured route"},
+        "2:1": {"state": "missing", "label": "no measured route"},
+        "2:2": {"state": "missing", "label": "no measured route"},
+        "2:3": {"state": "missing", "label": "no measured route"},
+        "2:4": {"state": "missing", "label": "no measured route"},
+        "3:1": {"state": "lab-measured", "label": "D48.434 · AR.587 · MTP3", "evidence_id": "q36-q4-0-tp1-intrinsic-mtp3", "packet_id": "qwen36-27b-q4-0-intrinsic-mtp3"},
+        "3:2": {"state": "missing", "label": "no measured route"},
+        "3:3": {"state": "missing", "label": "no measured route"},
+        "3:4": {"state": "missing", "label": "no measured route"},
+        "4:1": {"state": "missing", "label": "no measured route"},
+        "4:2": {"state": "missing", "label": "no measured route"},
+        "4:3": {"state": "missing", "label": "no measured route"},
+        "4:4": {"state": "missing", "label": "no measured route"},
+        "5:1": {"state": "missing", "label": "no measured route"},
+        "5:2": {"state": "missing", "label": "no measured route"},
+        "5:3": {"state": "missing", "label": "no measured route"},
+        "5:4": {"state": "missing", "label": "no measured route"}
+      }
+    },
+    {
+      "id": "q36-udq4kxl-mtp-by-tp",
+      "label": "Qwen3.6 UD-Q4_K_XL MTP × TP",
+      "row_axis": {"key": "mtp", "label": "MTP", "prefix": "MTP"},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.6-27b",
+        "quantization": "UD-Q4_K_XL",
+        "runtime_family": "llama.cpp SYCL",
+        "profile_id": "q36-udq4kxl-tp1-intrinsic-mtp-depth-v1",
+        "graph": "requested-not-proven-replay",
+        "kv": "f16"
+      },
+      "fixed": "Qwen3.6 UD-Q4_K_XL · llama.cpp SYCL · intrinsic MTP with n_min=0/p_min=0 · f16 KV · graph requested but replay unproven · fixed cold/cache-zero suite.",
+      "decision_note": "The July 5 wave was four independent TP1 services, never TP4. MTP0/3/4/5 are measured at TP1; MTP1/2 and all multi-card cells remain explicit gaps. Policy-tuned MTP7/9 evidence is separate from this fixed-policy matrix.",
+      "evidence": "results/qwen36-27b-mtp-gguf-q4-b70/README.md",
+      "rows": [0, 1, 2, 3, 4, 5],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "0:1": {"state": "lab-measured", "label": "D23.438 · target only", "evidence_id": "q36-udq4kxl-tp1-mtp0", "packet_id": "qwen36-27b-q4-mtp-ladder"},
+        "0:2": {"state": "missing", "label": "no measured route"},
+        "0:3": {"state": "missing", "label": "no measured route"},
+        "0:4": {"state": "missing", "label": "no measured route"},
+        "1:1": {"state": "missing", "label": "no measured route"},
+        "1:2": {"state": "missing", "label": "no measured route"},
+        "1:3": {"state": "missing", "label": "no measured route"},
+        "1:4": {"state": "missing", "label": "no measured route"},
+        "2:1": {"state": "missing", "label": "no measured route"},
+        "2:2": {"state": "missing", "label": "no measured route"},
+        "2:3": {"state": "missing", "label": "no measured route"},
+        "2:4": {"state": "missing", "label": "no measured route"},
+        "3:1": {"state": "lab-measured", "label": "D29.219 · AR.589", "evidence_id": "q36-udq4kxl-tp1-mtp3", "packet_id": "qwen36-27b-q4-mtp-ladder"},
+        "3:2": {"state": "missing", "label": "no measured route"},
+        "3:3": {"state": "missing", "label": "no measured route"},
+        "3:4": {"state": "missing", "label": "no measured route"},
+        "4:1": {"state": "lab-measured", "label": "D28.313 · AR.508", "evidence_id": "q36-udq4kxl-tp1-mtp4", "packet_id": "qwen36-27b-q4-mtp-ladder"},
+        "4:2": {"state": "missing", "label": "no measured route"},
+        "4:3": {"state": "missing", "label": "no measured route"},
+        "4:4": {"state": "missing", "label": "no measured route"},
+        "5:1": {"state": "lab-measured", "label": "D24.655 · AR.428", "evidence_id": "q36-udq4kxl-tp1-mtp5", "packet_id": "qwen36-27b-q4-mtp-ladder"},
+        "5:2": {"state": "missing", "label": "no measured route"},
+        "5:3": {"state": "missing", "label": "no measured route"},
+        "5:4": {"state": "missing", "label": "no measured route"}
+      }
+    },
+    {
+      "id": "q36-q4-0-speculation-by-tp",
+      "label": "Qwen3.6 Q4_0 speculation × TP",
+      "row_axis": {"key": "speculation_profile", "label": "speculation", "prefix": ""},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.6-27b",
+        "quantization": "Q4_0",
+        "runtime_family": "llama.cpp SYCL",
+        "graph": "off",
+        "kv": "q8_0"
+      },
+      "fixed": "Qwen3.6 Q4_0 target on llama.cpp SYCL with graph off and q8_0 target KV. Rows distinguish target-only, bundled intrinsic MTP3, and a separate native Q8_0 DFlash5 draft.",
+      "decision_note": "All TP1 rows use the same fixed 12-prompt cold/cache-zero suite and conventional 99-interval accounting, but protected runtime states differ and token-ID equivalence was not retained across mechanisms. DFlash is patch-backed EVID B; intrinsic MTP3 is the faster measured Q4_0 route. No TP2/3/4 speed is inferred.",
+      "evidence": "notes/2026-07-13-qwen27-dflash-sycl-closure.md",
+      "rows": ["target only", "intrinsic MTP3", "native DFlash5"],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "target only:1": {"state": "lab-measured", "label": "D25.678", "evidence_id": "q36-q4-0-tp1-target-only", "packet_id": "qwen36-27b-q4-0-intrinsic-mtp3"},
+        "target only:2": {"state": "missing", "label": "no measured route"},
+        "target only:3": {"state": "missing", "label": "no measured route"},
+        "target only:4": {"state": "missing", "label": "no measured route"},
+        "intrinsic MTP3:1": {"state": "lab-measured", "label": "D48.434 · AR.587", "evidence_id": "q36-q4-0-tp1-intrinsic-mtp3", "packet_id": "qwen36-27b-q4-0-intrinsic-mtp3"},
+        "intrinsic MTP3:2": {"state": "missing", "label": "no measured route"},
+        "intrinsic MTP3:3": {"state": "missing", "label": "no measured route"},
+        "intrinsic MTP3:4": {"state": "missing", "label": "no measured route"},
+        "native DFlash5:1": {"state": "lab-measured", "label": "D46.643–47.341 · EVID B", "evidence_id": "q36-q4-0-dflash5-q6-top1-candidate", "packet_id": "qwen36-27b-q4-0-dflash5-q6-top1"},
+        "native DFlash5:2": {"state": "missing", "label": "no measured route"},
+        "native DFlash5:3": {"state": "missing", "label": "no measured route"},
+        "native DFlash5:4": {"state": "missing", "label": "no measured route"}
+      }
+    },
     {
       "id": "q36-native-fp8-by-tp",
       "label": "Qwen3.6 runtime FP8 × TP",
@@ -2234,6 +2763,18 @@
     }
   ],
   "family_closures": [
+    {
+      "selectors": {"revision": "qwen3.6-27b", "quantization": "UD-Q4_K_XL", "runtime_family": "llama.cpp SYCL", "profile_id": "q36-udq4kxl-tp1-policy-tuned-deep-mtp-v1"},
+      "state": "closed",
+      "reason": "The fixed cache-zero MTP5/7/9 policy screen peaked at 31.165 conventional tok/s and remained noncompetitive with the separately qualified vLLM AutoRound route. Reopen only for a material backend, kernel, or quantization change—not another generic flag sweep.",
+      "evidence": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-07-05-pmin-screen-and-harness-fix.md"
+    },
+    {
+      "selectors": {"revision": "qwen3.6-27b", "quantization": "Q4_0", "runtime_family": "llama.cpp SYCL", "dflash": 5, "profile_id": "q36-q4-0-dflash5-q6-top1-v1"},
+      "state": "closed",
+      "reason": "The intensive native-DFlash program ended at a confirmed 47.341 conventional tok/s on one B70, below its 100 tok/s TP1 objective. The patch and safety evidence remain preserved; reopen only for a new mechanism, not generic configuration churn.",
+      "evidence": "notes/2026-07-13-qwen27-dflash-sycl-closure.md"
+    },
     {
       "selectors": {"revision": "qwen3.6-27b", "variant": "Q8_0 embedded publisher MTP artifact", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "profile_id": "q36-q8-embedded-mtp3-crossband-retention-v1", "tp": 1, "mtp": 3, "graph": "off", "kv": "f16", "draft_kv": "f16", "parallel_slots": 2, "context_tokens_per_slot": 32768},
       "state": "closed",
