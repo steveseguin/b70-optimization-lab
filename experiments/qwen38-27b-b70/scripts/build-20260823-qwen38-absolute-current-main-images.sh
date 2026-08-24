@@ -11,23 +11,25 @@ vllm_source=${VLLM_SOURCE:-/home/steve/src/vllm-current-main}
 kernel_source=${KERNEL_SOURCE:-/home/steve/src/vllm-xpu-kernels-current-main}
 build_parent=${BUILD_PARENT:-/home/steve/builds}
 archive_parent=${ARCHIVE_PARENT:-/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds}
-kernel_artifact_dir=${KERNEL_ARTIFACT_DIR:-/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/upstream-kernel-4543b580-artifact-9432931548}
+kernel_artifact_dir=${KERNEL_ARTIFACT_DIR:-/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/upstream-kernel-baaa05bb-artifact-9508328924}
 sudo_password_file=${SUDO_PASSWORD_FILE:-/home/steve/SUDOPASSWORD.txt}
 
 base_tag=vllm/vllm-openai-xpu:nightly
-base_digest=sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35
+base_digest=sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876
 base_image="vllm/vllm-openai-xpu@$base_digest"
 vllm_upstream_url=https://github.com/vllm-project/vllm.git
 kernel_upstream_url=https://github.com/vllm-project/vllm-xpu-kernels.git
-base_vllm_head=a3561ef8e49d3545c4078df43444beb4c98ae124
+base_vllm_head=f94666b60d4c58ec0807d22c837cfae322a1dde9
 base_kernel_version=0.1.13.2
-kernel_run_id=32440448665
-kernel_artifact_id=9432931548
-kernel_artifact_name=vllm-xpu-kernels--20260821-024021
-expected_kernel_build_info_sha256=d970b44b6c47cc669778aadbd0ca4023b7d339f7ec7ea3e6f5885d2984a3117b
-expected_kernel_wheel_sha256=1adf261d472ec9f0ee6f05fcefaa90de7336654955f812b0c37dac2cead06c8a
+kernel_run_id=32692290527
+kernel_artifact_id=9508328924
+kernel_artifact_name=vllm-xpu-kernels--20260824-050903
+expected_kernel_artifact_digest=sha256:ce94da86eb14e61673a10db5c8a2c3fffb49a5f61ec9d36c210601062f887f10
+expected_kernel_artifact_size_bytes=475965714
+expected_kernel_build_info_sha256=640dc7b2abee85037aa99eac4955e5092ccebd4479c07d0cafd0ea174e13dc15
+expected_kernel_wheel_sha256=7b886fa814469aef8904118729f31f2fe77559f3c5219bd0ecf799a904387483
 rust_extension_sha256=7cb3df775d2183d2c1a7d3025a8f49b9a79548d157993969fc0c49f46c725c52
-rust_frontend_sha256=05e62290dbdadebc6e79e9b64c7f8e95f6842eacdf3633cbc46bc1c52c307c0f
+rust_frontend_sha256=a415187153b2a8b10683494c7b22472158b487c69023713313542d4bc09c4c92
 min_root_free_kib=$((8 * 1024 * 1024))
 
 die() {
@@ -162,7 +164,7 @@ wheel_metadata_value() {
 
 verify_official_kernel_artifact() {
   local expected_head=$1
-  local api_result artifact_count build_info wheel
+  local api_result artifact_count artifact_result build_info wheel
   api_result=$(gh api "repos/vllm-project/vllm-xpu-kernels/actions/runs/$kernel_run_id")
   [[ $(jq -r .head_sha <<<"$api_result") == "$expected_head" ]] ||
     die 'official kernel run does not match literal kernel main'
@@ -175,6 +177,12 @@ verify_official_kernel_artifact() {
     "repos/vllm-project/vllm-xpu-kernels/actions/runs/$kernel_run_id/artifacts" \
     --jq "[.artifacts[] | select(.id == $kernel_artifact_id and .name == \"$kernel_artifact_name\" and .expired == false)] | length")
   [[ $artifact_count == 1 ]] || die 'exact official kernel artifact is absent or expired'
+  artifact_result=$(gh api \
+    "repos/vllm-project/vllm-xpu-kernels/actions/artifacts/$kernel_artifact_id")
+  [[ $(jq -r .digest <<<"$artifact_result") == \
+    "$expected_kernel_artifact_digest" ]] || die 'official kernel artifact digest mismatch'
+  [[ $(jq -r .size_in_bytes <<<"$artifact_result") == \
+    "$expected_kernel_artifact_size_bytes" ]] || die 'official kernel artifact size mismatch'
   [[ -d $kernel_artifact_dir ]] ||
     die "download the exact artifact into $kernel_artifact_dir"
 
@@ -198,7 +206,7 @@ verify_official_kernel_artifact() {
   unzip -t "$wheel" >/dev/null || die 'kernel wheel ZIP integrity failed'
   [[ $(wheel_metadata_value "$wheel" Name) == vllm-xpu-kernels ]] ||
     die 'kernel wheel package name mismatch'
-  [[ $(wheel_metadata_value "$wheel" Version) == 0.1.dev1+g4543b580f ]] ||
+  [[ $(wheel_metadata_value "$wheel" Version) == 0.1.dev1+gbaaa05bb4 ]] ||
     die 'unexpected official kernel wheel version'
   for member in \
     _C.abi3.so \
@@ -360,7 +368,7 @@ jq -n \
     },
     kernel: {head: $kernel_head, tree: $kernel_tree},
     reused_rust: {
-      source_equivalence_base: "a3561ef8e49d3545c4078df43444beb4c98ae124",
+      source_equivalence_base: "f94666b60d4c58ec0807d22c837cfae322a1dde9",
       extension_sha256: $rust_extension_sha256,
       frontend_sha256: $rust_frontend_sha256
     },
@@ -551,6 +559,7 @@ jq -n \
   --arg control_tag "$control_tag" \
   --arg dockerfile_sha256 "$dockerfile_sha256" \
   --arg kernel_artifact_name "$kernel_artifact_name" \
+  --arg kernel_artifact_digest "$expected_kernel_artifact_digest" \
   --arg kernel_head "$kernel_head" \
   --arg kernel_package_version "$kernel_package_version" \
   --arg kernel_tree "$kernel_tree" \
@@ -568,6 +577,7 @@ jq -n \
   --arg both_static_preflight_sha256 "$both_static_preflight_sha256" \
   --arg both_tag "$both_tag" \
   --argjson kernel_artifact_id "$kernel_artifact_id" \
+  --argjson kernel_artifact_size_bytes "$expected_kernel_artifact_size_bytes" \
   --argjson kernel_run_id "$kernel_run_id" \
   --argjson both_built "$both_built" \
   --argjson control_built "$control_built" \
@@ -601,6 +611,8 @@ jq -n \
           run_id: $kernel_run_id,
           artifact_id: $kernel_artifact_id,
           name: $kernel_artifact_name,
+          archive_digest: $kernel_artifact_digest,
+          archive_size_bytes: $kernel_artifact_size_bytes,
           wheel_sha256: $kernel_wheel_sha256,
           workflow_sha256: $workflow_sha256,
           chunk_prefill_full_sha256: $chunk_full_sha256,
