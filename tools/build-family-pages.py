@@ -57,6 +57,29 @@ OBSERVED_STATES = {
     "quarantined",
 }
 CURVE_STATES = {"lab-measured", "community-measured"}
+# Glyph + plain-words meaning for every coverage state. Cells show the glyph
+# with the words in a tooltip (and for screen readers); the legend spells the
+# words out once.
+STATE_GLYPHS = {
+    "lab-measured": "\u2713 measured",
+    "lab-screened": "\u25c7 screened",
+    "community-measured": "\u25d0 community",
+    "estimated": "\u2248 estimate",
+    "closed": "\u25a0 closed",
+    "quarantined": "\u26a0 quarantined",
+    "unsupported": "\u00d7 unsupported",
+    "missing": "\u00b7 untested",
+}
+STATE_MEANING = {
+    "lab-measured": "Measured on the lab's own machines; the number links to its proof",
+    "lab-screened": "Screened: one lighter-gate lab run, not the full quality battery",
+    "community-measured": "Measured by a community contributor and checked by the lab",
+    "estimated": "Estimate only, no measurement behind it",
+    "closed": "Closed: tried, rejected, and documented; not a blank",
+    "quarantined": "Quarantined: it ran, but failed a quality gate; kept for the record, do not use",
+    "unsupported": "The runtime or hardware cannot run this combination",
+    "missing": "Not tested yet",
+}
 ALLOWED_GRADES = {"A", "B", "C", "D"}
 SLUG_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 SELECTOR_KEY_RE = re.compile(r"[a-z][a-z0-9_]*\Z")
@@ -428,7 +451,8 @@ def public_evidence_inventory() -> tuple[dict[str, str], list[str]]:
     if result_index.exists():
         add("results/README.md", "result-index", "results index")
     for readme in sorted(results_root.glob("*/README.md")):
-        relative = str(readme.relative_to(ROOT))
+        # POSIX form on every platform: registry paths use forward slashes.
+        relative = readme.relative_to(ROOT).as_posix()
         kind = (
             "rapid-snapshot-index"
             if readme.parent.name == "rapid-model-snapshots-b70"
@@ -437,7 +461,7 @@ def public_evidence_inventory() -> tuple[dict[str, str], list[str]]:
         add(relative, kind, "results discovery")
     rapid_root = results_root / "rapid-model-snapshots-b70"
     for readme in sorted(rapid_root.glob("*/README.md")):
-        add(str(readme.relative_to(ROOT)), "rapid-snapshot", "rapid snapshot discovery")
+        add(readme.relative_to(ROOT).as_posix(), "rapid-snapshot", "rapid snapshot discovery")
     return expected, errors
 
 
@@ -1382,16 +1406,7 @@ def coverage_tables(family: dict[str, Any]) -> str:
     packets = {packet["id"]: packet for packet in family.get("packets") or []}
     buttons = []
     tables = []
-    state_labels = {
-        "lab-measured": "● measured",
-        "lab-screened": "△ screened",
-        "community-measured": "◐ community",
-        "estimated": "≈ estimate",
-        "closed": "■ closed",
-        "quarantined": "! quarantine",
-        "unsupported": "× unsupported",
-        "missing": "○ missing",
-    }
+    state_labels = STATE_GLYPHS
     for index, view in enumerate(family.get("coverage_views") or []):
         row_axis = coverage_axis(view, "row")
         column_axis = coverage_axis(view, "column")
@@ -1440,7 +1455,13 @@ def coverage_tables(family: dict[str, Any]) -> str:
                         f'{estimate["engine"]["name"]} {estimate["engine"]["version"]}; '
                         f'snapshot {estimate["engine"]["snapshot_sha256"]}'
                     )
-                body = f'<span class="state">{esc(title)}</span><b>{esc(label_text)}</b>'
+                glyph = title.split(" ", 1)[0]
+                meaning = STATE_MEANING.get(state, title)
+                body = (
+                    f'<span class="state" title="{esc(meaning)}">{esc(glyph)}'
+                    f'<span class="visually-hidden">{esc(title.split(" ", 1)[1] if " " in title else title)}</span></span>'
+                    f'<b>{esc(label_text)}</b>'
+                )
                 if evidence:
                     body = f'<a href="{esc(evidence_href(evidence))}" aria-label="{esc(title)}: {esc(label_text)}; open record">{body}</a>'
                 packet_link = ""
@@ -1455,7 +1476,7 @@ def coverage_tables(family: dict[str, Any]) -> str:
                     )
                     packet_link = f'<a class="cell-packet" href="{esc(href)}">packet</a>'
                 cells.append(
-                    f'<td class="coverage-cell is-{esc(state)}" title="{esc(cell.get("reason") or estimate_note or view.get("decision_note") or "")}">{body}{packet_link}</td>'
+                    f'<td class="coverage-cell is-{esc(state)}" title="{esc(cell.get("reason") or estimate_note or view.get("decision_note") or meaning)}">{body}{packet_link}</td>'
                 )
             rows.append(
                 f'<tr><th scope="row">{esc(axis_value_label(row_axis, row))}</th>{"".join(cells)}</tr>'
@@ -1661,16 +1682,45 @@ def family_page(family: dict[str, Any]) -> str:
         if popularity_date
         else str(popularity_scope)
     )
+    # The one number a visitor came for: the best fully-gated measured
+    # decode rate in the family, linked to its evidence.
+    best = None
+    for measurement in records(family):
+        if measurement.get("state") != "lab-measured":
+            continue
+        metrics = measurement.get("metrics") or {}
+        values = list(metrics.get("decode_tok_s") or [])
+        for point in measurement.get("points") or []:
+            if point.get("decode_tok_s") is not None:
+                values.append(point["decode_tok_s"])
+        if not values:
+            continue
+        # The current promoted reference outranks historical highs.
+        current = "current" in str(measurement.get("promotion_status") or "")
+        candidate = (current, max(values), measurement)
+        if best is None or (candidate[0], candidate[1]) > (best[0], best[1]):
+            best = candidate
+    headline_html = ""
+    if best:
+        _, peak, measurement = best
+        runtime_words = " ".join(str(measurement.get("runtime") or "").split()[:2])
+        label_bits = [bit for bit in (measurement.get("variant"), runtime_words) if bit]
+        evidence = (measurement.get("evidence") or {}).get("primary") if isinstance(measurement.get("evidence"), dict) else None
+        headline_html = (
+            '  <div class="hero-headline"><span class="big">' + fmt(peak) + '</span>'
+            '<span class="unit">tok/s measured</span>'
+            '<small>' + esc(" · ".join(label_bits)) + ' · single user, full quality gate</small></div>\n'
+        )
     coverage_section = ""
     if coverage_views:
         coverage_section = f'''
-  <div class="section-head"><div><h2>Combination coverage</h2><p>A compact decision map replaces near-duplicate result rows. Closed and quarantined cells are coverage, not blanks.</p></div></div>
+  <div class="section-head"><div><h2>Combination coverage</h2><p>One cell per combination &mdash; hover a mark for what it means.</p></div></div>
   {coverage}
 '''
     closures_section = ""
     if closure_items:
         closures_section = f'''
-  <div class="section-head"><div><h2>Scoped closures</h2><p>Impossible and rejected combinations apply only to the exact selectors shown.</p></div></div>
+  <div class="section-head"><div><h2>Scoped closures</h2><p>Rejected combinations, scoped to the exact selectors shown.</p></div></div>
   <div class="closure-grid">{closures}</div>
 '''
     url = f"{SITE}models/{family['id']}.html"
@@ -1713,6 +1763,15 @@ def family_page(family: dict[str, Any]) -> str:
   .family-main {{ max-width: 1120px; }}
   .lineage {{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }}
   .lineage span {{ padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }}
+  .hero-headline {{ display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:12px 0 0; }}
+  .hero .hero-headline .big {{ font:900 46px/1 var(--display); color:var(--paper, #fff); }}
+  .hero .hero-headline .unit {{ font:700 12px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }}
+  .hero .hero-headline small {{ flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }}
+  .signal[title] {{ cursor: help; }}
+  .visually-hidden {{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }}
+  details.fine {{ margin:0 0 22px; color:var(--muted); font-size:12.5px; }}
+  details.fine summary {{ cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; }}
+  details.fine p {{ margin:6px 0 0; }}
   .signals {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin:0 0 22px; }}
   .signal {{ border:2px solid var(--ink); padding:12px 13px; background:var(--paper); }}
   .signal span {{ display:block; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }}
@@ -1781,27 +1840,27 @@ def family_page(family: dict[str, Any]) -> str:
 </div></div>
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / {esc(family.get('name'))}</p>
-  <p class="eyebrow">Model family coverage · measured cells, honest gaps</p>
   <h1>{esc(family.get('display_name'))}</h1>
   <p>{esc(family.get('summary'))}</p>
+{headline_html}
   <div class="lineage">{lineage}</div>
 </div></header>
 <main id="main"><div class="wrap family-main">
   <div class="signals" aria-label="Family signals">
-    <div class="signal"><span>B70 fit</span><b>{esc(fit.get('band') or 'Pending')}</b><small>{esc(fit.get('scope') or 'local deployment fit')}, reviewed {esc(fit.get('reviewed_at') or family.get('updated_at'))}</small></div>
-    <div class="signal"><span>Quality evidence</span><b>{esc(str(quality.get('band') or 'Pending').replace('-', ' '))}</b><small>{esc(quality.get('scope') or 'No family-wide quality score is inferred from speed evidence.')}</small></div>
-    <div class="signal"><span>Interest snapshot</span><b>{esc(popularity_value)}</b><small>{esc(popularity_detail)}</small></div>
-    <div class="signal"><span>Evidence slices</span><b>{measured_count}</b><small>run arms and measured series; every point links to proof</small></div>
-    <div class="signal"><span>Stored estimates</span><b>{estimate_count}</b><small>versioned gap estimates only; live OPT grades stay separate</small></div>
+    <div class="signal" title="{esc(fit.get('scope') or 'local deployment fit')}, reviewed {esc(fit.get('reviewed_at') or family.get('updated_at'))}"><span>B70 fit</span><b>{esc(fit.get('band') or 'Pending')}</b></div>
+    <div class="signal" title="{esc(quality.get('scope') or 'No family-wide quality score is inferred from speed evidence.')}"><span>Quality evidence</span><b>{esc(str(quality.get('band') or 'Pending').replace('-', ' '))}</b></div>
+    <div class="signal" title="{esc(popularity_detail)}"><span>Interest</span><b>{esc(popularity_value)}</b></div>
+    <div class="signal" title="Run arms and measured series; every point links to proof"><span>Evidence slices</span><b>{measured_count}</b></div>
+    <div class="signal" title="Versioned gap estimates only; live OPT grades stay separate"><span>Stored estimates</span><b>{estimate_count}</b></div>
   </div>
-  <p class="scope-note"><strong>Transfer boundary:</strong> {esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p>
+  <details class="fine"><summary>Transfer boundary</summary><p>{esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
-  <div class="section-head"><div><h2>Measured slices</h2><p>Metric switches change the question without changing the configuration. Whiskers retain every captured repeat; no missing point is interpolated.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
+  <div class="section-head"><div><h2>Measured slices</h2><p>Every point links to its proof; the buttons switch metric.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
   <div class="views-grid">{views}</div>
 
 {coverage_section}{closures_section}
 
-  <div class="section-head"><div><h2>Packets and recipes</h2><p>Quantizations are deployment variants inside this family. Lower-maturity packets stay visible with their evidence boundary instead of disappearing.</p></div></div>
+  <div class="section-head"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid">{packets}</div>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="{esc(source)}"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
