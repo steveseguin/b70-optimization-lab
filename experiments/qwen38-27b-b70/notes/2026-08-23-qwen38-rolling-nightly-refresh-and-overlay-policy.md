@@ -1,15 +1,19 @@
 # Rolling XPU nightly refresh and optimization-overlay policy
 
-Date: 2026-08-23. This note changes the active development base; it does not
-rewrite any historical result.
+Date: 2026-08-23. This note changes the active development policy from an
+image tag to freshly resolved literal upstream `main`; it does not rewrite any
+historical result.
 
 ## Decision
 
-Active development follows the newest available upstream code. The rolling
-`vllm/vllm-openai-xpu:nightly` tag must be pulled again at the start of active
-runtime work, resolved to an immutable repository digest, and launched only by
-that resolved digest. A commit-tagged or digest-pinned prior nightly remains a
-reproduction/rollback anchor, not the active nightly.
+Active development follows the literal newest upstream code, not merely the
+newest published image. At the start of runtime work, resolve the upstream
+vLLM and XPU-kernel `main` heads as well as the rolling
+`vllm/vllm-openai-xpu:nightly` tag. Pull and pin the image by immutable digest,
+but when its embedded sources trail upstream, treat it only as the
+runtime/comparison base and build a clearly labeled custom-current-main source
+identity. A commit-tagged or digest-pinned prior nightly remains a
+reproduction/rollback anchor, not the active source base.
 
 Accepted lab optimizations are a maintained overlay on that moving base.
 Source patches, launcher settings, environment, topology, compilation mode,
@@ -19,9 +23,11 @@ accepted changes, and rerun mechanism/correctness/performance gates. A patch is
 never silently dropped because it conflicts. Negative and diagnostic patches
 remain preserved but are not automatically promoted.
 
-## Resolved image identity
+## Resolved official-image identity
 
-The tag was inspected and pulled on 2026-08-23. Docker reported:
+The tag was inspected and pulled on 2026-08-23. This section preserves the
+official-image comparison identity; it does not assert that the image still
+contains the literal upstream head. Docker reported:
 
 - source tag: `vllm/vllm-openai-xpu:nightly`;
 - repository/index digest:
@@ -56,7 +62,7 @@ the image is recoverable from the registry. The new image leaves about 3 GB
 free, so topology caches must be created on ext4 one at a time, sealed/replayed,
 and archived deliberately; raw evidence must not be deleted to make room.
 
-## What the 30.2 / 48.9 / 71.7 result actually used
+## What the pinned TP-scale result actually used
 
 The certified target-only graph column used the stock official image
 `nightly-e9d1398d9edfd90fcc1cf783805240e3effec013` with recorded local image
@@ -84,7 +90,7 @@ The optimization overlay that must transfer is:
   cache replay.
 
 Historical diagnostic values remain TP1 `30.2178 / 30.2569`, TP2
-`48.8301 / 48.9505`, and TP4 `71.6741 / 71.5488`. Historical strict
+`48.8301 / 48.950458800865434`, and TP4 `71.6741 / 71.5488`. Historical strict
 natural-EOS values remain TP1 `30.31067504052998`, TP2
 `49.01965141150585`, and TP4 `71.29326283364946 / 71.39843006187554`.
 They are not lowered or relabeled if the new base regresses.
@@ -111,11 +117,14 @@ negative/unsafe patches remain evidence, not current defaults.
 
 Use
 [`run-20260823-qwen38-rolling-nightly-strict-smoke.sh`](../scripts/run-20260823-qwen38-rolling-nightly-strict-smoke.sh).
-It pulls the rolling tag, resolves one matching immutable RepoDigest, verifies
+It is the official-image comparison/replay runner. It pulls the rolling tag,
+resolves one matching immutable RepoDigest, verifies
 the tag and digest map to the same image ID, records both identities, launches
 only the immutable reference, verifies model bytes through direct and ordinary
-reads, and preserves the strict cache/canary/quality contracts. The two dated
-old-image launchers remain unchanged.
+reads, and preserves the strict cache/canary/quality contracts. It does not
+prove the embedded vLLM or kernel source equals current upstream `main`; a
+separate custom-current-main build/runner identity is required when the image
+trails. The two dated old-image launchers remain unchanged.
 
 Qualification proceeds TP1 -> TP2 -> TP4. Each topology needs a fresh cache
 and exact replay. Stop before the next topology for an identity, boot, graph,

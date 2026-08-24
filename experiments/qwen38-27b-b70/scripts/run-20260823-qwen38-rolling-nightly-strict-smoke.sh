@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# Opt-in fresh-cache smoke/final runner for forward development on the rolling
-# Qwen3.8 XPU nightly. Historical pinned-image runners remain separate.
+# Opt-in fresh-cache smoke/final runner for the official rolling Qwen3.8 XPU
+# image comparison/replay lane. Historical pinned-image runners remain
+# separate. This runner does not establish that the image contains literal
+# current upstream main; use a separately labeled custom-current-main build
+# when the embedded source trails upstream.
 #
 # Usage: run-20260823-qwen38-rolling-nightly-strict-smoke.sh \
 #   MTP KV MAXLEN GPUS PORT OUT_DIR SUITE CACHE_DIR

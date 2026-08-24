@@ -1,0 +1,508 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-08-23",
+  "status": "preservation-gate-passed",
+  "policy": {
+    "active_base": "fresh custom build from literal upstream main heads",
+    "official_nightly_role_when_behind": "runtime base and comparison lane",
+    "legacy_tree_policy": "freeze; never wholesale rebase",
+    "result_policy": "append-only identities; never overwrite or lower historical highs"
+  },
+  "observed_heads": {
+    "official_nightly": {
+      "index_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+      "amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
+      "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124"
+    },
+    "vllm_upstream_main": "cd329413e2bb2086c2c97c373dcc3bd1ff29fa9f",
+    "vllm_xpu_kernels_upstream_main": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
+    "must_reresolve_before_build": true
+  },
+  "frozen_trees": {
+    "vllm": {
+      "path": "/home/steve/src/vllm",
+      "head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+      "tracked_clean": true,
+      "ahead_of_configured_upstream": 16942,
+      "behind_configured_upstream": 2468
+    },
+    "vllm_xpu_kernels": {
+      "path": "/home/steve/src/vllm-xpu-kernels",
+      "head": "2dd55f380df753a10a88fcd9e96192561066e713",
+      "tracked_clean": true,
+      "nested_onednn": "80afa71049cd69a3df32adcccb623b12cd7baa22"
+    }
+  },
+  "external_recovery": {
+    "directory": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823",
+    "human_manifest": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/MANIFEST.md",
+    "structured_overlay_manifest": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-current-main-overlay-manifest.json",
+    "artifacts": [
+      {
+        "name": "vllm-44fc8fde-all-refs.bundle",
+        "sha256": "0f465e8a07aeb923bde6d882b702a398ffc86d65fd5c0df0a1205448a15f4ac3",
+        "verified": true
+      },
+      {
+        "name": "vllm-xpu-kernels-2dd55f38-all-refs.bundle",
+        "sha256": "97d13d0f3cad9721454e0e02bcb1e4b23e6c705c0d2fcb8b9849aaeb412574f7",
+        "verified": true
+      },
+      {
+        "name": "vllm-xpu-kernels-2dd55f38-build-and-dso-snapshot.tar.zst",
+        "sha256": "4aed722125c5cda728251bfd541156e6643f25f241d4d4ee301311de6a4fe0a7",
+        "entries": 61869,
+        "zstd_verified": true,
+        "tar_traversal_verified": true
+      },
+      {
+        "name": "vllm-xpu-kernels-2dd55f38-files.sha256z",
+        "sha256": "a345f9a4f85ba1a32ce9b12dd93ab295248c1e1e687ce648fda99b092b89236f"
+      }
+    ],
+    "local_cleanup": {
+      "removed_ignored_build_tree_du": "13G",
+      "removed_archived_backup_dso_count": 109,
+      "removed_archived_backup_dso_bytes": 10458754872,
+      "active_dsos_retained_and_rehashed": true,
+      "root_free_space_after": "25G"
+    }
+  },
+  "protected_target_only_decode_tok_s": {
+    "pinned_diagnostic": {
+      "tp1": [30.2178, 30.2569],
+      "tp2": [48.8301, 48.950458800865434],
+      "tp4": [71.6741, 71.5488]
+    },
+    "pinned_strict": {
+      "tp1": [30.31067504052998],
+      "tp2": [49.01965141150585],
+      "tp4": [71.29326283364946, 71.39843006187554]
+    },
+    "a356_stock_diagnostic": {
+      "tp1": [30.329809361830037],
+      "tp2": [48.64759224153825],
+      "tp4": [71.34404937397696]
+    },
+    "a356_stock_strict": {
+      "tp1": [30.241645123711923, 30.243714296955797],
+      "tp2": [48.49048978038331],
+      "tp4": [71.9001988117144, 71.2457420049019]
+    },
+    "a356_tp2_decision_overlay_diagnostic": [49.05894025767351],
+    "a356_tp2_decision_overlay_strict": [49.00935245117815],
+    "a356_tp4_decision_overlay_diagnostic": [71.72254506718171],
+    "a356_tp4_decision_overlay_strict": [71.35287190161719, 71.45427094575045]
+  },
+  "overlays": {
+    "target_only_accepted": {
+      "source_patch": false,
+      "classification": "accepted_performance",
+      "acceptance_scope": "exact versioned model, launch, graph, cache, autotune-decision, and qualification contract",
+      "current_main_disposition": "remap_and_requalify",
+      "components": [
+        "pinned model identity",
+        "launch and topology contract",
+        "XPU graph configuration",
+        "fresh ext4 cache policy",
+        "versioned autotune decision files",
+        "quality, baseline, needle, cache-zero, and token-accounting gates"
+      ]
+    },
+    "target_only_decision_overlays": {
+      "tp2": {
+        "classification": "wip",
+        "result_status": "quality_qualified_partial_not_promoted",
+        "source_runtime": "e9d1398d9edfd90fcc1cf783805240e3effec013",
+        "target_runtime": "a3561ef8e49d3545c4078df43444beb4c98ae124",
+        "artifact_type": "Triton .best_config decisions only",
+        "seed_file_count": 78,
+        "seed_manifest_file_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757",
+        "decode_tok_s": {
+          "diagnostic": [49.05894025767351],
+          "strict": [49.00935245117815]
+        },
+        "default_enabled": false,
+        "current_main_disposition": "remap_and_requalify",
+        "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.json"
+      },
+      "tp4": {
+        "classification": "accepted_performance",
+        "result_status": "accepted_versioned_overlay",
+        "source_runtime": "e9d1398d9edfd90fcc1cf783805240e3effec013",
+        "target_runtime": "a3561ef8e49d3545c4078df43444beb4c98ae124",
+        "artifact_type": "Triton .best_config decisions only",
+        "seed_file_count": 152,
+        "seed_manifest_file_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2",
+        "decode_tok_s": {
+          "diagnostic": [71.72254506718171],
+          "strict": [71.35287190161719, 71.45427094575045]
+        },
+        "default_enabled": false,
+        "current_main_disposition": "remap_and_requalify",
+        "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp4-autotune-winner-overlay-result.json"
+      }
+    },
+    "accepted_coupled_historical": [
+      "record-20260711 complete vLLM+kernel+FA+oneCCL+runtime packet",
+      "target INT8 LM-head behavior with BF16 scales",
+      "draft INT4 group128 head behavior with BF16 scales"
+    ],
+    "native_mtp_historical_record": {
+      "classification": "accepted_performance",
+      "acceptance_scope": "coupled_packet_only",
+      "result_status": "retained_historical_record",
+      "current_main_disposition": "oracle_then_selective_port",
+      "default_enabled": false,
+      "decode_tok_s": 95.384867741895,
+      "suite_identity": "selection-12 short-context",
+      "source_manifest": {
+        "path": "patches/qwen36-27b-autoround-int4-b70/record-20260711/source-manifest.json",
+        "sha256": "1a21c604fab3b6cace45f499b410b2e96ae784f9f04b1c67ea9a858c30ce35c2"
+      },
+      "packet_checksums": {
+        "path": "patches/qwen36-27b-autoround-int4-b70/record-20260711/SHA256SUMS",
+        "README.md": "c69c8ce2805b4ae40c29a47a6698f61cbf2efc93aa07a94134ab63420baf462c",
+        "source-manifest.json": "1a21c604fab3b6cace45f499b410b2e96ae784f9f04b1c67ea9a858c30ce35c2",
+        "vllm-final-working.patch": "dcf84454f64bdeca546aa1697f4cd6af89fa95bb56f80ed314ad4d364e134b24",
+        "vllm-record-commits.bundle": "672b86f07952e93a7d103beefce3ddd93f8a4d58613e710830e75e8331ab12fc",
+        "vllm-xpu-kernels-final-working.patch": "edcb9314b43d6990474dfb5d64e3716e8d4c33618ec0e3fbd11ae671e47c8c1f",
+        "vllm-xpu-kernels-record-commits.bundle": "28280d89fb7a3b62565602dd0e074be4ee1911d748c64a8cc580a2e6def565bb"
+      },
+      "vllm": {
+        "public_prerequisite": "c51df43005726a09c6eb7348e8c1b00501c70a8e",
+        "recorded_head": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+        "bundle_sha256": "672b86f07952e93a7d103beefce3ddd93f8a4d58613e710830e75e8331ab12fc",
+        "working_patch_sha256": "dcf84454f64bdeca546aa1697f4cd6af89fa95bb56f80ed314ad4d364e134b24"
+      },
+      "vllm_xpu_kernels": {
+        "public_prerequisite": "28e1f5e74c15744b69cf3b760f6160ceabd15de0",
+        "recorded_head": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171",
+        "bundle_sha256": "28280d89fb7a3b62565602dd0e074be4ee1911d748c64a8cc580a2e6def565bb",
+        "working_patch_sha256": "edcb9314b43d6990474dfb5d64e3716e8d4c33618ec0e3fbd11ae671e47c8c1f"
+      },
+      "graph_safe_flashattention_companions": [
+        {
+          "path": "experiments/qwen27_graphsafe_flash_attention/qwen27-chunk-prefill-local-accessor.patch",
+          "sha256": "1f1a016bbf9cd4a71a47657846143913d879424fce73a9f669f982bcdaad165e",
+          "classification": "accepted_performance",
+          "acceptance_scope": "historical_graph_capture",
+          "current_main_disposition": "probe_then_port"
+        },
+        {
+          "path": "experiments/qwen27_graphsafe_flash_attention/qwen27-chunk-prefill-completion-barrier.patch",
+          "sha256": "1c2a25bbed856f1e739cb69bc5070b5dd071e38cedb1ccb0cfb21308bbcd17b8",
+          "classification": "correctness_only",
+          "acceptance_scope": "historical_graph_capture",
+          "current_main_disposition": "probe_then_port"
+        },
+        {
+          "path": "experiments/qwen27_graphsafe_flash_attention/qwen27-force-chunk-decode.patch",
+          "sha256": "383730d64b9bc818a56116ab15c2fecca9ab2a00709e08791572244708521a2a",
+          "classification": "accepted_performance",
+          "acceptance_scope": "short_context_fallback_only",
+          "current_main_disposition": "probe_then_port",
+          "default_enabled": false
+        },
+        {
+          "path": "experiments/qwen27_graphsafe_flash_attention/qwen27-force-chunk-decode-python.patch",
+          "sha256": "7fc9847e43e4f4263bfc9c268d9a9c9c834f52bde138af56b7ffb0e07dc5242c",
+          "classification": "correctness_only",
+          "acceptance_scope": "coupled_to_cpp_short_context_fallback",
+          "current_main_disposition": "probe_then_port",
+          "default_enabled": false
+        }
+      ],
+      "runtime_manifest": "repro/qwen36-27b-autoround-int4-b70/manifests/runtime.json",
+      "oneccl": {
+        "top_commit": "b52f40c07f0b140e6aba87548c80720a350a9827",
+        "libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
+        "libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+        "kernels_spv_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9"
+      }
+    },
+    "already_upstream": [
+      "native Qwen GDN MTP",
+      "split convolution/delta speculation",
+      "GDN eager graph break",
+      "GDN bounds and WAR-fence safety fixes"
+    ],
+    "historical_safety_provenance_already_represented_upstream": [
+      {
+        "classification": "already_upstream",
+        "legacy_commit": "3637764dbdf4e1846f1f83f35a58bb3dd3156369",
+        "upstream_equivalent_commit": "c9989668e7f280747680def85d58d116126c2249",
+        "verified_at_upstream_head": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
+        "upstream_paths_and_lines": [
+          "csrc/xpu/gdn_attn/xe_2/chunk_gated_delta_rule_kernels_xe2.hpp:202-216",
+          "csrc/xpu/gdn_attn/xe_2/chunk_gated_delta_rule_kernels_xe2.hpp:776-794"
+        ],
+        "behavior": "fence GDN SLM refills on Xe2",
+        "current_main_disposition": "skip_cherry_pick_verify_semantics"
+      },
+      {
+        "classification": "already_upstream",
+        "legacy_commit": "add17867ce19b8e3eaa39c2a37f59b6e1a556aa7",
+        "upstream_equivalent_commit": "18b78776ad897daef8b5aeb16bfb919307d97ce4",
+        "verified_at_upstream_head": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
+        "upstream_paths_and_lines": [
+          "csrc/xpu/gdn_attn/xe_2/chunk_gated_delta_rule_kernels_xe2.hpp:70-80"
+        ],
+        "behavior": "guard GDN virtual head bounds",
+        "current_main_disposition": "skip_cherry_pick_verify_semantics"
+      },
+      {
+        "classification": "already_upstream",
+        "legacy_commit": "6aed46a4f7ccf6db47323fe9e8eeed243b0ad3d8",
+        "upstream_equivalent_commit": "5813d7486fb7516adc005732d669cdaa48622c61",
+        "verified_at_upstream_head": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
+        "upstream_paths_and_lines": [
+          "csrc/xpu/gdn_attn/causal_conv1d.hpp:450-461",
+          "csrc/xpu/gdn_attn/xe_2/chunk_causal_conv1d_xe2.hpp:625-636"
+        ],
+        "behavior": "guard Qwen GDN convolution bounds",
+        "current_main_disposition": "skip_cherry_pick_verify_semantics"
+      }
+    ],
+    "sampler_optional_token_changing_policy": {
+      "classification": "accepted_performance",
+      "acceptance_scope": "optional_token_changing_policy",
+      "result_status": "accepted_only_within_policy",
+      "base_commit": "c6dc1a3f6d56729d3bde5544420690be9416c5fd",
+      "accepted_speed_commits": [
+        "011713d34be01018de8f845242807b0937fb8896",
+        "44fc8fde09fc311d3099dab10366b672d9142ea4"
+      ],
+      "packet_path": "patches/qwen36-27b-autoround-int4-b70/determinism-closeout-20260818",
+      "prerequisite": "95a76ff89173ff56e90a2ed384fde2cea3c015e6",
+      "bundle_sha256": "eb565490b7875d63d91c9e26b4cc1c817b469fca57efdeb62b3177eb9f77fed3",
+      "working_patch_sha256": "638545d9d548cd42a2674b43eedcb5c1328c678e3a971129ccac3cba45e375d0",
+      "qwen38_changed_prompts_with_margin": "18/25",
+      "default_enabled": false,
+      "current_main_disposition": "port_last_if_policy_retained"
+    },
+    "insufficient_corruption_fixes": [
+      {
+        "commit": "0ab8205756b52082399ae1849c0cfb6915f63f04",
+        "path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-scratch-zero-init-20260818.patch",
+        "sha256": "45791a28c8ef609368ab84fbc3d20be00759841df49c2760a7c35e9573244d5b",
+        "classification": "wip",
+        "result_status": "insufficient",
+        "acceptance_scope": "real candidate fix, never endpoint-qualified",
+        "finding": "zero-initializes persistent buffers but does not identify the read-before-write site or fix dose-8 multi-chunk corruption",
+        "default_enabled": false,
+        "current_main_disposition": "do_not_port_until_mechanism_fixed"
+      }
+    ],
+    "legacy_correctness_chain": [
+      {
+        "commit": "ad765a733ab5749abee1b3f0058ad78c7401fe18",
+        "component": "XPU kernels",
+        "behavior": "merge glue for GDN and batched GEMM",
+        "classification": "already_upstream",
+        "acceptance_scope": "legacy_behavior",
+        "artifact_recovery": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/vllm-xpu-kernels-2dd55f38-all-refs.bundle",
+        "current_main_disposition": "skip_text_port_verify_semantics"
+      },
+      {
+        "commit": "d07ee87a939d7a1f0e2a548207ef4c014f524d6d",
+        "component": "XPU kernels",
+        "behavior": "speculative token mapping",
+        "classification": "correctness_only",
+        "acceptance_scope": "legacy_behavior",
+        "artifact_recovery": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/vllm-xpu-kernels-2dd55f38-all-refs.bundle",
+        "current_main_disposition": "semantic_oracle_then_selective_port"
+      },
+      {
+        "commit": "50e729b1e87559eef8709c9836195f50766ba791",
+        "component": "XPU kernels",
+        "behavior": "chunk completion publication",
+        "classification": "correctness_only",
+        "acceptance_scope": "legacy_behavior",
+        "artifact_recovery": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/vllm-xpu-kernels-2dd55f38-all-refs.bundle",
+        "current_main_disposition": "semantic_oracle_then_selective_port"
+      },
+      {
+        "commit": "9bcc0cb9429683fbc84011332c0a3acd698ab8dd",
+        "component": "XPU kernels",
+        "behavior": "verifier prefix state",
+        "classification": "correctness_only",
+        "acceptance_scope": "legacy_behavior",
+        "artifact_recovery": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/vllm-xpu-kernels-2dd55f38-all-refs.bundle",
+        "current_main_disposition": "semantic_oracle_then_selective_port"
+      },
+      {
+        "commit": "2dd55f380df753a10a88fcd9e96192561066e713",
+        "component": "XPU kernels",
+        "behavior": "INT8 quantization ordering",
+        "classification": "correctness_only",
+        "acceptance_scope": "legacy_behavior",
+        "artifact_recovery": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/vllm-xpu-kernels-2dd55f38-all-refs.bundle",
+        "current_main_disposition": "semantic_oracle_then_selective_port"
+      }
+    ],
+    "conditional_source_deltas": [
+      {
+        "component": "ReplaySSM commit transaction",
+        "artifact_path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-replayssm-commit-race-fix-20260820.patch",
+        "sha256": "7f011d709b55ddeddfca69ab01f587a947648f97c71ec76f68aa85e5b38cca3e",
+        "classification": "correctness_only",
+        "result_status": "race_proven_and_fixed_in_replayssm_lane",
+        "depends_on": "ReplaySSM deliberately revived",
+        "default_enabled": false,
+        "current_main_disposition": "deferred_unless_dependency_revived",
+        "evidence": "experiments/qwen38-27b-b70/notes/2026-08-20-replayssm-commit-pending-race-found-and-fixed.md"
+      }
+    ],
+    "excluded_default_details": [
+      {
+        "commit": "534bd9ccca74e0b076067a212271f896bb137d2a",
+        "component": "persistent GDN graph scratch",
+        "source_path": "csrc/xpu/gdn_attn/gdn_attn_interface.cpp",
+        "classification": "failed_rejected",
+        "result_status": "unsafe_long_context_dose8",
+        "default_enabled": false,
+        "current_main_disposition": "do_not_port_until_mechanism_fixed",
+        "artifact_recovery": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/vllm-xpu-kernels-2dd55f38-all-refs.bundle",
+        "evidence": "results/qwen36-27b-autoround-int4-b70/fixed-scratch-validation-20260815.json"
+      },
+      {
+        "commit": "4050008863bf0db6047935f775378ab882265300",
+        "component": "per-layer persistent GDN graph scratch",
+        "source_path": "csrc/xpu/gdn_attn/gdn_attn_interface.cpp",
+        "classification": "failed_rejected",
+        "result_status": "did_not_fix_corruption",
+        "default_enabled": false,
+        "current_main_disposition": "do_not_port",
+        "artifact_recovery": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/vllm-xpu-kernels-2dd55f38-all-refs.bundle",
+        "evidence": "results/qwen36-27b-autoround-int4-b70/partition-validation-20260815.json"
+      },
+      {
+        "commit": "2f18699b7f99fb8748f2dc56679925c847bee8f9",
+        "component": "explicit oneDNN INT4 input dependency",
+        "source_paths": [
+          "csrc/xpu/onednn/int4_gemm_w4a16.h",
+          "csrc/xpu/onednn/onednn_ext.h",
+          "csrc/xpu/onednn/onednn_matmul.cpp",
+          "csrc/xpu/ops.h",
+          "csrc/xpu/torch_bindings.cpp"
+        ],
+        "classification": "correctness_only",
+        "result_status": "performance_neutral",
+        "default_enabled": false,
+        "current_main_disposition": "probe_only_if_current_dependency_oracle_fails",
+        "artifact_recovery": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/vllm-xpu-kernels-2dd55f38-all-refs.bundle",
+        "evidence": "patches/qwen36-27b-autoround-int4-b70/int4-input-dependency-20260817/"
+      },
+      {
+        "commit": "1dbb48599c55de3be8dc74e0cbdfc831d9481e06",
+        "component": "in-place all-reduce",
+        "source_paths": [
+          "vllm/distributed/device_communicators/base_device_communicator.py",
+          "vllm/distributed/device_communicators/xpu_communicator.py",
+          "vllm/distributed/parallel_state.py"
+        ],
+        "classification": "correctness_only",
+        "result_status": "performance_rejected_80.859_tok_s",
+        "default_enabled": false,
+        "current_main_disposition": "do_not_port_for_performance",
+        "artifact_recovery": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/vllm-44fc8fde-all-refs.bundle",
+        "evidence": "notes/2026-08-18-qwen36-int4-determinism-speed-tradeoff.md"
+      },
+      {
+        "component": "mtp.fc INT4",
+        "artifact_path": "patches/qwen38-27b-mtp-fc-int4-b70/vllm-mtp-fc-int4-default-off-20260822.diff",
+        "sha256": "95fca14c87dabbec6de40f2089985880fa2a604a47d4796123a3254eb5a0a49c",
+        "classification": "failed_rejected",
+        "result_status": "quality_clean_rate_neutral",
+        "default_enabled": false,
+        "current_main_disposition": "do_not_port_as_speed_lever"
+      }
+    ],
+    "unpromoted_candidate_details": [
+      {
+        "component": "Q64xK32 r2 attention",
+        "artifact_path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-m6-head256-q64k32-chunk-prefill-r2-20260821.patch",
+        "sha256": "9386432015f5c9cd330dd7cfb785a16f259cce8563f44da9f812dcceb342138a",
+        "classification": "wip",
+        "result_status": "operator_qualified_endpoint_blocked",
+        "default_enabled": false,
+        "current_main_disposition": "defer_until_corruption_fixed"
+      },
+      {
+        "component": "draft INT4 top-K rerank",
+        "artifact_path": "experiments/qwen38-27b-b70/patches/vllm-qwen38-draft-int4-topk-rerank-candidate-20260818.patch",
+        "sha256": "7d17e7dbd4b160bf016a2e3d789618ed911139ac5fd0c16d6ac356a6600bbf9a",
+        "classification": "wip",
+        "default_enabled": false,
+        "current_main_disposition": "rebase_only_after_core_correctness"
+      },
+      {
+        "component": "oneDNN INT4 determinism pad",
+        "artifact_path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-onednn-int4-determinism-pad-20260820.patch",
+        "sha256": "3bfdb410a16c1af83ed2e3c798fda99a6ec9340be5c4f4a55807dbedc76490fe",
+        "classification": "wip",
+        "result_status": "scoped_tp1_causal_positive_only",
+        "default_enabled": false,
+        "current_main_disposition": "retest_on_current_dependency_oracle"
+      },
+      {
+        "component": "MTP4 serial exact",
+        "artifact_path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-mtp4-serial-exact-candidate-20260818.patch",
+        "sha256": "2889a74a469e97a70189c90752c0ca13ae84801eaf690f2ba2caa20ba8fd916f",
+        "classification": "wip",
+        "default_enabled": false,
+        "current_main_disposition": "defer_until_corruption_fixed"
+      },
+      {
+        "component": "packed GDN ordinary shape",
+        "artifact_path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-packed-gdn-ordinary-code-shape-candidate-20260818.patch",
+        "sha256": "e4f46edcfd949768e1b124dfd57bd076c17835b35cbc22ed2ab6ad646e1aa1b6",
+        "classification": "wip",
+        "default_enabled": false,
+        "current_main_disposition": "retest_after_current_main_baseline"
+      }
+    ],
+    "conditional": [
+      "local-accessor and completion-barrier FA behavior after current graph oracle",
+      "compiled all-gather or pinned oneCCL only after current collective failure",
+      "accepted-state transaction behavior only after current native transaction failure",
+      "ReplaySSM race fix only if ReplaySSM is revived",
+      "bounded-margin sampler implementation default-off"
+    ],
+    "excluded_default": [
+      "persistent scratch",
+      "per-layer scratch isolation",
+      "explicit INT4 dependency",
+      "in-place all-reduce",
+      "failed margin and serialization stacks",
+      "diagnostic D1/D2/poison/factorial/state traces",
+      "mtp.fc INT4 rate-neutral patch"
+    ],
+    "unpromoted_candidates": [
+      "Q64xK32 r2",
+      "draft top-K rerank",
+      "oneDNN INT4 padding",
+      "MTP4 serial exact",
+      "packed-GDN ordinary shape"
+    ]
+  },
+  "qualification_order": [
+    "fresh main-only integration trees",
+    "zero-lab-overlay current-main control",
+    "target-only TP1 then TP2 then TP4",
+    "remap target-only autotune decisions and enforce protected floors",
+    "current graph+MTP route on/off sentinel",
+    "separate target INT8 and draft INT4 head ports",
+    "current collectives and native GDN transaction first",
+    "active-depth 0 through 32K matrix",
+    "separate versioned neural.download profiles"
+  ],
+  "packet_integrity": {
+    "stale_file": "repro/qwen36-27b-autoround-int4-b70/SHA256SUMS",
+    "corrected_download_model_sha256": "45b4de5ef716585845379a7772bb903617306c1b374ed044c4388a9d6efa0840",
+    "complete_repro_verifier_passed": true,
+    "record_source_checksums_passed": true,
+    "determinism_closeout_checksums_passed": true
+  }
+}

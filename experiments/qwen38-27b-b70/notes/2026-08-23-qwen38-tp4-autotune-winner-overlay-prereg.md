@@ -77,7 +77,7 @@ The preserved bundle and identity gates are under
 All three authorized arms completed without an identity, correctness, quality,
 or cache-integrity failure. Fresh diagnostic measured `71.722545`; strict A/B
 measured `71.352872 / 71.454271`. Both strict arms cleared the lower floor and
-B cleared the high bar, so the exact newest-runtime overlay profile passed the
+B cleared the high bar, so the exact `a3561ef8` official-image overlay profile passed the
 frozen stable-full-recovery rule. No fourth arm is authorized. See the
 [result note](2026-08-23-qwen38-tp4-autotune-winner-overlay-result.md) and
 [structured result](../data/2026-08-23-qwen38-tp4-autotune-winner-overlay-result.json).

@@ -150,7 +150,8 @@ full replay-A quality. That exact overlay profile is accepted. See the
 
 ## Frozen disposition
 
-- Keep `a3561ef8` as the active development base.
+- Keep `a3561ef8` as the last qualified official-image comparison/replay base;
+  literal freshly resolved upstream `main` is the active development target.
 - Keep all pinned diagnostic and strict frontiers unchanged.
 - Treat all TP1/2/4 newest arms as quality-qualified runtime profiles.
 - Accept the exact `a3561ef8` TP4 historical-winner overlay as a separate

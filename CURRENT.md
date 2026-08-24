@@ -44,9 +44,16 @@ The closed no-training Muse Q8/WOQ record remains approved by LocalMaxxing as
 It is a Q8/WOQ target-verified result, not BF16/lossless or universally
 token-exact evidence.
 
-## Active Rolling XPU Nightly Development Base (2026-08-23)
+## Active Upstream-Current XPU Integration Policy (2026-08-23)
 
-The active development base is now the rolling upstream tag
+The active development target is a fresh custom build from the literal vLLM
+and vLLM XPU-kernel upstream `main` heads, resolved immediately before every
+integration build. A published `nightly` image is not current when either
+source head is ahead of it. In that case the image is only a runtime base and
+an official-image comparison lane; it never substitutes for the current-main
+source identity.
+
+The last qualified official-image comparison was the rolling tag
 `vllm/vllm-openai-xpu:nightly`, pulled and resolved on 2026-08-23 to the
 immutable repository digest
 `sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35`.
@@ -58,23 +65,25 @@ The image was created `2026-08-23T05:09:33.938169411Z` and contains:
   vLLM XPU kernels `0.1.13.2`;
 - 18 vLLM commits after the certified `e9d1398d9` image below.
 
-This remains the current development base. Its complete MTP0/F16/graph column
-is now correctness- and quality-qualified at TP1/2/4, but it is not a wholesale
-performance replacement for the pinned frontier below. TP1 strict repeated
-about 0.22% slower, TP2 strict was 1.08% slower, and a TP4 strict 71.9002 high
-fell to 71.2457 on an exact same-cache repeat. The old `30.2 / 48.9 / 71.7`
-graph column used an unmodified official image: no local vLLM patch, XPU-kernel
-patch, source mount, DSO overlay, or image mutation was hidden in that result.
-Its optimization overlay is the exact graph, container IPC, device-selection,
-cache-isolation, model, memory, and benchmark contract. Carry that contract
-forward first; do not lower or relabel any historical speed while the rolling
-base is being qualified.
+This official-image identity remains the last qualified comparison base. Its
+complete MTP0/F16/graph column is correctness- and quality-qualified at
+TP1/2/4, but it is not a wholesale performance replacement for the pinned
+frontier below and is not proof of literal current-main behavior. TP1 strict
+repeated about 0.22% slower, TP2 strict was 1.08% slower, and a TP4 strict
+71.9002 high fell to 71.2457 on an exact same-cache repeat. The pinned
+`30.2178 / 48.8301 / 71.5488` diagnostic runs, whose corresponding captured
+highs are `30.2569 / 48.950458800865434 / 71.6741`, used an unmodified official
+image: no local vLLM patch, XPU-kernel patch, source mount, DSO overlay, or
+image mutation was hidden in that result. Its optimization overlay is the
+exact graph, container IPC, device-selection, cache-isolation, model, memory,
+and benchmark contract. Carry that contract forward first; do not lower or
+relabel any historical speed while current main is being qualified.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
 tune selected different winners. The capped TP2 preservation test transferred
 only 78 hash-matched historical `.best_config` decisions into a fresh
-newest-runtime compile; it did not copy compiled binaries or revert upstream.
+`a3561ef8` image compile; it did not copy compiled binaries or revert upstream.
 The diagnostic arm recovered from 48.6476 to **49.0589 tok/s**, a new
 overlay-identity diagnostic high, and passed its gate. The strict replay
 recovered from 48.4905 to **49.0094 tok/s**, passed the
@@ -85,8 +94,8 @@ quality-qualified partial recovery, not a promoted replacement. See the
 and [overlay result](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tp2-autotune-winner-overlay-result.md).
 
 The separately preregistered TP4 winner overlay is also closed. It seeded only
-152 hash-matched historical `.best_config` decisions into a fresh current-code
-compile. Diagnostic speed reached **71.722545 tok/s**; exact-cache strict A/B
+152 hash-matched historical `.best_config` decisions into a fresh `a3561ef8`
+image compile. Diagnostic speed reached **71.722545 tok/s**; exact-cache strict A/B
 reached **71.352872 / 71.454271 tok/s**. Both strict arms cleared the frozen
 historical floor and B cleared the high bar, with full replay-A quality and an
 unchanged 2,117-file cache. Accept this as an exact, versioned
@@ -105,11 +114,13 @@ patch was quality-clean but rate-neutral, and the D1/D2 state audit was
 diagnostic-only; neither is a mandatory performance overlay.
 
 Use the
-[rolling strict runner](experiments/qwen38-27b-b70/scripts/run-20260823-qwen38-rolling-nightly-strict-smoke.sh).
-It pulls the floating tag, resolves and launches only its immutable digest,
-checks the model through direct and ordinary reads, uses a fresh ext4 cache,
-and retains the strict canary, token-ID, natural-EOS, quality-baseline, and
-cache-replay gates. The dated pinned-image runners remain unchanged.
+[rolling official-image comparison runner](experiments/qwen38-27b-b70/scripts/run-20260823-qwen38-rolling-nightly-strict-smoke.sh)
+only for that comparison/replay lane. It pulls the floating tag, resolves and
+launches only its immutable digest, checks the model through direct and
+ordinary reads, uses a fresh ext4 cache, and retains the strict canary,
+token-ID, natural-EOS, quality-baseline, and cache-replay gates. It does not
+prove that literal current main was tested. The dated pinned-image runners
+remain unchanged.
 
 ## Pinned Certified Qwen3.8 TP-Scale Frontier (2026-08-23)
 
@@ -181,9 +192,12 @@ and the earlier
 
 Immediate order:
 
-1. before every runtime campaign, resolve the absolute newest rolling nightly;
-   if it moved, remap accepted overlays and rerun TP1/2/4 graph sentinels before
-   matrix work. Never use v0.27.1 or an older nightly as the active base;
+1. before every runtime campaign, resolve the literal upstream vLLM and XPU
+   kernel `main` heads as well as the official rolling image. If the image
+   trails either required source head, use it only as the runtime/comparison
+   base and build a clearly labeled custom-current-main source identity. Remap
+   accepted overlays and rerun TP1/2/4 graph sentinels before matrix work.
+   Never use v0.27.1 or an older nightly as the active base;
 2. preserve the pinned image, stock rolling results, accepted overlay packets,
    isolated-cache manifests, raw roots, and every captured high as distinct
    rollback/comparison identities;
@@ -211,7 +225,8 @@ Immediate order:
 Evidence and correction:
 [TP-scale packet](experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json),
 [finding](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-tpscale-nightly-finding.md),
-and [audit correction](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-nightly-audit-correction.md).
+[audit correction](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-nightly-audit-correction.md),
+and [current-main overlay preservation](experiments/qwen38-27b-b70/notes/2026-08-23-qwen38-absolute-current-main-overlay-preservation.md).
 
 ## mtp.fc INT4 integration: validated, quality-clean, rate-neutral (2026-08-22)
 
