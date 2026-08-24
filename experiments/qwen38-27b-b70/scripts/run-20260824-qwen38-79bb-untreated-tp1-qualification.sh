@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# Atomic, untreated-first TP1 qualification r2 for literal-current vLLM 79bb
-# and exact-current XPU kernel baaa. The first invocation closed before any
-# model arm at a mixed-runtime host gate. This corrected program still contains
-# no decision, source, DSO, or binary overlay. A speed-only miss is evidence for
-# a separate packet; it never authorizes carrying the closed 0ecc decisions in
-# this invocation.
+# Atomic, untreated-first TP1 qualification r3 for literal-current vLLM 79bb
+# and exact-current XPU kernel baaa. R1 closed at a mixed-runtime host gate; r2
+# passed that gate and then false-failed a procfs quiet comparison before any
+# model arm. This corrected program still contains no decision, source, DSO, or
+# binary overlay. A speed-only miss is evidence for a separate packet; it never
+# authorizes carrying the closed 0ecc decisions in this invocation.
 
 umask 077
 
@@ -28,10 +28,10 @@ model_manifest=$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json
 model_verifier=$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py
 bench_helper=$repo/scripts/bench-openai-realistic-suite.py
 quality_helper=$repo/scripts/qwen38-text-quality-suite.py
-prereg=$repo/experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-r2-prereg.md
+prereg=$repo/experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-r3-prereg.md
 hardware_gate_runner=$repo/experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-postreboot-hardware-gate.sh
-hardware_gate=${HARDWARE_GATE_ROOT:-/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-79bb-20260824-086de284-venvlib-r2}
-result_root=${RESULT_ROOT:-/home/steve/qwen38-current-main-runs/tp1-untreated-79bb-20260824-r2}
+hardware_gate=${HARDWARE_GATE_ROOT:-/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-79bb-20260824-086de284-venvlib-r3}
+result_root=${RESULT_ROOT:-/home/steve/qwen38-current-main-runs/tp1-untreated-79bb-20260824-r3}
 inputs=$result_root/inputs
 control_cache=$result_root/control-cache
 control_fresh_out=$result_root/control-fresh-diagnostic
@@ -44,7 +44,7 @@ sudo_pass_file=${SUDO_PASS_FILE:-/home/steve/SUDOPASSWORD.txt}
 expected_suite_sha256=292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c
 expected_baseline_sha256=738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18
 expected_receipt_sha256=92e8fa48ad09ee025fd16a8f29440d622715df0c300fade3023317cd756d948d
-expected_prereg_sha256=3fe64e088660b4863822ae87aeabad48c73f6ce2149f3c74137f899335286e45
+expected_prereg_sha256=1427f9baf6014308b6458997f74f4c78f9a60296d4987c183d86f212ccf7ac88
 expected_runner_sha256=cec5f3d852c84255822a4a5ee14d6829cd5efa6719ff9e8c59a904090d11c2b0
 expected_hardware_gate_runner_sha256=84b9f5025476f40cb3218dbe513718c6d37da1e4852d17031b403fa410e4c506
 expected_vllm_head=79bb395eea64dbfef99a55f010d2854db71f8571
@@ -336,11 +336,12 @@ verify_inputs() {
     die 'host kernel changed between untreated arms'
   uname -a | cmp -s - "$inputs/host-uname.txt" ||
     die 'host uname changed between untreated arms'
-  cmp -s /proc/sys/kernel/random/boot_id "$inputs/host-boot-id.txt" ||
+  cmp -- /proc/sys/kernel/random/boot_id \
+    "$inputs/host-boot-id.txt" >/dev/null ||
     die 'host rebooted between untreated arms'
   [[ $(<"$inputs/host-boot-id.txt") == "$expected_host_boot_id" ]] ||
     die 'frozen host boot is not the preregistered boot'
-  cmp -s /proc/cmdline "$inputs/host-cmdline.txt" ||
+  cmp -- /proc/cmdline "$inputs/host-cmdline.txt" >/dev/null ||
     die 'host command line changed between untreated arms'
   cmp -s "$hardware_gate/SHA256SUMS" \
     "$inputs/postreboot-hardware-gate-SHA256SUMS" ||

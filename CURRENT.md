@@ -126,18 +126,28 @@ This is failed-incomplete infrastructure, not 79bb correctness or speed
 evidence, and it changes no protected result. See the
 [failure record](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-hardware-gate-mixed-runtime-failure.md).
 
-The active next step is one separately preregistered corrected atomic attempt
-on fresh roots. Only the host gate's runtime coherence, DSO/origin checks,
-segfault accounting, and interleaved-log parser change; the 79bb image, strict
-runner, graph/cache/model contract, and every speed floor remain exact. A
-second gate failure stops without looping. Only a completed speed miss with
-every non-speed gate clean may permit deriving a separately versioned 79bb compatibility
-packet; if untreated 79bb passes, stop without testing old decisions and move
-to TP2 then TP4. No binary or generated kernel is transferred, and no result
-may lower a protected historical speed. See the
+R2 corrected the host gate and passed it completely: coherent runtime,
+four-card identity/compute/peer/XCCL, clean journal and taint, and clean
+postflight. The wrapper then false-failed its first frozen-input check before
+starting the candidate. GNU `cmp -s` trusted the procfs boot ID's reported size
+of zero and rejected its byte-identical 37-byte snapshot; ordinary comparison
+and both SHA-256 values prove the boot never changed. The r2 campaign has only
+sealed inputs and all three arms are missing, so it is also failed-incomplete
+infrastructure with no performance effect. See the
+[r2 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-r2-procfs-boot-validator-failure.md).
+
+The active next step is the separately preregistered r3 atomic attempt on
+fresh roots. Its only new change replaces the two direct procfs quiet
+comparisons with byte-reading `cmp`; the now-proven hardware correction, 79bb
+image, strict runner, graph/cache/model contract, and every speed floor remain
+exact. Only a completed speed miss with every non-speed gate clean may permit
+deriving a separately versioned 79bb compatibility packet; if untreated 79bb
+passes, stop without testing old decisions and move to TP2 then TP4. No binary
+or generated kernel is transferred, and no result may lower a protected
+historical speed. See the
 [closed 0ecc preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-0ecc-tp1-control-decision-overlay-prereg.md),
-[original 79bb preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-prereg.md), and
-[active r2 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-r2-prereg.md).
+[r2 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-r2-prereg.md), and
+[active r3 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-r3-prereg.md).
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh

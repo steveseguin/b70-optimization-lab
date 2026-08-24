@@ -1,0 +1,100 @@
+{
+  "schema": "neural-download-qwen38-current-main-prearm-validator-attempt-v1",
+  "date": "2026-08-24",
+  "classification": "failed-incomplete-prearm-procfs-validator",
+  "hardware_gate": "pass",
+  "candidate_qualification": "not_started",
+  "performance_evidence": false,
+  "protected_performance_changed": false,
+  "identity": {
+    "lab_commit": "621a2acb6f11e38c42f25a063b4a5e1b7f852624",
+    "vllm_head": "79bb395eea64dbfef99a55f010d2854db71f8571",
+    "xpu_kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "nightly_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "both_current_image": "sha256:786681b8aa4150d30e12af93b3038a03daba110719bf650a5c9d7c8804e0bdf3",
+    "boot_id": "086de284-0771-4269-9cb2-e064fe303e40",
+    "kernel": "7.0.0-30-generic"
+  },
+  "hardware": {
+    "root": "/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-79bb-20260824-086de284-venvlib-r2",
+    "started_utc": "2026-08-24T13:47:34Z",
+    "completed_utc": "2026-08-24T13:47:59Z",
+    "manifest_entries_verified": 64,
+    "manifest_entries_total": 64,
+    "manifest_sha256": "c9c0720d4809df30642195aac107cd85e328fe306ccb5f6d7e75fd2ea69e0cbc",
+    "summary_sha256": "538103f46123b7f26d8aaf56637d4245a99c85945cfe75b427e238f5ada6f434",
+    "final_status_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04",
+    "runner_sha256": "84b9f5025476f40cb3218dbe513718c6d37da1e4852d17031b403fa410e4c506",
+    "xccl_log_sha256": "9af3e1aeee4bbe9fdb2fe4e8169cf1c8c95b4823f0ee689ed578e0945163bca8",
+    "passed": true,
+    "exit_status": 0,
+    "gates": {
+      "four_device_identity": true,
+      "per_card_compute": true,
+      "four_device_peer_read": true,
+      "four_rank_xccl_allreduce": true,
+      "torch_runtime_coherent": true,
+      "repo_postflight": true,
+      "kernel_taint_pre": 0,
+      "kernel_taint_post": 0,
+      "kernel_reject_events": 0,
+      "containers_pre": 0,
+      "containers_post": 0,
+      "render_holders_final": 0,
+      "residual_probe_processes": 0
+    }
+  },
+  "campaign": {
+    "root": "/home/steve/qwen38-current-main-runs/tp1-untreated-79bb-20260824-r2",
+    "state": "failed-incomplete mode=all rc=1",
+    "exit_status": 1,
+    "manifest_entries_verified": 21,
+    "manifest_entries_total": 21,
+    "manifest_sha256": "68e65ab397ebc64bfb832638c68e5358860449e3c0bad6d30fd1b2f1f2d682f9",
+    "inputs_manifest_entries_verified": 18,
+    "inputs_manifest_entries_total": 18,
+    "inputs_manifest_sha256": "25188d38a5ab0dca54ed322baa8103616ca494668ce334e6f951acbd8c652a43",
+    "failure_json_sha256": "e39bb5d10c5a4569d3016dac056351cd9147e9d472569414e3ea281e4bf0edac",
+    "final_status_sha256": "2407e0ccc37ff46223e5b09ae2e34d598c71c0d95d3e7b12990982fc7c788c15",
+    "frozen_wrapper_sha256": "063b42c363fc79451e34940a18373854214069ac306f7579a18db716b414f153",
+    "frozen_prereg_sha256": "3fe64e088660b4863822ae87aeabad48c73f6ce2149f3c74137f899335286e45",
+    "strict_runner_sha256": "cec5f3d852c84255822a4a5ee14d6829cd5efa6719ff9e8c59a904090d11c2b0",
+    "build_receipt_sha256": "92e8fa48ad09ee025fd16a8f29440d622715df0c300fade3023317cd756d948d",
+    "arms": {
+      "control_fresh": "missing",
+      "control_replay_a": "missing",
+      "control_replay_b": "missing"
+    },
+    "candidate_container_started": false,
+    "model_started": false,
+    "compilation_cache_created": false,
+    "canary_started": false,
+    "timed_benchmark_started": false,
+    "quality_battery_started": false
+  },
+  "failure": {
+    "stage": "prepare_inputs -> first verify_inputs, before run_strict_arm",
+    "message": "host rebooted between untreated arms",
+    "message_is_false": true,
+    "cause_recording_boundary": "The sealed failure JSON did not include the stage or stderr; the cause was independently reproduced from the frozen wrapper and inputs.",
+    "cause": "GNU cmp -s used the procfs boot-id st_size of zero and returned mismatch against the 37-byte regular snapshot without comparing their equal contents.",
+    "proof": {
+      "live_boot_id_stat_size": 0,
+      "snapshot_boot_id_stat_size": 37,
+      "quiet_cmp_exit_status": 1,
+      "ordinary_cmp_exit_status": 0,
+      "live_boot_id_sha256": "bb9b7f66adbe173a11811c73f051dd678101e9e74160421367d20f4ff6348d5b",
+      "snapshot_boot_id_sha256": "bb9b7f66adbe173a11811c73f051dd678101e9e74160421367d20f4ff6348d5b",
+      "boot_id_before_and_after": "086de284-0771-4269-9cb2-e064fe303e40",
+      "ordinary_cmdline_cmp_exit_status": 0,
+      "cmdline_sha256": "6460a6558f3c819d1a527532a126179056efccfacefafb8c18c0ebaf0c027197"
+    },
+    "analogous_active_check": "The direct cmp -s check of /proc/cmdline passed on this host because it reports its content size, but it is the same fragile pseudo-file pattern and is corrected with the boot-id check."
+  },
+  "disposition": {
+    "r2_roots": "closed and checksum-sealed; do not overwrite",
+    "retry_policy": "one separately preregistered r3 atomic chain on fresh roots after replacing only the two direct procfs quiet comparisons",
+    "benchmark_contract": "unchanged",
+    "overlay_policy": "none; every non-speed gate must pass before a completed speed miss can authorize deriving a compatibility packet"
+  }
+}
