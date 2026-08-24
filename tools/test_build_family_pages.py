@@ -8,6 +8,8 @@ import importlib.util
 import json
 import math
 from pathlib import Path
+import re
+from statistics import median
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -21,6 +23,219 @@ SPEC.loader.exec_module(MODULE)
 
 
 class FamilyCoverageTest(unittest.TestCase):
+    def test_promoted_ornith_packet_and_family_stay_in_parity(self) -> None:
+        family = json.loads((MODULE.ROOT / "families/ornith-1-5.json").read_text())
+        package = json.loads(
+            (
+                MODULE.ROOT
+                / "packages/ornith-15-35b-a3b-q4km-b70/package.json"
+            ).read_text()
+        )
+        summary = json.loads(
+            (
+                MODULE.ROOT
+                / "experiments/ornith-15-b70/data/2026-08-23-ornith35b-shared-gate-residual-rms-summary.json"
+            ).read_text()
+        )
+        runs = {item["id"]: item for item in family["run_measurements"]}
+        series = {item["id"]: item for item in family["series_measurements"]}
+        packets = {item["id"]: item for item in family["packets"]}
+
+        current = runs["ornith-35b-twelve-feature-copyoff-one-card"]["metrics"][
+            "decode_tok_s"
+        ]
+        self.assertEqual(
+            current,
+            summary["fresh_server"][
+                "candidate_run_medians_conventional_tok_s"
+            ],
+        )
+        self.assertAlmostEqual(
+            package["library"]["featured_metric"]["value"],
+            sum(current) / len(current),
+            places=6,
+        )
+        index_html = (MODULE.ROOT / "index.html").read_text()
+        public_headline = f"{package['library']['featured_metric']['value']:.2f}"
+        self.assertGreaterEqual(index_html.count(f">{public_headline}</td>"), 1)
+        self.assertNotIn(">132.79</td>", index_html)
+
+        ratebars = [
+            (float(rate), float(width))
+            for rate, width in re.findall(
+                r'(\d+\.\d+)<div class="ratebar(?: max)?" '
+                r'style="width:(\d+(?:\.\d+)?)%"',
+                index_html,
+            )
+        ]
+        self.assertTrue(ratebars)
+        self.assertIn((float(public_headline), 100.0), ratebars)
+        max_rate = max(rate for rate, _ in ratebars)
+        for rate, width in ratebars:
+            with self.subTest(rate=rate):
+                self.assertEqual(width, round(100 * rate / max_rate, 1))
+        self.assertEqual(
+            packets["ornith-15-35b-a3b-q4km-b70"]["grades"]["evidence"][
+                "grade"
+            ],
+            "B",
+        )
+
+        # Keep the old measurement IDs bound to their original eleven-feature
+        # evidence while moving the public headline to a new twelve-feature ID.
+        self.assertEqual(
+            runs["ornith-35b-optimized-one-card"]["metrics"]["decode_tok_s"],
+            [130.159639, 128.977294],
+        )
+        self.assertEqual(
+            runs["ornith-35b-optimized-one-card"]["conventional_metrics"][
+                "decode_tok_s"
+            ],
+            [128.8580426010522, 127.68752111614396],
+        )
+        self.assertEqual(
+            runs["ornith-35b-twelve-feature-copyoff-one-card"][
+                "compatibility_metrics"
+            ]["decode_tok_s"],
+            [131.76906143822612, 133.80716195534055],
+        )
+
+        current_points = series[
+            "ornith-35b-twelve-feature-copyoff-context-depth"
+        ]["points"]
+        profiles = {
+            item["metric"]: item for item in package["performance_profiles"]
+        }
+        self.assertEqual(
+            [
+                {"context_tokens": point["x"], "value": point["decode_tok_s"], "samples": 5}
+                for point in current_points
+            ],
+            profiles["decode"]["points"],
+        )
+        self.assertEqual(
+            [
+                {"context_tokens": point["x"], "value": point["prefill_tok_s"], "samples": 5}
+                for point in current_points
+            ],
+            profiles["prefill"]["points"],
+        )
+
+        raw_prefix = MODULE.ROOT / "experiments/ornith-15-b70/data"
+        candidate_raw = [
+            json.loads((raw_prefix / name).read_text())
+            for name in (
+                "ornith-gate-resid-server-candidate-a.json",
+                "ornith-gate-resid-server-candidate-b.json",
+            )
+        ]
+        self.assertEqual(
+            current,
+            [
+                median(
+                    row["tok_s_1_100_intervals_after_ttft"]
+                    for row in record["rows"]
+                )
+                for record in candidate_raw
+            ],
+        )
+        self.assertEqual(
+            runs["ornith-35b-twelve-feature-copyoff-one-card"][
+                "compatibility_metrics"
+            ]["decode_tok_s"],
+            [
+                median(row["tok_s_1_100_after_ttft"] for row in record["rows"])
+                for record in candidate_raw
+            ],
+        )
+
+        copy_raw = [
+            json.loads((raw_prefix / name).read_text())
+            for name in (
+                "2026-08-23-ornith35b-copy-offload-B1-disabled.server.json",
+                "2026-08-23-ornith35b-copy-offload-B2-disabled.server.json",
+            )
+        ]
+        self.assertEqual(
+            runs["ornith-35b-optimized-one-card"]["conventional_metrics"][
+                "decode_tok_s"
+            ],
+            [
+                median(
+                    row["tok_s_1_100_intervals_after_ttft"]
+                    for row in record["rows"]
+                )
+                for record in copy_raw
+            ],
+        )
+
+        def raw_sweep_points(filename: str) -> list[dict[str, float | int]]:
+            records = json.loads(
+                (
+                    MODULE.ROOT
+                    / "repro/ornith-15-35b-a3b-q4km-b70"
+                    / filename
+                ).read_text()
+            )
+            depths = sorted({record["n_depth"] for record in records})
+            return [
+                {
+                    "x": depth,
+                    "decode_tok_s": next(
+                        record["avg_ts"]
+                        for record in records
+                        if record["n_depth"] == depth and record["n_gen"] == 128
+                    ),
+                    "prefill_tok_s": next(
+                        record["avg_ts"]
+                        for record in records
+                        if record["n_depth"] == depth
+                        and record["n_prompt"] == 2048
+                    ),
+                }
+                for depth in depths
+            ]
+
+        self.assertEqual(
+            series["ornith-35b-context-depth"]["points"],
+            raw_sweep_points("ornith-15-35b-a3b-q4km-eleven-feature.sweep.json"),
+        )
+        self.assertEqual(
+            current_points,
+            raw_sweep_points("ornith-15-35b-a3b-q4km-twelve-feature.sweep.json"),
+        )
+
+    def test_qwen_rolling_and_overlay_frontiers_are_append_only(self) -> None:
+        family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
+        runs = {item["id"]: item for item in family["run_measurements"]}
+        protected = {
+            "q38-a3561ef8-stock-tp1-graph-strict": [
+                30.241645123711923,
+                30.243714296955797,
+            ],
+            "q38-a3561ef8-stock-tp2-graph-strict": [48.49048978038331],
+            "q38-a3561ef8-stock-tp4-graph-strict": [
+                71.9001988117144,
+                71.2457420049019,
+            ],
+            "q38-a3561ef8-tp2-winner-overlay-graph-strict": [
+                49.00935245117815
+            ],
+            "q38-a3561ef8-tp4-winner-overlay-graph-diagnostic": [
+                71.72254506718171
+            ],
+            "q38-a3561ef8-tp4-winner-overlay-graph-strict": [
+                71.35287190161719,
+                71.45427094575045,
+            ],
+            "q38-nightly-tp4-mtp2-screen": [31.16799415898192],
+        }
+        for measurement_id, expected in protected.items():
+            with self.subTest(measurement_id=measurement_id):
+                self.assertEqual(
+                    runs[measurement_id]["metrics"]["decode_tok_s"], expected
+                )
+
     def test_legacy_mtp_tp_view_keeps_defaults(self) -> None:
         family = self._family()
 

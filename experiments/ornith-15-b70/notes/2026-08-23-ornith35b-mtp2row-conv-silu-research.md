@@ -55,7 +55,8 @@ fresh-server suite.
 Retain
 `../patches/llamacpp-ornith15-mtp2row-conv-silu-research-20260823.patch`
 as an exact, stackable research candidate. Do not enable it by default, call it
-a validated serving gain, or change the preferred MTP1 stack or 129.568 tok/s
-target-only package. Revisit only with a lower-noise protocol or as part of a
+a validated serving gain, or change the preferred MTP1 stack or the
+then-current target-only package. That package's `129.568 tok/s` figure used
+legacy 100-event compatibility accounting; its conventional mean was
+`128.272782 tok/s`. Revisit only with a lower-noise protocol or as part of a
 larger exact recurrent verifier fusion.
-

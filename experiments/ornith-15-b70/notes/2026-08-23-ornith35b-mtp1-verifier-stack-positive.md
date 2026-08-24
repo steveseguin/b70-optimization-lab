@@ -5,9 +5,10 @@
 **RESEARCH POSITIVE; TARGET-ONLY PACKAGE UNCHANGED.** Stacking the exact
 multi-row residual/RMS verifier fusion with the two-row ordered MoE reduction
 produced a repeatable CLI gain and a strong fresh-server A/B/B/A result. The
-assisted lane is still far below the accepted 129.568 tok/s target-only serving
-mean, so this is an optimization substrate for further MTP work, not a user
-default.
+assisted lane is still far below the then-current target-only result: a
+`129.568 tok/s` legacy 100-event compatibility mean, corresponding to the
+preferred conventional `128.272782 tok/s` mean. This is an optimization
+substrate for further MTP work, not a user default.
 
 ## Stack
 

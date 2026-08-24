@@ -328,8 +328,9 @@ patch removes 700 launches/token and reached a directly measured
 `128.832 tok/s` fresh-server mean before runtime tuning. An independent
 Ornith screen then accepted `UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1`: exact
 output was unchanged, mirrored engine decode improved **1.26%**, and fresh
-serving improved **1.09%** (`128.166` to `129.568 tok/s`), with 9/12
-prompt-matched averages favoring the candidate. The immediate-command-list
+conventional serving improved **1.09%** (`126.884` to `128.273 tok/s`), with
+the legacy compatibility means (`128.166` to `129.568 tok/s`) retained; 9/12
+prompt-matched averages favored the candidate. The immediate-command-list
 setting used by some Qwen recipes was separately rejected for Ornith serving,
 so it remains unset. No context-depth points were extrapolated from the runtime
 win.

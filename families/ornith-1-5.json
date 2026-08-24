@@ -163,6 +163,18 @@
       "cards": 1,
       "status": "candidate",
       "evidence_level": "B70-verified",
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Ornith 1.5 9B Q8_0 stock llama.cpp/SYCL one-card deployment",
+          "basis": "two fresh cache-zero serving runs, a seven-point measured 0–32K raw-engine profile, pinned artifact identity, and repeat/arithmetic/copy/JSON canaries are retained; the package has not had a clean-host replay and its quality evidence is scoped self-consistency rather than an external model-quality oracle",
+          "reviewed_at": "2026-08-23",
+          "evidence": [
+            "repro/ornith-15-9b-q8-b70/README.md",
+            "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.sweep.json"
+          ]
+        }
+      },
       "coverage": [
         "decode",
         "prefill",
@@ -187,6 +199,20 @@
       "cards": 1,
       "status": "candidate",
       "evidence_level": "B70-verified",
+      "grades": {
+        "evidence": {
+          "grade": "B",
+          "scope": "Ornith 1.5 35B-A3B Q4_K_M twelve-feature one-card optimization packet",
+          "basis": "the complete patch and binaries are hashed, the final incremental door has mirrored engine and fresh-server A/B evidence, every candidate and control row was cache-zero, the canonical 128-token transcript was byte-identical across 5,080 candidate hits, objective canaries passed, and the current seven-point 0–32K profile was measured directly; clean-host replay and cross-process output determinism remain open",
+          "reviewed_at": "2026-08-23",
+          "evidence": [
+            "experiments/ornith-15-b70/data/2026-08-23-ornith35b-shared-gate-residual-rms-summary.json",
+            "experiments/ornith-15-b70/data/2026-08-23-ornith35b-shared-gate-residual-rms-exactness.json",
+            "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-twelve-feature.sweep.json",
+            "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch"
+          ]
+        }
+      },
       "coverage": [
         "decode",
         "prefill",
@@ -213,6 +239,7 @@
       "config": {
         "model_size_b": 9,
         "cards": 1,
+        "profile_id": "ornith-9b-q8-stock-8k",
         "split_mode": "single device",
         "mtp": 0,
         "graph": "off",
@@ -238,21 +265,62 @@
       "config": {
         "model_size_b": 35,
         "cards": 1,
+        "profile_id": "ornith-35b-q4-eleven-feature-copyoff-8k",
         "split_mode": "single device",
         "mtp": 0,
         "graph": "off",
         "kv": "f16",
         "configured_max_context_tokens": 8192
       },
-      "workload": "two fresh-server runs of the 12-prompt suite, up-to-512-token responses, conventional 99-interval median, target-only, cache zero",
+      "workload": "two fresh-server runs of the 12-prompt suite, up-to-512-token responses, legacy 100-event numerator compatibility median over the 99-interval elapsed window, target-only, cache zero; retained under its original stable measurement ID",
       "metrics": {
         "decode_tok_s": [
           130.159639,
           128.977294
         ]
       },
+      "conventional_metrics": {
+        "decode_tok_s": [
+          128.8580426010522,
+          127.68752111614396
+        ],
+        "accounting": "preferred conventional 99-interval rate from the same physical run arms"
+      },
       "quality": "same-frozen-binary patch exactness and objective canary gates passed; stock fresh processes were already output-nondeterministic",
-      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
+      "evidence": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-copy-offload-summary.json"
+    },
+    {
+      "id": "ornith-35b-twelve-feature-copyoff-one-card",
+      "state": "lab-measured",
+      "revision": "ornith-1.5-35b-a3b",
+      "variant": "Q4_K_M MoE twelve-feature stack plus copy-offload setting",
+      "runtime": "llama.cpp SYCL 9fee29e plus lab patch",
+      "config": {
+        "model_size_b": 35,
+        "cards": 1,
+        "profile_id": "ornith-35b-q4-twelve-feature-8k",
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16",
+        "configured_max_context_tokens": 8192
+      },
+      "workload": "two fresh-server candidate runs from the matched A/B/B/A program, fixed 12-prompt suite, up-to-512-token responses, conventional 99-interval median, target-only, cache zero",
+      "metrics": {
+        "decode_tok_s": [
+          130.45137082384383,
+          132.46909033578714
+        ]
+      },
+      "compatibility_metrics": {
+        "decode_tok_s": [
+          131.76906143822612,
+          133.80716195534055
+        ],
+        "accounting": "legacy 100-event numerator over the same 99-interval elapsed window; retained but not used as the site headline"
+      },
+      "quality": "all candidate and control rows reported cached_tokens=0 and passed final gates; the same-frozen-binary 128-token transcript was byte-identical across 5,080 candidate hits; objective canaries passed, while stock cross-process output nondeterminism remains disclosed",
+      "evidence": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-shared-gate-residual-rms-summary.json"
     },
     {
       "id": "ornith-35b-stock-one-card",
@@ -262,6 +330,7 @@
       "runtime": "llama.cpp SYCL 9fee29e",
       "config": {
         "cards": 1,
+        "profile_id": "ornith-35b-q4-stock-8k",
         "split_mode": "single device",
         "mtp": 0,
         "graph": "off",
@@ -286,6 +355,7 @@
       "runtime": "llama.cpp SYCL 9fee29e",
       "config": {
         "cards": 2,
+        "profile_id": "ornith-35b-q4-stock-8k",
         "split_mode": "layer",
         "mtp": 0,
         "graph": "off",
@@ -312,6 +382,7 @@
       "runtime": "llama.cpp SYCL 9fee29e",
       "config": {
         "cards": 1,
+        "profile_id": "ornith-9b-q8-stock-context",
         "split_mode": "single device",
         "mtp": 0,
         "graph": "off",
@@ -366,6 +437,7 @@
       "runtime": "llama.cpp SYCL 9fee29e plus lab patch",
       "config": {
         "cards": 1,
+        "profile_id": "ornith-35b-q4-eleven-feature-context",
         "split_mode": "single device",
         "mtp": 0,
         "graph": "off",
@@ -411,6 +483,61 @@
         }
       ],
       "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-eleven-feature.sweep.json"
+    },
+    {
+      "id": "ornith-35b-twelve-feature-copyoff-context-depth",
+      "state": "lab-measured",
+      "revision": "ornith-1.5-35b-a3b",
+      "variant": "Q4_K_M MoE twelve-feature stack plus copy-offload setting",
+      "runtime": "llama.cpp SYCL 9fee29e plus lab patch",
+      "config": {
+        "cards": 1,
+        "profile_id": "ornith-35b-q4-twelve-feature-context",
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16"
+      },
+      "workload": "llama-bench pp2048 plus tg128 at each depth, flash attention on, five repetitions; exact twelve-feature raw-engine profile with the accepted copy-offload setting",
+      "axis": "active_context_tokens",
+      "points": [
+        {
+          "x": 0,
+          "decode_tok_s": 141.917514,
+          "prefill_tok_s": 1422.407346
+        },
+        {
+          "x": 2048,
+          "decode_tok_s": 136.848608,
+          "prefill_tok_s": 1343.876428
+        },
+        {
+          "x": 4096,
+          "decode_tok_s": 133.329784,
+          "prefill_tok_s": 1338.212192
+        },
+        {
+          "x": 8192,
+          "decode_tok_s": 126.829116,
+          "prefill_tok_s": 1301.167019
+        },
+        {
+          "x": 16384,
+          "decode_tok_s": 116.267169,
+          "prefill_tok_s": 1238.569995
+        },
+        {
+          "x": 24576,
+          "decode_tok_s": 106.967195,
+          "prefill_tok_s": 1212.927246
+        },
+        {
+          "x": 32768,
+          "decode_tok_s": 99.614237,
+          "prefill_tok_s": 1115.599876
+        }
+      ],
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-twelve-feature.sweep.json"
     }
   ],
   "views": [
@@ -431,9 +558,33 @@
           ]
         },
         {
-          "label": "35B-A3B MoE · Q4_K_M",
+          "label": "35B-A3B MoE · Q4_K_M · current 12-feature",
+          "measurement_ids": [
+            "ornith-35b-twelve-feature-copyoff-context-depth"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ornith-35b-optimization-context",
+      "title": "Accepted 35B optimization over context",
+      "subtitle": "Historical eleven-feature profile and current twelve-feature plus copy-offload profile; every marker is measured independently",
+      "x_label": "active context tokens",
+      "metrics": [
+        "decode_tok_s",
+        "prefill_tok_s"
+      ],
+      "series": [
+        {
+          "label": "historical 11-feature",
           "measurement_ids": [
             "ornith-35b-context-depth"
+          ]
+        },
+        {
+          "label": "current 12-feature + copy-offload",
+          "measurement_ids": [
+            "ornith-35b-twelve-feature-copyoff-context-depth"
           ]
         }
       ]
@@ -459,7 +610,157 @@
       ]
     }
   ],
-  "coverage_views": [],
+  "coverage_views": [
+    {
+      "id": "ornith-serving-profile-by-cards",
+      "label": "serving profile × cards",
+      "row_axis": {
+        "key": "profile_id",
+        "label": "deployment profile",
+        "prefix": "",
+        "value_labels": {
+          "ornith-9b-q8-stock-8k": "9B Q8_0 · stock",
+          "ornith-35b-q4-twelve-feature-8k": "35B-A3B Q4_K_M · current optimized",
+          "ornith-35b-q4-stock-8k": "35B-A3B Q4_K_M · stock"
+        }
+      },
+      "column_axis": {
+        "key": "cards",
+        "label": "B70 cards",
+        "prefix": ""
+      },
+      "fixed_selectors": {
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16",
+        "configured_max_context_tokens": 8192
+      },
+      "fixed": "Target-only · graph off · F16 KV · standard 8K serving profile. Rows keep stock and patched identities separate; a blank topology is never inferred from another row.",
+      "decision_note": "The optimized 35B-A3B packet is measured only on one card. Its stock two-card layer split is retained as a separate profile and is slower than stock one-card single-stream decode. No four-card serving point is claimed.",
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md",
+      "rows": [
+        "ornith-9b-q8-stock-8k",
+        "ornith-35b-q4-twelve-feature-8k",
+        "ornith-35b-q4-stock-8k"
+      ],
+      "columns": [1, 2, 4],
+      "cells": {
+        "ornith-9b-q8-stock-8k:1": {"state": "lab-measured", "label": "D49.573–49.588 · stock", "evidence_id": "ornith-9b-standard-one-card", "packet_id": "ornith-15-9b-q8-b70"},
+        "ornith-9b-q8-stock-8k:2": {"state": "missing", "label": "no measured route"},
+        "ornith-9b-q8-stock-8k:4": {"state": "missing", "label": "no measured route"},
+        "ornith-35b-q4-twelve-feature-8k:1": {"state": "lab-measured", "label": "D130.451–132.469 · EVID B", "evidence_id": "ornith-35b-twelve-feature-copyoff-one-card", "packet_id": "ornith-15-35b-a3b-q4km-b70"},
+        "ornith-35b-q4-twelve-feature-8k:2": {"state": "missing", "label": "current overlay not measured"},
+        "ornith-35b-q4-twelve-feature-8k:4": {"state": "missing", "label": "current overlay not measured"},
+        "ornith-35b-q4-stock-8k:1": {"state": "lab-measured", "label": "D104.811–104.840 · stock", "evidence_id": "ornith-35b-stock-one-card"},
+        "ornith-35b-q4-stock-8k:2": {"state": "lab-measured", "label": "D102.011–102.200 · layer split", "evidence_id": "ornith-35b-stock-layer-split-two-card"},
+        "ornith-35b-q4-stock-8k:4": {"state": "missing", "label": "no measured route"}
+      }
+    },
+    {
+      "id": "ornith-9b-context-by-cards",
+      "label": "9B Q8_0 context × cards",
+      "row_axis": {
+        "key": "active_context_tokens",
+        "label": "active context",
+        "prefix": ""
+      },
+      "column_axis": {
+        "key": "cards",
+        "label": "B70 cards",
+        "prefix": ""
+      },
+      "fixed_selectors": {
+        "revision": "ornith-1.5-9b",
+        "variant": "Q8_0 dense",
+        "runtime": "llama.cpp SYCL 9fee29e",
+        "profile_id": "ornith-9b-q8-stock-context",
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16"
+      },
+      "fixed": "Stock 9B Q8_0 · target-only · graph off · F16 KV · raw pp2048/tg128 · five repetitions per marker.",
+      "decision_note": "The complete one-card 0–32K profile is measured. Two- and four-card context curves remain explicit gaps.",
+      "evidence": "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.sweep.json",
+      "rows": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+      "columns": [1, 2, 4],
+      "cells": {
+        "0:1": {"state": "lab-measured", "label": "D50.29 · P3,184", "evidence_id": "ornith-9b-context-depth", "point_x": 0},
+        "0:2": {"state": "missing", "label": "not measured"},
+        "0:4": {"state": "missing", "label": "not measured"},
+        "2048:1": {"state": "lab-measured", "label": "D49.34 · P1,623", "evidence_id": "ornith-9b-context-depth", "point_x": 2048},
+        "2048:2": {"state": "missing", "label": "not measured"},
+        "2048:4": {"state": "missing", "label": "not measured"},
+        "4096:1": {"state": "lab-measured", "label": "D48.55 · P1,601", "evidence_id": "ornith-9b-context-depth", "point_x": 4096},
+        "4096:2": {"state": "missing", "label": "not measured"},
+        "4096:4": {"state": "missing", "label": "not measured"},
+        "8192:1": {"state": "lab-measured", "label": "D47.04 · P1,569", "evidence_id": "ornith-9b-context-depth", "point_x": 8192},
+        "8192:2": {"state": "missing", "label": "not measured"},
+        "8192:4": {"state": "missing", "label": "not measured"},
+        "16384:1": {"state": "lab-measured", "label": "D44.35 · P1,489", "evidence_id": "ornith-9b-context-depth", "point_x": 16384},
+        "16384:2": {"state": "missing", "label": "not measured"},
+        "16384:4": {"state": "missing", "label": "not measured"},
+        "24576:1": {"state": "lab-measured", "label": "D41.96 · P1,449", "evidence_id": "ornith-9b-context-depth", "point_x": 24576},
+        "24576:2": {"state": "missing", "label": "not measured"},
+        "24576:4": {"state": "missing", "label": "not measured"},
+        "32768:1": {"state": "lab-measured", "label": "D39.84 · P1,314", "evidence_id": "ornith-9b-context-depth", "point_x": 32768},
+        "32768:2": {"state": "missing", "label": "not measured"},
+        "32768:4": {"state": "missing", "label": "not measured"}
+      }
+    },
+    {
+      "id": "ornith-35b-context-by-cards",
+      "label": "35B-A3B current context × cards",
+      "row_axis": {
+        "key": "active_context_tokens",
+        "label": "active context",
+        "prefix": ""
+      },
+      "column_axis": {
+        "key": "cards",
+        "label": "B70 cards",
+        "prefix": ""
+      },
+      "fixed_selectors": {
+        "revision": "ornith-1.5-35b-a3b",
+        "variant": "Q4_K_M MoE twelve-feature stack plus copy-offload setting",
+        "runtime": "llama.cpp SYCL 9fee29e plus lab patch",
+        "profile_id": "ornith-35b-q4-twelve-feature-context",
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16"
+      },
+      "fixed": "Current twelve-feature Q4_K_M overlay plus accepted copy-offload setting · target-only · graph off · F16 KV · raw pp2048/tg128 · five repetitions per marker.",
+      "decision_note": "Every one-card 0–32K marker is measured from the current accepted overlay. The old eleven-feature curve remains historical evidence; no current-overlay multi-card curve is inferred.",
+      "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-twelve-feature.sweep.json",
+      "rows": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+      "columns": [1, 2, 4],
+      "cells": {
+        "0:1": {"state": "lab-measured", "label": "D141.92 · P1,422", "evidence_id": "ornith-35b-twelve-feature-copyoff-context-depth", "point_x": 0},
+        "0:2": {"state": "missing", "label": "not measured"},
+        "0:4": {"state": "missing", "label": "not measured"},
+        "2048:1": {"state": "lab-measured", "label": "D136.85 · P1,344", "evidence_id": "ornith-35b-twelve-feature-copyoff-context-depth", "point_x": 2048},
+        "2048:2": {"state": "missing", "label": "not measured"},
+        "2048:4": {"state": "missing", "label": "not measured"},
+        "4096:1": {"state": "lab-measured", "label": "D133.33 · P1,338", "evidence_id": "ornith-35b-twelve-feature-copyoff-context-depth", "point_x": 4096},
+        "4096:2": {"state": "missing", "label": "not measured"},
+        "4096:4": {"state": "missing", "label": "not measured"},
+        "8192:1": {"state": "lab-measured", "label": "D126.83 · P1,301", "evidence_id": "ornith-35b-twelve-feature-copyoff-context-depth", "point_x": 8192},
+        "8192:2": {"state": "missing", "label": "not measured"},
+        "8192:4": {"state": "missing", "label": "not measured"},
+        "16384:1": {"state": "lab-measured", "label": "D116.27 · P1,239", "evidence_id": "ornith-35b-twelve-feature-copyoff-context-depth", "point_x": 16384},
+        "16384:2": {"state": "missing", "label": "not measured"},
+        "16384:4": {"state": "missing", "label": "not measured"},
+        "24576:1": {"state": "lab-measured", "label": "D106.97 · P1,213", "evidence_id": "ornith-35b-twelve-feature-copyoff-context-depth", "point_x": 24576},
+        "24576:2": {"state": "missing", "label": "not measured"},
+        "24576:4": {"state": "missing", "label": "not measured"},
+        "32768:1": {"state": "lab-measured", "label": "D99.61 · P1,116", "evidence_id": "ornith-35b-twelve-feature-copyoff-context-depth", "point_x": 32768},
+        "32768:2": {"state": "missing", "label": "not measured"},
+        "32768:4": {"state": "missing", "label": "not measured"}
+      }
+    }
+  ],
   "family_closures": [
     {
       "selectors": {

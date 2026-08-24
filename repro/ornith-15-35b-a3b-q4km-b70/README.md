@@ -4,8 +4,11 @@ Status: **model verified, one-card operating point validated, and lab decode
 patch promoted** (2026-08-23). Lane: enthusiast MoE; the measured stock
 two-card comparison was slower than one card for single-stream decode.
 
-**Current directly measured target-only serving mean: `132.788112 tok/s`**
-(fresh-suite medians `131.769061` and `133.807162`, one B70, cache-zero).
+**Current directly measured target-only conventional serving mean:
+`131.460231 tok/s`** (fresh-suite 99-interval medians `130.451371` and
+`132.469090`, one B70, cache-zero). The corresponding legacy 100-event
+compatibility pair, `131.769061` and `133.807162`, remains retained but is not
+the preferred headline.
 
 **Intake diagnostic baseline (1x B70, 8K ctx, f16 KV, target-only,
 128/100 window, cache-zero verified): `105.782 tok/s` median /
@@ -319,8 +322,9 @@ The current runtime increment also comes from screening this lab's Qwen B70
 work against Ornith rather than assuming that every Qwen setting transfers.
 With `UR_L0_USE_IMMEDIATE_COMMANDLISTS` unset in both arms, setting
 `UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1` improved mirrored seven-repetition
-engine means from `131.535 -> 133.188 tok/s` (**+1.26%**) and fresh-server
-means from `128.166 -> 129.568 tok/s` (**+1.09%**). The candidate won 9/12
+engine means from `131.535 -> 133.188 tok/s` (**+1.26%**) and conventional
+fresh-server means from `126.884 -> 128.273 tok/s` (**+1.09%**). The legacy
+compatibility means were `128.166 -> 129.568 tok/s`. The candidate won 9/12
 prompt-matched averages, every response was uncached and passed the final
 gate, and the forced 128-token transcript remained byte-identical. This is a
 recipe-only runtime setting: the eleven-feature source patch and its binary
@@ -333,10 +337,11 @@ folds the scalar sigmoid and 2,048-element broadcast multiply into the already
 accepted routed/shared/residual/RMS launch while preserving every rounded FP32
 intermediate. This removes 80 launches/token and brings the complete stack to
 780. Mirrored engine means improved `132.925 -> 134.564 tok/s` (**+1.23%**).
-Fresh-server mean-of-run-medians improved `130.986 -> 132.788 tok/s`
-(**+1.38%**); pooled median improved +2.11%, pooled mean improved +1.69%, and
-12/12 prompt-paired averages won. The forced 128-token transcript was
-byte-identical across 5,080 candidate hits. Evidence:
+Conventional fresh-server mean-of-run-medians improved
+`129.676 -> 131.460 tok/s` (**+1.38%**); pooled median improved +2.11%, pooled
+mean improved +1.69%, and 12/12 prompt-paired averages won. The legacy
+100-event compatibility means were `130.986 -> 132.788 tok/s`. The forced
+128-token transcript was byte-identical across 5,080 candidate hits. Evidence:
 [`2026-08-23-ornith35b-shared-gate-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-shared-gate-residual-rms-positive.md).
 
 ## Stock two-card comparison (patch off; layer split, GPUs 0+1)

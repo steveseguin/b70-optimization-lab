@@ -21,6 +21,16 @@
   },
   "fresh_server": {
     "protocol": "new process per arm; fixed 12-prompt suite; each prompt once; up to 512 generated tokens; tokens 1-100 after TTFT; cache_prompt=false; A/B/B/A",
+    "primary_metric": "tok_s_1_100_intervals_after_ttft: 99 conventional intervals between 100 generated-token events",
+    "control_run_medians_conventional_tok_s": [130.81094212617563, 128.54039918106758],
+    "candidate_run_medians_conventional_tok_s": [130.45137082384383, 132.46909033578714],
+    "control_mean_of_run_medians_conventional_tok_s": 129.6756706536216,
+    "candidate_mean_of_run_medians_conventional_tok_s": 131.4602305798155,
+    "control_pooled_median_conventional_tok_s": 129.05926241301563,
+    "candidate_pooled_median_conventional_tok_s": 131.78006269774977,
+    "control_pooled_mean_conventional_tok_s": 125.33446637553931,
+    "candidate_pooled_mean_conventional_tok_s": 127.45051969411588,
+    "compatibility_metric": "tok_s_1_100_after_ttft: legacy 100-event numerator over the same 99-interval elapsed window",
     "control_run_medians_tok_s": [132.13226477391478, 129.8387870515834],
     "candidate_run_medians_tok_s": [131.76906143822612, 133.80716195534055],
     "control_mean_of_run_medians_tok_s": 130.9855259127491,
@@ -47,6 +57,8 @@
     "libggml_sycl": "21b9196911c9254f06756317a7cac85942517dbd4495e41694ec7f22c80db868"
   },
   "decision": "accepted as twelfth source feature",
+  "preferred_headline_conventional_tok_s": 131.4602305798155,
   "headline_tok_s": 132.78811169678335,
+  "headline_tok_s_accounting": "legacy 100-event compatibility accounting; retained, not the preferred conventional 99-interval headline",
   "no_extrapolation": true
 }

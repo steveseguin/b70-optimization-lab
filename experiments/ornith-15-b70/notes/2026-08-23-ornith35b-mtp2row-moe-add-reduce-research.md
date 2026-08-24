@@ -54,6 +54,8 @@ meet the stricter evidence pattern used for the user package.
 
 Retain
 `../patches/llamacpp-ornith15-mtp2row-moe-add-reduce-research-20260823.patch`
-as a stackable MTP research component. Do not change the 129.568 tok/s
-target-only package or describe this as an accepted serving gain. The complete
-summary and raw server rows are under `../data/2026-08-23-ornith35b-mtp2row-*`.
+as a stackable MTP research component. Do not change the then-current
+target-only package or describe this as an accepted serving gain. Its
+`129.568 tok/s` figure used legacy 100-event compatibility accounting; the
+conventional mean was `128.272782 tok/s`. The complete summary and raw server
+rows are under `../data/2026-08-23-ornith35b-mtp2row-*`.

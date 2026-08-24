@@ -39,8 +39,9 @@ prompt-matched grand mean regressed from 126.222048 to 125.646807 tok/s
 unique-prompt, uncached, and passed the freshness/finality gates.
 
 Therefore the engine-only result does not transfer to serving. Keep
-`UR_L0_SINGLE_THREAD_MODE` unset; the accepted Ornith recipe and its directly
-measured 129.568467 tok/s serving headline remain unchanged. The structured
-decision, raw engine/server JSON, exact transcripts, and server logs are
-adjacent under `../data/` with prefix
+`UR_L0_SINGLE_THREAD_MODE` unset; the accepted Ornith recipe and its
+then-current result remain unchanged. The historical `129.568467 tok/s`
+headline used legacy 100-event compatibility accounting; the conventional mean
+was `128.272782 tok/s`. The structured decision, raw engine/server JSON, exact
+transcripts, and server logs are adjacent under `../data/` with prefix
 `2026-08-23-ornith35b-ur-single-thread-`.

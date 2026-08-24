@@ -47,18 +47,20 @@ request per prompt, up to 512 generated tokens, the tokens 1-100 metric, prompt
 cache disabled, and a new server process for every arm. All four runs passed
 the final gate and reported `cached_tokens=0` for every row.
 
-| Arm | Suite median (tok/s) | Suite mean (tok/s) |
+| Arm | Conventional 99-interval median (tok/s) | Legacy 100-event compatibility median (tok/s) |
 | --- | ---: | ---: |
-| Control A | 132.132265 | 128.002318 |
-| Candidate A | 131.769061 | 128.172197 |
-| Candidate B | 133.807162 | 129.303600 |
-| Control B | 129.838787 | 125.198625 |
+| Control A | 130.810942 | 132.132265 |
+| Candidate A | 130.451371 | 131.769061 |
+| Candidate B | 132.469090 | 133.807162 |
+| Control B | 128.540399 | 129.838787 |
 
-The mean of the two run medians improved `130.985526 -> 132.788112 tok/s`
-(**+1.376%**). Across all 24 rows, the pooled median improved
-`130.362891 -> 133.111174 tok/s` (+2.108%) and pooled mean improved
-`126.600471 -> 128.737899 tok/s` (+1.688%). Candidate two-run averages beat
-control two-run averages on **12/12 prompt IDs**.
+The preferred conventional mean of the two run medians improved
+`129.675671 -> 131.460231 tok/s` (**+1.376%**). Across the 24 rows per arm,
+the conventional pooled median improved `129.059262 -> 131.780063 tok/s`
+(+2.108%) and pooled mean improved `125.334466 -> 127.450520 tok/s`
+(+1.688%). Candidate two-run averages beat control two-run averages on
+**12/12 prompt IDs**. The originally captured `130.985526 -> 132.788112`
+means are retained as legacy compatibility accounting, not the headline.
 
 The complete twelve-feature patch is
 `../../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch`
@@ -68,8 +70,9 @@ The incremental patch is
 Structured results and raw records are under `../data/ornith-gate-resid-*`.
 
 The source now has twelve accepted features and removes 780 decode launches
-per token. The directly measured current serving headline is the mean of the
-two candidate suite medians: **132.788112 tok/s**. A separate twelve-feature
+per token. The directly measured current conventional serving headline is the
+mean of the two candidate suite medians: **131.460231 tok/s**. The legacy
+compatibility mean remains **132.788112 tok/s**. A separate twelve-feature
 0-32K sweep was subsequently measured at all seven displayed depths; no curve
 point was scaled or inferred. See
 `2026-08-23-ornith35b-twelve-feature-depth-sweep.md`.

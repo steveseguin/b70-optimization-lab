@@ -30,15 +30,18 @@ That is a directly measured **+1.257%** raw-engine improvement.
 
 The decisive fresh 12-prompt server order was also A/B/B/A:
 
-| Arm | Run medians, tok/s | Mean of run medians |
-| --- | --- | ---: |
-| unset control | 128.623495, 127.708166 | **128.165830** |
-| copy offload disabled | 130.159639, 128.977294 | **129.568467** |
+| Arm | Conventional 99-interval run medians, tok/s | Conventional mean | Legacy 100-event compatibility run medians |
+| --- | --- | ---: | --- |
+| unset control | 127.337260, 126.431084 | **126.884172** | 128.623495, 127.708166 |
+| copy offload disabled | 128.858043, 127.687521 | **128.272782** | 130.159639, 128.977294 |
 
-The primary serving metric improved **+1.094%**. Across prompt-matched
-averages, the candidate won 9/12 prompts and changed the grand prompt mean
-from 124.298526 to 125.727855 tok/s (**+1.150%**). The pooled per-prompt
-medians were 128.338155 and 129.373200 tok/s.
+The primary conventional serving metric improved **+1.094%**. Across
+prompt-matched averages, the candidate won 9/12 prompts and changed the
+conventional grand prompt mean from 123.055541 to 124.470576 tok/s
+(**+1.150%**). The conventional pooled per-prompt medians were 127.054774 and
+128.079468 tok/s. The originally captured `128.165830 -> 129.568467` means
+remain available as legacy compatibility accounting, not the preferred
+headline.
 
 All 48 responses were unique-prompt and uncached, and all freshness/finality
 gates passed. One control response emitted 506 text chunks and one candidate

@@ -10,7 +10,7 @@
     "model_family": "Ornith 1.5",
     "publisher": "Ornith AI",
     "variant": "35B-A3B",
-    "summary": "35B-class Qwen-derived MoE (256 experts / 8 active, arch qwen35moe) reaching a directly measured 132.8 tok/s serving mean on one card with the lab's validated twelve-feature SYCL patch and Ornith-screened Level Zero runtime setting.",
+    "summary": "35B-class Qwen-derived MoE (256 experts / 8 active, arch qwen35moe) reaching a directly measured 131.5 tok/s conventional serving mean on one card with the lab's validated twelve-feature SYCL patch and Ornith-screened Level Zero runtime setting.",
     "quantization": "Q4_K_M",
     "runtime_label": "llama.cpp SYCL",
     "operating_systems": [
@@ -36,10 +36,10 @@
     ],
     "published_at": "2026-08-22",
     "featured_metric": {
-      "value": 132.788112,
+      "value": 131.460231,
       "unit": "tok/s",
       "label": "decode (3B active parameters)",
-      "scope": "Mean of two fresh-server suite medians (131.769 and 133.807 tok/s), up-to-512-token responses, target-only, cache-zero; the twelfth shared-gate/residual/RMS source fusion improved its matched mean-of-run-medians by +1.38%, with 12/12 prompt-paired averages winning. This value is directly measured, not extrapolated from the prior operating point or context curve.",
+      "scope": "Mean of two fresh-server conventional 99-interval suite medians (130.451 and 132.469 tok/s), up-to-512-token responses, target-only, cache-zero; the twelfth shared-gate/residual/RMS source fusion improved its matched mean-of-run-medians by +1.38%, with 12/12 prompt-paired averages winning. The legacy 100-event compatibility pair (131.769 and 133.807) remains retained in the evidence but is not the headline.",
       "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
     }
   },
@@ -51,7 +51,7 @@
       "profile": "https://github.com/steveseguin/b70-optimization-lab",
       "contribution": "Intake verification, bring-up, baselines, depth sweeps, ordered MoE add-reduction, recurrent convolution-SiLU, residual-RMSNorm, recurrent concat/state, direct gather/state, recurrent alpha-gate, routed-expert gate/up, MoE shared-branch residual/RMSNorm, GDN RMSNorm/SiLU-gate, in-place GDN state I/O, full-attention Q/K normalization-IMRoPE, shared-expert gate/residual/RMS patches, Ornith-specific Level Zero runtime screening, operating point, canary battery, and package.",
       "status": "integrated",
-      "validated_effect": "+4.85% matched fresh-server decode from ordered expert reduction, +2.10% incremental from recurrent convolution-SiLU, +1.37% incremental from residual-RMSNorm, +2.74% incremental from recurrent concat/state, +1.12% incremental from direct recurrent gather, +2.04% incremental from recurrent alpha-gate, +2.33% incremental from routed gate/up, +1.41% incremental from MoE shared-branch residual/RMSNorm, +0.78% incremental from GDN RMSNorm/SiLU-gate, +6.80% incremental from in-place GDN state I/O, +1.87% incremental from full-attention Q/K normalization-IMRoPE, +1.09% incremental serving from disabling Level Zero copy offload, then +1.38% matched mean-of-run-medians from the shared-gate/residual/RMS fusion (130.986 to 132.788 tok/s; 12/12 prompt-paired wins).",
+      "validated_effect": "+4.85% matched fresh-server decode from ordered expert reduction, +2.10% incremental from recurrent convolution-SiLU, +1.37% incremental from residual-RMSNorm, +2.74% incremental from recurrent concat/state, +1.12% incremental from direct recurrent gather, +2.04% incremental from recurrent alpha-gate, +2.33% incremental from routed gate/up, +1.41% incremental from MoE shared-branch residual/RMSNorm, +0.78% incremental from GDN RMSNorm/SiLU-gate, +6.80% incremental from in-place GDN state I/O, +1.87% incremental from full-attention Q/K normalization-IMRoPE, +1.09% incremental serving from disabling Level Zero copy offload, then +1.38% matched conventional mean-of-run-medians from the shared-gate/residual/RMS fusion (129.676 to 131.460 tok/s; 12/12 prompt-paired wins). The legacy compatibility means 130.986 to 132.788 remain retained separately.",
       "evidence": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-shared-gate-residual-rms-summary.json"
     }
   ],

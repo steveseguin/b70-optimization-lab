@@ -211,8 +211,9 @@ binary, driver, or benchmark protocol will reproduce them.
   `UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1` transfers to Ornith, while the
   separately tested immediate-command-list setting does not. On the unchanged
   eleven-feature source stack, mirrored engine means improved
-  `131.535 -> 133.188 tok/s` (+1.26%) and fresh-server means improved
-  `128.166 -> 129.568 tok/s` (+1.09%). The candidate won 9/12 prompt-matched
+  `131.535 -> 133.188 tok/s` (+1.26%) and conventional fresh-server means
+  improved `126.884 -> 128.273 tok/s` (+1.09%); the legacy compatibility means
+  were `128.166 -> 129.568 tok/s`. The candidate won 9/12 prompt-matched
   averages, forced output was byte-identical, and all freshness/finality gates
   passed. This is recipe-only and is not promoted globally. See
   `notes/2026-08-23-ornith35b-copy-offload-positive.md`.
@@ -222,9 +223,10 @@ binary, driver, or benchmark protocol will reproduce them.
   matcher and volatile FP32 intermediates preserve the stock sigmoid,
   broadcast multiply, ADD, residual, and RMS rounding boundaries while
   removing 80 launches/token. Mirrored engine means improved
-  `132.925 -> 134.564 tok/s` (+1.23%). Fresh-server mean-of-run-medians
-  improved `130.986 -> 132.788 tok/s` (+1.38%); pooled median improved 2.11%,
-  pooled mean improved 1.69%, and all 12 prompt-paired averages won. The
+  `132.925 -> 134.564 tok/s` (+1.23%). Conventional fresh-server
+  mean-of-run-medians improved `129.676 -> 131.460 tok/s` (+1.38%); the legacy
+  compatibility means were `130.986 -> 132.788 tok/s`. Pooled median improved
+  2.11%, pooled mean improved 1.69%, and all 12 prompt-paired averages won. The
   canonical transcript was byte-identical across 5,080 candidate hits. The
   complete twelve-feature stack removes 780 launches/token. See
   `notes/2026-08-23-ornith35b-shared-gate-residual-rms-positive.md`.

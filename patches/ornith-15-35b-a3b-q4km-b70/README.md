@@ -195,16 +195,18 @@ launches/token.
   forced 128-token output was byte-identical, exactly 1,270 full-attention hits
   were recorded, and the objective canary battery passed.
 - Disabling Level Zero copy offload on the unchanged eleven-feature stack
-  improved mirrored raw-engine decode by **+1.26%** and matched fresh-server
-  decode by **+1.09%**, reaching a directly measured `129.568467 tok/s`
-  two-server mean. The candidate won 9/12 prompt-matched averages, the forced
+  improved mirrored raw-engine decode by **+1.26%** and matched conventional
+  fresh-server decode by **+1.09%**, reaching a directly measured
+  `128.272782 tok/s` two-server mean. The legacy compatibility mean was
+  `129.568467 tok/s`. The candidate won 9/12 prompt-matched averages, the forced
   transcript was byte-identical, and all freshness/finality gates passed.
   This is a launch-recipe setting rather than a twelfth source feature.
 - The shared-gate/residual/RMS fusion improved mirrored raw-engine decode by
-  **+1.23%** and fresh-server mean-of-run-medians by **+1.38%**, reaching a
-  directly measured `132.788112 tok/s` two-server mean. The pooled median
-  improved +2.11%, pooled mean improved +1.69%, and candidate two-run averages
-  won 12/12 prompt IDs. The forced 128-token transcript was byte-identical
+  **+1.23%** and conventional fresh-server mean-of-run-medians by **+1.38%**,
+  reaching a directly measured `131.460231 tok/s` two-server mean. The legacy
+  compatibility mean was `132.788112 tok/s`. The pooled median improved
+  +2.11%, pooled mean improved +1.69%, and candidate two-run averages won 12/12
+  prompt IDs. The forced 128-token transcript was byte-identical
   across exactly 5,080 candidate hits; all freshness/finality gates passed.
 
 Fresh stock servers matched `0/12` complete response hashes with each other on

@@ -51,5 +51,6 @@ Retain
 `../patches/llamacpp-ornith15-mtp2row-glu-scatter-neutral-20260823.patch`
 and the raw CLI evidence as negative research. Do not enable
 `GGML_SYCL_FUSED_ORNITH_SPEC_MOE_GATE_UP`, do not change the preferred MTP1
-research stack, and do not change the 129.568 tok/s target-only package.
-
+research stack, and do not change the then-current target-only package. Its
+`129.568 tok/s` figure was the legacy 100-event compatibility mean; the
+conventional mean was `128.272782 tok/s`.
