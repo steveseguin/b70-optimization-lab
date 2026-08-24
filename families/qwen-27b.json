@@ -293,7 +293,25 @@
       "cards": 2,
       "status": "qualified-result",
       "evidence_level": "B70-verified",
-      "coverage": ["decode", "quality", "recipe"],
+      "coverage": ["decode", "TTFT", "TP2", "quality", "recipe", "patch identity"],
+      "grades": {
+        "evidence": {
+          "grade": "B",
+          "scope": "Qwen3.6 Q8_0 target-only TP2 conventional 99-interval record",
+          "basis": "a clean 12-prompt 512-token cache-zero run retained exact output hashes against the accepted control, with model, runtime binary, full patch, hardware, and metric identity preserved",
+          "reviewed_at": "2026-08-23",
+          "evidence": ["data/qwen36-q8-tp2-asrock-b70-20260814/summary.json"]
+        }
+      },
+      "featured_metric": {
+        "metric": "decode_tok_s",
+        "measurement_id": "q36-q8-tp2-target-conventional",
+        "sample_index": 0,
+        "value": 36.60412776947562,
+        "unit": "tok/s",
+        "workload": "12 unique cold prompts, 512 output tokens each, cached_tokens=0; conventional 99-interval median after TTFT",
+        "evidence": "data/qwen36-q8-tp2-asrock-b70-20260814/summary.json"
+      },
       "manifest": "results/qwen36-27b-q8-tp2-asrock-b70/README.md"
     },
     {
@@ -305,7 +323,25 @@
       "cards": 1,
       "status": "qualified-scoped-result-with-long-context-support-evidence",
       "evidence_level": "B70-verified",
-      "coverage": ["decode", "MTP acceptance", "active context", "quality", "memory"],
+      "coverage": ["decode", "MTP acceptance", "active context", "quality", "memory", "concurrency closure"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Qwen3.6 Q8_0 integrated-publisher-MTP3 TP1 fixed-suite and long-context support",
+          "basis": "the matched fresh-control fixed suite passed full token/content equality and was approved by LocalMaxxing; middle/near-32K retention is parallel functional evidence, while same-card c2 remains a documented fit no-go and production generalization is incomplete",
+          "reviewed_at": "2026-08-23",
+          "evidence": ["experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json"]
+        }
+      },
+      "featured_metric": {
+        "metric": "decode_tok_s",
+        "measurement_id": "q36-q8-tp1-mtp3-realistic",
+        "sample_index": 0,
+        "value": 36.04870684253697,
+        "unit": "tok/s",
+        "workload": "12-prompt fixed cold realistic suite, ordinary EOS, up to 512 output tokens, cached_tokens=0; conventional 99-interval median after TTFT",
+        "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json"
+      },
       "manifest": "experiments/qwen36-27b-q8-gguf-b70/README.md"
     },
     {
@@ -793,6 +829,156 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
     },
     {
+      "id": "q36-q8-tp1-target-short-exact",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "Q8_0 target-only",
+      "quantization": "Q8_0",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 15586e2d",
+      "profile_id": "q36-q8-target-tp1-short-exact-v1",
+      "measurement_class": "conventional-99-interval-fixed-cold-128",
+      "promotion_status": "validated-baseline-not-localmaxxing",
+      "quality_scope": "12-prompt short exact stream/replay gate",
+      "identity": {
+        "model_repository_revision": "unsloth/Qwen3.6-27B-GGUF@82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
+        "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+        "runtime_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+        "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16", "speculation_profile": "target only", "parallel_slots": 1, "configured_max_context_tokens": 4096},
+      "workload": "12-prompt fixed cold short suite, 128 output tokens, cached_tokens=0; conventional 99-interval median after TTFT",
+      "metrics": {"decode_tok_s": [15.550256588703753]},
+      "quality": "12/12 stream/replay exactness checks passed, every cache-reuse count was zero, the model fully offloaded, and teardown was clean.",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/baseline-summary-20260808.json"
+    },
+    {
+      "id": "q36-q8-tp2-target-conventional",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "Q8_0 target-only",
+      "quantization": "Q8_0",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 4302fb5 + lab patch f21e9b55",
+      "profile_id": "q36-q8-target-tp2-asrock-record-v1",
+      "measurement_class": "conventional-99-interval-fixed-cold-512",
+      "promotion_status": "quality-cleared-record",
+      "quality_scope": "12-prompt 512-token cache-zero exact-output gate",
+      "identity": {
+        "model_repository_revision": "ggml-org/Qwen3.6-27B-GGUF@8a7ee08e8b9bfb857107ecc25a5599d2f38b76f8",
+        "model_sha256": "73f8260284708ed78ae266df672288b6ad1f2c73ec7ffeb7514b5cecdba646c9",
+        "runtime_base_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+        "full_lab_patch_sha256": "f21e9b557c3d024527ac98d5f189cf7ea72fa8c38a5faf2a22ee339fd1988998",
+        "llama_server_sha256": "fecde8d8c645655b6ed5e48ccf1c3e879cda14bc95ba8d4a2cf7bf154d401641"
+      },
+      "config": {"tp": 2, "mtp": 0, "graph": "off", "kv": "f16", "speculation_profile": "target only", "parallel_slots": 1, "configured_max_context_tokens": 8192},
+      "workload": "12 unique cold prompts, 512 output tokens each, cached_tokens=0; conventional 99-interval median after TTFT",
+      "metrics": {"decode_tok_s": [36.60412776947562], "ttft_ms": [180.25461700744927]},
+      "quality": "Fresh-response validity passed; 12/12 complete 512-token output hashes matched the accepted control and all 12 cached-token counts were zero.",
+      "evidence": "data/qwen36-q8-tp2-asrock-b70-20260814/summary.json"
+    },
+    {
+      "id": "q36-q8-tp1-mtp0-matched-control",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "Q8_0 embedded publisher MTP artifact",
+      "quantization": "Q8_0",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 15586e2d",
+      "profile_id": "q36-q8-embedded-mtp3-realistic-v1",
+      "measurement_class": "conventional-99-interval-fixed-cold-realistic",
+      "promotion_status": "matched-fresh-control",
+      "quality_scope": "matched target-only control on the same embedded-MTP artifact and fixed suite",
+      "identity": {
+        "model_repository_revision": "unsloth/Qwen3.6-27B-MTP-GGUF@5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+        "model_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+        "runtime_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+        "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+        "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16", "speculation_profile": "embedded artifact, speculation off", "parallel_slots": 1, "configured_max_context_tokens": 32768},
+      "workload": "12-prompt fixed cold realistic suite, ordinary EOS, up to 512 output tokens, cached_tokens=0; conventional 99-interval median after TTFT",
+      "metrics": {"decode_tok_s": [17.107772327446934]},
+      "quality": "Fresh control for the MTP comparison; candidate and control full token IDs and content matched on all 12 prompts.",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json"
+    },
+    {
+      "id": "q36-q8-tp1-mtp3-realistic",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "Q8_0 embedded publisher MTP artifact",
+      "quantization": "Q8_0",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 15586e2d",
+      "profile_id": "q36-q8-embedded-mtp3-realistic-v1",
+      "measurement_class": "conventional-99-interval-fixed-cold-realistic",
+      "promotion_status": "localmaxxing-approved-research-scope-not-production",
+      "quality_scope": "matched fresh-control fixed suite; later long-context evidence is parallel functional support",
+      "identity": {
+        "model_repository_revision": "unsloth/Qwen3.6-27B-MTP-GGUF@5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+        "model_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+        "runtime_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+        "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+        "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49"
+      },
+      "config": {"tp": 1, "mtp": 3, "spec_draft_n_max": 3, "spec_draft_n_min": 0, "spec_draft_p_split": 0.1, "spec_draft_p_min": 0, "spec_draft_backend_sampling": true, "graph": "off", "kv": "f16", "draft_kv": "f16", "speculation_profile": "embedded MTP3", "parallel_slots": 1, "configured_max_context_tokens": 32768},
+      "workload": "12-prompt fixed cold realistic suite, ordinary EOS, up to 512 output tokens, cached_tokens=0; conventional 99-interval median after TTFT",
+      "metrics": {"decode_tok_s": [36.04870684253697], "draft_acceptance_rate": [0.5752171215880894], "effective_tokens_per_verification": [2.7235130111524164]},
+      "quality": "Matched fresh control and MTP3 candidate full token IDs and content were exact on all 12 prompts; 11 reached 512 tokens and one ended naturally at 248. LocalMaxxing approved the scoped result.",
+      "caveat": "The immutable source packet preserves its historical FAIL from a stale, identity-mismatched legacy-prefix oracle. A sealed offline supplement reclassified the complete unchanged measurement PASS against its matched fresh control; this is LocalMaxxing-approved research scope, not production promotion.",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json"
+    },
+    {
+      "id": "q36-q8-tp1-mtp3-short-diagnostic",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "Q8_0 embedded publisher MTP artifact",
+      "quantization": "Q8_0",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 15586e2d",
+      "profile_id": "q36-q8-embedded-mtp3-two-prompt-diagnostic-v1",
+      "measurement_class": "two-prompt-4k-diagnostic-99-interval",
+      "promotion_status": "diagnostic-not-promotable",
+      "quality_scope": "two full-512 rows, replays, canary, counter binding, cache zero, and full offload",
+      "identity": {
+        "model_repository_revision": "unsloth/Qwen3.6-27B-MTP-GGUF@5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+        "model_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+        "runtime_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+        "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49"
+      },
+      "config": {"tp": 1, "mtp": 3, "spec_draft_n_max": 3, "spec_draft_n_min": 0, "spec_draft_p_split": 0.1, "spec_draft_p_min": 0, "spec_draft_backend_sampling": true, "graph": "off", "kv": "f16", "draft_kv": "f16", "speculation_profile": "embedded MTP3", "parallel_slots": 1, "configured_max_context_tokens": 32768},
+      "workload": "two 4K-band prompts, 512 output tokens each, cache zero; diagnostic conventional 99-interval median after TTFT",
+      "metrics": {"decode_tok_s": [44.69661981847966], "ttft_ms": [7517.483672498202], "draft_acceptance_rate": [0.9344645991808075], "effective_tokens_per_verification": [3.791958041958042]},
+      "supporting_metrics": {"decode_511_interval_tok_s": 48.037351317642944},
+      "quality": "Both control and candidate rows were exact, stream/replay and post-canary gates passed, counters bound, cache was zero, and fit passed. Primary D99 was 44.6966198185 tok/s; the separately labeled matched full-window D511 was 48.0373513176 tok/s. This is a two-prompt diagnostic, not the fixed-suite record.",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json"
+    },
+    {
+      "id": "q36-q8-tp1-target-c2-near32k",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "Q8_0 target-only",
+      "quantization": "Q8_0",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 15586e2d",
+      "profile_id": "q36-q8-vdr2-target-c2-near32k-v1",
+      "measurement_class": "concurrent-two-slot-aggregate-d511",
+      "promotion_status": "functional-pass-performance-fail",
+      "quality_scope": "fresh sequential oracle followed by simultaneous two-slot full-512 gate",
+      "identity": {
+        "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+        "runtime_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+        "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+        "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16", "speculation_profile": "target only", "parallel_slots": 2, "context_tokens_per_slot": 32768, "total_context_tokens": 65536, "concurrency": 2},
+      "workload": "two simultaneous 31.8K-prompt, 512-output requests after fresh sequential oracles; aggregate conventional D511 window",
+      "metrics": {"decode_tok_s": [10.144217182338524], "prefill_tok_s": [598.1492279823318]},
+      "supporting_metrics": {"per_request_decode_511_tok_s": [5.185071612281629, 10.391849287987231], "fairness_min_over_max": 0.49895562075514965},
+      "quality": "Both simultaneous rows matched their fresh sequential oracles, cache was zero, M=2 occupancy and fit passed. Per-request D511 was 5.1850716123 / 10.3918492880 tok/s and fairness min/max was 0.4989556208; aggregate decode, each-request decode, and fairness missed the serving targets.",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json"
+    },
+    {
       "id": "q36-autoround-tp2-mtp3-historical",
       "state": "lab-measured",
       "revision": "qwen3.6-27b",
@@ -1171,12 +1357,73 @@
       "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json"
     },
     {
+      "id": "q36-q8-tp1-target-dnn-off-context",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "Q8_0",
+      "variant": "Q8_0 target-only",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 15586e2d",
+      "profile_id": "q36-q8-target-tp1-dnn-off-retrieval-v1",
+      "measurement_class": "cold-retrieval-variable-output-context-ladder",
+      "promotion_status": "validated-baseline-context-evidence-not-localmaxxing",
+      "identity": {
+        "model_repository_revision": "unsloth/Qwen3.6-27B-GGUF@82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
+        "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+        "runtime_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+        "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16", "dnn": false, "sycl_opt": true, "vmm": true, "parallel_slots": 1, "configured_max_context_tokens": 32768},
+      "workload": "Three cold retrieval prompts at their exact measured token counts; variable natural outputs; cached_tokens=0; decode after TTFT",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 4369, "decode_tok_s": 15.239550368728084, "output_tokens": 95},
+        {"x": 17274, "decode_tok_s": 14.025001944666018, "output_tokens": 96},
+        {"x": 31846, "decode_tok_s": 12.782893782279674, "output_tokens": 94}
+      ],
+      "quality": "3/3 retrieval rows passed exact JSON-field validation, all cache counts were zero, 65/65 layers offloaded, and teardown was clean. Median prefill 156.043068 tok/s is aggregate-only and is not assigned to individual points.",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/baseline-summary-20260808.json"
+    },
+    {
+      "id": "q36-q8-tp1-target-vdr2-bands",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "quantization": "Q8_0",
+      "variant": "Q8_0 target-only",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 15586e2d + VDR2",
+      "profile_id": "q36-q8-target-tp1-vdr2-band-tuned-v1",
+      "measurement_class": "official-isolated-two-prompt-full512-band-tuned",
+      "promotion_status": "scoped-vdr2-band-wins-below-18tok-decode-target",
+      "identity": {
+        "model_repository_revision": "unsloth/Qwen3.6-27B-GGUF@82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
+        "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+        "runtime_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+        "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+        "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16", "dnn": false, "sycl_opt": true, "q8_reorder_vdr_mmvq": 2, "speculation_profile": "target only", "parallel_slots": 1, "context_tokens_per_slot": 32768, "batch_size": 1024, "configured_max_context_tokens": 32768},
+      "workload": "Official isolated two-prompt full-512 bands; decode_tok_s is the primary D99 median. Each point lists its two exact prompt lengths and band-specific ubatch.",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 4369, "prompt_tokens": [4369, 4317], "ubatch_size": 1024, "decode_tok_s": 16.587155022411466, "full_512_decode_tok_s": 16.58890724722918, "prefill_tok_s": 606.0653917225968, "ttft_ms": 7187.438126500638},
+        {"x": 17274, "prompt_tokens": [17274, 17171], "ubatch_size": 128, "decode_tok_s": 15.138173254861634, "full_512_decode_tok_s": 15.077280898582845, "prefill_tok_s": 157.69755861897968, "ttft_ms": 109245.59903149202},
+        {"x": 31846, "prompt_tokens": [31846, 31841], "ubatch_size": 1024, "decode_tok_s": 13.689452617380034, "full_512_decode_tok_s": 13.686159353895466, "prefill_tok_s": 628.7871123260159, "ttft_ms": 50690.98523899447}
+      ],
+      "quality": "Every band passed its two-row 512-token oracle, intrinsic, exact-result, post-canary, cache-zero, full-offload, and cleanup gates. The series is band-tuned: ubatch is 1024/128/1024, not one universal setting.",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json"
+    },
+    {
       "id": "q36-q8-tp1-control-long-context",
       "state": "lab-measured",
       "revision": "qwen3.6-27b",
       "variant": "Q8_0 target with integrated draft disabled",
+      "quantization": "Q8_0",
+      "runtime_family": "llama.cpp SYCL",
       "runtime": "llama.cpp SYCL VDR2",
-      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "profile_id": "q36-q8-embedded-mtp3-crossband-retention-v1",
+      "measurement_class": "parallel-functional-full-512-depth-screen",
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16", "speculation_profile": "target only", "parallel_slots": 1, "context_tokens_per_slot": 32768, "configured_max_context_tokens": 32768},
       "workload": "two-wave same-card middle/near-32K full-512 retention screen",
       "axis": "active_context_tokens",
       "points": [
@@ -1191,8 +1438,12 @@
       "state": "lab-measured",
       "revision": "qwen3.6-27b",
       "variant": "Q8_0 target with integrated publisher MTP3",
+      "quantization": "Q8_0",
+      "runtime_family": "llama.cpp SYCL",
       "runtime": "llama.cpp SYCL VDR2",
-      "config": {"tp": 1, "mtp": 3, "graph": "off", "kv": "f16", "configured_max_context_tokens": 32768},
+      "profile_id": "q36-q8-embedded-mtp3-crossband-retention-v1",
+      "measurement_class": "parallel-functional-full-512-depth-screen",
+      "config": {"tp": 1, "mtp": 3, "spec_draft_n_max": 3, "spec_draft_n_min": 0, "spec_draft_p_split": 0.1, "spec_draft_p_min": 0, "spec_draft_backend_sampling": true, "graph": "off", "kv": "f16", "draft_kv": "f16", "speculation_profile": "embedded MTP3", "parallel_slots": 1, "context_tokens_per_slot": 32768, "configured_max_context_tokens": 32768},
       "workload": "two-wave same-card middle/near-32K full-512 retention screen",
       "axis": "active_context_tokens",
       "points": [
@@ -1333,6 +1584,29 @@
       ]
     },
     {
+      "id": "context-q36-q8-target",
+      "title": "Qwen3.6 Q8 target-only context",
+      "subtitle": "TP1 llama.cpp SYCL · discrete evidence, not a fitted curve · baseline x is one exact prompt count; each VDR2 x is the larger anchor of a disclosed two-prompt median with band-specific ubatch",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "prefill_tok_s", "ttft_ms"],
+      "discrete": true,
+      "series": [
+        {"label": "DNN-off cold retrieval", "measurement_ids": ["q36-q8-tp1-target-dnn-off-context"]},
+        {"label": "VDR2 exact full-512 bands", "measurement_ids": ["q36-q8-tp1-target-vdr2-bands"]}
+      ]
+    },
+    {
+      "id": "q36-q8-mtp3-matched-control",
+      "title": "Qwen3.6 Q8 MTP3 matched control",
+      "subtitle": "TP1 llama.cpp SYCL · same embedded publisher-MTP artifact · fixed cold 12-prompt realistic suite · full token/content exact against the fresh control",
+      "x_label": "draft tokens",
+      "metrics": ["decode_tok_s", "draft_acceptance_rate", "effective_tokens_per_verification"],
+      "discrete": true,
+      "series": [
+        {"label": "matched artifact control → MTP3", "measurement_ids": ["q36-q8-tp1-mtp0-matched-control", "q36-q8-tp1-mtp3-realistic"], "x_from": "config.mtp"}
+      ]
+    },
+    {
       "id": "context-q36-q8-mtp3",
       "title": "Qwen3.6 Q8 long context",
       "subtitle": "TP1 llama.cpp VDR2 · exact control/MTP3 full outputs · two-wave functional screen, not an isolated headline",
@@ -1345,6 +1619,76 @@
     }
   ],
   "coverage_views": [
+    {
+      "id": "q36-q8-mtp-by-tp",
+      "label": "Qwen3.6 Q8 MTP × TP",
+      "row_axis": {"key": "mtp", "label": "MTP", "prefix": "MTP"},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.6-27b",
+        "quantization": "Q8_0",
+        "runtime_family": "llama.cpp SYCL",
+        "graph": "off",
+        "kv": "f16"
+      },
+      "fixed": "Qwen3.6 Q8_0 llama.cpp SYCL evidence with graph disabled and f16 KV. Every MTP0–5 × TP1/2/3/4 cell is explicit; independent replicas are not mislabeled as tensor parallel.",
+      "decision_note": "Coverage map, not a same-workload leaderboard: the MTP0 TP1 cell is the matched control on the integrated publisher-MTP artifact, MTP0 TP2 uses a different Q8 artifact/runtime and 512-output suite, and MTP3 TP1 uses the fixed realistic suite. TP3 is not called unsupported for llama.cpp without direct evidence.",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/README.md",
+      "rows": [0, 1, 2, 3, 4, 5],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "0:1": {"state": "lab-measured", "label": "D17.108 · matched artifact", "evidence_id": "q36-q8-tp1-mtp0-matched-control"},
+        "0:2": {"state": "lab-measured", "label": "D36.604 · exact 512", "evidence_id": "q36-q8-tp2-target-conventional", "packet_id": "qwen36-27b-q8-tp2"},
+        "0:3": {"state": "missing", "label": "no measured route"},
+        "0:4": {"state": "missing", "label": "no measured route"},
+        "1:1": {"state": "missing", "label": "no measured route"},
+        "1:2": {"state": "missing", "label": "no measured route"},
+        "1:3": {"state": "missing", "label": "no measured route"},
+        "1:4": {"state": "missing", "label": "no measured route"},
+        "2:1": {"state": "missing", "label": "no measured route"},
+        "2:2": {"state": "missing", "label": "no measured route"},
+        "2:3": {"state": "missing", "label": "no measured route"},
+        "2:4": {"state": "missing", "label": "no measured route"},
+        "3:1": {"state": "lab-measured", "label": "D36.049 · exact matched", "evidence_id": "q36-q8-tp1-mtp3-realistic", "packet_id": "qwen36-27b-q8-mtp3-tp1"},
+        "3:2": {"state": "missing", "label": "no measured route"},
+        "3:3": {"state": "missing", "label": "no measured route"},
+        "3:4": {"state": "missing", "label": "no measured route"},
+        "4:1": {"state": "missing", "label": "no measured route"},
+        "4:2": {"state": "missing", "label": "no measured route"},
+        "4:3": {"state": "missing", "label": "no measured route"},
+        "4:4": {"state": "missing", "label": "no measured route"},
+        "5:1": {"state": "missing", "label": "no measured route"},
+        "5:2": {"state": "missing", "label": "no measured route"},
+        "5:3": {"state": "missing", "label": "no measured route"},
+        "5:4": {"state": "missing", "label": "no measured route"}
+      }
+    },
+    {
+      "id": "q36-q8-serving-slots",
+      "label": "Qwen3.6 Q8 speculation × serving slots",
+      "row_axis": {"key": "speculation_profile", "label": "speculation", "prefix": ""},
+      "column_axis": {"key": "parallel_slots", "label": "parallel slots", "prefix": "c"},
+      "fixed_selectors": {
+        "revision": "qwen3.6-27b",
+        "quantization": "Q8_0",
+        "runtime_family": "llama.cpp SYCL",
+        "tp": 1,
+        "graph": "off",
+        "kv": "f16",
+        "context_tokens_per_slot": 32768
+      },
+      "fixed": "Qwen3.6 Q8_0 TP1 llama.cpp SYCL at 32K configured capacity per slot. The target c1 cell uses official isolated two-prompt band evidence; target-only c2 was actually launched near 32K, while embedded MTP3 c2 stopped at the safe-fit gate.",
+      "decision_note": "Coverage, not slots scaling: target c1 values are two-prompt D511 medians, while c2 is an aggregate shared-window D511 measurement. The c2 route is functionally correct but misses aggregate decode, per-request decode, and fairness targets. Embedded MTP3 c2 is closed only for the pinned identity because projected loaded memory reaches 32,683 MiB before useful operating headroom; no launch or CPU offload was attempted.",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json",
+      "rows": ["target only", "embedded MTP3"],
+      "columns": [1, 2],
+      "cells": {
+        "target only:1": {"state": "lab-measured", "label": "D15.077 @17K / 13.686 @31.8K · D511", "evidence_id": "q36-q8-tp1-target-vdr2-bands"},
+        "target only:2": {"state": "lab-measured", "label": "D10.144 agg · P598.15 · perf fail", "evidence_id": "q36-q8-tp1-target-c2-near32k"},
+        "embedded MTP3:1": {"state": "lab-measured", "label": "D44.49 @17K / 41.49 @31.8K", "evidence_id": "q36-q8-tp1-mtp3-long-context"},
+        "embedded MTP3:2": {"state": "closed", "label": "32,683 MiB fit no-go", "reason": "A second target and draft KV plus recurrent state exceed safe B70 capacity before useful headroom; retry only with a materially lower-memory, separately preregistered identity."}
+      }
+    },
     {
       "id": "q36-autoround-mtp-by-tp",
       "label": "Qwen3.6 AutoRound MTP × TP",
@@ -1755,6 +2099,12 @@
     }
   ],
   "family_closures": [
+    {
+      "selectors": {"revision": "qwen3.6-27b", "variant": "Q8_0 embedded publisher MTP artifact", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "profile_id": "q36-q8-embedded-mtp3-crossband-retention-v1", "tp": 1, "mtp": 3, "graph": "off", "kv": "f16", "draft_kv": "f16", "parallel_slots": 2, "context_tokens_per_slot": 32768},
+      "state": "closed",
+      "reason": "The measured c1 MTP3 footprint was 29,911 MiB and projected c2 was 32,683 MiB, leaving no useful safe headroom. The c2 launch was not performed and CPU offload was not used.",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json"
+    },
     {
       "selectors": {"revision": "qwen3.8-27b", "variant": "AutoRound INT4", "runtime": "vLLM XPU nightly", "tp": 3},
       "state": "unsupported",
