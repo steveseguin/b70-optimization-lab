@@ -1,0 +1,78 @@
+{
+  "schema": "neural-download-qwen38-current-main-storage-rotation-v1",
+  "date": "2026-08-24",
+  "classification": "stale-build-archived-and-local-images-removed",
+  "reason": "preserve the complete 6648 build while restoring qualification and successor-build headroom without deleting evidence or accepted optimization artifacts",
+  "archive": {
+    "directory": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e",
+    "original_manifest_entries_verified": 14,
+    "original_manifest_sha256": "a00b53e007f77f8dc4f8746d327487d7dc5615736399830853cddc20cbac5e60",
+    "rotation_manifest_entries_verified": 6,
+    "rotation_manifest_sha256": "8414454007fd35dd1b4a169a2e542842d4e52803b37a559cda21264c8cd40e41"
+  },
+  "docker_image_archive": {
+    "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e/images-6648eb118d.docker.tar.zst",
+    "sha256": "697a3ad906d797474f29360855bcdfd7e6e607b93bfd510c9c6633b152b9428f",
+    "compressed_bytes": 5798503281,
+    "uncompressed_bytes": 5819692544,
+    "zstd_test_passed": true,
+    "tar_entries": 51,
+    "unsafe_tar_entries": 0,
+    "duplicate_tar_entries": 0,
+    "image_count": 2,
+    "layers_per_image": 28,
+    "tags_and_index_digests_verified": true,
+    "control_image_id": "sha256:00757757bb66515733395fbca3b26e752d3bea8c04e91b7c2a4e048190100e28",
+    "both_current_image_id": "sha256:945b121e92ee023098fca39919329eed82d6ec5bd7ddb2c3ec3e5d1c47f3e545",
+    "checksum_receipt_sha256": "6c5a2697dc407172ec2c80d2d5d3f5a4e2b27f5955a35d917591261064a6d16e",
+    "entry_list_sha256": "d26b1b528e0431967b70a8442ed271458077e1b80dc97720c48bca92a460687c",
+    "manifest_json_sha256": "cb6b7a5d4df4a7795eef2d557e11eda698de79b08ec7a3dea6d569247b786616",
+    "index_json_sha256": "a1736a6d9ed830dd34a61678b00c9ac4869d5a75ae3e7fe8e6ea16eba7ecc64a"
+  },
+  "build_root_relocation": {
+    "source": "/home/steve/builds/qwen38-current-main-20260824T165532Z-6648eb118d-baaa05bb4e",
+    "source_absent_after": true,
+    "destination": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e/build-root-6648eb118d",
+    "files": 9569,
+    "directories": 1188,
+    "file_bytes": 924175820,
+    "content_manifest_sha256": "08035c593eef4d474f88da178cdc75675bbe0da278e83ae675fc4cdf39c5bcde",
+    "all_file_bytes_verified_after_relocation": true,
+    "filesystem": "fuseblk/NTFS",
+    "posix_metadata_preserved": false,
+    "metadata_scope": "NTFS normalizes exposed POSIX metadata; content bytes are exact. The Git source tar, wheel, image archive, receipts, logs, and checksums preserve the build's reproducible identity and payloads."
+  },
+  "local_removal": {
+    "running_containers_before": 0,
+    "removed_exact_image_ids": [
+      "sha256:945b121e92ee023098fca39919329eed82d6ec5bd7ddb2c3ec3e5d1c47f3e545",
+      "sha256:00757757bb66515733395fbca3b26e752d3bea8c04e91b7c2a4e048190100e28"
+    ],
+    "removed_images_absent_after": true,
+    "base_image_retained": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "qualified_0ecc_stock_image_retained": "sha256:22a03a3db5ce34419562706d4a95394d67bd788c6d7eb63916ba436927e0845e",
+    "79bb_stock_image_retained": "sha256:9f8000f2317de47098161b4da63efb61994a51d9edd8bfe902818e8e685e075a",
+    "broad_docker_prune_ran": false,
+    "root_free_kib_before": 13889548,
+    "root_free_kib_after_exact_removal": 22053912,
+    "root_free_kib_after_unused_builder_cache_prune": 22472388,
+    "root_free_gib_after": 21.43
+  },
+  "builder_cache": {
+    "prune_scope": "docker-builder-only-all-unused",
+    "reported_logical_reclaim_bytes": 4583000000,
+    "actual_root_free_delta_kib": 418548,
+    "actual_root_free_delta_mib": 408.74,
+    "runtime_images_removed_by_prune": 0,
+    "models_or_run_evidence_removed": 0,
+    "build_cache_bytes_after": 0
+  },
+  "preservation": {
+    "hardware_and_campaign_roots_retained": true,
+    "performance_evidence_removed": false,
+    "protected_speed_changed": false,
+    "tp2_78_decision_overlay_changed": false,
+    "tp4_152_decision_overlay_changed": false,
+    "recovery": "zstd -dc /mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e/images-6648eb118d.docker.tar.zst | sudo docker load"
+  }
+}

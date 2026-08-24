@@ -289,10 +289,15 @@ speed is promoted, and the protected TP1 diagnostic pair and strict floor stay
 
 The successor is one cleanup-only vLLM commit; XPU-kernel main and the official
 nightly digest did not move. That bounds the port review but does not waive the
-literal-newest rebuild. Preserve and verify the exact 6648 images/build root on
-the USB artifact store before removing only those local identities, then
-re-resolve all three upstream identities and build the newest head. Resume in
-order TP1, TP2, TP4 without lowering a captured speed or dropping accepted
+literal-newest rebuild. The exact 6648 two-image archive and all 9,569
+build-root files are now byte-verified on the USB artifact store. Only the two
+recoverable stale image IDs, the duplicated ext4 build root, and unused Docker
+builder cache were removed; the nightly base, stock controls, raw run evidence,
+and accepted overlays remain. Final measured root headroom was 21.43 GiB. See
+the [6648 storage rotation](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6648eb118d-storage-rotation.md).
+
+Re-resolve all three upstream identities and build the newest head next. Resume
+in order TP1, TP2, TP4 without lowering a captured speed or dropping accepted
 optimization work.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-6648-r1-closed-stale-during-diagnostic",
+  "status": "preservation-gate-passed-6648-stale-archived-awaiting-successor-build",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -572,7 +572,7 @@
     "receipt_sha256": "87438694ce565d4cf1bd2190a28560f03abbe11d269e9c6da900d80d4502bdcb",
     "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e",
     "archive_sha256s_sha256": "a00b53e007f77f8dc4f8746d327487d7dc5615736399830853cddc20cbac5e60",
-    "archive_contains_docker_image_tar": false,
+    "archive_contains_docker_image_tar": true,
     "vllm_head": "6648eb118d77ad001a411cf52f9c6c4719476c83",
     "vllm_tree": "b223b37600829d862fc9d2b3a054ad5ef7de9c86",
     "vllm_package_version": "0.26.1rc1.dev1154+g6648eb118.xpu",
@@ -604,11 +604,23 @@
     },
     "upstream_delta_disposition": "6648 is the direct one-commit successor of 7797. It only removes a duplicate VLLM_USE_DEEP_GEMM check in kernel warmup. The called support function still checks the flag and XPU inherits DeepGEMM unsupported, so no Qwen/XPU behavior or speed gain is inferred.",
     "storage": {
-      "unused_docker_builder_cache_pruned_reported": "7.652GB",
-      "runtime_images_removed": 0,
-      "root_free_kib_after": 14094500,
+      "initial_post_build_unused_builder_cache_pruned_reported": "7.652GB",
       "minimum_gpu_launch_free_kib": 12582912,
-      "new_image_ids_retained": true
+      "storage_rotation_status": "verified-recoverable-local-stale-images-removed",
+      "storage_rotation_note": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6648eb118d-storage-rotation.md",
+      "storage_rotation_note_sha256": "cd80f3d67b79b900bec01e6cd773b44c90284e4a4a84649045f1c505c1aced41",
+      "storage_rotation_data": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6648eb118d-storage-rotation.json",
+      "storage_rotation_data_sha256": "fece95645be82c48d890ddb4213fc1b813a1fb131c6e4e1a9bec275efd366497",
+      "image_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e/images-6648eb118d.docker.tar.zst",
+      "image_archive_sha256": "697a3ad906d797474f29360855bcdfd7e6e607b93bfd510c9c6633b152b9428f",
+      "rotation_manifest_sha256": "8414454007fd35dd1b4a169a2e542842d4e52803b37a559cda21264c8cd40e41",
+      "build_root_relocated": true,
+      "build_root_content_manifest_sha256": "08035c593eef4d474f88da178cdc75675bbe0da278e83ae675fc4cdf39c5bcde",
+      "posix_metadata_preserved_on_ntfs": false,
+      "local_6648_image_ids_removed": true,
+      "runtime_images_removed_by_builder_prune": 0,
+      "root_free_kib_after": 22472388,
+      "new_image_ids_retained_locally": false
     },
     "qualification": {
       "status": "r1-failed-incomplete-stale-during-fresh-diagnostic",
