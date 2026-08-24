@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-successor-builds-stale-newest-build-pending",
+  "status": "preservation-gate-passed-7797-current-tp1-preregistered",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -14,7 +14,7 @@
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
       "vllm_source": "f94666b60d4c58ec0807d22c837cfae322a1dde9"
     },
-    "vllm_upstream_main": "29c9af5211e618bfb78c4140db9e814f1a838aa7",
+    "vllm_upstream_main": "7797b6022c129b862e45ae6aed08822e65d1bccb",
     "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
   },
@@ -460,6 +460,52 @@
     },
     "qualification": "never-launched"
   }],
+  "active_qualification_build": {
+    "built_utc": "2026-08-24T15:31:34Z",
+    "status": "static-preflight-passed-tp1-preregistered-not-launched",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-7797b6022c-absolute-current-main-build.json",
+    "receipt_sha256": "be82b2b6b5b94600d9b736dd9d8f11f48e9b475c13efa74adcda0829d510abba",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T153134Z-7797b6022c-baaa05bb4e",
+    "archive_sha256s_sha256": "87fcc77802cdb579a3720efb6eda0deb293e660c32dbf9f0f5fad99d976920e0",
+    "archive_contains_docker_image_tar": false,
+    "vllm_head": "7797b6022c129b862e45ae6aed08822e65d1bccb",
+    "vllm_tree": "78e0ffe9e07831fa2af9643e0c87501000a93014",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "vllm_xpu_kernels_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "source_archive_sha256": "31572c1698f40f8968f997c71562e83129f4135e304b9e2b5244c521421b597d",
+    "wheel_sha256": "9b88a47dbb243ccda2e9fac1a9f311d614bceb0e181b28a3793b7390ae0be360",
+    "images": {
+      "current_vllm_stock_kernel": "sha256:a385f20ca68b62f18d670722617ed69583fe9154b537c108f04b704029950abd",
+      "both_current_zero_overlay": "sha256:295de005ad89735c92aced11179d05db08dd694badff3722de3f1ceb9e5994f1"
+    },
+    "overlay_preservation_binding": {
+      "zero_overlay_build": true,
+      "decision_files_applied": 0,
+      "compiled_outputs_carried": 0,
+      "tp2_decision_files_preserved": 78,
+      "tp4_decision_files_preserved": 152,
+      "accepted_overlays_discarded": 0
+    },
+    "post_build_freshness_seal": {
+      "checked_utc": "2026-08-24T15:39:03Z",
+      "vllm_head": "7797b6022c129b862e45ae6aed08822e65d1bccb",
+      "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+      "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "status": "passed"
+    },
+    "upstream_delta_disposition": "The 7797 tuned batch-invariant matmul tables select only for BF16 plus VLLM_BATCH_INVARIANT on CUDA Ada/Hopper. This F16 XPU packet does not enable the mode and resolves the prior default. No B70 performance gain is inferred from the commit title.",
+    "qualification": {
+      "status": "preregistered-not-launched",
+      "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-untreated-tp1-r1-prereg.md",
+      "packet_sha256": "876cde31166ec10dcc4a26a2aad5eedc030fa6f2695169e34b51078b91a04c82",
+      "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-7797b6022c-untreated-tp1-qualification.sh",
+      "wrapper_sha256": "b9160cf8327210fde417bc48d1eeb2b3f0367967e01aa01415297a2c87b978f9",
+      "order": ["TP1", "TP2", "TP4"]
+    },
+    "policy": "Run once only from clean pushed main if all live inputs still match. Preserve every result append-only and never lower a historical floor or drop a compatible accepted overlay."
+  },
   "frozen_trees": {
     "vllm": {
       "path": "/home/steve/src/vllm",

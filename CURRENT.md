@@ -191,15 +191,25 @@ remained unchanged. Both builds are therefore stale and never launched. See the
 [ecfa attempt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-ecfa7bb373-absolute-current-main-build-attempt.json),
 and [f620 recovered receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-f620499ee3-absolute-current-main-build.json).
 
-Root headroom is about 21.9 GiB, above the unchanged 12-GiB GPU launch floor.
-The active step is to seal and push these unlaunched closeouts, then resolve all
-three moving inputs again and build `29c9af5211` or whatever literal head has
-superseded it. The first identity that survives the post-build freshness seal
-receives the unchanged one-shot untreated TP1 contract, then TP2 and TP4.
-Broader family/quant/MTP/context/KV/graph neural.download coverage follows those
-current topology anchors. Any further upstream movement stops the packet and
-rebuilds its successor without lowering historical floors or discarding
-accepted overlays.
+The next builder invocation resolved a still-newer literal head,
+`7797b6022c129b862e45ae6aed08822e65d1bccb`, and completed both zero-overlay
+images, the normal aggregate receipt, archive copy, checksum battery, and
+post-archive freshness seal. Kernel main and the nightly digest remain baaa and
+3ee0. The new commit's per-architecture batch-invariant matmul tables activate
+only for BF16 plus `VLLM_BATCH_INVARIANT` on CUDA Ada/Hopper; this F16 XPU lane
+does not enable that mode and resolves the prior default. Do not report the
+upstream "~3x" title as a B70 gain.
+
+After pruning only unused builder cache, root headroom is about 14.0 GiB, above
+the unchanged 12-GiB GPU launch floor. The exact
+[7797 build receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-7797b6022c-absolute-current-main-build.json),
+[TP1 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-untreated-tp1-r1-prereg.md),
+and frozen wrapper are prepared. The active step is independent packet audit,
+then a focused commit/push and one atomic untreated TP1 invocation if all three
+live inputs still match. A pass authorizes separately preregistered TP2 and TP4
+anchors. Broader family/quant/MTP/context/KV/graph neural.download coverage
+follows those anchors. Any upstream movement stops the packet and rebuilds its
+successor without lowering historical floors or discarding accepted overlays.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
