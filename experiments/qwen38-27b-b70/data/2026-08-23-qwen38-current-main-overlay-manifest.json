@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-342b-tp1-r2-closed-stale-before-launch-successor-build-required",
+  "status": "preservation-gate-passed-6a9-build-static-preflight-enospc-recovery-preregistered",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -9,7 +9,7 @@
     "result_policy": "append-only identities; never overwrite or lower historical highs"
   },
   "observed_heads": {
-    "checked_utc": "2026-08-24T18:51:31Z",
+    "checked_utc": "2026-08-24T19:24:18Z",
     "official_nightly": {
       "index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
@@ -18,6 +18,43 @@
     "vllm_upstream_main": "6a9c69fa851389dcf1ee5d3a2363e27af665d26d",
     "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
+  },
+  "pending_absolute_current_build_recovery": {
+    "build_utc": "2026-08-24T18:59:28Z",
+    "status": "both-images-and-static-preflights-complete-enospc-before-aggregate-receipt-recovery-preregistered-not-run",
+    "attempt_record": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-enospc-build-attempt.json",
+    "attempt_record_sha256": "9f690c02c4cbdbe72140043ffab1d87f6774f430b7a9d3a5506bdae638e19b18",
+    "recovery_preregistration": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-enospc-receipt-recovery-prereg.md",
+    "recovery_preregistration_sha256": "3eb068a26157a3a14f5005b103510ae140e1589d040f173a4b135744518e87f0",
+    "recovery_script": "experiments/qwen38-27b-b70/scripts/recover-20260824-qwen38-6a9c69fa85-enospc-build-receipt.sh",
+    "recovery_script_sha256": "e3f7da15e7ef90894b2629fd9e84eb25fc0eee00d68be1c8ffc44d1602610ba8",
+    "vllm_head": "6a9c69fa851389dcf1ee5d3a2363e27af665d26d",
+    "vllm_tree": "baf2301fb3f993537b07b6132b4d980efca2e7e4",
+    "vllm_package_version": "0.26.1rc1.dev1157+g6a9c69fa8.xpu",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "vllm_xpu_kernels_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "build_root": "/home/steve/builds/qwen38-current-main-20260824T185928Z-6a9c69fa85-baaa05bb4e",
+    "intended_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T185928Z-6a9c69fa85-baaa05bb4e",
+    "aggregate_receipt_exists": false,
+    "archive_exists": false,
+    "images": {
+      "current_vllm_stock_kernel": "sha256:24ca5f6b6e5a14f71f43f82469f6e9debd36b2965942932e1646f377e30799cf",
+      "both_current_zero_overlay": "sha256:f86c4c78d76a484f5d54eda310419c91a2471634ab97782022ef7573fc19a7d9"
+    },
+    "overlay_preservation_binding": {
+      "decision_files_applied": 0,
+      "tp2_decision_files_preserved": 78,
+      "tp2_manifest_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757",
+      "tp4_decision_files_preserved": 152,
+      "tp4_manifest_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2",
+      "protected_performance_changed": false
+    },
+    "last_freshness_check_utc": "2026-08-24T19:24:18Z",
+    "gpu_or_model_work_ran": false,
+    "qualification": "not-run",
+    "policy": "Recovery creates static evidence only. Re-resolve vLLM, kernels, nightly, lab main, immutable images, protected performance, and accepted decision artifacts before and after recovery; then independently audit the receipt before deriving TP1."
   },
   "historical_absolute_current_builds": [{
     "built_utc": "2026-08-24T04:05:36Z",

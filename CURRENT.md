@@ -360,6 +360,27 @@ payload, but it is speculative-decode-adjacent and must not be waived. Build
 kernels, and the live nightly digest, with zero source overlay. Re-resolve all
 three before and after the build.
 
+That zero-overlay successor build resolved and built at vLLM
+`6a9c69fa851389dcf1ee5d3a2363e27af665d26d`, XPU kernels
+`baaa05bb4e92901219a5a072dd63f2474896f6d1`, and nightly index digest
+`sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876`.
+The wheel, both immutable image exports, both full inspections, and both
+no-device static preflights completed. Root ENOSPC then stopped the normal
+builder while it wrote the both-current tag receipt, before the aggregate
+receipt or USB archive. No GPU, model, cache compile, benchmark, or quality arm
+ran. Only disposable uv, compiler, and Docker builder caches were cleared;
+both new images and all optimization/result evidence remain. Root headroom was
+restored above 17 GiB.
+
+A single report-only receipt recovery is preregistered, but has not run. It is
+allowed only from clean pushed `main` while all three live upstream identities,
+both immutable image IDs and complete label contracts, the official kernel
+artifact, every original build input/log/preflight, the complete protected
+performance ledger, and all 78 TP2 plus 152 TP4 decisions remain exact. It may
+not build, retag, remove, expose a GPU, or claim qualification. See the
+[attempt record](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-enospc-build-attempt.json)
+and [recovery preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-enospc-receipt-recovery-prereg.md).
+
 Do not authorize TP2 until TP1 passes full qualification. Then qualify TP2
 zero-overlay plus the preserved 78-decision remap, followed by TP4 zero-overlay
 plus the accepted 152-decision remap.

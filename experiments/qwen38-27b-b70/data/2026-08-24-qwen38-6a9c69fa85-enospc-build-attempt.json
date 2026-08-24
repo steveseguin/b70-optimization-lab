@@ -1,0 +1,88 @@
+{
+  "schema": "neural-download-absolute-current-main-enospc-attempt-v1",
+  "date": "2026-08-24",
+  "build_utc": "2026-08-24T18:59:28Z",
+  "failure_utc": "2026-08-24T19:02:17Z",
+  "classification": "incomplete-after-both-static-preflights-before-tag-and-aggregate-receipts",
+  "qualification": "not_run",
+  "performance_or_quality_evidence": false,
+  "gpu_or_model_work_ran": false,
+  "identity": {
+    "lab_head": "feffa703cf33ed86025d4833d1e4aa2a52243471",
+    "lab_tree": "d65181c5865e4941bb7ab3163bf97d3e05af4a61",
+    "vllm_head": "6a9c69fa851389dcf1ee5d3a2363e27af665d26d",
+    "vllm_tree": "baf2301fb3f993537b07b6132b4d980efca2e7e4",
+    "vllm_package_version": "0.26.1rc1.dev1157+g6a9c69fa8.xpu",
+    "xpu_kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "xpu_kernel_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "nightly_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none"
+  },
+  "build_root": "/home/steve/builds/qwen38-current-main-20260824T185928Z-6a9c69fa85-baaa05bb4e",
+  "build_root_size_bytes_after_failure": 924191907,
+  "intended_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T185928Z-6a9c69fa85-baaa05bb4e",
+  "intended_archive_absent": true,
+  "build_inputs": {
+    "script_sha256": "fc780ca35a9ea8b3022825ae9cebbc1e2e84c42a40a62289649bc67cd96eec16",
+    "dockerfile_sha256": "d9866acd99e7de78f675af1bc2aba49d4c5c749e0c79ea22d1f45d2ce745a749",
+    "source_identity_sha256": "7d2fe9b64a40cc868c7a5f6ac6d8c612888bd6e271a9c227aad19c3c4f27fac5",
+    "source_archive_sha256": "5eb2277adbf0ea46ec43ddc3a2f10c11aca26de45955f2df60d27c414d5dc2ce",
+    "vllm_wheel_sha256": "49832725de5066a25429a6f78ae2b448b9ff2e51af9ad34a7de89013e5b089db",
+    "kernel_wheel_sha256": "7b886fa814469aef8904118729f31f2fe77559f3c5219bd0ecf799a904387483"
+  },
+  "images": {
+    "current_vllm_stock_kernel": {
+      "tag": "neural-download/vllm-openai-xpu:vllm-6a9c69fa85-kernel-stock-3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "image_id": "sha256:24ca5f6b6e5a14f71f43f82469f6e9debd36b2965942932e1646f377e30799cf",
+      "inspect_sha256": "b67b98503acd75cdcdeb6165982c3058e90180d36dd0e005d9ab5fe43a126bcd",
+      "static_preflight_sha256": "7c201fffaa55300c0a44920a2c346a66c190dcf27acdba8016a888ffbe993003",
+      "export_completed": true,
+      "static_preflight_completed": true
+    },
+    "both_current_zero_overlay": {
+      "tag": "neural-download/vllm-openai-xpu:vllm-6a9c69fa85-kernel-baaa05bb4e-official",
+      "image_id": "sha256:f86c4c78d76a484f5d54eda310419c91a2471634ab97782022ef7573fc19a7d9",
+      "inspect_sha256": "e06ef362ed31ceae4a9b8a14c436c2e1c1feb5b0ffc5cffcb2b4430177333ce0",
+      "static_preflight_sha256": "b6e4b3789ec0b4d41d2d2be53d48b86e9bf514d681d8af25d61a0c1a247a99e8",
+      "export_completed": true,
+      "static_preflight_completed": true
+    }
+  },
+  "logs_sha256": {
+    "vllm_wheel_build": "77e834ef34033d4498db5fbcbcdf7d86bec3aa78eb114ec505224b111b378fb2",
+    "current_vllm_stock_kernel_image_build": "a13d784d3e90b94c240e5a5c9911f17e815bf0ce230156d57fb49c0dd2272327",
+    "both_current_zero_overlay_image_build": "f72ab213b9846038e786aca91f24c1ef99afd638ad21b17b920f0000bc28f87e"
+  },
+  "failure_boundary": {
+    "builder_line": 497,
+    "exact_stderr": "printf: write error: No space left on device",
+    "root_free_kib": 0,
+    "both_current_tag_receipt_size_bytes": 0,
+    "both_current_tag_receipt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "aggregate_build_receipt_exists": false,
+    "external_archive_exists": false
+  },
+  "storage_recovery": {
+    "uv_cache_prune_reported": "1.4GiB",
+    "uv_cache_clean_reported": "14.9GiB",
+    "ccache_clean_reported": "5.0GiB",
+    "docker_builder_cache_pruned_reported": "12.24GB",
+    "docker_images_removed": 0,
+    "new_image_ids_reverified_after_builder_prune": true,
+    "root_free_kib_after_cleanup": 17894384
+  },
+  "protected_performance_changed": false,
+  "overlay_preservation": {
+    "tp2_decision_files": 78,
+    "tp2_manifest_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757",
+    "tp4_decision_files": 152,
+    "tp4_manifest_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2",
+    "decisions_applied": 0
+  },
+  "recovery_packet": {
+    "script": "experiments/qwen38-27b-b70/scripts/recover-20260824-qwen38-6a9c69fa85-enospc-build-receipt.sh",
+    "script_sha256": "e3f7da15e7ef90894b2629fd9e84eb25fc0eee00d68be1c8ffc44d1602610ba8",
+    "cap": "one report-only recovery; no rebuild, retag, removal, GPU, model, or benchmark",
+    "status": "preregistered-not-run"
+  }
+}
