@@ -423,6 +423,70 @@
 
   const kTokens = value => value >= 1024 ? (value / 1024).toFixed(value % 1024 ? 1 : 0) + 'K' : String(value);
 
+  // Two series on one log-x chart: solid measured points, dashed projection.
+  function svgDualLine(measured, projected, title, xLabel) {
+    const width = 640, height = 260, left = 64, top = 24, right = 20, bottom = 46;
+    const all = measured.concat(projected);
+    const lx = all.map(p => Math.log2(Math.max(1, p.x)));
+    const x0 = Math.min.apply(null, lx), x1 = Math.max.apply(null, lx);
+    const yMax = Math.max.apply(null, all.map(p => p.y).concat([1])) * 1.12;
+    const sx = x => left + ((Math.log2(Math.max(1, x)) - x0) / Math.max(1e-9, x1 - x0)) * (width - left - right);
+    const sy = y => top + (1 - y / yMax) * (height - top - bottom);
+    const path = pts => pts.map((p, i) => (i ? 'L' : 'M') + sx(p.x).toFixed(1) + ',' + sy(p.y).toFixed(1)).join(' ');
+    const measuredDots = measured.map(p => '<circle cx="' + sx(p.x).toFixed(1) + '" cy="' + sy(p.y).toFixed(1) + '" r="3.5" fill="var(--ink)"></circle>'
+      + '<text x="' + sx(p.x).toFixed(1) + '" y="' + (sy(p.y) - 8).toFixed(1) + '" text-anchor="middle" font-size="10.5" font-family="var(--mono)" fill="var(--ink)">' + esc(fmt(p.y)) + '</text>'
+      + '<text x="' + sx(p.x).toFixed(1) + '" y="' + (height - 26) + '" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">' + esc(String(p.x)) + '</text>').join('');
+    return '<svg viewBox="0 0 ' + width + ' ' + height + '" width="100%" role="img" aria-label="' + esc(title) + '" xmlns="http://www.w3.org/2000/svg">'
+      + '<text x="0" y="14" font-size="12" font-weight="700" font-family="var(--mono)" fill="var(--ink)">' + esc(title) + '</text>'
+      + '<line x1="' + left + '" y1="' + sy(0).toFixed(1) + '" x2="' + (width - right) + '" y2="' + sy(0).toFixed(1) + '" stroke="var(--ink)" stroke-width="2"></line>'
+      + '<path d="' + path(projected) + '" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 4"></path>'
+      + '<path d="' + path(measured) + '" fill="none" stroke="var(--ink)" stroke-width="2.5"></path>'
+      + measuredDots
+      + '<text x="' + left + '" y="' + (height - 8) + '" font-size="11" font-family="var(--mono)" fill="var(--muted)">' + esc(xLabel) + '</text></svg>';
+  }
+
+  // ---- index.html#multi-user: measured sweep vs projected stock curve ----
+  async function renderConcurrencySection() {
+    const section = document.getElementById('multi-user');
+    if (!section || !section.dataset.mlMeasuredSweep) return;
+    const block = section.querySelector('[data-concurrency-chart]');
+    const status = section.querySelector('[data-concurrency-status]');
+    const figure = section.querySelector('[data-concurrency-figure]');
+    if (!block || !figure) return;
+    let measured;
+    try {
+      measured = JSON.parse(section.dataset.mlMeasuredSweep).map(pair => ({ x: pair[0], y: pair[1] }));
+    } catch (error) {
+      return;
+    }
+    let engine;
+    try {
+      engine = await loadEngine();
+    } catch (error) {
+      return; // the measured table stands on its own
+    }
+    const request = requestFromDataset(section.dataset);
+    const levels = measured.map(point => point.x);
+    let projected = [];
+    try {
+      const sweep = engine.sweep(request, { levels });
+      projected = (sweep.concurrency.points || [])
+        .filter(point => point.fits !== false)
+        .map(point => {
+          const users = point.concurrency || point.users || 1;
+          const aggregate = point.aggregateTokS || point.combinedTokS || ((point.perUserTokS || 0) * users);
+          return { x: users, y: aggregate };
+        });
+    } catch (error) {
+      projected = [];
+    }
+    if (!projected.length) return;
+    figure.innerHTML = svgDualLine(measured, projected,
+      'Combined tok/s vs simultaneous users - solid measured (tuned lab stack), dashed projected stock', 'simultaneous users (log scale)');
+    if (status) status.textContent = 'Projection from the ML Bottleneck physics engine v' + engine.version + ' for stock software on this exact setup; the solid line is the lab measurement above.';
+    block.hidden = false;
+  }
+
   // ---- models/<id>.html: package projection card + projected scaling ----
   async function renderPackagePage() {
     const root = document.getElementById('package-page');
@@ -508,6 +572,7 @@
     renderHeadroom();
     renderMiniPlanner();
     renderHardwareComparison();
+    renderConcurrencySection();
     renderPackagePage();
     renderFamilyHeadroomGrades();
   }
