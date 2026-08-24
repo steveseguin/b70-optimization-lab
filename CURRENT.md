@@ -113,16 +113,31 @@ and 38/38 compatible decision paths, but 17 different normalized autotune
 winners. Before the decision-only program ran, the host hard-rebooted from
 `7.0.0-28-generic` into `7.0.0-30-generic`; no overlay arm was active. The
 0ecc packet program then closed stale before launch when vLLM advanced to
-e239; the hardware gate and all overlay arms remain unrun. Its exact 38
+e239; the hardware gate and all overlay arms remained unrun. Its exact 38
 decisions are preserved as historical source evidence and must not be
-relabeled as e239 or 79bb. The active next step is the bounded atomic
-hardware-gate plus untreated 79bb both-current three-arm TP1 control. Only a
-speed-only control miss may permit deriving and preregistering a separately
-versioned 79bb compatibility packet; if the untreated base passes, stop without testing
-the old decisions. No binary or generated kernel is transferred, and no
-result may lower a protected historical speed. See the
-[closed 0ecc preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-0ecc-tp1-control-decision-overlay-prereg.md)
-and the [active 79bb untreated preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-prereg.md).
+relabeled as e239 or 79bb.
+
+The first atomic 79bb attempt then closed before any candidate image, model,
+cache, or benchmark ran. Four-card identity, per-card compute, and the
+four-device peer oracle passed; the host-only XCCL probe mixed the May
+virtualenv's Torch/SYCL/oneCCL with the system oneAPI-2026 UR loader, and all
+four ranks segfaulted at the first barrier. The 54-file raw manifest verifies.
+This is failed-incomplete infrastructure, not 79bb correctness or speed
+evidence, and it changes no protected result. See the
+[failure record](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-hardware-gate-mixed-runtime-failure.md).
+
+The active next step is one separately preregistered corrected atomic attempt
+on fresh roots. Only the host gate's runtime coherence, DSO/origin checks,
+segfault accounting, and interleaved-log parser change; the 79bb image, strict
+runner, graph/cache/model contract, and every speed floor remain exact. A
+second gate failure stops without looping. Only a completed speed miss with
+every non-speed gate clean may permit deriving a separately versioned 79bb compatibility
+packet; if untreated 79bb passes, stop without testing old decisions and move
+to TP2 then TP4. No binary or generated kernel is transferred, and no result
+may lower a protected historical speed. See the
+[closed 0ecc preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-0ecc-tp1-control-decision-overlay-prereg.md),
+[original 79bb preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-prereg.md), and
+[active r2 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-r2-prereg.md).
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh

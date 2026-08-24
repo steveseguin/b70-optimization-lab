@@ -1,0 +1,85 @@
+{
+  "schema": "neural-download-qwen38-current-main-hardware-gate-attempt-v1",
+  "date": "2026-08-24",
+  "classification": "failed-incomplete-host-collective-gate",
+  "candidate_qualification": "not_started",
+  "performance_evidence": false,
+  "protected_performance_changed": false,
+  "attempt": {
+    "lab_commit": "c555ea27404e22ce6d8de0598c1a56f6ffe2ef14",
+    "boot_id": "086de284-0771-4269-9cb2-e064fe303e40",
+    "kernel": "7.0.0-30-generic",
+    "started_utc": "2026-08-24T13:25:31Z",
+    "completed_utc": "2026-08-24T13:25:49Z",
+    "raw_root": "/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-79bb-20260824-086de284",
+    "raw_manifest_sha256": "5a47a865cf1e66c44ed5153625fdb553db1258fdc912532f9b831d234b6b823a",
+    "summary_sha256": "ab1c7e4febf3ad350d425caa973194b7b364556dc098b22cbe3fb295b75ca15d",
+    "final_status_sha256": "e93176b9cdf866ef0c78d24b2eae43327a3a79c44849a0a5e00140124cbfe5a6",
+    "xccl_log_sha256": "78ad3f066a306961ae1c24d7d648f09e93b84045063b760dcbb76d4f3cf2f2b9",
+    "kernel_delta_sha256": "86472e7dd61264c24561905d307e522acbefe89aadecc5ac0390e94712628ac3",
+    "runner_sha256": "348ace184632c3b00281fa07b65f1ea974e544af78467b793f7a8384f2805f53",
+    "manifest_entries_verified": 54,
+    "manifest_entries_total": 54,
+    "exit_status": 1
+  },
+  "gates": {
+    "four_device_identity": true,
+    "per_card_compute": true,
+    "four_device_peer_read": true,
+    "four_rank_xccl_allreduce": false,
+    "repo_postflight_reached": false,
+    "kernel_taint_pre": 0,
+    "kernel_taint_post": 0,
+    "render_holders_after_failure": 0,
+    "residual_probe_processes_after_failure": 0
+  },
+  "failure": {
+    "stage": "dist.barrier after all four init_process_group calls returned",
+    "rank_exit_signals": {
+      "0": "SIGSEGV",
+      "1": "SIGSEGV",
+      "2": "SIGSEGV",
+      "3": "SIGSEGV"
+    },
+    "candidate_image_started": false,
+    "model_started": false,
+    "compilation_cache_created": false,
+    "timed_benchmark_started": false,
+    "tp1_result_root_created": false
+  },
+  "runtime_identity": {
+    "scope": "host health probe only; not the immutable 79bb candidate image",
+    "python": "/home/steve/.venvs/vllm-xpu/bin/python",
+    "torch": "2.11.0+xpu",
+    "oneapi_runtime": "2025.3.2 in the virtualenv",
+    "oneccl": "2021.17.2",
+    "vllm": "0.20.2rc1.dev2+gc51df4300.d20260523.xpu",
+    "gate_ld_library_path": "/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib",
+    "resolved_sycl": "/home/steve/.venvs/vllm-xpu/lib/libsycl.so.8",
+    "resolved_ur_loader": "/opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0",
+    "venv_ur_loader_sha256": "68e273791752638dfad1ce3bb002b0ed8d00ceee21e491cd46dd0668d716bfa0",
+    "mixed_ur_loader_sha256": "92e4aecd31658e1d2d791d5206fffee73e8c3183601a0acfb0cfa16f7799f3e9"
+  },
+  "cause_assessment": {
+    "status": "high-confidence harness/runtime mismatch; corrected gate required for confirmation",
+    "primary": "The gate mixed the virtualenv Torch, SYCL, and oneCCL libraries with the system oneAPI 2026 UR loader. The repository records the same init-then-barrier-SIGSEGV symptom and recovery after placing the matching virtualenv runtime first.",
+    "not_supported_by_this_attempt": [
+      "79bb vLLM regression",
+      "baaa05bb4e XPU-kernel regression",
+      "candidate-image regression",
+      "decode-speed regression",
+      "persistent GPU hardware failure"
+    ],
+    "additional_harness_findings": [
+      "The kernel reject regex omitted generic segfault records.",
+      "The exact-line rank-marker parser could falsely reject valid interleaved torchrun output.",
+      "The original tool manifest pinned Python but not the effective Torch/SYCL/oneCCL/UR DSOs."
+    ]
+  },
+  "disposition": {
+    "old_root": "closed and checksum-sealed; do not overwrite",
+    "retry_policy": "one separately preregistered corrected atomic chain on fresh roots; no internal retry",
+    "benchmark_contract": "unchanged",
+    "overlay_policy": "none; a speed-only completed control miss is still required before a new compatibility packet may be derived"
+  }
+}

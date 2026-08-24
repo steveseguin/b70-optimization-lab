@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# Atomic, untreated-first TP1 qualification for literal-current vLLM 79bb and
-# exact-current XPU kernel baaa. This program contains no decision, source, DSO,
-# or binary overlay. A speed-only miss is evidence for a separate packet; it
-# never authorizes carrying the closed 0ecc decisions in this invocation.
+# Atomic, untreated-first TP1 qualification r2 for literal-current vLLM 79bb
+# and exact-current XPU kernel baaa. The first invocation closed before any
+# model arm at a mixed-runtime host gate. This corrected program still contains
+# no decision, source, DSO, or binary overlay. A speed-only miss is evidence for
+# a separate packet; it never authorizes carrying the closed 0ecc decisions in
+# this invocation.
 
 umask 077
 
@@ -26,10 +28,10 @@ model_manifest=$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json
 model_verifier=$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py
 bench_helper=$repo/scripts/bench-openai-realistic-suite.py
 quality_helper=$repo/scripts/qwen38-text-quality-suite.py
-prereg=$repo/experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-prereg.md
+prereg=$repo/experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-r2-prereg.md
 hardware_gate_runner=$repo/experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-postreboot-hardware-gate.sh
-hardware_gate=${HARDWARE_GATE_ROOT:-/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-79bb-20260824-086de284}
-result_root=${RESULT_ROOT:-/home/steve/qwen38-current-main-runs/tp1-untreated-79bb-20260824}
+hardware_gate=${HARDWARE_GATE_ROOT:-/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-79bb-20260824-086de284-venvlib-r2}
+result_root=${RESULT_ROOT:-/home/steve/qwen38-current-main-runs/tp1-untreated-79bb-20260824-r2}
 inputs=$result_root/inputs
 control_cache=$result_root/control-cache
 control_fresh_out=$result_root/control-fresh-diagnostic
@@ -42,7 +44,9 @@ sudo_pass_file=${SUDO_PASS_FILE:-/home/steve/SUDOPASSWORD.txt}
 expected_suite_sha256=292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c
 expected_baseline_sha256=738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18
 expected_receipt_sha256=92e8fa48ad09ee025fd16a8f29440d622715df0c300fade3023317cd756d948d
-expected_prereg_sha256=c2887c8f01aeb900315862628898dbc1f97555f6403eb1e5b2881714b50a2dfa
+expected_prereg_sha256=3fe64e088660b4863822ae87aeabad48c73f6ce2149f3c74137f899335286e45
+expected_runner_sha256=cec5f3d852c84255822a4a5ee14d6829cd5efa6719ff9e8c59a904090d11c2b0
+expected_hardware_gate_runner_sha256=84b9f5025476f40cb3218dbe513718c6d37da1e4852d17031b403fa410e4c506
 expected_vllm_head=79bb395eea64dbfef99a55f010d2854db71f8571
 expected_vllm_tree=3dc459a78f843186bb8a510631f9f1d34448a243
 expected_kernel_head=baaa05bb4e92901219a5a072dd63f2474896f6d1
@@ -99,12 +103,15 @@ validate_hardware_gate() {
     --arg boot_id "$expected_host_boot_id" \
     --arg kernel "$expected_host_kernel" \
     --arg repo_head "$(git -C "$repo" rev-parse HEAD)" '
-    .passed == true and .host.boot_id == $boot_id and .host.kernel == $kernel and
+    .schema == "neural-download-qwen38-postreboot-hardware-gate-v2" and
+    .passed == true and .gate_complete == true and .failure_stage == "complete" and
+    .host.boot_id == $boot_id and .host.kernel == $kernel and
     .host.taint_pre == "0" and .host.taint_post == "0" and
     .repo_head == $repo_head and .gates.four_device_identity == true and
     .gates.per_card_compute == true and .gates.four_device_peer_read == true and
     .gates.four_rank_xccl_allreduce == true and .gates.repo_postflight == true and
     .gates.atomic_lock_handoff == true and
+    .gates.torch_runtime_coherent == true and
     .gates.selector_and_mask_combined == false and
     .gates.kernel_reject_events == 0
   ' "$hardware_gate/summary.json" >/dev/null ||
@@ -125,6 +132,11 @@ done
   die 'exact 79bb build receipt changed'
 [[ $(sha256sum "$prereg" | awk '{print $1}') == "$expected_prereg_sha256" ]] ||
   die '79bb untreated preregistration hash changed'
+[[ $(sha256sum "$runner" | awk '{print $1}') == "$expected_runner_sha256" ]] ||
+  die 'successful benchmark runner changed'
+[[ $(sha256sum "$hardware_gate_runner" | awk '{print $1}') == \
+   "$expected_hardware_gate_runner_sha256" ]] ||
+  die 'corrected hardware-gate runner changed'
 jq -e \
   --arg vllm "$expected_vllm_head" --arg vllm_tree "$expected_vllm_tree" \
   --arg kernel "$expected_kernel_head" --arg kernel_tree "$expected_kernel_tree" \

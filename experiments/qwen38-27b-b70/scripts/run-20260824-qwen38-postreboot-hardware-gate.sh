@@ -13,6 +13,12 @@ script_dir=$(dirname -- "$script_path")
 repo=$(git -C "$script_dir" rev-parse --show-toplevel)
 python=/home/steve/.venvs/vllm-xpu/bin/python
 probe=$repo/tools/xccl_probe.py
+venv_lib=/home/steve/.venvs/vllm-xpu/lib
+torch_xpu_lib=$venv_lib/python3.12/site-packages/torch/lib/libtorch_xpu.so
+venv_sycl_lib=$venv_lib/libsycl.so.8
+venv_ccl1_lib=$venv_lib/libccl.so.1
+venv_ccl2_lib=$venv_lib/libccl.so.2
+venv_ur_loader=$venv_lib/libur_loader.so.0
 peer_binary=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-device-lost-recovery-20260723T103343Z/no-reboot-validation/sycl-peer-read-test-oneapi2026
 sycl_ls=/opt/intel/oneapi/compiler/2026.0/bin/sycl-ls
 sudo_pass_file=${SUDO_PASS_FILE:-/home/steve/SUDOPASSWORD.txt}
@@ -22,10 +28,16 @@ expected_boot_id=086de284-0771-4269-9cb2-e064fe303e40
 expected_kernel=7.0.0-30-generic
 expected_python_sha256=202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8
 expected_probe_sha256=6ecd340651a6780fdbe0bd57d346540efe168bf2e3175d54e10dd8660ed5b30a
+expected_torch_xpu_sha256=ee584edab22b995637c5f6ec83fc10dea5931469c86cf2ad91952bb3e1108290
+expected_venv_sycl_sha256=0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f
+expected_venv_ccl1_sha256=ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3
+expected_venv_ccl2_sha256=1185b0591e66f3b94f19b891367ad1c4ad5a95792f658f46d284fc7c643aedb7
+expected_venv_ur_loader_sha256=68e273791752638dfad1ce3bb002b0ed8d00ceee21e491cd46dd0668d716bfa0
 expected_peer_sha256=1ab3b96dd1c7cd46a2e5422b0b6bf705ba5b80f306102e968768f634ee4bf92c
 expected_sycl_ls_sha256=90843629cfe9faaa5b5308524f82399b493b82a64b8db4956284b626d886dfb4
 oneapi_ld_library_path=/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib
-reject_pattern='Timedout job:|Kernel-submitted job timed out|VM job timed out|device coredump|GT.*reset|reset (queued|started|done)|TLB.*timeout|GuC.*(fail|error|timeout)|CT.*(fail|error|timeout)|xe.*(device.?lost|fault|reset|hung|hang[: ]|tim(e|ed)[ -]?out)|AER:.*(error|fatal|nonfatal)|Hardware Error|aer_status|RxErr|NonFatalErr|nvme.*(timeout|reset|I/O error)|EXT4-fs error|WARNING:|BUG:|Oops:'
+torch_ld_library_path=$venv_lib
+reject_pattern='Timedout job:|Kernel-submitted job timed out|VM job timed out|device coredump|GT.*reset|reset (queued|started|done)|TLB.*timeout|GuC.*(fail|error|timeout)|CT.*(fail|error|timeout)|xe.*(device.?lost|fault|reset|hung|hang[: ]|tim(e|ed)[ -]?out)|AER:.*(error|fatal|nonfatal)|Hardware Error|aer_status|RxErr|NonFatalErr|nvme.*(timeout|reset|I/O error)|EXT4-fs error|segfault|WARNING:|BUG:|Oops:'
 
 die() {
   printf 'error: %s\n' "$*" >&2
@@ -37,6 +49,43 @@ check_sha256() {
   actual=$(sha256sum "$path" | awk '{print $1}')
   [[ $actual == "$expected" ]] ||
     die "hash mismatch for $path: $actual"
+}
+
+check_torch_loader_resolution() {
+  local resolution path expected_name expected_path
+  resolution=$(LD_LIBRARY_PATH="$torch_ld_library_path" ldd "$torch_xpu_lib") ||
+    die 'could not resolve the frozen Torch XPU runtime'
+  printf '%s\n' "$resolution" >"$result_root/torch-loader-resolution.txt"
+  while IFS='|' read -r expected_name expected_path; do
+    path=$(awk -v name="$expected_name" '$1 == name {print $3}' \
+      "$result_root/torch-loader-resolution.txt")
+    [[ -n $path && $(readlink -f -- "$path") == \
+      "$(readlink -f -- "$expected_path")" ]] ||
+      die "Torch runtime resolved $expected_name incoherently: ${path:-missing}"
+  done <<EOF
+libsycl.so.8|$venv_sycl_lib
+libccl.so.1|$venv_ccl1_lib
+libccl.so.2|$venv_ccl2_lib
+libur_loader.so.0|$venv_ur_loader
+EOF
+  ! grep -Fq 'not found' "$result_root/torch-loader-resolution.txt" ||
+    die 'Torch XPU runtime has an unresolved library'
+}
+
+require_one_fixed_marker() {
+  local marker=$1 path=$2 count
+  count=$(awk -v needle="$marker" '
+    {
+      line = $0
+      while ((at = index(line, needle)) != 0) {
+        count++
+        line = substr(line, at + length(needle))
+      }
+    }
+    END { print count + 0 }
+  ' "$path") || die "could not count XCCL marker: $marker"
+  [[ $count == 1 ]] ||
+    die "expected one XCCL marker, observed $count: $marker"
 }
 
 validate_inherited_lock() {
@@ -89,6 +138,7 @@ write_manifest() {
           kernel-taint.post.txt xpu-discovery.log xpu-discovery-post.log \
           xpu-discovery.check xpu-discovery.rc xpu-discovery-post.rc \
           started-utc.txt repo-head.txt uname.txt tool-identities.sha256 \
+          torch-loader-resolution.txt \
           inherited-runtime-variable-names.txt \
           docker-running-containers.pre.txt docker-ps.pre.stderr \
           docker-ps.pre.rc model-processes.pre.log model-processes.pre.stderr \
@@ -158,6 +208,7 @@ capture_kernel_delta() {
 
 started_utc=not-started
 gate_complete=false
+failure_stage=preflight
 journal_cursor=
 repo_head=unresolved
 sudo_ready=false
@@ -166,6 +217,8 @@ per_card_compute=false
 four_device_peer_read=false
 four_rank_xccl_allreduce=false
 repo_postflight=false
+atomic_lock_handoff=false
+torch_runtime_coherent=false
 taint_pre=unread
 taint_post=unread
 result_root_created=false
@@ -186,6 +239,7 @@ finalize() {
       rc=91
     fi
     taint_post=$(</proc/sys/kernel/tainted)
+    printf '%s\n' "$taint_post" >"$result_root/kernel-taint.post.txt"
     if [[ $taint_post != 0 && $rc -eq 0 ]]; then
       rc=92
     fi
@@ -239,6 +293,7 @@ finalize() {
       --arg kernel "$kernel_final" \
       --arg repo_head "$repo_head" --arg journal_cursor "$journal_cursor" \
       --arg reject_pattern "$reject_pattern" \
+      --arg failure_stage "$failure_stage" \
       --arg taint_pre "$taint_pre" --arg taint_post "$taint_post" \
       --argjson exit_code "$rc" --argjson reject_count "$reject_count" \
       --argjson gate_complete "$gate_complete" \
@@ -246,14 +301,19 @@ finalize() {
       --argjson per_card_compute "$per_card_compute" \
       --argjson four_device_peer_read "$four_device_peer_read" \
       --argjson four_rank_xccl_allreduce "$four_rank_xccl_allreduce" \
-      --argjson repo_postflight "$repo_postflight" '{
-        schema: "neural-download-qwen38-postreboot-hardware-gate-v1",
+      --argjson repo_postflight "$repo_postflight" \
+      --argjson atomic_lock_handoff "$atomic_lock_handoff" \
+      --argjson torch_runtime_coherent "$torch_runtime_coherent" '{
+        schema: "neural-download-qwen38-postreboot-hardware-gate-v2",
         passed: ($exit_code == 0 and $gate_complete and $reject_count == 0 and
           $taint_pre == "0" and $taint_post == "0" and
           $four_device_identity and $per_card_compute and
           $four_device_peer_read and $four_rank_xccl_allreduce and
-          $repo_postflight),
+          $repo_postflight and $atomic_lock_handoff and
+          $torch_runtime_coherent),
         exit_code: $exit_code,
+        gate_complete: $gate_complete,
+        failure_stage: $failure_stage,
         started_utc: $started_utc,
         completed_utc: $completed_utc,
         host: {
@@ -273,7 +333,8 @@ finalize() {
           four_device_peer_read: $four_device_peer_read,
           four_rank_xccl_allreduce: $four_rank_xccl_allreduce,
           repo_postflight: $repo_postflight,
-          atomic_lock_handoff: true,
+          atomic_lock_handoff: $atomic_lock_handoff,
+          torch_runtime_coherent: $torch_runtime_coherent,
           selector_and_mask_combined: false,
           kernel_reject_events: $reject_count
         },
@@ -316,7 +377,7 @@ trap 'exit 129' HUP
 
 [[ -r $sudo_pass_file ]] || die 'sudo password file is unreadable'
 for command_name in awk cmp date docker env find findmnt flock fuser git grep jq \
-  journalctl pgrep readlink realpath rg sed sha256sum sort sync tail timeout wc \
+  journalctl ldd pgrep readlink realpath rg sed sha256sum sort sync tail timeout wc \
   uname xargs xpu-smi; do
   command -v "$command_name" >/dev/null || die "$command_name is required"
 done
@@ -325,10 +386,17 @@ done
 [[ $(uname -r) == "$expected_kernel" ]] || die 'host kernel changed'
 taint_pre=$(</proc/sys/kernel/tainted)
 [[ $taint_pre == 0 ]] || die 'kernel is tainted'
-[[ -x $python && -f $probe && -x $peer_binary && -x $sycl_ls ]] ||
+[[ -x $python && -f $probe && -f $torch_xpu_lib && -f $venv_sycl_lib &&
+   -f $venv_ccl1_lib && -f $venv_ccl2_lib && -f $venv_ur_loader &&
+   -x $peer_binary && -x $sycl_ls ]] ||
   die 'health tool is absent'
 check_sha256 "$python" "$expected_python_sha256"
 check_sha256 "$probe" "$expected_probe_sha256"
+check_sha256 "$torch_xpu_lib" "$expected_torch_xpu_sha256"
+check_sha256 "$venv_sycl_lib" "$expected_venv_sycl_sha256"
+check_sha256 "$venv_ccl1_lib" "$expected_venv_ccl1_sha256"
+check_sha256 "$venv_ccl2_lib" "$expected_venv_ccl2_sha256"
+check_sha256 "$venv_ur_loader" "$expected_venv_ur_loader_sha256"
 check_sha256 "$peer_binary" "$expected_peer_sha256"
 check_sha256 "$sycl_ls" "$expected_sycl_ls_sha256"
 
@@ -365,8 +433,13 @@ printf '%s\n' "$repo_head" >"$result_root/repo-head.txt"
 printf '%s\n' "$taint_pre" >"$result_root/kernel-taint.pre.txt"
 uname -a >"$result_root/uname.txt"
 cp -- "$script_path" "$result_root/hardware-gate.sh"
-sha256sum "$script_path" "$python" "$probe" "$peer_binary" "$sycl_ls" \
+sha256sum "$script_path" "$python" "$probe" "$torch_xpu_lib" \
+  "$venv_sycl_lib" "$venv_ccl1_lib" "$venv_ccl2_lib" \
+  "$venv_ur_loader" "$peer_binary" "$sycl_ls" \
   >"$result_root/tool-identities.sha256"
+failure_stage=torch-runtime-loader-preflight
+check_torch_loader_resolution
+torch_runtime_coherent=true
 
 if runtime_variable_names=$(env | sed 's/=.*//' | LC_ALL=C sort -u); then
   :
@@ -418,7 +491,9 @@ for device in 0 1 2 3; do
   validate_inherited_lock "${inherited_gpu_lease_fds[$device]}" \
     "$gpu_lease_dir/gpu${device}.lock"
 done
+atomic_lock_handoff=true
 
+failure_stage=host-idle-preflight
 if timeout --signal=TERM --kill-after=5s 30s sudo -S -p '' docker ps -q \
     >"$result_root/docker-running-containers.pre.txt" \
     2>"$result_root/docker-ps.pre.stderr" \
@@ -449,6 +524,7 @@ mapfile -t render_nodes < <(find /dev/dri -maxdepth 1 -type c \
 [[ ${#render_nodes[@]} -eq 4 ]] || die 'expected four render nodes'
 check_render_idle pre || die 'render-node occupancy scan failed or found a holder'
 
+failure_stage=four-device-identity
 run_capture xpu-discovery timeout --signal=TERM --kill-after=5s 20s \
   env -u ONEAPI_DEVICE_SELECTOR -u ZE_AFFINITY_MASK \
     -u SYCL_DEVICE_FILTER -u SYCL_DEVICE_ALLOWLIST -u UR_DEVICE_SELECTORS \
@@ -473,6 +549,7 @@ expected_sycl_uuids=(
   868023e2-0000-0000-4300-000000000000
   868023e2-0000-0000-4700-000000000000
 )
+failure_stage=per-card-compute
 for physical_device in 0 1 2 3; do
   run_capture "sycl-identity-gpu${physical_device}" \
     timeout --signal=TERM --kill-after=10s 60s \
@@ -499,7 +576,7 @@ for physical_device in 0 1 2 3; do
     env -u ONEAPI_DEVICE_SELECTOR -u SYCL_DEVICE_FILTER \
     -u SYCL_DEVICE_ALLOWLIST -u UR_DEVICE_SELECTORS -u PYTHONPATH \
     -u PYTHONHOME -u LD_PRELOAD \
-    LD_LIBRARY_PATH="$oneapi_ld_library_path" PYTHONNOUSERSITE=1 \
+    LD_LIBRARY_PATH="$torch_ld_library_path" PYTHONNOUSERSITE=1 \
     PYTHONSAFEPATH=1 PYTHONDONTWRITEBYTECODE=1 \
     ZE_AFFINITY_MASK="$physical_device" \
     "$python" -c '
@@ -518,6 +595,7 @@ done
 capture_kernel_delta || die 'kernel rejected a per-card compute gate'
 per_card_compute=true
 
+failure_stage=four-device-peer-read
 run_capture peer-read timeout --signal=TERM --kill-after=15s 180s \
   env -u ONEAPI_DEVICE_SELECTOR -u SYCL_DEVICE_FILTER \
   -u SYCL_DEVICE_ALLOWLIST -u UR_DEVICE_SELECTORS -u PYTHONPATH \
@@ -529,25 +607,29 @@ grep -Fx 'peer kernel read ok across 4 devices' \
 capture_kernel_delta || die 'kernel rejected the peer-read gate'
 four_device_peer_read=true
 
+failure_stage=four-rank-xccl-allreduce
 run_capture xccl-allreduce timeout --signal=TERM --kill-after=15s 180s \
   env -u ONEAPI_DEVICE_SELECTOR -u SYCL_DEVICE_FILTER \
   -u SYCL_DEVICE_ALLOWLIST -u UR_DEVICE_SELECTORS -u PYTHONPATH \
   -u PYTHONHOME -u LD_PRELOAD \
-  LD_LIBRARY_PATH="$oneapi_ld_library_path" PYTHONNOUSERSITE=1 \
+  LD_LIBRARY_PATH="$torch_ld_library_path" PYTHONNOUSERSITE=1 \
   PYTHONSAFEPATH=1 PYTHONDONTWRITEBYTECODE=1 \
   ZE_AFFINITY_MASK=0,1,2,3 CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 \
   FI_TCP_IFACE=eth0 CCL_KVS_IFACE=eth0 TORCH_XCCL_ASYNC_ERROR_HANDLING=1 \
   "$python" -m torch.distributed.run --standalone --nproc_per_node=4 \
   "$probe" allreduce
 for rank in 0 1 2 3; do
-  grep -Fx "rank $rank init ok" "$result_root/xccl-allreduce.log" >/dev/null
-  grep -Fx "rank $rank barrier ok" "$result_root/xccl-allreduce.log" >/dev/null
-  grep -Fx "rank $rank allreduce ok 4.0" \
-    "$result_root/xccl-allreduce.log" >/dev/null
+  require_one_fixed_marker "rank $rank init ok" \
+    "$result_root/xccl-allreduce.log"
+  require_one_fixed_marker "rank $rank barrier ok" \
+    "$result_root/xccl-allreduce.log"
+  require_one_fixed_marker "rank $rank allreduce ok 4.0" \
+    "$result_root/xccl-allreduce.log"
 done
 capture_kernel_delta || die 'kernel rejected the XCCL gate'
 four_rank_xccl_allreduce=true
 
+failure_stage=host-postflight
 sleep 5
 run_capture xpu-discovery-post timeout --signal=TERM --kill-after=5s 20s \
   env -u ONEAPI_DEVICE_SELECTOR -u ZE_AFFINITY_MASK \
@@ -591,4 +673,5 @@ printf '%s\n' "$docker_ps_post_rc" >"$result_root/docker-ps.post.rc"
 [[ ! -s $result_root/docker-running-containers.post.txt ]] ||
   die 'a Docker container appeared during the health gate'
 
+failure_stage=complete
 gate_complete=true
