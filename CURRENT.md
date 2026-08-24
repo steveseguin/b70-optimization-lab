@@ -414,13 +414,34 @@ the [decision-overlay r1 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-q
 and [structured record](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-tp1-decision-overlay-r1-live-lab-stale.json).
 
 The remote commit did not touch Qwen3.8, the runtime, the packet, or any
-protected value; vLLM, XPU-kernel, and nightly identities remain exact. R2 may
-therefore reuse the immutable image and exact decision payload but must use a
-new hardware root, campaign root, and fresh compile cache. Require the lab tree
-to equal live `origin/main` at launch and keep the local commit plus frozen
-inputs immutable during the atomic run. Do not let a later remote-only docs
-push masquerade as a mutation of the running image; live engine upstream and
-nightly identities remain hard post-arm gates.
+protected value; vLLM, XPU-kernel, and nightly identities remained exact. At
+that point this authorized preparing r2 with the immutable image and exact
+decision payload, but a new hardware root, campaign root, and fresh compile
+cache. Its proposed rule required the lab tree to equal live `origin/main` at
+launch, then kept the local commit and frozen inputs immutable while engine
+upstream and nightly identities remained hard post-arm gates. The later 0d7
+freshness veto below superseded that authorization before campaign launch.
+
+That r2 packet passed independent static and performance-preservation audits,
+but the final precommit freshness check at `2026-08-24T21:44:48Z` resolved
+vLLM `main` to `0d7d5ed0b2b61da53f682534f1754fe7d0251a34`. R2 was closed
+stale before launch: its fresh roots remain absent, ports `19789`-`19791` are
+free, and no hardware gate, model load, compile, benchmark, quality battery, or
+GPU work ran. Preserve its exact preregistration and wrapper as unlaunchable
+provenance; no protected speed changed. See the
+[r2 stale closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-tp1-decision-overlay-r2-stale-before-launch.md).
+
+The three-commit successor moves upstream batch-invariance code from
+`model_executor/layers` to `model_executor/determinism`, adds a CUDA/FlashInfer
+TP>1 speculative-decode fix that sizes the fused-allreduce/RMSNorm workspace
+for the wider target or draft model, and closes an audio size-limit bypass.
+The local literal-main source clone is now fast-forwarded to 0d7d with
+no source overlay. Update successor wheel-path checks for
+`vllm/model_executor/determinism/batch_invariant_configs.py`, then rebuild 0d7d
+or any newer live head. Re-derive decision compatibility against the new fresh
+cache; do not blindly carry the 38 decisions. The TP>1 change warrants a later
+new-base retest but is not evidence that the observed XPU worker-init broadcast
+hang is fixed; XPU disables this fusion path.
 
 Do not authorize TP2 until TP1 passes full qualification. Then qualify TP2
 zero-overlay plus the preserved 78-decision remap, followed by TP4 zero-overlay

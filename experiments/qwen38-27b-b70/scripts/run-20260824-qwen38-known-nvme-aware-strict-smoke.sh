@@ -22,6 +22,9 @@ set -euo pipefail
 # EXPECTED_CACHE_MANIFEST_SHA256.
 # PYTHONHASHSEED_MODE: zero (default) or unset. The unset mode requires the
 # host variable to be absent and omits it from the container environment.
+# LAB_REMOTE_FRESHNESS_POLICY defaults to continuous. The opt-in frozen-local
+# mode requires EXPECTED_LAB_HEAD and holds the clean local commit exact while
+# the outer atomic wrapper continues to gate live engine upstream identities.
 
 [[ $# -eq 9 ]] || {
   printf 'usage: %s LANE MTP KV MAXLEN GPUS PORT OUT_DIR SUITE CACHE_DIR\n' \
@@ -57,6 +60,8 @@ venv=/home/steve/.venvs/vllm-xpu
 expected_suite_sha256=292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c
 expected_kernel_delta_classifier_sha256=fef74bdb90b82fdf543be6ea36320b308aff0d0c146a3c92bcbfff334b70d1b0
 cache_policy=${CACHE_POLICY:?set CACHE_POLICY=fresh, seeded-fresh, or replay}
+lab_remote_freshness_policy=${LAB_REMOTE_FRESHNESS_POLICY:-continuous}
+expected_lab_head=${EXPECTED_LAB_HEAD:-}
 best_config_seed_dir=${BEST_CONFIG_SEED_DIR:-}
 expected_best_config_seed_count=${EXPECTED_BEST_CONFIG_SEED_COUNT:-}
 expected_best_config_seed_manifest_sha256=${EXPECTED_BEST_CONFIG_SEED_MANIFEST_SHA256:-}
@@ -345,6 +350,17 @@ esac
   die 'autotune isolation flags are forbidden in zero-overlay qualification'
 [[ -z ${TRITON_CACHE_AUTOTUNING:-} ]] ||
   die 'autotune isolation flags are forbidden in zero-overlay qualification'
+case $lab_remote_freshness_policy in
+  continuous)
+    [[ -z $expected_lab_head ]] ||
+      die 'EXPECTED_LAB_HEAD is valid only with frozen-local lab freshness'
+    ;;
+  frozen-local)
+    [[ $expected_lab_head =~ ^[0-9a-f]{40}$ ]] ||
+      die 'frozen-local lab freshness requires an exact EXPECTED_LAB_HEAD'
+    ;;
+  *) die "unsupported LAB_REMOTE_FRESHNESS_POLICY: $lab_remote_freshness_policy" ;;
+esac
 
 while IFS='=' read -r variable _; do
   case $variable in
@@ -383,14 +399,24 @@ lab_status=$(git -C "$repo" status --porcelain=v1 --untracked-files=all) ||
 [[ -z $lab_status ]] ||
   die 'lab repository must be completely clean'
 [[ $(git -C "$repo" branch --show-current) == main ]] || die 'lab repository must be on main'
-[[ $(git -C "$repo" rev-parse HEAD) == "$(git -C "$repo" rev-parse origin/main)" ]] ||
-  die 'local main must equal origin/main'
-live_lab_main=$(timeout --signal=TERM --kill-after=5s 30s \
-  git -C "$repo" ls-remote --exit-code origin refs/heads/main |
-  awk 'NR == 1 {print $1}')
-[[ $live_lab_main =~ ^[0-9a-f]{40}$ ]] || die 'could not resolve live lab origin/main'
-[[ $(git -C "$repo" rev-parse HEAD) == "$live_lab_main" ]] ||
-  die 'local main must equal the live lab origin/main'
+case $lab_remote_freshness_policy in
+  continuous)
+    [[ $(git -C "$repo" rev-parse HEAD) == \
+       "$(git -C "$repo" rev-parse origin/main)" ]] ||
+      die 'local main must equal origin/main'
+    live_lab_main=$(timeout --signal=TERM --kill-after=5s 30s \
+      git -C "$repo" ls-remote --exit-code origin refs/heads/main |
+      awk 'NR == 1 {print $1}')
+    [[ $live_lab_main =~ ^[0-9a-f]{40}$ ]] ||
+      die 'could not resolve live lab origin/main'
+    [[ $(git -C "$repo" rev-parse HEAD) == "$live_lab_main" ]] ||
+      die 'local main must equal the live lab origin/main'
+    ;;
+  frozen-local)
+    [[ $(git -C "$repo" rev-parse HEAD) == "$expected_lab_head" ]] ||
+      die 'local main changed from the frozen qualification commit'
+    ;;
+esac
 
 IFS=',' read -r -a gpu_devices <<<"$gpu"
 declare -A seen_gpu=()
