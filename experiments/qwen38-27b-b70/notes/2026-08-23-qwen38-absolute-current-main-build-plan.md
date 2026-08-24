@@ -21,6 +21,21 @@ created. The failed attempt is preserved at
 the corrected guard continues to accept that exact optional-NIXL diagnostic
 and nothing broader.
 
+The corrected second attempt exported both immutable images and passed every
+static check, then stopped while rendering the final build receipt. A jq
+conditional used directly as an object value lacked the parentheses required
+by jq 1.6. This occurred after both image inspections and static-preflight
+receipts were written. The affected build root is
+`/home/steve/builds/qwen38-current-main-20260824T015950Z-2ec6f0d71e-4543b580fe/`.
+Its immutable image IDs are
+`sha256:f8a740ce23034ca4278b66aa8cd9ac75df10726e05fe964f6bacb5a55a0c4ef4`
+for current-vLLM/stock-kernel and
+`sha256:79820a7ec6258f08b070e00aa0fc872b7671704a30651364de068cd892c64986`
+for both-current zero-overlay. The receipt is recovered from those existing
+images only after revalidating their IDs, labels, in-image receipts, archived
+wheel/source hashes, and unchanged upstream heads; neither tag is overwritten
+or rebuilt.
+
 ## Non-negotiable update rule
 
 The newest literal upstream `main` is the base, not a replacement for the

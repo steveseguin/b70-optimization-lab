@@ -561,7 +561,7 @@ jq -n \
       head: $kernel_head,
       tree: $kernel_tree,
       package_version: (if $kernel_artifact_verified then $kernel_package_version else null end),
-      official_artifact: if $kernel_artifact_verified then {
+      official_artifact: (if $kernel_artifact_verified then {
           run_id: $kernel_run_id,
           artifact_id: $kernel_artifact_id,
           name: $kernel_artifact_name,
@@ -569,7 +569,7 @@ jq -n \
           workflow_sha256: $workflow_sha256,
           chunk_prefill_full_sha256: $chunk_full_sha256,
           paged_decode_full_sha256: $paged_full_sha256
-        } else null end
+        } else null end)
     },
     images: {
       current_vllm_stock_kernel: {
