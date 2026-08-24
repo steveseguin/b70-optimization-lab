@@ -1,7 +1,7 @@
 # Qwen3.8 absolute-current-main build plan
 
-Date: 2026-08-23. Status: **build tooling ready; zero-overlay GPU
-qualification not yet run**.
+Date: 2026-08-23. Status: **both zero-overlay images built and statically
+certified; GPU qualification not yet run**.
 
 ## First execution attempt
 
