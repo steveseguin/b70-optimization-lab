@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-6648-stale-archived-awaiting-successor-build",
+  "status": "preservation-gate-passed-342b-static-build-awaiting-tp1-preregistration",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -9,13 +9,13 @@
     "result_policy": "append-only identities; never overwrite or lower historical highs"
   },
   "observed_heads": {
-    "checked_utc": "2026-08-24T17:31:57Z",
+    "checked_utc": "2026-08-24T17:55:46Z",
     "official_nightly": {
       "index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
       "vllm_source": "f94666b60d4c58ec0807d22c837cfae322a1dde9"
     },
-    "vllm_upstream_main": "4f686e182a3460b28df9b8e26b377a5069d519fa",
+    "vllm_upstream_main": "342b8ebd8bd4595826f29ff95dfc48679a03a95a",
     "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
   },
@@ -460,6 +460,29 @@
       "later_live_head": "29c9af5211e618bfb78c4140db9e814f1a838aa7"
     },
     "qualification": "never-launched"
+  }, {
+    "built_utc": "2026-08-24T16:55:32Z",
+    "status": "r1-failed-incomplete-stale-during-diagnostic-then-archived",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6648eb118d-absolute-current-main-build.json",
+    "receipt_sha256": "87438694ce565d4cf1bd2190a28560f03abbe11d269e9c6da900d80d4502bdcb",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e",
+    "archive_sha256s_sha256": "a00b53e007f77f8dc4f8746d327487d7dc5615736399830853cddc20cbac5e60",
+    "vllm_head": "6648eb118d77ad001a411cf52f9c6c4719476c83",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "decision_files_applied": 0,
+    "compiled_outputs_carried": 0,
+    "images": {
+      "current_vllm_stock_kernel": "sha256:00757757bb66515733395fbca3b26e752d3bea8c04e91b7c2a4e048190100e28",
+      "both_current_zero_overlay": "sha256:945b121e92ee023098fca39919329eed82d6ec5bd7ddb2c3ec3e5d1c47f3e545"
+    },
+    "qualification_closeout": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6648eb118d-r1-stale-during-diagnostic.json",
+    "storage_rotation": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6648eb118d-storage-rotation.json",
+    "runnable_image_archive_sha256": "697a3ad906d797474f29360855bcdfd7e6e607b93bfd510c9c6633b152b9428f",
+    "build_root_content_manifest_sha256": "08035c593eef4d474f88da178cdc75675bbe0da278e83ae675fc4cdf39c5bcde",
+    "local_images_removed_after_verification": true,
+    "qualification": "failed-incomplete-stale-before-promotion"
   }],
   "previous_qualification_build": {
     "built_utc": "2026-08-24T15:31:34Z",
@@ -566,26 +589,26 @@
     "policy": "R2 is closed stale and must not run. Preserve its exact audited packet and every historical result append-only; build the literal-current successor without lowering a floor or dropping a compatible accepted overlay."
   },
   "active_qualification_build": {
-    "built_utc": "2026-08-24T16:55:32Z",
-    "status": "static-preflight-passed-r1-failed-incomplete-stale-during-diagnostic",
-    "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6648eb118d-absolute-current-main-build.json",
-    "receipt_sha256": "87438694ce565d4cf1bd2190a28560f03abbe11d269e9c6da900d80d4502bdcb",
-    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e",
-    "archive_sha256s_sha256": "a00b53e007f77f8dc4f8746d327487d7dc5615736399830853cddc20cbac5e60",
-    "archive_contains_docker_image_tar": true,
-    "vllm_head": "6648eb118d77ad001a411cf52f9c6c4719476c83",
-    "vllm_tree": "b223b37600829d862fc9d2b3a054ad5ef7de9c86",
-    "vllm_package_version": "0.26.1rc1.dev1154+g6648eb118.xpu",
+    "built_utc": "2026-08-24T17:48:12Z",
+    "status": "static-preflight-passed-tp1-packet-not-yet-preregistered",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-342b8ebd8b-absolute-current-main-build.json",
+    "receipt_sha256": "ad856716714af8893d0ce47416d0efab4e9cb014505e6deeed3b3545ea82141c",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T174812Z-342b8ebd8b-baaa05bb4e",
+    "archive_sha256s_sha256": "3a9c37f8b5942c2f15ddb6108c2f403cfe37cf703cd5e477066d8d72c30f4173",
+    "archive_contains_docker_image_tar": false,
+    "vllm_head": "342b8ebd8bd4595826f29ff95dfc48679a03a95a",
+    "vllm_tree": "7b60b566f69b2d158016082486b0ed4f3c430715",
+    "vllm_package_version": "0.26.1rc1.dev1156+g342b8ebd8.xpu",
     "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "vllm_xpu_kernels_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
     "vllm_xpu_kernels_package_version": "0.1.dev1+gbaaa05bb4",
     "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
     "source_overlay": "none",
-    "source_archive_sha256": "4e539b9f39adfeadc31af666c099780474025b1c8389e74be36ed8e0d1aca979",
-    "wheel_sha256": "8fc78ec8a5f413bc1bc80f553a59ef3a54d4470fc1432cdcba32daf13162200f",
+    "source_archive_sha256": "63d2ae34048c4751d1fd05bead705a050b2bdce7d00a7e1c5eac8b4f829d4c07",
+    "wheel_sha256": "0cce56c419df36b85a67536da1fac9ad06d5df9630d4d9f736e2776b749dd04a",
     "images": {
-      "current_vllm_stock_kernel": "sha256:00757757bb66515733395fbca3b26e752d3bea8c04e91b7c2a4e048190100e28",
-      "both_current_zero_overlay": "sha256:945b121e92ee023098fca39919329eed82d6ec5bd7ddb2c3ec3e5d1c47f3e545"
+      "current_vllm_stock_kernel": "sha256:23fe2e1c88e2c0f5c69b00370687a07c2c49aa1f4fea903ff9416b0223690c37",
+      "both_current_zero_overlay": "sha256:6dbd46c8d22c3fdb425dfe343e759a89c5aa443eb99f411b4f6d923eae2e54ae"
     },
     "overlay_preservation_binding": {
       "zero_overlay_build": true,
@@ -596,77 +619,29 @@
       "accepted_overlays_discarded": 0
     },
     "post_build_freshness_seal": {
-      "checked_utc": "2026-08-24T16:59:08Z",
-      "vllm_head": "6648eb118d77ad001a411cf52f9c6c4719476c83",
+      "checked_utc": "2026-08-24T17:51:19Z",
+      "vllm_head": "342b8ebd8bd4595826f29ff95dfc48679a03a95a",
       "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
       "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "status": "passed"
     },
-    "upstream_delta_disposition": "6648 is the direct one-commit successor of 7797. It only removes a duplicate VLLM_USE_DEEP_GEMM check in kernel warmup. The called support function still checks the flag and XPU inherits DeepGEMM unsupported, so no Qwen/XPU behavior or speed gain is inferred.",
+    "upstream_delta_disposition": "342b is two linear commits after 6648: deprecated-API cleanup and a CLIP/SigLIP mixed-pooling fix. Neither changes the Qwen/XPU causal path, graph/GDN/spec/TP/quantization/build files, or the separate TP2/TP4 decision payloads. The cumulative vllm/envs.py overlap with the historical coupled MTP patch is a separate hunk and requires selective port review if revived.",
     "storage": {
-      "initial_post_build_unused_builder_cache_pruned_reported": "7.652GB",
+      "unused_docker_builder_cache_pruned_reported": "12.24GB",
       "minimum_gpu_launch_free_kib": 12582912,
-      "storage_rotation_status": "verified-recoverable-local-stale-images-removed",
-      "storage_rotation_note": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6648eb118d-storage-rotation.md",
-      "storage_rotation_note_sha256": "cd80f3d67b79b900bec01e6cd773b44c90284e4a4a84649045f1c505c1aced41",
-      "storage_rotation_data": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6648eb118d-storage-rotation.json",
-      "storage_rotation_data_sha256": "fece95645be82c48d890ddb4213fc1b813a1fb131c6e4e1a9bec275efd366497",
-      "image_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e/images-6648eb118d.docker.tar.zst",
-      "image_archive_sha256": "697a3ad906d797474f29360855bcdfd7e6e607b93bfd510c9c6633b152b9428f",
-      "rotation_manifest_sha256": "8414454007fd35dd1b4a169a2e542842d4e52803b37a559cda21264c8cd40e41",
-      "build_root_relocated": true,
-      "build_root_content_manifest_sha256": "08035c593eef4d474f88da178cdc75675bbe0da278e83ae675fc4cdf39c5bcde",
-      "posix_metadata_preserved_on_ntfs": false,
-      "local_6648_image_ids_removed": true,
+      "root_free_kib_before_builder_prune": 7926428,
+      "root_free_kib_after_builder_prune": 14191428,
       "runtime_images_removed_by_builder_prune": 0,
-      "root_free_kib_after": 22472388,
-      "new_image_ids_retained_locally": false
+      "new_image_ids_retained_locally": true
     },
     "qualification": {
-      "status": "r1-failed-incomplete-stale-during-fresh-diagnostic",
-      "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6648eb118d-untreated-tp1-r1-prereg.md",
-      "packet_sha256": "22c8d1ffc0b1425bb72c20e35b82fd340aa3cfe68ce84ebf6c6d1a4c84891a60",
-      "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-6648eb118d-untreated-tp1-r1-qualification.sh",
-      "wrapper_sha256": "6a30959be27e19f51f8c8f6b695d354f5b7af0e9ec66ecfba82bd69ae867664e",
-      "kernel_delta_classifier": "experiments/qwen38-27b-b70/scripts/classify-20260824-kernel-delta.py",
-      "kernel_delta_classifier_sha256": "fef74bdb90b82fdf543be6ea36320b308aff0d0c146a3c92bcbfff334b70d1b0",
-      "kernel_delta_classifier_test": "experiments/qwen38-27b-b70/tests/test_classify_20260824_kernel_delta.py",
-      "kernel_delta_classifier_test_sha256": "b21befd70003b710027303e093915c36ce88d8fcd4eda66facfd549057e5474b",
-      "strict_runner": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-known-nvme-aware-strict-smoke.sh",
-      "strict_runner_sha256": "5647c9af599fb4a3bc31b8cf8118c986f8895842de9cd657c037e4ea099925da",
-      "hardware_gate_runner": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-known-nvme-aware-hardware-gate.sh",
-      "hardware_gate_runner_sha256": "8038015b179048662f53d7d41ead6cddc95671081942444f394c6e48ed57a6f7",
-      "hardware_gate_root": "/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-6648eb118d-20260824-086de284-venvlib-r1",
-      "campaign_root": "/home/steve/qwen38-current-main-runs/tp1-untreated-6648eb118d-20260824-r1",
-      "ports": [19767, 19768, 19769],
+      "status": "not-yet-preregistered",
       "diagnostic_floor_tok_s": 30.2178,
       "strict_floor_tok_s": 30.31067504052998,
-      "closeout_note": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6648eb118d-r1-stale-during-diagnostic.md",
-      "closeout_note_sha256": "3cee62719384a901ef775aa242a9e3df7c3e0493644e138a1df375442687eafe",
-      "closeout_data": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6648eb118d-r1-stale-during-diagnostic.json",
-      "closeout_data_sha256": "ac534f32bc9bb63b8e1fac99b15fe6b128c0eef287b1c8a68823e6853ce78a7f",
-      "hardware_gate_manifest": "passed-70-of-70",
-      "campaign_manifest": "passed-98-of-98",
-      "diagnostic_rows_eligible": 25,
-      "diagnostic_median_tok_s": 30.340562433175233,
-      "diagnostic_observation_promoted": false,
-      "strict_replays_completed": 0,
-      "quality_battery_completed": false,
       "order": ["both-current zero-overlay TP1", "TP2", "TP4"],
       "performance_floors_must_not_change": true
     },
-    "stale_observation": {
-      "stage": "fresh-diagnostic-postflight-before-promotion",
-      "built_vllm_head": "6648eb118d77ad001a411cf52f9c6c4719476c83",
-      "first_live_successor": "4f686e182a3460b28df9b8e26b377a5069d519fa",
-      "successor_is_direct_child": true,
-      "xpu_kernel_unchanged": true,
-      "official_nightly_digest_unchanged": true,
-      "intentional_exit_status": 5,
-      "cache_promotion_allowed": false,
-      "tp2_tp4_authorized": false
-    },
-    "policy": "Close 6648 stale and do not resume its packet or promote its diagnostic cache. Preserve every captured high and accepted overlay, archive exact recovery artifacts, and rebuild the literal-newest successor before a separately named TP1 packet."
+    "policy": "Re-resolve all live identities before packet commit and launch. Preserve every captured high and accepted overlay; this zero-overlay build neither applies nor supersedes them."
   },
   "frozen_trees": {
     "vllm": {

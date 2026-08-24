@@ -300,6 +300,26 @@ Re-resolve all three upstream identities and build the newest head next. Resume
 in order TP1, TP2, TP4 without lowering a captured speed or dropping accepted
 optimization work.
 
+The live vLLM head advanced again before that build, so the intermediate
+`4f686e182a` successor was not built. The atomic build instead completed at
+literal-current vLLM `342b8ebd8bd4595826f29ff95dfc48679a03a95a`, unchanged
+XPU-kernel `baaa05bb4e92901219a5a072dd63f2474896f6d1`, and unchanged official
+nightly digest
+`sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876`.
+Both zero-overlay images passed static import, package, DSO, source-label, and
+14/14 external-archive gates. The cumulative two-commit vLLM delta is API
+cleanup plus a CLIP/SigLIP mixed-pooling bugfix; it does not touch Qwen, XPU,
+GDN, graphs, speculative decode, distributed/TP, quantization, or build inputs.
+The only source-path overlap with historical work is a separate `vllm/envs.py`
+hunk in the old coupled MTP patch, so it requires selective review if revived,
+not wholesale application. No accepted overlay was applied or lost.
+
+The completed build's unused Docker builder cache was pruned without removing
+either new image or any evidence, restoring root headroom to about 13.53 GiB,
+above the unchanged 12-GiB launch floor. This is still only a current-source
+static build; TP1 qualification is pending. See the
+[342b build receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-342b8ebd8b-absolute-current-main-build.json).
+
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
 tune selected different winners. The capped TP2 preservation test transferred
