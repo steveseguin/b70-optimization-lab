@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-6a9-tp1-complete-speed-only-miss-decision-remap-next",
+  "status": "preservation-gate-passed-6a9-tp1-decision-overlay-r1-stale-r2-next",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -9,7 +9,7 @@
     "result_policy": "append-only identities; never overwrite or lower historical highs"
   },
   "observed_heads": {
-    "checked_utc": "2026-08-24T20:25:11Z",
+    "checked_utc": "2026-08-24T21:25:41Z",
     "official_nightly": {
       "index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
@@ -60,7 +60,7 @@
       "protected_performance_changed": false
     },
     "recovered_utc": "2026-08-24T19:30:48Z",
-    "last_freshness_check_utc": "2026-08-24T20:25:11Z",
+    "last_freshness_check_utc": "2026-08-24T21:25:41Z",
     "gpu_or_model_work_ran": true,
     "qualification": {
       "status": "r1-complete-speed-only-regression-no-overlay-run",
@@ -93,7 +93,41 @@
       "performance_floors_must_not_change": true,
       "order": ["fresh diagnostic", "strict quality replay A", "strict replay B"]
     },
-    "policy": "R1 completed with every non-speed gate green and both strict speed gates red. Do not lower a floor or authorize TP2/TP4. Derive a new TP1 decision-only compatibility packet by exact relative-path and configs_hash mapping into an absent cache, compile fresh, and requalify only while all upstream identities remain literal-current."
+    "decision_overlay_qualification": {
+      "status": "r1-failed-incomplete-stale-after-diagnostic-before-strict-a",
+      "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-tp1-decision-overlay-r1-prereg.md",
+      "packet_sha256": "c8d85e53f6aa0f17a98d10c587d895f453d57b5946fd3528e54de1e231f5f679",
+      "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-6a9c69fa85-tp1-decision-overlay-r1-qualification.sh",
+      "wrapper_sha256": "1ee7261ec643ae35adae2c9161ff722c04026c73dde74a958b3bb8a4dfc99b04",
+      "candidate": "experiments/qwen38-27b-b70/autotune-winner-overlays/tp1-6a9c69fa85-stock-kernel-best-config-compatible-r1",
+      "candidate_decision_files": 38,
+      "candidate_manifest_sha256": "b941bb71c1d264dcd55104b106b2dff6a85c686776b072e0ef6cc18a8354c928",
+      "hardware_gate_root": "/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-6a9c69fa85-overlay-20260824-086de284-venvlib-r1",
+      "campaign_root": "/home/steve/qwen38-current-main-runs/tp1-control-decision-overlay-6a9c69fa85-20260824-r1",
+      "ports": [19786, 19787, 19788],
+      "hardware_gate": "passed-70-of-70",
+      "campaign_manifest": "passed-161-of-161",
+      "frozen_inputs_manifest": "passed-76-of-76",
+      "diagnostic_tok_s": 30.268740193465128,
+      "diagnostic_floor_tok_s": 30.2178,
+      "diagnostic_speed_gate": true,
+      "strict_a_tok_s": null,
+      "strict_b_tok_s": null,
+      "quality_battery_executed": false,
+      "all_completed_arm_non_speed_gates_pass": true,
+      "qualification_ready": false,
+      "tp2_tp4_authorized": false,
+      "terminal_status": "failed-incomplete mode=all rc=1",
+      "terminal_cause": "live lab origin/main advanced through unrelated Qwen3.6 documentation/data after the diagnostic",
+      "closeout": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-tp1-decision-overlay-r1-live-lab-stale.md",
+      "closeout_sha256": "286525a8017c03bf09c69f8f290a5bf2b36da1673130331550a0f3ca3b1d4d57",
+      "result": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-tp1-decision-overlay-r1-live-lab-stale.json",
+      "result_sha256": "c9b20b3360fc24c45a8f116cb6b2f6c7cca12b66d842475e13fb71a62c983e5b",
+      "r1_roots_reusable": false,
+      "compiled_cache_reusable": false,
+      "next": "fresh-root r2 using the same exact engine image and decision payload; live lab equality at launch, immutable local/frozen inputs during run, live engine identities after every arm"
+    },
+    "policy": "The untreated r1 completed with every non-speed gate green and both strict speed gates red. Decision-overlay r1 then passed only its diagnostic before an unrelated live lab documentation commit triggered the frozen stale rule. Do not lower a floor or authorize TP2/TP4. Preserve both r1 roots; run a fresh-root decision-overlay r2 while all engine upstream identities remain literal-current."
   },
   "historical_absolute_current_builds": [{
     "built_utc": "2026-08-24T04:05:36Z",

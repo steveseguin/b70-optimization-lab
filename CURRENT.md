@@ -398,6 +398,30 @@ an absent cache and compiles fresh; compiled cache transfer remains forbidden.
 See the [6a9c r1 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-tp1-r1-speed-only-miss.md)
 and [structured result](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-tp1-r1-speed-only-miss.json).
 
+The separately versioned 38-decision TP1 compatibility packet then passed its
+fresh hardware gate and seeded-fresh diagnostic at
+`30.268740193465128 tok/s`, above the unchanged `30.2178` floor. All 19 model
+files, the exact canary, 25/25 cache-zero rows, fresh graph compilation, exact
+decision bytes, cache-tree checks, kernel checks, and cleanup passed. Before
+strict replay A, live lab `origin/main` advanced through an unrelated Qwen3.6
+documentation/data commit. The frozen r1 rule stopped the chain with rc 1.
+Neither strict replay nor the quality battery ran, so the observation is dated
+diagnostic support only: the overlay remains unqualified, no protected high is
+replaced, and TP2/TP4 remain unauthorized. The 161/161 campaign, 76/76 input,
+and 70/70 hardware manifests reverify; the sealed cache has 497 regular files,
+38 decision records, no links or special nodes, and must not be resumed. See
+the [decision-overlay r1 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-tp1-decision-overlay-r1-live-lab-stale.md)
+and [structured record](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-tp1-decision-overlay-r1-live-lab-stale.json).
+
+The remote commit did not touch Qwen3.8, the runtime, the packet, or any
+protected value; vLLM, XPU-kernel, and nightly identities remain exact. R2 may
+therefore reuse the immutable image and exact decision payload but must use a
+new hardware root, campaign root, and fresh compile cache. Require the lab tree
+to equal live `origin/main` at launch and keep the local commit plus frozen
+inputs immutable during the atomic run. Do not let a later remote-only docs
+push masquerade as a mutation of the running image; live engine upstream and
+nightly identities remain hard post-arm gates.
+
 Do not authorize TP2 until TP1 passes full qualification. Then qualify TP2
 zero-overlay plus the preserved 78-decision remap, followed by TP4 zero-overlay
 plus the accepted 152-decision remap.
