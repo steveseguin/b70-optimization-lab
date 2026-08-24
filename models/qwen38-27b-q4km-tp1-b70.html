@@ -28,6 +28,10 @@
   .facts div { min-width: 0; }
   .facts dt { font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
   .facts dd { margin: 2px 0 0; font-size: 13.5px; overflow-wrap: anywhere; }
+  .use-chip { display: inline-block; border: 1px solid var(--ink); padding: 1px 7px 0; font: 700 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; margin: 0 4px 4px 0; }
+  .placeholder { margin: 10px 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); color: var(--muted); }
+  .placeholder p { margin: 0; font-size: 13.5px; }
+  .badge.todo { background: var(--surface); color: var(--muted); border-color: var(--muted); }
   .missing { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--ink); background: var(--surface); }
   .missing-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); }
   .missing ul { margin: 0; padding-left: 18px; font-size: 13px; }
@@ -87,7 +91,7 @@
   <p>Validated one-card target-only route with an exact pinned source-and-patch rebuild.</p>
 </div></header>
 
-<main id="main"><div class="wrap"><div class="col prose" id="package-page">
+<main id="main"><div class="wrap"><div class="col prose" id="package-page" data-ml-model="qwen3.8_27b" data-ml-quant="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="27.82479" data-ml-quant-label="Q4_K_M" data-ml-runtime-label="llama.cpp SYCL" data-ml-prompt="128" data-ml-output="128">
 
   <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2>
   <div class="measured"><span class="big">27.8</span><span class="unit">tok/s decode</span></div>
@@ -98,12 +102,19 @@
     <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title=Qwen3.8%2027B%20Q4_K_M%20on%20one%20Intel%20Arc%20Pro%20B70">Submit an improvement</a>
   </div>
 
-  <dl class="facts"><div><dt>Model</dt><dd>Qwen3.8 27B</dd></div><div><dt>Publisher</dt><dd>Alibaba / Qwen</dd></div><div><dt>Checkpoint</dt><dd>ggml-org/Qwen3.8-27B-GGUF</dd></div><div><dt>Compression</dt><dd>Q4_K_M</dd></div><div><dt>Software</dt><dd>llama.cpp SYCL</dd></div><div><dt>Cards</dt><dd>1× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model weight bytes</dt><dd>19.0 GB</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd>general, coding, long context</dd></div><div><dt>Published</dt><dd>2026-08-22</dd></div><div><dt>Clean-host replay</dt><dd>not yet</dd></div></dl>
+  <dl class="facts"><div><dt>Model</dt><dd>Qwen3.8 27B</dd></div><div><dt>Publisher</dt><dd>Alibaba / Qwen</dd></div><div><dt>Checkpoint</dt><dd>ggml-org/Qwen3.8-27B-GGUF</dd></div><div><dt>Compression</dt><dd>Q4_K_M</dd></div><div><dt>Software</dt><dd>llama.cpp SYCL</dd></div><div><dt>Cards</dt><dd>1× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model weight bytes</dt><dd>19.0 GB</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd><span class="use-chip">general</span> <span class="use-chip">coding</span> <span class="use-chip">long context</span></dd></div><div><dt>Published</dt><dd>2026-08-22</dd></div><div><dt>Clean-host replay</dt><dd>not yet</dd></div></dl>
 <div class="missing"><p class="missing-tag">Still missing before this becomes an install guide</p><ul><li>tested clean-host Intel driver and oneAPI installation</li><li>clean-host source build and endpoint replay</li><li>beginner recovery flow</li><li>decode, prefill, and TTFT context sweep</li></ul></div>
+<h2 id="profiles">Measured performance profiles <span class="badge todo">Not measured</span></h2><div class="placeholder"><p>Context and depth sweeps have not been measured for this package yet. Nothing here is estimated in their place — the clearly labeled projection block below is the current best guess.</p></div>
+<h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2><div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this package. The lab's one measured sweep so far — Qwen3.6-35B on a single card, 1,039 combined tok/s at 64 users — is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>; the projection block below includes a projected combined-throughput-vs-users curve for this setup.</p></div>
 
-
-  <h2 id="projection">Optimization grade <span class="badge spec">OPT —</span></h2>
-  <p>The measured headline aggregates more than one prompt or completion shape, so a like-for-like tuned-run projection is withheld. The measured speed above is unchanged.</p>
+  <h2 id="projection">How much faster could this get? <span class="badge spec">Projected — not measured</span></h2>
+  <p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects what stock software, a tuned run, and the physical ceiling look like for this exact model, compression, card count, and software. The grade is optimization headroom against the tuned-run target, not model quality.</p>
+  <div id="package-projection" class="projection" hidden>
+    <p class="projection-status" data-projection-status>Loading projections from mlbottleneck.com…</p>
+    <div data-package-card></div>
+    <div data-package-charts></div>
+  </div>
+  <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript>
 
   <div class="related">
     <h2>Keep going</h2>

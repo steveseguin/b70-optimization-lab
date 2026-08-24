@@ -146,6 +146,8 @@ Style genome (duotone-hixffp):
   td.lnk a { border-bottom: 2px solid var(--ink); }
   td.lnk a:hover { border-bottom-color: var(--spot-dark); color: var(--spot-dark); }
   .guide-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; white-space: normal; }
+  .model-picker td.model-actions { min-width: 15.5rem; }
+  .model-picker td.model-use { white-space: nowrap; }
   .guide-actions a.open-guide {
     padding: 5px 8px; border: 2px solid var(--ink); background: var(--ink);
     color: var(--paper); font-family: var(--mono); font-size: 10px;
@@ -217,9 +219,13 @@ Style genome (duotone-hixffp):
   /* projections (ML Bottleneck bridge) */
   .dot.hollow { color: var(--muted); }
   .projection-status { margin: 0 0 14px; color: var(--muted); font-family: var(--mono); font-size: 11px; }
-  .conc-followup { font-size: 13.5px; margin: 10px 0 0; }
-  .conc-projection { border: 2px solid var(--ink); background: var(--paper); padding: 13px 14px 11px; margin-top: 16px; }
-  .conc-figure { margin: 0; }
+  .teaser-strip { border: 2px solid var(--ink); background: var(--paper); padding: 12px 14px; margin: 0; font-size: 14.5px; }
+  .teaser-strip .key { float: right; margin-left: 12px; }
+  .use-chip { display: inline-block; border: 1px solid var(--ink); padding: 1px 7px 0; font-family: var(--mono); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+  .agg-note { display: block; margin-top: 3px; font-weight: 400; }
+  .more-cards { font-family: var(--mono); font-size: 12px; }
+  .more-cards sup { font-size: 9px; }
+  .cards-note { display: block; font-family: var(--sans, inherit); font-size: 11px; color: var(--muted); font-weight: 400; }
   .hr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
   .hr-card { border: 2px solid var(--ink); background: var(--paper); padding: 13px 14px 11px; }
   .hr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
@@ -325,7 +331,7 @@ Style genome (duotone-hixffp):
       <a href="guides.html">Guide library</a>
       <a href="#start">Start here</a>
       <a href="#lab-speeds">Benchmarks</a>
-      <a href="#multi-user">Many users</a>
+      <a href="learn/multi-user.html">Many users</a>
       <a href="#contribute">Contribute</a>
       <a class="github-link" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
     </nav>
@@ -356,58 +362,73 @@ Style genome (duotone-hixffp):
     <h2 id="t0">Which model should I try?</h2>
     <p class="sub">
       Speeds are in <abbr title="tokens per second">tok/s</abbr>: a token is about &frac34; of a
-      word, so 100 tok/s is roughly 75 words a second. Each row is one specific deployment;
-      different card counts, compression, and measurement windows are kept separate.
+      word, so 100 tok/s is roughly 75 words a second. Each row is the model's headline lab deployment; every other measured
+      configuration (other card counts, compressions, research lanes) lives on its details page.
       New to these tradeoffs? The <a href="learn.html">Learn guides</a> explain, in plain language, what sets each number.
     </p>
     <div class="scroller model-scroller">
     <table class="model-picker" aria-labelledby="t0">
       <thead>
-        <tr><th scope="col">Model and deployment</th><th scope="col">Good for</th><th scope="col" class="r">Cards</th><th scope="col" class="r">Measured rate</th><th scope="col">Actions</th></tr>
+        <tr><th scope="col">Model and deployment</th><th scope="col">Best for</th><th scope="col" class="r">1 user (tok/s)</th><th scope="col" class="r">32K input (tok/s)</th><th scope="col">Actions</th></tr>
       </thead>
-      <tbody>
+
         <tr>
           <th scope="row" class="model"><a href="models/ornith-1-5.html">Ornith 1.5 35B-A3B</a> <small>1&times; B70 &middot; Q4_K_M &middot; Ornith AI &middot; Aug 2026</small><span class="status candidate">Candidate package</span></th>
-          <td class="mut model-use">Fast Qwen-derived one-card MoE; our twelve-feature stack is target-only, cache-zero tested, and directly profiled through 32K</td>
-          <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate" title="Conventional 99-interval mean; the legacy 100-event compatibility mean of 132.79 tok/s remains in the proof">131.46</td>
+          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Conventional 99-interval mean; the legacy 100-event compatibility mean of 132.79 tok/s remains in the proof">131.46</td>
+          <td class="num r model-32k" data-label="32K input" title="Measured on the eleven-feature stack depth sweep (32,768-token prompt, flash attention on); the 131.46 headline is the newer twelve-feature stack">97.00</td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/ornith-15-35b-a3b-q4km-b70.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="repro/ornith-15-35b-a3b-q4km-b70/README.md" aria-label="Copy Ornith 1.5 35B one-B70 candidate guide Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Ornith%201.5%2035B-A3B%201xB70">Submit improvement</a></div></td>
         </tr>
         <tr>
-          <th scope="row" class="model"><a href="models/gemma-4.html">Gemma-4-26B</a> <small>1&times; B70 &middot; Q8 + MTP3 &middot; Google &middot; Apr 2026</small><span class="status">Lab result</span></th>
-          <td class="mut model-use">Strong one-card all-rounder that also reads pictures; self-contained starter packaging is still in progress</td>
-          <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate">124.98</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy Gemma-4-26B lab report Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Gemma-4-26B%201xB70">Submit improvement</a></div></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/qwen-27b.html">Qwen3.8-27B</a> <small>1&times; B70 &middot; Q4_K_M &middot; Alibaba &middot; Aug 2026</small><span class="status candidate">Candidate package</span></th>
-          <td class="mut model-use">Newest one-card all-rounder here; cache-zero and exact across the registered 12-prompt oracle. Decode stays near-flat to 32K context &mdash; keep the KV cache at f16 for speed</td>
-          <td class="num r model-cards" data-label="Cards">1</td><td class="num r model-speed" data-label="Measured rate">27.82</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-q4km-tp1-b70.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-q4km-tp1-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-q4km-tp1-b70/README.md" aria-label="Copy Qwen3.8-27B one-B70 candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.8-27B%20Q4%201xB70">Submit improvement</a></div></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/qwen-27b.html">Qwen3.8-27B</a> <small>2&times; B70 &middot; official FP8 &middot; Docker/vLLM &middot; Aug 2026</small><span class="status candidate">Candidate package</span></th>
-          <td class="mut model-use">A digest-pinned, unpatched official-model route with semantic, repeat, and long-context gates</td>
-          <td class="num r model-cards" data-label="Cards">2</td><td class="num r model-speed" data-label="Measured rate">21.71</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp2-b70/README.md" aria-label="Copy Qwen3.8-27B two-B70 FP8 candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.8-27B%20FP8%202xB70">Submit improvement</a></div></td>
-        </tr>
-        <tr>
-          <th scope="row" class="model"><a href="models/qwen-27b.html">Qwen3.8-27B</a> <small>2&times; B70 &middot; INT4 + MTP5 &middot; research lane &middot; Aug 2026</small><span class="status research">Research only</span></th>
-          <td class="mut model-use">Our fastest Qwen3.8 experiment; run-to-run determinism remains unresolved, so this is not an install recommendation</td>
-          <td class="num r model-cards" data-label="Cards">2</td><td class="num r model-speed" data-label="Research rate">101.17</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">Open details</a><button type="button" class="copy-md" data-copy-markdown="repro/qwen38-27b-autoround-int4-b70/README.md" aria-label="Copy Qwen3.8-27B INT4 research status Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.8-27B%20INT4%20MTP5%202xB70">Submit improvement</a></div></td>
-        </tr>
-        <tr>
           <th scope="row" class="model"><a href="models/laguna-s.html">Laguna-S-2.1</a> <small>4&times; B70 &middot; INT4 + DFlash &middot; Poolside &middot; Jul 2026</small><span class="status">Lab result</span></th>
-          <td class="mut model-use">Coding-assistant work with a validated four-card DFlash deployment and a complete result packet</td>
-          <td class="num r model-cards" data-label="Cards">4</td><td class="num r model-speed" data-label="Measured rate">125.46</td>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Coding</span></td>
+          <td class="num r model-speed" data-label="1 user">125.46</td>
+          <td class="num r model-32k mut" data-label="32K input" title="Not measured yet at a 32,768-token input; the details page shows the projected behaviour, clearly labeled.">not measured</td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/laguna-s-2.1-int4-b70-125tps-20260731.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/laguna-s-2.1-int4-b70-125tps/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="packages/laguna-s-2.1-int4-b70-125tps/README.md" aria-label="Copy Laguna-S-2.1 record replay package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Laguna-S-2.1%204xB70">Submit improvement</a></div></td>
         </tr>
         <tr>
+          <th scope="row" class="model"><a href="models/gemma-4.html">Gemma-4-26B</a> <small>1&times; B70 &middot; Q8 + MTP3 &middot; Google &middot; Apr 2026</small><span class="status">Lab result</span></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
+          <td class="num r model-speed" data-label="1 user">124.98</td>
+          <td class="num r model-32k mut" data-label="32K input" title="Not measured yet at a 32,768-token input; the details page shows the projected behaviour, clearly labeled.">not measured</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy Gemma-4-26B lab report Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Gemma-4-26B%201xB70">Submit improvement</a></div></td>
+        </tr>
+        <tr>
           <th scope="row" class="model"><a href="models/muse-glimmer.html">Muse-Glimmer-30B</a> <small>4&times; B70 &middot; Q8/WOQ + DFlash &middot; Meta &middot; Aug 2026</small><span class="status">Expert repro</span></th>
-          <td class="mut model-use">Multimodal model with a 100.37 tok/s canonical repeat mean; its separately measured first-100 median was 161.90</td>
-          <td class="num r model-cards" data-label="Cards">4</td><td class="num r model-speed" data-label="Measured rate">100.37</td>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Vision</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Canonical repeat mean; its separately measured first-100 median was 161.90">100.37</td>
+          <td class="num r model-32k mut" data-label="32K input" title="Not measured yet at a 32,768-token input; the details page shows the projected behaviour, clearly labeled.">not measured</td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/muse-glimmer-30b-q8-woq-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="packages/muse-glimmer-30b-q8-woq-b70/README.md" aria-label="Copy Muse-Glimmer-30B candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Muse-Glimmer-30B%204xB70">Submit improvement</a></div></td>
         </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen-35b.html">Qwen3.6-35B-A3B</a> <small>4&times; B70 &middot; Quark W8A8 INT8 &middot; Alibaba &middot; Apr 2026</small><span class="status">Lab result</span><small class="agg-note">serves 64 at once: <strong>1,039 tok/s</strong> combined &middot; 1&times; card, experimental &middot; <a href="learn/multi-user.html">report</a></small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Long context</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Strictest quality gate; the experimental one-card INT4 route measured 90.91 tok/s (determinism open)">93.55</td>
+          <td class="num r model-32k mut" data-label="32K input" title="Not measured yet at a 32,768-token input; the details page shows the projected behaviour, clearly labeled.">not measured</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen-35b.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen36-35b-quark-int8-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="results/qwen36-35b-quark-int8-b70/README.md" aria-label="Copy Qwen3.6-35B lab report Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.6-35B-A3B">Submit improvement</a></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/minimax-m2-7.html">MiniMax-M2.7</a> <small>4&times; B70 &middot; AutoRound INT4 &middot; MiniMax &middot; Mar 2026</small><span class="status">Lab result</span></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Long context</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Mean of four clean long repeats; remembers ~32K tokens">89.31</td>
+          <td class="num r model-32k mut" data-label="32K input" title="Not measured yet at a 32,768-token input; the details page shows the projected behaviour, clearly labeled.">not measured</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/minimax-m2-7.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="repro/minimax-m27-b70-89tps-20260520/README.md" aria-label="Copy MiniMax-M2.7 report Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20MiniMax-M2.7%204xB70">Submit improvement</a></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/deepseek-v4.html">DeepSeek-V4-Flash-180B</a> <small>4&times; B70 &middot; FP8 + FP4 experts + DSpark &middot; community trim &middot; Jul 2026</small><span class="status research">Research only</span></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Research</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Median high; all 24 exact canaries passed. Experimental community-trimmed checkpoint, research only">80.82</td>
+          <td class="num r model-32k mut" data-label="32K input" title="Not measured yet at a 32,768-token input; the details page shows the projected behaviour, clearly labeled.">not measured</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/deepseek-v4.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/scoreboard.md">Full rankings</a><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20DeepSeek-V4-Flash-180B">Submit improvement</a></div></td>
+        </tr>
+        <tr>
+          <th scope="row" class="model"><a href="models/qwen-27b.html">Qwen3.8-27B</a> <small>1&times; B70 &middot; Q4_K_M &middot; Alibaba &middot; Aug 2026</small><span class="status candidate">Candidate package</span><small class="agg-note">also packaged: official FP8 2&times; (21.71) &middot; research INT4 + MTP5 2&times; (101.17, determinism open) &middot; details cover both</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Conventional 99-interval median, cache-zero, target-only; decode stays near-flat to 32K context">27.82</td>
+          <td class="num r model-32k mut" data-label="32K input" title="Not measured yet at a 32,768-token input; the details page shows the projected behaviour, clearly labeled.">not measured</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-q4km-tp1-b70.html">Details page</a><a class="open-guide secondary-guide" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-q4km-tp1-b70/README.md">GitHub guide</a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-q4km-tp1-b70/README.md" aria-label="Copy Qwen3.8-27B one-B70 candidate package Markdown" aria-live="polite">Copy Markdown</button><a class="submit-improvement" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20Qwen3.8-27B%20Q4%201xB70">Submit improvement</a></div></td>
+        </tr>
+       </tr>
       </tbody>
     </table>
     </div>
@@ -448,8 +469,11 @@ Style genome (duotone-hixffp):
     <p class="sub">
       Run and re-checked on the lab's own Arc Pro B70 machines; every number links to a proof
       folder with the exact settings, logs, and quality checks behind it. Speed is the typical
-      rate for the first hundred words of a fresh answer, unless noted. Bars are scaled to the
-      fastest row on this page.
+      single-user rate for the first hundred words of a fresh answer, unless noted; bars are scaled
+      to the fastest row. One row per model &mdash; its headline deployment at the fewest cards;
+      other measured card counts sit in the More-cards column, and <sup>R</sup> marks research
+      lanes whose run-to-run determinism is still open. The Cards column says whether the count is
+      a requirement of the model's size or an optional tensor-parallel split.
     </p>
     <div class="scroller benchmark-scroller" role="region" tabindex="0" aria-label="Lab benchmark table; scroll horizontally on narrow screens">
     <table aria-labelledby="t1">
@@ -460,6 +484,7 @@ Style genome (duotone-hixffp):
           <th scope="col"><abbr title="compression shrinks the model so it fits on fewer cards; speed-up tricks let a small helper draft ahead while the big model checks">Compression &amp; speed-up</abbr></th>
           <th scope="col" class="r">Cards</th>
           <th scope="col" class="r">Speed (tok/s)</th>
+          <th scope="col" class="hide-s">More cards</th>
           <th scope="col" class="hide-s">How measured</th>
           <th scope="col">Proof</th>
         </tr>
@@ -468,122 +493,89 @@ Style genome (duotone-hixffp):
         <tr data-ml-model="ornith_1.5_35b_a3b" data-ml-quant="Q4_K_M" data-ml-quant-label="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="128" data-ml-output="100">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/ornith-1-5.html">Ornith 1.5 35B-A3B</a> <small>Qwen-derived MoE &middot; uses ~3B of 35B per word &middot; Aug 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M + lab twelve-feature stack</td><td class="num r">1&times;</td>
-          <td class="num r">131.46<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
-          <td class="mut hide-s" title="mean of two fresh cache-zero conventional 99-interval suite medians; legacy 100-event compatibility mean 132.79 tok/s is retained in the proof">average of 2 fresh servers</td>
+          <td class="num r" title="Mean of two fresh cache-zero conventional 99-interval suite medians; legacy 100-event compatibility mean 132.79 tok/s is retained in the proof">131.46<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
+          <td class="more-cards hide-s">&mdash;</td>
+          <td class="mut hide-s">average of 2 fresh servers</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">full guide</a></td>
         </tr>
-        <tr>
+        <tr data-ml-model="laguna_s_2.1" data-ml-quant="AutoRound INT4" data-ml-quant-label="INT4 W4A16" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dflash:11" data-ml-prompt="128" data-ml-output="128">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/laguna-s.html">Laguna-S-2.1</a> <small>coding assistant &middot; Jul 2026</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">INT4 W4A16 + DFlash d11</td><td class="num r">4&times;</td>
+          <td class="mut">vLLM XPU</td><td class="mut">INT4 W4A16 + DFlash d11</td><td class="num r">4&times;<small class="cards-note" title="Fit and speed at one or two cards are not lab-tested yet">fewer untested</small></td>
           <td class="num r">125.46<div class="ratebar" style="width:95.4%" aria-hidden="true"></div></td>
-          <td class="mut hide-s" title="conventional median">typical</td>
+          <td class="more-cards hide-s">&mdash;</td>
+          <td class="mut hide-s">conventional median</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/laguna-s-2.1-int4-b70/README.md">test report</a></td>
         </tr>
         <tr data-ml-model="gemma4_26b_a4b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:3" data-ml-prompt="128" data-ml-output="128">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/gemma-4.html">Gemma-4-26B-A4B</a> <small>all-rounder &middot; uses ~4B of 26B per word &middot; Apr 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + MTP3</td><td class="num r">1&times;</td>
-          <td class="num r">124.98<div class="ratebar" style="width:95.1%" aria-hidden="true"></div></td>
-          <td class="mut hide-s" title="median; ctx 32,768">typical &middot; remembers ~24K words</td>
+          <td class="num r" title="median; ctx 32,768">124.98<div class="ratebar" style="width:95.1%" aria-hidden="true"></div></td>
+          <td class="more-cards hide-s">&mdash;</td>
+          <td class="mut hide-s">typical &middot; remembers ~24K words</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">test report</a></td>
-        </tr>
-        <tr data-ml-model="qwen3.8_27b" data-ml-quant="AutoRound INT4" data-ml-quant-label="INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:5" data-ml-prompt="128" data-ml-output="128">
-          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span>Qwen3.8-27B <small>newest all-rounder &middot; reads pictures &middot; Aug 2026</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">INT4 + MTP5</td><td class="num r">2&times;</td>
-          <td class="num r">101.17<div class="ratebar" style="width:77.0%" aria-hidden="true"></div></td>
-          <td class="mut hide-s" title="honest margin-free all-25 median; three arms agree on only 21 to 22 of 25 token arrays">research &middot; determinism open</td>
-          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">lab status</a></td>
         </tr>
         <tr data-ml-model="muse_glimmer_30b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="draft_model:15" data-ml-strategy="tensor" data-ml-prompt="128" data-ml-output="128">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/muse-glimmer.html">Muse-Glimmer-30B</a> <small>Meta &middot; reads pictures &middot; Aug 2026</small></th>
-          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash n15</td><td class="num r">4&times;</td>
-          <td class="num r">100.37<div class="ratebar" style="width:76.4%" aria-hidden="true"></div></td>
-          <td class="mut hide-s" title="canonical pooled mean">average across repeat runs</td>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash n15</td><td class="num r">4&times;<small class="cards-note" title="~32 GB of Q8 weights do not fit a single 32 GB card">needs &ge;2</small></td>
+          <td class="num r" title="canonical pooled mean">100.37<div class="ratebar" style="width:76.4%" aria-hidden="true"></div></td>
+          <td class="more-cards hide-s">&mdash;</td>
+          <td class="mut hide-s">average across repeat runs</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">full report</a></td>
         </tr>
         <tr data-ml-model="qwen3.6_27b" data-ml-quant="AutoRound INT4" data-ml-quant-label="AutoRound INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:3" data-ml-prompt="128" data-ml-output="128">
-          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-27B <small>general assistant &middot; uses all 27B per word &middot; Apr 2026</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 + MTP3</td><td class="num r">2&times;</td>
-          <td class="num r">98.77<div class="ratebar" style="width:75.1%" aria-hidden="true"></div></td>
-          <td class="mut hide-s" title="four-arm central estimate">average across 4 setups</td>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/qwen-27b.html">Qwen3.6-27B</a> <small>general assistant &middot; uses all 27B per word &middot; Apr 2026</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 + MTP3</td><td class="num r">2&times;<small class="cards-note" title="INT4 weights fit one card; this recipe runs tensor-parallel across two for speed &mdash; the details page compares card counts">fits on 1 &middot; TP2</small></td>
+          <td class="num r" title="four-arm central estimate">98.77<div class="ratebar" style="width:75.1%" aria-hidden="true"></div></td>
+          <td class="more-cards hide-s">&mdash;</td>
+          <td class="mut hide-s">average across 4 setups</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/scoreboard.md">full rankings</a></td>
         </tr>
         <tr data-ml-model="qwen3.6_35b_a3b" data-ml-quant="Quark W8A8 INT8" data-ml-quant-label="W8A8 INT8" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="128" data-ml-output="128">
-          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>Qwen3.6-35B-A3B <small>long documents &middot; uses ~3B of 35B per word &middot; Apr 2026</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">Quark W8A8 INT8</td><td class="num r">4&times;</td>
-          <td class="num r">93.55<div class="ratebar" style="width:71.2%" aria-hidden="true"></div></td>
-          <td class="mut hide-s" title="output, strict deep gate">typical, strictest quality gate</td>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/qwen-35b.html">Qwen3.6-35B-A3B</a> <small>long documents &middot; uses ~3B of 35B per word &middot; Apr 2026</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">Quark W8A8 INT8</td><td class="num r">4&times;<small class="cards-note" title="W8A8 INT8 weights (~37 GB) do not fit one 32 GB card; the INT4 route in More cards runs on one">needs &ge;2</small></td>
+          <td class="num r" title="output, strict deep gate">93.55<div class="ratebar" style="width:71.2%" aria-hidden="true"></div></td>
+          <td class="more-cards hide-s"><span title="AutoRound INT4 on a single card; experimental &mdash; fixed-seed determinism at high batch still open">&times;1 INT4 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/qwen36-35b-aggregate-throughput-evidence.md">90.91<sup>R</sup></a></span></td>
+          <td class="mut hide-s">typical, strictest quality gate</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen36-35b-quark-int8-b70/README.md">test report</a></td>
         </tr>
         <tr data-ml-model="minimax_m2.7" data-ml-quant="AutoRound INT4" data-ml-quant-label="AutoRound INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="512" data-ml-output="1536">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/minimax-m2-7.html">MiniMax-M2.7</a> <small>remembers long conversations (32K) &middot; Mar 2026</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 W4A16</td><td class="num r">4&times;</td>
-          <td class="num r">89.31<div class="ratebar" style="width:67.9%" aria-hidden="true"></div></td>
-          <td class="mut hide-s" title="mean of four clean long repeats">average of 4 clean runs</td>
+          <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 W4A16</td><td class="num r">4&times;<small class="cards-note" title="229B parameters at INT4 need all four cards">needs 4</small></td>
+          <td class="num r" title="mean of four clean long repeats">89.31<div class="ratebar" style="width:67.9%" aria-hidden="true"></div></td>
+          <td class="more-cards hide-s">&mdash;</td>
+          <td class="mut hide-s">average of 4 clean runs</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/README.md">full report</a></td>
         </tr>
         <tr data-ml-model="deepseek_v4_flash_reap_180b" data-ml-quant="q4" data-ml-quant-label="FP8 + FP4 experts" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dspark:7" data-ml-prompt="128" data-ml-output="128">
-          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span>DeepSeek-V4-Flash-180B <small>experimental community-trimmed copy &middot; research only</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">FP8 + FP4 experts + DSpark7</td><td class="num r">4&times;</td>
-          <td class="num r">80.82<div class="ratebar" style="width:61.5%" aria-hidden="true"></div></td>
-          <td class="mut hide-s" title="median high, 24/24 exact canaries">typical high &middot; all 24 checks passed</td>
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/deepseek-v4.html">DeepSeek-V4-Flash-180B</a> <small>experimental community-trimmed copy &middot; research only</small></th>
+          <td class="mut">vLLM XPU</td><td class="mut">FP8 + FP4 experts + DSpark7</td><td class="num r">4&times;<small class="cards-note" title="180B parameters need all four cards">needs 4</small></td>
+          <td class="num r" title="median high, 24/24 exact canaries">80.82<div class="ratebar" style="width:61.5%" aria-hidden="true"></div></td>
+          <td class="more-cards hide-s">&mdash;</td>
+          <td class="mut hide-s">typical high &middot; all 24 checks passed</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/scoreboard.md">full rankings</a></td>
+        </tr>
+        <tr data-ml-model="qwen3.8_27b" data-ml-quant="Q4_K_M" data-ml-quant-label="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="128" data-ml-output="128">
+          <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span><a href="models/qwen-27b.html">Qwen3.8-27B</a> <small>newest all-rounder &middot; reads pictures &middot; Aug 2026</small></th>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M, target-only</td><td class="num r">1&times;</td>
+          <td class="num r" title="Conventional 99-interval median on the fixed cold 12-prompt suite; cache-zero, no speculation">27.82<div class="ratebar" style="width:21.2%" aria-hidden="true"></div></td>
+          <td class="more-cards hide-s"><span title="Official FP8 checkpoint, Docker/vLLM, tensor-parallel across two cards">&times;2 FP8 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">21.71</a></span> &middot; <span title="AutoRound INT4 + MTP5 research lane; run-to-run determinism unresolved">&times;2 INT4+MTP5 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">101.17<sup>R</sup></a></span></td>
+          <td class="mut hide-s">typical of the promoted 1-card package</td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-q4km-tp1-b70/README.md">full guide</a></td>
         </tr>
       </tbody>
     </table>
     </div>
   </div>
+</section>
 
-<section id="multi-user"
-  data-ml-model="qwen3.6_35b_a3b" data-ml-quant="AutoRound INT4" data-ml-quant-label="AutoRound INT4"
-  data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="1"
-  data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none"
-  data-ml-prompt="128" data-ml-output="1024"
-  data-ml-measured-sweep="[[1,87.6],[2,77.2],[4,149.5],[8,276.8],[16,488.6],[32,823.2],[64,1039.4]]">
+<section id="multi-user">
   <div class="wrap">
-    <h2 id="t-multi">One card, many people at once <span class="key"><span class="dot" aria-hidden="true">&#9679;</span> measured &middot; experimental</span></h2>
-    <p class="sub">
-      A single Arc Pro B70 serving many users at the same time: Qwen3.6-35B-A3B (AutoRound INT4,
-      vLLM XPU, lab kernel stack) was measured answering 1 to 64 requests simultaneously. One user
-      gets ~88&nbsp;tok/s; 64 users together get over <strong>1,000 combined tokens per second</strong>
-      from one card. Combined rate counts every token after each request's first; per-user is the
-      combined rate divided by the number of users. Marked experimental: speeds repeat cleanly, but
-      fixed-seed outputs at 64 users are not yet bit-identical across repeats, so this is measured
-      evidence, not a promoted recipe.
-      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/qwen36-35b-aggregate-throughput-evidence.md">Evidence guide</a> &middot;
-      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/qwen36-35b-autoround-b70-concurrency-20260824.json">raw data</a>.
+    <p class="teaser-strip">
+      <span class="key"><span class="dot" aria-hidden="true">&#9679;</span> measured &middot; experimental</span>
+      <strong>1,039 tokens per second, combined</strong> &mdash; one Arc Pro B70 measured serving
+      64 people at once (Qwen3.6-35B-A3B; a single user gets ~88 tok/s).
+      <a href="learn/multi-user.html">Read the multi-user report</a>
     </p>
-    <div class="scroller benchmark-scroller" role="region" tabindex="0" aria-label="Multi-user throughput table; scroll horizontally on narrow screens">
-    <table aria-labelledby="t-multi">
-      <thead>
-        <tr>
-          <th scope="col" class="r">Users at once</th>
-          <th scope="col" class="r">Combined (tok/s)</th>
-          <th scope="col" class="r">Per user (tok/s)</th>
-          <th scope="col" class="hide-s">Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><th scope="row" class="num r">1</th><td class="num r">87.64</td><td class="num r">87.64</td><td class="mut hide-s">graph-captured single-user path</td></tr>
-        <tr><th scope="row" class="num r">2</th><td class="num r">77.19</td><td class="num r">38.59</td><td class="mut hide-s">runs off-graph; dips below one user</td></tr>
-        <tr><th scope="row" class="num r">4</th><td class="num r">149.48</td><td class="num r">37.37</td><td class="mut hide-s">off-graph</td></tr>
-        <tr><th scope="row" class="num r">8</th><td class="num r">276.77</td><td class="num r">34.60</td><td class="mut hide-s">off-graph</td></tr>
-        <tr><th scope="row" class="num r">16</th><td class="num r">488.65</td><td class="num r">30.54</td><td class="mut hide-s">off-graph</td></tr>
-        <tr><th scope="row" class="num r">32</th><td class="num r">823.15</td><td class="num r">25.72</td><td class="mut hide-s">graph-captured</td></tr>
-        <tr><th scope="row" class="num r">64</th><td class="num r">1,039.41</td><td class="num r">16.24</td><td class="mut hide-s">graph-captured &middot; determinism open</td></tr>
-      </tbody>
-    </table>
-    </div>
-    <p class="conc-followup mut">
-      A newer treatment measured separately (never joined to the curve above) reached
-      <strong>90.91</strong> tok/s for one user and <strong>1,052.87</strong> combined at 64.
-      The dip from 1 to 2 users is a property of this tuned stack &mdash; its XPU Graphs are captured
-      only at 1, 32, and 64 users; in-between sizes pay eager-mode overhead.
-    </p>
-    <div class="projection conc-projection" data-concurrency-chart hidden>
-      <p class="projection-status" data-concurrency-status>Loading the projected curve from mlbottleneck.com&hellip;</p>
-      <figure class="conc-figure" data-concurrency-figure></figure>
-      <p class="conc-followup mut">Dashed line: what the <a href="https://mlbottleneck.com/?model=qwen3.6_35b_a3b&amp;hardware=Intel%20Arc%20Pro%20B70&amp;count=1&amp;quant=q4&amp;format=AutoRound%20INT4&amp;runtime=vllm&amp;prompt=128&amp;output=1024&amp;batch=64#plan">ML Bottleneck physics engine</a> projects for <em>stock</em> software on this exact setup. It is a projection, not an independent check: the engine's batched-compute constant for Intel vLLM is calibrated partly against this sweep's 32- and 64-user anchors. Solid line: the lab's measured tuned stack, whose win over stock is biggest at one user; tuning of the batched path continues.</p>
-    </div>
   </div>
 </section>
 

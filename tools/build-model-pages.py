@@ -49,21 +49,24 @@ def stamp_bridge_includes(version):
 
 # package id -> ML Bottleneck request (preset key, exact quant label, runtime, speed-up, strategy)
 PACKAGE_ML = {
-    "gemma4-26b-a4b-q8-b70-125tps-20260701": {"model": "gemma4_26b_a4b", "quant": "UD-Q8_K_XL", "runtime": "llama_cpp", "spec": "mtp:3"},
-    "laguna-s-2.1-int4-b70-125tps-20260731": {"model": "laguna_s_2.1", "quant": "AutoRound INT4", "runtime": "vllm", "spec": "dflash:11"},
-    "lfm25-26b-q8-b70": {"model": "lfm2.5_2.6b", "quant": "Q8_0", "runtime": "llama_cpp", "spec": "none"},
+    "gemma4-26b-a4b-q8-b70-125tps-20260701": {"model": "gemma4_26b_a4b", "quant": "UD-Q8_K_XL", "runtime": "llama_cpp", "spec": "mtp:3", "prompt_tokens": 128, "output_tokens": 128},
+    "laguna-s-2.1-int4-b70-125tps-20260731": {"model": "laguna_s_2.1", "quant": "AutoRound INT4", "runtime": "vllm", "spec": "dflash:11", "prompt_tokens": 128, "output_tokens": 128},
+    "lfm25-26b-q8-b70": {"model": "lfm2.5_2.6b", "quant": "Q8_0", "runtime": "llama_cpp", "spec": "none", "prompt_tokens": 128, "output_tokens": 128},
     "minimax-m27-b70-89tps-20260520": {"model": "minimax_m2.7", "quant": "AutoRound INT4", "runtime": "vllm", "spec": "none", "prompt_tokens": 512, "output_tokens": 1536},
-    "muse-glimmer-30b-q8-woq-b70-100tps-20260813": {"model": "muse_glimmer_30b", "quant": "UD-Q8_K_XL", "runtime": "llama_cpp", "spec": "draft_model:15", "strategy": "tensor"},
-    "nemotron-35-lightning-30b-a3b-b70": {"model": "nemotron3.5_lightning_30b_a3b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none"},
-    "ornith-15-35b-a3b-q4km-b70": {"model": "ornith_1.5_35b_a3b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none"},
-    "ornith-15-9b-q8-b70": {"model": "ornith_1.5_9b", "quant": "Q8_0", "runtime": "llama_cpp", "spec": "none"},
+    "muse-glimmer-30b-q8-woq-b70-100tps-20260813": {"model": "muse_glimmer_30b", "quant": "UD-Q8_K_XL", "runtime": "llama_cpp", "spec": "draft_model:15", "strategy": "tensor", "prompt_tokens": 128, "output_tokens": 128},
+    "nemotron-35-lightning-30b-a3b-b70": {"model": "nemotron3.5_lightning_30b_a3b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "prompt_tokens": 128, "output_tokens": 100},
+    "ornith-15-35b-a3b-q4km-b70": {"model": "ornith_1.5_35b_a3b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "prompt_tokens": 128, "output_tokens": 100},
+    "ornith-15-9b-q8-b70": {"model": "ornith_1.5_9b", "quant": "Q8_0", "runtime": "llama_cpp", "spec": "none", "prompt_tokens": 128, "output_tokens": 100},
+    # Workload shapes are the packet's own convention: the conventional
+    # first-hundred-words suites run ~128-token prompts with 100-128-token
+    # answers; MiniMax and the FP8 TP2 packet record longer shapes explicitly.
     # The Q5 flagship and Q8 TP2 packets are intentionally omitted. The former
     # does not encode its draft depth; the latter's measured rate and launcher
     # do not share the reasoning/workload identity expected by the projection.
     # Their measured 26.7 and 36.8 tok/s headlines remain shown unchanged.
     "qwen38-27b-fp8-vllm-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "FP8", "runtime": "vllm", "spec": "none", "prompt_tokens": 512, "output_tokens": 128},
-    "qwen38-27b-q4km-tp1-b70": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none"},
-    "qwen38-27b-q4km-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "strategy": "tensor"},
+    "qwen38-27b-q4km-tp1-b70": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "prompt_tokens": 128, "output_tokens": 128},
+    "qwen38-27b-q4km-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "strategy": "tensor", "prompt_tokens": 128, "output_tokens": 128},
 }
 
 STATUS_LABEL = {"candidate": "Candidate package", "lab": "Lab result", "research": "Research", "starter": "Starter guide", "record": "Record replay"}
@@ -212,11 +215,18 @@ def page(pkg, all_pkgs, family=None):
         ("Model weight bytes", gb(hw.get("model_weight_bytes") or hw.get("target_model_bytes"))),
         ("Operating systems", ", ".join(lib.get("operating_systems", []))),
         ("Delivery", ", ".join("Docker / container" if v == "container" else v for v in lib.get("delivery", []))),
-        ("Good for", ", ".join(lib.get("use_cases", []))),
+        ("Good for", "\u0000USE_CHIPS\u0000"),
         ("Published", lib.get("published_at", "")),
         ("Clean-host replay", "yes" if pkg.get("clean_host_tested") else "not yet"),
     ]
-    facts_html = "".join(f"<div><dt>{esc(k)}</dt><dd>{esc(v) if v else '—'}</dd></div>" for k, v in facts)
+    use_chips = "".join(f'<span class="use-chip">{esc(u)}</span> ' for u in lib.get("use_cases", [])) or "—"
+
+    def fact_dd(value):
+        if value == "\u0000USE_CHIPS\u0000":
+            return use_chips.strip()
+        return esc(value) if value else "—"
+
+    facts_html = "".join(f"<div><dt>{esc(k)}</dt><dd>{fact_dd(v)}</dd></div>" for k, v in facts)
     profiles = [p for p in (pkg.get("performance_profiles") or []) if p.get("points")]
     profiles_html = "".join(
         f'<figure class="chart"><h4>{esc(p.get("label") or p.get("id"))} <span class="badge lab">Lab-measured</span></h4>{svg_profile(p)}'
@@ -276,6 +286,20 @@ def page(pkg, all_pkgs, family=None):
         "@type": "BreadcrumbList",
         "itemListElement": crumb_items,
     }
+    if profiles_html:
+        profiles_section = '<h2 id="profiles">Measured performance profiles <span class="badge lab">Lab-measured</span></h2>' + profiles_html
+    else:
+        profiles_section = ('<h2 id="profiles">Measured performance profiles <span class="badge todo">Not measured</span></h2>'
+                            '<div class="placeholder"><p>Context and depth sweeps have not been measured for this package yet. '
+                            'Nothing here is estimated in their place'
+                            + (' — the clearly labeled projection block below is the current best guess.' if ml else '.')
+                            + '</p></div>')
+    multiuser_section = ('<h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2>'
+                         '<div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this package. '
+                         'The lab\'s one measured sweep so far — Qwen3.6-35B on a single card, 1,039 combined tok/s at 64 users — is in '
+                         '<a class="inline" href="../learn/multi-user.html">the multi-user report</a>'
+                         + ('; the projection block below includes a projected combined-throughput-vs-users curve for this setup.' if exact_projection_workload else '.')
+                         + '</p></div>')
     projection_html = ""
     if exact_projection_workload:
         projection_html = f"""
@@ -291,6 +315,10 @@ def page(pkg, all_pkgs, family=None):
         projection_html = """
   <h2 id="projection">Optimization grade <span class="badge spec">OPT —</span></h2>
   <p>The measured headline aggregates more than one prompt or completion shape, so a like-for-like tuned-run projection is withheld. The measured speed above is unchanged.</p>"""
+    else:
+        projection_html = """
+  <h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2>
+  <div class="placeholder"><p>This package's measured workload does not map cleanly onto a single model + compression + card-count shape, so no like-for-like projection is shown. The measured numbers above stand on their own.</p></div>"""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -321,6 +349,10 @@ def page(pkg, all_pkgs, family=None):
   .facts div {{ min-width: 0; }}
   .facts dt {{ font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }}
   .facts dd {{ margin: 2px 0 0; font-size: 13.5px; overflow-wrap: anywhere; }}
+  .use-chip {{ display: inline-block; border: 1px solid var(--ink); padding: 1px 7px 0; font: 700 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; margin: 0 4px 4px 0; }}
+  .placeholder {{ margin: 10px 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); color: var(--muted); }}
+  .placeholder p {{ margin: 0; font-size: 13.5px; }}
+  .badge.todo {{ background: var(--surface); color: var(--muted); border-color: var(--muted); }}
   .missing {{ margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--ink); background: var(--surface); }}
   .missing-tag {{ margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); }}
   .missing ul {{ margin: 0; padding-left: 18px; font-size: 13px; }}
@@ -393,7 +425,8 @@ def page(pkg, all_pkgs, family=None):
 
   <dl class="facts">{facts_html}</dl>
 {missing_html}
-{('<h2 id="profiles">Measured performance profiles <span class="badge lab">Lab-measured</span></h2>' + profiles_html) if profiles_html else ''}
+{profiles_section}
+{multiuser_section}
 {projection_html}
 
   <div class="related">
