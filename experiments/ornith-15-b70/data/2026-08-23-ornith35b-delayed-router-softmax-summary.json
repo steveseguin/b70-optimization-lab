@@ -1,0 +1,34 @@
+{
+  "date": "2026-08-23 EDT",
+  "status": "closed_engine_neutral",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "candidate_env": "GGML_SYCL_ORNITH_DELAYED_ROUTER_SOFTMAX=1",
+  "shape_gate": {
+    "rows": 1,
+    "experts": 256,
+    "experts_used": 8,
+    "gating": "softmax",
+    "selected_weight_normalization": true
+  },
+  "correctness": {
+    "protocol": "same frozen binary, flag off/on, forced 128-token deterministic CLI continuation",
+    "control_sha256": "6b548046111bb3da022d917ee3b3285a60b14299e2b67a6e02da0ddc864809f9",
+    "candidate_sha256": "6b548046111bb3da022d917ee3b3285a60b14299e2b67a6e02da0ddc864809f9",
+    "candidate_hits": 5080,
+    "exact": true
+  },
+  "engine": {
+    "protocol": "same binary, depth-zero tg128, seven repetitions, A/B/B/A",
+    "control_a_tok_s": 134.717980,
+    "candidate_a_tok_s": 134.454561,
+    "candidate_b_tok_s": 134.303263,
+    "control_b_tok_s": 134.194221,
+    "control_mean_tok_s": 134.4561005,
+    "candidate_mean_tok_s": 134.378912,
+    "delta_percent": -0.0574079567,
+    "candidate_hits_each_arm": 35880
+  },
+  "server_screen_run": false,
+  "decision": "Exact but engine-neutral/slightly negative; do not ship.",
+  "no_extrapolation": true
+}

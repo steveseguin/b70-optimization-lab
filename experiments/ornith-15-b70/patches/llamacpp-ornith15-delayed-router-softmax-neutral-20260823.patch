@@ -1,0 +1,58 @@
+--- a/ggml/src/ggml-sycl/topk-moe.cpp
++++ b/ggml/src/ggml-sycl/topk-moe.cpp
+@@ -1,4 +1,9 @@
++#include <atomic>
+ #include <cfloat>
++#include <cinttypes>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
+ #include <initializer_list>
+ #include <vector>
+ 
+@@ -27,6 +32,23 @@ struct topk_moe_config {
+     bool delayed_softmax;
+ };
+ 
++static std::atomic<uint64_t> g_ggml_sycl_ornith_delayed_router_softmax_hits{0};
++
++static bool ggml_sycl_ornith_delayed_router_softmax_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_ORNITH_DELAYED_ROUTER_SOFTMAX");
++        const bool result = value != nullptr && std::strcmp(value, "0") != 0;
++        if (result) {
++            std::atexit([] {
++                std::fprintf(stderr, "ggml_sycl_ornith_delayed_router_softmax: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_delayed_router_softmax_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return result;
++    }();
++    return enabled;
++}
++
+ // warp-local softmax used for both the pre-top-k logits and the post-top-k delayed path
+ template <int experts_per_thread, bool use_limit>
+ static inline void softmax_warp_inplace(float (&vals)[experts_per_thread], const int limit, const int lane) {
+@@ -245,10 +267,19 @@ static void ggml_sycl_op_topk_moe(ggml_backend_sycl_context &     ctx,
+     const float clamp_val = clamp ? ggml_get_op_params_f32(clamp, 0) : -INFINITY;
+     const float scale_val = scale ? ggml_get_op_params_f32(scale, 0) : 1.0f;
+ 
++    const bool ornith_delayed_softmax =
++        ggml_sycl_ornith_delayed_router_softmax_enabled() &&
++        args.softmax && !args.sigmoid && !args.delayed_softmax && with_norm &&
++        n_experts == 256 && n_expert_used == 8 && n_rows == 1;
++
+     topk_moe_config config;
+     config.use_sigmoid     = args.sigmoid;
+-    config.with_norm       = with_norm;
+-    config.delayed_softmax = args.delayed_softmax;
++    config.with_norm       = with_norm && !ornith_delayed_softmax;
++    config.delayed_softmax = args.delayed_softmax || ornith_delayed_softmax;
++
++    if (ornith_delayed_softmax) {
++        g_ggml_sycl_ornith_delayed_router_softmax_hits.fetch_add(1, std::memory_order_relaxed);
++    }
+ 
+     queue_ptr stream = ctx.stream();
+     ggml_sycl_set_device(ctx.device);
