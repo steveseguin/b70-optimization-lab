@@ -384,6 +384,15 @@ it remains explicitly GPU-qualification-pending. See the
 [recovery pass](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-enospc-recovery-pass.md)
 and [tracked receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-absolute-current-main-build.json).
 
+The fresh-root 6a9c TP1 r1 packet is preregistered and not launched. It is a
+mechanical identity/root/port carry-forward of the audited 342b r2 wrapper,
+explicitly names the recovered 6a9c receipt, and retains the unchanged
+`30.2178` diagnostic and `30.31067504052998` strict floors plus the full
+quality, immutable-cache, hardware, repository, and per-arm freshness gates.
+Its roots and ports `19783`-`19785` were absent/free at preregistration. No TP2,
+TP4, MTP, or site-matrix work is authorized by packet creation alone. See the
+[6a9c r1 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-untreated-tp1-r1-prereg.md).
+
 Do not authorize TP2 until TP1 passes full qualification. Then qualify TP2
 zero-overlay plus the preserved 78-decision remap, followed by TP4 zero-overlay
 plus the accepted 152-decision remap.
