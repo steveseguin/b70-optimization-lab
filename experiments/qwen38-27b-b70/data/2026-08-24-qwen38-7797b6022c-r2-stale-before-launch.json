@@ -1,0 +1,87 @@
+{
+  "schema": "neural-download-qwen38-current-main-stale-before-launch-v1",
+  "date": "2026-08-24",
+  "checked_utc": "2026-08-24T16:35:15Z",
+  "classification": "closed-stale-before-launch-vllm-main-advanced",
+  "qualification": "not_launched",
+  "performance_evidence": false,
+  "protected_performance_changed": false,
+  "frozen_identity": {
+    "lab_commit": "eba4a9d10a9017ce412b1b0e377f4e849009c572",
+    "vllm_head": "7797b6022c129b862e45ae6aed08822e65d1bccb",
+    "vllm_tree": "78e0ffe9e07831fa2af9643e0c87501000a93014",
+    "xpu_kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "nightly_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "control_image": "sha256:a385f20ca68b62f18d670722617ed69583fe9154b537c108f04b704029950abd",
+    "both_current_image": "sha256:295de005ad89735c92aced11179d05db08dd694badff3722de3f1ceb9e5994f1",
+    "build_receipt_sha256": "be82b2b6b5b94600d9b736dd9d8f11f48e9b475c13efa74adcda0829d510abba"
+  },
+  "r2_packet": {
+    "preregistration": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-untreated-tp1-r2-prereg.md",
+    "preregistration_sha256": "990e6689d4562a329b026e48b3db7c0bd0d5a9cefc446562fc446c6a791d0e85",
+    "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-7797b6022c-untreated-tp1-r2-qualification.sh",
+    "wrapper_sha256": "41b23809cb7e5b197e4db0f75dcca8d5d967de0e24e78e3e9c1258706bd003f9",
+    "classifier_sha256": "fef74bdb90b82fdf543be6ea36320b308aff0d0c146a3c92bcbfff334b70d1b0",
+    "classifier_test_sha256": "b21befd70003b710027303e093915c36ce88d8fcd4eda66facfd549057e5474b",
+    "strict_runner_sha256": "5647c9af599fb4a3bc31b8cf8118c986f8895842de9cd657c037e4ea099925da",
+    "hardware_runner_sha256": "8038015b179048662f53d7d41ead6cddc95671081942444f394c6e48ed57a6f7",
+    "offline_classifier_tests": 14,
+    "independent_audits_passed": [
+      "script-and-safety",
+      "performance-preservation",
+      "evidence-and-freshness"
+    ]
+  },
+  "stale_observation": {
+    "component": "vllm_upstream_main",
+    "frozen_head": "7797b6022c129b862e45ae6aed08822e65d1bccb",
+    "live_head": "6648eb118d77ad001a411cf52f9c6c4719476c83",
+    "xpu_kernel_live_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "nightly_live_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "stage": "post-push prelaunch freshness gate",
+    "result": "qualification wrapper not invoked; rebuild the literal-current successor"
+  },
+  "upstream_delta_assessment": {
+    "range_commit_count": 1,
+    "successor_is_direct_child": true,
+    "commit_subject": "[Core] drop duplicate VLLM_USE_DEEP_GEMM check (#48687)",
+    "changed_path": "vllm/model_executor/warmup/kernel_warmup.py",
+    "qwen_dense_xpu_semantics_changed": false,
+    "accepted_overlay_textual_conflict": false,
+    "rebuild_still_required": true
+  },
+  "nonlaunch_evidence": {
+    "wrapper_invoked": false,
+    "hardware_gate_root": "/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-7797b6022c-20260824-086de284-venvlib-r2",
+    "hardware_gate_root_absent": true,
+    "campaign_root": "/home/steve/qwen38-current-main-runs/tp1-untreated-7797b6022c-20260824-r2",
+    "campaign_root_absent": true,
+    "ports_19764_19765_19766_unbound": true,
+    "running_containers": 0,
+    "model_servers": 0,
+    "render_holders": 0,
+    "hardware_gate_ran": false,
+    "model_loaded": false,
+    "canary_ran": false,
+    "benchmark_ran": false,
+    "quality_battery_ran": false,
+    "gpu_work_ran": false
+  },
+  "preservation": {
+    "r1_remains_sealed": true,
+    "r1_hardware_manifest": "64-of-64",
+    "r1_campaign_manifest": "70-of-70",
+    "tp2_decision_files_preserved": 78,
+    "tp2_overlay_manifest_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757",
+    "tp4_decision_files_preserved": 152,
+    "tp4_overlay_manifest_sha256": "a2df36b0009fc00af76add3392362410e4bb18a9d9698127abe270200043f6f9",
+    "accepted_overlays_applied_to_7797": 0,
+    "historical_floors_or_highs_lowered": 0
+  },
+  "disposition": {
+    "r2_packet": "retain byte-exact as audited stale provenance; do not invoke or relabel",
+    "7797_images": "dated static-preflight artifacts only",
+    "next_action": "build the successor from literal-current vLLM main with exact-current XPU kernels and the live official nightly digest, zero source overlay; then derive a separately named qualification packet",
+    "overlay_policy": "keep accepted runtime and TP2/TP4 decision overlays versioned; remap only compatible decisions into fresh caches after the successor zero-overlay base passes"
+  }
+}

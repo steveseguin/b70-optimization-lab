@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-7797-r1-closed-r2-preregistered",
+  "status": "preservation-gate-passed-7797-r1-closed-r2-stale-unlaunched",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -9,12 +9,13 @@
     "result_policy": "append-only identities; never overwrite or lower historical highs"
   },
   "observed_heads": {
+    "checked_utc": "2026-08-24T16:35:15Z",
     "official_nightly": {
       "index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
       "vllm_source": "f94666b60d4c58ec0807d22c837cfae322a1dde9"
     },
-    "vllm_upstream_main": "7797b6022c129b862e45ae6aed08822e65d1bccb",
+    "vllm_upstream_main": "6648eb118d77ad001a411cf52f9c6c4719476c83",
     "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
   },
@@ -462,7 +463,7 @@
   }],
   "active_qualification_build": {
     "built_utc": "2026-08-24T15:31:34Z",
-    "status": "static-preflight-passed-r1-failed-incomplete-r2-preregistered",
+    "status": "static-preflight-passed-r1-failed-incomplete-r2-stale-unlaunched",
     "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-7797b6022c-absolute-current-main-build.json",
     "receipt_sha256": "be82b2b6b5b94600d9b736dd9d8f11f48e9b475c13efa74adcda0829d510abba",
     "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T153134Z-7797b6022c-baaa05bb4e",
@@ -497,7 +498,7 @@
     },
     "upstream_delta_disposition": "The 7797 tuned batch-invariant matmul tables select only for BF16 plus VLLM_BATCH_INVARIANT on CUDA Ada/Hopper. This F16 XPU packet does not enable the mode and resolves the prior default. No B70 performance gain is inferred from the commit title.",
     "qualification": {
-      "status": "r2-preregistered-not-launched",
+      "status": "r2-closed-stale-before-launch",
       "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-untreated-tp1-r2-prereg.md",
       "packet_sha256": "990e6689d4562a329b026e48b3db7c0bd0d5a9cefc446562fc446c6a791d0e85",
       "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-7797b6022c-untreated-tp1-r2-qualification.sh",
@@ -512,6 +513,10 @@
       "hardware_gate_runner_sha256": "8038015b179048662f53d7d41ead6cddc95671081942444f394c6e48ed57a6f7",
       "hardware_gate_root": "/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-7797b6022c-20260824-086de284-venvlib-r2",
       "campaign_root": "/home/steve/qwen38-current-main-runs/tp1-untreated-7797b6022c-20260824-r2",
+      "closeout_note": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-r2-stale-before-launch.md",
+      "closeout_note_sha256": "5e35b6d4e69b3f0108316d9bd74dc6e42f5cde4aecba8646ecfe60338f26e725",
+      "closeout_data": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-7797b6022c-r2-stale-before-launch.json",
+      "closeout_data_sha256": "b8f58af394ed703cda3fbb405f46ccb6d30c889d9bd3117b46178271440f39a3",
       "order": ["TP1", "TP2", "TP4"],
       "prior_attempts": [{
         "attempt": "r1",
@@ -529,7 +534,20 @@
         "performance_evidence": false
       }]
     },
-    "policy": "Each preregistered attempt may run once only on its exact frozen roots from clean pushed main if all live inputs still match. Preserve every result append-only and never lower a historical floor or drop a compatible accepted overlay."
+    "stale_observation": {
+      "checked_utc": "2026-08-24T16:35:15Z",
+      "component": "vllm_upstream_main",
+      "built_head": "7797b6022c129b862e45ae6aed08822e65d1bccb",
+      "live_head": "6648eb118d77ad001a411cf52f9c6c4719476c83",
+      "phase": "after-r2-commit-push-before-wrapper-invocation",
+      "wrapper_invoked": false,
+      "hardware_gate_root_exists": false,
+      "campaign_root_exists": false,
+      "candidate_launched": false,
+      "gpu_work_ran": false,
+      "performance_evidence": false
+    },
+    "policy": "R2 is closed stale and must not run. Preserve its exact audited packet and every historical result append-only; build the literal-current successor without lowering a floor or dropping a compatible accepted overlay."
   },
   "frozen_trees": {
     "vllm": {
