@@ -47,6 +47,7 @@ LABEL org.opencontainers.image.created="${BUILD_UTC}" \
       neural.download.vllm.wheel.sha256="${VLLM_WHEEL_SHA256}"
 
 USER root
+WORKDIR /workspace/runtime
 
 # The base image uses /workspace/vllm as its workdir and source import. Remove
 # that old tree before installing the exact current-main wheel so it cannot
@@ -77,8 +78,6 @@ RUN set -eux; \
         test "${KERNEL_WHEEL_SHA256}" = stock-from-base; \
     fi; \
     rm -rf /tmp/current-kernel
-
-WORKDIR /workspace/runtime
 
 # Fail closed before a derived image is allowed near a GPU. This validates
 # identity, rejects source shadowing, imports every required extension, and
@@ -114,10 +113,17 @@ expected_vllm = os.environ["VLLM_EXPECTED_VERSION"]
 vllm = importlib.import_module("vllm")
 kernel_version = importlib.metadata.version("vllm-xpu-kernels")
 package_dir = Path(vllm.__file__).resolve().parent
+legacy_source_dir = Path("/workspace/vllm")
 if vllm.__version__ != expected_vllm:
     raise SystemExit(f"vLLM version mismatch: {vllm.__version__} != {expected_vllm}")
 if not str(package_dir).startswith("/opt/venv/lib/python3.12/site-packages/"):
     raise SystemExit(f"vLLM is shadowed by a source tree: {vllm.__file__}")
+if legacy_source_dir.is_symlink():
+    raise SystemExit(f"legacy source path is a symlink: {legacy_source_dir}")
+if legacy_source_dir.exists() and (
+    not legacy_source_dir.is_dir() or any(legacy_source_dir.iterdir())
+):
+    raise SystemExit(f"legacy source path is not absent or empty: {legacy_source_dir}")
 
 rust_extension = package_dir / "_rust_tool_parser.abi3.so"
 rust_frontend = package_dir / "vllm-rs"

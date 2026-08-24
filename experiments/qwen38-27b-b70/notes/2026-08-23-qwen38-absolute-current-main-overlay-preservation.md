@@ -356,3 +356,23 @@ Only unused Docker build cache was pruned after the archive passed; both e888
 images and all source/result archives remain. GPU qualification is still
 pending and the historical TP1/TP2/TP4 highs remain authoritative until the
 new identity clears every speed and quality gate.
+
+The first e888 GPU attempt is preserved at
+`/home/steve/qwen38-current-main-runs/tp1-20260824T031808Z`. Its control arm
+verified all model files, loaded the model, compiled the fresh graph cache, and
+became healthy, then stopped before sending any benchmark or quality request.
+The report-only stack-version probe incorrectly required
+`/workspace/vllm` itself to be absent. The derived image correctly imports
+vLLM from site-packages, but the inherited base workdir was recreated as an
+empty, ordinary directory during later image-build steps. Thus the failure is
+a harness false negative, not a speed or model-correctness result; it produced
+no decode measurement and changes no protected value.
+
+The qualification gate now accepts only two safe states for that legacy path:
+absent, or a non-symlink directory with no entries. It still requires the
+resolved import to live under the exact site-packages directory. Both sealed
+images passed that corrected gate without a GPU. For future images, the
+Dockerfile switches to `/workspace/runtime` before removing the base source
+tree so build steps do not recreate the empty legacy workdir. This harness and
+future-build correction changes no launch argument, runtime package, graph
+setting, or performance overlay on the already sealed e888 images.

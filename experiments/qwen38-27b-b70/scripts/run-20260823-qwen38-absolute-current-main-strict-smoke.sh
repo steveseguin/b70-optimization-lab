@@ -390,7 +390,13 @@ check_label neural.download.vllm.wheel.sha256 "$(jq -r .vllm.wheel_sha256 "$rece
 check_label org.opencontainers.image.revision "$vllm_head"
 
 dockerc run --rm --network=none --entrypoint /bin/bash "$image_id" -lc \
-  'test ! -e /workspace/vllm; cat /opt/neural-download/source-identity.json' \
+  'set -euo pipefail
+  if test -e /workspace/vllm || test -L /workspace/vllm; then
+    test -d /workspace/vllm
+    test ! -L /workspace/vllm
+    test -z "$(find /workspace/vllm -mindepth 1 -print -quit)"
+  fi
+  cat /opt/neural-download/source-identity.json' \
   >"$out/in-image-source-identity.json"
 dockerc run --rm --network=none --entrypoint /bin/bash "$image_id" -lc \
   'cat /opt/neural-download/import-receipt.json' >"$out/in-image-import-receipt.json"
@@ -656,7 +662,11 @@ dockerc exec "$name" /opt/venv/bin/python -c '
 import importlib.metadata as m
 import pathlib
 import vllm
-assert not pathlib.Path("/workspace/vllm").exists()
+legacy_source_dir = pathlib.Path("/workspace/vllm")
+assert not legacy_source_dir.is_symlink()
+assert not legacy_source_dir.exists() or (
+    legacy_source_dir.is_dir() and not any(legacy_source_dir.iterdir())
+)
 assert pathlib.Path(vllm.__file__).resolve().is_relative_to(pathlib.Path("/opt/venv/lib/python3.12/site-packages"))
 print("vllm", vllm.__version__)
 print("vllm-xpu-kernels", m.version("vllm-xpu-kernels"))
