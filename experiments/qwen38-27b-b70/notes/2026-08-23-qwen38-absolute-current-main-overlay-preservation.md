@@ -613,3 +613,61 @@ zero-source-overlay attribution base; the accepted launch, topology, graph,
 autotune-decision, cache, and quality overlays remain versioned and await
 exact-path/config-hash remapping after TP1. The protected TP1/TP2/TP4 speed
 history is unchanged and append-only.
+
+## 2026-08-24 `a4d70bef3` literal-current roll-forward
+
+The prelaunch recency gate stopped the unrun `8c2bbe00d` candidate when vLLM
+`main` advanced by one commit to
+`a4d70bef3724edb068c8206804154065acaa4cd4` (tree
+`7a53aac59000b1dfd47c8a8948486ff9f3f2c228`). No `8c2bbe00d` GPU arm was
+launched. Its exact receipt, wheel, source archive, build logs, and image
+identities remain dated evidence in
+`current-main-builds/20260824T060421Z-8c2bbe00d5-baaa05bb4e/`; the late-copied
+source tar is anchored by receipt SHA-256
+`7110d72bcf7fc2e07196af7e9f4cf4440bf62527ca13ebcf65e1db71f8f495e7`
+rather than being silently represented as an original `SHA256SUMS` member.
+
+The single upstream delta, `[Model Runner V2] Reserve CUDA graph memory`, is
+scoped to CUDA/ROCm Model Runner V2 profiling. Existing captured evidence
+resolves this Qwen lane as `Qwen3_5ForConditionalGeneration` on the V1 engine,
+with no `VLLM_USE_V2_MODEL_RUNNER`; the active XPU V1 runner, XPU GDN, graph,
+quantization, collective, and kernel paths are unchanged. This bounded audit
+predicts no steady-state change but does not waive fresh performance or quality
+qualification.
+
+The exact a4d build has:
+
+- vLLM wheel SHA-256
+  `48495720ed29ec11c39538a3e94bcc5ab8985b74249a0424535c3aecba902467`;
+- vLLM source-tar SHA-256
+  `c9ba8e4d2e4d7848a23a7dc7dbdc9dc8e02f1f64746183bab1dca37b98bf9149`;
+- current-vLLM/stock-kernel image
+  `sha256:58f96e00d65123179f6bb0a6bebc21de8bb5e19295f2f478fa30b3103fce4780`;
+- current-vLLM/exact-`baaa05bb4e`-kernel image
+  `sha256:4718fdd224aae9ea95bfbd7bc5aea7eea64ddc51975e2d8d09fa6fdcf5efd0cf`.
+
+Its archive is
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T062226Z-a4d70bef37-baaa05bb4e`.
+The tracked and archived receipts are byte-identical at SHA-256
+`473f7bf9f7a00d00dfabb6214a57d7bed6beeb94cc479cfee5fa3293c93f91d2`.
+The source tar was added to the archive manifest explicitly, all archive hashes
+pass, and its 7,581-entry traversal is safe. A live `--validate-only` seal at
+`2026-08-24T06:27:16Z` confirmed the same vLLM head, kernel head, nightly base,
+and official kernel wheel.
+
+The completed but stale `460c08bc8` measured control image is additionally
+preserved as a runnable Docker-load archive at
+`current-main-builds/20260824T054447Z-460c08bc8a-baaa05bb4e/control-image-b4451bcd0dbb.docker.tar.zst`,
+SHA-256
+`77252e0564fb2fcadcb48a24230616b27dbbf9c3e29cb072841a2b5161a5a3af`.
+It is a Docker archive of the measured platform image, not a claim that the
+original Buildx index/attestation digest was reconstructed.
+
+After these archives passed, only superseded unqualified local images and
+inactive reproducible BuildKit cache were removed. Current a4d images, the
+official base, all results and source packets, the 78-file TP2 decision bundle,
+and the accepted 152-file TP4 decision bundle remain intact. Root free space
+returned above the launch safety floor. The TP2/TP4 decision overlays are not
+implicitly portable through their old a356-bound runners: they require explicit
+current-image path/config-hash remapping and fresh compilation before claiming
+that the performance overlay has been carried forward.
