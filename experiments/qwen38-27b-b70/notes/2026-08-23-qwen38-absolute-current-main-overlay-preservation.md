@@ -671,3 +671,43 @@ returned above the launch safety floor. The TP2/TP4 decision overlays are not
 implicitly portable through their old a356-bound runners: they require explicit
 current-image path/config-hash remapping and fresh compilation before claiming
 that the performance overlay has been carried forward.
+
+## 2026-08-24 `a4d70bef3` hash-seed-unset diagnostic
+
+The preregistered both-current TP1 diagnostic with `PYTHONHASHSEED` truly
+absent completed its full 25-prompt benchmark at
+`30.25330610145591 tok/s` on the conventional 99-interval metric. That is
+`0.03550610145590838 tok/s` above the protected `30.2178` diagnostic floor
+and only `0.003593898544092866 tok/s` below the protected `30.2569` captured
+high. The high remains append-only and is not replaced. This was an
+ignore-EOS diagnostic, not a strict or quality-battery arm.
+
+The benchmark, code-14 canary, returned-token and zero-cache accounting,
+GPU-0 BDF/UUID mapping, and direct-plus-ordinary verification of all 19 model
+files passed. The fresh cache contains 1,097 files, including 38 autotune
+decision files. It has a verified post-run seal, but no replay occurred, so it
+does not establish fresh-compile determinism and none of its AOT models,
+binaries, or generated kernels may be reused on another code identity.
+
+Promotion was correctly vetoed after the valid benchmark because vLLM `main`
+advanced from `a4d70bef3724edb068c8206804154065acaa4cd4` to
+`cc40c3673b47a58d1326d1e7a2798f1f67a94a8f` during the arm. The kernel head
+and official nightly digest remained unchanged. Structured evidence is in
+`experiments/qwen38-27b-b70/data/2026-08-24-qwen38-a4d-hash-unset-tp1-diagnostic-attempt.json`.
+The complete 1,358-entry run, including its cache, is archived at
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-hash-unset-20260824T064134Z-a4d70bef37-stale-diagnostic.tar.zst`,
+SHA-256
+`d62187e66a3da0d5fe294f686fd01c2582f0eda7f08f0f2d34aaa98a4e277453`.
+
+The wrapper formerly summarized this specific inner recency veto as generic
+`fail rc=5`; the inner arm already recorded `stale-before-promotion`. Future
+runs now propagate that semantic status at the wrapper root. The build receipt
+also now exposes the already-verified Rust reuse hashes at top level so a
+consumer cannot mistake an omitted field for missing provenance.
+
+No accepted optimization was abandoned. This evidence confirms the protected
+runtime overlay still delivers the historical TP1 speed class on `a4d`; the
+next literal-current build must use a fresh compile cache, repeat this gate,
+then run strict/quality qualification. TP2's 78 and TP4's accepted 152
+`.best_config` files remain immutable decision-only overlays awaiting exact
+relative-path plus embedded-`configs_hash` remapping on that new base.

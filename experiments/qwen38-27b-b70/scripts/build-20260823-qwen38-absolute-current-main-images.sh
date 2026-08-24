@@ -567,6 +567,8 @@ jq -n \
   --arg lab_head "$lab_head" \
   --arg lab_tree "$lab_tree" \
   --arg paged_full_sha256 "$paged_full_sha256" \
+  --arg rust_extension_sha256 "$rust_extension_sha256" \
+  --arg rust_frontend_sha256 "$rust_frontend_sha256" \
   --arg vllm_archive_sha256 "$vllm_archive_sha256" \
   --arg vllm_head "$vllm_head" \
   --arg vllm_package_version "$expected_vllm_metadata_version" \
@@ -595,6 +597,11 @@ jq -n \
     build_inputs: {
       script_sha256: $build_script_sha256,
       dockerfile_sha256: $dockerfile_sha256
+    },
+    reused_rust: {
+      source_equivalence_base: "f94666b60d4c58ec0807d22c837cfae322a1dde9",
+      extension_sha256: $rust_extension_sha256,
+      frontend_sha256: $rust_frontend_sha256
     },
     vllm: {
       head: $vllm_head,

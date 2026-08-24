@@ -1,0 +1,188 @@
+{
+  "schema": "neural-download-current-main-tp1-hash-unset-diagnostic-v1",
+  "run_root": "/home/steve/qwen38-current-main-runs/tp1-hash-unset-20260824T064134Z",
+  "status": "dated-stale-after-valid-diagnostic",
+  "classification": "diagnostic-only-not-promotion-eligible",
+  "final_status": "fail rc=5",
+  "arm_final_status": "stale-before-promotion",
+  "bench_rc": 0,
+  "canary_rc": 0,
+  "strict_qualification": false,
+  "six_arm_campaign_satisfied": false,
+  "promotion_eligible": false,
+  "historical_replacement_allowed": false,
+  "diagnostic_result_json_written": false,
+  "diagnostic_result_json_note": "The inner runner exited stale at its postflight source-recency gate before the wrapper could synthesize a passing diagnostic-result.json.",
+  "source": {
+    "vllm_built": "a4d70bef3724edb068c8206804154065acaa4cd4",
+    "vllm_tree": "7a53aac59000b1dfd47c8a8948486ff9f3f2c228",
+    "vllm_version": "0.26.1rc1.dev1137+ga4d70bef3.xpu",
+    "vllm_pre": "a4d70bef3724edb068c8206804154065acaa4cd4",
+    "vllm_post": "cc40c3673b47a58d1326d1e7a2798f1f67a94a8f",
+    "vllm_unchanged": false,
+    "kernel_built_pre_post": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "kernel_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "kernel_version": "0.1.dev1+gbaaa05bb4",
+    "nightly_base_built_pre_post": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "stale_component": "vllm-main",
+    "source_overlay": "none"
+  },
+  "accepted_optimization_contract": {
+    "classification": "versioned-runtime-overlay-not-source-patch",
+    "components": [
+      "pinned model identity",
+      "launch and topology contract",
+      "XPU graph configuration",
+      "fresh ext4 cache and autotune policy",
+      "quality, cache-zero, token-accounting, model-integrity, and source-recency gates"
+    ],
+    "decision_overlay_applied": false,
+    "disposition": "Preserve this runtime identity and speed evidence; rebuild a fresh cache on the next literal upstream head. Never copy AOT models, binaries, or generated kernels across code identities."
+  },
+  "image": {
+    "tag": "neural-download/vllm-openai-xpu:vllm-a4d70bef37-kernel-baaa05bb4e-official",
+    "id": "sha256:4718fdd224aae9ea95bfbd7bc5aea7eea64ddc51975e2d8d09fa6fdcf5efd0cf",
+    "build_receipt_sha256": "473f7bf9f7a00d00dfabb6214a57d7bed6beeb94cc479cfee5fa3293c93f91d2"
+  },
+  "identity": {
+    "model_path": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_family": "Qwen3.6/Qwen3.8 qwen3_5_text",
+    "quantization": "AutoRound INT4 W4A16 group-128 symmetric",
+    "served_model": "qwen38-absolute-current-main-both",
+    "tp": 1,
+    "gpu": 0,
+    "gpu_bdf": "0000:23:00.0",
+    "gpu_uuid": "00000000-0000-0023-0000-0000e2238086",
+    "mtp": 0,
+    "model_dtype": "f16",
+    "kv_dtype": "f16",
+    "max_model_len": 32768,
+    "cache_policy": "fresh",
+    "max_tokens": 512,
+    "ignore_eos": true,
+    "quality_battery": false,
+    "return_token_ids": true,
+    "graph_mode": "FULL_AND_PIECEWISE",
+    "graph_capture_sizes": [
+      1,
+      2
+    ],
+    "async_scheduling": true,
+    "gpu_memory_utilization": 0.9,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "prefix_caching": false,
+    "chunked_prefill": true,
+    "lab_git_head": "e1b8459ae9efdb17a4bbaf49c3aca0c7201dcc31",
+    "lab_git_tree": "1c11baccf5e42831c1f68afa7789aee21ab63b94"
+  },
+  "python_hash_seed": {
+    "requested_mode": "unset",
+    "container_config_present": false,
+    "container_init_present": false,
+    "effective": "unset",
+    "mode_evidence_sha256": "bf6d18493b2bdc12e3d3001131abbe536f7a9edbe25724cf9f1ba1589cc5c4f8",
+    "container_environment_sha256": "91cfe99237791488d2299b617f6a5064e4f50a9994dd1f515aa1eb92a855b5a6",
+    "container_init_environment_sha256": "91cfe99237791488d2299b617f6a5064e4f50a9994dd1f515aa1eb92a855b5a6",
+    "note": "The engine request seed is separate from PYTHONHASHSEED; both captured container environment views prove the latter was absent."
+  },
+  "benchmark": {
+    "created_at_utc": "2026-08-24T06:52:28.134714+00:00",
+    "prompts": 25,
+    "unique_prompts": 25,
+    "completion_tokens_per_prompt": 512,
+    "total_completion_tokens": 12800,
+    "cached_tokens_all_zero": true,
+    "finish_reason_all": "length",
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "conventional_99_interval_median_tok_s": 30.25330610145591,
+    "mean_tok_s": 30.315668957159083,
+    "p10_tok_s": 30.210825377812952,
+    "min_tok_s": 29.671529825996657,
+    "max_tok_s": 30.80686931407074,
+    "stdev_tok_s": 0.2124968094509986,
+    "full_after_ttft_median_tok_s": 30.171570881276065,
+    "wall_full_median_tok_s": 29.684603011510053,
+    "ttft_median_ms": 280.71875707246363,
+    "diagnostic_floor_tok_s": 30.2178,
+    "floor_delta_tok_s": 0.03550610145590838,
+    "floor_pass": true,
+    "historical_high_tok_s": 30.2569,
+    "high_delta_tok_s": -0.003593898544092866,
+    "historical_high_exceeded": false,
+    "strict_floor_tok_s": 30.31067504052998,
+    "strict_floor_is_applicable_to_this_arm": false,
+    "bench_sha256": "e5656bde433615d1d2b3db45c6d9ab910d6330ffee83144a1c97a880af732f82",
+    "prompt_hash_array_sha256": "284f8b4a012631c763553ade97c49b93e3904db03d31958e439d40330ba588cf",
+    "output_hash_array_sha256": "7f0bcb6422e8055d3139c8456ded2291f11d72c29a85261ae40b26ae855d355e",
+    "token_id_arrays_sha256": "5fbe1c5043099d78a872b96004f925238c9fd494c25b7e098164054c581281bf"
+  },
+  "canary": {
+    "passed": true,
+    "content": "14",
+    "cached_tokens": 0,
+    "prompt_tokens": 36,
+    "completion_tokens": 3,
+    "reasoning_tokens": 0,
+    "sha256": "29f3a9c82254e359f78e68a22cdc064a7e7eed10935a666f9a1e9b5aa33dd3fb"
+  },
+  "model_verification": {
+    "passed": true,
+    "files_verified": 19,
+    "odirect_ok": 19,
+    "ordinary_ok": 19,
+    "paths_coherent": true,
+    "manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "evidence_sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+  },
+  "cache": {
+    "policy": "fresh",
+    "files": 1097,
+    "directories": 212,
+    "bytes": 155451814,
+    "best_config_files": 38,
+    "post_manifest_sha256": "1e0bc506429d4cf5b1c41fbe7994a98aac32fbc3e9ec9407c2a3418cd73a7d6b",
+    "all_file_hashes_pass": true,
+    "current_matches_captured_post_manifest": true,
+    "replay_verified": false,
+    "cross_version_reuse_allowed": false
+  },
+  "integrity": {
+    "raw_relative_manifest_sha256": "ba4346d7ec10d443ae61d4ebc2d9de355751b3f4e68faa8271d685d7fbf73ad7",
+    "output_subtree_manifest_sha256": "0a217ff135a69f51171f137b54ffe856fb961f869762eb7ef832bdf9297b06d5",
+    "root_input_manifest_sha256": "ebd1e2594b91b22061fe75e5faea29f065079246026325b7dee45aef5aef3861",
+    "inner_input_manifest_sha256": "d0b2c5b5f652d268389ee9d38f46325f67831403d029842953827cc328fcd206"
+  },
+  "cleanup": {
+    "recorded_pid_absent": true,
+    "port_19759_listener_absent": true,
+    "runner_container_removal_precedes_postflight": true,
+    "cache_retained_intentionally": true
+  },
+  "archive": {
+    "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-hash-unset-20260824T064134Z-a4d70bef37-stale-diagnostic.tar.zst",
+    "sha256": "d62187e66a3da0d5fe294f686fd01c2582f0eda7f08f0f2d34aaa98a4e277453",
+    "compressed_bytes": 2263370,
+    "uncompressed_bytes": 160266240,
+    "entries": 1358,
+    "zstd_test": "pass",
+    "safe_path_traversal": "pass"
+  },
+  "claim_policy": {
+    "may_claim": [
+      "The a4d70bef both-current hash-seed-unset diagnostic completed validly and cleared the protected 30.2178 tok/s diagnostic floor.",
+      "The measured 30.25330610145591 tok/s is within 0.003593898544092866 tok/s of the protected 30.2569 captured high.",
+      "The exact canary, token/cache accounting, GPU identity, and direct-plus-ordinary model verification passed."
+    ],
+    "must_not_claim": [
+      "literal-current qualification after vLLM main moved",
+      "strict or full-quality qualification",
+      "fresh-compile or cross-boot determinism",
+      "safe cache reuse on a later code identity",
+      "TP2, TP4, or MTP qualification",
+      "replacement or lowering of either protected TP1 diagnostic capture"
+    ],
+    "next": "Resolve the newest upstream heads, build fresh immutable images, repeat this hash-unset diagnostic, then run the frozen strict qualification without weakening any optimization or gate."
+  }
+}

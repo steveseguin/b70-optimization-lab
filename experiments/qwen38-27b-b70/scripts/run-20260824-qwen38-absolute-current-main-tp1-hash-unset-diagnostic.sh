@@ -48,10 +48,19 @@ mkdir -- "$run_root"
 
 wrapper_cleanup() {
   local rc=$?
+  local arm_status=
   trap - EXIT INT TERM HUP
   if [[ ! -f $run_root/final.status ]]; then
     [[ $rc -ne 0 ]] || rc=1
-    printf 'fail rc=%s\n' "$rc" >"$run_root/final.status"
+    if [[ -f $out/final.status ]]; then
+      arm_status=$(<"$out/final.status")
+    fi
+    if [[ $arm_status == stale-before-promotion ]]; then
+      printf 'stale-before-promotion arm=both-current-hash-unset-diagnostic rc=%s\n' \
+        "$rc" >"$run_root/final.status"
+    else
+      printf 'fail rc=%s\n' "$rc" >"$run_root/final.status"
+    fi
   fi
   exit "$rc"
 }
