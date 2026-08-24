@@ -570,13 +570,18 @@ remove_owned_container() {
 cleanup() {
   local rc=$?
   local cleanup_failed=0
+  local cleanup_manifest_sha256
   trap - EXIT INT TERM HUP
   remove_owned_container || cleanup_failed=1
   if [[ -d $cache_dir ]]; then
     cache_manifest "$out/cache-manifest.post.sha256" || cleanup_failed=1
     if [[ -f $out/cache-manifest.post.sha256 ]]; then
-      sha256sum "$out/cache-manifest.post.sha256" \
-        >"$out/cache-manifest.post.sha256.digest" 2>/dev/null || cleanup_failed=1
+      cleanup_manifest_sha256=$(sha256sum "$out/cache-manifest.post.sha256" |
+        awk '{print $1}') || cleanup_failed=1
+      if [[ $cleanup_failed == 0 ]]; then
+        printf '%s\n' "$cleanup_manifest_sha256" \
+          >"$out/cache-manifest.post.sha256.digest" || cleanup_failed=1
+      fi
       if [[ $cache_policy == replay && -f $out/cache-manifest.pre.sha256 ]]; then
         cmp -s "$out/cache-manifest.pre.sha256" "$out/cache-manifest.post.sha256" ||
           cleanup_failed=1

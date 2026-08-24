@@ -376,3 +376,23 @@ Dockerfile switches to `/workspace/runtime` before removing the base source
 tree so build steps do not recreate the empty legacy workdir. This harness and
 future-build correction changes no launch argument, runtime package, graph
 setting, or performance overlay on the already sealed e888 images.
+
+The corrected rerun at
+`/home/steve/qwen38-current-main-runs/tp1-20260824T032648Z` produced a valid
+25-row control diagnostic before a second bookkeeping-only campaign stop. Its
+conventional 1--100 interval median is `30.351516250263348 tok/s`, above the
+protected `30.2178` diagnostic floor; canary, model identity, cache-zero
+request shape, and all three upstream-recency checks passed. This is a valid
+diagnostic measurement, but it is not a completed TP1 qualification and does
+not replace the historical result.
+
+After the arm wrote a hash-only cache-manifest digest and `final.status=pass`,
+the unconditional EXIT cleanup recomputed the same manifest but overwrote the
+digest file with standard `sha256sum` output containing both hash and path.
+The parent expected exactly 64 hexadecimal characters and stopped before
+strict replay. The digest content was normalized back to its verified hash
+`0a6ab96e888b78e07b0651cd166e60be55ac70867ec00099ad0e6830372ac17c`.
+Cleanup now writes the same hash-only format as the normal path, and the parent
+independently recomputes and compares the digest before replay. No strict or
+quality arm ran in this attempt; the completed diagnostic and cache remain
+preserved as extra replication evidence.

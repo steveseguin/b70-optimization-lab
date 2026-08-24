@@ -267,8 +267,11 @@ run_lane() {
       "$diagnostic" "$frozen_suite" "$cache"
   check_frozen_inputs || die "$lane inputs changed during diagnostic"
 
-  manifest_sha=$(<"$diagnostic/cache-manifest.post.sha256.digest")
+  manifest_sha=$(awk 'NR == 1 {print $1}' \
+    "$diagnostic/cache-manifest.post.sha256.digest")
   [[ $manifest_sha =~ ^[0-9a-f]{64}$ ]] || die "$lane produced an invalid cache manifest"
+  [[ $manifest_sha == "$(sha256sum "$diagnostic/cache-manifest.post.sha256" |
+    awk '{print $1}')" ]] || die "$lane cache-manifest digest does not match its file"
 
   check_frozen_inputs || die "$lane inputs changed before strict replay A"
   CACHE_POLICY=replay EXPECTED_CACHE_MANIFEST_SHA256=$manifest_sha \
