@@ -273,6 +273,18 @@ receipt IDs, and root headroom is about 13.44 GiB, above but close to the
 unchanged 12-GiB launch floor. Recheck space and all live upstream identities
 immediately before invoking a separately named, committed, audited TP1 packet.
 
+That separately named 6648 r1 packet is now preregistered but not launched.
+It keeps the audited classifier, fourteen-test battery, hardware gate, and
+strict runner byte-exact from 7797 r2, while changing only the build receipt,
+vLLM/source/image identity, fresh non-overridable roots, diagnostic wording,
+and isolated ports. It runs only the both-current zero-overlay TP1 lane; it
+does not claim the stock-kernel attribution control listed in the broader
+build receipt. The diagnostic floor remains `30.2178 tok/s`, and both strict
+natural-EOS replays must still clear `30.31067504052998 tok/s` with the full
+quality and sealed-cache contract. No accepted decision overlay is applied or
+dropped. See the
+[6648 TP1 r1 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6648eb118d-untreated-tp1-r1-prereg.md).
+
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
 tune selected different winners. The capped TP2 preservation test transferred
