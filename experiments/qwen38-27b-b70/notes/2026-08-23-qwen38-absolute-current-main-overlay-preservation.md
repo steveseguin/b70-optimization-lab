@@ -561,3 +561,55 @@ The dated `702` run evidence, wheel/source archive, receipts, logs, and every
 accepted decision/source overlay remain. No historical speed or quality value
 was replaced. The new images are still unqualified; full TP1 diagnostic plus
 strict A/B must pass before separate TP2 and TP4 overlay remapping begins.
+
+## 2026-08-24 `460c08bc8` diagnostic and `8c2bbe00d` roll-forward
+
+The `460c08bc8` control diagnostic completed before promotion was vetoed by
+the per-arm recency gate. Its 25-prompt conventional 99-interval median was
+`30.333869114906538 tok/s`, `0.11606911490653715 tok/s` above the protected
+diagnostic floor. The canary, returned-token accounting, zero-cache checks,
+direct-plus-ordinary 19-file model verification, and 1,097-file cache seal all
+passed. It was not a strict arm: natural-EOS quality, strict replay A/B, and
+both-current were never run. It therefore remains valid dated diagnostic
+evidence and does not replace a strict result or any historical high.
+
+The exact reason for the stop was vLLM `main` advancing from
+`460c08bc8a525082f37b1ba4c8e70558e5aa8e9e` to
+`8c2bbe00d58a930c6c09a80495728b26b79d9200`. The kernel head and official
+nightly digest did not change. Structured evidence is in
+`experiments/qwen38-27b-b70/data/2026-08-24-qwen38-460c-tp1-qualification-attempts.json`.
+The complete raw run is independently archived at
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-20260824T055200Z-460c08bc8a-stale-diagnostic.tar.zst`,
+SHA-256
+`c5db478ceb7df910b7996ce669eeb2e6e103b7d4416aaece8c5c7121067ed817`.
+
+The new vLLM commit adds only Muse-Glimmer multimodal LoRA module mapping;
+it does not enter the protected Qwen/XPU path. That bounded audit does not
+waive qualification. Literal live identities were resolved again, and the
+unchanged exact kernel artifact and nightly base were reused only after the
+Rust-equivalence, artifact, import, dependency, DSO, and source-identity gates
+passed. The new vLLM wheel SHA-256 is
+`7fd324aa008dae05e97e75c06454d665b7fb6e0c15d4bae71368e2968e7966ef`.
+
+The rebuilt immutable image IDs are:
+
+- current vLLM with stock nightly kernel:
+  `sha256:83aaedca61fb3c55e4303ef8b2ab72744e16e0b3e9e61844e3298deb45354842`;
+- current vLLM with exact `baaa05bb4e` kernel:
+  `sha256:bee7e67a41a15cbe05fa9ddbeeaca659b8a4a01498609c053fdfb34a73bc0637`.
+
+Their verified archive is
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T060421Z-8c2bbe00d5-baaa05bb4e`.
+The tracked and archived receipts are byte-identical at SHA-256
+`49f85b12d2affd9700e6bf82cda1c60ce0b720b4f44cb2a82985cd21347d1223`.
+Historical build entries now point at immutable archived receipts rather than
+the mutable current-receipt path. The Dockerfile no longer supplies a stale
+fallback base to manual builds, and campaign cleanup now propagates the
+semantic `stale-before-promotion` arm status instead of hiding it as a generic
+exit code.
+
+No source performance overlay was dropped. The current build remains a
+zero-source-overlay attribution base; the accepted launch, topology, graph,
+autotune-decision, cache, and quality overlays remain versioned and await
+exact-path/config-hash remapping after TP1. The protected TP1/TP2/TP4 speed
+history is unchanged and append-only.

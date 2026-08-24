@@ -14,14 +14,15 @@
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
       "vllm_source": "f94666b60d4c58ec0807d22c837cfae322a1dde9"
     },
-    "vllm_upstream_main": "460c08bc8a525082f37b1ba4c8e70558e5aa8e9e",
+    "vllm_upstream_main": "8c2bbe00d58a930c6c09a80495728b26b79d9200",
     "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
   },
   "historical_absolute_current_builds": [{
     "built_utc": "2026-08-24T04:05:36Z",
     "status": "dated-stale-before-qualification-kernel-main-advanced",
-    "receipt": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json",
+    "receipt_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T040536Z-702e1d7186-4543b580fe/build-receipt.json",
+    "receipt_sha256": "22d5577b3054e6c1ed5a82dbd94594f408085888d50832be562dd9b4c21e00a5",
     "vllm_head": "702e1d718646b5290f17533c04932d58bf03dad6",
     "vllm_xpu_kernels_head": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
     "source_overlay": "none",
@@ -46,13 +47,11 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-702-tp1-qualification-attempts.json"
     },
     "policy": "Re-resolve both live upstream heads before and after qualification; if either moved, retain these images only as dated evidence and rebuild before calling a result current."
-  }],
-  "absolute_current_build": {
+  }, {
     "built_utc": "2026-08-24T05:44:47Z",
-    "status": "static-preflight-passed-gpu-qualification-pending",
-    "receipt": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json",
+    "status": "dated-stale-during-qualification-vllm-main-advanced",
+    "receipt_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T054447Z-460c08bc8a-baaa05bb4e/build-receipt.json",
     "receipt_sha256": "1e383c644ce4fcf393978fa0c88bb84461fd7a2f67437b82a7da8bdc513f006c",
-    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T054447Z-460c08bc8a-baaa05bb4e",
     "vllm_head": "460c08bc8a525082f37b1ba4c8e70558e5aa8e9e",
     "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
@@ -64,6 +63,40 @@
     "post_build_freshness_seal": {
       "checked_utc": "2026-08-24T05:48:57Z",
       "vllm_head": "460c08bc8a525082f37b1ba4c8e70558e5aa8e9e",
+      "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+      "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "status": "passed"
+    },
+    "stale_observation": {
+      "checked_utc": "2026-08-24T06:02:10Z",
+      "component": "vllm_upstream_main",
+      "built_head": "460c08bc8a525082f37b1ba4c8e70558e5aa8e9e",
+      "live_head": "8c2bbe00d58a930c6c09a80495728b26b79d9200",
+      "during": "control TP1 fresh-cache diagnostic postflight",
+      "result": "valid dated diagnostic; promotion vetoed",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-460c-tp1-qualification-attempts.json",
+      "raw_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-20260824T055200Z-460c08bc8a-stale-diagnostic.tar.zst",
+      "raw_archive_sha256": "c5db478ceb7df910b7996ce669eeb2e6e103b7d4416aaece8c5c7121067ed817"
+    },
+    "policy": "Retain the 30.333869114906538 tok/s diagnostic as dated evidence only; strict and both-current arms were not run, and no protected value is replaced."
+  }],
+  "absolute_current_build": {
+    "built_utc": "2026-08-24T06:04:21Z",
+    "status": "static-preflight-passed-gpu-qualification-pending",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json",
+    "receipt_sha256": "49f85b12d2affd9700e6bf82cda1c60ce0b720b4f44cb2a82985cd21347d1223",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T060421Z-8c2bbe00d5-baaa05bb4e",
+    "vllm_head": "8c2bbe00d58a930c6c09a80495728b26b79d9200",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "images": {
+      "current_vllm_stock_kernel": "sha256:83aaedca61fb3c55e4303ef8b2ab72744e16e0b3e9e61844e3298deb45354842",
+      "both_current_zero_overlay": "sha256:bee7e67a41a15cbe05fa9ddbeeaca659b8a4a01498609c053fdfb34a73bc0637"
+    },
+    "post_build_freshness_seal": {
+      "checked_utc": "2026-08-24T06:09:04Z",
+      "vllm_head": "8c2bbe00d58a930c6c09a80495728b26b79d9200",
       "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
       "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "status": "passed"

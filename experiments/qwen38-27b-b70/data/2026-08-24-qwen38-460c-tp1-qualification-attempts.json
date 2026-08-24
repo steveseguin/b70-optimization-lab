@@ -1,0 +1,146 @@
+{
+  "schema": "neural-download-current-main-tp1-attempts-v1",
+  "state": "dated-partial-evidence-stale-before-promotion",
+  "created_utc": "2026-08-24T06:02:10Z",
+  "source_identity": {
+    "vllm_head": "460c08bc8a525082f37b1ba4c8e70558e5aa8e9e",
+    "vllm_tree": "1bf1f2c8e421688aba1c51882acc0d323d2e0f87",
+    "comparison_kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "effective_kernel": {
+      "identity": "stock-from-base",
+      "version": "0.1.13.2"
+    },
+    "official_nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "image_lane": "current-vllm-stock-kernel",
+    "image_id": "sha256:b4451bcd0dbb1fe79fd46ce0cd6adc02b2f57a1ce0c4af0a436553514045fd5a",
+    "source_overlay": "none",
+    "pythonhashseed": 0,
+    "graph_mode": "FULL_AND_PIECEWISE",
+    "graph_capture_sizes": [
+      1,
+      2
+    ],
+    "model": {
+      "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+      "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+      "architecture_family": "Qwen3.6/Qwen3.8 qwen3_5_text",
+      "quantization": "AutoRound INT4 W4A16",
+      "group_size": 128,
+      "symmetric": true,
+      "model_verifier_files": 19
+    },
+    "topology": {
+      "tensor_parallel": 1,
+      "gpu": 0,
+      "mtp": 0,
+      "model_and_kv_dtype": "float16",
+      "max_model_len": 32768,
+      "gpu_memory_utilization": 0.9,
+      "max_num_seqs": 1,
+      "max_num_batched_tokens": 1024,
+      "async_scheduling": true,
+      "prefix_caching": false,
+      "chunked_prefill": true
+    }
+  },
+  "primary_metric": "median tok_s_1_100_intervals_after_ttft across 25 sequential 512-token rows",
+  "protected_floors_tok_s": {
+    "diagnostic": 30.2178,
+    "strict": 30.31067504052998
+  },
+  "attempts": [
+    {
+      "run_root": "/home/steve/qwen38-current-main-runs/tp1-20260824T055200Z",
+      "lab_head": "508a6746633e28ca28ee6b5ea479bbb0fdb94782",
+      "state": "stale-before-promotion",
+      "campaign_exit_code": 5,
+      "exit_reason_scope": "source-recency-only",
+      "promotion_eligible": false,
+      "failure": "vLLM main advanced from 460c08bc8a to 8c2bbe00d5 during the control diagnostic",
+      "diagnostic": {
+        "status": "stale-before-promotion-after-valid-benchmark",
+        "benchmark_body_completed": true,
+        "bench_sha256": "48215e8fa4777d6d18edf90e3884bcb47a58615fd7947e17cb75c9c8a507020b",
+        "build_receipt_sha256": "1e383c644ce4fcf393978fa0c88bb84461fd7a2f67437b82a7da8bdc513f006c",
+        "input_seal_manifest_sha256": "a27375e842067b27588428e417f79f8bc713702c2781aebbc3eaec2acf695163",
+        "input_seal_files": 9,
+        "input_seal_verified": true,
+        "cache_manifest_sha256": "76d354cf07a16f3c0ef846013e3f2681069d78b165a696ed76d346cc76c8f5b0",
+        "cache_manifest_entries": 1097,
+        "rows": 25,
+        "output_tokens_per_row": 512,
+        "metric_token_events": 100,
+        "metric_intervals": 99,
+        "unique_prompts": true,
+        "cached_tokens_all_zero": true,
+        "conventional_1_100_interval_median_tok_s": 30.333869114906538,
+        "conventional_1_100_interval_p10_tok_s": 30.308509298440462,
+        "full_decode_median_tok_s": 30.215454770284786,
+        "ttft_median_ms": 277.75774290785193,
+        "diagnostic_floor_delta_tok_s": 0.11606911490653715,
+        "diagnostic_speed_gate_pass": true,
+        "strict_threshold_numeric_delta_tok_s": 0.023194074376558405,
+        "strict_qualification_run": false,
+        "realistic_final_gate_pass": true,
+        "fresh_response_valid": true,
+        "canary": {
+          "pass": true,
+          "content": "14",
+          "cached_tokens": 0,
+          "sha256": "55ee2b14ad3df6ef38fd60eb779e2971dbf19b09f826d3c4c11d0fc109e0f14c"
+        },
+        "model_direct_and_ordinary_verify": {
+          "status": "verified",
+          "files": 19,
+          "all_ok": true,
+          "sha256": "662745b0d373b8ca9348037a37d98a4dda4d5b5b14137d34ab4d1cc7b7845d22"
+        },
+        "cache_manifest_written_after_container_removal": true,
+        "upstream_vllm_pre": "460c08bc8a525082f37b1ba4c8e70558e5aa8e9e",
+        "upstream_vllm_post": "8c2bbe00d58a930c6c09a80495728b26b79d9200",
+        "upstream_kernel_pre": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+        "upstream_kernel_post": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+        "upstream_nightly_base_pre": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+        "upstream_nightly_base_post": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876"
+      },
+      "not_run": [
+        "control strict replay A",
+        "control strict replay B",
+        "both-current diagnostic",
+        "both-current strict replay A",
+        "both-current strict replay B"
+      ],
+      "quality_arms_run": false,
+      "cleanup": {
+        "containers_remaining": 0,
+        "server_process_remaining": false,
+        "port_19760_listening": false
+      },
+      "external_archive": {
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-20260824T055200Z-460c08bc8a-stale-diagnostic.tar.zst",
+        "sha256": "c5db478ceb7df910b7996ce669eeb2e6e103b7d4416aaece8c5c7121067ed817",
+        "compressed_bytes": 7792704,
+        "uncompressed_bytes": 153825280,
+        "entries": 1373,
+        "zstd_verified": true,
+        "tar_traversal_verified": true
+      },
+      "disposition": "valid dated diagnostic evidence only; vLLM recency vetoes promotion"
+    }
+  ],
+  "claim_policy": {
+    "may_claim": [
+      "the 460c08bc8a stock-kernel control diagnostic cleared the protected diagnostic floor",
+      "the diagnostic used 25 unique 512-token responses with returned token IDs and zero cached tokens",
+      "the exact model, canary, input seal, and post-container cache manifest all passed"
+    ],
+    "must_not_claim": [
+      "completed 460c08bc8a TP1 qualification",
+      "strict or full-quality qualification",
+      "both-current kernel qualification",
+      "promotion of 460c08bc8a as current",
+      "replacement or lowering of any historical high"
+    ],
+    "next": "qualify the rebuilt 8c2bbe00d5 image pair without weakening any speed, quality, cache, model, or source-recency gate"
+  }
+}

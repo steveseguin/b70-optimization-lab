@@ -163,6 +163,7 @@ cleanup_recorded_containers() {
 
 campaign_cleanup() {
   local rc=$?
+  local arm arm_status_file
   local cleanup_failed=0
   trap - EXIT INT TERM HUP
   cleanup_recorded_containers || cleanup_failed=1
@@ -171,8 +172,20 @@ campaign_cleanup() {
     exit 7
   fi
   if [[ ! -f $run_root/final.status ]]; then
-    [[ $rc -ne 0 ]] || rc=1
-    printf 'fail rc=%s\n' "$rc" >"$run_root/final.status"
+    while IFS= read -r -d '' arm_status_file; do
+      if [[ $(<"$arm_status_file") == stale-before-promotion ]]; then
+        arm=${arm_status_file#"$run_root/"}
+        arm=${arm%/final.status}
+        printf 'stale-before-promotion arm=%s rc=%s\n' "$arm" "$rc" \
+          >"$run_root/final.status"
+        break
+      fi
+    done < <(find "$run_root" -mindepth 2 -maxdepth 2 -type f \
+      -name final.status -print0 2>/dev/null)
+    if [[ ! -f $run_root/final.status ]]; then
+      [[ $rc -ne 0 ]] || rc=1
+      printf 'fail rc=%s\n' "$rc" >"$run_root/final.status"
+    fi
   fi
   exit "$rc"
 }
