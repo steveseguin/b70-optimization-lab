@@ -89,9 +89,14 @@ literal current after the run. Independent remote ref and registry checks at
 `2026-08-24T09:14:47Z` still resolved 0ecc, `baaa05bb4e`, and the same
 official digest. A later mandatory freshness gate resolved vLLM `main` to
 `e239947777e18071c8053195ce599b6511717f67`; XPU-kernel main and the official
-nightly digest remained unchanged. The one new vLLM commit only changes the
-OpenAI batch-output upload path, but e239 must still be rebuilt and qualified
-as the active literal-current base.
+nightly digest remained unchanged. Before e239 was built, another mandatory
+gate resolved `main` to `79bb395eea64dbfef99a55f010d2854db71f8571`.
+The intervening commits change Cohere serving and pooling-only paths, not Qwen
+generation, XPU, speculative decode, graph/autotune, distributed runtime,
+dependencies, or Rust. A zero-source-overlay `--build-all` completed from
+79bb with both the stock-base-kernel control and exact-current-kernel
+`baaa05bb4e` image; all static receipts pass, but GPU qualification is still
+pending. See the [79bb build receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-79bb395eea-absolute-current-main-build.json).
 
 The paired vLLM-0ecc/current-kernel-`baaa05bb4e` candidate passed correctness
 and quality but missed both strict speed gates at
@@ -110,12 +115,14 @@ winners. Before the decision-only program ran, the host hard-rebooted from
 0ecc packet program then closed stale before launch when vLLM advanced to
 e239; the hardware gate and all overlay arms remain unrun. Its exact 38
 decisions are preserved as historical source evidence and must not be
-relabeled as e239. Build e239 first, derive a separately versioned
-compatibility packet, then run the bounded atomic hardware-gate plus untreated
-three-arm control. Only a speed-only control miss may permit a new e239
-decision-overlay campaign. No binary or generated kernel is transferred, and
-no result may lower a protected historical speed. See the
-[frozen preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-0ecc-tp1-control-decision-overlay-prereg.md).
+relabeled as e239 or 79bb. The active next step is the bounded atomic
+hardware-gate plus untreated 79bb both-current three-arm TP1 control. Only a
+speed-only control miss may permit deriving and preregistering a separately
+versioned 79bb compatibility packet; if the untreated base passes, stop without testing
+the old decisions. No binary or generated kernel is transferred, and no
+result may lower a protected historical speed. See the
+[closed 0ecc preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-0ecc-tp1-control-decision-overlay-prereg.md)
+and the [active 79bb untreated preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-prereg.md).
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh

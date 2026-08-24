@@ -86,6 +86,49 @@ die() {
   exit 1
 }
 
+non_speed_die() {
+  local reason=$*
+  local reason_tmp class_tmp
+  [[ -d ${out:-} ]] || die "$reason"
+  reason_tmp="$out/.qualification-failure.reason.txt.tmp.$$"
+  class_tmp="$out/.qualification-failure.class.tmp.$$"
+  printf '%s\n' "$reason" >"$reason_tmp" ||
+    die 'failed to record non-speed qualification failure reason'
+  mv -f -- "$reason_tmp" "$out/qualification-failure.reason.txt" ||
+    die 'failed to seal non-speed qualification failure reason'
+  printf 'non-speed-qualification-gate\n' >"$class_tmp" ||
+    die 'failed to record non-speed qualification failure class'
+  mv -f -- "$class_tmp" "$out/qualification-failure.class" ||
+    die 'failed to seal non-speed qualification failure class'
+  die "$reason"
+}
+
+require_fixed_text_or_non_speed() {
+  local needle=$1 source_file=$2 reason=$3 checker_rc
+  if grep -Fq -- "$needle" "$source_file"; then
+    return 0
+  else
+    checker_rc=$?
+  fi
+  if [[ $checker_rc -eq 1 ]]; then
+    non_speed_die "$reason"
+  fi
+  die "$reason checker failed with rc=$checker_rc"
+}
+
+require_jq_or_non_speed() {
+  local filter=$1 source_file=$2 reason=$3 checker_rc
+  if jq -e "$filter" "$source_file" >/dev/null; then
+    return 0
+  else
+    checker_rc=$?
+  fi
+  if [[ $checker_rc -eq 1 ]]; then
+    non_speed_die "$reason"
+  fi
+  die "$reason checker failed with rc=$checker_rc"
+}
+
 dockerc() {
   sudo -S -p '' docker "$@" <"$sudo_pass_file"
 }
@@ -301,7 +344,7 @@ while IFS='=' read -r variable _; do
 done < <(env)
 
 [[ -r $sudo_pass_file ]] || die "sudo password file is unreadable: $sudo_pass_file"
-for command_name in curl docker find findmnt flock fuser git jq journalctl \
+for command_name in curl docker find findmnt flock fuser git jq journalctl mv \
   pgrep realpath rg sed sha256sum ss sync tail timeout tr xpu-smi; do
   command -v "$command_name" >/dev/null || die "$command_name is required"
 done
@@ -325,7 +368,8 @@ lab_status=$(git -C "$repo" status --porcelain=v1 --untracked-files=all) ||
 [[ $(git -C "$repo" branch --show-current) == main ]] || die 'lab repository must be on main'
 [[ $(git -C "$repo" rev-parse HEAD) == "$(git -C "$repo" rev-parse origin/main)" ]] ||
   die 'local main must equal origin/main'
-live_lab_main=$(git -C "$repo" ls-remote --exit-code origin refs/heads/main |
+live_lab_main=$(timeout --signal=TERM --kill-after=5s 30s \
+  git -C "$repo" ls-remote --exit-code origin refs/heads/main |
   awk 'NR == 1 {print $1}')
 [[ $live_lab_main =~ ^[0-9a-f]{40}$ ]] || die 'could not resolve live lab origin/main'
 [[ $(git -C "$repo" rev-parse HEAD) == "$live_lab_main" ]] ||
@@ -480,12 +524,15 @@ expected_static_preflight_sha256=$(jq -r --arg key "$image_key" \
   die "missing archived static preflight: $archive_dir/$archived_static_preflight"
 [[ $(sha256sum "$archive_dir/$archived_static_preflight" | awk '{print $1}') == \
    "$expected_static_preflight_sha256" ]] || die 'archived static-preflight hash mismatch'
-remote_vllm_pre=$(git ls-remote --exit-code https://github.com/vllm-project/vllm.git refs/heads/main |
+remote_vllm_pre=$(timeout --signal=TERM --kill-after=5s 30s \
+  git ls-remote --exit-code https://github.com/vllm-project/vllm.git refs/heads/main |
   awk 'NR == 1 {print $1}')
-remote_kernel_pre=$(git ls-remote --exit-code https://github.com/vllm-project/vllm-xpu-kernels.git refs/heads/main |
+remote_kernel_pre=$(timeout --signal=TERM --kill-after=5s 30s \
+  git ls-remote --exit-code https://github.com/vllm-project/vllm-xpu-kernels.git refs/heads/main |
   awk 'NR == 1 {print $1}')
-remote_base_pre=$(dockerc buildx imagetools inspect vllm/vllm-openai-xpu:nightly \
-  --format '{{.Manifest.Digest}}')
+remote_base_pre=$(timeout --signal=TERM --kill-after=5s 60s \
+  sudo -S -p '' docker buildx imagetools inspect vllm/vllm-openai-xpu:nightly \
+  --format '{{.Manifest.Digest}}' <"$sudo_pass_file")
 [[ $remote_vllm_pre == "$vllm_head" ]] || die 'vLLM main advanced; rebuild before qualification'
 [[ $remote_kernel_pre == "$kernel_head" ]] || die 'XPU-kernel main advanced; rebuild before qualification'
 [[ $remote_base_pre == "$base_digest" ]] || die 'official nightly base advanced; rebuild before qualification'
@@ -590,13 +637,25 @@ if [[ $lane == both ]]; then
     "$out/in-image-pip-check.txt" >/dev/null || die 'exact current-kernel metadata diagnostic changed'
 fi
 
-"$model_verifier" "$model_manifest" "$model" \
-  --json "$out/model-direct-and-ordinary-verify.json" \
-  >"$out/model-direct-and-ordinary-verify.log" 2>&1 ||
-  die 'model direct-and-ordinary identity verification failed'
+if "$model_verifier" "$model_manifest" "$model" \
+    --json "$out/model-direct-and-ordinary-verify.json" \
+    >"$out/model-direct-and-ordinary-verify.log" 2>&1; then
+  model_verifier_rc=0
+else
+  model_verifier_rc=$?
+fi
+if [[ $model_verifier_rc -eq 1 ]] &&
+    jq -e '.status == "mismatch" and (.files | length) == 19 and
+      any(.files[]; .ok != true) and
+      all(.files[]; ((.error? // "") | startswith("ordinary read failed:") | not))' \
+      "$out/model-direct-and-ordinary-verify.json" >/dev/null 2>&1; then
+  non_speed_die 'model direct-and-ordinary identity mismatch'
+fi
+[[ $model_verifier_rc -eq 0 ]] ||
+  die "model direct-and-ordinary identity verification was incomplete rc=$model_verifier_rc"
 jq -e '.status == "verified" and (.files | length) == 19 and all(.files[]; .ok == true)' \
   "$out/model-direct-and-ordinary-verify.json" >/dev/null ||
-  die 'model verifier did not certify all 19 files'
+  die 'model verifier success artifact did not certify all 19 files'
 sha256sum "$model_manifest" "$suite" \
   "$bench_helper" "$quality_helper" "$model_verifier" "$script_path" \
   >"$out/input-files.sha256"
@@ -797,7 +856,7 @@ remove_owned_container() {
 
 cleanup() {
   local rc=$?
-  local cleanup_failed=0
+  local cleanup_failed=0 cleanup_cmp_rc
   local cleanup_manifest_sha256
   trap - EXIT
   trap '' INT TERM HUP
@@ -820,8 +879,23 @@ cleanup() {
           >"$out/cache-manifest.post.sha256.digest" || cleanup_failed=1
       fi
       if [[ $cache_policy == replay && -f $out/cache-manifest.pre.sha256 ]]; then
-        cmp -s "$out/cache-manifest.pre.sha256" "$out/cache-manifest.post.sha256" ||
-          cleanup_failed=1
+        if cmp -s "$out/cache-manifest.pre.sha256" \
+            "$out/cache-manifest.post.sha256"; then
+          :
+        else
+          cleanup_cmp_rc=$?
+          if [[ $cleanup_cmp_rc -eq 1 &&
+                -f $out/qualification-failure.class &&
+                -f $out/qualification-failure.reason.txt &&
+                $(<"$out/qualification-failure.class") == \
+                  non-speed-qualification-gate &&
+                $(<"$out/qualification-failure.reason.txt") == \
+                  'replay mutated the sealed compilation cache' ]]; then
+            :
+          else
+            cleanup_failed=1
+          fi
+        fi
       fi
     fi
   fi
@@ -982,8 +1056,9 @@ for cli_field in \
   "'max_num_batched_tokens': 1024" \
   "'max_num_seqs': 1" \
   "'async_scheduling': True"; do
-  grep -Fq "$cli_field" "$out/effective-cli-config.txt" ||
-    die "effective CLI config is missing: $cli_field"
+  require_fixed_text_or_non_speed "$cli_field" \
+    "$out/effective-cli-config.txt" \
+    "effective CLI config is missing: $cli_field"
 done
 for engine_field in \
   "model='$model'" \
@@ -1005,15 +1080,17 @@ for engine_field in \
   "'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE" \
   "'cudagraph_capture_sizes': [1, 2]" \
   "'max_cudagraph_capture_size': 2"; do
-  grep -Fq "$engine_field" "$out/effective-engine-config.txt" ||
-    die "effective engine config is missing: $engine_field"
+  require_fixed_text_or_non_speed "$engine_field" \
+    "$out/effective-engine-config.txt" \
+    "effective engine config is missing: $engine_field"
 done
-grep -Fq 'Capturing CUDA graphs (mixed prefill-decode, PIECEWISE)' "$out/server-startup.log" ||
-  die 'PIECEWISE graph capture marker is absent'
-grep -Fq 'Capturing CUDA graphs (decode, FULL)' "$out/server-startup.log" ||
-  die 'FULL graph capture marker is absent'
-grep -Fq 'Graph capturing finished' "$out/server-startup.log" ||
-  die 'graph capture completion marker is absent'
+require_fixed_text_or_non_speed \
+  'Capturing CUDA graphs (mixed prefill-decode, PIECEWISE)' \
+  "$out/server-startup.log" 'PIECEWISE graph capture marker is absent'
+require_fixed_text_or_non_speed 'Capturing CUDA graphs (decode, FULL)' \
+  "$out/server-startup.log" 'FULL graph capture marker is absent'
+require_fixed_text_or_non_speed 'Graph capturing finished' \
+  "$out/server-startup.log" 'graph capture completion marker is absent'
 
 if [[ $cache_policy == seeded-fresh ]]; then
   grep -Fq 'Compiling a graph for compile range' "$out/server-startup.log" ||
@@ -1064,7 +1141,8 @@ if [[ $cache_policy == seeded-fresh ]]; then
     die "compiler added unexpected .best_config records: $postcompile_best_config_count"
 fi
 
-"$venv/bin/python" - "http://127.0.0.1:$port" "$alias" "$out/canary.json" <<'PY'
+if "$venv/bin/python" - "http://127.0.0.1:$port" "$alias" \
+    "$out/canary.json" <<'PY'
 import json
 import sys
 import urllib.request
@@ -1099,6 +1177,18 @@ with open(destination, "w") as handle:
 if content != "14" or cached != 0:
     raise SystemExit(3)
 PY
+then
+  canary_rc=0
+else
+  canary_rc=$?
+fi
+if [[ $canary_rc -eq 3 ]] &&
+    jq -e '(.response | type) == "object" and
+      (.content != "14" or .cached_tokens != 0)' \
+      "$out/canary.json" >/dev/null 2>&1; then
+  non_speed_die 'arithmetic canary or cached-token-zero gate failed'
+fi
+[[ $canary_rc -eq 0 ]] || die "arithmetic canary was incomplete rc=$canary_rc"
 printf 'canary_rc=0\n' >"$out/canary.status"
 capture_kernel_delta post-canary ||
   die 'kernel rejected model startup or canary before timing'
@@ -1118,11 +1208,23 @@ else
   bench_args+=(
     --request-extra-json '{"chat_template_kwargs":{"enable_thinking":false},"ignore_eos":true}')
 fi
-"$venv/bin/python" "$bench_helper" \
-  "${bench_args[@]}" >"$out/bench.stdout.log" 2>&1
-printf 'bench_rc=0\n' >"$out/bench.status"
+if "$venv/bin/python" "$bench_helper" \
+    "${bench_args[@]}" >"$out/bench.stdout.log" 2>&1; then
+  bench_rc=0
+else
+  bench_rc=$?
+fi
 prompt_count=$(jq '.prompts | length' "$suite")
-jq -e --argjson count "$prompt_count" '
+if [[ $bench_rc -eq 2 ]] && jq -e --argjson count "$prompt_count" '
+    .realistic_final_gate.passed == false and
+    .fresh_response_validity.valid == false and
+    .run_identity.prompt_count == $count and (.rows | length) == $count
+  ' "$out/bench.json" >/dev/null 2>&1; then
+  non_speed_die 'realistic benchmark semantic gate failed'
+fi
+[[ $bench_rc -eq 0 ]] || die "realistic benchmark was incomplete rc=$bench_rc"
+printf 'bench_rc=0\n' >"$out/bench.status"
+if jq -e --argjson count "$prompt_count" '
   (.rows | length) == $count and
   .fresh_response_validity.valid == true and
   .fresh_response_validity.cached_tokens_all_zero == true and
@@ -1132,7 +1234,15 @@ jq -e --argjson count "$prompt_count" '
   .realistic_final_gate.metric_intervals == 99 and
   all(.rows[]; .cached_tokens == 0 and .metric_chunk_events_at_least_window == true and
       .metric_token_id_events_at_least_window == true and (.token_ids | length) >= 100)
-' "$out/bench.json" >/dev/null || die 'benchmark final gate failed'
+' "$out/bench.json" >/dev/null; then
+  :
+else
+  bench_gate_rc=$?
+  if [[ $bench_gate_rc -eq 1 ]]; then
+    non_speed_die 'benchmark final gate failed'
+  fi
+  die "benchmark final-gate checker failed with rc=$bench_gate_rc"
+fi
 curl -fsS "http://127.0.0.1:$port/metrics" >"$out/metrics.after.prom"
 
 if [[ $quality == 1 ]]; then
@@ -1152,10 +1262,28 @@ if [[ $quality == 1 ]]; then
     [[ -n $quality_baseline_json ]] || die 'required quality baseline is unset'
     quality_args+=(--require-baseline)
   fi
-  "$venv/bin/python" "$quality_helper" \
-    "${quality_args[@]}" >"$out/quality.stdout.log" 2>&1
+  if "$venv/bin/python" "$quality_helper" \
+      "${quality_args[@]}" >"$out/quality.stdout.log" 2>&1; then
+    quality_rc=0
+  else
+    quality_rc=$?
+  fi
+  if [[ $quality_rc -eq 1 ]] && jq -e \
+      --argjson require_baseline "$quality_require_baseline" '
+      (.pass_all | type) == "boolean" and
+      (.exact_cases | length) == 7 and
+      (.repeat_case.runs | length) == 8 and
+      .long_context_case.requested_context_tokens == 8192 and
+      ($require_baseline == 0 or (.baseline_comparisons | length) == 24) and
+      (.pass_all == false or
+        ($require_baseline == 1 and .baseline_match_all != true) or
+        ($require_baseline == 0 and .baseline_match_all == false))
+    ' "$out/quality.json" >/dev/null 2>&1; then
+    non_speed_die 'quality battery or baseline semantic gate failed'
+  fi
+  [[ $quality_rc -eq 0 ]] || die "quality battery was incomplete rc=$quality_rc"
   printf 'quality_rc=0\n' >"$out/quality.status"
-  jq -e '
+  require_jq_or_non_speed '
     .pass_all == true and (.exact_cases | length) == 7 and
     all(.exact_cases[]; .pass == true and
       .usage.prompt_tokens_details.cached_tokens == 0) and
@@ -1166,12 +1294,12 @@ if [[ $quality == 1 ]]; then
     .long_context_case.requested_context_tokens == 8192 and
     .long_context_case.actual_prompt_tokens == 7617 and
     .long_context_case.usage.prompt_tokens_details.cached_tokens == 0
-  ' "$out/quality.json" >/dev/null || die 'quality battery gate failed'
+  ' "$out/quality.json" 'quality battery gate failed'
   if [[ $quality_require_baseline == 1 ]]; then
-    jq -e '
+    require_jq_or_non_speed '
       .baseline_match_all == true and .baseline_status == "passed" and
       (.baseline_comparisons | length) == 24
-    ' "$out/quality.json" >/dev/null || die 'quality baseline gate failed'
+    ' "$out/quality.json" 'quality baseline gate failed'
   fi
 fi
 
@@ -1212,16 +1340,27 @@ cache_manifest "$out/cache-manifest.post.sha256"
 post_cache_manifest_sha256=$(sha256sum "$out/cache-manifest.post.sha256" | awk '{print $1}')
 printf '%s\n' "$post_cache_manifest_sha256" >"$out/cache-manifest.post.sha256.digest"
 if [[ $cache_policy == replay ]]; then
-  cmp -s "$out/cache-manifest.pre.sha256" "$out/cache-manifest.post.sha256" ||
-    die 'replay mutated the sealed compilation cache'
+  if cmp -s "$out/cache-manifest.pre.sha256" \
+      "$out/cache-manifest.post.sha256"; then
+    :
+  else
+    replay_cmp_rc=$?
+    if [[ $replay_cmp_rc -eq 1 ]]; then
+      non_speed_die 'replay mutated the sealed compilation cache'
+    fi
+    die "replay cache comparison failed with rc=$replay_cmp_rc"
+  fi
 fi
 
-remote_vllm_post=$(git ls-remote --exit-code https://github.com/vllm-project/vllm.git refs/heads/main |
+remote_vllm_post=$(timeout --signal=TERM --kill-after=5s 30s \
+  git ls-remote --exit-code https://github.com/vllm-project/vllm.git refs/heads/main |
   awk 'NR == 1 {print $1}')
-remote_kernel_post=$(git ls-remote --exit-code https://github.com/vllm-project/vllm-xpu-kernels.git refs/heads/main |
+remote_kernel_post=$(timeout --signal=TERM --kill-after=5s 30s \
+  git ls-remote --exit-code https://github.com/vllm-project/vllm-xpu-kernels.git refs/heads/main |
   awk 'NR == 1 {print $1}')
-remote_base_post=$(dockerc buildx imagetools inspect vllm/vllm-openai-xpu:nightly \
-  --format '{{.Manifest.Digest}}')
+remote_base_post=$(timeout --signal=TERM --kill-after=5s 60s \
+  sudo -S -p '' docker buildx imagetools inspect vllm/vllm-openai-xpu:nightly \
+  --format '{{.Manifest.Digest}}' <"$sudo_pass_file")
 printf '%s\n' "$remote_vllm_post" >"$out/upstream-vllm.post.txt"
 printf '%s\n' "$remote_kernel_post" >"$out/upstream-kernel.post.txt"
 printf '%s\n' "$remote_base_post" >"$out/upstream-nightly-base.post.txt"
