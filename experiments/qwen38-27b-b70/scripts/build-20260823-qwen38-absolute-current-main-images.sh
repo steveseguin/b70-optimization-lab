@@ -30,6 +30,8 @@ expected_kernel_build_info_sha256=640dc7b2abee85037aa99eac4955e5092ccebd4479c07d
 expected_kernel_wheel_sha256=7b886fa814469aef8904118729f31f2fe77559f3c5219bd0ecf799a904387483
 rust_extension_sha256=7cb3df775d2183d2c1a7d3025a8f49b9a79548d157993969fc0c49f46c725c52
 rust_frontend_sha256=a415187153b2a8b10683494c7b22472158b487c69023713313542d4bc09c4c92
+batch_invariant_config_path=vllm/model_executor/determinism/batch_invariant_configs.py
+expected_batch_invariant_config_sha256=e47b18d9394c61fd105e4db51108d72fe1e68d4a2043a8ba62c0af0237453128
 min_root_free_kib=$((8 * 1024 * 1024))
 
 die() {
@@ -155,6 +157,47 @@ verify_rust_equivalence() {
   fi
 }
 
+verify_source_batch_invariant_assets() {
+  local required legacy
+  for required in \
+      vllm/model_executor/determinism/__init__.py \
+      vllm/model_executor/determinism/batch_invariant.py \
+      "$batch_invariant_config_path"; do
+    [[ -f $vllm_source/$required ]] ||
+      die "current source is missing batch-invariance asset: $required"
+  done
+  [[ $(sha256sum "$vllm_source/$batch_invariant_config_path" |
+       awk '{print $1}') == "$expected_batch_invariant_config_sha256" ]] ||
+    die 'current source batch-invariant config changed; audit before repinning'
+  for legacy in \
+      vllm/model_executor/layers/batch_invariant.py \
+      vllm/model_executor/layers/batch_invariant_configs.py; do
+    [[ ! -e $vllm_source/$legacy ]] ||
+      die "current source retained a stale pre-refactor member: $legacy"
+  done
+}
+
+verify_wheel_batch_invariant_assets() {
+  local wheel=$1 required legacy
+  for required in \
+      vllm/model_executor/determinism/__init__.py \
+      vllm/model_executor/determinism/batch_invariant.py \
+      "$batch_invariant_config_path"; do
+    unzip -Z1 "$wheel" | grep -Fx "$required" >/dev/null ||
+      die "vLLM wheel is missing batch-invariance asset: $required"
+  done
+  [[ $(unzip -p "$wheel" "$batch_invariant_config_path" | sha256sum |
+       awk '{print $1}') == "$expected_batch_invariant_config_sha256" ]] ||
+    die 'vLLM wheel batch-invariant config hash mismatch'
+  for legacy in \
+      vllm/model_executor/layers/batch_invariant.py \
+      vllm/model_executor/layers/batch_invariant_configs.py; do
+    if unzip -Z1 "$wheel" | grep -Fx "$legacy" >/dev/null; then
+      die "vLLM wheel contains a stale pre-refactor member: $legacy"
+    fi
+  done
+}
+
 wheel_metadata_value() {
   local wheel=$1
   local field=$2
@@ -243,6 +286,7 @@ dockerfile_sha256=$(sha256sum "$dockerfile" | awk '{print $1}')
 vllm_short=${vllm_head:0:10}
 kernel_short=${kernel_head:0:10}
 verify_rust_equivalence "$vllm_head"
+verify_source_batch_invariant_assets
 
 vllm_scm_version=$(docker_cmd run --rm --network=none \
   --entrypoint /opt/venv/bin/python \
@@ -336,6 +380,8 @@ tar -xf "$vllm_archive" -C "$build_root/vllm-source"
 
 jq -n \
   --arg base_digest "$base_digest" \
+  --arg batch_invariant_config_path "$batch_invariant_config_path" \
+  --arg batch_invariant_config_sha256 "$expected_batch_invariant_config_sha256" \
   --arg build_script_sha256 "$build_script_sha256" \
   --arg build_utc "$build_utc" \
   --arg dockerfile_sha256 "$dockerfile_sha256" \
@@ -359,6 +405,12 @@ jq -n \
     build_inputs: {
       script_sha256: $build_script_sha256,
       dockerfile_sha256: $dockerfile_sha256
+    },
+    preserved_upstream_optimization_assets: {
+      batch_invariant_config: {
+        path: $batch_invariant_config_path,
+        sha256: $batch_invariant_config_sha256
+      }
     },
     vllm: {
       head: $vllm_head,
@@ -426,6 +478,7 @@ expected_vllm_metadata_version=$vllm_package_version
   die 'vLLM wheel Rust-extension hash mismatch'
 [[ $(unzip -p "$vllm_wheel" 'vllm/vllm-rs' | sha256sum | awk '{print $1}') == \
   "$rust_frontend_sha256" ]] || die 'vLLM wheel Rust-frontend hash mismatch'
+verify_wheel_batch_invariant_assets "$vllm_wheel"
 install -m 0644 "$vllm_wheel" "$build_root/context/vllm-artifacts/"
 touch "$build_root/context/kernel-artifacts/.stock-kernel"
 
@@ -468,6 +521,8 @@ build_image() {
     --tag "$image_tag" \
     --build-arg "BASE_IMAGE=$base_image" \
     --build-arg "BASE_DIGEST=$base_digest" \
+    --build-arg "BATCH_INVARIANT_CONFIG_PATH=$batch_invariant_config_path" \
+    --build-arg "BATCH_INVARIANT_CONFIG_SHA256=$expected_batch_invariant_config_sha256" \
     --build-arg "BUILD_SCRIPT_SHA256=$build_script_sha256" \
     --build-arg "BUILD_LANE=$lane" \
     --build-arg "BUILD_UTC=$build_utc" \
@@ -549,6 +604,8 @@ fi
 jq -n \
   --arg archive_dir "$archive_dir" \
   --arg base_digest "$base_digest" \
+  --arg batch_invariant_config_path "$batch_invariant_config_path" \
+  --arg batch_invariant_config_sha256 "$expected_batch_invariant_config_sha256" \
   --arg build_script_sha256 "$build_script_sha256" \
   --arg build_root "$build_root" \
   --arg build_utc "$build_utc" \
@@ -597,6 +654,12 @@ jq -n \
     build_inputs: {
       script_sha256: $build_script_sha256,
       dockerfile_sha256: $dockerfile_sha256
+    },
+    preserved_upstream_optimization_assets: {
+      batch_invariant_config: {
+        path: $batch_invariant_config_path,
+        sha256: $batch_invariant_config_sha256
+      }
     },
     reused_rust: {
       source_equivalence_base: "f94666b60d4c58ec0807d22c837cfae322a1dde9",
