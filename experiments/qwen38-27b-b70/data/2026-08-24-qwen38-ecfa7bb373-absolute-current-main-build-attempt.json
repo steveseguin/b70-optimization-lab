@@ -1,0 +1,54 @@
+{
+  "schema": "neural-download-absolute-current-main-build-attempt-v1",
+  "state": "images-static-preflight-passed-final-receipt-enospc-then-stale-before-qualification",
+  "build_utc": "2026-08-24T15:02:53Z",
+  "overlay": "none",
+  "base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+  "vllm": {
+    "head": "ecfa7bb37316a3c1dab345fea4178d81f63b1ce4",
+    "tree": "a9c58395b5df7fbadff7e9a97b9d7cede73a549f",
+    "package_version": "0.26.1rc1.dev1147+gecfa7bb37.xpu",
+    "source_archive_sha256": "e960ff9a69ee4b8233b257316bf294c87152781c06a68ce3dc2e1c4aeacb23ee",
+    "wheel_sha256": "bf89f15319c9ff1d086efa414b96cbfeaa588f2acb783545832373ba3a4661fc"
+  },
+  "kernel": {
+    "head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "wheel_sha256": "7b886fa814469aef8904118729f31f2fe77559f3c5219bd0ecf799a904387483"
+  },
+  "images": {
+    "current_vllm_stock_kernel": {
+      "image_id": "sha256:8feec959158eded6838e7a187840b406d4fc34192b2552653031c3da329b623e",
+      "static_preflight_sha256": "bfb7ca455f8425793b8ceaf81953dbb1d9c39d90a88f1590000fc3ce68ea93a3"
+    },
+    "both_current_zero_overlay": {
+      "image_id": "sha256:0e92dec34a7ee3823c291c3c1a69eb4f9e0940516f98a5557863367b6593d74a",
+      "static_preflight_sha256": "26bd55102efa67e8e5b9a0b0b078435b9d503bdfe4168a11625515bd70eca31e"
+    }
+  },
+  "failure": {
+    "component": "aggregate receipt finalization",
+    "errno": "ENOSPC",
+    "after": "both image exports, inspections, and static preflights",
+    "performance_effect": "none; no GPU was exposed and no qualification arm launched"
+  },
+  "runnable_archive": {
+    "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T150253Z-ecfa7bb373-baaa05bb4e/images-ecfa7bb373.docker.tar.zst",
+    "sha256": "a5e416b2e8e7627bc64a50307f8f91305041718054339125a4826ffe0b83eaca",
+    "compressed_bytes": 5805471787,
+    "uncompressed_bytes": 5819666432,
+    "entries": 51,
+    "expected_tags": 2,
+    "layers_per_tag": 28,
+    "zstd_verified": true,
+    "tar_traversal_verified": true,
+    "build_root_moved_to_archive": true,
+    "local_images_removed_after_verification": true
+  },
+  "superseded_by_at_retry_start": "f620499ee3fe18131d71b02e1e8e5f1cf984cf1c",
+  "qualification": {
+    "status": "never-launched",
+    "gpu_arms": 0
+  },
+  "policy": "Preserve the exact negative build/finalization evidence. Do not qualify or promote this dated identity, and do not change any historical performance floor or accepted overlay."
+}

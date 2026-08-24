@@ -1,0 +1,91 @@
+{
+  "schema": "neural-download-absolute-current-main-build-v1",
+  "state": "static-preflight-passed-dated-stale-before-qualification",
+  "mode": "--build-all",
+  "overlay": "none",
+  "build_utc": "2026-08-24T15:09:30Z",
+  "build_root": "/home/steve/builds/qwen38-current-main-20260824T150930Z-f620499ee3-baaa05bb4e",
+  "external_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T150930Z-f620499ee3-baaa05bb4e",
+  "base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+  "lab": {
+    "head": "d2c07a8e7cb3dd6c4e569f2474e1701500be96b6",
+    "tree": "92ad730eeefe650ec230c888e3814833c5317a3d"
+  },
+  "build_inputs": {
+    "script_sha256": "fc780ca35a9ea8b3022825ae9cebbc1e2e84c42a40a62289649bc67cd96eec16",
+    "dockerfile_sha256": "d9866acd99e7de78f675af1bc2aba49d4c5c749e0c79ea22d1f45d2ce745a749"
+  },
+  "reused_rust": {
+    "source_equivalence_base": "f94666b60d4c58ec0807d22c837cfae322a1dde9",
+    "extension_sha256": "7cb3df775d2183d2c1a7d3025a8f49b9a79548d157993969fc0c49f46c725c52",
+    "frontend_sha256": "a415187153b2a8b10683494c7b22472158b487c69023713313542d4bc09c4c92"
+  },
+  "vllm": {
+    "head": "f620499ee3fe18131d71b02e1e8e5f1cf984cf1c",
+    "tree": "6419f7611a7cadda2827225de09bd4d0cfac351f",
+    "package_version": "0.26.1rc1.dev1150+gf620499ee.xpu",
+    "source_archive_sha256": "1e216ce20f40e4ca48c3f1170b0ebd8eb4044d4cfdae9cd89b7bda2b6f2410b3",
+    "wheel_sha256": "1e2836dfe677b64abeb36ee563bbe17e29d55bca4257495ca5b2458cfda97e74"
+  },
+  "kernel": {
+    "head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "package_version": "0.1.dev1+gbaaa05bb4",
+    "official_artifact": {
+      "run_id": 32692290527,
+      "artifact_id": 9508328924,
+      "name": "vllm-xpu-kernels--20260824-050903",
+      "archive_digest": "sha256:ce94da86eb14e61673a10db5c8a2c3fffb49a5f61ec9d36c210601062f887f10",
+      "archive_size_bytes": 475965714,
+      "wheel_sha256": "7b886fa814469aef8904118729f31f2fe77559f3c5219bd0ecf799a904387483",
+      "workflow_sha256": "7670fc876c4f4c9deab5f972f65324c6a75ad61eb1dadea4759ae41282a78c12",
+      "chunk_prefill_full_sha256": "6091d2b7cda8340333beb26d6dde09c45689c1fd19e5a9e77352d8dedb7cbc59",
+      "paged_decode_full_sha256": "2c46aea68f7d70a0e40acd3de15a4afefe5c9f2ff0f105592d8a7d0c828bcebc"
+    }
+  },
+  "images": {
+    "current_vllm_stock_kernel": {
+      "built": true,
+      "tag": "neural-download/vllm-openai-xpu:vllm-f620499ee3-kernel-stock-3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "image_id": "sha256:bd57b528d05895ca7a2cbe2f25ec57634748c267b3dd710dd318e73040906740",
+      "static_preflight_passed": true,
+      "static_preflight_sha256": "ecde6b3e0f1805d0773bf6462a480de115590dc49a3cf805a7824535e84ada17"
+    },
+    "both_current_zero_overlay": {
+      "built": true,
+      "tag": "neural-download/vllm-openai-xpu:vllm-f620499ee3-kernel-baaa05bb4e-official",
+      "image_id": "sha256:39bf66f4ea5a1782decfa035a2c5e9828b30ddbbe5e7eb968f3e7db300bd477b",
+      "static_preflight_passed": true,
+      "static_preflight_sha256": "bb7239b0decdc2e825d0a6afc3daf595d6a71b4fd266cbd6fc029210bdfadff4"
+    }
+  },
+  "receipt_recovery": {
+    "required": true,
+    "cause": "The build completed both image exports, inspections, and static preflights, then the root filesystem returned ENOSPC while the builder wrote the both-current tag receipt. The original aggregate receipt and archive copy phase never ran.",
+    "recovered_utc": "2026-08-24T15:17:44Z",
+    "method": "Reconstructed only from the frozen source identity, immutable local image inspections and labels, exact wheel/source/static-preflight hashes, and the unchanged prior kernel artifact receipt. No image, source, wheel, overlay, benchmark runner, or performance gate was changed.",
+    "freshness_at_recovery": {
+      "vllm_upstream_main": "f620499ee3fe18131d71b02e1e8e5f1cf984cf1c",
+      "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+      "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876"
+    }
+  },
+  "stale_observation": {
+    "checked_utc": "2026-08-24T15:18:53Z",
+    "component": "vllm_upstream_main",
+    "built_head": "f620499ee3fe18131d71b02e1e8e5f1cf984cf1c",
+    "live_head": "4c56e62c85cea8fc2251efc25159836c214402aa",
+    "result": "No hardware gate, container, model, cache, benchmark, quality request, or GPU arm launched; preserve the images and build packet as dated evidence only."
+  },
+  "promotion": {
+    "qualified": false,
+    "order": [
+      "current-vLLM/stock-kernel TP1",
+      "both-current zero-overlay TP1",
+      "both-current accepted-overlay TP1",
+      "TP2",
+      "TP4"
+    ],
+    "rule": "Never replace a certified result unless identity, quality, and performance floors all pass."
+  }
+}

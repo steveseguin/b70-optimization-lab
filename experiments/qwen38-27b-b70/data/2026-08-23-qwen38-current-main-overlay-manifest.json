@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-current-build-stale-successor-pending",
+  "status": "preservation-gate-passed-successor-builds-stale-newest-build-pending",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -14,7 +14,7 @@
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
       "vllm_source": "f94666b60d4c58ec0807d22c837cfae322a1dde9"
     },
-    "vllm_upstream_main": "ecfa7bb37316a3c1dab345fea4178d81f63b1ce4",
+    "vllm_upstream_main": "29c9af5211e618bfb78c4140db9e814f1a838aa7",
     "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
   },
@@ -344,6 +344,17 @@
       "current_vllm_stock_kernel": "sha256:f872e8fc477df5b63ef8ef07a1c90a676b8f238dfa3999a48ec855b5c994775b",
       "both_current_zero_overlay": "sha256:11806bd940bf5870e897ab6bd700da8d16f97b4d96fabb16aabb93b607ce8070"
     },
+    "runnable_image_archive": {
+      "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T143242Z-4ca856b0b5-baaa05bb4e/images-4ca856b0b5.docker.tar.zst",
+      "sha256": "92776f7b45eb5d0eb7bbf97462244ec99e75fba53c7b0941971e8bc6887ef4ce",
+      "compressed_bytes": 5798784871,
+      "uncompressed_bytes": 5819666944,
+      "entries": 51,
+      "zstd_verified": true,
+      "tar_traversal_verified": true,
+      "build_root_moved_to_archive": true,
+      "local_images_removed_after_verification": true
+    },
     "overlay_preservation_binding": {
       "zero_overlay_build": true,
       "decision_files_applied": 0,
@@ -387,6 +398,68 @@
     "accepted_overlay_disposition": "The accepted model, launch, topology, graph, cache, quality, and TP2/TP4 decision overlays remain versioned and mandatory. Zero-overlay qualification never erases them; compatible decisions require a fresh remap and compile.",
     "policy": "Preserve this unlaunched dated build and rebuild the literal newest successor. Qualification remains fail-closed on live source/base movement and protected speed, quality, cache, and token-accounting gates. Historical builds and highs remain append-only."
   },
+  "successor_build_closeouts": [{
+    "built_utc": "2026-08-24T15:02:53Z",
+    "status": "images-static-preflight-passed-final-receipt-enospc-then-stale-before-qualification",
+    "record": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-ecfa7bb373-absolute-current-main-build-attempt.json",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T150253Z-ecfa7bb373-baaa05bb4e",
+    "vllm_head": "ecfa7bb37316a3c1dab345fea4178d81f63b1ce4",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "decision_files_applied": 0,
+    "compiled_outputs_carried": 0,
+    "images": {
+      "current_vllm_stock_kernel": "sha256:8feec959158eded6838e7a187840b406d4fc34192b2552653031c3da329b623e",
+      "both_current_zero_overlay": "sha256:0e92dec34a7ee3823c291c3c1a69eb4f9e0940516f98a5557863367b6593d74a"
+    },
+    "runnable_image_archive": {
+      "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T150253Z-ecfa7bb373-baaa05bb4e/images-ecfa7bb373.docker.tar.zst",
+      "sha256": "a5e416b2e8e7627bc64a50307f8f91305041718054339125a4826ffe0b83eaca",
+      "compressed_bytes": 5805471787,
+      "uncompressed_bytes": 5819666432,
+      "entries": 51,
+      "zstd_verified": true,
+      "tar_traversal_verified": true,
+      "build_root_moved_to_archive": true,
+      "local_images_removed_after_verification": true
+    },
+    "qualification": "never-launched"
+  }, {
+    "built_utc": "2026-08-24T15:09:30Z",
+    "status": "recovered-receipt-static-preflight-passed-then-stale-before-qualification",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-f620499ee3-absolute-current-main-build.json",
+    "receipt_sha256": "830217d638564d673843a609eaa72acbf6c1c53ad4f040e76541cf51c362e8e9",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T150930Z-f620499ee3-baaa05bb4e",
+    "archive_sha256s_sha256": "a8972876d9aff8ca6cc3e034b2c32745b4dc50b114bf02d9646fe186ceb356bc",
+    "vllm_head": "f620499ee3fe18131d71b02e1e8e5f1cf984cf1c",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "decision_files_applied": 0,
+    "compiled_outputs_carried": 0,
+    "images": {
+      "current_vllm_stock_kernel": "sha256:bd57b528d05895ca7a2cbe2f25ec57634748c267b3dd710dd318e73040906740",
+      "both_current_zero_overlay": "sha256:39bf66f4ea5a1782decfa035a2c5e9828b30ddbbe5e7eb968f3e7db300bd477b"
+    },
+    "runnable_image_archive": {
+      "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T150930Z-f620499ee3-baaa05bb4e/images-f620499ee3.docker.tar.zst",
+      "sha256": "dcc63c4decfcc02655b8b06fe73edf717faa789b17b66a1fd4cfdf57d58d2318",
+      "compressed_bytes": 5805570540,
+      "uncompressed_bytes": 5819674624,
+      "entries": 51,
+      "zstd_verified": true,
+      "tar_traversal_verified": true,
+      "build_root_moved_to_archive": true,
+      "local_images_removed_after_verification": true
+    },
+    "stale_observation": {
+      "built_head": "f620499ee3fe18131d71b02e1e8e5f1cf984cf1c",
+      "first_live_successor": "4c56e62c85cea8fc2251efc25159836c214402aa",
+      "later_live_head": "29c9af5211e618bfb78c4140db9e814f1a838aa7"
+    },
+    "qualification": "never-launched"
+  }],
   "frozen_trees": {
     "vllm": {
       "path": "/home/steve/src/vllm",

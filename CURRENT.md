@@ -173,18 +173,33 @@ R1; after a successor passes TP1, compatible decisions require
 exact-path/config-hash remapping into a fresh compile and full TP2/TP4
 qualification. The qualified 0ecc stock
 control `30.282673 / 30.324298 / 30.325971` profile is also explicitly
-protected. Unused build cache was pruned, and the removed local 79bb
-both-current image is exactly Docker-loadable from its verified USB archive;
-the 4ca images remain local and root headroom is above the unchanged 12-GiB
-launch floor.
+protected. Unused build cache was pruned, and the removed local 79bb and 4ca
+images are exactly Docker-loadable from their verified USB archives. The
+redundant 4ca build root was moved beside its archive; no unique evidence was
+deleted.
 
-The active step is to seal and push the unlaunched 4ca closure, then resolve all
-three moving inputs again and build `ecfa7bb373` or whatever literal head has
-superseded it. The successor receives the unchanged one-shot untreated TP1
-contract, then TP2 and TP4. Broader family/quant/MTP/context/KV/graph
-neural.download coverage follows those current topology anchors. Any further
-upstream movement stops the packet and rebuilds its successor without lowering
-historical floors or discarding accepted overlays.
+The next two literal-current builds completed both zero-overlay images and all
+static checks at ecfa and then f620. Each exhausted root space only while
+writing the final aggregate receipt, after the image exports and checks. The
+exact two-image pairs and complete build roots were moved to USB, verified, and
+only then removed locally. No GPU was exposed. The f620 receipt is explicitly
+marked as recovered from immutable labels/hashes rather than as a normal
+builder finalization. vLLM `main` subsequently advanced through 4c56 to
+`29c9af5211e618bfb78c4140db9e814f1a838aa7`; kernel main and the nightly digest
+remained unchanged. Both builds are therefore stale and never launched. See the
+[closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-ecfa-f620-build-closeouts.md),
+[ecfa attempt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-ecfa7bb373-absolute-current-main-build-attempt.json),
+and [f620 recovered receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-f620499ee3-absolute-current-main-build.json).
+
+Root headroom is about 21.9 GiB, above the unchanged 12-GiB GPU launch floor.
+The active step is to seal and push these unlaunched closeouts, then resolve all
+three moving inputs again and build `29c9af5211` or whatever literal head has
+superseded it. The first identity that survives the post-build freshness seal
+receives the unchanged one-shot untreated TP1 contract, then TP2 and TP4.
+Broader family/quant/MTP/context/KV/graph neural.download coverage follows those
+current topology anchors. Any further upstream movement stops the packet and
+rebuilds its successor without lowering historical floors or discarding
+accepted overlays.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
