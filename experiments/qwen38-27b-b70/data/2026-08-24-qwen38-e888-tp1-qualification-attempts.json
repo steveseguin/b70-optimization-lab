@@ -1,0 +1,164 @@
+{
+  "schema": "neural-download-current-main-tp1-attempts-v1",
+  "state": "dated-partial-evidence-stale-before-promotion",
+  "created_utc": "2026-08-24T04:04:00Z",
+  "source_identity": {
+    "vllm_head": "e8888b2d68bd7c6cce0aada7f0e214e55020e20d",
+    "vllm_tree": "8f15832ef5a8912e4f4531b40730648b2c4806ea",
+    "comparison_kernel_head": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
+    "effective_kernel": {
+      "identity": "stock-from-base",
+      "version": "0.1.13.2"
+    },
+    "official_nightly_base_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+    "image_lane": "current-vllm-stock-kernel",
+    "image_id": "sha256:84c1cb317728428107eedaaac10289b39cdeb9268d3965e332d4193e5ed55ca4",
+    "source_overlay": "none",
+    "pythonhashseed": 0,
+    "graph_mode": "FULL_AND_PIECEWISE",
+    "graph_capture_sizes": [
+      1,
+      2
+    ],
+    "model": {
+      "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+      "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+      "architecture": "Qwen3_5ForConditionalGeneration / qwen3_5_text",
+      "quantization": "AutoRound INT4 W4A16",
+      "group_size": 128,
+      "symmetric": true,
+      "model_verifier_files": 19
+    },
+    "topology": {
+      "tensor_parallel": 1,
+      "gpu": 0,
+      "mtp": 0,
+      "model_and_kv_dtype": "float16",
+      "max_model_len": 32768,
+      "gpu_memory_utilization": 0.9,
+      "async_scheduling": true,
+      "prefix_caching": false,
+      "chunked_prefill": true
+    }
+  },
+  "primary_metric": "median tok_s_1_100_intervals_after_ttft across 25 sequential 512-token rows",
+  "protected_floors_tok_s": {
+    "diagnostic": 30.2178,
+    "strict": 30.31067504052998
+  },
+  "attempts": [
+    {
+      "run_root": "/home/steve/qwen38-current-main-runs/tp1-20260824T031808Z",
+      "lab_head": "181ae0ef07e5255525b72451bdd2a29c89a44d10",
+      "state": "harness-false-negative-before-benchmark",
+      "failure": "post-health stack probe required the empty legacy /workspace/vllm directory itself to be absent",
+      "benchmark_requests_sent": 0,
+      "speed_result": null,
+      "disposition": "preserved harness evidence only"
+    },
+    {
+      "run_root": "/home/steve/qwen38-current-main-runs/tp1-20260824T032648Z",
+      "lab_head": "1bbf8dfcbec91bdd8b2f02e263ccf3380967bb60",
+      "state": "diagnostic-passed-parent-handoff-failed",
+      "failure": "EXIT cleanup overwrote a hash-only cache digest with HASH PATH output",
+      "diagnostic": {
+        "status": "pass",
+        "bench_sha256": "208e06e0032c0f0ee74f9b0e6c62244c3699719a1d7f6b12b22c789ad1e839dd",
+        "cache_manifest_sha256": "0a6ab96e888b78e07b0651cd166e60be55ac70867ec00099ad0e6830372ac17c",
+        "rows": 25,
+        "output_tokens_per_row": 512,
+        "cached_tokens_all_zero": true,
+        "conventional_1_100_interval_median_tok_s": 30.351516250263348,
+        "floor_delta_tok_s": 0.133716250263349,
+        "diagnostic_speed_gate_pass": true
+      },
+      "strict_or_quality_arms_run": false,
+      "disposition": "valid extra diagnostic replication; incomplete qualification"
+    },
+    {
+      "run_root": "/home/steve/qwen38-current-main-runs/tp1-20260824T034038Z",
+      "lab_head": "39777b9409439df176ed760a7e24bad25c1bd4e0",
+      "state": "stale-before-promotion",
+      "campaign_exit_code": 5,
+      "exit_reason_scope": "source-recency-only",
+      "promotion_eligible": false,
+      "failure": "vLLM main advanced from e8888b2d68 to 702e1d7186 during strict replay A",
+      "diagnostic": {
+        "status": "pass",
+        "bench_sha256": "3f387ff70e0510a6b3c518554fce41de60184fd534ee24446b7f3becac3e2f57",
+        "cache_manifest_sha256": "333d2d1e6fbc6f627ecc63b3dd45e40df425f48540851f5d161070ec1b95d572",
+        "rows": 25,
+        "output_tokens_per_row": 512,
+        "cached_tokens_all_zero": true,
+        "conventional_1_100_interval_median_tok_s": 30.421310780232716,
+        "full_decode_median_tok_s": 30.30568860471658,
+        "floor_delta_tok_s": 0.203510780232716,
+        "diagnostic_speed_gate_pass": true,
+        "canary": {
+          "pass": true,
+          "content": "14",
+          "cached_tokens": 0
+        },
+        "upstream_unchanged_through_arm": true
+      },
+      "strict_replay_a": {
+        "status": "stale-before-promotion",
+        "benchmark_and_quality_bodies_completed": true,
+        "bench_sha256": "93a5f56bca693c29f91f390b70f54298a7634a29a2ab15d21cac8b8830e1ebe7",
+        "quality_sha256": "c228a4a968eb2d73d5df9a69e3a635d57bc450ce6a86c162ed67ff84c058c86c",
+        "cache_manifest_sha256": "333d2d1e6fbc6f627ecc63b3dd45e40df425f48540851f5d161070ec1b95d572",
+        "rows": 25,
+        "cached_tokens_all_zero": true,
+        "conventional_1_100_interval_median_tok_s": 30.320453612816877,
+        "full_decode_median_tok_s": 30.177081863481593,
+        "floor_delta_tok_s": 0.009778572286897,
+        "strict_speed_gate_pass": true,
+        "canary": {
+          "pass": true,
+          "content": "14",
+          "cached_tokens": 0
+        },
+        "quality": {
+          "pass_all": true,
+          "baseline_match_all": true,
+          "baseline_status": "passed",
+          "exact_cases": 7,
+          "repeat_runs": 8,
+          "long_context_requested_tokens": 8192,
+          "long_context_actual_prompt_tokens": 7617,
+          "baseline_comparisons": 24,
+          "cached_tokens_all_zero": true
+        },
+        "cache_replay_used_diagnostic_manifest": true,
+        "cache_replay_immutable": true,
+        "cache_manifest_entries": 1097,
+        "upstream_vllm_pre": "e8888b2d68bd7c6cce0aada7f0e214e55020e20d",
+        "upstream_vllm_post": "702e1d718646b5290f17533c04932d58bf03dad6",
+        "upstream_kernel_unchanged": true,
+        "upstream_nightly_base_unchanged": true
+      },
+      "not_run": [
+        "control strict replay B",
+        "both-current diagnostic",
+        "both-current strict replay A",
+        "both-current strict replay B"
+      ],
+      "input_snapshot_seal_verified": true,
+      "disposition": "valid dated partial evidence only; source recency vetoes promotion"
+    }
+  ],
+  "claim_policy": {
+    "may_claim": [
+      "two independent e888 control diagnostics cleared the protected diagnostic floor",
+      "one e888 control strict replay cleared the strict floor and passed the full quality battery",
+      "the replay cache was byte-immutable"
+    ],
+    "must_not_claim": [
+      "completed e888 TP1 qualification",
+      "both-current kernel qualification",
+      "promotion of e888 as current",
+      "replacement or lowering of any historical high"
+    ],
+    "next": "rebuild at literal live vLLM main and restart qualification"
+  }
+}

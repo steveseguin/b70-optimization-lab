@@ -396,3 +396,44 @@ Cleanup now writes the same hash-only format as the normal path, and the parent
 independently recomputes and compares the digest before replay. No strict or
 quality arm ran in this attempt; the completed diagnostic and cache remain
 preserved as extra replication evidence.
+
+The next clean campaign at
+`/home/steve/qwen38-current-main-runs/tp1-20260824T034038Z` passed the digest
+handoff and entered replay. Its control diagnostic measured
+`30.421310780232716 tok/s`; strict replay A measured
+`30.320453612816877 tok/s`, narrowly above the protected
+`30.31067504052998` strict floor. Strict A also passed the complete quality
+and baseline battery: seven exact cases, eight repeats, the 8K/7617-token
+needle, 24 baseline comparisons, and zero cached tokens throughout. The
+1,097-file diagnostic cache manifest was byte-identical before and after
+replay.
+
+That arm is still not promotable. vLLM `main` was `e8888b2d68` at its
+preflight and advanced to `702e1d7186` before its postflight; the kernel and
+nightly runtime digest did not move. The runner therefore wrote
+`stale-before-promotion` and stopped before strict B or either both-current
+arm. The exact partial-attempt ledger is
+`experiments/qwen38-27b-b70/data/2026-08-24-qwen38-e888-tp1-qualification-attempts.json`.
+These are useful dated speed/quality/cache results and cannot be discarded,
+but recency remains a conjunctive gate: rebuild from the new head and restart
+qualification without changing the accepted overlay or historical floors.
+
+The next clean campaign at
+`/home/steve/qwen38-current-main-runs/tp1-20260824T034038Z` passed the digest
+handoff and entered replay. Its control diagnostic measured
+`30.421310780232716 tok/s`; strict replay A measured
+`30.320453612816877 tok/s`, narrowly above the protected
+`30.31067504052998` strict floor. Strict A also passed the complete quality
+and baseline battery: seven exact cases, eight repeats, the 8K/7617-token
+needle, 24 baseline comparisons, and zero cached tokens throughout. The
+diagnostic cache manifest was byte-identical before and after replay.
+
+That arm is still not promotable. vLLM `main` was `e8888b2d68` at its
+preflight and advanced to `702e1d7186` before its postflight; the kernel and
+nightly runtime digest did not move. The runner therefore wrote
+`stale-before-promotion` and stopped before strict B or either both-current
+arm. The exact partial-attempt ledger is
+`experiments/qwen38-27b-b70/data/2026-08-24-qwen38-e888-tp1-qualification-attempts.json`.
+These are useful dated speed/quality/cache results and cannot be discarded,
+but recency remains a conjunctive gate: rebuild from the new head and restart
+qualification without changing the accepted overlay or historical floors.
