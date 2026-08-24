@@ -49,6 +49,7 @@ neutral or slower and remain default-off/reverted.
 | 27B GGUF Q4_0, DFlash5 | 1x B70, llama.cpp/SYCL | Closed strict record `47.818818 tok/s` historical (`47.340630` conventional); unchanged Q4 target verifies accepted tokens | [closure](../notes/2026-07-13-qwen27-dflash-sycl-closure.md) |
 | 27B GGUF UD-Q4_K_XL, intrinsic MTP | 1x B70, llama.cpp/SYCL | Best valid p-min support row `31.480049 tok/s`; different target/quality identity | [result packet](../results/qwen36-27b-mtp-gguf-q4-b70/README.md) |
 | 27B native FP8 | 2x B70, vLLM/XPU | Community validation `30.171 tok/s` on a different prompt-length benchmark; not rank-comparable to fixed-suite rows | [status](../community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md) |
+| 35B A3B AutoRound W4A16, target-only concurrency experiment | 1x B70, vLLM/XPU TP1 | Experimental measured throughput: full seven-point sweep reaches `1,039.408` aggregate tok/s at B64; later two-point treatment reaches `1,052.870` at B64 and `90.909` at B1. Literal smoke passes, but fixed-seed B64 repeat identity remains incomplete, so this is not promoted | [consumer evidence](qwen36-35b-aggregate-throughput-evidence.md), [machine-readable sweep](../data/qwen36-35b-autoround-b70-concurrency-20260824.json) |
 | 35B A3B Quark W8A8 INT8 | 4x B70, vLLM/XPU | Closed reference; strict PIECEWISE forced-comm baseline about `93.55 tok/s`; no valid `>150` speculative result | [result packet](../results/qwen36-35b-quark-int8-b70/README.md) |
 
 The repository [Qwen3.6 27B model board](../README.md#qwen36-27b-model-board)

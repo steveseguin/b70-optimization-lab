@@ -9,6 +9,16 @@ them. Start with [../results/README.md](../results/README.md) for promoted
 packets and [../docs/model-effort-index.md](../docs/model-effort-index.md) for
 the cross-model map.
 
+## Consumer-ready experimental evidence
+
+- [Qwen3.6 35B-A3B one-B70 concurrency sweep](qwen36-35b-autoround-b70-concurrency-20260824.json):
+  measured raw-engine aggregate decode at 1-64 concurrent sequences, including
+  the directly observed `1,039.408` tok/s seven-point profile and separate
+  `1,052.870` tok/s B64 treatment. This is experimental speed evidence with an
+  unresolved B64 repeat-identity gate, not a promoted package. Read the
+  [scope guide](../docs/qwen36-35b-aggregate-throughput-evidence.md) before
+  importing it.
+
 ## What To Track
 
 Track compact artifacts that make a note reproducible:

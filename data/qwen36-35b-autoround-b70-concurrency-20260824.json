@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "kind": "measured_aggregate_decode_concurrency",
+  "date": "2026-08-24",
+  "publicationStatus": "experimental_measured_not_promoted",
+  "model": {
+    "id": "abhinand/Qwen3.6-35B-A3B-int4-AutoRound",
+    "quantization": "INC AutoRound W4A16",
+    "runtime": "vLLM/XPU",
+    "cards": 1,
+    "hardware": "Intel Arc Pro B70",
+    "tensorParallelSize": 1,
+    "speculativeTokens": 0
+  },
+  "measurementProtocol": {
+    "harness": "persistent raw-engine batching",
+    "inputTokensPerRequest": 128,
+    "outputTokensPerRequest": 1024,
+    "temperature": 0.0,
+    "ignoreEos": true,
+    "prefixCaching": false,
+    "repeats": 2,
+    "aggregateTokSDefinition": "all output tokens after each request's first token divided by the observed window from the earliest first-token timestamp to the latest last-token timestamp",
+    "perUserTokSDefinition": "aggregateTokS divided by users; derived for display, not an independently timed metric"
+  },
+  "profile": {
+    "id": "grouped-w4a16-piecewise-graph-r14",
+    "description": "One coherent seven-point measured sweep using oneDNN dense W4A16, Xe2 grouped W4A16 routed MoE, GDN state-memory reductions, and piecewise XPU Graph captures at batch sizes 1, 32, and 64.",
+    "concurrencySweep": [
+      {
+        "users": 1,
+        "perUserTokS": 87.6382088209863,
+        "aggregateTokS": 87.6382088209863,
+        "repeatAggregateTokS": [87.59768028166891, 87.67873736030371],
+        "fixedSeedIdenticalOutputs": "1/1"
+      },
+      {
+        "users": 2,
+        "perUserTokS": 38.593140078153155,
+        "aggregateTokS": 77.18628015630631,
+        "repeatAggregateTokS": [77.12953717708801, 77.24302313552461],
+        "fixedSeedIdenticalOutputs": "1/2"
+      },
+      {
+        "users": 4,
+        "perUserTokS": 37.37087696920749,
+        "aggregateTokS": 149.48350787682995,
+        "repeatAggregateTokS": [149.43967214738242, 149.52734360627744],
+        "fixedSeedIdenticalOutputs": "4/4"
+      },
+      {
+        "users": 8,
+        "perUserTokS": 34.59568810998205,
+        "aggregateTokS": 276.7655048798564,
+        "repeatAggregateTokS": [276.8883885983409, 276.64262116137195],
+        "fixedSeedIdenticalOutputs": "7/8"
+      },
+      {
+        "users": 16,
+        "perUserTokS": 30.54046311398923,
+        "aggregateTokS": 488.6474098238277,
+        "repeatAggregateTokS": [482.81457565350235, 494.480243994153],
+        "fixedSeedIdenticalOutputs": "13/16"
+      },
+      {
+        "users": 32,
+        "perUserTokS": 25.723463908217006,
+        "aggregateTokS": 823.1508450629442,
+        "repeatAggregateTokS": [824.5664601611766, 821.735229964712],
+        "fixedSeedIdenticalOutputs": "29/32"
+      },
+      {
+        "users": 64,
+        "perUserTokS": 16.24075020054675,
+        "aggregateTokS": 1039.408012834992,
+        "repeatAggregateTokS": [1041.7219935455369, 1037.0940321244473],
+        "fixedSeedIdenticalOutputs": "27/64"
+      }
+    ]
+  },
+  "latestTreatmentMeasuredPoints": {
+    "id": "combined-runtime-guards-r16",
+    "description": "Separate speed-positive, determinism-negative treatment. These two points must not be joined to the r14 profile as one curve.",
+    "concurrencySweep": [
+      {
+        "users": 1,
+        "perUserTokS": 90.90948338800597,
+        "aggregateTokS": 90.90948338800597,
+        "repeatAggregateTokS": [90.88505510330154, 90.93391167271041],
+        "fixedSeedIdenticalOutputs": "1/1"
+      },
+      {
+        "users": 64,
+        "perUserTokS": 16.45110066268671,
+        "aggregateTokS": 1052.8704424119495,
+        "repeatAggregateTokS": [1050.9996023701742, 1054.741282453725],
+        "fixedSeedIdenticalOutputs": "29/64"
+      }
+    ]
+  },
+  "validation": {
+    "r14QualitySmoke": "4/4 literal canaries passed at B4",
+    "r16QualitySmoke": "100/100 literal canaries passed across capture shapes B1, B32, and B64",
+    "determinism": "pending: r14 matched 27/64 B64 request sequences and r16 matched 29/64 across fixed-seed repeats",
+    "objective": "The directly measured 875 tok/s objective and 1000 tok/s stretch objective were exceeded at B64."
+  },
+  "scopeWarnings": [
+    "This is aggregate raw-engine throughput, not single-user decode. The single-request r16 point is 90.909 tok/s.",
+    "This is Qwen3.6-35B-A3B AutoRound under vLLM, not Ornith GGUF under llama.cpp; it must not be used as an Ornith measurement.",
+    "The B64 speed is directly measured, but fixed-seed outputs were not fully repeat-identical. This remains experimental evidence, not a validated deployment package.",
+    "No point is interpolated, extrapolated, projected, or simulated."
+  ],
+  "evidence": {
+    "canonicalStructuredResult": "experiments/ornith-15-b70/data/2026-08-24-qwen36-35b-autoround-grouped-graph-aggregate-candidate.json",
+    "canonicalStructuredResultSha256": "a07b77d82d3312f0bad59a92241293bcab503503cc4604184d82d09a02585ddf",
+    "humanAnalysis": "experiments/ornith-15-b70/notes/2026-08-24-qwen36-grouped-w4a16-aggregate-candidate.md",
+    "humanGuide": "docs/qwen36-35b-aggregate-throughput-evidence.md",
+    "sourceCommit": "2c2cbcac0ef314f9bec7ac6c97112a0f9fe1f3d9"
+  }
+}
