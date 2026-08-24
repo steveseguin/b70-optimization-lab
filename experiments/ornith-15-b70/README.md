@@ -502,6 +502,12 @@ binary, driver, or benchmark protocol will reproduce them.
   accepted WG4 arithmetic order and the canonical transcript, but mirrored
   means regressed `133.294 -> 132.911 tok/s` (-0.288%). Retain the generic
   kernel; see `notes/2026-08-23-ornith35b-dmmv-fixed2048-negative.md`.
+- **Shared-gate/residual/RMS work groups — PERFORMANCE NEGATIVE:** a
+  same-binary sweep preserved the canonical transcript but smaller work groups
+  lost clearly against the accepted device maximum. The bracketed default mean
+  was 135.523 tok/s; WG512 reached 133.333 (-1.62%) and WG256 reached 131.792
+  (-2.75%). Keep the device-max geometry; see
+  `notes/2026-08-23-ornith35b-shared-gate-residual-rms-workgroup-negative.md`.
 - **Speculative decode:** investigate a substantially smaller and faster
   vocabulary-compatible draft separately. Label target-only and assisted
   results separately.
