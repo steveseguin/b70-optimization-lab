@@ -461,3 +461,40 @@ cache was removed. The two `702e1d718` images, exact wheel/source archive,
 receipts, run data, accepted overlay artifacts, and historical evidence remain.
 No protected floor, launch flag, quality gate, decision overlay, or historical
 speed value changed. Full TP1 qualification is still required before TP2/TP4.
+
+## 2026-08-24 kernel-head advance during TP1
+
+The clean six-arm campaign at
+`/home/steve/qwen38-current-main-runs/tp1-20260824T041736Z` completed its
+current-vLLM/stock-kernel fresh diagnostic, then stopped at the arm postflight
+because XPU-kernel `main` advanced from `4543b580fe` to `baaa05bb4e`. vLLM
+remained `702e1d7186` and the official nightly index remained
+`sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35`.
+The recency veto was the only stop reason.
+
+The completed diagnostic is valid dated evidence. Its preferred conventional
+99-interval median is `30.3357425320144 tok/s`, clearing the protected
+`30.2178` diagnostic floor by `0.1179425320144 tok/s`. All 25 unique prompts
+returned 512 token IDs, every request reported zero cached tokens, code-14 and
+the direct-plus-ordinary 19-file model verifier passed, and the post-container
+1,097-entry cache manifest was sealed at
+`9a11b2781613e890d0ebe810fc861a43a62617cd1622ca1a970b170c3862d37a`.
+Strict A/B and all three both-current arms did not run, so this is neither a
+complete TP1 qualification nor kernel attribution. The structured evidence is
+`experiments/qwen38-27b-b70/data/2026-08-24-qwen38-702-tp1-qualification-attempts.json`.
+
+The kernel delta is one direct-parent commit with 18 added lines in
+`fp8_gemm_w8a16.h` and `fp8_gemm_w8a8.h`. It adds host-side divisibility
+checks for block-FP8 scale grids. The target model is AutoRound INT4 W4A16;
+its MTP, graph, GDN, FlashAttention, collective, autotune, and TP paths do not
+use either changed header, and no accepted overlay touches them. Expected Qwen
+performance and semantics are unchanged, but exact-current qualification still
+requires the new kernel DSO/image and a complete replay.
+
+At the stop boundary, upstream CI had not yet published a successful
+wheel-per-commit full-config artifact for `baaa05bb4e`. A default-config wheel
+was available but is not provenance/config equivalent and must not be used.
+The `702e1d718`/`4543b580` images are now dated artifacts. Wait for the exact
+full artifact—or follow a still-newer head if `main` advances again—then rebuild
+without weakening launch settings, quality gates, accepted overlays, or
+historical floors.

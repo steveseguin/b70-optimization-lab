@@ -15,12 +15,12 @@
       "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124"
     },
     "vllm_upstream_main": "702e1d718646b5290f17533c04932d58bf03dad6",
-    "vllm_xpu_kernels_upstream_main": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
+    "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
   },
   "absolute_current_build": {
     "built_utc": "2026-08-24T04:05:36Z",
-    "status": "static-preflight-passed-gpu-qualification-pending",
+    "status": "dated-stale-before-qualification-kernel-main-advanced",
     "receipt": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json",
     "vllm_head": "702e1d718646b5290f17533c04932d58bf03dad6",
     "vllm_xpu_kernels_head": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
@@ -35,6 +35,15 @@
       "vllm_xpu_kernels_head": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
       "official_nightly_index_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
       "status": "passed"
+    },
+    "stale_observation": {
+      "checked_utc": "2026-08-24T04:28:30Z",
+      "component": "vllm_xpu_kernels_upstream_main",
+      "built_head": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
+      "live_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+      "during": "control TP1 fresh-cache diagnostic postflight",
+      "result": "valid dated diagnostic; promotion vetoed",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-702-tp1-qualification-attempts.json"
     },
     "policy": "Re-resolve both live upstream heads before and after qualification; if either moved, retain these images only as dated evidence and rebuild before calling a result current."
   },

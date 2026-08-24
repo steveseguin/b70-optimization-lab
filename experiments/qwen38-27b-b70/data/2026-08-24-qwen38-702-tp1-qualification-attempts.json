@@ -1,0 +1,125 @@
+{
+  "schema": "neural-download-current-main-tp1-attempts-v1",
+  "state": "dated-partial-evidence-stale-before-promotion",
+  "created_utc": "2026-08-24T04:30:03Z",
+  "source_identity": {
+    "vllm_head": "702e1d718646b5290f17533c04932d58bf03dad6",
+    "vllm_tree": "3ebf6c94f19ab1e4a41f83baf5fc1812c4fe9f03",
+    "comparison_kernel_head": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
+    "effective_kernel": {
+      "identity": "stock-from-base",
+      "version": "0.1.13.2"
+    },
+    "official_nightly_base_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+    "image_lane": "current-vllm-stock-kernel",
+    "image_id": "sha256:d7372613500de2c823becd2364b322b7d7f7827b6fd0705500b14328f1eacdda",
+    "source_overlay": "none",
+    "pythonhashseed": 0,
+    "graph_mode": "FULL_AND_PIECEWISE",
+    "graph_capture_sizes": [
+      1,
+      2
+    ],
+    "model": {
+      "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+      "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+      "architecture": "Qwen3_5ForConditionalGeneration / qwen3_5_text",
+      "quantization": "AutoRound INT4 W4A16",
+      "group_size": 128,
+      "symmetric": true,
+      "model_verifier_files": 19
+    },
+    "topology": {
+      "tensor_parallel": 1,
+      "gpu": 0,
+      "mtp": 0,
+      "model_and_kv_dtype": "float16",
+      "max_model_len": 32768,
+      "gpu_memory_utilization": 0.9,
+      "async_scheduling": true,
+      "prefix_caching": false,
+      "chunked_prefill": true
+    }
+  },
+  "primary_metric": "median tok_s_1_100_intervals_after_ttft across 25 sequential 512-token rows",
+  "protected_floors_tok_s": {
+    "diagnostic": 30.2178,
+    "strict": 30.31067504052998
+  },
+  "attempts": [
+    {
+      "run_root": "/home/steve/qwen38-current-main-runs/tp1-20260824T041736Z",
+      "lab_head": "e1fbd06a6d64d0af85712b51bdc43ec10fa88631",
+      "state": "stale-before-promotion",
+      "campaign_exit_code": 5,
+      "exit_reason_scope": "source-recency-only",
+      "promotion_eligible": false,
+      "failure": "XPU-kernel main advanced from 4543b580fe to baaa05bb4e during the control diagnostic",
+      "diagnostic": {
+        "status": "stale-before-promotion-after-valid-benchmark",
+        "benchmark_body_completed": true,
+        "bench_sha256": "08b59d4e25eefd2b950f2204379e22f6b1e39c22e05bb2f88e9a68d430d97b53",
+        "build_receipt_sha256": "22d5577b3054e6c1ed5a82dbd94594f408085888d50832be562dd9b4c21e00a5",
+        "input_seal_sha256": "48cab63df81d74b188ebfa3f1d9e6613ceefa36e803d5f228160e0afac51be88",
+        "cache_manifest_sha256": "9a11b2781613e890d0ebe810fc861a43a62617cd1622ca1a970b170c3862d37a",
+        "cache_manifest_entries": 1097,
+        "rows": 25,
+        "output_tokens_per_row": 512,
+        "metric_token_events": 100,
+        "metric_intervals": 99,
+        "unique_prompts": true,
+        "cached_tokens_all_zero": true,
+        "conventional_1_100_interval_median_tok_s": 30.3357425320144,
+        "conventional_1_100_interval_p10_tok_s": 30.29545762356649,
+        "full_decode_median_tok_s": 30.211593370659898,
+        "ttft_median_ms": 277.1647130139172,
+        "floor_delta_tok_s": 0.1179425320144,
+        "diagnostic_speed_gate_pass": true,
+        "realistic_final_gate_pass": true,
+        "fresh_response_valid": true,
+        "canary": {
+          "pass": true,
+          "content": "14",
+          "cached_tokens": 0
+        },
+        "model_direct_and_ordinary_verify": {
+          "status": "verified",
+          "files": 19,
+          "all_ok": true
+        },
+        "cache_manifest_written_after_container_removal": true,
+        "upstream_vllm_pre": "702e1d718646b5290f17533c04932d58bf03dad6",
+        "upstream_vllm_post": "702e1d718646b5290f17533c04932d58bf03dad6",
+        "upstream_kernel_pre": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
+        "upstream_kernel_post": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+        "upstream_nightly_base_pre": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+        "upstream_nightly_base_post": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35"
+      },
+      "not_run": [
+        "control strict replay A",
+        "control strict replay B",
+        "both-current diagnostic",
+        "both-current strict replay A",
+        "both-current strict replay B"
+      ],
+      "quality_arms_run": false,
+      "input_snapshot_seal_verified": true,
+      "disposition": "valid dated diagnostic evidence only; kernel recency vetoes promotion"
+    }
+  ],
+  "claim_policy": {
+    "may_claim": [
+      "the 702e1d718 stock-kernel control diagnostic cleared the protected diagnostic floor",
+      "the diagnostic used 25 unique 512-token responses with returned token IDs and zero cached tokens",
+      "the model, canary, input seal, and post-container cache manifest all passed"
+    ],
+    "must_not_claim": [
+      "completed 702e1d718 TP1 qualification",
+      "strict or full-quality qualification",
+      "both-current kernel qualification",
+      "promotion of 702e1d718/4543b580 as current",
+      "replacement or lowering of any historical high"
+    ],
+    "next": "wait for or build an exact baaa05bb4e kernel artifact, rebuild the literal-current image pair, and restart qualification"
+  }
+}
