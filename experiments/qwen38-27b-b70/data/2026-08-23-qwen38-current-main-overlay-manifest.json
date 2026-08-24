@@ -468,7 +468,8 @@
     "receipt_sha256": "be82b2b6b5b94600d9b736dd9d8f11f48e9b475c13efa74adcda0829d510abba",
     "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T153134Z-7797b6022c-baaa05bb4e",
     "archive_sha256s_sha256": "87fcc77802cdb579a3720efb6eda0deb293e660c32dbf9f0f5fad99d976920e0",
-    "archive_contains_docker_image_tar": false,
+    "archive_contains_docker_image_tar": true,
+    "archive_image_tar_added_after_stale_closeout": true,
     "vllm_head": "7797b6022c129b862e45ae6aed08822e65d1bccb",
     "vllm_tree": "78e0ffe9e07831fa2af9643e0c87501000a93014",
     "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
@@ -488,6 +489,21 @@
       "tp2_decision_files_preserved": 78,
       "tp4_decision_files_preserved": 152,
       "accepted_overlays_discarded": 0
+    },
+    "storage_rotation": {
+      "status": "verified-recoverable-local-stale-images-removed",
+      "note": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-storage-rotation.md",
+      "note_sha256": "d2ff8fc6a4e95a78c95f392a2045d6f52eb05a3806bf9cd3788df1025a498781",
+      "data": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-7797b6022c-storage-rotation.json",
+      "data_sha256": "a49c4a92f38af947a5693e7b3f9d2b2b823aecde4fce23d6a6f7b01e70126901",
+      "image_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T153134Z-7797b6022c-baaa05bb4e/images-7797b6022c.docker.tar.zst",
+      "image_archive_sha256": "849a4849fa89399d2726f1dfa4d5a057be463ca49ad3d5853d2fd85e19880318",
+      "rotation_manifest_sha256": "1001215e59fbb3752abfa2ff39db5cdecd0aa8e215970f80b8631552e173eaee",
+      "build_root_relocated": true,
+      "build_root_content_manifest_sha256": "cc562994343df30aee925b6f49586b5a6e44fd09907d8a614665781fcba33cf0",
+      "posix_metadata_preserved_on_ntfs": false,
+      "local_image_ids_removed": true,
+      "root_free_kib_after": 22689052
     },
     "post_build_freshness_seal": {
       "checked_utc": "2026-08-24T15:39:03Z",

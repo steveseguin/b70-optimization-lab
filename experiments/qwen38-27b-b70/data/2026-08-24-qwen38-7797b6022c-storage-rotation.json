@@ -1,0 +1,67 @@
+{
+  "schema": "neural-download-qwen38-current-main-storage-rotation-v1",
+  "date": "2026-08-24",
+  "classification": "stale-build-archived-and-local-images-removed",
+  "reason": "preserve the complete 7797 build while restoring the unchanged 12-GiB qualification reserve before building the literal-current successor",
+  "archive": {
+    "directory": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T153134Z-7797b6022c-baaa05bb4e",
+    "original_manifest_entries_verified": 14,
+    "original_manifest_sha256": "87fcc77802cdb579a3720efb6eda0deb293e660c32dbf9f0f5fad99d976920e0",
+    "rotation_manifest_entries_verified": 6,
+    "rotation_manifest_sha256": "1001215e59fbb3752abfa2ff39db5cdecd0aa8e215970f80b8631552e173eaee"
+  },
+  "docker_image_archive": {
+    "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T153134Z-7797b6022c-baaa05bb4e/images-7797b6022c.docker.tar.zst",
+    "sha256": "849a4849fa89399d2726f1dfa4d5a057be463ca49ad3d5853d2fd85e19880318",
+    "compressed_bytes": 5798607216,
+    "uncompressed_bytes": 5819691008,
+    "zstd_test_passed": true,
+    "tar_entries": 51,
+    "unsafe_tar_entries": 0,
+    "duplicate_tar_entries": 0,
+    "image_count": 2,
+    "layers_per_image": 28,
+    "tags_and_index_digests_verified": true,
+    "control_image_id": "sha256:a385f20ca68b62f18d670722617ed69583fe9154b537c108f04b704029950abd",
+    "both_current_image_id": "sha256:295de005ad89735c92aced11179d05db08dd694badff3722de3f1ceb9e5994f1",
+    "checksum_receipt_sha256": "47d898734f9f00a73a56c345d9ed8f8676a57693af2982b05465a76cef246fd1",
+    "entry_list_sha256": "dc07d71da78098ba49ae7ebec7acfa12cddaf1015d0282a7625e998ca15952ea",
+    "manifest_json_sha256": "14f9c34af87f3c158a350e7567111036af8dd77087159229410a06b7cf6e2e90",
+    "index_json_sha256": "5dbedf7ec4347d253e5267c79f684a6b7bccd88fe4f27de3b4dfacd0aa5dc247"
+  },
+  "build_root_relocation": {
+    "source": "/home/steve/builds/qwen38-current-main-20260824T153134Z-7797b6022c-baaa05bb4e",
+    "source_absent_after": true,
+    "destination": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T153134Z-7797b6022c-baaa05bb4e/build-root-7797b6022c",
+    "files": 9569,
+    "directories": 1188,
+    "file_bytes": 924176258,
+    "content_manifest_sha256": "cc562994343df30aee925b6f49586b5a6e44fd09907d8a614665781fcba33cf0",
+    "all_file_bytes_verified_after_relocation": true,
+    "filesystem": "fuseblk/NTFS",
+    "posix_metadata_preserved": false,
+    "metadata_scope": "NTFS exposes the relocated files as mode 0755; content bytes are exact. The archived Git source tar, wheel, image archive, receipts, logs, and checksums retain the build's reproducible identities."
+  },
+  "local_removal": {
+    "running_containers_before": 0,
+    "removed_exact_image_ids": [
+      "sha256:295de005ad89735c92aced11179d05db08dd694badff3722de3f1ceb9e5994f1",
+      "sha256:a385f20ca68b62f18d670722617ed69583fe9154b537c108f04b704029950abd"
+    ],
+    "removed_images_absent_after": true,
+    "base_image_retained": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "qualified_0ecc_stock_image_retained": "sha256:22a03a3db5ce34419562706d4a95394d67bd788c6d7eb63916ba436927e0845e",
+    "79bb_stock_image_retained": "sha256:9f8000f2317de47098161b4da63efb61994a51d9edd8bfe902818e8e685e075a",
+    "broad_docker_prune_ran": false,
+    "root_free_kib_before": 14422744,
+    "root_free_kib_after": 22689052,
+    "root_free_gib_after": 21.64
+  },
+  "preservation": {
+    "performance_evidence_removed": false,
+    "protected_speed_changed": false,
+    "tp2_78_decision_overlay_changed": false,
+    "tp4_152_decision_overlay_changed": false,
+    "recovery": "zstd -dc /mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T153134Z-7797b6022c-baaa05bb4e/images-7797b6022c.docker.tar.zst | docker load"
+  }
+}

@@ -241,6 +241,16 @@ the live official nightly digest, followed by a separately named audited TP1
 packet. See the
 [r2 stale closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-r2-stale-before-launch.md).
 
+Before building the successor, the exact stale 7797 two-image pair was added
+to its USB archive and verified by compressed checksum, zstd integrity, OCI
+tag/index identity, layer count, and traversal-safe tar inventory. The 9,569-
+file build root was relocated with every file byte rehashed; NTFS normalized
+its POSIX modes, which is disclosed rather than treated as metadata-preserving
+recovery. Only the two exact recoverable 7797 image IDs were then removed.
+The official base, dated stock controls, all run evidence, and accepted
+decision artifacts remain; root headroom is now 21.64 GiB. See the
+[storage-rotation receipt](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-storage-rotation.md).
+
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
 tune selected different winners. The capped TP2 preservation test transferred
