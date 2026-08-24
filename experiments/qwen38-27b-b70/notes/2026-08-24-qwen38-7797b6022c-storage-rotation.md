@@ -48,7 +48,7 @@ restored without rebuilding:
 
 ```bash
 archive=/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T153134Z-7797b6022c-baaa05bb4e/images-7797b6022c.docker.tar.zst
-zstd -dc "$archive" | docker load
+zstd -dc "$archive" | sudo docker load
 ```
 
 The complete machine-readable receipt is
