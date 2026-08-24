@@ -10,15 +10,15 @@
   },
   "observed_heads": {
     "official_nightly": {
-      "index_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
-      "amd64_manifest_digest": "sha256:ad7d8e8ef69e3dcc1ad08339b12c0c118bf98b9602b89f66aa5efc236e1df41a",
-      "vllm_source": "a3561ef8e49d3545c4078df43444beb4c98ae124"
+      "index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
+      "vllm_source": "f94666b60d4c58ec0807d22c837cfae322a1dde9"
     },
-    "vllm_upstream_main": "702e1d718646b5290f17533c04932d58bf03dad6",
+    "vllm_upstream_main": "460c08bc8a525082f37b1ba4c8e70558e5aa8e9e",
     "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
   },
-  "absolute_current_build": {
+  "historical_absolute_current_builds": [{
     "built_utc": "2026-08-24T04:05:36Z",
     "status": "dated-stale-before-qualification-kernel-main-advanced",
     "receipt": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json",
@@ -46,6 +46,29 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-702-tp1-qualification-attempts.json"
     },
     "policy": "Re-resolve both live upstream heads before and after qualification; if either moved, retain these images only as dated evidence and rebuild before calling a result current."
+  }],
+  "absolute_current_build": {
+    "built_utc": "2026-08-24T05:44:47Z",
+    "status": "static-preflight-passed-gpu-qualification-pending",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json",
+    "receipt_sha256": "1e383c644ce4fcf393978fa0c88bb84461fd7a2f67437b82a7da8bdc513f006c",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T054447Z-460c08bc8a-baaa05bb4e",
+    "vllm_head": "460c08bc8a525082f37b1ba4c8e70558e5aa8e9e",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "images": {
+      "current_vllm_stock_kernel": "sha256:b4451bcd0dbb1fe79fd46ce0cd6adc02b2f57a1ce0c4af0a436553514045fd5a",
+      "both_current_zero_overlay": "sha256:6ea7380f8990a3df97e4699a1571727ec68d0bdacb0a4fbd512301ecefa64df9"
+    },
+    "post_build_freshness_seal": {
+      "checked_utc": "2026-08-24T05:48:57Z",
+      "vllm_head": "460c08bc8a525082f37b1ba4c8e70558e5aa8e9e",
+      "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+      "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "status": "passed"
+    },
+    "policy": "Qualification remains fail-closed on live source/base movement and protected speed, quality, cache, and token-accounting gates. Historical builds and highs remain append-only."
   },
   "frozen_trees": {
     "vllm": {

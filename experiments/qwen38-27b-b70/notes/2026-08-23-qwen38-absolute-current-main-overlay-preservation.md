@@ -498,3 +498,62 @@ The `702e1d718`/`4543b580` images are now dated artifacts. Wait for the exact
 full artifact—or follow a still-newer head if `main` advances again—then rebuild
 without weakening launch settings, quality gates, accepted overlays, or
 historical floors.
+
+## 2026-08-24 literal-current `460c08bc8` / `baaa05bb4e` rebuild
+
+The next fail-closed update followed all three moving inputs to their literal
+live identities before and after the build:
+
+- vLLM `460c08bc8a525082f37b1ba4c8e70558e5aa8e9e`, tree
+  `1bf1f2c8e421688aba1c51882acc0d323d2e0f87`;
+- vLLM XPU kernels `baaa05bb4e92901219a5a072dd63f2474896f6d1`, tree
+  `e7e7d1063f232a383c98c1820cebb94c45b4906e`;
+- official XPU nightly index
+  `sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876`,
+  whose embedded vLLM is `f94666b60d4c58ec0807d22c837cfae322a1dde9`
+  and stock kernel is `0.1.13.2`.
+
+The source delta after `702e1d718` is bounded but not waved through. Commit
+`f94666b60` skips the oneCCL warm-up all-reduce only at world size one, before
+model loading and decode. Commit `e6e1af4ca` tunes CUDA/FlashInfer all-reduce
+selection, and `460c08bc8` adds Qwen3-Omni multimodal LoRA support. The latter
+two do not enter this dense Qwen XPU path. Kernel commit `baaa05bb4e` adds only
+host-side block-FP8 scale-grid divisibility checks; the protected target is
+AutoRound INT4 W4A16. These audits predict no steady-state loss, but TP1/2/4
+performance and quality replay remain mandatory.
+
+The current kernel came from successful full-config unit-test run
+`32689598992` and wheel-per-commit run `32692290527`, artifact `9508328924`.
+The artifact archive digest is
+`sha256:ce94da86eb14e61673a10db5c8a2c3fffb49a5f61ec9d36c210601062f887f10`;
+the exact wheel SHA-256 is
+`7b886fa814469aef8904118729f31f2fe77559f3c5219bd0ecf799a904387483`.
+Its `build_info.txt`, package version `0.1.dev1+gbaaa05bb4`, full DSO member
+set, workflow, and full attention-config hashes all passed. The upstream
+artifact-name short SHA is blank because of an upstream metadata-output bug;
+the full commit field, run head, and wheel version independently agree.
+
+The builder produced vLLM wheel SHA-256
+`415aedb71c0f5db997768a9244455d8d72cd198f77a9cc2f8a022122016a9446`
+and two immutable images:
+
+- current vLLM with the new nightly's stock kernel:
+  `sha256:b4451bcd0dbb1fe79fd46ce0cd6adc02b2f57a1ce0c4af0a436553514045fd5a`;
+- current vLLM with the exact current kernel artifact:
+  `sha256:6ea7380f8990a3df97e4699a1571727ec68d0bdacb0a4fbd512301ecefa64df9`.
+
+The complete archive is
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T054447Z-460c08bc8a-baaa05bb4e`.
+Its checksum manifest passes. The tracked receipt is byte-identical to the
+archived receipt at SHA-256
+`1e383c644ce4fcf393978fa0c88bb84461fd7a2f67437b82a7da8bdc513f006c`.
+Both images passed package, import, source-shadowing, DSO, dependency, kernel,
+and static identity checks, followed by a live post-build source/base seal.
+
+To preserve enough ext4 space for qualification, the already archived and
+superseded `702e1d718` control/current-kernel images and the old digest-pinned
+base were removed locally, followed by reproducible inactive BuildKit cache.
+The dated `702` run evidence, wheel/source archive, receipts, logs, and every
+accepted decision/source overlay remain. No historical speed or quality value
+was replaced. The new images are still unqualified; full TP1 diagnostic plus
+strict A/B must pass before separate TP2 and TP4 overlay remapping begins.
