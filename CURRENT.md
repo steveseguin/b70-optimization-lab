@@ -372,14 +372,17 @@ ran. Only disposable uv, compiler, and Docker builder caches were cleared;
 both new images and all optimization/result evidence remain. Root headroom was
 restored above 17 GiB.
 
-A single report-only receipt recovery is preregistered, but has not run. It is
-allowed only from clean pushed `main` while all three live upstream identities,
-both immutable image IDs and complete label contracts, the official kernel
-artifact, every original build input/log/preflight, the complete protected
-performance ledger, and all 78 TP2 plus 152 TP4 decisions remain exact. It may
-not build, retag, remove, expose a GPU, or claim qualification. See the
-[attempt record](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-enospc-build-attempt.json)
-and [recovery preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-enospc-receipt-recovery-prereg.md).
+A single report-only receipt recovery then ran once from clean pushed `main`
+and passed. It revalidated all three live upstream identities, both immutable
+image IDs and complete label contracts, the official kernel artifact, every
+original build input/log/preflight, the complete protected performance ledger,
+and all 78 TP2 plus 152 TP4 decisions before and after archival. It did not
+build, pull, retag, remove, expose a GPU, run a model, or create a performance
+claim. The byte-identical tracked/build-root/archive receipt is
+`a7b2d9a4fa1693c4ca83e98a494b249a380087963702c0f30cf558bb889400f3`;
+it remains explicitly GPU-qualification-pending. See the
+[recovery pass](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-enospc-recovery-pass.md)
+and [tracked receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-absolute-current-main-build.json).
 
 Do not authorize TP2 until TP1 passes full qualification. Then qualify TP2
 zero-overlay plus the preserved 78-decision remap, followed by TP4 zero-overlay

@@ -1,0 +1,56 @@
+{
+  "schema": "neural-download-absolute-current-main-enospc-recovery-result-v1",
+  "date": "2026-08-24",
+  "status": "pass-static-evidence-only-gpu-qualification-pending",
+  "recovered_utc": "2026-08-24T19:30:48Z",
+  "post_recovery_audit_utc": "2026-08-24T19:34:03Z",
+  "recovery_commit": "521f3acdef61481ca1dad700543a8933f5b73c23",
+  "recovery_tree": "03228609b13ea915eda352707d450e23b3154fae",
+  "recovery_script": "experiments/qwen38-27b-b70/scripts/recover-20260824-qwen38-6a9c69fa85-enospc-build-receipt.sh",
+  "recovery_script_sha256": "e3f7da15e7ef90894b2629fd9e84eb25fc0eee00d68be1c8ffc44d1602610ba8",
+  "tracked_receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-absolute-current-main-build.json",
+  "tracked_receipt_sha256": "a7b2d9a4fa1693c4ca83e98a494b249a380087963702c0f30cf558bb889400f3",
+  "build_root_receipt": "/home/steve/builds/qwen38-current-main-20260824T185928Z-6a9c69fa85-baaa05bb4e/receipts/build-receipt.json",
+  "external_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T185928Z-6a9c69fa85-baaa05bb4e",
+  "archive_sha256s_sha256": "b65dbf867d860e123576e5da62b00a63da72cbb55655f1ef06a6974cdd401c5e",
+  "archive_files_including_sha256s": 19,
+  "archive_bytes": 32385901,
+  "failure_snapshot_sha256": "40947d134e2f68675cfda90fce7702908109f51f53ddf83001fea6e2feed0db5",
+  "identity": {
+    "vllm_head": "6a9c69fa851389dcf1ee5d3a2363e27af665d26d",
+    "vllm_tree": "baf2301fb3f993537b07b6132b4d980efca2e7e4",
+    "vllm_package_version": "0.26.1rc1.dev1157+g6a9c69fa8.xpu",
+    "xpu_kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "xpu_kernel_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "nightly_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none"
+  },
+  "images": {
+    "current_vllm_stock_kernel": "sha256:24ca5f6b6e5a14f71f43f82469f6e9debd36b2965942932e1646f377e30799cf",
+    "both_current_zero_overlay": "sha256:f86c4c78d76a484f5d54eda310419c91a2471634ab97782022ef7573fc19a7d9"
+  },
+  "preservation": {
+    "protected_performance_ledger_sha256": "e6ee2cb9908ce940087788243eac5b544c0d2831b94efa47fe6441232c740e8f",
+    "tp2_decision_files": 78,
+    "tp2_manifest_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757",
+    "tp4_decision_files": 152,
+    "tp4_manifest_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2",
+    "decisions_applied": 0,
+    "captured_performance_changed": false
+  },
+  "post_recovery": {
+    "archive_checksum_verification": "pass",
+    "tracked_build_root_archive_receipts_byte_identical": true,
+    "live_freshness": "pass",
+    "full_image_contracts": "pass",
+    "running_containers": 0,
+    "gpu_or_model_work_ran": false,
+    "performance_or_quality_evidence_created": false,
+    "root_free_kib": 17882316
+  },
+  "qualification": {
+    "status": "not_run",
+    "authorized": false,
+    "next_gate": "commit and push the byte-identical tracked receipt, then derive and independently audit a fresh-root TP1 packet that explicitly names it"
+  }
+}
