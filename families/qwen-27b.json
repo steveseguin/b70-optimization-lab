@@ -345,6 +345,65 @@
       "manifest": "experiments/qwen36-27b-q8-gguf-b70/README.md"
     },
     {
+      "id": "qwen36-27b-native-fp8-tp2-community",
+      "label": "Qwen3.6 runtime FP8 (vLLM native path) · TP2 community recipe",
+      "revision": "qwen3.6-27b",
+      "quantization": "FP8",
+      "runtime": "vLLM XPU",
+      "cards": 2,
+      "status": "b70-tested-community-recipe",
+      "evidence_level": "B70-tested",
+      "coverage": ["decode", "TTFT", "TP2", "262,144 configured max", "recipe", "topology support"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Qwen3.6 base checkpoint quantized at runtime through the vLLM native-FP8 TP2 path",
+          "basis": "the version-tagged recipe completed a 15-row three-pass decode measurement and a separate cross-root topology repeat, but sampling was enabled, cached_tokens was not reported, no deterministic output gate applied, and the image digest/source commit was not retained",
+          "reviewed_at": "2026-08-23",
+          "evidence": [
+            "community/dominick253-qwen36-27b-fp8-tp2-docker/validation/bench-20260725T163224Z.json",
+            "community/dominick253-qwen36-27b-fp8-tp2-docker/validation/bench-20260725T164806Z.json",
+            "community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md"
+          ]
+        }
+      },
+      "featured_metric": {
+        "metric": "decode_tok_s",
+        "measurement_id": "q36-native-fp8-tp2-eager-community-recipe",
+        "sample_index": 0,
+        "value": 30.1709,
+        "unit": "tok/s",
+        "workload": "one warmup discarded; 3 passes over five unique prompts; actual prompt lengths 29/30, 60, 210, 510, 2010; 256 output tokens; one active request",
+        "evidence": "community/dominick253-qwen36-27b-fp8-tp2-docker/validation/bench-20260725T163224Z.json"
+      },
+      "manifest": "community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md"
+    },
+    {
+      "id": "qwen36-27b-block-fp8-requant-historical",
+      "label": "Qwen3.6 block-FP8 checkpoint · historical XPU requant screen",
+      "revision": "qwen3.6-27b",
+      "quantization": "block FP8 checkpoint → per-channel FP8 requant",
+      "runtime": "vLLM XPU 0.20.1 + local fallback patch",
+      "topologies": [1, 2, 4],
+      "status": "historical-rd-screen-closed",
+      "evidence_level": "lab-screened",
+      "coverage": ["TP1/2/4 screen", "end-to-end output rate only", "negative result", "fallback patch identity"],
+      "grades": {
+        "evidence": {
+          "grade": "D",
+          "scope": "May 2026 official block-FP8 checkpoint fallback/requant R&D screen",
+          "basis": "one-cold-iteration total-window output rates include prefill and are not decode; TP1/TP4 raw JSONs and an exact model revision were not tracked, workloads differ across arms, and no quality gate applied, while the source patch and negative interpretation remain durable",
+          "reviewed_at": "2026-08-23",
+          "evidence": [
+            "results/fp8-vllm-xpu-qwen36-2026-05-04.md",
+            "results/qwen36-b70-followup-2026-05-04-vdr-rootcopy-fp8.md",
+            "patches/vllm-c51df4300-xpu-qwen36-block-fp8-fallbacks.patch"
+          ]
+        }
+      },
+      "manifest": "results/qwen36-b70-followup-2026-05-04-vdr-rootcopy-fp8.md"
+    },
+    {
       "id": "qwen36-27b-q4-mtp-ladder",
       "label": "Qwen3.6 Q4 · intrinsic MTP ladder",
       "revision": "qwen3.6-27b",
@@ -827,6 +886,57 @@
       "metrics": {"decode_tok_s": [31.16799415898192], "draft_acceptance_rate": [0.7095238095238096], "effective_tokens_per_verification": [2.419047619047619]},
       "quality": "boot and code-14 canary pass; no full battery; failed speed and acceptance expansion floors",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tpscale-nightly-matrix.json"
+    },
+    {
+      "id": "q36-native-fp8-tp2-eager-community-recipe",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "runtime FP8 (vLLM native path)",
+      "quantization": "FP8",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU · intel/llm-scaler-vllm:0.21.0-b1",
+      "profile_id": "q36-native-fp8-tp2-eager-community-v1",
+      "measurement_class": "single-session-decode-heterogeneous-prompt-suite",
+      "promotion_status": "b70-tested-community-packet-not-b70-verified",
+      "quality_scope": "performance and serve-path validation only; no exactness gate",
+      "identity": {
+        "model_repository": "Qwen/Qwen3.6-27B",
+        "model_revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+        "model_prequantized_fp8": false,
+        "image_reference": "intel/llm-scaler-vllm:0.21.0-b1",
+        "image_digest_recorded": false
+      },
+      "config": {"tp": 2, "mtp": 0, "weight_quantization": "runtime fp8", "graph": "off", "kv": "fp8_e4m3", "configured_max_context_tokens": 262144, "dtype": "float16", "block_size": 128, "max_num_seqs": 4, "gpu_memory_utilization": 0.92, "prefix_caching": false, "concurrency": 1, "card_pairing": "same-root cards 0+1", "sampling": "temperature=0.7, top_p=0.8, top_k=20"},
+      "workload": "one warmup discarded; 3 passes over five unique prompts; actual prompt lengths 29/30, 60, 210, 510, 2010; 256 output tokens; one active request",
+      "metrics": {"decode_tok_s": [30.1709], "ttft_ms": [218.3]},
+      "quality": "15/15 requests completed; median decode was 30.1709 tok/s (range 29.5637–30.5283, stdev 0.3018) and median TTFT across this heterogeneous suite was 218.3 ms. Prefix caching was disabled and prompts were unique, but cached_tokens was null rather than proven zero. Sampling was enabled, so no deterministic-output or exactness gate applies.",
+      "evidence": "community/dominick253-qwen36-27b-fp8-tp2-docker/validation/bench-20260725T163224Z.json",
+      "supporting_evidence": ["community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md", "community/dominick253-qwen36-27b-fp8-tp2-docker/validation/validate-recipe.sh"]
+    },
+    {
+      "id": "q36-native-fp8-tp2-eager-cross-root-support",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "variant": "runtime FP8 (vLLM native path)",
+      "quantization": "FP8",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU · intel/llm-scaler-vllm:0.21.0-b1",
+      "profile_id": "q36-native-fp8-tp2-eager-cross-root-v1",
+      "measurement_class": "interconnect-support-screen",
+      "promotion_status": "support-only-topology-repeat",
+      "quality_scope": "same protocol as the canonical replay; topology support only",
+      "identity": {
+        "model_repository": "Qwen/Qwen3.6-27B",
+        "model_revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+        "model_prequantized_fp8": false,
+        "image_reference": "intel/llm-scaler-vllm:0.21.0-b1",
+        "image_digest_recorded": false
+      },
+      "config": {"tp": 2, "mtp": 0, "weight_quantization": "runtime fp8", "graph": "off", "kv": "fp8_e4m3", "configured_max_context_tokens": 262144, "dtype": "float16", "block_size": 128, "max_num_seqs": 4, "gpu_memory_utilization": 0.92, "prefix_caching": false, "concurrency": 1, "card_pairing": "cross-root cards 0+2", "sampling": "temperature=0.7, top_p=0.8, top_k=20"},
+      "workload": "same 15-row protocol as the canonical FP8 record; one warmup discarded, three passes, five unique prompt lengths, 256 output tokens, one active request",
+      "metrics": {"decode_tok_s": [30.4824], "ttft_ms": [212.5]},
+      "quality": "Support-only topology repeat; median decode was 30.4824 tok/s (range 29.7523–30.9643, stdev 0.3642) and median TTFT across the heterogeneous suite was 212.5 ms. The 1.0% median increase over same-root cards is inside dispersion and is not a speed claim.",
+      "evidence": "community/dominick253-qwen36-27b-fp8-tp2-docker/validation/bench-20260725T164806Z.json"
     },
     {
       "id": "q36-q8-tp1-target-short-exact",
@@ -1619,6 +1729,31 @@
     }
   ],
   "coverage_views": [
+    {
+      "id": "q36-native-fp8-by-tp",
+      "label": "Qwen3.6 runtime FP8 × TP",
+      "row_axis": {"key": "quantization", "label": "weight quantization", "prefix": ""},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.6-27b",
+        "runtime_family": "vLLM XPU",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "fp8_e4m3",
+        "configured_max_context_tokens": 262144
+      },
+      "fixed": "Qwen3.6 base weights quantized at runtime through the vLLM native-FP8 path, replayed in the reference lab with 262,144 configured max, eager vLLM XPU, and fp8_e4m3 KV. This is not a prequantized FP8 checkpoint.",
+      "decision_note": "Configured max is not active benchmark depth: measured prompts were 29–2,010 tokens. The canonical same-root cell is separate from the 30.4824 tok/s cross-root support record; topology changed, so they are not merged as repeats. Sampling was enabled, cached_tokens was unavailable, and no exactness gate applied. The contributor's approximate 28.3–34.7 range is prose only.",
+      "evidence": "community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md",
+      "rows": ["FP8"],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "FP8:1": {"state": "missing", "label": "no measured 262K route"},
+        "FP8:2": {"state": "lab-measured", "label": "D30.171 same-root · no quality gate", "evidence_id": "q36-native-fp8-tp2-eager-community-recipe", "packet_id": "qwen36-27b-native-fp8-tp2-community"},
+        "FP8:3": {"state": "missing", "label": "no measured route"},
+        "FP8:4": {"state": "missing", "label": "no measured route"}
+      }
+    },
     {
       "id": "q36-q8-mtp-by-tp",
       "label": "Qwen3.6 Q8 MTP × TP",
