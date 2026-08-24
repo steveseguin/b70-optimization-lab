@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-7797-current-tp1-preregistered",
+  "status": "preservation-gate-passed-7797-r1-closed-r2-preregistered",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -462,7 +462,7 @@
   }],
   "active_qualification_build": {
     "built_utc": "2026-08-24T15:31:34Z",
-    "status": "static-preflight-passed-tp1-preregistered-not-launched",
+    "status": "static-preflight-passed-r1-failed-incomplete-r2-preregistered",
     "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-7797b6022c-absolute-current-main-build.json",
     "receipt_sha256": "be82b2b6b5b94600d9b736dd9d8f11f48e9b475c13efa74adcda0829d510abba",
     "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T153134Z-7797b6022c-baaa05bb4e",
@@ -497,14 +497,39 @@
     },
     "upstream_delta_disposition": "The 7797 tuned batch-invariant matmul tables select only for BF16 plus VLLM_BATCH_INVARIANT on CUDA Ada/Hopper. This F16 XPU packet does not enable the mode and resolves the prior default. No B70 performance gain is inferred from the commit title.",
     "qualification": {
-      "status": "preregistered-not-launched",
-      "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-untreated-tp1-r1-prereg.md",
-      "packet_sha256": "876cde31166ec10dcc4a26a2aad5eedc030fa6f2695169e34b51078b91a04c82",
-      "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-7797b6022c-untreated-tp1-qualification.sh",
-      "wrapper_sha256": "b9160cf8327210fde417bc48d1eeb2b3f0367967e01aa01415297a2c87b978f9",
-      "order": ["TP1", "TP2", "TP4"]
+      "status": "r2-preregistered-not-launched",
+      "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-untreated-tp1-r2-prereg.md",
+      "packet_sha256": "990e6689d4562a329b026e48b3db7c0bd0d5a9cefc446562fc446c6a791d0e85",
+      "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-7797b6022c-untreated-tp1-r2-qualification.sh",
+      "wrapper_sha256": "41b23809cb7e5b197e4db0f75dcca8d5d967de0e24e78e3e9c1258706bd003f9",
+      "kernel_delta_classifier": "experiments/qwen38-27b-b70/scripts/classify-20260824-kernel-delta.py",
+      "kernel_delta_classifier_sha256": "fef74bdb90b82fdf543be6ea36320b308aff0d0c146a3c92bcbfff334b70d1b0",
+      "kernel_delta_classifier_test": "experiments/qwen38-27b-b70/tests/test_classify_20260824_kernel_delta.py",
+      "kernel_delta_classifier_test_sha256": "b21befd70003b710027303e093915c36ce88d8fcd4eda66facfd549057e5474b",
+      "strict_runner": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-known-nvme-aware-strict-smoke.sh",
+      "strict_runner_sha256": "5647c9af599fb4a3bc31b8cf8118c986f8895842de9cd657c037e4ea099925da",
+      "hardware_gate_runner": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-known-nvme-aware-hardware-gate.sh",
+      "hardware_gate_runner_sha256": "8038015b179048662f53d7d41ead6cddc95671081942444f394c6e48ed57a6f7",
+      "hardware_gate_root": "/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-7797b6022c-20260824-086de284-venvlib-r2",
+      "campaign_root": "/home/steve/qwen38-current-main-runs/tp1-untreated-7797b6022c-20260824-r2",
+      "order": ["TP1", "TP2", "TP4"],
+      "prior_attempts": [{
+        "attempt": "r1",
+        "status": "failed-incomplete-known-corrected-root-nvme-before-timing",
+        "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-untreated-tp1-r1-prereg.md",
+        "packet_sha256": "876cde31166ec10dcc4a26a2aad5eedc030fa6f2695169e34b51078b91a04c82",
+        "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-7797b6022c-untreated-tp1-qualification.sh",
+        "wrapper_sha256": "b9160cf8327210fde417bc48d1eeb2b3f0367967e01aa01415297a2c87b978f9",
+        "closeout_note": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-r1-corrected-nvme-gate-stop.md",
+        "closeout_data": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-7797b6022c-r1-corrected-nvme-gate-stop.json",
+        "hardware_gate_manifest": "passed-64-of-64",
+        "campaign_manifest": "passed-70-of-70",
+        "exact_canary_passed": true,
+        "timed_benchmark_started": false,
+        "performance_evidence": false
+      }]
     },
-    "policy": "Run once only from clean pushed main if all live inputs still match. Preserve every result append-only and never lower a historical floor or drop a compatible accepted overlay."
+    "policy": "Each preregistered attempt may run once only on its exact frozen roots from clean pushed main if all live inputs still match. Preserve every result append-only and never lower a historical floor or drop a compatible accepted overlay."
   },
   "frozen_trees": {
     "vllm": {

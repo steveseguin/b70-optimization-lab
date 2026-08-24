@@ -220,16 +220,21 @@ cache preservation, and both evidence manifests. See the
 The repo's retained SMART/AER investigation already proves this exact event is
 a stable link-side nuisance behind a healthy controller/filesystem and warns
 that an `any corrected AER` gate is below the host noise floor. The 2026-08-24
-unsealed read-only postmortem SMART and ext4 observations remain clean. The
-active step is therefore a separately versioned r2 classifier/packet: retain
-the raw journal, fail closed
-on every GPU, uncorrected, nonfatal, reset, timeout, I/O, filesystem, taint, or
-unknown hardware event, and narrowly exempt only the exact capped corrected
-NVMe block after parser tests and independent audit. The model, graph, cache,
-quality, timing, performance floors, TP2 78-decision artifact, and accepted TP4
-152-decision overlay do not change. A current r2 TP1 pass authorizes separately
-preregistered TP2 and TP4 anchors; broader neural.download coverage follows.
-Any upstream movement instead closes 7797 stale and rebuilds its successor.
+unsealed read-only postmortem SMART and ext4 observations remain clean. A
+separately versioned r2 classifier/packet is now prepared and independently
+audited. It retains every raw journal delta, uses the same canonical reject
+scope in the hardware gate, parser tests, and model arms, rejects a cursor-
+truncated signature fragment, and may exempt at most one exact 21-line
+corrected root-NVMe block. Its fourteen-test battery passes, the exact r1 delta
+replays as one accepted block with zero rejects and an unchanged raw hash, and
+the wrapper pins the test itself on exact non-overridable fresh roots. The
+model, graph, cache, quality, benchmark, timing, performance floors, TP2
+78-decision artifact, and accepted TP4 152-decision overlay do not change. The
+launch gate requires clean pushed `main` and a final live match for vLLM main,
+XPU-kernel main, and the official nightly digest. A current r2 TP1 pass
+authorizes separately preregistered TP2 and TP4 anchors; broader
+neural.download coverage follows. Any upstream movement instead closes 7797
+stale and rebuilds its successor.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
