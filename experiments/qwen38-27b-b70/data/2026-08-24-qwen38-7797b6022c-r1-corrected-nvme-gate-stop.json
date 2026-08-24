@@ -1,0 +1,145 @@
+{
+  "schema": "neural-download-qwen38-current-main-kernel-classifier-attempt-v1",
+  "date": "2026-08-24",
+  "classification": "failed-incomplete-known-corrected-root-nvme-event",
+  "hardware_gate": "pass",
+  "candidate_qualification": "not_timed",
+  "performance_evidence": false,
+  "protected_performance_changed": false,
+  "identity": {
+    "lab_commit": "184e129b14107f9337394c0b6554bf8f00f194ac",
+    "vllm_head": "7797b6022c129b862e45ae6aed08822e65d1bccb",
+    "vllm_tree": "78e0ffe9e07831fa2af9643e0c87501000a93014",
+    "xpu_kernel_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "nightly_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "both_current_image": "sha256:295de005ad89735c92aced11179d05db08dd694badff3722de3f1ceb9e5994f1",
+    "build_receipt_sha256": "be82b2b6b5b94600d9b736dd9d8f11f48e9b475c13efa74adcda0829d510abba",
+    "boot_id": "086de284-0771-4269-9cb2-e064fe303e40",
+    "kernel": "7.0.0-30-generic"
+  },
+  "hardware": {
+    "root": "/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-7797b6022c-20260824-086de284-venvlib-r1",
+    "started_utc": "2026-08-24T15:46:04Z",
+    "completed_utc": "2026-08-24T15:46:29Z",
+    "manifest_entries_verified": 64,
+    "manifest_entries_total": 64,
+    "manifest_sha256": "c01ca6df033b9491d81a50fd7c7cbd2f07dd8f8401de0cc205ad9a50930d7bba",
+    "summary_sha256": "7dfa8bcaa87d5efdc1d0453d76d12584ef68cf4d998099285abb92a013f10bc1",
+    "final_status_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04",
+    "runner_sha256": "84b9f5025476f40cb3218dbe513718c6d37da1e4852d17031b403fa410e4c506",
+    "passed": true,
+    "exit_status": 0,
+    "gates": {
+      "four_device_identity": true,
+      "per_card_compute": true,
+      "four_device_peer_read": true,
+      "four_rank_xccl_allreduce": true,
+      "torch_runtime_coherent": true,
+      "repo_postflight": true,
+      "kernel_taint_pre": 0,
+      "kernel_taint_post": 0,
+      "kernel_reject_events": 0
+    }
+  },
+  "campaign": {
+    "root": "/home/steve/qwen38-current-main-runs/tp1-untreated-7797b6022c-20260824-r1",
+    "started_utc": "2026-08-24T15:46:29Z",
+    "completed_utc": "2026-08-24T15:50:35Z",
+    "state": "failed-incomplete mode=all rc=7",
+    "exit_status": 7,
+    "manifest_entries_verified": 70,
+    "manifest_entries_total": 70,
+    "manifest_sha256": "7d914ffc7a90df680026a04a6e595519f361dac6f4f2e31f4f9e80c62f042272",
+    "failure_json_sha256": "d651c92172df8bfea4c70f61669cc6d65af3c5c1a32e744b25ea22865c3d6be0",
+    "final_status_sha256": "6ee53e2ef77852ccb90e54730696e3b92722fe9da4379e1dff2c167d8b376c0a",
+    "frozen_wrapper_sha256": "b9160cf8327210fde417bc48d1eeb2b3f0367967e01aa01415297a2c87b978f9",
+    "frozen_prereg_sha256": "876cde31166ec10dcc4a26a2aad5eedc030fa6f2695169e34b51078b91a04c82",
+    "strict_runner_sha256": "cec5f3d852c84255822a4a5ee14d6829cd5efa6719ff9e8c59a904090d11c2b0",
+    "input_manifest_sha256": "dc814bddb0a07bc33bb53f04faa9ccf1ded3caf31ea755f2c4951c4af2536015",
+    "model_verification": {
+      "mode": "direct-and-ordinary",
+      "files_checked": 19,
+      "all_passed": true,
+      "sha256": "1a05e6d37441c02acdf1583bcd143c9a8390077f58d476c4f4d17d9a05774a48"
+    },
+    "arms": {
+      "control_fresh": {
+        "status": "fail-cleanup body_rc=1",
+        "server_healthy": true,
+        "canary_passed": true,
+        "canary_content": "14",
+        "canary_cached_tokens": 0,
+        "canary_sha256": "a51fce633c6bf04789075a864305ccb690cca2789fc3ac247d5504c90e5e62ca",
+        "timed_benchmark_started": false,
+        "median_tok_s": null
+      },
+      "control_replay_a": {
+        "status": "missing",
+        "median_tok_s": null
+      },
+      "control_replay_b": {
+        "status": "missing",
+        "median_tok_s": null
+      }
+    },
+    "cleanup": {
+      "evidence_scope": "The repeated journal match is sealed; container absence, render-idle state, and live cache preservation were independently confirmed during closeout.",
+      "owned_container_removed": true,
+      "running_containers_after": 0,
+      "render_holders_after": 0,
+      "cache_files_preserved": 1097,
+      "cache_bytes_preserved": 150930388,
+      "status_explanation": "The runner reports fail-cleanup and the identical cleanup reject file proves the same corrected NVMe event matched again. The runner has no single per-step summary proving this was its only internal cleanup flag; closeout found no container-removal or GPU-cleanup failure."
+    }
+  },
+  "failure": {
+    "stage": "fresh diagnostic after exact canary and before metrics or timing",
+    "kernel_event_timestamp": "2026-08-24T11:47:45-04:00",
+    "kernel_delta_sha256": "f0f32911c0907a36c154eaa48b3734f9c49736616bbb209caf6af84613925c16",
+    "kernel_reject_sha256": "379c86c52d34bc0a71df5c897675ac57661bb0ec20849ef03d540c14fb088a85",
+    "device": {
+      "bdf": "0000:01:00.0",
+      "type": "root-filesystem NVMe",
+      "vendor_device": "144d:a80a",
+      "model": "Samsung SSD 980 PRO",
+      "event": "corrected PCIe physical-layer receiver RxErr",
+      "aer_cor_status": "0x00000001",
+      "aer_uncor_status": "0x00000000",
+      "kernel_disposition": "corrected by hardware; no further action required"
+    },
+    "not_implicated": [
+      "any Intel Arc Pro B70",
+      "vLLM model startup",
+      "Qwen model content",
+      "XPU graph capture",
+      "the arithmetic canary",
+      "decode throughput"
+    ],
+    "frozen_rule": "The r1 strict runner rejected every line matching Hardware Error, aer_status, or RxErr, including the exact known corrected root-NVMe signature. The consumed r1 result remains invalid under that frozen rule."
+  },
+  "postmortem_health_check": {
+    "checked_utc": "2026-08-24T15:54:59Z",
+    "evidence_scope": "unsealed read-only postmortem observation; not part of either immutable campaign manifest",
+    "nvme_smart": {
+      "critical_warning": 0,
+      "media_errors": 0,
+      "num_err_log_entries": 0,
+      "percentage_used": 4,
+      "available_spare_percent": 100
+    },
+    "ext4": {
+      "errors_count": 0,
+      "first_error_time": 0,
+      "last_error_time": 0
+    },
+    "current_boot_nvme_correctable_events": 3,
+    "assessment": "The current evidence reproduces the repository's 2026-08-03 conclusion: the drive and filesystem are healthy; this exact corrected RxErr is a known stable link-side nuisance and not GPU evidence."
+  },
+  "disposition": {
+    "r1_roots": "closed and checksum-sealed; do not overwrite or reinterpret",
+    "retry_policy": "one separately preregistered r2 atomic chain on fresh roots after replacing the below-noise-floor broad match with a narrow, tested classifier that preserves the raw journal and only exempts the exact known corrected NVMe block",
+    "benchmark_contract": "unchanged",
+    "protected_floors": "unchanged",
+    "overlay_policy": "TP2 78-decision and TP4 152-decision overlays remain preserved and unapplied"
+  }
+}

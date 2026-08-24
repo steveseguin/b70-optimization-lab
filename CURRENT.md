@@ -204,12 +204,32 @@ After pruning only unused builder cache, root headroom is about 14.0 GiB, above
 the unchanged 12-GiB GPU launch floor. The exact
 [7797 build receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-7797b6022c-absolute-current-main-build.json),
 [TP1 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-untreated-tp1-r1-prereg.md),
-and frozen wrapper are prepared. The active step is independent packet audit,
-then a focused commit/push and one atomic untreated TP1 invocation if all three
-live inputs still match. A pass authorizes separately preregistered TP2 and TP4
-anchors. Broader family/quant/MTP/context/KV/graph neural.download coverage
-follows those anchors. Any upstream movement stops the packet and rebuilds its
-successor without lowering historical floors or discarding accepted overlays.
+and frozen wrapper passed independent audit and were committed/pushed before
+one atomic untreated TP1 invocation. The fresh hardware gate and 19-file
+direct/ordinary model verification passed; the exact image loaded, compiled,
+became healthy, and returned the required `14` with zero cached tokens. Before
+timing, the frozen broad journal pattern rejected one corrected physical-layer
+`RxErr` from Samsung root-NVMe endpoint `0000:01:00.0`. No B70, model, graph,
+timing, or decode-speed failure occurred, but r1 remains failed-incomplete
+under its frozen rule and both strict arms are missing. The literal arm status
+remains `fail-cleanup`; the repeated journal match proves that cause fired.
+This closeout independently confirmed container removal, render-idle state,
+cache preservation, and both evidence manifests. See the
+[r1 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-r1-corrected-nvme-gate-stop.md).
+
+The repo's retained SMART/AER investigation already proves this exact event is
+a stable link-side nuisance behind a healthy controller/filesystem and warns
+that an `any corrected AER` gate is below the host noise floor. The 2026-08-24
+unsealed read-only postmortem SMART and ext4 observations remain clean. The
+active step is therefore a separately versioned r2 classifier/packet: retain
+the raw journal, fail closed
+on every GPU, uncorrected, nonfatal, reset, timeout, I/O, filesystem, taint, or
+unknown hardware event, and narrowly exempt only the exact capped corrected
+NVMe block after parser tests and independent audit. The model, graph, cache,
+quality, timing, performance floors, TP2 78-decision artifact, and accepted TP4
+152-decision overlay do not change. A current r2 TP1 pass authorizes separately
+preregistered TP2 and TP4 anchors; broader neural.download coverage follows.
+Any upstream movement instead closes 7797 stale and rebuilds its successor.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
