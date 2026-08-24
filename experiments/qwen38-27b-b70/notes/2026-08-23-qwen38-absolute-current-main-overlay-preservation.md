@@ -664,7 +664,7 @@ It is a Docker archive of the measured platform image, not a claim that the
 original Buildx index/attestation digest was reconstructed.
 
 After these archives passed, only superseded unqualified local images and
-inactive reproducible BuildKit cache were removed. Current a4d images, the
+inactive reproducible BuildKit cache were removed. At that point the a4d images, the
 official base, all results and source packets, the 78-file TP2 decision bundle,
 and the accepted 152-file TP4 decision bundle remain intact. Root free space
 returned above the launch safety floor. The TP2/TP4 decision overlays are not
@@ -757,3 +757,21 @@ AOT cache namespaces. Therefore the next run compiles fresh; it never imports
 a4d AOT models, binaries, or generated kernels, and later remapping may copy
 only exact relative-path and embedded-`configs_hash`-compatible decision
 bytes before full requalification.
+
+Before removing the now-superseded a4d tags for launch disk headroom, the
+exact measured both-current image was exported as a Docker-loadable archive:
+
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T062226Z-a4d70bef37-baaa05bb4e/both-current-image-4718fdd224aa.docker.tar.zst`.
+
+Its SHA-256 is
+`0597d99fed986aefea19935c208a5c47577be9dfba79827d994ddf7ff94da5c4`;
+it is 5,692,633,435 bytes compressed, 5,713,474,048 bytes uncompressed,
+contains 38 tar entries, and passed both `zstd -t` and the safe traversal
+check. The a4d build archive now has 16 verified payloads and `SHA256SUMS`
+SHA-256
+`aed44b7203dd9e81c3de2f5ca1e298e0f1752daa1858add6788b7ba70e30d64d`.
+Only after that verification were the two superseded local a4d image tags
+removed. The current a047 images, official base, every result and patch, and
+both decision overlays remain local; the measured a4d image can be loaded
+directly from USB, while both a4d lanes are also rebuildable from the exact
+preserved source/wheel/base/kernel receipts.
