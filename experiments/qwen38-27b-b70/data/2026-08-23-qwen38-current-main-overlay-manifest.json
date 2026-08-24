@@ -14,7 +14,7 @@
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
       "vllm_source": "f94666b60d4c58ec0807d22c837cfae322a1dde9"
     },
-    "vllm_upstream_main": "a4d70bef3724edb068c8206804154065acaa4cd4",
+    "vllm_upstream_main": "a047e2543da570a64d1bbfeac4fe44eff3e87a81",
     "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
   },
@@ -110,17 +110,17 @@
       "result": "no GPU arm launched; images retained only as archived dated build evidence"
     },
     "policy": "Preserve the exact source, wheel, receipts, logs, and image identities; no qualification result exists and no protected optimization or historical high is replaced."
-  }],
-  "absolute_current_build": {
+  }, {
     "built_utc": "2026-08-24T06:22:26Z",
-    "status": "static-preflight-passed-gpu-qualification-pending",
-    "receipt": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json",
+    "status": "dated-stale-during-qualification-vllm-main-advanced",
+    "receipt_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T062226Z-a4d70bef37-baaa05bb4e/build-receipt.json",
     "receipt_sha256": "473f7bf9f7a00d00dfabb6214a57d7bed6beeb94cc479cfee5fa3293c93f91d2",
-    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T062226Z-a4d70bef37-baaa05bb4e",
     "vllm_head": "a4d70bef3724edb068c8206804154065acaa4cd4",
     "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
     "source_overlay": "none",
+    "source_archive_sha256": "c9ba8e4d2e4d7848a23a7dc7dbdc9dc8e02f1f64746183bab1dca37b98bf9149",
+    "wheel_sha256": "48495720ed29ec11c39538a3e94bcc5ab8985b74249a0424535c3aecba902467",
     "images": {
       "current_vllm_stock_kernel": "sha256:58f96e00d65123179f6bb0a6bebc21de8bb5e19295f2f478fa30b3103fce4780",
       "both_current_zero_overlay": "sha256:4718fdd224aae9ea95bfbd7bc5aea7eea64ddc51975e2d8d09fa6fdcf5efd0cf"
@@ -132,6 +132,44 @@
       "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "status": "passed"
     },
+    "stale_observation": {
+      "checked_utc": "2026-08-24T06:52:32Z",
+      "component": "vllm_upstream_main",
+      "built_head": "a4d70bef3724edb068c8206804154065acaa4cd4",
+      "live_head": "cc40c3673b47a58d1326d1e7a2798f1f67a94a8f",
+      "during": "both-current TP1 hash-seed-unset diagnostic postflight",
+      "result": "30.25330610145591 tok/s valid dated diagnostic; promotion vetoed",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-a4d-hash-unset-tp1-diagnostic-attempt.json",
+      "raw_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/tp1-hash-unset-20260824T064134Z-a4d70bef37-stale-diagnostic.tar.zst",
+      "raw_archive_sha256": "d62187e66a3da0d5fe294f686fd01c2582f0eda7f08f0f2d34aaa98a4e277453"
+    },
+    "policy": "The diagnostic preserved the protected TP1 speed class but was neither strict nor quality-battery qualification. Keep it append-only; rebuild fresh on the next head without lowering any historical value or discarding any accepted runtime or decision overlay."
+  }],
+  "absolute_current_build": {
+    "built_utc": "2026-08-24T07:00:08Z",
+    "status": "static-preflight-passed-gpu-qualification-pending",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json",
+    "receipt_sha256": "4c389b109e36021d4603873d441ac81766e4982be6c204405801303c465b810d",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T070008Z-a047e2543d-baaa05bb4e",
+    "archive_sha256s_sha256": "b420e9c5182271539bb4b27d62705521a0cd91868655750ac13fd70bab34151e",
+    "vllm_head": "a047e2543da570a64d1bbfeac4fe44eff3e87a81",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "source_archive_sha256": "98abf2d746cb4515b4e5c74429867edbd064a20ef41c182814be837952fe026f",
+    "wheel_sha256": "7673a25c5308a88bff3d8186533892a39e3ea3f381f735b62d04dc7f3399ff2c",
+    "images": {
+      "current_vllm_stock_kernel": "sha256:4ca9cb9063ddd662e8cdd3f2901bab31d67ea71bba3e0f3611e12039f444ba72",
+      "both_current_zero_overlay": "sha256:a63ed5c5e19b639813ba47e94e13fb739c3467ef74cc8ba4beaa9d99a5e6241c"
+    },
+    "post_build_freshness_seal": {
+      "checked_utc": "2026-08-24T07:04:31Z",
+      "vllm_head": "a047e2543da570a64d1bbfeac4fe44eff3e87a81",
+      "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+      "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "status": "passed"
+    },
+    "accepted_overlay_disposition": "The accepted model, launch, topology, graph, cache, quality, and TP2/TP4 decision overlays remain versioned and mandatory. Build fresh caches; remap only exact relative-path plus embedded-configs_hash-compatible decision bytes; never copy compiled outputs across versions.",
     "policy": "Qualification remains fail-closed on live source/base movement and protected speed, quality, cache, and token-accounting gates. Historical builds and highs remain append-only."
   },
   "frozen_trees": {

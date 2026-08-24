@@ -3,24 +3,29 @@
   "state": "static-preflight-passed-for-built-images-gpu-qualification-pending",
   "mode": "--build-all",
   "overlay": "none",
-  "build_utc": "2026-08-24T06:22:26Z",
-  "build_root": "/home/steve/builds/qwen38-current-main-20260824T062226Z-a4d70bef37-baaa05bb4e",
-  "external_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T062226Z-a4d70bef37-baaa05bb4e",
+  "build_utc": "2026-08-24T07:00:08Z",
+  "build_root": "/home/steve/builds/qwen38-current-main-20260824T070008Z-a047e2543d-baaa05bb4e",
+  "external_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T070008Z-a047e2543d-baaa05bb4e",
   "base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
   "lab": {
-    "head": "d731d41707be2c16aac6dbb99633f005c4f26fc8",
-    "tree": "00877acc9d4e985f60c9b6c9447968324f790e44"
+    "head": "b14bfa37ab30082291108e09734ae5b236b79bd0",
+    "tree": "1cc08a9aa83db8f1154b269dea7604f3071587bc"
   },
   "build_inputs": {
-    "script_sha256": "3ddfaddc936c2e61b130d156bdec737699cbf6850d4c9571a011c74227dd8e25",
+    "script_sha256": "fc780ca35a9ea8b3022825ae9cebbc1e2e84c42a40a62289649bc67cd96eec16",
     "dockerfile_sha256": "d9866acd99e7de78f675af1bc2aba49d4c5c749e0c79ea22d1f45d2ce745a749"
   },
+  "reused_rust": {
+    "source_equivalence_base": "f94666b60d4c58ec0807d22c837cfae322a1dde9",
+    "extension_sha256": "7cb3df775d2183d2c1a7d3025a8f49b9a79548d157993969fc0c49f46c725c52",
+    "frontend_sha256": "a415187153b2a8b10683494c7b22472158b487c69023713313542d4bc09c4c92"
+  },
   "vllm": {
-    "head": "a4d70bef3724edb068c8206804154065acaa4cd4",
-    "tree": "7a53aac59000b1dfd47c8a8948486ff9f3f2c228",
-    "package_version": "0.26.1rc1.dev1137+ga4d70bef3.xpu",
-    "source_archive_sha256": "c9ba8e4d2e4d7848a23a7dc7dbdc9dc8e02f1f64746183bab1dca37b98bf9149",
-    "wheel_sha256": "48495720ed29ec11c39538a3e94bcc5ab8985b74249a0424535c3aecba902467"
+    "head": "a047e2543da570a64d1bbfeac4fe44eff3e87a81",
+    "tree": "2c2bce17a3e5897184edfa66e26715965a1e9f22",
+    "package_version": "0.26.1rc1.dev1140+ga047e2543.xpu",
+    "source_archive_sha256": "98abf2d746cb4515b4e5c74429867edbd064a20ef41c182814be837952fe026f",
+    "wheel_sha256": "7673a25c5308a88bff3d8186533892a39e3ea3f381f735b62d04dc7f3399ff2c"
   },
   "kernel": {
     "head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
@@ -41,17 +46,17 @@
   "images": {
     "current_vllm_stock_kernel": {
       "built": true,
-      "tag": "neural-download/vllm-openai-xpu:vllm-a4d70bef37-kernel-stock-3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
-      "image_id": "sha256:58f96e00d65123179f6bb0a6bebc21de8bb5e19295f2f478fa30b3103fce4780",
+      "tag": "neural-download/vllm-openai-xpu:vllm-a047e2543d-kernel-stock-3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "image_id": "sha256:4ca9cb9063ddd662e8cdd3f2901bab31d67ea71bba3e0f3611e12039f444ba72",
       "static_preflight_passed": true,
-      "static_preflight_sha256": "117cc1d80a521ee0fc4bda7d99147e276b99591a2f33cecce33cc63363feada8"
+      "static_preflight_sha256": "96cec072aa7f5dfb9d6e9ce9301907a3c9306cc7136b14d4139921c96b3e9491"
     },
     "both_current_zero_overlay": {
       "built": true,
-      "tag": "neural-download/vllm-openai-xpu:vllm-a4d70bef37-kernel-baaa05bb4e-official",
-      "image_id": "sha256:4718fdd224aae9ea95bfbd7bc5aea7eea64ddc51975e2d8d09fa6fdcf5efd0cf",
+      "tag": "neural-download/vllm-openai-xpu:vllm-a047e2543d-kernel-baaa05bb4e-official",
+      "image_id": "sha256:a63ed5c5e19b639813ba47e94e13fb739c3467ef74cc8ba4beaa9d99a5e6241c",
       "static_preflight_passed": true,
-      "static_preflight_sha256": "9d0643c70835ea6d6b3f895f40c471714fe5647c28259c5910c7de2c9cc26e3e"
+      "static_preflight_sha256": "5102e8943fa29802840896da681c9be02572975884bc066a89415e19591c7b96"
     }
   },
   "promotion": {

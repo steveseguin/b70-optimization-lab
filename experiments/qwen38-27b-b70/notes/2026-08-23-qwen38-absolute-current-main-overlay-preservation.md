@@ -711,3 +711,49 @@ next literal-current build must use a fresh compile cache, repeat this gate,
 then run strict/quality qualification. TP2's 78 and TP4's accepted 152
 `.best_config` files remain immutable decision-only overlays awaiting exact
 relative-path plus embedded-`configs_hash` remapping on that new base.
+
+## 2026-08-24 `a047e2543` literal-current build
+
+Upstream continued from the stale observation through `cc40c3673` and
+`26858770e` to `a047e2543da570a64d1bbfeac4fe44eff3e87a81` (tree
+`2c2bce17a3e5897184edfa66e26715965a1e9f22`). The cumulative three-commit
+delta from a4d is one CPU documentation update, CUDA/NCCL packed-weight
+transfer stream reuse, and a CUDA SM90+/MNNVL Lamport-mailbox fix. Qwen3.5,
+MTP, INC, XPU platform, V1, compilation, packaging, requirements, and Rust
+inputs are byte-identical. The CUDA header is excluded by the XPU CMake path,
+and the optional NCCL weight-transfer module is not configured in this lane.
+That audit predicts no Qwen/XPU speed change but does not waive qualification.
+
+The new exact build has:
+
+- package `0.26.1rc1.dev1140+ga047e2543.xpu`;
+- vLLM wheel SHA-256
+  `7673a25c5308a88bff3d8186533892a39e3ea3f381f735b62d04dc7f3399ff2c`;
+- vLLM source-tar SHA-256
+  `98abf2d746cb4515b4e5c74429867edbd064a20ef41c182814be837952fe026f`;
+- current-vLLM/stock-kernel image
+  `sha256:4ca9cb9063ddd662e8cdd3f2901bab31d67ea71bba3e0f3611e12039f444ba72`;
+- current-vLLM/exact-`baaa05bb4e`-kernel image
+  `sha256:a63ed5c5e19b639813ba47e94e13fb739c3467ef74cc8ba4beaa9d99a5e6241c`.
+
+The tracked and archived build receipts are byte-identical at SHA-256
+`4c389b109e36021d4603873d441ac81766e4982be6c204405801303c465b810d`.
+Their top-level `reused_rust` object records the verified extension and
+frontend hashes instead of requiring readers to infer them from the nested
+source receipt. The immutable build archive is
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T070008Z-a047e2543d-baaa05bb4e`.
+Its `SHA256SUMS` SHA-256 is
+`b420e9c5182271539bb4b27d62705521a0cd91868655750ac13fd70bab34151e`;
+all 15 payload hashes pass, and the 7,582-entry source tar is traversal-safe.
+A live seal at `2026-08-24T07:04:31Z` still matched the vLLM head, unchanged
+kernel head, and official nightly digest.
+
+This remains zero lab source overlay only in the attribution sense. The
+accepted performance work is still mandatory and preserved separately:
+model/quant identity, launch/topology settings, XPU graph, ext4 fresh-cache
+policy, quality and recency gates, plus the TP2 78-file and accepted TP4
+152-file decision overlays. The version change deliberately changes outer and
+AOT cache namespaces. Therefore the next run compiles fresh; it never imports
+a4d AOT models, binaries, or generated kernels, and later remapping may copy
+only exact relative-path and embedded-`configs_hash`-compatible decision
+bytes before full requalification.
