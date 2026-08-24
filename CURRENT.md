@@ -273,17 +273,27 @@ receipt IDs, and root headroom is about 13.44 GiB, above but close to the
 unchanged 12-GiB launch floor. Recheck space and all live upstream identities
 immediately before invoking a separately named, committed, audited TP1 packet.
 
-That separately named 6648 r1 packet is now preregistered but not launched.
-It keeps the audited classifier, fourteen-test battery, hardware gate, and
-strict runner byte-exact from 7797 r2, while changing only the build receipt,
-vLLM/source/image identity, fresh non-overridable roots, diagnostic wording,
-and isolated ports. It runs only the both-current zero-overlay TP1 lane; it
-does not claim the stock-kernel attribution control listed in the broader
-build receipt. The diagnostic floor remains `30.2178 tok/s`, and both strict
-natural-EOS replays must still clear `30.31067504052998 tok/s` with the full
-quality and sealed-cache contract. No accepted decision overlay is applied or
-dropped. See the
-[6648 TP1 r1 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6648eb118d-untreated-tp1-r1-prereg.md).
+That separately named 6648 r1 packet was launched once from clean pushed
+`main`. The fresh hardware gate passed 70/70 and the both-current zero-overlay
+TP1 arm passed model verification, exact canary, fresh graph compile, and
+25/25 diagnostic rows. Its audited conventional median was
+`30.340562433175233 tok/s`, above the historical diagnostic high, but vLLM
+`main` advanced during the arm to direct successor `4f686e182a`. The
+post-diagnostic freshness guard intentionally exited 5 before writing the
+speed gate, strict A/B, or quality result. Close 6648 as failed-incomplete and
+stale before promotion: the observation is dated evidence only, no cache or
+speed is promoted, and the protected TP1 diagnostic pair and strict floor stay
+`30.2178 / 30.2569` and `30.31067504052998 tok/s`. The TP2 78-decision and TP4
+152-decision overlays remain intact, disabled, and unapplied. See the
+[6648 r1 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6648eb118d-r1-stale-during-diagnostic.md).
+
+The successor is one cleanup-only vLLM commit; XPU-kernel main and the official
+nightly digest did not move. That bounds the port review but does not waive the
+literal-newest rebuild. Preserve and verify the exact 6648 images/build root on
+the USB artifact store before removing only those local identities, then
+re-resolve all three upstream identities and build the newest head. Resume in
+order TP1, TP2, TP4 without lowering a captured speed or dropping accepted
+optimization work.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh

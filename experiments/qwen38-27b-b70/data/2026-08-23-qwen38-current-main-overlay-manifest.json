@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-6648-tp1-r1-preregistered-not-launched",
+  "status": "preservation-gate-passed-6648-r1-closed-stale-during-diagnostic",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -9,13 +9,13 @@
     "result_policy": "append-only identities; never overwrite or lower historical highs"
   },
   "observed_heads": {
-    "checked_utc": "2026-08-24T16:59:08Z",
+    "checked_utc": "2026-08-24T17:31:57Z",
     "official_nightly": {
       "index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
       "vllm_source": "f94666b60d4c58ec0807d22c837cfae322a1dde9"
     },
-    "vllm_upstream_main": "6648eb118d77ad001a411cf52f9c6c4719476c83",
+    "vllm_upstream_main": "4f686e182a3460b28df9b8e26b377a5069d519fa",
     "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
   },
@@ -567,7 +567,7 @@
   },
   "active_qualification_build": {
     "built_utc": "2026-08-24T16:55:32Z",
-    "status": "static-preflight-passed-tp1-r1-preregistered-not-launched",
+    "status": "static-preflight-passed-r1-failed-incomplete-stale-during-diagnostic",
     "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6648eb118d-absolute-current-main-build.json",
     "receipt_sha256": "87438694ce565d4cf1bd2190a28560f03abbe11d269e9c6da900d80d4502bdcb",
     "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e",
@@ -611,7 +611,7 @@
       "new_image_ids_retained": true
     },
     "qualification": {
-      "status": "r1-preregistered-not-launched",
+      "status": "r1-failed-incomplete-stale-during-fresh-diagnostic",
       "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6648eb118d-untreated-tp1-r1-prereg.md",
       "packet_sha256": "22c8d1ffc0b1425bb72c20e35b82fd340aa3cfe68ce84ebf6c6d1a4c84891a60",
       "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-6648eb118d-untreated-tp1-r1-qualification.sh",
@@ -629,10 +629,32 @@
       "ports": [19767, 19768, 19769],
       "diagnostic_floor_tok_s": 30.2178,
       "strict_floor_tok_s": 30.31067504052998,
+      "closeout_note": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6648eb118d-r1-stale-during-diagnostic.md",
+      "closeout_note_sha256": "3cee62719384a901ef775aa242a9e3df7c3e0493644e138a1df375442687eafe",
+      "closeout_data": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6648eb118d-r1-stale-during-diagnostic.json",
+      "closeout_data_sha256": "ac534f32bc9bb63b8e1fac99b15fe6b128c0eef287b1c8a68823e6853ce78a7f",
+      "hardware_gate_manifest": "passed-70-of-70",
+      "campaign_manifest": "passed-98-of-98",
+      "diagnostic_rows_eligible": 25,
+      "diagnostic_median_tok_s": 30.340562433175233,
+      "diagnostic_observation_promoted": false,
+      "strict_replays_completed": 0,
+      "quality_battery_completed": false,
       "order": ["both-current zero-overlay TP1", "TP2", "TP4"],
       "performance_floors_must_not_change": true
     },
-    "policy": "Re-resolve vLLM main, XPU-kernel main, and the official nightly digest immediately before launch. Preserve every captured high and accepted overlay; this zero-overlay build does not apply, supersede, or discard them."
+    "stale_observation": {
+      "stage": "fresh-diagnostic-postflight-before-promotion",
+      "built_vllm_head": "6648eb118d77ad001a411cf52f9c6c4719476c83",
+      "first_live_successor": "4f686e182a3460b28df9b8e26b377a5069d519fa",
+      "successor_is_direct_child": true,
+      "xpu_kernel_unchanged": true,
+      "official_nightly_digest_unchanged": true,
+      "intentional_exit_status": 5,
+      "cache_promotion_allowed": false,
+      "tp2_tp4_authorized": false
+    },
+    "policy": "Close 6648 stale and do not resume its packet or promote its diagnostic cache. Preserve every captured high and accepted overlay, archive exact recovery artifacts, and rebuild the literal-newest successor before a separately named TP1 packet."
   },
   "frozen_trees": {
     "vllm": {
