@@ -1,0 +1,52 @@
+{
+  "date": "2026-08-23",
+  "model": "Ornith-1.5-35B-Q4_K_M.gguf",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "hardware": "Intel Arc Pro B70, one device",
+  "baseline": "accepted eleven-feature stack plus UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1",
+  "candidate": "fold shared-expert sigmoid and broadcast multiply into accepted shared/residual/RMS fusion",
+  "environment_flag": "GGML_SYCL_FUSED_ORNITH_MOE_GATE_RESIDUAL_RMS=1",
+  "launches_removed_per_token": 80,
+  "canonical_exact": true,
+  "canonical_transcript_sha256": "2e7965fcdc273f0433df359cff5188ae3585426fd32f28536121d1b5e35dad18",
+  "canonical_candidate_hits": 5080,
+  "engine": {
+    "protocol": "same-binary flag-off/flag-on, depth-zero tg128, seven repetitions, A/B/B/A",
+    "control_runs_tok_s": [132.959645, 132.890786],
+    "candidate_runs_tok_s": [134.643526, 134.484529],
+    "control_mean_tok_s": 132.9252155,
+    "candidate_mean_tok_s": 134.5640275,
+    "delta_percent": 1.2328827107,
+    "candidate_beats_both_controls": true
+  },
+  "fresh_server": {
+    "protocol": "new process per arm; fixed 12-prompt suite; each prompt once; up to 512 generated tokens; tokens 1-100 after TTFT; cache_prompt=false; A/B/B/A",
+    "control_run_medians_tok_s": [132.13226477391478, 129.8387870515834],
+    "candidate_run_medians_tok_s": [131.76906143822612, 133.80716195534055],
+    "control_mean_of_run_medians_tok_s": 130.9855259127491,
+    "candidate_mean_of_run_medians_tok_s": 132.78811169678335,
+    "mean_of_run_medians_delta_percent": 1.3761717346,
+    "control_pooled_median_tok_s": 130.36289132627843,
+    "candidate_pooled_median_tok_s": 133.1111744421715,
+    "pooled_median_delta_percent": 2.1081790132,
+    "control_pooled_mean_tok_s": 126.60047108640335,
+    "candidate_pooled_mean_tok_s": 128.73789868092516,
+    "pooled_mean_delta_percent": 1.6883251509,
+    "prompt_paired_average_wins": 12,
+    "prompt_count": 12,
+    "all_cached_tokens_zero": true,
+    "all_final_gates_passed": true
+  },
+  "complete_patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch",
+  "complete_patch_sha256": "7b9204f8f44608fc5b1858a15498b3cf9bf52b4f02c27c0f91a1807af5b5d15d",
+  "source_diff_sha256": "7b9204f8f44608fc5b1858a15498b3cf9bf52b4f02c27c0f91a1807af5b5d15d",
+  "binary_sha256": {
+    "llama_cli": "b791b681d42ad4d6862bf94798bbaff97ead195fb4fb67e7f5c0be2bf7a80135",
+    "llama_server": "08bc580449dbc781fedd63db8039eed624817f07535a3f8a023280451f0c6e6f",
+    "llama_bench": "9bdd7033e50e22af9b05ec2c30742b5248f6708a89080974b0f0c491963c6e70",
+    "libggml_sycl": "21b9196911c9254f06756317a7cac85942517dbd4495e41694ec7f22c80db868"
+  },
+  "decision": "accepted as twelfth source feature",
+  "headline_tok_s": 132.78811169678335,
+  "no_extrapolation": true
+}

@@ -7,9 +7,9 @@ the recipe and validation evidence in this repository are the source of truth.
 ## Identity
 
 - Base: llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`.
-- Current complete patch: `llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch`.
+- Current complete patch: `llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch`.
 - Patch SHA-256:
-  `b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1`.
+  `7b9204f8f44608fc5b1858a15498b3cf9bf52b4f02c27c0f91a1807af5b5d15d`.
 - Runtime doors: `GGML_SYCL_FUSED_MOE_ADD_REDUCE=1` and
   `GGML_SYCL_FUSED_ORNITH_CONV_SILU=1` and
   `GGML_SYCL_FUSED_RESIDUAL_RMS_NORM=1` and
@@ -20,9 +20,10 @@ the recipe and validation evidence in this repository are the source of truth.
   `GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1` and
   `GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1` and
   `GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO=1` and
-  `GGML_SYCL_FUSED_ORNITH_QK_NORM_ROPE=1` (all default off).
+  `GGML_SYCL_FUSED_ORNITH_QK_NORM_ROPE=1` and
+  `GGML_SYCL_FUSED_ORNITH_MOE_GATE_RESIDUAL_RMS=1` (all default off).
 - Validated `libggml-sycl.so` SHA-256:
-  `060484479736f7cb7b6f55aacc38b9fdf162fb702fc3d73b1a1ce9750301fdcf`.
+  `21b9196911c9254f06756317a7cac85942517dbd4495e41694ec7f22c80db868`.
 - Validated recipe-only runtime setting:
   `UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1`; keep
   `UR_L0_USE_IMMEDIATE_COMMANDLISTS` unset.
@@ -31,9 +32,9 @@ Apply only to the pinned clean base:
 
 ```bash
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
-echo "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1  /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch" | sha256sum -c -
-git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch
-git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch
+echo "7b9204f8f44608fc5b1858a15498b3cf9bf52b4f02c27c0f91a1807af5b5d15d  /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch" | sha256sum -c -
+git apply --check /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch
+git apply /path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch
 git diff --check
 ```
 
@@ -51,7 +52,7 @@ The full-model trace observed 40 ordered-reduction matches, 30 recurrent
 convolution/SiLU matches, 80 residual/RMSNorm matches, and 30 recurrent
 concat/state matches per token. The direct state-materialization path replaces
 the latter boundary and also removes 30 recurrent `GET_ROWS` launches. Together
-the complete stack removes 700 launches/token.
+the complete stack removes 780 launches/token.
 
 The second fusion accepts only the exact one-token `[4,8192]` FP32 convolution
 whose sole consumer is a full-width SiLU. It preserves stock state handling,
@@ -125,6 +126,15 @@ parameters, named layer weights, sole-consumer chains, shapes, types, cache
 layout, and storage non-overlap fail closed. Replacing five operations with
 one in each of 10 full-attention layers removes another 40 launches/token.
 
+The twelfth fusion folds Ornith's Qwen-derived one-element shared-expert
+sigmoid and 2,048-element broadcast multiply into the existing
+routed/shared/residual/RMSNorm launch. It requires the exact named six-node
+chain, one-use non-output intermediates, FP32 scalar/vector layouts, and the
+accepted residual matcher. Local and volatile FP32 materialization preserves
+the sigmoid, gated-shared, routed-plus-shared, and residual rounding
+boundaries. It removes two launches in each of 40 MoE layers, or another 80
+launches/token.
+
 ## Validation
 
 - Raw engine A/B/B/A-style means: `103.047744` control versus
@@ -190,6 +200,12 @@ one in each of 10 full-attention layers removes another 40 launches/token.
   two-server mean. The candidate won 9/12 prompt-matched averages, the forced
   transcript was byte-identical, and all freshness/finality gates passed.
   This is a launch-recipe setting rather than a twelfth source feature.
+- The shared-gate/residual/RMS fusion improved mirrored raw-engine decode by
+  **+1.23%** and fresh-server mean-of-run-medians by **+1.38%**, reaching a
+  directly measured `132.788112 tok/s` two-server mean. The pooled median
+  improved +2.11%, pooled mean improved +1.69%, and candidate two-run averages
+  won 12/12 prompt IDs. The forced 128-token transcript was byte-identical
+  across exactly 5,080 candidate hits; all freshness/finality gates passed.
 
 Fresh stock servers matched `0/12` complete response hashes with each other on
 the long realistic suite. A new realistic same-process repeat probe also
@@ -222,3 +238,5 @@ The full-attention Q/K increment is in
 [`2026-08-23-ornith35b-qk-norm-rope-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-qk-norm-rope-positive.md).
 The copy-offload runtime increment is in
 [`2026-08-23-ornith35b-copy-offload-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-copy-offload-positive.md).
+The shared-gate/residual/RMS increment is in
+[`2026-08-23-ornith35b-shared-gate-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-shared-gate-residual-rms-positive.md).

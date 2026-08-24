@@ -1,0 +1,37 @@
+{
+ "format": "neural-download-depth-sweep-meta-v1",
+ "sweep_id": "ornith-15-35b-a3b-q4km-twelve-feature",
+ "model_path": "/home/steve/.cache/b70-optimization-lab/models/ornith-1.5-35b-a3b-q4km/Ornith-1.5-35B-Q4_K_M.gguf",
+ "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+ "bench_path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31-ornith-moe-graph/bin/llama-bench",
+ "bench_sha256": "9bdd7033e50e22af9b05ec2c30742b5248f6708a89080974b0f0c491963c6e70",
+ "kv_type": "f16",
+ "depths": "0,2048,4096,8192,16384,24576,32768",
+ "protocol": "llama-bench pp2048+tg128 at each depth, 5 reps, fa=on, raw engine rates",
+ "ggml_sycl_library_sha256": "21b9196911c9254f06756317a7cac85942517dbd4495e41694ec7f22c80db868",
+ "runtime_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+ "project_patch": "patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch",
+ "project_patch_sha256": "7b9204f8f44608fc5b1858a15498b3cf9bf52b4f02c27c0f91a1807af5b5d15d",
+ "sweep_sha256": "98f9539f5611146634e5fb11a8d29ddf1477af4c0a9e9857be52e3edffb671b5",
+ "environment": {
+  "UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD": "1",
+  "GGML_SYCL_ENABLE_GRAPH": "0",
+  "GGML_SYCL_FUSED_MOE_ADD_REDUCE": "1",
+  "GGML_SYCL_FUSED_ORNITH_CONV_SILU": "1",
+  "GGML_SYCL_FUSED_RESIDUAL_RMS_NORM": "1",
+  "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE": "1",
+  "GGML_SYCL_FUSED_ORNITH_CONCAT_STATE_DIRECT": "1",
+  "GGML_SYCL_FUSED_ORNITH_ALPHA_GATE": "1",
+  "GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP": "1",
+  "GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS": "1",
+  "GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE": "1",
+  "GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO": "1",
+  "GGML_SYCL_FUSED_ORNITH_QK_NORM_ROPE": "1",
+  "GGML_SYCL_FUSED_ORNITH_MOE_GATE_RESIDUAL_RMS": "1"
+ },
+ "observed_hits": {
+  "GGML_SYCL_FUSED_ORNITH_MOE_GATE_RESIDUAL_RMS": 179480
+ },
+ "no_interpolation": true,
+ "no_extrapolation": true
+}

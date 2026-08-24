@@ -4,8 +4,8 @@ Status: **model verified, one-card operating point validated, and lab decode
 patch promoted** (2026-08-23). Lane: enthusiast MoE; the measured stock
 two-card comparison was slower than one card for single-stream decode.
 
-**Current directly measured target-only serving mean: `129.568467 tok/s`**
-(fresh-suite medians `130.159639` and `128.977294`, one B70, cache-zero).
+**Current directly measured target-only serving mean: `132.788112 tok/s`**
+(fresh-suite medians `131.769061` and `133.807162`, one B70, cache-zero).
 
 **Intake diagnostic baseline (1x B70, 8K ctx, f16 KV, target-only,
 128/100 window, cache-zero verified): `105.782 tok/s` median /
@@ -47,8 +47,8 @@ git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-ornith15
 cd llama.cpp-ornith15
 git checkout 9fee29e9435f865ec0b811a783a6471a136d9317
 
-PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch
-echo "b1b987f9b7eaf2434d456fd18701eb80964ff9474639f378b115a5fb1ac6a4f1  $PATCH" | sha256sum -c -
+PATCH=/path/to/b70-optimization-lab/patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch
+echo "7b9204f8f44608fc5b1858a15498b3cf9bf52b4f02c27c0f91a1807af5b5d15d  $PATCH" | sha256sum -c -
 git apply --check "$PATCH"
 git apply "$PATCH"
 git diff --check
@@ -74,7 +74,7 @@ cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-bench -j2
 ```
 
 The validated compute library SHA-256 was
-`060484479736f7cb7b6f55aacc38b9fdf162fb702fc3d73b1a1ce9750301fdcf`.
+`21b9196911c9254f06756317a7cac85942517dbd4495e41694ec7f22c80db868`.
 AOT output can vary with the compiler installation, so the source revision,
 patch hash, build settings, and validation gates are the durable identity.
 
@@ -104,6 +104,7 @@ export GGML_SYCL_FUSED_ORNITH_MOE_SHARED_RESIDUAL_RMS=1
 export GGML_SYCL_FUSED_ORNITH_GDN_RMS_GATE=1
 export GGML_SYCL_FUSED_ORNITH_GDN_STATE_IO=1
 export GGML_SYCL_FUSED_ORNITH_QK_NORM_ROPE=1
+export GGML_SYCL_FUSED_ORNITH_MOE_GATE_RESIDUAL_RMS=1
 
 build-sycl-aot-bmg-g31/bin/llama-server \
   --model "$MODEL_DIR/Ornith-1.5-35B-Q4_K_M.gguf" \
@@ -120,30 +121,29 @@ Keep `UR_L0_USE_IMMEDIATE_COMMANDLISTS` unset: its independent matched server
 screen regressed serving. The copy-offload setting above is validated only for
 this exact one-B70 recipe and is not a global default for other models.
 
-## Current eleven-feature context-depth profile (llama-bench, FA on, 5 reps)
+## Current twelve-feature context-depth profile (llama-bench, FA on, 5 reps)
 
-![optimized depth sweep](optimized-depth-sweep-eleven-feature.svg)
+![optimized depth sweep](optimized-depth-sweep-twelve-feature.svg)
 
 | Depth | decode tg128 tok/s (±σ) | prefill pp2048 tok/s (±σ) |
 |---:|---:|---:|
-| 0 | 138.98 (±0.49) | 1397.3 (±37.9) |
-| 2,048 | 133.77 (±0.35) | 1326.7 (±7.4) |
-| 4,096 | 130.62 (±0.10) | 1312.2 (±5.0) |
-| 8,192 | 124.21 (±0.09) | 1284.8 (±5.8) |
-| 16,384 | 113.31 (±0.10) | 1220.2 (±6.1) |
-| 24,576 | 104.32 (±0.05) | 1196.7 (±5.8) |
-| 32,768 | 97.00 (±0.06) | 1101.6 (±3.9) |
+| 0 | 141.92 (±0.43) | 1422.4 (±47.9) |
+| 2,048 | 136.85 (±0.13) | 1343.9 (±9.4) |
+| 4,096 | 133.33 (±0.06) | 1338.2 (±5.2) |
+| 8,192 | 126.83 (±0.07) | 1301.2 (±7.7) |
+| 16,384 | 116.27 (±0.02) | 1238.6 (±4.9) |
+| 24,576 | 106.97 (±0.28) | 1212.9 (±6.5) |
+| 32,768 | 99.61 (±0.10) | 1115.6 (±3.4) |
 
-These are directly measured raw engine rates from the exact eleven-feature
-source stack with command graphs off, F16 KV, and five samples at every
-displayed depth. This sweep predates the accepted copy-offload runtime setting;
-its points have not been scaled. They are not inferred from the 8K server
-result and no missing depth is interpolated. Raw engine rates exclude HTTP and
-sampling overhead, so use the current fresh-server suite median below as the
-serving headline.
-Evidence: `ornith-15-35b-a3b-q4km-eleven-feature.sweep.json` plus
-`ornith-15-35b-a3b-q4km-eleven-feature.meta.json` (model and benchmark hashes
-inside).
+These are directly measured raw engine rates from the exact twelve-feature
+source stack and accepted copy-offload setting, with command graphs off, F16
+KV, and five samples at every displayed depth. The points are not inferred
+from the 8K server result; no missing depth is interpolated or extrapolated.
+Raw engine rates exclude HTTP and sampling overhead, so use the current
+fresh-server suite mean above as the serving headline. Evidence:
+`ornith-15-35b-a3b-q4km-twelve-feature.sweep.json` plus
+`ornith-15-35b-a3b-q4km-twelve-feature.meta.json` (model, benchmark, patch,
+library, environment, and activation hashes/counts inside).
 
 ## Historical stock context-depth reference (patch off; llama-bench, FA on, 5 reps)
 
@@ -189,7 +189,7 @@ Correctness gates:
   open runtime limitation rather than a patch acceptance gate.
 
 Patch instructions and evidence:
-[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-eleven-feature-stack-qk-norm-rope-20260823.patch),
+[complete source patch](../../patches/ornith-15-35b-a3b-q4km-b70/llama-cpp-ornith15-twelve-feature-stack-shared-gate-residual-rms-20260823.patch),
 [patch packet](../../patches/ornith-15-35b-a3b-q4km-b70/README.md), and
 [`experiments/ornith-15-b70/`](../../experiments/ornith-15-b70/).
 
@@ -326,6 +326,18 @@ gate, and the forced 128-token transcript remained byte-identical. This is a
 recipe-only runtime setting: the eleven-feature source patch and its binary
 hashes are unchanged. Evidence:
 [`2026-08-23-ornith35b-copy-offload-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-copy-offload-positive.md).
+
+The twelfth source increment completes the shared-expert gate boundary rather
+than repeating the earlier one-launch broadcast candidate. Its exact matcher
+folds the scalar sigmoid and 2,048-element broadcast multiply into the already
+accepted routed/shared/residual/RMS launch while preserving every rounded FP32
+intermediate. This removes 80 launches/token and brings the complete stack to
+780. Mirrored engine means improved `132.925 -> 134.564 tok/s` (**+1.23%**).
+Fresh-server mean-of-run-medians improved `130.986 -> 132.788 tok/s`
+(**+1.38%**); pooled median improved +2.11%, pooled mean improved +1.69%, and
+12/12 prompt-paired averages won. The forced 128-token transcript was
+byte-identical across 5,080 candidate hits. Evidence:
+[`2026-08-23-ornith35b-shared-gate-residual-rms-positive.md`](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-shared-gate-residual-rms-positive.md).
 
 ## Stock two-card comparison (patch off; layer split, GPUs 0+1)
 

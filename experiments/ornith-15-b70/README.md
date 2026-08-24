@@ -216,6 +216,18 @@ binary, driver, or benchmark protocol will reproduce them.
   averages, forced output was byte-identical, and all freshness/finality gates
   passed. This is recipe-only and is not promoted globally. See
   `notes/2026-08-23-ornith35b-copy-offload-positive.md`.
+- **Shared gate + residual/RMSNorm — ACCEPTED +1.38% incremental serving:**
+  Ornith's Qwen-derived scalar shared-expert gate is now computed inside the
+  already accepted routed/shared/residual/RMS kernel. The exact six-node
+  matcher and volatile FP32 intermediates preserve the stock sigmoid,
+  broadcast multiply, ADD, residual, and RMS rounding boundaries while
+  removing 80 launches/token. Mirrored engine means improved
+  `132.925 -> 134.564 tok/s` (+1.23%). Fresh-server mean-of-run-medians
+  improved `130.986 -> 132.788 tok/s` (+1.38%); pooled median improved 2.11%,
+  pooled mean improved 1.69%, and all 12 prompt-paired averages won. The
+  canonical transcript was byte-identical across 5,080 candidate hits. The
+  complete twelve-feature stack removes 780 launches/token. See
+  `notes/2026-08-23-ornith35b-shared-gate-residual-rms-positive.md`.
 - **Unified Runtime single-thread mode — CLOSED SERVING NEGATIVE:** layered on
   the accepted copy-offload setting, `UR_L0_SINGLE_THREAD_MODE=1` was
   byte-exact and improved mirrored raw-engine means by 0.31%, but fresh-server
@@ -243,6 +255,14 @@ binary, driver, or benchmark protocol will reproduce them.
   `96.996` at 32K; prefill measured `1397.348`, `1284.796`, and `1101.625`
   tok/s at those same depths. No point is interpolated or extrapolated. See
   `notes/2026-08-23-ornith35b-eleven-feature-depth-sweep.md` and the package guide.
+- **Twelve-feature 0-32K context profile — PUBLISHED, MEASURED ONLY:** the
+  promoted shared-gate stack plus accepted copy-offload setting was measured
+  independently at all seven depths, again with five samples per point. Decode
+  measured `141.918` tok/s at depth zero, `126.829` at 8K, and `99.614` at
+  32K; prefill measured `1422.407`, `1301.167`, and `1115.600` tok/s. These
+  points replace the prior curve in the package UI; none are scaled,
+  interpolated, or extrapolated. See
+  `notes/2026-08-23-ornith35b-twelve-feature-depth-sweep.md`.
 - **Current-stack serialized profile — DIAGNOSTIC ONLY:** temporary device
   barriers ranked dense projections first and routed projections second after
   the eight accepted optimizations. These serialized values are never
