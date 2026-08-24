@@ -1,0 +1,73 @@
+{
+  "schema": "neural-download-absolute-current-main-build-v1",
+  "state": "static-preflight-passed-for-built-images-gpu-qualification-pending",
+  "mode": "--build-all",
+  "overlay": "none",
+  "build_utc": "2026-08-24T16:55:32Z",
+  "build_root": "/home/steve/builds/qwen38-current-main-20260824T165532Z-6648eb118d-baaa05bb4e",
+  "external_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e",
+  "base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+  "lab": {
+    "head": "684d91884edd19a879a60356ed5ac6ffa9f391cd",
+    "tree": "90e5488d72a54412f328faee7934cbc09029149e"
+  },
+  "build_inputs": {
+    "script_sha256": "fc780ca35a9ea8b3022825ae9cebbc1e2e84c42a40a62289649bc67cd96eec16",
+    "dockerfile_sha256": "d9866acd99e7de78f675af1bc2aba49d4c5c749e0c79ea22d1f45d2ce745a749"
+  },
+  "reused_rust": {
+    "source_equivalence_base": "f94666b60d4c58ec0807d22c837cfae322a1dde9",
+    "extension_sha256": "7cb3df775d2183d2c1a7d3025a8f49b9a79548d157993969fc0c49f46c725c52",
+    "frontend_sha256": "a415187153b2a8b10683494c7b22472158b487c69023713313542d4bc09c4c92"
+  },
+  "vllm": {
+    "head": "6648eb118d77ad001a411cf52f9c6c4719476c83",
+    "tree": "b223b37600829d862fc9d2b3a054ad5ef7de9c86",
+    "package_version": "0.26.1rc1.dev1154+g6648eb118.xpu",
+    "source_archive_sha256": "4e539b9f39adfeadc31af666c099780474025b1c8389e74be36ed8e0d1aca979",
+    "wheel_sha256": "8fc78ec8a5f413bc1bc80f553a59ef3a54d4470fc1432cdcba32daf13162200f"
+  },
+  "kernel": {
+    "head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "package_version": "0.1.dev1+gbaaa05bb4",
+    "official_artifact": {
+      "run_id": 32692290527,
+      "artifact_id": 9508328924,
+      "name": "vllm-xpu-kernels--20260824-050903",
+      "archive_digest": "sha256:ce94da86eb14e61673a10db5c8a2c3fffb49a5f61ec9d36c210601062f887f10",
+      "archive_size_bytes": 475965714,
+      "wheel_sha256": "7b886fa814469aef8904118729f31f2fe77559f3c5219bd0ecf799a904387483",
+      "workflow_sha256": "7670fc876c4f4c9deab5f972f65324c6a75ad61eb1dadea4759ae41282a78c12",
+      "chunk_prefill_full_sha256": "6091d2b7cda8340333beb26d6dde09c45689c1fd19e5a9e77352d8dedb7cbc59",
+      "paged_decode_full_sha256": "2c46aea68f7d70a0e40acd3de15a4afefe5c9f2ff0f105592d8a7d0c828bcebc"
+    }
+  },
+  "images": {
+    "current_vllm_stock_kernel": {
+      "built": true,
+      "tag": "neural-download/vllm-openai-xpu:vllm-6648eb118d-kernel-stock-3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "image_id": "sha256:00757757bb66515733395fbca3b26e752d3bea8c04e91b7c2a4e048190100e28",
+      "static_preflight_passed": true,
+      "static_preflight_sha256": "9dbccb4d60073cb5ccb2e3b0b4cdae911256e401bb40e9f537badc30c5cb9782"
+    },
+    "both_current_zero_overlay": {
+      "built": true,
+      "tag": "neural-download/vllm-openai-xpu:vllm-6648eb118d-kernel-baaa05bb4e-official",
+      "image_id": "sha256:945b121e92ee023098fca39919329eed82d6ec5bd7ddb2c3ec3e5d1c47f3e545",
+      "static_preflight_passed": true,
+      "static_preflight_sha256": "d6248ac82e791156ee9869c77e08a45be0b1c9af621a1bdf193ecd235810f5a0"
+    }
+  },
+  "promotion": {
+    "qualified": false,
+    "order": [
+      "current-vLLM/stock-kernel TP1",
+      "both-current zero-overlay TP1",
+      "both-current accepted-overlay TP1",
+      "TP2",
+      "TP4"
+    ],
+    "rule": "Never replace a certified result unless identity, quality, and performance floors all pass."
+  }
+}

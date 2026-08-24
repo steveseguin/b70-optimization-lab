@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-7797-r1-closed-r2-stale-unlaunched",
+  "status": "preservation-gate-passed-6648-static-build-current-tp1-packet-pending",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -9,7 +9,7 @@
     "result_policy": "append-only identities; never overwrite or lower historical highs"
   },
   "observed_heads": {
-    "checked_utc": "2026-08-24T16:35:15Z",
+    "checked_utc": "2026-08-24T16:59:08Z",
     "official_nightly": {
       "index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
@@ -461,7 +461,7 @@
     },
     "qualification": "never-launched"
   }],
-  "active_qualification_build": {
+  "previous_qualification_build": {
     "built_utc": "2026-08-24T15:31:34Z",
     "status": "static-preflight-passed-r1-failed-incomplete-r2-stale-unlaunched",
     "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-7797b6022c-absolute-current-main-build.json",
@@ -564,6 +564,58 @@
       "performance_evidence": false
     },
     "policy": "R2 is closed stale and must not run. Preserve its exact audited packet and every historical result append-only; build the literal-current successor without lowering a floor or dropping a compatible accepted overlay."
+  },
+  "active_qualification_build": {
+    "built_utc": "2026-08-24T16:55:32Z",
+    "status": "static-preflight-passed-tp1-packet-pending",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6648eb118d-absolute-current-main-build.json",
+    "receipt_sha256": "87438694ce565d4cf1bd2190a28560f03abbe11d269e9c6da900d80d4502bdcb",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T165532Z-6648eb118d-baaa05bb4e",
+    "archive_sha256s_sha256": "a00b53e007f77f8dc4f8746d327487d7dc5615736399830853cddc20cbac5e60",
+    "archive_contains_docker_image_tar": false,
+    "vllm_head": "6648eb118d77ad001a411cf52f9c6c4719476c83",
+    "vllm_tree": "b223b37600829d862fc9d2b3a054ad5ef7de9c86",
+    "vllm_package_version": "0.26.1rc1.dev1154+g6648eb118.xpu",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "vllm_xpu_kernels_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "vllm_xpu_kernels_package_version": "0.1.dev1+gbaaa05bb4",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "source_archive_sha256": "4e539b9f39adfeadc31af666c099780474025b1c8389e74be36ed8e0d1aca979",
+    "wheel_sha256": "8fc78ec8a5f413bc1bc80f553a59ef3a54d4470fc1432cdcba32daf13162200f",
+    "images": {
+      "current_vllm_stock_kernel": "sha256:00757757bb66515733395fbca3b26e752d3bea8c04e91b7c2a4e048190100e28",
+      "both_current_zero_overlay": "sha256:945b121e92ee023098fca39919329eed82d6ec5bd7ddb2c3ec3e5d1c47f3e545"
+    },
+    "overlay_preservation_binding": {
+      "zero_overlay_build": true,
+      "decision_files_applied": 0,
+      "compiled_outputs_carried": 0,
+      "tp2_decision_files_preserved": 78,
+      "tp4_decision_files_preserved": 152,
+      "accepted_overlays_discarded": 0
+    },
+    "post_build_freshness_seal": {
+      "checked_utc": "2026-08-24T16:59:08Z",
+      "vllm_head": "6648eb118d77ad001a411cf52f9c6c4719476c83",
+      "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+      "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "status": "passed"
+    },
+    "upstream_delta_disposition": "6648 is the direct one-commit successor of 7797. It only removes a duplicate VLLM_USE_DEEP_GEMM check in kernel warmup. The called support function still checks the flag and XPU inherits DeepGEMM unsupported, so no Qwen/XPU behavior or speed gain is inferred.",
+    "storage": {
+      "unused_docker_builder_cache_pruned_reported": "7.652GB",
+      "runtime_images_removed": 0,
+      "root_free_kib_after": 14094500,
+      "minimum_gpu_launch_free_kib": 12582912,
+      "new_image_ids_retained": true
+    },
+    "qualification": {
+      "status": "packet-not-yet-preregistered",
+      "order": ["both-current zero-overlay TP1", "TP2", "TP4"],
+      "performance_floors_must_not_change": true
+    },
+    "policy": "Re-resolve vLLM main, XPU-kernel main, and the official nightly digest immediately before launch. Preserve every captured high and accepted overlay; this zero-overlay build does not apply, supersede, or discard them."
   },
   "frozen_trees": {
     "vllm": {

@@ -251,6 +251,28 @@ The official base, dated stock controls, all run evidence, and accepted
 decision artifacts remain; root headroom is now 21.64 GiB. See the
 [storage-rotation receipt](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-storage-rotation.md).
 
+The literal-current successor build then completed normally at vLLM
+`6648eb118d77ad001a411cf52f9c6c4719476c83`, XPU-kernel main
+`baaa05bb4e92901219a5a072dd63f2474896f6d1`, and official nightly digest
+`sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876`.
+Both the current-vLLM/stock-kernel attribution image and the both-current
+zero-overlay image passed their static import, package, DSO, source-label, and
+receipt gates. The external archive passes 14/14 checksums. The sole vLLM
+delta from 7797 removes a duplicate `VLLM_USE_DEEP_GEMM` check in kernel
+warmup; the called support function still checks the flag and XPU still
+reports DeepGEMM unsupported, so no B70 behavior or speed gain is inferred.
+A fresh independent check at `2026-08-24T16:59:08Z` resolved all three live
+upstream identities to the exact built values. This is a freshness and static
+build pass only; GPU qualification is pending. See the
+[6648 build receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6648eb118d-absolute-current-main-build.json).
+
+After the build archive verified, only 7.652 GB of unused Docker builder cache
+was pruned. No image, model, run evidence, compile cache, accepted decision,
+or protected result was removed. Both new images remain under their exact
+receipt IDs, and root headroom is about 13.44 GiB, above but close to the
+unchanged 12-GiB launch floor. Recheck space and all live upstream identities
+immediately before invoking a separately named, committed, audited TP1 packet.
+
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
 tune selected different winners. The capped TP2 preservation test transferred
