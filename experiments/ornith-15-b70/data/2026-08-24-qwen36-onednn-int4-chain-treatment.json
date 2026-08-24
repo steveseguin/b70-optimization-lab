@@ -1,0 +1,43 @@
+{
+  "timestamp_utc": "2026-08-24T16:43:53.303036+00:00",
+  "status": "synthetic_current_shape_onednn_int4_chain_repeat_stability",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "seed": 20260824,
+  "treatment": true,
+  "input_dependency": true,
+  "completion_barrier": true,
+  "rows": [
+    {
+      "batch_size": 1,
+      "input_size": 2048,
+      "output_size": 1024,
+      "repeats": 100,
+      "unique_output_sha256": 1,
+      "all_outputs_bit_identical": true,
+      "max_abs_drift_from_first": 0.0
+    },
+    {
+      "batch_size": 64,
+      "input_size": 2048,
+      "output_size": 1024,
+      "repeats": 100,
+      "unique_output_sha256": 1,
+      "all_outputs_bit_identical": true,
+      "max_abs_drift_from_first": 0.0
+    },
+    {
+      "batch_size": 64,
+      "input_size": 2048,
+      "output_size": 12288,
+      "repeats": 100,
+      "unique_output_sha256": 1,
+      "all_outputs_bit_identical": true,
+      "max_abs_drift_from_first": 0.0
+    }
+  ],
+  "notes": [
+    "Fixed tensors were reused for every repeat.",
+    "No host synchronization occurs between producer, GEMM, and consumer.",
+    "This does not establish full-model determinism, quality, or throughput."
+  ]
+}

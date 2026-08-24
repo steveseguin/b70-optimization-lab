@@ -1,0 +1,52 @@
+{
+  "timestamp_utc": "2026-08-24T16:40:02.510294+00:00",
+  "status": "synthetic_exact_dimension_gdn_decode_repeat_stability",
+  "mode": "graph",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "seed": 20260824,
+  "shape": {
+    "key_heads": 16,
+    "value_heads": 32,
+    "key_head_dim": 128,
+    "value_head_dim": 128,
+    "conv_width": 4,
+    "mixed_qkv_dim": 8192
+  },
+  "rows": [
+    {
+      "batch_size": 1,
+      "repeats": 25,
+      "output_bit_identical": true,
+      "conv_state_bit_identical": true,
+      "recurrent_state_bit_identical": true,
+      "output_max_abs_drift": 0.0,
+      "conv_state_max_abs_drift": 0.0,
+      "recurrent_state_max_abs_drift": 0.0
+    },
+    {
+      "batch_size": 4,
+      "repeats": 25,
+      "output_bit_identical": true,
+      "conv_state_bit_identical": true,
+      "recurrent_state_bit_identical": true,
+      "output_max_abs_drift": 0.0,
+      "conv_state_max_abs_drift": 0.0,
+      "recurrent_state_max_abs_drift": 0.0
+    },
+    {
+      "batch_size": 64,
+      "repeats": 25,
+      "output_bit_identical": true,
+      "conv_state_bit_identical": true,
+      "recurrent_state_bit_identical": true,
+      "output_max_abs_drift": 0.0,
+      "conv_state_max_abs_drift": 0.0,
+      "recurrent_state_max_abs_drift": 0.0
+    }
+  ],
+  "notes": [
+    "Fixed projected input and states were restored before every call.",
+    "The captured segment includes causal_conv1d_update and the packed recurrent update.",
+    "This does not establish full-model determinism, quality, or throughput."
+  ]
+}

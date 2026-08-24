@@ -116,22 +116,80 @@
     "passed": 4,
     "total": 4,
     "cases": ["arithmetic", "prime", "capital", "compact JSON"],
-    "scope": "literal smoke only; not a promotion-quality evaluation"
+    "batch_size": 4,
+    "captured_shape": false,
+    "scope": "literal smoke only; not validation of the captured B64 path or a promotion-quality evaluation"
   },
   "operator_repeat_stability": {
     "evidence": "2026-08-24-qwen36-grouped-w4a16-repeat-stability.json",
     "result": "bit-identical 25/25 at batch sizes 1, 2, 4, 8, 16, 32, and 64",
     "interpretation": "the standalone grouped W4A16 operator did not reproduce the model-level output variation"
   },
+  "eager_fixed_seed_discriminator": {
+    "evidence": "2026-08-24-qwen36-grouped-eager-fixed-seed-discriminator.json",
+    "b1_repeat_aggregate_tok_s": [24.574758751110785, 24.500401896446174],
+    "b1_identical_request_outputs": "1/1",
+    "b64_repeat_aggregate_tok_s": [948.9991477915532, 950.3028630506798],
+    "b64_identical_request_outputs": "31/64",
+    "interpretation": "same-shape variation persists with graph capture disabled, so graph replay is not the root cause"
+  },
+  "additional_component_repeat_stability": [
+    {
+      "evidence": "2026-08-24-qwen36-grouped-w4a16-graph-repeat-stability.json",
+      "result": "grouped W4A16 graph replay bit-identical 25/25 at B1-B64"
+    },
+    {
+      "evidence": "2026-08-24-qwen36-gdn-prefill-repeat-stability.json",
+      "result": "GDN prefill output and state bit-identical 25/25 at B1, B4, and B64"
+    },
+    {
+      "evidence": "2026-08-24-qwen36-gdn-decode-graph-repeat-stability.json",
+      "result": "captured GDN decode output and both states bit-identical 25/25 at B1, B4, and B64"
+    },
+    {
+      "evidence": "2026-08-24-qwen36-combined-runtime-onednn-control.json and 2026-08-24-qwen36-combined-runtime-onednn-treatment.json",
+      "result": "oneDNN producer-to-INT4-to-consumer chain bit-identical 100/100 with and without explicit input/completion dependencies at all three tested shapes"
+    }
+  ],
+  "guarded_runtime_treatment": {
+    "classification": "measured_speed_positive_determinism_negative_not_promoted",
+    "runtime_module_sha256": "12a0e730989225195d4068a65a932833b81154a7ebc6edaefee05754ffd32c69",
+    "gdn_library_sha256": "4a7019bd8bba6538dad41d142d24c65b4b11b2dd443a9b00127b0bb95d28398e",
+    "grouped_library_sha256": "6ca90896b773ec7d93a88f32b69e94893046b8eec01022b5967bc19dee9e49c1",
+    "dependency_guards": {
+      "input_dependency": true,
+      "input_dependency_scope": "all_target",
+      "completion_barrier": true,
+      "determinism_pad": true
+    },
+    "b1_repeat_aggregate_tok_s": [
+      90.88505510330154,
+      90.93391167271041
+    ],
+    "b1_mean_aggregate_tok_s": 90.90948338800597,
+    "b1_identical_request_outputs": "1/1",
+    "b64_repeat_aggregate_tok_s": [
+      1050.9996023701742,
+      1054.741282453725
+    ],
+    "b64_mean_aggregate_tok_s": 1052.8704424119495,
+    "b64_identical_request_outputs": "29/64",
+    "quality_smoke": "100/100 literal canaries passed at capture shapes B1, B32, and B64",
+    "interpretation": "The treatment improved measured B1 and B64 throughput but did not improve end-to-end fixed-seed repeat identity, so it is not a determinism fix and remains unpromoted."
+  },
   "raw_evidence": {
     "baseline": "../../../data/qwen36-35b-ar-tp1/persistent-eager-p128o1024-r6.json",
     "baseline_sha256": "148fbe4bdcc9cf0cc9a0fb362dd4b5dd09a57811ae35b75bbb4e2c8ed366abd5",
     "candidate": "../../../data/qwen36-35b-ar-tp1/persistent-grouped-graph-b1-b32-b64-repeat2-util90-p128o1024-r14.json",
-    "candidate_sha256": "a54a7cfce81992540396e77bad9f740dc4b5b84adf3887582ab22a8ba488f563"
+    "candidate_sha256": "a54a7cfce81992540396e77bad9f740dc4b5b84adf3887582ab22a8ba488f563",
+    "guarded_runtime_treatment": "../../../data/qwen36-35b-ar-tp1/persistent-grouped-graph-guards-b1-b64-repeat2-fixedseed-p128o1024-r16.json",
+    "guarded_runtime_treatment_sha256": "d09cfeaac6546523f07e1e92d51a2b96bd6f7522f654f457e6f2514b0ed9bace"
   },
   "notes": [
     "The directly measured 875 tok/s objective and 1000 tok/s stretch objective were both exceeded at batch 64.",
     "Only batch sizes 1, 32, and 64 were explicitly captured; every displayed rate is measured, never interpolated or extrapolated.",
-    "The fixed-seed model output mismatch remains open, especially at batch 64, so this candidate is not yet a promoted user recipe."
+    "Some fixed prompts produced different greedy sequences at different batch shapes in both grouped eager and graph modes; this is distinct from same-shape repeat instability.",
+    "The fixed-seed model output mismatch remains open, especially at batch 64, so this candidate is not yet a promoted user recipe.",
+    "The guarded runtime directly measured 90.909 tok/s at B1 and 1052.870 tok/s at B64, but matched only 29/64 B64 outputs across repeats; speed is valid, determinism repair is negative."
   ]
 }

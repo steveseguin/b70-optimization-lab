@@ -1,0 +1,726 @@
+diff --git a/csrc/moe/fused_moe_prologue.cpp b/csrc/moe/fused_moe_prologue.cpp
+new file mode 100644
+index 0000000..49a5c41
+--- /dev/null
++++ b/csrc/moe/fused_moe_prologue.cpp
+@@ -0,0 +1,216 @@
++#include <torch/all.h>
++#include "utils.h"
++#include "fused_moe_prologue.hpp"
++
++template <typename TA, typename TB>
++void fused_moe_prologue_impl(
++    torch::Tensor input,
++    const c10::optional<torch::Tensor>& input_scales,
++    torch::Tensor token_selected_experts,
++    torch::Tensor token_final_scales,
++    torch::Tensor workspace,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t block_k,
++    int64_t ep_rank,
++    int64_t ep_size,
++    int64_t num_experts_on_rank) {
++  int experts_per_token = token_selected_experts.size(1);
++  int64_t num_rows = input.size(0);
++
++  assert(ep_rank >= 0 && ep_rank < ep_size);
++  auto const num_experts_total =
++      static_cast<int>(num_experts_on_rank * ep_size);
++  auto& stream = at::xpu::getCurrentXPUStream(input.device().index()).queue();
++
++  assert(token_selected_experts.dtype() == torch::kInt64);
++  auto const* token_selected_experts_ =
++      reinterpret_cast<int64_t const*>(token_selected_experts.data_ptr());
++  auto const* input_activations = reinterpret_cast<TA const*>(input.data_ptr());
++
++  TB const* input_activation_scales;
++  if constexpr (!std::is_same_v<TB, NoScale>) {
++    input_activation_scales =
++        reinterpret_cast<TB const*>(input_scales->data_ptr());
++  }
++
++  auto const* token_topk_unpermuted_scales =
++      reinterpret_cast<float const*>(token_final_scales.data_ptr());
++  int const num_experts_per_node = num_experts_total / ep_size;
++  int start_expert = num_experts_per_node * ep_rank;
++  int end_expert = start_expert + num_experts_per_node;
++  auto expanded_num_rows = num_rows * experts_per_token;
++
++  // workspace configure
++  auto ws_ptr = reinterpret_cast<uint8_t*>(workspace.data_ptr());
++  size_t num_moe_inputs = experts_per_token * num_rows;
++  size_t const permuted_elems = num_moe_inputs * hidden_size;
++  size_t const interbuf_elems = num_moe_inputs * inter_size;
++  size_t const permuted_act_scales_elems =
++      num_moe_inputs * hidden_size / block_k;
++
++  constexpr int dtype_size = sizeof(TA);
++  constexpr int act_scales_dtype_size = sizeof(TB);
++
++  size_t const permuted_row_to_unpermuted_row_size =
++      num_moe_inputs * sizeof(int);
++  size_t const permuted_token_selected_experts_size =
++      num_moe_inputs * sizeof(int);
++  size_t src_to_dest_map_size = experts_per_token * num_rows * sizeof(int);
++  size_t const expert_first_token_offset_size =
++      (num_experts_per_node + 1) * sizeof(int64_t);
++
++  int64_t const num_tokens_per_block =
++      computeNumTokensPerBlock(num_rows, num_experts_per_node);
++  int64_t const num_blocks_per_seq = ceilDiv(num_rows, num_tokens_per_block);
++  size_t const blocked_expert_counts_size =
++      num_experts_per_node * num_blocks_per_seq * sizeof(int);
++  size_t const blocked_expert_counts_cumsum_size = blocked_expert_counts_size;
++  size_t const blocked_row_to_unpermuted_row_size =
++      num_experts_per_node * num_rows * sizeof(int);
++  size_t const permuted_data_size = permuted_elems * dtype_size;
++  size_t permuted_act_scales_size;
++  if constexpr (std::is_same_v<TB, NoScale>) {
++    permuted_act_scales_size = 0;
++  } else {
++    permuted_act_scales_size =
++        permuted_act_scales_elems * act_scales_dtype_size;
++  }
++  size_t const permuted_token_final_scales_size =
++      num_moe_inputs * sizeof(float);
++
++  int map_offset = 0;
++  std::map<std::string, std::pair<size_t, size_t>> ws_map;
++
++#define ADD_NAME(name, size)                             \
++  do {                                                   \
++    size_t aligned_size = ((size) + 255) & ~255ULL;      \
++    ws_map[#name] = std::pair{aligned_size, map_offset}; \
++    map_offset += aligned_size;                          \
++  } while (false)
++#define ADD(name) ADD_NAME(name, name##_size)
++
++  ADD(permuted_row_to_unpermuted_row);
++  ADD(permuted_token_selected_experts);
++  ADD_NAME(unpermuted_row_to_permuted_row, src_to_dest_map_size);
++  ADD(blocked_expert_counts);
++  ADD(blocked_expert_counts_cumsum);
++  ADD(blocked_row_to_unpermuted_row);
++  ADD(expert_first_token_offset);
++  ADD(permuted_token_final_scales);
++  ADD_NAME(overlapped_gemm1_gemm2_inputs, permuted_data_size);
++  ADD_NAME(permuted_act_scales, permuted_act_scales_size);
++
++  auto getWsPtr = [&](auto type, std::string const& name) {
++    return ws_map.at(name).first ? reinterpret_cast<decltype(type)*>(
++                                       ws_ptr + ws_map.at(name).second)
++                                 : nullptr;
++  };
++  auto permuted_token_selected_experts_ =
++      getWsPtr(int{}, "permuted_token_selected_experts");
++  auto permuted_row_to_unpermuted_row_ =
++      getWsPtr(int{}, "permuted_row_to_unpermuted_row");
++  auto unpermuted_row_to_permuted_row =
++      getWsPtr(int{}, "unpermuted_row_to_permuted_row");
++  auto expert_first_token_offset_ =
++      getWsPtr(int64_t{}, "expert_first_token_offset");
++  auto blocked_expert_counts_ = getWsPtr(int{}, "blocked_expert_counts");
++  auto blocked_expert_counts_cumsum_ =
++      getWsPtr(int{}, "blocked_expert_counts_cumsum");
++  auto blocked_row_to_unpermuted_row_ =
++      getWsPtr(int{}, "blocked_row_to_unpermuted_row");
++  auto permuted_data_ = getWsPtr(TA{}, "overlapped_gemm1_gemm2_inputs");
++  TB* permuted_act_scales_;
++  if constexpr (std::is_same_v<TB, NoScale>) {
++    permuted_act_scales_ = nullptr;
++  } else {
++    permuted_act_scales_ = getWsPtr(TB{}, "permuted_act_scales");
++  }
++  auto permuted_token_final_scales_ =
++      getWsPtr(float{}, "permuted_token_final_scales");
++  bool use_per_expert_act_scale = false;
++  at::DeviceGuard device_guard(input.device());
++  // TODO: fused prologe
++  threeStepBuildExpertMapsSortFirstToken(
++      token_selected_experts_,
++      permuted_token_selected_experts_,
++      permuted_row_to_unpermuted_row_,
++      unpermuted_row_to_permuted_row,
++      expert_first_token_offset_,
++      blocked_expert_counts_,
++      blocked_expert_counts_cumsum_,
++      blocked_row_to_unpermuted_row_,
++      num_rows,
++      num_experts_per_node,
++      experts_per_token,
++      start_expert,
++      stream);
++
++  TA* input_expand = reinterpret_cast<TA*>(permuted_data_);
++  TB* input_scales_expand = reinterpret_cast<TB*>(permuted_act_scales_);
++  expandInputRowsKernelLauncher(
++      input_activations,
++      input_expand,
++      input_activation_scales,
++      input_scales_expand,
++      block_k,
++      token_topk_unpermuted_scales,
++      permuted_token_final_scales_,
++      permuted_row_to_unpermuted_row_,
++      num_rows,
++      hidden_size,
++      experts_per_token,
++      num_experts_per_node,
++      use_per_expert_act_scale,
++      expert_first_token_offset_,
++      nullptr,
++      stream);
++}
++
++void fused_moe_prologue(
++    torch::Tensor input,
++    const c10::optional<torch::Tensor>& input_scales,
++    torch::Tensor token_selected_experts,
++    torch::Tensor token_final_scales,
++    torch::Tensor workspace,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t block_k,
++    int64_t ep_rank,
++    int64_t ep_size,
++    int64_t num_experts_on_rank) {
++  auto input_type = input.dtype();
++
++  auto call_impl = [&](auto data_type, auto scale_type) {
++    using TA = decltype(data_type);
++    using TS = decltype(scale_type);
++    fused_moe_prologue_impl<TA, TS>(
++        input,
++        input_scales,
++        token_selected_experts,
++        token_final_scales,
++        workspace,
++        hidden_size,
++        inter_size,
++        block_k,
++        ep_rank,
++        ep_size,
++        num_experts_on_rank);
++  };
++
++  if (input_type == at::kBFloat16) {
++    call_impl(at::BFloat16{}, NoScale{});
++  } else if (input_type == at::kHalf) {
++    call_impl(at::Half{}, NoScale{});
++  } else if (input_type == at::kFloat8_e4m3fn) {
++    if (input_scales->dtype() == at::kFloat) {
++      call_impl(at::Float8_e4m3fn{}, float{});
++    } else if (input_scales->dtype() == at::kFloat8_e8m0fnu) {
++      call_impl(at::Float8_e4m3fn{}, at::Float8_e8m0fnu{});
++    }
++  } else if (
++      input_type == at::kFloat4_e2m1fn_x2 &&
++      input_scales->dtype() == at::kFloat8_e8m0fnu) {
++    call_impl(at::Float4_e2m1fn_x2{}, at::Float8_e8m0fnu{});
++  }
++}
+diff --git a/csrc/moe/moe_ops.h b/csrc/moe/moe_ops.h
+index 9d85185..213b9d9 100755
+--- a/csrc/moe/moe_ops.h
++++ b/csrc/moe/moe_ops.h
+@@ -88,6 +88,19 @@ void moe_gather(
+     const torch::Tensor& unpermuted_row_to_permuted_row,
+     const int64_t num_experts);
+ 
++void fused_moe_prologue(
++    torch::Tensor input,
++    const c10::optional<torch::Tensor>& input_scales,
++    torch::Tensor token_selected_experts,
++    torch::Tensor token_final_scales,
++    torch::Tensor workspace,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t block_k,
++    int64_t ep_rank,
++    int64_t ep_size,
++    int64_t num_experts_on_rank);
++
+ void init_expert_map(
+     torch::Tensor& expert_map,
+     const int64_t num_experts,
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index e5e51d6..8a13801 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -202,23 +202,28 @@ GdnSpecDecodeScratch& get_gdn_spec_decode_scratch(
+   entry->local_num_v_heads = local_num_v_heads;
+   entry->head_k_dim = head_k_dim;
+   entry->head_v_dim = head_v_dim;
+-  entry->accepted_state_indices = torch::empty({num_spec_decodes}, int_options);
+-  entry->running_state_indices = torch::empty({num_spec_decodes}, int_options);
++  // Zero-initialise every persistent scratch buffer. This scratch is cached
++  // and reused across calls, so any element read before it is written returns
++  // the previous call's residue, making results depend on request history. At
++  // four verifier rows the whole region happened to be written; at five it is
++  // not. Allocation happens once per shape, so the memset is not on the hot path.
++  entry->accepted_state_indices = torch::zeros({num_spec_decodes}, int_options);
++  entry->running_state_indices = torch::zeros({num_spec_decodes}, int_options);
+   entry->base_conv_state =
+-      torch::empty({num_spec_decodes, conv_history_len, conv_dim}, options);
+-  entry->compact_qkvz = torch::empty({total_spec_tokens, qkvz_dim}, options);
+-  entry->compact_ba = torch::empty({total_spec_tokens, ba_dim}, options);
+-  entry->compact_z = torch::empty(
++      torch::zeros({num_spec_decodes, conv_history_len, conv_dim}, options);
++  entry->compact_qkvz = torch::zeros({total_spec_tokens, qkvz_dim}, options);
++  entry->compact_ba = torch::zeros({total_spec_tokens, ba_dim}, options);
++  entry->compact_z = torch::zeros(
+       {total_spec_tokens, local_num_v_heads, head_v_dim}, options);
+   entry->has_initial_state = torch::ones({num_spec_decodes}, bool_options);
+-  entry->q = torch::empty(
++  entry->q = torch::zeros(
+       {total_spec_tokens, local_num_k_heads, head_k_dim}, options);
+-  entry->k = torch::empty_like(entry->q);
+-  entry->v = torch::empty(
++  entry->k = torch::zeros_like(entry->q);
++  entry->v = torch::zeros(
+       {total_spec_tokens, local_num_v_heads, head_v_dim}, options);
+-  entry->b = torch::empty({total_spec_tokens, local_num_v_heads}, options);
+-  entry->a = torch::empty_like(entry->b);
+-  entry->exact_core = torch::empty_like(entry->compact_z);
++  entry->b = torch::zeros({total_spec_tokens, local_num_v_heads}, options);
++  entry->a = torch::zeros_like(entry->b);
++  entry->exact_core = torch::zeros_like(entry->compact_z);
+   entry->exact_query_start_loc = torch::arange(2, int_options);
+   TORCH_WARN(
+       "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH allocated on ",
+diff --git a/csrc/xpu/gdn_attn/spec_decode.hpp b/csrc/xpu/gdn_attn/spec_decode.hpp
+index 0dbadd4..5d38f5b 100644
+--- a/csrc/xpu/gdn_attn/spec_decode.hpp
++++ b/csrc/xpu/gdn_attn/spec_decode.hpp
+@@ -6474,7 +6474,8 @@ struct gdn_replayssm_commit_pending_kernel {
+       const int rows,
+       const int conv_dim,
+       const int conv_base_len) {
+-    const int elems_per_row = std::max(1, conv_dim * conv_base_len);
++    (void)conv_base_len;
++    const int elems_per_row = std::max(1, conv_dim);
+     const int total = rows * elems_per_row;
+     sycl::range<1> local(group_size);
+     sycl::range<1> global((total + group_size - 1) / group_size);
+@@ -6518,7 +6519,14 @@ struct gdn_replayssm_commit_pending_kernel {
+   }
+ 
+   void operator()(sycl::nd_item<1> item) const {
+-    const int elems_per_row = sycl::max(1, conv_dim * conv_base_len);
++    // One work item per (row, conv_elem) column. The left-shift by
++    // `accepted` is performed serially in ascending state_pos order within
++    // the item: at step i it writes position i and reads position
++    // i + accepted (> i), which has not been written yet. This makes the
++    // in-place shift race-free. The previous per-element formulation raced:
++    // one work item's read of position j competed with another item's write
++    // of position j.
++    const int elems_per_row = sycl::max(1, conv_dim);
+     const int linear = item.get_global_linear_id();
+     const int total = rows * elems_per_row;
+     if (linear >= total) {
+@@ -6526,49 +6534,35 @@ struct gdn_replayssm_commit_pending_kernel {
+     }
+ 
+     const int row = linear / elems_per_row;
+-    const int elem = linear - row * elems_per_row;
++    const int conv_elem = linear - row * elems_per_row;
+     const int slot = slot_for_row(row);
+     const bool active = active_for_row(row, slot);
+     const int accepted = accepted_for_row(row, slot, active);
+-    if (!active) {
++    if (!active || accepted <= 0) {
+       return;
+     }
+ 
+-    if (conv_base_len > 0 && elem < conv_dim * conv_base_len) {
+-      const int state_pos = elem / conv_dim;
+-      const int conv_elem = elem - state_pos * conv_dim;
++    const int64_t slot_state_base =
++        static_cast<int64_t>(slot) * conv_stride_0 +
++        static_cast<int64_t>(conv_elem) * conv_stride_1;
++    const int64_t slot_pending_base =
++        static_cast<int64_t>(slot) * pending_stride_0 +
++        static_cast<int64_t>(conv_elem) * pending_stride_2;
++    for (int state_pos = 0; state_pos < conv_base_len; ++state_pos) {
+       const int source_pos = accepted + state_pos;
+-      T value = T(0);
++      T value;
+       if (source_pos < conv_base_len) {
+-        value = conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
+-                           static_cast<int64_t>(conv_elem) * conv_stride_1 +
++        value = conv_state[slot_state_base +
+                            static_cast<int64_t>(source_pos) * conv_stride_2];
+       } else {
+         const int pending_pos = source_pos - conv_base_len;
+-        value = conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
+-                             static_cast<int64_t>(pending_pos) * pending_stride_1 +
+-                             static_cast<int64_t>(conv_elem) * pending_stride_2];
++        value = conv_pending[slot_pending_base +
++                             static_cast<int64_t>(pending_pos) *
++                                 pending_stride_1];
+       }
+-      conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
+-                 static_cast<int64_t>(conv_elem) * conv_stride_1 +
++      conv_state[slot_state_base +
+                  static_cast<int64_t>(state_pos) * conv_stride_2] = value;
+     }
+-
+-    // Cursor update: run once per row on work item d==0.
+-    if (elem == 0) {
+-      const int old_wp = write_pos[slot];
+-      const int old_base = cache_base[slot];
+-      const bool old_flush = is_flush[slot] != 0;
+-      const bool flush_now = accepted > 0 && old_flush;
+-      const int new_base =
+-          flush_now ? (old_base + old_wp) & (max_cache_len - 1) : old_base;
+-      const int new_wp = old_flush ? accepted : old_wp + accepted;
+-      const bool next_flush = (new_wp + 2 * max_spec_len) > max_cache_len;
+-      write_pos[slot] = new_wp;
+-      cache_base[slot] = new_base;
+-      is_flush[slot] = next_flush ? int8_t(1) : int8_t(0);
+-      pending[slot] = int8_t(0);
+-    }
+   }
+ 
+  private:
+@@ -6596,6 +6590,100 @@ struct gdn_replayssm_commit_pending_kernel {
+   const int null_block_id;
+ };
+ 
++// Bookkeeping/cursor update for commit_pending, launched AFTER the shift
++// kernel on the same queue. A separate kernel is required for correctness:
++// the shift work items read pending[]/pending_len[] while the cursor update
++// writes pending[]/write_pos[]/cache_base[]/is_flush[]; doing both in one
++// kernel raced (a work item could observe pending[slot]==0 cleared by the
++// row's elem==0 item and skip its portion of the shift, corrupting
++// conv_state).
++template <typename T>
++struct gdn_replayssm_commit_cursor_kernel {
++  static constexpr int group_size = 256;
++
++  gdn_replayssm_commit_cursor_kernel(
++      int* write_pos,
++      int* cache_base,
++      int8_t* is_flush,
++      int8_t* pending,
++      const int* pending_len,
++      const int* num_accepted_tokens,
++      const int64_t* state_indices,
++      const int rows,
++      const int num_slots,
++      const int max_cache_len,
++      const int max_spec_len,
++      const int null_block_id)
++      : write_pos(write_pos),
++        cache_base(cache_base),
++        is_flush(is_flush),
++        pending(pending),
++        pending_len(pending_len),
++        num_accepted_tokens(num_accepted_tokens),
++        state_indices(state_indices),
++        rows(rows),
++        num_slots(num_slots),
++        max_cache_len(max_cache_len),
++        max_spec_len(max_spec_len),
++        null_block_id(null_block_id) {}
++
++  static inline sycl::nd_range<1> get_nd_range(const int rows) {
++    sycl::range<1> local(group_size);
++    sycl::range<1> global((rows + group_size - 1) / group_size);
++    return sycl::nd_range<1>(global * local, local);
++  }
++
++  void operator()(sycl::nd_item<1> item) const {
++    const int row = item.get_global_linear_id();
++    if (row >= rows) {
++      return;
++    }
++    const int64_t raw_slot = state_indices[row];
++    if (raw_slot <= static_cast<int64_t>(null_block_id) ||
++        raw_slot >= static_cast<int64_t>(num_slots)) {
++      return;
++    }
++    const int slot = static_cast<int>(raw_slot);
++    if (pending[slot] == 0) {
++      return;
++    }
++    int accepted = num_accepted_tokens[row];
++    if (accepted < 0) {
++      accepted = 0;
++    }
++    const int prev_len = pending_len[slot];
++    if (accepted > prev_len) {
++      accepted = prev_len;
++    }
++    const int old_wp = write_pos[slot];
++    const int old_base = cache_base[slot];
++    const bool old_flush = is_flush[slot] != 0;
++    const bool flush_now = accepted > 0 && old_flush;
++    const int new_base =
++        flush_now ? (old_base + old_wp) & (max_cache_len - 1) : old_base;
++    const int new_wp = old_flush ? accepted : old_wp + accepted;
++    const bool next_flush = (new_wp + 2 * max_spec_len) > max_cache_len;
++    write_pos[slot] = new_wp;
++    cache_base[slot] = new_base;
++    is_flush[slot] = next_flush ? int8_t(1) : int8_t(0);
++    pending[slot] = int8_t(0);
++  }
++
++ private:
++  int* write_pos;
++  int* cache_base;
++  int8_t* is_flush;
++  int8_t* pending;
++  const int* pending_len;
++  const int* num_accepted_tokens;
++  const int64_t* state_indices;
++  const int rows;
++  const int num_slots;
++  const int max_cache_len;
++  const int max_spec_len;
++  const int null_block_id;
++};
++
+ template <typename T>
+ void gdn_replayssm_commit_pending(
+     sycl::queue& queue,
+@@ -6644,6 +6732,26 @@ void gdn_replayssm_commit_pending(
+         null_block_id);
+     cgh.parallel_for(range, task);
+   });
++  // Ordered after the shift kernel on this queue: fixes the bookkeeping
++  // read/write race (see gdn_replayssm_commit_cursor_kernel comment).
++  using CURSOR_KERNEL = gdn_replayssm_commit_cursor_kernel<T>;
++  auto cursor_range = CURSOR_KERNEL::get_nd_range(rows);
++  queue.submit([&](sycl::handler& cgh) {
++    CURSOR_KERNEL task(
++        reinterpret_cast<int*>(write_pos.data_ptr()),
++        reinterpret_cast<int*>(cache_base.data_ptr()),
++        reinterpret_cast<int8_t*>(is_flush.data_ptr()),
++        reinterpret_cast<int8_t*>(pending.data_ptr()),
++        reinterpret_cast<const int*>(pending_len.data_ptr()),
++        reinterpret_cast<const int*>(num_accepted_tokens.data_ptr()),
++        reinterpret_cast<const int64_t*>(state_indices.data_ptr()),
++        rows,
++        conv_state.size(0),
++        max_cache_len,
++        max_spec_len,
++        null_block_id);
++    cgh.parallel_for(cursor_range, task);
++  });
+ }
+ 
+ }  // namespace spec_decode
+diff --git a/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp b/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
+index b3cfd2e..289154e 100644
+--- a/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
++++ b/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
+@@ -11,15 +11,16 @@
+ 
+ torch::Tensor cutlass_grouped_gemm_interface(
+     torch::Tensor ptr_A,
+-    const c10::optional<at::Tensor>& ptr_A_scale,
+     torch::Tensor ptr_B,
+-    const c10::optional<at::Tensor>& ptr_B_scale,
++    const c10::optional<at::Tensor>& ptr_scales,
+     const c10::optional<at::Tensor>& ptr_bias,
+     torch::Tensor ptr_D,
+     torch::Tensor rows_per_expert,
+     int64_t N,
+     int64_t K,
+-    int64_t num_experts) {
++    int64_t num_experts,
++    bool is_B_int4,
++    bool is_B_mxfp4) {
+   if (vllm::xpu::force_xe_default_kernel()) {
+ #ifdef VLLM_XPU_ENABLE_XE_DEFAULT
+     int64_t groups = num_experts;
+@@ -33,21 +34,18 @@ torch::Tensor cutlass_grouped_gemm_interface(
+ #endif
+   } else if (vllm::xpu::is_xe2_arch() || vllm::xpu::is_xe3_arch()) {
+ #ifdef VLLM_XPU_ENABLE_XE2
+-    // Xe2 grouped GEMM currently consumes high-precision A (W16A16 / W8A16).
+-    // When callers pass FP8 activations + ptr_A_scale, Python
+-    // (fused_moe_interface._apply_kernel) dequants A before this entry.
+-    // Device W8A8 with ptr_A_scale is not yet implemented here.
+-    (void)ptr_A_scale;
+     return cutlass_grouped_gemm_xe2(
+         ptr_A,
+         ptr_B,
+-        ptr_B_scale,
++        ptr_scales,
+         ptr_bias,
+         ptr_D,
+         rows_per_expert,
+         N,
+         K,
+-        num_experts);
++        num_experts,
++        is_B_int4,
++        is_B_mxfp4);
+ #else
+     TORCH_CHECK(false, "XE2 cutlass kernel is not enabled in this build.");
+ #endif
+@@ -81,6 +79,9 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_interface(
+         "does not implement this path.");
+   } else if (vllm::xpu::is_xe2_arch()) {
+ #ifdef VLLM_XPU_ENABLE_XE2
++    TORCH_CHECK(
++        cutlass_grouped_gemm_w8a8_int8_xe2 != nullptr,
++        "W8A8 INT8 grouped GEMM is unavailable in this XE2 kernel build.");
+     return cutlass_grouped_gemm_w8a8_int8_xe2(
+         ptr_A,
+         ptr_A_scales,
+@@ -120,6 +121,10 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_offsets_interface(
+         "default does not implement this path.");
+   } else if (vllm::xpu::is_xe2_arch()) {
+ #ifdef VLLM_XPU_ENABLE_XE2
++    TORCH_CHECK(
++        cutlass_grouped_gemm_w8a8_int8_xe2_offsets != nullptr,
++        "W8A8 INT8 grouped GEMM offsets is unavailable in this XE2 kernel "
++        "build.");
+     return cutlass_grouped_gemm_w8a8_int8_xe2_offsets(
+         ptr_A,
+         ptr_A_scales,
+@@ -160,6 +165,10 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_offsets_atomic_interface(
+         "default does not implement this path.");
+   } else if (vllm::xpu::is_xe2_arch()) {
+ #ifdef VLLM_XPU_ENABLE_XE2
++    TORCH_CHECK(
++        cutlass_grouped_gemm_w8a8_int8_xe2_offsets_atomic != nullptr,
++        "W8A8 INT8 grouped GEMM atomic offsets is unavailable in this XE2 "
++        "kernel build.");
+     return cutlass_grouped_gemm_w8a8_int8_xe2_offsets_atomic(
+         ptr_A,
+         ptr_A_scales,
+@@ -202,6 +211,10 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_active_offsets_interface(
+         "kernel; XE default does not implement this path.");
+   } else if (vllm::xpu::is_xe2_arch()) {
+ #ifdef VLLM_XPU_ENABLE_XE2
++    TORCH_CHECK(
++        cutlass_grouped_gemm_w8a8_int8_xe2_active_offsets != nullptr,
++        "W8A8 INT8 grouped GEMM active offsets is unavailable in this XE2 "
++        "kernel build.");
+     return cutlass_grouped_gemm_w8a8_int8_xe2_active_offsets(
+         ptr_A,
+         ptr_A_scales,
+@@ -246,6 +259,10 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_topk8_gather_interface(
+         "default does not implement this path.");
+   } else if (vllm::xpu::is_xe2_arch()) {
+ #ifdef VLLM_XPU_ENABLE_XE2
++    TORCH_CHECK(
++        cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gather != nullptr,
++        "W8A8 INT8 topk8 gather GEMM is unavailable in this XE2 kernel "
++        "build.");
+     return cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gather(
+         ptr_A,
+         ptr_A_scales,
+@@ -288,6 +305,9 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_topk8_gemm1_interface(
+         "does not implement this path.");
+   } else if (vllm::xpu::is_xe2_arch()) {
+ #ifdef VLLM_XPU_ENABLE_XE2
++    TORCH_CHECK(
++        cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gemm1 != nullptr,
++        "W8A8 INT8 topk8 GEMM1 is unavailable in this XE2 kernel build.");
+     return cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gemm1(
+         ptr_A,
+         ptr_A_scales,
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h
+index 23e81fe..f7aa649 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h
+@@ -23,7 +23,7 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2(
+     torch::Tensor rows_per_expert,
+     int64_t N,
+     int64_t K,
+-    int64_t num_experts);
++    int64_t num_experts) __attribute__((weak));
+ 
+ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets(
+     torch::Tensor ptr_A,
+@@ -35,7 +35,7 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets(
+     torch::Tensor expert_first_token_offset,
+     int64_t N,
+     int64_t K,
+-    int64_t num_experts);
++    int64_t num_experts) __attribute__((weak));
+ 
+ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets_atomic(
+     torch::Tensor ptr_A,
+@@ -48,7 +48,7 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets_atomic(
+     int64_t N,
+     int64_t K,
+     int64_t num_experts,
+-    int* atomic_buffer);
++    int* atomic_buffer) __attribute__((weak));
+ 
+ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_active_offsets(
+     torch::Tensor ptr_A,
+@@ -62,7 +62,7 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_active_offsets(
+     int64_t N,
+     int64_t K,
+     int64_t num_experts,
+-    int64_t num_active_experts);
++    int64_t num_active_experts) __attribute__((weak));
+ 
+ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gather(
+     torch::Tensor ptr_A,
+@@ -76,7 +76,7 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gather(
+     torch::Tensor unpermuted_row_to_permuted_row,
+     int64_t N,
+     int64_t K,
+-    int64_t num_experts);
++    int64_t num_experts) __attribute__((weak));
+ 
+ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gemm1(
+     torch::Tensor ptr_A,
+@@ -89,4 +89,4 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gemm1(
+     torch::Tensor unpermuted_row_to_permuted_row,
+     int64_t N,
+     int64_t K,
+-    int64_t num_experts);
++    int64_t num_experts) __attribute__((weak));
+diff --git a/csrc/xpu/onednn/int4_gemm_w4a16.h b/csrc/xpu/onednn/int4_gemm_w4a16.h
+index f8f4f3c..0376bdf 100644
+--- a/csrc/xpu/onednn/int4_gemm_w4a16.h
++++ b/csrc/xpu/onednn/int4_gemm_w4a16.h
+@@ -26,6 +26,38 @@ static inline void dnnl_matmul_w4a16_int4(
+ 
+   const int m = std::reduce(
+       src_sz.begin(), src_sz.end() - 1, 1, std::multiplies<int64_t>());
++
++  // Determinism pad (BMG): oneDNN selects a race-prone int4 kernel for
++  // 128 < M < 512; outputs differ bitwise between identical calls
++  // (measured: qkv 5120x1408 dirty for M in [129, 448], down 8704x5120 for
++  // M in [129, 248]; M <= 128 and M >= 449 clean; gate_up 5120x8704 clean).
++  // GEMM rows are independent (proven bitwise: real rows identical under
++  // arbitrary padding content), so pad M to 512 with zeros and slice back.
++  // Prefill-only cost; decode widths (M <= 6) never enter this branch.
++  // Opt-out: VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD=0.
++  static const bool det_pad = []() {
++    const char* e = std::getenv("VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD");
++    return e == nullptr || std::string_view(e) != "0";
++  }();
++  if (det_pad && m > 128 && m < 512) {
++    TORCH_WARN_ONCE("VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD reached");
++    auto pad_sz = src_sz.vec();
++    pad_sz.back() = src_sz.back();  // k unchanged
++    // total padded rows across leading dims: we only support the flat case
++    // (dim==2) and [b, m, k] with b==1 collapsed upstream; assert 2D which
++    // is what the quantized linear layers call with.
++    TORCH_CHECK(mat1.dim() == 2,
++                "determinism pad expects 2D src, got ", mat1.dim());
++    torch::Tensor mat1_pad = mat1.new_zeros({512, src_sz.back()});
++    mat1_pad.narrow(0, 0, m).copy_(mat1);
++    torch::Tensor result_pad =
++        result.new_empty({512, o_sz.back()});
++    dnnl_matmul_w4a16_int4(result_pad, mat1_pad, mat2, bias, scale, zp,
++                           group_size, input_dependency);
++    result.copy_(result_pad.narrow(0, 0, m));
++    return;
++  }
++
+   const int n = o_sz.back();  // presume channel last format
+   const int k = *(src_sz.end() - 1);
+ 

@@ -1,0 +1,74 @@
+{
+  "date": "2026-08-24",
+  "status": "measured_eager_repeat_discriminator_model_variation_reproduced",
+  "model": "abhinand/Qwen3.6-35B-A3B-int4-AutoRound",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "cards": 1,
+  "runtime": {
+    "vllm": "0.21.1rc1.dev289+g44fc8fde0",
+    "vllm_git_head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+    "vllm_xpu_kernels_git_head": "2dd55f380df753a10a88fcd9e96192561066e713",
+    "torch": "2.11.0+xpu",
+    "mode": "eager",
+    "routed_moe_backend": "vllm-xpu-kernels Xe2 grouped W4A16",
+    "dense_w4a16_backend": "oneDNN",
+    "source_patch_sha256": "c0f47b4c07540e761809102d028ff9ea3b8c642eaa39dc77ff2176722ff22b5a"
+  },
+  "workload": {
+    "input_tokens_per_request": 128,
+    "output_tokens_per_request": 1024,
+    "temperature": 0.0,
+    "ignore_eos": true,
+    "fixed_seed": 20260824,
+    "repeats": 2,
+    "prefix_caching": false,
+    "speculative_tokens": 0
+  },
+  "rows": [
+    {
+      "batch_size": 1,
+      "repeat_aggregate_decode_tok_s": [24.574758751110785, 24.500401896446174],
+      "mean_aggregate_decode_tok_s": 24.537580323778478,
+      "repeat_end_to_end_output_tok_s": [24.524856278696156, 24.450006599769324],
+      "fixed_seed_identical_request_outputs": 1,
+      "requests": 1
+    },
+    {
+      "batch_size": 64,
+      "repeat_aggregate_decode_tok_s": [948.9991477915532, 950.3028630506798],
+      "mean_aggregate_decode_tok_s": 949.6510054211165,
+      "repeat_end_to_end_output_tok_s": [942.4954640789496, 945.298668289566],
+      "mean_median_per_request_decode_tok_s": 15.234923711613744,
+      "fixed_seed_identical_request_outputs": 31,
+      "requests": 64
+    }
+  ],
+  "quality_smoke": {
+    "passed": 4,
+    "total": 4,
+    "cases": ["arithmetic", "prime", "capital", "compact JSON"],
+    "scope": "literal smoke only"
+  },
+  "component_repeat_diagnostics": [
+    {
+      "component": "grouped W4A16 routed MoE under graph replay",
+      "evidence": "2026-08-24-qwen36-grouped-w4a16-graph-repeat-stability.json",
+      "result": "bit-identical 25/25 at B1, B2, B4, B8, B16, B32, and B64"
+    },
+    {
+      "component": "GDN prefill output and recurrent state",
+      "evidence": "2026-08-24-qwen36-gdn-prefill-repeat-stability.json",
+      "result": "bit-identical 25/25 at B1, B4, and B64"
+    },
+    {
+      "component": "captured GDN convolution and packed recurrent decode segment",
+      "evidence": "2026-08-24-qwen36-gdn-decode-graph-repeat-stability.json",
+      "result": "output, convolution state, and recurrent state bit-identical 25/25 at B1, B4, and B64"
+    }
+  ],
+  "raw_evidence": {
+    "path": "../../../data/qwen36-35b-ar-tp1/persistent-grouped-eager-b1-b64-repeat2-fixedseed-p128o1024-r15.json",
+    "sha256": "411a44b0cb4a4e6d229d2bfeabaca64d03a0240e6870b6f402566a055e5b3052"
+  },
+  "conclusion": "The same-shape B64 variation persists in eager mode, so XPU Graph replay is not the root cause. The three patched component paths did not reproduce variation in exact-shape fixed-input probes. Full-model promotion remains blocked pending localization or a stable treatment."
+}

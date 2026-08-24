@@ -40,19 +40,33 @@ The recovered definition, the deployed symbol and the call site all agree:
 | recovered `.cpp:170` | `torch::Tensor, const c10::optional<torch::Tensor>&, torch::Tensor, torch::Tensor, torch::Tensor` + 6 × `int64_t` |
 | `moe_layerlet.cpp:1186` call | 5 tensors + `hidden_size, inter_size, 1, 0, 1, num_experts` |
 
-## Status: NOT build-verified
+## Status: build-verified on BMG-G31 (2026-08-24)
 
 The `.hpp` we ship has drifted from the one that paired with this `.cpp`:
 
 - local `csrc/moe/fused_moe_prologue.hpp` → `sha256 89a6591974fa22ea2c39d5a5b641286922e3e191a8dc026d269dcb0f5b51bc88`
 - `bed9504^` `.hpp` → `sha256 91be429fc5071f8023fae574429cf8599ef3eef564c71db2a3f70d9f40180063`
 
-The signature agreement above is strong evidence the drift is not in the
-prologue's own interface, but **this has not been compiled**. Do not claim the
-pinned identity is rebuildable until someone builds it.
+The signature agreement above was subsequently confirmed by compilation. The
+recovered `.cpp` compiled together with the retained local `.hpp`, linked into
+the combined `_xpu_C` module, imported successfully, and completed the Qwen3.6
+35B model load plus B1/B64 decode treatment on one B70.
 
-Nothing was written into the kernel repo: a benchmark was running and the
-harness identity guard aborts on a dirty kernel tree.
+The pinned tree still needs two source-compatibility repairs beyond copying
+this file: restore the declaration in `csrc/moe/moe_ops.h`, and align the
+grouped W4A16 wrapper with the deployed 11-argument Xe2 ABI. The pinned
+grouped-GEMM source does not compile against its current CUTLASS checkout, so
+the verified experimental module reused the already deployed grouped library
+byte-for-byte instead of claiming a full clean-tree kernel rebuild.
+
+Verified BMG-G31 runtime identities:
+
+- combined `_xpu_C.abi3.so`: `sha256 12a0e730989225195d4068a65a932833b81154a7ebc6edaefee05754ffd32c69`
+- rebuilt `libgdn_attn_kernels_xe_2.so`: `sha256 4a7019bd8bba6538dad41d142d24c65b4b11b2dd443a9b00127b0bb95d28398e`
+- reused `libgrouped_gemm_xe_2.so`: `sha256 6ca90896b773ec7d93a88f32b69e94893046b8eec01022b5967bc19dee9e49c1`
+
+This verifies the recovered prologue source and the combined module, not the
+incompatible grouped-GEMM source subtarget.
 
 ## To use
 

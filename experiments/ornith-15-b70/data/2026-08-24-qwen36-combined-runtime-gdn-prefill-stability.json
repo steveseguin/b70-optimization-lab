@@ -1,0 +1,49 @@
+{
+  "timestamp_utc": "2026-08-24T17:38:23.859871+00:00",
+  "status": "synthetic_exact_dimension_gdn_prefill_repeat_stability",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "seed": 20260824,
+  "shape": {
+    "key_heads": 16,
+    "value_heads": 32,
+    "key_head_dim": 128,
+    "value_head_dim": 128
+  },
+  "kernel": "fused_sigmoid_gating_delta_rule_update(store_last_only=True)",
+  "rows": [
+    {
+      "batch_size": 1,
+      "tokens_per_sequence": 128,
+      "total_tokens": 128,
+      "repeats": 25,
+      "output_bit_identical": true,
+      "state_bit_identical": true,
+      "output_max_abs_drift": 0.0,
+      "state_max_abs_drift": 0.0
+    },
+    {
+      "batch_size": 4,
+      "tokens_per_sequence": 128,
+      "total_tokens": 512,
+      "repeats": 25,
+      "output_bit_identical": true,
+      "state_bit_identical": true,
+      "output_max_abs_drift": 0.0,
+      "state_max_abs_drift": 0.0
+    },
+    {
+      "batch_size": 64,
+      "tokens_per_sequence": 128,
+      "total_tokens": 8192,
+      "repeats": 25,
+      "output_bit_identical": true,
+      "state_bit_identical": true,
+      "output_max_abs_drift": 0.0,
+      "state_max_abs_drift": 0.0
+    }
+  ],
+  "notes": [
+    "Inputs and initial states were fixed across every repeat.",
+    "This does not establish full-model determinism, quality, or throughput."
+  ]
+}

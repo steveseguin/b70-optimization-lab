@@ -1,0 +1,76 @@
+{
+  "timestamp_utc": "2026-08-24T16:39:34.720740+00:00",
+  "status": "synthetic_exact_shape_operator_repeat_stability",
+  "mode": "graph",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "seed": 20260824,
+  "shape": {
+    "experts": 256,
+    "hidden_size": 2048,
+    "intermediate_size": 512,
+    "experts_per_token": 8,
+    "group_size": 128
+  },
+  "rows": [
+    {
+      "batch_size": 1,
+      "repeats": 25,
+      "unique_output_sha256": 1,
+      "all_outputs_bit_identical": true,
+      "max_abs_drift_from_first": 0.0,
+      "first_output_sha256": "d5288f521fb0a63ed24667f5d98d31580a27f69bdd50921db1c7ac516b9d5b21"
+    },
+    {
+      "batch_size": 2,
+      "repeats": 25,
+      "unique_output_sha256": 1,
+      "all_outputs_bit_identical": true,
+      "max_abs_drift_from_first": 0.0,
+      "first_output_sha256": "7c48f9fdd184856c3da28b2013ca147d9ad8a3863de3a54d4233cc3faeb837d5"
+    },
+    {
+      "batch_size": 4,
+      "repeats": 25,
+      "unique_output_sha256": 1,
+      "all_outputs_bit_identical": true,
+      "max_abs_drift_from_first": 0.0,
+      "first_output_sha256": "5ac84c797906fde161455726e678206df5f7ce3847564f586035474732f805b5"
+    },
+    {
+      "batch_size": 8,
+      "repeats": 25,
+      "unique_output_sha256": 1,
+      "all_outputs_bit_identical": true,
+      "max_abs_drift_from_first": 0.0,
+      "first_output_sha256": "2247337e74bb14789575e4a174763465644abc654c295b7f654d86f779c418e2"
+    },
+    {
+      "batch_size": 16,
+      "repeats": 25,
+      "unique_output_sha256": 1,
+      "all_outputs_bit_identical": true,
+      "max_abs_drift_from_first": 0.0,
+      "first_output_sha256": "4625a528d69541b44bca116d1e0bf1ec22bb1514e736c6d9cade17ed4df2af8d"
+    },
+    {
+      "batch_size": 32,
+      "repeats": 25,
+      "unique_output_sha256": 1,
+      "all_outputs_bit_identical": true,
+      "max_abs_drift_from_first": 0.0,
+      "first_output_sha256": "686fcfeedcbd7fb0e911ce9b0fc27c7f3f79ccf3a0c3eac53503eab4c6dd5336"
+    },
+    {
+      "batch_size": 64,
+      "repeats": 25,
+      "unique_output_sha256": 1,
+      "all_outputs_bit_identical": true,
+      "max_abs_drift_from_first": 0.0,
+      "first_output_sha256": "3a2cda07ebf145ff06d68f468bfc3121f95a876c1687f7e353dc441d1b26f667"
+    }
+  ],
+  "notes": [
+    "Fixed inputs, routing, weights, and scales were reused for every repeat.",
+    "This diagnostic does not establish end-to-end model determinism or quality."
+  ]
+}

@@ -94,6 +94,34 @@ def git_diff_sha256(path: str) -> str | None:
     return hashlib.sha256(diff).hexdigest()
 
 
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def xpu_runtime_files(package_file: str) -> list[dict[str, Any]]:
+    package_dir = Path(package_file).resolve().parent
+    patterns = (
+        "_xpu_C*.so",
+        "_moe_C*.so",
+        "libgdn_attn_kernels*.so",
+        "libgrouped_gemm*.so",
+        "flash_attn_interface.py",
+    )
+    paths = sorted({path for pattern in patterns for path in package_dir.glob(pattern)})
+    return [
+        {
+            "path": str(path),
+            "size_bytes": path.stat().st_size,
+            "sha256": file_sha256(path),
+        }
+        for path in paths
+    ]
+
+
 def make_prompt_token_ids(
     *, request_index: int, token_count: int, vocab_size: int, seed: int
 ) -> list[int]:
@@ -222,7 +250,12 @@ def compare_request_tokens(
 
 
 def run_quality_smoke(
-    *, llm: Any, tokenizer: Any, sampling_params_cls: Any, seed: int
+    *,
+    llm: Any,
+    tokenizer: Any,
+    sampling_params_cls: Any,
+    seed: int,
+    batch_sizes: list[int],
 ) -> list[dict[str, Any]]:
     """Run deterministic, literal-answer canaries in the measured engine.
 
@@ -256,26 +289,45 @@ def run_quality_smoke(
         max_tokens=32,
         seed=seed,
     )
-    outputs = llm.generate(prompts, params, use_tqdm=False)
     smoke: list[dict[str, Any]] = []
-    for (case_id, question, expected), output in zip(cases, outputs):
-        text = output.outputs[0].text.strip()
-        compact = "".join(text.split())
-        expected_compact = "".join(expected.split())
-        token_ids = [int(token) for token in output.outputs[0].token_ids]
-        smoke.append(
-            {
-                "case_id": case_id,
-                "question": question,
-                "expected": expected,
-                "text": text,
-                "literal_match": expected_compact.casefold() in compact.casefold(),
-                "token_ids": token_ids,
-                "token_ids_sha256": hashlib.sha256(
-                    ",".join(map(str, token_ids)).encode()
-                ).hexdigest(),
-            }
+    invocation = 0
+    for batch_size in batch_sizes:
+        case_groups = (
+            [[case_index] for case_index in range(len(cases))]
+            if batch_size == 1
+            else [[index % len(cases) for index in range(batch_size)]]
         )
+        for case_indices in case_groups:
+            outputs = llm.generate(
+                [prompts[index] for index in case_indices], params, use_tqdm=False
+            )
+            for request_index, (case_index, output) in enumerate(
+                zip(case_indices, outputs)
+            ):
+                case_id, question, expected = cases[case_index]
+                text = output.outputs[0].text.strip()
+                compact = "".join(text.split())
+                expected_compact = "".join(expected.split())
+                token_ids = [int(token) for token in output.outputs[0].token_ids]
+                smoke.append(
+                    {
+                        "batch_size": len(case_indices),
+                        "invocation": invocation,
+                        "request_index": request_index,
+                        "case_id": case_id,
+                        "question": question,
+                        "expected": expected,
+                        "text": text,
+                        "literal_match": (
+                            expected_compact.casefold() in compact.casefold()
+                        ),
+                        "token_ids": token_ids,
+                        "token_ids_sha256": hashlib.sha256(
+                            ",".join(map(str, token_ids)).encode()
+                        ).hexdigest(),
+                    }
+                )
+            invocation += 1
     return smoke
 
 
@@ -293,9 +345,9 @@ def resolve_speculative_method(model_path: str) -> str:
     text_config = config.get("text_config") or {}
     model_type = text_config.get("model_type") or config.get("model_type")
     if isinstance(model_type, str) and model_type.startswith("qwen3_5"):
-        return "qwen3_5_mtp"
+        return "mtp"
     if isinstance(model_type, str) and model_type.startswith("qwen3_next"):
-        return "qwen3_next_mtp"
+        return "mtp"
     raise ValueError(
         "--speculative-tokens requires a known in-checkpoint MTP model; "
         f"unsupported model_type={model_type!r}"
@@ -331,6 +383,9 @@ def main() -> int:
             "torch": torch.__version__,
             "vllm": vllm.__version__,
             "vllm_xpu_kernels_file": vllm_xpu_kernels.__file__,
+            "vllm_xpu_runtime_files": xpu_runtime_files(
+                vllm_xpu_kernels.__file__
+            ),
             "vllm_git_head": git_head("/home/steve/src/vllm"),
             "vllm_worktree_diff_sha256": git_diff_sha256("/home/steve/src/vllm"),
             "xpu_kernel_git_head": git_head("/home/steve/src/vllm-xpu-kernels"),
@@ -341,6 +396,15 @@ def main() -> int:
             ),
             "vllm_xpu_moe_wna16_grouped": os.environ.get(
                 "VLLM_XPU_MOE_WNA16_GROUPED"
+            ),
+            "vllm_xpu_onednn_int4_completion_barrier": os.environ.get(
+                "VLLM_XPU_ONEDNN_INT4_COMPLETION_BARRIER"
+            ),
+            "vllm_xpu_onednn_int4_input_dependency": os.environ.get(
+                "VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY"
+            ),
+            "vllm_xpu_onednn_int4_input_dependency_scope": os.environ.get(
+                "VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE"
             ),
             "ld_library_path": os.environ.get("LD_LIBRARY_PATH"),
         },
@@ -440,11 +504,17 @@ def main() -> int:
     write_result(output_path, result)
 
     if args.quality_smoke:
+        quality_batch_sizes = (
+            sorted(set(args.capture_sizes))
+            if args.graph
+            else sorted({1, max(args.batch_sizes)})
+        )
         result["quality_smoke"] = run_quality_smoke(
             llm=llm,
             tokenizer=tokenizer,
             sampling_params_cls=SamplingParams,
             seed=args.seed,
+            batch_sizes=quality_batch_sizes,
         )
         write_result(output_path, result)
         print(json.dumps({"quality_smoke": result["quality_smoke"]}, sort_keys=True), flush=True)
