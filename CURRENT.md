@@ -435,13 +435,34 @@ The three-commit successor moves upstream batch-invariance code from
 `model_executor/layers` to `model_executor/determinism`, adds a CUDA/FlashInfer
 TP>1 speculative-decode fix that sizes the fused-allreduce/RMSNorm workspace
 for the wider target or draft model, and closes an audio size-limit bypass.
-The local literal-main source clone is now fast-forwarded to 0d7d with
-no source overlay. Update successor wheel-path checks for
-`vllm/model_executor/determinism/batch_invariant_configs.py`, then rebuild 0d7d
-or any newer live head. Re-derive decision compatibility against the new fresh
-cache; do not blindly carry the 38 decisions. The TP>1 change warrants a later
-new-base retest but is not evidence that the observed XPU worker-init broadcast
-hang is fixed; XPU disables this fusion path.
+The local literal-main source clone was fast-forwarded to 0d7d with no source
+overlay. The general builder now requires the new determinism members at the
+source, wheel, installed-package, label, import-receipt, and aggregate-receipt
+stages and pins the byte-identical batch-invariance config hash. A changed or
+missing upstream optimization asset therefore stops for review instead of
+being silently omitted.
+
+The literal-current 0d7d build then completed normally at vLLM
+`0d7d5ed0b2b61da53f682534f1754fe7d0251a34`, XPU kernels
+`baaa05bb4e92901219a5a072dd63f2474896f6d1`, and nightly digest
+`sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876`.
+Both immutable zero-overlay images passed every static gate and the 14-file USB
+archive battery; no GPU or model work ran. The exact
+[build receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-0d7d5ed0b2-absolute-current-main-build.json)
+remains GPU-qualification-pending. Unused builder cache was pruned after the
+build. The stale 342b image pair was then exported to a verified Docker-loadable
+USB archive before only those two exact local IDs were removed, restoring about
+15.48 GiB free while retaining the 0d7d and 6a9 image pairs, build roots, all
+run evidence, the preserved TP2 78-decision artifact, and the accepted TP4
+152-decision artifact. See the
+[342b storage receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-342b8ebd8b-storage-rotation.json).
+
+Before launching a separately named 0d7d TP1 packet, re-resolve every live
+engine identity. If still exact, run a fresh untreated cache and do not blindly
+carry the old 38 decisions; compatibility must be re-derived by relative path
+and embedded `configs_hash`. The TP>1 change warrants a later new-base retest
+but is not evidence that the observed XPU worker-init broadcast hang is fixed;
+XPU disables this fusion path.
 
 Do not authorize TP2 until TP1 passes full qualification. Then qualify TP2
 zero-overlay plus the preserved 78-decision remap, followed by TP4 zero-overlay

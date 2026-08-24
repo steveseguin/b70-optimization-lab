@@ -1,0 +1,57 @@
+{
+  "schema": "neural-download-qwen38-current-main-storage-rotation-v1",
+  "date": "2026-08-24",
+  "classification": "stale-build-archived-and-local-images-removed",
+  "reason": "preserve the complete stale 342b build while restoring the unchanged 12-GiB qualification reserve after the literal-current 0d7 build",
+  "archive": {
+    "directory": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T174812Z-342b8ebd8b-baaa05bb4e",
+    "original_manifest_entries_verified": 14,
+    "original_manifest_sha256": "3a9c37f8b5942c2f15ddb6108c2f403cfe37cf703cd5e477066d8d72c30f4173"
+  },
+  "docker_image_archive": {
+    "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T174812Z-342b8ebd8b-baaa05bb4e/images-342b8ebd8b.docker.tar.zst",
+    "sha256": "82f9741730decae4b4fa7195bb8a2075c83a9d4688cba76eb924eb567e7039d7",
+    "checksum_sidecar_sha256": "8f744dffc36c81ba2bc9756d0ec286fe8575693c989f72f57e24f7cc440c89c5",
+    "compressed_bytes": 5805379860,
+    "uncompressed_bytes": 5819693568,
+    "zstd_test_passed": true,
+    "tar_entries": 51,
+    "unsafe_tar_entries": 0,
+    "duplicate_tar_entries": 0,
+    "image_count": 2,
+    "layers_per_image": 28,
+    "tags_and_index_digests_verified": true,
+    "control_image_id": "sha256:23fe2e1c88e2c0f5c69b00370687a07c2c49aa1f4fea903ff9416b0223690c37",
+    "both_current_image_id": "sha256:6dbd46c8d22c3fdb425dfe343e759a89c5aa443eb99f411b4f6d923eae2e54ae",
+    "manifest_json_sha256": "2693405dbd7919c857bf6e0fb13830142373a4e0f9913801aa7f9e45815ddd16",
+    "index_json_sha256": "0fd073fa0fe0d2cfd047040a8f91beca5076a16bcf0a46ded39376d2e24c5b96"
+  },
+  "build_root": {
+    "path": "/home/steve/builds/qwen38-current-main-20260824T174812Z-342b8ebd8b-baaa05bb4e",
+    "retained_locally": true
+  },
+  "local_removal": {
+    "running_containers_before": 0,
+    "removed_exact_image_ids": [
+      "sha256:6dbd46c8d22c3fdb425dfe343e759a89c5aa443eb99f411b4f6d923eae2e54ae",
+      "sha256:23fe2e1c88e2c0f5c69b00370687a07c2c49aa1f4fea903ff9416b0223690c37"
+    ],
+    "removed_images_absent_after": true,
+    "broad_docker_prune_ran": false,
+    "unused_builder_cache_pruned_before_rotation_bytes_reported": 7652000000,
+    "root_free_kib_before_image_removal": 8892812,
+    "root_free_kib_after_image_removal": 16234256,
+    "root_free_gib_after": 15.48,
+    "current_0d7_images_retained": true,
+    "6a9_images_retained": true,
+    "official_base_retained": true,
+    "qualified_stock_controls_retained": true
+  },
+  "preservation": {
+    "performance_evidence_removed": false,
+    "protected_speed_changed": false,
+    "tp2_78_decision_overlay_changed": false,
+    "tp4_152_decision_overlay_changed": false,
+    "recovery": "zstd -dc /mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T174812Z-342b8ebd8b-baaa05bb4e/images-342b8ebd8b.docker.tar.zst | sudo docker load"
+  }
+}

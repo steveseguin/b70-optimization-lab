@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-6a9-r2-stale-before-launch-0d7-build-next",
+  "status": "preservation-gate-passed-0d7-static-build-pass-tp1-packet-next",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -9,7 +9,7 @@
     "result_policy": "append-only identities; never overwrite or lower historical highs"
   },
   "observed_heads": {
-    "checked_utc": "2026-08-24T22:01:02Z",
+    "checked_utc": "2026-08-24T22:22:05Z",
     "official_nightly": {
       "index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
@@ -732,13 +732,80 @@
     "policy": "R2 is closed stale and must not run. Preserve its exact audited packet and every historical result append-only; build the literal-current successor without lowering a floor or dropping a compatible accepted overlay."
   },
   "active_qualification_build": {
+    "built_utc": "2026-08-24T22:12:22Z",
+    "status": "static-preflight-passed-gpu-qualification-pending",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-0d7d5ed0b2-absolute-current-main-build.json",
+    "receipt_sha256": "3fb8db843817624948833e53d49f41839a63703502649c9151be1c1b18e38c2e",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T221222Z-0d7d5ed0b2-baaa05bb4e",
+    "archive_sha256s_sha256": "fe0bf831c91beb95d2711e853406450130a659062bbeccdef5cd9e45b99e9930",
+    "archive_contains_docker_image_tar": false,
+    "vllm_head": "0d7d5ed0b2b61da53f682534f1754fe7d0251a34",
+    "vllm_tree": "32a84ef59ace9ebad6200dd71d658cf986f416f1",
+    "vllm_package_version": "0.26.1rc1.dev1160+g0d7d5ed0b.xpu",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "vllm_xpu_kernels_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "vllm_xpu_kernels_package_version": "0.1.dev1+gbaaa05bb4",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "source_archive_sha256": "33f280c52846f50d9b79ace974ebf5a60a06cbb8daacf23c66d681cec8ac6af1",
+    "wheel_sha256": "e3277e3976f78b16d648bc90e39e0a7339866afd9a218cbd26c781c090347006",
+    "images": {
+      "current_vllm_stock_kernel": "sha256:38ec94fd09ec93e4e698aefcf02e0db37ff54c964db2ca42175db52886d14662",
+      "both_current_zero_overlay": "sha256:bbaa702fa0fd4e1d2b9e178a61747657ec35fa5dc83655903f13925a8b83c23d"
+    },
+    "preserved_upstream_optimization_assets": {
+      "batch_invariant_config_path": "vllm/model_executor/determinism/batch_invariant_configs.py",
+      "batch_invariant_config_sha256": "e47b18d9394c61fd105e4db51108d72fe1e68d4a2043a8ba62c0af0237453128",
+      "source_wheel_installed_labels_and_receipts_verified": true
+    },
+    "overlay_preservation_binding": {
+      "zero_overlay_build": true,
+      "decision_files_applied": 0,
+      "compiled_outputs_carried": 0,
+      "tp2_decision_files_preserved": 78,
+      "tp2_manifest_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757",
+      "tp4_decision_files_preserved": 152,
+      "tp4_manifest_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2",
+      "accepted_overlays_discarded": 0,
+      "protected_performance_changed": false
+    },
+    "post_archive_freshness_seal": {
+      "checked_utc": "2026-08-24T22:22:05Z",
+      "vllm_head": "0d7d5ed0b2b61da53f682534f1754fe7d0251a34",
+      "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+      "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "status": "passed"
+    },
+    "storage": {
+      "unused_docker_builder_cache_pruned_reported_bytes": 7652000000,
+      "minimum_gpu_launch_free_kib": 12582912,
+      "root_free_kib_after_342b_rotation": 16234256,
+      "new_image_ids_retained_locally": true,
+      "6a9_image_ids_retained_locally": true,
+      "342b_rotation": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-342b8ebd8b-storage-rotation.json"
+    },
+    "qualification": {
+      "status": "pending-separately-named-audited-tp1-packet",
+      "packet": null,
+      "wrapper": null,
+      "gpu_work_ran": false,
+      "diagnostic_floor_tok_s": 30.2178,
+      "strict_floor_tok_s": 30.31067504052998,
+      "performance_floors_must_not_change": true,
+      "decision_compatibility_must_be_rederived": true,
+      "order": ["current-vLLM/stock-kernel TP1", "both-current zero-overlay TP1", "fresh TP1 decision remap", "TP2", "TP4"]
+    },
+    "policy": "Re-resolve every live engine identity before launch. If exact, use a fresh ext4 cache and frozen protected gates. If any identity moved, close this build stale and build the successor; never lower a speed or transfer compiled-cache outputs."
+  },
+  "dated_342b_qualification_build": {
     "built_utc": "2026-08-24T17:48:12Z",
     "status": "dated-stale-before-qualification-vllm-main-advanced",
     "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-342b8ebd8b-absolute-current-main-build.json",
     "receipt_sha256": "ad856716714af8893d0ce47416d0efab4e9cb014505e6deeed3b3545ea82141c",
     "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T174812Z-342b8ebd8b-baaa05bb4e",
     "archive_sha256s_sha256": "3a9c37f8b5942c2f15ddb6108c2f403cfe37cf703cd5e477066d8d72c30f4173",
-    "archive_contains_docker_image_tar": false,
+    "archive_contains_docker_image_tar": true,
+    "storage_rotation": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-342b8ebd8b-storage-rotation.json",
     "vllm_head": "342b8ebd8bd4595826f29ff95dfc48679a03a95a",
     "vllm_tree": "7b60b566f69b2d158016082486b0ed4f3c430715",
     "vllm_package_version": "0.26.1rc1.dev1156+g342b8ebd8.xpu",
