@@ -1,0 +1,225 @@
+# syntax=docker/dockerfile:1
+
+ARG BASE_IMAGE=vllm/vllm-openai-xpu@sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35
+FROM ${BASE_IMAGE}
+
+ARG BASE_DIGEST
+ARG BUILD_SCRIPT_SHA256
+ARG BUILD_LANE
+ARG BUILD_UTC
+ARG DOCKERFILE_SHA256
+ARG INSTALL_CURRENT_KERNEL
+ARG KERNEL_CONFIG_CHUNK_SHA256
+ARG KERNEL_CONFIG_PAGED_SHA256
+ARG KERNEL_HEAD
+ARG KERNEL_PACKAGE_VERSION
+ARG KERNEL_TREE
+ARG KERNEL_WHEEL_SHA256
+ARG LAB_HEAD
+ARG LAB_TREE
+ARG RUST_EXTENSION_SHA256
+ARG RUST_FRONTEND_SHA256
+ARG VLLM_ARCHIVE_SHA256
+ARG VLLM_HEAD
+ARG VLLM_PACKAGE_VERSION
+ARG VLLM_TREE
+ARG VLLM_WHEEL_SHA256
+
+LABEL org.opencontainers.image.created="${BUILD_UTC}" \
+      org.opencontainers.image.revision="${VLLM_HEAD}" \
+      neural.download.base.digest="${BASE_DIGEST}" \
+      neural.download.build.dockerfile.sha256="${DOCKERFILE_SHA256}" \
+      neural.download.build.lane="${BUILD_LANE}" \
+      neural.download.build.script.sha256="${BUILD_SCRIPT_SHA256}" \
+      neural.download.kernel.chunk_config.sha256="${KERNEL_CONFIG_CHUNK_SHA256}" \
+      neural.download.kernel.head="${KERNEL_HEAD}" \
+      neural.download.kernel.paged_config.sha256="${KERNEL_CONFIG_PAGED_SHA256}" \
+      neural.download.kernel.tree="${KERNEL_TREE}" \
+      neural.download.kernel.wheel.sha256="${KERNEL_WHEEL_SHA256}" \
+      neural.download.lab.head="${LAB_HEAD}" \
+      neural.download.lab.tree="${LAB_TREE}" \
+      neural.download.overlay="none" \
+      neural.download.rust.extension.sha256="${RUST_EXTENSION_SHA256}" \
+      neural.download.rust.frontend.sha256="${RUST_FRONTEND_SHA256}" \
+      neural.download.vllm.archive.sha256="${VLLM_ARCHIVE_SHA256}" \
+      neural.download.vllm.head="${VLLM_HEAD}" \
+      neural.download.vllm.tree="${VLLM_TREE}" \
+      neural.download.vllm.wheel.sha256="${VLLM_WHEEL_SHA256}"
+
+USER root
+
+# The base image uses /workspace/vllm as its workdir and source import. Remove
+# that old tree before installing the exact current-main wheel so it cannot
+# shadow site-packages during qualification.
+RUN rm -rf /workspace/vllm
+COPY vllm-artifacts/ /tmp/current-vllm/
+COPY kernel-artifacts/ /tmp/current-kernel/
+COPY source-identity.json /opt/neural-download/source-identity.json
+
+RUN set -eux; \
+    test "$(find /tmp/current-vllm -maxdepth 1 -type f -name '*.whl' | wc -l)" -eq 1; \
+    wheel="$(find /tmp/current-vllm -maxdepth 1 -type f -name '*.whl')"; \
+    test "$(sha256sum "${wheel}" | awk '{print $1}')" = "${VLLM_WHEEL_SHA256}"; \
+    /root/.local/bin/uv pip install --python /opt/venv/bin/python \
+        --no-deps --no-index --reinstall "${wheel}"; \
+    rm -rf /tmp/current-vllm
+
+RUN set -eux; \
+    wheel_count="$(find /tmp/current-kernel -maxdepth 1 -type f -name '*.whl' | wc -l)"; \
+    if [ "${INSTALL_CURRENT_KERNEL}" = 1 ]; then \
+        test "${wheel_count}" -eq 1; \
+        wheel="$(find /tmp/current-kernel -maxdepth 1 -type f -name '*.whl')"; \
+        test "$(sha256sum "${wheel}" | awk '{print $1}')" = "${KERNEL_WHEEL_SHA256}"; \
+        /root/.local/bin/uv pip install --python /opt/venv/bin/python \
+            --no-deps --no-index --reinstall "${wheel}"; \
+    else \
+        test "${wheel_count}" -eq 0; \
+        test "${KERNEL_WHEEL_SHA256}" = stock-from-base; \
+    fi; \
+    rm -rf /tmp/current-kernel
+
+WORKDIR /workspace/runtime
+
+# Fail closed before a derived image is allowed near a GPU. This validates
+# identity, rejects source shadowing, imports every required extension, and
+# verifies that the reused Rust artifacts are byte-identical to the base.
+RUN set -eux; \
+    BUILD_LANE_VALUE="${BUILD_LANE}" \
+    INSTALL_CURRENT_KERNEL_VALUE="${INSTALL_CURRENT_KERNEL}" \
+    KERNEL_HEAD_VALUE="${KERNEL_HEAD}" \
+    RUST_EXTENSION_EXPECTED="${RUST_EXTENSION_SHA256}" \
+    RUST_FRONTEND_EXPECTED="${RUST_FRONTEND_SHA256}" \
+    VLLM_EXPECTED_VERSION="${VLLM_PACKAGE_VERSION}" \
+    VLLM_HEAD_VALUE="${VLLM_HEAD}" \
+      /opt/venv/bin/python - <<'PY'
+import hashlib
+import importlib
+import importlib.metadata
+import json
+import os
+from pathlib import Path
+
+import torch
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+expected_vllm = os.environ["VLLM_EXPECTED_VERSION"]
+vllm = importlib.import_module("vllm")
+kernel_version = importlib.metadata.version("vllm-xpu-kernels")
+package_dir = Path(vllm.__file__).resolve().parent
+if vllm.__version__ != expected_vllm:
+    raise SystemExit(f"vLLM version mismatch: {vllm.__version__} != {expected_vllm}")
+if not str(package_dir).startswith("/opt/venv/lib/python3.12/site-packages/"):
+    raise SystemExit(f"vLLM is shadowed by a source tree: {vllm.__file__}")
+
+rust_extension = package_dir / "_rust_tool_parser.abi3.so"
+rust_frontend = package_dir / "vllm-rs"
+if sha256(rust_extension) != os.environ["RUST_EXTENSION_EXPECTED"]:
+    raise SystemExit("installed Rust extension hash mismatch")
+if sha256(rust_frontend) != os.environ["RUST_FRONTEND_EXPECTED"]:
+    raise SystemExit("installed Rust frontend hash mismatch")
+
+for module in (
+    "vllm_xpu_kernels._C",
+    "vllm_xpu_kernels._moe_C",
+    "vllm_xpu_kernels._vllm_fa2_C",
+    "vllm_xpu_kernels._xpu_C",
+    "vllm_xpu_kernels.xpumem_allocator",
+):
+    importlib.import_module(module)
+
+required_schemas = [
+    ("_C", "rms_norm"),
+    ("_vllm_fa2_C", "varlen_fwd"),
+    ("_xpu_C", "gdn_attention"),
+    ("_xpu_C", "int4_gemm_w4a16"),
+]
+if os.environ["INSTALL_CURRENT_KERNEL_VALUE"] == "1":
+    required_schemas.append(("_xpu_C", "fp8_gemm_out"))
+for namespace, op_name in required_schemas:
+    op = getattr(getattr(torch.ops, namespace), op_name)
+    if not op._schemas:
+        raise SystemExit(f"missing Torch schema: {namespace}::{op_name}")
+
+Path("/opt/neural-download/import-receipt.json").write_text(
+    json.dumps(
+        {
+            "build_lane": os.environ["BUILD_LANE_VALUE"],
+            "kernel_head": os.environ["KERNEL_HEAD_VALUE"],
+            "kernel_version": kernel_version,
+            "rust_extension_sha256": sha256(rust_extension),
+            "rust_frontend_sha256": sha256(rust_frontend),
+            "vllm_file": vllm.__file__,
+            "vllm_head": os.environ["VLLM_HEAD_VALUE"],
+            "vllm_version": vllm.__version__,
+        },
+        indent=2,
+        sort_keys=True,
+    )
+    + "\n"
+)
+PY
+
+RUN set -eux; \
+    package_dir=/opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels; \
+    torch_lib_dir="$(/opt/venv/bin/python -c 'import pathlib, torch; print(pathlib.Path(torch.__file__).resolve().parent / "lib")')"; \
+    export LD_LIBRARY_PATH="${torch_lib_dir}:${package_dir}:${LD_LIBRARY_PATH:-}"; \
+    test -d "${package_dir}"; \
+    for name in \
+        _C.abi3.so \
+        _moe_C.abi3.so \
+        _vllm_fa2_C.abi3.so \
+        _xpu_C.abi3.so \
+        libattn_kernels_xe_2.so \
+        libgdn_attn_kernels_xe_2.so \
+        libgrouped_gemm_xe_2.so \
+        libgrouped_gemm_xe_default.so \
+        libmhc_kernels_xe_2.so \
+        libmqa_logits_kernels_xe_2.so \
+        xpumem_allocator.abi3.so; do \
+        test -s "${package_dir}/${name}"; \
+    done; \
+    find "${package_dir}" -maxdepth 1 -type f -name '*.so' -print0 | \
+      while IFS= read -r -d '' library; do \
+        dynamic="$(readelf -d "${library}")"; \
+        resolved="$(ldd "${library}")"; \
+        if printf '%s\n' "${dynamic}" | grep -E '(RPATH|RUNPATH).*(/home/steve|/build|/work|/opt/intel/oneapi)'; then \
+            echo "host/build RPATH/RUNPATH leaked into ${library}" >&2; \
+            exit 1; \
+        fi; \
+        if printf '%s\n' "${resolved}" | grep -F 'not found'; then \
+            echo "unresolved dependency in ${library}" >&2; \
+            exit 1; \
+        fi; \
+      done
+
+# The official base has one known pip-check defect (nixl's optional CUDA
+# companion). The untouched official current-kernel artifact also has a
+# shallow-SCM version that does not satisfy vLLM's public-version pin. Accept
+# those exact lines for their exact lanes and nothing else.
+RUN set -eux; \
+    set +e; \
+    /root/.local/bin/uv pip check --python /opt/venv/bin/python \
+      >/opt/neural-download/pip-check.txt 2>&1; \
+    check_status=$?; \
+    set -e; \
+    if [ "${check_status}" -ne 0 ]; then \
+        expected_count=1; \
+        if [ "${INSTALL_CURRENT_KERNEL}" = 1 ]; then expected_count=2; fi; \
+        test "$(grep -c '^The package ' /opt/neural-download/pip-check.txt)" -eq "${expected_count}"; \
+        grep -Fx 'The package `nixl` requires `nixl-cu13==1.3.2`, but it is not installed' \
+          /opt/neural-download/pip-check.txt; \
+        if [ "${INSTALL_CURRENT_KERNEL}" = 1 ]; then \
+            grep -Fx "The package \`vllm\` requires \`vllm-xpu-kernels==0.1.13.2\`, but \`${KERNEL_PACKAGE_VERSION}\` is installed" \
+              /opt/neural-download/pip-check.txt; \
+        fi; \
+    fi
+
+ENTRYPOINT ["vllm", "serve"]
