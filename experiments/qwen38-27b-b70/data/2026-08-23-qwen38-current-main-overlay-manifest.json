@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-342b-tp1-r1-preregistered-not-launched",
+  "status": "preservation-gate-passed-342b-tp1-r1-failed-incomplete-r2-pending",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -9,7 +9,7 @@
     "result_policy": "append-only identities; never overwrite or lower historical highs"
   },
   "observed_heads": {
-    "checked_utc": "2026-08-24T18:02:41Z",
+    "checked_utc": "2026-08-24T18:28:03Z",
     "official_nightly": {
       "index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
@@ -590,7 +590,7 @@
   },
   "active_qualification_build": {
     "built_utc": "2026-08-24T17:48:12Z",
-    "status": "static-preflight-passed-tp1-r1-preregistered-not-launched",
+    "status": "static-preflight-passed-tp1-r1-failed-incomplete-r2-pending",
     "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-342b8ebd8b-absolute-current-main-build.json",
     "receipt_sha256": "ad856716714af8893d0ce47416d0efab4e9cb014505e6deeed3b3545ea82141c",
     "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T174812Z-342b8ebd8b-baaa05bb4e",
@@ -635,7 +635,7 @@
       "new_image_ids_retained_locally": true
     },
     "qualification": {
-      "status": "r1-preregistered-not-launched",
+      "status": "r1-failed-incomplete-after-strict-a-r2-pending",
       "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-342b8ebd8b-untreated-tp1-r1-prereg.md",
       "packet_sha256": "6d94eda899686f99a224e13d67d29a3d45dcce74f4cebc70bd5a32f081b28fd9",
       "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-342b8ebd8b-untreated-tp1-r1-qualification.sh",
@@ -650,6 +650,21 @@
       "hardware_gate_runner_sha256": "8038015b179048662f53d7d41ead6cddc95671081942444f394c6e48ed57a6f7",
       "hardware_gate_root": "/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-342b8ebd8b-20260824-086de284-venvlib-r1",
       "campaign_root": "/home/steve/qwen38-current-main-runs/tp1-untreated-342b8ebd8b-20260824-r1",
+      "closeout_note": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-342b8ebd8b-r1-repo-advanced-after-replay-a.md",
+      "closeout_note_sha256": "f393b8d0446f71c244a690251531876f69e16a84c72e7c627af1cd564233e9cb",
+      "closeout_data": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-342b8ebd8b-r1-repo-advanced-after-replay-a.json",
+      "closeout_data_sha256": "9521de832206ded0b6e023a48696f53619599fa7d1ba91f49fd5059560fbc1bd",
+      "hardware_gate_manifest": "passed-70-of-70",
+      "campaign_manifest": "passed-178-of-178",
+      "frozen_inputs_manifest": "passed-21-of-21",
+      "r1_observations_tok_s": {
+        "diagnostic": 30.337988469031558,
+        "strict_a": 30.295550825778708,
+        "strict_a_quality": "pass",
+        "strict_a_speed_gate": "fail-by-0.015124214751271",
+        "strict_b": null
+      },
+      "r1_terminal_cause": "live lab origin/main advanced between strict arms; engine upstream identities remained exact",
       "ports": [19770, 19771, 19772],
       "offline_classifier_tests": 14,
       "diagnostic_floor_tok_s": 30.2178,
@@ -657,7 +672,7 @@
       "order": ["both-current zero-overlay TP1", "TP2", "TP4"],
       "performance_floors_must_not_change": true
     },
-    "policy": "Re-resolve all live identities after packet commit and immediately before its one atomic launch. Preserve every captured high and accepted overlay; this zero-overlay packet neither applies nor supersedes them."
+    "policy": "R1 is sealed and cannot resume. If 342b remains literal-current, preregister a fresh-root r2 with unchanged floors and keep the repository quiet for its atomic GPU window. If an engine upstream identity moves first, rebuild. Preserve every captured high and accepted overlay; this zero-overlay attempt neither applies nor supersedes them."
   },
   "frozen_trees": {
     "vllm": {
@@ -740,6 +755,11 @@
     "0ecc_qualified_stock_control": {
       "diagnostic": [30.282672968694783],
       "strict": [30.324297716696414, 30.325970521145816]
+    },
+    "342b_dated_zero_overlay_r1": {
+      "diagnostic": [30.337988469031558],
+      "strict_a": [30.295550825778708],
+      "status": "failed-incomplete-after-strict-a; diagnostic support and quality-clean strict speed miss only; no protected value replaced"
     }
   },
   "overlays": {

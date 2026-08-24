@@ -320,16 +320,35 @@ above the unchanged 12-GiB launch floor. This is still only a current-source
 static build; TP1 qualification is pending. See the
 [342b build receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-342b8ebd8b-absolute-current-main-build.json).
 
-A separately named 342b r1 TP1 packet is now preregistered but not launched.
-Its 991-line wrapper is an exact normalized copy of the audited 6648 safety
-harness: only source/image/receipt identity, fresh non-overridable roots,
-isolated ports `19770`-`19772`, and identity wording changed. The classifier,
-fourteen-test battery, corrected-NVMe-aware hardware gate, strict runner,
-model and quality inputs, graph/cache lifecycle, diagnostic floor `30.2178`,
-and both strict floors `30.31067504052998 tok/s` remain exact. The wrapper runs
-only the both-current zero-overlay TP1 lane; no old cache or accepted decision
-is applied or discarded. See the
-[342b TP1 r1 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-342b8ebd8b-untreated-tp1-r1-prereg.md).
+The separately named 342b r1 TP1 packet then ran once from clean pushed
+`main`. Its hardware gate passed 70/70. The zero-overlay diagnostic completed
+25/25 cache-zero rows at `30.337988469031558 tok/s`, above its frozen floor.
+Strict replay A completed 25/25 natural-EOS rows at
+`30.295550825778708 tok/s` and passed all seven exact cases, the 8/8 one-hash
+repeat, the 8K needle, all 24 baseline comparisons, direct/ordinary model
+verification, immutable-cache checks, and clean kernel/teardown gates. Its
+speed gate missed the unchanged `30.31067504052998 tok/s` floor by only
+`0.015124214751271 tok/s` (`0.049897%`).
+
+Before replay B, an unrelated Ornith/Qwen3.6 evidence commit advanced the lab
+repository's live `origin/main`. The wrapper intentionally stopped with rc 1;
+replay B and an aggregate result do not exist. The engine upstream identities
+did not move, and the repository commit changed neither the frozen packet nor
+the running image/cache. Close r1 as failed-incomplete, not as a completed TP1
+qualification or permission to lower a captured value. Its 178/178 campaign,
+21/21 input, and 70/70 hardware manifests reverify; both containers are gone,
+ports are free, and the 1,097-file cache stayed byte-identical. See the
+[r1 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-342b8ebd8b-r1-repo-advanced-after-replay-a.md)
+and original
+[preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-342b8ebd8b-untreated-tp1-r1-prereg.md).
+
+An independent check at `2026-08-24T18:28:03Z` still resolved literal-current
+vLLM 342b, XPU kernels baaa, and nightly digest 3ee0. If they remain exact,
+preregister a fresh-root r2 with identical performance/quality gates and a
+repository-quiet atomic GPU window. If any engine identity moves first, archive
+342b as dated evidence and rebuild the successor. Do not authorize TP2 until
+TP1 closes; then qualify TP2 zero-overlay plus the preserved 78-decision
+remap, followed by TP4 zero-overlay plus the accepted 152-decision remap.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
