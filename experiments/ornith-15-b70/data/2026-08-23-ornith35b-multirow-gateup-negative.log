@@ -1,0 +1,36 @@
+0.00.503.084 W model has unused tensor blk.40.attn_norm.weight (size = 8192 bytes) -- ignoring
+0.00.503.091 W model has unused tensor blk.40.post_attention_norm.weight (size = 8192 bytes) -- ignoring
+0.00.503.096 W model has unused tensor blk.40.attn_q.weight (size = 9437184 bytes) -- ignoring
+0.00.503.098 W model has unused tensor blk.40.attn_k.weight (size = 589824 bytes) -- ignoring
+0.00.503.099 W model has unused tensor blk.40.attn_v.weight (size = 860160 bytes) -- ignoring
+0.00.503.105 W model has unused tensor blk.40.attn_output.weight (size = 4718592 bytes) -- ignoring
+0.00.503.107 W model has unused tensor blk.40.attn_q_norm.weight (size = 1024 bytes) -- ignoring
+0.00.503.109 W model has unused tensor blk.40.attn_k_norm.weight (size = 1024 bytes) -- ignoring
+0.00.503.111 W model has unused tensor blk.40.ffn_gate_inp.weight (size = 2097152 bytes) -- ignoring
+0.00.503.113 W model has unused tensor blk.40.ffn_down_exps.weight (size = 220200960 bytes) -- ignoring
+0.00.503.117 W model has unused tensor blk.40.ffn_gate_exps.weight (size = 150994944 bytes) -- ignoring
+0.00.503.119 W model has unused tensor blk.40.ffn_up_exps.weight (size = 150994944 bytes) -- ignoring
+0.00.503.121 W model has unused tensor blk.40.ffn_gate_inp_shexp.weight (size = 8192 bytes) -- ignoring
+0.00.503.123 W model has unused tensor blk.40.ffn_gate_shexp.weight (size = 589824 bytes) -- ignoring
+0.00.503.125 W model has unused tensor blk.40.ffn_up_shexp.weight (size = 589824 bytes) -- ignoring
+0.00.503.127 W model has unused tensor blk.40.ffn_down_shexp.weight (size = 860160 bytes) -- ignoring
+0.00.503.130 W model has unused tensor blk.40.nextn.eh_proj.weight (size = 4718592 bytes) -- ignoring
+0.00.503.133 W model has unused tensor blk.40.nextn.enorm.weight (size = 8192 bytes) -- ignoring
+0.00.503.135 W model has unused tensor blk.40.nextn.hnorm.weight (size = 8192 bytes) -- ignoring
+0.00.503.141 W model has unused tensor blk.40.nextn.shared_head_norm.weight (size = 8192 bytes) -- ignoring
+0.38.703.325 I 
+main: n_predict = 80, n_ctx = 512, n_batch = 80, n_parallel = 4, n_kv_req = 287
+0.40.972.713 I main: stream 0 finished at n_cur = 800.40.972.940 I main: stream 1 finished at n_cur = 800.40.973.166 I main: stream 2 finished at n_cur = 800.40.973.397 I main: stream 3 finished at n_cur = 80
+0.40.973.407 I main: decoded 276 tokens in 1.54 s, speed: 179.70 t/s
+ggml_sycl_ornith_moe_gate_up_multirow: fused_hits=2800
+ggml_sycl_ornith_moe_gate_up: fused_hits=2800
+ggml_sycl_ornith_alpha_gate: fused_hits=0
+ggml_sycl_ornith_moe_shared_residual_rms: fused_hits=0
+ggml_sycl_residual_rms_norm: fused_hits=0
+ggml_sycl_ornith_moe_gate_residual_rms: fused_hits=0
+ggml_sycl_ornith_conv_silu: fused_hits=0
+ggml_sycl_ornith_concat_state_direct: fused_hits=0
+ggml_sycl_ornith_concat_state: fused_hits=0
+ggml_sycl_ornith_gdn_state_io: fused_hits=0
+ggml_sycl_ornith_gdn_rms_gate: fused_hits=0
+ggml_sycl_ornith_qk_norm_rope: fused_hits=0

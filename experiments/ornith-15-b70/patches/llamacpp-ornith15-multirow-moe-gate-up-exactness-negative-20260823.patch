@@ -1,0 +1,251 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 38b2121..54d4075 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -4655,6 +4655,23 @@ static bool ggml_sycl_mul_mat_glu_mmvq_fused(ggml_backend_sycl_context & ctx, gg
+ }
+
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_moe_gate_up_hits{0};
++static std::atomic<uint64_t> g_ggml_sycl_ornith_moe_gate_up_multirow_hits{0};
++
++static bool ggml_sycl_ornith_moe_gate_up_multirow_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP_MULTIROW");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_moe_gate_up_multirow: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_moe_gate_up_multirow_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
+
+ static bool ggml_sycl_ornith_moe_gate_up_enabled() {
+     static const bool enabled = [] {
+@@ -4673,7 +4690,7 @@ static bool ggml_sycl_ornith_moe_gate_up_enabled() {
+
+ static bool ggml_sycl_ornith_moe_projection(
+         const ggml_tensor * projection, const ggml_tensor * input,
+-        const ggml_tensor * ids, const char * weight_name) {
++        const ggml_tensor * ids, const char * weight_name, int n_tokens) {
+     const ggml_tensor * weight = projection != nullptr ? projection->src[0] : nullptr;
+     return projection != nullptr && projection->op == GGML_OP_MUL_MAT_ID &&
+            (projection->flags & GGML_TENSOR_FLAG_COMPUTE) != 0 &&
+@@ -4681,7 +4698,7 @@ static bool ggml_sycl_ornith_moe_projection(
+            projection->src[1] == input && projection->src[2] == ids &&
+            projection->type == GGML_TYPE_F32 &&
+            projection->ne[0] == 512 && projection->ne[1] == 8 &&
+-           projection->ne[2] == 1 && projection->ne[3] == 1 &&
++           projection->ne[2] == n_tokens && projection->ne[3] == 1 &&
+            ggml_is_contiguous(projection) && weight != nullptr &&
+            std::strcmp(weight->name, weight_name) == 0 &&
+            weight->type == GGML_TYPE_Q4_K && weight->ne[0] == 2048 &&
+@@ -4702,9 +4719,14 @@ static bool ggml_sycl_ornith_moe_gate_up_fused(
+     ggml_tensor * first = cgraph->nodes[node_idx];
+     ggml_tensor * second = cgraph->nodes[node_idx + 1];
+     ggml_tensor * glu = cgraph->nodes[node_idx + 2];
+-    if (glu == nullptr || ggml_get_glu_op(glu) != GGML_GLU_OP_SWIGLU ||
++    if (glu == nullptr) {
++        return false;
++    }
++    const int n_tokens = (int) glu->ne[2];
++    if (ggml_get_glu_op(glu) != GGML_GLU_OP_SWIGLU ||
+         ggml_get_op_params_i32(glu, 1) != 0 || glu->type != GGML_TYPE_F32 ||
+-        glu->ne[0] != 512 || glu->ne[1] != 8 || glu->ne[2] != 1 || glu->ne[3] != 1 ||
++        glu->ne[0] != 512 || glu->ne[1] != 8 || n_tokens < 1 || n_tokens > 32 ||
++        (n_tokens > 1 && !ggml_sycl_ornith_moe_gate_up_multirow_enabled()) || glu->ne[3] != 1 ||
+         !ggml_is_contiguous(glu)) {
+         return false;
+     }
+@@ -4718,9 +4740,10 @@ static bool ggml_sycl_ornith_moe_gate_up_fused(
+     const ggml_tensor * ids = up->src[2];
+     if (input == nullptr || ids == nullptr || gate->src[1] != input || gate->src[2] != ids ||
+         input->type != GGML_TYPE_F32 || input->ne[0] != 2048 || input->ne[1] != 1 ||
+-        input->ne[2] != 1 || input->ne[3] != 1 || !ggml_is_contiguous(input) ||
+-        ids->type != GGML_TYPE_I32 || ids->ne[0] != 8 || ids->ne[1] != 1 ||
+-        !ggml_is_contiguous(ids)) {
++        input->ne[2] != n_tokens || input->ne[3] != 1 || !ggml_is_contiguous(input) ||
++        ids->type != GGML_TYPE_I32 || ids->ne[0] != 8 || ids->ne[1] != n_tokens ||
++        ids->ne[2] != 1 || ids->ne[3] != 1 || ids->nb[0] != sizeof(int32_t) ||
++        ids->nb[1] < 8 * sizeof(int32_t)) {
+         return false;
+     }
+
+@@ -4735,8 +4758,8 @@ static bool ggml_sycl_ornith_moe_gate_up_fused(
+     char up_name[64];
+     std::snprintf(gate_name, sizeof(gate_name), "blk.%d.ffn_gate_exps.weight", layer);
+     std::snprintf(up_name, sizeof(up_name), "blk.%d.ffn_up_exps.weight", layer);
+-    if (!ggml_sycl_ornith_moe_projection(gate, input, ids, gate_name) ||
+-        !ggml_sycl_ornith_moe_projection(up, input, ids, up_name) ||
++    if (!ggml_sycl_ornith_moe_projection(gate, input, ids, gate_name, n_tokens) ||
++        !ggml_sycl_ornith_moe_projection(up, input, ids, up_name, n_tokens) ||
+         !ggml_are_same_shape(gate->src[0], up->src[0]) ||
+         !ggml_are_same_stride(gate->src[0], up->src[0])) {
+         return false;
+@@ -4756,17 +4779,27 @@ static bool ggml_sycl_ornith_moe_gate_up_fused(
+     constexpr int ncols = 2048;
+     const int padded = GGML_PAD(ncols, MATRIX_ROW_PADDING);
+     ggml_sycl_pool_alloc<char> input_q8(ctx.pool(),
+-        (size_t) padded * sizeof(block_q8_1) / QK8_1);
++        (size_t) n_tokens * padded * sizeof(block_q8_1) / QK8_1);
+     quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>(
+-        (const float *) input->data, input_q8.get(), ncols, 1, padded, stream);
+-
+-    const bool ok = ggml_sycl_mul_mat_vec_q_id_glu_reorder(
+-        up->src[0]->type, ggml_get_glu_op(glu), up->src[0]->data,
+-        gate->src[0]->data, input_q8.get(), (const int32_t *) ids->data,
+-        (float *) glu->data, ncols, 512, 8, up->src[0]->nb[2], glu->nb[1],
+-        /*src1_row_stride=*/0, stream);
++        (const float *) input->data, input_q8.get(), ncols, n_tokens, padded, stream);
++
++    const size_t input_q8_stride = (size_t) padded * sizeof(block_q8_1) / QK8_1;
++    const bool ok = n_tokens == 1
++        ? ggml_sycl_mul_mat_vec_q_id_glu_reorder(
++            up->src[0]->type, ggml_get_glu_op(glu), up->src[0]->data,
++            gate->src[0]->data, input_q8.get(), (const int32_t *) ids->data,
++            (float *) glu->data, ncols, 512, 8, up->src[0]->nb[2], glu->nb[1],
++            /*src1_row_stride=*/0, stream)
++        : ggml_sycl_mul_mat_vec_q_id_glu_reorder_multirow(
++            up->src[0]->type, ggml_get_glu_op(glu), up->src[0]->data,
++            gate->src[0]->data, input_q8.get(), (const int32_t *) ids->data,
++            (float *) glu->data, ncols, 512, n_tokens, 8, ids->nb[1],
++            up->src[0]->nb[2], glu->nb[1], glu->nb[2], input_q8_stride, stream);
+     if (ok) {
+         g_ggml_sycl_ornith_moe_gate_up_hits.fetch_add(1, std::memory_order_relaxed);
++        if (n_tokens > 1) {
++            g_ggml_sycl_ornith_moe_gate_up_multirow_hits.fetch_add(1, std::memory_order_relaxed);
++        }
+     }
+     return ok;
+ }
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+index 3f09854..0085bc1 100644
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -2844,19 +2844,24 @@ static void mul_mat_vec_q_moe_glu_reorder(
+     const void * __restrict__ vup_base, const void * __restrict__ vgate_base,
+     const void * __restrict__ vy_base, float * __restrict__ dst_base,
+     const int32_t * __restrict__ ids_dev, const int ncols, const int nrows,
+-    const size_t expert_weight_stride, const size_t dst_row_stride,
+-    const size_t src1_row_stride, const ggml_glu_op glu_op,
++    const size_t ids_token_stride, const size_t expert_weight_stride,
++    const size_t dst_expert_stride, const size_t dst_token_stride,
++    const size_t src1_token_stride, const ggml_glu_op glu_op,
+     const sycl::nd_item<3> & item_ct1) {
+     using block_type   = ggml_sycl_reordered::block_q_t<reorder_vec_dot_q_sycl::gtype>;
+     using block_traits = typename block_type::traits;
+
++    const int token_idx  = item_ct1.get_group(0);
+     const int expert_idx = item_ct1.get_group(1);
+-    const int expert_id  = ids_dev[expert_idx];
++    const int32_t * ids_token = (const int32_t *) ((const char *) ids_dev +
++        (size_t) token_idx * ids_token_stride);
++    const int expert_id  = ids_token[expert_idx];
+
+     const char * vup   = (const char *) vup_base + (size_t) expert_id * expert_weight_stride;
+     const char * vgate = (const char *) vgate_base + (size_t) expert_id * expert_weight_stride;
+-    const char * vy    = (const char *) vy_base + (size_t) expert_idx * src1_row_stride;
+-    float * dst        = (float *) ((char *) dst_base + (size_t) expert_idx * dst_row_stride);
++    const char * vy    = (const char *) vy_base + (size_t) token_idx * src1_token_stride;
++    float * dst        = (float *) ((char *) dst_base +
++        (size_t) token_idx * dst_token_stride + (size_t) expert_idx * dst_expert_stride);
+
+     const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
+     if (row >= nrows) {
+@@ -2933,11 +2908,13 @@ template <typename reorder_vec_dot_q_sycl>
+ static void launch_mul_mat_vec_q_moe_glu_reorder(
+     const void * vup_base, const void * vgate_base, const void * vy,
+     const int32_t * ids_dev, float * dst_base, const int ncols,
+-    const int nrows, const int n_experts_used, const size_t expert_weight_stride,
+-    const size_t dst_row_stride, const size_t src1_row_stride,
++    const int nrows, const int n_tokens, const int n_experts_used,
++    const size_t ids_token_stride, const size_t expert_weight_stride,
++    const size_t dst_expert_stride, const size_t dst_token_stride,
++    const size_t src1_token_stride,
+     const ggml_glu_op glu_op, dpct::queue_ptr stream) {
+     const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+-    const sycl::range<3> block_nums(1, (unsigned) n_experts_used, (unsigned) block_num_y);
++    const sycl::range<3> block_nums((unsigned) n_tokens, (unsigned) n_experts_used, (unsigned) block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+@@ -2945,7 +2922,8 @@ static void launch_mul_mat_vec_q_moe_glu_reorder(
+             [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                 mul_mat_vec_q_moe_glu_reorder<reorder_vec_dot_q_sycl>(
+                     vup_base, vgate_base, vy, dst_base, ids_dev, ncols, nrows,
+-                    expert_weight_stride, dst_row_stride, src1_row_stride, glu_op, item);
++                    ids_token_stride, expert_weight_stride, dst_expert_stride,
++                    dst_token_stride, src1_token_stride, glu_op, item);
+             });
+     });
+ }
+@@ -2961,12 +2939,31 @@ bool ggml_sycl_mul_mat_vec_q_id_glu_reorder(
+         return false;
+     }
+     launch_mul_mat_vec_q_moe_glu_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q4_K>>(
+-        vup_base, vgate_base, vy, ids_dev, dst_base, ncols, nrows,
+-        n_experts_used, expert_weight_stride, dst_row_stride,
++        vup_base, vgate_base, vy, ids_dev, dst_base, ncols, nrows, 1,
++        n_experts_used, 0, expert_weight_stride, dst_row_stride, 0,
+         src1_row_stride, glu_op, stream);
+     return true;
+ }
+
++bool ggml_sycl_mul_mat_vec_q_id_glu_reorder_multirow(
++    enum ggml_type src0_type, enum ggml_glu_op glu_op,
++    const void * vup_base, const void * vgate_base, const void * vy,
++    const int32_t * ids_dev, float * dst_base, int ncols, int nrows,
++    int n_tokens, int n_experts_used, size_t ids_token_stride,
++    size_t expert_weight_stride, size_t dst_expert_stride,
++    size_t dst_token_stride, size_t src1_token_stride,
++    dpct::queue_ptr stream) {
++    if (src0_type != GGML_TYPE_Q4_K || n_tokens < 2 || n_tokens > 32 ||
++        (glu_op != GGML_GLU_OP_SWIGLU && glu_op != GGML_GLU_OP_GEGLU)) {
++        return false;
++    }
++    launch_mul_mat_vec_q_moe_glu_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q4_K>>(
++        vup_base, vgate_base, vy, ids_dev, dst_base, ncols, nrows,
++        n_tokens, n_experts_used, ids_token_stride, expert_weight_stride,
++        dst_expert_stride, dst_token_stride, src1_token_stride, glu_op, stream);
++    return true;
++}
++
+ template <typename reorder_vec_dot_q_sycl, int ncols_dst>
+ static void launch_mul_mat_vec_q_reorder_glu(const void * vx, const void * vgate, const void * vy, float * dst,
+                                              const int ncols, const int nrows, const int stride_col_y_bytes,
+diff --git a/ggml/src/ggml-sycl/mmvq.hpp b/ggml/src/ggml-sycl/mmvq.hpp
+index 5787870..94fb4b0 100644
+--- a/ggml/src/ggml-sycl/mmvq.hpp
++++ b/ggml/src/ggml-sycl/mmvq.hpp
+@@ -75,6 +75,27 @@ bool ggml_sycl_mul_mat_vec_q_id_glu_reorder(
+     size_t             src1_row_stride,
+     dpct::queue_ptr    stream);
+
++// Multi-token variant of the routed-expert gate/up GEMV. Each token owns one
++// contiguous set of route ids and one quantized input row.
++bool ggml_sycl_mul_mat_vec_q_id_glu_reorder_multirow(
++    enum ggml_type     src0_type,
++    enum ggml_glu_op   glu_op,
++    const void *       vup_base,
++    const void *       vgate_base,
++    const void *       vy,
++    const int32_t *    ids_dev,
++    float *            dst_base,
++    int                ncols,
++    int                nrows,
++    int                n_tokens,
++    int                n_experts_used,
++    size_t             ids_token_stride,
++    size_t             expert_weight_stride,
++    size_t             dst_expert_stride,
++    size_t             dst_token_stride,
++    size_t             src1_token_stride,
++    dpct::queue_ptr    stream);
++
+ // Fused dense-FFN GEMV: writes glu(gate . y, up . y) instead of the two mat-vec results.
+ // vx / vgate must share shape, stride and reorder layout. Returns false if unhandled.
+ bool ggml_sycl_mul_mat_vec_q_glu_reorder(

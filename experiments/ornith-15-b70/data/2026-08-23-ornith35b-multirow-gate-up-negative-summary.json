@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-23",
+  "status": "exactness-negative-do-not-use",
+  "model_sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f",
+  "llama_cpp_revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "accepted_patch_sha256": "7b9204f8f44608fc5b1858a15498b3cf9bf52b4f02c27c0f91a1807af5b5d15d",
+  "candidate": {
+    "environment": "GGML_SYCL_FUSED_ORNITH_MOE_GATE_UP_MULTIROW=1",
+    "default_enabled": false,
+    "patch": "../patches/llamacpp-ornith15-multirow-moe-gate-up-exactness-negative-20260823.patch",
+    "patch_sha256": "11f917406faf210f2b3807e20823ba06e079f49b52935815c83591a52dc64d90",
+    "fused_hits": 2800
+  },
+  "deterministic_four_sequence_gate": {
+    "generated_tokens": 276,
+    "control_tok_s": 128.82,
+    "candidate_tok_s": 179.70,
+    "speed_delta_pct": 39.496,
+    "control_stdout_sha256": "1b50819cab9e15ac7e5219f05e8f76878686ded24b3a99ebde6616dad4b621f1",
+    "candidate_stdout_sha256": "5b7fce0350dc30b263bbc466b62372d64755d2710b34e4cd37e8c2519bb1fff1",
+    "byte_identical": false
+  },
+  "artifacts": {
+    "control_stdout": "2026-08-23-ornith35b-multirow-gateup-control.txt",
+    "control_log": "2026-08-23-ornith35b-multirow-gateup-control.log",
+    "candidate_stdout": "2026-08-23-ornith35b-multirow-gateup-negative.txt",
+    "candidate_log": "2026-08-23-ornith35b-multirow-gateup-negative.log"
+  },
+  "promotion_allowed": false
+}
