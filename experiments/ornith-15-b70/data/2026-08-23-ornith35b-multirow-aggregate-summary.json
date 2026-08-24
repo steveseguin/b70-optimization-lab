@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-23",
+  "model": {
+    "name": "Ornith 1.5 35B-A3B Q4_K_M",
+    "sha256": "ca6ea26329c88b78ffd90a85163be2e746c2fafd1024f56db47e499f117f9a7f"
+  },
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 1
+  },
+  "runtime": {
+    "project": "llama.cpp",
+    "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "accepted_patch_sha256": "7b9204f8f44608fc5b1858a15498b3cf9bf52b4f02c27c0f91a1807af5b5d15d",
+    "accepted_libggml_sycl_sha256": "21b9196911c9254f06756317a7cac85942517dbd4495e41694ec7f22c80db868"
+  },
+  "benchmark": {
+    "tool": "llama-batched-bench",
+    "kind": "raw engine continuous batching with independent prompts and interleaved decode",
+    "is_http_serving_result": false,
+    "arguments": ["-ngl", "all", "-fa", "on", "-c", "65536", "-npp", "1024", "-ntg", "256", "-npl", "1,2,4,8,16,32"],
+    "aggregate_metric": "speed_tg",
+    "aggregate_unit": "tok/s"
+  },
+  "accepted_stack_baseline": {
+    "source_files": [
+      "2026-08-23-ornith35b-concurrency-calibration.jsonl",
+      "2026-08-23-ornith35b-concurrency-4-32.jsonl"
+    ],
+    "concurrency_sweep": [
+      {"users": 1, "perUserTokS": 98.024651, "aggregateTokS": 98.024651},
+      {"users": 2, "perUserTokS": 51.335869, "aggregateTokS": 102.671738},
+      {"users": 4, "perUserTokS": 29.720736, "aggregateTokS": 118.882942},
+      {"users": 8, "perUserTokS": 18.285381, "aggregateTokS": 146.283051},
+      {"users": 16, "perUserTokS": 10.156496, "aggregateTokS": 162.503937},
+      {"users": 32, "perUserTokS": 6.766034, "aggregateTokS": 216.513077}
+    ]
+  },
+  "candidate": {
+    "environment": "GGML_SYCL_FUSED_ORNITH_MULTIROW=1",
+    "default_enabled": false,
+    "patch": "../patches/llamacpp-ornith15-multirow-aggregate-fusions-candidate-20260823.patch",
+    "patch_sha256": "61135a790d749b66ca6fd63a045a5b675ec7c2e868d913e8234adff7cabbbe6e",
+    "scope": "ordered eight-expert FP32 reduction and residual/RMS fusion paths for 1-32 rows",
+    "descending_paired_sweep": [
+      {"users": 1, "controlTokS": 100.771454, "candidateTokS": 100.810143, "deltaPct": 0.038393},
+      {"users": 2, "controlTokS": 92.030434, "candidateTokS": 95.245575, "deltaPct": 3.493563},
+      {"users": 4, "controlTokS": 119.350189, "candidateTokS": 121.930367, "deltaPct": 2.161013},
+      {"users": 8, "controlTokS": 145.830063, "candidateTokS": 147.897491, "deltaPct": 1.417688},
+      {"users": 16, "controlTokS": 165.291611, "candidateTokS": 166.580048, "deltaPct": 0.779496},
+      {"users": 32, "controlTokS": 219.308441, "candidateTokS": 220.459366, "deltaPct": 0.524796}
+    ],
+    "focused_four_user_cb_bc": {
+      "excluded_each_process_first_cold_shape": true,
+      "control_1_rows": [121.193855, 121.328239],
+      "candidate_1_rows": [123.402557, 123.371819],
+      "candidate_2_rows": [123.295631, 123.352219],
+      "control_2_rows": [119.975861, 120.276337],
+      "pooled_control_tok_s": 120.693573,
+      "pooled_candidate_tok_s": 123.355557,
+      "delta_pct": 2.20558
+    }
+  },
+  "correctness": {
+    "gate": "deterministic llama-batched four-sequence unified-KV greedy transcript",
+    "control_stdout_sha256": "1b50819cab9e15ac7e5219f05e8f76878686ded24b3a99ebde6616dad4b621f1",
+    "candidate_stdout_sha256": "1b50819cab9e15ac7e5219f05e8f76878686ded24b3a99ebde6616dad4b621f1",
+    "byte_identical": true,
+    "candidate_multirow_moe_hits": 2800,
+    "candidate_multirow_residual_rms_hits": 5600,
+    "http_hash_gate_rejected": "fresh flag-off controls were already nondeterministic across concurrent server runs"
+  },
+  "claim": {
+    "status": "research-positive optional concurrency candidate",
+    "headline_single_user_changed": false,
+    "validated_four_user_delta_pct": 2.20558,
+    "no_extrapolation": true
+  }
+}

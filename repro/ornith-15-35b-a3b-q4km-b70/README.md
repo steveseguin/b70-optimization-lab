@@ -148,6 +148,43 @@ fresh-server suite mean above as the serving headline. Evidence:
 `ornith-15-35b-a3b-q4km-twelve-feature.meta.json` (model, benchmark, patch,
 library, environment, and activation hashes/counts inside).
 
+## Aggregate decode over concurrent sequences
+
+The accepted stack was also measured with raw-engine continuous batching. This
+is `llama-batched-bench` aggregate decode, not HTTP users/sec: it excludes
+request parsing, queueing, networking, and server scheduling.
+
+| concurrent sequences | aggregate tok/s | arithmetic per-user tok/s |
+| ---: | ---: | ---: |
+| 1 | 98.025 | 98.025 |
+| 2 | 102.672 | 51.336 |
+| 4 | 118.883 | 29.721 |
+| 8 | 146.283 | 18.285 |
+| 16 | 162.504 | 10.156 |
+| 32 | 216.513 | 6.766 |
+
+Exact command shape, raw rows, limitations, and the matched candidate result
+are in the [aggregate evidence note](../../experiments/ornith-15-b70/notes/2026-08-23-ornith35b-multirow-aggregate-positive.md)
+and [machine-readable summary](../../experiments/ornith-15-b70/data/2026-08-23-ornith35b-multirow-aggregate-summary.json).
+No point is interpolated or extrapolated.
+
+For multi-sequence deployments only, an optional research patch extends the
+one-row MoE-reduction and residual/RMS fusions to 2--32 rows. It improved a
+focused four-sequence C/B/B/C comparison by **+2.21%** and was neutral at one
+sequence. Apply it after the required twelve-feature patch:
+
+```bash
+MULTIROW_PATCH=/path/to/b70-optimization-lab/experiments/ornith-15-b70/patches/llamacpp-ornith15-multirow-aggregate-fusions-candidate-20260823.patch
+echo "61135a790d749b66ca6fd63a045a5b675ec7c2e868d913e8234adff7cabbbe6e  $MULTIROW_PATCH" | sha256sum -c -
+git apply --check "$MULTIROW_PATCH"
+git apply "$MULTIROW_PATCH"
+cmake --build build-sycl-aot-bmg-g31 --target llama-server llama-batched-bench -j2
+export GGML_SYCL_FUSED_ORNITH_MULTIROW=1
+```
+
+Keep this flag unset for the package's documented `--parallel 1` launch. The
+candidate is default off and has not been promoted into the required patch.
+
 ## Historical stock context-depth reference (patch off; llama-bench, FA on, 5 reps)
 
 ![depth sweep](depth-sweep.svg)

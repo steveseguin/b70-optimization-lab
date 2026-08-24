@@ -10,11 +10,14 @@ and measured metric). The `contributors` block records the exact work and
 evidence carried into that package; upstream dependencies are not treated as
 contributors unless a concrete contribution was adopted.
 
-An optional `performance_profiles` list carries measured context curves. Each
-curve names one metric (`decode`, `prefill`, or `ttft`), uses actual context
-tokens on the x-axis, links in-repository evidence, and contains at least two
-ordered measured points. A package with only a headline omits the list; the
-guide library then displays “sweep pending” instead of inventing a curve.
+An optional `performance_profiles` list carries measured curves. Each curve
+names one metric (`decode`, `prefill`, `ttft`, or `aggregate_decode`), uses an
+explicit measured x-axis (`context_tokens` by default, or
+`concurrent_sequences`), links in-repository evidence, and contains at least
+two ordered measured points. Aggregate curves may include `per_user_value` in
+addition to their aggregate `value`. A package with only a headline omits the
+list; the guide library then displays “sweep pending” instead of inventing a
+curve.
 
 A package status matters:
 

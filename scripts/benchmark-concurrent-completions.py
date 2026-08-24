@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import statistics
 import threading
@@ -65,6 +66,11 @@ def main() -> int:
     parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--repeats", type=int, default=2)
+    parser.add_argument(
+        "--unique-prompts",
+        action="store_true",
+        help="Append the deterministic request seed to each prompt for per-request correctness comparisons.",
+    )
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args()
@@ -80,9 +86,13 @@ def main() -> int:
 
     def worker(seed: int) -> None:
         try:
+            prompt = args.prompt
+            if args.unique_prompts:
+                prompt += f"\nDeterministic request lane: {seed}."
             r = request_completion(
-                base_url, model, args.prompt, args.max_tokens, seed, args.timeout
+                base_url, model, prompt, args.max_tokens, seed, args.timeout
             )
+            r["seed"] = seed
             with lock:
                 results.append(r)
         except Exception as exc:
@@ -138,6 +148,14 @@ def main() -> int:
         "completion_tokens": {
             "mean": statistics.mean(completion_tokens),
             "sum": sum(completion_tokens),
+        },
+        "response_sha256": sorted(
+            hashlib.sha256(r["text"].encode("utf-8")).hexdigest()
+            for r in results
+        ),
+        "response_sha256_by_seed": {
+            str(r["seed"]): hashlib.sha256(r["text"].encode("utf-8")).hexdigest()
+            for r in sorted(results, key=lambda item: item["seed"])
         },
     }
     print(json.dumps(out, indent=2))

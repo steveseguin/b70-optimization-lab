@@ -42,7 +42,13 @@ PACKAGE_OPERATING_SYSTEMS = {"Linux", "Windows"}
 PACKAGE_DELIVERY = {"native", "container"}
 CONTRIBUTOR_KINDS = {"lab", "external"}
 CONTRIBUTOR_STATUSES = {"acknowledged", "credited", "validated-boost", "integrated"}
-PERFORMANCE_METRICS = {"decode": "tok/s", "prefill": "tok/s", "ttft": "ms"}
+PERFORMANCE_METRICS = {
+    "decode": "tok/s",
+    "prefill": "tok/s",
+    "ttft": "ms",
+    "aggregate_decode": "tok/s",
+}
+PERFORMANCE_X_METRICS = {"context_tokens", "concurrent_sequences"}
 
 
 class GuideAnchorParser(HTMLParser):
@@ -472,36 +478,51 @@ def _validate_performance_profiles(
             _validate_internal_dependency(repo, profile_label, profile.get("evidence"))
         )
 
+        x_metric = profile.get("x_metric", "context_tokens")
+        if x_metric not in PERFORMANCE_X_METRICS:
+            errors.append(
+                f"{profile_label}.x_metric must be in {sorted(PERFORMANCE_X_METRICS)}"
+            )
+            x_metric = "context_tokens"
+
         points = profile.get("points")
         if not isinstance(points, list) or len(points) < 2:
             errors.append(f"{profile_label}.points must contain at least two measurements")
             continue
-        contexts: list[int] = []
+        x_values: list[int] = []
         for point_index, point in enumerate(points):
             point_label = f"{profile_label}.points[{point_index}]"
             if not isinstance(point, dict):
                 errors.append(f"{point_label} must be an object")
                 continue
-            context_tokens = point.get("context_tokens")
+            x_value = point.get(x_metric)
             value = point.get("value")
             samples = point.get("samples")
             if (
-                isinstance(context_tokens, bool)
-                or not isinstance(context_tokens, int)
-                or context_tokens < 0
+                isinstance(x_value, bool)
+                or not isinstance(x_value, int)
+                or x_value < (1 if x_metric == "concurrent_sequences" else 0)
             ):
-                errors.append(f"{point_label}.context_tokens must be a non-negative integer")
+                requirement = "a positive integer" if x_metric == "concurrent_sequences" else "a non-negative integer"
+                errors.append(f"{point_label}.{x_metric} must be {requirement}")
             else:
-                contexts.append(context_tokens)
+                x_values.append(x_value)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
                 errors.append(f"{point_label}.value must be a positive number")
             if samples is not None and (
                 isinstance(samples, bool) or not isinstance(samples, int) or samples < 1
             ):
                 errors.append(f"{point_label}.samples must be a positive integer")
-        if len(contexts) == len(points) and contexts != sorted(set(contexts)):
+            per_user_value = point.get("per_user_value")
+            if per_user_value is not None and (
+                isinstance(per_user_value, bool)
+                or not isinstance(per_user_value, (int, float))
+                or per_user_value <= 0
+            ):
+                errors.append(f"{point_label}.per_user_value must be a positive number")
+        if len(x_values) == len(points) and x_values != sorted(set(x_values)):
             errors.append(
-                f"{profile_label}.points must use unique, increasing context_tokens"
+                f"{profile_label}.points must use unique, increasing {x_metric}"
             )
     return errors
 

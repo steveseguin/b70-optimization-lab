@@ -91,6 +91,24 @@
         { "context_tokens": 24576, "value": 1212.927246, "samples": 5 },
         { "context_tokens": 32768, "value": 1115.599876, "samples": 5 }
       ]
+    },
+    {
+      "id": "aggregate-decode-vs-concurrent-sequences",
+      "label": "Accepted-stack aggregate decode over concurrent sequences",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent engine sequences",
+      "scope": "Direct llama-batched-bench raw-engine continuous batching with independent pp1024 prompts, interleaved tg256 decode, c65536, flash attention on, F16 KV, one B70, and the exact accepted twelve-feature stack. This excludes HTTP, JSON, queueing, and server-scheduler overhead. Per-user values are arithmetic aggregate/users. No point is scaled, interpolated, or extrapolated.",
+      "evidence": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-multirow-aggregate-summary.json",
+      "points": [
+        { "concurrent_sequences": 1, "value": 98.024651, "per_user_value": 98.024651, "samples": 1 },
+        { "concurrent_sequences": 2, "value": 102.671738, "per_user_value": 51.335869, "samples": 1 },
+        { "concurrent_sequences": 4, "value": 118.882942, "per_user_value": 29.720736, "samples": 1 },
+        { "concurrent_sequences": 8, "value": 146.283051, "per_user_value": 18.285381, "samples": 1 },
+        { "concurrent_sequences": 16, "value": 162.503937, "per_user_value": 10.156496, "samples": 1 },
+        { "concurrent_sequences": 32, "value": 216.513077, "per_user_value": 6.766034, "samples": 1 }
+      ]
     }
   ],
   "known_limitations": [
@@ -98,6 +116,7 @@
     "Canary battery is objective self-consistency only; no cross-model oracle.",
     "Stock two-card layer split measured 102.01/102.20 tok/s versus 104.84/104.81 on one card (-2.6%): use one card for single-stream decode.",
     "Fresh stock servers matched 0/12 complete realistic-suite hashes across processes on this runtime. A realistic same-process repeat also produced four hashes across eight requests; use same-frozen-binary door-off/on exactness and activation counts for patch validation, while the short exact-answer 8x canary remains a narrower check.",
+    "The aggregate concurrency profile is a raw-engine continuous-batching measurement, not an HTTP serving users/sec result. The optional multi-row research patch improves the four-sequence aggregate rate by a confirmed 2.21% but is not enabled by the single-user package launch.",
     "Stage the GGUF on local or sufficiently fast direct-attached storage; optimized first-token setup rereads roughly 20.0 GB of expert tensors, making a 100 Mb/s NFS mmap unsuitable for cold benchmarking."
   ],
   "hardware": {
@@ -197,6 +216,9 @@
     "experiments/ornith-15-b70/notes/2026-08-23-ornith35b-shared-gate-residual-rms-positive.md",
     "experiments/ornith-15-b70/data/2026-08-23-ornith35b-shared-gate-residual-rms-summary.json",
     "experiments/ornith-15-b70/data/2026-08-23-ornith35b-shared-gate-residual-rms-exactness.json",
+    "experiments/ornith-15-b70/notes/2026-08-23-ornith35b-multirow-aggregate-positive.md",
+    "experiments/ornith-15-b70/data/2026-08-23-ornith35b-multirow-aggregate-summary.json",
+    "experiments/ornith-15-b70/patches/llamacpp-ornith15-multirow-aggregate-fusions-candidate-20260823.patch",
     "experiments/ornith-15-b70/notes/2026-08-23-ornith35b-twelve-feature-depth-sweep.md",
     "experiments/ornith-15-b70/notes/2026-08-23-ornith35b-eleven-feature-depth-sweep.md",
     "experiments/ornith-15-b70/notes/2026-08-23-ornith35b-optimized-depth-sweep.md",

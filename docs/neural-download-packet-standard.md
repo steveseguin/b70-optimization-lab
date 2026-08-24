@@ -73,7 +73,17 @@ Agents creating or updating these surfaces must use the repository-local
      profile differs from the headline lane, label that difference directly.
    - Store measured points and aggregation in repository evidence, then expose
      them through `performance_profiles`; never interpolate a one-point
-     headline or mix unrelated experiments into a line.
+   headline or mix unrelated experiments into a line.
+
+8. **Aggregate concurrency profile** (optional until measured)
+   - Use an explicit `x_metric: concurrent_sequences` profile and record raw
+     aggregate decode as `value`; `per_user_value` may accompany it.
+   - State whether the harness is raw-engine batching or an HTTP service test.
+     Never relabel engine sequences as users/sec, and never fill missing
+     concurrency points from a projection.
+   - Hold prompt/output shape, cache state, batching mode, runtime flags, and
+     hardware fixed. Preserve ascending/descending or matched-repeat evidence
+     when warmup and run order materially affect the curve.
 
 ## Integrity rules (inherited from the lab standard)
 

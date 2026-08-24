@@ -1,0 +1,315 @@
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -5689,8 +5689,31 @@
+     ggml_tensor * weighted;
+     ggml_tensor * dst;
+     int           nodes_to_skip;
++    int           n_tokens;
+ };
+
++static std::atomic<uint64_t> g_ggml_sycl_ornith_multirow_moe_add_reduce_hits{0};
++static std::atomic<uint64_t> g_ggml_sycl_ornith_multirow_residual_rms_hits{0};
++
++static bool ggml_sycl_ornith_multirow_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_MULTIROW");
++        const bool on = value != nullptr && std::atoi(value) != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_multirow_moe_add_reduce: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_multirow_moe_add_reduce_hits.load(std::memory_order_relaxed));
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_multirow_residual_rms: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_multirow_residual_rms_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
++
+ static bool ggml_sycl_moe_add_reduce_enabled() {
+     static const bool enabled = [] {
+         const char * value = std::getenv("GGML_SYCL_FUSED_MOE_ADD_REDUCE");
+@@ -5743,18 +5766,24 @@
+     ggml_tensor * first = cgraph->nodes[add_idxs[0]];
+     ggml_tensor * weighted = first->src[0] != nullptr ? first->src[0]->view_src : nullptr;
+     if (weighted == nullptr || weighted->type != GGML_TYPE_F32 ||
+-        weighted->ne[1] != n_experts || weighted->ne[2] != 1 || weighted->ne[3] != 1 ||
++        weighted->ne[1] != n_experts || weighted->ne[3] != 1 ||
+         !ggml_is_contiguous(weighted)) {
+         return false;
+     }
+
+     const int64_t row_len = weighted->ne[0];
+-    const auto is_expert_row = [weighted, row_len](const ggml_tensor * view, int expert) {
++    const int n_tokens = (int) weighted->ne[2];
++    if (n_tokens < 1 || n_tokens > 32 ||
++        (n_tokens > 1 && !ggml_sycl_ornith_multirow_enabled())) {
++        return false;
++    }
++    const auto is_expert_row = [weighted, row_len, n_tokens](const ggml_tensor * view, int expert) {
+         return view != nullptr && view->op == GGML_OP_VIEW && view->view_src == weighted &&
+                view->view_offs == (size_t) expert * weighted->nb[1] &&
+-               view->type == GGML_TYPE_F32 && ggml_nelements(view) == row_len &&
+-               view->ne[0] == row_len && view->ne[1] == 1 && view->ne[2] == 1 && view->ne[3] == 1 &&
+-               ggml_is_contiguous(view);
++               view->type == GGML_TYPE_F32 && ggml_nelements(view) == row_len * n_tokens &&
++               view->ne[0] == row_len && view->ne[1] == n_tokens &&
++               view->ne[2] == 1 && view->ne[3] == 1 &&
++               view->nb[0] == sizeof(float) && view->nb[1] == weighted->nb[2];
+     };
+
+     if (!is_expert_row(first->src[0], 0) || !is_expert_row(first->src[1], 1)) {
+@@ -5770,13 +5799,15 @@
+
+     ggml_tensor * dst = cgraph->nodes[add_idxs[n_adds - 1]];
+     if (dst->type != GGML_TYPE_F32 || !ggml_is_contiguous(dst) ||
+-        dst->ne[0] != row_len || dst->ne[1] != 1 || dst->ne[2] != 1 || dst->ne[3] != 1) {
++        dst->ne[0] != row_len || dst->ne[1] != n_tokens ||
++        dst->ne[2] != 1 || dst->ne[3] != 1) {
+         return false;
+     }
+
+     match.weighted = weighted;
+     match.dst = dst;
+     match.nodes_to_skip = last_idx - node_idx;
++    match.n_tokens = n_tokens;
+     return true;
+ }
+
+@@ -5787,6 +5818,9 @@
+     float * dst = static_cast<float *>(match.dst->data);
+     const int64_t row_len = match.weighted->ne[0];
+     const int64_t row_stride = match.weighted->nb[1] / sizeof(float);
++    const int64_t token_stride = match.weighted->nb[2] / sizeof(float);
++    const int64_t dst_token_stride = match.dst->nb[1] / sizeof(float);
++    const int n_tokens = match.n_tokens;
+     const bool poison = [] {
+         const char * value = std::getenv("GGML_SYCL_FUSED_MOE_ADD_REDUCE_POISON");
+         return value != nullptr && std::atoi(value) != 0;
+@@ -5794,15 +5828,20 @@
+
+     GGML_SYCL_DEBUG("[SYCL][OP] call %s: row_len=%lld experts=%d\n",
+                     __func__, (long long) row_len, n_experts);
+-    ctx.stream()->parallel_for(sycl::range<1>((size_t) row_len), [=](sycl::id<1> id) {
+-        const int64_t col = (int64_t) id[0];
+-        float sum = src[col];
++    ctx.stream()->parallel_for(sycl::range<1>((size_t) row_len * n_tokens), [=](sycl::id<1> id) {
++        const int64_t token = (int64_t) id[0] / row_len;
++        const int64_t col = (int64_t) id[0] - token * row_len;
++        const int64_t token_base = token * token_stride;
++        float sum = src[token_base + col];
+ #pragma unroll
+         for (int expert = 1; expert < n_experts; ++expert) {
+-            sum = sum + src[(int64_t) expert * row_stride + col];
++            sum = sum + src[token_base + (int64_t) expert * row_stride + col];
+         }
+-        dst[col] = poison && col == 0 ? sum + 1.0f : sum;
++        dst[token * dst_token_stride + col] = poison && col == 0 ? sum + 1.0f : sum;
+     });
++    if (n_tokens > 1) {
++        g_ggml_sycl_ornith_multirow_moe_add_reduce_hits.fetch_add(1, std::memory_order_relaxed);
++    }
+ }
+
+ static std::atomic<uint64_t> g_ggml_sycl_residual_rms_norm_hits{0};
+@@ -5838,8 +5877,11 @@
+         return false;
+     }
+
++    const int64_t nrows = add->ne[1];
+     if ((std::strstr(add->name, "attn_residual-") == nullptr && std::strstr(add->name, "l_out-") == nullptr) ||
+-        add->type != GGML_TYPE_F32 || add->ne[0] != 2048 || add->ne[1] != 1 || add->ne[2] != 1 || add->ne[3] != 1 ||
++        add->type != GGML_TYPE_F32 || add->ne[0] != 2048 ||
++        (nrows != 1 && (!ggml_sycl_ornith_multirow_enabled() || nrows > 32)) ||
++        add->ne[2] != 1 || add->ne[3] != 1 ||
+         !ggml_is_contiguous(add) || add->src[0] == nullptr || add->src[1] == nullptr ||
+         add->src[0]->type != GGML_TYPE_F32 || add->src[1]->type != GGML_TYPE_F32 ||
+         !ggml_are_same_shape(add, add->src[0]) || !ggml_are_same_shape(add, add->src[1]) ||
+@@ -5850,7 +5892,8 @@
+     const ggml_tensor * mul_src = mul->src[0] == rms_norm ? mul->src[1] : mul->src[0];
+     return rms_norm->src[0] == add && rms_norm->type == GGML_TYPE_F32 && ggml_is_contiguous(rms_norm) &&
+            mul_src != nullptr && mul_src->type == GGML_TYPE_F32 && mul_src->ne[0] == 2048 &&
+-           ggml_nelements(mul_src) == 2048 && ggml_is_contiguous(mul_src) && ggml_is_contiguous(mul);
++           ggml_nelements(mul_src) == 2048 && ggml_is_contiguous(mul_src) &&
++           ggml_are_same_shape(add, mul) && ggml_is_contiguous(mul);
+ }
+
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_moe_shared_residual_rms_hits{0};
+@@ -5901,16 +5944,20 @@
+     const ggml_tensor * residual_in = residual_add->src[0] == ffn_add
+         ? residual_add->src[1] : residual_add->src[0];
+     const ggml_tensor * mul_src = mul->src[0] == rms_norm ? mul->src[1] : mul->src[0];
+-    const auto exact_vec = [](const ggml_tensor * t) {
++    const int64_t nrows = ffn_add->ne[1];
++    if (nrows != 1 && (!ggml_sycl_ornith_multirow_enabled() || nrows > 32)) {
++        return false;
++    }
++    const auto exact_vec = [nrows](const ggml_tensor * t) {
+         return t != nullptr && t->type == GGML_TYPE_F32 &&
+-               t->ne[0] == 2048 && t->ne[1] == 1 && t->ne[2] == 1 && t->ne[3] == 1 &&
++               t->ne[0] == 2048 && t->ne[1] == nrows && t->ne[2] == 1 && t->ne[3] == 1 &&
+                ggml_is_contiguous(t);
+     };
+     return exact_vec(ffn_add) && exact_vec(ffn_add->src[0]) && exact_vec(ffn_add->src[1]) &&
+            exact_vec(residual_add) && exact_vec(residual_in) && exact_vec(rms_norm) &&
+            mul_src != nullptr && mul_src->type == GGML_TYPE_F32 && mul_src->ne[0] == 2048 &&
+            ggml_nelements(mul_src) == 2048 && ggml_is_contiguous(mul_src) &&
+-           mul->type == GGML_TYPE_F32 && ggml_is_contiguous(mul);
++           mul->type == GGML_TYPE_F32 && ggml_are_same_shape(ffn_add, mul) && ggml_is_contiguous(mul);
+ }
+
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_moe_gate_residual_rms_hits{0};
+@@ -6987,12 +7034,20 @@
+                     cgraph->nodes[i + 2], cgraph->nodes[i + 3]);
+                 g_ggml_sycl_ornith_moe_shared_residual_rms_hits.fetch_add(
+                     1, std::memory_order_relaxed);
++                if (node->ne[1] > 1) {
++                    g_ggml_sycl_ornith_multirow_residual_rms_hits.fetch_add(
++                        1, std::memory_order_relaxed);
++                }
+                 i += 3;
+                 continue;
+             }
+             if (ggml_sycl_can_fuse_residual_rms_norm(cgraph, i)) {
+                 ggml_sycl_op_residual_rms_norm_fused(*sycl_ctx, node, cgraph->nodes[i + 1], cgraph->nodes[i + 2]);
+                 g_ggml_sycl_residual_rms_norm_hits.fetch_add(1, std::memory_order_relaxed);
++                if (node->ne[1] > 1) {
++                    g_ggml_sycl_ornith_multirow_residual_rms_hits.fetch_add(
++                        1, std::memory_order_relaxed);
++                }
+                 i += 2;
+                 continue;
+             }
+--- a/ggml/src/ggml-sycl/norm.cpp
++++ b/ggml/src/ggml-sycl/norm.cpp
+@@ -432,26 +432,30 @@
+         const float * mul,
+         float * dst,
+         const int ncols,
++        const int nrows,
+         const float eps,
+         queue_ptr stream,
+         int device) {
+     const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
+     GGML_ASSERT(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
+     const sycl::range<3> block_dims(1, 1, work_group_size);
++    const sycl::range<3> global_dims(1, 1, (size_t) nrows * work_group_size);
+
+     stream->submit([&](sycl::handler & cgh) {
+         sycl::local_accessor<float, 1> s_sum_acc(sycl::range<1>(work_group_size / WARP_SIZE), cgh);
+         cgh.parallel_for(
+-            sycl::nd_range<3>(block_dims, block_dims),
++            sycl::nd_range<3>(global_dims, block_dims),
+             [=](sycl::nd_item<3> item)
+             [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                 const int tid = item.get_local_id(2);
++                const int row = item.get_group(2);
++                const int base = row * ncols;
+                 const int nwarps = work_group_size / WARP_SIZE;
+                 float tmp = 0.0f;
+
+                 for (int col = tid; col < ncols; col += work_group_size) {
+-                    residual[col] = add0[col] + add1[col];
+-                    const float xi = residual[col];
++                    residual[base + col] = add0[base + col] + add1[base + col];
++                    const float xi = residual[base + col];
+                     tmp += xi * xi;
+                 }
+
+@@ -473,7 +477,7 @@
+
+                 const float scale = sycl::rsqrt(tmp / ncols + eps);
+                 for (int col = tid; col < ncols; col += work_group_size) {
+-                    dst[col] = scale * residual[col] * mul[col];
++                    dst[base + col] = scale * residual[base + col] * mul[col];
+                 }
+             });
+     });
+@@ -488,30 +492,34 @@
+         const float * mul,
+         float * dst,
+         const int ncols,
++        const int nrows,
+         const float eps,
+         queue_ptr stream,
+         int device) {
+     const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
+     GGML_ASSERT(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
+     const sycl::range<3> block_dims(1, 1, work_group_size);
++    const sycl::range<3> global_dims(1, 1, (size_t) nrows * work_group_size);
+
+     stream->submit([&](sycl::handler & cgh) {
+         sycl::local_accessor<float, 1> s_sum_acc(sycl::range<1>(work_group_size / WARP_SIZE), cgh);
+         cgh.parallel_for(
+-            sycl::nd_range<3>(block_dims, block_dims),
++            sycl::nd_range<3>(global_dims, block_dims),
+             [=](sycl::nd_item<3> item)
+             [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                 const int tid = item.get_local_id(2);
++                const int row = item.get_group(2);
++                const int base = row * ncols;
+                 const int nwarps = work_group_size / WARP_SIZE;
+                 float tmp = 0.0f;
+
+                 for (int col = tid; col < ncols; col += work_group_size) {
+                     // Preserve both graph-visible FP32 rounding boundaries. Volatile global
+                     // stores prevent reassociation into routed + shared + residual_in.
+-                    ffn_out[col] = routed[col] + shared[col];
+-                    const float rounded_ffn = ffn_out[col];
+-                    residual_out[col] = rounded_ffn + residual_in[col];
+-                    const float xi = residual_out[col];
++                    ffn_out[base + col] = routed[base + col] + shared[base + col];
++                    const float rounded_ffn = ffn_out[base + col];
++                    residual_out[base + col] = rounded_ffn + residual_in[base + col];
++                    const float xi = residual_out[base + col];
+                     tmp += xi * xi;
+                 }
+
+@@ -533,7 +541,7 @@
+
+                 const float scale = sycl::rsqrt(tmp / ncols + eps);
+                 for (int col = tid; col < ncols; col += work_group_size) {
+-                    dst[col] = scale * residual_out[col] * mul[col];
++                    dst[base + col] = scale * residual_out[base + col] * mul[col];
+                 }
+             });
+     });
+@@ -879,7 +887,7 @@
+         ggml_backend_sycl_context & ctx, ggml_tensor * add, ggml_tensor * rms_norm, ggml_tensor * mul_tensor) {
+     GGML_ASSERT(add->src[0] != nullptr && add->src[1] != nullptr && rms_norm->src[0] == add);
+     GGML_ASSERT(add->type == GGML_TYPE_F32 && rms_norm->type == GGML_TYPE_F32 && mul_tensor->type == GGML_TYPE_F32);
+-    GGML_ASSERT(add->ne[0] == 2048 && add->ne[1] == 1 && add->ne[2] == 1 && add->ne[3] == 1);
++    GGML_ASSERT(add->ne[0] == 2048 && add->ne[1] >= 1 && add->ne[1] <= 32 && add->ne[2] == 1 && add->ne[3] == 1);
+     GGML_ASSERT(ggml_is_contiguous(add) && ggml_is_contiguous(add->src[0]) && ggml_is_contiguous(add->src[1]));
+
+     const ggml_tensor * mul_src = mul_tensor->src[0] == rms_norm ? mul_tensor->src[1] : mul_tensor->src[0];
+@@ -896,7 +904,7 @@
+         static_cast<volatile float *>(add->data),
+         static_cast<const float *>(mul_src->data),
+         static_cast<float *>(mul_tensor->data),
+-        2048, eps, ctx.stream(), ctx.device);
++        2048, add->ne[1], eps, ctx.stream(), ctx.device);
+ }
+
+ void ggml_sycl_op_moe_shared_residual_rms_norm_fused(
+@@ -907,7 +915,7 @@
+     GGML_ASSERT(rms_norm->src[0] == residual_add);
+     GGML_ASSERT(ffn_add->type == GGML_TYPE_F32 && residual_add->type == GGML_TYPE_F32);
+     GGML_ASSERT(rms_norm->type == GGML_TYPE_F32 && mul_tensor->type == GGML_TYPE_F32);
+-    GGML_ASSERT(ffn_add->ne[0] == 2048 && ffn_add->ne[1] == 1 &&
++    GGML_ASSERT(ffn_add->ne[0] == 2048 && ffn_add->ne[1] >= 1 && ffn_add->ne[1] <= 32 &&
+                 ffn_add->ne[2] == 1 && ffn_add->ne[3] == 1);
+
+     const ggml_tensor * residual_in = residual_add->src[0] == ffn_add
+@@ -928,7 +936,7 @@
+         static_cast<volatile float *>(residual_add->data),
+         static_cast<const float *>(mul_src->data),
+         static_cast<float *>(mul_tensor->data),
+-        2048, eps, ctx.stream(), ctx.device);
++        2048, ffn_add->ne[1], eps, ctx.stream(), ctx.device);
+ }
+
+ void ggml_sycl_op_moe_shared_gate_residual_rms_norm_fused(

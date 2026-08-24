@@ -134,7 +134,8 @@ def svg_profile(profile):
     points = [p for p in profile.get("points", []) if isinstance(p.get("value"), (int, float))]
     if len(points) < 2:
         return ""
-    xs = [max(1, float(p.get("context_tokens", 0))) for p in points]
+    x_metric = profile.get("x_metric", "context_tokens")
+    xs = [max(1, float(p.get(x_metric, 0))) for p in points]
     ys = [float(p["value"]) for p in points]
     width, height, left, top, right, bottom = 640, 260, 64, 20, 20, 44
     import math
@@ -151,13 +152,15 @@ def svg_profile(profile):
         f'<text x="{sx(x):.1f}" y="{sy(y) - 9:.1f}" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">{fmt(y)}</text>'
         for x, y in zip(xs, ys)
     )
-    def ktok(v):
+    def x_tick(v):
         v = int(v)
+        if x_metric == "concurrent_sequences":
+            return str(v)
         if v < 2:
             return "0"
         return f"{v // 1024}K" if v >= 1024 and v % 1024 == 0 else (f"{v / 1024:.1f}K" if v >= 1024 else str(v))
     ticks = "".join(
-        f'<text x="{sx(x):.1f}" y="{height - 24}" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">{ktok(x)}</text>'
+        f'<text x="{sx(x):.1f}" y="{height - 24}" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">{x_tick(x)}</text>'
         for x in xs
     )
     unit = profile.get("unit", "tok/s")
@@ -166,7 +169,7 @@ def svg_profile(profile):
         f'<svg viewBox="0 0 {width} {height}" width="100%" role="img" aria-label="{esc(label)}" xmlns="http://www.w3.org/2000/svg">'
         f'<line x1="{left}" y1="{sy(0):.1f}" x2="{width - right}" y2="{sy(0):.1f}" stroke="var(--ink)" stroke-width="2"></line>'
         f'<path d="{path}" fill="none" stroke="var(--spot)" stroke-width="3"></path>{dots}{ticks}'
-        f'<text x="{left}" y="{height - 6}" font-size="11" font-family="var(--mono)" fill="var(--muted)">{esc(profile.get("x_label", "context tokens"))} ({unit})</text>'
+        f'<text x="{left}" y="{height - 6}" font-size="11" font-family="var(--mono)" fill="var(--muted)">{esc(profile.get("x_label", "Context tokens"))} · y: {esc(unit)}</text>'
         f"</svg>"
     )
 
@@ -390,7 +393,7 @@ def page(pkg, all_pkgs, family=None):
 
   <dl class="facts">{facts_html}</dl>
 {missing_html}
-{('<h2 id="profiles">Measured across context depth <span class="badge lab">Lab-measured</span></h2>' + profiles_html) if profiles_html else ''}
+{('<h2 id="profiles">Measured performance profiles <span class="badge lab">Lab-measured</span></h2>' + profiles_html) if profiles_html else ''}
 {projection_html}
 
   <div class="related">

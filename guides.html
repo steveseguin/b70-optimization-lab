@@ -200,15 +200,17 @@
   const profileChart = profile => {
     const width = 440, height = 160, left = 47, right = 10, top = 10, bottom = 34;
     const innerWidth = width - left - right, innerHeight = height - top - bottom;
-    const xMax = Math.max(...profile.points.map(point => point.context_tokens));
+    const xMetric = profile.x_metric || "context_tokens";
+    const xSuffix = xMetric === "concurrent_sequences" ? " sequences" : " tokens";
+    const xMax = Math.max(...profile.points.map(point => point[xMetric]));
     const yMax = Math.max(...profile.points.map(point => point.value)) * 1.08;
     const x = value => left + (value / xMax) * innerWidth;
     const y = value => top + innerHeight - (value / yMax) * innerHeight;
-    const points = profile.points.map(point => `${x(point.context_tokens).toFixed(1)},${y(point.value).toFixed(1)}`).join(" ");
-    const dots = profile.points.map(point => `<circle class="point" cx="${x(point.context_tokens).toFixed(1)}" cy="${y(point.value).toFixed(1)}" r="3.5"><title>${escapeHtml(point.context_tokens.toLocaleString())} tokens · ${escapeHtml(Number(point.value).toFixed(2))} ${escapeHtml(profile.unit)}${point.samples ? ` · ${escapeHtml(point.samples)} samples` : ""}</title></circle>`).join("");
+    const points = profile.points.map(point => `${x(point[xMetric]).toFixed(1)},${y(point.value).toFixed(1)}`).join(" ");
+    const dots = profile.points.map(point => `<circle class="point" cx="${x(point[xMetric]).toFixed(1)}" cy="${y(point.value).toFixed(1)}" r="3.5"><title>${escapeHtml(point[xMetric].toLocaleString())}${xSuffix} · ${escapeHtml(Number(point.value).toFixed(2))} ${escapeHtml(profile.unit)}${point.per_user_value ? ` aggregate · ${escapeHtml(Number(point.per_user_value).toFixed(2))} per user` : ""}${point.samples ? ` · ${escapeHtml(point.samples)} samples` : ""}</title></circle>`).join("");
     const evidence = `${GITHUB}${encodeURI(profile.evidence)}`;
     return `<section class="profile-chart"><h4>${escapeHtml(profile.label)}</h4>
-      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(profile.label)} from zero to ${escapeHtml(xMax.toLocaleString())} context tokens">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(profile.label)} from zero to ${escapeHtml(xMax.toLocaleString())}${xSuffix}">
         <line class="gridline" x1="${left}" y1="${top}" x2="${width - right}" y2="${top}" />
         <line class="gridline" x1="${left}" y1="${top + innerHeight / 2}" x2="${width - right}" y2="${top + innerHeight / 2}" />
         <line class="axis" x1="${left}" y1="${top + innerHeight}" x2="${width - right}" y2="${top + innerHeight}" />
@@ -217,7 +219,7 @@
         <text x="${left - 5}" y="${top + innerHeight + 3}" text-anchor="end">0</text>
         <text x="${left}" y="${height - 9}" text-anchor="middle">0</text>
         <text x="${left + innerWidth / 2}" y="${height - 9}" text-anchor="middle">${escapeHtml(shortNumber(xMax / 2))}</text>
-        <text x="${width - right}" y="${height - 9}" text-anchor="end">${escapeHtml(shortNumber(xMax))} tokens</text>
+        <text x="${width - right}" y="${height - 9}" text-anchor="end">${escapeHtml(shortNumber(xMax))}${xSuffix}</text>
         <polyline class="curve" points="${points}" />${dots}
       </svg>
       <p class="profile-note">${escapeHtml(profile.scope)} <a href="${evidence}">Evidence</a></p></section>`;
@@ -225,8 +227,11 @@
   const performanceBlock = item => {
     const profiles = item.performance_profiles || [];
     if (!profiles.length) return `<details class="performance"><summary>Context performance <span>sweep pending</span></summary><p class="profile-empty">No comparable decode, prefill, and TTFT context sweep is packaged yet. The headline above remains valid only for its stated benchmark shape.</p></details>`;
-    const maxContext = Math.max(...profiles.flatMap(profile => profile.points.map(point => point.context_tokens)));
-    return `<details class="performance"><summary>Performance curves <span>${profiles.length} measured · to ${escapeHtml(shortNumber(maxContext))} tokens</span></summary><div class="profiles">${profiles.map(profileChart).join("")}</div></details>`;
+    const kinds = new Set(profiles.map(profile => profile.x_metric || "context_tokens"));
+    const span = kinds.size === 1 && kinds.has("context_tokens")
+      ? ` · to ${escapeHtml(shortNumber(Math.max(...profiles.flatMap(profile => profile.points.map(point => point.context_tokens)))))} tokens`
+      : "";
+    return `<details class="performance"><summary>Performance curves <span>${profiles.length} measured${span}</span></summary><div class="profiles">${profiles.map(profileChart).join("")}</div></details>`;
   };
   const copyText = async value => {
     if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(value);

@@ -146,6 +146,29 @@ class ReproGuideValidationTest(unittest.TestCase):
                 MODULE._validate_performance_profiles(repo, "example", profiles), []
             )
 
+    def test_performance_profile_accepts_measured_concurrency(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            (repo / "data").mkdir()
+            (repo / "data/measured.json").write_text("{}\n")
+            profiles = [{
+                "id": "aggregate-concurrency",
+                "label": "Aggregate decode over concurrent sequences",
+                "metric": "aggregate_decode",
+                "unit": "tok/s",
+                "x_metric": "concurrent_sequences",
+                "x_label": "Concurrent engine sequences",
+                "scope": "Two raw-engine measured rows",
+                "evidence": "data/measured.json",
+                "points": [
+                    {"concurrent_sequences": 1, "value": 100.0, "per_user_value": 100.0},
+                    {"concurrent_sequences": 4, "value": 120.0, "per_user_value": 30.0},
+                ],
+            }]
+            self.assertEqual(
+                MODULE._validate_performance_profiles(repo, "example", profiles), []
+            )
+
     @staticmethod
     def _entry(guide: str) -> dict[str, object]:
         return {
