@@ -384,14 +384,19 @@ it remains explicitly GPU-qualification-pending. See the
 [recovery pass](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-enospc-recovery-pass.md)
 and [tracked receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-absolute-current-main-build.json).
 
-The fresh-root 6a9c TP1 r1 packet is preregistered and not launched. It is a
-mechanical identity/root/port carry-forward of the audited 342b r2 wrapper,
-explicitly names the recovered 6a9c receipt, and retains the unchanged
-`30.2178` diagnostic and `30.31067504052998` strict floors plus the full
-quality, immutable-cache, hardware, repository, and per-arm freshness gates.
-Its roots and ports `19783`-`19785` were absent/free at preregistration. No TP2,
-TP4, MTP, or site-matrix work is authorized by packet creation alone. See the
-[6a9c r1 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-untreated-tp1-r1-prereg.md).
+The fresh-root 6a9c TP1 r1 packet then ran its complete zero-overlay sequence.
+The hardware gate and every non-speed gate passed. Diagnostic reached
+`30.27858669748398 tok/s`, above its frozen floor. Strict natural-EOS A/B
+reached `30.26782494070049 / 30.27119782672338 tok/s`. Replay A passed the
+complete quality battery, and both replays passed immutable-cache gates, but
+they missed the unchanged `30.31067504052998` floor by
+`0.141370% / 0.130242%`. This is a completed,
+repeatable speed-only miss: no protected value changes and TP2/TP4 remain
+unauthorized. It permits only a separately versioned TP1 decision-compatibility
+packet that maps exact relative paths and embedded `configs_hash` values into
+an absent cache and compiles fresh; compiled cache transfer remains forbidden.
+See the [6a9c r1 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-tp1-r1-speed-only-miss.md)
+and [structured result](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-tp1-r1-speed-only-miss.json).
 
 Do not authorize TP2 until TP1 passes full qualification. Then qualify TP2
 zero-overlay plus the preserved 78-decision remap, followed by TP4 zero-overlay

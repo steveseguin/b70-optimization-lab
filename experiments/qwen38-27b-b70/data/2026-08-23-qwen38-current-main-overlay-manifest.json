@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-6a9-recovered-tp1-r1-preregistered-not-launched",
+  "status": "preservation-gate-passed-6a9-tp1-complete-speed-only-miss-decision-remap-next",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -9,7 +9,7 @@
     "result_policy": "append-only identities; never overwrite or lower historical highs"
   },
   "observed_heads": {
-    "checked_utc": "2026-08-24T19:24:18Z",
+    "checked_utc": "2026-08-24T20:25:11Z",
     "official_nightly": {
       "index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
@@ -60,10 +60,10 @@
       "protected_performance_changed": false
     },
     "recovered_utc": "2026-08-24T19:30:48Z",
-    "last_freshness_check_utc": "2026-08-24T19:34:03Z",
-    "gpu_or_model_work_ran": false,
+    "last_freshness_check_utc": "2026-08-24T20:25:11Z",
+    "gpu_or_model_work_ran": true,
     "qualification": {
-      "status": "r1-preregistered-not-launched",
+      "status": "r1-complete-speed-only-regression-no-overlay-run",
       "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-untreated-tp1-r1-prereg.md",
       "packet_sha256": "c1b9629c2f0812db3bf6e6bab57482725b697559537eb73f794112ad86ba47dc",
       "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-6a9c69fa85-untreated-tp1-r1-qualification.sh",
@@ -73,12 +73,27 @@
       "ports": [19783, 19784, 19785],
       "roots_absent_at_preregistration": true,
       "ports_free_at_preregistration": true,
+      "hardware_gate": "passed-70-of-70",
+      "campaign_manifest": "passed-255-of-255",
+      "frozen_inputs_manifest": "passed-21-of-21",
+      "diagnostic_tok_s": 30.27858669748398,
+      "strict_a_tok_s": 30.26782494070049,
+      "strict_b_tok_s": 30.27119782672338,
+      "all_non_speed_gates_pass": true,
+      "qualification_ready": false,
+      "terminal_status": "complete-speed-only-regression-no-overlay-run",
+      "result": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-tp1-r1-speed-only-miss.json",
+      "result_sha256": "5068d6b035deb02395780e5bebf34b6b81082be08029293547acbb4507902784",
+      "closeout": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-6a9c69fa85-tp1-r1-speed-only-miss.md",
+      "closeout_sha256": "becac5747b289dfea5923b868ccc26a5589b6d7b525f741d330c6b6f3bf8c3d6",
+      "next_authorized_gate": "separately versioned TP1 exact-path/configs_hash decision-compatibility packet only",
+      "tp2_tp4_authorized": false,
       "diagnostic_floor_tok_s": 30.2178,
       "strict_floor_tok_s": 30.31067504052998,
       "performance_floors_must_not_change": true,
       "order": ["fresh diagnostic", "strict quality replay A", "strict replay B"]
     },
-    "policy": "Recovery created static evidence only. Commit and push the byte-identical tracked receipt, then derive a fresh-root TP1 packet that explicitly names it. Re-resolve vLLM, kernels, nightly, lab main, immutable images, protected performance, and accepted decision artifacts before packet commit and launch."
+    "policy": "R1 completed with every non-speed gate green and both strict speed gates red. Do not lower a floor or authorize TP2/TP4. Derive a new TP1 decision-only compatibility packet by exact relative-path and configs_hash mapping into an absent cache, compile fresh, and requalify only while all upstream identities remain literal-current."
   },
   "historical_absolute_current_builds": [{
     "built_utc": "2026-08-24T04:05:36Z",
