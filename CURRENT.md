@@ -136,18 +136,31 @@ sealed inputs and all three arms are missing, so it is also failed-incomplete
 infrastructure with no performance effect. See the
 [r2 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-r2-procfs-boot-validator-failure.md).
 
-The active next step is the separately preregistered r3 atomic attempt on
-fresh roots. Its only new change replaces the two direct procfs quiet
-comparisons with byte-reading `cmp`; the now-proven hardware correction, 79bb
-image, strict runner, graph/cache/model contract, and every speed floor remain
-exact. Only a completed speed miss with every non-speed gate clean may permit
-deriving a separately versioned 79bb compatibility packet; if untreated 79bb
-passes, stop without testing old decisions and move to TP2 then TP4. No binary
-or generated kernel is transferred, and no result may lower a protected
-historical speed. See the
+R3 then passed the fresh hardware gate and ran two clean zero-overlay arms.
+The diagnostic arm passed at `30.25266152916977 tok/s`. Strict replay A passed
+its canary, 25-row natural-EOS benchmark, immutable-cache check, full exact
+quality battery, and clean shutdown, with an observed median of
+`30.2372362888838 tok/s`. Before the wrapper could write its strict speed gate,
+the mandatory post-arm freshness check found that vLLM `main` had advanced
+from 79bb to `9f295fe8cee4cbd2b21a5ce3066cec026e4bd2af`; XPU-kernel main and the
+official nightly digest were unchanged. The strict runner correctly wrote
+`stale-before-promotion`, exited 5, and prevented replay B. R3 is therefore
+failed-incomplete/stale, not a completed speed regression or a qualification;
+its observed strict value cannot authorize a compatibility packet or lower a
+protected result. Both roots are sealed and all cleanup guards passed. See the
 [closed 0ecc preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-0ecc-tp1-control-decision-overlay-prereg.md),
 [r2 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-r2-prereg.md), and
-[active r3 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-r3-prereg.md).
+[r3 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-r3-stale-during-replay-a.md).
+
+The active next step is to resolve all three moving upstream identities again
+and build the absolute-newest vLLM main (9f295fe8 at r3 closure, or its
+successor) with the newest XPU-kernel main over the current official nightly.
+Preserve accepted performance work as versioned runtime, decision, and source
+overlays; do not copy generated binaries forward or lower any historical
+floor/high. Qualify the untreated current base at TP1 first, then carry only
+explicitly justified overlays through TP2 and TP4. Broader family/quant/MTP/
+context/KV/graph coverage for neural.download follows those current topology
+anchors.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
