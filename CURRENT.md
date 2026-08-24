@@ -320,6 +320,17 @@ above the unchanged 12-GiB launch floor. This is still only a current-source
 static build; TP1 qualification is pending. See the
 [342b build receipt](experiments/qwen38-27b-b70/data/2026-08-24-qwen38-342b8ebd8b-absolute-current-main-build.json).
 
+A separately named 342b r1 TP1 packet is now preregistered but not launched.
+Its 991-line wrapper is an exact normalized copy of the audited 6648 safety
+harness: only source/image/receipt identity, fresh non-overridable roots,
+isolated ports `19770`-`19772`, and identity wording changed. The classifier,
+fourteen-test battery, corrected-NVMe-aware hardware gate, strict runner,
+model and quality inputs, graph/cache lifecycle, diagnostic floor `30.2178`,
+and both strict floors `30.31067504052998 tok/s` remain exact. The wrapper runs
+only the both-current zero-overlay TP1 lane; no old cache or accepted decision
+is applied or discarded. See the
+[342b TP1 r1 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-342b8ebd8b-untreated-tp1-r1-prereg.md).
+
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh
 tune selected different winners. The capped TP2 preservation test transferred

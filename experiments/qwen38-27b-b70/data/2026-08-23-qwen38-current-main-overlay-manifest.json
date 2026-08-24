@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed-342b-static-build-awaiting-tp1-preregistration",
+  "status": "preservation-gate-passed-342b-tp1-r1-preregistered-not-launched",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -9,7 +9,7 @@
     "result_policy": "append-only identities; never overwrite or lower historical highs"
   },
   "observed_heads": {
-    "checked_utc": "2026-08-24T17:55:46Z",
+    "checked_utc": "2026-08-24T18:02:41Z",
     "official_nightly": {
       "index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
@@ -590,7 +590,7 @@
   },
   "active_qualification_build": {
     "built_utc": "2026-08-24T17:48:12Z",
-    "status": "static-preflight-passed-tp1-packet-not-yet-preregistered",
+    "status": "static-preflight-passed-tp1-r1-preregistered-not-launched",
     "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-342b8ebd8b-absolute-current-main-build.json",
     "receipt_sha256": "ad856716714af8893d0ce47416d0efab4e9cb014505e6deeed3b3545ea82141c",
     "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T174812Z-342b8ebd8b-baaa05bb4e",
@@ -635,13 +635,29 @@
       "new_image_ids_retained_locally": true
     },
     "qualification": {
-      "status": "not-yet-preregistered",
+      "status": "r1-preregistered-not-launched",
+      "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-342b8ebd8b-untreated-tp1-r1-prereg.md",
+      "packet_sha256": "6d94eda899686f99a224e13d67d29a3d45dcce74f4cebc70bd5a32f081b28fd9",
+      "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-342b8ebd8b-untreated-tp1-r1-qualification.sh",
+      "wrapper_sha256": "ba9bf94fd85bc1424791d0837df80cf2f1e77644a7e154cc419c6deceac24d32",
+      "kernel_delta_classifier": "experiments/qwen38-27b-b70/scripts/classify-20260824-kernel-delta.py",
+      "kernel_delta_classifier_sha256": "fef74bdb90b82fdf543be6ea36320b308aff0d0c146a3c92bcbfff334b70d1b0",
+      "kernel_delta_classifier_test": "experiments/qwen38-27b-b70/tests/test_classify_20260824_kernel_delta.py",
+      "kernel_delta_classifier_test_sha256": "b21befd70003b710027303e093915c36ce88d8fcd4eda66facfd549057e5474b",
+      "strict_runner": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-known-nvme-aware-strict-smoke.sh",
+      "strict_runner_sha256": "5647c9af599fb4a3bc31b8cf8118c986f8895842de9cd657c037e4ea099925da",
+      "hardware_gate_runner": "experiments/qwen38-27b-b70/scripts/run-20260824-qwen38-known-nvme-aware-hardware-gate.sh",
+      "hardware_gate_runner_sha256": "8038015b179048662f53d7d41ead6cddc95671081942444f394c6e48ed57a6f7",
+      "hardware_gate_root": "/home/steve/qwen38-current-main-runs/postreboot-hardware-gate-342b8ebd8b-20260824-086de284-venvlib-r1",
+      "campaign_root": "/home/steve/qwen38-current-main-runs/tp1-untreated-342b8ebd8b-20260824-r1",
+      "ports": [19770, 19771, 19772],
+      "offline_classifier_tests": 14,
       "diagnostic_floor_tok_s": 30.2178,
       "strict_floor_tok_s": 30.31067504052998,
       "order": ["both-current zero-overlay TP1", "TP2", "TP4"],
       "performance_floors_must_not_change": true
     },
-    "policy": "Re-resolve all live identities before packet commit and launch. Preserve every captured high and accepted overlay; this zero-overlay build neither applies nor supersedes them."
+    "policy": "Re-resolve all live identities after packet commit and immediately before its one atomic launch. Preserve every captured high and accepted overlay; this zero-overlay packet neither applies nor supersedes them."
   },
   "frozen_trees": {
     "vllm": {
