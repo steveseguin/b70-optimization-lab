@@ -226,17 +226,23 @@ cp -- "$input_dir/SHA256SUMS" "$run_root/input-files.sha256"
 
 campaign_vllm_head=$(jq -r .vllm.head "$frozen_receipt")
 campaign_kernel_head=$(jq -r .kernel.head "$frozen_receipt")
+campaign_base_digest=$(jq -r .base_digest "$frozen_receipt")
 control_kernel_version=0.1.13.2
 remote_vllm_pre=$(git ls-remote --exit-code https://github.com/vllm-project/vllm.git refs/heads/main |
   awk 'NR == 1 {print $1}')
 remote_kernel_pre=$(git ls-remote --exit-code https://github.com/vllm-project/vllm-xpu-kernels.git refs/heads/main |
   awk 'NR == 1 {print $1}')
+remote_base_pre=$(dockerc buildx imagetools inspect vllm/vllm-openai-xpu:nightly \
+  --format '{{.Manifest.Digest}}')
 printf '%s\n' "$remote_vllm_pre" >"$run_root/upstream-vllm.pre.txt"
 printf '%s\n' "$remote_kernel_pre" >"$run_root/upstream-kernel.pre.txt"
+printf '%s\n' "$remote_base_pre" >"$run_root/upstream-nightly-base.pre.txt"
 [[ $remote_vllm_pre == "$campaign_vllm_head" ]] ||
   die 'vLLM main advanced; rebuild instead of qualifying a stale image'
 [[ $remote_kernel_pre == "$campaign_kernel_head" ]] ||
   die 'XPU-kernel main advanced; rebuild instead of qualifying a stale image'
+[[ $remote_base_pre == "$campaign_base_digest" ]] ||
+  die 'official nightly base advanced; rebuild instead of qualifying a stale image'
 
 run_lane() {
   local lane=$1
@@ -404,11 +410,15 @@ remote_vllm_post=$(git ls-remote --exit-code https://github.com/vllm-project/vll
   awk 'NR == 1 {print $1}')
 remote_kernel_post=$(git ls-remote --exit-code https://github.com/vllm-project/vllm-xpu-kernels.git refs/heads/main |
   awk 'NR == 1 {print $1}')
+remote_base_post=$(dockerc buildx imagetools inspect vllm/vllm-openai-xpu:nightly \
+  --format '{{.Manifest.Digest}}')
 printf '%s\n' "$remote_vllm_post" >"$run_root/upstream-vllm.post.txt"
 printf '%s\n' "$remote_kernel_post" >"$run_root/upstream-kernel.post.txt"
+printf '%s\n' "$remote_base_post" >"$run_root/upstream-nightly-base.post.txt"
 upstream_unchanged=false
 if [[ $remote_vllm_post == "$campaign_vllm_head" &&
-      $remote_kernel_post == "$campaign_kernel_head" ]]; then
+      $remote_kernel_post == "$campaign_kernel_head" &&
+      $remote_base_post == "$campaign_base_digest" ]]; then
   upstream_unchanged=true
 fi
 live_lab_main_post=$(git -C "$repo" ls-remote --exit-code origin refs/heads/main |
@@ -426,6 +436,7 @@ jq -n \
   --arg run_root "$run_root" \
   --arg vllm_head "$campaign_vllm_head" \
   --arg kernel_head "$campaign_kernel_head" \
+  --arg base_digest "$campaign_base_digest" \
   --arg control_kernel_version "$control_kernel_version" \
   --argjson upstream_unchanged "$upstream_unchanged" \
   --argjson lab_unchanged "$lab_unchanged" \
@@ -436,6 +447,7 @@ jq -n \
     run_root: $run_root,
     source: {
       vllm_head: $vllm_head,
+      official_nightly_base_digest: $base_digest,
       control_kernel: {identity: "stock-from-base", version: $control_kernel_version},
       both_current_kernel: {head: $kernel_head},
       upstream_unchanged: $upstream_unchanged,

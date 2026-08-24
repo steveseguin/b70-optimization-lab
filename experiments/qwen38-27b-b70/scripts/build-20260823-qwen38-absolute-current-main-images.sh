@@ -14,6 +14,7 @@ archive_parent=${ARCHIVE_PARENT:-/mnt/usb-models/llm-optimization-artifacts/qwen
 kernel_artifact_dir=${KERNEL_ARTIFACT_DIR:-/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/upstream-kernel-4543b580-artifact-9432931548}
 sudo_password_file=${SUDO_PASSWORD_FILE:-/home/steve/SUDOPASSWORD.txt}
 
+base_tag=vllm/vllm-openai-xpu:nightly
 base_digest=sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35
 base_image="vllm/vllm-openai-xpu@$base_digest"
 vllm_upstream_url=https://github.com/vllm-project/vllm.git
@@ -126,7 +127,11 @@ assert_root_space() {
 }
 
 verify_base_image() {
-  local image_id
+  local image_id registry_digest
+  registry_digest=$(docker_cmd buildx imagetools inspect "$base_tag" \
+    --format '{{.Manifest.Digest}}')
+  [[ $registry_digest == "$base_digest" ]] ||
+    die "official nightly base advanced: $registry_digest != $base_digest; resolve and pin the new base before building"
   image_id=$(docker_cmd image inspect "$base_image" --format '{{.Id}}')
   [[ $image_id == "$base_digest" ]] ||
     die "base image ID mismatch: $image_id"
@@ -420,6 +425,7 @@ build_image() {
   local lane=$1
   local install_current_kernel=$2
   local image_tag=$3
+  local image_id static_preflight_sha256
   local lane_kernel_head lane_kernel_tree lane_kernel_version
   local lane_kernel_sha lane_chunk_sha lane_paged_sha
 
@@ -481,6 +487,25 @@ build_image() {
     -lc 'cat /opt/neural-download/import-receipt.json; cat /opt/neural-download/pip-check.txt' \
     >"$build_root/receipts/$lane-static-preflight.txt"
   printf '%s\n' "$image_tag" >"$build_root/receipts/$lane-image-tag.txt"
+
+  image_id=$(jq -r '.[0].Id' "$build_root/receipts/$lane-image-inspect.json")
+  [[ $image_id =~ ^sha256:[0-9a-f]{64}$ ]] ||
+    die "invalid built image ID for $lane: $image_id"
+  [[ $(docker_cmd image inspect "$image_tag" --format '{{.Id}}') == "$image_id" ]] ||
+    die "built image tag moved before receipt capture: $image_tag"
+  static_preflight_sha256=$(sha256sum \
+    "$build_root/receipts/$lane-static-preflight.txt" | awk '{print $1}')
+  case "$lane" in
+    current-vllm-stock-kernel)
+      control_image_id=$image_id
+      control_static_preflight_sha256=$static_preflight_sha256
+      ;;
+    both-current-zero-overlay)
+      both_image_id=$image_id
+      both_static_preflight_sha256=$static_preflight_sha256
+      ;;
+    *) die "unknown build lane: $lane" ;;
+  esac
 }
 
 control_tag="neural-download/vllm-openai-xpu:vllm-$vllm_short-kernel-stock-$base_digest"
@@ -489,6 +514,10 @@ both_tag="neural-download/vllm-openai-xpu:vllm-$vllm_short-kernel-$kernel_short-
 
 control_built=false
 both_built=false
+control_image_id=
+control_static_preflight_sha256=
+both_image_id=
+both_static_preflight_sha256=
 if [[ $mode == --build-control || $mode == --build-all ]]; then
   build_image current-vllm-stock-kernel 0 "$control_tag"
   control_built=true
@@ -505,6 +534,9 @@ fi
   die 'vLLM main advanced during the build; do not qualify these images'
 [[ $(live_remote_head "$kernel_upstream_url") == "$kernel_head" ]] ||
   die 'kernel main advanced during the build; do not qualify these images'
+[[ $(docker_cmd buildx imagetools inspect "$base_tag" \
+  --format '{{.Manifest.Digest}}') == "$base_digest" ]] ||
+  die 'official nightly base advanced during the build; do not qualify these images'
 
 jq -n \
   --arg archive_dir "$archive_dir" \
@@ -514,6 +546,8 @@ jq -n \
   --arg build_utc "$build_utc" \
   --arg mode "$mode" \
   --arg chunk_full_sha256 "$chunk_full_sha256" \
+  --arg control_image_id "$control_image_id" \
+  --arg control_static_preflight_sha256 "$control_static_preflight_sha256" \
   --arg control_tag "$control_tag" \
   --arg dockerfile_sha256 "$dockerfile_sha256" \
   --arg kernel_artifact_name "$kernel_artifact_name" \
@@ -530,6 +564,8 @@ jq -n \
   --arg vllm_tree "$vllm_tree" \
   --arg vllm_wheel_sha256 "$vllm_wheel_sha256" \
   --arg workflow_sha256 "$workflow_sha256" \
+  --arg both_image_id "$both_image_id" \
+  --arg both_static_preflight_sha256 "$both_static_preflight_sha256" \
   --arg both_tag "$both_tag" \
   --argjson kernel_artifact_id "$kernel_artifact_id" \
   --argjson kernel_run_id "$kernel_run_id" \
@@ -575,12 +611,16 @@ jq -n \
       current_vllm_stock_kernel: {
         built: $control_built,
         tag: (if $control_built then $control_tag else null end),
-        static_preflight_passed: $control_built
+        image_id: (if $control_built then $control_image_id else null end),
+        static_preflight_passed: $control_built,
+        static_preflight_sha256: (if $control_built then $control_static_preflight_sha256 else null end)
       },
       both_current_zero_overlay: {
         built: $both_built,
         tag: (if $both_built then $both_tag else null end),
-        static_preflight_passed: $both_built
+        image_id: (if $both_built then $both_image_id else null end),
+        static_preflight_passed: $both_built,
+        static_preflight_sha256: (if $both_built then $both_static_preflight_sha256 else null end)
       }
     },
     promotion: {
@@ -612,6 +652,14 @@ find "$build_root/logs" -maxdepth 1 -type f \
     sort | xargs -r sha256sum >SHA256SUMS
   sha256sum -c SHA256SUMS
 )
+
+[[ $(live_remote_head "$vllm_upstream_url") == "$vllm_head" ]] ||
+  die 'vLLM main advanced while archiving; do not qualify these images'
+[[ $(live_remote_head "$kernel_upstream_url") == "$kernel_head" ]] ||
+  die 'kernel main advanced while archiving; do not qualify these images'
+[[ $(docker_cmd buildx imagetools inspect "$base_tag" \
+  --format '{{.Manifest.Digest}}') == "$base_digest" ]] ||
+  die 'official nightly base advanced while archiving; do not qualify these images'
 
 printf 'PASS: static current-main build completed; GPU qualification is still pending.\n'
 printf '  build root: %s\n' "$build_root"

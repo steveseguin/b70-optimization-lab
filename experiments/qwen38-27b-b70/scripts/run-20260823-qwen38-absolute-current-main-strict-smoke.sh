@@ -277,6 +277,12 @@ archive_dir=$(jq -r .external_archive "$receipt")
 ) || die 'external build archive checksum failure'
 cmp -s "$receipt" "$archive_dir/build-receipt.json" ||
   die 'tracked and archived build receipts differ'
+[[ $(sha256sum "$archive_dir/build-20260823-qwen38-absolute-current-main-images.sh" |
+  awk '{print $1}') == "$(jq -r .build_inputs.script_sha256 "$receipt")" ]] ||
+  die 'archived build-script hash differs from the build receipt'
+[[ $(sha256sum "$archive_dir/Dockerfile.absolute-current-main" | awk '{print $1}') == \
+   "$(jq -r .build_inputs.dockerfile_sha256 "$receipt")" ]] ||
+  die 'archived Dockerfile hash differs from the build receipt'
 
 case $lane in
   control)
@@ -328,8 +334,11 @@ remote_vllm_pre=$(git ls-remote --exit-code https://github.com/vllm-project/vllm
   awk 'NR == 1 {print $1}')
 remote_kernel_pre=$(git ls-remote --exit-code https://github.com/vllm-project/vllm-xpu-kernels.git refs/heads/main |
   awk 'NR == 1 {print $1}')
+remote_base_pre=$(dockerc buildx imagetools inspect vllm/vllm-openai-xpu:nightly \
+  --format '{{.Manifest.Digest}}')
 [[ $remote_vllm_pre == "$vllm_head" ]] || die 'vLLM main advanced; rebuild before qualification'
 [[ $remote_kernel_pre == "$kernel_head" ]] || die 'XPU-kernel main advanced; rebuild before qualification'
+[[ $remote_base_pre == "$base_digest" ]] || die 'official nightly base advanced; rebuild before qualification'
 
 out_parent=$(dirname -- "$out")
 cache_parent=$(dirname -- "$cache_dir")
@@ -343,6 +352,7 @@ cp -- "$suite" "$out/validation-suite.json"
 cp -- "$receipt" "$out/build-receipt.json"
 printf '%s\n' "$remote_vllm_pre" >"$out/upstream-vllm.pre.txt"
 printf '%s\n' "$remote_kernel_pre" >"$out/upstream-kernel.pre.txt"
+printf '%s\n' "$remote_base_pre" >"$out/upstream-nightly-base.pre.txt"
 
 prelaunch_cleanup() {
   local rc=$?
@@ -814,9 +824,14 @@ remote_vllm_post=$(git ls-remote --exit-code https://github.com/vllm-project/vll
   awk 'NR == 1 {print $1}')
 remote_kernel_post=$(git ls-remote --exit-code https://github.com/vllm-project/vllm-xpu-kernels.git refs/heads/main |
   awk 'NR == 1 {print $1}')
+remote_base_post=$(dockerc buildx imagetools inspect vllm/vllm-openai-xpu:nightly \
+  --format '{{.Manifest.Digest}}')
 printf '%s\n' "$remote_vllm_post" >"$out/upstream-vllm.post.txt"
 printf '%s\n' "$remote_kernel_post" >"$out/upstream-kernel.post.txt"
-if [[ $remote_vllm_post != "$vllm_head" || $remote_kernel_post != "$kernel_head" ]]; then
+printf '%s\n' "$remote_base_post" >"$out/upstream-nightly-base.post.txt"
+if [[ $remote_vllm_post != "$vllm_head" ||
+      $remote_kernel_post != "$kernel_head" ||
+      $remote_base_post != "$base_digest" ]]; then
   printf 'stale-before-promotion\n' >"$out/final.status"
   exit 5
 fi

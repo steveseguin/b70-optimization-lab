@@ -3,40 +3,24 @@
   "state": "static-preflight-passed-for-built-images-gpu-qualification-pending",
   "mode": "--build-all",
   "overlay": "none",
-  "build_utc": "2026-08-24T01:59:50Z",
-  "build_root": "/home/steve/builds/qwen38-current-main-20260824T015950Z-2ec6f0d71e-4543b580fe",
-  "external_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T015950Z-2ec6f0d71e-4543b580fe",
+  "build_utc": "2026-08-24T03:06:07Z",
+  "build_root": "/home/steve/builds/qwen38-current-main-20260824T030607Z-e8888b2d68-4543b580fe",
+  "external_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T030607Z-e8888b2d68-4543b580fe",
   "base_digest": "sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
   "lab": {
-    "head": "413e969cc6026501bebe666b568c49bf1c3627ac",
-    "tree": "98e67c056b3da28e6c56bec39a511fb37f15bd88"
+    "head": "f4799d3118adb3fb540b94008c87c8702fd089a7",
+    "tree": "0fff2f942a62751188199ab4a34ad5a67a157e1b"
   },
   "build_inputs": {
-    "script_sha256": "c4e04a1a5bd5e1273ad0db9d9e7a295b911eec68000d445c165ce8bba849fda2",
+    "script_sha256": "1d9938792f2d1fa681b0aee356947096e359a3ee70e2b3fa02b23917592c18c2",
     "dockerfile_sha256": "2f12d32d7fbdb907ad89cb2b03e918e33fd7d99d7f206a9d8a3e37aeb6e2344c"
   },
-  "receipt_recovery": {
-    "reason": "post-export jq-1.6 object-value conditional required parentheses",
-    "original_exit_code": 3,
-    "recovered_without_rebuild": true,
-    "generated_utc": "2026-08-24T02:07:40Z",
-    "fixed_by_lab_head": "d161561cc531abe2821115fe43a1818a22788ddc",
-    "fixed_script_sha256": "1d9938792f2d1fa681b0aee356947096e359a3ee70e2b3fa02b23917592c18c2",
-    "validations": [
-      "live image IDs equal saved post-export inspections",
-      "live OCI labels equal saved inspections and source identity",
-      "in-image source and static-preflight receipts equal build-root copies",
-      "vLLM source archive and wheel hashes pass",
-      "original lab commit and tree pass",
-      "canonical vLLM and XPU-kernel main heads remain unchanged"
-    ]
-  },
   "vllm": {
-    "head": "2ec6f0d71ea3b350952630e310efcda1c744ff4d",
-    "tree": "16ca425c0fff5ffff94501863847d4630a7f7aae",
-    "package_version": "0.26.1rc1.dev1130+g2ec6f0d71.xpu",
-    "source_archive_sha256": "920e5128385533f490d555cd0b77bdc1f83e7016739d047b8eaa9377d09cce35",
-    "wheel_sha256": "9deb8248047b688259b4e10f3f1aa8479dc352da60b79a4abf78c64c0f2f0afb"
+    "head": "e8888b2d68bd7c6cce0aada7f0e214e55020e20d",
+    "tree": "8f15832ef5a8912e4f4531b40730648b2c4806ea",
+    "package_version": "0.26.1rc1.dev1131+ge8888b2d6.xpu",
+    "source_archive_sha256": "2a04783abdcc482c432b355cb2afff340c67d791babccb986e82977804c604ba",
+    "wheel_sha256": "c01800c7c00d48caaeb8de46cc9d8d8c2991b29cb378109f638a901f18c303f4"
   },
   "kernel": {
     "head": "4543b580fecca68a7dd54ddaf6e444dc5f11a6a4",
@@ -55,17 +39,17 @@
   "images": {
     "current_vllm_stock_kernel": {
       "built": true,
-      "tag": "neural-download/vllm-openai-xpu:vllm-2ec6f0d71e-kernel-stock-d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
-      "image_id": "sha256:f8a740ce23034ca4278b66aa8cd9ac75df10726e05fe964f6bacb5a55a0c4ef4",
+      "tag": "neural-download/vllm-openai-xpu:vllm-e8888b2d68-kernel-stock-d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35",
+      "image_id": "sha256:84c1cb317728428107eedaaac10289b39cdeb9268d3965e332d4193e5ed55ca4",
       "static_preflight_passed": true,
-      "static_preflight_sha256": "0d0937392777ef29b90b536b5ef2b1f7b800bf2c13b74dc36c824863034f2ff1"
+      "static_preflight_sha256": "f482801c1ddd781ecefcb6bc1b00661f724c96960d5f7e2be8627a81d298bcd0"
     },
     "both_current_zero_overlay": {
       "built": true,
-      "tag": "neural-download/vllm-openai-xpu:vllm-2ec6f0d71e-kernel-4543b580fe-official",
-      "image_id": "sha256:79820a7ec6258f08b070e00aa0fc872b7671704a30651364de068cd892c64986",
+      "tag": "neural-download/vllm-openai-xpu:vllm-e8888b2d68-kernel-4543b580fe-official",
+      "image_id": "sha256:f9887e6270c47dff470cff1c927c4baa22cdb1b128ff42c945a57a7717c04537",
       "static_preflight_passed": true,
-      "static_preflight_sha256": "043fc5cc7d05e40f4d45526b6ae15c3d10c4c095634e8e58f549ae4ad093982e"
+      "static_preflight_sha256": "ca3754dec2cec664c1464e98f117dc6a18496c53998d40f3d30293d53e12ba23"
     }
   },
   "promotion": {

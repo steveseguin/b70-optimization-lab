@@ -306,3 +306,53 @@ hash. The ledger was updated to the tracked script's SHA-256
 `45b4de5ef716585845379a7772bb903617306c1b374ed044c4388a9d6efa0840`.
 The complete repro verifier and both source/determinism packet checksum sets
 then passed.
+
+## 2026-08-24 literal-head refresh
+
+The first preregistered TP1 campaign stopped before creating a container when
+vLLM `main` advanced during its launch preflight. That was the intended
+fail-closed result: no GPU work ran and the `2ec6f0d71e` images remained dated
+artifacts rather than being relabeled as current.
+
+The source tree was then fast-forwarded and both zero-source-overlay images
+were rebuilt at literal vLLM head
+`e8888b2d68bd7c6cce0aada7f0e214e55020e20d`, tree
+`8f15832ef5a8912e4f4531b40730648b2c4806ea`, with XPU-kernel head
+`4543b580fecca68a7dd54ddaf6e444dc5f11a6a4`. The vLLM delta from
+`2ec6f0d71e` is one direct-parent commit limited to ModernBERT FP8 support and
+its tests. Exact Git-object comparisons found the Qwen3.5/3.8, INC/AutoRound,
+XPU graph, scheduler, cache, LM-head, GDN, collective, and TP paths unchanged.
+This predicts no Qwen semantic or performance change, but does not waive
+requalification.
+
+The current immutable image IDs are:
+
+- current vLLM with stock-base kernel:
+  `sha256:84c1cb317728428107eedaaac10289b39cdeb9268d3965e332d4193e5ed55ca4`;
+- current vLLM with current official kernel artifact:
+  `sha256:f9887e6270c47dff470cff1c927c4baa22cdb1b128ff42c945a57a7717c04537`.
+
+Their complete build archive is
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T030607Z-e8888b2d68-4543b580fe`.
+The tracked receipt, build-root receipt, and archived receipt are byte-identical
+at SHA-256
+`459d32899d0a53d0868fdb33ab0934dbff7c38f0a7f5efcac31c651ad0d301b9`,
+and the full archive checksum manifest passes. The builder's original receipt
+is retained beside it as `build-receipt.pre-finalization.json`; finalization
+added only image IDs and static-preflight hashes derived from its saved image
+inspections and preflight outputs.
+
+The floating official `vllm/vllm-openai-xpu:nightly` registry index was
+re-resolved immediately after the build and still matched pinned digest
+`sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35`.
+The builder and qualification runners now check that live digest before and
+after their work, alongside both Git heads, so a moved runtime base also makes
+an otherwise successful result stale before promotion. Future builder receipts
+capture immutable image IDs and static-preflight hashes directly. No launch
+flags, protected floors, accepted decision overlays, or historical result
+values changed in this refresh.
+
+Only unused Docker build cache was pruned after the archive passed; both e888
+images and all source/result archives remain. GPU qualification is still
+pending and the historical TP1/TP2/TP4 highs remain authoritative until the
+new identity clears every speed and quality gate.
