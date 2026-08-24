@@ -553,6 +553,10 @@ and static identity checks, followed by a live post-build source/base seal.
 To preserve enough ext4 space for qualification, the already archived and
 superseded `702e1d718` control/current-kernel images and the old digest-pinned
 base were removed locally, followed by reproducible inactive BuildKit cache.
+Four completed build scratch trees (`2ec6f0d71e`, `e8888b2d68`, `702e1d7186`,
+and `460c08bc8a`) were also removed only after each matching versioned archive
+passed its full `SHA256SUMS`; the separate incomplete `2ec6f0d71e` attempt was
+left untouched for later classification.
 The dated `702` run evidence, wheel/source archive, receipts, logs, and every
 accepted decision/source overlay remain. No historical speed or quality value
 was replaced. The new images are still unqualified; full TP1 diagnostic plus
