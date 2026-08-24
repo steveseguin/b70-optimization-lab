@@ -3,6 +3,24 @@
 Date: 2026-08-23. Status: **build tooling ready; zero-overlay GPU
 qualification not yet run**.
 
+## First execution attempt
+
+The first CPU-only `--build-all` attempt used vLLM
+`2ec6f0d71ea3b350952630e310efcda1c744ff4d` and XPU kernels
+`4543b580fecca68a7dd54ddaf6e444dc5f11a6a4`. The vLLM wheel built, and the
+control image passed its static imports, Torch schemas, Rust-artifact identity,
+and DSO linkage checks. The image build then stopped before export because the
+guard for the official base's one known `uv pip check` defect expected the
+words `but it is not installed`; the actual stable diagnostic says
+`but it's not installed`.
+
+This was a validation-harness wording defect, not a source, binary, GPU, or
+performance failure. No GPU was exposed and no immutable result tag was
+created. The failed attempt is preserved at
+`/home/steve/builds/qwen38-current-main-20260824T015706Z-2ec6f0d71e-4543b580fe/`;
+the corrected guard continues to accept that exact optional-NIXL diagnostic
+and nothing broader.
+
 ## Non-negotiable update rule
 
 The newest literal upstream `main` is the base, not a replacement for the

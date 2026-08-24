@@ -167,7 +167,7 @@ Path("/opt/neural-download/import-receipt.json").write_text(
 )
 PY
 
-RUN set -eux; \
+RUN set -eu; \
     package_dir=/opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels; \
     torch_lib_dir="$(/opt/venv/bin/python -c 'import pathlib, torch; print(pathlib.Path(torch.__file__).resolve().parent / "lib")')"; \
     export LD_LIBRARY_PATH="${torch_lib_dir}:${package_dir}:${LD_LIBRARY_PATH:-}"; \
@@ -214,7 +214,7 @@ RUN set -eux; \
         expected_count=1; \
         if [ "${INSTALL_CURRENT_KERNEL}" = 1 ]; then expected_count=2; fi; \
         test "$(grep -c '^The package ' /opt/neural-download/pip-check.txt)" -eq "${expected_count}"; \
-        grep -Fx 'The package `nixl` requires `nixl-cu13==1.3.2`, but it is not installed' \
+        grep -Fx 'The package `nixl` requires `nixl-cu13==1.3.2`, but it'"'"'s not installed' \
           /opt/neural-download/pip-check.txt; \
         if [ "${INSTALL_CURRENT_KERNEL}" = 1 ]; then \
             grep -Fx "The package \`vllm\` requires \`vllm-xpu-kernels==0.1.13.2\`, but \`${KERNEL_PACKAGE_VERSION}\` is installed" \
