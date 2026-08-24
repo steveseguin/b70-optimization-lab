@@ -12,6 +12,7 @@ kernel_source=${KERNEL_SOURCE:-/home/steve/src/vllm-xpu-kernels-current-main}
 build_parent=${BUILD_PARENT:-/home/steve/builds}
 archive_parent=${ARCHIVE_PARENT:-/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds}
 kernel_artifact_dir=${KERNEL_ARTIFACT_DIR:-/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/upstream-kernel-4543b580-artifact-9432931548}
+sudo_password_file=${SUDO_PASSWORD_FILE:-/home/steve/SUDOPASSWORD.txt}
 
 base_digest=sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35
 base_image="vllm/vllm-openai-xpu@$base_digest"
@@ -44,8 +45,9 @@ Builds immutable zero-overlay images from literal upstream main:
   control: current vLLM + the official-base stock kernel
   both:    current vLLM + upstream's exact-current kernel artifact
 
-The script never launches a GPU. Cache sudo first when Docker requires it:
-  sudo -v
+The script never launches a GPU. By default, privileged Docker calls read the
+local ignored password file documented in AGENTS.md. Set DOCKER_USE_SUDO=0
+when the current user can access Docker directly.
 EOF
 }
 
@@ -64,15 +66,15 @@ done
 
 docker_cmd() {
   if [[ ${DOCKER_USE_SUDO:-1} == 1 ]]; then
-    sudo -n docker "$@"
+    sudo -S -p '' docker "$@" <"$sudo_password_file"
   else
     docker "$@"
   fi
 }
 
 if [[ ${DOCKER_USE_SUDO:-1} == 1 ]]; then
-  sudo -n true 2>/dev/null ||
-    die 'sudo is not cached; run sudo -v without exposing the password'
+  [[ -r $sudo_password_file ]] ||
+    die "sudo password file is not readable: $sudo_password_file"
 fi
 docker_cmd version >/dev/null || die 'Docker is not available'
 
