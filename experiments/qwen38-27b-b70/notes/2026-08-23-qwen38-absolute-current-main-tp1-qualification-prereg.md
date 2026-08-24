@@ -5,10 +5,35 @@ the custom images built from literal upstream `main`. It is an attribution and
 preservation campaign, not permission to replace historical records, discard
 accepted overlays, or call a stale rolling image current.
 
-## Goal and immutable source identities
+## Active identity roll-forward: 2026-08-24
 
-Qualify vLLM `2ec6f0d71ea3b350952630e310efcda1c744ff4d` first with the
-stock kernel from the official-image base and then with XPU kernels
+The arm order, launch/runtime configuration, quality contract, and protected
+floors below remain frozen. The only permitted roll-forward is the
+upstream/build identity when a freshness gate detects that `main` advanced.
+The next campaign is bound
+to tracked receipt
+`experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json`
+and its byte-identical archived copy, currently:
+
+- vLLM `702e1d718646b5290f17533c04932d58bf03dad6`;
+- XPU kernels `4543b580fecca68a7dd54ddaf6e444dc5f11a6a4`;
+- official nightly base index
+  `sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35`;
+- current-vLLM/stock-kernel image
+  `sha256:d7372613500de2c823becd2364b322b7d7f7827b6fd0705500b14328f1eacdda`;
+- both-current image
+  `sha256:eaa0f2c7a2ea5db677945d29e664f105e38a661446caea9d3e212fd0e118ff0a`.
+
+The older identities in the original goal section below are historical
+preregistration evidence, not authorization to launch stale images. If any of
+the three live upstream identities differs before an arm, the runner stops and
+the identity rolls forward again without weakening any optimization or gate.
+
+## Original preregistration identity (dated evidence)
+
+The original protocol targeted vLLM
+`2ec6f0d71ea3b350952630e310efcda1c744ff4d` first with the stock kernel from
+the official-image base and then with XPU kernels
 `4543b580fecca68a7dd54ddaf6e444dc5f11a6a4`. The immutable image IDs are:
 
 - current vLLM / stock kernel:

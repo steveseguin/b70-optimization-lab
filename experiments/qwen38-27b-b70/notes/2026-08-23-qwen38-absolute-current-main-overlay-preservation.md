@@ -352,10 +352,14 @@ capture immutable image IDs and static-preflight hashes directly. No launch
 flags, protected floors, accepted decision overlays, or historical result
 values changed in this refresh.
 
-Only unused Docker build cache was pruned after the archive passed; both e888
-images and all source/result archives remain. GPU qualification is still
-pending and the historical TP1/TP2/TP4 highs remain authoritative until the
-new identity clears every speed and quality gate.
+Only unused Docker build cache was pruned after the archive passed. The local
+e888 images were later removed when a newer vLLM head required another build;
+their verified USB build archive, retained local source tar, pinned inputs, and
+all run/result evidence remain, so the dated runtime can be reconstructed from
+exact pinned inputs. The literal image IDs were not exported, and BuildKit
+provenance attestations can change a rebuilt manifest-list ID. GPU qualification
+is still pending and the historical TP1/TP2/TP4 highs remain authoritative
+until a newer identity clears every speed and quality gate.
 
 The first e888 GPU attempt is preserved at
 `/home/steve/qwen38-current-main-runs/tp1-20260824T031808Z`. Its control arm
@@ -418,22 +422,42 @@ These are useful dated speed/quality/cache results and cannot be discarded,
 but recency remains a conjunctive gate: rebuild from the new head and restart
 qualification without changing the accepted overlay or historical floors.
 
-The next clean campaign at
-`/home/steve/qwen38-current-main-runs/tp1-20260824T034038Z` passed the digest
-handoff and entered replay. Its control diagnostic measured
-`30.421310780232716 tok/s`; strict replay A measured
-`30.320453612816877 tok/s`, narrowly above the protected
-`30.31067504052998` strict floor. Strict A also passed the complete quality
-and baseline battery: seven exact cases, eight repeats, the 8K/7617-token
-needle, 24 baseline comparisons, and zero cached tokens throughout. The
-diagnostic cache manifest was byte-identical before and after replay.
+## 2026-08-24 `702e1d718` forward sync
 
-That arm is still not promotable. vLLM `main` was `e8888b2d68` at its
-preflight and advanced to `702e1d7186` before its postflight; the kernel and
-nightly runtime digest did not move. The runner therefore wrote
-`stale-before-promotion` and stopped before strict B or either both-current
-arm. The exact partial-attempt ledger is
-`experiments/qwen38-27b-b70/data/2026-08-24-qwen38-e888-tp1-qualification-attempts.json`.
-These are useful dated speed/quality/cache results and cannot be discarded,
-but recency remains a conjunctive gate: rebuild from the new head and restart
-qualification without changing the accepted overlay or historical floors.
+The replacement zero-source-overlay build uses literal vLLM head
+`702e1d718646b5290f17533c04932d58bf03dad6`, tree
+`3ebf6c94f19ab1e4a41f83baf5fc1812c4fe9f03`, and the unchanged official XPU
+kernel head `4543b580fecca68a7dd54ddaf6e444dc5f11a6a4`. The single-commit delta from
+`e8888b2d68` adds LoRA support for DeepSeek V4. Its three changed Python files
+do not touch Qwen, INC/AutoRound, GDN, XPU graphs, scheduling, caches,
+collectives, tensor parallelism, kernels, Rust, dependencies, or build
+configuration. The one shared routed-expert mapping is behaviorally unchanged
+when LoRA prefixes are empty; this dense Qwen lane does not enable LoRA. That
+is a low-risk source audit, not a substitute for speed and quality replay.
+
+The builder produced vLLM wheel SHA-256
+`f82f780fd9b8111eb4f4c0bbdd0aa5e72ec45ef012547bf0b529537d3671a4d0`
+and two immutable images:
+
+- current vLLM with stock-base kernel:
+  `sha256:d7372613500de2c823becd2364b322b7d7f7827b6fd0705500b14328f1eacdda`;
+- current vLLM with current official kernel artifact:
+  `sha256:eaa0f2c7a2ea5db677945d29e664f105e38a661446caea9d3e212fd0e118ff0a`.
+
+Their complete archive is
+`/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T040536Z-702e1d7186-4543b580fe`.
+The tracked and archived receipts are byte-identical at SHA-256
+`22d5577b3054e6c1ed5a82dbd94594f408085888d50832be562dd9b4c21e00a5`,
+and the archive checksum manifest passes. Both images passed package, import,
+source-shadowing, DSO, dependency, kernel, and static identity checks. A
+post-build re-resolution found vLLM main, kernel main, and the official nightly
+index digest still unchanged at the identities above and
+`sha256:d3f5daa1552a231471a5ec5097475d282e07788db336819ed9e932f9193b0e35`.
+An independent live recheck sealed those three identities at
+`2026-08-24T04:11:20Z`.
+
+After sealing the archive, 8.038 GB of unused and reproducible Docker build
+cache was removed. The two `702e1d718` images, exact wheel/source archive,
+receipts, run data, accepted overlay artifacts, and historical evidence remain.
+No protected floor, launch flag, quality gate, decision overlay, or historical
+speed value changed. Full TP1 qualification is still required before TP2/TP4.
