@@ -125,3 +125,11 @@ replace the accepted single-user patch or advertise an HTTP users/sec result.
 The next aggregate optimization should extend another high-frequency
 single-row Ornith fusion to multi-row, with the same deterministic gate and
 matched C/B/B/C measurement discipline.
+
+## Full shared-gate chain follow-up
+
+That next fusion was tested. It measured +1.235% alone, but only +0.276% when
+stacked on this generic patch, with overlapping warm-sample ranges. It is not
+promoted; this generic +2.21% patch remains the recommendation. See
+`2026-08-23-ornith35b-shared-gate-residual-rms-multirow.md` for the direct
+measurements and archived research patches.

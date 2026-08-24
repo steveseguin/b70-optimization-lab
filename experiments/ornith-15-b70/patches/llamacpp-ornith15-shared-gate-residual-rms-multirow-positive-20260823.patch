@@ -1,0 +1,189 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -5854,6 +5854,23 @@
+ }
+ 
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_moe_shared_residual_rms_hits{0};
++static std::atomic<uint64_t> g_ggml_sycl_ornith_moe_gate_residual_rms_multirow_hits{0};
++
++static bool ggml_sycl_ornith_moe_gate_residual_rms_multirow_enabled() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_SYCL_FUSED_ORNITH_MOE_GATE_RESIDUAL_RMS_MULTIROW");
++        const bool on = value != nullptr && std::strcmp(value, "0") != 0;
++        if (on) {
++            std::atexit([] {
++                std::fprintf(stderr,
++                    "ggml_sycl_ornith_moe_gate_residual_rms_multirow: fused_hits=%" PRIu64 "\n",
++                    g_ggml_sycl_ornith_moe_gate_residual_rms_multirow_hits.load(std::memory_order_relaxed));
++            });
++        }
++        return on;
++    }();
++    return enabled;
++}
+ 
+ static bool ggml_sycl_ornith_moe_shared_residual_rms_enabled() {
+     static const bool enabled = [] {
+@@ -5872,7 +5889,7 @@
+ }
+ 
+ static bool ggml_sycl_can_fuse_ornith_moe_shared_residual_rms(
+-        const ggml_cgraph * cgraph, int node_idx) {
++        const ggml_cgraph * cgraph, int node_idx, bool allow_gate_multirow = false) {
+     if (!g_ggml_sycl_enable_fusion || !ggml_sycl_residual_rms_norm_enabled() ||
+         !ggml_sycl_ornith_moe_shared_residual_rms_enabled() ||
+         node_idx < 0 || node_idx + 3 >= cgraph->n_nodes) {
+@@ -5901,16 +5918,22 @@
+     const ggml_tensor * residual_in = residual_add->src[0] == ffn_add
+         ? residual_add->src[1] : residual_add->src[0];
+     const ggml_tensor * mul_src = mul->src[0] == rms_norm ? mul->src[1] : mul->src[0];
+-    const auto exact_vec = [](const ggml_tensor * t) {
++    const int64_t nrows = ffn_add->ne[1];
++    if (nrows < 1 || nrows > 32 ||
++        (nrows > 1 && (!allow_gate_multirow ||
++            !ggml_sycl_ornith_moe_gate_residual_rms_multirow_enabled()))) {
++        return false;
++    }
++    const auto exact_vec = [nrows](const ggml_tensor * t) {
+         return t != nullptr && t->type == GGML_TYPE_F32 &&
+-               t->ne[0] == 2048 && t->ne[1] == 1 && t->ne[2] == 1 && t->ne[3] == 1 &&
++               t->ne[0] == 2048 && t->ne[1] == nrows && t->ne[2] == 1 && t->ne[3] == 1 &&
+                ggml_is_contiguous(t);
+     };
+     return exact_vec(ffn_add) && exact_vec(ffn_add->src[0]) && exact_vec(ffn_add->src[1]) &&
+            exact_vec(residual_add) && exact_vec(residual_in) && exact_vec(rms_norm) &&
+            mul_src != nullptr && mul_src->type == GGML_TYPE_F32 && mul_src->ne[0] == 2048 &&
+            ggml_nelements(mul_src) == 2048 && ggml_is_contiguous(mul_src) &&
+-           mul->type == GGML_TYPE_F32 && ggml_is_contiguous(mul);
++           mul->type == GGML_TYPE_F32 && ggml_are_same_shape(ffn_add, mul) && ggml_is_contiguous(mul);
+ }
+ 
+ static std::atomic<uint64_t> g_ggml_sycl_ornith_moe_gate_residual_rms_hits{0};
+@@ -5935,7 +5958,8 @@
+         const ggml_cgraph * cgraph, int node_idx) {
+     if (!ggml_sycl_ornith_moe_gate_residual_rms_enabled() ||
+         node_idx < 0 || node_idx + 5 >= cgraph->n_nodes ||
+-        !ggml_sycl_can_fuse_ornith_moe_shared_residual_rms(cgraph, node_idx + 2)) {
++        !ggml_sycl_can_fuse_ornith_moe_shared_residual_rms(
++            cgraph, node_idx + 2, /*allow_gate_multirow=*/true)) {
+         return false;
+     }
+ 
+@@ -5959,14 +5983,17 @@
+     const ggml_tensor * gate_in = sigmoid->src[0];
+     const ggml_tensor * shared = shared_gated->src[0] == sigmoid
+         ? shared_gated->src[1] : shared_gated->src[0];
+-    const auto exact_vec = [](const ggml_tensor * t) {
++    const int64_t nrows = ffn_add->ne[1];
++    const auto exact_vec = [nrows](const ggml_tensor * t) {
+         return t != nullptr && t->type == GGML_TYPE_F32 &&
+-               t->ne[0] == 2048 && t->ne[1] == 1 && t->ne[2] == 1 && t->ne[3] == 1 &&
++               t->ne[0] == 2048 && t->ne[1] == nrows && t->ne[2] == 1 && t->ne[3] == 1 &&
+                ggml_is_contiguous(t);
+     };
+     return gate_in != nullptr && gate_in->type == GGML_TYPE_F32 &&
+-           ggml_nelements(gate_in) == 1 && ggml_is_contiguous(gate_in) &&
+-           sigmoid->type == GGML_TYPE_F32 && ggml_nelements(sigmoid) == 1 &&
++           gate_in->ne[0] == 1 && gate_in->ne[1] == nrows &&
++           gate_in->ne[2] == 1 && gate_in->ne[3] == 1 && ggml_is_contiguous(gate_in) &&
++           sigmoid->type == GGML_TYPE_F32 && sigmoid->ne[0] == 1 &&
++           sigmoid->ne[1] == nrows && sigmoid->ne[2] == 1 && sigmoid->ne[3] == 1 &&
+            ggml_is_contiguous(sigmoid) && exact_vec(shared) && exact_vec(shared_gated);
+ }
+ 
+@@ -7018,6 +7045,10 @@
+                     cgraph->nodes[i + 3], cgraph->nodes[i + 4], cgraph->nodes[i + 5]);
+                 g_ggml_sycl_ornith_moe_gate_residual_rms_hits.fetch_add(
+                     1, std::memory_order_relaxed);
++                if (node->ne[1] > 1) {
++                    g_ggml_sycl_ornith_moe_gate_residual_rms_multirow_hits.fetch_add(
++                        1, std::memory_order_relaxed);
++                }
+                 i += 5;
+                 continue;
+             }
+diff --git a/ggml/src/ggml-sycl/norm.cpp b/ggml/src/ggml-sycl/norm.cpp
+--- a/ggml/src/ggml-sycl/norm.cpp
++++ b/ggml/src/ggml-sycl/norm.cpp
+@@ -550,26 +550,30 @@
+         const float * mul,
+         float * dst,
+         const int ncols,
++        const int nrows,
+         const float eps,
+         queue_ptr stream,
+         int device) {
+     const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
+     GGML_ASSERT(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
+     const sycl::range<3> block_dims(1, 1, work_group_size);
++    const sycl::range<3> global_dims(1, 1, (size_t) nrows * work_group_size);
+ 
+     stream->submit([&](sycl::handler & cgh) {
+         sycl::local_accessor<float, 1> s_sum_acc(sycl::range<1>(work_group_size / WARP_SIZE), cgh);
+         sycl::local_accessor<float, 1> s_gate(sycl::range<1>(1), cgh);
+         cgh.parallel_for(
+-            sycl::nd_range<3>(block_dims, block_dims),
++            sycl::nd_range<3>(global_dims, block_dims),
+             [=](sycl::nd_item<3> item)
+             [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                 const int tid = item.get_local_id(2);
++                const int row = item.get_group(2);
++                const int base = row * ncols;
+                 const int nwarps = work_group_size / WARP_SIZE;
+                 if (tid == 0) {
+                     // Match the stock FP32 sigmoid and force its output rounding
+                     // before the broadcast multiply.
+-                    s_gate[0] = 1.0f / (1.0f + op_exp(-gate_in[0]));
++                    s_gate[0] = 1.0f / (1.0f + op_exp(-gate_in[row]));
+                 }
+                 item.barrier(sycl::access::fence_space::local_space);
+                 const float gate = s_gate[0];
+@@ -577,12 +581,12 @@
+ 
+                 for (int col = tid; col < ncols; col += work_group_size) {
+                     // Preserve all three graph-visible FP32 rounding boundaries.
+-                    shared_gated[col] = shared[col] * gate;
+-                    const float rounded_shared = shared_gated[col];
+-                    ffn_out[col] = routed[col] + rounded_shared;
+-                    const float rounded_ffn = ffn_out[col];
+-                    residual_out[col] = rounded_ffn + residual_in[col];
+-                    const float xi = residual_out[col];
++                    shared_gated[base + col] = shared[base + col] * gate;
++                    const float rounded_shared = shared_gated[base + col];
++                    ffn_out[base + col] = routed[base + col] + rounded_shared;
++                    const float rounded_ffn = ffn_out[base + col];
++                    residual_out[base + col] = rounded_ffn + residual_in[base + col];
++                    const float xi = residual_out[base + col];
+                     tmp += xi * xi;
+                 }
+ 
+@@ -604,7 +608,7 @@
+ 
+                 const float scale = sycl::rsqrt(tmp / ncols + eps);
+                 for (int col = tid; col < ncols; col += work_group_size) {
+-                    dst[col] = scale * residual_out[col] * mul[col];
++                    dst[base + col] = scale * residual_out[base + col] * mul[col];
+                 }
+             });
+     });
+@@ -950,6 +954,10 @@
+     const ggml_tensor * mul_src = mul_tensor->src[0] == rms_norm
+         ? mul_tensor->src[1] : mul_tensor->src[0];
+     GGML_ASSERT(shared != nullptr && routed != nullptr && residual_in != nullptr && mul_src != nullptr);
++    const int nrows = (int) ffn_add->ne[1];
++    GGML_ASSERT(nrows >= 1 && nrows <= 32);
++    GGML_ASSERT(gate_sigmoid->ne[0] == 1 && gate_sigmoid->ne[1] == nrows);
++    GGML_ASSERT(ffn_add->ne[0] == 2048 && ggml_are_same_shape(ffn_add, residual_add));
+ 
+     float eps = 0.0f;
+     memcpy(&eps, rms_norm->op_params, sizeof(float));
+@@ -965,7 +973,7 @@
+         static_cast<volatile float *>(residual_add->data),
+         static_cast<const float *>(mul_src->data),
+         static_cast<float *>(mul_tensor->data),
+-        2048, eps, ctx.stream(), ctx.device);
++        2048, nrows, eps, ctx.stream(), ctx.device);
+ }
+ 
+ void ggml_sycl_op_rms_norm_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
