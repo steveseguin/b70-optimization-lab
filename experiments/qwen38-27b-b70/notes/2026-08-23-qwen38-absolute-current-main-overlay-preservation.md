@@ -992,3 +992,50 @@ a known-good fallback. Only after current-kernel TP1 passes do the TP2
 78-decision and TP4 152-decision overlays get exact-path/`configs_hash`
 remapping and their original speed/quality gates. This preserves the 48.95 and
 71.7 classes instead of letting a forward update silently lower them.
+
+## 2026-08-24 4ca carry-forward binding
+
+The preceding 0ecc next-step paragraph is a dated decision, not current live
+state. vLLM main advanced through 79bb and then 4ca. The 79bb R3 packet passed
+its diagnostic and replay-A correctness/quality work but closed stale when
+main moved during replay A; it did not write a strict gate or authorize TP2,
+TP4, or an overlay. Its exact both-current image is now preserved as a verified
+Docker-loadable USB archive before local removal.
+
+The then-literal-current vLLM `4ca856b0b59d87c7b167d1bd8c748421719c9a57`
+and XPU-kernel `baaa05bb4e92901219a5a072dd63f2474896f6d1` were built
+over official nightly digest `sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876`.
+The exact tracked
+[`receipt`](../data/2026-08-24-qwen38-4ca856b0b5-absolute-current-main-build.json)
+and [build record](2026-08-24-qwen38-4ca856b0b5-absolute-current-main-build.md)
+remain static-only and unlaunched.
+
+The structured manifest now makes the carry-forward explicit:
+
+- the 4ca build is zero-overlay, with zero decision files applied and zero
+  compiled outputs carried;
+- TP2's 78-file bundle still verifies at manifest SHA-256
+  `65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757`
+  and remains an accepted decision artifact / quality-clean partial, not a
+  promoted performance replacement;
+- TP4's accepted 152-file performance bundle still verifies at manifest
+  SHA-256
+  `a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2`;
+- neither bundle is enabled or applied to 4ca. After a literal-current
+  successor passes untreated TP1, compatible decisions may be remapped only by
+  relative path plus embedded config hash, then freshly compiled and fully
+  requalified;
+- the qualified dated 0ecc stock-control profile at
+  `30.282672968694783 / 30.324297716696414 / 30.325970521145816 tok/s`
+  is now included in the protected-results object without replacing any prior
+  floor or high.
+
+Before 4ca R1 launched, the independent prelaunch audit at
+`2026-08-24T14:49:17Z` resolved vLLM main to
+`ecfa7bb37316a3c1dab345fea4178d81f63b1ce4`. XPU-kernel main and the nightly
+digest were unchanged. No hardware gate, container, model, cache, or GPU arm
+ran. The 4ca build and preregistration therefore closed stale and remain dated
+evidence. The active order transfers unchanged to ecfa or whatever is newest
+at the next build gate: untreated TP1, then TP2, then TP4. This
+zero-overlay-first order isolates the current base; it does not erase the
+accepted overlays that must be carried forward after the anchor passes.

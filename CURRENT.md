@@ -152,15 +152,39 @@ protected result. Both roots are sealed and all cleanup guards passed. See the
 [r2 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-untreated-tp1-r2-prereg.md), and
 [r3 closeout](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-79bb-r3-stale-during-replay-a.md).
 
-The active next step is to resolve all three moving upstream identities again
-and build the absolute-newest vLLM main (9f295fe8 at r3 closure, or its
-successor) with the newest XPU-kernel main over the current official nightly.
-Preserve accepted performance work as versioned runtime, decision, and source
-overlays; do not copy generated binaries forward or lower any historical
-floor/high. Qualify the untreated current base at TP1 first, then carry only
-explicitly justified overlays through TP2 and TP4. Broader family/quant/MTP/
-context/KV/graph coverage for neural.download follows those current topology
-anchors.
+The successor zero-overlay build completed at vLLM
+`4ca856b0b59d87c7b167d1bd8c748421719c9a57`, XPU-kernel main
+`baaa05bb4e92901219a5a072dd63f2474896f6d1`, and the unchanged official
+nightly digest. Both the stock-kernel attribution image and both-current image
+passed static certification. Before any hardware gate, container, model, or
+GPU arm launched, the independent prelaunch audit resolved vLLM `main` to
+`ecfa7bb37316a3c1dab345fea4178d81f63b1ce4`. The 4ca packet therefore closed
+stale and unlaunched. Its one-commit successor caches common multimodal token
+sequences; none of the changed files is on this dense text-only Qwen path, but
+that bounded audit does not waive a newest-head rebuild or qualification. See
+the [4ca build record](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-4ca856b0b5-absolute-current-main-build.md)
+and [closed R1 preregistration](experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-4ca856b0b5-untreated-tp1-r1-prereg.md).
+
+The preservation manifest binds the dated 4ca zero-overlay build to **zero**
+applied decision files and **zero** carried compiled outputs while retaining the
+verified TP2 78-decision artifact and accepted TP4 152-decision performance
+overlay separately. Neither was silently dropped or baked into the unlaunched
+R1; after a successor passes TP1, compatible decisions require
+exact-path/config-hash remapping into a fresh compile and full TP2/TP4
+qualification. The qualified 0ecc stock
+control `30.282673 / 30.324298 / 30.325971` profile is also explicitly
+protected. Unused build cache was pruned, and the removed local 79bb
+both-current image is exactly Docker-loadable from its verified USB archive;
+the 4ca images remain local and root headroom is above the unchanged 12-GiB
+launch floor.
+
+The active step is to seal and push the unlaunched 4ca closure, then resolve all
+three moving inputs again and build `ecfa7bb373` or whatever literal head has
+superseded it. The successor receives the unchanged one-shot untreated TP1
+contract, then TP2 and TP4. Broader family/quant/MTP/context/KV/graph
+neural.download coverage follows those current topology anchors. Any further
+upstream movement stops the packet and rebuilds its successor without lowering
+historical floors or discarding accepted overlays.
 
 The old/new compiled Qwen graphs and autotune candidate sets are identical,
 but the nightly package version changed the compile-cache namespace and a fresh

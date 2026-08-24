@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "created_at": "2026-08-23",
-  "status": "preservation-gate-passed",
+  "status": "preservation-gate-passed-current-build-stale-successor-pending",
   "policy": {
     "active_base": "fresh custom build from literal upstream main heads",
     "official_nightly_role_when_behind": "runtime base and comparison lane",
@@ -14,7 +14,7 @@
       "amd64_manifest_digest": "sha256:748e4c6a306eba21ac0a66a8497244312c1377dbc8179a7b1f88848ee50efde7",
       "vllm_source": "f94666b60d4c58ec0807d22c837cfae322a1dde9"
     },
-    "vllm_upstream_main": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
+    "vllm_upstream_main": "ecfa7bb37316a3c1dab345fea4178d81f63b1ce4",
     "vllm_xpu_kernels_upstream_main": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
     "must_reresolve_before_build": true
   },
@@ -237,10 +237,9 @@
       "root_free_after": "21G"
     },
     "policy": "Append the 30.267690888459764 diagnostic as a dated high without replacing historical identities. The valid control diagnostic is not a strict result. Roll forward fresh to 0ecc and preserve every accepted runtime and decision overlay."
-  }],
-  "absolute_current_build": {
+  }, {
     "built_utc": "2026-08-24T07:38:55Z",
-    "status": "static-preflight-passed-gpu-qualification-pending",
+    "status": "dated-qualified-stock-control-both-current-not-promoted-superseded",
     "receipt": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-absolute-current-main-build.json",
     "receipt_sha256": "275029980b9c1b59b341ca8a2e2ca1d8845505f74e700cc9e653635c1bb96947",
     "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T073855Z-0ecc284790-baaa05bb4e",
@@ -275,8 +274,118 @@
         "raw_archive_sha256": "9c760f97ddac5ff9434f201ded337bc8f6ba24babb21ce00e1dfbb90363353f9"
       }
     ],
+    "qualified_stock_control_tok_s": {
+      "diagnostic": 30.282672968694783,
+      "strict_a": 30.324297716696414,
+      "strict_b": 30.325970521145816
+    },
+    "both_current_candidate_tok_s": {
+      "diagnostic": 30.293320491708876,
+      "strict_a": 30.27919625650121,
+      "strict_b": 30.261661472495938,
+      "status": "quality-clean-strict-speed-miss-not-promoted"
+    },
+    "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-0ecc-tp1-qualification-attempts.json",
     "accepted_overlay_disposition": "The accepted model, launch, topology, graph, cache, quality, and TP2/TP4 decision overlays remain versioned and mandatory. Build fresh caches; remap only exact relative-path plus embedded-configs_hash-compatible decision bytes; never copy compiled outputs across versions.",
-    "policy": "Qualification remains fail-closed on live source/base movement and protected speed, quality, cache, and token-accounting gates. Historical builds and highs remain append-only."
+    "policy": "Retain the qualified dated stock-kernel profile and the failed both-current candidate without replacing any protected result."
+  }, {
+    "built_utc": "2026-08-24T12:40:51Z",
+    "status": "dated-stale-during-strict-replay-a-vllm-main-advanced",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-79bb395eea-absolute-current-main-build.json",
+    "receipt_sha256": "92e8fa48ad09ee025fd16a8f29440d622715df0c300fade3023317cd756d948d",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T124051Z-79bb395eea-baaa05bb4e",
+    "archive_sha256s_sha256": "e4955c3bc9fbd78c9486db5c01be9f77b2b59e87c7fa4bc97ffe2c6d8c440774",
+    "vllm_head": "79bb395eea64dbfef99a55f010d2854db71f8571",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "source_archive_sha256": "d7c58608ad7341ee2eb304435709a464cc93aaec36b19d722f6fdc1bab34ddc7",
+    "wheel_sha256": "877556fab53ed97d800aa2dfec2e2f26fbac5dca2602be14f08e1c1d0754fcd5",
+    "images": {
+      "current_vllm_stock_kernel": "sha256:9f8000f2317de47098161b4da63efb61994a51d9edd8bfe902818e8e685e075a",
+      "both_current_zero_overlay": "sha256:786681b8aa4150d30e12af93b3038a03daba110719bf650a5c9d7c8804e0bdf3"
+    },
+    "r3_observations_tok_s": {
+      "diagnostic": 30.25266152916977,
+      "strict_a_audit_only": 30.2372362888838,
+      "strict_gate_written": false,
+      "replay_b_started": false
+    },
+    "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-79bb-r3-stale-during-replay-a.json",
+    "runnable_image_archive": {
+      "image_id": "sha256:786681b8aa4150d30e12af93b3038a03daba110719bf650a5c9d7c8804e0bdf3",
+      "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T124051Z-79bb395eea-baaa05bb4e/both-current-image-786681b8aa41.docker.tar.zst",
+      "sha256": "46a27b5ab8c5c728ecb3bfb41ca7a998410066c2d69db7225a6bdb632ee9078c",
+      "compressed_bytes": 5682309842,
+      "uncompressed_bytes": 5713477632,
+      "entries": 38,
+      "zstd_verified": true,
+      "tar_traversal_verified": true,
+      "local_image_removed_after_verification": true
+    },
+    "policy": "R3 remains stale and incomplete; preserve its dated observations and exact runnable image without authorizing an overlay, TP2, TP4, or historical replacement."
+  }],
+  "absolute_current_build": {
+    "built_utc": "2026-08-24T14:32:42Z",
+    "status": "dated-stale-before-qualification-vllm-main-advanced",
+    "receipt": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-4ca856b0b5-absolute-current-main-build.json",
+    "receipt_sha256": "d416f9f26642739f371a45226427b40094295318fd29af9f8780d815b66699f7",
+    "archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T143242Z-4ca856b0b5-baaa05bb4e",
+    "archive_sha256s_sha256": "576ec37583778fc48d10f7c06b81609aafd5790c632fa1586573e52bb2a186e0",
+    "vllm_head": "4ca856b0b59d87c7b167d1bd8c748421719c9a57",
+    "vllm_tree": "442cbede8a32127f18899cb1f2442031b3a8adbd",
+    "vllm_xpu_kernels_head": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+    "vllm_xpu_kernels_tree": "e7e7d1063f232a383c98c1820cebb94c45b4906e",
+    "official_nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "source_overlay": "none",
+    "source_archive_sha256": "3a7464bc7d37d90fd3949348d45bc20a0119587ae11e7ba257ae83d9257a1e1c",
+    "wheel_sha256": "402c5ac6dac2f9a14f758d08b01c8d04a8b13856cb3c67c57708d5bdaea61097",
+    "images": {
+      "current_vllm_stock_kernel": "sha256:f872e8fc477df5b63ef8ef07a1c90a676b8f238dfa3999a48ec855b5c994775b",
+      "both_current_zero_overlay": "sha256:11806bd940bf5870e897ab6bd700da8d16f97b4d96fabb16aabb93b607ce8070"
+    },
+    "overlay_preservation_binding": {
+      "zero_overlay_build": true,
+      "decision_files_applied": 0,
+      "compiled_outputs_carried": 0,
+      "tp2": {
+        "path": "experiments/qwen38-27b-b70/autotune-winner-overlays/tp2-e9d1398-best-config",
+        "decision_files": 78,
+        "manifest_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757",
+        "metadata_sha256": "bb46c84ee3a238587957961b7dc7d2a461b5d618489ff8dc362f877c37d3dd63",
+        "preservation_status": "accepted-decision-artifact-quality-clean-partial-not-promoted",
+        "applied_to_4ca": false,
+        "default_enabled": false
+      },
+      "tp4": {
+        "path": "experiments/qwen38-27b-b70/autotune-winner-overlays/tp4-e9d1398-best-config",
+        "decision_files": 152,
+        "manifest_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2",
+        "metadata_sha256": "f823ef67e40ae8602cc3d16c5e69a1bbbe894a5a019c5fd40275b938c3312cad",
+        "preservation_status": "accepted-versioned-performance",
+        "applied_to_4ca": false,
+        "default_enabled": false
+      },
+      "next_action": "After a literal-current successor passes untreated TP1, remap only relative-path and embedded-configs_hash-compatible decisions into fresh caches, freshly compile, and fully requalify; never carry generated kernels or old outer caches."
+    },
+    "qualification": {
+      "status": "closed-stale-before-launch-never-launched",
+      "packet": "experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-4ca856b0b5-untreated-tp1-r1-prereg.md",
+      "closed_packet_sha256": "e1f79da3ef527b4b79c1a1c8eeac6146415108526021e0931bdc6cde103e95d8",
+      "obsolete_wrapper_frozen_prereg_sha256": "257d6397fa3e1bc6774b666ffdd9c9ff6c61c2c20e15f20b7b1f8b33653b3558",
+      "intentional_nonlaunch_pin_mismatch": true,
+      "order": ["TP1", "TP2", "TP4"]
+    },
+    "stale_observation": {
+      "checked_utc": "2026-08-24T14:49:17Z",
+      "component": "vllm_upstream_main",
+      "built_head": "4ca856b0b59d87c7b167d1bd8c748421719c9a57",
+      "live_head": "ecfa7bb37316a3c1dab345fea4178d81f63b1ce4",
+      "during": "independent prelaunch packet audit",
+      "result": "no hardware gate, container, model, cache, benchmark, quality request, or GPU arm launched; qualification closed stale"
+    },
+    "accepted_overlay_disposition": "The accepted model, launch, topology, graph, cache, quality, and TP2/TP4 decision overlays remain versioned and mandatory. Zero-overlay qualification never erases them; compatible decisions require a fresh remap and compile.",
+    "policy": "Preserve this unlaunched dated build and rebuild the literal newest successor. Qualification remains fail-closed on live source/base movement and protected speed, quality, cache, and token-accounting gates. Historical builds and highs remain append-only."
   },
   "frozen_trees": {
     "vllm": {
@@ -355,7 +464,11 @@
     "a356_tp4_decision_overlay_strict": [71.35287190161719, 71.45427094575045],
     "a047_dated_both_current_hash_unset_diagnostic": [30.267690888459764],
     "a047_dated_stock_kernel_control_diagnostic": [30.322439318579008],
-    "0ecc_current_both_current_hash_unset_diagnostic": [30.265258667943765]
+    "0ecc_current_both_current_hash_unset_diagnostic": [30.265258667943765],
+    "0ecc_qualified_stock_control": {
+      "diagnostic": [30.282672968694783],
+      "strict": [30.324297716696414, 30.325970521145816]
+    }
   },
   "overlays": {
     "target_only_accepted": {
