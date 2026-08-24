@@ -1,0 +1,85 @@
+{
+  "date": "2026-08-24",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "status": "synthetic_exact_shape_diagnostic_not_model_throughput",
+  "shape": {
+    "experts": 256,
+    "hidden_size": 2048,
+    "intermediate_size": 512,
+    "experts_per_token": 8,
+    "group_size": 128
+  },
+  "comparison": {
+    "control": "vLLM fused_moe_kernel_gptq_awq W4A16",
+    "candidate": "vllm-xpu-kernels Xe2 grouped W4A16"
+  },
+  "rows": [
+    {
+      "batch_size": 1,
+      "control_us": 189.83108748216182,
+      "candidate_us": 92.16458420269191,
+      "speedup": 2.0596966733412256,
+      "max_abs": 0.001953125,
+      "mean_abs": 0.00025768764317035675
+    },
+    {
+      "batch_size": 8,
+      "control_us": 513.4710809215903,
+      "candidate_us": 231.8629170379912,
+      "speedup": 2.214545937233495,
+      "max_abs": 0.00390625,
+      "mean_abs": 0.00028281277627684176
+    },
+    {
+      "batch_size": 32,
+      "control_us": 1874.4599995746587,
+      "candidate_us": 547.0137499893705,
+      "speedup": 3.4267145928435676,
+      "max_abs": 0.00390625,
+      "mean_abs": 0.0002836935454979539
+    },
+    {
+      "batch_size": 64,
+      "control_us": 4267.380335174191,
+      "candidate_us": 738.5630839659522,
+      "speedup": 5.777949680695004,
+      "max_abs": 0.0078125,
+      "mean_abs": 0.00029362895293161273
+    }
+  ],
+  "xpu_graph_probes": {
+    "batch_1": {
+      "captured": true,
+      "input_change_replay_max_abs": 0.0,
+      "eager_us": 90.68401006516069,
+      "graph_us": 93.2036399608478,
+      "speedup": 0.9729664002742218
+    },
+    "batch_64": {
+      "captured": true,
+      "input_change_replay_max_abs": 0.0,
+      "input_change_replay_mean_abs": 0.0,
+      "eager_us": 758.2339202053845,
+      "graph_us": 745.9044700954109,
+      "speedup": 1.016529529724358
+    }
+  },
+  "independent_dequant_canary": {
+    "shape": {
+      "experts": 4,
+      "hidden_size": 128,
+      "intermediate_size": 128,
+      "batch_size": 4,
+      "experts_per_token": 2
+    },
+    "low_nibble_first_max_abs": 0.002389669418334961,
+    "low_nibble_first_mean_abs": 0.00042170356027781963,
+    "wrong_high_nibble_first_max_abs": 4.995121002197266,
+    "wrong_high_nibble_first_mean_abs": 1.038320779800415
+  },
+  "notes": [
+    "All candidate outputs were finite.",
+    "Timing excludes first-call conversion and warmup.",
+    "This is a kernel diagnostic at the model's exact MoE dimensions; it must not be presented as end-to-end model throughput."
+  ]
+}

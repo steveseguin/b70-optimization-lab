@@ -1,0 +1,80 @@
+{
+  "date": "2026-08-24",
+  "status": "measured_architecture_surrogate_not_ornith_headline",
+  "model": "abhinand/Qwen3.6-35B-A3B-int4-AutoRound",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "cards": 1,
+  "runtime": {
+    "vllm": "0.21.1rc1.dev289+g44fc8fde0",
+    "dtype": "float16",
+    "quantization": "INC AutoRound W4A16",
+    "mode": "eager",
+    "routed_moe_backend": "vLLM fused_moe_kernel_gptq_awq",
+    "prefix_caching": false
+  },
+  "workload": {
+    "input_tokens_per_request": 128,
+    "output_tokens_per_request": 1024,
+    "temperature": 0.0,
+    "ignore_eos": true,
+    "max_model_len": 4096,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 1024,
+    "warmup_excluded": true
+  },
+  "rate_definitions": {
+    "aggregate_decode_tok_s": "all output tokens after each request's first token divided by the observed window from earliest first-token timestamp to latest last-token timestamp",
+    "end_to_end_output_tok_s": "all generated output tokens divided by wall time including prefill",
+    "median_per_request_decode_tok_s": "median per-request rate from first-token to last-token timestamps"
+  },
+  "init_s": 2060.141121857974,
+  "rows": [
+    {
+      "batch_size": 1,
+      "aggregate_decode_tok_s": 20.732495044552998,
+      "end_to_end_output_tok_s": 20.667730873294747,
+      "median_per_request_decode_tok_s": 20.732495044552998
+    },
+    {
+      "batch_size": 2,
+      "aggregate_decode_tok_s": 40.86891031956213,
+      "end_to_end_output_tok_s": 40.64806497466883,
+      "median_per_request_decode_tok_s": 20.445384936974573
+    },
+    {
+      "batch_size": 4,
+      "aggregate_decode_tok_s": 81.71197272017476,
+      "end_to_end_output_tok_s": 81.07780506848587,
+      "median_per_request_decode_tok_s": 20.449718871927068
+    },
+    {
+      "batch_size": 8,
+      "aggregate_decode_tok_s": 162.0006561331562,
+      "end_to_end_output_tok_s": 160.16794075638282,
+      "median_per_request_decode_tok_s": 20.272122837329746
+    },
+    {
+      "batch_size": 16,
+      "aggregate_decode_tok_s": 306.31710121243515,
+      "end_to_end_output_tok_s": 302.8526150611668,
+      "median_per_request_decode_tok_s": 19.33506476768318
+    },
+    {
+      "batch_size": 32,
+      "aggregate_decode_tok_s": 390.28619977928844,
+      "end_to_end_output_tok_s": 387.59493878140523,
+      "median_per_request_decode_tok_s": 12.399938766792907
+    },
+    {
+      "batch_size": 64,
+      "aggregate_decode_tok_s": 399.67918828646043,
+      "end_to_end_output_tok_s": 398.46057114472717,
+      "median_per_request_decode_tok_s": 6.3504168165455575
+    }
+  ],
+  "request_0_output_sha256_all_batches": "f5f2c9939a579a4e6492a8d9f049147a43a786dd877695b598fc5d7dfa5f29db",
+  "notes": [
+    "Request 0 produced the same 1024-token digest at every batch size.",
+    "This checkpoint is an exact Qwen3.5/3.6 MoE architecture surrogate for the pending Ornith AutoRound checkpoint; do not publish these rates as Ornith results."
+  ]
+}

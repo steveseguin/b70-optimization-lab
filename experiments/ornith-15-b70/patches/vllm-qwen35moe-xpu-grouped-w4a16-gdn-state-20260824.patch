@@ -1,0 +1,272 @@
+diff --git a/vllm/model_executor/layers/fla/ops/fused_sigmoid_gating.py b/vllm/model_executor/layers/fla/ops/fused_sigmoid_gating.py
+index f74b6c332..7a311c2a8 100644
+--- a/vllm/model_executor/layers/fla/ops/fused_sigmoid_gating.py
++++ b/vllm/model_executor/layers/fla/ops/fused_sigmoid_gating.py
+@@ -62,6 +62,7 @@ def fused_sigmoid_gating_delta_rule_update_kernel(
+     SPEC_INIT_FROM_FIRST_STATE: tl.constexpr,
+     SPEC_STATE_OFFSET_PLUS_ONE: tl.constexpr,
+     STORE_ACCEPTED_ONLY: tl.constexpr,
++    STORE_LAST_ONLY: tl.constexpr,
+     IS_KDA: tl.constexpr,
+ ):
+     i_k, i_v, i_nh = tl.program_id(0), tl.program_id(1), tl.program_id(2)
+@@ -125,7 +126,9 @@ def fused_sigmoid_gating_delta_rule_update_kernel(
+                 return
+             p_h0 = h0 + state_idx * stride_init_state_token
+         else:
+-            p_h0 = h0 + bos * HV * V * K
++            # Variable-length inputs pack tokens by ``bos``, but initial
++            # recurrent states remain packed one row per sequence.
++            p_h0 = h0 + i_n * stride_init_state_token
+         p_h0 = p_h0 + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
+         b_h += tl.load(p_h0, mask=mask_h, other=0).to(tl.float32)
+ 
+@@ -182,7 +185,7 @@ def fused_sigmoid_gating_delta_rule_update_kernel(
+                     p_ht = ht + final_state_idx * stride_final_state_token
+                     p_ht = p_ht + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
+                     tl.store(p_ht, b_h.to(p_ht.dtype.element_ty), mask=mask_h)
+-        else:
++        elif not STORE_LAST_ONLY:
+             p_ht = ht + (bos + i_t) * stride_final_state_token
+             p_ht = p_ht + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
+             tl.store(p_ht, b_h.to(p_ht.dtype.element_ty), mask=mask_h)
+@@ -195,6 +198,11 @@ def fused_sigmoid_gating_delta_rule_update_kernel(
+         p_b += HV
+         p_a += HV
+ 
++    if not INPLACE_FINAL_STATE and STORE_LAST_ONLY:
++        p_ht = ht + i_n * stride_final_state_token
++        p_ht = p_ht + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
++        tl.store(p_ht, b_h.to(p_ht.dtype.element_ty), mask=mask_h)
++
+ 
+ def fused_sigmoid_gating_delta_rule_update(
+     A_log: torch.Tensor,
+@@ -214,6 +222,7 @@ def fused_sigmoid_gating_delta_rule_update(
+     num_accepted_tokens: torch.Tensor | None = None,
+     use_qk_l2norm_in_kernel: bool = False,
+     is_kda: bool = False,
++    store_last_only: bool = False,
+ ):
+     """
+     Fused triton implementation of sigmoid gating delta rule update.
+@@ -242,7 +251,13 @@ def fused_sigmoid_gating_delta_rule_update(
+ 
+     o = q.new_empty(NK, *v.shape)
+     if inplace_final_state:
++        assert not store_last_only
+         final_state = initial_state
++    elif store_last_only:
++        # Prefill only needs one final recurrent state per sequence.  Keep the
++        # initial state for empty sequences and overwrite non-empty rows in the
++        # kernel instead of materializing a state for every input token.
++        final_state = initial_state.clone()
+     else:
+         final_state = q.new_empty(T, HV, V, K, dtype=initial_state.dtype)
+ 
+@@ -310,6 +325,7 @@ def fused_sigmoid_gating_delta_rule_update(
+         SPEC_INIT_FROM_FIRST_STATE=spec_init_from_first_state,
+         SPEC_STATE_OFFSET_PLUS_ONE=spec_state_offset_plus_one,
+         STORE_ACCEPTED_ONLY=store_accepted_only,
++        STORE_LAST_ONLY=store_last_only,
+         IS_KDA=is_kda,
+         num_warps=num_warps,
+         num_stages=num_stages,
+diff --git a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+index 919f8ac34..76f6bc7d8 100644
+--- a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
++++ b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+@@ -264,6 +264,7 @@ class MoERunner(MoERunnerInterface):
+         routed_input_transform: torch.nn.Module | None,
+         gate: torch.nn.Module | None,
+         shared_experts: torch.nn.Module | None,
++        shared_expert_gate: torch.nn.Module | None,
+         quant_method: FusedMoEMethodBase,
+         enable_dbo: bool,
+         routed_output_transform: torch.nn.Module | None = None,
+@@ -276,6 +277,7 @@ class MoERunner(MoERunnerInterface):
+         self.routed_output_transform = routed_output_transform
+         self.routed_scaling_factor = routed_scaling_factor
+         self.gate = gate
++        self.shared_expert_gate = shared_expert_gate
+         self._quant_method = quant_method
+         self.enable_dbo = enable_dbo
+ 
+@@ -607,6 +609,7 @@ class MoERunner(MoERunnerInterface):
+                     x=hidden_states,
+                     topk_weights=topk_weights,
+                     topk_ids=topk_ids,
++                    shared_experts=self._shared_experts,
+                     shared_experts_input=shared_experts_input,
+                 )
+ 
+diff --git a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+index 1be565676..93a04279a 100644
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -3960,19 +3960,16 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+                     inplace_final_state=False,
+                     cu_seqlens=non_spec_query_start_loc,
+                     use_qk_l2norm_in_kernel=True,
++                    store_last_only=True,
+                 )
+                 seq_lens = (
+                     non_spec_query_start_loc[1:] - non_spec_query_start_loc[:-1]
+                 )
+                 non_empty_seq_mask = seq_lens > 0
+                 if current_platform.is_xpu():
+-                    end_indices = torch.clamp(
+-                        non_spec_query_start_loc[1:] - 1, min=0)
+-                    selected_final_state = last_recurrent_state.index_select(
+-                        0, end_indices)
+                     state_mask = non_empty_seq_mask.reshape(-1, 1, 1, 1)
+                     last_recurrent_state = torch.where(
+-                        state_mask, selected_final_state, initial_state)
++                        state_mask, last_recurrent_state, initial_state)
+                 elif non_empty_seq_mask.all():
+                     last_recurrent_state = last_recurrent_state.index_select(
+                         0, non_spec_query_start_loc[1:] - 1
+diff --git a/vllm/model_executor/layers/quantization/inc.py b/vllm/model_executor/layers/quantization/inc.py
+index 054102ec4..b3dadc918 100644
+--- a/vllm/model_executor/layers/quantization/inc.py
++++ b/vllm/model_executor/layers/quantization/inc.py
+@@ -423,21 +423,51 @@ class INCConfig(QuantizationConfig):
+                 "INC W4A16 on XPU only supports symmetric quantization for now."
+             )
+ 
++        if isinstance(layer, RoutedExperts):
++            from vllm.model_executor.layers.quantization.moe_wna16 import (
++                MoeWNA16Config,
++            )
++
++            # AutoRound's auto_gptq packing is the same packed symmetric
++            # W4A16 representation consumed by MoeWNA16Method.  Route MoE
++            # experts through that method on XPU instead of falling through
++            # to an unquantized expert allocation.
++            config = {
++                "quant_method": "gptq",
++                "bits": weight_bits,
++                "group_size": group_size,
++                "sym": sym,
++                "lm_head": False,
++            }
++            return MoeWNA16Config.from_config(config).get_quant_method(
++                layer, prefix
++            )
++
+         if isinstance(layer, (LinearBase, ParallelLMHead)):
+             is_ark_available, ark_error, _, _ = get_ark_state()
+-            if is_ark_available:
++            force_onednn = (
++                os.environ.get("VLLM_XPU_INC_FORCE_ONEDNN_W4A16", "0") == "1"
++            )
++            if is_ark_available and not force_onednn:
+                 return INCARKLinearMethod(
+                     weight_bits=weight_bits,
+                     group_size=group_size,
+                     sym=sym,
+                 )
+ 
+-            logger.debug(
+-                "ARK backend is unavailable for layer %s; "
+-                "falling back to the default XPU INC path. Error: %s",
+-                prefix,
+-                ark_error or "unknown error",
+-            )
++            if force_onednn:
++                logger.debug(
++                    "Using the requested oneDNN W4A16 backend for XPU INC "
++                    "layer %s instead of ARK.",
++                    prefix,
++                )
++            else:
++                logger.debug(
++                    "ARK backend is unavailable for layer %s; "
++                    "falling back to the default XPU INC path. Error: %s",
++                    prefix,
++                    ark_error or "unknown error",
++                )
+ 
+             return INCXPULinearMethod(
+                 weight_bits=weight_bits,
+@@ -708,7 +738,7 @@ class INCXPULinearMethod(INCXPULinearBase):
+             os.environ.get("VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY") == "1"
+             and dependency_scope_match
+         )
+-        out = torch.ops._xpu_C.int4_gemm_w4a16(
++        int4_args = (
+             reshaped_x,
+             layer.qweight,
+             bias,
+@@ -716,8 +746,16 @@ class INCXPULinearMethod(INCXPULinearBase):
+             layer.qzeros,
+             self.group_size,
+             None,  # g_idx not needed: desc_act is always False for INC models
+-            input_dependency,
+         )
++        if input_dependency:
++            # The research kernel ABI has an eighth dependency flag; accepted
++            # release kernels retain the stable seven-argument schema.  Only
++            # request the extended ABI when its experimental mode is enabled.
++            out = torch.ops._xpu_C.int4_gemm_w4a16(
++                *int4_args, input_dependency
++            )
++        else:
++            out = torch.ops._xpu_C.int4_gemm_w4a16(*int4_args)
+         if not torch.compiler.is_compiling():
+             from vllm.model_executor.xpu_m4_m1_oracle import (
+                 component_enabled,
+diff --git a/vllm/model_executor/layers/quantization/moe_wna16.py b/vllm/model_executor/layers/quantization/moe_wna16.py
+index d6729bbbc..5f2be761b 100644
+--- a/vllm/model_executor/layers/quantization/moe_wna16.py
++++ b/vllm/model_executor/layers/quantization/moe_wna16.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
+ from typing import Any
+ 
+ import torch
+@@ -365,6 +366,41 @@ class MoeWNA16Method(FusedMoEMethodBase):
+         shared_experts: SharedExperts | None,
+         shared_experts_input: torch.Tensor | None,
+     ) -> torch.Tensor:
++        use_xpu_grouped = (
++            current_platform.is_xpu()
++            and os.environ.get("VLLM_XPU_MOE_WNA16_GROUPED", "0") == "1"
++        )
++        if use_xpu_grouped:
++            if self.quant_config.weight_bits != 4 or self.quant_config.has_zp:
++                raise NotImplementedError(
++                    "Xe2 grouped WNA16 MoE requires symmetric 4-bit weights."
++                )
++            if layer.apply_router_weight_on_input:
++                raise NotImplementedError(
++                    "Xe2 grouped WNA16 MoE does not support applying router "
++                    "weights on the input."
++                )
++            from vllm_xpu_kernels.fused_moe_interface import xpu_fused_moe
++
++            return xpu_fused_moe(
++                hidden_states=x,
++                w13=layer.w13_qweight,
++                w13_scales=layer.w13_scales,
++                w13_bias=None,
++                w2=layer.w2_qweight,
++                w2_scales=layer.w2_scales,
++                w2_bias=None,
++                topk_weights=topk_weights,
++                topk_ids=topk_ids,
++                n_experts_per_token=layer.top_k,
++                activation="silu",
++                num_experts=layer.local_num_experts,
++                ep_rank=layer.ep_rank,
++                ep_size=layer.ep_size,
++                expert_map=layer.expert_map,
++                is_int4=True,
++            )
++
+         from vllm.model_executor.layers.fused_moe import fused_experts
+ 
+         assert layer.activation == MoEActivation.SILU, (

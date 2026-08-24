@@ -1,0 +1,137 @@
+{
+  "date": "2026-08-24",
+  "status": "measured_candidate_throughput_quality_smoke_pass_determinism_pending_not_ornith_headline",
+  "model": "abhinand/Qwen3.6-35B-A3B-int4-AutoRound",
+  "model_role": "Qwen35MoE architecture surrogate for Ornith 1.5 35B-A3B; these are not Ornith GGUF results",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "cards": 1,
+  "runtime": {
+    "vllm": "0.21.1rc1.dev289+g44fc8fde0",
+    "vllm_git_head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+    "vllm_xpu_kernels_git_head": "2dd55f380df753a10a88fcd9e96192561066e713",
+    "torch": "2.11.0+xpu",
+    "dtype": "float16",
+    "quantization": "INC AutoRound W4A16",
+    "tensor_parallel_size": 1,
+    "mode": "piecewise XPU Graph",
+    "capture_sizes": [1, 32, 64],
+    "gpu_memory_utilization": 0.9,
+    "routed_moe_backend": "vllm-xpu-kernels Xe2 grouped W4A16",
+    "dense_w4a16_backend": "oneDNN",
+    "prefix_caching": false,
+    "speculative_tokens": 0,
+    "source_patch": "../patches/vllm-qwen35moe-xpu-grouped-w4a16-gdn-state-20260824.patch",
+    "source_patch_sha256": "c0f47b4c07540e761809102d028ff9ea3b8c642eaa39dc77ff2176722ff22b5a"
+  },
+  "workload": {
+    "input_tokens_per_request": 128,
+    "output_tokens_per_request": 1024,
+    "temperature": 0.0,
+    "ignore_eos": true,
+    "fixed_seed": 20260824,
+    "repeats": 2,
+    "max_model_len": 4096,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 1024,
+    "warmup_excluded": true
+  },
+  "capacity": {
+    "model_memory_gib": 19.05,
+    "graph_memory_gib": 1.29,
+    "available_kv_cache_gib": 8.87,
+    "kv_cache_tokens": 249856,
+    "reported_max_concurrency_at_4096_tokens": 61.0
+  },
+  "rate_definitions": {
+    "aggregate_decode_tok_s": "all output tokens after each request's first token divided by the observed window from earliest first-token timestamp to latest last-token timestamp",
+    "end_to_end_output_tok_s": "all generated output tokens divided by wall time including prefill"
+  },
+  "rows": [
+    {
+      "batch_size": 1,
+      "baseline_eager_aggregate_tok_s": 20.732495044552998,
+      "candidate_repeat_aggregate_tok_s": [87.59768028166891, 87.67873736030371],
+      "candidate_mean_aggregate_tok_s": 87.6382088209863,
+      "gain_over_baseline_pct": 322.709416462691,
+      "fixed_seed_identical_request_outputs": 1,
+      "requests": 1
+    },
+    {
+      "batch_size": 2,
+      "baseline_eager_aggregate_tok_s": 40.86891031956213,
+      "candidate_repeat_aggregate_tok_s": [77.12953717708801, 77.24302313552461],
+      "candidate_mean_aggregate_tok_s": 77.18628015630631,
+      "gain_over_baseline_pct": 88.86307355094971,
+      "fixed_seed_identical_request_outputs": 1,
+      "requests": 2
+    },
+    {
+      "batch_size": 4,
+      "baseline_eager_aggregate_tok_s": 81.71197272017476,
+      "candidate_repeat_aggregate_tok_s": [149.43967214738242, 149.52734360627744],
+      "candidate_mean_aggregate_tok_s": 149.48350787682995,
+      "gain_over_baseline_pct": 82.93954104956072,
+      "fixed_seed_identical_request_outputs": 4,
+      "requests": 4
+    },
+    {
+      "batch_size": 8,
+      "baseline_eager_aggregate_tok_s": 162.0006561331562,
+      "candidate_repeat_aggregate_tok_s": [276.8883885983409, 276.64262116137195],
+      "candidate_mean_aggregate_tok_s": 276.7655048798564,
+      "gain_over_baseline_pct": 70.84221230089918,
+      "fixed_seed_identical_request_outputs": 7,
+      "requests": 8
+    },
+    {
+      "batch_size": 16,
+      "baseline_eager_aggregate_tok_s": 306.31710121243515,
+      "candidate_repeat_aggregate_tok_s": [482.81457565350235, 494.480243994153],
+      "candidate_mean_aggregate_tok_s": 488.6474098238277,
+      "gain_over_baseline_pct": 59.52338537081674,
+      "fixed_seed_identical_request_outputs": 13,
+      "requests": 16
+    },
+    {
+      "batch_size": 32,
+      "baseline_eager_aggregate_tok_s": 390.28619977928844,
+      "candidate_repeat_aggregate_tok_s": [824.5664601611766, 821.735229964712],
+      "candidate_mean_aggregate_tok_s": 823.1508450629442,
+      "gain_over_baseline_pct": 110.90954420844139,
+      "fixed_seed_identical_request_outputs": 29,
+      "requests": 32
+    },
+    {
+      "batch_size": 64,
+      "baseline_eager_aggregate_tok_s": 399.67918828646043,
+      "candidate_repeat_aggregate_tok_s": [1041.7219935455369, 1037.0940321244473],
+      "candidate_mean_aggregate_tok_s": 1039.408012834992,
+      "candidate_repeat_end_to_end_tok_s": [1039.105144590461, 1036.025887078368],
+      "gain_over_baseline_pct": 160.06057940900874,
+      "fixed_seed_identical_request_outputs": 27,
+      "requests": 64
+    }
+  ],
+  "quality_smoke": {
+    "passed": 4,
+    "total": 4,
+    "cases": ["arithmetic", "prime", "capital", "compact JSON"],
+    "scope": "literal smoke only; not a promotion-quality evaluation"
+  },
+  "operator_repeat_stability": {
+    "evidence": "2026-08-24-qwen36-grouped-w4a16-repeat-stability.json",
+    "result": "bit-identical 25/25 at batch sizes 1, 2, 4, 8, 16, 32, and 64",
+    "interpretation": "the standalone grouped W4A16 operator did not reproduce the model-level output variation"
+  },
+  "raw_evidence": {
+    "baseline": "../../../data/qwen36-35b-ar-tp1/persistent-eager-p128o1024-r6.json",
+    "baseline_sha256": "148fbe4bdcc9cf0cc9a0fb362dd4b5dd09a57811ae35b75bbb4e2c8ed366abd5",
+    "candidate": "../../../data/qwen36-35b-ar-tp1/persistent-grouped-graph-b1-b32-b64-repeat2-util90-p128o1024-r14.json",
+    "candidate_sha256": "a54a7cfce81992540396e77bad9f740dc4b5b84adf3887582ab22a8ba488f563"
+  },
+  "notes": [
+    "The directly measured 875 tok/s objective and 1000 tok/s stretch objective were both exceeded at batch 64.",
+    "Only batch sizes 1, 32, and 64 were explicitly captured; every displayed rate is measured, never interpolated or extrapolated.",
+    "The fixed-seed model output mismatch remains open, especially at batch 64, so this candidate is not yet a promoted user recipe."
+  ]
+}
