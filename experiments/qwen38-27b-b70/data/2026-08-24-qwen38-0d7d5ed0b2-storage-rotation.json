@@ -1,0 +1,51 @@
+{
+  "schema": "neural-download-qwen38-current-main-storage-rotation-v1",
+  "date": "2026-08-24",
+  "classification": "stale-build-artifacts-retained-and-local-images-removed",
+  "reason": "restore the frozen 12-GiB qualification reserve after the literal-current d154 build exhausted root headroom",
+  "archive": {
+    "directory": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T221222Z-0d7d5ed0b2-baaa05bb4e",
+    "manifest_entries_verified": 14,
+    "manifest_sha256": "fe0bf831c91beb95d2711e853406450130a659062bbeccdef5cd9e45b99e9930",
+    "receipt_sha256": "3fb8db843817624948833e53d49f41839a63703502649c9151be1c1b18e38c2e",
+    "source_identity_sha256": "55451a884d334a3d137d91f3158d70589ad0c9e16e6166ed1c5d8e6f8823cc41",
+    "vllm_wheel_sha256": "e3277e3976f78b16d648bc90e39e0a7339866afd9a218cbd26c781c090347006",
+    "dockerfile_and_build_script_retained": true,
+    "image_inspects_and_static_preflights_retained": true,
+    "docker_image_tar_created": false
+  },
+  "build_root": {
+    "path": "/home/steve/builds/qwen38-current-main-20260824T221222Z-0d7d5ed0b2-baaa05bb4e",
+    "retained_locally": true
+  },
+  "local_removal": {
+    "running_containers_before": 0,
+    "all_containers_before": 0,
+    "unused_builder_cache_prune_ran": true,
+    "unused_builder_cache_reclaimed_reported": "7.652GB",
+    "root_free_kib_before_builder_prune": 1709128,
+    "root_free_kib_after_builder_prune": 7659324,
+    "removed_exact_image_ids": [
+      "sha256:bbaa702fa0fd4e1d2b9e178a61747657ec35fa5dc83655903f13925a8b83c23d",
+      "sha256:38ec94fd09ec93e4e698aefcf02e0db37ff54c964db2ca42175db52886d14662"
+    ],
+    "removed_images_absent_after": true,
+    "broad_image_prune_ran": false,
+    "root_free_kib_before_image_removal": 7659324,
+    "root_free_kib_after_image_removal": 14897124,
+    "root_free_gib_after": 14.21,
+    "current_d154_images_retained": true,
+    "official_base_retained": true,
+    "older_qualified_and_comparison_images_retained": true,
+    "containers_after": 0
+  },
+  "preservation": {
+    "performance_evidence_removed": false,
+    "protected_speed_changed": false,
+    "tp2_78_decision_overlay_changed": false,
+    "tp4_152_decision_overlay_changed": false,
+    "qualification_artifact_removed": false,
+    "recovery": "rebuild only from the retained exact source archive, wheel, source identity, build script, Dockerfile, kernel artifact, image inspect, static receipts, and official base digest; do not assert the historical image ID until a reconstructed image revalidates it",
+    "recoverability_scope": "source/build reproducibility retained; no byte-for-byte docker-load archive was created because the images were already stale and had never produced GPU evidence"
+  }
+}
