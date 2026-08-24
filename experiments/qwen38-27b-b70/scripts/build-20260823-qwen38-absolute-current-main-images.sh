@@ -597,15 +597,15 @@ jq -n \
   }' >"$build_root/receipts/build-receipt.json"
 
 mkdir -p -- "$archive_dir"
-install -m 0644 "$vllm_wheel" "$archive_dir/"
-install -m 0644 "$build_root/receipts/build-receipt.json" "$archive_dir/"
-install -m 0644 "$build_root/context/source-identity.json" "$archive_dir/"
-install -m 0755 "$script_path" "$archive_dir/"
-install -m 0644 "$dockerfile" "$archive_dir/"
+cp -- "$vllm_wheel" "$archive_dir/"
+cp -- "$build_root/receipts/build-receipt.json" "$archive_dir/"
+cp -- "$build_root/context/source-identity.json" "$archive_dir/"
+cp -- "$script_path" "$archive_dir/"
+cp -- "$dockerfile" "$archive_dir/"
 find "$build_root/receipts" -maxdepth 1 -type f ! -name build-receipt.json \
-  -exec install -m 0644 -t "$archive_dir" {} +
+  -exec cp -t "$archive_dir" -- {} +
 find "$build_root/logs" -maxdepth 1 -type f \
-  -exec install -m 0644 -t "$archive_dir" {} +
+  -exec cp -t "$archive_dir" -- {} +
 (
   cd "$archive_dir"
   find . -maxdepth 1 -type f ! -name SHA256SUMS -printf '%P\n' |

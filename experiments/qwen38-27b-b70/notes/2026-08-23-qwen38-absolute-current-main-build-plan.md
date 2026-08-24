@@ -36,6 +36,14 @@ images only after revalidating their IDs, labels, in-image receipts, archived
 wheel/source hashes, and unchanged upstream heads; neither tag is overwritten
 or rebuilt.
 
+Receipt recovery passed all image, label, in-image receipt, source archive,
+wheel, lab-commit, and live-upstream checks. Its first archive copy then
+stopped because `install -m` tried to apply POSIX mode bits on the deliberately
+closed-artifact-only NTFS/FUSE volume. External archival now uses byte copies
+followed by `SHA256SUMS`; live builds and caches remain ext4-only. The partial
+archive contained only a checksum-matching wheel and was resumed in place
+after inspection.
+
 ## Non-negotiable update rule
 
 The newest literal upstream `main` is the base, not a replacement for the
