@@ -15,7 +15,7 @@ kernel_artifact_dir=${KERNEL_ARTIFACT_DIR:-/mnt/usb-models/llm-optimization-arti
 sudo_password_file=${SUDO_PASSWORD_FILE:-/home/steve/SUDOPASSWORD.txt}
 
 base_tag=vllm/vllm-openai-xpu:nightly
-base_digest=sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876
+base_digest=sha256:c345345f9dcc751983a77cef128783513f2994fdd334e5cd382aeea36a2e0a36
 base_image="vllm/vllm-openai-xpu@$base_digest"
 vllm_upstream_url=https://github.com/vllm-project/vllm.git
 kernel_upstream_url=https://github.com/vllm-project/vllm-xpu-kernels.git
