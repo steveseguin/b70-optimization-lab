@@ -1,0 +1,138 @@
+{
+  "schema": "neural-download-qwen38-current-main-storage-rotation-v2",
+  "date": "2026-08-24",
+  "completed_utc": "2026-08-25T01:33:45Z",
+  "classification": "archive-before-delete-of-superseded-and-unqualified-local-builds",
+  "reason": "create a measured >=21-GiB root-filesystem reserve for the literal-newest vLLM plus XPU-kernel build without discarding prior optimization work or changing any captured result",
+  "next_build_target_at_rotation": {
+    "vllm_head": "09fddeb4ce7ee8cd0c46f1da9c45aafb9a17e89a",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "nightly_index_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "qualification_required": true,
+    "note": "These were the audited upstream heads at rotation time. Recheck all upstream identities immediately before building."
+  },
+  "pre_removal_audit": {
+    "running_containers": 0,
+    "whole_protected_manifest_sha256": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "protected_performance_values_sha256": "e6ee2cb9908ce940087788243eac5b544c0d2831b94efa47fe6441232c740e8f",
+    "tp2_overlay_files_verified": 78,
+    "tp2_overlay_manifest_sha256": "65c574c24d24804d250e5179e9a202ec9e77e8c5740cea121b7660d8ee854757",
+    "tp4_overlay_files_verified": 152,
+    "tp4_overlay_manifest_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2",
+    "candidate_scope_contains_accepted_overlay_bytes": false,
+    "candidate_scope_contains_promoted_performance_evidence": false
+  },
+  "docker_recovery_archive": {
+    "path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/storage-rotations/20260825T012657Z-pre-1e90/retired-images-6a9-pair-79bb-stock.docker.tar.zst",
+    "compressed_size_bytes": 5905423979,
+    "uncompressed_tar_size_bytes": 5925886464,
+    "sha256": "cf0e95ee376b899c2f4ee720c9186b5812de6d0522083ffa1b8555b2e5d47dc9",
+    "sha256_sidecar_verified": true,
+    "zstd_test_passed": true,
+    "tar_entry_count": 65,
+    "tar_paths_safe_and_unique": true,
+    "oci_blob_count": 60,
+    "all_oci_blob_names_match_content_sha256": true,
+    "manifest_has_exact_three_tags": true,
+    "index_has_exact_three_image_digests": true,
+    "config_identity_labels_verified": true,
+    "docker_load_recovery_tested": false,
+    "recovery_command": "zstd -dc /mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/storage-rotations/20260825T012657Z-pre-1e90/retired-images-6a9-pair-79bb-stock.docker.tar.zst | sudo docker load",
+    "note": "The archive and its OCI content were exhaustively hashed and identity-audited before deletion. A restore was not loaded into the live daemon because the exact images were still present during validation. Confirm the three exact IDs after any future load."
+  },
+  "removed_images": [
+    {
+      "id": "sha256:f86c4c78d76a484f5d54eda310419c91a2471634ab97782022ef7573fc19a7d9",
+      "tag": "neural-download/vllm-openai-xpu:vllm-6a9c69fa85-kernel-baaa05bb4e-official",
+      "classification": "quality-clean-but-unqualified-speed-only-miss",
+      "captured_diagnostic_median_decode_tok_s": 30.27858669748398,
+      "captured_strict_median_decode_tok_s": [
+        30.26782494070049,
+        30.27119782672338
+      ],
+      "captured_result_retained_in_git": true
+    },
+    {
+      "id": "sha256:24ca5f6b6e5a14f71f43f82469f6e9debd36b2965942932e1646f377e30799cf",
+      "tag": "neural-download/vllm-openai-xpu:vllm-6a9c69fa85-kernel-stock-3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "classification": "static-control-image",
+      "gpu_observation_removed": false
+    },
+    {
+      "id": "sha256:9f8000f2317de47098161b4da63efb61994a51d9edd8bfe902818e8e685e075a",
+      "tag": "neural-download/vllm-openai-xpu:vllm-79bb395eea-kernel-stock-3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "classification": "static-control-image",
+      "gpu_observation_removed": false,
+      "note": "The 79bb GPU observations used its separately archived both-current image, not this stock image."
+    }
+  ],
+  "build_root_recovery_archives": [
+    {
+      "removed_path": "/home/steve/builds/qwen38-current-main-20260824T185928Z-6a9c69fa85-baaa05bb4e",
+      "archive_path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T185928Z-6a9c69fa85-baaa05bb4e/build-root-6a9c69fa85.tar.zst",
+      "compressed_size_bytes": 676756217,
+      "uncompressed_tar_size_bytes": 943185920,
+      "allocated_source_bytes": 948875264,
+      "logical_source_bytes": 924198463,
+      "entry_count": 10759,
+      "source_file_count": 9571,
+      "source_directory_count": 1188,
+      "sha256": "e3248e211e34581f92f7eaeab75c044c0f3d05bd95c29616b871ca3224181e8a",
+      "zstd_test_passed": true,
+      "tar_paths_safe_and_unique": true,
+      "gnu_tar_compare_passed_before_removal": true,
+      "sha256_sidecar_verified": true,
+      "metadata_scope": "The tar headers preserve POSIX modes, numeric owner IDs, and mtimes; NTFS stores the archive bytes, not an unpacked POSIX tree."
+    },
+    {
+      "removed_path": "/home/steve/builds/qwen38-current-main-20260825T001451Z-7ca336929c-baaa05bb4e",
+      "archive_path": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260825T001451Z-7ca336929c-baaa05bb4e/build-root-7ca336929c.tar.zst",
+      "compressed_size_bytes": 676531002,
+      "uncompressed_tar_size_bytes": 942551040,
+      "allocated_source_bytes": 948248576,
+      "logical_source_bytes": 923597553,
+      "entry_count": 10738,
+      "source_file_count": 9549,
+      "source_directory_count": 1189,
+      "sha256": "54ad27fb4bbdd9ca4885bcfcd9e6701c29af1052ef8a0a4606c4a6f616343796",
+      "zstd_test_passed": true,
+      "tar_paths_safe_and_unique": true,
+      "gnu_tar_compare_passed_before_removal": true,
+      "sha256_sidecar_verified": true,
+      "metadata_scope": "The tar headers preserve POSIX modes, numeric owner IDs, and mtimes; NTFS stores the archive bytes, not an unpacked POSIX tree."
+    }
+  ],
+  "retained_images_verified_after": [
+    "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "sha256:22a03a3db5ce34419562706d4a95394d67bd788c6d7eb63916ba436927e0845e",
+    "sha256:6043c332c753604a827f75c07f480998c1330e9e722b3120a8e6b3c47f74fc6c",
+    "sha256:b7bc798035552130e96f3649c21541f1b40fa3c5db0558631e44e461297196a4"
+  ],
+  "local_removal": {
+    "removed_exact_image_count": 3,
+    "removed_exact_build_root_count": 2,
+    "removed_images_absent_after": true,
+    "removed_build_roots_absent_after": true,
+    "running_containers_after": 0,
+    "broad_docker_prune_ran": false,
+    "builder_prune_ran": false,
+    "root_free_kib_before": 13878296,
+    "root_free_kib_after": 23449008,
+    "root_freed_kib": 9570712,
+    "root_free_gib_after": 22.36,
+    "minimum_21_gib_reserve_passed": true
+  },
+  "preservation": {
+    "all_run_roots_and_model_data_unchanged": true,
+    "captured_performance_evidence_removed": false,
+    "captured_speed_lowered_or_relabelled": false,
+    "quality_evidence_changed": false,
+    "protected_speed_values_changed": false,
+    "tp2_78_decision_overlay_changed": false,
+    "tp4_152_decision_overlay_changed": false,
+    "nightly_base_changed": false,
+    "qualified_0ecc_control_changed": false,
+    "7ca_images_changed": false,
+    "summary": "Removed only the three exact superseded or unqualified image IDs and the two byte- and metadata-preserved build-root duplicates. All run roots, model data, captured performance, quality evidence, protected floors and highs, TP2 78-decision overlay, TP4 152-decision overlay, nightly base, qualified 0ecc control, and 7ca images remain unchanged. Docker recovery uses the verified combined archive; build-root recovery uses the verified tar.zst archives. No captured speed was lowered or relabelled."
+  }
+}
