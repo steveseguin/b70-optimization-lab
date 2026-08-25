@@ -1533,6 +1533,38 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 7)
         self.assertTrue(all(cell["selectors"]["mtp"] == 0 for cell in q38_target))
 
+        rendered = MODULE.family_page(family)
+        overview = re.search(
+            r'<section class="contract-overview".*?</section>',
+            rendered,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(overview)
+        overview_html = overview.group(0)
+        self.assertIn("TP1 coverage · 8 matrices", overview_html)
+        self.assertIn("111/1,771 classified", overview_html)
+        for state, count, word in (
+            ("lab-measured", "41", "measured"),
+            ("estimated", "7", "estimated"),
+            ("quarantined", "63", "quarantined"),
+            ("missing", "1,660", "missing"),
+        ):
+            self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
+
+        self.assertEqual(
+            family["initial_view_ids"],
+            ["tp-phase", "mtp-nightly-tp1", "context-kv", "context-quant"],
+        )
+        initial_html, deferred_html = rendered.split(
+            '<details class="more-views">', maxsplit=1
+        )
+        self.assertEqual(initial_html.count('data-family-view="'), 4)
+        for view_id in family["initial_view_ids"]:
+            self.assertIn(f'data-family-view="{view_id}"', initial_html)
+            self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
+        self.assertIn("14 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 14)
+
         unknown_speculator = deepcopy(family)
         next(
             contract
@@ -1880,6 +1912,24 @@ class FamilyCoverageTest(unittest.TestCase):
         coverage = self._family()
         coverage["coverage_views"].append(deepcopy(coverage["coverage_views"][0]))
         self._assert_error(self._errors(coverage), "duplicate", "coverage")
+
+    def test_initial_view_ids_are_valid_unique_view_references(self) -> None:
+        family = self._family()
+        family["views"] = [self._measured_view()]
+        family["initial_view_ids"] = [family["views"][0]["id"]]
+        self.assertEqual(self._errors(family), [])
+
+        duplicate = deepcopy(family)
+        duplicate["initial_view_ids"] *= 2
+        self._assert_error(self._errors(duplicate), "initial_view_ids", "unique")
+
+        unknown = deepcopy(family)
+        unknown["initial_view_ids"] = ["not-a-view"]
+        self._assert_error(self._errors(unknown), "initial_view_ids", "unknown")
+
+        empty = deepcopy(family)
+        empty["initial_view_ids"] = []
+        self._assert_error(self._errors(empty), "initial_view_ids", "non-empty")
 
     def test_packet_revision_must_resolve_to_family_revision(self) -> None:
         family = self._family()

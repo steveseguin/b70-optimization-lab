@@ -1433,6 +1433,23 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                             f"{label}: view {view_id} series {series.get('label')} mixes identities along a connected curve"
                         )
 
+    initial_view_ids = family.get("initial_view_ids")
+    if initial_view_ids is not None:
+        if (
+            not isinstance(initial_view_ids, list)
+            or not initial_view_ids
+            or any(not isinstance(view_id, str) for view_id in initial_view_ids)
+        ):
+            errors.append(f"{label}: initial_view_ids must be a non-empty string list")
+        else:
+            if len(set(initial_view_ids)) != len(initial_view_ids):
+                errors.append(f"{label}: initial_view_ids must be unique")
+            unknown_initial_views = set(initial_view_ids) - view_ids
+            if unknown_initial_views:
+                errors.append(
+                    f"{label}: initial_view_ids reference unknown views {sorted(unknown_initial_views)}"
+                )
+
     coverage_ids: set[str] = set()
     for coverage in coverage_views:
         coverage_id = coverage.get("id")
@@ -2468,8 +2485,11 @@ def coverage_tables(family: dict[str, Any]) -> str:
 def coverage_contract_scorecards(family: dict[str, Any]) -> str:
     """Render dense contracts as totals and axis breakdowns, never cell prose."""
     cards: list[str] = []
-    for contract in family.get("coverage_contracts") or []:
+    contracts = family.get("coverage_contracts") or []
+    aggregate_cells: list[dict[str, Any]] = []
+    for contract in contracts:
         cells, _ = expand_coverage_contract(contract)
+        aggregate_cells.extend(cells)
         total = len(cells)
         state_counts = {
             state: sum(cell.get("state") == state for cell in cells)
@@ -2525,7 +2545,68 @@ def coverage_contract_scorecards(family: dict[str, Any]) -> str:
             f'<details class="contract-filters"><summary>Break down by axis</summary>'
             f'{"".join(axis_blocks)}</details></section>'
         )
-    return '<div class="contract-grid">' + "".join(cards) + "</div>" if cards else ""
+    if not cards:
+        return ""
+
+    aggregate_counts = {
+        state: sum(cell.get("state") == state for cell in aggregate_cells)
+        for state in ALLOWED_STATES
+    }
+    aggregate_total = len(aggregate_cells)
+    aggregate_classified = aggregate_total - aggregate_counts["missing"]
+    tp_values = {
+        cell.get("selectors", {}).get("tp")
+        for cell in aggregate_cells
+        if "tp" in cell.get("selectors", {})
+    }
+    aggregate_label = "TP1 coverage" if tp_values == {1} else "Coverage"
+    state_order = (
+        "lab-measured",
+        "estimated",
+        "quarantined",
+        "missing",
+        "lab-screened",
+        "community-measured",
+        "closed",
+        "unsupported",
+    )
+    state_words = {
+        "lab-measured": "measured",
+        "estimated": "estimated",
+        "quarantined": "quarantined",
+        "missing": "missing",
+        "lab-screened": "screened",
+        "community-measured": "community",
+        "closed": "closed",
+        "unsupported": "unsupported",
+    }
+    shown_states = [state for state in state_order if aggregate_counts[state]]
+    aria = ", ".join(
+        f'{fmt(aggregate_counts[state], 0)} {state_words[state]}'
+        for state in shown_states
+    )
+    rail = "".join(
+        f'<span class="is-{esc(state)}" data-coverage-state="{esc(state)}" '
+        f'style="flex-grow:{aggregate_counts[state]}" title="{aggregate_counts[state]} '
+        f'{esc(state_words[state])}"></span>'
+        for state in shown_states
+    )
+    counts = "".join(
+        f'<span class="is-{esc(state)}"><b>{fmt(aggregate_counts[state], 0)}</b> '
+        f'{esc(state_words[state])}</span>'
+        for state in shown_states
+    )
+    aggregate = (
+        '<section class="contract-overview" data-coverage-aggregate>'
+        '<div class="contract-overview-head"><div>'
+        f'<span>{esc(aggregate_label)} · {len(contracts)} matrices</span>'
+        f'<b>{fmt(aggregate_classified, 0)}/{fmt(aggregate_total, 0)} classified</b>'
+        '</div></div>'
+        f'<div class="contract-overview-rail" role="img" aria-label="{esc(aria)}">{rail}</div>'
+        f'<div class="contract-overview-counts">{counts}</div>'
+        '</section>'
+    )
+    return aggregate + '<div class="contract-grid">' + "".join(cards) + "</div>"
 
 
 def closure_cards(family: dict[str, Any]) -> str:
@@ -2856,11 +2937,51 @@ def family_page(family: dict[str, Any]) -> str:
     fit = signals.get("b70_fit") or {}
     revisions = family.get("weight_revisions") or []
     transfer = family.get("transfer_scope") or {}
-    views = "".join(view_card(family, view) for view in family.get("views") or [])
+    all_views = family.get("views") or []
+    initial_view_ids = family.get("initial_view_ids")
+    if initial_view_ids:
+        by_view_id = {view.get("id"): view for view in all_views}
+        initial_views = [by_view_id[view_id] for view_id in initial_view_ids]
+        deferred_views = [
+            view for view in all_views if view.get("id") not in initial_view_ids
+        ]
+    else:
+        initial_views = all_views
+        deferred_views = []
+    views = "".join(view_card(family, view) for view in initial_views)
+    deferred_views_html = ""
+    if deferred_views:
+        deferred_cards = "".join(view_card(family, view) for view in deferred_views)
+        deferred_views_html = (
+            '<details class="more-views"><summary>'
+            f'{len(deferred_views)} more evidence views</summary>'
+            f'<div class="views-grid">{deferred_cards}</div></details>'
+        )
+    coverage_contracts = family.get("coverage_contracts") or []
+    contract_overview_css = ""
+    if coverage_contracts:
+        contract_overview_css = """  .contract-overview { border:2px solid var(--ink); padding:12px; margin-bottom:12px; background:var(--surface); }
+  .contract-overview-head span { display:block; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; }
+  .contract-overview-head b { display:block; margin-top:3px; font:900 23px/1 var(--display); text-transform:uppercase; }
+  .contract-overview-rail { display:flex; width:100%; height:9px; margin-top:11px; overflow:hidden; border:1px solid var(--ink); background:var(--paper); }
+  .contract-overview-rail .is-lab-measured { background:var(--good); }
+  .contract-overview-rail .is-estimated { background:var(--spot); }
+  .contract-overview-rail .is-quarantined { background:#a12820; }
+  .contract-overview-rail .is-missing { background:var(--line); }
+  .contract-overview-rail .is-lab-screened, .contract-overview-rail .is-closed { background:var(--warn); }
+  .contract-overview-rail .is-community-measured { background:var(--s2); }
+  .contract-overview-rail .is-unsupported { background:var(--muted); }
+  .contract-overview-counts { display:flex; flex-wrap:wrap; gap:5px 14px; margin-top:8px; font:10px var(--mono); text-transform:uppercase; }
+"""
+    deferred_views_css = ""
+    if deferred_views:
+        deferred_views_css = """  .more-views { margin-top:14px; }
+  .more-views > summary { cursor:pointer; font:800 11px var(--mono); text-transform:uppercase; }
+  .more-views > .views-grid { margin-top:12px; }
+"""
     packets = packet_cards(family)
     coverage_views = family.get("coverage_views") or []
     coverage = coverage_tables(family) if coverage_views else ""
-    coverage_contracts = family.get("coverage_contracts") or []
     contract_coverage = (
         coverage_contract_scorecards(family) if coverage_contracts else ""
     )
@@ -3090,7 +3211,7 @@ def family_page(family: dict[str, Any]) -> str:
   .stat-row.is-superseded b {{ font:700 15px/1 var(--display); color:var(--muted); }}
   .combo-list {{ list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }}
   .contract-grid {{ display:grid; gap:12px; margin-bottom:14px; }}
-  .contract-card {{ border:2px solid var(--ink); background:var(--paper); padding:12px; }}
+{contract_overview_css}  .contract-card {{ border:2px solid var(--ink); background:var(--paper); padding:12px; }}
   .contract-head {{ display:flex; justify-content:space-between; gap:16px; align-items:start; }}
   .contract-head h3 {{ margin:0; font:900 17px/1.1 var(--display); text-transform:uppercase; }}
   .contract-head p {{ margin:4px 0 0; color:var(--muted); font-size:12px; }}
@@ -3141,7 +3262,7 @@ def family_page(family: dict[str, Any]) -> str:
   .section-head h2 {{ margin:0; font:900 25px/1.1 var(--display); text-transform:uppercase; }}
   .section-head p {{ max-width:68ch; margin:0; color:var(--muted); font-size:13px; }}
   .views-grid {{ display:grid; grid-template-columns:1fr; gap:14px; }}
-  figure.family-view {{ margin:0; min-width:0; max-width:720px; }}
+{deferred_views_css}  figure.family-view {{ margin:0; min-width:0; max-width:720px; }}
   .chart-head {{ display:flex; justify-content:space-between; gap:12px; align-items:start; min-height:64px; }}
   .chart-head h3 {{ margin:0; font:900 15px var(--display); text-transform:uppercase; }}
   .chart-head p {{ margin:3px 0 0; color:var(--muted); font-size:11.5px; line-height:1.35; }}
@@ -3215,7 +3336,7 @@ def family_page(family: dict[str, Any]) -> str:
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
   {strip_html}
-  <div class="views-grid">{views}</div>
+  <div class="views-grid">{views}</div>{deferred_views_html}
   <details class="fine"><summary>Transfer boundary</summary><p>{esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="{esc(source)}"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
