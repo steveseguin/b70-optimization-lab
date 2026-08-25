@@ -61,6 +61,8 @@
     "short_suite_sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c",
     "quality_baseline": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp1-mtp0-f16-graph-seed0-natural-eos-replay-a-baseline-quality/quality.json",
     "quality_baseline_sha256": "738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18",
+    "context_suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-b2dd9ce73d-tp1-context-sentinel-suite.json",
+    "context_suite_sha256": "e8a8a470c8e0a9f6e73460e8d5e01d42d13659faf447e289ca4803c7aa7a683f",
     "delegated_runner": "experiments/qwen38-27b-b70/scripts/run-20260823-qwen38-rolling-nightly-strict-smoke.sh",
     "delegated_runner_sha256_at_preregistration": "cb2bfd95e7ad9956dae5bc22ccfa575c8742847c963143291a21505533598202"
   },
@@ -90,7 +92,7 @@
     "phase_policy": "First phase uses CACHE_POLICY=fresh. An authorized expansion uses CACHE_POLICY=replay plus the exact first-phase cache manifest; no phase mutates or resumes an output directory. The delegated harness stops on its exit-14 canary before benchmark/quality. Parent-specific oracle, acceptance, and retrieval resolution remains fail-closed outside runner final.status."
   },
   "runner_mapping": {
-    "p1-context-spine":{"argv":["0","f16","32768","0","19850","<root>/sentinel-context","<generated-context-suite>","<cache>"],"environment":"graph_on + context; PROMPT_IDS=context-2048-early,context-2048-middle,context-2048-late,context-8192-early,context-8192-middle,context-8192-late,context-32000-early,context-32000-middle,context-32000-late"},
+    "p1-context-spine":{"argv":["0","f16","32768","0","19850","<root>/sentinel-context","experiments/qwen38-27b-b70/data/2026-08-25-qwen38-b2dd9ce73d-tp1-context-sentinel-suite.json","<cache>"],"environment":"graph_on + context; PROMPT_IDS=context-2048-early,context-2048-middle,context-2048-late,context-8192-early,context-8192-middle,context-8192-late,context-32000-early,context-32000-middle,context-32000-late"},
     "p2-eager-control":{"argv":["0","f16","32768","0","19851","<root>/full-short","<short-suite>","<cache>"],"environment":"graph_off + full_short + frozen quality baseline"},
     "p3-eager-mtp2":{"argv":["2","f16","32768","0","19852","<root>/sensitive-screen","<short-suite>","<cache>"],"environment":"graph_off; PROMPT_IDS=selection--incident-retrospective,selection--technical-guide; MAX_TOKENS=512; BENCH=1; NATURAL_EOS=1; QUALITY=0. Full-short replay is authorized only after acceptance/oracle resolution."},
     "p4-graph-mtp1":{"argv":["1","f16","32768","0","19853","<root>/sensitive-screen","<short-suite>","<cache>"],"environment":"graph_on; PROMPT_IDS=selection--incident-retrospective,selection--technical-guide; MAX_TOKENS=512; BENCH=1; NATURAL_EOS=1; QUALITY=0. Full-short replay is authorized only after acceptance/oracle resolution."},

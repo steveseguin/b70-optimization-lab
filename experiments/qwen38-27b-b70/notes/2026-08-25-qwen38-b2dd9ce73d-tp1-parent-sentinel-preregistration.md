@@ -30,3 +30,20 @@ Full qualification means: exit-14/cache-zero canary; 25 cold unique rows; natura
 Speed never decides correctness or support status and never overwrites a historical result. The complete protected floor list, immutable hashes, exact parents, roots, ports, expansion rules, and publication semantics are in `data/2026-08-25-qwen38-b2dd9ce73d-tp1-parent-sentinel-campaign.json`.
 
 The runner is deliberately inert unless the operator supplies the explicit execution acknowledgement documented by its `--help`. Before any later launch, recheck its frozen dependency hashes and use a clean pushed-main gate. This preregistration did not start Docker, touch a GPU, create a run/cache root, or change the website.
+
+For audit hosts whose model mirror is mounted somewhere other than
+`/mnt/usb-models`, the context-suite generator accepts `--model PATH`; its
+default remains the frozen measuring-host path. The static validator similarly
+accepts `QUALITY_BASELINE=PATH`. These overrides change only where an input is
+read: the validator still requires the exact preregistered SHA-256, and the
+runtime contract retains its frozen measuring-host paths. Audit hosts may use
+`--validate-repo-only`; that mode explicitly does not certify the external
+baseline, while the default `--validate` remains fail-closed on it.
+
+The generated 18-prompt context suite is now frozen in the packet at
+`data/2026-08-25-qwen38-b2dd9ce73d-tp1-context-sentinel-suite.json` (SHA-256
+`e8a8a470c8e0a9f6e73460e8d5e01d42d13659faf447e289ca4803c7aa7a683f`).
+Generation was repeated byte-for-byte, all prompt hashes and single-marker
+invariants passed, and every actual prompt length is within nine tokens of its
+2K/4K/8K/16K/24K/32K target. The measuring host therefore does not need to
+regenerate this suite or install Transformers merely to launch the campaign.
