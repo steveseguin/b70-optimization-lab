@@ -1,0 +1,85 @@
+{
+  "schema": "neural-download-absolute-current-main-build-v3",
+  "state": "static-preflight-passed-for-built-images-gpu-qualification-pending",
+  "mode": "--build-all",
+  "overlay": "none",
+  "build_utc": "2026-08-25T06:10:34Z",
+  "build_root": "/home/steve/builds/qwen38-current-main-20260825T061034Z-4af586e185-1e90ffa672",
+  "external_archive": "/mnt/extended-ssd/steve-archive/qwen-current-main-builds-20260825/20260825T061034Z-4af586e185-1e90ffa672",
+  "base_digest": "sha256:c345345f9dcc751983a77cef128783513f2994fdd334e5cd382aeea36a2e0a36",
+  "lab": {
+    "head": "8aeb13099eb6c92a770ec319a46e66cc87d90bb2",
+    "tree": "a77f04343c6834bb7f67da6c0cd7feb2289521a7"
+  },
+  "build_inputs": {
+    "script_sha256": "3e9199cbc53d5726d36e7ab48f6a4499d2461894b419ed6e44dc9078b91487a5",
+    "dockerfile_sha256": "6b64dadbba8de3bba4313f464c54a4c58bf6b1de499f34c566d60cc79eace5dd",
+    "preflight_script_sha256": "0a67d5a3f66736b8d8b2b2ffbb85c62e8b45615011f2729c7b4a4a753400535a"
+  },
+  "preserved_upstream_optimization_assets": {
+    "batch_invariant_config": {
+      "path": "vllm/model_executor/determinism/batch_invariant_configs.py",
+      "sha256": "e47b18d9394c61fd105e4db51108d72fe1e68d4a2043a8ba62c0af0237453128"
+    }
+  },
+  "rebuilt_rust": {
+    "toolchain": "1.95",
+    "toolchain_file_sha256": "b75adb23d2a10ff0bfdbc436fa4e5e74347ec25eebfaa729a4344f01b59dccfe",
+    "cargo_lock_sha256": "e975bb622cac4874694d7aa2d90cd34ab13a30d0426c32feead7b7c441c8219f",
+    "rustup_init_sha256": "4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10",
+    "dependency_fetch_network": "enabled-lockfile-enforced",
+    "compile_network": "none-cargo-offline",
+    "extension_sha256": "4751e6c44099ee4989445cb8cdb81b928f55f396b86593cd0dce708789b3a897",
+    "frontend_sha256": "166cb0ae15b1b2a52cefb48db5be6e675b5479a94cabd505ab5b9a28d045d13d"
+  },
+  "vllm": {
+    "head": "4af586e185b028acf08312a4dee381b5998a137e",
+    "tree": "bc76e1de903d3f786d75e71bf85d05dca0a96b6b",
+    "package_version": "0.26.1rc1.dev1180+g4af586e18.xpu",
+    "source_archive_sha256": "484171fe5c5b32ead1bd789b208420d88ba1b35aef09bc2a5c4f768da85e6604",
+    "wheel_sha256": "417a059a972e349abbd9971310c9e10630db2b0cb9ae77762447827fff091b9e"
+  },
+  "kernel": {
+    "head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "tree": "b3cf7a800eea50e0d0f6140c1c2047a074a7fcb9",
+    "package_version": "0.1.dev1+g1e90ffa67",
+    "official_artifact": {
+      "run_id": 32798686770,
+      "artifact_id": 9546354902,
+      "name": "vllm-xpu-kernels--20260825-014754",
+      "archive_digest": "sha256:086116f01e838105167b4dfc408be0b3d4e924d7db9d616a0c00b67a69b24ecb",
+      "archive_size_bytes": 344792738,
+      "wheel_sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "workflow_sha256": "7670fc876c4f4c9deab5f972f65324c6a75ad61eb1dadea4759ae41282a78c12",
+      "chunk_prefill_full_sha256": "6091d2b7cda8340333beb26d6dde09c45689c1fd19e5a9e77352d8dedb7cbc59",
+      "paged_decode_full_sha256": "2c46aea68f7d70a0e40acd3de15a4afefe5c9f2ff0f105592d8a7d0c828bcebc"
+    }
+  },
+  "images": {
+    "current_vllm_stock_kernel": {
+      "built": true,
+      "tag": "neural-download/vllm-openai-xpu:vllm-4af586e185-kernel-stock-c345345f9dcc751983a77cef128783513f2994fdd334e5cd382aeea36a2e0a36",
+      "image_id": "sha256:5c5bde2a8a2484336b08c7c852281ea95a547c8aa43f8f764b5bc993d9b21680",
+      "static_preflight_passed": true,
+      "static_preflight_sha256": "368cc6cc1e4a704d00ea078a682d61906304273b78123af1aa1771d68ffbfa15"
+    },
+    "both_current_zero_overlay": {
+      "built": true,
+      "tag": "neural-download/vllm-openai-xpu:vllm-4af586e185-kernel-1e90ffa672-official",
+      "image_id": "sha256:cb8e41a716a896fdc641d85df1339eb7cc72db9185db5df7f08292ef9e5f1e3f",
+      "static_preflight_passed": true,
+      "static_preflight_sha256": "bd3a6167d7d79df82c22920be8f0b5552738afe7f70ebd83a9dbbfa31bc4cc50"
+    }
+  },
+  "promotion": {
+    "qualified": false,
+    "order": [
+      "current-vLLM/stock-kernel TP1",
+      "both-current zero-overlay TP1",
+      "both-current accepted-overlay TP1",
+      "TP2",
+      "TP4"
+    ],
+    "rule": "Never replace a certified result unless identity, quality, and performance floors all pass."
+  }
+}
