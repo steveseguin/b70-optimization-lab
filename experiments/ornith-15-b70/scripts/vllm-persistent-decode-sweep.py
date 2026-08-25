@@ -42,7 +42,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-model-len", type=int, default=4096)
     parser.add_argument("--max-num-seqs", type=int, default=64)
     parser.add_argument("--max-num-batched-tokens", type=int, default=8192)
+    parser.add_argument("--kv-cache-dtype", default="auto")
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.95)
+    parser.add_argument("--tensor-parallel-size", type=int, default=1)
     parser.add_argument("--loader-threads", type=int, default=0)
     parser.add_argument("--speculative-tokens", type=int, default=0)
     parser.add_argument(
@@ -54,6 +56,19 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--graph", action="store_true")
     parser.add_argument("--quality-smoke", action="store_true")
+    parser.add_argument(
+        "--sequential-oracle",
+        action="store_true",
+        help=(
+            "generate every distinct prompt alone and compare each batched "
+            "request with that same-prompt token sequence"
+        ),
+    )
+    parser.add_argument(
+        "--record-token-ids",
+        action="store_true",
+        help="retain complete generated token arrays in the result JSON",
+    )
     parser.add_argument(
         "--async-scheduling",
         action=argparse.BooleanOptionalAction,
@@ -71,6 +86,7 @@ def parse_args() -> argparse.Namespace:
         or args.warmup_tokens < 1
         or args.loader_threads < 0
         or args.speculative_tokens < 0
+        or args.tensor_parallel_size < 1
     ):
         parser.error(
             "--repeats/--warmup-tokens must be positive and loader threads "
@@ -279,6 +295,25 @@ def compare_request_tokens(
     }
 
 
+def oracle_entry(
+    *, request_index: int, arm: dict[str, Any], request_token_ids: list[list[int]],
+    record_token_ids: bool,
+) -> dict[str, Any]:
+    if len(request_token_ids) != 1:
+        raise ValueError("a sequential oracle arm must contain exactly one request")
+    entry = {
+        "request_index": request_index,
+        "generated_output_tokens": arm["generated_output_tokens"],
+        "elapsed_s": arm["elapsed_s"],
+        "decode_window_s": arm["decode_window_s"],
+        "decode_tok_s": arm["median_per_request_decode_tok_s"],
+        "token_ids_sha256": arm["request_token_ids_sha256"][0],
+    }
+    if record_token_ids:
+        entry["token_ids"] = request_token_ids[0]
+    return entry
+
+
 def run_quality_smoke(
     *,
     llm: Any,
@@ -405,6 +440,10 @@ def main() -> int:
             "aggregate_decode_tok_s": "all tokens after each request's first / observed earliest-first to latest-last monotonic window",
             "median_per_request_decode_tok_s": "median measured first-to-last-token rate across requests",
         },
+        "token_comparison_definitions": {
+            "repeat0_comparison": "same batch size and prompts versus the first measured repeat",
+            "sequential_oracle_comparison": "each batched request versus the same prompt generated alone in the same engine",
+        },
         "model": str(Path(args.model).resolve()),
         "config": recorded_config,
         "completed": False,
@@ -509,10 +548,11 @@ def main() -> int:
         trust_remote_code=True,
         dtype="float16",
         quantization="auto",
-        tensor_parallel_size=1,
+        tensor_parallel_size=args.tensor_parallel_size,
         max_model_len=args.max_model_len,
         max_num_seqs=args.max_num_seqs,
         max_num_batched_tokens=args.max_num_batched_tokens,
+        kv_cache_dtype=args.kv_cache_dtype,
         gpu_memory_utilization=args.gpu_memory_utilization,
         enforce_eager=not args.graph,
         skip_mm_profiling=True,
@@ -556,6 +596,32 @@ def main() -> int:
     }
     write_result(output_path, result)
 
+    sequential_oracle_tokens: list[list[int]] | None = None
+    if args.sequential_oracle:
+        result["sequential_oracle"] = []
+        sequential_oracle_tokens = []
+        for request_index, prompt in enumerate(prompts):
+            arm, request_token_ids = measure_arm(
+                llm=llm,
+                sampling_params_cls=SamplingParams,
+                prompts=[prompt],
+                batch_size=1,
+                output_tokens=args.output_tokens,
+                temperature=args.temperature,
+                seed=args.seed,
+                repeat=0,
+            )
+            sequential_oracle_tokens.append(request_token_ids[0])
+            result["sequential_oracle"].append(
+                oracle_entry(
+                    request_index=request_index,
+                    arm=arm,
+                    request_token_ids=request_token_ids,
+                    record_token_ids=args.record_token_ids,
+                )
+            )
+            write_result(output_path, result)
+
     if args.quality_smoke:
         quality_batch_sizes = (
             sorted(set(args.capture_sizes))
@@ -591,6 +657,12 @@ def main() -> int:
                 arm["repeat0_comparison"] = compare_request_tokens(
                     repeat0_tokens[batch_size], request_token_ids
                 )
+            if sequential_oracle_tokens is not None:
+                arm["sequential_oracle_comparison"] = compare_request_tokens(
+                    sequential_oracle_tokens[:batch_size], request_token_ids
+                )
+            if args.record_token_ids:
+                arm["request_token_ids"] = request_token_ids
             result["arms"].append(arm)
             write_result(output_path, result)
             print(json.dumps(arm, sort_keys=True), flush=True)
