@@ -5,7 +5,7 @@
   "name": "Gemma 4",
   "display_name": "Gemma 4 · 26B A4B",
   "publisher": "Google",
-  "updated_at": "2026-08-23",
+  "updated_at": "2026-08-25",
   "summary": "A one-card Intel Arc Pro B70 deployment family for the Gemma 4 26B A4B MoE target, with a UD-Q8_K_XL verifier and a separately quantized Q4_0 MTP draft.",
   "architecture": {
     "class": "Gemma 4 26B A4B MoE",
@@ -83,10 +83,10 @@
     "target_quantization": ["UD-Q8_K_XL"],
     "draft_quantization": ["Q4_0 MTP"],
     "runtime": ["llama.cpp SYCL"],
-    "cards": [1],
-    "tp": [1],
+    "cards": [1, 2, 4],
+    "tp": [1, 2, 4],
     "speculative_method": ["target-verified MTP"],
-    "draft_depth": [3, 7],
+    "draft_depth": [0, 1, 2, 3, 4, 7],
     "active_context_tokens": [741, 2806, 5643, 10976, 16213, 22730, 30400, 32571],
     "configured_max_context_tokens": [8192, 32768],
     "kv": ["f16"]
@@ -192,6 +192,42 @@
       "series": [
         {"label": "qualified records", "measurement_ids": ["gemma4-q8-tp1-mtp3-short-record", "gemma4-q8-tp1-mtp7-historical-record"], "x_from": "config.mtp"}
       ]
+    }
+  ],
+  "coverage_views": [
+    {
+      "id": "gemma4-udq8kxl-mtp-by-tp",
+      "label": "MTP depth × TP",
+      "row_axis": {"key": "mtp", "label": "MTP", "prefix": "MTP"},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "gemma4-26b-a4b-it-gguf-3bb10d5",
+        "variant": "UD-Q8_K_XL target + locally derived Q4_0 MTP draft",
+        "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0",
+        "kv": "f16",
+        "configured_max_context_tokens": 32768
+      },
+      "fixed": "Gemma 4 26B A4B · UD-Q8_K_XL target + locally derived Q4_0 MTP draft · llama.cpp SYCL · f16 KV · 32K configured ceiling.",
+      "decision_note": "MTP3 at TP1 is the current strict package reference. Every other core MTP0–4 × TP1/2/4 cell remains explicitly unmeasured for this exact identity; the distinct historical MTP7 operating point stays in the record-history chart.",
+      "rows": [0, 1, 2, 3, 4],
+      "columns": [1, 2, 4],
+      "cells": {
+        "0:1": {"state": "missing", "label": "not measured", "reason": "No normalized qualified target-only result exists for this exact runtime and 32K profile."},
+        "0:2": {"state": "missing", "label": "not measured", "reason": "No qualified TP2 profile exists for this exact identity."},
+        "0:4": {"state": "missing", "label": "not measured", "reason": "No qualified TP4 profile exists for this exact identity."},
+        "1:1": {"state": "missing", "label": "not measured", "reason": "No normalized qualified MTP1 result exists for this exact identity."},
+        "1:2": {"state": "missing", "label": "not measured", "reason": "No qualified TP2 profile exists for this exact identity."},
+        "1:4": {"state": "missing", "label": "not measured", "reason": "No qualified TP4 profile exists for this exact identity."},
+        "2:1": {"state": "missing", "label": "not measured", "reason": "No normalized qualified MTP2 result exists for this exact identity."},
+        "2:2": {"state": "missing", "label": "not measured", "reason": "No qualified TP2 profile exists for this exact identity."},
+        "2:4": {"state": "missing", "label": "not measured", "reason": "No qualified TP4 profile exists for this exact identity."},
+        "3:1": {"state": "lab-measured", "label": "strict", "evidence_id": "gemma4-q8-tp1-mtp3-short-record"},
+        "3:2": {"state": "missing", "label": "not measured", "reason": "No qualified TP2 profile exists for this exact identity."},
+        "3:4": {"state": "missing", "label": "not measured", "reason": "No qualified TP4 profile exists for this exact identity."},
+        "4:1": {"state": "missing", "label": "not measured", "reason": "No normalized qualified MTP4 result exists for this exact identity."},
+        "4:2": {"state": "missing", "label": "not measured", "reason": "No qualified TP2 profile exists for this exact identity."},
+        "4:4": {"state": "missing", "label": "not measured", "reason": "No qualified TP4 profile exists for this exact identity."}
+      }
     }
   ],
   "family_closures": [
