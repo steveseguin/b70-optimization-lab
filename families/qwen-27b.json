@@ -186,7 +186,7 @@
           "repository": "ggml-org/Qwen3.8-27B-GGUF",
           "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
           "file_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json"
+          "evidence": "repro/qwen38-27b-q8-tp1-b70/model-direct.json"
         },
         {
           "id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
@@ -394,6 +394,19 @@
       "coverage": ["decode", "TTFT", "quality", "recipe"],
       "projection": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "strategy": "tensor", "prompt_tokens": 128, "output_tokens": 128},
       "manifest": "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-q8-tp1-b70",
+      "label": "Qwen3.8 Q8_0 · TP1",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "quantization": "Q8_0",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "candidate",
+      "evidence_level": "B70-verified",
+      "coverage": ["decode", "context", "prefill", "quality", "recipe"],
+      "manifest": "packages/qwen38-27b-q8-tp1-b70/package.json"
     },
     {
       "id": "qwen38-27b-q8-tp2-asrock-b70",
@@ -2442,6 +2455,39 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json"
     },
     {
+      "id": "q38-q8weights-tp1-kv-f16-context",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "quantization": "Q8_0",
+      "variant": "Q8_0",
+      "runtime": "llama.cpp SYCL 4302fb599 + lab TP1 stack / oneAPI 2026.1.1",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-q8-tp1-llamacpp-sycl-target-only-v1",
+      "profile_id": "q38-q8weights-f16-raw-target-only-depth-v1",
+      "measurement_class": "llama-bench-raw-depth-sweep",
+      "identity": {
+        "model_revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+        "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+        "bench_sha256": "f8fe61241c010d91dba839ff3d5505def9ba569ae98c0ca498efc01b5fb4e2f0"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "kv": "f16", "speculation": "none"},
+      "workload": "llama-bench pp2048 plus tg128 at each exact depth, five repetitions, fa=on; raw-engine shape metric",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 19.662501, "prefill_tok_s": 996.891020, "samples": 5},
+        {"x": 2048, "decode_tok_s": 19.592508, "prefill_tok_s": 987.388875, "samples": 5},
+        {"x": 4096, "decode_tok_s": 19.509481, "prefill_tok_s": 959.560446, "samples": 5},
+        {"x": 8192, "decode_tok_s": 19.293993, "prefill_tok_s": 914.062353, "samples": 5},
+        {"x": 16384, "decode_tok_s": 18.838870, "prefill_tok_s": 837.512717, "samples": 5},
+        {"x": 24576, "decode_tok_s": 18.418098, "prefill_tok_s": 773.146408, "samples": 5},
+        {"x": 32768, "decode_tok_s": 18.023689, "prefill_tok_s": 719.144647, "samples": 5}
+      ],
+      "quality": "The separate exact service tuple passed 7/7 semantic canaries, 8/8 repeat stability, a 7,617-token needle, and zero cached tokens on all 16 responses.",
+      "caveat": "The curve itself is target-only raw-engine pp2048/tg128, not HTTP or realistic-prompt speed; the service quality gate is separate matched-tuple evidence.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json"
+    },
+    {
       "id": "q38-q5ks-tp1-kv-f16-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -2829,13 +2875,14 @@
     {
       "id": "context-quant",
       "title": "Context × weight quant",
-      "subtitle": "Qwen3.8 · TP1 llama.cpp · f16 KV · Q4_K-tuned runtime · raw-engine shape sweep",
+      "subtitle": "Qwen3.8 · TP1 llama.cpp · f16 KV · separately pinned builds and raw-engine shape sweeps; inspect each series identity before cross-quant comparison",
       "x_label": "active context tokens",
       "metrics": ["decode_tok_s", "prefill_tok_s"],
       "series": [
         {"label": "Q4_K_M", "measurement_ids": ["q38-q4km-tp1-kv-f16-context"]},
         {"label": "UD-Q5_K_S", "measurement_ids": ["q38-q5ks-tp1-kv-f16-context"]},
-        {"label": "UD-Q4_K_XL", "measurement_ids": ["q38-q4kxl-tp1-kv-f16-context"]}
+        {"label": "UD-Q4_K_XL", "measurement_ids": ["q38-q4kxl-tp1-kv-f16-context"]},
+        {"label": "Q8_0 weights", "measurement_ids": ["q38-q8weights-tp1-kv-f16-context"]}
       ]
     },
     {
