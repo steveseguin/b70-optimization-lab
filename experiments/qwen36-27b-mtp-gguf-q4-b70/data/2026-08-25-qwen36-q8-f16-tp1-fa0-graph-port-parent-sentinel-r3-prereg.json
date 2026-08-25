@@ -1,0 +1,50 @@
+{
+  "schema": "neural.download.qwen36-llama-fa0-graph-port-parent-sentinel-r3-overlay.v1",
+  "state": "sealed-preregistered-not-launched",
+  "campaign_id": "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r3",
+  "purpose": "Retry only the R2 parent sentinel after repairing the manifest runtime/source provenance schema mismatch that aborted R2 before either arm launched.",
+  "predecessor": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-r2-prereg.json",
+    "manifest_sha256": "175c59eb9a2a2eb95c45f92a0c20c0bd543279d46a4b0e2051ed745db0093a96",
+    "runner_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-r2.py",
+    "runner_sha256": "4c34b1c5cdf7f1018478836c924d5264ca2914fb624559a07e15a48c4f72aa17",
+    "failed_run_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r2",
+    "failure_stage": "campaign-identity-pre-arm",
+    "failure": "KeyError: manifest['runtime']['source_provenance']",
+    "arms_launched": 0,
+    "evidence_must_remain_immutable": true
+  },
+  "only_manifest_delta": {
+    "runtime_source_provenance": "exact deep copy of source.provenance",
+    "schema": "neural.download.qwen36-llama-fa0-graph-port-parent-sentinel-r3-runtime.v1",
+    "terminal_pass_state": "passed-r3-parent-sentinel-only",
+    "campaign_id": "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r3",
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r3",
+    "exact_ack": "RUN qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r3"
+  },
+  "identity_preservation": {
+    "source": "byte-identical sealed R2 object",
+    "model": "byte-identical sealed R2 object",
+    "runtime_except_source_provenance": "byte-identical sealed R2 object",
+    "effective_shared_libraries": "byte-identical sealed R2 34-row closure",
+    "canary": "byte-identical sealed R2 object",
+    "generated_tokens_per_arm": 64,
+    "same_binary_arms": ["off-cache0", "on-cache8"]
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r3",
+    "exact_ack": "RUN qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r3",
+    "create_only": true,
+    "r1_and_r2_roots_immutable": true
+  },
+  "authority": {
+    "parent_sentinel_only": true,
+    "curve_authorized": false,
+    "site_publication_authorized": false,
+    "speed_claim_authorized": false,
+    "quality_claim_authorized": false,
+    "record_or_submission_authorized": false,
+    "protected_graph_off_values_may_be_replaced": false,
+    "historical_featured_speeds_are_immutable": true
+  }
+}
