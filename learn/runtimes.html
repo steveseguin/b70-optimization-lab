@@ -61,7 +61,7 @@
   <p>A single, self-contained engine that runs GGUF-quantized models. On Intel it uses the SYCL backend. It's the easiest to get working and is happy on <strong>one card</strong>. Several pinned lab lanes are byte-reproducible, which makes them strong quality controls, but determinism still belongs to the exact build and recipe. llama.cpp now has validated Qwen MTP and draft-model lanes too; support is model- and artifact-specific.</p>
 
   <h3>vLLM (XPU backend)</h3>
-  <p>A production-grade serving engine. It brings the high-end features: <a href="mtp-ladder.html">MTP speculative decoding</a>, tensor-parallel across cards, continuous batching, FP8 KV. It's how we reach the 100+ tok/s research numbers. The costs are real: it's a bigger install (usually Docker), and it is <strong>strongly tied to its exact version</strong> — see the warning below.</p>
+  <p>A production-grade serving engine. It brings the high-end features: <a href="mtp-ladder.html">MTP speculative decoding</a>, tensor-parallel across cards, continuous batching (many users share the card at once), FP8 KV. It's how we reach the 100+ tok/s research numbers. The costs are real: it's a bigger install (usually Docker), and it is <strong>strongly tied to its exact version</strong> — see the warning below.</p>
 
   <h3>IPEX-LLM / Intel XPU</h3>
   <p>"XPU" is Intel's name for its GPU compute target in PyTorch. <strong>IPEX-LLM</strong> (Intel Extension for PyTorch, LLM) is the acceleration layer many PyTorch-based tools use to run on Arc — it underpins parts of the vLLM XPU path and portable Ollama/llama.cpp builds for Intel. You rarely pick it directly; you pick a tool built on it. We call it out so the "XPU" label in other guides isn't a mystery.</p>
@@ -71,7 +71,7 @@
   <figure class="chart">
     <h4>llama.cpp vs vLLM on one card</h4>
     <img src="assets/runtime-1card.svg" alt="Bar chart: llama.cpp SYCL about 29 tokens per second versus vLLM XPU about 52 tokens per second on the same single card.">
-    <figcaption>~29 tok/s (llama.cpp SYCL, Q5_K_M) vs 52.2 tok/s (vLLM XPU, GPTQ + MTP2). Quants differ, so it's not perfectly clean, but the ~1.8× gap — driven largely by vLLM having MTP — is the poster's own measurement. <a href="../community/field-reports/reddit-arc-b70-vllm-52tps/README.md">Field report</a>.</figcaption>
+    <figcaption>~29 tok/s (llama.cpp SYCL, Q5_K_M) vs 52.2 tok/s (vLLM XPU, GPTQ + MTP2). Quants differ, so it's not perfectly clean, but the ~1.8× gap is the poster's own measurement — both runs used MTP2, so the gap is the runtimes themselves, not the draft. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/community/field-reports/reddit-arc-b70-vllm-52tps/README.md">Field report</a>.</figcaption>
   </figure>
 
   <h2>Which does what</h2>
@@ -90,7 +90,7 @@
 
   <div class="callout warn">
     <span class="tag">What to be aware of: vLLM version sensitivity</span>
-    <p>The digest-pinned nightly reports <code>0.26.1rc1.dev1102+ge9d1398d9</code>. Its commit is dated 11 days after the <code>0.27.1</code> image used in a community report, but the release tag is not its ancestor, so they are non-descendant comparators. The nightly boots Qwen3.8 target-only at TP1/2/4; its TP1 MTP verify path is slow, and graph + MTP is corrupt. The local <code>0.27.1</code> cross-check is still unrun. Pin the image digest and treat every model, quant, TP, graph, and MTP combination as version-specific. See the <a href="../models/qwen-27b.html">Qwen coverage map</a>.</p>
+    <p>Our exact pinned nightly build reports <code>0.26.1rc1.dev1102+ge9d1398d9</code>. Its code is 11 days newer than the <code>0.27.1</code> image a community report used — but the two builds sit on different branches, so neither is simply an upgrade of the other and their numbers can't be read as before-and-after. On our nightly, Qwen3.8 runs without a draft on 1, 2, or 4 cards; MTP's verify step is slow on one card, and graph mode plus MTP produces corrupt output. We have not yet re-run the comparison on 0.27.1 locally. Pin the image digest and treat every model, quant, TP, graph, and MTP combination as version-specific. See the <a href="../models/qwen-27b.html">Qwen coverage map</a>.</p>
   </div>
 
   <div class="callout good">

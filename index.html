@@ -68,7 +68,7 @@ Style genome (duotone-hixffp):
     position: sticky; top: 0; z-index: 50;
     background: rgba(246, 241, 229, .97); border-bottom: 2px solid var(--ink);
   }
-  .site-nav .wrap { display: flex; align-items: stretch; min-height: 56px; }
+  .site-nav .wrap { display: flex; align-items: stretch; min-height: 56px; max-width: 1280px; }
   .brand {
     display: flex; align-items: center; flex: 0 0 auto; padding-right: 25px;
     font-family: var(--display); font-size: 16px; text-transform: uppercase;
@@ -347,8 +347,8 @@ Style genome (duotone-hixffp):
   <div class="wrap">
     <a class="brand" href="#top" aria-current="page"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
     <nav aria-label="Primary">
-      <a href="#pick">Models</a>
-      <a href="models/">Coverage</a>
+      <a href="#pick">Pick a model</a>
+      <a href="models/">Models</a>
       <a href="learn.html">Learn</a>
       <a href="guides.html">Guide library</a>
       <a href="#start">Start here</a>
@@ -399,7 +399,7 @@ Style genome (duotone-hixffp):
           <th scope="row" class="model"><span class="status-ico" title="Candidate package — a complete documented install route; clean-host replay still pending" aria-label="Candidate package">📦<span class="visually-hidden">Candidate package</span></span> <a href="models/ornith-1-5.html">Ornith 1.5 35B-A3B</a> <small>1&times; B70 &middot; Q4_K_M &middot; Ornith AI &middot; Aug 2026</small></th>
           <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
           <td class="num r model-speed" data-label="1 user" title="Conventional 99-interval mean; the legacy 100-event compatibility mean of 132.79 tok/s remains in the proof">131.46</td>
-          <td class="num r model-32k" data-label="32K input" title="Measured on the eleven-feature stack depth sweep (32,768-token prompt, flash attention on); the 131.46 headline is the newer twelve-feature stack">97.00</td>
+          <td class="num r model-32k" data-label="32K input" title="Measured on the eleven-feature stack depth sweep (32,768-token prompt, flash attention on); the 131.46 headline is the newer twelve-feature stack">97.00&dagger;</td>
           <td class="num r model-agg mut" data-label="Many users" title="Combined multi-user throughput not measured for this route yet; the one measured sweep so far is in the multi-user report.">&mdash;<span class="visually-hidden">not measured</span></td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/ornith-15-35b-a3b-q4km-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="repro/ornith-15-35b-a3b-q4km-b70/README.md" aria-label="Copy Ornith 1.5 35B one-B70 candidate guide Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
         </tr>
@@ -414,13 +414,13 @@ Style genome (duotone-hixffp):
         <tr>
           <th scope="row" class="model"><span class="status-ico" title="Lab result — measured and re-checked on the lab’s own machines; every number links to proof" aria-label="Lab result">🧪<span class="visually-hidden">Lab result</span></span> <a href="models/gemma-4.html">Gemma-4-26B</a> <small>1&times; B70 &middot; Q8 + MTP3 &middot; Google &middot; Apr 2026</small></th>
           <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
-          <td class="num r model-speed" data-label="1 user">124.98</td>
+          <td class="num r model-speed" data-label="1 user" title="Promoted conventional median; the historical 100-event compatibility figure was 124.98">123.73</td>
           <td class="num r model-32k mut" data-label="32K input" title="Not measured yet at a 32,768-token input; the details page shows the projected behaviour, clearly labeled.">&mdash;<span class="visually-hidden">not measured</span></td>
           <td class="num r model-agg mut" data-label="Many users" title="Combined multi-user throughput not measured for this route yet; the one measured sweep so far is in the multi-user report.">&mdash;<span class="visually-hidden">not measured</span></td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/gemma4-26b-a4b-q8-b70-125tps-20260701.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="results/gemma4-26b-a4b-q8-b70/README.md" aria-label="Copy Gemma-4-26B lab report Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
         </tr>
         <tr>
-          <th scope="row" class="model"><span class="status-ico" title="Lab result — measured and re-checked on the lab’s own machines; every number links to proof" aria-label="Lab result">🧪<span class="visually-hidden">Lab result</span></span> <a href="models/muse-glimmer.html">Muse-Glimmer-30B</a> <small>4&times; B70 &middot; Q8/WOQ + DFlash &middot; Meta &middot; Aug 2026</small></th>
+          <th scope="row" class="model"><span class="status-ico" title="Lab result — measured and re-checked on the lab’s own machines; every number links to proof" aria-label="Lab result">🧪<span class="visually-hidden">Lab result</span></span> <a href="models/muse-glimmer.html">Muse-Glimmer-30B</a> <small>4&times; B70 &middot; Q8/WOQ + DFlash draft &middot; Meta &middot; Aug 2026</small></th>
           <td class="model-use" data-label="Best for"><span class="use-chip">Vision</span></td>
           <td class="num r model-speed" data-label="1 user" title="Canonical repeat mean; its separately measured first-100 median was 161.90">100.37</td>
           <td class="num r model-32k mut" data-label="32K input" title="Not measured yet at a 32,768-token input; the details page shows the projected behaviour, clearly labeled.">&mdash;<span class="visually-hidden">not measured</span></td>
@@ -499,6 +499,7 @@ Style genome (duotone-hixffp):
     </table>
     </div>
     <p class="icon-key mut"><span aria-hidden="true">🧪</span> lab result, measured and re-checked &middot; <span aria-hidden="true">📦</span> candidate package, clean-host replay pending &middot; <span aria-hidden="true">🔬</span> research / experimental, determinism still open</p>
+    <p class="icon-key mut">Words: Q4/Q8/INT4/FP8 = how tightly the model is compressed &middot; MTP / DFlash / DSpark = a small draft speeds up generation, the big model verifies &middot; TP&thinsp;N = split across N cards &middot; target-only = no draft &middot; cache-zero = fresh start, nothing pre-computed &middot; &dagger;&thinsp;97.00 was measured on the earlier eleven-feature stack.</p>
   </div>
 </section>
 
@@ -537,7 +538,8 @@ Style genome (duotone-hixffp):
       Run and re-checked on the lab's own Arc Pro B70 machines; every number links to a proof
       folder with the exact settings, logs, and quality checks behind it. Speed is the typical
       single-user rate for the first hundred words of a fresh answer, unless noted; bars are scaled
-      to the fastest row. One row per model &mdash; its headline deployment at the fewest cards;
+      to the fastest row. Proof links open the run's evidence folder (or the rankings sheet where a
+      route has no dedicated folder). One row per model &mdash; its headline deployment at the fewest cards;
       other measured card counts sit in the More-cards column, and <sup>R</sup> marks research
       lanes whose run-to-run determinism is still open. The Cards column says whether the count is
       a requirement of the model's size or an optional tensor-parallel split.
@@ -563,7 +565,7 @@ Style genome (duotone-hixffp):
           <td class="num r" title="Mean of two fresh cache-zero conventional 99-interval suite medians; legacy 100-event compatibility mean 132.79 tok/s is retained in the proof">131.46<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
           <td class="more-cards hide-s">&mdash;</td>
           <td class="mut hide-s">average of 2 fresh servers</td>
-          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">full guide</a></td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">candidate guide</a></td>
         </tr>
         <tr data-ml-model="laguna_s_2.1" data-ml-quant="AutoRound INT4" data-ml-quant-label="INT4 W4A16" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dflash:11" data-ml-prompt="128" data-ml-output="128">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/laguna-s.html">Laguna-S-2.1</a> <small>coding assistant &middot; Jul 2026</small></th>
@@ -576,14 +578,14 @@ Style genome (duotone-hixffp):
         <tr data-ml-model="gemma4_26b_a4b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="mtp:3" data-ml-prompt="128" data-ml-output="128">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/gemma-4.html">Gemma-4-26B-A4B</a> <small>all-rounder &middot; uses ~4B of 26B per word &middot; Apr 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + MTP3</td><td class="num r">1&times;</td>
-          <td class="num r" title="median; ctx 32,768">124.98<div class="ratebar" style="width:95.1%" aria-hidden="true"></div></td>
+          <td class="num r" title="Promoted conventional median; the historical 100-event compatibility figure was 124.98 (ctx 32,768)">123.73<div class="ratebar" style="width:94.1%" aria-hidden="true"></div></td>
           <td class="more-cards hide-s">&mdash;</td>
           <td class="mut hide-s">typical &middot; remembers ~24K words</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/gemma4-26b-a4b-q8-b70/README.md">test report</a></td>
         </tr>
         <tr data-ml-model="muse_glimmer_30b" data-ml-quant="UD-Q8_K_XL" data-ml-quant-label="UD-Q8_K_XL" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="draft_model:15" data-ml-strategy="tensor" data-ml-prompt="128" data-ml-output="128">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/muse-glimmer.html">Muse-Glimmer-30B</a> <small>Meta &middot; reads pictures &middot; Aug 2026</small></th>
-          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash n15</td><td class="num r">4&times;<small class="cards-note" title="~32 GB of Q8 weights do not fit a single 32 GB card">needs &ge;2</small></td>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">UD-Q8_K_XL + DFlash draft model n15</td><td class="num r">4&times;<small class="cards-note" title="~32 GB of Q8 weights do not fit a single 32 GB card">needs &ge;2</small></td>
           <td class="num r" title="canonical pooled mean">100.37<div class="ratebar" style="width:76.4%" aria-hidden="true"></div></td>
           <td class="more-cards hide-s">&mdash;</td>
           <td class="mut hide-s">average across repeat runs</td>
@@ -627,7 +629,7 @@ Style genome (duotone-hixffp):
           <td class="num r" title="Conventional 99-interval median on the fixed cold 12-prompt suite; cache-zero, no speculation">27.82<div class="ratebar" style="width:21.2%" aria-hidden="true"></div></td>
           <td class="more-cards hide-s"><span title="Official FP8 checkpoint, Docker/vLLM, tensor-parallel across two cards">&times;2 FP8 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">21.71</a></span> &middot; <span title="AutoRound INT4 + MTP5 research lane; run-to-run determinism unresolved">&times;2 INT4+MTP5 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">101.17<sup>R</sup></a></span></td>
           <td class="mut hide-s">typical of the promoted 1-card package</td>
-          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-q4km-tp1-b70/README.md">full guide</a></td>
+          <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-q4km-tp1-b70/README.md">candidate guide</a></td>
         </tr>
       </tbody>
     </table>
@@ -640,7 +642,7 @@ Style genome (duotone-hixffp):
     <p class="teaser-strip">
       <span class="key"><span class="dot" aria-hidden="true">&#9679;</span> measured &middot; experimental</span>
       <strong>1,039 tokens per second, combined</strong> &mdash; one Arc Pro B70 measured serving
-      64 people at once (Qwen3.6-35B-A3B; a single user gets ~88 tok/s).
+      64 people at once (Qwen3.6-35B-A3B; the sweep’s single-user arm ran at &asymp;88 tok/s &mdash; measured separately, 90.91).
       <a href="learn/multi-user.html">Read the multi-user report</a>
     </p>
   </div>
@@ -650,7 +652,7 @@ Style genome (duotone-hixffp):
   <div class="wrap">
     <h2 id="t-headroom">How much faster could these get? <span class="key"><span class="dot hollow" aria-hidden="true">&#9675;</span> projected, not measured</span></h2>
     <p class="sub">
-      Each measured row above is compared with what the <a href="https://mlbottleneck.com/">ML Bottleneck</a>
+      Each measured row above is compared with what the <a href="https://mlbottleneck.com/">ML Bottleneck</a> <small class="mut">(same author)</small>
       physics engine projects for the same model, compression, card count, and software: what
       <strong>stock software</strong> is expected to do, a <strong>tuned-run target</strong> (the
       best-demonstrated kernel efficiency on that stack), and the <strong>physical ceiling</strong>
@@ -738,7 +740,7 @@ Style genome (duotone-hixffp):
 
 <footer>
   <div class="wrap">
-    <span>Unofficial lab, not affiliated with Intel. <a href="LICENSE">License</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/DISCLAIMER.md">Disclaimer</a></span>
+    <span>Unofficial lab, not affiliated with Intel. Measured numbers link to proof; projections are labeled. <a href="LICENSE">License</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/DISCLAIMER.md">Disclaimer</a></span>
     <span class="right">
       <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/CURRENT.md">Current work</a>
       <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/README.md">Docs</a>
@@ -746,7 +748,7 @@ Style genome (duotone-hixffp):
       <a href="llms.txt">For AI agents</a>
       <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
       <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a>
-      <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a>
+      <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a> <small class="mut">(same author)</small>
     </span>
   </div>
 </footer>
@@ -800,6 +802,6 @@ Style genome (duotone-hixffp):
   })();
 </script>
 
-<script defer src="learn/assets/mlbottleneck-bridge.js?v=c44fb5a41f"></script>
+<script defer src="learn/assets/mlbottleneck-bridge.js?v=0db318266e"></script>
 </body>
 </html>

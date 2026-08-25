@@ -234,6 +234,18 @@ def page(pkg, all_pkgs, family=None):
         for p in profiles
     )
     evidence_link = f'<a class="inline" href="{GITHUB}{esc(fm["evidence"])}">proof file</a>' if fm.get("evidence") else ""
+    # Plain words for the measurement vocabulary the scope line uses.
+    GLOSS = [
+        ("target-only", "target-only = no draft model assisting"),
+        ("cache-zero", "cache-zero = a fresh start, nothing pre-computed"),
+        ("99-interval", "99-interval median = the middle rate across 99 measured stretches of a long answer"),
+        ("tg128", "tg128 = a raw 128-token generation benchmark, not the headline suite"),
+        ("MTP", "MTP = multi-token prediction, a small draft the main model verifies"),
+        ("oracle", "oracle = the fixed prompt set whose exact outputs are checked"),
+    ]
+    scope_text = f"{fm.get('scope', '')} {name}"
+    gloss_bits = [words for term, words in GLOSS if term.lower() in scope_text.lower()]
+    scope_gloss = f'<p class="scope-gloss">{esc(" · ".join(gloss_bits))}</p>' if gloss_bits else ""
     missing = pkg.get("missing") or []
     missing_html = ""
     if missing:
@@ -331,7 +343,7 @@ def page(pkg, all_pkgs, family=None):
 <meta name="theme-color" content="#f6f1e5">
 <meta property="og:type" content="article">
 <meta property="og:url" content="{esc(url)}">
-<meta property="og:title" content="{esc(name)} — {esc(fmt(fm.get('value')))} tok/s on Intel Arc Pro B70">
+<meta property="og:title" content="{esc(name)} — {esc(fmt(fm.get('value')))} {esc(fm.get('unit', 'tok/s'))} measured">
 <meta property="og:description" content="{esc(desc)}">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta property="og:site_name" content="neural.download">
@@ -359,7 +371,8 @@ def page(pkg, all_pkgs, family=None):
   .measured {{ display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 8px 0 6px; }}
   .measured .big {{ font: 900 44px/1 var(--display); color: var(--spot-dark); }}
   .measured .unit {{ font: 700 13px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }}
-  .scope {{ margin: 0 0 12px; color: var(--muted); font-size: 13px; }}
+  .scope {{ margin: 0 0 6px; color: var(--muted); font-size: 13px; }}
+  .scope-gloss {{ margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }}
   .actions {{ display: flex; flex-wrap: wrap; gap: 9px 12px; margin: 14px 0 22px; align-items: center; }}
   .actions .button {{ display: inline-flex; align-items: center; min-height: 36px; padding: 7px 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper); font: 700 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; }}
   .actions .button:hover {{ background: var(--spot); border-color: var(--spot); color: #fff; }}
@@ -416,7 +429,7 @@ def page(pkg, all_pkgs, family=None):
 
   <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2>
   <div class="measured"><span class="big">{esc(fmt(fm.get('value')))}</span><span class="unit">{esc(fm.get('unit', 'tok/s'))} {esc(fm.get('label', 'decode'))}</span></div>
-  <p class="scope">{esc(fm.get('scope', ''))} {evidence_link}</p>
+  <p class="scope">{esc(fm.get('scope', ''))} {evidence_link}</p>{scope_gloss}
   <div class="actions">
     <a class="button" href="{GITHUB}{esc(pkg.get('guide', ''))}">Open the full guide</a>
     <button type="button" class="copy-md" data-copy-markdown="../{esc(pkg.get('guide', ''))}" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
@@ -471,7 +484,7 @@ def page(pkg, all_pkgs, family=None):
 def index_page(pkgs, families):
     family_rows = "".join(
         f'<a class="guide-card family-card" href="{esc(f["id"])}.html"><div class="gc-top"><div class="gc-n">Model family · {esc(len(f.get("weight_revisions") or []))} revision{"s" if len(f.get("weight_revisions") or []) != 1 else ""} · {esc(len(f.get("packets") or []))} packet{"s" if len(f.get("packets") or []) != 1 else ""}</div><h3>{esc(f.get("display_name") or f.get("name"))}</h3></div>'
-        f'<div class="gc-body"><p>{esc(f.get("summary", ""))}</p><p class="gc-meta"><strong>{esc(family_topology(f))}</strong> · {esc(family_speedup(f))} · context, KV, graph, quant, prefill, TTFT, quality</p></div><div class="gc-go">Open family coverage →</div></a>'
+        f'<div class="gc-body"><p>{esc(f.get("summary", ""))}</p><p class="gc-meta"><strong>{esc(family_topology(f))}</strong> · {esc(family_speedup(f))} · context, KV, graph, quant, prefill, TTFT, quality</p></div><div class="gc-go">Open the model page →</div></a>'
         for f in sorted(families, key=lambda item: (item.get("display_name") or item.get("name", "")).casefold())
     )
     display_pkgs = sorted(
@@ -537,7 +550,7 @@ def index_page(pkgs, families):
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / Models</p>
   <p class="eyebrow">Families first · quantizations are deployment variants</p>
-  <h1>Model coverage</h1>
+  <h1>Models</h1>
   <p>Start with the model family, then choose weights, quantization, cards, context, runtime, and speed-up. Mini graphs show decode, prefill, TTFT, quality, and gaps without turning every permutation into another model.</p>
 </div></header>
 <main id="main"><div class="wrap">

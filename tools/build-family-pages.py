@@ -1750,11 +1750,15 @@ def coverage_tables(family: dict[str, Any]) -> str:
         scope = str(view.get("fixed") or "")
         if selectors:
             scope = f"{scope} Fixed: {selectors}.".strip()
+        block_html = "".join(html for _, html in items)
         classified = (
-            f'<ul class="combo-list">{"".join(html for _, html in items)}</ul>'
+            f'<ul class="combo-list">{block_html}</ul>'
             if items
             else '<p class="combo-none">No classified combinations in this slice yet.</p>'
         )
+        if re.search(r"[DPA]\d|AR\d|T\d", block_html):
+            tail = ('<p class="combo-tail">Codes in the rows: D = decode tok/s · P = prefill tok/s · '
+                    'T = ms to first token · AR = share of drafted tokens accepted · A = combined tok/s.</p>') + tail
         blocks.append(
             f'<div class="combo-block"><p class="combo-scope">{esc(scope)}</p>'
             f'{classified}{tail}</div>'
@@ -1846,7 +1850,7 @@ def packet_manifest_target(packet: dict[str, Any]) -> tuple[str, str]:
     if manifest.startswith("repro/") and manifest.endswith("README.md"):
         return href, "Open reproduction guide"
     if manifest.startswith("results/") and manifest.endswith("README.md"):
-        return href, "Open result dossier"
+        return href, "Read the lab report"
     return href, "Open evidence packet"
 
 
@@ -2148,19 +2152,23 @@ def family_page(family: dict[str, Any]) -> str:
     # an honest action label rather than promising an install guide.
     cta_html = ""
     packets_for_cta = list(family.get("packets") or [])
-    preferred = next(
-        (
-            packet
-            for packet in packets_for_cta
-            if packet_link_kind(family, packet) == "guide"
-        ),
-        packets_for_cta[0] if packets_for_cta else None,
-    )
+
+    def cta_rank(packet):
+        # Guides first; among guides, the fastest headline (so a 35B hero is
+        # never paired with its 9B sibling's guide).
+        kind = packet_link_kind(family, packet)
+        _v, _u, _h, raw_value, _w, _e = package_metric(family, packet)
+        return (0 if kind == "guide" else 1, -(raw_value or 0))
+
+    preferred = sorted(packets_for_cta, key=cta_rank)[0] if packets_for_cta else None
     if preferred:
         cta_href, cta_label = packet_manifest_target(preferred)
+        cta_note = ""
+        if packet_link_kind(family, preferred) != "guide":
+            cta_note = '<span class="cta-note">No step-by-step install guide is published for this model yet.</span>'
         cta_html = (
-            f'<div class="family-cta"><a class="button" href="{esc(cta_href)}">{esc(cta_label)}</a>'
-            f'<a class="inline" href="#packets">All packets and recipes</a></div>'
+            f'<div class="family-cta"><a class="button{"" if not cta_note else " secondary"}" href="{esc(cta_href)}">{esc(cta_label)}</a>'
+            f'<a class="inline" href="#packets">All packets and recipes</a>{cta_note}</div>'
         )
     measured_count = sum(
         1

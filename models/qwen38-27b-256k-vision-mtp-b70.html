@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#f6f1e5">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://neural.download/models/qwen38-27b-256k-vision-mtp-b70.html">
-<meta property="og:title" content="Qwen3.8 27B 256K + vision + MTP draft on one Intel Arc Pro B70 — 26.7 tok/s on Intel Arc Pro B70">
+<meta property="og:title" content="Qwen3.8 27B 256K + vision + MTP draft on one Intel Arc Pro B70 — 26.7 tok/s measured">
 <meta property="og:description" content="Full 262144-token context, vision projector, and MTP speculative draft resident together on one 32 GiB card. Fit-off decided on hardware: UD-Q5_K_S ships (2.86 GiB free); UD-Q4_K_XL is the measured speed alternative (+3%). Measured 26.7 tok/s decode (MTP-assisted, full package resident) on 1× Intel ">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta property="og:site_name" content="neural.download">
@@ -38,7 +38,8 @@
   .measured { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 8px 0 6px; }
   .measured .big { font: 900 44px/1 var(--display); color: var(--spot-dark); }
   .measured .unit { font: 700 13px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-  .scope { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+  .scope { margin: 0 0 6px; color: var(--muted); font-size: 13px; }
+  .scope-gloss { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }
   .actions { display: flex; flex-wrap: wrap; gap: 9px 12px; margin: 14px 0 22px; align-items: center; }
   .actions .button { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper); font: 700 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
   .actions .button:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
@@ -95,7 +96,7 @@
 
   <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2>
   <div class="measured"><span class="big">26.7</span><span class="unit">tok/s decode (MTP-assisted, full package resident)</span></div>
-  <p class="scope">Conventional 99-interval median, cold 12-prompt suite, up to 512-token responses, cache-zero, at 262144 configured capacity with q8_0 K/V, vision mmproj, and MTP draft loaded; active prompts were 48–78 tokens and the second fresh-server run measured 26.640510. Speculation-assisted and labeled as such; target-only tg128 at depth 0 is 22.64 tok/s (raw engine). <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-256k-vision-mtp-b70/README.md">proof file</a></p>
+  <p class="scope">Conventional 99-interval median, cold 12-prompt suite, up to 512-token responses, cache-zero, at 262144 configured capacity with q8_0 K/V, vision mmproj, and MTP draft loaded; active prompts were 48–78 tokens and the second fresh-server run measured 26.640510. Speculation-assisted and labeled as such; target-only tg128 at depth 0 is 22.64 tok/s (raw engine). <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-256k-vision-mtp-b70/README.md">proof file</a></p><p class="scope-gloss">target-only = no draft model assisting · cache-zero = a fresh start, nothing pre-computed · 99-interval median = the middle rate across 99 measured stretches of a long answer · tg128 = a raw 128-token generation benchmark, not the headline suite · MTP = multi-token prediction, a small draft the main model verifies</p>
   <div class="actions">
     <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-256k-vision-mtp-b70/README.md">Open the full guide</a>
     <button type="button" class="copy-md" data-copy-markdown="../repro/qwen38-27b-256k-vision-mtp-b70/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
@@ -127,7 +128,7 @@
   <span>Unofficial lab, not affiliated with Intel. Measured numbers link to proof; projections are labeled.</span>
   <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
 </div></footer>
-<script defer src="../learn/assets/mlbottleneck-bridge.js?v=c44fb5a41f"></script>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=0db318266e"></script>
 <script>
 (() => {
   document.querySelectorAll("[data-copy-markdown]").forEach((button) => {

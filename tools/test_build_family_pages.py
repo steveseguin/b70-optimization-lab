@@ -1130,7 +1130,7 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         href, label = MODULE.packet_manifest_target(result)
         self.assertTrue(href.endswith("results/result-a/README.md"))
-        self.assertEqual(label, "Open result dossier")
+        self.assertEqual(label, "Read the lab report")
 
     def test_local_evidence_cannot_escape_repository(self) -> None:
         for path in ("/etc/passwd", "../outside-evidence.json"):

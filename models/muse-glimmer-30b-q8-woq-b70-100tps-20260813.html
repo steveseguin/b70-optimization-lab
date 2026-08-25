@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#f6f1e5">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://neural.download/models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">
-<meta property="og:title" content="Muse-Glimmer 30B Q8/WOQ with DFlash on four Intel Arc Pro B70 cards — 100 tok/s on Intel Arc Pro B70">
+<meta property="og:title" content="Muse-Glimmer 30B Q8/WOQ with DFlash on four Intel Arc Pro B70 cards — 100 tok/s measured">
 <meta property="og:description" content="Four-card native SYCL candidate with the lab&#x27;s oneDNN Q8 WOQ, distributed argmax, DFlash, and target-verified gates. Measured 100 tok/s pooled canonical mean on 4× Intel Arc Pro B70 32 GiB with llama.cpp SYCL (UD-Q8_K_XL / BF16 draft). Exact pins, patches, proof, and a projected optimization headroo">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta property="og:site_name" content="neural.download">
@@ -38,7 +38,8 @@
   .measured { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 8px 0 6px; }
   .measured .big { font: 900 44px/1 var(--display); color: var(--spot-dark); }
   .measured .unit { font: 700 13px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-  .scope { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+  .scope { margin: 0 0 6px; color: var(--muted); font-size: 13px; }
+  .scope-gloss { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }
   .actions { display: flex; flex-wrap: wrap; gap: 9px 12px; margin: 14px 0 22px; align-items: center; }
   .actions .button { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper); font: 700 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
   .actions .button:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
@@ -133,7 +134,7 @@
   <span>Unofficial lab, not affiliated with Intel. Measured numbers link to proof; projections are labeled.</span>
   <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
 </div></footer>
-<script defer src="../learn/assets/mlbottleneck-bridge.js?v=c44fb5a41f"></script>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=0db318266e"></script>
 <script>
 (() => {
   document.querySelectorAll("[data-copy-markdown]").forEach((button) => {

@@ -70,7 +70,7 @@
   <figure class="chart">
     <h4>GPU power during decode, by MTP setting</h4>
     <img src="assets/power-mtp.svg" alt="Bar chart of GPU watts during decode: 230 W with MTP off, dropping to 186, 174, 174, and 176 W as MTP increases.">
-    <figcaption>Power falls from 230 W to ~174 W as MTP raises throughput — the card is doing more useful work with less power because decode was never compute-limited. <a href="../community/field-reports/reddit-arc-b70-vllm-52tps/README.md">Field report</a>.</figcaption>
+    <figcaption>Power falls from 230 W to ~174 W as MTP raises throughput — the card is doing more useful work with less power because decode was never compute-limited. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/community/field-reports/reddit-arc-b70-vllm-52tps/README.md">Field report</a>.</figcaption>
   </figure>
   <p>If throughput and power both fell, you'd suspect throttling. Here throughput <em>rose</em> while power fell — the signature of a workload that was waiting on memory, not on the clock.</p>
 

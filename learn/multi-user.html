@@ -39,7 +39,7 @@
 </div></div>
 
 <header class="hero"><div class="wrap">
-  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="../learn.html">Learn</a> / Many users</p>
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="../learn.html">Learn</a> / Guide 09</p>
   <p class="eyebrow">Guide 09 · Serving · measured, experimental</p>
   <h1>One card, many people at once</h1>
   <p class="lede">
@@ -66,7 +66,7 @@
     Persistent raw-engine batching, 128-token prompts, 1,024-token answers, temperature 0, two
     repeats per point. <em>Combined</em> counts every token after each request's first;
     <em>per user</em> is the combined rate divided by the number of users.
-    <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/qwen36-35b-aggregate-throughput-evidence.md">Evidence guide</a> ·
+    <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/qwen36-35b-aggregate-throughput-evidence.md">Methodology &amp; data</a> ·
     <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/qwen36-35b-autoround-b70-concurrency-20260824.json">raw data</a>.
   </p>
   <div class="scroller">
@@ -103,6 +103,7 @@
       <figure class="chart" data-concurrency-figure></figure>
       <p class="projection-foot">Dashed line: what the <a class="inline" href="https://mlbottleneck.com/?model=qwen3.6_35b_a3b&amp;hardware=Intel%20Arc%20Pro%20B70&amp;count=1&amp;quant=q4&amp;format=AutoRound%20INT4&amp;runtime=vllm&amp;prompt=128&amp;output=1024&amp;batch=64#plan">ML Bottleneck physics engine</a> projects for <em>stock</em> software on this exact setup. It is a projection, not an independent check: the engine's batched-compute constant for Intel vLLM is calibrated partly against this sweep's 32- and 64-user anchors. Solid line: the lab's measured tuned stack, whose win over stock is biggest at one user; tuning of the batched path continues.</p>
     </div>
+    <noscript><p class="projection-status">The projected stock-software curve needs JavaScript; the measured table above is static and complete.</p></noscript>
   </div>
 
   <h2 id="reading">How to read it</h2>
