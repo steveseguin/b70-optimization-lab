@@ -142,8 +142,10 @@
       32768
     ],
     "configured_max_context_tokens": [
-      8192
+      8192,
+      65536
     ],
+    "concurrent_sequences": [1, 2, 4, 8, 16, 32],
     "native_context_tokens": [
       262144
     ],
@@ -539,6 +541,40 @@
         }
       ],
       "evidence": "repro/ornith-15-35b-a3b-q4km-b70/ornith-15-35b-a3b-q4km-twelve-feature.sweep.json"
+    },
+    {
+      "id": "ornith-35b-accepted-stack-concurrency",
+      "state": "lab-measured",
+      "revision": "ornith-1.5-35b-a3b",
+      "variant": "Q4_K_M MoE accepted twelve-feature stack",
+      "runtime": "llama.cpp SYCL 9fee29e plus accepted lab patch",
+      "profile_id": "ornith-35b-q4-accepted-stack-batched",
+      "measurement_class": "raw-engine-continuous-batching",
+      "promotion_status": "measured-capacity-profile-not-http-serving",
+      "quality_scope": "accepted stack; independent prompts; candidate patch correctness was separately byte-identical at four sequences",
+      "config": {
+        "cards": 1,
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16",
+        "configured_max_context_tokens": 65536,
+        "prompt_tokens_per_sequence": 1024,
+        "output_tokens_per_sequence": 256
+      },
+      "workload": "llama-batched-bench raw-engine continuous batching with independent prompts and interleaved decode; npp=1024, ntg=256; not HTTP users or a server-scheduler result",
+      "axis": "concurrent_sequences",
+      "points": [
+        {"x": 1, "decode_tok_s": 98.024651, "aggregate_tok_s": 98.024651},
+        {"x": 2, "decode_tok_s": 51.335869, "aggregate_tok_s": 102.671738},
+        {"x": 4, "decode_tok_s": 29.720736, "aggregate_tok_s": 118.882942},
+        {"x": 8, "decode_tok_s": 18.285381, "aggregate_tok_s": 146.283051},
+        {"x": 16, "decode_tok_s": 10.156496, "aggregate_tok_s": 162.503937},
+        {"x": 32, "decode_tok_s": 6.766034, "aggregate_tok_s": 216.513077}
+      ],
+      "quality": "Measured baseline for the accepted stack. The separately tested optional multirow candidate preserved a byte-identical four-sequence transcript; that candidate's speeds are not substituted into this baseline curve.",
+      "caveat": "Decode is per sequence and aggregate is combined engine throughput. Sequence count is not equated with HTTP users.",
+      "evidence": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-multirow-aggregate-summary.json"
     }
   ],
   "views": [
@@ -607,6 +643,19 @@
             "ornith-35b-stock-layer-split-two-card"
           ],
           "x_from": "config.cards"
+        }
+      ]
+    },
+    {
+      "id": "ornith-35b-concurrency",
+      "title": "35B accepted-stack batching capacity",
+      "subtitle": "Raw llama-batched-bench engine throughput; combined and per-sequence rates are both measured, and sequence count is not relabeled as HTTP users",
+      "x_label": "concurrent engine sequences",
+      "metrics": ["aggregate_tok_s", "decode_tok_s"],
+      "series": [
+        {
+          "label": "accepted 12-feature stack",
+          "measurement_ids": ["ornith-35b-accepted-stack-concurrency"]
         }
       ]
     }
@@ -759,6 +808,49 @@
         "32768:1": {"state": "lab-measured", "label": "D99.61 · P1,116", "evidence_id": "ornith-35b-twelve-feature-copyoff-context-depth", "point_x": 32768},
         "32768:2": {"state": "missing", "label": "not measured"},
         "32768:4": {"state": "missing", "label": "not measured"}
+      }
+    },
+    {
+      "id": "ornith-35b-concurrency-by-cards",
+      "label": "35B concurrent sequences × cards",
+      "row_axis": {"key": "concurrent_sequences", "label": "engine sequences", "prefix": "c"},
+      "column_axis": {"key": "cards", "label": "B70 cards", "prefix": ""},
+      "fixed_selectors": {
+        "revision": "ornith-1.5-35b-a3b",
+        "variant": "Q4_K_M MoE accepted twelve-feature stack",
+        "runtime": "llama.cpp SYCL 9fee29e plus accepted lab patch",
+        "profile_id": "ornith-35b-q4-accepted-stack-batched",
+        "measurement_class": "raw-engine-continuous-batching",
+        "split_mode": "single device",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "f16",
+        "configured_max_context_tokens": 65536
+      },
+      "fixed": "Accepted Ornith 35B Q4_K_M stack · one-card raw-engine continuous batching · independent 1,024-token prompts · 256 generated tokens per sequence · graph off · F16 KV.",
+      "decision_note": "Only the one-card accepted stack has a measured concurrency curve. Combined engine throughput rises through c32 while per-sequence decode falls; these are engine sequences, not HTTP-user or scheduler claims. Two- and four-card curves remain explicit gaps.",
+      "evidence": "experiments/ornith-15-b70/data/2026-08-23-ornith35b-multirow-aggregate-summary.json",
+      "rows": [1, 2, 4, 8, 16, 32],
+      "columns": [1, 2, 4],
+      "cells": {
+        "1:1": {"state": "lab-measured", "label": "D98.02 · A98.02", "evidence_id": "ornith-35b-accepted-stack-concurrency", "point_x": 1},
+        "1:2": {"state": "missing", "label": "not measured"},
+        "1:4": {"state": "missing", "label": "not measured"},
+        "2:1": {"state": "lab-measured", "label": "D51.34 · A102.67", "evidence_id": "ornith-35b-accepted-stack-concurrency", "point_x": 2},
+        "2:2": {"state": "missing", "label": "not measured"},
+        "2:4": {"state": "missing", "label": "not measured"},
+        "4:1": {"state": "lab-measured", "label": "D29.72 · A118.88", "evidence_id": "ornith-35b-accepted-stack-concurrency", "point_x": 4},
+        "4:2": {"state": "missing", "label": "not measured"},
+        "4:4": {"state": "missing", "label": "not measured"},
+        "8:1": {"state": "lab-measured", "label": "D18.29 · A146.28", "evidence_id": "ornith-35b-accepted-stack-concurrency", "point_x": 8},
+        "8:2": {"state": "missing", "label": "not measured"},
+        "8:4": {"state": "missing", "label": "not measured"},
+        "16:1": {"state": "lab-measured", "label": "D10.16 · A162.5", "evidence_id": "ornith-35b-accepted-stack-concurrency", "point_x": 16},
+        "16:2": {"state": "missing", "label": "not measured"},
+        "16:4": {"state": "missing", "label": "not measured"},
+        "32:1": {"state": "lab-measured", "label": "D6.77 · A216.51", "evidence_id": "ornith-35b-accepted-stack-concurrency", "point_x": 32},
+        "32:2": {"state": "missing", "label": "not measured"},
+        "32:4": {"state": "missing", "label": "not measured"}
       }
     }
   ],

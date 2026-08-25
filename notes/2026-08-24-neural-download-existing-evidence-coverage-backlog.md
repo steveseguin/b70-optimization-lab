@@ -101,7 +101,11 @@ package profile: `D50.291618 / P3184.490007`.
 Source: `repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.sweep.json`.
 Proposed `lab-measured`, retain packet EVID C. It is an observed zero-depth row.
 
-Import status: measured imports.
+Import status: **completed 2026-08-24**. The 35B accepted-stack concurrency
+series now exposes combined and per-sequence rates through c32, with two- and
+four-card capacity curves explicit as unknown. The 9B zero-depth point remains
+bound to its exact measured context curve. Engine sequences are not relabeled
+as HTTP users.
 
 ### 4. Qwen 27B: add exact Qwen3.6 Q8_0 context-by-MTP coverage
 
