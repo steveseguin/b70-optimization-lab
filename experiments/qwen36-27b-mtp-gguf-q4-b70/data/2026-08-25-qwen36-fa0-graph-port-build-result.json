@@ -1,0 +1,72 @@
+{
+  "schema": "neural.download.qwen36-llama-fa0-graph-port-build-result.v1",
+  "state": "built-not-gpu-qualified",
+  "date": "2026-08-25",
+  "source": {
+    "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port",
+    "base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "status": [
+      " M ggml/src/ggml-sycl/common.hpp",
+      " M ggml/src/ggml-sycl/ggml-sycl.cpp"
+    ],
+    "patch_sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892"
+  },
+  "build": {
+    "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port",
+    "targets": {
+      "llama-bench": {
+        "state": "built",
+        "size_bytes": 545160,
+        "sha256": "8ea8fd14e6ac0c4a4b3a711db8997189d677df2a4f7f88d20609f59ca463a55e"
+      },
+      "llama-cli": {
+        "state": "built",
+        "size_bytes": 736520,
+        "sha256": "68ab26cf34f821a40afb5a05374360e8343b9b802c927fd0850fcd7bf3c7e1fd"
+      },
+      "libggml-sycl.so": {
+        "state": "built",
+        "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-sycl.so.0.19.0",
+        "size_bytes": 329322096,
+        "sha256": "4704ef75115558047f8fe40f0e97b63132e1343340c5c4c92d6876dbaf358a6e"
+      }
+    },
+    "identity_files": {
+      "CMakeCache.txt": "39852126a74e193d99fe9ee2a0a2553d6afc9f6ed2b77b7b853bb25dd689d461",
+      "Makefile": "db2b9dcc0296571e4f76b48402649af56376ea81582c49ca0442b9b35070298f",
+      "ggml-sycl-flags.make": "c52e473c20c9e06f30b5558445d210791e88047fc0dd6e4585f9fa634fd0a727"
+    },
+    "required_cmake": {
+      "CMAKE_BUILD_TYPE": "Release",
+      "GGML_BACKEND_DL": "OFF",
+      "GGML_SYCL": "ON",
+      "GGML_SYCL_DEVICE_ARCH": "bmg_g31",
+      "GGML_SYCL_DNN": "OFF",
+      "GGML_SYCL_F16": "ON",
+      "GGML_SYCL_GRAPH": "ON",
+      "GGML_SYCL_HOST_MEM_FALLBACK": "OFF",
+      "GGML_SYCL_SUPPORT_LEVEL_ZERO_API": "ON",
+      "GGML_SYCL_TARGET": "INTEL"
+    },
+    "link_time_dso_counts": {
+      "llama-bench": 32,
+      "llama-cli": 34
+    }
+  },
+  "normalized_delta_from_proven_graph_off_build": {
+    "runtime_delta": {
+      "GGML_SYCL_GRAPH": ["OFF", "ON"]
+    },
+    "non_runtime_cache_typing_delta": {
+      "CMAKE_EXPORT_COMPILE_COMMANDS": ["BOOL empty", "UNINITIALIZED OFF"]
+    },
+    "path_only_deltas_ignored": true
+  },
+  "authority": {
+    "gpu_mechanism_qualified": false,
+    "speed_or_quality_authority": false,
+    "website_or_matrix_authority": false,
+    "protected_graph_off_results_changed": false,
+    "next_gate": "same-new-binary Q8/F16 TP1 graph-off/on parent sentinel"
+  }
+}

@@ -1,0 +1,232 @@
+{
+  "schema": "neural.download.qwen36-llama-fa0-graph-port-parent-sentinel-prereg.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1",
+  "state": "preregistered-not-launched",
+  "build_identity_status": "sealed",
+  "purpose": "Test only whether the focused fa0 persistent-graph port records and directly replays target-only Q8/F16 TP1 graphs with exact same-new-binary graph-off/on output parity.",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-q8-0-82d411a",
+    "quantization": "Q8_0",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "mtp": 0,
+    "kv": "f16",
+    "graph_comparison": ["off-cache0", "on-cache8"]
+  },
+  "model": {
+    "repository": "unsloth/Qwen3.6-27B-GGUF",
+    "revision": "82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
+    "path": "/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+    "size_bytes": 28595763424,
+    "sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+    "embedded_mtp_capability": false
+  },
+  "source": {
+    "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port",
+    "base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "required_modified_paths": [
+      "ggml/src/ggml-sycl/common.hpp",
+      "ggml/src/ggml-sycl/ggml-sycl.cpp"
+    ],
+    "post_apply_sha256": {
+      "ggml/src/ggml-sycl/common.hpp": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+      "ggml/src/ggml-sycl/ggml-sycl.cpp": "024fda2f9e667aa82cfdac64c079b5cb932e6a40e90031ad16cfd142bec93544"
+    },
+    "patch": {
+      "path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-evidence-port-20260825.patch",
+      "sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892",
+      "source_manifest": "patches/qwen36-27b-mtp-gguf-q4-b70/source-manifest.json",
+      "source_manifest_sha256": "2a4c315a5429c458b80e6aa55396e3ce31af44fac76905d78a6155ea75a7ae1c"
+    },
+    "provenance": {
+      "classification": "exact-reconstructable-two-file-port-on-fa0",
+      "limitation": "This is the focused two-file graph evidence/cache port applied to the exact fa0 base. It is a candidate mechanism recipe until this sentinel passes; no historical dirty source or unrelated runtime delta transfers."
+    }
+  },
+  "runtime": {
+    "build_root": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port",
+    "source_provenance": {
+      "classification": "exact-reconstructable-two-file-port-on-fa0",
+      "limitation": "This is the focused two-file graph evidence/cache port applied to the exact fa0 base. It is a candidate mechanism recipe until this sentinel passes; no historical dirty source or unrelated runtime delta transfers."
+    },
+    "binary": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-cli",
+      "size_bytes": 736520,
+      "sha256": "68ab26cf34f821a40afb5a05374360e8343b9b802c927fd0850fcd7bf3c7e1fd"
+    },
+    "graph_backend": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-sycl.so",
+      "size_bytes": 329322096,
+      "sha256": "4704ef75115558047f8fe40f0e97b63132e1343340c5c4c92d6876dbaf358a6e"
+    },
+    "cmake_cache": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/CMakeCache.txt",
+      "sha256": "39852126a74e193d99fe9ee2a0a2553d6afc9f6ed2b77b7b853bb25dd689d461"
+    },
+    "makefile": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/Makefile",
+      "sha256": "db2b9dcc0296571e4f76b48402649af56376ea81582c49ca0442b9b35070298f"
+    },
+    "sycl_flags": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/ggml/src/ggml-sycl/CMakeFiles/ggml-sycl.dir/flags.make",
+      "sha256": "c52e473c20c9e06f30b5558445d210791e88047fc0dd6e4585f9fa634fd0a727"
+    },
+    "required_cmake": {
+      "CMAKE_BUILD_TYPE": "Release",
+      "GGML_SYCL": "ON",
+      "GGML_SYCL_DEVICE_ARCH": "bmg_g31",
+      "GGML_SYCL_DNN": "OFF",
+      "GGML_SYCL_F16": "ON",
+      "GGML_SYCL_GRAPH": "ON",
+      "GGML_SYCL_HOST_MEM_FALLBACK": "OFF",
+      "GGML_SYCL_SUPPORT_LEVEL_ZERO_API": "ON",
+      "GGML_SYCL_TARGET": "INTEL"
+    },
+    "effective_shared_libraries_scope": "ldd-link-time-closure; runtime-loaded Level Zero and Unified Runtime driver components are outside this list and are identified by the inherited device/postflight receipts",
+    "effective_shared_libraries": [
+      {"soname": "ld-linux-x86-64.so.2", "realpath": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2", "sha256": "cd4df4f3c7b83673d61189bf2eaebd33ca4f2853ab9772b8a25e025ef99b1e81"},
+      {"soname": "libc.so.6", "realpath": "/usr/lib/x86_64-linux-gnu/libc.so.6", "sha256": "8db37cf3f2169f59a0f07ef1fea308c35656668c64c8ff294e1860f4121eb161"},
+      {"soname": "libcrypto.so.3", "realpath": "/usr/lib/x86_64-linux-gnu/libcrypto.so.3", "sha256": "1451aceec262c3338052fa77542eb971d4ba311c6bf12d9aa70d0b56aca942f9"},
+      {"soname": "libdl.so.2", "realpath": "/usr/lib/x86_64-linux-gnu/libdl.so.2", "sha256": "292d5f5af2e7360b3e18c56591a4960115373ecf40627660f9149b6c68a33f80"},
+      {"soname": "libgcc_s.so.1", "realpath": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1", "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"},
+      {"soname": "libggml-base.so.0", "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-base.so.0.19.0", "sha256": "93715e52bcfa473db4ef5907fed7b683012800648ab4482a6aead30f7d94e50b"},
+      {"soname": "libggml-cpu.so.0", "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-cpu.so.0.19.0", "sha256": "813fdc81df23f72b9ac3fefff82db3a992951932e6fe920cfa0b72831b6de5a5"},
+      {"soname": "libggml-sycl.so.0", "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-sycl.so.0.19.0", "sha256": "4704ef75115558047f8fe40f0e97b63132e1343340c5c4c92d6876dbaf358a6e"},
+      {"soname": "libggml.so.0", "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml.so.0.19.0", "sha256": "e61859213bceb2a8dc02f369c9a101e42a120eb9448ecfe9e4d3936ef4ee4ec8"},
+      {"soname": "libgomp.so.1", "realpath": "/usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0", "sha256": "135f3c8f006d2fe5e68e51281c7974cb991a03de3bfb3593d68d174dfcf854d1"},
+      {"soname": "libimf.so", "realpath": "/opt/intel/oneapi/compiler/2026.0/lib/libimf.so", "sha256": "31f0ab1dcce74417de63e5c6876b5bb078c15efea4c49ca9afc233abbe80fda8"},
+      {"soname": "libintlc.so.5", "realpath": "/opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5", "sha256": "2722b7aba08edf1d37c45b8f90070c87b499404b0888bd1b4150f34e123ef120"},
+      {"soname": "libiomp5.so", "realpath": "/opt/intel/oneapi/compiler/2026.0/lib/libiomp5.so", "sha256": "19cd02fbb18d948db4c4936afc5e07929ef16d676f72d0e76e9e853e665b5146"},
+      {"soname": "libirng.so", "realpath": "/opt/intel/oneapi/compiler/2026.0/lib/libirng.so", "sha256": "a1ac0424b50897bac9dc65cf09fb95882aaa08c4683a800ea7a06779dff2217e"},
+      {"soname": "libllama-cli-impl.so", "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libllama-cli-impl.so", "sha256": "cbc194d47cdb0db7bc25b157db8f973d3c0ab64b35a45c5da29560f6d66d4879"},
+      {"soname": "libllama-common.so.0", "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libllama-common.so.0.1.0", "sha256": "e27b8cb8dd48bca68bf2a5ef4e6e4ac0071ac7ecca20c22fa73ef8875ab17d9a"},
+      {"soname": "libllama-server-impl.so", "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libllama-server-impl.so", "sha256": "4f6e94c616195580e79ad50fc797263d2978d919880db7e5ccdc56552e29f2b4"},
+      {"soname": "libllama.so.0", "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libllama.so.0.1.0", "sha256": "8c889b15ef69e3daee9861b8f82993256d33d4787084ae367cd0fe0cbcc49d70"},
+      {"soname": "libm.so.6", "realpath": "/usr/lib/x86_64-linux-gnu/libm.so.6", "sha256": "e9c4b28d340e415b8137480ec442662f981e1399386c5931dae0e886e3639e91"},
+      {"soname": "libmkl_core.so.3", "realpath": "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_core.so.3", "sha256": "4dbf719a3fa0d9331fe03ad8a80a2959bb30a92a605877f0ee5b3eb4b4371cc7"},
+      {"soname": "libmkl_intel_ilp64.so.3", "realpath": "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_intel_ilp64.so.3", "sha256": "b3e63f4dabfb044dc25a06d05a715e1c2e7056de2388818dae54a5e94403fece"},
+      {"soname": "libmkl_sycl_blas.so.6", "realpath": "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_sycl_blas.so.6", "sha256": "4a57ec3b837d14060c394f1ecd9cb30523f554f8736626f7f8b7167e0cd1fe6b"},
+      {"soname": "libmkl_tbb_thread.so.3", "realpath": "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_tbb_thread.so.3", "sha256": "abfd259cf77154b5e2cacc7fba5c39f147ef67f193b3ad7cd50153876ac37028"},
+      {"soname": "libmtmd.so.0", "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libmtmd.so.0.1.0", "sha256": "c630807c85664a4eab8f917dd58f383041aed34d3b00ed8f370cc7a8a41b0830"},
+      {"soname": "libpthread.so.0", "realpath": "/usr/lib/x86_64-linux-gnu/libpthread.so.0", "sha256": "a27ffa9bf233d61a5f02ddb0cf770dd6579021afc1aa8aec0fb58ee4a965281a"},
+      {"soname": "librt.so.1", "realpath": "/usr/lib/x86_64-linux-gnu/librt.so.1", "sha256": "c6e6288545e24b0b3cfbf33320bda9236521625d8c3d628f3444f1ed40e5c7c5"},
+      {"soname": "libssl.so.3", "realpath": "/usr/lib/x86_64-linux-gnu/libssl.so.3", "sha256": "55869549f4c7d7221e311121696f135390a7172755459ad04aef831f855eb214"},
+      {"soname": "libstdc++.so.6", "realpath": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33", "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11"},
+      {"soname": "libsvml.so", "realpath": "/opt/intel/oneapi/compiler/2026.0/lib/libsvml.so", "sha256": "db2799d501167c9526268c54bfa505834ae3aad5cf047cd5a6dcd5a0f99c6353"},
+      {"soname": "libsycl.so.9", "realpath": "/opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9.0.0", "sha256": "1fae524cade4c3599cfb6fe74d3d01dabe48fbeaa344c2f42c5d264b46abf45a"},
+      {"soname": "libtbb.so.12", "realpath": "/opt/intel/oneapi/tbb/2023.0/lib/libtbb.so.12.18", "sha256": "c260c4a96754d4057a19cffd851f73b2c646dbdc2f49eeb54b789726224a95a4"},
+      {"soname": "libur_loader.so.0", "realpath": "/opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0.12.0", "sha256": "92e4aecd31658e1d2d791d5206fffee73e8c3183601a0acfb0cfa16f7799f3e9"},
+      {"soname": "libz.so.1", "realpath": "/usr/lib/x86_64-linux-gnu/libz.so.1.3", "sha256": "9b64150b28505a33d6bc3ecf709c279f6de97a1c184dbda65d06ee4537f6d286"},
+      {"soname": "libze_loader.so.1", "realpath": "/usr/lib/x86_64-linux-gnu/libze_loader.so.1.28.2", "sha256": "0fe232b18985ae078dd546b57bc6d11bacf1030834c0544f7e3feb53ed71c1d0"}
+    ]
+  },
+  "canary": {
+    "prompt": "Write a concise deterministic paragraph explaining why checksum-pinned A/B tests isolate one runtime variable.",
+    "common_argv": [
+      "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-cli",
+      "-m", "/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+      "-dev", "SYCL0", "-ngl", "99", "-sm", "none", "-c", "2048",
+      "-n", "64", "-b", "512", "-ub", "512", "-fa", "on",
+      "-ctk", "f16", "-ctv", "f16", "-t", "16", "--poll", "50",
+      "--seed", "42", "--temp", "0", "--ignore-eos", "--no-conversation",
+      "--no-display-prompt", "--simple-io", "--no-warmup", "--single-turn",
+      "--no-show-timings", "--log-verbosity", "4", "--prompt",
+      "Write a concise deterministic paragraph explaining why checksum-pinned A/B tests isolate one runtime variable."
+    ],
+    "base_runtime_knobs_source": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4kxl-q8-tp1-exact-depth-prereg.json",
+    "base_runtime_knobs": {
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+      "UR_L0_USE_IMMEDIATE_COMMANDLISTS": "1",
+      "UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD": "1",
+      "GGML_SYCL_COMM_SINGLE_KERNEL": "1",
+      "GGML_META_FUSE_ALLREDUCE_ADD": "1",
+      "GGML_META_FUSE_ALLREDUCE_ADD_RMS_MUL": "1",
+      "GGML_SYCL_COMM_FUSED_Q8": "1",
+      "GGML_SYCL_FUSED_SWIGLU_Q8": "1",
+      "GGML_SYCL_FUSED_ATTN_Q8": "1",
+      "GGML_SYCL_FUSED_GDN_Q8": "1",
+      "GGML_SYCL_FUSED_MMVQ_PAIR": "1",
+      "GGML_SYCL_FUSED_MMVQ_SWIGLU_Q4K": "1",
+      "GGML_SYCL_FUSED_MMVQ_PAIR_GDN": "1",
+      "GGML_SYCL_FUSED_MMVQ_TRIPLE_ATTN": "1",
+      "GGML_SYCL_FUSED_MMVQ_TRIPLE_GDN": "1",
+      "GGML_SYCL_FUSED_MMVQ_QUAD_GDN": "1",
+      "GGML_SYCL_FUSED_GDN_BETA_SIGMOID": "1",
+      "GGML_SYCL_FUSED_CONCAT_STATE": "1",
+      "GGML_SYCL_FUSED_GDN_STATE_IO": "1",
+      "GGML_SYCL_FUSED_CONV_STATE_IO": "1",
+      "GGML_SYCL_COMM_DIRECT_Q8": "2",
+      "GGML_SYCL_FUSED_ROPE_SET_ROWS": "1",
+      "GGML_SYCL_COMM_REDUCE_VEC4": "1",
+      "GGML_SYCL_FUSED_QK_NORM_ROPE": "1",
+      "GGML_SYCL_FUSED_CONV_SILU_L2": "1",
+      "GGML_SYCL_FUSE_EXT": "31",
+      "GGML_SYCL_QDEDUP_STATS": "1",
+      "GGML_SYCL_MMQ_Q4K_REORDER": "1"
+    },
+    "control_environment_delta": {
+      "GGML_SYCL_ENABLE_GRAPH": "0",
+      "GGML_SYCL_GRAPH_CACHE_SIZE": "0"
+    },
+    "candidate_environment_delta": {
+      "GGML_SYCL_ENABLE_GRAPH": "1",
+      "GGML_SYCL_GRAPH_CACHE_SIZE": "8"
+    },
+    "unsafe_graph_variables_forbidden": [
+      "SYCL_GRAPH_FORCE_NATIVE_RECORDING",
+      "GGML_SYCL_GRAPH_RECORD_QUEUE",
+      "GGML_SYCL_GRAPH_REPLAY_NO_UPDATE"
+    ],
+    "same_new_binary_required": true,
+    "exact_output_bytes_required": true,
+    "fresh_process_local_cache_roots_both_arms": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1",
+    "output_fstype": "ext4",
+    "exact_ack": "RUN qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1",
+    "model_view_timeout_seconds": 1200,
+    "compute_timeout_seconds": 40,
+    "arm_timeout_seconds": 900,
+    "child_stdin": "/dev/null",
+    "hard_process_group_timeout": "TERM then KILL",
+    "requires_clean_pushed_main": true,
+    "live_origin_equality_required_prelaunch": true,
+    "local_launch_head_and_packet_blobs_frozen_postlaunch": true,
+    "live_origin_equality_required_postlaunch": false,
+    "requires_no_server_or_container": true,
+    "required_locks": [
+      "/run/lock/muse-glimmer-gpu-exclusive.lock",
+      "/tmp/b70-benchmark.lock",
+      "/tmp/b70-gpu0.lock",
+      "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"
+    ],
+    "artifacts_are_create_only": true,
+    "packet_and_artifact_postflight_required": true,
+    "terminal_receipt_required": true
+  },
+  "acceptance": {
+    "control_all_graph_counters_zero": true,
+    "candidate_device": 0,
+    "candidate_cache_limit": 8,
+    "candidate_compatibility_rejected": 0,
+    "candidate_device_unsupported": 0,
+    "candidate_cache_full": 0,
+    "candidate_positive": ["requested", "cache_hit", "cache_miss", "direct_replay", "recorded", "created", "replayed"],
+    "candidate_replayed_equals_requested": true,
+    "exact_output_parity": true
+  },
+  "interpretation": {
+    "terminal_pass_state": "passed-parent-sentinel-only",
+    "mechanism_and_exact_output_parity_only": true,
+    "seven_cell_expansion_authorized": false,
+    "site_publication_authorized": false,
+    "record_or_submission_authorized": false,
+    "quality_claim_authorized": false,
+    "speed_measurement_or_floor": null,
+    "historical_featured_speeds_are_immutable": true,
+    "graph_estimates_forbidden": true,
+    "next_after_pass": "Write and commit a separate exact-depth preregistration that pins this exact binary, backend, source port, DSOs, parent terminal, and parity receipts."
+  }
+}
