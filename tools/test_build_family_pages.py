@@ -47,8 +47,8 @@ class FamilyCoverageTest(unittest.TestCase):
                 self.assertIn(f">{expected:.2f}&dagger;</td>", index_html)
 
         self.assertIn(">216.5 raw&dagger;</a>", index_html)
-        self.assertIn(">95.4 raw&dagger;</a>", index_html)
-        self.assertIn("output-qualified HTTP serving remains pending", index_html)
+        self.assertIn(">83.8 HTTP&dagger;</a>", index_html)
+        self.assertIn("Multi-user greedy output is batch-shape-dependent", index_html)
 
     def test_promoted_ornith_packet_and_family_stay_in_parity(self) -> None:
         family = json.loads((MODULE.ROOT / "families/ornith-1-5.json").read_text())

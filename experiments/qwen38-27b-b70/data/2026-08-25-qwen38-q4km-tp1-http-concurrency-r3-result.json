@@ -1,0 +1,56 @@
+{
+  "schema": "neural.download.qwen38-q4km-http-concurrency-result.v3",
+  "campaign_id": "qwen38-q4km-tp1-http-concurrency-20260825-r3",
+  "status": "output-isolation-qualified-shape-variant",
+  "measured_at": "2026-08-25",
+  "identity": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "oracle_digests_sha256": "0bff10d407ea22b7138b4d68c2602869d877a09ba0c48cb8686d6a43bb398fbb",
+    "compiler": "Intel oneAPI 2026.1.1 reconstruction",
+    "gpu": "one Intel Arc Pro B70 32 GiB",
+    "endpoint": "llama.cpp native HTTP /completion",
+    "context_tokens_total": 32768,
+    "parallel_slots": 64,
+    "kv_cache": "f16",
+    "prompt_cache": false,
+    "slot_prompt_similarity": 0
+  },
+  "qualification": {
+    "fresh_server_attempts": [1, 2],
+    "attempts_passed": 2,
+    "completion_tokens_128_all": true,
+    "complete_raw_token_ids_all": true,
+    "cached_tokens_zero_all": true,
+    "cross_base_oracle_collision_count": 0,
+    "point_relative_range_at_most_10_percent": true,
+    "maximum_relative_range_percent": 2.0257908119037356,
+    "sequential_token_identity_boundary": "Exact for the one-user point in both attempts; batch-shape-dependent for at least one response at every multi-user point. This is output-isolation-qualified, not output-identity-qualified."
+  },
+  "points": [
+    {"concurrent_users": 1, "aggregate_tok_s": 24.640824267538715, "per_user_tok_s": 24.640824267538715, "attempt_values": [24.622564090808538, 24.659084444268892], "relative_range_percent": 0.14821076220435078, "samples": 2},
+    {"concurrent_users": 2, "aggregate_tok_s": 36.55301939162611, "per_user_tok_s": 18.276509695813054, "attempt_values": [36.41277166993784, 36.69326711331437], "relative_range_percent": 0.7673660016189763, "samples": 2},
+    {"concurrent_users": 4, "aggregate_tok_s": 49.31613227816557, "per_user_tok_s": 12.329033069541392, "attempt_values": [49.208114227004934, 49.4241503293262], "relative_range_percent": 0.43806375792555297, "samples": 2},
+    {"concurrent_users": 8, "aggregate_tok_s": 56.11968943309129, "per_user_tok_s": 7.014961179136411, "attempt_values": [55.55125567698905, 56.688123189193526], "relative_range_percent": 2.0257908119037356, "samples": 2},
+    {"concurrent_users": 16, "aggregate_tok_s": 54.96560656389367, "per_user_tok_s": 3.4353504102433545, "attempt_values": [54.892096201073166, 55.03911692671417], "relative_range_percent": 0.2674776734613217, "samples": 2},
+    {"concurrent_users": 32, "aggregate_tok_s": 65.80288089832067, "per_user_tok_s": 2.056340028072521, "attempt_values": [65.90887034068231, 65.696891455959], "relative_range_percent": 0.32214225552048437, "samples": 2},
+    {"concurrent_users": 64, "aggregate_tok_s": 83.79674254084222, "per_user_tok_s": 1.3093241022006596, "attempt_values": [83.73663749139688, 83.85684759028757], "relative_range_percent": 0.14345438169282648, "samples": 2}
+  ],
+  "strict_sequential_oracle_exact": {
+    "attempt_1": ["1/1", "1/2", "3/4", "5/8", "5/16", "17/32", "43/64"],
+    "attempt_2": ["1/1", "1/2", "2/4", "5/8", "2/16", "18/32", "42/64"]
+  },
+  "raw_artifacts": {
+    "attempt_1_root": "/mnt/extended-ssd/b70-runs/qwen38-q4km-tp1-http-concurrency-20260825-r3-attempt1",
+    "attempt_2_root": "/mnt/extended-ssd/b70-runs/qwen38-q4km-tp1-http-concurrency-20260825-r3-attempt2",
+    "sha256": {
+      "attempt1/result.json": "f7543930207d7b84acb67dfc0967a3834dfe65d0e3523b01627130be0b89be6f",
+      "attempt1/server.log": "6695913c028f14e0707c23317e69092b8294eb52d23399bb005f9de60f25a7da",
+      "attempt2/result.json": "8300bf18535cb032691cc2fddc0ce88d532e398014dd5d46d621ef3d1666453c",
+      "attempt2/server.log": "c3e271a3fe41158a2ccc26fa6e7bed174e4a169f240d866755ce1210a431f2d7",
+      "server-command.txt": "cdd48d77b09fd037e6a2831d4b7ab800b31aa2979c051db0a4746291a6a3a1cd"
+    }
+  },
+  "publication_boundary": "Every displayed point is the median of two directly measured preregistered fresh-server attempts; no interpolation or extrapolation. Outputs are complete, token-audited, cache-off, and isolated by base task, but multi-user greedy output is not bit-identical to the frozen sequential oracle."
+}

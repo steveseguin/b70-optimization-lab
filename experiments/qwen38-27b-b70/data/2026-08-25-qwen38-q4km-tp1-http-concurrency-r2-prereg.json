@@ -1,0 +1,40 @@
+{
+  "schema": "neural.download.qwen38-q4km-http-concurrency-preregistration.v2",
+  "campaign_id": "qwen38-q4km-tp1-http-concurrency-20260825-r2",
+  "state": "preregistered-not-launched",
+  "created_at": "2026-08-25",
+  "purpose": "Measure output-qualified HTTP aggregate decode without the ambiguous text-only oracle or same-process repeat hysteresis in r1.",
+  "identity": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "compiler": "Intel oneAPI 2026.1.1 reconstruction",
+    "gpu": "one Intel Arc Pro B70 32 GiB",
+    "model_parallelism": "TP1",
+    "speculation": "off"
+  },
+  "server_profile": {
+    "context_tokens_total": 32768,
+    "parallel_slots": 64,
+    "nominal_context_tokens_per_slot": 512,
+    "kv_cache": "f16",
+    "flash_attention": true,
+    "prompt_cache": false
+  },
+  "measurement": {
+    "concurrency": [1, 2, 4, 8, 16, 32, 64],
+    "max_output_tokens": 128,
+    "fresh_server_attempts": 2,
+    "harness_repeats_per_server": 1,
+    "endpoint": "llama.cpp native HTTP /completion, selected because this runtime returns auditable raw token IDs there; OpenAI-compatible /v1/completions does not honor the vLLM return_token_ids extension",
+    "required_output_gate": "128 complete returned token IDs per request, exactly equal to that prompt's sequential oracle; zero cached tokens; no cross-request response identity",
+    "required_stability_gate": "both fresh-server attempts pass output gates; per-point aggregate spread is reported and any point above 10% relative range remains diagnostic",
+    "aggregate_metric": "sum reported completion tokens divided by batch wall time"
+  },
+  "publication": {
+    "no_interpolation_or_extrapolation": true,
+    "failed_points_remain_diagnostic": true,
+    "raw_engine_results_are_not_substitutes": true,
+    "fresh_server_attempts_are_not_averaged_with_r1": true
+  }
+}

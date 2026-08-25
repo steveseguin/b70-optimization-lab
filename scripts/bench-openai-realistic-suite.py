@@ -15,6 +15,17 @@ from pathlib import Path
 from typing import Any
 
 
+def native_cached_tokens(event: dict[str, Any]) -> int | None:
+    """Return reused prompt tokens, not native ``tokens_cached`` slot length."""
+    timings = event.get("timings")
+    if isinstance(timings, dict) and isinstance(timings.get("cache_n"), int):
+        return timings["cache_n"]
+    value = event.get("prompt_tokens_cached")
+    if isinstance(value, int):
+        return value
+    return None
+
+
 def post_stream(
     *,
     base_url: str,
@@ -145,7 +156,7 @@ def post_stream(
                 if event.get("stop"):
                     completion_count = event.get("tokens_predicted")
                     prompt_count = event.get("tokens_evaluated")
-                    native_cached = event.get("prompt_tokens_cached")
+                    native_cached = native_cached_tokens(event)
                     usage = {
                         "completion_tokens": completion_count,
                         "prompt_tokens": prompt_count,

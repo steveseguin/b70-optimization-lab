@@ -1,0 +1,55 @@
+{
+  "schema": "neural.download.qwen38-q4km-http-concurrency-result.v2",
+  "campaign_id": "qwen38-q4km-tp1-http-concurrency-20260825-r2",
+  "status": "failed-strict-identity-pilot-output-isolation-observed",
+  "measured_at": "2026-08-25",
+  "identity": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "compiler": "Intel oneAPI 2026.1.1 reconstruction",
+    "gpu": "one Intel Arc Pro B70 32 GiB",
+    "endpoint": "llama.cpp native HTTP /completion",
+    "context_tokens_total": 32768,
+    "parallel_slots": 64,
+    "kv_cache": "f16",
+    "prompt_cache": false,
+    "slot_prompt_similarity": 0
+  },
+  "qualification": {
+    "fresh_server_attempts": [4, 5],
+    "completion_tokens_128_all": true,
+    "complete_raw_token_ids_all": true,
+    "cross_base_oracle_collision_count": 0,
+    "attempt_5_cached_tokens_zero_all": true,
+    "attempt_4_cache_boundary": "Server command hard-disabled prompt caching and slot similarity; the then-current adapter recorded the live slot length instead of timings.cache_n, so cache-zero is asserted from configuration and full prompt-eval logs rather than its malformed usage field.",
+    "point_relative_range_at_most_10_percent": true,
+    "maximum_relative_range_percent": 1.6132771823986818,
+    "sequential_token_identity_boundary": "Exact at concurrency 1 and 2 in both attempts; batch-shape-dependent greedy token choices above 2. This is output-isolation-qualified, not output-identity-qualified."
+  },
+  "points": [
+    {"concurrent_users": 1, "aggregate_tok_s": 25.122512739584813, "per_user_tok_s": 25.122512739584813, "attempt_values": [25.128500520770086, 25.116524958399538], "relative_range_percent": 0.047668648811862, "samples": 2},
+    {"concurrent_users": 2, "aggregate_tok_s": 37.65721274068578, "per_user_tok_s": 18.82860637034289, "attempt_values": [37.656388653337025, 37.65803682803453], "relative_range_percent": 0.00437678356297123, "samples": 2},
+    {"concurrent_users": 4, "aggregate_tok_s": 50.30418858048439, "per_user_tok_s": 12.576047145121098, "attempt_values": [49.89841558240451, 50.70996157856427], "relative_range_percent": 1.6132771823986818, "samples": 2},
+    {"concurrent_users": 8, "aggregate_tok_s": 57.570712822870014, "per_user_tok_s": 7.196339102858752, "attempt_values": [57.62062187976641, 57.52080376597362], "relative_range_percent": 0.17338349465970151, "samples": 2},
+    {"concurrent_users": 16, "aggregate_tok_s": 55.59104657054383, "per_user_tok_s": 3.4744404106589893, "attempt_values": [55.65349525411019, 55.52859788697747], "relative_range_percent": 0.22467173193839005, "samples": 2},
+    {"concurrent_users": 32, "aggregate_tok_s": 65.96772511820559, "per_user_tok_s": 2.0614914099439246, "attempt_values": [65.86345930310266, 66.07199093330853], "relative_range_percent": 0.3161115982584014, "samples": 2},
+    {"concurrent_users": 64, "aggregate_tok_s": 84.38767051525114, "per_user_tok_s": 1.318557351800799, "attempt_values": [84.22314075351191, 84.55220027699038], "relative_range_percent": 0.38993791565675845, "samples": 2}
+  ],
+  "strict_sequential_oracle_exact": {
+    "attempt_4": ["1/1", "2/2", "2/4", "6/8", "3/16", "18/32", "38/64"],
+    "attempt_5": ["1/1", "2/2", "2/4", "5/8", "4/16", "16/32", "38/64"]
+  },
+  "raw_artifacts": {
+    "attempt_4_root": "/mnt/extended-ssd/b70-runs/qwen38-q4km-tp1-http-concurrency-20260825-r2-attempt4",
+    "attempt_5_root": "/mnt/extended-ssd/b70-runs/qwen38-q4km-tp1-http-concurrency-20260825-r2-attempt5",
+    "sha256": {
+      "attempt4/result.json": "4f383a193170d56e804646ae43c00ce649d8a762ca4a5c524bce8f5a22963241",
+      "attempt4/server.log": "bc32e81dfc5dc7717156e91062ae1639a65d3b46b5d562334cce1a5a955f1700",
+      "attempt5/result.json": "b88e229a4b450029931a61a0e34a37ff474136672b84eed842557ad7cdf0233d",
+      "attempt5/server.log": "3a55f71cb743ed5ef2127e3c0e7c78b1d35bf28d2023e9071d128df39d8cb72b",
+      "server-command.txt": "cdd48d77b09fd037e6a2831d4b7ab800b31aa2979c051db0a4746291a6a3a1cd"
+    }
+  },
+  "publication_boundary": "R2 failed its preregistered strict sequential-identity gate and is pilot evidence only. Its post-hoc output-isolation observation motivated preregistered r3; do not publish this r2 curve as the qualified result."
+}

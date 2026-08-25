@@ -63,7 +63,7 @@ Nothing between the displayed markers is inferred. See the
 [result note](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.md)
 and [compact evidence](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.json).
 
-## Multiple users: measured support boundary, curve still pending
+## Multiple users: measured HTTP capacity, output varies by batch shape
 
 A separate oneAPI 2026.1.1 reconstruction audit loaded this model on one B70
 with 64 HTTP server slots and 32K total F16 KV context (`512` nominal tokens
@@ -78,8 +78,24 @@ The observed 64-way diagnostics (`86.28` and `85.97 tok/s`) remain evidence,
 not a package headline or user guarantee. See the
 [result note](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-result.md)
 and [structured closeout](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-summary.json).
-The public aggregate graph remains pending until output isolation and
-point-order stability pass under a preregistered service harness.
+That first pass was replaced by an output-audited native HTTP run. Two fresh,
+cache-off server attempts agreed within 2.03% at every point:
+
+| users | aggregate decode | per user |
+| ---: | ---: | ---: |
+| 1 | 24.64 tok/s | 24.64 tok/s |
+| 4 | 49.32 tok/s | 12.33 tok/s |
+| 8 | 56.12 tok/s | 7.01 tok/s |
+| 16 | 54.97 tok/s | 3.44 tok/s |
+| 32 | 65.80 tok/s | 2.06 tok/s |
+| 64 | **83.80 tok/s** | 1.31 tok/s |
+
+Every request returned 128 raw token IDs; prompt caching and slot similarity
+were disabled; no output matched an oracle from a different base task.
+However, exact sequential greedy identity held in both attempts only at one
+user. Multi-user token choices vary with batch shape. This is an honest HTTP
+capacity curve, not a deterministic-serving promise. See the
+[r3 result](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-concurrency-r3-result.md).
 
 ## Who built what
 

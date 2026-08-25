@@ -154,13 +154,30 @@ identity plus point-order stability. Do not turn its `86.28 / 85.97 tok/s`
 [result](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-result.md),
 [preregistration](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-prereg.json),
 and [runner](../../experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-http-smallctx.sh)
-make this publication boundary auditable. A qualified HTTP concurrency curve
-remains pending.
+make the rejected publication boundary auditable.
+
+The corrected r2 harness uses native HTTP raw token IDs, disables prompt
+caching and slot similarity at the server, and restarts between retained
+attempts. The preregistered r3 confirmation measured
+`24.64, 36.55, 49.32, 56.12, 54.97, 65.80, 83.80` aggregate tok/s at 1→64
+users; fresh-attempt relative range was at most 2.03%.
+All responses contained 128 raw IDs and none collided with a different base
+task's oracle. Exact sequential greedy identity nevertheless becomes
+batch-shape-dependent in multi-user serving. Treat the
+[r3 curve](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-concurrency-r3-result.md)
+as measured service capacity with that output warning, not deterministic
+serving. The retained [runner](../../experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-http-concurrency-r3.sh)
+reproduces the exact cache-off profile.
 
 ## Beginner recovery checklist
 
 This checklist is safe to use on an existing installation; it does not claim
 that the Intel stack has been clean-host certified yet.
+
+For an actual fresh installation, follow the fail-closed
+[clean-host certification runbook](CLEAN-HOST.md). It links Intel's current
+primary driver/oneAPI instructions and defines the platform, build, model,
+endpoint, and repeat receipts required before the badge may change.
 
 1. **The compiler or IntelSYCL package is missing.** Confirm that
    `/opt/intel/oneapi/setvars.sh` exists, then start a new shell and run
@@ -203,5 +220,6 @@ and the benchmark JSON. Remove usernames and unrelated environment secrets.
 - [2026-08-25 qualified realistic HTTP and exact-depth result](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.md)
 
 Still open: a tested clean-host driver/oneAPI installation, a clean-host
-source build plus endpoint replay, and a qualified HTTP concurrency curve.
+source build plus endpoint replay, and batch-shape-invariant greedy output in
+multi-user serving.
 Until those are closed, call this a candidate—not a one-click installer.

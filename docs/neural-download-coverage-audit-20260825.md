@@ -13,7 +13,8 @@ batch is never substituted for an unmeasured HTTP deployment.
 | headline single-user measurement | 14 / 14 | 100% |
 | directly measured decode at approximately 32K or 32K | 8 / 14 | 57% |
 | HTTP/service TTFT profile | 2 / 14 | 14% |
-| output-qualified HTTP concurrency profile | 0 / 14 | 0% |
+| output-audited HTTP concurrency profile | 1 / 14 | 7% |
+| sequential-output-invariant HTTP concurrency profile | 0 / 14 | 0% |
 | clean-host installation and replay | 0 / 14 | 0% |
 
 The home picker had an additional publication defect: it showed only one of
@@ -29,8 +30,10 @@ user-serving claim:
 - Qwen3.8 27B Q4_K_M: 95.411842 tok/s at 64 raw concurrent engine sequences.
 
 Neither raw tool emits auditable completions or includes HTTP and scheduler
-overhead. They are ceilings and optimization evidence, not completed “many
-users” service profiles.
+overhead. They are ceilings and optimization evidence, not substitutes for a
+service profile. Qwen Q4 TP1 now separately has an 83.796743 tok/s measured
+64-user native HTTP point with complete raw token IDs, cache off, two
+fresh-server attempts, and an explicit batch-shape output warning.
 
 After the initial census, Qwen3.8 Q4 TP1 completed a qualified cold
 realistic-prompt HTTP run and an exact 2K→32K HTTP decode/TTFT sweep. The
@@ -43,22 +46,23 @@ explicitly grade C and is not presented as long natural prose.
 
 | priority | exact tuple or group | missing evidence | why it is still missing |
 | ---: | --- | --- | --- |
-| 1 | Qwen3.8 27B Q4_K_M TP1 | output-qualified and point-order-stable HTTP concurrency | Realistic HTTP speed/TTFT and exact 2K→32K service depth are now closed. The first 64-slot run completed every request but greedy outputs varied by batch shape and the 2–32 point order showed large hysteresis, so it failed closed instead of publishing a misleading curve. |
+| 1 | Qwen3.8 27B Q4_K_M TP1 | batch-shape-invariant greedy output for multi-user serving | Realistic HTTP speed/TTFT, exact 2K→32K service depth, and a preregistered output-audited stable HTTP capacity curve are now closed. The corrected 64-slot curve returns complete token IDs and has no cross-base collision, but strict sequential token identity varies for multi-user serving. |
 | 2 | Ornith 1.5 35B Q4_K_M TP1 | realistic HTTP TTFT/depth and qualified concurrency | Its context and raw 1→32 engine curves are complete; the service-shaped workload has not yet been run. |
 | 3 | LFM2.5, Nemotron 3.5, Ornith 9B | realistic HTTP TTFT/depth and qualified concurrency | These were first brought in as stock one-card packet baselines and depth-screened with `llama-bench`; package work outpaced service profiling. |
 | 4 | Laguna S, Muse-Glimmer, MiniMax M2.7 | decode/prefill/TTFT context curves and qualified concurrency | These are four-card or historical specialist stacks with much higher setup cost; only their promoted workloads were preserved. |
 | 5 | Qwen3.8 Q4/Q8/FP8 TP2 | 32K service/depth profiles and qualified concurrency | Exact two-card single-user baselines exist, but no cross-card result can populate the one-card cells and no short-context run can populate 32K. |
-| 6 | all 14 packages | clean-host Intel/oneAPI replay; beginner recovery outside Qwen Q4 TP1 | Every current result was reconstructed or replayed on an established lab host. Qwen Q4 TP1 now has a failure-oriented beginner recovery checklist, but no established host can certify a fresh supported OS, driver install, failed-build recovery, and first-time-user path. |
+| 6 | all 14 packages | clean-host Intel/oneAPI replay; beginner recovery outside Qwen Q4 TP1 | Every current result was reconstructed or replayed on an established lab host. Qwen Q4 TP1 now has a failure-oriented beginner recovery checklist plus a primary-source clean-host runbook and inventory receipt script. This host has overlapping oneAPI 2025.3/2026.0/2026.1 packages, so it correctly remains uncertified; only a fresh supported OS can close the badge. |
 
 ## Optimization queue
 
 Measurements, not model popularity alone, set this order:
 
-1. **Qwen3.8 Q4 TP1 concurrency.** Raw aggregate reaches only 95.411842 tok/s
-   at 64 sequences. The current low-latency build has the Q4_K oneDNN WDC path
-   disabled. Broad forced-reorder attempts exceeded memory or did not engage;
-   the next valid optimization is the bounded source-level Q4_K-only WDC door,
-   followed by the same output-qualified endpoint gate.
+1. **Qwen3.8 Q4 TP1 concurrency.** Output-audited HTTP reaches 83.796743 tok/s
+   at 64 users versus the 95.411842 tok/s raw-engine ceiling. The current
+   low-latency build has the Q4_K oneDNN WDC path disabled. Broad
+   forced-reorder attempts exceeded memory or did not engage; the next valid
+   optimization is the bounded source-level Q4_K-only WDC door, followed by
+   the same token-audited endpoint and batch-shape comparison.
 2. **Ornith 35B service batching.** Single-user decode is already strong at
    131.460231 tok/s, but 32-way raw aggregate is only 216.513077 tok/s. This is
    the clearest practical batching/scheduler and batched-MoE kernel opportunity.

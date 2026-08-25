@@ -9,6 +9,7 @@ import datetime as dt
 import hashlib
 import importlib.util
 import json
+import re
 import statistics
 import threading
 import time
@@ -54,6 +55,48 @@ def expand_prompts(
     return expanded
 
 
+def output_identity_match(
+    row: dict[str, Any], oracle: dict[str, Any]
+) -> tuple[bool, str]:
+    """Prefer complete token IDs; otherwise retain the text-hash fallback."""
+    row_ids = row.get("token_ids")
+    oracle_ids = oracle.get("token_ids")
+    row_count = row.get("completion_tokens")
+    oracle_count = oracle.get("completion_tokens")
+    token_ids_complete = (
+        isinstance(row_ids, list)
+        and isinstance(oracle_ids, list)
+        and isinstance(row_count, int)
+        and isinstance(oracle_count, int)
+        and row_count > 0
+        and row_count == len(row_ids)
+        and oracle_count == len(oracle_ids)
+    )
+    if token_ids_complete:
+        return row_ids == oracle_ids, "complete_token_ids"
+    if (
+        isinstance(row_ids, list)
+        and isinstance(row_count, int)
+        and row_count > 0
+        and row_count == len(row_ids)
+        and isinstance(oracle.get("token_ids_sha256"), str)
+    ):
+        return (
+            token_ids_sha256(row_ids) == oracle["token_ids_sha256"],
+            "complete_token_ids_sha256",
+        )
+    return row.get("sha256") == oracle.get("sha256"), "text_sha256"
+
+
+def base_prompt_id(prompt_id: str) -> str:
+    return re.sub(r"-c\d+$", "", prompt_id)
+
+
+def token_ids_sha256(token_ids: list[int]) -> str:
+    payload = json.dumps(token_ids, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def summarize_batch(
     *,
     concurrency: int,
@@ -65,10 +108,34 @@ def summarize_batch(
     completion_tokens = [row.get("completion_tokens") for row in rows]
     completion_tokens_complete = all(isinstance(v, int) for v in completion_tokens)
     total_tokens = sum(v for v in completion_tokens if isinstance(v, int))
-    exact = [
-        row.get("sha256") == oracle_by_id[row["prompt_id"]].get("sha256")
+    identity = [
+        output_identity_match(row, oracle_by_id[row["prompt_id"]])
         for row in rows
     ]
+    exact = [matched for matched, _ in identity]
+    identity_methods = [method for _, method in identity]
+    complete_token_ids = all(
+        method in {"complete_token_ids", "complete_token_ids_sha256"}
+        for method in identity_methods
+    )
+    cross_base_oracle_collisions = 0
+    if complete_token_ids:
+        oracle_tokens: dict[str, set[str]] = {}
+        for prompt_id, oracle in oracle_by_id.items():
+            token_ids = oracle.get("token_ids")
+            digest = (
+                token_ids_sha256(token_ids)
+                if isinstance(token_ids, list)
+                else oracle.get("token_ids_sha256")
+            )
+            if isinstance(digest, str):
+                oracle_tokens.setdefault(digest, set()).add(
+                    oracle.get("base_prompt_id", base_prompt_id(prompt_id))
+                )
+        for row in rows:
+            bases = oracle_tokens.get(token_ids_sha256(row["token_ids"]), set())
+            if any(base != base_prompt_id(row["prompt_id"]) for base in bases):
+                cross_base_oracle_collisions += 1
     cached = [_BASE.cached_tokens(row) for row in rows]
     request_wall_rates = [
         float(row["tok_s_wall_full"])
@@ -90,6 +157,9 @@ def summarize_batch(
         "oracle_exact_count": sum(exact),
         "oracle_exact_total": len(exact),
         "oracle_exact_all": all(exact),
+        "oracle_identity_methods": sorted(set(identity_methods)),
+        "complete_token_id_identity_all": complete_token_ids,
+        "cross_base_oracle_collision_count": cross_base_oracle_collisions,
         "cached_tokens": cached,
         "cached_tokens_all_zero": all(v == 0 for v in cached),
         "rows": rows,
@@ -136,6 +206,11 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--request-extra-json", default="{}")
     parser.add_argument("--return-token-ids", action="store_true")
+    parser.add_argument(
+        "--oracle-digests",
+        type=Path,
+        help="Use a pinned compact sequential token-ID oracle instead of regenerating it.",
+    )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     if args.repeats < 1 or args.max_tokens < 1:
@@ -163,14 +238,32 @@ def main() -> int:
             request_id=request_id,
         )
 
-    oracle_rows = []
-    for index, item in enumerate(prompts):
-        row = request(item, f"oracle-{index:03d}")
-        row["prompt_id"] = item["id"]
-        row["prompt_sha256"] = hashlib.sha256(
-            item["prompt"].encode("utf-8")
-        ).hexdigest()
-        oracle_rows.append(row)
+    oracle_digest_sha256 = None
+    if args.oracle_digests:
+        oracle_digest_bytes = args.oracle_digests.read_bytes()
+        oracle_digest_sha256 = hashlib.sha256(oracle_digest_bytes).hexdigest()
+        oracle_doc = json.loads(oracle_digest_bytes)
+        oracle_rows = oracle_doc["rows"]
+        expected_prompts = {
+            item["id"]: hashlib.sha256(item["prompt"].encode("utf-8")).hexdigest()
+            for item in prompts
+        }
+        actual_prompts = {
+            row["prompt_id"]: row["prompt_sha256"] for row in oracle_rows
+        }
+        if actual_prompts != expected_prompts:
+            raise SystemExit("oracle digest prompt IDs/hashes do not match expanded suite")
+        oracle_fresh = oracle_doc.get("cached_tokens_zero") is True
+    else:
+        oracle_rows = []
+        for index, item in enumerate(prompts):
+            row = request(item, f"oracle-{index:03d}")
+            row["prompt_id"] = item["id"]
+            row["prompt_sha256"] = hashlib.sha256(
+                item["prompt"].encode("utf-8")
+            ).hexdigest()
+            oracle_rows.append(row)
+        oracle_fresh = all(_BASE.cached_tokens(row) == 0 for row in oracle_rows)
     oracle_by_id = {row["prompt_id"]: row for row in oracle_rows}
 
     batches = []
@@ -193,19 +286,29 @@ def main() -> int:
                 )
             )
 
-    oracle_fresh = all(_BASE.cached_tokens(row) == 0 for row in oracle_rows)
     all_exact = all(batch["oracle_exact_all"] for batch in batches)
     all_fresh = oracle_fresh and all(
         batch["cached_tokens_all_zero"] for batch in batches
     )
     all_counts = all(batch["completion_tokens_complete"] for batch in batches)
+    output_isolation_qualified = (
+        all_fresh
+        and all_counts
+        and all(batch["complete_token_id_identity_all"] for batch in batches)
+        and all(batch["cross_base_oracle_collision_count"] == 0 for batch in batches)
+    )
+    classification = (
+        "output-identity-qualified"
+        if all_exact and all_fresh and all_counts
+        else (
+            "output-isolation-qualified-shape-variant"
+            if output_isolation_qualified
+            else "measured-output-variant"
+        )
+    )
     result = {
         "created_at_utc": dt.datetime.now(dt.UTC).isoformat(),
-        "classification": (
-            "output-identity-qualified"
-            if all_exact and all_fresh and all_counts
-            else "measured-output-variant"
-        ),
+        "classification": classification,
         "aggregate_metric": "sum(completion_tokens) / batch wall time",
         "reporting_boundary": (
             "Measured endpoint batches with per-prompt sequential oracle comparison. "
@@ -223,6 +326,8 @@ def main() -> int:
             "seed": args.seed,
             "request_extra": request_extra,
             "return_token_ids": args.return_token_ids,
+            "oracle_digests": str(args.oracle_digests) if args.oracle_digests else None,
+            "oracle_digests_sha256": oracle_digest_sha256,
         },
         "oracle": {
             "request_count": len(oracle_rows),
@@ -246,7 +351,7 @@ def main() -> int:
             for row in batches
         ],
     }, indent=2))
-    return 0 if all_exact and all_fresh and all_counts else 3
+    return 0 if classification != "measured-output-variant" else 3
 
 
 if __name__ == "__main__":

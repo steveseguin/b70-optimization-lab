@@ -9,9 +9,15 @@ out_parent="${OUT_DIR:-${repo_root}/experiments/qwen38-27b-b70/data}"
 gpu_index="${GPU_INDEX:-0}"
 attempt="${ATTEMPT:-1}"
 port="${PORT:-18088}"
-campaign="qwen38-q4km-tp1-http-smallctx-20260825-r1"
+campaign="${CAMPAIGN_ID:-qwen38-q4km-tp1-http-smallctx-20260825-r1}"
 suite="${repo_root}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-suite.json"
-prereg="${repo_root}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-prereg.json"
+prereg="${PREREG_PATH:-${repo_root}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-prereg.json}"
+harness_repeats="${HARNESS_REPEATS:-2}"
+return_token_ids="${RETURN_TOKEN_IDS:-0}"
+api_mode="${API_MODE:-completions}"
+disable_prompt_cache="${DISABLE_PROMPT_CACHE:-0}"
+oracle_digests="${ORACLE_DIGESTS:-}"
+qualification_mode="${QUALIFICATION_MODE:-identity}"
 expected_model_sha=31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34
 expected_server_sha=35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545
 expected_backend_sha=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154
@@ -21,6 +27,12 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ "${gpu_index}" =~ ^[0-9]+$ ]] || fail 'GPU_INDEX must be numeric'
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail 'ATTEMPT must be positive'
 [[ "${port}" =~ ^[1-9][0-9]*$ ]] || fail 'PORT must be positive'
+[[ "${harness_repeats}" =~ ^[1-9][0-9]*$ ]] || fail 'HARNESS_REPEATS must be positive'
+[[ "${return_token_ids}" == 0 || "${return_token_ids}" == 1 ]] || fail 'RETURN_TOKEN_IDS must be 0 or 1'
+[[ "${api_mode}" == completions || "${api_mode}" == native ]] || fail 'API_MODE must be completions or native'
+[[ "${disable_prompt_cache}" == 0 || "${disable_prompt_cache}" == 1 ]] || fail 'DISABLE_PROMPT_CACHE must be 0 or 1'
+[[ "${qualification_mode}" == identity || "${qualification_mode}" == isolation ]] || fail 'QUALIFICATION_MODE must be identity or isolation'
+[[ -z "${oracle_digests}" || -f "${oracle_digests}" ]] || fail 'ORACLE_DIGESTS does not exist'
 
 model="${model_dir}/Qwen3.8-27B-Q4_K_M.gguf"
 server="${build_dir}/bin/llama-server"
@@ -82,7 +94,9 @@ unset GGML_SYCL_WDC GGML_SYCL_WDC_Q4K GGML_SYCL_REORDER_IN_GEMM
 unset GGML_SYCL_FORCE_REORDER GGML_SYCL_FORCE_REORDER_Q4K GGML_SYCL_DISABLE_REORDER_Q6K
 
 env | grep -E '^(GGML_|UR_L0_|ONEAPI_DEVICE_SELECTOR=|ONEAPI_ROOT=|LD_LIBRARY_PATH=|PATH=)' | LC_ALL=C sort > "${run_dir}/environment.txt"
-sha256sum "${model}" "${server}" "${backend}" "${suite}" "${prereg}" "${repo_root}/scripts/bench-openai-concurrency-oracle.py" > "${run_dir}/sha256sums.txt"
+sha_inputs=("${model}" "${server}" "${backend}" "${suite}" "${prereg}" "${repo_root}/scripts/bench-openai-concurrency-oracle.py")
+if [[ -n "${oracle_digests}" ]]; then sha_inputs+=("${oracle_digests}"); fi
+sha256sum "${sha_inputs[@]}" > "${run_dir}/sha256sums.txt"
 free -b > "${run_dir}/memory-before.txt"
 xpu-smi dump -d "${gpu_index}" -m 0,1,2,3,4,5 -n 1 > "${run_dir}/xpu-before.txt" 2>&1 || true
 
@@ -91,6 +105,9 @@ cmd=("${server}" --model "${model}" --device SYCL0 --gpu-layers 99
   --cache-type-k f16 --cache-type-v f16 --cache-ram 0 --ctx-checkpoints 0
   --reasoning off --threads 8 --poll 50 --ctx-size 32768 --parallel 64
   --cont-batching --metrics --host 127.0.0.1 --port "${port}")
+if (( disable_prompt_cache == 1 )); then
+  cmd+=(--no-cache-prompt --slot-prompt-similarity 0)
+fi
 printf '%q ' "${cmd[@]}" > "${run_dir}/server-command.txt"; printf '\n' >> "${run_dir}/server-command.txt"
 
 cleanup() {
@@ -128,31 +145,47 @@ fi
 curl -fsS "http://127.0.0.1:${port}/props" > "${run_dir}/props.json" || true
 curl -fsS "http://127.0.0.1:${port}/slots" > "${run_dir}/slots.json" || true
 
-set +e
-python3 "${repo_root}/scripts/bench-openai-concurrency-oracle.py" \
+harness_cmd=(python3 "${repo_root}/scripts/bench-openai-concurrency-oracle.py"
   --base-url "http://127.0.0.1:${port}" --model qwen38-q4km-tp1-http-smallctx \
-  --api-mode completions --suite "${suite}" --concurrency 1,2,4,8,16,32,64 \
-  --repeats 2 --max-tokens 128 --seed 42 --timeout 900 \
+  --api-mode "${api_mode}" --suite "${suite}" --concurrency 1,2,4,8,16,32,64 \
+  --repeats "${harness_repeats}" --max-tokens 128 --seed 42 --timeout 900 \
   --request-extra-json '{"cache_prompt":false,"ignore_eos":true,"temperature":0}' \
-  --out "${run_dir}/result.json" | tee "${run_dir}/harness-summary.txt"
+  --out "${run_dir}/result.json")
+if (( return_token_ids == 1 )); then harness_cmd+=(--return-token-ids); fi
+if [[ -n "${oracle_digests}" ]]; then harness_cmd+=(--oracle-digests "${oracle_digests}"); fi
+set +e
+"${harness_cmd[@]}" | tee "${run_dir}/harness-summary.txt"
 harness_status=${PIPESTATUS[0]}
 set -e
 printf '%s\n' "${harness_status}" > "${run_dir}/harness-exit-status.txt"
 
-python3 -B - "${run_dir}/result.json" > "${run_dir}/qualification.json" <<'PY'
+python3 -B - "${run_dir}/result.json" "${return_token_ids}" "${qualification_mode}" > "${run_dir}/qualification.json" <<'PY'
 import json, sys
 path = sys.argv[1]
+require_token_ids = sys.argv[2] == "1"
+qualification_mode = sys.argv[3]
 d = json.load(open(path, encoding="utf-8"))
 rows = d["oracle"]["rows"] + [r for b in d["batches"] for r in b["rows"]]
 counts_exact = all(r.get("completion_tokens") == 128 for r in rows)
 cache_zero = d["oracle"]["cached_tokens_all_zero"] and all(b["cached_tokens_all_zero"] for b in d["batches"])
 hashes_exact = all(b["oracle_exact_all"] for b in d["batches"])
-qualified = counts_exact and cache_zero and hashes_exact and d.get("classification") == "output-identity-qualified"
+token_ids_complete = all(b.get("complete_token_id_identity_all") for b in d["batches"])
+cross_base_collisions = sum(b.get("cross_base_oracle_collision_count", 0) for b in d["batches"])
+identity_qualified = hashes_exact and d.get("classification") == "output-identity-qualified"
+isolation_qualified = d.get("classification") in {
+    "output-identity-qualified", "output-isolation-qualified-shape-variant"
+} and cross_base_collisions == 0
+qualified = counts_exact and cache_zero and (token_ids_complete or not require_token_ids) and (
+    identity_qualified if qualification_mode == "identity" else isolation_qualified
+)
 out = {
-    "classification": "output-identity-qualified" if qualified else "measured-output-variant",
+    "classification": d.get("classification") if qualified else "measured-output-variant",
+    "qualification_mode": qualification_mode,
     "completion_tokens_128_all": counts_exact,
     "cached_tokens_all_zero": cache_zero,
     "oracle_hashes_exact_all": hashes_exact,
+    "complete_token_id_identity_all": token_ids_complete,
+    "cross_base_oracle_collision_count": cross_base_collisions,
     "request_count": len(rows),
     "batches": [{
         "concurrency": b["concurrency"], "repeat": b["repeat"],
