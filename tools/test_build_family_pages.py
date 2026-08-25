@@ -803,6 +803,56 @@ class FamilyCoverageTest(unittest.TestCase):
         _, incomplete_errors = MODULE.expand_coverage_contract(incomplete_match)
         self._assert_error(incomplete_errors, "match must name every axis")
 
+    def test_dense_coverage_contract_fixed_selectors_are_exact_and_fail_closed(self) -> None:
+        contract = {
+            "id": "runtime-slice",
+            "label": "Runtime slice",
+            "fixed_selectors": {"runtime_family": "runtime-a"},
+            "axes": [
+                {"key": "tp", "label": "TP", "values": [1, 2]},
+                {"key": "kv", "label": "KV", "values": ["f16"]},
+            ],
+            "rules": [
+                {
+                    "id": "all-gaps",
+                    "match": {"tp": "*", "kv": "*"},
+                    "state": "missing",
+                }
+            ],
+        }
+        cells, errors = MODULE.expand_coverage_contract(contract)
+        self.assertEqual(errors, [])
+        self.assertEqual(len(cells), 2)
+        self.assertTrue(
+            all(cell["selectors"]["runtime_family"] == "runtime-a" for cell in cells)
+        )
+        rendered = MODULE.coverage_contract_scorecards(
+            {"coverage_contracts": [contract]}
+        )
+        self.assertIn("Fixed: runtime_family=runtime-a", rendered)
+        self.assertNotIn("<strong>runtime_family</strong>", rendered)
+
+        empty = deepcopy(contract)
+        empty["fixed_selectors"] = {}
+        self._assert_error(
+            MODULE.expand_coverage_contract(empty)[1],
+            "fixed_selectors must be a non-empty object",
+        )
+
+        wildcard = deepcopy(contract)
+        wildcard["fixed_selectors"] = {"runtime_family": "*"}
+        self._assert_error(
+            MODULE.expand_coverage_contract(wildcard)[1],
+            "scalar values excluding '*'",
+        )
+
+        repeated = deepcopy(contract)
+        repeated["fixed_selectors"] = {"tp": 1}
+        self._assert_error(
+            MODULE.expand_coverage_contract(repeated)[1],
+            "cannot repeat axis keys",
+        )
+
     def test_legacy_mtp_tp_view_keeps_defaults(self) -> None:
         family = self._family()
 
@@ -1417,6 +1467,92 @@ class FamilyCoverageTest(unittest.TestCase):
         measured_heading = rendered.index("<h2>Measured results</h2>")
         self.assertLess(rendered.index("Packets and recipes"), measured_heading)
         self.assertLess(rendered.index("What has been classified"), measured_heading)
+
+    def test_qwen27_dense_tp1_contracts_use_runtime_capability_vocabularies(self) -> None:
+        family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
+        contracts = {item["id"]: item for item in family["coverage_contracts"]}
+        expected_counts = {
+            "qwen36-tp1-vllm-xpu-target-matrix": 189,
+            "qwen36-tp1-vllm-xpu-autoround-mtp-matrix": 252,
+            "qwen36-tp1-llamacpp-sycl-mtp-matrix": 336,
+            "qwen36-tp1-llamacpp-sycl-target-matrix": 140,
+            "qwen38-tp1-vllm-xpu-target-matrix": 126,
+            "qwen38-tp1-vllm-xpu-autoround-mtp-matrix": 252,
+            "qwen38-tp1-llamacpp-sycl-target-matrix": 112,
+            "qwen38-tp1-llamacpp-sycl-mtp-package-matrix": 224,
+        }
+        self.assertEqual(set(contracts), set(expected_counts))
+        self.assertEqual(self._errors(family), [])
+
+        all_cells = []
+        for contract_id, expected_count in expected_counts.items():
+            cells, errors = MODULE.expand_coverage_contract(contracts[contract_id])
+            self.assertEqual(errors, [], contract_id)
+            self.assertEqual(len(cells), expected_count, contract_id)
+            all_cells.extend(cells)
+        self.assertEqual(len(all_cells), 1631)
+
+        for contract_id, contract in contracts.items():
+            axes = {axis["key"]: axis["values"] for axis in contract["axes"]}
+            if "target-matrix" in contract_id:
+                self.assertEqual(axes["mtp"], [0])
+            else:
+                self.assertNotIn(0, axes["mtp"])
+            if "vllm-xpu" in contract_id:
+                self.assertEqual(
+                    axes["graph_mode"],
+                    ["off", "FULL_AND_PIECEWISE", "PIECEWISE"],
+                )
+                self.assertEqual(axes["kv"], ["f16", "fp8_e4m3", "fp8_e5m2"])
+            else:
+                self.assertEqual(axes["graph_mode"], ["off", "SYCL"])
+                self.assertEqual(axes["kv"], ["f16", "q8_0"])
+
+        q38_target, _ = MODULE.expand_coverage_contract(
+            contracts["qwen38-tp1-llamacpp-sycl-target-matrix"]
+        )
+        self.assertEqual(
+            sum(cell["state"] == "lab-measured" for cell in q38_target), 35
+        )
+        self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 7)
+        self.assertTrue(all(cell["selectors"]["mtp"] == 0 for cell in q38_target))
+
+        unknown_speculator = deepcopy(family)
+        next(
+            contract
+            for contract in unknown_speculator["coverage_contracts"]
+            if contract["id"] == "qwen38-tp1-llamacpp-sycl-mtp-package-matrix"
+        )["fixed_selectors"]["speculator_artifact_id"] = "unknown-speculator"
+        self._assert_error(
+            self._errors(unknown_speculator),
+            "references unknown speculator artifact unknown-speculator",
+        )
+
+        target_as_speculator = deepcopy(family)
+        next(
+            contract
+            for contract in target_as_speculator["coverage_contracts"]
+            if contract["id"] == "qwen38-tp1-llamacpp-sycl-mtp-package-matrix"
+        )["fixed_selectors"]["speculator_artifact_id"] = (
+            "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207"
+        )
+        self._assert_error(
+            self._errors(target_as_speculator),
+            "is not declared with role=speculator",
+        )
+
+        target_only_closure = next(
+            closure
+            for closure in family["family_closures"]
+            if closure["selectors"].get("artifact_id")
+            == "qwen36-27b-unsloth-q8-0-82d411a"
+            and closure["selectors"].get("mtp") == [1, 2, 3, 4]
+        )
+        self.assertEqual(target_only_closure["state"], "unsupported")
+        self.assertEqual(
+            target_only_closure["evidence"],
+            "experiments/qwen36-27b-q8-gguf-b70/model-manifest.json",
+        )
 
     def test_packet_fallback_uses_the_highest_curated_packet_claim(self) -> None:
         family = self._family()

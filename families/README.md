@@ -110,12 +110,15 @@ the artifact.
 For families with more than two meaningful dimensions, optional
 `coverage_contracts` declare the dense Cartesian inventory without storing one
 JSON object per cell. A contract has an `id`, `label`, optional `description`,
-an ordered `axes` list, and ordered `rules`:
+optional non-empty `fixed_selectors`, an ordered `axes` list, and ordered
+`rules`. Fixed selectors identify a runtime or other invariant that belongs to
+every expanded cell but would be meaningless as a one-value display axis:
 
 ```json
 {
   "id": "main-serving-space",
   "label": "Main serving space",
+  "fixed_selectors": {"runtime_family": "runtime-a"},
   "axes": [
     {"key": "revision", "label": "Revision", "values": ["revision-a"]},
     {"key": "artifact_id", "label": "Artifact", "values": ["artifact-a"]},
@@ -138,8 +141,11 @@ an ordered `axes` list, and ordered `rules`:
 }
 ```
 
-Every rule `match` names every axis with either one exact declared value or the
-`"*"` wildcard. Rules are applied in declaration order and may emit `state`,
+Every rule `match` names every axis (but no fixed selector) with either one
+exact declared value or the `"*"` wildcard. Fixed selectors must use scalar
+values other than `"*"` and cannot repeat an axis key. They are included in
+the effective selectors used to validate cited evidence and estimates. Rules
+are applied in declaration order and may emit `state`,
 `label`, `reason`, evidence/estimate/packet IDs, `point_x`, `parent`, and scalar
 `retry` metadata. For any cell, matching rules must form a strict chain from a
 broader exact-key set to a proper superset; intersecting sibling rules and

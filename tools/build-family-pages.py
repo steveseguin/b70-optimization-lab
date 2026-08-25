@@ -712,6 +712,24 @@ def expand_coverage_contract(
 ) -> tuple[list[dict[str, Any]], list[str]]:
     """Expand an ordered wildcard-to-exact contract into exact selector cells."""
     errors: list[str] = []
+    fixed_selectors = contract.get("fixed_selectors")
+    if fixed_selectors is None:
+        fixed_selectors = {}
+    elif not isinstance(fixed_selectors, dict) or not fixed_selectors:
+        errors.append(f"{label}.fixed_selectors must be a non-empty object")
+        fixed_selectors = {}
+    invalid_fixed = [
+        key
+        for key, value in fixed_selectors.items()
+        if not isinstance(key, str)
+        or not SELECTOR_KEY_RE.fullmatch(key)
+        or not is_selector_scalar(value)
+        or value == "*"
+    ]
+    if invalid_fixed:
+        errors.append(
+            f"{label}.fixed_selectors must use selector keys and scalar values excluding '*'"
+        )
     axes = contract.get("axes")
     if not isinstance(axes, list) or not axes:
         return [], [f"{label} needs a non-empty axes list"]
@@ -756,6 +774,13 @@ def expand_coverage_contract(
         axis_values.append(values)
 
     if len(axis_keys) != len(axes) or any(not values for values in axis_values):
+        return [], errors
+    repeated_fixed = set(fixed_selectors) & set(axis_keys)
+    if repeated_fixed:
+        errors.append(
+            f"{label}.fixed_selectors cannot repeat axis keys {sorted(repeated_fixed)}"
+        )
+    if invalid_fixed or repeated_fixed:
         return [], errors
     cell_count = math.prod(len(values) for values in axis_values)
     if cell_count > MAX_COVERAGE_CONTRACT_CELLS:
@@ -855,12 +880,13 @@ def expand_coverage_contract(
 
     cells: list[dict[str, Any]] = []
     for coordinates in product(*axis_values):
-        selectors = dict(zip(axis_keys, coordinates))
+        axis_selectors = dict(zip(axis_keys, coordinates))
+        selectors = {**fixed_selectors, **axis_selectors}
         matching = [
             rule
             for rule in normalized_rules
             if all(
-                wanted == "*" or selectors[key] == wanted
+                wanted == "*" or axis_selectors[key] == wanted
                 for key, wanted in rule[1].items()
             )
         ]
@@ -1863,6 +1889,28 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                                 f"{cell_label} {quant_key}={selector_quant} does not match artifact {selector_artifact} ({artifact_quant})"
                             )
 
+            selector_speculator = selectors.get("speculator_artifact_id")
+            if selector_speculator is not None:
+                if (
+                    not isinstance(selector_speculator, str)
+                    or selector_speculator not in artifacts_by_id
+                ):
+                    errors.append(
+                        f"{cell_label} references unknown speculator artifact {selector_speculator}"
+                    )
+                elif (
+                    isinstance(selector_revision, str)
+                    and artifact_revision_ids[selector_speculator]
+                    != selector_revision
+                ):
+                    errors.append(
+                        f"{cell_label} speculator artifact {selector_speculator} does not belong to revision {selector_revision}"
+                    )
+                elif artifacts_by_id[selector_speculator].get("role") != "speculator":
+                    errors.append(
+                        f"{cell_label} speculator artifact {selector_speculator} is not declared with role=speculator"
+                    )
+
             point_x = cell.get("point_x")
             point_axis = observed.get("axis") if observed is not None else None
             if point_x is not None:
@@ -2457,6 +2505,13 @@ def coverage_contract_scorecards(family: dict[str, Any]) -> str:
                 f'<div><strong>{esc(axis.get("label"))}</strong>{"".join(values)}</div>'
             )
         description = contract.get("description") or "Exact Cartesian coverage contract."
+        fixed = " · ".join(
+            f"{key}={value}"
+            for key, value in (contract.get("fixed_selectors") or {}).items()
+        )
+        fixed_html = (
+            f'<p class="contract-fixed">Fixed: {esc(fixed)}</p>' if fixed else ""
+        )
         cards.append(
             f'<section class="contract-card" data-coverage-contract="{esc(contract.get("id"))}">'
             f'<div class="contract-head"><div><h3>{esc(contract.get("label"))}</h3>'
@@ -2466,6 +2521,7 @@ def coverage_contract_scorecards(family: dict[str, Any]) -> str:
             f'<span><b>{state_counts["missing"]}</b> gaps</span>'
             f'<span><b>{retry_count}</b> retry-tagged</span></div>'
             f'<div class="contract-state-rail">{state_rail}</div>'
+            f'{fixed_html}'
             f'<details class="contract-filters"><summary>Break down by axis</summary>'
             f'{"".join(axis_blocks)}</details></section>'
         )

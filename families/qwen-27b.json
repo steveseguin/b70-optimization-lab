@@ -199,6 +199,17 @@
           "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/model-manifest.json"
         },
         {
+          "id": "qwen38-27b-mtp-q4-0-50d9ce5",
+          "label": "Q4_0 MTP draft · unsloth GGUF",
+          "role": "speculator",
+          "quantization": "Q4_0",
+          "quantization_origin": "export",
+          "repository": "unsloth/Qwen3.8-27B-GGUF",
+          "revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502",
+          "file_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+          "evidence": "repro/qwen38-27b-256k-vision-mtp-b70/model-manifest.json"
+        },
+        {
           "id": "qwen38-27b-official-fp8-017b9c7",
           "label": "Official FP8 checkpoint",
           "quantization": "FP8",
@@ -276,7 +287,7 @@
     "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768],
     "configured_max_context_tokens": [4096, 32768, 262144],
     "graph": ["off", "on"],
-    "graph_mode": ["off", "FULL_AND_PIECEWISE", "PIECEWISE"],
+    "graph_mode": ["off", "SYCL", "FULL_AND_PIECEWISE", "PIECEWISE"],
     "kv": ["f16", "q8_0", "fp8_e4m3", "fp8_e5m2"]
   },
   "packets": [
@@ -2152,6 +2163,7 @@
       "quantization": "Q4_K_M",
       "variant": "Q4_K_M",
       "runtime": "llama.cpp SYCL",
+      "runtime_family": "llama.cpp SYCL",
       "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "kv": "f16"},
       "workload": "llama-bench tg128/pp2048, five reps; raw engine shape metric",
       "axis": "active_context_tokens",
@@ -2174,6 +2186,7 @@
       "quantization": "Q4_K_M",
       "variant": "Q4_K_M",
       "runtime": "llama.cpp SYCL",
+      "runtime_family": "llama.cpp SYCL",
       "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "kv": "q8_0"},
       "workload": "llama-bench tg128/pp2048, five reps; raw engine shape metric",
       "axis": "active_context_tokens",
@@ -2196,6 +2209,7 @@
       "quantization": "UD-Q5_K_S",
       "variant": "UD-Q5_K_S",
       "runtime": "llama.cpp SYCL",
+      "runtime_family": "llama.cpp SYCL",
       "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "kv": "f16"},
       "workload": "llama-bench tg128/pp2048, five reps; raw engine shape metric",
       "axis": "active_context_tokens",
@@ -2218,6 +2232,7 @@
       "quantization": "UD-Q4_K_XL",
       "variant": "UD-Q4_K_XL",
       "runtime": "llama.cpp SYCL",
+      "runtime_family": "llama.cpp SYCL",
       "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "kv": "f16"},
       "workload": "llama-bench tg128/pp2048, five reps; raw engine shape metric",
       "axis": "active_context_tokens",
@@ -2577,1149 +2592,1846 @@
     }
   ],
   "coverage_contracts": [
-    {
-      "id": "qwen36-tp1-full-matrix",
-      "label": "Qwen3.6 TP1 full matrix",
-      "description": "3,360 exact cells: eight quantized artifacts × MTP0–4 × active context 0/2K/4K/8K/16K/24K/32K × three exact graph modes × four KV modes. Existing noncanonical and configured-capacity evidence remains visible below but is never snapped into this lattice.",
-      "axes": [
-        {
-          "key": "revision",
-          "label": "Weight revision",
-          "values": [
-            "qwen3.6-27b"
-          ]
-        },
-        {
-          "key": "artifact_id",
-          "label": "Quantized artifact",
-          "values": [
-            "qwen36-27b-autoround-w4a16-f5750c9",
-            "qwen36-27b-unsloth-mtp-q4-0-20c9c45",
-            "qwen36-27b-unsloth-mtp-ud-q4-k-xl-4085665",
-            "qwen36-27b-unsloth-q8-0-82d411a",
-            "qwen36-27b-ggmlorg-q8-0-8a7ee08",
-            "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
-            "qwen36-27b-base-runtime-fp8-6a9e13b",
-            "qwen36-27b-official-block-fp8-unpinned"
-          ],
-          "value_labels": {
-            "qwen36-27b-autoround-w4a16-f5750c9": "AutoRound INT4 · webhie",
-            "qwen36-27b-unsloth-mtp-q4-0-20c9c45": "Q4_0 · unsloth MTP",
-            "qwen36-27b-unsloth-mtp-ud-q4-k-xl-4085665": "UD-Q4_K_XL · unsloth MTP",
-            "qwen36-27b-unsloth-q8-0-82d411a": "Q8_0 · unsloth target",
-            "qwen36-27b-ggmlorg-q8-0-8a7ee08": "Q8_0 · ggml-org",
-            "qwen36-27b-unsloth-mtp-q8-0-5cb35eb": "Q8_0 · unsloth embedded MTP",
-            "qwen36-27b-base-runtime-fp8-6a9e13b": "FP8 · runtime-native base",
-            "qwen36-27b-official-block-fp8-unpinned": "FP8 · historical export"
-          }
-        },
-        {
-          "key": "tp",
-          "label": "Tensor parallel",
-          "prefix": "TP",
-          "values": [
-            1
-          ]
-        },
-        {
-          "key": "mtp",
-          "label": "MTP depth",
-          "prefix": "MTP",
-          "values": [
-            0,
-            1,
-            2,
-            3,
-            4
-          ]
-        },
-        {
-          "key": "active_context_tokens",
-          "label": "Active context",
-          "values": [
-            0,
-            2048,
-            4096,
-            8192,
-            16384,
-            24576,
-            32768
-          ],
-          "value_labels": {
-            "0": "0",
-            "2048": "2K",
-            "4096": "4K",
-            "8192": "8K",
-            "16384": "16K",
-            "24576": "24K",
-            "32768": "32K"
-          }
-        },
-        {
-          "key": "graph_mode",
-          "label": "Graph mode",
-          "values": [
-            "off",
-            "FULL_AND_PIECEWISE",
-            "PIECEWISE"
-          ],
-          "value_labels": {
-            "off": "off",
-            "FULL_AND_PIECEWISE": "full + piecewise",
-            "PIECEWISE": "piecewise"
-          }
-        },
-        {
-          "key": "kv",
-          "label": "KV cache",
-          "values": [
-            "f16",
-            "q8_0",
-            "fp8_e4m3",
-            "fp8_e5m2"
-          ],
-          "value_labels": {
-            "f16": "F16",
-            "q8_0": "Q8_0",
-            "fp8_e4m3": "FP8 E4M3",
-            "fp8_e5m2": "FP8 E5M2"
-          }
-        }
-      ],
-      "rules": [
-        {
-          "id": "default-exact-gap",
-          "match": {
-            "revision": "*",
-            "artifact_id": "*",
-            "tp": "*",
-            "mtp": "*",
-            "active_context_tokens": "*",
-            "graph_mode": "*",
-            "kv": "*"
-          },
-          "state": "missing",
-          "label": "unmeasured exact cell",
-          "reason": "No result or frozen estimate binds every declared selector; configured maximum context never substitutes for active context.",
-          "parent": "qwen-tp1-parent-sentinel-program",
-          "retry": {
-            "status": "queued",
-            "trigger": "parent-or-calibrated-estimate"
-          }
-        }
-      ]
+  {
+    "id": "qwen36-tp1-vllm-xpu-target-matrix",
+    "label": "Qwen3.6 TP1 · vLLM XPU target-only matrix",
+    "description": "189 meaningful target-only vLLM XPU cells: three runtime-compatible artifacts × MTP0 × seven exact active-context depths × off/full+piecewise/piecewise graph × f16/E4M3/E5M2 KV. MTP depths are not blindly attached to FP8 artifacts without an exact speculator/package binding.",
+    "fixed_selectors": {
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen36-tp1-vllm-xpu-target-only-v1",
+      "speculation_method": "none"
     },
-    {
-      "id": "qwen38-tp1-full-matrix",
-      "label": "Qwen3.8 TP1 full matrix",
-      "description": "2,520 exact cells: six quantized artifacts × MTP0–4 × active context 0/2K/4K/8K/16K/24K/32K × three exact graph modes × four KV modes. Qwen3.8 is the current weight update; mechanisms may transfer from Qwen3.6, but speeds never do without calibration.",
-      "axes": [
-        {
-          "key": "revision",
-          "label": "Weight revision",
-          "values": [
-            "qwen3.8-27b"
-          ]
-        },
-        {
-          "key": "artifact_id",
-          "label": "Quantized artifact",
-          "values": [
-            "qwen38-27b-autoround-w4a16-bce40ca",
-            "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "qwen38-27b-ggmlorg-q8-0-0669b98",
-            "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-            "qwen38-27b-official-fp8-017b9c7"
-          ],
-          "value_labels": {
-            "qwen38-27b-autoround-w4a16-bce40ca": "AutoRound INT4 · devan-carlin",
-            "qwen38-27b-ggmlorg-q4-k-m-0669b98": "Q4_K_M · ggml-org",
-            "qwen38-27b-ggmlorg-q8-0-0669b98": "Q8_0 · ggml-org",
-            "qwen38-27b-unsloth-ud-q5-k-s-4ca7207": "UD-Q5_K_S · unsloth",
-            "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207": "UD-Q4_K_XL · unsloth",
-            "qwen38-27b-official-fp8-017b9c7": "FP8 · official"
-          }
-        },
-        {
-          "key": "tp",
-          "label": "Tensor parallel",
-          "prefix": "TP",
-          "values": [
-            1
-          ]
-        },
-        {
-          "key": "mtp",
-          "label": "MTP depth",
-          "prefix": "MTP",
-          "values": [
-            0,
-            1,
-            2,
-            3,
-            4
-          ]
-        },
-        {
-          "key": "active_context_tokens",
-          "label": "Active context",
-          "values": [
-            0,
-            2048,
-            4096,
-            8192,
-            16384,
-            24576,
-            32768
-          ],
-          "value_labels": {
-            "0": "0",
-            "2048": "2K",
-            "4096": "4K",
-            "8192": "8K",
-            "16384": "16K",
-            "24576": "24K",
-            "32768": "32K"
-          }
-        },
-        {
-          "key": "graph_mode",
-          "label": "Graph mode",
-          "values": [
-            "off",
-            "FULL_AND_PIECEWISE",
-            "PIECEWISE"
-          ],
-          "value_labels": {
-            "off": "off",
-            "FULL_AND_PIECEWISE": "full + piecewise",
-            "PIECEWISE": "piecewise"
-          }
-        },
-        {
-          "key": "kv",
-          "label": "KV cache",
-          "values": [
-            "f16",
-            "q8_0",
-            "fp8_e4m3",
-            "fp8_e5m2"
-          ],
-          "value_labels": {
-            "f16": "F16",
-            "q8_0": "Q8_0",
-            "fp8_e4m3": "FP8 E4M3",
-            "fp8_e5m2": "FP8 E5M2"
-          }
+    "axes": [
+      {
+        "key": "revision",
+        "label": "Weight revision",
+        "values": [
+          "qwen3.6-27b"
+        ]
+      },
+      {
+        "key": "artifact_id",
+        "label": "Quantized artifact",
+        "values": [
+          "qwen36-27b-autoround-w4a16-f5750c9",
+          "qwen36-27b-base-runtime-fp8-6a9e13b",
+          "qwen36-27b-official-block-fp8-unpinned"
+        ],
+        "value_labels": {
+          "qwen36-27b-autoround-w4a16-f5750c9": "AutoRound INT4 · webhie",
+          "qwen36-27b-base-runtime-fp8-6a9e13b": "FP8 · runtime-native base",
+          "qwen36-27b-official-block-fp8-unpinned": "FP8 · historical export"
         }
-      ],
-      "rules": [
-        {
-          "id": "default-exact-gap",
-          "match": {
-            "revision": "*",
-            "artifact_id": "*",
-            "tp": "*",
-            "mtp": "*",
-            "active_context_tokens": "*",
-            "graph_mode": "*",
-            "kv": "*"
-          },
-          "state": "missing",
-          "label": "unmeasured exact cell",
-          "reason": "No result or frozen estimate binds every declared selector; configured maximum context never substitutes for active context.",
-          "parent": "qwen-tp1-parent-sentinel-program",
-          "retry": {
-            "status": "queued",
-            "trigger": "parent-or-calibrated-estimate"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-f16-context-0",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 0,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D24.81 · P825.24 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-f16-context",
-          "point_x": 0,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-f16-context-2048",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 2048,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D24.46 · P919.67 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-f16-context",
-          "point_x": 2048,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-f16-context-4096",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 4096,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D24.25 · P892.64 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-f16-context",
-          "point_x": 4096,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-f16-context-8192",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 8192,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D23.83 · P850.97 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-f16-context",
-          "point_x": 8192,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-f16-context-16384",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 16384,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D23.1 · P779.5 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-f16-context",
-          "point_x": 16384,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-f16-context-24576",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 24576,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D22.42 · P719.39 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-f16-context",
-          "point_x": 24576,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-f16-context-32768",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 32768,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D21.77 · P667.83 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-f16-context",
-          "point_x": 32768,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-q8-context-0",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 0,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D24.27 · P817.78 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-q8-context",
-          "point_x": 0,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-q8-context-2048",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 2048,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D22.45 · P912.17 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-q8-context",
-          "point_x": 2048,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-q8-context-4096",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 4096,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D21.05 · P887.17 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-q8-context",
-          "point_x": 4096,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-q8-context-8192",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 8192,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D18.68 · P843.21 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-q8-context",
-          "point_x": 8192,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-q8-context-16384",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 16384,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D14.86 · P772.01 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-q8-context",
-          "point_x": 16384,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-q8-context-24576",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 24576,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D12.4 · P711.48 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-q8-context",
-          "point_x": 24576,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4km-tp1-kv-q8-context-32768",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 32768,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D10.66 · P662.56 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4km-tp1-kv-q8-context",
-          "point_x": 32768,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-tp1-kv-f16-context-0",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 0,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D22.72 · P849.3 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-tp1-kv-f16-context",
-          "point_x": 0,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-tp1-kv-f16-context-2048",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 2048,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D22.37 · P778.35 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-tp1-kv-f16-context",
-          "point_x": 2048,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-tp1-kv-f16-context-4096",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 4096,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D22.13 · P759.39 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-tp1-kv-f16-context",
-          "point_x": 4096,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-tp1-kv-f16-context-8192",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 8192,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D21.79 · P726.59 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-tp1-kv-f16-context",
-          "point_x": 8192,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-tp1-kv-f16-context-16384",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 16384,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D21.19 · P671.59 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-tp1-kv-f16-context",
-          "point_x": 16384,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-tp1-kv-f16-context-24576",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 24576,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D20.61 · P625.83 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-tp1-kv-f16-context",
-          "point_x": 24576,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-tp1-kv-f16-context-32768",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 32768,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D20.09 · P588.21 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-tp1-kv-f16-context",
-          "point_x": 32768,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4kxl-tp1-kv-f16-context-0",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 0,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D21.81 · P762.57 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
-          "point_x": 0,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4kxl-tp1-kv-f16-context-2048",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 2048,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D21.53 · P735.45 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
-          "point_x": 2048,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4kxl-tp1-kv-f16-context-4096",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 4096,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D21.37 · P719.47 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
-          "point_x": 4096,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4kxl-tp1-kv-f16-context-8192",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 8192,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D21.06 · P689.58 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
-          "point_x": 8192,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4kxl-tp1-kv-f16-context-16384",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 16384,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D20.49 · P639.46 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
-          "point_x": 16384,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4kxl-tp1-kv-f16-context-24576",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 24576,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D19.95 · P596.49 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
-          "point_x": 24576,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q4kxl-tp1-kv-f16-context-32768",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 32768,
-            "graph_mode": "off",
-            "kv": "f16"
-          },
-          "state": "lab-measured",
-          "label": "D19.45 · P564.86 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
-          "point_x": 32768,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-flagship-tp1-kv-q8-context-0",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 0,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D22.642 · P915.08 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
-          "point_x": 0,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-flagship-tp1-kv-q8-context-2048",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 2048,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D21.014 · P831.41 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
-          "point_x": 2048,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-flagship-tp1-kv-q8-context-4096",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 4096,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D19.763 · P822.29 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
-          "point_x": 4096,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-flagship-tp1-kv-q8-context-8192",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 8192,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D17.627 · P807.56 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
-          "point_x": 8192,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-flagship-tp1-kv-q8-context-16384",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 16384,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D14.139 · P760.36 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
-          "point_x": 16384,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-          "id": "measured-q5ks-flagship-tp1-kv-q8-context-24576",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 24576,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D11.904 · P750.99 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
-          "point_x": 24576,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
-        },
-        {
-            "id": "estimated-q4kxl-q8-context-0",
-            "match": {
-              "revision": "qwen3.8-27b",
-              "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-              "tp": 1,
-              "mtp": 0,
-              "active_context_tokens": 0,
-              "graph_mode": "off",
-              "kv": "q8_0"
-            },
-            "state": "estimated",
-            "label": "≈D21.534 · grade D",
-            "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-            "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-0",
-            "parent": "qwen38-q4kxl-q8-estimator-v1",
-            "retry": {
-              "status": "estimate-published",
-              "replacement": "measured-parent"
-            }
-          },
-          {
-            "id": "estimated-q4kxl-q8-context-2048",
-            "match": {
-              "revision": "qwen3.8-27b",
-              "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-              "tp": 1,
-              "mtp": 0,
-              "active_context_tokens": 2048,
-              "graph_mode": "off",
-              "kv": "q8_0"
-            },
-            "state": "estimated",
-            "label": "≈D19.991 · grade D",
-            "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-            "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-2048",
-            "parent": "qwen38-q4kxl-q8-estimator-v1",
-            "retry": {
-              "status": "estimate-published",
-              "replacement": "measured-parent"
-            }
-          },
-          {
-            "id": "estimated-q4kxl-q8-context-4096",
-            "match": {
-              "revision": "qwen3.8-27b",
-              "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-              "tp": 1,
-              "mtp": 0,
-              "active_context_tokens": 4096,
-              "graph_mode": "off",
-              "kv": "q8_0"
-            },
-            "state": "estimated",
-            "label": "≈D18.815 · grade D",
-            "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-            "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-4096",
-            "parent": "qwen38-q4kxl-q8-estimator-v1",
-            "retry": {
-              "status": "estimate-published",
-              "replacement": "measured-parent"
-            }
-          },
-          {
-            "id": "estimated-q4kxl-q8-context-8192",
-            "match": {
-              "revision": "qwen3.8-27b",
-              "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-              "tp": 1,
-              "mtp": 0,
-              "active_context_tokens": 8192,
-              "graph_mode": "off",
-              "kv": "q8_0"
-            },
-            "state": "estimated",
-            "label": "≈D16.771 · grade D",
-            "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-            "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-8192",
-            "parent": "qwen38-q4kxl-q8-estimator-v1",
-            "retry": {
-              "status": "estimate-published",
-              "replacement": "measured-parent"
-            }
-          },
-          {
-            "id": "estimated-q4kxl-q8-context-16384",
-            "match": {
-              "revision": "qwen3.8-27b",
-              "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-              "tp": 1,
-              "mtp": 0,
-              "active_context_tokens": 16384,
-              "graph_mode": "off",
-              "kv": "q8_0"
-            },
-            "state": "estimated",
-            "label": "≈D13.424 · grade D",
-            "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-            "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-16384",
-            "parent": "qwen38-q4kxl-q8-estimator-v1",
-            "retry": {
-              "status": "estimate-published",
-              "replacement": "measured-parent"
-            }
-          },
-          {
-            "id": "estimated-q4kxl-q8-context-24576",
-            "match": {
-              "revision": "qwen3.8-27b",
-              "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-              "tp": 1,
-              "mtp": 0,
-              "active_context_tokens": 24576,
-              "graph_mode": "off",
-              "kv": "q8_0"
-            },
-            "state": "estimated",
-            "label": "≈D11.276 · grade D",
-            "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-            "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-24576",
-            "parent": "qwen38-q4kxl-q8-estimator-v1",
-            "retry": {
-              "status": "estimate-published",
-              "replacement": "measured-parent"
-            }
-          },
-          {
-            "id": "estimated-q4kxl-q8-context-32768",
-            "match": {
-              "revision": "qwen3.8-27b",
-              "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
-              "tp": 1,
-              "mtp": 0,
-              "active_context_tokens": 32768,
-              "graph_mode": "off",
-              "kv": "q8_0"
-            },
-            "state": "estimated",
-            "label": "≈D9.756 · grade D",
-            "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-            "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-32768",
-            "parent": "qwen38-q4kxl-q8-estimator-v1",
-            "retry": {
-              "status": "estimate-published",
-              "replacement": "measured-parent"
-            }
-          },
-        {
-          "id": "measured-q5ks-flagship-tp1-kv-q8-context-32768",
-          "match": {
-            "revision": "qwen3.8-27b",
-            "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
-            "tp": 1,
-            "mtp": 0,
-            "active_context_tokens": 32768,
-            "graph_mode": "off",
-            "kv": "q8_0"
-          },
-          "state": "lab-measured",
-          "label": "D10.323 · P678.87 · raw sweep",
-          "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-          "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
-          "point_x": 32768,
-          "parent": "qwen38-tp1-raw-depth-sweep",
-          "retry": {
-            "status": "complete"
-          }
+      },
+      {
+        "key": "tp",
+        "label": "Tensor parallel",
+        "prefix": "TP",
+        "values": [
+          1
+        ]
+      },
+      {
+        "key": "mtp",
+        "label": "MTP depth",
+        "prefix": "MTP",
+        "values": [
+          0
+        ]
+      },
+      {
+        "key": "active_context_tokens",
+        "label": "Active context",
+        "values": [
+          0,
+          2048,
+          4096,
+          8192,
+          16384,
+          24576,
+          32768
+        ],
+        "value_labels": {
+          "0": "0",
+          "2048": "2K",
+          "4096": "4K",
+          "8192": "8K",
+          "16384": "16K",
+          "24576": "24K",
+          "32768": "32K"
         }
-      ]
-    }
-  ],
+      },
+      {
+        "key": "graph_mode",
+        "label": "Graph mode",
+        "values": [
+          "off",
+          "FULL_AND_PIECEWISE",
+          "PIECEWISE"
+        ],
+        "value_labels": {
+          "off": "off",
+          "FULL_AND_PIECEWISE": "full + piecewise",
+          "PIECEWISE": "piecewise"
+        }
+      },
+      {
+        "key": "kv",
+        "label": "KV cache",
+        "values": [
+          "f16",
+          "fp8_e4m3",
+          "fp8_e5m2"
+        ],
+        "value_labels": {
+          "f16": "F16",
+          "fp8_e4m3": "FP8 E4M3",
+          "fp8_e5m2": "FP8 E5M2"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "default-exact-gap",
+        "match": {
+          "revision": "*",
+          "artifact_id": "*",
+          "tp": "*",
+          "mtp": "*",
+          "active_context_tokens": "*",
+          "graph_mode": "*",
+          "kv": "*"
+        },
+        "state": "missing",
+        "label": "unmeasured exact cell",
+        "reason": "No result or frozen estimate binds every declared selector; configured maximum context never substitutes for active context.",
+        "parent": "qwen-tp1-parent-sentinel-program",
+        "retry": {
+          "status": "queued",
+          "trigger": "parent-or-calibrated-estimate"
+        }
+      }
+    ]
+  },
+  {
+    "id": "qwen36-tp1-vllm-xpu-autoround-mtp-matrix",
+    "label": "Qwen3.6 TP1 · vLLM XPU AutoRound MTP matrix",
+    "description": "252 meaningful native-MTP cells: the measured AutoRound artifact × MTP1–4 × seven exact active-context depths × off/full+piecewise/piecewise graph × f16/E4M3/E5M2 KV. Other artifacts stay outside this profile until their speculator binding is established.",
+    "fixed_selectors": {
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen36-tp1-vllm-xpu-autoround-native-mtp-v1",
+      "speculation_method": "native-mtp"
+    },
+    "axes": [
+      {
+        "key": "revision",
+        "label": "Weight revision",
+        "values": [
+          "qwen3.6-27b"
+        ]
+      },
+      {
+        "key": "artifact_id",
+        "label": "Quantized artifact",
+        "values": [
+          "qwen36-27b-autoround-w4a16-f5750c9"
+        ],
+        "value_labels": {
+          "qwen36-27b-autoround-w4a16-f5750c9": "AutoRound INT4 · webhie"
+        }
+      },
+      {
+        "key": "tp",
+        "label": "Tensor parallel",
+        "prefix": "TP",
+        "values": [
+          1
+        ]
+      },
+      {
+        "key": "mtp",
+        "label": "MTP depth",
+        "prefix": "MTP",
+        "values": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      {
+        "key": "active_context_tokens",
+        "label": "Active context",
+        "values": [
+          0,
+          2048,
+          4096,
+          8192,
+          16384,
+          24576,
+          32768
+        ],
+        "value_labels": {
+          "0": "0",
+          "2048": "2K",
+          "4096": "4K",
+          "8192": "8K",
+          "16384": "16K",
+          "24576": "24K",
+          "32768": "32K"
+        }
+      },
+      {
+        "key": "graph_mode",
+        "label": "Graph mode",
+        "values": [
+          "off",
+          "FULL_AND_PIECEWISE",
+          "PIECEWISE"
+        ],
+        "value_labels": {
+          "off": "off",
+          "FULL_AND_PIECEWISE": "full + piecewise",
+          "PIECEWISE": "piecewise"
+        }
+      },
+      {
+        "key": "kv",
+        "label": "KV cache",
+        "values": [
+          "f16",
+          "fp8_e4m3",
+          "fp8_e5m2"
+        ],
+        "value_labels": {
+          "f16": "F16",
+          "fp8_e4m3": "FP8 E4M3",
+          "fp8_e5m2": "FP8 E5M2"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "default-exact-gap",
+        "match": {
+          "revision": "*",
+          "artifact_id": "*",
+          "tp": "*",
+          "mtp": "*",
+          "active_context_tokens": "*",
+          "graph_mode": "*",
+          "kv": "*"
+        },
+        "state": "missing",
+        "label": "unmeasured exact cell",
+        "reason": "No result or frozen estimate binds every declared selector; configured maximum context never substitutes for active context.",
+        "parent": "qwen-tp1-parent-sentinel-program",
+        "retry": {
+          "status": "queued",
+          "trigger": "parent-or-calibrated-estimate"
+        }
+      }
+    ]
+  },
+  {
+    "id": "qwen36-tp1-llamacpp-sycl-mtp-matrix",
+    "label": "Qwen3.6 TP1 · llama.cpp SYCL MTP matrix",
+    "description": "336 meaningful llama.cpp SYCL speculative cells: three MTP-bearing GGUF artifacts × MTP1–4 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. MTP0 is represented in the separate target-only profile; vLLM compilation modes and FP8 KV are excluded.",
+    "fixed_selectors": {
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen36-tp1-llamacpp-sycl-embedded-mtp-v1",
+      "speculation_method": "embedded-mtp"
+    },
+    "axes": [
+      {
+        "key": "revision",
+        "label": "Weight revision",
+        "values": [
+          "qwen3.6-27b"
+        ]
+      },
+      {
+        "key": "artifact_id",
+        "label": "Quantized artifact",
+        "values": [
+          "qwen36-27b-unsloth-mtp-q4-0-20c9c45",
+          "qwen36-27b-unsloth-mtp-ud-q4-k-xl-4085665",
+          "qwen36-27b-unsloth-mtp-q8-0-5cb35eb"
+        ],
+        "value_labels": {
+          "qwen36-27b-unsloth-mtp-q4-0-20c9c45": "Q4_0 · unsloth MTP",
+          "qwen36-27b-unsloth-mtp-ud-q4-k-xl-4085665": "UD-Q4_K_XL · unsloth MTP",
+          "qwen36-27b-unsloth-mtp-q8-0-5cb35eb": "Q8_0 · unsloth embedded MTP"
+        }
+      },
+      {
+        "key": "tp",
+        "label": "Tensor parallel",
+        "prefix": "TP",
+        "values": [
+          1
+        ]
+      },
+      {
+        "key": "mtp",
+        "label": "MTP depth",
+        "prefix": "MTP",
+        "values": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      {
+        "key": "active_context_tokens",
+        "label": "Active context",
+        "values": [
+          0,
+          2048,
+          4096,
+          8192,
+          16384,
+          24576,
+          32768
+        ],
+        "value_labels": {
+          "0": "0",
+          "2048": "2K",
+          "4096": "4K",
+          "8192": "8K",
+          "16384": "16K",
+          "24576": "24K",
+          "32768": "32K"
+        }
+      },
+      {
+        "key": "graph_mode",
+        "label": "Graph mode",
+        "values": [
+          "off",
+          "SYCL"
+        ],
+        "value_labels": {
+          "off": "off",
+          "SYCL": "SYCL graph"
+        }
+      },
+      {
+        "key": "kv",
+        "label": "KV cache",
+        "values": [
+          "f16",
+          "q8_0"
+        ],
+        "value_labels": {
+          "f16": "F16",
+          "q8_0": "Q8_0"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "default-exact-gap",
+        "match": {
+          "revision": "*",
+          "artifact_id": "*",
+          "tp": "*",
+          "mtp": "*",
+          "active_context_tokens": "*",
+          "graph_mode": "*",
+          "kv": "*"
+        },
+        "state": "missing",
+        "label": "unmeasured exact cell",
+        "reason": "No result or frozen estimate binds every declared selector; configured maximum context never substitutes for active context.",
+        "parent": "qwen-tp1-parent-sentinel-program",
+        "retry": {
+          "status": "queued",
+          "trigger": "parent-or-calibrated-estimate"
+        }
+      }
+    ]
+  },
+  {
+    "id": "qwen36-tp1-llamacpp-sycl-target-matrix",
+    "label": "Qwen3.6 TP1 · llama.cpp SYCL target-only matrix",
+    "description": "140 meaningful target-only cells: all five Qwen3.6 GGUF target artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. Intrinsic MTP1–4 is never manufactured for target-only files; those depths live only in the separately bound MTP-bearing profile.",
+    "fixed_selectors": {
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen36-tp1-llamacpp-sycl-target-only-v1",
+      "speculation_method": "none"
+    },
+    "axes": [
+      {
+        "key": "revision",
+        "label": "Weight revision",
+        "values": [
+          "qwen3.6-27b"
+        ]
+      },
+      {
+        "key": "artifact_id",
+        "label": "Quantized artifact",
+        "values": [
+          "qwen36-27b-unsloth-mtp-q4-0-20c9c45",
+          "qwen36-27b-unsloth-mtp-ud-q4-k-xl-4085665",
+          "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
+          "qwen36-27b-unsloth-q8-0-82d411a",
+          "qwen36-27b-ggmlorg-q8-0-8a7ee08"
+        ],
+        "value_labels": {
+          "qwen36-27b-unsloth-mtp-q4-0-20c9c45": "Q4_0 · unsloth MTP",
+          "qwen36-27b-unsloth-mtp-ud-q4-k-xl-4085665": "UD-Q4_K_XL · unsloth MTP",
+          "qwen36-27b-unsloth-mtp-q8-0-5cb35eb": "Q8_0 · unsloth embedded MTP",
+          "qwen36-27b-unsloth-q8-0-82d411a": "Q8_0 · unsloth target",
+          "qwen36-27b-ggmlorg-q8-0-8a7ee08": "Q8_0 · ggml-org"
+        }
+      },
+      {
+        "key": "tp",
+        "label": "Tensor parallel",
+        "prefix": "TP",
+        "values": [
+          1
+        ]
+      },
+      {
+        "key": "mtp",
+        "label": "MTP depth",
+        "prefix": "MTP",
+        "values": [
+          0
+        ]
+      },
+      {
+        "key": "active_context_tokens",
+        "label": "Active context",
+        "values": [
+          0,
+          2048,
+          4096,
+          8192,
+          16384,
+          24576,
+          32768
+        ],
+        "value_labels": {
+          "0": "0",
+          "2048": "2K",
+          "4096": "4K",
+          "8192": "8K",
+          "16384": "16K",
+          "24576": "24K",
+          "32768": "32K"
+        }
+      },
+      {
+        "key": "graph_mode",
+        "label": "Graph mode",
+        "values": [
+          "off",
+          "SYCL"
+        ],
+        "value_labels": {
+          "off": "off",
+          "SYCL": "SYCL graph"
+        }
+      },
+      {
+        "key": "kv",
+        "label": "KV cache",
+        "values": [
+          "f16",
+          "q8_0"
+        ],
+        "value_labels": {
+          "f16": "F16",
+          "q8_0": "Q8_0"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "default-exact-gap",
+        "match": {
+          "revision": "*",
+          "artifact_id": "*",
+          "tp": "*",
+          "mtp": "*",
+          "active_context_tokens": "*",
+          "graph_mode": "*",
+          "kv": "*"
+        },
+        "state": "missing",
+        "label": "unmeasured exact cell",
+        "reason": "No result or frozen estimate binds every declared selector; configured maximum context never substitutes for active context.",
+        "parent": "qwen-tp1-parent-sentinel-program",
+        "retry": {
+          "status": "queued",
+          "trigger": "parent-or-calibrated-estimate"
+        }
+      }
+    ]
+  },
+  {
+    "id": "qwen38-tp1-vllm-xpu-target-matrix",
+    "label": "Qwen3.8 TP1 · vLLM XPU target-only matrix",
+    "description": "126 meaningful target-only vLLM XPU cells: two runtime-compatible artifacts × MTP0 × seven exact active-context depths × off/full+piecewise/piecewise graph × f16/E4M3/E5M2 KV. MTP depths are not blindly attached to the official FP8 artifact without an exact speculator/package binding.",
+    "fixed_selectors": {
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp1-vllm-xpu-target-only-v1",
+      "speculation_method": "none"
+    },
+    "axes": [
+      {
+        "key": "revision",
+        "label": "Weight revision",
+        "values": [
+          "qwen3.8-27b"
+        ]
+      },
+      {
+        "key": "artifact_id",
+        "label": "Quantized artifact",
+        "values": [
+          "qwen38-27b-autoround-w4a16-bce40ca",
+          "qwen38-27b-official-fp8-017b9c7"
+        ],
+        "value_labels": {
+          "qwen38-27b-autoround-w4a16-bce40ca": "AutoRound INT4 · devan-carlin",
+          "qwen38-27b-official-fp8-017b9c7": "FP8 · official"
+        }
+      },
+      {
+        "key": "tp",
+        "label": "Tensor parallel",
+        "prefix": "TP",
+        "values": [
+          1
+        ]
+      },
+      {
+        "key": "mtp",
+        "label": "MTP depth",
+        "prefix": "MTP",
+        "values": [
+          0
+        ]
+      },
+      {
+        "key": "active_context_tokens",
+        "label": "Active context",
+        "values": [
+          0,
+          2048,
+          4096,
+          8192,
+          16384,
+          24576,
+          32768
+        ],
+        "value_labels": {
+          "0": "0",
+          "2048": "2K",
+          "4096": "4K",
+          "8192": "8K",
+          "16384": "16K",
+          "24576": "24K",
+          "32768": "32K"
+        }
+      },
+      {
+        "key": "graph_mode",
+        "label": "Graph mode",
+        "values": [
+          "off",
+          "FULL_AND_PIECEWISE",
+          "PIECEWISE"
+        ],
+        "value_labels": {
+          "off": "off",
+          "FULL_AND_PIECEWISE": "full + piecewise",
+          "PIECEWISE": "piecewise"
+        }
+      },
+      {
+        "key": "kv",
+        "label": "KV cache",
+        "values": [
+          "f16",
+          "fp8_e4m3",
+          "fp8_e5m2"
+        ],
+        "value_labels": {
+          "f16": "F16",
+          "fp8_e4m3": "FP8 E4M3",
+          "fp8_e5m2": "FP8 E5M2"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "default-exact-gap",
+        "match": {
+          "revision": "*",
+          "artifact_id": "*",
+          "tp": "*",
+          "mtp": "*",
+          "active_context_tokens": "*",
+          "graph_mode": "*",
+          "kv": "*"
+        },
+        "state": "missing",
+        "label": "unmeasured exact cell",
+        "reason": "No result or frozen estimate binds every declared selector; configured maximum context never substitutes for active context.",
+        "parent": "qwen-tp1-parent-sentinel-program",
+        "retry": {
+          "status": "queued",
+          "trigger": "parent-or-calibrated-estimate"
+        }
+      }
+    ]
+  },
+  {
+    "id": "qwen38-tp1-vllm-xpu-autoround-mtp-matrix",
+    "label": "Qwen3.8 TP1 · vLLM XPU AutoRound MTP matrix",
+    "description": "252 meaningful native-MTP cells: the measured AutoRound artifact × MTP1–4 × seven exact active-context depths × off/full+piecewise/piecewise graph × f16/E4M3/E5M2 KV. The official FP8 artifact stays outside this profile until its exact speculator binding is established.",
+    "fixed_selectors": {
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp1-vllm-xpu-autoround-native-mtp-v1",
+      "speculation_method": "native-mtp"
+    },
+    "axes": [
+      {
+        "key": "revision",
+        "label": "Weight revision",
+        "values": [
+          "qwen3.8-27b"
+        ]
+      },
+      {
+        "key": "artifact_id",
+        "label": "Quantized artifact",
+        "values": [
+          "qwen38-27b-autoround-w4a16-bce40ca"
+        ],
+        "value_labels": {
+          "qwen38-27b-autoround-w4a16-bce40ca": "AutoRound INT4 · devan-carlin"
+        }
+      },
+      {
+        "key": "tp",
+        "label": "Tensor parallel",
+        "prefix": "TP",
+        "values": [
+          1
+        ]
+      },
+      {
+        "key": "mtp",
+        "label": "MTP depth",
+        "prefix": "MTP",
+        "values": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      {
+        "key": "active_context_tokens",
+        "label": "Active context",
+        "values": [
+          0,
+          2048,
+          4096,
+          8192,
+          16384,
+          24576,
+          32768
+        ],
+        "value_labels": {
+          "0": "0",
+          "2048": "2K",
+          "4096": "4K",
+          "8192": "8K",
+          "16384": "16K",
+          "24576": "24K",
+          "32768": "32K"
+        }
+      },
+      {
+        "key": "graph_mode",
+        "label": "Graph mode",
+        "values": [
+          "off",
+          "FULL_AND_PIECEWISE",
+          "PIECEWISE"
+        ],
+        "value_labels": {
+          "off": "off",
+          "FULL_AND_PIECEWISE": "full + piecewise",
+          "PIECEWISE": "piecewise"
+        }
+      },
+      {
+        "key": "kv",
+        "label": "KV cache",
+        "values": [
+          "f16",
+          "fp8_e4m3",
+          "fp8_e5m2"
+        ],
+        "value_labels": {
+          "f16": "F16",
+          "fp8_e4m3": "FP8 E4M3",
+          "fp8_e5m2": "FP8 E5M2"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "default-exact-gap",
+        "match": {
+          "revision": "*",
+          "artifact_id": "*",
+          "tp": "*",
+          "mtp": "*",
+          "active_context_tokens": "*",
+          "graph_mode": "*",
+          "kv": "*"
+        },
+        "state": "missing",
+        "label": "unmeasured exact cell",
+        "reason": "No result or frozen estimate binds every declared selector; configured maximum context never substitutes for active context.",
+        "parent": "qwen-tp1-parent-sentinel-program",
+        "retry": {
+          "status": "queued",
+          "trigger": "parent-or-calibrated-estimate"
+        }
+      }
+    ]
+  },
+  {
+    "id": "qwen38-tp1-llamacpp-sycl-target-matrix",
+    "label": "Qwen3.8 TP1 · llama.cpp SYCL target-only matrix",
+    "description": "112 meaningful target-only cells: four GGUF artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. These cells preserve the 35 raw measurements and seven frozen estimates; no MTP speed is transferred into them.",
+    "fixed_selectors": {
+      "runtime_family": "llama.cpp SYCL"
+    },
+    "axes": [
+      {
+        "key": "revision",
+        "label": "Weight revision",
+        "values": [
+          "qwen3.8-27b"
+        ]
+      },
+      {
+        "key": "artifact_id",
+        "label": "Quantized artifact",
+        "values": [
+          "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "qwen38-27b-ggmlorg-q8-0-0669b98",
+          "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207"
+        ],
+        "value_labels": {
+          "qwen38-27b-ggmlorg-q4-k-m-0669b98": "Q4_K_M · ggml-org",
+          "qwen38-27b-ggmlorg-q8-0-0669b98": "Q8_0 · ggml-org",
+          "qwen38-27b-unsloth-ud-q5-k-s-4ca7207": "UD-Q5_K_S · unsloth",
+          "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207": "UD-Q4_K_XL · unsloth"
+        }
+      },
+      {
+        "key": "tp",
+        "label": "Tensor parallel",
+        "prefix": "TP",
+        "values": [
+          1
+        ]
+      },
+      {
+        "key": "mtp",
+        "label": "MTP depth",
+        "prefix": "MTP",
+        "values": [
+          0
+        ]
+      },
+      {
+        "key": "active_context_tokens",
+        "label": "Active context",
+        "values": [
+          0,
+          2048,
+          4096,
+          8192,
+          16384,
+          24576,
+          32768
+        ],
+        "value_labels": {
+          "0": "0",
+          "2048": "2K",
+          "4096": "4K",
+          "8192": "8K",
+          "16384": "16K",
+          "24576": "24K",
+          "32768": "32K"
+        }
+      },
+      {
+        "key": "graph_mode",
+        "label": "Graph mode",
+        "values": [
+          "off",
+          "SYCL"
+        ],
+        "value_labels": {
+          "off": "off",
+          "SYCL": "SYCL graph"
+        }
+      },
+      {
+        "key": "kv",
+        "label": "KV cache",
+        "values": [
+          "f16",
+          "q8_0"
+        ],
+        "value_labels": {
+          "f16": "F16",
+          "q8_0": "Q8_0"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "default-exact-gap",
+        "match": {
+          "revision": "*",
+          "artifact_id": "*",
+          "tp": "*",
+          "mtp": "*",
+          "active_context_tokens": "*",
+          "graph_mode": "*",
+          "kv": "*"
+        },
+        "state": "missing",
+        "label": "unmeasured exact cell",
+        "reason": "No result or frozen estimate binds every declared selector; configured maximum context never substitutes for active context.",
+        "parent": "qwen-tp1-parent-sentinel-program",
+        "retry": {
+          "status": "queued",
+          "trigger": "parent-or-calibrated-estimate"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-f16-context-0",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 0,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D24.81 · P825.24 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-f16-context",
+        "point_x": 0,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-f16-context-2048",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 2048,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D24.46 · P919.67 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-f16-context",
+        "point_x": 2048,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-f16-context-4096",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 4096,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D24.25 · P892.64 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-f16-context",
+        "point_x": 4096,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-f16-context-8192",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 8192,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D23.83 · P850.97 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-f16-context",
+        "point_x": 8192,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-f16-context-16384",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 16384,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D23.1 · P779.5 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-f16-context",
+        "point_x": 16384,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-f16-context-24576",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 24576,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D22.42 · P719.39 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-f16-context",
+        "point_x": 24576,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-f16-context-32768",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 32768,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D21.77 · P667.83 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-f16-context",
+        "point_x": 32768,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-q8-context-0",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 0,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D24.27 · P817.78 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-q8-context",
+        "point_x": 0,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-q8-context-2048",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 2048,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D22.45 · P912.17 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-q8-context",
+        "point_x": 2048,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-q8-context-4096",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 4096,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D21.05 · P887.17 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-q8-context",
+        "point_x": 4096,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-q8-context-8192",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 8192,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D18.68 · P843.21 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-q8-context",
+        "point_x": 8192,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-q8-context-16384",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 16384,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D14.86 · P772.01 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-q8-context",
+        "point_x": 16384,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-q8-context-24576",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 24576,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D12.4 · P711.48 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-q8-context",
+        "point_x": 24576,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4km-tp1-kv-q8-context-32768",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 32768,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D10.66 · P662.56 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4km-tp1-kv-q8-context",
+        "point_x": 32768,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-tp1-kv-f16-context-0",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 0,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D22.72 · P849.3 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-tp1-kv-f16-context",
+        "point_x": 0,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-tp1-kv-f16-context-2048",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 2048,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D22.37 · P778.35 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-tp1-kv-f16-context",
+        "point_x": 2048,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-tp1-kv-f16-context-4096",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 4096,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D22.13 · P759.39 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-tp1-kv-f16-context",
+        "point_x": 4096,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-tp1-kv-f16-context-8192",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 8192,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D21.79 · P726.59 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-tp1-kv-f16-context",
+        "point_x": 8192,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-tp1-kv-f16-context-16384",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 16384,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D21.19 · P671.59 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-tp1-kv-f16-context",
+        "point_x": 16384,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-tp1-kv-f16-context-24576",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 24576,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D20.61 · P625.83 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-tp1-kv-f16-context",
+        "point_x": 24576,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-tp1-kv-f16-context-32768",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 32768,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D20.09 · P588.21 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-tp1-kv-f16-context",
+        "point_x": 32768,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4kxl-tp1-kv-f16-context-0",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 0,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D21.81 · P762.57 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "point_x": 0,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4kxl-tp1-kv-f16-context-2048",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 2048,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D21.53 · P735.45 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "point_x": 2048,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4kxl-tp1-kv-f16-context-4096",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 4096,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D21.37 · P719.47 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "point_x": 4096,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4kxl-tp1-kv-f16-context-8192",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 8192,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D21.06 · P689.58 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "point_x": 8192,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4kxl-tp1-kv-f16-context-16384",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 16384,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D20.49 · P639.46 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "point_x": 16384,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4kxl-tp1-kv-f16-context-24576",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 24576,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D19.95 · P596.49 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "point_x": 24576,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q4kxl-tp1-kv-f16-context-32768",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 32768,
+          "graph_mode": "off",
+          "kv": "f16"
+        },
+        "state": "lab-measured",
+        "label": "D19.45 · P564.86 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "point_x": 32768,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-flagship-tp1-kv-q8-context-0",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 0,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D22.642 · P915.08 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
+        "point_x": 0,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-flagship-tp1-kv-q8-context-2048",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 2048,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D21.014 · P831.41 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
+        "point_x": 2048,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-flagship-tp1-kv-q8-context-4096",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 4096,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D19.763 · P822.29 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
+        "point_x": 4096,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-flagship-tp1-kv-q8-context-8192",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 8192,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D17.627 · P807.56 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
+        "point_x": 8192,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-flagship-tp1-kv-q8-context-16384",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 16384,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D14.139 · P760.36 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
+        "point_x": 16384,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "measured-q5ks-flagship-tp1-kv-q8-context-24576",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 24576,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D11.904 · P750.99 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
+        "point_x": 24576,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      },
+      {
+        "id": "estimated-q4kxl-q8-context-0",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 0,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "estimated",
+        "label": "≈D21.534 · grade D",
+        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
+        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-0",
+        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "retry": {
+          "status": "estimate-published",
+          "replacement": "measured-parent"
+        }
+      },
+      {
+        "id": "estimated-q4kxl-q8-context-2048",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 2048,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "estimated",
+        "label": "≈D19.991 · grade D",
+        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
+        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-2048",
+        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "retry": {
+          "status": "estimate-published",
+          "replacement": "measured-parent"
+        }
+      },
+      {
+        "id": "estimated-q4kxl-q8-context-4096",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 4096,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "estimated",
+        "label": "≈D18.815 · grade D",
+        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
+        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-4096",
+        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "retry": {
+          "status": "estimate-published",
+          "replacement": "measured-parent"
+        }
+      },
+      {
+        "id": "estimated-q4kxl-q8-context-8192",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 8192,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "estimated",
+        "label": "≈D16.771 · grade D",
+        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
+        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-8192",
+        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "retry": {
+          "status": "estimate-published",
+          "replacement": "measured-parent"
+        }
+      },
+      {
+        "id": "estimated-q4kxl-q8-context-16384",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 16384,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "estimated",
+        "label": "≈D13.424 · grade D",
+        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
+        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-16384",
+        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "retry": {
+          "status": "estimate-published",
+          "replacement": "measured-parent"
+        }
+      },
+      {
+        "id": "estimated-q4kxl-q8-context-24576",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 24576,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "estimated",
+        "label": "≈D11.276 · grade D",
+        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
+        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-24576",
+        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "retry": {
+          "status": "estimate-published",
+          "replacement": "measured-parent"
+        }
+      },
+      {
+        "id": "estimated-q4kxl-q8-context-32768",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 32768,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "estimated",
+        "label": "≈D9.756 · grade D",
+        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
+        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-32768",
+        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "retry": {
+          "status": "estimate-published",
+          "replacement": "measured-parent"
+        }
+      },
+      {
+        "id": "measured-q5ks-flagship-tp1-kv-q8-context-32768",
+        "match": {
+          "revision": "qwen3.8-27b",
+          "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "tp": 1,
+          "mtp": 0,
+          "active_context_tokens": 32768,
+          "graph_mode": "off",
+          "kv": "q8_0"
+        },
+        "state": "lab-measured",
+        "label": "D10.323 · P678.87 · raw sweep",
+        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q5ks-flagship-tp1-kv-q8-context",
+        "point_x": 32768,
+        "parent": "qwen38-tp1-raw-depth-sweep",
+        "retry": {
+          "status": "complete"
+        }
+      }
+    ]
+  },
+  {
+    "id": "qwen38-tp1-llamacpp-sycl-mtp-package-matrix",
+    "label": "Qwen3.8 TP1 · llama.cpp SYCL MTP-package matrix",
+    "description": "224 meaningful package cells: the two targets pinned with the inspected Unsloth Q4_0 MTP draft × MTP1–4 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. This is an exact package backlog; no Qwen3.6 speed or quality transfers.",
+    "fixed_selectors": {
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp1-llamacpp-sycl-external-mtp-v1",
+      "speculation_method": "external-mtp-draft",
+      "speculator_artifact_id": "qwen38-27b-mtp-q4-0-50d9ce5"
+    },
+    "axes": [
+      {
+        "key": "revision",
+        "label": "Weight revision",
+        "values": [
+          "qwen3.8-27b"
+        ]
+      },
+      {
+        "key": "artifact_id",
+        "label": "Quantized artifact",
+        "values": [
+          "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+          "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207"
+        ],
+        "value_labels": {
+          "qwen38-27b-unsloth-ud-q5-k-s-4ca7207": "UD-Q5_K_S · unsloth",
+          "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207": "UD-Q4_K_XL · unsloth"
+        }
+      },
+      {
+        "key": "tp",
+        "label": "Tensor parallel",
+        "prefix": "TP",
+        "values": [
+          1
+        ]
+      },
+      {
+        "key": "mtp",
+        "label": "MTP depth",
+        "prefix": "MTP",
+        "values": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      {
+        "key": "active_context_tokens",
+        "label": "Active context",
+        "values": [
+          0,
+          2048,
+          4096,
+          8192,
+          16384,
+          24576,
+          32768
+        ],
+        "value_labels": {
+          "0": "0",
+          "2048": "2K",
+          "4096": "4K",
+          "8192": "8K",
+          "16384": "16K",
+          "24576": "24K",
+          "32768": "32K"
+        }
+      },
+      {
+        "key": "graph_mode",
+        "label": "Graph mode",
+        "values": [
+          "off",
+          "SYCL"
+        ],
+        "value_labels": {
+          "off": "off",
+          "SYCL": "SYCL graph"
+        }
+      },
+      {
+        "key": "kv",
+        "label": "KV cache",
+        "values": [
+          "f16",
+          "q8_0"
+        ],
+        "value_labels": {
+          "f16": "F16",
+          "q8_0": "Q8_0"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "id": "default-exact-gap",
+        "match": {
+          "revision": "*",
+          "artifact_id": "*",
+          "tp": "*",
+          "mtp": "*",
+          "active_context_tokens": "*",
+          "graph_mode": "*",
+          "kv": "*"
+        },
+        "state": "missing",
+        "label": "unmeasured exact cell",
+        "reason": "No result or frozen estimate binds every declared selector; configured maximum context never substitutes for active context.",
+        "parent": "qwen-tp1-parent-sentinel-program",
+        "retry": {
+          "status": "queued",
+          "trigger": "parent-or-calibrated-estimate"
+        }
+      }
+    ]
+  }
+],
   "coverage_views": [
     {
       "id": "q36-q4-0-mtp-by-tp",
@@ -4521,6 +5233,12 @@
       "state": "quarantined",
       "reason": "The least-compounded TP1 target-only anchor matched only 3/20 stable-set oracle outputs.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json"
+    },
+    {
+      "selectors": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-q8-0-82d411a", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "speculation_method": "same-artifact-intrinsic-mtp", "mtp": [1, 2, 3, 4]},
+      "state": "unsupported",
+      "reason": "The checksum-pinned target-only Q8_0 file has mtp_included=false. Same-artifact intrinsic MTP1–4 therefore requires a different MTP-bearing artifact/package and is excluded from the target-only contract; this does not close separately bound external drafts.",
+      "evidence": "experiments/qwen36-27b-q8-gguf-b70/model-manifest.json"
     }
   ],
   "estimates": [
