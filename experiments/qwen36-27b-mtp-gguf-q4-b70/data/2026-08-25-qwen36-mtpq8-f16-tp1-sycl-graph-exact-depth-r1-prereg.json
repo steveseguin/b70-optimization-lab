@@ -1,0 +1,83 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-embedded-mtp-q8-model-overlay.v1",
+  "campaign_id": "qwen36-mtpq8-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+  "state": "preregistered-not-launched",
+  "sealing_status": "sealed",
+  "purpose": "Fill only the seven Qwen3.6 embedded-MTP Q8_0 artifact TP1/MTP0/SYCL-graph/F16-KV exact active-context cells by changing only the model identity from the passed target-Q8/F16 R4 packet.",
+  "base": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-sycl-graph-exact-depth-r4-prereg.json",
+    "manifest_sha256": "32ffe76461abcfe2b57606d9d25cb3240f3b6705e0bdcacc6d52465d355b070b",
+    "runner_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-f16-tp1-sycl-graph-exact-depth-r4.py",
+    "runner_sha256": "ed3deb0c739dcadab97c26532b8bd4549178932c1926a9a0338d383e985f4602"
+  },
+  "accepted_graph_off_embedded_mtp_reference": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-exact-depth-prereg.json",
+    "manifest_sha256": "d4cd3fe61fc1e78ecdf4f2bffbcb8db808d484dcdb0d03fa170a83a213af5089",
+    "result_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-exact-depth-result.json",
+    "result_sha256": "bec6f1427a0fd02b029522af54eccaa320e86eedc4e0b7d12d1b1c3effdb7b7e",
+    "measurement_id": "q36-mtpq8-tp1-kv-f16-context",
+    "authority_transfer": "model identity and workload comparison only; no graph-off speed, quality, graph, record, or site authority transfers"
+  },
+  "model_identity_delta": {
+    "only_runtime_delta": "replace the target-only Q8_0 GGUF with the checksum-pinned embedded-MTP Q8_0 GGUF; MTP remains disabled at depth 0",
+    "from_artifact_id": "qwen36-27b-unsloth-q8-0-82d411a",
+    "to_artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
+    "model": {
+      "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+      "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+      "revision_binding": "Hugging Face blobs metadata and retained B70 evidence bind this exact MTP-bearing Q8_0 filename, size, and SHA-256 to the pinned revision.",
+      "revision_binding_source": "https://huggingface.co/api/models/unsloth/Qwen3.6-27B-MTP-GGUF/revision/5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace?blobs=true",
+      "retained_identity_evidence": "experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json",
+      "path": "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+      "size_bytes": 29047084160,
+      "sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "direct_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "ordinary_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "embedded_mtp_capability": true
+    },
+    "mtp_selector": {
+      "value": 0,
+      "interpretation": "target-only execution of an MTP-bearing artifact; no draft tokens are requested or claimed"
+    }
+  },
+  "source_patch_chain_in_order": [
+    {
+      "path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-evidence-port-20260825.patch",
+      "sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892"
+    },
+    {
+      "path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-pointer-stable-r2-20260825.patch",
+      "sha256": "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3"
+    },
+    {
+      "path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-capacity-scaled-r3-20260825.patch",
+      "sha256": "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"
+    }
+  ],
+  "preserved": {
+    "contexts": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "tp": 1,
+    "mtp": 0,
+    "kv": "f16",
+    "graph_on_cache8": true,
+    "source_backend_build_and_32_dso_closure": true,
+    "three_patch_chain": true,
+    "environment_and_verbose_argv": true,
+    "phase_aware_prefill_and_decode_gates": true,
+    "create_only_lifecycle": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+    "exact_ack": "RUN qwen36-mtpq8-f16-tp1-sycl-graph-exact-depth-20260825-r1"
+  },
+  "authority": {
+    "raw_cells_require_all_existing_gates": true,
+    "quality_gate_required_before_publication": true,
+    "site_publication_authorized": false,
+    "record_or_submission_authorized": false,
+    "quality_claim_authorized": false,
+    "graph_estimates_forbidden": true,
+    "protected_graph_off_values_must_not_be_replaced": true,
+    "speed_floor": null
+  }
+}
