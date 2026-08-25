@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Qwen3 30B-A3B · General + Coder on Intel Arc Pro B70 — neural.download</title>
-<meta name="description" content="One Qwen3 MoE family with separately measured General Instruct 2507 and Coder siblings. Their core geometry transfers implementation work, but their weights and dense FFN details are not interchangeable. Every number links to its measured proof.">
+<meta name="description" content="Alibaba&#x27;s Qwen3 30B mixture-of-experts (about 3B active per word) in its General Instruct and Coder forms. Fast on one Arc Pro B70; the two siblings share a design but not their weights. Every number links to its measured proof.">
 <link rel="canonical" href="https://neural.download/models/qwen-30b-a3b.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://neural.download/models/qwen-30b-a3b.html">
 <meta property="og:title" content="Qwen3 30B-A3B · General + Coder on Intel Arc Pro B70 — neural.download">
-<meta property="og:description" content="One Qwen3 MoE family with separately measured General Instruct 2507 and Coder siblings. Their core geometry transfers implementation work, but their weights and dense FFN details are not interchangeable.">
+<meta property="og:description" content="Alibaba&#x27;s Qwen3 30B mixture-of-experts (about 3B active per word) in its General Instruct and Coder forms. Fast on one Arc Pro B70; the two siblings share a design but not their weights.">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta name="theme-color" content="#f6f1e5">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "Qwen3 30B-A3B · General + Coder", "description": "One Qwen3 MoE family with separately measured General Instruct 2507 and Coder siblings. Their core geometry transfers implementation work, but their weights and dense FFN details are not interchangeable.", "url": "https://neural.download/models/qwen-30b-a3b.html", "dateModified": "2026-08-24", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "Qwen3 30B-A3B · General + Coder", "description": "Alibaba's Qwen3 30B mixture-of-experts (about 3B active per word) in its General Instruct and Coder forms. Fast on one Arc Pro B70; the two siblings share a design but not their weights.", "url": "https://neural.download/models/qwen-30b-a3b.html", "dateModified": "2026-08-24", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
 <style>
@@ -127,6 +127,7 @@
   details.fine { margin:0 0 22px; color:var(--muted); font-size:12.5px; }
   details.fine summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
   details.fine p { margin:6px 0 0; }
+  details.fine .closure-note { margin-top:8px; }
   .signals { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin:0 0 22px; }
   .signal { border:2px solid var(--ink); padding:12px 13px; background:var(--paper); }
   .signal span { display:block; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -196,7 +197,7 @@
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Qwen3 30B-A3B · General + Coder</p>
   <h1>Qwen3 30B-A3B · General + Coder</h1>
-  <p>One Qwen3 MoE family with separately measured General Instruct 2507 and Coder siblings. Their core geometry transfers implementation work, but their weights and dense FFN details are not interchangeable.</p>
+  <p>Alibaba&#x27;s Qwen3 30B mixture-of-experts (about 3B active per word) in its General Instruct and Coder forms. Fast on one Arc Pro B70; the two siblings share a design but not their weights.</p>
   <a class="hero-headline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json" title="rapid-qwen3-coder-30b-a3b-udq4 · 12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled"><span class="big">108.12</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 81 words a second</span><small>qwen3-coder-30b-a3b-instruct · UD-Q4_K_XL · llama.cpp SYCL fdb1db877 · 1× B70 · Evidence D of A–D</small></a>
   <div class="lineage"><span>Qwen3 30B-A3B generation · shared publisher/architecture family</span></div>
 </div></header>
@@ -210,7 +211,7 @@
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid"><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">
   <div class="packet-top"><span>qwen3-30b-a3b-instruct-2507</span><span class="packet-badges"><b>B70-measured narrow baseline</b></span></div>
-  <h3>Qwen3 30B-A3B Instruct 2507 UD-Q4_K_XL</h3>
+  <h3 title="Qwen3 30B-A3B Instruct 2507 UD-Q4_K_XL">Qwen3 30B-A3B Instruct 2507 UD-Q4_K_XL</h3>
   <p class="packet-promise">Measured evidence: <b>107.48 tok/s</b> on 1× B70 · rapid research snapshot</p>
   <small class="packet-workload">12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, request prompt cache disabled</small>
   <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
@@ -218,7 +219,7 @@
   <div class="coverage-rail"><span>General Instruct</span><span>decode</span><span>TTFT</span><span>TP1</span><span>cache-zero strict suite</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json">
   <div class="packet-top"><span>qwen3-coder-30b-a3b-instruct</span><span class="packet-badges"><b>B70-measured narrow baseline</b></span></div>
-  <h3>Qwen3-Coder 30B-A3B Instruct UD-Q4_K_XL</h3>
+  <h3 title="Qwen3-Coder 30B-A3B Instruct UD-Q4_K_XL">Qwen3-Coder 30B-A3B Instruct UD-Q4_K_XL</h3>
   <p class="packet-promise">Measured evidence: <b>108.12 tok/s</b> on 1× B70 · rapid research snapshot</p>
   <small class="packet-workload">12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled</small>
   <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
@@ -233,12 +234,12 @@
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/qwen-30b-a3b.json">family data</a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="qwen-30b-a3b-siblings">
-  <div class="chart-head"><div><h3>Separately measured sibling variants</h3><p>1 = General Instruct 2507; 2 = Coder. Shared core geometry does not make these speed or quality results transferable.</p></div><div class="metric-switch"></div></div>
+  <div class="chart-head"><div><h3 title="Separately measured sibling variants">Sibling models compared</h3><p>1 = General Instruct 2507; 2 = Coder. Shared core geometry does not make these speed or quality results transferable.</p></div><div class="metric-switch"></div></div>
   <div class="stat-row"><span class="l">General Instruct 2507 · model sibling 1</span><span class="stat-values"><span class="stat-metric"><b>107.48</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>166.95</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · promoted representative row · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">evidence</a></span></div><div class="stat-row"><span class="l">Coder · model sibling 2</span><span class="stat-values"><span class="stat-metric"><b>108.12</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>164.13</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · promoted representative row · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>General Instruct 2507</span><span><i style="background:var(--s2)"></i>Coder</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">evidence 1</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json">evidence 2</a></span></figcaption>
 </figure></div>
-  <details class="fine"><summary>Transfer boundary</summary><p>Qwen3MoeForCausalLM, 48 layers, 2048 hidden. partial transfer only; General Instruct 2507 and Coder are sibling model variants, not interchangeable revisions. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
+  <details class="fine"><summary>Fine print</summary><p>Qwen3MoeForCausalLM, 48 layers, 2048 hidden. partial transfer only; General Instruct 2507 and Coder are sibling model variants, not interchangeable revisions. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2></div></div>
   <div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this family. The lab’s one measured sweep so far is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>; the projection block below includes a projected users curve where a projection exists.</p></div>

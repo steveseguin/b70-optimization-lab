@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DeepSeek V4 · Flash 180B on Intel Arc Pro B70 — neural.download</title>
-<meta name="description" content="A closed four-B70 TP4+EP research frontier for the experimental DeepSeek V4 Flash uniform-K160 checkpoint, with target-verified DSpark7 decode and its provenance caveat kept attached. Every number links to its measured proof.">
+<meta name="description" content="DeepSeek&#x27;s large mixture-of-experts reasoning model in a community-trimmed 180B form (about 13B active per word). A research-grade deployment: it needs all four B70 cards and an experimental checkpoint, so treat it as a look at what the biggest open models can do on this hardware, not a daily driver. Every number links to its measured proof.">
 <link rel="canonical" href="https://neural.download/models/deepseek-v4.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://neural.download/models/deepseek-v4.html">
 <meta property="og:title" content="DeepSeek V4 · Flash 180B on Intel Arc Pro B70 — neural.download">
-<meta property="og:description" content="A closed four-B70 TP4+EP research frontier for the experimental DeepSeek V4 Flash uniform-K160 checkpoint, with target-verified DSpark7 decode and its provenance caveat kept attached.">
+<meta property="og:description" content="DeepSeek&#x27;s large mixture-of-experts reasoning model in a community-trimmed 180B form (about 13B active per word). A research-grade deployment: it needs all four B70 cards and an experimental checkpoint, so treat it as a look at what the biggest open models can do on this hardware, not a daily driver.">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta name="theme-color" content="#f6f1e5">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "DeepSeek V4 · Flash 180B", "description": "A closed four-B70 TP4+EP research frontier for the experimental DeepSeek V4 Flash uniform-K160 checkpoint, with target-verified DSpark7 decode and its provenance caveat kept attached.", "url": "https://neural.download/models/deepseek-v4.html", "dateModified": "2026-08-24", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "DeepSeek V4 · Flash 180B", "description": "DeepSeek's large mixture-of-experts reasoning model in a community-trimmed 180B form (about 13B active per word). A research-grade deployment: it needs all four B70 cards and an experimental checkpoint, so treat it as a look at what the biggest open models can do on this hardware, not a daily driver.", "url": "https://neural.download/models/deepseek-v4.html", "dateModified": "2026-08-24", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
 <style>
@@ -127,6 +127,7 @@
   details.fine { margin:0 0 22px; color:var(--muted); font-size:12.5px; }
   details.fine summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
   details.fine p { margin:6px 0 0; }
+  details.fine .closure-note { margin-top:8px; }
   .signals { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin:0 0 22px; }
   .signal { border:2px solid var(--ink); padding:12px 13px; background:var(--paper); }
   .signal span { display:block; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -196,7 +197,7 @@
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / DeepSeek V4 · Flash 180B</p>
   <h1>DeepSeek V4 · Flash 180B</h1>
-  <p>A closed four-B70 TP4+EP research frontier for the experimental DeepSeek V4 Flash uniform-K160 checkpoint, with target-verified DSpark7 decode and its provenance caveat kept attached.</p>
+  <p>DeepSeek&#x27;s large mixture-of-experts reasoning model in a community-trimmed 180B form (about 13B active per word). A research-grade deployment: it needs all four B70 cards and an experimental checkpoint, so treat it as a look at what the biggest open models can do on this hardware, not a daily driver.</p>
   <a class="hero-headline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json" title="deepseek-v4-flash-k160-b70-80tps-20260718 · 12 unique cold prompts per suite, 128 output tokens, median generated tokens 1-100 after TTFT; three strict suites"><span class="big">78.29</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 59 words a second</span><small>deepseek-v4-flash-180b-k160-7c360e1 · experimental uniform-K160 FP8/MXFP4 target · vLLM XPU record stack 264c7f2/3131567/48fda4f · 4× B70 · Evidence C of A–D</small></a>
   <div class="lineage"><span>DeepSeek V4 Flash 180B · experimental uniform-K160 · measured target checkpoint</span></div>
 </div></header>
@@ -210,7 +211,7 @@
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid"><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">
   <div class="packet-top"><span>deepseek-v4-flash-180b-k160-7c360e1</span><span class="packet-badges"><b>B70-verified experimental record</b></span></div>
-  <h3>DeepSeek V4 Flash K160 · TP4+EP DSpark7</h3>
+  <h3 title="DeepSeek V4 Flash K160 · TP4+EP DSpark7">DeepSeek V4 Flash K160 · TP4+EP DSpark7</h3>
   <p class="packet-promise">Measured evidence: <b>78.29 tok/s</b> on 4× B70 · closed research frontier</p>
   <small class="packet-workload">12 unique cold prompts per suite, 128 output tokens, median generated tokens 1-100 after TTFT; three strict suites</small>
   <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
@@ -222,18 +223,15 @@
   <div class="section-head"><div><h2>What has been classified</h2><p>Dense scorecards summarize every declared combination; measured slices retain exact evidence links.</p></div></div>
   <div class="combo-block"><p class="combo-scope">Exact experimental K160 target and record runtime; missing cells have no inherited result. Fixed: revision=deepseek-v4-flash-180b-k160-7c360e1 · variant=experimental uniform-K160 FP8/MXFP4 target · runtime=vLLM XPU record stack 264c7f2/3131567/48fda4f.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">4 cards, DSpark7 <code>TP4·DSpark7</code></span><b class="c-val">80.82 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/deepseek-v4-flash-k160-b70/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>2 untested combinations</summary><div class="gap-chips"><code title="1 card, DSpark7 — no stored lane">TP1·DSpark7</code><code title="2 cards, DSpark7 — no stored lane">TP2·DSpark7</code></div></details><a class="inline" href="../families/deepseek-v4.json">Full matrix and exact selectors</a></div></div>
 
-  <div class="section-head"><div><h2>Scoped closures</h2><p>Rejected combinations, scoped to the exact selectors shown.</p></div></div>
-  <div class="closure-grid"><a class="closure-card is-closed" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md"><span>closed · revision=deepseek-v4-flash-180b-k160-7c360e1 · frontier=configuration-sweeps</span><b>The configuration frontier is paused; reopen only for a substantial EAGLE capture/training effort or a genuinely new mechanism, not another generic flag sweep.</b></a></div>
-
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/deepseek-v4.json">family data</a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="deepseek-v4-strict-tp4">
-  <div class="chart-head"><div><h3>Strict TP4+EP DSpark7 suites</h3><p>Decode retains three independent suite medians (76.900178–80.820052); the packet headline is the 78.287226 median-of-medians, while TTFT is the 342.777657 record-suite observation</p></div><div class="metric-switch"></div></div>
+  <div class="chart-head"><div><h3 title="Strict TP4+EP DSpark7 suites">Measured speed on four cards</h3><p>Decode retains three independent suite medians (76.900178–80.820052); the packet headline is the 78.287226 median-of-medians, while TTFT is the 342.777657 record-suite observation</p></div><div class="metric-switch"></div></div>
   <div class="stat-row"><span class="l">experimental K160 + DSpark7 · tensor parallel cards 4</span><span class="stat-values"><span class="stat-metric"><b>76.9–80.82</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>342.78</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">three independent strict suites · closed frontier record · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>experimental K160 + DSpark7</span><span><i class="gap-line"></i>missing</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">evidence 1</a></span></figcaption>
 </figure></div>
-  <details class="fine"><summary>Transfer boundary</summary><p>DeepSeek V4 Flash 180B sparse MoE. exact experimental checkpoint and record stack only. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
+  <details class="fine"><summary>Fine print</summary><p>DeepSeek V4 Flash 180B sparse MoE. exact experimental checkpoint and record stack only. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p><p class="closure-note"><b>1 combination the lab has stopped pursuing:</b> The configuration frontier is paused; reopen only for a substantial EAGLE capture/training effort or a genuinely new mechanism, not another generic flag sweep. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md">evidence</a> Exact selectors are in the <a class="inline" href="../families/deepseek-v4.json">family data</a>.</p></details>
 
   <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2></div></div>
   <div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this family. The lab’s one measured sweep so far is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>; the projection block below includes a projected users curve where a projection exists.</p></div>

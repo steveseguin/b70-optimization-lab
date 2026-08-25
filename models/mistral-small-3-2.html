@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mistral Small 3.2 · 24B Instruct 2506 on Intel Arc Pro B70 — neural.download</title>
-<meta name="description" content="One dense 24B weight revision with two measured one-B70 GGUF quantization variants: UD-Q4_K_XL for the representative rapid row and a slower strict-valid UD-Q8_K_XL reference. Every number links to its measured proof.">
+<meta name="description" content="Mistral Small 3.2, a dense 24B instruct model from Mistral AI. A solid general assistant that fits one Arc Pro B70 in 4-bit form. Every number links to its measured proof.">
 <link rel="canonical" href="https://neural.download/models/mistral-small-3-2.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://neural.download/models/mistral-small-3-2.html">
 <meta property="og:title" content="Mistral Small 3.2 · 24B Instruct 2506 on Intel Arc Pro B70 — neural.download">
-<meta property="og:description" content="One dense 24B weight revision with two measured one-B70 GGUF quantization variants: UD-Q4_K_XL for the representative rapid row and a slower strict-valid UD-Q8_K_XL reference.">
+<meta property="og:description" content="Mistral Small 3.2, a dense 24B instruct model from Mistral AI. A solid general assistant that fits one Arc Pro B70 in 4-bit form.">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta name="theme-color" content="#f6f1e5">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "Mistral Small 3.2 · 24B Instruct 2506", "description": "One dense 24B weight revision with two measured one-B70 GGUF quantization variants: UD-Q4_K_XL for the representative rapid row and a slower strict-valid UD-Q8_K_XL reference.", "url": "https://neural.download/models/mistral-small-3-2.html", "dateModified": "2026-08-24", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "Mistral Small 3.2 · 24B Instruct 2506", "description": "Mistral Small 3.2, a dense 24B instruct model from Mistral AI. A solid general assistant that fits one Arc Pro B70 in 4-bit form.", "url": "https://neural.download/models/mistral-small-3-2.html", "dateModified": "2026-08-24", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
 <style>
@@ -127,6 +127,7 @@
   details.fine { margin:0 0 22px; color:var(--muted); font-size:12.5px; }
   details.fine summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
   details.fine p { margin:6px 0 0; }
+  details.fine .closure-note { margin-top:8px; }
   .signals { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin:0 0 22px; }
   .signal { border:2px solid var(--ink); padding:12px 13px; background:var(--paper); }
   .signal span { display:block; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -196,7 +197,7 @@
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Mistral Small 3.2 · 24B Instruct 2506</p>
   <h1>Mistral Small 3.2 · 24B Instruct 2506</h1>
-  <p>One dense 24B weight revision with two measured one-B70 GGUF quantization variants: UD-Q4_K_XL for the representative rapid row and a slower strict-valid UD-Q8_K_XL reference.</p>
+  <p>Mistral Small 3.2, a dense 24B instruct model from Mistral AI. A solid general assistant that fits one Arc Pro B70 in 4-bit form.</p>
   <a class="hero-headline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json" title="rapid-mistral-small-3-2-24b-udq4 · 12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled"><span class="big">27.3</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 20 words a second</span><small>mistral-small-3.2-24b-instruct-2506-b750ec2 · UD-Q4_K_XL · llama.cpp SYCL fdb1db877 · 1× B70 · Evidence D of A–D</small></a>
   <div class="lineage"><span>Mistral Small 3.2 24B Instruct 2506 · measured weights</span></div>
 </div></header>
@@ -210,7 +211,7 @@
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid"><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json">
   <div class="packet-top"><span>mistral-small-3.2-24b-instruct-2506-b750ec2</span><span class="packet-badges"><b>B70-measured narrow baseline</b></span></div>
-  <h3>Mistral Small 3.2 24B · Q4/Q8 rapid snapshot</h3>
+  <h3 title="Mistral Small 3.2 24B · Q4/Q8 rapid snapshot">Mistral Small 3.2 24B · Q4/Q8 rapid snapshot</h3>
   <p class="packet-promise">Measured evidence: <b>27.3 tok/s</b> on 1× B70 · rapid research snapshot</p>
   <small class="packet-workload">12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled</small>
   <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
@@ -225,12 +226,12 @@
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/mistral-small-3-2.json">family data</a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="mistral-small-3-2-quant">
-  <div class="chart-head"><div><h3>Measured quantization variants</h3><p>1 = UD-Q4_K_XL; 2 = UD-Q8_K_XL. Same weight revision and rapid suite; each quant retains its own measured decode and TTFT.</p></div><div class="metric-switch"></div></div>
+  <div class="chart-head"><div><h3 title="Measured quantization variants">Compression options compared</h3><p>1 = UD-Q4_K_XL; 2 = UD-Q8_K_XL. Same weight revision and rapid suite; each quant retains its own measured decode and TTFT.</p></div><div class="metric-switch"></div></div>
   <div class="stat-row"><span class="l">UD-Q4_K_XL · quantization variant 1</span><span class="stat-values"><span class="stat-metric"><b>27.3</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>1,502</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · promoted representative row · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json">evidence</a></span></div><div class="stat-row"><span class="l">UD-Q8_K_XL · quantization variant 2</span><span class="stat-values"><span class="stat-metric"><b>16.38</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>2,686</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · measured higher precision reference · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq8-llamacpp-faon-ctx4096-realistic128-20260704T201848Z.json">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>UD-Q4_K_XL</span><span><i style="background:var(--s2)"></i>UD-Q8_K_XL</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json">evidence 1</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq8-llamacpp-faon-ctx4096-realistic128-20260704T201848Z.json">evidence 2</a></span></figcaption>
 </figure></div>
-  <details class="fine"><summary>Transfer boundary</summary><p>Mistral Small 3.2 dense 24B. one weight revision; Q4 and Q8 are deployment variants with separate measurements. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
+  <details class="fine"><summary>Fine print</summary><p>Mistral Small 3.2 dense 24B. one weight revision; Q4 and Q8 are deployment variants with separate measurements. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2></div></div>
   <div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this family. The lab’s one measured sweep so far is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>; the projection block below includes a projected users curve where a projection exists.</p></div>

@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DeepSeek Coder V2 · Lite Instruct on Intel Arc Pro B70 — neural.download</title>
-<meta name="description" content="A strict one-B70 Q4_K_M rapid snapshot for the 16B-total, 2.4B-active DeepSeek-Coder-V2 Lite Instruct MoE, published as a narrow measured baseline rather than a complete deployment curve. Every number links to its measured proof.">
+<meta name="description" content="DeepSeek&#x27;s coding model in its small mixture-of-experts form: 16B parameters total, about 2.4B active per word, built for code completion and programming help. Fits one Arc Pro B70 with room to spare. Every number links to its measured proof.">
 <link rel="canonical" href="https://neural.download/models/deepseek-coder-v2.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://neural.download/models/deepseek-coder-v2.html">
 <meta property="og:title" content="DeepSeek Coder V2 · Lite Instruct on Intel Arc Pro B70 — neural.download">
-<meta property="og:description" content="A strict one-B70 Q4_K_M rapid snapshot for the 16B-total, 2.4B-active DeepSeek-Coder-V2 Lite Instruct MoE, published as a narrow measured baseline rather than a complete deployment curve.">
+<meta property="og:description" content="DeepSeek&#x27;s coding model in its small mixture-of-experts form: 16B parameters total, about 2.4B active per word, built for code completion and programming help. Fits one Arc Pro B70 with room to spare.">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta name="theme-color" content="#f6f1e5">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "DeepSeek Coder V2 · Lite Instruct", "description": "A strict one-B70 Q4_K_M rapid snapshot for the 16B-total, 2.4B-active DeepSeek-Coder-V2 Lite Instruct MoE, published as a narrow measured baseline rather than a complete deployment curve.", "url": "https://neural.download/models/deepseek-coder-v2.html", "dateModified": "2026-08-24", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "DeepSeek Coder V2 · Lite Instruct", "description": "DeepSeek's coding model in its small mixture-of-experts form: 16B parameters total, about 2.4B active per word, built for code completion and programming help. Fits one Arc Pro B70 with room to spare.", "url": "https://neural.download/models/deepseek-coder-v2.html", "dateModified": "2026-08-24", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
 <style>
@@ -127,6 +127,7 @@
   details.fine { margin:0 0 22px; color:var(--muted); font-size:12.5px; }
   details.fine summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
   details.fine p { margin:6px 0 0; }
+  details.fine .closure-note { margin-top:8px; }
   .signals { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin:0 0 22px; }
   .signal { border:2px solid var(--ink); padding:12px 13px; background:var(--paper); }
   .signal span { display:block; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -196,7 +197,7 @@
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / DeepSeek Coder V2 · Lite Instruct</p>
   <h1>DeepSeek Coder V2 · Lite Instruct</h1>
-  <p>A strict one-B70 Q4_K_M rapid snapshot for the 16B-total, 2.4B-active DeepSeek-Coder-V2 Lite Instruct MoE, published as a narrow measured baseline rather than a complete deployment curve.</p>
+  <p>DeepSeek&#x27;s coding model in its small mixture-of-experts form: 16B parameters total, about 2.4B active per word, built for code completion and programming help. Fits one Arc Pro B70 with room to spare.</p>
   <a class="hero-headline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json" title="rapid-deepseek-coder-v2-lite-q4km · 12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled"><span class="big">57.1</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 43 words a second</span><small>deepseek-coder-v2-lite-instruct-8f248fa · Q4_K_M · llama.cpp SYCL fdb1db877 · 1× B70 · Evidence D of A–D</small></a>
   <div class="lineage"><span>DeepSeek-Coder-V2 Lite Instruct · measured GGUF weights</span></div>
 </div></header>
@@ -210,7 +211,7 @@
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid"><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json">
   <div class="packet-top"><span>deepseek-coder-v2-lite-instruct-8f248fa</span><span class="packet-badges"><b>B70-measured narrow baseline</b></span></div>
-  <h3>DeepSeek-Coder-V2 Lite Q4_K_M · TP1</h3>
+  <h3 title="DeepSeek-Coder-V2 Lite Q4_K_M · TP1">DeepSeek-Coder-V2 Lite Q4_K_M · TP1</h3>
   <p class="packet-promise">Measured evidence: <b>57.1 tok/s</b> on 1× B70 · rapid research snapshot</p>
   <small class="packet-workload">12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled</small>
   <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
@@ -225,12 +226,12 @@
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/deepseek-coder-v2.json">family data</a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="deepseek-coder-v2-rapid-tp">
-  <div class="chart-head"><div><h3>Strict rapid operating point</h3><p>Q4_K_M · one B70 · f16 KV · ctx=2048 configured; this one point is not a context curve</p></div><div class="metric-switch"></div></div>
+  <div class="chart-head"><div><h3 title="Strict rapid operating point">Measured speed (quick lab check)</h3><p>Q4_K_M · one B70 · f16 KV · ctx=2048 configured; this one point is not a context curve</p></div><div class="metric-switch"></div></div>
   <div class="stat-row"><span class="l">Q4_K_M · tensor parallel cards 1</span><span class="stat-values"><span class="stat-metric"><b>57.1</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>139.83</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · promoted conservative standalone row · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>Q4_K_M</span><span><i class="gap-line"></i>missing</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json">evidence 1</a></span></figcaption>
 </figure></div>
-  <details class="fine"><summary>Transfer boundary</summary><p>DeepSeek-Coder-V2 Lite sparse MoE. one measured Lite Instruct GGUF revision. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
+  <details class="fine"><summary>Fine print</summary><p>DeepSeek-Coder-V2 Lite sparse MoE. one measured Lite Instruct GGUF revision. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2></div></div>
   <div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this family. The lab’s one measured sweep so far is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>; the projection block below includes a projected users curve where a projection exists.</p></div>

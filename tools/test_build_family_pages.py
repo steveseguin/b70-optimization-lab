@@ -1701,8 +1701,8 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("TP1·MTP1", coverage)
         self.assertNotIn("Stopped by the declared fit gate", coverage)
         rendered = MODULE.family_page(family)
-        self.assertIn("Scoped closures", rendered)
-        self.assertIn("revision=revision-a", rendered)
+        self.assertIn("the lab has stopped pursuing", rendered)
+        self.assertIn("Stopped by the declared fit gate", rendered)  # closure reason in words; selectors live in the family data
         self.assertIn("https://example.test/closure.json", rendered)
 
     def test_metric_code_legend_renders_for_compact_matrix_values(self) -> None:

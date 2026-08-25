@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GLM 4.7 · Flash 30B-A3B on Intel Arc Pro B70 — neural.download</title>
-<meta name="description" content="A strict one-B70 UD-Q4_K_XL rapid snapshot for GLM-4.7-Flash, retaining its MLA-style MoE identity and conservative standalone result without promoting faster concurrent-screen artifacts. Every number links to its measured proof.">
+<meta name="description" content="Zhipu&#x27;s GLM-4.7 Flash, a 30B mixture-of-experts with about 3B active per word. A fast general assistant that fits one Arc Pro B70 in 4-bit form. Every number links to its measured proof.">
 <link rel="canonical" href="https://neural.download/models/glm-4-7.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://neural.download/models/glm-4-7.html">
 <meta property="og:title" content="GLM 4.7 · Flash 30B-A3B on Intel Arc Pro B70 — neural.download">
-<meta property="og:description" content="A strict one-B70 UD-Q4_K_XL rapid snapshot for GLM-4.7-Flash, retaining its MLA-style MoE identity and conservative standalone result without promoting faster concurrent-screen artifacts.">
+<meta property="og:description" content="Zhipu&#x27;s GLM-4.7 Flash, a 30B mixture-of-experts with about 3B active per word. A fast general assistant that fits one Arc Pro B70 in 4-bit form.">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta name="theme-color" content="#f6f1e5">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "GLM 4.7 · Flash 30B-A3B", "description": "A strict one-B70 UD-Q4_K_XL rapid snapshot for GLM-4.7-Flash, retaining its MLA-style MoE identity and conservative standalone result without promoting faster concurrent-screen artifacts.", "url": "https://neural.download/models/glm-4-7.html", "dateModified": "2026-08-24", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "GLM 4.7 · Flash 30B-A3B", "description": "Zhipu's GLM-4.7 Flash, a 30B mixture-of-experts with about 3B active per word. A fast general assistant that fits one Arc Pro B70 in 4-bit form.", "url": "https://neural.download/models/glm-4-7.html", "dateModified": "2026-08-24", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
 <style>
@@ -127,6 +127,7 @@
   details.fine { margin:0 0 22px; color:var(--muted); font-size:12.5px; }
   details.fine summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
   details.fine p { margin:6px 0 0; }
+  details.fine .closure-note { margin-top:8px; }
   .signals { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin:0 0 22px; }
   .signal { border:2px solid var(--ink); padding:12px 13px; background:var(--paper); }
   .signal span { display:block; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -196,7 +197,7 @@
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / GLM 4.7 · Flash 30B-A3B</p>
   <h1>GLM 4.7 · Flash 30B-A3B</h1>
-  <p>A strict one-B70 UD-Q4_K_XL rapid snapshot for GLM-4.7-Flash, retaining its MLA-style MoE identity and conservative standalone result without promoting faster concurrent-screen artifacts.</p>
+  <p>Zhipu&#x27;s GLM-4.7 Flash, a 30B mixture-of-experts with about 3B active per word. A fast general assistant that fits one Arc Pro B70 in 4-bit form.</p>
   <a class="hero-headline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/glm-4.7-flash-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T221455Z.json" title="rapid-glm-4-7-flash-udq4 · 12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled"><span class="big">40.77</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 31 words a second</span><small>glm-4.7-flash-0d32489 · UD-Q4_K_XL · llama.cpp SYCL fdb1db877 · 1× B70 · Evidence D of A–D</small></a>
   <div class="lineage"><span>GLM-4.7-Flash · measured GGUF weights</span></div>
 </div></header>
@@ -210,7 +211,7 @@
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid"><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/glm-4.7-flash-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T221455Z.json">
   <div class="packet-top"><span>glm-4.7-flash-0d32489</span><span class="packet-badges"><b>B70-measured narrow baseline</b></span></div>
-  <h3>GLM-4.7-Flash UD-Q4_K_XL · TP1</h3>
+  <h3 title="GLM-4.7-Flash UD-Q4_K_XL · TP1">GLM-4.7-Flash UD-Q4_K_XL · TP1</h3>
   <p class="packet-promise">Measured evidence: <b>40.77 tok/s</b> on 1× B70 · rapid research snapshot</p>
   <small class="packet-workload">12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled</small>
   <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
@@ -225,12 +226,12 @@
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/glm-4-7.json">family data</a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="glm-4-7-rapid-tp">
-  <div class="chart-head"><div><h3>Strict rapid operating point</h3><p>UD-Q4_K_XL · one B70 · f16 KV · ctx=4096 configured; faster concurrent-screen rows are not promoted</p></div><div class="metric-switch"></div></div>
+  <div class="chart-head"><div><h3 title="Strict rapid operating point">Measured speed (quick lab check)</h3><p>UD-Q4_K_XL · one B70 · f16 KV · ctx=4096 configured; faster concurrent-screen rows are not promoted</p></div><div class="metric-switch"></div></div>
   <div class="stat-row"><span class="l">UD-Q4_K_XL · tensor parallel cards 1</span><span class="stat-values"><span class="stat-metric"><b>40.77</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>206.21</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · promoted conservative standalone row · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/glm-4.7-flash-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T221455Z.json">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>UD-Q4_K_XL</span><span><i class="gap-line"></i>missing</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/glm-4.7-flash-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T221455Z.json">evidence 1</a></span></figcaption>
 </figure></div>
-  <details class="fine"><summary>Transfer boundary</summary><p>Glm4MoeLiteForCausalLM. one measured GLM-4.7-Flash GGUF revision. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
+  <details class="fine"><summary>Fine print</summary><p>Glm4MoeLiteForCausalLM. one measured GLM-4.7-Flash GGUF revision. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2></div></div>
   <div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this family. The lab’s one measured sweep so far is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>; the projection block below includes a projected users curve where a projection exists.</p></div>

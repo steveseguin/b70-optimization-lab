@@ -2266,6 +2266,81 @@ def view_point_count(family: dict[str, Any], view: dict[str, Any]) -> int:
     return len(xs)
 
 
+VIEW_TITLE_WORDS = {
+    "strict rapid operating point": "Measured speed (quick lab check)",
+    "strict tp4+ep dspark7 suites": "Measured speed on four cards",
+    "active-context service profile": "Speed as the conversation grows",
+    "qualified short-record history": "Record history",
+    "qualified record progression": "How the record improved",
+    "historical dflash efficiency evidence": "Draft-model efficiency (earlier runs)",
+    "serving repeat": "Repeat runs",
+    "active context depth": "Speed as the conversation grows",
+    "deployment profiles": "Deployment options",
+    "32k endpoint observation": "Speed at a 32K-token conversation",
+    "production service observations": "Speed in real service",
+    "prompt processing": "Prompt processing speed",
+    "measured quantization variants": "Compression options compared",
+    "q8 canonical classes": "Q8 prompt classes",
+    "quantization and topology profiles": "Compression and card-count options",
+    "bf16 kernel-campaign closeout": "Uncompressed (BF16) results",
+    "one card beats layer split": "One card vs. a two-card layer split",
+    "context-depth profile": "Speed as the conversation grows",
+    "measured context profiles": "Speed as the conversation grows",
+    "accepted 35b optimization over context": "Tuned 35B speed as the conversation grows",
+    "35b stock card count": "35B: stock software by card count",
+    "35b accepted-stack batching capacity": "35B: many users at once",
+    "measured mini quantization variants": "Compression options compared",
+    "tp strict runtime profiles": "Card count (fully checked runs)",
+    "tp diagnostic runtime profiles": "Card count (quick checks)",
+    "tp changes more than decode": "What changes with card count",
+    "pinned e9d1398 mtp depth": "Draft depth (one pinned build)",
+    "qwen3.6 mtp ladder": "Qwen3.6 draft-depth ladder",
+    "qwen3.6 mtp5 capture screen": "Qwen3.6 draft depth 5 (quick check)",
+    "qwen3.6 mtp3 historical vs current": "Qwen3.6 draft depth 3: then vs. now",
+    "qwen3.6 q4_0 intrinsic mtp": "Qwen3.6 Q4_0 with its built-in draft",
+    "qwen3.6 q4_0 dflash5 top-1 fusion": "Qwen3.6 Q4_0 with a DFlash draft",
+    "qwen3.6 ud-q4_k_xl intrinsic mtp depth": "Qwen3.6 UD-Q4_K_XL draft depth",
+    "qwen3.6 ud-q4_k_xl deep-mtp policy closure": "Qwen3.6 UD-Q4_K_XL deep draft (closed)",
+    "qwen3.8 source-stack anchors": "Qwen3.8 by software build",
+    "context x kv cache": "Conversation length x KV cache precision",
+    "context \u00d7 kv cache": "Conversation length \u00d7 KV cache precision",
+    "context x weight quant": "Conversation length x compression",
+    "context \u00d7 weight quant": "Conversation length \u00d7 compression",
+    "q5_k_s raw active context": "Q5_K_S as the conversation grows",
+    "qwen3.6 q8 target-only context": "Qwen3.6 Q8 (no draft) as the conversation grows",
+    "qwen3.6 q8 mtp3 matched control": "Qwen3.6 Q8 with draft depth 3",
+    "qwen3.6 q8 long context": "Qwen3.6 Q8 at long context",
+    "separately measured sibling variants": "Sibling models compared",
+    "tp4 strict and historical identities": "Four-card results: current and earlier",
+    "one card serving many users": "One card serving many users",
+}
+
+
+LABEL_WORDS = [
+    (re.compile(r"\s*\u00b7\s*TP(\d) a[0-9a-f]{7,} winner overlay", re.I), lambda m: f" \u00b7 {m.group(1)} cards, tuned"),
+    (re.compile(r"\bTP(\d)\s+strict result collection", re.I), lambda m: f"{m.group(1)} cards, fully checked"),
+    (re.compile(r"\bstrict TP(\d)\b", re.I), lambda m: f"{m.group(1)} cards, fully checked"),
+    (re.compile(r"\bTP(\d)\b\s*\u00b7\s*(vLLM XPU|llama\.cpp SYCL) target-only matrix", re.I), lambda m: f"{m.group(1)} card{'s' if m.group(1) != '1' else ''} \u00b7 {m.group(2)}, no draft model"),
+    (re.compile(r"\btarget-only\b", re.I), lambda m: "no draft model"),
+    (re.compile(r"\bstrict\b", re.I), lambda m: "fully checked"),
+    (re.compile(r"\bdossier\b", re.I), lambda m: "record"),
+    (re.compile(r"\bcloseout\b", re.I), lambda m: "final results"),
+    (re.compile(r"\bscreen\b", re.I), lambda m: "quick check"),
+]
+
+
+def plain_label(text: str) -> str:
+    out = str(text or "")
+    for pattern, repl in LABEL_WORDS:
+        out = pattern.sub(repl, out)
+    return re.sub(r"\s{2,}", " ", out).strip()
+
+
+def plain_view_title(title: str) -> str:
+    key = re.sub(r"\s+", " ", str(title or "")).strip().lower()
+    return VIEW_TITLE_WORDS.get(key, str(title or ""))
+
+
 def view_card(family: dict[str, Any], view: dict[str, Any]) -> str:
     as_stats = view_point_count(family, view) < 3
     charts = []
@@ -2319,7 +2394,7 @@ def view_card(family: dict[str, Any], view: dict[str, Any]) -> str:
     if view.get("unsupported_x"):
         legends.append('<span><i class="gap-line"></i>unsupported</span>')
     return f'''<figure class="chart family-view" data-family-view="{esc(view.get('id'))}">
-  <div class="chart-head"><div><h3>{esc(view.get('title'))}{view_flag}</h3><p>{esc(view.get('subtitle'))}</p></div><div class="metric-switch">{"".join(buttons)}</div></div>
+  <div class="chart-head"><div><h3 title="{esc(view.get('title'))}">{esc(plain_view_title(view.get('title')))}{view_flag}</h3><p>{esc(view.get('subtitle'))}</p></div><div class="metric-switch">{"".join(buttons)}</div></div>
   {"".join(charts)}
   <div class="legend">{"".join(legends)}</div>
   <figcaption>{"".join(summaries)}<span class="proof-links">{links}</span></figcaption>
@@ -2534,7 +2609,7 @@ def coverage_contract_scorecards(family: dict[str, Any]) -> str:
         )
         cards.append(
             f'<section class="contract-card" data-coverage-contract="{esc(contract.get("id"))}">'
-            f'<div class="contract-head"><div><h3>{esc(contract.get("label"))}</h3>'
+            f'<div class="contract-head"><div><h3 title="{esc(contract.get("label"))}">{esc(plain_label(contract.get("label")))}</h3>'
             f'<p>{esc(description)}</p></div><b>{classified}/{total}</b></div>'
             f'<div class="contract-stats"><span><b>{total}</b> exact cells</span>'
             f'<span><b>{classified}</b> classified</span><span><b>{measured}</b> measured</span>'
@@ -3019,7 +3094,7 @@ def packet_cards(family: dict[str, Any]) -> str:
         cards.append(
             f'''<a class="packet-card" href="{esc(href)}"{attrs}>
   <div class="packet-top"><span>{esc(packet.get('revision'))}</span><span class="packet-badges"><b>{esc(packet.get('evidence_level'))}</b>{headroom}</span></div>
-  <h3>{esc(packet.get('label'))}</h3>
+  <h3 title="{esc(packet.get('label'))}">{esc(plain_label(packet.get('label')))}</h3>
   <p class="packet-promise">{promise} · {esc(status_text)}</p>{workload_html}{report_note}
   <div class="grade-rail">{grade_rail}</div>
   <div class="coverage-rail">{coverage}</div>
@@ -3029,6 +3104,7 @@ def packet_cards(family: dict[str, Any]) -> str:
 
 
 def family_page(family: dict[str, Any]) -> str:
+    source = f"../families/{family['id']}.json"
     signals = family.get("model_signals") or {}
     popularity = signals.get("popularity") or {}
     architecture = family.get("architecture") or {}
@@ -3296,12 +3372,20 @@ def family_page(family: dict[str, Any]) -> str:
 '''
     closures_section = ""
     if closure_items:
-        closures_section = f'''
-  <div class="section-head"><div><h2>Scoped closures</h2><p>Rejected combinations, scoped to the exact selectors shown.</p></div></div>
-  <div class="closure-grid">{closures}</div>
-'''
+        reasons = []
+        for closure in closure_items:
+            reason = str(closure.get("reason") or "").strip().rstrip(".")
+            if not reason:
+                continue
+            evidence = closure.get("evidence")
+            link = f' <a class="inline" href="{esc(evidence_href(str(evidence)))}">evidence</a>' if evidence else ""
+            reasons.append(esc(reason) + "." + link)
+        closures_section = (
+            f'<p class="closure-note"><b>{len(closure_items)} combination{"s" if len(closure_items) != 1 else ""} the lab has stopped pursuing:</b> '
+            + " ".join(reasons)
+            + f' Exact selectors are in the <a class="inline" href="{esc(source)}">family data</a>.</p>'
+        )
     url = f"{SITE}models/{family['id']}.html"
-    source = f"../families/{family['id']}.json"
     ld = {
         "@context": "https://schema.org",
         "@type": "Dataset",
@@ -3441,6 +3525,7 @@ def family_page(family: dict[str, Any]) -> str:
   details.fine {{ margin:0 0 22px; color:var(--muted); font-size:12.5px; }}
   details.fine summary {{ cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; }}
   details.fine p {{ margin:6px 0 0; }}
+  details.fine .closure-note {{ margin-top:8px; }}
   .signals {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin:0 0 22px; }}
   .signal {{ border:2px solid var(--ink); padding:12px 13px; background:var(--paper); }}
   .signal span {{ display:block; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }}
@@ -3520,11 +3605,11 @@ def family_page(family: dict[str, Any]) -> str:
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid">{packets}</div>
 
-{coverage_section}{closures_section}
+{coverage_section}
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
   <div class="views-grid">{views}</div>{deferred_views_html}
-  <details class="fine"><summary>Transfer boundary</summary><p>{esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
+  <details class="fine"><summary>Fine print</summary><p>{esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p>{closures_section}</details>
 {multiuser_html}{projection_html}
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="{esc(source)}"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>
