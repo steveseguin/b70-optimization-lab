@@ -1892,6 +1892,10 @@
         "revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
         "build": "repro/qwen38-27b-q4km-tp1-b70/restore-and-build.sh"
       },
+      "known_limitations": [
+        "The package launch is one slot at 8K. A separate oneAPI 2026.1.1 audit loaded 64 slots at 512 nominal tokens per slot, but used 32281.7/32656 MiB and failed batch-shape exact-output and point-order stability gates; its 86.28/85.97 tok/s rows are diagnostic only, so the HTTP concurrency curve remains pending.",
+        "Qwen3.8 27B is dense; do not compare this one-card aggregate rate as if it were a sparse Qwen-derived MoE or an NVIDIA NVFP4 deployment."
+      ],
       "project_patches": {
         "required": true,
         "items": [
@@ -1924,13 +1928,18 @@
         "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-quality-battery-result.md",
         "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-i.json",
         "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json",
-        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-quality-battery.json"
+        "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-quality-battery.json",
+        "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-prereg.json",
+        "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-summary.json",
+        "experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-result.md",
+        "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-http-smallctx.sh"
       ],
       "missing": [
         "tested clean-host Intel driver and oneAPI installation",
         "clean-host source build and endpoint replay",
         "beginner recovery flow",
-        "TTFT context sweep"
+        "TTFT context sweep",
+        "output-qualified and point-order-stable HTTP concurrency curve"
       ]
     },
     {

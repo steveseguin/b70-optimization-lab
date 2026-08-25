@@ -128,6 +128,20 @@ Success requires `cached_tokens_all_zero=true`,
 informational until those gates pass. Stop the foreground server with
 `Ctrl-C`; then confirm `pgrep -x llama-server` returns no process.
 
+### Concurrent-serving boundary
+
+The promoted launcher deliberately remains a one-slot, 8K context profile.
+A separately identified oneAPI 2026.1.1 research build proved that a 64-slot
+server with 32K total context (`512` tokens/slot) can load and complete on one
+B70, but it used `32281.7 / 32656 MiB` and failed exact batch-shape output
+identity plus point-order stability. Do not turn its `86.28 / 85.97 tok/s`
+64-way diagnostic into a deployment promise. The retained
+[result](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-result.md),
+[preregistration](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-prereg.json),
+and [runner](../../experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-http-smallctx.sh)
+make this publication boundary auditable. A qualified HTTP concurrency curve
+remains pending.
+
 ## Evidence and remaining gates
 
 - [Final quality and performance result](../../experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-quality-battery-result.md)
@@ -136,5 +150,6 @@ informational until those gates pass. Stop the foreground server with
 - [2026-08-22 direct-I/O model verification](model-verification-20260822.json)
 
 Still open: a tested clean-host driver/oneAPI installation, a clean-host
-source build plus endpoint replay, and beginner-oriented recovery guidance.
+source build plus endpoint replay, a qualified HTTP concurrency curve, and
+beginner-oriented recovery guidance.
 Until those are closed, call this a candidate—not a one-click installer.

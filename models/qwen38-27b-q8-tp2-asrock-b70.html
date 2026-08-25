@@ -51,6 +51,9 @@
   .missing { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--ink); background: var(--surface); }
   .missing-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); }
   .missing ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .limitations { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); }
+  .limitations-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink); }
+  .limitations ul { margin: 0; padding-left: 18px; font-size: 13px; }
   .measured { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 8px 0 6px; }
   .measured .big { font: 900 44px/1 var(--display); color: var(--spot-dark); }
   .measured .unit { font: 700 13px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
@@ -121,8 +124,9 @@
 
   <dl class="facts"><div><dt>Model</dt><dd>Qwen3.8 27B Q8_0 target-only</dd></div><div><dt>Publisher</dt><dd>Alibaba / Qwen</dd></div><div><dt>Checkpoint</dt><dd>ggml-org/Qwen3.8-27B-GGUF</dd></div><div><dt>Compression</dt><dd>Q8_0 / F16 KV</dd></div><div><dt>Software</dt><dd>llama.cpp SYCL</dd></div><div><dt>Cards</dt><dd>2× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model weight bytes</dt><dd>28.6 GB</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd><span class="use-chip">general</span> <span class="use-chip">coding</span> <span class="use-chip">long context</span> <span class="use-chip">quality conservative</span></dd></div><div><dt>Published</dt><dd>2026-08-22</dd></div><div><dt>Clean-host replay</dt><dd>not yet</dd></div></dl>
 <div class="missing"><p class="missing-tag">Still missing before this becomes an install guide</p><ul><li>tested platform installation</li><li>model download helper with direct-read verification</li><li>clean-host replay</li><li>beginner recovery flow</li><li>decode, prefill, and TTFT context sweep</li></ul></div>
-<h2 id="profiles">Measured performance profiles <span class="badge todo">Not measured</span></h2><div class="placeholder"><p>Context and depth sweeps have not been measured for this package yet. Nothing here is estimated in their place.</p></div>
-<h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2><div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this package. The lab's one measured sweep so far — Qwen3.6-35B on a single card, 1,039 combined tok/s at 64 users — is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>.</p></div>
+
+<h2 id="profiles">Measured performance profiles <span class="badge todo">Not published</span></h2><div class="placeholder"><p>No qualified structured context or depth profile is published for this package. Diagnostic evidence may still be linked under “What to know” or in the full guide; nothing is estimated in its place.</p></div>
+<h2 id="multi-user">Many people at once <span class="badge todo">Not published</span></h2><div class="placeholder"><p>No qualified multi-user aggregate profile is published for this exact package. Diagnostic or unsupported boundaries may still appear under “What to know” or in the full guide. Nothing is interpolated or promoted from a different model, quantization, runtime, or card count.</p></div>
 
   <h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2>
   <div class="placeholder"><p>This package's measured workload does not map cleanly onto a single model + compression + card-count shape, so no like-for-like projection is shown. The measured numbers above stand on their own.</p></div>

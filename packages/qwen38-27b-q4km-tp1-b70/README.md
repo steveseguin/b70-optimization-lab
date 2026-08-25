@@ -39,6 +39,24 @@ context into 32 GiB. Full data:
 [sweep JSON](../../experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json),
 [chart](../../experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.svg).
 
+## Multiple users: measured support boundary, curve still pending
+
+A separate oneAPI 2026.1.1 reconstruction audit loaded this model on one B70
+with 64 HTTP server slots and 32K total F16 KV context (`512` nominal tokens
+per slot). It completed all 318 requests; every request returned the full 128
+tokens with `cached_tokens=0`. Peak observed GPU memory was
+`32281.7 / 32656 MiB`, leaving very little safety margin.
+
+That audit is **not a validated concurrency-speed curve**. Greedy outputs were
+shape-dependent (only `23/64` matched their sequential oracle at each 64-way
+repeat), and the second pass showed large 2–32-user order/state hysteresis.
+The observed 64-way diagnostics (`86.28` and `85.97 tok/s`) remain evidence,
+not a package headline or user guarantee. See the
+[result note](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-result.md)
+and [structured closeout](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-summary.json).
+The public aggregate graph remains pending until output isolation and
+point-order stability pass under a preregistered service harness.
+
 ## Who built what
 
 - **neural.download lab — integrated:** Qwen3.8 Q4_K_M bring-up, the complete

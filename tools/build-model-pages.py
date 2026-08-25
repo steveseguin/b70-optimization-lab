@@ -231,11 +231,18 @@ def page(pkg, all_pkgs, family=None):
 
     facts_html = "".join(f"<div><dt>{esc(k)}</dt><dd>{fact_dd(v)}</dd></div>" for k, v in facts)
     profiles = [p for p in (pkg.get("performance_profiles") or []) if p.get("points")]
-    profiles_html = "".join(
+    context_profiles = [p for p in profiles if p.get("x_metric", "context_tokens") != "concurrent_sequences"]
+    concurrent_profiles = [p for p in profiles if p.get("x_metric") == "concurrent_sequences"]
+
+    def render_profiles(items):
+        return "".join(
         f'<figure class="chart"><h4>{esc(p.get("label") or p.get("id"))} <span class="badge lab">Lab-measured</span></h4>{svg_profile(p)}'
         f'<figcaption>{esc(p.get("scope", ""))}' + (f' <a class="inline" href="{GITHUB}{esc(p["evidence"])}">evidence</a>' if p.get("evidence") else "") + "</figcaption></figure>"
-        for p in profiles
-    )
+        for p in items
+        )
+
+    profiles_html = render_profiles(context_profiles)
+    concurrent_profiles_html = render_profiles(concurrent_profiles)
     evidence_link = f'<a class="inline" href="{GITHUB}{esc(fm["evidence"])}">proof file</a>' if fm.get("evidence") else ""
     # Plain words for the measurement vocabulary the scope line uses.
     GLOSS = [
@@ -254,6 +261,17 @@ def page(pkg, all_pkgs, family=None):
     if missing:
         items = "".join(f"<li>{esc(m if isinstance(m, str) else m.get('item') or m.get('description') or json.dumps(m))}</li>" for m in missing[:8])
         missing_html = f'<div class="missing"><p class="missing-tag">Still missing before this becomes an install guide</p><ul>{items}</ul></div>'
+    limitations = pkg.get("known_limitations") or []
+    limitations_html = ""
+    if limitations:
+        items = "".join(
+            f"<li>{esc(item if isinstance(item, str) else json.dumps(item))}</li>"
+            for item in limitations[:8]
+        )
+        limitations_html = (
+            '<div class="limitations"><p class="limitations-tag">What to know</p>'
+            f'<ul>{items}</ul></div>'
+        )
     related = [p for p in all_pkgs if p["id"] != pid and p["library"].get("model_family") == lib.get("model_family")][:4]
     related_html = "".join(
         f'<a href="{esc(p["id"])}.html"><b>{esc(p["name"])}</b><span>{esc(fmt((p["library"].get("featured_metric") or {}).get("value")))} tok/s · {esc(p["library"].get("runtime_label", ""))}</span></a>'
@@ -304,17 +322,21 @@ def page(pkg, all_pkgs, family=None):
     if profiles_html:
         profiles_section = '<h2 id="profiles">Measured performance profiles <span class="badge lab">Lab-measured</span></h2>' + profiles_html
     else:
-        profiles_section = ('<h2 id="profiles">Measured performance profiles <span class="badge todo">Not measured</span></h2>'
-                            '<div class="placeholder"><p>Context and depth sweeps have not been measured for this package yet. '
-                            'Nothing here is estimated in their place'
+        profiles_section = ('<h2 id="profiles">Measured performance profiles <span class="badge todo">Not published</span></h2>'
+                            '<div class="placeholder"><p>No qualified structured context or depth profile is published for this package. '
+                            'Diagnostic evidence may still be linked under “What to know” or in the full guide; nothing is estimated in its place'
                             + (' — the clearly labeled projection block below is the current best guess.' if ml else '.')
                             + '</p></div>')
-    multiuser_section = ('<h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2>'
-                         '<div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this package. '
-                         'The lab\'s one measured sweep so far — Qwen3.6-35B on a single card, 1,039 combined tok/s at 64 users — is in '
-                         '<a class="inline" href="../learn/multi-user.html">the multi-user report</a>'
-                         + ('; the projection block below includes a projected combined-throughput-vs-users curve for this setup.' if exact_projection_workload else '.')
-                         + '</p></div>')
+    if concurrent_profiles_html:
+        multiuser_section = ('<h2 id="multi-user">Many people at once <span class="badge lab">Lab-measured</span></h2>'
+                             + concurrent_profiles_html)
+    else:
+        multiuser_section = ('<h2 id="multi-user">Many people at once <span class="badge todo">Not published</span></h2>'
+                             '<div class="placeholder"><p>No qualified multi-user aggregate profile is published for this exact package. '
+                             'Diagnostic or unsupported boundaries may still appear under “What to know” or in the full guide. '
+                             'Nothing is interpolated or promoted from a different model, quantization, runtime, or card count'
+                             + ('; the projection below remains clearly labeled as projected.' if exact_projection_workload else '.')
+                             + '</p></div>')
     projection_html = ""
     if exact_projection_workload:
         projection_html = f"""
@@ -361,6 +383,9 @@ def page(pkg, all_pkgs, family=None):
   .missing {{ margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--ink); background: var(--surface); }}
   .missing-tag {{ margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); }}
   .missing ul {{ margin: 0; padding-left: 18px; font-size: 13px; }}
+  .limitations {{ margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); }}
+  .limitations-tag {{ margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink); }}
+  .limitations ul {{ margin: 0; padding-left: 18px; font-size: 13px; }}
   .measured {{ display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 8px 0 6px; }}
   .measured .big {{ font: 900 44px/1 var(--display); color: var(--spot-dark); }}
   .measured .unit {{ font: 700 13px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }}
@@ -431,6 +456,7 @@ def page(pkg, all_pkgs, family=None):
 
   <dl class="facts">{facts_html}</dl>
 {missing_html}
+{limitations_html}
 {profiles_section}
 {multiuser_section}
 {projection_html}
