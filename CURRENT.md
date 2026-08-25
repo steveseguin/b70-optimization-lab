@@ -632,6 +632,14 @@ driver on record. See the
 
 ## Active Product Track: neural.download packets
 
+**Site follow-ups requested 2026-08-25:** see
+[docs/requests/2026-08-25-site-followups.md](docs/requests/2026-08-25-site-followups.md)
+— two Qwen3.6-35B reproduction guides (the family page currently has no
+install route), a path-sanitizing step in the publishing flow, and a stock
+(unpatched vLLM) 1..64-user sweep to pair with the tuned one. Each item
+states its done-condition; the site regenerates from `guide`/`manifest`
+fields, so no site-side change is needed when they land.
+
 **Model store network share (2026-08-22):** `/mnt/usb-models/llm-models`
 is exported read-only over NFS to `10.0.0.0/24`
 (`ro,no_subtree_check,all_squash`; nothing else on the drive is shared —
