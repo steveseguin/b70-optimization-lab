@@ -554,6 +554,20 @@ These exact-context measurements are additive and do not replace or lower the
 protected short-workload `30.31 tok/s` result. See the
 [result note](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp1-exact-depth-r1-result.md).
 
+The next independent b2dd packet is the TP1 target-only eager concurrency
+ladder. It is preregistered but not launched: batch sizes
+`1/2/4/8/16/32/64`, 128 distinct input tokens, 512 forced output tokens, two
+fixed-seed repeats, and one same-engine sequential oracle for every one of the
+64 prompts. Complete token arrays are retained and every batched response is
+compared with its own prompt generated alone. This is raw-engine aggregate
+decode evidence, not HTTP users or requests per second. A valid but
+output-varying run remains experimental with its exact mismatch disclosure;
+an identity, completeness, timing, or literal-quality failure is quarantined.
+The two-B70 15-GiB host must not execute the full model. Graph capture and
+TP2/TP4 concurrency remain separately pinned followups after the eager shape
+is measured. See the
+[preregistration](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp1-target-concurrency-preregistration.md).
+
 A separate dated current-main image pair was statically certified at vLLM
 `4af586e185b028acf08312a4dee381b5998a137e` and XPU kernels
 `1e90ffa672ba02f17a909da11838a4c55b199783`. Both the stock-kernel control and

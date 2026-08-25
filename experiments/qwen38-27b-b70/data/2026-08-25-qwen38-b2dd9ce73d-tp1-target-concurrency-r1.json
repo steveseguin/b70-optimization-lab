@@ -1,0 +1,103 @@
+{
+  "schema": "neural.download.qwen38-target-concurrency-preregistration.v1",
+  "campaign_id": "qwen38-b2dd9ce73d-tp1-target-concurrency-20260825-r1",
+  "state": "preregistered-not-launched",
+  "created_at": "2026-08-25",
+  "purpose": "Measure the target-only TP1 aggregate-decode saturation curve before graph, MTP, or kernel treatments.",
+  "run_identity": {
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "model_manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model.json",
+    "quantization": "AutoRound INT4 W4A16",
+    "image_tag": "neural-download/vllm-openai-xpu:vllm-b2dd9ce73d-kernel-1e90ffa672-official",
+    "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "source_identity_sha256": "2a0ee74968dd68ba15b31eeef3e404807d125e6e52a0e96d25e8b955bd4ae0a0",
+    "vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "tensor_parallel_size": 1,
+    "gpu_affinity": "0",
+    "mtp_depth": 0,
+    "graph_mode": "off",
+    "kv_cache_dtype_argument": "auto",
+    "resolved_kv_precision": "float16",
+    "prefix_caching": false,
+    "async_scheduling": true
+  },
+  "measurement_contract": {
+    "stage_id": "c1-eager-target-ladder",
+    "batch_sizes": [1, 2, 4, 8, 16, 32, 64],
+    "input_tokens_per_request": 128,
+    "output_tokens_per_request": 512,
+    "max_model_len": 1024,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 8192,
+    "gpu_memory_utilization": 0.9,
+    "temperature": 0.0,
+    "seed": 20260825,
+    "repeats": 2,
+    "ignore_eos": true,
+    "distinct_deterministic_prompt_token_ids": true,
+    "sequential_oracle_for_every_request": true,
+    "record_complete_output_token_ids": true,
+    "literal_quality_smoke_at_batch_sizes": [1, 64],
+    "rate_definitions": {
+      "aggregate_decode_tok_s": "All tokens after each request's first token divided by the observed earliest-first-token to latest-last-token window.",
+      "end_to_end_output_tok_s": "All generated output tokens divided by the observed generate-call wall time.",
+      "median_per_request_decode_tok_s": "Median directly observed first-to-last-token rate across requests."
+    },
+    "no_speed_floor": true,
+    "no_interpolation_or_extrapolation": true
+  },
+  "classification": {
+    "complete_exact": "All lifecycle, literal-quality, timestamp, repeat, and same-prompt sequential-oracle comparisons pass.",
+    "measured_output_variant": "Lifecycle, literal-quality, and timing pass, but at least one repeat or sequential-oracle token sequence differs; retain measured throughput as experimental evidence with the exact mismatch disclosure.",
+    "quarantined": "Identity, lifecycle, completeness, timestamp, or literal-quality failure; do not publish a throughput curve from the attempt."
+  },
+  "execution": {
+    "output_root_r1": "/home/steve/qwen38-current-main-runs/tp1-target-concurrency-b2dd9ce73d-20260825-r1/01-eager-target-ladder",
+    "cache_root_r1": "/home/steve/qwen38-current-main-runs/tp1-target-concurrency-cache-b2dd9ce73d-20260825-r1/01-eager-target-ladder",
+    "container_name_r1": "qwen38-b2dd-tp1-concurrency-r1",
+    "acknowledgement": "RUN qwen38-b2dd9ce73d-tp1-target-concurrency-20260825-r1 c1-eager-target-ladder r1",
+    "fresh_create_only": true,
+    "measuring_host_required": true,
+    "two_b70_15gib_host_full_model_forbidden": true
+  },
+  "frozen_dependencies": {
+    "launcher": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-20260825-qwen38-b2dd-tp1-target-concurrency-r1.py",
+      "identity_policy": "The launcher records its own SHA-256 in the terminal receipt."
+    },
+    "launcher_tests": {
+      "path": "experiments/qwen38-27b-b70/scripts/test_qwen38_b2dd_tp1_target_concurrency.py",
+      "sha256": "fcde87fff6bfe792e790ef2f7a16218aabde89e891e9babc2dc04aa3bd0f348a"
+    },
+    "harness": {
+      "path": "experiments/ornith-15-b70/scripts/vllm-persistent-decode-sweep.py",
+      "sha256": "bf63bb5a1f636e9d6268885b112e8c67ca9de379414a764c1bce4d8a21c55849"
+    },
+    "harness_tests": {
+      "path": "experiments/ornith-15-b70/scripts/test_vllm_persistent_decode_sweep.py",
+      "sha256": "d430c7edcebe9d72f1dadd0488c4dacacb4c8f23c70b76fd6ccd46d72a487c9b"
+    },
+    "model_manifest": {
+      "path": "repro/qwen38-27b-autoround-int4-b70/manifests/model.json",
+      "sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8"
+    },
+    "direct_model_verifier": {
+      "path": "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
+      "sha256": "5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9"
+    },
+    "build_record": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-b2dd9ce73d-absolute-current-main-build.json",
+      "sha256": "d56dc84c1137d741042b2e295c6b1f6a40bf28a3c56e0c52761dd725e3a5caa0"
+    }
+  },
+  "followups": {
+    "after_complete_measurement": [
+      "Profile the observed saturation region and batch-shape output boundary.",
+      "Preregister selected PIECEWISE graph capture shapes without combining eager and graph rows into one curve.",
+      "Run matched TP2 and TP4 ladders only after their exact target-only topology identities are qualified.",
+      "Promote no neural.download package profile until the portable repro and package validation gates pass."
+    ]
+  }
+}
