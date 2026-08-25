@@ -1538,10 +1538,23 @@ class FamilyCoverageTest(unittest.TestCase):
             contracts["qwen38-tp1-llamacpp-sycl-target-matrix"]
         )
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q38_target), 42
+            sum(cell["state"] == "lab-measured" for cell in q38_target), 49
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 0)
         self.assertTrue(all(cell["selectors"]["mtp"] == 0 for cell in q38_target))
+        q38_q8_f16 = [
+            cell for cell in q38_target
+            if cell["selectors"]["artifact_id"]
+            == "qwen38-27b-ggmlorg-q8-0-0669b98"
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "f16"
+        ]
+        self.assertEqual(len(q38_q8_f16), 7)
+        self.assertTrue(all(cell["state"] == "lab-measured" for cell in q38_q8_f16))
+        self.assertEqual(
+            [cell["evidence_id"] for cell in q38_q8_f16],
+            ["q38-q8weights-tp1-kv-f16-context"] * 7,
+        )
 
         rendered = MODULE.family_page(family)
         overview = re.search(
@@ -1552,11 +1565,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("167/1,771 classified", overview_html)
+        self.assertIn("174/1,771 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "104", "measured"),
+            ("lab-measured", "111", "measured"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,604", "missing"),
+            ("missing", "1,597", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)

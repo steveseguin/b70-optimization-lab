@@ -3872,7 +3872,7 @@
   {
     "id": "qwen38-tp1-llamacpp-sycl-target-matrix",
     "label": "Qwen3.8 TP1 · llama.cpp SYCL target-only matrix",
-    "description": "112 meaningful target-only cells: four GGUF artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. These cells preserve the 35 raw measurements and seven frozen estimates; no MTP speed is transferred into them.",
+    "description": "112 meaningful target-only cells: four GGUF artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. These cells preserve 49 exact raw measurements; no MTP speed is transferred into them.",
     "fixed_selectors": {
       "runtime_family": "llama.cpp SYCL"
     },
@@ -4865,6 +4865,41 @@
         "retry": {
           "status": "complete"
         }
+      },
+      {
+        "id": "measured-q8weights-tp1-kv-f16-context-0",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "f16"},
+        "state": "lab-measured", "label": "D19.663 · P996.89 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 0, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-kv-f16-context-2048",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "f16"},
+        "state": "lab-measured", "label": "D19.593 · P987.39 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 2048, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-kv-f16-context-4096",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "off", "kv": "f16"},
+        "state": "lab-measured", "label": "D19.509 · P959.56 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 4096, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-kv-f16-context-8192",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "off", "kv": "f16"},
+        "state": "lab-measured", "label": "D19.294 · P914.06 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 8192, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-kv-f16-context-16384",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "f16"},
+        "state": "lab-measured", "label": "D18.839 · P837.51 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 16384, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-kv-f16-context-24576",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "off", "kv": "f16"},
+        "state": "lab-measured", "label": "D18.418 · P773.15 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 24576, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-kv-f16-context-32768",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"},
+        "state": "lab-measured", "label": "D18.024 · P719.14 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 32768, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
       }
     ]
   },
