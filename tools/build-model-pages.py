@@ -17,11 +17,14 @@ package lands, or the page simply omits the projection block.
 import hashlib
 import html
 import json
+import sys
 import os
 import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from site_seo import seo_head  # noqa: E402
 CATALOG = os.path.join(ROOT, "packages", "catalog.json")
 FAMILY_CATALOG = os.path.join(ROOT, "families", "catalog.json")
 OUT_DIR = os.path.join(ROOT, "models")
@@ -337,17 +340,7 @@ def page(pkg, all_pkgs, family=None):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)}</title>
-<meta name="description" content="{esc(desc)}">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
-<link rel="canonical" href="{esc(url)}">
-<meta name="theme-color" content="#f6f1e5">
-<meta property="og:type" content="article">
-<meta property="og:url" content="{esc(url)}">
-<meta property="og:title" content="{esc(name)} — {esc(fmt(fm.get('value')))} {esc(fm.get('unit', 'tok/s'))} measured">
-<meta property="og:description" content="{esc(desc)}">
-<meta property="og:image" content="https://neural.download/og-image.png">
-<meta property="og:site_name" content="neural.download">
-<meta name="twitter:card" content="summary_large_image">
+{seo_head(url, f"{name} — {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured", desc, image=f"{SITE}models/cards/{pid}.png", image_alt=f"{name}: {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured on Intel Arc Pro B70 — neural.download", og_type="article", depth=1)}
 <script type="application/ld+json">
 {json_for_html_script(ld)}
 </script>
@@ -506,18 +499,8 @@ def index_page(pkgs, families):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Model families on Intel Arc Pro B70 — coverage, packets, and measured deployments — neural.download</title>
-<meta name="description" content="Model-family coverage across weight revisions, variants, quantizations, TP, MTP, context, KV cache, runtime, prefill, TTFT, quality, and measured deployment packets on Intel Arc Pro B70.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
-<link rel="canonical" href="{SITE}models/">
-<meta name="theme-color" content="#f6f1e5">
-<meta property="og:type" content="website">
-<meta property="og:url" content="{SITE}models/">
-<meta property="og:title" content="Model families on Intel Arc Pro B70 — neural.download">
-<meta property="og:description" content="Family-level coverage with measured packets, honest gaps, and exact proof.">
-<meta property="og:image" content="https://neural.download/og-image.png">
-<meta property="og:site_name" content="neural.download">
-<meta name="twitter:card" content="summary_large_image">
+<title>Model families on Intel Arc Pro B70 — neural.download</title>
+{seo_head(f"{SITE}models/", "Models measured on Intel Arc Pro B70 — neural.download", "Every model the lab has measured on Intel Arc Pro B70 cards: headline speed, deployment packets, and what has been tried, with every number linked to its proof.", depth=1)}
 <script type="application/ld+json">
 {json_for_html_script({"@context": "https://schema.org", "@type": "CollectionPage", "name": "Model families on Intel Arc Pro B70", "url": f"{SITE}models/", "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": SITE}, "inLanguage": "en", "isAccessibleForFree": True})}
 </script>

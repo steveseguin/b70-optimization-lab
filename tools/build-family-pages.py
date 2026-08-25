@@ -23,6 +23,8 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from site_seo import seo_head  # noqa: E402
 CATALOG = ROOT / "families" / "catalog.json"
 COVERAGE_REGISTRY = ROOT / "families" / "coverage-registry.json"
 PACKAGE_CATALOG = ROOT / "packages" / "catalog.json"
@@ -3402,14 +3404,7 @@ def family_page(family: dict[str, Any]) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(family.get('display_name'))} on Intel Arc Pro B70 — neural.download</title>
-<meta name="description" content="{esc(family.get('summary'))} Every number links to its measured proof.">
-<link rel="canonical" href="{esc(url)}">
-<meta property="og:type" content="website">
-<meta property="og:url" content="{esc(url)}">
-<meta property="og:title" content="{esc(family.get('display_name'))} on Intel Arc Pro B70 — neural.download">
-<meta property="og:description" content="{esc(family.get('summary'))}">
-<meta property="og:image" content="{SITE}og-image.png">
-<meta name="theme-color" content="#f6f1e5">
+{seo_head(url, f"{family.get('display_name')} on Intel Arc Pro B70 — neural.download", f"{family.get('summary')} Every number links to its measured proof.", image=f"{SITE}models/cards/{family['id']}.png", image_alt=f"{family.get('display_name')} measured on Intel Arc Pro B70 — neural.download", depth=1)}
 <script type="application/ld+json">{json_for_html_script(ld)}</script>
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
