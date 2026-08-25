@@ -1,0 +1,51 @@
+{
+  "schema": "neural.download.qwen38-local-depth-prereg.v1",
+  "campaign_id": "qwen38-q8weights-f16-tp1-local-20260825-r2",
+  "state": "preregistered-not-launched",
+  "purpose": "Fill the one-B70 Qwen3.8 Q8_0-weight/F16-KV raw decode and prefill depth gap using the exact locally available model and frozen reconstructed binary.",
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "path": "/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+    "bytes": 28595763552,
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "runtime": {
+    "base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "applied_source_diff_sha256_at_control_build": "f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e",
+    "compiler": "Intel oneAPI 2026.1.1 reconstruction",
+    "binary": "/mnt/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825/build-sycl-aot-bmg-g31/bin/llama-bench",
+    "binary_sha256": "f8fe61241c010d91dba839ff3d5505def9ba569ae98c0ca498efc01b5fb4e2f0",
+    "backend": "/mnt/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825/build-sycl-aot-bmg-g31/bin/libggml-sycl.so",
+    "backend_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154"
+  },
+  "measurement": {
+    "hardware": "one Intel Arc Pro B70 32 GiB",
+    "topology": "TP1 / SYCL0 / split mode layer",
+    "weights": "Q8_0",
+    "kv": "F16 K and V",
+    "mtp": 0,
+    "graph": "off",
+    "depths": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "prefill_tokens": 2048,
+    "decode_tokens": 128,
+    "repetitions": 5,
+    "flash_attention": true,
+    "batch": 2048,
+    "ubatch": 512,
+    "no_speed_floor": true,
+    "no_interpolation_or_extrapolation": true
+  },
+  "classification": {
+    "complete": "All fourteen exact depth/metric rows and five samples per row are present.",
+    "unsupported_fit": "The frozen invocation cleanly fails allocation or OOM; retain the exact failure without changing KV, depths, or topology.",
+    "failed": "Any identity, lifecycle, process, parse, or non-allocation runtime failure."
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-qwen38-q8weights-f16-tp1-local-r2.sh",
+    "output_root": "/mnt/extended-ssd/b70-runs/qwen38-q8weights-f16-tp1-local-20260825-r2",
+    "exact_ack": "RUN qwen38-q8weights-f16-tp1-local-20260825-r2",
+    "create_only": true,
+    "requires_clean_pushed_main": true
+  }
+}
