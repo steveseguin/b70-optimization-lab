@@ -1,0 +1,51 @@
+{
+  "schema": "neural.download.qwen36-llama-fa0-graph-port-parent-sentinel-r4-overlay.v1",
+  "state": "sealed-preregistered-not-launched",
+  "campaign_id": "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r4",
+  "purpose": "Retry only the 64-token TP1 parent sentinel on the final cache-scaled pointer-stable Q8 memo source and rebuilt runtime.",
+  "sealed_r2_base": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-r2-prereg.json",
+    "manifest_sha256": "175c59eb9a2a2eb95c45f92a0c20c0bd543279d46a4b0e2051ed745db0093a96"
+  },
+  "source_delta": {
+    "common_hpp_sha256": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+    "ggml_sycl_cpp_sha256": "25152136d7e7ff9e96822127f320f08ccb4fa200af607f33afaa05a318cbbd6a",
+    "incremental_patch_path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-capacity-scaled-r3-20260825.patch",
+    "incremental_patch_sha256": "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6",
+    "prereg_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-fa0-graph-cache-q8-capacity-scaled-r3-prereg.json",
+    "prereg_sha256": "738349e396d9322136dcdb6995d1d1bc21dfce4f6d58b3ec38d850189b70f334",
+    "build_result_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-fa0-graph-cache-q8-capacity-scaled-r3-build-result.json",
+    "build_result_sha256": "95c287bf5dddbc1416e331e0dd3395b8e8119aa0072e427f9c87ae0d62f947be"
+  },
+  "runtime_delta": {
+    "llama_cli": {"size_bytes": 736520, "sha256": "68ab26cf34f821a40afb5a05374360e8343b9b802c927fd0850fcd7bf3c7e1fd"},
+    "graph_backend": {"size_bytes": 329322096, "sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2"},
+    "cmake_cache_sha256": "39852126a74e193d99fe9ee2a0a2553d6afc9f6ed2b77b7b853bb25dd689d461",
+    "makefile_sha256": "db2b9dcc0296571e4f76b48402649af56376ea81582c49ca0442b9b35070298f",
+    "sycl_flags_sha256": "c52e473c20c9e06f30b5558445d210791e88047fc0dd6e4585f9fa634fd0a727",
+    "fresh_ldd_closure_count": 34,
+    "fresh_ldd_changed_rows": {
+      "libggml-sycl.so.0": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2",
+      "libllama-server-impl.so": "63dcf154a547aa8611be00625a3c72b190cbdfcdc6a139679ee165c170c93a6b"
+    },
+    "fresh_ldd_unchanged_rows_inherited_from_sealed_r2": 32
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r4",
+    "exact_ack": "RUN qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r4",
+    "create_only": true,
+    "predecessor_roots_immutable": true,
+    "generated_tokens_per_arm": 64,
+    "same_binary_arms": ["off-cache0", "on-cache8"]
+  },
+  "authority": {
+    "parent_sentinel_only": true,
+    "curve_authorized": false,
+    "site_publication_authorized": false,
+    "speed_claim_authorized": false,
+    "quality_claim_authorized": false,
+    "record_or_submission_authorized": false,
+    "protected_graph_off_values_may_be_replaced": false,
+    "historical_featured_speeds_are_immutable": true
+  }
+}
