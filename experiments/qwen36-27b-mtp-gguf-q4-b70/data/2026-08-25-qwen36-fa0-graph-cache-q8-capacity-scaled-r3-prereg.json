@@ -1,0 +1,41 @@
+{
+  "schema": "neural.download.qwen36-fa0-graph-cache-q8-capacity-scaled-r3-prereg.v1",
+  "state": "preregistered-source-applied-build-pending",
+  "purpose": "Retain pointer-stable Q8 memo storage across cache-eight executable graphs while scaling the bounded slot capacity beyond the single-graph 320-slot budget exposed by the R3 parent sentinel.",
+  "trigger": {
+    "campaign_id": "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r3",
+    "terminal_receipt_sha256": "4d419b0231e1a8f80ba75ed4b5c89303138dbdf5b907da20cb1fe533f1aeb244",
+    "failure": "persistent SYCL graph Q8 memo exhausted 320 pointer-stable slots for 78336 bytes",
+    "original_queue_wait_exception_reproduced": false
+  },
+  "source": {
+    "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port",
+    "head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "common_hpp_sha256": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+    "ggml_sycl_cpp_preimage_sha256": "f0c4bda8beb3c0b06c72edc202fcc074d72e031433a4eacd8a91b8acf5f468a0",
+    "ggml_sycl_cpp_postimage_sha256": "25152136d7e7ff9e96822127f320f08ccb4fa200af607f33afaa05a318cbbd6a",
+    "incremental_patch": {
+      "path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-capacity-scaled-r3-20260825.patch",
+      "sha256": "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"
+    }
+  },
+  "frozen_delta": {
+    "graph_off_slot_limit": 320,
+    "graph_on_slot_limit_formula": "320 * GGML_SYCL_GRAPH_CACHE_SIZE",
+    "cache_size_for_retry": 8,
+    "retry_slot_limit": 2560,
+    "reuse_policy": "best-fit only among stale buffers whose existing capacity is sufficient",
+    "resize_or_free_while_graph_cache_active": false,
+    "allocation_failure": "abort closed",
+    "slot_exhaustion": "abort closed"
+  },
+  "interpretation": {
+    "graph_off_semantics_must_remain_unchanged": true,
+    "parent_retry_required": true,
+    "curve_authorized": false,
+    "site_publication_authorized": false,
+    "speed_claim_authorized": false,
+    "record_or_submission_authorized": false,
+    "protected_graph_off_values_may_be_replaced": false
+  }
+}

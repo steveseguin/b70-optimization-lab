@@ -1,0 +1,30 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -4068,6 +4068,9 @@ static char * ggml_sycl_q8_dedup_lookup_generation(
+     ggml_backend_sycl_context::q8_memo_entry * slot = nullptr;
+     const bool preserve_graph_cache_pointers =
+         g_ggml_sycl_enable_graph != 0 && g_ggml_sycl_graph_cache_size > 0;
++    const size_t memo_slot_limit = preserve_graph_cache_pointers
++        ? GGML_SYCL_Q8_MEMO_SLOTS * static_cast<size_t>(g_ggml_sycl_graph_cache_size)
++        : GGML_SYCL_Q8_MEMO_SLOTS;
+     for (auto & e : ctx.q8_memo) {
+         if (e.generation != gen) {
+             if (!preserve_graph_cache_pointers) {
+@@ -4083,13 +4086,13 @@ static char * ggml_sycl_q8_dedup_lookup_generation(
+         }
+     }
+     if (slot == nullptr) {
+-        if (ctx.q8_memo.size() < GGML_SYCL_Q8_MEMO_SLOTS) {
++        if (ctx.q8_memo.size() < memo_slot_limit) {
+             ctx.q8_memo.emplace_back();
+             slot = &ctx.q8_memo.back();
+         } else if (preserve_graph_cache_pointers) {
+             GGML_ABORT(
+-                "persistent SYCL graph Q8 memo exhausted %zu pointer-stable slots for %zu bytes",
+-                ctx.q8_memo.size(), size);
++                "persistent SYCL graph Q8 memo exhausted %zu/%zu pointer-stable slots for %zu bytes",
++                ctx.q8_memo.size(), memo_slot_limit, size);
+         } else {
+             slot = &ctx.q8_memo[ctx.q8_memo_cursor];   // ring-evict the oldest live entry
+             ctx.q8_memo_cursor = (ctx.q8_memo_cursor + 1) % ctx.q8_memo.size();
