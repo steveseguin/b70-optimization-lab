@@ -36,10 +36,16 @@ exec 8>"/tmp/b70-gpu0.lock"; flock -n 8 || fail 'GPU0 lock held'
 mkdir -p "/run/user/$(id -u)/qwen36-b70-gpu-leases"
 exec 9>"/run/user/$(id -u)/qwen36-b70-gpu-leases/gpu0.lock"; flock -n 9 || fail 'legacy GPU0 lease held'
 pgrep -af '[l]lama-(server|bench|batched-bench)|[v]llm' >/dev/null && fail 'another model process is running'
-# The unprivileged shell intentionally opens the protected local password file;
-# sudo reads only its contents on stdin and command output remains captured.
-# shellcheck disable=SC2024
-container_ids=$(sudo -S -p '' docker ps -q < /home/steve/SUDOPASSWORD.txt 2>/dev/null) || fail 'could not verify Docker state'
+if container_ids=$(docker ps -q 2>/dev/null); then
+  :
+elif [[ -r /home/steve/SUDOPASSWORD.txt ]]; then
+  # The unprivileged shell intentionally opens the protected local password
+  # file; sudo reads only its contents and command output remains captured.
+  # shellcheck disable=SC2024
+  container_ids=$(sudo -S -p '' docker ps -q < /home/steve/SUDOPASSWORD.txt 2>/dev/null) || fail 'could not verify Docker state'
+else
+  fail 'could not verify Docker state without direct access or the local sudo file'
+fi
 [[ -z "${container_ids}" ]] || fail 'a Docker container is running'
 
 [[ "$(stat -c %s "${model}")" == 28595763552 ]] || fail 'model size mismatch'

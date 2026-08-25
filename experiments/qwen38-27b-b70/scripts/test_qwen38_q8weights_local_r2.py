@@ -22,7 +22,7 @@ class LocalQ8DepthR2Test(unittest.TestCase):
         self.assertIn(self.manifest["runtime"]["binary_sha256"], self.text)
 
     def test_safe_lifecycle(self):
-        for fragment in ("status --porcelain", "ls-remote", "flock -n 6", "flock -n 9", "create-only output", "MemoryMax=13G"):
+        for fragment in ("status --porcelain", "ls-remote", "flock -n 6", "flock -n 9", "docker ps -q", "create-only output", "MemoryMax=13G"):
             self.assertIn(fragment, self.text)
 
     def test_failure_is_not_silently_resized(self):
