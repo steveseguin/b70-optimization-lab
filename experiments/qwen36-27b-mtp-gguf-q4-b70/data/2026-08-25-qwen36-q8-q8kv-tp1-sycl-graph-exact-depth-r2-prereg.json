@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-q8kv-exact-depth-overlay.v1",
+  "campaign_id": "qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-20260825-r2",
+  "state": "preregistered-not-launched",
+  "sealing_status": "sealed",
+  "supersedes_unsealed_packet": "qwen36-q8-q8kv-tp1-fa0-graph-exact-depth-20260825-r1",
+  "base": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-sycl-graph-exact-depth-r4-prereg.json",
+    "manifest_sha256": "32ffe76461abcfe2b57606d9d25cb3240f3b6705e0bdcacc6d52465d355b070b",
+    "runner_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-f16-tp1-sycl-graph-exact-depth-r4.py",
+    "runner_sha256": "ed3deb0c739dcadab97c26532b8bd4549178932c1926a9a0338d383e985f4602"
+  },
+  "accepted_graph_off_q8kv_reference": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-q8kv-tp1-exact-depth-prereg.json",
+    "manifest_sha256": "24924133fb2a81ca7c368018d9a136067fb38d380904f14cfec4dacf698365e2",
+    "result_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-q8kv-tp1-exact-depth-result.json",
+    "result_sha256": "74b6373258eb2db816f5d5bbe5f69f1478313f818e3e826733b8500d45be2e59",
+    "authority_transfer": "identity and workload comparison only; no speed, graph, quality, or publication authority transfers"
+  },
+  "execution_identity_delta": {
+    "only_runtime_change": "replace both F16 KV selectors with q8_0",
+    "ctk": {"from": "f16", "to": "q8_0"},
+    "ctv": {"from": "f16", "to": "q8_0"},
+    "corresponding_identity_label": {"selectors.kv": "q8_0"}
+  },
+  "preserved": {
+    "contexts": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "graph_on_cache8": true,
+    "source_backend_build_model_and_32_dso_closure": true,
+    "environment_and_verbose_argv": true,
+    "phase_aware_prefill_and_decode_gates": true,
+    "create_only_lifecycle": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-20260825-r2",
+    "exact_ack": "RUN qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-20260825-r2"
+  },
+  "authority": {
+    "raw_cells_require_all_existing_gates": true,
+    "quality_gate_required_before_publication": true,
+    "site_publication_authorized": false,
+    "record_or_submission_authorized": false,
+    "quality_claim_authorized": false,
+    "graph_estimates_forbidden": true,
+    "protected_graph_off_values_must_not_be_replaced": true
+  }
+}
