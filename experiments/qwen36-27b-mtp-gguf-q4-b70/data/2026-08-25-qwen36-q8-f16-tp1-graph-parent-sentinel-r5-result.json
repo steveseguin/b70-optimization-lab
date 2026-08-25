@@ -1,0 +1,85 @@
+{
+  "schema": "neural.download.qwen36-llama-graph-parent-sentinel-result.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-graph-sentinel-20260825-r5",
+  "classification": "passed-bounded-mechanism-and-exact-output-parity",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-graph-sentinel-20260825-r5",
+  "terminal_sha256": "99d05f4fbd84b678e0ad3333025ea529ee71684e260afa826aeb7836b6b7ddad",
+  "terminal": {
+    "state": "passed-parent-sentinel-only",
+    "stage": "complete",
+    "cleanup_passed": true,
+    "repo_head": "8dba0ba5bbf7ead82c0a93c8bc36da9662511e0d",
+    "error": null
+  },
+  "identity": {
+    "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+    "binary_sha256": "6d38f7c31e7c5b7ca7299c8b38dd31c356d86e0514bd406546c789eca7b73dcc",
+    "device": 0,
+    "kv_cache": "f16",
+    "source_provenance_limitation": "The retained historical graph-enabled binary is sealed by binary, build-receipt, DSO, and model hashes, but its exact private dirty source delta was not captured as a complete reconstructable snapshot. It is bounded mechanism evidence, not the publishable exact-depth recipe."
+  },
+  "control": {
+    "passed": true,
+    "elapsed_seconds": 24.605695143000048,
+    "output_bytes": 1293,
+    "output_sha256": "cc12d7e693e9bf8404ba0e36a33c8f42393f58be62e013dd23c3803e40f50822",
+    "graph_summary": {
+      "device": 0,
+      "requested": 0,
+      "compatibility_rejected": 0,
+      "device_unsupported": 0,
+      "cache_entries": 0,
+      "cache_limit": 0,
+      "cache_hit": 0,
+      "cache_miss": 0,
+      "cache_full": 0,
+      "direct_replay": 0,
+      "recorded": 0,
+      "created": 0,
+      "updated": 0,
+      "recreated": 0,
+      "replayed": 0
+    }
+  },
+  "candidate": {
+    "passed": true,
+    "elapsed_seconds": 25.108018021001044,
+    "output_bytes": 1293,
+    "output_sha256": "cc12d7e693e9bf8404ba0e36a33c8f42393f58be62e013dd23c3803e40f50822",
+    "graph_summary": {
+      "device": 0,
+      "requested": 66,
+      "compatibility_rejected": 0,
+      "device_unsupported": 0,
+      "cache_entries": 4,
+      "cache_limit": 8,
+      "cache_hit": 62,
+      "cache_miss": 4,
+      "cache_full": 0,
+      "direct_replay": 62,
+      "recorded": 4,
+      "created": 4,
+      "updated": 0,
+      "recreated": 0,
+      "replayed": 66
+    }
+  },
+  "parity": {
+    "passed": true,
+    "same_binary": true,
+    "exact_output_bytes": true,
+    "cache_zero_both_arms": true,
+    "output_sha256": "cc12d7e693e9bf8404ba0e36a33c8f42393f58be62e013dd23c3803e40f50822",
+    "receipt_sha256": "3efb01f7c0cb7145808d754ace73faf1af58c43114b4cfc76178e0749fc1f914"
+  },
+  "postflight_seal_sha256": "9c97654be4aaedf8e574f2cf54e992d1e8ba2e058992fb5dbbd82cda4bf1a6e8",
+  "authority": {
+    "mechanism_and_exact_output_parity": true,
+    "seven_cell_expansion": false,
+    "site_publication": false,
+    "record_or_submission": false,
+    "speed_measurement_or_floor": null,
+    "historical_featured_speeds_are_immutable": true
+  },
+  "next": "Build and seal a graph-enabled sibling from the clean exact-depth source and run a separately preregistered target-Q8/F16 seven-depth curve before adding any graph cells to the site."
+}
