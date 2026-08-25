@@ -257,6 +257,7 @@ def post_stream(
         "tok_s_wall_full": tok_s_wall,
         "tok_s_after_ttft_full": tok_s_after_ttft_full,
         "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "text": text,
         "text_preview": text[:320],
     }
 

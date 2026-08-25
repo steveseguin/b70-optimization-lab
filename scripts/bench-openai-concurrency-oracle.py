@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+"""Measure endpoint concurrency against per-prompt sequential output oracles."""
+
+from __future__ import annotations
+
+import argparse
+import concurrent.futures
+import datetime as dt
+import hashlib
+import importlib.util
+import json
+import statistics
+import threading
+import time
+from pathlib import Path
+from typing import Any, Callable
+
+
+_HERE = Path(__file__).resolve().parent
+_SPEC = importlib.util.spec_from_file_location(
+    "bench_openai_realistic_suite", _HERE / "bench-openai-realistic-suite.py"
+)
+if _SPEC is None or _SPEC.loader is None:
+    raise RuntimeError("cannot load bench-openai-realistic-suite.py")
+_BASE = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(_BASE)
+
+
+def parse_counts(value: str) -> list[int]:
+    counts = [int(item) for item in value.split(",")]
+    if not counts or any(item < 1 for item in counts):
+        raise argparse.ArgumentTypeError("counts must be positive integers")
+    if counts != sorted(set(counts)):
+        raise argparse.ArgumentTypeError("counts must be unique and ascending")
+    return counts
+
+
+def expand_prompts(
+    base_prompts: list[dict[str, str]], count: int
+) -> list[dict[str, str]]:
+    if not base_prompts:
+        raise ValueError("suite has no prompts")
+    expanded = []
+    for index in range(count):
+        base = base_prompts[index % len(base_prompts)]
+        variant = index // len(base_prompts)
+        suffix = f"\n\n[Independent validation case {index:03d}; variant {variant:02d}]"
+        expanded.append(
+            {
+                "id": f"{base['id']}-c{index:03d}",
+                "prompt": base["prompt"] + suffix,
+            }
+        )
+    return expanded
+
+
+def summarize_batch(
+    *,
+    concurrency: int,
+    repeat: int,
+    elapsed_s: float,
+    rows: list[dict[str, Any]],
+    oracle_by_id: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    completion_tokens = [row.get("completion_tokens") for row in rows]
+    completion_tokens_complete = all(isinstance(v, int) for v in completion_tokens)
+    total_tokens = sum(v for v in completion_tokens if isinstance(v, int))
+    exact = [
+        row.get("sha256") == oracle_by_id[row["prompt_id"]].get("sha256")
+        for row in rows
+    ]
+    cached = [_BASE.cached_tokens(row) for row in rows]
+    request_wall_rates = [
+        float(row["tok_s_wall_full"])
+        for row in rows
+        if isinstance(row.get("tok_s_wall_full"), (int, float))
+    ]
+    return {
+        "concurrency": concurrency,
+        "repeat": repeat,
+        "elapsed_s": elapsed_s,
+        "request_count": len(rows),
+        "completion_tokens": completion_tokens,
+        "completion_tokens_complete": completion_tokens_complete,
+        "total_completion_tokens": total_tokens,
+        "aggregate_tok_s_wall": total_tokens / elapsed_s if elapsed_s > 0 else None,
+        "per_request_tok_s_wall_median": (
+            statistics.median(request_wall_rates) if request_wall_rates else None
+        ),
+        "oracle_exact_count": sum(exact),
+        "oracle_exact_total": len(exact),
+        "oracle_exact_all": all(exact),
+        "cached_tokens": cached,
+        "cached_tokens_all_zero": all(v == 0 for v in cached),
+        "rows": rows,
+    }
+
+
+def run_group(
+    *,
+    prompts: list[dict[str, str]],
+    concurrency: int,
+    request: Callable[[dict[str, str], str], dict[str, Any]],
+    request_prefix: str,
+) -> tuple[float, list[dict[str, Any]]]:
+    barrier = threading.Barrier(concurrency)
+
+    def one(index: int, item: dict[str, str]) -> dict[str, Any]:
+        barrier.wait()
+        row = request(item, f"{request_prefix}-{index:03d}")
+        row["prompt_id"] = item["id"]
+        row["prompt_sha256"] = hashlib.sha256(
+            item["prompt"].encode("utf-8")
+        ).hexdigest()
+        return row
+
+    started = time.perf_counter()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
+        futures = [pool.submit(one, i, item) for i, item in enumerate(prompts)]
+        rows = [future.result() for future in futures]
+    return time.perf_counter() - started, rows
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--base-url", default="http://127.0.0.1:18088")
+    parser.add_argument("--model", required=True)
+    parser.add_argument(
+        "--api-mode", choices=("chat", "completions", "native"), default="completions"
+    )
+    parser.add_argument("--suite", type=Path, required=True)
+    parser.add_argument("--concurrency", type=parse_counts, default=parse_counts("1,2,4,8"))
+    parser.add_argument("--repeats", type=int, default=2)
+    parser.add_argument("--max-tokens", type=int, default=256)
+    parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--timeout", type=int, default=900)
+    parser.add_argument("--request-extra-json", default="{}")
+    parser.add_argument("--return-token-ids", action="store_true")
+    parser.add_argument("--out", type=Path, required=True)
+    args = parser.parse_args()
+    if args.repeats < 1 or args.max_tokens < 1:
+        raise SystemExit("--repeats and --max-tokens must be positive")
+    request_extra = json.loads(args.request_extra_json)
+    if not isinstance(request_extra, dict):
+        raise SystemExit("--request-extra-json must be an object")
+
+    suite_meta, base_prompts = _BASE.load_suite(args.suite)
+    prompts = expand_prompts(base_prompts, max(args.concurrency))
+    system_prompt = suite_meta.get("system_prompt")
+
+    def request(item: dict[str, str], request_id: str) -> dict[str, Any]:
+        return _BASE.post_stream(
+            base_url=args.base_url,
+            model=args.model,
+            prompt=item["prompt"],
+            max_tokens=args.max_tokens,
+            timeout=args.timeout,
+            api_mode=args.api_mode,
+            seed=args.seed,
+            request_extra=request_extra,
+            return_token_ids=args.return_token_ids,
+            system_prompt=system_prompt,
+            request_id=request_id,
+        )
+
+    oracle_rows = []
+    for index, item in enumerate(prompts):
+        row = request(item, f"oracle-{index:03d}")
+        row["prompt_id"] = item["id"]
+        row["prompt_sha256"] = hashlib.sha256(
+            item["prompt"].encode("utf-8")
+        ).hexdigest()
+        oracle_rows.append(row)
+    oracle_by_id = {row["prompt_id"]: row for row in oracle_rows}
+
+    batches = []
+    for repeat in range(1, args.repeats + 1):
+        for concurrency in args.concurrency:
+            selected = prompts[:concurrency]
+            elapsed, rows = run_group(
+                prompts=selected,
+                concurrency=concurrency,
+                request=request,
+                request_prefix=f"c{concurrency}-r{repeat}",
+            )
+            batches.append(
+                summarize_batch(
+                    concurrency=concurrency,
+                    repeat=repeat,
+                    elapsed_s=elapsed,
+                    rows=rows,
+                    oracle_by_id=oracle_by_id,
+                )
+            )
+
+    oracle_fresh = all(_BASE.cached_tokens(row) == 0 for row in oracle_rows)
+    all_exact = all(batch["oracle_exact_all"] for batch in batches)
+    all_fresh = oracle_fresh and all(
+        batch["cached_tokens_all_zero"] for batch in batches
+    )
+    all_counts = all(batch["completion_tokens_complete"] for batch in batches)
+    result = {
+        "created_at_utc": dt.datetime.now(dt.UTC).isoformat(),
+        "classification": (
+            "output-identity-qualified"
+            if all_exact and all_fresh and all_counts
+            else "measured-output-variant"
+        ),
+        "aggregate_metric": "sum(completion_tokens) / batch wall time",
+        "reporting_boundary": (
+            "Measured endpoint batches with per-prompt sequential oracle comparison. "
+            "No interpolation or extrapolation; semantic quality remains a separate gate."
+        ),
+        "config": {
+            "base_url": args.base_url,
+            "model": args.model,
+            "api_mode": args.api_mode,
+            "suite_path": str(args.suite),
+            "suite": suite_meta,
+            "concurrency": args.concurrency,
+            "repeats": args.repeats,
+            "max_tokens": args.max_tokens,
+            "seed": args.seed,
+            "request_extra": request_extra,
+            "return_token_ids": args.return_token_ids,
+        },
+        "oracle": {
+            "request_count": len(oracle_rows),
+            "cached_tokens_all_zero": oracle_fresh,
+            "rows": oracle_rows,
+        },
+        "batches": batches,
+    }
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+    print(json.dumps({
+        "classification": result["classification"],
+        "output": str(args.out),
+        "batches": [
+            {
+                "concurrency": row["concurrency"],
+                "repeat": row["repeat"],
+                "aggregate_tok_s_wall": row["aggregate_tok_s_wall"],
+                "oracle_exact": f"{row['oracle_exact_count']}/{row['oracle_exact_total']}",
+            }
+            for row in batches
+        ],
+    }, indent=2))
+    return 0 if all_exact and all_fresh and all_counts else 3
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
