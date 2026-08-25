@@ -1,0 +1,37 @@
+{
+  "schema": "neural.download.qwen36-llama-graph-parent-sentinel-r2-delta.v1",
+  "base_manifest": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-graph-parent-sentinel-prereg.json",
+  "campaign_id": "qwen36-q8-f16-tp1-graph-sentinel-20260825-r2",
+  "state": "preregistered-not-launched",
+  "purpose": "Rerun the complete parent sentinel with only the lifecycle, deterministic-output, and graph-log observability defects exposed by R1 repaired.",
+  "common_argv_append_before_prompt": [
+    "--single-turn",
+    "--no-show-timings",
+    "--log-verbosity",
+    "4"
+  ],
+  "lifecycle_delta": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-graph-sentinel-20260825-r2",
+    "exact_ack": "RUN qwen36-q8-f16-tp1-graph-sentinel-20260825-r2",
+    "child_stdin": "/dev/null",
+    "single_turn_required": true,
+    "ui_timings_disabled": true,
+    "graph_log_verbosity": 4
+  },
+  "predecessor": {
+    "classification": "failed-incomplete-harness-lifecycle",
+    "result": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-graph-parent-sentinel-r1-result.json",
+    "terminal_sha256": "dfe5befea05b65df0271e3b00c0ba69f2fa847e4330b41b2eba5c1e1651f70c8",
+    "control_stdout_sha256": "887eaca797104ec80fab21ab8634416f95647bb0ee4b461a801a2f9970fafdc3",
+    "reuse_any_arm": false
+  },
+  "unchanged": [
+    "model and direct/ordinary verification",
+    "binary, graph-enabled build receipts, and 34 effective DSOs",
+    "GPU0 compute oracle and device binding",
+    "prompt, seed, 64-token output, F16 K/V, graph off 0 versus graph on cache 8",
+    "unsafe graph-variable exclusions",
+    "four locks, 900-second arm watchdog, TERM/KILL cleanup, and postflight",
+    "no speed floor, site authority, matrix authority, or submission authority"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "schema": "neural.download.qwen36-llama-graph-parent-sentinel-result.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-graph-sentinel-20260825-r1",
+  "classification": "failed-incomplete-harness-lifecycle",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-graph-sentinel-20260825-r1",
+  "terminal": {
+    "state": "failed",
+    "stage": "control-graph0-cache0",
+    "started_utc": "2026-08-25T19:46:10.034872+00:00",
+    "finished_utc": "2026-08-25T20:01:49.372992+00:00",
+    "error": "control-graph0-cache0 timed out; process group was cleaned",
+    "cleanup_passed": true,
+    "sha256": "dfe5befea05b65df0271e3b00c0ba69f2fa847e4330b41b2eba5c1e1651f70c8"
+  },
+  "completed_preflight": {
+    "model_views": {
+      "status": "verified",
+      "direct_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+      "ordinary_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+      "views_coherent": true,
+      "elapsed_seconds": 36.46852961499826,
+      "receipt_sha256": "b7965f6fb3d3bd53dbd9f36acb0034607fee75234e8414268aec4adda600f6dd"
+    },
+    "gpu0_compute": {
+      "passed": true,
+      "visible_xpu_count": 1,
+      "oracle": "sum(x+1)==2097152.0",
+      "elapsed_seconds": 2.4196895770000992,
+      "receipt_sha256": "d2042802bd019793ea78bb54a504d4dd9ef470d99d84af9b184461e92627a16f"
+    }
+  },
+  "control_observation": {
+    "receipt_exists": false,
+    "stdout_bytes": 1341,
+    "stdout_sha256": "887eaca797104ec80fab21ab8634416f95647bb0ee4b461a801a2f9970fafdc3",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "identity_sha256": "65d3deb9c150b7414f573f64ac4f8ded428e729058b4ddcab8c90be20f9cba49",
+    "generated_requested_tokens": 64,
+    "next_interactive_prompt_observed": true,
+    "watchdog_generated_exit_text": true,
+    "dynamic_timing_line_observed": true
+  },
+  "candidate_observation": null,
+  "cause": {
+    "primary": "The old llama-cli completed the requested generation, returned to its interactive input loop, and inherited the orchestrator terminal instead of exiting.",
+    "secondary": "The CLI defaulted to error-only logging, so the INFO-level graph markers required by the frozen gate were absent from stderr.",
+    "parity_hazard": "Raw stdout included a dynamic prompt/generation timing line and therefore was not a deterministic cross-arm parity artifact."
+  },
+  "authority": {
+    "graph_mechanism": false,
+    "output_parity": false,
+    "seven_cell_expansion": false,
+    "site_publication": false,
+    "record_or_submission": false,
+    "speed_measurement_or_floor": null,
+    "reuse_any_r1_arm": false,
+    "historical_featured_speeds_are_immutable": true
+  },
+  "next": "Use a fresh R2 root and rerun every preflight plus both arms with single-turn mode, stdin closed, UI timings disabled, and INFO-capable graph logging."
+}
