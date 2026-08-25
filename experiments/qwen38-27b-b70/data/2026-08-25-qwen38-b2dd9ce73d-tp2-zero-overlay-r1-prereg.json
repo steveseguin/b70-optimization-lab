@@ -1,0 +1,117 @@
+{
+  "schema": "neural.download.frozen-topology-qualification.v1",
+  "campaign_id": "qwen38-b2dd9ce73d-tp2-zero-overlay-20260825-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Fill the explicit TP2 hole between the measured b2dd/1e90 TP1 and TP4 anchors without changing or lowering any protected historical result.",
+  "launch_host": "four-B70 measuring host only",
+  "frozen_identity": {
+    "campaign_freeze": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-b2dd9ce73d-campaign-freeze.json",
+    "campaign_freeze_sha256": "54f6303a7864cb2263818bc55370606df2535c689a06011dd97d2eddcbd8ac2c",
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model.json",
+    "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "vllm_commit": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "base_image_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "image_tag": "neural-download/vllm-openai-xpu:vllm-b2dd9ce73d-kernel-1e90ffa672-official",
+    "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "source_identity_path": "/opt/neural-download/source-identity.json",
+    "source_identity_sha256": "2a0ee74968dd68ba15b31eeef3e404807d125e6e52a0e96d25e8b955bd4ae0a0",
+    "overlay": "none"
+  },
+  "topology": {
+    "gpus": "0,1",
+    "tensor_parallel": 2,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "concurrency": 1,
+    "mtp_depth": 0,
+    "model_dtype": "float16",
+    "kv_cache_dtype": "float16",
+    "max_model_len": 32768,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "prefix_cache": false,
+    "chunked_prefill": true,
+    "async_scheduling": true,
+    "graph": {
+      "enabled": true,
+      "mode": "FULL_AND_PIECEWISE",
+      "capture_sizes": [1, 2],
+      "maximum_capture_size": 2
+    }
+  },
+  "frozen_inputs": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260823-qwen38-rolling-nightly-strict-smoke.sh",
+    "runner_sha256": "cb2bfd95e7ad9956dae5bc22ccfa575c8742847c963143291a21505533598202",
+    "suite": "patches/qwen36-27b-autoround-int4-b70/batch-invariant-rmsnorm-20260817/validation-suite.json",
+    "suite_sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c",
+    "quality_baseline": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp2-mtp0-f16-graph-natural-eos-replay-b-baseline-quality/quality.json",
+    "quality_baseline_sha256": "0ba49be19bbb081023259ce290f87990d3e26038e461d136862631442a63bc48"
+  },
+  "paths": {
+    "result_root": "/home/steve/qwen38-current-main-runs/tp2-untreated-b2dd9ce73d-20260825-r1",
+    "cache": "/home/steve/qwen38-current-main-runs/tp2-untreated-b2dd9ce73d-20260825-r1/control-cache",
+    "diagnostic": "control-fresh-diagnostic",
+    "strict_a": "control-strict-quality-replay-a",
+    "strict_b": "control-strict-replay-b",
+    "ports": [19860, 19861, 19862]
+  },
+  "arms": [
+    {
+      "id": "diagnostic",
+      "cache_policy": "fresh",
+      "natural_eos": false,
+      "quality": false,
+      "benchmark_rows": 25,
+      "max_tokens": 512
+    },
+    {
+      "id": "strict-a",
+      "cache_policy": "replay",
+      "natural_eos": true,
+      "quality": true,
+      "benchmark_rows": 25,
+      "max_tokens": 512,
+      "requires_manifest_from": "diagnostic"
+    },
+    {
+      "id": "strict-b",
+      "cache_policy": "replay",
+      "natural_eos": true,
+      "quality": false,
+      "benchmark_rows": 25,
+      "max_tokens": 512,
+      "requires_manifest_from": "diagnostic"
+    }
+  ],
+  "non_speed_gates": {
+    "model_direct_and_ordinary": "19/19",
+    "canary": "content 14 and cached_tokens 0",
+    "benchmark": "25 unique cold rows, token IDs returned, >=100 events per eligible row, cached_tokens 0",
+    "quality_strict_a": "7/7 exact, 8/8 repeat with one hash, 8K needle, 24/24 baseline, all cached_tokens 0",
+    "cache": "byte-identical file manifest after every arm and container cleanup",
+    "cleanup": "arm container absent and port unbound after every arm"
+  },
+  "protected_speed_comparisons_tok_s": {
+    "diagnostic_floor": 48.8301,
+    "diagnostic_captured_high": 48.950458800865434,
+    "strict_floor": 49.01965141150585,
+    "accepted_overlay_diagnostic": 49.05894025767351,
+    "accepted_overlay_strict": 49.00935245117815,
+    "speed_controls_execution": false,
+    "lowering_or_replacement_allowed": false
+  },
+  "execution_policy": {
+    "atomic": true,
+    "continue_after_speed_miss_if_non_speed_gates_pass": true,
+    "fresh_ext4_cache": true,
+    "copy_and_hash_all_inputs_into_result_root": true,
+    "clean_pushed_main_required": true,
+    "remote_upstream_movement_after_freeze_is_non_gating": true,
+    "explicit_acknowledgement": "RUN_QWEN38_B2DD_TP2_ZERO_OVERLAY_R1",
+    "note": "This contract is inert. A measuring-host wrapper must freeze its boot ID, kernel, hardware gate, and this contract hash before launch."
+  },
+  "follow_up": "Only a completed zero-overlay TP2 packet may authorize exact-path/config-hash remapping of the preserved 78-decision TP2 overlay."
+}
