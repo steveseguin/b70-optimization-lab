@@ -2676,6 +2676,19 @@ def ml_spec_label(config: dict[str, Any], variant_text: str) -> str:
     return "none"
 
 
+def plain_identity(identity: str) -> str:
+    """Drop revision ids and commit hashes from an identity line for prose."""
+    parts = [bit.strip() for bit in str(identity).split("\u00b7")]
+    kept = []
+    for bit in parts:
+        if re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*-[0-9a-f]{7,}", bit):
+            continue
+        bit = re.sub(r"\b[0-9a-f]{7,}(?:/[0-9a-f]{7,})*\b", "", bit).strip(" /")
+        if bit:
+            kept.append(bit)
+    return " \u00b7 ".join(kept)
+
+
 def family_projection_attrs(family: dict[str, Any], hero: dict[str, Any] | None) -> str:
     """data-ml-* attributes for the shared bridge renderer, built from the
     family's hero measurement: its quant, runtime, card count, and the
@@ -3176,7 +3189,7 @@ def family_page(family: dict[str, Any]) -> str:
     projection_attrs = family_projection_attrs(family, hero_measurement)
     if projection_attrs and hero_result:
         projection_html = f'''
-  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge spec">Projected \u2014 not measured</span></h2><p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects a tuned-run target and the physical ceiling for the headline setup ({esc(hero_result.get("identity") or "")}). The grade is optimization headroom against the tuned-run target, not model quality.</p></div></div>
+  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge spec">Projected \u2014 not measured</span></h2><p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects a tuned-run target and the physical ceiling for the headline setup ({esc(plain_identity(hero_result.get("identity") or ""))}). The grade is optimization headroom against the tuned-run target, not model quality.</p></div></div>
   <div id="package-page"{projection_attrs} data-ml-measured="{esc(hero_result["value"])}">
     <div id="package-projection" class="projection" hidden>
       <p class="projection-status" data-projection-status>Loading projections from mlbottleneck.com\u2026</p>
