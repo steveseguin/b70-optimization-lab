@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CPU-only fail-closed tests for the unsealed Q8/F16 SYCL-graph curve."""
+"""CPU-only fail-closed tests for the sealed Q8/F16 SYCL-graph curve."""
 
 from __future__ import annotations
 
@@ -76,23 +76,23 @@ class ContractTests(unittest.TestCase):
         with self.assertRaisesRegex(RUNNER.GateError, "exactly one"):
             RUNNER.parse_graph_summary("")
 
-    def test_unsealed_placeholders_are_mandatory_blockers(self) -> None:
-        self.assertNotEqual(self.manifest["sealing_status"], "sealed")
-        with self.assertRaisesRegex(RUNNER.GateError, "packet is unsealed"):
-            RUNNER.require_sealed_dependencies(self.manifest)
+    def test_sealed_runtime_and_r4_parent_receipts_pass(self) -> None:
+        self.assertEqual(self.manifest["sealing_status"], "sealed")
+        RUNNER.require_sealed_dependencies(self.manifest)
         runtime = self.manifest["runtime"]
-        self.assertLess(runtime["binary"]["size_bytes"], 0)
-        self.assertTrue(runtime["binary"]["sha256"].startswith(RUNNER.PLACEHOLDER_PREFIX))
-        self.assertTrue(runtime["graph_backend"]["sha256"].startswith(RUNNER.PLACEHOLDER_PREFIX))
-        self.assertEqual(runtime["effective_shared_libraries"], [])
-        for key in ("result", "terminal_receipt", "parity_receipt"):
-            self.assertTrue(
-                self.manifest["parent_sentinel"][key]["sha256"].startswith(
-                    RUNNER.PLACEHOLDER_PREFIX
-                )
-            )
+        self.assertEqual(runtime["binary"]["size_bytes"], 545160)
+        self.assertEqual(len(runtime["effective_shared_libraries"]), 32)
+        self.assertEqual(
+            self.manifest["parent_sentinel"]["campaign_id"],
+            "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r4",
+        )
 
-    def test_default_is_inert_and_check_fails_closed(self) -> None:
+        changed = copy.deepcopy(self.manifest)
+        changed["runtime"]["graph_backend"]["sha256"] = "0" * 64
+        with self.assertRaisesRegex(RUNNER.GateError, "graph backend identity changed"):
+            RUNNER.require_sealed_dependencies(changed)
+
+    def test_default_is_inert_and_check_passes_without_launch(self) -> None:
         output = Path(self.manifest["lifecycle"]["output_root"])
         self.assertFalse(output.exists())
         plan = subprocess.run(
@@ -104,13 +104,14 @@ class ContractTests(unittest.TestCase):
         self.assertTrue(payload["graph_evidence_required_per_cell"])
         check = subprocess.run(
             [sys.executable, "-B", str(SCRIPT), "--check"],
-            check=False, text=True, capture_output=True,
+            check=True, text=True, capture_output=True,
         )
-        self.assertEqual(check.returncode, 2)
-        self.assertIn("packet is unsealed", check.stderr)
+        check_payload = json.loads(check.stdout)
+        self.assertEqual(check_payload["status"], "PASS")
+        self.assertFalse(check_payload["launched"])
         self.assertFalse(output.exists())
 
-    def test_execute_cannot_bypass_ack_or_sealing(self) -> None:
+    def test_execute_cannot_bypass_ack(self) -> None:
         output = Path(self.manifest["lifecycle"]["output_root"])
         missing_ack = subprocess.run(
             [sys.executable, "-B", str(SCRIPT), "--execute"],
@@ -118,12 +119,6 @@ class ContractTests(unittest.TestCase):
         )
         self.assertEqual(missing_ack.returncode, 2)
         self.assertIn("exact acknowledgement required", missing_ack.stderr)
-        unsealed = subprocess.run(
-            [sys.executable, "-B", str(SCRIPT), "--execute", "--ack", RUNNER.ACK],
-            check=False, text=True, capture_output=True,
-        )
-        self.assertEqual(unsealed.returncode, 2)
-        self.assertIn("packet is unsealed", unsealed.stderr)
         self.assertFalse(output.exists())
 
     def test_claim_boundaries_and_protected_graph_off_series(self) -> None:

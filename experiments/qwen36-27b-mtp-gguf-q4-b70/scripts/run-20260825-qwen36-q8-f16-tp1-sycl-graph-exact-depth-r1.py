@@ -119,7 +119,7 @@ def validate_manifest(value: Mapping[str, Any]) -> None:
         and model.get("ordinary_sha256") == model.get("sha256")
         and model.get("embedded_mtp_capability") is False
         and source.get("base_head") == "fa0f3b25a47f346858a4d0d169f5181aa424b110"
-        and parent.get("campaign_id") == "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1"
+        and parent.get("campaign_id") == "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r4"
         and parent.get("same_graph_backend_as_curve_required") is True
         and graph.get("required_for_every_context") == DEPTHS
         and graph.get("graph_estimates_forbidden") is True
@@ -202,6 +202,8 @@ def require_sealed_dependencies(manifest: Mapping[str, Any]) -> None:
         if not soname or soname in seen or not Path(realpath).is_absolute():
             raise GateError("effective DSO closure is duplicated or non-canonical")
         _require_hash(digest, f"DSO {soname}")
+        if not Path(realpath).is_file() or sha256_file(Path(realpath)) != digest:
+            raise GateError(f"sealed DSO identity changed: {soname}")
         seen.add(soname)
     parent = manifest["parent_sentinel"]
     verified_parent_paths = {
@@ -209,10 +211,22 @@ def require_sealed_dependencies(manifest: Mapping[str, Any]) -> None:
         for key in ("preregistration", "runner", "result", "terminal_receipt", "parity_receipt")
     }
     parent_manifest = load_json(_resolve(parent["preregistration"]["path"]))
-    parent_backend = (parent_manifest.get("runtime") or {}).get("graph_backend") or {}
+    parent_backend = (parent_manifest.get("runtime_delta") or {}).get("graph_backend") or {}
+    parent_base = parent_manifest.get("sealed_r2_base") or {}
+    parent_base_path = _verify_ref(
+        {
+            "path": parent_base.get("manifest_path"),
+            "sha256": parent_base.get("manifest_sha256"),
+        },
+        "parent sealed R2 base",
+    )
+    parent_base_manifest = load_json(parent_base_path)
+    parent_base_backend = (parent_base_manifest.get("runtime") or {}).get("graph_backend") or {}
     if parent_backend.get("sha256") != runtime["graph_backend"]["sha256"]:
         raise GateError("curve and parent sentinel do not bind the same graph backend")
-    if Path(str(parent_backend.get("path", ""))).resolve() != backend.resolve():
+    if parent_backend.get("size_bytes") != runtime["graph_backend"]["size_bytes"]:
+        raise GateError("curve and parent sentinel graph backend sizes differ")
+    if Path(str(parent_base_backend.get("path", ""))).resolve() != backend.resolve():
         raise GateError("curve and parent sentinel graph backend paths differ")
     result = load_json(verified_parent_paths["result"])
     terminal = result.get("terminal") or {}
@@ -220,6 +234,8 @@ def require_sealed_dependencies(manifest: Mapping[str, Any]) -> None:
     authority = result.get("authority") or {}
     if not (
         result.get("campaign_id") == parent["campaign_id"]
+        and (result.get("runtime") or {}).get("graph_backend_sha256")
+        == runtime["graph_backend"]["sha256"]
         and terminal.get("state") == "passed-parent-sentinel-only"
         and terminal.get("cleanup_passed") is True
         and parity.get("passed") is True

@@ -2,7 +2,7 @@
   "schema": "neural.download.qwen36-llama-sycl-graph-exact-depth-prereg.v1",
   "campaign_id": "qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r1",
   "state": "preregistered-not-launched",
-  "sealing_status": "UNSEALED_AWAITING_GRAPH_BINARY_BACKEND_DSOS_AND_PARENT_RECEIPTS",
+  "sealing_status": "sealed",
   "purpose": "Fill only the seven Unsloth Qwen3.6 target-only Q8_0 TP1/MTP0/SYCL-graph/F16-KV exact active-context cells after the clean fa0 graph-port parent proves mechanism and exact output parity.",
   "selectors": {
     "revision": "qwen3.6-27b",
@@ -39,7 +39,7 @@
     "base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
     "required_modified_paths": {
       "ggml/src/ggml-sycl/common.hpp": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
-      "ggml/src/ggml-sycl/ggml-sycl.cpp": "024fda2f9e667aa82cfdac64c079b5cb932e6a40e90031ad16cfd142bec93544"
+      "ggml/src/ggml-sycl/ggml-sycl.cpp": "25152136d7e7ff9e96822127f320f08ccb4fa200af607f33afaa05a318cbbd6a"
     },
     "patch": {
       "path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-evidence-port-20260825.patch",
@@ -50,15 +50,48 @@
     "build_root": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port",
     "binary": {
       "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-bench",
-      "size_bytes": -1,
-      "sha256": "FILL_AFTER_LLAMA_BENCH_BUILD"
+      "size_bytes": 545160,
+      "sha256": "8ea8fd14e6ac0c4a4b3a711db8997189d677df2a4f7f88d20609f59ca463a55e"
     },
     "graph_backend": {
       "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-sycl.so",
-      "size_bytes": -1,
-      "sha256": "FILL_AFTER_GRAPH_BACKEND_BUILD"
+      "size_bytes": 329322096,
+      "sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2"
     },
-    "effective_shared_libraries": [],
+    "effective_shared_libraries": [
+      ["libllama-bench-impl.so", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libllama-bench-impl.so", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libllama-bench-impl.so", "97b1342ef9faceae69a38fda731ace95bb74bc2142f16912ff76a37d215a3db6"],
+      ["libllama-common.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libllama-common.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libllama-common.so.0.1.0", "e27b8cb8dd48bca68bf2a5ef4e6e4ac0071ac7ecca20c22fa73ef8875ab17d9a"],
+      ["libllama.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libllama.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libllama.so.0.1.0", "8c889b15ef69e3daee9861b8f82993256d33d4787084ae367cd0fe0cbcc49d70"],
+      ["libggml.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml.so.0.19.0", "e61859213bceb2a8dc02f369c9a101e42a120eb9448ecfe9e4d3936ef4ee4ec8"],
+      ["libggml-cpu.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-cpu.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-cpu.so.0.19.0", "813fdc81df23f72b9ac3fefff82db3a992951932e6fe920cfa0b72831b6de5a5"],
+      ["libggml-sycl.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-sycl.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-sycl.so.0.19.0", "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2"],
+      ["libggml-base.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-base.so.0", "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-base.so.0.19.0", "93715e52bcfa473db4ef5907fed7b683012800648ab4482a6aead30f7d94e50b"],
+      ["libstdc++.so.6", "/lib/x86_64-linux-gnu/libstdc++.so.6", "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33", "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11"],
+      ["libm.so.6", "/lib/x86_64-linux-gnu/libm.so.6", "/usr/lib/x86_64-linux-gnu/libm.so.6", "e9c4b28d340e415b8137480ec442662f981e1399386c5931dae0e886e3639e91"],
+      ["libgcc_s.so.1", "/lib/x86_64-linux-gnu/libgcc_s.so.1", "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1", "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"],
+      ["libc.so.6", "/lib/x86_64-linux-gnu/libc.so.6", "/usr/lib/x86_64-linux-gnu/libc.so.6", "8db37cf3f2169f59a0f07ef1fea308c35656668c64c8ff294e1860f4121eb161"],
+      ["libsvml.so", "/opt/intel/oneapi/compiler/2026.0/lib/libsvml.so", "/opt/intel/oneapi/compiler/2026.0/lib/libsvml.so", "db2799d501167c9526268c54bfa505834ae3aad5cf047cd5a6dcd5a0f99c6353"],
+      ["libirng.so", "/opt/intel/oneapi/compiler/2026.0/lib/libirng.so", "/opt/intel/oneapi/compiler/2026.0/lib/libirng.so", "a1ac0424b50897bac9dc65cf09fb95882aaa08c4683a800ea7a06779dff2217e"],
+      ["libimf.so", "/opt/intel/oneapi/compiler/2026.0/lib/libimf.so", "/opt/intel/oneapi/compiler/2026.0/lib/libimf.so", "31f0ab1dcce74417de63e5c6876b5bb078c15efea4c49ca9afc233abbe80fda8"],
+      ["libintlc.so.5", "/opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5", "/opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5", "2722b7aba08edf1d37c45b8f90070c87b499404b0888bd1b4150f34e123ef120"],
+      ["libssl.so.3", "/lib/x86_64-linux-gnu/libssl.so.3", "/usr/lib/x86_64-linux-gnu/libssl.so.3", "55869549f4c7d7221e311121696f135390a7172755459ad04aef831f855eb214"],
+      ["libcrypto.so.3", "/lib/x86_64-linux-gnu/libcrypto.so.3", "/usr/lib/x86_64-linux-gnu/libcrypto.so.3", "1451aceec262c3338052fa77542eb971d4ba311c6bf12d9aa70d0b56aca942f9"],
+      ["ld-linux-x86-64.so.2", "/lib64/ld-linux-x86-64.so.2", "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2", "cd4df4f3c7b83673d61189bf2eaebd33ca4f2853ab9772b8a25e025ef99b1e81"],
+      ["libgomp.so.1", "/lib/x86_64-linux-gnu/libgomp.so.1", "/usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0", "135f3c8f006d2fe5e68e51281c7974cb991a03de3bfb3593d68d174dfcf854d1"],
+      ["libiomp5.so", "/opt/intel/oneapi/compiler/2026.0/lib/libiomp5.so", "/opt/intel/oneapi/compiler/2026.0/lib/libiomp5.so", "19cd02fbb18d948db4c4936afc5e07929ef16d676f72d0e76e9e853e665b5146"],
+      ["libze_loader.so.1", "/lib/x86_64-linux-gnu/libze_loader.so.1", "/usr/lib/x86_64-linux-gnu/libze_loader.so.1.28.2", "0fe232b18985ae078dd546b57bc6d11bacf1030834c0544f7e3feb53ed71c1d0"],
+      ["libsycl.so.9", "/opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9", "/opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9.0.0", "1fae524cade4c3599cfb6fe74d3d01dabe48fbeaa344c2f42c5d264b46abf45a"],
+      ["libmkl_sycl_blas.so.6", "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_sycl_blas.so.6", "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_sycl_blas.so.6", "4a57ec3b837d14060c394f1ecd9cb30523f554f8736626f7f8b7167e0cd1fe6b"],
+      ["libmkl_intel_ilp64.so.3", "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_intel_ilp64.so.3", "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_intel_ilp64.so.3", "b3e63f4dabfb044dc25a06d05a715e1c2e7056de2388818dae54a5e94403fece"],
+      ["libmkl_tbb_thread.so.3", "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_tbb_thread.so.3", "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_tbb_thread.so.3", "abfd259cf77154b5e2cacc7fba5c39f147ef67f193b3ad7cd50153876ac37028"],
+      ["libmkl_core.so.3", "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_core.so.3", "/opt/intel/oneapi/mkl/2026.0/lib/libmkl_core.so.3", "4dbf719a3fa0d9331fe03ad8a80a2959bb30a92a605877f0ee5b3eb4b4371cc7"],
+      ["libtbb.so.12", "/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8/libtbb.so.12", "/opt/intel/oneapi/tbb/2023.0/lib/libtbb.so.12.18", "c260c4a96754d4057a19cffd851f73b2c646dbdc2f49eeb54b789726224a95a4"],
+      ["librt.so.1", "/lib/x86_64-linux-gnu/librt.so.1", "/usr/lib/x86_64-linux-gnu/librt.so.1", "c6e6288545e24b0b3cfbf33320bda9236521625d8c3d628f3444f1ed40e5c7c5"],
+      ["libdl.so.2", "/lib/x86_64-linux-gnu/libdl.so.2", "/usr/lib/x86_64-linux-gnu/libdl.so.2", "292d5f5af2e7360b3e18c56591a4960115373ecf40627660f9149b6c68a33f80"],
+      ["libpthread.so.0", "/lib/x86_64-linux-gnu/libpthread.so.0", "/usr/lib/x86_64-linux-gnu/libpthread.so.0", "a27ffa9bf233d61a5f02ddb0cf770dd6579021afc1aa8aec0fb58ee4a965281a"],
+      ["libur_loader.so.0", "/opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0", "/opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0.12.0", "92e4aecd31658e1d2d791d5206fffee73e8c3183601a0acfb0cfa16f7799f3e9"],
+      ["libz.so.1", "/lib/x86_64-linux-gnu/libz.so.1", "/usr/lib/x86_64-linux-gnu/libz.so.1.3", "9b64150b28505a33d6bc3ecf709c279f6de97a1c184dbda65d06ee4537f6d286"]
+    ],
     "required_cmake": {
       "CMAKE_BUILD_TYPE": "Release",
       "GGML_SYCL": "ON",
@@ -72,26 +105,26 @@
     }
   },
   "parent_sentinel": {
-    "campaign_id": "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1",
+    "campaign_id": "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r4",
     "preregistration": {
-      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-prereg.json",
-      "sha256": "FILL_AFTER_PARENT_PACKET_FREEZE"
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-r4-prereg.json",
+      "sha256": "839d0b01917df4cb1a67a7f5ad656ca71057d5dd6ef8f9271290eef22fdbd611"
     },
     "runner": {
-      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-r1.py",
-      "sha256": "FILL_AFTER_PARENT_PACKET_FREEZE"
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-r4.py",
+      "sha256": "a0449f41ab987834eb2c8f3302f198642d20ad512031e2b51884d1d900b8e187"
     },
     "result": {
-      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-r1-result.json",
-      "sha256": "FILL_AFTER_PARENT_PASS"
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-r4-result.json",
+      "sha256": "2fcc35859dd701666d38b6f1940da375f27e694db33bb6dafe9e7cb056f13d7f"
     },
     "terminal_receipt": {
-      "path": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1/terminal-receipt.json",
-      "sha256": "FILL_AFTER_PARENT_PASS"
+      "path": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r4/terminal-receipt.json",
+      "sha256": "5990698a2d7287f707d6ee397eac547bbd04a6bcd7455e4d02b6913c85bea026"
     },
     "parity_receipt": {
-      "path": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1/parity-receipt.json",
-      "sha256": "FILL_AFTER_PARENT_PASS"
+      "path": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r4/parity-receipt.json",
+      "sha256": "e0da69de308fa0b2bed70ce1ed4c193450df0e2fb039fc15623547e72775e98d"
     },
     "required_authority": {
       "terminal_state": "passed-parent-sentinel-only",
