@@ -93,6 +93,16 @@
           "evidence": "results/qwen36-27b-mtp-gguf-q4-b70/README.md"
         },
         {
+          "id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+          "label": "Q4_K_M target with embedded MTP · unsloth GGUF",
+          "quantization": "Q4_K_M",
+          "quantization_origin": "export",
+          "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+          "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+          "file_sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+          "evidence": "notes/2026-08-25-qwen36-q4km-mtp-artifact-intake.md"
+        },
+        {
           "id": "qwen36-27b-unsloth-q8-0-82d411a",
           "label": "Q8_0 target-only · unsloth GGUF",
           "quantization": "Q8_0",
@@ -2156,6 +2166,32 @@
   ],
   "series_measurements": [
     {
+      "id": "q38-b2dd-tp1-graph-f16-exact-context",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "variant": "AutoRound INT4",
+      "runtime": "vLLM XPU b2dd9ce73d/1e90ffa672 zero-overlay",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp1-vllm-xpu-target-only-v1",
+      "runtime_snapshot_id": "b2dd9ce73d-1e90ffa672-zero-overlay",
+      "speculation_method": "none",
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "graph_mode": "FULL_AND_PIECEWISE", "kv": "f16", "configured_max_context_tokens": 32896},
+      "workload": "OpenAI-compatible exact flat-token depth requests; 128 output tokens; first 100 events/99 intervals; one quality-qualified server",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 2048, "decode_tok_s": 30.09574673632959},
+        {"x": 4096, "decode_tok_s": 29.76690784678723},
+        {"x": 8192, "decode_tok_s": 29.277761929165937},
+        {"x": 16384, "decode_tok_s": 28.4202492985839},
+        {"x": 24576, "decode_tok_s": 27.657572566220896},
+        {"x": 32768, "decode_tok_s": 26.988772332153104}
+      ],
+      "quality": "All six exact token/cache/length gates, full+piecewise graph capture, 7 exact cases, 8 repeats, 24 baseline comparisons, and 16 cache-zero observations passed.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-b2dd9ce73d-tp1-exact-depth-r1-result.json"
+    },
+    {
       "id": "q38-q4km-tp1-kv-f16-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -2857,7 +2893,7 @@
   {
     "id": "qwen36-tp1-llamacpp-sycl-mtp-matrix",
     "label": "Qwen3.6 TP1 · llama.cpp SYCL MTP matrix",
-    "description": "336 meaningful llama.cpp SYCL speculative cells: three MTP-bearing GGUF artifacts × MTP1–4 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. MTP0 is represented in the separate target-only profile; vLLM compilation modes and FP8 KV are excluded.",
+    "description": "448 meaningful llama.cpp SYCL speculative cells: four MTP-bearing GGUF artifacts × MTP1–4 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. MTP0 is represented in the separate target-only profile; vLLM compilation modes and FP8 KV are excluded.",
     "fixed_selectors": {
       "runtime_family": "llama.cpp SYCL",
       "runtime_profile_id": "qwen36-tp1-llamacpp-sycl-embedded-mtp-v1",
@@ -2877,11 +2913,13 @@
         "values": [
           "qwen36-27b-unsloth-mtp-q4-0-20c9c45",
           "qwen36-27b-unsloth-mtp-ud-q4-k-xl-4085665",
+          "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
           "qwen36-27b-unsloth-mtp-q8-0-5cb35eb"
         ],
         "value_labels": {
           "qwen36-27b-unsloth-mtp-q4-0-20c9c45": "Q4_0 · unsloth MTP",
           "qwen36-27b-unsloth-mtp-ud-q4-k-xl-4085665": "UD-Q4_K_XL · unsloth MTP",
+          "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb": "Q4_K_M · unsloth MTP",
           "qwen36-27b-unsloth-mtp-q8-0-5cb35eb": "Q8_0 · unsloth embedded MTP"
         }
       },
@@ -2977,7 +3015,7 @@
   {
     "id": "qwen36-tp1-llamacpp-sycl-target-matrix",
     "label": "Qwen3.6 TP1 · llama.cpp SYCL target-only matrix",
-    "description": "140 meaningful target-only cells: all five Qwen3.6 GGUF target artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. Intrinsic MTP1–4 is never manufactured for target-only files; those depths live only in the separately bound MTP-bearing profile.",
+    "description": "168 meaningful target-only cells: all six Qwen3.6 GGUF target artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. Intrinsic MTP1–4 is never manufactured for target-only files; those depths live only in the separately bound MTP-bearing profile.",
     "fixed_selectors": {
       "runtime_family": "llama.cpp SYCL",
       "runtime_profile_id": "qwen36-tp1-llamacpp-sycl-target-only-v1",
@@ -2997,6 +3035,7 @@
         "values": [
           "qwen36-27b-unsloth-mtp-q4-0-20c9c45",
           "qwen36-27b-unsloth-mtp-ud-q4-k-xl-4085665",
+          "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
           "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
           "qwen36-27b-unsloth-q8-0-82d411a",
           "qwen36-27b-ggmlorg-q8-0-8a7ee08"
@@ -3004,6 +3043,7 @@
         "value_labels": {
           "qwen36-27b-unsloth-mtp-q4-0-20c9c45": "Q4_0 · unsloth MTP",
           "qwen36-27b-unsloth-mtp-ud-q4-k-xl-4085665": "UD-Q4_K_XL · unsloth MTP",
+          "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb": "Q4_K_M · unsloth MTP",
           "qwen36-27b-unsloth-mtp-q8-0-5cb35eb": "Q8_0 · unsloth embedded MTP",
           "qwen36-27b-unsloth-q8-0-82d411a": "Q8_0 · unsloth target",
           "qwen36-27b-ggmlorg-q8-0-8a7ee08": "Q8_0 · ggml-org"
@@ -3211,6 +3251,72 @@
           "status": "queued",
           "trigger": "parent-or-calibrated-estimate"
         }
+      },
+      {
+        "id": "measured-b2dd-graph-f16-exact-context-2048",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "FULL_AND_PIECEWISE", "kv": "f16"},
+        "state": "lab-measured",
+        "label": "D30.1",
+        "reason": "Exact OpenAI-serving depth point from one graph-captured, full-quality b2dd server; the protected short-workload rate remains separate.",
+        "evidence_id": "q38-b2dd-tp1-graph-f16-exact-context",
+        "point_x": 2048,
+        "parent": "qwen38-b2dd-tp1-exact-depth-r1",
+        "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-b2dd-graph-f16-exact-context-4096",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "FULL_AND_PIECEWISE", "kv": "f16"},
+        "state": "lab-measured",
+        "label": "D29.77",
+        "reason": "Exact OpenAI-serving depth point from one graph-captured, full-quality b2dd server; the protected short-workload rate remains separate.",
+        "evidence_id": "q38-b2dd-tp1-graph-f16-exact-context",
+        "point_x": 4096,
+        "parent": "qwen38-b2dd-tp1-exact-depth-r1",
+        "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-b2dd-graph-f16-exact-context-8192",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "FULL_AND_PIECEWISE", "kv": "f16"},
+        "state": "lab-measured",
+        "label": "D29.28",
+        "reason": "Exact OpenAI-serving depth point from one graph-captured, full-quality b2dd server; the protected short-workload rate remains separate.",
+        "evidence_id": "q38-b2dd-tp1-graph-f16-exact-context",
+        "point_x": 8192,
+        "parent": "qwen38-b2dd-tp1-exact-depth-r1",
+        "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-b2dd-graph-f16-exact-context-16384",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "FULL_AND_PIECEWISE", "kv": "f16"},
+        "state": "lab-measured",
+        "label": "D28.42",
+        "reason": "Exact OpenAI-serving depth point from one graph-captured, full-quality b2dd server; the protected short-workload rate remains separate.",
+        "evidence_id": "q38-b2dd-tp1-graph-f16-exact-context",
+        "point_x": 16384,
+        "parent": "qwen38-b2dd-tp1-exact-depth-r1",
+        "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-b2dd-graph-f16-exact-context-24576",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "FULL_AND_PIECEWISE", "kv": "f16"},
+        "state": "lab-measured",
+        "label": "D27.66",
+        "reason": "Exact OpenAI-serving depth point from one graph-captured, full-quality b2dd server; the protected short-workload rate remains separate.",
+        "evidence_id": "q38-b2dd-tp1-graph-f16-exact-context",
+        "point_x": 24576,
+        "parent": "qwen38-b2dd-tp1-exact-depth-r1",
+        "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-b2dd-graph-f16-exact-context-32768",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "FULL_AND_PIECEWISE", "kv": "f16"},
+        "state": "lab-measured",
+        "label": "D26.99",
+        "reason": "Exact OpenAI-serving depth point from one graph-captured, full-quality b2dd server; the protected short-workload rate remains separate.",
+        "evidence_id": "q38-b2dd-tp1-graph-f16-exact-context",
+        "point_x": 32768,
+        "parent": "qwen38-b2dd-tp1-exact-depth-r1",
+        "retry": {"status": "complete"}
       }
     ]
   },

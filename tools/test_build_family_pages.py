@@ -1474,8 +1474,8 @@ class FamilyCoverageTest(unittest.TestCase):
         expected_counts = {
             "qwen36-tp1-vllm-xpu-target-matrix": 189,
             "qwen36-tp1-vllm-xpu-autoround-mtp-matrix": 252,
-            "qwen36-tp1-llamacpp-sycl-mtp-matrix": 336,
-            "qwen36-tp1-llamacpp-sycl-target-matrix": 140,
+            "qwen36-tp1-llamacpp-sycl-mtp-matrix": 448,
+            "qwen36-tp1-llamacpp-sycl-target-matrix": 168,
             "qwen38-tp1-vllm-xpu-target-matrix": 126,
             "qwen38-tp1-vllm-xpu-autoround-mtp-matrix": 252,
             "qwen38-tp1-llamacpp-sycl-target-matrix": 112,
@@ -1490,7 +1490,7 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertEqual(errors, [], contract_id)
             self.assertEqual(len(cells), expected_count, contract_id)
             all_cells.extend(cells)
-        self.assertEqual(len(all_cells), 1631)
+        self.assertEqual(len(all_cells), 1771)
 
         q36_cells = [
             cell
@@ -1498,11 +1498,11 @@ class FamilyCoverageTest(unittest.TestCase):
             if contract_id.startswith("qwen36-")
             for cell in MODULE.expand_coverage_contract(contract)[0]
         ]
-        self.assertEqual(len(q36_cells), 917)
+        self.assertEqual(len(q36_cells), 1057)
         self.assertEqual(
             sum(cell["state"] == "quarantined" for cell in q36_cells), 63
         )
-        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 854)
+        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 994)
         self.assertEqual(
             sum(cell["state"] == "lab-measured" for cell in q36_cells), 0
         )

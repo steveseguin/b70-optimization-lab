@@ -544,6 +544,16 @@ packet remains ready and must stay distinct from TP1 evidence. See the
 [E1 closeout](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp1-eager-mtp2-full-r1.md),
 and [TP2 preregistration](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp2-zero-overlay-r1-prereg.md).
 
+The independent b2dd TP1 exact-depth packet then filled six real graph cells
+for the same AutoRound/MTP0/F16 identity in one server: `30.0957`, `29.7669`,
+`29.2778`, `28.4202`, `27.6576`, and `26.9888 tok/s` at exact active contexts
+2K/4K/8K/16K/24K/32K. Every per-depth token/cache/length gate, both graph
+capture markers, and the full quality battery passed. Depth zero remains
+explicitly missing because an empty fixture is not an OpenAI-serving request.
+These exact-context measurements are additive and do not replace or lower the
+protected short-workload `30.31 tok/s` result. See the
+[result note](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp1-exact-depth-r1-result.md).
+
 A separate dated current-main image pair was statically certified at vLLM
 `4af586e185b028acf08312a4dee381b5998a137e` and XPU kernels
 `1e90ffa672ba02f17a909da11838a4c55b199783`. Both the stock-kernel control and

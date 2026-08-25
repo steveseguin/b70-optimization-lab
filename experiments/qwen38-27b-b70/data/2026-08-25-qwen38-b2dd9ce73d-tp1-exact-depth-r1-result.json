@@ -1,0 +1,79 @@
+{
+  "schema": "neural.download.qwen38-tp1-exact-depth-result.v1",
+  "campaign_id": "qwen38-b2dd9ce73d-tp1-exact-depth-20260825-r1",
+  "state": "passed",
+  "terminal": true,
+  "run_identity": {
+    "runtime_profile": "b2dd9ce73d/1e90ffa672 both-current zero-overlay",
+    "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "source_identity_sha256": "2a0ee74968dd68ba15b31eeef3e404807d125e6e52a0e96d25e8b955bd4ae0a0",
+    "vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "tp": 1,
+    "mtp": 0,
+    "kv": "f16",
+    "graph_mode": "FULL_AND_PIECEWISE",
+    "configured_max_context_tokens": 32896
+  },
+  "exact_context_measurements": [
+    {
+      "active_context_tokens": 2048,
+      "decode_tok_s": 30.09574673632959
+    },
+    {
+      "active_context_tokens": 4096,
+      "decode_tok_s": 29.76690784678723
+    },
+    {
+      "active_context_tokens": 8192,
+      "decode_tok_s": 29.277761929165937
+    },
+    {
+      "active_context_tokens": 16384,
+      "decode_tok_s": 28.4202492985839
+    },
+    {
+      "active_context_tokens": 24576,
+      "decode_tok_s": 27.657572566220896
+    },
+    {
+      "active_context_tokens": 32768,
+      "decode_tok_s": 26.988772332153104
+    }
+  ],
+  "depth_zero": {
+    "state": "missing",
+    "reason": "The exact OpenAI-compatible fixture has an empty depth-zero input; configured capacity is not an active-context measurement."
+  },
+  "gates": {
+    "exact_depths": "6/6",
+    "canary": "passed",
+    "graph_capture": "piecewise and full capture markers passed",
+    "quality": {
+      "passed": true,
+      "exact_cases": 7,
+      "repeat_cases": 8,
+      "baseline_comparisons": 24,
+      "baseline_match_all": true,
+      "cache_observations": 16,
+      "cache_zero": 16
+    },
+    "cleanup": "passed",
+    "local_git_unchanged": true
+  },
+  "evidence": {
+    "run_root": "/home/steve/qwen38-current-main-runs/tp1-exact-depth-b2dd9ce73d-20260825-r1/01-exact-depths",
+    "stage_receipt_sha256": "1b79688d384259fa0697c5510cb7903e15d01330923a4c8bc97f09e586907ee6",
+    "bench_sha256": "703ba906ab7f583b2c282d39dfec2e51ab8a617822a8a7a2e8709276c7632f32",
+    "quality_sha256": "18bc9c78207d11eb73f5e0e9592bd15c7f8c575a57cafce289729412b8d06e48"
+  },
+  "interpretation": {
+    "cells_filled": 6,
+    "speed_floor_applied": false,
+    "historical_short_workload_speed_replaced": false,
+    "protected_speed_values_sha256": "e6ee2cb9908ce940087788243eac5b544c0d2831b94efa47fe6441232c740e8f",
+    "website_use": "six measured exact active-context cells for this dated runtime profile; depth zero remains missing"
+  }
+}
