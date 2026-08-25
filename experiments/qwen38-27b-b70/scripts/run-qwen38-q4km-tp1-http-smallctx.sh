@@ -5,12 +5,14 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../../.." && pwd)
 model_dir="${MODEL_DIR:-}"
 build_dir="${BUILD_DIR:-}"
+source_dir="${SOURCE_DIR:-}"
 out_parent="${OUT_DIR:-${repo_root}/experiments/qwen38-27b-b70/data}"
 gpu_index="${GPU_INDEX:-0}"
+profile="${PROFILE:-tp1}"
 attempt="${ATTEMPT:-1}"
 port="${PORT:-18088}"
 campaign="${CAMPAIGN_ID:-qwen38-q4km-tp1-http-smallctx-20260825-r1}"
-suite="${repo_root}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-suite.json"
+suite="${SUITE_PATH:-${repo_root}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-suite.json}"
 prereg="${PREREG_PATH:-${repo_root}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-prereg.json}"
 harness_repeats="${HARNESS_REPEATS:-2}"
 return_token_ids="${RETURN_TOKEN_IDS:-0}"
@@ -19,10 +21,21 @@ disable_prompt_cache="${DISABLE_PROMPT_CACHE:-0}"
 oracle_digests="${ORACLE_DIGESTS:-}"
 qualification_mode="${QUALIFICATION_MODE:-identity}"
 expected_model_sha=31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34
-expected_server_sha=35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545
-expected_backend_sha=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
+case "${profile}" in
+  tp1)
+    expected_server_sha=35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545
+    expected_backend_sha=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154
+    ;;
+  tp2)
+    expected_server_sha=6ae782c7e8f7a992e0eeced10ade2a84b3cbb9ba65c65cbb917e52d1ce09777d
+    expected_backend_sha=375f6d251b022b62367e73d2cd6b7eb0200efc9cc9c854a509af45950938c3ed
+    expected_source_commit=a4349bcee933cd2b13820bc72fbe842e9c2f4b7a
+    [[ -n "${source_dir}" && -d "${source_dir}/.git" ]] || fail 'TP2 requires SOURCE_DIR'
+    ;;
+  *) fail 'PROFILE must be tp1 or tp2' ;;
+esac
 [[ -n "${model_dir}" && -n "${build_dir}" ]] || fail 'set MODEL_DIR and BUILD_DIR'
 [[ "${gpu_index}" =~ ^[0-9]+$ ]] || fail 'GPU_INDEX must be numeric'
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail 'ATTEMPT must be positive'
@@ -46,23 +59,36 @@ exec 8>"/tmp/b70-benchmark.lock"
 flock -n 8 || fail 'host-wide benchmark lock is held'
 exec 9>"/tmp/b70-gpu${gpu_index}.lock"
 flock -n 9 || fail "GPU ${gpu_index} lock is held"
+if [[ "${profile}" == tp2 ]]; then
+  exec 10>"/tmp/b70-gpu1.lock"
+  flock -n 10 || fail 'GPU 1 lock is held'
+fi
 pgrep -af 'llama-(server|bench|batched-bench)|vllm' >/dev/null && fail 'another model process is running'
 
 [[ "$(sha256sum "${model}" | awk '{print $1}')" == "${expected_model_sha}" ]] || fail 'model SHA-256 mismatch'
 [[ "$(sha256sum "${server}" | awk '{print $1}')" == "${expected_server_sha}" ]] || fail 'server SHA-256 mismatch'
 [[ "$(sha256sum "${backend}" | awk '{print $1}')" == "${expected_backend_sha}" ]] || fail 'backend SHA-256 mismatch'
+if [[ "${profile}" == tp2 ]]; then
+  [[ "$(git -C "${source_dir}" rev-parse HEAD)" == "${expected_source_commit}" ]] || fail 'source commit mismatch'
+fi
 
 run_dir="${out_parent}/${campaign}-attempt${attempt}"
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 mkdir -p "${run_dir}"
-unit="nd-q38-http-smallctx-a${attempt}"
+unit="nd-q38-${profile}-http-smallctx-a${attempt}"
 server_log="${run_dir}/server.log"
 
 set +u
 # shellcheck disable=SC1091
 source /opt/intel/oneapi/setvars.sh --force >/dev/null 2>&1
 set -u
-export ONEAPI_DEVICE_SELECTOR="level_zero:${gpu_index}"
+if [[ "${profile}" == tp2 ]]; then
+  export ONEAPI_DEVICE_SELECTOR="level_zero:1,0"
+  device_args=(--device SYCL0,SYCL1 --split-mode tensor --tensor-split 1,1)
+else
+  export ONEAPI_DEVICE_SELECTOR="level_zero:${gpu_index}"
+  device_args=(--device SYCL0 --split-mode none)
+fi
 export UR_L0_USE_IMMEDIATE_COMMANDLISTS=1
 export UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1
 export GGML_SYCL_COMM_SINGLE_KERNEL=1
@@ -97,18 +123,23 @@ env | grep -E '^(GGML_|UR_L0_|ONEAPI_DEVICE_SELECTOR=|ONEAPI_ROOT=|LD_LIBRARY_PA
 sha_inputs=("${model}" "${server}" "${backend}" "${suite}" "${prereg}" "${repo_root}/scripts/bench-openai-concurrency-oracle.py")
 if [[ -n "${oracle_digests}" ]]; then sha_inputs+=("${oracle_digests}"); fi
 sha256sum "${sha_inputs[@]}" > "${run_dir}/sha256sums.txt"
+if [[ "${profile}" == tp2 ]]; then
+  git -C "${source_dir}" status --short > "${run_dir}/source-status.txt"
+fi
 free -b > "${run_dir}/memory-before.txt"
 xpu-smi dump -d "${gpu_index}" -m 0,1,2,3,4,5 -n 1 > "${run_dir}/xpu-before.txt" 2>&1 || true
 
-cmd=("${server}" --model "${model}" --device SYCL0 --gpu-layers 99
-  --split-mode none --fit off --flash-attn on --batch-size 2048 --ubatch-size 256
+cmd=("${server}" --model "${model}" "${device_args[@]}" --gpu-layers 99
+  --fit off --flash-attn on --batch-size 2048 --ubatch-size 256
   --cache-type-k f16 --cache-type-v f16 --cache-ram 0 --ctx-checkpoints 0
   --reasoning off --threads 8 --poll 50 --ctx-size 32768 --parallel 64
   --cont-batching --metrics --host 127.0.0.1 --port "${port}")
 if (( disable_prompt_cache == 1 )); then
   cmd+=(--no-cache-prompt --slot-prompt-similarity 0)
 fi
-printf '%q ' "${cmd[@]}" > "${run_dir}/server-command.txt"; printf '\n' >> "${run_dir}/server-command.txt"
+printf '%q' "${cmd[0]}" > "${run_dir}/server-command.txt"
+printf ' %q' "${cmd[@]:1}" >> "${run_dir}/server-command.txt"
+printf '\n' >> "${run_dir}/server-command.txt"
 
 cleanup() {
   # Signal only timeout, which forwards one TERM to the server. Stopping the
@@ -146,7 +177,7 @@ curl -fsS "http://127.0.0.1:${port}/props" > "${run_dir}/props.json" || true
 curl -fsS "http://127.0.0.1:${port}/slots" > "${run_dir}/slots.json" || true
 
 harness_cmd=(python3 "${repo_root}/scripts/bench-openai-concurrency-oracle.py"
-  --base-url "http://127.0.0.1:${port}" --model qwen38-q4km-tp1-http-smallctx \
+  --base-url "http://127.0.0.1:${port}" --model "qwen38-q4km-${profile}-http-smallctx" \
   --api-mode "${api_mode}" --suite "${suite}" --concurrency 1,2,4,8,16,32,64 \
   --repeats "${harness_repeats}" --max-tokens 128 --seed 42 --timeout 900 \
   --request-extra-json '{"cache_prompt":false,"ignore_eos":true,"temperature":0}' \

@@ -70,7 +70,9 @@ cmd=("${server}" --model "${model}" --device SYCL0,SYCL1 --gpu-layers 99
   --cache-ram 0 --ctx-checkpoints 0 --reasoning off --threads 8 --poll 50
   --ctx-size 33024 --parallel 1 --no-cache-prompt --slot-prompt-similarity 0
   --metrics --host 127.0.0.1 --port "${port}")
-printf '%q ' "${cmd[@]}" > "${run_dir}/server-command.txt"; printf '\n' >> "${run_dir}/server-command.txt"
+printf '%q' "${cmd[0]}" > "${run_dir}/server-command.txt"
+printf ' %q' "${cmd[@]:1}" >> "${run_dir}/server-command.txt"
+printf '\n' >> "${run_dir}/server-command.txt"
 
 cleanup() {
   if [[ -n "${server_pid:-}" ]] && kill -0 "${server_pid}" 2>/dev/null; then

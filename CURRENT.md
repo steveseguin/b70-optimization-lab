@@ -887,6 +887,12 @@ gate. This is additive grade-C repeated-token shape evidence, not natural
 prose, and contains no interpolation or inherited TP1 point. See the
 [result](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp2-http-depth-r1-result.md).
 
+The next coverage packet is a separately preregistered, non-publishable TP2
+HTTP concurrency oracle pilot. It must create 64 complete cache-zero sequential
+token-ID oracles before two later fresh-server publication attempts can be
+specified. Pilot concurrency rates are excluded by construction. See the
+[oracle-pilot preregistration](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp2-http-concurrency-oracle-pilot-preregistration.md).
+
 The 2026-08-15 Q4_K fusion passed a clean build, mechanism counter, same-binary
 control, and complete 12-prompt cold suite. It improved the conventional
 median by `+1.701%`; all complete output hashes remained exact. The Q8_0 TP2
