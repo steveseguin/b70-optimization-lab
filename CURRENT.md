@@ -511,6 +511,21 @@ token-ID, natural-EOS, quality-baseline, and cache-replay gates. It does not
 prove that literal current main was tested. The dated pinned-image runners
 remain unchanged.
 
+The frozen b2dd/1e90 zero-overlay TP4 packet now closes that dated source
+stack's TP4 blank. Diagnostic measured `72.07605937552125 tok/s`; strict
+natural-EOS A/B measured `71.77179128057259 / 71.82969607434323 tok/s`.
+All three 25-row arms, direct/ordinary model verification, exact cache-zero
+canaries, immutable-cache checks, and strict-A full quality battery passed.
+After every model arm had cleaned up, the outer wrapper failed only in its
+deterministic aggregation because mawk reserves `floor` as a built-in. The
+original failed status remains preserved; a hash-sealed offline recovery
+revalidated every gate and computed only the preregistered comparisons. Treat
+the result as a qualified dated TP4 anchor with that recovery disclosure, not
+as literal current-main evidence. No historical high was lowered or replaced,
+no decision overlay was applied, and the higher stock strict `71.9001988117144`
+capture remains distinct. See the [structured recovery](experiments/qwen38-27b-b70/data/2026-08-25-qwen38-b2dd9ce73d-tp4-zero-overlay-r1-recovery.json)
+and [closeout note](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp4-zero-overlay-r1-recovery.md).
+
 ## Pinned Certified Qwen3.8 TP-Scale Frontier (2026-08-23)
 
 The certified short-decode target-only frontier uses the digest-pinned XPU

@@ -5,7 +5,7 @@
   "name": "Qwen 27B",
   "display_name": "Qwen 27B · 3.6 → 3.8",
   "publisher": "Qwen / Alibaba",
-  "updated_at": "2026-08-24",
+  "updated_at": "2026-08-25",
   "summary": "One architecture family, two measured weight revisions, and deployment variants spanning llama.cpp and vLLM on one, two, and four Intel Arc Pro B70 cards.",
   "featured_results": [
     {
@@ -1842,6 +1842,31 @@
       "quality": "Strict A passed the complete quality battery: 7/7 exact, 8/8 repeat with one hash, 8K needle, 24/24 baseline comparisons, and cache zero.",
       "caveat": "The old continuous-remote policy stopped the packet before strict B after upstream advanced. This is a frozen, quality-clean dated snapshot, not a replicated record-grade pair; the protected floor is unchanged.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-b2dd9ce73d-r1-frozen-snapshot-closeout.json"
+    },
+    {
+      "id": "q38-b2dd-1e90-tp4-strict-pair",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU b2dd9ce73d + XPU kernels 1e90ffa672",
+      "profile_id": "q38-b2dd-1e90-frozen-snapshot",
+      "measurement_class": "strict-natural-eos",
+      "promotion_status": "qualified-dated-control-offline-aggregation-recovery",
+      "quality_scope": "complete quality battery on strict A plus immutable-cache strict B",
+      "identity": {
+        "vllm_source": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+        "xpu_kernels_source": "1e90ffa672ba02f17a909da11838a4c55b199783",
+        "nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+        "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+        "recovered_result_sha256": "d4d94a33161171461155e8526b53b306a38ec99f978b41d53912ce9c9e3b4201"
+      },
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.6, "natural_eos": true},
+      "workload": "two strict natural-EOS replays; 25 unique cold prompts; up to 512 output tokens; cached_tokens=0; conventional 99-interval median",
+      "metrics": {"decode_tok_s": [71.77179128057259, 71.82969607434323]},
+      "quality": "Both strict arms passed all non-speed gates; strict A passed 7/7 exact cases, 8/8 one-hash repeat, the 8K needle, 24/24 baseline comparisons, and 16/16 zero cache counts. The exact compile cache stayed immutable through replay B.",
+      "caveat": "All model arms passed. The outer wrapper hit a mawk reserved-name error only during deterministic aggregation; the original failure marker is preserved and the offline recovery is hash-sealed. The same packet's ignore-EOS diagnostic was 72.07605937552125 tok/s. No historical high was lowered or replaced.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-b2dd9ce73d-tp4-zero-overlay-r1-recovery.json"
     }
   ],
   "series_measurements": [
@@ -2622,7 +2647,7 @@
         "natural_eos": true
       },
       "fixed": "Qwen3.8 AutoRound · exact dated vLLM/XPU-kernel source stacks · strict natural-EOS profile · MTP0 · f16 KV · graph on. Each row is immutable historical evidence, never a moving 'current' alias.",
-      "decision_note": "The 0ecc stock-kernel row is the qualified control. The baaa and 6a9 rows are quality-clean strict misses. b2dd has one quality-clean strict arm because the superseded continuous-remote policy stopped before replay B. No row replaces or lowers protected speed history; TP2/TP4 remain explicit gaps for these exact stacks.",
+      "decision_note": "The 0ecc stock-kernel TP1 row is a qualified control. The baaa and 6a9 rows are quality-clean strict misses. b2dd has a quality-clean but incomplete TP1 arm and a qualified TP4 strict pair; TP4's model arms passed before a disclosed offline-only aggregation recovery. No row replaces or lowers protected speed history; TP2 remains an explicit gap for these exact stacks.",
       "rows": [
         "q38-0ecc-stock-kernel-dated-snapshot",
         "q38-0ecc-baaa-dated-snapshot",
@@ -2646,7 +2671,7 @@
         "q38-b2dd-1e90-frozen-snapshot:1": {"state": "lab-measured", "label": "30.280 · quality-clean strict A", "evidence_id": "q38-b2dd-1e90-tp1-strict-a"},
         "q38-b2dd-1e90-frozen-snapshot:2": {"state": "missing", "label": "not measured"},
         "q38-b2dd-1e90-frozen-snapshot:3": {"state": "unsupported", "label": "head split"},
-        "q38-b2dd-1e90-frozen-snapshot:4": {"state": "missing", "label": "not measured"}
+        "q38-b2dd-1e90-frozen-snapshot:4": {"state": "lab-measured", "label": "71.772 / 71.830 · recovered qualified", "evidence_id": "q38-b2dd-1e90-tp4-strict-pair", "reason": "All model and quality arms passed; deterministic aggregation was recovered offline after a mawk reserved-name wrapper failure."}
       }
     },
     {

@@ -328,11 +328,11 @@ run_arm() {
 
 write_campaign_manifest() {
   local tmp=$result_root/.campaign-evidence.sha256.tmp
-  (
-    cd "$result_root"
-    find . -type f ! -name 'campaign-evidence.sha256*' -print0 |
+  sudo -S -p '' bash -c '
+    cd "$1" || exit 1
+    find . -type f ! -name "campaign-evidence.sha256*" -print0 |
       sort -z | xargs -0 -r sha256sum
-  ) >"$tmp"
+  ' bash "$result_root" <"$sudo_pass_file" >"$tmp"
   mv -- "$tmp" "$result_root/campaign-evidence.sha256"
   sha256sum "$result_root/campaign-evidence.sha256" |
     awk '{print $1}' >"$result_root/campaign-evidence.sha256.digest"
@@ -451,10 +451,11 @@ failure_stage=aggregate
 diagnostic=$(jq -r '.summary.tok_s_1_100_intervals_after_ttft.median' "$fresh_out/bench.json")
 strict_a=$(jq -r '.summary.tok_s_1_100_intervals_after_ttft.median' "$replay_a_out/bench.json")
 strict_b=$(jq -r '.summary.tok_s_1_100_intervals_after_ttft.median' "$replay_b_out/bench.json")
-diagnostic_pass=$(awk -v value="$diagnostic" -v floor="$diagnostic_floor" \
-  'BEGIN {print value >= floor ? "true" : "false"}')
-strict_pass=$(awk -v a="$strict_a" -v b="$strict_b" -v each="$strict_each_floor" \
-  -v one="$strict_one_floor" 'BEGIN {high=(a>b?a:b); print a>=each && b>=each && high>=one ? "true" : "false"}')
+diagnostic_pass=$(awk -v value="$diagnostic" -v threshold="$diagnostic_floor" \
+  'BEGIN {print value >= threshold ? "true" : "false"}')
+strict_pass=$(awk -v a="$strict_a" -v b="$strict_b" \
+  -v each_threshold="$strict_each_floor" -v one_threshold="$strict_one_floor" \
+  'BEGIN {high=(a>b?a:b); print a>=each_threshold && b>=each_threshold && high>=one_threshold ? "true" : "false"}')
 
 jq -n --arg created_utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   --arg vllm "$expected_vllm_head" --arg kernel "$expected_kernel_head" \

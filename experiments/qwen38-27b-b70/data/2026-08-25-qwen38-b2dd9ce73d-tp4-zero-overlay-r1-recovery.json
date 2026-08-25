@@ -1,0 +1,81 @@
+{
+  "schema": "neural-download-qwen38-frozen-tp4-offline-recovery-v1",
+  "date": "2026-08-25",
+  "classification": "recovered-complete-qualified-frozen-snapshot",
+  "campaign_snapshot": {
+    "vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "vllm_tree": "65c93c14916a9a895c5592b8a0ba2803efc96346",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "source_overlay": "none",
+    "decision_overlay": "none"
+  },
+  "run_root": "/home/steve/qwen38-current-main-runs/tp4-untreated-b2dd9ce73d-20260825-r1",
+  "wrapper_closeout": {
+    "original_final_status": "fail rc=2 stage=aggregate reason=unexpected command failure",
+    "failure_after_all_model_arms": true,
+    "cause": "mawk reserves floor as a built-in; the deterministic speed-threshold aggregation used -v floor=...",
+    "performance_or_quality_failure": false,
+    "gpu_rerun_required": false,
+    "original_final_status_preserved": true,
+    "offline_recovery_scope": "validate sealed evidence and compute the preregistered Boolean comparisons only"
+  },
+  "results": {
+    "diagnostic": {
+      "median_decode_tok_s": 72.07605937552125,
+      "floor_tok_s": 71.5488,
+      "pass": true,
+      "rows": 25
+    },
+    "strict_a": {
+      "median_decode_tok_s": 71.77179128057259,
+      "floor_tok_s": 71.29326283364946,
+      "pass": true,
+      "rows": 25,
+      "full_quality_battery_pass": true
+    },
+    "strict_b": {
+      "median_decode_tok_s": 71.82969607434323,
+      "floor_tok_s": 71.29326283364946,
+      "pass": true,
+      "rows": 25
+    },
+    "strict_pair": {
+      "one_must_reach_tok_s": 71.39843006187554,
+      "pass": true
+    }
+  },
+  "gates": {
+    "hardware_gate_pass": true,
+    "frozen_inputs_manifest_pass": true,
+    "model_direct_and_ordinary_19_of_19_all_arms": true,
+    "exact_canary_and_cached_zero_all_arms": true,
+    "benchmark_shape_and_cache_zero_all_arms": true,
+    "strict_a_exact_cases": "7/7",
+    "strict_a_repeat_runs": "8/8",
+    "strict_a_repeat_unique_hashes": 1,
+    "strict_a_long_context_needle_tokens": 8192,
+    "strict_a_baseline_comparisons": "24/24",
+    "strict_a_quality_cached_tokens": "16/16 zero",
+    "cache_manifest_immutable_across_replays": true,
+    "containers_ports_and_model_processes_clean": true
+  },
+  "sealed_evidence": {
+    "recovered_result_sha256": "d4d94a33161171461155e8526b53b306a38ec99f978b41d53912ce9c9e3b4201",
+    "recovered_campaign_manifest_sha256": "d94f843161a603005b6fb0011fc5ad3105fea38736ca760f35c87762f327353e",
+    "diagnostic_benchmark_sha256": "adf11a06f88e689b3faf8d550228bba79077d01e38ccfaf3bcf5377970a5e49d",
+    "strict_a_benchmark_sha256": "8d4d98474171b072d1a31e9943703a030de7bb2a6341d4ca288e4a09e16efec4",
+    "strict_a_quality_sha256": "82f5209bde3535fefa8eaf32947f8bc799273dee3df9e17cfa6ed58e13759932",
+    "strict_b_benchmark_sha256": "5b3f075edf925947078a24bc9d280f5061de95df5621804c3a342f85db4d51e4",
+    "hardware_summary_sha256": "296d944cf558c7360c715ffc0abcc81db20530a217617917306f4543b6492995",
+    "frozen_inputs_manifest_sha256": "3157097fd67210e2658bfcea6079d267befcdb5b61ad1a716c30089de77398d4"
+  },
+  "interpretation": {
+    "website_use": "qualified dated TP4 source-stack anchor with explicit offline aggregation recovery disclosure",
+    "historical_values_lowered": false,
+    "historical_values_replaced": false,
+    "historical_overlay_applied": false,
+    "localmaxxing_submission": "not automatic; the stock 71.9001988117144 captured high remains higher"
+  }
+}
