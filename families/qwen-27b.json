@@ -2631,6 +2631,16 @@
       ]
     },
     {
+      "id": "context-q36-quant-kv",
+      "title": "Qwen3.6 quant × KV context",
+      "subtitle": "TP1 llama.cpp SYCL · MTP0 · graph off · raw-engine exact-depth points only; quantizations and KV types remain separate series",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "prefill_tok_s"],
+      "series": [
+        {"label": "Q4_K_M · f16 KV", "measurement_ids": ["q36-q4km-tp1-kv-f16-context"]}
+      ]
+    },
+    {
       "id": "context-kv",
       "title": "Context × KV cache",
       "subtitle": "Qwen3.8 Q4_K_M · TP1 llama.cpp · raw-engine shape sweep",

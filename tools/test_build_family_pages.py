@@ -1573,8 +1573,21 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("14 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 14)
+        self.assertIn("15 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 15)
+
+        q36_context_view = next(
+            view for view in family["views"]
+            if view["id"] == "context-q36-quant-kv"
+        )
+        self.assertEqual(
+            q36_context_view["series"][0]["measurement_ids"],
+            ["q36-q4km-tp1-kv-f16-context"],
+        )
+        self.assertIn('data-family-view="context-q36-quant-kv"', rendered)
+        self.assertIn("Q4_K_M · f16 KV", rendered)
+        self.assertIn("value=29.30276 tok/s", rendered)
+        self.assertIn("value=655.10387 tok/s", rendered)
 
         unknown_speculator = deepcopy(family)
         next(
@@ -1680,6 +1693,86 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertIn(expected, rendered)
         self.assertNotIn("superseded", rendered.casefold())
         self.assertNotIn("full quality gate", rendered.casefold())
+
+    def test_svg_points_disclose_unrounded_escaped_values(self) -> None:
+        family = self._family()
+        family["run_measurements"][0]["metrics"]["decode_tok_s"] = [
+            71.45427094575045
+        ]
+        view = self._measured_view()
+        view["series"][0]["label"] = 'Q4 <fast> & "safe"'
+        view["x_label"] = "cards <active>"
+
+        svg, _summary = MODULE.chart_svg(
+            family, view, "decode_tok_s", True
+        )
+
+        self.assertIn("<circle", svg)
+        self.assertIn("<title>", svg)
+        self.assertIn("Q4 &lt;fast&gt; &amp; &quot;safe&quot;", svg)
+        self.assertIn("Decode (decode_tok_s)", svg)
+        self.assertIn("cards &lt;active&gt;=1.0", svg)
+        self.assertIn("value=71.45427094575045 tok/s", svg)
+        self.assertNotIn("Q4 <fast>", svg)
+
+    def test_multimetric_chart_has_complete_no_script_summary_table(self) -> None:
+        family = self._family()
+        family["series_measurements"] = [
+            {
+                "id": "measured-depth",
+                "state": "lab-measured",
+                "revision": "revision-a",
+                "variant": "quant-a",
+                "runtime": "runtime-a",
+                "config": {"mtp": 0, "tp": 1, "graph": "off"},
+                "workload": "fixed context sweep",
+                "points": [
+                    {
+                        "x": 1024,
+                        "decode_tok_s": 30.1,
+                        "prefill_tok_s": 800.1,
+                        "ttft_ms": 100.1,
+                    },
+                    {
+                        "x": 2048,
+                        "decode_tok_s": 29.2,
+                        "prefill_tok_s": 780.2,
+                        "ttft_ms": 120.2,
+                    },
+                    {
+                        "x": 4096,
+                        "decode_tok_s": 28.3,
+                        "prefill_tok_s": 750.3,
+                        "ttft_ms": 150.3,
+                    },
+                ],
+                "evidence": "https://example.test/measured-depth.json",
+            }
+        ]
+        view = {
+            "id": "all-metrics",
+            "title": "All metrics",
+            "subtitle": "Static fallback stays complete.",
+            "x_label": "context tokens",
+            "metrics": ["decode_tok_s", "prefill_tok_s", "ttft_ms"],
+            "series": [
+                {
+                    "label": "candidate",
+                    "measurement_ids": ["measured-depth"],
+                }
+            ],
+        }
+
+        rendered = MODULE.view_card(family, view)
+        fallback = rendered.split("<noscript>", 1)[1].split("</noscript>", 1)[0]
+
+        self.assertIn('<table class="metric-fallback">', fallback)
+        self.assertIn("All measured metric summaries", fallback)
+        for label in ("Decode", "Prefill", "TTFT"):
+            self.assertIn(f'<th scope="row">{label}</th>', fallback)
+        for value in ("30.1", "800.1", "100.1"):
+            self.assertIn(value, fallback)
+        self.assertNotIn(" hidden", fallback)
 
     def test_compact_gaps_and_scoped_closures_remain_explicit(self) -> None:
         family = self._family()

@@ -150,6 +150,12 @@ def fmt_x(value: float | int) -> str:
     return fmt(number, 0)
 
 
+def exact_number(value: float | int) -> str:
+    """Keep a finite measured number unrounded for point-level disclosure."""
+
+    return str(value)
+
+
 def compact_count(value: Any) -> str:
     if not is_finite_number(value):
         return "Pending"
@@ -2110,7 +2116,6 @@ def chart_svg(
         return top + (1 - (value - y0) / (y1 - y0)) * (height - top - bottom)
 
     label, unit = METRICS[metric]
-    hidden = "" if visible else " hidden"
     lines = [
         f'<svg class="family-chart" viewBox="0 0 {width} {height}" role="img" aria-label="{esc(view.get("title"))}: {esc(label)}">'
     ]
@@ -2132,22 +2137,38 @@ def chart_svg(
         drawable = []
         for point in item["points"]:
             mean = sum(point["values"]) / len(point["values"])
-            drawable.append((point["x"], mean, min(point["values"]), max(point["values"])))
+            drawable.append(
+                (
+                    point["x"],
+                    mean,
+                    min(point["values"]),
+                    max(point["values"]),
+                    point["values"],
+                )
+            )
         path = " ".join(
             f'{"M" if index == 0 else "L"}{sx(x):.1f},{sy(mean):.1f}'
-            for index, (x, mean, _low, _high) in enumerate(drawable)
+            for index, (x, mean, _low, _high, _values) in enumerate(drawable)
         )
         if not view.get("discrete") and len(drawable) > 1:
             lines.append(
                 f'<path d="{path}" fill="none" stroke="{item["color"]}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>'
             )
-        for x, mean, low, high in drawable:
+        for x, mean, low, high, source_values in drawable:
             if high > low:
                 lines.append(
                     f'<line x1="{sx(x):.1f}" y1="{sy(low):.1f}" x2="{sx(x):.1f}" y2="{sy(high):.1f}" stroke="{item["color"]}" stroke-width="5" stroke-linecap="round"></line>'
                 )
+            measured_values = ", ".join(exact_number(value) for value in source_values)
+            value_word = "value" if len(source_values) == 1 else "values"
+            tooltip = (
+                f'{item["label"]} · {label} ({metric}) · '
+                f'{view.get("x_label") or "x"}={exact_number(x)} · '
+                f'{value_word}={measured_values} {unit}'
+            )
             lines.append(
-                f'<circle cx="{sx(x):.1f}" cy="{sy(mean):.1f}" r="4" fill="var(--paper)" stroke="{item["color"]}" stroke-width="2.5"></circle>'
+                f'<circle cx="{sx(x):.1f}" cy="{sy(mean):.1f}" r="4" fill="var(--paper)" stroke="{item["color"]}" stroke-width="2.5">'
+                f'<title>{esc(tooltip)}</title></circle>'
             )
     for missing in view.get("missing_x") or []:
         lines.append(
@@ -2347,6 +2368,7 @@ def view_card(family: dict[str, Any], view: dict[str, Any]) -> str:
     as_stats = view_point_count(family, view) < 3
     charts = []
     summaries = []
+    fallback_rows = []
     buttons = []
     metric_list = list(view.get("metrics") or [])
     for index, metric in enumerate(metric_list):
@@ -2361,12 +2383,16 @@ def view_card(family: dict[str, Any], view: dict[str, Any]) -> str:
             f'<div data-family-summary="{esc(metric)}"{"" if index == 0 else " hidden"}>{summary}</div>'
         )
         label, _unit = METRICS[metric]
+        fallback_rows.append(
+            f'<tr><th scope="row">{esc(label)}</th><td>{summary}</td></tr>'
+        )
         buttons.append(
             f'<button type="button" data-metric-button="{esc(metric)}" aria-pressed="{"true" if index == 0 else "false"}">{esc(label)}</button>'
         )
     if as_stats:
         charts = [view_stat_rows(family, view)]
         summaries = []
+        fallback_rows = []
         buttons = []
     if len(buttons) < 2:
         buttons = []
@@ -2395,11 +2421,18 @@ def view_card(family: dict[str, Any], view: dict[str, Any]) -> str:
         legends.append('<span><i class="gap-line"></i>missing</span>')
     if view.get("unsupported_x"):
         legends.append('<span><i class="gap-line"></i>unsupported</span>')
+    no_script_fallback = ""
+    if len(fallback_rows) > 1:
+        no_script_fallback = (
+            '<noscript><table class="metric-fallback">'
+            '<caption>All measured metric summaries</caption><tbody>'
+            f'{"".join(fallback_rows)}</tbody></table></noscript>'
+        )
     return f'''<figure class="chart family-view" data-family-view="{esc(view.get('id'))}">
   <div class="chart-head"><div><h3 title="{esc(view.get('title'))}">{esc(plain_view_title(view.get('title')))}{view_flag}</h3><p>{esc(view.get('subtitle'))}</p></div><div class="metric-switch">{"".join(buttons)}</div></div>
   {"".join(charts)}
   <div class="legend">{"".join(legends)}</div>
-  <figcaption>{"".join(summaries)}<span class="proof-links">{links}</span></figcaption>
+  <figcaption>{"".join(summaries)}{no_script_fallback}<span class="proof-links">{links}</span></figcaption>
 </figure>'''
 
 
@@ -3540,6 +3573,10 @@ def family_page(family: dict[str, Any]) -> str:
   .metric-switch button[aria-pressed="true"], .coverage-switch button[aria-selected="true"] {{ background:var(--ink); color:var(--paper); }}
   .family-chart {{ min-height:210px; }}
   .gap-line {{ height:0!important; border-top:2px dashed var(--muted); background:transparent!important; }}
+  .metric-fallback {{ width:100%; margin-top:9px; border-collapse:collapse; font-size:11px; }}
+  .metric-fallback caption {{ padding-bottom:4px; text-align:left; font:700 9px var(--mono); text-transform:uppercase; }}
+  .metric-fallback th, .metric-fallback td {{ padding:5px 7px; border-top:1px solid var(--line); text-align:left; vertical-align:top; }}
+  .metric-fallback th {{ width:72px; font:700 9px var(--mono); text-transform:uppercase; }}
   .proof-links {{ display:block; margin-top:5px; }}
   .proof-links a {{ border-bottom:1px solid currentColor; }}
   .coverage-panel > p {{ margin:8px 0 0; color:var(--muted); font:11px var(--mono); }}
