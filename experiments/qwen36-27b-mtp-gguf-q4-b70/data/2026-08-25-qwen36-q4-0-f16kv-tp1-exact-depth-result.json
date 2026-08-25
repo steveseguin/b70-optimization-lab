@@ -1,0 +1,70 @@
+{
+  "schema": "neural.download.qwen36-llama-exact-depth-result.v1",
+  "campaign_id": "qwen36-q4-0-f16kv-tp1-exact-depth-20260825-r1",
+  "status": "passed",
+  "classification": "raw-engine-performance-only",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q4-0-20c9c45",
+    "quantization": "Q4_0",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "mtp": 0,
+    "graph_mode": "off",
+    "kv": "f16"
+  },
+  "identity": {
+    "model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+    "model_revision": "checksum-pinned-no-captured-hugging-face-revision",
+    "model_sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+    "model_size_bytes": 16056476800,
+    "runtime_source": "e3546c7948e3af463d0b401e6421d5a4c2faf565",
+    "llama_bench_sha256": "90d4d23363825219d6cff02d59b73c3912fd42071694e8e215ba8cfc5d058aff",
+    "lab_git_head": "f5ac2fa944f2b94a07546587eea44a5d26f8e929"
+  },
+  "workload": {
+    "benchmark": "llama-bench",
+    "prefill_tokens": 2048,
+    "decode_tokens": 128,
+    "repetitions": 5,
+    "flash_attention": true,
+    "batch_size": 2048,
+    "ubatch_size": 512,
+    "measurement_class": "raw-engine",
+    "http_serving_metric": false,
+    "new_quality_gate": false
+  },
+  "cells": [
+    {"active_context_tokens": 0, "decode_tok_s": 26.403242, "prefill_tok_s": 635.640524, "samples": 5},
+    {"active_context_tokens": 2048, "decode_tok_s": 25.612445, "prefill_tok_s": 300.209882, "samples": 5},
+    {"active_context_tokens": 4096, "decode_tok_s": 24.982236, "prefill_tok_s": 284.812214, "samples": 5},
+    {"active_context_tokens": 8192, "decode_tok_s": 23.885171, "prefill_tok_s": 255.794498, "samples": 5},
+    {"active_context_tokens": 16384, "decode_tok_s": 21.956970, "prefill_tok_s": 203.909768, "samples": 5},
+    {"active_context_tokens": 24576, "decode_tok_s": 20.306007, "prefill_tok_s": 168.950165, "samples": 5},
+    {"active_context_tokens": 32768, "decode_tok_s": 18.908580, "prefill_tok_s": 144.909151, "samples": 5}
+  ],
+  "gates": {
+    "declared_depths_exact": true,
+    "true_n_depth_zero_present": true,
+    "all_seven_cells_ready": true,
+    "benchmark_return_code": 0,
+    "parser_return_code": 0,
+    "cleanup_passed": true,
+    "graph_off_exact_dso_attested": true,
+    "xpu_kernel_error_window_clear": true,
+    "corrected_nvme_pcie_event_observed": true,
+    "speed_floor": null,
+    "historical_featured_speeds_immutable": true,
+    "q8_rows_reused": false
+  },
+  "evidence_sha256": {
+    "llama_bench_json": "13a3bef43c266204ebcb31903b8c859fd3b9c7db82085a3de3f25544e5a205f9",
+    "llama_bench_stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "metadata": "41b399e33e583f5d410d2bba5a20d3695d0bc1d1ee1e97f89b5d8d3af23478cb",
+    "exact_depth_receipt": "99cd28f8dd2726aa9ab4e31758b7d5ded94335f99784d951d584411c4acc2d02",
+    "terminal_receipt": "5a89faf6aa8c2267889d8d8cf484d7ef8c0e65b8608cd3d0cf76612e59ade9cf",
+    "graph_off_attestation": "38ac2bf235ca186a381e834441abb9ce1dde8f2457e81870ea547dc17a40cf49"
+  },
+  "raw_root": "/home/steve/qwen36-matrix-runs/q4-0-tp1-mtp0-f16kv-exact-depth-20260825-r1",
+  "publication_scope": "These seven exact Qwen3.6 Q4_0 TP1/MTP0/graph-off/F16-KV cells only. No q8 timing row is reused, and no value replaces a featured or serving result."
+}
