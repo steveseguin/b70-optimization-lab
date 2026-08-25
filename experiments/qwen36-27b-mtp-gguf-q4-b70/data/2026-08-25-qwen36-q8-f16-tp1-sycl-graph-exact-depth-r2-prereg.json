@@ -1,0 +1,36 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-exact-depth-overlay.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r2",
+  "state": "preregistered-not-launched",
+  "base": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-sycl-graph-exact-depth-prereg.json",
+    "manifest_sha256": "07ade7f9a89f2845e5d5b4a61c5eb6f63663435ecb882d5f3885a1aaa51b9395",
+    "runner_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-f16-tp1-sycl-graph-exact-depth-r1.py",
+    "runner_sha256": "f713abacab63782e5c512dff23c5d888d46f1df948d3ccc95ec6d27e3edaff14"
+  },
+  "execution_identity_delta": {
+    "only_change": "insert llama-bench -v immediately before -o json",
+    "insert": "-v",
+    "before": "-o",
+    "following_value": "json",
+    "reason": "Expose GGML_LOG_INFO SYCL graph counters and destructor summary; R1 produced valid depth-0 benchmark JSON but failed closed because those evidence lines were suppressed."
+  },
+  "preserved": {
+    "contexts": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "source_model_build_runtime_and_32_dso_closure": true,
+    "selectors_environment_graph_gates_and_authority": true,
+    "create_only_lifecycle": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r2",
+    "exact_ack": "RUN qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r2"
+  },
+  "authority": {
+    "raw_cells_require_all_existing_gates": true,
+    "site_publication_authorized": false,
+    "record_or_submission_authorized": false,
+    "quality_claim_authorized": false,
+    "graph_estimates_forbidden": true,
+    "protected_graph_off_values_must_not_be_replaced": true
+  }
+}
