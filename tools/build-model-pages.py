@@ -20,7 +20,6 @@ import json
 import sys
 import os
 import re
-import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -141,15 +140,23 @@ def svg_profile(profile):
     if len(points) < 2:
         return ""
     x_metric = profile.get("x_metric", "context_tokens")
-    xs = [max(1, float(p.get(x_metric, 0))) for p in points]
+    xs = [float(p.get(x_metric, 0)) for p in points]
     ys = [float(p["value"]) for p in points]
     width, height, left, top, right, bottom = 640, 260, 64, 20, 20, 44
     import math
-    lx = [math.log2(x) for x in xs]
-    x0, x1 = min(lx), max(lx)
+    # Context depth is a cardinal scale and should read linearly. Concurrency
+    # ladders are conventionally powers of two, so retain log2 spacing there
+    # and name it in the axis label below.
+    tx = (
+        [math.log2(max(1, x)) for x in xs]
+        if x_metric == "concurrent_sequences"
+        else xs
+    )
+    x0, x1 = min(tx), max(tx)
     y1 = max(ys) * 1.1
     def sx(v):
-        return left + ((math.log2(max(1, v)) - x0) / max(1e-9, x1 - x0)) * (width - left - right)
+        transformed = math.log2(max(1, v)) if x_metric == "concurrent_sequences" else v
+        return left + ((transformed - x0) / max(1e-9, x1 - x0)) * (width - left - right)
     def sy(v):
         return top + (1 - v / y1) * (height - top - bottom)
     path = " ".join(f"{'M' if i == 0 else 'L'}{sx(x):.1f},{sy(y):.1f}" for i, (x, y) in enumerate(zip(xs, ys)))
@@ -175,7 +182,7 @@ def svg_profile(profile):
         f'<svg viewBox="0 0 {width} {height}" width="100%" role="img" aria-label="{esc(label)}" xmlns="http://www.w3.org/2000/svg">'
         f'<line x1="{left}" y1="{sy(0):.1f}" x2="{width - right}" y2="{sy(0):.1f}" stroke="var(--ink)" stroke-width="2"></line>'
         f'<path d="{path}" fill="none" stroke="var(--spot)" stroke-width="3"></path>{dots}{ticks}'
-        f'<text x="{left}" y="{height - 6}" font-size="11" font-family="var(--mono)" fill="var(--muted)">{esc(profile.get("x_label", "Context tokens"))} · y: {esc(unit)}</text>'
+        f'<text x="{left}" y="{height - 6}" font-size="11" font-family="var(--mono)" fill="var(--muted)">{esc(profile.get("x_label", "Context tokens"))}{" · log2 spacing" if x_metric == "concurrent_sequences" else ""} · y: {esc(unit)}</text>'
         f"</svg>"
     )
 
@@ -189,8 +196,6 @@ def page(pkg, all_pkgs, family=None):
     pid = pkg["id"]
     name = pkg["name"]
     title = f"{name} — {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured — neural.download"
-    desc = f"{lib.get('summary', '')} Measured {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} {fm.get('label', 'decode')} on {hw.get('cards', 1)}× {hw.get('accelerator', 'Intel Arc Pro B70')} with {lib.get('runtime_label', '')} ({lib.get('quantization', '')}). Exact pins, patches, proof, and a projected optimization headroom."
-    desc = re.sub(r"\s+", " ", desc).strip()[:300]
     url = f"{SITE}models/{pid}.html"
     status = STATUS_LABEL.get(pkg.get("status"), pkg.get("status", "").title())
     ml = PACKAGE_ML.get(pid)
@@ -202,6 +207,19 @@ def page(pkg, all_pkgs, family=None):
         and isinstance(ml.get("output_tokens"), int)
         and ml["output_tokens"] > 0
     )
+    projection_tail = (
+        " Exact pins, patches, proof, and a clearly labeled optimization projection."
+        if exact_projection_workload
+        else " Exact pins, patches, and proof; no unmatched projection is implied."
+    )
+    desc = (
+        f"{lib.get('summary', '')} Measured {fmt(fm.get('value'))} "
+        f"{fm.get('unit', 'tok/s')} {fm.get('label', 'decode')} on "
+        f"{hw.get('cards', 1)}× {hw.get('accelerator', 'Intel Arc Pro B70')} "
+        f"with {lib.get('runtime_label', '')} ({lib.get('quantization', '')})."
+        f"{projection_tail}"
+    )
+    desc = re.sub(r"\s+", " ", desc).strip()[:300]
     if exact_projection_workload:
         ml_attrs = (f' data-ml-model="{esc(ml["model"])}" data-ml-quant="{esc(ml["quant"])}" data-ml-runtime="{esc(ml["runtime"])}"'
                     f' data-ml-cards="{esc(hw.get("cards", 1))}" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="{esc(ml.get("spec", "none"))}"'

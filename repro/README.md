@@ -26,6 +26,7 @@ gaps.
 | Reproduction | Cards | Main remaining gate |
 | --- | ---: | --- |
 | [Qwen3.8 27B Q4_K_M llama.cpp/SYCL TP1](qwen38-27b-q4km-tp1-b70/) | 1 | Tested host-platform install and clean-host replay; [candidate package](../packages/qwen38-27b-q4km-tp1-b70/) |
+| [Qwen3.8 27B Q8_0 llama.cpp/SYCL TP1](qwen38-27b-q8-tp1-b70/) | 1 | Tested host-platform install and clean-host replay; [candidate package](../packages/qwen38-27b-q8-tp1-b70/) |
 | [Qwen3.8 27B official FP8 vLLM/XPU TP2](qwen38-27b-fp8-vllm-tp2-asrock-b70/) | 2 | Tested host-platform install and clean-host replay; [candidate package](../packages/qwen38-27b-fp8-tp2-b70/) |
 | [Laguna S 2.1 INT4, 102 tok/s](laguna-s-2.1-int4-b70-102tps-20260726/) | 4 | Tested host-platform install and independent replay |
 | [MiniMax M2.7, 110 tok/s](minimax-m27-b70-110tps-ubuntu24-20260523/) | multi-card | Immutable platform package lock and current clean-host replay |

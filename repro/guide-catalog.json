@@ -393,6 +393,38 @@
       ]
     },
     {
+      "id": "qwen38-27b-q8-tp1-b70",
+      "guide": "repro/qwen38-27b-q8-tp1-b70/README.md",
+      "package": "packages/qwen38-27b-q8-tp1-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "intermediate",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-q8-tp1-b70/model-direct.json",
+        "repro/qwen38-27b-q8-tp1-b70/restore-and-build.sh",
+        "patches/qwen38-27b-q4km-tp1-b70s/README.md",
+        "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json",
+        "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-service-quality-20260825-r1/qualification.json"
+      ],
+      "missing": [
+        "tested clean-host Intel driver and oneAPI installation",
+        "clean-host source build and endpoint replay",
+        "beginner recovery flow",
+        "realistic-prompt HTTP speed and TTFT context sweep",
+        "output-qualified HTTP concurrency curve"
+      ]
+    },
+    {
       "id": "qwen38-27b-q4km-tp1-b70",
       "guide": "repro/qwen38-27b-q4km-tp1-b70/README.md",
       "package": "packages/qwen38-27b-q4km-tp1-b70/package.json",

@@ -1,0 +1,155 @@
+{
+  "format": "b70-model-package-v1",
+  "id": "qwen38-27b-q8-tp1-b70",
+  "name": "Qwen3.8 27B Q8_0 on one Intel Arc Pro B70",
+  "status": "candidate",
+  "audience": "intermediate",
+  "guide": "repro/qwen38-27b-q8-tp1-b70/README.md",
+  "clean_host_tested": false,
+  "library": {
+    "model_family": "Qwen3.8",
+    "publisher": "Alibaba / Qwen",
+    "variant": "27B",
+    "summary": "A quality-conservative one-card Qwen3.8 lane using Q8_0 weights, F16 KV, llama.cpp/SYCL, and no speculative decoding.",
+    "quantization": "Q8_0",
+    "runtime_label": "llama.cpp SYCL",
+    "operating_systems": ["Linux"],
+    "delivery": ["native"],
+    "modalities": ["text"],
+    "use_cases": ["general", "coding", "long context"],
+    "tags": ["one card", "target only", "cache zero", "source build", "quality conservative"],
+    "published_at": "2026-08-25",
+    "featured_metric": {
+      "value": 19.662501,
+      "unit": "tok/s",
+      "label": "raw decode",
+      "scope": "Direct llama-bench tg128 at depth zero, one B70, Q8_0 weights, F16 KV, five repetitions. The matching service quality battery passed separately; this is not an HTTP or realistic-prompt rate.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json"
+    }
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "Qwen3.8 Q8 one-card bring-up, source/patch integration, exact depth measurement, service-quality gate, and package.",
+      "status": "integrated",
+      "validated_effect": "The exact package tuple completed all 14 depth/metric rows through 32K and passed 7/7 canaries, 8/8 repeat stability, long-context needle recall, and 16/16 cache-zero responses.",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q8weights-f16-tp1-service-quality-r1-result.md"
+    },
+    {
+      "id": "mndodd",
+      "name": "mndodd",
+      "kind": "external",
+      "profile": "https://github.com/mndodd",
+      "contribution": "Optimized Intel SYCL llama.cpp fork used as the pinned runtime base beneath the lab patch stack.",
+      "status": "integrated",
+      "validated_effect": "A separate matched Qwen3.6 Q8 TP2 control measured +5.836% for the fork; that A/B does not assign this later Qwen3.8 one-card result to the fork.",
+      "evidence": "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+    }
+  ],
+  "performance_profiles": [
+    {
+      "id": "decode-f16-kv-vs-context-depth",
+      "label": "Q8_0 raw decode with F16 KV",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Existing context depth before tg128",
+      "scope": "Direct llama-bench raw-engine tg128, exact Q8_0 TP1 tuple, one B70, F16 K/V, flash attention on, and five repetitions per displayed depth. Every marker is measured; no point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json",
+      "points": [
+        {"context_tokens": 0, "value": 19.662501, "samples": 5},
+        {"context_tokens": 2048, "value": 19.592508, "samples": 5},
+        {"context_tokens": 4096, "value": 19.509481, "samples": 5},
+        {"context_tokens": 8192, "value": 19.293993, "samples": 5},
+        {"context_tokens": 16384, "value": 18.83887, "samples": 5},
+        {"context_tokens": 24576, "value": 18.418098, "samples": 5},
+        {"context_tokens": 32768, "value": 18.023689, "samples": 5}
+      ]
+    },
+    {
+      "id": "prefill-f16-kv-vs-context-depth",
+      "label": "Q8_0 raw pp2048 with F16 KV",
+      "metric": "prefill",
+      "unit": "tok/s",
+      "x_label": "Existing context depth before pp2048",
+      "scope": "Direct llama-bench raw-engine pp2048, exact Q8_0 TP1 tuple, one B70, F16 K/V, flash attention on, and five repetitions per displayed depth. Every marker is measured; no point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json",
+      "points": [
+        {"context_tokens": 0, "value": 996.89102, "samples": 5},
+        {"context_tokens": 2048, "value": 987.388875, "samples": 5},
+        {"context_tokens": 4096, "value": 959.560446, "samples": 5},
+        {"context_tokens": 8192, "value": 914.062353, "samples": 5},
+        {"context_tokens": 16384, "value": 837.512717, "samples": 5},
+        {"context_tokens": 24576, "value": 773.146408, "samples": 5},
+        {"context_tokens": 32768, "value": 719.144647, "samples": 5}
+      ]
+    }
+  ],
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 1,
+    "host_ram_min_bytes": 16106127360,
+    "host_ram_plus_swap_min_bytes": 32212254720,
+    "model_weight_bytes": 28595763552
+  },
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "manifest": "repro/qwen38-27b-q8-tp1-b70/model-direct.json"
+  },
+  "runtime": {
+    "kind": "native",
+    "project": "mndodd/llama.cpp",
+    "revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "build": "repro/qwen38-27b-q8-tp1-b70/restore-and-build.sh"
+  },
+  "known_limitations": [
+    "The measured depth curve is raw llama-bench pp2048/tg128, not a realistic-prompt or HTTP throughput curve.",
+    "The server package is one slot at 8K; TTFT by depth and output-qualified concurrent serving remain unmeasured.",
+    "The tested host had 16 GB nominal RAM plus swap. Clean-host installation and replay remain pending."
+  ],
+  "project_patches": {
+    "required": true,
+    "items": [
+      "patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp2-asrock-b70/llama-cpp-q4k-mmvq-swiglu-tp2-20260815.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-gdn-state-io-widen-20260821.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-conv-qk-widen-20260821.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-qk-norm-rope-src-widen-20260821.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-q8out-rejected-memo320-20260821.diff.gz.b64"
+    ],
+    "reason": "The exact measured binaries were reconstructed from the complete shared Qwen3.8 TP1 source stack; Q4-only paths are retained but inert for Q8 weights."
+  },
+  "commands": {
+    "preflight": "MODEL_DIR=/path/to/qwen3.8-27b-q8 BUILD_DIR=/path/to/llama.cpp/build-sycl-aot-bmg-g31 repro/qwen38-27b-q8-tp1-b70/preflight.sh",
+    "launch": "MODEL_DIR=/path/to/qwen3.8-27b-q8 BUILD_DIR=/path/to/llama.cpp/build-sycl-aot-bmg-g31 repro/qwen38-27b-q8-tp1-b70/run-server.sh",
+    "health": "curl -fsS http://127.0.0.1:18088/health",
+    "benchmark": "MODEL_DIR=/path/to/qwen3.8-27b-q8 BUILD_DIR=/path/to/llama.cpp/build-sycl-aot-bmg-g31 OUT=/path/to/depth.json repro/qwen38-27b-q8-tp1-b70/bench-depth.sh",
+    "stop": "Ctrl-C in the foreground server terminal; then pgrep -x llama-server must return no process"
+  },
+  "dependencies": [
+    "repro/qwen38-27b-q8-tp1-b70/README.md",
+    "repro/qwen38-27b-q8-tp1-b70/model-direct.json",
+    "repro/qwen38-27b-q8-tp1-b70/verify-model-direct.sh",
+    "repro/qwen38-27b-q8-tp1-b70/restore-and-build.sh",
+    "repro/qwen38-27b-q8-tp1-b70/preflight.sh",
+    "repro/qwen38-27b-q8-tp1-b70/run-server.sh",
+    "repro/qwen38-27b-q8-tp1-b70/bench-depth.sh",
+    "repro/qwen38-27b-q8-tp1-b70/quality.sh",
+    "repro/qwen38-27b-q4km-tp1-b70/restore-and-build.sh",
+    "patches/qwen38-27b-q4km-tp1-b70s/README.md",
+    "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q8weights-f16-tp1-local-r2-result.md",
+    "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-service-quality-20260825-r1/qualification.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q8weights-f16-tp1-service-quality-r1-result.md"
+  ],
+  "missing": [
+    "tested clean-host Intel driver and oneAPI installation",
+    "clean-host source build and endpoint replay",
+    "beginner recovery flow",
+    "realistic-prompt HTTP speed and TTFT context sweep",
+    "output-qualified HTTP concurrency curve"
+  ]
+}
