@@ -1,0 +1,77 @@
+{
+  "schema": "neural.download.qwen36-llama-exact-depth-result.v1",
+  "campaign_id": "qwen36-mtpq8-f16-tp1-exact-depth-20260825-r1",
+  "status": "passed",
+  "classification": "raw-engine-performance-only",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
+    "quantization": "Q8_0",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "mtp": 0,
+    "graph_mode": "off",
+    "kv": "f16"
+  },
+  "identity": {
+    "model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+    "model_revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+    "model_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+    "model_size_bytes": 29047084160,
+    "embedded_mtp_capability": true,
+    "runtime_source": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "llama_bench_sha256": "908b78b77fc28ad23b2924b7f32f56f4a8415eac9c2a79a244dee85b49b19030",
+    "lab_git_head": "39a9aa761bf3bc244d0e192bf7732113020dd0ea"
+  },
+  "model_view_verification": {
+    "method_order": ["odirect", "ordinary"],
+    "direct_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+    "ordinary_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+    "views_coherent": true,
+    "verifier_sha256": "f9fbe5968e4bcd3437bb7cdf64ce215968e8958bc935ec8b4c8e76a6d24f84b2"
+  },
+  "workload": {
+    "benchmark": "llama-bench",
+    "prefill_tokens": 2048,
+    "decode_tokens": 128,
+    "repetitions": 5,
+    "flash_attention": true,
+    "batch_size": 2048,
+    "ubatch_size": 512,
+    "measurement_class": "raw-engine",
+    "http_serving_metric": false,
+    "new_quality_gate": false
+  },
+  "cells": [
+    {"active_context_tokens": 0, "decode_tok_s": 19.834912, "prefill_tok_s": 908.102030, "samples": 5},
+    {"active_context_tokens": 2048, "decode_tok_s": 19.637971, "prefill_tok_s": 897.500019, "samples": 5},
+    {"active_context_tokens": 4096, "decode_tok_s": 19.504957, "prefill_tok_s": 871.159456, "samples": 5},
+    {"active_context_tokens": 8192, "decode_tok_s": 19.268213, "prefill_tok_s": 830.349728, "samples": 5},
+    {"active_context_tokens": 16384, "decode_tok_s": 18.814981, "prefill_tok_s": 763.173586, "samples": 5},
+    {"active_context_tokens": 24576, "decode_tok_s": 18.387779, "prefill_tok_s": 707.362149, "samples": 5},
+    {"active_context_tokens": 32768, "decode_tok_s": 17.981787, "prefill_tok_s": 658.014356, "samples": 5}
+  ],
+  "gates": {
+    "declared_depths_exact": true,
+    "true_n_depth_zero_present": true,
+    "all_seven_cells_ready": true,
+    "benchmark_return_code": 0,
+    "parser_return_code": 0,
+    "cleanup_passed": true,
+    "direct_and_ordinary_model_views_coherent": true,
+    "speed_floor": null,
+    "new_quality_gate": false,
+    "record_or_submission_authorized": false,
+    "historical_featured_speeds_immutable": true
+  },
+  "evidence_sha256": {
+    "llama_bench_json": "ef31a94e18a3ee52191744d6f11b2aa20438fe28fc1a92d689bb3816d477dd0f",
+    "llama_bench_stderr": "88143f8d3ebded246469a5c8fc68ade5b5a44d800ba5971a5561ba094016d14c",
+    "metadata": "f958dcb0451d8fc517ab001d232f958fb550e85111a721f08ac71dc45efc4734",
+    "exact_depth_receipt": "fce9efbb6b43e03c457c20c27096a019ffbc0f23fa1f0405ceb69fc104247730",
+    "terminal_receipt": "7643d53b570ec6e84070f5fd203939966f2f7ccd279be109bcaf27535f0a9d41",
+    "effective_shared_libraries": "d5e2565716f9511322d1ed42233d886fe5150b146de714f7547f96bf0ca67975"
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-exact-depth-20260825-r1",
+  "publication_scope": "These seven exact Qwen3.6 embedded-MTP Q8_0 artifact TP1/MTP0/graph-off/F16-KV cells only. They are raw-engine target-only measurements, add no quality or record claim, and replace no featured or serving result."
+}
