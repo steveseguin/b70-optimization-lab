@@ -1,0 +1,73 @@
+{
+  "schema": "neural.download.qwen36-llama-mtp1-parent-sentinel-failure.v1",
+  "campaign_id": "qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r1",
+  "status": "failed-preserve-do-not-expand",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r1",
+  "terminal_receipt": {
+    "path": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r1/terminal-receipt.json",
+    "sha256": "4287e36e2eed1faabcb4e8838f6df80ea6b0b0dc14067d6f83235c72dd2079df",
+    "exit_code": 1
+  },
+  "execution_stop": {
+    "stage": "candidate quality client deferred tokenizer import before the 8K needle",
+    "cause": "The R1 runner invoked scripts/qwen36-text-quality-suite.py with system python3. Four exact canaries and two repeat requests were served before the suite reached its deferred transformers.AutoTokenizer import for the 8K needle; transformers was unavailable in that interpreter. quality.json was never written, so no result or pass/fail value from those six requests is persisted or claimable.",
+    "requests_served_before_stop": 6,
+    "persisted_quality_results": 0,
+    "traceback_evidence": "The traceback was console-only and is not a run-root artifact. The cause is established by a system-Python import reproduction plus the pinned client code and candidate server-log request sequence.",
+    "quality_stdout_path": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r1/candidate-mtp1/quality.stdout.json",
+    "quality_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "dependency_fix_only": "R2 may change only the interpreter used for the quality client plus the create-only campaign identity. It must rerun both arms and every frozen gate."
+  },
+  "completed_exact_depth_arms": {
+    "control_mtp0": {
+      "receipt_path": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r1/control-mtp0/exact-depth.json",
+      "receipt_sha256": "791c21004a5a4757778edbdfb4834da36e18a8cf70a28e00c04feaa4e29dd21b",
+      "gate_passed": true,
+      "serving_decode_tok_s_99_interval": 22.54901425418198,
+      "output_token_ids_sha256": "20fe4323dd29c9cf828cb5b15c1e02e68b919ca7d3ef5a9360bace8b882c68a7",
+      "cached_tokens": 0,
+      "server_log_sha256": "690613b9cbfbdf914984c172468515b3a15d536e940a91711ec10148652afa8f",
+      "models_sha256": "6acda1a307e343b736b02c95a0ec27a7f2458496bd930e91cf1547f44ee06e34"
+    },
+    "candidate_mtp1": {
+      "receipt_path": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r1/candidate-mtp1/exact-depth.json",
+      "receipt_sha256": "c55e28488509f1744e8fe6cd0beffc3fdaa9e2d9dae194b4f81cad63773c94e6",
+      "gate_passed": true,
+      "serving_decode_tok_s_99_interval": 30.16612325933283,
+      "output_token_ids_sha256": "326ffa809641e7f6cbcf39dd3d33c52af1eb5f91ba70adb9fdc0473922a45dc0",
+      "cached_tokens": 0,
+      "first_exact_request_draft_counters": {
+        "accepted": 59,
+        "generated": 68,
+        "ratio": 0.86765
+      },
+      "server_log_sha256": "51975200a5baf6645c5604ed75e7f8dab1cfa9fcd19f2ea8630e011d502054dc",
+      "models_sha256": "0dbdf7ecae8c5f5e3e64485d4986414e0d22e5798fa95363e04e68958b297051"
+    },
+    "candidate_vs_control_ratio": 1.3378023056479362
+  },
+  "unpassed_scientific_gates": {
+    "quality": "incomplete and unpersisted: six short requests were served, then the deferred tokenizer import failed before the 8K needle and before quality.json was written",
+    "target_output_parity": {
+      "passed": false,
+      "reason": "The completed control and candidate output-token hashes differ. R1 stopped before the terminal validator adjudicated this frozen gate, but the captured evidence does not satisfy parity."
+    },
+    "terminal_validation": "not reached"
+  },
+  "identity": {
+    "identity_path": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r1/identity.txt",
+    "identity_sha256": "6a897928f587deb437b0965c93da5a9a27fb35cf3409d881a0a61fc13ea5144f"
+  },
+  "cleanup_status": {
+    "classification": "cleanup observed, not terminal-validator certified",
+    "evidence": "The candidate server log ends with 'cleaning up before exit'; the fallback terminal receipt was written approximately 0.23 seconds later, and the present process census is idle.",
+    "limitations": "The set -e dependency failure bypassed the explicit stop_server call, postflight render-node gate, and terminal validator. R1 must not be labeled cleanup-gate passed."
+  },
+  "interpretation": {
+    "matrix_cells_filled": 0,
+    "mtp1_depth_curve_authorized": false,
+    "speed_claim_authorized": false,
+    "r1_rows_may_be_reused_by_r2": false,
+    "historical_featured_speeds_unchanged": true
+  }
+}

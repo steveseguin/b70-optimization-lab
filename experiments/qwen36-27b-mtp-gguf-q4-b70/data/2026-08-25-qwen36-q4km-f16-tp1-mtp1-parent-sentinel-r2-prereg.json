@@ -1,0 +1,86 @@
+{
+  "schema": "neural.download.qwen36-llama-mtp1-parent-sentinel-r2-overlay.v1",
+  "campaign_id": "qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r2",
+  "state": "preregistered-not-launched",
+  "purpose": "Fresh rerun of both parent-sentinel arms with a pinned quality-capable interpreter after R1 stopped during the deferred tokenizer import before completing or persisting the quality battery and also captured unequal control/candidate output hashes.",
+  "base_packet": {
+    "manifest": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-mtp1-parent-sentinel-prereg.json",
+    "manifest_sha256": "8c47322d82e866f1e4d4eb11ab7b431bc38eceb6bc894b7dc2d589c02fcb60f7",
+    "runner": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q4km-f16-tp1-mtp1-parent-sentinel-r1.sh",
+    "runner_sha256": "efe0ec09e2f50f8953b66eee0a43e0ab58240a2e79cd5a47f36674bed4041d5d",
+    "validator": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/validate-20260825-qwen36-q4km-f16-tp1-mtp1-parent-sentinel-r1.py",
+    "validator_sha256": "1a9040cfdf3cffed1d147fbdb59585cea56a3daa37806277d913d3d6dcc60e9e",
+    "preregistration_note": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-08-25-qwen36-q4km-f16-tp1-mtp1-parent-sentinel-preregistration.md",
+    "preregistration_note_sha256": "7dd3f7ca1e8ba1d4d18f148215a6eb527eb141e1dce8dca66d4548b3791a4ba6"
+  },
+  "r1_failure": {
+    "run_root": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r1",
+    "terminal_receipt_sha256": "4287e36e2eed1faabcb4e8838f6df80ea6b0b0dc14067d6f83235c72dd2079df",
+    "failure_record": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-mtp1-parent-sentinel-r1-failure.json",
+    "failure_record_sha256": "e14754b4a121e24eab2e51cb1496feade401459b1dff92b086a38e1fd0578686",
+    "failure_note": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-08-25-qwen36-q4km-f16-tp1-mtp1-parent-sentinel-r1-failure.md",
+    "failure_note_sha256": "ea72d37838e3f84e8d66fadb0e6a5f5b37bfc3b0a61fe8e46c55052b16130692",
+    "rows_reused": false,
+    "known_unpassed_gates": [
+      "quality battery aborted at the deferred tokenizer import before the 8K needle and persisted no quality.json",
+      "control/candidate output-token hashes differed",
+      "terminal validator was not reached"
+    ]
+  },
+  "quality_environment": {
+    "interpreter": "/home/steve/.venvs/vllm-xpu/bin/python",
+    "interpreter_realpath": "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12",
+    "interpreter_sha256": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8",
+    "sys_prefix": "/home/steve/.venvs/vllm-xpu",
+    "python_version": "3.12.13",
+    "pyvenv_cfg": "/home/steve/.venvs/vllm-xpu/pyvenv.cfg",
+    "pyvenv_cfg_sha256": "357c89e2054aa169364236533fd419951dc3948290100a8837e89868a3d82617",
+    "transformers": {
+      "version": "5.10.2",
+      "metadata": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/transformers-5.10.2.dist-info/METADATA",
+      "metadata_sha256": "422eeb712bb92b9265261ad894ef621675610f6c05c0c68f94723e4e8e67d84f"
+    },
+    "tokenizers": {
+      "version": "0.22.2",
+      "metadata": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/tokenizers-0.22.2.dist-info/METADATA",
+      "metadata_sha256": "15a5ddaf489f592b77e0a934c0eeb46b51130a94064ca129232afdb0a3868efc"
+    },
+    "numpy": {
+      "version": "2.3.5",
+      "metadata": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/numpy-2.3.5.dist-info/METADATA",
+      "metadata_sha256": "6002f29765e5bc1a3be4a1b92ed56b64968a0fecba73e7f81cd536d0c40f4fa3"
+    },
+    "offline_tokenizer_probe": {
+      "tokenizer_path": "/mnt/fast-ai/llm-cache/hf/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+      "text": "B70 Qwen3.6 R2 tokenizer capability probe: satin cobalt orbit 42.",
+      "tokenizer_class": "Qwen2Tokenizer",
+      "token_ids": [33, 22, 15, 1167, 16451, 18, 13, 21, 423, 17, 44424, 21610, 21059, 25, 74448, 32709, 3045, 25659, 220, 19, 17, 13],
+      "token_ids_sha256": "1282f7bb9acbe2b814ebbd1301382590794f9bc940313f485e009eb5138ef691",
+      "local_files_only": true
+    },
+    "required_capability": "isolated offline AutoTokenizer.from_pretrained on the pinned tokenizer plus exact Python, prefix, transformers, tokenizers, and numpy versions and metadata hashes",
+    "scope": "This interpreter is used only for scripts/qwen36-text-quality-suite.py; exact-depth and validation clients retain the R1 interpreters."
+  },
+  "r2_lifecycle": {
+    "runner": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q4km-f16-tp1-mtp1-parent-sentinel-r2.sh",
+    "validator": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/validate-20260825-qwen36-q4km-f16-tp1-mtp1-parent-sentinel-r2.py",
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r2",
+    "exact_ack": "RUN qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r2",
+    "requires_clean_pushed_main": true,
+    "fresh_both_arms": true,
+    "r1_root_is_read_only": true,
+    "artifacts_are_create_only": true,
+    "quality_stderr_artifact": "candidate-mtp1/quality.stderr.log",
+    "transformed_runner_sha256": "21b12584dc1e10b3d8483de23ce6f149979eecf5f71313c54f511a7bc2be639a"
+  },
+  "frozen_interpretation": {
+    "speed_floor": null,
+    "cell_gain_on_sentinel_pass": 0,
+    "potential_cell_gain_after_separate_curve": 7,
+    "expand_only_if": "Every R1 identity, exact-depth, target-output-parity, nonzero draft generated/accepted, quality, cache-zero, cleanup, DSO, readiness, and lifecycle gate passes freshly in R2.",
+    "do_not_expand_if": "Any R2 gate fails, including another control/candidate output-token mismatch.",
+    "r1_measurement_transfer_allowed": false,
+    "historical_featured_speeds_are_immutable": true,
+    "site_or_family_edit_authorized": false
+  }
+}
