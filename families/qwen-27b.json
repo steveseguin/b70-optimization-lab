@@ -2166,6 +2166,40 @@
   ],
   "series_measurements": [
     {
+      "id": "q36-q4km-tp1-kv-f16-context",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+      "quantization": "Q4_K_M",
+      "variant": "Q4_K_M",
+      "runtime": "llama.cpp SYCL fa0f3b25a47f346858a4d0d169f5181aa424b110",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen36-tp1-llamacpp-sycl-target-only-v1",
+      "speculation_method": "none",
+      "profile_id": "q36-q4km-f16-raw-target-only-depth-v1",
+      "measurement_class": "llama-bench-raw-depth-sweep",
+      "identity": {
+        "model_revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+        "model_sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+        "bench_sha256": "908b78b77fc28ad23b2924b7f32f56f4a8415eac9c2a79a244dee85b49b19030"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "kv": "f16", "speculation": "none"},
+      "workload": "llama-bench pp2048 plus tg128 at each exact depth, five repetitions, fa=on; raw-engine shape metric",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 29.302760, "prefill_tok_s": 826.357043, "samples": 5},
+        {"x": 2048, "decode_tok_s": 28.718264, "prefill_tok_s": 891.595341, "samples": 5},
+        {"x": 4096, "decode_tok_s": 28.423839, "prefill_tok_s": 869.408814, "samples": 5},
+        {"x": 8192, "decode_tok_s": 27.883558, "prefill_tok_s": 830.461807, "samples": 5},
+        {"x": 16384, "decode_tok_s": 26.882685, "prefill_tok_s": 760.015741, "samples": 5},
+        {"x": 24576, "decode_tok_s": 25.898142, "prefill_tok_s": 704.976178, "samples": 5},
+        {"x": 32768, "decode_tok_s": 25.039506, "prefill_tok_s": 655.103870, "samples": 5}
+      ],
+      "quality": "Performance-only raw-engine sweep; no new quality gate. The x=0 marker is a real n_depth=0 measurement.",
+      "caveat": "Target-only raw-engine curve, not intrinsic MTP and not an HTTP serving measurement. Artifact quality and optimization maturity are graded separately.",
+      "evidence": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-exact-depth-result.json"
+    },
+    {
       "id": "q38-b2dd-tp1-graph-f16-exact-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -3169,7 +3203,14 @@
           "status": "queued",
           "trigger": "parent-or-calibrated-estimate"
         }
-      }
+      },
+      {"id": "measured-q36-q4km-f16-context-0", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D29.303 · P826.36 · raw sweep", "reason": "Exact raw-engine depth point with five repetitions. Performance, serving quality, and optimization maturity remain separate.", "evidence_id": "q36-q4km-tp1-kv-f16-context", "point_x": 0, "parent": "qwen36-tp1-raw-depth-sweep", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-f16-context-2048", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D28.718 · P891.60 · raw sweep", "reason": "Exact raw-engine depth point with five repetitions. Performance, serving quality, and optimization maturity remain separate.", "evidence_id": "q36-q4km-tp1-kv-f16-context", "point_x": 2048, "parent": "qwen36-tp1-raw-depth-sweep", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-f16-context-4096", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D28.424 · P869.41 · raw sweep", "reason": "Exact raw-engine depth point with five repetitions. Performance, serving quality, and optimization maturity remain separate.", "evidence_id": "q36-q4km-tp1-kv-f16-context", "point_x": 4096, "parent": "qwen36-tp1-raw-depth-sweep", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-f16-context-8192", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D27.884 · P830.46 · raw sweep", "reason": "Exact raw-engine depth point with five repetitions. Performance, serving quality, and optimization maturity remain separate.", "evidence_id": "q36-q4km-tp1-kv-f16-context", "point_x": 8192, "parent": "qwen36-tp1-raw-depth-sweep", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-f16-context-16384", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D26.883 · P760.02 · raw sweep", "reason": "Exact raw-engine depth point with five repetitions. Performance, serving quality, and optimization maturity remain separate.", "evidence_id": "q36-q4km-tp1-kv-f16-context", "point_x": 16384, "parent": "qwen36-tp1-raw-depth-sweep", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-f16-context-24576", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D25.898 · P704.98 · raw sweep", "reason": "Exact raw-engine depth point with five repetitions. Performance, serving quality, and optimization maturity remain separate.", "evidence_id": "q36-q4km-tp1-kv-f16-context", "point_x": 24576, "parent": "qwen36-tp1-raw-depth-sweep", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-f16-context-32768", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D25.040 · P655.10 · raw sweep", "reason": "Exact raw-engine depth point with five repetitions. Performance, serving quality, and optimization maturity remain separate.", "evidence_id": "q36-q4km-tp1-kv-f16-context", "point_x": 32768, "parent": "qwen36-tp1-raw-depth-sweep", "retry": {"status": "complete"}}
     ]
   },
   {

@@ -1512,9 +1512,9 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             sum(cell["state"] == "quarantined" for cell in q36_cells), 63
         )
-        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 994)
+        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 987)
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q36_cells), 0
+            sum(cell["state"] == "lab-measured" for cell in q36_cells), 7
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q36_cells), 0)
 
@@ -1552,11 +1552,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("111/1,771 classified", overview_html)
+        self.assertIn("118/1,771 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "48", "measured"),
+            ("lab-measured", "55", "measured"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,660", "missing"),
+            ("missing", "1,653", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
