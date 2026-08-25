@@ -1,0 +1,45 @@
+{
+  "schema": "neural.download.qwen36-fa0-graph-cache-q8-capacity-scaled-r3-build-result.v1",
+  "state": "build-passed-parent-retry-pending",
+  "source": {
+    "head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "common_hpp_sha256": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+    "ggml_sycl_cpp_sha256": "25152136d7e7ff9e96822127f320f08ccb4fa200af607f33afaa05a318cbbd6a",
+    "required_modified_paths": [
+      "ggml/src/ggml-sycl/common.hpp",
+      "ggml/src/ggml-sycl/ggml-sycl.cpp"
+    ]
+  },
+  "build_root": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port",
+  "artifacts": {
+    "llama_cli": {
+      "size_bytes": 736520,
+      "sha256": "68ab26cf34f821a40afb5a05374360e8343b9b802c927fd0850fcd7bf3c7e1fd"
+    },
+    "llama_bench": {
+      "size_bytes": 545160,
+      "sha256": "8ea8fd14e6ac0c4a4b3a711db8997189d677df2a4f7f88d20609f59ca463a55e"
+    },
+    "libggml_sycl": {
+      "size_bytes": 329322096,
+      "sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2"
+    },
+    "cmake_cache_sha256": "39852126a74e193d99fe9ee2a0a2553d6afc9f6ed2b77b7b853bb25dd689d461",
+    "makefile_sha256": "db2b9dcc0296571e4f76b48402649af56376ea81582c49ca0442b9b35070298f",
+    "sycl_flags_sha256": "c52e473c20c9e06f30b5558445d210791e88047fc0dd6e4585f9fa634fd0a727"
+  },
+  "build": {
+    "parallelism": 2,
+    "backend_compile_passed": true,
+    "first_launcher_relink": "failed because the calling shell omitted oneAPI link-library paths",
+    "launcher_relink_with_oneapi_environment_passed": true,
+    "backend_recompile_during_relink": false
+  },
+  "interpretation": {
+    "parent_retry_required": true,
+    "curve_authorized": false,
+    "site_publication_authorized": false,
+    "speed_claim_authorized": false,
+    "protected_graph_off_values_may_be_replaced": false
+  }
+}
