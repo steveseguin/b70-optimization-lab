@@ -1,6 +1,6 @@
 {
   "campaign_id": "qwen38-q4km-tp1-wdc-feasibility-20260825-r3",
-  "status": "preregistered",
+  "status": "closed-flag-only-path-infeasible",
   "objective": "Determine whether Q4_K WDC can engage and fit on one 32 GiB B70 at the exact minimum context for the B64 matrix before spending source-authoring time on a production type-scoped reorder fix.",
   "predecessors": [
     "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-wdc-screen-20260825-r1-attempt1/raw.log",
@@ -19,5 +19,10 @@
   },
   "interpretation_boundary": "The forced arm is diagnostic and cannot ship. Advance to a source-level type-scoped production reorder fix only if it completes, emits a non-mutant Q4_K WDC-CENSUS engagement line, B64 is at least 1.05x matched control, and B1 is at least 0.95x matched control.",
   "quality_boundary": "Raw random-token mechanism evidence only. No user-facing performance promotion without endpoint sequential-oracle validation.",
-  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh"
+  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh",
+  "outcome": {
+    "control": "Completed: B1 24.392443 tok/s and B64 94.607864 tok/s. Despite CTX_SIZE=24576, the tool reported n_kv_max=32768.",
+    "candidate": "Failed before any row while the broad force-reorder hook made a temporary copy of the 1.27-billion-element q6_K output tensor.",
+    "decision": "Do not continue flag-only attempts. Author and preregister a source-level Q4_K-only reorder door before another WDC measurement."
+  }
 }
