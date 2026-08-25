@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-24**
+Last reviewed: **2026-08-25**
 
 ## Authority And Update Rule
 
@@ -525,6 +525,30 @@ as literal current-main evidence. No historical high was lowered or replaced,
 no decision overlay was applied, and the higher stock strict `71.9001988117144`
 capture remains distinct. See the [structured recovery](experiments/qwen38-27b-b70/data/2026-08-25-qwen38-b2dd9ce73d-tp4-zero-overlay-r1-recovery.json)
 and [closeout note](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp4-zero-overlay-r1-recovery.md).
+
+The same dated b2dd/1e90 matrix is still the active measured campaign. TP1's
+nine-probe context spine, full eager-MTP0 short control, and eager-MTP2
+sensitive parent have passed. The MTP2 parent matched the MTP0 target oracle
+on both sensitive prompts and accepted `589/868` draft tokens. Its only
+authorized expansion is now E1: one full 25-prompt eager-MTP2 short battery
+with complete quality, all-25 target-oracle equality, and nonzero-acceptance
+gates. Only an E1 pass may unlock E2, the one globally authorized full
+eager-MTP4 actual. The launcher serializes the single-actual check under the
+campaign/GPU locks and will not reinterpret a partial or failed actual as
+permission to retry. The separately frozen TP2 zero-overlay packet remains
+ready; do not bypass E1/E2 ordering or silently mix its evidence with TP2.
+See the [TP1 expansion preregistration](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp1-eager-mtp-expansion-preregistration.md)
+and [TP2 preregistration](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp2-zero-overlay-r1-prereg.md).
+
+A separate dated current-main image pair was statically certified at vLLM
+`4af586e185b028acf08312a4dee381b5998a137e` and XPU kernels
+`1e90ffa672ba02f17a909da11838a4c55b199783`. Both the stock-kernel control and
+both-current image passed the fail-closed import/schema/ELF receipt chain and
+were packaged in a checksum-tested Docker-loadable transfer bundle. No model,
+GPU, benchmark, or quality request ran on this host, so this is a later
+GPU-qualification-pending packet, not literal-current performance evidence and
+not an inheritor of the b2dd matrix. See the
+[4af build record](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-4af586e185-absolute-current-main-build.md).
 
 ## Pinned Certified Qwen3.8 TP-Scale Frontier (2026-08-23)
 
