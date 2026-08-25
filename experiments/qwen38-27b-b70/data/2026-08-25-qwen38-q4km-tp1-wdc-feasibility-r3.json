@@ -1,0 +1,23 @@
+{
+  "campaign_id": "qwen38-q4km-tp1-wdc-feasibility-20260825-r3",
+  "status": "preregistered",
+  "objective": "Determine whether Q4_K WDC can engage and fit on one 32 GiB B70 at the exact minimum context for the B64 matrix before spending source-authoring time on a production type-scoped reorder fix.",
+  "predecessors": [
+    "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-wdc-screen-20260825-r1-attempt1/raw.log",
+    "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-wdc-screen-20260825-r2-attempt1/raw.log"
+  ],
+  "matrix": {
+    "parallel_sequences": [1, 64],
+    "prompt_tokens_per_sequence": 128,
+    "generated_tokens_per_sequence": 256,
+    "context_tokens": 24576,
+    "context_derivation": "64 * (128 + 256); exact, not estimated"
+  },
+  "arms": {
+    "control": "existing DNN-off control build, RUNTIME_PROFILE=control",
+    "candidate": "DNN+nibble-plane build, RUNTIME_PROFILE=wdc-q4k-forced; master WDC off, only Q4_K WDC enabled, test-only forced reorder enabled"
+  },
+  "interpretation_boundary": "The forced arm is diagnostic and cannot ship. Advance to a source-level type-scoped production reorder fix only if it completes, emits a non-mutant Q4_K WDC-CENSUS engagement line, B64 is at least 1.05x matched control, and B1 is at least 0.95x matched control.",
+  "quality_boundary": "Raw random-token mechanism evidence only. No user-facing performance promotion without endpoint sequential-oracle validation.",
+  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh"
+}

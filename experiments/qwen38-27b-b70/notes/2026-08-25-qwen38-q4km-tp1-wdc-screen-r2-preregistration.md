@@ -30,3 +30,14 @@ RUNTIME_PROFILE=wdc-q4k NPL=1,64 ATTEMPT=1 \
 As before, any speed row remains raw random-token mechanism evidence. It
 cannot be promoted as concurrent serving without the endpoint sequential
 oracle gate.
+
+## R2 outcome
+
+R2 emitted one B1 raw row (`25.059813 tok/s`) and then exhausted device memory
+before B64. It emitted no `WDC-CENSUS` engagement line and explicitly warned
+that Q4_K WDC could not engage because the weight was not reordered. Source
+inspection confirmed that `REORDER_IN_GEMM=1` still passes through the normal
+MMVQ-width predicate, making it vacuous for the 512-token warm-up. The partial
+row is therefore DNN-build diagnostic evidence only, not a WDC result. The
+[raw failure](../data/qwen38-q4km-tp1-wdc-screen-20260825-r2-attempt1/raw.log)
+is retained unchanged.

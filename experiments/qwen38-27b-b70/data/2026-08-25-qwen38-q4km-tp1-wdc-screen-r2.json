@@ -1,6 +1,6 @@
 {
   "campaign_id": "qwen38-q4km-tp1-wdc-screen-20260825-r2",
-  "status": "preregistered-after-r1-premeasurement-oom",
+  "status": "failed-incomplete-vacuous-treatment",
   "objective": "Retry the Q4_K-only WDC screen after removing a test-only force-reorder hook and explicitly disabling the integration branch's unrelated default-on q8_0 WDC path.",
   "control_evidence": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-batched-ladder-20260825-r1-attempt2/summary.json",
   "failed_predecessor": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-wdc-screen-20260825-r1-attempt1/raw.log",
@@ -33,5 +33,6 @@
   },
   "quality_boundary": "Raw random-token mechanism evidence only. Endpoint sequential-oracle comparison is mandatory before any user-facing promotion.",
   "build_script": "experiments/qwen38-27b-b70/scripts/build-qwen38-q4km-tp1-wdc-batched-r1.sh",
-  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh"
+  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh",
+  "outcome": "Attempt 1 emitted one B1 raw row (25.059813 tok/s), then device-OOMed before B64. No WDC-CENSUS was emitted and the backend warned that Q4_K WDC could not engage because the weight was not reordered. The lone row is incomplete DNN-build diagnostic evidence, not a Q4_K WDC result."
 }

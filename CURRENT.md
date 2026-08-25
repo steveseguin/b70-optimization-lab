@@ -976,9 +976,11 @@ decode rises from `24.363621` to `95.411842 tok/s`; no point is interpolated.
 These `llama-batched-bench` rows are mechanism/ceiling evidence, not
 quality-qualified concurrent serving. The DNN-off banner identifies Q4_K WDC
 as the next bounded batched-build A/B; that two-point screen is
-[preregistered](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-wdc-screen-r2-preregistration.md).
-Its r1 recipe failed before measurement because a test-only forced reorder
-exceeded device memory; r2 removes that hook and isolates the Q4_K WDC door.
+[in feasibility screening](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-wdc-feasibility-r3-preregistration.md).
+R1 failed before measurement because a test-only forced reorder exceeded
+device memory. R2 isolated Q4_K but exposed a vacuous reorder door and failed
+before B64. R3 uses a matched, exact-minimum-context control to decide whether
+a production type-scoped reorder fix is worth authoring.
 A promising point must then pass a
 separate endpoint replay with sequential output oracles before package
 promotion.

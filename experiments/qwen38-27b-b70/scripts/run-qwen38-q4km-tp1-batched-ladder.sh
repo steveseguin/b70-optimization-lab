@@ -11,6 +11,7 @@ gpu_index="${GPU_INDEX:-0}"
 attempt="${ATTEMPT:-1}"
 runtime_profile="${RUNTIME_PROFILE:-control}"
 npl="${NPL:-1,2,4,8,16,32,64}"
+ctx_size="${CTX_SIZE:-32768}"
 
 campaign="${CAMPAIGN_ID:-qwen38-q4km-tp1-batched-ladder-20260825-r1}"
 expected_model_sha=31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34
@@ -24,9 +25,14 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail 'ATTEMPT must be positive'
 [[ "${campaign}" =~ ^[a-z0-9][a-z0-9-]*$ ]] || fail 'invalid CAMPAIGN_ID'
 [[ "${npl}" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]] || fail 'invalid NPL list'
+[[ "${ctx_size}" =~ ^[1-9][0-9]*$ ]] || fail 'CTX_SIZE must be positive'
 [[ "${runtime_profile}" == control || "${runtime_profile}" == wdc-q4k || \
-   "${runtime_profile}" == wdc-q4k-r1 ]] || \
-  fail 'RUNTIME_PROFILE must be control, wdc-q4k, or wdc-q4k-r1'
+   "${runtime_profile}" == wdc-q4k-r1 || \
+   "${runtime_profile}" == wdc-q4k-forced ]] || \
+  fail 'RUNTIME_PROFILE must be control, wdc-q4k, wdc-q4k-r1, or wdc-q4k-forced'
+max_pl=$(tr ',' '\n' <<< "${npl}" | sort -nr | head -1)
+(( ctx_size >= max_pl * (128 + 256) )) || \
+  fail "CTX_SIZE ${ctx_size} is below the exact ${max_pl}x(128+256) token requirement"
 
 # Take the same host-wide locks used by the other B70 campaigns before any
 # process scan.  The per-GPU lock alone does not exclude launchers from older
@@ -94,7 +100,8 @@ export GGML_SYCL_FUSED_CONV_SILU_L2=1
 export GGML_SYCL_FUSE_EXT=31
 export GGML_SYCL_QDEDUP_STATS=1
 export GGML_SYCL_MMQ_Q4K_REORDER=1
-if [[ "${runtime_profile}" == wdc-q4k || "${runtime_profile}" == wdc-q4k-r1 ]]; then
+if [[ "${runtime_profile}" == wdc-q4k || "${runtime_profile}" == wdc-q4k-r1 || \
+      "${runtime_profile}" == wdc-q4k-forced ]]; then
   grep -qx 'GGML_SYCL_DNN:BOOL=ON' "${build_dir}/CMakeCache.txt" || \
     fail 'wdc-q4k requires a GGML_SYCL_DNN=ON build'
   grep -Eq '^CMAKE_CXX_FLAGS:STRING=.*GGML_SYCL_Q4K_NIBBLE_PLANE=1' \
@@ -111,6 +118,12 @@ if [[ "${runtime_profile}" == wdc-q4k || "${runtime_profile}" == wdc-q4k-r1 ]]; 
     # amended screen type-pure: the per-type Q4_K door above overrides this.
     export GGML_SYCL_WDC=off
     unset GGML_SYCL_FORCE_REORDER
+    if [[ "${runtime_profile}" == wdc-q4k-forced ]]; then
+      # Diagnostic only: r2 showed REORDER_IN_GEMM is width-gated and vacuous
+      # for this harness. This estimates the opportunity before a type-scoped
+      # production reorder fix; it is not itself a shippable runtime profile.
+      export GGML_SYCL_FORCE_REORDER=1
+    fi
   fi
 fi
 unset GGML_SYCL_FUSED_MMVQ_SWIGLU_Q4K_POISON GGML_SYCL_FUSED_GDN_STATE_IO_POISON
@@ -130,7 +143,7 @@ xpu-smi dump -d "${gpu_index}" -m 0,1,2,3,4,5 -n 1 > "${run_dir}/xpu-before.txt"
 
 cmd=("${bench}" --model "${model}" --device SYCL0 --gpu-layers 99
   --split-mode none --fit off --flash-attn on --cache-type-k f16
-  --cache-type-v f16 --ctx-size 32768 --batch-size 2048 --ubatch-size 256
+  --cache-type-v f16 --ctx-size "${ctx_size}" --batch-size 2048 --ubatch-size 256
   --threads 8 --poll 50 -npp 128 -ntg 256 -npl "${npl}"
   --output-format jsonl)
 printf '%q ' "${cmd[@]}" > "${run_dir}/command.txt"
