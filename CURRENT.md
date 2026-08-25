@@ -987,7 +987,9 @@ but failed before measurement: the width-1 q6_K output head still takes its
 ordinary reorder path after Q4_K planes consume VRAM. A default-off q6_K
 reorder suppression door is the next memory-feasibility delta; its speed cost
 must be measured rather than assumed. That two-point screen is now
-[preregistered](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-wdc-noq6-r5-preregistration.md).
+[rejected](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-wdc-noq6-r5-preregistration.md):
+B1 fell to `21.412285 tok/s` (`0.878863x` control), B64 OOMed, and no WDC
+engagement census appeared. The one-card Q4_K WDC branch is closed.
 A promising point must then pass a
 separate endpoint replay with sequential output oracles before package
 promotion.

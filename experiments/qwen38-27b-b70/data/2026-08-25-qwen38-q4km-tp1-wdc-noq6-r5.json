@@ -1,6 +1,6 @@
 {
   "campaign_id": "qwen38-q4km-tp1-wdc-noq6-20260825-r5",
-  "status": "preregistered",
+  "status": "rejected",
   "objective": "Measure whether Q4_K WDC can fit and win when q6_K reorder is explicitly suppressed, avoiding the 1.27-billion-element output-head temporary copy.",
   "source": {
     "base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
@@ -26,5 +26,6 @@
   "advance_to_full_ladder_if": "Clean completion; banner force_reorder=0, force_q4k=1, disable_q6k=1; non-mutant q4_K WDC-CENSUS engagement; B64 at least 1.05x control; B1 at least 0.95x control. Suppressing q6_K reorder may regress output-head performance, so both speed thresholds are mandatory.",
   "quality_boundary": "Raw random-token mechanism evidence only. Endpoint sequential-oracle validation is mandatory before promotion.",
   "build_script": "experiments/qwen38-27b-b70/scripts/build-qwen38-q4km-tp1-wdc-batched-r1.sh",
-  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh"
+  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh",
+  "outcome": "B1 completed at 21.412285 tok/s, 0.878863x the 24.363621 control and below the frozen 0.95x retention gate. B64 device-OOMed. No WDC-CENSUS engagement line was emitted. Reject without a full ladder or endpoint promotion."
 }

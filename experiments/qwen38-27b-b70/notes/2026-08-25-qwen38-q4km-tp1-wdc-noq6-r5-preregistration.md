@@ -34,3 +34,12 @@ The q6_K output-head path may become slower without reordered MMVQ. R5 must
 therefore retain at least 95% of B1 and gain at least 5% at B64 before any
 full-ladder work. Even a passing raw screen remains unqualified until the
 endpoint sequential-oracle gate passes.
+
+## Outcome
+
+Rejected. B1 completed at `21.412285 tok/s`, only `0.878863x` the
+`24.363621 tok/s` control and below the frozen `0.95x` retention gate. B64
+then exhausted device memory. The log emitted no `WDC-CENSUS` engagement
+line, so the intended treatment was not proven engaged even before the speed
+and completion failures. The [raw capture](../data/qwen38-q4km-tp1-wdc-noq6-20260825-r5-attempt1/raw.log)
+is retained; no full ladder or endpoint promotion is authorized.
