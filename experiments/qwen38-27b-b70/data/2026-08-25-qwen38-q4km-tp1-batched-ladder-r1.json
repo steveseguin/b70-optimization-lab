@@ -1,0 +1,52 @@
+{
+  "campaign_id": "qwen38-q4km-tp1-batched-ladder-20260825-r1",
+  "status": "preregistered",
+  "registered_at": "2026-08-25T14:30:00Z",
+  "objective": "Measure, without interpolation, the raw-engine aggregate decode ceiling of the validated Qwen3.8 27B Q4_K_M TP1 source stack as parallel sequence count increases.",
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "file": "Qwen3.8-27B-Q4_K_M.gguf",
+    "bytes": 18973870432,
+    "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34"
+  },
+  "runtime": {
+    "base_repository": "mndodd/llama.cpp",
+    "base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "applied_diff_sha256": "f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e",
+    "patch_recipe": "repro/qwen38-27b-q4km-tp1-b70/restore-and-build.sh",
+    "compiler_identity_for_this_attempt": "Intel oneAPI DPC++/C++ 2026.1.1 (2026.1.1.20260724)",
+    "identity_note": "This compiler differs from the 2026.0.0 TP1 headline build and therefore defines a new experimental identity. Results must not be silently pooled."
+  },
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 1,
+    "gpu_index": 0
+  },
+  "matrix": {
+    "prompt_tokens_per_sequence": 128,
+    "generated_tokens_per_sequence": 256,
+    "parallel_sequences": [1, 2, 4, 8, 16, 32, 64],
+    "context_size": 32768,
+    "batch_size": 2048,
+    "ubatch_size": 256,
+    "kv_cache": "f16",
+    "flash_attention": true,
+    "split_mode": "none",
+    "repetitions": 1
+  },
+  "metrics": {
+    "aggregate_decode": "speed_tg from llama-batched-bench JSONL",
+    "per_sequence_decode": "speed_tg / pl, derived only for the same measured row",
+    "prefill": "speed_pp from the same measured row"
+  },
+  "quality_boundary": "llama-batched-bench feeds random token IDs and does not generate auditable model outputs. Its rows are mechanism/ceiling evidence only, never user-facing quality-qualified concurrency. A separate server endpoint run with per-request output oracles is required for promotion.",
+  "reporting_rules": [
+    "Report every measured row, including regressions and failures.",
+    "Do not interpolate or extrapolate between parallel-sequence counts.",
+    "Do not call parallel sequences HTTP users or requests per second.",
+    "Do not compare speed_tg directly with the package's conventional 99-interval endpoint metric.",
+    "No throughput floor is a validity gate."
+  ],
+  "launcher": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh"
+}

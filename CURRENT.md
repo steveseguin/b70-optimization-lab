@@ -969,6 +969,13 @@ stays rejected for exactness. See the
 - [lane registration](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-lane-open.md)
 - [baseline result](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-baseline-result.md)
 
+The missing TP1 aggregate-decode curve is now
+[preregistered](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-batched-ladder-preregistration.md)
+at directly measured parallel-sequence counts 1/2/4/8/16/32/64. Its
+`llama-batched-bench` rows are explicitly mechanism/ceiling evidence, not
+quality-qualified concurrent serving. A promising point must pass a separate
+endpoint replay with sequential output oracles before package promotion.
+
 ## Active Research: Qwen3.8 27B INT4 AutoRound, vLLM/XPU TP2 speculative
 
 Opened 2026-08-18, succeeding the closed Qwen3.6 27B INT4 lane. This is a

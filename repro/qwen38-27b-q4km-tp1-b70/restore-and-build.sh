@@ -5,6 +5,7 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../.." && pwd)
 source_dir="${SOURCE_DIR:-}"
 jobs="${BUILD_JOBS:-2}"
+compiler="${CXX_COMPILER:-/opt/intel/oneapi/compiler/2026.0/bin/icpx}"
 
 [[ -n "${source_dir}" ]] || {
     printf 'Set SOURCE_DIR to a new, empty destination directory.\n' >&2
@@ -15,10 +16,23 @@ jobs="${BUILD_JOBS:-2}"
     exit 2
 }
 [[ "${jobs}" =~ ^[1-9][0-9]*$ ]] || { printf 'BUILD_JOBS must be positive.\n' >&2; exit 2; }
-[[ -x /opt/intel/oneapi/compiler/2026.0/bin/icpx ]] || {
-    printf 'Missing validated compiler: /opt/intel/oneapi/compiler/2026.0/bin/icpx\n' >&2
+[[ -r /opt/intel/oneapi/setvars.sh ]] || {
+    printf 'Missing Intel oneAPI environment: /opt/intel/oneapi/setvars.sh\n' >&2
     exit 1
 }
+# CMake needs IntelSYCL, MKL, and their package roots in addition to icpx.
+# A direct compiler path alone is not sufficient in a fresh shell.
+set +u
+# shellcheck disable=SC1091
+source /opt/intel/oneapi/setvars.sh >/dev/null 2>&1
+set -u
+[[ -x "${compiler}" ]] || {
+    printf 'Missing compiler: %s\n' "${compiler}" >&2
+    exit 1
+}
+
+printf 'compiler=%s\n' "${compiler}"
+"${compiler}" --version | sed -n '1,2p'
 
 git clone https://github.com/mndodd/llama.cpp.git "${source_dir}"
 git -C "${source_dir}" checkout 4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126
@@ -61,7 +75,7 @@ git -C "${source_dir}" diff --check
 cmake -G "Unix Makefiles" -S "${source_dir}" -B "${source_dir}/build-sycl-aot-bmg-g31" \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_C_COMPILER=/usr/bin/cc \
-  -DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icpx \
+  -DCMAKE_CXX_COMPILER="${compiler}" \
   -DBUILD_SHARED_LIBS=ON \
   -DGGML_NATIVE=ON \
   -DLLAMA_CURL=OFF \
@@ -74,7 +88,7 @@ cmake -G "Unix Makefiles" -S "${source_dir}" -B "${source_dir}/build-sycl-aot-bm
   -DGGML_SYCL_HOST_MEM_FALLBACK=OFF \
   -DGGML_SYCL_SUPPORT_LEVEL_ZERO_API=ON
 cmake --build "${source_dir}/build-sycl-aot-bmg-g31" \
-  --target llama-bench llama-cli llama-server -j"${jobs}"
+  --target llama-batched-bench llama-bench llama-cli llama-server -j"${jobs}"
 
 printf 'BUILD COMPLETE\nsource=%s\nbuild=%s\n' \
   "${source_dir}" "${source_dir}/build-sycl-aot-bmg-g31"
