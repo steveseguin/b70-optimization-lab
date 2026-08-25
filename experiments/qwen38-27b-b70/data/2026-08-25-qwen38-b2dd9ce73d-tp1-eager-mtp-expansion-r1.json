@@ -1,0 +1,103 @@
+{
+  "schema": "neural.download.qwen38-tp1-eager-mtp-expansion.v1",
+  "campaign_id": "qwen38-b2dd9ce73d-tp1-eager-mtp-expansion-20260825-r1",
+  "parent_campaign_id": "qwen38-b2dd9ce73d-tp1-parent-sentinels-20260825-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Execute the exact expansion unlocked by the passed eager-MTP2 sensitive parent: one full MTP2 qualification followed, only if it passes, by exactly one eager-MTP4 short actual.",
+  "frozen_interpretation": {
+    "mtp2": "A fresh-cache, fresh-output 25-prompt natural-EOS short benchmark plus the complete quality battery, nonzero acceptance, and exact all-prompt target-oracle equality.",
+    "mtp4": "Exactly one fresh-cache, fresh-output short actual. To maximize useful coverage without adding another actual, the single MTP4 server run includes the same full 25-prompt benchmark and full quality battery, plus nonzero acceptance and exact all-prompt target-oracle equality.",
+    "speed_policy": "Speed is recorded but never decides correctness, support, quarantine, or whether a historical result is preserved.",
+    "context_policy": "The short suite remains outside the numeric active_context_tokens axis and max-model-len 32768 is not an active-context measurement."
+  },
+  "identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "weight_revision": "Qwen3.8-27B only",
+    "quantization": "AutoRound INT4 b70",
+    "vllm_commit": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image": "neural-download/vllm-openai-xpu:vllm-b2dd9ce73d-kernel-1e90ffa672-official",
+    "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "source_identity_sha256": "2a0ee74968dd68ba15b31eeef3e404807d125e6e52a0e96d25e8b955bd4ae0a0",
+    "tp": 1,
+    "pp": 1,
+    "dp": 1,
+    "gpu_csv": "0",
+    "concurrency": 1,
+    "graph_mode": "off",
+    "kv_cache_dtype": "f16",
+    "max_model_len": 32768,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "enable_chunked_prefill": true,
+    "async_scheduling": true,
+    "enable_prefix_caching": false,
+    "pythonhashseed": "0"
+  },
+  "stages": [
+    {
+      "stage_id": "e1-mtp2-full",
+      "rank": 1,
+      "mtp_depth": 2,
+      "port_r1": 19856,
+      "root_r1": "/home/steve/qwen38-current-main-runs/tp1-eager-mtp-expansion-b2dd9ce73d-20260825-r1/01-mtp2-full",
+      "cache_r1": "/home/steve/qwen38-current-main-runs/tp1-eager-mtp-expansion-cache-b2dd9ce73d-20260825-r1/01-mtp2-full",
+      "required_parent": "p3-eager-mtp2 r1 passed",
+      "workload": "25 cold unique prompts, natural EOS, max 512, returned token IDs; complete quality battery",
+      "gates": ["canary", "25-row realistic gate", "all-25 target oracle", "nonzero drafting and acceptance", "full quality battery", "cleanup"]
+    },
+    {
+      "stage_id": "e2-mtp4-full-actual",
+      "rank": 2,
+      "mtp_depth": 4,
+      "port_r1": 19857,
+      "root_r1": "/home/steve/qwen38-current-main-runs/tp1-eager-mtp-expansion-b2dd9ce73d-20260825-r1/02-mtp4-full-actual",
+      "cache_r1": "/home/steve/qwen38-current-main-runs/tp1-eager-mtp-expansion-cache-b2dd9ce73d-20260825-r1/02-mtp4-full-actual",
+      "required_parent": "e1-mtp2-full same-attempt receipt passed",
+      "actual_count_contract": "This is the campaign's one and only eager-MTP4 actual. It may use rN only if no earlier E2 output or cache exists; after any E2 evidence exists, another MTP4 launch requires a new preregistration.",
+      "workload": "25 cold unique prompts, natural EOS, max 512, returned token IDs; complete quality battery",
+      "gates": ["canary", "25-row realistic gate", "all-25 target oracle", "nonzero drafting and acceptance", "full quality battery", "cleanup"]
+    }
+  ],
+  "frozen_inputs": {
+    "parent_contract": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-b2dd9ce73d-tp1-parent-sentinel-campaign.json",
+    "parent_contract_sha256": "9a96aa5bf9ebdad2b455e4b3d0c06d5ac2748cefba61a164003a1de560113400",
+    "parent_result": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-b2dd9ce73d-tp1-eager-mtp2-parent-r1.json",
+    "parent_result_sha256": "4df7d2ee53aa9bbb561d8a8465933a6d80c303d688a79494d7f59d5cd8301186",
+    "short_suite": "patches/qwen36-27b-autoround-int4-b70/batch-invariant-rmsnorm-20260817/validation-suite.json",
+    "short_suite_sha256": "292dea6aaf60f53067fb63c9bc5aba15bd1c6e71c2601693e6750239edf9fa0c",
+    "quality_baseline": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp1-mtp0-f16-graph-seed0-natural-eos-replay-a-baseline-quality/quality.json",
+    "quality_baseline_sha256": "738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18",
+    "delegated_runner": "experiments/qwen38-27b-b70/scripts/run-20260823-qwen38-rolling-nightly-strict-smoke.sh",
+    "delegated_runner_sha256": "cb2bfd95e7ad9956dae5bc22ccfa575c8742847c963143291a21505533598202",
+    "shared_parent_launcher": "experiments/qwen38-27b-b70/scripts/run-20260825-qwen38-tp1-parent-sentinel-stage.py",
+    "shared_parent_launcher_sha256": "daffc2782871f9499fd09133ee4fa6eb5cd6e626a19204ea1c6361471c6ab351"
+  },
+  "parent_evidence": {
+    "target_control_root": "/home/steve/qwen38-current-main-runs/tp1-parent-sentinels-b2dd9ce73d-20260825-r1/02-eager-control/full-short",
+    "target_control_receipt_sha256": "e4513a9a76ff8c5673a06099c8f1f00ba7b25b60cd0635c6914c1e397495ba86",
+    "target_control_benchmark_sha256": "4509e8b085a69b9e82659816aaf324ba06e170b7a85762e419528874ead582ff",
+    "target_control_quality_sha256": "e3c9279540056e46e8d7cbfe255e837b09c182f747df5134ff7403dbd0ca884b",
+    "mtp2_sensitive_root": "/home/steve/qwen38-current-main-runs/tp1-parent-sentinels-b2dd9ce73d-20260825-r1/03-eager-mtp2/sensitive-screen",
+    "mtp2_sensitive_receipt_sha256": "f7501bced81beefd52bf8b56a44c16be3d9ea861d7695fe884b4ba3b2cbcc14a",
+    "mtp2_sensitive_benchmark_sha256": "bab562a946e194826469ebaa7ab9fd0c046ed7f185860db3772da208d5450658",
+    "mtp2_sensitive_metrics_before_sha256": "8c70c8002cfbded324bc99105a8bec2dddc926af39a66732862c0046d4fc2452",
+    "mtp2_sensitive_metrics_after_sha256": "0fcf348661bd46d559c9da342bce2cfa2605a3796ae8f17eba4d03532ea2aef1"
+  },
+  "launch_policy": {
+    "default": "inert",
+    "acknowledgement": "Exact per-stage ACK required before any preflight or launch.",
+    "git_at_launch": "Require a clean worktree on main with HEAD equal to cached and live origin/main.",
+    "git_after_launch": "Require local HEAD, branch, and worktree unchanged. Query and record live origin movement, but remote movement after launch is non-gating.",
+    "storage": "Every stage and retry uses a nonexistent output and cache on ext4. No resume and no overwrite.",
+    "cleanup": "Before and after each stage: no running container, selected port free, no vLLM/llama process, no render-node owner; acquire the host and GPU0 locks.",
+    "attempts": "Every attempt is immutable. E1 retries use a new rN root, cache, and port. E2 may select an rN identity only before its first launch; any existing E2 output or cache closes the one-actual authorization."
+  },
+  "protected_speed_evidence": {
+    "manifest_sha256": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "canonical_values_sha256": "e6ee2cb9908ce940087788243eac5b544c0d2831b94efa47fe6441232c740e8f",
+    "rule": "No expansion result overwrites or lowers any historical value."
+  },
+  "publication_rule": "A passed stage is measured short-suite evidence only. It fills no numeric active-context point. Failed or quarantined attempts remain durable and speed never changes correctness classification."
+}
