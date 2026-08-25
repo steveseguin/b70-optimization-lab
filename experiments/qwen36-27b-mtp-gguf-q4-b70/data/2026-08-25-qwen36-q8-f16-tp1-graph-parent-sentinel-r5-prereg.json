@@ -1,0 +1,22 @@
+{
+  "schema": "neural.download.qwen36-llama-graph-parent-sentinel-r5-delta.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-graph-sentinel-20260825-r5",
+  "state": "preregistered-not-launched",
+  "purpose": "Rerun the complete passing R4 mechanism while preventing unrelated post-launch remote commits from invalidating immutable local evidence.",
+  "lifecycle_delta": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-graph-sentinel-20260825-r5",
+    "exact_ack": "RUN qwen36-q8-f16-tp1-graph-sentinel-20260825-r5"
+  },
+  "graph_and_parity_delta": "none-from-r4",
+  "postflight_remote_policy": {
+    "live_origin_equality_required_prelaunch": true,
+    "local_launch_head_and_packet_blobs_frozen_postlaunch": true,
+    "live_origin_equality_required_postlaunch": false,
+    "reason": "A later unrelated remote commit cannot alter the running binary, model, local launch commit, or sealed packet blobs."
+  },
+  "predecessor": {
+    "terminal_sha256": "16d41c9752778227f079ece3838299a81b5510913a806079652a57ac48871e8e",
+    "parity_receipt_sha256": "3efb01f7c0cb7145808d754ace73faf1af58c43114b4cfc76178e0749fc1f914",
+    "reuse_any_arm": false
+  }
+}

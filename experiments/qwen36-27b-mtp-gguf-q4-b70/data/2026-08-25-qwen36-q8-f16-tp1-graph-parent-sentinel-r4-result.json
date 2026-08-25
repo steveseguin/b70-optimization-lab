@@ -1,0 +1,49 @@
+{
+  "schema": "neural.download.qwen36-llama-graph-parent-sentinel-result.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-graph-sentinel-20260825-r4",
+  "classification": "failed-incomplete-unrelated-live-origin-postflight-race",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-graph-sentinel-20260825-r4",
+  "terminal_sha256": "16d41c9752778227f079ece3838299a81b5510913a806079652a57ac48871e8e",
+  "terminal": {
+    "state": "failed",
+    "stage": "packet-and-artifact-postflight",
+    "cleanup_passed": true,
+    "error": "lab main differs from live origin/main"
+  },
+  "control": {
+    "passed": true,
+    "output_sha256": "cc12d7e693e9bf8404ba0e36a33c8f42393f58be62e013dd23c3803e40f50822",
+    "summary": "device=0 and all graph/cache/rejection counters zero"
+  },
+  "candidate": {
+    "passed": true,
+    "output_sha256": "cc12d7e693e9bf8404ba0e36a33c8f42393f58be62e013dd23c3803e40f50822",
+    "summary": {
+      "device": 0,
+      "requested": 66,
+      "compatibility_rejected": 0,
+      "device_unsupported": 0,
+      "cache_entries": 4,
+      "cache_limit": 8,
+      "cache_hit": 62,
+      "cache_miss": 4,
+      "cache_full": 0,
+      "direct_replay": 62,
+      "recorded": 4,
+      "created": 4,
+      "updated": 0,
+      "recreated": 0,
+      "replayed": 66
+    }
+  },
+  "parity_receipt_sha256": "3efb01f7c0cb7145808d754ace73faf1af58c43114b4cfc76178e0749fc1f914",
+  "cause": "An unrelated Qwen3.8 website/runbook commit advanced live origin/main after both arms and parity passed. The immutable local launch HEAD and packet bytes did not change.",
+  "authority": {
+    "seven_cell_expansion": false,
+    "site_publication": false,
+    "speed_measurement_or_floor": null,
+    "reuse_any_r4_arm": false,
+    "historical_featured_speeds_are_immutable": true
+  },
+  "next": "Fresh R5 checks live origin at launch, then freezes the local launch HEAD and packet blobs without allowing unrelated later remote commits to invalidate completed arms."
+}
