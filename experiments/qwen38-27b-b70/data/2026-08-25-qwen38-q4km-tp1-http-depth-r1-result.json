@@ -1,0 +1,65 @@
+{
+  "schema": "neural.download.qwen38-q4km-http-depth-result.v1",
+  "campaign_id": "qwen38-q4km-tp1-http-depth-20260825-r1",
+  "status": "passed",
+  "attempt": 1,
+  "measured_at": "2026-08-25",
+  "identity": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "compiler": "Intel oneAPI 2026.1.1 reconstruction",
+    "gpu": "one Intel Arc Pro B70 32 GiB",
+    "context_capacity_tokens": 33024,
+    "parallel_slots": 1,
+    "kv_cache": "f16"
+  },
+  "realistic_http": {
+    "workload": "fixed 12-prompt realistic package suite, cold and unique prompts",
+    "passed_prompts": 12,
+    "registered_output_hashes_exact": 12,
+    "cached_tokens_zero": true,
+    "preferred_metric": "conventional first-100 decode using 99 intervals",
+    "decode_tok_s": {
+      "median": 27.78593047561477,
+      "p10": 27.45810799213607,
+      "minimum": 27.335366136661516,
+      "maximum": 28.048715892199436,
+      "samples": 12
+    },
+    "ttft_ms": {
+      "median": 262.8694364684634,
+      "p10": 255.69680273765698,
+      "minimum": 252.20384204294533,
+      "maximum": 354.6685000183061,
+      "samples": 12
+    }
+  },
+  "exact_depth_http": {
+    "evidence_grade": "C synthetic repeated-token fixture; exact context shape, not representative natural prose",
+    "required_gates": "exact submitted and reported prompt count; cache zero; no truncation or context shift; 128 returned token IDs; conventional first-100 timing uses 99 intervals",
+    "points": [
+      {"active_context_tokens": 2048, "decode_tok_s": 27.261640383930207, "ttft_ms": 2775.1139199826866, "status": "passed"},
+      {"active_context_tokens": 4096, "decode_tok_s": 27.19498446044623, "ttft_ms": 5577.305173967034, "status": "passed"},
+      {"active_context_tokens": 8192, "decode_tok_s": 26.865065081907545, "ttft_ms": 11343.381671002135, "status": "passed"},
+      {"active_context_tokens": 16384, "decode_tok_s": 25.997575234489133, "ttft_ms": 23472.727512940764, "status": "passed"},
+      {"active_context_tokens": 24576, "decode_tok_s": 25.235258591473393, "ttft_ms": 36439.75531402975, "status": "passed"},
+      {"active_context_tokens": 32768, "decode_tok_s": 24.488129029771436, "ttft_ms": 50266.55042101629, "status": "passed"}
+    ]
+  },
+  "raw_artifacts": {
+    "retained_root": "/mnt/extended-ssd/b70-runs/qwen38-q4km-tp1-http-depth-20260825-r1-attempt1",
+    "sha256": {
+      "realistic.json": "4d1d5c8fa3648947c138157865b398bd4bf1dbbc1a2bb204a8129986b45d96d9",
+      "depth-2048.json": "af8a9aedc56de6ae092cc1a61228fce056f5fea207e456f1bcafe3c2d9b913cc",
+      "depth-4096.json": "37cd047fac24bb33ed5ba9622361abed800f377c1ece4b4ee27195c510bab4a6",
+      "depth-8192.json": "4e9101c2fe8832f593a37bf3b01bc7ecf354729e3305c7c60de4a95d68f1feb4",
+      "depth-16384.json": "ea23f5bb88aa152f486866be209a904d4523678c5699a6ef0f83f0cfd69f7e33",
+      "depth-24576.json": "ae84b0ba164bfec48b77e1bf03b21b3855e2018b39cee7da65e446b37bed062e",
+      "depth-32768.json": "ca7eb205957b8f5a4c9fc583f52a2c9a6d6c6752c5a95a27a74a43b4dd30f647",
+      "server.log": "c8f5f94bdd61ca613371e9f6008b9cc227c5cde0d94895d19a3c1ab48e6db325",
+      "props.json": "8fd4c654885b80bbd20a59dfc36552e4f5c3d534a8f9080e128ae4e015453f4e"
+    }
+  },
+  "publication_boundary": "Realistic short-prompt HTTP and grade-C exact repeated-token depth remain separate. No point is interpolated or extrapolated. This is not a concurrency result."
+}

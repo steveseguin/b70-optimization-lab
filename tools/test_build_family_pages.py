@@ -23,6 +23,33 @@ SPEC.loader.exec_module(MODULE)
 
 
 class FamilyCoverageTest(unittest.TestCase):
+    def test_home_picker_surfaces_existing_exact_32k_and_raw_aggregate_evidence(self) -> None:
+        index_html = (MODULE.ROOT / "index.html").read_text()
+        expected_context = {
+            "packages/gemma4-26b-a4b-q8-b70/package.json": ("decode-vs-context", 114.8486529751413),
+            "packages/lfm25-26b-q8-b70/package.json": ("decode-vs-context-depth", 89.93812),
+            "packages/nemotron-35-lightning-30b-a3b-b70/package.json": ("decode-vs-context-depth", 64.622975),
+            "packages/ornith-15-35b-a3b-q4km-b70/package.json": ("decode-vs-context-depth", 99.614237),
+            "packages/ornith-15-9b-q8-b70/package.json": ("decode-vs-context-depth", 39.83848),
+            "packages/qwen38-27b-q4km-tp1-b70/package.json": ("http-decode-vs-active-context", 24.488129029771436),
+        }
+        for manifest, (profile_id, expected) in expected_context.items():
+            package = json.loads((MODULE.ROOT / manifest).read_text())
+            profile = next(
+                item
+                for item in package["performance_profiles"]
+                if item["id"] == profile_id
+            )
+            point = max(profile["points"], key=lambda item: item["context_tokens"])
+            with self.subTest(package=package["id"]):
+                self.assertGreaterEqual(point["context_tokens"], 32_000)
+                self.assertAlmostEqual(point["value"], expected)
+                self.assertIn(f">{expected:.2f}&dagger;</td>", index_html)
+
+        self.assertIn(">216.5 raw&dagger;</a>", index_html)
+        self.assertIn(">95.4 raw&dagger;</a>", index_html)
+        self.assertIn("output-qualified HTTP serving remains pending", index_html)
+
     def test_promoted_ornith_packet_and_family_stay_in_parity(self) -> None:
         family = json.loads((MODULE.ROOT / "families/ornith-1-5.json").read_text())
         package = json.loads(

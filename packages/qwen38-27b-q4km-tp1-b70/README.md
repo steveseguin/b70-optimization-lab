@@ -39,6 +39,30 @@ context into 32 GiB. Full data:
 [sweep JSON](../../experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json),
 [chart](../../experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.svg).
 
+## Qualified HTTP speed and TTFT (measured 2026-08-25)
+
+The pinned oneAPI 2026.1.1 reconstruction also passed the package's cold,
+cache-zero 12-prompt HTTP suite: 12/12 registered outputs, **27.785930 tok/s**
+median conventional 99-interval decode, and **262.869 ms** median TTFT.
+
+A separate exact-token HTTP sweep used a one-slot, 33,024-token F16-KV
+service. Every row passed exact prompt accounting, zero cache reuse, no
+truncation/context shift, and 128 returned token IDs:
+
+| active prompt | decode | TTFT |
+| ---: | ---: | ---: |
+| 2K | 27.2616 tok/s | 2.775 s |
+| 8K | 26.8651 tok/s | 11.343 s |
+| 16K | 25.9976 tok/s | 23.473 s |
+| 24K | 25.2353 tok/s | 36.440 s |
+| 32K | **24.4881 tok/s** | **50.267 s** |
+
+The exact-depth prompt deliberately repeats registered tokens, so this is a
+grade-C context-shape measurement—not a claim about 32K of natural prose.
+Nothing between the displayed markers is inferred. See the
+[result note](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.md)
+and [compact evidence](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.json).
+
 ## Multiple users: measured support boundary, curve still pending
 
 A separate oneAPI 2026.1.1 reconstruction audit loaded this model on one B70

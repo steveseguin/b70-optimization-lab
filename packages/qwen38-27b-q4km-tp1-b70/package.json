@@ -121,6 +121,59 @@
         {"context_tokens": 24576, "value": 711.48, "samples": 5},
         {"context_tokens": 32768, "value": 662.56, "samples": 5}
       ]
+    },
+    {
+      "id": "aggregate-decode-vs-concurrent-sequences",
+      "label": "Raw aggregate decode over parallel sequences",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent engine sequences",
+      "scope": "Direct llama-batched-bench raw-engine continuous batching with independent pp128 prompts, interleaved tg256 decode, c32768, flash attention on, F16 KV, one B70, and the exact accepted package stack. This is a mechanism ceiling: it does not emit auditable completions and excludes HTTP, JSON, queueing, and server-scheduler overhead. No point is scaled, interpolated, or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-batched-ladder-20260825-r1-attempt2/summary.json",
+      "points": [
+        {"concurrent_sequences": 1, "value": 24.363621, "per_user_value": 24.363621, "samples": 1},
+        {"concurrent_sequences": 2, "value": 39.621750, "per_user_value": 19.810875, "samples": 1},
+        {"concurrent_sequences": 4, "value": 54.081142, "per_user_value": 13.5202855, "samples": 1},
+        {"concurrent_sequences": 8, "value": 59.088936, "per_user_value": 7.386117, "samples": 1},
+        {"concurrent_sequences": 16, "value": 58.696918, "per_user_value": 3.668557375, "samples": 1},
+        {"concurrent_sequences": 32, "value": 70.999931, "per_user_value": 2.21874784375, "samples": 1},
+        {"concurrent_sequences": 64, "value": 95.411842, "per_user_value": 1.49081003125, "samples": 1}
+      ]
+    },
+    {
+      "id": "http-decode-vs-active-context",
+      "label": "Qualified HTTP decode over exact active context",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Exact active prompt tokens",
+      "scope": "One-slot llama-server HTTP completions on the exact accepted Q4_K_M TP1 stack, one B70, F16 KV, 33,024 configured context, cache zero, no truncation or context shift, and 128 returned token IDs. The registered repeated-token fixture is evidence grade C: it fixes context shape but is not natural prose. Every marker is measured; no point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.json",
+      "points": [
+        {"context_tokens": 2048, "value": 27.261640383930207, "samples": 1},
+        {"context_tokens": 4096, "value": 27.19498446044623, "samples": 1},
+        {"context_tokens": 8192, "value": 26.865065081907545, "samples": 1},
+        {"context_tokens": 16384, "value": 25.997575234489133, "samples": 1},
+        {"context_tokens": 24576, "value": 25.235258591473393, "samples": 1},
+        {"context_tokens": 32768, "value": 24.488129029771436, "samples": 1}
+      ]
+    },
+    {
+      "id": "http-ttft-vs-active-context",
+      "label": "Qualified HTTP TTFT over exact active context",
+      "metric": "ttft",
+      "unit": "ms",
+      "x_label": "Exact active prompt tokens",
+      "scope": "TTFT from the same one-slot exact-token HTTP receipts as the qualified decode curve. Cache was zero and prompt counts were exact at every marker. The repeated-token fixture is evidence grade C and is not a natural-prose latency claim. Every marker is measured; no point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.json",
+      "points": [
+        {"context_tokens": 2048, "value": 2775.1139199826866, "samples": 1},
+        {"context_tokens": 4096, "value": 5577.305173967034, "samples": 1},
+        {"context_tokens": 8192, "value": 11343.381671002135, "samples": 1},
+        {"context_tokens": 16384, "value": 23472.727512940764, "samples": 1},
+        {"context_tokens": 24576, "value": 36439.75531402975, "samples": 1},
+        {"context_tokens": 32768, "value": 50266.55042101629, "samples": 1}
+      ]
     }
   ],
   "hardware": {
@@ -142,7 +195,7 @@
     "build": "repro/qwen38-27b-q4km-tp1-b70/restore-and-build.sh"
   },
   "known_limitations": [
-    "The package launch is one slot at 8K. A separate oneAPI 2026.1.1 audit loaded 64 slots at 512 nominal tokens per slot, but used 32281.7/32656 MiB and failed batch-shape exact-output and point-order stability gates; its 86.28/85.97 tok/s rows are diagnostic only, so the HTTP concurrency curve remains pending.",
+    "The beginner launch remains a conservative one-slot 8K profile. A separate qualified one-slot audit measured exact HTTP active context through 32K, but the 64-slot audit used 32281.7/32656 MiB and failed batch-shape exact-output and point-order stability gates; its 86.28/85.97 tok/s rows are diagnostic only, so the HTTP concurrency curve remains pending.",
     "Qwen3.8 27B is dense; do not compare this one-card aggregate rate as if it were a sparse Qwen-derived MoE or an NVIDIA NVFP4 deployment."
   ],
   "project_patches": {
@@ -181,13 +234,17 @@
     "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-prereg.json",
     "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-summary.json",
     "experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-smallctx-r1-result.md",
-    "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-http-smallctx.sh"
+    "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-http-smallctx.sh",
+    "experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-batched-ladder-result.md",
+    "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-batched-ladder-20260825-r1-attempt2/summary.json",
+    "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-depth-r1-prereg.json",
+    "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.md",
+    "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-http-depth.sh"
   ],
   "missing": [
     "tested clean-host Intel driver and oneAPI installation",
     "clean-host source build and endpoint replay",
-    "beginner recovery flow",
-    "TTFT context sweep",
     "output-qualified and point-order-stable HTTP concurrency curve"
   ]
 }

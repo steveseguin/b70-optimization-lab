@@ -128,6 +128,21 @@ Success requires `cached_tokens_all_zero=true`,
 informational until those gates pass. Stop the foreground server with
 `Ctrl-C`; then confirm `pgrep -x llama-server` returns no process.
 
+### Qualified HTTP depth and TTFT
+
+The separate pinned oneAPI 2026.1.1 audit ran the same realistic suite and a
+one-slot exact-token HTTP sweep through 32K active context. The realistic
+suite passed 12/12 registered outputs at `27.785930 tok/s` median decode and
+`262.869 ms` median TTFT. The exact 32,768-token receipt passed cache,
+truncation, token-count, and returned-token gates at `24.488129 tok/s` and
+`50,266.550 ms` TTFT. The depth fixture is synthetic grade C and is kept
+separate from natural-prompt evidence. Use the retained
+[preregistration](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-depth-r1-prereg.json),
+[runner](../../experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-http-depth.sh),
+and [result](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.json)
+to repeat that exact research profile; do not silently change the context,
+KV type, slot count, compiler identity, or metric.
+
 ### Concurrent-serving boundary
 
 The promoted launcher deliberately remains a one-slot, 8K context profile.
@@ -142,14 +157,51 @@ and [runner](../../experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-http-s
 make this publication boundary auditable. A qualified HTTP concurrency curve
 remains pending.
 
+## Beginner recovery checklist
+
+This checklist is safe to use on an existing installation; it does not claim
+that the Intel stack has been clean-host certified yet.
+
+1. **The compiler or IntelSYCL package is missing.** Confirm that
+   `/opt/intel/oneapi/setvars.sh` exists, then start a new shell and run
+   `source /opt/intel/oneapi/setvars.sh --force`. Check `command -v icpx` and
+   `icpx --version` before rebuilding. Do not mix objects from two compiler
+   versions; use a new `SOURCE_DIR` for an override.
+2. **No SYCL GPU appears.** Run `sycl-ls`, `ls -l /dev/dri`, `id`, and
+   `xpu-smi discovery`. The user must have access to the render device (often
+   via the `render` group). Log out and back in after a group change. Do not
+   work around permissions with world-writable device nodes.
+3. **Model verification fails.** Stop. Re-run
+   `verify-model-direct.sh /path/to/Qwen3.8-27B-Q4_K_M.gguf`. A cached read is
+   not enough: both direct and ordinary SHA-256 checks must equal the identity
+   in `model-direct.json`. Delete and download only the bad file; never patch
+   around a checksum failure.
+4. **The build tries to download a Web UI or runs out of memory.** Use only
+   `restore-and-build.sh`; this revision disables those unused paths and
+   defaults to two jobs. Start from a new source directory after a failed or
+   manually modified build. Lower `BUILD_JOBS=1` on a small host.
+5. **The server cannot allocate the model or KV cache.** Ensure no other model
+   process is active with `pgrep -af 'llama-(server|bench)|vllm'`. Start with
+   the supplied one-slot 8K launcher. Do not copy the research 64-slot flags;
+   that profile nearly filled the card and failed output-stability gates.
+6. **Health works but validation fails.** Preserve the JSON and server log.
+   A nonzero cache count, stale response, or output-hash mismatch invalidates
+   the speed. Stop the server, verify the exact binary/model identities, and
+   repeat once from a fresh process; do not average a failed attempt into a
+   passing one.
+
+For a useful issue report, attach the preflight output, `icpx --version`,
+`sycl-ls`, `xpu-smi discovery`, the exact failing command, the server log,
+and the benchmark JSON. Remove usernames and unrelated environment secrets.
+
 ## Evidence and remaining gates
 
 - [Final quality and performance result](../../experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-quality-battery-result.md)
 - [Final capture I](../../experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-i.json) and [capture J](../../experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json)
 - [Quality battery JSON](../../experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-quality-battery.json)
 - [2026-08-22 direct-I/O model verification](model-verification-20260822.json)
+- [2026-08-25 qualified realistic HTTP and exact-depth result](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.md)
 
 Still open: a tested clean-host driver/oneAPI installation, a clean-host
-source build plus endpoint replay, a qualified HTTP concurrency curve, and
-beginner-oriented recovery guidance.
+source build plus endpoint replay, and a qualified HTTP concurrency curve.
 Until those are closed, call this a candidate—not a one-click installer.
