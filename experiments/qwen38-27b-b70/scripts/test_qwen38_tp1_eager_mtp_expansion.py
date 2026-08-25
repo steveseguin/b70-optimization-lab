@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 from unittest import mock
 
@@ -134,6 +135,39 @@ class ExpansionContractTests(unittest.TestCase):
                 L.execute(stage, 1, ack)
         git_gate.assert_called_once_with()
         order.assert_not_called()
+        launch.assert_not_called()
+
+    def test_mtp4_single_actual_scan_occurs_inside_campaign_lock(self) -> None:
+        stage = L.STAGES["e2-mtp4-full-actual"]
+        ack = f"RUN {L.CAMPAIGN_ID} {stage.stage_id} r1"
+        events: list[str] = []
+
+        @contextmanager
+        def locks():
+            events.append("lock-enter")
+            try:
+                yield
+            finally:
+                events.append("lock-exit")
+
+        def single_actual_gate() -> None:
+            events.append("single-actual-scan")
+            raise L.CampaignError("stop after atomic scan")
+
+        with mock.patch.object(L, "verify_dependencies", return_value={}), mock.patch.object(
+            L.COMMON, "campaign_locks", side_effect=locks
+        ), mock.patch.object(
+            L.COMMON, "git_clean_pushed_main", return_value="a" * 40
+        ), mock.patch.object(
+            L, "verify_stage_order"
+        ), mock.patch.object(
+            L, "ensure_single_mtp4_actual", side_effect=single_actual_gate
+        ), mock.patch.object(
+            L.subprocess, "run"
+        ) as launch:
+            with self.assertRaisesRegex(L.CampaignError, "atomic scan"):
+                L.execute(stage, 1, ack)
+        self.assertEqual(events, ["lock-enter", "single-actual-scan", "lock-exit"])
         launch.assert_not_called()
 
     def test_check_does_not_require_clean_git_or_launch(self) -> None:

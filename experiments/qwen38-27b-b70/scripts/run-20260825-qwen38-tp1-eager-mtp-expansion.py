@@ -576,12 +576,7 @@ def execute(stage: ExpansionStage, attempt: int, acknowledgement: str) -> int:
     if acknowledgement != expected_ack:
         raise CampaignError(f"exact acknowledgement required: {expected_ack}")
     dependencies = verify_dependencies()
-    launch_head = COMMON.git_clean_pushed_main()
-    verify_stage_order(stage, attempt)
-    if stage.stage_id == "e2-mtp4-full-actual":
-        ensure_single_mtp4_actual()
     output, cache, port = layout(stage, attempt)
-    ensure_idle(stage, attempt)
     env = stage_environment(stage)
     args = [
         str(RUNNER),
@@ -597,6 +592,15 @@ def execute(stage: ExpansionStage, attempt: int, acknowledgement: str) -> int:
     runner_rc = 125
     cleanup_passed = False
     with COMMON.campaign_locks():
+        # These gates must execute while holding the host/GPU locks. In
+        # particular, an E2 launcher that waited behind another E2 launcher
+        # must rescan every retry root after acquiring the lock; otherwise two
+        # concurrent processes could both pass the one-actual precheck.
+        launch_head = COMMON.git_clean_pushed_main()
+        verify_stage_order(stage, attempt)
+        if stage.stage_id == "e2-mtp4-full-actual":
+            ensure_single_mtp4_actual()
+        ensure_idle(stage, attempt)
         runner_rc = subprocess.run(args, cwd=REPO, env=env, check=False).returncode
         try:
             COMMON.ensure_post_cleanup(port)
