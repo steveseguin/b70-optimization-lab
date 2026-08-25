@@ -1,0 +1,68 @@
+{
+  "schema": "neural.download.qwen36-llama-exact-depth-result.v1",
+  "campaign_id": "qwen36-q4km-q8kv-tp1-exact-depth-20260825-r2",
+  "status": "passed",
+  "classification": "raw-engine-performance-only",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+    "quantization": "Q4_K_M",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "mtp": 0,
+    "graph_mode": "off",
+    "kv": "q8_0"
+  },
+  "identity": {
+    "model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+    "model_revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+    "model_sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+    "model_size_bytes": 17106773120,
+    "runtime_source": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "llama_bench_sha256": "908b78b77fc28ad23b2924b7f32f56f4a8415eac9c2a79a244dee85b49b19030",
+    "lab_git_head": "0632f169deb16df6c25fee1d08e7cd2b01ff64b5"
+  },
+  "workload": {
+    "benchmark": "llama-bench",
+    "prefill_tokens": 2048,
+    "decode_tokens": 128,
+    "repetitions": 5,
+    "flash_attention": true,
+    "batch_size": 2048,
+    "ubatch_size": 512,
+    "measurement_class": "raw-engine",
+    "http_serving_metric": false,
+    "new_quality_gate": false
+  },
+  "cells": [
+    {"active_context_tokens": 0, "decode_tok_s": 28.427444, "prefill_tok_s": 824.618443, "samples": 5},
+    {"active_context_tokens": 2048, "decode_tok_s": 25.907235, "prefill_tok_s": 884.563514, "samples": 5},
+    {"active_context_tokens": 4096, "decode_tok_s": 23.996142, "prefill_tok_s": 865.761332, "samples": 5},
+    {"active_context_tokens": 8192, "decode_tok_s": 20.918488, "prefill_tok_s": 823.096859, "samples": 5},
+    {"active_context_tokens": 16384, "decode_tok_s": 16.167457, "prefill_tok_s": 756.105791, "samples": 5},
+    {"active_context_tokens": 24576, "decode_tok_s": 13.301100, "prefill_tok_s": 698.561985, "samples": 5},
+    {"active_context_tokens": 32768, "decode_tok_s": 11.375246, "prefill_tok_s": 648.263152, "samples": 5}
+  ],
+  "gates": {
+    "declared_depths_exact": true,
+    "true_n_depth_zero_present": true,
+    "all_seven_cells_ready": true,
+    "benchmark_return_code": 0,
+    "parser_return_code": 0,
+    "cleanup_passed": true,
+    "kernel_error_window_clear": true,
+    "speed_floor": null,
+    "historical_featured_speeds_immutable": true,
+    "r1_rows_reused": false
+  },
+  "evidence_sha256": {
+    "llama_bench_json": "e206b0d5b347b88aaff5dada03c5730c13ba6eb2a683facd48c50f81e279db94",
+    "llama_bench_stderr": "9b3a122be60894c0f94da3ed4d2a1af0020f8d8f7163e4ebf01c26f0b1945c44",
+    "metadata": "e998f420069ebc5f60ca425a18181174c322b98a802b4ce65935e6b5f14cd38b",
+    "exact_depth_receipt": "8bfb88a7fcd36b15a9fb12b93f73430d28e0cd5f3f1b327c6d1f6d866ca2e7bd",
+    "terminal_receipt": "f8ff60aa530d475318439e9e136272c2b6e795658ed585e9a8541f3b570345ee",
+    "effective_shared_libraries": "d5e2565716f9511322d1ed42233d886fe5150b146de714f7547f96bf0ca67975"
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen36-q4km-q8kv-tp1-exact-depth-20260825-r2",
+  "publication_scope": "These seven exact Qwen3.6 Q4_K_M TP1/MTP0/graph-off/q8_0-KV cells from r2 only. R1 remains failed closed and contributes no timing row. No value replaces a featured or serving result."
+}
