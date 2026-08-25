@@ -507,7 +507,34 @@ class FamilyCoverageTest(unittest.TestCase):
             "qwen36-35b-quark-w8a8-cced565",
         )
         rendered = MODULE.family_page(family)
-        self.assertEqual(rendered.count("· quantized artifact</span>"), 2)
+        self.assertEqual(rendered.count('class="artifact-disclosure"'), 1)
+        self.assertIn("2 exact artifacts · 2 quantizations", rendered)
+        self.assertEqual(rendered.count("· quantized artifact</span>"), 0)
+
+        origins = deepcopy(family)
+        origins["weight_revisions"][0]["quantized_artifacts"][0][
+            "quantization_origin"
+        ] = "export"
+        origins["weight_revisions"][0]["quantized_artifacts"][1][
+            "quantization_origin"
+        ] = "runtime"
+        self.assertEqual(self._errors(origins), [])
+
+        invalid_origin = deepcopy(origins)
+        invalid_origin["weight_revisions"][0]["quantized_artifacts"][0][
+            "quantization_origin"
+        ] = "inherited"
+        self._assert_error(
+            self._errors(invalid_origin), "quantization_origin", "export or runtime"
+        )
+
+        missing_canonical_quantization = deepcopy(family)
+        del missing_canonical_quantization["run_measurements"][0]["quantization"]
+        self._assert_error(
+            self._errors(missing_canonical_quantization),
+            "canonical quantization",
+            "artifact-bound revision",
+        )
 
         mismatched = deepcopy(family)
         mismatched["run_measurements"][0]["artifact_id"] = (
@@ -562,6 +589,219 @@ class FamilyCoverageTest(unittest.TestCase):
             "family closure",
             "unknown quantized artifact",
         )
+
+    def test_artifact_bound_cell_selectors_and_estimates_fail_closed(self) -> None:
+        family = json.loads((MODULE.ROOT / "families/qwen-35b.json").read_text())
+        view = family["coverage_views"][0]
+        artifact_id = view["fixed_selectors"].pop("artifact_id")
+        for cell in view["cells"].values():
+            cell["selectors"] = {"artifact_id": artifact_id}
+
+        self.assertEqual(self._errors(family), [])
+        self.assertEqual(
+            MODULE.effective_cell_selectors(view, 0, 1, view["cells"]["0:1"])[
+                "artifact_id"
+            ],
+            artifact_id,
+        )
+
+        repeated = deepcopy(family)
+        repeated["coverage_views"][0]["cells"]["0:1"]["selectors"][
+            "revision"
+        ] = "qwen3.6-35b-a3b-base"
+        self._assert_error(
+            self._errors(repeated), "cell 0:1.selectors", "repeat inherited keys"
+        )
+
+        unknown = deepcopy(family)
+        unknown["coverage_views"][0]["cells"]["0:1"]["selectors"][
+            "artifact_id"
+        ] = "unknown-artifact"
+        self._assert_error(
+            self._errors(unknown), "cell 0:1", "unknown quantized artifact"
+        )
+
+        estimate_family = json.loads(
+            (MODULE.ROOT / "families/qwen-35b.json").read_text()
+        )
+        measurement = estimate_family["run_measurements"][0]
+        estimate = self._estimate()
+        estimate["basis_measurement_ids"] = [measurement["id"]]
+        estimate["selectors"] = {
+            "revision": measurement["revision"],
+            "artifact_id": measurement["artifact_id"],
+            "quantization": measurement["quantization"],
+        }
+        estimate_family["estimates"] = [estimate]
+        self.assertEqual(self._errors(estimate_family), [])
+
+        missing_estimate_artifact = deepcopy(estimate_family)
+        del missing_estimate_artifact["estimates"][0]["selectors"]["artifact_id"]
+        self._assert_error(
+            self._errors(missing_estimate_artifact),
+            "estimate estimate-a",
+            "must bind quantized artifact",
+        )
+
+        mismatched_estimate_quantization = deepcopy(estimate_family)
+        mismatched_estimate_quantization["estimates"][0]["selectors"][
+            "quantization"
+        ] = "wrong-quantization"
+        self._assert_error(
+            self._errors(mismatched_estimate_quantization),
+            "estimate estimate-a",
+            "does not match artifact",
+        )
+
+    def test_dense_coverage_contract_expands_and_renders_a_scorecard(self) -> None:
+        family = self._family()
+        family["weight_revisions"][0]["quantized_artifacts"] = [
+            {
+                "id": "revision-a-quant-a",
+                "label": "Quant A",
+                "quantization": "quant-a",
+                "repository": "example/quant-a",
+                "revision": "a" * 40,
+                "evidence": "https://example.test/quant-a.json",
+            }
+        ]
+        measurement = family["run_measurements"][0]
+        measurement.update(
+            {
+                "artifact_id": "revision-a-quant-a",
+                "quantization": "quant-a",
+            }
+        )
+        measurement["config"].update(
+            {"active_context_tokens": 0, "kv": "f16"}
+        )
+        axes = [
+            {"key": "revision", "label": "Revision", "values": ["revision-a"]},
+            {
+                "key": "artifact_id",
+                "label": "Artifact",
+                "values": ["revision-a-quant-a"],
+            },
+            {"key": "quantization", "label": "Quantization", "values": ["quant-a"]},
+            {"key": "tp", "label": "TP", "prefix": "TP", "values": [1, 2, 4]},
+            {"key": "mtp", "label": "MTP", "prefix": "MTP", "values": [0, 1]},
+            {
+                "key": "active_context_tokens",
+                "label": "Active context",
+                "values": [0, 32768],
+                "value_labels": {"32768": "32K"},
+            },
+            {"key": "graph", "label": "Graph", "values": ["off", "on"]},
+            {"key": "kv", "label": "KV", "values": ["f16"]},
+        ]
+        wildcard = {axis["key"]: "*" for axis in axes}
+        measured_match = {
+            "revision": "revision-a",
+            "artifact_id": "revision-a-quant-a",
+            "quantization": "quant-a",
+            "tp": 1,
+            "mtp": 0,
+            "active_context_tokens": 0,
+            "graph": "off",
+            "kv": "f16",
+        }
+        contract = {
+            "id": "dense-main-lane",
+            "label": "Dense main lane",
+            "description": "Every deployment permutation.",
+            "axes": axes,
+            "rules": [
+                {
+                    "id": "all-gaps",
+                    "match": wildcard,
+                    "state": "missing",
+                    "label": "not measured",
+                    "parent": "main-coverage-backlog",
+                    "retry": {"status": "queued", "reason": "unmeasured"},
+                },
+                {
+                    "id": "measured-control",
+                    "match": measured_match,
+                    "state": "lab-measured",
+                    "label": "30.0–30.2 tok/s",
+                    "evidence_id": "measured-a",
+                    "retry": {"status": "complete"},
+                },
+            ],
+        }
+        family["coverage_contracts"] = [contract]
+
+        cells, expansion_errors = MODULE.expand_coverage_contract(contract)
+        self.assertEqual(expansion_errors, [])
+        self.assertEqual(len(cells), 24)
+        measured_cell = next(
+            cell for cell in cells if cell["state"] == "lab-measured"
+        )
+        self.assertEqual(measured_cell["rule_ids"], ["all-gaps", "measured-control"])
+        self.assertEqual(measured_cell["parent"], "main-coverage-backlog")
+        self.assertEqual(measured_cell["retry"], {"status": "complete"})
+        self.assertEqual(self._errors(family), [])
+
+        rendered = MODULE.coverage_contract_scorecards(family)
+        self.assertIn("1/24", rendered)
+        self.assertIn("23</b> gaps", rendered)
+        self.assertIn("Break down by axis", rendered)
+        self.assertIn("TP4", rendered)
+        self.assertIn("32K", rendered)
+        self.assertNotIn('"active_context_tokens":32768', rendered)
+        page = MODULE.family_page(family)
+        self.assertIn('data-coverage-contract="dense-main-lane"', page)
+        self.assertIn("Dense scorecards summarize every declared combination", page)
+
+    def test_dense_coverage_contract_fails_on_gaps_and_ambiguous_rules(self) -> None:
+        axes = [
+            {"key": "tp", "label": "TP", "values": [1, 2]},
+            {"key": "graph", "label": "Graph", "values": ["off", "on"]},
+        ]
+        exact = {
+            "id": "tp1-off",
+            "match": {"tp": 1, "graph": "off"},
+            "state": "missing",
+        }
+        uncovered = {
+            "id": "uncovered",
+            "label": "Uncovered",
+            "axes": axes,
+            "rules": [exact],
+        }
+        _, uncovered_errors = MODULE.expand_coverage_contract(uncovered)
+        self._assert_error(uncovered_errors, "leaves cell", "uncovered")
+
+        ambiguous = {
+            "id": "ambiguous",
+            "label": "Ambiguous",
+            "axes": axes,
+            "rules": [
+                {
+                    "id": "fallback",
+                    "match": {"tp": "*", "graph": "*"},
+                    "state": "missing",
+                },
+                {
+                    "id": "tp1",
+                    "match": {"tp": 1, "graph": "*"},
+                    "label": "TP1",
+                },
+                {
+                    "id": "graph-off",
+                    "match": {"tp": "*", "graph": "off"},
+                    "label": "graph off",
+                },
+            ],
+        }
+        _, ambiguous_errors = MODULE.expand_coverage_contract(ambiguous)
+        self._assert_error(ambiguous_errors, "ambiguous or misordered", "tp")
+
+        incomplete_match = deepcopy(ambiguous)
+        incomplete_match["rules"] = [deepcopy(ambiguous["rules"][0])]
+        del incomplete_match["rules"][0]["match"]["graph"]
+        _, incomplete_errors = MODULE.expand_coverage_contract(incomplete_match)
+        self._assert_error(incomplete_errors, "match must name every axis")
 
     def test_legacy_mtp_tp_view_keeps_defaults(self) -> None:
         family = self._family()
@@ -1141,8 +1381,9 @@ class FamilyCoverageTest(unittest.TestCase):
         ]
         self.assertEqual(self._errors(family), [])
         rendered = MODULE.family_page(family)
-        self.assertIn('<span class="big">30</span>', rendered)
-        self.assertNotIn('<span class="big">30.2</span>', rendered)
+        self.assertIn('<b>30</b>', rendered)
+        self.assertNotIn('<b>30.2</b>', rendered)
+        self.assertNotIn("hero-headline", rendered)
         self.assertIn("Bounded declared quality scope", rendered)
         self.assertNotIn("full quality gate", rendered.casefold())
 
@@ -1168,15 +1409,14 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(strip)
         strip_html = strip.group(0)
-        hero = re.search(
-            r'<a class="hero-headline".*?</a>', rendered, re.DOTALL
-        )
-        self.assertIsNotNone(hero)
-        self.assertIn("71.45", hero.group(0))
-        for protected in ("30.33", "49.06", "71.9"):
+        self.assertNotIn("hero-headline", rendered)
+        for protected in ("71.45", "30.33", "49.06", "71.9"):
             self.assertIn(protected, strip_html)
         for eager in ("24.25", "16.77", "17.38", "71.72"):
             self.assertNotIn(eager, strip_html)
+        measured_heading = rendered.index("<h2>Measured results</h2>")
+        self.assertLess(rendered.index("Packets and recipes"), measured_heading)
+        self.assertLess(rendered.index("What has been classified"), measured_heading)
 
     def test_packet_fallback_uses_the_highest_curated_packet_claim(self) -> None:
         family = self._family()

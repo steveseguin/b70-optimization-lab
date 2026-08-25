@@ -17,6 +17,7 @@ import math
 import os
 import re
 import sys
+from itertools import product
 from pathlib import Path
 from typing import Any
 
@@ -63,6 +64,19 @@ CURVE_STATES = {"lab-measured", "community-measured"}
 # quarantined runs still never chart. Coverage-cell evidence requirements keep
 # using CURVE_STATES: a screened cell is not obliged to carry a measurement id.
 CHARTABLE_STATES = CURVE_STATES | {"lab-screened"}
+MAX_COVERAGE_CONTRACT_CELLS = 50_000
+CONTRACT_CELL_FIELDS = {
+    "state",
+    "label",
+    "reason",
+    "evidence_id",
+    "evidence",
+    "packet_id",
+    "estimate_id",
+    "point_x",
+    "parent",
+    "retry",
+}
 # Glyph + plain-words meaning for every coverage state. Cells show the glyph
 # with the words in a tooltip (and for screen readers); the legend spells the
 # words out once.
@@ -295,11 +309,16 @@ def record_selector_value(record: dict[str, Any], key: str) -> Any:
 
 
 def effective_cell_selectors(
-    view: dict[str, Any], row: Any, column: Any
+    view: dict[str, Any],
+    row: Any,
+    column: Any,
+    cell: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     selectors = dict(view.get("fixed_selectors") or {})
     selectors[coverage_axis(view, "row")["key"]] = row
     selectors[coverage_axis(view, "column")["key"]] = column
+    if isinstance(cell, dict) and isinstance(cell.get("selectors"), dict):
+        selectors.update(cell["selectors"])
     return selectors
 
 
@@ -688,6 +707,188 @@ def curve_identity(record: dict[str, Any], x_from: str) -> dict[str, Any]:
     return identity
 
 
+def expand_coverage_contract(
+    contract: dict[str, Any], label: str = "coverage contract"
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Expand an ordered wildcard-to-exact contract into exact selector cells."""
+    errors: list[str] = []
+    axes = contract.get("axes")
+    if not isinstance(axes, list) or not axes:
+        return [], [f"{label} needs a non-empty axes list"]
+
+    axis_keys: list[str] = []
+    axis_values: list[list[Any]] = []
+    for index, axis in enumerate(axes):
+        axis_label = f"{label} axis {index}"
+        if not isinstance(axis, dict):
+            errors.append(f"{axis_label} must be an object")
+            continue
+        key = axis.get("key")
+        values = axis.get("values")
+        if not isinstance(key, str) or not SELECTOR_KEY_RE.fullmatch(key):
+            errors.append(f"{axis_label} needs a selector key")
+            continue
+        if key in axis_keys:
+            errors.append(f"{label} repeats axis key {key}")
+            continue
+        axis_keys.append(key)
+        if not isinstance(axis.get("label"), str) or not axis.get("label"):
+            errors.append(f"{axis_label} needs a label")
+        if (
+            not isinstance(values, list)
+            or not values
+            or any(not is_selector_scalar(value) or value == "*" for value in values)
+        ):
+            errors.append(
+                f"{axis_label} values must be non-empty selector scalars excluding '*'"
+            )
+            axis_values.append([])
+            continue
+        if len({json.dumps(value, sort_keys=True) for value in values}) != len(values):
+            errors.append(f"{axis_label} values must be unique")
+        value_labels = axis.get("value_labels")
+        if value_labels is not None and (
+            not isinstance(value_labels, dict)
+            or set(value_labels) - {str(value) for value in values}
+            or any(not isinstance(value, str) for value in value_labels.values())
+        ):
+            errors.append(f"{axis_label} has invalid value_labels")
+        axis_values.append(values)
+
+    if len(axis_keys) != len(axes) or any(not values for values in axis_values):
+        return [], errors
+    cell_count = math.prod(len(values) for values in axis_values)
+    if cell_count > MAX_COVERAGE_CONTRACT_CELLS:
+        errors.append(
+            f"{label} expands to {cell_count} cells; maximum is {MAX_COVERAGE_CONTRACT_CELLS}"
+        )
+        return [], errors
+
+    rules = contract.get("rules")
+    if not isinstance(rules, list) or not rules:
+        return [], errors + [f"{label} needs a non-empty ordered rules list"]
+    normalized_rules: list[tuple[str, dict[str, Any], frozenset[str], dict[str, Any]]] = []
+    rule_ids: set[str] = set()
+    expected_match_keys = set(axis_keys)
+    for index, rule in enumerate(rules):
+        rule_label = f"{label} rule {index}"
+        if not isinstance(rule, dict):
+            errors.append(f"{rule_label} must be an object")
+            continue
+        rule_id = rule.get("id")
+        if not isinstance(rule_id, str) or not SLUG_RE.fullmatch(rule_id):
+            errors.append(f"{rule_label} needs a lowercase hyphenated id")
+            rule_id = f"rule-{index}"
+        elif rule_id in rule_ids:
+            errors.append(f"{label} repeats rule id {rule_id}")
+        rule_ids.add(rule_id)
+        match = rule.get("match")
+        if not isinstance(match, dict) or set(match) != expected_match_keys:
+            errors.append(
+                f"{rule_label} match must name every axis exactly once"
+            )
+            continue
+        match_valid = True
+        for key, value in match.items():
+            domain = axis_values[axis_keys.index(key)]
+            if value != "*" and value not in domain:
+                errors.append(
+                    f"{rule_label} match {key}={value} is outside its axis"
+                )
+                match_valid = False
+        unknown_fields = set(rule) - {"id", "match"} - CONTRACT_CELL_FIELDS
+        if unknown_fields:
+            errors.append(
+                f"{rule_label} has unknown output fields {sorted(unknown_fields)}"
+            )
+        payload = {
+            field: rule[field]
+            for field in CONTRACT_CELL_FIELDS
+            if field in rule
+        }
+        if "state" in payload and payload["state"] not in ALLOWED_STATES:
+            errors.append(f"{rule_label}.state is not an allowed coverage state")
+        for field in (
+            "label",
+            "reason",
+            "evidence_id",
+            "evidence",
+            "packet_id",
+            "estimate_id",
+        ):
+            if field in payload and (
+                not isinstance(payload[field], str) or not payload[field]
+            ):
+                errors.append(f"{rule_label}.{field} must be a non-empty string")
+        if "point_x" in payload and not is_finite_number(payload["point_x"]):
+            errors.append(f"{rule_label}.point_x must be finite numeric")
+        if "parent" in payload and (
+            not isinstance(payload["parent"], str) or not payload["parent"]
+        ):
+            errors.append(f"{rule_label}.parent must be a non-empty string")
+        if "retry" in payload:
+            retry = payload["retry"]
+            if (
+                not isinstance(retry, dict)
+                or not retry
+                or not isinstance(retry.get("status"), str)
+                or not retry.get("status")
+                or any(
+                    not isinstance(key, str)
+                    or not SELECTOR_KEY_RE.fullmatch(key)
+                    or not is_selector_scalar(value)
+                    for key, value in (retry or {}).items()
+                )
+            ):
+                errors.append(
+                    f"{rule_label}.retry needs scalar metadata and a non-empty status"
+                )
+        if match_valid:
+            normalized_rules.append(
+                (
+                    rule_id,
+                    match,
+                    frozenset(key for key, value in match.items() if value != "*"),
+                    payload,
+                )
+            )
+
+    cells: list[dict[str, Any]] = []
+    for coordinates in product(*axis_values):
+        selectors = dict(zip(axis_keys, coordinates))
+        matching = [
+            rule
+            for rule in normalized_rules
+            if all(
+                wanted == "*" or selectors[key] == wanted
+                for key, wanted in rule[1].items()
+            )
+        ]
+        selector_text = json.dumps(selectors, sort_keys=True, separators=(",", ":"))
+        if not matching:
+            errors.append(f"{label} leaves cell {selector_text} uncovered")
+            continue
+        exact_sets = [rule[2] for rule in matching]
+        if any(
+            not earlier < later
+            for earlier, later in zip(exact_sets, exact_sets[1:])
+        ):
+            errors.append(
+                f"{label} has ambiguous or misordered rules for cell {selector_text}"
+            )
+            continue
+        cell: dict[str, Any] = {"selectors": selectors}
+        for _, _, _, payload in matching:
+            cell.update(payload)
+        cell["rule_ids"] = [rule[0] for rule in matching]
+        if cell.get("state") not in ALLOWED_STATES:
+            errors.append(
+                f"{label} cell {selector_text} does not resolve an allowed state"
+            )
+        cells.append(cell)
+    return cells, errors
+
+
 def validate_family(family: dict[str, Any], source: Path) -> list[str]:
     label = source_label(source)
     errors: list[str] = []
@@ -715,6 +916,9 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
     views = object_list(family.get("views"), f"{label}: views", errors)
     coverage_views = object_list(
         family.get("coverage_views"), f"{label}: coverage_views", errors
+    )
+    coverage_contracts = object_list(
+        family.get("coverage_contracts"), f"{label}: coverage_contracts", errors
     )
     closures = object_list(
         family.get("family_closures"), f"{label}: family_closures", errors
@@ -781,6 +985,14 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                 errors.append(
                     f"{label}: quantized artifact {artifact_id} needs revision or explicit revision_status"
                 )
+            quantization_origin = artifact.get("quantization_origin")
+            if quantization_origin is not None and quantization_origin not in {
+                "export",
+                "runtime",
+            }:
+                errors.append(
+                    f"{label}: quantized artifact {artifact_id}.quantization_origin must be export or runtime"
+                )
 
     declared_revision_ids = set(revision_ids)
     for variant in model_variants:
@@ -811,6 +1023,13 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
         if measurement.get("revision") not in declared_revision_ids:
             errors.append(f"{label}: {mid} references unknown revision {measurement.get('revision')}")
         artifact_id = measurement.get("artifact_id")
+        if measurement.get("revision") in artifact_bound_revision_ids and (
+            not isinstance(measurement.get("quantization"), str)
+            or not measurement.get("quantization")
+        ):
+            errors.append(
+                f"{label}: {mid} must name its canonical quantization for artifact-bound revision {measurement.get('revision')}"
+            )
         if (
             measurement.get("revision") in artifact_bound_revision_ids
             and artifact_id is None
@@ -827,7 +1046,7 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                         f"{label}: {mid} artifact {artifact_id} does not belong to revision {measurement.get('revision')}"
                     )
                 artifact_quant = artifacts_by_id[artifact_id].get("quantization")
-                measured_quant = measurement.get("quantization") or measurement.get("variant")
+                measured_quant = measurement.get("quantization")
                 if measured_quant != artifact_quant:
                     errors.append(
                         f"{label}: {mid} quantization {measured_quant} does not match artifact {artifact_id} ({artifact_quant})"
@@ -928,6 +1147,13 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
         if not isinstance(revision, str) or revision not in declared_revision_ids:
             errors.append(f"{label}: packet {packet_id} references unknown revision {revision}")
         artifact_id = packet.get("artifact_id")
+        if revision in artifact_bound_revision_ids and (
+            not isinstance(packet.get("quantization"), str)
+            or not packet.get("quantization")
+        ):
+            errors.append(
+                f"{label}: packet {packet_id} must name its canonical quantization for artifact-bound revision {revision}"
+            )
         if revision in artifact_bound_revision_ids and artifact_id is None:
             errors.append(
                 f"{label}: packet {packet_id} must name a quantized artifact for revision {revision}"
@@ -1043,6 +1269,42 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
             for key, value in selectors.items()
         ):
             errors.append(f"{estimate_label}.selectors must be scalar selector key/value pairs")
+        if isinstance(selectors, dict):
+            selector_revision = selectors.get("revision")
+            selector_artifact = selectors.get("artifact_id")
+            if (
+                selector_revision in artifact_bound_revision_ids
+                and selector_artifact is None
+            ):
+                errors.append(
+                    f"{estimate_label} must bind quantized artifact for revision {selector_revision}"
+                )
+            if selector_artifact is not None:
+                if (
+                    not isinstance(selector_artifact, str)
+                    or selector_artifact not in artifacts_by_id
+                ):
+                    errors.append(
+                        f"{estimate_label} references unknown quantized artifact {selector_artifact}"
+                    )
+                else:
+                    if (
+                        isinstance(selector_revision, str)
+                        and artifact_revision_ids[selector_artifact]
+                        != selector_revision
+                    ):
+                        errors.append(
+                            f"{estimate_label} artifact {selector_artifact} does not belong to revision {selector_revision}"
+                        )
+                    selector_quant = selectors.get("quantization")
+                    if (
+                        selector_quant is not None
+                        and selector_quant
+                        != artifacts_by_id[selector_artifact].get("quantization")
+                    ):
+                        errors.append(
+                            f"{estimate_label} quantization {selector_quant} does not match artifact {selector_artifact}"
+                        )
         metric = estimate.get("metric")
         if metric not in METRICS:
             errors.append(f"{estimate_label} uses unknown metric {metric}")
@@ -1223,14 +1485,6 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                 ),
                 None,
             )
-            if (
-                selector_revision in artifact_bound_revision_ids
-                and selector_artifact is None
-                and artifact_axis is None
-            ):
-                errors.append(
-                    f"{label}: coverage {coverage_id} must bind quantized artifact for revision {selector_revision}"
-                )
             if selector_artifact is not None:
                 if (
                     not isinstance(selector_artifact, str)
@@ -1281,6 +1535,31 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
             if not isinstance(cell, dict):
                 errors.append(f"{label}: coverage {coverage_id} cell {cell_id} must be an object")
                 continue
+            cell_selectors = cell.get("selectors")
+            if cell_selectors is not None and not isinstance(cell_selectors, dict):
+                errors.append(
+                    f"{label}: coverage {coverage_id} cell {cell_id}.selectors must be an object"
+                )
+                cell_selectors = {}
+            if isinstance(cell_selectors, dict):
+                if any(
+                    not isinstance(key, str)
+                    or not SELECTOR_KEY_RE.fullmatch(key)
+                    or not is_selector_scalar(value)
+                    for key, value in cell_selectors.items()
+                ):
+                    errors.append(
+                        f"{label}: coverage {coverage_id} cell {cell_id}.selectors must be scalar selector key/value pairs"
+                    )
+                inherited_keys = set(fixed_selectors or {}) | {
+                    row_axis.get("key"),
+                    column_axis.get("key"),
+                }
+                repeated_keys = sorted(set(cell_selectors) & inherited_keys)
+                if repeated_keys:
+                    errors.append(
+                        f"{label}: coverage {coverage_id} cell {cell_id}.selectors cannot repeat inherited keys {repeated_keys}"
+                    )
             state = cell.get("state")
             if state not in ALLOWED_STATES:
                 errors.append(f"{label}: coverage {coverage_id} cell {cell_id} has invalid state")
@@ -1333,10 +1612,48 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                     value for value in column_axis["values"] if str(value) == column_text
                 )
             expected_selectors = (
-                effective_cell_selectors(coverage, row_value, column_value)
+                effective_cell_selectors(coverage, row_value, column_value, cell)
                 if row_value is not None and column_value is not None
                 else {}
             )
+            selector_revision = expected_selectors.get("revision")
+            selector_artifact = expected_selectors.get("artifact_id")
+            if (
+                selector_revision in artifact_bound_revision_ids
+                and selector_artifact is None
+            ):
+                errors.append(
+                    f"{label}: coverage {coverage_id} cell {cell_id} must bind quantized artifact for revision {selector_revision}"
+                )
+            if selector_artifact is not None:
+                if (
+                    not isinstance(selector_artifact, str)
+                    or selector_artifact not in artifacts_by_id
+                ):
+                    errors.append(
+                        f"{label}: coverage {coverage_id} cell {cell_id} references unknown quantized artifact {selector_artifact}"
+                    )
+                else:
+                    if (
+                        isinstance(selector_revision, str)
+                        and artifact_revision_ids[selector_artifact]
+                        != selector_revision
+                    ):
+                        errors.append(
+                            f"{label}: coverage {coverage_id} cell {cell_id} artifact {selector_artifact} does not belong to revision {selector_revision}"
+                        )
+                    artifact_quant = artifacts_by_id[selector_artifact].get(
+                        "quantization"
+                    )
+                    for quant_key in ("quantization", "variant"):
+                        selector_quant = expected_selectors.get(quant_key)
+                        if (
+                            selector_quant is not None
+                            and selector_quant != artifact_quant
+                        ):
+                            errors.append(
+                                f"{label}: coverage {coverage_id} cell {cell_id} {quant_key}={selector_quant} does not match artifact {selector_artifact} ({artifact_quant})"
+                            )
             if isinstance(packet_id, str) and packet_id in packet_by_id:
                 packet = packet_by_id[packet_id]
                 packet_claims = {
@@ -1399,7 +1716,7 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                             f"{label}: coverage {coverage_id} cell {cell_id} label must match {evidence_id} point ({derived_label})"
                         )
 
-            selector_strict = named_axes or bool(fixed_selectors)
+            selector_strict = named_axes or bool(fixed_selectors) or bool(cell_selectors)
             if observed is not None:
                 for key, wanted in expected_selectors.items():
                     actual = record_selector_value(observed, key)
@@ -1423,6 +1740,169 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                     if actual != wanted:
                         errors.append(
                             f"{label}: coverage {coverage_id} cell {cell_id} selector {key}={wanted} mismatches {estimate_id} value {actual}"
+                        )
+
+    contract_ids: set[str] = set()
+    for contract in coverage_contracts:
+        contract_id = contract.get("id")
+        if not isinstance(contract_id, str) or not SLUG_RE.fullmatch(contract_id):
+            errors.append(
+                f"{label}: coverage contract id must be a lowercase hyphenated slug"
+            )
+            contract_id = str(contract_id)
+        if contract_id in contract_ids or contract_id in coverage_ids:
+            errors.append(f"{label}: duplicate coverage id {contract_id}")
+        contract_ids.add(contract_id)
+        contract_label = f"{label}: coverage contract {contract_id}"
+        if not isinstance(contract.get("label"), str) or not contract.get("label"):
+            errors.append(f"{contract_label} needs a label")
+        if "description" in contract and not isinstance(contract.get("description"), str):
+            errors.append(f"{contract_label}.description must be a string")
+        contract_cells, contract_errors = expand_coverage_contract(
+            contract, contract_label
+        )
+        errors.extend(contract_errors)
+        for cell in contract_cells:
+            selectors = cell["selectors"]
+            selector_text = json.dumps(
+                selectors, sort_keys=True, separators=(",", ":")
+            )
+            cell_label = f"{contract_label} cell {selector_text}"
+            state = cell.get("state")
+            evidence_id = cell.get("evidence_id")
+            estimate_id = cell.get("estimate_id")
+            packet_id = cell.get("packet_id")
+            observed = (
+                measurements.get(evidence_id)
+                if isinstance(evidence_id, str)
+                else None
+            )
+            if evidence_id is not None and observed is None:
+                errors.append(f"{cell_label} references missing {evidence_id}")
+            if observed is not None and state != observed.get("state"):
+                errors.append(
+                    f"{cell_label} state {state} does not match {evidence_id} state {observed.get('state')}"
+                )
+            if packet_id is not None and packet_id not in packet_by_id:
+                errors.append(f"{cell_label} references missing packet {packet_id}")
+            if isinstance(packet_id, str) and packet_id in packet_by_id:
+                packet = packet_by_id[packet_id]
+                packet_claims = {
+                    "revision": packet.get("revision"),
+                    "artifact_id": packet.get("artifact_id"),
+                    "quantization": packet.get("quantization"),
+                    "runtime": packet.get("runtime"),
+                }
+                for key, actual in packet_claims.items():
+                    wanted = selectors.get(key)
+                    if wanted is not None and actual is not None and actual != wanted:
+                        errors.append(
+                            f"{cell_label} packet {packet_id} {key}={actual} mismatches selector {wanted}"
+                        )
+                wanted_tp = selectors.get("tp")
+                packet_cards = packet.get("cards")
+                packet_topologies = packet.get("topologies")
+                if wanted_tp is not None and (
+                    (packet_cards is not None and packet_cards != wanted_tp)
+                    or (
+                        packet_cards is None
+                        and isinstance(packet_topologies, list)
+                        and wanted_tp not in packet_topologies
+                    )
+                ):
+                    errors.append(
+                        f"{cell_label} packet {packet_id} does not cover TP{wanted_tp}"
+                    )
+            if state in CURVE_STATES and observed is None:
+                errors.append(f"{cell_label} needs a measurement evidence_id")
+            if state == "estimated":
+                if not isinstance(estimate_id, str) or estimate_id not in estimate_by_id:
+                    errors.append(f"{cell_label} needs a known estimate_id")
+                if evidence_id is not None:
+                    errors.append(f"{cell_label} cannot use evidence_id for an estimate")
+            elif estimate_id is not None:
+                errors.append(f"{cell_label} uses estimate_id outside estimated state")
+            if state in {"lab-screened", "quarantined"} and not (
+                observed is not None or cell.get("evidence")
+            ):
+                errors.append(f"{cell_label} lacks evidence")
+
+            selector_revision = selectors.get("revision")
+            selector_artifact = selectors.get("artifact_id")
+            if (
+                selector_revision in artifact_bound_revision_ids
+                and selector_artifact is None
+            ):
+                errors.append(
+                    f"{cell_label} must bind quantized artifact for revision {selector_revision}"
+                )
+            if selector_artifact is not None:
+                if (
+                    not isinstance(selector_artifact, str)
+                    or selector_artifact not in artifacts_by_id
+                ):
+                    errors.append(
+                        f"{cell_label} references unknown quantized artifact {selector_artifact}"
+                    )
+                else:
+                    if (
+                        isinstance(selector_revision, str)
+                        and artifact_revision_ids[selector_artifact]
+                        != selector_revision
+                    ):
+                        errors.append(
+                            f"{cell_label} artifact {selector_artifact} does not belong to revision {selector_revision}"
+                        )
+                    artifact_quant = artifacts_by_id[selector_artifact].get(
+                        "quantization"
+                    )
+                    for quant_key in ("quantization", "variant"):
+                        selector_quant = selectors.get(quant_key)
+                        if selector_quant is not None and selector_quant != artifact_quant:
+                            errors.append(
+                                f"{cell_label} {quant_key}={selector_quant} does not match artifact {selector_artifact} ({artifact_quant})"
+                            )
+
+            point_x = cell.get("point_x")
+            point_axis = observed.get("axis") if observed is not None else None
+            if point_x is not None:
+                if not is_finite_number(point_x):
+                    errors.append(f"{cell_label}.point_x must be finite numeric")
+                elif observed is None:
+                    errors.append(f"{cell_label}.point_x needs measurement evidence")
+                elif not any(
+                    isinstance(point, dict) and point.get("x") == point_x
+                    for point in observed.get("points") or []
+                ):
+                    errors.append(
+                        f"{cell_label}.point_x is absent from {evidence_id}"
+                    )
+                elif selectors.get(point_axis) != point_x:
+                    errors.append(
+                        f"{cell_label}.point_x must bind {evidence_id} measurement axis"
+                    )
+            if observed is not None:
+                for key, wanted in selectors.items():
+                    actual = record_selector_value(observed, key)
+                    point_selector_match = (
+                        point_x is not None
+                        and point_axis == key
+                        and point_x == wanted
+                    )
+                    if actual is None and not point_selector_match:
+                        errors.append(
+                            f"{cell_label} selector {key}={wanted} is absent from {evidence_id}"
+                        )
+                    elif actual is not None and actual != wanted:
+                        errors.append(
+                            f"{cell_label} selector {key}={wanted} mismatches {evidence_id} value {actual}"
+                        )
+            if isinstance(estimate_id, str) and estimate_id in estimate_by_id:
+                estimate_selectors = estimate_by_id[estimate_id].get("selectors") or {}
+                for key, wanted in selectors.items():
+                    if estimate_selectors.get(key) != wanted:
+                        errors.append(
+                            f"{cell_label} selector {key}={wanted} mismatches {estimate_id} value {estimate_selectors.get(key)}"
                         )
 
     for closure in closures:
@@ -1937,6 +2417,61 @@ def coverage_tables(family: dict[str, Any]) -> str:
     return "".join(blocks)
 
 
+def coverage_contract_scorecards(family: dict[str, Any]) -> str:
+    """Render dense contracts as totals and axis breakdowns, never cell prose."""
+    cards: list[str] = []
+    for contract in family.get("coverage_contracts") or []:
+        cells, _ = expand_coverage_contract(contract)
+        total = len(cells)
+        state_counts = {
+            state: sum(cell.get("state") == state for cell in cells)
+            for state in ALLOWED_STATES
+        }
+        classified = total - state_counts["missing"]
+        measured = sum(state_counts[state] for state in CURVE_STATES)
+        retry_count = sum(isinstance(cell.get("retry"), dict) for cell in cells)
+        state_rail = "".join(
+            f'<span class="is-{esc(state)}"><b>{count}</b> {esc(STATE_GLYPHS[state])}</span>'
+            for state in sorted(ALLOWED_STATES)
+            if (count := state_counts[state])
+        )
+        axis_blocks: list[str] = []
+        for axis in contract.get("axes") or []:
+            key = axis["key"]
+            values = []
+            for value in axis["values"]:
+                selected = [cell for cell in cells if cell["selectors"][key] == value]
+                selected_classified = sum(
+                    cell.get("state") != "missing" for cell in selected
+                )
+                selected_states = ", ".join(
+                    f"{STATE_GLYPHS[state]} {sum(cell.get('state') == state for cell in selected)}"
+                    for state in sorted(ALLOWED_STATES)
+                    if any(cell.get("state") == state for cell in selected)
+                )
+                values.append(
+                    f'<span title="{esc(selected_states)}"><b>{esc(axis_value_label(axis, value))}</b> '
+                    f'{selected_classified}/{len(selected)}</span>'
+                )
+            axis_blocks.append(
+                f'<div><strong>{esc(axis.get("label"))}</strong>{"".join(values)}</div>'
+            )
+        description = contract.get("description") or "Exact Cartesian coverage contract."
+        cards.append(
+            f'<section class="contract-card" data-coverage-contract="{esc(contract.get("id"))}">'
+            f'<div class="contract-head"><div><h3>{esc(contract.get("label"))}</h3>'
+            f'<p>{esc(description)}</p></div><b>{classified}/{total}</b></div>'
+            f'<div class="contract-stats"><span><b>{total}</b> exact cells</span>'
+            f'<span><b>{classified}</b> classified</span><span><b>{measured}</b> measured</span>'
+            f'<span><b>{state_counts["missing"]}</b> gaps</span>'
+            f'<span><b>{retry_count}</b> retry-tagged</span></div>'
+            f'<div class="contract-state-rail">{state_rail}</div>'
+            f'<details class="contract-filters"><summary>Break down by axis</summary>'
+            f'{"".join(axis_blocks)}</details></section>'
+        )
+    return '<div class="contract-grid">' + "".join(cards) + "</div>" if cards else ""
+
+
 def closure_cards(family: dict[str, Any]) -> str:
     cards = []
     for closure in family.get("family_closures") or []:
@@ -2269,6 +2804,10 @@ def family_page(family: dict[str, Any]) -> str:
     packets = packet_cards(family)
     coverage_views = family.get("coverage_views") or []
     coverage = coverage_tables(family) if coverage_views else ""
+    coverage_contracts = family.get("coverage_contracts") or []
+    contract_coverage = (
+        coverage_contract_scorecards(family) if coverage_contracts else ""
+    )
     closure_items = family.get("family_closures") or []
     closures = closure_cards(family) if closure_items else ""
     lineage = "".join(
@@ -2277,14 +2816,28 @@ def family_page(family: dict[str, Any]) -> str:
         + "</span>"
         for revision in revisions
     )
-    lineage += "".join(
-        f'<span title="{esc(artifact.get("repository"))} · '
-        f'{esc(artifact.get("revision") or artifact.get("revision_status"))}">'
-        f'{esc(artifact.get("label") or artifact.get("id"))} · quantized artifact</span>'
+    artifacts = [
+        artifact
         for revision in revisions
         for artifact in revision.get("quantized_artifacts") or []
         if isinstance(artifact, dict)
-    )
+    ]
+    if artifacts:
+        quantization_count = len(
+            {artifact.get("quantization") for artifact in artifacts}
+        )
+        artifact_items = "".join(
+            f'<li><code>{esc(artifact.get("id"))}</code> · '
+            f'{esc(artifact.get("quantization"))} · '
+            f'{esc(artifact.get("repository"))}@'
+            f'{esc(artifact.get("revision") or artifact.get("revision_status"))}</li>'
+            for artifact in artifacts
+        )
+        lineage += (
+            '<details class="artifact-disclosure"><summary>'
+            f'{len(artifacts)} exact artifacts · {quantization_count} quantizations'
+            f'</summary><ul>{artifact_items}</ul></details>'
+        )
     architecture_bits = []
     if architecture.get("class"):
         architecture_bits.append(str(architecture["class"]))
@@ -2330,30 +2883,15 @@ def family_page(family: dict[str, Any]) -> str:
     # Claims are explicit measurement bindings or curated packet metrics. Do
     # not manufacture a headline from an arbitrary maximum or insertion order.
     selected_results = featured_result_entries(family)
-    hero_result = next(
-        (item for item in selected_results if item.get("role") == "hero"), None
-    )
-    headline_html = ""
-    if hero_result:
-        hero_detail = " · ".join(
-            bit
-            for bit in (
-                hero_result.get("identity"),
-                hero_result.get("quality_label"),
-            )
-            if bit
-        )
-        headline_html = (
-            f'  <a class="hero-headline" href="{esc(hero_result["href"])}" '
-            f'title="{esc(hero_result.get("record_label"))} · {esc(hero_result.get("workload"))}">'
-            f'<span class="big">{fmt(hero_result["value"])}</span>'
-            f'<span class="unit">{esc(hero_result["unit"])}<br>measured</span>'
-            f'<span class="gloss">{esc(hero_result["label"])}</span>'
-            f'<small>{esc(hero_detail)}</small></a>\n'
-        )
     strip_cards = []
-    for result in (item for item in selected_results if item is not hero_result):
-        tone = "is-screened" if result.get("state") == "lab-screened" else "is-scoped"
+    for result in selected_results:
+        tone = (
+            "is-featured"
+            if result.get("role") == "hero"
+            else "is-screened"
+            if result.get("state") == "lab-screened"
+            else "is-scoped"
+        )
         strip_cards.append(
             f'<a class="result {tone}" href="{esc(result["href"])}" '
             f'title="{esc(result.get("record_label"))} · {esc(result.get("workload"))}">'
@@ -2363,8 +2901,8 @@ def family_page(family: dict[str, Any]) -> str:
             f'<span class="r-gate">{esc(result.get("quality_label"))}</span></a>'
         )
     strip_html = (
-        '<div class="result-strip" aria-label="Other curated measured results">'
-        + "".join(strip_cards[:4])
+        '<div class="result-strip" aria-label="Curated measured results">'
+        + "".join(strip_cards[:5])
         + "</div>"
         if strip_cards
         else ""
@@ -2413,10 +2951,10 @@ def family_page(family: dict[str, Any]) -> str:
     if measured_count:
         signal_cards += f'\n    <div title="Run arms and measured series; every point links to proof"><dt>Measured results</dt><dd>{measured_count}</dd></div>'
     coverage_section = ""
-    if coverage_views:
+    if coverage_views or coverage_contracts:
         coverage_section = f'''
-  <div class="section-head"><div><h2>What has been classified</h2><p>Measured, screened, closed, and unsupported combinations are listed; expand each exact gap set.</p></div></div>
-  {coverage}
+  <div class="section-head"><div><h2>What has been classified</h2><p>Dense scorecards summarize every declared combination; measured slices retain exact evidence links.</p></div></div>
+  {contract_coverage}{coverage}
 '''
     closures_section = ""
     if closure_items:
@@ -2457,14 +2995,13 @@ def family_page(family: dict[str, Any]) -> str:
   .family-main {{ max-width: 1120px; }}
   .lineage {{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }}
   .lineage span {{ padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }}
+  .artifact-disclosure {{ flex-basis:100%; font:600 10px var(--mono); }}
+  .artifact-disclosure summary {{ cursor:pointer; width:max-content; max-width:100%; padding:5px 8px; border:1px solid rgba(255,255,255,.7); text-transform:uppercase; }}
+  .artifact-disclosure ul {{ margin:7px 0 0; padding:8px 10px 8px 28px; background:rgba(255,255,255,.08); line-height:1.6; overflow-wrap:anywhere; }}
   .hero h1 {{ font-size:clamp(22px, 2.6vw, 32px); }}
-  .hero-headline {{ display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }}
-  .hero .hero-headline .big {{ font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }}
-  .hero .hero-headline .unit {{ font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }}
-  .hero .hero-headline .gloss {{ font-size:13px; color:rgba(255,255,255,.9); }}
-  .hero .hero-headline small {{ flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }}
   .result-strip {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:0 0 14px; }}
   .result {{ display:block; border:2px solid var(--ink); background:var(--paper); padding:11px 12px 9px; }}
+  .result.is-featured {{ border-color:var(--spot); }}
   .result:hover {{ border-color:var(--spot); }}
   .result .r-kind {{ display:block; font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }}
   .result b {{ font:900 27px/1.15 var(--display); }}
@@ -2496,6 +3033,19 @@ def family_page(family: dict[str, Any]) -> str:
   .stat-row.is-superseded {{ color:var(--muted); }}
   .stat-row.is-superseded b {{ font:700 15px/1 var(--display); color:var(--muted); }}
   .combo-list {{ list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }}
+  .contract-grid {{ display:grid; gap:12px; margin-bottom:14px; }}
+  .contract-card {{ border:2px solid var(--ink); background:var(--paper); padding:12px; }}
+  .contract-head {{ display:flex; justify-content:space-between; gap:16px; align-items:start; }}
+  .contract-head h3 {{ margin:0; font:900 17px/1.1 var(--display); text-transform:uppercase; }}
+  .contract-head p {{ margin:4px 0 0; color:var(--muted); font-size:12px; }}
+  .contract-head > b {{ font:900 25px/1 var(--display); white-space:nowrap; }}
+  .contract-stats, .contract-state-rail {{ display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font:10px var(--mono); text-transform:uppercase; }}
+  .contract-state-rail span {{ padding:3px 6px; border:1px solid var(--line); }}
+  .contract-filters {{ margin-top:10px; border-top:1px solid var(--line); padding-top:8px; }}
+  .contract-filters summary {{ cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }}
+  .contract-filters div {{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-top:7px; }}
+  .contract-filters strong {{ min-width:110px; font:700 10px var(--mono); text-transform:uppercase; }}
+  .contract-filters span {{ padding:3px 6px; background:var(--surface); font:9px var(--mono); }}
   .combo {{ display:grid; grid-template-columns:130px 1fr auto auto; gap:4px 12px; align-items:baseline; padding:9px 12px; border-bottom:1px solid var(--line); }}
   .combo:last-child {{ border-bottom:0; }}
   .combo .c-state {{ font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; }}
@@ -2596,20 +3146,20 @@ def family_page(family: dict[str, Any]) -> str:
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / {esc(family.get('display_name'))}</p>
   <h1>{esc(family.get('display_name'))}</h1>
   <p>{esc(family.get('summary'))}</p>
-{headline_html}
   <div class="lineage">{lineage}</div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-{strip_html}{cta_html}
+{cta_html}
   <dl class="meta-strip" aria-label="Family signals">{signal_cards}</dl>
 
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid">{packets}</div>
 
-  <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
-  <div class="views-grid">{views}</div>
-
 {coverage_section}{closures_section}
+
+  <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
+  {strip_html}
+  <div class="views-grid">{views}</div>
   <details class="fine"><summary>Transfer boundary</summary><p>{esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="{esc(source)}"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>

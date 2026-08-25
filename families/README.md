@@ -72,9 +72,14 @@ Quantized exports of the same base weights are not separate weight revisions
 or architecture siblings. They may be listed under the base revision as
 `quantized_artifacts`; each child pins its quantization, repository, available
 artifact revision, and evidence. Measurements and packets name that child with
-`artifact_id` while retaining the common base `revision`. A missing artifact
-revision stays explicitly unpinned rather than turning the quantized repository
-into a surrogate model revision.
+`artifact_id` while retaining the common base `revision`, and must also carry
+the child's exact canonical `quantization` (a descriptive `variant` is not a
+substitute). Optional `quantization_origin` is either `export` for a distinct
+quantized weight artifact or `runtime` for runtime quantization of the named
+weights. A missing artifact revision stays explicitly unpinned rather than
+turning the quantized repository into a surrogate model revision. Public pages
+collapse exact artifact provenance behind one compact disclosure instead of
+adding one lineage chip per quantization.
 
 Allowed public coverage states are `lab-measured`, `lab-screened`,
 `community-measured`, `estimated`, `closed`, `quarantined`, `unsupported`, and
@@ -94,6 +99,56 @@ from one exact point in a measured curve, `point_x` must match both the row
 or column axis and an existing `points[].x` value in that evidence record; the
 displayed metric label is derived from the cited point rather than trusted as
 free text.
+
+An optional cell `selectors` object adds selectors that vary independently of
+the row and column axes. It cannot repeat fixed or axis keys. This keeps a mixed
+artifact matrix compact while making each effective cell selector exact. Every
+cell and estimate under an artifact-bound revision must resolve an `artifact_id`
+that belongs to that revision; any canonical quantization selector must match
+the artifact.
+
+For families with more than two meaningful dimensions, optional
+`coverage_contracts` declare the dense Cartesian inventory without storing one
+JSON object per cell. A contract has an `id`, `label`, optional `description`,
+an ordered `axes` list, and ordered `rules`:
+
+```json
+{
+  "id": "main-serving-space",
+  "label": "Main serving space",
+  "axes": [
+    {"key": "revision", "label": "Revision", "values": ["revision-a"]},
+    {"key": "artifact_id", "label": "Artifact", "values": ["artifact-a"]},
+    {"key": "tp", "label": "TP", "values": [1, 2, 4]},
+    {"key": "mtp", "label": "MTP", "values": [0, 1, 2, 3, 4]},
+    {"key": "active_context_tokens", "label": "Context", "values": [0, 2048, 32768]},
+    {"key": "graph", "label": "Graph", "values": ["off", "on"]},
+    {"key": "kv", "label": "KV", "values": ["f16"]}
+  ],
+  "rules": [
+    {
+      "id": "default-gap",
+      "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "active_context_tokens": "*", "graph": "*", "kv": "*"},
+      "state": "missing",
+      "label": "not measured",
+      "parent": "serving-backlog",
+      "retry": {"status": "queued"}
+    }
+  ]
+}
+```
+
+Every rule `match` names every axis with either one exact declared value or the
+`"*"` wildcard. Rules are applied in declaration order and may emit `state`,
+`label`, `reason`, evidence/estimate/packet IDs, `point_x`, `parent`, and scalar
+`retry` metadata. For any cell, matching rules must form a strict chain from a
+broader exact-key set to a proper superset; intersecting sibling rules and
+duplicate-specificity rules are ambiguous and rejected. The final merged cell
+must resolve an allowed state. Uncovered cells, invalid references, artifact or
+quantization mismatches, and contracts above 50,000 cells fail validation.
+Public pages render state totals and per-axis breakdowns, not thousands of cell
+sentences. Existing two-axis `coverage_views` remain available for curated
+evidence-linked slices.
 
 Estimates are first-class, versioned records with selectors, metric, value and
 interval, engine name/version/snapshot SHA-256, generation time, basis

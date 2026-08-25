@@ -19,14 +19,13 @@
   .family-main { max-width: 1120px; }
   .lineage { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
   .lineage span { padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }
+  .artifact-disclosure { flex-basis:100%; font:600 10px var(--mono); }
+  .artifact-disclosure summary { cursor:pointer; width:max-content; max-width:100%; padding:5px 8px; border:1px solid rgba(255,255,255,.7); text-transform:uppercase; }
+  .artifact-disclosure ul { margin:7px 0 0; padding:8px 10px 8px 28px; background:rgba(255,255,255,.08); line-height:1.6; overflow-wrap:anywhere; }
   .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
-  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
-  .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
-  .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
-  .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
-  .hero .hero-headline small { flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }
   .result-strip { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:0 0 14px; }
   .result { display:block; border:2px solid var(--ink); background:var(--paper); padding:11px 12px 9px; }
+  .result.is-featured { border-color:var(--spot); }
   .result:hover { border-color:var(--spot); }
   .result .r-kind { display:block; font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .result b { font:900 27px/1.15 var(--display); }
@@ -58,6 +57,19 @@
   .stat-row.is-superseded { color:var(--muted); }
   .stat-row.is-superseded b { font:700 15px/1 var(--display); color:var(--muted); }
   .combo-list { list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }
+  .contract-grid { display:grid; gap:12px; margin-bottom:14px; }
+  .contract-card { border:2px solid var(--ink); background:var(--paper); padding:12px; }
+  .contract-head { display:flex; justify-content:space-between; gap:16px; align-items:start; }
+  .contract-head h3 { margin:0; font:900 17px/1.1 var(--display); text-transform:uppercase; }
+  .contract-head p { margin:4px 0 0; color:var(--muted); font-size:12px; }
+  .contract-head > b { font:900 25px/1 var(--display); white-space:nowrap; }
+  .contract-stats, .contract-state-rail { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font:10px var(--mono); text-transform:uppercase; }
+  .contract-state-rail span { padding:3px 6px; border:1px solid var(--line); }
+  .contract-filters { margin-top:10px; border-top:1px solid var(--line); padding-top:8px; }
+  .contract-filters summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
+  .contract-filters div { display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-top:7px; }
+  .contract-filters strong { min-width:110px; font:700 10px var(--mono); text-transform:uppercase; }
+  .contract-filters span { padding:3px 6px; background:var(--surface); font:9px var(--mono); }
   .combo { display:grid; grid-template-columns:130px 1fr auto auto; gap:4px 12px; align-items:baseline; padding:9px 12px; border-bottom:1px solid var(--line); }
   .combo:last-child { border-bottom:0; }
   .combo .c-state { font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -158,8 +170,6 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / DeepSeek V4 · Flash 180B</p>
   <h1>DeepSeek V4 · Flash 180B</h1>
   <p>A closed four-B70 TP4+EP research frontier for the experimental DeepSeek V4 Flash uniform-K160 checkpoint, with target-verified DSpark7 decode and its provenance caveat kept attached.</p>
-  <a class="hero-headline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json" title="deepseek-v4-flash-k160-b70-80tps-20260718 · 12 unique cold prompts per suite, 128 output tokens, median generated tokens 1-100 after TTFT; three strict suites"><span class="big">78.29</span><span class="unit">tok/s<br>measured</span><span class="gloss">DeepSeek V4 Flash K160 · TP4+EP DSpark7</span><small>deepseek-v4-flash-180b-k160-7c360e1 · experimental uniform-K160 FP8/MXFP4 target · vLLM XPU record stack 264c7f2/3131567/48fda4f · 4× B70 · Evidence C of A–D</small></a>
-
   <div class="lineage"><span>DeepSeek V4 Flash 180B · experimental uniform-K160 · measured target checkpoint</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
@@ -180,21 +190,22 @@
   <div class="coverage-rail"><span>TP4+EP</span><span>DSpark7</span><span>decode</span><span>TTFT</span><span>exact canaries</span><span>reproduction</span></div>
 </a></div>
 
+
+  <div class="section-head"><div><h2>What has been classified</h2><p>Dense scorecards summarize every declared combination; measured slices retain exact evidence links.</p></div></div>
+  <div class="combo-block"><p class="combo-scope">Exact experimental K160 target and record runtime; missing cells have no inherited result. Fixed: revision=deepseek-v4-flash-180b-k160-7c360e1 · variant=experimental uniform-K160 FP8/MXFP4 target · runtime=vLLM XPU record stack 264c7f2/3131567/48fda4f.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">4 cards, DSpark7 <code>TP4·DSpark7</code></span><b class="c-val">80.82 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/deepseek-v4-flash-k160-b70/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>2 untested combinations</summary><div class="gap-chips"><code title="1 card, DSpark7 — no stored lane">TP1·DSpark7</code><code title="2 cards, DSpark7 — no stored lane">TP2·DSpark7</code></div></details><a class="inline" href="../families/deepseek-v4.json">Full matrix and exact selectors</a></div></div>
+
+  <div class="section-head"><div><h2>Scoped closures</h2><p>Rejected combinations, scoped to the exact selectors shown.</p></div></div>
+  <div class="closure-grid"><a class="closure-card is-closed" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md"><span>closed · revision=deepseek-v4-flash-180b-k160-7c360e1 · frontier=configuration-sweeps</span><b>The configuration frontier is paused; reopen only for a substantial EAGLE capture/training effort or a genuinely new mechanism, not another generic flag sweep.</b></a></div>
+
+
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/deepseek-v4.json">family data</a></div>
+  <div class="result-strip" aria-label="Curated measured results"><a class="result is-featured" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json" title="deepseek-v4-flash-k160-b70-80tps-20260718 · 12 unique cold prompts per suite, 128 output tokens, median generated tokens 1-100 after TTFT; three strict suites"><span class="r-kind">DeepSeek V4 Flash K160 · TP4+EP DSpark7</span><b>78.29</b><span class="r-unit">tok/s</span><span class="r-note">deepseek-v4-flash-180b-k160-7c360e1 · experimental uniform-K160 FP8/MXFP4 target · vLLM XPU record stack 264c7f2/3131567/48fda4f · 4× B70</span><span class="r-gate">Evidence C of A–D</span></a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="deepseek-v4-strict-tp4">
   <div class="chart-head"><div><h3>Strict TP4+EP DSpark7 suites</h3><p>Decode retains three independent suite medians (76.900178–80.820052); the packet headline is the 78.287226 median-of-medians, while TTFT is the 342.777657 record-suite observation</p></div><div class="metric-switch"></div></div>
   <div class="stat-row"><span class="l">experimental K160 + DSpark7 · tensor parallel cards 4</span><span class="stat-values"><span class="stat-metric"><b>76.9–80.82</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>342.78</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">three independent strict suites · closed frontier record · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>experimental K160 + DSpark7</span><span><i class="gap-line"></i>missing</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">evidence 1</a></span></figcaption>
 </figure></div>
-
-
-  <div class="section-head"><div><h2>What has been classified</h2><p>Measured, screened, closed, and unsupported combinations are listed; expand each exact gap set.</p></div></div>
-  <div class="combo-block"><p class="combo-scope">Exact experimental K160 target and record runtime; missing cells have no inherited result. Fixed: revision=deepseek-v4-flash-180b-k160-7c360e1 · variant=experimental uniform-K160 FP8/MXFP4 target · runtime=vLLM XPU record stack 264c7f2/3131567/48fda4f.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">4 cards, DSpark7 <code>TP4·DSpark7</code></span><b class="c-val">80.82 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/deepseek-v4-flash-k160-b70/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>2 untested combinations</summary><div class="gap-chips"><code title="1 card, DSpark7 — no stored lane">TP1·DSpark7</code><code title="2 cards, DSpark7 — no stored lane">TP2·DSpark7</code></div></details><a class="inline" href="../families/deepseek-v4.json">Full matrix and exact selectors</a></div></div>
-
-  <div class="section-head"><div><h2>Scoped closures</h2><p>Rejected combinations, scoped to the exact selectors shown.</p></div></div>
-  <div class="closure-grid"><a class="closure-card is-closed" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md"><span>closed · revision=deepseek-v4-flash-180b-k160-7c360e1 · frontier=configuration-sweeps</span><b>The configuration frontier is paused; reopen only for a substantial EAGLE capture/training effort or a genuinely new mechanism, not another generic flag sweep.</b></a></div>
-
   <details class="fine"><summary>Transfer boundary</summary><p>DeepSeek V4 Flash 180B sparse MoE. exact experimental checkpoint and record stack only. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="../families/deepseek-v4.json"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>

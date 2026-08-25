@@ -1,0 +1,254 @@
+{
+  "classification": "estimated-not-measured",
+  "engine": {
+    "arithmetic": "Python Decimal, precision=50, geometric mean, output rounded to 6 decimals",
+    "id": "qwen38-q4kxl-q8-context-estimator",
+    "script": "tools/qwen38_q4kxl_q8_estimator_v1.py",
+    "sha256": "1b12ff6b5b878cf8d0f3f276ce86b6eb91c4d2819b5cd9672a550118d3e3cc8d",
+    "version": "1.0.0"
+  },
+  "format": "neural-download-estimate-snapshot-v1",
+  "grade": "D",
+  "id": "qwen38-q4kxl-tp1-q8-context-estimate-v1",
+  "limitations": [
+    "No UD-Q4_K_XL q8_0 KV run is measured; every central value and band is an estimate.",
+    "Only two donor quantizations define the envelope, so model-form uncertainty can be larger than the reported band.",
+    "The UD-Q5_K_S q8 donor used llama.cpp build commit 9fee29e while the f16 weight ladder records a named build rather than a full commit identity.",
+    "The snapshot estimates raw-engine decode only; prefill is deliberately withheld because the donor ratios disagree.",
+    "The snapshot does not estimate quality, TTFT, VRAM, serving throughput, or record eligibility.",
+    "Do not transfer these values across revisions, TP, MTP depth, graph mode, KV dtype, runtime, workload, or hardware."
+  ],
+  "method": {
+    "central_formula": "target_f16 * sqrt((Q4_K_M_q8/Q4_K_M_f16) * (UD-Q5_K_S_q8/UD-Q5_K_S_f16))",
+    "estimated_metrics": [
+      "decode_tok_s"
+    ],
+    "scope": "within Qwen3.8, TP1, MTP0, graph off, exact matching active-context point",
+    "uncertainty_formula": "target_f16 * [min(donor ratios), max(donor ratios)]",
+    "uncertainty_kind": "two-donor envelope; not a statistical confidence interval",
+    "withheld_metrics": {
+      "prefill_tok_s": "Q4_K_M and UD-Q5_K_S prefill penalties disagree materially and are runtime-build-confounded"
+    }
+  },
+  "points": [
+    {
+      "active_context_tokens": 0,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.98735547,
+          "q4_k_m": 0.978234583,
+          "ud_q5_k_s": 0.9965614
+        },
+        "estimate": 21.534223,
+        "lower": 21.335296,
+        "relative_half_width_pct": 0.9324,
+        "upper": 21.735004
+      },
+      "prefill_tok_s": {
+        "donor_ratios": {
+          "q4_k_m": 0.990960206,
+          "ud_q5_k_s": 1.077449219
+        },
+        "reason": "donor prefill ratios disagree and the donor builds are not identical; no defensible central estimate",
+        "state": "missing"
+      },
+      "target_f16_anchor": {
+        "decode_tok_s": 21.81,
+        "prefill_tok_s": 762.57
+      }
+    },
+    {
+      "active_context_tokens": 2048,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.928535556,
+          "q4_k_m": 0.91782502,
+          "ud_q5_k_s": 0.939371077
+        },
+        "estimate": 19.991371,
+        "lower": 19.760773,
+        "relative_half_width_pct": 1.1669,
+        "upper": 20.224659
+      },
+      "prefill_tok_s": {
+        "donor_ratios": {
+          "q4_k_m": 0.991844901,
+          "ud_q5_k_s": 1.068174803
+        },
+        "reason": "donor prefill ratios disagree and the donor builds are not identical; no defensible central estimate",
+        "state": "missing"
+      },
+      "target_f16_anchor": {
+        "decode_tok_s": 21.53,
+        "prefill_tok_s": 735.45
+      }
+    },
+    {
+      "active_context_tokens": 4096,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.880457887,
+          "q4_k_m": 0.868041237,
+          "ud_q5_k_s": 0.893052146
+        },
+        "estimate": 18.815385,
+        "lower": 18.550041,
+        "relative_half_width_pct": 1.4304,
+        "upper": 19.084524
+      },
+      "prefill_tok_s": {
+        "donor_ratios": {
+          "q4_k_m": 0.99387211,
+          "ud_q5_k_s": 1.082828166
+        },
+        "reason": "donor prefill ratios disagree and the donor builds are not identical; no defensible central estimate",
+        "state": "missing"
+      },
+      "target_f16_anchor": {
+        "decode_tok_s": 21.37,
+        "prefill_tok_s": 719.47
+      }
+    },
+    {
+      "active_context_tokens": 8192,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.796329567,
+          "q4_k_m": 0.783885858,
+          "ud_q5_k_s": 0.808970812
+        },
+        "estimate": 16.770701,
+        "lower": 16.508636,
+        "relative_half_width_pct": 1.5874,
+        "upper": 17.036925
+      },
+      "prefill_tok_s": {
+        "donor_ratios": {
+          "q4_k_m": 0.990880995,
+          "ud_q5_k_s": 1.111441293
+        },
+        "reason": "donor prefill ratios disagree and the donor builds are not identical; no defensible central estimate",
+        "state": "missing"
+      },
+      "target_f16_anchor": {
+        "decode_tok_s": 21.06,
+        "prefill_tok_s": 689.58
+      }
+    },
+    {
+      "active_context_tokens": 16384,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.655165586,
+          "q4_k_m": 0.643290043,
+          "ud_q5_k_s": 0.667260359
+        },
+        "estimate": 13.424343,
+        "lower": 13.181013,
+        "relative_half_width_pct": 1.8461,
+        "upper": 13.672165
+      },
+      "prefill_tok_s": {
+        "donor_ratios": {
+          "q4_k_m": 0.990391276,
+          "ud_q5_k_s": 1.132175175
+        },
+        "reason": "donor prefill ratios disagree and the donor builds are not identical; no defensible central estimate",
+        "state": "missing"
+      },
+      "target_f16_anchor": {
+        "decode_tok_s": 20.49,
+        "prefill_tok_s": 639.46
+      }
+    },
+    {
+      "active_context_tokens": 24576,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.565199156,
+          "q4_k_m": 0.553077609,
+          "ud_q5_k_s": 0.577586366
+        },
+        "estimate": 11.275723,
+        "lower": 11.033898,
+        "relative_half_width_pct": 2.1917,
+        "upper": 11.522848
+      },
+      "prefill_tok_s": {
+        "donor_ratios": {
+          "q4_k_m": 0.989004573,
+          "ud_q5_k_s": 1.199982839
+        },
+        "reason": "donor prefill ratios disagree and the donor builds are not identical; no defensible central estimate",
+        "state": "missing"
+      },
+      "target_f16_anchor": {
+        "decode_tok_s": 19.95,
+        "prefill_tok_s": 596.49
+      }
+    },
+    {
+      "active_context_tokens": 32768,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.501598805,
+          "q4_k_m": 0.489664676,
+          "ud_q5_k_s": 0.513823793
+        },
+        "estimate": 9.756097,
+        "lower": 9.523978,
+        "relative_half_width_pct": 2.4372,
+        "upper": 9.993873
+      },
+      "prefill_tok_s": {
+        "donor_ratios": {
+          "q4_k_m": 0.99210877,
+          "ud_q5_k_s": 1.154124396
+        },
+        "reason": "donor prefill ratios disagree and the donor builds are not identical; no defensible central estimate",
+        "state": "missing"
+      },
+      "target_f16_anchor": {
+        "decode_tok_s": 19.45,
+        "prefill_tok_s": 564.86
+      }
+    }
+  ],
+  "selectors": {
+    "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+    "graph": "off",
+    "kv": "q8_0",
+    "mtp": 0,
+    "quantization": "UD-Q4_K_XL",
+    "revision": "qwen3.8-27b",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1
+  },
+  "snapshot_date": "2026-08-25",
+  "sources": [
+    {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json",
+      "sha256": "1c439bc6e46dc29ba37ed234ceb5a52758a68a10f570dc4d3efa0a03d33aa6ca"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.json",
+      "sha256": "219331863fd0dee7f14f705890f373c1208b9a45d8f6d54e5e6ae2fde0ee4c26"
+    },
+    {
+      "path": "repro/qwen38-27b-256k-vision-mtp-b70/qwen38-27b-q5ks-flagship.sweep.json",
+      "sha256": "8f05570d712f6687bf359cfbda59d2cfb1bf31b3f573fc544f7b79f600accc09"
+    },
+    {
+      "path": "repro/qwen38-27b-256k-vision-mtp-b70/model-manifest.json",
+      "sha256": "7e7beaa9264400082c8ac50b6db9a50bc36ca44319d0bb6c921d923c38e285ee"
+    }
+  ],
+  "state": "estimated",
+  "target_identity": {
+    "file": "Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "repository": "unsloth/Qwen3.8-27B-GGUF",
+    "revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502",
+    "sha256": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e"
+  },
+  "workload": "llama-bench tg128 at exact active-depth points; raw-engine decode shape estimate"
+}

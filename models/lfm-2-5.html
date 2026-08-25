@@ -19,14 +19,13 @@
   .family-main { max-width: 1120px; }
   .lineage { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
   .lineage span { padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }
+  .artifact-disclosure { flex-basis:100%; font:600 10px var(--mono); }
+  .artifact-disclosure summary { cursor:pointer; width:max-content; max-width:100%; padding:5px 8px; border:1px solid rgba(255,255,255,.7); text-transform:uppercase; }
+  .artifact-disclosure ul { margin:7px 0 0; padding:8px 10px 8px 28px; background:rgba(255,255,255,.08); line-height:1.6; overflow-wrap:anywhere; }
   .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
-  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
-  .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
-  .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
-  .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
-  .hero .hero-headline small { flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }
   .result-strip { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:0 0 14px; }
   .result { display:block; border:2px solid var(--ink); background:var(--paper); padding:11px 12px 9px; }
+  .result.is-featured { border-color:var(--spot); }
   .result:hover { border-color:var(--spot); }
   .result .r-kind { display:block; font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .result b { font:900 27px/1.15 var(--display); }
@@ -58,6 +57,19 @@
   .stat-row.is-superseded { color:var(--muted); }
   .stat-row.is-superseded b { font:700 15px/1 var(--display); color:var(--muted); }
   .combo-list { list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }
+  .contract-grid { display:grid; gap:12px; margin-bottom:14px; }
+  .contract-card { border:2px solid var(--ink); background:var(--paper); padding:12px; }
+  .contract-head { display:flex; justify-content:space-between; gap:16px; align-items:start; }
+  .contract-head h3 { margin:0; font:900 17px/1.1 var(--display); text-transform:uppercase; }
+  .contract-head p { margin:4px 0 0; color:var(--muted); font-size:12px; }
+  .contract-head > b { font:900 25px/1 var(--display); white-space:nowrap; }
+  .contract-stats, .contract-state-rail { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font:10px var(--mono); text-transform:uppercase; }
+  .contract-state-rail span { padding:3px 6px; border:1px solid var(--line); }
+  .contract-filters { margin-top:10px; border-top:1px solid var(--line); padding-top:8px; }
+  .contract-filters summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
+  .contract-filters div { display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-top:7px; }
+  .contract-filters strong { min-width:110px; font:700 10px var(--mono); text-transform:uppercase; }
+  .contract-filters span { padding:3px 6px; background:var(--surface); font:9px var(--mono); }
   .combo { display:grid; grid-template-columns:130px 1fr auto auto; gap:4px 12px; align-items:baseline; padding:9px 12px; border-bottom:1px solid var(--line); }
   .combo:last-child { border-bottom:0; }
   .combo .c-state { font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -158,8 +170,6 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / LFM2.5 2.6B</p>
   <h1>LFM2.5 2.6B</h1>
   <p>A compact hybrid convolution-and-attention model with a stock-upstream, one-card B70 package and measured serving, decode-depth, and prefill-depth profiles through 32K active context.</p>
-  <a class="hero-headline" href="lfm25-26b-q8-b70.html" title="lfm25-26b-q8-b70 · Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 132.467576."><span class="big">132.35</span><span class="unit">tok/s<br>measured</span><span class="gloss">LFM2.5 2.6B Q8_0 · TP1</span><small>lfm2.5-2.6b · Q8_0 · llama.cpp SYCL · 1× B70 · B70-verified</small></a>
-
   <div class="lineage"><span>LFM2.5 2.6B · current measured weights</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
@@ -179,7 +189,13 @@
   <div class="coverage-rail"><span>decode</span><span>prefill</span><span>active context through 32K</span><span>quality</span><span>stock upstream</span></div>
 </a></div>
 
+
+  <div class="section-head"><div><h2>What has been classified</h2><p>Dense scorecards summarize every declared combination; measured slices retain exact evidence links.</p></div></div>
+  <div class="combo-block"><p class="combo-scope">LFM2.5 2.6B Q8_0 · llama.cpp SYCL · f16 KV · MTP is not used. TP1 has serving and raw-depth evidence; TP2/TP4 have not been measured.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, no speculative decoding <code>TP1·MTP0</code></span><b class="c-val">132.47 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/README.md">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>2 untested combinations</summary><div class="gap-chips"><code title="2 cards, no speculative decoding — No TP2 LFM2.5 Q8_0 result is stored.">TP2·MTP0</code><code title="4 cards, no speculative decoding — No TP4 LFM2.5 Q8_0 result is stored.">TP4·MTP0</code></div></details><a class="inline" href="../families/lfm-2-5.json">Full matrix and exact selectors</a></div></div>
+
+
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/lfm-2-5.json">family data</a></div>
+  <div class="result-strip" aria-label="Curated measured results"><a class="result is-featured" href="lfm25-26b-q8-b70.html" title="lfm25-26b-q8-b70 · Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 132.467576."><span class="r-kind">LFM2.5 2.6B Q8_0 · TP1</span><b>132.35</b><span class="r-unit">tok/s</span><span class="r-note">lfm2.5-2.6b · Q8_0 · llama.cpp SYCL · 1× B70</span><span class="r-gate">B70-verified</span></a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="lfm-serving-operating-point">
   <div class="chart-head"><div><h3>Serving repeat</h3><p>Q8_0 · TP1 · 8K configured · f16 KV · cold 12-prompt cache-zero suite</p></div><div class="metric-switch"></div></div>
   <div class="stat-row"><span class="l">fresh-server repeats · tensor parallel cards 1</span><span class="stat-values"><span class="stat-metric"><b>132.35–132.47</b><span class="u">tok/s</span><small>Decode</small></span></span><span class="m">lab measurement; quality scope in evidence · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/README.md">evidence</a></span></div>
@@ -191,11 +207,6 @@
   <div class="legend"><span><i style="background:var(--s1)"></i>Q8_0</span></div>
   <figcaption><div data-family-summary="decode_tok_s"><b>Q8_0</b> 0: 135.2 · 2K: 131.26 · 4K: 127.21 · 8K: 120.2 · 16K: 107.98 · 24K: 98.14 · 32K: 89.94</div><div data-family-summary="prefill_tok_s" hidden><b>Q8_0</b> 0: 9,131 · 2K: 4,699 · 4K: 4,585 · 8K: 4,400 · 16K: 3,752 · 24K: 3,698 · 32K: 2,825</div><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/lfm25-26b-q8.sweep.json">evidence 1</a></span></figcaption>
 </figure></div>
-
-
-  <div class="section-head"><div><h2>What has been classified</h2><p>Measured, screened, closed, and unsupported combinations are listed; expand each exact gap set.</p></div></div>
-  <div class="combo-block"><p class="combo-scope">LFM2.5 2.6B Q8_0 · llama.cpp SYCL · f16 KV · MTP is not used. TP1 has serving and raw-depth evidence; TP2/TP4 have not been measured.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, no speculative decoding <code>TP1·MTP0</code></span><b class="c-val">132.47 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/README.md">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>2 untested combinations</summary><div class="gap-chips"><code title="2 cards, no speculative decoding — No TP2 LFM2.5 Q8_0 result is stored.">TP2·MTP0</code><code title="4 cards, no speculative decoding — No TP4 LFM2.5 Q8_0 result is stored.">TP4·MTP0</code></div></details><a class="inline" href="../families/lfm-2-5.json">Full matrix and exact selectors</a></div></div>
-
   <details class="fine"><summary>Transfer boundary</summary><p>LFM2ForCausalLM, 30 layers, 2048 hidden. one measured weight revision; quantization and runtime paths require independent gates. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="../families/lfm-2-5.json"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>

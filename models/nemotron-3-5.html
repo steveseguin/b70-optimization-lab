@@ -19,14 +19,13 @@
   .family-main { max-width: 1120px; }
   .lineage { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
   .lineage span { padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }
+  .artifact-disclosure { flex-basis:100%; font:600 10px var(--mono); }
+  .artifact-disclosure summary { cursor:pointer; width:max-content; max-width:100%; padding:5px 8px; border:1px solid rgba(255,255,255,.7); text-transform:uppercase; }
+  .artifact-disclosure ul { margin:7px 0 0; padding:8px 10px 8px 28px; background:rgba(255,255,255,.08); line-height:1.6; overflow-wrap:anywhere; }
   .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
-  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
-  .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
-  .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
-  .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
-  .hero .hero-headline small { flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }
   .result-strip { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:0 0 14px; }
   .result { display:block; border:2px solid var(--ink); background:var(--paper); padding:11px 12px 9px; }
+  .result.is-featured { border-color:var(--spot); }
   .result:hover { border-color:var(--spot); }
   .result .r-kind { display:block; font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .result b { font:900 27px/1.15 var(--display); }
@@ -58,6 +57,19 @@
   .stat-row.is-superseded { color:var(--muted); }
   .stat-row.is-superseded b { font:700 15px/1 var(--display); color:var(--muted); }
   .combo-list { list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }
+  .contract-grid { display:grid; gap:12px; margin-bottom:14px; }
+  .contract-card { border:2px solid var(--ink); background:var(--paper); padding:12px; }
+  .contract-head { display:flex; justify-content:space-between; gap:16px; align-items:start; }
+  .contract-head h3 { margin:0; font:900 17px/1.1 var(--display); text-transform:uppercase; }
+  .contract-head p { margin:4px 0 0; color:var(--muted); font-size:12px; }
+  .contract-head > b { font:900 25px/1 var(--display); white-space:nowrap; }
+  .contract-stats, .contract-state-rail { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font:10px var(--mono); text-transform:uppercase; }
+  .contract-state-rail span { padding:3px 6px; border:1px solid var(--line); }
+  .contract-filters { margin-top:10px; border-top:1px solid var(--line); padding-top:8px; }
+  .contract-filters summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
+  .contract-filters div { display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-top:7px; }
+  .contract-filters strong { min-width:110px; font:700 10px var(--mono); text-transform:uppercase; }
+  .contract-filters span { padding:3px 6px; background:var(--surface); font:9px var(--mono); }
   .combo { display:grid; grid-template-columns:130px 1fr auto auto; gap:4px 12px; align-items:baseline; padding:9px 12px; border-bottom:1px solid var(--line); }
   .combo:last-child { border-bottom:0; }
   .combo .c-state { font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -158,8 +170,6 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Nemotron 3.5 Lightning 30B-A3B</p>
   <h1>Nemotron 3.5 Lightning 30B-A3B</h1>
   <p>One measured hybrid-Mamba MoE deployment on a single Intel Arc Pro B70, with a stock llama.cpp/SYCL recipe, a measured 0–32K context profile, and a slower measured two-card layer split.</p>
-  <a class="hero-headline" href="nemotron-35-lightning-30b-a3b-b70.html" title="nemotron-35-lightning-30b-a3b-b70 · Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 72.035976."><span class="big">72.17</span><span class="unit">tok/s<br>measured</span><span class="gloss">Nemotron 3.5 Lightning 30B-A3B · UD-Q4_K_M · one B70</span><small>nemotron-3.5-lightning-30b-a3b · UD-Q4_K_M · llama.cpp SYCL · 1× B70 · B70-verified</small></a>
-
   <div class="lineage"><span>Nemotron 3.5 Lightning 30B-A3B · measured model</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
@@ -180,7 +190,13 @@
   <div class="coverage-rail"><span>decode</span><span>prefill</span><span>context through 32K</span><span>quality</span><span>recipe</span></div>
 </a></div>
 
+
+  <div class="section-head"><div><h2>Scoped closures</h2><p>Rejected combinations, scoped to the exact selectors shown.</p></div></div>
+  <div class="closure-grid"><a class="closure-card is-missing" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/nemotron-35-lightning-30b-a3b-b70/README.md"><span>missing · revision=nemotron-3.5-lightning-30b-a3b · active_context_tokens=&gt;32768</span><b>The artifact declares a 1,048,576-token native window, but this package has measured context-depth evidence only through 32,768 tokens.</b></a></div>
+
+
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/nemotron-3-5.json">family data</a></div>
+  <div class="result-strip" aria-label="Curated measured results"><a class="result is-featured" href="nemotron-35-lightning-30b-a3b-b70.html" title="nemotron-35-lightning-30b-a3b-b70 · Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 72.035976."><span class="r-kind">Nemotron 3.5 Lightning 30B-A3B · UD-Q4_K_M · one B70</span><b>72.17</b><span class="r-unit">tok/s</span><span class="r-note">nemotron-3.5-lightning-30b-a3b · UD-Q4_K_M · llama.cpp SYCL · 1× B70</span><span class="r-gate">B70-verified</span></a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="nemotron-card-count">
   <div class="chart-head"><div><h3>One card beats layer split</h3><p>Same UD-Q4_K_M serving protocol; the two-card layer split is measured, not estimated</p></div><div class="metric-switch"></div></div>
   <div class="stat-row"><span class="l">serving median · B70 cards 1</span><span class="stat-values"><span class="stat-metric"><b>72.04–72.17</b><span class="u">tok/s</span><small>Decode</small></span></span><span class="m">lab measurement; quality scope in evidence · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/nemotron-35-lightning-30b-a3b-b70/README.md">evidence</a></span></div><div class="stat-row"><span class="l">serving median · B70 cards 2</span><span class="stat-values"><span class="stat-metric"><b>69.45–69.49</b><span class="u">tok/s</span><small>Decode</small></span></span><span class="m">lab measurement; quality scope in evidence · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/nemotron-35-lightning-30b-a3b-b70/README.md">evidence</a></span></div>
@@ -192,11 +208,6 @@
   <div class="legend"><span><i style="background:var(--s1)"></i>UD-Q4_K_M</span></div>
   <figcaption><div data-family-summary="decode_tok_s"><b>UD-Q4_K_M</b> 0: 73.01 · 2K: 72.42 · 4K: 71.85 · 8K: 70.7 · 16K: 68.56 · 24K: 66.55 · 32K: 64.62</div><div data-family-summary="prefill_tok_s" hidden><b>UD-Q4_K_M</b> 0: 1,260 · 2K: 1,167 · 4K: 1,153 · 8K: 1,146 · 16K: 1,106 · 24K: 1,103 · 32K: 1,019</div><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/nemotron-35-lightning-30b-a3b-b70/nemotron-35-lightning.sweep.json">evidence 1</a></span></figcaption>
 </figure></div>
-
-
-  <div class="section-head"><div><h2>Scoped closures</h2><p>Rejected combinations, scoped to the exact selectors shown.</p></div></div>
-  <div class="closure-grid"><a class="closure-card is-missing" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/nemotron-35-lightning-30b-a3b-b70/README.md"><span>missing · revision=nemotron-3.5-lightning-30b-a3b · active_context_tokens=&gt;32768</span><b>The artifact declares a 1,048,576-token native window, but this package has measured context-depth evidence only through 32,768 tokens.</b></a></div>
-
   <details class="fine"><summary>Transfer boundary</summary><p>nemotron_h_moe, 53 layers, 2688 hidden. Only one model artifact and quantization are measured; no cross-quantization, cross-runtime, or later-weight transfer is claimed. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="../families/nemotron-3-5.json"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
