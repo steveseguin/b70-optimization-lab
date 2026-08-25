@@ -1,0 +1,76 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-exact-depth-phase-aware-overlay.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r4",
+  "state": "preregistered-not-launched",
+  "base": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-sycl-graph-exact-depth-r3-prereg.json",
+    "manifest_sha256": "4b00014de1684b945679ff4e9afe686c6549d519b6a5c8808e0184a280b2a447",
+    "runner_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-f16-tp1-sycl-graph-exact-depth-r3.py",
+    "runner_sha256": "281a15e0c2327028cb042a6d3f9a9a78e93998427c341dc3b36334556c26dd19"
+  },
+  "runtime_identity": {
+    "identical_to_r3": true,
+    "GGML_SYCL_GRAPH_CACHE_SIZE": "8"
+  },
+  "evidence_delta": {
+    "collection": "one isolated llama-bench process per exact context; require exactly two ordered SYCL graph summaries mapped by llama-bench contract to prefill then decode",
+    "summary_count_exact": 2,
+    "ordered_phases": ["prefill", "decode"],
+    "common_requirements": {
+      "device": 0,
+      "cache_limit": 8,
+      "compatibility_rejected": 0,
+      "device_unsupported": 0,
+      "updated": 0,
+      "recreated": 0
+    },
+    "prefill_requirements": {
+      "cache_full_permitted": true,
+      "requested_equals_cache_hit_plus_cache_miss": true,
+      "cache_hit_equals_direct_replay": true,
+      "recorded_equals_created": true,
+      "replayed_equals_cache_hit_plus_created": true,
+      "cache_full_equals_cache_miss_minus_created": true,
+      "requested_equals_replayed_plus_cache_full": true,
+      "requested_positive": true,
+      "recorded_positive": true,
+      "created_positive": true,
+      "replayed_positive": true
+    },
+    "decode_requirements": {
+      "cache_full": 0,
+      "requested_equals_cache_hit_plus_cache_miss": true,
+      "cache_hit_equals_direct_replay": true,
+      "cache_miss_equals_recorded_equals_created": true,
+      "replayed_equals_requested": true,
+      "requested_positive": true,
+      "recorded_positive": true,
+      "created_positive": true,
+      "cache_hit_positive": true,
+      "direct_replay_positive": true,
+      "replayed_positive": true
+    },
+    "aggregate": "sum all counters except cache_entries=max and summary_count=2; retain raw ordered prefill/decode summaries",
+    "prefill_classification_when_cache_full_positive": "mixed-partial-graph; not fully graph certified"
+  },
+  "preserved": {
+    "r3_verbose_argv": true,
+    "contexts": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "source_model_build_runtime_and_32_dso_closure": true,
+    "selectors_and_environment": true,
+    "create_only_lifecycle": true,
+    "authority": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r4",
+    "exact_ack": "RUN qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r4"
+  },
+  "authority": {
+    "raw_cells_require_all_existing_gates": true,
+    "site_publication_authorized": false,
+    "record_or_submission_authorized": false,
+    "quality_claim_authorized": false,
+    "graph_estimates_forbidden": true,
+    "protected_graph_off_values_must_not_be_replaced": true
+  }
+}
