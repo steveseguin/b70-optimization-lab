@@ -1,0 +1,82 @@
+{
+  "schema": "neural.download.qwen38-tp1-context-spine-result.v1",
+  "date": "2026-08-25",
+  "campaign_id": "qwen38-b2dd9ce73d-tp1-parent-sentinels-20260825-r1",
+  "stage_id": "p1-context-spine",
+  "attempt": 1,
+  "classification": "passed-supporting-context-probe",
+  "run_identity": {
+    "lab_git_head": "7aa9b6631ac1ce5ce8e1b571e88e6220b2977315",
+    "vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "tp": 1,
+    "mtp_depth": 0,
+    "graph_profile": "FULL_AND_PIECEWISE",
+    "kv_cache_dtype": "f16",
+    "max_output_tokens": 128,
+    "metric_tokens": 100,
+    "cached_tokens_all_zero": true
+  },
+  "run_root": "/home/steve/qwen38-current-main-runs/tp1-parent-sentinels-b2dd9ce73d-20260825-r1/01-context-spine/sentinel-context",
+  "gates": {
+    "stage_state": "passed",
+    "terminal": true,
+    "canary": true,
+    "context_retrieval": true,
+    "rows_completed": 9,
+    "rows_planned": 9,
+    "first_failure": null,
+    "stopped_on_first_failure": false,
+    "post_cleanup": true,
+    "speed_gate_applied": false
+  },
+  "context_semantics": {
+    "requested_input_tokens": [2048, 8192, 32000],
+    "marker_positions": ["early", "middle", "late"],
+    "actual_prompt_token_ranges": {
+      "2048": [2056, 2057],
+      "8192": [8197, 8198],
+      "32000": [32003, 32004]
+    },
+    "fills_exact_active_context_axis": false,
+    "input_32000_fills_active_context_32768": false,
+    "website_use": "supporting measured evidence and estimator calibration only; fills no exact active_context_tokens cell"
+  },
+  "decode_summary": {
+    "metric": "tok_s_1_100_intervals_after_ttft",
+    "count": 9,
+    "min": 27.070643561307573,
+    "p10": 27.12693202739584,
+    "median": 29.37724825443033,
+    "mean": 28.90461979600654,
+    "max": 30.257292066985876,
+    "stdev": 1.372839964921244
+  },
+  "rows": [
+    {"prompt_id":"context-2048-early","requested_prompt_tokens":2048,"prompt_tokens":2057,"ttft_s":1.4669099250022555,"decode_tok_s":30.257292066985876,"response_sha256":"b0d5ee0dfd16f1f9649b32f5dc9daa3858c50655c3fbcfd566dde532289b0d31"},
+    {"prompt_id":"context-2048-middle","requested_prompt_tokens":2048,"prompt_tokens":2056,"ttft_s":1.475143453993951,"decode_tok_s":30.20988404818759,"response_sha256":"37b4d05f62257fd429deda4c76bb84cea89536fb0e8d583248fbfb891a5d2524"},
+    {"prompt_id":"context-2048-late","requested_prompt_tokens":2048,"prompt_tokens":2057,"ttft_s":1.4792518769972958,"decode_tok_s":30.152905438293057,"response_sha256":"08e70590d009cfbfbc26bac4f0e987c1657e6179d87436db7e7751811dcde21e"},
+    {"prompt_id":"context-8192-early","requested_prompt_tokens":8192,"prompt_tokens":8198,"ttft_s":5.325268069995218,"decode_tok_s":29.390718916694894,"response_sha256":"da79fec5765dd6df8ff5ee58bfd58fc3025793cc3407de8ccb353bd13d686773"},
+    {"prompt_id":"context-8192-middle","requested_prompt_tokens":8192,"prompt_tokens":8197,"ttft_s":5.335662482990301,"decode_tok_s":29.37724825443033,"response_sha256":"550310005c8aaa5e54cba118b453a2a437d0d7361682316799358b7d559ceb1c"},
+    {"prompt_id":"context-8192-late","requested_prompt_tokens":8192,"prompt_tokens":8198,"ttft_s":5.364971939008683,"decode_tok_s":29.33143261306621,"response_sha256":"a1b608eaa51416024d23b153fcf6840a75b2516acc96cb872fd391aa8685e3bf"},
+    {"prompt_id":"context-32000-early","requested_prompt_tokens":32000,"prompt_tokens":32004,"ttft_s":22.480649460994755,"decode_tok_s":27.210449121175397,"response_sha256":"2045faab5fc49e694d941c182f4675ae04c604c579385b1733cad4867b4cc638"},
+    {"prompt_id":"context-32000-middle","requested_prompt_tokens":32000,"prompt_tokens":32003,"ttft_s":22.33087414500187,"decode_tok_s":27.141004143917904,"response_sha256":"32e2d8e086274edfe7294ef02adb4f3f2e895510d24c8f4f86dd5bc6d5a3d13e"},
+    {"prompt_id":"context-32000-late","requested_prompt_tokens":32000,"prompt_tokens":32004,"ttft_s":22.38762396099628,"decode_tok_s":27.070643561307573,"response_sha256":"7daa647bf08ea4ad6297a9835c227cc90b76761c22551874bf418d7a912815bb"}
+  ],
+  "sealed_evidence": {
+    "stage_receipt_sha256": "55bafa6f63c38b538886576867598e0a71cbe96aa94f8b98902058cb894de87a",
+    "benchmark_sha256": "06904ec4a73a51ac8b124f36657627788bcf589840b7898a71da9c2f4cb8b0e5",
+    "canary_sha256": "eb620a3779ade8cd134f4dc4a4792ccddf46fcf1425166fc6e2ab52fb14a5ce7",
+    "server_startup_sha256": "87dba5abd52dac5d502c88e291938b5b46b428a1c0b4ccec74f20669636c2287",
+    "cache_manifest_sha256": "5265fcdc4b41c98addd259ff744d7f9293d94b8f67aee83f342047268aecdce2",
+    "input_files_manifest_sha256": "4c0609dd7fd8138a8899ca9ce673a5a30dd4c7c83b378a72de78ac92b5f7d1f1"
+  },
+  "interpretation": {
+    "fallback_16k_24k_required": false,
+    "supporting_probes_4k_16k_24k_eligible": true,
+    "promoted_speed_record": false,
+    "historical_speed_changed": false,
+    "next_stage_eligible": "p2-eager-control"
+  }
+}
