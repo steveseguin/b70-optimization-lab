@@ -6,6 +6,7 @@ script_dir=$(dirname -- "$script_path")
 lane_dir=$(cd -- "$script_dir/.." && pwd)
 repo_root=$(git -C "$lane_dir" rev-parse --show-toplevel)
 dockerfile="$lane_dir/docker/Dockerfile.absolute-current-main"
+preflight_script="$lane_dir/docker/absolute-current-main-preflight.py"
 
 vllm_source=${VLLM_SOURCE:-/home/steve/src/vllm-current-main}
 kernel_source=${KERNEL_SOURCE:-/home/steve/src/vllm-xpu-kernels-current-main}
@@ -70,6 +71,7 @@ for command_name in awk curl date find findmnt gh git grep jq realpath sed \
   command -v "$command_name" >/dev/null || die "$command_name is required"
 done
 [[ -f $dockerfile ]] || die "missing Dockerfile: $dockerfile"
+[[ -f $preflight_script ]] || die "missing image preflight: $preflight_script"
 
 docker_cmd() {
   if [[ ${DOCKER_USE_SUDO:-1} == 1 ]]; then
@@ -294,6 +296,7 @@ lab_head=$(git -C "$repo_root" rev-parse HEAD)
 lab_tree=$(git -C "$repo_root" rev-parse 'HEAD^{tree}')
 build_script_sha256=$(sha256sum "$script_path" | awk '{print $1}')
 dockerfile_sha256=$(sha256sum "$dockerfile" | awk '{print $1}')
+preflight_script_sha256=$(sha256sum "$preflight_script" | awk '{print $1}')
 vllm_short=${vllm_head:0:10}
 kernel_short=${kernel_head:0:10}
 verify_rust_inputs
@@ -385,6 +388,8 @@ mkdir -p -- \
   "$build_root/receipts" \
   "$build_root/vllm-source" \
   "$build_root/vllm-wheel"
+install -m 0644 "$preflight_script" \
+  "$build_root/context/absolute-current-main-preflight.py"
 
 vllm_archive="$build_root/vllm-source.tar"
 git -C "$vllm_source" archive --format=tar --output="$vllm_archive" "$vllm_head"
@@ -475,6 +480,7 @@ jq -n \
   --arg build_script_sha256 "$build_script_sha256" \
   --arg build_utc "$build_utc" \
   --arg dockerfile_sha256 "$dockerfile_sha256" \
+  --arg preflight_script_sha256 "$preflight_script_sha256" \
   --arg kernel_head "$kernel_head" \
   --arg kernel_tree "$kernel_tree" \
   --arg lab_head "$lab_head" \
@@ -490,7 +496,7 @@ jq -n \
   --arg vllm_package_version "$vllm_package_version" \
   --arg vllm_tree "$vllm_tree" \
   '{
-    schema: "neural-download-absolute-current-main-source-v2",
+    schema: "neural-download-absolute-current-main-source-v3",
     state: "built-not-gpu-qualified",
     overlay: "none",
     build_utc: $build_utc,
@@ -498,7 +504,8 @@ jq -n \
     lab: {head: $lab_head, tree: $lab_tree},
     build_inputs: {
       script_sha256: $build_script_sha256,
-      dockerfile_sha256: $dockerfile_sha256
+      dockerfile_sha256: $dockerfile_sha256,
+      preflight_script_sha256: $preflight_script_sha256
     },
     preserved_upstream_optimization_assets: {
       batch_invariant_config: {
@@ -608,6 +615,7 @@ build_image() {
     --build-arg "KERNEL_WHEEL_SHA256=$lane_kernel_sha" \
     --build-arg "LAB_HEAD=$lab_head" \
     --build-arg "LAB_TREE=$lab_tree" \
+    --build-arg "PREFLIGHT_SCRIPT_SHA256=$preflight_script_sha256" \
     --build-arg "RUST_EXTENSION_SHA256=$rust_extension_sha256" \
     --build-arg "RUST_FRONTEND_SHA256=$rust_frontend_sha256" \
     --build-arg "VLLM_ARCHIVE_SHA256=$vllm_archive_sha256" \
@@ -619,7 +627,7 @@ build_image() {
 
   docker_cmd image inspect "$image_tag" >"$build_root/receipts/$lane-image-inspect.json"
   docker_cmd run --rm --network=none --entrypoint /bin/bash "$image_tag" \
-    -lc 'cat /opt/neural-download/import-receipt.json; cat /opt/neural-download/pip-check.txt' \
+    -lc 'set -euo pipefail; test -s /opt/neural-download/import-receipt.json; cat /opt/neural-download/import-receipt.json; cat /opt/neural-download/pip-check.txt' \
     >"$build_root/receipts/$lane-static-preflight.txt"
   printf '%s\n' "$image_tag" >"$build_root/receipts/$lane-image-tag.txt"
 
@@ -686,6 +694,7 @@ jq -n \
   --arg control_static_preflight_sha256 "$control_static_preflight_sha256" \
   --arg control_tag "$control_tag" \
   --arg dockerfile_sha256 "$dockerfile_sha256" \
+  --arg preflight_script_sha256 "$preflight_script_sha256" \
   --arg kernel_artifact_name "$kernel_artifact_name" \
   --arg kernel_artifact_digest "$expected_kernel_artifact_digest" \
   --arg kernel_head "$kernel_head" \
@@ -717,7 +726,7 @@ jq -n \
   --argjson control_built "$control_built" \
   --argjson kernel_artifact_verified "$kernel_artifact_verified" \
   '{
-    schema: "neural-download-absolute-current-main-build-v2",
+    schema: "neural-download-absolute-current-main-build-v3",
     state: "static-preflight-passed-for-built-images-gpu-qualification-pending",
     mode: $mode,
     overlay: "none",
@@ -728,7 +737,8 @@ jq -n \
     lab: {head: $lab_head, tree: $lab_tree},
     build_inputs: {
       script_sha256: $build_script_sha256,
-      dockerfile_sha256: $dockerfile_sha256
+      dockerfile_sha256: $dockerfile_sha256,
+      preflight_script_sha256: $preflight_script_sha256
     },
     preserved_upstream_optimization_assets: {
       batch_invariant_config: {
@@ -804,6 +814,7 @@ cp -- "$build_root/receipts/build-receipt.json" "$archive_dir/"
 cp -- "$build_root/context/source-identity.json" "$archive_dir/"
 cp -- "$script_path" "$archive_dir/"
 cp -- "$dockerfile" "$archive_dir/"
+cp -- "$preflight_script" "$archive_dir/"
 find "$build_root/receipts" -maxdepth 1 -type f ! -name build-receipt.json \
   -exec cp -t "$archive_dir" -- {} +
 find "$build_root/logs" -maxdepth 1 -type f \
