@@ -1,0 +1,99 @@
+{
+  "schema": "neural.download.qwen38-tp1-exact-depth-campaign.v1",
+  "campaign_id": "qwen38-4af586e185-tp1-exact-depth-20260825-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Measure the six nonzero exact active-context depths for the Qwen3.8 27B AutoRound INT4 TP1 MTP0/F16/FULL_AND_PIECEWISE cell family in one qualified server.",
+  "availability": {
+    "reviewed_utc_date": "2026-08-25",
+    "exact_image_loaded": false,
+    "transfer_bundle_found_on_attached_storage": false,
+    "execution_state": "blocked-until-exact-4af-image-is-restored",
+    "policy": "Static --check validates the packet only. It is not runtime readiness; execution must fail closed unless the exact pinned image tag and ID are restored."
+  },
+  "run_identity": {
+    "runtime_profile": "4af586e185/1e90ffa672 both-current zero-overlay",
+    "image_tag": "neural-download/vllm-openai-xpu:vllm-4af586e185-kernel-1e90ffa672-official",
+    "image_id": "sha256:cb8e41a716a896fdc641d85df1339eb7cc72db9185db5df7f08292ef9e5f1e3f",
+    "source_identity_sha256": "f89a02ca59a8ed0079e2297863b0c2799ae8f4665c3fd921e3ddf4c5409bb41a",
+    "vllm_head": "4af586e185b028acf08312a4dee381b5998a137e",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "model_path": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "tensor_parallel_size": 1,
+    "gpu_affinity": "0",
+    "mtp_depth": 0,
+    "kv_cache_dtype": "float16",
+    "graph_mode": "FULL_AND_PIECEWISE",
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "cache_policy": "fresh",
+    "prefix_cache": false,
+    "pythonhashseed": 0
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "measured_depths": [2048, 4096, 8192, 16384, 24576, 32768],
+    "depth_zero": {
+      "state_after_campaign": "missing",
+      "reason": "The OpenAI-compatible exact-depth client refuses to substitute a nonempty request for the fixture's empty depth-zero input."
+    },
+    "requests_per_depth": 1,
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "required_checks": [
+      "flat integer input has exactly D token IDs and its frozen case hash matches",
+      "usage.prompt_tokens equals D and cached_tokens equals zero",
+      "configured capacity covers D plus 128 output tokens",
+      "prompt truncation, special-token insertion, and context shift are disabled or absent",
+      "exactly 128 output token IDs return with a length finish",
+      "the conventional rate uses 99 intervals between the first 100 output-token events"
+    ]
+  },
+  "lifecycle": {
+    "server_count": 1,
+    "stage_id": "d1-exact-depths",
+    "attempt": 1,
+    "output_root": "/home/steve/qwen38-current-main-runs/tp1-exact-depth-4af586e185-20260825-r1/01-exact-depths",
+    "cache_root": "/home/steve/qwen38-current-main-runs/tp1-exact-depth-cache-4af586e185-20260825-r1/01-exact-depths",
+    "port": 19858,
+    "fresh_ext4_required": true,
+    "clean_pushed_main_required": true,
+    "exact_ack": "RUN qwen38-4af586e185-tp1-exact-depth-20260825-r1 d1-exact-depths r1",
+    "full_quality_battery_required": true,
+    "graph_capture_proof_required": true,
+    "post_run_cleanup_required": true,
+    "terminal_receipt_is_atomic": true
+  },
+  "frozen_inputs": {
+    "build_record": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-4af586e185-absolute-current-main-build.json",
+    "build_record_sha256": "328bf6727262174345f6bb571752c44a77a36b00c2946c5ef6e9fba4cff68989",
+    "build_note": "experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-4af586e185-absolute-current-main-build.md",
+    "build_note_sha256": "cd9a5754d7bf253bdfcd3c1f52826082848e3554971dae4ab5f691b223be3b72",
+    "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "model_verifier_sha256": "5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9",
+    "exact_depth_helper_sha256": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067",
+    "quality_helper_sha256": "67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d",
+    "quality_baseline_sha256": "738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18",
+    "strict_runner_sha256": "cb2bfd95e7ad9956dae5bc22ccfa575c8742847c963143291a21505533598202"
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "speed_is_a_correctness_gate": false,
+    "historical_b2dd_speeds_are_immutable": true,
+    "this_campaign_replaces_historical_results": false,
+    "a_passing_depth_receipt_fills_one_exact_active_context_cell": true,
+    "a_configured_context_limit_without_a_passing_depth_receipt_fills_no_cell": true,
+    "short_quality_workloads_fill_no_exact_active_context_cell": true
+  },
+  "protected_speed_evidence": {
+    "manifest": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-current-main-overlay-manifest.json",
+    "manifest_sha256": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "canonical_values_sha256": "e6ee2cb9908ce940087788243eac5b544c0d2831b94efa47fe6441232c740e8f"
+  }
+}
