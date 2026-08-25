@@ -1,0 +1,236 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-exact-depth-prereg.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+  "state": "preregistered-not-launched",
+  "sealing_status": "UNSEALED_AWAITING_GRAPH_BINARY_BACKEND_DSOS_AND_PARENT_RECEIPTS",
+  "purpose": "Fill only the seven Unsloth Qwen3.6 target-only Q8_0 TP1/MTP0/SYCL-graph/F16-KV exact active-context cells after the clean fa0 graph-port parent proves mechanism and exact output parity.",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-q8-0-82d411a",
+    "quantization": "Q8_0",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "mtp": 0,
+    "graph_mode": "SYCL",
+    "kv": "f16",
+    "active_context_tokens": [
+      0,
+      2048,
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ]
+  },
+  "model": {
+    "repository": "unsloth/Qwen3.6-27B-GGUF",
+    "revision": "82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
+    "artifact_last_change_commit": "9e3417c2ce78c6214c8be9cb7a8b0927b1be2c8b",
+    "path": "/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+    "size_bytes": 28595763424,
+    "sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+    "direct_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+    "ordinary_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+    "embedded_mtp_capability": false
+  },
+  "source": {
+    "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port",
+    "base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "required_modified_paths": {
+      "ggml/src/ggml-sycl/common.hpp": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+      "ggml/src/ggml-sycl/ggml-sycl.cpp": "024fda2f9e667aa82cfdac64c079b5cb932e6a40e90031ad16cfd142bec93544"
+    },
+    "patch": {
+      "path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-evidence-port-20260825.patch",
+      "sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892"
+    }
+  },
+  "runtime": {
+    "build_root": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port",
+    "binary": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-bench",
+      "size_bytes": -1,
+      "sha256": "FILL_AFTER_LLAMA_BENCH_BUILD"
+    },
+    "graph_backend": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-sycl.so",
+      "size_bytes": -1,
+      "sha256": "FILL_AFTER_GRAPH_BACKEND_BUILD"
+    },
+    "effective_shared_libraries": [],
+    "required_cmake": {
+      "CMAKE_BUILD_TYPE": "Release",
+      "GGML_SYCL": "ON",
+      "GGML_SYCL_DEVICE_ARCH": "bmg_g31",
+      "GGML_SYCL_DNN": "OFF",
+      "GGML_SYCL_F16": "ON",
+      "GGML_SYCL_GRAPH": "ON",
+      "GGML_SYCL_HOST_MEM_FALLBACK": "OFF",
+      "GGML_SYCL_SUPPORT_LEVEL_ZERO_API": "ON",
+      "GGML_SYCL_TARGET": "INTEL"
+    }
+  },
+  "parent_sentinel": {
+    "campaign_id": "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1",
+    "preregistration": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-prereg.json",
+      "sha256": "FILL_AFTER_PARENT_PACKET_FREEZE"
+    },
+    "runner": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-r1.py",
+      "sha256": "FILL_AFTER_PARENT_PACKET_FREEZE"
+    },
+    "result": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-fa0-graph-port-parent-sentinel-r1-result.json",
+      "sha256": "FILL_AFTER_PARENT_PASS"
+    },
+    "terminal_receipt": {
+      "path": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1/terminal-receipt.json",
+      "sha256": "FILL_AFTER_PARENT_PASS"
+    },
+    "parity_receipt": {
+      "path": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1/parity-receipt.json",
+      "sha256": "FILL_AFTER_PARENT_PASS"
+    },
+    "required_authority": {
+      "terminal_state": "passed-parent-sentinel-only",
+      "mechanism_and_exact_output_parity": true,
+      "seven_cell_expansion": false,
+      "site_publication": false,
+      "record_or_submission": false
+    },
+    "same_graph_backend_as_curve_required": true
+  },
+  "graph_evidence": {
+    "collection": "one isolated llama-bench process per exact context; every process must emit exactly one accepted SYCL graph summary",
+    "required_for_every_context": [
+      0,
+      2048,
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "per_context_requirements": {
+      "requested_positive": true,
+      "recorded_positive": true,
+      "created_positive": true,
+      "cache_hit_positive": true,
+      "direct_replay_positive": true,
+      "replayed_positive": true,
+      "replayed_equals_requested": true,
+      "compatibility_rejected": 0,
+      "device_unsupported": 0,
+      "cache_full": 0,
+      "device": 0,
+      "cache_limit": 8
+    },
+    "graph_estimates_forbidden": true
+  },
+  "argv_template": [
+    "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-bench",
+    "-m",
+    "/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+    "-dev",
+    "SYCL0",
+    "-ngl",
+    "99",
+    "-sm",
+    "layer",
+    "-p",
+    "2048",
+    "-n",
+    "128",
+    "-d",
+    "{active_context_tokens}",
+    "-b",
+    "2048",
+    "-ub",
+    "512",
+    "-fa",
+    "on",
+    "-ctk",
+    "f16",
+    "-ctv",
+    "f16",
+    "-t",
+    "16",
+    "--poll",
+    "50",
+    "-r",
+    "5",
+    "-o",
+    "json"
+  ],
+  "environment": {
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "GGML_SYCL_ENABLE_GRAPH": "1",
+    "GGML_SYCL_GRAPH_CACHE_SIZE": "8",
+    "UR_L0_USE_IMMEDIATE_COMMANDLISTS": "1",
+    "UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD": "1",
+    "GGML_SYCL_COMM_SINGLE_KERNEL": "1",
+    "GGML_META_FUSE_ALLREDUCE_ADD": "1",
+    "GGML_META_FUSE_ALLREDUCE_ADD_RMS_MUL": "1",
+    "GGML_SYCL_COMM_FUSED_Q8": "1",
+    "GGML_SYCL_FUSED_SWIGLU_Q8": "1",
+    "GGML_SYCL_FUSED_ATTN_Q8": "1",
+    "GGML_SYCL_FUSED_GDN_Q8": "1",
+    "GGML_SYCL_FUSED_MMVQ_PAIR": "1",
+    "GGML_SYCL_FUSED_MMVQ_SWIGLU_Q4K": "1",
+    "GGML_SYCL_FUSED_MMVQ_PAIR_GDN": "1",
+    "GGML_SYCL_FUSED_MMVQ_TRIPLE_ATTN": "1",
+    "GGML_SYCL_FUSED_MMVQ_TRIPLE_GDN": "1",
+    "GGML_SYCL_FUSED_MMVQ_QUAD_GDN": "1",
+    "GGML_SYCL_FUSED_GDN_BETA_SIGMOID": "1",
+    "GGML_SYCL_FUSED_CONCAT_STATE": "1",
+    "GGML_SYCL_FUSED_GDN_STATE_IO": "1",
+    "GGML_SYCL_FUSED_CONV_STATE_IO": "1",
+    "GGML_SYCL_COMM_DIRECT_Q8": "2",
+    "GGML_SYCL_FUSED_ROPE_SET_ROWS": "1",
+    "GGML_SYCL_COMM_REDUCE_VEC4": "1",
+    "GGML_SYCL_FUSED_QK_NORM_ROPE": "1",
+    "GGML_SYCL_FUSED_CONV_SILU_L2": "1",
+    "GGML_SYCL_FUSE_EXT": "31",
+    "GGML_SYCL_QDEDUP_STATS": "1",
+    "GGML_SYCL_MMQ_Q4K_REORDER": "1"
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+    "output_fstype": "ext4",
+    "exact_ack": "RUN qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+    "timeout_seconds_per_context": 1800,
+    "requires_clean_pushed_main": true,
+    "requires_idle_gpu0_render_node": "/dev/dri/by-path/pci-0000:23:00.0-render",
+    "requires_no_server_or_container": true,
+    "required_locks": [
+      "/run/lock/muse-glimmer-gpu-exclusive.lock",
+      "/tmp/b70-benchmark.lock",
+      "/tmp/b70-gpu0.lock",
+      "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"
+    ],
+    "artifacts_are_create_only": true,
+    "terminal_receipt_required": true
+  },
+  "interpretation": {
+    "measurement_class": "raw-engine llama-bench",
+    "http_serving_metric": false,
+    "new_quality_gate": false,
+    "quality_gate_required_before_publication": true,
+    "artifact_quality_is_separate": true,
+    "speed_floor": null,
+    "cell_gain_on_pass": 7,
+    "fill_only": "the seven matching Unsloth Qwen3.6 target-only Q8_0 TP1/MTP0/SYCL-graph/F16-KV missing cells after parent, identity, per-context graph, parser, and cleanup gates pass",
+    "site_publication_authorized": false,
+    "record_or_submission_authorized": false,
+    "quality_claim_authorized": false,
+    "graph_estimates_forbidden": true,
+    "protected_graph_off_measurement_id": "q36-unsloth-q8-tp1-kv-f16-context",
+    "protected_graph_off_values_must_not_be_replaced": true,
+    "protected_overlay_manifest_sha256": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "protected_site_metric_projection_sha256": "1a5c4e32cf868776ea0174b0e8349e5b7f0d7e1e4187946c4dbe689457b03c",
+    "historical_featured_speeds_are_immutable": true,
+    "cross_revision_or_quantization_transfer_allowed": false
+  }
+}

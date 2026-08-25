@@ -1,0 +1,175 @@
+{
+  "schema": "neural.download.qwen36-llama-fa0-graph-exact-depth-prereg.v1",
+  "campaign_id": "qwen36-q8-q8kv-tp1-fa0-graph-exact-depth-20260825-r1",
+  "state": "preregistered-not-launched",
+  "build_identity_status": "UNSEALED_AWAITING_LLAMA_BENCH_AND_DSO_HASHES",
+  "parent_identity_status": "UNSEALED_AWAITING_PASSED_PARENT_RECEIPTS",
+  "purpose": "Measure only the seven target-only Unsloth Qwen3.6 Q8_0 TP1/MTP0/SYCL-graph/q8_0-KV exact active-context cells after the focused graph-port parent passes.",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-q8-0-82d411a",
+    "quantization": "Q8_0",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "mtp": 0,
+    "graph_mode": "on",
+    "kv": "q8_0",
+    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+  },
+  "model": {
+    "repository": "unsloth/Qwen3.6-27B-GGUF",
+    "revision": "82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
+    "artifact_last_change_commit": "9e3417c2ce78c6214c8be9cb7a8b0927b1be2c8b",
+    "path": "/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+    "size_bytes": 28595763424,
+    "sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+    "direct_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+    "ordinary_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+    "embedded_mtp_capability": false
+  },
+  "accepted_graph_off_reference": {
+    "manifest": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-q8kv-tp1-exact-depth-prereg.json",
+    "manifest_sha256": "24924133fb2a81ca7c368018d9a136067fb38d380904f14cfec4dacf698365e2",
+    "runner": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-q8kv-tp1-exact-depth-r1.py",
+    "runner_sha256": "e266eed67e136078c65dd1a31ba569dd2b65be38e067fb84efbb6da2954c6596",
+    "result": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-q8kv-tp1-exact-depth-result.json",
+    "result_sha256": "74b6373258eb2db816f5d5bbe5f69f1478313f818e3e826733b8500d45be2e59",
+    "result_note": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-08-25-qwen36-q8-q8kv-tp1-exact-depth-result.md",
+    "result_note_sha256": "4aab0de3ff9b293289e6a16bd3b47d605a0f607b60d71ac27f04f170e96f56ea",
+    "transfer_scope": "Only model, q8_0-KV workload shape, exact depths, parser, lifecycle, and comparison identity transfer. No graph-off speed, graph classification, quality, or publication authority transfers."
+  },
+  "source": {
+    "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port",
+    "base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "required_modified_paths": ["ggml/src/ggml-sycl/common.hpp", "ggml/src/ggml-sycl/ggml-sycl.cpp"],
+    "post_apply_sha256": {
+      "ggml/src/ggml-sycl/common.hpp": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+      "ggml/src/ggml-sycl/ggml-sycl.cpp": "024fda2f9e667aa82cfdac64c079b5cb932e6a40e90031ad16cfd142bec93544"
+    },
+    "patch": {
+      "path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-evidence-port-20260825.patch",
+      "sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892",
+      "source_manifest": "patches/qwen36-27b-mtp-gguf-q4-b70/source-manifest.json",
+      "source_manifest_sha256": "2a4c315a5429c458b80e6aa55396e3ce31af44fac76905d78a6155ea75a7ae1c"
+    }
+  },
+  "runtime": {
+    "build_root": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port",
+    "binary": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-bench",
+      "size_bytes": -1,
+      "sha256": "FILL_AFTER_LLAMA_BENCH_BUILD"
+    },
+    "graph_backend": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-sycl.so",
+      "size_bytes": -1,
+      "sha256": "FILL_AFTER_GRAPH_BACKEND_BUILD"
+    },
+    "cmake_cache": {"path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/CMakeCache.txt", "sha256": "39852126a74e193d99fe9ee2a0a2553d6afc9f6ed2b77b7b853bb25dd689d461"},
+    "makefile": {"path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/Makefile", "sha256": "db2b9dcc0296571e4f76b48402649af56376ea81582c49ca0442b9b35070298f"},
+    "sycl_flags": {"path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/ggml/src/ggml-sycl/CMakeFiles/ggml-sycl.dir/flags.make", "sha256": "c52e473c20c9e06f30b5558445d210791e88047fc0dd6e4585f9fa634fd0a727"},
+    "required_cmake": {"CMAKE_BUILD_TYPE": "Release", "GGML_SYCL": "ON", "GGML_SYCL_DEVICE_ARCH": "bmg_g31", "GGML_SYCL_DNN": "OFF", "GGML_SYCL_F16": "ON", "GGML_SYCL_GRAPH": "ON", "GGML_SYCL_HOST_MEM_FALLBACK": "OFF", "GGML_SYCL_SUPPORT_LEVEL_ZERO_API": "ON", "GGML_SYCL_TARGET": "INTEL"},
+    "effective_shared_libraries": []
+  },
+  "parent_sentinel": {
+    "campaign_id": "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1",
+    "terminal_receipt": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1/terminal-receipt.json",
+    "terminal_sha256": "FILL_AFTER_PASSED_PARENT_SENTINEL",
+    "campaign_identity_receipt": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1/campaign-identity.json",
+    "campaign_identity_sha256": "FILL_AFTER_PASSED_PARENT_SENTINEL",
+    "parity_receipt": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1/parity-receipt.json",
+    "parity_receipt_sha256": "FILL_AFTER_PASSED_PARENT_SENTINEL",
+    "required_state": "passed-parent-sentinel-only",
+    "required_same_build_root": true,
+    "required_exact_output_parity": true,
+    "scope": "The parent transfers only the focused port mechanism, positive record/direct-replay evidence, and same-new-build F16 output parity. It does not transfer q8_0-KV quality or seven-cell performance."
+  },
+  "environment": {
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "GGML_SYCL_ENABLE_GRAPH": "1",
+    "GGML_SYCL_GRAPH_CACHE_SIZE": "8",
+    "UR_L0_USE_IMMEDIATE_COMMANDLISTS": "1",
+    "UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD": "1",
+    "GGML_SYCL_COMM_SINGLE_KERNEL": "1",
+    "GGML_META_FUSE_ALLREDUCE_ADD": "1",
+    "GGML_META_FUSE_ALLREDUCE_ADD_RMS_MUL": "1",
+    "GGML_SYCL_COMM_FUSED_Q8": "1",
+    "GGML_SYCL_FUSED_SWIGLU_Q8": "1",
+    "GGML_SYCL_FUSED_ATTN_Q8": "1",
+    "GGML_SYCL_FUSED_GDN_Q8": "1",
+    "GGML_SYCL_FUSED_MMVQ_PAIR": "1",
+    "GGML_SYCL_FUSED_MMVQ_SWIGLU_Q4K": "1",
+    "GGML_SYCL_FUSED_MMVQ_PAIR_GDN": "1",
+    "GGML_SYCL_FUSED_MMVQ_TRIPLE_ATTN": "1",
+    "GGML_SYCL_FUSED_MMVQ_TRIPLE_GDN": "1",
+    "GGML_SYCL_FUSED_MMVQ_QUAD_GDN": "1",
+    "GGML_SYCL_FUSED_GDN_BETA_SIGMOID": "1",
+    "GGML_SYCL_FUSED_CONCAT_STATE": "1",
+    "GGML_SYCL_FUSED_GDN_STATE_IO": "1",
+    "GGML_SYCL_FUSED_CONV_STATE_IO": "1",
+    "GGML_SYCL_COMM_DIRECT_Q8": "2",
+    "GGML_SYCL_FUSED_ROPE_SET_ROWS": "1",
+    "GGML_SYCL_COMM_REDUCE_VEC4": "1",
+    "GGML_SYCL_FUSED_QK_NORM_ROPE": "1",
+    "GGML_SYCL_FUSED_CONV_SILU_L2": "1",
+    "GGML_SYCL_FUSE_EXT": "31",
+    "GGML_SYCL_QDEDUP_STATS": "1",
+    "GGML_SYCL_MMQ_Q4K_REORDER": "1"
+  },
+  "workload": {
+    "execution_shape": "seven-fresh-processes-one-depth-each",
+    "common_argv": ["/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-bench", "-m", "/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf", "-dev", "SYCL0", "-ngl", "99", "-sm", "layer", "-p", "2048", "-n", "128", "-b", "2048", "-ub", "512", "-fa", "on", "-ctk", "q8_0", "-ctv", "q8_0", "-t", "16", "--poll", "50", "-r", "5", "-o", "json"],
+    "per_cell_depth_argv": ["-d", "{active_context_tokens}"],
+    "timeout_seconds_per_cell": 1800,
+    "child_stdin": "/dev/null",
+    "fresh_home_cache_tmp_per_cell": true
+  },
+  "graph_acceptance_per_cell": {
+    "exactly_one_summary": true,
+    "device": 0,
+    "cache_limit": 8,
+    "compatibility_rejected": 0,
+    "device_unsupported": 0,
+    "cache_full": 0,
+    "positive": ["requested", "cache_hit", "cache_miss", "direct_replay", "recorded", "created", "replayed"],
+    "replayed_equals_requested": true,
+    "all_seven_depths_required": true
+  },
+  "q8_kv_publication_gate": {
+    "status": "pending-separate-parity-and-quality-receipt",
+    "receipt": "FILL_AFTER_Q8KV_PARITY_AND_QUALITY_GATE",
+    "receipt_sha256": "FILL_AFTER_Q8KV_PARITY_AND_QUALITY_GATE",
+    "same_model_build_and_q8_0_kv_required": true,
+    "graph_off_on_exact_output_parity_required": true,
+    "q8_0_kv_quality_battery_required": true,
+    "required_before_site_publication": true,
+    "site_publication_authority": false
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-q8kv-tp1-fa0-graph-exact-depth-20260825-r1",
+    "output_fstype": "ext4",
+    "exact_ack": "RUN qwen36-q8-q8kv-tp1-fa0-graph-exact-depth-20260825-r1",
+    "requires_clean_pushed_main": true,
+    "live_origin_equality_required_prelaunch": true,
+    "local_launch_head_and_packet_blobs_frozen_postlaunch": true,
+    "live_origin_equality_required_postlaunch": false,
+    "requires_no_server_or_container": true,
+    "required_locks": ["/run/lock/muse-glimmer-gpu-exclusive.lock", "/tmp/b70-benchmark.lock", "/tmp/b70-gpu0.lock", "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"],
+    "artifacts_are_create_only": true,
+    "terminal_receipt_required": true
+  },
+  "interpretation": {
+    "measurement_class": "raw-engine llama-bench",
+    "http_serving_metric": false,
+    "speed_floor": null,
+    "cell_gain_on_measurement_pass": 7,
+    "graph_estimates_forbidden": true,
+    "measured_graph_cells_only": true,
+    "site_publication_authorized": false,
+    "record_or_submission_authorized": false,
+    "quality_claim_authorized": false,
+    "protected_graph_off_values_are_immutable": true,
+    "graph_on_cells_are_append_only": true,
+    "cross_kv_transfer_allowed": false
+  }
+}
