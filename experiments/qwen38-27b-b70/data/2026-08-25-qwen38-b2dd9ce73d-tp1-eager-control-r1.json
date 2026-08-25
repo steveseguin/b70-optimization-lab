@@ -1,0 +1,105 @@
+{
+  "schema": "neural.download.qwen38-tp1-eager-control-result.v1",
+  "date": "2026-08-25",
+  "campaign_id": "qwen38-b2dd9ce73d-tp1-parent-sentinels-20260825-r1",
+  "stage_id": "p2-eager-control",
+  "attempt": 1,
+  "classification": "passed-quality-clean-short-suite-control",
+  "run_identity": {
+    "lab_git_head_at_launch": "5ce411e5a609aed51bca1872050dd6046a13ce90",
+    "vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+    "tp": 1,
+    "mtp_depth": 0,
+    "graph_mode": "off",
+    "kv_cache_dtype": "f16",
+    "max_model_len": 32768,
+    "prefix_caching": false,
+    "max_output_tokens": 512,
+    "metric_tokens": 100,
+    "natural_eos": true,
+    "return_token_ids": true,
+    "seed": 1
+  },
+  "run_root": "/home/steve/qwen38-current-main-runs/tp1-parent-sentinels-b2dd9ce73d-20260825-r1/02-eager-control/full-short",
+  "gates": {
+    "stage_state": "passed",
+    "terminal": true,
+    "runner_return_code": 0,
+    "phase_return_codes": {
+      "canary": 0,
+      "bench": 0,
+      "quality": 0
+    },
+    "canary": true,
+    "benchmark_rows": 25,
+    "benchmark_gate": true,
+    "exact_quality_cases": 7,
+    "repeat_runs": 8,
+    "repeat_unique_hashes": 1,
+    "long_context_needle": true,
+    "baseline_comparisons_passed": 24,
+    "quality_cached_zero": 16,
+    "quality_gate": true,
+    "post_cleanup": true,
+    "speed_gate_applied": false
+  },
+  "decode_summary": {
+    "preferred_metric": "tok_s_1_100_intervals_after_ttft",
+    "count": 25,
+    "min": 22.286417971537013,
+    "p10": 22.574409944274304,
+    "median": 23.851819544748224,
+    "mean": 23.62161282024653,
+    "max": 24.27564513069227,
+    "stdev": 0.6483234099405163,
+    "median_ttft_ms": 276.30411100108176
+  },
+  "context_semantics": {
+    "classification": "short-suite-parent-control",
+    "fills_exact_active_context_axis": false,
+    "fills_active_context_tokens_zero": false,
+    "configured_max_context_is_not_active_context": true,
+    "serving_input_8192_and_32000_expansion_eligible": true
+  },
+  "receipt_recovery": {
+    "required": true,
+    "reason": "The original launcher completed runner output and cleanup, then its obsolete second live-origin equality check saw origin/main advance and aborted before writing a receipt.",
+    "remote_transition": {
+      "launch_head": "5ce411e5a609aed51bca1872050dd6046a13ce90",
+      "observed_live_origin_after": "25fb28655cad6b8a333916f4fb74b33882149770",
+      "fast_forward": true,
+      "frozen_run_identity_changed": false
+    },
+    "policy_fix_commit": "afcf8aaa474ec30d6df500b7c2803fa01c8dd1b9",
+    "recovery_mode": "report-only-existing-output",
+    "recovery_launched_gpu_or_container": false,
+    "all_frozen_inputs_reverified": true
+  },
+  "sealed_evidence": {
+    "stage_receipt_sha256": "e4513a9a76ff8c5673a06099c8f1f00ba7b25b60cd0635c6914c1e397495ba86",
+    "benchmark_sha256": "4509e8b085a69b9e82659816aaf324ba06e170b7a85762e419528874ead582ff",
+    "quality_sha256": "e3c9279540056e46e8d7cbfe255e837b09c182f747df5134ff7403dbd0ca884b",
+    "canary_sha256": "b85c0178e4865a4e0e439b770c3445a18929c5de66d50e2cfd96db065c85fa3c",
+    "server_startup_sha256": "149c925d739ec760a39b1f19bb291bb7d9814f6c3baca8731a05b6ab3bfc30f4",
+    "cache_manifest_sha256": "e886037cccf49c32af0e37e4e797eace9e2769f6f344828ba2dd79cd7241adad",
+    "input_files_manifest_sha256": "076737562d751ff7f3daba3da302f89ee3bb5d43f236162bdfcb86ab40fb14a0"
+  },
+  "interpretation": {
+    "promoted_speed_record": false,
+    "historical_speed_changed": false,
+    "protected_graph_on_speed_remains_distinct": true,
+    "target_oracle_parent_qualified": true,
+    "directly_eligible_children": [
+      "p3-eager-mtp2",
+      "p4-graph-mtp1"
+    ],
+    "still_order_gated_descendants": [
+      "p5-e4m3-kv",
+      "p6-e5m2-kv-init"
+    ],
+    "website_use": "quality-clean measured parent/control evidence; not an exact active-context cell"
+  }
+}
