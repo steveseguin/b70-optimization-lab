@@ -2405,6 +2405,90 @@
           "evidence": "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
         }
       ],
+      "performance_profiles": [
+        {
+          "id": "http-decode-vs-active-context",
+          "label": "Qualified TP2 HTTP decode over exact active context",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_label": "Exact active prompt tokens",
+          "scope": "One-slot native HTTP completions on the exact promoted Q4_K_M TP2 stack, two B70s, equal tensor split, F16 KV, 33,024 configured context, cache disabled, no truncation or context shift, and 128 returned token IDs. The fixture is grade C repeated-token shape evidence, not natural prose. Every marker is measured; no point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp2-http-depth-20260825-r1-attempt1/summary.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 49.489490115227746,
+              "samples": 1
+            },
+            {
+              "context_tokens": 4096,
+              "value": 49.01030658650703,
+              "samples": 1
+            },
+            {
+              "context_tokens": 8192,
+              "value": 48.30039279903885,
+              "samples": 1
+            },
+            {
+              "context_tokens": 16384,
+              "value": 47.03057165241295,
+              "samples": 1
+            },
+            {
+              "context_tokens": 24576,
+              "value": 45.53456055073531,
+              "samples": 1
+            },
+            {
+              "context_tokens": 32768,
+              "value": 44.43728051677345,
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "id": "http-ttft-vs-active-context",
+          "label": "Qualified TP2 HTTP TTFT over exact active context",
+          "metric": "ttft",
+          "unit": "ms",
+          "x_label": "Exact active prompt tokens",
+          "scope": "TTFT from the same one-slot exact-token HTTP receipts as the TP2 decode curve. Cache was zero and prompt counts were exact at every marker. The fixture is grade C repeated-token shape evidence and is not a natural-prose latency claim. Every marker is measured; no point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp2-http-depth-20260825-r1-attempt1/summary.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 1945.0462919194251,
+              "samples": 1
+            },
+            {
+              "context_tokens": 4096,
+              "value": 3860.131878987886,
+              "samples": 1
+            },
+            {
+              "context_tokens": 8192,
+              "value": 7861.680709989741,
+              "samples": 1
+            },
+            {
+              "context_tokens": 16384,
+              "value": 16299.778147018515,
+              "samples": 1
+            },
+            {
+              "context_tokens": 24576,
+              "value": 25347.310534096323,
+              "samples": 1
+            },
+            {
+              "context_tokens": 32768,
+              "value": 35058.737567975186,
+              "samples": 1
+            }
+          ]
+        }
+      ],
       "hardware": {
         "accelerator": "Intel Arc Pro B70 32 GiB",
         "cards": 2,
@@ -2454,14 +2538,14 @@
         "The package has not been replayed from a clean host and is not a beginner install guide; source-rebuilt binaries require an explicit preflight override and the full output-oracle gate.",
         "The 49.717503 tok/s headline is a TP2 target-only reasoning-off result and must not be compared as a TP1, speculative, or alternate-accounting row.",
         "The optional large-batch mode improves prefill on a short probe while slightly reducing decode; it is not the headline configuration.",
-        "No full active-context, VRAM, or power curve has been captured for this TP2 identity."
+        "No active-context prefill, VRAM, or power curve has been captured for this TP2 identity."
       ],
       "missing": [
         "tested platform installation",
         "self-contained model download helper",
         "clean-host replay",
         "beginner recovery flow",
-        "active-context prefill, TTFT, memory, and power profiles"
+        "active-context prefill, memory, and power profiles"
       ]
     },
     {

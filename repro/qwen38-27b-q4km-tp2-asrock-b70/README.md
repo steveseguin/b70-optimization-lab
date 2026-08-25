@@ -103,3 +103,14 @@ The structured promoted result and exact output oracle are in
 [`2026-08-15-q4km-tp2-q4k-glu-summary.json`](../../experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json).
 The prior route remains preserved in
 [`2026-08-15-q4km-tp2-target-summary.json`](../../experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-target-summary.json).
+
+## Exact active-context HTTP profile
+
+The same exact package identity was subsequently measured through one native
+HTTP slot at 2K/4K/8K/16K/24K/32K active prompt tokens. At 32K it delivered
+**`44.437281 tok/s`** decode with **`35,058.738 ms`** TTFT. All six points
+returned 128 token IDs, were cache-zero, and passed exact-length and context
+gates. The fixture is grade C repeated-token shape evidence, not natural
+prose; no point is interpolated or extrapolated. See the
+[result note](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp2-http-depth-r1-result.md)
+and [complete evidence](../../experiments/qwen38-27b-b70/data/qwen38-q4km-tp2-http-depth-20260825-r1-attempt1/).
