@@ -30,7 +30,8 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ "${runtime_profile}" == control || "${runtime_profile}" == wdc-q4k || \
    "${runtime_profile}" == wdc-q4k-r1 || \
    "${runtime_profile}" == wdc-q4k-forced || \
-   "${runtime_profile}" == wdc-q4k-scoped ]] || \
+   "${runtime_profile}" == wdc-q4k-scoped || \
+   "${runtime_profile}" == wdc-q4k-scoped-noq6 ]] || \
   fail 'invalid RUNTIME_PROFILE'
 max_pl=$(tr ',' '\n' <<< "${npl}" | sort -nr | head -1)
 (( ctx_size >= max_pl * (128 + 256) )) || \
@@ -104,9 +105,11 @@ export GGML_SYCL_QDEDUP_STATS=1
 export GGML_SYCL_MMQ_Q4K_REORDER=1
 unset GGML_SYCL_WDC GGML_SYCL_WDC_Q4K GGML_SYCL_REORDER_IN_GEMM
 unset GGML_SYCL_FORCE_REORDER GGML_SYCL_FORCE_REORDER_Q4K
+unset GGML_SYCL_DISABLE_REORDER_Q6K
 if [[ "${runtime_profile}" == wdc-q4k || "${runtime_profile}" == wdc-q4k-r1 || \
       "${runtime_profile}" == wdc-q4k-forced || \
-      "${runtime_profile}" == wdc-q4k-scoped ]]; then
+      "${runtime_profile}" == wdc-q4k-scoped || \
+      "${runtime_profile}" == wdc-q4k-scoped-noq6 ]]; then
   grep -qx 'GGML_SYCL_DNN:BOOL=ON' "${build_dir}/CMakeCache.txt" || \
     fail 'wdc-q4k requires a GGML_SYCL_DNN=ON build'
   grep -Eq '^CMAKE_CXX_FLAGS:STRING=.*GGML_SYCL_Q4K_NIBBLE_PLANE=1' \
@@ -128,8 +131,12 @@ if [[ "${runtime_profile}" == wdc-q4k || "${runtime_profile}" == wdc-q4k-r1 || \
       # for this harness. This estimates the opportunity before a type-scoped
       # production reorder fix; it is not itself a shippable runtime profile.
       export GGML_SYCL_FORCE_REORDER=1
-    elif [[ "${runtime_profile}" == wdc-q4k-scoped ]]; then
+    elif [[ "${runtime_profile}" == wdc-q4k-scoped || \
+            "${runtime_profile}" == wdc-q4k-scoped-noq6 ]]; then
       export GGML_SYCL_FORCE_REORDER_Q4K=1
+      if [[ "${runtime_profile}" == wdc-q4k-scoped-noq6 ]]; then
+        export GGML_SYCL_DISABLE_REORDER_Q6K=1
+      fi
     fi
   fi
 fi

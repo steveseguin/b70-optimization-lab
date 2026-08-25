@@ -986,7 +986,8 @@ Q4_K-only reorder door is now
 but failed before measurement: the width-1 q6_K output head still takes its
 ordinary reorder path after Q4_K planes consume VRAM. A default-off q6_K
 reorder suppression door is the next memory-feasibility delta; its speed cost
-must be measured rather than assumed.
+must be measured rather than assumed. That two-point screen is now
+[preregistered](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-wdc-noq6-r5-preregistration.md).
 A promising point must then pass a
 separate endpoint replay with sequential output oracles before package
 promotion.

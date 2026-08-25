@@ -1,0 +1,29 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -5822,3 +5822,10 @@ static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_ten
++    static const bool disable_q6k = [] {
++        const char * value = std::getenv("GGML_SYCL_DISABLE_REORDER_Q6K");
++        return value != nullptr && std::atoi(value) != 0;
++    }();
++    if (disable_q6k && dst->src[0]->type == GGML_TYPE_Q6_K) {
++        return false;
++    }
+     return g_ggml_sycl_enable_optimize && //allow optimize, controlled by $GGML_SYCL_ENABLE_OPT
+            ctx.opt_feature.reorder &&      //allow this device due to good perf, skip the devices with bad perf.
+            dst->op == GGML_OP_MUL_MAT &&   //limit to some supported cases of Q4_0, to do for more cases.
+diff --git a/ggml/src/ggml-sycl/gemm-wdc.cpp b/ggml/src/ggml-sycl/gemm-wdc.cpp
+--- a/ggml/src/ggml-sycl/gemm-wdc.cpp
++++ b/ggml/src/ggml-sycl/gemm-wdc.cpp
+@@ -726,7 +726,10 @@ void ggml_sycl_wdc_print_doors() {
+     fprintf(stderr, "SYCL doors | reorder    : in_gemm=%d (GGML_SYCL_REORDER_IN_GEMM)   "
+                   "force_reorder=%d (GGML_SYCL_FORCE_REORDER)   "
+-                  "force_q4k=%d (GGML_SYCL_FORCE_REORDER_Q4K)   nvfp4_reorder=%d (%s)\n",
++                  "force_q4k=%d (GGML_SYCL_FORCE_REORDER_Q4K)   "
++                  "disable_q6k=%d (GGML_SYCL_DISABLE_REORDER_Q6K)   nvfp4_reorder=%d (%s)\n",
+                   g_ggml_sycl_reorder_in_gemm, g_ggml_sycl_force_reorder,
+                   g_ggml_sycl_force_reorder_q4k,
++                  getenv("GGML_SYCL_DISABLE_REORDER_Q6K") != nullptr &&
++                          atoi(getenv("GGML_SYCL_DISABLE_REORDER_Q6K")) != 0,
+                   ggml_sycl_nvfp4_reorder_enabled() ? 1 : 0,
+                   getenv("GGML_SYCL_NVFP4_REORDER") != nullptr ? "explicit" : "derived from WDC");

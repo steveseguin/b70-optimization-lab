@@ -1,0 +1,30 @@
+{
+  "campaign_id": "qwen38-q4km-tp1-wdc-noq6-20260825-r5",
+  "status": "preregistered",
+  "objective": "Measure whether Q4_K WDC can fit and win when q6_K reorder is explicitly suppressed, avoiding the 1.27-billion-element output-head temporary copy.",
+  "source": {
+    "base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "applied_diff_sha256": "6a6b49a22e09738f5de7bd04f1ac71b4a39d764091c5cf4f02ee0c526dce170f",
+    "scoped_reorder_patch": "experiments/qwen38-27b-b70/patches/llama-qwen38-q4k-scoped-reorder-20260825.patch",
+    "disable_q6k_patch": "experiments/qwen38-27b-b70/patches/llama-qwen38-disable-q6k-reorder-20260825.patch",
+    "disable_q6k_patch_sha256": "5a33ad949bdafd54854563b6df531d78b4ac3208eb33a710fcdcb21b44d60a65"
+  },
+  "runtime": [
+    "GGML_SYCL_WDC=off",
+    "GGML_SYCL_WDC_Q4K=1",
+    "GGML_SYCL_REORDER_IN_GEMM=1",
+    "GGML_SYCL_FORCE_REORDER_Q4K=1",
+    "GGML_SYCL_DISABLE_REORDER_Q6K=1"
+  ],
+  "matrix": {
+    "parallel_sequences": [1, 64],
+    "prompt_tokens_per_sequence": 128,
+    "generated_tokens_per_sequence": 256,
+    "context_tokens": 32768
+  },
+  "control_evidence": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-batched-ladder-20260825-r1-attempt2/summary.json",
+  "advance_to_full_ladder_if": "Clean completion; banner force_reorder=0, force_q4k=1, disable_q6k=1; non-mutant q4_K WDC-CENSUS engagement; B64 at least 1.05x control; B1 at least 0.95x control. Suppressing q6_K reorder may regress output-head performance, so both speed thresholds are mandatory.",
+  "quality_boundary": "Raw random-token mechanism evidence only. Endpoint sequential-oracle validation is mandatory before promotion.",
+  "build_script": "experiments/qwen38-27b-b70/scripts/build-qwen38-q4km-tp1-wdc-batched-r1.sh",
+  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh"
+}
