@@ -19,7 +19,6 @@ base_digest=sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f
 base_image="vllm/vllm-openai-xpu@$base_digest"
 vllm_upstream_url=https://github.com/vllm-project/vllm.git
 kernel_upstream_url=https://github.com/vllm-project/vllm-xpu-kernels.git
-base_vllm_head=f94666b60d4c58ec0807d22c837cfae322a1dde9
 base_kernel_version=0.1.13.2
 kernel_run_id=32798686770
 kernel_artifact_id=9546354902
@@ -28,8 +27,10 @@ expected_kernel_artifact_digest=sha256:086116f01e838105167b4dfc408be0b3d4e924d7d
 expected_kernel_artifact_size_bytes=344792738
 expected_kernel_build_info_sha256=21d3850a885b1aa848016bd0e2330daafa6d083d6117ba6ea70a623afe6fb470
 expected_kernel_wheel_sha256=f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6
-rust_extension_sha256=7cb3df775d2183d2c1a7d3025a8f49b9a79548d157993969fc0c49f46c725c52
-rust_frontend_sha256=a415187153b2a8b10683494c7b22472158b487c69023713313542d4bc09c4c92
+expected_kernel_package_version=0.1.dev1+g1e90ffa67
+rust_toolchain=1.95
+expected_rust_toolchain_file_sha256=b75adb23d2a10ff0bfdbc436fa4e5e74347ec25eebfaa729a4344f01b59dccfe
+expected_rust_cargo_lock_sha256=e975bb622cac4874694d7aa2d90cd34ab13a30d0426c32feead7b7c441c8219f
 batch_invariant_config_path=vllm/model_executor/determinism/batch_invariant_configs.py
 expected_batch_invariant_config_sha256=e47b18d9394c61fd105e4db51108d72fe1e68d4a2043a8ba62c0af0237453128
 min_initial_root_free_kib=$((21 * 1024 * 1024))
@@ -64,24 +65,24 @@ case "$mode" in
   *) usage; exit 2 ;;
 esac
 
-for command_name in awk date find findmnt gh git grep jq realpath sed sha256sum \
-  stat tar unzip; do
+for command_name in awk curl date find findmnt gh git grep jq realpath sed \
+  sha256sum stat tar unzip; do
   command -v "$command_name" >/dev/null || die "$command_name is required"
 done
 [[ -f $dockerfile ]] || die "missing Dockerfile: $dockerfile"
 
 docker_cmd() {
   if [[ ${DOCKER_USE_SUDO:-1} == 1 ]]; then
-    sudo -S -p '' docker "$@" <"$sudo_password_file"
+    if [[ -r $sudo_password_file ]]; then
+      sudo -S -p '' docker "$@" <"$sudo_password_file"
+    else
+      sudo docker "$@"
+    fi
   else
     docker "$@"
   fi
 }
 
-if [[ ${DOCKER_USE_SUDO:-1} == 1 ]]; then
-  [[ -r $sudo_password_file ]] ||
-    die "sudo password file is not readable: $sudo_password_file"
-fi
 docker_cmd version >/dev/null || die 'Docker is not available'
 
 assert_clean_main() {
@@ -133,10 +134,21 @@ assert_root_space() {
     die "root has insufficient free space for $phase (${available} KiB available; ${minimum_kib} KiB required)"
 }
 
+live_base_digest() {
+  local token
+  token=$(curl -fsSL \
+    'https://auth.docker.io/token?service=registry.docker.io&scope=repository:vllm/vllm-openai-xpu:pull' |
+    jq -er .token)
+  curl -fsSI \
+    -H "Authorization: Bearer $token" \
+    -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json' \
+    "https://registry-1.docker.io/v2/vllm/vllm-openai-xpu/manifests/${base_tag##*:}" |
+    tr -d '\r' | awk 'tolower($1) == "docker-content-digest:" {print $2}'
+}
+
 verify_base_image() {
   local image_id registry_digest
-  registry_digest=$(docker_cmd buildx imagetools inspect "$base_tag" \
-    --format '{{.Manifest.Digest}}')
+  registry_digest=$(live_base_digest)
   [[ $registry_digest == "$base_digest" ]] ||
     die "official nightly base advanced: $registry_digest != $base_digest; resolve and pin the new base before building"
   image_id=$(docker_cmd image inspect "$base_image" --format '{{.Id}}')
@@ -144,20 +156,16 @@ verify_base_image() {
     die "base image ID mismatch: $image_id"
 }
 
-verify_rust_equivalence() {
-  local vllm_head=$1
-  local rust_paths=(
-    rust
-    rust-toolchain.toml
-    build_rust.sh
-    tools/build_rust.py
-  )
-  git -C "$vllm_source" cat-file -e "$base_vllm_head^{commit}" ||
-    die 'official-base vLLM commit is absent from the current clone'
-  if ! git -C "$vllm_source" diff --quiet \
-      "$base_vllm_head..$vllm_head" -- "${rust_paths[@]}"; then
-    die 'Rust inputs changed; rebuild Rust instead of reusing base artifacts'
-  fi
+verify_rust_inputs() {
+  [[ $(sha256sum "$vllm_source/rust-toolchain.toml" | awk '{print $1}') == \
+    "$expected_rust_toolchain_file_sha256" ]] ||
+    die 'Rust toolchain file changed; audit and repin before building'
+  [[ $(sha256sum "$vllm_source/rust/Cargo.lock" | awk '{print $1}') == \
+    "$expected_rust_cargo_lock_sha256" ]] ||
+    die 'Rust Cargo.lock changed; audit and repin before building'
+  [[ $(sed -n 's/^channel = "\([^"]*\)"$/\1/p' \
+    "$vllm_source/rust-toolchain.toml") == "$rust_toolchain" ]] ||
+    die 'Rust toolchain channel does not match the pinned value'
 }
 
 verify_source_batch_invariant_assets() {
@@ -252,7 +260,8 @@ verify_official_kernel_artifact() {
   unzip -t "$wheel" >/dev/null || die 'kernel wheel ZIP integrity failed'
   [[ $(wheel_metadata_value "$wheel" Name) == vllm-xpu-kernels ]] ||
     die 'kernel wheel package name mismatch'
-  [[ $(wheel_metadata_value "$wheel" Version) == 0.1.dev1+g1e90ffa67 ]] ||
+  [[ $(wheel_metadata_value "$wheel" Version) == \
+    "$expected_kernel_package_version" ]] ||
     die 'unexpected official kernel wheel version'
   for member in \
     _C.abi3.so \
@@ -288,7 +297,7 @@ build_script_sha256=$(sha256sum "$script_path" | awk '{print $1}')
 dockerfile_sha256=$(sha256sum "$dockerfile" | awk '{print $1}')
 vllm_short=${vllm_head:0:10}
 kernel_short=${kernel_head:0:10}
-verify_rust_equivalence "$vllm_head"
+verify_rust_inputs
 verify_source_batch_invariant_assets
 
 vllm_scm_version=$(docker_cmd run --rm --network=none \
@@ -381,6 +390,82 @@ git -C "$vllm_source" archive --format=tar --output="$vllm_archive" "$vllm_head"
 vllm_archive_sha256=$(sha256sum "$vllm_archive" | awk '{print $1}')
 tar -xf "$vllm_archive" -C "$build_root/vllm-source"
 
+builder_name="q38-vllm-wheel-$vllm_short"
+rust_fetch_name="q38-rust-fetch-$vllm_short"
+if docker_cmd container inspect "$rust_fetch_name" >/dev/null 2>&1; then
+  die "refusing to replace existing container $rust_fetch_name"
+fi
+if docker_cmd container inspect "$builder_name" >/dev/null 2>&1; then
+  die "refusing to replace existing container $builder_name"
+fi
+
+# Fetch the exact Rust toolchain and Cargo.lock dependencies in a dedicated
+# networked phase. Compilation and wheel assembly below are network-disabled.
+docker_cmd run --rm --name "$rust_fetch_name" \
+  --entrypoint /bin/bash \
+  --mount "type=bind,src=$build_root,dst=/build" \
+  "$base_image" -lc "
+    set -euo pipefail
+    cleanup() { chown -R $(id -u):$(id -g) /build; }
+    trap cleanup EXIT
+    test ! -e /dev/dri
+    export CARGO_HOME=/build/cargo-home
+    export RUSTUP_HOME=/build/rustup-home
+    export PATH=\"\$CARGO_HOME/bin:\$PATH\"
+    curl --proto '=https' --tlsv1.2 -fsS \
+      -o /build/receipts/rustup-init \
+      https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init
+    curl --proto '=https' --tlsv1.2 -fsS \
+      -o /build/receipts/rustup-init.sha256 \
+      https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init.sha256
+    cd /build/receipts
+    sha256sum -c rustup-init.sha256
+    chmod 0755 rustup-init
+    ./rustup-init -y --profile minimal --default-toolchain '$rust_toolchain' \
+      --no-modify-path
+    rustup run '$rust_toolchain' rustc --version --verbose \
+      >rustc-version.txt
+    rustup run '$rust_toolchain' cargo --version --verbose \
+      >cargo-version.txt
+    cd /build/vllm-source
+    rustup run '$rust_toolchain' cargo fetch --locked \
+      --manifest-path rust/Cargo.toml
+  " 2>&1 | tee "$build_root/logs/rust-locked-fetch.log"
+
+docker_cmd run --rm --name "$builder_name" --network=none \
+  --entrypoint /bin/bash \
+  --mount "type=bind,src=$build_root,dst=/build" \
+  "$base_image" -lc "
+    set -euo pipefail
+    cleanup() { chown -R $(id -u):$(id -g) /build; }
+    trap cleanup EXIT
+    test ! -e /dev/dri
+    export CARGO_HOME=/build/cargo-home
+    export RUSTUP_HOME=/build/rustup-home
+    export RUSTUP_TOOLCHAIN='$rust_toolchain'
+    export CARGO_NET_OFFLINE=true
+    export PATH=\"\$CARGO_HOME/bin:\$PATH\"
+    cd /build/vllm-source
+    VLLM_RS_BUILD_VERSION='$vllm_package_version' \
+      /opt/venv/bin/python tools/build_rust.py --release
+    test -x vllm/_rust_tool_parser.abi3.so
+    test -x vllm/vllm-rs
+    VLLM_TARGET_DEVICE=xpu \\
+    VLLM_REQUIRE_RUST_FRONTEND=1 \\
+    VLLM_VERSION_OVERRIDE='$vllm_package_version' \\
+    SETUPTOOLS_SCM_PRETEND_VERSION='$vllm_package_version' \\
+      /root/.local/bin/uv build --offline --no-build-isolation --wheel \\
+        --no-create-gitignore --python /opt/venv/bin/python \\
+        --out-dir /build/vllm-wheel .
+  " 2>&1 | tee "$build_root/logs/rust-and-vllm-wheel-build.log"
+
+rustup_init_sha256=$(sha256sum "$build_root/receipts/rustup-init" |
+  awk '{print $1}')
+rust_extension_sha256=$(sha256sum \
+  "$build_root/vllm-source/vllm/_rust_tool_parser.abi3.so" | awk '{print $1}')
+rust_frontend_sha256=$(sha256sum \
+  "$build_root/vllm-source/vllm/vllm-rs" | awk '{print $1}')
+
 jq -n \
   --arg base_digest "$base_digest" \
   --arg batch_invariant_config_path "$batch_invariant_config_path" \
@@ -392,14 +477,18 @@ jq -n \
   --arg kernel_tree "$kernel_tree" \
   --arg lab_head "$lab_head" \
   --arg lab_tree "$lab_tree" \
+  --arg rust_cargo_lock_sha256 "$expected_rust_cargo_lock_sha256" \
   --arg rust_extension_sha256 "$rust_extension_sha256" \
   --arg rust_frontend_sha256 "$rust_frontend_sha256" \
+  --arg rust_toolchain "$rust_toolchain" \
+  --arg rust_toolchain_file_sha256 "$expected_rust_toolchain_file_sha256" \
+  --arg rustup_init_sha256 "$rustup_init_sha256" \
   --arg vllm_archive_sha256 "$vllm_archive_sha256" \
   --arg vllm_head "$vllm_head" \
   --arg vllm_package_version "$vllm_package_version" \
   --arg vllm_tree "$vllm_tree" \
   '{
-    schema: "neural-download-absolute-current-main-source-v1",
+    schema: "neural-download-absolute-current-main-source-v2",
     state: "built-not-gpu-qualified",
     overlay: "none",
     build_utc: $build_utc,
@@ -422,8 +511,13 @@ jq -n \
       package_version: $vllm_package_version
     },
     kernel: {head: $kernel_head, tree: $kernel_tree},
-    reused_rust: {
-      source_equivalence_base: "f94666b60d4c58ec0807d22c837cfae322a1dde9",
+    rebuilt_rust: {
+      toolchain: $rust_toolchain,
+      toolchain_file_sha256: $rust_toolchain_file_sha256,
+      cargo_lock_sha256: $rust_cargo_lock_sha256,
+      rustup_init_sha256: $rustup_init_sha256,
+      dependency_fetch_network: "enabled-lockfile-enforced",
+      compile_network: "none-cargo-offline",
       extension_sha256: $rust_extension_sha256,
       frontend_sha256: $rust_frontend_sha256
     },
@@ -437,33 +531,6 @@ jq -n \
       }
     }
   }' >"$build_root/context/source-identity.json"
-
-builder_name="q38-vllm-wheel-$vllm_short"
-if docker_cmd container inspect "$builder_name" >/dev/null 2>&1; then
-  die "refusing to replace existing container $builder_name"
-fi
-
-docker_cmd run --rm --name "$builder_name" --network=none \
-  --entrypoint /bin/bash \
-  --mount "type=bind,src=$build_root,dst=/build" \
-  "$base_image" -lc "
-    set -euo pipefail
-    cleanup() { chown -R $(id -u):$(id -g) /build; }
-    trap cleanup EXIT
-    test ! -e /dev/dri
-    test \"\$(sha256sum /workspace/vllm/vllm/_rust_tool_parser.abi3.so | awk '{print \$1}')\" = '$rust_extension_sha256'
-    test \"\$(sha256sum /workspace/vllm/vllm/vllm-rs | awk '{print \$1}')\" = '$rust_frontend_sha256'
-    install -m 0755 /workspace/vllm/vllm/_rust_tool_parser.abi3.so /build/vllm-source/vllm/_rust_tool_parser.abi3.so
-    install -m 0755 /workspace/vllm/vllm/vllm-rs /build/vllm-source/vllm/vllm-rs
-    cd /build/vllm-source
-    VLLM_TARGET_DEVICE=xpu \\
-    VLLM_REQUIRE_RUST_FRONTEND=1 \\
-    VLLM_VERSION_OVERRIDE='$vllm_package_version' \\
-    SETUPTOOLS_SCM_PRETEND_VERSION='$vllm_package_version' \\
-      /root/.local/bin/uv build --offline --no-build-isolation --wheel \\
-        --no-create-gitignore --python /opt/venv/bin/python \\
-        --out-dir /build/vllm-wheel .
-  " 2>&1 | tee "$build_root/logs/vllm-wheel-build.log"
 
 mapfile -t vllm_wheels < <(find "$build_root/vllm-wheel" -maxdepth 1 \
   -type f -name '*.whl' -print)
@@ -600,8 +667,7 @@ fi
   die 'vLLM main advanced during the build; do not qualify these images'
 [[ $(live_remote_head "$kernel_upstream_url") == "$kernel_head" ]] ||
   die 'kernel main advanced during the build; do not qualify these images'
-[[ $(docker_cmd buildx imagetools inspect "$base_tag" \
-  --format '{{.Manifest.Digest}}') == "$base_digest" ]] ||
+[[ $(live_base_digest) == "$base_digest" ]] ||
   die 'official nightly base advanced during the build; do not qualify these images'
 
 jq -n \
@@ -627,8 +693,12 @@ jq -n \
   --arg lab_head "$lab_head" \
   --arg lab_tree "$lab_tree" \
   --arg paged_full_sha256 "$paged_full_sha256" \
+  --arg rust_cargo_lock_sha256 "$expected_rust_cargo_lock_sha256" \
   --arg rust_extension_sha256 "$rust_extension_sha256" \
   --arg rust_frontend_sha256 "$rust_frontend_sha256" \
+  --arg rust_toolchain "$rust_toolchain" \
+  --arg rust_toolchain_file_sha256 "$expected_rust_toolchain_file_sha256" \
+  --arg rustup_init_sha256 "$rustup_init_sha256" \
   --arg vllm_archive_sha256 "$vllm_archive_sha256" \
   --arg vllm_head "$vllm_head" \
   --arg vllm_package_version "$expected_vllm_metadata_version" \
@@ -645,7 +715,7 @@ jq -n \
   --argjson control_built "$control_built" \
   --argjson kernel_artifact_verified "$kernel_artifact_verified" \
   '{
-    schema: "neural-download-absolute-current-main-build-v1",
+    schema: "neural-download-absolute-current-main-build-v2",
     state: "static-preflight-passed-for-built-images-gpu-qualification-pending",
     mode: $mode,
     overlay: "none",
@@ -664,8 +734,13 @@ jq -n \
         sha256: $batch_invariant_config_sha256
       }
     },
-    reused_rust: {
-      source_equivalence_base: "f94666b60d4c58ec0807d22c837cfae322a1dde9",
+    rebuilt_rust: {
+      toolchain: $rust_toolchain,
+      toolchain_file_sha256: $rust_toolchain_file_sha256,
+      cargo_lock_sha256: $rust_cargo_lock_sha256,
+      rustup_init_sha256: $rustup_init_sha256,
+      dependency_fetch_network: "enabled-lockfile-enforced",
+      compile_network: "none-cargo-offline",
       extension_sha256: $rust_extension_sha256,
       frontend_sha256: $rust_frontend_sha256
     },
@@ -742,8 +817,7 @@ find "$build_root/logs" -maxdepth 1 -type f \
   die 'vLLM main advanced while archiving; do not qualify these images'
 [[ $(live_remote_head "$kernel_upstream_url") == "$kernel_head" ]] ||
   die 'kernel main advanced while archiving; do not qualify these images'
-[[ $(docker_cmd buildx imagetools inspect "$base_tag" \
-  --format '{{.Manifest.Digest}}') == "$base_digest" ]] ||
+[[ $(live_base_digest) == "$base_digest" ]] ||
   die 'official nightly base advanced while archiving; do not qualify these images'
 
 printf 'PASS: static current-main build completed; GPU qualification is still pending.\n'
