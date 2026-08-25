@@ -1,0 +1,24 @@
+{
+  "schema": "neural.download.llamacpp-source-patch-manifest.v1",
+  "base": {
+    "repository": "https://github.com/mndodd/llama.cpp.git",
+    "commit": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "required_state": "clean exact commit",
+    "files": {
+      "ggml/src/ggml-sycl/common.hpp": "25e2323e6199c25b840c4c2f5729389963358faa892de1ee6b71a08619ac7be8",
+      "ggml/src/ggml-sycl/ggml-sycl.cpp": "561a275ca5abfc437fdbf126a5d1b475755558d6cec9cac3f5f66d1af8c241bd"
+    }
+  },
+  "patch": {
+    "file": "llamacpp-fa0-graph-cache-evidence-port-20260825.patch",
+    "sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892",
+    "insertions": 215,
+    "deletions": 21,
+    "files": 2
+  },
+  "post_apply_files": {
+    "ggml/src/ggml-sycl/common.hpp": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+    "ggml/src/ggml-sycl/ggml-sycl.cpp": "024fda2f9e667aa82cfdac64c079b5cb932e6a40e90031ad16cfd142bec93544"
+  },
+  "authority": "source identity and static patch provenance only; no build or runtime claim"
+}

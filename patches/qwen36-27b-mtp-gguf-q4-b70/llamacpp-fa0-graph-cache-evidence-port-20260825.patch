@@ -1,0 +1,322 @@
+diff --git a/ggml/src/ggml-sycl/common.hpp b/ggml/src/ggml-sycl/common.hpp
+index 6354b08e2..f15331970 100644
+--- a/ggml/src/ggml-sycl/common.hpp
++++ b/ggml/src/ggml-sycl/common.hpp
+@@ -607,7 +607,25 @@ struct ggml_backend_sycl_context {
+     }
+ 
+ #ifdef GGML_SYCL_GRAPH
++    struct graph_cache_entry {
++        std::vector<uint8_t> signature;
++        std::unique_ptr<sycl_ex::command_graph<sycl_ex::graph_state::executable>> exec_graph;
++    };
++
+     std::unique_ptr<sycl_ex::command_graph<sycl_ex::graph_state::executable>> exec_graph = nullptr;
++    std::vector<graph_cache_entry> graph_cache;
++    uint64_t graph_requested_count              = 0;
++    uint64_t graph_compatibility_rejected_count = 0;
++    uint64_t graph_device_unsupported_count     = 0;
++    uint64_t graph_cache_hit_count              = 0;
++    uint64_t graph_cache_miss_count             = 0;
++    uint64_t graph_cache_full_count             = 0;
++    uint64_t graph_direct_replay_count           = 0;
++    uint64_t graph_recorded_count               = 0;
++    uint64_t graph_created_count                = 0;
++    uint64_t graph_updated_count                = 0;
++    uint64_t graph_recreated_count              = 0;
++    uint64_t graph_replayed_count               = 0;
+ #endif
+ 
+     // f372 (B81): per-graph-eval memo deduplicating q8_1 quantizations of a SHARED src1.
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 769934b9e..37c43632b 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -96,6 +96,7 @@ static bool g_sycl_loaded = false;
+ int g_ggml_sycl_debug = 0;
+ int g_ggml_sycl_enable_optimize = 1;
+ int g_ggml_sycl_enable_graph = 0;
++int g_ggml_sycl_graph_cache_size = 0;
+ int g_ggml_sycl_enable_dnn = 1;
+ // GGML_SYCL_REORDER_IN_GEMM: also reorder a weight the FIRST time it reaches the DEQ+GEMM path.
+ // Without it a tensor that only ever sees large ne[1] (llama-bench -p N, llama-perplexity) is
+@@ -514,6 +515,8 @@ static void ggml_check_sycl() try {
+         g_ggml_sycl_debug = ggml_sycl_get_env("GGML_SYCL_DEBUG", 0);
+         g_ggml_sycl_enable_optimize = ggml_sycl_get_env("GGML_SYCL_ENABLE_OPT", 1);
+         g_ggml_sycl_enable_graph = ggml_sycl_get_env("GGML_SYCL_ENABLE_GRAPH", 0);
++        g_ggml_sycl_graph_cache_size = ggml_sycl_get_env("GGML_SYCL_GRAPH_CACHE_SIZE", 0);
++        g_ggml_sycl_graph_cache_size = std::max(0, std::min(g_ggml_sycl_graph_cache_size, 64));
+         g_ggml_sycl_enable_dnn = ggml_sycl_get_env("GGML_SYCL_ENABLE_DNN", 1);
+         g_ggml_sycl_reorder_in_gemm = ggml_sycl_get_env("GGML_SYCL_REORDER_IN_GEMM", 0);
+         g_ggml_sycl_fa_onednn = ggml_sycl_get_env("GGML_SYCL_FA_ONEDNN", 1);
+@@ -903,8 +906,10 @@ static void ggml_check_sycl() try {
+ 
+ #ifdef GGML_SYCL_GRAPH
+         fprintf(stderr, "  GGML_SYCL_ENABLE_GRAPH: %d\n", g_ggml_sycl_enable_graph);
++        fprintf(stderr, "  GGML_SYCL_GRAPH_CACHE_SIZE: %d\n", g_ggml_sycl_graph_cache_size);
+ #else
+-        fprintf(stderr, "  GGML_SYCL_ENABLE_GRAPH: graph disabled by compile flag\n");
++        fprintf(stderr, "  GGML_SYCL_ENABLE_GRAPH: requested=%d status=disabled_by_compile_flag\n",
++                g_ggml_sycl_enable_graph);
+ #endif
+ 
+         fprintf(stderr, "  GGML_SYCL_ENABLE_OPT: %d\n", g_ggml_sycl_enable_optimize);
+@@ -7789,6 +7794,28 @@ static const char * ggml_backend_sycl_get_name(ggml_backend_t backend) {
+ static void ggml_backend_sycl_free(ggml_backend_t backend) {
+     ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
+ 
++#ifdef GGML_SYCL_GRAPH
++    GGML_LOG_INFO(
++        "[SYCL-GRAPH] summary device=%d requested=%llu compatibility_rejected=%llu device_unsupported=%llu "
++        "cache_entries=%zu cache_limit=%d cache_hit=%llu cache_miss=%llu cache_full=%llu direct_replay=%llu "
++        "recorded=%llu created=%llu updated=%llu recreated=%llu replayed=%llu\n",
++        sycl_ctx->device,
++        (unsigned long long) sycl_ctx->graph_requested_count,
++        (unsigned long long) sycl_ctx->graph_compatibility_rejected_count,
++        (unsigned long long) sycl_ctx->graph_device_unsupported_count,
++        sycl_ctx->graph_cache.size(),
++        g_ggml_sycl_graph_cache_size,
++        (unsigned long long) sycl_ctx->graph_cache_hit_count,
++        (unsigned long long) sycl_ctx->graph_cache_miss_count,
++        (unsigned long long) sycl_ctx->graph_cache_full_count,
++        (unsigned long long) sycl_ctx->graph_direct_replay_count,
++        (unsigned long long) sycl_ctx->graph_recorded_count,
++        (unsigned long long) sycl_ctx->graph_created_count,
++        (unsigned long long) sycl_ctx->graph_updated_count,
++        (unsigned long long) sycl_ctx->graph_recreated_count,
++        (unsigned long long) sycl_ctx->graph_replayed_count);
++#endif
++
+     // GGML_SYCL_SET_TENSOR_CENSUS=1 -- how many host->device tensor sets, how big, how long.
+     if (const char * s = getenv("GGML_SYCL_SET_TENSOR_CENSUS"); s && atoi(s) != 0) {
+         const int d = sycl_ctx->device;
+@@ -9313,6 +9340,61 @@ static void ggml_sycl_prof_graph_end(ggml_backend_sycl_context * ctx, ggml_cgrap
+ }
+ 
+ #ifdef GGML_SYCL_GRAPH
++static bool should_log_graph_counter(uint64_t count) {
++    return count != 0 && (count & (count - 1)) == 0;
++}
++
++template<typename T>
++static void graph_signature_append(std::vector<uint8_t> & signature, const T & value) {
++    const uint8_t * bytes = reinterpret_cast<const uint8_t *>(&value);
++    signature.insert(signature.end(), bytes, bytes + sizeof(value));
++}
++
++static void graph_signature_append_tensor(std::vector<uint8_t> & signature, const ggml_tensor * tensor) {
++    graph_signature_append(signature, tensor);
++    if (tensor == nullptr) {
++        return;
++    }
++
++    graph_signature_append(signature, tensor->type);
++    graph_signature_append(signature, tensor->buffer);
++    graph_signature_append(signature, tensor->op);
++    graph_signature_append(signature, tensor->flags);
++    graph_signature_append(signature, tensor->view_src);
++    graph_signature_append(signature, tensor->view_offs);
++    graph_signature_append(signature, tensor->data);
++    graph_signature_append(signature, tensor->extra);
++    signature.insert(signature.end(), reinterpret_cast<const uint8_t *>(tensor->op_params),
++                     reinterpret_cast<const uint8_t *>(tensor->op_params) + sizeof(tensor->op_params));
++    for (int dim = 0; dim < GGML_MAX_DIMS; ++dim) {
++        graph_signature_append(signature, tensor->ne[dim]);
++        graph_signature_append(signature, tensor->nb[dim]);
++    }
++    if (tensor->extra != nullptr) {
++        const auto * extra = static_cast<const ggml_tensor_extra_gpu *>(tensor->extra);
++        for (int device = 0; device < GGML_SYCL_MAX_DEVICES; ++device) {
++            graph_signature_append(signature, extra->data_device[device]);
++        }
++        graph_signature_append(signature, extra->optimized_feature.reorder);
++    }
++}
++
++static std::vector<uint8_t> graph_signature(const ggml_cgraph * cgraph) {
++    std::vector<uint8_t> signature;
++    signature.reserve((size_t) cgraph->n_nodes * 256);
++    graph_signature_append(signature, cgraph->n_nodes);
++
++    for (int i = 0; i < cgraph->n_nodes; ++i) {
++        const ggml_tensor * node = cgraph->nodes[i];
++        graph_signature_append_tensor(signature, node);
++        for (int j = 0; j < GGML_MAX_SRC; ++j) {
++            graph_signature_append_tensor(signature, node->src[j]);
++        }
++    }
++
++    return signature;
++}
++
+ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
+     // NOTE (per-device graphs): the previous guard bailed on the GLOBAL device
+     // count (ggml_sycl_info().device_count > 1). That is the wrong test here.
+@@ -9331,11 +9413,20 @@ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
+         switch (node_op) {
+             default:
+                 break;
+-            case GGML_OP_CONCAT:
+-                // ggml_sycl_op_concat() does a blocking host wait after memcpy operations,
+-                // but wait() can't be called on the events returned by a queue recording
+-                // to a graph.
+-                [[fallthrough]];
++            case GGML_OP_CONCAT: {
++                const ggml_tensor * node = cgraph->nodes[i];
++                const int32_t dim = ((const int32_t *) node->op_params)[0];
++
++                // Only the contiguous dim-3 path uses blocking memcpy waits. The
++                // dim-0/1/2 and non-contiguous paths submit capture-safe kernels.
++                if (dim != 3 || !ggml_is_contiguous(node->src[0]) || !ggml_is_contiguous(node->src[1])) {
++                    break;
++                }
++
++                GGML_LOG_INFO("%s: disabling SYCL graphs due to unsupported node type %s dim=%d\n", __func__,
++                              ggml_op_name(node_op), dim);
++                return false;
++            }
+             case GGML_OP_MUL_MAT_ID:
+                 // ggml_sycl_mul_mat_id() does a blocking host wait on the sycl queue after
+                 // submitting a memcpy operation, but wait() can't be called on a queue that
+@@ -9377,41 +9468,126 @@ static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_
+     // (This is a no-op in practice: GGML_SYCL_ENABLE_GRAPH defaults to 0 and the
+     // deploy env does not set it, so the eager path is already production's.)
+     if (g_ggml_sycl_enable_graph && !ggml_sycl_prof_on()) {
++        sycl_ctx->graph_requested_count++;
++        if (should_log_graph_counter(sycl_ctx->graph_requested_count)) {
++            GGML_LOG_INFO("[SYCL-GRAPH] requested device=%d count=%llu\n",
++                          sycl_ctx->device, (unsigned long long) sycl_ctx->graph_requested_count);
++        }
+         use_sycl_graph = check_graph_compatibility(cgraph);
++        if (!use_sycl_graph) {
++            sycl_ctx->graph_compatibility_rejected_count++;
++            if (should_log_graph_counter(sycl_ctx->graph_compatibility_rejected_count)) {
++                GGML_LOG_INFO("[SYCL-GRAPH] compatibility_rejected device=%d count=%llu\n",
++                              sycl_ctx->device,
++                              (unsigned long long) sycl_ctx->graph_compatibility_rejected_count);
++            }
++        }
+     }
+     if (use_sycl_graph) {
+         const bool graph_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_limited_graph);
+         if (!graph_support) {
+-            GGML_SYCL_DEBUG("[SYCL-GRAPH] can not use graphs on device:%d\n", sycl_ctx->device);
++            sycl_ctx->graph_device_unsupported_count++;
++            if (should_log_graph_counter(sycl_ctx->graph_device_unsupported_count)) {
++                GGML_LOG_INFO("[SYCL-GRAPH] device_unsupported device=%d count=%llu\n",
++                              sycl_ctx->device,
++                              (unsigned long long) sycl_ctx->graph_device_unsupported_count);
++            }
+             ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
+             return GGML_STATUS_SUCCESS;
+         }
+ 
++        std::vector<uint8_t> signature;
++        if (g_ggml_sycl_graph_cache_size > 0) {
++            signature = graph_signature(cgraph);
++            for (const auto & entry : sycl_ctx->graph_cache) {
++                if (entry.signature == signature) {
++                    sycl_ctx->stream()->ext_oneapi_graph(*(entry.exec_graph));
++                    sycl_ctx->graph_cache_hit_count++;
++                    sycl_ctx->graph_direct_replay_count++;
++                    sycl_ctx->graph_replayed_count++;
++                    if (should_log_graph_counter(sycl_ctx->graph_direct_replay_count)) {
++                        GGML_LOG_INFO(
++                            "[SYCL-GRAPH] direct_replay device=%d count=%llu cache_entries=%zu\n",
++                            sycl_ctx->device,
++                            (unsigned long long) sycl_ctx->graph_direct_replay_count,
++                            sycl_ctx->graph_cache.size());
++                    }
++                    return GGML_STATUS_SUCCESS;
++                }
++            }
++            sycl_ctx->graph_cache_miss_count++;
++            if (should_log_graph_counter(sycl_ctx->graph_cache_miss_count)) {
++                GGML_LOG_INFO("[SYCL-GRAPH] cache_miss device=%d count=%llu cache_entries=%zu\n",
++                              sycl_ctx->device,
++                              (unsigned long long) sycl_ctx->graph_cache_miss_count,
++                              sycl_ctx->graph_cache.size());
++            }
++            if (sycl_ctx->graph_cache.size() >= (size_t) g_ggml_sycl_graph_cache_size) {
++                sycl_ctx->graph_cache_full_count++;
++                if (should_log_graph_counter(sycl_ctx->graph_cache_full_count)) {
++                    GGML_LOG_INFO("[SYCL-GRAPH] cache_full device=%d count=%llu cache_entries=%zu\n",
++                                  sycl_ctx->device,
++                                  (unsigned long long) sycl_ctx->graph_cache_full_count,
++                                  sycl_ctx->graph_cache.size());
++                }
++                ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
++                return GGML_STATUS_SUCCESS;
++            }
++        }
++
+         sycl_ex::command_graph model_sycl_graph(*(sycl_ctx->stream()), {sycl_ex::property::graph::assume_buffer_outlives_graph{}});
+ 
++        sycl_ctx->graph_recorded_count++;
++        if (should_log_graph_counter(sycl_ctx->graph_recorded_count)) {
++            GGML_LOG_INFO("[SYCL-GRAPH] recording_entered device=%d count=%llu\n",
++                          sycl_ctx->device, (unsigned long long) sycl_ctx->graph_recorded_count);
++        }
+         model_sycl_graph.begin_recording(*(sycl_ctx->stream()));
+         ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
+         model_sycl_graph.end_recording();
+ 
+-        const bool graph_update_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_graph);
+-        if (!sycl_ctx->exec_graph || !graph_update_support) {
+-            auto exec_graph = graph_update_support ? model_sycl_graph.finalize(sycl_ex::property::graph::updatable{}) :
+-                                                     model_sycl_graph.finalize();
+-            sycl_ctx->exec_graph = std::make_unique<
+-                sycl_ex::command_graph<sycl_ex::graph_state::executable>>(exec_graph);
++        if (g_ggml_sycl_graph_cache_size > 0) {
++            auto exec_graph = model_sycl_graph.finalize();
++            sycl_ctx->graph_cache.push_back({std::move(signature), std::make_unique<
++                sycl_ex::command_graph<sycl_ex::graph_state::executable>>(std::move(exec_graph))});
++            sycl_ctx->graph_created_count++;
++            sycl_ctx->stream()->ext_oneapi_graph(*(sycl_ctx->graph_cache.back().exec_graph));
+         } else {
+-            try {
+-                sycl_ctx->exec_graph->update(model_sycl_graph);
+-                GGML_SYCL_DEBUG("[SYCL-GRAPH] update success\n");
+-            } catch (sycl::exception const & e) {
+-                GGML_SYCL_DEBUG("[SYCL-GRAPH] Exception when updating graph, %s\n", e.what());
+-                auto exec_graph = model_sycl_graph.finalize({sycl_ex::property::graph::updatable{}});
++            const bool graph_update_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_graph);
++            if (!sycl_ctx->exec_graph || !graph_update_support) {
++                auto exec_graph = graph_update_support ? model_sycl_graph.finalize(sycl_ex::property::graph::updatable{}) :
++                                                         model_sycl_graph.finalize();
+                 sycl_ctx->exec_graph = std::make_unique<
+-                    sycl_ex::command_graph<sycl_ex::graph_state::executable>>(exec_graph);
++                    sycl_ex::command_graph<sycl_ex::graph_state::executable>>(std::move(exec_graph));
++                sycl_ctx->graph_created_count++;
++            } else {
++                try {
++                    sycl_ctx->exec_graph->update(model_sycl_graph);
++                    sycl_ctx->graph_updated_count++;
++                    GGML_SYCL_DEBUG("[SYCL-GRAPH] update success\n");
++                } catch (sycl::exception const & e) {
++                    GGML_SYCL_DEBUG("[SYCL-GRAPH] Exception when updating graph, %s\n", e.what());
++                    auto exec_graph = model_sycl_graph.finalize({sycl_ex::property::graph::updatable{}});
++                    sycl_ctx->exec_graph = std::make_unique<
++                        sycl_ex::command_graph<sycl_ex::graph_state::executable>>(std::move(exec_graph));
++                    sycl_ctx->graph_recreated_count++;
++                }
+             }
++
++            sycl_ctx->stream()->ext_oneapi_graph(*(sycl_ctx->exec_graph));
+         }
+ 
+-        sycl_ctx->stream()->ext_oneapi_graph(*(sycl_ctx->exec_graph));
++        sycl_ctx->graph_replayed_count++;
++        if (should_log_graph_counter(sycl_ctx->graph_replayed_count)) {
++            GGML_LOG_INFO(
++                "[SYCL-GRAPH] replayed device=%d count=%llu recorded=%llu created=%llu updated=%llu recreated=%llu\n",
++                sycl_ctx->device,
++                (unsigned long long) sycl_ctx->graph_replayed_count,
++                (unsigned long long) sycl_ctx->graph_recorded_count,
++                (unsigned long long) sycl_ctx->graph_created_count,
++                (unsigned long long) sycl_ctx->graph_updated_count,
++                (unsigned long long) sycl_ctx->graph_recreated_count);
++        }
+     } else
+ #endif
+     {

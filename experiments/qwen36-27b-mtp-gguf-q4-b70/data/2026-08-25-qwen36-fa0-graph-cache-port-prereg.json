@@ -1,0 +1,104 @@
+{
+  "schema": "neural.download.qwen36-llamacpp-fa0-graph-cache-port-prereg.v1",
+  "date": "2026-08-25",
+  "status": "patch-prepared-static-only",
+  "source": {
+    "path": "/home/steve/src/llama.cpp-q38-tp1-lane",
+    "commit": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "required_state": "clean detached exact commit",
+    "files": {
+      "ggml/src/ggml-sycl/common.hpp": "25e2323e6199c25b840c4c2f5729389963358faa892de1ee6b71a08619ac7be8",
+      "ggml/src/ggml-sycl/ggml-sycl.cpp": "561a275ca5abfc437fdbf126a5d1b475755558d6cec9cac3f5f66d1af8c241bd"
+    }
+  },
+  "patch": {
+    "path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-evidence-port-20260825.patch",
+    "sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892",
+    "source_manifest": "patches/qwen36-27b-mtp-gguf-q4-b70/source-manifest.json",
+    "paths": [
+      "ggml/src/ggml-sycl/common.hpp",
+      "ggml/src/ggml-sycl/ggml-sycl.cpp"
+    ],
+    "insertions": 215,
+    "deletions": 21,
+    "defaults_changed": false
+  },
+  "ported_mechanisms": [
+    "bounded complete-identity executable graph cache",
+    "requested/rejected/unsupported/cache/record/create/update/recreate/replay counters",
+    "power-of-two graph progress logs and exact shutdown summary",
+    "capture-safe CONCAT allowance with contiguous dim-3 wait path still rejected"
+  ],
+  "explicitly_excluded": [
+    "cycle or per-op timing",
+    "DFlash or MTP executor changes",
+    "kernel or fusion changes",
+    "server or sampler changes",
+    "global multi-device graph rejection",
+    "historical compiled binaries or DSOs"
+  ],
+  "build_gate": {
+    "cmake_delta_from_accepted_graph_off_build": {
+      "GGML_SYCL_GRAPH": "ON"
+    },
+    "required_target_first": "llama-bench",
+    "max_initial_parallel_jobs": 2,
+    "pass": [
+      "patch applies to exact clean base",
+      "graph-enabled configure uses the accepted compiler and all accepted optimization flags",
+      "llama-bench and effective libggml-sycl build successfully",
+      "compiled backend contains GGML_SYCL_GRAPH"
+    ]
+  },
+  "first_gpu_gate": {
+    "scope": "TP1 parent sentinel only",
+    "diagnostic_profilers": "off because fa0 deliberately bypasses command graphs while per-node SYCL profiling is active",
+    "same_binary_arms": [
+      {
+        "name": "control",
+        "GGML_SYCL_ENABLE_GRAPH": 0,
+        "GGML_SYCL_GRAPH_CACHE_SIZE": 0
+      },
+      {
+        "name": "candidate",
+        "GGML_SYCL_ENABLE_GRAPH": 1,
+        "GGML_SYCL_GRAPH_CACHE_SIZE": 8
+      }
+    ],
+    "required_candidate_summary": {
+      "requested": ">0",
+      "compatibility_rejected": 0,
+      "device_unsupported": 0,
+      "cache_entries": ">0",
+      "cache_limit": 8,
+      "cache_hit": ">0",
+      "cache_miss": ">0",
+      "cache_full": 0,
+      "direct_replay": ">0",
+      "recorded": ">0",
+      "created": ">0",
+      "replayed": "equals requested"
+    },
+    "required_control_summary": "all graph action counters zero",
+    "parity": "exact output bytes and SHA-256 between arms from the same new binary",
+    "quality": "existing parent canary remains exact",
+    "performance": "report elapsed and decode speed, but no minimum uplift gate"
+  },
+  "frozen_interpretations": {
+    "requested_without_replay": "failure, never graph evidence",
+    "any_compatibility_rejection": "failure for the tested parent; do not label graph-on",
+    "cache_full": "capacity failure for cache-size 8; do not silently raise the limit inside the same run",
+    "output_mismatch": "correctness failure regardless of speed",
+    "same_output_and_positive_direct_replay": "mechanism/parity pass only, not depth or publication authority",
+    "slower_candidate": "valid measured graph result and negative performance finding; preserve existing graph-off highs",
+    "faster_candidate": "candidate result only until exact-depth and quality gates pass",
+    "cross_build_output_difference": "expected possible fp-model=fast rebuild effect; not a graph failure",
+    "graph_estimates": "forbidden"
+  },
+  "authorization_after_parent_pass": [
+    "separately preregister graph-on exact-depth TP1 curves",
+    "retain old certified graph-off cells when they are faster",
+    "qualify TP2 and TP4 only through separately named per-device graph packets"
+  ],
+  "current_authority": "static patch preparation only; the interrupted unpatched configure/build grants nothing; no build, GPU, speed, depth, quality, TP2, TP4, site, or submission claim"
+}
