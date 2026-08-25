@@ -1,0 +1,71 @@
+{
+  "schema": "neural.download.qwen36-llama-exact-depth-prereg.v1",
+  "campaign_id": "qwen36-q4kxl-f16-tp1-exact-depth-20260825-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Fill the seven Qwen3.6 UD-Q4_K_XL TP1/MTP0/graph-off/F16-KV exact active-context cells with raw llama-bench evidence.",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-ud-q4-k-xl-4085665",
+    "quantization": "UD-Q4_K_XL",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "mtp": 0,
+    "graph_mode": "off",
+    "kv": "f16",
+    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+  },
+  "model": {
+    "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+    "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+    "revision_binding": "Hugging Face blobs metadata for the pinned revision reports this exact filename, size, and LFS SHA-256; the local read-only artifact matches both byte fields.",
+    "revision_binding_source": "https://huggingface.co/api/models/unsloth/Qwen3.6-27B-MTP-GGUF/revision/5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace?blobs=true",
+    "path": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-UD-Q4_K_XL.gguf",
+    "size_bytes": 17909097600,
+    "sha256": "4085665ee36d82a672a238a43f0e5643f2f0e39f2d7bd5d373f0ef10ecf53095",
+    "embedded_mtp_capability": true
+  },
+  "runtime_reference": {
+    "manifest": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4kxl-q8-tp1-exact-depth-prereg.json",
+    "manifest_sha256": "86775bd326675c7d66d27695d2b9ec8bf8bdd320181efffac01eefc4bf572af4",
+    "adapter": "experiments/qwen38-27b-b70/scripts/run-20260825-qwen38-q4kxl-q8-tp1-exact-depth-r1.py",
+    "adapter_sha256": "c30e9cee51bd4f5083f4ab57efca794fa89caec2a0e0e1aaf427b02c00b78875",
+    "scope": "Reuse only the checksum-pinned llama.cpp source, binary, effective shared-library inventory, controlled graph-off environment, canonical locks, idle checks, and create-only lifecycle implementation. No Qwen3.8 model, selector, measurement, speed, or quality transfers."
+  },
+  "argv": [
+    "/home/steve/src/llama.cpp-q38-tp1-lane/build-sycl-aot-bmg-g31/bin/llama-bench",
+    "-m", "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-UD-Q4_K_XL.gguf",
+    "-dev", "SYCL0", "-ngl", "99", "-sm", "layer", "-p", "2048", "-n", "128",
+    "-d", "0,2048,4096,8192,16384,24576,32768", "-b", "2048", "-ub", "512",
+    "-fa", "on", "-ctk", "f16", "-ctv", "f16", "-t", "16", "--poll", "50", "-r", "5", "-o", "json"
+  ],
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q4kxl-f16-tp1-exact-depth-20260825-r1",
+    "output_fstype": "ext4",
+    "exact_ack": "RUN qwen36-q4kxl-f16-tp1-exact-depth-20260825-r1",
+    "timeout_seconds": 3600,
+    "requires_clean_pushed_main": true,
+    "requires_idle_gpu0_render_node": "/dev/dri/by-path/pci-0000:23:00.0-render",
+    "requires_no_server_or_container": true,
+    "required_locks": [
+      "/run/lock/muse-glimmer-gpu-exclusive.lock",
+      "/tmp/b70-benchmark.lock",
+      "/tmp/b70-gpu0.lock",
+      "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"
+    ],
+    "artifacts_are_create_only": true,
+    "terminal_receipt_required": true
+  },
+  "interpretation": {
+    "measurement_class": "raw-engine llama-bench",
+    "http_serving_metric": false,
+    "new_quality_gate": false,
+    "artifact_quality_is_separate": true,
+    "speed_floor": null,
+    "cell_gain_on_pass": 7,
+    "fill_only": "the seven matching Qwen3.6 UD-Q4_K_XL TP1/MTP0/graph-off/F16-KV missing cells after every receipt gate passes",
+    "protected_overlay_manifest_sha256": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "protected_site_metric_projection_sha256": "1a5c4e32cf868776ea0174b0e8349e5b7f0d7e1e4187946c4dbe689457b03c",
+    "historical_featured_speeds_are_immutable": true,
+    "cross_revision_or_quantization_transfer_allowed": false
+  }
+}
