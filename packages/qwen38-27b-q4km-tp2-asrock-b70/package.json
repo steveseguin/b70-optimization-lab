@@ -83,6 +83,25 @@
         {"context_tokens": 24576, "value": 25347.310534096323, "samples": 1},
         {"context_tokens": 32768, "value": 35058.737567975186, "samples": 1}
       ]
+    },
+    {
+      "id": "http-output-audited-aggregate-vs-concurrent-users",
+      "label": "Output-audited TP2 HTTP aggregate decode",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "llama.cpp native HTTP /completion on two B70s with 64 slots, 32K total F16 KV context, prompt cache and slot similarity disabled, unique short prompts, and 128 returned raw token IDs per request. Each marker is the median of two preregistered fresh-server attempts whose relative range was at most 1.72%. Output isolation passed with no cross-base oracle collision, but multi-user greedy token identity is batch-shape-dependent. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-result.json",
+      "points": [
+        {"concurrent_sequences": 1, "value": 42.694235799361806, "per_user_value": 42.694235799361806, "samples": 2},
+        {"concurrent_sequences": 2, "value": 61.88466425158718, "per_user_value": 30.94233212579359, "samples": 2},
+        {"concurrent_sequences": 4, "value": 87.56640520423115, "per_user_value": 21.891601301057786, "samples": 2},
+        {"concurrent_sequences": 8, "value": 108.37157051235434, "per_user_value": 13.546446314044292, "samples": 2},
+        {"concurrent_sequences": 16, "value": 109.14655327814907, "per_user_value": 6.821659579884317, "samples": 2},
+        {"concurrent_sequences": 32, "value": 127.49980108773008, "per_user_value": 3.984368783991565, "samples": 2},
+        {"concurrent_sequences": 64, "value": 165.3872859472557, "per_user_value": 2.58417634292587, "samples": 2}
+      ]
     }
   ],
   "hardware": {
@@ -128,12 +147,14 @@
     "patches/qwen36-27b-q8-tp2-asrock-b70/README.md",
     "patches/qwen38-27b-q4km-tp2-asrock-b70/README.md",
     "experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json",
+    "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-result.json",
     "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
   ],
   "known_limitations": [
     "The package has not been replayed from a clean host and is not a beginner install guide; source-rebuilt binaries require an explicit preflight override and the full output-oracle gate.",
     "The 49.717503 tok/s headline is a TP2 target-only reasoning-off result and must not be compared as a TP1, speculative, or alternate-accounting row.",
     "The optional large-batch mode improves prefill on a short probe while slightly reducing decode; it is not the headline configuration.",
+    "Multi-user greedy token identity is batch-shape-dependent. The qualified HTTP curve proves complete isolated responses with zero cross-base oracle collisions, not sequential byte identity.",
     "No active-context prefill, VRAM, or power curve has been captured for this TP2 identity."
   ],
   "missing": [

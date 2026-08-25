@@ -114,3 +114,20 @@ gates. The fixture is grade C repeated-token shape evidence, not natural
 prose; no point is interpolated or extrapolated. See the
 [result note](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp2-http-depth-r1-result.md)
 and [complete evidence](../../experiments/qwen38-27b-b70/data/qwen38-q4km-tp2-http-depth-20260825-r1-attempt1/).
+
+## Output-audited HTTP concurrency profile
+
+Two preregistered fresh-server attempts measured 1/2/4/8/16/32/64 native
+HTTP users on the same TP2 package. The median aggregate curve was
+**`42.694 / 61.885 / 87.566 / 108.372 / 109.147 / 127.500 / 165.387 tok/s`**.
+Every response returned all 128 raw token IDs with cache reuse disabled, and
+no response collided with a frozen sequential oracle for another base task.
+The worst pointwise run-to-run relative range was `1.717%`.
+
+This qualifies output isolation and aggregate service capacity, not
+batch-invariant text. Greedy token identity becomes batch-shape-dependent for
+some requests. The pilot rates were excluded, every published point is the
+median of exactly two new attempts, and no point is interpolated or
+extrapolated. See the
+[result note](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-result.md)
+and [structured result](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-result.json).

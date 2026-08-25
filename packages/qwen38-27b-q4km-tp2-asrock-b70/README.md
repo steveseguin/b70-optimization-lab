@@ -19,3 +19,10 @@ SwiGLU increment. Both are default-off source paths with explicit runtime
 doors and exact output gates. The model is the same pinned Qwen3.8 Q4_K_M
 artifact as the one-card packet; the two-card result remains its own topology
 and metric identity.
+
+Additional measured profiles now cover exact 2K→32K native HTTP decode/TTFT
+and output-audited 1→64-user HTTP aggregate decode. At exactly 32K the package
+measured `44.437281 tok/s`; at 64 simultaneous users it measured
+`165.387286 tok/s` aggregate as the median of two fresh-server attempts.
+Multi-user outputs were complete and isolated, but greedy token identity is
+batch-shape-dependent; the full guide preserves that boundary.

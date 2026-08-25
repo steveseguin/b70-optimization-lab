@@ -887,12 +887,15 @@ gate. This is additive grade-C repeated-token shape evidence, not natural
 prose, and contains no interpolation or inherited TP1 point. See the
 [result](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp2-http-depth-r1-result.md).
 
-The non-publishable TP2 HTTP concurrency oracle pilot passed with 64/64
-complete cache-zero sequential token-ID oracles. Its concurrency rates remain
-excluded. The frozen digest now anchors a separately preregistered two-server
-R2 publication campaign at 1/2/4/8/16/32/64 users, requiring complete raw
-token IDs, cache zero, output isolation, and <=10% pointwise range. See the
-[R2 preregistration](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-preregistration.md).
+The subsequent TP2 HTTP concurrency R2 passed twice on fresh 64-slot servers.
+At 1/2/4/8/16/32/64 users, median aggregate decode measured
+`42.6942 / 61.8847 / 87.5664 / 108.3716 / 109.1466 / 127.4998 / 165.3873
+tok/s`. Every response returned all 128 raw token IDs with cache reuse off;
+there were no cross-base oracle collisions, and the worst pointwise relative
+range was `1.717%`. Greedy text is batch-shape-dependent, so this qualifies
+output isolation and service capacity rather than sequential byte identity.
+The pilot rates remain excluded and no point is interpolated. See the
+[R2 result](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-result.md).
 
 The 2026-08-15 Q4_K fusion passed a clean build, mechanism counter, same-binary
 control, and complete 12-prompt cold suite. It improved the conventional

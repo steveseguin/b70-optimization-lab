@@ -1,0 +1,151 @@
+{
+  "attempts": [
+    {
+      "checks": {
+        "cached_tokens_all_zero": true,
+        "classification": true,
+        "complete_token_id_identity_all": true,
+        "completion_tokens_128_all": true,
+        "cross_base_oracle_collision_count_zero": true
+      },
+      "oracle_exact": {
+        "1": "1/1",
+        "2": "1/2",
+        "4": "3/4",
+        "8": "2/8",
+        "16": "5/16",
+        "32": "16/32",
+        "64": "30/64"
+      },
+      "qualification_sha256": "026e249a3de16f663afc33b9971e95644f8e4f9558085f0b16d30d9ed8ae3169",
+      "rates": {
+        "1": 42.32772639680915,
+        "2": 61.752036657140636,
+        "4": 87.92739600401823,
+        "8": 108.56569518258374,
+        "16": 109.19937242003608,
+        "32": 127.42608231856713,
+        "64": 165.65661272211264
+      },
+      "result_sha256": "1bbd60c6b3cb3b9c08de9368389afb483dc26ee80a4aedb6d46e372d4a0ae675",
+      "root": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp2-http-concurrency-20260825-r2-attempt1"
+    },
+    {
+      "checks": {
+        "cached_tokens_all_zero": true,
+        "classification": true,
+        "complete_token_id_identity_all": true,
+        "completion_tokens_128_all": true,
+        "cross_base_oracle_collision_count_zero": true
+      },
+      "oracle_exact": {
+        "1": "1/1",
+        "2": "1/2",
+        "4": "3/4",
+        "8": "2/8",
+        "16": "5/16",
+        "32": "17/32",
+        "64": "31/64"
+      },
+      "qualification_sha256": "52012ad11ad78f5315e3b39e2151827eeb97845f17aa6cc9eafb4ce0eb4329e0",
+      "rates": {
+        "1": 43.060745201914465,
+        "2": 62.01729184603373,
+        "4": 87.20541440444406,
+        "8": 108.17744584212494,
+        "16": 109.09373413626206,
+        "32": 127.57351985689304,
+        "64": 165.1179591723987
+      },
+      "result_sha256": "1e6f90c969e70392cb8ec6e0b86794b4f7caf9d3d473bd4758a9733c0681124e",
+      "root": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp2-http-concurrency-20260825-r2-attempt2"
+    }
+  ],
+  "classification": "qualified-output-audited-http-concurrency",
+  "created_at_utc": "2026-08-25T21:37:55.802139+00:00",
+  "fresh_server_attempts": 2,
+  "label": "Qwen3.8-27B Q4_K_M TP2 native HTTP, two B70s, F16 KV",
+  "max_relative_range_percent": 10.0,
+  "oracle_digests_sha256": "0a9095d3407263150fce9794035c33ed480a0ba04908f793ae6810d4e5567e33",
+  "points": [
+    {
+      "attempt_values_tok_s": [
+        42.32772639680915,
+        43.060745201914465
+      ],
+      "concurrent_users": 1,
+      "median_aggregate_tok_s": 42.694235799361806,
+      "median_per_user_tok_s": 42.694235799361806,
+      "relative_range_percent": 1.7169034446478468,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        61.752036657140636,
+        62.01729184603373
+      ],
+      "concurrent_users": 2,
+      "median_aggregate_tok_s": 61.88466425158718,
+      "median_per_user_tok_s": 30.94233212579359,
+      "relative_range_percent": 0.4286283073536912,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        87.92739600401823,
+        87.20541440444406
+      ],
+      "concurrent_users": 4,
+      "median_aggregate_tok_s": 87.56640520423115,
+      "median_per_user_tok_s": 21.891601301057786,
+      "relative_range_percent": 0.8244961042882833,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        108.56569518258374,
+        108.17744584212494
+      ],
+      "concurrent_users": 8,
+      "median_aggregate_tok_s": 108.37157051235434,
+      "median_per_user_tok_s": 13.546446314044292,
+      "relative_range_percent": 0.35825755650052027,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        109.19937242003608,
+        109.09373413626206
+      ],
+      "concurrent_users": 16,
+      "median_aggregate_tok_s": 109.14655327814907,
+      "median_per_user_tok_s": 6.821659579884317,
+      "relative_range_percent": 0.09678572579824732,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        127.42608231856713,
+        127.57351985689304
+      ],
+      "concurrent_users": 32,
+      "median_aggregate_tok_s": 127.49980108773008,
+      "median_per_user_tok_s": 3.984368783991565,
+      "relative_range_percent": 0.115637465367078,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        165.65661272211264,
+        165.1179591723987
+      ],
+      "concurrent_users": 64,
+      "median_aggregate_tok_s": 165.3872859472557,
+      "median_per_user_tok_s": 2.58417634292587,
+      "relative_range_percent": 0.32569223603180225,
+      "stability_passed": true
+    }
+  ],
+  "reporting_boundary": "Every point is the median of exact fresh-server attempts. No interpolation or extrapolation. Sequential identity is reported separately from output isolation.",
+  "schema": "neural.download.http-concurrency-aggregate.v1"
+}
