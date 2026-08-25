@@ -1512,9 +1512,9 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             sum(cell["state"] == "quarantined" for cell in q36_cells), 63
         )
-        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 966)
+        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 959)
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q36_cells), 28
+            sum(cell["state"] == "lab-measured" for cell in q36_cells), 35
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q36_cells), 0)
 
@@ -1552,11 +1552,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("139/1,771 classified", overview_html)
+        self.assertIn("146/1,771 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "76", "measured"),
+            ("lab-measured", "83", "measured"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,632", "missing"),
+            ("missing", "1,625", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -1585,6 +1585,7 @@ class FamilyCoverageTest(unittest.TestCase):
             [
                 ["q36-q4km-tp1-kv-f16-context"],
                 ["q36-q4km-tp1-kv-q8-context"],
+                ["q36-q4kxl-tp1-kv-f16-context"],
                 ["q36-q4-0-tp1-kv-f16-context"],
                 ["q36-q4-0-tp1-kv-q8-context"],
             ],
@@ -1595,6 +1596,8 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("value=655.10387 tok/s", rendered)
         self.assertIn("value=28.427444 tok/s", rendered)
         self.assertIn("value=648.263152 tok/s", rendered)
+        self.assertIn("value=28.204518 tok/s", rendered)
+        self.assertIn("value=654.617886 tok/s", rendered)
         self.assertIn("value=26.403242 tok/s", rendered)
         self.assertIn("value=144.909151 tok/s", rendered)
         self.assertIn("value=25.872387 tok/s", rendered)
