@@ -1267,6 +1267,12 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("revision=revision-a", rendered)
         self.assertIn("https://example.test/closure.json", rendered)
 
+    def test_metric_code_legend_renders_for_compact_matrix_values(self) -> None:
+        family = json.loads((MODULE.ROOT / "families/laguna-s.json").read_text())
+        rendered = MODULE.coverage_tables(family)
+        self.assertIn("Codes in the rows: D = decode tok/s", rendered)
+        self.assertIn("AR = share of drafted tokens accepted", rendered)
+
     def test_packet_cta_labels_match_the_actual_target(self) -> None:
         package = {
             "id": "packet-a",

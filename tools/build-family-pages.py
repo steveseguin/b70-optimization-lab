@@ -1916,7 +1916,7 @@ def coverage_tables(family: dict[str, Any]) -> str:
             if items
             else '<p class="combo-none">No classified combinations in this slice yet.</p>'
         )
-        if re.search(r"[DPA]\d|AR\d|T\d", block_html):
+        if re.search(r"\b(?:AR|[DPTA])\d", block_html):
             tail = ('<p class="combo-tail">Codes in the rows: D = decode tok/s · P = prefill tok/s · '
                     'T = ms to first token · AR = share of drafted tokens accepted · A = combined tok/s.</p>') + tail
         blocks.append(
