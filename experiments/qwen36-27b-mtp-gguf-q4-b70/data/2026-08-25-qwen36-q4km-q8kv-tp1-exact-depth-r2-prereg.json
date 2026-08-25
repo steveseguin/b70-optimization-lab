@@ -1,0 +1,78 @@
+{
+  "schema": "neural.download.qwen36-llama-exact-depth-prereg.v1",
+  "campaign_id": "qwen36-q4km-q8kv-tp1-exact-depth-20260825-r2",
+  "state": "preregistered-not-launched",
+  "purpose": "Fresh seven-depth Qwen3.6 Q4_K_M q8_0-KV rerun after r1 failed closed on a process-census false positive.",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+    "quantization": "Q4_K_M",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "mtp": 0,
+    "graph_mode": "off",
+    "kv": "q8_0",
+    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+  },
+  "model": {
+    "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+    "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+    "path": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_K_M.gguf",
+    "size_bytes": 17106773120,
+    "sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+    "embedded_mtp_capability": true
+  },
+  "runtime_reference": {
+    "manifest": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-q8kv-tp1-exact-depth-prereg.json",
+    "manifest_sha256": "043b411ab5d0fae6b508a4e323dfcd73b747be18270c88b5db4ee34a4edad81f",
+    "adapter": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q4km-q8kv-tp1-exact-depth-r1.py",
+    "adapter_sha256": "d1fd544ce257969cd370c6e132da5665396ef9248094deed22e37d933de77b1d",
+    "scope": "Reuse the checksum-pinned r1 model/runtime/argv/library/create-only machinery only. R1 measurements, cleanup state, and terminal decision do not transfer."
+  },
+  "argv": [
+    "/home/steve/src/llama.cpp-q38-tp1-lane/build-sycl-aot-bmg-g31/bin/llama-bench",
+    "-m", "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_K_M.gguf",
+    "-dev", "SYCL0", "-ngl", "99", "-sm", "layer", "-p", "2048", "-n", "128",
+    "-d", "0,2048,4096,8192,16384,24576,32768", "-b", "2048", "-ub", "512",
+    "-fa", "on", "-ctk", "q8_0", "-ctv", "q8_0", "-t", "16", "--poll", "50", "-r", "5", "-o", "json"
+  ],
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q4km-q8kv-tp1-exact-depth-20260825-r2",
+    "output_fstype": "ext4",
+    "exact_ack": "RUN qwen36-q4km-q8kv-tp1-exact-depth-20260825-r2",
+    "timeout_seconds": 3600,
+    "requires_clean_pushed_main": true,
+    "requires_idle_gpu0_render_node": "/dev/dri/by-path/pci-0000:23:00.0-render",
+    "requires_no_server_or_container": true,
+    "required_locks": [
+      "/run/lock/muse-glimmer-gpu-exclusive.lock",
+      "/tmp/b70-benchmark.lock",
+      "/tmp/b70-gpu0.lock",
+      "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"
+    ],
+    "process_classifier": "exact llama comm/argv0 plus token-aware vLLM EngineCore, Python -m entrypoint, or vllm serve identity",
+    "artifacts_are_create_only": true,
+    "terminal_receipt_required": true
+  },
+  "r1_quarantine": {
+    "run_root": "/mnt/fast-ai/bench-results/qwen36-q4km-q8kv-tp1-exact-depth-20260825-r1",
+    "failure_record": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-q8kv-tp1-exact-depth-r1-failure.json",
+    "failure_record_sha256": "e69e497d598102bc71b70224bb9c9cc1f19f5986315f2e9d3835f08c7331d30e",
+    "failure_note": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-08-25-qwen36-q4km-q8kv-tp1-exact-depth-r1-failure.md",
+    "failure_note_sha256": "a08b7a41a963c20be1333a1539ce8b0902e56464cbefcabd2400162364b66ff1",
+    "raw_row_reuse_allowed": false,
+    "cells_publishable_from_r1": 0
+  },
+  "interpretation": {
+    "measurement_class": "raw-engine llama-bench",
+    "http_serving_metric": false,
+    "new_quality_gate": false,
+    "artifact_quality_is_separate": true,
+    "speed_floor": null,
+    "cell_gain_on_pass": 7,
+    "fill_only": "the seven matching Qwen3.6 Q4_K_M TP1/MTP0/graph-off/q8_0-KV cells from r2 after every receipt gate passes",
+    "historical_featured_speeds_are_immutable": true,
+    "cross_revision_or_quantization_transfer_allowed": false,
+    "r1_rows_transfer_allowed": false
+  }
+}

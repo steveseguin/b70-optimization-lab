@@ -1,0 +1,51 @@
+{
+  "schema": "neural.download.qwen36-llama-exact-depth-failure.v1",
+  "campaign_id": "qwen36-q4km-q8kv-tp1-exact-depth-20260825-r1",
+  "status": "failed-closed",
+  "created_at_utc": "2026-08-25T16:37:53.996270+00:00",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q4km-q8kv-tp1-exact-depth-20260825-r1",
+  "identity": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+    "model_sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+    "runtime_source_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "binary_sha256": "908b78b77fc28ad23b2924b7f32f56f4a8415eac9c2a79a244dee85b49b19030",
+    "tp": 1,
+    "mtp": 0,
+    "kv": "q8_0",
+    "requested_graph_mode": "off"
+  },
+  "failure": {
+    "stage": "post-benchmark idle/cleanup census",
+    "reason": "The process census matched evidence-hashing shell processes because their later command-line arguments contained the llama-bench.json filename.",
+    "reported_processes": ["32858:bash", "32862:sha256sum"],
+    "benchmark_return_code": 0,
+    "parser_return_code": 0,
+    "parser_status": "passed",
+    "exact_cell_ready": true,
+    "raw_cell_count": 7,
+    "cleanup_passed": false,
+    "cells_published": 0,
+    "retry_performed": false
+  },
+  "raw_unpromoted_rows": [
+    {"active_context_tokens": 0, "prefill_tok_s": 822.519269, "decode_tok_s": 28.386855},
+    {"active_context_tokens": 2048, "prefill_tok_s": 884.355795, "decode_tok_s": 25.855038},
+    {"active_context_tokens": 4096, "prefill_tok_s": 863.352327, "decode_tok_s": 23.979998},
+    {"active_context_tokens": 8192, "prefill_tok_s": 825.087122, "decode_tok_s": 20.885741},
+    {"active_context_tokens": 16384, "prefill_tok_s": 755.390574, "decode_tok_s": 16.160294},
+    {"active_context_tokens": 24576, "prefill_tok_s": 698.654344, "decode_tok_s": 13.305337},
+    {"active_context_tokens": 32768, "prefill_tok_s": 649.231015, "decode_tok_s": 11.376109}
+  ],
+  "evidence_sha256": {
+    "terminal_receipt": "2e4deb6345757a22f1945537bff74ef2b457b27556bb0963d0a4b34a9f2d2953",
+    "exact_depth_receipt": "4d6eaeabbc1eb6bad19d3c7c4f14e2b7604585acc3eea4527ade435bba7cf807",
+    "llama_bench_json": "03bb01163d37328066816061e2ddfde2b7f49418223744b8b4a008166361a9fd",
+    "llama_bench_stderr": "9b3a122be60894c0f94da3ed4d2a1af0020f8d8f7163e4ebf01c26f0b1945c44",
+    "metadata": "d654f450d881bd96f48be6b2d5868df7f947f33b7d604454ad6817be2a536f09",
+    "effective_shared_libraries": "d5e2565716f9511322d1ed42233d886fe5150b146de714f7547f96bf0ca67975",
+    "parser_stdout": "6f30dc4a64e0ff4e528b02c840add1d00b8d80a995ca8518039ddbd2049958b9",
+    "parser_stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "interpretation": "This is a process-census false positive after successful benchmark and parser execution, not a model, GPU, graph, parser, or performance failure. The frozen r1 contract failed closed, so none of its otherwise complete rows are publishable. A fresh r2 must use a preregistered exact comm/argv0 llama classifier and a new create-only root."
+}

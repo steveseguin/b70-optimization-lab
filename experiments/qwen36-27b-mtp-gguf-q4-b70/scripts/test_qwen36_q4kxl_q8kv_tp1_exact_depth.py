@@ -95,7 +95,19 @@ class ContractTests(unittest.TestCase):
         )
         self.assertIs(RUNNER.ENGINE.campaign_locks, RUNNER.REFERENCE.campaign_locks)
         source = inspect.getsource(RUNNER.REFERENCE.active_model_processes)
-        self.assertIn('"llama-batched-bench"', source)
+        self.assertIn("is_active_model_process", source)
+
+    def test_inherited_classifier_ignores_evidence_filenames(self) -> None:
+        self.assertFalse(
+            RUNNER.REFERENCE.is_active_model_process(
+                "sha256sum", ["sha256sum", "/tmp/run/llama-bench.json"]
+            )
+        )
+        self.assertTrue(
+            RUNNER.REFERENCE.is_active_model_process(
+                "llama-batched-b", ["/opt/bin/llama-batched-bench"]
+            )
+        )
 
     def test_metadata_is_parser_compatible_and_q8_scoped(self) -> None:
         metadata = RUNNER.metadata(

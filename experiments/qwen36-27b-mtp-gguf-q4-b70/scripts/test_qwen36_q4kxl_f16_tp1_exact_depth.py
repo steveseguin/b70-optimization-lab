@@ -97,6 +97,34 @@ class ContractTests(unittest.TestCase):
         self.assertIs(RUNNER.BASE.active_model_processes, RUNNER.active_model_processes)
         self.assertIs(RUNNER.BASE.campaign_locks, RUNNER.campaign_locks)
 
+    def test_evidence_filenames_are_not_model_processes(self) -> None:
+        fixtures = (
+            ("bash", ["/bin/bash", "-lc", "sha256sum /tmp/run/llama-bench.json"]),
+            ("sha256sum", ["sha256sum", "/tmp/run/llama-bench.json"]),
+            ("tail", ["tail", "-f", "/tmp/run/llama-bench.stderr.log"]),
+            ("rg", ["rg", "error", "/tmp/run/llama-batched-bench.log"]),
+            ("bash", ["bash", "-lc", "tail -f '/tmp/vllm serve.log'"]),
+            ("tail", ["tail", "-f", "/tmp/vllm.entrypoints.log"]),
+            ("rg", ["rg", "VLLM::EngineCore", "/tmp/evidence.log"]),
+            ("rg", ["rg", "-m", "vllm.entrypoints.log"]),
+        )
+        for comm, argv in fixtures:
+            with self.subTest(comm=comm):
+                self.assertFalse(RUNNER.is_active_model_process(comm, argv))
+
+    def test_real_model_executables_are_detected(self) -> None:
+        fixtures = (
+            ("llama-bench", ["/opt/bin/llama-bench", "-m", "model.gguf"]),
+            ("llama-batched-b", ["/opt/bin/llama-batched-bench"]),
+            ("llama-server", ["/opt/bin/llama-server"]),
+            ("python3", ["python3", "-m", "vllm.entrypoints.openai.api_server"]),
+            ("vllm", ["/opt/bin/vllm", "serve", "model"]),
+            ("VLLM::EngineCor", ["VLLM::EngineCore"]),
+        )
+        for comm, argv in fixtures:
+            with self.subTest(comm=comm):
+                self.assertTrue(RUNNER.is_active_model_process(comm, argv))
+
     def test_metadata_is_parser_compatible(self) -> None:
         metadata = RUNNER.metadata(
             self.manifest,

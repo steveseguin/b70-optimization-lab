@@ -16,7 +16,7 @@ import json
 import os
 from pathlib import Path
 import sys
-from typing import Any, Iterator
+from typing import Any, Iterator, Sequence
 
 
 REPO = Path(__file__).resolve().parents[3]
@@ -47,6 +47,9 @@ CANONICAL_LOCKS = [
     "/tmp/b70-gpu0.lock",
     "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock",
 ]
+LLAMA_EXECUTABLES = frozenset({"llama-bench", "llama-batched-bench", "llama-server"})
+LLAMA_COMMS = LLAMA_EXECUTABLES | {"llama-batched-b"}
+VLLM_ENGINE_NAMES = frozenset({"VLLM::EngineCore", "VLLM::EngineCor"})
 
 
 def _load_module():
@@ -145,29 +148,35 @@ def static_check() -> dict[str, Any]:
     return manifest
 
 
-def active_model_processes() -> list[str]:
-    """Reject every known llama/vLLM benchmark or serving executable."""
-    matches: list[str] = []
-    exact_comms = {"llama-bench", "llama-batched-bench", "llama-server"}
-    cmdline_markers = (
-        "llama-bench",
-        "llama-batched-bench",
-        "llama-server",
-        "vllm.entrypoints",
-        "vllm serve",
-        "VLLM::EngineCore",
+def is_active_model_process(comm: str, argv: Sequence[str]) -> bool:
+    """Classify executable identity without matching evidence filenames."""
+    argv0 = Path(argv[0]).name if argv else ""
+    if comm in LLAMA_COMMS or argv0 in LLAMA_EXECUTABLES:
+        return True
+    if comm in VLLM_ENGINE_NAMES or argv0 in VLLM_ENGINE_NAMES:
+        return True
+    if argv0 == "vllm" and len(argv) > 1 and argv[1] == "serve":
+        return True
+    return argv0.startswith("python") and any(
+        item == "-m" and index + 1 < len(argv)
+        and argv[index + 1].startswith("vllm.entrypoints")
+        for index, item in enumerate(argv)
     )
+
+
+def active_model_processes() -> list[str]:
+    """Reject known llama/vLLM executables without substring false positives."""
+    matches: list[str] = []
     for entry in Path("/proc").iterdir():
         if not entry.name.isdigit() or int(entry.name) == os.getpid():
             continue
         try:
             comm = (entry / "comm").read_text(encoding="utf-8").strip()
-            cmdline = (entry / "cmdline").read_bytes().replace(b"\0", b" ").decode(
-                errors="replace"
-            )
+            raw = (entry / "cmdline").read_bytes()
         except (FileNotFoundError, PermissionError, ProcessLookupError):
             continue
-        if comm in exact_comms or any(marker in cmdline for marker in cmdline_markers):
+        argv = [item.decode(errors="replace") for item in raw.split(b"\0") if item]
+        if is_active_model_process(comm, argv):
             matches.append(f"{entry.name}:{comm}")
     return matches
 
