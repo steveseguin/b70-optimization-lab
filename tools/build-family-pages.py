@@ -1008,6 +1008,17 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                     ):
                         errors.append(f"{projection_label}.{field} must be a positive integer")
 
+    primary_packet_id = family.get("primary_packet_id")
+    if packets:
+        if not isinstance(primary_packet_id, str) or not primary_packet_id:
+            errors.append(f"{label}: families with packets need primary_packet_id")
+        elif primary_packet_id not in packet_by_id:
+            errors.append(
+                f"{label}: primary_packet_id references missing packet {primary_packet_id}"
+            )
+    elif primary_packet_id is not None:
+        errors.append(f"{label}: primary_packet_id is set but the family has no packets")
+
     estimate_ids: set[str] = set()
     estimate_by_id: dict[str, dict[str, Any]] = {}
     for estimate in estimates:
@@ -2016,6 +2027,34 @@ def packet_manifest_target(packet: dict[str, Any]) -> tuple[str, str]:
     return href, "Open evidence packet"
 
 
+def preferred_packet(family: dict[str, Any]) -> dict[str, Any] | None:
+    """Return the explicitly curated family CTA packet.
+
+    Validation requires the binding whenever packets exist. The deterministic
+    fallback is only for defensive rendering of invalid/in-progress data and
+    deliberately never considers throughput.
+    """
+
+    packets = list(family.get("packets") or [])
+    primary_packet_id = family.get("primary_packet_id")
+    explicit = next(
+        (packet for packet in packets if packet.get("id") == primary_packet_id),
+        None,
+    )
+    if explicit is not None:
+        return explicit
+    grade_rank = {"A": 0, "B": 1, "C": 2, "D": 3}
+
+    def fallback_rank(packet: dict[str, Any]) -> tuple[int, int]:
+        grade = (((packet.get("grades") or {}).get("evidence") or {}).get("grade"))
+        return (
+            grade_rank.get(str(grade), 4),
+            0 if packet_link_kind(family, packet) == "guide" else 1,
+        )
+
+    return min(packets, key=fallback_rank) if packets else None
+
+
 def measurement_identity(measurement: dict[str, Any]) -> str:
     config = measurement.get("config") or {}
     bits = [
@@ -2333,16 +2372,7 @@ def family_page(family: dict[str, Any]) -> str:
     # Prefer a deployment/reproduction surface. Evidence-only families retain
     # an honest action label rather than promising an install guide.
     cta_html = ""
-    packets_for_cta = list(family.get("packets") or [])
-
-    def cta_rank(packet):
-        # Guides first; among guides, the fastest headline (so a 35B hero is
-        # never paired with its 9B sibling's guide).
-        kind = packet_link_kind(family, packet)
-        _v, _u, _h, raw_value, _w, _e = package_metric(family, packet)
-        return (0 if kind == "guide" else 1, -(raw_value or 0))
-
-    preferred = sorted(packets_for_cta, key=cta_rank)[0] if packets_for_cta else None
+    preferred = preferred_packet(family)
     if preferred:
         cta_href, cta_label = packet_manifest_target(preferred)
         cta_note = ""

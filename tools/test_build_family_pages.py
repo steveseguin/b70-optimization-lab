@@ -799,6 +799,7 @@ class FamilyCoverageTest(unittest.TestCase):
                 },
             }
         ]
+        family["primary_packet_id"] = "packet-a"
         self.assertEqual(self._errors(family), [])
 
         invalid = deepcopy(family)
@@ -816,6 +817,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "https://example.test/research-a.json"
         )
         family["packets"] = [self._research_packet()]
+        family["primary_packet_id"] = "research-a"
         self.assertEqual(self._errors(family), [])
         rendered = MODULE.packet_cards(family)
         self.assertIn("42 tok/s", rendered)
@@ -858,6 +860,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "https://example.test/research-a.json"
         )
         family["packets"] = [self._research_packet()]
+        family["primary_packet_id"] = "research-a"
         self.assertEqual(self._errors(family), [])
 
         cases = {}
@@ -1199,6 +1202,7 @@ class FamilyCoverageTest(unittest.TestCase):
             }
         )
         family["packets"] = [packet_a, packet_b]
+        family["primary_packet_id"] = "research-b"
 
         self.assertEqual(self._errors(family), [])
         entries = MODULE.featured_result_entries(family)
@@ -1297,6 +1301,27 @@ class FamilyCoverageTest(unittest.TestCase):
         href, label = MODULE.packet_manifest_target(repro)
         self.assertTrue(href.endswith("repro/repro-a/README.md"))
         self.assertEqual(label, "Open reproduction guide")
+
+    def test_primary_packet_binding_controls_cta_without_speed_ranking(self) -> None:
+        family = self._family()
+        slower = self._research_packet()
+        slower["id"] = "curated-slower"
+        slower["featured_metric"]["value"] = 30.0
+        faster = deepcopy(slower)
+        faster["id"] = "uncurated-faster"
+        faster["featured_metric"]["value"] = 300.0
+        family["packets"] = [faster, slower]
+        family["primary_packet_id"] = "curated-slower"
+
+        self.assertIs(MODULE.preferred_packet(family), slower)
+
+        missing = deepcopy(family)
+        del missing["primary_packet_id"]
+        self._assert_error(self._errors(missing), "primary_packet_id")
+
+        unknown = deepcopy(family)
+        unknown["primary_packet_id"] = "not-a-packet"
+        self._assert_error(self._errors(unknown), "primary_packet_id", "missing")
 
     def test_repro_packet_keeps_reproduction_promise(self) -> None:
         family = self._family()

@@ -28,6 +28,12 @@ measurement exactly. This exposes an existing result without pretending that
 the packet is an installable catalog package or allowing presentation metadata
 to manufacture a headline.
 
+Every family with packets declares one `primary_packet_id` for its main action.
+This is a deliberate editorial binding: the renderer never chooses a call to
+action from raw decode speed. Model relevance, recipe usefulness, and evidence
+maturity are resolved when curating the binding; all other packets remain one
+click away in the complete packet list.
+
 Optional family `featured_results` are presentation-only exact pointers. A
 non-empty list has one `hero` and any number of `support` entries; every entry
 binds a declared metric to one `measurement_id` and one exact `sample_index` or
