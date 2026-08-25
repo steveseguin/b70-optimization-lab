@@ -1,0 +1,24 @@
+{
+  "schema": "neural.download.qwen36-llama-graph-parent-sentinel-r4-delta.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-graph-sentinel-20260825-r4",
+  "state": "preregistered-not-launched",
+  "purpose": "Rerun the complete sentinel while removing only the three unavailable candidate configuration strings exposed by R3.",
+  "lifecycle_delta": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-graph-sentinel-20260825-r4",
+    "exact_ack": "RUN qwen36-q8-f16-tp1-graph-sentinel-20260825-r4"
+  },
+  "control_gate_delta": "none-from-r3",
+  "candidate_gate_delta": {
+    "remove_required_strings": [
+      "GGML_SYCL_GRAPH: yes",
+      "GGML_SYCL_ENABLE_GRAPH: 1",
+      "GGML_SYCL_GRAPH_CACHE_SIZE: 8"
+    ],
+    "positive_action_markers_and_summary_unchanged": true
+  },
+  "predecessor": {
+    "terminal_sha256": "809c9b756526d694a97d37df7e40aa6484d652a14d4513094a8560229cad3c50",
+    "candidate_stderr_sha256": "f91ea5d9a0e48c16ae748d9f86c3e9f347d0760bc78a77c6605bcee93dd9e34d",
+    "reuse_any_arm": false
+  }
+}

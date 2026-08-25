@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.qwen36-llama-graph-parent-sentinel-result.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-graph-sentinel-20260825-r3",
+  "classification": "failed-incomplete-redundant-candidate-log-gate",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-graph-sentinel-20260825-r3",
+  "terminal_sha256": "809c9b756526d694a97d37df7e40aa6484d652a14d4513094a8560229cad3c50",
+  "terminal": {
+    "state": "failed",
+    "stage": "candidate-graph1-cache8",
+    "cleanup_passed": true,
+    "error": "candidate graph evidence absent: ['GGML_SYCL_GRAPH: yes', 'GGML_SYCL_ENABLE_GRAPH: 1', 'GGML_SYCL_GRAPH_CACHE_SIZE: 8']"
+  },
+  "control": {
+    "receipt_passed": true,
+    "output_sha256": "cc12d7e693e9bf8404ba0e36a33c8f42393f58be62e013dd23c3803e40f50822",
+    "stderr_sha256": "95a4b8261736344e14f5bf17b85b7efe19d3f4c8810978fb37b5d1f0bb608afc",
+    "summary": "device=0 and all graph/cache/rejection counters zero"
+  },
+  "candidate_observation": {
+    "receipt_exists": false,
+    "output_sha256": "cc12d7e693e9bf8404ba0e36a33c8f42393f58be62e013dd23c3803e40f50822",
+    "stderr_sha256": "f91ea5d9a0e48c16ae748d9f86c3e9f347d0760bc78a77c6605bcee93dd9e34d",
+    "raw_stdout_matches_control": true,
+    "positive_action_markers_observed": [
+      "requested",
+      "recording_entered",
+      "replayed",
+      "direct_replay"
+    ],
+    "summary": {
+      "device": 0,
+      "requested": 66,
+      "compatibility_rejected": 0,
+      "device_unsupported": 0,
+      "cache_entries": 4,
+      "cache_limit": 8,
+      "cache_hit": 62,
+      "cache_miss": 4,
+      "cache_full": 0,
+      "direct_replay": 62,
+      "recorded": 4,
+      "created": 4,
+      "updated": 0,
+      "recreated": 0,
+      "replayed": 66
+    }
+  },
+  "cause": "All substantive graph and parity evidence was present, but the frozen candidate parser stopped first on the same three human-readable configuration strings that R2/R3 proved this backend does not emit.",
+  "authority": {
+    "seven_cell_expansion": false,
+    "site_publication": false,
+    "speed_measurement_or_floor": null,
+    "reuse_any_r3_arm": false,
+    "historical_featured_speeds_are_immutable": true
+  },
+  "next": "Fresh R4 reruns both arms and removes only the unavailable candidate configuration strings; all positive graph markers, exact summary gates, and parity remain mandatory."
+}
