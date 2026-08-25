@@ -1,0 +1,71 @@
+{
+  "schema": "neural.download.qwen36-llama-mtp1-parent-sentinel-result.v1",
+  "campaign_id": "qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r2",
+  "status": "failed-do-not-expand",
+  "failed_gate": "candidate_target_output_parity",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+    "quantization": "Q4_K_M",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "graph_mode": "off",
+    "kv": "f16",
+    "active_context_tokens": 8192,
+    "control_mtp": 0,
+    "candidate_mtp": 1
+  },
+  "control": {
+    "exact_depth_gate_passed": true,
+    "serving_decode_tok_s_99_interval": 22.467299998850997,
+    "output_token_ids_sha256": "8c6866126b71dcbf417657333a860da5823b7b5cd9290ae8383b0caa315b124c",
+    "receipt_sha256": "4461a48b0256cd321bcd31f196c8b1e826a30dff04359c179d257a7a0ea4464d",
+    "draft_counters_present": false
+  },
+  "candidate": {
+    "exact_depth_gate_passed": true,
+    "serving_decode_tok_s_99_interval": 30.06710373477709,
+    "output_token_ids_sha256": "b1cd1adc22faa6fd6ad9a45d81dac84a6655e0571460f2959434b67ae251edc8",
+    "receipt_sha256": "58f6190e1de9c88cc2d39f5d8742acc604a8bca7871eab46fc6f56ca7beb8645",
+    "first_exact_request_draft_counters": {
+      "accepted": 59,
+      "generated": 67,
+      "ratio": 0.8806
+    }
+  },
+  "candidate_vs_control_ratio": 1.3382606604404959,
+  "quality": {
+    "pass_all": true,
+    "request_count": 7,
+    "repeat_count": 2,
+    "long_context_needle_passed": true,
+    "cached_tokens": [0, 0, 0, 0, 0, 0, 0],
+    "result_sha256": "0e24161cd90abc78eedf273ec12a623158dfbc5a63c3dfcdbbaf967e1f0524f3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "gates": {
+    "all_non_parity_terminal_checks_passed": true,
+    "candidate_target_output_parity": false,
+    "terminal_gate_passed": false,
+    "fresh_receipts_postdate_r1": true,
+    "r1_rows_reused": false,
+    "postflight_reached_terminal_validator": true,
+    "gpu_processes_idle_after_run": true
+  },
+  "evidence_sha256": {
+    "terminal_receipt": "e66f2dee70ef017a46a25cb770c00b42d4409baca73c96cc752c612fef96fe8c",
+    "identity": "6e30a9da52c85411755195a8fd9191e3d92584276a5d5b84531c4c0e4f877816",
+    "control_server_log": "5696bc78c8e7a321bb7b76e096fad7aff4761dc67e2cb1e2c6e2f4c94c3168ab",
+    "candidate_server_log": "ad7b0d34363de926d52b32e09715720dc5f755af5c15dc0fdbec82c92cf7cd27"
+  },
+  "launch_boundary_disclosure": "After the clean-tree gate and temporary runner materialization, a collaborating agent added only an explanatory capability-probe-environment field to the tracked overlay manifest and matching wrapper/note text. The executable temporary runner, model/runtime/client identities, selectors, arms, requests, and gates did not change. The terminal validator read the additive overlay field; files were restored byte-identical to pushed main after completion. This lifecycle blemish cannot create the independently observed parity failure and grants no measurement authority.",
+  "interpretation": {
+    "matrix_cells_filled": 0,
+    "mtp1_depth_curve_authorized": false,
+    "speed_claim_authorized": false,
+    "quality_claim_scope": "The frozen seven-request candidate quality battery passed in R2 only.",
+    "historical_featured_speeds_unchanged": true,
+    "next_action": "Do not expand embedded MTP1 from this lane; move to the already preregistered target-only Q8 curves."
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r2"
+}
