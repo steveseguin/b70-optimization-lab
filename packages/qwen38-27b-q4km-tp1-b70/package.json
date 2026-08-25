@@ -49,6 +49,80 @@
       "evidence": "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
     }
   ],
+  "performance_profiles": [
+    {
+      "id": "decode-f16-kv-vs-context-depth",
+      "label": "Q4_K_M raw decode with F16 KV",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Existing context depth before tg128",
+      "scope": "Direct llama-bench raw-engine tg128 using the exact Q4_K_M TP1 lane, one B70, flash attention on, F16 K/V, and 5 repetitions at every displayed depth. This is a context-shape profile, not the 27.82 tok/s realistic-suite headline. Every marker is measured; no point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json",
+      "points": [
+        {"context_tokens": 0, "value": 24.81, "samples": 5},
+        {"context_tokens": 2048, "value": 24.46, "samples": 5},
+        {"context_tokens": 4096, "value": 24.25, "samples": 5},
+        {"context_tokens": 8192, "value": 23.83, "samples": 5},
+        {"context_tokens": 16384, "value": 23.10, "samples": 5},
+        {"context_tokens": 24576, "value": 22.42, "samples": 5},
+        {"context_tokens": 32768, "value": 21.77, "samples": 5}
+      ]
+    },
+    {
+      "id": "prefill-f16-kv-vs-context-depth",
+      "label": "Q4_K_M raw pp2048 with F16 KV",
+      "metric": "prefill",
+      "unit": "tok/s",
+      "x_label": "Existing context depth before pp2048",
+      "scope": "Direct llama-bench raw-engine pp2048 using the exact Q4_K_M TP1 lane, one B70, flash attention on, F16 K/V, and 5 repetitions at every displayed depth. Every marker is measured; no point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json",
+      "points": [
+        {"context_tokens": 0, "value": 825.24, "samples": 5},
+        {"context_tokens": 2048, "value": 919.67, "samples": 5},
+        {"context_tokens": 4096, "value": 892.64, "samples": 5},
+        {"context_tokens": 8192, "value": 850.97, "samples": 5},
+        {"context_tokens": 16384, "value": 779.50, "samples": 5},
+        {"context_tokens": 24576, "value": 719.39, "samples": 5},
+        {"context_tokens": 32768, "value": 667.83, "samples": 5}
+      ]
+    },
+    {
+      "id": "decode-q8-kv-vs-context-depth",
+      "label": "Q4_K_M raw decode with Q8_0 KV",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Existing context depth before tg128",
+      "scope": "Alternative Q8_0 K/V operating profile on the same exact Q4_K_M TP1 lane, one B70, flash attention on, raw-engine tg128, and 5 repetitions per depth. It is shown separately because KV precision materially changes decode. Every marker is measured; no point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json",
+      "points": [
+        {"context_tokens": 0, "value": 24.27, "samples": 5},
+        {"context_tokens": 2048, "value": 22.45, "samples": 5},
+        {"context_tokens": 4096, "value": 21.05, "samples": 5},
+        {"context_tokens": 8192, "value": 18.68, "samples": 5},
+        {"context_tokens": 16384, "value": 14.86, "samples": 5},
+        {"context_tokens": 24576, "value": 12.40, "samples": 5},
+        {"context_tokens": 32768, "value": 10.66, "samples": 5}
+      ]
+    },
+    {
+      "id": "prefill-q8-kv-vs-context-depth",
+      "label": "Q4_K_M raw pp2048 with Q8_0 KV",
+      "metric": "prefill",
+      "unit": "tok/s",
+      "x_label": "Existing context depth before pp2048",
+      "scope": "Alternative Q8_0 K/V operating profile on the same exact Q4_K_M TP1 lane, one B70, flash attention on, raw-engine pp2048, and 5 repetitions per depth. Every marker is measured; no point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-q4km-tp1-context-kv-sweep.json",
+      "points": [
+        {"context_tokens": 0, "value": 817.78, "samples": 5},
+        {"context_tokens": 2048, "value": 912.17, "samples": 5},
+        {"context_tokens": 4096, "value": 887.17, "samples": 5},
+        {"context_tokens": 8192, "value": 843.21, "samples": 5},
+        {"context_tokens": 16384, "value": 772.01, "samples": 5},
+        {"context_tokens": 24576, "value": 711.48, "samples": 5},
+        {"context_tokens": 32768, "value": 662.56, "samples": 5}
+      ]
+    }
+  ],
   "hardware": {
     "accelerator": "Intel Arc Pro B70 32 GiB",
     "cards": 1,
