@@ -1748,6 +1748,99 @@
       "quality": "Both fresh runs passed the fresh-response gate and objective canaries pass_all=true. Suite output hashes matched only 8/12 across fresh servers; no Q4-specific vision smoke or deep-context needle was recorded.",
       "caveat": "Configured 262144 capacity with companions resident; serving speed was measured on short prompts, not at 256K active depth.",
       "evidence": "data/qwen38-27b-256k-package-operating-points-20260822.json"
+    },
+    {
+      "id": "q38-0ecc-stock-kernel-tp1-strict",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU 0ecc284790 + stock kernel 0.1.13.2",
+      "profile_id": "q38-0ecc-stock-kernel-dated-snapshot",
+      "measurement_class": "strict-natural-eos",
+      "promotion_status": "qualified-dated-control-not-current-head",
+      "quality_scope": "complete quality battery and immutable-cache replay",
+      "identity": {
+        "vllm_source": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
+        "xpu_kernels_source": "stock-from-nightly-base-0.1.13.2",
+        "nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "natural_eos": true},
+      "workload": "two strict natural-EOS replays; 25 unique cold prompts; up to 512 output tokens; cached_tokens=0; conventional 99-interval median",
+      "metrics": {"decode_tok_s": [30.324297716696414, 30.325970521145816]},
+      "quality": "Both strict speed gates passed. The full quality battery, benchmark-shape gates, model verification, and immutable-cache replay passed.",
+      "caveat": "Qualified dated control using the stock kernel from the pinned nightly base. It is not the current upstream head and does not replace any protected historical value.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-0ecc-tp1-qualification-attempts.json"
+    },
+    {
+      "id": "q38-0ecc-baaa-tp1-strict",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU 0ecc284790 + XPU kernels baaa05bb4e",
+      "profile_id": "q38-0ecc-baaa-dated-snapshot",
+      "measurement_class": "strict-natural-eos",
+      "promotion_status": "quality-clean-speed-floor-miss",
+      "quality_scope": "complete quality battery and immutable-cache replay",
+      "identity": {
+        "vllm_source": "0ecc284790e5403f74b899524ef82ecb69f83cb3",
+        "xpu_kernels_source": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+        "nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "natural_eos": true},
+      "workload": "two strict natural-EOS replays; 25 unique cold prompts; up to 512 output tokens; cached_tokens=0; conventional 99-interval median",
+      "metrics": {"decode_tok_s": [30.27919625650121, 30.261661472495938]},
+      "quality": "Both arms passed correctness, the complete quality battery, benchmark-shape gates, model verification, and immutable-cache replay.",
+      "caveat": "Both strict speeds missed the frozen floor. This is measured support evidence only; it is not promoted and lowers no protected value.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-0ecc-tp1-qualification-attempts.json"
+    },
+    {
+      "id": "q38-6a9-baaa-tp1-strict",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU 6a9c69fa85 + XPU kernels baaa05bb4e",
+      "profile_id": "q38-6a9-baaa-dated-snapshot",
+      "measurement_class": "strict-natural-eos",
+      "promotion_status": "quality-clean-speed-floor-miss",
+      "quality_scope": "complete quality battery on replay A and immutable-cache replay B",
+      "identity": {
+        "vllm_source": "6a9c69fa851389dcf1ee5d3a2363e27af665d26d",
+        "xpu_kernels_source": "baaa05bb4e92901219a5a072dd63f2474896f6d1",
+        "nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "natural_eos": true},
+      "workload": "two strict natural-EOS replays; 25 unique cold prompts; up to 512 output tokens; cached_tokens=0; conventional 99-interval median",
+      "metrics": {"decode_tok_s": [30.26782494070049, 30.27119782672338]},
+      "quality": "All non-speed gates passed; replay A passed the complete quality battery and replay B preserved the immutable cache.",
+      "caveat": "Both strict speeds missed the frozen floor. This is a dated quality-clean speed miss, not a promoted profile or a replacement for protected history.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-tp1-r1-speed-only-miss.json"
+    },
+    {
+      "id": "q38-b2dd-1e90-tp1-strict-a",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "variant": "AutoRound INT4",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU b2dd9ce73d + XPU kernels 1e90ffa672",
+      "profile_id": "q38-b2dd-1e90-frozen-snapshot",
+      "measurement_class": "strict-natural-eos",
+      "promotion_status": "quality-clean-incomplete-single-strict-arm",
+      "quality_scope": "complete quality battery on strict A; strict B not run",
+      "identity": {
+        "vllm_source": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+        "xpu_kernels_source": "1e90ffa672ba02f17a909da11838a4c55b199783",
+        "nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+        "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "natural_eos": true},
+      "workload": "one strict natural-EOS arm; 25 unique cold prompts; up to 512 output tokens; cached_tokens=0; conventional 99-interval median",
+      "metrics": {"decode_tok_s": [30.280007107732555]},
+      "quality": "Strict A passed the complete quality battery: 7/7 exact, 8/8 repeat with one hash, 8K needle, 24/24 baseline comparisons, and cache zero.",
+      "caveat": "The old continuous-remote policy stopped the packet before strict B after upstream advanced. This is a frozen, quality-clean dated snapshot, not a replicated record-grade pair; the protected floor is unchanged.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-b2dd9ce73d-r1-frozen-snapshot-closeout.json"
     }
   ],
   "series_measurements": [
@@ -2499,6 +2592,60 @@
         "5:2": {"state": "missing", "label": "outside program"},
         "5:3": {"state": "unsupported", "label": "head split"},
         "5:4": {"state": "missing", "label": "outside program"}
+      }
+    },
+    {
+      "id": "dated-current-main-snapshot-by-tp",
+      "label": "dated current-main snapshots × TP",
+      "row_axis": {
+        "key": "profile_id",
+        "label": "frozen source stack",
+        "prefix": "",
+        "value_labels": {
+          "q38-0ecc-stock-kernel-dated-snapshot": "0ecc + stock kernel",
+          "q38-0ecc-baaa-dated-snapshot": "0ecc + baaa",
+          "q38-6a9-baaa-dated-snapshot": "6a9 + baaa",
+          "q38-b2dd-1e90-frozen-snapshot": "b2dd + 1e90"
+        }
+      },
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.8-27b",
+        "variant": "AutoRound INT4",
+        "runtime_family": "vLLM XPU",
+        "measurement_class": "strict-natural-eos",
+        "mtp": 0,
+        "graph": "on",
+        "kv": "f16",
+        "configured_max_context_tokens": 32768,
+        "natural_eos": true
+      },
+      "fixed": "Qwen3.8 AutoRound · exact dated vLLM/XPU-kernel source stacks · strict natural-EOS profile · MTP0 · f16 KV · graph on. Each row is immutable historical evidence, never a moving 'current' alias.",
+      "decision_note": "The 0ecc stock-kernel row is the qualified control. The baaa and 6a9 rows are quality-clean strict misses. b2dd has one quality-clean strict arm because the superseded continuous-remote policy stopped before replay B. No row replaces or lowers protected speed history; TP2/TP4 remain explicit gaps for these exact stacks.",
+      "rows": [
+        "q38-0ecc-stock-kernel-dated-snapshot",
+        "q38-0ecc-baaa-dated-snapshot",
+        "q38-6a9-baaa-dated-snapshot",
+        "q38-b2dd-1e90-frozen-snapshot"
+      ],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "q38-0ecc-stock-kernel-dated-snapshot:1": {"state": "lab-measured", "label": "30.324 / 30.326 · qualified", "evidence_id": "q38-0ecc-stock-kernel-tp1-strict"},
+        "q38-0ecc-stock-kernel-dated-snapshot:2": {"state": "missing", "label": "not measured"},
+        "q38-0ecc-stock-kernel-dated-snapshot:3": {"state": "unsupported", "label": "head split"},
+        "q38-0ecc-stock-kernel-dated-snapshot:4": {"state": "missing", "label": "not measured"},
+        "q38-0ecc-baaa-dated-snapshot:1": {"state": "lab-measured", "label": "30.279 / 30.262 · quality-clean miss", "evidence_id": "q38-0ecc-baaa-tp1-strict"},
+        "q38-0ecc-baaa-dated-snapshot:2": {"state": "missing", "label": "not measured"},
+        "q38-0ecc-baaa-dated-snapshot:3": {"state": "unsupported", "label": "head split"},
+        "q38-0ecc-baaa-dated-snapshot:4": {"state": "missing", "label": "not measured"},
+        "q38-6a9-baaa-dated-snapshot:1": {"state": "lab-measured", "label": "30.268 / 30.271 · quality-clean miss", "evidence_id": "q38-6a9-baaa-tp1-strict"},
+        "q38-6a9-baaa-dated-snapshot:2": {"state": "missing", "label": "not measured"},
+        "q38-6a9-baaa-dated-snapshot:3": {"state": "unsupported", "label": "head split"},
+        "q38-6a9-baaa-dated-snapshot:4": {"state": "missing", "label": "not measured"},
+        "q38-b2dd-1e90-frozen-snapshot:1": {"state": "lab-measured", "label": "30.280 · quality-clean strict A", "evidence_id": "q38-b2dd-1e90-tp1-strict-a"},
+        "q38-b2dd-1e90-frozen-snapshot:2": {"state": "missing", "label": "not measured"},
+        "q38-b2dd-1e90-frozen-snapshot:3": {"state": "unsupported", "label": "head split"},
+        "q38-b2dd-1e90-frozen-snapshot:4": {"state": "missing", "label": "not measured"}
       }
     },
     {

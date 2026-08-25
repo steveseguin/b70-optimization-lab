@@ -42,8 +42,10 @@ Sources:
 - `experiments/qwen38-27b-b70/data/2026-08-24-qwen38-6a9c69fa85-tp1-r1-speed-only-miss.json`;
 - `experiments/qwen38-27b-b70/data/2026-08-24-qwen38-09fd-1e90-prebuild-storage-rotation.json` proves storage/build preparation only and supplies no performance value.
 
-Import status: measured import. Do not feature the failed candidates or call a
-dated head “current.”
+Import status: **completed 2026-08-24**. The three preregistered rows are now
+exact measured cells in a dated-source-stack view, alongside the later frozen
+`b2dd9ce73d` + `1e90ffa672` quality-clean strict-A snapshot. Failed or
+incomplete candidates are not featured, and no dated head is called “current.”
 
 ### 2. Qwen 27B: complete the Qwen3.8 Q4_K_M KV-by-context cells
 
