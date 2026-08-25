@@ -1,0 +1,136 @@
+{
+  "schema": "neural.download.qwen36-llama-exact-depth-campaign.v1",
+  "campaign_id": "qwen36-q4-0-tp1-mtp0-q8kv-exact-depth-20260825-r2",
+  "state": "preregistered-not-launched",
+  "purpose": "Fresh rerun of the seven TP1 target-only Q4_0, MTP0, graph-off, q8_0-KV exact active-context cells after r1 was quarantined for a graph-attestation failure and confirmed GPU0 overlap.",
+  "run_identity": {
+    "weight_revision": "qwen3.6-27b",
+    "base_model_repository": "Qwen/Qwen3.6-27B",
+    "base_model_revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q4-0-20c9c45",
+    "artifact_repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+    "artifact_revision": null,
+    "artifact_revision_status": "The exact Hugging Face repository revision was not captured; this artifact is bound by path, size, and SHA-256 and does not inherit the sibling Q4_K_M revision.",
+    "model_path": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_0.gguf",
+    "model_size_bytes": 16056476800,
+    "model_sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+    "quantization": "Q4_0",
+    "embedded_mtp_capability": true,
+    "tensor_parallel_size": 1,
+    "mtp_depth": 0,
+    "speculation_profile": "target only",
+    "graph_mode": "off",
+    "kv_cache_dtype": "q8_0",
+    "runtime_family": "llama.cpp SYCL",
+    "runtime_build_number": 9976,
+    "runtime_commit": "e3546c7948e3af463d0b401e6421d5a4c2faf565",
+    "runtime_build_tree_status": "dirty-build; runnable identity is the exact executable and complete resolved-library chain inherited by hash from the frozen r1 manifest"
+  },
+  "binary": {
+    "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/llama-bench",
+    "size_bytes": 564624,
+    "sha256": "90d4d23363825219d6cff02d59b73c3912fd42071694e8e215ba8cfc5d058aff",
+    "implementation_path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libllama-bench-impl.so",
+    "implementation_sha256": "f963fc1504afeff14bdd389f65a00d9b581e40056bef0c9b81e17e89fc0d79d5",
+    "sycl_backend_path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libggml-sycl.so.0.16.0",
+    "sycl_backend_sha256": "5b53c03bf2702cc3a2b8146b1da8fd437f8b30400f3016bb2a75473c4345a6a3"
+  },
+  "frozen_dependency_manifest": {
+    "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4-0-tp1-mtp0-q8kv-exact-depth-r1.json",
+    "sha256": "b83dcb08ceaf8ad479489b322c6bf4c1cba8ae5ea52b9ce68d101bb04d2f77b0",
+    "reuse_scope": "identity and resolved-library hashes only; no r1 timing row is reused"
+  },
+  "benchmark_contract": {
+    "declared_depths": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "argv": [
+      "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/llama-bench",
+      "-m", "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_0.gguf",
+      "-dev", "SYCL0", "-ngl", "99", "-sm", "layer", "-p", "2048",
+      "-n", "128", "-d", "0,2048,4096,8192,16384,24576,32768",
+      "-b", "2048", "-ub", "512", "-fa", "on", "-ctk", "q8_0",
+      "-ctv", "q8_0", "-t", "16", "--poll", "50", "-r", "5",
+      "-o", "json"
+    ],
+    "parser": "scripts/parse-llama-bench-exact-depth.py",
+    "parser_sha256": "bd32939350062e104a526536357e6f1055b683adc9c520c76e4e3d42e563f66e",
+    "measurement_class": "raw-engine",
+    "is_http_serving_metric": false,
+    "includes_quality_gate": false,
+    "speed_floor": null,
+    "cross_quant_transfer_allowed": false
+  },
+  "graph_off_attestation": {
+    "timing": "must pass under all four campaign locks immediately before the fresh llama-bench process starts",
+    "compile_flag": {
+      "cmake_cache_path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/CMakeCache.txt",
+      "cmake_cache_sha256": "0930be75442696207b47bcaff3f0f19e2630b8e201a128659d903eba71070aab",
+      "required_line": "GGML_SYCL_GRAPH:BOOL=ON",
+      "build_ninja_path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/build.ninja",
+      "build_ninja_sha256": "7c4ef3c5c9323ea778e816a5b4bb2fc15bd3fcdd1655565d6711ab84f0fb57af",
+      "interpretation": "Graph support is compiled in, so graph-off must be established by the exact runtime gate rather than inferred from a graph-disabled build."
+    },
+    "source_reference": {
+      "repository": "/home/steve/src/llama.cpp",
+      "commit": "e3546c7948e3af463d0b401e6421d5a4c2faf565",
+      "path": "ggml/src/ggml-sycl/ggml-sycl.cpp",
+      "environment_reader_path": "ggml/src/ggml-sycl/common.cpp",
+      "scope": "The committed source parses an unsigned environment value, defines GGML_SYCL_ENABLE_GRAPH with default zero, and guards command-graph entry with g_ggml_sycl_enable_graph; it is explanatory support, not a substitute for the exact dirty-build DSO proof."
+    },
+    "exact_binary_proof": {
+      "sycl_backend_sha256": "5b53c03bf2702cc3a2b8146b1da8fd437f8b30400f3016bb2a75473c4345a6a3",
+      "get_env_symbol": "ggml_sycl_get_env(char const*, int)@0x240060",
+      "initialization_symbol": "ggml_check_sycl()@0x1aa000",
+      "graph_dispatch_symbol": "ggml_backend_sycl_graph_compute(ggml_backend*, ggml_cgraph*)@0x1badb0",
+      "proof": "Disassembly must show GGML_SYCL_ENABLE_GRAPH loaded with default zero into g_ggml_sycl_enable_graph and graph dispatch branching directly to ordinary compute when that global is zero."
+    },
+    "controlled_environment": {
+      "GGML_SYCL_ENABLE_GRAPH": "0",
+      "GGML_SYCL_GRAPH_CACHE_SIZE": "0"
+    },
+    "runtime_stderr_markers_required": false,
+    "reason": "This exact llama-bench suppresses the informational logger in JSON mode; r1 proved that requiring those strings is infeasible, while the exact DSO contains a statically auditable graph gate."
+  },
+  "execution_contract": {
+    "exact_ack": "RUN qwen36-q4-0-tp1-mtp0-q8kv-exact-depth-20260825-r2 d1-exact-depths r2",
+    "run_root": "/home/steve/qwen36-matrix-runs/q4-0-tp1-mtp0-q8kv-exact-depth-20260825-r2",
+    "run_root_filesystem": "ext4",
+    "create_only": true,
+    "required_branch": "main",
+    "required_repo_state": "clean and equal to the live origin/main ref",
+    "required_locks": [
+      "/run/lock/muse-glimmer-gpu-exclusive.lock",
+      "/tmp/b70-benchmark.lock",
+      "/tmp/b70-gpu0.lock",
+      "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"
+    ],
+    "required_idle_process_coverage": [
+      "EngineCore", "vllm serve", "llama-server", "llama-bench", "llama-batched-bench"
+    ],
+    "terminal_receipt": "terminal-receipt.json",
+    "graph_attestation_receipt": "graph-off-attestation.json"
+  },
+  "r1_quarantine": {
+    "run_root": "/home/steve/qwen36-matrix-runs/q4-0-tp1-mtp0-q8kv-exact-depth-20260825-r1",
+    "failure_note": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-08-25-qwen36-q4-0-tp1-mtp0-q8kv-exact-depth-r1-failure.md",
+    "failure_note_sha256": "1777f16c6dd7385329283d089b367d01535b40ed5abee1ff4d17d103e4d1505d",
+    "failure_record": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4-0-tp1-mtp0-q8kv-exact-depth-r1-failure.json",
+    "failure_record_sha256": "85a8a9eb412a1bf7e70a31730b22101fba9392dbf83c8590d1610163421a98db",
+    "competing_commit": "c5f880c94ac3fda8237ecbf3fbb60cfe3a908983",
+    "competing_commit_time": "2026-08-25T10:26:34-04:00",
+    "overlap": "The competing Qwen3.8 GPU0 llama-batched-bench result was committed inside r1's 10:22:09-10:38:40 local interval. Treat GPU0 overlap as confirmed for publication policy.",
+    "raw_row_reuse_allowed": false,
+    "cells_publishable_from_r1": 0,
+    "preservation": "R1's failed terminal receipt, failure record, note, and raw rows remain untouched and quarantined."
+  },
+  "quality_boundary": {
+    "current_packet_quality_state": "not-tested",
+    "historical_support_only": "data/qwen27-cycle-timeline/no-spec-normal-20260712T160033Z/qwen27-q4_0-kv8-no-spec-graph0-strict128-20260712T160033Z.json",
+    "historical_support_sha256": "1a72aeda183a7cb8f3b9cfb1d705e2cd64d47f887c9fab342be91e7bad78c49f",
+    "disclosure": "Historical same-artifact quality is cited separately and is not transferred to the fresh exact-depth cells."
+  },
+  "interpretation": {
+    "on_pass": "Create seven measured raw-engine cells from r2 only for this exact artifact/runtime/config identity; quality remains separately labeled.",
+    "on_failure": "Preserve the create-only r2 root and terminal failure receipt; fill no matrix cells and do not reuse r1.",
+    "performance_policy": "No minimum speed gate. A slower exact-depth point is evidence and does not overwrite a different historical result."
+  }
+}
