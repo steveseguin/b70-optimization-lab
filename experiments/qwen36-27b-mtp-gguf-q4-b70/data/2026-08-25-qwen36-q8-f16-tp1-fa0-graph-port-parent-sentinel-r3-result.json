@@ -1,0 +1,37 @@
+{
+  "schema": "neural.download.qwen36-llama-fa0-graph-port-parent-sentinel-r3-result.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r3",
+  "state": "failed",
+  "stage": "candidate-graph1-cache8",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r3",
+  "terminal_receipt_sha256": "4d419b0231e1a8f80ba75ed4b5c89303138dbdf5b907da20cb1fe533f1aeb244",
+  "control": {
+    "passed": true,
+    "return_code": 0,
+    "output_bytes": 1290,
+    "output_sha256": "48c64a14860487bbf8caca4c4965615476f273149ce8c0f521b838a951b030c4",
+    "all_graph_counters_zero": true
+  },
+  "candidate": {
+    "passed": false,
+    "return_code": -6,
+    "stderr_sha256": "0998c4b829072b507ec522e8a0a26cdd4ee28c59ee30d323a169ba746b2696c1",
+    "partial_output_sha256": "7b6e7c062fd111522f1056e8748fd5ce1060914e2457912658f25c68fbcbd5ab",
+    "observed_before_abort": {
+      "requested": 2,
+      "cache_miss": 2,
+      "recorded": 2,
+      "created": 2,
+      "replayed": 2
+    },
+    "failure": "persistent SYCL graph Q8 memo exhausted 320 pointer-stable slots for 78336 bytes"
+  },
+  "original_r1_queue_wait_exception_reproduced": false,
+  "cleanup_passed": true,
+  "interpretation": "The pointer-stability repair removed the original queue-wait-on-recording failure, but its fixed 320-slot bound is insufficient when a later cached graph needs a larger memo geometry. No parent pass or curve authority was earned.",
+  "curve_authorized": false,
+  "site_publication_authorized": false,
+  "speed_claim_authorized": false,
+  "record_or_submission_authorized": false,
+  "protected_graph_off_values_may_be_replaced": false
+}
