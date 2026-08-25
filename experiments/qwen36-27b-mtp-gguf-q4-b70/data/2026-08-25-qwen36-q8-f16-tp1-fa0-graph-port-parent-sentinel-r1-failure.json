@@ -1,0 +1,128 @@
+{
+  "schema": "neural.download.qwen36-llama-fa0-graph-port-parent-sentinel-failure.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1",
+  "status": "failed-closed",
+  "classification": "candidate-runtime-failure-after-two-recorded-and-replayed-computes",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-fa0-graph-port-sentinel-20260825-r1",
+  "identity": {
+    "lab_git_head": "575352eea8bfe0f309c3a7c9009cb0792cecbbf4",
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-q8-0-82d411a",
+    "quantization": "Q8_0",
+    "tp": 1,
+    "mtp": 0,
+    "kv": "f16",
+    "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+    "source_base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "source_port_patch_sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892",
+    "binary_sha256": "68ab26cf34f821a40afb5a05374360e8343b9b802c927fd0850fcd7bf3c7e1fd",
+    "control_graph_cache": "0/0",
+    "candidate_graph_cache": "1/8"
+  },
+  "control": {
+    "status": "passed",
+    "return_code": 0,
+    "timed_out": false,
+    "process_group_empty": true,
+    "output_bytes": 1290,
+    "output_sha256": "48c64a14860487bbf8caca4c4965615476f273149ce8c0f521b838a951b030c4",
+    "graph_summary": {
+      "device": 0,
+      "requested": 0,
+      "compatibility_rejected": 0,
+      "device_unsupported": 0,
+      "cache_entries": 0,
+      "cache_limit": 0,
+      "cache_hit": 0,
+      "cache_miss": 0,
+      "cache_full": 0,
+      "direct_replay": 0,
+      "recorded": 0,
+      "created": 0,
+      "updated": 0,
+      "recreated": 0,
+      "replayed": 0
+    }
+  },
+  "candidate": {
+    "status": "failed",
+    "return_code": 1,
+    "terminal_error": "candidate-graph1-cache8 exited 1",
+    "exception_message": "wait cannot be called for a queue which is recording",
+    "observed_log_line": "wait cannot be called for a queue which is recording to a command graph.Exception caught at file:/home/steve/src/llama.cpp-q38-tp1-graph-port/ggml/src/ggml-sycl/ggml-sycl.cpp, line:4547",
+    "output_bytes": 1009,
+    "output_sha256": "70bbc9e9aeb547e6d7022140b1e271088da3380e340b0917d6c6986039779800",
+    "receipt_created": false,
+    "shutdown_summary_emitted": false,
+    "exact_output_parity_evaluated": false,
+    "pre_failure_graph_evidence": {
+      "scope": "Only the first two computes completed the emitted request/miss/record/replay sequence before the process failed.",
+      "compute_1": {
+        "requested": 1,
+        "cache_miss": 1,
+        "recording_entered": 1,
+        "replayed": 1,
+        "recorded": 1,
+        "created": 1,
+        "updated": 0,
+        "recreated": 0
+      },
+      "compute_2": {
+        "requested": 2,
+        "cache_miss": 2,
+        "recording_entered": 2,
+        "replayed": 2,
+        "recorded": 2,
+        "created": 2,
+        "updated": 0,
+        "recreated": 0
+      },
+      "last_emitted_cumulative_counts": {
+        "requested": 2,
+        "cache_miss": 2,
+        "recording_entered": 2,
+        "replayed": 2,
+        "recorded": 2,
+        "created": 2,
+        "updated": 0,
+        "recreated": 0
+      },
+      "acceptance_summary_available": false,
+      "parent_mechanism_gate_passed": false
+    }
+  },
+  "cleanup": {
+    "passed": true,
+    "terminal_stage": "candidate-graph1-cache8",
+    "terminal_state": "failed"
+  },
+  "evidence_sha256": {
+    "terminal_receipt": "ac63223683ba5e40b0078d3ab59c895e59eb8de9f1ed76ca99d0ba1f0e4d79f0",
+    "campaign_identity": "65c585c93c9852aa5ad5c285e6e490cea4e1452f504b2074a22ee9b89cd0403a",
+    "effective_shared_libraries": "dbc5fbff18638a00986ff783a7b9710f71fbde84d7d3dbe47b5a76d5ab1f6fc0",
+    "model_view_verification_receipt": "583425b8413700644c5f9b1a037152f01dc72bd622a00510582fe8613f679036",
+    "gpu0_compute_gate_receipt": "c694e4deb995009b109e6ac825005efa2d03c7f6ca717b344137397341a1eceb",
+    "control_identity": "34adbba168f01677e1fffe5ac39152745c5e336d26b1004e7c7d413987bc635d",
+    "control_output": "48c64a14860487bbf8caca4c4965615476f273149ce8c0f521b838a951b030c4",
+    "control_receipt": "3c831f2c43591c4638b6d1a66c853b12c5b936973843eba14f0c2cbc8b1192d3",
+    "control_stderr": "a0de4dfff5bdef08e1faaa4688361ad742eafb7fd339687a3601772fd7e35b6f",
+    "candidate_identity": "7d16d3ce7f3481da45794c161b2fc42629e38612d32454ad56cc5f64755fbdad",
+    "candidate_output": "70bbc9e9aeb547e6d7022140b1e271088da3380e340b0917d6c6986039779800",
+    "candidate_stderr": "3dd475cc6ff15b9a510e41565b2962118cc45a1477452f3812f13293e0f7175c"
+  },
+  "interpretation": {
+    "root_cause": "not determined by this result",
+    "observed_fact_only": "The graph-on candidate exited 1 after two emitted request/cache-miss/record/replay sequences and the recorded queue-wait exception.",
+    "graph_port_qualified": false,
+    "seven_cell_curve_authorized": false,
+    "site_publication_authorized": false,
+    "speed_measurement_or_floor": null,
+    "speed_claim_authorized": false,
+    "quality_claim_authorized": false,
+    "record_or_submission_authorized": false,
+    "graph_estimates_authorized": false,
+    "protected_graph_off_values_changed": false,
+    "historical_featured_speeds_are_immutable": true,
+    "retry_performed": false
+  }
+}
