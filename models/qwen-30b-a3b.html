@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Qwen3 30B-A3B · General + Coder coverage — neural.download</title>
-<meta name="description" content="One Qwen3 MoE family with separately measured General Instruct 2507 and Coder siblings. Their core geometry transfers implementation work, but their weights and dense FFN details are not interchangeable. Measured topology, context, speed-up, quantization, prefill, TTFT, quality, and packet coverage without merging revision identities.">
+<title>Qwen3 30B-A3B · General + Coder on Intel Arc Pro B70 — neural.download</title>
+<meta name="description" content="One Qwen3 MoE family with separately measured General Instruct 2507 and Coder siblings. Their core geometry transfers implementation work, but their weights and dense FFN details are not interchangeable. Every number links to its measured proof.">
 <link rel="canonical" href="https://neural.download/models/qwen-30b-a3b.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://neural.download/models/qwen-30b-a3b.html">
-<meta property="og:title" content="Qwen3 30B-A3B · General + Coder coverage — neural.download">
-<meta property="og:description" content="Measured deployment coverage across the axes users actually choose.">
+<meta property="og:title" content="Qwen3 30B-A3B · General + Coder on Intel Arc Pro B70 — neural.download">
+<meta property="og:description" content="One Qwen3 MoE family with separately measured General Instruct 2507 and Coder siblings. Their core geometry transfers implementation work, but their weights and dense FFN details are not interchangeable.">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta name="theme-color" content="#f6f1e5">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "Qwen3 30B-A3B · General + Coder", "description": "One Qwen3 MoE family with separately measured General Instruct 2507 and Coder siblings. Their core geometry transfers implementation work, but their weights and dense FFN details are not interchangeable.", "url": "https://neural.download/models/qwen-30b-a3b.html", "dateModified": "2026-08-24", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
@@ -19,10 +19,58 @@
   .family-main { max-width: 1120px; }
   .lineage { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
   .lineage span { padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }
-  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:12px 0 0; }
-  .hero .hero-headline .big { font:900 46px/1 var(--display); color:var(--paper, #fff); }
-  .hero .hero-headline .unit { font:700 12px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
+  .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
+  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; }
+  .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
+  .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
+  .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
   .hero .hero-headline small { flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }
+  .result-strip { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:0 0 14px; }
+  .result { display:block; border:2px solid var(--ink); background:var(--paper); padding:11px 12px 9px; }
+  .result:hover { border-color:var(--spot); }
+  .result .r-kind { display:block; font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .result b { font:900 27px/1.15 var(--display); }
+  .result .r-unit { margin-left:5px; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .result .r-note { display:block; font-size:11px; color:var(--muted); }
+  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--good); }
+  .result.is-screened .r-gate { color:var(--warn); }
+  .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
+  .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
+  .family-cta .button:hover { background:var(--spot); border-color:var(--spot); color:#fff; }
+  .meta-strip { display:flex; flex-wrap:wrap; gap:8px 26px; margin:0 0 20px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .meta-strip div { cursor:help; }
+  .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .meta-strip dd { margin:1px 0 0; font-size:12.5px; }
+  .stat-row { display:grid; grid-template-columns:auto auto 1fr auto; gap:4px 12px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-row .m { text-align:right; }
+  .stat-row:last-child { border-bottom:0; }
+  .stat-row b { font:900 20px/1 var(--display); }
+  .stat-row .u { font:700 10px var(--mono); text-transform:uppercase; color:var(--muted); margin-left:4px; }
+  .stat-row .l { font-size:12.5px; }
+  .stat-row .m { font:11px var(--mono); color:var(--muted); white-space:nowrap; }
+  .stat-row.is-superseded { color:var(--muted); }
+  .stat-row.is-superseded b { font:700 15px/1 var(--display); color:var(--muted); }
+  .combo-list { list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }
+  .combo { display:grid; grid-template-columns:130px 1fr auto auto; gap:4px 12px; align-items:baseline; padding:9px 12px; border-bottom:1px solid var(--line); }
+  .combo:last-child { border-bottom:0; }
+  .combo .c-state { font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
+  .combo.is-lab-measured .c-state { color:var(--good); }
+  .combo.is-lab-screened .c-state { color:var(--warn); }
+  .combo.is-quarantined .c-state { color:#a12820; }
+  .combo .c-what { font-size:12.5px; }
+  .combo .c-what code { font:8.5px var(--mono); color:var(--muted); border:1px solid var(--line); padding:0 4px; vertical-align:1px; }
+  .combo .c-dead { font-size:11.5px; color:var(--muted); font-weight:400; }
+  .combo .c-val { font:700 13px var(--mono); white-space:nowrap; }
+  .combo .c-links { font:11px var(--mono); white-space:nowrap; }
+  .combo-scope { margin:0 0 8px; color:var(--muted); font-size:12px; }
+  .combo-tail { margin:8px 0 0; color:var(--muted); font-size:12px; }
+  .view-flag { font:700 9px var(--mono); letter-spacing:.05em; color:var(--warn); margin-left:8px; vertical-align:2px; }
+  h2, .section-head { scroll-margin-top:70px; }
+  @media (max-width:520px) {
+    .combo { grid-template-columns:1fr; gap:2px; }
+    .stat-row { grid-template-columns:1fr; }
+    .result-strip { grid-template-columns:1fr; }
+  }
   .signal[title] { cursor: help; }
   .visually-hidden { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
   details.fine { margin:0 0 22px; color:var(--muted); font-size:12.5px; }
@@ -36,8 +84,8 @@
   .section-head { display:flex; align-items:end; justify-content:space-between; gap:18px; margin:34px 0 10px; }
   .section-head h2 { margin:0; font:900 25px/1.1 var(--display); text-transform:uppercase; }
   .section-head p { max-width:68ch; margin:0; color:var(--muted); font-size:13px; }
-  .views-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
-  figure.family-view { margin:0; min-width:0; }
+  .views-grid { display:grid; grid-template-columns:1fr; gap:14px; }
+  figure.family-view { margin:0; min-width:0; max-width:720px; }
   .chart-head { display:flex; justify-content:space-between; gap:12px; align-items:start; min-height:64px; }
   .chart-head h3 { margin:0; font:900 15px var(--display); text-transform:uppercase; }
   .chart-head p { margin:3px 0 0; color:var(--muted); font-size:11.5px; line-height:1.35; }
@@ -95,57 +143,55 @@
   <nav aria-label="Primary"><a href="../index.html">Home</a><a href="index.html" aria-current="page">Models</a><a href="../learn.html">Learn</a><a href="../guides.html">Guide library</a><a href="../index.html#lab-speeds">Benchmarks</a><a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></nav>
 </div></div>
 <header class="hero"><div class="wrap">
-  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Qwen 30B-A3B</p>
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Qwen3 30B-A3B · General + Coder</p>
   <h1>Qwen3 30B-A3B · General + Coder</h1>
   <p>One Qwen3 MoE family with separately measured General Instruct 2507 and Coder siblings. Their core geometry transfers implementation work, but their weights and dense FFN details are not interchangeable.</p>
-  <div class="hero-headline"><span class="big">108.12</span><span class="unit">tok/s measured</span><small>UD-Q4_K_XL · llama.cpp SYCL · single user, full quality gate</small></div>
+  <div class="hero-headline"><span class="big">108.12</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 81 words a second</span><small>1× Arc Pro B70 · UD-Q4_K_XL · llama.cpp SYCL · single user · full quality gate</small></div>
 
   <div class="lineage"><span>Qwen3 30B-A3B generation · shared publisher/architecture family</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-  <div class="signals" aria-label="Family signals">
-    <div class="signal" title="UD-Q4_K_XL rapid lanes, reviewed 2026-08-24"><span>B70 fit</span><b>two siblings one-card measured</b></div>
-    <div class="signal" title="12 unique cache-zero prompts per sibling; no token IDs or cross-sibling quality equivalence claim"><span>Quality evidence</span><b>rapid snapshot only</b></div>
-    <div class="signal" title="No dated, revision-scoped popularity snapshot is stored for both measured siblings."><span>Interest</span><b>Pending</b></div>
-    <div class="signal" title="Run arms and measured series; every point links to proof"><span>Evidence slices</span><b>2</b></div>
-    <div class="signal" title="Versioned gap estimates only; live OPT grades stay separate"><span>Stored estimates</span><b>0</b></div>
-  </div>
-  <details class="fine"><summary>Transfer boundary</summary><p>Qwen3MoeForCausalLM, 48 layers, 2048 hidden. partial transfer only; General Instruct 2507 and Coder are sibling model variants, not interchangeable revisions. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
+<div class="family-cta"><a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">Get the install guide</a><a class="inline" href="#packets">All deployment packets</a></div>
+  <dl class="meta-strip" aria-label="Family signals">
+    <div title="UD-Q4_K_XL rapid lanes, reviewed 2026-08-24"><dt>B70 fit</dt><dd>Two siblings one card measured</dd></div>
+    <div title="12 unique cache-zero prompts per sibling; no token IDs or cross-sibling quality equivalence claim"><dt>Quality evidence</dt><dd>Rapid snapshot only</dd></div>
+    <div title="Run arms and measured series; every point links to proof"><dt>Measured results</dt><dd>2</dd></div></dl>
 
-  <div class="section-head"><div><h2>Measured slices</h2><p>Every point links to its proof; the buttons switch metric.</p></div><a class="inline" href="../families/qwen-30b-a3b.json">family data</a></div>
-  <div class="views-grid"><figure class="chart family-view" data-family-view="qwen-30b-a3b-siblings">
-  <div class="chart-head"><div><h3>Separately measured sibling variants</h3><p>1 = General Instruct 2507; 2 = Coder. Shared core geometry does not make these speed or quality results transferable.</p></div><div class="metric-switch"><button type="button" data-metric-button="decode_tok_s" aria-pressed="true">Decode</button><button type="button" data-metric-button="ttft_ms" aria-pressed="false">TTFT</button></div></div>
-  <svg class="family-chart" data-family-metric="decode_tok_s" viewBox="0 0 620 250" role="img" aria-label="Separately measured sibling variants: Decode"><line class="grid" x1="54" y1="208.0" x2="602" y2="208.0"></line><text class="lbl" x="47" y="212.0" text-anchor="end">0</text><line class="grid" x1="54" y1="160.5" x2="602" y2="160.5"></line><text class="lbl" x="47" y="164.5" text-anchor="end">30.3</text><line class="grid" x1="54" y1="113.0" x2="602" y2="113.0"></line><text class="lbl" x="47" y="117.0" text-anchor="end">60.5</text><line class="grid" x1="54" y1="65.5" x2="602" y2="65.5"></line><text class="lbl" x="47" y="69.5" text-anchor="end">90.8</text><line class="grid" x1="54" y1="18.0" x2="602" y2="18.0"></line><text class="lbl" x="47" y="22.0" text-anchor="end">121.1</text><text class="lbl" x="54.0" y="232" text-anchor="middle">1</text><text class="lbl" x="602.0" y="232" text-anchor="middle">2</text><text class="lbl" x="54" y="247">model sibling · tok/s</text><circle cx="54.0" cy="39.3" r="4" fill="var(--paper)" stroke="var(--s1)" stroke-width="2.5"></circle><circle cx="602.0" cy="38.4" r="4" fill="var(--paper)" stroke="var(--s2)" stroke-width="2.5"></circle></svg><svg class="family-chart" data-family-metric="ttft_ms" hidden viewBox="0 0 620 250" role="img" aria-label="Separately measured sibling variants: TTFT"><line class="grid" x1="54" y1="208.0" x2="602" y2="208.0"></line><text class="lbl" x="47" y="212.0" text-anchor="end">0</text><line class="grid" x1="54" y1="160.5" x2="602" y2="160.5"></line><text class="lbl" x="47" y="164.5" text-anchor="end">46.7</text><line class="grid" x1="54" y1="113.0" x2="602" y2="113.0"></line><text class="lbl" x="47" y="117.0" text-anchor="end">93.5</text><line class="grid" x1="54" y1="65.5" x2="602" y2="65.5"></line><text class="lbl" x="47" y="69.5" text-anchor="end">140.2</text><line class="grid" x1="54" y1="18.0" x2="602" y2="18.0"></line><text class="lbl" x="47" y="22.0" text-anchor="end">187</text><text class="lbl" x="54.0" y="232" text-anchor="middle">1</text><text class="lbl" x="602.0" y="232" text-anchor="middle">2</text><text class="lbl" x="54" y="247">model sibling · ms</text><circle cx="54.0" cy="38.4" r="4" fill="var(--paper)" stroke="var(--s1)" stroke-width="2.5"></circle><circle cx="602.0" cy="41.2" r="4" fill="var(--paper)" stroke="var(--s2)" stroke-width="2.5"></circle></svg>
-  <div class="legend"><span><i style="background:var(--s1)"></i>General Instruct 2507</span><span><i style="background:var(--s2)"></i>Coder</span></div>
-  <figcaption><div data-family-summary="decode_tok_s"><b>General Instruct 2507</b> 1: 107.48<br><b>Coder</b> 2: 108.12</div><div data-family-summary="ttft_ms" hidden><b>General Instruct 2507</b> 1: 166.95<br><b>Coder</b> 2: 164.13</div><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">evidence 1</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json">evidence 2</a></span></figcaption>
-</figure></div>
-
-
-  <div class="section-head"><div><h2>Combination coverage</h2><p>One cell per combination &mdash; hover a mark for what it means.</p></div></div>
-  <div class="coverage-switch" role="tablist" aria-label="Coverage slices"><button type="button" role="tab" id="coverage-tab-qwen-30b-a3b-sibling-by-tp" aria-controls="coverage-panel-qwen-30b-a3b-sibling-by-tp" data-coverage-button="qwen-30b-a3b-sibling-by-tp" aria-selected="true" tabindex="0">sibling × TP</button></div><div class="coverage-panel" role="tabpanel" id="coverage-panel-qwen-30b-a3b-sibling-by-tp" aria-labelledby="coverage-tab-qwen-30b-a3b-sibling-by-tp" data-coverage-panel="qwen-30b-a3b-sibling-by-tp"><p>UD-Q4_K_XL, exact measured GGUF revisions and rapid runtime; sibling measurements never substitute for one another. Fixed: variant=UD-Q4_K_XL · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><div class="scroller" tabindex="0" role="region" aria-label="sibling × TP Model variant by TP coverage"><table class="data coverage-table"><thead><tr><th>Model variant / TP</th><th scope="col">TP1</th><th scope="col">TP2</th><th scope="col">TP4</th></tr></thead><tbody><tr><th scope="row">General 2507</th><td class="coverage-cell is-lab-measured" title="Measured on the lab&#x27;s own machines; the number links to its proof"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json" aria-label="✓ measured: D107.484 · T166.953; open record"><span class="state" title="Measured on the lab&#x27;s own machines; the number links to its proof">✓<span class="visually-hidden">measured</span></span><b>D107.484 · T166.953</b></a><a class="cell-packet" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">packet</a></td><td class="coverage-cell is-missing" title="Not tested yet"><span class="state" title="Not tested yet">·<span class="visually-hidden">untested</span></span><b>no stored lane</b></td><td class="coverage-cell is-missing" title="Not tested yet"><span class="state" title="Not tested yet">·<span class="visually-hidden">untested</span></span><b>no stored lane</b></td></tr><tr><th scope="row">Coder</th><td class="coverage-cell is-lab-measured" title="Measured on the lab&#x27;s own machines; the number links to its proof"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json" aria-label="✓ measured: D108.117 · T164.129; open record"><span class="state" title="Measured on the lab&#x27;s own machines; the number links to its proof">✓<span class="visually-hidden">measured</span></span><b>D108.117 · T164.129</b></a><a class="cell-packet" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4/README.md">packet</a></td><td class="coverage-cell is-missing" title="Not tested yet"><span class="state" title="Not tested yet">·<span class="visually-hidden">untested</span></span><b>no stored lane</b></td><td class="coverage-cell is-missing" title="Not tested yet"><span class="state" title="Not tested yet">·<span class="visually-hidden">untested</span></span><b>no stored lane</b></td></tr></tbody></table></div></div><div class="coverage-legend"><span class="is-lab-measured">✓ measured</span><span class="is-lab-screened">◇ screened</span><span class="is-community-measured">◐ community</span><span class="is-estimated">≈ estimate</span><span class="is-closed">■ closed</span><span class="is-quarantined">⚠ quarantined</span><span class="is-unsupported">× unsupported</span><span class="is-missing">· untested</span></div>
-
-
-  <div class="section-head"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
+  <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid"><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">
   <div class="packet-top"><span>qwen3-30b-a3b-instruct-2507</span><span class="packet-badges"><b>B70-measured narrow baseline</b></span></div>
   <h3>Qwen3 30B-A3B Instruct 2507 UD-Q4_K_XL</h3>
-  <p><strong>107.48 tok/s</strong> measured headline · rapid research snapshot</p>
+  <p class="packet-promise">Reproduce <b>107.48 tok/s</b> on 1× B70 · rapid research snapshot</p>
   <small class="packet-workload">12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, request prompt cache disabled</small>
-  <div class="grade-rail"><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="CAP not graded yet">CAP —</span><span class="curated-grade" tabindex="0" title="exact General Instruct 2507 UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet" aria-label="EVID grade D: exact General Instruct 2507 UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet">EVID D</span></div>
+  <div class="grade-rail"><span class="curated-grade" tabindex="0" title="exact General Instruct 2507 UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet" aria-label="Evidence grade D: exact General Instruct 2507 UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet">Evidence D <small>of A–D</small></span></div>
   <div class="coverage-rail"><span>General Instruct</span><span>decode</span><span>TTFT</span><span>TP1</span><span>cache-zero strict suite</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json">
   <div class="packet-top"><span>qwen3-coder-30b-a3b-instruct</span><span class="packet-badges"><b>B70-measured narrow baseline</b></span></div>
   <h3>Qwen3-Coder 30B-A3B Instruct UD-Q4_K_XL</h3>
-  <p><strong>108.12 tok/s</strong> measured headline · rapid research snapshot</p>
+  <p class="packet-promise">Reproduce <b>108.12 tok/s</b> on 1× B70 · rapid research snapshot</p>
   <small class="packet-workload">12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled</small>
-  <div class="grade-rail"><span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="CAP not graded yet">CAP —</span><span class="curated-grade" tabindex="0" title="exact Coder UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet" aria-label="EVID grade D: exact Coder UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet">EVID D</span></div>
+  <div class="grade-rail"><span class="curated-grade" tabindex="0" title="exact Coder UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet" aria-label="Evidence grade D: exact Coder UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet">Evidence D <small>of A–D</small></span></div>
   <div class="coverage-rail"><span>Coder sibling</span><span>decode</span><span>TTFT</span><span>TP1</span><span>cache-zero strict suite</span></div>
 </a></div>
+
+  <div class="section-head"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/qwen-30b-a3b.json">family data</a></div>
+  <div class="views-grid"><figure class="chart family-view" data-family-view="qwen-30b-a3b-siblings">
+  <div class="chart-head"><div><h3>Separately measured sibling variants</h3><p>1 = General Instruct 2507; 2 = Coder. Shared core geometry does not make these speed or quality results transferable.</p></div><div class="metric-switch"></div></div>
+  <div class="stat-row is-superseded"><b>107.48</b><span class="u">tok/s</span><span class="l">General Instruct 2507 — 1 card, earlier quality gate, superseded</span><span class="m">167 ms to first token · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">evidence</a></span></div><div class="stat-row is-superseded"><b>108.12</b><span class="u">tok/s</span><span class="l">Coder — 1 card, earlier quality gate, superseded</span><span class="m">164 ms to first token · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json">evidence</a></span></div>
+  <div class="legend"><span><i style="background:var(--s1)"></i>General Instruct 2507</span><span><i style="background:var(--s2)"></i>Coder</span></div>
+  <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">evidence 1</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json">evidence 2</a></span></figcaption>
+</figure></div>
+
+
+  <div class="section-head"><div><h2>What has been tried</h2><p>Only tested combinations are listed; the full matrix is in the family data.</p></div></div>
+  <div class="combo-block"><p class="combo-scope">UD-Q4_K_XL, exact measured GGUF revisions and rapid runtime; sibling measurements never substitute for one another. Fixed: variant=UD-Q4_K_XL · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, General 2507 <code>TP1·qwen3-30b-a3b-instruct-2507</code></span><b class="c-val">107.48 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">packet</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">evidence</a></span></li><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, Coder <code>TP1·qwen3-coder-30b-a3b-instruct</code></span><b class="c-val">108.12 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4/README.md">packet</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json">evidence</a></span></li></ul><p class="combo-tail">4 other combinations untested. Full matrix in the <a class="inline" href="../families/qwen-30b-a3b.json">family data</a>.</p></div>
+
+  <details class="fine"><summary>Transfer boundary</summary><p>Qwen3MoeForCausalLM, 48 layers, 2048 hidden. partial transfer only; General Instruct 2507 and Coder are sibling model variants, not interchangeable revisions. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="../families/qwen-30b-a3b.json"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>
 <footer><div class="wrap"><span>Unofficial lab, not affiliated with Intel. Measurements link to proof; estimates are labeled.</span><span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span></div></footer>
-<script defer src="../learn/assets/mlbottleneck-bridge.js?v=c44fb5a41f"></script>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=0db318266e"></script>
 <script>
 (() => {
   document.querySelectorAll('[data-family-view]').forEach(view => {

@@ -550,20 +550,20 @@
       if (!badge || !Number.isFinite(measured)) continue;
       const request = requestFromDataset(card.dataset);
       if (!request) {
-        badge.textContent = 'OPT —';
+        badge.textContent = 'projected headroom —';
         continue;
       }
       try {
         const result = engine.predict(request);
         const target = result.ceiling && result.ceiling.optimizedTokensPerSecond;
         const g = grade(target > 0 ? measured / target : NaN);
-        badge.textContent = 'OPT ' + g.letter;
+        badge.textContent = 'projected headroom ' + g.letter;
         badge.title = 'Projected optimization headroom: ' + g.note
           + (target > 0 ? ' · measured ' + fmt(measured) + ' / projected tuned target ' + fmt(target) + ' tok/s' : '')
           + '. This is not model quality or packet evidence.';
         badge.dataset.ready = 'true';
       } catch (error) {
-        badge.textContent = 'OPT —';
+        badge.textContent = 'projected headroom —';
       }
     }
   }

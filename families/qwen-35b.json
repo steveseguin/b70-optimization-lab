@@ -3,21 +3,40 @@
   "id": "qwen-35b",
   "name": "Qwen 35B",
   "display_name": "Qwen3.6 35B A3B",
-  "summary": "The closed Quark W8A8 INT8 Qwen3.6 35B A3B lane, keeping the current strict TP4 result, the older approved high, a bounded TP2 screen, and the failed MTP1 quality gate distinct.",
+  "summary": "Qwen's 35B mixture-of-experts for long documents - about 3B parameters active per word. Measured at 93.55 tok/s on four cards under the strictest quality gate, 90.91 tok/s on a single card (experimental), and 1,039 combined tok/s serving 64 people at once from one card.",
   "updated_at": "2026-08-24",
   "architecture": {
     "class": "Qwen3.6 35B A3B sparse MoE",
     "evidence": "results/qwen36-35b-quark-int8-b70/README.md"
   },
   "dimensions": {
-    "weight_revision": ["qwen3.6-35b-a3b-quark-int8-cced565"],
-    "weight_quantization": ["Quark W8A8 INT8"],
-    "runtime": ["vLLM XPU 2026-06 strict program"],
-    "tp": [1, 2, 4],
-    "mtp": [0, 1],
-    "graph": ["on"],
-    "configured_max_context_tokens": [32768],
-    "kv": ["auto"]
+    "weight_revision": [
+      "qwen3.6-35b-a3b-quark-int8-cced565"
+    ],
+    "weight_quantization": [
+      "Quark W8A8 INT8"
+    ],
+    "runtime": [
+      "vLLM XPU 2026-06 strict program"
+    ],
+    "tp": [
+      1,
+      2,
+      4
+    ],
+    "mtp": [
+      0,
+      1
+    ],
+    "graph": [
+      "on"
+    ],
+    "configured_max_context_tokens": [
+      32768
+    ],
+    "kv": [
+      "auto"
+    ]
   },
   "weight_revisions": [
     {
@@ -29,7 +48,14 @@
       "model_manifest": "data/localmaxxing-qwen36-35b-quark-int8-exacthf-20260612ak.json"
     }
   ],
-  "model_variants": [],
+  "model_variants": [
+    {
+      "id": "qwen3.6-35b-a3b-int4-autoround",
+      "label": "Qwen3.6 35B A3B · AutoRound W4A16 INT4",
+      "role": "experimental single-card weights",
+      "repository": "abhinand/Qwen3.6-35B-A3B-int4-AutoRound"
+    }
+  ],
   "transfer_scope": {
     "status": "one measured Quark INT8 revision; gates and runtime generations remain separate",
     "transfers": [
@@ -53,9 +79,14 @@
     "quality_evidence": {
       "band": "strict TP4 only",
       "scope": "Current target-only TP4 passed JSON, color, baseline, repeat, and long-context gates; MTP1 failed immediately and is quarantined.",
-      "evidence": ["data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-deep-gate-summary-20260615a13deep2.json"]
+      "evidence": [
+        "data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-deep-gate-summary-20260615a13deep2.json"
+      ]
     },
-    "popularity": {"state": "not-scored", "reason": "No dated popularity snapshot is stored for this exact revision."}
+    "popularity": {
+      "state": "not-scored",
+      "reason": "No dated popularity snapshot is stored for this exact revision."
+    }
   },
   "run_measurements": [
     {
@@ -66,13 +97,26 @@
       "quantization": "Quark W8A8 INT8",
       "runtime": "vLLM XPU 2026-06 strict program",
       "runtime_identity": "prefill-safe INT8 mixed-workspace async deep gate 20260615a13deep2",
-      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "auto", "gate_generation": 2},
+      "config": {
+        "tp": 4,
+        "mtp": 0,
+        "graph": "on",
+        "kv": "auto",
+        "gate_generation": 2
+      },
       "profile_id": "qwen35-quark-int8-tp4-current-strict-v1",
       "measurement_class": "strict deep gate",
       "promotion_status": "current strict reference",
       "quality_scope": "JSON 128/128, color 256/256, exact suite, repeat, long-context, and baseline match passed",
       "workload": "p512/o512, four post-warmup repeats, corrected output throughput after first streamed chunk",
-      "metrics": {"decode_tok_s": [93.55054235558917], "ttft_ms": [187.33663426246494]},
+      "metrics": {
+        "decode_tok_s": [
+          93.55054235558917
+        ],
+        "ttft_ms": [
+          187.33663426246494
+        ]
+      },
       "evidence": "data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-deep-gate-summary-20260615a13deep2.json"
     },
     {
@@ -82,13 +126,23 @@
       "variant": "Quark W8A8 INT8",
       "quantization": "Quark W8A8 INT8",
       "runtime": "vLLM XPU 0.20.2rc1.dev2+gc51df4300",
-      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "auto", "gate_generation": 1},
+      "config": {
+        "tp": 4,
+        "mtp": 0,
+        "graph": "on",
+        "kv": "auto",
+        "gate_generation": 1
+      },
       "profile_id": "qwen35-quark-int8-tp4-legacy-approved-v1",
       "measurement_class": "older-gate LocalMaxxing-approved result",
       "promotion_status": "historical high",
       "quality_scope": "older exact/quality gates; retained as history, not substituted for the current strict reference",
       "workload": "p512/o512, four repeats after warmup, corrected steady-state output throughput after first streamed text chunk",
-      "metrics": {"decode_tok_s": [99.42835812273452]},
+      "metrics": {
+        "decode_tok_s": [
+          99.42835812273452
+        ]
+      },
       "evidence": "data/localmaxxing-qwen36-35b-quark-int8-exacthf-20260612ak.json"
     },
     {
@@ -98,13 +152,22 @@
       "variant": "Quark W8A8 INT8",
       "quantization": "Quark W8A8 INT8",
       "runtime": "vLLM XPU 2026-06 strict program",
-      "config": {"tp": 2, "mtp": 0, "graph": "on", "kv": "auto"},
+      "config": {
+        "tp": 2,
+        "mtp": 0,
+        "graph": "on",
+        "kv": "auto"
+      },
       "profile_id": "qwen35-quark-int8-tp2-screen-v1",
       "measurement_class": "bounded smoke",
       "promotion_status": "screened only",
       "quality_scope": "JSON and color 16/16 passed; full quality suite was skipped",
       "workload": "p512/o512 TP2 smoke, one measured arm, corrected output throughput",
-      "metrics": {"decode_tok_s": [85.86911405999231]},
+      "metrics": {
+        "decode_tok_s": [
+          85.86911405999231
+        ]
+      },
       "evidence": "data/qwen36-ablation-prefill-safe-int8-mixed-workspace-async-tp2-smoke-summary-20260615tp2safe1.json"
     },
     {
@@ -114,17 +177,99 @@
       "variant": "Quark W8A8 INT8",
       "quantization": "Quark W8A8 INT8",
       "runtime": "vLLM XPU 2026-06 strict program",
-      "config": {"tp": 4, "mtp": 1, "graph": "on", "kv": "auto"},
+      "config": {
+        "tp": 4,
+        "mtp": 1,
+        "graph": "on",
+        "kv": "auto"
+      },
       "profile_id": "qwen35-quark-int8-tp4-mtp1-parity-fix-v2",
       "measurement_class": "invalid speculative screen",
       "promotion_status": "quarantined",
       "quality_scope": "JSON and color failed on the first request; quality suite skipped",
       "workload": "p512/o512 MTP1 diagnostic, corrected output throughput; invalid for promotion",
-      "metrics": {"decode_tok_s": [107.76565033909118]},
+      "metrics": {
+        "decode_tok_s": [
+          107.76565033909118
+        ]
+      },
       "evidence": "data/qwen36-ablation-tp4-mtp-k1-parity-fix-v2-summary-20260620061440.json"
+    },
+    {
+      "id": "qwen35-autoround-tp1-single-r16",
+      "state": "lab-screened",
+      "revision": "qwen3.6-35b-a3b-int4-autoround",
+      "variant": "AutoRound W4A16 INT4",
+      "runtime": "vLLM/XPU combined-runtime-guards r16",
+      "config": {
+        "tp": 1,
+        "mtp": 0,
+        "graph": "piecewise 1/32/64",
+        "kv": "auto"
+      },
+      "measurement_class": "experimental screen",
+      "promotion_status": "experimental, not promoted",
+      "quality_scope": "100/100 literal canaries across capture shapes; fixed-seed outputs identical 1/1 at one user",
+      "workload": "i128/o1024, persistent raw-engine batching, single user, temperature 0, two repeats",
+      "metrics": {
+        "decode_tok_s": [
+          90.90948338800597
+        ]
+      },
+      "evidence": "data/qwen36-35b-autoround-b70-concurrency-20260824.json"
     }
   ],
-  "series_measurements": [],
+  "series_measurements": [
+    {
+      "id": "qwen35-autoround-tp1-users-r14",
+      "state": "lab-screened",
+      "revision": "qwen3.6-35b-a3b-int4-autoround",
+      "variant": "AutoRound W4A16 INT4",
+      "runtime": "vLLM/XPU grouped-w4a16-piecewise-graph r14",
+      "config": {
+        "tp": 1,
+        "mtp": 0,
+        "graph": "piecewise 1/32/64",
+        "kv": "auto"
+      },
+      "measurement_class": "experimental screen",
+      "promotion_status": "experimental, not promoted",
+      "quality_scope": "4/4 literal canaries at four users; fixed-seed determinism at 64 users unresolved (27/64)",
+      "workload": "i128/o1024 per request, persistent raw-engine batching, temperature 0, two repeats per level; combined counts every token after each request's first",
+      "axis": "simultaneous_users",
+      "points": [
+        {
+          "x": 1,
+          "aggregate_tok_s": 87.6382088209863
+        },
+        {
+          "x": 2,
+          "aggregate_tok_s": 77.18628015630631
+        },
+        {
+          "x": 4,
+          "aggregate_tok_s": 149.48350787682995
+        },
+        {
+          "x": 8,
+          "aggregate_tok_s": 276.7655048798564
+        },
+        {
+          "x": 16,
+          "aggregate_tok_s": 488.6474098238277
+        },
+        {
+          "x": 32,
+          "aggregate_tok_s": 823.1508450629442
+        },
+        {
+          "x": 64,
+          "aggregate_tok_s": 1039.408012834992
+        }
+      ],
+      "evidence": "data/qwen36-35b-autoround-b70-concurrency-20260824.json"
+    }
+  ],
   "estimates": [],
   "packets": [
     {
@@ -136,14 +281,22 @@
       "cards": 4,
       "status": "closed research result",
       "evidence_level": "B70 strict plus historical dossier",
-      "coverage": ["TP4 strict", "legacy high", "TP2 screen", "MTP1 quarantine", "quality"],
+      "coverage": [
+        "TP4 strict",
+        "legacy high",
+        "TP2 screen",
+        "MTP1 quarantine",
+        "quality"
+      ],
       "grades": {
         "evidence": {
           "grade": "C",
           "scope": "Qwen3.6 35B Quark INT8 result collection",
           "basis": "strong TP4 deep-gate evidence and preserved history, but no clean-host package and only screened TP2 evidence; speculative paths remain invalid",
           "reviewed_at": "2026-08-24",
-          "evidence": ["results/qwen36-35b-quark-int8-b70/README.md"]
+          "evidence": [
+            "results/qwen36-35b-quark-int8-b70/README.md"
+          ]
         }
       },
       "featured_metric": {
@@ -165,11 +318,44 @@
       "subtitle": "1 = older LocalMaxxing-approved 99.428358 high; 2 = current 93.550542 deep-gate reference. Different gate generations are discrete history, not a regression A/B.",
       "x_label": "gate generation",
       "discrete": true,
-      "metrics": ["decode_tok_s", "ttft_ms"],
+      "metrics": [
+        "decode_tok_s",
+        "ttft_ms"
+      ],
       "series": [
-        {"label": "older approved high", "measurement_ids": ["qwen35-quark-tp4-legacy-approved"], "x_from": "config.gate_generation"},
-        {"label": "current strict reference", "measurement_ids": ["qwen35-quark-tp4-strict-current"], "x_from": "config.gate_generation"}
+        {
+          "label": "older approved high",
+          "measurement_ids": [
+            "qwen35-quark-tp4-legacy-approved"
+          ],
+          "x_from": "config.gate_generation"
+        },
+        {
+          "label": "current strict reference",
+          "measurement_ids": [
+            "qwen35-quark-tp4-strict-current"
+          ],
+          "x_from": "config.gate_generation"
+        }
       ]
+    },
+    {
+      "id": "qwen35-users-aggregate",
+      "title": "One card serving many users",
+      "subtitle": "Combined rate across all simultaneous users, one Arc Pro B70, AutoRound INT4 · experimental: the 2-16-user dip is the stack's graph-capture boundary, and 64-user determinism is still open",
+      "x_label": "simultaneous users",
+      "metrics": [
+        "aggregate_tok_s"
+      ],
+      "series": [
+        {
+          "label": "measured combined rate",
+          "measurement_ids": [
+            "qwen35-autoround-tp1-users-r14"
+          ]
+        }
+      ],
+      "x_scale": "log"
     }
   ],
   "coverage_views": [
@@ -177,29 +363,69 @@
       "id": "qwen35-current-mtp-by-tp",
       "label": "MTP × TP",
       "fixed": "Current June 2026 strict-program identity; the legacy TP4 high is shown separately.",
-      "row_axis": {"key": "mtp", "label": "MTP", "prefix": "MTP"},
-      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "row_axis": {
+        "key": "mtp",
+        "label": "MTP",
+        "prefix": "MTP"
+      },
+      "column_axis": {
+        "key": "tp",
+        "label": "TP",
+        "prefix": "TP"
+      },
       "fixed_selectors": {
         "revision": "qwen3.6-35b-a3b-quark-int8-cced565",
         "variant": "Quark W8A8 INT8",
         "runtime": "vLLM XPU 2026-06 strict program",
         "graph": "on"
       },
-      "rows": [0, 1],
-      "columns": [1, 2, 4],
+      "rows": [
+        0,
+        1
+      ],
+      "columns": [
+        1,
+        2,
+        4
+      ],
       "cells": {
-        "0:1": {"state": "missing", "label": "no stored lane"},
-        "0:2": {"state": "lab-screened", "label": "85.869; full quality skipped", "evidence_id": "qwen35-quark-tp2-screen"},
-        "0:4": {"state": "lab-measured", "label": "93.551 strict", "evidence_id": "qwen35-quark-tp4-strict-current", "packet_id": "qwen36-35b-quark-int8-b70-result"},
-        "1:1": {"state": "missing", "label": "no stored lane"},
-        "1:2": {"state": "missing", "label": "no stored lane"},
-        "1:4": {"state": "quarantined", "label": "107.766 invalid", "evidence_id": "qwen35-quark-tp4-mtp1-quarantined"}
+        "0:1": {
+          "state": "missing",
+          "label": "no stored lane"
+        },
+        "0:2": {
+          "state": "lab-screened",
+          "label": "85.869; full quality skipped",
+          "evidence_id": "qwen35-quark-tp2-screen"
+        },
+        "0:4": {
+          "state": "lab-measured",
+          "label": "93.551 strict",
+          "evidence_id": "qwen35-quark-tp4-strict-current",
+          "packet_id": "qwen36-35b-quark-int8-b70-result"
+        },
+        "1:1": {
+          "state": "missing",
+          "label": "no stored lane"
+        },
+        "1:2": {
+          "state": "missing",
+          "label": "no stored lane"
+        },
+        "1:4": {
+          "state": "quarantined",
+          "label": "107.766 invalid",
+          "evidence_id": "qwen35-quark-tp4-mtp1-quarantined"
+        }
       }
     }
   ],
   "family_closures": [
     {
-      "selectors": {"revision": "qwen3.6-35b-a3b-quark-int8-cced565", "frontier": "ad-hoc-optimization"},
+      "selectors": {
+        "revision": "qwen3.6-35b-a3b-quark-int8-cced565",
+        "frontier": "ad-hoc-optimization"
+      },
       "state": "closed",
       "reason": "The TP4 target-only lane is exhausted for now; reopen only for a controlled upstream bakeoff or a new graph-compatible speculative-state mechanism.",
       "evidence": "results/qwen36-35b-quark-int8-b70/README.md"

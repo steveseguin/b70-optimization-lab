@@ -237,6 +237,10 @@ class FamilyCoverageTest(unittest.TestCase):
                 )
 
     def test_nine_family_backlog_is_published_without_invented_curves(self) -> None:
+        # qwen-35b left the no-curve backlog on 2026-08-24: it gained a real
+        # measured series (the published 1..64-user AutoRound aggregate sweep,
+        # data/qwen36-35b-autoround-b70-concurrency-20260824.json), so the
+        # no-invented-curves pin no longer applies to it.
         expected = {
             "deepseek-v4",
             "deepseek-coder-v2",
@@ -246,14 +250,13 @@ class FamilyCoverageTest(unittest.TestCase):
             "phi-4",
             "qwen-14b",
             "qwen-30b-a3b",
-            "qwen-35b",
         }
         catalog = json.loads(MODULE.CATALOG.read_text())
         family_ids = {entry["id"] for entry in catalog["families"]}
         self.assertEqual(len(family_ids), 17)
-        self.assertLessEqual(expected, family_ids)
+        self.assertLessEqual(expected | {"qwen-35b"}, family_ids)
         model_index = (MODULE.ROOT / "models/index.html").read_text()
-        for family_id in expected:
+        for family_id in expected | {"qwen-35b"}:
             self.assertIn(f'href="{family_id}.html"', model_index)
 
         registry = json.loads(MODULE.COVERAGE_REGISTRY.read_text())
@@ -407,9 +410,9 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(self._errors(family), [])
 
         rendered = MODULE.coverage_tables(family)
-        self.assertIn("<th>MTP / TP</th>", rendered)
-        self.assertIn('<th scope="col">TP1</th>', rendered)
-        self.assertIn('<tr><th scope="row">MTP0</th>', rendered)
+        self.assertIn("1 card, no speculative decoding", rendered)
+        self.assertIn("<code>TP1·MTP0</code>", rendered)
+        self.assertIn("✓ Measured", rendered)
 
     def test_named_axes_fixed_selectors_and_exact_cartesian_cells(self) -> None:
         family = self._family()
@@ -455,9 +458,8 @@ class FamilyCoverageTest(unittest.TestCase):
             },
         )
         rendered = MODULE.coverage_tables(family)
-        self.assertIn("<th>Active context / Quantization</th>", rendered)
-        self.assertIn('<th scope="col">Q4_K_M</th>', rendered)
-        self.assertIn('<tr><th scope="row">32K</th>', rendered)
+        self.assertIn("4 other combinations untested", rendered)
+        self.assertIn("family data", rendered)
         self.assertIn("Fixed: revision=revision-a", rendered)
 
         missing_cell = deepcopy(family)
@@ -510,7 +512,7 @@ class FamilyCoverageTest(unittest.TestCase):
 
         self.assertEqual(self._errors(family), [])
         rendered = MODULE.coverage_tables(family)
-        self.assertIn("≈ estimate", rendered)
+        self.assertIn("≈ Estimate", rendered)
         self.assertIn("≈ 42 tok/s (36–48)", rendered)
         self.assertIn("gap-engine 1.0.0", rendered)
 
@@ -649,7 +651,8 @@ class FamilyCoverageTest(unittest.TestCase):
         rendered = MODULE.packet_cards(family)
         self.assertIn("42 tok/s", rendered)
         self.assertIn("p66/o128 fixed rapid suite", rendered)
-        self.assertIn("OPT —", rendered)
+        self.assertNotIn("OPT", rendered)
+        self.assertNotIn("projected headroom", rendered)
         self.assertNotIn("data-family-headroom", rendered)
 
         pinned = deepcopy(family)

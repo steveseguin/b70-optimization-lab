@@ -33,6 +33,7 @@ GITHUB = "https://github.com/steveseguin/b70-optimization-lab/blob/main/"
 
 METRICS = {
     "decode_tok_s": ("Decode", "tok/s"),
+    "aggregate_tok_s": ("Combined", "tok/s"),
     "prefill_tok_s": ("Prefill", "tok/s"),
     "ttft_ms": ("TTFT", "ms"),
     "mean_acceptance_length": ("Acceptance length", "tokens"),
@@ -57,6 +58,11 @@ OBSERVED_STATES = {
     "quarantined",
 }
 CURVE_STATES = {"lab-measured", "community-measured"}
+# Screened lab runs may draw curves too: they are real measurements under a
+# lighter gate, and the view flag plus legend carry that caveat. Estimates and
+# quarantined runs still never chart. Coverage-cell evidence requirements keep
+# using CURVE_STATES: a screened cell is not obliged to carry a measurement id.
+CHARTABLE_STATES = CURVE_STATES | {"lab-screened"}
 # Glyph + plain-words meaning for every coverage state. Cells show the glyph
 # with the words in a tooltip (and for screen readers); the legend spells the
 # words out once.
@@ -85,6 +91,7 @@ SLUG_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 SELECTOR_KEY_RE = re.compile(r"[a-z][a-z0-9_]*\Z")
 POINT_METRIC_PREFIX = {
     "decode_tok_s": "D",
+    "aggregate_tok_s": "A",
     "prefill_tok_s": "P",
     "ttft_ms": "T",
     "mean_acceptance_length": "A",
@@ -340,7 +347,7 @@ def validate_featured_metric(
         errors.append(f"{label}.measurement_id must reference a known measurement")
         return errors
     measurement = measurements[measurement_id]
-    if measurement.get("state") not in CURVE_STATES:
+    if measurement.get("state") not in CHARTABLE_STATES:
         errors.append(f"{label}.measurement_id must reference measured curve evidence")
     sample_index = value.get("sample_index")
     point_x = value.get("point_x")
@@ -939,9 +946,9 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                 else:
                     selected.append(measurements[mid])
                     states.add(measurements[mid].get("state"))
-            if states - CURVE_STATES:
+            if states - CHARTABLE_STATES:
                 errors.append(
-                    f"{label}: view {view_id} series {series.get('label')} uses non-curve states {sorted(states - CURVE_STATES)}"
+                    f"{label}: view {view_id} series {series.get('label')} uses non-curve states {sorted(states - CHARTABLE_STATES)}"
                 )
             if len(states) > 1:
                 errors.append(
@@ -1228,7 +1235,7 @@ def collect_view_series(
         for mid in spec.get("measurement_ids") or []:
             measurement = by_id[mid]
             states.add(measurement.get("state", "lab-measured"))
-            if measurement.get("state") not in CURVE_STATES:
+            if measurement.get("state") not in CHARTABLE_STATES:
                 continue
             evidence.append(measurement["evidence"])
             if measurement.get("points"):
@@ -1281,10 +1288,21 @@ def chart_svg(
     if y1 <= 0:
         y1 = 1.0
 
+    # A log x-axis (view: "x_scale": "log") keeps geometric level sweeps
+    # (1, 2, 4, ... 64 users) evenly spaced instead of bunched at the left.
+    log_x = view.get("x_scale") == "log"
+
+    def x_key(value: float) -> float:
+        if log_x:
+            return math.log2(max(value, 1e-9))
+        return value
+
+    kx0, kx1 = x_key(x0), x_key(x1)
+
     def sx(value: float) -> float:
-        if x1 == x0:
+        if kx1 == kx0:
             return (left + width - right) / 2
-        return left + (value - x0) / (x1 - x0) * (width - left - right)
+        return left + (x_key(value) - kx0) / (kx1 - kx0) * (width - left - right)
 
     def sy(value: float) -> float:
         return top + (1 - (value - y0) / (y1 - y0)) * (height - top - bottom)
@@ -1292,7 +1310,7 @@ def chart_svg(
     label, unit = METRICS[metric]
     hidden = "" if visible else " hidden"
     lines = [
-        f'<svg class="family-chart" data-family-metric="{esc(metric)}"{hidden} viewBox="0 0 {width} {height}" role="img" aria-label="{esc(view.get("title"))}: {esc(label)}">'
+        f'<svg class="family-chart" viewBox="0 0 {width} {height}" role="img" aria-label="{esc(view.get("title"))}: {esc(label)}">'
     ]
     for fraction in (0, 0.25, 0.5, 0.75, 1):
         value = y1 * fraction
@@ -1354,15 +1372,74 @@ def chart_svg(
     return "".join(lines), "<br>".join(summaries)
 
 
+STAT_LABELS = {
+    "older approved high": "Older approved high",
+    "current strict reference": "Current reference",
+}
+
+
+def view_stat_rows(family: dict[str, Any], view: dict[str, Any]) -> str:
+    """A discrete view with one or two runs is numbers, not a chart."""
+    by_id = {measurement["id"]: measurement for measurement in records(family)}
+    rows = []
+    for series in view.get("series") or []:
+        for mid in series.get("measurement_ids") or []:
+            measurement = by_id.get(mid)
+            if not measurement:
+                continue
+            metrics = measurement.get("metrics") or {}
+            decode = max(metrics.get("decode_tok_s") or [0])
+            ttft = max(metrics.get("ttft_ms") or [0])
+            current = "current" in f'{measurement.get("promotion_status", "")} {series.get("label", "")}'
+            tp_n = (measurement.get("config") or {}).get("tp") or 1
+            gate = "full quality gate" if current else "earlier quality gate, superseded"
+            label = STAT_LABELS.get(str(series.get("label")), str(series.get("label") or mid))
+            what = f"{label} — {tp_n} card{'s' if tp_n != 1 else ''}, {gate}"
+            meta_bits = []
+            if ttft:
+                meta_bits.append(f"{fmt(ttft, 0)} ms to first token")
+            evidence = measurement.get("evidence")
+            if evidence:
+                meta_bits.append(f'<a class="inline" href="{esc(evidence_href(evidence))}">evidence</a>')
+            rows.append((0 if current else 1,
+                f'<div class="stat-row{"" if current else " is-superseded"}">'
+                f'<b>{esc(fmt(decode))}</b><span class="u">tok/s</span>'
+                f'<span class="l">{esc(what)}</span>'
+                f'<span class="m">{" · ".join(meta_bits)}</span></div>'))
+    rows.sort(key=lambda item: item[0])
+    return "".join(html for _, html in rows)
+
+
+def view_point_count(family: dict[str, Any], view: dict[str, Any]) -> int:
+    by_id = {measurement["id"]: measurement for measurement in records(family)}
+    xs = set()
+    for series in view.get("series") or []:
+        for mid in series.get("measurement_ids") or []:
+            measurement = by_id.get(mid)
+            if not measurement:
+                continue
+            points = measurement.get("points") or []
+            if points:
+                xs.update(point.get("x") for point in points)
+            else:
+                xs.add(mid)
+    return len(xs)
+
+
 def view_card(family: dict[str, Any], view: dict[str, Any]) -> str:
+    as_stats = view_point_count(family, view) < 3
     charts = []
     summaries = []
     buttons = []
-    for index, metric in enumerate(view.get("metrics") or []):
+    metric_list = list(view.get("metrics") or [])
+    for index, metric in enumerate(metric_list):
+        if as_stats:
+            break
         svg, summary = chart_svg(family, view, metric, index == 0)
         if not svg:
             continue
-        charts.append(svg)
+        hidden_attr = "" if index == 0 else " hidden"
+        charts.append(f'<div data-family-metric="{esc(metric)}"{hidden_attr}>{svg}</div>')
         summaries.append(
             f'<div data-family-summary="{esc(metric)}"{"" if index == 0 else " hidden"}>{summary}</div>'
         )
@@ -1370,6 +1447,15 @@ def view_card(family: dict[str, Any], view: dict[str, Any]) -> str:
         buttons.append(
             f'<button type="button" data-metric-button="{esc(metric)}" aria-pressed="{"true" if index == 0 else "false"}">{esc(label)}</button>'
         )
+    if as_stats:
+        charts = [view_stat_rows(family, view)]
+        summaries = []
+        buttons = []
+    if len(buttons) < 2:
+        buttons = []
+    by_id_states = {measurement["id"]: measurement.get("state") for measurement in records(family)}
+    states = {by_id_states.get(mid) for series in view.get("series") or [] for mid in series.get("measurement_ids") or []}
+    view_flag = ' <span class="view-flag">\u25c7 screened, experimental</span>' if states and states <= {"lab-screened"} else ""
     evidence = []
     by_id = {
         measurement["id"]: measurement
@@ -1393,41 +1479,59 @@ def view_card(family: dict[str, Any], view: dict[str, Any]) -> str:
     if view.get("unsupported_x"):
         legends.append('<span><i class="gap-line"></i>unsupported</span>')
     return f'''<figure class="chart family-view" data-family-view="{esc(view.get('id'))}">
-  <div class="chart-head"><div><h3>{esc(view.get('title'))}</h3><p>{esc(view.get('subtitle'))}</p></div><div class="metric-switch">{"".join(buttons)}</div></div>
+  <div class="chart-head"><div><h3>{esc(view.get('title'))}{view_flag}</h3><p>{esc(view.get('subtitle'))}</p></div><div class="metric-switch">{"".join(buttons)}</div></div>
   {"".join(charts)}
   <div class="legend">{"".join(legends)}</div>
   <figcaption>{"".join(summaries)}<span class="proof-links">{links}</span></figcaption>
 </figure>'''
 
 
+def axis_plain_words(axis: dict[str, Any], value: Any) -> str:
+    """Translate an axis coordinate into visitor words; codes stay as a tag."""
+    key = str(axis.get("key") or "").lower()
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        number = None
+    if key == "tp" and number is not None:
+        return f"{number} card{'s' if number != 1 else ''}"
+    if key == "mtp" and number is not None:
+        return "no speculative decoding" if number == 0 else f"+ speculative decoding (depth {number})"
+    return axis_value_label(axis, value)
+
+
+COMBO_STATE_WORDS = {
+    "lab-measured": "\u2713 Measured",
+    "lab-screened": "\u25c7 Speed check only",
+    "community-measured": "\u25d0 Community",
+    "estimated": "\u2248 Estimate",
+    "closed": "\u25a0 Closed",
+    "quarantined": "\u26a0 Failed quality gate",
+    "unsupported": "\u00d7 Unsupported",
+}
+COMBO_ORDER = {"lab-measured": 0, "community-measured": 1, "lab-screened": 2, "estimated": 3, "closed": 4, "unsupported": 5, "quarantined": 9}
+
+
 def coverage_tables(family: dict[str, Any]) -> str:
+    """Only tested combinations, one plain-words line each; the full matrix
+    stays in the family data JSON."""
     by_id = {measurement["id"]: measurement for measurement in records(family)}
     estimates = {estimate["id"]: estimate for estimate in family.get("estimates") or []}
     packets = {packet["id"]: packet for packet in family.get("packets") or []}
-    buttons = []
-    tables = []
-    state_labels = STATE_GLYPHS
-    for index, view in enumerate(family.get("coverage_views") or []):
+    blocks = []
+    for view in family.get("coverage_views") or []:
         row_axis = coverage_axis(view, "row")
         column_axis = coverage_axis(view, "column")
-        tab_id = f'coverage-tab-{view.get("id")}'
-        panel_id = f'coverage-panel-{view.get("id")}'
-        buttons.append(
-            f'<button type="button" role="tab" id="{esc(tab_id)}" aria-controls="{esc(panel_id)}" data-coverage-button="{esc(view.get("id"))}" aria-selected="{"true" if index == 0 else "false"}" tabindex="{0 if index == 0 else -1}">{esc(view.get("label"))}</button>'
-        )
-        head = "".join(
-            f'<th scope="col">{esc(axis_value_label(column_axis, column))}</th>'
-            for column in column_axis["values"]
-        )
-        rows = []
+        items = []
+        untested = 0
         for row in row_axis["values"]:
-            cells = []
             for column in column_axis["values"]:
                 cell = view["cells"][f"{row}:{column}"]
                 state = cell["state"]
-                title = state_labels[state]
+                if state in {"missing"}:
+                    untested += 1
+                    continue
                 evidence_id = cell.get("evidence_id")
-                estimate_id = cell.get("estimate_id")
                 evidence = (
                     by_id[evidence_id].get("evidence")
                     if evidence_id
@@ -1437,34 +1541,29 @@ def coverage_tables(family: dict[str, Any]) -> str:
                 if evidence_id and cell.get("point_x") is not None:
                     observed = by_id[evidence_id]
                     point = next(
-                        point
-                        for point in observed.get("points") or []
+                        point for point in observed.get("points") or []
                         if point.get("x") == cell["point_x"]
                     )
                     label_text = point_metric_label(point)
+                elif evidence_id:
+                    metrics = by_id[evidence_id].get("metrics") or {}
+                    decode_values = metrics.get("decode_tok_s") or []
+                    if decode_values:
+                        label_text = f"{fmt(max(decode_values))} tok/s"
                 estimate_note = ""
-                if estimate_id:
-                    estimate = estimates[estimate_id]
+                if cell.get("estimate_id"):
+                    estimate = estimates[cell["estimate_id"]]
                     interval = estimate["interval"]
                     label_text = (
-                        f'≈ {fmt(estimate["value"])} {estimate["unit"]} '
-                        f'({fmt(interval["low"])}–{fmt(interval["high"])})'
+                        f'\u2248 {fmt(estimate["value"])} {estimate["unit"]} '
+                        f'({fmt(interval["low"])}\u2013{fmt(interval["high"])})'
                     )
                     evidence = estimate["record"]
-                    estimate_note = (
-                        f'{estimate["engine"]["name"]} {estimate["engine"]["version"]}; '
-                        f'snapshot {estimate["engine"]["snapshot_sha256"]}'
-                    )
-                glyph = title.split(" ", 1)[0]
-                meaning = STATE_MEANING.get(state, title)
-                body = (
-                    f'<span class="state" title="{esc(meaning)}">{esc(glyph)}'
-                    f'<span class="visually-hidden">{esc(title.split(" ", 1)[1] if " " in title else title)}</span></span>'
-                    f'<b>{esc(label_text)}</b>'
-                )
-                if evidence:
-                    body = f'<a href="{esc(evidence_href(evidence))}" aria-label="{esc(title)}: {esc(label_text)}; open record">{body}</a>'
-                packet_link = ""
+                    engine = estimate.get("engine") or {}
+                    estimate_note = f'{engine.get("name", "")} {engine.get("version", "")}'.strip()
+                what = f"{axis_plain_words(column_axis, column)}, {axis_plain_words(row_axis, row)}"
+                code = f'{column_axis.get("prefix", "")}{column}\u00b7{row_axis.get("prefix", "")}{row}'
+                links = []
                 packet_id = cell.get("packet_id")
                 if packet_id:
                     packet = packets[packet_id]
@@ -1474,27 +1573,55 @@ def coverage_tables(family: dict[str, Any]) -> str:
                         if manifest.startswith("packages/") and manifest.endswith("package.json")
                         else evidence_href(manifest)
                     )
-                    packet_link = f'<a class="cell-packet" href="{esc(href)}">packet</a>'
-                cells.append(
-                    f'<td class="coverage-cell is-{esc(state)}" title="{esc(cell.get("reason") or estimate_note or view.get("decision_note") or meaning)}">{body}{packet_link}</td>'
-                )
-            rows.append(
-                f'<tr><th scope="row">{esc(axis_value_label(row_axis, row))}</th>{"".join(cells)}</tr>'
-            )
+                    links.append(f'<a href="{esc(href)}">packet</a>')
+                if evidence:
+                    links.append(f'<a href="{esc(evidence_href(evidence))}">evidence</a>')
+                reason = cell.get("reason") or ""
+                if state == "quarantined":
+                    dead = f'{esc(reason or "output not usable")}. <span class="c-dead">Ran at {esc(label_text)}.</span>'
+                    body = (
+                        f'<span class="c-what">{esc(what)} <code>{esc(code)}</code> \u2014 {dead}</span>'
+                    )
+                    value_html = ""
+                else:
+                    note_bits = []
+                    if reason and reason.lower() not in {"", "strict"}:
+                        note_bits.append(esc(reason))
+                    if estimate_note:
+                        note_bits.append(esc(estimate_note))
+                    note = (" — " + "; ".join(note_bits)) if note_bits else ""
+                    body = f'<span class="c-what">{esc(what)} <code>{esc(code)}</code>{note}</span>'
+                    value_html = f'<b class="c-val">{esc(label_text)}</b>' if label_text else ""
+                items.append((COMBO_ORDER.get(state, 8), (
+                    f'<li class="combo is-{esc(state)}">'
+                    f'<span class="c-state">{COMBO_STATE_WORDS.get(state, esc(state))}</span>'
+                    f'{body}{value_html}'
+                    f'<span class="c-links">{" \u00b7 ".join(links)}</span></li>'
+                )))
+        items.sort(key=lambda item: item[0])
+        closures = family.get("family_closures") or []
+        closure_text = "; ".join(str(closure.get("reason") or "").rstrip(". ") for closure in closures)
+        tail_bits = []
+        if untested:
+            tail_bits.append(f"{untested} other combination{'s' if untested != 1 else ''} untested")
+        if closure_text:
+            tail_bits.append(closure_text)
+        tail = (
+            f'<p class="combo-tail">{esc("; ".join(tail_bits))}. '
+            f'Full matrix in the <a class="inline" href="../families/{esc(family["id"])}.json">family data</a>.</p>'
+            if tail_bits else ""
+        )
         selectors = " · ".join(
             f"{key}={value}" for key, value in (view.get("fixed_selectors") or {}).items()
         )
         scope = str(view.get("fixed") or "")
         if selectors:
-            scope = f"{scope} Fixed: {selectors}."
-        table_label = f'{view.get("label")} {row_axis["label"]} by {column_axis["label"]} coverage'
-        tables.append(
-            f'<div class="coverage-panel" role="tabpanel" id="{esc(panel_id)}" aria-labelledby="{esc(tab_id)}" data-coverage-panel="{esc(view.get("id"))}"{"" if index == 0 else " hidden"}><p>{esc(scope)}</p><div class="scroller" tabindex="0" role="region" aria-label="{esc(table_label)}"><table class="data coverage-table"><thead><tr><th>{esc(row_axis["label"])} / {esc(column_axis["label"])}</th>{head}</tr></thead><tbody>{"".join(rows)}</tbody></table></div></div>'
+            scope = f"{scope} Fixed: {selectors}.".strip()
+        blocks.append(
+            f'<div class="combo-block"><p class="combo-scope">{esc(scope)}</p>'
+            f'<ul class="combo-list">{"".join(html for _, html in items)}</ul>{tail}</div>'
         )
-    legend = "".join(
-        f'<span class="is-{esc(state)}">{esc(label)}</span>' for state, label in state_labels.items()
-    )
-    return f'<div class="coverage-switch" role="tablist" aria-label="Coverage slices">{"".join(buttons)}</div>{"".join(tables)}<div class="coverage-legend">{legend}</div>'
+    return "".join(blocks)
 
 
 def closure_cards(family: dict[str, Any]) -> str:
@@ -1555,12 +1682,14 @@ def package_metric(
 
 
 def grade_badge(label: str, value: Any) -> str:
+    # No grade -> no badge: an em-dash placeholder is noise, not information.
     if not isinstance(value, dict):
-        return f'<span class="curated-grade is-pending" tabindex="0" title="Not graded yet" aria-label="{esc(label)} not graded yet">{esc(label)} —</span>'
+        return ""
     title = f'{value.get("scope", "")} · {value.get("basis", "")}'
+    word = {"CAP": "Capability", "EVID": "Evidence"}.get(label, label)
     return (
-        f'<span class="curated-grade" tabindex="0" title="{esc(title)}" aria-label="{esc(label)} grade {esc(value.get("grade"))}: {esc(title)}">'
-        f'{esc(label)} {esc(value.get("grade"))}</span>'
+        f'<span class="curated-grade" tabindex="0" title="{esc(title)}" aria-label="{esc(word)} grade {esc(value.get("grade"))}: {esc(title)}">'
+        f'{esc(word)} {esc(value.get("grade"))} <small>of A\u2013D</small></span>'
     )
 
 
@@ -1590,9 +1719,9 @@ def packet_cards(family: dict[str, Any]) -> str:
                 f' data-ml-prompt="{esc(projection.get("prompt_tokens"))}" data-ml-output="{esc(projection.get("output_tokens"))}"'
                 + (f' data-ml-strategy="{esc(projection.get("strategy"))}"' if projection.get("strategy") else "")
             )
-            headroom = '<span class="opt-grade" data-family-headroom-value title="Projected optimization grade is loading; this compares measured speed with the modeled tuned target, not model quality or packet evidence.">OPT …</span>'
+            headroom = '<span class="opt-grade" data-family-headroom-value title="Compares measured speed with the modeled tuned target, not model quality or packet evidence.">projected headroom \u2026</span>'
         elif projection and value != "—":
-            headroom = '<span class="opt-grade" title="OPT is withheld until this measured workload has explicit prompt and output token selectors.">OPT —</span>'
+            headroom = ""
         grades = packet.get("grades") or {}
         revision = revisions.get(packet.get("revision")) or {}
         capability = grades.get("capability") or (revision.get("grades") or {}).get("capability")
@@ -1602,17 +1731,29 @@ def packet_cards(family: dict[str, Any]) -> str:
                 grade_badge("EVID", grades.get("evidence")),
             )
         )
-        metric_text = f"{value} {unit}".strip()
+        STATUS_WORDS = {
+            "closed research result": "research, closed \u2014 the lab has stopped tuning this configuration for now",
+            "candidate": "candidate package",
+            "research": "research",
+        }
+        status_text = STATUS_WORDS.get(str(packet.get("status") or "").lower(), str(packet.get("status") or ""))
+        # The measured workload stays visible under the number (honesty: the
+        # claim carries its own scope), just small and muted.
         workload_html = (
             f'\n  <small class="packet-workload">{esc(workload)}</small>'
-            if workload
+            if workload and value != "—"
             else ""
+        )
+        cards_n = packet.get("cards")
+        promise = (
+            f'Reproduce <b>{esc(value)} {esc(unit)}</b>' + (f' on {esc(cards_n)}\u00d7 B70' if cards_n else '')
+            if value != "\u2014" else "Evidence packet"
         )
         cards.append(
             f'''<a class="packet-card" href="{esc(href)}"{attrs}>
   <div class="packet-top"><span>{esc(packet.get('revision'))}</span><span class="packet-badges"><b>{esc(packet.get('evidence_level'))}</b>{headroom}</span></div>
   <h3>{esc(packet.get('label'))}</h3>
-  <p><strong>{esc(metric_text)}</strong>{" measured headline" if value != "—" else " evidence packet"} · {esc(packet.get('status'))}</p>{workload_html}
+  <p class="packet-promise">{promise} · {esc(status_text)}</p>{workload_html}
   <div class="grade-rail">{grade_rail}</div>
   <div class="coverage-rail">{coverage}</div>
 </a>'''
@@ -1701,20 +1842,106 @@ def family_page(family: dict[str, Any]) -> str:
         if best is None or (candidate[0], candidate[1]) > (best[0], best[1]):
             best = candidate
     headline_html = ""
+    headline_id = None
     if best:
         _, peak, measurement = best
+        headline_id = measurement.get("id")
         runtime_words = " ".join(str(measurement.get("runtime") or "").split()[:2])
-        label_bits = [bit for bit in (measurement.get("variant"), runtime_words) if bit]
-        evidence = (measurement.get("evidence") or {}).get("primary") if isinstance(measurement.get("evidence"), dict) else None
+        hero_tp = (measurement.get("config") or {}).get("tp") or 1
+        gate = "full quality gate" if measurement.get("state") == "lab-measured" else "screened run"
+        label_bits = [f"{hero_tp}\u00d7 Arc Pro B70", measurement.get("variant"), runtime_words, "single user", gate]
+        words = int(round(peak * 0.75))
         headline_html = (
             '  <div class="hero-headline"><span class="big">' + fmt(peak) + '</span>'
-            '<span class="unit">tok/s measured</span>'
-            '<small>' + esc(" · ".join(label_bits)) + ' · single user, full quality gate</small></div>\n'
+            '<span class="unit">tok/s<br>measured</span>'
+            '<span class="gloss">&asymp; ' + str(words) + ' words a second</span>'
+            '<small>' + esc(" · ".join(str(bit) for bit in label_bits if bit)) + '</small></div>\n'
         )
+    # Other notable measured results (never repeating the hero number): the
+    # best per configuration, plus the best combined multi-user rate.
+    strip_cards = []
+    seen_configs = set()
+    if best:
+        hero_measurement = best[2]
+        seen_configs.add((hero_measurement.get("variant"), (hero_measurement.get("config") or {}).get("tp")))
+    for measurement in records(family):
+        if measurement.get("state") not in OBSERVED_STATES or measurement.get("state") == "quarantined":
+            continue
+        if measurement.get("id") == headline_id:
+            continue
+        config = measurement.get("config") or {}
+        key = (measurement.get("variant"), config.get("tp"))
+        metrics = measurement.get("metrics") or {}
+        decode_values = metrics.get("decode_tok_s") or []
+        aggregate_points = [point for point in measurement.get("points") or [] if point.get("aggregate_tok_s") is not None]
+        screened = measurement.get("state") != "lab-measured"
+        glyph = "\u25c7" if screened else "\u2713"
+        note = "screened, experimental" if screened else "full quality gate"
+        gate_words = ("\u2713 Full quality gate" if not screened else "\u25c7 Speed check only")
+        gate_class = "is-strict" if not screened else "is-screened"
+        if decode_values and key not in seen_configs:
+            seen_configs.add(key)
+            cards_n = config.get("tp") or 1
+            strip_cards.append((0 if not screened else 1,
+                '<a class="result ' + gate_class + '" href="' + esc(evidence_href(measurement.get("evidence"))) + '">'
+                '<span class="r-kind">' + esc(f"{cards_n} card{'s' if cards_n != 1 else ''} · {measurement.get('variant') or ''}") + '</span>'
+                '<b>' + fmt(max(decode_values)) + '</b><span class="r-unit">tok/s · 1 user</span>'
+                '<span class="r-gate">' + esc(gate_words) + '</span></a>'
+            ))
+        if aggregate_points:
+            top = max(aggregate_points, key=lambda point: point["aggregate_tok_s"])
+            cards_n = config.get("tp") or 1
+            per_user = top["aggregate_tok_s"] / max(float(top.get("x") or 1), 1)
+            strip_cards.append((2,
+                '<a class="result is-aggregate ' + gate_class + '" href="#measured">'
+                '<span class="r-kind">serves ' + fmt_x(top.get("x")) + ' at once · ' + esc(f"{cards_n} card{'s' if cards_n != 1 else ''}") + '</span>'
+                '<b>' + f"{top['aggregate_tok_s']:,.0f}" + '</b><span class="r-unit">tok/s combined</span>'
+                '<span class="r-note">&asymp; ' + fmt(per_user, 0) + ' tok/s per user</span>'
+                '<span class="r-gate">' + esc(gate_words) + ' · measured curve below</span></a>'
+            ))
+    strip_cards.sort(key=lambda item: item[0])
+    strip_html = ('<div class="result-strip" aria-label="Other measured results">' + "".join(html for _, html in strip_cards[:4]) + '</div>') if strip_cards else ""
+    # Primary action: the best packet's page or guide.
+    cta_html = ""
+    for packet in family.get("packets") or []:
+        _v, _u, cta_href, _rv, _w, _e = package_metric(family, packet)
+        if cta_href:
+            cta_html = f'<div class="family-cta"><a class="button" href="{esc(cta_href)}">Get the install guide</a><a class="inline" href="#packets">All deployment packets</a></div>'
+            break
+    measured_count = sum(
+        1
+        for item in list(family.get("run_measurements") or [])
+        + list(family.get("series_measurements") or [])
+        if item.get("state") == "lab-measured"
+    )
+    estimate_count = len(family.get("estimates") or [])
+    BAND_WORDS = {
+        "four-card measured": "Runs on 4 cards (measured)",
+        "one-card measured": "Runs on 1 card (measured)",
+        "strict tp4 only": "Full gate, 4-card only",
+        "high": "High",
+        "pending": "Pending",
+    }
+
+    def band_words(value):
+        text = str(value or "").strip()
+        return BAND_WORDS.get(text.lower(), text[:1].upper() + text[1:].replace("-", " ") if text else "Pending")
+
+    signal_cards = ""
+    fit_band = fit.get("band")
+    if fit_band:
+        signal_cards += f'\n    <div title="{esc(fit.get("scope") or "local deployment fit")}, reviewed {esc(fit.get("reviewed_at") or family.get("updated_at"))}"><dt>B70 fit</dt><dd>{esc(band_words(fit_band))}</dd></div>'
+    quality_band = quality.get("band")
+    if quality_band:
+        signal_cards += f'\n    <div title="{esc(quality.get("scope") or "No family-wide quality score is inferred from speed evidence.")}"><dt>Quality evidence</dt><dd>{esc(band_words(quality_band))}</dd></div>'
+    if popularity_value not in (None, "Pending"):
+        signal_cards += f'\n    <div title="{esc(popularity_detail)}"><dt>Interest</dt><dd>{esc(popularity_value)}</dd></div>'
+    if measured_count:
+        signal_cards += f'\n    <div title="Run arms and measured series; every point links to proof"><dt>Measured results</dt><dd>{measured_count}</dd></div>'
     coverage_section = ""
     if coverage_views:
         coverage_section = f'''
-  <div class="section-head"><div><h2>Combination coverage</h2><p>One cell per combination &mdash; hover a mark for what it means.</p></div></div>
+  <div class="section-head"><div><h2>What has been tried</h2><p>Only tested combinations are listed; the full matrix is in the family data.</p></div></div>
   {coverage}
 '''
     closures_section = ""
@@ -1735,25 +1962,18 @@ def family_page(family: dict[str, Any]) -> str:
         "creator": {"@type": "Organization", "name": "neural.download lab"},
         "isAccessibleForFree": True,
     }
-    measured_count = sum(
-        1
-        for item in list(family.get("run_measurements") or [])
-        + list(family.get("series_measurements") or [])
-        if item.get("state") == "lab-measured"
-    )
-    estimate_count = len(family.get("estimates") or [])
     return f'''<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{esc(family.get('display_name'))} coverage — neural.download</title>
-<meta name="description" content="{esc(family.get('summary'))} Measured topology, context, speed-up, quantization, prefill, TTFT, quality, and packet coverage without merging revision identities.">
+<title>{esc(family.get('display_name'))} on Intel Arc Pro B70 — neural.download</title>
+<meta name="description" content="{esc(family.get('summary'))} Every number links to its measured proof.">
 <link rel="canonical" href="{esc(url)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{esc(url)}">
-<meta property="og:title" content="{esc(family.get('display_name'))} coverage — neural.download">
-<meta property="og:description" content="Measured deployment coverage across the axes users actually choose.">
+<meta property="og:title" content="{esc(family.get('display_name'))} on Intel Arc Pro B70 — neural.download">
+<meta property="og:description" content="{esc(family.get('summary'))}">
 <meta property="og:image" content="{SITE}og-image.png">
 <meta name="theme-color" content="#f6f1e5">
 <script type="application/ld+json">{json_for_html_script(ld)}</script>
@@ -1763,10 +1983,58 @@ def family_page(family: dict[str, Any]) -> str:
   .family-main {{ max-width: 1120px; }}
   .lineage {{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }}
   .lineage span {{ padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }}
-  .hero-headline {{ display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:12px 0 0; }}
-  .hero .hero-headline .big {{ font:900 46px/1 var(--display); color:var(--paper, #fff); }}
-  .hero .hero-headline .unit {{ font:700 12px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }}
+  .hero h1 {{ font-size:clamp(22px, 2.6vw, 32px); }}
+  .hero-headline {{ display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; }}
+  .hero .hero-headline .big {{ font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }}
+  .hero .hero-headline .unit {{ font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }}
+  .hero .hero-headline .gloss {{ font-size:13px; color:rgba(255,255,255,.9); }}
   .hero .hero-headline small {{ flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }}
+  .result-strip {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:0 0 14px; }}
+  .result {{ display:block; border:2px solid var(--ink); background:var(--paper); padding:11px 12px 9px; }}
+  .result:hover {{ border-color:var(--spot); }}
+  .result .r-kind {{ display:block; font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }}
+  .result b {{ font:900 27px/1.15 var(--display); }}
+  .result .r-unit {{ margin-left:5px; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }}
+  .result .r-note {{ display:block; font-size:11px; color:var(--muted); }}
+  .result .r-gate {{ display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--good); }}
+  .result.is-screened .r-gate {{ color:var(--warn); }}
+  .family-cta {{ display:flex; align-items:center; gap:14px; margin:0 0 18px; }}
+  .family-cta .button {{ display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }}
+  .family-cta .button:hover {{ background:var(--spot); border-color:var(--spot); color:#fff; }}
+  .meta-strip {{ display:flex; flex-wrap:wrap; gap:8px 26px; margin:0 0 20px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }}
+  .meta-strip div {{ cursor:help; }}
+  .meta-strip dt {{ font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }}
+  .meta-strip dd {{ margin:1px 0 0; font-size:12.5px; }}
+  .stat-row {{ display:grid; grid-template-columns:auto auto 1fr auto; gap:4px 12px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }}
+  .stat-row .m {{ text-align:right; }}
+  .stat-row:last-child {{ border-bottom:0; }}
+  .stat-row b {{ font:900 20px/1 var(--display); }}
+  .stat-row .u {{ font:700 10px var(--mono); text-transform:uppercase; color:var(--muted); margin-left:4px; }}
+  .stat-row .l {{ font-size:12.5px; }}
+  .stat-row .m {{ font:11px var(--mono); color:var(--muted); white-space:nowrap; }}
+  .stat-row.is-superseded {{ color:var(--muted); }}
+  .stat-row.is-superseded b {{ font:700 15px/1 var(--display); color:var(--muted); }}
+  .combo-list {{ list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }}
+  .combo {{ display:grid; grid-template-columns:130px 1fr auto auto; gap:4px 12px; align-items:baseline; padding:9px 12px; border-bottom:1px solid var(--line); }}
+  .combo:last-child {{ border-bottom:0; }}
+  .combo .c-state {{ font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; }}
+  .combo.is-lab-measured .c-state {{ color:var(--good); }}
+  .combo.is-lab-screened .c-state {{ color:var(--warn); }}
+  .combo.is-quarantined .c-state {{ color:#a12820; }}
+  .combo .c-what {{ font-size:12.5px; }}
+  .combo .c-what code {{ font:8.5px var(--mono); color:var(--muted); border:1px solid var(--line); padding:0 4px; vertical-align:1px; }}
+  .combo .c-dead {{ font-size:11.5px; color:var(--muted); font-weight:400; }}
+  .combo .c-val {{ font:700 13px var(--mono); white-space:nowrap; }}
+  .combo .c-links {{ font:11px var(--mono); white-space:nowrap; }}
+  .combo-scope {{ margin:0 0 8px; color:var(--muted); font-size:12px; }}
+  .combo-tail {{ margin:8px 0 0; color:var(--muted); font-size:12px; }}
+  .view-flag {{ font:700 9px var(--mono); letter-spacing:.05em; color:var(--warn); margin-left:8px; vertical-align:2px; }}
+  h2, .section-head {{ scroll-margin-top:70px; }}
+  @media (max-width:520px) {{
+    .combo {{ grid-template-columns:1fr; gap:2px; }}
+    .stat-row {{ grid-template-columns:1fr; }}
+    .result-strip {{ grid-template-columns:1fr; }}
+  }}
   .signal[title] {{ cursor: help; }}
   .visually-hidden {{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }}
   details.fine {{ margin:0 0 22px; color:var(--muted); font-size:12.5px; }}
@@ -1780,8 +2048,8 @@ def family_page(family: dict[str, Any]) -> str:
   .section-head {{ display:flex; align-items:end; justify-content:space-between; gap:18px; margin:34px 0 10px; }}
   .section-head h2 {{ margin:0; font:900 25px/1.1 var(--display); text-transform:uppercase; }}
   .section-head p {{ max-width:68ch; margin:0; color:var(--muted); font-size:13px; }}
-  .views-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }}
-  figure.family-view {{ margin:0; min-width:0; }}
+  .views-grid {{ display:grid; grid-template-columns:1fr; gap:14px; }}
+  figure.family-view {{ margin:0; min-width:0; max-width:720px; }}
   .chart-head {{ display:flex; justify-content:space-between; gap:12px; align-items:start; min-height:64px; }}
   .chart-head h3 {{ margin:0; font:900 15px var(--display); text-transform:uppercase; }}
   .chart-head p {{ margin:3px 0 0; color:var(--muted); font-size:11.5px; line-height:1.35; }}
@@ -1839,29 +2107,24 @@ def family_page(family: dict[str, Any]) -> str:
   <nav aria-label="Primary"><a href="../index.html">Home</a><a href="index.html" aria-current="page">Models</a><a href="../learn.html">Learn</a><a href="../guides.html">Guide library</a><a href="../index.html#lab-speeds">Benchmarks</a><a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></nav>
 </div></div>
 <header class="hero"><div class="wrap">
-  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / {esc(family.get('name'))}</p>
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / {esc(family.get('display_name'))}</p>
   <h1>{esc(family.get('display_name'))}</h1>
   <p>{esc(family.get('summary'))}</p>
 {headline_html}
   <div class="lineage">{lineage}</div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-  <div class="signals" aria-label="Family signals">
-    <div class="signal" title="{esc(fit.get('scope') or 'local deployment fit')}, reviewed {esc(fit.get('reviewed_at') or family.get('updated_at'))}"><span>B70 fit</span><b>{esc(fit.get('band') or 'Pending')}</b></div>
-    <div class="signal" title="{esc(quality.get('scope') or 'No family-wide quality score is inferred from speed evidence.')}"><span>Quality evidence</span><b>{esc(str(quality.get('band') or 'Pending').replace('-', ' '))}</b></div>
-    <div class="signal" title="{esc(popularity_detail)}"><span>Interest</span><b>{esc(popularity_value)}</b></div>
-    <div class="signal" title="Run arms and measured series; every point links to proof"><span>Evidence slices</span><b>{measured_count}</b></div>
-    <div class="signal" title="Versioned gap estimates only; live OPT grades stay separate"><span>Stored estimates</span><b>{estimate_count}</b></div>
-  </div>
-  <details class="fine"><summary>Transfer boundary</summary><p>{esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
+{strip_html}{cta_html}
+  <dl class="meta-strip" aria-label="Family signals">{signal_cards}</dl>
 
-  <div class="section-head"><div><h2>Measured slices</h2><p>Every point links to its proof; the buttons switch metric.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
+  <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
+  <div class="packet-grid">{packets}</div>
+
+  <div class="section-head"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
   <div class="views-grid">{views}</div>
 
-{coverage_section}{closures_section}
-
-  <div class="section-head"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
-  <div class="packet-grid">{packets}</div>
+{coverage_section}
+  <details class="fine"><summary>Transfer boundary</summary><p>{esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="{esc(source)}"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>
