@@ -1,0 +1,55 @@
+diff --git a/ggml/src/ggml-sycl/common.hpp b/ggml/src/ggml-sycl/common.hpp
+--- a/ggml/src/ggml-sycl/common.hpp
++++ b/ggml/src/ggml-sycl/common.hpp
+@@ -67,6 +67,7 @@ extern int g_ggml_sycl_dev2dev_memcpy;
+ extern int g_ggml_sycl_enable_dnn;
+ extern int g_ggml_sycl_reorder_in_gemm;
+ extern int g_ggml_sycl_force_reorder;
++extern int g_ggml_sycl_force_reorder_q4k;
+ extern int g_ggml_sycl_fa_onednn;
+ extern int g_ggml_sycl_fa_onednn_max_kv;
+ extern int g_ggml_sycl_mkl_direct;
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -113,5 +113,10 @@ int g_ggml_sycl_enable_mmq = 0;
+ // condition and reorders in the MMQ branch too, so the CPU-reference suite can validate it.
+ int g_ggml_sycl_force_reorder = 0;
++// Production-scoped companion to the broad test hook above. Q4_K WDC needs a
++// reordered tensor even when the first observed width exceeds the MMVQ cap,
++// but forcing every supported type can require a full temporary copy of a
++// very large q6_K output tensor and exceed device memory. Default off.
++int g_ggml_sycl_force_reorder_q4k = 0;
+ // TEST HOOK. q4_K/q5_K/q6_K on MMQ used to hang; with tile_k they are correct and enabled by
+ // default.  Setting GGML_SYCL_MMQ_KQUANT=0 excludes them again, which reproduces the pre-fix arm
+ // (MMQ on for the legacy quants, K-quants still on the f16 dequant+GEMM path) inside the SAME
+@@ -524,6 +530,7 @@ static void ggml_check_sycl() try {
+         g_ggml_sycl_prioritize_dmmv = ggml_sycl_get_env("GGML_SYCL_PRIORITIZE_DMMV", 0);
+         g_ggml_sycl_enable_mmq = ggml_sycl_get_env("GGML_SYCL_ENABLE_MMQ", 1);   // INTEGRATION default-ON (was 0). See PROVENANCE.md.
+         g_ggml_sycl_force_reorder = ggml_sycl_get_env("GGML_SYCL_FORCE_REORDER", 0);
++        g_ggml_sycl_force_reorder_q4k = ggml_sycl_get_env("GGML_SYCL_FORCE_REORDER_Q4K", 0);
+         g_ggml_sycl_mmq_kquant = ggml_sycl_get_env("GGML_SYCL_MMQ_KQUANT", 1);
+         // ★★★ f134: the dispatch DEFAULT is now finding 85's VALIDATED deploy config, not the bare
+         //   upstream cap of 8.  The integration tree flipped GGML_SYCL_ENABLE_MMQ=1 default-ON but left
+@@ -5826,5 +5833,6 @@ static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_ten
+            // the cap must set in BOTH arms -- otherwise it confounds kernel with layout (~1.85x).
+            (g_ggml_sycl_force_reorder ||
++            (g_ggml_sycl_force_reorder_q4k && dst->src[0]->type == GGML_TYPE_Q4_K) ||
+             dst->src[1]->ne[1] <= ggml_sycl_mmvq_max_batch_size(dst->src[0]->type, ctx.device)) &&
+            dst->src[1]->ne[2]==1 && dst->src[1]->ne[3]==1;
+ }
+diff --git a/ggml/src/ggml-sycl/gemm-wdc.cpp b/ggml/src/ggml-sycl/gemm-wdc.cpp
+--- a/ggml/src/ggml-sycl/gemm-wdc.cpp
++++ b/ggml/src/ggml-sycl/gemm-wdc.cpp
+@@ -724,8 +724,10 @@ void ggml_sycl_wdc_print_doors() {
+                       ? "  ☠☠ REQUESTED BUT UNBUILDABLE: no nibble plane => the row is compiled out"
+                       : "");
+     fprintf(stderr, "SYCL doors | reorder    : in_gemm=%d (GGML_SYCL_REORDER_IN_GEMM)   "
+-                  "force_reorder=%d (GGML_SYCL_FORCE_REORDER)   nvfp4_reorder=%d (%s)\n",
++                  "force_reorder=%d (GGML_SYCL_FORCE_REORDER)   "
++                  "force_q4k=%d (GGML_SYCL_FORCE_REORDER_Q4K)   nvfp4_reorder=%d (%s)\n",
+                   g_ggml_sycl_reorder_in_gemm, g_ggml_sycl_force_reorder,
++                  g_ggml_sycl_force_reorder_q4k,
+                   ggml_sycl_nvfp4_reorder_enabled() ? 1 : 0,
+                   getenv("GGML_SYCL_NVFP4_REORDER") != nullptr ? "explicit" : "derived from WDC");
+     fprintf(stderr, "SYCL doors | opt        : enable_opt=%d  enable_dnn=%d\n",

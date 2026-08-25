@@ -16,7 +16,7 @@ ctx_size="${CTX_SIZE:-32768}"
 campaign="${CAMPAIGN_ID:-qwen38-q4km-tp1-batched-ladder-20260825-r1}"
 expected_model_sha=31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34
 expected_source_rev=4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126
-expected_diff_sha=f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e
+expected_diff_sha="${EXPECTED_DIFF_SHA:-f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e}"
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ -n "${model_dir}" && -n "${source_dir}" && -n "${build_dir}" ]] || \
@@ -26,10 +26,12 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ "${campaign}" =~ ^[a-z0-9][a-z0-9-]*$ ]] || fail 'invalid CAMPAIGN_ID'
 [[ "${npl}" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]] || fail 'invalid NPL list'
 [[ "${ctx_size}" =~ ^[1-9][0-9]*$ ]] || fail 'CTX_SIZE must be positive'
+[[ "${expected_diff_sha}" =~ ^[0-9a-f]{64}$ ]] || fail 'EXPECTED_DIFF_SHA must be SHA-256'
 [[ "${runtime_profile}" == control || "${runtime_profile}" == wdc-q4k || \
    "${runtime_profile}" == wdc-q4k-r1 || \
-   "${runtime_profile}" == wdc-q4k-forced ]] || \
-  fail 'RUNTIME_PROFILE must be control, wdc-q4k, wdc-q4k-r1, or wdc-q4k-forced'
+   "${runtime_profile}" == wdc-q4k-forced || \
+   "${runtime_profile}" == wdc-q4k-scoped ]] || \
+  fail 'invalid RUNTIME_PROFILE'
 max_pl=$(tr ',' '\n' <<< "${npl}" | sort -nr | head -1)
 (( ctx_size >= max_pl * (128 + 256) )) || \
   fail "CTX_SIZE ${ctx_size} is below the exact ${max_pl}x(128+256) token requirement"
@@ -100,8 +102,11 @@ export GGML_SYCL_FUSED_CONV_SILU_L2=1
 export GGML_SYCL_FUSE_EXT=31
 export GGML_SYCL_QDEDUP_STATS=1
 export GGML_SYCL_MMQ_Q4K_REORDER=1
+unset GGML_SYCL_WDC GGML_SYCL_WDC_Q4K GGML_SYCL_REORDER_IN_GEMM
+unset GGML_SYCL_FORCE_REORDER GGML_SYCL_FORCE_REORDER_Q4K
 if [[ "${runtime_profile}" == wdc-q4k || "${runtime_profile}" == wdc-q4k-r1 || \
-      "${runtime_profile}" == wdc-q4k-forced ]]; then
+      "${runtime_profile}" == wdc-q4k-forced || \
+      "${runtime_profile}" == wdc-q4k-scoped ]]; then
   grep -qx 'GGML_SYCL_DNN:BOOL=ON' "${build_dir}/CMakeCache.txt" || \
     fail 'wdc-q4k requires a GGML_SYCL_DNN=ON build'
   grep -Eq '^CMAKE_CXX_FLAGS:STRING=.*GGML_SYCL_Q4K_NIBBLE_PLANE=1' \
@@ -123,6 +128,8 @@ if [[ "${runtime_profile}" == wdc-q4k || "${runtime_profile}" == wdc-q4k-r1 || \
       # for this harness. This estimates the opportunity before a type-scoped
       # production reorder fix; it is not itself a shippable runtime profile.
       export GGML_SYCL_FORCE_REORDER=1
+    elif [[ "${runtime_profile}" == wdc-q4k-scoped ]]; then
+      export GGML_SYCL_FORCE_REORDER_Q4K=1
     fi
   fi
 fi

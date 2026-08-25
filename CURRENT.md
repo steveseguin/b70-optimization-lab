@@ -981,7 +981,9 @@ R1 failed before measurement because a test-only forced reorder exceeded
 device memory. R2 isolated Q4_K but exposed a vacuous reorder door and failed
 before B64. R3 proved the harness still allocates 32,768 tokens and the broad
 forced-reorder arm cannot fit; the flag-only path is closed. A source-level
-Q4_K-only reorder door is the next bounded candidate.
+Q4_K-only reorder door is now
+[preregistered](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-wdc-scoped-r4-preregistration.md)
+as the next bounded candidate.
 A promising point must then pass a
 separate endpoint replay with sequential output oracles before package
 promotion.

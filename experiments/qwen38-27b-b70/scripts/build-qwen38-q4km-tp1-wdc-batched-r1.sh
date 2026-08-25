@@ -6,12 +6,13 @@ build_dir="${BUILD_DIR:-}"
 jobs="${BUILD_JOBS:-2}"
 compiler="${CXX_COMPILER:-/opt/intel/oneapi/compiler/2026.1/bin/icpx}"
 expected_rev=4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126
-expected_diff=f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e
+expected_diff="${EXPECTED_DIFF_SHA:-f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e}"
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ -n "${source_dir}" && -n "${build_dir}" ]] || fail 'set SOURCE_DIR and BUILD_DIR'
 [[ ! -e "${build_dir}" ]] || fail "BUILD_DIR must not exist: ${build_dir}"
 [[ "${jobs}" =~ ^[1-9][0-9]*$ ]] || fail 'BUILD_JOBS must be positive'
+[[ "${expected_diff}" =~ ^[0-9a-f]{64}$ ]] || fail 'EXPECTED_DIFF_SHA must be SHA-256'
 [[ -x "${compiler}" ]] || fail "missing compiler: ${compiler}"
 [[ -r /opt/intel/oneapi/setvars.sh ]] || fail 'missing /opt/intel/oneapi/setvars.sh'
 [[ "$(git -C "${source_dir}" rev-parse HEAD)" == "${expected_rev}" ]] || \

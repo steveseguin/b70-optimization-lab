@@ -1,0 +1,39 @@
+{
+  "campaign_id": "qwen38-q4km-tp1-wdc-scoped-20260825-r4",
+  "status": "preregistered",
+  "objective": "Test a source-level Q4_K-only reorder door that enables Q4_K WDC without allocating a temporary reordered copy of the 1.27-billion-element q6_K output tensor.",
+  "source": {
+    "base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "applied_diff_sha256": "3d2ab1e5b6820cf05874377510cc4ee4168190290e65af7b8621a4e032b8493b",
+    "incremental_patch": "experiments/qwen38-27b-b70/patches/llama-qwen38-q4k-scoped-reorder-20260825.patch",
+    "incremental_patch_sha256": "519bb0005d815c73a807dbf7f6ef196b31d61597bad3dc82b68d156259f8f261"
+  },
+  "candidate": {
+    "build": [
+      "GGML_SYCL_DNN=ON",
+      "GGML_SYCL_Q4K_NIBBLE_PLANE=1"
+    ],
+    "runtime": [
+      "GGML_SYCL_WDC=off",
+      "GGML_SYCL_WDC_Q4K=1",
+      "GGML_SYCL_REORDER_IN_GEMM=1",
+      "GGML_SYCL_FORCE_REORDER_Q4K=1"
+    ],
+    "explicitly_absent": [
+      "GGML_SYCL_FORCE_REORDER",
+      "q8_0 WDC",
+      "q6_K WDC"
+    ]
+  },
+  "matrix": {
+    "parallel_sequences": [1, 64],
+    "prompt_tokens_per_sequence": 128,
+    "generated_tokens_per_sequence": 256,
+    "requested_context_tokens": 32768
+  },
+  "control_evidence": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-batched-ladder-20260825-r1-attempt2/summary.json",
+  "advance_to_full_ladder_if": "The process completes, banner prints force_reorder=0 and force_q4k=1, a non-mutant q4_K WDC-CENSUS line proves engagement, B64 is at least 1.05x control, and B1 is at least 0.95x control. These are advancement rules, not validity or publication floors.",
+  "quality_boundary": "Raw random-token mechanism evidence only. Endpoint sequential-oracle validation remains mandatory before package or website promotion.",
+  "build_script": "experiments/qwen38-27b-b70/scripts/build-qwen38-q4km-tp1-wdc-batched-r1.sh",
+  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh"
+}
