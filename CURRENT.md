@@ -528,16 +528,20 @@ and [closeout note](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73
 
 The same dated b2dd/1e90 matrix is still the active measured campaign. TP1's
 nine-probe context spine, full eager-MTP0 short control, and eager-MTP2
-sensitive parent have passed. The MTP2 parent matched the MTP0 target oracle
-on both sensitive prompts and accepted `589/868` draft tokens. Its only
-authorized expansion is now E1: one full 25-prompt eager-MTP2 short battery
-with complete quality, all-25 target-oracle equality, and nonzero-acceptance
-gates. Only an E1 pass may unlock E2, the one globally authorized full
-eager-MTP4 actual. The launcher serializes the single-actual check under the
-campaign/GPU locks and will not reinterpret a partial or failed actual as
-permission to retry. The separately frozen TP2 zero-overlay packet remains
-ready; do not bypass E1/E2 ordering or silently mix its evidence with TP2.
-See the [TP1 expansion preregistration](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp1-eager-mtp-expansion-preregistration.md)
+sensitive parent passed. The expanded 25-prompt eager-MTP2 E1 then completed
+with every canary, quality, acceptance, identity, cleanup, and benchmark gate
+green, but matched its separate-boot MTP0 target oracle on `23/25` rather than
+the frozen `25/25` requirement. It is terminally quarantined and its
+`10.90171641629769 tok/s` interval median is not promotable. Both mismatches
+were coherent, the quality battery was fully green, and target-only fresh
+compiles are already known to vary as low as `19/25`; this cross-boot result
+therefore does **not** prove MTP corruption. It fills zero exact active-context
+cells. E2, the one authorized eager-MTP4 actual, is blocked and was not run.
+Do not retry E1, launch E2, or open a causality detour under this campaign;
+advance an independent matrix packet. The separately frozen TP2 zero-overlay
+packet remains ready and must stay distinct from TP1 evidence. See the
+[TP1 expansion preregistration](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp1-eager-mtp-expansion-preregistration.md),
+[E1 closeout](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp1-eager-mtp2-full-r1.md),
 and [TP2 preregistration](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-b2dd9ce73d-tp2-zero-overlay-r1-prereg.md).
 
 A separate dated current-main image pair was statically certified at vLLM

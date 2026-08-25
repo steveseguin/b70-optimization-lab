@@ -1,0 +1,121 @@
+{
+  "schema": "neural.download.qwen38-tp1-eager-mtp2-full-result.v1",
+  "date": "2026-08-25",
+  "campaign_id": "qwen38-b2dd9ce73d-tp1-eager-mtp-expansion-20260825-r1",
+  "stage_id": "e1-mtp2-full",
+  "attempt": 1,
+  "classification": "quarantined-cross-boot-target-oracle-mismatch",
+  "run_identity": {
+    "lab_git_head": "7ade4c31d24a1d1b6dfe4ab0d41ff1127a5accdc",
+    "vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+    "tp": 1,
+    "mtp_depth": 2,
+    "graph_mode": "off",
+    "kv_cache_dtype": "f16",
+    "max_model_len": 32768,
+    "prefix_caching": false,
+    "natural_eos": true,
+    "return_token_ids": true,
+    "seed": 1
+  },
+  "run_root": "/home/steve/qwen38-current-main-runs/tp1-eager-mtp-expansion-b2dd9ce73d-20260825-r1/01-mtp2-full",
+  "gates": {
+    "stage_state": "quarantined",
+    "terminal": true,
+    "runner_return_code": 0,
+    "canary": true,
+    "benchmark_rows": 25,
+    "benchmark_gate": true,
+    "cached_tokens_all_zero": true,
+    "target_oracle": {
+      "passed": false,
+      "exact_output_hash_matches": 23,
+      "exact_token_id_matches": 23,
+      "expected_matches": 25
+    },
+    "quality": {
+      "passed": true,
+      "exact_count": 7,
+      "repeat_count": 8,
+      "baseline_comparison_count": 24,
+      "baseline_match_all": true,
+      "cached_zero_count": 16
+    },
+    "acceptance": {
+      "passed": true,
+      "drafted_tokens": 10040,
+      "accepted_tokens": 7391,
+      "acceptance_rate": 0.7361553784860557
+    },
+    "post_cleanup": true,
+    "local_lab_head_unchanged": true,
+    "live_origin_advanced_during_stage": true,
+    "remote_movement_was_non_gating": true,
+    "speed_gate_applied": false
+  },
+  "oracle_mismatches": [
+    {
+      "prompt_id": "selection--customer-email",
+      "first_divergence_zero_based": 128,
+      "first_divergence_one_based": 129,
+      "target_token_id": 488,
+      "candidate_token_id": 264,
+      "target_token_count": 218,
+      "candidate_token_count": 220,
+      "interpretation": "Both continuations are coherent; this is not garbling or a runtime failure."
+    },
+    {
+      "prompt_id": "selection--performance-hypotheses",
+      "first_divergence_zero_based": 49,
+      "first_divergence_one_based": 50,
+      "target_token_id": 32335,
+      "candidate_token_id": 380,
+      "target_token_count": 512,
+      "candidate_token_count": 512,
+      "interpretation": "Both continuations are coherent; this is not garbling or a runtime failure."
+    }
+  ],
+  "decode_summary": {
+    "classification": "quarantined-short-suite-only",
+    "promotable": false,
+    "preferred_metric": "tok_s_1_100_intervals_after_ttft",
+    "count": 25,
+    "min": 9.278274751007908,
+    "median": 10.90171641629769,
+    "mean": 10.811013769892963,
+    "max": 13.22022124146038,
+    "stdev": 0.8731162242336163
+  },
+  "context_semantics": {
+    "fills_exact_active_context_axis": false,
+    "configured_max_context_is_not_active_context": true,
+    "exact_cells_filled": 0,
+    "website_use": "supporting quarantined parent evidence only"
+  },
+  "sealed_evidence": {
+    "stage_receipt_sha256": "6decc3ad2624634054949fec4b37591b13f19f8b8324933e0c006bab9dde01ff",
+    "benchmark_sha256": "80f0d8659076a56af6c42d1ec48c4f7eab8cbad111f28d0dbf5298c731aec8e4",
+    "quality_sha256": "9163eaa8be5f4af5c848c048cd95723cc4a63c134a99512296b8512c96c7afed",
+    "canary_sha256": "8851523a25c3867c390c73b534e77de9eb49174fd0f0b71ff552d92e54637870",
+    "metrics_before_sha256": "91a2971acfe6aba3c7332a55a48edde9e05ed886a31c0852a3d887983b32215c",
+    "metrics_after_sha256": "5828e31b4eff7525dc57a4a7a4519a85d31fbf028849045f5361470ceb32ef2b",
+    "server_startup_sha256": "9a7c1b353ac879a75efc19257e1b076aef7ca11cc892593306076556fc71743c",
+    "cache_manifest_sha256": "1d0cced2ed78a116050b684e00bb9dbcfc154c749fb546419b76007c7a60eaa2",
+    "input_files_manifest_sha256": "076737562d751ff7f3daba3da302f89ee3bb5d43f236162bdfcb86ab40fb14a0"
+  },
+  "interpretation": {
+    "promoted_speed_record": false,
+    "historical_speed_changed": false,
+    "exact_oracle_gate_failed": true,
+    "mtp_corruption_proven": false,
+    "cross_boot_causality_isolated": false,
+    "reason": "The candidate and oracle were separate fresh boots and caches, while target-only evidence already shows independent-compile output variability. The conservative gate can reject promotion but cannot attribute two coherent flips to MTP.",
+    "e2_mtp4_actual_authorized": false,
+    "e2_mtp4_actual_was_run": false,
+    "exact_context_measurements_remain_missing": true,
+    "next_action": "Preserve this terminal attempt and advance an independent matrix packet. Do not rerun E1 or launch E2 under this campaign."
+  }
+}
