@@ -1,0 +1,63 @@
+{
+  "schema": "neural-download-qwen38-frozen-snapshot-closeout-v1",
+  "date": "2026-08-24",
+  "classification": "failed-incomplete-remote-upstream-advanced-after-strict-a-quality",
+  "campaign_snapshot": {
+    "vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "vllm_tree": "65c93c14916a9a895c5592b8a0ba2803efc96346",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "build_receipt_sha256": "d56dc84c1137d741042b2e295c6b1f6a40bf28a3c56e0c52761dd725e3a5caa0"
+  },
+  "run_root": "/home/steve/qwen38-current-main-runs/tp1-untreated-b2dd9ce73d-20260824-r1",
+  "sealed_evidence": {
+    "campaign_manifest_sha256": "974d752a9b5930c2430b359c4b93b42c6f535ed0d1168a2bd9699aea8546ad8d",
+    "campaign_manifest_verified": true,
+    "campaign_failure_sha256": "7392fd6deac4af5ee2696888d083cb868f3b5216542595932055a6d770cbfc94",
+    "diagnostic_benchmark_sha256": "49217dc79ce634c96633d0ddf74ef023dd1b81bb520020408ecd5957674a6aee",
+    "diagnostic_canary_sha256": "a10b8b446046a0f2a5f2e2ad55d7b60d71e7e766cfe973aea8ab065609676166",
+    "strict_a_benchmark_sha256": "dd5192a35bdf2150c18c179b1fc5cba7d6cff82f188190d42dcf771ef1db2f3c",
+    "strict_a_quality_sha256": "0111fc4358d350b01a91db4d8f9090a96ad7122629473d559736508e83bdeb74",
+    "strict_a_canary_sha256": "466a0afc33056a47b8883dd86fe5a5d6389f62864fdce8e90398808fd61e8285"
+  },
+  "results": {
+    "diagnostic": {
+      "status": "pass",
+      "median_decode_tok_s": 30.282711567525514,
+      "floor_tok_s": 30.2178,
+      "rows": 25,
+      "exact_canary": "14",
+      "cached_tokens": 0
+    },
+    "strict_a": {
+      "status": "stale-before-promotion",
+      "median_decode_tok_s": 30.280007107732555,
+      "protected_floor_tok_s": 30.31067504052998,
+      "rows": 25,
+      "quality_pass_all": true,
+      "exact_cases_passed": 7,
+      "repeat_runs_passed": 8,
+      "repeat_unique_hashes": 1,
+      "long_context_8k_needle_passed": true,
+      "baseline_comparisons_passed": 24,
+      "all_quality_cached_tokens_zero": true
+    },
+    "strict_b": {
+      "status": "not-run",
+      "reason": "the original continuous-remote freshness policy stopped the packet after strict A"
+    }
+  },
+  "freshness_transition": {
+    "pre_arm_vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "post_arm_remote_vllm_head": "d3e2888c7588fe3a7be93606c7c626dbfd304d2e",
+    "remote_delta": "frontend-only hf_token log redaction",
+    "local_image_or_source_mutated": false
+  },
+  "interpretation": {
+    "promoted_speed_record": false,
+    "historical_floor_lowered": false,
+    "website_use": "measured quality-clean dated snapshot evidence, not a replicated record-grade strict pair",
+    "campaign_policy_forward": "freeze engine identity at campaign launch; later remote-only commits are recorded and non-gating until the scheduled refresh lane"
+  }
+}
