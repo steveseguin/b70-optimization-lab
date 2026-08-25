@@ -39,3 +39,13 @@ RUNTIME_PROFILE=wdc-q4k-scoped NPL=1,64 ATTEMPT=1 \
 The screen advances only with a clean Q4_K WDC census and the frozen speed
 thresholds. Raw success still does not establish output quality or concurrent
 HTTP serving; those require the endpoint sequential-oracle harness.
+
+## Outcome
+
+The scoped door printed exactly as frozen (`force_reorder=0`, `force_q4k=1`),
+but the run failed before a row or WDC census. The q6_K output head naturally
+executes at width 1, so it still qualified for ordinary reorder and attempted
+the same full 1.27-billion-element temporary copy after Q4_K planes occupied
+VRAM. The [failure capture](../data/qwen38-q4km-tp1-wdc-scoped-20260825-r4-attempt1/raw.log)
+is retained. R4 therefore validates the new door's scope but does not produce
+a WDC performance result.

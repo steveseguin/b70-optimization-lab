@@ -983,7 +983,10 @@ before B64. R3 proved the harness still allocates 32,768 tokens and the broad
 forced-reorder arm cannot fit; the flag-only path is closed. A source-level
 Q4_K-only reorder door is now
 [preregistered](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp1-wdc-scoped-r4-preregistration.md)
-as the next bounded candidate.
+but failed before measurement: the width-1 q6_K output head still takes its
+ordinary reorder path after Q4_K planes consume VRAM. A default-off q6_K
+reorder suppression door is the next memory-feasibility delta; its speed cost
+must be measured rather than assumed.
 A promising point must then pass a
 separate endpoint replay with sequential output oracles before package
 promotion.

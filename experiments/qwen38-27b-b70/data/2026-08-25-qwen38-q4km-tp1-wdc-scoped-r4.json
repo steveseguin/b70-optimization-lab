@@ -1,6 +1,6 @@
 {
   "campaign_id": "qwen38-q4km-tp1-wdc-scoped-20260825-r4",
-  "status": "preregistered",
+  "status": "failed-before-measurement-q6-normal-reorder-oom",
   "objective": "Test a source-level Q4_K-only reorder door that enables Q4_K WDC without allocating a temporary reordered copy of the 1.27-billion-element q6_K output tensor.",
   "source": {
     "base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
@@ -35,5 +35,6 @@
   "advance_to_full_ladder_if": "The process completes, banner prints force_reorder=0 and force_q4k=1, a non-mutant q4_K WDC-CENSUS line proves engagement, B64 is at least 1.05x control, and B1 is at least 0.95x control. These are advancement rules, not validity or publication floors.",
   "quality_boundary": "Raw random-token mechanism evidence only. Endpoint sequential-oracle validation remains mandatory before package or website promotion.",
   "build_script": "experiments/qwen38-27b-b70/scripts/build-qwen38-q4km-tp1-wdc-batched-r1.sh",
-  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh"
+  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh",
+  "outcome": "The scoped door resolved correctly (force_reorder=0, force_q4k=1), but the q6_K output head naturally qualified for normal width-1 reorder and exhausted device memory on its full temporary copy after Q4_K planes were allocated. No benchmark row or WDC-CENSUS engagement line was produced."
 }
