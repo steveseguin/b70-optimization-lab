@@ -447,6 +447,7 @@ docker_cmd run --rm --name "$builder_name" --network=none \
     export CARGO_NET_OFFLINE=true
     export PATH=\"\$CARGO_HOME/bin:\$PATH\"
     cd /build/vllm-source
+    SETUPTOOLS_SCM_PRETEND_VERSION='$vllm_package_version' \
     VLLM_RS_BUILD_VERSION='$vllm_package_version' \
       /opt/venv/bin/python tools/build_rust.py --release
     test -x vllm/_rust_tool_parser.abi3.so
