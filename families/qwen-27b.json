@@ -2710,6 +2710,27 @@
           "status": "queued",
           "trigger": "parent-or-calibrated-estimate"
         }
+      },
+      {
+        "id": "quarantine-unpinned-official-fp8",
+        "match": {
+          "revision": "*",
+          "artifact_id": "qwen36-27b-official-block-fp8-unpinned",
+          "tp": "*",
+          "mtp": "*",
+          "active_context_tokens": "*",
+          "graph_mode": "*",
+          "kv": "*"
+        },
+        "state": "quarantined",
+        "label": "historical artifact identity incomplete",
+        "reason": "The retained historical block-FP8 screen did not capture an immutable Hugging Face revision or target-file digest, so none of its runtime/config observations can bind an exact dense cell.",
+        "evidence": "results/fp8-vllm-xpu-qwen36-2026-05-04.md",
+        "parent": "qwen36-block-fp8-identity-recovery",
+        "retry": {
+          "status": "blocked-on-identity",
+          "trigger": "pin-exact-checkpoint-and-rerun"
+        }
       }
     ]
   },

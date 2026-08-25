@@ -1492,6 +1492,22 @@ class FamilyCoverageTest(unittest.TestCase):
             all_cells.extend(cells)
         self.assertEqual(len(all_cells), 1631)
 
+        q36_cells = [
+            cell
+            for contract_id, contract in contracts.items()
+            if contract_id.startswith("qwen36-")
+            for cell in MODULE.expand_coverage_contract(contract)[0]
+        ]
+        self.assertEqual(len(q36_cells), 917)
+        self.assertEqual(
+            sum(cell["state"] == "quarantined" for cell in q36_cells), 63
+        )
+        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 854)
+        self.assertEqual(
+            sum(cell["state"] == "lab-measured" for cell in q36_cells), 0
+        )
+        self.assertEqual(sum(cell["state"] == "estimated" for cell in q36_cells), 0)
+
         for contract_id, contract in contracts.items():
             axes = {axis["key"]: axis["values"] for axis in contract["axes"]}
             if "target-matrix" in contract_id:
