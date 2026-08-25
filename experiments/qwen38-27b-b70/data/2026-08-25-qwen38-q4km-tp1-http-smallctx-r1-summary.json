@@ -1,0 +1,33 @@
+{
+  "schema": "neural.download.qwen38-q4km-http-concurrency-result.v1",
+  "campaign_id": "qwen38-q4km-tp1-http-smallctx-20260825-r1",
+  "attempt": 1,
+  "classification": "measured-output-variant-not-promotable",
+  "profile_support": {
+    "server_became_healthy": true,
+    "parallel_slots": 64,
+    "context_tokens_total": 32768,
+    "context_tokens_per_slot": 512,
+    "peak_gpu_memory_mib_observed": 32281.71484375,
+    "gpu_memory_total_mib": 32656,
+    "completed_requests": 318
+  },
+  "gates": {
+    "completion_tokens_128_all": true,
+    "cached_tokens_all_zero": true,
+    "finish_reason_length_all": true,
+    "oracle_hashes_exact_all": false,
+    "no_output_hash_matched_another_base_task_oracle": true
+  },
+  "rows": [
+    {"concurrency": 1, "repeat_1_aggregate_tok_s": 25.09535088343503, "repeat_2_aggregate_tok_s": 25.08873680900437, "repeat_1_exact": "1/1", "repeat_2_exact": "1/1"},
+    {"concurrency": 2, "repeat_1_aggregate_tok_s": 37.72695173540366, "repeat_2_aggregate_tok_s": 24.91191142268155, "repeat_1_exact": "1/2", "repeat_2_exact": "2/2"},
+    {"concurrency": 4, "repeat_1_aggregate_tok_s": 50.302110407499804, "repeat_2_aggregate_tok_s": 25.000796300929018, "repeat_1_exact": "2/4", "repeat_2_exact": "4/4"},
+    {"concurrency": 8, "repeat_1_aggregate_tok_s": 57.56461344492966, "repeat_2_aggregate_tok_s": 27.056058443398097, "repeat_1_exact": "2/8", "repeat_2_exact": "1/8"},
+    {"concurrency": 16, "repeat_1_aggregate_tok_s": 55.42754624183719, "repeat_2_aggregate_tok_s": 31.793804050367378, "repeat_1_exact": "4/16", "repeat_2_exact": "3/16"},
+    {"concurrency": 32, "repeat_1_aggregate_tok_s": 66.17358388673684, "repeat_2_aggregate_tok_s": 39.31239786487895, "repeat_1_exact": "10/32", "repeat_2_exact": "6/32"},
+    {"concurrency": 64, "repeat_1_aggregate_tok_s": 86.27725249459992, "repeat_2_aggregate_tok_s": 85.97226532377324, "repeat_1_exact": "23/64", "repeat_2_exact": "23/64"}
+  ],
+  "reporting_boundary": "Do not publish these rows as an output-qualified HTTP concurrency curve. They demonstrate that the exact one-B70 64-slot/512-token-per-slot profile loads and completes, while batch-shape output identity and repeat-order stability remain unresolved.",
+  "evidence": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-http-smallctx-20260825-r1-attempt1/result.json"
+}

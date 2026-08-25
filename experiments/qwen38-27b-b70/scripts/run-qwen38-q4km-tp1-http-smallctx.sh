@@ -94,8 +94,14 @@ cmd=("${server}" --model "${model}" --device SYCL0 --gpu-layers 99
 printf '%q ' "${cmd[@]}" > "${run_dir}/server-command.txt"; printf '\n' >> "${run_dir}/server-command.txt"
 
 cleanup() {
+  # Signal only timeout, which forwards one TERM to the server. Stopping the
+  # whole scope first signals both timeout and its child and made this runtime
+  # treat cleanup as a double interrupt after otherwise complete evidence.
+  if [[ -n "${server_pid:-}" ]] && kill -0 "${server_pid}" 2>/dev/null; then
+    kill -TERM "${server_pid}" 2>/dev/null || true
+    wait "${server_pid}" 2>/dev/null || true
+  fi
   systemctl --user stop "${unit}.scope" >/dev/null 2>&1 || true
-  wait "${server_pid:-}" 2>/dev/null || true
   free -b > "${run_dir}/memory-after.txt" 2>/dev/null || true
   xpu-smi dump -d "${gpu_index}" -m 0,1,2,3,4,5 -n 1 > "${run_dir}/xpu-after.txt" 2>&1 || true
 }
