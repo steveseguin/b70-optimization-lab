@@ -139,11 +139,34 @@ class LauncherTests(unittest.TestCase):
         self.assertEqual(LAUNCHER.load_json(path), {"ok": True})
         path.read_text.assert_called_once_with(encoding="utf-8")
 
-    def test_frozen_dependencies_and_protected_speeds_validate(self) -> None:
-        observed = LAUNCHER.verify_dependencies()
+    def test_repo_frozen_dependencies_and_protected_speeds_validate(self) -> None:
+        repo_dependencies = {
+            path: expected
+            for path, expected in LAUNCHER.DEPENDENCIES.items()
+            if path != LAUNCHER.BASELINE
+        }
+        real_command = LAUNCHER.command
+
+        def repo_only_validator(args, **kwargs):
+            if args == [str(LAUNCHER.VALIDATOR), "--validate"]:
+                args = [str(LAUNCHER.VALIDATOR), "--validate-repo-only"]
+            return real_command(args, **kwargs)
+
+        with mock.patch.object(LAUNCHER, "DEPENDENCIES", repo_dependencies), mock.patch.object(
+            LAUNCHER, "command", side_effect=repo_only_validator
+        ):
+            observed = LAUNCHER.verify_dependencies()
         self.assertEqual(
             observed[str(LAUNCHER.PROTECTED_MANIFEST.relative_to(LAUNCHER.REPO))],
             LAUNCHER.PROTECTED_MANIFEST_SHA256,
+        )
+
+    def test_external_baseline_hash_when_mounted(self) -> None:
+        if not LAUNCHER.BASELINE.is_file():
+            self.skipTest("measuring-host quality baseline is not mounted")
+        self.assertEqual(
+            LAUNCHER.sha256_file(LAUNCHER.BASELINE),
+            LAUNCHER.DEPENDENCIES[LAUNCHER.BASELINE],
         )
 
     def test_graph_off_scrubs_every_graph_variable(self) -> None:
