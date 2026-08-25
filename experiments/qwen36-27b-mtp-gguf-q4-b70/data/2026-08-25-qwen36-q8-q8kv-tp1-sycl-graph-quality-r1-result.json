@@ -1,0 +1,174 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-q8kv-quality-r1-result.v1",
+  "campaign_id": "qwen36-q8-q8kv-tp1-sycl-graph-quality-20260825-r1",
+  "state": "passed-quality-prerequisite-tracked-adjudication",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-q8kv-tp1-sycl-graph-quality-20260825-r1",
+  "packet": {
+    "preregistration": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-q8kv-tp1-sycl-graph-quality-r1-prereg.json",
+      "sha256": "f4556db677619175cffae1031c78d2e90ace658e79e63d35d9707975bd54a77a"
+    },
+    "runner": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-q8kv-tp1-sycl-graph-quality-r1.py",
+      "sha256": "1c03886b21a0033a6b0e47468fa15d9983ae43bc6c9ad4d05c6a0dfbd81de8a4"
+    },
+    "preregistration_note": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-08-25-qwen36-q8-q8kv-tp1-sycl-graph-quality-r1-preregistration.md",
+      "sha256": "2ae1c21d66d0ea218af3163cc78ab732628ff0a2f27e86ceed639f354cd5cafb"
+    },
+    "cpu_tests": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/test_qwen36_q8_q8kv_tp1_sycl_graph_quality_r1.py",
+      "sha256": "54a4e885589d153ded02e53cf9404196375ec9779700010de25a7e930db4fc51",
+      "prelaunch_result": "5 tests passed",
+      "postrun_result": "4 tests passed; 1 expected failure because the prelaunch-only test asserts that RUN_ROOT does not yet exist",
+      "interpretation": "The post-run failure is not a run failure and grants no broader claim about the prelaunch-only suite."
+    }
+  },
+  "curve_parent": {
+    "campaign_id": "qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-20260825-r2",
+    "result": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-r2-result.json",
+      "sha256": "b0fba56c1adb26366f664c6c46d24b0645ac41890ca9ae2334a5dffa5d7d83f1"
+    },
+    "covered_active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "coverage_basis": "All seven raw cells share the exact q8_0-KV model/source/build/environment/selectors certified by this fresh isolated service battery; the R2 curve separately supplies phase-aware graph evidence at every depth.",
+    "per_depth_quality_reruns_required": false
+  },
+  "raw_artifacts": {
+    "models.json": "ef25f1d8410770fa429fdab6a34783fda6f8dfc79adfbb95c1e251f97a3fe75e",
+    "quality-gate.json": "9b466a9f6974bb33a79010081829dca3b7c9762c0d0126cf02773da515c9d532",
+    "quality.json": "a06d7226b069d45825a1d98f1c65b2211e4127f716188b9dbdef9e043ef767be",
+    "quality.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "quality.stdout.json": "b41d9ef840e43ca663c3ff5e64fbed1038e6a9c9fa30dc4c6df2b9439431d524",
+    "server.log": "98cb386e7681463f6c51d233ef346273c7b7e90ba493ecbf4ad3268e4856e096",
+    "terminal-receipt.json": "bf280fa36bc45941a799b77fbf1998315833b101f674429de685c184fc778ff9"
+  },
+  "sealed_identity": {
+    "selectors": {
+      "revision": "qwen3.6-27b",
+      "artifact_id": "qwen36-27b-unsloth-q8-0-82d411a",
+      "quantization": "Q8_0",
+      "runtime_family": "llama.cpp SYCL",
+      "tp": 1,
+      "mtp": 0,
+      "graph_mode": "SYCL",
+      "kv": "q8_0"
+    },
+    "service_kv_log_evidence": "32768 cells; K (q8_0) 544.00 MiB; V (q8_0) 544.00 MiB",
+    "source_base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "source_files": {
+      "ggml/src/ggml-sycl/common.hpp": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+      "ggml/src/ggml-sycl/ggml-sycl.cpp": "25152136d7e7ff9e96822127f320f08ccb4fa200af607f33afaa05a318cbbd6a"
+    },
+    "patch_chain_in_order": [
+      "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892",
+      "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3",
+      "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"
+    ],
+    "model": {
+      "path": "/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+      "revision": "82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
+      "size_bytes": 28595763424,
+      "sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce"
+    },
+    "server": {
+      "size_bytes": 736520,
+      "sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b"
+    },
+    "server_impl_sha256": "63dcf154a547aa8611be00625a3c72b190cbdfcdc6a139679ee165c170c93a6b",
+    "graph_backend": {
+      "size_bytes": 329322096,
+      "sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2"
+    },
+    "server_effective_shared_libraries": {
+      "count": 33,
+      "canonical_json_sha256": "5cf0ba76d9784072e245e5fe67772c52b01cc028034687c9689313f6de6ef17c",
+      "identity_receipt": "quality-gate.json"
+    },
+    "graph_environment": {
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+      "GGML_SYCL_ENABLE_GRAPH": "1",
+      "GGML_SYCL_GRAPH_CACHE_SIZE": "8"
+    },
+    "service_context_tokens": 32768
+  },
+  "quality": {
+    "passed": true,
+    "request_count": 13,
+    "exact_cases": {
+      "passed": 4,
+      "required": 4,
+      "names": ["exact_ok", "copy_phrase", "arithmetic", "json_schema"]
+    },
+    "repeat_stability": {
+      "passed": 8,
+      "required": 8,
+      "unique_normalized_output_hashes": 1,
+      "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+    },
+    "long_context_needle": {
+      "passed": true,
+      "requested_context_tokens": 31744,
+      "actual_prompt_tokens_reported_by_suite": 29403,
+      "usage_prompt_tokens": 29415,
+      "claim_label": "approximately 29.4K actual prompt tokens inside a 32K service",
+      "needle": "B70_QWEN36_NEEDLE_20260609",
+      "output_sha256": "8772a18ffb56a2344b8cf7b44099653ef795b97a9bc5d8264007ea0df5d1481f"
+    },
+    "prompt_cache_accounting": {
+      "zero_cached_tokens": 13,
+      "request_count": 13,
+      "all_zero": true
+    }
+  },
+  "server_graph_evidence": {
+    "summary_count": 1,
+    "device": 0,
+    "requested": 169,
+    "cache_hit": 84,
+    "cache_miss": 85,
+    "cache_entries": 8,
+    "cache_limit": 8,
+    "cache_full": 77,
+    "direct_replay": 84,
+    "recorded": 8,
+    "created": 8,
+    "updated": 0,
+    "recreated": 0,
+    "replayed": 92,
+    "compatibility_rejected": 0,
+    "device_unsupported": 0,
+    "classification": "positive-capture-and-replay-with-mixed-partial-prefill"
+  },
+  "terminal": {
+    "receipt_sha256": "bf280fa36bc45941a799b77fbf1998315833b101f674429de685c184fc778ff9",
+    "created_at_utc": "2026-08-25T23:11:00.912365+00:00",
+    "lab_git_head": "81a2a025c03c30bc428caab5d9a8892f02679593",
+    "cleanup_passed": true,
+    "error": null,
+    "post_result_process_check": "no target server or port 19437 listener",
+    "raw_receipt_plumbing_contradiction": {
+      "schema": "neural.download.qwen36-llama-exact-depth-terminal.v1",
+      "state": "passed-quality-prerequisite-awaiting-tracked-adjudication",
+      "quality_claim_authorized": false,
+      "interpretation": "The preregistered inherited writer intentionally preserves the exact-depth schema and false raw authority field. The immutable raw receipt remains checksum-bound; this tracked result adjudicates the battery as satisfying the quality prerequisite but does not grant publication authority."
+    }
+  },
+  "claim_boundaries": {
+    "quality_classification": "quality-battery-certified",
+    "raw_engine_speed_measurements_unchanged": true,
+    "http_speed_claim": false,
+    "depth_0_prefill": "fully graph-certified by the R2 curve evidence",
+    "depth_2k_through_32k_prefill": "mixed partial graph because cache_full is positive in the R2 curve evidence",
+    "decode_all_depths": "verified capture-and-replay by the R2 curve evidence"
+  },
+  "authority": {
+    "quality_covers_all_seven_r2_q8kv_cells": true,
+    "battery_satisfies_quality_prerequisite": true,
+    "battery_itself_authorizes_site_publication": false,
+    "publication_binding_requires_separate_ingestion_packet": true,
+    "record_or_submission_authorized": false,
+    "protected_graph_off_values_replaced": false,
+    "historical_featured_speeds_are_immutable": true
+  }
+}
