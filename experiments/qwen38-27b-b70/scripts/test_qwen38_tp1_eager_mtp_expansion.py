@@ -28,7 +28,16 @@ def load_launcher():
 L = load_launcher()
 
 
+def measuring_host_evidence_available() -> bool:
+    required = [L.BASELINE, *(L.PARENT_EVIDENCE.keys())]
+    return all(path.is_file() for path in required)
+
+
 class ExpansionContractTests(unittest.TestCase):
+    @unittest.skipUnless(
+        measuring_host_evidence_available(),
+        "requires frozen measuring-host baseline and parent run evidence",
+    )
     def test_frozen_manifest_dependencies_and_parent_pass(self) -> None:
         observed = L.verify_dependencies()
         self.assertEqual(observed[str(L.MANIFEST)], L.MANIFEST_SHA256)
@@ -176,8 +185,14 @@ class ExpansionGateTests(unittest.TestCase):
             "\n".join(f"{key}={value}" for key, value in values.items()) + "\n"
         )
         (output / "image-id.txt").write_text(L.IMAGE_ID + "\n")
-        (output / "source-identity.json").write_bytes(
-            (L.CONTROL_ROOT / "source-identity.json").read_bytes()
+        (output / "source-identity.json").write_text(
+            json.dumps(
+                {
+                    "vllm": {"head": L.VLLM_HEAD},
+                    "kernel": {"head": L.KERNEL_HEAD},
+                }
+            )
+            + "\n"
         )
         (output / "server-args.txt").write_text(
             "\n".join(
@@ -251,7 +266,10 @@ class ExpansionGateTests(unittest.TestCase):
             with self.subTest(stage=stage_id), tempfile.TemporaryDirectory() as raw:
                 output = Path(raw)
                 self._write_identity(output, mtp)
-                result = L.verify_exact_run_identity(L.STAGES[stage_id], output)
+                with mock.patch.object(
+                    L, "sha256_file", return_value=L.SOURCE_IDENTITY_SHA256
+                ):
+                    result = L.verify_exact_run_identity(L.STAGES[stage_id], output)
                 self.assertTrue(result["passed"])
                 self.assertEqual(result["mtp_depth"], mtp)
                 self.assertEqual(result["graph_mode"], "off")
@@ -260,7 +278,9 @@ class ExpansionGateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             output = Path(raw)
             self._write_identity(output, 4)
-            with self.assertRaisesRegex(L.CampaignError, "identity mismatch"):
+            with mock.patch.object(
+                L, "sha256_file", return_value=L.SOURCE_IDENTITY_SHA256
+            ), self.assertRaisesRegex(L.CampaignError, "identity mismatch"):
                 L.verify_exact_run_identity(L.STAGES["e1-mtp2-full"], output)
 
     def test_frozen_run_input_manifest_mismatch_fails_closed(self) -> None:
@@ -269,7 +289,9 @@ class ExpansionGateTests(unittest.TestCase):
             self._write_identity(output, 2)
             with (output / "input-files.sha256").open("a") as stream:
                 stream.write("0" * 64 + "  /unexpected\n")
-            with self.assertRaisesRegex(L.CampaignError, "frozen inputs"):
+            with mock.patch.object(
+                L, "sha256_file", return_value=L.SOURCE_IDENTITY_SHA256
+            ), self.assertRaisesRegex(L.CampaignError, "frozen inputs"):
                 L.verify_exact_run_identity(L.STAGES["e1-mtp2-full"], output)
 
     def test_full_environment_is_graph_off_quality_enabled(self) -> None:
@@ -306,18 +328,39 @@ class ExpansionGateTests(unittest.TestCase):
             self.assertFalse(L.acceptance_gate(output)["passed"])
 
     def test_target_oracle_requires_all_25_hashes_and_token_sequences(self) -> None:
-        control = json.loads((L.CONTROL_ROOT / "bench.json").read_text())
         with tempfile.TemporaryDirectory() as raw:
-            output = Path(raw)
+            base = Path(raw)
+            output = base / "candidate"
+            control_root = base / "control"
+            output.mkdir()
+            control_root.mkdir()
+            suite = json.loads(L.SHORT_SUITE.read_text())
+            control = {
+                "rows": [
+                    {
+                        "prompt_id": prompt["id"],
+                        "token_ids": [index, index + 1],
+                        "sha256": f"{'0' * 62}{index:02x}",
+                    }
+                    for index, prompt in enumerate(suite["prompts"])
+                ]
+            }
+            (control_root / "bench.json").write_text(json.dumps(control))
             (output / "bench.json").write_text(json.dumps(control))
-            gate = L.target_oracle_gate(output)
+            with mock.patch.object(L, "CONTROL_ROOT", control_root):
+                gate = L.target_oracle_gate(output)
             self.assertTrue(gate["passed"])
             self.assertEqual(gate["exact_token_id_matches"], 25)
             self.assertEqual(gate["exact_output_hash_matches"], 25)
             control["rows"][0]["token_ids"][0] += 1
             (output / "bench.json").write_text(json.dumps(control))
-            self.assertFalse(L.target_oracle_gate(output)["passed"])
+            with mock.patch.object(L, "CONTROL_ROOT", control_root):
+                self.assertFalse(L.target_oracle_gate(output)["passed"])
 
+    @unittest.skipUnless(
+        measuring_host_evidence_available(),
+        "requires frozen measuring-host full-quality control",
+    )
     def test_frozen_full_quality_control_passes_complete_gate(self) -> None:
         quality = L.COMMON.load_json(L.CONTROL_ROOT / "quality.json")
         passed, details = L.COMMON.full_quality_passes(quality)
