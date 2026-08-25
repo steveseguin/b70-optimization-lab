@@ -1,0 +1,55 @@
+{
+  "schema": "neural.download.qwen36-llama-graph-parent-sentinel-result.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-graph-sentinel-20260825-r2",
+  "classification": "failed-incomplete-redundant-control-log-gate",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-graph-sentinel-20260825-r2",
+  "terminal": {
+    "state": "failed",
+    "stage": "control-graph0-cache0",
+    "started_utc": "2026-08-25T20:17:20.154801+00:00",
+    "finished_utc": "2026-08-25T20:18:20.843424+00:00",
+    "error": "control graph-off marker absent: GGML_SYCL_GRAPH: yes",
+    "cleanup_passed": true,
+    "sha256": "36d1a596adf882c73b6d1411c57c699229601cd34749d041c178fe25ac67cec1"
+  },
+  "control_observation": {
+    "natural_exit": true,
+    "stdout_bytes": 1293,
+    "stdout_sha256": "cc12d7e693e9bf8404ba0e36a33c8f42393f58be62e013dd23c3803e40f50822",
+    "stderr_bytes": 21593,
+    "stderr_sha256": "1d51054b3026dea8c293f82b5edafa49a0be7a0fffcd04e814eba05f132072a5",
+    "identity_sha256": "58ae85fefb1a7bf5b5eb7f7f03d36786cdd43dd3a2da6953ea3eda21b4b0d996",
+    "single_turn_fixed": true,
+    "dynamic_ui_timing_absent": true,
+    "summary": {
+      "device": 0,
+      "requested": 0,
+      "compatibility_rejected": 0,
+      "device_unsupported": 0,
+      "cache_entries": 0,
+      "cache_limit": 0,
+      "cache_hit": 0,
+      "cache_miss": 0,
+      "cache_full": 0,
+      "direct_replay": 0,
+      "recorded": 0,
+      "created": 0,
+      "updated": 0,
+      "recreated": 0,
+      "replayed": 0
+    }
+  },
+  "candidate_observation": null,
+  "cause": "The control emitted the compile-guarded SYCL-GRAPH shutdown summary with every graph counter and cache limit zero, but the retained backend does not emit the redundant human-readable GGML_SYCL_GRAPH/GGML_SYCL_ENABLE_GRAPH configuration lines required by R2.",
+  "authority": {
+    "graph_mechanism": false,
+    "output_parity": false,
+    "seven_cell_expansion": false,
+    "site_publication": false,
+    "record_or_submission": false,
+    "speed_measurement_or_floor": null,
+    "reuse_any_r2_arm": false,
+    "historical_featured_speeds_are_immutable": true
+  },
+  "next": "Fresh R3 reruns all gates and both arms; the control gate uses the compile-guarded exact shutdown summary as its authority and retains the candidate's positive action-marker requirements unchanged."
+}
