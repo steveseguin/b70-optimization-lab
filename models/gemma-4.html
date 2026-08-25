@@ -37,6 +37,10 @@
   .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
   .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
   .family-cta .button:hover { background:var(--spot); border-color:var(--spot); color:#fff; }
+  .family-cta .button.secondary { background:transparent; color:var(--ink); }
+  .family-cta .button.secondary:hover { background:var(--ink); color:var(--paper); }
+  .cta-note { font-size:12px; color:var(--muted); }
+  .packet-note { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--warn); }
   .meta-strip { display:flex; flex-wrap:wrap; gap:8px 26px; margin:0 0 20px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
   .meta-strip div { cursor:help; }
   .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
@@ -169,6 +173,7 @@
   <div class="packet-top"><span>gemma4-26b-a4b-it-gguf-3bb10d5</span><span class="packet-badges"><b>B70-verified history</b></span></div>
   <h3>Gemma 4 26B A4B UD-Q8_K_XL · historical TP1 + MTP7</h3>
   <p class="packet-promise">Evidence packet · superseded-historical-reproduction</p>
+  <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>quality</span><span>recipe</span></div>
 </a></div>

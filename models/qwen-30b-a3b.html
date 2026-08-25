@@ -37,6 +37,10 @@
   .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
   .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
   .family-cta .button:hover { background:var(--spot); border-color:var(--spot); color:#fff; }
+  .family-cta .button.secondary { background:transparent; color:var(--ink); }
+  .family-cta .button.secondary:hover { background:var(--ink); color:var(--paper); }
+  .cta-note { font-size:12px; color:var(--muted); }
+  .packet-note { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--warn); }
   .meta-strip { display:flex; flex-wrap:wrap; gap:8px 26px; margin:0 0 20px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
   .meta-strip div { cursor:help; }
   .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
@@ -151,7 +155,7 @@
   <div class="lineage"><span>Qwen3 30B-A3B generation · shared publisher/architecture family</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-<div class="family-cta"><a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">Get the install guide</a><a class="inline" href="#packets">All deployment packets</a></div>
+<div class="family-cta"><a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">Read the lab report</a><span class="cta-note">No step-by-step install guide is published for this model yet.</span></div>
   <dl class="meta-strip" aria-label="Family signals">
     <div title="UD-Q4_K_XL rapid lanes, reviewed 2026-08-24"><dt>B70 fit</dt><dd>Two siblings one card measured</dd></div>
     <div title="12 unique cache-zero prompts per sibling; no token IDs or cross-sibling quality equivalence claim"><dt>Quality evidence</dt><dd>Rapid snapshot only</dd></div>
@@ -163,6 +167,7 @@
   <h3>Qwen3 30B-A3B Instruct 2507 UD-Q4_K_XL</h3>
   <p class="packet-promise">Reproduce <b>107.48 tok/s</b> on 1× B70 · rapid research snapshot</p>
   <small class="packet-workload">12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, request prompt cache disabled</small>
+  <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
   <div class="grade-rail"><span class="curated-grade" tabindex="0" title="exact General Instruct 2507 UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet" aria-label="Evidence grade D: exact General Instruct 2507 UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet">Evidence D <small>of A–D</small></span></div>
   <div class="coverage-rail"><span>General Instruct</span><span>decode</span><span>TTFT</span><span>TP1</span><span>cache-zero strict suite</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json">
@@ -170,6 +175,7 @@
   <h3>Qwen3-Coder 30B-A3B Instruct UD-Q4_K_XL</h3>
   <p class="packet-promise">Reproduce <b>108.12 tok/s</b> on 1× B70 · rapid research snapshot</p>
   <small class="packet-workload">12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled</small>
+  <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
   <div class="grade-rail"><span class="curated-grade" tabindex="0" title="exact Coder UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet" aria-label="Evidence grade D: exact Coder UD-Q4_K_XL TP1 row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet">Evidence D <small>of A–D</small></span></div>
   <div class="coverage-rail"><span>Coder sibling</span><span>decode</span><span>TTFT</span><span>TP1</span><span>cache-zero strict suite</span></div>
 </a></div>
@@ -184,7 +190,7 @@
 
 
   <div class="section-head"><div><h2>What has been tried</h2><p>Only tested combinations are listed; the full matrix is in the family data.</p></div></div>
-  <div class="combo-block"><p class="combo-scope">UD-Q4_K_XL, exact measured GGUF revisions and rapid runtime; sibling measurements never substitute for one another. Fixed: variant=UD-Q4_K_XL · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, General 2507 <code>TP1·qwen3-30b-a3b-instruct-2507</code></span><b class="c-val">107.48 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">packet</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">evidence</a></span></li><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, Coder <code>TP1·qwen3-coder-30b-a3b-instruct</code></span><b class="c-val">108.12 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4/README.md">packet</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json">evidence</a></span></li></ul><p class="combo-tail">4 other combinations untested. Full matrix in the <a class="inline" href="../families/qwen-30b-a3b.json">family data</a>.</p></div>
+  <div class="combo-block"><p class="combo-scope">UD-Q4_K_XL, exact measured GGUF revisions and rapid runtime; sibling measurements never substitute for one another. Fixed: variant=UD-Q4_K_XL · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, General 2507 <code>TP1·qwen3-30b-a3b-instruct-2507</code></span><b class="c-val">107.48 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json">evidence</a></span></li><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, Coder <code>TP1·qwen3-coder-30b-a3b-instruct</code></span><b class="c-val">108.12 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json">evidence</a></span></li></ul><p class="combo-tail">4 other combinations untested. Full matrix in the <a class="inline" href="../families/qwen-30b-a3b.json">family data</a>.</p></div>
 
   <details class="fine"><summary>Transfer boundary</summary><p>Qwen3MoeForCausalLM, 48 layers, 2048 hidden. partial transfer only; General Instruct 2507 and Coder are sibling model variants, not interchangeable revisions. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 

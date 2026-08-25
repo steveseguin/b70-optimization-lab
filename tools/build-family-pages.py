@@ -1573,7 +1573,7 @@ def coverage_tables(family: dict[str, Any]) -> str:
                         if manifest.startswith("packages/") and manifest.endswith("package.json")
                         else evidence_href(manifest)
                     )
-                    links.append(f'<a href="{esc(href)}">packet</a>')
+                    links.append(f'<a href="{esc(href)}">{"guide" if packet_link_kind(family, packet) == "guide" else "report"}</a>')
                 if evidence:
                     links.append(f'<a href="{esc(evidence_href(evidence))}">evidence</a>')
                 reason = cell.get("reason") or ""
@@ -1633,6 +1633,18 @@ def closure_cards(family: dict[str, Any]) -> str:
             f'<span>{esc(closure["state"])} · {esc(selectors)}</span><b>{esc(closure["reason"])}</b></a>'
         )
     return "".join(cards)
+
+
+def packet_link_kind(family: dict[str, Any], packet: dict[str, Any]) -> str:
+    """'guide' when a real install route exists (repro guide or package
+    manifest), else 'report' (a lab report or raw evidence is NOT a recipe)."""
+    guide = str(packet.get("guide") or "")
+    if guide.startswith("repro/") or guide.startswith("packages/"):
+        return "guide"
+    manifest = str(packet.get("manifest") or "")
+    if manifest.startswith("packages/") and manifest.endswith("package.json"):
+        return "guide"
+    return "report"
 
 
 def package_metric(
@@ -1744,6 +1756,11 @@ def packet_cards(family: dict[str, Any]) -> str:
             if workload and value != "—"
             else ""
         )
+        report_note = (
+            '\n  <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>'
+            if packet_link_kind(family, packet) == "report"
+            else ""
+        )
         cards_n = packet.get("cards")
         promise = (
             f'Reproduce <b>{esc(value)} {esc(unit)}</b>' + (f' on {esc(cards_n)}\u00d7 B70' if cards_n else '')
@@ -1753,7 +1770,7 @@ def packet_cards(family: dict[str, Any]) -> str:
             f'''<a class="packet-card" href="{esc(href)}"{attrs}>
   <div class="packet-top"><span>{esc(packet.get('revision'))}</span><span class="packet-badges"><b>{esc(packet.get('evidence_level'))}</b>{headroom}</span></div>
   <h3>{esc(packet.get('label'))}</h3>
-  <p class="packet-promise">{promise} · {esc(status_text)}</p>{workload_html}
+  <p class="packet-promise">{promise} · {esc(status_text)}</p>{workload_html}{report_note}
   <div class="grade-rail">{grade_rail}</div>
   <div class="coverage-rail">{coverage}</div>
 </a>'''
@@ -1903,11 +1920,23 @@ def family_page(family: dict[str, Any]) -> str:
     strip_html = ('<div class="result-strip" aria-label="Other measured results">' + "".join(html for _, html in strip_cards[:4]) + '</div>') if strip_cards else ""
     # Primary action: the best packet's page or guide.
     cta_html = ""
-    for packet in family.get("packets") or []:
+    cta_candidates = sorted(
+        family.get("packets") or [],
+        key=lambda packet: 0 if packet_link_kind(family, packet) == "guide" else 1,
+    )
+    for packet in cta_candidates:
         _v, _u, cta_href, _rv, _w, _e = package_metric(family, packet)
-        if cta_href:
+        if not cta_href:
+            continue
+        if packet_link_kind(family, packet) == "guide":
+            guide = str(packet.get("guide") or "")
+            if guide.startswith("repro/") or guide.startswith("packages/"):
+                cta_href = evidence_href(guide)
             cta_html = f'<div class="family-cta"><a class="button" href="{esc(cta_href)}">Get the install guide</a><a class="inline" href="#packets">All deployment packets</a></div>'
-            break
+        else:
+            cta_html = (f'<div class="family-cta"><a class="button secondary" href="{esc(cta_href)}">Read the lab report</a>'
+                        f'<span class="cta-note">No step-by-step install guide is published for this model yet.</span></div>')
+        break
     measured_count = sum(
         1
         for item in list(family.get("run_measurements") or [])
@@ -2001,6 +2030,10 @@ def family_page(family: dict[str, Any]) -> str:
   .family-cta {{ display:flex; align-items:center; gap:14px; margin:0 0 18px; }}
   .family-cta .button {{ display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }}
   .family-cta .button:hover {{ background:var(--spot); border-color:var(--spot); color:#fff; }}
+  .family-cta .button.secondary {{ background:transparent; color:var(--ink); }}
+  .family-cta .button.secondary:hover {{ background:var(--ink); color:var(--paper); }}
+  .cta-note {{ font-size:12px; color:var(--muted); }}
+  .packet-note {{ display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--warn); }}
   .meta-strip {{ display:flex; flex-wrap:wrap; gap:8px 26px; margin:0 0 20px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }}
   .meta-strip div {{ cursor:help; }}
   .meta-strip dt {{ font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }}

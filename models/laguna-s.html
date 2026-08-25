@@ -37,6 +37,10 @@
   .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
   .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
   .family-cta .button:hover { background:var(--spot); border-color:var(--spot); color:#fff; }
+  .family-cta .button.secondary { background:transparent; color:var(--ink); }
+  .family-cta .button.secondary:hover { background:var(--ink); color:var(--paper); }
+  .cta-note { font-size:12px; color:var(--muted); }
+  .packet-note { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--warn); }
   .meta-strip { display:flex; flex-wrap:wrap; gap:8px 26px; margin:0 0 20px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
   .meta-strip div { cursor:help; }
   .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
@@ -169,12 +173,14 @@
   <div class="packet-top"><span>laguna-s-2.1-int4-4bbfc28</span><span class="packet-badges"><b>B70-verified sealed history</b></span></div>
   <h3>Laguna S 2.1 INT4 · historical TP4+EP4 + DFlash11</h3>
   <p class="packet-promise">Evidence packet · superseded-approved-record</p>
+  <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>TTFT</span><span>DFlash acceptance</span><span>quality</span><span>portable evidence audit</span><span>recipe</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/laguna-s-2.1-xpu-b70/long-context-baseline-gpu080-swap24g-20260802.json">
   <div class="packet-top"><span>laguna-s-2.1-int4-4bbfc28</span><span class="packet-badges"><b>B70-screened retrieval evidence; not promotion-grade</b></span></div>
   <h3>Laguna S 2.1 INT4 · TP4+EP4 long-context screen</h3>
   <p class="packet-promise">Evidence packet · bounded-research-screen-not-q1-exact</p>
+  <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
   <div class="grade-rail"><span class="curated-grade" tabindex="0" title="composed TP4+EP4 long-context retrieval screen from 1,024 through 32,640 prompt tokens · exact prompt lengths, cache-zero, 128-token completions, retrieval, and post-32K sentinels passed, but the profile was composed from three runs and q1 output equality failed at every 4K-and-longer point" aria-label="Evidence grade C: composed TP4+EP4 long-context retrieval screen from 1,024 through 32,640 prompt tokens · exact prompt lengths, cache-zero, 128-token completions, retrieval, and post-32K sentinels passed, but the profile was composed from three runs and q1 output equality failed at every 4K-and-longer point">Evidence C <small>of A–D</small></span></div>
   <div class="coverage-rail"><span>1K through 32,640 prompt tokens</span><span>decode</span><span>prefill</span><span>TTFT</span><span>DFlash acceptance</span><span>retrieval</span><span>q1 exactness audit</span></div>
 </a></div>

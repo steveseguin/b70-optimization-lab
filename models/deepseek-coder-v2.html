@@ -37,6 +37,10 @@
   .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
   .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
   .family-cta .button:hover { background:var(--spot); border-color:var(--spot); color:#fff; }
+  .family-cta .button.secondary { background:transparent; color:var(--ink); }
+  .family-cta .button.secondary:hover { background:var(--ink); color:var(--paper); }
+  .cta-note { font-size:12px; color:var(--muted); }
+  .packet-note { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--warn); }
   .meta-strip { display:flex; flex-wrap:wrap; gap:8px 26px; margin:0 0 20px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
   .meta-strip div { cursor:help; }
   .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
@@ -151,7 +155,7 @@
   <div class="lineage"><span>DeepSeek-Coder-V2 Lite Instruct · measured GGUF weights</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-<div class="family-cta"><a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json">Get the install guide</a><a class="inline" href="#packets">All deployment packets</a></div>
+<div class="family-cta"><a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json">Read the lab report</a><span class="cta-note">No step-by-step install guide is published for this model yet.</span></div>
   <dl class="meta-strip" aria-label="Family signals">
     <div title="Q4_K_M short-context rapid lane, reviewed 2026-08-24"><dt>B70 fit</dt><dd>Runs on 1 card (measured)</dd></div>
     <div title="12 unique cache-zero deterministic prompts; no token IDs or broad model-quality evaluation"><dt>Quality evidence</dt><dd>Rapid snapshot only</dd></div>
@@ -163,6 +167,7 @@
   <h3>DeepSeek-Coder-V2 Lite Q4_K_M · TP1</h3>
   <p class="packet-promise">Reproduce <b>57.1 tok/s</b> on 1× B70 · rapid research snapshot</p>
   <small class="packet-workload">12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled</small>
+  <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
   <div class="grade-rail"><span class="curated-grade" tabindex="0" title="exact Q4_K_M TP1 rapid row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet" aria-label="Evidence grade D: exact Q4_K_M TP1 rapid row · valid measured snapshot with a narrow workload and no clean-host or broad quality packet">Evidence D <small>of A–D</small></span></div>
   <div class="coverage-rail"><span>decode</span><span>TTFT</span><span>TP1</span><span>cache-zero strict suite</span></div>
 </a></div>
@@ -177,7 +182,7 @@
 
 
   <div class="section-head"><div><h2>What has been tried</h2><p>Only tested combinations are listed; the full matrix is in the family data.</p></div></div>
-  <div class="combo-block"><p class="combo-scope">Exact measured revision and rapid runtime; TP2/4 are unmeasured gaps. Fixed: revision=deepseek-coder-v2-lite-instruct-8f248fa · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, Q4_K_M <code>TP1·Q4_K_M</code></span><b class="c-val">57.1 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md">packet</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json">evidence</a></span></li></ul><p class="combo-tail">2 other combinations untested. Full matrix in the <a class="inline" href="../families/deepseek-coder-v2.json">family data</a>.</p></div>
+  <div class="combo-block"><p class="combo-scope">Exact measured revision and rapid runtime; TP2/4 are unmeasured gaps. Fixed: revision=deepseek-coder-v2-lite-instruct-8f248fa · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, Q4_K_M <code>TP1·Q4_K_M</code></span><b class="c-val">57.1 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json">evidence</a></span></li></ul><p class="combo-tail">2 other combinations untested. Full matrix in the <a class="inline" href="../families/deepseek-coder-v2.json">family data</a>.</p></div>
 
   <details class="fine"><summary>Transfer boundary</summary><p>DeepSeek-Coder-V2 Lite sparse MoE. one measured Lite Instruct GGUF revision. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 

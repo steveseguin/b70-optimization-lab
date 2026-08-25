@@ -37,6 +37,10 @@
   .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
   .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
   .family-cta .button:hover { background:var(--spot); border-color:var(--spot); color:#fff; }
+  .family-cta .button.secondary { background:transparent; color:var(--ink); }
+  .family-cta .button.secondary:hover { background:var(--ink); color:var(--paper); }
+  .cta-note { font-size:12px; color:var(--muted); }
+  .packet-note { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--warn); }
   .meta-strip { display:flex; flex-wrap:wrap; gap:8px 26px; margin:0 0 20px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
   .meta-strip div { cursor:help; }
   .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
@@ -151,7 +155,7 @@
   <div class="lineage"><span>DeepSeek V4 Flash 180B · experimental uniform-K160 · measured target checkpoint</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-<div class="family-cta"><a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">Get the install guide</a><a class="inline" href="#packets">All deployment packets</a></div>
+<div class="family-cta"><a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">Read the lab report</a><span class="cta-note">No step-by-step install guide is published for this model yet.</span></div>
   <dl class="meta-strip" aria-label="Family signals">
     <div title="TP4 plus expert parallelism on four 32 GiB B70 cards, reviewed 2026-08-24"><dt>B70 fit</dt><dd>Runs on 4 cards (measured)</dd></div>
     <div title="36/36 cache-zero realistic requests and 24/24 ordered exact canaries; checkpoint-construction provenance remains incomplete"><dt>Quality evidence</dt><dd>Target verified exact gates</dd></div>
@@ -163,6 +167,7 @@
   <h3>DeepSeek V4 Flash K160 · TP4+EP DSpark7</h3>
   <p class="packet-promise">Reproduce <b>78.29 tok/s</b> on 4× B70 · closed research frontier</p>
   <small class="packet-workload">12 unique cold prompts per suite, 128 output tokens, median generated tokens 1-100 after TTFT; three strict suites</small>
+  <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
   <div class="grade-rail"><span class="curated-grade" tabindex="0" title="exact experimental uniform-K160 TP4+EP DSpark7 lane · strong exact lab and replay material, but the public K160 checkpoint lacks calibration/ranking provenance and is not an official REAP construction" aria-label="Evidence grade C: exact experimental uniform-K160 TP4+EP DSpark7 lane · strong exact lab and replay material, but the public K160 checkpoint lacks calibration/ranking provenance and is not an official REAP construction">Evidence C <small>of A–D</small></span></div>
   <div class="coverage-rail"><span>TP4+EP</span><span>DSpark7</span><span>decode</span><span>TTFT</span><span>exact canaries</span><span>reproduction</span></div>
 </a></div>
@@ -177,7 +182,7 @@
 
 
   <div class="section-head"><div><h2>What has been tried</h2><p>Only tested combinations are listed; the full matrix is in the family data.</p></div></div>
-  <div class="combo-block"><p class="combo-scope">Exact experimental K160 target and record runtime; missing cells have no inherited result. Fixed: revision=deepseek-v4-flash-180b-k160-7c360e1 · variant=experimental uniform-K160 FP8/MXFP4 target · runtime=vLLM XPU record stack 264c7f2/3131567/48fda4f.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">4 cards, DSpark7 <code>TP4·DSpark7</code></span><b class="c-val">80.82 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/deepseek-v4-flash-k160-b70/README.md">packet</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">evidence</a></span></li></ul><p class="combo-tail">2 other combinations untested; The configuration frontier is paused; reopen only for a substantial EAGLE capture/training effort or a genuinely new mechanism, not another generic flag sweep. Full matrix in the <a class="inline" href="../families/deepseek-v4.json">family data</a>.</p></div>
+  <div class="combo-block"><p class="combo-scope">Exact experimental K160 target and record runtime; missing cells have no inherited result. Fixed: revision=deepseek-v4-flash-180b-k160-7c360e1 · variant=experimental uniform-K160 FP8/MXFP4 target · runtime=vLLM XPU record stack 264c7f2/3131567/48fda4f.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">4 cards, DSpark7 <code>TP4·DSpark7</code></span><b class="c-val">80.82 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/deepseek-v4-flash-k160-b70/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json">evidence</a></span></li></ul><p class="combo-tail">2 other combinations untested; The configuration frontier is paused; reopen only for a substantial EAGLE capture/training effort or a genuinely new mechanism, not another generic flag sweep. Full matrix in the <a class="inline" href="../families/deepseek-v4.json">family data</a>.</p></div>
 
   <details class="fine"><summary>Transfer boundary</summary><p>DeepSeek V4 Flash 180B sparse MoE. exact experimental checkpoint and record stack only. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
