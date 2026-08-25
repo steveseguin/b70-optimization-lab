@@ -102,6 +102,27 @@
     .result-strip { grid-template-columns:1fr; }
   }
   .signal[title] { cursor: help; }
+  .placeholder { margin:10px 0 22px; padding:12px 16px; border:2px solid var(--line); background:var(--surface); color:var(--muted); }
+  .placeholder p { margin:0; font-size:13.5px; }
+  .badge.todo { background:var(--surface); color:var(--muted); border-color:var(--muted); }
+  .hr-card { border:2px solid var(--ink); background:var(--paper); padding:13px 14px 11px; margin:0 0 12px; }
+  .hr-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }
+  .hr-card h3 { margin:0; font:900 15px var(--display); text-transform:uppercase; }
+  .hr-deploy { margin:3px 0 0; color:var(--muted); font:10.5px var(--mono); }
+  .hr-grade { flex:0 0 auto; text-align:right; }
+  .hr-grade-letter { display:block; font:900 26px/1 var(--display); color:var(--spot-dark); }
+  .hr-grade-note { display:block; margin-top:3px; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
+  .hr-bar-row { display:grid; grid-template-columns:108px 1fr 78px; align-items:center; gap:8px; margin:5px 0; font:10.5px var(--mono); }
+  .hr-bar-label { color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .hr-bar-track { display:block; height:9px; background:var(--surface); border:1px solid var(--ink); }
+  .hr-bar { display:block; height:100%; background:var(--ink); }
+  .hr-bar.is-measured { background:var(--spot); }
+  .hr-bar.is-physical { background:var(--muted); opacity:.55; }
+  .hr-bar-value { text-align:right; font-weight:700; white-space:nowrap; }
+  .hr-bar-value small { font-weight:400; color:var(--muted); }
+  .hr-why { margin:9px 0 0; color:var(--muted); font-size:12px; }
+  .hr-links { margin:7px 0 0; font:10.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
+  .hr-links a { border-bottom:1px solid currentColor; }
   .visually-hidden { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
   details.fine { margin:0 0 22px; color:var(--muted); font-size:12.5px; }
   details.fine summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
@@ -226,6 +247,18 @@
   <figcaption><div data-family-summary="aggregate_tok_s"><b>measured combined rate</b> 1: 87.64 · 2: 77.19 · 4: 149.48 · 8: 276.77 · 16: 488.65 · 32: 823.15 · 64: 1,039</div><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/qwen36-35b-autoround-b70-concurrency-20260824.json">evidence 1</a></span></figcaption>
 </figure></div>
   <details class="fine"><summary>Transfer boundary</summary><p>Qwen3.6 35B A3B sparse MoE. one Qwen3.6 base weight revision; Quark and AutoRound are quantized deployment artifacts whose evidence stays separate. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
+
+  <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge lab">Lab-measured</span></h2><p>64 simultaneous users share <b>1,039 combined tok/s</b> on 1 card (AutoRound W4A16 INT4); the full curve is under Measured results and in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>.</p></div></div>
+
+  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge spec">Projected — not measured</span></h2><p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects a tuned-run target and the physical ceiling for the headline setup (qwen3.6-35b-a3b-base · qwen36-35b-quark-w8a8-cced565 · Quark W8A8 INT8 · vLLM XPU 2026-06 strict program · TP4 · MTP0 · graph on · auto KV · max context 32,768). The grade is optimization headroom against the tuned-run target, not model quality.</p></div></div>
+  <div id="package-page" data-ml-model="qwen3.6_35b_a3b" data-ml-quant="Quark W8A8 INT8" data-ml-quant-label="Quark W8A8 INT8" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU 2026-06 strict program" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="512" data-ml-output="512" data-ml-measured="93.55054235558917">
+    <div id="package-projection" class="projection" hidden>
+      <p class="projection-status" data-projection-status>Loading projections from mlbottleneck.com…</p>
+      <div data-package-card></div>
+      <div data-package-charts></div>
+    </div>
+    <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript>
+  </div>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="../families/qwen-35b.json"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>

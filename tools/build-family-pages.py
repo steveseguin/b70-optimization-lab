@@ -2620,6 +2620,92 @@ def closure_cards(family: dict[str, Any]) -> str:
     return "".join(cards)
 
 
+# ML Bottleneck preset per family. A family whose hero run is a model the
+# engine does not know gets no projection block (an honest gap), never a
+# guess from a sibling.
+FAMILY_ML_MODEL = {
+    "deepseek-coder-v2": None,            # DeepSeek Coder V2 Lite: no engine preset yet
+    "deepseek-v4": "deepseek_v4_flash_reap_180b",
+    "gemma-4": "gemma4_26b_a4b",
+    "glm-4-7": "glm4.7_flash",
+    "laguna-s": "laguna_s_2.1",
+    "lfm-2-5": "lfm2.5_2.6b",
+    "minimax-m2-7": "minimax_m2.7",
+    "mistral-small-3-2": "mistral_small_24b",
+    "muse-glimmer": "muse_glimmer_30b",
+    "nemotron-3-5": "nemotron3.5_lightning_30b_a3b",
+    "nemotron-cascade-2": None,           # Nemotron Cascade 2: no engine preset yet
+    "ornith-1-5": "ornith_1.5_35b_a3b",
+    "phi-4": "phi4_mini_3.8b",
+    "qwen-14b": None,                     # Qwen3 14B: no engine preset yet
+    "qwen-27b": "qwen3.8_27b",
+    "qwen-30b-a3b": "qwen3_30b_a3b",
+    "qwen-35b": "qwen3.6_35b_a3b",
+}
+
+
+def ml_runtime_key(runtime_text: str) -> str:
+    text = str(runtime_text or "").lower()
+    if "vllm" in text:
+        return "vllm"
+    if "sglang" in text:
+        return "sglang"
+    return "llama_cpp"
+
+
+def ml_quant_label(variant_text: str) -> str:
+    """Reduce a measurement's variant text to a quantization label the
+    engine parses (first recognisable format token; family default q4)."""
+    text = str(variant_text or "")
+    for token in ("UD-Q8_K_XL", "UD-Q4_K_XL", "UD-Q4_K_M", "UD-IQ4_XS", "Q4_K_M", "Q5_K_M", "Q6_K", "Q8_0", "Q4_0",
+                  "AutoRound INT4", "AutoRound W4A16 INT4", "GPTQ INT4", "AWQ", "Quark W8A8 INT8", "W8A8 INT8", "FP8", "MXFP4", "NVFP4", "INT4", "INT8"):
+        if token.lower() in text.lower():
+            return {"AutoRound W4A16 INT4": "AutoRound INT4", "W8A8 INT8": "Quark W8A8 INT8", "INT4": "AutoRound INT4"}.get(token, token)
+    return "q4"
+
+
+def ml_spec_label(config: dict[str, Any], variant_text: str) -> str:
+    mtp = config.get("mtp")
+    if isinstance(mtp, int) and mtp > 0:
+        return f"mtp:{mtp}"
+    text = str(variant_text or "").lower()
+    if "dflash" in text:
+        return "dflash:11"
+    if "dspark" in text:
+        return "dspark:7"
+    return "none"
+
+
+def family_projection_attrs(family: dict[str, Any], hero: dict[str, Any] | None) -> str:
+    """data-ml-* attributes for the shared bridge renderer, built from the
+    family's hero measurement: its quant, runtime, card count, and the
+    prompt/output shape it actually ran. Empty when unmapped."""
+    model_key = FAMILY_ML_MODEL.get(str(family.get("id")))
+    if not model_key or not hero:
+        return ""
+    config = hero.get("config") or {}
+    cards = config.get("tp") or config.get("cards") or 1
+    workload = str(hero.get("workload") or "")
+    prompt_tokens = 128
+    output_tokens = 128
+    match = re.search(r"p(\d+)\s*/\s*[on](\d+)", workload)
+    if match:
+        prompt_tokens, output_tokens = int(match.group(1)), int(match.group(2))
+    else:
+        out_match = re.search(r"(\d+)[- ]token (?:output|responses|answers)", workload)
+        if out_match:
+            output_tokens = int(out_match.group(1))
+    return (
+        f' data-ml-model="{esc(model_key)}" data-ml-quant="{esc(ml_quant_label(hero.get("variant")))}"'
+        f' data-ml-quant-label="{esc(hero.get("variant") or "")}" data-ml-runtime="{esc(ml_runtime_key(hero.get("runtime")))}"'
+        f' data-ml-runtime-label="{esc(hero.get("runtime") or "")}" data-ml-cards="{esc(cards)}"'
+        f' data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70"'
+        f' data-ml-spec="{esc(ml_spec_label(config, hero.get("variant")))}"'
+        + (' data-ml-strategy="tensor"' if int(cards or 1) > 1 and ml_runtime_key(hero.get("runtime")) == "llama_cpp" else "")
+        + f' data-ml-prompt="{prompt_tokens}" data-ml-output="{output_tokens}"'
+    )
+
+
 def packet_link_kind(family: dict[str, Any], packet: dict[str, Any]) -> str:
     """'guide' when a real install route exists (repro guide or package
     manifest), else 'report' (a lab report or raw evidence is NOT a recipe)."""
@@ -3075,6 +3161,51 @@ def family_page(family: dict[str, Any]) -> str:
             + (f'<span class="gloss">&asymp; {words} words a second</span>' if words else "")
             + f'<small>{esc(hero_detail)}</small></a>\n'
         )
+    # The same projection block the package pages carry, driven by the hero
+    # run's own identity; the bridge fills it client-side.
+    hero_measurement = None
+    if hero_result:
+        hero_measurement = next((m for m in records(family) if m.get("id") == hero_result.get("record_label")), None)
+    if hero_result and hero_measurement is None:
+        # Packet-derived headline: use the packet's featured measurement, else
+        # the family's best lab-measured decode run, so the projection is
+        # built from a real recorded identity.
+        candidates = [m for m in records(family) if m.get("state") == "lab-measured" and (m.get("metrics") or {}).get("decode_tok_s")]
+        if candidates:
+            hero_measurement = max(candidates, key=lambda m: max((m.get("metrics") or {}).get("decode_tok_s") or [0]))
+    projection_attrs = family_projection_attrs(family, hero_measurement)
+    if projection_attrs and hero_result:
+        projection_html = f'''
+  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge spec">Projected \u2014 not measured</span></h2><p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects a tuned-run target and the physical ceiling for the headline setup ({esc(hero_result.get("identity") or "")}). The grade is optimization headroom against the tuned-run target, not model quality.</p></div></div>
+  <div id="package-page"{projection_attrs} data-ml-measured="{esc(hero_result["value"])}">
+    <div id="package-projection" class="projection" hidden>
+      <p class="projection-status" data-projection-status>Loading projections from mlbottleneck.com\u2026</p>
+      <div data-package-card></div>
+      <div data-package-charts></div>
+    </div>
+    <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript>
+  </div>
+'''
+    else:
+        reason = ("this model is not in the ML Bottleneck catalog yet" if not FAMILY_ML_MODEL.get(str(family.get("id")))
+                  else "the family has no curated headline measurement yet")
+        projection_html = f'''
+  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2></div></div>
+  <div class="placeholder"><p>No projection is shown: {esc(reason)}. The measured numbers above stand on their own.</p></div>
+'''
+    # Many people at once: measured aggregate sweeps where the family has one.
+    aggregate_series = [m for m in records(family) if any(p.get("aggregate_tok_s") is not None for p in (m.get("points") or []))]
+    if aggregate_series:
+        best_series = max(aggregate_series, key=lambda m: max(p.get("aggregate_tok_s") or 0 for p in m.get("points") or []))
+        top = max((p for p in best_series.get("points") or []), key=lambda p: p.get("aggregate_tok_s") or 0)
+        multiuser_html = f'''
+  <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge lab">Lab-measured</span></h2><p>{esc(fmt_x(top.get("x")))} simultaneous users share <b>{top["aggregate_tok_s"]:,.0f} combined tok/s</b> on {esc((best_series.get("config") or {}).get("tp") or 1)} card{"s" if ((best_series.get("config") or {}).get("tp") or 1) != 1 else ""} ({esc(best_series.get("variant") or "")}); the full curve is under Measured results and in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>.</p></div></div>
+'''
+    else:
+        multiuser_html = '''
+  <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2></div></div>
+  <div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this family. The lab\u2019s one measured sweep so far is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>; the projection block below includes a projected users curve where a projection exists.</p></div>
+'''
     strip_cards = []
     for result in selected_results:
         if result is hero_result:
@@ -3272,6 +3403,27 @@ def family_page(family: dict[str, Any]) -> str:
     .result-strip {{ grid-template-columns:1fr; }}
   }}
   .signal[title] {{ cursor: help; }}
+  .placeholder {{ margin:10px 0 22px; padding:12px 16px; border:2px solid var(--line); background:var(--surface); color:var(--muted); }}
+  .placeholder p {{ margin:0; font-size:13.5px; }}
+  .badge.todo {{ background:var(--surface); color:var(--muted); border-color:var(--muted); }}
+  .hr-card {{ border:2px solid var(--ink); background:var(--paper); padding:13px 14px 11px; margin:0 0 12px; }}
+  .hr-head {{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }}
+  .hr-card h3 {{ margin:0; font:900 15px var(--display); text-transform:uppercase; }}
+  .hr-deploy {{ margin:3px 0 0; color:var(--muted); font:10.5px var(--mono); }}
+  .hr-grade {{ flex:0 0 auto; text-align:right; }}
+  .hr-grade-letter {{ display:block; font:900 26px/1 var(--display); color:var(--spot-dark); }}
+  .hr-grade-note {{ display:block; margin-top:3px; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }}
+  .hr-bar-row {{ display:grid; grid-template-columns:108px 1fr 78px; align-items:center; gap:8px; margin:5px 0; font:10.5px var(--mono); }}
+  .hr-bar-label {{ color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }}
+  .hr-bar-track {{ display:block; height:9px; background:var(--surface); border:1px solid var(--ink); }}
+  .hr-bar {{ display:block; height:100%; background:var(--ink); }}
+  .hr-bar.is-measured {{ background:var(--spot); }}
+  .hr-bar.is-physical {{ background:var(--muted); opacity:.55; }}
+  .hr-bar-value {{ text-align:right; font-weight:700; white-space:nowrap; }}
+  .hr-bar-value small {{ font-weight:400; color:var(--muted); }}
+  .hr-why {{ margin:9px 0 0; color:var(--muted); font-size:12px; }}
+  .hr-links {{ margin:7px 0 0; font:10.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }}
+  .hr-links a {{ border-bottom:1px solid currentColor; }}
   .visually-hidden {{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }}
   details.fine {{ margin:0 0 22px; color:var(--muted); font-size:12.5px; }}
   details.fine summary {{ cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; }}
@@ -3360,7 +3512,7 @@ def family_page(family: dict[str, Any]) -> str:
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
   <div class="views-grid">{views}</div>{deferred_views_html}
   <details class="fine"><summary>Transfer boundary</summary><p>{esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
-
+{multiuser_html}{projection_html}
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="{esc(source)}"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>
 <footer><div class="wrap"><span>Unofficial lab, not affiliated with Intel. Measurements link to proof; estimates are labeled.</span><span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span></div></footer>
