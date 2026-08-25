@@ -1512,9 +1512,9 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             sum(cell["state"] == "quarantined" for cell in q36_cells), 63
         )
-        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 987)
+        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 980)
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q36_cells), 7
+            sum(cell["state"] == "lab-measured" for cell in q36_cells), 14
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q36_cells), 0)
 
@@ -1552,11 +1552,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("118/1,771 classified", overview_html)
+        self.assertIn("125/1,771 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "55", "measured"),
+            ("lab-measured", "62", "measured"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,653", "missing"),
+            ("missing", "1,646", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -1581,13 +1581,18 @@ class FamilyCoverageTest(unittest.TestCase):
             if view["id"] == "context-q36-quant-kv"
         )
         self.assertEqual(
-            q36_context_view["series"][0]["measurement_ids"],
-            ["q36-q4km-tp1-kv-f16-context"],
+            [series["measurement_ids"] for series in q36_context_view["series"]],
+            [
+                ["q36-q4km-tp1-kv-f16-context"],
+                ["q36-q4-0-tp1-kv-q8-context"],
+            ],
         )
         self.assertIn('data-family-view="context-q36-quant-kv"', rendered)
         self.assertIn("Q4_K_M · f16 KV", rendered)
         self.assertIn("value=29.30276 tok/s", rendered)
         self.assertIn("value=655.10387 tok/s", rendered)
+        self.assertIn("value=25.872387 tok/s", rendered)
+        self.assertIn("value=144.957372 tok/s", rendered)
 
         unknown_speculator = deepcopy(family)
         next(
