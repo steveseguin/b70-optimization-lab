@@ -72,3 +72,7 @@ or malformed/missing matrix rows.
   retains the cause and boundary. A too-broad environment capture from that
   attempt was removed; subsequent attempts record only a non-secret runtime
   whitelist.
+- Attempt 2 completed all seven frozen rows. The result and interpretation are
+  in the [result note](2026-08-25-qwen38-q4km-tp1-batched-ladder-result.md);
+  the highest directly measured raw-engine aggregate was `95.411842 tok/s` at
+  64 parallel sequences.

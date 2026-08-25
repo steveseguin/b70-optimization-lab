@@ -1,0 +1,32 @@
+{
+  "campaign_id": "qwen38-q4km-tp1-wdc-screen-20260825-r1",
+  "status": "preregistered",
+  "objective": "Test whether the source's shape-guarded Q4_K oneDNN weight-decompression GEMM transfers to Qwen3.8 27B batched decode without sacrificing the one-sequence raw rate.",
+  "control_evidence": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-batched-ladder-20260825-r1-attempt2/summary.json",
+  "source": {
+    "base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "applied_diff_sha256": "f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e"
+  },
+  "candidate_changes": {
+    "build": [
+      "GGML_SYCL_DNN=ON",
+      "GGML_SYCL_Q4K_NIBBLE_PLANE=1"
+    ],
+    "runtime": [
+      "GGML_SYCL_WDC_Q4K=1",
+      "GGML_SYCL_REORDER_IN_GEMM=1",
+      "GGML_SYCL_FORCE_REORDER=1"
+    ],
+    "all_other_matrix_and_runtime_values": "same as the completed DNN-off ladder"
+  },
+  "stage_1": {
+    "parallel_sequences": [1, 64],
+    "advance_to_full_ladder_if": "B64 aggregate speed_tg is at least 1.05x control and B1 speed_tg is at least 0.95x control, with an engaged non-mutant q4_K WDC census and clean completion. These are advancement rules, not validity or publication floors."
+  },
+  "stage_2_if_advanced": {
+    "parallel_sequences": [1, 2, 4, 8, 16, 32, 64]
+  },
+  "quality_boundary": "Raw random-token mechanism evidence only. Endpoint sequential-oracle comparison is mandatory before any user-facing promotion.",
+  "build_script": "experiments/qwen38-27b-b70/scripts/build-qwen38-q4km-tp1-wdc-batched-r1.sh",
+  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh"
+}

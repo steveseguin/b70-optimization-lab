@@ -9,8 +9,10 @@ build_dir="${BUILD_DIR:-}"
 out_parent="${OUT_DIR:-${repo_root}/experiments/qwen38-27b-b70/data}"
 gpu_index="${GPU_INDEX:-0}"
 attempt="${ATTEMPT:-1}"
+runtime_profile="${RUNTIME_PROFILE:-control}"
+npl="${NPL:-1,2,4,8,16,32,64}"
 
-campaign=qwen38-q4km-tp1-batched-ladder-20260825-r1
+campaign="${CAMPAIGN_ID:-qwen38-q4km-tp1-batched-ladder-20260825-r1}"
 expected_model_sha=31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34
 expected_source_rev=4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126
 expected_diff_sha=f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e
@@ -20,6 +22,10 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
   fail 'set MODEL_DIR, SOURCE_DIR, and BUILD_DIR explicitly'
 [[ "${gpu_index}" =~ ^[0-9]+$ ]] || fail 'GPU_INDEX must be numeric'
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail 'ATTEMPT must be positive'
+[[ "${campaign}" =~ ^[a-z0-9][a-z0-9-]*$ ]] || fail 'invalid CAMPAIGN_ID'
+[[ "${npl}" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]] || fail 'invalid NPL list'
+[[ "${runtime_profile}" == control || "${runtime_profile}" == wdc-q4k ]] || \
+  fail 'RUNTIME_PROFILE must be control or wdc-q4k'
 
 model="${model_dir}/Qwen3.8-27B-Q4_K_M.gguf"
 bench="${build_dir}/bin/llama-batched-bench"
@@ -79,6 +85,16 @@ export GGML_SYCL_FUSED_CONV_SILU_L2=1
 export GGML_SYCL_FUSE_EXT=31
 export GGML_SYCL_QDEDUP_STATS=1
 export GGML_SYCL_MMQ_Q4K_REORDER=1
+if [[ "${runtime_profile}" == wdc-q4k ]]; then
+  grep -qx 'GGML_SYCL_DNN:BOOL=ON' "${build_dir}/CMakeCache.txt" || \
+    fail 'wdc-q4k requires a GGML_SYCL_DNN=ON build'
+  grep -Eq '^CMAKE_CXX_FLAGS:STRING=.*GGML_SYCL_Q4K_NIBBLE_PLANE=1' \
+    "${build_dir}/CMakeCache.txt" || \
+    fail 'wdc-q4k requires GGML_SYCL_Q4K_NIBBLE_PLANE=1 at compile time'
+  export GGML_SYCL_WDC_Q4K=1
+  export GGML_SYCL_REORDER_IN_GEMM=1
+  export GGML_SYCL_FORCE_REORDER=1
+fi
 unset GGML_SYCL_FUSED_MMVQ_SWIGLU_Q4K_POISON GGML_SYCL_FUSED_GDN_STATE_IO_POISON
 unset GGML_SYCL_FUSED_CONV_STATE_IO_POISON GGML_SYCL_GDN_RMS_TAIL_POISON
 unset GGML_SYCL_FUSED_QK_NORM_ROPE_POISON GGML_SYCL_FUSED_CONV_SILU_OUTPUT
@@ -97,7 +113,7 @@ xpu-smi dump -d "${gpu_index}" -m 0,1,2,3,4,5 -n 1 > "${run_dir}/xpu-before.txt"
 cmd=("${bench}" --model "${model}" --device SYCL0 --gpu-layers 99
   --split-mode none --fit off --flash-attn on --cache-type-k f16
   --cache-type-v f16 --ctx-size 32768 --batch-size 2048 --ubatch-size 256
-  --threads 8 --poll 50 -npp 128 -ntg 256 -npl "1,2,4,8,16,32,64"
+  --threads 8 --poll 50 -npp 128 -ntg 256 -npl "${npl}"
   --output-format jsonl)
 printf '%q ' "${cmd[@]}" > "${run_dir}/command.txt"
 printf '\n' >> "${run_dir}/command.txt"
@@ -115,20 +131,21 @@ free -b > "${run_dir}/memory-after.txt"
 (( status == 0 )) || fail "benchmark exited ${status}; raw evidence retained at ${run_dir}"
 
 awk '/^\{.*"speed_tg"/ { print }' "${run_dir}/raw.log" > "${run_dir}/rows.jsonl"
-python3 -B - "${run_dir}/rows.jsonl" > "${run_dir}/summary.json" <<'PY'
+python3 -B - "${run_dir}/rows.jsonl" "${npl}" "${campaign}" \
+  > "${run_dir}/summary.json" <<'PY'
 import json
 import sys
 
 path = sys.argv[1]
 rows = [json.loads(line) for line in open(path, encoding="utf-8") if line.strip()]
-expected = [1, 2, 4, 8, 16, 32, 64]
+expected = [int(item) for item in sys.argv[2].split(",")]
 observed = [row["pl"] for row in rows]
 if observed != expected:
     raise SystemExit(f"matrix mismatch: expected {expected}, got {observed}")
 for row in rows:
     row["per_sequence_tg"] = row["speed_tg"] / row["pl"]
 summary = {
-    "campaign_id": "qwen38-q4km-tp1-batched-ladder-20260825-r1",
+    "campaign_id": sys.argv[3],
     "classification": "raw-engine-mechanism-evidence-only",
     "quality_qualified": False,
     "rows": rows,
