@@ -1,0 +1,50 @@
+{
+  "schema": "neural-download-qwen38-current-main-storage-rotation-v1",
+  "date": "2026-08-24",
+  "completed_utc": "2026-08-25T00:26:54Z",
+  "classification": "superseded-local-images-removed-after-successor-artifact-audit",
+  "reason": "restore the unchanged 12-GiB qualification reserve for the literal-current 7ca336929c successor after that successor's complete independent artifact audit passed",
+  "superseded_build": {
+    "vllm_head": "d154d90d6c4bcf26a0c78ac4f3e43621c14333ba",
+    "local_build_root": "/home/steve/builds/qwen38-current-main-20260824T231759Z-d154d90d6c-baaa05bb4e",
+    "external_receipt_archive": "/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds/20260824T231759Z-d154d90d6c-baaa05bb4e",
+    "external_sha256sums_verified_before_removal": true,
+    "external_sha256sums_entries_verified": 14,
+    "external_sha256sums_sha256": "3a00ab8f5c35a8086b8e860e6764c67de1a45205c591f69f62baefeaeb34bf6e",
+    "source_archive_sha256": "51e428dfe14ca35b06b35812ca8c79599b699a983b8ffa8c08236b88410f8aec",
+    "wheel_sha256": "e1e4d3205987bdb8cc9cd05c99b8bebfd4c1ddbb2c37fb2c4831448710f555fe",
+    "build_receipt_sha256": "024a1ceb228ff0c60a2ae6ddfe05a23615ba33da3fc05841e8ceb4cf8f694e1e",
+    "qualification_closeout": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-d154d90d6c-r1-stale-during-replay-a.json",
+    "qualification_closeout_sha256": "00a2ced82c7787417a1e7205323ffdb530da3d84b9092939501727c85392de37"
+  },
+  "artifact_audited_successor_retained": {
+    "vllm_head": "7ca336929c169fee1210dd5293029d78811fba27",
+    "artifact_audit_passed": true,
+    "current_vllm_stock_kernel_image_id": "sha256:6043c332c753604a827f75c07f480998c1330e9e722b3120a8e6b3c47f74fc6c",
+    "both_current_zero_overlay_image_id": "sha256:b7bc798035552130e96f3649c21541f1b40fa3c5db0558631e44e461297196a4"
+  },
+  "local_removal": {
+    "running_containers_before": 0,
+    "removed_exact_image_ids": [
+      "sha256:358fb358a30463ededcb9ead252d0841b29eeeac684be756e16528329cb1030e",
+      "sha256:51ceafc2ffed75e0a7f1166b6cd55251516502363a9d00d12fe0ad4b3469e70b"
+    ],
+    "removed_images_absent_after": true,
+    "successor_images_retained_after": true,
+    "builder_prune_ran": true,
+    "builder_prune_reported_reclaimed_bytes": 386100000,
+    "root_free_kib_before": 6466456,
+    "root_free_kib_after": 14081388,
+    "root_free_gib_after": 13.43,
+    "running_containers_after": 0
+  },
+  "preservation": {
+    "performance_evidence_removed": false,
+    "protected_speed_changed": false,
+    "runtime_or_launcher_configuration_changed": false,
+    "tp2_78_decision_overlay_changed": false,
+    "tp4_152_decision_overlay_changed": false,
+    "local_docker_image_archive_exists": false,
+    "recovery": "Reconstruct the d154 image lanes only from the retained exact source archive, wheel, source identity, Dockerfile, build script, kernel artifact, receipts, archived image inspections and static preflights, and pinned official base digest. No Docker image archive was retained; do not assert either deleted historical image ID unless a reconstruction independently reproduces and revalidates it."
+  }
+}
