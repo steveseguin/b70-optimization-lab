@@ -15,7 +15,7 @@
         "model_family": "Gemma 4",
         "publisher": "Google",
         "variant": "26B A4B",
-        "summary": "One-card Q8 target with target-verified MTP; preserved as a source reconstruction candidate.",
+        "summary": "Google's Gemma 4 26B mixture-of-experts on one Arc Pro B70 in 8-bit form, with its built-in draft head speeding up generation. A strong all-rounder that also reads images.",
         "quantization": "UD-Q8_K_XL + Q4_0 MTP",
         "runtime_label": "llama.cpp SYCL",
         "operating_systems": [
@@ -281,7 +281,7 @@
         "model_family": "Laguna S 2.1",
         "publisher": "Poolside",
         "variant": "INT4 target plus INT4 DFlash draft",
-        "summary": "Artifact-exact four-card lab replay of the current BF16-KV Laguna record, with sealed quality and idle-host gates.",
+        "summary": "Poolside's Laguna S 2.1 coding assistant on four Arc Pro B70 cards in 4-bit form, with a draft model speeding up generation. A replay of the lab's record run, quality-checked.",
         "quantization": "INT4 / BF16 KV",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -390,7 +390,7 @@
         "model_family": "LFM2.5",
         "publisher": "Liquid AI",
         "variant": "2.6B",
-        "summary": "Smallest honest single-command B70 recipe; stock pinned upstream llama.cpp, no patches.",
+        "summary": "Liquid AI's compact LFM2.5 2.6B on one Arc Pro B70 in 8-bit form with stock, unpatched llama.cpp - the simplest single-command recipe on the site.",
         "quantization": "Q8_0",
         "runtime_label": "llama.cpp SYCL",
         "operating_systems": [
@@ -582,7 +582,7 @@
         "model_family": "MiniMax M2.7",
         "publisher": "MiniMax AI",
         "variant": "AutoRound W4A16 INT4",
-        "summary": "Four-card native vLLM/XPU candidate with strict token-hash quality gates and retained vLLM plus llm-scaler patch snapshots.",
+        "summary": "MiniMax M2.7, a 229B mixture-of-experts for long conversations, on four Arc Pro B70 cards in 4-bit form with vLLM. Quality-checked token by token.",
         "quantization": "AutoRound W4A16 INT4",
         "runtime_label": "vLLM XPU + llm-scaler",
         "operating_systems": [
@@ -703,7 +703,7 @@
         "model_family": "Muse-Glimmer",
         "publisher": "Meta Models",
         "variant": "30B UD-Q8_K_XL target plus BF16 DFlash assistant",
-        "summary": "Four-card native SYCL candidate with the lab's oneDNN Q8 WOQ, distributed argmax, DFlash, and target-verified gates.",
+        "summary": "Meta's Muse-Glimmer 30B, a model that reads images as well as text, on four Arc Pro B70 cards in 8-bit form with a draft model speeding up generation.",
         "quantization": "UD-Q8_K_XL / BF16 draft",
         "runtime_label": "llama.cpp SYCL",
         "operating_systems": [
@@ -811,7 +811,7 @@
         "model_family": "Nemotron 3.5",
         "publisher": "NVIDIA (GGUF by unsloth)",
         "variant": "Lightning 30B-A3B",
-        "summary": "Hybrid Mamba MoE (arch nemotron_h_moe, 1M native context) confirmed running on Intel with no NVFP4 runtime; flattest decode-vs-depth curve of the first wave.",
+        "summary": "NVIDIA's Nemotron 3.5 Lightning, a 30B hybrid Mamba mixture-of-experts, on one Arc Pro B70 in 4-bit form with stock llama.cpp. Its speed barely drops as the conversation grows.",
         "quantization": "UD-Q4_K_M",
         "runtime_label": "llama.cpp SYCL",
         "operating_systems": [
@@ -1003,7 +1003,7 @@
         "model_family": "Ornith 1.5",
         "publisher": "Ornith AI",
         "variant": "35B-A3B",
-        "summary": "35B-class Qwen-derived MoE (256 experts / 8 active, arch qwen35moe) reaching a directly measured 131.5 tok/s conventional serving mean on one card with the lab's validated twelve-feature SYCL patch and Ornith-screened Level Zero runtime setting.",
+        "summary": "Ornith AI's 35B mixture-of-experts (about 3B active per word) on one Arc Pro B70 in 4-bit form - the fastest single-card result this lab has measured, using the lab's tuned kernel stack.",
         "quantization": "Q4_K_M",
         "runtime_label": "llama.cpp SYCL",
         "operating_systems": [
@@ -1321,7 +1321,7 @@
         "model_family": "Ornith 1.5",
         "publisher": "Ornith AI",
         "variant": "9B",
-        "summary": "Recent official one-card dense model (arch qwen35); beginner package candidate on stock pinned upstream.",
+        "summary": "Ornith AI's dense 9B on one Arc Pro B70 in 8-bit form with stock llama.cpp. A small, official, beginner-friendly deployment.",
         "quantization": "Q8_0",
         "runtime_label": "llama.cpp SYCL",
         "operating_systems": [
@@ -1513,7 +1513,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen (GGUF by unsloth)",
         "variant": "27B flagship package",
-        "summary": "Full 262144-token context, vision projector, and MTP speculative draft resident together on one 32 GiB card. Fit-off decided on hardware: UD-Q5_K_S ships (2.86 GiB free); UD-Q4_K_XL is the measured speed alternative (+3%).",
+        "summary": "Alibaba's Qwen3.8 27B on one Arc Pro B70 with its full 262K-token context, image input, and draft head all resident at once. A capability-first fit, not a speed record.",
         "quantization": "UD-Q5_K_S (shipped) / UD-Q4_K_XL (alternative)",
         "runtime_label": "llama.cpp SYCL",
         "operating_systems": [
@@ -1718,7 +1718,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Digest-pinned two-card Docker route using the official FP8 model and vLLM XPU image.",
+        "summary": "Alibaba's Qwen3.8 27B in the official 8-bit (FP8) form on two Arc Pro B70 cards, run from a pinned Docker image with vLLM. No patches; the easiest two-card route.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -1820,7 +1820,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B",
-        "summary": "Validated one-card target-only route with an exact pinned source-and-patch rebuild.",
+        "summary": "Alibaba's Qwen3.8 27B on one Arc Pro B70 in 4-bit form with llama.cpp, no draft model. The lab's promoted one-card package, rebuilt from pinned source.",
         "quantization": "Q4_K_M",
         "runtime_label": "llama.cpp SYCL",
         "operating_systems": [
@@ -1946,7 +1946,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B Q4_K_M target-only TP2",
-        "summary": "Two-card target-only Q4_K_M lane with the complete lab TP2 stack and a quality-gated dense gate/up SwiGLU fusion.",
+        "summary": "Alibaba's Qwen3.8 27B on two Arc Pro B70 cards in 4-bit form with llama.cpp, no draft model. Roughly 1.8x the one-card speed using the lab's two-card kernel stack.",
         "quantization": "Q4_K_M / F16 KV",
         "runtime_label": "llama.cpp SYCL",
         "operating_systems": [
@@ -2074,7 +2074,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B Q8_0 target-only",
-        "summary": "Quality-conservative two-card llama.cpp/SYCL service with the lab's TP2, DP4A2, and recurrent-quad SG24 stack.",
+        "summary": "Alibaba's Qwen3.8 27B on two Arc Pro B70 cards in 8-bit form with llama.cpp - the quality-conservative choice when 4-bit is not enough.",
         "quantization": "Q8_0 / F16 KV",
         "runtime_label": "llama.cpp SYCL",
         "operating_systems": [

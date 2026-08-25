@@ -84,12 +84,12 @@
   <div class="scroller"><table class="data">
     <thead><tr><th>Model</th><th>Design</th><th class="num">Cards</th><th class="num">Decode tok/s</th><th>Note</th></tr></thead>
     <tbody>
-      <tr><td><a href="../models/gemma-4.html">Gemma-4-26B A4B</a></td><td>MoE (~4B active)</td><td class="num">1</td><td class="num">124.98</td><td>Measured one-card MoE lane</td></tr>
-      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>hybrid, Q4_K_M</td><td class="num">1</td><td class="num">27.82</td><td>Quality-validated; measured context curve through 32K</td></tr>
-      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>Q8_0</td><td class="num">2</td><td class="num">36.77</td><td>Quality-conservative deployment</td></tr>
-      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>INT4 + MTP 5</td><td class="num">2</td><td class="num">101.2</td><td>Research lane (determinism open)</td></tr>
-      <tr><td><a href="../models/laguna-s.html">Laguna S 2.1</a></td><td>INT4 + DFlash</td><td class="num">4</td><td class="num">125.46</td><td>Closed record</td></tr>
-      <tr><td><a href="../models/muse-glimmer.html">Muse-Glimmer-30B</a></td><td>Q8/WOQ + DFlash</td><td class="num">4</td><td class="num">100.37</td><td>Canonical repeat mean</td></tr>
+      <tr><td><a href="../models/gemma-4.html">Gemma-4-26B A4B</a></td><td>MoE (~4B active)</td><td class="num">1</td><td class="num">124.98</td><td>Runs on one card; measured</td></tr>
+      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>hybrid, Q4_K_M</td><td class="num">1</td><td class="num">27.82</td><td>Quality-checked; speed measured out to 32K</td></tr>
+      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>Q8_0</td><td class="num">2</td><td class="num">36.77</td><td>8-bit: slower, more conservative</td></tr>
+      <tr><td><a href="../models/qwen-27b.html">Qwen3.8-27B</a></td><td>INT4 + MTP 5</td><td class="num">2</td><td class="num">101.2</td><td>Research result (not yet repeatable run to run)</td></tr>
+      <tr><td><a href="../models/laguna-s.html">Laguna S 2.1</a></td><td>INT4 + DFlash</td><td class="num">4</td><td class="num">125.46</td><td>Lab record run</td></tr>
+      <tr><td><a href="../models/muse-glimmer.html">Muse-Glimmer-30B</a></td><td>Q8/WOQ + DFlash</td><td class="num">4</td><td class="num">100.37</td><td>Average across repeat runs</td></tr>
     </tbody>
   </table></div>
   <p>The <a href="../models/qwen-27b.html">Qwen 27B family page</a> keeps weights, quantizations, TP, MTP, context, prefill, TTFT, quality, and gaps together. The full filterable packet list lives in the <a href="../guides.html">Guide library</a>.</p>

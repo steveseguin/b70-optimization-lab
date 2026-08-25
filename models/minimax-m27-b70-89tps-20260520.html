@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MiniMax M2.7 AutoRound INT4 on four Intel Arc Pro B70 cards — 89.3 tok/s measured — neural.download</title>
-<meta name="description" content="Four-card native vLLM/XPU candidate with strict token-hash quality gates and retained vLLM plus llm-scaler patch snapshots. Measured 89.3 tok/s mean output throughput on 4× Intel Arc Pro B70 32 GiB with vLLM XPU + llm-scaler (AutoRound W4A16 INT4). Exact pins, patches, proof, and a projected optimiz">
+<meta name="description" content="MiniMax M2.7, a 229B mixture-of-experts for long conversations, on four Arc Pro B70 cards in 4-bit form with vLLM. Quality-checked token by token. Measured 89.3 tok/s mean output throughput on 4× Intel Arc Pro B70 32 GiB with vLLM XPU + llm-scaler (AutoRound W4A16 INT4). Exact pins, patches, proof, ">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230f62e8'/%3E%3Crect%20x='10'%20y='34'%20width='12'%20height='20'%20fill='%23f6f1e5'/%3E%3Crect%20x='26'%20y='22'%20width='12'%20height='32'%20fill='%23f6f1e5'/%3E%3Crect%20x='42'%20y='10'%20width='12'%20height='44'%20fill='%23f6f1e5'/%3E%3C/svg%3E">
 <link rel="canonical" href="https://neural.download/models/minimax-m27-b70-89tps-20260520.html">
 <meta name="theme-color" content="#f6f1e5">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://neural.download/models/minimax-m27-b70-89tps-20260520.html">
 <meta property="og:title" content="MiniMax M2.7 AutoRound INT4 on four Intel Arc Pro B70 cards — 89.3 tok/s measured">
-<meta property="og:description" content="Four-card native vLLM/XPU candidate with strict token-hash quality gates and retained vLLM plus llm-scaler patch snapshots. Measured 89.3 tok/s mean output throughput on 4× Intel Arc Pro B70 32 GiB with vLLM XPU + llm-scaler (AutoRound W4A16 INT4). Exact pins, patches, proof, and a projected optimiz">
+<meta property="og:description" content="MiniMax M2.7, a 229B mixture-of-experts for long conversations, on four Arc Pro B70 cards in 4-bit form with vLLM. Quality-checked token by token. Measured 89.3 tok/s mean output throughput on 4× Intel Arc Pro B70 32 GiB with vLLM XPU + llm-scaler (AutoRound W4A16 INT4). Exact pins, patches, proof, ">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta property="og:site_name" content="neural.download">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{"@context": "https://schema.org", "@type": "TechArticle", "headline": "MiniMax M2.7 AutoRound INT4 on four Intel Arc Pro B70 cards", "description": "Four-card native vLLM/XPU candidate with strict token-hash quality gates and retained vLLM plus llm-scaler patch snapshots. Measured 89.3 tok/s mean output throughput on 4× Intel Arc Pro B70 32 GiB with vLLM XPU + llm-scaler (AutoRound W4A16 INT4). Exact pins, patches, proof, and a projected optimiz", "url": "https://neural.download/models/minimax-m27-b70-89tps-20260520.html", "dateModified": "2026-08-22", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["MiniMax M2.7", "Intel Arc Pro B70", "local LLM inference"]}
+{"@context": "https://schema.org", "@type": "TechArticle", "headline": "MiniMax M2.7 AutoRound INT4 on four Intel Arc Pro B70 cards", "description": "MiniMax M2.7, a 229B mixture-of-experts for long conversations, on four Arc Pro B70 cards in 4-bit form with vLLM. Quality-checked token by token. Measured 89.3 tok/s mean output throughput on 4× Intel Arc Pro B70 32 GiB with vLLM XPU + llm-scaler (AutoRound W4A16 INT4). Exact pins, patches, proof, ", "url": "https://neural.download/models/minimax-m27-b70-89tps-20260520.html", "dateModified": "2026-08-22", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["MiniMax M2.7", "Intel Arc Pro B70", "local LLM inference"]}
 </script>
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "MiniMax M2.7", "item": "https://neural.download/models/minimax-m2-7.html"}, {"@type": "ListItem", "position": 4, "name": "MiniMax M2.7 AutoRound INT4 on four Intel Arc Pro B70 cards", "item": "https://neural.download/models/minimax-m27-b70-89tps-20260520.html"}]}
@@ -89,7 +89,7 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / <a href="minimax-m2-7.html">MiniMax M2.7</a> / AutoRound W4A16 INT4</p>
   <p class="eyebrow">Candidate package · vLLM XPU + llm-scaler · 4× Intel Arc Pro B70</p>
   <h1>MiniMax M2.7 AutoRound INT4 on four Intel Arc Pro B70 cards</h1>
-  <p>Four-card native vLLM/XPU candidate with strict token-hash quality gates and retained vLLM plus llm-scaler patch snapshots.</p>
+  <p>MiniMax M2.7, a 229B mixture-of-experts for long conversations, on four Arc Pro B70 cards in 4-bit form with vLLM. Quality-checked token by token.</p>
 </div></header>
 
 <main id="main"><div class="wrap"><div class="col prose" id="package-page" data-ml-model="minimax_m2.7" data-ml-quant="AutoRound INT4" data-ml-runtime="vllm" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-measured="89.31419538094708" data-ml-quant-label="AutoRound W4A16 INT4" data-ml-runtime-label="vLLM XPU + llm-scaler" data-ml-prompt="512" data-ml-output="1536">
