@@ -18,7 +18,10 @@ set -uo pipefail
 #                 required.
 #
 # Image acquisition:
-#   SOURCE_IMAGE_TAG defaults to vllm/vllm-openai-xpu:nightly.
+#   SOURCE_IMAGE_REPOSITORY defaults to vllm/vllm-openai-xpu and
+#   SOURCE_IMAGE_TAG defaults to that repository's :nightly tag. A frozen
+#   locally built campaign may set both to its exact tagged repository while
+#   retaining the same tag/RepoDigest/image-ID checks.
 #   PULL_SOURCE_IMAGE defaults to 1. The floating tag is pulled and resolved to
 #   exactly one matching registry RepoDigest; only that immutable reference is
 #   launched.
@@ -26,7 +29,10 @@ set -uo pipefail
 #   EXPECTED_RESOLVED_IMAGE_DIGEST and EXPECTED_IMAGE_ID.
 #
 # Useful environment:
-#   SUDO_PASS_FILE, EXTRA_VLLM_ARGS, GPU_MEM_UTIL, VLLM_XPU_GRAPH
+#   SUDO_PASS_FILE, EXTRA_VLLM_ARGS_JSON (preferred), EXTRA_VLLM_ARGS (legacy),
+#   GPU_MEM_UTIL, VLLM_XPU_GRAPH
+#   SOURCE_IDENTITY_PATH plus EXPECTED_SOURCE_IDENTITY_SHA256 for wheel-built
+#   images that intentionally do not retain a /workspace/vllm Git checkout.
 #   PYTHONHASHSEED, VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE
 #   VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING, TRITON_CACHE_AUTOTUNING
 #   PROMPT_IDS (comma-separated), MAX_TOKENS (default 128), BENCH (default 1)
@@ -39,17 +45,22 @@ set -uo pipefail
 #   EXPECTED_CACHE_COMPILER_HASH, EXPECTED_CACHE_CONFIG_HASH,
 #   EXPECTED_CACHE_ENV_SHA256, EXPECTED_COMPUTATION_GRAPH_SHA256S
 
-readonly image_repository="vllm/vllm-openai-xpu"
-source_image_tag=${SOURCE_IMAGE_TAG:-vllm/vllm-openai-xpu:nightly}
+image_repository=${SOURCE_IMAGE_REPOSITORY:-vllm/vllm-openai-xpu}
+source_image_tag=${SOURCE_IMAGE_TAG:-$image_repository:nightly}
 pull_source_image=${PULL_SOURCE_IMAGE:-1}
+extra_vllm_args_json=${EXTRA_VLLM_ARGS_JSON:-}
+source_identity_path=${SOURCE_IDENTITY_PATH:-}
+expected_source_identity_sha256=${EXPECTED_SOURCE_IDENTITY_SHA256:-}
 
 mtp=${1:?}; kv=${2:?}; maxlen=${3:?}; gpu=${4:?}; port=${5:?}
 out=${6:?}; suite=${7:?}; cache_dir=${8:?}
 tp=$(( $(tr -dc ',' <<< "$gpu" | wc -c) + 1 ))
-repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
+repo=${LAB_REPO_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)}
 model=/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan
-model_manifest="$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json"
-model_verifier="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py"
+model_manifest=${MODEL_MANIFEST_PATH:-$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json}
+model_verifier=${MODEL_VERIFIER_PATH:-$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py}
+bench_helper=${BENCH_HELPER_PATH:-$repo/scripts/bench-openai-realistic-suite.py}
+quality_helper=${QUALITY_HELPER_PATH:-$repo/scripts/qwen38-text-quality-suite.py}
 venv=/home/steve/.venvs/vllm-xpu
 alias=qwen38-rolling-nightly-strict
 name="qwen38-rolling-nightly-strict-${port}"
@@ -139,6 +150,9 @@ valid_sha256() {
   fail "CACHE_POLICY must be fresh, seeded-fresh, or replay"
 [[ "$pull_source_image" == "0" || "$pull_source_image" == "1" ]] || \
   fail "PULL_SOURCE_IMAGE must be 0 or 1"
+[[ "$image_repository" =~ ^[a-z0-9._/-]+$ && "$image_repository" != */ &&
+   "$image_repository" != /* ]] || \
+  fail "SOURCE_IMAGE_REPOSITORY must be a normalized repository name"
 [[ "$source_image_tag" == "$image_repository:"* ]] || \
   fail "SOURCE_IMAGE_TAG must be a tag in $image_repository"
 [[ "$source_image_tag" != "$image_repository:latest" ]] || \
@@ -184,6 +198,20 @@ fi
 if [[ -n "${EXPECTED_IMAGE_ID:-}" ]]; then
   valid_sha256_ref "$EXPECTED_IMAGE_ID" || \
     fail "EXPECTED_IMAGE_ID must be sha256 plus 64 lowercase hex digits"
+fi
+if [[ -n "$extra_vllm_args_json" ]]; then
+  jq -e 'type == "array" and all(.[]; type == "string" and length > 0)' \
+    <<<"$extra_vllm_args_json" >/dev/null || \
+    fail "EXTRA_VLLM_ARGS_JSON must be a JSON array of non-empty strings"
+fi
+if [[ -n "$source_identity_path" ]]; then
+  [[ "$source_identity_path" =~ ^/[A-Za-z0-9._/-]+$ &&
+     "$source_identity_path" != */ ]] || \
+    fail "SOURCE_IDENTITY_PATH must be a normalized absolute container path"
+  valid_sha256 "$expected_source_identity_sha256" || \
+    fail "SOURCE_IDENTITY_PATH requires EXPECTED_SOURCE_IDENTITY_SHA256"
+elif [[ -n "$expected_source_identity_sha256" ]]; then
+  fail "EXPECTED_SOURCE_IDENTITY_SHA256 requires SOURCE_IDENTITY_PATH"
 fi
 [[ -f "$suite" ]] || fail "missing suite: $suite"
 [[ -f "$model_manifest" ]] || fail "missing model manifest: $model_manifest"
@@ -318,9 +346,7 @@ fi
   --json "$out/model-direct-and-ordinary-verify.json" \
   > "$out/model-direct-and-ordinary-verify.log" 2>&1 || \
   fail "model direct-and-ordinary identity verification failed"
-sha256sum "$model_manifest" "$suite" \
-  "$repo/scripts/bench-openai-realistic-suite.py" \
-  "$repo/scripts/qwen38-text-quality-suite.py" \
+sha256sum "$model_manifest" "$suite" "$bench_helper" "$quality_helper" \
   "$model_verifier" "${BASH_SOURCE[0]}" > "$out/input-files.sha256" || \
   fail "failed to hash run inputs"
 uname -a > "$out/host-uname.txt" || fail "failed to capture host kernel identity"
@@ -345,7 +371,14 @@ args=( "$model" --host 0.0.0.0 --port 8000 --trust-remote-code
 [[ "$mtp" != "0" ]] && args+=(
   --speculative-config "{\"method\":\"qwen3_next_mtp\",\"num_speculative_tokens\":$mtp}"
 )
-[[ -n "${EXTRA_VLLM_ARGS:-}" ]] && args+=( ${EXTRA_VLLM_ARGS} )
+if [[ -n "$extra_vllm_args_json" ]]; then
+  mapfile -t extra_vllm_args < <(jq -r '.[]' <<<"$extra_vllm_args_json")
+  args+=( "${extra_vllm_args[@]}" )
+elif [[ -n "${EXTRA_VLLM_ARGS:-}" ]]; then
+  # Legacy path retained for historical callers. New packets use the JSON
+  # array above so structured values cannot be changed by shell word splitting.
+  args+=( ${EXTRA_VLLM_ARGS} )
+fi
 printf '%s\n' "${args[@]}" > "$out/server-args.txt"
 
 env_args=(
@@ -368,6 +401,7 @@ done
 
 {
   echo "source_image_tag=$source_image_tag"
+  echo "source_image_repository=$image_repository"
   echo "image_acquisition=$image_acquisition"
   echo "pull_source_image=$pull_source_image"
   echo "resolved_image_ref=$resolved_image_ref"
@@ -399,6 +433,9 @@ done
   echo "inductor_max_autotune=${VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE:-unset}"
   echo "inductor_coordinate_descent=${VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING:-unset}"
   echo "triton_cache_autotuning=${TRITON_CACHE_AUTOTUNING:-unset}"
+  echo "extra_vllm_args_json=${extra_vllm_args_json:-unset}"
+  echo "source_identity_path=${source_identity_path:-unset}"
+  echo "expected_source_identity_sha256=${expected_source_identity_sha256:-unset}"
   echo "require_graph_capture=${REQUIRE_GRAPH_CAPTURE:-0}"
   echo "natural_eos=${NATURAL_EOS:-0}"
   echo "return_token_ids=${RETURN_TOKEN_IDS:-1}"
@@ -434,7 +471,7 @@ trap cleanup EXIT
 dockerc run -d --name "$name" \
   --device /dev/dri --group-add 44 --group-add 992 --ipc=host \
   -v /dev/dri/by-path:/dev/dri/by-path:ro \
-  -v /mnt/usb-models:/mnt/usb-models \
+  -v "$model:$model:ro" \
   -v "$cache_dir:/run-cache" \
   -p "127.0.0.1:$port:8000" \
   "${env_args[@]}" --shm-size 16g \
@@ -458,8 +495,21 @@ done
 dockerc exec "$name" python3 -c \
   'import importlib.metadata as m, torch, transformers, triton, vllm; print("vllm", vllm.__version__); print("torch", torch.__version__); print("triton", triton.__version__); print("transformers", transformers.__version__); print("vllm-xpu-kernels", m.version("vllm-xpu-kernels"))' \
   > "$out/stack-versions.txt" 2>&1 || exit 2
-dockerc exec "$name" git -C /workspace/vllm show -s \
-  '--format=%H%n%cI%n%s' HEAD > "$out/vllm-source-commit.txt" 2>&1 || exit 2
+if [[ -n "$source_identity_path" ]]; then
+  dockerc exec "$name" cat "$source_identity_path" \
+    >"$out/source-identity.json" 2>"$out/source-identity.stderr" || exit 2
+  actual_source_identity_sha256=$(sha256sum "$out/source-identity.json" |
+    awk '{print $1}')
+  [[ "$actual_source_identity_sha256" == "$expected_source_identity_sha256" ]] ||
+    fail "embedded source identity hash mismatch"
+  jq -e '.vllm.head | type == "string" and length > 0' \
+    "$out/source-identity.json" >/dev/null || fail "embedded source identity is invalid"
+  jq -r '.vllm.head' "$out/source-identity.json" \
+    >"$out/vllm-source-commit.txt" || exit 2
+else
+  dockerc exec "$name" git -C /workspace/vllm show -s \
+    '--format=%H%n%cI%n%s' HEAD > "$out/vllm-source-commit.txt" 2>&1 || exit 2
+fi
 dockerc logs "$name" > "$out/server-startup.log" 2>&1 || exit 2
 if [[ "${REQUIRE_GRAPH_CAPTURE:-0}" == "1" ]]; then
   grep -Fq 'quantization=inc' "$out/server-startup.log" || \
@@ -583,7 +633,7 @@ if [[ "${BENCH:-1}" == "1" ]]; then
       --request-extra-json '{"chat_template_kwargs":{"enable_thinking":false},"ignore_eos":true}'
     )
   fi
-  "$venv/bin/python" "$repo/scripts/bench-openai-realistic-suite.py" \
+  "$venv/bin/python" "$bench_helper" \
     "${bench_args[@]}" > "$out/bench.stdout.log" 2>&1
   bench_rc=$?
   echo "bench_rc=$bench_rc" > "$out/bench.status"
@@ -610,7 +660,7 @@ if [[ "${QUALITY:-0}" == "1" ]]; then
       fail "QUALITY_REQUIRE_BASELINE=1 requires QUALITY_BASELINE_JSON"
     quality_args+=( --require-baseline )
   fi
-  "$venv/bin/python" "$repo/scripts/qwen38-text-quality-suite.py" \
+  "$venv/bin/python" "$quality_helper" \
     "${quality_args[@]}" > "$out/quality.stdout.log" 2>&1
   quality_rc=$?
   echo "quality_rc=$quality_rc" > "$out/quality.status"

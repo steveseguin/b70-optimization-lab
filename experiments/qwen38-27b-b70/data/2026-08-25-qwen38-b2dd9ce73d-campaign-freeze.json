@@ -1,0 +1,52 @@
+{
+  "schema": "neural-download-frozen-upstream-campaign-v1",
+  "created_utc": "2026-08-25T03:50:00Z",
+  "campaign": "qwen38-b2dd9ce73d-xpu-1e90ffa672",
+  "policy": {
+    "engine_identity_frozen_at_first_arm": true,
+    "later_remote_upstream_movement_is_gating": false,
+    "scheduled_refresh_required_for_new_upstream_identity": true,
+    "local_lab_head_and_worktree_are_gating": true,
+    "arm_inputs_are_copied_and_hash_locked": true,
+    "measurements_transfer_across_campaigns": false,
+    "patch_findings_may_be_forward_ported_and_requalified": true
+  },
+  "source_identity": {
+    "vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "vllm_tree": "65c93c14916a9a895c5592b8a0ba2803efc96346",
+    "vllm_package_version": "0.26.1rc1.dev1172+gb2dd9ce73.xpu",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "xpu_kernel_tree": "b3cf7a800eea50e0d0f6140c1c2047a074a7fcb9",
+    "nightly_dependency_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+    "image_repository": "neural-download/vllm-openai-xpu",
+    "image_tag": "neural-download/vllm-openai-xpu:vllm-b2dd9ce73d-kernel-1e90ffa672-official",
+    "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "image_repo_digest": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "embedded_source_identity_path": "/opt/neural-download/source-identity.json",
+    "embedded_source_identity_sha256": "2a0ee74968dd68ba15b31eeef3e404807d125e6e52a0e96d25e8b955bd4ae0a0",
+    "build_receipt_sha256": "d56dc84c1137d741042b2e295c6b1f6a40bf28a3c56e0c52761dd725e3a5caa0"
+  },
+  "freeze_evidence": {
+    "r1_closeout": "experiments/qwen38-27b-b70/data/2026-08-24-qwen38-b2dd9ce73d-r1-frozen-snapshot-closeout.json",
+    "r1_closeout_sha256": "c607c0d02c892713c64c3a8b4418d590a511c9caa7689b97b4178d6ae1224757",
+    "r1_campaign_evidence_manifest_sha256": "974d752a9b5930c2430b359c4b93b42c6f535ed0d1168a2bd9699aea8546ad8d",
+    "r1_pre_arm_vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "r1_pre_arm_xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "r1_pre_arm_nightly_base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876"
+  },
+  "protected_performance": {
+    "ledger_sha256": "e6ee2cb9908ce940087788243eac5b544c0d2831b94efa47fe6441232c740e8f",
+    "tp4_diagnostic_floor_tok_s": 71.5488,
+    "tp4_diagnostic_high_tok_s": 71.6741,
+    "tp4_strict_each_floor_tok_s": 71.29326283364946,
+    "tp4_strict_one_floor_tok_s": 71.39843006187554,
+    "stock_tp4_captured_high_tok_s": 71.9001988117144,
+    "accepted_overlay_observations_tok_s": [
+      71.72254506718171,
+      71.35287190161719,
+      71.45427094575045
+    ],
+    "tp4_historical_overlay_manifest_sha256": "a2df36339567d2619e024351deeca98970ebf92497db0148eac0de7dd5df3ba2",
+    "lowering_or_replacement_allowed": false
+  }
+}
