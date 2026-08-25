@@ -2284,6 +2284,37 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.json"
     },
     {
+      "id": "q38-q4kxl-tp1-kv-q8-context",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL fa0f3b25a47f346858a4d0d169f5181aa424b110",
+      "runtime_family": "llama.cpp SYCL",
+      "profile_id": "q38-q4kxl-q8-raw-target-only-depth-v1",
+      "measurement_class": "llama-bench-raw-depth-sweep",
+      "identity": {
+        "model_sha256": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e",
+        "bench_sha256": "908b78b77fc28ad23b2924b7f32f56f4a8415eac9c2a79a244dee85b49b19030"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "kv": "q8_0", "vision": "not loaded", "speculation": "none"},
+      "workload": "llama-bench pp2048 plus tg128 at each exact depth, five repetitions, fa=on; raw-engine shape metric",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 23.122116, "prefill_tok_s": 759.033298, "samples": 5},
+        {"x": 2048, "decode_tok_s": 21.447833, "prefill_tok_s": 731.081733, "samples": 5},
+        {"x": 4096, "decode_tok_s": 20.178749, "prefill_tok_s": 714.545011, "samples": 5},
+        {"x": 8192, "decode_tok_s": 17.991709, "prefill_tok_s": 685.254801, "samples": 5},
+        {"x": 16384, "decode_tok_s": 14.383417, "prefill_tok_s": 634.601362, "samples": 5},
+        {"x": 24576, "decode_tok_s": 12.092596, "prefill_tok_s": 592.443936, "samples": 5},
+        {"x": 32768, "decode_tok_s": 10.425173, "prefill_tok_s": 557.748574, "samples": 5}
+      ],
+      "quality": "Performance-only raw-engine sweep; no new quality gate. The x=0 marker is a real n_depth=0 measurement.",
+      "caveat": "Target-only raw-engine curve, not the MTP/vision package and not an HTTP serving measurement. Historical quality is cited separately and not transferred.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4kxl-q8-tp1-exact-depth-result.json"
+    },
+    {
       "id": "q38-q5ks-flagship-tp1-kv-q8-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -4276,7 +4307,7 @@
         }
       },
       {
-        "id": "estimated-q4kxl-q8-context-0",
+        "id": "measured-q4kxl-q8-context-0",
         "match": {
           "revision": "qwen3.8-27b",
           "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
@@ -4286,18 +4317,18 @@
           "graph_mode": "off",
           "kv": "q8_0"
         },
-        "state": "estimated",
-        "label": "≈D21.534 · grade D",
-        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-0",
-        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "state": "lab-measured",
+        "label": "D23.122 · P759.03 · raw sweep",
+        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "point_x": 0,
+        "parent": "qwen38-tp1-raw-depth-sweep",
         "retry": {
-          "status": "estimate-published",
-          "replacement": "measured-parent"
+          "status": "complete"
         }
       },
       {
-        "id": "estimated-q4kxl-q8-context-2048",
+        "id": "measured-q4kxl-q8-context-2048",
         "match": {
           "revision": "qwen3.8-27b",
           "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
@@ -4307,18 +4338,18 @@
           "graph_mode": "off",
           "kv": "q8_0"
         },
-        "state": "estimated",
-        "label": "≈D19.991 · grade D",
-        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-2048",
-        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "state": "lab-measured",
+        "label": "D21.448 · P731.08 · raw sweep",
+        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "point_x": 2048,
+        "parent": "qwen38-tp1-raw-depth-sweep",
         "retry": {
-          "status": "estimate-published",
-          "replacement": "measured-parent"
+          "status": "complete"
         }
       },
       {
-        "id": "estimated-q4kxl-q8-context-4096",
+        "id": "measured-q4kxl-q8-context-4096",
         "match": {
           "revision": "qwen3.8-27b",
           "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
@@ -4328,18 +4359,18 @@
           "graph_mode": "off",
           "kv": "q8_0"
         },
-        "state": "estimated",
-        "label": "≈D18.815 · grade D",
-        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-4096",
-        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "state": "lab-measured",
+        "label": "D20.179 · P714.55 · raw sweep",
+        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "point_x": 4096,
+        "parent": "qwen38-tp1-raw-depth-sweep",
         "retry": {
-          "status": "estimate-published",
-          "replacement": "measured-parent"
+          "status": "complete"
         }
       },
       {
-        "id": "estimated-q4kxl-q8-context-8192",
+        "id": "measured-q4kxl-q8-context-8192",
         "match": {
           "revision": "qwen3.8-27b",
           "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
@@ -4349,18 +4380,18 @@
           "graph_mode": "off",
           "kv": "q8_0"
         },
-        "state": "estimated",
-        "label": "≈D16.771 · grade D",
-        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-8192",
-        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "state": "lab-measured",
+        "label": "D17.992 · P685.25 · raw sweep",
+        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "point_x": 8192,
+        "parent": "qwen38-tp1-raw-depth-sweep",
         "retry": {
-          "status": "estimate-published",
-          "replacement": "measured-parent"
+          "status": "complete"
         }
       },
       {
-        "id": "estimated-q4kxl-q8-context-16384",
+        "id": "measured-q4kxl-q8-context-16384",
         "match": {
           "revision": "qwen3.8-27b",
           "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
@@ -4370,18 +4401,18 @@
           "graph_mode": "off",
           "kv": "q8_0"
         },
-        "state": "estimated",
-        "label": "≈D13.424 · grade D",
-        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-16384",
-        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "state": "lab-measured",
+        "label": "D14.383 · P634.60 · raw sweep",
+        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "point_x": 16384,
+        "parent": "qwen38-tp1-raw-depth-sweep",
         "retry": {
-          "status": "estimate-published",
-          "replacement": "measured-parent"
+          "status": "complete"
         }
       },
       {
-        "id": "estimated-q4kxl-q8-context-24576",
+        "id": "measured-q4kxl-q8-context-24576",
         "match": {
           "revision": "qwen3.8-27b",
           "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
@@ -4391,18 +4422,18 @@
           "graph_mode": "off",
           "kv": "q8_0"
         },
-        "state": "estimated",
-        "label": "≈D11.276 · grade D",
-        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-24576",
-        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "state": "lab-measured",
+        "label": "D12.093 · P592.44 · raw sweep",
+        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "point_x": 24576,
+        "parent": "qwen38-tp1-raw-depth-sweep",
         "retry": {
-          "status": "estimate-published",
-          "replacement": "measured-parent"
+          "status": "complete"
         }
       },
       {
-        "id": "estimated-q4kxl-q8-context-32768",
+        "id": "measured-q4kxl-q8-context-32768",
         "match": {
           "revision": "qwen3.8-27b",
           "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
@@ -4412,14 +4443,14 @@
           "graph_mode": "off",
           "kv": "q8_0"
         },
-        "state": "estimated",
-        "label": "≈D9.756 · grade D",
-        "reason": "Frozen within-revision two-donor estimate; raw-engine decode only, not measured and not promotion-eligible.",
-        "estimate_id": "q38-q4kxl-q8-tp1-context-estimate-v1-32768",
-        "parent": "qwen38-q4kxl-q8-estimator-v1",
+        "state": "lab-measured",
+        "label": "D10.425 · P557.75 · raw sweep",
+        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
+        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "point_x": 32768,
+        "parent": "qwen38-tp1-raw-depth-sweep",
         "retry": {
-          "status": "estimate-published",
-          "replacement": "measured-parent"
+          "status": "complete"
         }
       },
       {

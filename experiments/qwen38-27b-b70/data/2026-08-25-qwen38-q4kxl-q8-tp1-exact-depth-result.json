@@ -1,0 +1,59 @@
+{
+  "schema": "neural.download.qwen38-llama-exact-depth-result.v1",
+  "campaign_id": "qwen38-q4kxl-q8-tp1-exact-depth-20260825-r1",
+  "state": "passed",
+  "completed_at_utc": "2026-08-25T08:13:01.555207+00:00",
+  "run_root": "/mnt/fast-ai/bench-results/qwen38-q4kxl-q8-tp1-exact-depth-20260825-r1",
+  "identity": {
+    "revision": "qwen3.8-27b",
+    "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+    "quantization": "UD-Q4_K_XL",
+    "model_sha256": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e",
+    "runtime_family": "llama.cpp SYCL",
+    "runtime_commit": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "llama_bench_sha256": "908b78b77fc28ad23b2924b7f32f56f4a8415eac9c2a79a244dee85b49b19030",
+    "tp": 1,
+    "mtp": 0,
+    "graph_mode": "off",
+    "kv": "q8_0"
+  },
+  "measurement": {
+    "class": "raw-engine llama-bench exact-depth sweep",
+    "workload": "pp2048 and tg128 at every depth, five repetitions",
+    "http_serving_metric": false,
+    "new_quality_gate": false,
+    "decode_aggregate": "llama-bench reported mean tok/s over five samples",
+    "prefill_aggregate": "llama-bench reported mean tok/s over five samples",
+    "cells": [
+      {"active_context_tokens": 0, "decode_tok_s": 23.122116, "decode_median_tok_s": 23.1158, "decode_p10_tok_s": 23.10554, "prefill_tok_s": 759.033298, "prefill_median_tok_s": 758.807, "samples": 5},
+      {"active_context_tokens": 2048, "decode_tok_s": 21.447833, "decode_median_tok_s": 21.4451, "decode_p10_tok_s": 21.44446, "prefill_tok_s": 731.081733, "prefill_median_tok_s": 731.473, "samples": 5},
+      {"active_context_tokens": 4096, "decode_tok_s": 20.178749, "decode_median_tok_s": 20.179, "decode_p10_tok_s": 20.17752, "prefill_tok_s": 714.545011, "prefill_median_tok_s": 714.365, "samples": 5},
+      {"active_context_tokens": 8192, "decode_tok_s": 17.991709, "decode_median_tok_s": 17.9953, "decode_p10_tok_s": 17.97318, "prefill_tok_s": 685.254801, "prefill_median_tok_s": 685.338, "samples": 5},
+      {"active_context_tokens": 16384, "decode_tok_s": 14.383417, "decode_median_tok_s": 14.3829, "decode_p10_tok_s": 14.37628, "prefill_tok_s": 634.601362, "prefill_median_tok_s": 635.437, "samples": 5},
+      {"active_context_tokens": 24576, "decode_tok_s": 12.092596, "decode_median_tok_s": 12.0938, "decode_p10_tok_s": 12.0878, "prefill_tok_s": 592.443936, "prefill_median_tok_s": 593.044, "samples": 5},
+      {"active_context_tokens": 32768, "decode_tok_s": 10.425173, "decode_median_tok_s": 10.4249, "decode_p10_tok_s": 10.42126, "prefill_tok_s": 557.748574, "prefill_median_tok_s": 558.925, "samples": 5}
+    ]
+  },
+  "gates": {
+    "bench_return_code": 0,
+    "parser_return_code": 0,
+    "exact_cell_ready": true,
+    "true_n_depth_zero_present": true,
+    "tg128_rows_exact": true,
+    "cleanup_passed": true,
+    "historical_featured_speeds_are_immutable": true
+  },
+  "estimate_calibration": {
+    "superseded_snapshot": "data/qwen38-q4kxl-q8-tp1-context-estimate-v1.json",
+    "classification": "grade D historical estimate; superseded for these seven selectors",
+    "relative_actual_minus_estimate_pct": [7.374, 7.285, 7.246, 7.281, 7.144, 7.245, 6.858],
+    "finding": "All seven measured decode values were above the frozen estimate by 6.858% to 7.374%; retain this as same-artifact calibration evidence."
+  },
+  "evidence_sha256": {
+    "exact_depth_receipt": "ef4fccb64907be0e0644359c914204d979314effb2c8d24e559be4e9d4426d1c",
+    "terminal_receipt": "02426ca068ca5dd83fe123b7ef1002603fc505b71352ee032f17eab6a54cd78f",
+    "llama_bench_json": "7f534365a991f093f896cf12f635edee37f024818d412e48d8e904c16411441c",
+    "metadata": "87881042ae7c6e9ecffc82d282f3126b0ecab95a9fde61d468791ac16a092bc9"
+  },
+  "publication_boundary": "These seven cells replace only the same-selector grade-D estimates. They do not replace serving, quality, speculative, graph, or featured speed results."
+}

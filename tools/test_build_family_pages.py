@@ -1538,9 +1538,9 @@ class FamilyCoverageTest(unittest.TestCase):
             contracts["qwen38-tp1-llamacpp-sycl-target-matrix"]
         )
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q38_target), 35
+            sum(cell["state"] == "lab-measured" for cell in q38_target), 42
         )
-        self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 7)
+        self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 0)
         self.assertTrue(all(cell["selectors"]["mtp"] == 0 for cell in q38_target))
 
         rendered = MODULE.family_page(family)
@@ -1554,12 +1554,13 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
         self.assertIn("111/1,771 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "41", "measured"),
-            ("estimated", "7", "estimated"),
+            ("lab-measured", "48", "measured"),
             ("quarantined", "63", "quarantined"),
             ("missing", "1,660", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
+        self.assertNotIn('class="is-estimated"', overview_html)
+        self.assertNotIn("7 estimates", rendered)
 
         self.assertEqual(
             family["initial_view_ids"],
