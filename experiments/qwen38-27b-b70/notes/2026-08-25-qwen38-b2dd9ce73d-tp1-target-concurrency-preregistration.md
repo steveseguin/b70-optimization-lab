@@ -46,3 +46,21 @@ neural.download recipe must pin and link the model revision, image/runtime,
 required patches, command, environment, benchmark definition, quality state,
 and structured evidence using repository-relative links. Machine-local model,
 cache, and result paths are lab execution details, not portable user commands.
+
+From a clean clone on the four-B70 measuring host, the packet is checked and
+launched with repository-relative commands:
+
+```bash
+python3 -B experiments/qwen38-27b-b70/scripts/run-20260825-qwen38-b2dd-tp1-target-concurrency-r1.py --check
+python3 -B experiments/qwen38-27b-b70/scripts/run-20260825-qwen38-b2dd-tp1-target-concurrency-r1.py --plan --attempt 1
+python3 -B experiments/qwen38-27b-b70/scripts/run-20260825-qwen38-b2dd-tp1-target-concurrency-r1.py \
+  --execute --stage c1-eager-target-ladder --attempt 1 \
+  --ack 'RUN qwen38-b2dd9ce73d-tp1-target-concurrency-20260825-r1 c1-eager-target-ladder r1'
+```
+
+The launcher itself resolves the lab checkout, pins all repository inputs by
+hash, verifies the exact local image ID and all model files, creates fresh
+roots, and records the fully expanded Docker argument vector. Users do not
+need to copy this lab-only launcher into a deployment recipe; the eventual
+package guide will translate the validated configuration into portable
+download, image/build, launch, benchmark, and cleanup steps.
