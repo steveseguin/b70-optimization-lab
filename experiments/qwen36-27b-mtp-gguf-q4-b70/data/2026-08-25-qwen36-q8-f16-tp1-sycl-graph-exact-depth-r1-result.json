@@ -1,0 +1,25 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-exact-depth-r1-result.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+  "state": "failed",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+  "terminal_receipt_sha256": "2115c6cd32e1595e5ae00c49613d2fb185813b41f7a5eee0e2a30696c52ce23a",
+  "launched_depths": [0],
+  "depth_0": {
+    "llama_bench_returned_rows": true,
+    "bench_json_sha256": "771dd4a6062089248e195f3228cb03e954b6fbf28ca1e03392dece0ec8b2ff2d",
+    "stderr_sha256": "f36c1511a54053756888fc399880efbad4cb712cff6e3c4ffeabed984d4aa6ea",
+    "graph_enabled_build_and_environment_printed": true,
+    "q8_graph_computes": 665,
+    "sycl_graph_info_events_visible": false,
+    "sycl_graph_summary_visible": false
+  },
+  "failure": "expected exactly one SYCL graph summary, got 0",
+  "root_cause": "llama-bench default logging suppresses GGML_LOG_INFO graph action and destructor-summary lines; the packet omitted llama-bench -v.",
+  "cleanup_passed": true,
+  "retry_requirement": "Distinct create-only R2 packet adding only llama-bench -v while preserving every source, model, build, runtime, context, and authority field.",
+  "curve_authorized": false,
+  "site_publication_authorized": false,
+  "record_or_submission_authorized": false,
+  "protected_graph_off_values_may_be_replaced": false
+}
