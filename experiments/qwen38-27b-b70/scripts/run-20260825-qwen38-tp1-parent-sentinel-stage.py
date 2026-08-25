@@ -162,6 +162,79 @@ def git_clean_pushed_main() -> str:
     return head
 
 
+def git_post_run_snapshot(launch_head: str) -> dict[str, Any]:
+    """Verify the local checkout without making later remote movement gating.
+
+    A live-origin equality check belongs at launch. Once the immutable image,
+    inputs, dependencies, and local checkout have passed that gate, unrelated
+    commits pushed while a GPU stage is running cannot mutate the active
+    process. The transition is still recorded in every receipt.
+    """
+    status = require_ok(
+        command(
+            [
+                "git",
+                "-C",
+                str(REPO),
+                "status",
+                "--porcelain=v1",
+                "--untracked-files=all",
+            ]
+        ),
+        "post-run git status",
+    )
+    branch = require_ok(
+        command(["git", "-C", str(REPO), "branch", "--show-current"]),
+        "post-run git branch",
+    )
+    head = require_ok(
+        command(["git", "-C", str(REPO), "rev-parse", "HEAD"]),
+        "post-run git HEAD",
+    )
+    cached_origin = require_ok(
+        command(["git", "-C", str(REPO), "rev-parse", "origin/main"]),
+        "post-run cached origin/main",
+    )
+    live_result = command(
+        [
+            "git",
+            "-C",
+            str(REPO),
+            "ls-remote",
+            "--exit-code",
+            "origin",
+            "refs/heads/main",
+        ],
+        timeout=30,
+    )
+    live_origin = (
+        live_result.stdout.strip().split()[0]
+        if live_result.returncode == 0 and live_result.stdout.strip()
+        else None
+    )
+    return {
+        "launch_head": launch_head,
+        "post_run_head": head,
+        "post_run_branch": branch,
+        "post_run_worktree_clean": not bool(status),
+        "cached_origin_main_after": cached_origin,
+        "live_origin_main_after": live_origin,
+        "local_lab_unchanged": not bool(status)
+        and branch == "main"
+        and head == launch_head,
+        "live_origin_query_passed": live_origin is not None,
+        "live_origin_query_error": (
+            None
+            if live_origin is not None
+            else (live_result.stderr.strip() or f"rc={live_result.returncode}")
+        ),
+        "live_origin_advanced_during_stage": (
+            live_origin != launch_head if live_origin is not None else None
+        ),
+        "remote_movement_is_non_gating_after_launch": True,
+    }
+
+
 def layout(stage: Stage, attempt: int) -> tuple[Path, Path, int]:
     if attempt < 1 or attempt > 99:
         raise CampaignError("attempt must be between 1 and 99")
@@ -435,6 +508,7 @@ def full_quality_passes(quality: dict[str, Any] | None) -> tuple[bool, dict[str,
     exact = quality.get("exact_cases")
     repeats = quality.get("repeat_case")
     long_case = quality.get("long_context_case")
+    comparisons = quality.get("baseline_comparisons")
     cached: list[Any] = []
     if isinstance(exact, list):
         cached += [((row.get("usage") or {}).get("prompt_tokens_details") or {}).get("cached_tokens") for row in exact]
@@ -454,10 +528,14 @@ def full_quality_passes(quality: dict[str, Any] | None) -> tuple[bool, dict[str,
         and len(repeats.get("unique_hashes") or []) == 1
         and isinstance(long_case, dict)
         and long_case.get("pass") is True
+        and quality.get("baseline_status") == "passed"
+        and isinstance(comparisons, dict)
+        and len(comparisons) == 24
+        and all(value is True for value in comparisons.values())
         and len(cached) == 16
         and all(value == 0 for value in cached)
     )
-    return passed, {"exact_count": len(exact) if isinstance(exact, list) else None, "repeat_count": repeats.get("repeats") if isinstance(repeats, dict) else None, "cached_zero_count": sum(value == 0 for value in cached), "cached_count": len(cached), "baseline_match_all": quality.get("baseline_match_all"), "pass_all": quality.get("pass_all")}
+    return passed, {"exact_count": len(exact) if isinstance(exact, list) else None, "repeat_count": repeats.get("repeats") if isinstance(repeats, dict) else None, "cached_zero_count": sum(value == 0 for value in cached), "cached_count": len(cached), "baseline_comparison_count": len(comparisons) if isinstance(comparisons, dict) else None, "baseline_status": quality.get("baseline_status"), "baseline_match_all": quality.get("baseline_match_all"), "pass_all": quality.get("pass_all")}
 
 
 def evaluate(stage: Stage, output: Path, attempt: int, runner_rc: int) -> tuple[str, bool, dict[str, Any]]:
@@ -568,12 +646,23 @@ def execute(stage: Stage, attempt: int, acknowledgement: str) -> int:
     if not post_cleanup_ok:
         state, terminal = "failed", False
     gates["post_cleanup_passed"] = post_cleanup_ok
-    final_head = git_clean_pushed_main()
-    if final_head != head:
+    try:
+        post_git = git_post_run_snapshot(head)
+    except CampaignError as exc:
+        post_git = {
+            "launch_head": head,
+            "local_lab_unchanged": False,
+            "post_run_check_error": str(exc),
+            "remote_movement_is_non_gating_after_launch": True,
+        }
+    if not post_git["local_lab_unchanged"]:
         state, terminal = "failed", False
         gates["lab_head_unchanged"] = False
     else:
         gates["lab_head_unchanged"] = True
+    gates["live_origin_advanced_during_stage"] = post_git.get(
+        "live_origin_advanced_during_stage"
+    )
     receipt = {
         "schema": "neural.download.tp1-parent-sentinel-stage-receipt.v1",
         "campaign_id": CAMPAIGN_ID,
@@ -586,6 +675,7 @@ def execute(stage: Stage, attempt: int, acknowledgement: str) -> int:
         "cache": str(cache),
         "port": port,
         "lab_git_head": head,
+        "git_state": post_git,
         "runner_return_code": runner_rc,
         "gates": gates,
         "protected_speed_evidence": {"manifest_sha256": PROTECTED_MANIFEST_SHA256, "canonical_values_sha256": PROTECTED_VALUES_SHA256, "historical_values_are_immutable": True, "speed_was_not_a_correctness_gate": True},
@@ -594,6 +684,235 @@ def execute(stage: Stage, attempt: int, acknowledgement: str) -> int:
     }
     write_receipt(output, receipt)
     print(json.dumps({"stage": stage.stage_id, "attempt": attempt, "state": state, "terminal": terminal, "receipt": str(output / "stage-receipt.json")}, sort_keys=True))
+    return 0 if state == "passed" else 20 if terminal else 1
+
+
+def infer_existing_runner_rc(output: Path) -> int:
+    final = output / "final.status"
+    if not final.is_file():
+        raise CampaignError("existing stage has no final.status")
+    value = final.read_text(encoding="utf-8").strip()
+    if value == "pass":
+        return 0
+    match = re.fullmatch(r"fail rc=(\d+)", value)
+    if match:
+        return int(match.group(1))
+    raise CampaignError(f"unrecognized existing final.status: {value!r}")
+
+
+def existing_evidence_hashes(stage: Stage, output: Path) -> dict[str, str]:
+    names = [
+        "bench.json",
+        "canary.json",
+        "final.status",
+        "server-startup.log",
+        "cache-manifest.post.sha256",
+        "input-files.sha256",
+    ]
+    if stage.mode == "full":
+        names.append("quality.json")
+    hashes: dict[str, str] = {}
+    for name in names:
+        path = output / name
+        if not path.is_file():
+            raise CampaignError(f"existing stage evidence is incomplete: {name}")
+        hashes[name] = sha256_file(path)
+    return hashes
+
+
+def verify_existing_phase_statuses(stage: Stage, output: Path) -> dict[str, int]:
+    expected = {"canary": 0, "bench": 0}
+    if stage.mode == "full":
+        expected["quality"] = 0
+    observed: dict[str, int] = {}
+    for phase, expected_rc in expected.items():
+        path = output / f"{phase}.status"
+        if not path.is_file():
+            raise CampaignError(f"existing stage has no {phase}.status")
+        match = re.fullmatch(
+            rf"{re.escape(phase)}_rc=(\d+)",
+            path.read_text(encoding="utf-8").strip(),
+        )
+        if not match:
+            raise CampaignError(f"unrecognized existing {phase}.status")
+        observed[phase] = int(match.group(1))
+        if observed[phase] != expected_rc:
+            raise CampaignError(f"existing {phase} phase did not pass")
+    return observed
+
+
+def verify_existing_run_identity(
+    stage: Stage, output: Path, launch_head: str
+) -> dict[str, Any]:
+    identity_path = output / "identity.env"
+    if not identity_path.is_file():
+        raise CampaignError("existing stage has no identity.env")
+    identity: dict[str, str] = {}
+    for line in identity_path.read_text(encoding="utf-8").splitlines():
+        if "=" in line:
+            key, value = line.split("=", 1)
+            identity[key] = value
+    expected_image = (
+        "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296"
+    )
+    expected = {
+        "lab_git_head": launch_head,
+        "tp": "1",
+        "mtp": str(stage.mtp),
+        "kv": stage.kv,
+        "expected_image_id": expected_image,
+        "resolved_image_id": expected_image,
+        "pull_source_image": "0",
+        "require_graph_capture": "1" if stage.graph else "0",
+    }
+    mismatches = {
+        key: {"expected": value, "observed": identity.get(key)}
+        for key, value in expected.items()
+        if identity.get(key) != value
+    }
+    if mismatches:
+        raise CampaignError(f"existing identity mismatch: {mismatches}")
+    source = load_json(output / "source-identity.json")
+    if source is None:
+        raise CampaignError("existing stage has no source-identity.json")
+    if (source.get("vllm") or {}).get("head") != "b2dd9ce73dce2ad09007d1db5c171454118981d7":
+        raise CampaignError("existing stage vLLM source identity mismatch")
+    if (source.get("kernel") or {}).get("head") != "1e90ffa672ba02f17a909da11838a4c55b199783":
+        raise CampaignError("existing stage XPU kernel identity mismatch")
+    manifest_path = output / "input-files.sha256"
+    if not manifest_path.is_file():
+        raise CampaignError("existing stage has no input-files.sha256")
+    verified_inputs: dict[str, str] = {}
+    for line in manifest_path.read_text(encoding="utf-8").splitlines():
+        digest, raw_path = line.split(maxsplit=1)
+        path = Path(raw_path)
+        if not path.is_file() or sha256_file(path) != digest:
+            raise CampaignError(f"existing stage input hash mismatch: {path}")
+        verified_inputs[str(path)] = digest
+    if len(verified_inputs) != 6:
+        raise CampaignError("existing stage input manifest must contain six files")
+    return {
+        "identity_env_sha256": sha256_file(identity_path),
+        "source_identity_sha256": sha256_file(output / "source-identity.json"),
+        "image_id": expected_image,
+        "vllm_head": (source.get("vllm") or {}).get("head"),
+        "xpu_kernel_head": (source.get("kernel") or {}).get("head"),
+        "verified_input_count": len(verified_inputs),
+        "verified_inputs": verified_inputs,
+    }
+
+
+def finalize_existing(
+    stage: Stage,
+    attempt: int,
+    acknowledgement: str,
+    launch_head: str,
+) -> int:
+    """Write a receipt for a complete stage stopped only by the old remote gate.
+
+    This is report-only: it never launches Docker or a model process and refuses
+    to overwrite a receipt. It exists for the completed p2 r1 arm whose old
+    wrapper checked live origin a second time after cleanup.
+    """
+    expected_ack = (
+        f"FINALIZE {CAMPAIGN_ID} {stage.stage_id} r{attempt} FROM {launch_head}"
+    )
+    if acknowledgement != expected_ack:
+        raise CampaignError(f"exact acknowledgement required: {expected_ack}")
+    if stage.stage_id != "p2-eager-control" or attempt != 1:
+        raise CampaignError("existing-output finalization is scoped only to p2 r1")
+    if not re.fullmatch(r"[0-9a-f]{40}", launch_head):
+        raise CampaignError("--launch-head must be a full lowercase commit hash")
+    dependency_hashes = verify_dependencies()
+    receipt_head = git_clean_pushed_main()
+    require_ok(
+        command(
+            ["git", "-C", str(REPO), "cat-file", "-e", f"{launch_head}^{{commit}}"]
+        ),
+        "launch commit identity",
+    )
+    require_ok(
+        command(
+            [
+                "git",
+                "-C",
+                str(REPO),
+                "merge-base",
+                "--is-ancestor",
+                launch_head,
+                receipt_head,
+            ]
+        ),
+        "launch commit ancestry",
+    )
+    verify_stage_order(stage, attempt)
+    output, cache, port = layout(stage, attempt)
+    if not output.is_dir() or not cache.is_dir():
+        raise CampaignError("existing stage output/cache is missing")
+    if (output / "stage-receipt.json").exists():
+        raise CampaignError("existing stage receipt already exists")
+    ensure_post_cleanup(port)
+    runner_rc = infer_existing_runner_rc(output)
+    phase_statuses = verify_existing_phase_statuses(stage, output)
+    identity = verify_existing_run_identity(stage, output, launch_head)
+    state, terminal, gates = evaluate(stage, output, attempt, runner_rc)
+    gates["post_cleanup_passed"] = True
+    gates["lab_head_unchanged"] = True
+    gates["lab_head_unchanged_basis"] = (
+        "original launch preflight passed at launch_head; the original wrapper "
+        "reached its post-run live-origin check with the same local HEAD and a "
+        "clean worktree, then aborted only because live origin/main advanced"
+    )
+    gates["live_origin_advanced_during_stage"] = True
+    evidence_hashes = existing_evidence_hashes(stage, output)
+    receipt = {
+        "schema": "neural.download.tp1-parent-sentinel-stage-receipt.v1",
+        "campaign_id": CAMPAIGN_ID,
+        "stage_id": stage.stage_id,
+        "rank": stage.rank,
+        "attempt": attempt,
+        "state": state,
+        "terminal": terminal,
+        "output": str(output),
+        "cache": str(cache),
+        "port": port,
+        "lab_git_head": launch_head,
+        "runner_return_code": runner_rc,
+        "gates": gates,
+        "protected_speed_evidence": {
+            "manifest_sha256": PROTECTED_MANIFEST_SHA256,
+            "canonical_values_sha256": PROTECTED_VALUES_SHA256,
+            "historical_values_are_immutable": True,
+            "speed_was_not_a_correctness_gate": True,
+        },
+        "frozen_dependency_sha256": dependency_hashes,
+        "next_action": next_action_for(stage, state),
+        "finalization": {
+            "mode": "report-only-existing-output",
+            "reason": "old post-run live-origin equality gate aborted before receipt",
+            "gpu_or_container_launch_performed": False,
+            "launch_head": launch_head,
+            "receipt_git_head": receipt_head,
+            "launch_head_is_ancestor_of_receipt_head": True,
+            "phase_return_codes": phase_statuses,
+            "identity": identity,
+            "evidence_sha256": evidence_hashes,
+        },
+    }
+    write_receipt(output, receipt)
+    print(
+        json.dumps(
+            {
+                "stage": stage.stage_id,
+                "attempt": attempt,
+                "state": state,
+                "terminal": terminal,
+                "receipt": str(output / "stage-receipt.json"),
+                "launch_performed": False,
+            },
+            sort_keys=True,
+        )
+    )
     return 0 if state == "passed" else 20 if terminal else 1
 
 
@@ -637,13 +956,21 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="validate frozen inputs only; never launches")
     parser.add_argument("--plan", action="store_true", help="render the stage plan; never launches")
     parser.add_argument("--execute", action="store_true", help="execute exactly one stage")
+    parser.add_argument(
+        "--finalize-existing",
+        action="store_true",
+        help="report-only receipt recovery for a complete existing stage; never launches",
+    )
     parser.add_argument("--stage", choices=tuple(STAGES))
     parser.add_argument("--attempt", type=int, default=1)
     parser.add_argument("--ack", default="")
+    parser.add_argument("--launch-head", default="")
     args = parser.parse_args()
-    selected = sum((args.check, args.plan, args.execute))
+    selected = sum((args.check, args.plan, args.execute, args.finalize_existing))
     if selected != 1:
-        parser.error("choose exactly one of --check, --plan, or --execute")
+        parser.error(
+            "choose exactly one of --check, --plan, --execute, or --finalize-existing"
+        )
     if args.check:
         hashes = verify_dependencies()
         print(json.dumps({"campaign_id": CAMPAIGN_ID, "status": "PASS", "launch_performed": False, "dependencies": hashes}, sort_keys=True))
@@ -652,7 +979,13 @@ def main() -> int:
         print(json.dumps(plan_payload(args.attempt), indent=2, sort_keys=True))
         return 0
     if not args.stage:
-        parser.error("--execute requires --stage")
+        parser.error("--execute/--finalize-existing requires --stage")
+    if args.finalize_existing:
+        if not args.launch_head:
+            parser.error("--finalize-existing requires --launch-head")
+        return finalize_existing(
+            STAGES[args.stage], args.attempt, args.ack, args.launch_head
+        )
     return execute(STAGES[args.stage], args.attempt, args.ack)
 
 

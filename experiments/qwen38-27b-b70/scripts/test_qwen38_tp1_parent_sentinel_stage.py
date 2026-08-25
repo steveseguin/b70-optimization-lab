@@ -228,6 +228,102 @@ class LauncherTests(unittest.TestCase):
             with self.assertRaisesRegex(LAUNCHER.CampaignError, "must be clean"):
                 LAUNCHER.git_clean_pushed_main()
 
+    def test_post_run_remote_advance_is_recorded_but_non_gating(self) -> None:
+        launch_head = "a" * 40
+        live_head = "b" * 40
+
+        def post_command(args, **_kwargs):
+            joined = " ".join(args)
+            if "status --porcelain" in joined:
+                stdout = ""
+            elif "branch --show-current" in joined:
+                stdout = "main\n"
+            elif "rev-parse HEAD" in joined or "rev-parse origin/main" in joined:
+                stdout = launch_head + "\n"
+            elif "ls-remote" in joined:
+                stdout = f"{live_head}\trefs/heads/main\n"
+            else:
+                raise AssertionError(args)
+            return subprocess.CompletedProcess(args, 0, stdout, "")
+
+        with mock.patch.object(LAUNCHER, "command", side_effect=post_command):
+            snapshot = LAUNCHER.git_post_run_snapshot(launch_head)
+        self.assertTrue(snapshot["local_lab_unchanged"])
+        self.assertTrue(snapshot["live_origin_advanced_during_stage"])
+        self.assertTrue(snapshot["remote_movement_is_non_gating_after_launch"])
+
+    def test_post_run_local_change_remains_gating(self) -> None:
+        launch_head = "a" * 40
+
+        def post_command(args, **_kwargs):
+            joined = " ".join(args)
+            if "status --porcelain" in joined:
+                stdout = "changed-file\n"
+            elif "branch --show-current" in joined:
+                stdout = "main\n"
+            elif "rev-parse HEAD" in joined or "rev-parse origin/main" in joined:
+                stdout = launch_head + "\n"
+            elif "ls-remote" in joined:
+                stdout = f"{launch_head}\trefs/heads/main\n"
+            else:
+                raise AssertionError(args)
+            return subprocess.CompletedProcess(args, 0, stdout, "")
+
+        with mock.patch.object(LAUNCHER, "command", side_effect=post_command):
+            snapshot = LAUNCHER.git_post_run_snapshot(launch_head)
+        self.assertFalse(snapshot["local_lab_unchanged"])
+        self.assertFalse(snapshot["live_origin_advanced_during_stage"])
+
+    def test_existing_runner_rc_is_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            output = Path(raw)
+            (output / "final.status").write_text("pass\n")
+            self.assertEqual(LAUNCHER.infer_existing_runner_rc(output), 0)
+            (output / "final.status").write_text("fail rc=17\n")
+            self.assertEqual(LAUNCHER.infer_existing_runner_rc(output), 17)
+            (output / "final.status").write_text("unknown\n")
+            with self.assertRaisesRegex(LAUNCHER.CampaignError, "unrecognized"):
+                LAUNCHER.infer_existing_runner_rc(output)
+
+    def test_existing_phase_statuses_require_zero(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            output = Path(raw)
+            for phase in ("canary", "bench", "quality"):
+                (output / f"{phase}.status").write_text(f"{phase}_rc=0\n")
+            self.assertEqual(
+                LAUNCHER.verify_existing_phase_statuses(
+                    LAUNCHER.STAGES["p2-eager-control"], output
+                ),
+                {"canary": 0, "bench": 0, "quality": 0},
+            )
+            (output / "quality.status").write_text("quality_rc=2\n")
+            with self.assertRaisesRegex(LAUNCHER.CampaignError, "did not pass"):
+                LAUNCHER.verify_existing_phase_statuses(
+                    LAUNCHER.STAGES["p2-eager-control"], output
+                )
+
+    def test_full_quality_requires_all_24_frozen_comparisons(self) -> None:
+        cached_zero = {"usage": {"prompt_tokens_details": {"cached_tokens": 0}}}
+        quality = {
+            "pass_all": True,
+            "baseline_status": "passed",
+            "baseline_match_all": True,
+            "baseline_comparisons": {f"gate-{index}": True for index in range(24)},
+            "exact_cases": [cached_zero | {"pass": True} for _ in range(7)],
+            "repeat_case": {
+                "pass": True,
+                "repeats": 8,
+                "unique_hashes": ["stable"],
+                "runs": [cached_zero for _ in range(8)],
+            },
+            "long_context_case": cached_zero | {"pass": True},
+        }
+        passed, details = LAUNCHER.full_quality_passes(quality)
+        self.assertTrue(passed)
+        self.assertEqual(details["baseline_comparison_count"], 24)
+        quality["baseline_comparisons"].pop("gate-23")
+        self.assertFalse(LAUNCHER.full_quality_passes(quality)[0])
+
     def test_default_invocation_is_inert(self) -> None:
         result = subprocess.run(
             [
