@@ -878,6 +878,12 @@ The promoted target-only two-B70 Q4_K_M result is:
 - LocalMaxxing: approved as
   [`cmsy530c70cpwms01bl1sjk6g`](https://www.localmaxxing.com/en/runs/cmsy530c70cpwms01bl1sjk6g).
 
+An independent exact-depth HTTP coverage packet is now preregistered for this
+same Q4_K_M TP2 identity at 2K/4K/8K/16K/24K/32K active prompt tokens. It is
+additive coverage only: grade-C repeated-token shape evidence, one HTTP slot,
+F16 KV, cache disabled, and no interpolation or inherited TP1 points. See the
+[preregistration](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp2-http-depth-r1-preregistration.md).
+
 The 2026-08-15 Q4_K fusion passed a clean build, mechanism counter, same-binary
 control, and complete 12-prompt cold suite. It improved the conventional
 median by `+1.701%`; all complete output hashes remained exact. The Q8_0 TP2
