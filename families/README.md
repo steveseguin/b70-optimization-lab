@@ -62,6 +62,14 @@ Measurements do not transfer across weight revisions. Source patches and
 configuration findings may transfer when the manifest records the shared
 architecture boundary and the later revision independently exercises the path.
 
+Quantized exports of the same base weights are not separate weight revisions
+or architecture siblings. They may be listed under the base revision as
+`quantized_artifacts`; each child pins its quantization, repository, available
+artifact revision, and evidence. Measurements and packets name that child with
+`artifact_id` while retaining the common base `revision`. A missing artifact
+revision stays explicitly unpinned rather than turning the quantized repository
+into a surrogate model revision.
+
 Allowed public coverage states are `lab-measured`, `lab-screened`,
 `community-measured`, `estimated`, `closed`, `quarantined`, `unsupported`, and
 `missing`. `lab-screened` means a bounded boot/canary observation without a

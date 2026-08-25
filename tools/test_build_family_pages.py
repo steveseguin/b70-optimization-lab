@@ -411,6 +411,158 @@ class FamilyCoverageTest(unittest.TestCase):
         phi = json.loads((MODULE.ROOT / "families/phi-4.json").read_text())
         self.assertEqual([item["id"] for item in phi["weight_revisions"]], ["phi4-mini-instruct-7ff82c2"])
 
+    def test_qwen35_quantizations_share_one_fail_closed_base_revision(self) -> None:
+        family = json.loads((MODULE.ROOT / "families/qwen-35b.json").read_text())
+        self.assertEqual(self._errors(family), [])
+        self.assertEqual(
+            [revision["id"] for revision in family["weight_revisions"]],
+            ["qwen3.6-35b-a3b-base"],
+        )
+        self.assertEqual(family["model_variants"], [])
+        revision = family["weight_revisions"][0]
+        self.assertNotIn("repository", revision)
+        self.assertNotIn("revision", revision)
+        artifacts = {
+            artifact["id"]: artifact
+            for artifact in revision["quantized_artifacts"]
+        }
+        self.assertEqual(
+            set(artifacts),
+            {
+                "qwen36-35b-quark-w8a8-cced565",
+                "qwen36-35b-autoround-w4a16",
+            },
+        )
+        self.assertNotIn("revision", artifacts["qwen36-35b-autoround-w4a16"])
+        self.assertIn(
+            "not captured",
+            artifacts["qwen36-35b-autoround-w4a16"]["revision_status"],
+        )
+        expected_artifact = {
+            "Quark W8A8 INT8": "qwen36-35b-quark-w8a8-cced565",
+            "AutoRound W4A16 INT4": "qwen36-35b-autoround-w4a16",
+        }
+        for measurement in MODULE.records(family):
+            self.assertEqual(measurement["revision"], "qwen3.6-35b-a3b-base")
+            self.assertEqual(
+                measurement["artifact_id"], expected_artifact[measurement["variant"]]
+            )
+
+        coverage = {view["id"]: view for view in family["coverage_views"]}
+        quark_mtp = coverage["qwen35-current-mtp-by-tp"]
+        self.assertEqual(quark_mtp["rows"], [0, 1, 2, 3, 4])
+        self.assertEqual(quark_mtp["columns"], [1, 2, 4])
+        self.assertEqual(len(quark_mtp["cells"]), 15)
+        self.assertTrue(
+            all(
+                quark_mtp["cells"][f"{depth}:{tp}"]["state"] == "missing"
+                for depth in (2, 3, 4)
+                for tp in (1, 2, 4)
+            )
+        )
+        quark_context = coverage["qwen35-quark-context-by-tp"]
+        self.assertEqual(
+            quark_context["rows"],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertEqual(quark_context["columns"], [1, 2, 4])
+        self.assertEqual(len(quark_context["cells"]), 21)
+        self.assertTrue(
+            all(
+                cell["state"] == "missing"
+                for cell in quark_context["cells"].values()
+            )
+        )
+        mtp = coverage["qwen35-autoround-mtp-by-tp"]
+        self.assertEqual(mtp["rows"], [0, 1, 2, 3, 4])
+        self.assertEqual(mtp["columns"], [1, 2, 4])
+        self.assertEqual(len(mtp["cells"]), 15)
+        self.assertEqual(mtp["cells"]["0:1"]["state"], "lab-screened")
+        self.assertTrue(
+            all(
+                cell["state"] == "missing"
+                for key, cell in mtp["cells"].items()
+                if key != "0:1"
+            )
+        )
+        context = coverage["qwen35-autoround-context-by-tp"]
+        self.assertEqual(
+            context["rows"], [0, 2048, 4096, 8192, 16384, 24576, 32768]
+        )
+        self.assertEqual(context["columns"], [1, 2, 4])
+        self.assertEqual(len(context["cells"]), 21)
+        self.assertTrue(
+            all(cell["state"] == "missing" for cell in context["cells"].values())
+        )
+
+        packets = {packet["id"]: packet for packet in family["packets"]}
+        research = packets["qwen36-35b-autoround-w4a16-research"]
+        self.assertEqual(research["grades"]["evidence"]["grade"], "C")
+        self.assertEqual(
+            research["featured_metric"]["measurement_id"],
+            "qwen35-autoround-tp1-single-r16",
+        )
+        self.assertEqual(
+            family["family_closures"][0]["selectors"]["artifact_id"],
+            "qwen36-35b-quark-w8a8-cced565",
+        )
+        rendered = MODULE.family_page(family)
+        self.assertEqual(rendered.count("· quantized artifact</span>"), 2)
+
+        mismatched = deepcopy(family)
+        mismatched["run_measurements"][0]["artifact_id"] = (
+            "qwen36-35b-autoround-w4a16"
+        )
+        self._assert_error(self._errors(mismatched), "artifact", "quantization")
+
+        for collection, index in (
+            ("run_measurements", 0),
+            ("series_measurements", 0),
+            ("packets", 0),
+        ):
+            with self.subTest(missing_artifact_binding=collection):
+                missing = deepcopy(family)
+                del missing[collection][index]["artifact_id"]
+                self._assert_error(
+                    self._errors(missing), "must name a quantized artifact"
+                )
+
+        missing_view_binding = deepcopy(family)
+        del missing_view_binding["coverage_views"][0]["fixed_selectors"][
+            "artifact_id"
+        ]
+        self._assert_error(
+            self._errors(missing_view_binding), "must bind quantized artifact"
+        )
+
+        unknown_view_artifact = deepcopy(family)
+        unknown_view_artifact["coverage_views"][1]["fixed_selectors"][
+            "artifact_id"
+        ] = "unknown-artifact"
+        self._assert_error(
+            self._errors(unknown_view_artifact),
+            "coverage",
+            "unknown quantized artifact",
+        )
+
+        missing_closure_binding = deepcopy(family)
+        del missing_closure_binding["family_closures"][0]["selectors"][
+            "artifact_id"
+        ]
+        self._assert_error(
+            self._errors(missing_closure_binding), "must bind quantized artifact"
+        )
+
+        unknown_closure_artifact = deepcopy(family)
+        unknown_closure_artifact["family_closures"][0]["selectors"][
+            "artifact_id"
+        ] = "unknown-artifact"
+        self._assert_error(
+            self._errors(unknown_closure_artifact),
+            "family closure",
+            "unknown quantized artifact",
+        )
+
     def test_legacy_mtp_tp_view_keeps_defaults(self) -> None:
         family = self._family()
 
@@ -1124,6 +1276,10 @@ class FamilyCoverageTest(unittest.TestCase):
             "id": "result-a",
             "manifest": "results/result-a/README.md",
         }
+        repro = {
+            "id": "repro-a",
+            "manifest": "repro/repro-a/README.md",
+        }
         self.assertEqual(
             MODULE.packet_manifest_target(package),
             ("packet-a.html", "Open deployment packet"),
@@ -1131,6 +1287,37 @@ class FamilyCoverageTest(unittest.TestCase):
         href, label = MODULE.packet_manifest_target(result)
         self.assertTrue(href.endswith("results/result-a/README.md"))
         self.assertEqual(label, "Read the lab report")
+        self.assertEqual(MODULE.packet_link_kind({}, repro), "guide")
+        href, label = MODULE.packet_manifest_target(repro)
+        self.assertTrue(href.endswith("repro/repro-a/README.md"))
+        self.assertEqual(label, "Open reproduction guide")
+
+    def test_repro_packet_keeps_reproduction_promise(self) -> None:
+        family = self._family()
+        measurement = family["run_measurements"][0]
+        measurement["metrics"]["decode_tok_s"] = [42.0]
+        measurement["workload"] = "p66/o128 fixed rapid suite"
+        packet = self._research_packet()
+        packet["manifest"] = "repro/repro-a/README.md"
+        family["packets"] = [packet]
+
+        rendered = MODULE.packet_cards(family)
+        self.assertIn("Reproduce <b>42 tok/s</b>", rendered)
+        self.assertNotIn("Measured evidence: <b>42 tok/s</b>", rendered)
+        self.assertNotIn("not a step-by-step install guide", rendered)
+
+    def test_report_packet_describes_measured_evidence_not_reproduction(self) -> None:
+        family = self._family()
+        measurement = family["run_measurements"][0]
+        measurement["metrics"]["decode_tok_s"] = [42.0]
+        measurement["workload"] = "p66/o128 fixed rapid suite"
+        measurement["evidence"] = "https://example.test/research-a.json"
+        family["packets"] = [self._research_packet()]
+
+        rendered = MODULE.packet_cards(family)
+        self.assertIn("Measured evidence: <b>42 tok/s</b>", rendered)
+        self.assertNotIn("Reproduce <b>42 tok/s</b>", rendered)
+        self.assertIn("not a step-by-step install guide", rendered)
 
     def test_local_evidence_cannot_escape_repository(self) -> None:
         for path in ("/etc/passwd", "../outside-evidence.json"):

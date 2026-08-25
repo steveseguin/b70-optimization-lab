@@ -671,6 +671,7 @@ def curve_identity(record: dict[str, Any], x_from: str) -> dict[str, Any]:
             "measurement_class",
             "workload",
             "model_revision",
+            "artifact_id",
             "identity",
             "runtime_identity",
         )
@@ -720,6 +721,10 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
     )
 
     revision_ids: set[str] = set()
+    artifact_bound_revision_ids: set[str] = set()
+    artifact_ids: set[str] = set()
+    artifact_revision_ids: dict[str, str] = {}
+    artifacts_by_id: dict[str, dict[str, Any]] = {}
     for revision in revisions:
         revision_id = revision.get("id")
         if not isinstance(revision_id, str) or not revision_id:
@@ -738,6 +743,44 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                 f"{label}: revision {revision_id} capability grade",
             )
         )
+        artifacts = object_list(
+            revision.get("quantized_artifacts"),
+            f"{label}: revision {revision_id} quantized_artifacts",
+            errors,
+        )
+        if artifacts:
+            artifact_bound_revision_ids.add(revision_id)
+        for artifact in artifacts:
+            artifact_id = artifact.get("id")
+            if not isinstance(artifact_id, str) or not SLUG_RE.fullmatch(artifact_id):
+                errors.append(
+                    f"{label}: revision {revision_id} quantized artifact needs a lowercase hyphenated id"
+                )
+                continue
+            if artifact_id in artifact_ids:
+                errors.append(f"{label}: duplicate quantized artifact id {artifact_id}")
+            artifact_ids.add(artifact_id)
+            artifact_revision_ids[artifact_id] = revision_id
+            artifacts_by_id[artifact_id] = artifact
+            for field in ("label", "quantization", "repository", "evidence"):
+                if not isinstance(artifact.get(field), str) or not artifact.get(field):
+                    errors.append(
+                        f"{label}: quantized artifact {artifact_id}.{field} is required"
+                    )
+            artifact_revision = artifact.get("revision")
+            if artifact_revision is not None and (
+                not isinstance(artifact_revision, str) or not artifact_revision
+            ):
+                errors.append(
+                    f"{label}: quantized artifact {artifact_id}.revision must be a non-empty string"
+                )
+            if artifact_revision is None and (
+                not isinstance(artifact.get("revision_status"), str)
+                or not artifact.get("revision_status")
+            ):
+                errors.append(
+                    f"{label}: quantized artifact {artifact_id} needs revision or explicit revision_status"
+                )
 
     declared_revision_ids = set(revision_ids)
     for variant in model_variants:
@@ -767,6 +810,28 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
             )
         if measurement.get("revision") not in declared_revision_ids:
             errors.append(f"{label}: {mid} references unknown revision {measurement.get('revision')}")
+        artifact_id = measurement.get("artifact_id")
+        if (
+            measurement.get("revision") in artifact_bound_revision_ids
+            and artifact_id is None
+        ):
+            errors.append(
+                f"{label}: {mid} must name a quantized artifact for revision {measurement.get('revision')}"
+            )
+        elif artifact_id is not None:
+            if not isinstance(artifact_id, str) or artifact_id not in artifacts_by_id:
+                errors.append(f"{label}: {mid} references unknown quantized artifact {artifact_id}")
+            else:
+                if artifact_revision_ids[artifact_id] != measurement.get("revision"):
+                    errors.append(
+                        f"{label}: {mid} artifact {artifact_id} does not belong to revision {measurement.get('revision')}"
+                    )
+                artifact_quant = artifacts_by_id[artifact_id].get("quantization")
+                measured_quant = measurement.get("quantization") or measurement.get("variant")
+                if measured_quant != artifact_quant:
+                    errors.append(
+                        f"{label}: {mid} quantization {measured_quant} does not match artifact {artifact_id} ({artifact_quant})"
+                    )
         if not isinstance(measurement.get("evidence"), str) or not measurement.get("evidence"):
             errors.append(f"{label}: {mid} lacks evidence")
         for field in ("profile_id", "measurement_class", "promotion_status", "quality_scope"):
@@ -862,6 +927,26 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
         revision = packet.get("revision")
         if not isinstance(revision, str) or revision not in declared_revision_ids:
             errors.append(f"{label}: packet {packet_id} references unknown revision {revision}")
+        artifact_id = packet.get("artifact_id")
+        if revision in artifact_bound_revision_ids and artifact_id is None:
+            errors.append(
+                f"{label}: packet {packet_id} must name a quantized artifact for revision {revision}"
+            )
+        elif artifact_id is not None:
+            if not isinstance(artifact_id, str) or artifact_id not in artifacts_by_id:
+                errors.append(
+                    f"{label}: packet {packet_id} references unknown quantized artifact {artifact_id}"
+                )
+            else:
+                if artifact_revision_ids[artifact_id] != revision:
+                    errors.append(
+                        f"{label}: packet {packet_id} artifact {artifact_id} does not belong to revision {revision}"
+                    )
+                artifact_quant = artifacts_by_id[artifact_id].get("quantization")
+                if packet.get("quantization") != artifact_quant:
+                    errors.append(
+                        f"{label}: packet {packet_id} quantization does not match artifact {artifact_id}"
+                    )
         grades = packet.get("grades")
         if grades is not None and not isinstance(grades, dict):
             errors.append(f"{label}: packet {packet_id} grades must be an object")
@@ -1117,6 +1202,55 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                 errors.append(
                     f"{label}: coverage {coverage_id} fixed_selectors must be scalar selector key/value pairs"
                 )
+            selector_revision = fixed_selectors.get("revision")
+            selector_artifact = fixed_selectors.get("artifact_id")
+            artifact_axis = next(
+                (
+                    axis
+                    for axis in (row_axis, column_axis)
+                    if axis.get("key") == "artifact_id"
+                ),
+                None,
+            )
+            if (
+                selector_revision in artifact_bound_revision_ids
+                and selector_artifact is None
+                and artifact_axis is None
+            ):
+                errors.append(
+                    f"{label}: coverage {coverage_id} must bind quantized artifact for revision {selector_revision}"
+                )
+            if selector_artifact is not None:
+                if (
+                    not isinstance(selector_artifact, str)
+                    or selector_artifact not in artifacts_by_id
+                ):
+                    errors.append(
+                        f"{label}: coverage {coverage_id} references unknown quantized artifact {selector_artifact}"
+                    )
+                elif (
+                    isinstance(selector_revision, str)
+                    and artifact_revision_ids[selector_artifact] != selector_revision
+                ):
+                    errors.append(
+                        f"{label}: coverage {coverage_id} artifact {selector_artifact} does not belong to revision {selector_revision}"
+                    )
+            if artifact_axis is not None:
+                for selector_artifact in artifact_axis["values"]:
+                    if (
+                        not isinstance(selector_artifact, str)
+                        or selector_artifact not in artifacts_by_id
+                    ):
+                        errors.append(
+                            f"{label}: coverage {coverage_id} axis references unknown quantized artifact {selector_artifact}"
+                        )
+                    elif (
+                        isinstance(selector_revision, str)
+                        and artifact_revision_ids[selector_artifact] != selector_revision
+                    ):
+                        errors.append(
+                            f"{label}: coverage {coverage_id} artifact {selector_artifact} does not belong to revision {selector_revision}"
+                        )
 
         expected = {
             f"{row}:{column}"
@@ -1196,6 +1330,7 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                 packet = packet_by_id[packet_id]
                 packet_claims = {
                     "revision": packet.get("revision"),
+                    "artifact_id": packet.get("artifact_id"),
                     "variant": packet.get("quantization"),
                     "runtime": packet.get("runtime"),
                 }
@@ -1294,6 +1429,31 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
             errors.append(f"{label}: family closure needs a reason")
         if not isinstance(closure.get("evidence"), str) or not closure.get("evidence"):
             errors.append(f"{label}: family closure needs evidence")
+        if isinstance(selectors, dict):
+            selector_revision = selectors.get("revision")
+            selector_artifact = selectors.get("artifact_id")
+            if (
+                selector_revision in artifact_bound_revision_ids
+                and selector_artifact is None
+            ):
+                errors.append(
+                    f"{label}: family closure must bind quantized artifact for revision {selector_revision}"
+                )
+            if selector_artifact is not None:
+                if (
+                    not isinstance(selector_artifact, str)
+                    or selector_artifact not in artifacts_by_id
+                ):
+                    errors.append(
+                        f"{label}: family closure references unknown quantized artifact {selector_artifact}"
+                    )
+                elif (
+                    isinstance(selector_revision, str)
+                    and artifact_revision_ids[selector_artifact] != selector_revision
+                ):
+                    errors.append(
+                        f"{label}: family closure artifact {selector_artifact} does not belong to revision {selector_revision}"
+                    )
 
     for rel in local_evidence_paths(family):
         path = safe_repo_path(rel)
@@ -1786,6 +1946,8 @@ def packet_link_kind(family: dict[str, Any], packet: dict[str, Any]) -> str:
     manifest = str(packet.get("manifest") or "")
     if manifest.startswith("packages/") and manifest.endswith("package.json"):
         return "guide"
+    if manifest.startswith("repro/") and manifest.endswith("README.md"):
+        return "guide"
     return "report"
 
 
@@ -1856,7 +2018,12 @@ def packet_manifest_target(packet: dict[str, Any]) -> tuple[str, str]:
 
 def measurement_identity(measurement: dict[str, Any]) -> str:
     config = measurement.get("config") or {}
-    bits = [measurement.get("revision"), measurement.get("variant"), measurement.get("runtime")]
+    bits = [
+        measurement.get("revision"),
+        measurement.get("artifact_id"),
+        measurement.get("variant"),
+        measurement.get("runtime"),
+    ]
     tp = config.get("tp") or config.get("cards")
     if tp is not None:
         bits.append(f"TP{tp}")
@@ -2028,10 +2195,17 @@ def packet_cards(family: dict[str, Any]) -> str:
             else ""
         )
         cards_n = packet.get("cards")
-        promise = (
-            f'Reproduce <b>{esc(value)} {esc(unit)}</b>' + (f' on {esc(cards_n)}\u00d7 B70' if cards_n else '')
-            if value != "\u2014" else "Evidence packet"
-        )
+        link_kind = packet_link_kind(family, packet)
+        if value == "\u2014":
+            promise = "Evidence packet"
+        elif link_kind == "guide":
+            promise = f'Reproduce <b>{esc(value)} {esc(unit)}</b>' + (
+                f' on {esc(cards_n)}\u00d7 B70' if cards_n else ""
+            )
+        else:
+            promise = f'Measured evidence: <b>{esc(value)} {esc(unit)}</b>' + (
+                f' on {esc(cards_n)}\u00d7 B70' if cards_n else ""
+            )
         cards.append(
             f'''<a class="packet-card" href="{esc(href)}"{attrs}>
   <div class="packet-top"><span>{esc(packet.get('revision'))}</span><span class="packet-badges"><b>{esc(packet.get('evidence_level'))}</b>{headroom}</span></div>
@@ -2063,6 +2237,14 @@ def family_page(family: dict[str, Any]) -> str:
         + (f' · {esc(revision.get("role"))}' if revision.get("role") else "")
         + "</span>"
         for revision in revisions
+    )
+    lineage += "".join(
+        f'<span title="{esc(artifact.get("repository"))} · '
+        f'{esc(artifact.get("revision") or artifact.get("revision_status"))}">'
+        f'{esc(artifact.get("label") or artifact.get("id"))} · quantized artifact</span>'
+        for revision in revisions
+        for artifact in revision.get("quantized_artifacts") or []
+        if isinstance(artifact, dict)
     )
     architecture_bits = []
     if architecture.get("class"):
