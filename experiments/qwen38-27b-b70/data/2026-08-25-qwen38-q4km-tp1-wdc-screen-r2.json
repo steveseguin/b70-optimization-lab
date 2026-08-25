@@ -1,8 +1,9 @@
 {
-  "campaign_id": "qwen38-q4km-tp1-wdc-screen-20260825-r1",
-  "status": "failed-before-measurement",
-  "objective": "Test whether the source's shape-guarded Q4_K oneDNN weight-decompression GEMM transfers to Qwen3.8 27B batched decode without sacrificing the one-sequence raw rate.",
+  "campaign_id": "qwen38-q4km-tp1-wdc-screen-20260825-r2",
+  "status": "preregistered-after-r1-premeasurement-oom",
+  "objective": "Retry the Q4_K-only WDC screen after removing a test-only force-reorder hook and explicitly disabling the integration branch's unrelated default-on q8_0 WDC path.",
   "control_evidence": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-batched-ladder-20260825-r1-attempt2/summary.json",
+  "failed_predecessor": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp1-wdc-screen-20260825-r1-attempt1/raw.log",
   "source": {
     "base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
     "applied_diff_sha256": "f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e"
@@ -13,9 +14,13 @@
       "GGML_SYCL_Q4K_NIBBLE_PLANE=1"
     ],
     "runtime": [
+      "GGML_SYCL_WDC=off",
       "GGML_SYCL_WDC_Q4K=1",
-      "GGML_SYCL_REORDER_IN_GEMM=1",
-      "GGML_SYCL_FORCE_REORDER=1"
+      "GGML_SYCL_REORDER_IN_GEMM=1"
+    ],
+    "explicitly_absent": [
+      "GGML_SYCL_FORCE_REORDER",
+      "q8_0 WDC"
     ],
     "all_other_matrix_and_runtime_values": "same as the completed DNN-off ladder"
   },
@@ -28,6 +33,5 @@
   },
   "quality_boundary": "Raw random-token mechanism evidence only. Endpoint sequential-oracle comparison is mandatory before any user-facing promotion.",
   "build_script": "experiments/qwen38-27b-b70/scripts/build-qwen38-q4km-tp1-wdc-batched-r1.sh",
-  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh",
-  "outcome": "Attempt 1 produced no benchmark row. It exhausted device memory while FORCE_REORDER made a temporary copy of the 1.27-billion-element q6_K output tensor. The failed capture is retained; the correction is separately frozen in r2."
+  "run_script": "experiments/qwen38-27b-b70/scripts/run-qwen38-q4km-tp1-batched-ladder.sh"
 }

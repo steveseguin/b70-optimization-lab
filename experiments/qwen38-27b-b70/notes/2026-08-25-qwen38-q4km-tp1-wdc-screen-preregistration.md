@@ -37,3 +37,14 @@ RUNTIME_PROFILE=wdc-q4k NPL=1,64 ATTEMPT=1 \
 Even a large raw gain remains mechanism evidence. Promotion requires the
 separate endpoint concurrency harness with complete outputs and each prompt's
 same-server sequential oracle.
+
+## R1 outcome
+
+R1 failed during warm-up before producing a benchmark row: the test-only
+`GGML_SYCL_FORCE_REORDER=1` setting caused a full temporary reorder copy of
+the 1.27-billion-element q6_K output tensor after Q4_K WDC planes had consumed
+the remaining VRAM. The raw failure is retained in
+[`attempt1/raw.log`](../data/qwen38-q4km-tp1-wdc-screen-20260825-r1-attempt1/raw.log).
+The corrected, Q4_K-only retry was separately
+[preregistered as r2](2026-08-25-qwen38-q4km-tp1-wdc-screen-r2-preregistration.md);
+r1 will not be overwritten or described as a speed result.

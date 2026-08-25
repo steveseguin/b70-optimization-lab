@@ -24,8 +24,9 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail 'ATTEMPT must be positive'
 [[ "${campaign}" =~ ^[a-z0-9][a-z0-9-]*$ ]] || fail 'invalid CAMPAIGN_ID'
 [[ "${npl}" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]] || fail 'invalid NPL list'
-[[ "${runtime_profile}" == control || "${runtime_profile}" == wdc-q4k ]] || \
-  fail 'RUNTIME_PROFILE must be control or wdc-q4k'
+[[ "${runtime_profile}" == control || "${runtime_profile}" == wdc-q4k || \
+   "${runtime_profile}" == wdc-q4k-r1 ]] || \
+  fail 'RUNTIME_PROFILE must be control, wdc-q4k, or wdc-q4k-r1'
 
 # Take the same host-wide locks used by the other B70 campaigns before any
 # process scan.  The per-GPU lock alone does not exclude launchers from older
@@ -93,7 +94,7 @@ export GGML_SYCL_FUSED_CONV_SILU_L2=1
 export GGML_SYCL_FUSE_EXT=31
 export GGML_SYCL_QDEDUP_STATS=1
 export GGML_SYCL_MMQ_Q4K_REORDER=1
-if [[ "${runtime_profile}" == wdc-q4k ]]; then
+if [[ "${runtime_profile}" == wdc-q4k || "${runtime_profile}" == wdc-q4k-r1 ]]; then
   grep -qx 'GGML_SYCL_DNN:BOOL=ON' "${build_dir}/CMakeCache.txt" || \
     fail 'wdc-q4k requires a GGML_SYCL_DNN=ON build'
   grep -Eq '^CMAKE_CXX_FLAGS:STRING=.*GGML_SYCL_Q4K_NIBBLE_PLANE=1' \
@@ -101,7 +102,16 @@ if [[ "${runtime_profile}" == wdc-q4k ]]; then
     fail 'wdc-q4k requires GGML_SYCL_Q4K_NIBBLE_PLANE=1 at compile time'
   export GGML_SYCL_WDC_Q4K=1
   export GGML_SYCL_REORDER_IN_GEMM=1
-  export GGML_SYCL_FORCE_REORDER=1
+  if [[ "${runtime_profile}" == wdc-q4k-r1 ]]; then
+    # Preserves the failed r1 recipe exactly. FORCE_REORDER is a test hook and
+    # made the 1.27B-element q6_K output tensor exceed peak VRAM during reorder.
+    export GGML_SYCL_FORCE_REORDER=1
+  else
+    # The integration branch defaults q8_0 WDC on when this is unset. Keep the
+    # amended screen type-pure: the per-type Q4_K door above overrides this.
+    export GGML_SYCL_WDC=off
+    unset GGML_SYCL_FORCE_REORDER
+  fi
 fi
 unset GGML_SYCL_FUSED_MMVQ_SWIGLU_Q4K_POISON GGML_SYCL_FUSED_GDN_STATE_IO_POISON
 unset GGML_SYCL_FUSED_CONV_STATE_IO_POISON GGML_SYCL_GDN_RMS_TAIL_POISON
