@@ -1,0 +1,218 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-embedded-mtp-q8-exact-depth-result.v1",
+  "campaign_id": "qwen36-mtpq8-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+  "state": "passed-raw-graph-cells-quality-pending-negative-optimization",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+  "packet": {
+    "preregistration": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-sycl-graph-exact-depth-r1-prereg.json",
+      "sha256": "13496bb700d3382baa647f5a9a49b37c1b3c773da5939cf31d45cdc9379c6446"
+    },
+    "runner": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-f16-tp1-sycl-graph-exact-depth-r1.py",
+      "sha256": "e66f0cfe63fcedefe27e7f7e984674cd32fa1587262e93123049ab6711d6781e"
+    },
+    "launch_git_head": "46f144cfaa063df3c3924a96e9dac3f6819c8440"
+  },
+  "raw_artifacts": {
+    "exact-depth-receipt.json": "5107f7c3f0009d3c5ae65638969e4d4cdd0649229c7d57fce17a6dac3b9e53b8",
+    "graph-evidence.json": "5e5bab106e96161dec98a83174c418cf2db7a841feeb3bc01de388e00af56ce8",
+    "llama-bench-0.json": "fd9c2685bcdf9e7ec2aad4c14f1227d1eaec2d9319dca10b6a040a716405a70e",
+    "llama-bench-0.stderr.log": "05977d27b970b85a0247329ecbc6d91067a2bb6cd9a328556424f301657095c5",
+    "llama-bench-2048.json": "77fac87715f6f73b6e9655a7ee3ba9660e1101fbe47302e0e0e05848eb088a5b",
+    "llama-bench-2048.stderr.log": "646ea0142ad908d6de51f14eb9f18ac7a58d3d7909fa9290321165139ae2ed0f",
+    "llama-bench-4096.json": "afb8975d957c652054311c0b6288a203910c179dca4306b61dac917111e2857a",
+    "llama-bench-4096.stderr.log": "ccaf77837ce2e91318c38660bb81d4b3b4f9083ebd146bd57b961085c19f0b1a",
+    "llama-bench-8192.json": "61255dfac02b39f129387e36db46dd7a0577224ea3c28452cbc554361c3e8a16",
+    "llama-bench-8192.stderr.log": "a0221b8c551cda16c3550202f9c38e20a3e186c73e6447edcf58390a2705aa11",
+    "llama-bench-16384.json": "041a269a3d6bee8b6365c39d248cfe9da40779919d6f3249d4de0c893a05b2c3",
+    "llama-bench-16384.stderr.log": "8715f5040b9a4240975cc0c8be62566f6c491c5e94a82343805dc19c4d9f7d00",
+    "llama-bench-24576.json": "7827192af3f3a349e466a7075334130b2913fa1011769d36847ac6fbc03e999e",
+    "llama-bench-24576.stderr.log": "33ef23d5f34c710a5b97be8483168c606a540180c94f8070338175b083c04979",
+    "llama-bench-32768.json": "71cef9b1d0299e3174391097efbd1d135ecd65483663b4fbced42a7db0dd165d",
+    "llama-bench-32768.stderr.log": "bfba05b824b461e85e8c53cd06b37b7ea42ebf99a4650c805594dedaf1f1773c",
+    "llama-bench.json": "3a61385b8f486aff039a5671f85706ee9434856a933a891955fca5dd0c73dbfa",
+    "metadata.json": "c9dce57ede32265d514f255491e057ea39102ff895ab8a806728f2ec4c9ea9bd",
+    "parser.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "parser.stdout.json": "25823f8c178196becc391192f2b791d1cf51d1c1d3ed87fbf85bcde6d660382c",
+    "terminal-receipt.json": "adfda358c46e35007a8b91ea47336d441f48bcfcd0aaa61480b2f8638f082c3b"
+  },
+  "identity": {
+    "selectors": {
+      "revision": "qwen3.6-27b",
+      "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
+      "quantization": "Q8_0",
+      "runtime_family": "llama.cpp SYCL",
+      "tp": 1,
+      "mtp": 0,
+      "graph_mode": "SYCL",
+      "kv": "f16",
+      "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+    },
+    "model": {
+      "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+      "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+      "path": "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+      "size_bytes": 29047084160,
+      "sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "direct_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "ordinary_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "embedded_mtp_capability": true
+    },
+    "source": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port",
+      "base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+      "required_modified_paths": {
+        "ggml/src/ggml-sycl/common.hpp": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+        "ggml/src/ggml-sycl/ggml-sycl.cpp": "25152136d7e7ff9e96822127f320f08ccb4fa200af607f33afaa05a318cbbd6a"
+      },
+      "patch_chain_in_order": [
+        {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-evidence-port-20260825.patch", "sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892"},
+        {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-pointer-stable-r2-20260825.patch", "sha256": "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3"},
+        {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-capacity-scaled-r3-20260825.patch", "sha256": "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"}
+      ]
+    },
+    "build": {
+      "root": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port",
+      "required_cmake": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "GGML_SYCL": "ON",
+        "GGML_SYCL_DEVICE_ARCH": "bmg_g31",
+        "GGML_SYCL_DNN": "OFF",
+        "GGML_SYCL_F16": "ON",
+        "GGML_SYCL_GRAPH": "ON",
+        "GGML_SYCL_HOST_MEM_FALLBACK": "OFF",
+        "GGML_SYCL_SUPPORT_LEVEL_ZERO_API": "ON",
+        "GGML_SYCL_TARGET": "INTEL"
+      },
+      "binary": {
+        "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-bench",
+        "size_bytes": 545160,
+        "sha256": "8ea8fd14e6ac0c4a4b3a711db8997189d677df2a4f7f88d20609f59ca463a55e"
+      },
+      "graph_backend": {
+        "soname": "libggml-sycl.so.0",
+        "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-sycl.so.0.19.0",
+        "size_bytes": 329322096,
+        "sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2"
+      },
+      "effective_dso_closure": {
+        "count": 32,
+        "canonical_json_sha256": "381e09a3e6a3f9c932930f20d5d4cc7fd67eef2b2c6bfb39308724f13b570720",
+        "identity_receipt": "metadata.json",
+        "identity_receipt_sha256": "c9dce57ede32265d514f255491e057ea39102ff895ab8a806728f2ec4c9ea9bd"
+      }
+    }
+  },
+  "cells": [
+    {
+      "active_context_tokens": 0,
+      "prefill_avg_tok_s": 900.476067,
+      "decode_avg_tok_s": 19.363945,
+      "ordered_graph_summaries": [
+        {"phase": "prefill", "classification": "capture-and-replay-without-cache-full", "device": 0, "requested": 24, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 16, "cache_miss": 8, "cache_full": 0, "direct_replay": 16, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 24},
+        {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 3, "cache_limit": 8, "cache_hit": 638, "cache_miss": 3, "cache_full": 0, "direct_replay": 638, "recorded": 3, "created": 3, "updated": 0, "recreated": 0, "replayed": 641}
+      ]
+    },
+    {
+      "active_context_tokens": 2048,
+      "prefill_avg_tok_s": 880.567469,
+      "decode_avg_tok_s": 19.181638,
+      "ordered_graph_summaries": [
+        {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 28, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 28, "cache_full": 20, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+        {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+      ]
+    },
+    {
+      "active_context_tokens": 4096,
+      "prefill_avg_tok_s": 857.097412,
+      "decode_avg_tok_s": 19.077044,
+      "ordered_graph_summaries": [
+        {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 32, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 32, "cache_full": 24, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+        {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+      ]
+    },
+    {
+      "active_context_tokens": 8192,
+      "prefill_avg_tok_s": 819.594441,
+      "decode_avg_tok_s": 18.846108,
+      "ordered_graph_summaries": [
+        {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 40, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 40, "cache_full": 32, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+        {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+      ]
+    },
+    {
+      "active_context_tokens": 16384,
+      "prefill_avg_tok_s": 755.794333,
+      "decode_avg_tok_s": 18.413817,
+      "ordered_graph_summaries": [
+        {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 56, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 56, "cache_full": 48, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+        {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+      ]
+    },
+    {
+      "active_context_tokens": 24576,
+      "prefill_avg_tok_s": 700.160452,
+      "decode_avg_tok_s": 18.006725,
+      "ordered_graph_summaries": [
+        {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 72, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 72, "cache_full": 64, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+        {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+      ]
+    },
+    {
+      "active_context_tokens": 32768,
+      "prefill_avg_tok_s": 650.649241,
+      "decode_avg_tok_s": 17.616797,
+      "ordered_graph_summaries": [
+        {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 88, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 88, "cache_full": 80, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+        {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+      ]
+    }
+  ],
+  "graph_off_comparison": {
+    "reference": {
+      "measurement_id": "q36-mtpq8-tp1-kv-f16-context",
+      "result_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-exact-depth-result.json",
+      "result_sha256": "bec6f1427a0fd02b029522af54eccaa320e86eedc4e0b7d12d1b1c3effdb7b7e"
+    },
+    "same_artifact_selectors_and_workload_except_graph_mode": true,
+    "per_depth_percent_delta_graph_on_vs_graph_off": [
+      {"active_context_tokens": 0, "prefill_percent": -0.839769, "decode_percent": -2.374435},
+      {"active_context_tokens": 2048, "prefill_percent": -1.886635, "decode_percent": -2.323728},
+      {"active_context_tokens": 4096, "prefill_percent": -1.614176, "decode_percent": -2.193868},
+      {"active_context_tokens": 8192, "prefill_percent": -1.295272, "decode_percent": -2.190681},
+      {"active_context_tokens": 16384, "prefill_percent": -0.966917, "decode_percent": -2.132152},
+      {"active_context_tokens": 24576, "prefill_percent": -1.018106, "decode_percent": -2.072322},
+      {"active_context_tokens": 32768, "prefill_percent": -1.119294, "decode_percent": -2.029776}
+    ],
+    "unweighted_mean_percent_delta": {"prefill_percent": -1.248596, "decode_percent": -2.188137},
+    "classification": "negative-optimization-result; graph-on is slower at every measured depth for both prefill and decode",
+    "authority": "coverage evidence only; do not replace the faster protected graph-off values"
+  },
+  "result": {
+    "raw_cell_count": 7,
+    "exact_depth_receipt_status": "passed",
+    "graph_classification": "verified-capture-and-replay-with-mixed-partial-prefill",
+    "decode_graph_classification_all_cells": "verified-capture-and-replay",
+    "prefill_phase_disclosure": "Depth 0 is fully graph-certified. Depths 2048 through 32768 are mixed partial-graph prefill because cache 8 records eight shapes and reports the remaining distinct prefill shapes as cache_full; every decode phase is fully capture-and-replay certified.",
+    "performance_classification": "negative-versus-matching-graph-off",
+    "quality_status": "pending"
+  },
+  "terminal": {
+    "receipt_sha256": "adfda358c46e35007a8b91ea47336d441f48bcfcd0aaa61480b2f8638f082c3b",
+    "created_at_utc": "2026-08-25T23:33:11.383920+00:00",
+    "launched_depths": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "cleanup_passed": true,
+    "error": null
+  },
+  "authority": {
+    "raw_cells": 7,
+    "coverage_evidence_preserved": true,
+    "site_publication_authorized": false,
+    "quality_claim_authorized": false,
+    "record_or_submission_authorized": false,
+    "graph_estimates_used": false,
+    "protected_graph_off_values_replaced": false,
+    "historical_featured_speeds_are_immutable": true
+  }
+}
