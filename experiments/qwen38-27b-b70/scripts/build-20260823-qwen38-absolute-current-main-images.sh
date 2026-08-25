@@ -11,7 +11,7 @@ vllm_source=${VLLM_SOURCE:-/home/steve/src/vllm-current-main}
 kernel_source=${KERNEL_SOURCE:-/home/steve/src/vllm-xpu-kernels-current-main}
 build_parent=${BUILD_PARENT:-/home/steve/builds}
 archive_parent=${ARCHIVE_PARENT:-/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/current-main-builds}
-kernel_artifact_dir=${KERNEL_ARTIFACT_DIR:-/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/upstream-kernel-baaa05bb-artifact-9508328924}
+kernel_artifact_dir=${KERNEL_ARTIFACT_DIR:-/mnt/usb-models/llm-optimization-artifacts/qwen-current-main-transition-20260823/upstream-kernel-1e90ffa6-artifact-9546354902}
 sudo_password_file=${SUDO_PASSWORD_FILE:-/home/steve/SUDOPASSWORD.txt}
 
 base_tag=vllm/vllm-openai-xpu:nightly
@@ -21,13 +21,13 @@ vllm_upstream_url=https://github.com/vllm-project/vllm.git
 kernel_upstream_url=https://github.com/vllm-project/vllm-xpu-kernels.git
 base_vllm_head=f94666b60d4c58ec0807d22c837cfae322a1dde9
 base_kernel_version=0.1.13.2
-kernel_run_id=32692290527
-kernel_artifact_id=9508328924
-kernel_artifact_name=vllm-xpu-kernels--20260824-050903
-expected_kernel_artifact_digest=sha256:ce94da86eb14e61673a10db5c8a2c3fffb49a5f61ec9d36c210601062f887f10
-expected_kernel_artifact_size_bytes=475965714
-expected_kernel_build_info_sha256=640dc7b2abee85037aa99eac4955e5092ccebd4479c07d0cafd0ea174e13dc15
-expected_kernel_wheel_sha256=7b886fa814469aef8904118729f31f2fe77559f3c5219bd0ecf799a904387483
+kernel_run_id=32798686770
+kernel_artifact_id=9546354902
+kernel_artifact_name=vllm-xpu-kernels--20260825-014754
+expected_kernel_artifact_digest=sha256:086116f01e838105167b4dfc408be0b3d4e924d7db9d616a0c00b67a69b24ecb
+expected_kernel_artifact_size_bytes=344792738
+expected_kernel_build_info_sha256=21d3850a885b1aa848016bd0e2330daafa6d083d6117ba6ea70a623afe6fb470
+expected_kernel_wheel_sha256=f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6
 rust_extension_sha256=7cb3df775d2183d2c1a7d3025a8f49b9a79548d157993969fc0c49f46c725c52
 rust_frontend_sha256=a415187153b2a8b10683494c7b22472158b487c69023713313542d4bc09c4c92
 batch_invariant_config_path=vllm/model_executor/determinism/batch_invariant_configs.py
@@ -252,7 +252,7 @@ verify_official_kernel_artifact() {
   unzip -t "$wheel" >/dev/null || die 'kernel wheel ZIP integrity failed'
   [[ $(wheel_metadata_value "$wheel" Name) == vllm-xpu-kernels ]] ||
     die 'kernel wheel package name mismatch'
-  [[ $(wheel_metadata_value "$wheel" Version) == 0.1.dev1+gbaaa05bb4 ]] ||
+  [[ $(wheel_metadata_value "$wheel" Version) == 0.1.dev1+g1e90ffa67 ]] ||
     die 'unexpected official kernel wheel version'
   for member in \
     _C.abi3.so \
