@@ -1,0 +1,40 @@
+{
+  "suite_id": "qwen38-q4km-tp1-http-smallctx-v1",
+  "version": 1,
+  "description": "Short, distinct user prompts for the fixed 64-slot HTTP throughput profile. The concurrency harness adds a unique validation-case suffix to every request.",
+  "metric": "Measured aggregate completion tokens divided by synchronized HTTP batch wall time; output identity is checked against a sequential oracle for every expanded prompt.",
+  "prompts": [
+    {
+      "id": "cache",
+      "prompt": "Explain one practical reason a cache invalidation rule can cause stale API responses."
+    },
+    {
+      "id": "index",
+      "prompt": "Name two checks to perform before adding a database index to production."
+    },
+    {
+      "id": "rollback",
+      "prompt": "Describe a safe rollback trigger for a staged software deployment."
+    },
+    {
+      "id": "benchmark",
+      "prompt": "Explain why an inference benchmark should record uncached and cached results separately."
+    },
+    {
+      "id": "monitoring",
+      "prompt": "List three useful signals for monitoring a local model-serving endpoint."
+    },
+    {
+      "id": "testing",
+      "prompt": "Give one deterministic test for detecting cross-request response contamination."
+    },
+    {
+      "id": "capacity",
+      "prompt": "Explain the tradeoff between context length and concurrent model-server slots."
+    },
+    {
+      "id": "evidence",
+      "prompt": "State what evidence is needed before publishing a claimed inference speedup."
+    }
+  ]
+}

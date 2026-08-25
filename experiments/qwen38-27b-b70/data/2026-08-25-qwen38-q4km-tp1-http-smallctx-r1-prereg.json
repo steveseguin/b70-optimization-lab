@@ -1,0 +1,54 @@
+{
+  "schema": "neural.download.qwen38-q4km-http-concurrency-preregistration.v1",
+  "campaign_id": "qwen38-q4km-tp1-http-smallctx-20260825-r1",
+  "state": "preregistered-not-launched",
+  "created_at": "2026-08-25",
+  "purpose": "Measure an output-qualified one-B70 HTTP aggregate-decode curve using deliberately small per-slot contexts.",
+  "identity": {
+    "model": "ggml-org/Qwen3.8-27B-GGUF/Qwen3.8-27B-Q4_K_M.gguf",
+    "model_revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "runtime_base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "applied_source_diff_sha256": "f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e",
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "compiler": "Intel oneAPI 2026.1.1 reconstruction",
+    "gpu": "one Intel Arc Pro B70 32 GiB",
+    "topology": "TP1 / one visible Level Zero device",
+    "speculation": "off"
+  },
+  "server_profile": {
+    "context_tokens_total": 32768,
+    "parallel_slots": 64,
+    "nominal_context_tokens_per_slot": 512,
+    "kv_cache": "f16",
+    "flash_attention": true,
+    "batch_size": 2048,
+    "ubatch_size": 256,
+    "cache_ram_mib": 0,
+    "context_checkpoints": 0,
+    "fit": "off",
+    "continuous_batching": true
+  },
+  "measurement_contract": {
+    "api": "OpenAI-compatible streaming completions",
+    "concurrency": [1, 2, 4, 8, 16, 32, 64],
+    "repeats": 2,
+    "max_output_tokens": 128,
+    "ignore_eos": true,
+    "temperature": 0,
+    "seed": 42,
+    "sequential_oracle_for_every_expanded_prompt": true,
+    "required_completion_tokens_per_request": 128,
+    "required_cached_tokens": 0,
+    "required_exact_output_hashes": true,
+    "aggregate_metric": "sum(completion_tokens) / synchronized HTTP batch wall time",
+    "no_interpolation_or_extrapolation": true,
+    "semantic_quality": "separate from this deterministic output-identity gate"
+  },
+  "classification": {
+    "qualified": "Every request returns 128 tokens, cached_tokens=0, and exactly matches its sequential same-server oracle.",
+    "measured_output_variant": "The service completes and timing is retained, but one or more output/cache/completeness gates fail.",
+    "unsupported": "The exact 64-slot profile cannot load or complete on one B70; retain the failure and do not fabricate a curve."
+  }
+}
