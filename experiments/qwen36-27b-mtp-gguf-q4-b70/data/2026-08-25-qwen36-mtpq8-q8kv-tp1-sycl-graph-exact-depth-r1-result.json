@@ -1,0 +1,200 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-embedded-mtp-q8-q8kv-exact-depth-result.v1",
+  "campaign_id": "qwen36-mtpq8-q8kv-tp1-sycl-graph-exact-depth-20260825-r1",
+  "state": "passed-raw-graph-cells-quality-pending-negative-optimization",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-q8kv-tp1-sycl-graph-exact-depth-20260825-r1",
+  "packet": {
+    "preregistration": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-q8kv-tp1-sycl-graph-exact-depth-r1-prereg.json",
+      "sha256": "7032fd8e6887efe9cf0ddaea127f37d9a71f358778d578d9437bb3fbd3ebafd5"
+    },
+    "runner": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-q8kv-tp1-sycl-graph-exact-depth-r1.py",
+      "sha256": "9282a3e2268dff75ba04bfe03ddf016c26e156e845f0805e915481f19d61b134"
+    },
+    "launch_git_head": "80ec51f871cb216bd496ee8180bf13046d6ee401"
+  },
+  "raw_artifacts": {
+    "exact-depth-receipt.json": "52a2a11922feb306c5ffaa43fefa96a9408329b3849ce5b143aa4e205e42283e",
+    "graph-evidence.json": "a1a58ca288670e9a9cf858ede40723f6750e2c831700c0b9ab94d03febe90f7d",
+    "llama-bench-0.json": "90de3d63c61bc124c5e56fe741cf92e3976e343a93790e228bacc4e0b1097e87",
+    "llama-bench-0.stderr.log": "dfad2720cdf151a3e8d128ee16ac200695d22ef2fdb33803231cca3bd5063e38",
+    "llama-bench-2048.json": "3437cb7e15aebf119deb0a4dc04872318e40cec38e9bf57567457bd6c2e2826e",
+    "llama-bench-2048.stderr.log": "9bd36b93bc5989c802f5e77d9bdd3470f84f25bdc0fd77d214ef77bfb49be259",
+    "llama-bench-4096.json": "1fbb56b56861985004dc13526ffbe92277f49bc18f38d8a57dca47b463d300c1",
+    "llama-bench-4096.stderr.log": "b2ee339e7f16590b08daa7062337d7e5fd4995ba14fddec776e0b32bc79d17bc",
+    "llama-bench-8192.json": "e0db64a0e0584f49f0a08ea8a885b28e1b2a7e24988f14bd67f84391152ef192",
+    "llama-bench-8192.stderr.log": "f9b667f571d8786d94f4d695e1c21c6658f6213aca40c1f9e12eeb5510313f7f",
+    "llama-bench-16384.json": "7aff81763103790f004f1adf690e9ddba3e42e6d24f68e9d8d5e9c68999c65a2",
+    "llama-bench-16384.stderr.log": "7b37ee13e240f58d5d2e03e11e96e6283dcef6b45519edc4ec04261a96603a9d",
+    "llama-bench-24576.json": "ac322b2d5baa12ec0951aa146ace76779a0a54ca05b89238ba3a949cca9178d1",
+    "llama-bench-24576.stderr.log": "25f051842d550661728a83d3f7bb5659077e578e21de04aeee76985e61615162",
+    "llama-bench-32768.json": "5a340eada21fa932e5cd5e3718adea9bf76db76d624296a659cc55294c644a76",
+    "llama-bench-32768.stderr.log": "7ca86d7c7b8e05ded7f0f7e5b0b38aa8a529c293844f02fc56b7921c4d8ca5a0",
+    "llama-bench.json": "7e49b7a9159c05084ebd359a72a12fd3948ec265c35b164397b1d0998de0f193",
+    "metadata.json": "7139eb68cb9dd7e8b0f5cb946685bbbe875d8d7b032eef1121dcc6df7bec4525",
+    "parser.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "parser.stdout.json": "5c0da60505759528043f8d6be1920b066ef2540c796073ae29e59aabd3f2558c",
+    "terminal-receipt.json": "b2d3633c4c8de8cc2059c4025bf568f11ccfb2a4d98138f7cab46e816689e11b"
+  },
+  "identity": {
+    "selectors": {
+      "revision": "qwen3.6-27b",
+      "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
+      "quantization": "Q8_0",
+      "runtime_family": "llama.cpp SYCL",
+      "tp": 1,
+      "mtp": 0,
+      "graph_mode": "SYCL",
+      "kv": "q8_0",
+      "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+    },
+    "model": {
+      "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+      "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+      "path": "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+      "size_bytes": 29047084160,
+      "sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "direct_and_ordinary_views_match": true,
+      "embedded_mtp_capability": true
+    },
+    "source": {
+      "base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+      "common_hpp_sha256": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+      "ggml_sycl_cpp_sha256": "25152136d7e7ff9e96822127f320f08ccb4fa200af607f33afaa05a318cbbd6a",
+      "patch_chain_sha256_in_order": [
+        "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892",
+        "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3",
+        "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"
+      ]
+    },
+    "build": {
+      "llama_bench_size_bytes": 545160,
+      "llama_bench_sha256": "8ea8fd14e6ac0c4a4b3a711db8997189d677df2a4f7f88d20609f59ca463a55e",
+      "graph_backend_size_bytes": 329322096,
+      "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2",
+      "effective_dso_closure_count": 32,
+      "effective_dso_closure_canonical_json_sha256": "381e09a3e6a3f9c932930f20d5d4cc7fd67eef2b2c6bfb39308724f13b570720"
+    },
+    "graph_environment": {
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+      "GGML_SYCL_ENABLE_GRAPH": "1",
+      "GGML_SYCL_GRAPH_CACHE_SIZE": "8"
+    }
+  },
+  "phase_counter_field_order": [
+    "requested", "cache_hit", "cache_miss", "cache_full", "direct_replay",
+    "recorded", "created", "updated", "recreated", "replayed"
+  ],
+  "cells": [
+    {
+      "active_context_tokens": 0,
+      "prefill_avg_tok_s": 894.194091,
+      "decode_avg_tok_s": 19.020734,
+      "prefill_classification": "capture-and-replay-without-cache-full",
+      "prefill_counters": [24, 16, 8, 0, 16, 8, 8, 0, 0, 24],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 638, 3, 0, 638, 3, 3, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 2048,
+      "prefill_avg_tok_s": 871.088091,
+      "decode_avg_tok_s": 17.938989,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [28, 0, 28, 20, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 4096,
+      "prefill_avg_tok_s": 849.455941,
+      "decode_avg_tok_s": 17.037098,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [32, 0, 32, 24, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 8192,
+      "prefill_avg_tok_s": 810.191617,
+      "decode_avg_tok_s": 15.466532,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [40, 0, 40, 32, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 16384,
+      "prefill_avg_tok_s": 747.505555,
+      "decode_avg_tok_s": 12.712723,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [56, 0, 56, 48, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 24576,
+      "prefill_avg_tok_s": 692.952118,
+      "decode_avg_tok_s": 10.833383,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [72, 0, 72, 64, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 32768,
+      "prefill_avg_tok_s": 644.910941,
+      "decode_avg_tok_s": 9.475383,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [88, 0, 88, 80, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    }
+  ],
+  "graph_off_comparison": {
+    "reference_measurement_id": "q36-mtpq8-tp1-kv-q8-context",
+    "result_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-q8kv-tp1-exact-depth-result.json",
+    "result_sha256": "34efb7b4b09bb7b11e523af983abfc96154599b5e0bdba70e854c80ca78eff03",
+    "percent_delta_field_order": ["active_context_tokens", "prefill_graph_on_vs_off", "decode_graph_on_vs_off"],
+    "per_depth_percent_delta": [
+      [0, -0.862827, -1.982965],
+      [2048, -2.185151, -1.827727],
+      [4096, -1.603094, -1.774483],
+      [8192, -1.607710, -1.575765],
+      [16384, -0.762414, -1.286403],
+      [24576, -1.160927, -1.185756],
+      [32768, -1.243386, -0.975553]
+    ],
+    "unweighted_mean_percent_delta": {
+      "prefill": -1.346501,
+      "decode": -1.515522
+    },
+    "wins": {"prefill_cells": 0, "decode_cells": 0},
+    "classification": "negative-optimization-result; graph-on is slower at all seven depths for both phases",
+    "authority": "coverage and mechanism evidence only; do not replace the faster protected graph-off values"
+  },
+  "result": {
+    "raw_cell_count": 7,
+    "exact_depth_receipt_status": "passed",
+    "graph_classification": "verified-capture-and-replay-with-mixed-partial-prefill",
+    "decode_graph_classification_all_cells": "verified-capture-and-replay",
+    "prefill_phase_disclosure": "Depth 0 is fully graph-certified. Depths 2048 through 32768 are mixed partial because cache 8 records eight shapes and reports the remaining distinct prefill shapes as cache_full.",
+    "performance_classification": "negative-versus-matching-graph-off",
+    "quality_status": "pending"
+  },
+  "terminal": {
+    "receipt_sha256": "b2d3633c4c8de8cc2059c4025bf568f11ccfb2a4d98138f7cab46e816689e11b",
+    "created_at_utc": "2026-08-25T23:53:04.748677+00:00",
+    "cleanup_passed": true,
+    "error": null
+  },
+  "authority": {
+    "coverage_evidence_preserved": true,
+    "site_publication_authorized": false,
+    "quality_claim_authorized": false,
+    "record_or_submission_authorized": false,
+    "graph_estimates_used": false,
+    "protected_graph_off_values_replaced": false,
+    "historical_featured_speeds_are_immutable": true
+  }
+}
