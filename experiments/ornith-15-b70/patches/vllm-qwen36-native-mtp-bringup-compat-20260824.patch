@@ -1,0 +1,109 @@
+diff --git a/vllm/_custom_ops.py b/vllm/_custom_ops.py
+index 305362a01..5030e667c 100644
+--- a/vllm/_custom_ops.py
++++ b/vllm/_custom_ops.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ from enum import IntEnum
++from functools import cache
+ from typing import TYPE_CHECKING, Literal
+ 
+ import torch
+@@ -19,6 +20,13 @@ logger = init_logger(__name__)
+ 
+ current_platform.import_kernels()
+ 
++
++@cache
++def _custom_op_has_argument(namespace: str, op_name: str, argument: str) -> bool:
++    """Bridge optional arguments across extension ABI revisions."""
++    op = getattr(getattr(torch.ops, namespace), op_name)
++    return any(arg.name == argument for arg in op.default._schema.arguments)
++
+ if TYPE_CHECKING:
+ 
+     def register_fake(fn):
+@@ -2405,7 +2413,7 @@ def topk_softmax(
+     renormalize: bool = False,
+     e_score_correction_bias: torch.Tensor | None = None,
+ ) -> None:
+-    torch.ops._moe_C.topk_softmax(
++    args = (
+         topk_weights,
+         topk_ids,
+         token_expert_indices,
+@@ -2413,6 +2421,10 @@ def topk_softmax(
+         renormalize,
+         e_score_correction_bias,
+     )
++    if _custom_op_has_argument("_moe_C", "topk_softmax", "is_padding"):
++        torch.ops._moe_C.topk_softmax(*args, None)
++    else:
++        torch.ops._moe_C.topk_softmax(*args)
+ 
+ 
+ def topk_sigmoid(
+@@ -2423,7 +2435,7 @@ def topk_sigmoid(
+     renormalize: bool = False,
+     e_score_correction_bias: torch.Tensor | None = None,
+ ) -> None:
+-    torch.ops._moe_C.topk_sigmoid(
++    args = (
+         topk_weights,
+         topk_ids,
+         token_expert_indices,
+@@ -2431,6 +2443,12 @@ def topk_sigmoid(
+         renormalize,
+         e_score_correction_bias,
+     )
++    if _custom_op_has_argument(
++        "_moe_C", "topk_sigmoid", "routed_scaling_factor"
++    ):
++        torch.ops._moe_C.topk_sigmoid(*args, 1.0, None)
++    else:
++        torch.ops._moe_C.topk_sigmoid(*args)
+ 
+ 
+ def topk_hash_softplus_sqrt(
+diff --git a/vllm/model_executor/layers/quantization/inc.py b/vllm/model_executor/layers/quantization/inc.py
+index b3dadc918..22d4dc991 100644
+--- a/vllm/model_executor/layers/quantization/inc.py
++++ b/vllm/model_executor/layers/quantization/inc.py
+@@ -1,9 +1,9 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
+ from fractions import Fraction
+ from functools import lru_cache
+-import os
+ from typing import TYPE_CHECKING, Any
+ 
+ import regex as re
+@@ -424,6 +424,25 @@ class INCConfig(QuantizationConfig):
+             )
+ 
+         if isinstance(layer, RoutedExperts):
++            # Some Qwen3.5 AutoRound exports keep the in-checkpoint MTP
++            # routed experts as fused BF16 tensors while quantizing the base
++            # model and the MTP attention/shared-expert linears.  Constructing
++            # W4A16 parameters for those BF16 tensors makes the native MTP
++            # loader look for w13_qweight/w2_qweight and fail before it can
++            # load the checkpoint's fused gate_up_proj/down_proj tensors.
++            # Keep this workaround explicit and limited to the MTP module's
++            # prefix; base-model RoutedExperts are unaffected.
++            use_bf16_mtp_experts = (
++                os.environ.get("VLLM_QWEN35_MTP_BF16_EXPERTS", "0") == "1"
++                and "mtp" in prefix.split(".")
++            )
++            if use_bf16_mtp_experts:
++                logger.warning_once(
++                    "Leaving Qwen3.5 MTP routed experts unquantized because "
++                    "VLLM_QWEN35_MTP_BF16_EXPERTS=1."
++                )
++                return None
++
+             from vllm.model_executor.layers.quantization.moe_wna16 import (
+                 MoeWNA16Config,
+             )

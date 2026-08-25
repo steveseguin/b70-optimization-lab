@@ -153,11 +153,61 @@ evidence and are not performance rows.
 - Persistent sweep harness:
   `../scripts/vllm-persistent-decode-sweep.py`
 
+## Native MTP1 gate: rejected
+
+The checkpoint's native MTP layer was screened after the aggregate candidate.
+A symlink-only reduced model view limited the draft loader to the required
+`mtp.*` tensors, and the MTP routed experts remained BF16 because the target's
+W4A16 packing contract does not apply to those tensors. This changed loading
+mechanics only; it did not alter the target or draft weights.
+
+The only completed end-to-end treatment was eager because repeated graph
+attempts reached mixed prefill/decode capture and then hard-faulted the Xe
+device during decode-graph capture. Two independent failures are archived as
+the r20 and r22 kernel logs. The eager comparison is therefore the honest
+like-for-like MTP result:
+
+| lane | B1 mean tok/s | B64 aggregate mean tok/s | repeat identity |
+| --- | ---: | ---: | --- |
+| Target-only eager (r15) | 24.538 | **949.651** | B64 previously measured 31/64 |
+| Native MTP1 eager (r23) | **40.130** | 515.909 | B1 1/1; B64 **0/64** |
+| Accepted graph target-only (r16; context only) | **90.909** | **1,052.870** | B1 1/1; B64 29/64 |
+
+MTP1 is a real eager B1 improvement of 63.54%, but it cuts eager aggregate
+throughput by 45.67%, misses the required 875 tok/s floor by a wide margin,
+and cannot currently use the graph path that makes target-only B1 fast. Its
+B1 literal canaries passed 4/4, while the B64 canary batch passed only 30/64;
+that smoke result and 0/64 repeat identity are additional reasons not to
+promote it.
+
+Decision: close this native-MTP1 implementation as a deployment negative. Do
+not add it to a user packet, public performance row, or default configuration.
+Re-open only after the decode-graph device fault is fixed and a measured B64
+treatment remains above 875 tok/s without weakening the quality and repeat
+gates. The accepted optimization direction remains target-only graph decode,
+with B1 work required to preserve or improve the measured B64 aggregate rate.
+
+MTP artifacts:
+
+- tracked compact result:
+  `../data/2026-08-24-qwen36-native-mtp1-rejection-summary.json`
+- completed eager treatment:
+  `../../../data/qwen36-35b-ar-tp1/persistent-grouped-eager-guards-mtp1-reduced-view-b1-b64-repeat2-fixedseed-p128o1024-r23.json`
+- graph-fault kernel evidence:
+  `../evidence/qwen36-mtp-bf16-moe-xpu-device-loss-r20-kernel-20260824.log.gz`
+  and
+  `../evidence/qwen36-mtp-bf16-moe-xpu-device-loss-r22-kernel-20260824.log.gz`
+- reduced-view builder:
+  `../scripts/build-qwen35-mtp-model-view.py`
+- incremental vLLM bring-up patch, applied after the grouped-W4A16/GDN base
+  patch listed above:
+  `../patches/vllm-qwen36-native-mtp-bringup-compat-20260824.patch`
+
 ## Next gate
 
-The cross-runtime dependency treatment is closed as a determinism negative.
-Next, screen the checkpoint's MTP1 layer for single-request speed while
-requiring aggregate throughput to remain above the requested 875 tok/s floor,
-then run the full realistic quality battery and repeat any surviving candidate
-in a clean process. Only then should it become a user-facing recipe or feed a
-public measured chart.
+The cross-runtime dependency treatment and native MTP1 are closed as
+deployment negatives. Continue target-only graph work, first with cheap B1
+launch/fusion screens, while requiring the measured B64 aggregate mean to stay
+at or above 1,052.870 tok/s. Any survivor still needs the realistic quality
+battery and clean-process repeats before it becomes a user-facing recipe or
+feeds a public measured chart.

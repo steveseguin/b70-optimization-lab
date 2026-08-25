@@ -1,0 +1,108 @@
+{
+  "date": "2026-08-24",
+  "status": "measured_native_mtp1_deployment_negative",
+  "classification": "measured_no_extrapolation",
+  "model": "abhinand/Qwen3.6-35B-A3B-int4-AutoRound",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "cards": 1,
+  "runtime": {
+    "vllm": "0.21.1rc1.dev289+g44fc8fde0",
+    "vllm_git_head": "44fc8fde09fc311d3099dab10366b672d9142ea4",
+    "vllm_xpu_kernels_git_head": "2dd55f380df753a10a88fcd9e96192561066e713",
+    "torch": "2.11.0+xpu",
+    "target_quantization": "INC AutoRound W4A16",
+    "mtp_routed_experts": "BF16 checkpoint tensors",
+    "tensor_parallel_size": 1,
+    "speculative_method": "mtp",
+    "speculative_tokens": 1,
+    "graph": false,
+    "reduced_model_view": true,
+    "reduced_model_view_index_sha256": "fed372d402ab7083a8232935e81fe78cfd5a3a7b0c10d893ba0fa8a7af5904bb",
+    "base_patch": "../patches/vllm-qwen35moe-xpu-grouped-w4a16-gdn-state-20260824.patch",
+    "incremental_mtp_patch": "../patches/vllm-qwen36-native-mtp-bringup-compat-20260824.patch",
+    "incremental_mtp_patch_sha256": "469b55e8e59757c637377aa55192ae2676c0dd2febc09bbf12ab2dfd9b0183f2"
+  },
+  "workload": {
+    "input_tokens_per_request": 128,
+    "output_tokens_per_request": 1024,
+    "temperature": 0.0,
+    "ignore_eos": true,
+    "fixed_seed": 20260824,
+    "repeats": 2,
+    "max_model_len": 4096,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 1024,
+    "warmup_excluded": true
+  },
+  "rows": [
+    {
+      "batch_size": 1,
+      "target_only_eager_repeat_aggregate_tok_s": [
+        24.574758751110785,
+        24.500401896446174
+      ],
+      "target_only_eager_mean_aggregate_tok_s": 24.537580323778478,
+      "mtp1_eager_repeat_aggregate_tok_s": [
+        40.11484424099542,
+        40.14547370502975
+      ],
+      "mtp1_eager_mean_aggregate_tok_s": 40.130158973012584,
+      "mtp1_vs_eager_target_pct": 63.54570598847478,
+      "mtp1_fixed_seed_identical_requests": 1,
+      "requests": 1
+    },
+    {
+      "batch_size": 64,
+      "target_only_eager_repeat_aggregate_tok_s": [
+        948.9991477915532,
+        950.3028630506798
+      ],
+      "target_only_eager_mean_aggregate_tok_s": 949.6510054211165,
+      "mtp1_eager_repeat_aggregate_tok_s": [
+        514.3875401681098,
+        517.4295782175909
+      ],
+      "mtp1_eager_mean_aggregate_tok_s": 515.9085591928504,
+      "mtp1_vs_eager_target_pct": -45.67387848296184,
+      "mtp1_fixed_seed_identical_requests": 0,
+      "requests": 64
+    }
+  ],
+  "accepted_graph_target_context": {
+    "purpose": "context only; not an eager like-for-like comparison",
+    "b1_mean_aggregate_tok_s": 90.90948338800598,
+    "b64_mean_aggregate_tok_s": 1052.8704424119496,
+    "mtp1_vs_graph_target_b1_pct": -55.857015706782576,
+    "mtp1_vs_graph_target_b64_pct": -50.9998060149746
+  },
+  "quality_smoke": {
+    "b1_literal_matches": 4,
+    "b1_total": 4,
+    "b64_literal_matches": 30,
+    "b64_total": 64,
+    "scope": "literal canaries only; not a promotion-quality evaluation"
+  },
+  "graph_capture": {
+    "status": "failed",
+    "failure": "repeated Xe engine memory CAT faults and engine resets during decode-graph capture",
+    "evidence": [
+      {
+        "path": "../evidence/qwen36-mtp-bf16-moe-xpu-device-loss-r20-kernel-20260824.log.gz",
+        "sha256": "02b9315b517696246e0f32ced33e9efc878e6609e85e45694e502e2607d48e1b"
+      },
+      {
+        "path": "../evidence/qwen36-mtp-bf16-moe-xpu-device-loss-r22-kernel-20260824.log.gz",
+        "sha256": "28e2c38ffcc20c3ac4dd1c157a4c2c17a562f9aa959425af8e17601e17cfdc1c"
+      }
+    ]
+  },
+  "raw_evidence": {
+    "target_only_eager": "../../../data/qwen36-35b-ar-tp1/persistent-grouped-eager-b1-b64-repeat2-fixedseed-p128o1024-r15.json",
+    "target_only_eager_sha256": "411a44b0cb4a4e6d229d2bfeabaca64d03a0240e6870b6f402566a055e5b3052",
+    "mtp1_eager": "../../../data/qwen36-35b-ar-tp1/persistent-grouped-eager-guards-mtp1-reduced-view-b1-b64-repeat2-fixedseed-p128o1024-r23.json",
+    "mtp1_eager_sha256": "d361c5e7808b4ab420e42e5c98fc02639f8ad62b6d6f5ab5ff697db38b01fad9",
+    "accepted_graph_target": "../../../data/qwen36-35b-ar-tp1/persistent-grouped-graph-guards-b1-b64-repeat2-fixedseed-p128o1024-r16.json",
+    "accepted_graph_target_sha256": "d09cfeaac6546523f07e1e92d51a2b96bd6f7522f654f457e6f2514b0ed9bace"
+  },
+  "decision": "Reject native MTP1 for deployment. It improves eager B1 but cuts eager B64 aggregate throughput below the 875 tok/s floor, worsens repeat identity, and cannot use the accepted graph path because decode capture faults the device."
+}

@@ -47,12 +47,15 @@ binary, driver, or benchmark protocol will reproduce them.
 - **Qwen35MoE vLLM aggregate surrogate — MEASURED CANDIDATE, NOT AN ORNITH
   HEADLINE:** transferring the architecture-specific W4A16 and GDN work to a
   Qwen3.6-35B-A3B AutoRound checkpoint raised directly measured one-B70 TP1
-  aggregate decode from `399.679` to a two-repeat mean of **1,039.408 tok/s**
-  at 64 concurrent requests. Single-request decode rose from `20.732` to
-  **87.638 tok/s**. Four literal canaries passed, but fixed-seed output hashes
-  were not fully stable at intermediate and large batches, so the candidate is
-  not promoted. The standalone grouped MoE operator was bit-identical 25/25 at
-  every tested batch size, narrowing but not resolving the variation. See
+  aggregate decode from `399.679` to a guarded-runtime two-repeat mean of
+  **1,052.870 tok/s** at 64 concurrent requests. Single-request decode reached
+  **90.909 tok/s**, and 100/100 literal canaries passed at the captured B1,
+  B32, and B64 shapes. Fixed-seed output hashes were still only 29/64 identical
+  at B64, so the candidate is not promoted. Native MTP1 was then closed as a
+  deployment negative: it improved the matched eager B1 mean
+  `24.538 -> 40.130 tok/s`, but cut eager B64 aggregate
+  `949.651 -> 515.909 tok/s`, produced 0/64 repeat-identical B64 requests, and
+  repeatedly faulted the device during decode-graph capture. See
   `notes/2026-08-24-qwen36-grouped-w4a16-aggregate-candidate.md`.
 - **Dense command-graph A/B — CLOSED NEUTRAL:** matched local-file runs measured
   50.149 tok/s graph-off versus 50.169 graph-on (+0.0388%). The earlier apparent

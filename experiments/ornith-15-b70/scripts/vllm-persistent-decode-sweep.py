@@ -45,6 +45,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.95)
     parser.add_argument("--loader-threads", type=int, default=0)
     parser.add_argument("--speculative-tokens", type=int, default=0)
+    parser.add_argument(
+        "--speculative-model",
+        help=(
+            "optional local model view for the MTP drafter; the target model "
+            "still supplies the tokenizer and main weights"
+        ),
+    )
     parser.add_argument("--graph", action="store_true")
     parser.add_argument("--quality-smoke", action="store_true")
     parser.add_argument(
@@ -69,6 +76,10 @@ def parse_args() -> argparse.Namespace:
             "--repeats/--warmup-tokens must be positive and loader threads "
             "and speculative tokens nonnegative"
         )
+    if args.speculative_model and not args.speculative_tokens:
+        parser.error("--speculative-model requires --speculative-tokens")
+    if args.speculative_model and not Path(args.speculative_model).is_dir():
+        parser.error("--speculative-model must name an existing directory")
     return args
 
 
@@ -110,6 +121,7 @@ def xpu_runtime_files(package_file: str) -> list[dict[str, Any]]:
         "libgdn_attn_kernels*.so",
         "libgrouped_gemm*.so",
         "flash_attn_interface.py",
+        "fused_moe_interface.py",
     )
     paths = sorted({path for pattern in patterns for path in package_dir.glob(pattern)})
     return [
@@ -120,6 +132,24 @@ def xpu_runtime_files(package_file: str) -> list[dict[str, Any]]:
         }
         for path in paths
     ]
+
+
+def speculative_model_view_identity(path: str | None) -> dict[str, Any] | None:
+    if not path:
+        return None
+    model_view = Path(path).resolve()
+    index_path = model_view / "model.safetensors.index.json"
+    manifest_path = model_view / "mtp-view-manifest.json"
+    identity: dict[str, Any] = {
+        "path": str(model_view),
+        "index_sha256": file_sha256(index_path),
+    }
+    if manifest_path.is_file():
+        identity["manifest_sha256"] = file_sha256(manifest_path)
+        identity["manifest"] = json.loads(
+            manifest_path.read_text(encoding="utf-8")
+        )
+    return identity
 
 
 def make_prompt_token_ids(
@@ -377,6 +407,7 @@ def main() -> int:
         },
         "model": str(Path(args.model).resolve()),
         "config": recorded_config,
+        "completed": False,
         "identity": {
             "hostname": platform.node(),
             "python": platform.python_version(),
@@ -405,6 +436,24 @@ def main() -> int:
             ),
             "vllm_xpu_onednn_int4_input_dependency_scope": os.environ.get(
                 "VLLM_XPU_ONEDNN_INT4_INPUT_DEPENDENCY_SCOPE"
+            ),
+            "vllm_xpu_onednn_int4_determinism_pad": os.environ.get(
+                "VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD"
+            ),
+            "vllm_xpu_gdn_replayssm_spec": os.environ.get(
+                "VLLM_XPU_GDN_REPLAYSSM_SPEC"
+            ),
+            "vllm_qwen35_mtp_bf16_experts": os.environ.get(
+                "VLLM_QWEN35_MTP_BF16_EXPERTS"
+            ),
+            "vllm_xpu_draft_lm_head_int4": os.environ.get(
+                "VLLM_XPU_DRAFT_LM_HEAD_INT4"
+            ),
+            "vllm_xpu_draft_lm_head_int4_fallback_margin": os.environ.get(
+                "VLLM_XPU_DRAFT_LM_HEAD_INT4_FALLBACK_MARGIN"
+            ),
+            "speculative_model_view": speculative_model_view_identity(
+                args.speculative_model
             ),
             "ld_library_path": os.environ.get("LD_LIBRARY_PATH"),
         },
@@ -438,6 +487,10 @@ def main() -> int:
             "method": speculative_method,
             "num_speculative_tokens": args.speculative_tokens,
         }
+        if args.speculative_model:
+            speculative_config["model"] = str(
+                Path(args.speculative_model).resolve()
+            )
 
     optional_init_args: dict[str, Any] = {}
     if compilation_config is not None:
