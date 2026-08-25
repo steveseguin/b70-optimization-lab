@@ -8,6 +8,12 @@ This is the user-facing front door for our validated one-card Qwen3.8 lane:
 > build, launch, and result identities are present. The Intel driver and
 > oneAPI installation have not yet been rebuilt and tested from a clean OS.
 
+The restore script initializes the oneAPI environment, verifies every decoded
+patch, disables the unused Web UI/download path, and builds the server plus
+`llama-bench` and `llama-batched-bench`. `CXX_COMPILER` may select another
+installed compiler only as a clearly separate experimental identity; it does
+not reproduce the 2026.0.0 headline by implication.
+
 Use the [reproduction guide](../../repro/qwen38-27b-q4km-tp1-b70/README.md)
 for the complete procedure. It includes every required repository patch and
 its decoded SHA-256, rather than sending users to a detached recipe.

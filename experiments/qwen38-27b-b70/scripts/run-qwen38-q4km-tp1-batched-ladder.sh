@@ -84,7 +84,8 @@ unset GGML_SYCL_FUSED_CONV_STATE_IO_POISON GGML_SYCL_GDN_RMS_TAIL_POISON
 unset GGML_SYCL_FUSED_QK_NORM_ROPE_POISON GGML_SYCL_FUSED_CONV_SILU_OUTPUT
 unset GGML_SYCL_MMVQ_SG32_OUTPUT_HEAD
 
-env | LC_ALL=C sort > "${run_dir}/environment.txt"
+env | grep -E '^(GGML_|UR_L0_|ONEAPI_DEVICE_SELECTOR=|ONEAPI_ROOT=|LD_LIBRARY_PATH=|PATH=)' \
+  | LC_ALL=C sort > "${run_dir}/environment.txt"
 uname -a > "${run_dir}/uname.txt"
 free -b > "${run_dir}/memory-before.txt"
 "${bench}" --version > "${run_dir}/version.txt" 2>&1
@@ -96,7 +97,7 @@ xpu-smi dump -d "${gpu_index}" -m 0,1,2,3,4,5 -n 1 > "${run_dir}/xpu-before.txt"
 cmd=("${bench}" --model "${model}" --device SYCL0 --gpu-layers 99
   --split-mode none --fit off --flash-attn on --cache-type-k f16
   --cache-type-v f16 --ctx-size 32768 --batch-size 2048 --ubatch-size 256
-  --threads 8 --poll 50 --npp 128 --ntg 256 --npl "1,2,4,8,16,32,64"
+  --threads 8 --poll 50 -npp 128 -ntg 256 -npl "1,2,4,8,16,32,64"
   --output-format jsonl)
 printf '%q ' "${cmd[@]}" > "${run_dir}/command.txt"
 printf '\n' >> "${run_dir}/command.txt"

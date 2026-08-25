@@ -61,3 +61,14 @@ OUT_DIR=/path/to/results \
 The launcher refuses a model or source mismatch, an occupied GPU, a competing
 model process, missing oneAPI initialization, an existing output directory,
 or malformed/missing matrix rows.
+
+## Attempt log
+
+- Attempt 1 closed `failed-incomplete-preload` with zero performance rows. The
+  pinned tool rejected the unsupported double-dash `--npp` spelling before
+  model load or GPU work. The corrected launcher uses its documented
+  single-dash `-npp/-ntg/-npl` forms without changing the frozen matrix. The
+  [failure record](../data/qwen38-q4km-tp1-batched-ladder-20260825-r1-attempt1/failure.json)
+  retains the cause and boundary. A too-broad environment capture from that
+  attempt was removed; subsequent attempts record only a non-secret runtime
+  whitelist.

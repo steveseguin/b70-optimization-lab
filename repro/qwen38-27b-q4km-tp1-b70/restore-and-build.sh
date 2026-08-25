@@ -79,6 +79,8 @@ cmake -G "Unix Makefiles" -S "${source_dir}" -B "${source_dir}/build-sycl-aot-bm
   -DBUILD_SHARED_LIBS=ON \
   -DGGML_NATIVE=ON \
   -DLLAMA_CURL=OFF \
+  -DLLAMA_BUILD_UI=OFF \
+  -DLLAMA_USE_PREBUILT_UI=OFF \
   -DGGML_SYCL=ON \
   -DGGML_SYCL_TARGET=INTEL \
   -DGGML_SYCL_DEVICE_ARCH=bmg_g31 \
@@ -88,7 +90,7 @@ cmake -G "Unix Makefiles" -S "${source_dir}" -B "${source_dir}/build-sycl-aot-bm
   -DGGML_SYCL_HOST_MEM_FALLBACK=OFF \
   -DGGML_SYCL_SUPPORT_LEVEL_ZERO_API=ON
 cmake --build "${source_dir}/build-sycl-aot-bmg-g31" \
-  --target llama-batched-bench llama-bench llama-cli llama-server -j"${jobs}"
+  --target llama-batched-bench llama-bench llama-server -j"${jobs}"
 
 printf 'BUILD COMPLETE\nsource=%s\nbuild=%s\n' \
   "${source_dir}" "${source_dir}/build-sycl-aot-bmg-g31"

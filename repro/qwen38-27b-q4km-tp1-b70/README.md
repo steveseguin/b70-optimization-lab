@@ -24,7 +24,7 @@ until a smaller clean host is validated.
 | Model | [`model-direct.json`](model-direct.json): `ggml-org/Qwen3.8-27B-GGUF` revision `0669b98607d47046c7c2b3f801011d54a08cfccf`, Q4_K_M SHA-256 `31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34`. |
 | Runtime base | `mndodd/llama.cpp` commit `4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126`. |
 | Lab patches | Full Qwen3.6 stack, Qwen3.8 Q4 increment, then the four TP1 artifacts enumerated and verified by [`restore-and-build.sh`](restore-and-build.sh). The authoritative patch explanation is [`patches/qwen38-27b-q4km-tp1-b70s/README.md`](../../patches/qwen38-27b-q4km-tp1-b70s/README.md). |
-| Build | Release, shared libraries, Intel SYCL, BMG-G31 AOT, graph and oneDNN paths off; exact CMake command is in `restore-and-build.sh`. |
+| Build | Release, shared libraries, Intel SYCL, BMG-G31 AOT, graph, oneDNN, and embedded/prebuilt Web UI paths off; exact CMake command is in `restore-and-build.sh`. The script builds only the server and two benchmark programs used by this packet. |
 | Launch | [`run-server.sh`](run-server.sh): one visible Level Zero device, 8K context, F16 KV, one slot, cache RAM zero, exact accepted fusion doors. |
 | Validation | [`bench.sh`](bench.sh) requires fresh responses, zero cached tokens, and 12/12 exact hashes against the registered TP1 oracle. The full quality result is [recorded here](../../experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-q4km-tp1-quality-battery-result.md). |
 
@@ -69,9 +69,25 @@ SOURCE_DIR=/path/to/new/llama.cpp-qwen38-tp1 \
   repro/qwen38-27b-q4km-tp1-b70/restore-and-build.sh
 ```
 
-It requires the observed Intel oneAPI 2026.0 compiler path. This dependency
-is intentionally not auto-installed while the clean-host platform recipe is
-still unverified.
+It defaults to the observed Intel oneAPI 2026.0 compiler path. The script
+initializes `/opt/intel/oneapi/setvars.sh` so CMake can resolve IntelSYCL, MKL,
+and their runtime libraries; naming `icpx` alone is insufficient in a fresh
+shell. This dependency is intentionally not auto-installed while the
+clean-host platform recipe is still unverified.
+
+For an explicitly separate experimental identity, another installed compiler
+can be selected without editing the recipe:
+
+```bash
+SOURCE_DIR=/path/to/new/llama.cpp-qwen38-tp1 \
+CXX_COMPILER=/opt/intel/oneapi/compiler/2026.1/bin/icpx \
+  repro/qwen38-27b-q4km-tp1-b70/restore-and-build.sh
+```
+
+Do not pool results from an override with the 2026.0.0 package headline. A
+2026.1.1 reconstruction completed under a 10 GiB build cap on 2026-08-25 and
+exposed the missing oneAPI initialization and unwanted UI download that this
+revision fixes; it remains a different compiler identity.
 
 ## 3. Preflight
 
