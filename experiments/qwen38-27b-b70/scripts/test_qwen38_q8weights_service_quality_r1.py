@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 MANIFEST = ROOT / "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8weights-f16-tp1-service-quality-r1-prereg.json"
 RUNNER = ROOT / "experiments/qwen38-27b-b70/scripts/run-qwen38-q8weights-f16-tp1-service-quality-r1.sh"
+RESULT = ROOT / "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-service-quality-20260825-r1"
 
 
 class ServiceQualityContract(unittest.TestCase):
@@ -37,6 +38,25 @@ class ServiceQualityContract(unittest.TestCase):
             "service-quality-qualified",
         ):
             self.assertIn(marker, MANIFEST.read_text(encoding="utf-8") + text)
+
+    def test_committed_result_satisfies_every_frozen_gate(self) -> None:
+        quality = json.loads((RESULT / "quality.json").read_text(encoding="utf-8"))
+        qualification = json.loads(
+            (RESULT / "qualification.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            qualification["classification"], "service-quality-qualified"
+        )
+        self.assertTrue(all(qualification["checks"].values()))
+        self.assertEqual(qualification["response_count"], 16)
+        self.assertEqual(qualification["cached_tokens"], [0] * 16)
+        self.assertTrue(quality["pass_all"])
+        self.assertEqual(len(quality["exact_cases"]), 7)
+        self.assertTrue(all(row["pass"] for row in quality["exact_cases"]))
+        self.assertEqual(quality["repeat_case"]["repeats"], 8)
+        self.assertEqual(len(quality["repeat_case"]["unique_hashes"]), 1)
+        self.assertTrue(quality["long_context_case"]["pass"])
+        self.assertEqual(quality["long_context_case"]["actual_prompt_tokens"], 7617)
 
 
 if __name__ == "__main__":
