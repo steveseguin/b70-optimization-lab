@@ -152,7 +152,7 @@
     const ratio = target ? measured / target : NaN;
     const vsStock = stock > 0 ? measured / stock : NaN;
     const g = grade(ratio);
-    const max = Math.max(measured, stock || 0, target || 0, physical || 0);
+    const max = Math.max(measured, target || 0, physical || 0);
     const withoutSpec = result.decode.withoutSpeculation;
     const provenance = result.ceiling && result.ceiling.peers > 0
       ? 'calibrated on ' + result.ceiling.peers + ' community run' + (result.ceiling.peers === 1 ? '' : 's') + ' of this stack'
@@ -161,11 +161,10 @@
       + '<div class="hr-head"><div><h3>' + esc(title) + '</h3><p class="hr-deploy">' + esc(deployment) + '</p></div>'
       + '<div class="hr-grade" title="' + esc(g.note) + '"><span class="hr-grade-letter">' + esc(g.letter) + '</span><span class="hr-grade-note">' + esc(Number.isFinite(ratio) ? Math.round(ratio * 100) + '% of target' : g.note) + '</span></div></div>'
       + barRow('Measured here', measured, max, 'is-measured', 'tok/s')
-      + barRow('Stock software', stock, max, 'is-stock', 'projected')
       + barRow('Tuned-run target', target, max, 'is-target', 'projected')
       + barRow('Physical ceiling', physical, max, 'is-physical', 'projected')
       + '<p class="hr-why">'
-      + (Number.isFinite(vsStock) ? '<strong>' + esc(vsStock.toFixed(2)) + '×</strong> the stock-software projection · ' : '')
+
       + 'projected limiter: <strong>' + esc(limiterText(result)) + '</strong>'
       + (withoutSpec && result.decode.speculationMultiplier ? ' · speculation modeled at ×' + esc(result.decode.speculationMultiplier.toFixed(2)) : '')
       + ' · ' + esc(provenance) + '.</p>'
