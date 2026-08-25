@@ -1,0 +1,128 @@
+{
+  "schema": "neural.download.qwen36-llama-mtp1-parent-sentinel-prereg.v1",
+  "campaign_id": "qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Decide, without a speed floor, whether embedded MTP1 is executable and quality-safe enough to expand into the seven-depth Qwen3.6 TP1 curve.",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+    "quantization": "Q4_K_M",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "graph_mode": "off",
+    "kv": "f16",
+    "sentinel_active_context_tokens": 8192,
+    "candidate_mtp": 1,
+    "control_mtp": 0
+  },
+  "model": {
+    "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+    "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+    "path": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_K_M.gguf",
+    "size_bytes": 17106773120,
+    "sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+    "draft_binding": "embedded MTP tensors in the same checksum-pinned GGUF; no external draft model is allowed"
+  },
+  "runtime": {
+    "binary": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/llama-server",
+    "binary_sha256": "2421d1b28fe96a552759fdcb68ee3f80936b7a2b01852376c0003debd99e9889",
+    "reported_version": "9976 (e3546c794)",
+    "source_commit": "e3546c7948e3af463d0b401e6421d5a4c2faf565",
+    "source_tree_clean_required": false,
+    "source_tree_note": "The executable hash and reported embedded commit bind execution. The shared source tree contains preserved post-build experiment changes and is not a rebuild input for this packet.",
+    "required_help_token": "draft-mtp"
+  },
+  "fixture": {
+    "path": "data/qwen27-exact-depth/qwen36-6a9e13bd-exact-depth-v1.json",
+    "sha256": "85b1050c88b4c1e6cb9c4ce7f1580284cd2aa68243dad0d0dff16460decbe5ac",
+    "case_id": "depth-8192",
+    "depth": 8192,
+    "prompt_token_ids_sha256": "6baa17bea14f0ecad7e4edf54a05256eafaef1d447a447569fd303371c671741",
+    "evidence_grade": "C synthetic exact-depth sentinel; not a natural-context performance curve"
+  },
+  "clients": {
+    "exact_depth": {
+      "path": "scripts/bench-openai-token-depth-suite.py",
+      "sha256": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067",
+      "requests_per_arm": 1,
+      "output_tokens": 128,
+      "primary_metric": "conventional serving decode rate over 99 intervals between streamed token-ID events 1 and 100"
+    },
+    "quality": {
+      "path": "scripts/qwen36-text-quality-suite.py",
+      "sha256": "6e91e669a6d1ec005b32b141ea7ed859cae64657e99fc262506235eb0cfaa365",
+      "tokenizer_path": "/mnt/fast-ai/llm-cache/hf/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+      "candidate_arm_only": true,
+      "repeat_runs": 2,
+      "long_context_tokens": 8192,
+      "requirements": "all exact/JSON/arithmetic/copy canaries, two-repeat stability, 8K needle recall, and cached_tokens=0 on every quality request"
+    }
+  },
+  "arms": [
+    {
+      "id": "control-mtp0",
+      "spec_type": "none",
+      "mtp": 0,
+      "workload": "one exact depth-8192 completion"
+    },
+    {
+      "id": "candidate-mtp1",
+      "spec_type": "draft-mtp",
+      "mtp": 1,
+      "spec_draft_n_max": 1,
+      "spec_draft_n_min": 1,
+      "spec_draft_p_min": 0.0,
+      "workload": "one exact depth-8192 completion followed by the bounded Qwen3.6 quality battery"
+    }
+  ],
+  "server_contract": {
+    "host": "127.0.0.1",
+    "port": 19432,
+    "context_capacity": 12288,
+    "parallel_slots": 1,
+    "batch_size": 2048,
+    "ubatch_size": 512,
+    "flash_attention": true,
+    "cache_type_k": "f16",
+    "cache_type_v": "f16",
+    "prompt_cache_ram_mb": 0,
+    "context_checkpoints": 0,
+    "reasoning": "off",
+    "oneapi_device_selector": "level_zero:*",
+    "ze_affinity_mask": "0",
+    "ggml_sycl_enable_graph": "0",
+    "ggml_sycl_graph_cache_size": "0"
+  },
+  "lifecycle": {
+    "runner": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q4km-f16-tp1-mtp1-parent-sentinel-r1.sh",
+    "validator": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/validate-20260825-qwen36-q4km-f16-tp1-mtp1-parent-sentinel-r1.py",
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r1",
+    "output_fstype": "ext4",
+    "exact_ack": "RUN qwen36-q4km-f16-tp1-mtp1-parent-8192-20260825-r1",
+    "timeout_seconds_per_request": 3600,
+    "requires_clean_pushed_main": true,
+    "requires_idle_gpu0_render_node": "/dev/dri/by-path/pci-0000:23:00.0-render",
+    "requires_no_server_benchmark_or_container": true,
+    "required_locks": [
+      "/run/lock/muse-glimmer-gpu-exclusive.lock",
+      "/tmp/b70-benchmark.lock",
+      "/tmp/b70-gpu0.lock",
+      "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"
+    ],
+    "artifacts_are_create_only": true,
+    "terminal_receipt_required": true
+  },
+  "frozen_interpretation": {
+    "measurement_class": "HTTP serving, batch 1, conventional 99-interval streamed token-ID decode metric",
+    "raw_engine_metric": false,
+    "speed_floor": null,
+    "expand_if": "both exact-depth receipts pass, candidate output token IDs exactly match control, candidate emits nonzero draft generated and accepted counters, the complete candidate quality battery passes with zero cached tokens, and cleanup passes",
+    "do_not_expand_if": "any boot/request/identity/exact-depth/target-parity/draft-engagement/quality/cache/cleanup gate fails",
+    "slower_but_valid": "expand the MTP1 curve; record the slower serving rate honestly",
+    "cell_gain_on_sentinel_pass": 0,
+    "potential_cell_gain_after_separate_curve": 7,
+    "historical_featured_speeds_are_immutable": true,
+    "cross_revision_or_quantization_transfer_allowed": false,
+    "site_or_family_edit_authorized": false
+  }
+}
