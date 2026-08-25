@@ -32,7 +32,8 @@ rust_extension_sha256=7cb3df775d2183d2c1a7d3025a8f49b9a79548d157993969fc0c49f46c
 rust_frontend_sha256=a415187153b2a8b10683494c7b22472158b487c69023713313542d4bc09c4c92
 batch_invariant_config_path=vllm/model_executor/determinism/batch_invariant_configs.py
 expected_batch_invariant_config_sha256=e47b18d9394c61fd105e4db51108d72fe1e68d4a2043a8ba62c0af0237453128
-min_root_free_kib=$((8 * 1024 * 1024))
+min_initial_root_free_kib=$((21 * 1024 * 1024))
+min_lane_root_free_kib=$((8 * 1024 * 1024))
 
 die() {
   printf 'error: %s\n' "$*" >&2
@@ -123,11 +124,13 @@ sync_literal_main() {
 }
 
 assert_root_space() {
+  local minimum_kib=$1
+  local phase=$2
   local available
   available=$(df -Pk / | awk 'NR == 2 {print $4}')
   [[ $available =~ ^[0-9]+$ ]] || die 'could not read root free space'
-  (( available >= min_root_free_kib )) ||
-    die "root has less than 8 GiB free (${available} KiB)"
+  (( available >= minimum_kib )) ||
+    die "root has insufficient free space for $phase (${available} KiB available; ${minimum_kib} KiB required)"
 }
 
 verify_base_image() {
@@ -273,7 +276,7 @@ assert_clean_main "$repo_root" 'lab repository'
 sync_literal_main "$vllm_source" 'vLLM source' "$vllm_upstream_url"
 sync_literal_main "$kernel_source" 'XPU-kernel source' "$kernel_upstream_url"
 verify_base_image
-assert_root_space
+assert_root_space "$min_initial_root_free_kib" 'the complete build'
 
 vllm_head=$(git -C "$vllm_source" rev-parse HEAD)
 vllm_tree=$(git -C "$vllm_source" rev-parse 'HEAD^{tree}')
@@ -515,7 +518,7 @@ build_image() {
     lane_paged_sha=stock-from-base
   fi
 
-  assert_root_space
+  assert_root_space "$min_lane_root_free_kib" "the $lane image"
   docker_cmd build --network=none --pull=false \
     --file "$dockerfile" \
     --tag "$image_tag" \
