@@ -1,0 +1,25 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-exact-depth-r2-result.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r2",
+  "state": "failed",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r2",
+  "terminal_receipt_sha256": "4cf1d625c016fe73ce568da03d2d1615a6e4d76947e8923d1736e69a706f829f",
+  "launched_depths": [0],
+  "depth_0": {
+    "bench_json_sha256": "b10e660f24d0988e3060aaa6a70d2b255e0f5b95b861a41bd9f45b2f93b6e01d",
+    "stderr_sha256": "319d58a742879aad4a5aef0fcee470e5bdd13a1fa577d63992a33e453d06ad75",
+    "graph_summaries": [
+      {"requested": 24, "cache_hit": 16, "cache_miss": 8, "direct_replay": 16, "recorded": 8, "created": 8, "replayed": 24, "rejections_or_failures": 0},
+      {"requested": 641, "cache_hit": 638, "cache_miss": 3, "direct_replay": 638, "recorded": 3, "created": 3, "replayed": 641, "rejections_or_failures": 0}
+    ],
+    "summary_interpretation": "llama-bench creates separate prompt and token-generation benchmark contexts; both independently satisfy capture/replay conservation."
+  },
+  "failure": "expected exactly one SYCL graph summary, got 2",
+  "root_cause": "The evidence parser assumed one backend lifecycle per llama-bench process, but llama-bench emitted separate valid prompt and generation context summaries.",
+  "cleanup_passed": true,
+  "retry_requirement": "Distinct R3 packet requiring every emitted summary to pass strict conservation, then aggregating them per context without changing runtime identity.",
+  "curve_authorized": false,
+  "site_publication_authorized": false,
+  "record_or_submission_authorized": false,
+  "protected_graph_off_values_may_be_replaced": false
+}
