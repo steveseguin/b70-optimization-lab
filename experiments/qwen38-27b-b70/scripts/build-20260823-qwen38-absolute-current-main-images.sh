@@ -285,7 +285,6 @@ assert_clean_main "$repo_root" 'lab repository'
 sync_literal_main "$vllm_source" 'vLLM source' "$vllm_upstream_url"
 sync_literal_main "$kernel_source" 'XPU-kernel source' "$kernel_upstream_url"
 verify_base_image
-assert_root_space "$min_initial_root_free_kib" 'the complete build'
 
 vllm_head=$(git -C "$vllm_source" rev-parse HEAD)
 vllm_tree=$(git -C "$vllm_source" rev-parse 'HEAD^{tree}')
@@ -342,6 +341,8 @@ fi
 if [[ $mode == --validate-only ]]; then
   exit 0
 fi
+
+assert_root_space "$min_initial_root_free_kib" 'the complete build'
 
 mkdir -p -- "$build_parent"
 [[ $(findmnt -n -o FSTYPE --target "$build_parent") == ext4 ]] ||
