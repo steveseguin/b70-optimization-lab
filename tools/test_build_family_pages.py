@@ -1512,9 +1512,9 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             sum(cell["state"] == "quarantined" for cell in q36_cells), 63
         )
-        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 938)
+        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 931)
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q36_cells), 56
+            sum(cell["state"] == "lab-measured" for cell in q36_cells), 63
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q36_cells), 0)
 
@@ -1565,11 +1565,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("174/1,771 classified", overview_html)
+        self.assertIn("181/1,771 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "111", "measured"),
+            ("lab-measured", "118", "measured"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,597", "missing"),
+            ("missing", "1,590", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -1604,6 +1604,7 @@ class FamilyCoverageTest(unittest.TestCase):
                 ["q36-q4-0-tp1-kv-q8-context"],
                 ["q36-mtpq8-tp1-kv-f16-context"],
                 ["q36-mtpq8-tp1-kv-q8-context"],
+                ["q36-unsloth-q8-tp1-kv-f16-context"],
             ],
         )
         self.assertIn('data-family-view="context-q36-quant-kv"', rendered)
@@ -1626,6 +1627,9 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("Q8_0 embedded-MTP artifact · q8_0 KV", rendered)
         self.assertIn("value=19.405539 tok/s", rendered)
         self.assertIn("value=653.030632 tok/s", rendered)
+        self.assertIn("Q8_0 target-only Unsloth · f16 KV", rendered)
+        self.assertIn("value=19.837968 tok/s", rendered)
+        self.assertIn("value=660.84773 tok/s", rendered)
 
         unknown_speculator = deepcopy(family)
         next(
