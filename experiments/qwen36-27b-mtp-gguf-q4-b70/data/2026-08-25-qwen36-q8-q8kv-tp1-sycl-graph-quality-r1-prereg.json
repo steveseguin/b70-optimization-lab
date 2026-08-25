@@ -1,0 +1,73 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-q8kv-quality-overlay.v1",
+  "campaign_id": "qwen36-q8-q8kv-tp1-sycl-graph-quality-20260825-r1",
+  "state": "sealed-preregistered-not-launched",
+  "base_quality_packet": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-sycl-graph-quality-r1-prereg.json",
+    "manifest_sha256": "0b3a0f6582f6fd71f23651450a7ca3b0fb78fccc53a8b27a31ec66babf631207",
+    "runner_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-f16-tp1-sycl-graph-quality-r1.py",
+    "runner_sha256": "501d3f37e79791aa8f97c740fbbe90fdc4b75483880441df14147e21289a0cfc"
+  },
+  "curve_parent": {
+    "campaign_id": "qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-20260825-r2",
+    "preregistration": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-r2-prereg.json",
+      "sha256": "c89feedf5c4dc4fcf9cc4d387aff1bdb5197fe77abf0bdbde172cfadd2d29ee1"
+    },
+    "runner": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-r2.py",
+      "sha256": "fe9fcc73175f7e989b14ac1490ed3ebf2a1d27247b76ef01788a80c306b76f5f"
+    },
+    "terminal_receipt": {
+      "path": "/mnt/fast-ai/bench-results/qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-20260825-r2/terminal-receipt.json",
+      "sha256": "377f5c09491c5aeb33f037c4d0078a9322fff88cb94e6dff5da9da9b200a0893"
+    },
+    "exact_depth_receipt": {
+      "path": "/mnt/fast-ai/bench-results/qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-20260825-r2/exact-depth-receipt.json",
+      "sha256": "c5a91301d43a473bad4a28a95ab2b218ca653ad25ba25120694da751a090694a"
+    },
+    "metadata": {
+      "path": "/mnt/fast-ai/bench-results/qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-20260825-r2/metadata.json",
+      "sha256": "9d07b6f4fff2542aed9019bfa525d077abf05b22070c731c2aaf2d2971b60f31"
+    },
+    "graph_evidence": {
+      "path": "/mnt/fast-ai/bench-results/qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-20260825-r2/graph-evidence.json",
+      "sha256": "9a607a3455e65ce17a04d053c380381b85b2b8b493d41ceb7028534ffd4785d5"
+    },
+    "depths": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+  },
+  "execution_identity_delta": {
+    "only_runtime_selector_delta_from_f16_quality": "selectors.kv and server -ctk/-ctv change from f16 to q8_0",
+    "selectors.kv": "q8_0",
+    "ctk": "q8_0",
+    "ctv": "q8_0",
+    "service_alias": "qwen36-q8-q8kv-tp1-graph-quality-r1",
+    "service_port": 19437
+  },
+  "preserved": {
+    "model_source_server_backend_graph_environment_and_cache8": true,
+    "three_patch_chain_and_33_dso_closure": true,
+    "four_exact_eight_repeat_and_long_context_contract": true,
+    "long_context_claim": "approximately 29.4K actual prompt tokens inside a 32K service; never label the result 31.7K or 32K actual",
+    "cached_tokens_zero_on_all_13_requests": true,
+    "mixed_partial_prefill_disclosure": true,
+    "raw_engine_speed_unchanged": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q8-q8kv-tp1-sycl-graph-quality-20260825-r1",
+    "exact_ack": "RUN qwen36-q8-q8kv-tp1-sycl-graph-quality-20260825-r1",
+    "create_only": true
+  },
+  "raw_terminal_writer_caveat": {
+    "preserve_inherited_exact_depth_schema_and_quality_claim_authorized_false": true,
+    "tracked_adjudication_required_after_pass": true
+  },
+  "authority": {
+    "quality_may_cover_all_seven_q8kv_curve_cells_on_pass": true,
+    "per_depth_quality_reruns_required": false,
+    "site_publication_authorized": false,
+    "record_or_submission_authorized": false,
+    "protected_graph_off_values_may_be_replaced": false,
+    "publication_requires_tracked_adjudication_and_separate_ingestion": true
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-q8kv-exact-depth-r2-result.v1",
+  "campaign_id": "qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-20260825-r2",
+  "state": "passed-raw-graph-cells-quality-pending",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-20260825-r2",
+  "packet": {
+    "preregistration": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-r2-prereg.json",
+      "sha256": "c89feedf5c4dc4fcf9cc4d387aff1bdb5197fe77abf0bdbde172cfadd2d29ee1"
+    },
+    "runner": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-q8kv-tp1-sycl-graph-exact-depth-r2.py",
+      "sha256": "fe9fcc73175f7e989b14ac1490ed3ebf2a1d27247b76ef01788a80c306b76f5f"
+    }
+  },
+  "raw_artifacts": {
+    "exact-depth-receipt.json": "c5a91301d43a473bad4a28a95ab2b218ca653ad25ba25120694da751a090694a",
+    "graph-evidence.json": "9a607a3455e65ce17a04d053c380381b85b2b8b493d41ceb7028534ffd4785d5",
+    "llama-bench-0.json": "c70b4c50736eaa96b6fe7b11c92287e6e33ad5d04fc0687e34de2764d819260a",
+    "llama-bench-0.stderr.log": "a35e65dffaa0af6ed929f0679c57246871fe1550ad5a60e7afeeea97ce774a3d",
+    "llama-bench-2048.json": "dbf6a4661b02c51da064444cfdb1ab494d78a7d196296a6138bca16ef8a335c7",
+    "llama-bench-2048.stderr.log": "b63f4a56dd6b25fd1abe53251d763da5751e35f5265a96aa6034bffb99739f56",
+    "llama-bench-4096.json": "7d6b80725c6366cbf8bae09023dce537afa57d5cd64391f800e01660b08103c4",
+    "llama-bench-4096.stderr.log": "e030f7fa5c88d9fa0bda14376e7a4995c9af17f072a7cbf64ba4cfd2a95f84bd",
+    "llama-bench-8192.json": "a3d65fda9d7592c97ffd5550ad009a373cab6d9ec7119e7662ab6f7bb0718910",
+    "llama-bench-8192.stderr.log": "2a56410737f12e752a709d04164fd22d71cd75aba632dc364c7e742f7fc6c32b",
+    "llama-bench-16384.json": "c0b2dc5d743493f385beb506de4793de561f25e63b9aad4579bbf842ce27c1b9",
+    "llama-bench-16384.stderr.log": "ed41d505e5ace0a7a4ec7108ba164b9b712a3646b02e1599da6257cb3557525a",
+    "llama-bench-24576.json": "9ca8a3cba1ed197b6c7e92327f65f62ea702c469002220db24a5abaa476405da",
+    "llama-bench-24576.stderr.log": "e83b34ba909808636a462ae553435faa19d362c78f62b43b4c19f271c27c7ccc",
+    "llama-bench-32768.json": "c491e05a9d96b0d5abd9c9ab64b898f3aee365a3cc45c5aa9c2855a4fe5f3ca6",
+    "llama-bench-32768.stderr.log": "d43670483b7ce5e1ccd2a1d298a4b2e4e085bd5ee73f3bcb3fbe5c75388257f5",
+    "llama-bench.json": "e154a7f335fbed05eb27b51f44a99c4ef5a7f0c6ce5c056986983e70067be530",
+    "metadata.json": "9d07b6f4fff2542aed9019bfa525d077abf05b22070c731c2aaf2d2971b60f31",
+    "parser.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "parser.stdout.json": "9320e3dc401d9edf4190d24a61d9aabc367a6877d999d1834191ccaf16efa4a7",
+    "terminal-receipt.json": "377f5c09491c5aeb33f037c4d0078a9322fff88cb94e6dff5da9da9b200a0893"
+  },
+  "sealed_runtime_identity": {
+    "selectors": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-q8-0-82d411a", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "tp": 1, "mtp": 0, "graph_mode": "on", "kv": "q8_0"},
+    "source_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "binary": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-bench",
+      "size_bytes": 545160,
+      "sha256": "8ea8fd14e6ac0c4a4b3a711db8997189d677df2a4f7f88d20609f59ca463a55e"
+    },
+    "graph_backend_dso": {
+      "soname": "libggml-sycl.so.0",
+      "reported_path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-sycl.so.0",
+      "realpath": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/libggml-sycl.so.0.19.0",
+      "sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2"
+    },
+    "effective_dso_closure": {
+      "count": 32,
+      "identity_receipt": "exact-depth-receipt.json",
+      "metadata_file_sha256": "9d07b6f4fff2542aed9019bfa525d077abf05b22070c731c2aaf2d2971b60f31",
+      "receipt_recorded_metadata_sha256": "68c3676b94cef196e25de489c8aa8e15df3214f33104358fa8bc7c9bb6fadf37"
+    },
+    "argv_sha256": "10e2320c5d09c5eb5da7878a5621c80795233097d22f68dfab8b55297a5f9fa1",
+    "env_sha256": "070640335d13e4b539efe53d06103587bf9a8dfd3ba154e6fa197d866935c98b",
+    "model": {
+      "path": "/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+      "repository": "unsloth/Qwen3.6-27B-GGUF",
+      "revision": "82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
+      "size_bytes": 28595763424,
+      "sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce"
+    }
+  },
+  "terminal": {
+    "receipt_sha256": "377f5c09491c5aeb33f037c4d0078a9322fff88cb94e6dff5da9da9b200a0893",
+    "created_at_utc": "2026-08-25T23:05:04.255149+00:00",
+    "lab_git_head": "649b9c97c15bf7516a0fe8c74d946e86c48cb1be",
+    "launched_depths": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "cleanup_passed": true,
+    "error": null
+  },
+  "cells": [
+    {"active_context_tokens": 0, "prefill_avg_ts": 896.094776, "decode_avg_ts": 19.009751, "ordered_graph_summaries": [
+      {"phase": "prefill", "classification": "capture-and-replay-without-cache-full", "device": 0, "requested": 24, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 16, "cache_miss": 8, "cache_full": 0, "direct_replay": 16, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 24},
+      {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 3, "cache_limit": 8, "cache_hit": 638, "cache_miss": 3, "cache_full": 0, "direct_replay": 638, "recorded": 3, "created": 3, "updated": 0, "recreated": 0, "replayed": 641}
+    ]},
+    {"active_context_tokens": 2048, "prefill_avg_ts": 871.9281, "decode_avg_ts": 17.932808, "ordered_graph_summaries": [
+      {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 28, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 28, "cache_full": 20, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+      {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+    ]},
+    {"active_context_tokens": 4096, "prefill_avg_ts": 850.230179, "decode_avg_ts": 17.032154, "ordered_graph_summaries": [
+      {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 32, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 32, "cache_full": 24, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+      {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+    ]},
+    {"active_context_tokens": 8192, "prefill_avg_ts": 809.773693, "decode_avg_ts": 15.467807, "ordered_graph_summaries": [
+      {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 40, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 40, "cache_full": 32, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+      {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+    ]},
+    {"active_context_tokens": 16384, "prefill_avg_ts": 747.452109, "decode_avg_ts": 12.709356, "ordered_graph_summaries": [
+      {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 56, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 56, "cache_full": 48, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+      {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+    ]},
+    {"active_context_tokens": 24576, "prefill_avg_ts": 691.39816, "decode_avg_ts": 10.835266, "ordered_graph_summaries": [
+      {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 72, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 72, "cache_full": 64, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+      {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+    ]},
+    {"active_context_tokens": 32768, "prefill_avg_ts": 645.089763, "decode_avg_ts": 9.475195, "ordered_graph_summaries": [
+      {"phase": "prefill", "classification": "mixed-partial-cache-full", "device": 0, "requested": 88, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 88, "cache_full": 80, "direct_replay": 0, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 8},
+      {"phase": "decode", "classification": "verified-capture-and-replay", "device": 0, "requested": 641, "compatibility_rejected": 0, "device_unsupported": 0, "cache_entries": 2, "cache_limit": 8, "cache_hit": 639, "cache_miss": 2, "cache_full": 0, "direct_replay": 639, "recorded": 2, "created": 2, "updated": 0, "recreated": 0, "replayed": 641}
+    ]}
+  ],
+  "result": {
+    "raw_cell_count": 7,
+    "exact_depth_receipt_status": "passed",
+    "graph_classification": "verified-capture-and-replay",
+    "decode_graph_classification_all_cells": "verified-capture-and-replay",
+    "prefill_phase_disclosure": "Depth 0 is fully graph-certified. Depths 2048 through 32768 are mixed partial-graph prefill because cache 8 records eight shapes and reports the remaining distinct prefill shapes as cache_full; every decode phase is fully capture-and-replay certified.",
+    "quality_status": "pending"
+  },
+  "authority": {
+    "raw_cells": 7,
+    "site_publication_authorized": false,
+    "quality_claim_authorized": false,
+    "record_or_submission_authorized": false,
+    "graph_estimates_used": false,
+    "protected_graph_off_values_replaced": false,
+    "historical_featured_speeds_are_immutable": true
+  }
+}
