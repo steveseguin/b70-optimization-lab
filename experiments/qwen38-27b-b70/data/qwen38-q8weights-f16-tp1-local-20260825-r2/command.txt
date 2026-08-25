@@ -1,0 +1,1 @@
+/mnt/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825/build-sycl-aot-bmg-g31/bin/llama-bench -m /mnt/fast-ai/llm-models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf -dev SYCL0 -ngl 99 -sm layer -p 2048 -n 128 -d 0\,2048\,4096\,8192\,16384\,24576\,32768 -b 2048 -ub 512 -fa on -ctk f16 -ctv f16 -t 16 --poll 50 -r 5 -o json 
