@@ -30,7 +30,51 @@
     "source_commit": "e3546c7948e3af463d0b401e6421d5a4c2faf565",
     "source_tree_clean_required": false,
     "source_tree_note": "The executable hash and reported embedded commit bind execution. The shared source tree contains preserved post-build experiment changes and is not a rebuild input for this packet.",
-    "required_help_token": "draft-mtp"
+    "required_help_token": "draft-mtp",
+    "effective_local_shared_libraries": [
+      {
+        "soname": "libllama-server-impl.so",
+        "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libllama-server-impl.so",
+        "sha256": "13f68c70cd6d82760fefa6f5da09599bcf05d351b7963e9738c8bdbd0490ba87"
+      },
+      {
+        "soname": "libllama-common.so.0",
+        "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libllama-common.so.0.0.9976",
+        "sha256": "7e71ecdb198c82032f3218d9db308872d860cccd08d00666516ccff76a20a7f8"
+      },
+      {
+        "soname": "libmtmd.so.0",
+        "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libmtmd.so.0.0.9976",
+        "sha256": "f19e52a025cdc75b62355f98da74ebcc7f9e246a35cf30539b69f1cd4e3f87a4"
+      },
+      {
+        "soname": "libllama.so.0",
+        "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libllama.so.0.0.9976",
+        "sha256": "7ba12171958c6e6be254f58442f4639d6221e934fc8f7e57a2104f5734fddef2"
+      },
+      {
+        "soname": "libggml.so.0",
+        "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libggml.so.0.16.0",
+        "sha256": "a7ec9e84cc44ce537564bfd575acd5157f53cbd05d21a1fd4beb244fb69fe45a"
+      },
+      {
+        "soname": "libggml-cpu.so.0",
+        "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libggml-cpu.so.0.16.0",
+        "sha256": "f19e10710361bf1cfe1fa3e4088f61c0b9888a2ff5bf7b6009637d98baa6078d"
+      },
+      {
+        "soname": "libggml-sycl.so.0",
+        "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libggml-sycl.so.0.16.0",
+        "sha256": "5b53c03bf2702cc3a2b8146b1da8fd437f8b30400f3016bb2a75473c4345a6a3"
+      },
+      {
+        "soname": "libggml-base.so.0",
+        "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libggml-base.so.0.16.0",
+        "sha256": "1ef89c5d7646b1bee919a1d699a0c9fcd90539fee4166a153f8a59827d7044f7"
+      }
+    ],
+    "effective_library_capture": "Every local build-tree DSO resolved by ldd is checksum-gated before launch and its soname/canonical path/hash plus the full ldd resolution are captured in identity.txt.",
+    "effective_library_set_policy": "The eight declared DSOs must be the complete local build-tree ldd set; any additional local build-tree target fails prelaunch and validation."
   },
   "fixture": {
     "path": "data/qwen27-exact-depth/qwen36-6a9e13bd-exact-depth-v1.json",
@@ -103,6 +147,7 @@
     "requires_clean_pushed_main": true,
     "requires_idle_gpu0_render_node": "/dev/dri/by-path/pci-0000:23:00.0-render",
     "requires_no_server_benchmark_or_container": true,
+    "process_classifier": "exact llama comm/argv0 plus token-aware vLLM EngineCore, Python -m entrypoint, or vllm serve identity; evidence filenames are never substring-matched",
     "required_locks": [
       "/run/lock/muse-glimmer-gpu-exclusive.lock",
       "/tmp/b70-benchmark.lock",
@@ -110,7 +155,17 @@
       "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"
     ],
     "artifacts_are_create_only": true,
-    "terminal_receipt_required": true
+    "terminal_receipt_required": true,
+    "server_shutdown": "TERM for at most 30 seconds, then KILL for at most 10 seconds; never unbounded wait",
+    "readiness_capture": "Retry /v1/models against /dev/null; after readiness, validate the frozen alias in one temporary response and publish models.json once with an exclusive hard link",
+    "readiness_timeouts_seconds": {
+      "outer_deadline": 300,
+      "probe_connect": 2,
+      "probe_total": 5,
+      "capture_connect": 2,
+      "capture_total": 15
+    },
+    "signal_exit_status": "INT exits 130 and TERM exits 143 before the EXIT-only cleanup writes the failure receipt"
   },
   "frozen_interpretation": {
     "measurement_class": "HTTP serving, batch 1, conventional 99-interval streamed token-ID decode metric",

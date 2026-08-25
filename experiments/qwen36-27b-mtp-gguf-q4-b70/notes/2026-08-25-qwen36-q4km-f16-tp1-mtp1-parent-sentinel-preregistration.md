@@ -43,3 +43,29 @@ servers plus bare or containerized vLLM work, repeats the idle census directly
 before each arm, creates the frozen ext4 run root exactly once, tears each
 server down before the next arm, writes a terminal receipt, and never edits the
 family catalog or site.
+
+The prelaunch audit tightened three lifecycle details without changing either
+arm, request, selector, or interpretation. The process census now classifies
+exact llama executable identities and token-aware vLLM entrypoints instead of
+substring-matching evidence filenames. All eight local build-tree DSOs resolved
+by `llama-server` are checksum-gated and captured beside the already pinned
+executable; an unexpected ninth local build-tree target fails closed. Server
+shutdown is bounded: TERM gets 30 seconds, then KILL gets 10
+seconds; the runner never waits indefinitely on a wedged child. These are
+identity and failure-containment repairs only and cannot authorize a speed or
+site-row transfer.
+
+The same audit also corrected a prelaunch `noclobber` interaction in the
+readiness loop. Failed readiness probes now write only to `/dev/null`; they
+cannot create an empty final artifact that poisons later retries. Once the
+endpoint is ready, the runner captures one response to a unique temporary
+file, validates the frozen model alias, and publishes `models.json` exactly
+once through an exclusive hard link. Both arms' validated listings are required
+by the terminal validator. Each probe is independently bounded to a two-second
+connect and five-second total, inside the 300-second readiness deadline; the
+one-time capture is bounded to a two-second connect and 15-second total.
+
+Signal handling is likewise fail-closed. `INT` exits 130 and `TERM` exits 143;
+only the resulting `EXIT` invokes cleanup. The failure receipt therefore keeps
+the signal-derived nonzero status instead of accidentally recording a clean
+exit when an interrupt arrived between commands.
