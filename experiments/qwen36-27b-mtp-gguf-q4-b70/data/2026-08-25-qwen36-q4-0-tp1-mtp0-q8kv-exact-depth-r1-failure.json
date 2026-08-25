@@ -1,0 +1,53 @@
+{
+  "schema": "neural.download.qwen36-llama-exact-depth-failure.v1",
+  "campaign_id": "qwen36-q4-0-tp1-mtp0-q8kv-exact-depth-20260825-r1",
+  "status": "failed-closed",
+  "started_utc": "2026-08-25T14:22:09.052105+00:00",
+  "finished_utc": "2026-08-25T14:38:40.421369+00:00",
+  "run_root": "/home/steve/qwen36-matrix-runs/q4-0-tp1-mtp0-q8kv-exact-depth-20260825-r1",
+  "identity": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q4-0-20c9c45",
+    "model_sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+    "binary_sha256": "90d4d23363825219d6cff02d59b73c3912fd42071694e8e215ba8cfc5d058aff",
+    "tp": 1,
+    "mtp": 0,
+    "kv": "q8_0",
+    "requested_graph_mode": "off"
+  },
+  "failure": {
+    "stage": "post-benchmark graph-mode attestation",
+    "reason": "The exact binary produced an empty stderr log and therefore did not emit the two preregistered graph-off marker strings.",
+    "missing_markers": [
+      "GGML_SYCL_ENABLE_GRAPH: 0",
+      "GGML_SYCL_GRAPH_CACHE_SIZE: 0"
+    ],
+    "benchmark_process_completed": true,
+    "raw_row_count": 14,
+    "cells_published": 0,
+    "retry_performed": false
+  },
+  "raw_unpromoted_rows": [
+    {"active_context_tokens": 0, "prefill_tok_s": 633.089553, "decode_tok_s": 25.788875},
+    {"active_context_tokens": 2048, "prefill_tok_s": 299.986373, "decode_tok_s": 23.88529},
+    {"active_context_tokens": 4096, "prefill_tok_s": 283.948539, "decode_tok_s": 22.497919},
+    {"active_context_tokens": 8192, "prefill_tok_s": 255.84926, "decode_tok_s": 20.209892},
+    {"active_context_tokens": 16384, "prefill_tok_s": 203.731862, "decode_tok_s": 16.812507},
+    {"active_context_tokens": 24576, "prefill_tok_s": 168.36219, "decode_tok_s": 14.391065},
+    {"active_context_tokens": 32768, "prefill_tok_s": 144.815037, "decode_tok_s": 12.59479}
+  ],
+  "evidence_sha256": {
+    "llama_bench_json": "a2861354ff5b93e8d311cf86ac7b56ef7e7b352a7bb74dc5199760c93ae537d1",
+    "llama_bench_stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "metadata": "898b5e1503822bb5702043a3da22d5bd52ee822fec4de75b77c6537f0435eee7",
+    "terminal_receipt": "13734d5da5a81921013d94b2fb7af89b5219238a9a02328c32454533e6e33d8a"
+  },
+  "host_postflight": {
+    "model_processes_idle": true,
+    "docker_containers_idle": true,
+    "gpu0_render_node_idle": true,
+    "kernel_gpu_oom_fault_scan_clean": true
+  },
+  "coordination_caveat": "A separate writer committed a Qwen3.8 llama-batched-bench GPU0 result at 10:26 local while this 10:22-10:38 campaign was active. This runner's process scan did not include llama-batched-bench. Preflight found GPU0 idle, but a post-preflight race cannot be excluded; no raw performance value from this failed campaign is suitable for publication.",
+  "interpretation": "This is an observability-contract failure, not a speed or GPU failure. The raw rows remain diagnostic-only until a separately preregistered attestation repair is justified and run."
+}
