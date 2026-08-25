@@ -1,0 +1,75 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 573905de8..996b31780 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -4066,16 +4066,30 @@ static char * ggml_sycl_q8_dedup_lookup_generation(
+         }
+     }
+     ggml_backend_sycl_context::q8_memo_entry * slot = nullptr;
++    const bool preserve_graph_cache_pointers =
++        g_ggml_sycl_enable_graph != 0 && g_ggml_sycl_graph_cache_size > 0;
+     for (auto & e : ctx.q8_memo) {
+         if (e.generation != gen) {
+-            slot = &e;   // stale slot from an earlier eval: reusable for free
+-            break;
++            if (!preserve_graph_cache_pointers) {
++                slot = &e;  // retain the accepted graph-off first-stale policy
++                break;
++            }
++            if (e.cap >= size && (slot == nullptr || e.cap < slot->cap)) {
++                // Persistent executable graphs retain kernel argument pointers.
++                // Best-fit avoids resizing and preserves larger slots for later
++                // large requests.
++                slot = &e;
++            }
+         }
+     }
+     if (slot == nullptr) {
+         if (ctx.q8_memo.size() < GGML_SYCL_Q8_MEMO_SLOTS) {
+             ctx.q8_memo.emplace_back();
+             slot = &ctx.q8_memo.back();
++        } else if (preserve_graph_cache_pointers) {
++            GGML_ABORT(
++                "persistent SYCL graph Q8 memo exhausted %zu pointer-stable slots for %zu bytes",
++                ctx.q8_memo.size(), size);
+         } else {
+             slot = &ctx.q8_memo[ctx.q8_memo_cursor];   // ring-evict the oldest live entry
+             ctx.q8_memo_cursor = (ctx.q8_memo_cursor + 1) % ctx.q8_memo.size();
+@@ -4084,6 +4098,7 @@ static char * ggml_sycl_q8_dedup_lookup_generation(
+     if (slot->cap < size) {
+         queue_ptr q = ctx.stream();
+         if (slot->buf != nullptr) {
++            GGML_ASSERT(!preserve_graph_cache_pointers);
+             // Rare (geometry growth only).  The old buffer may still be read by in-flight kernels
+             // from an earlier eval on this in-order queue: drain before freeing.
+             q->wait();
+@@ -4093,6 +4108,9 @@ static char * ggml_sycl_q8_dedup_lookup_generation(
+         }
+         slot->buf = (char *) sycl::malloc_device(size, *q);
+         if (slot->buf == nullptr) {
++            if (preserve_graph_cache_pointers) {
++                GGML_ABORT("persistent SYCL graph Q8 memo allocation failed for %zu bytes", size);
++            }
+             return nullptr;   // OOM: leave the slot empty, caller takes the stock path
+         }
+         slot->cap = size;
+@@ -7816,6 +7834,19 @@ static void ggml_backend_sycl_free(ggml_backend_t backend) {
+         (unsigned long long) sycl_ctx->graph_replayed_count);
+ #endif
+ 
++#ifdef GGML_SYCL_GRAPH
++    // Executable graphs retain Q8 memo USM pointers. Drain submitted work and
++    // destroy every executable graph before the context destructor frees those
++    // memo allocations. Keep teardown nonthrowing.
++    try {
++        sycl_ctx->stream()->wait_and_throw();
++    } catch (const std::exception & e) {
++        GGML_LOG_WARN("[SYCL-GRAPH] teardown queue drain failed: %s\n", e.what());
++    }
++    sycl_ctx->graph_cache.clear();
++    sycl_ctx->exec_graph.reset();
++#endif
++
+     // GGML_SYCL_SET_TENSOR_CENSUS=1 -- how many host->device tensor sets, how big, how long.
+     if (const char * s = getenv("GGML_SYCL_SET_TENSOR_CENSUS"); s && atoi(s) != 0) {
+         const int d = sycl_ctx->device;
