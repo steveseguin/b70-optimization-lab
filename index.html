@@ -304,6 +304,10 @@ Style genome (duotone-hixffp):
     .model-picker td.model-32k, .model-picker td.model-agg { font-size: 13px; }
     .model-picker .model-group-row { padding: 0 2px; border: 0; background: none; }
     .model-picker .model-group-row th { padding: 6px 0 0; font-size: 16px; }
+    .model-picker .model-group-row th small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); margin: 2px 0 6px; }
+    .model-picker .model-group-row .use-chip { margin-left: 0; }
+    .model-picker tr { grid-template-columns: 1fr 1fr 1fr; }
+    .model-picker td.model-agg { grid-column: 3; }
     .model-picker .variant-row th.model { padding-left: 0; }
     .guide-actions { gap: 7px; }
     .guide-actions a.open-guide, .copy-md { min-height: 34px; display: inline-flex; align-items: center; }
@@ -323,7 +327,17 @@ Style genome (duotone-hixffp):
     .hero-actions .button { flex: 1 1 150px; }
     td .ratebar { display: none; }
     th.hide-s, td.hide-s { display: none; }
-    .benchmark-scroller table { min-width: 760px; }
+    /* Narrow screens: model + cards + speed + proof stay visible without
+       scrolling; software / compression / more-cards / how-measured hide. */
+    .benchmark-scroller table { min-width: 0; }
+    #lab-speeds table th:nth-child(2), #lab-speeds table td:nth-child(2),
+    #lab-speeds table th:nth-child(3), #lab-speeds table td:nth-child(3) { display: none; }
+    #lab-speeds th.model { max-width: 52vw; white-space: normal; overflow-wrap: normal; }
+    #lab-speeds th.model small { display: none; }
+    #lab-speeds .cards-note { font-size: 10px; }
+    #lab-speeds td.num { min-width: 0; }
+    .teaser-strip { font-size: 14px; }
+    .teaser-strip .key { float: none; display: block; margin: 0 0 6px; }
     .start-grid, .contribute-panel { grid-template-columns: 1fr; }
     .start-card { padding: 14px; }
     .contribute-panel { padding: 17px; gap: 21px; }
