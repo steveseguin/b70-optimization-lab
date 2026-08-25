@@ -4,8 +4,42 @@
   "name": "Qwen 27B",
   "display_name": "Qwen 27B · 3.6 → 3.8",
   "publisher": "Qwen / Alibaba",
-  "updated_at": "2026-08-23",
+  "updated_at": "2026-08-24",
   "summary": "One architecture family, two measured weight revisions, and deployment variants spanning llama.cpp and vLLM on one, two, and four Intel Arc Pro B70 cards.",
+  "featured_results": [
+    {
+      "role": "hero",
+      "label": "Qwen3.8 AutoRound INT4 · TP4 graph overlay",
+      "measurement_id": "q38-a3561ef8-tp4-winner-overlay-graph-strict",
+      "metric": "decode_tok_s",
+      "sample_index": 1,
+      "quality_label": "Accepted strict natural-EOS overlay; replay A passed the full battery and replay B was not repeated"
+    },
+    {
+      "role": "support",
+      "label": "Qwen3.8 AutoRound INT4 · TP1 graph diagnostic",
+      "measurement_id": "q38-a3561ef8-stock-tp1-graph-diagnostic",
+      "metric": "decode_tok_s",
+      "sample_index": 0,
+      "quality_label": "Fixed-output diagnostic high; strict quality belongs to the separate natural-EOS replay"
+    },
+    {
+      "role": "support",
+      "label": "Qwen3.8 AutoRound INT4 · TP2 graph diagnostic",
+      "measurement_id": "q38-a3561ef8-tp2-winner-overlay-graph-diagnostic",
+      "metric": "decode_tok_s",
+      "sample_index": 0,
+      "quality_label": "Fixed-output diagnostic high only; exact canary and cache-zero checks passed"
+    },
+    {
+      "role": "support",
+      "label": "Qwen3.8 AutoRound INT4 · TP4 captured strict high",
+      "measurement_id": "q38-a3561ef8-stock-tp4-graph-strict",
+      "metric": "decode_tok_s",
+      "sample_index": 0,
+      "quality_label": "Quality battery passed; this single capture did not replicate and is not a promotion"
+    }
+  ],
   "architecture": {
     "class": "Qwen3_5ForConditionalGeneration",
     "model_type": "qwen3_5_text",

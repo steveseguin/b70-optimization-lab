@@ -20,7 +20,7 @@
   .lineage { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
   .lineage span { padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }
   .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
-  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; }
+  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
   .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
   .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
   .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
@@ -32,7 +32,7 @@
   .result b { font:900 27px/1.15 var(--display); }
   .result .r-unit { margin-left:5px; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
   .result .r-note { display:block; font-size:11px; color:var(--muted); }
-  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--good); }
+  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .result.is-screened .r-gate { color:var(--warn); }
   .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
   .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -45,13 +45,16 @@
   .meta-strip div { cursor:help; }
   .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .meta-strip dd { margin:1px 0 0; font-size:12.5px; }
-  .stat-row { display:grid; grid-template-columns:auto auto 1fr auto; gap:4px 12px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-row { display:grid; grid-template-columns:minmax(150px,1fr) auto; gap:5px 14px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-values { display:flex; flex-wrap:wrap; justify-content:end; gap:8px 14px; }
+  .stat-metric { display:grid; grid-template-columns:auto auto; align-items:baseline; column-gap:4px; }
+  .stat-metric small { grid-column:1 / -1; color:var(--muted); font:9px var(--mono); text-transform:uppercase; }
   .stat-row .m { text-align:right; }
   .stat-row:last-child { border-bottom:0; }
   .stat-row b { font:900 20px/1 var(--display); }
   .stat-row .u { font:700 10px var(--mono); text-transform:uppercase; color:var(--muted); margin-left:4px; }
   .stat-row .l { font-size:12.5px; }
-  .stat-row .m { font:11px var(--mono); color:var(--muted); white-space:nowrap; }
+  .stat-row .m { grid-column:1 / -1; font:11px var(--mono); color:var(--muted); }
   .stat-row.is-superseded { color:var(--muted); }
   .stat-row.is-superseded b { font:700 15px/1 var(--display); color:var(--muted); }
   .combo-list { list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }
@@ -68,6 +71,11 @@
   .combo .c-links { font:11px var(--mono); white-space:nowrap; }
   .combo-scope { margin:0 0 8px; color:var(--muted); font-size:12px; }
   .combo-tail { margin:8px 0 0; color:var(--muted); font-size:12px; }
+  .combo-none { margin:0; padding:9px 12px; border:1px solid var(--line); color:var(--muted); font-size:12px; }
+  .combo-gaps { margin:0 0 6px; }
+  .combo-gaps summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
+  .gap-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .gap-chips code { padding:2px 5px; border:1px solid var(--line); background:var(--surface); font:9px var(--mono); }
   .view-flag { font:700 9px var(--mono); letter-spacing:.05em; color:var(--warn); margin-left:8px; vertical-align:2px; }
   h2, .section-head { scroll-margin-top:70px; }
   @media (max-width:520px) {
@@ -150,12 +158,12 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Phi-4 Mini · Instruct</p>
   <h1>Phi-4 Mini · Instruct</h1>
   <p>Phi-4 coverage currently means Phi-4 Mini Instruct only: one measured weight revision with Q4_K_M and Q8_0 one-B70 rapid variants, and no implied result for full-size Phi-4.</p>
-  <div class="hero-headline"><span class="big">96.55</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 72 words a second</span><small>1× Arc Pro B70 · Q4_K_M · llama.cpp SYCL · single user · full quality gate</small></div>
+  <a class="hero-headline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q4km-llamacpp-faon-cacheoff-confirm-ctx4096-realistic128-20260704T224303Z.json" title="rapid-phi4-mini-instruct-gguf · 12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled"><span class="big">96.55</span><span class="unit">tok/s<br>measured</span><span class="gloss">Phi-4 Mini Instruct · Q4_K_M and Q8_0</span><small>phi4-mini-instruct-7ff82c2 · Q4_K_M · llama.cpp SYCL fdb1db877 · 1× B70 · Evidence D of A–D</small></a>
 
   <div class="lineage"><span>Phi-4 Mini Instruct · only measured Phi-4-family weights</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-<div class="result-strip" aria-label="Other measured results"><a class="result is-strict" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q8-llamacpp-faon-cacheoff-confirm2-ctx4096-realistic128-20260704T224430Z.json"><span class="r-kind">1 card · Q8_0</span><b>72.25</b><span class="r-unit">tok/s · 1 user</span><span class="r-gate">✓ Full quality gate</span></a></div><div class="family-cta"><a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q4km-llamacpp-faon-cacheoff-confirm-ctx4096-realistic128-20260704T224303Z.json">Read the lab report</a><span class="cta-note">No step-by-step install guide is published for this model yet.</span></div>
+<div class="family-cta"><a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md">Open result dossier</a><a class="inline" href="#packets">All packets and recipes</a></div>
   <dl class="meta-strip" aria-label="Family signals">
     <div title="Phi-4 Mini Q4_K_M and Q8_0 rapid lanes, reviewed 2026-08-24"><dt>B70 fit</dt><dd>Runs on 1 card (measured)</dd></div>
     <div title="12 unique cache-zero deterministic prompts per quant; no token IDs or broad model-quality evaluation"><dt>Quality evidence</dt><dd>Rapid snapshot only</dd></div>
@@ -172,17 +180,17 @@
   <div class="coverage-rail"><span>Q4</span><span>Q8</span><span>decode</span><span>TTFT</span><span>TP1</span><span>cache-zero strict suite</span></div>
 </a></div>
 
-  <div class="section-head"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/phi-4.json">family data</a></div>
+  <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/phi-4.json">family data</a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="phi4-mini-quant">
   <div class="chart-head"><div><h3>Measured Mini quantization variants</h3><p>1 = Q4_K_M; 2 = Q8_0. Same Mini weights and rapid suite; full-size Phi-4 is not represented.</p></div><div class="metric-switch"></div></div>
-  <div class="stat-row is-superseded"><b>96.55</b><span class="u">tok/s</span><span class="l">Q4_K_M — 1 card, earlier quality gate, superseded</span><span class="m">7 ms to first token · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q4km-llamacpp-faon-cacheoff-confirm-ctx4096-realistic128-20260704T224303Z.json">evidence</a></span></div><div class="stat-row is-superseded"><b>72.25</b><span class="u">tok/s</span><span class="l">Q8_0 — 1 card, earlier quality gate, superseded</span><span class="m">119 ms to first token · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q8-llamacpp-faon-cacheoff-confirm2-ctx4096-realistic128-20260704T224430Z.json">evidence</a></span></div>
+  <div class="stat-row"><span class="l">Q4_K_M · quantization variant 1</span><span class="stat-values"><span class="stat-metric"><b>96.55</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>69.94</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · promoted speed row · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q4km-llamacpp-faon-cacheoff-confirm-ctx4096-realistic128-20260704T224303Z.json">evidence</a></span></div><div class="stat-row"><span class="l">Q8_0 · quantization variant 2</span><span class="stat-values"><span class="stat-metric"><b>72.25</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>119.46</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · measured higher quality quant reference · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q8-llamacpp-faon-cacheoff-confirm2-ctx4096-realistic128-20260704T224430Z.json">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>Q4_K_M</span><span><i style="background:var(--s2)"></i>Q8_0</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q4km-llamacpp-faon-cacheoff-confirm-ctx4096-realistic128-20260704T224303Z.json">evidence 1</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q8-llamacpp-faon-cacheoff-confirm2-ctx4096-realistic128-20260704T224430Z.json">evidence 2</a></span></figcaption>
 </figure></div>
 
 
-  <div class="section-head"><div><h2>What has been tried</h2><p>Only tested combinations are listed; the full matrix is in the family data.</p></div></div>
-  <div class="combo-block"><p class="combo-scope">Phi-4 Mini Instruct only; exact measured revision and rapid runtime. Fixed: revision=phi4-mini-instruct-7ff82c2 · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, Q4_K_M <code>TP1·Q4_K_M</code></span><b class="c-val">96.55 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q4km-llamacpp-faon-cacheoff-confirm-ctx4096-realistic128-20260704T224303Z.json">evidence</a></span></li><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, Q8_0 <code>TP1·Q8_0</code></span><b class="c-val">72.25 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q8-llamacpp-faon-cacheoff-confirm2-ctx4096-realistic128-20260704T224430Z.json">evidence</a></span></li></ul><p class="combo-tail">4 other combinations untested. Full matrix in the <a class="inline" href="../families/phi-4.json">family data</a>.</p></div>
+  <div class="section-head"><div><h2>What has been classified</h2><p>Measured, screened, closed, and unsupported combinations are listed; expand each exact gap set.</p></div></div>
+  <div class="combo-block"><p class="combo-scope">Phi-4 Mini Instruct only; exact measured revision and rapid runtime. Fixed: revision=phi4-mini-instruct-7ff82c2 · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, Q4_K_M <code>TP1·Q4_K_M</code></span><b class="c-val">96.55 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q4km-llamacpp-faon-cacheoff-confirm-ctx4096-realistic128-20260704T224303Z.json">evidence</a></span></li><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, Q8_0 <code>TP1·Q8_0</code></span><b class="c-val">72.25 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/phi4-mini-instruct-q8-llamacpp-faon-cacheoff-confirm2-ctx4096-realistic128-20260704T224430Z.json">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>4 untested combinations</summary><div class="gap-chips"><code title="2 cards, Q4_K_M — no stored lane">TP2·Q4_K_M</code><code title="4 cards, Q4_K_M — no stored lane">TP4·Q4_K_M</code><code title="2 cards, Q8_0 — no stored lane">TP2·Q8_0</code><code title="4 cards, Q8_0 — no stored lane">TP4·Q8_0</code></div></details><a class="inline" href="../families/phi-4.json">Full matrix and exact selectors</a></div></div>
 
   <details class="fine"><summary>Transfer boundary</summary><p>Phi-4 Mini Instruct. Mini Instruct only; Q4 and Q8 are deployment variants of one measured revision. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 

@@ -20,7 +20,7 @@
   .lineage { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
   .lineage span { padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }
   .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
-  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; }
+  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
   .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
   .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
   .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
@@ -32,7 +32,7 @@
   .result b { font:900 27px/1.15 var(--display); }
   .result .r-unit { margin-left:5px; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
   .result .r-note { display:block; font-size:11px; color:var(--muted); }
-  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--good); }
+  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .result.is-screened .r-gate { color:var(--warn); }
   .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
   .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -45,13 +45,16 @@
   .meta-strip div { cursor:help; }
   .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .meta-strip dd { margin:1px 0 0; font-size:12.5px; }
-  .stat-row { display:grid; grid-template-columns:auto auto 1fr auto; gap:4px 12px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-row { display:grid; grid-template-columns:minmax(150px,1fr) auto; gap:5px 14px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-values { display:flex; flex-wrap:wrap; justify-content:end; gap:8px 14px; }
+  .stat-metric { display:grid; grid-template-columns:auto auto; align-items:baseline; column-gap:4px; }
+  .stat-metric small { grid-column:1 / -1; color:var(--muted); font:9px var(--mono); text-transform:uppercase; }
   .stat-row .m { text-align:right; }
   .stat-row:last-child { border-bottom:0; }
   .stat-row b { font:900 20px/1 var(--display); }
   .stat-row .u { font:700 10px var(--mono); text-transform:uppercase; color:var(--muted); margin-left:4px; }
   .stat-row .l { font-size:12.5px; }
-  .stat-row .m { font:11px var(--mono); color:var(--muted); white-space:nowrap; }
+  .stat-row .m { grid-column:1 / -1; font:11px var(--mono); color:var(--muted); }
   .stat-row.is-superseded { color:var(--muted); }
   .stat-row.is-superseded b { font:700 15px/1 var(--display); color:var(--muted); }
   .combo-list { list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }
@@ -68,6 +71,11 @@
   .combo .c-links { font:11px var(--mono); white-space:nowrap; }
   .combo-scope { margin:0 0 8px; color:var(--muted); font-size:12px; }
   .combo-tail { margin:8px 0 0; color:var(--muted); font-size:12px; }
+  .combo-none { margin:0; padding:9px 12px; border:1px solid var(--line); color:var(--muted); font-size:12px; }
+  .combo-gaps { margin:0 0 6px; }
+  .combo-gaps summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
+  .gap-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .gap-chips code { padding:2px 5px; border:1px solid var(--line); background:var(--surface); font:9px var(--mono); }
   .view-flag { font:700 9px var(--mono); letter-spacing:.05em; color:var(--warn); margin-left:8px; vertical-align:2px; }
   h2, .section-head { scroll-margin-top:70px; }
   @media (max-width:520px) {
@@ -150,12 +158,12 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / MiniMax M2.7</p>
   <h1>MiniMax M2.7</h1>
   <p>A sparse-MoE family with a four-card AutoRound deployment packet, separate strict-speed and 32K serving identities, exact-token gates, and measured decode, prefill, TTFT, and long-context service profiles.</p>
-  <div class="hero-headline"><span class="big">96.82</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 73 words a second</span><small>4× Arc Pro B70 · AutoRound W4A16 INT4 · vLLM XPU · single user · full quality gate</small></div>
+  <a class="hero-headline" href="minimax-m27-b70-89tps-20260520.html" title="minimax-m27-b70-89tps-20260520 · Mean output throughput across four promoted warm p512/n1536, batch-one, 2K-context runs after the strict quality gate."><span class="big">89.31</span><span class="unit">tok/s<br>measured</span><span class="gloss">MiniMax M2.7 AutoRound · strict TP4</span><small>minimax-m2.7-lasimeri · AutoRound W4A16 INT4 · vLLM XPU 0.20.1-local · 4× B70 · B70-verified historical</small></a>
 
   <div class="lineage"><span>MiniMax M2.7 · Lasimeri AutoRound export · measured deployment weights</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-<div class="family-cta"><a class="button" href="minimax-m27-b70-89tps-20260520.html">Get the install guide</a><a class="inline" href="#packets">All deployment packets</a></div>
+<div class="family-cta"><a class="button" href="minimax-m27-b70-89tps-20260520.html">Open deployment packet</a><a class="inline" href="#packets">All packets and recipes</a></div>
   <dl class="meta-strip" aria-label="Family signals">
     <div title="single active generation on four B70 cards, reviewed 2026-08-23"><dt>B70 fit</dt><dd>Four card</dd></div>
     <div title="exact token hashes, deterministic repeats, semantic, arithmetic, and extended canaries for the packaged AutoRound lane; not a general capability score"><dt>Quality evidence</dt><dd>Strong scoped evidence</dd></div>
@@ -192,15 +200,15 @@
   <div class="coverage-rail"><span>constrained decode</span><span>30/30 accepted</span><span>zero rejects</span><span>not free-form comparable</span></div>
 </a></div>
 
-  <div class="section-head"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/minimax-m2-7.json">family data</a></div>
+  <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/minimax-m2-7.json">family data</a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="minimax-deployment-profiles">
   <div class="chart-head"><div><h3>Deployment profiles</h3><p>TP4 · p512/n1536 comparison gate · active context 2K; x is configured service capacity, not active prompt length</p></div><div class="metric-switch"></div></div>
-  <div class="stat-row is-superseded"><b>89.53</b><span class="u">tok/s</span><span class="l">historical strict stack — 4 cards, earlier quality gate, superseded</span><span class="m"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json">evidence</a></span></div><div class="stat-row is-superseded"><b>83.55</b><span class="u">tok/s</span><span class="l">deployable 32K stack — 4 cards, earlier quality gate, superseded</span><span class="m"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-110tps-ubuntu24-20260523/results/summary-20260523.json">evidence</a></span></div>
+  <div class="stat-row"><span class="l">historical strict stack · configured max context tokens 2K</span><span class="stat-values"><span class="stat-metric"><b>88.93–89.53</b><span class="u">tok/s</span><small>Decode</small></span></span><span class="m">lab measurement; quality scope in evidence · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json">evidence</a></span></div><div class="stat-row"><span class="l">deployable 32K stack · configured max context tokens 32K</span><span class="stat-values"><span class="stat-metric"><b>82.37–83.55</b><span class="u">tok/s</span><small>Decode</small></span></span><span class="m">lab measurement; quality scope in evidence · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-110tps-ubuntu24-20260523/results/summary-20260523.json">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>historical strict stack</span><span><i style="background:var(--s2)"></i>deployable 32K stack</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json">evidence 1</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-110tps-ubuntu24-20260523/results/summary-20260523.json">evidence 2</a></span></figcaption>
 </figure><figure class="chart family-view" data-family-view="minimax-endpoint-metrics">
   <div class="chart-head"><div><h3>32K endpoint observation</h3><p>TP4 · configured 32K · warm p510/n1536 request; prefill is a conservative lower bound</p></div><div class="metric-switch"></div></div>
-  <div class="stat-row is-superseded"><b>85.45</b><span class="u">tok/s</span><span class="l">OpenAI endpoint — 4 cards, earlier quality gate, superseded</span><span class="m">351 ms to first token · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/minimax-m27-openai-endpoint-metrics-32k-20260524.json">evidence</a></span></div>
+  <div class="stat-row"><span class="l">OpenAI endpoint · active prompt tokens 510</span><span class="stat-values"><span class="stat-metric"><b>85.45</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>1,446</b><span class="u">tok/s</span><small>Prefill</small></span><span class="stat-metric"><b>351.07</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">lab measurement; quality scope in evidence · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/minimax-m27-openai-endpoint-metrics-32k-20260524.json">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>OpenAI endpoint</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/minimax-m27-openai-endpoint-metrics-32k-20260524.json">evidence 1</a></span></figcaption>
 </figure><figure class="chart family-view" data-family-view="minimax-production-context">
@@ -216,8 +224,11 @@
 </figure></div>
 
 
-  <div class="section-head"><div><h2>What has been tried</h2><p>Only tested combinations are listed; the full matrix is in the family data.</p></div></div>
-  <div class="combo-block"><p class="combo-scope">MiniMax M2.7 AutoRound W4A16 · vLLM XPU · graph on · f16-family KV · MTP/speculation off. Only TP4 is measured in the maintained family packet.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">4 cards, no speculative decoding <code>TP4·MTP0</code></span><b class="c-val">89.53 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json">evidence</a></span></li></ul><p class="combo-tail">2 other combinations untested; The 33,792-token startup loaded and entered compile/warmup but did not expose /v1/models within the wait window; 32,768 is the promoted service setting; The larger prefill chunk triggered the documented PIECEWISE compile-range/startup failure; 512 remains the stable service setting. Full matrix in the <a class="inline" href="../families/minimax-m2-7.json">family data</a>.</p></div>
+  <div class="section-head"><div><h2>What has been classified</h2><p>Measured, screened, closed, and unsupported combinations are listed; expand each exact gap set.</p></div></div>
+  <div class="combo-block"><p class="combo-scope">MiniMax M2.7 AutoRound W4A16 · vLLM XPU · graph on · f16-family KV · MTP/speculation off. Only TP4 is measured in the maintained family packet.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">4 cards, no speculative decoding <code>TP4·MTP0</code></span><b class="c-val">89.53 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>2 untested combinations</summary><div class="gap-chips"><code title="1 card, no speculative decoding — No comparable TP1 AutoRound result is stored.">TP1·MTP0</code><code title="2 cards, no speculative decoding — No comparable TP2 AutoRound result is stored.">TP2·MTP0</code></div></details><a class="inline" href="../families/minimax-m2-7.json">Full matrix and exact selectors</a></div></div>
+
+  <div class="section-head"><div><h2>Scoped closures</h2><p>Rejected combinations, scoped to the exact selectors shown.</p></div></div>
+  <div class="closure-grid"><a class="closure-card is-closed" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-110tps-ubuntu24-20260523/results/context-window-32768-20260523.json"><span>closed · revision=minimax-m2.7-lasimeri · variant=AutoRound W4A16 INT4 · runtime=vLLM XPU c51df430 deployable stack · tp=4 · configured_max_context_tokens=33792</span><b>The 33,792-token startup loaded and entered compile/warmup but did not expose /v1/models within the wait window; 32,768 is the promoted service setting.</b></a><a class="closure-card is-closed" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md"><span>closed · revision=minimax-m2.7-lasimeri · variant=AutoRound W4A16 INT4 · runtime=vLLM XPU c51df430 deployable stack · tp=4 · max_num_batched_tokens=1024</span><b>The larger prefill chunk triggered the documented PIECEWISE compile-range/startup failure; 512 remains the stable service setting.</b></a></div>
 
   <details class="fine"><summary>Transfer boundary</summary><p>MiniMaxM2ForCausalLM, 62 layers, 3072 hidden. one packaged AutoRound revision; workload and runtime identities remain separate. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 

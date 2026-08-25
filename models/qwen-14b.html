@@ -20,7 +20,7 @@
   .lineage { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
   .lineage span { padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }
   .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
-  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; }
+  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
   .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
   .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
   .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
@@ -32,7 +32,7 @@
   .result b { font:900 27px/1.15 var(--display); }
   .result .r-unit { margin-left:5px; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
   .result .r-note { display:block; font-size:11px; color:var(--muted); }
-  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--good); }
+  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .result.is-screened .r-gate { color:var(--warn); }
   .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
   .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -45,13 +45,16 @@
   .meta-strip div { cursor:help; }
   .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .meta-strip dd { margin:1px 0 0; font-size:12.5px; }
-  .stat-row { display:grid; grid-template-columns:auto auto 1fr auto; gap:4px 12px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-row { display:grid; grid-template-columns:minmax(150px,1fr) auto; gap:5px 14px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-values { display:flex; flex-wrap:wrap; justify-content:end; gap:8px 14px; }
+  .stat-metric { display:grid; grid-template-columns:auto auto; align-items:baseline; column-gap:4px; }
+  .stat-metric small { grid-column:1 / -1; color:var(--muted); font:9px var(--mono); text-transform:uppercase; }
   .stat-row .m { text-align:right; }
   .stat-row:last-child { border-bottom:0; }
   .stat-row b { font:900 20px/1 var(--display); }
   .stat-row .u { font:700 10px var(--mono); text-transform:uppercase; color:var(--muted); margin-left:4px; }
   .stat-row .l { font-size:12.5px; }
-  .stat-row .m { font:11px var(--mono); color:var(--muted); white-space:nowrap; }
+  .stat-row .m { grid-column:1 / -1; font:11px var(--mono); color:var(--muted); }
   .stat-row.is-superseded { color:var(--muted); }
   .stat-row.is-superseded b { font:700 15px/1 var(--display); color:var(--muted); }
   .combo-list { list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }
@@ -68,6 +71,11 @@
   .combo .c-links { font:11px var(--mono); white-space:nowrap; }
   .combo-scope { margin:0 0 8px; color:var(--muted); font-size:12px; }
   .combo-tail { margin:8px 0 0; color:var(--muted); font-size:12px; }
+  .combo-none { margin:0; padding:9px 12px; border:1px solid var(--line); color:var(--muted); font-size:12px; }
+  .combo-gaps { margin:0 0 6px; }
+  .combo-gaps summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
+  .gap-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .gap-chips code { padding:2px 5px; border:1px solid var(--line); background:var(--surface); font:9px var(--mono); }
   .view-flag { font:700 9px var(--mono); letter-spacing:.05em; color:var(--warn); margin-left:8px; vertical-align:2px; }
   h2, .section-head { scroll-margin-top:70px; }
   @media (max-width:520px) {
@@ -150,12 +158,12 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Qwen3 14B · Instruct</p>
   <h1>Qwen3 14B · Instruct</h1>
   <p>A strict one-B70 Q4_K_M rapid snapshot for Qwen3 14B Instruct, keeping the measured short-context row separate from unmeasured TP, quantization, and context combinations.</p>
-  <div class="hero-headline"><span class="big">38.25</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 29 words a second</span><small>1× Arc Pro B70 · Q4_K_M · llama.cpp SYCL · single user · full quality gate</small></div>
+  <a class="hero-headline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json" title="rapid-qwen3-14b-instruct-q4km · 12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled"><span class="big">38.25</span><span class="unit">tok/s<br>measured</span><span class="gloss">Qwen3 14B Instruct Q4_K_M · TP1</span><small>qwen3-14b-instruct-f723b4e · Q4_K_M · llama.cpp SYCL fdb1db877 · 1× B70 · Evidence D of A–D</small></a>
 
   <div class="lineage"><span>Qwen3 14B Instruct · measured GGUF weights</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-<div class="family-cta"><a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json">Read the lab report</a><span class="cta-note">No step-by-step install guide is published for this model yet.</span></div>
+<div class="family-cta"><a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km/README.md">Open result dossier</a><a class="inline" href="#packets">All packets and recipes</a></div>
   <dl class="meta-strip" aria-label="Family signals">
     <div title="Q4_K_M short-context rapid lane, reviewed 2026-08-24"><dt>B70 fit</dt><dd>Runs on 1 card (measured)</dd></div>
     <div title="12 unique cache-zero prompts and visible non-thinking output; no token IDs or broad model-quality evaluation"><dt>Quality evidence</dt><dd>Rapid snapshot only</dd></div>
@@ -172,17 +180,17 @@
   <div class="coverage-rail"><span>decode</span><span>TTFT</span><span>TP1</span><span>cache-zero strict suite</span></div>
 </a></div>
 
-  <div class="section-head"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/qwen-14b.json">family data</a></div>
+  <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/qwen-14b.json">family data</a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="qwen-14b-rapid-tp">
   <div class="chart-head"><div><h3>Strict rapid operating point</h3><p>Q4_K_M · one B70 · f16 KV · ctx=2048 configured; this one point is not a context curve</p></div><div class="metric-switch"></div></div>
-  <div class="stat-row is-superseded"><b>38.25</b><span class="u">tok/s</span><span class="l">Q4_K_M — 1 card, earlier quality gate, superseded</span><span class="m">24 ms to first token · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json">evidence</a></span></div>
+  <div class="stat-row"><span class="l">Q4_K_M · tensor parallel cards 1</span><span class="stat-values"><span class="stat-metric"><b>38.25</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>240.04</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · promoted conservative standalone row · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>Q4_K_M</span><span><i class="gap-line"></i>missing</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json">evidence 1</a></span></figcaption>
 </figure></div>
 
 
-  <div class="section-head"><div><h2>What has been tried</h2><p>Only tested combinations are listed; the full matrix is in the family data.</p></div></div>
-  <div class="combo-block"><p class="combo-scope">Exact measured revision and rapid runtime; TP2/4 are unmeasured gaps. Fixed: revision=qwen3-14b-instruct-f723b4e · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, Q4_K_M <code>TP1·Q4_K_M</code></span><b class="c-val">38.25 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json">evidence</a></span></li></ul><p class="combo-tail">2 other combinations untested. Full matrix in the <a class="inline" href="../families/qwen-14b.json">family data</a>.</p></div>
+  <div class="section-head"><div><h2>What has been classified</h2><p>Measured, screened, closed, and unsupported combinations are listed; expand each exact gap set.</p></div></div>
+  <div class="combo-block"><p class="combo-scope">Exact measured revision and rapid runtime; TP2/4 are unmeasured gaps. Fixed: revision=qwen3-14b-instruct-f723b4e · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, Q4_K_M <code>TP1·Q4_K_M</code></span><b class="c-val">38.25 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>2 untested combinations</summary><div class="gap-chips"><code title="2 cards, Q4_K_M — no stored lane">TP2·Q4_K_M</code><code title="4 cards, Q4_K_M — no stored lane">TP4·Q4_K_M</code></div></details><a class="inline" href="../families/qwen-14b.json">Full matrix and exact selectors</a></div></div>
 
   <details class="fine"><summary>Transfer boundary</summary><p>Qwen3 dense 14B. one measured Qwen3 14B Instruct GGUF revision. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 

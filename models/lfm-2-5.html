@@ -20,7 +20,7 @@
   .lineage { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
   .lineage span { padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }
   .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
-  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; }
+  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
   .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
   .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
   .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
@@ -32,7 +32,7 @@
   .result b { font:900 27px/1.15 var(--display); }
   .result .r-unit { margin-left:5px; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
   .result .r-note { display:block; font-size:11px; color:var(--muted); }
-  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--good); }
+  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .result.is-screened .r-gate { color:var(--warn); }
   .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
   .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -45,13 +45,16 @@
   .meta-strip div { cursor:help; }
   .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .meta-strip dd { margin:1px 0 0; font-size:12.5px; }
-  .stat-row { display:grid; grid-template-columns:auto auto 1fr auto; gap:4px 12px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-row { display:grid; grid-template-columns:minmax(150px,1fr) auto; gap:5px 14px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-values { display:flex; flex-wrap:wrap; justify-content:end; gap:8px 14px; }
+  .stat-metric { display:grid; grid-template-columns:auto auto; align-items:baseline; column-gap:4px; }
+  .stat-metric small { grid-column:1 / -1; color:var(--muted); font:9px var(--mono); text-transform:uppercase; }
   .stat-row .m { text-align:right; }
   .stat-row:last-child { border-bottom:0; }
   .stat-row b { font:900 20px/1 var(--display); }
   .stat-row .u { font:700 10px var(--mono); text-transform:uppercase; color:var(--muted); margin-left:4px; }
   .stat-row .l { font-size:12.5px; }
-  .stat-row .m { font:11px var(--mono); color:var(--muted); white-space:nowrap; }
+  .stat-row .m { grid-column:1 / -1; font:11px var(--mono); color:var(--muted); }
   .stat-row.is-superseded { color:var(--muted); }
   .stat-row.is-superseded b { font:700 15px/1 var(--display); color:var(--muted); }
   .combo-list { list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }
@@ -68,6 +71,11 @@
   .combo .c-links { font:11px var(--mono); white-space:nowrap; }
   .combo-scope { margin:0 0 8px; color:var(--muted); font-size:12px; }
   .combo-tail { margin:8px 0 0; color:var(--muted); font-size:12px; }
+  .combo-none { margin:0; padding:9px 12px; border:1px solid var(--line); color:var(--muted); font-size:12px; }
+  .combo-gaps { margin:0 0 6px; }
+  .combo-gaps summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
+  .gap-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .gap-chips code { padding:2px 5px; border:1px solid var(--line); background:var(--surface); font:9px var(--mono); }
   .view-flag { font:700 9px var(--mono); letter-spacing:.05em; color:var(--warn); margin-left:8px; vertical-align:2px; }
   h2, .section-head { scroll-margin-top:70px; }
   @media (max-width:520px) {
@@ -150,12 +158,12 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / LFM2.5 2.6B</p>
   <h1>LFM2.5 2.6B</h1>
   <p>A compact hybrid convolution-and-attention model with a stock-upstream, one-card B70 package and measured serving, decode-depth, and prefill-depth profiles through 32K active context.</p>
-  <div class="hero-headline"><span class="big">135.2</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 101 words a second</span><small>1× Arc Pro B70 · Q8_0 · llama.cpp bench · single user · full quality gate</small></div>
+  <a class="hero-headline" href="lfm25-26b-q8-b70.html" title="lfm25-26b-q8-b70 · Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 132.467576."><span class="big">132.35</span><span class="unit">tok/s<br>measured</span><span class="gloss">LFM2.5 2.6B Q8_0 · TP1</span><small>lfm2.5-2.6b · Q8_0 · llama.cpp SYCL · 1× B70 · B70-verified</small></a>
 
   <div class="lineage"><span>LFM2.5 2.6B · current measured weights</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-<div class="family-cta"><a class="button" href="lfm25-26b-q8-b70.html">Get the install guide</a><a class="inline" href="#packets">All deployment packets</a></div>
+<div class="family-cta"><a class="button" href="lfm25-26b-q8-b70.html">Open deployment packet</a><a class="inline" href="#packets">All packets and recipes</a></div>
   <dl class="meta-strip" aria-label="Family signals">
     <div title="small local model on one B70, reviewed 2026-08-23"><dt>B70 fit</dt><dd>High</dd></div>
     <div title="Q8_0 objective canaries and repeat stability; not a cross-model capability score"><dt>Quality evidence</dt><dd>Scoped deployment evidence</dd></div>
@@ -171,10 +179,10 @@
   <div class="coverage-rail"><span>decode</span><span>prefill</span><span>active context through 32K</span><span>quality</span><span>stock upstream</span></div>
 </a></div>
 
-  <div class="section-head"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/lfm-2-5.json">family data</a></div>
+  <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/lfm-2-5.json">family data</a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="lfm-serving-operating-point">
   <div class="chart-head"><div><h3>Serving repeat</h3><p>Q8_0 · TP1 · 8K configured · f16 KV · cold 12-prompt cache-zero suite</p></div><div class="metric-switch"></div></div>
-  <div class="stat-row is-superseded"><b>132.47</b><span class="u">tok/s</span><span class="l">fresh-server repeats — 1 card, earlier quality gate, superseded</span><span class="m"><a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/README.md">evidence</a></span></div>
+  <div class="stat-row"><span class="l">fresh-server repeats · tensor parallel cards 1</span><span class="stat-values"><span class="stat-metric"><b>132.35–132.47</b><span class="u">tok/s</span><small>Decode</small></span></span><span class="m">lab measurement; quality scope in evidence · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/README.md">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>fresh-server repeats</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/README.md">evidence 1</a></span></figcaption>
 </figure><figure class="chart family-view" data-family-view="lfm-context-depth">
@@ -185,8 +193,8 @@
 </figure></div>
 
 
-  <div class="section-head"><div><h2>What has been tried</h2><p>Only tested combinations are listed; the full matrix is in the family data.</p></div></div>
-  <div class="combo-block"><p class="combo-scope">LFM2.5 2.6B Q8_0 · llama.cpp SYCL · f16 KV · MTP is not used. TP1 has serving and raw-depth evidence; TP2/TP4 have not been measured.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, no speculative decoding <code>TP1·MTP0</code></span><b class="c-val">132.47 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/README.md">evidence</a></span></li></ul><p class="combo-tail">2 other combinations untested. Full matrix in the <a class="inline" href="../families/lfm-2-5.json">family data</a>.</p></div>
+  <div class="section-head"><div><h2>What has been classified</h2><p>Measured, screened, closed, and unsupported combinations are listed; expand each exact gap set.</p></div></div>
+  <div class="combo-block"><p class="combo-scope">LFM2.5 2.6B Q8_0 · llama.cpp SYCL · f16 KV · MTP is not used. TP1 has serving and raw-depth evidence; TP2/TP4 have not been measured.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, no speculative decoding <code>TP1·MTP0</code></span><b class="c-val">132.47 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/README.md">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>2 untested combinations</summary><div class="gap-chips"><code title="2 cards, no speculative decoding — No TP2 LFM2.5 Q8_0 result is stored.">TP2·MTP0</code><code title="4 cards, no speculative decoding — No TP4 LFM2.5 Q8_0 result is stored.">TP4·MTP0</code></div></details><a class="inline" href="../families/lfm-2-5.json">Full matrix and exact selectors</a></div></div>
 
   <details class="fine"><summary>Transfer boundary</summary><p>LFM2ForCausalLM, 30 layers, 2048 hidden. one measured weight revision; quantization and runtime paths require independent gates. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 

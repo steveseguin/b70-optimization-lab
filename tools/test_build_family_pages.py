@@ -371,8 +371,23 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(qwen35_runs["qwen35-quark-tp2-screen"]["state"], "lab-screened")
         self.assertEqual(
+            qwen35_runs["qwen35-autoround-tp1-users-r16"]["metrics"][
+                "aggregate_tok_s"
+            ],
+            [1052.8704424119495],
+        )
+        self.assertEqual(
             qwen35_runs["qwen35-quark-tp4-mtp1-quarantined"]["state"],
             "quarantined",
+        )
+        self.assertEqual(
+            [entry["value"] for entry in MODULE.featured_result_entries(qwen35)],
+            [
+                93.55054235558917,
+                90.90948338800597,
+                1052.8704424119495,
+                85.86911405999231,
+            ],
         )
 
         qwen30 = json.loads((MODULE.ROOT / "families/qwen-30b-a3b.json").read_text())
@@ -458,8 +473,10 @@ class FamilyCoverageTest(unittest.TestCase):
             },
         )
         rendered = MODULE.coverage_tables(family)
-        self.assertIn("4 other combinations untested", rendered)
-        self.assertIn("family data", rendered)
+        self.assertIn("4 untested combinations", rendered)
+        self.assertIn("Q4_K_M·0", rendered)
+        self.assertIn("Q8_0·32K", rendered)
+        self.assertIn("Full matrix and exact selectors", rendered)
         self.assertIn("Fixed: revision=revision-a", rendered)
 
         missing_cell = deepcopy(family)
@@ -954,6 +971,166 @@ class FamilyCoverageTest(unittest.TestCase):
         rendered = MODULE.family_page(family)
         self.assertNotIn(script_payload, rendered)
         self.assertNotIn("</script><script>alert(1)</script>", rendered)
+
+    def test_featured_results_are_exact_and_never_infer_full_quality(self) -> None:
+        family = self._family()
+        family["featured_results"] = [
+            {
+                "role": "hero",
+                "label": "Explicit strict selection",
+                "measurement_id": "measured-a",
+                "metric": "decode_tok_s",
+                "sample_index": 0,
+                "quality_label": "Bounded declared quality scope",
+            }
+        ]
+        self.assertEqual(self._errors(family), [])
+        rendered = MODULE.family_page(family)
+        self.assertIn('<span class="big">30</span>', rendered)
+        self.assertNotIn('<span class="big">30.2</span>', rendered)
+        self.assertIn("Bounded declared quality scope", rendered)
+        self.assertNotIn("full quality gate", rendered.casefold())
+
+        invalid = deepcopy(family)
+        invalid["featured_results"][0]["sample_index"] = 9
+        self._assert_error(self._errors(invalid), "featured_results", "select")
+
+    def test_qwen27_curated_strip_keeps_graph_results_not_eager_insertion_order(self) -> None:
+        family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
+        entries = MODULE.featured_result_entries(family)
+        self.assertEqual(
+            [entry["value"] for entry in entries],
+            [
+                71.45427094575045,
+                30.329809361830037,
+                49.05894025767351,
+                71.9001988117144,
+            ],
+        )
+        rendered = MODULE.family_page(family)
+        strip = re.search(
+            r'<div class="result-strip".*?</div>', rendered, re.DOTALL
+        )
+        self.assertIsNotNone(strip)
+        strip_html = strip.group(0)
+        hero = re.search(
+            r'<a class="hero-headline".*?</a>', rendered, re.DOTALL
+        )
+        self.assertIsNotNone(hero)
+        self.assertIn("71.45", hero.group(0))
+        for protected in ("30.33", "49.06", "71.9"):
+            self.assertIn(protected, strip_html)
+        for eager in ("24.25", "16.77", "17.38", "71.72"):
+            self.assertNotIn(eager, strip_html)
+
+    def test_packet_fallback_uses_the_highest_curated_packet_claim(self) -> None:
+        family = self._family()
+        measured_a = family["run_measurements"][0]
+        measured_a["metrics"]["decode_tok_s"] = [42.0]
+        measured_a["workload"] = "p66/o128 fixed rapid suite"
+        measured_a["evidence"] = "https://example.test/research-a.json"
+        measured_b = deepcopy(measured_a)
+        measured_b["id"] = "measured-b"
+        measured_b["metrics"]["decode_tok_s"] = [43.0]
+        measured_b["evidence"] = "https://example.test/research-b.json"
+        family["run_measurements"].append(measured_b)
+        packet_a = self._research_packet()
+        packet_b = deepcopy(packet_a)
+        packet_b["id"] = "research-b"
+        packet_b["label"] = "Research B"
+        packet_b["manifest"] = "https://example.test/research-b.json"
+        packet_b["featured_metric"].update(
+            {
+                "measurement_id": "measured-b",
+                "value": 43.0,
+                "evidence": "https://example.test/research-b.json",
+            }
+        )
+        family["packets"] = [packet_a, packet_b]
+
+        self.assertEqual(self._errors(family), [])
+        entries = MODULE.featured_result_entries(family)
+        self.assertEqual([entry["value"] for entry in entries], [43.0, 42.0])
+        self.assertEqual([entry["role"] for entry in entries], ["hero", "support"])
+
+    def test_small_stat_views_render_every_metric_without_fake_supersession(self) -> None:
+        family = self._family()
+        family["run_measurements"][0]["metrics"].update(
+            {
+                "ttft_ms": [100.0],
+                "draft_acceptance_rate": [0.61],
+                "effective_tokens_per_verification": [2.4],
+            }
+        )
+        family["views"] = [
+            {
+                "id": "small-complete",
+                "title": "Small complete view",
+                "subtitle": "All metrics remain visible.",
+                "x_label": "draft tokens",
+                "discrete": True,
+                "metrics": [
+                    "decode_tok_s",
+                    "ttft_ms",
+                    "draft_acceptance_rate",
+                    "effective_tokens_per_verification",
+                ],
+                "series": [
+                    {
+                        "label": "candidate",
+                        "measurement_ids": ["measured-a"],
+                        "x_from": "config.mtp",
+                    }
+                ],
+            }
+        ]
+        rendered = MODULE.view_card(family, family["views"][0])
+        for expected in ("30–30.2", "100", "0.61", "2.4"):
+            self.assertIn(expected, rendered)
+        self.assertNotIn("superseded", rendered.casefold())
+        self.assertNotIn("full quality gate", rendered.casefold())
+
+    def test_compact_gaps_and_scoped_closures_remain_explicit(self) -> None:
+        family = self._family()
+        view = family["coverage_views"][0]
+        view["rows"] = [0, 1]
+        view["cells"]["1:1"] = {
+            "state": "missing",
+            "label": "not run",
+        }
+        family["family_closures"] = [
+            {
+                "selectors": {"revision": "revision-a", "mtp": 4},
+                "state": "closed",
+                "reason": "Stopped by the declared fit gate.",
+                "evidence": "https://example.test/closure.json",
+            }
+        ]
+        coverage = MODULE.coverage_tables(family)
+        self.assertIn("1 untested combination", coverage)
+        self.assertIn("TP1·MTP1", coverage)
+        self.assertNotIn("Stopped by the declared fit gate", coverage)
+        rendered = MODULE.family_page(family)
+        self.assertIn("Scoped closures", rendered)
+        self.assertIn("revision=revision-a", rendered)
+        self.assertIn("https://example.test/closure.json", rendered)
+
+    def test_packet_cta_labels_match_the_actual_target(self) -> None:
+        package = {
+            "id": "packet-a",
+            "manifest": "packages/packet-a/package.json",
+        }
+        result = {
+            "id": "result-a",
+            "manifest": "results/result-a/README.md",
+        }
+        self.assertEqual(
+            MODULE.packet_manifest_target(package),
+            ("packet-a.html", "Open deployment packet"),
+        )
+        href, label = MODULE.packet_manifest_target(result)
+        self.assertTrue(href.endswith("results/result-a/README.md"))
+        self.assertEqual(label, "Open result dossier")
 
     def test_local_evidence_cannot_escape_repository(self) -> None:
         for path in ("/etc/passwd", "../outside-evidence.json"):

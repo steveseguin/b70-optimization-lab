@@ -28,6 +28,15 @@ measurement exactly. This exposes an existing result without pretending that
 the packet is an installable catalog package or allowing presentation metadata
 to manufacture a headline.
 
+Optional family `featured_results` are presentation-only exact pointers. A
+non-empty list has one `hero` and any number of `support` entries; every entry
+binds a declared metric to one `measurement_id` and one exact `sample_index` or
+`point_x`, and carries an explicit evidence-scope label. The renderer never
+selects a raw maximum, equates `lab-measured` with a full quality gate, or
+coarsens distinct runtime, graph, workload, and topology identities into one
+variant/TP result. Families without this list fall back only to already-curated
+packet featured metrics, not arbitrary measurement insertion order.
+
 Optional packet `projection` metadata must pin both `prompt_tokens` and
 `output_tokens` before any measured-vs-projected `OPT` grade is calculated.
 The same fail-closed rule applies on family cards, package pages, and the home

@@ -394,6 +394,81 @@ def validate_featured_metric(
     return errors
 
 
+def selected_metric_value(
+    binding: dict[str, Any], measurement: dict[str, Any]
+) -> float | None:
+    """Resolve one explicit metric binding without choosing a max or average."""
+
+    metric = binding.get("metric")
+    sample_index = binding.get("sample_index")
+    if isinstance(sample_index, int) and not isinstance(sample_index, bool):
+        values = (measurement.get("metrics") or {}).get(metric)
+        if isinstance(values, list) and 0 <= sample_index < len(values):
+            value = values[sample_index]
+            return float(value) if is_finite_number(value) else None
+    point_x = binding.get("point_x")
+    if is_finite_number(point_x):
+        for point in measurement.get("points") or []:
+            if (
+                isinstance(point, dict)
+                and point.get("x") == point_x
+                and is_finite_number(point.get(metric))
+            ):
+                return float(point[metric])
+    return None
+
+
+def validate_featured_results(
+    value: Any,
+    label: str,
+    measurements: dict[str, dict[str, Any]],
+) -> list[str]:
+    """Validate presentation picks as exact pointers, never inferred highs."""
+
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        return [f"{label} must be a list"]
+    errors: list[str] = []
+    hero_count = 0
+    for index, binding in enumerate(value):
+        item_label = f"{label}[{index}]"
+        if not isinstance(binding, dict):
+            errors.append(f"{item_label} must be an object")
+            continue
+        role = binding.get("role")
+        if role not in {"hero", "support"}:
+            errors.append(f"{item_label}.role must be hero or support")
+        hero_count += role == "hero"
+        for field in ("label", "quality_label"):
+            if not isinstance(binding.get(field), str) or not binding.get(field):
+                errors.append(f"{item_label}.{field} is required")
+        measurement_id = binding.get("measurement_id")
+        if not isinstance(measurement_id, str) or measurement_id not in measurements:
+            errors.append(f"{item_label}.measurement_id must reference a known measurement")
+            continue
+        measurement = measurements[measurement_id]
+        if measurement.get("state") not in CHARTABLE_STATES:
+            errors.append(
+                f"{item_label}.measurement_id must reference measured or screened evidence"
+            )
+        metric = binding.get("metric")
+        if metric not in METRICS:
+            errors.append(f"{item_label}.metric must be one of {sorted(METRICS)}")
+            continue
+        sample_index = binding.get("sample_index")
+        point_x = binding.get("point_x")
+        if (sample_index is None) == (point_x is None):
+            errors.append(
+                f"{item_label} must set exactly one of sample_index or point_x"
+            )
+        if selected_metric_value(binding, measurement) is None:
+            errors.append(f"{item_label} does not select the declared metric")
+    if value and hero_count != 1:
+        errors.append(f"{label} must contain exactly one hero")
+    return errors
+
+
 def evidence_href(path: str) -> str:
     if path.startswith(("https://", "http://")):
         return path
@@ -634,6 +709,7 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
     series_measurements = object_list(
         family.get("series_measurements"), f"{label}: series_measurements", errors
     )
+    featured_results = family.get("featured_results")
     estimates = object_list(family.get("estimates"), f"{label}: estimates", errors)
     views = object_list(family.get("views"), f"{label}: views", errors)
     coverage_views = object_list(
@@ -763,6 +839,14 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
                 errors.append(
                     f"{label}: {mid}.sample_annotations[{index}].value does not match the indexed sample"
                 )
+
+    errors.extend(
+        validate_featured_results(
+            featured_results,
+            f"{label}: featured_results",
+            measurements,
+        )
+    )
 
     packet_ids: set[str] = set()
     packet_by_id: dict[str, dict[str, Any]] = {}
@@ -1372,42 +1456,82 @@ def chart_svg(
     return "".join(lines), "<br>".join(summaries)
 
 
-STAT_LABELS = {
-    "older approved high": "Older approved high",
-    "current strict reference": "Current reference",
-}
-
-
 def view_stat_rows(family: dict[str, Any], view: dict[str, Any]) -> str:
-    """A discrete view with one or two runs is numbers, not a chart."""
+    """Render small views as complete metric rows rather than tiny charts."""
+
     by_id = {measurement["id"]: measurement for measurement in records(family)}
-    rows = []
+    rows: list[str] = []
+    view_metrics = list(view.get("metrics") or [])
     for series in view.get("series") or []:
         for mid in series.get("measurement_ids") or []:
             measurement = by_id.get(mid)
             if not measurement:
                 continue
-            metrics = measurement.get("metrics") or {}
-            decode = max(metrics.get("decode_tok_s") or [0])
-            ttft = max(metrics.get("ttft_ms") or [0])
-            current = "current" in f'{measurement.get("promotion_status", "")} {series.get("label", "")}'
-            tp_n = (measurement.get("config") or {}).get("tp") or 1
-            gate = "full quality gate" if current else "earlier quality gate, superseded"
-            label = STAT_LABELS.get(str(series.get("label")), str(series.get("label") or mid))
-            what = f"{label} — {tp_n} card{'s' if tp_n != 1 else ''}, {gate}"
-            meta_bits = []
-            if ttft:
-                meta_bits.append(f"{fmt(ttft, 0)} ms to first token")
-            evidence = measurement.get("evidence")
-            if evidence:
-                meta_bits.append(f'<a class="inline" href="{esc(evidence_href(evidence))}">evidence</a>')
-            rows.append((0 if current else 1,
-                f'<div class="stat-row{"" if current else " is-superseded"}">'
-                f'<b>{esc(fmt(decode))}</b><span class="u">tok/s</span>'
-                f'<span class="l">{esc(what)}</span>'
-                f'<span class="m">{" · ".join(meta_bits)}</span></div>'))
-    rows.sort(key=lambda item: item[0])
-    return "".join(html for _, html in rows)
+            source_rows: list[tuple[Any, dict[str, Any]]] = []
+            points = measurement.get("points") or []
+            if points:
+                source_rows.extend(
+                    (point.get("x"), point)
+                    for point in points
+                    if isinstance(point, dict)
+                )
+            else:
+                source_rows.append(
+                    (
+                        nested(measurement, series.get("x_from", "config.tp")),
+                        measurement.get("metrics") or {},
+                    )
+                )
+            for x_value, source in source_rows:
+                metric_items = []
+                for metric in view_metrics:
+                    raw = source.get(metric)
+                    values = raw if isinstance(raw, list) else [raw]
+                    values = [value for value in values if is_finite_number(value)]
+                    if not values:
+                        continue
+                    low, high = min(values), max(values)
+                    shown = fmt(low) if low == high else f"{fmt(low)}–{fmt(high)}"
+                    metric_label, unit = METRICS[metric]
+                    metric_items.append(
+                        f'<span class="stat-metric"><b>{esc(shown)}</b>'
+                        f'<span class="u">{esc(unit)}</span>'
+                        f'<small>{esc(metric_label)}</small></span>'
+                    )
+                if not metric_items:
+                    continue
+                label = str(series.get("label") or measurement.get("variant") or mid)
+                if x_value is not None:
+                    label += f" · {view.get('x_label') or 'point'} {fmt_x(x_value) if is_finite_number(x_value) else x_value}"
+                meta_bits = []
+                declared_scope = measurement.get("measurement_class")
+                if declared_scope:
+                    meta_bits.append(esc(str(declared_scope).replace("-", " ")))
+                promotion = measurement.get("promotion_status")
+                if promotion:
+                    meta_bits.append(esc(str(promotion).replace("-", " ")))
+                state = measurement.get("state")
+                if state == "lab-screened":
+                    meta_bits.append("screened, not fully qualified")
+                elif state == "community-measured":
+                    meta_bits.append("community measurement")
+                elif not meta_bits:
+                    meta_bits.append("lab measurement; quality scope in evidence")
+                evidence = measurement.get("evidence")
+                if evidence:
+                    meta_bits.append(
+                        f'<a class="inline" href="{esc(evidence_href(evidence))}">evidence</a>'
+                    )
+                explicitly_superseded = measurement.get("superseded") is True or (
+                    isinstance(promotion, str) and "superseded" in promotion.casefold()
+                )
+                rows.append(
+                    f'<div class="stat-row{" is-superseded" if explicitly_superseded else ""}">'
+                    f'<span class="l">{esc(label)}</span>'
+                    f'<span class="stat-values">{"".join(metric_items)}</span>'
+                    f'<span class="m">{" · ".join(meta_bits)}</span></div>'
+                )
+    return "".join(rows)
 
 
 def view_point_count(family: dict[str, Any], view: dict[str, Any]) -> int:
@@ -1513,8 +1637,7 @@ COMBO_ORDER = {"lab-measured": 0, "community-measured": 1, "lab-screened": 2, "e
 
 
 def coverage_tables(family: dict[str, Any]) -> str:
-    """Only tested combinations, one plain-words line each; the full matrix
-    stays in the family data JSON."""
+    """Show classified cells and keep every exact gap available on demand."""
     by_id = {measurement["id"]: measurement for measurement in records(family)}
     estimates = {estimate["id"]: estimate for estimate in family.get("estimates") or []}
     packets = {packet["id"]: packet for packet in family.get("packets") or []}
@@ -1523,13 +1646,21 @@ def coverage_tables(family: dict[str, Any]) -> str:
         row_axis = coverage_axis(view, "row")
         column_axis = coverage_axis(view, "column")
         items = []
-        untested = 0
+        missing_items: list[str] = []
         for row in row_axis["values"]:
             for column in column_axis["values"]:
                 cell = view["cells"][f"{row}:{column}"]
                 state = cell["state"]
                 if state in {"missing"}:
-                    untested += 1
+                    what = f"{axis_plain_words(column_axis, column)}, {axis_plain_words(row_axis, row)}"
+                    code = (
+                        f'{axis_value_label(column_axis, column)}·'
+                        f'{axis_value_label(row_axis, row)}'
+                    )
+                    reason = str(cell.get("reason") or cell.get("label") or "Not tested yet")
+                    missing_items.append(
+                        f'<code title="{esc(what)} — {esc(reason)}">{esc(code)}</code>'
+                    )
                     continue
                 evidence_id = cell.get("evidence_id")
                 evidence = (
@@ -1562,7 +1693,10 @@ def coverage_tables(family: dict[str, Any]) -> str:
                     engine = estimate.get("engine") or {}
                     estimate_note = f'{engine.get("name", "")} {engine.get("version", "")}'.strip()
                 what = f"{axis_plain_words(column_axis, column)}, {axis_plain_words(row_axis, row)}"
-                code = f'{column_axis.get("prefix", "")}{column}\u00b7{row_axis.get("prefix", "")}{row}'
+                code = (
+                    f'{axis_value_label(column_axis, column)}\u00b7'
+                    f'{axis_value_label(row_axis, row)}'
+                )
                 links = []
                 packet_id = cell.get("packet_id")
                 if packet_id:
@@ -1599,17 +1733,16 @@ def coverage_tables(family: dict[str, Any]) -> str:
                     f'<span class="c-links">{" \u00b7 ".join(links)}</span></li>'
                 )))
         items.sort(key=lambda item: item[0])
-        closures = family.get("family_closures") or []
-        closure_text = "; ".join(str(closure.get("reason") or "").rstrip(". ") for closure in closures)
-        tail_bits = []
-        if untested:
-            tail_bits.append(f"{untested} other combination{'s' if untested != 1 else ''} untested")
-        if closure_text:
-            tail_bits.append(closure_text)
+        gaps = (
+            f'<details class="combo-gaps"><summary>{len(missing_items)} untested '
+            f'combination{"s" if len(missing_items) != 1 else ""}</summary>'
+            f'<div class="gap-chips">{"".join(missing_items)}</div></details>'
+            if missing_items
+            else ""
+        )
         tail = (
-            f'<p class="combo-tail">{esc("; ".join(tail_bits))}. '
-            f'Full matrix in the <a class="inline" href="../families/{esc(family["id"])}.json">family data</a>.</p>'
-            if tail_bits else ""
+            f'<div class="combo-tail">{gaps}<a class="inline" '
+            f'href="../families/{esc(family["id"])}.json">Full matrix and exact selectors</a></div>'
         )
         selectors = " · ".join(
             f"{key}={value}" for key, value in (view.get("fixed_selectors") or {}).items()
@@ -1617,9 +1750,14 @@ def coverage_tables(family: dict[str, Any]) -> str:
         scope = str(view.get("fixed") or "")
         if selectors:
             scope = f"{scope} Fixed: {selectors}.".strip()
+        classified = (
+            f'<ul class="combo-list">{"".join(html for _, html in items)}</ul>'
+            if items
+            else '<p class="combo-none">No classified combinations in this slice yet.</p>'
+        )
         blocks.append(
             f'<div class="combo-block"><p class="combo-scope">{esc(scope)}</p>'
-            f'<ul class="combo-list">{"".join(html for _, html in items)}</ul>{tail}</div>'
+            f'{classified}{tail}</div>'
         )
     return "".join(blocks)
 
@@ -1691,6 +1829,130 @@ def package_metric(
         str(metric.get("scope", "")),
         metric.get("unit") == "tok/s",
     )
+
+
+def packet_manifest_target(packet: dict[str, Any]) -> tuple[str, str]:
+    """Return an honest action label for the packet's best runnable surface."""
+
+    guide = str(packet.get("guide") or "")
+    if guide.startswith("repro/"):
+        return evidence_href(guide), "Open reproduction guide"
+    if guide.startswith("packages/"):
+        return evidence_href(guide), "Open deployment guide"
+    manifest = str(packet.get("manifest") or "")
+    if manifest.startswith("packages/") and manifest.endswith("package.json"):
+        return f'{packet["id"]}.html', "Open deployment packet"
+    href = evidence_href(manifest)
+    if manifest.startswith("repro/") and manifest.endswith("README.md"):
+        return href, "Open reproduction guide"
+    if manifest.startswith("results/") and manifest.endswith("README.md"):
+        return href, "Open result dossier"
+    return href, "Open evidence packet"
+
+
+def measurement_identity(measurement: dict[str, Any]) -> str:
+    config = measurement.get("config") or {}
+    bits = [measurement.get("revision"), measurement.get("variant"), measurement.get("runtime")]
+    tp = config.get("tp") or config.get("cards")
+    if tp is not None:
+        bits.append(f"TP{tp}")
+    if config.get("mtp") is not None:
+        bits.append(f'MTP{config["mtp"]}')
+    if config.get("graph") is not None:
+        bits.append(f'graph {config["graph"]}')
+    if config.get("kv") is not None:
+        bits.append(f'{config["kv"]} KV')
+    if config.get("configured_max_context_tokens") is not None:
+        context = config["configured_max_context_tokens"]
+        shown = f"{context:,}" if isinstance(context, int) else str(context)
+        bits.append(f"max context {shown}")
+    if config.get("active_context_tokens") is not None:
+        context = config["active_context_tokens"]
+        shown = f"{context:,}" if isinstance(context, int) else str(context)
+        bits.append(f"active context {shown}")
+    if config.get("gpu_memory_utilization") is not None:
+        bits.append(f'GPU memory {config["gpu_memory_utilization"]}')
+    if config.get("natural_eos") is not None:
+        bits.append("natural EOS" if config["natural_eos"] else "fixed output")
+    return " · ".join(str(bit) for bit in bits if bit not in (None, ""))
+
+
+def featured_result_entries(family: dict[str, Any]) -> list[dict[str, Any]]:
+    """Resolve curated presentation claims; packet metrics are the safe fallback."""
+
+    by_id = {measurement["id"]: measurement for measurement in records(family)}
+    configured = family.get("featured_results")
+    entries: list[dict[str, Any]] = []
+    if isinstance(configured, list) and configured:
+        for binding in configured:
+            measurement = by_id[binding["measurement_id"]]
+            value = selected_metric_value(binding, measurement)
+            if value is None:  # Validation rejects this; keep rendering fail-closed.
+                continue
+            metric = binding["metric"]
+            entries.append(
+                {
+                    "role": binding["role"],
+                    "label": binding["label"],
+                    "value": value,
+                    "unit": METRICS[metric][1],
+                    "metric": metric,
+                    "href": evidence_href(measurement["evidence"]),
+                    "identity": measurement_identity(measurement),
+                    "quality_label": binding["quality_label"],
+                    "workload": measurement.get("workload") or "",
+                    "state": measurement.get("state"),
+                    "record_label": measurement.get("id") or "measurement",
+                }
+            )
+        entries.sort(key=lambda item: item["role"] != "hero")
+        return entries
+
+    for packet in family.get("packets") or []:
+        value, unit, href, raw_value, workload, _opt_eligible = package_metric(
+            family, packet
+        )
+        if raw_value is None or value == "—":
+            continue
+        grades = packet.get("grades") or {}
+        evidence_grade = grades.get("evidence") or {}
+        quality_label = (
+            f'Evidence {evidence_grade["grade"]} of A–D'
+            if evidence_grade.get("grade")
+            else str(packet.get("evidence_level") or "Measured packet; see evidence scope")
+        )
+        identity = " · ".join(
+            str(bit)
+            for bit in (
+                packet.get("revision"),
+                packet.get("quantization"),
+                packet.get("runtime"),
+                f'{packet.get("cards")}× B70' if packet.get("cards") else None,
+            )
+            if bit not in (None, "")
+        )
+        entries.append(
+            {
+                "role": "hero" if not entries else "support",
+                "label": packet.get("label") or packet.get("id"),
+                "value": raw_value,
+                "unit": unit,
+                "metric": "decode_tok_s" if unit == "tok/s" else "packet_metric",
+                "href": href,
+                "identity": identity,
+                "quality_label": quality_label,
+                "workload": workload,
+                "state": "packet",
+                "record_label": packet.get("id") or "packet",
+            }
+        )
+    if entries:
+        comparable = [entry for entry in entries if entry["unit"] == "tok/s"]
+        hero = max(comparable or entries, key=lambda entry: entry["value"])
+        for entry in entries:
+            entry["role"] = "hero" if entry is hero else "support"
+        entries.sort(key=lambda item: item["role"] != "hero")
+    return entries
 
 
 def grade_badge(label: str, value: Any) -> str:
@@ -1840,103 +2102,66 @@ def family_page(family: dict[str, Any]) -> str:
         if popularity_date
         else str(popularity_scope)
     )
-    # The one number a visitor came for: the best fully-gated measured
-    # decode rate in the family, linked to its evidence.
-    best = None
-    for measurement in records(family):
-        if measurement.get("state") != "lab-measured":
-            continue
-        metrics = measurement.get("metrics") or {}
-        values = list(metrics.get("decode_tok_s") or [])
-        for point in measurement.get("points") or []:
-            if point.get("decode_tok_s") is not None:
-                values.append(point["decode_tok_s"])
-        if not values:
-            continue
-        # The current promoted reference outranks historical highs.
-        current = "current" in str(measurement.get("promotion_status") or "")
-        candidate = (current, max(values), measurement)
-        if best is None or (candidate[0], candidate[1]) > (best[0], best[1]):
-            best = candidate
-    headline_html = ""
-    headline_id = None
-    if best:
-        _, peak, measurement = best
-        headline_id = measurement.get("id")
-        runtime_words = " ".join(str(measurement.get("runtime") or "").split()[:2])
-        hero_tp = (measurement.get("config") or {}).get("tp") or 1
-        gate = "full quality gate" if measurement.get("state") == "lab-measured" else "screened run"
-        label_bits = [f"{hero_tp}\u00d7 Arc Pro B70", measurement.get("variant"), runtime_words, "single user", gate]
-        words = int(round(peak * 0.75))
-        headline_html = (
-            '  <div class="hero-headline"><span class="big">' + fmt(peak) + '</span>'
-            '<span class="unit">tok/s<br>measured</span>'
-            '<span class="gloss">&asymp; ' + str(words) + ' words a second</span>'
-            '<small>' + esc(" · ".join(str(bit) for bit in label_bits if bit)) + '</small></div>\n'
-        )
-    # Other notable measured results (never repeating the hero number): the
-    # best per configuration, plus the best combined multi-user rate.
-    strip_cards = []
-    seen_configs = set()
-    if best:
-        hero_measurement = best[2]
-        seen_configs.add((hero_measurement.get("variant"), (hero_measurement.get("config") or {}).get("tp")))
-    for measurement in records(family):
-        if measurement.get("state") not in OBSERVED_STATES or measurement.get("state") == "quarantined":
-            continue
-        if measurement.get("id") == headline_id:
-            continue
-        config = measurement.get("config") or {}
-        key = (measurement.get("variant"), config.get("tp"))
-        metrics = measurement.get("metrics") or {}
-        decode_values = metrics.get("decode_tok_s") or []
-        aggregate_points = [point for point in measurement.get("points") or [] if point.get("aggregate_tok_s") is not None]
-        screened = measurement.get("state") != "lab-measured"
-        glyph = "\u25c7" if screened else "\u2713"
-        note = "screened, experimental" if screened else "full quality gate"
-        gate_words = ("\u2713 Full quality gate" if not screened else "\u25c7 Speed check only")
-        gate_class = "is-strict" if not screened else "is-screened"
-        if decode_values and key not in seen_configs:
-            seen_configs.add(key)
-            cards_n = config.get("tp") or 1
-            strip_cards.append((0 if not screened else 1,
-                '<a class="result ' + gate_class + '" href="' + esc(evidence_href(measurement.get("evidence"))) + '">'
-                '<span class="r-kind">' + esc(f"{cards_n} card{'s' if cards_n != 1 else ''} · {measurement.get('variant') or ''}") + '</span>'
-                '<b>' + fmt(max(decode_values)) + '</b><span class="r-unit">tok/s · 1 user</span>'
-                '<span class="r-gate">' + esc(gate_words) + '</span></a>'
-            ))
-        if aggregate_points:
-            top = max(aggregate_points, key=lambda point: point["aggregate_tok_s"])
-            cards_n = config.get("tp") or 1
-            per_user = top["aggregate_tok_s"] / max(float(top.get("x") or 1), 1)
-            strip_cards.append((2,
-                '<a class="result is-aggregate ' + gate_class + '" href="#measured">'
-                '<span class="r-kind">serves ' + fmt_x(top.get("x")) + ' at once · ' + esc(f"{cards_n} card{'s' if cards_n != 1 else ''}") + '</span>'
-                '<b>' + f"{top['aggregate_tok_s']:,.0f}" + '</b><span class="r-unit">tok/s combined</span>'
-                '<span class="r-note">&asymp; ' + fmt(per_user, 0) + ' tok/s per user</span>'
-                '<span class="r-gate">' + esc(gate_words) + ' · measured curve below</span></a>'
-            ))
-    strip_cards.sort(key=lambda item: item[0])
-    strip_html = ('<div class="result-strip" aria-label="Other measured results">' + "".join(html for _, html in strip_cards[:4]) + '</div>') if strip_cards else ""
-    # Primary action: the best packet's page or guide.
-    cta_html = ""
-    cta_candidates = sorted(
-        family.get("packets") or [],
-        key=lambda packet: 0 if packet_link_kind(family, packet) == "guide" else 1,
+    # Claims are explicit measurement bindings or curated packet metrics. Do
+    # not manufacture a headline from an arbitrary maximum or insertion order.
+    selected_results = featured_result_entries(family)
+    hero_result = next(
+        (item for item in selected_results if item.get("role") == "hero"), None
     )
-    for packet in cta_candidates:
-        _v, _u, cta_href, _rv, _w, _e = package_metric(family, packet)
-        if not cta_href:
-            continue
-        if packet_link_kind(family, packet) == "guide":
-            guide = str(packet.get("guide") or "")
-            if guide.startswith("repro/") or guide.startswith("packages/"):
-                cta_href = evidence_href(guide)
-            cta_html = f'<div class="family-cta"><a class="button" href="{esc(cta_href)}">Get the install guide</a><a class="inline" href="#packets">All deployment packets</a></div>'
-        else:
-            cta_html = (f'<div class="family-cta"><a class="button secondary" href="{esc(cta_href)}">Read the lab report</a>'
-                        f'<span class="cta-note">No step-by-step install guide is published for this model yet.</span></div>')
-        break
+    headline_html = ""
+    if hero_result:
+        hero_detail = " · ".join(
+            bit
+            for bit in (
+                hero_result.get("identity"),
+                hero_result.get("quality_label"),
+            )
+            if bit
+        )
+        headline_html = (
+            f'  <a class="hero-headline" href="{esc(hero_result["href"])}" '
+            f'title="{esc(hero_result.get("record_label"))} · {esc(hero_result.get("workload"))}">'
+            f'<span class="big">{fmt(hero_result["value"])}</span>'
+            f'<span class="unit">{esc(hero_result["unit"])}<br>measured</span>'
+            f'<span class="gloss">{esc(hero_result["label"])}</span>'
+            f'<small>{esc(hero_detail)}</small></a>\n'
+        )
+    strip_cards = []
+    for result in (item for item in selected_results if item is not hero_result):
+        tone = "is-screened" if result.get("state") == "lab-screened" else "is-scoped"
+        strip_cards.append(
+            f'<a class="result {tone}" href="{esc(result["href"])}" '
+            f'title="{esc(result.get("record_label"))} · {esc(result.get("workload"))}">'
+            f'<span class="r-kind">{esc(result["label"])}</span>'
+            f'<b>{fmt(result["value"])}</b><span class="r-unit">{esc(result["unit"])}</span>'
+            f'<span class="r-note">{esc(result.get("identity"))}</span>'
+            f'<span class="r-gate">{esc(result.get("quality_label"))}</span></a>'
+        )
+    strip_html = (
+        '<div class="result-strip" aria-label="Other curated measured results">'
+        + "".join(strip_cards[:4])
+        + "</div>"
+        if strip_cards
+        else ""
+    )
+    # Prefer a deployment/reproduction surface. Evidence-only families retain
+    # an honest action label rather than promising an install guide.
+    cta_html = ""
+    packets_for_cta = list(family.get("packets") or [])
+    preferred = next(
+        (
+            packet
+            for packet in packets_for_cta
+            if packet_link_kind(family, packet) == "guide"
+        ),
+        packets_for_cta[0] if packets_for_cta else None,
+    )
+    if preferred:
+        cta_href, cta_label = packet_manifest_target(preferred)
+        cta_html = (
+            f'<div class="family-cta"><a class="button" href="{esc(cta_href)}">{esc(cta_label)}</a>'
+            f'<a class="inline" href="#packets">All packets and recipes</a></div>'
+        )
     measured_count = sum(
         1
         for item in list(family.get("run_measurements") or [])
@@ -1970,7 +2195,7 @@ def family_page(family: dict[str, Any]) -> str:
     coverage_section = ""
     if coverage_views:
         coverage_section = f'''
-  <div class="section-head"><div><h2>What has been tried</h2><p>Only tested combinations are listed; the full matrix is in the family data.</p></div></div>
+  <div class="section-head"><div><h2>What has been classified</h2><p>Measured, screened, closed, and unsupported combinations are listed; expand each exact gap set.</p></div></div>
   {coverage}
 '''
     closures_section = ""
@@ -2013,7 +2238,7 @@ def family_page(family: dict[str, Any]) -> str:
   .lineage {{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }}
   .lineage span {{ padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }}
   .hero h1 {{ font-size:clamp(22px, 2.6vw, 32px); }}
-  .hero-headline {{ display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; }}
+  .hero-headline {{ display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }}
   .hero .hero-headline .big {{ font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }}
   .hero .hero-headline .unit {{ font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }}
   .hero .hero-headline .gloss {{ font-size:13px; color:rgba(255,255,255,.9); }}
@@ -2025,7 +2250,7 @@ def family_page(family: dict[str, Any]) -> str:
   .result b {{ font:900 27px/1.15 var(--display); }}
   .result .r-unit {{ margin-left:5px; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }}
   .result .r-note {{ display:block; font-size:11px; color:var(--muted); }}
-  .result .r-gate {{ display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--good); }}
+  .result .r-gate {{ display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }}
   .result.is-screened .r-gate {{ color:var(--warn); }}
   .family-cta {{ display:flex; align-items:center; gap:14px; margin:0 0 18px; }}
   .family-cta .button {{ display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }}
@@ -2038,13 +2263,16 @@ def family_page(family: dict[str, Any]) -> str:
   .meta-strip div {{ cursor:help; }}
   .meta-strip dt {{ font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }}
   .meta-strip dd {{ margin:1px 0 0; font-size:12.5px; }}
-  .stat-row {{ display:grid; grid-template-columns:auto auto 1fr auto; gap:4px 12px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }}
+  .stat-row {{ display:grid; grid-template-columns:minmax(150px,1fr) auto; gap:5px 14px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }}
+  .stat-values {{ display:flex; flex-wrap:wrap; justify-content:end; gap:8px 14px; }}
+  .stat-metric {{ display:grid; grid-template-columns:auto auto; align-items:baseline; column-gap:4px; }}
+  .stat-metric small {{ grid-column:1 / -1; color:var(--muted); font:9px var(--mono); text-transform:uppercase; }}
   .stat-row .m {{ text-align:right; }}
   .stat-row:last-child {{ border-bottom:0; }}
   .stat-row b {{ font:900 20px/1 var(--display); }}
   .stat-row .u {{ font:700 10px var(--mono); text-transform:uppercase; color:var(--muted); margin-left:4px; }}
   .stat-row .l {{ font-size:12.5px; }}
-  .stat-row .m {{ font:11px var(--mono); color:var(--muted); white-space:nowrap; }}
+  .stat-row .m {{ grid-column:1 / -1; font:11px var(--mono); color:var(--muted); }}
   .stat-row.is-superseded {{ color:var(--muted); }}
   .stat-row.is-superseded b {{ font:700 15px/1 var(--display); color:var(--muted); }}
   .combo-list {{ list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }}
@@ -2061,6 +2289,11 @@ def family_page(family: dict[str, Any]) -> str:
   .combo .c-links {{ font:11px var(--mono); white-space:nowrap; }}
   .combo-scope {{ margin:0 0 8px; color:var(--muted); font-size:12px; }}
   .combo-tail {{ margin:8px 0 0; color:var(--muted); font-size:12px; }}
+  .combo-none {{ margin:0; padding:9px 12px; border:1px solid var(--line); color:var(--muted); font-size:12px; }}
+  .combo-gaps {{ margin:0 0 6px; }}
+  .combo-gaps summary {{ cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }}
+  .gap-chips {{ display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }}
+  .gap-chips code {{ padding:2px 5px; border:1px solid var(--line); background:var(--surface); font:9px var(--mono); }}
   .view-flag {{ font:700 9px var(--mono); letter-spacing:.05em; color:var(--warn); margin-left:8px; vertical-align:2px; }}
   h2, .section-head {{ scroll-margin-top:70px; }}
   @media (max-width:520px) {{
@@ -2153,10 +2386,10 @@ def family_page(family: dict[str, Any]) -> str:
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid">{packets}</div>
 
-  <div class="section-head"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
+  <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
   <div class="views-grid">{views}</div>
 
-{coverage_section}
+{coverage_section}{closures_section}
   <details class="fine"><summary>Transfer boundary</summary><p>{esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="{esc(source)}"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>

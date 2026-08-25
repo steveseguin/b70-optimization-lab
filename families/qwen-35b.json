@@ -3,8 +3,42 @@
   "id": "qwen-35b",
   "name": "Qwen 35B",
   "display_name": "Qwen3.6 35B A3B",
-  "summary": "Qwen's 35B mixture-of-experts for long documents - about 3B parameters active per word. Measured at 93.55 tok/s on four cards under the strictest quality gate, 90.91 tok/s on a single card (experimental), and 1,039 combined tok/s serving 64 people at once from one card.",
+  "summary": "Qwen's 35B mixture-of-experts for long documents - about 3B parameters active per word. Measured at 93.55 tok/s on four cards under the strictest quality gate, 90.91 tok/s on a single card (experimental), and 1,052.87 combined tok/s serving 64 people at once from one card.",
   "updated_at": "2026-08-24",
+  "featured_results": [
+    {
+      "role": "hero",
+      "label": "Quark W8A8 INT8 · TP4 strict reference",
+      "measurement_id": "qwen35-quark-tp4-strict-current",
+      "metric": "decode_tok_s",
+      "sample_index": 0,
+      "quality_label": "Current strict deep-gate reference"
+    },
+    {
+      "role": "support",
+      "label": "AutoRound W4A16 INT4 · one user",
+      "measurement_id": "qwen35-autoround-tp1-single-r16",
+      "metric": "decode_tok_s",
+      "sample_index": 0,
+      "quality_label": "Experimental speed screen; 100/100 literal canaries, not a promoted deployment"
+    },
+    {
+      "role": "support",
+      "label": "AutoRound W4A16 INT4 · 64 users combined",
+      "measurement_id": "qwen35-autoround-tp1-users-r16",
+      "metric": "aggregate_tok_s",
+      "sample_index": 0,
+      "quality_label": "Experimental r16 two-point treatment; 100/100 literal canaries, but only 29/64 fixed-seed request sequences matched"
+    },
+    {
+      "role": "support",
+      "label": "Quark W8A8 INT8 · TP2 screen",
+      "measurement_id": "qwen35-quark-tp2-screen",
+      "metric": "decode_tok_s",
+      "sample_index": 0,
+      "quality_label": "Bounded speed screen; full quality suite was skipped"
+    }
+  ],
   "architecture": {
     "class": "Qwen3.6 35B A3B sparse MoE",
     "evidence": "results/qwen36-35b-quark-int8-b70/README.md"
@@ -214,6 +248,30 @@
       "metrics": {
         "decode_tok_s": [
           90.90948338800597
+        ]
+      },
+      "evidence": "data/qwen36-35b-autoround-b70-concurrency-20260824.json"
+    },
+    {
+      "id": "qwen35-autoround-tp1-users-r16",
+      "state": "lab-screened",
+      "revision": "qwen3.6-35b-a3b-int4-autoround",
+      "variant": "AutoRound W4A16 INT4",
+      "runtime": "vLLM/XPU combined-runtime-guards r16",
+      "config": {
+        "tp": 1,
+        "mtp": 0,
+        "graph": "piecewise 1/32/64",
+        "kv": "auto",
+        "simultaneous_users": 64
+      },
+      "measurement_class": "experimental discrete aggregate screen",
+      "promotion_status": "experimental, not promoted; separate from the r14 curve",
+      "quality_scope": "100/100 literal canaries across capture shapes; only 29/64 fixed-seed request sequences matched at 64 users",
+      "workload": "i128/o1024 per request, persistent raw-engine batching, 64 simultaneous users, temperature 0, two repeats; combined counts every token after each request's first",
+      "metrics": {
+        "aggregate_tok_s": [
+          1052.8704424119495
         ]
       },
       "evidence": "data/qwen36-35b-autoround-b70-concurrency-20260824.json"

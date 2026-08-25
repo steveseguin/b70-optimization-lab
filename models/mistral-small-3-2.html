@@ -20,7 +20,7 @@
   .lineage { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
   .lineage span { padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }
   .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
-  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; }
+  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
   .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
   .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
   .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
@@ -32,7 +32,7 @@
   .result b { font:900 27px/1.15 var(--display); }
   .result .r-unit { margin-left:5px; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
   .result .r-note { display:block; font-size:11px; color:var(--muted); }
-  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--good); }
+  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .result.is-screened .r-gate { color:var(--warn); }
   .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
   .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
@@ -45,13 +45,16 @@
   .meta-strip div { cursor:help; }
   .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .meta-strip dd { margin:1px 0 0; font-size:12.5px; }
-  .stat-row { display:grid; grid-template-columns:auto auto 1fr auto; gap:4px 12px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-row { display:grid; grid-template-columns:minmax(150px,1fr) auto; gap:5px 14px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-values { display:flex; flex-wrap:wrap; justify-content:end; gap:8px 14px; }
+  .stat-metric { display:grid; grid-template-columns:auto auto; align-items:baseline; column-gap:4px; }
+  .stat-metric small { grid-column:1 / -1; color:var(--muted); font:9px var(--mono); text-transform:uppercase; }
   .stat-row .m { text-align:right; }
   .stat-row:last-child { border-bottom:0; }
   .stat-row b { font:900 20px/1 var(--display); }
   .stat-row .u { font:700 10px var(--mono); text-transform:uppercase; color:var(--muted); margin-left:4px; }
   .stat-row .l { font-size:12.5px; }
-  .stat-row .m { font:11px var(--mono); color:var(--muted); white-space:nowrap; }
+  .stat-row .m { grid-column:1 / -1; font:11px var(--mono); color:var(--muted); }
   .stat-row.is-superseded { color:var(--muted); }
   .stat-row.is-superseded b { font:700 15px/1 var(--display); color:var(--muted); }
   .combo-list { list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }
@@ -68,6 +71,11 @@
   .combo .c-links { font:11px var(--mono); white-space:nowrap; }
   .combo-scope { margin:0 0 8px; color:var(--muted); font-size:12px; }
   .combo-tail { margin:8px 0 0; color:var(--muted); font-size:12px; }
+  .combo-none { margin:0; padding:9px 12px; border:1px solid var(--line); color:var(--muted); font-size:12px; }
+  .combo-gaps { margin:0 0 6px; }
+  .combo-gaps summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
+  .gap-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .gap-chips code { padding:2px 5px; border:1px solid var(--line); background:var(--surface); font:9px var(--mono); }
   .view-flag { font:700 9px var(--mono); letter-spacing:.05em; color:var(--warn); margin-left:8px; vertical-align:2px; }
   h2, .section-head { scroll-margin-top:70px; }
   @media (max-width:520px) {
@@ -150,12 +158,12 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Mistral Small 3.2 · 24B Instruct 2506</p>
   <h1>Mistral Small 3.2 · 24B Instruct 2506</h1>
   <p>One dense 24B weight revision with two measured one-B70 GGUF quantization variants: UD-Q4_K_XL for the representative rapid row and a slower strict-valid UD-Q8_K_XL reference.</p>
-  <div class="hero-headline"><span class="big">27.3</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 20 words a second</span><small>1× Arc Pro B70 · UD-Q4_K_XL · llama.cpp SYCL · single user · full quality gate</small></div>
+  <a class="hero-headline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json" title="rapid-mistral-small-3-2-24b-udq4 · 12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled"><span class="big">27.3</span><span class="unit">tok/s<br>measured</span><span class="gloss">Mistral Small 3.2 24B · Q4/Q8 rapid snapshot</span><small>mistral-small-3.2-24b-instruct-2506-b750ec2 · UD-Q4_K_XL · llama.cpp SYCL fdb1db877 · 1× B70 · Evidence D of A–D</small></a>
 
   <div class="lineage"><span>Mistral Small 3.2 24B Instruct 2506 · measured weights</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-<div class="result-strip" aria-label="Other measured results"><a class="result is-strict" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq8-llamacpp-faon-ctx4096-realistic128-20260704T201848Z.json"><span class="r-kind">1 card · UD-Q8_K_XL</span><b>16.38</b><span class="r-unit">tok/s · 1 user</span><span class="r-gate">✓ Full quality gate</span></a></div><div class="family-cta"><a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json">Read the lab report</a><span class="cta-note">No step-by-step install guide is published for this model yet.</span></div>
+<div class="family-cta"><a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4/README.md">Open result dossier</a><a class="inline" href="#packets">All packets and recipes</a></div>
   <dl class="meta-strip" aria-label="Family signals">
     <div title="UD-Q4_K_XL and UD-Q8_K_XL short-context rapid lanes, reviewed 2026-08-24"><dt>B70 fit</dt><dd>Runs on 1 card (measured)</dd></div>
     <div title="12 unique cache-zero deterministic prompts per quant; no token IDs or broad model-quality evaluation"><dt>Quality evidence</dt><dd>Rapid snapshot only</dd></div>
@@ -172,17 +180,17 @@
   <div class="coverage-rail"><span>Q4</span><span>Q8</span><span>decode</span><span>TTFT</span><span>TP1</span><span>cache-zero strict suite</span></div>
 </a></div>
 
-  <div class="section-head"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/mistral-small-3-2.json">family data</a></div>
+  <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/mistral-small-3-2.json">family data</a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="mistral-small-3-2-quant">
   <div class="chart-head"><div><h3>Measured quantization variants</h3><p>1 = UD-Q4_K_XL; 2 = UD-Q8_K_XL. Same weight revision and rapid suite; each quant retains its own measured decode and TTFT.</p></div><div class="metric-switch"></div></div>
-  <div class="stat-row is-superseded"><b>27.3</b><span class="u">tok/s</span><span class="l">UD-Q4_K_XL — 1 card, earlier quality gate, superseded</span><span class="m">1,502 ms to first token · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json">evidence</a></span></div><div class="stat-row is-superseded"><b>16.38</b><span class="u">tok/s</span><span class="l">UD-Q8_K_XL — 1 card, earlier quality gate, superseded</span><span class="m">2,686 ms to first token · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq8-llamacpp-faon-ctx4096-realistic128-20260704T201848Z.json">evidence</a></span></div>
+  <div class="stat-row"><span class="l">UD-Q4_K_XL · quantization variant 1</span><span class="stat-values"><span class="stat-metric"><b>27.3</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>1,502</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · promoted representative row · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json">evidence</a></span></div><div class="stat-row"><span class="l">UD-Q8_K_XL · quantization variant 2</span><span class="stat-values"><span class="stat-metric"><b>16.38</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>2,686</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · measured higher precision reference · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq8-llamacpp-faon-ctx4096-realistic128-20260704T201848Z.json">evidence</a></span></div>
   <div class="legend"><span><i style="background:var(--s1)"></i>UD-Q4_K_XL</span><span><i style="background:var(--s2)"></i>UD-Q8_K_XL</span></div>
   <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json">evidence 1</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq8-llamacpp-faon-ctx4096-realistic128-20260704T201848Z.json">evidence 2</a></span></figcaption>
 </figure></div>
 
 
-  <div class="section-head"><div><h2>What has been tried</h2><p>Only tested combinations are listed; the full matrix is in the family data.</p></div></div>
-  <div class="combo-block"><p class="combo-scope">Exact measured revision and rapid runtime; only TP1 has stored rows. Fixed: revision=mistral-small-3.2-24b-instruct-2506-b750ec2 · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, UD-Q4_K_XL <code>TP1·UD-Q4_K_XL</code></span><b class="c-val">27.3 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json">evidence</a></span></li><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, UD-Q8_K_XL <code>TP1·UD-Q8_K_XL</code></span><b class="c-val">16.38 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq8-llamacpp-faon-ctx4096-realistic128-20260704T201848Z.json">evidence</a></span></li></ul><p class="combo-tail">4 other combinations untested. Full matrix in the <a class="inline" href="../families/mistral-small-3-2.json">family data</a>.</p></div>
+  <div class="section-head"><div><h2>What has been classified</h2><p>Measured, screened, closed, and unsupported combinations are listed; expand each exact gap set.</p></div></div>
+  <div class="combo-block"><p class="combo-scope">Exact measured revision and rapid runtime; only TP1 has stored rows. Fixed: revision=mistral-small-3.2-24b-instruct-2506-b750ec2 · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, UD-Q4_K_XL <code>TP1·UD-Q4_K_XL</code></span><b class="c-val">27.3 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json">evidence</a></span></li><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, UD-Q8_K_XL <code>TP1·UD-Q8_K_XL</code></span><b class="c-val">16.38 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq8-llamacpp-faon-ctx4096-realistic128-20260704T201848Z.json">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>4 untested combinations</summary><div class="gap-chips"><code title="2 cards, UD-Q4_K_XL — no stored lane">TP2·UD-Q4_K_XL</code><code title="4 cards, UD-Q4_K_XL — no stored lane">TP4·UD-Q4_K_XL</code><code title="2 cards, UD-Q8_K_XL — no stored lane">TP2·UD-Q8_K_XL</code><code title="4 cards, UD-Q8_K_XL — no stored lane">TP4·UD-Q8_K_XL</code></div></details><a class="inline" href="../families/mistral-small-3-2.json">Full matrix and exact selectors</a></div></div>
 
   <details class="fine"><summary>Transfer boundary</summary><p>Mistral Small 3.2 dense 24B. one weight revision; Q4 and Q8 are deployment variants with separate measurements. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 
