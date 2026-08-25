@@ -23,6 +23,12 @@
   .artifact-disclosure summary { cursor:pointer; width:max-content; max-width:100%; padding:5px 8px; border:1px solid rgba(255,255,255,.7); text-transform:uppercase; }
   .artifact-disclosure ul { margin:7px 0 0; padding:8px 10px 8px 28px; background:rgba(255,255,255,.08); line-height:1.6; overflow-wrap:anywhere; }
   .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
+  .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
+  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
+  .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
+  .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
+  .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
+  .hero .hero-headline small { flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }
   .result-strip { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:0 0 14px; }
   .result { display:block; border:2px solid var(--ink); background:var(--paper); padding:11px 12px 9px; }
   .result.is-featured { border-color:var(--spot); }
@@ -170,6 +176,7 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Qwen3 14B · Instruct</p>
   <h1>Qwen3 14B · Instruct</h1>
   <p>A strict one-B70 Q4_K_M rapid snapshot for Qwen3 14B Instruct, keeping the measured short-context row separate from unmeasured TP, quantization, and context combinations.</p>
+  <a class="hero-headline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json" title="rapid-qwen3-14b-instruct-q4km · 12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled"><span class="big">38.25</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 29 words a second</span><small>qwen3-14b-instruct-f723b4e · Q4_K_M · llama.cpp SYCL fdb1db877 · 1× B70 · Evidence D of A–D</small></a>
   <div class="lineage"><span>Qwen3 14B Instruct · measured GGUF weights</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
@@ -196,7 +203,6 @@
 
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/qwen-14b.json">family data</a></div>
-  <div class="result-strip" aria-label="Curated measured results"><a class="result is-featured" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json" title="rapid-qwen3-14b-instruct-q4km · 12 unique cold prompts, 128 output tokens, median tokens 1-100 after TTFT, server and request prompt caches disabled"><span class="r-kind">Qwen3 14B Instruct Q4_K_M · TP1</span><b>38.25</b><span class="r-unit">tok/s</span><span class="r-note">qwen3-14b-instruct-f723b4e · Q4_K_M · llama.cpp SYCL fdb1db877 · 1× B70</span><span class="r-gate">Evidence D of A–D</span></a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="qwen-14b-rapid-tp">
   <div class="chart-head"><div><h3>Strict rapid operating point</h3><p>Q4_K_M · one B70 · f16 KV · ctx=2048 configured; this one point is not a context curve</p></div><div class="metric-switch"></div></div>
   <div class="stat-row"><span class="l">Q4_K_M · tensor parallel cards 1</span><span class="stat-values"><span class="stat-metric"><b>38.25</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>240.04</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">strict rapid snapshot · promoted conservative standalone row · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km-llamacpp-faon-cacheoff-ctx2048-ub512-t12-confirm-realistic128-20260705T005359Z.json">evidence</a></span></div>

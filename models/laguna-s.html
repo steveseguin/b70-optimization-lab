@@ -23,6 +23,12 @@
   .artifact-disclosure summary { cursor:pointer; width:max-content; max-width:100%; padding:5px 8px; border:1px solid rgba(255,255,255,.7); text-transform:uppercase; }
   .artifact-disclosure ul { margin:7px 0 0; padding:8px 10px 8px 28px; background:rgba(255,255,255,.08); line-height:1.6; overflow-wrap:anywhere; }
   .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
+  .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
+  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
+  .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
+  .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
+  .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
+  .hero .hero-headline small { flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }
   .result-strip { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:0 0 14px; }
   .result { display:block; border:2px solid var(--ink); background:var(--paper); padding:11px 12px 9px; }
   .result.is-featured { border-color:var(--spot); }
@@ -170,6 +176,7 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Laguna S · 2.1</p>
   <h1>Laguna S · 2.1</h1>
   <p>A four-card Intel Arc Pro B70 deployment family for the pinned Laguna S 2.1 INT4 target and its separately pinned INT4 DFlash draft, measured with TP4+EP4 and an exact width-12 verifier.</p>
+  <a class="hero-headline" href="laguna-s-2.1-int4-b70-125tps-20260731.html" title="laguna-s-2.1-int4-b70-125tps-20260731 · Conventional 99-interval median across the sealed 13-prompt, one-start, cache-zero record gate."><span class="big">125.46</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 94 words a second</span><small>laguna-s-2.1-int4-4bbfc28 · INT4 target + INT4 DFlash draft / BF16 KV · vLLM XPU 1a7f61feffbc61b21b73f812d231c7426386ccdc · 4× B70 · B70-verified originating-host replay</small></a>
   <div class="lineage"><span>Laguna S 2.1 INT4 · target/verifier checkpoint</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
@@ -211,7 +218,6 @@
 
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/laguna-s.json">family data</a></div>
-  <div class="result-strip" aria-label="Curated measured results"><a class="result is-featured" href="laguna-s-2.1-int4-b70-125tps-20260731.html" title="laguna-s-2.1-int4-b70-125tps-20260731 · Conventional 99-interval median across the sealed 13-prompt, one-start, cache-zero record gate."><span class="r-kind">Laguna S 2.1 INT4 · TP4+EP4 + DFlash11</span><b>125.46</b><span class="r-unit">tok/s</span><span class="r-note">laguna-s-2.1-int4-4bbfc28 · INT4 target + INT4 DFlash draft / BF16 KV · vLLM XPU 1a7f61feffbc61b21b73f812d231c7426386ccdc · 4× B70</span><span class="r-gate">B70-verified originating-host replay</span></a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="laguna-s-record-progression">
   <div class="chart-head"><div><h3>Qualified record progression</h3><p>Same pinned INT4 target and DFlash draft, TP4+EP4, DFlash11, width-12 verifier, BF16 KV; runtime revisions differ and values use conventional 99-interval accounting</p></div><div class="metric-switch"></div></div>
   <div class="stat-row"><span class="l">qualified records · qualified record generation 1</span><span class="stat-values"><span class="stat-metric"><b>101.94</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>5,759</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">lab measurement; quality scope in evidence · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json">evidence</a></span></div><div class="stat-row"><span class="l">qualified records · qualified record generation 2</span><span class="stat-values"><span class="stat-metric"><b>125.46</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>5,954</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">lab measurement; quality scope in evidence · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/laguna-shared-elementwise-m12-record-20260731.json">evidence</a></span></div>

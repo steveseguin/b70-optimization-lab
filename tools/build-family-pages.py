@@ -3060,8 +3060,25 @@ def family_page(family: dict[str, Any]) -> str:
     # Claims are explicit measurement bindings or curated packet metrics. Do
     # not manufacture a headline from an arbitrary maximum or insertion order.
     selected_results = featured_result_entries(family)
+    hero_result = next((item for item in selected_results if item.get("role") == "hero"), None)
+    headline_html = ""
+    if hero_result:
+        words = int(round(float(hero_result["value"]) * 0.75)) if hero_result.get("unit") == "tok/s" else None
+        hero_detail = " \u00b7 ".join(
+            bit for bit in (hero_result.get("identity"), hero_result.get("quality_label")) if bit
+        )
+        headline_html = (
+            f'  <a class="hero-headline" href="{esc(hero_result["href"])}" '
+            f'title="{esc(hero_result.get("record_label"))} \u00b7 {esc(hero_result.get("workload"))}">'
+            f'<span class="big">{fmt(hero_result["value"])}</span>'
+            f'<span class="unit">{esc(hero_result["unit"])}<br>measured</span>'
+            + (f'<span class="gloss">&asymp; {words} words a second</span>' if words else "")
+            + f'<small>{esc(hero_detail)}</small></a>\n'
+        )
     strip_cards = []
     for result in selected_results:
+        if result is hero_result:
+            continue
         tone = (
             "is-featured"
             if result.get("role") == "hero"
@@ -3176,6 +3193,12 @@ def family_page(family: dict[str, Any]) -> str:
   .artifact-disclosure summary {{ cursor:pointer; width:max-content; max-width:100%; padding:5px 8px; border:1px solid rgba(255,255,255,.7); text-transform:uppercase; }}
   .artifact-disclosure ul {{ margin:7px 0 0; padding:8px 10px 8px 28px; background:rgba(255,255,255,.08); line-height:1.6; overflow-wrap:anywhere; }}
   .hero h1 {{ font-size:clamp(22px, 2.6vw, 32px); }}
+  .hero h1 {{ font-size:clamp(22px, 2.6vw, 32px); }}
+  .hero-headline {{ display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }}
+  .hero .hero-headline .big {{ font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }}
+  .hero .hero-headline .unit {{ font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }}
+  .hero .hero-headline .gloss {{ font-size:13px; color:rgba(255,255,255,.9); }}
+  .hero .hero-headline small {{ flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }}
   .result-strip {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:0 0 14px; }}
   .result {{ display:block; border:2px solid var(--ink); background:var(--paper); padding:11px 12px 9px; }}
   .result.is-featured {{ border-color:var(--spot); }}
@@ -3323,10 +3346,10 @@ def family_page(family: dict[str, Any]) -> str:
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / {esc(family.get('display_name'))}</p>
   <h1>{esc(family.get('display_name'))}</h1>
   <p>{esc(family.get('summary'))}</p>
-  <div class="lineage">{lineage}</div>
+{headline_html}  <div class="lineage">{lineage}</div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-{cta_html}
+{strip_html}{cta_html}
   <dl class="meta-strip" aria-label="Family signals">{signal_cards}</dl>
 
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
@@ -3335,7 +3358,6 @@ def family_page(family: dict[str, Any]) -> str:
 {coverage_section}{closures_section}
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="{esc(source)}">family data</a></div>
-  {strip_html}
   <div class="views-grid">{views}</div>{deferred_views_html}
   <details class="fine"><summary>Transfer boundary</summary><p>{esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
 

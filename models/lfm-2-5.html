@@ -23,6 +23,12 @@
   .artifact-disclosure summary { cursor:pointer; width:max-content; max-width:100%; padding:5px 8px; border:1px solid rgba(255,255,255,.7); text-transform:uppercase; }
   .artifact-disclosure ul { margin:7px 0 0; padding:8px 10px 8px 28px; background:rgba(255,255,255,.08); line-height:1.6; overflow-wrap:anywhere; }
   .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
+  .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
+  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
+  .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
+  .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
+  .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
+  .hero .hero-headline small { flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }
   .result-strip { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:0 0 14px; }
   .result { display:block; border:2px solid var(--ink); background:var(--paper); padding:11px 12px 9px; }
   .result.is-featured { border-color:var(--spot); }
@@ -170,6 +176,7 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / LFM2.5 2.6B</p>
   <h1>LFM2.5 2.6B</h1>
   <p>A compact hybrid convolution-and-attention model with a stock-upstream, one-card B70 package and measured serving, decode-depth, and prefill-depth profiles through 32K active context.</p>
+  <a class="hero-headline" href="lfm25-26b-q8-b70.html" title="lfm25-26b-q8-b70 · Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 132.467576."><span class="big">132.35</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 99 words a second</span><small>lfm2.5-2.6b · Q8_0 · llama.cpp SYCL · 1× B70 · B70-verified</small></a>
   <div class="lineage"><span>LFM2.5 2.6B · current measured weights</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
@@ -195,7 +202,6 @@
 
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/lfm-2-5.json">family data</a></div>
-  <div class="result-strip" aria-label="Curated measured results"><a class="result is-featured" href="lfm25-26b-q8-b70.html" title="lfm25-26b-q8-b70 · Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 132.467576."><span class="r-kind">LFM2.5 2.6B Q8_0 · TP1</span><b>132.35</b><span class="r-unit">tok/s</span><span class="r-note">lfm2.5-2.6b · Q8_0 · llama.cpp SYCL · 1× B70</span><span class="r-gate">B70-verified</span></a></div>
   <div class="views-grid"><figure class="chart family-view" data-family-view="lfm-serving-operating-point">
   <div class="chart-head"><div><h3>Serving repeat</h3><p>Q8_0 · TP1 · 8K configured · f16 KV · cold 12-prompt cache-zero suite</p></div><div class="metric-switch"></div></div>
   <div class="stat-row"><span class="l">fresh-server repeats · tensor parallel cards 1</span><span class="stat-values"><span class="stat-metric"><b>132.35–132.47</b><span class="u">tok/s</span><small>Decode</small></span></span><span class="m">lab measurement; quality scope in evidence · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-26b-q8-b70/README.md">evidence</a></span></div>

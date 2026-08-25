@@ -1431,9 +1431,13 @@ class FamilyCoverageTest(unittest.TestCase):
         ]
         self.assertEqual(self._errors(family), [])
         rendered = MODULE.family_page(family)
-        self.assertIn('<b>30</b>', rendered)
+        # The hero binding renders as the page headline (the one number a
+        # visitor came for) and is not repeated in the strip; it carries the
+        # declared quality scope verbatim, never an inferred gate.
+        self.assertIn('<span class="big">30</span>', rendered)
+        self.assertNotIn('<b>30</b>', rendered)
         self.assertNotIn('<b>30.2</b>', rendered)
-        self.assertNotIn("hero-headline", rendered)
+        self.assertIn("hero-headline", rendered)
         self.assertIn("Bounded declared quality scope", rendered)
         self.assertNotIn("full quality gate", rendered.casefold())
 
@@ -1459,12 +1463,18 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(strip)
         strip_html = strip.group(0)
-        self.assertNotIn("hero-headline", rendered)
-        for protected in ("71.45", "30.33", "49.06", "71.9"):
+        # The curated hero (71.45) is the page headline; the other curated
+        # results stay in the strip, in curated order, never eager captures.
+        self.assertIn("hero-headline", rendered)
+        self.assertIn('<span class="big">71.45</span>', rendered)
+        for protected in ("30.33", "49.06", "71.9"):
             self.assertIn(protected, strip_html)
         for eager in ("24.25", "16.77", "17.38", "71.72"):
             self.assertNotIn(eager, strip_html)
         measured_heading = rendered.index("<h2>Measured results</h2>")
+        # Answer first: the results strip precedes packets, which precede the
+        # measured-detail section.
+        self.assertLess(rendered.index('class="result-strip"'), rendered.index("Packets and recipes"))
         self.assertLess(rendered.index("Packets and recipes"), measured_heading)
         self.assertLess(rendered.index("What has been classified"), measured_heading)
 
