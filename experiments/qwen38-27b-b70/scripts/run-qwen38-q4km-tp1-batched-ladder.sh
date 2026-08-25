@@ -27,6 +27,16 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ "${runtime_profile}" == control || "${runtime_profile}" == wdc-q4k ]] || \
   fail 'RUNTIME_PROFILE must be control or wdc-q4k'
 
+# Take the same host-wide locks used by the other B70 campaigns before any
+# process scan.  The per-GPU lock alone does not exclude launchers from older
+# lanes, and scanning before locking leaves a post-scan race.
+exec 7>"/run/lock/muse-glimmer-gpu-exclusive.lock"
+flock -n 7 || fail 'host-wide GPU campaign lock is held'
+exec 8>"/tmp/b70-benchmark.lock"
+flock -n 8 || fail 'host-wide benchmark lock is held'
+exec 9>"/tmp/b70-gpu${gpu_index}.lock"
+flock -n 9 || fail "GPU ${gpu_index} lock is held"
+
 model="${model_dir}/Qwen3.8-27B-Q4_K_M.gguf"
 bench="${build_dir}/bin/llama-batched-bench"
 libsycl_backend="${build_dir}/bin/libggml-sycl.so"
@@ -50,8 +60,6 @@ mkdir -p "${out_parent}"
 run_dir="${out_parent}/${campaign}-attempt${attempt}"
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 mkdir "${run_dir}"
-exec 9>"/tmp/b70-gpu${gpu_index}.lock"
-flock -n 9 || fail "GPU ${gpu_index} lock is held"
 
 set +u
 # shellcheck disable=SC1091

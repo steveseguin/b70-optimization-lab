@@ -43,3 +43,9 @@ The next bounded A/B therefore changes only the build/runtime doors needed for
 Q4_K WDC, first at parallel 1 and 64. It must retain the DNN-off result as the
 control, print an engaged WDC census, and remain research-only until a separate
 endpoint run compares every concurrent output with its own sequential oracle.
+
+Before that A/B, the shared launcher was hardened after a cross-session audit:
+it now takes the canonical host-wide GPU and benchmark locks, plus its per-GPU
+lock, before scanning for model processes or creating a run root. This closes
+the prior post-scan race with older Qwen launchers; it does not change the
+completed control evidence above.
