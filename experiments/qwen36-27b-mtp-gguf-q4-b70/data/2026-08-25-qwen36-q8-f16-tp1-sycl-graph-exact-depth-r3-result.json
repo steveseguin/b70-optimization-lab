@@ -1,0 +1,153 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-exact-depth-r3-result.v1",
+  "campaign_id": "qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r3",
+  "state": "failed",
+  "classification": "bounded-negative-graph-cache-capacity",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q8-f16-tp1-sycl-graph-exact-depth-20260825-r3",
+  "packet": {
+    "preregistration": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-f16-tp1-sycl-graph-exact-depth-r3-prereg.json",
+      "sha256": "4b00014de1684b945679ff4e9afe686c6549d519b6a5c8808e0184a280b2a447"
+    },
+    "runner": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-f16-tp1-sycl-graph-exact-depth-r3.py",
+      "sha256": "281a15e0c2327028cb042a6d3f9a9a78e93998427c341dc3b36334556c26dd19"
+    }
+  },
+  "raw_artifacts": {
+    "llama-bench-0.json": "04522b91f6b70be6949f95d6e745312dc0db68f18c9f4344ca94d72a1c4a0381",
+    "llama-bench-0.stderr.log": "a29057e135b2beed268a97fed23407db3fe1848094b3d0ca3177cd3e67e75f3e",
+    "llama-bench-2048.json": "d9d6c99c732c5f4eb97e0c7727c0df13fb2c0d6f42d6c0093a9489108233794b",
+    "llama-bench-2048.stderr.log": "03de34716a3c6532a759fc26bc898d3659b1caeb23ff27b5c08978420817c815",
+    "terminal-receipt.json": "f2e2a5cf56a9d374d16ae6cb15c6faedcec33a18aadb70df79bff437fab332bb"
+  },
+  "terminal": {
+    "created_at_utc": "2026-08-25T22:18:58.842512+00:00",
+    "lab_git_head": "c8a94dce109847602456c2b04345ff486267b773",
+    "launched_depths": [0, 2048],
+    "cleanup_passed": true,
+    "error": "graph summary 1 evidence gate failed: {'device': 0, 'requested': 28, 'compatibility_rejected': 0, 'device_unsupported': 0, 'cache_entries': 8, 'cache_limit': 8, 'cache_hit': 0, 'cache_miss': 28, 'cache_full': 20, 'direct_replay': 0, 'recorded': 8, 'created': 8, 'updated': 0, 'recreated': 0, 'replayed': 8}"
+  },
+  "measured_depths": {
+    "0": {
+      "prefill": {
+        "n_prompt": 2048,
+        "n_gen": 0,
+        "n_depth": 0,
+        "avg_ts": 900.310441
+      },
+      "decode": {
+        "n_prompt": 0,
+        "n_gen": 128,
+        "n_depth": 0,
+        "avg_ts": 19.356325
+      },
+      "graph_summaries": [
+        {
+          "phase": "prefill",
+          "device": 0,
+          "requested": 24,
+          "compatibility_rejected": 0,
+          "device_unsupported": 0,
+          "cache_entries": 8,
+          "cache_limit": 8,
+          "cache_hit": 16,
+          "cache_miss": 8,
+          "cache_full": 0,
+          "direct_replay": 16,
+          "recorded": 8,
+          "created": 8,
+          "updated": 0,
+          "recreated": 0,
+          "replayed": 24
+        },
+        {
+          "phase": "decode",
+          "device": 0,
+          "requested": 641,
+          "compatibility_rejected": 0,
+          "device_unsupported": 0,
+          "cache_entries": 3,
+          "cache_limit": 8,
+          "cache_hit": 638,
+          "cache_miss": 3,
+          "cache_full": 0,
+          "direct_replay": 638,
+          "recorded": 3,
+          "created": 3,
+          "updated": 0,
+          "recreated": 0,
+          "replayed": 641
+        }
+      ]
+    },
+    "2048": {
+      "prefill": {
+        "n_prompt": 2048,
+        "n_gen": 0,
+        "n_depth": 2048,
+        "avg_ts": 880.776171
+      },
+      "decode": {
+        "n_prompt": 0,
+        "n_gen": 128,
+        "n_depth": 2048,
+        "avg_ts": 19.198522
+      },
+      "graph_summaries": [
+        {
+          "phase": "prefill",
+          "device": 0,
+          "requested": 28,
+          "compatibility_rejected": 0,
+          "device_unsupported": 0,
+          "cache_entries": 8,
+          "cache_limit": 8,
+          "cache_hit": 0,
+          "cache_miss": 28,
+          "cache_full": 20,
+          "direct_replay": 0,
+          "recorded": 8,
+          "created": 8,
+          "updated": 0,
+          "recreated": 0,
+          "replayed": 8
+        },
+        {
+          "phase": "decode",
+          "device": 0,
+          "requested": 641,
+          "compatibility_rejected": 0,
+          "device_unsupported": 0,
+          "cache_entries": 2,
+          "cache_limit": 8,
+          "cache_hit": 639,
+          "cache_miss": 2,
+          "cache_full": 0,
+          "direct_replay": 639,
+          "recorded": 2,
+          "created": 2,
+          "updated": 0,
+          "recreated": 0,
+          "replayed": 641
+        }
+      ]
+    }
+  },
+  "failure": {
+    "exact_gate": "Every graph summary for a cell must have cache_full=0 and replayed=requested.",
+    "observed": "At depth 2048, the prefill phase requested 28 graph shapes with cache_limit=8: only 8 were recorded/replayed and 20 were rejected as cache_full.",
+    "healthy_decode_summary": "The subsequent depth-2048 decode phase remained healthy: requested=641, replayed=641, cache_hit=639, direct_replay=639, cache_full=0.",
+    "scope": "The failure is the fixed cache-8 capacity gate for the depth-2048 prefill phase; it is not a decode failure and does not authorize inference for unlaunched depths."
+  },
+  "authority": {
+    "cell_gain": 0,
+    "curve_authorized": false,
+    "site_publication_authorized": false,
+    "quality_claim_authorized": false,
+    "record_or_submission_authorized": false,
+    "graph_estimates_used": false,
+    "protected_graph_off_values_replaced": false,
+    "historical_featured_speeds_are_immutable": true
+  }
+}
