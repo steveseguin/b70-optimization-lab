@@ -1,0 +1,116 @@
+{
+  "schema": "neural.download.qwen38-llama-exact-depth-prereg.v1",
+  "campaign_id": "qwen38-q8weights-f16-tp1-exact-depth-20260825-r1",
+  "state": "preregistered-not-launched",
+  "selectors": {
+    "revision": "qwen3.8-27b",
+    "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+    "quantization": "Q8_0",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "mtp": 0,
+    "graph_mode": "off",
+    "kv": "f16",
+    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+  },
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "path": "/mnt/usb-models/models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+    "bytes": 28595763552,
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "present_at_preregistration": false
+  },
+  "runtime": {
+    "source_path": "/home/steve/src/llama.cpp-q38-tp1-lane",
+    "source_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "source_required_clean": true,
+    "binary": {
+      "path": "/home/steve/src/llama.cpp-q38-tp1-lane/build-sycl-aot-bmg-g31/bin/llama-bench",
+      "sha256": "908b78b77fc28ad23b2924b7f32f56f4a8415eac9c2a79a244dee85b49b19030"
+    },
+    "effective_shared_libraries_from": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4kxl-q8-tp1-exact-depth-prereg.json",
+      "sha256": "86775bd326675c7d66d27695d2b9ec8bf8bdd320181efffac01eefc4bf572af4",
+      "row_count": 32
+    },
+    "runner_base": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-20260825-qwen38-q4kxl-q8-tp1-exact-depth-r1.py",
+      "sha256": "c30e9cee51bd4f5083f4ab57efca794fa89caec2a0e0e1aaf427b02c00b78875"
+    }
+  },
+  "argv": [
+    "/home/steve/src/llama.cpp-q38-tp1-lane/build-sycl-aot-bmg-g31/bin/llama-bench",
+    "-m", "/mnt/usb-models/models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+    "-dev", "SYCL0", "-ngl", "99", "-sm", "layer", "-p", "2048", "-n", "128",
+    "-d", "0,2048,4096,8192,16384,24576,32768", "-b", "2048", "-ub", "512",
+    "-fa", "on", "-ctk", "f16", "-ctv", "f16", "-t", "16", "--poll", "50", "-r", "5", "-o", "json"
+  ],
+  "environment": {
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "GGML_SYCL_ENABLE_GRAPH": "0",
+    "UR_L0_USE_IMMEDIATE_COMMANDLISTS": "1",
+    "UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD": "1",
+    "GGML_SYCL_COMM_SINGLE_KERNEL": "1",
+    "GGML_META_FUSE_ALLREDUCE_ADD": "1",
+    "GGML_META_FUSE_ALLREDUCE_ADD_RMS_MUL": "1",
+    "GGML_SYCL_COMM_FUSED_Q8": "1",
+    "GGML_SYCL_FUSED_SWIGLU_Q8": "1",
+    "GGML_SYCL_FUSED_ATTN_Q8": "1",
+    "GGML_SYCL_FUSED_GDN_Q8": "1",
+    "GGML_SYCL_FUSED_MMVQ_PAIR": "1",
+    "GGML_SYCL_FUSED_MMVQ_SWIGLU_Q4K": "1",
+    "GGML_SYCL_FUSED_MMVQ_PAIR_GDN": "1",
+    "GGML_SYCL_FUSED_MMVQ_TRIPLE_ATTN": "1",
+    "GGML_SYCL_FUSED_MMVQ_TRIPLE_GDN": "1",
+    "GGML_SYCL_FUSED_MMVQ_QUAD_GDN": "1",
+    "GGML_SYCL_FUSED_GDN_BETA_SIGMOID": "1",
+    "GGML_SYCL_FUSED_CONCAT_STATE": "1",
+    "GGML_SYCL_FUSED_GDN_STATE_IO": "1",
+    "GGML_SYCL_FUSED_CONV_STATE_IO": "1",
+    "GGML_SYCL_COMM_DIRECT_Q8": "2",
+    "GGML_SYCL_FUSED_ROPE_SET_ROWS": "1",
+    "GGML_SYCL_COMM_REDUCE_VEC4": "1",
+    "GGML_SYCL_FUSED_QK_NORM_ROPE": "1",
+    "GGML_SYCL_FUSED_CONV_SILU_L2": "1",
+    "GGML_SYCL_FUSE_EXT": "31",
+    "GGML_SYCL_QDEDUP_STATS": "1",
+    "GGML_SYCL_MMQ_Q4K_REORDER": "1"
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-q8weights-f16-tp1-exact-depth-20260825-r1",
+    "output_fstype": "ext4",
+    "exact_ack": "RUN qwen38-q8weights-f16-tp1-exact-depth-20260825-r1",
+    "timeout_seconds": 3600,
+    "requires_clean_pushed_main": true,
+    "requires_idle_gpu0_render_node": "/dev/dri/by-path/pci-0000:23:00.0-render",
+    "requires_no_server_or_container": true,
+    "lock_paths": [
+      "/run/lock/muse-glimmer-gpu-exclusive.lock",
+      "/tmp/b70-benchmark.lock",
+      "/tmp/b70-gpu0.lock",
+      "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"
+    ],
+    "artifacts_are_create_only": true,
+    "terminal_receipt_required": true
+  },
+  "fit_assessment": {
+    "card_usable_gib": 31.5,
+    "weight_file_gib": 26.631880551576614,
+    "f16_kv_32768_gib": 2.0,
+    "paper_headroom_before_compute_buffers_gib": 2.8681194484233856,
+    "risk": "tight-unmeasured-fit",
+    "failure_disposition": "A clean allocation failure is a bounded fit result; do not retry this r1 or silently switch KV dtype."
+  },
+  "interpretation": {
+    "measurement_class": "raw-engine llama-bench",
+    "http_serving_metric": false,
+    "new_quality_gate": false,
+    "artifact_quality_is_separate": true,
+    "speed_floor": null,
+    "replace_only": "the seven matching missing Qwen3.8 ggml-org Q8_0 TP1/MTP0/graph-off/F16-KV exact-depth cells, and only after every receipt gate passes",
+    "protected_overlay_manifest_sha256": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "protected_site_metric_projection_sha256": "1a5c4e32cf868776ea0174b0e8349e5b7f0d7e1e4187946c4dbe689457b03c",
+    "historical_featured_speeds_are_immutable": true
+  }
+}
