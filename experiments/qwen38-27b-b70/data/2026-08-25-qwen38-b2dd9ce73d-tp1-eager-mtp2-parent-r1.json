@@ -1,0 +1,85 @@
+{
+  "schema": "neural.download.qwen38-tp1-eager-mtp2-parent-result.v1",
+  "date": "2026-08-25",
+  "campaign_id": "qwen38-b2dd9ce73d-tp1-parent-sentinels-20260825-r1",
+  "stage_id": "p3-eager-mtp2",
+  "attempt": 1,
+  "classification": "passed-sensitive-parent",
+  "run_identity": {
+    "lab_git_head": "26477da59228795297ec429201755ccf63d7284b",
+    "vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+    "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+    "tp": 1,
+    "mtp_depth": 2,
+    "graph_mode": "off",
+    "kv_cache_dtype": "f16",
+    "max_model_len": 32768,
+    "prefix_caching": false,
+    "natural_eos": true,
+    "return_token_ids": true,
+    "seed": 1
+  },
+  "run_root": "/home/steve/qwen38-current-main-runs/tp1-parent-sentinels-b2dd9ce73d-20260825-r1/03-eager-mtp2/sensitive-screen",
+  "gates": {
+    "stage_state": "passed",
+    "terminal": true,
+    "runner_return_code": 0,
+    "canary": true,
+    "benchmark_rows": 2,
+    "benchmark_gate": true,
+    "cached_tokens_all_zero": true,
+    "target_oracle": {
+      "passed": true,
+      "exact_output_hash_matches": 2,
+      "exact_token_id_matches": 2
+    },
+    "acceptance": {
+      "passed": true,
+      "drafted_tokens": 868,
+      "accepted_tokens": 589,
+      "acceptance_rate": 0.6785714285714286
+    },
+    "post_cleanup": true,
+    "local_lab_head_unchanged": true,
+    "live_origin_advanced_during_stage": true,
+    "remote_movement_was_non_gating": true,
+    "speed_gate_applied": false
+  },
+  "decode_summary": {
+    "classification": "two-prompt-sensitive-screen-only",
+    "preferred_metric": "tok_s_1_100_intervals_after_ttft",
+    "count": 2,
+    "min": 10.370510879199367,
+    "median": 10.511166009554383,
+    "mean": 10.511166009554383,
+    "max": 10.6518211399094,
+    "stdev": 0.19891639296541969
+  },
+  "context_semantics": {
+    "fills_exact_active_context_axis": false,
+    "configured_max_context_is_not_active_context": true,
+    "website_use": "mechanism and target-oracle parent evidence only"
+  },
+  "sealed_evidence": {
+    "stage_receipt_sha256": "f7501bced81beefd52bf8b56a44c16be3d9ea861d7695fe884b4ba3b2cbcc14a",
+    "benchmark_sha256": "bab562a946e194826469ebaa7ab9fd0c046ed7f185860db3772da208d5450658",
+    "canary_sha256": "ea067905bf632870cdb486746a2b8ae895614e3cebb3f70ead5b99a7ea712907",
+    "metrics_before_sha256": "8c70c8002cfbded324bc99105a8bec2dddc926af39a66732862c0046d4fc2452",
+    "metrics_after_sha256": "0fcf348661bd46d559c9da342bce2cfa2605a3796ae8f17eba4d03532ea2aef1",
+    "server_startup_sha256": "13dd664e4489b724c88e64413ec7aca771155e9276bc6cc576c5ab09b1d2fe3d",
+    "cache_manifest_sha256": "cd71806834d77ef264d2fa7c39cac3e4ee5c550410d28400783d95117c6e3629",
+    "input_files_manifest_sha256": "076737562d751ff7f3daba3da302f89ee3bb5d43f236162bdfcb86ab40fb14a0"
+  },
+  "interpretation": {
+    "promoted_speed_record": false,
+    "historical_speed_changed": false,
+    "corruption_parent_passed": true,
+    "zero_acceptance_hypothesis_rejected": true,
+    "full_mtp2_short_battery_eligible": true,
+    "one_eager_mtp4_short_actual_eligible_after_full_mtp2_pass": true,
+    "mtp1_and_mtp3_remain_estimate_candidates": true,
+    "exact_context_measurements_remain_missing": true
+  }
+}
