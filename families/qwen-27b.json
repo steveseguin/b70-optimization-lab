@@ -2650,7 +2650,7 @@
         "key": "active_context_tokens",
         "label": "active context",
         "prefix": "",
-        "value_labels": {"2048": "2K", "4096": "4K", "8192": "8K", "16384": "16K", "24576": "24K", "32768": "32K"}
+        "value_labels": {"0": "0", "2048": "2K", "4096": "4K", "8192": "8K", "16384": "16K", "24576": "24K", "32768": "32K"}
       },
       "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
       "fixed_selectors": {
@@ -2661,11 +2661,15 @@
         "graph": "off",
         "kv": "f16"
       },
-      "fixed": "Qwen3.8 Q4_K_M · llama.cpp SYCL · target only · f16 KV. Exact raw-engine decode/prefill sweep points are shown from 2K through 32K; zero depth is deliberately not synthesized into this coverage table.",
+      "fixed": "Qwen3.8 Q4_K_M · llama.cpp SYCL · target only · f16 KV. Exact raw-engine decode/prefill sweep points are shown from the measured zero-depth anchor through 32K.",
       "decision_note": "Only TP1 has a measured active-context curve. TP2/TP3/TP4 remain explicit gaps; no TP scaling is inferred from the TP1 curve.",
-      "rows": [2048, 4096, 8192, 16384, 24576, 32768],
+      "rows": [0, 2048, 4096, 8192, 16384, 24576, 32768],
       "columns": [1, 2, 3, 4],
       "cells": {
+        "0:1": {"state": "lab-measured", "label": "D24.81 · P825.24", "evidence_id": "q38-q4km-tp1-kv-f16-context", "point_x": 0, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "0:2": {"state": "missing", "label": "no curve"},
+        "0:3": {"state": "missing", "label": "no curve"},
+        "0:4": {"state": "missing", "label": "no curve"},
         "2048:1": {"state": "lab-measured", "label": "D24.46 · P919.67", "evidence_id": "q38-q4km-tp1-kv-f16-context", "point_x": 2048, "packet_id": "qwen38-27b-q4km-tp1-b70"},
         "2048:2": {"state": "missing", "label": "no curve"},
         "2048:3": {"state": "missing", "label": "no curve"},
@@ -2687,6 +2691,59 @@
         "24576:3": {"state": "missing", "label": "no curve"},
         "24576:4": {"state": "missing", "label": "no curve"},
         "32768:1": {"state": "lab-measured", "label": "D21.77 · P667.83", "evidence_id": "q38-q4km-tp1-kv-f16-context", "point_x": 32768, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "32768:2": {"state": "missing", "label": "no curve"},
+        "32768:3": {"state": "missing", "label": "no curve"},
+        "32768:4": {"state": "missing", "label": "no curve"}
+      }
+    },
+    {
+      "id": "q38-q4km-q8-context-by-tp",
+      "label": "Q4_K_M q8 KV context × TP",
+      "row_axis": {
+        "key": "active_context_tokens",
+        "label": "active context",
+        "prefix": "",
+        "value_labels": {"0": "0", "2048": "2K", "4096": "4K", "8192": "8K", "16384": "16K", "24576": "24K", "32768": "32K"}
+      },
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen3.8-27b",
+        "variant": "Q4_K_M",
+        "runtime": "llama.cpp SYCL",
+        "mtp": 0,
+        "graph": "off",
+        "kv": "q8_0"
+      },
+      "fixed": "Qwen3.8 Q4_K_M · llama.cpp SYCL · target only · q8_0 KV. Exact raw-engine decode/prefill sweep points are shown from the measured zero-depth anchor through 32K.",
+      "decision_note": "Only TP1 has a measured q8_0 KV active-context curve. TP2/TP3/TP4 remain explicit gaps; no TP scaling is inferred from the TP1 curve.",
+      "rows": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+      "columns": [1, 2, 3, 4],
+      "cells": {
+        "0:1": {"state": "lab-measured", "label": "D24.27 · P817.78", "evidence_id": "q38-q4km-tp1-kv-q8-context", "point_x": 0, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "0:2": {"state": "missing", "label": "no curve"},
+        "0:3": {"state": "missing", "label": "no curve"},
+        "0:4": {"state": "missing", "label": "no curve"},
+        "2048:1": {"state": "lab-measured", "label": "D22.45 · P912.17", "evidence_id": "q38-q4km-tp1-kv-q8-context", "point_x": 2048, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "2048:2": {"state": "missing", "label": "no curve"},
+        "2048:3": {"state": "missing", "label": "no curve"},
+        "2048:4": {"state": "missing", "label": "no curve"},
+        "4096:1": {"state": "lab-measured", "label": "D21.05 · P887.17", "evidence_id": "q38-q4km-tp1-kv-q8-context", "point_x": 4096, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "4096:2": {"state": "missing", "label": "no curve"},
+        "4096:3": {"state": "missing", "label": "no curve"},
+        "4096:4": {"state": "missing", "label": "no curve"},
+        "8192:1": {"state": "lab-measured", "label": "D18.68 · P843.21", "evidence_id": "q38-q4km-tp1-kv-q8-context", "point_x": 8192, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "8192:2": {"state": "missing", "label": "no curve"},
+        "8192:3": {"state": "missing", "label": "no curve"},
+        "8192:4": {"state": "missing", "label": "no curve"},
+        "16384:1": {"state": "lab-measured", "label": "D14.86 · P772.01", "evidence_id": "q38-q4km-tp1-kv-q8-context", "point_x": 16384, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "16384:2": {"state": "missing", "label": "no curve"},
+        "16384:3": {"state": "missing", "label": "no curve"},
+        "16384:4": {"state": "missing", "label": "no curve"},
+        "24576:1": {"state": "lab-measured", "label": "D12.4 · P711.48", "evidence_id": "q38-q4km-tp1-kv-q8-context", "point_x": 24576, "packet_id": "qwen38-27b-q4km-tp1-b70"},
+        "24576:2": {"state": "missing", "label": "no curve"},
+        "24576:3": {"state": "missing", "label": "no curve"},
+        "24576:4": {"state": "missing", "label": "no curve"},
+        "32768:1": {"state": "lab-measured", "label": "D10.66 · P662.56", "evidence_id": "q38-q4km-tp1-kv-q8-context", "point_x": 32768, "packet_id": "qwen38-27b-q4km-tp1-b70"},
         "32768:2": {"state": "missing", "label": "no curve"},
         "32768:3": {"state": "missing", "label": "no curve"},
         "32768:4": {"state": "missing", "label": "no curve"}

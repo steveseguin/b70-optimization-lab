@@ -70,7 +70,9 @@ quality gate); keep the deployment packet's quality evidence separate. The
 `x=0` rows are observed `n_depth=0` measurements, not graph origins invented by
 the renderer.
 
-Import status: measured import. TP2/TP4 context curves remain unknown.
+Import status: **completed 2026-08-24**. The F16 zero-depth point and all seven
+Q8_0-KV points now have exact coverage cells. TP2/TP4 context curves remain
+unknown and explicit rather than inferred.
 
 ### 3. Ornith 1.5: surface multi-sequence throughput and the 9B zero point
 
