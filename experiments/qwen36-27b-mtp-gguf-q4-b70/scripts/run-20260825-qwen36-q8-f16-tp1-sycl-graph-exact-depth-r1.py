@@ -309,7 +309,13 @@ def verify_source(manifest: Mapping[str, Any]) -> None:
     if BASE.git_output("rev-parse", "HEAD", cwd=source) != manifest["source"]["base_head"]:
         raise GateError("graph-port source HEAD changed")
     expected = manifest["source"]["required_modified_paths"]
-    status = BASE.git_output("status", "--porcelain=v1", "--untracked-files=all", cwd=source).splitlines()
+    # Do not use BASE.git_output here: its whole-string strip() removes the
+    # first porcelain status column from the first modified path.
+    status = subprocess.check_output(
+        ["git", "-C", str(source), "status", "--porcelain=v1", "--untracked-files=all"],
+        text=True,
+        timeout=30,
+    ).rstrip("\n").splitlines()
     if set(status) != {f" M {path}" for path in expected}:
         raise GateError("graph-port source contains non-frozen changes")
     for relative, digest in expected.items():

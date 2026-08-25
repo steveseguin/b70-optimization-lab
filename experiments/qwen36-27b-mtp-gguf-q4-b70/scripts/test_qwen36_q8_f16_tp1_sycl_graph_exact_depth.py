@@ -92,6 +92,9 @@ class ContractTests(unittest.TestCase):
         with self.assertRaisesRegex(RUNNER.GateError, "graph backend identity changed"):
             RUNNER.require_sealed_dependencies(changed)
 
+    def test_source_gate_preserves_porcelain_status_columns(self) -> None:
+        RUNNER.verify_source(self.manifest)
+
     def test_default_is_inert_and_check_passes_without_launch(self) -> None:
         output = Path(self.manifest["lifecycle"]["output_root"])
         self.assertFalse(output.exists())
