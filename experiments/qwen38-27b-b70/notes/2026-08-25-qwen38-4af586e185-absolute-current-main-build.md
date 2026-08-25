@@ -25,10 +25,21 @@ The aggregate receipt SHA-256 is
 `328bf6727262174345f6bb571752c44a77a36b00c2946c5ef6e9fba4cff68989`;
 source identity is
 `f89a02ca59a8ed0079e2297863b0c2799ae8f4665c3fd921e3ddf4c5409bb41a`.
-The external archive checksum manifest is
-`9b3b150baeda542c166cb61a62c58018ba7d5a5943436dd92c711968b33b0521`
+The final external archive checksum manifest is
+`372e45c70b1013f3d1c5c371ce945a6e29b639bf60d2c221fbde06d387c05dbf`
 and its full battery passed. Durable artifacts are under
 `/mnt/extended-ssd/steve-archive/qwen-current-main-builds-20260825/20260825T061034Z-4af586e185-1e90ffa672`.
+
+That directory also contains the exact two-image transfer bundle
+`images-4af586e185.docker.tar.zst`: `5,399,932,281` bytes, SHA-256
+`4da6fd4601a1a1a6dda80b7854fa2edee5c5443afa38a9ff1506a6fb75c33db4`.
+The compressed stream passed `zstd -t`; its Docker manifest contains exactly
+the two tags above; and a same-daemon `docker load` round trip retained both
+image IDs. Recover it on the measuring host with:
+
+```bash
+zstd -dc images-4af586e185.docker.tar.zst | docker load
+```
 
 Relative to the qualified b2dd snapshot, the direct Qwen-adjacent runtime
 change is a DFlash2 decoder-layer loading fix. This packet's staged TP1 matrix
