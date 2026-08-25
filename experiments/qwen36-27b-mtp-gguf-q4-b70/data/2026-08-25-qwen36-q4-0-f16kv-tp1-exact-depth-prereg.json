@@ -1,0 +1,100 @@
+{
+  "schema": "neural.download.qwen36-llama-exact-depth-prereg.v1",
+  "campaign_id": "qwen36-q4-0-f16kv-tp1-exact-depth-20260825-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Fill the seven Qwen3.6 Q4_0 TP1/MTP0/graph-off/F16-KV exact active-context cells with raw llama-bench evidence.",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q4-0-20c9c45",
+    "quantization": "Q4_0",
+    "runtime_family": "llama.cpp SYCL",
+    "runtime_build": "9976-e3546c794-dirty-binary-pinned",
+    "tp": 1,
+    "mtp": 0,
+    "speculation_profile": "target only",
+    "graph_mode": "off",
+    "kv": "f16",
+    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+  },
+  "model": {
+    "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+    "revision": "checksum-pinned-no-captured-hugging-face-revision",
+    "revision_status": "The exact artifact revision was not captured; this packet binds the local file by path, size, and SHA-256 and does not inherit the sibling Q4_K_M revision.",
+    "path": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_0.gguf",
+    "size_bytes": 16056476800,
+    "sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+    "embedded_mtp_capability": true
+  },
+  "runtime": {
+    "source_commit": "e3546c7948e3af463d0b401e6421d5a4c2faf565",
+    "build_number": 9976,
+    "build_tree_status": "dirty-build; executable and effective dependency identities are checksum-pinned",
+    "binary": {
+      "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/llama-bench",
+      "size_bytes": 564624,
+      "sha256": "90d4d23363825219d6cff02d59b73c3912fd42071694e8e215ba8cfc5d058aff"
+    },
+    "implementation": {
+      "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libllama-bench-impl.so",
+      "size_bytes": 443800,
+      "sha256": "f963fc1504afeff14bdd389f65a00d9b581e40056bef0c9b81e17e89fc0d79d5"
+    },
+    "sycl_backend": {
+      "path": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/libggml-sycl.so.0.16.0",
+      "size_bytes": 187522344,
+      "sha256": "5b53c03bf2702cc3a2b8146b1da8fd437f8b30400f3016bb2a75473c4345a6a3"
+    }
+  },
+  "runtime_reference": {
+    "manifest": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4-0-tp1-mtp0-q8kv-exact-depth-r2.json",
+    "manifest_sha256": "90f1a308d61d76e4aa55f4f4346116cd65c9dced59f61fb8b1ab9f04d0fcbf80",
+    "adapter": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q4-0-tp1-mtp0-q8kv-exact-depth-r2.py",
+    "adapter_sha256": "9143ee1661c92037b961f55bb2ad1a6b9fbe2f3901bb408b435e050685c80018",
+    "scope": "Reuse only the checksum-pinned Q4_0 model/runtime identity, resolved-library verification, exact-DSO graph-off attestation, four-lock lifecycle, corrected process census, parser, and create-only receipt machinery. No q8_0 timing row, failed r1 row, or quality judgment transfers into this F16 packet."
+  },
+  "argv": [
+    "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/llama-bench",
+    "-m", "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_0.gguf",
+    "-dev", "SYCL0", "-ngl", "99", "-sm", "layer", "-p", "2048",
+    "-n", "128", "-d", "0,2048,4096,8192,16384,24576,32768",
+    "-b", "2048", "-ub", "512", "-fa", "on", "-ctk", "f16",
+    "-ctv", "f16", "-t", "16", "--poll", "50", "-r", "5",
+    "-o", "json"
+  ],
+  "environment": {
+    "GGML_SYCL_ENABLE_GRAPH": "0",
+    "GGML_SYCL_GRAPH_CACHE_SIZE": "0"
+  },
+  "lifecycle": {
+    "output_root": "/home/steve/qwen36-matrix-runs/q4-0-tp1-mtp0-f16kv-exact-depth-20260825-r1",
+    "output_fstype": "ext4",
+    "exact_ack": "RUN qwen36-q4-0-f16kv-tp1-exact-depth-20260825-r1 d1-exact-depths r1",
+    "requires_clean_pushed_main": true,
+    "requires_no_server_or_container": true,
+    "required_locks": [
+      "/run/lock/muse-glimmer-gpu-exclusive.lock",
+      "/tmp/b70-benchmark.lock",
+      "/tmp/b70-gpu0.lock",
+      "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"
+    ],
+    "required_idle_process_coverage": [
+      "EngineCore", "vllm serve", "llama-server", "llama-bench", "llama-batched-bench"
+    ],
+    "artifacts_are_create_only": true,
+    "terminal_receipt_required": true
+  },
+  "interpretation": {
+    "measurement_class": "raw-engine llama-bench",
+    "http_serving_metric": false,
+    "new_quality_gate": false,
+    "artifact_quality_is_separate": true,
+    "speed_floor": null,
+    "cell_gain_on_pass": 7,
+    "fill_only": "the seven matching Qwen3.6 Q4_0 TP1/MTP0/graph-off/F16-KV missing cells after every receipt gate passes",
+    "protected_overlay_manifest_sha256": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "protected_site_metric_projection_sha256": "1a5c4e32cf868776ea0174b0e8349e5b7f0d7e1e4187946c4dbe689457b03c",
+    "historical_featured_speeds_are_immutable": true,
+    "cross_revision_or_quantization_transfer_allowed": false,
+    "q8_rows_transfer_allowed": false
+  }
+}
