@@ -502,6 +502,28 @@
       "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp1-fit-depth-r2-result.json"
     },
     {
+      "id": "qwen38-27b-official-fp8-tp4-piecewise-depth-grade-c",
+      "label": "Qwen3.8 official FP8 · TP4 PIECEWISE depth",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-official-fp8-017b9c7",
+      "quantization": "FP8",
+      "runtime": "vLLM XPU",
+      "cards": 4,
+      "status": "grade-c-exact-depth",
+      "evidence_level": "B70-measured Grade C",
+      "coverage": ["target-only MTP0", "HTTP serving", "exact context 2K-32K", "F16 KV", "PIECEWISE graph"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Official Qwen3.8 FP8 TP4 PIECEWISE exact-depth serving through 32K",
+          "basis": "strict direct-plus-ordinary verification passed for all 66 weights; six cache-zero receipts returned 128 token IDs and passed every exact-depth gate. This is repeated-token shape evidence, not natural prose, a package headline, or a replacement for the faster protected AutoRound TP4 route.",
+          "reviewed_at": "2026-08-26",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp4-http-depth-r1-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp4-http-depth-r1-result.json"
+    },
+    {
       "id": "qwen38-27b-256k-vision-mtp-b70",
       "label": "Qwen3.8 Q5_K_S · 256K + vision + MTP",
       "revision": "qwen3.8-27b",
@@ -4341,6 +4363,36 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp1-fit-depth-r2-result.json"
     },
     {
+      "id": "q38-official-fp8-tp4-f16kv-http-context-r1-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-official-fp8-017b9c7",
+      "quantization": "FP8",
+      "variant": "Official FP8 target-only TP4",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp4-vllm-xpu-official-fp8-http-depth-v1",
+      "speculation_method": "none",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "profile_id": "q38-official-fp8-tp4-f16kv-http-depth-grade-c-v1",
+      "measurement_class": "conventional-99-interval-exact-depth-openai-http-serving-grade-c",
+      "promotion_status": "authorized-six-cell-tp4-http-context-curve-no-x0-headline-or-submission",
+      "identity": {"model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a", "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f", "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9", "model_manifest_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb"},
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "graph_mode": "PIECEWISE", "graph_capture_sizes": [1], "kv": "f16", "speculation": "none", "parallel_slots": 1, "configured_max_context_tokens": 33024, "gpu_memory_utilization": 0.8, "prefix_caching": false},
+      "workload": "One-slot vLLM OpenAI-compatible HTTP completions; exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 2048, "decode_tok_s": 35.526051366782006, "ttft_ms": 1972.8882819908904, "effective_prompt_throughput_proxy_tok_s": 1038.0719570868516, "cached_tokens": 0, "output_token_ids_sha256": "c23bf554e30205f7606c6ab9a137d5e53f5d5868d3a963d02109a3e7bf364d1b"},
+        {"x": 4096, "decode_tok_s": 34.898259891958816, "ttft_ms": 3662.974345003022, "effective_prompt_throughput_proxy_tok_s": 1118.216950000675, "cached_tokens": 0, "output_token_ids_sha256": "b751b0bfa737c4824dc37b5e3da89238b4f4197345fae8c4d7de8e66a694417e"},
+        {"x": 8192, "decode_tok_s": 33.969008846291906, "ttft_ms": 7200.292951005395, "effective_prompt_throughput_proxy_tok_s": 1137.7314861690636, "cached_tokens": 0, "output_token_ids_sha256": "b619ef25f938c18e11e67b21339fb95cf632520cb59c63a9cf211b0cbd46a0df"},
+        {"x": 16384, "decode_tok_s": 33.643737958666264, "ttft_ms": 14424.102268996648, "effective_prompt_throughput_proxy_tok_s": 1135.8765831282258, "cached_tokens": 0, "output_token_ids_sha256": "d33b03661a70c438ffc7d55dd6c80ae850f37350ff7c24702db3423106edc2cb"},
+        {"x": 24576, "decode_tok_s": 33.27243664089886, "ttft_ms": 21792.12021800049, "effective_prompt_throughput_proxy_tok_s": 1127.7470826220938, "cached_tokens": 0, "output_token_ids_sha256": "c89d818b02947c125f26355896823ff201cb7a0234571af166b62580101c6983"},
+        {"x": 32768, "decode_tok_s": 33.106580865553255, "ttft_ms": 29236.43605300458, "effective_prompt_throughput_proxy_tok_s": 1120.793243765855, "cached_tokens": 0, "output_token_ids_sha256": "98947e31c8ca0d0660722608218a7a6cb8f7022fb484df876e042a5a04d573c8"}
+      ],
+      "quality": "All six Grade C exact-depth requests passed exact prompt-count, 128-token output, cache-zero, no-truncation/context-shift, and timing gates. All 66 weight files passed strict O_DIRECT plus ordinary full-read verification.",
+      "caveat": "The repeated-token 2K-32K curve is Grade C shape evidence, not natural prose. No x=0 point was measured. Effective prompt throughput is a disclosed HTTP TTFT proxy, not server prefill. This official-FP8 profile does not replace the faster AutoRound TP4 frontier. No alternate-KV, MTP, concurrency, headline, protected-value, or submission authority transfers.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp4-http-depth-r1-result.json"
+    },
+    {
       "id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -4819,13 +4871,14 @@
     },
     {
       "id": "context-q38-official-fp8-http",
-      "title": "Official FP8 TP1/TP2 HTTP context",
-      "subtitle": "Grade C · same exact official Qwen3.8 FP8 weights and pinned vLLM image · TP1 eager fit supports measured 2K-8K while TP2 PIECEWISE reaches measured 2K-32K · x=0 and unmeasured TP1 depths remain missing · profiles are separately labeled and not a causal scaling A/B",
+      "title": "Official FP8 TP1/TP2/TP4 HTTP context",
+      "subtitle": "Grade C · same exact official Qwen3.8 FP8 weights and pinned vLLM image · TP1 eager fit supports measured 2K-8K while TP2/TP4 PIECEWISE reach measured 2K-32K · x=0 and unmeasured TP1 depths remain missing · profiles are separately labeled and not a causal scaling A/B",
       "x_label": "active context tokens",
       "metrics": ["decode_tok_s", "ttft_ms"],
       "series": [
         {"label": "Official FP8 · TP1 · F16 KV · eager", "measurement_ids": ["q38-official-fp8-tp1-f16kv-eager-http-context-r2-grade-c"]},
-        {"label": "Official FP8 · TP2 · F16 KV · vLLM PIECEWISE", "measurement_ids": ["q38-official-fp8-tp2-f16kv-http-context-r1-grade-c"]}
+        {"label": "Official FP8 · TP2 · F16 KV · vLLM PIECEWISE", "measurement_ids": ["q38-official-fp8-tp2-f16kv-http-context-r1-grade-c"]},
+        {"label": "Official FP8 · TP4 · F16 KV · vLLM PIECEWISE", "measurement_ids": ["q38-official-fp8-tp4-f16kv-http-context-r1-grade-c"]}
       ]
     },
     {
@@ -7530,6 +7583,34 @@
       {"id": "measured-16k", "match": {"active_context_tokens": 16384}, "state": "lab-measured", "label": "D20.93 · T10,533", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-24k", "match": {"active_context_tokens": 24576}, "state": "lab-measured", "label": "D20.65 · T16,139", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-32k", "match": {"active_context_tokens": 32768}, "state": "lab-measured", "label": "D20.39 · T21,873", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}}
+    ]
+  },
+  {
+    "id": "qwen38-tp4-vllm-xpu-fp8-http-depth",
+    "label": "Qwen3.8 TP4 · vLLM XPU official FP8 exact HTTP depth",
+    "description": "Seven exact selector cells for the pinned official-FP8 TP4 target-only F16-KV PIECEWISE HTTP lane: six Grade C cache-zero measurements at 2K-32K and an explicit missing x=0 cell. This slower profile does not replace the AutoRound TP4 frontier.",
+    "fixed_selectors": {
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-official-fp8-017b9c7",
+      "tp": 4,
+      "mtp": 0,
+      "graph_mode": "PIECEWISE",
+      "kv": "f16",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp4-vllm-xpu-official-fp8-http-depth-v1",
+      "speculation_method": "none"
+    },
+    "axes": [
+      {"key": "active_context_tokens", "label": "Active context", "values": [0, 2048, 4096, 8192, 16384, 24576, 32768], "value_labels": {"0": "0", "2048": "2K", "4096": "4K", "8192": "8K", "16384": "16K", "24576": "24K", "32768": "32K"}}
+    ],
+    "rules": [
+      {"id": "default-exact-gap", "match": {"active_context_tokens": "*"}, "state": "missing", "label": "unmeasured exact cell", "reason": "No exact official-FP8 TP4 HTTP request binds this selector; configured maximum context never substitutes for active context.", "parent": "qwen38-official-fp8-tp4-http-depth-20260826-r1", "retry": {"status": "queued", "trigger": "new-exact-http-run"}},
+      {"id": "measured-2k", "match": {"active_context_tokens": 2048}, "state": "lab-measured", "label": "D35.53 · T1,973", "reason": "Exact Grade C cache-zero official-FP8 TP4 HTTP depth cell; no faster route is replaced.", "evidence_id": "q38-official-fp8-tp4-f16kv-http-context-r1-grade-c", "point_x": 2048, "packet_id": "qwen38-27b-official-fp8-tp4-piecewise-depth-grade-c", "parent": "qwen38-official-fp8-tp4-http-depth-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-4k", "match": {"active_context_tokens": 4096}, "state": "lab-measured", "label": "D34.90 · T3,663", "reason": "Exact Grade C cache-zero official-FP8 TP4 HTTP depth cell; no faster route is replaced.", "evidence_id": "q38-official-fp8-tp4-f16kv-http-context-r1-grade-c", "point_x": 4096, "packet_id": "qwen38-27b-official-fp8-tp4-piecewise-depth-grade-c", "parent": "qwen38-official-fp8-tp4-http-depth-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-8k", "match": {"active_context_tokens": 8192}, "state": "lab-measured", "label": "D33.97 · T7,200", "reason": "Exact Grade C cache-zero official-FP8 TP4 HTTP depth cell; no faster route is replaced.", "evidence_id": "q38-official-fp8-tp4-f16kv-http-context-r1-grade-c", "point_x": 8192, "packet_id": "qwen38-27b-official-fp8-tp4-piecewise-depth-grade-c", "parent": "qwen38-official-fp8-tp4-http-depth-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-16k", "match": {"active_context_tokens": 16384}, "state": "lab-measured", "label": "D33.64 · T14,424", "reason": "Exact Grade C cache-zero official-FP8 TP4 HTTP depth cell; no faster route is replaced.", "evidence_id": "q38-official-fp8-tp4-f16kv-http-context-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-official-fp8-tp4-piecewise-depth-grade-c", "parent": "qwen38-official-fp8-tp4-http-depth-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-24k", "match": {"active_context_tokens": 24576}, "state": "lab-measured", "label": "D33.27 · T21,792", "reason": "Exact Grade C cache-zero official-FP8 TP4 HTTP depth cell; no faster route is replaced.", "evidence_id": "q38-official-fp8-tp4-f16kv-http-context-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-official-fp8-tp4-piecewise-depth-grade-c", "parent": "qwen38-official-fp8-tp4-http-depth-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-32k", "match": {"active_context_tokens": 32768}, "state": "lab-measured", "label": "D33.11 · T29,236", "reason": "Exact Grade C cache-zero official-FP8 TP4 HTTP depth cell; no faster route is replaced.", "evidence_id": "q38-official-fp8-tp4-f16kv-http-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-official-fp8-tp4-piecewise-depth-grade-c", "parent": "qwen38-official-fp8-tp4-http-depth-20260826-r1", "retry": {"status": "complete"}}
     ]
   },
   {
