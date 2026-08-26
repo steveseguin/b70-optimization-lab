@@ -1,0 +1,151 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-compact-result.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-20260826-r1",
+  "status": "passed-quality-clean-sentinel",
+  "identity": {
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "embedded_mtp_tensor": "model_extra_tensors.safetensors",
+    "embedded_mtp_tensor_sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de",
+    "external_speculator": null,
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "raw_sha256": {
+      "image-id.txt": "3f4cc79dc498548ebcc9fd65e0da396111d68903c453b83d9b613f2e0a8887fb",
+      "vllm-source-commit.txt": "b60f6014c07dfcf32c30278eede59198e8ac93c176f9685a38ff320ac76e376f",
+      "stack-versions.txt": "8c2197b31e85ddcd41a43d93103ccc6629acf521bf22d8759ed368ec0f57ba3f",
+      "server-args.shell.txt": "77f32beacfff87f4545f3862c00a539986850ba4c2164715fff719fe11a4d2cf",
+      "server-startup.log": "b2e8ac29ddb4a28948dd8e0dee8154b0a40a4e3c76428b08c34cbe59dff4a07d",
+      "container-inspect.json": "85b8d103639c117ce64a5b47fe51cf51622515b0a544d8ccb2e04bfec4416400"
+    }
+  },
+  "config": {
+    "tp": 1,
+    "cards": 1,
+    "device_affinity": "0",
+    "oneapi_device_selector": "level_zero:0",
+    "mtp": 1,
+    "speculative_method_requested": "qwen3_next_mtp",
+    "speculative_method_resolved": "mtp",
+    "num_speculative_tokens": 1,
+    "graph": "off",
+    "graph_mode": "off",
+    "enforce_eager": true,
+    "kv": "fp8_e4m3",
+    "parallel_slots": 1,
+    "configured_max_context_tokens": 32896,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "prefix_caching": false,
+    "pythonhashseed": 0
+  },
+  "point": {
+    "x": 4096,
+    "decode_tok_s": 8.378608393519674,
+    "historical_100_event_decode_tok_s": 8.463240801535022,
+    "published_decode_field": "conventional_99_interval_tok_s",
+    "ttft_s": 3.8431851619970985,
+    "ttft_ms": 3843.1851619970985,
+    "cached_tokens": 0,
+    "completion_tokens": 128,
+    "output_token_ids_sha256": "a3d7ad63a22cfb897d9d7f69952e30e2036617776d18fb4c8a9be1513da522cd",
+    "raw_sha256": "158563cead75219f68220b80c2107ca34b1e4c224ae656b602e3d252972bf4fe"
+  },
+  "mechanism": {
+    "passed": true,
+    "drafted_tokens": 66,
+    "accepted_tokens": 62,
+    "acceptance_rate": 0.9393939393939394,
+    "isolated_to_exact_4k_request": true,
+    "raw_sha256": "19c0337475d256d3fa3c9b13cdd0a5c282eca7a7a873faf6cb3c686ad869def9"
+  },
+  "target_oracle": {
+    "passed": true,
+    "scope": "frozen same-image TP1/MTP0/eager/E4M3 exact-4K receipt; conservative cross-boot exact-token gate",
+    "target_path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1/exact-depth/depth-4096.json",
+    "target_raw_sha256": "1d541ec78830ba6455b4434c352fe5a44ba5000f5d9d5e6f4c171b7f1053884f",
+    "candidate_token_ids_sha256": "a3d7ad63a22cfb897d9d7f69952e30e2036617776d18fb4c8a9be1513da522cd",
+    "target_token_ids_sha256": "a3d7ad63a22cfb897d9d7f69952e30e2036617776d18fb4c8a9be1513da522cd",
+    "token_count": 128,
+    "first_divergence": null
+  },
+  "quality": {
+    "grade_candidate": "C",
+    "scope": "one exact-4K TP1 native-MTP1 eager/E4M3 sentinel plus the complete objective and same-image baseline quality battery",
+    "exact_depth_gate_passed": true,
+    "exact_cases": 7,
+    "repeat_runs": 8,
+    "unique_repeat_hashes": 1,
+    "baseline_comparisons": 24,
+    "long_context_needle_passed": true,
+    "cache_zero_requests": 16,
+    "cache_zero_all_requests": true,
+    "baseline_match_all": true,
+    "interpolation_or_extrapolation": false,
+    "raw_sha256": "3a74a70dc8803607e1831eee170dbe255164416cafa9b06b0b9ad15d03772315"
+  },
+  "runtime_isolation": {
+    "eager_identity_passed": true,
+    "graph_compilation_config_absent": true,
+    "tp1_topology_verified": true,
+    "world_size": 1,
+    "rank": 0,
+    "local_rank": 0,
+    "tp_rank": 0,
+    "dedicated_cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-20260826-r1",
+    "prefix_cache_disabled": true
+  },
+  "model_verification": {
+    "status": "verified",
+    "files_verified": 19,
+    "direct_and_ordinary_paths_coherent": true,
+    "raw_sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+  },
+  "cleanup": {
+    "status": "clean",
+    "launch_git_head": "900d9eb92b13f30eddc15089bf81e0ca3e1b4154",
+    "terminal_receipt_sha256": "f1c2f03976ed9e0852ab7119e82a3ad2be2809e98cd6d423a5af7ae16d66015a",
+    "arm_result_sha256": "8a9b43881108ffcb7426253acb832e8639ddae37db818762e033e6d4ad409e03",
+    "strict_postcleanup_passed": true,
+    "campaign_container_absent_at_terminal": true,
+    "port_19524_closed_at_terminal": true
+  },
+  "publication_candidate": {
+    "decision": "pending-separate-family-and-site-publication",
+    "selected_depths": [4096],
+    "missing_depths": [0, 2048, 8192, 16384, 24576, 32768],
+    "candidate_grade": "C",
+    "raw_runner_automatic_publication": false,
+    "publication_is_automatic": false,
+    "basis": "Exact/cache-zero gates, isolated conserved 62/66 MTP1 acceptance, all-128-token equality to the frozen same-image E4M3 MTP0 target, full objective and baseline quality, eager identity, TP1 topology, model verification, isolated cache, and cleanup all passed."
+  },
+  "authority": {
+    "scope": "current f01e/ac7509e2 TP1/MTP1/eager/E4M3 exact-4K measured cell only",
+    "measured_cells_pending_publication": 1,
+    "site_cells_published_by_this_packet": 0,
+    "site_or_family_publication_authorized_by_raw_runner": false,
+    "quality_grade_candidate": "C",
+    "headline_or_frontier_replacement": false,
+    "historical_or_protected_replacement": false,
+    "protected_decode_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
+    "other_depths_modes_tp_mtp_or_kv_inferred": false,
+    "automatic_descendant_expansion": false,
+    "descendant_execution_authorized": false,
+    "localmaxxing_submission": false,
+    "x0_remains_missing": true
+  },
+  "tracked_inputs": {
+    "preregistration": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-r1-prereg.json",
+      "sha256": "e9103de086c653024f721cbfe532f149bd2fa62e8d93af72c61f20e969aec801"
+    },
+    "runner": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-r1.sh",
+      "sha256": "36e61b0effce77375caa5943c86a04374afe6b3bf4ceb8dd876e0093783fc0d8"
+    }
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-20260826-r1"
+}
