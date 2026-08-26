@@ -1,0 +1,18 @@
+{
+  "schema": "neural.download.qwen38-fp8-tp1-fit-screen-result.v1",
+  "state": "startup-configuration-gate-no-measurement",
+  "campaign_id": "qwen38-fp8-tp1-http-p32-fit-screen-20260826-r19",
+  "server": {
+    "health_reached": false,
+    "requests_sent": 0,
+    "cleanup": "clean",
+    "requested_gpu_memory_utilization": 0.98,
+    "device_capacity_gib": 30.3,
+    "startup_free_gib": 29.38,
+    "requested_budget_gib": 29.69
+  },
+  "root_cause": "vLLM rejected startup before weight loading because the 29.38 GiB free snapshot was below the 29.69 GiB budget requested by gpu-memory-utilization=0.98.",
+  "interpretation": "This is not a model-fit result and contains no performance measurement. The observed free capacity is sufficient to pass the same startup guard at 0.96 (29.09 GiB), which R20 tests without changing the workload.",
+  "correction": "R20 changes only gpu-memory-utilization from 0.98 to 0.96 and uses a fresh server/cache/run directory.",
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp1-http-p32-fit-screen-20260826-r19-attempt1"
+}
