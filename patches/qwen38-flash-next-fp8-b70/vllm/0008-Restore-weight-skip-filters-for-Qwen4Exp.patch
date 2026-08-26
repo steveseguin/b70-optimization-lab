@@ -1,0 +1,93 @@
+From 71670287ecf703268cead7931465da0c88c1cee1 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 26 Aug 2026 18:58:17 -0400
+Subject: [PATCH] Restore weight skip filters for Qwen4Exp
+
+---
+ tests/models/test_utils.py          | 35 +++++++++++++++++++++++++++++
+ vllm/model_executor/models/utils.py | 10 ++++++++-
+ 2 files changed, 44 insertions(+), 1 deletion(-)
+
+diff --git a/tests/models/test_utils.py b/tests/models/test_utils.py
+index 02903504c..c112c67f0 100644
+--- a/tests/models/test_utils.py
++++ b/tests/models/test_utils.py
+@@ -169,6 +169,41 @@ def test_module_load_shared_params_that_are_not_tied_embeddings():
+     assert torch.all(mod.gate.weight == torch.Tensor([[1, 2], [3, 4]]))
+ 
+ 
++@pytest.mark.cpu_test
++@pytest.mark.parametrize(
++    ("loader_kwargs", "extra_weight_names"),
++    [
++        (
++            {"skip_prefixes": ["unused."]},
++            ["unused.weight", "unused.bias"],
++        ),
++        (
++            {"skip_substrs": [".unused."]},
++            ["nested_mod.0.unused.weight", "nested_mod.unused.bias"],
++        ),
++    ],
++)
++def test_module_skip_named_weights(
++    loader_kwargs: dict[str, list[str]],
++    extra_weight_names: list[str],
++) -> None:
++    source = ModuleWithNestedBatchNorm()
++    source(torch.tensor([[1.0, 2.0], [3.0, 4.0]]))
++    target = ModuleWithNestedBatchNorm()
++    weights = dict(source.state_dict())
++    weights.update((name, torch.ones(2)) for name in extra_weight_names)
++
++    loaded = AutoWeightsLoader(target, **loader_kwargs).load_weights(weights.items())
++
++    assert loaded == set(source.state_dict())
++    torch.testing.assert_close(
++        target.nested_mod.bn.running_mean, source.nested_mod.bn.running_mean
++    )
++    torch.testing.assert_close(
++        target.nested_mod.bn.running_var, source.nested_mod.bn.running_var
++    )
++
++
+ class raise_if_cuda_sync:
+     def __enter__(self):
+         self.previous_debug_mode = torch.cuda.get_sync_debug_mode()
+diff --git a/vllm/model_executor/models/utils.py b/vllm/model_executor/models/utils.py
+index 9c6c7f6bb..96db1c91e 100644
+--- a/vllm/model_executor/models/utils.py
++++ b/vllm/model_executor/models/utils.py
+@@ -227,12 +227,16 @@ class AutoWeightsLoader:
+         self,
+         module: nn.Module,
+         *,
++        skip_prefixes: list[str] | None = None,
++        skip_substrs: list[str] | None = None,
+         ignore_unexpected_prefixes: list[str] | None = None,
+         ignore_unexpected_suffixes: list[str] | None = None,
+     ) -> None:
+         super().__init__()
+ 
+         self.module = module
++        self.skip_prefixes = skip_prefixes or []
++        self.skip_substrs = skip_substrs or []
+         self.ignore_unexpected_prefixes = ignore_unexpected_prefixes or []
+         self.ignore_unexpected_suffixes = ignore_unexpected_suffixes or []
+ 
+@@ -273,7 +277,11 @@ class AutoWeightsLoader:
+         return ".".join((prefix, rest))
+ 
+     def _can_skip(self, qualname: str) -> bool:
+-        return qualname in self.aliased_params
++        return (
++            qualname in self.aliased_params
++            or any(qualname.startswith(prefix) for prefix in self.skip_prefixes)
++            or any(substr in qualname for substr in self.skip_substrs)
++        )
+ 
+     def _can_ignore_unexpected(self, qualname: str) -> bool:
+         iup = (qualname.startswith(p) for p in self.ignore_unexpected_prefixes)
+-- 
+2.43.0
+

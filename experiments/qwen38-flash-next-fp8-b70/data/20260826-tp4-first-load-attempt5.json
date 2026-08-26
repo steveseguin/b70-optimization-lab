@@ -1,0 +1,56 @@
+{
+  "date": "2026-08-26",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1",
+  "attempt": 5,
+  "status": "bounded_failure_at_weight_loader_entry",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "240899082e3c9a4733c5871038f604e583bf2498",
+    "kernel_head": "7cf216774fb3c5eabf20d1f481d6548682604c37",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp_dose": 0,
+    "enforce_eager": true,
+    "max_model_len": 512,
+    "moe_backend": "triton",
+    "offload_backend": "uva"
+  },
+  "passed_before_failure": {
+    "four_rank_xccl_barrier_and_allreduce": true,
+    "ple_constructor_on_xpu": true,
+    "tp4_ep4_model_construction": true,
+    "gdn_backend": "triton",
+    "fp8_moe_backend": "triton",
+    "ple_uva_gib_per_rank": 11.92,
+    "checkpoint_shard_read_started": false
+  },
+  "failure": {
+    "class": "imported_branch_loader_api_drift",
+    "location": "vllm/models/qwen4_exp/amd/model.py:1000",
+    "exception": "TypeError: AutoWeightsLoader.__init__() got an unexpected keyword argument 'skip_prefixes'",
+    "classification": "source compatibility bug before shard I/O; not a performance regression, OOM, hang, collective failure, or model-fit failure"
+  },
+  "repair": {
+    "vllm_commit": "71670287ecf703268cead7931465da0c88c1cee1",
+    "patch_artifact": "patches/qwen38-flash-next-fp8-b70/vllm/0008-Restore-weight-skip-filters-for-Qwen4Exp.patch",
+    "tests": "73 passed, 1 skipped",
+    "preserved_current_upstream_behavior": [
+      "tied-embedding alias safety",
+      "weight mapper pipeline",
+      "unused rotary embedding removal"
+    ],
+    "performance_identity_changes": []
+  },
+  "external_evidence": {
+    "run_directory": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt5",
+    "server_log_sha256": "601fbf29f25fecfb87c90bb740f4fea8b7a3d49276c28ee627f3cbd57f8f986b",
+    "identity_sha256": "bc61d11272f415b932390c252c8d54d59d310df522e1fda5a3b4146f15f66d8b",
+    "runtime_versions_sha256": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "xccl_preflight_sha256": "903c0aeba087bc567c9d3fa8bf063327783a39f3af6f3a65e3fffe602da1dd2a"
+  },
+  "cleanup": {
+    "processes_and_listener_absent": true,
+    "attempt_rpc_directory_removed": true
+  },
+  "next_action": "retry the identical frozen TP4/EP4 eager MTP0 load as attempt 6 with only the loader compatibility repair"
+}

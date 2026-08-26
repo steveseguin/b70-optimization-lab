@@ -163,5 +163,22 @@ B70 probe proves that the same PLE constructor device context creates ordinary
 tensors on `xpu:0`. Patch artifact `vllm/0007` preserves the repair.
 
 Structured attempt evidence is in
-`data/20260826-tp4-first-load-attempt4.json`. The next action is an unchanged
-attempt 5 with only the source repair and launcher source-head pin advanced.
+`data/20260826-tp4-first-load-attempt4.json`.
+
+Attempt 5 confirmed that repair on all four ranks, constructed the model,
+selected the intended backends, and placed exactly 11.92 GiB of PLE parameters
+per rank in selective UVA. It then reached `load_weights()` and failed before
+reading checkpoint shards because the Qwen integration branch still called
+the older `AutoWeightsLoader(skip_prefixes=..., skip_substrs=...)` contract.
+Current upstream had replaced its built-in skip filters with weight mappers,
+but the imported Qwen implementation has eight calls that still require those
+filters for visual, MTP, reconstructed PLE state, and merged HyperConnection
+weights.
+
+vLLM commit `71670287ec` restores the two optional filters while retaining
+current upstream's tied-embedding alias safety and mapper pipeline. It is a
+load-time compatibility repair only. A combined loader/Qwen/PLE suite passes
+`73 passed, 1 skipped`; prefix and substring filters have direct regression
+tests. Patch artifact `vllm/0008` preserves the delta. Attempt 5 evidence is in
+`data/20260826-tp4-first-load-attempt5.json`. The next action is unchanged
+attempt 6 with only the compatibility repair and source-head pin advanced.
