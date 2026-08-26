@@ -1,0 +1,97 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp4-mtp0-f16-eager-depth-expansion-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Freeze the current-f01e TP4/MTP0/eager/F16 same-topology target-only curve needed before TP4 MTP1-4 depth expansions. TP1 same-depth equality is a conservative comparison caveat, not a TP4-native freeze gate.",
+  "parent_oracle": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1",
+    "exact_8k_sha256": "49ea5caae577dae86bb52378e84a6ad45da051ae403904158751903393121d9e",
+    "terminal_sha256": "779c64418c9cec0654f5107bfc83ccb5263f88d12b9481dd87a5ec301d170a16",
+    "quality_sha256": "2019240440a9ec03bf7904317b4d14a8499631b91183fd06430eedb3eb19d5ca",
+    "output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53",
+    "gate": "The candidate 8K receipt must reproduce the frozen TP4 parent token IDs exactly; mismatch quarantines the arm and cannot replace the prior 8K cell."
+  },
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 4,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0,1,2,3",
+    "mtp_depth": 0,
+    "kv_cache_dtype": "float16",
+    "graph_mode": "off",
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.6,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "graph_environment": {"VLLM_XPU_ENABLE_XPU_GRAPH": "0", "VLLM_XPU_GRAPH": "0"},
+    "oneapi_device_selector": "unset",
+    "speculative_config": null
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [2048, 4096, 8192, 16384, 24576, 32768],
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896,
+    "tp1_cross_topology_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3/eager-f16/exact-depth",
+    "tp1_receipt_sha256": {
+      "2048": "b130cd570fdf72303c79b30c79704956adc73d1507e9909e5f6bf34a0ee20d5e",
+      "4096": "c9dbfb8b9cf8ef23bea5ebe2cb3199c82d678988106e2f619221236e4726dd9e",
+      "8192": "94f7d11862b2e35b057e7a95b3d529b89a4c2857d8886ce93e4b4d85b7385c34",
+      "16384": "69cab2ec785de5615c4a47ca666c68d579dc5d9a163a50c87461e35217d0a847",
+      "24576": "4902ceb508b2828f405f62e7c3b76c323074b03b904d67be2dfce64b159e23c4",
+      "32768": "668b1ae15d8497c7230565a6937514585e6dddcc56e685e1f0e146c902464598"
+    },
+    "comparison_policy": "Record exact token equality/divergence per depth. A mismatch is a caveat only and does not block freezing a quality-clean TP4-native receipt."
+  },
+  "quality_contract": {
+    "helper": "scripts/qwen38-text-quality-suite.py",
+    "baseline": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp1-mtp0-f16-graph-seed0-natural-eos-replay-a-baseline-quality/quality.json",
+    "baseline_sha256": "738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18",
+    "objective_gate": "pass_all plus exactly seven exact, eight repeat, and one long-context usage records, all with cached_tokens == 0",
+    "baseline_mismatch_policy": "Recorded comparison caveat, not a TP4-native freeze rejection."
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "port": 19486,
+    "container": "q38-f01e-ar-tp4-mtp0-f16-depth-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true
+  },
+  "terminal_classification": {
+    "passed-quality-clean-depth-expansion": "Six exact TP4 depths, parent 8K match, objective quality, topology, cache isolation, and cleanup pass; freeze all six same-topology outputs.",
+    "passed-quality-clean-depth-expansion-with-comparison-caveat": "All TP4-native gates pass but one or more TP1 token comparisons or baseline comparisons differ; freeze all six with explicit caveats.",
+    "quarantined-parent-8k-mismatch": "Candidate 8K differs from the frozen TP4 parent; preserve all receipts without replacing the prior cell.",
+    "partial-depth-expansion": "Some exact-depth requests fail; preserve passing and failing per-depth receipts without automatic publication.",
+    "failed": "Infrastructure, identity, topology, quality, cache, or cleanup gate failed; retain evidence."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "protected_decode_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
+    "historical_replacement_allowed": false,
+    "protected_route_replacement_allowed": false,
+    "existing_tp4_8k_replacement_allowed": false,
+    "site_cells_filled_on_pass": 6,
+    "cross_topology_mismatch_is_caveat_not_rejection": true,
+    "same_topology_descendant_oracle_authority_requires_native_pass": true,
+    "descendant_execution_authorized": false
+  },
+  "target_only_contract": {"speculative_config_absent": true, "draft_model_absent": true},
+  "cache_contract": {"filesystem": "ext4", "fresh": true, "rank_namespaces": ["rank_0_0", "rank_1_0", "rank_2_0", "rank_3_0"]}
+}
