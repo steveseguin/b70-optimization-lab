@@ -7,11 +7,21 @@ build_dir="${BUILD_DIR:-}"
 host="${HOST_ADDR:-127.0.0.1}"
 port="${PORT:-18088}"
 gpu="${GPU_INDEX:-0}"
+parallel_slots="${PARALLEL_SLOTS:-1}"
+ctx_size="${CTX_SIZE:-8192}"
+threads="${THREADS:-16}"
+ubatch_size="${UBATCH_SIZE:-512}"
+throughput_mode="${THROUGHPUT_MODE:-0}"
 [[ -n "${model_dir}" && -n "${build_dir}" ]] || { printf 'Set MODEL_DIR and BUILD_DIR.\n' >&2; exit 2; }
 server="${build_dir}/bin/llama-server"
 model="${model_dir}/Qwen3.8-27B-Q8_0.gguf"
 [[ -x "${server}" ]] || { printf 'Missing executable: %s\n' "${server}" >&2; exit 1; }
 [[ "${gpu}" =~ ^[0-9]+$ ]] || { printf 'GPU_INDEX must be numeric.\n' >&2; exit 2; }
+[[ "${parallel_slots}" =~ ^[1-9][0-9]*$ ]] || { printf 'PARALLEL_SLOTS must be positive.\n' >&2; exit 2; }
+[[ "${ctx_size}" =~ ^[1-9][0-9]*$ ]] || { printf 'CTX_SIZE must be positive.\n' >&2; exit 2; }
+[[ "${threads}" =~ ^[1-9][0-9]*$ ]] || { printf 'THREADS must be positive.\n' >&2; exit 2; }
+[[ "${ubatch_size}" =~ ^[1-9][0-9]*$ ]] || { printf 'UBATCH_SIZE must be positive.\n' >&2; exit 2; }
+[[ "${throughput_mode}" == 0 || "${throughput_mode}" == 1 ]] || { printf 'THROUGHPUT_MODE must be 0 or 1.\n' >&2; exit 2; }
 pgrep -x llama-server >/dev/null && { printf 'Another llama-server is running.\n' >&2; exit 1; }
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
 
@@ -48,11 +58,18 @@ export GGML_SYCL_FUSED_CONV_SILU_L2=1
 export GGML_SYCL_FUSE_EXT=31
 export GGML_SYCL_QDEDUP_STATS=1
 export GGML_SYCL_MMQ_Q4K_REORDER=1
+unset GGML_SYCL_WDC GGML_SYCL_WDC_Q4K GGML_SYCL_REORDER_IN_GEMM
+unset GGML_SYCL_FORCE_REORDER GGML_SYCL_FORCE_REORDER_Q4K GGML_SYCL_DISABLE_REORDER_Q6K
+
+server_args=("${server}" --model "${model}" --device SYCL0 --gpu-layers 99
+  --split-mode none --fit off --flash-attn on --batch-size 2048 --ubatch-size "${ubatch_size}"
+  --cache-type-k f16 --cache-type-v f16 --cache-ram 0 --ctx-checkpoints 0
+  --reasoning off --threads "${threads}" --poll 50 --ctx-size "${ctx_size}" --parallel "${parallel_slots}"
+  --metrics --host "${host}" --port "${port}")
+if (( throughput_mode == 1 )); then
+  server_args+=(--cont-batching --no-cache-prompt --slot-prompt-similarity 0)
+fi
 
 exec systemd-run --user --scope --quiet \
   --property=MemoryHigh=11G --property=MemoryMax=13G --property=MemorySwapMax=12G \
-  "${server}" --model "${model}" --device SYCL0 --gpu-layers 99 \
-  --split-mode none --fit off --flash-attn on --batch-size 2048 --ubatch-size 512 \
-  --cache-type-k f16 --cache-type-v f16 --cache-ram 0 --ctx-checkpoints 0 \
-  --reasoning off --threads 16 --poll 50 --ctx-size 8192 --parallel 1 \
-  --metrics --host "${host}" --port "${port}"
+  "${server_args[@]}"

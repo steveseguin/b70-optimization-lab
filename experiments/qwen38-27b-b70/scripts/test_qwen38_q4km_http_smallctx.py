@@ -7,6 +7,8 @@ import unittest
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = Path(__file__).with_name("run-qwen38-q4km-tp1-http-smallctx.sh")
 SUITE = ROOT / "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-suite.json"
+Q8_RUN_SERVER = ROOT / "repro/qwen38-27b-q8-tp1-b70/run-server.sh"
+Q8_THROUGHPUT_SERVER = ROOT / "repro/qwen38-27b-q8-tp1-b70/run-throughput-server.sh"
 
 
 class SmallContextHttpTests(unittest.TestCase):
@@ -51,6 +53,23 @@ class SmallContextHttpTests(unittest.TestCase):
         self.assertEqual(len(prompts), 8)
         self.assertEqual(len({p["id"] for p in prompts}), 8)
         self.assertTrue(all(len(p["prompt"].split()) <= 18 for p in prompts))
+
+    def test_q8_package_has_separate_qualified_throughput_profile(self) -> None:
+        base = Q8_RUN_SERVER.read_text(encoding="utf-8")
+        throughput = Q8_THROUGHPUT_SERVER.read_text(encoding="utf-8")
+        for fragment in (
+            'parallel_slots="${PARALLEL_SLOTS:-1}"',
+            'ctx_size="${CTX_SIZE:-8192}"',
+            "--no-cache-prompt",
+            "--slot-prompt-similarity 0",
+        ):
+            self.assertIn(fragment, base)
+        for fragment in (
+            'PARALLEL_SLOTS="${PARALLEL_SLOTS:-8}"',
+            'CTX_SIZE="${CTX_SIZE:-4096}"',
+            "THROUGHPUT_MODE=1",
+        ):
+            self.assertIn(fragment, throughput)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,25 @@
+{
+  "schema": "neural.download.package-launch-smoke.v1",
+  "date": "2026-08-25",
+  "package": "qwen38-27b-q8-tp1-b70",
+  "launcher": "repro/qwen38-27b-q8-tp1-b70/run-throughput-server.sh",
+  "identity": {
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "backend_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154"
+  },
+  "profile": {
+    "cards": 1,
+    "parallel_slots": 8,
+    "context_tokens_total": 4096,
+    "kv_cache": "f16",
+    "generation": "target-only / MTP0"
+  },
+  "checks": {
+    "direct_and_ordinary_model_hash_match": true,
+    "health_status_ok": true,
+    "completion_prompt": "Reply with exactly: PACKAGE_OK",
+    "completion_text": "PACKAGE_OK",
+    "clean_shutdown": true
+  }
+}

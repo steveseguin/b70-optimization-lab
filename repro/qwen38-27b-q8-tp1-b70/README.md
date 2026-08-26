@@ -11,7 +11,9 @@ decoding. The raw-engine tg128 curve measured `19.662501 tok/s` at depth zero
 and `18.023689 tok/s` at 32K. These are direct `llama-bench` rates, not HTTP or
 realistic-prompt headline rates. The matching service tuple separately passed
 7/7 canaries, 8/8 repeat stability, a 7,617-token needle test, and zero cached
-tokens on all 16 responses.
+tokens on all 16 responses. A separate output-audited HTTP profile uses eight
+active slots and queues up to 64 simultaneous requests, reaching a stable
+`68.555544 tok/s` aggregate at 64 requests.
 
 ## Exact dependencies
 
@@ -83,6 +85,36 @@ Success prints `service_quality_passed=true` and
 `cached_tokens_all_zero=true`. Stop the foreground server with `Ctrl-C` and
 confirm `pgrep -x llama-server` returns no process.
 
+For aggregate serving, launch the exact qualified eight-slot/4K-total-context
+profile instead. Requests above eight wait in the server queue; they do not
+allocate additional GPU slots.
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-q8 \
+BUILD_DIR=/path/to/new/llama.cpp-qwen38-q8-tp1/build-sycl-aot-bmg-g31 \
+GPU_INDEX=0 repro/qwen38-27b-q8-tp1-b70/run-throughput-server.sh
+```
+
+The measured 1/2/4/8/16/32/64-request aggregate curve is in the
+[qualified result](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp1-http-p8-queue-concurrency-r5-result.json).
+All points are medians of two fresh servers with complete raw token IDs and
+zero prompt-cache reuse. The p64/32K and p32/16K F16-KV profiles are retained
+allocation failures; p16/8K fits but loses aggregate throughput above eight
+users. The queue profile does not qualify queued TTFT or per-request latency.
+
+To reproduce one exact output-audited curve attempt, stop any running server
+and invoke the retained fail-closed wrapper. It verifies model and binary
+hashes, acquires the GPU locks, starts a fresh p8 service, sends the frozen
+1/2/4/8/16/32/64-request suite, and rejects incomplete, cached, or cross-task
+output. Use a new `ATTEMPT` value rather than overwriting evidence.
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-q8 \
+BUILD_DIR=/path/to/new/llama.cpp-qwen38-q8-tp1/build-sycl-aot-bmg-g31 \
+OUT_DIR=/path/to/results ATTEMPT=1 PORT=18088 \
+  experiments/qwen38-27b-b70/scripts/run-qwen38-q8-tp1-http-p8-queue-concurrency-r5.sh
+```
+
 ## Reproduce the measured context curve
 
 Run this with no server active. It performs 5 repetitions for pp2048 and tg128
@@ -97,4 +129,4 @@ OUT=/path/to/depth.json repro/qwen38-27b-q8-tp1-b70/bench-depth.sh
 Measured evidence: [depth result](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q8weights-f16-tp1-local-r2-result.md)
 and [service-quality result](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q8weights-f16-tp1-service-quality-r1-result.md).
 Still open: clean-host platform/build replay, a conventional realistic-prompt
-HTTP speed capture, TTFT by context, and an output-qualified concurrency curve.
+HTTP speed capture, TTFT by context, and queued per-request latency.

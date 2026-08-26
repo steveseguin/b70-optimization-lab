@@ -24,3 +24,23 @@ weak spot. The sealed r4 follow-up keeps eight active slots and 4K total
 context while admitting 1–64 simultaneous HTTP requests to the server queue.
 Its pilot rates are excluded; if output gates pass, compact 64-row digests and
 two new publication attempts are required.
+
+## R5 publication result
+
+R5 passed both fresh-server attempts and every output/stability gate. The
+qualified queued-p8 aggregate curve is:
+
+| simultaneous HTTP requests | median aggregate tok/s | relative range |
+| ---: | ---: | ---: |
+| 1 | 18.071 | 0.15% |
+| 2 | 29.148 | 0.06% |
+| 4 | 47.518 | 0.95% |
+| 8 | 67.073 | 0.53% |
+| 16 | 68.128 | 0.20% |
+| 32 | 68.311 | 0.14% |
+| 64 | **68.556** | 0.22% |
+
+At 16 simultaneous requests, queued p8 improves over preallocated p16 by
+**56.24%** (`68.128 / 43.603 - 1`). Aggregate remains essentially flat from
+16 through 64 requests. The tradeoff is queueing latency: this campaign
+qualifies aggregate batch-wall throughput, not TTFT or per-request latency.

@@ -64,6 +64,7 @@ class FamilyCoverageTest(unittest.TestCase):
 
         self.assertIn(">216.5 raw&dagger;</a>", index_html)
         self.assertIn(">83.8 HTTP&dagger;</a>", index_html)
+        self.assertIn(">68.6 HTTP&dagger;</a>", index_html)
         self.assertIn(">165.4 HTTP&dagger;</a>", index_html)
         self.assertIn("Multi-user greedy output is batch-shape-dependent", index_html)
 

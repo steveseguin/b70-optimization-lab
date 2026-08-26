@@ -12,9 +12,9 @@ tokens on all 16 requests. The raw-engine rate is not relabeled as HTTP or
 realistic-prompt speed.
 
 > **Status: candidate.** The model, source patches, build, launch, depth
-> benchmark, and quality checks are closed in this repository. A clean Ubuntu
-> host installation/replay, beginner recovery path, realistic HTTP speed, and
-> qualified concurrency curve remain open.
+> benchmark, quality checks, and output-audited HTTP concurrency are closed in
+> this repository. A clean Ubuntu host installation/replay, beginner recovery
+> path, and realistic-prompt HTTP TTFT/depth remain open.
 
 Use the [complete reproduction guide](../../repro/qwen38-27b-q8-tp1-b70/README.md).
 It includes the pinned download, direct-read verification, specific patch
@@ -35,6 +35,35 @@ Those are measured endpoint comparisons, not an interpolated curve. See the
 [full evidence](../../experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json)
 and [quality qualification](../../experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-service-quality-20260825-r1/qualification.json).
 
+## Measured queued HTTP throughput
+
+The qualified throughput profile keeps **eight active inference slots** and
+4,096 total F16-KV context tokens while the server queues incoming requests
+above eight. This avoids the measured p16 batch-shape collapse without
+pretending that 64 full GPU slots fit.
+
+| simultaneous HTTP requests | aggregate tok/s | batch-wall tok/s per user |
+| ---: | ---: | ---: |
+| 1 | 18.071 | 18.071 |
+| 2 | 29.148 | 14.574 |
+| 4 | 47.518 | 11.879 |
+| 8 | 67.073 | 8.384 |
+| 16 | 68.128 | 4.258 |
+| 32 | 68.311 | 2.135 |
+| 64 | **68.556** | 1.071 |
+
+Every marker is the median of two preregistered fresh-server attempts; the
+worst relative range was 0.96%. All responses returned 128 raw token IDs,
+cached-token counts stayed zero, and no response collided with another base
+task's oracle. Greedy output is batch-shape-dependent. This is aggregate batch
+wall throughput, not queued TTFT or per-request latency, and no point is
+interpolated or extrapolated. The exact p64/32K and p32/16K profiles failed
+device allocation. P16/8K fits, but measured only 43.603 tok/s at 16 users;
+queued p8 improves that point by 56.24%.
+
+Evidence: [qualified aggregate](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp1-http-p8-queue-concurrency-r5-result.json)
+and [fit/optimization note](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q8-tp1-http-p16-qualified-and-p8-queue-prereg.md).
+
 ## Short path
 
 ```bash
@@ -50,6 +79,14 @@ BUILD_DIR=/path/to/new/llama.cpp-qwen38-q8-tp1/build-sycl-aot-bmg-g31 \
 MODEL_DIR=/path/to/qwen3.8-27b-q8 \
 BUILD_DIR=/path/to/new/llama.cpp-qwen38-q8-tp1/build-sycl-aot-bmg-g31 \
   repro/qwen38-27b-q8-tp1-b70/run-server.sh
+```
+
+For the measured aggregate-throughput profile, use the separate launcher:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-q8 \
+BUILD_DIR=/path/to/new/llama.cpp-qwen38-q8-tp1/build-sycl-aot-bmg-g31 \
+  repro/qwen38-27b-q8-tp1-b70/run-throughput-server.sh
 ```
 
 The guide's `quality.sh` is the promotion gate. The separate

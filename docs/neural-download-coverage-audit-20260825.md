@@ -54,8 +54,12 @@ Qwen3.8 Q8 TP1 now has a separately qualified F16-KV HTTP curve. The exact
 16 slots at 8K total context is the largest measured fit. Two fresh-server
 attempts passed the output-isolation and stability gates at 1/2/4/8/16 users.
 Aggregate decode peaks at 66.329901 tok/s at eight users and falls to
-43.603476 tok/s at 16, motivating a preregistered eight-active-slot queued
-HTTP follow-up. The capacity failures are not displayed as zero throughput.
+43.603476 tok/s at 16 on the preallocated p16 baseline. The qualified
+eight-active-slot queued profile removes that collapse: its median aggregate
+is 68.127528 tok/s at 16 and 68.555544 tok/s at 64 simultaneous requests, a
+56.24% gain at 16. Its worst pointwise two-run range is 0.96%. This is
+aggregate batch-wall throughput; queued TTFT and per-request latency remain
+unmeasured. The capacity failures are not displayed as zero throughput.
 
 ## Generation and topology comparison policy
 
