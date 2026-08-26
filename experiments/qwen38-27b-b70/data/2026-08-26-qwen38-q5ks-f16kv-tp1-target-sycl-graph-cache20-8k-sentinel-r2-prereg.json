@@ -1,0 +1,68 @@
+{
+  "schema": "neural.download.qwen38-q5ks-f16kv-target-sycl-graph-cache20-8k-sentinel-overlay.v1",
+  "campaign_id": "qwen38-q5ks-f16kv-tp1-target-sycl-graph-cache20-8k-sentinel-20260826-r2",
+  "state": "preregistered-not-launched",
+  "purpose": "Test the smallest evidence-derived graph-cache capacity that can retain the exact 8K server warmup/prefill signatures plus the expected recurrent decode signatures, without changing source, model, workload, or protected graph-off evidence.",
+  "sealed_base_packet": {
+    "preregistration": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q5ks-f16kv-tp1-target-sycl-graph-8k-sentinel-r1-prereg.json", "sha256": "323702024ea514610127a046f4900dc0091c6def5be691539ae0e8c8bfc4f72e"},
+    "runner": {"path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-q5ks-f16kv-tp1-target-sycl-graph-8k-sentinel-r1.py", "sha256": "c20e16c4e88f1bc0884c3ad82796fc0d415333af50e0aa638cccb6bfe1eeb40d"},
+    "validator": {"path": "experiments/qwen38-27b-b70/scripts/validate-20260826-qwen38-q5ks-f16kv-tp1-target-sycl-graph-8k-sentinel-r1.py", "sha256": "7f5d30bd71fe85102695bdd4e284c8ba3a5354e3f36a8de9121dfe00c868e11e"}
+  },
+  "failed_r1_evidence": {
+    "result": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q5ks-f16kv-tp1-target-sycl-graph-8k-sentinel-r1-result.json", "sha256": "1c38131aa042b46549a3fab2648264e5f91da973a6c680487fa30b6681e23c22"},
+    "candidate_server_log": {"path": "/mnt/fast-ai/bench-results/qwen38-q5ks-f16kv-tp1-target-sycl-graph-8k-sentinel-20260826-r1/candidate-graph-on-cache8/server.log", "sha256": "6e3f2f8d55640a1cf277a7377ae16befd3ae63b5e28206ae8a10e9f581350ed8"},
+    "observed": {"requested": 146, "cache_entries": 8, "cache_limit": 8, "cache_hit": 0, "cache_miss": 146, "cache_full": 138, "direct_replay": 0, "recorded": 8, "created": 8, "replayed": 8},
+    "timing_structure": {"completion_tokens": 128, "non_decode_graph_requests": 18, "derivation": "146 total graph requests minus 128 generated tokens equals 18 warmup/prefill requests; cache 8 was therefore full before the recurrent decode phase could be retained."},
+    "must_remain_immutable": true
+  },
+  "mechanism_delta": {
+    "classification": "bounded evidence-derived cache-capacity retry",
+    "candidate_environment": {"GGML_SYCL_ENABLE_GRAPH": "1", "GGML_SYCL_GRAPH_CACHE_SIZE": "20"},
+    "cache_size": {"from": 8, "to": 20},
+    "capacity_derivation": "18 observed non-decode graph requests plus two recurrent decode shapes established by the qualified same-architecture nonzero-depth Qwen3.6 graph evidence.",
+    "source_change": false,
+    "binary_change": false,
+    "maximum_source_supported_cache_size": 64,
+    "no_automatic_capacity_escalation": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-q5ks-f16kv-tp1-target-sycl-graph-cache20-8k-sentinel-20260826-r2",
+    "exact_ack": "RUN qwen38-q5ks-f16kv-tp1-target-sycl-graph-cache20-8k-sentinel-20260826-r2",
+    "default_is_inert": true,
+    "requires_clean_pushed_main": true,
+    "create_only": true,
+    "fresh_server_lifetimes": 2
+  },
+  "acceptance": {
+    "exact_output_token_text_usage_and_returned_prompt_parity": true,
+    "cached_tokens_zero_both_arms": true,
+    "control_graph_counters_zero": true,
+    "candidate_cache_limit": 20,
+    "candidate_requested_expected": 146,
+    "candidate_cache_full": 0,
+    "candidate_positive_cache_hit_and_direct_replay": true,
+    "candidate_minimum_cache_hit_and_direct_replay": 120,
+    "candidate_replayed_equals_requested": true,
+    "candidate_strict_counter_conservation": true,
+    "candidate_compatibility_rejected_device_unsupported_updated_recreated_zero": true,
+    "cleanup_required": true,
+    "speed_floor": null
+  },
+  "frozen_interpretation": {
+    "pass": "The cache-8 failure was capacity starvation in this one-lifetime ordering; cache 20 retains and directly replays the recurrent decode graph while preserving exact output parity. A separate reviewed full-curve preregistration is then allowed.",
+    "fail_cache_full": "Cache 20 is still insufficient. Stop; do not silently raise capacity. Preserve both negative sentinels and audit phase-aware eviction or cache partitioning.",
+    "fail_no_hits": "Capacity alone does not explain the signature churn. Stop and instrument signature-field deltas before changing source equality semantics.",
+    "fail_parity_or_runtime": "Reject graph use and preserve graph-off as the qualified path.",
+    "site_cells_authorized": 0,
+    "full_graph_curve_authorized": false,
+    "full_curve_preregistration_authorized_only_on_pass": true,
+    "quality_battery_authorized": false,
+    "mtp_or_speculative_cells_authorized": 0,
+    "tp2_or_tp4_cells_authorized": 0,
+    "prefill_cells_authorized": 0,
+    "headline_or_protected_replacement_authorized": false,
+    "localmaxxing_submission_authorized": false,
+    "historical_featured_speeds_are_immutable": true,
+    "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]
+  }
+}
