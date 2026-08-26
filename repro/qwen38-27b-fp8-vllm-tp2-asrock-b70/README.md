@@ -56,6 +56,32 @@ The image selected `XPUFp8BlockScaledMMKernel`. It used Qwen Triton kernels
 for the Qwen3.8 GDN path; that fallback is the principal source-level
 optimization opportunity.
 
+## Exact 2K–32K service profile
+
+A separate preregistered one-slot service raised the configured capacity to
+33,024 tokens and measured six exact prompt depths. It retained the same
+model, image, TP2 topology, FP16 KV, target-only/MTP0 policy, and size-one
+PIECEWISE decode graph; only the service capacity, active prompt depth, one
+slot, and 4,096-token chunked-prefill batch identify this operating profile.
+
+| Exact prompt tokens | Decode tok/s | TTFT ms | Effective prompt proxy tok/s |
+| ---: | ---: | ---: | ---: |
+| 2,048 | 21.835160 | 1,385.137 | 1,478.554 |
+| 4,096 | 21.673278 | 2,605.858 | 1,571.843 |
+| 8,192 | 21.270146 | 5,191.968 | 1,577.822 |
+| 16,384 | 20.927452 | 10,533.231 | 1,555.458 |
+| 24,576 | 20.650133 | 16,139.140 | 1,522.758 |
+| 32,768 | 20.389854 | 21,872.674 | 1,498.125 |
+
+All six receipts passed exact prompt usage, 128 returned token IDs, cache-zero,
+no-truncation, and no-context-shift gates. This is one fresh-server sample per
+point using a grade-C repeated-token shape fixture; no point is interpolated or
+extrapolated. The effective prompt proxy is `exact prompt tokens / measured
+HTTP TTFT seconds`, including scheduling and first-token work. It is not a
+server-only or kernel-only prefill rate. See the
+[`structured evidence`](../../experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json)
+and [`result note`](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-depth-r1-result.md).
+
 ## Dependency closure
 
 | Component | Status and exact dependency |
@@ -128,6 +154,21 @@ After `/health` succeeds, benchmark from another terminal:
 OUT=/path/to/result.json \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh
 ```
+
+To reproduce the distinct exact-depth profile, use:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/vllm-depth-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-depth-server.sh
+
+OUT_DIR=/path/to/depth-result \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-depth.sh
+```
+
+The wrapper fixes the measured 33,024-token/one-slot/4,096-prefill profile.
+Changing those values creates another operating profile and must not be
+compared as though it were the same measurement.
 
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and
 uses `ZE_AFFINITY_MASK=0,1`. Verify device enumeration before copying that

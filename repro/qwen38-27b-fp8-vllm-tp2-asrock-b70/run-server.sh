@@ -7,6 +7,12 @@ cache_dir="${VLLM_CACHE_DIR:-/mnt/fast-ai/vllm-cache/q38-official-fp8-f01e/vllm}
 container="${CONTAINER_NAME:-qwen38-fp8-tp2}"
 port="${PORT:-18087}"
 max_num_seqs="${MAX_NUM_SEQS:-4}"
+max_model_len="${MAX_MODEL_LEN:-4096}"
+max_num_batched_tokens="${MAX_NUM_BATCHED_TOKENS:-256}"
+
+[[ "${max_num_seqs}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_NUM_SEQS must be positive\n' >&2; exit 1; }
+[[ "${max_model_len}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_MODEL_LEN must be positive\n' >&2; exit 1; }
+[[ "${max_num_batched_tokens}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_NUM_BATCHED_TOKENS must be positive\n' >&2; exit 1; }
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
@@ -46,6 +52,8 @@ exec docker run --rm --name "${container}" \
     -e CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD=4294967296 \
     -e CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD=4294967296 \
     -e REPRO_MAX_NUM_SEQS="${max_num_seqs}" \
+    -e REPRO_MAX_MODEL_LEN="${max_model_len}" \
+    -e REPRO_MAX_BATCHED_TOKENS="${max_num_batched_tokens}" \
     --entrypoint bash \
     "${image}" -lc \
-    'exec vllm serve /model --served-model-name qwen38-fp8 --host 0.0.0.0 --port 8000 --tensor-parallel-size 2 --dtype float16 --quantization fp8 --kv-cache-dtype auto --gpu-memory-utilization 0.80 --max-model-len 4096 --block-size 64 --max-num-seqs "${REPRO_MAX_NUM_SEQS}" --max-num-batched-tokens 256 --no-enable-prefix-caching --enable-prompt-tokens-details --language-model-only --compilation-config '\''{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'\'''
+    'exec vllm serve /model --served-model-name qwen38-fp8 --host 0.0.0.0 --port 8000 --tensor-parallel-size 2 --dtype float16 --quantization fp8 --kv-cache-dtype auto --gpu-memory-utilization 0.80 --max-model-len "${REPRO_MAX_MODEL_LEN}" --block-size 64 --max-num-seqs "${REPRO_MAX_NUM_SEQS}" --max-num-batched-tokens "${REPRO_MAX_BATCHED_TOKENS}" --no-enable-prefix-caching --enable-prompt-tokens-details --language-model-only --compilation-config '\''{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'\'''

@@ -75,12 +75,14 @@ Main entries:
 - [archived contributed GPTQ INT4/MTP route](../community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 - [AutoRound INT4/MTP3 lane and replay gates](../repro/qwen38-27b-autoround-int4-b70/README.md)
 
-Status: active as of 2026-08-16. The current lab record is target-only
+Status: active as of 2026-08-26. The current lab record is target-only
 Q4_K_M TP2 at `49.717503 tok/s` conventional (`50.219700` historical helper),
 with a device-local Q4_K gate/up/SwiGLU fusion, 12/12 complete-output hash
 parity, and all cache counters zero. Q8_0 TP2 reached `36.772932 tok/s`
-conventional. The official FP8 vLLM artifact loaded but did not complete engine
-initialization under the bounded local profile.
+conventional. The official FP8 vLLM artifact now has a qualified TP2 size-one
+graph baseline at `21.708532 tok/s` and an exact one-slot 2K→32K HTTP profile;
+the 32K point is `20.389854 tok/s` with `21.873 s` TTFT. It remains slower than
+GGUF and its TP2 graph path is explicitly experimental.
 
 The strict-greedy distributed-argmax candidate was token-for-token exact
 across a position-balanced 48-request replay, but it moved the primary metric

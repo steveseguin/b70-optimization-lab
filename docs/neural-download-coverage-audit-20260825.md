@@ -11,8 +11,8 @@ batch is never substituted for an unmeasured HTTP deployment.
 | package-level evidence | packages | coverage |
 | --- | ---: | ---: |
 | headline single-user measurement | 14 / 14 | 100% |
-| directly measured decode at approximately 32K or 32K | 8 / 14 | 57% |
-| HTTP/service TTFT profile | 2 / 14 | 14% |
+| directly measured decode at approximately 32K or 32K | 9 / 14 | 64% |
+| HTTP/service TTFT profile | 3 / 14 | 21% |
 | output-audited HTTP concurrency profile | 3 / 14 | 21% |
 | sequential-output-invariant HTTP concurrency profile | 0 / 14 | 0% |
 | clean-host installation and replay | 0 / 14 | 0% |
@@ -70,6 +70,13 @@ fresh servers and is retained rather than smoothed; the worst pointwise range
 was 1.455%. Every curve is target-only/MTP0, F16 KV, and separately labeled
 from the historical reasoning-enabled headline.
 
+Qwen3.8 official FP8 TP2 now closes its exact one-slot service depth gap. The
+32K point measures 20.389854 tok/s decode with 21.873 s TTFT; all six 2K→32K
+requests were exact-count, cache-zero, and returned 128 token IDs. Its prompt
+throughput profile is explicitly the derived `prompt tokens / HTTP TTFT`
+effective rate, including scheduling and first-token work—not a server-only
+kernel prefill claim. Qualified concurrency remains missing.
+
 ## Generation and topology comparison policy
 
 - Every public speed must state its generation mode. `Target-only / MTP0`
@@ -95,7 +102,7 @@ from the historical reasoning-enabled headline.
 | 2 | Ornith 1.5 35B Q4_K_M TP1 | realistic HTTP TTFT/depth and qualified concurrency | Its context and raw 1→32 engine curves are complete; the service-shaped workload has not yet been run. |
 | 3 | Qwen3.8 Q8 TP1, LFM2.5, Nemotron 3.5, Ornith 9B | realistic HTTP TTFT/depth; qualified concurrency for the three small/stock packages | Qwen Q8 now has output-audited HTTP concurrency but not realistic-prompt TTFT/depth. The other packages were first brought in as stock one-card baselines and depth-screened with `llama-bench`; package work outpaced service profiling. |
 | 4 | Laguna S, Muse-Glimmer, MiniMax M2.7 | decode/prefill/TTFT context curves and qualified concurrency | These are four-card or historical specialist stacks with much higher setup cost; only their promoted workloads were preserved. |
-| 5 | Qwen3.8 FP8 TP2 | 32K service/depth profiles and qualified concurrency | Exact two-card single-user baseline exists, but neither Q4_K_M nor Q8_0 can populate the official-FP8/vLLM tuple. Q4_K_M and Q8_0 TP2 are now closed for these service profiles. |
+| 5 | Qwen3.8 FP8 TP2 | qualified concurrency and queued per-request latency | Exact 2K→32K decode/TTFT is now measured on the official-FP8 tuple. Its service capacity and queue behavior remain unmeasured. |
 | 6 | all 14 packages | clean-host Intel/oneAPI replay; beginner recovery outside Qwen Q4 TP1 | Every current result was reconstructed or replayed on an established lab host. Qwen Q4 TP1 now has a failure-oriented beginner recovery checklist plus a primary-source clean-host runbook and inventory receipt script. This host has overlapping oneAPI 2025.3/2026.0/2026.1 packages, so it correctly remains uncertified; only a fresh supported OS can close the badge. |
 
 ## Optimization queue
@@ -111,10 +118,11 @@ Measurements, not model popularity alone, set this order:
 2. **Ornith 35B service batching.** Single-user decode is already strong at
    131.460231 tok/s, but 32-way raw aggregate is only 216.513077 tok/s. This is
    the clearest practical batching/scheduler and batched-MoE kernel opportunity.
-3. **Qwen TP2 FP8 context and service behavior.** Measure first. Q4_K_M and
-   Q8_0 now have exact service-depth and output-audited concurrency curves;
-   official FP8/vLLM still does not reveal whether its weak point is
-   long-context attention, collectives, scheduling, or weight traffic.
+3. **Qwen TP2 FP8 concurrency and service behavior.** Exact context behavior
+   is now measured: decode falls only from 21.84 tok/s at 2K to 20.39 at 32K,
+   while the effective prompt proxy stays near 1.5K tok/s. The next measurement
+   is output-qualified concurrency, followed by matched scheduling or
+   collective work if aggregate scaling is poor.
 4. **Laguna/Muse/MiniMax context profiles.** These are expensive four-card
    lanes. Fill the missing service curves before changing kernels so a later
    improvement has a matched baseline.
@@ -128,8 +136,8 @@ Measurements, not model popularity alone, set this order:
 The locally staged, exact artifacts support more Qwen work without another
 download: Qwen3.8 Q4_K_M/Q8_0/FP8/INT4 plus its MTP drafts, and Qwen3.6
 Q8_0/AutoRound INT4/DFlash plus its draft artifacts. The next matched service
-tuple after the now-closed Q8 TP1/TP2 profiles is official FP8 TP2, followed by the remaining
-Qwen3.6 depth/topology cells where a compatible runtime exists.
+tuple is official FP8 TP2 concurrency, followed by the remaining Qwen3.6
+depth/topology cells where a compatible runtime exists.
 
 MiniMax M2.7 artifacts are checksum-verified in USB cold storage because its
 promoted deployment needs four B70s, so this host cannot honestly fill that

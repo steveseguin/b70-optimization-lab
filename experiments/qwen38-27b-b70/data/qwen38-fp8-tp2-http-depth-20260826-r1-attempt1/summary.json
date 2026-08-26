@@ -1,0 +1,70 @@
+{
+  "campaign_id": "qwen38-fp8-tp2-http-depth-20260826-r1",
+  "classification": "qualified-exact-depth",
+  "points": [
+    {
+      "active_context_tokens": 2048,
+      "cached_tokens_zero": true,
+      "decode_tok_s": 21.83515985732775,
+      "effective_prompt_throughput_proxy_formula": "active_context_tokens / measured_ttft_seconds",
+      "effective_prompt_throughput_proxy_tok_s": 1478.553658563211,
+      "output_token_ids_sha256": "f504c0a691e466943c82b270087c30b09e5b39b11af600878cc3ddcc0f913105",
+      "status": "passed",
+      "ttft_ms": 1385.137420031242
+    },
+    {
+      "active_context_tokens": 4096,
+      "cached_tokens_zero": true,
+      "decode_tok_s": 21.67327818299236,
+      "effective_prompt_throughput_proxy_formula": "active_context_tokens / measured_ttft_seconds",
+      "effective_prompt_throughput_proxy_tok_s": 1571.8428664639384,
+      "output_token_ids_sha256": "0f078254be0567e42025404c942fead803aec5e93225809777b7c1149be42a3d",
+      "status": "passed",
+      "ttft_ms": 2605.8584400452673
+    },
+    {
+      "active_context_tokens": 8192,
+      "cached_tokens_zero": true,
+      "decode_tok_s": 21.270145761584512,
+      "effective_prompt_throughput_proxy_formula": "active_context_tokens / measured_ttft_seconds",
+      "effective_prompt_throughput_proxy_tok_s": 1577.8218142602484,
+      "output_token_ids_sha256": "e6fa5a350fef6d977e98c576716f400854d02e542f6315b2e4da35fe345f0f51",
+      "status": "passed",
+      "ttft_ms": 5191.96776591707
+    },
+    {
+      "active_context_tokens": 16384,
+      "cached_tokens_zero": true,
+      "decode_tok_s": 20.927452277370538,
+      "effective_prompt_throughput_proxy_formula": "active_context_tokens / measured_ttft_seconds",
+      "effective_prompt_throughput_proxy_tok_s": 1555.4581123342782,
+      "output_token_ids_sha256": "bbcad44e1415ae44a1a285618c47ee9d38000b71093ead24464180a86a2f38a1",
+      "status": "passed",
+      "ttft_ms": 10533.231251989491
+    },
+    {
+      "active_context_tokens": 24576,
+      "cached_tokens_zero": true,
+      "decode_tok_s": 20.650132687274663,
+      "effective_prompt_throughput_proxy_formula": "active_context_tokens / measured_ttft_seconds",
+      "effective_prompt_throughput_proxy_tok_s": 1522.757683089734,
+      "output_token_ids_sha256": "a8c694cad45bed222385b17937022a2b3463994776f528775482dbd147c41928",
+      "status": "passed",
+      "ttft_ms": 16139.140372048132
+    },
+    {
+      "active_context_tokens": 32768,
+      "cached_tokens_zero": true,
+      "decode_tok_s": 20.38985363507897,
+      "effective_prompt_throughput_proxy_formula": "active_context_tokens / measured_ttft_seconds",
+      "effective_prompt_throughput_proxy_tok_s": 1498.1249964391839,
+      "output_token_ids_sha256": "a19557e76af679995d75f7b64fd8cddb231f842d79a37d6a1b585efd478a852f",
+      "status": "passed",
+      "ttft_ms": 21872.674228041433
+    }
+  ],
+  "proxy_boundary": "Effective prompt throughput is exact prompt tokens divided by observed HTTP TTFT. It includes scheduling, chunked prefill, and first-token work; it is not a server-only kernel prefill rate.",
+  "schema": "neural.download.qwen38-fp8-vllm-http-depth-result.v1",
+  "tuple": "Qwen3.8-27B official FP8 TP2; FP16 KV; target-only/MTP0; PIECEWISE size-one graph; 33,024-token capacity; one service slot",
+  "workload_boundary": "Grade-C exact repeated-token context fixture; every point measured; no interpolation or extrapolation; not natural prose."
+}

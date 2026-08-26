@@ -71,16 +71,74 @@
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-depth-server.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-depth.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
     "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
-    "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json"
+    "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-depth-r1-result.md"
+  ],
+  "performance_profiles": [
+    {
+      "id": "http-decode-vs-active-context",
+      "label": "Official FP8 TP2 HTTP decode over exact active context",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Exact active prompt tokens",
+      "scope": "One-slot vLLM HTTP completions on two B70s with official FP8 weights, FP16 KV, target-only/MTP0, 33,024-token capacity, cache disabled, and 128 returned token IDs. One fresh-server sample per measured point. The fixture is grade-C repeated-token shape evidence, not natural prose. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json",
+      "points": [
+        {"context_tokens": 2048, "value": 21.83515985732775, "samples": 1},
+        {"context_tokens": 4096, "value": 21.67327818299236, "samples": 1},
+        {"context_tokens": 8192, "value": 21.270145761584512, "samples": 1},
+        {"context_tokens": 16384, "value": 20.927452277370538, "samples": 1},
+        {"context_tokens": 24576, "value": 20.650132687274663, "samples": 1},
+        {"context_tokens": 32768, "value": 20.38985363507897, "samples": 1}
+      ]
+    },
+    {
+      "id": "http-effective-prompt-proxy-vs-active-context",
+      "label": "Effective prompt throughput (prompt tokens divided by HTTP TTFT)",
+      "metric": "prefill",
+      "unit": "tok/s",
+      "x_label": "Exact submitted prompt tokens",
+      "scope": "Derived from each exact measured request as submitted prompt tokens divided by HTTP TTFT seconds. It includes scheduling, chunked prefill, and first-token work and is not a server-only or kernel-only prefill rate. The grade-C fixture is repeated-token shape evidence. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json",
+      "points": [
+        {"context_tokens": 2048, "value": 1478.553658563211, "samples": 1},
+        {"context_tokens": 4096, "value": 1571.8428664639384, "samples": 1},
+        {"context_tokens": 8192, "value": 1577.8218142602484, "samples": 1},
+        {"context_tokens": 16384, "value": 1555.4581123342782, "samples": 1},
+        {"context_tokens": 24576, "value": 1522.757683089734, "samples": 1},
+        {"context_tokens": 32768, "value": 1498.1249964391839, "samples": 1}
+      ]
+    },
+    {
+      "id": "http-ttft-vs-active-context",
+      "label": "Official FP8 TP2 HTTP TTFT over exact active context",
+      "metric": "ttft",
+      "unit": "ms",
+      "x_label": "Exact active prompt tokens",
+      "scope": "Direct HTTP TTFT from the same six exact-token, cache-zero, one-slot receipts. The fixture is grade-C repeated-token shape evidence, not natural prose. One fresh-server sample per point; no interpolation or extrapolation.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json",
+      "points": [
+        {"context_tokens": 2048, "value": 1385.137420031242, "samples": 1},
+        {"context_tokens": 4096, "value": 2605.8584400452673, "samples": 1},
+        {"context_tokens": 8192, "value": 5191.96776591707, "samples": 1},
+        {"context_tokens": 16384, "value": 10533.231251989491, "samples": 1},
+        {"context_tokens": 24576, "value": 16139.140372048132, "samples": 1},
+        {"context_tokens": 32768, "value": 21872.674228041433, "samples": 1}
+      ]
+    }
   ],
   "missing": [
     "tested clean-host Intel driver and Docker installation",
     "clean-host endpoint replay",
     "beginner recovery flow",
-    "decode, prefill, and TTFT context sweep"
+    "natural-prompt HTTP speed and TTFT context sweep",
+    "output-qualified HTTP concurrency and queued per-request latency"
   ]
 }

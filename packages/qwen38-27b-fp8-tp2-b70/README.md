@@ -3,7 +3,9 @@
 This is the first distribution-package front door. It uses Qwen's official
 FP8 model and a digest-pinned vLLM XPU container on two Intel Arc Pro B70
 32 GiB cards. The lab reproduction reached `21.708532 tok/s` decode and passed
-the recorded semantic, repeat, and long-context gates.
+the recorded semantic, repeat, and long-context gates. A separately measured
+33,024-token service profile reaches `20.389854 tok/s` decode at an exact 32K
+prompt with `21.873 s` TTFT.
 
 > **Status: candidate, not a beginner install guide.** The exact model,
 > container, configuration, commands, and evidence are present. A clean Ubuntu
@@ -93,6 +95,24 @@ OUT=/path/to/result.json \
 Read the reproduction guide before comparing results: its prompt shape,
 quality boundary, zero-cache requirement, and experimental TP2 graph warning
 are part of the result identity.
+
+For the measured 2K through 32K operating profile, launch the distinct
+one-slot service and run its exact-token sweep:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/vllm-depth-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-depth-server.sh
+
+OUT_DIR=/path/to/depth-result \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-depth.sh
+```
+
+This profile is target-only/MTP0 with FP16 KV, one service slot, 33,024-token
+capacity, and 4,096-token chunked-prefill batches. Its repeated-token fixture
+is shape evidence, not natural-prose latency evidence. The published prompt
+rate is explicitly `prompt tokens / HTTP TTFT`; it includes scheduling and
+first-token work and is not a kernel-only prefill rate.
 
 ## 5. Stop and recover
 

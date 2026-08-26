@@ -924,6 +924,15 @@ than GGUF Q8 and remains experimental because vLLM officially limits XPU Graph
 support to single GPU; it is the source-level GDN/collective control, not the
 promoted fastest service.
 
+The separately preregistered 33,024-token one-slot service profile then passed
+all six exact 2K/4K/8K/16K/24K/32K cells. Decode measured `21.835160 / 21.673278
+/ 21.270146 / 20.927452 / 20.650133 / 20.389854 tok/s`; TTFT measured `1.385 /
+2.606 / 5.192 / 10.533 / 16.139 / 21.873 s`. Every receipt was cache-zero and
+returned 128 token IDs. The repeated-token fixture is grade-C shape evidence,
+not natural prose, and the disclosed prompt-throughput proxy includes HTTP
+scheduling and first-token work. This closes the exact 32K/decode/TTFT gap for
+the official-FP8 TP2 tuple; qualified concurrency remains next.
+
 Resume and evidence:
 
 - [Qwen3.8 model board](README.md#qwen38-27b-model-board)
