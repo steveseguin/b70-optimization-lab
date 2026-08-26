@@ -1,0 +1,224 @@
+{
+  "schema": "neural.download.qwen38-q4km-f16kv-target-sycl-graph-cache20-8k-offline-recovery.v1",
+  "campaign_id": "qwen38-q4km-f16kv-tp1-target-sycl-graph-8k-sentinel-20260826-r1",
+  "classification": "recovered-valid-mechanism-sentinel-original-procedural-failure-preserved",
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-q4km-f16kv-tp1-target-sycl-graph-8k-sentinel-20260826-r1",
+  "original_closeout": {
+    "control_status": "completed-awaiting-validation",
+    "candidate_status": "failed-preserve",
+    "candidate_error": "GateError: server graph mechanism evidence failed",
+    "terminal_receipt_written": false,
+    "graph_evidence_written": false,
+    "cause": "The historical Q4_K_M runner delegates execution to the Q5 base runner, which calls GRAPH.IMPL.F16.graph_evidence after generation and cleanup. That inherited helper requires cache_limit == 8. The raw candidate correctly reported cache_limit == 20, so the report parser rejected a passing cache20 mechanism result before a terminal receipt could be written.",
+    "performance_or_quality_failure": false,
+    "gpu_rerun_required": false,
+    "original_status_and_runner_preserved": true
+  },
+  "tracked_inputs": {
+    "preregistration": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4km-f16kv-tp1-target-sycl-graph-8k-sentinel-r1-prereg.json",
+      "sha256": "65dfd2916c47f1988d1634e3c0ee77b6b31a11805b7858fa3a9a50bfe5311310"
+    },
+    "historical_runner": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-q4km-f16kv-tp1-target-sycl-graph-8k-sentinel-r1.py",
+      "sha256": "b9e150dc2c69890a905b16ae2ac2b984b9d848ca2f9e532cf0df0ff4d9926de4"
+    },
+    "inherited_base_runner": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-q5ks-f16kv-tp1-target-sycl-graph-8k-sentinel-r1.py",
+      "sha256": "c20e16c4e88f1bc0884c3ad82796fc0d415333af50e0aa638cccb6bfe1eeb40d"
+    },
+    "historical_validator": {
+      "path": "experiments/qwen38-27b-b70/scripts/validate-20260826-qwen38-q4km-f16kv-tp1-target-sycl-graph-8k-sentinel-r1.py",
+      "sha256": "5a15e2411599f5a5596e1defbda1a7a8eaa51dff8d9ed65f0973d0108bff4b8f"
+    },
+    "inherited_graph_parser": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-f16-tp1-sycl-graph-quality-r1.py",
+      "sha256": "501d3f37e79791aa8f97c740fbbe90fdc4b75483880441df14147e21289a0cfc"
+    }
+  },
+  "raw_files": [
+    {
+      "path": "candidate-graph-on-cache20/arm-result.json",
+      "bytes": 228,
+      "sha256": "bdce246a21d09481db5b6db4e107b9adce6509f8df7185aa70516b2cc13674bd"
+    },
+    {
+      "path": "candidate-graph-on-cache20/cleanup.json",
+      "bytes": 106,
+      "sha256": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179"
+    },
+    {
+      "path": "candidate-graph-on-cache20/depth-8192/exact-depth.json",
+      "bytes": 15419,
+      "sha256": "b482dc26cb9a829e0f3c8e6be21665ec9ef7d54295769c86e7af8e4ae189caf6"
+    },
+    {
+      "path": "candidate-graph-on-cache20/depth-8192/exact-depth.stdout.json",
+      "bytes": 15419,
+      "sha256": "b482dc26cb9a829e0f3c8e6be21665ec9ef7d54295769c86e7af8e4ae189caf6"
+    },
+    {
+      "path": "candidate-graph-on-cache20/models.json",
+      "bytes": 1096,
+      "sha256": "0244be40aae976939536a375073c05fc519b4577b0b2771087e9dedb5ecaa4e6"
+    },
+    {
+      "path": "candidate-graph-on-cache20/server.log",
+      "bytes": 29745,
+      "sha256": "f5cf59369a0ddc932af60fa424187a3b3b09a8b3323b73c70b31858d2d17bcd8"
+    },
+    {
+      "path": "control-graph-off-cache0/arm-result.json",
+      "bytes": 195,
+      "sha256": "77261fa90af2cf262e1d6855662d05c5e647afa73b5354df2fd107e8d0bb3fa4"
+    },
+    {
+      "path": "control-graph-off-cache0/cleanup.json",
+      "bytes": 106,
+      "sha256": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179"
+    },
+    {
+      "path": "control-graph-off-cache0/depth-8192/exact-depth.json",
+      "bytes": 15420,
+      "sha256": "0306031c542c1a22993559ab5fa0f9a3d4f5b339d290a809f86ff8f9270d1216"
+    },
+    {
+      "path": "control-graph-off-cache0/depth-8192/exact-depth.stdout.json",
+      "bytes": 15420,
+      "sha256": "0306031c542c1a22993559ab5fa0f9a3d4f5b339d290a809f86ff8f9270d1216"
+    },
+    {
+      "path": "control-graph-off-cache0/models.json",
+      "bytes": 1096,
+      "sha256": "0f8b90cb85d78b200faf2fca7fafdf7413879bb08fa12e60ad2242813b221022"
+    },
+    {
+      "path": "control-graph-off-cache0/server.log",
+      "bytes": 27608,
+      "sha256": "0f4c6c598e40a0c1691fd4b3cc21b3aedd0949658281dcdf1718806ecf3985b0"
+    },
+    {
+      "path": "identity.json",
+      "bytes": 5161,
+      "sha256": "76b08611b110e8fc424a7e96995a109f23988afedfee2ec13a177d08afb85cb0"
+    }
+  ],
+  "identity": {
+    "git_head_and_origin_main": "3538d51b8f4517b3ccfbee1fba8e5a0252c38c55",
+    "model": {
+      "path": "/mnt/usb-models/models/qwen3.8-27b-gguf/Qwen3.8-27B-Q4_K_M.gguf",
+      "quantization": "Q4_K_M",
+      "repository": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+      "size_bytes": 18973870432
+    },
+    "graph_runtime": {
+      "binary": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-server",
+      "binary_sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b",
+      "binary_size_bytes": 736520,
+      "effective_dso_canonical_sha256": "5cf0ba76d9784072e245e5fe67772c52b01cc028034687c9689313f6de6ef17c",
+      "effective_dso_count": 33,
+      "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2",
+      "patch_chain_sha256": [
+        "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892",
+        "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3",
+        "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"
+      ],
+      "source_base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+      "source_path": "/home/steve/src/llama.cpp-q38-tp1-graph-port"
+    }
+  },
+  "measurements": {
+    "control-graph-off-cache0": {
+      "active_context_tokens": 8192,
+      "serving_decode_tok_s_99_interval": 26.39588391738354,
+      "output_token_ids_sha256": "e9febe4f6f60a852c700465c030614b27a3c2fcf57967766ff04c1d97186828a",
+      "text_sha256": "79a4f55107344c587fbcda50ecb40f61b292f6f362cb6c76bc27c224467884c8",
+      "cached_tokens": 0
+    },
+    "candidate-graph-on-cache20": {
+      "active_context_tokens": 8192,
+      "serving_decode_tok_s_99_interval": 25.481231872416824,
+      "output_token_ids_sha256": "e9febe4f6f60a852c700465c030614b27a3c2fcf57967766ff04c1d97186828a",
+      "text_sha256": "79a4f55107344c587fbcda50ecb40f61b292f6f362cb6c76bc27c224467884c8",
+      "cached_tokens": 0
+    }
+  },
+  "graph_counters": {
+    "control-graph-off-cache0": {
+      "device": 0,
+      "requested": 0,
+      "compatibility_rejected": 0,
+      "device_unsupported": 0,
+      "cache_entries": 0,
+      "cache_limit": 0,
+      "cache_hit": 0,
+      "cache_miss": 0,
+      "cache_full": 0,
+      "direct_replay": 0,
+      "recorded": 0,
+      "created": 0,
+      "updated": 0,
+      "recreated": 0,
+      "replayed": 0
+    },
+    "candidate-graph-on-cache20": {
+      "device": 0,
+      "requested": 146,
+      "compatibility_rejected": 0,
+      "device_unsupported": 0,
+      "cache_entries": 20,
+      "cache_limit": 20,
+      "cache_hit": 126,
+      "cache_miss": 20,
+      "cache_full": 0,
+      "direct_replay": 126,
+      "recorded": 20,
+      "created": 20,
+      "updated": 0,
+      "recreated": 0,
+      "replayed": 146
+    }
+  },
+  "checks": {
+    "all_13_raw_files_hash_bound": true,
+    "launch_identity_clean_pushed_main": true,
+    "model_and_runtime_identity_bound": true,
+    "target_only_f16_kv_tp1": true,
+    "only_graph_environment_differs": true,
+    "both_exact_depth_gates_pass": true,
+    "cached_tokens_zero_both_arms": true,
+    "exact_token_text_usage_and_prompt_parity": true,
+    "control_graph_counters_zero": true,
+    "candidate_cache20_counter_gate_pass": true,
+    "cleanup_pass_both_arms": true,
+    "original_failed_status_preserved": true,
+    "original_terminal_receipt_absent": true
+  },
+  "authority": {
+    "site_cells": 0,
+    "full_graph_curve": false,
+    "full_curve_preregistration": true,
+    "quality_battery": false,
+    "mtp_or_speculative_cells": 0,
+    "tp2_or_tp4_cells": 0,
+    "prefill_cells": 0,
+    "protected_or_headline_replacement": false,
+    "localmaxxing_submission": false
+  },
+  "protected_decode_values": [
+    71.45427094575045,
+    30.329809361830037,
+    49.05894025767351,
+    71.9001988117144
+  ],
+  "interpretation": "Cache 20 retains and directly replays the recurrent Q4_K_M decode graph with exact graph-off parity, but this single 8K observation was slower and carries no speed authority. This mechanism-only recovery authorizes only a separately reviewed full-curve preregistration. It publishes no site cell and changes no historical speed.",
+  "observed_speed_direction": {
+    "classification": "single-sentinel-observation-not-a-speed-claim",
+    "control_tok_s": 26.39588391738354,
+    "candidate_tok_s": 25.481231872416824,
+    "candidate_vs_control_percent": -3.465131335739635,
+    "direction": "graph-on was slower in this one 8K sentinel"
+  }
+}
