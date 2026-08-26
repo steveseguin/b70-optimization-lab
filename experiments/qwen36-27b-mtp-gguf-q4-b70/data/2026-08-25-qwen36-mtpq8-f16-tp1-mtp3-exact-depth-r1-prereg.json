@@ -1,0 +1,98 @@
+{
+  "schema": "neural.download.qwen36-llama-mtp3-exact-depth-prereg.v1",
+  "campaign_id": "qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Measure the seven exact TP1 active-context cells for the proven embedded-Q8 MTP3/F16 graph-off route, with a fresh MTP0 control and fail-closed per-depth target-output parity.",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
+    "quantization": "Q8_0",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "candidate_mtp": 3,
+    "control_mtp": 0,
+    "graph_mode": "off",
+    "target_kv": "f16",
+    "draft_kv": "f16",
+    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+  },
+  "model": {
+    "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+    "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+    "path": "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+    "size_bytes": 29047084160,
+    "sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+    "artifact_manifest": "experiments/qwen36-27b-q8-gguf-b70/optional-artifacts-manifest.json",
+    "artifact_manifest_sha256": "3f59254c2f01a96f22c2a2bbe83eec09a6d62d6daf1ff6c638fcf5750f687053",
+    "draft_binding": "embedded MTP tensors in the same checksum-pinned GGUF; no external draft model is allowed"
+  },
+  "runtime": {
+    "profile": "q8-vdr2-candidate",
+    "source_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+    "reported_version": "version: 10298 (15586e2d7)",
+    "manifest": "experiments/qwen36-27b-q8-gguf-b70/runtime-manifest-q8-vdr2-candidate.json",
+    "manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+    "binary": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/llama-server",
+    "binary_size_bytes": 755984,
+    "binary_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+    "compile_time_controls": {"GGML_SYCL_REORDER_Q8_0_VDR_MMVQ": 2},
+    "effective_local_shared_libraries": [
+      {"soname": "libllama-server-impl.so", "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libllama-server-impl.so", "size_bytes": 7416464, "sha256": "cbf95973702633d9b603a5f119cfb6f991acd869ee3f7472f71c005a6162913f"},
+      {"soname": "libllama-common.so.0", "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libllama-common.so.0.0.10298", "size_bytes": 5613104, "sha256": "6dfc358f766ed84a33879421a8a2747557ddea257fe7256c9a003caa19680aad"},
+      {"soname": "libmtmd.so.0", "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libmtmd.so.0.0.10298", "size_bytes": 1817200, "sha256": "d213efaa5c43f93890034aae621509c9adf56e01d00e3aae6009430058c46a14"},
+      {"soname": "libllama.so.0", "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libllama.so.0.0.10298", "size_bytes": 3911408, "sha256": "664613ebeab1e208585abd82319ead63327e6b2c9061321174d60c4caeb8bcdb"},
+      {"soname": "libggml.so.0", "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml.so.0.18.1", "size_bytes": 55440, "sha256": "c9c5d6a332f6f4f47af9afd57a2696ae0925b8e5433d39f50d4aee491217d79c"},
+      {"soname": "libggml-cpu.so.0", "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml-cpu.so.0.18.1", "size_bytes": 1750784, "sha256": "e964205599e02d875b2d861e743541285a9e5d5e7acc74bc67421eb0f50b170b"},
+      {"soname": "libggml-sycl.so.0", "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml-sycl.so.0.18.1", "size_bytes": 86885752, "sha256": "eff26ef9562196d454fdc54cca7680304e6ce37e9a9d92ef3b514e8c34f3d0a0"},
+      {"soname": "libggml-base.so.0", "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml-base.so.0.18.1", "size_bytes": 1043152, "sha256": "71876bc702d43f5da637844b53b70939d08b10e9293f90f9097f8da9ffdb52a4"}
+    ],
+    "effective_library_policy": "The eight declared origin DSOs must equal the complete runtime-origin ldd closure; their canonical paths, sizes, hashes, and the full ldd output are captured before launch."
+  },
+  "fixture": {
+    "path": "data/qwen27-exact-depth/qwen36-6a9e13bd-exact-depth-v1.json",
+    "sha256": "85b1050c88b4c1e6cb9c4ce7f1580284cd2aa68243dad0d0dff16460decbe5ac",
+    "fixture_id": "qwen36-6a9e13bd-exact-depth-v1",
+    "provenance_sha256": "2bf3da520c6eee8f3c4a69e825270cf5a3ec9cf1cecb5bc26c4bed0ae4eb2b1f",
+    "case_ids": ["depth-0", "depth-2048", "depth-4096", "depth-8192", "depth-16384", "depth-24576", "depth-32768"],
+    "prompt_token_ids_sha256": ["4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945", "a173e60e5047c0f080e0ea45680eecbb533d30946cfc2ae0e028c684bf18d1ba", "aedf2eb779bfa4aad8f533c644ca94646977deae1c10221bff592f06785c76d0", "6baa17bea14f0ecad7e4edf54a05256eafaef1d447a447569fd303371c671741", "b7acffcd09d9466fd8382a72248f5447c59f4ee18572aff243ef29ee889883e7", "0e0004c062890ee48b86fa426373baada8c1c277faaadb749d01689f4afaaa36", "3c4526a112dfc70bc62205f4e7f060f14ee49ef748527cd58778c3c2c238302c"],
+    "evidence_grade": "C synthetic exact-depth serving curve; each cell requires fresh MTP0/MTP3 output parity and is not a natural-workload headline"
+  },
+  "clients": {
+    "exact_depth": {"path": "scripts/bench-openai-token-depth-suite.py", "sha256": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067", "requests_per_arm": 7, "output_tokens": 128, "primary_metric": "conventional serving decode rate over 99 intervals between streamed token-ID events 1 and 100"},
+    "quality": {"path": "scripts/qwen36-text-quality-suite.py", "sha256": "6e91e669a6d1ec005b32b141ea7ed859cae64657e99fc262506235eb0cfaa365", "interpreter": "/home/steve/.venvs/vllm-xpu/bin/python", "interpreter_sha256": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8", "tokenizer_path": "/mnt/fast-ai/llm-cache/hf/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9", "repeat_runs": 2, "long_context_tokens": 29400, "requirements": "all exact/JSON/arithmetic/copy canaries, repeat stability, approximately 29.4K needle recall, and cached_tokens=0 on all seven quality requests"}
+  },
+  "server_contract": {
+    "host": "127.0.0.1", "port": 19433, "model_alias": "qwen36-mtpq8-f16-tp1-mtp3-depth-r1", "context_capacity": 33024, "parallel_slots": 1, "batch_size": 1024, "ubatch_size": 1024, "threads": 8, "flash_attention": true, "cache_type_k": "f16", "cache_type_v": "f16", "prompt_cache_ram_mb": 0, "context_checkpoints": 0, "context_shift": false, "kv_unified": false, "reasoning": "off", "oneapi_device_selector": "level_zero:*", "ze_affinity_mask": "0", "ggml_sycl_enable_graph": "0", "ggml_sycl_graph_cache_size": "0"
+  },
+  "arms": [
+    {"id": "control-mtp0", "spec_type": "none", "mtp": 0, "workload": "seven exact-depth completions in ascending order"},
+    {"id": "candidate-mtp3", "spec_type": "draft-mtp", "mtp": 3, "spec_draft_n_max": 3, "spec_draft_n_min": 0, "spec_draft_p_split": 0.1, "spec_draft_p_min": 0.0, "spec_draft_backend_sampling": true, "workload": "seven exact-depth completions in ascending order followed by the bounded quality battery"}
+  ],
+  "lifecycle": {
+    "runner": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r1.py",
+    "validator": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/validate-20260825-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r1.py",
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r1",
+    "output_fstype": "ext4",
+    "exact_ack": "RUN qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r1",
+    "default_is_inert": true,
+    "requires_clean_pushed_main": true,
+    "requires_idle_gpu0_render_node": "/dev/dri/by-path/pci-0000:23:00.0-render",
+    "required_locks": ["/run/lock/muse-glimmer-gpu-exclusive.lock", "/tmp/b70-benchmark.lock", "/tmp/b70-gpu0.lock", "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"],
+    "artifacts_are_create_only": true,
+    "terminal_receipt_required": true,
+    "server_shutdown": "TERM for at most 30 seconds, then KILL for at most 10 seconds; forced KILL fails cleanup",
+    "request_timeout_seconds": 3600
+  },
+  "frozen_interpretation": {
+    "measurement_class": "HTTP serving, batch 1, conventional 99-interval streamed token-ID decode",
+    "raw_engine_metric": false,
+    "speed_floor": null,
+    "cell_gain_if_all_gates_pass": 7,
+    "publish_only_if": "All 14 exact-depth receipts pass, every same-depth MTP3 output-token hash equals MTP0, every candidate depth has nonzero generated and accepted drafts with accepted <= generated and ratio conservation, the complete quality battery passes cache-zero, and both lifetimes clean up without forced kill.",
+    "do_not_publish_if": "Any identity, boot, exact-depth, target-parity, draft-engagement/conservation, quality, cache-zero, or cleanup gate fails.",
+    "historical_featured_speeds_are_immutable": true,
+    "graph_claim_authorized": false,
+    "site_or_family_edit_authorized_before_result_and_quality_review": false,
+    "cross_revision_or_quantization_transfer_allowed": false
+  }
+}
