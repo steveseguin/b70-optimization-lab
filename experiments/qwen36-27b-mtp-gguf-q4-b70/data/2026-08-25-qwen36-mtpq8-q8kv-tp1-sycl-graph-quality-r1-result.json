@@ -1,0 +1,156 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-embedded-mtp-q8-q8kv-quality-r1-result.v1",
+  "campaign_id": "qwen36-mtpq8-q8kv-tp1-sycl-graph-quality-20260825-r1",
+  "state": "passed-quality-covers-seven-raw-curve-cells",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-q8kv-tp1-sycl-graph-quality-20260825-r1",
+  "packet": {
+    "preregistration": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-q8kv-tp1-sycl-graph-quality-r1-prereg.json", "sha256": "67dde9ab15c6b86cda20c1ac20ab5d4a90fda7d13cec839160e511908c27f726"},
+    "runner": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-q8kv-tp1-sycl-graph-quality-r1.py", "sha256": "a9fba5239180d021e966292f7510f10d11a10f27530f93c0e3bcb507366bb2bc"},
+    "preregistration_note": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-08-25-qwen36-mtpq8-q8kv-tp1-sycl-graph-quality-r1-preregistration.md", "sha256": "d444773e8145b1412ccacb535aaf4b69b4cb91586a3742c50ba00ae09b82de35"},
+    "cpu_tests": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/test_qwen36_mtpq8_q8kv_tp1_sycl_graph_quality_r1.py", "sha256": "3b5d7d546665c574a41f5e60fd2d3464ae31094d25a689b1420340345f2c9820", "prelaunch_result": "7 tests passed"},
+    "launch_git_head": "7fb98c25a4813df678748d832352370b0066e1ee"
+  },
+  "curve_parent": {
+    "campaign_id": "qwen36-mtpq8-q8kv-tp1-sycl-graph-exact-depth-20260825-r1",
+    "preregistration": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-q8kv-tp1-sycl-graph-exact-depth-r1-prereg.json", "sha256": "7032fd8e6887efe9cf0ddaea127f37d9a71f358778d578d9437bb3fbd3ebafd5"},
+    "runner": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-q8kv-tp1-sycl-graph-exact-depth-r1.py", "sha256": "9282a3e2268dff75ba04bfe03ddf016c26e156e845f0805e915481f19d61b134"},
+    "terminal_receipt": {"path": "/mnt/fast-ai/bench-results/qwen36-mtpq8-q8kv-tp1-sycl-graph-exact-depth-20260825-r1/terminal-receipt.json", "sha256": "b2d3633c4c8de8cc2059c4025bf568f11ccfb2a4d98138f7cab46e816689e11b"},
+    "exact_depth_receipt": {"path": "/mnt/fast-ai/bench-results/qwen36-mtpq8-q8kv-tp1-sycl-graph-exact-depth-20260825-r1/exact-depth-receipt.json", "sha256": "52a2a11922feb306c5ffaa43fefa96a9408329b3849ce5b143aa4e205e42283e"},
+    "metadata": {"path": "/mnt/fast-ai/bench-results/qwen36-mtpq8-q8kv-tp1-sycl-graph-exact-depth-20260825-r1/metadata.json", "sha256": "7139eb68cb9dd7e8b0f5cb946685bbbe875d8d7b032eef1121dcc6df7bec4525"},
+    "graph_evidence": {"path": "/mnt/fast-ai/bench-results/qwen36-mtpq8-q8kv-tp1-sycl-graph-exact-depth-20260825-r1/graph-evidence.json", "sha256": "a1a58ca288670e9a9cf858ede40723f6750e2c831700c0b9ab94d03febe90f7d"},
+    "covered_active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "coverage_basis": "All seven raw cells share this exact embedded-MTP Q8_0 artifact, source, build, graph environment, TP1/MTP0/q8_0-KV selectors, and cache-8 tuple. The curve raw artifacts supply per-depth phase-aware graph evidence; this fresh isolated service battery supplies one near-32K quality seal for the shared tuple.",
+    "per_depth_quality_reruns_required": false
+  },
+  "raw_artifacts": {
+    "models.json": "40be02bafebc8885fa360cb3b8e8f688d1f2acc4fd2741d1a80980fa9d9cabf4",
+    "quality-gate.json": "9b466a9f6974bb33a79010081829dca3b7c9762c0d0126cf02773da515c9d532",
+    "quality.json": "245fc62d453b81b68ab1b627b60d8194c7b90e0bfbee3fbd5bc30d4fbdb7c1ff",
+    "quality.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "quality.stdout.json": "c7438b708a44e0448a0f971fe08024479ffd415025a4ef27c5f56625f2c33dd4",
+    "server.log": "d1c961ef25587883aea0b0af3cbb65ca93e5fe951f1bb4504a5090ace755035f",
+    "terminal-receipt.json": "df2bb14a9b4829ac902e8b5dac8ed4e0b077cedba8fe23eb1a80291d435f2445"
+  },
+  "sealed_identity": {
+    "selectors": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "tp": 1, "mtp": 0, "graph_mode": "SYCL", "kv": "q8_0"},
+    "source_base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "source_files": {
+      "ggml/src/ggml-sycl/common.hpp": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+      "ggml/src/ggml-sycl/ggml-sycl.cpp": "25152136d7e7ff9e96822127f320f08ccb4fa200af607f33afaa05a318cbbd6a"
+    },
+    "patch_chain_in_order": [
+      {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-evidence-port-20260825.patch", "sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892"},
+      {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-pointer-stable-r2-20260825.patch", "sha256": "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3"},
+      {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-capacity-scaled-r3-20260825.patch", "sha256": "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"}
+    ],
+    "model": {
+      "path": "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+      "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+      "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+      "size_bytes": 29047084160,
+      "sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "direct_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "ordinary_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "embedded_mtp_capability": true
+    },
+    "runtime": {
+      "build_root": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port",
+      "server": {"path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-server", "size_bytes": 736520, "sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b"},
+      "server_impl_sha256": "63dcf154a547aa8611be00625a3c72b190cbdfcdc6a139679ee165c170c93a6b",
+      "graph_backend": {"size_bytes": 329322096, "sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2"},
+      "server_effective_shared_libraries": {"count": 33, "canonical_json_sha256": "5cf0ba76d9784072e245e5fe67772c52b01cc028034687c9689313f6de6ef17c", "identity_receipt": "quality-gate.json"},
+      "cmake_cache_sha256": "39852126a74e193d99fe9ee2a0a2553d6afc9f6ed2b77b7b853bb25dd689d461",
+      "makefile_sha256": "db2b9dcc0296571e4f76b48402649af56376ea81582c49ca0442b9b35070298f",
+      "sycl_flags_sha256": "c52e473c20c9e06f30b5558445d210791e88047fc0dd6e4585f9fa634fd0a727"
+    },
+    "graph_environment": {"ONEAPI_DEVICE_SELECTOR": "level_zero:0", "GGML_SYCL_ENABLE_GRAPH": "1", "GGML_SYCL_GRAPH_CACHE_SIZE": "8"},
+    "service_context_tokens": 32768,
+    "kv": "q8_0",
+    "speculator_loaded": false
+  },
+  "quality": {
+    "passed": true,
+    "request_count": 13,
+    "exact_cases": {
+      "passed": 4,
+      "required": 4,
+      "names": ["exact_ok", "copy_phrase", "arithmetic", "json_schema"],
+      "output_sha256": {
+        "exact_ok": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+        "copy_phrase": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+        "arithmetic": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+        "json_schema": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91"
+      }
+    },
+    "repeat_stability": {"passed": 8, "required": 8, "unique_normalized_output_hashes": 1, "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"},
+    "long_context_needle": {"passed": true, "requested_context_tokens": 31744, "actual_prompt_tokens_reported_by_suite": 29403, "usage_prompt_tokens": 29415, "claim_label": "approximately 29.4K actual prompt tokens inside a 32K service", "needle": "B70_QWEN36_NEEDLE_20260609", "output_sha256": "8772a18ffb56a2344b8cf7b44099653ef795b97a9bc5d8264007ea0df5d1481f"},
+    "prompt_cache_accounting": {"zero_cached_tokens": 13, "request_count": 13, "all_zero": true}
+  },
+  "server_graph_evidence": {
+    "summary_count": 1,
+    "device": 0,
+    "requested": 169,
+    "cache_hit": 84,
+    "cache_miss": 85,
+    "cache_entries": 8,
+    "cache_limit": 8,
+    "cache_full": 77,
+    "direct_replay": 84,
+    "recorded": 8,
+    "created": 8,
+    "updated": 0,
+    "recreated": 0,
+    "replayed": 92,
+    "compatibility_rejected": 0,
+    "device_unsupported": 0,
+    "classification": "positive-capture-and-replay-with-mixed-partial-prefill"
+  },
+  "graph_off_comparison": {
+    "reference": {"measurement_id": "q36-mtpq8-tp1-kv-q8-context", "result_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-q8kv-tp1-exact-depth-result.json", "result_sha256": "34efb7b4b09bb7b11e523af983abfc96154599b5e0bdba70e854c80ca78eff03"},
+    "same_artifact_selectors_and_workload_except_graph_mode": true,
+    "per_depth_percent_delta_graph_on_vs_graph_off": [
+      {"active_context_tokens": 0, "prefill_percent": -0.862827, "decode_percent": -1.982965},
+      {"active_context_tokens": 2048, "prefill_percent": -2.185151, "decode_percent": -1.827727},
+      {"active_context_tokens": 4096, "prefill_percent": -1.603094, "decode_percent": -1.774483},
+      {"active_context_tokens": 8192, "prefill_percent": -1.607710, "decode_percent": -1.575765},
+      {"active_context_tokens": 16384, "prefill_percent": -0.762414, "decode_percent": -1.286403},
+      {"active_context_tokens": 24576, "prefill_percent": -1.160927, "decode_percent": -1.185756},
+      {"active_context_tokens": 32768, "prefill_percent": -1.243386, "decode_percent": -0.975553}
+    ],
+    "unweighted_mean_percent_delta": {"prefill_percent": -1.346501, "decode_percent": -1.515522},
+    "classification": "quality-certified negative optimization; graph-on is slower at every measured depth for both prefill and decode",
+    "authority": "coverage evidence only; do not replace the faster protected graph-off values"
+  },
+  "terminal": {
+    "receipt_sha256": "df2bb14a9b4829ac902e8b5dac8ed4e0b077cedba8fe23eb1a80291d435f2445",
+    "created_at_utc": "2026-08-26T00:00:39.951986+00:00",
+    "lab_git_head": "7fb98c25a4813df678748d832352370b0066e1ee",
+    "cleanup_passed": true,
+    "error": null,
+    "post_result_process_check": "no target server or port 19438 listener",
+    "raw_receipt_plumbing_caveat": {
+      "schema": "neural.download.qwen36-llama-exact-depth-terminal.v1",
+      "state": "passed-quality-prerequisite-awaiting-tracked-adjudication",
+      "quality_claim_authorized": false,
+      "interpretation": "The inherited writer intentionally leaves raw quality authority false and requires tracked adjudication. This checksum-bound result records that the independently verified battery satisfies the seven-cell curve quality prerequisite, but it grants no site authority by itself."
+    }
+  },
+  "claim_boundaries": {
+    "quality_classification": "quality-battery-certified",
+    "quality_covers_all_seven_curve_cells": true,
+    "raw_engine_speed_measurements_unchanged": true,
+    "http_speed_claim": false,
+    "depth_0_prefill": "fully graph-certified by curve evidence",
+    "depth_2k_through_32k_prefill": "mixed partial graph because cache_full is positive in curve evidence",
+    "decode_all_depths": "verified capture-and-replay by curve evidence",
+    "graph_on_performance": "quality-certified negative optimization versus matching graph-off; preserve graph-on as coverage evidence and keep graph-off speeds protected"
+  },
+  "authority": {
+    "battery_satisfies_quality_prerequisite_for_all_seven_curve_cells": true,
+    "battery_itself_authorizes_site_publication": false,
+    "publication_binding_requires_separate_ingestion_packet": true,
+    "record_or_submission_authorized": false,
+    "protected_graph_off_values_replaced": false,
+    "historical_featured_speeds_are_immutable": true
+  }
+}
