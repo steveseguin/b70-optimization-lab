@@ -1,0 +1,140 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp4-mtp0-f16-piecewise-depth-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp4-mtp0-f16-piecewise-depth-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Measure the current-f01e Qwen3.8 AutoRound TP4/MTP0/PIECEWISE/F16 exact-context graph profile at 2K, 4K, 8K, 16K, 24K, and 32K in one server lifetime. Require exact same-image TP4 eager target parity, objective and baseline quality, graph identity, both TP4 workers, rank-scoped cache isolation, cache zero, and strict cleanup. Preserve every historical and protected result.",
+  "parent_oracles": {
+    "same_image_same_topology_eager": {
+      "campaign": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1",
+      "root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1",
+      "terminal_state": "passed-quality-clean-depth-expansion-with-comparison-caveat",
+      "terminal_receipt_sha256": "f6ed578228a9e6c21c68653b828a0ecc4ee776107337446e6ecc2f595d47297e",
+      "arm_result_sha256": "f9d6aac74557a16dc3da1f55f2d9da76908cac17b341fb1abc2fd55fbb1f4414",
+      "quality_sha256": "2172c3bdba148062487ba73980fee46a5f1f2501baa37ceb83ca0e058bcaa83f",
+      "gate": "All six candidate outputs must exactly match the 128 token IDs from this current-image, same-topology target-only eager oracle. The full quality battery must pass objective gates and baseline_match_all against its frozen quality receipt."
+    },
+    "dated_graph_comparison": {
+      "campaign": "qwen38-b2dd9ce73d-tp4-exact-depth-quality-20260826-r1",
+      "result": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-b2dd9ce73d-tp4-exact-depth-quality-r1-result.json",
+      "result_sha256": "ff64abc91423519b529a5c924e9c5c59ee75e5b203cfe0d594297a30b19d8fbc",
+      "identity_difference": "The dated comparison used b2dd9ce73d/1e90ffa672, FULL_AND_PIECEWISE, capture sizes 1 and 2, PYTHONHASHSEED unset, and a different cache identity.",
+      "policy": "Pin and record token comparison only. A mismatch is a dated cross-runtime caveat, never a rejection of an otherwise current-f01e exact graph cell and never a speed floor."
+    }
+  },
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "image_id": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 4,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0,1,2,3",
+    "mtp_depth": 0,
+    "speculative_config": null,
+    "kv_cache_dtype": "float16",
+    "graph_mode": "PIECEWISE",
+    "graph_capture_sizes": [1],
+    "max_graph_capture_size": 1,
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.6,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "graph_environment": {
+      "VLLM_XPU_ENABLE_XPU_GRAPH": "1"
+    },
+    "oneapi_device_selector": "unset"
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [2048, 4096, 8192, 16384, 24576, 32768],
+    "depth_zero_state": "missing",
+    "depth_zero_reason": "The vLLM exact-depth fixture has no literal empty serving request; configured capacity and an ordinary prompt do not fill x=0.",
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896,
+    "same_image_target_receipt_sha256": {
+      "2048": "614eba447a944a87114f0b117b7148d4cf009deb356d5c2f5ed5cf3b9b68ea1e",
+      "4096": "1dbba43c7ed816156f53b489e2287247e8a96f26a7d5f15a1a381d28f7e89e02",
+      "8192": "a4a898748454b9d2588fd911c9e38ddfff58a129736db3a97ce1b871c5f472dc",
+      "16384": "d0a621857ecd56e7b2cb44ec07381b5e4ebfbd3e0df322fdc741f92f0715481a",
+      "24576": "13122dd794bd0e9106450224b5a19261585a2740a9b293e787e8e6a74e4fd4b6",
+      "32768": "1ebe52108c16706a2995ee9981509dcada252e1961c9eaeb3b321a3e460545e4"
+    },
+    "dated_graph_receipt_sha256": {
+      "2048": "0b3f04813e2f3766692b60539062acdf23daab2f9f49b796f150af3e41127acc",
+      "4096": "e9e950225b4c7b1350ff45f7b5e460cc5da7129d59d1a69c7d21a1362f1a2826",
+      "8192": "70cc0464eaffc8ecaf46164e012cc7bbc50d31cd04c0874ae6f97635c2603516",
+      "16384": "a321ff294119f7c5df989925afb541d1d3c170baa71ca31cda2a145fb06becb0",
+      "24576": "64c8cea962299e5e3fbcbe46f3a7ec9d5472f24b70ee84bf96a36a1b63df9e32",
+      "32768": "444d50d8c85a99d27532ba2192b4f118a1629b724f91ebbac006207f5dbc150c"
+    }
+  },
+  "quality_contract": {
+    "helper": "scripts/qwen38-text-quality-suite.py",
+    "baseline": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1/quality.json",
+    "baseline_sha256": "2172c3bdba148062487ba73980fee46a5f1f2501baa37ceb83ca0e058bcaa83f",
+    "objective_gate": "pass_all, seven exact cases, eight-repeat one-hash determinism, one long-context needle, and cached_tokens == 0 on all 16 usage records",
+    "same_topology_gate": "baseline_match_all must be true against the frozen current-f01e TP4 eager quality receipt"
+  },
+  "graph_contract": {
+    "required_startup_markers": [
+      "enforce_eager=False",
+      "Capturing CUDA graphs (mixed prefill-decode, PIECEWISE)",
+      "Graph capturing finished",
+      "Compiling a graph for compile range"
+    ],
+    "forbidden_startup_markers": [
+      "Capturing CUDA graphs (decode, FULL)",
+      "enforce_eager=True"
+    ],
+    "cache_policy": "fresh ext4 cache; only rank_0_0, rank_1_0, rank_2_0, and rank_3_0 rank namespaces are allowed, while shared AOT/cache support files are inventoried separately",
+    "runtime_disclosure": "Multi-GPU XPU graph is labeled unsupported/experimental by the runtime; a passing result remains Grade C profile-specific evidence."
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp4-mtp0-f16-piecewise-depth-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-piecewise-depth-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp4-mtp0-f16-piecewise-depth-20260826-r1",
+    "port": 19498,
+    "container": "q38-f01e-ar-tp4-mtp0-f16-pwdepth-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp4-mtp0-f16-piecewise-depth-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true
+  },
+  "terminal_classification": {
+    "passed-quality-clean-piecewise-depth": "All six exact depths, same-image eager target parity, objective and same-topology quality, PIECEWISE markers, TP4 topology, rank cache isolation, and cleanup pass.",
+    "partial-depth-expansion": "Global gates pass but fewer than six depths pass exact request plus current-f01e eager target parity; freeze only valid depths and infer nothing.",
+    "quarantined-target-or-quality-failed": "Any same-image target divergence or objective/baseline quality failure quarantines that evidence; retain every receipt without publication authority.",
+    "failed": "Identity, graph mechanism, topology, cache isolation, model verification, or cleanup fails; retain evidence and authorize nothing."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "evidence_grade_on_full_pass": "C",
+    "protected_decode_values_unchanged": [
+      71.45427094575045,
+      30.329809361830037,
+      49.05894025767351,
+      71.9001988117144
+    ],
+    "historical_replacement_allowed": false,
+    "eager_profile_replacement_allowed": false,
+    "dated_graph_profile_replacement_allowed": false,
+    "protected_route_replacement_allowed": false,
+    "automatic_publication_allowed": false,
+    "descendant_execution_authorized": false,
+    "measured_cells_on_full_pass": 6,
+    "site_cells_filled_automatically": 0,
+    "context_zero_inferred": false
+  }
+}
