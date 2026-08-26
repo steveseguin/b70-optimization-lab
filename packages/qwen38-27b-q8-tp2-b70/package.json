@@ -49,6 +49,27 @@
       "evidence": "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
     }
   ],
+  "performance_profiles": [
+    {
+      "id": "http-output-audited-aggregate-vs-concurrent-users",
+      "label": "Output-audited Q8_0 TP2 HTTP aggregate decode",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "llama.cpp native HTTP /completion on two B70s with 64 active slots, 32K total F16 KV context, prompt cache and slot similarity disabled, unique short prompts, and 128 returned raw token IDs per request. Each marker is the median of two preregistered fresh-server attempts whose relative range was at most 1.46%. Output isolation passed with no cross-base oracle collision, but multi-user greedy token identity is batch-shape-dependent. The directly reproduced c8-to-c16 throughput dip is retained rather than smoothed. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-r2-result.json",
+      "points": [
+        {"concurrent_sequences": 1, "value": 32.48673907107751, "per_user_value": 32.48673907107751, "samples": 2},
+        {"concurrent_sequences": 2, "value": 51.60144040951495, "per_user_value": 25.800720204757475, "samples": 2},
+        {"concurrent_sequences": 4, "value": 85.59522372041042, "per_user_value": 21.398805930102604, "samples": 2},
+        {"concurrent_sequences": 8, "value": 125.41437907811792, "per_user_value": 15.67679738476474, "samples": 2},
+        {"concurrent_sequences": 16, "value": 84.3286328753673, "per_user_value": 5.2705395547104565, "samples": 2},
+        {"concurrent_sequences": 32, "value": 125.83227328244796, "per_user_value": 3.9322585400764987, "samples": 2},
+        {"concurrent_sequences": 64, "value": 163.64420555060713, "per_user_value": 2.5569407117282363, "samples": 2}
+      ]
+    }
+  ],
   "hardware": {
     "accelerator": "Intel Arc Pro B70 32 GiB",
     "cards": 2,
@@ -75,7 +96,7 @@
     "reason": "The service and record depend on the lab's complete TP2/DP4A2 patch plus the Qwen3.8 recurrent-quad SG16 and SG24 increments."
   },
   "commands": {
-    "preflight": "repro/qwen38-27b-q8-tp2-asrock-b70/verify-artifacts.sh",
+    "preflight": "repro/qwen38-27b-q8-tp2-asrock-b70/verify-artifacts.sh && repro/qwen38-27b-q8-tp2-asrock-b70/verify-model-direct.sh /path/to/model-directory",
     "launch": "QWEN38_SOURCE_DIR=/path/to/source QWEN38_BUILD_DIR=/path/to/build QWEN38_MODEL=/path/to/Qwen3.8-27B-Q8_0.gguf repro/qwen38-27b-q8-tp2-asrock-b70/run-server.sh",
     "health": "curl -fsS http://127.0.0.1:18088/health",
     "benchmark": "OUT=/path/to/result.json repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh",
@@ -86,18 +107,31 @@
     "repro/qwen38-27b-q8-tp2-asrock-b70/config.env",
     "repro/qwen38-27b-q8-tp2-asrock-b70/runtime-common.sh",
     "repro/qwen38-27b-q8-tp2-asrock-b70/run-server.sh",
+    "repro/qwen38-27b-q8-tp2-asrock-b70/run-throughput-server.sh",
     "repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh",
     "repro/qwen38-27b-q8-tp2-asrock-b70/verify-artifacts.sh",
+    "repro/qwen38-27b-q8-tp2-asrock-b70/verify-model-direct.sh",
+    "repro/qwen38-27b-q8-tp1-b70/model-direct.json",
     "patches/qwen38-27b-q8-tp2-asrock-b70/README.md",
     "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json",
     "experiments/qwen38-27b-b70/data/2026-08-17-q8-dp4a2-sg24-accepted.json",
+    "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-r2-result.json",
+    "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-r2-prereg.json",
+    "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-oracle-digests.json",
+    "experiments/qwen38-27b-b70/scripts/run-qwen38-q8-tp2-http-concurrency-r2.sh",
     "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+  ],
+  "known_limitations": [
+    "The historical 36.772932 tok/s headline used reasoning-enabled output; the packaged service and concurrency curve use reasoning off and are a distinct identity.",
+    "Multi-user greedy token identity is batch-shape-dependent. The qualified curve proves complete isolated responses with zero cross-base oracle collisions, not sequential byte identity.",
+    "The c8-to-c16 aggregate drop reproduced on both fresh servers. It is retained as measured and is not interpolated away.",
+    "The concurrency profile measures aggregate batch-wall throughput, not per-request TTFT or latency under queueing."
   ],
   "missing": [
     "tested platform installation",
-    "model download helper with direct-read verification",
     "clean-host replay",
     "beginner recovery flow",
-    "decode, prefill, and TTFT context sweep"
+    "decode, prefill, and TTFT context sweep",
+    "queued TTFT and per-request latency profile"
   ]
 }

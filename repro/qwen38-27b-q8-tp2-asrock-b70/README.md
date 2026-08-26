@@ -178,6 +178,34 @@ OUT=/path/to/result.json repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh
 repro/qwen38-27b-q8-tp2-asrock-b70/verify-artifacts.sh
 ```
 
+Before launch, bypass the page cache and verify the model bytes against the
+pinned manifest:
+
+```bash
+repro/qwen38-27b-q8-tp2-asrock-b70/verify-model-direct.sh \
+  /path/to/directory-containing-Qwen3.8-27B-Q8_0.gguf
+```
+
+For the directly qualified multi-user identity, use the dedicated launcher:
+
+```bash
+QWEN38_SOURCE_DIR=/path/to/llama.cpp-qwen38-q8-tp2 \
+QWEN38_BUILD_DIR=/path/to/llama.cpp-qwen38-q8-tp2/build-sycl-aot-bmg-g31 \
+QWEN38_MODEL=/path/to/Qwen3.8-27B-Q8_0.gguf \
+  repro/qwen38-27b-q8-tp2-asrock-b70/run-throughput-server.sh
+```
+
+That profile is target-only/MTP0, TP2 split 1,1, 64 active slots, 32,768
+total context tokens, F16 KV, and prompt cache off. Two fresh-server attempts
+qualified c1/c2/c4/c8/c16/c32/c64 at aggregate medians of `32.487`, `51.601`,
+`85.595`, `125.414`, `84.329`, `125.832`, and `163.644 tok/s`. All responses
+returned 128 token IDs with zero cache reuse and no cross-base oracle
+collision. The c16 dip reproduced and must not be interpolated away. This is
+aggregate batch-wall throughput, not queued TTFT or per-request latency. See
+the [qualified result](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-r2-result.json),
+[preregistration](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-r2-prereg.json),
+and [compact oracle](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-oracle-digests.json).
+
 The reference selector is `level_zero:1,0`, addressed as `SYCL0,SYCL1` by the
 server. Confirm enumeration on another host. The launcher is loopback-only,
 uses equal TP2, one slot, 8K context, F16 KV, FlashAttention, cache RAM zero,

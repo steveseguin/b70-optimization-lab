@@ -1,0 +1,61 @@
+{
+  "classification": "output-isolation-qualified-shape-variant",
+  "qualification_mode": "isolation",
+  "completion_tokens_128_all": true,
+  "cached_tokens_all_zero": true,
+  "oracle_hashes_exact_all": false,
+  "complete_token_id_identity_all": true,
+  "cross_base_oracle_collision_count": 0,
+  "request_count": 191,
+  "batches": [
+    {
+      "concurrency": 1,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 32.54718791217582,
+      "per_user_tok_s_wall": 32.54718791217582,
+      "oracle_exact": "1/1"
+    },
+    {
+      "concurrency": 2,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 51.97669210667188,
+      "per_user_tok_s_wall": 25.98834605333594,
+      "oracle_exact": "1/2"
+    },
+    {
+      "concurrency": 4,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 85.4050925575293,
+      "per_user_tok_s_wall": 21.351273139382325,
+      "oracle_exact": "2/4"
+    },
+    {
+      "concurrency": 8,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 126.0755540598697,
+      "per_user_tok_s_wall": 15.759444257483713,
+      "oracle_exact": "5/8"
+    },
+    {
+      "concurrency": 16,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 84.20699689323128,
+      "per_user_tok_s_wall": 5.262937305826955,
+      "oracle_exact": "9/16"
+    },
+    {
+      "concurrency": 32,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 125.52776895517273,
+      "per_user_tok_s_wall": 3.922742779849148,
+      "oracle_exact": "18/32"
+    },
+    {
+      "concurrency": 64,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 163.59786592481666,
+      "per_user_tok_s_wall": 2.5562166550752603,
+      "oracle_exact": "36/64"
+    }
+  ]
+}

@@ -64,7 +64,38 @@ The accepted headline was reasoning-enabled. The packaged service defaults to
 `--reasoning off`, which is intentionally a different benchmark identity. Do
 not compare the two without recording that setting.
 
+## Output-audited multi-user profile
+
+For throughput service, launch the separately qualified 64-slot, 32K-total
+profile:
+
+```bash
+QWEN38_SOURCE_DIR=/path/to/llama.cpp-qwen38-q8-tp2 \
+QWEN38_BUILD_DIR=/path/to/llama.cpp-qwen38-q8-tp2/build-sycl-aot-bmg-g31 \
+QWEN38_MODEL=/path/to/Qwen3.8-27B-Q8_0.gguf \
+  repro/qwen38-27b-q8-tp2-asrock-b70/run-throughput-server.sh
+```
+
+| Simultaneous requests | Aggregate tok/s | Per-user tok/s |
+| ---: | ---: | ---: |
+| 1 | 32.487 | 32.487 |
+| 2 | 51.601 | 25.801 |
+| 4 | 85.595 | 21.399 |
+| 8 | 125.414 | 15.677 |
+| 16 | 84.329 | 5.271 |
+| 32 | 125.832 | 3.932 |
+| 64 | **163.644** | 2.557 |
+
+Every point is the median of two preregistered fresh-server attempts; the
+worst relative range was 1.46%. Each response returned 128 raw token IDs,
+cached-token reuse was zero, and no output collided with another base task's
+frozen oracle. Greedy output remains batch-shape-dependent. The reproduced
+c8-to-c16 drop is deliberately not smoothed. These are aggregate batch-wall
+rates, not queued TTFT or per-request latency. See the
+[evidence](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-r2-result.json).
+
 ## Certification gaps
 
-The remaining work is a tested host installation path, direct-read model
-verification helper, clean-host replay, and beginner recovery guide.
+The remaining work is a tested host installation path, clean-host replay,
+beginner recovery guide, exact active-context decode/prefill/TTFT curves, and
+queued TTFT/per-request latency.

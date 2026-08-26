@@ -1,0 +1,151 @@
+{
+  "attempts": [
+    {
+      "checks": {
+        "cached_tokens_all_zero": true,
+        "classification": true,
+        "complete_token_id_identity_all": true,
+        "completion_tokens_128_all": true,
+        "cross_base_oracle_collision_count_zero": true
+      },
+      "oracle_exact": {
+        "1": "1/1",
+        "2": "1/2",
+        "4": "2/4",
+        "8": "5/8",
+        "16": "9/16",
+        "32": "20/32",
+        "64": "36/64"
+      },
+      "qualification_sha256": "423bd7ef5ff342b3859258c07cfc4955785edb98952ce2c56405e9ece2c1dfb9",
+      "rates": {
+        "1": 32.426290229979195,
+        "2": 51.226188712358024,
+        "4": 85.78535488329153,
+        "8": 124.75320409636612,
+        "16": 84.45026885750333,
+        "32": 126.13677760972318,
+        "64": 163.69054517639756
+      },
+      "result_sha256": "9791413ed8fd0ce43fb2aef0827d1f5c95c74c2591e8c5ae58a68e8726eada47",
+      "root": "experiments/qwen38-27b-b70/data/qwen38-q8-tp2-http-concurrency-20260825-r2-attempt1"
+    },
+    {
+      "checks": {
+        "cached_tokens_all_zero": true,
+        "classification": true,
+        "complete_token_id_identity_all": true,
+        "completion_tokens_128_all": true,
+        "cross_base_oracle_collision_count_zero": true
+      },
+      "oracle_exact": {
+        "1": "1/1",
+        "2": "1/2",
+        "4": "2/4",
+        "8": "5/8",
+        "16": "9/16",
+        "32": "18/32",
+        "64": "36/64"
+      },
+      "qualification_sha256": "3a23506445d4a0b75fa343cd4ae8e43d26a03a1b206ad88fdcd1535ee161266f",
+      "rates": {
+        "1": 32.54718791217582,
+        "2": 51.97669210667188,
+        "4": 85.4050925575293,
+        "8": 126.0755540598697,
+        "16": 84.20699689323128,
+        "32": 125.52776895517273,
+        "64": 163.59786592481666
+      },
+      "result_sha256": "d360717dc0e04c1e9042b9d2d333c7b1dae47c6ba434ac8c825b31bea8bc0912",
+      "root": "experiments/qwen38-27b-b70/data/qwen38-q8-tp2-http-concurrency-20260825-r2-attempt2"
+    }
+  ],
+  "classification": "qualified-output-audited-http-concurrency",
+  "created_at_utc": "2026-08-26T02:34:58.687142+00:00",
+  "fresh_server_attempts": 2,
+  "label": "Qwen3.8 27B Q8_0 TP2 output-audited native HTTP concurrency",
+  "max_relative_range_percent": 10.0,
+  "oracle_digests_sha256": "06ab0b7fb679a11380c594888e542545d7de01dea2bc148b15076d7e05558094",
+  "points": [
+    {
+      "attempt_values_tok_s": [
+        32.426290229979195,
+        32.54718791217582
+      ],
+      "concurrent_users": 1,
+      "median_aggregate_tok_s": 32.48673907107751,
+      "median_per_user_tok_s": 32.48673907107751,
+      "relative_range_percent": 0.37214471397734394,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        51.226188712358024,
+        51.97669210667188
+      ],
+      "concurrent_users": 2,
+      "median_aggregate_tok_s": 51.60144040951495,
+      "median_per_user_tok_s": 25.800720204757475,
+      "relative_range_percent": 1.4544233423675228,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        85.78535488329153,
+        85.4050925575293
+      ],
+      "concurrent_users": 4,
+      "median_aggregate_tok_s": 85.59522372041042,
+      "median_per_user_tok_s": 21.398805930102604,
+      "relative_range_percent": 0.4442564774458985,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        124.75320409636612,
+        126.0755540598697
+      ],
+      "concurrent_users": 8,
+      "median_aggregate_tok_s": 125.41437907811792,
+      "median_per_user_tok_s": 15.67679738476474,
+      "relative_range_percent": 1.054384651284619,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        84.45026885750333,
+        84.20699689323128
+      ],
+      "concurrent_users": 16,
+      "median_aggregate_tok_s": 84.3286328753673,
+      "median_per_user_tok_s": 5.2705395547104565,
+      "relative_range_percent": 0.28848085872754003,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        126.13677760972318,
+        125.52776895517273
+      ],
+      "concurrent_users": 32,
+      "median_aggregate_tok_s": 125.83227328244796,
+      "median_per_user_tok_s": 3.9322585400764987,
+      "relative_range_percent": 0.4839844649261372,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        163.69054517639756,
+        163.59786592481666
+      ],
+      "concurrent_users": 64,
+      "median_aggregate_tok_s": 163.64420555060713,
+      "median_per_user_tok_s": 2.5569407117282363,
+      "relative_range_percent": 0.05663460632111592,
+      "stability_passed": true
+    }
+  ],
+  "reporting_boundary": "Every point is the median of exact fresh-server attempts. No interpolation or extrapolation. Sequential identity is reported separately from output isolation.",
+  "schema": "neural.download.http-concurrency-aggregate.v1"
+}
