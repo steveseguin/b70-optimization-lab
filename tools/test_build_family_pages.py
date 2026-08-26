@@ -23,6 +23,19 @@ SPEC.loader.exec_module(MODULE)
 
 
 class FamilyCoverageTest(unittest.TestCase):
+    def test_home_benchmark_tables_separate_weights_from_generation_mode(self) -> None:
+        index_html = (MODULE.ROOT / "index.html").read_text()
+        self.assertNotIn("Compression &amp; speed-up", index_html)
+        self.assertGreaterEqual(index_html.count(">Weights</abbr>"), 2)
+        self.assertGreaterEqual(index_html.count(">Generation</abbr>"), 2)
+        for mode in (
+            "Target-only &middot; MTP0",
+            "MTP &middot; depth 3",
+            "DFlash &middot; depth 11",
+            "DSpark &middot; depth 7",
+        ):
+            self.assertIn(mode, index_html)
+
     def test_home_picker_surfaces_existing_exact_32k_and_raw_aggregate_evidence(self) -> None:
         index_html = (MODULE.ROOT / "index.html").read_text()
         expected_context = {
