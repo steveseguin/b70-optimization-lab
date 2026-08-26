@@ -35,6 +35,8 @@ class FamilyCoverageTest(unittest.TestCase):
             "DSpark &middot; depth 7",
         ):
             self.assertIn(mode, index_html)
+        self.assertGreaterEqual(index_html.count("target-only MTP0"), 9)
+        self.assertIn("target-only / MTP0 = no draft", index_html)
 
     def test_home_picker_surfaces_existing_exact_32k_and_raw_aggregate_evidence(self) -> None:
         index_html = (MODULE.ROOT / "index.html").read_text()
