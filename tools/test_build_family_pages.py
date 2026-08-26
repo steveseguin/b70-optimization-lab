@@ -3225,14 +3225,14 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 16 matrices", overview_html)
-        self.assertIn("495/1,910 classified", overview_html)
+        self.assertIn("501/1,910 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "303", "measured"),
+            ("lab-measured", "308", "measured"),
             ("lab-screened", "32", "screened"),
-            ("quarantined", "96", "quarantined"),
+            ("quarantined", "97", "quarantined"),
             ("closed", "6", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,415", "missing"),
+            ("missing", "1,409", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3248,8 +3248,8 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("27 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 27)
+        self.assertIn("28 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 28)
         self.assertIn("Q4_K_M HTTP context × KV/graph", initial_html)
         self.assertIn("value=26.7217226139707 tok/s", initial_html)
         self.assertIn("value=23.221668353050664 tok/s", initial_html)
@@ -3288,6 +3288,10 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("value=12.157390534237836 tok/s", deferred_html)
         self.assertIn("value=29.763525310023436 tok/s", deferred_html)
         self.assertIn("value=26.782574825882012 tok/s", deferred_html)
+        self.assertIn('data-family-view="context-q38-tp1-autoround-mtp3-partial"', deferred_html)
+        self.assertIn("Qwen3.8 AutoRound TP1 eager MTP3 partial depth", deferred_html)
+        self.assertIn("value=13.250527400483348 tok/s", deferred_html)
+        self.assertIn("value=11.165397459018312 tok/s", deferred_html)
         e4m3_curve = next(
             item for item in family["series_measurements"]
             if item["id"] == "q38-f01e-autoround-tp1-eager-e4m3kv-exact-context-r1"
@@ -3374,6 +3378,61 @@ class FamilyCoverageTest(unittest.TestCase):
                 "vLLM XPU nightly e9d1398d9",
                 "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
             },
+        )
+        q38_mtp_cells, errors = MODULE.expand_coverage_contract(
+            contracts["qwen38-tp1-vllm-xpu-autoround-mtp-matrix"]
+        )
+        self.assertEqual(errors, [])
+        mtp3_measured = [
+            cell for cell in q38_mtp_cells
+            if cell.get("evidence_id")
+            == "q38-f01e-autoround-tp1-mtp3-eager-f16-exact-context-r1-grade-d"
+        ]
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in mtp3_measured],
+            [4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(all(
+            cell["state"] == "lab-measured"
+            and cell["selectors"]["mtp"] == 3
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "f16"
+            for cell in mtp3_measured
+        ))
+        mtp3_2k = next(
+            cell for cell in q38_mtp_cells
+            if cell["selectors"]["mtp"] == 3
+            and cell["selectors"]["active_context_tokens"] == 2048
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "f16"
+        )
+        self.assertEqual(mtp3_2k["state"], "quarantined")
+        self.assertIn("token-90 divergence", mtp3_2k["label"])
+        mtp3_x0 = next(
+            cell for cell in q38_mtp_cells
+            if cell["selectors"]["mtp"] == 3
+            and cell["selectors"]["active_context_tokens"] == 0
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "f16"
+        )
+        self.assertEqual(mtp3_x0["state"], "missing")
+        mtp3_result = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp3-f16-eager-depth-expansion-r1-result.json"
+        ).read_text())
+        self.assertEqual(
+            mtp3_result["metric_definition"]["published_decode_field"],
+            "conventional_99_interval_tok_s",
+        )
+        self.assertTrue(
+            mtp3_result["adjudication"]["whole_arm_fail_closed_receipt_preserved"]
+        )
+        self.assertFalse(
+            mtp3_result["adjudication"]["automatic_publication_authority"]
+        )
+        self.assertEqual(
+            mtp3_result["authority"]["protected_decode_values_unchanged"],
+            [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
         )
         self.assertIn("Qwen3.8 AutoRound TP1/TP2/TP4 HTTP context", deferred_html)
         self.assertIn("value=48.15370845841339 tok/s", deferred_html)

@@ -1,0 +1,48 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-mtp3-f16-eager-depth-partial-result.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp1-mtp3-f16-eager-depth-expansion-20260826-r1",
+  "raw_terminal_state": "quarantined-target-verification-failed",
+  "publication_state": "mixed-partial-grade-d-human-adjudicated",
+  "identity": {
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3"
+  },
+  "config": {"tp": 1, "cards": 1, "mtp": 3, "speculation_method": "qwen3_next_mtp", "num_speculative_tokens": 3, "graph": "off", "graph_mode": "off", "enforce_eager": true, "kv": "f16", "configured_max_context_tokens": 32896, "max_num_batched_tokens": 1024, "gpu_memory_utilization": 0.9, "prefix_caching": false, "pythonhashseed": 0},
+  "metric_definition": {
+    "published_decode_field": "conventional_99_interval_tok_s",
+    "published_decode_semantics": "first 100 timestamped token events over 99 inter-token intervals",
+    "historical_100_event_field_retained": true,
+    "historical_values_are_not_published_as_decode_tok_s": true
+  },
+  "points": [
+    {"x": 2048, "decode_tok_s": 10.428661741057745, "historical_100_event_tok_s": 10.534001758644186, "ttft_ms": 2369.0053780010203, "cached_tokens": 0, "completion_tokens": 128, "acceptance_rate": 0.5133333333333333, "accepted_tokens": 77.0, "drafted_tokens": 150.0, "output_token_ids_sha256": "921825efade0d24e902bdbaffecfde1275acf6afeb349d15f993f518b50f7446", "target_output_token_ids_sha256": "c606180877a26135511d7c4213c48c6107d20368e5d107aefe2b0de795ef4e89", "target_parity": false, "first_divergence": {"zero_based": 89, "one_based": 90, "candidate": 59178, "target": 16539}, "publication_state": "quarantined", "evidence_grade": "D", "raw_sha256": "26944d12a9af842dfc67c3cf0e7497fb95e16c75907df7ac9b38a717f14bfe6f", "verification_sha256": "1bbe7e4dc32b6adcc71ff3dd6ac14eb3bc3de9422a236c9f28f309a87c9b0df1"},
+    {"x": 4096, "decode_tok_s": 13.250527400483348, "historical_100_event_tok_s": 13.384371111599341, "ttft_ms": 2970.3801670111716, "cached_tokens": 0, "completion_tokens": 128, "acceptance_rate": 0.6991869918699187, "accepted_tokens": 86.0, "drafted_tokens": 123.0, "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0", "target_output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0", "target_parity": true, "first_divergence": null, "publication_state": "lab-measured", "evidence_grade": "D", "raw_sha256": "d5f7629d89e1ddb32ba41a043e57d778889b4e7fde2d1c8c05dd9356d47b5a56", "verification_sha256": "b0684d1e71ec0303ba8f79e4e1bc419e5cc075fccde830317cb9729a532c02c6"},
+    {"x": 8192, "decode_tok_s": 14.123076442666536, "historical_100_event_tok_s": 14.265733780471248, "ttft_ms": 5970.33788599947, "cached_tokens": 0, "completion_tokens": 128, "acceptance_rate": 0.7807017543859649, "accepted_tokens": 89.0, "drafted_tokens": 114.0, "output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53", "target_output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53", "target_parity": true, "first_divergence": null, "publication_state": "lab-measured", "evidence_grade": "D", "raw_sha256": "82f31fe6f4de5838f9c7181bf0b04bfadd3afc7d6d4810b5c118f845eb8b14c0", "verification_sha256": "a4ac63f7b5fe3c857fad2bab0940faaf5c3a5aa3f62a3c22088220a4e9e38aff"},
+    {"x": 16384, "decode_tok_s": 11.298582863750458, "historical_100_event_tok_s": 11.412709963384302, "ttft_ms": 12284.87772999506, "cached_tokens": 0, "completion_tokens": 128, "acceptance_rate": 0.6148148148148148, "accepted_tokens": 83.0, "drafted_tokens": 135.0, "output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7", "target_output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7", "target_parity": true, "first_divergence": null, "publication_state": "lab-measured", "evidence_grade": "D", "raw_sha256": "56ad1453cc989ac2e9a70f8181217b1d6a5bebab156d8b370af184b6a9e31791", "verification_sha256": "c7a7f8e8a9dd2dff57a1583c19fc86382c60ee94220202c6851ac3346d448a61"},
+    {"x": 24576, "decode_tok_s": 11.228402095832283, "historical_100_event_tok_s": 11.341820298820489, "ttft_ms": 18970.23649699986, "cached_tokens": 0, "completion_tokens": 128, "acceptance_rate": 0.6589147286821705, "accepted_tokens": 85.0, "drafted_tokens": 129.0, "output_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8", "target_output_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8", "target_parity": true, "first_divergence": null, "publication_state": "lab-measured", "evidence_grade": "D", "raw_sha256": "4f4a5f9dfe518ef76535d437fc322868657094117d2d65727889e903a5e0df26", "verification_sha256": "76ec028846184bac213d7ede8b3f8d5171774509baa3cb3630baa9fd5d81d981"},
+    {"x": 32768, "decode_tok_s": 11.165397459018312, "historical_100_event_tok_s": 11.278179251533649, "ttft_ms": 26063.397003003047, "cached_tokens": 0, "completion_tokens": 128, "acceptance_rate": 0.6074074074074074, "accepted_tokens": 82.0, "drafted_tokens": 135.0, "output_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786", "target_output_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786", "target_parity": true, "first_divergence": null, "publication_state": "lab-measured", "evidence_grade": "D", "raw_sha256": "99b3d7edc28b40a04b6563b8f7175e3c41f1b6b72e9133641c3e387f8fd842a1", "verification_sha256": "49c07166709f8455806bbf7fdc6e5b34ce2e915c458159b792dc70266141e9e9"}
+  ],
+  "quality": {"full_battery_passed": true, "exact_cases": 7, "repeat_runs": 8, "unique_repeat_hashes": 1, "long_context_needle_passed": true, "baseline_comparisons": 24, "cache_zero": true, "raw_sha256": "9d85363f7246bf503a34dacb330d7bef325635d1a321bca08ad041d3c607863f"},
+  "model_verification": {"status": "verified", "files_verified": 19, "direct_and_ordinary_paths_coherent": true, "raw_sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"},
+  "adjudication": {
+    "kind": "explicit-human-per-depth-coverage-adjudication",
+    "whole_arm_fail_closed_receipt_preserved": true,
+    "automatic_publication_authority": false,
+    "basis": "Five depths passed exact target-token parity, all six passed exact measurement and acceptance, and the full quality battery passed; the structurally divergent 2K cell remains quarantined.",
+    "measured_depths": [4096, 8192, 16384, 24576, 32768],
+    "quarantined_depths": [2048],
+    "missing_depths": [0],
+    "evidence_grade": "D"
+  },
+  "cleanup": {"status": "clean", "terminal_receipt_sha256": "a66087460ac153fd16e9c5aca9fc6f1618592ca23cdbdc0f5aee2b76d287f55d", "arm_result_sha256": "a371f6d8b0db79534200cecd1759f15f87dcb4922e124498e56d17ad4df64c8c"},
+  "authority": {"site_measured_cells": 5, "site_quarantined_cells": 1, "zero_context_cells": 0, "other_mtp_graph_kv_tp_or_runtime_cells": 0, "headline_or_protected_replacement": false, "localmaxxing_submission": false, "protected_decode_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]},
+  "tracked_inputs": {
+    "preregistration": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp3-f16-eager-depth-expansion-r1-prereg.json", "sha256": "17903966dbf8fa7e078c35b2366fa396c520a038fec23ec5dbd291ed3c2d433b"},
+    "runner": {"path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp1-mtp3-f16-eager-depth-expansion-r1.sh", "sha256": "8bc94bbcc84560c2409d470031d912a9e6df2413ae631dc27e7ac6de38b3f17a"}
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-mtp3-f16-eager-depth-expansion-20260826-r1"
+}
