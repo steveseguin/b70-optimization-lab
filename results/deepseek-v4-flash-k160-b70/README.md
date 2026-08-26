@@ -14,6 +14,10 @@ medians were `80.820052`, `76.900178`, and `78.287226 tok/s`, making
   [`repro/deepseek-v4-flash-k160-b70-80tps-20260718/`](../../repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md)
 - Record note:
   [`2026-07-18-sharded-target-argmax-record.md`](../../experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-sharded-target-argmax-record.md)
+- Structured record:
+  [`dspark-sharded-target-argmax-record-20260718.json`](../../experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json)
+- Immutable raw-file receipt:
+  [`dspark-sharded-target-argmax-record-20260718-raw-receipt.json`](../../experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718-raw-receipt.json)
 - Closeout and reopen conditions:
   [`2026-07-21-deepseek-v4-flash-frontier-closeout.md`](../../experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md)
 - Validity rules: [`validity-gates.md`](validity-gates.md)
