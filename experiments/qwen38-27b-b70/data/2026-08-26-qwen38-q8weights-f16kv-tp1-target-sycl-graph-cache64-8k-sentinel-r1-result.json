@@ -1,0 +1,151 @@
+{
+  "schema": "neural.download.qwen38-q8weights-f16kv-target-sycl-graph-cache64-8k-sentinel-result.v1",
+  "campaign_id": "qwen38-q8weights-f16kv-tp1-target-sycl-graph-cache64-8k-sentinel-20260826-r1",
+  "classification": "completed-valid-diagnostic-mechanism-and-quality-sentinel",
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-q8weights-f16kv-tp1-target-sycl-graph-cache64-8k-sentinel-20260826-r1",
+  "tracked_inputs": {
+    "preregistration": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-target-sycl-graph-cache64-8k-sentinel-r1-prereg.json",
+      "sha256": "42b575a8eebacdb76c80c311807f166b2c2e817d8ef5e334ba4a8e2d54f5f044"
+    },
+    "runner": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-q8weights-f16kv-tp1-target-sycl-graph-cache64-8k-sentinel-r1.py",
+      "sha256": "ca8b591336253c2b7464e9cef13a235099ab9621910b6cca016e472a4041ca95"
+    },
+    "terminal_validator": {
+      "path": "experiments/qwen38-27b-b70/scripts/validate-20260826-qwen38-q8weights-f16kv-tp1-target-sycl-graph-cache64-8k-sentinel-r1.py",
+      "sha256": "2992325c6d2eecb0fd71483e961d64f7c879ae1040c15a230c239b55186b7c0c"
+    },
+    "runner_tests": {
+      "path": "experiments/qwen38-27b-b70/scripts/test_qwen38_q8weights_f16kv_tp1_target_sycl_graph_cache64_8k_sentinel_r1.py",
+      "sha256": "db459a1a7326a793b090836c612d2bbc83476ce8b9d26715ed0ff67e9f50b3dd"
+    }
+  },
+  "raw_files": [
+    {"path": "candidate-graph-on-cache64/arm-result.json", "bytes": 195, "sha256": "77261fa90af2cf262e1d6855662d05c5e647afa73b5354df2fd107e8d0bb3fa4"},
+    {"path": "candidate-graph-on-cache64/cleanup.json", "bytes": 106, "sha256": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179"},
+    {"path": "candidate-graph-on-cache64/depth-8192/exact-depth.json", "bytes": 15669, "sha256": "a3439561b34b14530cfd2c2359c9b008375e5f9f8e957e0f5ef480d8878f0b5e"},
+    {"path": "candidate-graph-on-cache64/depth-8192/exact-depth.stdout.json", "bytes": 15669, "sha256": "a3439561b34b14530cfd2c2359c9b008375e5f9f8e957e0f5ef480d8878f0b5e"},
+    {"path": "candidate-graph-on-cache64/graph-evidence.json", "bytes": 381, "sha256": "1760bc444301384765b50f291603e29141d4162c5445f123df3bbe28db13501d"},
+    {"path": "candidate-graph-on-cache64/models.json", "bytes": 1139, "sha256": "d51fb3e7e579d51c6485a057473c6b911070649bcecbe87adb5e0957312f6b36"},
+    {"path": "candidate-graph-on-cache64/quality.json", "bytes": 7630, "sha256": "0964b080cca16d8751e14918c57f82069e0c50fd56870383336ab67e37a6ad66"},
+    {"path": "candidate-graph-on-cache64/quality.stderr.log", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": "candidate-graph-on-cache64/quality.stdout.json", "bytes": 531, "sha256": "9d386bc9f9cd21eaa4c083d45693b68df6f27468d990ffbc6b3b2936bebc86bf"},
+    {"path": "candidate-graph-on-cache64/server.log", "bytes": 55180, "sha256": "fa3223de9dc1108869dd3b5e23e714cb60d2d86db986795a879e671daa1f6fb9"},
+    {"path": "control-graph-off-cache0/arm-result.json", "bytes": 195, "sha256": "77261fa90af2cf262e1d6855662d05c5e647afa73b5354df2fd107e8d0bb3fa4"},
+    {"path": "control-graph-off-cache0/cleanup.json", "bytes": 106, "sha256": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179"},
+    {"path": "control-graph-off-cache0/depth-8192/exact-depth.json", "bytes": 15669, "sha256": "56d5d7d867eb41a8affbab6cc9f9eac782a3e2a4ab1928a95236838e5e61c7af"},
+    {"path": "control-graph-off-cache0/depth-8192/exact-depth.stdout.json", "bytes": 15669, "sha256": "56d5d7d867eb41a8affbab6cc9f9eac782a3e2a4ab1928a95236838e5e61c7af"},
+    {"path": "control-graph-off-cache0/models.json", "bytes": 1139, "sha256": "3029fb0016f19b478c00442f459fabc1f27ca816690aece2b8d5c2762134702b"},
+    {"path": "control-graph-off-cache0/quality.json", "bytes": 7613, "sha256": "dcecfa387b4f8bcc83e898b50423b465c7a9fb60e06008d4ae6d63573998d516"},
+    {"path": "control-graph-off-cache0/quality.stderr.log", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": "control-graph-off-cache0/quality.stdout.json", "bytes": 529, "sha256": "0227271572e066f12be91f15c819e1745359b3feff3ac6f39f7bead63550a4cd"},
+    {"path": "control-graph-off-cache0/server.log", "bytes": 52766, "sha256": "fae156cc1eff15f86e443475a5fcdaaf2cdaf8a79d1ad5b8491dc6dbb3a1897b"},
+    {"path": "identity.json", "bytes": 6415, "sha256": "e2b63637b4172f7262d1d7305ecdb4620670140d447d996639c8ed2d9e9f957f"},
+    {"path": "terminal-receipt.json", "bytes": 2286, "sha256": "553dd5f10358760c421eec7670f5bd0a75a5984e1c7c66f2e8ac71b35b79b892"},
+    {"path": "validator.stdout.json", "bytes": 2286, "sha256": "553dd5f10358760c421eec7670f5bd0a75a5984e1c7c66f2e8ac71b35b79b892"}
+  ],
+  "identity": {
+    "git_head_and_origin_main": "54c1288f6cd24900644ae3a211586da13820af91",
+    "model": {
+      "path": "/mnt/usb-models/models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+      "repository": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "quantization": "Q8_0",
+      "size_bytes": 28595763552,
+      "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+    },
+    "runtime": {
+      "source_base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+      "binary_sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b",
+      "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2",
+      "effective_dso_canonical_sha256": "5cf0ba76d9784072e245e5fe67772c52b01cc028034687c9689313f6de6ef17c"
+    },
+    "selectors": {"tp": 1, "mtp": 0, "active_context_tokens": 8192, "kv": "f16", "fit": "off", "transport": "HTTP /v1/completions"},
+    "arm_delta": {
+      "control-graph-off-cache0": {"GGML_SYCL_ENABLE_GRAPH": "0", "GGML_SYCL_GRAPH_CACHE_SIZE": "0"},
+      "candidate-graph-on-cache64": {"GGML_SYCL_ENABLE_GRAPH": "1", "GGML_SYCL_GRAPH_CACHE_SIZE": "64"}
+    }
+  },
+  "measurements": {
+    "control-graph-off-cache0": {
+      "serving_decode_tok_s_99_interval": 19.17044886972126,
+      "time_to_first_token_s": 9.238952548999805,
+      "completion_tokens": 128,
+      "prompt_tokens": 8192,
+      "cached_tokens": 0,
+      "output_token_ids_sha256": "adf9344f835b00dd7d74d0e68ddfbfe65d14f15ffdbea0c0e0127099cd06b54c",
+      "text_sha256": "a5869fffec9d7970a7deab36c2ff83c80d2badd227349ebbee6e28ac56a3b723"
+    },
+    "candidate-graph-on-cache64": {
+      "serving_decode_tok_s_99_interval": 18.66215581878247,
+      "time_to_first_token_s": 9.674812845012639,
+      "completion_tokens": 128,
+      "prompt_tokens": 8192,
+      "cached_tokens": 0,
+      "output_token_ids_sha256": "adf9344f835b00dd7d74d0e68ddfbfe65d14f15ffdbea0c0e0127099cd06b54c",
+      "text_sha256": "a5869fffec9d7970a7deab36c2ff83c80d2badd227349ebbee6e28ac56a3b723"
+    }
+  },
+  "single_sentinel_performance_observation": {
+    "classification": "adverse-non-authoritative-no-speed-floor",
+    "graph_on_relative_percent": -2.651440529082305,
+    "speed_authority": false
+  },
+  "quality": {
+    "both_full_batteries_passed": true,
+    "exact_cases_per_arm": 7,
+    "repeat_runs_per_arm": 2,
+    "unique_repeat_hashes_per_arm": 1,
+    "long_context_actual_prompt_tokens": 25200,
+    "long_context_api_prompt_tokens": 25212,
+    "cache_zero_requests_per_arm": 10,
+    "exact_case_hashes": [
+      "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+      "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+      "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+      "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+      "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+      "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61"
+    ],
+    "repeat_sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+    "long_context_sha256": "1583fb313bb7b240d09b6419481427b0d55f5b21d4ec5c5317a343d667744ad1",
+    "graph_off_on_output_parity": true
+  },
+  "graph_mechanism": {
+    "passed": true,
+    "requested": 263,
+    "replayed": 263,
+    "direct_replay": 202,
+    "minimum_direct_replays": 120,
+    "cache_entries": 61,
+    "cache_limit": 64,
+    "cache_hit": 202,
+    "cache_miss": 61,
+    "cache_full": 0,
+    "created": 61,
+    "recorded": 61,
+    "compatibility_rejected": 0,
+    "device_unsupported": 0,
+    "updated": 0,
+    "recreated": 0
+  },
+  "validation": {
+    "terminal_status": "completed-valid-q8weights-f16kv-graph-cache64-8k-sentinel",
+    "terminal_checks_passed": 18,
+    "terminal_checks_total": 18,
+    "terminal_and_validator_stdout_equal": true,
+    "clean_shutdown_both_arms": true
+  },
+  "authority": {
+    "site_cells": 0,
+    "full_graph_curve": false,
+    "seven_depth_full_curve_preregistration": true,
+    "other_cells": 0,
+    "protected_or_headline_replacement": false,
+    "localmaxxing_submission": false
+  },
+  "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
+  "interpretation": "The Q8_0-weight/F16-KV cache64 graph arm preserved exact 8K output and usage parity with the graph-off same-binary control, passed a second full quality battery with identical output hashes, cleaned up, and produced 202 direct replays out of 263 requests. The graph-on arm was 2.651440529082305% slower in this single diagnostic observation, which has no speed authority. This sentinel authorizes zero site cells and only a separate, reviewed seven-depth graph-curve preregistration."
+}
