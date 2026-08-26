@@ -1,0 +1,173 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp4-mtp4-f16-eager-quality-recovery-result.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-quality-recovery-20260826-r1",
+  "status": "passed-quality-clean-recovery-human-adjudicated-grade-c",
+  "identity": {
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3"
+  },
+  "config": {
+    "tp": 4,
+    "cards": 4,
+    "mtp": 4,
+    "speculation": "native-mtp",
+    "num_speculative_tokens": 4,
+    "graph": "off",
+    "graph_mode": "off",
+    "enforce_eager": true,
+    "kv": "f16",
+    "parallel_slots": 1,
+    "configured_max_context_tokens": 32896,
+    "gpu_memory_utilization": 0.6,
+    "prefix_caching": false,
+    "pythonhashseed": 0
+  },
+  "workload": "One-slot vLLM OpenAI-compatible HTTP completions; exact submitted token depths; 128 returned IDs; isolated draft counters; conventional first-100 decode over 99 intervals",
+  "axis": "active_context_tokens",
+  "published_points": [
+    {
+      "x": 4096,
+      "decode_tok_s": 21.97463738631815,
+      "historical_100_event_decode_tok_s": 22.196603420523385,
+      "ttft_ms": 4248.559083003784,
+      "effective_prompt_throughput_proxy_tok_s": 964.0915708071259,
+      "cached_tokens": 0,
+      "drafted_tokens": 148,
+      "accepted_tokens": 90,
+      "draft_acceptance_rate": 0.6081081081081081,
+      "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0",
+      "raw_sha256": "391e038b889a8a5efbda9f7798c6a97aaacf508f5e99ca599118887eb65af058",
+      "site_action": "add-grade-c-cell"
+    },
+    {
+      "x": 16384,
+      "decode_tok_s": 23.789706915057792,
+      "historical_100_event_decode_tok_s": 24.03000698490686,
+      "ttft_ms": 6114.677273013513,
+      "effective_prompt_throughput_proxy_tok_s": 2679.454576009934,
+      "cached_tokens": 0,
+      "drafted_tokens": 156,
+      "accepted_tokens": 88,
+      "draft_acceptance_rate": 0.5641025641025641,
+      "output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7",
+      "raw_sha256": "95fc1c04eb23d7a5eeee9d9951c80b5e8d5e553c530c68d3f38dcdfb85b17f2c",
+      "site_action": "add-grade-c-cell"
+    },
+    {
+      "x": 24576,
+      "decode_tok_s": 25.753606722449813,
+      "historical_100_event_decode_tok_s": 26.01374416409072,
+      "ttft_ms": 9387.60368200019,
+      "effective_prompt_throughput_proxy_tok_s": 2617.9204866862956,
+      "cached_tokens": 0,
+      "drafted_tokens": 144,
+      "accepted_tokens": 92,
+      "draft_acceptance_rate": 0.6388888888888888,
+      "output_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8",
+      "raw_sha256": "f92b25d5767de2710d7bc5e9b9cbc0e0c22f5d2583f2dd9fac5f3a27196cd2da",
+      "site_action": "add-grade-c-cell"
+    }
+  ],
+  "retained_structural_states": [
+    {
+      "x": 0,
+      "state": "missing",
+      "reason": "No exact zero-active-context fixture was run; no point is inferred."
+    },
+    {
+      "x": 2048,
+      "state": "quarantined",
+      "reason": "The prior expansion diverged from the same-topology target at token 90. Recovery intentionally did not retest it; no speed is published.",
+      "first_divergence_one_based": 90,
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-depth-expansion-r1-result.json"
+    },
+    {
+      "x": 8192,
+      "state": "quarantined",
+      "reason": "Recovery exactly reproduced the prior MTP4 candidate, which diverges from the same-topology TP4/MTP0 target at token 99. No speed is published.",
+      "first_divergence_one_based": 99,
+      "candidate_output_token_ids_sha256": "dd31856f45269d222efe0f6f5f1ac9342b6c9ae55e5ce9129fc02b27abdb7e8e",
+      "target_output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-8k-sentinel-r1-result.json"
+    },
+    {
+      "x": 32768,
+      "state": "closed",
+      "reason": "The prior expansion hit the current-profile XPU GDN speculative-token shape fatal after 126 target-matching prefix tokens and never produced a complete response. Recovery intentionally excluded 32K; no speed is published.",
+      "fatal": "RuntimeError: Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-depth-expansion-r1-result.json"
+    }
+  ],
+  "quality": {
+    "grade": "C",
+    "all_four_exact_depth_and_acceptance_gates_passed": true,
+    "objective_passed": true,
+    "same_topology_baseline_passed": true,
+    "exact_cases": 7,
+    "repeat_runs": 8,
+    "unique_repeat_hashes": 1,
+    "baseline_comparisons": 24,
+    "long_context_needle_passed": true,
+    "cache_zero_all_16_quality_requests": true,
+    "same_topology_target_parity_depths": [4096, 16384, 24576],
+    "parent_reproduction_only_depths": [8192]
+  },
+  "adjudication": {
+    "raw_terminal_state": "passed-quality-clean-recovery",
+    "valid_depths": [4096, 16384, 24576],
+    "quarantined_depths": [2048, 8192],
+    "runtime_fatal_closed_depths": [32768],
+    "explicitly_excluded_recovery_depths": [2048, 32768],
+    "human_per_depth_publication": true,
+    "automatic_publication_authority": false,
+    "diagnostic_speed_publication": false,
+    "existing_8k_site_state_retained": true
+  },
+  "cleanup": {
+    "status": "clean",
+    "terminal_receipt_sha256": "3c2db71be33872fbe6fbd2ec30c1595be240839b38b577061c653c7ea06807cc",
+    "arm_result_sha256": "2993b1466b34896a1b4d71034c987ea1eac249108f082c9e92b500544a2602fd",
+    "quality_sha256": "c7e5e7e4b7b5754f0e3d4fa32f289b1508d13580c615b19ef795a7a7c25b6f58",
+    "model_verification_sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd",
+    "rank_cache_isolation_sha256": "227f75f7f7397569a0a0e11204ce78285a058d00f49949ec58063eb329481c3c",
+    "campaign_container_absent_at_sealing": true,
+    "port_closed_at_sealing": true
+  },
+  "authority": {
+    "qualified_raw_cells": 3,
+    "new_site_measured_cells": 3,
+    "new_site_quarantined_cells": 1,
+    "new_site_closed_cells": 1,
+    "retained_existing_site_cells": 1,
+    "zero_context_cells": 0,
+    "other_mtp_or_graph_cells": 0,
+    "diagnostic_speed_cells": 0,
+    "headline_or_protected_replacement": false,
+    "existing_8k_speed_replacement": false,
+    "localmaxxing_submission": false,
+    "protected_decode_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]
+  },
+  "tracked_inputs": {
+    "preregistration": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-quality-recovery-r1-prereg.json",
+      "sha256": "3ec2008c280f72d54e0c4d575401f7a8c75baa3f7cd08b2101a45ec74f66315c"
+    },
+    "runner": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-quality-recovery-r1.sh",
+      "sha256": "4f3f72df2b983bb42d543e5822e081ae476e3f3409bda281ac795cbd668d70e9"
+    },
+    "prior_depth_diagnostic": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-depth-expansion-r1-result.json",
+      "sha256": "2e4cd6d033007dd1d05491833b240e42be3154df69a63499ec21cd612851ba5a"
+    },
+    "prior_8k_quarantine": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-8k-sentinel-r1-result.json",
+      "sha256": "9692e9cee5fbc0e412dec4742804c60c6ac6c9271461f8c69b04b4bc7b22ba60"
+    }
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-quality-recovery-20260826-r1"
+}
