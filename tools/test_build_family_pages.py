@@ -3225,14 +3225,14 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 16 matrices", overview_html)
-        self.assertIn("489/1,910 classified", overview_html)
+        self.assertIn("495/1,910 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "297", "measured"),
+            ("lab-measured", "303", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "96", "quarantined"),
             ("closed", "6", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,421", "missing"),
+            ("missing", "1,415", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3283,8 +3283,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("value=11.919327130453762 tok/s", deferred_html)
         self.assertIn("value=30.075429359128265 tok/s", deferred_html)
         self.assertIn('data-family-view="context-q38-tp1-autoround-eager-kv"', deferred_html)
+        self.assertIn("Qwen3.8 AutoRound TP1 current-image KV/graph", deferred_html)
         self.assertIn("value=12.106811568755516 tok/s", deferred_html)
         self.assertIn("value=12.157390534237836 tok/s", deferred_html)
+        self.assertIn("value=29.763525310023436 tok/s", deferred_html)
+        self.assertIn("value=26.782574825882012 tok/s", deferred_html)
         e4m3_curve = next(
             item for item in family["series_measurements"]
             if item["id"] == "q38-f01e-autoround-tp1-eager-e4m3kv-exact-context-r1"
@@ -3299,6 +3302,17 @@ class FamilyCoverageTest(unittest.TestCase):
             [12.106811568755516, 11.986857838637341, 12.085894881224178,
              12.178365844454287, 12.15958526221534, 12.157390534237836],
         )
+        e4m3_piecewise_curve = next(
+            item for item in family["series_measurements"]
+            if item["id"] == "q38-f01e-autoround-tp1-piecewise-e4m3kv-exact-context-r1"
+        )
+        self.assertEqual(e4m3_piecewise_curve["config"]["graph_mode"], "PIECEWISE")
+        self.assertEqual(e4m3_piecewise_curve["config"]["kv"], "fp8_e4m3")
+        self.assertEqual(
+            [point["decode_tok_s"] for point in e4m3_piecewise_curve["points"]],
+            [29.763525310023436, 28.9442310610282, 28.663718207928127,
+             28.028757083522407, 27.319292359315934, 26.782574825882012],
+        )
         q38_target_contract = next(
             item for item in family["coverage_contracts"]
             if item["id"] == "qwen38-tp1-vllm-xpu-target-matrix"
@@ -3309,6 +3323,23 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(e4m3_rule["label"], "D12.09 · E4M3 KV · Grade C")
         self.assertEqual(e4m3_rule["match"]["active_context_tokens"], 8192)
+        e4m3_piecewise_cells = [
+            cell for cell in q38_vllm_target
+            if cell.get("evidence_id")
+            == "q38-f01e-autoround-tp1-piecewise-e4m3kv-exact-context-r1"
+        ]
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in e4m3_piecewise_cells],
+            [2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(all(
+            cell["state"] == "lab-measured"
+            and cell["selectors"]["tp"] == 1
+            and cell["selectors"]["mtp"] == 0
+            and cell["selectors"]["graph_mode"] == "PIECEWISE"
+            and cell["selectors"]["kv"] == "fp8_e4m3"
+            for cell in e4m3_piecewise_cells
+        ))
         current_e5m2_evidence = (
             "experiments/qwen38-27b-b70/data/"
             "2026-08-26-qwen38-official-f01e-autoround-tp1-e5m2kv-init-canary-r1-result.json"

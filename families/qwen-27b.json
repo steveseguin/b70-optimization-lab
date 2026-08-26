@@ -503,25 +503,25 @@
     },
     {
       "id": "qwen38-27b-autoround-int4-tp1-f01e-e4m3kv-depth-grade-c",
-      "label": "Qwen3.8 AutoRound INT4 · TP1 current-image E4M3-KV depth curve",
+      "label": "Qwen3.8 AutoRound INT4 · TP1 current-image E4M3-KV eager/PIECEWISE depth",
       "revision": "qwen3.8-27b",
       "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
       "quantization": "AutoRound INT4",
       "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
       "cards": 1,
-      "status": "quality-battery-qualified-grade-c-http-curve",
+      "status": "quality-battery-qualified-grade-c-http-curves",
       "evidence_level": "B70-measured Grade C",
-      "coverage": ["target-only MTP0", "HTTP serving", "exact context 2K-32K", "FP8 E4M3 KV", "eager", "full quality battery", "x0 missing"],
+      "coverage": ["target-only MTP0", "HTTP serving", "exact context 2K-32K", "FP8 E4M3 KV", "eager and PIECEWISE", "full quality battery", "x0 missing"],
       "grades": {
         "evidence": {
           "grade": "C",
-          "scope": "AutoRound INT4 TP1 eager serving at six exact nonzero active-context depths with FP8 E4M3 KV on the current official image",
-          "basis": "All six cache-zero exact-depth receipts and the complete quality battery passed on f01e/ac7509e2. This replaces the current-image singleton publication and supersedes the e9d output-divergence closure only for these six current-runtime cells; the older immutable-runtime evidence stays historical and no graph, TP, MTP, other-KV, x0, headline, or descendant authority transfers.",
+          "scope": "AutoRound INT4 TP1 eager and PIECEWISE serving at six exact nonzero active-context depths each with FP8 E4M3 KV on the current official image",
+          "basis": "All twelve cache-zero exact-depth receipts passed, and each arm passed the complete frozen quality battery on f01e/ac7509e2. The PIECEWISE curve supersedes only its non-publishing singleton diagnostic; the eager curve and older immutable-runtime evidence remain distinct, and no other graph mode, TP, MTP, KV, runtime, x0, headline, or descendant authority transfers.",
           "reviewed_at": "2026-08-26",
-          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-r1-result.json"]
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-r1-result.json", "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-r1-result.json"]
         }
       },
-      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-r1-result.json"
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-r1-result.json"
     },
     {
       "id": "qwen38-27b-official-fp8-tp1-eager-depth-grade-c",
@@ -3820,6 +3820,35 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-r1-result.json"
     },
     {
+      "id": "q38-f01e-autoround-tp1-piecewise-e4m3kv-exact-context-r1",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "variant": "AutoRound INT4 target-only TP1 PIECEWISE · FP8 E4M3 KV",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp1-vllm-xpu-target-only-v1",
+      "runtime_snapshot_id": "f01e24f6-ac7509e2-official-image",
+      "speculation_method": "none",
+      "profile_id": "q38-f01e-autoround-tp1-piecewise-e4m3kv-depth-grade-c-r1",
+      "measurement_class": "conventional-99-interval-exact-depth-openai-http-serving-grade-c",
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "graph_mode": "PIECEWISE", "graph_capture_sizes": [1], "kv": "fp8_e4m3", "configured_max_context_tokens": 32896, "prefix_caching": false},
+      "workload": "One-slot vLLM OpenAI-compatible HTTP completions; six exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 2048, "decode_tok_s": 29.763525310023436, "ttft_ms": 1383.3610949950526, "cached_tokens": 0, "output_token_ids_sha256": "c606180877a26135511d7c4213c48c6107d20368e5d107aefe2b0de795ef4e89"},
+        {"x": 4096, "decode_tok_s": 28.9442310610282, "ttft_ms": 2534.876361998613, "cached_tokens": 0, "output_token_ids_sha256": "a3d7ad63a22cfb897d9d7f69952e30e2036617776d18fb4c8a9be1513da522cd"},
+        {"x": 8192, "decode_tok_s": 28.663718207928127, "ttft_ms": 5269.396286996198, "cached_tokens": 0, "output_token_ids_sha256": "80363e2d6f67a92484cb7e1f347cf7765520b6f5a3ac8d1b1a3573d3cddcba67"},
+        {"x": 16384, "decode_tok_s": 28.028757083522407, "ttft_ms": 11340.360561007401, "cached_tokens": 0, "output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7"},
+        {"x": 24576, "decode_tok_s": 27.319292359315934, "ttft_ms": 18166.281376004918, "cached_tokens": 0, "output_token_ids_sha256": "1c3ddf94bb9acdcab20064b923112bafb086c93b76cc4a7d43ace3f1a91b923d"},
+        {"x": 32768, "decode_tok_s": 26.782574825882012, "ttft_ms": 25756.289586992352, "cached_tokens": 0, "output_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786"}
+      ],
+      "quality": "All six exact-depth gates and the full quality battery passed: 7 exact cases, 8 deterministic repeats with one hash, the 8K needle, 24 baseline comparisons, and cache zero.",
+      "caveat": "Current-runtime Grade C PIECEWISE curve. It supersedes only the non-publishing 8K singleton diagnostic and infers no FULL_AND_PIECEWISE, eager, TP, MTP, other-KV, other-runtime, or x0 cell.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-r1-result.json"
+    },
+    {
       "id": "q38-b2dd-tp1-graph-f16-exact-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -5014,13 +5043,15 @@
     },
     {
       "id": "context-q38-tp1-autoround-eager-kv",
-      "title": "Qwen3.8 AutoRound TP1 eager KV",
-      "subtitle": "Grade C · exact cache-zero HTTP serving at 2K-32K · same current AutoRound weights and official f01e/ac7509e2 image · TP1 · MTP0 · eager · F16 and FP8 E4M3 KV remain separately labeled · x=0 remains missing",
+      "title": "Qwen3.8 AutoRound TP1 current-image KV/graph",
+      "subtitle": "Grade C · exact cache-zero HTTP serving at 2K-32K · same current AutoRound weights and official f01e/ac7509e2 image · TP1 · MTP0 · eager and PIECEWISE · F16 and FP8 E4M3 KV remain separately labeled · x=0 remains missing",
       "x_label": "active context tokens",
       "metrics": ["decode_tok_s", "ttft_ms"],
       "series": [
         {"label": "F16 KV · eager", "measurement_ids": ["q38-f01e-autoround-tp1-eager-f16-exact-context-r3"]},
-        {"label": "FP8 E4M3 KV · eager", "measurement_ids": ["q38-f01e-autoround-tp1-eager-e4m3kv-exact-context-r1"]}
+        {"label": "FP8 E4M3 KV · eager", "measurement_ids": ["q38-f01e-autoround-tp1-eager-e4m3kv-exact-context-r1"]},
+        {"label": "F16 KV · PIECEWISE", "measurement_ids": ["q38-f01e-autoround-tp1-piecewise-f16-exact-context-r3"]},
+        {"label": "FP8 E4M3 KV · PIECEWISE", "measurement_ids": ["q38-f01e-autoround-tp1-piecewise-e4m3kv-exact-context-r1"]}
       ]
     },
     {
@@ -6044,6 +6075,12 @@
       {"id": "measured-f01e-autoround-eager-e4m3kv-exact-16k", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "fp8_e4m3"}, "state": "lab-measured", "label": "D12.18 · E4M3 KV · Grade C", "reason": "Exact current f01e/ac7509e2 eager E4M3-KV cache-zero depth cell with full quality; no other selector transfers.", "evidence_id": "q38-f01e-autoround-tp1-eager-e4m3kv-exact-context-r1", "point_x": 16384, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-e4m3kv-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-f01e-autoround-eager-e4m3kv-exact-24k", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "off", "kv": "fp8_e4m3"}, "state": "lab-measured", "label": "D12.16 · E4M3 KV · Grade C", "reason": "Exact current f01e/ac7509e2 eager E4M3-KV cache-zero depth cell with full quality; no other selector transfers.", "evidence_id": "q38-f01e-autoround-tp1-eager-e4m3kv-exact-context-r1", "point_x": 24576, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-e4m3kv-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-f01e-autoround-eager-e4m3kv-exact-32k", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "fp8_e4m3"}, "state": "lab-measured", "label": "D12.16 · E4M3 KV · Grade C", "reason": "Exact current f01e/ac7509e2 eager E4M3-KV cache-zero depth cell with full quality; no other selector transfers.", "evidence_id": "q38-f01e-autoround-tp1-eager-e4m3kv-exact-context-r1", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-e4m3kv-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-e4m3kv-exact-2k", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "PIECEWISE", "kv": "fp8_e4m3"}, "state": "lab-measured", "label": "D29.76 · PIECEWISE E4M3 KV · Grade C", "reason": "Exact current f01e/ac7509e2 PIECEWISE E4M3-KV cache-zero depth cell with full quality; no other selector transfers.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-e4m3kv-exact-context-r1", "point_x": 2048, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-e4m3kv-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-e4m3kv-exact-4k", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "PIECEWISE", "kv": "fp8_e4m3"}, "state": "lab-measured", "label": "D28.94 · PIECEWISE E4M3 KV · Grade C", "reason": "Exact current f01e/ac7509e2 PIECEWISE E4M3-KV cache-zero depth cell with full quality; no other selector transfers.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-e4m3kv-exact-context-r1", "point_x": 4096, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-e4m3kv-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-e4m3kv-exact-8k", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "PIECEWISE", "kv": "fp8_e4m3"}, "state": "lab-measured", "label": "D28.66 · PIECEWISE E4M3 KV · Grade C", "reason": "Exact current f01e/ac7509e2 PIECEWISE E4M3-KV cache-zero depth cell with full quality; supersedes only the non-publishing singleton diagnostic.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-e4m3kv-exact-context-r1", "point_x": 8192, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-e4m3kv-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-e4m3kv-exact-16k", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "PIECEWISE", "kv": "fp8_e4m3"}, "state": "lab-measured", "label": "D28.03 · PIECEWISE E4M3 KV · Grade C", "reason": "Exact current f01e/ac7509e2 PIECEWISE E4M3-KV cache-zero depth cell with full quality; no other selector transfers.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-e4m3kv-exact-context-r1", "point_x": 16384, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-e4m3kv-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-e4m3kv-exact-24k", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "PIECEWISE", "kv": "fp8_e4m3"}, "state": "lab-measured", "label": "D27.32 · PIECEWISE E4M3 KV · Grade C", "reason": "Exact current f01e/ac7509e2 PIECEWISE E4M3-KV cache-zero depth cell with full quality; no other selector transfers.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-e4m3kv-exact-context-r1", "point_x": 24576, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-e4m3kv-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-e4m3kv-exact-32k", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "PIECEWISE", "kv": "fp8_e4m3"}, "state": "lab-measured", "label": "D26.78 · PIECEWISE E4M3 KV · Grade C", "reason": "Exact current f01e/ac7509e2 PIECEWISE E4M3-KV cache-zero depth cell with full quality; no other selector transfers.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-e4m3kv-exact-context-r1", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-e4m3kv-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
       {
         "id": "measured-b2dd-graph-f16-exact-context-2048",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "FULL_AND_PIECEWISE", "kv": "f16"},
