@@ -4,7 +4,10 @@
 import json
 import importlib.util
 import pathlib
+import sys
 import unittest
+
+sys.dont_write_bytecode = True
 
 REPO = pathlib.Path(__file__).resolve().parents[3]
 LANE = REPO / "experiments/qwen38-27b-b70"
