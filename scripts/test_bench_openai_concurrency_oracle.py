@@ -36,6 +36,12 @@ class ConcurrencyOracleTests(unittest.TestCase):
         self.assertEqual(len({row["id"] for row in prompts}), 3)
         self.assertEqual(len({row["prompt"] for row in prompts}), 3)
 
+    def test_request_id_prefix_uses_shared_safe_encoding(self) -> None:
+        self.assertEqual(
+            MODULE._BASE.safe_request_id("candidate lane / R2"),
+            "candidate-lane-R2",
+        )
+
     def test_summary_uses_batch_wall_and_per_prompt_oracle(self) -> None:
         oracle = {
             "a": {"sha256": "x"},

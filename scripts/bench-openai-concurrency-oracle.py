@@ -205,6 +205,11 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--request-extra-json", default="{}")
+    parser.add_argument(
+        "--request-id-prefix",
+        default="concurrency-oracle",
+        help="Stable prefix for X-Request-Id values used by this run.",
+    )
     parser.add_argument("--return-token-ids", action="store_true")
     parser.add_argument(
         "--oracle-digests",
@@ -218,6 +223,9 @@ def main() -> int:
     request_extra = json.loads(args.request_extra_json)
     if not isinstance(request_extra, dict):
         raise SystemExit("--request-extra-json must be an object")
+    request_id_prefix = _BASE.safe_request_id(args.request_id_prefix)
+    if not request_id_prefix:
+        raise SystemExit("--request-id-prefix must contain a safe request-ID character")
 
     suite_meta, base_prompts = _BASE.load_suite(args.suite)
     prompts = expand_prompts(base_prompts, max(args.concurrency))
@@ -257,7 +265,7 @@ def main() -> int:
     else:
         oracle_rows = []
         for index, item in enumerate(prompts):
-            row = request(item, f"oracle-{index:03d}")
+            row = request(item, f"{request_id_prefix}-oracle-{index:03d}")
             row["prompt_id"] = item["id"]
             row["prompt_sha256"] = hashlib.sha256(
                 item["prompt"].encode("utf-8")
@@ -274,7 +282,9 @@ def main() -> int:
                 prompts=selected,
                 concurrency=concurrency,
                 request=request,
-                request_prefix=f"c{concurrency}-r{repeat}",
+                request_prefix=(
+                    f"{request_id_prefix}-c{concurrency}-r{repeat}"
+                ),
             )
             batches.append(
                 summarize_batch(
@@ -325,6 +335,7 @@ def main() -> int:
             "max_tokens": args.max_tokens,
             "seed": args.seed,
             "request_extra": request_extra,
+            "request_id_prefix": request_id_prefix,
             "return_token_ids": args.return_token_ids,
             "oracle_digests": str(args.oracle_digests) if args.oracle_digests else None,
             "oracle_digests_sha256": oracle_digest_sha256,
