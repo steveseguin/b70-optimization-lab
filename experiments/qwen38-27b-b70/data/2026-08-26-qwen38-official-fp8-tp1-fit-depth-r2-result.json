@@ -1,0 +1,143 @@
+{
+  "schema": "neural.download.qwen38-official-fp8-tp1-fit-depth-result.v1",
+  "campaign_id": "qwen38-official-fp8-tp1-fit-depth-20260826-r2",
+  "status": "passed-bounded-fit-depth",
+  "classification": "grade-c-exact-depth-serving-at-first-supported-official-fp8-tp1-capacity",
+  "identity": {
+    "model_repository": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "model_manifest_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9"
+  },
+  "config": {
+    "tp": 1,
+    "cards": 1,
+    "mtp": 0,
+    "speculation": "none",
+    "graph": "off",
+    "graph_mode": "off",
+    "enforce_eager": true,
+    "kv": "f16",
+    "kv_cache_runtime_value": "auto",
+    "gpu_memory_utilization": 0.96,
+    "parallel_slots": 1,
+    "block_size": 64,
+    "max_num_batched_tokens": 2048,
+    "prefix_caching": false,
+    "configured_max_context_tokens": 8448
+  },
+  "model_verification": {
+    "status": "verified",
+    "files_verified": 66,
+    "bytes_verified_each_read_path": 30866866928,
+    "direct_mode": "strict O_DIRECT; no fallback",
+    "ordinary_mode": "complete unbuffered ordinary read after all direct reads",
+    "paths_coherent": true,
+    "raw_sha256": "39097b3b61cbd577a2f32c40990469900a37b6551295403a28baa4e6dbe4405a"
+  },
+  "fit": {
+    "first_supported_depth": 8192,
+    "context_capacity_tokens": 8448,
+    "explicit_fit_failure": false,
+    "smaller_arms_skipped_after_first_success": true
+  },
+  "workload": "One-slot vLLM OpenAI-compatible HTTP completions; exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+  "axis": "active_context_tokens",
+  "cells": [
+    {
+      "x": 2048,
+      "decode_tok_s": 10.752574826796211,
+      "ttft_ms": 2289.1607579949778,
+      "cached_tokens": 0,
+      "completion_tokens": 128,
+      "output_token_ids_sha256": "f504c0a691e466943c82b270087c30b09e5b39b11af600878cc3ddcc0f913105",
+      "raw_sha256": "00d7f60ae00b3608edb386940a49f2c5e1c371a101420cfb14e22378dac083e7"
+    },
+    {
+      "x": 4096,
+      "decode_tok_s": 10.760381473147484,
+      "ttft_ms": 4591.800662004971,
+      "cached_tokens": 0,
+      "completion_tokens": 128,
+      "output_token_ids_sha256": "0f078254be0567e42025404c942fead803aec5e93225809777b7c1149be42a3d",
+      "raw_sha256": "799fd30c8d83ca1d85fd43c28edfa90f5dc2709448d8b506a33ceeb64ab594d2"
+    },
+    {
+      "x": 8192,
+      "decode_tok_s": 10.741772379915982,
+      "ttft_ms": 9333.341902005486,
+      "cached_tokens": 0,
+      "completion_tokens": 128,
+      "output_token_ids_sha256": "1d6bc48d9693f0977cc5154df5b1333cc9db4303e5b9444a9195e5ab4bd19905",
+      "raw_sha256": "6112a49499df6f271f8b6575c7d30d1908dee433a717c47ac000f2f2dc9efd92"
+    }
+  ],
+  "quality": {
+    "grade": "C",
+    "scope": "deterministic repeated-token exact-depth serving shape",
+    "all_depth_gates_passed": true,
+    "cache_zero_all_cells": true,
+    "exact_128_returned_tokens_all_cells": true,
+    "natural_prose_battery": false,
+    "full_semantic_quality_battery": false
+  },
+  "cleanup": {
+    "terminal_status": "completed-valid-bounded-fit-depth",
+    "terminal_receipt_sha256": "0c698d5e33dc151c879c82aeed42e46ed846aa331e4e5e104a85912a070ef156",
+    "container_absent_after_run": true,
+    "port_19456_closed_after_run": true
+  },
+  "authority": {
+    "site_cells": 3,
+    "tp2_or_tp4_cells": 0,
+    "graph_on_cells": 0,
+    "speculative_cells": 0,
+    "headline_or_protected_replacement": false,
+    "localmaxxing_submission": false,
+    "interpolation_or_extrapolation": false,
+    "protected_decode_values_unchanged": [
+      71.45427094575045,
+      30.329809361830037,
+      49.05894025767351,
+      71.9001988117144
+    ]
+  },
+  "tracked_inputs": {
+    "preregistration": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp1-fit-depth-r2-prereg.json",
+      "sha256": "6141898eb5a6b80a3288aa0097df6da8787b70a1fadedfc156940ba3f2d5e3ee"
+    },
+    "runner": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-fp8-tp1-fit-depth-r2.sh",
+      "sha256": "32ebbf62acec2edbc66cce841ec5687a66055f790e8f657ee1478ef8d8430f46"
+    }
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-fp8-tp1-fit-depth-20260826-r2",
+  "raw_artifacts": {
+    "file_count": 20,
+    "sha256": {
+      "fit-8k/arm-result.json": "aa696a2c1f9fbf64b36abf43a72cca15e6706e9f4000457fe651c4f4e110f926",
+      "fit-8k/container-id.txt": "d448c7eee1d0c6cf64e47a13093a0cd7e11b1b3c5df98ac95d59de30df5d96eb",
+      "fit-8k/depth-2048.json": "00d7f60ae00b3608edb386940a49f2c5e1c371a101420cfb14e22378dac083e7",
+      "fit-8k/depth-2048.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "fit-8k/depth-2048.stdout.json": "00d7f60ae00b3608edb386940a49f2c5e1c371a101420cfb14e22378dac083e7",
+      "fit-8k/depth-4096.json": "799fd30c8d83ca1d85fd43c28edfa90f5dc2709448d8b506a33ceeb64ab594d2",
+      "fit-8k/depth-4096.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "fit-8k/depth-4096.stdout.json": "799fd30c8d83ca1d85fd43c28edfa90f5dc2709448d8b506a33ceeb64ab594d2",
+      "fit-8k/depth-8192.json": "6112a49499df6f271f8b6575c7d30d1908dee433a717c47ac000f2f2dc9efd92",
+      "fit-8k/depth-8192.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "fit-8k/depth-8192.stdout.json": "6112a49499df6f271f8b6575c7d30d1908dee433a717c47ac000f2f2dc9efd92",
+      "fit-8k/health.json": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "fit-8k/models.json": "424a17d681d42eb3ba70fc6c08084a54076bf6c1a5ef3891a01b035df669a7fd",
+      "fit-8k/server-command.txt": "935d350a896eec02bde2423eaebe301a40d7df2f6a2bbe7d9185e6de72edbc26",
+      "fit-8k/server.log": "631bf2dc06d90cd4cf06fc980211895865e55d9949f7f827909af2b815e9284b",
+      "image-inspect.json": "c72d922681857221d627e2c0e9766dc94cda526d9df4a8ee9d0d21ea945fa604",
+      "input-sha256sums.txt": "4b6311d53ed03b1239b6f78875d2683194326bd6c7e51710f67f480121265359",
+      "model-verification.json": "39097b3b61cbd577a2f32c40990469900a37b6551295403a28baa4e6dbe4405a",
+      "model-verification.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "terminal-receipt.json": "0c698d5e33dc151c879c82aeed42e46ed846aa331e4e5e104a85912a070ef156"
+    }
+  }
+}

@@ -3050,6 +3050,49 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertFalse(q38_screen_result["authority"]["speed_claim"])
 
+        q38_vllm_target, _ = MODULE.expand_coverage_contract(
+            contracts["qwen38-tp1-vllm-xpu-target-matrix"]
+        )
+        official_fp8_eager = [
+            cell for cell in q38_vllm_target
+            if cell.get("evidence_id")
+            == "q38-official-fp8-tp1-f16kv-eager-http-context-r2-grade-c"
+        ]
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in official_fp8_eager],
+            [2048, 4096, 8192],
+        )
+        self.assertTrue(all(
+            cell["state"] == "lab-measured"
+            and cell["selectors"]["artifact_id"]
+            == "qwen38-27b-official-fp8-017b9c7"
+            and cell["selectors"]["tp"] == 1
+            and cell["selectors"]["mtp"] == 0
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "f16"
+            and cell["packet_id"]
+            == "qwen38-27b-official-fp8-tp1-eager-depth-grade-c"
+            for cell in official_fp8_eager
+        ))
+        official_fp8_result = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp1-fit-depth-r2-result.json"
+        ).read_text())
+        official_fp8_measurement = series[
+            "q38-official-fp8-tp1-f16kv-eager-http-context-r2-grade-c"
+        ]
+        self.assertEqual(
+            [point["decode_tok_s"] for point in official_fp8_measurement["points"]],
+            [cell["decode_tok_s"] for cell in official_fp8_result["cells"]],
+        )
+        self.assertFalse(
+            official_fp8_result["authority"]["headline_or_protected_replacement"]
+        )
+        self.assertEqual(
+            official_fp8_result["authority"]["protected_decode_values_unchanged"],
+            [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
+        )
+
         rendered = MODULE.family_page(family)
         overview = re.search(
             r'<section class="contract-overview".*?</section>',
@@ -3059,12 +3102,12 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 14 matrices", overview_html)
-        self.assertIn("356/1,807 classified", overview_html)
+        self.assertIn("359/1,807 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "261", "measured"),
+            ("lab-measured", "264", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,451", "missing"),
+            ("missing", "1,448", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3080,8 +3123,8 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("24 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 24)
+        self.assertIn("25 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 25)
         self.assertIn("Q4_K_M HTTP context × KV/graph", initial_html)
         self.assertIn("value=26.7217226139707 tok/s", initial_html)
         self.assertIn("value=23.221668353050664 tok/s", initial_html)
