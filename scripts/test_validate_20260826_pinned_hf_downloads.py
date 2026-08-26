@@ -68,6 +68,22 @@ class ValidatorTests(unittest.TestCase):
             )
             self.assertEqual(MODULE.active_downloads(Path(temporary)), ["123"])
 
+    def test_selected_target_ignores_another_active_download(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            proc = Path(temporary) / "123"
+            proc.mkdir()
+            qwen, deepseek = MODULE.TARGETS
+            (proc / "cmdline").write_bytes(
+                b"/usr/bin/hf\0download\0" + qwen["repo_id"].encode() + b"\0"
+            )
+            self.assertEqual(MODULE.active_downloads(Path(temporary), (deepseek,)), [])
+
+    def test_single_target_plan_contains_only_selection(self):
+        with mock.patch("builtins.print") as output:
+            self.assertEqual(MODULE.main(["--target", MODULE.TARGETS[1]["id"]]), 0)
+        plan = json.loads(output.call_args.args[0])
+        self.assertEqual([target["id"] for target in plan["targets"]], [MODULE.TARGETS[1]["id"]])
+
     def test_strict_json_rejects_duplicate_keys(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "duplicate.json"

@@ -143,7 +143,10 @@ def load_and_pin_tree(target: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return files
 
 
-def active_downloads(proc_root: Path = Path("/proc")) -> list[str]:
+def active_downloads(
+    proc_root: Path = Path("/proc"), targets: tuple[dict[str, Any], ...] | None = None
+) -> list[str]:
+    targets = TARGETS if targets is None else targets
     matches: list[str] = []
     for cmdline in proc_root.glob("[0-9]*/cmdline"):
         try:
@@ -154,16 +157,19 @@ def active_downloads(proc_root: Path = Path("/proc")) -> list[str]:
         if not has_hf_download:
             continue
         joined = "\0".join(args)
-        if any(target["repo_id"] in joined or str(target["root"]) in joined for target in TARGETS):
+        if any(target["repo_id"] in joined or str(target["root"]) in joined for target in targets):
             matches.append(cmdline.parent.name)
     return sorted(matches)
 
 
-def reject_live_downloads(proc_root: Path = Path("/proc")) -> None:
-    live = active_downloads(proc_root)
+def reject_live_downloads(
+    proc_root: Path = Path("/proc"), targets: tuple[dict[str, Any], ...] | None = None
+) -> None:
+    targets = TARGETS if targets is None else targets
+    live = active_downloads(proc_root, targets)
     incomplete = [
         path
-        for target in TARGETS
+        for target in targets
         for path in (target["root"] / ".cache/huggingface/download").rglob("*.incomplete")
     ]
     if live or incomplete:
@@ -336,14 +342,14 @@ def validate_index_and_headers(target: dict[str, Any], files: dict[str, dict[str
         raise ValidationError(f"{target['id']}: safetensors payload total mismatch")
 
 
-def frozen_plan() -> dict[str, Any]:
+def frozen_plan(targets: tuple[dict[str, Any], ...] = TARGETS) -> dict[str, Any]:
     return {
         "ack": ACK,
         "evidence_root": str(EVIDENCE_ROOT),
         "sequential": True,
         "targets": [
             {key: (str(value) if isinstance(value, Path) else value) for key, value in target.items()}
-            for target in TARGETS
+            for target in targets
         ],
     }
 
@@ -356,23 +362,31 @@ def main(argv: list[str] | None = None) -> int:
         "--hf-command", default="uv tool uvx --from huggingface_hub hf",
         help="tokenless hf CLI prefix used only for the pinned dry-run",
     )
+    parser.add_argument(
+        "--target",
+        action="append",
+        choices=[target["id"] for target in TARGETS],
+        help="validate only the selected pinned target; repeat to select more than one",
+    )
     args = parser.parse_args(argv)
+    selected_ids = set(args.target or ())
+    targets = tuple(target for target in TARGETS if not selected_ids or target["id"] in selected_ids)
     if not args.execute:
-        print(json.dumps(frozen_plan(), indent=2, sort_keys=True))
+        print(json.dumps(frozen_plan(targets), indent=2, sort_keys=True))
         return 0
     if args.ack != ACK:
         raise ValidationError(f"--execute requires --ack {ACK}")
 
     # Fail before creating evidence or doing any expensive reads.
-    reject_live_downloads()
-    trees = [(target, load_and_pin_tree(target)) for target in TARGETS]
+    reject_live_downloads(targets=targets)
+    trees = [(target, load_and_pin_tree(target)) for target in targets]
     for target, files in trees:
         validate_inventory(target, files)
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     out = EVIDENCE_ROOT / stamp
     out.mkdir(parents=True, exist_ok=False)
-    summary: dict[str, Any] = {"format": "b70-pinned-hf-post-download-validation-v1", "status": "running", "plan": frozen_plan()}
+    summary: dict[str, Any] = {"format": "b70-pinned-hf-post-download-validation-v1", "status": "running", "plan": frozen_plan(targets)}
     try:
         for target, files in trees:
             validate_dry_run(target, args.hf_command, out)
