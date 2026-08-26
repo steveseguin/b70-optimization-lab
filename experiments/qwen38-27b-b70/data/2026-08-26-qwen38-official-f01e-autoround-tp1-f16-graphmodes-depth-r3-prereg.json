@@ -1,0 +1,88 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-graphmodes-depth-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3",
+  "state": "preregistered-not-launched",
+  "purpose": "Fill the twelve highest-value remaining Qwen3.8 AutoRound TP1/MTP0/F16 exact-context cells: graph off and PIECEWISE at 2K, 4K, 8K, 16K, 24K, and 32K, without changing the protected FULL_AND_PIECEWISE profile or any historical speed.",
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "image_id": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 1,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0",
+    "mtp_depth": 0,
+    "kv_cache_dtype": "float16",
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "prefix_cache": false,
+    "pythonhashseed": 0
+  },
+  "arms": [
+    {
+      "id": "eager-f16",
+      "graph_mode": "off",
+      "server_delta": ["--enforce-eager"],
+      "expected_startup": ["enforce_eager=True"],
+      "forbidden_startup": ["Graph capturing finished"]
+    },
+    {
+      "id": "piecewise-f16",
+      "graph_mode": "PIECEWISE",
+      "environment": {"VLLM_XPU_ENABLE_XPU_GRAPH": "1"},
+      "server_delta": ["--compilation-config", "{\"cudagraph_mode\":\"PIECEWISE\",\"cudagraph_capture_sizes\":[1],\"max_cudagraph_capture_size\":1}"],
+      "expected_startup": ["enforce_eager=False", "Capturing CUDA graphs (mixed prefill-decode, PIECEWISE)", "Graph capturing finished"],
+      "forbidden_startup": ["Capturing CUDA graphs (decode, FULL)"]
+    }
+  ],
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [2048, 4096, 8192, 16384, 24576, 32768],
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "depth_zero": "missing; configured capacity and quality prompts do not fill it"
+  },
+  "quality_contract": {
+    "helper": "scripts/qwen38-text-quality-suite.py",
+    "baseline": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp1-mtp0-f16-graph-seed0-natural-eos-replay-a-baseline-quality/quality.json",
+    "baseline_sha256": "738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18",
+    "full_pass": "seven exact cases, eight-repeat one-hash determinism, 8K needle, 24 baseline comparisons, and cache zero",
+    "classification": "An arm with exact depth receipts but a nonzero quality helper result is screened/quarantined for review, never silently discarded and never promoted as fully quality-qualified. Each exact-depth receipt retains its own measurement gate."
+  },
+  "frozen_input_sha256": {
+    "model_manifest": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "model_verifier": "5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9",
+    "depth_helper": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067",
+    "quality_helper": "67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d"
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-r3.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3",
+    "ports": [19466, 19467],
+    "ack": "RUN qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_server_at_a_time": true,
+    "r1_prelaunch_abort": "R1 created only its evidence/cache roots and was interrupted during complete model verification after a live-origin mismatch failed inside command substitution without propagating. No container or GPU service launched; R2 fixed that propagation.",
+    "r2_harness_closeout": "Both R2 server identities and full quality batteries passed, but all depth helper invocations failed before requests because --context-capacity was omitted. R3 adds only --context-capacity 32896 and uses fresh identities."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "historical_replacement_allowed": false,
+    "protected_full_and_piecewise_cells_are_untouched": true,
+    "new_values_are_additive_profile-specific_evidence": true,
+    "e4m3_next_gate": "Reopen only as an eager 8K sentinel because the older nightly was output-divergent.",
+    "e5m2_next_gate": "Reopen only as an init/canary sentinel because the older nightly rejected this dtype on XPU."
+  }
+}
