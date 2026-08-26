@@ -1,0 +1,115 @@
+{
+  "schema": "neural.download.qwen38-q8weights-q8kv-graph-cache64-8k-sentinel-negative.v1",
+  "campaign_id": "qwen38-q8weights-q8kv-tp1-target-sycl-graph-cache64-8k-sentinel-20260826-r1",
+  "status": "failed-closed",
+  "classification": "bounded-negative-q8weights-q8kv-sycl-graph-cache64-long-context-quality-crash",
+  "completed_at_utc": "2026-08-26T09:17:20.228681+00:00",
+  "preregistration": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-target-sycl-graph-cache64-8k-sentinel-r1-prereg.json",
+    "sha256": "6b4d66165128949ceef2cd01a2ec882ad8c1e5336a358392d662c54ed0aff5a3"
+  },
+  "identity": {
+    "git_head": "8ae38e423b690cf11541c045a4d3f2c853e34bd0",
+    "origin_main": "8ae38e423b690cf11541c045a4d3f2c853e34bd0",
+    "model_path": "/mnt/usb-models/models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "target_quantization": "Q8_0",
+    "target_kv": "q8_0",
+    "tp": 1,
+    "mtp": 0,
+    "fit": "off",
+    "graph_runtime_binary_sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b",
+    "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2"
+  },
+  "matched_8k": {
+    "control_graph_off_cache0": {
+      "gate_passed": true,
+      "serving_decode_tok_s_99_interval": 15.618717159021681,
+      "cached_tokens": 0
+    },
+    "candidate_graph_on_cache64": {
+      "gate_passed": true,
+      "serving_decode_tok_s_99_interval": 15.36081896962535,
+      "cached_tokens": 0
+    },
+    "parity": {
+      "output_token_ids": true,
+      "output_token_ids_sha256": "c58c7f49909bd0d4c9206f0ba0a4c8b086368344ec7b9bcf3a9ed53e6d956337",
+      "text": true,
+      "text_sha256": "3e2aea9d3f0b985c28344f43f29e393067c6dec05f19c5406809677ab0498e02",
+      "usage": true,
+      "usage": {"completion_tokens": 128, "prompt_tokens": 8192, "prompt_tokens_details": {"cached_tokens": 0}, "total_tokens": 8320},
+      "returned_prompt_identity": true
+    },
+    "interpretation": "The exact 8K matched request passed and was token/text/usage-identical. These diagnostic measurements do not authorize a site or performance cell because the preregistered dual-quality sentinel failed."
+  },
+  "quality": {
+    "control_graph_off_cache0": {
+      "pass_all": true,
+      "exact_cases_passed": 7,
+      "repeat_runs": 2,
+      "repeat_unique_hashes": 1,
+      "long_context_passed": true,
+      "long_context_requested_tokens": 27200,
+      "long_context_actual_prompt_tokens": 25200,
+      "cache_zero_requests": 10
+    },
+    "candidate_graph_on_cache64": {
+      "pass_all": false,
+      "quality_json_created": false,
+      "failure_stage": "long_context_case during prompt processing after 8192 tokens",
+      "client_failure": "http.client.RemoteDisconnected: Remote end closed connection without response",
+      "server_failure": "wait cannot be called for a queue which is recording to a command graph",
+      "source_failure": "CHECK_TRY_ERROR(qptr->wait()) in ggml_sycl_fattn_kv_buffers::kv_buffer::ensure_half at ggml/src/ggml-sycl/fattn-buffers.cpp:23",
+      "backtrace_path": "ggml_sycl_flash_attn_ext_mma -> ggml_sycl_flash_attn_ext -> ggml_sycl_compute_forward -> ggml_backend_sycl_graph_compute_impl",
+      "classification": "Q8_0-KV long-context FlashAttention buffer conversion attempts a forbidden queue wait while command-graph recording is active"
+    }
+  },
+  "mechanism": {
+    "candidate_terminal_graph_summary_present": false,
+    "candidate_graph_evidence_json_present": false,
+    "reason": "The candidate aborted before orderly shutdown and graph-summary extraction; do not infer graph accounting from the partial server lifetime."
+  },
+  "cleanup": {
+    "control_graph_off_cache0": {"forced_kill": false, "port_closed": true, "render_node_idle": true, "server_survivor": false},
+    "candidate_graph_on_cache64": {"forced_kill": false, "port_closed": true, "render_node_idle": true, "server_survivor": false},
+    "terminal_receipt_present": false
+  },
+  "raw_artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-q8weights-q8kv-tp1-target-sycl-graph-cache64-8k-sentinel-20260826-r1",
+    "file_count": 18,
+    "files": {
+      "candidate-graph-on-cache64/arm-result.json": {"bytes": 935, "sha256": "573b3e066180d4df839f2791582b2e22ed5edb5498079cbeedb6516cc5291e20"},
+      "candidate-graph-on-cache64/cleanup.json": {"bytes": 106, "sha256": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179"},
+      "candidate-graph-on-cache64/depth-8192/exact-depth.json": {"bytes": 15656, "sha256": "c9d139e9c83643492e46a126ba829170a88173b6bab058720d47aadbd3e1d176"},
+      "candidate-graph-on-cache64/depth-8192/exact-depth.stdout.json": {"bytes": 15656, "sha256": "c9d139e9c83643492e46a126ba829170a88173b6bab058720d47aadbd3e1d176"},
+      "candidate-graph-on-cache64/models.json": {"bytes": 1135, "sha256": "03b3298d9863fe2ff0104ec730f78f63c32101635b48305f29b8bac053563ba8"},
+      "candidate-graph-on-cache64/quality.stderr.log": {"bytes": 2904, "sha256": "ddf8862dc456c5c6b86313e3689201f5e3548741cdd1101c5355797151b8f037"},
+      "candidate-graph-on-cache64/quality.stdout.json": {"bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      "candidate-graph-on-cache64/server.log": {"bytes": 57454, "sha256": "1caac2a5ac4b20d5d9e63b8994924cefc698e2eaf8437ed7c6c527994fcda263"},
+      "control-graph-off-cache0/arm-result.json": {"bytes": 195, "sha256": "77261fa90af2cf262e1d6855662d05c5e647afa73b5354df2fd107e8d0bb3fa4"},
+      "control-graph-off-cache0/cleanup.json": {"bytes": 106, "sha256": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179"},
+      "control-graph-off-cache0/depth-8192/exact-depth.json": {"bytes": 15655, "sha256": "985667fffd59e279cad3d2fd67904996324a61eccfe9f0bd3b37bb831a4b05f6"},
+      "control-graph-off-cache0/depth-8192/exact-depth.stdout.json": {"bytes": 15655, "sha256": "985667fffd59e279cad3d2fd67904996324a61eccfe9f0bd3b37bb831a4b05f6"},
+      "control-graph-off-cache0/models.json": {"bytes": 1135, "sha256": "1aeb942de0cad98a269e0679a4e1fcb5bc277be7ad2a83240d602bdca677bdba"},
+      "control-graph-off-cache0/quality.json": {"bytes": 7601, "sha256": "74b5503e009d9ea7ee251931cae8b53bcf3118b2e88510fc15ec0ae1da047346"},
+      "control-graph-off-cache0/quality.stderr.log": {"bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      "control-graph-off-cache0/quality.stdout.json": {"bytes": 527, "sha256": "19cfa14efaba6d84fa508a83b1ad6a76569bd611b45b6e1f3b68b4636b57e5f7"},
+      "control-graph-off-cache0/server.log": {"bytes": 52759, "sha256": "f6d320e6356285579676b1ca8b0f2867f5cdde90d65f47e25ecfbd34f355642a"},
+      "identity.json": {"bytes": 6160, "sha256": "8b2093c7d11695668af6e151b2f2eca1b6f57765410450af603cde52f67db4db"}
+    },
+    "missing_by_design_or_failure": ["candidate-graph-on-cache64/quality.json", "candidate-graph-on-cache64/graph-evidence.json", "terminal-receipt.json"]
+  },
+  "frozen_authority": {
+    "site_cells": 0,
+    "performance_cells": 0,
+    "full_q8kv_graph_curve_design_closed": true,
+    "seven_depth_q8kv_graph_curve_authorized": false,
+    "graph_off_q8kv_curve_changed": false,
+    "f16_kv_paths_changed": false,
+    "protected_or_headline_replacement": false,
+    "localmaxxing_submission": false,
+    "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]
+  },
+  "scope_boundary": "This negative closes only the current Q8_0-weight/Q8_0-KV TP1/MTP0 cache64 command-graph full-quality/full-curve design. It does not invalidate the passed Q8_0-KV graph-off curve or transfer any claim to F16 KV, other quantizations, TP2/TP4, speculation, or another graph implementation."
+}
