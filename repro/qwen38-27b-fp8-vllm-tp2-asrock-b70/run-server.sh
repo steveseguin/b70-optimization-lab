@@ -9,10 +9,12 @@ port="${PORT:-18087}"
 max_num_seqs="${MAX_NUM_SEQS:-4}"
 max_model_len="${MAX_MODEL_LEN:-4096}"
 max_num_batched_tokens="${MAX_NUM_BATCHED_TOKENS:-256}"
+ccl_p2p_access="${CCL_P2P_ACCESS:-0}"
 
 [[ "${max_num_seqs}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_NUM_SEQS must be positive\n' >&2; exit 1; }
 [[ "${max_model_len}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_MODEL_LEN must be positive\n' >&2; exit 1; }
 [[ "${max_num_batched_tokens}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_NUM_BATCHED_TOKENS must be positive\n' >&2; exit 1; }
+[[ "${ccl_p2p_access}" == 0 || "${ccl_p2p_access}" == 1 ]] || { printf 'CCL_P2P_ACCESS must be 0 or 1\n' >&2; exit 1; }
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
@@ -47,7 +49,7 @@ exec docker run --rm --name "${container}" \
     -e CCL_ZE_IPC_EXCHANGE=pidfd \
     -e CCL_SEND=direct \
     -e CCL_RECV=direct \
-    -e CCL_TOPO_P2P_ACCESS=0 \
+    -e CCL_TOPO_P2P_ACCESS="${ccl_p2p_access}" \
     -e CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD=4294967296 \
     -e CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD=4294967296 \
     -e CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD=4294967296 \

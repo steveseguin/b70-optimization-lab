@@ -87,22 +87,24 @@ and [`result note`](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8
 A separate target-only/MTP0 service profile retained the same model, image,
 TP2 topology, FP16 KV, prefix-cache policy, and size-one graph while fixing
 maximum model length 4,096, maximum active sequences 64, and maximum batched
-tokens 256. Two preregistered fresh-server attempts measured each point:
+tokens 256. Its concurrency wrapper enables direct oneCCL P2P access; the
+single-slot and depth profiles retain their captured P2P-off identity. Two
+preregistered fresh-server attempts measured each point:
 
 | concurrent HTTP users | aggregate tok/s | per-user tok/s | TTFT p50 / p95 ms | queued |
 | ---: | ---: | ---: | ---: | :---: |
-| 1 | 21.554729 | 21.554729 | 96.669 / 96.669 | no |
-| 2 | 41.371500 | 20.685750 | 125.962 / 178.579 | no |
-| 4 | 80.966535 | 20.241634 | 232.083 / 232.298 | no |
-| 8 | 155.050071 | 19.381259 | 294.478 / 295.145 | no |
-| 16 | 280.827699 | 17.551731 | 310.737 / 449.855 | no |
-| 32 | 469.849149 | 14.682786 | 495.173 / 837.908 | no |
-| 64 | 695.792088 | 10.871751 | 889.839 / 1,744.033 | no |
+| 1 | 21.557059 | 21.557059 | 95.048 / 95.048 | no |
+| 2 | 41.424196 | 20.712098 | 122.743 / 170.950 | no |
+| 4 | 81.299381 | 20.324845 | 211.000 / 211.286 | no |
+| 8 | 157.990884 | 19.748860 | 267.133 / 267.680 | no |
+| 16 | 293.363030 | 18.335189 | 262.556 / 391.232 | no |
+| 32 | 504.387101 | 15.762097 | 426.066 / 728.501 | no |
+| 64 | 774.394144 | 12.099908 | 768.749 / 1,525.973 | no |
 
 All responses returned 128 complete raw token IDs and zero cached prompt
 tokens; no generated digest collided with a frozen sequential oracle belonging
-to another base task. The worst aggregate range was `0.261%` and the worst
-latency range was `9.423%`. Greedy output may vary with batch shape, so the
+to another base task. The worst aggregate range was `0.525%` and the worst
+latency range was `4.404%`. Greedy output may vary with batch shape, so the
 gate proves completion and output isolation rather than sequential token
 identity.
 
@@ -120,9 +122,9 @@ OUT_DIR=/path/to/new-attempt \
 
 Stop it with `docker stop -t 20 qwen38-fp8-tp2-concurrency`, launch a fresh
 one, and use a different `OUT_DIR` for the second attempt. The
-[qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-confirmation-r5-result.md),
-[structured aggregate](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-confirmation-r5-result.json),
-[frozen preregistration](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-confirmation-r5-prereg.json),
+[qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.md),
+[structured aggregate](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json),
+[frozen preregistration](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-prereg.json),
 [compact oracle](../../experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-oracle-pilot-20260826-r1-attempt1/oracle-digests.json),
 and exact [request suite](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json)
 are all in this repository. No point is interpolated or extrapolated.
@@ -229,7 +231,8 @@ never interrupt the engine while graph initialization is still in progress.
 - PIECEWISE graph capture limited to request size 1
 - oneCCL direct send/receive, TCP loopback OFI, pidfd IPC, simple collective
   thresholds pinned high
-- `CCL_TOPO_P2P_ACCESS=0`: forcing `1` changed decode by only `-0.011%`
+- `CCL_TOPO_P2P_ACCESS=0` for the single-slot/depth identities; the concurrency
+  wrapper selects `1`, which raised qualified c64 aggregate throughput 11.30%
 - `FULL_DECODE_ONLY` was quality-clean but `1.618%` slower; retain PIECEWISE
 
 The 2026-08-16 nightly (`8efa13b70`, XPU kernels `0.1.13.2`) was also

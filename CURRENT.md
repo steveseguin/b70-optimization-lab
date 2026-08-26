@@ -936,13 +936,15 @@ the official-FP8 TP2 tuple.
 The first output-audited HTTP concurrency profile established a four-slot
 control at `81.086716 tok/s` for c4. A preregistered capacity screen then found
 that active service slots—not model compute—were the limit. The p32
-confirmation reached `470.181647 tok/s`, then the final p64 confirmation passed
-on two wholly new servers: c1/c2/c4/c8/c16/c32/c64 measured `21.554729 /
-41.371500 / 80.966535 / 155.050071 / 280.827699 / 469.849149 / 695.792088
-tok/s`. All are active-slot points; c64 median/p95 TTFT is `0.890 / 1.744 s`.
-Every response returned 128 raw token IDs with cache zero and passed output
-isolation. This closes the current c1-c64 short-context concurrency gap for the
-exact official-FP8 TP2/MTP0 tuple without interpolation or extrapolation.
+confirmation reached `470.181647 tok/s`, and the first p64 confirmation reached
+`695.792088 tok/s`. Enabling direct oneCCL P2P access then passed the frozen
+five-percent promotion gate and was confirmed on two wholly new servers:
+c1/c2/c4/c8/c16/c32/c64 measured `21.557059 / 41.424196 / 81.299381 /
+157.990884 / 293.363030 / 504.387101 / 774.394144 tok/s`. All are active-slot
+points; c64 median/p95 TTFT is `0.769 / 1.526 s`. Every response returned 128
+raw token IDs with cache zero and passed output isolation. This closes the
+current c1-c64 short-context concurrency gap for the exact official-FP8
+TP2/MTP0/direct-P2P tuple without interpolation or extrapolation.
 
 Resume and evidence:
 
@@ -961,6 +963,7 @@ Resume and evidence:
 - [GPTQ quality/KV/runtime-dtype decision](community/sergiiob-qwen38-27b-vllm-xpu/validation/2026-08-16-quality-kv-dtype-decision.md)
 - [official FP8 vLLM/XPU TP2 reproduction](repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md)
 - [official FP8 graph result](experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md)
+- [official FP8 direct-P2P c64 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.md)
 
 Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
 prototype inherited from Qwen3.6 work. Both caused device faults/resets. Do not

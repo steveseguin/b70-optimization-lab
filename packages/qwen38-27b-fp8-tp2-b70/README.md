@@ -6,7 +6,7 @@ FP8 model and a digest-pinned vLLM XPU container on two Intel Arc Pro B70
 the recorded semantic, repeat, and long-context gates. A separately measured
 33,024-token service profile reaches `20.389854 tok/s` decode at an exact 32K
 prompt with `21.873 s` TTFT. The target-only/MTP0 64-slot HTTP profile reaches
-`695.792088 tok/s` aggregate at 64 active users.
+`774.394144 tok/s` aggregate at 64 active users.
 
 > **Status: candidate, not a beginner install guide.** The exact model,
 > container, configuration, commands, and evidence are present. A clean Ubuntu
@@ -20,9 +20,10 @@ The machine-readable front door is [`package.json`](package.json).
 ## Who built what
 
 **neural.download lab — integrated:** B70/XPU integration, graph and quality
-validation, direct-I/O model verification, and this digest-pinned package. The
-packaged route measured `21.708532 tok/s` and passed the recorded semantic,
-repeat, and long-context gates. No project patch is applied; the model and
+validation, direct-I/O model verification, direct-P2P concurrency tuning, and
+this digest-pinned package. The packaged route measured `21.708532 tok/s`; the
+validated P2P setting raised c64 aggregate throughput from `695.792088` to
+`774.394144 tok/s` (11.30%). No project patch is applied; the model and
 container remain the pinned upstream artifacts. See the
 [lab evidence](../../experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md).
 
@@ -127,13 +128,15 @@ OUT_DIR=/path/to/new-attempt \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-concurrency.sh
 ```
 
-The published profile uses two such attempts on separate fresh servers. Each
-request uses a unique short prompt, returns 128 raw token IDs, and must pass
-cache-zero and cross-task output-isolation checks. c1-c64 are active-service
-measurements. At c64, aggregate throughput is `695.792088 tok/s` with median
-and p95 TTFT of `889.839 / 1,744.033 ms`. See the
-[qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-confirmation-r5-result.md)
-and [structured evidence](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-confirmation-r5-result.json).
+The concurrency wrapper enables direct oneCCL P2P access; the single-slot and
+depth launch identities remain P2P-off. The published profile uses two such
+attempts on separate fresh servers. Each request uses a unique short prompt,
+returns 128 raw token IDs, and must pass cache-zero and cross-task
+output-isolation checks. c1-c64 are active-service measurements. At c64,
+aggregate throughput is `774.394144 tok/s` with median and p95 TTFT of
+`768.749 / 1,525.973 ms`. See the
+[qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.md)
+and [structured evidence](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json).
 
 ## 5. Stop and recover
 

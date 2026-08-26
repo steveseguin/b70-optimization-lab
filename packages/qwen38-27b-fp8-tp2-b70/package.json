@@ -33,10 +33,10 @@
       "name": "neural.download lab",
       "kind": "lab",
       "profile": "https://github.com/steveseguin/b70-optimization-lab",
-      "contribution": "B70/XPU integration, graph and quality validation, direct-I/O model verification, and the digest-pinned package.",
+      "contribution": "B70/XPU integration, graph and quality validation, direct-I/O model verification, direct-P2P concurrency tuning, and the digest-pinned package.",
       "status": "integrated",
-      "validated_effect": "The packaged graph route measured 21.708532 tok/s and passed the recorded semantic, repeat, and long-context gates; no project patch is applied.",
-      "evidence": "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md"
+      "validated_effect": "The packaged graph route measured 21.708532 tok/s; direct oneCCL P2P access raised the qualified c64 HTTP profile from 695.792088 to 774.394144 tok/s (11.30%). No project patch is applied.",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.md"
     }
   ],
   "hardware": {
@@ -106,6 +106,13 @@
     "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-confirmation-20260826-r5-attempt1/qualification.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-confirmation-20260826-r5-attempt2/result.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-confirmation-20260826-r5-attempt2/qualification.json",
+    "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-prereg.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.md",
+    "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-p2p1-confirmation-20260826-r10-attempt1/result.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-p2p1-confirmation-20260826-r10-attempt1/qualification.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-p2p1-confirmation-20260826-r10-attempt2/result.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-p2p1-confirmation-20260826-r10-attempt2/qualification.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-oracle-pilot-20260826-r1-attempt1/oracle-digests.json",
     "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
     "scripts/bench-openai-concurrency-oracle.py",
@@ -171,16 +178,16 @@
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "vLLM OpenAI-compatible HTTP completions on two B70s with official FP8 weights, FP16 KV, target-only/MTP0, 64 active service slots, 4,096-token capacity, unique 128-token short prompts, cache disabled, and 128 returned raw token IDs per response. Each marker is the median of two preregistered fresh-server attempts; worst throughput range was 0.261%. c1-c64 are within the active-slot limit. Output isolation passed, but greedy token identity is batch-shape-dependent. No point is interpolated or extrapolated.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-confirmation-r5-result.json",
+      "scope": "vLLM OpenAI-compatible HTTP completions on two B70s with official FP8 weights, FP16 KV, target-only/MTP0, direct oneCCL P2P access, 64 active service slots, 4,096-token capacity, unique 128-token short prompts, cache disabled, and 128 returned raw token IDs per response. Each marker is the median of two preregistered fresh-server attempts; worst throughput range was 0.525%. c1-c64 are within the active-slot limit. Output isolation passed, but greedy token identity is batch-shape-dependent. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json",
       "points": [
-        {"concurrent_sequences": 1, "value": 21.55472902374846, "per_user_value": 21.55472902374846, "samples": 2},
-        {"concurrent_sequences": 2, "value": 41.371500377970506, "per_user_value": 20.685750188985253, "samples": 2},
-        {"concurrent_sequences": 4, "value": 80.96653464742448, "per_user_value": 20.24163366185612, "samples": 2},
-        {"concurrent_sequences": 8, "value": 155.05007094826234, "per_user_value": 19.381258868532793, "samples": 2},
-        {"concurrent_sequences": 16, "value": 280.82769902180803, "per_user_value": 17.551731188863002, "samples": 2},
-        {"concurrent_sequences": 32, "value": 469.84914896973635, "per_user_value": 14.68278590530426, "samples": 2},
-        {"concurrent_sequences": 64, "value": 695.7920879022334, "per_user_value": 10.871751373472398, "samples": 2}
+        {"concurrent_sequences": 1, "value": 21.557058993055225, "per_user_value": 21.557058993055225, "samples": 2},
+        {"concurrent_sequences": 2, "value": 41.42419577960041, "per_user_value": 20.712097889800205, "samples": 2},
+        {"concurrent_sequences": 4, "value": 81.29938089637803, "per_user_value": 20.324845224094506, "samples": 2},
+        {"concurrent_sequences": 8, "value": 157.99088376038839, "per_user_value": 19.748860470048548, "samples": 2},
+        {"concurrent_sequences": 16, "value": 293.3630296119064, "per_user_value": 18.33518935074415, "samples": 2},
+        {"concurrent_sequences": 32, "value": 504.38710091574535, "per_user_value": 15.762096903617042, "samples": 2},
+        {"concurrent_sequences": 64, "value": 774.3941438129216, "per_user_value": 12.0999084970769, "samples": 2}
       ]
     },
     {
@@ -190,16 +197,16 @@
       "unit": "ms",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "Median request TTFT from the same two fresh-server, output-audited attempts. The service has 64 active slots, so c1-c64 are unqueued. Each point is the median of the two per-attempt p50 values; worst latency range across every reported p50/p95 metric was 9.423%. No point is interpolated or extrapolated.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-confirmation-r5-result.json",
+      "scope": "Median request TTFT from the same two fresh-server, output-audited direct-P2P attempts. The service has 64 active slots, so c1-c64 are unqueued. Each point is the median of the two per-attempt p50 values; worst latency range across every reported p50/p95 metric was 4.404%. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json",
       "points": [
-        {"concurrent_sequences": 1, "value": 96.6692470246926, "samples": 2},
-        {"concurrent_sequences": 2, "value": 125.96160525572486, "samples": 2},
-        {"concurrent_sequences": 4, "value": 232.08309174515307, "samples": 2},
-        {"concurrent_sequences": 8, "value": 294.4776502554305, "samples": 2},
-        {"concurrent_sequences": 16, "value": 310.7368742348626, "samples": 2},
-        {"concurrent_sequences": 32, "value": 495.1727375155315, "samples": 2},
-        {"concurrent_sequences": 64, "value": 889.8392840055749, "samples": 2}
+        {"concurrent_sequences": 1, "value": 95.04806052427739, "samples": 2},
+        {"concurrent_sequences": 2, "value": 122.74269599583931, "samples": 2},
+        {"concurrent_sequences": 4, "value": 210.9998007363174, "samples": 2},
+        {"concurrent_sequences": 8, "value": 267.1333530161064, "samples": 2},
+        {"concurrent_sequences": 16, "value": 262.5558724976145, "samples": 2},
+        {"concurrent_sequences": 32, "value": 426.0661029838957, "samples": 2},
+        {"concurrent_sequences": 64, "value": 768.7485652277246, "samples": 2}
       ]
     },
     {
@@ -209,16 +216,16 @@
       "unit": "ms",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "p95 request TTFT from the same two fresh-server, output-audited attempts. The service has 64 active slots, so c1-c64 are unqueued. Each point is the median of the two per-attempt p95 values; c64 reached 1.744 seconds. No point is interpolated or extrapolated.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-confirmation-r5-result.json",
+      "scope": "p95 request TTFT from the same two fresh-server, output-audited direct-P2P attempts. The service has 64 active slots, so c1-c64 are unqueued. Each point is the median of the two per-attempt p95 values; c64 reached 1.526 seconds. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json",
       "points": [
-        {"concurrent_sequences": 1, "value": 96.6692470246926, "samples": 2},
-        {"concurrent_sequences": 2, "value": 178.5791078436887, "samples": 2},
-        {"concurrent_sequences": 4, "value": 232.2975068789674, "samples": 2},
-        {"concurrent_sequences": 8, "value": 295.1451533532236, "samples": 2},
-        {"concurrent_sequences": 16, "value": 449.85526698292233, "samples": 2},
-        {"concurrent_sequences": 32, "value": 837.9077436693478, "samples": 2},
-        {"concurrent_sequences": 64, "value": 1744.03305168089, "samples": 2}
+        {"concurrent_sequences": 1, "value": 95.04806052427739, "samples": 2},
+        {"concurrent_sequences": 2, "value": 170.9504044643836, "samples": 2},
+        {"concurrent_sequences": 4, "value": 211.2859381682938, "samples": 2},
+        {"concurrent_sequences": 8, "value": 267.68026400823146, "samples": 2},
+        {"concurrent_sequences": 16, "value": 391.23190475220326, "samples": 2},
+        {"concurrent_sequences": 32, "value": 728.5014198219869, "samples": 2},
+        {"concurrent_sequences": 64, "value": 1525.9734081308125, "samples": 2}
       ]
     }
   ],
