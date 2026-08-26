@@ -1,0 +1,99 @@
+{
+  "schema": "neural.download.qwen36-llama-mtp01234-q8kv-exact2k-classification-prereg.v1",
+  "campaign_id": "qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-20260825-r2",
+  "state": "preregistered-not-launched",
+  "purpose": "Classify the Q8-KV exact-2K divergence observed in failed R1 as repeat-stable exactness, repeat-stable route divergence, or within-arm run noise without creating any matrix or publication authority.",
+  "selectors": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
+    "quantization": "Q8_0",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1,
+    "mtp": [0, 1, 2, 3, 4],
+    "active_context_tokens": 2048,
+    "target_kv": "q8_0",
+    "draft_kv": "q8_0",
+    "graph_mode": "off",
+    "completion_tokens": 128,
+    "uncached_repeats_per_arm": 3
+  },
+  "failed_r1_parent": {
+    "campaign_id": "qwen36-mtpq8-q8kv-tp1-mtp1234-exact-depth-quality-20260825-r1",
+    "root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-q8kv-tp1-mtp1234-exact-depth-quality-20260825-r1",
+    "required_status": "failed-invalid-control-frame-do-not-publish",
+    "tracked": {
+      "manifest": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-q8kv-tp1-mtp1234-exact-depth-quality-r1-prereg.json", "sha256": "757e9bcc423d2f059bb81ca3abb1b6d0a281b5ccad406e2fdbc3af9d9de6c65f"},
+      "runner": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-q8kv-tp1-mtp1234-exact-depth-quality-r1.py", "sha256": "1b14dd512fdb5ae2ed11b6be594b48432d49273a4e4d93ef5eba8bf896bac271"},
+      "validator": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/validate-20260825-qwen36-mtpq8-q8kv-tp1-mtp1234-exact-depth-quality-r1.py", "sha256": "761a3e0ca97f2e8ee663f2efadc92576cc46c78c4339f6cc69e8ce0a0fdbcfb8"}
+    },
+    "raw": {
+      "terminal-receipt.json": "a793930bc2d4a244c2c45bd5663e095bb109f6f13e3a1361823be71d84520bbf",
+      "identity.json": "6f022df0ab44ca57e36d0563bce4cb391d4cd80a483adb324fce5d12da8a69f6",
+      "control-mtp0/depth-2048/exact-depth.json": "0ac996288382cc25e0648e97787a4f522106b528a8276c535eb989e1dc291d28",
+      "candidate-mtp1/depth-2048/exact-depth.json": "1b00ba55dac1c09eba63be051eed67e2aed06836c7b7647559d68dc1dfd810f4",
+      "candidate-mtp1/depth-2048/draft-counters.json": "598f6cd5ceb67fc54978d0fb327b85542812934cff7268273ec2d364131b9dd2",
+      "candidate-mtp2/depth-2048/exact-depth.json": "a5ae86b1f6078b96b55792ff435dcc80e189054ca7f7545a773f6b218db2a158",
+      "candidate-mtp2/depth-2048/draft-counters.json": "b637623707130b1d20d44daab6adb82315e27b624e4f7946d08edc9efc73aa84",
+      "candidate-mtp3/depth-2048/exact-depth.json": "1e4e88113ccdff78168fc5f837d56834e8bc7d7b0cc7db5d00bdfbea3d0ca994",
+      "candidate-mtp3/depth-2048/draft-counters.json": "1d311f2d566c14e97cbb8330831a4c069b58c2e658608f08856e69ef15166eaf",
+      "candidate-mtp4/depth-2048/exact-depth.json": "f0514e6a7c064a9890773daa9434a5bcf1c90acc45363cfa0ba28ac8058d0857",
+      "candidate-mtp4/depth-2048/draft-counters.json": "961cd68ea8c25510eb5a4b38fdc77bc9460d04e39c766c6a2aea8c536fc8ba21"
+    },
+    "observed_2k_output_hashes": {
+      "control-mtp0": "e11b5a317688e28bf0cd4b1e1d234b72327feb06a435357ef846acc5344a620d",
+      "candidate-mtp1": "15ae89335b6e0ad365cf9f9ad524d621befbaea3580940374943a7b2e02dcf72",
+      "candidate-mtp2": "6177d7799a71763d852b589188137db878177ff878b600de0977a5182264b3b6",
+      "candidate-mtp3": "6177d7799a71763d852b589188137db878177ff878b600de0977a5182264b3b6",
+      "candidate-mtp4": "6177d7799a71763d852b589188137db878177ff878b600de0977a5182264b3b6"
+    }
+  },
+  "execution_contract": {
+    "arm_order": ["control-mtp0a", "candidate-mtp1", "candidate-mtp2", "candidate-mtp3", "candidate-mtp4", "control-mtp0b"],
+    "fresh_server_lifetime_per_arm": true,
+    "requests_per_arm": 3,
+    "total_requests": 18,
+    "same_frozen_2k_fixture_for_every_request": true,
+    "request_cache_disabled": true,
+    "capture_full_token_ids": true,
+    "compare_within_arm_repeat_hashes": true,
+    "compare_cross_arm_token_ids_and_first_divergence": true,
+    "candidate_draft_counter_conservation_required": true,
+    "cache_zero_required": true,
+    "clean_shutdown_required": true,
+    "whitespace_tolerant_ldd": true,
+    "no_quality_battery": true,
+    "no_speed_gate": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-20260825-r2",
+    "port": 19438,
+    "exact_ack": "RUN qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-20260825-r2",
+    "default_is_inert": true,
+    "create_only": true,
+    "requires_clean_pushed_main": true
+  },
+  "frozen_interpretation": {
+    "route_classifications": {
+      "exact-repeat-stable": "All three candidate outputs are identical within-arm and exactly equal to both repeat-stable bracketing MTP0 controls.",
+      "deterministic-route-divergence": "Both bracketing MTP0 controls are repeat-stable and identical to each other, all three candidate outputs are identical within-arm, and the candidate differs from the controls at a repeat-stable first token position.",
+      "temporal-control-drift": "The opening and closing MTP0 controls are each repeat-stable but differ from one another; candidate divergence cannot then be attributed to route identity.",
+      "within-arm-run-noise": "An arm produces more than one output-token hash across its three otherwise valid repeats.",
+      "invalid-evidence": "Any receipt, cache-zero, counter, identity, or cleanup gate fails."
+    },
+    "packet_grade_mapping": {
+      "A": "unreachable from this bounded packet alone; requires full curve and quality evidence",
+      "B": "all routes exact-repeat-stable with every mechanism and lifecycle gate passing",
+      "C": "valid repeat-stable evidence with at least one deterministic-route-divergence and no within-arm noise",
+      "D": "temporal-control-drift, within-arm-run-noise, or invalid-evidence"
+    },
+    "prior_q8kv_control_hash_is_observation_not_oracle": "e11b5a317688e28bf0cd4b1e1d234b72327feb06a435357ef846acc5344a620d",
+    "site_cells_authorized": 0,
+    "site_publication_authorized": false,
+    "curve_expansion_authorized": false,
+    "speed_claim_authorized": false,
+    "graph_claim_authorized": false,
+    "headline_or_protected_replacement_authorized": false,
+    "localmaxxing_submission_authorized": false,
+    "post_hoc_grade_changes_authorized": false
+  }
+}
