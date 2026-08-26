@@ -1,0 +1,85 @@
+{
+  "schema": "neural.download.qwen38-q5ks-f16kv-target-http-depth-quality-sibling-prereg.v1",
+  "campaign_id": "qwen38-q5ks-f16kv-tp1-target-http-depth-quality-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Upgrade the existing current-weight UD-Q5_K_S/F16-KV raw-engine curve with an exact TP1 target-only HTTP serving curve and a full same-lifetime Qwen3.8 text-quality battery.",
+  "base": {
+    "manifest": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-q8kv-tp1-target-http-depth-quality-r1-prereg.json",
+    "manifest_sha256": "7d8c95dbc0cb3e1eb1f6d243ddf2c58077bf83419d7638944d44ad6a6c02c326",
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260825-qwen38-q5ks-q8kv-tp1-target-http-depth-quality-r1.py",
+    "runner_sha256": "c49d1044a9b15eed4b75695ae25338b57d67c5d9fd5fa94e368df3b545021e3c",
+    "validator": "experiments/qwen38-27b-b70/scripts/validate-20260825-qwen38-q5ks-q8kv-tp1-target-http-depth-quality-r1.py",
+    "validator_sha256": "a43d11bce70eeb2285f989989e52bd1c3ba927b7b00d5b229da9d5f50eb70818",
+    "result": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-q8kv-tp1-target-http-depth-quality-r1-result.json",
+    "result_sha256": "2653041587bb80a1ea2c08d177114911d9cf60a2d379baa782a416396a7f0cd3",
+    "terminal": "/mnt/fast-ai/bench-results/qwen38-q5ks-q8kv-tp1-target-http-depth-quality-20260825-r1/terminal-receipt.json",
+    "terminal_sha256": "2290101bbcf4a98af5758b7ab3b8eeb102ac4732b1f868ec8a08509cdcf456b6",
+    "identity": "/mnt/fast-ai/bench-results/qwen38-q5ks-q8kv-tp1-target-http-depth-quality-20260825-r1/identity.json",
+    "identity_sha256": "43c372398c0d1ed4c86baec5d15c3ad4a57937385b4abe48edd3a45d5e11e6a0",
+    "required_status": "completed-valid-target-only-depth-quality",
+    "relationship": "passed same-model/runtime/workload Q8_0-KV sibling; no Q8 speed or output hash transfers"
+  },
+  "existing_f16_evidence": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.json",
+    "sha256": "219331863fd0dee7f14f705890f373c1208b9a45d8f6d54e5e6ae2fde0ee4c26",
+    "variant": "UD-Q5_K_S",
+    "protocol": "llama-bench pp2048 + tg128, five repetitions, F16 KV",
+    "depths": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "classification": "already measured raw-engine curve; not HTTP serving or same-lifetime quality evidence"
+  },
+  "identity_delta": {
+    "only_runtime_selector_delta": "target KV cache K/V q8_0 to f16",
+    "target_kv": {"from": "q8_0", "to": "f16"},
+    "model_runtime_fixture_clients_tp_mtp_graph_fit_transport_depths_quality": "identical to the sealed Q8_0-KV base"
+  },
+  "selectors": {
+    "revision": "qwen3.8-27b-current-weights",
+    "target_quantization": "UD-Q5_K_S",
+    "tp": 1,
+    "mtp": 0,
+    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "target_kv": "f16",
+    "graph_mode": "off",
+    "fit": "off",
+    "transport": "HTTP /v1/completions"
+  },
+  "server_contract": {
+    "model_alias": "qwen38-q5ks-f16kv-target-depth-r1",
+    "cache_type_k": "f16",
+    "cache_type_v": "f16",
+    "context_capacity": 33024,
+    "parallel": 1,
+    "spec_type": "none"
+  },
+  "execution_contract": {
+    "arm": "target-mtp0",
+    "fresh_server_lifetimes": 1,
+    "depth_order": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "completion_tokens_per_depth": 128,
+    "quality_after_all_depths": true,
+    "require_cached_tokens_zero_everywhere": true,
+    "require_q8_sibling_base_passed": true,
+    "require_cleanup": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-q5ks-f16kv-tp1-target-http-depth-quality-20260826-r1",
+    "exact_ack": "RUN qwen38-q5ks-f16kv-tp1-target-http-depth-quality-20260826-r1",
+    "default_is_inert": true,
+    "requires_clean_pushed_main": true,
+    "create_only": true
+  },
+  "frozen_interpretation": {
+    "speed_floor": null,
+    "evidence_grade": "C",
+    "target_only_f16_serving_curve_cells_if_all_gates_pass": 7,
+    "speculative_cells_authorized": 0,
+    "q8_kv_cells_authorized": 0,
+    "tp2_or_tp4_cells_authorized": 0,
+    "graph_cells_authorized": 0,
+    "prefill_cells_authorized": 0,
+    "headline_or_protected_replacement_authorized": false,
+    "localmaxxing_submission_authorized": false,
+    "historical_featured_speeds_are_immutable": true,
+    "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]
+  }
+}
