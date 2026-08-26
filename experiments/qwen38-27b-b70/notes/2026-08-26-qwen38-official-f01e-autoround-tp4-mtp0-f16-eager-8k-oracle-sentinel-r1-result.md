@@ -1,0 +1,9 @@
+# Current f01e AutoRound TP4 eager/F16 target oracle sentinel R1
+
+The preregistered four-card target-only oracle passed. On the pinned official `f01e24f6…` image (`ac7509e2b`, vLLM `0.27.2rc1.dev77`), one TP4/MTP0 eager server with F16 KV measured **9.647242826428695 conventional decode tok/s** at exact 8K, with **4.768155981990276 s TTFT**. The legacy 100-event definition was **9.74468972366535 tok/s**; it is retained for historical comparison and is not the site value.
+
+Every exact-depth gate passed with 8,192 prompt tokens, 128 returned token IDs, and zero cached tokens. The candidate exactly matched the frozen same-image TP1 target output (`34e792cc…`) across all 128 tokens. The full objective and baseline quality battery passed: 7/7 exact cases, deterministic 8/8 repeats with one hash, the long-context needle, 24/24 baseline comparisons, and explicit cache zero on all 16 requests. All four workers were present, graph-off produced no rank compilation artifacts, the cache root was fresh ext4, all 19 model files passed coherent direct and ordinary verification, and cleanup was terminal and clean.
+
+This publishes one additive Grade C measured cell: current `f01e/ac7509e2`, AutoRound INT4, TP4/MTP0/eager/F16, exact 8K. Other depths, graph modes, TP/MTP/KV choices, and `x=0` remain unmeasured. It does not replace the protected 71.900 graph route, the b2dd TP4 graph curve, any historical value, headline, or LocalMaxxing result. The passed target oracle may parent only separately preregistered descendants; expansion is never automatic.
+
+Compact evidence is in `experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-r1-result.json`; raw receipts remain at `/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1`.

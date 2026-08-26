@@ -1610,6 +1610,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "qwen38-tp4-vllm-xpu-fp8-http-depth": 7,
             "qwen38-tp2-vllm-xpu-autoround-http-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-http-depth": 7,
+            "qwen38-tp4-vllm-xpu-autoround-f01e-eager-oracle-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-strict-snapshot": 1,
         }
         self.assertEqual(set(contracts), set(expected_counts))
@@ -1621,7 +1622,7 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertEqual(errors, [], contract_id)
             self.assertEqual(len(cells), expected_count, contract_id)
             all_cells.extend(cells)
-        self.assertEqual(len(all_cells), 1910)
+        self.assertEqual(len(all_cells), 1917)
 
         fp8_tp1_cells, errors = MODULE.expand_coverage_contract(
             contracts["qwen38-tp1-vllm-xpu-target-matrix"]
@@ -3224,15 +3225,15 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
-        self.assertIn("Coverage · 16 matrices", overview_html)
-        self.assertIn("513/1,910 classified", overview_html)
+        self.assertIn("Coverage · 17 matrices", overview_html)
+        self.assertIn("514/1,917 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "315", "measured"),
+            ("lab-measured", "316", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "102", "quarantined"),
             ("closed", "6", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,397", "missing"),
+            ("missing", "1,403", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3571,6 +3572,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("value=42.33933781431878 tok/s", deferred_html)
         self.assertIn("value=71.16806401683698 tok/s", deferred_html)
         self.assertIn("value=66.64506545273888 tok/s", deferred_html)
+        self.assertIn("value=9.647242826428695 tok/s", deferred_html)
         tp_scale_view = next(
             view for view in family["views"]
             if view["id"] == "context-q38-tp4-autoround-http"
@@ -3581,6 +3583,7 @@ class FamilyCoverageTest(unittest.TestCase):
                 ["q38-b2dd-tp1-graph-f16-exact-context"],
                 ["q38-autoround-tp2-f16kv-http-context-r1-grade-c"],
                 ["q38-autoround-tp4-f16kv-http-context-r1-grade-c"],
+                ["q38-f01e-autoround-tp4-eager-f16-exact-8k-r1-grade-c"],
             ],
         )
         self.assertIn(
@@ -4129,6 +4132,62 @@ class FamilyCoverageTest(unittest.TestCase):
             ),
             f"no error contained all of {needles!r}: {errors}",
         )
+
+    def test_q38_current_f01e_tp4_eager_oracle_is_one_additive_cell(self) -> None:
+        family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
+        packets = {item["id"]: item for item in family["packets"]}
+        series = {item["id"]: item for item in family["series_measurements"]}
+        contracts = {item["id"]: item for item in family["coverage_contracts"]}
+
+        packet_id = "qwen38-27b-autoround-int4-tp4-f01e-eager-f16-oracle-8k-grade-c"
+        measurement_id = "q38-f01e-autoround-tp4-eager-f16-exact-8k-r1-grade-c"
+        contract_id = "qwen38-tp4-vllm-xpu-autoround-f01e-eager-oracle-depth"
+        self.assertEqual(packets[packet_id]["grades"]["evidence"]["grade"], "C")
+        point = series[measurement_id]["points"]
+        self.assertEqual(len(point), 1)
+        self.assertEqual(point[0]["x"], 8192)
+        self.assertEqual(point[0]["decode_tok_s"], 9.647242826428695)
+        self.assertEqual(point[0]["historical_100_event_decode_tok_s"], 9.74468972366535)
+        self.assertEqual(point[0]["cached_tokens"], 0)
+
+        cells, errors = MODULE.expand_coverage_contract(contracts[contract_id])
+        self.assertEqual(errors, [])
+        self.assertEqual(len(cells), 7)
+        measured = [cell for cell in cells if cell["state"] == "lab-measured"]
+        self.assertEqual(len(measured), 1)
+        self.assertEqual(measured[0]["selectors"]["active_context_tokens"], 8192)
+        self.assertEqual(measured[0]["evidence_id"], measurement_id)
+        self.assertEqual(measured[0]["packet_id"], packet_id)
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in cells if cell["state"] == "missing"],
+            [0, 2048, 4096, 16384, 24576, 32768],
+        )
+        self.assertTrue(all(
+            cell["selectors"]["tp"] == 4
+            and cell["selectors"]["mtp"] == 0
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "f16"
+            for cell in cells
+        ))
+
+        result = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-r1-result.json"
+        ).read_text())
+        self.assertEqual(result["point"]["published_decode_field"], "conventional_99_interval_tok_s")
+        self.assertEqual(result["authority"]["site_cells"], 1)
+        self.assertFalse(result["authority"]["historical_or_protected_replacement"])
+        self.assertEqual(
+            result["authority"]["protected_decode_values_unchanged"],
+            [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
+        )
+        graph_series = series["q38-autoround-tp4-f16kv-http-context-r1-grade-c"]
+        self.assertEqual(graph_series["points"][2]["decode_tok_s"], 69.8695629973191)
+        protected = next(
+            item for item in family["run_measurements"]
+            if item["id"] == "q38-a3561ef8-stock-tp4-graph-strict"
+        )
+        self.assertEqual(protected["metrics"]["decode_tok_s"][0], 71.9001988117144)
 
     @staticmethod
     def _family() -> dict[str, object]:
