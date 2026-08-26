@@ -1612,6 +1612,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "qwen38-tp4-vllm-xpu-autoround-http-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-eager-oracle-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-mtp1-eager-depth": 7,
+            "qwen38-tp4-vllm-xpu-autoround-f01e-mtp2-eager-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-strict-snapshot": 1,
         }
         self.assertEqual(set(contracts), set(expected_counts))
@@ -1623,7 +1624,7 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertEqual(errors, [], contract_id)
             self.assertEqual(len(cells), expected_count, contract_id)
             all_cells.extend(cells)
-        self.assertEqual(len(all_cells), 1924)
+        self.assertEqual(len(all_cells), 1931)
 
         fp8_tp1_cells, errors = MODULE.expand_coverage_contract(
             contracts["qwen38-tp1-vllm-xpu-target-matrix"]
@@ -3226,15 +3227,15 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
-        self.assertIn("Coverage · 18 matrices", overview_html)
-        self.assertIn("515/1,924 classified", overview_html)
+        self.assertIn("Coverage · 19 matrices", overview_html)
+        self.assertIn("516/1,931 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "317", "measured"),
+            ("lab-measured", "318", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "102", "quarantined"),
             ("closed", "6", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,409", "missing"),
+            ("missing", "1,415", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3575,6 +3576,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("value=66.64506545273888 tok/s", deferred_html)
         self.assertIn("value=9.647242826428695 tok/s", deferred_html)
         self.assertIn("value=13.709857016920843 tok/s", deferred_html)
+        self.assertIn("value=18.078249787896656 tok/s", deferred_html)
         tp_scale_view = next(
             view for view in family["views"]
             if view["id"] == "context-q38-tp4-autoround-http"
@@ -3587,6 +3589,7 @@ class FamilyCoverageTest(unittest.TestCase):
                 ["q38-autoround-tp4-f16kv-http-context-r1-grade-c"],
                 ["q38-f01e-autoround-tp4-eager-f16-exact-8k-r1-grade-c"],
                 ["q38-f01e-autoround-tp4-mtp1-eager-f16-exact-8k-r1-grade-c"],
+                ["q38-f01e-autoround-tp4-mtp2-eager-f16-exact-8k-r1-grade-c"],
             ],
         )
         self.assertIn(
@@ -4135,6 +4138,38 @@ class FamilyCoverageTest(unittest.TestCase):
             ),
             f"no error contained all of {needles!r}: {errors}",
         )
+
+    def test_q38_current_f01e_tp4_mtp2_is_one_adjudicated_cell(self) -> None:
+        family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
+        packets = {item["id"]: item for item in family["packets"]}
+        series = {item["id"]: item for item in family["series_measurements"]}
+        contracts = {item["id"]: item for item in family["coverage_contracts"]}
+        packet_id = "qwen38-27b-autoround-int4-tp4-f01e-mtp2-eager-f16-8k-grade-c"
+        measurement_id = "q38-f01e-autoround-tp4-mtp2-eager-f16-exact-8k-r1-grade-c"
+        contract_id = "qwen38-tp4-vllm-xpu-autoround-f01e-mtp2-eager-depth"
+        self.assertEqual(packets[packet_id]["grades"]["evidence"]["grade"], "C")
+        points = series[measurement_id]["points"]
+        self.assertEqual(len(points), 1)
+        self.assertEqual(points[0]["x"], 8192)
+        self.assertEqual(points[0]["decode_tok_s"], 18.078249787896656)
+        self.assertEqual(points[0]["historical_100_event_decode_tok_s"], 18.260858371612784)
+        self.assertEqual((points[0]["accepted_tokens"], points[0]["drafted_tokens"]), (78, 98))
+        cells, errors = MODULE.expand_coverage_contract(contracts[contract_id])
+        self.assertEqual(errors, [])
+        self.assertEqual(len(cells), 7)
+        measured = [cell for cell in cells if cell["state"] == "lab-measured"]
+        self.assertEqual(len(measured), 1)
+        self.assertEqual(measured[0]["selectors"]["active_context_tokens"], 8192)
+        self.assertEqual(measured[0]["evidence_id"], measurement_id)
+        self.assertEqual([cell["selectors"]["active_context_tokens"] for cell in cells if cell["state"] == "missing"], [0, 2048, 4096, 16384, 24576, 32768])
+        self.assertTrue(all(cell["selectors"]["tp"] == 4 and cell["selectors"]["mtp"] == 2 and cell["selectors"]["graph_mode"] == "off" and cell["selectors"]["kv"] == "f16" for cell in cells))
+        result = json.loads((MODULE.ROOT / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp2-f16-eager-8k-sentinel-r1-result.json").read_text())
+        self.assertFalse(result["adjudication"]["raw_automatic_publication_authority"])
+        self.assertTrue(result["adjudication"]["explicit_human_per_cell_publication_authority"])
+        self.assertEqual(result["adjudication"]["published_depths"], [8192])
+        self.assertFalse(result["adjudication"]["descendant_expansion_authorized"])
+        self.assertEqual(result["authority"]["protected_decode_values_unchanged"], [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144])
+        self.assertEqual(series["q38-autoround-tp4-f16kv-http-context-r1-grade-c"]["points"][2]["decode_tok_s"], 69.8695629973191)
 
     def test_q38_current_f01e_tp4_mtp1_is_one_additive_cell(self) -> None:
         family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
