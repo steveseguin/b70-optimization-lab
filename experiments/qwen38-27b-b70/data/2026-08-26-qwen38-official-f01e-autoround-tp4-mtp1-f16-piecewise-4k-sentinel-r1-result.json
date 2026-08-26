@@ -1,0 +1,150 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp4-mtp1-f16-piecewise-4k-sentinel-compact-result.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp4-mtp1-f16-piecewise-4k-sentinel-20260826-r1",
+  "status": "passed-quality-clean-evidence-only",
+  "identity": {
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "raw_sha256": {
+      "image-id.txt": "3f4cc79dc498548ebcc9fd65e0da396111d68903c453b83d9b613f2e0a8887fb",
+      "vllm-source-commit.txt": "b60f6014c07dfcf32c30278eede59198e8ac93c176f9685a38ff320ac76e376f",
+      "stack-versions.txt": "8c2197b31e85ddcd41a43d93103ccc6629acf521bf22d8759ed368ec0f57ba3f",
+      "server-args.shell.txt": "caecb53a39351bfc25e2db1efa153905a962a44faf431fb069af6b1ee405b1c9",
+      "server-startup.log": "1304c5128734c66765c3785a268ec6976e6310733b2c73145e34e9e054402994",
+      "container-inspect.json": "eeb21dd4d6ce0b67f0f8f8cf950451654a0b78e4ec433c620ad8542b2d9e7c6b"
+    }
+  },
+  "config": {
+    "tp": 4,
+    "cards": 4,
+    "device_affinity": "0,1,2,3",
+    "mtp": 1,
+    "speculative_method": "qwen3_next_mtp",
+    "num_speculative_tokens": 1,
+    "graph": "on",
+    "graph_mode": "PIECEWISE",
+    "graph_capture_sizes": [1],
+    "max_cudagraph_capture_size": 1,
+    "enforce_eager": false,
+    "kv": "f16",
+    "parallel_slots": 1,
+    "configured_max_context_tokens": 32896,
+    "prefix_caching": false,
+    "pythonhashseed": 0
+  },
+  "point": {
+    "x": 4096,
+    "decode_tok_s": 18.823672180898463,
+    "historical_100_event_decode_tok_s": 19.013810283735822,
+    "published_decode_field": "conventional_99_interval_tok_s",
+    "ttft_s": 2.3496064160135575,
+    "ttft_ms": 2349.6064160135575,
+    "cached_tokens": 0,
+    "completion_tokens": 128,
+    "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0",
+    "raw_sha256": "698b9d51d750417df68c8a01a8f038323cf154701e7e9b2b4aefbe3b3a1a5ec8"
+  },
+  "mechanism": {
+    "passed": true,
+    "drafted_tokens": 71,
+    "accepted_tokens": 56,
+    "acceptance_rate": 0.7887323943661971,
+    "isolated_to_exact_4k_request": true,
+    "raw_sha256": "2c8c87df733417ad87b0a0cb45717ad961a150ca9c5c83eca86f32fef76b1fdf"
+  },
+  "parent_oracles": {
+    "passed": true,
+    "mtp0_eager": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1/exact-depth/depth-4096.json",
+      "raw_sha256": "1dbba43c7ed816156f53b489e2287247e8a96f26a7d5f15a1a381d28f7e89e02",
+      "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"
+    },
+    "mtp0_piecewise": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-piecewise-depth-20260826-r1/exact-depth/depth-4096.json",
+      "raw_sha256": "1e79d05c8e3ffe763a1f44a0d6def6b2b2f5b997aeec997e3841d7a447125deb",
+      "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"
+    },
+    "mtp1_eager_mechanism_parent": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp1-f16-eager-depth-expansion-20260826-r1/exact-depth/depth-4096.json",
+      "raw_sha256": "a4f646c7fffd345399a916046528d3b4d72a945b3f01f5fe47b2df7ab8936bd0",
+      "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"
+    },
+    "candidate_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0",
+    "all_128_tokens_equal": true
+  },
+  "quality": {
+    "passed": true,
+    "exact_cases": 7,
+    "repeat_runs": 8,
+    "unique_repeat_hashes": 1,
+    "baseline_comparisons": 24,
+    "long_context_needle_passed": true,
+    "cache_zero_requests": 16,
+    "cache_zero_all_requests": true,
+    "raw_sha256": "aacf4d5f97dd32384f7be2af3db60a7b09f27374fef8132fafed1dfd9019c285"
+  },
+  "graph_topology_and_cache": {
+    "graph_identity_passed": true,
+    "mixed_prefill_decode_capture_seen": true,
+    "graph_capture_finished_seen": true,
+    "full_decode_capture_absent": true,
+    "world_size": 4,
+    "local_world_size": 4,
+    "ranks": [0, 1, 2, 3],
+    "local_ranks": [0, 1, 2, 3],
+    "tp_ranks": [0, 1, 2, 3],
+    "expected_rank_cache_namespaces": ["rank_0_0", "rank_1_0", "rank_2_0", "rank_3_0"],
+    "observed_rank_cache_namespaces": ["rank_0_0", "rank_1_0", "rank_2_0", "rank_3_0"],
+    "rank_cache_isolation_passed": true,
+    "rank_cache_raw_sha256": "c9a6813fdbcc6dd5635a2c45d36eac79fde2dbaa1d9da498d223dddcfd9fe40b",
+    "prefix_cache_disabled": true
+  },
+  "model_verification": {
+    "status": "verified",
+    "files_verified": 19,
+    "direct_and_ordinary_paths_coherent": true,
+    "raw_sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+  },
+  "cleanup": {
+    "status": "clean",
+    "launch_git_head": "936acde5708fe0ad32775c3adc72fc926e97f77c",
+    "terminal_receipt_sha256": "44c326a002b4841a02c52ba80bdd678179da2e141c41a911dfc1b83fc5de0d5f",
+    "arm_result_sha256": "02e721d575ca5a9f99f13bcf87a2fda9cc8a503fa990ec1e8a96c0a4dbbb1ed3",
+    "campaign_container_absent_at_terminal": true,
+    "port_19519_closed_at_terminal": true
+  },
+  "historical_graph_corruption_caveat": {
+    "retained": true,
+    "excluded_depth": 8192,
+    "alternate_output_token_ids_sha256": "dd31856f45269d222efe0f6f5f1ac9342b6c9ae55e5ce9129fc02b27abdb7e8e",
+    "first_divergence": {"one_based": 99, "graph": 411, "eager_target": 579},
+    "interpretation": "This exact-4K pass does not clear the current-f01e PIECEWISE 8K token-99 corruption signature or authorize any graph-plus-MTP depth beyond 4K."
+  },
+  "authority": {
+    "scope": "evidence for current-f01e TP4/MTP1/PIECEWISE/F16 exact-4K only",
+    "site_or_family_publication_authorized": false,
+    "site_cells": 0,
+    "selected_evidence_depths": [4096],
+    "missing_depths": [0, 2048, 8192, 16384, 24576, 32768],
+    "automatic_publication": false,
+    "automatic_descendant_expansion": false,
+    "historical_or_protected_replacement": false,
+    "protected_profiles_untouched": true,
+    "other_depths_modes_tp_mtp_or_kv_inferred": false,
+    "localmaxxing_submission": false
+  },
+  "tracked_inputs": {
+    "preregistration": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp1-f16-piecewise-4k-sentinel-r1-prereg.json",
+      "sha256": "4b11c1130e57edfc50cdb1ef7f265a7c96c54527bcbe5cb3e5805cc1733b116c"
+    },
+    "runner": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp4-mtp1-f16-piecewise-4k-sentinel-r1.sh",
+      "sha256": "abd20b83e2b0f6537b7a53c5f758c10fca43542a9b838b258b8b22a43b369e95"
+    }
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp1-f16-piecewise-4k-sentinel-20260826-r1"
+}
