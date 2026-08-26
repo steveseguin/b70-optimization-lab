@@ -26,8 +26,10 @@ def response(prompt_id: str, *, raw: bool) -> dict:
     return row
 
 
-def result(*, raw_oracle: bool) -> dict:
-    oracle = [response(f"task-c{i:03d}", raw=raw_oracle) for i in range(64)]
+def result(*, raw_oracle: bool, oracle_rows: int = 64) -> dict:
+    oracle = [
+        response(f"task-c{i:03d}", raw=raw_oracle) for i in range(oracle_rows)
+    ]
     batch_row = response("task-c000", raw=True)
     return {
         "oracle": {"cached_tokens_all_zero": True, "rows": oracle},
@@ -68,6 +70,28 @@ class QualificationTests(unittest.TestCase):
             result(raw_oracle=True), pilot=False, active_slots=4
         )
         self.assertEqual(qualified["classification"], "failed-closed")
+
+    def test_explicit_128_row_pilot_passes_and_legacy_field_is_false(self) -> None:
+        qualified = MODULE.qualify(
+            result(raw_oracle=True, oracle_rows=128),
+            pilot=True,
+            active_slots=128,
+            expected_oracle_rows=128,
+        )
+        self.assertEqual(qualified["classification"], "qualified-oracle-pilot")
+        self.assertEqual(qualified["expected_oracle_rows"], 128)
+        self.assertTrue(qualified["oracle_rows_expected_complete"])
+        self.assertFalse(qualified["oracle_rows_64_complete"])
+
+    def test_128_row_expectation_rejects_64_row_oracle(self) -> None:
+        qualified = MODULE.qualify(
+            result(raw_oracle=True),
+            pilot=True,
+            active_slots=128,
+            expected_oracle_rows=128,
+        )
+        self.assertEqual(qualified["classification"], "failed-closed")
+        self.assertFalse(qualified["oracle_rows_expected_complete"])
 
 
 if __name__ == "__main__":

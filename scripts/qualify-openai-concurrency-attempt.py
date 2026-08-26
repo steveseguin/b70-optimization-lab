@@ -32,17 +32,23 @@ def milliseconds(values: list[Any], fraction: float) -> float | None:
     return value * 1000 if value is not None else None
 
 
-def qualify(result: dict[str, Any], *, pilot: bool, active_slots: int) -> dict[str, Any]:
+def qualify(
+    result: dict[str, Any],
+    *,
+    pilot: bool,
+    active_slots: int,
+    expected_oracle_rows: int = 64,
+) -> dict[str, Any]:
     oracle = result["oracle"]["rows"]
     batches = result["batches"]
     batch_rows = [row for batch in batches for row in batch["rows"]]
     all_rows = oracle + batch_rows
-    oracle_raw_complete = len(oracle) == 64 and all(
+    oracle_raw_complete = len(oracle) == expected_oracle_rows and all(
         row.get("completion_tokens") == 128
         and len(row.get("token_ids", [])) == 128
         for row in oracle
     )
-    oracle_compact_complete = len(oracle) == 64 and all(
+    oracle_compact_complete = len(oracle) == expected_oracle_rows and all(
         row.get("completion_tokens") == 128
         and isinstance(row.get("token_ids_sha256"), str)
         and re.fullmatch(r"[0-9a-f]{64}", row["token_ids_sha256"])
@@ -102,7 +108,11 @@ def qualify(result: dict[str, Any], *, pilot: bool, active_slots: int) -> dict[s
             )
         ),
         "pilot": pilot,
-        "oracle_rows_64_complete": oracle_evidence_complete,
+        "expected_oracle_rows": expected_oracle_rows,
+        "oracle_rows_expected_complete": oracle_evidence_complete,
+        # Retain the original field for old evidence consumers. It means
+        # exactly what its name says and is deliberately false for p128.
+        "oracle_rows_64_complete": len(oracle) == 64 and oracle_evidence_complete,
         "oracle_raw_token_ids_complete": oracle_raw_complete,
         "oracle_compact_digests_complete": oracle_compact_complete,
         "completion_tokens_128_all": counts_complete,
@@ -145,15 +155,23 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--pilot", action="store_true")
     parser.add_argument("--active-slots", type=int, required=True)
+    parser.add_argument("--expected-oracle-rows", type=int, default=64)
     parser.add_argument("--oracle-out", type=Path)
     args = parser.parse_args()
     if args.active_slots < 1:
         raise SystemExit("--active-slots must be positive")
+    if args.expected_oracle_rows < 1:
+        raise SystemExit("--expected-oracle-rows must be positive")
     if args.pilot != bool(args.oracle_out):
         raise SystemExit("pilot mode requires --oracle-out and publication mode forbids it")
 
     result = json.loads(args.result.read_text())
-    qualification = qualify(result, pilot=args.pilot, active_slots=args.active_slots)
+    qualification = qualify(
+        result,
+        pilot=args.pilot,
+        active_slots=args.active_slots,
+        expected_oracle_rows=args.expected_oracle_rows,
+    )
     args.out.write_text(json.dumps(qualification, indent=2, sort_keys=True) + "\n")
     if args.pilot and qualification["classification"] == "qualified-oracle-pilot":
         assert args.oracle_out is not None
