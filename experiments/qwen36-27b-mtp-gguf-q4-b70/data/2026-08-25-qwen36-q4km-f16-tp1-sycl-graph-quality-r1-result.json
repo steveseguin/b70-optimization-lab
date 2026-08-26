@@ -1,0 +1,58 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-embedded-mtp-q4km-quality-r1-result.v1",
+  "campaign_id": "qwen36-q4km-f16-tp1-sycl-graph-quality-20260825-r1",
+  "state": "passed-quality-covers-seven-raw-curve-cells",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-sycl-graph-quality-20260825-r1",
+  "packet": {
+    "preregistration": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-quality-r1-prereg.json", "sha256": "719c238760a1d32584c4ff286f3352b5e943a869ab5db241d94357f3a480695c"},
+    "runner": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q4km-f16-tp1-sycl-graph-quality-r1.py", "sha256": "975be481da8b4885a84c0b5502ca48f25e1b78bf1bb260118ab75cccad1fdb5b"},
+    "preregistration_note": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-quality-r1-preregistration.md", "sha256": "2b9bb32f213ec209436c781fec9a40ba43f66503665e5955a044a9484696ac6d"},
+    "cpu_tests": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/test_qwen36_q4km_f16_tp1_sycl_graph_quality_r1.py", "sha256": "c4dbf0cb1d7983f1ad0eb2b8260c639f2f7fb24abe6c1b176f781462245dad94"},
+    "launch_git_head": "314fefa8748a3d40c27dc6d91615be44a7a77b81"
+  },
+  "curve_parent": {
+    "campaign_id": "qwen36-q4km-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+    "result": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-exact-depth-r1-result.json", "sha256": "0718ff211926a0b5f9dc1d964b20b331ffefcba78e6a64f390fdfe6f23e43700"},
+    "covered_active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "coverage_basis": "All seven raw cells share this exact embedded-MTP Q4_K_M artifact, source, build, environment, TP1/MTP0/F16 selectors, and graph cache-8 tuple. The curve carries separate phase-aware graph evidence at each depth; this fresh isolated service battery supplies one near-32K quality seal for the shared tuple.",
+    "per_depth_quality_reruns_required": false,
+    "performance_result_remains_negative_vs_graph_off": true
+  },
+  "raw_artifacts": {
+    "models.json": "3733d7cecf5c1ec419ff9cf129973a692266e0c267867d977e2e5dbff5652931",
+    "quality-gate.json": "9b466a9f6974bb33a79010081829dca3b7c9762c0d0126cf02773da515c9d532",
+    "quality.json": "c3413a7e51c399e4122b71c29af26bcba1a4cfc382b5368148e16c0b9d52f46b",
+    "quality.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "quality.stdout.json": "29d8f33fd4fce2b21f87574eee2f22d303a512f86caf74bac372acd008eeedcb",
+    "server.log": "cbffb899207aa3799e1d34e470ef27e2dcb1010111043406dcfaff98c83a49ea",
+    "terminal-receipt.json": "9546648c3cafc622d140359d3e37c6fd22989781c09bb469ef202f395ed68238"
+  },
+  "sealed_identity": {
+    "selectors": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "quantization": "Q4_K_M", "runtime_family": "llama.cpp SYCL", "tp": 1, "mtp": 0, "graph_mode": "SYCL", "kv": "f16"},
+    "source_base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "source_files": {"ggml/src/ggml-sycl/common.hpp": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805", "ggml/src/ggml-sycl/ggml-sycl.cpp": "25152136d7e7ff9e96822127f320f08ccb4fa200af607f33afaa05a318cbbd6a"},
+    "patch_chain_in_order": [
+      {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-evidence-port-20260825.patch", "sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892"},
+      {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-pointer-stable-r2-20260825.patch", "sha256": "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3"},
+      {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-capacity-scaled-r3-20260825.patch", "sha256": "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"}
+    ],
+    "model": {"repository": "unsloth/Qwen3.6-27B-MTP-GGUF", "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace", "path": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_K_M.gguf", "size_bytes": 17106773120, "sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f", "direct_sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f", "ordinary_sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f", "embedded_mtp_capability": true},
+    "runtime": {"server": {"size_bytes": 736520, "sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b"}, "server_impl_sha256": "63dcf154a547aa8611be00625a3c72b190cbdfcdc6a139679ee165c170c93a6b", "graph_backend": {"size_bytes": 329322096, "sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2"}, "server_effective_shared_libraries_count": 33},
+    "graph_environment": {"ONEAPI_DEVICE_SELECTOR": "level_zero:0", "GGML_SYCL_ENABLE_GRAPH": "1", "GGML_SYCL_GRAPH_CACHE_SIZE": "8"},
+    "service_context_tokens": 32768,
+    "speculator_loaded": false,
+    "f16_kv_buffer_mib": 2048
+  },
+  "quality": {
+    "passed": true,
+    "request_count": 13,
+    "exact_cases": {"passed": 4, "required": 4, "names": ["exact_ok", "copy_phrase", "arithmetic", "json_schema"], "output_sha256": {"exact_ok": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3", "copy_phrase": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569", "arithmetic": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9", "json_schema": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91"}},
+    "repeat_stability": {"passed": 8, "required": 8, "unique_normalized_output_hashes": 1, "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"},
+    "long_context_needle": {"passed": true, "requested_context_tokens": 31744, "actual_prompt_tokens_reported_by_suite": 29403, "usage_prompt_tokens": 29415, "claim_label": "approximately 29.4K actual prompt tokens inside a 32K service", "needle": "B70_QWEN36_NEEDLE_20260609", "output_sha256": "8772a18ffb56a2344b8cf7b44099653ef795b97a9bc5d8264007ea0df5d1481f"},
+    "prompt_cache_accounting": {"zero_cached_tokens": 13, "request_count": 13, "all_zero": true}
+  },
+  "server_graph_evidence": {"summary_count": 1, "device": 0, "requested": 169, "cache_hit": 84, "cache_miss": 85, "cache_entries": 8, "cache_limit": 8, "cache_full": 77, "direct_replay": 84, "recorded": 8, "created": 8, "updated": 0, "recreated": 0, "replayed": 92, "compatibility_rejected": 0, "device_unsupported": 0, "classification": "positive-capture-and-replay-with-mixed-partial-prefill"},
+  "terminal": {"receipt_sha256": "9546648c3cafc622d140359d3e37c6fd22989781c09bb469ef202f395ed68238", "created_at_utc": "2026-08-26T00:22:01.386066+00:00", "lab_git_head": "314fefa8748a3d40c27dc6d91615be44a7a77b81", "cleanup_passed": true, "error": null, "raw_receipt_plumbing_contradiction": {"schema": "neural.download.qwen36-llama-exact-depth-terminal.v1", "quality_claim_authorized": false, "interpretation": "The immutable raw terminal intentionally awaits tracked adjudication; this independently verified battery satisfies the curve quality prerequisite but grants no publication authority by itself."}},
+  "claim_boundaries": {"quality_classification": "quality-battery-certified", "quality_covers_all_seven_curve_cells": true, "raw_engine_speed_measurements_unchanged": true, "http_speed_claim": false, "depth_0_prefill": "fully graph-certified by curve evidence", "depth_2k_through_32k_prefill": "mixed partial graph because cache_full is positive in the curve evidence", "decode_all_depths": "verified capture-and-replay by curve evidence", "graph_on_performance": "quality-certified negative optimization versus matching graph-off; preserve both as coverage evidence and keep graph-off speeds protected"},
+  "authority": {"battery_satisfies_quality_prerequisite_for_all_seven_curve_cells": true, "battery_itself_authorizes_site_publication": false, "publication_binding_requires_separate_ingestion_packet": true, "record_or_submission_authorized": false, "protected_graph_off_values_replaced": false, "historical_featured_speeds_are_immutable": true}
+}
