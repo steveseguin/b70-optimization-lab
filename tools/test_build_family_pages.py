@@ -1605,6 +1605,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "qwen38-tp2-llamacpp-sycl-q4km-http-depth": 7,
             "qwen38-tp2-llamacpp-sycl-q8-http-depth": 7,
             "qwen38-tp2-vllm-xpu-fp8-http-depth": 7,
+            "qwen38-tp4-vllm-xpu-autoround-strict-snapshot": 1,
         }
         self.assertEqual(set(contracts), set(expected_counts))
         self.assertEqual(self._errors(family), [])
@@ -1615,7 +1616,7 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertEqual(errors, [], contract_id)
             self.assertEqual(len(cells), expected_count, contract_id)
             all_cells.extend(cells)
-        self.assertEqual(len(all_cells), 1792)
+        self.assertEqual(len(all_cells), 1793)
 
         for contract_id, evidence_id in (
             ("qwen38-tp2-llamacpp-sycl-q4km-http-depth", "q38-q4km-tp2-f16kv-http-context-r1-grade-c"),
@@ -1972,7 +1973,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertFalse(r3_result["authority"]["direct_site_publication"])
 
         for contract_id, contract in contracts.items():
-            if "-tp2-" in contract_id:
+            if "-tp1-" not in contract_id:
                 continue
             axes = {axis["key"]: axis["values"] for axis in contract["axes"]}
             if "target-matrix" in contract_id:
@@ -1995,8 +1996,39 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             sum(cell["state"] == "lab-measured" for cell in q38_target), 49
         )
-        self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 0)
+        self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 7)
         self.assertTrue(all(cell["selectors"]["mtp"] == 0 for cell in q38_target))
+        q38_tp4_snapshot, _ = MODULE.expand_coverage_contract(
+            contracts["qwen38-tp4-vllm-xpu-autoround-strict-snapshot"]
+        )
+        self.assertEqual(len(q38_tp4_snapshot), 1)
+        tp4_cell = q38_tp4_snapshot[0]
+        self.assertEqual(tp4_cell["state"], "lab-measured")
+        self.assertEqual(
+            tp4_cell["evidence_id"], "q38-b2dd-1e90-tp4-strict-pair"
+        )
+        self.assertNotIn("active_context_tokens", tp4_cell["selectors"])
+        self.assertNotIn("point_x", tp4_cell)
+        self.assertEqual(
+            (
+                tp4_cell["selectors"]["tp"],
+                tp4_cell["selectors"]["mtp"],
+                tp4_cell["selectors"]["graph_mode"],
+                tp4_cell["selectors"]["kv"],
+            ),
+            (4, 0, "FULL_AND_PIECEWISE", "f16"),
+        )
+        tp4_measurement = next(
+            measurement
+            for measurement in family["run_measurements"]
+            if measurement["id"] == "q38-b2dd-1e90-tp4-strict-pair"
+        )
+        self.assertEqual(
+            tp4_measurement["metrics"]["decode_tok_s"],
+            [71.77179128057259, 71.82969607434323],
+        )
+        self.assertIn("offline recovery", tp4_measurement["caveat"])
+        self.assertIn("No historical high was lowered or replaced", tp4_measurement["caveat"])
         q38_q4km_f16 = [
             cell for cell in q38_target
             if cell["selectors"]["artifact_id"]
@@ -2557,17 +2589,17 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
-        self.assertIn("Coverage · 11 matrices", overview_html)
-        self.assertIn("308/1,792 classified", overview_html)
+        self.assertIn("Coverage · 12 matrices", overview_html)
+        self.assertIn("316/1,793 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "213", "measured"),
+            ("lab-measured", "214", "measured"),
+            ("estimated", "7", "estimated"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,484", "missing"),
+            ("missing", "1,477", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
-        self.assertNotIn('class="is-estimated"', overview_html)
-        self.assertNotIn("7 estimates", rendered)
+        self.assertIn('class="is-estimated"', overview_html)
 
         self.assertEqual(
             family["initial_view_ids"],

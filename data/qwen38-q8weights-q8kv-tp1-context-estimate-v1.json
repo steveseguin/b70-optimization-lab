@@ -1,0 +1,311 @@
+{
+  "authority": {
+    "estimated_cells": 7,
+    "headline": false,
+    "localmaxxing_submission": false,
+    "measured_cells": 0,
+    "promotion": false,
+    "protected_value_replacement": false,
+    "quality_cells": 0
+  },
+  "classification": "estimated-not-measured",
+  "engine": {
+    "arithmetic": "Python Decimal, precision=50, geometric mean, output rounded to 6 decimals",
+    "id": "qwen38-q8weights-q8kv-context-estimator",
+    "script": "tools/qwen38_q8weights_q8kv_estimator_v1.py",
+    "sha256": "0ddd2422a7803afa44312936433e2fe4e7c1e058d53ed16cd71cfa1f66cbf088",
+    "version": "1.0.0"
+  },
+  "format": "neural-download-estimate-snapshot-v1",
+  "grades": {
+    "evidence": {
+      "grade": "D",
+      "label": "calibrated estimate only",
+      "reason": "No Q8_0-weight/Q8_0-KV target run exists; values transfer matched KV penalties from two same-runtime sibling artifacts onto the measured Q8_0-weight/F16 anchor."
+    },
+    "optimization_maturity": {
+      "label": "not optimized or benchmarked",
+      "reason": "An estimated speed is not evidence that this tuple boots, passes quality, or has received optimization work.",
+      "state": "unassessed"
+    }
+  },
+  "id": "qwen38-q8weights-q8kv-tp1-context-estimate-v1",
+  "limitations": [
+    "No Q8_0-weight/Q8_0-KV run is measured; every central value and interval is an estimate.",
+    "The target F16 anchor is raw-engine build 4302fb599 while donor ratios are same-binary HTTP measurements on 9fee29e; workload and runtime transfer may exceed the displayed interval.",
+    "Only two sibling artifacts define the ratio envelope; Q8_0-weight behavior may differ.",
+    "Evidence grade D is distinct from optimization maturity, which is unassessed.",
+    "No quality, boot, fit, determinism, HTTP serving, prefill, TTFT, VRAM, record, or promotion claim is authorized.",
+    "Do not transfer these values across revisions, artifacts, TP, MTP, graph mode, KV dtype, runtime, workload, or hardware."
+  ],
+  "method": {
+    "central_formula": "Q8weights_F16_raw * sqrt((Q5_Q8_HTTP/Q5_F16_HTTP) * (Q4XL_Q8_HTTP/Q4XL_F16_HTTP))",
+    "estimated_metrics": [
+      "decode_tok_s"
+    ],
+    "mismatch_disclosure": "The donor ratios are internally same-runtime and same-workload, but they are transferred onto a different sealed raw-engine target anchor; Grade D and the expanded band reflect that mismatch.",
+    "same_runtime_donor_requirement": {
+      "binary_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964",
+      "runtime_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+      "workload": "HTTP exact-depth, 128 generated tokens, cache zero, conventional 99-interval decode"
+    },
+    "target_anchor_runtime": {
+      "binary_sha256": "f8fe61241c010d91dba839ff3d5505def9ba569ae98c0ca498efc01b5fb4e2f0",
+      "commit_short": "4302fb599",
+      "workload": "llama-bench tg128, five repetitions"
+    },
+    "uncertainty_formula": "Q8weights_F16_raw * [0.95 * min(donor ratios), 1.05 * max(donor ratios)]",
+    "uncertainty_kind": "same-runtime two-donor envelope plus a conservative five-percent multiplicative expansion; not a statistical confidence interval",
+    "withheld_metrics": [
+      "quality",
+      "HTTP serving decode",
+      "prefill",
+      "TTFT",
+      "VRAM",
+      "fit",
+      "determinism"
+    ]
+  },
+  "points": [
+    {
+      "active_context_tokens": 0,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.995772267,
+          "ud_q4_k_xl": 0.997382823,
+          "ud_q5_k_s": 0.994164312
+        },
+        "estimate": 19.579373,
+        "lower": 18.570369,
+        "uncertainty": {
+          "donor_ratio_high": 0.997382823,
+          "donor_ratio_low": 0.994164312,
+          "extra_multiplicative_expansion_each_side": 0.05,
+          "kind": "same-runtime two-donor envelope expanded by five percent; not a statistical confidence interval"
+        },
+        "upper": 20.591593
+      },
+      "evidence_grade": "D",
+      "optimization_maturity": "unassessed",
+      "target_f16_anchor": {
+        "decode_tok_s": 19.662501,
+        "runtime_commit_short": "4302fb599",
+        "workload": "llama-bench tg128, five repetitions"
+      }
+    },
+    {
+      "active_context_tokens": 2048,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.94847232,
+          "ud_q4_k_xl": 0.950989803,
+          "ud_q5_k_s": 0.945961502
+        },
+        "estimate": 18.582952,
+        "lower": 17.60707,
+        "uncertainty": {
+          "donor_ratio_high": 0.950989803,
+          "donor_ratio_low": 0.945961502,
+          "extra_multiplicative_expansion_each_side": 0.05,
+          "kind": "same-runtime two-donor envelope expanded by five percent; not a statistical confidence interval"
+        },
+        "upper": 19.563889
+      },
+      "evidence_grade": "D",
+      "optimization_maturity": "unassessed",
+      "target_f16_anchor": {
+        "decode_tok_s": 19.592508,
+        "runtime_commit_short": "4302fb599",
+        "workload": "llama-bench tg128, five repetitions"
+      }
+    },
+    {
+      "active_context_tokens": 4096,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.912510427,
+          "ud_q4_k_xl": 0.914610561,
+          "ud_q5_k_s": 0.910415114
+        },
+        "estimate": 17.802605,
+        "lower": 16.87364,
+        "uncertainty": {
+          "donor_ratio_high": 0.914610561,
+          "donor_ratio_low": 0.910415114,
+          "extra_multiplicative_expansion_each_side": 0.05,
+          "kind": "same-runtime two-donor envelope expanded by five percent; not a statistical confidence interval"
+        },
+        "upper": 18.735756
+      },
+      "evidence_grade": "D",
+      "optimization_maturity": "unassessed",
+      "target_f16_anchor": {
+        "decode_tok_s": 19.509481,
+        "runtime_commit_short": "4302fb599",
+        "workload": "llama-bench tg128, five repetitions"
+      }
+    },
+    {
+      "active_context_tokens": 8192,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.850346313,
+          "ud_q4_k_xl": 0.855064808,
+          "ud_q5_k_s": 0.845653855
+        },
+        "estimate": 16.406576,
+        "lower": 15.500238,
+        "uncertainty": {
+          "donor_ratio_high": 0.855064808,
+          "donor_ratio_low": 0.845653855,
+          "extra_multiplicative_expansion_each_side": 0.05,
+          "kind": "same-runtime two-donor envelope expanded by five percent; not a statistical confidence interval"
+        },
+        "upper": 17.322495
+      },
+      "evidence_grade": "D",
+      "optimization_maturity": "unassessed",
+      "target_f16_anchor": {
+        "decode_tok_s": 19.293993,
+        "runtime_commit_short": "4302fb599",
+        "workload": "llama-bench tg128, five repetitions"
+      }
+    },
+    {
+      "active_context_tokens": 16384,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.738411396,
+          "ud_q4_k_xl": 0.741958968,
+          "ud_q5_k_s": 0.734880785
+        },
+        "estimate": 13.910836,
+        "lower": 13.152107,
+        "uncertainty": {
+          "donor_ratio_high": 0.741958968,
+          "donor_ratio_low": 0.734880785,
+          "extra_multiplicative_expansion_each_side": 0.05,
+          "kind": "same-runtime two-donor envelope expanded by five percent; not a statistical confidence interval"
+        },
+        "upper": 14.676552
+      },
+      "evidence_grade": "D",
+      "optimization_maturity": "unassessed",
+      "target_f16_anchor": {
+        "decode_tok_s": 18.83887,
+        "runtime_commit_short": "4302fb599",
+        "workload": "llama-bench tg128, five repetitions"
+      }
+    },
+    {
+      "active_context_tokens": 24576,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.66646751,
+          "ud_q4_k_xl": 0.670518032,
+          "ud_q5_k_s": 0.662441457
+        },
+        "estimate": 12.275064,
+        "lower": 11.590866,
+        "uncertainty": {
+          "donor_ratio_high": 0.670518032,
+          "donor_ratio_low": 0.662441457,
+          "extra_multiplicative_expansion_each_side": 0.05,
+          "kind": "same-runtime two-donor envelope expanded by five percent; not a statistical confidence interval"
+        },
+        "upper": 12.96715
+      },
+      "evidence_grade": "D",
+      "optimization_maturity": "unassessed",
+      "target_f16_anchor": {
+        "decode_tok_s": 18.418098,
+        "runtime_commit_short": "4302fb599",
+        "workload": "llama-bench tg128, five repetitions"
+      }
+    },
+    {
+      "active_context_tokens": 32768,
+      "decode_tok_s": {
+        "donor_ratios": {
+          "geometric_mean": 0.612780796,
+          "ud_q4_k_xl": 0.614900922,
+          "ud_q5_k_s": 0.610667981
+        },
+        "estimate": 11.04457,
+        "lower": 10.456165,
+        "uncertainty": {
+          "donor_ratio_high": 0.614900922,
+          "donor_ratio_low": 0.610667981,
+          "extra_multiplicative_expansion_each_side": 0.05,
+          "kind": "same-runtime two-donor envelope expanded by five percent; not a statistical confidence interval"
+        },
+        "upper": 11.636922
+      },
+      "evidence_grade": "D",
+      "optimization_maturity": "unassessed",
+      "target_f16_anchor": {
+        "decode_tok_s": 18.023689,
+        "runtime_commit_short": "4302fb599",
+        "workload": "llama-bench tg128, five repetitions"
+      }
+    }
+  ],
+  "selectors": {
+    "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+    "graph_mode": "off",
+    "kv": "q8_0",
+    "mtp": 0,
+    "quantization": "Q8_0",
+    "revision": "qwen3.8-27b",
+    "runtime_family": "llama.cpp SYCL",
+    "tp": 1
+  },
+  "snapshot_date": "2026-08-26",
+  "sources": [
+    {
+      "path": "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json",
+      "sha256": "43a911b11dfe135180361d8ce24870bc6898d60416ef5ca17b09a1b530e795c2"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/command.txt",
+      "sha256": "6f80d02e551b651587f7a812e8018f24d006213c44ed7d78605ec12ecadf7b9c"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/environment.txt",
+      "sha256": "a442ebbfd36720142322f0b35c539de6882bc4e76e8718a1fcc6098e703eaf62"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/sha256sums.txt",
+      "sha256": "a7d5579a5a1a3b1c92bd28524099a4d256dedc26955250032c295008bb4ffa02"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q5ks-f16kv-tp1-target-http-depth-quality-r1-result.json",
+      "sha256": "ee8cb67112e753832a62cdcb5d5449f5def065da0fbf83cbc8122cd7a193eda4"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-q8kv-tp1-target-http-depth-quality-r1-result.json",
+      "sha256": "2653041587bb80a1ea2c08d177114911d9cf60a2d379baa782a416396a7f0cd3"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-target-http-depth-quality-r1-result.json",
+      "sha256": "9b824989b7f0856da27871f794c28e0362251ee82709840e75a80746426996af"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-q8kv-tp1-target-http-depth-quality-r1-result.json",
+      "sha256": "00aa8a92c0a7b3f7faccb03db3c3847b63e96979278487e4435d5ae1a5104ec2"
+    },
+    {
+      "path": "repro/qwen38-27b-q8-tp1-b70/model-direct.json",
+      "sha256": "189104e9d795fca60fa437da69f07b7bac5705effc819a00fbd08e26ef5d7888"
+    }
+  ],
+  "state": "estimated",
+  "target_identity": {
+    "bytes": 28595763552,
+    "file": "Qwen3.8-27B-Q8_0.gguf",
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"
+  },
+  "workload": "estimated raw-engine llama-bench tg128 at seven exact active-depth points; not HTTP serving"
+}

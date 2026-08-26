@@ -5,7 +5,7 @@
   "name": "Qwen 27B",
   "display_name": "Qwen 27B · 3.6 → 3.8",
   "publisher": "Qwen / Alibaba",
-  "updated_at": "2026-08-25",
+  "updated_at": "2026-08-26",
   "summary": "Alibaba's dense 27B Qwen line (3.6 and the newer 3.8), the lab's most-tested general assistant: it reads images, handles long context, and has been measured on one, two, and four Arc Pro B70 cards with both llama.cpp and vLLM.",
   "featured_results": [
     {
@@ -2492,7 +2492,7 @@
         "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
         "recovered_result_sha256": "d4d94a33161171461155e8526b53b306a38ec99f978b41d53912ce9c9e3b4201"
       },
-      "config": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.6, "natural_eos": true},
+      "config": {"tp": 4, "mtp": 0, "graph": "on", "graph_mode": "FULL_AND_PIECEWISE", "kv": "f16", "configured_max_context_tokens": 32768, "gpu_memory_utilization": 0.6, "natural_eos": true},
       "workload": "two strict natural-EOS replays; 25 unique cold prompts; up to 512 output tokens; cached_tokens=0; conventional 99-interval median",
       "metrics": {"decode_tok_s": [71.77179128057259, 71.82969607434323]},
       "quality": "Both strict arms passed all non-speed gates; strict A passed 7/7 exact cases, 8/8 one-hash repeat, the 8K needle, 24/24 baseline comparisons, and 16/16 zero cache counts. The exact compile cache stayed immutable through replay B.",
@@ -6455,6 +6455,41 @@
         "id": "measured-q8weights-tp1-kv-f16-context-32768",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"},
         "state": "lab-measured", "label": "D18.024 · P719.14 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 32768, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+      },
+      {
+        "id": "estimated-q8weights-tp1-kv-q8-context-0",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "q8_0"},
+        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-0", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+      },
+      {
+        "id": "estimated-q8weights-tp1-kv-q8-context-2048",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "q8_0"},
+        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-2048", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+      },
+      {
+        "id": "estimated-q8weights-tp1-kv-q8-context-4096",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "off", "kv": "q8_0"},
+        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-4096", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+      },
+      {
+        "id": "estimated-q8weights-tp1-kv-q8-context-8192",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "off", "kv": "q8_0"},
+        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-8192", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+      },
+      {
+        "id": "estimated-q8weights-tp1-kv-q8-context-16384",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "q8_0"},
+        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-16384", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+      },
+      {
+        "id": "estimated-q8weights-tp1-kv-q8-context-24576",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "off", "kv": "q8_0"},
+        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-24576", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+      },
+      {
+        "id": "estimated-q8weights-tp1-kv-q8-context-32768",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "q8_0"},
+        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-32768", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
       }
     ]
   },
@@ -6680,6 +6715,57 @@
       {"id": "measured-16k", "match": {"active_context_tokens": 16384}, "state": "lab-measured", "label": "D20.93 · T10,533", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-24k", "match": {"active_context_tokens": 24576}, "state": "lab-measured", "label": "D20.65 · T16,139", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-32k", "match": {"active_context_tokens": 32768}, "state": "lab-measured", "label": "D20.39 · T21,873", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}}
+    ]
+  },
+  {
+    "id": "qwen38-tp4-vllm-xpu-autoround-strict-snapshot",
+    "label": "Qwen3.8 TP4 · vLLM XPU AutoRound strict snapshot",
+    "description": "One exact short-suite TP4 anchor for the frozen b2dd9ce73d + 1e90ffa672 source stack. This is not an active-context curve: 32K is configured capacity only, and no x=0/2K/4K/8K/16K/24K/32K throughput cell is claimed.",
+    "fixed_selectors": {
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "runtime_family": "vLLM XPU",
+      "runtime": "vLLM XPU b2dd9ce73d + XPU kernels 1e90ffa672",
+      "measurement_class": "strict-natural-eos",
+      "workload": "two strict natural-EOS replays; 25 unique cold prompts; up to 512 output tokens; cached_tokens=0; conventional 99-interval median",
+      "tp": 4,
+      "mtp": 0,
+      "graph": "on",
+      "graph_mode": "FULL_AND_PIECEWISE",
+      "kv": "f16",
+      "configured_max_context_tokens": 32768,
+      "gpu_memory_utilization": 0.6,
+      "natural_eos": true
+    },
+    "axes": [
+      {
+        "key": "profile_id",
+        "label": "Frozen source stack",
+        "values": ["q38-b2dd-1e90-frozen-snapshot"],
+        "value_labels": {"q38-b2dd-1e90-frozen-snapshot": "b2dd9ce73d + 1e90ffa672"}
+      }
+    ],
+    "rules": [
+      {
+        "id": "default-profile-gap",
+        "match": {"profile_id": "*"},
+        "state": "missing",
+        "label": "unmeasured exact profile",
+        "reason": "No qualified short-suite result binds this exact source-stack profile.",
+        "parent": "qwen38-b2dd9ce73d-tp4-zero-overlay-r1",
+        "retry": {"status": "queued", "trigger": "new-exact-short-suite-run"}
+      },
+      {
+        "id": "measured-b2dd-1e90-strict-pair",
+        "match": {"profile_id": "q38-b2dd-1e90-frozen-snapshot"},
+        "state": "lab-measured",
+        "label": "D71.772 / 71.830 · qualified dated pair",
+        "reason": "Both strict model arms passed all non-speed gates; strict A passed the full battery. The post-run aggregation was recovered offline from sealed artifacts after a mawk wrapper-only failure.",
+        "evidence_id": "q38-b2dd-1e90-tp4-strict-pair",
+        "parent": "qwen38-b2dd9ce73d-tp4-zero-overlay-r1",
+        "retry": {"status": "complete"}
+      }
     ]
   }
 ],
@@ -7758,6 +7844,104 @@
       ],
       "not_for_promotion": true,
       "limitations": "Grade D raw-engine decode estimate only; no measured q8_0 target point, no quality/TTFT/VRAM/prefill claim, and no transfer across revision, artifact, TP, MTP, graph, KV, runtime, workload, or hardware."
+    },
+    {
+      "id": "q38-q8weights-q8kv-tp1-context-estimate-v1-0",
+      "state": "estimated",
+      "selectors": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "q8_0"},
+      "metric": "decode_tok_s", "unit": "tok/s", "value": 19.579373,
+      "interval": {"low": 18.570369, "high": 20.591593},
+      "engine": {"name": "qwen38-q8weights-q8kv-context-estimator", "version": "1.0.0", "snapshot_sha256": "0a53f1da68144fddba44153bfb468cc056dbc99d780e7655bbf20829be813d0f"},
+      "generated_at": "2026-08-26", "record": "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json",
+      "basis_measurement_ids": ["q38-q8weights-tp1-kv-f16-context", "q38-q5ks-tp1-f16kv-target-http-context-r1-grade-c", "q38-q5ks-tp1-q8kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"],
+      "evidence_grade": {"grade": "D", "label": "calibrated estimate only"},
+      "optimization_maturity": {"state": "unassessed", "label": "not optimized or benchmarked"},
+      "not_for_promotion": true,
+      "limitations": "Grade D raw-engine decode estimate only; optimization maturity is separately unassessed. No measured Q8_0-weight/Q8_0-KV target point and no boot, quality, HTTP, fit, determinism, TTFT, VRAM, prefill, record, protected-value, or promotion authority."
+    },
+    {
+      "id": "q38-q8weights-q8kv-tp1-context-estimate-v1-2048",
+      "state": "estimated",
+      "selectors": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "q8_0"},
+      "metric": "decode_tok_s", "unit": "tok/s", "value": 18.582952,
+      "interval": {"low": 17.60707, "high": 19.563889},
+      "engine": {"name": "qwen38-q8weights-q8kv-context-estimator", "version": "1.0.0", "snapshot_sha256": "0a53f1da68144fddba44153bfb468cc056dbc99d780e7655bbf20829be813d0f"},
+      "generated_at": "2026-08-26", "record": "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json",
+      "basis_measurement_ids": ["q38-q8weights-tp1-kv-f16-context", "q38-q5ks-tp1-f16kv-target-http-context-r1-grade-c", "q38-q5ks-tp1-q8kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"],
+      "evidence_grade": {"grade": "D", "label": "calibrated estimate only"},
+      "optimization_maturity": {"state": "unassessed", "label": "not optimized or benchmarked"},
+      "not_for_promotion": true,
+      "limitations": "Grade D raw-engine decode estimate only; optimization maturity is separately unassessed. No measured Q8_0-weight/Q8_0-KV target point and no boot, quality, HTTP, fit, determinism, TTFT, VRAM, prefill, record, protected-value, or promotion authority."
+    },
+    {
+      "id": "q38-q8weights-q8kv-tp1-context-estimate-v1-4096",
+      "state": "estimated",
+      "selectors": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "off", "kv": "q8_0"},
+      "metric": "decode_tok_s", "unit": "tok/s", "value": 17.802605,
+      "interval": {"low": 16.87364, "high": 18.735756},
+      "engine": {"name": "qwen38-q8weights-q8kv-context-estimator", "version": "1.0.0", "snapshot_sha256": "0a53f1da68144fddba44153bfb468cc056dbc99d780e7655bbf20829be813d0f"},
+      "generated_at": "2026-08-26", "record": "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json",
+      "basis_measurement_ids": ["q38-q8weights-tp1-kv-f16-context", "q38-q5ks-tp1-f16kv-target-http-context-r1-grade-c", "q38-q5ks-tp1-q8kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"],
+      "evidence_grade": {"grade": "D", "label": "calibrated estimate only"},
+      "optimization_maturity": {"state": "unassessed", "label": "not optimized or benchmarked"},
+      "not_for_promotion": true,
+      "limitations": "Grade D raw-engine decode estimate only; optimization maturity is separately unassessed. No measured Q8_0-weight/Q8_0-KV target point and no boot, quality, HTTP, fit, determinism, TTFT, VRAM, prefill, record, protected-value, or promotion authority."
+    },
+    {
+      "id": "q38-q8weights-q8kv-tp1-context-estimate-v1-8192",
+      "state": "estimated",
+      "selectors": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "off", "kv": "q8_0"},
+      "metric": "decode_tok_s", "unit": "tok/s", "value": 16.406576,
+      "interval": {"low": 15.500238, "high": 17.322495},
+      "engine": {"name": "qwen38-q8weights-q8kv-context-estimator", "version": "1.0.0", "snapshot_sha256": "0a53f1da68144fddba44153bfb468cc056dbc99d780e7655bbf20829be813d0f"},
+      "generated_at": "2026-08-26", "record": "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json",
+      "basis_measurement_ids": ["q38-q8weights-tp1-kv-f16-context", "q38-q5ks-tp1-f16kv-target-http-context-r1-grade-c", "q38-q5ks-tp1-q8kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"],
+      "evidence_grade": {"grade": "D", "label": "calibrated estimate only"},
+      "optimization_maturity": {"state": "unassessed", "label": "not optimized or benchmarked"},
+      "not_for_promotion": true,
+      "limitations": "Grade D raw-engine decode estimate only; optimization maturity is separately unassessed. No measured Q8_0-weight/Q8_0-KV target point and no boot, quality, HTTP, fit, determinism, TTFT, VRAM, prefill, record, protected-value, or promotion authority."
+    },
+    {
+      "id": "q38-q8weights-q8kv-tp1-context-estimate-v1-16384",
+      "state": "estimated",
+      "selectors": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "q8_0"},
+      "metric": "decode_tok_s", "unit": "tok/s", "value": 13.910836,
+      "interval": {"low": 13.152107, "high": 14.676552},
+      "engine": {"name": "qwen38-q8weights-q8kv-context-estimator", "version": "1.0.0", "snapshot_sha256": "0a53f1da68144fddba44153bfb468cc056dbc99d780e7655bbf20829be813d0f"},
+      "generated_at": "2026-08-26", "record": "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json",
+      "basis_measurement_ids": ["q38-q8weights-tp1-kv-f16-context", "q38-q5ks-tp1-f16kv-target-http-context-r1-grade-c", "q38-q5ks-tp1-q8kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"],
+      "evidence_grade": {"grade": "D", "label": "calibrated estimate only"},
+      "optimization_maturity": {"state": "unassessed", "label": "not optimized or benchmarked"},
+      "not_for_promotion": true,
+      "limitations": "Grade D raw-engine decode estimate only; optimization maturity is separately unassessed. No measured Q8_0-weight/Q8_0-KV target point and no boot, quality, HTTP, fit, determinism, TTFT, VRAM, prefill, record, protected-value, or promotion authority."
+    },
+    {
+      "id": "q38-q8weights-q8kv-tp1-context-estimate-v1-24576",
+      "state": "estimated",
+      "selectors": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "off", "kv": "q8_0"},
+      "metric": "decode_tok_s", "unit": "tok/s", "value": 12.275064,
+      "interval": {"low": 11.590866, "high": 12.96715},
+      "engine": {"name": "qwen38-q8weights-q8kv-context-estimator", "version": "1.0.0", "snapshot_sha256": "0a53f1da68144fddba44153bfb468cc056dbc99d780e7655bbf20829be813d0f"},
+      "generated_at": "2026-08-26", "record": "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json",
+      "basis_measurement_ids": ["q38-q8weights-tp1-kv-f16-context", "q38-q5ks-tp1-f16kv-target-http-context-r1-grade-c", "q38-q5ks-tp1-q8kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"],
+      "evidence_grade": {"grade": "D", "label": "calibrated estimate only"},
+      "optimization_maturity": {"state": "unassessed", "label": "not optimized or benchmarked"},
+      "not_for_promotion": true,
+      "limitations": "Grade D raw-engine decode estimate only; optimization maturity is separately unassessed. No measured Q8_0-weight/Q8_0-KV target point and no boot, quality, HTTP, fit, determinism, TTFT, VRAM, prefill, record, protected-value, or promotion authority."
+    },
+    {
+      "id": "q38-q8weights-q8kv-tp1-context-estimate-v1-32768",
+      "state": "estimated",
+      "selectors": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "quantization": "Q8_0", "runtime_family": "llama.cpp SYCL", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "q8_0"},
+      "metric": "decode_tok_s", "unit": "tok/s", "value": 11.04457,
+      "interval": {"low": 10.456165, "high": 11.636922},
+      "engine": {"name": "qwen38-q8weights-q8kv-context-estimator", "version": "1.0.0", "snapshot_sha256": "0a53f1da68144fddba44153bfb468cc056dbc99d780e7655bbf20829be813d0f"},
+      "generated_at": "2026-08-26", "record": "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json",
+      "basis_measurement_ids": ["q38-q8weights-tp1-kv-f16-context", "q38-q5ks-tp1-f16kv-target-http-context-r1-grade-c", "q38-q5ks-tp1-q8kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c", "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"],
+      "evidence_grade": {"grade": "D", "label": "calibrated estimate only"},
+      "optimization_maturity": {"state": "unassessed", "label": "not optimized or benchmarked"},
+      "not_for_promotion": true,
+      "limitations": "Grade D raw-engine decode estimate only; optimization maturity is separately unassessed. No measured Q8_0-weight/Q8_0-KV target point and no boot, quality, HTTP, fit, determinism, TTFT, VRAM, prefill, record, protected-value, or promotion authority."
     }
   ]
 }
