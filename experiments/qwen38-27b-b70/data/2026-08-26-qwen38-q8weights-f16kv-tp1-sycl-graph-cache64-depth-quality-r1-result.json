@@ -1,0 +1,69 @@
+{
+  "schema": "neural.download.qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-result.v1",
+  "campaign_id": "qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r1",
+  "status": "passed",
+  "classification": "Grade C exact-depth HTTP serving curve under a separate cache64 SYCL-graph profile",
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r1",
+  "tracked_inputs": {
+    "preregistration": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-r1-prereg.json", "sha256": "0e694189f219b5c5fc3b2b22561a543a00007a5c9cdae23de386d81e5c284aa5"},
+    "runner": {"path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-r1.py", "sha256": "a8b90c737d34f5ebb77c7ec50ccb2423f5f345638f629b6d0b3962c15680732e"},
+    "terminal_validator": {"path": "experiments/qwen38-27b-b70/scripts/validate-20260826-qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-r1.py", "sha256": "92256e8a958f96d80cf48f16a16016d0a9bd62012c7fd7d392fa758841d20720"},
+    "runner_tests": {"path": "experiments/qwen38-27b-b70/scripts/test_qwen38_q8weights_f16kv_tp1_sycl_graph_cache64_depth_quality_r1.py", "sha256": "bdc17714778525227321d3e9d37092533490ba34dddd1494c57dfc05ea15bc93"}
+  },
+  "raw_artifacts": {
+    "sha256": {
+      "identity.json": "9ccd8177c875ad8d72138ea4b3c7eccba621f7b59b87b515ecbf5c2993acacb2",
+      "target-mtp0-graph-cache64/arm-result.json": "77261fa90af2cf262e1d6855662d05c5e647afa73b5354df2fd107e8d0bb3fa4",
+      "target-mtp0-graph-cache64/cleanup.json": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179",
+      "target-mtp0-graph-cache64/depth-0/exact-depth.json": "3978334029eae196ee37e3450c46e58119c0efdb8563659b121df12a8241c85d",
+      "target-mtp0-graph-cache64/depth-0/exact-depth.stdout.json": "3978334029eae196ee37e3450c46e58119c0efdb8563659b121df12a8241c85d",
+      "target-mtp0-graph-cache64/depth-2048/exact-depth.json": "a8c39bb4ceddc9b4c5ad4ed774d0478b399ae1442ee996d0f4fab9970f8797a9",
+      "target-mtp0-graph-cache64/depth-2048/exact-depth.stdout.json": "a8c39bb4ceddc9b4c5ad4ed774d0478b399ae1442ee996d0f4fab9970f8797a9",
+      "target-mtp0-graph-cache64/depth-4096/exact-depth.json": "be498c192f45be5c848296cc9fe37c42e0f3d3df0258c7f376d9521139bc1ca7",
+      "target-mtp0-graph-cache64/depth-4096/exact-depth.stdout.json": "be498c192f45be5c848296cc9fe37c42e0f3d3df0258c7f376d9521139bc1ca7",
+      "target-mtp0-graph-cache64/depth-8192/exact-depth.json": "844124d39c84abc30318f5fa59d1f57273d3a5bb0d218d12d1d64988228d0957",
+      "target-mtp0-graph-cache64/depth-8192/exact-depth.stdout.json": "844124d39c84abc30318f5fa59d1f57273d3a5bb0d218d12d1d64988228d0957",
+      "target-mtp0-graph-cache64/depth-16384/exact-depth.json": "7c5fd0d049c04ebbcfafc5260ef5ab2fc2a2f8a44ee0d165f5065652faa1ccc0",
+      "target-mtp0-graph-cache64/depth-16384/exact-depth.stdout.json": "7c5fd0d049c04ebbcfafc5260ef5ab2fc2a2f8a44ee0d165f5065652faa1ccc0",
+      "target-mtp0-graph-cache64/depth-24576/exact-depth.json": "2403e3f72aab1a09a5517aae23466da59b8bb901c165218ecf1ba4a2193aa2bd",
+      "target-mtp0-graph-cache64/depth-24576/exact-depth.stdout.json": "2403e3f72aab1a09a5517aae23466da59b8bb901c165218ecf1ba4a2193aa2bd",
+      "target-mtp0-graph-cache64/depth-32768/exact-depth.json": "52c38345ec80c316f3e31afc43831e22161ce26522f771882c24f6e0b662cb7a",
+      "target-mtp0-graph-cache64/depth-32768/exact-depth.stdout.json": "52c38345ec80c316f3e31afc43831e22161ce26522f771882c24f6e0b662cb7a",
+      "target-mtp0-graph-cache64/graph-evidence.json": "6a799cf32565633efe1e5d39edefbdbc445f3da8c60ae587356b9652116b5fd1",
+      "target-mtp0-graph-cache64/models.json": "3c25fe3e1db77ef2f8ce26f0dd932226151eab4e59919bf3260da29d0d58ad83",
+      "target-mtp0-graph-cache64/quality.json": "c32a312c0b13f03c9b0246336d7c547f4994f4a65130d3dec4d4427cad367351",
+      "target-mtp0-graph-cache64/quality.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "target-mtp0-graph-cache64/quality.stdout.json": "7a0ec1ec9f77035c73dea669fe57be5aa4f7290aebe4d15e119fd8028f27fb86",
+      "target-mtp0-graph-cache64/server.log": "7a5f45bd62802b2c77351ccaae3136140fd0b80d80664561fcac4938d475889a",
+      "terminal-receipt.json": "669cbb2bf44fd5724587d7aaecfa99222e5ed82d81a90df46478751929681355",
+      "validator.stdout.json": "669cbb2bf44fd5724587d7aaecfa99222e5ed82d81a90df46478751929681355"
+    }
+  },
+  "identity": {
+    "git_head_and_origin_main": "8ae38e423b690cf11541c045a4d3f2c853e34bd0",
+    "model": {"path": "/mnt/usb-models/models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf", "repository": "ggml-org/Qwen3.8-27B-GGUF", "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf", "quantization": "Q8_0", "size_bytes": 28595763552, "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8"},
+    "runtime": {"source_base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110", "binary_sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b", "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2", "effective_dso_canonical_sha256": "5cf0ba76d9784072e245e5fe67772c52b01cc028034687c9689313f6de6ef17c"},
+    "config": {"tp": 1, "mtp": 0, "graph": "on", "graph_mode": "SYCL", "graph_profile": "cache64", "fit": "off", "kv": "f16", "speculation": "none", "configured_max_context_tokens": 33024, "cache_prompt": false, "ctx_checkpoints": 0}
+  },
+  "serving_curve": {
+    "evidence_grade": "C",
+    "metric": "conventional HTTP serving decode tok/s over 99 intervals between streamed token-ID events 1 and 100",
+    "fixture": "synthetic repeated-token exact-depth fixture; separately passed full natural-language quality battery",
+    "context_axis_disclosure": {"x0": "zero prior active context plus one explicit ordinary prompt token", "positive_depths": "exact submitted token counts", "configured_capacity_is_not_active_context": true},
+    "cells": [
+      {"active_context_tokens": 0, "serving_decode_tok_s_99_interval": 19.167301559287175, "time_to_first_token_s": 0.08054172899574041, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "dab29d7687ea2f3c58e9592665e8a4e14d7504ec873e580fb89ee9f1b9574883", "text_sha256": "890940cbe12eca94a17e1abdbd5d5178b134bbf4ebf92c6a5bfc9fe703f845df"},
+      {"active_context_tokens": 2048, "serving_decode_tok_s_99_interval": 18.9799759652464, "time_to_first_token_s": 2.3459229419968324, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "5b50b962a571834aa9a7beebe37929db23520f0749cbe0df2ab847421eea0f30", "text_sha256": "404ab85306fe3a503afc4d6c91df7296ea96a307195b856dea4e4ab73c44223c"},
+      {"active_context_tokens": 4096, "serving_decode_tok_s_99_interval": 18.92645913551314, "time_to_first_token_s": 4.641036590008298, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "d6e637475049304d94d09bd553ade177f8831eab0754109f2df3c64d4865f256", "text_sha256": "810725e6425cbf5ca3ffde8f018009d572eaece0b00ee1417e13c442d4ea1b98"},
+      {"active_context_tokens": 8192, "serving_decode_tok_s_99_interval": 18.69274344002126, "time_to_first_token_s": 9.483954833995085, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "adf9344f835b00dd7d74d0e68ddfbfe65d14f15ffdbea0c0e0127099cd06b54c", "text_sha256": "a5869fffec9d7970a7deab36c2ff83c80d2badd227349ebbee6e28ac56a3b723"},
+      {"active_context_tokens": 16384, "serving_decode_tok_s_99_interval": 18.219334703070594, "time_to_first_token_s": 19.887802596000256, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "6729ff1c62f25b70f1c52df382839824037a3e5900b481e2a44eae106fdc4727", "text_sha256": "389cb7f1dddd3eed4b3217dd0268565725441c307046e698e57b75523ae80391"},
+      {"active_context_tokens": 24576, "serving_decode_tok_s_99_interval": 17.768465334283064, "time_to_first_token_s": 30.9617885560001, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "f613b70435d43d9164fab65d2152456390ea459d56f3f36cfacc39f81243fb0f", "text_sha256": "6492deec8ddde0520d786f3eff6198d94bb229ac230de4f9b5cf3831fcabe6d2"},
+      {"active_context_tokens": 32768, "serving_decode_tok_s_99_interval": 17.521196458119796, "time_to_first_token_s": 42.329847107001115, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "747773a85e12c33128105d8b7163690e67e692ab4a048fb3d08a2f25f01c1186", "text_sha256": "b14140a48c79639e0b87d401d1e3fd9af637e8032f744065f2da78b2b50ac998"}
+    ]
+  },
+  "quality": {"pass_all": true, "exact_cases": {"passed": 7, "required": 7}, "repeat_stability": {"passed": true, "runs": 2, "unique_hashes": 1, "output_sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"}, "long_context_needle": {"passed": true, "actual_prompt_tokens_before_chat_template": 25200, "api_usage_prompt_tokens": 25212, "output_sha256": "1583fb313bb7b240d09b6419481427b0d55f5b21d4ec5c5317a343d667744ad1"}, "cache_zero_requests": {"passed": 10, "required": 10}},
+  "graph_mechanism": {"passed": true, "requested": 1182, "cache_entries": 64, "cache_limit": 64, "cache_hit": 947, "cache_miss": 235, "cache_full": 171, "direct_replay": 947, "minimum_direct_replays": 896, "recorded": 64, "created": 64, "replayed": 1011, "compatibility_rejected": 0, "device_unsupported": 0, "updated": 0, "recreated": 0},
+  "validation": {"terminal_status": "completed-valid-q8weights-f16kv-graph-cache64-depth-quality", "terminal_checks_passed": 19, "terminal_checks_total": 19, "clean_shutdown": true, "offline_recovery": false},
+  "authority": {"site_graph_q8weights_f16_curve_publication": true, "graph_q8weights_f16_serving_curve_cells": 7, "graph_off_cells": 0, "other_quantization_cells": 0, "speculative_cells": 0, "tp2_or_tp4_cells": 0, "prefill_cells": 0, "protected_or_headline_replacement": false, "localmaxxing_submission": false},
+  "comparison_disclosure": "This separately pinned graph profile can be slower than graph-off at the same selector. It does not replace graph-off F16/Q8_0 routes, package headlines, or protected values.",
+  "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]
+}

@@ -678,6 +678,20 @@
       "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-target-http-depth-quality-r1-result.json"
     },
     {
+      "id": "qwen38-27b-q8weights-f16kv-sycl-graph-cache64-depth-grade-c",
+      "label": "Qwen3.8 Q8_0 weights · TP1 F16-KV cache64 SYCL-graph HTTP context curve",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "quantization": "Q8_0",
+      "runtime": "llama.cpp SYCL graph patch stack fa0f3b25a47f",
+      "cards": 1,
+      "status": "quality-battery-qualified-grade-c-graph-http-curve",
+      "evidence_level": "B70-measured Grade C",
+      "coverage": ["target-only MTP0", "HTTP serving", "active context 0-32K", "F16 KV", "SYCL graph cache64", "full quality battery"],
+      "grades": {"evidence": {"grade": "C", "scope": "Qwen3.8 Q8_0-weight target-only TP1 HTTP serving at seven exact active-context depths with F16 KV, fit disabled, and the separately pinned cache64 SYCL-graph patch profile", "basis": "all seven cache-zero exact-depth receipts completed under one pinned graph-patched identity; the full quality battery and 947-direct-replay graph floor passed. This separate graph profile can be slower and does not replace graph-off F16/Q8_0 routes, headlines, protected scores, or LocalMaxxing.", "reviewed_at": "2026-08-26", "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-r1-result.json"]}},
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-r1-result.json"
+    },
+    {
       "id": "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c",
       "label": "Qwen3.8 Q8_0 weights · TP1 target-only Q8_0-KV HTTP context curve",
       "revision": "qwen3.8-27b",
@@ -3838,6 +3852,37 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-target-http-depth-quality-r1-result.json"
     },
     {
+      "id": "q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "quantization": "Q8_0",
+      "variant": "Q8_0 weights target-only cache64 SYCL graph",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp1-llamacpp-sycl-graph-cache64-target-only-v1",
+      "speculation_method": "none",
+      "runtime": "llama.cpp SYCL graph patch stack fa0f3b25a47f",
+      "profile_id": "q38-q8weights-f16kv-sycl-graph-cache64-http-depth-grade-c-v1",
+      "measurement_class": "conventional-99-interval-exact-depth-http-serving-grade-c",
+      "promotion_status": "authorized-seven-cell-q8weights-f16kv-cache64-graph-site-curve-no-graph-off-headline-or-submission",
+      "identity": {"model_revision": "0669b98607d47046c7c2b3f801011d54a08cfccf", "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8", "llama_server_sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b", "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2", "terminal_receipt_sha256": "669cbb2bf44fd5724587d7aaecfa99222e5ed82d81a90df46478751929681355"},
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "graph_mode": "SYCL", "graph_profile": "cache64", "fit": "off", "kv": "f16", "speculation": "none", "configured_max_context_tokens": 33024, "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "HTTP /v1/completions; exact submitted token depths; 128 generated tokens; cache zero; conventional 99-interval serving decode",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 19.167301559287175, "ttft_ms": 80.54172899574041, "cached_tokens": 0, "output_token_ids_sha256": "dab29d7687ea2f3c58e9592665e8a4e14d7504ec873e580fb89ee9f1b9574883", "context_semantics": "zero prior active context plus one explicit ordinary prompt token"},
+        {"x": 2048, "decode_tok_s": 18.9799759652464, "ttft_ms": 2345.9229419968324, "cached_tokens": 0, "output_token_ids_sha256": "5b50b962a571834aa9a7beebe37929db23520f0749cbe0df2ab847421eea0f30"},
+        {"x": 4096, "decode_tok_s": 18.92645913551314, "ttft_ms": 4641.036590008298, "cached_tokens": 0, "output_token_ids_sha256": "d6e637475049304d94d09bd553ade177f8831eab0754109f2df3c64d4865f256"},
+        {"x": 8192, "decode_tok_s": 18.69274344002126, "ttft_ms": 9483.954833995085, "cached_tokens": 0, "output_token_ids_sha256": "adf9344f835b00dd7d74d0e68ddfbfe65d14f15ffdbea0c0e0127099cd06b54c"},
+        {"x": 16384, "decode_tok_s": 18.219334703070594, "ttft_ms": 19887.802596000256, "cached_tokens": 0, "output_token_ids_sha256": "6729ff1c62f25b70f1c52df382839824037a3e5900b481e2a44eae106fdc4727"},
+        {"x": 24576, "decode_tok_s": 17.768465334283064, "ttft_ms": 30961.7885560001, "cached_tokens": 0, "output_token_ids_sha256": "f613b70435d43d9164fab65d2152456390ea459d56f3f36cfacc39f81243fb0f"},
+        {"x": 32768, "decode_tok_s": 17.521196458119796, "ttft_ms": 42329.847107001115, "cached_tokens": 0, "output_token_ids_sha256": "747773a85e12c33128105d8b7163690e67e692ab4a048fb3d08a2f25f01c1186"}
+      ],
+      "quality": "Full Qwen3.8 quality battery passed: 7 exact cases, 2 stable repeat runs, the 25,200-token long-context needle, and cached_tokens=0 on all 10 quality requests. The graph mechanism passed with 947 direct replays against the 896 floor.",
+      "caveat": "Grade C synthetic exact-depth serving shape under the separately pinned graph-patched cache64 runtime. This graph profile can be slower and does not replace graph-off F16/Q8_0 routes, other selectors, headlines, protected values, or LocalMaxxing.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-r1-result.json"
+    },
+    {
       "id": "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -4683,13 +4728,14 @@
     },
     {
       "id": "context-q8weights-http",
-      "title": "Q8_0-weight HTTP context × KV",
-      "subtitle": "Grade C · same Qwen3.8 Q8_0 artifact and runtime · target-only TP1 · graph and fit off · exact cache-zero HTTP serving through 32K · both full quality batteries passed",
+      "title": "Q8_0-weight HTTP context × KV/graph",
+      "subtitle": "Grade C · same Qwen3.8 Q8_0 artifact · target-only TP1 · graph-off F16/Q8_0 and cache64 graph-patched F16 remain separately labeled · the graph profile can be slower and does not replace graph-off · all full quality batteries passed",
       "x_label": "active context tokens",
       "metrics": ["decode_tok_s"],
       "series": [
-        {"label": "F16 KV · HTTP · Grade C", "measurement_ids": ["q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c"]},
-        {"label": "Q8_0 KV · HTTP · Grade C", "measurement_ids": ["q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c"]}
+        {"label": "F16 KV · graph off · HTTP · Grade C", "measurement_ids": ["q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c"]},
+        {"label": "F16 KV · SYCL graph cache64 · HTTP · Grade C", "measurement_ids": ["q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c"]},
+        {"label": "Q8_0 KV · graph off · HTTP · Grade C", "measurement_ids": ["q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c"]}
       ]
     },
     {
@@ -5822,7 +5868,7 @@
   {
     "id": "qwen38-tp1-llamacpp-sycl-target-matrix",
     "label": "Qwen3.8 TP1 · llama.cpp SYCL target-only matrix",
-    "description": "112 meaningful target-only cells: four GGUF artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. These cells preserve 77 exact measurements; retired estimates remain historical calibration evidence only, and no MTP speed is transferred into them.",
+    "description": "112 meaningful target-only cells: four GGUF artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. These cells preserve 84 exact measurements; retired estimates remain historical calibration evidence only, and no MTP speed is transferred into them.",
     "fixed_selectors": {
       "runtime_family": "llama.cpp SYCL"
     },
@@ -7052,6 +7098,41 @@
         "id": "measured-q8weights-tp1-kv-f16-context-32768",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"},
         "state": "lab-measured", "label": "D12.679 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.", "evidence_id": "q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-q8weights-f16kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-f16kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-f16kv-sycl-graph-cache64-context-0",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D19.167 · graph c64 · Grade C", "reason": "Authorized cache-zero graph-profile HTTP cell; full quality and graph mechanism passed. The graph profile can be slower and does not replace graph-off. x=0 is zero prior context plus one ordinary prompt token.", "evidence_id": "q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c", "point_x": 0, "packet_id": "qwen38-27b-q8weights-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r1", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-f16kv-sycl-graph-cache64-context-2048",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D18.980 · graph c64 · Grade C", "reason": "Authorized cache-zero graph-profile HTTP cell; full quality and graph mechanism passed. The graph profile can be slower and does not replace graph-off.", "evidence_id": "q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c", "point_x": 2048, "packet_id": "qwen38-27b-q8weights-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r1", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-f16kv-sycl-graph-cache64-context-4096",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D18.926 · graph c64 · Grade C", "reason": "Authorized cache-zero graph-profile HTTP cell; full quality and graph mechanism passed. The graph profile can be slower and does not replace graph-off.", "evidence_id": "q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c", "point_x": 4096, "packet_id": "qwen38-27b-q8weights-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r1", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-f16kv-sycl-graph-cache64-context-8192",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D18.693 · graph c64 · Grade C", "reason": "Authorized cache-zero graph-profile HTTP cell; full quality and graph mechanism passed. The graph profile can be slower and does not replace graph-off.", "evidence_id": "q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c", "point_x": 8192, "packet_id": "qwen38-27b-q8weights-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r1", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-f16kv-sycl-graph-cache64-context-16384",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D18.219 · graph c64 · Grade C", "reason": "Authorized cache-zero graph-profile HTTP cell; full quality and graph mechanism passed. The graph profile can be slower and does not replace graph-off.", "evidence_id": "q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-q8weights-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r1", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-f16kv-sycl-graph-cache64-context-24576",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D17.768 · graph c64 · Grade C", "reason": "Authorized cache-zero graph-profile HTTP cell; full quality and graph mechanism passed. The graph profile can be slower and does not replace graph-off.", "evidence_id": "q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-q8weights-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r1", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q8weights-tp1-f16kv-sycl-graph-cache64-context-32768",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D17.521 · graph c64 · Grade C", "reason": "Authorized cache-zero graph-profile HTTP cell; full quality and graph mechanism passed. The graph profile can be slower and does not replace graph-off.", "evidence_id": "q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-q8weights-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r1", "retry": {"status": "complete"}
       },
       {
         "id": "measured-q8weights-tp1-kv-q8-context-0",

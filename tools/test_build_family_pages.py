@@ -1996,7 +1996,7 @@ class FamilyCoverageTest(unittest.TestCase):
             contracts["qwen38-tp1-llamacpp-sycl-target-matrix"]
         )
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q38_target), 77
+            sum(cell["state"] == "lab-measured" for cell in q38_target), 84
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 0)
         self.assertTrue(all(cell["selectors"]["mtp"] == 0 for cell in q38_target))
@@ -2463,6 +2463,45 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(q38_q8_f16_packet["grades"]["evidence"]["grade"], "C")
         self.assertNotIn("featured_metric", q38_q8_f16_packet)
 
+        q38_q8_f16_graph = [
+            cell for cell in q38_target
+            if cell["selectors"]["artifact_id"] == "qwen38-27b-ggmlorg-q8-0-0669b98"
+            and cell["selectors"]["graph_mode"] == "SYCL"
+            and cell["selectors"]["kv"] == "f16"
+        ]
+        self.assertEqual(len(q38_q8_f16_graph), 7)
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in q38_q8_f16_graph],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(all(
+            cell["state"] == "lab-measured"
+            and cell["evidence_id"] == "q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c"
+            and cell["packet_id"] == "qwen38-27b-q8weights-f16kv-sycl-graph-cache64-depth-grade-c"
+            for cell in q38_q8_f16_graph
+        ))
+        q38_q8_f16_graph_series = series[
+            "q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c"
+        ]
+        q38_q8_f16_graph_result = json.loads((
+            MODULE.ROOT / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-sycl-graph-cache64-depth-quality-r1-result.json"
+        ).read_text())
+        self.assertEqual(
+            [(point["x"], point["decode_tok_s"], point["output_token_ids_sha256"]) for point in q38_q8_f16_graph_series["points"]],
+            [(cell["active_context_tokens"], cell["serving_decode_tok_s_99_interval"], cell["output_token_ids_sha256"]) for cell in q38_q8_f16_graph_result["serving_curve"]["cells"]],
+        )
+        self.assertTrue(q38_q8_f16_graph_result["quality"]["pass_all"])
+        self.assertEqual(q38_q8_f16_graph_result["graph_mechanism"]["direct_replay"], 947)
+        self.assertEqual(q38_q8_f16_graph_result["validation"]["terminal_checks_passed"], 19)
+        self.assertFalse(q38_q8_f16_graph_result["authority"]["protected_or_headline_replacement"])
+        self.assertIn("can be slower", q38_q8_f16_graph_result["comparison_disclosure"])
+        q38_q8_f16_graph_packet = next(
+            packet for packet in family["packets"]
+            if packet["id"] == "qwen38-27b-q8weights-f16kv-sycl-graph-cache64-depth-grade-c"
+        )
+        self.assertEqual(q38_q8_f16_graph_packet["grades"]["evidence"]["grade"], "C")
+        self.assertNotIn("featured_metric", q38_q8_f16_graph_packet)
+
         q38_q8_q8 = [
             cell for cell in q38_target
             if cell["selectors"]["artifact_id"]
@@ -2561,9 +2600,12 @@ class FamilyCoverageTest(unittest.TestCase):
             [item["measurement_ids"] for item in q38_q8_view["series"]],
             [
                 ["q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c"],
+                ["q38-q8weights-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c"],
                 ["q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c"],
             ],
         )
+        self.assertIn("can be slower", q38_q8_view["subtitle"])
+        self.assertIn("does not replace graph-off", q38_q8_view["subtitle"])
 
         q38_q5ks_q8_http = [
             cell for cell in q38_target
@@ -3017,12 +3059,12 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 14 matrices", overview_html)
-        self.assertIn("349/1,807 classified", overview_html)
+        self.assertIn("356/1,807 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "254", "measured"),
+            ("lab-measured", "261", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,458", "missing"),
+            ("missing", "1,451", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3054,6 +3096,9 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("Q5_K_S HTTP context × KV/graph", deferred_html)
         self.assertIn("value=23.98574798250926 tok/s", deferred_html)
         self.assertIn("value=21.023067722865875 tok/s", deferred_html)
+        self.assertIn("Q8_0-weight HTTP context × KV/graph", deferred_html)
+        self.assertIn("value=19.167301559287175 tok/s", deferred_html)
+        self.assertIn("value=17.521196458119796 tok/s", deferred_html)
         self.assertIn(
             'data-family-view="q38-q5ks-q8kv-mtp-8k-grade-c"',
             deferred_html,
