@@ -1,0 +1,160 @@
+{
+  "schema": "neural.download.qwen38-q5ks-f16kv-target-sycl-graph-8k-sentinel-result.v1",
+  "campaign_id": "qwen38-q5ks-f16kv-tp1-target-sycl-graph-8k-sentinel-20260826-r1",
+  "status": "failed-closed",
+  "classification": "correct-output-parity-but-no-graph-cache-reuse",
+  "completed_at_utc": "2026-08-26T04:42:05.817370+00:00",
+  "identity": {
+    "git_head": "ae2f25ceb142b3aac10c6089e421b11f570b8754",
+    "model": {
+      "path": "/mnt/usb-models/llm-models/qwen3.8-27b-unsloth-gguf/Qwen3.8-27B-UD-Q5_K_S.gguf",
+      "repository": "unsloth/Qwen3.8-27B-GGUF",
+      "revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502",
+      "quantization": "UD-Q5_K_S",
+      "size_bytes": 18665753504,
+      "sha256": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe"
+    },
+    "runtime": {
+      "name": "llama.cpp SYCL graph port",
+      "source_path": "/home/steve/src/llama.cpp-q38-tp1-graph-port",
+      "source_base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+      "binary_path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-server",
+      "binary_sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b",
+      "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2",
+      "effective_dso_count": 33,
+      "effective_dso_canonical_sha256": "5cf0ba76d9784072e245e5fe67772c52b01cc028034687c9689313f6de6ef17c",
+      "patch_chain_sha256": [
+        "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892",
+        "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3",
+        "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"
+      ]
+    },
+    "configuration": {
+      "gpu": "one Intel Arc Pro B70",
+      "tp": 1,
+      "mtp": 0,
+      "transport": "HTTP /v1/completions",
+      "fit": "off",
+      "flash_attention": "on",
+      "target_kv": "f16",
+      "active_context_tokens": 8192,
+      "context_capacity_tokens": 32768,
+      "parallel_slots": 1,
+      "completion_tokens": 128,
+      "cache_ram": 0,
+      "context_checkpoints": 0,
+      "spec_type": "none",
+      "graph_control": "GGML_SYCL_ENABLE_GRAPH=0; GGML_SYCL_GRAPH_CACHE_SIZE=0",
+      "graph_candidate": "GGML_SYCL_ENABLE_GRAPH=1; GGML_SYCL_GRAPH_CACHE_SIZE=8"
+    }
+  },
+  "arms": {
+    "control_graph_off_cache0": {
+      "status": "passed",
+      "serving_decode_tok_s_99_interval": 23.712998310490885,
+      "exact_depth_gate_passed": true,
+      "cached_tokens": 0,
+      "completion_tokens": 128,
+      "output_token_ids_sha256": "6c8a98455d0ea4ea6fca2430e1d6ceb61129259a6fb3a1d72e9ef9e97174777c",
+      "output_text_sha256": "9d0edd34429688063d080b78bd62cb358b8d632a23c637e29eb39ea20db592b1",
+      "graph_summary": {
+        "requested": 0,
+        "compatibility_rejected": 0,
+        "device_unsupported": 0,
+        "cache_entries": 0,
+        "cache_limit": 0,
+        "cache_hit": 0,
+        "cache_miss": 0,
+        "cache_full": 0,
+        "direct_replay": 0,
+        "recorded": 0,
+        "created": 0,
+        "updated": 0,
+        "recreated": 0,
+        "replayed": 0
+      }
+    },
+    "candidate_graph_on_cache8": {
+      "status": "failed-graph-mechanism-gate",
+      "serving_decode_tok_s_99_interval": 23.07605058705001,
+      "exact_depth_gate_passed": true,
+      "cached_tokens": 0,
+      "completion_tokens": 128,
+      "output_token_ids_sha256": "6c8a98455d0ea4ea6fca2430e1d6ceb61129259a6fb3a1d72e9ef9e97174777c",
+      "output_text_sha256": "9d0edd34429688063d080b78bd62cb358b8d632a23c637e29eb39ea20db592b1",
+      "graph_summary": {
+        "requested": 146,
+        "compatibility_rejected": 0,
+        "device_unsupported": 0,
+        "cache_entries": 8,
+        "cache_limit": 8,
+        "cache_hit": 0,
+        "cache_miss": 146,
+        "cache_full": 138,
+        "direct_replay": 0,
+        "recorded": 8,
+        "created": 8,
+        "updated": 0,
+        "recreated": 0,
+        "replayed": 8
+      }
+    }
+  },
+  "comparison": {
+    "exact_output_token_parity": true,
+    "exact_output_text_parity": true,
+    "cache_zero_both_arms": true,
+    "candidate_minus_control_tok_s": -0.636947723440876,
+    "candidate_vs_control_percent": -2.686069956658,
+    "speed_interpretation": "The candidate was slower in this sentinel, but speed was not the failing gate."
+  },
+  "failure_mechanism": {
+    "observed": "Every graph request was a cache miss. The cache recorded and replayed eight initial entries, then all remaining 138 requests encountered the full eight-entry cache. There were no cache hits or direct replays.",
+    "failed_required_gates": [
+      "cache_hit must be positive",
+      "direct_replay must be positive",
+      "replayed must equal requested",
+      "cache_full must equal zero"
+    ],
+    "root_cause": "not determined by this sentinel",
+    "correctness_scope": "The exact 8K request remained deterministic and cache-zero across the two arms; this does not qualify the graph mechanism or a broader quality battery."
+  },
+  "cleanup": {
+    "passed": true,
+    "both_arms": {
+      "forced_kill": false,
+      "port_closed": true,
+      "render_node_idle": true,
+      "server_survivor": false
+    }
+  },
+  "raw_artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-q5ks-f16kv-tp1-target-sycl-graph-8k-sentinel-20260826-r1",
+    "file_count": 13,
+    "sha256": {
+      "identity.json": "036825b665f0c7e538c66ebd24c3b4dc38d07a823c43be8d8ada7125c43137bf",
+      "control-graph-off-cache0/arm-result.json": "77261fa90af2cf262e1d6855662d05c5e647afa73b5354df2fd107e8d0bb3fa4",
+      "control-graph-off-cache0/cleanup.json": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179",
+      "control-graph-off-cache0/depth-8192/exact-depth.json": "834ecb68a610179ecbaf5708612b37d0c24a6eab42e65bcf488cab2d7bf7ab1d",
+      "control-graph-off-cache0/depth-8192/exact-depth.stdout.json": "834ecb68a610179ecbaf5708612b37d0c24a6eab42e65bcf488cab2d7bf7ab1d",
+      "control-graph-off-cache0/models.json": "738610512276c232192b11573f5e6c4de55ff7bdbce9209fac35c6a4bebc8967",
+      "control-graph-off-cache0/server.log": "76bceeba62ab36d5c5f45f06900fabb0c91a1e0a78d71dc5754496a69de7340c",
+      "candidate-graph-on-cache8/arm-result.json": "bdce246a21d09481db5b6db4e107b9adce6509f8df7185aa70516b2cc13674bd",
+      "candidate-graph-on-cache8/cleanup.json": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179",
+      "candidate-graph-on-cache8/depth-8192/exact-depth.json": "c026f5414ea997913eae1e44b9c8267365325f37082bb90e32d0f6bfcad1391c",
+      "candidate-graph-on-cache8/depth-8192/exact-depth.stdout.json": "c026f5414ea997913eae1e44b9c8267365325f37082bb90e32d0f6bfcad1391c",
+      "candidate-graph-on-cache8/models.json": "81a6d54936edf034e50534a73b2cd15a9e17380f89721165e0ff69e126c1f600",
+      "candidate-graph-on-cache8/server.log": "6e3f2f8d55640a1cf277a7377ae16befd3ae63b5e28206ae8a10e9f581350ed8"
+    }
+  },
+  "authority": {
+    "site_publication": false,
+    "full_curve": false,
+    "graph_cells": 0,
+    "quality_battery": false,
+    "protected_or_headline_replacement": false,
+    "localmaxxing_submission": false
+  },
+  "scope_boundary": "This is a preserved negative 8K TP1 target-only F16-KV graph-mechanism sentinel. It authorizes no graph serving cell, full curve, quality claim, site update, protected-speed replacement, estimate, topology transfer, or submission.",
+  "next_implication": "Stop Qwen3.8 Q5_K_S graph expansion on this patch/cache design. Preserve the passing graph-off F16 curve unchanged and return to higher-priority coverage lanes unless a separately preregistered mechanism fix explains and eliminates the all-miss/cache-full behavior."
+}
