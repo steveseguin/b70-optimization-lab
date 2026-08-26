@@ -1,0 +1,48 @@
+{
+  "classification": "output-isolation-qualified-shape-variant",
+  "output": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-http-p64-confirmation-20260826-r5-attempt1/result.json",
+  "batches": [
+    {
+      "concurrency": 1,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 21.541915130901288,
+      "oracle_exact": "0/1"
+    },
+    {
+      "concurrency": 2,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 41.34412844964311,
+      "oracle_exact": "0/2"
+    },
+    {
+      "concurrency": 4,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 80.9377651430126,
+      "oracle_exact": "0/4"
+    },
+    {
+      "concurrency": 8,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 155.23528846380867,
+      "oracle_exact": "1/8"
+    },
+    {
+      "concurrency": 16,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 280.4623333116281,
+      "oracle_exact": "0/16"
+    },
+    {
+      "concurrency": 32,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 469.6662997764191,
+      "oracle_exact": "3/32"
+    },
+    {
+      "concurrency": 64,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 695.4259745070543,
+      "oracle_exact": "4/64"
+    }
+  ]
+}

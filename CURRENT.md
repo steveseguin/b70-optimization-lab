@@ -935,14 +935,14 @@ the official-FP8 TP2 tuple.
 
 The first output-audited HTTP concurrency profile established a four-slot
 control at `81.086716 tok/s` for c4. A preregistered capacity screen then found
-that active service slots—not model compute—were the limit. The final p32
-confirmation passed on two wholly new servers: c1/c2/c4/c8/c16/c32 measured
-`21.552291 / 41.283248 / 80.883699 / 154.663420 / 281.199884 / 470.181647
-tok/s`. These are all active-slot points. c64 measured `474.536615 tok/s` but
-queues behind 32 slots; its median/p95 TTFT is `4.721 / 9.375 s`. All responses
-returned 128 raw token IDs with cache zero and passed output isolation. This
-closes the current short-context concurrency gap for the exact official-FP8
-TP2/MTP0 tuple without extrapolating a 64-active-user result.
+that active service slots—not model compute—were the limit. The p32
+confirmation reached `470.181647 tok/s`, then the final p64 confirmation passed
+on two wholly new servers: c1/c2/c4/c8/c16/c32/c64 measured `21.554729 /
+41.371500 / 80.966535 / 155.050071 / 280.827699 / 469.849149 / 695.792088
+tok/s`. All are active-slot points; c64 median/p95 TTFT is `0.890 / 1.744 s`.
+Every response returned 128 raw token IDs with cache zero and passed output
+isolation. This closes the current c1-c64 short-context concurrency gap for the
+exact official-FP8 TP2/MTP0 tuple without interpolation or extrapolation.
 
 Resume and evidence:
 

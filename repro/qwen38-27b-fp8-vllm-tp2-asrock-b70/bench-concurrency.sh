@@ -11,7 +11,7 @@ oracle=${ORACLE_DIGESTS:-${repo_root}/experiments/qwen38-27b-b70/data/qwen38-fp8
 single_client=${repo_root}/scripts/bench-openai-single-decode.py
 harness=${repo_root}/scripts/bench-openai-concurrency-oracle.py
 qualifier=${repo_root}/scripts/qualify-openai-concurrency-attempt.py
-active_slots=${ACTIVE_SLOTS:-32}
+active_slots=${ACTIVE_SLOTS:-64}
 
 [[ ! -e "${out_dir}" ]] || { printf 'refusing to overwrite %s\n' "${out_dir}" >&2; exit 1; }
 [[ "${active_slots}" =~ ^[1-9][0-9]*$ ]] || { printf 'ACTIVE_SLOTS must be positive\n' >&2; exit 1; }

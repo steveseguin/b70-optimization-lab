@@ -86,29 +86,28 @@ and [`result note`](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8
 
 A separate target-only/MTP0 service profile retained the same model, image,
 TP2 topology, FP16 KV, prefix-cache policy, and size-one graph while fixing
-maximum model length 4,096, maximum active sequences 32, and maximum batched
+maximum model length 4,096, maximum active sequences 64, and maximum batched
 tokens 256. Two preregistered fresh-server attempts measured each point:
 
 | concurrent HTTP users | aggregate tok/s | per-user tok/s | TTFT p50 / p95 ms | queued |
 | ---: | ---: | ---: | ---: | :---: |
-| 1 | 21.552291 | 21.552291 | 94.877 / 94.877 | no |
-| 2 | 41.283248 | 20.641624 | 126.510 / 179.162 | no |
-| 4 | 80.883699 | 20.220925 | 229.458 / 229.668 | no |
-| 8 | 154.663420 | 19.332927 | 290.866 / 291.105 | no |
-| 16 | 281.199884 | 17.574993 | 304.845 / 444.262 | no |
-| 32 | 470.181647 | 14.693176 | 484.531 / 827.564 | no |
-| 64 | 474.536615 | 7.414635 | 4,720.881 / 9,375.086 | yes |
+| 1 | 21.554729 | 21.554729 | 96.669 / 96.669 | no |
+| 2 | 41.371500 | 20.685750 | 125.962 / 178.579 | no |
+| 4 | 80.966535 | 20.241634 | 232.083 / 232.298 | no |
+| 8 | 155.050071 | 19.381259 | 294.478 / 295.145 | no |
+| 16 | 280.827699 | 17.551731 | 310.737 / 449.855 | no |
+| 32 | 469.849149 | 14.682786 | 495.173 / 837.908 | no |
+| 64 | 695.792088 | 10.871751 | 889.839 / 1,744.033 | no |
 
 All responses returned 128 complete raw token IDs and zero cached prompt
 tokens; no generated digest collided with a frozen sequential oracle belonging
-to another base task. The worst aggregate range was `0.251%` and the worst
-latency range was `6.359%`. Greedy output may vary with batch shape, so the
+to another base task. The worst aggregate range was `0.261%` and the worst
+latency range was `9.423%`. Greedy output may vary with batch shape, so the
 gate proves completion and output isolation rather than sequential token
 identity.
 
-The service scales through c32. c64 is above the configured active-slot limit,
-so its latency includes queue wait and it is not evidence for 64 active users.
-Reproduce one attempt with:
+The service scales through c64, and every published point is within its
+configured active-slot limit. Reproduce one attempt with:
 
 ```bash
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
@@ -121,9 +120,9 @@ OUT_DIR=/path/to/new-attempt \
 
 Stop it with `docker stop -t 20 qwen38-fp8-tp2-concurrency`, launch a fresh
 one, and use a different `OUT_DIR` for the second attempt. The
-[qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p32-confirmation-r3-result.md),
-[structured aggregate](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p32-confirmation-r3-result.json),
-[frozen preregistration](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p32-confirmation-r3-prereg.json),
+[qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-confirmation-r5-result.md),
+[structured aggregate](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-confirmation-r5-result.json),
+[frozen preregistration](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-confirmation-r5-prereg.json),
 [compact oracle](../../experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-oracle-pilot-20260826-r1-attempt1/oracle-digests.json),
 and exact [request suite](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json)
 are all in this repository. No point is interpolated or extrapolated.
