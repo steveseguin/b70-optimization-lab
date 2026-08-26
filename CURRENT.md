@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-25**
+Last reviewed: **2026-08-26**
 
 ## Authority And Update Rule
 
@@ -931,7 +931,17 @@ all six exact 2K/4K/8K/16K/24K/32K cells. Decode measured `21.835160 / 21.673278
 returned 128 token IDs. The repeated-token fixture is grade-C shape evidence,
 not natural prose, and the disclosed prompt-throughput proxy includes HTTP
 scheduling and first-token work. This closes the exact 32K/decode/TTFT gap for
-the official-FP8 TP2 tuple; qualified concurrency remains next.
+the official-FP8 TP2 tuple.
+
+The follow-up output-audited HTTP concurrency R3 then passed on two new fresh
+servers. At c1/c2/c4, aggregate throughput measured `21.585295 / 41.347433 /
+81.086716 tok/s`. Because the exact service allows four active sequences,
+c8/c16/c32/c64 are queued and remain flat at `81.244830 / 81.434154 /
+81.503041 / 81.493140 tok/s`; c64 median/p95 TTFT rises to `47.235 / 93.332 s`.
+All responses returned 128 raw token IDs with cache zero and passed output
+isolation. This closes concurrency and queued-latency coverage for the exact
+official-FP8 TP2/MTP0 tuple, but exposes active-slot capacity as the next
+matched optimization target.
 
 Resume and evidence:
 

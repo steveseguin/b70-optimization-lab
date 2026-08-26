@@ -1795,14 +1795,29 @@
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-depth-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-concurrency-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-depth.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-concurrency.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
         "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
         "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json",
         "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json",
-        "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-depth-r1-result.md"
+        "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-depth-r1-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-prereg.json",
+        "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-preregistration.md",
+        "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-result.json",
+        "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-result.md",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-20260826-r3-attempt1/result.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-20260826-r3-attempt1/qualification.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-20260826-r3-attempt2/result.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-20260826-r3-attempt2/qualification.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-oracle-pilot-20260826-r1-attempt1/oracle-digests.json",
+        "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+        "scripts/bench-openai-concurrency-oracle.py",
+        "scripts/qualify-openai-concurrency-attempt.py",
+        "scripts/summarize-http-concurrency-attempts.py"
       ],
       "performance_profiles": [
         {
@@ -1927,14 +1942,161 @@
               "samples": 1
             }
           ]
+        },
+        {
+          "id": "http-output-audited-aggregate-vs-concurrent-users",
+          "label": "Output-audited official FP8 TP2 HTTP aggregate decode",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "Concurrent HTTP users",
+          "scope": "vLLM OpenAI-compatible HTTP completions on two B70s with official FP8 weights, FP16 KV, target-only/MTP0, four active service slots, 4,096-token capacity, unique 128-token short prompts, cache disabled, and 128 returned raw token IDs per response. Each marker is the median of two preregistered fresh-server attempts; worst throughput range was 0.1831%. c1-c4 are active; c8-c64 queue behind four slots and aggregate capacity is flat. Output isolation passed, but greedy token identity is batch-shape-dependent. No point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-result.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 21.585294823962453,
+              "per_user_value": 21.585294823962453,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 41.34743340271259,
+              "per_user_value": 20.673716701356295,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 81.08671564662076,
+              "per_user_value": 20.27167891165519,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 8,
+              "value": 81.24483018340794,
+              "per_user_value": 10.155603772925993,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 16,
+              "value": 81.43415399829684,
+              "per_user_value": 5.089634624893552,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 32,
+              "value": 81.50304147044653,
+              "per_user_value": 2.546970045951454,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 64,
+              "value": 81.49314019219591,
+              "per_user_value": 1.273330315503061,
+              "samples": 2
+            }
+          ]
+        },
+        {
+          "id": "http-ttft-p50-vs-concurrent-users",
+          "label": "Official FP8 TP2 HTTP median TTFT under concurrency",
+          "metric": "ttft",
+          "unit": "ms",
+          "x_metric": "concurrent_sequences",
+          "x_label": "Concurrent HTTP users",
+          "scope": "Median request TTFT from the same two fresh-server, output-audited attempts. The service has four active slots: c1-c4 are unqueued, while c8-c64 include queue wait. Each point is the median of the two per-attempt p50 values; worst latency range across every reported p50/p95 metric was 1.1354%. No point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-result.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 89.44869099650532,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 127.08649999694899,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 175.49408524064347,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 8,
+              "value": 3291.1213710031006,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 16,
+              "value": 9556.379282235866,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 32,
+              "value": 22114.973172254395,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 64,
+              "value": 47234.92584252381,
+              "samples": 2
+            }
+          ]
+        },
+        {
+          "id": "http-ttft-p95-vs-concurrent-users",
+          "label": "Official FP8 TP2 HTTP p95 TTFT under concurrency",
+          "metric": "ttft",
+          "unit": "ms",
+          "x_metric": "concurrent_sequences",
+          "x_label": "Concurrent HTTP users",
+          "scope": "p95 request TTFT from the same two fresh-server, output-audited attempts. The service has four active slots: c1-c4 are unqueued, while c8-c64 include queue wait. Each point is the median of the two per-attempt p95 values; c64 reached 93.3 seconds despite flat aggregate throughput. No point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-result.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 89.44869099650532,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 177.0171706622932,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 212.7321592415683,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 8,
+              "value": 6499.807419086574,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 16,
+              "value": 19041.6027297033,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 32,
+              "value": 44144.48580373428,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 64,
+              "value": 93332.47245687523,
+              "samples": 2
+            }
+          ]
         }
       ],
       "missing": [
         "tested clean-host Intel driver and Docker installation",
         "clean-host endpoint replay",
         "beginner recovery flow",
-        "natural-prompt HTTP speed and TTFT context sweep",
-        "output-qualified HTTP concurrency and queued per-request latency"
+        "natural-prompt HTTP speed and TTFT context sweep"
       ]
     },
     {
