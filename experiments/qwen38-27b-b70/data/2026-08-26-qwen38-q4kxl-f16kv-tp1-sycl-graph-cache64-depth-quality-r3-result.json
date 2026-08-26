@@ -1,0 +1,149 @@
+{
+  "schema": "neural.download.qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-result.v1",
+  "campaign_id": "qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3",
+  "status": "passed",
+  "classification": "grade-c-q4kxl-f16kv-tp1-mtp0-sycl-graph-cache64-exact-depth-serving-curve-with-full-quality-battery",
+  "completed_at_utc": "2026-08-26T07:45:28.224800+00:00",
+  "tracked_inputs": {
+    "preregistration": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-r3-prereg.json", "sha256": "e9fc205929842c13be746ff268bc94ee4b54db66510556618c7a08335ec3a232"},
+    "runner": {"path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-r3.py", "sha256": "b2c3a521fe31cad0035df42b9e0387dda6be3114c0cd4d9cf656175a3241c955"},
+    "recovered_validator": {"path": "experiments/qwen38-27b-b70/scripts/validate-20260826-qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-r3.py", "sha256": "92633fef6083283defdf67bb904e3f41a7b1b46e9086fc636b7ebdcc47c0e8d5"}
+  },
+  "identity": {
+    "git_head_and_origin_main_at_launch": "7db7105ad4034527ae0e87d3d9b334c59993f597",
+    "model": {
+      "path": "/mnt/usb-models/llm-models/qwen3.8-27b-unsloth-gguf/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+      "repository": "unsloth/Qwen3.8-27B-GGUF",
+      "revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502",
+      "quantization": "UD-Q4_K_XL",
+      "relationship": "quantized artifact subset of the Qwen3.8 27B family",
+      "size_bytes": 17559178144,
+      "sha256": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e"
+    },
+    "runtime": {
+      "source_commit": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+      "binary_path": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-server",
+      "binary_sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b",
+      "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2",
+      "effective_dso_canonical_sha256": "5cf0ba76d9784072e245e5fe67772c52b01cc028034687c9689313f6de6ef17c",
+      "patch_chain_sha256": [
+        "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892",
+        "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3",
+        "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"
+      ]
+    },
+    "configuration": {
+      "gpu": "one Intel Arc Pro B70",
+      "tp": 1,
+      "mtp": 0,
+      "transport": "HTTP /v1/completions",
+      "graph_mode": "SYCL graph cache64",
+      "graph_environment": {"GGML_SYCL_ENABLE_GRAPH": "1", "GGML_SYCL_GRAPH_CACHE_SIZE": "64"},
+      "fit": "off",
+      "flash_attention": "on",
+      "target_kv": "f16",
+      "context_capacity_tokens": 33024,
+      "completion_tokens_per_cell": 128,
+      "cache_ram": 0,
+      "context_checkpoints": 0,
+      "spec_type": "none"
+    }
+  },
+  "serving_curve": {
+    "evidence_grade": "C",
+    "metric": "conventional HTTP serving decode tok/s over 99 intervals between streamed token-ID events 1 and 100",
+    "fixture": "synthetic repeated-token exact-depth fixture; separate natural-language quality battery required",
+    "context_axis_disclosure": {
+      "x0": "zero prior active context plus one explicit ordinary prompt token",
+      "positive_depths": "exact submitted token counts",
+      "configured_capacity_is_not_active_context": true
+    },
+    "cells": [
+      {"active_context_tokens": 0, "serving_decode_tok_s_99_interval": 23.20717810276497, "time_to_first_token_s": 0.07644050299131777, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "dab29d7687ea2f3c58e9592665e8a4e14d7504ec873e580fb89ee9f1b9574883", "receipt_sha256": "836e16a83d1231d0a83a355f8e3cb5eebf1ed8ab4fc1b85b3646769ebc0b252b"},
+      {"active_context_tokens": 2048, "serving_decode_tok_s_99_interval": 22.822029963348005, "time_to_first_token_s": 2.8340580869989935, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "4091434f407380cdbd974136168961f1235aff408562dbd72a2ea0bb1b659c5d", "receipt_sha256": "5fa28981c017049bcbdee66500879bedc6b8382d3f67a7650dc6723cb499759a"},
+      {"active_context_tokens": 4096, "serving_decode_tok_s_99_interval": 22.66142475534695, "time_to_first_token_s": 5.614368496011593, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "6926aa8ceb45f39719dabb2a224ab55979c2c8599bca94a51ec02fe47b2fd61c", "receipt_sha256": "cf42e1cadf261d13e8e965be412e86f50446f893ca49ed18d938e769b3cd500c"},
+      {"active_context_tokens": 8192, "serving_decode_tok_s_99_interval": 22.267522660577832, "time_to_first_token_s": 11.45218236099754, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "d38b6e716fce36ad0f339b67d009ac94c2b3b64b69128050d2f15e1ac7b5d00c", "receipt_sha256": "25d06b67877b1c6cfac52abf9f417f8161a83274e28c26af601cdb8187baa1d4"},
+      {"active_context_tokens": 16384, "serving_decode_tok_s_99_interval": 21.45337721637781, "time_to_first_token_s": 23.80660338200687, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "76af0304a4d33053006a4471631681c16f3063c76ab1451792c42c5d023c07e2", "receipt_sha256": "ad6f4dc8435d600721f314eeb6ba945d260050f6ec070fb4c512bded28fe7414"},
+      {"active_context_tokens": 24576, "serving_decode_tok_s_99_interval": 20.760840745828116, "time_to_first_token_s": 36.924882351988344, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "fcd5a80511fce0a931682be94ab755621f33c01a999269446710fc77304f2144", "receipt_sha256": "ccbd69e429817db42e6b8ec10349a30517c6e5fb413f8a1bc32a0aa5bec47d8a"},
+      {"active_context_tokens": 32768, "serving_decode_tok_s_99_interval": 20.3516257692428, "time_to_first_token_s": 50.4851422119973, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "3e7f1a4b1ab7e9ecd6f7dd4a4b5890192051a7d18643ba2e0b9f2f4a75bc9419", "receipt_sha256": "9b62d84cfc30bd7150d0ec22863129ffeb35fc5a19d9459f3a8a83b068809df4"}
+    ]
+  },
+  "quality": {
+    "pass_all": true,
+    "exact_cases": {"passed": 7, "required": 7},
+    "repeat_stability": {"passed": true, "runs": 2, "unique_hashes": 1, "output_sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"},
+    "long_context_needle": {"passed": true, "requested_context_tokens": 27200, "actual_prompt_tokens_before_chat_template": 25200, "api_usage_prompt_tokens": 25212, "output_sha256": "1583fb313bb7b240d09b6419481427b0d55f5b21d4ec5c5317a343d667744ad1"},
+    "cache_zero_requests": {"passed": 10, "required": 10}
+  },
+  "graph_mechanism": {
+    "passed": true,
+    "requested": 1182,
+    "cache_entries": 64,
+    "cache_limit": 64,
+    "cache_hit": 947,
+    "cache_miss": 235,
+    "cache_full": 171,
+    "direct_replay": 947,
+    "minimum_direct_replays": 896,
+    "recorded": 64,
+    "created": 64,
+    "replayed": 1011,
+    "compatibility_rejected": 0,
+    "device_unsupported": 0,
+    "updated": 0,
+    "recreated": 0,
+    "capacity_delta": {"from": 20, "to": 64, "source_supported_maximum": 64, "no_further_capacity_escalation": true}
+  },
+  "validation_recovery": {
+    "classification": "offline-validator-recovery-no-gpu-rerun",
+    "reason": "The completed GPU workload and clean shutdown were already immutable when the original composed validator took its R2-only entry path. Commit 2206b49cc corrected only R3 manifest/validator composition, then regenerated terminal-receipt.json from the preserved raw root without launching a server or GPU workload.",
+    "historical_empty_validator_stdout_preserved": true,
+    "terminal_checks_passed": 19,
+    "clean_shutdown": true
+  },
+  "raw_artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3",
+    "file_count": 25,
+    "sha256": {
+      "identity.json": "b6a51f222e9243fac349849267b3e4e7874867709c75691539d33b16eecf78ad",
+      "target-mtp0-graph-cache64/arm-result.json": "77261fa90af2cf262e1d6855662d05c5e647afa73b5354df2fd107e8d0bb3fa4",
+      "target-mtp0-graph-cache64/cleanup.json": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179",
+      "target-mtp0-graph-cache64/depth-0/exact-depth.json": "836e16a83d1231d0a83a355f8e3cb5eebf1ed8ab4fc1b85b3646769ebc0b252b",
+      "target-mtp0-graph-cache64/depth-0/exact-depth.stdout.json": "836e16a83d1231d0a83a355f8e3cb5eebf1ed8ab4fc1b85b3646769ebc0b252b",
+      "target-mtp0-graph-cache64/depth-2048/exact-depth.json": "5fa28981c017049bcbdee66500879bedc6b8382d3f67a7650dc6723cb499759a",
+      "target-mtp0-graph-cache64/depth-2048/exact-depth.stdout.json": "5fa28981c017049bcbdee66500879bedc6b8382d3f67a7650dc6723cb499759a",
+      "target-mtp0-graph-cache64/depth-4096/exact-depth.json": "cf42e1cadf261d13e8e965be412e86f50446f893ca49ed18d938e769b3cd500c",
+      "target-mtp0-graph-cache64/depth-4096/exact-depth.stdout.json": "cf42e1cadf261d13e8e965be412e86f50446f893ca49ed18d938e769b3cd500c",
+      "target-mtp0-graph-cache64/depth-8192/exact-depth.json": "25d06b67877b1c6cfac52abf9f417f8161a83274e28c26af601cdb8187baa1d4",
+      "target-mtp0-graph-cache64/depth-8192/exact-depth.stdout.json": "25d06b67877b1c6cfac52abf9f417f8161a83274e28c26af601cdb8187baa1d4",
+      "target-mtp0-graph-cache64/depth-16384/exact-depth.json": "ad6f4dc8435d600721f314eeb6ba945d260050f6ec070fb4c512bded28fe7414",
+      "target-mtp0-graph-cache64/depth-16384/exact-depth.stdout.json": "ad6f4dc8435d600721f314eeb6ba945d260050f6ec070fb4c512bded28fe7414",
+      "target-mtp0-graph-cache64/depth-24576/exact-depth.json": "ccbd69e429817db42e6b8ec10349a30517c6e5fb413f8a1bc32a0aa5bec47d8a",
+      "target-mtp0-graph-cache64/depth-24576/exact-depth.stdout.json": "ccbd69e429817db42e6b8ec10349a30517c6e5fb413f8a1bc32a0aa5bec47d8a",
+      "target-mtp0-graph-cache64/depth-32768/exact-depth.json": "9b62d84cfc30bd7150d0ec22863129ffeb35fc5a19d9459f3a8a83b068809df4",
+      "target-mtp0-graph-cache64/depth-32768/exact-depth.stdout.json": "9b62d84cfc30bd7150d0ec22863129ffeb35fc5a19d9459f3a8a83b068809df4",
+      "target-mtp0-graph-cache64/graph-evidence.json": "6a799cf32565633efe1e5d39edefbdbc445f3da8c60ae587356b9652116b5fd1",
+      "target-mtp0-graph-cache64/models.json": "7050da3e69eca627c5ec6ca94271c1114b1ca97522ef3d58bdf0ea9743d64ecd",
+      "target-mtp0-graph-cache64/quality.json": "84dda2929cfc067f3f1555303e140174e582b80ab5253deb11ddab1634a33086",
+      "target-mtp0-graph-cache64/quality.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "target-mtp0-graph-cache64/quality.stdout.json": "c33358d6e1e259f951665ecc9e755fdf46199372c1e7e57f9017ab6412a4c0a3",
+      "target-mtp0-graph-cache64/server.log": "f76ed8c04a4b8f1f2198be51024b5d4b92103dade94b5e259bd9f9289ef74514",
+      "terminal-receipt.json": "008943ce0c41d63f2b2620a2785e0dc7f3cbd170c7b45d334eae9420aa771e9b",
+      "validator.stdout.json": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "authority": {
+    "site_graph_q4kxl_f16_curve_publication": true,
+    "graph_q4kxl_f16_serving_curve_cells": 7,
+    "graph_off_cells": 0,
+    "other_quantization_cells": 0,
+    "speculative_cells": 0,
+    "tp2_or_tp4_cells": 0,
+    "prefill_cells": 0,
+    "protected_or_headline_replacement": false,
+    "localmaxxing_submission": false
+  },
+  "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
+  "scope_boundary": "This authorizes only seven Grade-C graph-on exact active-context cells for current-weight Qwen3.8 UD-Q4_K_XL TP1, MTP0, F16-KV, fit-off HTTP serving at 0/2/4/8/16/24/32K under the cache64 graph profile. It does not replace graph-off cells, another KV/quant/TP/MTP selector, prefill, concurrency, headlines, protected values, or LocalMaxxing.",
+  "next_implication": "Publish the seven exact graph-on cells beside, not over, the graph-off curve; continue remaining matrix cells with separately qualified packets."
+}

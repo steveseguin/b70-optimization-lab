@@ -546,6 +546,28 @@
       "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-target-http-depth-quality-r1-result.json"
     },
     {
+      "id": "qwen38-27b-q4kxl-f16kv-sycl-graph-cache64-depth-grade-c",
+      "label": "Qwen3.8 Q4_K_XL · TP1 F16-KV cache64 SYCL-graph HTTP context curve",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL graph port",
+      "cards": 1,
+      "status": "quality-and-graph-mechanism-qualified-grade-c-http-curve",
+      "evidence_level": "B70-measured Grade C",
+      "coverage": ["target-only MTP0", "HTTP serving", "active context 0-32K", "F16 KV", "SYCL graph cache64", "full quality battery"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Qwen3.8 UD-Q4_K_XL target-only TP1 HTTP serving at seven exact active-context depths with fit disabled, F16 KV, and the exact cache64 SYCL-graph patch profile",
+          "basis": "all seven cache-zero depth receipts and the full natural-language quality battery passed. Graph telemetry recorded 947 direct replays versus the frozen 896 minimum with 64/64 entries, zero compatibility/device rejects, and conserved counters. The synthetic fixture and one campaign remain Grade C; offline validator recovery used the immutable completed raw root and no GPU rerun. No other KV/quant/TP/MTP selector, prefill, headline, protected-score, or LocalMaxxing authority transfers.",
+          "reviewed_at": "2026-08-26",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-r3-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-r3-result.json"
+    },
+    {
       "id": "qwen38-27b-q4kxl-q8kv-target-http-depth-grade-c",
       "label": "Qwen3.8 Q4_K_XL · TP1 target-only Q8_0-KV HTTP context curve",
       "revision": "qwen3.8-27b",
@@ -3856,6 +3878,37 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-target-http-depth-quality-r1-result.json"
     },
     {
+      "id": "q38-q4kxl-tp1-f16kv-sycl-graph-cache64-http-context-r3-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL target-only · SYCL graph cache64",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp1-llamacpp-sycl-graph-cache64-v1",
+      "speculation_method": "none",
+      "runtime": "llama.cpp SYCL fa0f3b25a47f346858a4d0d169f5181aa424b110 + exact 3-patch graph chain",
+      "profile_id": "q38-q4kxl-f16kv-sycl-graph-cache64-http-depth-grade-c-v1",
+      "measurement_class": "conventional-99-interval-exact-depth-http-serving-grade-c",
+      "promotion_status": "authorized-q4kxl-f16kv-cache64-graph-site-curve-no-headline-or-submission",
+      "identity": {"model_revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502", "model_sha256": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e", "llama_server_sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b", "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2", "terminal_receipt_sha256": "008943ce0c41d63f2b2620a2785e0dc7f3cbd170c7b45d334eae9420aa771e9b"},
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "graph_mode": "SYCL", "graph_cache_size": 64, "fit": "off", "kv": "f16", "speculation": "none", "configured_max_context_tokens": 33024, "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "HTTP /v1/completions; exact submitted token depths; 128 generated tokens; cache zero; conventional 99-interval serving decode",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 23.20717810276497, "ttft_ms": 76.44050299131777, "cached_tokens": 0, "output_token_ids_sha256": "dab29d7687ea2f3c58e9592665e8a4e14d7504ec873e580fb89ee9f1b9574883", "context_semantics": "zero prior active context plus one explicit ordinary prompt token"},
+        {"x": 2048, "decode_tok_s": 22.822029963348005, "ttft_ms": 2834.0580869989935, "cached_tokens": 0, "output_token_ids_sha256": "4091434f407380cdbd974136168961f1235aff408562dbd72a2ea0bb1b659c5d"},
+        {"x": 4096, "decode_tok_s": 22.66142475534695, "ttft_ms": 5614.368496011593, "cached_tokens": 0, "output_token_ids_sha256": "6926aa8ceb45f39719dabb2a224ab55979c2c8599bca94a51ec02fe47b2fd61c"},
+        {"x": 8192, "decode_tok_s": 22.267522660577832, "ttft_ms": 11452.18236099754, "cached_tokens": 0, "output_token_ids_sha256": "d38b6e716fce36ad0f339b67d009ac94c2b3b64b69128050d2f15e1ac7b5d00c"},
+        {"x": 16384, "decode_tok_s": 21.45337721637781, "ttft_ms": 23806.60338200687, "cached_tokens": 0, "output_token_ids_sha256": "76af0304a4d33053006a4471631681c16f3063c76ab1451792c42c5d023c07e2"},
+        {"x": 24576, "decode_tok_s": 20.760840745828116, "ttft_ms": 36924.882351988344, "cached_tokens": 0, "output_token_ids_sha256": "fcd5a80511fce0a931682be94ab755621f33c01a999269446710fc77304f2144"},
+        {"x": 32768, "decode_tok_s": 20.3516257692428, "ttft_ms": 50485.1422119973, "cached_tokens": 0, "output_token_ids_sha256": "3e7f1a4b1ab7e9ecd6f7dd4a4b5890192051a7d18643ba2e0b9f2f4a75bc9419"}
+      ],
+      "quality": "Full Qwen3.8 quality battery passed: 7 exact cases, 2 stable repeat runs, one 25,200-token long-context case, and cached_tokens=0 on all 10 quality requests. Graph telemetry passed with 947 direct replays versus the frozen 896 minimum.",
+      "caveat": "Grade C cache64 graph-on F16-KV serving curve under the exact graph-patched runtime. The terminal receipt was recovered offline after a validator-composition fix from the completed immutable raw root; no GPU workload was rerun. Cache64 is the source-supported maximum. No other KV/quant/TP/MTP selector, graph-off replacement, prefill, protected or headline replacement, or LocalMaxxing authority is authorized.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-r3-result.json"
+    },
+    {
       "id": "q38-q4kxl-tp1-kv-q8-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -4429,13 +4482,14 @@
     },
     {
       "id": "context-q4kxl-f16-http",
-      "title": "Q4_K_XL HTTP context × KV",
-      "subtitle": "Grade C · same Qwen3.8 UD-Q4_K_XL artifact and runtime · target-only TP1 · graph and fit off · exact cache-zero HTTP serving through 32K · both full quality batteries passed",
+      "title": "Q4_K_XL HTTP context × KV/graph",
+      "subtitle": "Grade C · same Qwen3.8 UD-Q4_K_XL artifact · target-only TP1 · exact cache-zero HTTP serving through 32K · graph-off F16/Q8_0 and exact cache64 graph-patched F16 profiles remain separately labeled · all full quality batteries passed",
       "x_label": "active context tokens",
       "metrics": ["decode_tok_s"],
       "series": [
-        {"label": "F16 KV · HTTP · Grade C", "measurement_ids": ["q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c"]},
-        {"label": "Q8_0 KV · HTTP · Grade C", "measurement_ids": ["q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"]}
+        {"label": "F16 KV · graph off · Grade C", "measurement_ids": ["q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c"]},
+        {"label": "F16 KV · SYCL graph cache64 · Grade C", "measurement_ids": ["q38-q4kxl-tp1-f16kv-sycl-graph-cache64-http-context-r3-grade-c"]},
+        {"label": "Q8_0 KV · graph off · Grade C", "measurement_ids": ["q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"]}
       ]
     },
     {
@@ -5576,7 +5630,7 @@
   {
     "id": "qwen38-tp1-llamacpp-sycl-target-matrix",
     "label": "Qwen3.8 TP1 · llama.cpp SYCL target-only matrix",
-    "description": "112 meaningful target-only cells: four GGUF artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. These cells preserve 56 exact measurements; retired estimates remain historical calibration evidence only, and no MTP speed is transferred into them.",
+    "description": "112 meaningful target-only cells: four GGUF artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. These cells preserve 63 exact measurements; retired estimates remain historical calibration evidence only, and no MTP speed is transferred into them.",
     "fixed_selectors": {
       "runtime_family": "llama.cpp SYCL"
     },
@@ -6673,6 +6727,41 @@
         "id": "measured-q8weights-tp1-kv-q8-context-32768",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "q8_0"},
         "state": "lab-measured", "label": "D8.548 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed. The retired estimate remains historical calibration evidence only.", "evidence_id": "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-q8kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q4kxl-tp1-graph-f16-context-0",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D23.207 · graph c64 · Grade C", "reason": "Exact cache-zero HTTP depth cell under the qualified cache64 graph mechanism and full quality battery. x=0 is zero prior context plus one ordinary prompt token.", "evidence_id": "q38-q4kxl-tp1-f16kv-sycl-graph-cache64-http-context-r3-grade-c", "point_x": 0, "packet_id": "qwen38-27b-q4kxl-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q4kxl-tp1-graph-f16-context-2048",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D22.822 · graph c64 · Grade C", "reason": "Exact cache-zero HTTP depth cell under the qualified cache64 graph mechanism and full quality battery.", "evidence_id": "q38-q4kxl-tp1-f16kv-sycl-graph-cache64-http-context-r3-grade-c", "point_x": 2048, "packet_id": "qwen38-27b-q4kxl-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q4kxl-tp1-graph-f16-context-4096",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D22.661 · graph c64 · Grade C", "reason": "Exact cache-zero HTTP depth cell under the qualified cache64 graph mechanism and full quality battery.", "evidence_id": "q38-q4kxl-tp1-f16kv-sycl-graph-cache64-http-context-r3-grade-c", "point_x": 4096, "packet_id": "qwen38-27b-q4kxl-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q4kxl-tp1-graph-f16-context-8192",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D22.268 · graph c64 · Grade C", "reason": "Exact cache-zero HTTP depth cell under the qualified cache64 graph mechanism and full quality battery.", "evidence_id": "q38-q4kxl-tp1-f16kv-sycl-graph-cache64-http-context-r3-grade-c", "point_x": 8192, "packet_id": "qwen38-27b-q4kxl-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q4kxl-tp1-graph-f16-context-16384",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D21.453 · graph c64 · Grade C", "reason": "Exact cache-zero HTTP depth cell under the qualified cache64 graph mechanism and full quality battery.", "evidence_id": "q38-q4kxl-tp1-f16kv-sycl-graph-cache64-http-context-r3-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-q4kxl-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q4kxl-tp1-graph-f16-context-24576",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D20.761 · graph c64 · Grade C", "reason": "Exact cache-zero HTTP depth cell under the qualified cache64 graph mechanism and full quality battery.", "evidence_id": "q38-q4kxl-tp1-f16kv-sycl-graph-cache64-http-context-r3-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-q4kxl-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3", "retry": {"status": "complete"}
+      },
+      {
+        "id": "measured-q4kxl-tp1-graph-f16-context-32768",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "SYCL", "kv": "f16"},
+        "state": "lab-measured", "label": "D20.352 · graph c64 · Grade C", "reason": "Exact cache-zero HTTP depth cell under the qualified cache64 graph mechanism and full quality battery.", "evidence_id": "q38-q4kxl-tp1-f16kv-sycl-graph-cache64-http-context-r3-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-q4kxl-f16kv-sycl-graph-cache64-depth-grade-c", "parent": "qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3", "retry": {"status": "complete"}
       }
     ]
   },
