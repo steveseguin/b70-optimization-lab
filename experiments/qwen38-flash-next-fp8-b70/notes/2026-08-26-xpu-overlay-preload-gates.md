@@ -89,6 +89,27 @@ MoE and GDN enabled, B70-only AOT, one compile job, and external-drive build
 storage. No live binary will be replaced until import, operator-registration,
 architecture, grouped-GEMM, GDN, and MoE numerical gates pass.
 
+### Superseding native-build decision
+
+A deeper interface audit stopped that grouped-GEMM build before its expensive
+compile. The maintained tree currently mixes the old local 11-argument grouped
+GEMM Python/binding ABI with the newer 10-argument C++ interface. More
+importantly, a later local performance overlay displaced upstream's explicit
+block-FP8 128x128 scale path. Merely making the mixed source compile could
+therefore silently execute this checkpoint with the wrong scale semantics.
+
+The first-load path now preserves the accepted existing `_xpu_C`, grouped-GEMM,
+GDN, FA2, and optimization binaries and explicitly selects
+`--moe-backend triton`. Only `_C` and `_moe_C` are rebuilt from current source
+to update their stale operator schemas. That narrow build disables SYCL-TLA,
+FA2, GDN, MQA, `_xpu_C`, and the allocator, so it cannot overwrite or dilute
+the accepted performance stack. A resident plus UVA block-FP8 Triton
+numerical gate is mandatory before the full checkpoint load.
+
+Native grouped MoE is now a later optimization task: reconcile the ABI,
+reapply the upstream block-FP8 scale path onto the local INT8/INT4/MXFP4
+optimizations, build in isolation, and prove numerical parity before promotion.
+
 Structured evidence is in `data/20260826-preload-gates.json`.
 
 ## Frozen first-load identity
@@ -103,6 +124,7 @@ After the native package gate passes:
 - 512-token model length, one sequence, 512 batched tokens;
 - PLE CPU process enabled;
 - UVA general-weight offload, 5 GiB/rank;
+- Triton MoE backend (native grouped MoE is not correctness-qualified);
 - GPU memory utilization 0.92;
 - external cache, temp, and log roots;
 - exact-token and semantic canaries before any performance claim.
