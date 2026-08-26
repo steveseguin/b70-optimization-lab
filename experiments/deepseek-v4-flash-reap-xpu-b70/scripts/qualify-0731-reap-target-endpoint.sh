@@ -15,6 +15,11 @@ case "${mode}" in
   *) printf 'usage: %s smoke|full\n' "$0" >&2; exit 2 ;;
 esac
 
+printf '%s\n' \
+  'ERROR: qualification driver is fail-closed pending endpoint-process binding,' \
+  'full frozen-identity validation, and atomic attempt-directory handling.' >&2
+exit 2
+
 identity="${run_dir}/identity.txt"
 test -f "${identity}"
 grep -Fx "model_revision=${revision}" "${identity}" >/dev/null

@@ -208,6 +208,11 @@ argv=(
 )
 
 {
+  printf 'launcher_pid=%s\n' "$$"
+  printf 'host_boot_id=%s\n' "$(< /proc/sys/kernel/random/boot_id)"
+  printf 'process_start_ticks=%s\n' "$(awk '{print $22}' "/proc/$$/stat")"
+  printf 'host=%s\n' "${HOST:-127.0.0.1}"
+  printf 'port=%s\n' "${port}"
   printf 'model=%s\n' "$(readlink -f "${model}")"
   printf 'model_revision=%s\n' "${revision}"
   printf 'served_model_name=%s\n' "${served_model_name}"
