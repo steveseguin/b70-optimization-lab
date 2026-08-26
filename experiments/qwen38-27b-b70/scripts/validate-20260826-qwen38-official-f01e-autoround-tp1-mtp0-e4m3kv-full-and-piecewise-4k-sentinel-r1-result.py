@@ -47,11 +47,14 @@ def validate(root: Path = ROOT, result_path: Path = RESULT) -> dict:
     def arg(name: str) -> str:
         return args[args.index(name) + 1]
 
-    need(arg("--tensor-parallel-size") == "1" and arg("--gpu-memory-utilization") == "0.90", "TP1 changed")
+    need(arg("--tensor-parallel-size") == "1" and arg("--pipeline-parallel-size") == "1" and arg("--data-parallel-size") == "1" and arg("--gpu-memory-utilization") == "0.90", "TP1 changed")
     need(arg("--kv-cache-dtype") == "fp8_e4m3" and "--enforce-eager" not in args, "E4M3 graph identity changed")
+    need("--speculative-config" not in args and "--no-enable-prefix-caching" in args, "target-only/cache identity changed")
     compilation = json.loads(arg("--compilation-config"))
     need(compilation == {"cudagraph_mode": "FULL_AND_PIECEWISE", "cudagraph_capture_sizes": [1, 2], "max_cudagraph_capture_size": 2}, "graph config changed")
-    need("ZE_AFFINITY_MASK=0" in env and "ONEAPI_DEVICE_SELECTOR=level_zero:0" in env and "PYTHONHASHSEED=0" in env, "environment changed")
+    need("ZE_AFFINITY_MASK=0" in env and "ONEAPI_DEVICE_SELECTOR=level_zero:0" in env and "PYTHONHASHSEED=0" in env and "VLLM_XPU_ENABLE_XPU_GRAPH=1" in env, "environment changed")
+    config = result["config"]
+    need(config["tp"] == 1 and config["mtp"] == 0 and config["speculation_method"] == "none" and config["kv"] == "fp8_e4m3" and config["graph_mode"] == "FULL_AND_PIECEWISE" and config["graph_capture_sizes"] == [1, 2], "compact config changed")
 
     terminal = load(root / "terminal-receipt.json")
     need(digest(root / "terminal-receipt.json") == result["cleanup"]["terminal_receipt_sha256"], "terminal changed")
@@ -62,7 +65,7 @@ def validate(root: Path = ROOT, result_path: Path = RESULT) -> dict:
     need(digest(root / "arm-result.json") == result["cleanup"]["arm_result_sha256"], "arm changed")
     passed = ("cleanup_passed", "full_and_piecewise_graph_identity_passed", "quality_contract_passed", "rank_cache_isolation_passed", "startup_identity_passed", "tp1_topology_passed")
     need(arm["runner_return_code"] == 38 and arm["exact_4k_return_code"] == 0 and arm["quality_return_code"] == 0 and all(arm[key] for key in passed), "non-parity gate failed")
-    need(not arm["dual_e4m3_target_verification_passed"] and not arm["publication_authorized"] and not arm["descendant_execution_authorized"], "quarantine cause or authority changed")
+    need(not arm["dual_e4m3_target_verification_passed"] and not arm["publication_authorized"] and not arm["descendant_expansion_authorized"] and not arm["descendant_execution_authorized"], "quarantine cause or authority changed")
 
     raw_path = root / "exact-depth/depth-4096.json"
     raw = load(raw_path)
@@ -79,13 +82,26 @@ def validate(root: Path = ROOT, result_path: Path = RESULT) -> dict:
     expected = result["target_failure"]
     need(digest(root / "target-verification.json") == expected["raw_sha256"] and not target["passed"] and target["candidate_exact_passed"], "target failure changed")
     need(target["candidate_ids_sha256"] == expected["candidate_token_ids_sha256"] and target["eager_parent_ids_sha256"] == expected["eager_target_token_ids_sha256"] and target["piecewise_parent_ids_sha256"] == expected["piecewise_target_token_ids_sha256"], "target hashes changed")
-    need(target["parents_equal"] and target["candidate_vs_eager_first_divergence"] == expected["first_divergence"] and expected["first_divergence"]["one_based"] == 95, "divergence changed")
+    need(target["parents_equal"] and target["candidate_vs_eager_first_divergence"] == expected["first_divergence"] and target["candidate_vs_piecewise_first_divergence"] == expected["first_divergence"] and expected["first_divergence"]["one_based"] == 95, "divergence changed")
+    prereg = load(REPO / result["tracked_inputs"]["preregistration"]["path"])
+    parent_arrays = []
+    for name in ("eager", "piecewise"):
+        binding = prereg["dual_e4m3_oracles"][name]["exact_4k"]
+        parent_path = Path(binding["path"])
+        need(digest(parent_path) == binding["sha256"], f"{name} parent raw changed")
+        parent = load(parent_path)
+        ids = parent["response"]["token_ids"]
+        need(len(ids) == 128 and parent["response"]["output_token_ids_sha256"] == binding["output_token_ids_sha256"], f"{name} parent token array changed")
+        parent_arrays.append(ids)
+    need(parent_arrays[0] == parent_arrays[1] and raw["response"]["token_ids"] != parent_arrays[0], "parent/candidate array relation changed")
 
     quality = load(root / "quality.json")
     need(digest(root / "quality.json") == result["quality"]["raw_sha256"] and quality["pass_all"] and quality["baseline_match_all"], "quality changed")
     usages = [item["usage"] for item in quality["exact_cases"]] + [item["usage"] for item in quality["repeat_case"]["runs"]] + [quality["long_context_case"]["usage"]]
     need(len(quality["exact_cases"]) == 7 and quality["repeat_case"]["pass"] and quality["repeat_case"]["repeats"] == 8 and len(quality["repeat_case"]["unique_hashes"]) == 1, "quality coverage changed")
     need(quality["long_context_case"]["pass"] and len(quality["baseline_comparisons"]) == 24 and len(usages) == 16 and all(item["prompt_tokens_details"]["cached_tokens"] == 0 for item in usages), "quality or cache-zero coverage changed")
+    compact_quality = result["quality"]
+    need(compact_quality["objective_passed"] and compact_quality["baseline_match_all"] and compact_quality["exact_cases"] == 7 and compact_quality["repeat_runs"] == 8 and compact_quality["unique_repeat_hashes"] == 1 and compact_quality["baseline_comparisons"] == 24 and compact_quality["long_context_needle_passed"] and compact_quality["cache_zero_requests"] == 16 and compact_quality["cache_zero_all_requests"], "compact quality changed")
 
     rank_cache = load(root / "rank-cache-isolation.json")
     need(digest(root / "rank-cache-isolation.json") == result["graph_topology_and_cache"]["rank_cache_raw_sha256"] and rank_cache["passed"] and rank_cache["observed_rank_namespaces"] == ["rank_0_0"], "rank cache changed")
@@ -93,14 +109,18 @@ def validate(root: Path = ROOT, result_path: Path = RESULT) -> dict:
     need(digest(root / "server-startup.log") == result["graph_topology_and_cache"]["startup_raw_sha256"], "startup log changed")
     for marker in ("world_size=1 rank=0 local_rank=0", "Capturing CUDA graphs (mixed prefill-decode, PIECEWISE)", "Capturing CUDA graphs (decode, FULL)", "Graph capturing finished"):
         need(marker in startup, f"startup marker absent: {marker}")
+    graph = result["graph_topology_and_cache"]
+    need(graph["full_and_piecewise_capture_verified"] and graph["piecewise_capture_sizes"] == [1, 2] and graph["full_decode_capture_size"] == 1 and graph["graph_capture_finished"] and graph["tp1_worker_verified"] and graph["gpu0_selected"] and graph["rank_namespaces"] == ["rank_0_0"], "compact graph/topology changed")
 
     model = load(root / "model-verification.json")
     need(digest(root / "model-verification.json") == result["model_verification"]["raw_sha256"] and model["status"] == "verified" and len(model["files"]) == 19 and all(item["ok"] and item["paths_coherent"] for item in model["files"]), "model verification failed")
 
     authority = result["authority"]
-    need(authority["site_structural_quarantine_cells"] == 1 and authority["site_measured_speed_cells"] == 0 and authority["diagnostic_speed_retained_only_in_evidence"], "site authority changed")
+    need(authority["site_structural_quarantine_cells"] == 1 and authority["site_measured_speed_cells"] == 0 and authority["diagnostic_speed_retained_only_in_evidence"] and not authority["localmaxxing_submission"] and authority["x0_remains_missing"], "site authority changed")
     need(not authority["raw_publication_authorized"] and not authority["historical_or_protected_replacement"] and not authority["other_depths_tp_mtp_graph_or_kv_inferred"], "authority widened")
     need(authority["protected_decode_values_unchanged"] == [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144], "protected values changed")
+    cleanup = result["cleanup"]
+    need(cleanup["status"] == "clean" and cleanup["runner_return_code"] == 38 and cleanup["campaign_container_absent_at_terminal"] and cleanup["port_19523_closed_at_terminal"], "compact cleanup changed")
     return {"status": "pass", "structural_quarantine_cells": 1, "measured_speed_cells": 0, "tp": 1, "mtp": 0, "kv": "fp8_e4m3", "graph": "FULL_AND_PIECEWISE", "x": 4096, "divergence_token": 95, "runner_rc": 38}
 
 

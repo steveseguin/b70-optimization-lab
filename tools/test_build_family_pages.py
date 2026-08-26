@@ -3279,14 +3279,14 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 30 matrices", overview_html)
-        self.assertIn("592/2,008 classified", overview_html)
+        self.assertIn("593/2,008 classified", overview_html)
         for state, count, word in (
             ("lab-measured", "374", "measured"),
             ("lab-screened", "35", "screened"),
-            ("quarantined", "116", "quarantined"),
+            ("quarantined", "117", "quarantined"),
             ("closed", "9", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,416", "missing"),
+            ("missing", "1,415", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)

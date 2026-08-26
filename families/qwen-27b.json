@@ -7133,6 +7133,16 @@
         }
       },
       {
+        "id": "quarantined-f01e-autoround-full-and-piecewise-e4m3kv-exact-4k",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "FULL_AND_PIECEWISE", "kv": "fp8_e4m3"},
+        "state": "quarantined",
+        "label": "token-95 dual-E4M3 divergence · no measured speed",
+        "reason": "Exact 4K depth, FULL_AND_PIECEWISE capture, full quality, cache isolation, model verification, and cleanup passed, but the 128-token candidate diverged from both equal same-image E4M3 eager and PIECEWISE arrays at token 95. Diagnostic timing is evidence-only.",
+        "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp0-e4m3kv-full-and-piecewise-4k-sentinel-r1-result.json",
+        "parent": "qwen38-official-f01e-autoround-tp1-mtp0-e4m3kv-full-and-piecewise-4k-sentinel-20260826-r1",
+        "retry": {"status": "blocked-on-parity", "trigger": "same-profile-4k-dual-e4m3-parity"}
+      },
+      {
         "id": "unsupported-f01e-autoround-eager-e5m2kv-current",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": "*", "graph_mode": "off", "kv": "fp8_e5m2"},
         "state": "unsupported",

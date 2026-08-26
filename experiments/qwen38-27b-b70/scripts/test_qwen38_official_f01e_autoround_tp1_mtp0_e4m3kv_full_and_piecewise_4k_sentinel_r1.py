@@ -39,9 +39,10 @@ class ContractTests(unittest.TestCase):
         self.assertNotIn("--depth 8192", self.runner)
         self.assertNotIn("for depth in", self.runner)
 
-    def test_coverage_contract_resolves_exact_target_as_missing(self) -> None:
+    def test_preregistered_missing_target_now_resolves_as_one_exact_quarantine(self) -> None:
         contract = self.manifest["coverage_contract"]
         self.assertEqual(contract["id"], "qwen38-tp1-vllm-xpu-target-matrix")
+        self.assertEqual(contract["preregistration_state"], "missing")
         family = json.loads(FAMILY.read_text(encoding="utf-8"))
         raw_contract = next(
             item for item in family["coverage_contracts"] if item["id"] == contract["id"]
@@ -55,8 +56,26 @@ class ContractTests(unittest.TestCase):
         cells, errors = module.expand_coverage_contract(raw_contract)
         self.assertEqual(errors, [])
         target = next(cell for cell in cells if cell["selectors"] == contract["selectors"])
-        self.assertEqual(target["state"], "missing")
-        self.assertEqual(target["rule_ids"], ["default-exact-gap"])
+        rule_id = "quarantined-f01e-autoround-full-and-piecewise-e4m3kv-exact-4k"
+        self.assertEqual(target["state"], "quarantined")
+        self.assertEqual(target["rule_ids"], ["default-exact-gap", rule_id])
+        self.assertNotIn("evidence_id", target)
+        self.assertNotIn("point_x", target)
+        self.assertNotIn("packet_id", target)
+        self.assertIn("no measured speed", target["label"])
+        matching = [cell for cell in cells if rule_id in cell["rule_ids"]]
+        self.assertEqual(len(matching), 1)
+        siblings = [
+            cell for cell in cells
+            if cell["selectors"]["artifact_id"] == "qwen38-27b-autoround-w4a16-bce40ca"
+            and cell["selectors"]["graph_mode"] == "FULL_AND_PIECEWISE"
+            and cell["selectors"]["kv"] == "fp8_e4m3"
+        ]
+        self.assertEqual(len(siblings), 7)
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in siblings if cell["state"] == "missing"],
+            [0, 2048, 8192, 16384, 24576, 32768],
+        )
         self.assertEqual(contract["other_cells_authorized"], 0)
 
     def test_dual_e4m3_raw_array_oracles_are_pinned(self) -> None:
