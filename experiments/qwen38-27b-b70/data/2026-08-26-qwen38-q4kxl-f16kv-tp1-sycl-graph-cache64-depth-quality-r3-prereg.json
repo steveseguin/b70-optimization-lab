@@ -1,0 +1,26 @@
+{
+  "schema": "neural.download.qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-r3-overlay.v1",
+  "campaign_id": "qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3",
+  "state": "preregistered-not-launched",
+  "purpose": "Run the unchanged full graph curve at the sealed source-supported cache maximum after cache20 filled during the multi-depth and quality workload.",
+  "sealed_r2_packet": {
+    "preregistration": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-sycl-graph-cache20-depth-quality-r2-prereg.json", "sha256": "93727bc5193f0463bfb83a2a68f4ce36240acb183e6c8debf7467f469ac5546d"},
+    "runner": {"path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-q4kxl-f16kv-tp1-sycl-graph-cache20-depth-quality-r2.py", "sha256": "d6eb19c00804e1d20990a65c05ecfb20a3cb15bba10f9156bacbb3fd27726b14"},
+    "validator": {"path": "experiments/qwen38-27b-b70/scripts/validate-20260826-qwen38-q4kxl-f16kv-tp1-sycl-graph-cache20-depth-quality-r2.py", "sha256": "2c45cd3fe7570719dbe67e9028e5ea70cdd2f1c83acb6e49e4da6edda8cbdb9b"}
+  },
+  "preserved_r2_evidence": {
+    "identity": {"path": "/mnt/fast-ai/bench-results/qwen38-q4kxl-f16kv-tp1-sycl-graph-cache20-depth-quality-20260826-r2/identity.json", "sha256": "beef2e38357105448849907a0b734d2757bc74bd069f97b24e70a6245094491d"},
+    "arm_result": {"path": "/mnt/fast-ai/bench-results/qwen38-q4kxl-f16kv-tp1-sycl-graph-cache20-depth-quality-20260826-r2/target-mtp0-graph-cache20/arm-result.json", "sha256": "d44cd137a1c6307ebb6bdaab638f07d0c2c5eff871f80da748d48a7a6d46af73"},
+    "server_log": {"path": "/mnt/fast-ai/bench-results/qwen38-q4kxl-f16kv-tp1-sycl-graph-cache20-depth-quality-20260826-r2/target-mtp0-graph-cache20/server.log", "sha256": "4c31074bc9e320d17140303b69510562203310e0e37c03d7b88b081804e401f3"},
+    "quality": {"path": "/mnt/fast-ai/bench-results/qwen38-q4kxl-f16kv-tp1-sycl-graph-cache20-depth-quality-20260826-r2/target-mtp0-graph-cache20/quality.json", "sha256": "b4e978dbb18a4a150258657abd4affc79d5ce5f643723c4ce49fe1d6dee5dffd"},
+    "terminal": {"path": "/mnt/fast-ai/bench-results/qwen38-q4kxl-f16kv-tp1-sycl-graph-cache20-depth-quality-20260826-r2/terminal-receipt.json", "sha256": "0c295cbbcf06ee0be7407683fc03ef94be226daca51b8e8d8237c51d86623532"},
+    "graph_summary": {"requested": 1182, "cache_entries": 20, "cache_limit": 20, "cache_hit": 471, "cache_miss": 711, "cache_full": 691, "direct_replay": 471, "recorded": 20, "created": 20, "updated": 0, "recreated": 0, "replayed": 491, "compatibility_rejected": 0, "device_unsupported": 0},
+    "seven_exact_depths_passed": true,
+    "full_quality_battery_passed": true,
+    "cleanup_passed": true,
+    "authority_cells": 0,
+    "must_remain_immutable": true
+  },
+  "mechanism_delta": {"cache_size": {"from": 20, "to": 64}, "source_supported_maximum": 64, "evidence_basis": "cache20 recorded 20 entries then rejected 691 later requests as cache-full during the complete workload", "model_runtime_binary_dso_patch_chain_change": false, "depth_quality_workload_change": false, "minimum_direct_replays": 896, "no_further_capacity_escalation": true},
+  "lifecycle": {"output_root": "/mnt/fast-ai/bench-results/qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3", "exact_ack": "RUN qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-20260826-r3", "default_is_inert": true, "requires_clean_pushed_main": true, "create_only": true}
+}
