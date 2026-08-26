@@ -1557,9 +1557,9 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             sum(cell["state"] == "quarantined" for cell in q36_cells), 63
         )
-        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 875)
+        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 854)
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q36_cells), 119
+            sum(cell["state"] == "lab-measured" for cell in q36_cells), 140
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q36_cells), 0)
 
@@ -1625,6 +1625,78 @@ class FamilyCoverageTest(unittest.TestCase):
                 == cell["candidate_receipt_sha256"]
                 and cell.get("draft_counters_sha256")
                 for cell in result["cells"]
+            )
+        )
+
+        mtp124_result = json.loads(
+            (
+                MODULE.ROOT
+                / "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-mtp124-exact-depth-quality-r1-result.json"
+            ).read_text()
+        )
+        inventory = json.loads(
+            (MODULE.ROOT / mtp124_result["raw_inventory"]["path"]).read_text()
+        )
+        self.assertEqual(inventory["file_count"], 105)
+        self.assertEqual(len(inventory["files"]), 105)
+        self.assertEqual(
+            mtp124_result["raw_inventory"]["sha256"],
+            "1d386022c1540827abcf1b9fa01fb8ccac9e922b69db1fbdad8c3a482d06d388",
+        )
+        self.assertEqual(
+            [battery["quality_result_sha256"] for battery in mtp124_result["quality_batteries"]],
+            [
+                "03fee366374e7bae15d708a257570619afcc9b60f6d5b8e5c3bb166576bd811c",
+                "96e7f69879db03ad262145632b2cf31754143b595e3597abbc0495cb2643f7c0",
+                "2a1f59480702882f1d9a441c8548c31e41caefd69e4fa60eb943921bf05485a7",
+            ],
+        )
+        self.assertTrue(
+            all(
+                battery["exact_canaries"] == 4
+                and battery["stable_repeats"] == 2
+                and battery["needle"]["api_usage_prompt_tokens"] == 27246
+                and battery["needle"]["passed"]
+                for battery in mtp124_result["quality_batteries"]
+            )
+        )
+        candidate_cells = [
+            cell
+            for arm in mtp124_result["arms"]
+            if arm["mtp"] in (1, 2, 4)
+            for cell in arm["cells"]
+        ]
+        self.assertEqual(len(candidate_cells), 21)
+        self.assertTrue(
+            all(
+                cell["target_output_parity"]
+                and cell["draft_counters"]["passed"]
+                for cell in candidate_cells
+            )
+        )
+        for arm in ("candidate-mtp1", "candidate-mtp2", "candidate-mtp4"):
+            argv = mtp124_result["runtime_identity"]["server_argv"][arm]
+            self.assertEqual(argv[argv.index("--spec-draft-type-k") + 1], "f16")
+            self.assertEqual(argv[argv.index("--spec-draft-type-v") + 1], "f16")
+        mtp124_cells = [
+            cell
+            for cell in q36_cells
+            if cell.get("evidence_id") in {
+                "q36-mtpq8-tp1-mtp1-f16-http-context-r1",
+                "q36-mtpq8-tp1-mtp2-f16-http-context-r1",
+                "q36-mtpq8-tp1-mtp4-f16-http-context-r1",
+            }
+        ]
+        self.assertEqual(len(mtp124_cells), 21)
+        self.assertEqual(
+            sorted({cell["selectors"]["mtp"] for cell in mtp124_cells}),
+            [1, 2, 4],
+        )
+        self.assertTrue(
+            all(
+                cell["selectors"]["graph_mode"] == "off"
+                and cell["selectors"]["kv"] == "f16"
+                for cell in mtp124_cells
             )
         )
 
@@ -1759,11 +1831,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("237/1,771 classified", overview_html)
+        self.assertIn("258/1,771 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "174", "measured"),
+            ("lab-measured", "195", "measured"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,534", "missing"),
+            ("missing", "1,513", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
