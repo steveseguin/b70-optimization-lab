@@ -182,3 +182,26 @@ load-time compatibility repair only. A combined loader/Qwen/PLE suite passes
 tests. Patch artifact `vllm/0008` preserves the delta. Attempt 5 evidence is in
 `data/20260826-tp4-first-load-attempt5.json`. The next action is unchanged
 attempt 6 with only the compatibility repair and source-head pin advanced.
+
+Attempt 6 loaded all 131 checkpoint shards on every rank. Rank 0 reported
+`688.80` seconds for weight loading; all ranks reported approximately `31.61`
+GiB of accelerator-side model memory and completed post-load FP8 processing.
+The run then failed at KV-cache specification because current upstream replaced
+the MLA-specific `compress_ratio` field with the generic
+`tokens_per_state` field. The QSA integration still constructed and read the
+removed field.
+
+vLLM commit `4382519af0` ports QSA compressed-cache publication and metadata
+consumption to `tokens_per_state`, deriving physical states with current
+upstream's `num_states` interface. The focused QSA/config/weight suite passes
+`71 passed, 27 skipped`. A four-rank TP4+EP4 meta cache-spec gate also passes:
+all four ranks expose 73 cache specs, including 12 compressed MLA specs with
+four tokens per stored state and 12 circular raw-key specs. Patch artifact
+`vllm/0009` preserves the repair.
+
+The API parent remained alive after EngineCore had failed, so the launcher
+health loop did not notice the terminal child failure until manually stopped.
+The launcher now recognizes the two terminal EngineCore startup messages and
+enters its normal bounded process-group and IPC cleanup immediately. Attempt 6
+evidence is in `data/20260826-tp4-first-load-attempt6.json`. Attempt 7 keeps the
+same runtime identity and advances only the compatibility repair/source pin.

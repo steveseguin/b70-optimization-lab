@@ -22,6 +22,7 @@ from vllm.engine.arg_utils import EngineArgs
 from vllm.model_executor.model_loader.utils import initialize_model
 from vllm.model_executor.models import ModelRegistry
 from vllm.utils.torch_utils import set_default_torch_dtype
+from vllm.v1.worker.gpu.attn_utils import get_kv_cache_spec
 
 
 def parse_args() -> argparse.Namespace:
@@ -88,6 +89,7 @@ def main() -> None:
                 model_class=model_cls,
                 model_config=vllm_config.model_config,
             )
+        kv_cache_specs = get_kv_cache_spec(vllm_config)
 
     dtype_bytes: dict[str, int] = {}
     parameter_count = 0
@@ -134,6 +136,15 @@ def main() -> None:
         "largest_parameters": largest_parameters[:20],
         "largest_parameters_by_dtype": largest_by_dtype,
         "ple_modules": ple_modules,
+        "kv_cache_specs": {
+            name: {
+                "type": type(spec).__name__,
+                "block_size": spec.block_size,
+                "tokens_per_state": str(spec.tokens_per_state),
+                "num_states": spec.num_states,
+            }
+            for name, spec in kv_cache_specs.items()
+        },
     }
     print("QWEN38_META_RESULT=" + json.dumps(result, sort_keys=True), flush=True)
     dist.barrier()

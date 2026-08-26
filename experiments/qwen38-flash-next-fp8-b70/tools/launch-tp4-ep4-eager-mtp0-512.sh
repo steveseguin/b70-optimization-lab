@@ -35,7 +35,7 @@ runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtim
 validation_root="${repo_root}/data/model-intake/post-download-validation-20260826/20260826T211840Z"
 moe_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260826-triton-block-fp8-gate.json"
 
-expected_vllm_head="71670287ecf703268cead7931465da0c88c1cee1"
+expected_vllm_head="4382519af0eb5d68a1c57b97336dc746d93e7558"
 expected_kernels_head="7cf216774fb3c5eabf20d1f481d6548682604c37"
 expected_model_index_sha="0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6"
 expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d"
@@ -363,6 +363,9 @@ healthy=0
 for _ in $(seq 1 720); do
   if curl -fsS "http://127.0.0.1:${port}/health" >"${run_dir}/health.json" 2>/dev/null; then
     healthy=1
+    break
+  fi
+  if grep -Eq 'EngineCore failed to start|Engine core initialization failed' "${server_log}"; then
     break
   fi
   kill -0 "${server_pid}" 2>/dev/null || break

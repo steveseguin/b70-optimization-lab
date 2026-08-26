@@ -1,0 +1,60 @@
+{
+  "date": "2026-08-26",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1",
+  "attempt": 6,
+  "status": "bounded_failure_at_kv_cache_specification",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "71670287ecf703268cead7931465da0c88c1cee1",
+    "kernel_head": "7cf216774fb3c5eabf20d1f481d6548682604c37",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp_dose": 0,
+    "enforce_eager": true,
+    "max_model_len": 512,
+    "moe_backend": "triton",
+    "offload_backend": "uva"
+  },
+  "passed_before_failure": {
+    "four_rank_xccl_barrier_and_allreduce": true,
+    "tp4_ep4_model_construction": true,
+    "ple_uva_gib_per_rank": 11.92,
+    "checkpoint_shards_loaded": "131/131 on all ranks",
+    "rank0_weight_loading_seconds": 688.80,
+    "model_loading_gib_per_rank": 31.61,
+    "post_load_fp8_processing": true
+  },
+  "failure": {
+    "class": "imported_branch_kv_cache_api_drift",
+    "location": "vllm/models/qwen4_exp/common/qsa_cache.py:799",
+    "exception": "TypeError: MLAAttentionSpec.__init__() got an unexpected keyword argument 'compress_ratio'",
+    "classification": "KV-cache specification compatibility bug after successful weight load; not a throughput result, OOM, hang, collective failure, or model-fit failure"
+  },
+  "repair": {
+    "vllm_commit": "4382519af0eb5d68a1c57b97336dc746d93e7558",
+    "patch_artifact": "patches/qwen38-flash-next-fp8-b70/vllm/0009-Port-QSA-compressed-cache-to-tokens-per-state.patch",
+    "tests": "71 passed, 27 skipped",
+    "tp4_ep4_meta_cache_spec_gate": {
+      "ranks_passed": [0, 1, 2, 3],
+      "cache_specs_per_rank": 73,
+      "compressed_mla_specs_per_rank": 12,
+      "circular_specs_per_rank": 12,
+      "compressed_tokens_per_state": 4
+    },
+    "performance_identity_changes": []
+  },
+  "external_evidence": {
+    "run_directory": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt6",
+    "server_log_sha256": "1d6d51c5549e82ca24e1248e1665f83546070547fbdc4302252b66b9e4bac41b",
+    "identity_sha256": "cca42b4cf08f1d6ea8629640bfcb57a80d8f4eff497afc52932cd8e20ddc7418",
+    "runtime_versions_sha256": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "xccl_preflight_sha256": "f226b1225a8e74ed3470a307ef2263789056fc515e77f79fb278d53c3b8d970e"
+  },
+  "cleanup": {
+    "api_parent_required_manual_interrupt_after_enginecore_exit": true,
+    "processes_and_listener_absent_after_interrupt": true,
+    "attempt_rpc_directory_removed": true,
+    "launcher_terminal_enginecore_detection_added": true
+  },
+  "next_action": "retry the identical frozen TP4/EP4 eager MTP0 load as attempt 7 with only the QSA cache-spec compatibility repair"
+}

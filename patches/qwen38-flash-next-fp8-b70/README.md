@@ -22,6 +22,7 @@ ada51dac31d5be31f5b07396e391a2cbc855f3bf24bb751b4998ae304e544ada  vllm/0001-Merg
 d2d84153d4e94d7369b474a23bda89a5da564a7ca969125c9f02af432d5ef381  vllm/0006-Enable-Qwen4Exp-QSA-kernels-on-XPU.patch
 64c65eb34efff1bb91208de2b2892b2a3467bb736fb3e938ea47856e4981a993  vllm/0007-Fix-PLE-target-device-selection-across-accelerators.patch
 7941bbd056f168272a82b91c5b9ea97501e8c2ec674c17eeea38fb192a5c1c6e  vllm/0008-Restore-weight-skip-filters-for-Qwen4Exp.patch
+fd1dd94b54e5b41812d9cefdc3c05bdbab5c0a4d684c04aedd85cd6fe9973c49  vllm/0009-Port-QSA-compressed-cache-to-tokens-per-state.patch
 23d25179eb7e287ca8217afac479ec0fe55736cb2e20ff8032e866ffd77b536e  vllm-xpu-kernels/0001-fix-xpu-restore-architecture-probe-bindings.patch
 8cfaecdb5c0d1afe61f6eb87d6018346261c1b8eadb58f181aec328c16f70af1  vllm-xpu-kernels/0002-fix-build-restore-local-MoE-prologue-source.patch
 e8880c975ad17cbfc8676e65edd82eae96a94aaecf883137bd3c51c124e627a2  vllm-xpu-kernels/0003-fix-build-include-fused-quant-implementations.patch
