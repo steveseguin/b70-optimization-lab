@@ -1,0 +1,41 @@
+{
+  "schema": "neural.download.qwen38-q8-http-concurrency-preregistration.v1",
+  "campaign_id": "qwen38-q8-tp2-http-concurrency-20260825-r2",
+  "state": "preregistered-not-launched",
+  "purpose": "Measure output-audited native HTTP aggregate decode for the Qwen3.8 Q8_0 TP2 package on two fresh cache-off servers.",
+  "identity": {
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "source_commit": "a4349bcee933cd2b13820bc72fbe842e9c2f4b7a",
+    "server_sha256": "6ae782c7e8f7a992e0eeced10ade2a84b3cbb9ba65c65cbb917e52d1ce09777d",
+    "backend_sha256": "375f6d251b022b62367e73d2cd6b7eb0200efc9cc9c854a509af45950938c3ed",
+    "oracle_digests_sha256": "06ab0b7fb679a11380c594888e542545d7de01dea2bc148b15076d7e05558094",
+    "oracle_source_result_sha256": "ee0a34eb64efcb72e554c46a4c3bed86f583ada50cd2ba139a118aef979cd8ae",
+    "cards": 2,
+    "topology": "TP2 tensor split 1,1",
+    "generation": "target-only / MTP0",
+    "kv_cache": "f16"
+  },
+  "server_profile": {
+    "endpoint": "llama.cpp native HTTP /completion",
+    "context_tokens_total": 32768,
+    "parallel_slots": 64,
+    "nominal_context_tokens_per_slot": 512,
+    "prompt_cache": false,
+    "slot_prompt_similarity": 0
+  },
+  "measurement": {
+    "concurrency": [1, 2, 4, 8, 16, 32, 64],
+    "max_output_tokens": 128,
+    "fresh_server_attempts": 2,
+    "required_output_gate": "128 complete raw token IDs per response, zero reused prompt tokens, and no generated token digest equal to a frozen sequential oracle from another base task",
+    "required_stability_gate": "both fresh attempts pass; relative range at every point <=10%",
+    "sequential_identity": "reported but not required because TP2 greedy output may vary with batch shape"
+  },
+  "publication": {
+    "classification_if_passed": "output-isolation-qualified-shape-variant",
+    "aggregate": "median of the two fresh-server aggregate tok/s values at each exact concurrency",
+    "no_interpolation_or_extrapolation": true,
+    "oracle_pilot_rates_are_excluded": true,
+    "failed_points_remain_diagnostic": true
+  }
+}
