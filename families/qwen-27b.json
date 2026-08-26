@@ -458,6 +458,28 @@
       "manifest": "packages/qwen38-27b-256k-vision-mtp-b70/package.json"
     },
     {
+      "id": "qwen38-27b-q5ks-q8kv-external-mtp-8k-grade-c",
+      "label": "Qwen3.8 Q5_K_S · TP1 external-MTP 8K route screen",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+      "quantization": "UD-Q5_K_S",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "grade-c-diagnostic-route-divergence-no-speed-authority",
+      "evidence_level": "B70-screened Grade C diagnostic",
+      "coverage": ["exact 8K", "MTP0/1/2/3/4", "Q8_0 target/draft KV", "deterministic route divergence"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Qwen3.8 UD-Q5_K_S with the same-revision external Q4_0 MTP draft at TP1, exact 8K active context, graph off, and Q8_0 target/draft KV",
+          "basis": "five fresh cache-zero route lifetimes retained exact target, draft, runtime, binary, request, output-token, counter, and cleanup receipts. MTP1–4 all deterministically diverged from MTP0 at token index 6, so their positive counters and apparent speedups are diagnostic only; preregistered candidate quality batteries were skipped and no speed, headline, certification, or submission authority transfers.",
+          "reviewed_at": "2026-08-25",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1-result.json"
+    },
+    {
       "id": "qwen38-27b-autoround-int4-mtp5-research",
       "label": "Qwen3.8 AutoRound INT4 · TP2 + MTP5",
       "revision": "qwen3.8-27b",
@@ -2130,6 +2152,113 @@
       "evidence": "data/qwen38-27b-256k-package-operating-points-20260822.json"
     },
     {
+      "id": "q38-q5ks-q8kv-route8k-mtp0-grade-c",
+      "state": "lab-screened",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+      "quantization": "UD-Q5_K_S",
+      "variant": "UD-Q5_K_S + same-revision external Q4_0 MTP draft",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-q5ks-external-q4mtp-q8kv-route8k-grade-c-v1",
+      "measurement_class": "exact-8k-http-route-sentinel-grade-c-diagnostic",
+      "promotion_status": "diagnostic-control-no-speed-authority",
+      "identity": {"model_sha256": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe", "mtp_draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e", "llama_server_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964"},
+      "config": {"tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph": "off", "graph_mode": "off", "kv": "q8_0", "draft_kv": "q8_0", "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "one fresh lifetime; exact active 8192; 128 generated tokens; temperature 0; cache zero; conventional 99-interval serving decode",
+      "metrics": {"decode_tok_s": [17.499247703365086]},
+      "quality": "Target-only control stream retained exactly; this row is the diagnostic comparator and has no independent headline or certified-speed authority.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1-result.json"
+    },
+    {
+      "id": "q38-q5ks-q8kv-route8k-mtp1-grade-c",
+      "state": "lab-screened",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+      "quantization": "UD-Q5_K_S",
+      "variant": "UD-Q5_K_S + same-revision external Q4_0 MTP draft",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp1-llamacpp-sycl-external-mtp-v1",
+      "speculation_method": "external-mtp-draft",
+      "speculator_artifact_id": "qwen38-27b-mtp-q4-0-50d9ce5",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-q5ks-external-q4mtp-q8kv-route8k-grade-c-v1",
+      "measurement_class": "exact-8k-http-route-sentinel-grade-c-diagnostic",
+      "promotion_status": "deterministic-divergence-no-speed-authority",
+      "identity": {"model_sha256": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe", "mtp_draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e", "llama_server_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964"},
+      "config": {"tp": 1, "mtp": 1, "active_context_tokens": 8192, "graph": "off", "graph_mode": "off", "kv": "q8_0", "draft_kv": "q8_0", "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "one fresh lifetime; exact active 8192; 128 generated tokens; temperature 0; cache zero; conventional 99-interval serving decode",
+      "metrics": {"decode_tok_s": [21.750429921645285], "draft_acceptance_rate": [0.75]},
+      "quality": "Deterministically diverged from MTP0 at zero-based token index 6; candidate battery skipped by the preregistered parity gate. Diagnostic only.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1-result.json"
+    },
+    {
+      "id": "q38-q5ks-q8kv-route8k-mtp2-grade-c",
+      "state": "lab-screened",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+      "quantization": "UD-Q5_K_S",
+      "variant": "UD-Q5_K_S + same-revision external Q4_0 MTP draft",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp1-llamacpp-sycl-external-mtp-v1",
+      "speculation_method": "external-mtp-draft",
+      "speculator_artifact_id": "qwen38-27b-mtp-q4-0-50d9ce5",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-q5ks-external-q4mtp-q8kv-route8k-grade-c-v1",
+      "measurement_class": "exact-8k-http-route-sentinel-grade-c-diagnostic",
+      "promotion_status": "deterministic-divergence-no-speed-authority",
+      "identity": {"model_sha256": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe", "mtp_draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e", "llama_server_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964"},
+      "config": {"tp": 1, "mtp": 2, "active_context_tokens": 8192, "graph": "off", "graph_mode": "off", "kv": "q8_0", "draft_kv": "q8_0", "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "one fresh lifetime; exact active 8192; 128 generated tokens; temperature 0; cache zero; conventional 99-interval serving decode",
+      "metrics": {"decode_tok_s": [24.99411125486185], "draft_acceptance_rate": [0.61947]},
+      "quality": "Deterministically diverged from MTP0 at zero-based token index 6; candidate battery skipped by the preregistered parity gate. Diagnostic only.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1-result.json"
+    },
+    {
+      "id": "q38-q5ks-q8kv-route8k-mtp3-grade-c",
+      "state": "lab-screened",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+      "quantization": "UD-Q5_K_S",
+      "variant": "UD-Q5_K_S + same-revision external Q4_0 MTP draft",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp1-llamacpp-sycl-external-mtp-v1",
+      "speculation_method": "external-mtp-draft",
+      "speculator_artifact_id": "qwen38-27b-mtp-q4-0-50d9ce5",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-q5ks-external-q4mtp-q8kv-route8k-grade-c-v1",
+      "measurement_class": "exact-8k-http-route-sentinel-grade-c-diagnostic",
+      "promotion_status": "deterministic-divergence-no-speed-authority",
+      "identity": {"model_sha256": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe", "mtp_draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e", "llama_server_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964"},
+      "config": {"tp": 1, "mtp": 3, "active_context_tokens": 8192, "graph": "off", "graph_mode": "off", "kv": "q8_0", "draft_kv": "q8_0", "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "one fresh lifetime; exact active 8192; 128 generated tokens; temperature 0; cache zero; conventional 99-interval serving decode",
+      "metrics": {"decode_tok_s": [24.286066239547786], "draft_acceptance_rate": [0.55245]},
+      "quality": "Deterministically diverged from MTP0 at zero-based token index 6; candidate battery skipped by the preregistered parity gate. Diagnostic only.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1-result.json"
+    },
+    {
+      "id": "q38-q5ks-q8kv-route8k-mtp4-grade-c",
+      "state": "lab-screened",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207",
+      "quantization": "UD-Q5_K_S",
+      "variant": "UD-Q5_K_S + same-revision external Q4_0 MTP draft",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp1-llamacpp-sycl-external-mtp-v1",
+      "speculation_method": "external-mtp-draft",
+      "speculator_artifact_id": "qwen38-27b-mtp-q4-0-50d9ce5",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-q5ks-external-q4mtp-q8kv-route8k-grade-c-v1",
+      "measurement_class": "exact-8k-http-route-sentinel-grade-c-diagnostic",
+      "promotion_status": "deterministic-divergence-no-speed-authority",
+      "identity": {"model_sha256": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe", "mtp_draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e", "llama_server_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964"},
+      "config": {"tp": 1, "mtp": 4, "active_context_tokens": 8192, "graph": "off", "graph_mode": "off", "kv": "q8_0", "draft_kv": "q8_0", "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "one fresh lifetime; exact active 8192; 128 generated tokens; temperature 0; cache zero; conventional 99-interval serving decode",
+      "metrics": {"decode_tok_s": [22.85489181453138], "draft_acceptance_rate": [0.47977]},
+      "quality": "Deterministically diverged from MTP0 at zero-based token index 6; candidate battery skipped by the preregistered parity gate. Diagnostic only.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1-result.json"
+    },
+    {
       "id": "q38-q4kxl-flagship-tp1-256k-mtp3-serving",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -3792,6 +3921,27 @@
       "metrics": ["decode_tok_s", "prefill_tok_s"],
       "series": [
         {"label": "target-only Q8 KV", "measurement_ids": ["q38-q5ks-flagship-tp1-kv-q8-context"]}
+      ]
+    },
+    {
+      "id": "q38-q5ks-q8kv-mtp-8k-grade-c",
+      "title": "Q5_K_S external-MTP 8K route screen",
+      "subtitle": "Grade C diagnostic · TP1 · graph off · Q8_0 target/draft KV · MTP1–4 all diverge from MTP0 at token index 6; rates and draft counters have no certified or headline authority",
+      "x_label": "draft tokens",
+      "metrics": ["decode_tok_s", "draft_acceptance_rate"],
+      "discrete": true,
+      "series": [
+        {
+          "label": "exact-8K screened routes",
+          "measurement_ids": [
+            "q38-q5ks-q8kv-route8k-mtp0-grade-c",
+            "q38-q5ks-q8kv-route8k-mtp1-grade-c",
+            "q38-q5ks-q8kv-route8k-mtp2-grade-c",
+            "q38-q5ks-q8kv-route8k-mtp3-grade-c",
+            "q38-q5ks-q8kv-route8k-mtp4-grade-c"
+          ],
+          "x_from": "config.mtp"
+        }
       ]
     },
     {
@@ -5997,23 +6147,44 @@
     "rules": [
       {
         "id": "default-exact-gap",
-        "match": {
-          "revision": "*",
-          "artifact_id": "*",
-          "tp": "*",
-          "mtp": "*",
-          "active_context_tokens": "*",
-          "graph_mode": "*",
-          "kv": "*"
-        },
+        "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "active_context_tokens": "*", "graph_mode": "*", "kv": "*"},
         "state": "missing",
         "label": "unmeasured exact cell",
         "reason": "No result or frozen estimate binds every declared selector; configured maximum context never substitutes for active context.",
         "parent": "qwen-tp1-parent-sentinel-program",
-        "retry": {
-          "status": "queued",
-          "trigger": "parent-or-calibrated-estimate"
-        }
+        "retry": {"status": "queued", "trigger": "parent-or-calibrated-estimate"}
+      },
+      {
+        "id": "screened-q5ks-q8kv-mtp1-exact8k-divergent",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207", "tp": 1, "mtp": 1, "active_context_tokens": 8192, "graph_mode": "off", "kv": "q8_0"},
+        "state": "lab-screened", "label": "D21.750 · Grade C divergent",
+        "reason": "Exact cache-zero 8K route sentinel with positive draft counters, but the output diverged from MTP0 at token index 6. Candidate quality batteries were skipped; no speed or certification authority.",
+        "evidence_id": "q38-q5ks-q8kv-route8k-mtp1-grade-c", "packet_id": "qwen38-27b-q5ks-q8kv-external-mtp-8k-grade-c", "parent": "qwen38-q5ks-external-mtp-8k-route-sentinel",
+        "retry": {"status": "classified-deterministic-divergence"}
+      },
+      {
+        "id": "screened-q5ks-q8kv-mtp2-exact8k-divergent",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207", "tp": 1, "mtp": 2, "active_context_tokens": 8192, "graph_mode": "off", "kv": "q8_0"},
+        "state": "lab-screened", "label": "D24.994 · Grade C divergent",
+        "reason": "Exact cache-zero 8K route sentinel with positive draft counters, but the output diverged from MTP0 at token index 6. Candidate quality batteries were skipped; no speed or certification authority.",
+        "evidence_id": "q38-q5ks-q8kv-route8k-mtp2-grade-c", "packet_id": "qwen38-27b-q5ks-q8kv-external-mtp-8k-grade-c", "parent": "qwen38-q5ks-external-mtp-8k-route-sentinel",
+        "retry": {"status": "classified-deterministic-divergence"}
+      },
+      {
+        "id": "screened-q5ks-q8kv-mtp3-exact8k-divergent",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207", "tp": 1, "mtp": 3, "active_context_tokens": 8192, "graph_mode": "off", "kv": "q8_0"},
+        "state": "lab-screened", "label": "D24.286 · Grade C divergent",
+        "reason": "Exact cache-zero 8K route sentinel with positive draft counters, but the output diverged from MTP0 at token index 6. Candidate quality batteries were skipped; no speed or certification authority.",
+        "evidence_id": "q38-q5ks-q8kv-route8k-mtp3-grade-c", "packet_id": "qwen38-27b-q5ks-q8kv-external-mtp-8k-grade-c", "parent": "qwen38-q5ks-external-mtp-8k-route-sentinel",
+        "retry": {"status": "classified-deterministic-divergence"}
+      },
+      {
+        "id": "screened-q5ks-q8kv-mtp4-exact8k-divergent",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-unsloth-ud-q5-k-s-4ca7207", "tp": 1, "mtp": 4, "active_context_tokens": 8192, "graph_mode": "off", "kv": "q8_0"},
+        "state": "lab-screened", "label": "D22.855 · Grade C divergent",
+        "reason": "Exact cache-zero 8K route sentinel with positive draft counters, but the output diverged from MTP0 at token index 6. Candidate quality batteries were skipped; no speed or certification authority.",
+        "evidence_id": "q38-q5ks-q8kv-route8k-mtp4-grade-c", "packet_id": "qwen38-27b-q5ks-q8kv-external-mtp-8k-grade-c", "parent": "qwen38-q5ks-external-mtp-8k-route-sentinel",
+        "retry": {"status": "classified-deterministic-divergence"}
       }
     ]
   }

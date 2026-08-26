@@ -1933,6 +1933,42 @@ class FamilyCoverageTest(unittest.TestCase):
             ["q38-q8weights-tp1-kv-f16-context"] * 7,
         )
 
+        q38_mtp_cells, _ = MODULE.expand_coverage_contract(
+            contracts["qwen38-tp1-llamacpp-sycl-mtp-package-matrix"]
+        )
+        q38_q5ks_8k_screen = [
+            cell for cell in q38_mtp_cells
+            if cell["state"] == "lab-screened"
+        ]
+        self.assertEqual(len(q38_q5ks_8k_screen), 4)
+        self.assertEqual(
+            [cell["selectors"]["mtp"] for cell in q38_q5ks_8k_screen],
+            [1, 2, 3, 4],
+        )
+        self.assertTrue(all(
+            cell["selectors"]["artifact_id"]
+            == "qwen38-27b-unsloth-ud-q5-k-s-4ca7207"
+            and cell["selectors"]["active_context_tokens"] == 8192
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "q8_0"
+            and "divergent" in cell["label"]
+            for cell in q38_q5ks_8k_screen
+        ))
+        q38_screen_packet = next(
+            packet for packet in family["packets"]
+            if packet["id"] == "qwen38-27b-q5ks-q8kv-external-mtp-8k-grade-c"
+        )
+        self.assertEqual(q38_screen_packet["grades"]["evidence"]["grade"], "C")
+        self.assertNotIn("featured_metric", q38_screen_packet)
+        q38_screen_result = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1-result.json"
+        ).read_text())
+        self.assertEqual(
+            q38_screen_result["divergence"]["first_zero_based_token_index"], 6
+        )
+        self.assertFalse(q38_screen_result["authority"]["speed_claim"])
+
         rendered = MODULE.family_page(family)
         overview = re.search(
             r'<section class="contract-overview".*?</section>',
@@ -1942,12 +1978,12 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("286/1,771 classified", overview_html)
+        self.assertIn("290/1,771 classified", overview_html)
         for state, count, word in (
             ("lab-measured", "195", "measured"),
-            ("lab-screened", "28", "screened"),
+            ("lab-screened", "32", "screened"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,485", "missing"),
+            ("missing", "1,481", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -1964,8 +2000,12 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("19 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 19)
+        self.assertIn("20 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 20)
+        self.assertIn(
+            'data-family-view="q38-q5ks-q8kv-mtp-8k-grade-c"',
+            deferred_html,
+        )
         self.assertIn(
             'data-family-view="context-q36-mtpq8-q8kv-http-grade-c"',
             deferred_html,
