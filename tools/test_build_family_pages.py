@@ -2020,13 +2020,105 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertFalse(q38_q5ks_http_result["authority"]["localmaxxing_submission"])
 
+        q38_q5ks_f16_http = [
+            cell for cell in q38_target
+            if cell["selectors"]["artifact_id"]
+            == "qwen38-27b-unsloth-ud-q5-k-s-4ca7207"
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "f16"
+        ]
+        self.assertEqual(len(q38_q5ks_f16_http), 7)
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in q38_q5ks_f16_http],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(all(
+            cell["state"] == "lab-measured"
+            and cell["evidence_id"]
+            == "q38-q5ks-tp1-f16kv-target-http-context-r1-grade-c"
+            and cell["packet_id"]
+            == "qwen38-27b-q5ks-f16kv-target-http-depth-grade-c"
+            and "HTTP" in cell["label"]
+            and "Grade C" in cell["label"]
+            for cell in q38_q5ks_f16_http
+        ))
+        q38_q5ks_f16_series = series[
+            "q38-q5ks-tp1-f16kv-target-http-context-r1-grade-c"
+        ]
+        self.assertEqual(
+            [point["decode_tok_s"] for point in q38_q5ks_f16_series["points"]],
+            [
+                22.617348746656774,
+                22.072826293347987,
+                21.51247483924336,
+                20.699622782660835,
+                19.116902989029395,
+                17.847541304863622,
+                16.72668172192112,
+            ],
+        )
+        self.assertTrue(all(
+            point["cached_tokens"] == 0
+            for point in q38_q5ks_f16_series["points"]
+        ))
+        self.assertEqual(q38_q5ks_f16_series["config"]["mtp"], 0)
+        self.assertEqual(q38_q5ks_f16_series["config"]["graph_mode"], "off")
+        self.assertEqual(q38_q5ks_f16_series["config"]["fit"], "off")
+        self.assertEqual(q38_q5ks_f16_series["config"]["kv"], "f16")
+        self.assertIn("Full Qwen3.8 quality battery passed", q38_q5ks_f16_series["quality"])
+        q38_q5ks_f16_packet = next(
+            packet for packet in family["packets"]
+            if packet["id"] == "qwen38-27b-q5ks-f16kv-target-http-depth-grade-c"
+        )
+        self.assertEqual(q38_q5ks_f16_packet["grades"]["evidence"]["grade"], "C")
+        self.assertNotIn("featured_metric", q38_q5ks_f16_packet)
+        q38_q5ks_f16_result = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q5ks-f16kv-tp1-target-http-depth-quality-r1-result.json"
+        ).read_text())
+        self.assertEqual(q38_q5ks_f16_result["status"], "passed")
+        self.assertEqual(q38_q5ks_f16_result["serving_curve"]["evidence_grade"], "C")
+        self.assertEqual(
+            [point["decode_tok_s"] for point in q38_q5ks_f16_series["points"]],
+            [
+                cell["serving_decode_tok_s_99_interval"]
+                for cell in q38_q5ks_f16_result["serving_curve"]["cells"]
+            ],
+        )
+        self.assertTrue(q38_q5ks_f16_result["quality"]["pass_all"])
+        self.assertEqual(
+            q38_q5ks_f16_result["quality"]["cache_zero_requests"],
+            {"passed": 10, "required": 10},
+        )
+        self.assertTrue(
+            q38_q5ks_f16_result["authority"]["site_target_only_f16_curve_publication"]
+        )
+        self.assertEqual(
+            q38_q5ks_f16_result["authority"]["target_only_f16_serving_curve_cells"], 7
+        )
+        for forbidden_authority in (
+            "q8_kv_cells",
+            "speculative_cells",
+            "tp2_or_tp4_cells",
+            "graph_cells",
+            "prefill_cells",
+        ):
+            self.assertEqual(q38_q5ks_f16_result["authority"][forbidden_authority], 0)
+        self.assertFalse(
+            q38_q5ks_f16_result["authority"]["protected_or_headline_replacement"]
+        )
+        self.assertFalse(q38_q5ks_f16_result["authority"]["localmaxxing_submission"])
+
         q38_q5ks_view = next(
             view for view in family["views"]
             if view["id"] == "context-flagship-q8"
         )
         self.assertEqual(
-            q38_q5ks_view["series"][0]["measurement_ids"],
-            ["q38-q5ks-tp1-q8kv-target-http-context-r1-grade-c"],
+            [item["measurement_ids"] for item in q38_q5ks_view["series"]],
+            [
+                ["q38-q5ks-tp1-f16kv-target-http-context-r1-grade-c"],
+                ["q38-q5ks-tp1-q8kv-target-http-context-r1-grade-c"],
+            ],
         )
         self.assertEqual(q38_q5ks_view["metrics"], ["decode_tok_s"])
 
