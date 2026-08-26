@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import hashlib
 import importlib.util
 import json
 import math
@@ -1573,9 +1574,12 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             sum(cell["state"] == "quarantined" for cell in q36_cells), 63
         )
-        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 854)
+        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 826)
         self.assertEqual(
             sum(cell["state"] == "lab-measured" for cell in q36_cells), 140
+        )
+        self.assertEqual(
+            sum(cell["state"] == "lab-screened" for cell in q36_cells), 28
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q36_cells), 0)
 
@@ -1800,6 +1804,97 @@ class FamilyCoverageTest(unittest.TestCase):
             )
         )
 
+        grade_c_packet_id = (
+            "qwen36-27b-embedded-mtp-q8-q8kv-tp1-mtp1234-grade-c"
+        )
+        q36_q8kv_grade_c = [
+            cell
+            for cell in q36_cells
+            if cell.get("packet_id") == grade_c_packet_id
+        ]
+        self.assertEqual(len(q36_q8kv_grade_c), 28)
+        self.assertEqual(
+            sorted({cell["selectors"]["mtp"] for cell in q36_q8kv_grade_c}),
+            [1, 2, 3, 4],
+        )
+        self.assertTrue(
+            all(
+                cell["state"] == "lab-screened"
+                and cell["selectors"]["artifact_id"]
+                == "qwen36-27b-unsloth-mtp-q8-0-5cb35eb"
+                and cell["selectors"]["graph_mode"] == "off"
+                and cell["selectors"]["kv"] == "q8_0"
+                and "Grade C" in cell["label"]
+                for cell in q36_q8kv_grade_c
+            )
+        )
+        for mtp in (1, 2, 3, 4):
+            route = [
+                cell
+                for cell in q36_q8kv_grade_c
+                if cell["selectors"]["mtp"] == mtp
+            ]
+            self.assertEqual(
+                [cell["selectors"]["active_context_tokens"] for cell in route],
+                [0, 2048, 4096, 8192, 16384, 24576, 32768],
+            )
+            divergent = [
+                cell
+                for cell in route
+                if cell["selectors"]["active_context_tokens"] == 2048
+            ]
+            self.assertEqual(len(divergent), 1)
+            self.assertIn("divergent", divergent[0]["label"])
+            self.assertIn("deterministic output divergence", divergent[0]["reason"])
+
+        grade_c_series = {
+            mtp: series[
+                f"q36-mtpq8-tp1-mtp{mtp}-q8kv-http-context-r1-grade-c"
+            ]
+            for mtp in (1, 2, 3, 4)
+        }
+        r1_path = (
+            MODULE.ROOT
+            / "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-q8kv-tp1-mtp1234-exact-depth-quality-r1-result.json"
+        )
+        r1_result = json.loads(r1_path.read_text())
+        self.assertEqual(
+            r1_result["classification"],
+            "failed-global-cross-kv-seal-partial-quality-positive-no-publication",
+        )
+        self.assertTrue(all(arm["quality"]["passed"] for arm in r1_result["arms"][1:]))
+        for mtp, measurement in grade_c_series.items():
+            arm = next(arm for arm in r1_result["arms"] if arm["mtp"] == mtp)
+            self.assertEqual(measurement["state"], "lab-screened")
+            self.assertEqual(
+                [point["decode_tok_s"] for point in measurement["points"]],
+                [cell["serving_decode_tok_s_99_interval"] for cell in arm["cells"]],
+            )
+            self.assertEqual(
+                [point["fresh_control_exact"] for point in measurement["points"]],
+                [cell["matches_fresh_q8kv_control"] for cell in arm["cells"]],
+            )
+            self.assertIn("R1 remains failed", measurement["quality"])
+
+        grade_c_packet = next(
+            packet for packet in family["packets"] if packet["id"] == grade_c_packet_id
+        )
+        self.assertNotIn("featured_metric", grade_c_packet)
+        self.assertIn("failed", grade_c_packet["status"])
+        self.assertEqual(grade_c_packet["grades"]["evidence"]["grade"], "C")
+        r3_path = (
+            MODULE.ROOT
+            / "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-r3-result.json"
+        )
+        self.assertEqual(
+            hashlib.sha256(r3_path.read_bytes()).hexdigest(),
+            "3f63f3e7c1d28f2305ec561cb084b04ecba29187d238859d768fa6e72bc12661",
+        )
+        r3_result = json.loads(r3_path.read_text())
+        self.assertEqual(r3_result["classification"], "grade-c-deterministic-route-divergence")
+        self.assertEqual(r3_result["grade"]["packet_grade"], "C")
+        self.assertFalse(r3_result["authority"]["direct_site_publication"])
+
         for contract_id, contract in contracts.items():
             axes = {axis["key"]: axis["values"] for axis in contract["axes"]}
             if "target-matrix" in contract_id:
@@ -1847,11 +1942,12 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("258/1,771 classified", overview_html)
+        self.assertIn("286/1,771 classified", overview_html)
         for state, count, word in (
             ("lab-measured", "195", "measured"),
+            ("lab-screened", "28", "screened"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,513", "missing"),
+            ("missing", "1,485", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -1868,8 +1964,13 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("18 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 18)
+        self.assertIn("19 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 19)
+        self.assertIn(
+            'data-family-view="context-q36-mtpq8-q8kv-http-grade-c"',
+            deferred_html,
+        )
+        self.assertIn("◇ screened, experimental", deferred_html)
 
         q36_context_view = next(
             view for view in family["views"]
