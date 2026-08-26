@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "classification": "measured-negative-screen",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "mtp_weights": "publisher-supplied mtp.safetensors"
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mtp-width-r1",
+    "image_id": "sha256:9918c4477d2d3bdbd84732c5beb13619a89740f9915b1d7393fb48f1d3c8ed72",
+    "kernel_patch_sha256": "68c486a9a10a2f7e85d7d88783a05f89919e931d2b81922f85be733bfb59f1b5",
+    "xpu_extension_sha256": "de253fa31df9acae6020b95da8d2286f5ff15d8fe3d51b59b71496cbf9311f62",
+    "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "gpu_memory_utilization": 0.96,
+    "prefix_cache": false,
+    "returned_tokens_per_request": 128,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 2,
+      "num_speculative_tokens_per_batch_size": [[1, 1, 2], [2, 128, 1]]
+    }
+  },
+  "repair_validation": {
+    "focused_active_width": 2,
+    "focused_padded_state_width": 3,
+    "focused_num_spec_decodes": 4,
+    "focused_test": "passed 1/1 with output/state comparison and untouched padded slots",
+    "c2_crash_canary": {
+      "completion_tokens": 256,
+      "oracle_exact": "2/2",
+      "engine_health_after": "pass"
+    }
+  },
+  "quality": {
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "baseline_match_all": true,
+    "baseline": "static MTP2",
+    "cached_tokens_all_zero": true
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "fresh_response_after_ttft_tok_s": 83.16116216604749,
+    "gate_tok_s": 82.810053,
+    "gate_passed": true,
+    "change_vs_static_mtp2_percent": -0.5802460962359368
+  },
+  "concurrency": {
+    "metric": "sum(completion_tokens) / synchronized HTTP batch wall time",
+    "excluded_transition_tok_s": 783.7218575371897,
+    "declared_c64_tok_s": 817.0079100926317,
+    "gate_tok_s": 875,
+    "gate_passed": false,
+    "change_vs_static_mtp2_percent": 10.827302094186543,
+    "change_vs_static_mtp1_percent": -25.157921181781806,
+    "change_vs_static_mtp0_same_short_shape_percent": -2.001642841470175,
+    "declared_output": {
+      "requests": 64,
+      "completion_tokens": 8192,
+      "cached_tokens_all_zero": true,
+      "cross_base_oracle_collision_count": 0,
+      "sequential_oracle_exact": "58/64",
+      "classification": "output-isolation-qualified-shape-variant"
+    }
+  },
+  "capacity_diagnosis": {
+    "measured_gpu_kv_cache_tokens": 12595,
+    "reported_max_concurrency_at_256_tokens": 49.2,
+    "requests_in_c64_batch": 64,
+    "observation": "The engine reported 49 running and 15 waiting requests at full KV-cache use. Dynamic MTP retains maximum-width state allocation even when the active multi-request depth is MTP1.",
+    "static_mtp1_control_kv_cache_tokens": 17956,
+    "static_mtp1_reported_max_concurrency_at_256_tokens": 70.14
+  },
+  "decision": {
+    "status": "closed-negative",
+    "reason": "The declared 817.007910 tok/s result is below the preregistered 875 tok/s gate.",
+    "replication": "not run by preregistered stop rule",
+    "next_treatment": "A separately preregistered 192-token short-context service profile may remove the measured c64 residency bottleneck without changing runtime code or the dynamic MTP policy."
+  },
+  "evidence_directory": "qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-20260826-r2",
+  "reporting_boundary": "Every rate is directly measured. R2 is a 256-token short-context negative screen, not a promoted package result. No value is interpolated or extrapolated; the capacity explanation is based on the server's own measured cache and scheduler logs."
+}

@@ -34,6 +34,13 @@ MTP2_DYNAMIC_RAW = DATA / "qwen38-fp8-w8a16-mtp2-dynamic-20260826-r1"
 MTP2_DYNAMIC_SUMMARY = (
     DATA / "2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-r1-summary.json"
 )
+MTP2_DYNAMIC_FIXED_RAW = (
+    DATA / "qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-20260826-r2"
+)
+MTP2_DYNAMIC_FIXED_SUMMARY = (
+    DATA
+    / "2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2-summary.json"
+)
 PATCH = (
     ROOT
     / "experiments/qwen38-27b-b70/patches"
@@ -481,6 +488,64 @@ def main() -> int:
     assert dynamic_launcher.is_file()
     assert "[[1,1,2],[2,128,0]]" in dynamic_launcher.read_text()
 
+    fixed = load(MTP2_DYNAMIC_FIXED_SUMMARY)
+    assert fixed["classification"] == "measured-negative-screen"
+    assert fixed["service"]["speculative_config"][
+        "num_speculative_tokens_per_batch_size"
+    ] == [[1, 1, 2], [2, 128, 1]]
+    assert fixed["repair_validation"]["focused_test"].startswith("passed 1/1")
+    assert fixed["repair_validation"]["c2_crash_canary"]["engine_health_after"] == (
+        "pass"
+    )
+    assert fixed["quality"]["baseline_match_all"] is True
+    assert fixed["decision"]["status"] == "closed-negative"
+    assert fixed["decision"]["replication"] == (
+        "not run by preregistered stop rule"
+    )
+    assert "No value is interpolated or extrapolated" in fixed[
+        "reporting_boundary"
+    ]
+
+    fixed_quality = load(MTP2_DYNAMIC_FIXED_RAW / "sequential-quality.json")
+    assert fixed_quality["pass_all"] is True
+    assert fixed_quality["baseline_match_all"] is True
+    fixed_single = load(MTP2_DYNAMIC_FIXED_RAW / "single-p40-o128.json")
+    fixed_single_rate = fixed_single["fresh_response_validity"][
+        "headline_tok_s_after_ttft"
+    ]
+    close(
+        fixed_single_rate,
+        fixed["single_user"]["fresh_response_after_ttft_tok_s"],
+    )
+    assert fixed_single_rate >= fixed["single_user"]["gate_tok_s"]
+    fixed_c2 = load(MTP2_DYNAMIC_FIXED_RAW / "excluded-c2-crash-canary.json")
+    validate_output_isolation_batch(fixed_c2["batches"][0], 2)
+    fixed_transition = load(
+        MTP2_DYNAMIC_FIXED_RAW / "excluded-c64-transition.json"
+    )
+    fixed_c64 = load(MTP2_DYNAMIC_FIXED_RAW / "c64-screen.json")
+    validate_output_isolation_batch(fixed_transition["batches"][0], 64)
+    validate_output_isolation_batch(fixed_c64["batches"][0], 64)
+    close(
+        fixed_transition["batches"][0]["aggregate_tok_s_wall"],
+        fixed["concurrency"]["excluded_transition_tok_s"],
+    )
+    close(
+        fixed_c64["batches"][0]["aggregate_tok_s_wall"],
+        fixed["concurrency"]["declared_c64_tok_s"],
+    )
+    assert fixed["concurrency"]["gate_passed"] is False
+    assert fixed["concurrency"]["declared_c64_tok_s"] < fixed[
+        "concurrency"
+    ]["gate_tok_s"]
+    fixed_inspect = load(MTP2_DYNAMIC_FIXED_RAW / "docker-inspect.json")[0]
+    assert fixed_inspect["Image"] == fixed["runtime"]["image_id"]
+    assert fixed_inspect["Config"]["Labels"][
+        "neural.download.kernel.patch.sha256"
+    ] == fixed["runtime"]["kernel_patch_sha256"]
+    assert not (MTP2_DYNAMIC_FIXED_RAW / "c64-replication.json").exists()
+    assert not (MTP2_DYNAMIC_FIXED_RAW / "c64-quality-512.json").exists()
+
     assert mtp2["quality"]["sequential_evidence"] == [
         f"{MTP2_RAW.name}/sequential-quality.json",
         f"{MTP2_MBT768_RAW.name}/sequential-quality.json",
@@ -536,6 +601,10 @@ def main() -> int:
         "build-mtp1-kernel-image.sh",
         "run-w8a16-mtp1-server.sh",
         "bench-w8a16-mtp1.sh",
+        "run-w8a16-mtp2-dynamic-mtp1-fixed-r2-server.sh",
+        "bench-w8a16-mtp2-dynamic-mtp1-fixed-r2.sh",
+        "run-w8a16-mtp2-dynamic-mtp1-fixed-r3-p192-server.sh",
+        "bench-w8a16-mtp2-dynamic-mtp1-fixed-r3-p192.sh",
         "verify-model-direct.sh",
     ):
         assert (REPRO / name).is_file(), name
@@ -557,6 +626,10 @@ def main() -> int:
                 "mtp2_local_argmax_c64_tok_s": local_c64_rate,
                 "mtp2_dynamic_single_tok_s": dynamic_single_rate,
                 "mtp2_dynamic_c64_tok_s": dynamic_c64_rate,
+                "mtp2_dynamic_fixed_single_tok_s": fixed_single_rate,
+                "mtp2_dynamic_fixed_c64_tok_s": fixed_c64["batches"][0][
+                    "aggregate_tok_s_wall"
+                ],
                 "depth_32k_w8a16_tok_s": summary["exact_context"]["points"][-1][
                     "w8a16_decode_tok_s"
                 ],
