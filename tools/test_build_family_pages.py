@@ -1619,6 +1619,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "qwen38-tp2-vllm-xpu-autoround-f01e-mtp4-eager-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-eager-oracle-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-piecewise-depth": 7,
+            "qwen38-tp4-vllm-xpu-autoround-f01e-mtp1-piecewise-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-mtp1-eager-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-mtp2-eager-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-mtp3-eager-depth": 7,
@@ -1634,7 +1635,23 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertEqual(errors, [], contract_id)
             self.assertEqual(len(cells), expected_count, contract_id)
             all_cells.extend(cells)
-        self.assertEqual(len(all_cells), 2001)
+        self.assertEqual(len(all_cells), 2008)
+
+        tp4_graph_mtp1_cells, errors = MODULE.expand_coverage_contract(
+            contracts["qwen38-tp4-vllm-xpu-autoround-f01e-mtp1-piecewise-depth"]
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in tp4_graph_mtp1_cells if cell["state"] == "lab-measured"],
+            [4096],
+        )
+        graph_mtp1_4k = next(cell for cell in tp4_graph_mtp1_cells if cell["state"] == "lab-measured")
+        self.assertEqual(graph_mtp1_4k["evidence_id"], "q38-f01e-autoround-tp4-mtp1-piecewise-f16-exact-4k-r1-grade-c")
+        self.assertEqual(graph_mtp1_4k["packet_id"], "qwen38-27b-autoround-int4-tp4-f01e-mtp1-piecewise-f16-4k-grade-c")
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in tp4_graph_mtp1_cells if cell["state"] == "missing"],
+            [0, 2048, 8192, 16384, 24576, 32768],
+        )
 
         fp8_tp1_cells, errors = MODULE.expand_coverage_contract(
             contracts["qwen38-tp1-vllm-xpu-target-matrix"]
@@ -3261,15 +3278,15 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
-        self.assertIn("Coverage · 29 matrices", overview_html)
-        self.assertIn("591/2,001 classified", overview_html)
+        self.assertIn("Coverage · 30 matrices", overview_html)
+        self.assertIn("592/2,008 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "373", "measured"),
+            ("lab-measured", "374", "measured"),
             ("lab-screened", "35", "screened"),
             ("quarantined", "116", "quarantined"),
             ("closed", "9", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,410", "missing"),
+            ("missing", "1,416", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
