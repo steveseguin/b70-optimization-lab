@@ -1,0 +1,70 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-e5m2kv-init-canary-compact-result.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp1-e5m2kv-init-canary-20260826-r1",
+  "status": "unsupported",
+  "identity": {
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3"
+  },
+  "config": {
+    "tp": 1,
+    "mtp": 0,
+    "graph": "off",
+    "graph_mode": "off",
+    "enforce_eager": true,
+    "kv": "fp8_e5m2",
+    "configured_max_context_tokens": 32896,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "prefix_caching": false,
+    "pythonhashseed": 0
+  },
+  "failure": {
+    "phase": "engine-initialization",
+    "classification": "explicit-e5m2-kv-dtype-rejection",
+    "runner_return_code": 42,
+    "exact_error": "NotImplementedError: FlashAttention does not support fp8_e5m2 kv-cache on this device.",
+    "startup_identity_passed": false,
+    "canary_run": false,
+    "quality_run": false,
+    "server_log_sha256": "2ce6c96ff6726bba76610b7d7159ce0fb9c10b2ce12bdb4c1aaf208e5133e508"
+  },
+  "model_verification": {
+    "status": "verified",
+    "files_verified": 19,
+    "direct_and_ordinary_paths_coherent": true,
+    "raw_sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+  },
+  "scope": {
+    "unsupported_cells": 7,
+    "selectors": {"tp": 1, "mtp": 0, "graph_mode": "off", "kv": "fp8_e5m2", "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768]},
+    "basis": "The engine cannot initialize this exact current-runtime serving profile, so no active-context request can execute under it.",
+    "graph_tp_mtp_or_other_runtime_transfer": false,
+    "older_e9d_unsupported_closure_retained": true
+  },
+  "cleanup": {
+    "status": "clean",
+    "terminal_receipt_sha256": "87adf1a0d01330089387a486395db1827db40c8e46ad4e365a9b398feb98ae83",
+    "arm_result_sha256": "d64e6312e2a5ba429918c1e7a324a24515736a16ed2fbdea875e0327902f5c33",
+    "campaign_container_absent_at_sealing": true,
+    "port_19470_closed_at_sealing": true
+  },
+  "authority": {
+    "measured_cells": 0,
+    "estimated_cells": 0,
+    "unsupported_cells": 7,
+    "headline_or_protected_replacement": false,
+    "localmaxxing_submission": false,
+    "protected_decode_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]
+  },
+  "tracked_inputs": {
+    "preregistration": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e5m2kv-init-canary-r1-prereg.json", "sha256": "3568a959011ecc921f67e99b6c6754f3b64f2e4f850631a7b0ba1fae65c508e2"},
+    "runner": {"path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp1-e5m2kv-init-canary-r1.sh", "sha256": "28f30f909b1acc5504bae082d92728c5dab70e4672f667aa2291cfb229d75064"}
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e5m2kv-init-canary-20260826-r1"
+}
