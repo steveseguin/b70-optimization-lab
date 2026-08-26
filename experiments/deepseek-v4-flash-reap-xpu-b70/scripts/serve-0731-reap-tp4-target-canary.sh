@@ -28,6 +28,20 @@ test "$(sha256sum "${kernel_tree}/vllm_xpu_kernels/_xpu_C.abi3.so" | awk '{print
   c0597c1db9d1e684462adce681101957e7a969baab3c0c71fb748ca7fd8c24e9
 test "$(sha256sum "${oneccl_lib}/libccl.so.1" | awk '{print $1}')" = \
   53de2b6d65265803d64773546c1166ceed4ae43737f0fded776f5847b4b461c9
+PYTHONPATH="${vllm_tree}:${kernel_tree}" "${python}" - <<'PY'
+from importlib.metadata import version
+
+expected = {
+    "torch": "2.12.0+xpu",
+    "triton-xpu": "3.7.1",
+    "vllm": "0.1.dev1172+g4a6fd8747.xpu",
+    "vllm-xpu-kernels": "0.1.11.dev53+g744a8b4",
+    "oneccl": "2021.17.2",
+}
+actual = {name: version(name) for name in expected}
+if actual != expected:
+    raise SystemExit(f"record venv package identity mismatch: {actual!r}")
+PY
 
 export MODEL_PATH="${model}"
 export MODEL_REVISION="${revision}"
