@@ -111,7 +111,10 @@ for inherited in $(compgen -A variable); do
   esac
 done
 
+set +e
 source /opt/intel/oneapi/compiler/2025.3/env/vars.sh >/dev/null 2>&1
+set -e
+[[ "${CMPLR_ROOT:-}" == "/opt/intel/oneapi/compiler/2025.3" ]] || fail "oneAPI 2025.3 environment was not selected"
 export PYTHONPATH="${stage}:${vllm_src}"
 export LD_LIBRARY_PATH="${stage}/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 export HF_HOME="${cache_dir}/hf"
