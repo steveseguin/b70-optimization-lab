@@ -38,6 +38,7 @@ def qualify(
     pilot: bool,
     active_slots: int,
     expected_oracle_rows: int = 64,
+    pilot_require_batch_gates: bool = False,
 ) -> dict[str, Any]:
     oracle = result["oracle"]["rows"]
     batches = result["batches"]
@@ -88,14 +89,11 @@ def qualify(
             }
         )
 
+    batch_gates_passed = (
+        counts_complete and batch_ids_complete and cache_zero and isolation
+    )
     passed = oracle_evidence_complete and oracle_cache_zero and (
-        pilot
-        or (
-            counts_complete
-            and batch_ids_complete
-            and cache_zero
-            and isolation
-        )
+        (pilot and not pilot_require_batch_gates) or batch_gates_passed
     )
     return {
         "classification": (
@@ -108,6 +106,8 @@ def qualify(
             )
         ),
         "pilot": pilot,
+        "pilot_require_batch_gates": pilot_require_batch_gates,
+        "batch_gates_passed": batch_gates_passed,
         "expected_oracle_rows": expected_oracle_rows,
         "oracle_rows_expected_complete": oracle_evidence_complete,
         # Retain the original field for old evidence consumers. It means
@@ -156,6 +156,7 @@ def main() -> int:
     parser.add_argument("--pilot", action="store_true")
     parser.add_argument("--active-slots", type=int, required=True)
     parser.add_argument("--expected-oracle-rows", type=int, default=64)
+    parser.add_argument("--pilot-require-batch-gates", action="store_true")
     parser.add_argument("--oracle-out", type=Path)
     args = parser.parse_args()
     if args.active_slots < 1:
@@ -164,6 +165,8 @@ def main() -> int:
         raise SystemExit("--expected-oracle-rows must be positive")
     if args.pilot != bool(args.oracle_out):
         raise SystemExit("pilot mode requires --oracle-out and publication mode forbids it")
+    if args.pilot_require_batch_gates and not args.pilot:
+        raise SystemExit("--pilot-require-batch-gates requires --pilot")
 
     result = json.loads(args.result.read_text())
     qualification = qualify(
@@ -171,6 +174,7 @@ def main() -> int:
         pilot=args.pilot,
         active_slots=args.active_slots,
         expected_oracle_rows=args.expected_oracle_rows,
+        pilot_require_batch_gates=args.pilot_require_batch_gates,
     )
     args.out.write_text(json.dumps(qualification, indent=2, sort_keys=True) + "\n")
     if args.pilot and qualification["classification"] == "qualified-oracle-pilot":

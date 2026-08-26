@@ -93,6 +93,26 @@ class QualificationTests(unittest.TestCase):
         self.assertEqual(qualified["classification"], "failed-closed")
         self.assertFalse(qualified["oracle_rows_expected_complete"])
 
+    def test_strict_pilot_rejects_failed_concurrency_batch_gate(self) -> None:
+        data = result(raw_oracle=True, oracle_rows=128)
+        data["batches"][0]["cross_base_oracle_collision_count"] = 1
+        ordinary_pilot = MODULE.qualify(
+            data,
+            pilot=True,
+            active_slots=128,
+            expected_oracle_rows=128,
+        )
+        strict_pilot = MODULE.qualify(
+            data,
+            pilot=True,
+            active_slots=128,
+            expected_oracle_rows=128,
+            pilot_require_batch_gates=True,
+        )
+        self.assertEqual(ordinary_pilot["classification"], "qualified-oracle-pilot")
+        self.assertEqual(strict_pilot["classification"], "failed-closed")
+        self.assertFalse(strict_pilot["batch_gates_passed"])
+
 
 if __name__ == "__main__":
     unittest.main()
