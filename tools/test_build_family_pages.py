@@ -1541,9 +1541,9 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             sum(cell["state"] == "quarantined" for cell in q36_cells), 63
         )
-        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 903)
+        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 896)
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q36_cells), 91
+            sum(cell["state"] == "lab-measured" for cell in q36_cells), 98
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q36_cells), 0)
 
@@ -1565,6 +1565,27 @@ class FamilyCoverageTest(unittest.TestCase):
                 and cell["selectors"]["kv"] == "f16"
                 and cell["selectors"]["mtp"] == 0
                 for cell in q36_embedded_graph_f16
+            )
+        )
+
+        q36_embedded_graph_q8 = [
+            cell
+            for cell in q36_cells
+            if cell.get("evidence_id") == "q36-mtpq8-tp1-graph-q8-context"
+        ]
+        self.assertEqual(len(q36_embedded_graph_q8), 7)
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in q36_embedded_graph_q8],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(
+            all(
+                cell["selectors"]["artifact_id"]
+                == "qwen36-27b-unsloth-mtp-q8-0-5cb35eb"
+                and cell["selectors"]["graph_mode"] == "SYCL"
+                and cell["selectors"]["kv"] == "q8_0"
+                and cell["selectors"]["mtp"] == 0
+                for cell in q36_embedded_graph_q8
             )
         )
 
@@ -1615,11 +1636,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("209/1,771 classified", overview_html)
+        self.assertIn("216/1,771 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "146", "measured"),
+            ("lab-measured", "153", "measured"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,562", "missing"),
+            ("missing", "1,555", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
