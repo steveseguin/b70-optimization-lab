@@ -1,0 +1,37 @@
+{
+  "schema": "neural.download.qwen36-llama-mtp01234-q8kv-exact2k-classification-retry-prereg.v1",
+  "campaign_id": "qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-20260825-r3",
+  "state": "preregistered-not-launched",
+  "base_r2": {
+    "manifest": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-r2-prereg.json", "sha256": "37991917443548f25ea4a89f845105c04adfe8b1df5ad9d058b4a6b113debd7d"},
+    "runner": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-r2.py", "sha256": "96378795459b5ce2aa92178c66398640cbaacbc5f14de5a3f8f9be7706b47e2b"},
+    "validator": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/validate-20260825-qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-r2.py", "sha256": "9554ec25176541a95dd12a8e179b78bc0fc5b6dbca7ae414ba564b4e63013cc7"}
+  },
+  "failed_r2_parent": {
+    "campaign_id": "qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-20260825-r2",
+    "root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-20260825-r2",
+    "required_status": "failed-evidence-preserve",
+    "terminal_sha256": "ff88e3db558098cae20d604a46aa73e688715c4c5216a754c630ff223bd5f510",
+    "identity_sha256": "38179f3f8025c8400d5219630833776c31fabab169815ca39312272852f85467",
+    "cause": "invalid generated --case-id rejected before every first request; no classification evidence"
+  },
+  "sole_execution_delta": {
+    "case_id": "depth-2048",
+    "port": 19439,
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-20260825-r3",
+    "exact_ack": "RUN qwen36-mtpq8-q8kv-tp1-mtp01234-exact2k-classification-20260825-r3"
+  },
+  "preserved_contract": {
+    "arm_order": ["control-mtp0a", "candidate-mtp1", "candidate-mtp2", "candidate-mtp3", "candidate-mtp4", "control-mtp0b"],
+    "fresh_server_lifetimes": 6,
+    "repeats_per_arm": 3,
+    "total_requests": 18,
+    "active_context_tokens": 2048,
+    "completion_tokens": 128,
+    "target_kv": "q8_0",
+    "draft_kv": "q8_0",
+    "graph_mode": "off",
+    "frozen_packet_grades": ["B", "C", "D"],
+    "site_cells_authorized": 0
+  }
+}
