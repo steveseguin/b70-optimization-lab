@@ -41,6 +41,13 @@ MTP2_DYNAMIC_FIXED_SUMMARY = (
     DATA
     / "2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2-summary.json"
 )
+MTP2_DYNAMIC_P192_RAW = (
+    DATA / "qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r3-p192-20260826"
+)
+MTP2_DYNAMIC_P192_SUMMARY = (
+    DATA
+    / "2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r3-p192-summary.json"
+)
 PATCH = (
     ROOT
     / "experiments/qwen38-27b-b70/patches"
@@ -546,6 +553,54 @@ def main() -> int:
     assert not (MTP2_DYNAMIC_FIXED_RAW / "c64-replication.json").exists()
     assert not (MTP2_DYNAMIC_FIXED_RAW / "c64-quality-512.json").exists()
 
+    p192 = load(MTP2_DYNAMIC_P192_SUMMARY)
+    assert p192["classification"] == "mechanism-invalidated-before-aggregate"
+    assert p192["service"]["max_model_len"] == 192
+    assert p192["treatment"]["only_change_vs_r2"] == (
+        "max_model_len 256 to 192"
+    )
+    assert p192["capacity"]["reported_max_concurrency_at_192_tokens"] == 49.2
+    assert p192["capacity"]["r2_reported_max_concurrency_at_256_tokens"] == 49.2
+    p192_conditioner = load(
+        MTP2_DYNAMIC_P192_RAW / "excluded-single-conditioning.json"
+    )
+    p192_single = load(MTP2_DYNAMIC_P192_RAW / "single-p40-o128.json")
+    close(
+        p192_conditioner["fresh_response_validity"][
+            "headline_tok_s_after_ttft"
+        ],
+        p192["single_user"]["excluded_conditioning_tok_s_after_ttft"],
+    )
+    p192_single_rate = p192_single["fresh_response_validity"][
+        "headline_tok_s_after_ttft"
+    ]
+    close(
+        p192_single_rate,
+        p192["single_user"]["first_eligible_fresh_response_tok_s_after_ttft"],
+    )
+    assert p192_single["rows"][0]["usage"]["completion_tokens"] == 128
+    assert p192_single["rows"][0]["usage"]["prompt_tokens"] == 40
+    assert p192_single["rows"][0]["usage"]["prompt_tokens_details"][
+        "cached_tokens"
+    ] == 0
+    assert p192_single_rate < p192["single_user"]["gate_tok_s"]
+    assert p192["concurrency"]["declared_c64_run"] is False
+    assert p192["concurrency"]["aggregate_tok_s"] is None
+    assert not (MTP2_DYNAMIC_P192_RAW / "excluded-c64-transition.json").exists()
+    assert not (MTP2_DYNAMIC_P192_RAW / "c64-screen.json").exists()
+    p192_log = (MTP2_DYNAMIC_P192_RAW / "server-final.log").read_text(
+        errors="replace"
+    )
+    assert "GPU KV cache size: 9,446 tokens" in p192_log
+    assert "Maximum concurrency for 192 tokens per request: 49.20x" in p192_log
+    p192_inspect = load(MTP2_DYNAMIC_P192_RAW / "docker-inspect.json")[0]
+    assert p192_inspect["Image"] == p192["runtime"]["image_id"]
+    assert "--max-model-len" in p192_inspect["Config"]["Cmd"]
+    assert p192_inspect["Config"]["Cmd"][
+        p192_inspect["Config"]["Cmd"].index("--max-model-len") + 1
+    ] == "192"
+    assert "none is interpolated or extrapolated" in p192["reporting_boundary"]
+
     assert mtp2["quality"]["sequential_evidence"] == [
         f"{MTP2_RAW.name}/sequential-quality.json",
         f"{MTP2_MBT768_RAW.name}/sequential-quality.json",
@@ -630,6 +685,8 @@ def main() -> int:
                 "mtp2_dynamic_fixed_c64_tok_s": fixed_c64["batches"][0][
                     "aggregate_tok_s_wall"
                 ],
+                "mtp2_dynamic_p192_single_tok_s": p192_single_rate,
+                "mtp2_dynamic_p192_c64_tok_s": None,
                 "depth_32k_w8a16_tok_s": summary["exact_context"]["points"][-1][
                     "w8a16_decode_tok_s"
                 ],

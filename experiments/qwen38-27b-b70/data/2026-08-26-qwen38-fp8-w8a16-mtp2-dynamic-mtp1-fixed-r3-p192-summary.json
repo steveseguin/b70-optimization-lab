@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "classification": "mechanism-invalidated-before-aggregate",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "mtp_weights": "publisher-supplied mtp.safetensors"
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mtp-width-r1",
+    "image_id": "sha256:9918c4477d2d3bdbd84732c5beb13619a89740f9915b1d7393fb48f1d3c8ed72",
+    "kernel_patch_sha256": "68c486a9a10a2f7e85d7d88783a05f89919e931d2b81922f85be733bfb59f1b5"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 192,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "gpu_memory_utilization": 0.96,
+    "prefix_cache": false,
+    "returned_tokens_per_request": 128,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 2,
+      "num_speculative_tokens_per_batch_size": [[1, 1, 2], [2, 128, 1]]
+    }
+  },
+  "treatment": {
+    "only_change_vs_r2": "max_model_len 256 to 192",
+    "measured_request_tokens": 168,
+    "intent": "Test whether the shorter service cap allows all 64 short requests to reside concurrently."
+  },
+  "capacity": {
+    "measured_gpu_kv_cache_tokens": 9446,
+    "reported_max_concurrency_at_192_tokens": 49.2,
+    "r2_measured_gpu_kv_cache_tokens_at_256": 12595,
+    "r2_reported_max_concurrency_at_256_tokens": 49.2,
+    "conclusion": "The service cap reduced the reported token count proportionally but did not increase sequence residency. The configured maximum MTP2 state-row allocation remains the limiting resource."
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "excluded_conditioning_tok_s_after_ttft": 59.329622486807736,
+    "first_eligible_fresh_response_tok_s_after_ttft": 82.56439856037065,
+    "gate_tok_s": 82.810053,
+    "gate_passed": false,
+    "change_vs_r2_percent": -0.7175989249468273,
+    "change_vs_static_mtp2_percent": -1.2936811814341254,
+    "cached_tokens": 0
+  },
+  "concurrency": {
+    "declared_c64_run": false,
+    "reason": "The first eligible single-user row failed ordered gate 2; the preregistered wrapper stopped before either c64 request batch.",
+    "aggregate_tok_s": null
+  },
+  "quality": {
+    "inherited_code_runtime_evidence": "R2 active-width focused test, c2 canary, and 7/7 + repeat 8/8 semantic result",
+    "runtime_errors": false,
+    "gdn_crash": false
+  },
+  "decision": {
+    "status": "closed-negative",
+    "reason": "The treatment neither increased reported request residency nor passed the frozen single-user retention gate.",
+    "replication": "not run by preregistered stop rule",
+    "next_treatment": "Investigate dynamic per-request Mamba speculative-state allocation; reducing max_model_len is closed."
+  },
+  "evidence_directory": "qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r3-p192-20260826",
+  "reporting_boundary": "Every rate is directly measured. No c64 performance result exists for R3, and none is interpolated or extrapolated. The capacity conclusion uses the server-reported cache values from R2 and R3."
+}
