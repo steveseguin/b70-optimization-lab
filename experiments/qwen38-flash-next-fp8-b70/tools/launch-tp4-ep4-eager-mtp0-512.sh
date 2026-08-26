@@ -111,12 +111,12 @@ for inherited in $(compgen -A variable); do
   esac
 done
 
-set +e
-source /opt/intel/oneapi/compiler/2025.3/env/vars.sh >/dev/null 2>&1
-set -e
-[[ "${CMPLR_ROOT:-}" == "/opt/intel/oneapi/compiler/2025.3" ]] || fail "oneAPI 2025.3 environment was not selected"
+export CMPLR_ROOT=/opt/intel/oneapi/compiler/2025.3
+export PATH="${CMPLR_ROOT}/bin:${PATH}"
+export LIBRARY_PATH="${CMPLR_ROOT}/lib:${CMPLR_ROOT}/opt/compiler/lib"
+export OCL_ICD_FILENAMES="${CMPLR_ROOT}/lib/libintelocl.so"
 export PYTHONPATH="${stage}:${vllm_src}"
-export LD_LIBRARY_PATH="${stage}/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+export LD_LIBRARY_PATH="${stage}/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:${CMPLR_ROOT}/lib:${CMPLR_ROOT}/opt/compiler/lib"
 export HF_HOME="${cache_dir}/hf"
 export HUGGINGFACE_HUB_CACHE="${cache_dir}/hf"
 export HF_HUB_OFFLINE=1
