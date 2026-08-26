@@ -1,0 +1,187 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-compact-result.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-20260826-r1",
+  "status": "passed-quality-postrun-cache-audited-publication-candidate",
+  "original_terminal_class": "passed-quality-clean-sentinel",
+  "identity": {
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "embedded_mtp_tensor_sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "raw_sha256": {
+      "image-id.txt": "3f4cc79dc498548ebcc9fd65e0da396111d68903c453b83d9b613f2e0a8887fb",
+      "vllm-source-commit.txt": "b60f6014c07dfcf32c30278eede59198e8ac93c176f9685a38ff320ac76e376f",
+      "stack-versions.txt": "8c2197b31e85ddcd41a43d93103ccc6629acf521bf22d8759ed368ec0f57ba3f",
+      "server-args.shell.txt": "ebfb7a5dc07407f7b8c98c94529541a857b763573ed74faa88656ec01326f41e",
+      "server-startup.log": "b7f7f426e48603b2fb5472382dd9946d383b1268286fbee4b167c585091b996a",
+      "container-inspect.json": "d7a8abebec9bc41dcfaa0f1691c0a3047ba5e4ebea218999aec2aa9c8f71ef66"
+    }
+  },
+  "config": {
+    "tp": 1,
+    "cards": 1,
+    "device_affinity": "0",
+    "oneapi_device_selector": "level_zero:0",
+    "mtp": 2,
+    "speculative_method_requested": "qwen3_next_mtp",
+    "speculative_method_resolved": "mtp",
+    "num_speculative_tokens": 2,
+    "graph_mode": "PIECEWISE",
+    "graph_capture_sizes": [1],
+    "max_cudagraph_capture_size": 1,
+    "enforce_eager": false,
+    "kv": "f16",
+    "configured_max_context_tokens": 32896,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "prefix_caching": false,
+    "pythonhashseed": 0
+  },
+  "point": {
+    "x": 4096,
+    "decode_tok_s": 11.988874911178696,
+    "historical_100_event_decode_tok_s": 12.10997465775626,
+    "published_decode_field": "conventional_99_interval_tok_s",
+    "ttft_s": 2.941726919991197,
+    "ttft_ms": 2941.726919991197,
+    "cached_tokens": 0,
+    "completion_tokens": 128,
+    "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0",
+    "raw_sha256": "2371213f429396e2e259b69540df6181e4a02878fbf3ddb6cfc8b4a395c2ee2c"
+  },
+  "mechanism": {
+    "passed": true,
+    "drafted_tokens": 94,
+    "accepted_tokens": 80,
+    "acceptance_rate": 0.851063829787234,
+    "isolated_to_exact_4k_request": true,
+    "raw_sha256": "5800b41336daae6fffecb237e2b517852f2083f9db871678f0b808e9cfa6801b"
+  },
+  "dual_parent_oracle": {
+    "passed": true,
+    "scope": "candidate must equal both same-image TP1/MTP0 eager/F16 and clean TP1/MTP0 PIECEWISE/F16 exact-4K parents",
+    "eager_target_path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3/eager-f16/exact-depth/depth-4096.json",
+    "eager_target_raw_sha256": "c9dbfb8b9cf8ef23bea5ebe2cb3199c82d678988106e2f619221236e4726dd9e",
+    "piecewise_parent_path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3/piecewise-f16/exact-depth/depth-4096.json",
+    "piecewise_parent_raw_sha256": "dbe7523591ee8bf5722eeba2555dfa9243d00b35bf80bb758b2a26b2fa50b027",
+    "candidate_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0",
+    "token_count": 128,
+    "parents_equal": true,
+    "candidate_vs_eager_first_divergence": null,
+    "candidate_vs_piecewise_first_divergence": null
+  },
+  "quality": {
+    "grade_candidate": "C",
+    "scope": "one exact-4K TP1 native-MTP2 PIECEWISE/F16 sentinel plus the complete objective and TP1/MTP0 PIECEWISE baseline battery",
+    "exact_depth_gate_passed": true,
+    "exact_cases": 7,
+    "repeat_runs": 8,
+    "unique_repeat_hashes": 1,
+    "baseline_comparisons": 24,
+    "long_context_needle_passed": true,
+    "cache_zero_requests": 16,
+    "cache_zero_all_requests": true,
+    "baseline_match_all": true,
+    "interpolation_or_extrapolation": false,
+    "raw_sha256": "49bd07d9d42f658df6ac458c146b6c7f330eeb0ae556760207ed5abde114b290"
+  },
+  "graph_and_topology": {
+    "graph_identity_passed": true,
+    "graph_mode": "PIECEWISE",
+    "capture_sizes": [1],
+    "mixed_prefill_decode_capture_seen": true,
+    "graph_capture_finished_seen": true,
+    "full_decode_capture_absent": true,
+    "tp1_topology_verified": true,
+    "world_size": 1,
+    "rank": 0,
+    "local_rank": 0,
+    "tp_rank": 0,
+    "prefix_cache_disabled": true
+  },
+  "cache_isolation": {
+    "classification": "passed-by-transparent-post-run-report-only-audit",
+    "runner_defect_disclosed": true,
+    "original_terminal_enforced_cache_gate": false,
+    "original_terminal_rewritten": false,
+    "measured_response_rewritten": false,
+    "posthoc": true,
+    "postrun_audit_passed": true,
+    "postrun_audit_authority": "Structural evidence for the surviving dedicated TP1 cache tree only; it does not retroactively change the terminal or independently authorize publication.",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-20260826-r1",
+    "expected_rank_namespaces": ["rank_0_0"],
+    "observed_rank_namespaces": ["rank_0_0"],
+    "rank_file_counts": {"rank_0_0": 6},
+    "shared_file_count": 1364,
+    "total_file_count": 1370,
+    "total_bytes": 173190178,
+    "audit_path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-20260826-r1/postrun-cache-isolation-audit.json",
+    "audit_sha256": "545030d1cc4adada3cea4fe62f2f3dd20950e9ded277cd6cfce87f4b8b5dafc3",
+    "content_manifest_path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-20260826-r1/postrun-cache-files.sha256",
+    "content_manifest_sha256": "a90d8cea73ebbaab5e3d474248f2d12f06ff8dad856bdb675494de40adf49e55"
+  },
+  "model_verification": {
+    "status": "verified",
+    "files_verified": 19,
+    "direct_and_ordinary_paths_coherent": true,
+    "raw_sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+  },
+  "cleanup": {
+    "classification": "original-runtime-cleanup-passed-cache-gate-omitted",
+    "launch_git_head": "5dd48073b0c010bb94446a524bbc812eb68854db",
+    "terminal_receipt_sha256": "c3d2dad22afa3c7cd2cc63d94004634cf1fa6801c0e06eccd6d83fa9f7acf24f",
+    "arm_result_sha256": "8c079e930f78e98ce27f317239c6f3a929e5a23716e1eb04e3e8835dc0e0c1bb",
+    "strict_runtime_postcleanup_passed": true,
+    "cache_isolation_was_not_an_original_terminal_gate": true
+  },
+  "historical_corruption_caveats": {
+    "retained": true,
+    "same_image_graph_family_8k": {
+      "output_token_ids_sha256": "dd31856f45269d222efe0f6f5f1ac9342b6c9ae55e5ce9129fc02b27abdb7e8e",
+      "first_divergence": {"zero_based": 98, "one_based": 99, "candidate": 411, "target": 579}
+    },
+    "same_image_mtp2_eager": {
+      "2048": {"candidate_token_ids_sha256": "921825efade0d24e902bdbaffecfde1275acf6afeb349d15f993f518b50f7446", "target_token_ids_sha256": "c606180877a26135511d7c4213c48c6107d20368e5d107aefe2b0de795ef4e89", "first_divergence": {"zero_based": 89, "one_based": 90, "candidate": 59178, "target": 16539}},
+      "8192": {"candidate_token_ids_sha256": "dd31856f45269d222efe0f6f5f1ac9342b6c9ae55e5ce9129fc02b27abdb7e8e", "target_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53", "first_divergence": {"zero_based": 98, "one_based": 99, "candidate": 411, "target": 579}},
+      "16384": {"candidate_token_ids_sha256": "14dcadafaa8d9e90806d8b9dfd154e3a72a53c5677cdbdc433eb63e187f5ac51", "target_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7", "first_divergence": {"zero_based": 31, "one_based": 32, "candidate": 13, "target": 11}}
+    },
+    "interpretation": "This exact-4K pass does not clear the known 2K, 8K, or 16K corruption signatures, long context, another MTP dose, another TP topology, another KV mode, or another runtime image."
+  },
+  "human_adjudication": {
+    "kind": "separate-human-one-cell-publication-candidate-with-postrun-cache-defect-disclosure",
+    "decision": "pending-separate-family-and-site-publication",
+    "selected_depths": [4096],
+    "excluded_depths": [0, 2048, 8192, 16384, 24576, 32768],
+    "candidate_grade": "C",
+    "original_runner_automatic_publication": false,
+    "original_terminal_cache_gate_omission_accepted_only_with_disclosure": true,
+    "basis": "Exact/cache-zero, isolated 80/94 acceptance, dual-parent token equality, full quality, graph identity, TP1 topology, model verification, runtime cleanup, and the separate surviving-cache audit pass."
+  },
+  "authority": {
+    "scope": "current f01e/ac7509e2 TP1/MTP2/PIECEWISE/F16 exact-4K measured cell only",
+    "measured_cells_pending_publication": 1,
+    "site_cells_published_by_this_packet": 0,
+    "site_or_family_publication_authorized_by_original_runner": false,
+    "quality_grade_candidate": "C",
+    "headline_or_frontier_replacement": false,
+    "historical_or_protected_replacement": false,
+    "protected_decode_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
+    "corruption_caveats_preserved": true,
+    "other_depths_modes_tp_mtp_or_kv_inferred": false,
+    "automatic_descendant_expansion": false,
+    "descendant_execution_authorized": false,
+    "localmaxxing_submission": false,
+    "x0_remains_missing": true
+  },
+  "tracked_inputs": {
+    "preregistration": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-r1-prereg.json", "sha256": "a008082e4517165c932057d7b9992be2161b1090532026545e495f845325aad8"},
+    "launch_runner": {"path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-r1.sh", "git_commit": "5dd48073b0c010bb94446a524bbc812eb68854db", "sha256": "09df24edf416a04886b3e3aca0cda3e4dced47351e9dfd77d51047ba0e597e79", "note": "Immutable launch-time blob; the working-tree runner has a transparent post-run cache-gate fix."},
+    "launch_inert_test": {"path": "experiments/qwen38-27b-b70/scripts/test_qwen38_official_f01e_autoround_tp1_mtp2_f16_piecewise_4k_sentinel_r1.py", "git_commit": "5dd48073b0c010bb94446a524bbc812eb68854db", "sha256": "eeeac88f74f6ca0ae1608cbef0999e7c0ed725f1a7ebe65e4ea15a5dffe440f1", "note": "Immutable launch-time blob; the working-tree test now covers the corrected cache gate."},
+    "postrun_cache_auditor": {"path": "experiments/qwen38-27b-b70/scripts/audit-20260826-qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-postrun-cache.py", "sha256": "95954b9d332dcfc34ccdf3c702767e36bc1e4c8dc0091a3314a542d74c218856"}
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-20260826-r1"
+}
