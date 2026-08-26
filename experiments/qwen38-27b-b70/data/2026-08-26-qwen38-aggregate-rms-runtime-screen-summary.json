@@ -1,0 +1,80 @@
+{
+  "schema": "neural.download.qwen38.aggregate-rms-runtime-screen.v1",
+  "date": "2026-08-26",
+  "model": "Qwen3.8-27B",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70",
+    "visible_gpu_count": 2,
+    "tp4_available": false
+  },
+  "objective": {
+    "requested_aggregate_tok_s": 875,
+    "preferred_aggregate_tok_s": 1000,
+    "achieved_with_quality_gates": false,
+    "no_extrapolation": true
+  },
+  "official_fp8_tp2_c128": {
+    "runtime_image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "max_model_len": 1024,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "first_shape_aggregate_tok_s": 688.4598115173835,
+    "conditioned_aggregate_tok_s": [
+      662.6089356594113,
+      691.3611267144524
+    ],
+    "conditioned_median_aggregate_tok_s": 676.9850311869319,
+    "sequential_quality": "7/7 exact and 8/8 repeat",
+    "concurrent_semantic_canaries": "256/256",
+    "strict_token_identity": [
+      "5/128",
+      "2/128"
+    ],
+    "classification": "output-isolation-qualified-shape-variant; capacity negative"
+  },
+  "autoround_native_xmx": {
+    "model_storage_verification": "19/19 O_DIRECT and ordinary-read entries passed",
+    "base_image": "vllm/vllm-openai-xpu@sha256:c345345f9dcc751983a77cef128783513f2994fdd334e5cd382aeea36a2e0a36",
+    "derived_image": "sha256:b96c7c1169748599d928c79a4b6184fa0d22072d070b395e071b846b2e5badd8",
+    "guard_override": "default-off AUTO_ROUND_XPU_ASSUME_ONEAPI_GE_2026 diagnostic",
+    "tp2_c64": {
+      "aggregate_tok_s": 556.966830736802,
+      "sequential_quality": "7/7 exact and 8/8 repeat",
+      "concurrent_semantic_canaries": "111/128",
+      "strict_token_identity": "0/64"
+    },
+    "tp1_c64": {
+      "aggregate_tok_s": 106.83572359077418,
+      "sequential_quality": "failed arithmetic: 54 instead of 60"
+    },
+    "classification": "native XMX activated; quality and capacity negative"
+  },
+  "w8a8_rms_clip": {
+    "runtime_image": "sha256:63d623d8424e77f5298daa402ca07c2df501d6b80b362dec16e2e427c052f04b",
+    "vllm_base_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "kernel_base_commit": "2dd55f380df753a10a88fcd9e96192561066e713",
+    "telemetry_max_over_rms_range": "approximately 5.8 to 68.4 on selected layers",
+    "screens": [
+      {"alpha": 4, "sequential_pass": false, "concurrent_requests": 0, "concurrent_failures": null},
+      {"alpha": 12, "sequential_pass": false, "concurrent_requests": 0, "concurrent_failures": null},
+      {"alpha": 48, "sequential_pass": true, "concurrent_requests": 256, "concurrent_failures": 30},
+      {"alpha": 52, "sequential_pass": true, "concurrent_requests": 256, "concurrent_failures": 3},
+      {"alpha": 54, "sequential_pass": true, "concurrent_requests": 512, "concurrent_failures": 10},
+      {"alpha": 56, "sequential_pass": true, "concurrent_requests": 128, "concurrent_failures": 2},
+      {"alpha": 64, "sequential_pass": false, "concurrent_requests": 256, "concurrent_failures": 2}
+    ],
+    "static_mixed_reference": {
+      "sequential_pass": true,
+      "concurrent_requests": 256,
+      "concurrent_failures": 35
+    },
+    "classification": "quality-negative; no alpha or static repair promoted"
+  },
+  "decision": {
+    "site_changed": false,
+    "package_promoted": false,
+    "research_ceiling_over_875_retained": "W8A8 has raw speed headroom, but all tested repair families fail concurrent quality",
+    "next_direction": "profile and eliminate the batch-shape-sensitive W8A8 error source rather than tune a global clip constant"
+  },
+  "raw_evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-aggregate-rms-runtime-screen-20260826-r1"
+}

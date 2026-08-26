@@ -1,0 +1,3233 @@
+{
+  "schema_version": 1,
+  "classification": "measured-concurrent-exact-answer-quality-canary",
+  "base_url": "http://127.0.0.1:18097",
+  "model": "qwen38-w8a8-rms56-deps-ring16-p2p1-p64",
+  "concurrency": 64,
+  "rounds": 2,
+  "total_requests": 128,
+  "pass_all": false,
+  "no_extrapolation": true,
+  "results": [
+    {
+      "round": 1,
+      "concurrency": 64,
+      "elapsed_s": 2.371420406969264,
+      "case_counts": {
+        "arithmetic": 9,
+        "code_execution": 9,
+        "copy_phrase": 9,
+        "exact_ok": 10,
+        "factual": 9,
+        "json_schema": 9,
+        "logic": 9
+      },
+      "passed": 63,
+      "failed": 1,
+      "cached_tokens_nonzero": 0,
+      "pass": false,
+      "results": [
+        {
+          "slot": 0,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r00-s000-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 1.876438581966795,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 1,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r00-s001-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 1.7761053299764171,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 2,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r00-s002-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 1.5706688369391486,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 3,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r00-s003-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 1.8750370320631191,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 4,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r00-s004-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 1.0870999490143731,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 5,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r00-s005-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 1.1917985039763153,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 6,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r00-s006-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 1.472684831940569,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 7,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r00-s007-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 1.9179585240781307,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 8,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r00-s008-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 1.5711609610589221,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 9,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r00-s009-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 1.9182895959820598,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 10,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r00-s010-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 2.3691835700301453,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 11,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r00-s011-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 1.4709948799572885,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 12,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r00-s012-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 1.773395398980938,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 13,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r00-s013-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 0.6233223879244179,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 14,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r00-s014-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 1.8739371339324862,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 15,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r00-s015-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 2.0381885869428515,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 16,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r00-s016-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 0.9004604580113664,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 17,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r00-s017-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 2.368001541006379,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 18,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r00-s018-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 1.3734645979711786,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 19,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r00-s019-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 1.6401272289222106,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 20,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r00-s020-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 1.5686482130549848,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 21,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r00-s021-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 1.5689970050007105,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 22,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r00-s022-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 1.9154431750066578,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 23,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r00-s023-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 1.8669369210256264,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 24,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r00-s024-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 2.254942101892084,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 25,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r00-s025-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 1.2736083079362288,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 26,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r00-s026-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 1.4646623419830576,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 27,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r00-s027-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 1.8496564710512757,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 28,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r00-s028-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 1.4679505169624463,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 29,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r00-s029-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 2.031897649052553,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 30,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r00-s030-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 1.6624154159799218,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 31,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r00-s031-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 2.2039674799889326,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 32,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r00-s032-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 1.6614014379447326,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 33,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r00-s033-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 1.3623210040386766,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 34,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r00-s034-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 1.926418207003735,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 35,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r00-s035-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 1.367738784989342,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 36,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r00-s036-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 1.849900814006105,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 37,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r00-s037-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 1.7644024509936571,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 38,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r00-s038-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 2.3267520420486107,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 39,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r00-s039-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 1.7292637981008738,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 40,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r00-s040-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 1.706079242983833,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 41,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r00-s041-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 1.6641380289802328,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 42,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r00-s042-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 1.8830455020070076,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 43,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r00-s043-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 1.9982727270107716,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 44,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r00-s044-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 1.618311355006881,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 45,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r00-s045-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 2.3086084650130942,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 46,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r00-s046-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 1.6662267149658874,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 47,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r00-s047-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 1.418007722008042,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 48,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r00-s048-code_execution",
+          "content": "30",
+          "normalized": "30",
+          "sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+          "elapsed_s": 1.259318251046352,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": false
+        },
+        {
+          "slot": 49,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r00-s049-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 1.2670739190652966,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 50,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r00-s050-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 1.97901769191958,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 51,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r00-s051-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 1.7559959790669382,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 52,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r00-s052-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 2.1695677019888535,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 53,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r00-s053-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 1.2733954770956188,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 54,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r00-s054-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 1.6640890890266746,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 55,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r00-s055-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 1.8286681940080598,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 56,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r00-s056-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 1.7318711180705577,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 57,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r00-s057-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 1.8773637790000066,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 58,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r00-s058-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 1.456391950021498,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 59,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r00-s059-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 2.3277440890669823,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 60,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r00-s060-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 1.8183031460503116,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 61,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r00-s061-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 1.357890131068416,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 62,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r00-s062-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 1.659874347038567,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 63,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r00-s063-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 1.361984741059132,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "concurrency": 64,
+      "elapsed_s": 1.3689854620024562,
+      "case_counts": {
+        "arithmetic": 9,
+        "code_execution": 9,
+        "copy_phrase": 9,
+        "exact_ok": 10,
+        "factual": 9,
+        "json_schema": 9,
+        "logic": 9
+      },
+      "passed": 63,
+      "failed": 1,
+      "cached_tokens_nonzero": 0,
+      "pass": false,
+      "results": [
+        {
+          "slot": 0,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r01-s000-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 0.5383538600290194,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 1,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r01-s001-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 1.0479217229876667,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 2,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r01-s002-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 0.24050731398165226,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 3,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r01-s003-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 1.2684640280203894,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 4,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r01-s004-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 0.7417386450106278,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 5,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r01-s005-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 0.6416290448978543,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 6,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r01-s006-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 0.6416765650501475,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 7,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r01-s007-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 0.4363790650386363,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 8,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r01-s008-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 0.7430330449715257,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 9,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r01-s009-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 0.8502161890501156,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 10,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r01-s010-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 1.0860012390185148,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 11,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r01-s011-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 0.9638174219289795,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 12,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r01-s012-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 0.63870839192532,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 13,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r01-s013-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 0.6391551160486415,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 14,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r01-s014-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 0.7446949980221689,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 15,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r01-s015-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 0.5372313110856339,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 16,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r01-s016-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 0.74370747001376,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 17,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r01-s017-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 1.3675820720382035,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 18,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r01-s018-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 0.3371395799331367,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 19,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r01-s019-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 0.8475209499010816,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 20,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r01-s020-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 0.926544522983022,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 21,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r01-s021-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 0.3370720089878887,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 22,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r01-s022-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 0.5370522899320349,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 23,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r01-s023-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 0.8474031379446387,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 24,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r01-s024-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 1.1959356639999896,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 25,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r01-s025-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 0.3368980479426682,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 26,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r01-s026-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 0.922623023041524,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 27,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r01-s027-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 0.5368774180533364,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 28,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r01-s028-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 0.33524192601908,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 29,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r01-s029-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 0.5368819989962503,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 30,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r01-s030-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 0.9653060929849744,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 31,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r01-s031-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 1.3634476310107857,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 32,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r01-s032-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 0.6384926809696481,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 33,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r01-s033-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 0.5339931870112196,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 34,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r01-s034-code_execution",
+          "content": "30",
+          "normalized": "30",
+          "sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+          "elapsed_s": 1.0075230399379507,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": false
+        },
+        {
+          "slot": 35,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r01-s035-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 0.14467479602899402,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 36,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r01-s036-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 0.9260689789662138,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 37,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r01-s037-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 0.7422727500088513,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 38,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r01-s038-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 1.195565840927884,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 39,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r01-s039-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 0.6385050819953904,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 40,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r01-s040-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 0.8494499439839274,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 41,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r01-s041-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 0.5343685200205073,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 42,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r01-s042-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 0.8465698319487274,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 43,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r01-s043-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 0.7446852769935504,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 44,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r01-s044-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 0.8491681020241231,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 45,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r01-s045-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 1.2277200819225982,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 46,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r01-s046-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 0.33672810602001846,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 47,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r01-s047-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 0.3362426629755646,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 48,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r01-s048-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 0.8483518549473956,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 49,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r01-s049-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 0.33638389501720667,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 50,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r01-s050-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 0.9237980910111219,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 51,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r01-s051-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 0.8461760790087283,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 52,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r01-s052-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 1.0844756269361824,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 53,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r01-s053-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 0.8469163350528106,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 54,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r01-s054-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 0.43452795094344765,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 55,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r01-s055-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 0.9634677791036665,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 56,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r01-s056-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 0.1466425999533385,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 57,
+          "case": "copy_phrase",
+          "request_id": "rms56-r94-c64x2-r01-s057-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 0.7441682040225714,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "completion_tokens": 6,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 58,
+          "case": "arithmetic",
+          "request_id": "rms56-r94-c64x2-r01-s058-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 0.5350089949788526,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 59,
+          "case": "json_schema",
+          "request_id": "rms56-r94-c64x2-r01-s059-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 1.3632558290846646,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 60,
+          "case": "factual",
+          "request_id": "rms56-r94-c64x2-r01-s060-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 0.848390716011636,
+          "usage": {
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 61,
+          "case": "logic",
+          "request_id": "rms56-r94-c64x2-r01-s061-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 0.7395064790034667,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 62,
+          "case": "code_execution",
+          "request_id": "rms56-r94-c64x2-r01-s062-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 0.23800394590944052,
+          "usage": {
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "completion_tokens": 3,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 63,
+          "case": "exact_ok",
+          "request_id": "rms56-r94-c64x2-r01-s063-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 0.9218541170703247,
+          "usage": {
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "completion_tokens": 2,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "created_cache_tokens": 0,
+              "multimodal_tokens": null
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        }
+      ]
+    }
+  ]
+}

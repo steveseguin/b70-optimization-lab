@@ -1,0 +1,338 @@
+{
+  "base_url": "http://127.0.0.1:18105",
+  "model": "qwen38-fp8-tp2-mtp0-p128",
+  "tokenizer": "/mnt/fast-ai/llm-models/qwen3.8-27b-fp8",
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  },
+  "request_delay_s": 0.0,
+  "request_id_prefix": "fp8-tp2-p128-r105-seq",
+  "seed": 20260609,
+  "exact_cases": [
+    {
+      "name": "exact_ok",
+      "request_id": "fp8-tp2-p128-r105-seq-exact-00-exact_ok",
+      "content": "OK",
+      "normalized": "OK",
+      "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "elapsed_s": 0.22614911699201912,
+      "usage": {
+        "prompt_tokens": 17,
+        "total_tokens": 19,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0,
+          "multimodal_tokens": null
+        }
+      },
+      "expected": "OK",
+      "json_expected_fields": null,
+      "pass": true
+    },
+    {
+      "name": "copy_phrase",
+      "request_id": "fp8-tp2-p128-r105-seq-exact-01-copy_phrase",
+      "content": "satin cobalt orbit",
+      "normalized": "satin cobalt orbit",
+      "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+      "elapsed_s": 0.336364374961704,
+      "usage": {
+        "prompt_tokens": 26,
+        "total_tokens": 32,
+        "completion_tokens": 6,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0,
+          "multimodal_tokens": null
+        }
+      },
+      "expected": "satin cobalt orbit",
+      "json_expected_fields": null,
+      "pass": true
+    },
+    {
+      "name": "arithmetic",
+      "request_id": "fp8-tp2-p128-r105-seq-exact-02-arithmetic",
+      "content": "60",
+      "normalized": "60",
+      "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+      "elapsed_s": 0.2042651540832594,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 39,
+        "completion_tokens": 3,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0,
+          "multimodal_tokens": null
+        }
+      },
+      "expected": "60",
+      "json_expected_fields": null,
+      "pass": true
+    },
+    {
+      "name": "json_schema",
+      "request_id": "fp8-tp2-p128-r105-seq-exact-03-json_schema",
+      "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+      "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+      "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+      "elapsed_s": 0.7065038189757615,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 50,
+        "completion_tokens": 14,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0,
+          "multimodal_tokens": null
+        }
+      },
+      "expected": null,
+      "json_expected_fields": {
+        "answer": "42",
+        "unit": "widgets"
+      },
+      "pass": true,
+      "json_parsed": {
+        "answer": 42,
+        "unit": "widgets"
+      }
+    },
+    {
+      "name": "factual",
+      "request_id": "fp8-tp2-p128-r105-seq-exact-04-factual",
+      "content": "Au",
+      "normalized": "Au",
+      "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+      "elapsed_s": 0.152691935072653,
+      "usage": {
+        "prompt_tokens": 26,
+        "total_tokens": 28,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0,
+          "multimodal_tokens": null
+        }
+      },
+      "expected": "Au",
+      "json_expected_fields": null,
+      "pass": true
+    },
+    {
+      "name": "logic",
+      "request_id": "fp8-tp2-p128-r105-seq-exact-05-logic",
+      "content": "yes",
+      "normalized": "yes",
+      "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+      "elapsed_s": 0.1540741060161963,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 38,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0,
+          "multimodal_tokens": null
+        }
+      },
+      "expected": "yes",
+      "json_expected_fields": null,
+      "pass": true
+    },
+    {
+      "name": "code_execution",
+      "request_id": "fp8-tp2-p128-r105-seq-exact-06-code_execution",
+      "content": "14",
+      "normalized": "14",
+      "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+      "elapsed_s": 0.19998442602809519,
+      "usage": {
+        "prompt_tokens": 36,
+        "total_tokens": 39,
+        "completion_tokens": 3,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0,
+          "multimodal_tokens": null
+        }
+      },
+      "expected": "14",
+      "json_expected_fields": null,
+      "pass": true
+    }
+  ],
+  "repeat_case": {
+    "name": "repeat_hash_stability",
+    "repeats": 8,
+    "hashes": [
+      "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+      "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+      "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+      "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+      "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+      "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+      "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+      "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d"
+    ],
+    "texts": [
+      "blue,green,red,yellow",
+      "blue,green,red,yellow",
+      "blue,green,red,yellow",
+      "blue,green,red,yellow",
+      "blue,green,red,yellow",
+      "blue,green,red,yellow",
+      "blue,green,red,yellow",
+      "blue,green,red,yellow"
+    ],
+    "unique_hashes": [
+      "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d"
+    ],
+    "pass": true,
+    "runs": [
+      {
+        "request_id": "fp8-tp2-p128-r105-seq-repeat-0000",
+        "content": "blue,green,red,yellow",
+        "normalized": "blue,green,red,yellow",
+        "sha256": "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+        "elapsed_s": 0.43021871405653656,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 0,
+            "multimodal_tokens": null
+          }
+        }
+      },
+      {
+        "request_id": "fp8-tp2-p128-r105-seq-repeat-0001",
+        "content": "blue,green,red,yellow",
+        "normalized": "blue,green,red,yellow",
+        "sha256": "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+        "elapsed_s": 0.4288836719933897,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 0,
+            "multimodal_tokens": null
+          }
+        }
+      },
+      {
+        "request_id": "fp8-tp2-p128-r105-seq-repeat-0002",
+        "content": "blue,green,red,yellow",
+        "normalized": "blue,green,red,yellow",
+        "sha256": "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+        "elapsed_s": 0.4290820519672707,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 0,
+            "multimodal_tokens": null
+          }
+        }
+      },
+      {
+        "request_id": "fp8-tp2-p128-r105-seq-repeat-0003",
+        "content": "blue,green,red,yellow",
+        "normalized": "blue,green,red,yellow",
+        "sha256": "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+        "elapsed_s": 0.428898534970358,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 0,
+            "multimodal_tokens": null
+          }
+        }
+      },
+      {
+        "request_id": "fp8-tp2-p128-r105-seq-repeat-0004",
+        "content": "blue,green,red,yellow",
+        "normalized": "blue,green,red,yellow",
+        "sha256": "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+        "elapsed_s": 0.4290259900735691,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 0,
+            "multimodal_tokens": null
+          }
+        }
+      },
+      {
+        "request_id": "fp8-tp2-p128-r105-seq-repeat-0005",
+        "content": "blue,green,red,yellow",
+        "normalized": "blue,green,red,yellow",
+        "sha256": "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+        "elapsed_s": 0.4292492719832808,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 0,
+            "multimodal_tokens": null
+          }
+        }
+      },
+      {
+        "request_id": "fp8-tp2-p128-r105-seq-repeat-0006",
+        "content": "blue,green,red,yellow",
+        "normalized": "blue,green,red,yellow",
+        "sha256": "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+        "elapsed_s": 0.4294834550237283,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 0,
+            "multimodal_tokens": null
+          }
+        }
+      },
+      {
+        "request_id": "fp8-tp2-p128-r105-seq-repeat-0007",
+        "content": "blue,green,red,yellow",
+        "normalized": "blue,green,red,yellow",
+        "sha256": "c7d3e9aa218e58a25232a7102f59aa26a2ccc1a9909b7ab8c6a20634f85fd20d",
+        "elapsed_s": 0.4286288439761847,
+        "usage": {
+          "prompt_tokens": 30,
+          "total_tokens": 38,
+          "completion_tokens": 8,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 0,
+            "multimodal_tokens": null
+          }
+        }
+      }
+    ]
+  },
+  "long_context_case": null,
+  "pass_all": true,
+  "baseline_comparisons": {},
+  "baseline_status": "not_run",
+  "baseline_match_all": null
+}

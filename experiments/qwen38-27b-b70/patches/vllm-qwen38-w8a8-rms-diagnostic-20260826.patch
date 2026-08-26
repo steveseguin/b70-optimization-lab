@@ -1,0 +1,526 @@
+diff --git a/vllm/model_executor/layers/quantization/fp8.py b/vllm/model_executor/layers/quantization/fp8.py
+index 9c69ff93d..b46430db9 100644
+--- a/vllm/model_executor/layers/quantization/fp8.py
++++ b/vllm/model_executor/layers/quantization/fp8.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
+ from typing import TYPE_CHECKING, Any, Literal
+ 
+ import torch
+@@ -87,6 +88,130 @@ if TYPE_CHECKING:
+ ACTIVATION_SCHEMES = ["static", "dynamic"]
+ 
+ logger = init_logger(__name__)
++_XPU_INT8_SIDECAR_LOADED = False
++_XPU_INT8_BODY_CANDIDATE_INDEX = 0
++_XPU_INT8_RMS_DEBUG_COUNTS: dict[tuple[int, int], int] = {}
++
++
++def _xpu_int8_layer_in_spec(
++    env_name: str, layer_index: int, *, default: bool
++) -> bool:
++    spec = os.environ.get(env_name, "").strip()
++    if not spec:
++        return default
++    for item in spec.split(","):
++        bounds = item.strip().split("-", maxsplit=1)
++        start = int(bounds[0])
++        end = int(bounds[-1])
++        if start <= layer_index <= end:
++            return True
++    return False
++
++
++def _xpu_int8_dual_layer_selected(layer_index: int) -> bool:
++    return _xpu_int8_layer_in_spec(
++        "VLLM_XPU_FP8_BODY_INT8_DUAL_LAYERS",
++        layer_index,
++        default=True,
++    )
++
++
++def _xpu_int8_keep_fp8_linear_type_selected(linear_type: int) -> bool:
++    spec = os.environ.get(
++        "VLLM_XPU_FP8_BODY_INT8_KEEP_FP8_LINEAR_TYPES", ""
++    ).strip()
++    if not spec:
++        return True
++    return linear_type in {int(item.strip()) for item in spec.split(",")}
++
++
++def _load_xpu_int8_sidecar() -> None:
++    global _XPU_INT8_SIDECAR_LOADED
++    if _XPU_INT8_SIDECAR_LOADED:
++        return
++    import vllm_xpu_kernels
++
++    torch.ops.load_library(
++        os.path.join(
++            os.path.dirname(vllm_xpu_kernels.__file__),
++            "_xpu_lm_head_C.abi3.so",
++        )
++    )
++
++    @torch.library.register_fake("_xpu_lm_head_C::per_token_quant_int8_xpu")
++    def _fake_per_token_quant_int8_xpu(x: torch.Tensor):
++        q = torch.empty_like(x, dtype=torch.int8)
++        scales = torch.empty(
++            x.shape[:-1] + (1,), device=x.device, dtype=torch.float32
++        )
++        return q, scales
++
++    @torch.library.register_fake(
++        "_xpu_lm_head_C::per_token_quant_int8_xpu_clip"
++    )
++    def _fake_per_token_quant_int8_xpu_clip(
++        x: torch.Tensor, clip_ratio: float
++    ):
++        del clip_ratio
++        q = torch.empty_like(x, dtype=torch.int8)
++        scales = torch.empty(
++            x.shape[:-1] + (1,), device=x.device, dtype=torch.float32
++        )
++        return q, scales
++
++    @torch.library.register_fake(
++        "_xpu_lm_head_C::per_token_quant_int8_xpu_rms_clip"
++    )
++    def _fake_per_token_quant_int8_xpu_rms_clip(
++        x: torch.Tensor, rms_multiplier: float
++    ):
++        del rms_multiplier
++        q = torch.empty_like(x, dtype=torch.int8)
++        scales = torch.empty(
++            x.shape[:-1] + (1,), device=x.device, dtype=torch.float32
++        )
++        return q, scales
++
++    @torch.library.register_fake("_xpu_lm_head_C::int8_gemm_w8a8")
++    def _fake_int8_gemm_w8a8(
++        a: torch.Tensor,
++        a_scale: torch.Tensor,
++        b: torch.Tensor,
++        b_scale: torch.Tensor,
++        out_dtype: torch.dtype | None,
++        bias: torch.Tensor | None,
++    ):
++        del a_scale, b_scale, bias
++        return torch.empty(
++            a.shape[:-1] + (b.shape[-1],),
++            device=a.device,
++            dtype=out_dtype or torch.float16,
++        )
++
++    @torch.library.register_fake(
++        "_xpu_lm_head_C::hybrid_fp8_int8_linear"
++    )
++    def _fake_hybrid_fp8_int8_linear(
++        x: torch.Tensor,
++        fp8_weight: torch.Tensor,
++        fp8_weight_scale: torch.Tensor,
++        int8_weight: torch.Tensor,
++        int8_weight_scale: torch.Tensor,
++        min_tokens: int,
++    ) -> torch.Tensor:
++        del (
++            fp8_weight_scale,
++            int8_weight,
++            int8_weight_scale,
++            min_tokens,
++        )
++        return torch.empty(
++            (x.reshape(-1, x.shape[-1]).shape[0], fp8_weight.shape[0]),
++            device=x.device,
++            dtype=x.dtype,
++        )
++
++    _XPU_INT8_SIDECAR_LOADED = True
+ 
+ 
+ class Fp8Config(QuantizationConfig):
+@@ -379,6 +504,9 @@ class Fp8LinearMethod(LinearMethodBase):
+             self.fp8_linear.process_weights_after_loading(layer)
+             return
+ 
++        if self._maybe_prepare_xpu_int8_body_linear(layer):
++            return
++
+         input_scale = None
+         # TODO(rob): refactor block quant into separate class.
+         if self.block_quant:
+@@ -415,12 +543,225 @@ class Fp8LinearMethod(LinearMethodBase):
+ 
+         self.fp8_linear.process_weights_after_loading(layer)
+ 
++    def _maybe_prepare_xpu_int8_body_linear(
++        self, layer: torch.nn.Module
++    ) -> bool:
++        """Repack large block-FP8 XPU linears into a default-off W8A8 path."""
++        global _XPU_INT8_BODY_CANDIDATE_INDEX
++        enabled = os.environ.get("VLLM_XPU_FP8_BODY_INT8", "0").strip().lower()
++        if enabled not in ("1", "true", "yes", "on"):
++            return False
++        if not self.block_quant or layer.weight.device.type != "xpu":
++            return False
++        minimum = int(os.environ.get("VLLM_XPU_FP8_BODY_INT8_MIN_DIM", "4096"))
++        if min(layer.weight.shape) < minimum:
++            return False
++        minimum_max = int(
++            os.environ.get("VLLM_XPU_FP8_BODY_INT8_MIN_MAX_DIM", "0")
++        )
++        if max(layer.weight.shape) < minimum_max:
++            return False
++        maximum_max = int(
++            os.environ.get("VLLM_XPU_FP8_BODY_INT8_MAX_MAX_DIM", "0")
++        )
++        if maximum_max and max(layer.weight.shape) > maximum_max:
++            return False
++        candidate_index = _XPU_INT8_BODY_CANDIDATE_INDEX
++        _XPU_INT8_BODY_CANDIDATE_INDEX += 1
++        layer_index = candidate_index // 3
++        linear_type = candidate_index % 3
++        if _xpu_int8_layer_in_spec(
++            "VLLM_XPU_FP8_BODY_INT8_KEEP_FP8_LAYERS",
++            layer_index,
++            default=False,
++        ) and _xpu_int8_keep_fp8_linear_type_selected(linear_type):
++            # Keep numerically sensitive layers on the normal checkpoint-FP8
++            # path.  This static split avoids both duplicate weights and a
++            # runtime dispatch wrapper while later layers use W8A8.
++            logger.info(
++                "Keeping experimental XPU body linear in FP8: "
++                "layer=%d linear_type=%d",
++                layer_index,
++                linear_type,
++            )
++            return False
++        try:
++            _load_xpu_int8_sidecar()
++        except Exception as exc:
++            logger.warning_once("Could not load XPU W8A8 sidecar: %r", exc)
++            return False
++        required_ops = ("int8_gemm_w8a8", "per_token_quant_int8_xpu")
++        if any(not hasattr(torch.ops._xpu_lm_head_C, op) for op in required_ops):
++            logger.warning_once("Required XPU W8A8 sidecar ops are unavailable.")
++            return False
++
++        from vllm.model_executor.layers.quantization.utils.quant_utils import (
++            scaled_dequantize,
++        )
++
++        assert self.weight_block_size is not None
++        with torch.no_grad():
++            weight_f = scaled_dequantize(
++                layer.weight,
++                layer.weight_scale_inv,
++                group_shape=GroupShape(*self.weight_block_size),
++                out_dtype=torch.float32,
++            )
++            scales = weight_f.abs().amax(dim=1).clamp_min(1.0e-10) / 127.0
++            weight_q_t = (
++                torch.round(weight_f / scales[:, None])
++                .clamp(-127, 127)
++                .to(torch.int8)
++                .t()
++                .contiguous()
++            )
++            scales = scales.to(self.input_dtype).contiguous()
++
++        min_tokens = int(
++            os.environ.get("VLLM_XPU_FP8_BODY_INT8_MIN_TOKENS", "0")
++        )
++        if min_tokens > 0 and not _xpu_int8_dual_layer_selected(layer_index):
++            min_tokens = 0
++        if min_tokens > 0:
++            # Preserve the checkpoint FP8 tensors for low-batch requests and
++            # retain an auxiliary W8A8 copy for throughput-sized batches.
++            # A plain tensor attribute is intentional: these are immutable
++            # inference tensors and do not belong in a checkpoint state dict.
++            layer._xpu_int8_weight = weight_q_t
++            layer._xpu_int8_weight_scale = scales
++            layer._xpu_fp8_body_int8_min_tokens = min_tokens
++            layer._xpu_fp8_body_int8_dual = True
++            # The caller returns early when this method succeeds.  Preserve
++            # the normal XPU block-FP8 layout conversion explicitly so the
++            # low-batch branch sees the scale/weight layout expected by
++            # XPUFp8BlockScaledMMKernel.
++            self.fp8_linear.process_weights_after_loading(layer)
++        else:
++            replace_parameter(layer, "weight", weight_q_t)
++            replace_parameter(layer, "weight_scale_inv", scales)
++            layer._xpu_fp8_body_int8_dual = False
++        layer._xpu_fp8_body_int8 = True
++        layer._xpu_fp8_body_layer_index = layer_index
++        layer._xpu_fp8_body_linear_type = linear_type
++        logger.info(
++            "Prepared experimental XPU W8A8 body linear: weight=%s scale=%s "
++            "layer=%d min_tokens=%d dual=%s",
++            tuple(weight_q_t.shape),
++            tuple(scales.shape),
++            layer_index,
++            min_tokens,
++            min_tokens > 0,
++        )
++        return True
++
+     def apply(
+         self,
+         layer: torch.nn.Module,
+         x: torch.Tensor,
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
++        if getattr(layer, "_xpu_fp8_body_int8", False):
++            x_contiguous = x if x.is_contiguous() else x.contiguous()
++            flat_x = x_contiguous.reshape(-1, x_contiguous.shape[-1])
++            dual = getattr(layer, "_xpu_fp8_body_int8_dual", False)
++            min_tokens = getattr(
++                layer, "_xpu_fp8_body_int8_min_tokens", 0
++            )
++            if not dual:
++                rms_multiplier = float(
++                    os.environ.get(
++                        "VLLM_XPU_FP8_BODY_INT8_ACT_RMS_CLIP", "0.0"
++                    )
++                )
++                clip_ratio = float(
++                    os.environ.get(
++                        "VLLM_XPU_FP8_BODY_INT8_ACT_CLIP_RATIO", "1.0"
++                    )
++                )
++                if rms_multiplier > 0.0:
++                    debug_spec = os.environ.get(
++                        "VLLM_XPU_FP8_BODY_INT8_RMS_DEBUG_LAYERS", ""
++                    ).strip()
++                    layer_index = getattr(
++                        layer, "_xpu_fp8_body_layer_index", -1
++                    )
++                    linear_type = getattr(
++                        layer, "_xpu_fp8_body_linear_type", -1
++                    )
++                    debug_layers = {
++                        int(item.strip())
++                        for item in debug_spec.split(",")
++                        if item.strip()
++                    }
++                    debug_key = (layer_index, linear_type)
++                    debug_count = _XPU_INT8_RMS_DEBUG_COUNTS.get(
++                        debug_key, 0
++                    )
++                    if layer_index in debug_layers and debug_count < 2:
++                        flat_f = flat_x.float()
++                        rms = torch.sqrt(
++                            torch.mean(flat_f * flat_f, dim=-1)
++                        ).clamp_min(1.0e-10)
++                        ratio = flat_f.abs().amax(dim=-1) / rms
++                        ratio_cpu = ratio.detach().cpu()
++                        logger.warning(
++                            "Experimental XPU W8A8 activation max/RMS: "
++                            "layer=%d linear_type=%d tokens=%d min=%.4f "
++                            "mean=%.4f max=%.4f",
++                            layer_index,
++                            linear_type,
++                            flat_x.shape[0],
++                            ratio_cpu.min().item(),
++                            ratio_cpu.mean().item(),
++                            ratio_cpu.max().item(),
++                        )
++                        _XPU_INT8_RMS_DEBUG_COUNTS[debug_key] = (
++                            debug_count + 1
++                        )
++                    x_q, x_scale = (
++                        torch.ops._xpu_lm_head_C.per_token_quant_int8_xpu_rms_clip(
++                            flat_x, rms_multiplier
++                        )
++                    )
++                elif clip_ratio < 1.0:
++                    x_q, x_scale = (
++                        torch.ops._xpu_lm_head_C.per_token_quant_int8_xpu_clip(
++                            flat_x, clip_ratio
++                        )
++                    )
++                else:
++                    x_q, x_scale = (
++                        torch.ops._xpu_lm_head_C.per_token_quant_int8_xpu(
++                            flat_x
++                        )
++                    )
++                output = torch.ops._xpu_lm_head_C.int8_gemm_w8a8(
++                    x_q,
++                    x_scale,
++                    layer.weight,
++                    layer.weight_scale_inv,
++                    x.dtype,
++                    bias,
++                )
++                return output.reshape(
++                    x_contiguous.shape[:-1] + (output.shape[-1],)
++                )
++
++            output = (
++                torch.ops._xpu_lm_head_C.hybrid_fp8_int8_linear(
++                    flat_x,
++                    layer.weight,
++                    layer.weight_scale_inv,
++                    layer._xpu_int8_weight,
++                    layer._xpu_int8_weight_scale,
++                    min_tokens,
++                )
++            )
++            if bias is not None:
++                output = output + bias
++            return output.reshape(
++                x_contiguous.shape[:-1] + (output.shape[-1],)
++            )
+         # if batch invariant mode is enabled, prefer direct FP8 path
+         # we will use BF16 dequant when direct FP8 is not supported.
+         if envs.VLLM_BATCH_INVARIANT:
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index 79695084e..cf0132b70 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
+ from collections.abc import Sequence
+ from dataclasses import dataclass
+ 
+@@ -15,6 +16,7 @@ from vllm.distributed import (
+     get_tensor_model_parallel_world_size,
+     tensor_model_parallel_all_reduce,
+ )
++from vllm.logger import init_logger
+ from vllm.model_executor.custom_op import PluggableLayer
+ from vllm.model_executor.layers.batch_invariant import (
+     linear_batch_invariant,
+@@ -30,6 +32,7 @@ from vllm.model_executor.utils import set_weight_attrs
+ from vllm.platforms import current_platform
+ 
+ DEFAULT_VOCAB_PADDING_SIZE = 64
++logger = init_logger(__name__)
+ 
+ 
+ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+@@ -63,6 +66,90 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+             from vllm.model_executor.layers.utils import dispatch_cpu_unquantized_gemm
+ 
+             dispatch_cpu_unquantized_gemm(layer, remove_weight=False)
++        self._maybe_prepare_xpu_int8_lm_head(layer)
++
++    @staticmethod
++    def _env_enabled(name: str) -> bool:
++        return os.environ.get(name, "0").strip().lower() in (
++            "1",
++            "true",
++            "yes",
++            "on",
++        )
++
++    def _maybe_prepare_xpu_int8_lm_head(self, layer: torch.nn.Module) -> None:
++        """Prepare a default-off W8A8 copy of an XPU output head.
++
++        The checkpoint weight remains resident and unchanged, so disabling the
++        environment door restores the ordinary BF16 path. This experiment is
++        restricted to ParallelLMHead and must pass the model quality gate before
++        use outside a benchmark candidate.
++        """
++        if not self._env_enabled("VLLM_XPU_LM_HEAD_INT8"):
++            return
++        if layer.__class__.__name__ != "ParallelLMHead":
++            return
++        weight = getattr(layer, "weight", None)
++        if weight is None or weight.device.type != "xpu":
++            return
++        if weight.dtype not in (torch.float16, torch.bfloat16):
++            logger.warning_once(
++                "XPU INT8 lm_head requires BF16/FP16 weights; got %s.",
++                weight.dtype,
++            )
++            return
++        try:
++            import vllm_xpu_kernels
++
++            torch.ops.load_library(
++                os.path.join(
++                    os.path.dirname(vllm_xpu_kernels.__file__),
++                    "_xpu_lm_head_C.abi3.so",
++                )
++            )
++        except Exception as exc:
++            logger.warning_once("Could not load XPU INT8 lm_head ops: %r", exc)
++            return
++        required_ops = ("int8_gemm_w8a8", "per_token_quant_int8_xpu")
++        if any(not hasattr(torch.ops._xpu_lm_head_C, op) for op in required_ops):
++            logger.warning_once("Required XPU INT8 lm_head ops are unavailable.")
++            return
++
++        with torch.no_grad():
++            weight_f = weight.detach().float()
++            scales = weight_f.abs().amax(dim=1).clamp_min(1.0e-10) / 127.0
++            weight_q_t = (
++                torch.round(weight_f / scales.view(-1, 1))
++                .clamp(-127, 127)
++                .to(torch.int8)
++                .t()
++                .contiguous()
++            )
++            scale_dtype = os.environ.get(
++                "VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE", "bf16"
++            ).strip().lower()
++            if scale_dtype in ("bf16", "bfloat16"):
++                scales = scales.to(torch.bfloat16)
++            elif scale_dtype in ("fp16", "float16", "half"):
++                scales = scales.to(torch.float16)
++            elif scale_dtype not in ("", "fp32", "float32"):
++                logger.warning_once(
++                    "Unknown XPU INT8 lm_head scale dtype %r; using FP32.",
++                    scale_dtype,
++                )
++            scales = scales.contiguous()
++
++        layer.register_buffer(
++            "_xpu_lm_head_int8_weight_t", weight_q_t, persistent=False
++        )
++        layer.register_buffer(
++            "_xpu_lm_head_int8_scale", scales, persistent=False
++        )
++        logger.info(
++            "Prepared experimental XPU INT8 lm_head weight_t=%s scale_dtype=%s",
++            tuple(weight_q_t.shape),
++            scales.dtype,
++        )
+ 
+     def apply(
+         self,
+@@ -70,6 +157,27 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+         x: torch.Tensor,
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
++        if (
++            self._env_enabled("VLLM_XPU_LM_HEAD_INT8")
++            and bias is None
++            and x.device.type == "xpu"
++            and hasattr(layer, "_xpu_lm_head_int8_weight_t")
++            and hasattr(layer, "_xpu_lm_head_int8_scale")
++        ):
++            x_contiguous = x if x.is_contiguous() else x.contiguous()
++            flat_x = x_contiguous.reshape(-1, x_contiguous.shape[-1])
++            x_q, x_scale = torch.ops._xpu_lm_head_C.per_token_quant_int8_xpu(
++                flat_x
++            )
++            logits = torch.ops._xpu_lm_head_C.int8_gemm_w8a8(
++                x_q,
++                x_scale,
++                layer._xpu_lm_head_int8_weight_t,
++                layer._xpu_lm_head_int8_scale,
++                layer.weight.dtype,
++                None,
++            )
++            return logits.reshape(x_contiguous.shape[:-1] + (logits.shape[-1],))
+         if envs.VLLM_BATCH_INVARIANT and current_platform.is_cuda_alike():
+             return linear_batch_invariant(x, layer.weight, bias)
+         return dispatch_unquantized_gemm()(layer, x, layer.weight, bias)
