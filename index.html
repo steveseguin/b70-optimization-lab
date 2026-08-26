@@ -98,16 +98,24 @@ Style genome (duotone-hixffp):
     font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
   }
   .site-nav nav::-webkit-scrollbar { display: none; }
+  /* Never truncate the menu silently: below the shared 720px breakpoint the
+     nav wraps to a second row instead of scrolling out of sight. */
+  @media (max-width: 720px) {
+    .site-nav .wrap { flex-wrap: wrap; padding-bottom: 4px; }
+    .site-nav nav { flex-wrap: wrap; overflow-x: visible; justify-content: flex-end; }
+    .site-nav nav a { padding: 0 9px; }
+    .site-nav nav .github { display: none; }
+  }
   .site-nav nav a {
     display: flex; align-items: center; flex: 0 0 auto; padding: 0 13px;
     border-bottom: 4px solid transparent;
   }
   .site-nav nav a:hover { color: var(--spot-dark); border-bottom-color: var(--spot); }
-  .site-nav nav .github-link {
+  .site-nav nav .github {
     align-self: center; min-height: 32px; margin-left: 8px; padding: 0 10px;
     border: 2px solid var(--ink);
   }
-  .site-nav nav .github-link:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .site-nav nav .github:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
   /* masthead — full-bleed spot slab */
   .masthead { background: var(--spot); color: #fff; padding: 54px 0 36px; }
@@ -338,7 +346,6 @@ Style genome (duotone-hixffp):
     .brand { padding-right: 13px; font-size: 13px; }
     .brand-mark { margin-right: 6px; }
     .site-nav nav a { padding: 0 10px; }
-    .site-nav nav .github-link { display: none; }
     .masthead { padding: 38px 0 31px; }
     .masthead .kicker { font-size: 10px; }
     .masthead .sub { font-size: 14px; }
@@ -385,7 +392,7 @@ Style genome (duotone-hixffp):
       <a href="guides.html">Recipes</a>
       <a href="#lab-speeds">Benchmarks</a>
       <a href="#contribute">Contribute</a>
-      <a class="github-link" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+      <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
     </nav>
   </div>
 </div>

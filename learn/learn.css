@@ -141,7 +141,11 @@ footer a { color: var(--ink); border-bottom: 1px solid currentColor; }
   body { font-size: 14.5px; }
   .site-nav .wrap { padding-right: 0; }
   .brand { font: 700 11px var(--mono); }
-  nav { font-size: 10px; } nav a { padding: 0 9px; } nav .github { display: none; }
+  /* Wrap instead of scrolling: a hidden-scrollbar nav silently drops
+     Contribute and GitHub off the right edge on a phone. */
+  nav { font-size: 10px; flex-wrap: wrap; overflow-x: visible; justify-content: flex-end; }
+  .site-nav .wrap { flex-wrap: wrap; padding-bottom: 4px; }
+  nav a { padding: 0 9px; } nav .github { display: none; }
   header.hero { padding: 34px 0 28px; }
   .prose h2 { font-size: 21px; }
 }
