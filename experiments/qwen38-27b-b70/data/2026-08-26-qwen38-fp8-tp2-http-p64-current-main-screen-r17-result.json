@@ -1,0 +1,37 @@
+{
+  "schema": "neural.download.qwen38-fp8-current-main-screen-result.v1",
+  "state": "complete-negative-screen",
+  "campaign_id": "qwen38-fp8-tp2-http-p64-current-main-screen-20260826-r17",
+  "candidate": {
+    "image": "neural-download/vllm-openai-xpu:vllm-4af586e185-kernel-1e90ffa672-official",
+    "image_id": "sha256:cb8e41a716a896fdc641d85df1339eb7cc72db9185db5df7f08292ef9e5f1e3f",
+    "vllm_head": "4af586e185b028acf08312a4dee381b5998a137e",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "source_overlay": "none"
+  },
+  "measurement": {
+    "concurrent_users": 64,
+    "aggregate_tok_s_wall": 736.0906980167306,
+    "excluded_warmup_tok_s": 700.2903790658318,
+    "ttft_ms_p50": 1378.6797799402848,
+    "ttft_ms_p95": 2086.74425187055,
+    "end_to_end_ms_p50": 10910.791172005702,
+    "end_to_end_ms_p95": 11081.962751748506,
+    "output_classification": "output-isolation-qualified-shape-variant",
+    "completion_tokens_128_all": true,
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collision_count": 0,
+    "cleanup": "clean"
+  },
+  "comparison": {
+    "protected_c64_median_tok_s": 774.394144,
+    "delta_tok_s": -38.30344598326941,
+    "delta_percent": -4.946257778164035,
+    "promising_threshold_tok_s": 813.1138512,
+    "threshold_passed": false
+  },
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-current-main-screen-20260826-r17-attempt1",
+  "result_sha256": "b7c9437793d642d552d4034fb0d2099fc4633303d722fca954e93ac4e959532f",
+  "qualification_sha256": "e8224392943f9a9647b7f262d71f0d454f76411b0941dd054a8235aee2e5a674",
+  "conclusion": "The later zero-overlay runtime regresses this exact official-FP8 c64 profile and does not advance to confirmation. The promoted result remains unchanged."
+}
