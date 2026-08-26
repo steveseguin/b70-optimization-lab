@@ -37,6 +37,8 @@ case "${profile}" in
     ;;
   *) fail 'PROFILE must be q4km or q8' ;;
 esac
+campaign="${CAMPAIGN_ID:-${campaign}}"
+prereg="${PREREG_PATH:-${prereg}}"
 [[ -n "${source_dir}" && -n "${build_dir}" && -n "${model}" ]] || fail 'set SOURCE_DIR, BUILD_DIR, and MODEL'
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail 'ATTEMPT must be positive'
 [[ "${port}" =~ ^[1-9][0-9]*$ ]] || fail 'PORT must be positive'
@@ -130,18 +132,33 @@ for depth in 2048 4096 8192 16384 24576 32768; do
 done
 
 python3 -B - "${run_dir}" "${tuple_label}" > "${run_dir}/summary.json" <<'PY'
-import json, pathlib, sys
+import json, pathlib, re, sys
 root = pathlib.Path(sys.argv[1])
 paths = [p for p in sorted(root.glob("depth-*.json")) if not p.name.endswith(".stdout.json")]
 rows = [json.loads(p.read_text()) for p in paths]
+prompt_matches = re.findall(
+    r"prompt eval time =\s+([0-9.]+) ms /\s+([0-9]+) tokens .*?([0-9.]+) tokens per second",
+    (root / "server.log").read_text(encoding="utf-8"),
+)
+prompt_rates = {
+    int(tokens): {"prompt_eval_ms": float(ms), "prefill_tok_s": float(rate)}
+    for ms, tokens, rate in prompt_matches
+}
 points = [{
     "active_context_tokens": row["run_identity"]["active_context_tokens"],
     "status": row["status"],
     "decode_tok_s": row["metric_window"]["conventional_99_interval_tok_s"],
     "ttft_ms": row["metric_window"]["time_to_first_token_s"] * 1000,
+    "prompt_eval_ms": prompt_rates.get(row["run_identity"]["active_context_tokens"], {}).get("prompt_eval_ms"),
+    "prefill_tok_s": prompt_rates.get(row["run_identity"]["active_context_tokens"], {}).get("prefill_tok_s"),
     "cached_tokens_zero": row["gate"]["checks"]["cached_tokens_zero"],
 } for row in rows]
-passed = len(points) == 6 and all(p["status"] == "passed" and p["cached_tokens_zero"] for p in points)
+passed = len(points) == 6 and len(prompt_matches) == 6 and set(prompt_rates) == {
+    2048, 4096, 8192, 16384, 24576, 32768
+} and all(
+    p["status"] == "passed" and p["cached_tokens_zero"] and p["prefill_tok_s"]
+    for p in points
+)
 out = {
     "classification": "qualified-exact-depth" if passed else "failed-closed",
     "tuple": sys.argv[2],

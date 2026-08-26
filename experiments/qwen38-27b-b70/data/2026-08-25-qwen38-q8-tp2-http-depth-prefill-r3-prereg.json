@@ -1,0 +1,39 @@
+{
+  "schema": "neural.download.http-depth-preregistration.v1",
+  "campaign_id": "qwen38-q8-tp2-http-depth-prefill-20260825-r3",
+  "status": "preregistered-not-run",
+  "purpose": "Replicate the qualified Qwen3.8 Q8_0 TP2 active-context curve and add a fail-closed server-reported prompt-evaluation throughput profile.",
+  "tuple": {
+    "model": "Qwen3.8-27B-Q8_0.gguf",
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "runtime_source_commit": "a4349bcee933cd2b13820bc72fbe842e9c2f4b7a",
+    "server_sha256": "6ae782c7e8f7a992e0eeced10ade2a84b3cbb9ba65c65cbb917e52d1ce09777d",
+    "backend_sha256": "375f6d251b022b62367e73d2cd6b7eb0200efc9cc9c854a509af45950938c3ed",
+    "cards": 2,
+    "topology": "TP2 tensor split 1,1 over SYCL0,SYCL1",
+    "quantization": "Q8_0 target weights; F16 K/V",
+    "generation": "target-only / MTP0",
+    "context_capacity_tokens": 33024,
+    "parallel_slots": 1,
+    "output_tokens": 128
+  },
+  "measured_depths": [2048, 4096, 8192, 16384, 24576, 32768],
+  "metrics": {
+    "decode": "99 inter-token intervals after TTFT over 128 returned token IDs",
+    "ttft": "HTTP request start to first returned token",
+    "prefill": "llama-server prompt eval tokens per second for the exact submitted prompt; parsed only when the log reports one exact timing row for every registered depth",
+    "workload_grade": "C repeated-token exact-shape fixture; not natural prose"
+  },
+  "required_gates": [
+    "ordinary and O_DIRECT model hashes match before launch",
+    "server, SYCL backend, fixture, and benchmark harness hashes match",
+    "all six exact-depth receipts pass the token-count, 128-token, cache-zero, no-truncation, and no-context-shift gates",
+    "server log contains exactly one prompt-evaluation timing for each registered depth and no registered depth is missing"
+  ],
+  "publication": {
+    "no_interpolation_or_extrapolation": true,
+    "zero_context_point": "not measured and must remain absent",
+    "r2_observation_is_not_a_publication_input": true,
+    "headline_effect": "additive context profiles only"
+  }
+}
