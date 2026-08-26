@@ -1996,7 +1996,7 @@ class FamilyCoverageTest(unittest.TestCase):
             contracts["qwen38-tp1-llamacpp-sycl-target-matrix"]
         )
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q38_target), 70
+            sum(cell["state"] == "lab-measured" for cell in q38_target), 77
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 0)
         self.assertTrue(all(cell["selectors"]["mtp"] == 0 for cell in q38_target))
@@ -2105,6 +2105,65 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(q38_q5ks_graph_packet["grades"]["evidence"]["grade"], "C")
         self.assertNotIn("featured_metric", q38_q5ks_graph_packet)
+
+        q38_q4km_graph = [
+            cell for cell in q38_target
+            if cell["selectors"]["artifact_id"]
+            == "qwen38-27b-ggmlorg-q4-k-m-0669b98"
+            and cell["selectors"]["graph_mode"] == "SYCL"
+            and cell["selectors"]["kv"] == "f16"
+        ]
+        self.assertEqual(len(q38_q4km_graph), 7)
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in q38_q4km_graph],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(all(
+            cell["state"] == "lab-measured"
+            and cell["evidence_id"]
+            == "q38-q4km-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c"
+            and cell["packet_id"]
+            == "qwen38-27b-q4km-f16kv-sycl-graph-cache64-depth-grade-c"
+            for cell in q38_q4km_graph
+        ))
+        q38_q4km_graph_measurement = series[
+            "q38-q4km-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c"
+        ]
+        q38_q4km_graph_result = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4km-f16kv-tp1-sycl-graph-cache64-depth-quality-r1-result.json"
+        ).read_text())
+        self.assertEqual(
+            [point["x"] for point in q38_q4km_graph_measurement["points"]],
+            [cell["active_context_tokens"] for cell in q38_q4km_graph_result["serving_curve"]["cells"]],
+        )
+        self.assertEqual(
+            [point["decode_tok_s"] for point in q38_q4km_graph_measurement["points"]],
+            [cell["serving_decode_tok_s_99_interval"] for cell in q38_q4km_graph_result["serving_curve"]["cells"]],
+        )
+        self.assertEqual(
+            [point["output_token_ids_sha256"] for point in q38_q4km_graph_measurement["points"]],
+            [cell["output_token_ids_sha256"] for cell in q38_q4km_graph_result["serving_curve"]["cells"]],
+        )
+        self.assertTrue(q38_q4km_graph_result["quality"]["pass_all"])
+        self.assertTrue(q38_q4km_graph_result["graph_mechanism"]["passed"])
+        self.assertEqual(q38_q4km_graph_result["graph_mechanism"]["cache_limit"], 64)
+        self.assertGreaterEqual(
+            q38_q4km_graph_result["graph_mechanism"]["direct_replay"],
+            q38_q4km_graph_result["graph_mechanism"]["minimum_direct_replays"],
+        )
+        self.assertEqual(q38_q4km_graph_result["validation"]["terminal_checks_passed"], 19)
+        self.assertFalse(q38_q4km_graph_result["validation"]["offline_recovery"])
+        self.assertFalse(
+            q38_q4km_graph_result["authority"]["protected_or_headline_replacement"]
+        )
+        q38_q4km_graph_packet = next(
+            packet for packet in family["packets"]
+            if packet["id"]
+            == "qwen38-27b-q4km-f16kv-sycl-graph-cache64-depth-grade-c"
+        )
+        self.assertEqual(q38_q4km_graph_packet["grades"]["evidence"]["grade"], "C")
+        self.assertNotIn("featured_metric", q38_q4km_graph_packet)
         q38_tp2_depth, _ = MODULE.expand_coverage_contract(
             contracts["qwen38-tp2-vllm-xpu-autoround-http-depth"]
         )
@@ -2331,11 +2390,13 @@ class FamilyCoverageTest(unittest.TestCase):
             [item["measurement_ids"] for item in q38_q4km_view["series"]],
             [
                 ["q38-q4km-tp1-f16kv-http-context-r1-grade-c"],
+                ["q38-q4km-tp1-f16kv-sycl-graph-cache64-http-context-r1-grade-c"],
                 ["q38-q4km-tp1-kv-q8-context"],
             ],
         )
-        self.assertIn("F16 x=0 remains raw", q38_q4km_view["subtitle"])
-        self.assertIn("Q8_0 is the preserved raw-engine curve", q38_q4km_view["subtitle"])
+        self.assertIn("graph-off F16 is Grade C", q38_q4km_view["subtitle"])
+        self.assertIn("exact cache64 graph-patched F16 covers 0-32K", q38_q4km_view["subtitle"])
+        self.assertIn("Q8_0 remains the preserved raw-engine graph-off curve", q38_q4km_view["subtitle"])
 
         q38_q8_f16 = [
             cell for cell in q38_target
@@ -2956,12 +3017,12 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 14 matrices", overview_html)
-        self.assertIn("342/1,807 classified", overview_html)
+        self.assertIn("349/1,807 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "247", "measured"),
+            ("lab-measured", "254", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,465", "missing"),
+            ("missing", "1,458", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -2979,6 +3040,10 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
         self.assertIn("24 more evidence views", deferred_html)
         self.assertEqual(deferred_html.count('data-family-view="'), 24)
+        self.assertIn("Q4_K_M HTTP context × KV/graph", initial_html)
+        self.assertIn("value=26.7217226139707 tok/s", initial_html)
+        self.assertIn("value=23.221668353050664 tok/s", initial_html)
+        self.assertIn("SYCL graph cache64", initial_html)
         self.assertIn(
             'data-family-view="context-q4kxl-f16-http"',
             deferred_html,
