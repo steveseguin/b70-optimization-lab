@@ -15,7 +15,16 @@ class SmallContextHttpTests(unittest.TestCase):
         cls.text = SCRIPT.read_text(encoding="utf-8")
 
     def test_exact_frozen_profile(self) -> None:
-        for fragment in ("--ctx-size 32768", "--parallel 64", "--max-tokens 128", "--concurrency 1,2,4,8,16,32,64"):
+        for fragment in (
+            'parallel_slots="${PARALLEL_SLOTS:-64}"',
+            'ctx_size="${CTX_SIZE:-32768}"',
+            'concurrency_points="${CONCURRENCY_POINTS:-1,2,4,8,16,32,64}"',
+            '--ctx-size "${ctx_size}"',
+            '--parallel "${parallel_slots}"',
+            '--max-tokens 128',
+            '--concurrency "${concurrency_points}"',
+            "a concurrency point exceeds PARALLEL_SLOTS",
+        ):
             self.assertIn(fragment, self.text)
 
     def test_quality_requirements(self) -> None:

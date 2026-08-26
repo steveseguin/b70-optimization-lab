@@ -1,0 +1,30 @@
+{
+  "schema": "neural.download.concurrency-capacity-oracle-pilot-preregistration.v1",
+  "campaign_id": "qwen38-q8-tp1-http-capacity-20260825-r2",
+  "state": "preregistered-not-launched",
+  "prior_result": {
+    "campaign_id": "qwen38-q8-tp1-http-concurrency-oracle-pilot-20260825-r1",
+    "profile": "64 slots, 32768 total context, F16 KV",
+    "classification": "unsupported",
+    "failure": "UR_RESULT_ERROR_OUT_OF_DEVICE_MEMORY while clearing the recurrent-state allocation; no request or performance row was produced"
+  },
+  "purpose": "Find the largest output-qualified one-card Q8 serving profile at a fixed nominal 512 context tokens per user, without changing F16 KV or publishing capacity-discovery rates.",
+  "identity": {
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "runtime_base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "applied_source_diff_sha256": "f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e",
+    "server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "backend_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "cards": 1,
+    "topology": "TP1 on one Intel Arc Pro B70",
+    "generation": "target-only / MTP0",
+    "kv_cache": "f16"
+  },
+  "ordered_arms": [
+    {"id": "p32-k16", "parallel_slots": 32, "context_tokens_total": 16384, "nominal_context_tokens_per_slot": 512, "concurrency_points": [1, 2, 4, 8, 16, 32]},
+    {"id": "p16-k8", "parallel_slots": 16, "context_tokens_total": 8192, "nominal_context_tokens_per_slot": 512, "concurrency_points": [1, 2, 4, 8, 16]},
+    {"id": "p8-k4", "parallel_slots": 8, "context_tokens_total": 4096, "nominal_context_tokens_per_slot": 512, "concurrency_points": [1, 2, 4, 8]}
+  ],
+  "stopping_rule": "Run arms in order and stop at the first arm that loads and passes the complete token-ID, 128-token, and cache-zero oracle gate. An unsupported arm is retained; no unlisted profile may be substituted.",
+  "publication_status": "capacity discovery only; rates may not be published until compact oracle digests and two fresh-server publication attempts are preregistered"
+}

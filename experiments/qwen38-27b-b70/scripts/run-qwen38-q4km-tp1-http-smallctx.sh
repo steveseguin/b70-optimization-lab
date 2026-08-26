@@ -20,6 +20,9 @@ api_mode="${API_MODE:-completions}"
 disable_prompt_cache="${DISABLE_PROMPT_CACHE:-0}"
 oracle_digests="${ORACLE_DIGESTS:-}"
 qualification_mode="${QUALIFICATION_MODE:-identity}"
+parallel_slots="${PARALLEL_SLOTS:-64}"
+ctx_size="${CTX_SIZE:-32768}"
+concurrency_points="${CONCURRENCY_POINTS:-1,2,4,8,16,32,64}"
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 case "${profile}" in
@@ -58,6 +61,13 @@ esac
 [[ "${disable_prompt_cache}" == 0 || "${disable_prompt_cache}" == 1 ]] || fail 'DISABLE_PROMPT_CACHE must be 0 or 1'
 [[ "${qualification_mode}" == identity || "${qualification_mode}" == isolation ]] || fail 'QUALIFICATION_MODE must be identity or isolation'
 [[ -z "${oracle_digests}" || -f "${oracle_digests}" ]] || fail 'ORACLE_DIGESTS does not exist'
+[[ "${parallel_slots}" =~ ^[1-9][0-9]*$ ]] || fail 'PARALLEL_SLOTS must be positive'
+[[ "${ctx_size}" =~ ^[1-9][0-9]*$ ]] || fail 'CTX_SIZE must be positive'
+[[ "${concurrency_points}" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]] || fail 'CONCURRENCY_POINTS must be comma-separated positive integers'
+IFS=, read -r -a concurrency_values <<< "${concurrency_points}"
+for value in "${concurrency_values[@]}"; do
+  (( value <= parallel_slots )) || fail 'a concurrency point exceeds PARALLEL_SLOTS'
+done
 
 model="${model_dir}/${model_filename}"
 server="${build_dir}/bin/llama-server"
@@ -87,7 +97,7 @@ fi
 run_dir="${out_parent}/${campaign}-attempt${attempt}"
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 mkdir -p "${run_dir}"
-unit="nd-q38-${profile}-http-smallctx-a${attempt}"
+unit="nd-q38-${profile}-p${parallel_slots}-http-a${attempt}"
 server_log="${run_dir}/server.log"
 
 set +u
@@ -144,7 +154,7 @@ xpu-smi dump -d "${gpu_index}" -m 0,1,2,3,4,5 -n 1 > "${run_dir}/xpu-before.txt"
 cmd=("${server}" --model "${model}" "${device_args[@]}" --gpu-layers 99
   --fit off --flash-attn on --batch-size 2048 --ubatch-size 256
   --cache-type-k f16 --cache-type-v f16 --cache-ram 0 --ctx-checkpoints 0
-  --reasoning off --threads 8 --poll 50 --ctx-size 32768 --parallel 64
+  --reasoning off --threads 8 --poll 50 --ctx-size "${ctx_size}" --parallel "${parallel_slots}"
   --cont-batching --metrics --host 127.0.0.1 --port "${port}")
 if (( disable_prompt_cache == 1 )); then
   cmd+=(--no-cache-prompt --slot-prompt-similarity 0)
@@ -190,7 +200,7 @@ curl -fsS "http://127.0.0.1:${port}/slots" > "${run_dir}/slots.json" || true
 
 harness_cmd=(python3 "${repo_root}/scripts/bench-openai-concurrency-oracle.py"
   --base-url "http://127.0.0.1:${port}" --model "${model_label}" \
-  --api-mode "${api_mode}" --suite "${suite}" --concurrency 1,2,4,8,16,32,64 \
+  --api-mode "${api_mode}" --suite "${suite}" --concurrency "${concurrency_points}" \
   --repeats "${harness_repeats}" --max-tokens 128 --seed 42 --timeout 900 \
   --request-extra-json '{"cache_prompt":false,"ignore_eos":true,"temperature":0}' \
   --out "${run_dir}/result.json")
