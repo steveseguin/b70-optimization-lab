@@ -5951,6 +5951,16 @@
         }
       },
       {
+        "id": "unsupported-f01e-autoround-eager-e5m2kv-current",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": "*", "graph_mode": "off", "kv": "fp8_e5m2"},
+        "state": "unsupported",
+        "label": "E5M2 KV unsupported · f01e",
+        "reason": "The current f01e/ac7509e2 XPU FlashAttention backend explicitly rejects fp8_e5m2 KV at engine initialization, before startup, canary, or quality; no other selector transfers.",
+        "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e5m2kv-init-canary-r1-result.json",
+        "parent": "qwen38-official-f01e-autoround-tp1-e5m2kv-init-canary-20260826-r1",
+        "retry": {"status": "blocked-on-runtime", "trigger": "backend-e5m2-support"}
+      },
+      {
         "id": "capacity-excluded-official-fp8-tp1-eager-f16-context-16384",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-official-fp8-017b9c7", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "f16"},
         "state": "unsupported",
@@ -8787,6 +8797,12 @@
       "state": "unsupported",
       "reason": "The XPU FlashAttention backend rejects fp8_e5m2 KV cache at engine initialization.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json"
+    },
+    {
+      "selectors": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "variant": "AutoRound INT4", "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b", "tp": 1, "mtp": 0, "graph": "off", "kv": "fp8_e5m2"},
+      "state": "unsupported",
+      "reason": "The current f01e/ac7509e2 engine explicitly rejects fp8_e5m2 KV at initialization; startup, canary, and quality did not run, so this closure does not transfer to graph-on, other TP/MTP, KV formats, or runtimes.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e5m2kv-init-canary-r1-result.json"
     },
     {
       "selectors": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "variant": "AutoRound INT4", "kv": "fp8_e4m3", "runtime": "vLLM XPU nightly e9d1398d9"},

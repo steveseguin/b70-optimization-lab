@@ -3225,14 +3225,14 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 16 matrices", overview_html)
-        self.assertIn("482/1,910 classified", overview_html)
+        self.assertIn("489/1,910 classified", overview_html)
         for state, count, word in (
             ("lab-measured", "297", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "96", "quarantined"),
             ("closed", "6", "closed"),
-            ("unsupported", "51", "unsupported"),
-            ("missing", "1,428", "missing"),
+            ("unsupported", "58", "unsupported"),
+            ("missing", "1,421", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3309,6 +3309,41 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(e4m3_rule["label"], "D12.09 · E4M3 KV · Grade C")
         self.assertEqual(e4m3_rule["match"]["active_context_tokens"], 8192)
+        current_e5m2_evidence = (
+            "experiments/qwen38-27b-b70/data/"
+            "2026-08-26-qwen38-official-f01e-autoround-tp1-e5m2kv-init-canary-r1-result.json"
+        )
+        current_e5m2_cells = [
+            cell for cell in q38_vllm_target
+            if cell.get("evidence") == current_e5m2_evidence
+        ]
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in current_e5m2_cells],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(all(
+            cell["state"] == "unsupported"
+            and cell["selectors"]["artifact_id"]
+            == "qwen38-27b-autoround-w4a16-bce40ca"
+            and cell["selectors"]["tp"] == 1
+            and cell["selectors"]["mtp"] == 0
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "fp8_e5m2"
+            for cell in current_e5m2_cells
+        ))
+        e5m2_closures = [
+            closure for closure in family["family_closures"]
+            if closure["selectors"].get("artifact_id")
+            == "qwen38-27b-autoround-w4a16-bce40ca"
+            and closure["selectors"].get("kv") == "fp8_e5m2"
+        ]
+        self.assertEqual(
+            {closure["selectors"]["runtime"] for closure in e5m2_closures},
+            {
+                "vLLM XPU nightly e9d1398d9",
+                "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+            },
+        )
         self.assertIn("Qwen3.8 AutoRound TP1/TP2/TP4 HTTP context", deferred_html)
         self.assertIn("value=48.15370845841339 tok/s", deferred_html)
         self.assertIn("value=42.33933781431878 tok/s", deferred_html)
