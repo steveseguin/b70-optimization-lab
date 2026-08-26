@@ -18,6 +18,13 @@ pending while the Qwen Flash-Next download owns the shared USB I/O path. A GPU
 launch is forbidden until that validator emits a passing summary bound to this
 exact revision and cached-tree hash.
 
+An offline exact-source `ModelConfig` construction passed without loading
+weights or starting an XPU process. The record vLLM source resolves the new
+tree as `DeepseekV4ForCausalLM`, `deepseek_v4_fp8`, BF16 activations, UE8M0
+scales, and a generate runner at the frozen 256-token first-canary length. This
+closes parser/config compatibility only; it is not a model-load or output
+claim.
+
 ## Frozen first arm
 
 - four B70s, TP4+EP, DP1, PP1, concurrency one;
@@ -52,6 +59,15 @@ or replace any captured value.
 7. Long-context points are measured independently at exact active lengths; no
    point is inherited, estimated, interpolated, or promoted from the 256-token
    canary.
+
+New 0731 evidence must use the fail-closed scorer modes. Exact canaries use
+`quality/exact-canaries-0731-target-contract-v1.json`; that contract binds the
+served model, target revision, frozen suite bytes, seed, output limit, and
+logprob mode. Quality captures use `score-quality-capture.py --promotion` with
+the frozen suite plus expected served-model and target revisions. Promotion
+mode rejects corruption, cache reuse, missing/reordered/extra rows, prompt or
+suite drift, and decoding mismatches. Historical scorer behavior remains
+available only to interpret old evidence and is not a promotion gate.
 
 The intended deliverable is a candidate neural.download package with exact
 model/runtime/patch identities, target-only and target-verified-speculation

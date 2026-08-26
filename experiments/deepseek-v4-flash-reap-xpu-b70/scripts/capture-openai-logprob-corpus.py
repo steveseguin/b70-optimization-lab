@@ -50,6 +50,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:18080")
     parser.add_argument("--model", default="deepseek-v4-flash-k160")
+    parser.add_argument(
+        "--model-revision",
+        help="immutable target revision recorded in new promotion captures",
+    )
     parser.add_argument("--suite", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--max-tokens", type=int, default=8)
@@ -115,11 +119,18 @@ def main() -> int:
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "label": args.label,
         "model": args.model,
+        "model_revision": args.model_revision,
         "suite_path": str(args.suite),
+        "suite_sha256": hashlib.sha256(args.suite.read_bytes()).hexdigest(),
         "suite": suite_meta,
         "seed": args.seed,
         "max_tokens": args.max_tokens,
         "top_logprobs": args.top_logprobs,
+        "decoding": {
+            "seed": args.seed,
+            "max_tokens": args.max_tokens,
+            "top_logprobs": args.top_logprobs,
+        },
         "inter_request_delay": args.inter_request_delay,
         "cached_tokens_all_zero": all(row["cached_tokens"] == 0 for row in rows),
         "rows": rows,
