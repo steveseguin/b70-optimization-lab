@@ -1,0 +1,19 @@
+{
+  "schema": "neural.download.qwen38-fp8-tp1-fit-screen-result.v1",
+  "state": "compiled-profile-kv-fit-negative-no-measurement",
+  "campaign_id": "qwen38-fp8-tp1-http-p32-fit-screen-20260826-r20",
+  "server": {
+    "health_reached": false,
+    "requests_sent": 0,
+    "cleanup": "clean",
+    "gpu_memory_utilization": 0.96,
+    "checkpoint_size_gib": 28.75,
+    "reported_model_memory_gib": 27.57,
+    "available_kv_cache_memory_gib": -1.09,
+    "hybrid_cache_page_tokens": 832
+  },
+  "root_cause": "The official checkpoint loaded completely, then compile/profiling left negative memory for cache blocks. vLLM refused to start the server.",
+  "interpretation": "Weights alone fit one B70, but this compiled FP16-family-KV profile does not. Increasing utilization cannot cover the 1.09 GiB deficit because only about 0.29 GiB existed between the 0.96 budget and the observed startup-free ceiling.",
+  "next_screen": "R21 removes compile/graph residency with --enforce-eager while preserving the model, FP16-family KV, c32 workload, and output qualification.",
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp1-http-p32-fit-screen-20260826-r20-attempt1"
+}
