@@ -1605,6 +1605,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "qwen38-tp2-llamacpp-sycl-q4km-http-depth": 7,
             "qwen38-tp2-llamacpp-sycl-q8-http-depth": 7,
             "qwen38-tp2-vllm-xpu-fp8-http-depth": 7,
+            "qwen38-tp4-vllm-xpu-autoround-http-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-strict-snapshot": 1,
         }
         self.assertEqual(set(contracts), set(expected_counts))
@@ -1616,7 +1617,7 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertEqual(errors, [], contract_id)
             self.assertEqual(len(cells), expected_count, contract_id)
             all_cells.extend(cells)
-        self.assertEqual(len(all_cells), 1793)
+        self.assertEqual(len(all_cells), 1800)
 
         for contract_id, evidence_id in (
             ("qwen38-tp2-llamacpp-sycl-q4km-http-depth", "q38-q4km-tp2-f16kv-http-context-r1-grade-c"),
@@ -2029,6 +2030,58 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIn("offline recovery", tp4_measurement["caveat"])
         self.assertIn("No historical high was lowered or replaced", tp4_measurement["caveat"])
+        q38_tp4_depth, _ = MODULE.expand_coverage_contract(
+            contracts["qwen38-tp4-vllm-xpu-autoround-http-depth"]
+        )
+        self.assertEqual(len(q38_tp4_depth), 7)
+        self.assertEqual(q38_tp4_depth[0]["selectors"]["active_context_tokens"], 0)
+        self.assertEqual(q38_tp4_depth[0]["state"], "missing")
+        self.assertNotIn("point_x", q38_tp4_depth[0])
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in q38_tp4_depth[1:]],
+            [2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(all(
+            cell["state"] == "lab-measured"
+            and cell["evidence_id"]
+            == "q38-autoround-tp4-f16kv-http-context-r1-grade-c"
+            and cell["selectors"]["tp"] == 4
+            and cell["selectors"]["mtp"] == 0
+            and cell["selectors"]["graph_mode"] == "FULL_AND_PIECEWISE"
+            and cell["selectors"]["kv"] == "f16"
+            for cell in q38_tp4_depth[1:]
+        ))
+        tp4_depth_measurement = next(
+            measurement
+            for measurement in family["series_measurements"]
+            if measurement["id"]
+            == "q38-autoround-tp4-f16kv-http-context-r1-grade-c"
+        )
+        tp4_depth_result = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-b2dd9ce73d-tp4-exact-depth-quality-r1-result.json"
+        ).read_text())
+        self.assertEqual(
+            [point["x"] for point in tp4_depth_measurement["points"]],
+            [cell["active_context_tokens"] for cell in tp4_depth_result["serving_curve"]["cells"]],
+        )
+        self.assertEqual(
+            [point["decode_tok_s"] for point in tp4_depth_measurement["points"]],
+            [cell["serving_decode_tok_s_99_interval"] for cell in tp4_depth_result["serving_curve"]["cells"]],
+        )
+        self.assertEqual(
+            [point["output_token_ids_sha256"] for point in tp4_depth_measurement["points"]],
+            [cell["output_token_ids_sha256"] for cell in tp4_depth_result["serving_curve"]["cells"]],
+        )
+        self.assertNotIn(0, [point["x"] for point in tp4_depth_measurement["points"]])
+        self.assertNotIn(
+            71.77179128057259,
+            [point["decode_tok_s"] for point in tp4_depth_measurement["points"]],
+        )
+        self.assertNotIn(
+            71.82969607434323,
+            [point["decode_tok_s"] for point in tp4_depth_measurement["points"]],
+        )
         q38_q4km_f16 = [
             cell for cell in q38_target
             if cell["selectors"]["artifact_id"]
@@ -2742,13 +2795,13 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
-        self.assertIn("Coverage · 12 matrices", overview_html)
-        self.assertIn("316/1,793 classified", overview_html)
+        self.assertIn("Coverage · 13 matrices", overview_html)
+        self.assertIn("322/1,800 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "221", "measured"),
+            ("lab-measured", "227", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,477", "missing"),
+            ("missing", "1,478", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -2764,8 +2817,8 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("23 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 23)
+        self.assertIn("24 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 24)
         self.assertIn(
             'data-family-view="context-q4kxl-f16-http"',
             deferred_html,
@@ -2774,6 +2827,12 @@ class FamilyCoverageTest(unittest.TestCase):
             'data-family-view="q38-q5ks-q8kv-mtp-8k-grade-c"',
             deferred_html,
         )
+        self.assertIn(
+            'data-family-view="context-q38-tp4-autoround-http"',
+            deferred_html,
+        )
+        self.assertIn("value=71.16806401683698 tok/s", deferred_html)
+        self.assertIn("value=66.64506545273888 tok/s", deferred_html)
         self.assertIn(
             'data-family-view="context-q36-mtpq8-q8kv-http-grade-c"',
             deferred_html,

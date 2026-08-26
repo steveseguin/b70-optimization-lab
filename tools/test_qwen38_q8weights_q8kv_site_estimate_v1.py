@@ -102,10 +102,10 @@ class SiteEstimateTest(unittest.TestCase):
 
     def test_rendered_page_shows_measured_curve_not_retired_estimates(self) -> None:
         rendered = MODULE.family_page(self.family)
-        self.assertIn("316/1,793 classified", rendered)
-        self.assertIn('class="is-lab-measured"><b>221</b> measured', rendered)
+        self.assertIn("322/1,800 classified", rendered)
+        self.assertIn('class="is-lab-measured"><b>227</b> measured', rendered)
         self.assertNotIn('class="is-estimated"', rendered)
-        self.assertIn('class="is-missing"><b>1,477</b> missing', rendered)
+        self.assertIn('class="is-missing"><b>1,478</b> missing', rendered)
         self.assertIn('data-family-view="context-q8weights-http"', rendered)
         self.assertIn("Q8_0-weight HTTP context × KV", rendered)
         # The frozen Grade-D snapshot remains data-only historical evidence;
