@@ -480,6 +480,28 @@
       "manifest": "packages/qwen38-27b-fp8-tp2-b70/package.json"
     },
     {
+      "id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c",
+      "label": "Qwen3.8 AutoRound INT4 · TP1 official-image eager/PIECEWISE depth",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "cards": 1,
+      "status": "quality-battery-qualified-grade-c-http-curves",
+      "evidence_level": "B70-measured Grade C",
+      "coverage": ["target-only MTP0", "HTTP serving", "exact context 2K-32K", "F16 KV", "eager and PIECEWISE", "full quality battery", "x0 missing"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "AutoRound INT4 TP1 eager and PIECEWISE HTTP serving at six exact nonzero active-context depths each",
+          "basis": "All twelve cache-zero exact-depth receipts passed on the pinned f01e/ac7509e2 image and both arms passed 7 exact cases, 8 stable repeats, the 8K needle, and 24 baseline comparisons. The repeated-token depth fixture and single campaign remain Grade C; x0 is missing and the protected FULL_AND_PIECEWISE and short-decode profiles remain separate.",
+          "reviewed_at": "2026-08-26",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-r3-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-r3-result.json"
+    },
+    {
       "id": "qwen38-27b-official-fp8-tp1-eager-depth-grade-c",
       "label": "Qwen3.8 official FP8 · TP1 eager depth screen",
       "revision": "qwen3.8-27b",
@@ -3689,6 +3711,64 @@
       "evidence": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q8-q8kv-tp1-exact-depth-result.json"
     },
     {
+      "id": "q38-f01e-autoround-tp1-eager-f16-exact-context-r3",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "variant": "AutoRound INT4 target-only TP1 eager",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp1-vllm-xpu-target-only-v1",
+      "runtime_snapshot_id": "f01e24f6-ac7509e2-official-image",
+      "speculation_method": "none",
+      "profile_id": "q38-f01e-autoround-tp1-eager-f16-depth-grade-c-r3",
+      "measurement_class": "conventional-99-interval-exact-depth-openai-http-serving-grade-c",
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "enforce_eager": true, "kv": "f16", "configured_max_context_tokens": 32896, "prefix_caching": false},
+      "workload": "One-slot vLLM OpenAI-compatible HTTP completions; exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 2048, "decode_tok_s": 11.919327130453762, "ttft_ms": 1520.064229000127, "cached_tokens": 0},
+        {"x": 4096, "decode_tok_s": 12.115385179434695, "ttft_ms": 2758.202084005461, "cached_tokens": 0},
+        {"x": 8192, "decode_tok_s": 11.919958636516224, "ttft_ms": 5644.954247007263, "cached_tokens": 0},
+        {"x": 16384, "decode_tok_s": 12.112539400630334, "ttft_ms": 11681.28542600607, "cached_tokens": 0},
+        {"x": 24576, "decode_tok_s": 12.039525807023459, "ttft_ms": 18096.79437900195, "cached_tokens": 0},
+        {"x": 32768, "decode_tok_s": 12.1065485687806, "ttft_ms": 24927.870916988468, "cached_tokens": 0}
+      ],
+      "quality": "All six exact-depth gates and the full quality battery passed: 7 exact cases, 8 deterministic repeats with one hash, the 8K needle, 24 baseline comparisons, and cache zero.",
+      "caveat": "Grade C repeated-token context shape. x0 was not measured. No protected speed, FULL_AND_PIECEWISE cell, headline, or submission authority transfers.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-r3-result.json"
+    },
+    {
+      "id": "q38-f01e-autoround-tp1-piecewise-f16-exact-context-r3",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "variant": "AutoRound INT4 target-only TP1 PIECEWISE",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp1-vllm-xpu-target-only-v1",
+      "runtime_snapshot_id": "f01e24f6-ac7509e2-official-image",
+      "speculation_method": "none",
+      "profile_id": "q38-f01e-autoround-tp1-piecewise-f16-depth-grade-c-r3",
+      "measurement_class": "conventional-99-interval-exact-depth-openai-http-serving-grade-c",
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "graph_mode": "PIECEWISE", "graph_capture_sizes": [1], "kv": "f16", "configured_max_context_tokens": 32896, "prefix_caching": false},
+      "workload": "One-slot vLLM OpenAI-compatible HTTP completions; exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 2048, "decode_tok_s": 30.075429359128265, "ttft_ms": 1363.4014569979627, "cached_tokens": 0},
+        {"x": 4096, "decode_tok_s": 29.41347238250489, "ttft_ms": 2474.7674179961905, "cached_tokens": 0},
+        {"x": 8192, "decode_tok_s": 29.01975248295894, "ttft_ms": 5060.748901989427, "cached_tokens": 0},
+        {"x": 16384, "decode_tok_s": 28.192761390148664, "ttft_ms": 10545.48624700692, "cached_tokens": 0},
+        {"x": 24576, "decode_tok_s": 27.463520678399885, "ttft_ms": 16543.705064992537, "cached_tokens": 0},
+        {"x": 32768, "decode_tok_s": 26.759466347975422, "ttft_ms": 22671.85614600021, "cached_tokens": 0}
+      ],
+      "quality": "All six exact-depth gates and the full quality battery passed: 7 exact cases, 8 deterministic repeats with one hash, the 8K needle, 24 baseline comparisons, and cache zero.",
+      "caveat": "Grade C repeated-token context shape. x0 was not measured. This does not overwrite the distinct, protected FULL_AND_PIECEWISE or short-decode profiles.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-r3-result.json"
+    },
+    {
       "id": "q38-b2dd-tp1-graph-f16-exact-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -4882,6 +4962,18 @@
       ]
     },
     {
+      "id": "context-q38-tp1-autoround-graphmodes",
+      "title": "Qwen3.8 AutoRound TP1 graph modes",
+      "subtitle": "Grade C · exact cache-zero HTTP serving at 2K-32K · same AutoRound weights · MTP0 · F16 KV · eager and PIECEWISE use the current official f01e/ac7509e2 image while FULL_AND_PIECEWISE remains the separately labeled b2dd/1e90 profile · x=0 remains missing",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "eager · f01e/ac7509e2", "measurement_ids": ["q38-f01e-autoround-tp1-eager-f16-exact-context-r3"]},
+        {"label": "PIECEWISE · f01e/ac7509e2", "measurement_ids": ["q38-f01e-autoround-tp1-piecewise-f16-exact-context-r3"]},
+        {"label": "FULL_AND_PIECEWISE · b2dd/1e90", "measurement_ids": ["q38-b2dd-tp1-graph-f16-exact-context"]}
+      ]
+    },
+    {
       "id": "context-q38-tp4-autoround-http",
       "title": "Qwen3.8 AutoRound TP1/TP2/TP4 HTTP context",
       "subtitle": "Grade C · exact cache-zero HTTP serving at 2K-32K · same current weights and b2dd9ce73d/1e90ffa672 zero-overlay runtime · MTP0 · F16 KV · vLLM FULL_AND_PIECEWISE · x=0 remains missing",
@@ -5832,6 +5924,18 @@
         "parent": "qwen38-official-fp8-tp1-fit-depth-20260826-r2",
         "retry": {"status": "complete"}
       },
+      {"id": "measured-f01e-autoround-eager-f16-context-2048", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D11.92 · eager · Grade C", "reason": "Exact cache-zero official-image eager HTTP depth cell with the full quality battery; no protected route is replaced.", "evidence_id": "q38-f01e-autoround-tp1-eager-f16-exact-context-r3", "point_x": 2048, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-eager-f16-context-4096", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D12.12 · eager · Grade C", "reason": "Exact cache-zero official-image eager HTTP depth cell with the full quality battery; no protected route is replaced.", "evidence_id": "q38-f01e-autoround-tp1-eager-f16-exact-context-r3", "point_x": 4096, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-eager-f16-context-8192", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D11.92 · eager · Grade C", "reason": "Exact cache-zero official-image eager HTTP depth cell with the full quality battery; no protected route is replaced.", "evidence_id": "q38-f01e-autoround-tp1-eager-f16-exact-context-r3", "point_x": 8192, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-eager-f16-context-16384", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D12.11 · eager · Grade C", "reason": "Exact cache-zero official-image eager HTTP depth cell with the full quality battery; no protected route is replaced.", "evidence_id": "q38-f01e-autoround-tp1-eager-f16-exact-context-r3", "point_x": 16384, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-eager-f16-context-24576", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D12.04 · eager · Grade C", "reason": "Exact cache-zero official-image eager HTTP depth cell with the full quality battery; no protected route is replaced.", "evidence_id": "q38-f01e-autoround-tp1-eager-f16-exact-context-r3", "point_x": 24576, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-eager-f16-context-32768", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D12.11 · eager · Grade C", "reason": "Exact cache-zero official-image eager HTTP depth cell with the full quality battery; no protected route is replaced.", "evidence_id": "q38-f01e-autoround-tp1-eager-f16-exact-context-r3", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-f16-context-2048", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "PIECEWISE", "kv": "f16"}, "state": "lab-measured", "label": "D30.08 · PIECEWISE · Grade C", "reason": "Exact cache-zero official-image PIECEWISE HTTP depth cell with the full quality battery; FULL_AND_PIECEWISE remains separate.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-f16-exact-context-r3", "point_x": 2048, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-f16-context-4096", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "PIECEWISE", "kv": "f16"}, "state": "lab-measured", "label": "D29.41 · PIECEWISE · Grade C", "reason": "Exact cache-zero official-image PIECEWISE HTTP depth cell with the full quality battery; FULL_AND_PIECEWISE remains separate.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-f16-exact-context-r3", "point_x": 4096, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-f16-context-8192", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "PIECEWISE", "kv": "f16"}, "state": "lab-measured", "label": "D29.02 · PIECEWISE · Grade C", "reason": "Exact cache-zero official-image PIECEWISE HTTP depth cell with the full quality battery; FULL_AND_PIECEWISE remains separate.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-f16-exact-context-r3", "point_x": 8192, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-f16-context-16384", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "PIECEWISE", "kv": "f16"}, "state": "lab-measured", "label": "D28.19 · PIECEWISE · Grade C", "reason": "Exact cache-zero official-image PIECEWISE HTTP depth cell with the full quality battery; FULL_AND_PIECEWISE remains separate.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-f16-exact-context-r3", "point_x": 16384, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-f16-context-24576", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "PIECEWISE", "kv": "f16"}, "state": "lab-measured", "label": "D27.46 · PIECEWISE · Grade C", "reason": "Exact cache-zero official-image PIECEWISE HTTP depth cell with the full quality battery; FULL_AND_PIECEWISE remains separate.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-f16-exact-context-r3", "point_x": 24576, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-piecewise-f16-context-32768", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "PIECEWISE", "kv": "f16"}, "state": "lab-measured", "label": "D26.76 · PIECEWISE · Grade C", "reason": "Exact cache-zero official-image PIECEWISE HTTP depth cell with the full quality battery; FULL_AND_PIECEWISE remains separate.", "evidence_id": "q38-f01e-autoround-tp1-piecewise-f16-exact-context-r3", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3", "retry": {"status": "complete"}},
       {
         "id": "measured-b2dd-graph-f16-exact-context-2048",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "FULL_AND_PIECEWISE", "kv": "f16"},

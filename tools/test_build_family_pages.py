@@ -3136,12 +3136,12 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 15 matrices", overview_html)
-        self.assertIn("365/1,814 classified", overview_html)
+        self.assertIn("377/1,814 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "270", "measured"),
+            ("lab-measured", "282", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,449", "missing"),
+            ("missing", "1,437", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3157,8 +3157,8 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("25 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 25)
+        self.assertIn("26 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 26)
         self.assertIn("Q4_K_M HTTP context × KV/graph", initial_html)
         self.assertIn("value=26.7217226139707 tok/s", initial_html)
         self.assertIn("value=23.221668353050664 tok/s", initial_html)
@@ -3184,6 +3184,13 @@ class FamilyCoverageTest(unittest.TestCase):
             'data-family-view="context-q38-tp4-autoround-http"',
             deferred_html,
         )
+        self.assertIn(
+            'data-family-view="context-q38-tp1-autoround-graphmodes"',
+            deferred_html,
+        )
+        self.assertIn("Qwen3.8 AutoRound TP1 graph modes", deferred_html)
+        self.assertIn("value=11.919327130453762 tok/s", deferred_html)
+        self.assertIn("value=30.075429359128265 tok/s", deferred_html)
         self.assertIn("Qwen3.8 AutoRound TP1/TP2/TP4 HTTP context", deferred_html)
         self.assertIn("value=48.15370845841339 tok/s", deferred_html)
         self.assertIn("value=42.33933781431878 tok/s", deferred_html)
