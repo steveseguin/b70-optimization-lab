@@ -1,0 +1,18 @@
+{
+  "schema": "neural.download.qwen38-fp8-conditioning-result.v1",
+  "state": "failed-closed-no-factorial-result",
+  "campaign_id": "qwen38-fp8-tp2-http-p64-conditioning-20260826-r27",
+  "failure": "The standalone c1-to-c32 phase expanded 32 prompt IDs but the frozen oracle contains the required 64. The base harness refused the mismatch before that phase sent measurement requests.",
+  "partial_evidence": {
+    "c64_before_tok_s": 732.0453595807712,
+    "classification": "output-isolation-qualified-shape-variant",
+    "oracle_exact": "4/64",
+    "usable_as_factorial": false,
+    "reason": "No post-conditioning c64 measurement exists."
+  },
+  "cleanup": "clean",
+  "c64_before_sha256": "dc3af4a8c114574da2386ede663955538121298fc36d957c1c92e4db2bae800e",
+  "server_log_sha256": "6e2bcab09db792c32cdcde6754939deda21a98acb38258a218efd24395cf2810",
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-conditioning-20260826-r27-attempt1",
+  "correction": "R28 includes c64 at the end of the conditioning ladder so every phase uses the complete 64-row frozen oracle and also mirrors the historical R10 order."
+}
