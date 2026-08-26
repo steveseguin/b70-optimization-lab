@@ -1,0 +1,223 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-embedded-mtp-q4km-f16-exact-depth-result.v1",
+  "campaign_id": "qwen36-q4km-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+  "state": "passed-raw-graph-cells-quality-pending-negative-optimization",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+  "packet": {
+    "preregistration": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-exact-depth-r1-prereg.json",
+      "sha256": "d2f8de4d70013cfca6100236f35857d024b0573e81d6047a37581c76322d0561"
+    },
+    "runner": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q4km-f16-tp1-sycl-graph-exact-depth-r1.py",
+      "sha256": "0841a3beabc945c9b9c7443add3fd09fcef1a1dabab85b380cc75ee3c6c6c364"
+    },
+    "preregistration_note": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-exact-depth-r1-preregistration.md",
+      "sha256": "ef3bbb10854650655e9477b47eb39144d96f836fb31cd5ee8a37be5ad7307919"
+    },
+    "cpu_tests": {
+      "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/test_qwen36_q4km_f16_tp1_sycl_graph_exact_depth_r1.py",
+      "sha256": "bd4edd1467a97b2fcfb6eecd9470a7799553cb558432f31cf23ca6be592663a0"
+    },
+    "launch_git_head": "7fb98c25a4813df678748d832352370b0066e1ee"
+  },
+  "raw_artifacts": {
+    "exact-depth-receipt.json": "0a4c1298a3115aa458b8f89706d533826692f2a76ffbc865f07ea1d241821076",
+    "graph-evidence.json": "879d7e7d191bc9b6ad5e8fb6468896a3ea93f990b45885c09ec452436c60fe9e",
+    "llama-bench-0.json": "1ce526384af00cd44d7356d3e37d56c49fea7e8a8c8517ecc187287458639f38",
+    "llama-bench-0.stderr.log": "a9c35371920693071981cb2d5306f3d63f50008eb7464861c45092ed729c306e",
+    "llama-bench-2048.json": "9e72ab4e0e3e739f53cef6e34a3f9056e9cfd092dc033f4622b586844f9158e9",
+    "llama-bench-2048.stderr.log": "907904a85a43988a1015f677f1ad7387a507539ce274a30f891289ca3e60d259",
+    "llama-bench-4096.json": "5d09674d9a3c7f6b3856fad450b29121c7000c085135b604de0f1df87000f47a",
+    "llama-bench-4096.stderr.log": "2874e00763d2ce39ff981ef9ee0a1ff0b880123b85551423646491d532930cdf",
+    "llama-bench-8192.json": "e7d30e6c8d7e463fe9d73ab017bab3e5a000b36cebbdb7f34e42d87ef72b36d8",
+    "llama-bench-8192.stderr.log": "84eee1f3b057d6ee5a2919e69a7cfea87edc99fdb61a738544f1c8088a1bf0f5",
+    "llama-bench-16384.json": "07c05f613d46f52be771fe99d84177f36b7f51151728014e384c1bb29947985f",
+    "llama-bench-16384.stderr.log": "6ee5226bb02b56ec86806873f4c7b76fb238e507dab7807e7cba54f623704258",
+    "llama-bench-24576.json": "e41fee157b2c110017360355f5fcf2b1079b3ce4b8b478392c34a5d296c4619d",
+    "llama-bench-24576.stderr.log": "7cce180b4268c030d32f9b091aa7acc4570245bcc148414e1485974aa4b3169c",
+    "llama-bench-32768.json": "d2dfeed2f01c2a1318fb922b0c14feb0974e430a732767a812afac55a1c0e553",
+    "llama-bench-32768.stderr.log": "bf0999d18c85838509abada5b216bc23774a7dfcff2281ad093dd809b3662c3a",
+    "llama-bench.json": "53651e61458828d981d613dce91ec46dccc4e381733b9f51de4824d4722db5d5",
+    "metadata.json": "07dd8c8f677da133486b30d4da6a91e8fa2ae734dd450f0288244105cf1e77d2",
+    "parser.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "parser.stdout.json": "ff9898a65f22d91898d336ff607408468cbc2b21c4e26ad93cdd1b0aa7c13974",
+    "terminal-receipt.json": "4f77a7bfb27db085ace94c5c427b67f4ca918544b24522c7d3f082aff9a2cb1b"
+  },
+  "identity": {
+    "selectors": {
+      "revision": "qwen3.6-27b",
+      "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+      "quantization": "Q4_K_M",
+      "runtime_family": "llama.cpp SYCL",
+      "tp": 1,
+      "mtp": 0,
+      "graph_mode": "SYCL",
+      "kv": "f16",
+      "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+    },
+    "model": {
+      "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+      "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+      "path": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_K_M.gguf",
+      "size_bytes": 17106773120,
+      "sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+      "direct_and_ordinary_views_match": true,
+      "embedded_mtp_capability": true
+    },
+    "source": {
+      "base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+      "common_hpp_sha256": "ce4c8541381f9e1043e15b21359c8c828fc17f20c48672afb0c6d646c02b7805",
+      "ggml_sycl_cpp_sha256": "25152136d7e7ff9e96822127f320f08ccb4fa200af607f33afaa05a318cbbd6a",
+      "patch_chain_sha256_in_order": [
+        "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892",
+        "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3",
+        "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"
+      ]
+    },
+    "build": {
+      "llama_bench_size_bytes": 545160,
+      "llama_bench_sha256": "8ea8fd14e6ac0c4a4b3a711db8997189d677df2a4f7f88d20609f59ca463a55e",
+      "graph_backend_size_bytes": 329322096,
+      "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2",
+      "effective_dso_closure_count": 32,
+      "effective_dso_closure_canonical_json_sha256": "381e09a3e6a3f9c932930f20d5d4cc7fd67eef2b2c6bfb39308724f13b570720"
+    },
+    "graph_environment": {
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+      "GGML_SYCL_ENABLE_GRAPH": "1",
+      "GGML_SYCL_GRAPH_CACHE_SIZE": "8"
+    }
+  },
+  "phase_counter_field_order": [
+    "requested",
+    "cache_hit",
+    "cache_miss",
+    "cache_full",
+    "direct_replay",
+    "recorded",
+    "created",
+    "updated",
+    "recreated",
+    "replayed"
+  ],
+  "cells": [
+    {
+      "active_context_tokens": 0,
+      "prefill_avg_tok_s": 818.204240,
+      "decode_avg_tok_s": 28.579918,
+      "prefill_classification": "capture-and-replay-without-cache-full",
+      "prefill_counters": [24, 16, 8, 0, 16, 8, 8, 0, 0, 24],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 638, 3, 0, 638, 3, 3, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 2048,
+      "prefill_avg_tok_s": 800.162651,
+      "decode_avg_tok_s": 28.049278,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [28, 0, 28, 20, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 4096,
+      "prefill_avg_tok_s": 780.493068,
+      "decode_avg_tok_s": 27.664886,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [32, 0, 32, 24, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 8192,
+      "prefill_avg_tok_s": 746.470110,
+      "decode_avg_tok_s": 27.180377,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [40, 0, 40, 32, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 16384,
+      "prefill_avg_tok_s": 688.173276,
+      "decode_avg_tok_s": 26.233159,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [56, 0, 56, 48, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 24576,
+      "prefill_avg_tok_s": 644.830793,
+      "decode_avg_tok_s": 25.366200,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [72, 0, 72, 64, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    },
+    {
+      "active_context_tokens": 32768,
+      "prefill_avg_tok_s": 606.643612,
+      "decode_avg_tok_s": 24.569574,
+      "prefill_classification": "mixed-partial-cache-full",
+      "prefill_counters": [88, 0, 88, 80, 0, 8, 8, 0, 0, 8],
+      "decode_classification": "verified-capture-and-replay",
+      "decode_counters": [641, 639, 2, 0, 639, 2, 2, 0, 0, 641]
+    }
+  ],
+  "graph_off_comparison": {
+    "reference_measurement_id": "q36-q4km-tp1-kv-f16-context",
+    "result_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-exact-depth-result.json",
+    "result_sha256": "95954a7e8ea89bc6824226382920e0d56840a621c5391f223e3a75f006fbbf20",
+    "percent_delta_field_order": [
+      "active_context_tokens",
+      "prefill_graph_on_vs_off",
+      "decode_graph_on_vs_off"
+    ],
+    "per_depth_percent_delta": [
+      [0, -0.986596, -2.466805],
+      [2048, -10.254954, -2.329479],
+      [4096, -10.227150, -2.670128],
+      [8192, -10.113854, -2.521848],
+      [16384, -9.452760, -2.416150],
+      [24576, -8.531549, -2.053977],
+      [32768, -7.397340, -1.876762]
+    ],
+    "unweighted_mean_percent_delta": {
+      "prefill": -8.137743,
+      "decode": -2.333593
+    },
+    "wins": {
+      "prefill_cells": 0,
+      "decode_cells": 0
+    },
+    "classification": "negative-optimization-result; graph-on is slower at all seven depths for both phases",
+    "authority": "coverage and mechanism evidence only; do not replace the faster protected graph-off values"
+  },
+  "result": {
+    "raw_cell_count": 7,
+    "exact_depth_receipt_status": "passed",
+    "graph_classification": "verified-capture-and-replay-with-mixed-partial-prefill",
+    "decode_graph_classification_all_cells": "verified-capture-and-replay",
+    "prefill_phase_disclosure": "Depth 0 is fully graph-certified. Depths 2048 through 32768 are mixed partial because cache 8 records eight shapes and reports the remaining distinct prefill shapes as cache_full.",
+    "performance_classification": "negative-versus-matching-graph-off",
+    "quality_status": "pending"
+  },
+  "terminal": {
+    "receipt_sha256": "4f77a7bfb27db085ace94c5c427b67f4ca918544b24522c7d3f082aff9a2cb1b",
+    "created_at_utc": "2026-08-26T00:09:31.205142+00:00",
+    "cleanup_passed": true,
+    "error": null
+  },
+  "authority": {
+    "coverage_evidence_preserved": true,
+    "site_publication_authorized": false,
+    "quality_claim_authorized": false,
+    "record_or_submission_authorized": false,
+    "graph_estimates_used": false,
+    "protected_graph_off_values_replaced": false,
+    "historical_featured_speeds_are_immutable": true
+  }
+}
