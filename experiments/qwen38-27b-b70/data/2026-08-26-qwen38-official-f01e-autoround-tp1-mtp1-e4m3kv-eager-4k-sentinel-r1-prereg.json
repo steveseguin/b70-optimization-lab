@@ -1,0 +1,151 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-mtp1-e4m3kv-eager-sentinel-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Test exactly one current-f01e AutoRound TP1/native-MTP1/eager/E4M3-KV exact-4K cell. Require active accepted speculation, exact equality to the same-image TP1/MTP0/eager/E4M3 target, the full quality battery, exact runtime identity, model verification, isolated cache, and cleanup. The TP1/MTP1/eager/F16 exact-4K result is mechanism precedent only because changing KV dtype changes the target-token oracle.",
+  "coverage_contract": {
+    "path": "families/qwen-27b.json",
+    "id": "qwen38-tp1-vllm-xpu-autoround-mtp-matrix",
+    "selectors": {
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "tp": 1,
+      "mtp": 1,
+      "active_context_tokens": 4096,
+      "graph_mode": "off",
+      "kv": "fp8_e4m3",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp1-vllm-xpu-autoround-native-mtp-v1",
+      "speculation_method": "native-mtp"
+    },
+    "preregistration_state": "missing",
+    "other_cells_authorized": 0
+  },
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "image_id": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 1,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0",
+    "mtp_depth": 1,
+    "kv_cache_dtype": "fp8_e4m3",
+    "graph_mode": "off",
+    "enforce_eager": true,
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "server_delta": [
+      "--enforce-eager",
+      "--kv-cache-dtype fp8_e4m3",
+      "--speculative-config {\"method\":\"qwen3_next_mtp\",\"num_speculative_tokens\":1}"
+    ]
+  },
+  "parent_evidence": {
+    "e4m3_mtp0_target": {
+      "role": "same-image, same-topology, same-mode, same-KV exact-token oracle",
+      "result_path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-r1-result.json",
+      "result_sha256": "0e3e8a9923e4904a33f8a4223aa197281ddb98fc93661dd4e6174aefa26f0d07",
+      "raw_path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1/exact-depth/depth-4096.json",
+      "raw_sha256": "1d541ec78830ba6455b4434c352fe5a44ba5000f5d9d5e6f4c171b7f1053884f",
+      "output_token_ids_sha256": "a3d7ad63a22cfb897d9d7f69952e30e2036617776d18fb4c8a9be1513da522cd",
+      "terminal_path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1/terminal-receipt.json",
+      "terminal_sha256": "ddf2d160dac21c5e110417410c84a113c0c89c2db2c0fa41a53943efad3d9eef"
+    },
+    "f16_mtp1_mechanism_parent": {
+      "role": "same-image TP1/native-MTP1/eager exact-4K boot and acceptance precedent; not a token oracle across KV dtype",
+      "result_path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-r1-result.json",
+      "result_sha256": "e9e22f9e9d75ff199973496d6dfcac3a0277dde302a9d0a6504f710c1014d02a",
+      "raw_path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-20260826-r1/exact-depth/depth-4096.json",
+      "raw_sha256": "debf82553a2799d1949d469656820163b993407c6d7225aad25511fb5cbc0109",
+      "verification_path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-20260826-r1/verification/depth-4096.json",
+      "verification_sha256": "afaac3d1d18839a016a7fc062ca3931a54f170cc4311b4e21660e84b771ccf1a",
+      "accepted_tokens": 56,
+      "drafted_tokens": 71,
+      "target_parity": true
+    }
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [4096],
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896,
+    "cache_tokens_required": 0,
+    "gate": "The request must pass every exact-depth check and return 128 token IDs exactly equal to the frozen E4M3 MTP0 target. Cross-boot mismatch quarantines the result without proving a causal MTP defect."
+  },
+  "acceptance_contract": {
+    "snapshot_scope": "Prometheus counters immediately before and after only the exact-4K request; startup and quality traffic excluded",
+    "draft_metric": "vllm:spec_decode_num_draft_tokens_total",
+    "accepted_metric": "vllm:spec_decode_num_accepted_tokens_total",
+    "gate": "drafted delta > 0 and accepted delta > 0 and accepted <= drafted"
+  },
+  "quality_contract": {
+    "helper": "scripts/qwen38-text-quality-suite.py",
+    "baseline": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp1-mtp0-f16-graph-seed0-natural-eos-replay-a-baseline-quality/quality.json",
+    "baseline_sha256": "738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18",
+    "gate": "After exact 4K, require seven exact cases, eight repeats with one hash, 8K needle, 24 baseline matches, pass_all, baseline_match_all, and cache zero for all requests."
+  },
+  "terminal_classification": {
+    "passed-quality-clean-sentinel": "Exact 4K, isolated positive conserved MTP1 acceptance, E4M3 target parity, full quality, identity, cache/model verification, and cleanup pass.",
+    "quarantined-acceptance-failed": "Exact 4K passes but drafting or acceptance is absent or non-conserved; retain diagnostic evidence without speed publication.",
+    "quarantined-target-verification-failed": "Exact 4K passes but candidate IDs differ from the frozen same-profile E4M3 target; retain diagnostic evidence without speed publication.",
+    "quarantined-quality-failed": "Exact 4K, acceptance, and target parity pass but the full quality contract fails.",
+    "quarantined-exact-depth-failed": "The exact 4K helper gate fails; retain diagnostic evidence only.",
+    "unsupported": "Only an explicit exact-image rejection of the embedded MTP1 speculator binding.",
+    "failed": "Startup, identity, topology, endpoint, model, cache, cleanup, or another non-explicit failure."
+  },
+  "speculator_binding": {
+    "type": "native embedded Qwen MTP; no external draft model",
+    "method_requested": "qwen3_next_mtp",
+    "method_resolved_expected": "mtp",
+    "num_speculative_tokens": 1,
+    "mtp_num_hidden_layers": 1,
+    "mtp_tensor_count": 29,
+    "mtp_tensor_file": "model_extra_tensors.safetensors",
+    "mtp_tensor_sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de"
+  },
+  "frozen_input_sha256": {
+    "protected_overlay_manifest": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "model_manifest": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "model_verifier": "5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9",
+    "depth_helper": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067",
+    "quality_helper": "67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d"
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-20260826-r1",
+    "port": 19524,
+    "container": "q38-f01e-ar-mtp1-e4m3-4k-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_gpu_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true,
+    "clean_pushed_main_required": true
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "historical_replacement_allowed": false,
+    "protected_profiles_untouched": true,
+    "automatic_publication": false,
+    "site_cells_filled_automatically": 0,
+    "descendant_expansion_is_automatic": false,
+    "descendant_execution_authorized": false,
+    "only_exact_4k_authorized": true,
+    "other_depths_tp_mtp_graph_or_kv_inferred": false
+  }
+}
