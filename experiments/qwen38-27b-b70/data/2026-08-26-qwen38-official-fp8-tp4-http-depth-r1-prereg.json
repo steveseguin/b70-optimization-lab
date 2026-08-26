@@ -1,0 +1,65 @@
+{
+  "schema": "neural.download.qwen38-fp8-vllm-http-depth-prereg.v1",
+  "campaign_id": "qwen38-official-fp8-tp4-http-depth-20260826-r1",
+  "status": "preregistered-not-run",
+  "purpose": "Fill the official Qwen3.8 FP8 TP4 target-only context gap with exact measured decode and TTFT points, plus a disclosed effective-prompt-throughput proxy.",
+  "tuple": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "local_model_path": "/mnt/usb-models/llm-models/qwen3.8-27b-fp8-official-017b9c7",
+    "model_manifest_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb",
+    "runtime_image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "runtime_version": "0.27.2rc1.dev77+gac7509e2b",
+    "cards": 4,
+    "topology": "TP4 over all four Arc Pro B70 cards with ZE_AFFINITY_MASK=0,1,2,3",
+    "quantization": "official block-scaled FP8 target weights; FP16 KV",
+    "generation": "target-only / MTP0 / no draft / no speculation",
+    "graph": "PIECEWISE decode capture size one; experimental TP4 XPU graph",
+    "context_capacity_tokens": 33024,
+    "parallel_slots": 1,
+    "max_num_batched_tokens": 4096,
+    "prefix_cache": false,
+    "output_tokens": 128
+  },
+  "frozen_inputs": {
+    "fixture": {
+      "path": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+      "sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9"
+    },
+    "client": {
+      "path": "scripts/bench-openai-token-depth-suite.py",
+      "sha256": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067"
+    },
+    "model_verifier": {
+      "path": "experiments/qwen38-27b-b70/scripts/verify-20260826-qwen38-official-fp8-tp1-fit-depth-r1.py",
+      "sha256": "50cb9e228511a7d855557b15792b3d8158c8daf28e97c00d1d2e781b7e28943d"
+    }
+  },
+  "measured_depths": [2048, 4096, 8192, 16384, 24576, 32768],
+  "metrics": {
+    "decode": "99 inter-token intervals between streamed token-ID events 1 and 100 after TTFT",
+    "ttft": "HTTP request start to first returned token",
+    "effective_prompt_throughput_proxy": "exact submitted prompt tokens divided by measured TTFT seconds; includes HTTP scheduling, chunked prefill, and first-token work and is not a server-only kernel prefill rate",
+    "workload_grade": "C repeated-token exact-shape fixture; not natural prose"
+  },
+  "required_gates": [
+    "clean pushed main and exclusive host/GPU locks before launch",
+    "exact pinned image is local and ordinary plus O_DIRECT model identities match",
+    "fixture, client, verifier, model manifest, and preregistration hashes are captured",
+    "all six receipts report exact prompt usage, 128 completion token IDs, cache zero, no truncation, and no context shift",
+    "container stops cleanly and all four render nodes are idle after the run"
+  ],
+  "failure_policy": {
+    "create_only_output": true,
+    "no_same_campaign_retry": true,
+    "startup_or_capacity_failure": "preserve logs and publish no cells; any changed memory, batch, context, or graph setting requires a new preregistration"
+  },
+  "publication": {
+    "no_interpolation_or_extrapolation": true,
+    "zero_context_point": "not measured and must remain absent",
+    "historical_short-decode_profiles_are_control_only": true,
+    "headline_effect": "additive operating profile only; does not replace or lower any protected TP4 short-decode result",
+    "natural_prompt_claim_authorized": false,
+    "server_only_prefill_claim_authorized": false
+  }
+}
