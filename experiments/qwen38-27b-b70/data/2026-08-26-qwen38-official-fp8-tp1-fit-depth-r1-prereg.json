@@ -1,0 +1,48 @@
+{
+  "schema": "neural.download.qwen38-official-fp8-tp1-fit-depth-prereg.v1",
+  "campaign_id": "qwen38-official-fp8-tp1-fit-depth-20260826-r1",
+  "state": "preregistered-not-launched-download-incomplete",
+  "purpose": "Boundedly determine whether the official Qwen3.8-27B FP8 artifact fits one B70 at exact 8K, 4K, or 2K and publish every smaller exact-depth serving cell supported by the first successful service lifetime.",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "target_path": "/mnt/usb-models/llm-models/qwen3.8-27b-fp8-official-017b9c7",
+    "direct_manifest": {"path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json", "sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb", "lfs_files": 66, "total_weight_bytes": 30866866928},
+    "verification": "Every manifest weight must first match size and publisher SHA-256 through strict O_DIRECT full-file reads, then match again through complete ordinary reads; fallback direct modes are not sufficient for this campaign.",
+    "download_policy": "This packet never downloads, resumes, repairs, deletes, or renames model files. An external revision-pinned download must finish before explicit verification or launch."
+  },
+  "runtime": {
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "classification": "newest pinned vLLM XPU nightly identity already audited for the official FP8 model; immutable comparison/runtime base, not a floating tag",
+    "audit_inputs": {
+      "tp2_prereg": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-depth-r1-prereg.json", "sha256": "a1c688eb065205cb36a8c66a307433693dff4c8b6c623419552624bb71815c5f"},
+      "image_inspect": {"path": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/image-inspect.json", "sha256": "ff377c9e9ca90e6e96fd24fc8645f0db241a6300890888850149b028f4e6ff47"},
+      "server_log": {"path": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/server.log", "sha256": "079788a3985c53f6a4029c455c5645e4f359d7e145ce2cf89a8d21d7fec28a18"},
+      "tp2_summary": {"path": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json", "sha256": "71c5925287f93eb0d81d198aab5eb849674b40032e355f9a450fde91e2f7c7f7"}
+    }
+  },
+  "selectors": {"cards": 1, "topology": "TP1 / one visible B70", "target_quantization": "official block-scaled FP8", "kv_cache": "FP16/auto", "mtp": 0, "speculation": "none", "graph": "off / enforce-eager for minimum fit memory", "parallel_slots": 1, "prefix_cache": false, "fit": "bounded descending context capacities"},
+  "fit_ladder": [
+    {"arm": "fit-8k", "active_context_tokens": 8192, "context_capacity_tokens": 8448, "cells_if_first_success": [8192, 4096, 2048]},
+    {"arm": "fit-4k", "active_context_tokens": 4096, "context_capacity_tokens": 4352, "cells_if_first_success": [4096, 2048]},
+    {"arm": "fit-2k", "active_context_tokens": 2048, "context_capacity_tokens": 2304, "cells_if_first_success": [2048]}
+  ],
+  "server_contract": {"gpu_memory_utilization": 0.98, "block_size": 64, "max_num_seqs": 1, "max_num_batched_tokens": 2048, "dtype": "float16", "quantization": "fp8", "language_model_only": true, "output_tokens_per_cell": 128, "request_timeout_seconds": 1800},
+  "frozen_inputs": {
+    "fixture": {"path": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json", "sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9"},
+    "client": {"path": "scripts/bench-openai-token-depth-suite.py", "sha256": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067"},
+    "strict_direct_verifier_base": {"path": "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py", "sha256": "5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9"}
+  },
+  "execution_contract": {"descending_order": [8192, 4096, 2048], "fresh_service_lifetime_per_attempt": true, "stop_after_first_success": true, "measure_first_success_and_all_smaller_cells_in_that_lifetime": true, "model_verification_immediately_before_gpu_lock_and_launch": true, "clean_pushed_main": true, "exclusive_gpu0_and_host_locks": true, "create_only": true},
+  "failure_policy": {
+    "startup_failure": "Preserve logs and cleanup, then descend to the next arm regardless of classifier; only explicit allocation/capacity evidence is labeled fit failure.",
+    "receipt_or_correctness_failure_after_boot": "Stop failed-invalid, preserve all artifacts, publish no cell from that lifetime, and do not reinterpret it as fit failure.",
+    "2k_explicit_fit_failure": "Durable unsupported closure for official FP8 TP1 at active context >=2K under this exact runtime and memory contract; publish zero measured cells.",
+    "2k_unclassified_failure": "Durable failed/inconclusive closure, not unsupported.",
+    "larger_explicit_fit_failure_then_smaller_success": "Publish only the exact smaller Grade-C cells returned by the successful lifetime and retain larger depths as unsupported under this tuple."
+  },
+  "publication": {"evidence_grade": "C exact repeated-token serving shape with 128 returned token IDs and cache-zero gate; not natural prose", "no_interpolation_or_extrapolation": true, "valid_cells_if_8k_fits": 3, "valid_cells_if_4k_fits": 2, "valid_cells_if_only_2k_fits": 1, "cells_if_no_fit": 0, "tp2_or_tp4_cells": 0, "speculative_cells": 0, "graph_on_cells": 0, "headline_or_protected_replacement": false, "localmaxxing_submission": false, "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]},
+  "lifecycle": {"output_root": "/mnt/fast-ai/bench-results/qwen38-official-fp8-tp1-fit-depth-20260826-r1", "cache_root": "/mnt/fast-ai/vllm-cache/qwen38-official-fp8-f01e-tp1-fit-depth-r1", "port": 19453, "container_prefix": "qwen38-official-fp8-tp1-fit-r1", "exact_ack": "RUN qwen38-official-fp8-tp1-fit-depth-20260826-r1", "default_is_inert": true, "requires_clean_pushed_main": true, "create_only": true}
+}
