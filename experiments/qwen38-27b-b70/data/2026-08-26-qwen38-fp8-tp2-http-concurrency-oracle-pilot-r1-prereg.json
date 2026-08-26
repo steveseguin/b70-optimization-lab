@@ -1,0 +1,41 @@
+{
+  "schema": "neural.download.concurrency-oracle-pilot-preregistration.v1",
+  "campaign_id": "qwen38-fp8-tp2-http-concurrency-oracle-pilot-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Generate a complete cache-zero sequential token-ID oracle for 64 fixed official-FP8 TP2 prompts before publication attempts are specified.",
+  "identity": {
+    "model_repository": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "model_manifest_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b",
+    "cards": 2,
+    "topology": "TP2",
+    "generation": "target-only / MTP0",
+    "kv_cache": "FP16"
+  },
+  "frozen_inputs": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "harness": "scripts/bench-openai-concurrency-oracle.py",
+    "harness_sha256": "5860b8e75224d20f3a880b7a970cb07f00697562090e5489549c88b049a4eac2",
+    "request_client": "scripts/bench-openai-realistic-suite.py",
+    "request_client_sha256": "911fcd172cb3b4d2a319e34cc6ba6ca41ee7c352fcd269e93008371e45cc4fb2"
+  },
+  "server_profile": {
+    "endpoint": "vLLM OpenAI-compatible /v1/completions",
+    "max_model_len": 4096,
+    "max_num_seqs": 4,
+    "max_num_batched_tokens": 256,
+    "prefix_cache": false,
+    "graph": "PIECEWISE capture size 1"
+  },
+  "pilot": {
+    "concurrency_points": [1, 2, 4, 8, 16, 32, 64],
+    "max_output_tokens": 128,
+    "sequential_oracle_rows": 64,
+    "required_oracle_gate": "all 64 sequential responses contain 128 complete raw token IDs and report zero cached prompt tokens",
+    "publication_status": "pilot only; its concurrency rates and latency values may not be published"
+  },
+  "next_step_if_passed": "Commit compact prompt/token-ID digests, then preregister two new fresh-server attempts with output-isolation, cache-zero, complete-response, queued-latency, and pointwise-stability gates."
+}
