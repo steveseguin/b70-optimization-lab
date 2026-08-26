@@ -36,11 +36,13 @@ class SmallContextHttpTests(unittest.TestCase):
 
     def test_profiles_have_separate_model_identities(self) -> None:
         for fragment in (
-            "PROFILE must be tp1, tp2, or q8_tp1",
+            "PROFILE must be tp1, tp2, q8_tp1, or q8_tp2",
             "model_filename=Qwen3.8-27B-Q4_K_M.gguf",
             "model_filename=Qwen3.8-27B-Q8_0.gguf",
             "expected_model_sha=f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
             "model_label=qwen38-q8-tp1-http-smallctx",
+            "model_label=qwen38-q8-tp2-http-smallctx",
+            "topology=tp2",
         ):
             self.assertIn(fragment, self.text)
 

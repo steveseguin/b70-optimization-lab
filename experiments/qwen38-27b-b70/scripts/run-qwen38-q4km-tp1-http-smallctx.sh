@@ -9,6 +9,7 @@ source_dir="${SOURCE_DIR:-}"
 out_parent="${OUT_DIR:-${repo_root}/experiments/qwen38-27b-b70/data}"
 gpu_index="${GPU_INDEX:-0}"
 profile="${PROFILE:-tp1}"
+topology=tp1
 attempt="${ATTEMPT:-1}"
 port="${PORT:-18088}"
 campaign="${CAMPAIGN_ID:-qwen38-q4km-tp1-http-smallctx-20260825-r1}"
@@ -35,6 +36,7 @@ case "${profile}" in
     expected_backend_sha=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154
     ;;
   tp2)
+    topology=tp2
     model_filename=Qwen3.8-27B-Q4_K_M.gguf
     model_label=qwen38-q4km-tp2-http-smallctx
     expected_model_sha=31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34
@@ -50,7 +52,17 @@ case "${profile}" in
     expected_server_sha=35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545
     expected_backend_sha=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154
     ;;
-  *) fail 'PROFILE must be tp1, tp2, or q8_tp1' ;;
+  q8_tp2)
+    topology=tp2
+    model_filename=Qwen3.8-27B-Q8_0.gguf
+    model_label=qwen38-q8-tp2-http-smallctx
+    expected_model_sha=f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8
+    expected_server_sha=6ae782c7e8f7a992e0eeced10ade2a84b3cbb9ba65c65cbb917e52d1ce09777d
+    expected_backend_sha=375f6d251b022b62367e73d2cd6b7eb0200efc9cc9c854a509af45950938c3ed
+    expected_source_commit=a4349bcee933cd2b13820bc72fbe842e9c2f4b7a
+    [[ -n "${source_dir}" && -d "${source_dir}/.git" ]] || fail 'Q8 TP2 requires SOURCE_DIR'
+    ;;
+  *) fail 'PROFILE must be tp1, tp2, q8_tp1, or q8_tp2' ;;
 esac
 [[ -n "${model_dir}" && -n "${build_dir}" ]] || fail 'set MODEL_DIR and BUILD_DIR'
 [[ "${gpu_index}" =~ ^[0-9]+$ ]] || fail 'GPU_INDEX must be numeric'
@@ -83,7 +95,7 @@ exec 8>"/tmp/b70-benchmark.lock"
 flock -n 8 || fail 'host-wide benchmark lock is held'
 exec 9>"/tmp/b70-gpu${gpu_index}.lock"
 flock -n 9 || fail "GPU ${gpu_index} lock is held"
-if [[ "${profile}" == tp2 ]]; then
+if [[ "${topology}" == tp2 ]]; then
   exec 10>"/tmp/b70-gpu1.lock"
   flock -n 10 || fail 'GPU 1 lock is held'
 fi
@@ -92,7 +104,7 @@ pgrep -af 'llama-(server|bench|batched-bench)|vllm' >/dev/null && fail 'another 
 [[ "$(sha256sum "${model}" | awk '{print $1}')" == "${expected_model_sha}" ]] || fail 'model SHA-256 mismatch'
 [[ "$(sha256sum "${server}" | awk '{print $1}')" == "${expected_server_sha}" ]] || fail 'server SHA-256 mismatch'
 [[ "$(sha256sum "${backend}" | awk '{print $1}')" == "${expected_backend_sha}" ]] || fail 'backend SHA-256 mismatch'
-if [[ "${profile}" == tp2 ]]; then
+if [[ "${topology}" == tp2 ]]; then
   [[ "$(git -C "${source_dir}" rev-parse HEAD)" == "${expected_source_commit}" ]] || fail 'source commit mismatch'
 fi
 
@@ -106,7 +118,7 @@ set +u
 # shellcheck disable=SC1091
 source /opt/intel/oneapi/setvars.sh --force >/dev/null 2>&1
 set -u
-if [[ "${profile}" == tp2 ]]; then
+if [[ "${topology}" == tp2 ]]; then
   export ONEAPI_DEVICE_SELECTOR="level_zero:1,0"
   device_args=(--device SYCL0,SYCL1 --split-mode tensor --tensor-split 1,1)
 else
@@ -147,7 +159,7 @@ env | grep -E '^(GGML_|UR_L0_|ONEAPI_DEVICE_SELECTOR=|ONEAPI_ROOT=|LD_LIBRARY_PA
 sha_inputs=("${model}" "${server}" "${backend}" "${suite}" "${prereg}" "${repo_root}/scripts/bench-openai-concurrency-oracle.py")
 if [[ -n "${oracle_digests}" ]]; then sha_inputs+=("${oracle_digests}"); fi
 sha256sum "${sha_inputs[@]}" > "${run_dir}/sha256sums.txt"
-if [[ "${profile}" == tp2 ]]; then
+if [[ "${topology}" == tp2 ]]; then
   git -C "${source_dir}" status --short > "${run_dir}/source-status.txt"
 fi
 free -b > "${run_dir}/memory-before.txt"
