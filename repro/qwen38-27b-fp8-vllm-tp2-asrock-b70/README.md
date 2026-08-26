@@ -132,6 +132,16 @@ passed 7/7 sequential semantic cases, 8/8 repeat stability, and a 512/512 c64
 concurrent semantic canary. See the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md)
 and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-summary.json).
 
+### MTP2 one-layer reuse is research-only
+
+The checkpoint has one publisher MTP layer. Asking vLLM for two speculative
+tokens serially reuses that layer; it is not a native MTP2 checkpoint. The
+bounded screen measured `83.646518 tok/s` for one user, but only `737.190110
+tok/s` at c64 versus MTP1's `1,091.642460`, and MBT768 fell to `712.790232`.
+Use the MTP1 launcher above for the selected service. The exact positive and
+negative boundaries are in the
+[MTP2-reuse result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-result.md).
+
 ## Captured result
 
 - median decode after TTFT: **`21.708532 tok/s`**

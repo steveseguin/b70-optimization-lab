@@ -169,6 +169,8 @@ def svg_profile(profile):
         v = int(v)
         if x_metric == "concurrent_sequences":
             return str(v)
+        if x_metric == "speculative_tokens":
+            return f"MTP{v}"
         if v < 2:
             return "0"
         return f"{v // 1024}K" if v >= 1024 and v % 1024 == 0 else (f"{v / 1024:.1f}K" if v >= 1024 else str(v))

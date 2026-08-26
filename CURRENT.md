@@ -958,6 +958,13 @@ faster at its separate c128 optimum. The concurrent MTP1 service requires XPU
 kernels `1e90ffa672`, whose upstream mixed speculative/non-speculative GDN
 correction replaced an older kernel that aborted at c16.
 
+The bounded MTP2 one-layer-reuse screen is closed as a split research result:
+single-user decode rose to `83.646518 tok/s`, but c64 aggregate fell to
+`737.190110 tok/s`; MBT768 regressed further to `712.790232` and MBT1024 did
+not run by the frozen stop rule. It is not native two-layer MTP or a candidate
+default. See the
+[result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-result.md).
+
 Resume and evidence:
 
 - [Qwen3.8 model board](README.md#qwen38-27b-model-board)

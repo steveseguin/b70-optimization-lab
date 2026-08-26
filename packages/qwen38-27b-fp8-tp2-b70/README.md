@@ -15,6 +15,13 @@ The package also includes a separate publisher-MTP1 profile. It reaches
 at 64 users. MTP1 is the faster interactive mode; target-only/MTP0 remains the
 highest-throughput mode. The site and guide keep those identities separate.
 
+An experimental MTP2-reuse screen ran the checkpoint's one publisher MTP
+layer twice. It reached **`83.646518 tok/s`** for the same one-user shape, but
+fell to `737.190110 tok/s` at c64 (`-32.47%` versus MTP1); MBT768 regressed
+again. It is recorded as a research result, not a package default or native
+two-layer MTP. See the
+[MTP2-reuse result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-result.md).
+
 > **Status: candidate, not a beginner install guide.** The exact model,
 > container, configuration, commands, and evidence are present. A clean Ubuntu
 > host installation of the Intel driver and Docker prerequisites has not yet

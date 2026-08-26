@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "classification": "measured-research-screen",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "publisher_mtp_layers": 1,
+    "requested_speculative_tokens": 2,
+    "mode": "serial reuse of the one publisher MTP layer; not native two-layer MTP"
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image_id": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
+    "w8a16_environment_gate": "VLLM_XPU_FP8_BLOCK_W8A16=1"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "block_size": 64,
+    "prefix_cache": false
+  },
+  "single_user": {
+    "max_num_batched_tokens": 512,
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "fresh_response_after_ttft_tok_s": 83.6465178203373,
+    "wall_tok_s": 79.9074903997698,
+    "cached_tokens": 0,
+    "gain_vs_mtp1_percent": 35.570644059768156,
+    "gain_vs_mtp0_percent": 138.91244582459677,
+    "evidence": "qwen38-fp8-block-w8a16-mtp2-reuse-screen-20260826-r1/single-p40-o128.json"
+  },
+  "concurrency": {
+    "metric": "sum(completion_tokens) / synchronized HTTP batch wall time",
+    "points": [
+      {
+        "max_num_batched_tokens": 512,
+        "concurrent_sequences": 64,
+        "aggregate_tok_s": 737.1901098867297,
+        "samples": 1,
+        "complete_tokens": "8192/8192",
+        "sequential_oracle_exact": "57/64",
+        "evidence": "qwen38-fp8-block-w8a16-mtp2-reuse-screen-20260826-r1/c64-screen.json"
+      },
+      {
+        "max_num_batched_tokens": 768,
+        "concurrent_sequences": 64,
+        "aggregate_tok_s": 712.7902319255527,
+        "samples": 1,
+        "complete_tokens": "8192/8192",
+        "sequential_oracle_exact": "58/64",
+        "evidence": "qwen38-fp8-block-w8a16-mtp2-reuse-mbt768-screen-20260826-r1/c64-screen.json"
+      }
+    ],
+    "mbt512_loss_vs_mtp1_c64_percent": -32.46963753154104,
+    "mbt768_change_vs_mbt512_percent": -3.3098487939462573
+  },
+  "quality": {
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "sequential_evidence": [
+      "qwen38-fp8-block-w8a16-mtp2-reuse-screen-20260826-r1/sequential-quality.json",
+      "qwen38-fp8-block-w8a16-mtp2-reuse-mbt768-screen-20260826-r1/sequential-quality.json"
+    ],
+    "c64_output_isolation": "passed at MBT512 and MBT768",
+    "cache_nonzero_requests": 0,
+    "concurrent_semantic_canary": "not run because the aggregate continuation hurdle failed"
+  },
+  "decision": {
+    "status": "closed-research-profile",
+    "single_user": "positive",
+    "aggregate": "negative versus MTP1",
+    "mbt1024": "not run by preregistered stop rule",
+    "promotion": "not a candidate package default"
+  },
+  "reporting_boundary": "All values are directly measured. This serial one-layer reuse mode is labeled separately from native MTP1. It has no 32K result, no replicated concurrency point, and no concurrent semantic-canary claim. No value is interpolated or extrapolated."
+}

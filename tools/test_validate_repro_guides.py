@@ -169,6 +169,30 @@ class ReproGuideValidationTest(unittest.TestCase):
                 MODULE._validate_performance_profiles(repo, "example", profiles), []
             )
 
+    def test_performance_profile_accepts_measured_speculative_depth(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            (repo / "data").mkdir()
+            (repo / "data/measured.json").write_text("{}\n")
+            profiles = [{
+                "id": "decode-speculative-depth",
+                "label": "Decode by MTP mode",
+                "metric": "decode",
+                "unit": "tok/s",
+                "x_metric": "speculative_tokens",
+                "x_label": "Requested speculative tokens",
+                "scope": "Three directly measured modes",
+                "evidence": "data/measured.json",
+                "points": [
+                    {"speculative_tokens": 0, "value": 35.0, "samples": 1},
+                    {"speculative_tokens": 1, "value": 61.0, "samples": 1},
+                    {"speculative_tokens": 2, "value": 83.0, "samples": 1},
+                ],
+            }]
+            self.assertEqual(
+                MODULE._validate_performance_profiles(repo, "example", profiles), []
+            )
+
     @staticmethod
     def _entry(guide: str) -> dict[str, object]:
         return {

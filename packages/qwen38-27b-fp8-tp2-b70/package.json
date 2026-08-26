@@ -17,7 +17,7 @@
     "delivery": ["container"],
     "modalities": ["text"],
     "use_cases": ["general", "coding", "long context"],
-    "tags": ["two cards", "Docker", "official checkpoint", "target only", "MTP0", "MTP1", "W8A16"],
+    "tags": ["two cards", "Docker", "official checkpoint", "target only", "MTP0", "MTP1", "MTP2 reuse research", "W8A16"],
     "published_at": "2026-08-22",
     "featured_metric": {
       "value": 35.01136892707062,
@@ -118,6 +118,13 @@
     "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-sequential-quality.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-c64-quality-512.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/r121-server.log",
+    "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-result.md",
+    "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-summary.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp2-reuse-screen-20260826-r1/single-p40-o128.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp2-reuse-screen-20260826-r1/c64-screen.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp2-reuse-screen-20260826-r1/sequential-quality.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp2-reuse-mbt768-screen-20260826-r1/c64-screen.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp2-reuse-mbt768-screen-20260826-r1/sequential-quality.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/w8a16-c128-measured-x5.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/w8a16-c128-quality-1024.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
@@ -161,6 +168,21 @@
     "scripts/summarize-http-concurrency-attempts.py"
   ],
   "performance_profiles": [
+    {
+      "id": "http-block-w8a16-single-user-vs-speculative-tokens",
+      "label": "Block-W8A16 official FP8 TP2 single-user decode by MTP mode",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_metric": "speculative_tokens",
+      "x_label": "Requested speculative tokens (MTP2 serially reuses the one publisher layer)",
+      "scope": "Directly measured fresh-response after-TTFT decode for the same cache-zero 40-prompt-token/128-output-token shape on two B70s. MTP0 is target-only, MTP1 uses the publisher's one MTP layer once, and experimental MTP2 reuses that same layer serially. Each marker is the first declared response after its mode's conditioning procedure. MTP2 improves this repeated single-user fixture but loses 32.47% versus MTP1 at c64, so it is research-only. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-summary.json",
+      "points": [
+        {"speculative_tokens": 0, "value": 35.01136892707062, "samples": 1},
+        {"speculative_tokens": 1, "value": 61.69957987620137, "samples": 1},
+        {"speculative_tokens": 2, "value": 83.6465178203373, "samples": 1}
+      ]
+    },
     {
       "id": "http-block-w8a16-mtp1-output-audited-aggregate-vs-concurrent-users",
       "label": "Block-W8A16 official FP8 TP2 + MTP1 aggregate decode",

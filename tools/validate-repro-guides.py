@@ -48,7 +48,11 @@ PERFORMANCE_METRICS = {
     "ttft": "ms",
     "aggregate_decode": "tok/s",
 }
-PERFORMANCE_X_METRICS = {"context_tokens", "concurrent_sequences"}
+PERFORMANCE_X_METRICS = {
+    "context_tokens",
+    "concurrent_sequences",
+    "speculative_tokens",
+}
 
 
 class GuideAnchorParser(HTMLParser):
