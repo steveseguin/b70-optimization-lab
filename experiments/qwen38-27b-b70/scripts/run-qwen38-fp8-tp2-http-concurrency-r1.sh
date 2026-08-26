@@ -17,6 +17,7 @@ container="${CONTAINER_NAME:-qwen38-fp8-tp2-concurrency-r1-a${attempt}}"
 image='vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f'
 harness="${repo_root}/scripts/bench-openai-concurrency-oracle.py"
 client="${repo_root}/scripts/bench-openai-realistic-suite.py"
+single_client="${repo_root}/scripts/bench-openai-single-decode.py"
 verifier="${repo_root}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh"
 manifest="${repo_root}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json"
 run_dir="${out_parent}/${campaign}-attempt${attempt}"
@@ -76,7 +77,7 @@ trap cleanup EXIT INT TERM
 
 free -b >"${run_dir}/memory-before.txt"
 docker image inspect "${image}" >"${run_dir}/image-inspect.json"
-inputs=("${suite}" "${harness}" "${client}" "${verifier}" "${manifest}" "${prereg}" "${BASH_SOURCE[0]}")
+inputs=("${suite}" "${harness}" "${client}" "${single_client}" "${verifier}" "${manifest}" "${prereg}" "${BASH_SOURCE[0]}")
 [[ -z "${oracle_digests}" ]] || inputs+=("${oracle_digests}")
 sha256sum "${inputs[@]}" >"${run_dir}/input-sha256sums.txt"
 "${verifier}" "${model_dir}" >"${run_dir}/model-verification.txt"
@@ -112,6 +113,14 @@ docker logs "${container}" >"${server_log}" 2>&1 || true
 (( healthy == 1 )) || fail "FP8 TP2 concurrency profile did not become healthy; retained at ${run_dir}"
 curl -fsS "http://127.0.0.1:${port}/v1/models" >"${run_dir}/models.json"
 curl -fsS "http://127.0.0.1:${port}/metrics" >"${run_dir}/metrics-before.txt" || true
+
+if (( pilot == 0 )); then
+  python3 "${single_client}" --base-url "http://127.0.0.1:${port}" \
+    --model qwen38-fp8-concurrency --api-mode completions \
+    --prompt-tokens 128 --prompt-mode filled-fixed-line-unique \
+    --max-tokens 128 --repeats 1 --seed 4242 --timeout 600 \
+    --out "${run_dir}/excluded-warmup.json" >"${run_dir}/excluded-warmup.stdout.txt"
+fi
 
 harness_cmd=(python3 "${harness}" --base-url "http://127.0.0.1:${port}"
   --model qwen38-fp8-concurrency --api-mode completions --suite "${suite}"

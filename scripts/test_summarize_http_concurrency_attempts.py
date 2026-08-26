@@ -34,6 +34,17 @@ class SummaryTests(unittest.TestCase):
             "cached_tokens_all_zero": True,
             "complete_token_id_identity_all": True,
             "cross_base_oracle_collision_count": 0,
+            "latency": [
+                {
+                    "concurrent_users": c,
+                    "queued_profile": c > 1,
+                    "ttft_ms_p50": 10.0 * c,
+                    "ttft_ms_p95": 12.0 * c,
+                    "end_to_end_ms_p50": 100.0 * c,
+                    "end_to_end_ms_p95": 120.0 * c,
+                }
+                for c in (1, 2)
+            ],
         }
         (root / "result.json").write_text(json.dumps(result))
         (root / "qualification.json").write_text(json.dumps(qualification))
@@ -53,6 +64,10 @@ class SummaryTests(unittest.TestCase):
             self.assertEqual(data["classification"], "qualified-output-audited-http-concurrency")
             self.assertAlmostEqual(data["points"][0]["median_aggregate_tok_s"], 10.1)
             self.assertTrue(all(point["stability_passed"] for point in data["points"]))
+            self.assertFalse(data["points"][0]["queued_profile"])
+            self.assertTrue(data["points"][1]["queued_profile"])
+            self.assertEqual(data["points"][1]["latency_ms"]["ttft_ms_p95"]["median"], 24.0)
+            self.assertTrue(data["points"][1]["latency_ms"]["ttft_ms_p95"]["stability_passed"])
 
     def test_failed_stability_returns_three_and_labels_output(self):
         with tempfile.TemporaryDirectory() as temp:

@@ -1,0 +1,58 @@
+{
+  "schema": "neural.download.qwen38-fp8-http-concurrency-preregistration.v1",
+  "campaign_id": "qwen38-fp8-tp2-http-concurrency-20260826-r2",
+  "state": "preregistered-not-launched",
+  "purpose": "Measure output-isolation-qualified HTTP aggregate decode plus TTFT and end-to-end latency for the exact official-FP8 TP2 package on two new fresh servers.",
+  "identity": {
+    "model_repository": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "model_manifest_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b",
+    "cards": 2,
+    "topology": "TP2",
+    "generation": "target-only / MTP0",
+    "kv_cache": "FP16"
+  },
+  "frozen_inputs": {
+    "oracle": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-oracle-pilot-20260826-r1-attempt1/oracle-digests.json",
+    "oracle_sha256": "3499c3812ba1ad4cadda4a5503f00629c320e25fc6ce802a0774a31011447b1b",
+    "pilot_result_sha256": "b104120cf7d61be9d50686f36c76a88ec36a19eb98dd841fca19a5d28a1c179c",
+    "pilot_qualification_sha256": "8aadbb4c2af86cacaf667b843971b595300958b9dee11caf43e0e7019db19a2d",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "runner": "experiments/qwen38-27b-b70/scripts/run-qwen38-fp8-tp2-http-concurrency-r1.sh",
+    "runner_sha256": "f7151dae87ba77b852218b2f9b51fb3e6558952c2896de0f2e7a3c9188466ad7",
+    "summarizer": "scripts/summarize-http-concurrency-attempts.py",
+    "summarizer_sha256": "0f415e7486e5b86d3607b9233f64cf43f809da1216a5f53a9af019ed89b38f10",
+    "excluded_warmup_client": "scripts/bench-openai-single-decode.py",
+    "excluded_warmup_client_sha256": "bcbd08b7101d55e2941f26fefabb0b03f32795a2ee04e127a35b493fe4eb1cbb"
+  },
+  "server_profile": {
+    "endpoint": "vLLM OpenAI-compatible /v1/completions",
+    "max_model_len": 4096,
+    "max_num_seqs": 4,
+    "max_num_batched_tokens": 256,
+    "prefix_cache": false,
+    "graph": "PIECEWISE capture size 1",
+    "excluded_warmup": "one distinct 128-prompt-token, 128-output-token request before the measured ladder"
+  },
+  "measurement": {
+    "concurrency": [1, 2, 4, 8, 16, 32, 64],
+    "max_output_tokens": 128,
+    "fresh_server_attempts": 2,
+    "required_output_gate": "128 complete raw token IDs per response, zero cached prompt tokens, and no generated token digest equal to a frozen sequential oracle from another base task",
+    "sequential_identity": "reported but not required because TP2 greedy output may vary with batch shape",
+    "required_throughput_stability_gate": "relative range between the two attempts at every point <=10%",
+    "required_latency_stability_gate": "relative range between the two attempts for TTFT p50/p95 and end-to-end p50/p95 at every point <=15%",
+    "queue_boundary": "c1-c4 are active-slot measurements; c8-c64 include service queueing because max_num_seqs=4"
+  },
+  "publication": {
+    "classification_if_passed": "qualified-output-audited-http-concurrency",
+    "throughput": "median of two exact fresh-server aggregate tok/s values per concurrency",
+    "latency": "median of the two per-attempt p50/p95 TTFT and end-to-end latency values per concurrency",
+    "no_interpolation_or_extrapolation": true,
+    "pilot_rates_are_excluded": true,
+    "failed_points_remain_diagnostic": true
+  }
+}
