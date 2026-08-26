@@ -1,0 +1,114 @@
+{
+  "schema": "neural.download.qwen38-q8weights-f16kv-target-sycl-graph-cache64-8k-sentinel-prereg.v1",
+  "campaign_id": "qwen38-q8weights-f16kv-tp1-target-sycl-graph-cache64-8k-sentinel-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Gate the current-weight Qwen3.8 Q8_0-weight TP1/MTP0/F16-KV SYCL graph mechanism at exact 8K against a same-binary graph-off control before any seven-depth graph curve is preregistered.",
+  "dependencies": {
+    "q8_graph_off_prereg": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-target-http-depth-quality-r1-prereg.json", "sha256": "0b7c32f75ff54c52cb908a62b614f185dcc5b3f1716abff08edade01b2a67c74"},
+    "q8_graph_off_runner": {"path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-q8weights-f16kv-tp1-target-http-depth-quality-r1.py", "sha256": "f0c18cebeaab16cae9ab1199f32a783cf3b17295ef9548c1b7788b621ea4e820"},
+    "q8_graph_off_validator": {"path": "experiments/qwen38-27b-b70/scripts/validate-20260826-qwen38-q8weights-f16kv-tp1-target-http-depth-quality-r1.py", "sha256": "0c1f932b8fbebe111d93f72815c2b6a4274a121c42f230add93517f854212c12"},
+    "q8_graph_off_result": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-target-http-depth-quality-r1-result.json", "sha256": "fc3a9f749d54ce0a69c5d6706797d34b58edd1afefa042b43156c3d0961b0064"},
+    "q8_graph_off_terminal": {"path": "/mnt/fast-ai/bench-results/qwen38-q8weights-f16kv-tp1-target-http-depth-quality-20260826-r1/terminal-receipt.json", "sha256": "42d12af5440c63f7b0ae1c765e491df5a7bff7138c367916d6202b2ff45b1aad"},
+    "q8_graph_off_8k_receipt": {"path": "/mnt/fast-ai/bench-results/qwen38-q8weights-f16kv-tp1-target-http-depth-quality-20260826-r1/target-mtp0/depth-8192/exact-depth.json", "sha256": "5b8853f3854f02b8eb1de23b0ecbe9afc2e91043a9199ec8a8373718ca7ceacd"},
+    "graph_template_prereg": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q5ks-f16kv-tp1-target-sycl-graph-8k-sentinel-r1-prereg.json", "sha256": "323702024ea514610127a046f4900dc0091c6def5be691539ae0e8c8bfc4f72e"},
+    "graph_template_runner": {"path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-q5ks-f16kv-tp1-target-sycl-graph-8k-sentinel-r1.py", "sha256": "c20e16c4e88f1bc0884c3ad82796fc0d415333af50e0aa638cccb6bfe1eeb40d"},
+    "q4km_cache64_full_result": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4km-f16kv-tp1-sycl-graph-cache64-depth-quality-r1-result.json", "sha256": "df0bdac8ec70b0f62a8167e7357ab5a8fbcd9897ea16c0dea7d658c0a9d1bd7c"},
+    "q5ks_cache64_full_result": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q5ks-f16kv-tp1-sycl-graph-cache64-depth-quality-r1-result.json", "sha256": "73bca3207276106c8dec390eefa808f99ce2709198879756bcdd2235615d1b17"},
+    "q4kxl_cache64_full_result": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-sycl-graph-cache64-depth-quality-r3-result.json", "sha256": "3cf06262b54e196bea1bfeb39303075876e9daa91ecc2ecd0bf74b7434534a31"}
+  },
+  "selectors": {
+    "revision": "qwen3.8-27b-current-weights",
+    "target_quantization": "Q8_0",
+    "tp": 1,
+    "mtp": 0,
+    "active_context_tokens": 8192,
+    "target_kv": "f16",
+    "graph_mode": "matched control: off versus SYCL graph cache64",
+    "fit": "off",
+    "transport": "HTTP /v1/completions"
+  },
+  "model": {
+    "path": "/mnt/usb-models/models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "quantization": "Q8_0",
+    "size_bytes": 28595763552,
+    "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "family_relationship": "quantized artifact subset of the current Qwen3.8 27B weight revision"
+  },
+  "graph_runtime": {
+    "source_path": "/home/steve/src/llama.cpp-q38-tp1-graph-port",
+    "source_base_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+    "binary": "/home/steve/src/llama.cpp-q38-tp1-graph-port/build-sycl-aot-bmg-g31-graph-port/bin/llama-server",
+    "binary_size_bytes": 736520,
+    "binary_sha256": "b82fcfc3bda77b0446c11daa5da62b39ddf941202150d9b44a9092968658e19b",
+    "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2",
+    "effective_dso_count": 33,
+    "effective_dso_canonical_sha256": "5cf0ba76d9784072e245e5fe67772c52b01cc028034687c9689313f6de6ef17c",
+    "patch_chain_sha256": ["1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892", "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3", "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"]
+  },
+  "fixture": {
+    "path": "data/qwen27-exact-depth/qwen36-6a9e13bd-exact-depth-v1.json",
+    "sha256": "85b1050c88b4c1e6cb9c4ce7f1580284cd2aa68243dad0d0dff16460decbe5ac",
+    "case_id": "depth-8192",
+    "prompt_token_ids_sha256": "6baa17bea14f0ecad7e4edf54a05256eafaef1d447a447569fd303371c671741"
+  },
+  "clients": {
+    "exact_depth": {"path": "scripts/bench-openai-token-depth-suite.py", "sha256": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067", "output_tokens": 128},
+    "quality": {"path": "scripts/qwen38-text-quality-suite.py", "sha256": "67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d", "interpreter": "/home/steve/.venvs/vllm-xpu/bin/python", "interpreter_sha256": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8", "tokenizer_path": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan", "repeat_runs": 2, "long_context_tokens": 27200, "expected_requests_per_arm": 10}
+  },
+  "server_contract": {"host": "127.0.0.1", "port": 19454, "model_alias": "qwen38-q8weights-f16kv-tp1-graph-cache64-8k-r1", "context_capacity": 33024, "parallel": 1, "spec_type": "none", "cache_type_k": "f16", "cache_type_v": "f16", "fit": "off"},
+  "capacity_decision": {
+    "selected_cache_size": 64,
+    "source_supported_maximum": 64,
+    "no_further_capacity_escalation": true,
+    "full_workload_replicas": [
+      {"quantization": "Q4_K_M", "requested": 1182, "direct_replay": 947, "minimum_direct_replays": 896},
+      {"quantization": "UD-Q5_K_S", "requested": 1182, "direct_replay": 947, "minimum_direct_replays": 896},
+      {"quantization": "UD-Q4_K_XL", "requested": 1182, "direct_replay": 947, "minimum_direct_replays": 896}
+    ],
+    "interpretation": "Three completed same-workload current-weight Qwen3.8 curves independently passed at the source-supported maximum64; cache20 previously saturated on the same workload. Q8 starts at64 to test the mechanism, not to transfer performance or correctness."
+  },
+  "execution_contract": {
+    "arm_order": ["control-graph-off-cache0", "candidate-graph-on-cache64"],
+    "fresh_server_lifetime_per_arm": true,
+    "same_exact_8k_and_full_quality_workload_per_arm": true,
+    "control_environment_delta": {"GGML_SYCL_ENABLE_GRAPH": "0", "GGML_SYCL_GRAPH_CACHE_SIZE": "0"},
+    "candidate_environment_delta": {"GGML_SYCL_ENABLE_GRAPH": "1", "GGML_SYCL_GRAPH_CACHE_SIZE": "64"},
+    "only_graph_flags_may_differ_between_arms": true,
+    "require_exact_128_token_output_and_usage_parity": true,
+    "require_full_quality_pass_and_output_hash_parity": true,
+    "require_cached_tokens_zero": true,
+    "require_positive_exact_graph_accounting": true,
+    "minimum_direct_replays": 120,
+    "minimum_direct_replay_fraction": 0.35,
+    "allow_cache_full_for_additional_quality_shapes": true,
+    "require_zero_graph_compatibility_device_update_or_recreate_events": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-q8weights-f16kv-tp1-target-sycl-graph-cache64-8k-sentinel-20260826-r1",
+    "exact_ack": "RUN qwen38-q8weights-f16kv-tp1-target-sycl-graph-cache64-8k-sentinel-20260826-r1",
+    "default_is_inert": true,
+    "requires_clean_pushed_main": true,
+    "create_only": true,
+    "requires_idle_gpu0_render_node": "/dev/dri/by-path/pci-0000:23:00.0-render",
+    "required_locks": ["/run/lock/muse-glimmer-gpu-exclusive.lock", "/tmp/b70-benchmark.lock", "/tmp/b70-gpu0.lock", "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"],
+    "request_timeout_seconds": 900
+  },
+  "frozen_interpretation": {
+    "speed_floor": null,
+    "evidence_grade_if_passed": "diagnostic matched-control mechanism and quality sentinel",
+    "site_cells_authorized": 0,
+    "sentinel_pass_authorizes_separate_seven_depth_full_curve_preregistration": true,
+    "graph_off_control_cells_authorized": 0,
+    "full_graph_curve_authorized": false,
+    "q8_kv_cells_authorized": 0,
+    "other_weight_quantization_cells_authorized": 0,
+    "mtp_or_speculative_cells_authorized": 0,
+    "tp2_or_tp4_cells_authorized": 0,
+    "prefill_cells_authorized": 0,
+    "headline_or_protected_replacement_authorized": false,
+    "localmaxxing_submission_authorized": false,
+    "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]
+  }
+}
