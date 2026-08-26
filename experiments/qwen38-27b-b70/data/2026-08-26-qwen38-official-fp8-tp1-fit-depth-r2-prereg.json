@@ -1,0 +1,58 @@
+{
+  "schema": "neural.download.qwen38-official-fp8-tp1-fit-depth-prereg.v2",
+  "campaign_id": "qwen38-official-fp8-tp1-fit-depth-20260826-r2",
+  "state": "preregistered-not-launched-model-complete-sized-verification-required",
+  "purpose": "Boundedly determine whether the official Qwen3.8-27B FP8 artifact fits one B70 in proven eager mode at exact 8K, 4K, or 2K and publish every smaller exact-depth serving cell supported by the first successful service lifetime.",
+  "supersedes": {
+    "campaign_id": "qwen38-official-fp8-tp1-fit-depth-20260826-r1",
+    "state": "superseded-not-run",
+    "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp1-fit-depth-r1-prereg.json",
+    "manifest_sha256": "c277872f132f722634d04dea19d1563f4419910da81cbd162d55c4b0f1f5c41a",
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-fp8-tp1-fit-depth-r1.sh",
+    "runner_sha256": "8e07547d79396d75d20a624398dda9f3153f3cbbba7164bd8c463b729424cd27",
+    "relationship": "R1 was never launched. R2 preserves its exact model, runtime, ladder, fixture, verifier, gates, and publication policy while correcting the startup budget from 0.98 to the evidence-supported 0.96 and assigning fresh identities."
+  },
+  "rebased_fit_evidence": {
+    "r19": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp1-http-p32-fit-screen-r19-result.json", "sha256": "19ec8da82d8d3c0328084e0fcea53c2d14833d357a1a2387b1b71370c07b3125", "finding": "gpu-memory-utilization 0.98 is impossible at the observed startup snapshot: 29.38 GiB free is below the 29.69 GiB requested budget; no weights or requests"},
+    "r20": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp1-http-p32-fit-screen-r20-result.json", "sha256": "466e1c7f783af8eda13c4bb1f28cfd8952c4c820bc84712156d318be2b6c5142", "finding": "gpu-memory-utilization 0.96 passes the startup guard and loads all weights, but the compiled profile leaves -1.09 GiB for KV cache"},
+    "r21": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp1-http-p32-eager-screen-r21-result.json", "sha256": "1673675327a0decfa994f1a99e97ce4e295fe9ac3235a53b10a18dc54e253e7e", "server_log": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp1-http-p32-eager-screen-20260826-r21-attempt1/server.log", "server_log_sha256": "5ba0a8ce418c72e06852655bd1d004d5603e30b434405f86f9ba275ef07d6223", "finding": "enforce-eager removes compile/graph residency and reaches healthy TP1 service; R21 used 0.968, while R2 deliberately retains the independently proven 0.96 startup/weight-load budget rather than importing opportunistic tuning"},
+    "frozen_conclusion": "Only gpu-memory-utilization changes from R1: 0.98 to 0.96. Eager execution was already frozen in R1. No R21 concurrency, context, 0.968 budget, throughput, or other setting transfers."
+  },
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "target_path": "/mnt/usb-models/llm-models/qwen3.8-27b-fp8-official-017b9c7",
+    "direct_manifest": {"path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json", "sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb", "lfs_files": 66, "total_weight_bytes": 30866866928},
+    "readiness_at_preparation": {"complete_size_matched_files": 66, "missing_files": 0, "wrong_size_files": 0},
+    "verification": "Immediately before locks and launch, every manifest weight must match publisher SHA-256 through strict O_DIRECT full-file reads and again through complete ordinary reads; no fallback direct mode is accepted.",
+    "download_policy": "This packet never downloads, resumes, repairs, deletes, or renames model files."
+  },
+  "runtime": {
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "classification": "same pinned audited XPU nightly as R1 and R19-R21; immutable runtime base"
+  },
+  "selectors": {"cards": 1, "topology": "TP1 / one visible B70", "target_quantization": "official block-scaled FP8", "kv_cache": "FP16/auto", "mtp": 0, "speculation": "none", "graph": "off / enforce-eager", "parallel_slots": 1, "prefix_cache": false, "fit": "bounded descending context capacities"},
+  "fit_ladder": [
+    {"arm": "fit-8k", "active_context_tokens": 8192, "context_capacity_tokens": 8448, "cells_if_first_success": [8192, 4096, 2048]},
+    {"arm": "fit-4k", "active_context_tokens": 4096, "context_capacity_tokens": 4352, "cells_if_first_success": [4096, 2048]},
+    {"arm": "fit-2k", "active_context_tokens": 2048, "context_capacity_tokens": 2304, "cells_if_first_success": [2048]}
+  ],
+  "server_contract": {"gpu_memory_utilization": 0.96, "block_size": 64, "max_num_seqs": 1, "max_num_batched_tokens": 2048, "dtype": "float16", "quantization": "fp8", "language_model_only": true, "output_tokens_per_cell": 128, "request_timeout_seconds": 1800},
+  "frozen_inputs": {
+    "fixture": {"path": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json", "sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9"},
+    "client": {"path": "scripts/bench-openai-token-depth-suite.py", "sha256": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067"},
+    "strict_verifier_reused_exact": {"path": "experiments/qwen38-27b-b70/scripts/verify-20260826-qwen38-official-fp8-tp1-fit-depth-r1.py", "sha256": "50cb9e228511a7d855557b15792b3d8158c8daf28e97c00d1d2e781b7e28943d", "scope": "model identity/readiness and strict O_DIRECT-plus-ordinary hashes only; its R1 campaign label does not transfer execution identity"}
+  },
+  "execution_contract": {"descending_order": [8192, 4096, 2048], "fresh_service_lifetime_per_attempt": true, "fresh_cache_and_container_identity_per_attempt": true, "stop_after_first_success": true, "measure_first_success_and_all_smaller_cells_in_that_lifetime": true, "model_verification_immediately_before_gpu_lock_and_launch": true, "clean_pushed_main": true, "exclusive_gpu0_and_host_locks": true, "create_only": true, "only_configuration_delta_from_r1": "gpu_memory_utilization 0.98 -> 0.96"},
+  "failure_policy": {
+    "startup_failure": "Preserve logs and cleanup, then descend to the next arm regardless of classifier; only explicit allocation/capacity evidence is labeled fit failure.",
+    "receipt_or_correctness_failure_after_boot": "Stop failed-invalid, preserve all artifacts, publish no cell from that lifetime, and do not reinterpret it as fit failure.",
+    "2k_explicit_fit_failure": "Durable unsupported closure for official FP8 TP1 at active context >=2K under this exact runtime and memory contract; publish zero measured cells.",
+    "2k_unclassified_failure": "Durable failed/inconclusive closure, not unsupported.",
+    "larger_explicit_fit_failure_then_smaller_success": "Publish only the exact smaller Grade-C cells returned by the successful lifetime and retain larger depths as unsupported under this tuple."
+  },
+  "publication": {"evidence_grade": "C exact repeated-token serving shape with 128 returned token IDs and cache-zero gate; not natural prose", "no_interpolation_or_extrapolation": true, "valid_cells_if_8k_fits": 3, "valid_cells_if_4k_fits": 2, "valid_cells_if_only_2k_fits": 1, "cells_if_no_fit": 0, "tp2_or_tp4_cells": 0, "speculative_cells": 0, "graph_on_cells": 0, "headline_or_protected_replacement": false, "localmaxxing_submission": false, "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]},
+  "lifecycle": {"output_root": "/mnt/fast-ai/bench-results/qwen38-official-fp8-tp1-fit-depth-20260826-r2", "cache_root": "/mnt/fast-ai/vllm-cache/qwen38-official-fp8-f01e-tp1-fit-depth-r2", "port": 19456, "container_prefix": "qwen38-official-fp8-tp1-fit-r2", "exact_ack": "RUN qwen38-official-fp8-tp1-fit-depth-20260826-r2", "default_is_inert": true, "requires_clean_pushed_main": true, "create_only": true}
+}
