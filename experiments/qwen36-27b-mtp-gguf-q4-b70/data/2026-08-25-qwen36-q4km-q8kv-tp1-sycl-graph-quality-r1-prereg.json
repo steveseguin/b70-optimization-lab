@@ -1,0 +1,60 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-q4km-q8kv-quality-overlay.v1",
+  "campaign_id": "qwen36-q4km-q8kv-tp1-sycl-graph-quality-20260825-r1",
+  "state": "sealed-preregistered-not-launched",
+  "purpose": "Certify the shared embedded-MTP Q4_K_M artifact TP1/MTP0/SYCL-graph/q8_0-KV tuple behind all seven passed exact-depth cells with the unchanged 13-request service battery.",
+  "base_quality_packet": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-quality-r1-prereg.json",
+    "manifest_sha256": "719c238760a1d32584c4ff286f3352b5e943a869ab5db241d94357f3a480695c",
+    "runner_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q4km-f16-tp1-sycl-graph-quality-r1.py",
+    "runner_sha256": "975be481da8b4885a84c0b5502ca48f25e1b78bf1bb260118ab75cccad1fdb5b"
+  },
+  "sealed_q8kv_service_lifecycle_implementation": {
+    "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-q8kv-tp1-sycl-graph-quality-r1.py",
+    "sha256": "1c03886b21a0033a6b0e47468fa15d9983ae43bc6c9ad4d05c6a0dfbd81de8a4",
+    "scope": "Reuse only the passed q8_0-KV isolated service lifecycle with the Q4_K_M model, curve, campaign, port, and authority rebound here."
+  },
+  "curve_parent": {
+    "campaign_id": "qwen36-q4km-q8kv-tp1-sycl-graph-exact-depth-20260825-r1",
+    "preregistration": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-q8kv-tp1-sycl-graph-exact-depth-r1-prereg.json", "sha256": "0337629be657c69cceae4e335143e4244a1fd5125f259aaa5860a4cb6970e50b"},
+    "runner": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q4km-q8kv-tp1-sycl-graph-exact-depth-r1.py", "sha256": "2a4cb29ad707afe46125b79b526968913d5b712d8391b3b45758556c9101269d"},
+    "terminal_receipt": {"path": "/mnt/fast-ai/bench-results/qwen36-q4km-q8kv-tp1-sycl-graph-exact-depth-20260825-r1/terminal-receipt.json", "sha256": "411de061a0caebf14682e714c4d496dfb69144572b14171b96cff6d1d70fad06"},
+    "exact_depth_receipt": {"path": "/mnt/fast-ai/bench-results/qwen36-q4km-q8kv-tp1-sycl-graph-exact-depth-20260825-r1/exact-depth-receipt.json", "sha256": "14e62a4384f0f92aaaad8ee02fe166839ba5133834ecc418ee8a3c11c25076ce"},
+    "metadata": {"path": "/mnt/fast-ai/bench-results/qwen36-q4km-q8kv-tp1-sycl-graph-exact-depth-20260825-r1/metadata.json", "sha256": "08c9aca27b657e25ab9b054b015a85ebf927abbcff49d086e11d6a6566f9fe77"},
+    "graph_evidence": {"path": "/mnt/fast-ai/bench-results/qwen36-q4km-q8kv-tp1-sycl-graph-exact-depth-20260825-r1/graph-evidence.json", "sha256": "4fa8938c2f4560561080f19d5acc1a4c55a58cec54fe13de62fbf2e0f660771a"},
+    "depths": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+  },
+  "execution_identity_delta": {
+    "only_runtime_selector_delta_from_q4km_f16_quality": "selectors.kv and server -ctk/-ctv change from f16 to q8_0; curve/campaign/alias/port/output identities change correspondingly",
+    "selectors.kv": "q8_0",
+    "ctk": "q8_0",
+    "ctv": "q8_0",
+    "service_alias": "qwen36-q4km-q8kv-tp1-graph-quality-r1",
+    "service_port": 19440
+  },
+  "preserved": {
+    "complete_q4km_model_and_artifact_identity": true,
+    "mtp0_target_only_spec_none": true,
+    "source_server_backend_graph_environment_and_cache8": true,
+    "three_patch_chain_and_33_dso_closure": true,
+    "four_exact_eight_repeat_and_long_context_contract": true,
+    "long_context_claim": "approximately 29.4K actual prompt tokens inside a 32K service",
+    "cached_tokens_zero_on_all_13_requests": true,
+    "mixed_partial_prefill_disclosure": true,
+    "raw_engine_speed_unchanged": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q4km-q8kv-tp1-sycl-graph-quality-20260825-r1",
+    "exact_ack": "RUN qwen36-q4km-q8kv-tp1-sycl-graph-quality-20260825-r1",
+    "create_only": true
+  },
+  "raw_terminal_writer_caveat": {"preserve_inherited_exact_depth_schema_and_quality_claim_authorized_false": true, "tracked_adjudication_required_after_pass": true},
+  "authority": {
+    "quality_may_cover_all_seven_q4km_q8kv_curve_cells_on_pass": true,
+    "per_depth_quality_reruns_required": false,
+    "site_publication_authorized": false,
+    "record_or_submission_authorized": false,
+    "protected_graph_off_values_may_be_replaced": false,
+    "publication_requires_tracked_adjudication_and_separate_ingestion": true
+  }
+}
