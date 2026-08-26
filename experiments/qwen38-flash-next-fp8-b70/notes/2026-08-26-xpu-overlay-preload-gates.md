@@ -205,3 +205,19 @@ The launcher now recognizes the two terminal EngineCore startup messages and
 enters its normal bounded process-group and IPC cleanup immediately. Attempt 6
 evidence is in `data/20260826-tp4-first-load-attempt6.json`. Attempt 7 keeps the
 same runtime identity and advances only the compatibility repair/source pin.
+
+Attempt 7 confirmed the cache-spec port and again loaded all 131 shards, this
+time in `549.09` seconds on rank 0. It entered the first dummy/profile forward,
+where all ranks raced to build the same Triton launcher in the attempt-local
+cache on the external NTFS/FUSE volume. Triton then attempted to load a
+launcher shared object that the non-POSIX cache transaction had not preserved.
+The missing file was only 548 KiB of generated cache state; model weights,
+runtime DSOs, and source artifacts were unaffected.
+
+Attempt 8 moves only fresh Triton and TorchInductor compilation caches to a
+unique `/tmp` ext4 directory. Durable logs, model weights, and non-executable
+cache roots remain external. The launcher rejects reuse, records the exact
+compile-cache path, and removes it during bounded cleanup. This is filesystem
+correctness for generated executable artifacts, not a model, kernel, topology,
+or decode configuration change. Structured evidence is in
+`data/20260826-tp4-first-load-attempt7.json`.

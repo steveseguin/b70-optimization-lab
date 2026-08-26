@@ -1,0 +1,52 @@
+{
+  "date": "2026-08-26",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1",
+  "attempt": 7,
+  "status": "bounded_failure_in_generated_triton_cache",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "4382519af0eb5d68a1c57b97336dc746d93e7558",
+    "kernel_head": "7cf216774fb3c5eabf20d1f481d6548682604c37",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp_dose": 0,
+    "enforce_eager": true,
+    "max_model_len": 512,
+    "moe_backend": "triton",
+    "offload_backend": "uva"
+  },
+  "passed_before_failure": {
+    "four_rank_xccl_barrier_and_allreduce": true,
+    "qsa_tokens_per_state_cache_spec": true,
+    "checkpoint_shards_loaded": "131/131 on all ranks",
+    "rank0_weight_loading_seconds": 549.09,
+    "model_loading_gib_per_rank": 31.61,
+    "first_profile_forward_entered": true
+  },
+  "failure": {
+    "class": "non_posix_generated_compile_cache_transaction",
+    "filesystem": "fuseblk (NTFS)",
+    "component": "Triton Intel launcher compilation",
+    "exception": "OSError: __triton_launcher.cpython-312-x86_64-linux-gnu.so: cannot open shared object file: No such file or directory",
+    "classification": "generated-cache filesystem failure during profile forward; not a throughput result, OOM, model-fit failure, source regression, or lost optimization"
+  },
+  "repair": {
+    "change": "place fresh attempt-local Triton and TorchInductor caches on /tmp ext4",
+    "durable_external_artifacts_unchanged": true,
+    "fresh_cache_isolation_preserved": true,
+    "performance_identity_changes": []
+  },
+  "external_evidence": {
+    "run_directory": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt7",
+    "server_log_sha256": "cc400197bd03476fda0de91e1331fbad3f5a27b813331e7c32abe5ce30b21af2",
+    "identity_sha256": "1a31c42c9e5d6c6b773334143b2fecd99886cc83c872712708ec48fa5f5d24cb",
+    "runtime_versions_sha256": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "xccl_preflight_sha256": "04d04e5b4af139da21860174d96e183378a3a480300f8a69c5cb5bb13437510d"
+  },
+  "cleanup": {
+    "terminal_enginecore_detection_worked": true,
+    "processes_and_listener_absent": true,
+    "attempt_rpc_directory_removed": true
+  },
+  "next_action": "retry the identical frozen TP4/EP4 eager MTP0 load as attempt 8 with generated executable caches on ext4"
+}

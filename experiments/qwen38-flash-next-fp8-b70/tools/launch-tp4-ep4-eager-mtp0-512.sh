@@ -29,6 +29,7 @@ run_parent="${RUN_PARENT:-/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b7
 cache_parent="${CACHE_PARENT:-/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70}"
 run_dir="${run_parent}/${campaign}-attempt${attempt}"
 cache_dir="${cache_parent}/${campaign}-attempt${attempt}"
+compile_cache_dir="/tmp/${campaign}-attempt${attempt}-compile"
 server_log="${run_dir}/server.log"
 rpc_dir="/tmp/${campaign}-attempt${attempt}-rpc"
 runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-loadable.sha256"
@@ -49,6 +50,7 @@ expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e
 [[ -f "${runtime_manifest}" && -f "${validation_root}/summary.json" && -f "${moe_receipt}" ]] || fail "sealed validation input is missing"
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ ! -e "${cache_dir}" ]] || fail "refusing to reuse ${cache_dir}"
+[[ ! -e "${compile_cache_dir}" ]] || fail "refusing to reuse ${compile_cache_dir}"
 [[ ! -e "${rpc_dir}" ]] || fail "refusing to reuse ${rpc_dir}"
 [[ -z "${VLLM_PLE_CPU_OFFLOAD+x}" ]] || fail "VLLM_PLE_CPU_OFFLOAD must be absent"
 
@@ -83,8 +85,8 @@ mem_available_kib=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
 (( $(df --output=avail -B1 /mnt/usb-models | tail -1) >= 300 * 1024 * 1024 * 1024 )) || fail "less than 300 GiB external space is available"
 [[ "$(findmnt -no FSTYPE --target /tmp)" =~ ^(ext4|tmpfs)$ ]] || fail "/tmp must be ext4 or tmpfs for vLLM IPC"
 
-mkdir -p "${run_dir}" "${cache_dir}/vllm" "${cache_dir}/torchinductor" \
-  "${cache_dir}/triton" "${cache_dir}/xdg" "${rpc_dir}"
+mkdir -p "${run_dir}" "${cache_dir}/vllm" "${cache_dir}/xdg" \
+  "${compile_cache_dir}/torchinductor" "${compile_cache_dir}/triton" "${rpc_dir}"
 chmod 700 "${rpc_dir}"
 
 server_pid=""
@@ -101,6 +103,8 @@ cleanup() {
   fi
   find "${rpc_dir}" -mindepth 1 -delete 2>/dev/null || true
   rmdir "${rpc_dir}" 2>/dev/null || true
+  find "${compile_cache_dir}" -mindepth 1 -delete 2>/dev/null || true
+  rmdir "${compile_cache_dir}" 2>/dev/null || true
 }
 trap cleanup EXIT
 
@@ -123,8 +127,8 @@ export HUGGINGFACE_HUB_CACHE="${cache_dir}/hf"
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export VLLM_CACHE_ROOT="${cache_dir}/vllm"
-export TORCHINDUCTOR_CACHE_DIR="${cache_dir}/torchinductor"
-export TRITON_CACHE_DIR="${cache_dir}/triton"
+export TORCHINDUCTOR_CACHE_DIR="${compile_cache_dir}/torchinductor"
+export TRITON_CACHE_DIR="${compile_cache_dir}/triton"
 export XDG_CACHE_HOME="${cache_dir}/xdg"
 export TMPDIR="${rpc_dir}"
 export VLLM_RPC_BASE_PATH="${rpc_dir}"
@@ -302,6 +306,7 @@ PY
   printf 'vllm_head=%s\n' "${expected_vllm_head}"
   printf 'kernels_head=%s\n' "${expected_kernels_head}"
   printf 'stage=%s\n' "${stage}"
+  printf 'compile_cache=%s\n' "${compile_cache_dir}"
   printf 'offload_backend=uva\n'
   printf 'cpu_offload_gb=12\n'
   printf 'cpu_offload_params=ple_embedding.ngram_embedding.weight\n'
