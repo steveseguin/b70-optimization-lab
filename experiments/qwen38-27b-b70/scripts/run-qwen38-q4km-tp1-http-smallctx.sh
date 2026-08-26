@@ -193,7 +193,7 @@ done
 if (( healthy == 0 )); then
   wait "${server_pid}" || status=$?
   printf '%s\n' "${status:-1}" > "${run_dir}/server-exit-status.txt"
-  fail "exact 64-slot profile did not become healthy; retained as unsupported at ${run_dir}"
+  fail "exact ${parallel_slots}-slot profile did not become healthy; retained as unsupported at ${run_dir}"
 fi
 curl -fsS "http://127.0.0.1:${port}/props" > "${run_dir}/props.json" || true
 curl -fsS "http://127.0.0.1:${port}/slots" > "${run_dir}/slots.json" || true
