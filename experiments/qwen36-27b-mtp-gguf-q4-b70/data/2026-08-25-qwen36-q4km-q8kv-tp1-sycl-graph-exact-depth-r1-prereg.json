@@ -1,0 +1,54 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-embedded-mtp-q4km-q8kv-overlay.v1",
+  "campaign_id": "qwen36-q4km-q8kv-tp1-sycl-graph-exact-depth-20260825-r1",
+  "state": "preregistered-not-launched",
+  "sealing_status": "sealed",
+  "purpose": "Fill only the seven embedded-MTP Q4_K_M artifact TP1/MTP0/SYCL-graph/q8_0-KV exact active-context cells by changing only the KV selectors from the sealed Q4_K_M/F16 graph packet.",
+  "base": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-exact-depth-r1-prereg.json",
+    "manifest_sha256": "d2f8de4d70013cfca6100236f35857d024b0573e81d6047a37581c76322d0561",
+    "runner_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q4km-f16-tp1-sycl-graph-exact-depth-r1.py",
+    "runner_sha256": "0841a3beabc945c9b9c7443add3fd09fcef1a1dabab85b380cc75ee3c6c6c364"
+  },
+  "accepted_graph_off_q4km_q8kv_reference": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-q8kv-tp1-exact-depth-r2-prereg.json",
+    "manifest_sha256": "3b3a2444669bb4461956c9cbcf445e207572746d414581cfe67599fb3e87a4d7",
+    "result_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-q8kv-tp1-exact-depth-result.json",
+    "result_sha256": "073e5c9cdf9025ccc51fa6bd2d07cf3f65f4d01ebf252ab8675c75177e969943",
+    "measurement_id": "q36-q4km-tp1-kv-q8-context",
+    "authority_transfer": "identity and workload comparison only; no graph-off speed, quality, graph, record, protected-value replacement, or site authority transfers"
+  },
+  "execution_identity_delta": {
+    "only_runtime_delta": "replace both F16 KV selectors with q8_0",
+    "ctk": {"from": "f16", "to": "q8_0"},
+    "ctv": {"from": "f16", "to": "q8_0"},
+    "corresponding_identity_label": {"selectors.kv": "q8_0"}
+  },
+  "preserved": {
+    "contexts": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+    "quantization": "Q4_K_M",
+    "tp": 1,
+    "mtp": 0,
+    "graph_on_cache8": true,
+    "source_model_backend_build_and_32_dso_closure": true,
+    "three_patch_chain": true,
+    "environment_and_verbose_argv": true,
+    "phase_aware_prefill_and_decode_gates": true,
+    "create_only_lifecycle": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q4km-q8kv-tp1-sycl-graph-exact-depth-20260825-r1",
+    "exact_ack": "RUN qwen36-q4km-q8kv-tp1-sycl-graph-exact-depth-20260825-r1"
+  },
+  "authority": {
+    "raw_cells_require_all_existing_gates": true,
+    "quality_gate_required_before_publication": true,
+    "site_publication_authorized": false,
+    "record_or_submission_authorized": false,
+    "quality_claim_authorized": false,
+    "graph_estimates_forbidden": true,
+    "protected_graph_off_values_must_not_be_replaced": true,
+    "speed_floor": null
+  }
+}
