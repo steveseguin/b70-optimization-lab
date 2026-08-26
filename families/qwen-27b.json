@@ -590,6 +590,28 @@
       "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-r1-result.json"
     },
     {
+      "id": "qwen38-27b-autoround-int4-tp2-f01e-mtp4-eager-f16-8k-quarantine",
+      "label": "Qwen3.8 AutoRound INT4 · TP2 eager/F16 MTP4 8K quarantine",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "cards": 2,
+      "status": "quarantined-target-parity-failed",
+      "evidence_level": "B70 structural quarantine",
+      "coverage": ["native MTP4", "TP2", "exact context 8K quarantined", "token-99 divergence", "F16 KV", "eager", "mechanism and quality diagnostic only", "no measured 8K speed", "all other depths missing"],
+      "grades": {
+        "evidence": {
+          "grade": "D",
+          "scope": "Current-f01e TP2/MTP4/eager/F16 exact-8K structural quarantine",
+          "basis": "Exact depth, 97/124 finite conserved acceptance, full objective and same-topology baseline quality, all 16 cache-zero usages, topology, identity, and cleanup passed, but the candidate diverged from the same-topology TP2/MTP0 oracle at token 99. Only the 8K selector is classified as quarantined; its diagnostic timing is not a measured site speed and all other depths remain missing.",
+          "reviewed_at": "2026-08-26",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-8k-sentinel-r1-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-8k-sentinel-r1-result.json"
+    },
+    {
       "id": "qwen38-27b-autoround-int4-tp4-f01e-mtp4-eager-f16-8k-quarantine",
       "label": "Qwen3.8 AutoRound INT4 · TP4 eager/F16 MTP4 8K quarantine",
       "revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "quantization": "AutoRound INT4", "runtime": "vLLM XPU", "cards": 4,
@@ -8815,6 +8837,30 @@
       {"id": "measured-16k", "match": {"active_context_tokens": 16384}, "state": "lab-measured", "label": "D20.28 · A82/135 · Grade C", "reason": "Exact cache-zero TP2 MTP3 eager cell with positive isolated acceptance, full quality, and exact same-topology target parity.", "evidence_id": "q38-f01e-autoround-tp2-mtp3-eager-f16-exact-context-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp3-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-24k", "match": {"active_context_tokens": 24576}, "state": "lab-measured", "label": "D20.17 · A85/129 · Grade C", "reason": "Exact cache-zero TP2 MTP3 eager cell with positive isolated acceptance, full quality, and exact same-topology target parity.", "evidence_id": "q38-f01e-autoround-tp2-mtp3-eager-f16-exact-context-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp3-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-32k", "match": {"active_context_tokens": 32768}, "state": "lab-measured", "label": "D20.16 · A82/135 · Grade C", "reason": "Exact cache-zero TP2 MTP3 eager cell with positive isolated acceptance, full quality, and exact same-topology target parity.", "evidence_id": "q38-f01e-autoround-tp2-mtp3-eager-f16-exact-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp3-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}}
+    ]
+  },
+  {
+    "id": "qwen38-tp2-vllm-xpu-autoround-f01e-mtp4-eager-depth",
+    "label": "Qwen3.8 TP2 · current f01e AutoRound eager MTP4 sentinel depth",
+    "description": "Seven exact current-f01e AutoRound INT4 TP2 native-MTP4 eager F16-KV selectors: exact 8K is a structural target-parity quarantine with no site speed, while x0 and all five other nonzero depths remain missing. No value is inferred from another MTP depth or topology.",
+    "fixed_selectors": {
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "tp": 2,
+      "mtp": 4,
+      "graph_mode": "off",
+      "kv": "f16",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp2-vllm-xpu-autoround-native-mtp4-v1",
+      "speculation_method": "native-mtp"
+    },
+    "axes": [
+      {"key": "active_context_tokens", "label": "Active context", "values": [0, 2048, 4096, 8192, 16384, 24576, 32768], "value_labels": {"0": "0", "2048": "2K", "4096": "4K", "8192": "8K", "16384": "16K", "24576": "24K", "32768": "32K"}}
+    ],
+    "rules": [
+      {"id": "default-exact-gap", "match": {"active_context_tokens": "*"}, "state": "missing", "label": "unmeasured exact cell", "reason": "No exact TP2/MTP4 observation exists for this selector. It is not inferred from configured capacity, TP2/MTP0-3, TP1/TP4, graph evidence, or the diagnostic 8K timing.", "parent": "qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-8k-sentinel-20260826-r1", "retry": {"status": "queued", "trigger": "new-exact-profile-specific-measurement"}},
+      {"id": "quarantined-8k-token99", "match": {"active_context_tokens": 8192}, "state": "quarantined", "label": "MTP4 token-99 divergence · no measured speed", "reason": "Exact depth, cache zero, 97/124 isolated acceptance, full quality, topology, and cleanup passed, but the output diverged from the same-topology TP2/MTP0 target at token 99. Diagnostic timing remains evidence-only.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-8k-sentinel-r1-result.json", "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp4-eager-f16-8k-quarantine", "parent": "qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-8k-sentinel-20260826-r1", "retry": {"status": "blocked-on-target-parity", "trigger": "same-profile-8k-target-parity-pass"}}
     ]
   },
   {

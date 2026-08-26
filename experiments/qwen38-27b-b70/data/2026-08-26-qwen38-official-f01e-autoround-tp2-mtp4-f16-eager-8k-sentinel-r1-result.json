@@ -1,0 +1,150 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp2-mtp4-f16-eager-sentinel-compact-result.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-8k-sentinel-20260826-r1",
+  "status": "quarantined-target-parity-failed",
+  "identity": {
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "embedded_mtp_tensor_sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "raw_sha256": {
+      "image-id.txt": "3f4cc79dc498548ebcc9fd65e0da396111d68903c453b83d9b613f2e0a8887fb",
+      "vllm-source-commit.txt": "b60f6014c07dfcf32c30278eede59198e8ac93c176f9685a38ff320ac76e376f",
+      "stack-versions.txt": "8c2197b31e85ddcd41a43d93103ccc6629acf521bf22d8759ed368ec0f57ba3f",
+      "server-args.shell.txt": "5029c7b022e80efbb88cb00417e8cccae1b3632fa20e3c49c2a9faaff13b7930",
+      "container-inspect.json": "a7e698adacd849cf0d60ca5e48e96f29b58451cb864e1dd60d7985cd3387fcd2"
+    }
+  },
+  "config": {
+    "tp": 2,
+    "cards": 2,
+    "device_affinity": "0,1",
+    "oneapi_device_selector": null,
+    "mtp": 4,
+    "speculative_method_requested": "qwen3_next_mtp",
+    "speculative_method_resolved": "mtp",
+    "num_speculative_tokens": 4,
+    "graph": "off",
+    "graph_mode": "off",
+    "enforce_eager": true,
+    "kv": "f16",
+    "parallel_slots": 1,
+    "configured_max_context_tokens": 32896,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.6,
+    "prefix_caching": false,
+    "pythonhashseed": 0
+  },
+  "diagnostic_point": {
+    "x": 8192,
+    "historical_100_event_decode_tok_s": 22.13683638090851,
+    "conventional_99_interval_decode_tok_s": 21.915468017099425,
+    "ttft_s": 6.256625322988839,
+    "ttft_ms": 6256.625322988839,
+    "cached_tokens": 0,
+    "completion_tokens": 128,
+    "candidate_output_token_ids_sha256": "dd31856f45269d222efe0f6f5f1ac9342b6c9ae55e5ce9129fc02b27abdb7e8e",
+    "raw_sha256": "a4195cecd70d4833dbd40805de0b6f9b3b886c3d3276451db465e3b09ee24866",
+    "site_speed_publication": false,
+    "headline_authority": false
+  },
+  "mechanism": {
+    "passed": true,
+    "conserved": true,
+    "before_drafted_tokens": 0,
+    "after_drafted_tokens": 124,
+    "drafted_tokens": 124,
+    "before_accepted_tokens": 0,
+    "after_accepted_tokens": 97,
+    "accepted_tokens": 97,
+    "acceptance_rate": 0.782258064516129,
+    "isolated_to_exact_8k_request": true,
+    "finite_counters": true,
+    "raw_sha256": "4d6737ade687a9feeae525d7c4b9292816a1002a2284fce6021444e863a8d077"
+  },
+  "target_failure": {
+    "passed": false,
+    "scope": "frozen same-image same-topology TP2/MTP0/eager/F16 exact-8K receipt; required target parity",
+    "candidate_token_ids_sha256": "dd31856f45269d222efe0f6f5f1ac9342b6c9ae55e5ce9129fc02b27abdb7e8e",
+    "target_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53",
+    "token_count": 128,
+    "first_divergence": {
+      "zero_based": 98,
+      "one_based": 99,
+      "candidate": 411,
+      "target": 579
+    },
+    "target_path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-20260826-r1/exact-depth/depth-8192.json",
+    "target_raw_sha256": "55bc2ad94cb920dda1233f3d26209d009a80549469974182c0455d2826f11266"
+  },
+  "quality": {
+    "objective_passed": true,
+    "baseline_match_all": true,
+    "exact_cases": 7,
+    "repeat_runs": 8,
+    "unique_repeat_hashes": 1,
+    "baseline_comparisons": 24,
+    "long_context_needle_passed": true,
+    "cache_zero_requests": 16,
+    "cache_zero_all_requests": true,
+    "raw_sha256": "e1b0bfb10194c2088ac46e932e14578c1d7efb0e9c39c8959240e0e9c2b21cb6"
+  },
+  "topology_and_cache": {
+    "tp2_workers_verified": true,
+    "both_gpus_selected": true,
+    "fresh_ext4_cache": true,
+    "shared_writable_ntfs": false,
+    "rank_cache_status": "graph-off: no compile artifacts",
+    "rank_cache_raw_sha256": "227f75f7f7397569a0a0e11204ce78285a058d00f49949ec58063eb329481c3c"
+  },
+  "model_verification": {
+    "status": "verified",
+    "files_verified": 19,
+    "direct_and_ordinary_paths_coherent": true,
+    "raw_sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+  },
+  "cleanup": {
+    "status": "clean",
+    "launch_git_head": "073dd1b7503df6dc34aa5d6c04cccdcd917749f9",
+    "runner_return_code": 39,
+    "terminal_receipt_sha256": "fbfde29d19d80a451d7a518c6c676f3c049219424f73e7d391df17c118b8277e",
+    "arm_result_sha256": "2d637ed7a26f05c475cb078b6b87bab73aa50f6709b1b92591ecb2a952c16569",
+    "campaign_container_absent_at_terminal": true,
+    "port_19497_closed_at_terminal": true
+  },
+  "authority": {
+    "scope": "current f01e/ac7509e2 TP2/MTP4/eager/F16 exact-8K structural quarantine only",
+    "raw_publication_authorized": false,
+    "site_structural_quarantine_cells": 1,
+    "site_measured_speed_cells": 0,
+    "quality_grade": null,
+    "diagnostic_speed_retained_only_in_evidence": true,
+    "headline_graph_or_frontier_replacement": false,
+    "historical_or_protected_replacement": false,
+    "protected_decode_values_unchanged": [
+      71.45427094575045,
+      30.329809361830037,
+      49.05894025767351,
+      71.9001988117144
+    ],
+    "other_depths_tp_mtp_graph_or_kv_inferred": false,
+    "automatic_depth_or_descendant_expansion": false,
+    "localmaxxing_submission": false,
+    "x0_remains_missing": true
+  },
+  "tracked_inputs": {
+    "preregistration": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-8k-sentinel-r1-prereg.json",
+      "sha256": "670178da014db768970f1b058fd252ee47be28d601efe01351d66b7a0deb44a4"
+    },
+    "runner": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-8k-sentinel-r1.sh",
+      "sha256": "6ba85d47e014122e2b418e277df1ff85469f71a3b9ca3e6d8c7d9c47eee82dfa"
+    }
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-8k-sentinel-20260826-r1"
+}

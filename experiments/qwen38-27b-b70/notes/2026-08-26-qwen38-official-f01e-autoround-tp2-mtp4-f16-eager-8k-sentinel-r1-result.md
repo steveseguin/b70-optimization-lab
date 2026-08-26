@@ -1,0 +1,5 @@
+# Current f01e AutoRound TP2 eager/F16 MTP4 8K sentinel R1
+
+This sentinel is **quarantined**, not a measured/qualified speed result. Exact depth, finite conserved acceptance (97/124, `0.782258064516129`), objective and same-topology baseline quality, all 16 cache-zero usages, TP2 topology, cache isolation, model verification, and cleanup passed. However, the 128-token candidate hash `dd31856f…` diverged from the frozen same-topology TP2/MTP0 oracle `34e792cc…` at token 99 (zero-based 98: candidate 411, target 579), producing terminal rc39 `quarantined-target-parity-failed`.
+
+Diagnostic timing is retained only in the evidence: historical 22.13683638090851 tok/s, conventional 21.915468017099425 tok/s, and 6.256625322988839 s TTFT. None is published as a measured site speed, chart point, headline, or protected replacement. The site classifies only the exact TP2/MTP4/eager/F16 8K selector as quarantined; x0 and all other depths remain missing. Raw `publication_authorized=false`, no expansion, protected profiles, and LocalMaxxing state remain unchanged.
