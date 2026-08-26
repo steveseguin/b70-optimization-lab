@@ -3279,14 +3279,14 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 30 matrices", overview_html)
-        self.assertIn("593/2,008 classified", overview_html)
+        self.assertIn("594/2,008 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "374", "measured"),
+            ("lab-measured", "375", "measured"),
             ("lab-screened", "35", "screened"),
             ("quarantined", "117", "quarantined"),
             ("closed", "9", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,415", "missing"),
+            ("missing", "1,414", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -4654,6 +4654,54 @@ class FamilyCoverageTest(unittest.TestCase):
         rendered = MODULE.family_page(family)
         self.assertIn("8.69", rendered)
         self.assertIn("PIECEWISE", rendered)
+
+    def test_q38_current_f01e_tp1_mtp1_eager_e4m3_publishes_only_exact_4k(self) -> None:
+        family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
+        packets = {item["id"]: item for item in family["packets"]}
+        series = {item["id"]: item for item in family["series_measurements"]}
+        contracts = {item["id"]: item for item in family["coverage_contracts"]}
+        packet_id = "qwen38-27b-autoround-int4-tp1-f01e-mtp1-eager-e4m3kv-4k-grade-c"
+        measurement_id = "q38-f01e-autoround-tp1-mtp1-eager-e4m3kv-exact-4k-r1-grade-c"
+        contract_id = "qwen38-tp1-vllm-xpu-autoround-mtp-matrix"
+
+        self.assertEqual(packets[packet_id]["grades"]["evidence"]["grade"], "C")
+        point = series[measurement_id]["points"]
+        self.assertEqual([item["x"] for item in point], [4096])
+        self.assertEqual(point[0]["decode_tok_s"], 8.378608393519674)
+        self.assertEqual(point[0]["ttft_ms"], 3843.1851619970985)
+        self.assertEqual((point[0]["accepted_tokens"], point[0]["drafted_tokens"]), (62, 66))
+        self.assertEqual(point[0]["output_token_ids_sha256"], "a3d7ad63a22cfb897d9d7f69952e30e2036617776d18fb4c8a9be1513da522cd")
+
+        cells, errors = MODULE.expand_coverage_contract(contracts[contract_id])
+        self.assertEqual(errors, [])
+        scoped = [
+            cell for cell in cells
+            if cell["selectors"]["mtp"] == 1
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "fp8_e4m3"
+        ]
+        measured = [cell for cell in scoped if cell["state"] == "lab-measured"]
+        self.assertEqual([cell["selectors"]["active_context_tokens"] for cell in measured], [4096])
+        self.assertEqual(measured[0]["evidence_id"], measurement_id)
+        self.assertEqual(measured[0]["packet_id"], packet_id)
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in scoped if cell["state"] == "missing"],
+            [0, 2048, 8192, 16384, 24576, 32768],
+        )
+        self.assertEqual(len(scoped), 7)
+
+        result = json.loads((MODULE.ROOT / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp1-e4m3kv-eager-4k-sentinel-r1-result.json").read_text())
+        self.assertEqual(result["publication_candidate"]["selected_depths"], [4096])
+        self.assertEqual(result["publication_candidate"]["missing_depths"], [0, 2048, 8192, 16384, 24576, 32768])
+        self.assertEqual(result["authority"]["measured_cells_pending_publication"], 1)
+        self.assertEqual(result["authority"]["site_cells_published_by_this_packet"], 0)
+        self.assertFalse(result["authority"]["historical_or_protected_replacement"])
+        self.assertEqual(result["authority"]["protected_decode_values_unchanged"], [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144])
+
+        rendered = MODULE.family_page(family)
+        self.assertIn("MTP1 eager/E4M3 · exact 4K Grade C", rendered)
+        self.assertIn("4K: 8.38", rendered)
+        self.assertNotIn("8.463240801535022", rendered)
 
     def test_q38_current_f01e_tp2_piecewise_adds_four_and_quarantines_two_without_replacing_graph(self) -> None:
         family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
