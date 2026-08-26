@@ -2662,6 +2662,86 @@
       "quality_evidence": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-sycl-graph-quality-r1-result.json"
     },
     {
+      "id": "q36-mtpq8-tp1-mtp0-f16-http-context-r3",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
+      "quantization": "Q8_0",
+      "variant": "Q8_0 · embedded-MTP artifact · same-run MTP0 HTTP control",
+      "runtime": "llama.cpp SYCL 15586e2d7165570fb3aa7c26e0d442e289ef69de",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen36-tp1-llamacpp-sycl-embedded-mtp-v1",
+      "speculation_method": "none",
+      "profile_id": "q36-mtpq8-f16-http-serving-depth-r3",
+      "measurement_class": "llama-server-http-exact-depth-serving-decode",
+      "promotion_status": "quality-qualified-family-research-profile-control",
+      "identity": {
+        "model_revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+        "model_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+        "source_head": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+        "server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+        "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+        "dso_closure_count": 8,
+        "identity_sha256": "1b6db009e3e39481099a449fd15456f892a001f540751b2705b7e71b0dca814a"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "kv": "f16", "speculation": "none"},
+      "workload": "llama-server HTTP completion, 128 completion tokens; decode metric spans 100 timed events / 99 inter-token intervals; cache zero",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 17.186903062463262, "physical_prompt_tokens": 1},
+        {"x": 2048, "decode_tok_s": 16.84888501801203},
+        {"x": 4096, "decode_tok_s": 16.60797709525109},
+        {"x": 8192, "decode_tok_s": 16.10476602273647},
+        {"x": 16384, "decode_tok_s": 15.179667843472442},
+        {"x": 24576, "decode_tok_s": 14.361850846419154},
+        {"x": 32768, "decode_tok_s": 13.62620935700169}
+      ],
+      "quality": "Same-run cache-zero control for seven MTP3 cells. Each output-token sequence exactly matches its MTP3 peer; the candidate passed four exact canaries, two stable repeats, and a 27,246-token API prompt under the configured approximately 29.4K target.",
+      "caveat": "At x=0 there are zero prior active-context tokens but the HTTP transport submits one ordinary prompt token; this is not a literal empty prompt or raw-engine zero-token call. This control does not replace the protected raw-engine curve or historical one-point MTP0 measurement.",
+      "evidence": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r3-result.json"
+    },
+    {
+      "id": "q36-mtpq8-tp1-mtp3-f16-http-context-r3",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
+      "quantization": "Q8_0",
+      "variant": "Q8_0 · embedded-MTP artifact · MTP3 HTTP serving",
+      "runtime": "llama.cpp SYCL 15586e2d7165570fb3aa7c26e0d442e289ef69de",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen36-tp1-llamacpp-sycl-embedded-mtp-v1",
+      "speculation_method": "embedded-mtp",
+      "profile_id": "q36-mtpq8-f16-http-serving-depth-r3",
+      "measurement_class": "llama-server-http-exact-depth-serving-decode",
+      "promotion_status": "quality-battery-certified-family-research-profile",
+      "quality_scope": "Four exact canaries, two stable repeats, and one long-context needle (27,234 fixture tokens before templating; 27,246 API prompt tokens; approximately 29.4K configured target); all seven quality requests and all fourteen measurement requests were cache-zero",
+      "identity": {
+        "model_revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+        "model_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+        "source_head": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+        "server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+        "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+        "dso_closure_count": 8,
+        "identity_sha256": "1b6db009e3e39481099a449fd15456f892a001f540751b2705b7e71b0dca814a"
+      },
+      "config": {"tp": 1, "mtp": 3, "graph": "off", "graph_mode": "off", "kv": "f16", "speculation": "embedded-mtp", "draft_n_max": 3, "draft_n_min": 0, "draft_p_split": 0.1, "draft_p_min": 0.0, "draft_backend_sampling": true},
+      "workload": "llama-server HTTP completion, 128 completion tokens; decode metric spans 100 timed events / 99 inter-token intervals; cache zero",
+      "axis": "active_context_tokens",
+      "comparison_to_control": {"baseline_measurement_id": "q36-mtpq8-tp1-mtp0-f16-http-context-r3", "all_seven_outputs_exact": true, "all_seven_draft_counters_engaged_and_conserved": true, "gain_pct_range": [105.72964025086603, 157.0170130742484]},
+      "points": [
+        {"x": 0, "decode_tok_s": 39.507147504807406, "physical_prompt_tokens": 1, "gain_pct": 129.86775081714552, "draft_accepted": 87, "draft_generated": 115, "draft_acceptance_rate": 0.75652},
+        {"x": 2048, "decode_tok_s": 34.66315053383821, "gain_pct": 105.72964025086603, "draft_accepted": 81, "draft_generated": 135, "draft_acceptance_rate": 0.6},
+        {"x": 4096, "decode_tok_s": 39.731990961273645, "gain_pct": 139.23437955989635, "draft_accepted": 88, "draft_generated": 115, "draft_acceptance_rate": 0.76522},
+        {"x": 8192, "decode_tok_s": 41.39198859423371, "gain_pct": 157.0170130742484, "draft_accepted": 91, "draft_generated": 108, "draft_acceptance_rate": 0.84259},
+        {"x": 16384, "decode_tok_s": 31.842193628967856, "gain_pct": 109.76871139285586, "draft_accepted": 82, "draft_generated": 130, "draft_acceptance_rate": 0.63077},
+        {"x": 24576, "decode_tok_s": 34.247383499226686, "gain_pct": 138.4607935666286, "draft_accepted": 88, "draft_generated": 117, "draft_acceptance_rate": 0.75214},
+        {"x": 32768, "decode_tok_s": 31.806289861124814, "gain_pct": 133.41994114292302, "draft_accepted": 87, "draft_generated": 119, "draft_acceptance_rate": 0.73109}
+      ],
+      "quality": "Quality-battery-certified for these seven shared-identity cells. Candidate and control output-token hashes match exactly at every depth; draft counters engage and conserve at every depth.",
+      "caveat": "At x=0 there are zero prior active-context tokens but the HTTP transport submits one ordinary prompt token; this is not a literal empty prompt or raw-engine zero-token call. This scoped serving profile does not replace historical, featured, protected, or record values.",
+      "evidence": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r3-result.json"
+    },
+    {
       "id": "q36-mtpq8-tp1-kv-q8-context",
       "state": "lab-measured",
       "revision": "qwen3.6-27b",
@@ -3492,6 +3572,17 @@
       ]
     },
     {
+      "id": "context-q36-mtpq8-mtp3-http",
+      "title": "Qwen3.6 embedded-Q8 MTP3 serving context",
+      "subtitle": "TP1 · F16 KV · graph off · HTTP serving · exact target-output parity · quality certified · x=0 means zero prior context plus one prompt token",
+      "x_label": "prior active context tokens",
+      "metrics": ["decode_tok_s"],
+      "series": [
+        {"label": "MTP0 · same-run control", "measurement_ids": ["q36-mtpq8-tp1-mtp0-f16-http-context-r3"]},
+        {"label": "MTP3 · exact-output speculative", "measurement_ids": ["q36-mtpq8-tp1-mtp3-f16-http-context-r3"]}
+      ]
+    },
+    {
       "id": "context-q36-q8-target",
       "title": "Qwen3.6 Q8 target-only context",
       "subtitle": "TP1 llama.cpp SYCL · discrete evidence, not a fitted curve · baseline x is one exact prompt count; each VDR2 x is the larger anchor of a disclosed two-prompt median with band-specific ubatch",
@@ -3908,7 +3999,14 @@
           "status": "queued",
           "trigger": "parent-or-calibrated-estimate"
         }
-      }
+      },
+      {"id": "measured-q36-mtpq8-mtp3-f16-http-context-0", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb", "tp": 1, "mtp": 3, "active_context_tokens": 0, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D39.507 · +129.87% · qualified HTTP", "reason": "Quality-certified MTP3 HTTP-serving cell with exact target-output parity and conserved draft counters. x=0 means zero prior active context plus one explicit prompt token, not a literal empty prompt.", "evidence_id": "q36-mtpq8-tp1-mtp3-f16-http-context-r3", "point_x": 0, "parent": "qwen36-tp1-mtp3-http-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-mtpq8-mtp3-f16-http-context-2048", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb", "tp": 1, "mtp": 3, "active_context_tokens": 2048, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D34.663 · +105.73% · qualified HTTP", "reason": "Quality-certified cache-zero MTP3 HTTP-serving cell with exact target-output parity and conserved draft counters.", "evidence_id": "q36-mtpq8-tp1-mtp3-f16-http-context-r3", "point_x": 2048, "parent": "qwen36-tp1-mtp3-http-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-mtpq8-mtp3-f16-http-context-4096", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb", "tp": 1, "mtp": 3, "active_context_tokens": 4096, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D39.732 · +139.23% · qualified HTTP", "reason": "Quality-certified cache-zero MTP3 HTTP-serving cell with exact target-output parity and conserved draft counters.", "evidence_id": "q36-mtpq8-tp1-mtp3-f16-http-context-r3", "point_x": 4096, "parent": "qwen36-tp1-mtp3-http-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-mtpq8-mtp3-f16-http-context-8192", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb", "tp": 1, "mtp": 3, "active_context_tokens": 8192, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D41.392 · +157.02% · qualified HTTP", "reason": "Quality-certified cache-zero MTP3 HTTP-serving cell with exact target-output parity and conserved draft counters.", "evidence_id": "q36-mtpq8-tp1-mtp3-f16-http-context-r3", "point_x": 8192, "parent": "qwen36-tp1-mtp3-http-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-mtpq8-mtp3-f16-http-context-16384", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb", "tp": 1, "mtp": 3, "active_context_tokens": 16384, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D31.842 · +109.77% · qualified HTTP", "reason": "Quality-certified cache-zero MTP3 HTTP-serving cell with exact target-output parity and conserved draft counters.", "evidence_id": "q36-mtpq8-tp1-mtp3-f16-http-context-r3", "point_x": 16384, "parent": "qwen36-tp1-mtp3-http-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-mtpq8-mtp3-f16-http-context-24576", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb", "tp": 1, "mtp": 3, "active_context_tokens": 24576, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D34.247 · +138.46% · qualified HTTP", "reason": "Quality-certified cache-zero MTP3 HTTP-serving cell with exact target-output parity and conserved draft counters.", "evidence_id": "q36-mtpq8-tp1-mtp3-f16-http-context-r3", "point_x": 24576, "parent": "qwen36-tp1-mtp3-http-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-mtpq8-mtp3-f16-http-context-32768", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb", "tp": 1, "mtp": 3, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D31.806 · +133.42% · qualified HTTP", "reason": "Quality-certified cache-zero MTP3 HTTP-serving cell with exact target-output parity and conserved draft counters.", "evidence_id": "q36-mtpq8-tp1-mtp3-f16-http-context-r3", "point_x": 32768, "parent": "qwen36-tp1-mtp3-http-depth-curve", "retry": {"status": "complete"}}
     ]
   },
   {

@@ -1556,11 +1556,76 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             sum(cell["state"] == "quarantined" for cell in q36_cells), 63
         )
-        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 882)
+        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 875)
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q36_cells), 112
+            sum(cell["state"] == "lab-measured" for cell in q36_cells), 119
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q36_cells), 0)
+
+        q36_mtp3_http_f16 = [
+            cell
+            for cell in q36_cells
+            if cell.get("evidence_id")
+            == "q36-mtpq8-tp1-mtp3-f16-http-context-r3"
+        ]
+        self.assertEqual(len(q36_mtp3_http_f16), 7)
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in q36_mtp3_http_f16],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(
+            all(
+                cell["selectors"]["artifact_id"]
+                == "qwen36-27b-unsloth-mtp-q8-0-5cb35eb"
+                and cell["selectors"]["mtp"] == 3
+                and cell["selectors"]["graph_mode"] == "off"
+                and cell["selectors"]["kv"] == "f16"
+                for cell in q36_mtp3_http_f16
+            )
+        )
+
+        series = {item["id"]: item for item in family["series_measurements"]}
+        mtp3 = series["q36-mtpq8-tp1-mtp3-f16-http-context-r3"]
+        control = series["q36-mtpq8-tp1-mtp0-f16-http-context-r3"]
+        self.assertEqual(
+            [point["x"] for point in mtp3["points"]],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertEqual(mtp3["points"][0]["physical_prompt_tokens"], 1)
+        self.assertIn("not a literal empty prompt", mtp3["caveat"])
+        self.assertTrue(mtp3["comparison_to_control"]["all_seven_outputs_exact"])
+        self.assertTrue(
+            mtp3["comparison_to_control"][
+                "all_seven_draft_counters_engaged_and_conserved"
+            ]
+        )
+        self.assertEqual(len(control["points"]), 7)
+        self.assertEqual(family["primary_packet_id"], "qwen38-27b-256k-vision-mtp-b70")
+
+        result = json.loads(
+            (
+                MODULE.ROOT
+                / "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r3-result.json"
+            ).read_text()
+        )
+        self.assertEqual(result["raw_inventory_file_count"], 47)
+        self.assertEqual(len(result["raw_artifacts"]), 47)
+        self.assertEqual(
+            len({item["path"] for item in result["raw_artifacts"]}), 47
+        )
+        self.assertEqual(result["scope"]["completion_tokens"], 128)
+        self.assertEqual(result["scope"]["metric_intervals"], 99)
+        self.assertEqual(result["correctness"]["needle"]["api_usage_prompt_tokens"], 27246)
+        self.assertTrue(
+            all(
+                cell.get("control_stdout_mirror_sha256")
+                == cell["control_receipt_sha256"]
+                and cell.get("candidate_stdout_mirror_sha256")
+                == cell["candidate_receipt_sha256"]
+                and cell.get("draft_counters_sha256")
+                for cell in result["cells"]
+            )
+        )
 
         q36_embedded_graph_f16 = [
             cell
@@ -1693,11 +1758,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("230/1,771 classified", overview_html)
+        self.assertIn("237/1,771 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "167", "measured"),
+            ("lab-measured", "174", "measured"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,541", "missing"),
+            ("missing", "1,534", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -1714,8 +1779,8 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("17 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 17)
+        self.assertIn("18 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 18)
 
         q36_context_view = next(
             view for view in family["views"]
