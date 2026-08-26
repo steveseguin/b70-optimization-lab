@@ -5470,14 +5470,15 @@
     {
       "id": "context-q38-tp4-autoround-http",
       "title": "Qwen3.8 AutoRound TP1/TP2/TP4 HTTP context",
-      "subtitle": "Grade C · exact cache-zero HTTP serving · b2dd9ce73d/1e90ffa672 graph curves span 2K-32K; current f01e eager TP4 has exact-8K MTP0-3 points · F16 KV · x=0 remains missing",
+      "subtitle": "Grade C · exact cache-zero HTTP serving · b2dd9ce73d/1e90ffa672 graph curves span 2K-32K; current f01e eager TP4 MTP0 now spans every nonzero canonical depth while retaining the prior 8K point, and MTP1-3 remain exact-8K · F16 KV · x=0 remains missing",
       "x_label": "active context tokens",
       "metrics": ["decode_tok_s"],
       "series": [
         {"label": "AutoRound INT4 · TP1 · F16 KV", "measurement_ids": ["q38-b2dd-tp1-graph-f16-exact-context"]},
         {"label": "AutoRound INT4 · TP2 · F16 KV", "measurement_ids": ["q38-autoround-tp2-f16kv-http-context-r1-grade-c"]},
         {"label": "AutoRound INT4 · TP4 · F16 KV · graph", "measurement_ids": ["q38-autoround-tp4-f16kv-http-context-r1-grade-c"]},
-        {"label": "AutoRound INT4 · TP4 · MTP0 · F16 KV · current f01e eager oracle", "measurement_ids": ["q38-f01e-autoround-tp4-eager-f16-exact-8k-r1-grade-c"]},
+        {"label": "AutoRound INT4 · TP4 · MTP0 · F16 KV · current f01e eager prior 8K", "measurement_ids": ["q38-f01e-autoround-tp4-eager-f16-exact-8k-r1-grade-c"]},
+        {"label": "AutoRound INT4 · TP4 · MTP0 · F16 KV · current f01e eager expansion", "measurement_ids": ["q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c"]},
         {"label": "AutoRound INT4 · TP4 · MTP1 · F16 KV · current f01e eager", "measurement_ids": ["q38-f01e-autoround-tp4-mtp1-eager-f16-exact-8k-r1-grade-c"]},
         {"label": "AutoRound INT4 · TP4 · MTP2 · F16 KV · current f01e eager", "measurement_ids": ["q38-f01e-autoround-tp4-mtp2-eager-f16-exact-8k-r1-grade-c"]},
         {"label": "AutoRound INT4 · TP4 · MTP3 · F16 KV · current f01e eager", "measurement_ids": ["q38-f01e-autoround-tp4-mtp3-eager-f16-exact-8k-r1-grade-c"]}

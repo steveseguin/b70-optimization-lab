@@ -3577,6 +3577,18 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("value=71.16806401683698 tok/s", deferred_html)
         self.assertIn("value=66.64506545273888 tok/s", deferred_html)
         self.assertIn("value=9.647242826428695 tok/s", deferred_html)
+        for speed in (
+            "9.826154819323886",
+            "10.052904972149483",
+            "10.256704369059573",
+            "10.167773834875007",
+            "10.211861327963087",
+        ):
+            self.assertIn(f"value={speed} tok/s", deferred_html)
+        self.assertIn(
+            "2026-08-26-qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-r1-result.json",
+            deferred_html,
+        )
         self.assertIn("value=13.709857016920843 tok/s", deferred_html)
         self.assertIn("value=18.078249787896656 tok/s", deferred_html)
         self.assertIn("value=21.07719065875979 tok/s", deferred_html)
@@ -3591,6 +3603,7 @@ class FamilyCoverageTest(unittest.TestCase):
                 ["q38-autoround-tp2-f16kv-http-context-r1-grade-c"],
                 ["q38-autoround-tp4-f16kv-http-context-r1-grade-c"],
                 ["q38-f01e-autoround-tp4-eager-f16-exact-8k-r1-grade-c"],
+                ["q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c"],
                 ["q38-f01e-autoround-tp4-mtp1-eager-f16-exact-8k-r1-grade-c"],
                 ["q38-f01e-autoround-tp4-mtp2-eager-f16-exact-8k-r1-grade-c"],
                 ["q38-f01e-autoround-tp4-mtp3-eager-f16-exact-8k-r1-grade-c"],

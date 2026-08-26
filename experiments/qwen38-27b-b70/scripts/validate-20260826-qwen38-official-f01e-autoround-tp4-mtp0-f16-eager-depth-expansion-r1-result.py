@@ -40,6 +40,9 @@ def validate():
     need(digest(ROOT / "terminal-receipt.json") == result["cleanup"]["terminal_receipt_sha256"], "terminal changed")
     need(digest(ROOT / "arm-result.json") == result["cleanup"]["arm_result_sha256"], "arm changed")
     need(digest(ROOT / "quality.json") == result["cleanup"]["quality_sha256"], "quality changed")
+    need(digest(ROOT / "model-verification.json") == result["cleanup"]["model_verification_sha256"], "model verification changed")
+    need(digest(ROOT / "rank-cache-isolation.txt") == result["cleanup"]["rank_cache_isolation_sha256"], "rank-cache receipt changed")
+    need((ROOT / "rank-cache-isolation.txt").read_text() == "graph-off: no compile artifacts\n", "rank-cache isolation content changed")
     need(terminal["terminal"] and terminal["runner_return_code"] == 0, "campaign not terminal-passed")
     need(arm["state"] == "passed-quality-clean-depth-expansion-with-comparison-caveat", "arm state changed")
     need(arm["passed_depth_count"] == 6 and arm["frozen_same_topology_oracle_depths"] == DEPTHS, "depth authority changed")
@@ -51,6 +54,9 @@ def validate():
     usages = [case["usage"] for case in quality["exact_cases"]] + [run["usage"] for run in quality["repeat_case"]["runs"]] + [quality["long_context_case"]["usage"]]
     need(len(quality["exact_cases"]) == 7 and quality["repeat_case"]["repeats"] == 8 and len(usages) == 16, "quality cardinality changed")
     need(all(usage["prompt_tokens_details"]["cached_tokens"] == 0 for usage in usages), "quality cache reuse appeared")
+    verification = load(ROOT / "model-verification.json")
+    need(verification["status"] == "verified" and len(verification["files"]) == 19, "model verification weakened")
+    need(all(item["ok"] and item["paths_coherent"] and item["direct_mode"] == "odirect" for item in verification["files"]), "model verification path weakened")
 
     points = []
     for depth in DEPTHS:
