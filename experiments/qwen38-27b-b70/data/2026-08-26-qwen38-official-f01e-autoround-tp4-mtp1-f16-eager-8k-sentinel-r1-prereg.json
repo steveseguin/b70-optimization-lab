@@ -1,0 +1,107 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp4-mtp1-f16-eager-sentinel-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp4-mtp1-f16-eager-8k-sentinel-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Establish current-f01e AutoRound TP4/MTP1/eager/F16 exact-8K evidence against the frozen same-topology TP4/MTP0 oracle. Require exact depth, isolated positive/conserved acceptance, exact 128-token target parity, objective cache-zero quality, four-rank identity, cache isolation, and cleanup. TP1 comparisons are context only.",
+  "parent_oracle": {
+    "campaign": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1",
+    "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1",
+    "terminal_receipt": {"path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1/terminal-receipt.json", "sha256": "779c64418c9cec0654f5107bfc83ccb5263f88d12b9481dd87a5ec301d170a16", "state": "passed-quality-clean-tp4-oracle-sentinel"},
+    "exact_8k": {"path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1/exact-depth/depth-8192.json", "sha256": "49ea5caae577dae86bb52378e84a6ad45da051ae403904158751903393121d9e", "output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53"},
+    "gate": "Candidate must exactly equal all 128 token IDs from this same-image, same-topology MTP0 receipt."
+  },
+  "context_only": {
+    "tp1_mtp0_exact_8k": "The TP4/MTP0 parent also matched the current-f01e TP1/MTP0 token hash 34e792cc..., but TP1 is never the MTP1 target or quality baseline."
+  },
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "image_id": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 4,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0,1,2,3",
+    "mtp_depth": 1,
+    "kv_cache_dtype": "float16",
+    "graph_mode": "off",
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.6,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "graph_environment": {"VLLM_XPU_ENABLE_XPU_GRAPH": "0", "VLLM_XPU_GRAPH": "0"},
+    "oneapi_device_selector": "unset",
+    "server_delta_from_tp4_mtp0": ["--speculative-config", "{\"method\":\"qwen3_next_mtp\",\"num_speculative_tokens\":1}"]
+  },
+  "speculator_binding": {
+    "type": "native embedded Qwen MTP; no external draft model",
+    "method_requested": "qwen3_next_mtp",
+    "method_resolved_expected": "mtp",
+    "num_speculative_tokens": 1,
+    "mtp_num_hidden_layers": 1,
+    "mtp_tensor_count": 29,
+    "mtp_tensor_file": "model_extra_tensors.safetensors",
+    "mtp_tensor_sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de",
+    "config_sha256": "9a1c29a807e34529bec03cba92b4dc00ba61e37a703b029b08a3142b6dc08cd1",
+    "index_sha256": "adf387dee183d109e95cdc4d4988fcd966de326861ff4d66876692170f1e03ad"
+  },
+  "acceptance_contract": {
+    "snapshot_scope": "Prometheus snapshots immediately before and after only the exact 8K request; startup and quality traffic excluded",
+    "draft_metric": "vllm:spec_decode_num_draft_tokens_total",
+    "accepted_metric": "vllm:spec_decode_num_accepted_tokens_total",
+    "gate": "drafted delta > 0, accepted delta > 0, and accepted <= drafted"
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [8192],
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896
+  },
+  "quality_contract": {
+    "helper": "scripts/qwen38-text-quality-suite.py",
+    "baseline": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1/quality.json",
+    "baseline_sha256": "2019240440a9ec03bf7904317b4d14a8499631b91183fd06430eedb3eb19d5ca",
+    "objective_gate": "pass_all plus exactly 16 usage records (7 exact, 8 repeat, 1 long context), each explicitly reporting prompt_tokens_details.cached_tokens == 0; missing cache telemetry fails",
+    "comparison_grade": "same-topology TP4/MTP0 baseline_match_all is recorded separately and may produce a lower-grade passed sentinel caveat"
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp4-mtp1-f16-eager-8k-sentinel-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp1-f16-eager-8k-sentinel-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp4-mtp1-f16-eager-8k-sentinel-20260826-r1",
+    "port": 19482,
+    "container": "q38-f01e-ar-tp4-mtp1-f16-8k-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp4-mtp1-f16-eager-8k-sentinel-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true
+  },
+  "cache_contract": {"filesystem": "ext4", "fresh": true, "writable_ntfs_forbidden": true, "policy": "Fresh vLLM rank_<rank>_0 namespaces; graph-off expects no compile artifacts, otherwise all four namespaces and no shared compile files are mandatory."},
+  "terminal_classification": {
+    "passed-quality-clean-tp4-mtp1-sentinel": "All TP4 identity, topology, exact-depth, isolated acceptance, same-topology parity, objective quality, same-topology MTP0 baseline comparison, cache, and cleanup gates pass.",
+    "passed-quality-clean-tp4-mtp1-with-baseline-caveat": "All mandatory TP4/MTP1 gates pass but the same-topology MTP0 baseline comparison differs; retain usable lower-grade TP4/MTP1 evidence with the caveat.",
+    "quarantined-acceptance-failed": "Exact request passes but isolated counters do not prove positive conserved speculative activity.",
+    "quarantined-target-verification-failed": "Exact request passes but differs from the frozen same-topology TP4/MTP0 oracle.",
+    "quarantined-objective-quality-failed": "Exact request passes but objective quality or explicit cache-zero usage fails.",
+    "quarantined-exact-depth-failed": "Exact 8K fails; retain diagnostic evidence.",
+    "unsupported": "Only an exact-image explicit native MTP/speculative unsupported log classification.",
+    "failed": "Infrastructure, binding, startup, identity, topology, metrics, cache, or cleanup failure; preserve raw evidence."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "historical_replacement_allowed": false,
+    "new_value_is_additive_profile_specific_evidence": true,
+    "descendant_expansion_is_automatic": false,
+    "site_cells_filled_on_pass": 1
+  }
+}
