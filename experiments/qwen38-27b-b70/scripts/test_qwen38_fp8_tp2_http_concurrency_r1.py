@@ -56,6 +56,26 @@ class Fp8ConcurrencyPilotContractTest(unittest.TestCase):
             "f7151dae87ba77b852218b2f9b51fb3e6558952c2896de0f2e7a3c9188466ad7",
         )
 
+    def test_r3_freezes_repaired_qualifier_and_excludes_r2(self) -> None:
+        path = ROOT / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-prereg.json"
+        data = json.loads(path.read_text())
+        self.assertEqual(data["state"], "preregistered-not-launched")
+        self.assertIn("not reused", data["repair_boundary"]["r2_status"])
+        self.assertEqual(len(data["repair_boundary"]["unit_tests"]), 3)
+        for key, field in (
+            ("oracle", "oracle_sha256"),
+            ("suite", "suite_sha256"),
+            ("runner", "runner_sha256"),
+            ("qualifier", "qualifier_sha256"),
+            ("summarizer", "summarizer_sha256"),
+            ("excluded_warmup_client", "excluded_warmup_client_sha256"),
+        ):
+            source = ROOT / data["frozen_inputs"][key]
+            self.assertEqual(
+                hashlib.sha256(source.read_bytes()).hexdigest(),
+                data["frozen_inputs"][field],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
