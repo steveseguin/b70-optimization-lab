@@ -1,0 +1,9 @@
+# Official f01e AutoRound TP1 eager/F16 MTP4 8K sentinel R1 result
+
+The preregistered native-MTP4 parent sentinel passed. On the pinned official `f01e24f6…` image (`ac7509e2b`, vLLM `0.27.2rc1.dev77`), the AutoRound TP1 eager server used F16 KV and recurrently reused its embedded MTP module for four speculative tokens. Its exact 8K request measured **15.694764790035633 decode tok/s** with **6.8153263599961065 s TTFT**. The request had exactly 8,192 prompt tokens, 128 returned target token IDs, zero cached tokens, and every exact-depth gate passed.
+
+Mechanism and target fidelity both passed. The isolated exact-8K request drafted 140 tokens and accepted 92 (`0.6571428571428571` acceptance), while its complete 128-token output exactly matched the frozen current-f01e TP1/MTP0/eager/F16 target receipt (`34e792cc…`). The complete quality battery also passed: 7/7 exact cases, 8/8 deterministic repeats with one hash, the 8K needle, 24/24 baseline comparisons, and cache zero on every request. Model verification passed for all 19 files through coherent direct and ordinary reads. Cleanup was terminal and clean.
+
+This is additive, profile-specific diagnostic parent evidence only for current `f01e/ac7509e2` TP1/MTP4/eager/F16 at exact 8K. It does not replace the protected graph/frontier routes, any historical value, or a headline result. It authorizes only a separately preregistered expansion; expansion is not automatic, no descendant was executed by this result, and no other depth, TP, MTP, graph, KV, or `x=0` cell is inferred.
+
+The sentinel is deliberately not published into `families/qwen-27b.json` or the generated site yet. Compact evidence is in `experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp4-f16-eager-8k-sentinel-r1-result.json`; raw receipts remain at `/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-mtp4-f16-eager-8k-sentinel-20260826-r1`.
