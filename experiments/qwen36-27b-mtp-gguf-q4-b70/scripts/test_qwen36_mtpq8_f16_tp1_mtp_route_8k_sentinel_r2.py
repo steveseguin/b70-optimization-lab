@@ -16,6 +16,7 @@ HERE = Path(__file__).resolve().parent
 R2_RUNNER_PATH = HERE / "run-20260825-qwen36-mtpq8-f16-tp1-mtp-route-8k-sentinel-r2.py"
 R2_VALIDATOR_PATH = HERE / "validate-20260825-qwen36-mtpq8-f16-tp1-mtp-route-8k-sentinel-r2.py"
 R1_TEST_PATH = HERE / "test_qwen36_mtpq8_f16_tp1_mtp_route_8k_sentinel_r1.py"
+RESULT_PATH = HERE.parent / "data/2026-08-25-qwen36-mtpq8-f16-tp1-mtp-route-8k-sentinel-r2-result.json"
 
 
 def load(path: Path, name: str):
@@ -122,6 +123,25 @@ class Route8KSentinelR2Tests(unittest.TestCase):
         self.assertEqual(result["campaign_id"], R2.R2_CAMPAIGN_ID)
         self.assertEqual(result["authority"]["candidate_routes_eligible_for_separately_preregistered_curve"], [1, 2, 4])
         self.assertFalse(result["authority"]["headline_or_protected_replacement"])
+
+    def test_durable_result_preserves_route_only_authority(self) -> None:
+        result = json.loads(RESULT_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(result["raw_inventory_file_count"], 37)
+        self.assertEqual(len(result["raw_inventory"]), 37)
+        self.assertEqual([arm["mtp"] for arm in result["arms"]], [0, 1, 2, 3, 4])
+        self.assertEqual(
+            {arm["output_token_ids_sha256"] for arm in result["arms"]},
+            {"a5d484b53727b903cd925d6521c100fdd2114094801253363661b370cb4692ef"},
+        )
+        self.assertEqual(
+            result["authority"][
+                "candidate_routes_eligible_for_separately_preregistered_curve"
+            ],
+            [1, 2, 4],
+        )
+        self.assertEqual(result["authority"]["eight_k_site_or_matrix_cells"], 0)
+        self.assertFalse(result["authority"]["site_or_family_publication"])
+        self.assertEqual(result["r1_failure"]["gpu_launches"], 0)
 
 
 if __name__ == "__main__":
