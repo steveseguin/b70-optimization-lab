@@ -1,0 +1,120 @@
+{
+  "schema": "neural.download.qwen38-q8weights-f16kv-target-http-depth-quality-result.v1",
+  "campaign_id": "qwen38-q8weights-f16kv-tp1-target-http-depth-quality-20260826-r1",
+  "status": "passed",
+  "classification": "grade-c-q8weights-f16kv-exact-depth-serving-curve-with-full-qwen38-quality-battery",
+  "completed_at_utc": "2026-08-26T06:14:54.869629+00:00",
+  "identity": {
+    "git_head": "3be2e57e5f5d081718045182471fe24ed2b21d82",
+    "origin_main": "3be2e57e5f5d081718045182471fe24ed2b21d82",
+    "model": {
+      "path": "/mnt/usb-models/models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+      "repository": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "quantization": "Q8_0",
+      "size_bytes": 28595763552,
+      "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+      "family_relationship": "quantized artifact subset of the current Qwen3.8 27B weight revision"
+    },
+    "runtime": {
+      "name": "llama.cpp",
+      "source_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+      "reported_version": "version: 0.2.0-dev (build 1, commit 9fee29e)",
+      "binary_path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/llama-server",
+      "binary_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964",
+      "libggml_sycl_sha256": "959fe7c30eea55d6a2225d970e81e0fb49cfbbf83a4332c79f79c3b0d5bf6b7f",
+      "effective_local_shared_library_count": 8
+    },
+    "configuration": {
+      "gpu": "one Intel Arc Pro B70",
+      "tp": 1,
+      "mtp": 0,
+      "transport": "HTTP /v1/completions",
+      "graph_mode": "off",
+      "fit": "off",
+      "flash_attention": "on",
+      "target_kv": "f16",
+      "context_capacity_tokens": 33024,
+      "completion_tokens_per_cell": 128,
+      "cache_ram": 0,
+      "context_checkpoints": 0,
+      "spec_type": "none"
+    }
+  },
+  "serving_curve": {
+    "evidence_grade": "C",
+    "metric": "conventional HTTP serving decode tok/s over 99 intervals between streamed token-ID events 1 and 100",
+    "fixture": "synthetic repeated-token exact-depth fixture; separate natural-language quality battery required",
+    "context_axis_disclosure": {
+      "x0": "zero prior active context plus one explicit ordinary prompt token",
+      "positive_depths": "exact submitted token counts",
+      "configured_capacity_is_not_active_context": true
+    },
+    "cells": [
+      {"active_context_tokens": 0, "serving_decode_tok_s_99_interval": 15.717197487271713, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "dab29d7687ea2f3c58e9592665e8a4e14d7504ec873e580fb89ee9f1b9574883", "text_sha256": "890940cbe12eca94a17e1abdbd5d5178b134bbf4ebf92c6a5bfc9fe703f845df", "receipt_sha256": "88381420a02cda84b80fce57746747ada2a04e8b088e89cdca33ffdb2be1b4af"},
+      {"active_context_tokens": 2048, "serving_decode_tok_s_99_interval": 15.458843096537539, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "db361b8a7e37128f73b8bfcd463d48ec90ca4297dad2d9f16221dd50d8a627fe", "text_sha256": "fb1ec4eea84567cb42bbac3404c0c46377d07fee6240fc03f69226de3645e9e7", "receipt_sha256": "2491ed677329303e64437b69d8e4a213ecc586e6bfa7b68d329e6027ed0fa3df"},
+      {"active_context_tokens": 4096, "serving_decode_tok_s_99_interval": 15.230509805983916, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "d6e637475049304d94d09bd553ade177f8831eab0754109f2df3c64d4865f256", "text_sha256": "810725e6425cbf5ca3ffde8f018009d572eaece0b00ee1417e13c442d4ea1b98", "receipt_sha256": "f895d2032bc596eddb95808accd86e1d07e1527ce97acb6f12b54c70990991e9"},
+      {"active_context_tokens": 8192, "serving_decode_tok_s_99_interval": 14.775880887179762, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "adf9344f835b00dd7d74d0e68ddfbfe65d14f15ffdbea0c0e0127099cd06b54c", "text_sha256": "a5869fffec9d7970a7deab36c2ff83c80d2badd227349ebbee6e28ac56a3b723", "receipt_sha256": "5b8853f3854f02b8eb1de23b0ecbe9afc2e91043a9199ec8a8373718ca7ceacd"},
+      {"active_context_tokens": 16384, "serving_decode_tok_s_99_interval": 14.007513353127061, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "793a531365cdedd1722ac0dfe3102bbfef18968f501c5fc1845a80ec40986cc5", "text_sha256": "5fe88afd66bafc342d71606674ed7fadda0a463f424b2cb036e1d8f14e36bd49", "receipt_sha256": "3134bc83c7db6798db63504eb4c01c59f8c964f908f23ba30a4c067b07047f9e"},
+      {"active_context_tokens": 24576, "serving_decode_tok_s_99_interval": 13.321273594224953, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "c89d818b02947c125f26355896823ff201cb7a0234571af166b62580101c6983", "text_sha256": "027503d225042c2110ce2c2ecba053aebc7b082c5592bb37ca8c191bcc72a82e", "receipt_sha256": "965c16a53d847e4f800d6fcef21b3c9858b17b4621a2105fb5b582bc34c7ffd3"},
+      {"active_context_tokens": 32768, "serving_decode_tok_s_99_interval": 12.6788728221903, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "12d7b35a781713c3af6635b5d069aa8d5b087e256a49cf395270bd68c65edf91", "text_sha256": "605a966ab3c04626bd73a1e8a563778f0be62ed746c69ab37804693e00f8b554", "receipt_sha256": "9a6776c378fb1f2ad699c23743f94fe5fb5af24c2be488a0e32e4d2dfd4fb1cd"}
+    ]
+  },
+  "quality": {
+    "pass_all": true,
+    "exact_cases": {
+      "passed": 7,
+      "required": 7,
+      "outputs": [
+        {"name": "exact_ok", "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3"},
+        {"name": "copy_phrase", "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569"},
+        {"name": "arithmetic", "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9"},
+        {"name": "json_schema", "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91"},
+        {"name": "factual", "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636"},
+        {"name": "logic", "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d"},
+        {"name": "code_execution", "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61"}
+      ]
+    },
+    "repeat_stability": {"passed": true, "runs": 2, "unique_hashes": 1, "output_sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"},
+    "long_context_needle": {"passed": true, "requested_context_tokens": 27200, "actual_prompt_tokens_before_chat_template": 25200, "api_usage_prompt_tokens": 25212, "output_sha256": "1583fb313bb7b240d09b6419481427b0d55f5b21d4ec5c5317a343d667744ad1"},
+    "cache_zero_requests": {"passed": 10, "required": 10},
+    "baseline_comparison": "not_run"
+  },
+  "validation": {
+    "all_terminal_checks_passed": true,
+    "terminal_check_count": 16,
+    "terminal_checks": {"alias": true, "argv_exact": true, "base_bound": true, "cleanup": true, "complete": true, "depth_cache_zero": true, "f16_kv": true, "graph_fit_off": true, "identity": true, "manifest": true, "protected": true, "q8weights_model": true, "quality": true, "runtime": true, "seven_depths": true, "target_only": true},
+    "clean_shutdown": true,
+    "forced_kill": false,
+    "port_closed": true,
+    "render_node_idle": true,
+    "server_survivor": false
+  },
+  "raw_artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-q8weights-f16kv-tp1-target-http-depth-quality-20260826-r1",
+    "file_count": 24,
+    "sha256": {
+      "terminal-receipt.json": "42d12af5440c63f7b0ae1c765e491df5a7bff7138c367916d6202b2ff45b1aad",
+      "identity.json": "f38446c0443b846a64a80653aaa65453073b97d50a8383b3ac4061e6ceed4981",
+      "target-mtp0/quality.json": "c4700c2002fe361c2b63d0f16650b79e5f1b23cab3c33375b21899840e1a9ceb",
+      "target-mtp0/arm-result.json": "77261fa90af2cf262e1d6855662d05c5e647afa73b5354df2fd107e8d0bb3fa4",
+      "target-mtp0/cleanup.json": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179",
+      "target-mtp0/server.log": "cd450e5664e2f3891b18da45f17300fefae25fb08f07a7416304482123f2ea83"
+    }
+  },
+  "authority": {
+    "site_target_only_q8weights_f16_curve_publication": true,
+    "target_only_q8weights_f16_serving_curve_cells": 7,
+    "target_only_selectors": {"active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768], "fit": "off", "graph_mode": "off", "mtp": 0, "revision": "qwen3.8-27b-current-weights", "target_kv": "f16", "target_quantization": "Q8_0", "tp": 1, "transport": "HTTP /v1/completions"},
+    "q8_kv_cells": 0,
+    "other_weight_quantization_cells": 0,
+    "speculative_cells": 0,
+    "tp2_or_tp4_cells": 0,
+    "graph_cells": 0,
+    "prefill_cells": 0,
+    "protected_or_headline_replacement": false,
+    "localmaxxing_submission": false
+  },
+  "scope_boundary": "This closes only the current-weight Qwen3.8 Q8_0-weight TP1 target-only, graph-off, fit-off, F16-KV HTTP serving curve at 0/2/4/8/16/24/32K. It is not Q8-KV, another weight quantization, speculative, TP2/TP4, graph, prefill, concurrency, headline, protected-speed replacement, or LocalMaxxing authority.",
+  "next_implication": "Publish these seven measured Q8_0-weight/F16-KV target-only cells, then qualify the same artifact with Q8_0 KV for a matched context-by-KV comparison."
+}

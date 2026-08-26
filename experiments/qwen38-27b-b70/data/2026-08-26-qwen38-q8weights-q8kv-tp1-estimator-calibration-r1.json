@@ -1,0 +1,52 @@
+{
+  "schema": "neural.download.qwen38-q8weights-q8kv-tp1-estimator-calibration.v1",
+  "calibration_id": "qwen38-q8weights-q8kv-tp1-estimator-calibration-20260826-r1",
+  "status": "completed-negative-calibration",
+  "frozen_estimate": {
+    "path": "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json",
+    "sha256": "0a53f1da68144fddba44153bfb468cc056dbc99d780e7655bbf20829be813d0f",
+    "evidence_grade": "D",
+    "classification": "estimated-not-measured",
+    "workload": "estimated raw-engine llama-bench tg128",
+    "must_remain_immutable": true
+  },
+  "actual_result": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-target-http-depth-quality-r1-result.json",
+    "sha256": "6c7cd71fe4430424ee2334cc120d10e1ffae447990505f29cd03ce1d88d243a4",
+    "terminal_path": "/mnt/fast-ai/bench-results/qwen38-q8weights-q8kv-tp1-target-http-depth-quality-20260826-r1/terminal-receipt.json",
+    "terminal_sha256": "a48968624a9b167e2e997031b8dfadc4af91d89dd0e838e76351cd0c96cf3f4e",
+    "evidence_grade": "C",
+    "workload": "HTTP /v1/completions, exact-depth fixture, conventional 99-interval decode"
+  },
+  "comparison_formula": {
+    "overprediction_percent_of_actual": "(estimate - actual) / actual * 100",
+    "actual_below_lower_percent_of_actual": "(lower_band - actual) / actual * 100",
+    "band_hit": "lower_band <= actual <= upper_band"
+  },
+  "points": [
+    {"active_context_tokens": 0, "estimate": 19.579373, "lower": 18.570369, "upper": 20.591593, "actual": 15.64211300487966, "estimate_minus_actual": 3.937259995120341, "overprediction_percent_of_actual": 25.17089599015227, "actual_below_lower_by": 2.92825599512034, "actual_below_lower_percent_of_actual": 18.72033525270436, "band_hit": false},
+    {"active_context_tokens": 2048, "estimate": 18.582952, "lower": 17.60707, "upper": 19.563889, "actual": 14.874633425244946, "estimate_minus_actual": 3.7083185747550527, "overprediction_percent_of_actual": 24.930487150435347, "actual_below_lower_by": 2.732436574755054, "actual_below_lower_percent_of_actual": 18.369774209814235, "band_hit": false},
+    {"active_context_tokens": 4096, "estimate": 17.802605, "lower": 16.87364, "upper": 18.735756, "actual": 14.242379238866612, "estimate_minus_actual": 3.5602257611333883, "overprediction_percent_of_actual": 24.99740879963189, "actual_below_lower_by": 2.6312607611333902, "actual_below_lower_percent_of_actual": 18.474867976783226, "band_hit": false},
+    {"active_context_tokens": 8192, "estimate": 16.406576, "lower": 15.500238, "upper": 17.322495, "actual": 13.144786025605898, "estimate_minus_actual": 3.2617899743941035, "overprediction_percent_of_actual": 24.814325376161868, "actual_below_lower_by": 2.355451974394102, "actual_below_lower_percent_of_actual": 17.919287311377357, "band_hit": false},
+    {"active_context_tokens": 16384, "estimate": 13.910836, "lower": 13.152107, "upper": 14.676552, "actual": 11.10097936684887, "estimate_minus_actual": 2.8098566331511297, "overprediction_percent_of_actual": 25.31179043123235, "actual_below_lower_by": 2.051127633151131, "actual_below_lower_percent_of_actual": 18.476997077180993, "band_hit": false},
+    {"active_context_tokens": 24576, "estimate": 12.275064, "lower": 11.590866, "upper": 12.96715, "actual": 9.640680271615087, "estimate_minus_actual": 2.634383728384913, "overprediction_percent_of_actual": 27.32570372799615, "actual_below_lower_by": 1.9501857283849127, "actual_below_lower_percent_of_actual": 20.228714918871603, "band_hit": false},
+    {"active_context_tokens": 32768, "estimate": 11.04457, "lower": 10.456165, "upper": 11.636922, "actual": 8.548307893500933, "estimate_minus_actual": 2.496262106499067, "overprediction_percent_of_actual": 29.20182728089279, "actual_below_lower_by": 1.9078571064990673, "actual_below_lower_percent_of_actual": 22.318535203318586, "band_hit": false}
+  ],
+  "summary": {
+    "band_hits": 0,
+    "band_misses": 7,
+    "all_actuals_below_lower_band": true,
+    "endpoint_overprediction_percent_of_actual": {"x0": 25.17089599015227, "x32768": 29.20182728089279},
+    "requested_rounded_endpoint_summary": "The frozen Grade-D estimate overpredicted measured HTTP serving by 25.17% at x=0 and 29.20% at 32K and missed every displayed band.",
+    "all_point_overprediction_percent_of_actual": {"minimum": 24.814325376161868, "maximum": 29.20182728089279},
+    "calibration_result": "negative: the donor-ratio transfer plus five-percent envelope was not calibrated for this target HTTP workload"
+  },
+  "interpretation_boundary": {
+    "protocol_mismatch": "The frozen estimate explicitly targeted raw-engine llama-bench and withheld HTTP serving; the actual is conventional HTTP serving. This is a useful out-of-sample site-gap calibration, not a claim that a matched-protocol raw-engine estimate was falsified.",
+    "next_estimator_rule": "Do not use the v1 Q8weights/Q8KV estimate or its band for HTTP cells. Prefer the seven measured Grade-C cells for the exact HTTP selectors, and require matched-protocol calibration before issuing a replacement estimator.",
+    "site_edit_authorized": false,
+    "family_registry_edit_authorized": false,
+    "protected_or_headline_replacement_authorized": false,
+    "localmaxxing_submission_authorized": false
+  }
+}

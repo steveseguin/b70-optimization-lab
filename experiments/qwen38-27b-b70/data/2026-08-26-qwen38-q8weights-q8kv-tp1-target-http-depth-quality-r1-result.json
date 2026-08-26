@@ -1,0 +1,146 @@
+{
+  "schema": "neural.download.qwen38-q8weights-q8kv-target-http-depth-quality-result.v1",
+  "campaign_id": "qwen38-q8weights-q8kv-tp1-target-http-depth-quality-20260826-r1",
+  "status": "passed",
+  "classification": "grade-c-q8weights-q8kv-exact-depth-serving-curve-with-full-qwen38-quality-battery",
+  "completed_at_utc": "2026-08-26T06:20:51.189488+00:00",
+  "identity": {
+    "git_head": "de4fbc0809ec63ebcef8fcc2aab3235175690d67",
+    "origin_main": "de4fbc0809ec63ebcef8fcc2aab3235175690d67",
+    "model": {
+      "path": "/mnt/usb-models/models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf",
+      "repository": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "quantization": "Q8_0",
+      "size_bytes": 28595763552,
+      "sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+      "family_relationship": "quantized artifact subset of the current Qwen3.8 27B weight revision"
+    },
+    "runtime": {
+      "name": "llama.cpp",
+      "source_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+      "reported_version": "version: 0.2.0-dev (build 1, commit 9fee29e)",
+      "binary_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964",
+      "libggml_sycl_sha256": "959fe7c30eea55d6a2225d970e81e0fb49cfbbf83a4332c79f79c3b0d5bf6b7f"
+    },
+    "configuration": {
+      "gpu": "one Intel Arc Pro B70",
+      "tp": 1,
+      "mtp": 0,
+      "transport": "HTTP /v1/completions",
+      "graph_mode": "off",
+      "fit": "off",
+      "flash_attention": "on",
+      "target_kv": "q8_0",
+      "context_capacity_tokens": 33024,
+      "completion_tokens_per_cell": 128,
+      "batch": 1024,
+      "ubatch": 1024,
+      "cache_ram": 0,
+      "context_checkpoints": 0,
+      "spec_type": "none",
+      "oneapi_device_selector": "level_zero:*",
+      "ze_affinity_mask": "0"
+    }
+  },
+  "serving_curve": {
+    "evidence_grade": "C",
+    "metric": "conventional HTTP serving decode tok/s over 99 intervals between streamed token-ID events 1 and 100",
+    "fixture": "synthetic repeated-token exact-depth fixture; separate natural-language quality battery required",
+    "context_axis_disclosure": {
+      "x0": "zero prior active context plus one explicit ordinary prompt token",
+      "positive_depths": "exact submitted token counts",
+      "configured_capacity_is_not_active_context": true
+    },
+    "cells": [
+      {"active_context_tokens": 0, "serving_decode_tok_s_99_interval": 15.64211300487966, "cached_tokens": 0, "context_semantics": "zero prior active context plus one explicit ordinary prompt token", "output_token_ids_sha256": "1a8460d6ac1e6052606d8c64525ae12eb2f40380159055df785817b741194ef0"},
+      {"active_context_tokens": 2048, "serving_decode_tok_s_99_interval": 14.874633425244946, "cached_tokens": 0, "context_semantics": "exact submitted token depth", "output_token_ids_sha256": "db361b8a7e37128f73b8bfcd463d48ec90ca4297dad2d9f16221dd50d8a627fe"},
+      {"active_context_tokens": 4096, "serving_decode_tok_s_99_interval": 14.242379238866612, "cached_tokens": 0, "context_semantics": "exact submitted token depth", "output_token_ids_sha256": "d6e637475049304d94d09bd553ade177f8831eab0754109f2df3c64d4865f256"},
+      {"active_context_tokens": 8192, "serving_decode_tok_s_99_interval": 13.144786025605898, "cached_tokens": 0, "context_semantics": "exact submitted token depth", "output_token_ids_sha256": "c58c7f49909bd0d4c9206f0ba0a4c8b086368344ec7b9bcf3a9ed53e6d956337"},
+      {"active_context_tokens": 16384, "serving_decode_tok_s_99_interval": 11.10097936684887, "cached_tokens": 0, "context_semantics": "exact submitted token depth", "output_token_ids_sha256": "6729ff1c62f25b70f1c52df382839824037a3e5900b481e2a44eae106fdc4727"},
+      {"active_context_tokens": 24576, "serving_decode_tok_s_99_interval": 9.640680271615087, "cached_tokens": 0, "context_semantics": "exact submitted token depth", "output_token_ids_sha256": "dbce1eabae7120052f6b87f2b267d0180c77cc56ed07edf6a78984c2c02659d9"},
+      {"active_context_tokens": 32768, "serving_decode_tok_s_99_interval": 8.548307893500933, "cached_tokens": 0, "context_semantics": "exact submitted token depth", "output_token_ids_sha256": "747773a85e12c33128105d8b7163690e67e692ab4a048fb3d08a2f25f01c1186"}
+    ]
+  },
+  "quality": {
+    "pass_all": true,
+    "exact_cases": {
+      "passed": 7,
+      "required": 7,
+      "output_sha256": {
+        "exact_ok": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+        "copy_phrase": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+        "arithmetic": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+        "json_schema": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+        "factual": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+        "logic": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+        "code_execution": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61"
+      }
+    },
+    "repeat_stability": {"passed": true, "runs": 2, "unique_hashes": 1, "output_sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"},
+    "long_context_needle": {"passed": true, "requested_context_tokens": 27200, "actual_prompt_tokens_before_chat_template": 25200, "api_usage_prompt_tokens": 25212, "output_sha256": "1583fb313bb7b240d09b6419481427b0d55f5b21d4ec5c5317a343d667744ad1"},
+    "cache_zero_requests": {"passed": 10, "required": 10}
+  },
+  "validation": {
+    "all_terminal_checks_passed": true,
+    "terminal_check_count": 16,
+    "checks": ["alias", "argv_exact", "base_bound", "cleanup", "complete", "depth_cache_zero", "graph_fit_off", "identity", "manifest", "protected", "q8_kv", "q8weights_model", "quality", "runtime", "seven_depths", "target_only"],
+    "clean_shutdown": true,
+    "forced_kill": false,
+    "port_closed": true,
+    "render_node_idle": true,
+    "server_survivor": false
+  },
+  "raw_artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-q8weights-q8kv-tp1-target-http-depth-quality-20260826-r1",
+    "file_count": 24,
+    "sha256": {
+      "terminal-receipt.json": "a48968624a9b167e2e997031b8dfadc4af91d89dd0e838e76351cd0c96cf3f4e",
+      "identity.json": "547f37d3eaae8809409065c83ee972cbeff5a821bbf8e0099109ecb70ee5d6b0",
+      "target-mtp0/quality.json": "c4a4fbc26e8c2e31d94116694c5a8704d7f28feb6c27c0caca18b8e6d04e6b37",
+      "target-mtp0/server.log": "d3590f26e842daec934aee5b91eaeb23453a0b68519ab46fc612fc0271934cb8",
+      "target-mtp0/arm-result.json": "77261fa90af2cf262e1d6855662d05c5e647afa73b5354df2fd107e8d0bb3fa4",
+      "target-mtp0/cleanup.json": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179",
+      "target-mtp0/depth-0/exact-depth.json": "206973bbf882aeb90756dde994724100714be5beeaf98b84d712dd7aa8e4c024",
+      "target-mtp0/depth-2048/exact-depth.json": "386d89c6f2a8a8a5c21b828f82068b3c8cc3c9cd32b0eafacb612f2836f4e193",
+      "target-mtp0/depth-4096/exact-depth.json": "777d1db37715ada5323f17f5045952aec2d0f9aab2b9040f84c45e58369a279b",
+      "target-mtp0/depth-8192/exact-depth.json": "767a0590872a3fe53e36ac14d48d38c833e30ccb9d38828d949289b9471d3004",
+      "target-mtp0/depth-16384/exact-depth.json": "1c18dad9a9bc2bc616e2285d8962bb9c0f70855145a8f89b7753f107ee23d71c",
+      "target-mtp0/depth-24576/exact-depth.json": "7070e563e93af25fd9bf2d9b996916ecf7d3084fe24370587d315f0a47fd86d7",
+      "target-mtp0/depth-32768/exact-depth.json": "34b6074692a20b78f7b9119835f6d0bed11521d89678011a393785512afe012d"
+    }
+  },
+  "authority": {
+    "site_target_only_q8weights_q8kv_curve_publication": true,
+    "target_only_q8weights_q8kv_serving_curve_cells": 7,
+    "estimate_replacement_only_for_exact_same_selectors": true,
+    "target_only_selectors": {
+      "active_context_tokens": [
+        0,
+        2048,
+        4096,
+        8192,
+        16384,
+        24576,
+        32768
+      ],
+      "fit": "off",
+      "graph_mode": "off",
+      "mtp": 0,
+      "revision": "qwen3.8-27b-current-weights",
+      "target_kv": "q8_0",
+      "target_quantization": "Q8_0",
+      "tp": 1,
+      "transport": "HTTP /v1/completions"
+    },
+    "f16_kv_cells": 0,
+    "other_weight_quantization_cells": 0,
+    "speculative_cells": 0,
+    "tp2_or_tp4_cells": 0,
+    "graph_cells": 0,
+    "prefill_cells": 0,
+    "protected_or_headline_replacement": false,
+    "localmaxxing_submission": false
+  },
+  "scope_boundary": "This closes only current-weight Qwen3.8 Q8_0 weights with Q8_0 KV, TP1 target-only, MTP0, graph-off, fit-off HTTP serving at 0/2/4/8/16/24/32K."
+}
