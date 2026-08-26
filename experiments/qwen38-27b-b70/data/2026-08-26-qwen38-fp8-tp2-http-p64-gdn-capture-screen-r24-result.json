@@ -1,0 +1,17 @@
+{
+  "schema": "neural.download.qwen38-fp8-gdn-capture-screen-result.v1",
+  "state": "integration-boundary-no-measurement",
+  "campaign_id": "qwen38-fp8-tp2-http-p64-gdn-capture-screen-20260826-r24",
+  "health_reached": false,
+  "weights_loaded": false,
+  "requests_sent": 0,
+  "cleanup": "clean",
+  "gpu_health_after": {
+    "gpu0_ones_plus_one_sum": 512.0,
+    "gpu1_ones_plus_one_sum": 512.0
+  },
+  "root_cause": "CudagraphDispatcher requires every registered attention-family op in splitting_ops for PIECEWISE mode. Removing only the three Qwen/XPU GDN split points therefore triggered its startup assertion before weight loading.",
+  "interpretation": "This does not test whether Inductor can retain the state-mutating GDN op. It only proves that a partial attention split list cannot be paired with PIECEWISE mode on this vLLM commit.",
+  "corrected_boundary": "At the measured c64 shape, capture size 1 is not active. A separate compile-on, cudagraph-NONE candidate may omit the GDN split points without claiming a c64 graph-mode change.",
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-gdn-capture-screen-20260826-r24-attempt1"
+}
