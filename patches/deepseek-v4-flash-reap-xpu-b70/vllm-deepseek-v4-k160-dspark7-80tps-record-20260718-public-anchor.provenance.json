@@ -1,0 +1,71 @@
+{
+  "schema": "neural.download.git-bundle-provenance.v1",
+  "bundle": "vllm-deepseek-v4-k160-dspark7-80tps-record-20260718-public-anchor.bundle",
+  "bundle_sha256": "bdb02267d5a128665fa46ca0119e218df8596a43ccbbe41767d5543acc9a7096",
+  "bundle_size": 152050,
+  "classification": "thin-public-prerequisite",
+  "expected_ref": "refs/tags/deepseek-v4-k160-vllm-record-20260718",
+  "expected_tip": "264c7f2f7df21ddeeab32ecca0353133344f1ac9",
+  "expected_tree": "98d21ed3a502a04eb8d9c57f185a7486c15286c1",
+  "prerequisites": [
+    {
+      "commit": "382bbd51448b2f58c73b3e51d051bc352166ba91",
+      "tree": "f1fd71449bba50a4639f7c582b0a753bdbc35406",
+      "subject": "[ROCm][Kernel] Add HybridW4A16LinearKernel: Triton prefill + HIP skinny decode (#40977)",
+      "public_remote": "https://github.com/vllm-project/vllm.git",
+      "provenance_remote_name": "origin",
+      "provenance_ref": "refs/remotes/origin/main"
+    }
+  ],
+  "included_commits": [
+    {
+      "commit": "61c87db645c256651b5a366f538898485077ad32",
+      "tree": "0941404ac83d0a19790507ed04812fe44e9f7acd",
+      "must_be_absent_before_bundle": true
+    }
+  ],
+  "public_recovery_refs": [
+    {
+      "role": "historical-bundle-base",
+      "public_remote": "https://github.com/steveseguin/vllm.git",
+      "ref": "refs/tags/deepseek-v4-k160-vllm-base-20260714",
+      "commit": "61c87db645c256651b5a366f538898485077ad32",
+      "tree": "0941404ac83d0a19790507ed04812fe44e9f7acd"
+    },
+    {
+      "role": "record",
+      "public_remote": "https://github.com/steveseguin/vllm.git",
+      "ref": "refs/tags/deepseek-v4-k160-vllm-record-20260718",
+      "commit": "264c7f2f7df21ddeeab32ecca0353133344f1ac9",
+      "tree": "98d21ed3a502a04eb8d9c57f185a7486c15286c1"
+    }
+  ],
+  "private_record_base": {
+    "commit": "61c87db645c256651b5a366f538898485077ad32",
+    "tree": "0941404ac83d0a19790507ed04812fe44e9f7acd",
+    "subject": "Harden XPU block FP8 scale prepack",
+    "classification": "experimental ancestor included inside corrected bundle and published under an exact recovery tag",
+    "commits_after_public_prerequisite": 23
+  },
+  "record_history": {
+    "commits_after_public_prerequisite": 121,
+    "commits_after_private_record_base": 98
+  },
+  "preserved_historical_bundle": {
+    "path": "vllm-deepseek-v4-k160-dspark7-80tps-record-20260718.bundle",
+    "sha256": "cebc81bedc22496dc82836b9419428e0377a3eb4e7ac213014a7306c7b30e825",
+    "size": 110741,
+    "prerequisite": "61c87db645c256651b5a366f538898485077ad32",
+    "direct_empty_restore_allowed": false,
+    "public_recovery_available": true,
+    "public_recovery_ref": "refs/tags/deepseek-v4-k160-vllm-base-20260714",
+    "reason": "The preserved artifact remains thin, but its exact prerequisite is now available from a narrowly scoped public recovery tag."
+  },
+  "review_patch": {
+    "path": "vllm-deepseek-v4-k160-dspark7-80tps-record-20260718.patch",
+    "sha256": "9228bccd3e690a9ca06366a21e6c2506fd088176f580eb8355d83a5c6fa71aff",
+    "applies_to": "61c87db645c256651b5a366f538898485077ad32",
+    "result_tree": "98d21ed3a502a04eb8d9c57f185a7486c15286c1",
+    "portable_without_corrected_bundle": false
+  }
+}

@@ -28,22 +28,35 @@ REAP ranking.
 
 ## Exact source identity
 
-| Component | Public base | Record commit | Archive |
+| Component | Restore prerequisite | Record commit | Archive |
 | --- | --- | --- | --- |
-| vLLM | `61c87db645c256651b5a366f538898485077ad32` | `264c7f2f7df21ddeeab32ecca0353133344f1ac9` | `patches/deepseek-v4-flash-reap-xpu-b70/vllm-deepseek-v4-k160-dspark7-80tps-record-20260718.bundle` |
+| vLLM | public upstream `382bbd51448b2f58c73b3e51d051bc352166ba91` | `264c7f2f7df21ddeeab32ecca0353133344f1ac9` | `patches/deepseek-v4-flash-reap-xpu-b70/vllm-deepseek-v4-k160-dspark7-80tps-record-20260718-public-anchor.bundle` |
 | vLLM XPU kernels | `dda91d171fbc3f51d1d65a7f8839714b1efffd42` | `31315673737d95da0f79179c8f755260ef02c1d6` | `patches/deepseek-v4-flash-reap-xpu-b70/vllm-xpu-kernels-deepseek-v4-k160-80tps-record-20260718.bundle` |
 | oneCCL | `66499938b7a8b615e26361c52900e7aec306ce50` (2021.17.2) | `48fda4f0e074db005596d6899d5227d3f0316c12` | `patches/deepseek-v4-flash-reap-xpu-b70/oneccl-deepseek-v4-b70-wideepoch-record-20260715.bundle` |
 
-The adjacent `.patch` files are reviewable combined diffs from each public base
-to the record tree. The `.bundle` files preserve the exact original commits
-and are what the launcher identity expects.
+The corrected vLLM bundle includes the previously unpublished experimental base
+`61c87db645c256651b5a366f538898485077ad32` and all later record commits.
+Its only prerequisite is verified official-upstream commit
+`382bbd51448b2f58c73b3e51d051bc352166ba91`. The adjacent vLLM `.patch`
+is a reviewable diff from the experimental base, not a standalone restoration
+artifact.
 
-From upstream clones that already contain the public bases, fetch the bundles:
+First validate the vLLM bundle's checksum, declared prerequisite, public
+provenance, disposable restore, record commit, and record tree:
+
+```bash
+repo=/home/steve/llm-optimizations
+python3 "$repo/tools/validate-git-bundle-provenance.py" \
+  --manifest "$repo/patches/deepseek-v4-flash-reap-xpu-b70/vllm-deepseek-v4-k160-dspark7-80tps-record-20260718-public-anchor.provenance.json" \
+  --provenance-repo /home/steve/src/vllm
+```
+
+Then fetch from source clones containing the declared prerequisites:
 
 ```bash
 repo=/home/steve/llm-optimizations
 git -C /home/steve/src/vllm fetch \
-  "$repo/patches/deepseek-v4-flash-reap-xpu-b70/vllm-deepseek-v4-k160-dspark7-80tps-record-20260718.bundle" \
+  "$repo/patches/deepseek-v4-flash-reap-xpu-b70/vllm-deepseek-v4-k160-dspark7-80tps-record-20260718-public-anchor.bundle" \
   'refs/tags/deepseek-v4-k160-vllm-record-20260718:refs/heads/deepseek-v4-k160-record'
 git -C /home/steve/src/vllm worktree add --detach \
   /home/steve/src/deepseek-v4-vllm-record-264c7f2f7-exact \
@@ -63,6 +76,31 @@ git -C /home/steve/src/oneCCL worktree add --detach \
   /home/steve/src/oneccl-2021.17.2-b70-sizegate \
   48fda4f0e074db005596d6899d5227d3f0316c12
 ```
+
+The historical vLLM bundle with SHA-256
+`cebc81bedc22496dc82836b9419428e0377a3eb4e7ac213014a7306c7b30e825`
+is preserved beside the corrected archive. It remains thin, but its exact
+prerequisite and record are now public under narrowly scoped tags. The direct
+record tag is the shortest public recovery route. To exercise the historical
+bundle itself, fetch only its exact base tag first:
+
+```bash
+repo=/home/steve/llm-optimizations
+git fetch https://github.com/steveseguin/vllm.git \
+  'refs/tags/deepseek-v4-k160-vllm-base-20260714:refs/tags/deepseek-v4-k160-vllm-base-20260714'
+git bundle verify \
+  "$repo/patches/deepseek-v4-flash-reap-xpu-b70/vllm-deepseek-v4-k160-dspark7-80tps-record-20260718.bundle"
+git fetch \
+  "$repo/patches/deepseek-v4-flash-reap-xpu-b70/vllm-deepseek-v4-k160-dspark7-80tps-record-20260718.bundle" \
+  'refs/tags/deepseek-v4-k160-vllm-record-20260718:refs/heads/deepseek-v4-k160-record-historical'
+```
+
+See the public
+[base tag](https://github.com/steveseguin/vllm/releases/tag/deepseek-v4-k160-vllm-base-20260714),
+[record tag](https://github.com/steveseguin/vllm/releases/tag/deepseek-v4-k160-vllm-record-20260718),
+and [incident #38](https://github.com/steveseguin/b70-optimization-lab/issues/38).
+The official-upstream-anchored corrected bundle remains preferred because it
+does not depend on the incident-specific base tag.
 
 Build vLLM/XPU kernels and oneCCL with the workflow in
 [`ORCHESTRATOR_HANDOFF.md`](../../experiments/deepseek-v4-flash-reap-xpu-b70/ORCHESTRATOR_HANDOFF.md#6-build-workflow).
