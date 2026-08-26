@@ -759,6 +759,28 @@
       "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-r1-result.json"
     },
     {
+      "id": "qwen38-27b-autoround-int4-tp2-f01e-mtp3-eager-f16-depth-grade-c",
+      "label": "Qwen3.8 AutoRound INT4 · TP2 current-image eager/F16 MTP3 partial depth",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "cards": 2,
+      "status": "quality-battery-qualified-grade-c-parent-scoped",
+      "evidence_level": "B70-measured Grade C partial",
+      "coverage": ["native MTP3", "TP2", "HTTP serving", "exact context 4K-32K measured", "2K structurally excluded by parent token90 quarantine", "F16 KV", "eager", "positive isolated acceptance 5/5", "same-topology target parity 5/5", "full quality battery", "x0 missing"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Current-f01e AutoRound INT4 TP2/MTP3 eager/F16 serving at five exact target-parity depths",
+          "basis": "All five frozen included cache-zero exact TP2-native receipts passed with positive finite isolated draft counters and exact same-topology TP2/MTP0 token parity. The complete objective and baseline quality battery, both-worker topology, rank-cache isolation, direct model verification, and cleanup passed. The parent MTP2 token-90 divergence structurally excluded 2K before launch, so no MTP3 2K speed exists. Five 4K-32K cells are added; x0, the parent quarantine, prior MTP0-2 profiles, graph evidence, and protected values remain unchanged.",
+          "reviewed_at": "2026-08-26",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-r1-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-r1-result.json"
+    },
+    {
       "id": "qwen38-27b-autoround-int4-tp4-f01e-eager-f16-oracle-8k-grade-c",
       "label": "Qwen3.8 AutoRound INT4 · TP4 eager/F16 exact-8K oracle",
       "revision": "qwen3.8-27b",
@@ -4473,6 +4495,36 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-r1-result.json"
     },
     {
+      "id": "q38-f01e-autoround-tp2-mtp3-eager-f16-exact-context-r1-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "variant": "AutoRound INT4 native-MTP3 TP2 eager · F16 KV · parent-scoped target-parity context",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp2-vllm-xpu-autoround-native-mtp3-v1",
+      "runtime_snapshot_id": "f01e24f6-ac7509e2-official-image",
+      "speculation_method": "native-mtp",
+      "profile_id": "q38-f01e-autoround-tp2-mtp3-eager-f16-exact-context-grade-c-r1",
+      "measurement_class": "conventional-99-interval-exact-depth-openai-http-serving-grade-c-parent-scoped-five-cell-publication",
+      "promotion_status": "authorized-five-mtp3-context-cells-2k-parent-quarantined-without-speed-no-x0-mtp0-2-graph-headline-replacement-or-submission",
+      "identity": {"model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1", "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f", "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9", "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8"},
+      "config": {"tp": 2, "mtp": 3, "graph": "off", "graph_mode": "off", "enforce_eager": true, "kv": "f16", "speculation": "native-mtp", "num_speculative_tokens": 3, "parallel_slots": 1, "configured_max_context_tokens": 32896, "gpu_memory_utilization": 0.6, "prefix_caching": false},
+      "workload": "One-slot vLLM OpenAI-compatible HTTP completions; exact submitted token depths; 128 returned token IDs; cache zero; isolated draft counters; conventional first-100 decode over 99 intervals",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 4096, "decode_tok_s": 19.08418591204264, "historical_100_event_decode_tok_s": 19.276955466709733, "ttft_ms": 4266.5411600028165, "effective_prompt_throughput_proxy_tok_s": 960.0282398300585, "cached_tokens": 0, "drafted_tokens": 123, "accepted_tokens": 86, "draft_acceptance_rate": 0.6991869918699187, "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"},
+        {"x": 8192, "decode_tok_s": 25.11756608538104, "historical_100_event_decode_tok_s": 25.371278874122265, "ttft_ms": 3971.456897997996, "effective_prompt_throughput_proxy_tok_s": 2062.7191004212013, "cached_tokens": 0, "drafted_tokens": 114, "accepted_tokens": 89, "draft_acceptance_rate": 0.7807017543859649, "output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53"},
+        {"x": 16384, "decode_tok_s": 20.279538044061752, "historical_100_event_decode_tok_s": 20.48438186268864, "ttft_ms": 8163.322320004227, "effective_prompt_throughput_proxy_tok_s": 2007.0259825280937, "cached_tokens": 0, "drafted_tokens": 135, "accepted_tokens": 82, "draft_acceptance_rate": 0.6074074074074074, "output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7"},
+        {"x": 24576, "decode_tok_s": 20.171481912081873, "historical_100_event_decode_tok_s": 20.375234254628154, "ttft_ms": 12638.517398998374, "effective_prompt_throughput_proxy_tok_s": 1944.5318801355365, "cached_tokens": 0, "drafted_tokens": 129, "accepted_tokens": 85, "draft_acceptance_rate": 0.6589147286821705, "output_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8"},
+        {"x": 32768, "decode_tok_s": 20.15867375927568, "historical_100_event_decode_tok_s": 20.36229672654109, "ttft_ms": 17363.838483011932, "effective_prompt_throughput_proxy_tok_s": 1887.1403366288432, "cached_tokens": 0, "drafted_tokens": 135, "accepted_tokens": 82, "draft_acceptance_rate": 0.6074074074074074, "output_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786"}
+      ],
+      "quality": "All five frozen included TP2-native exact-depth, isolated acceptance, and same-topology target-parity receipts passed. The full objective/baseline battery passed with cache zero on all 16 quality requests.",
+      "caveat": "Grade C one-server partial MTP3 curve. Only five measured target-parity nonzero cells are plotted. The parent MTP2 token-90 divergence structurally excluded 2K before launch, so no MTP3 speed exists there. x0 stays missing and TP2/MTP0-2, the older TP2 graph profile, protected routes, headlines, and LocalMaxxing results remain unchanged.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-r1-result.json"
+    },
+    {
       "id": "q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -5761,6 +5813,7 @@
         {"label": "AutoRound INT4 · TP2 · MTP0 · F16 KV · current f01e eager", "measurement_ids": ["q38-f01e-autoround-tp2-eager-f16-exact-context-r1-grade-c"]},
         {"label": "AutoRound INT4 · TP2 · MTP1 · F16 KV · current f01e eager", "measurement_ids": ["q38-f01e-autoround-tp2-mtp1-eager-f16-exact-context-r1-grade-c"]},
         {"label": "AutoRound INT4 · TP2 · MTP2 · F16 KV · current f01e eager", "measurement_ids": ["q38-f01e-autoround-tp2-mtp2-eager-f16-exact-context-r1-grade-c"]},
+        {"label": "AutoRound INT4 · TP2 · MTP3 · F16 KV · current f01e eager", "measurement_ids": ["q38-f01e-autoround-tp2-mtp3-eager-f16-exact-context-r1-grade-c"]},
         {"label": "AutoRound INT4 · TP4 · F16 KV · graph", "measurement_ids": ["q38-autoround-tp4-f16kv-http-context-r1-grade-c"]},
         {"label": "AutoRound INT4 · TP4 · MTP0 · F16 KV · current f01e eager prior 8K", "measurement_ids": ["q38-f01e-autoround-tp4-eager-f16-exact-8k-r1-grade-c"]},
         {"label": "AutoRound INT4 · TP4 · MTP0 · F16 KV · current f01e eager expansion", "measurement_ids": ["q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c"]},
@@ -8746,6 +8799,22 @@
       {"id": "measured-16k", "match": {"active_context_tokens": 16384}, "state": "lab-measured", "label": "D18.29 · A76/104 · Grade C", "reason": "Exact cache-zero TP2 MTP2 eager cell with positive isolated acceptance, full quality, and exact same-topology target parity.", "evidence_id": "q38-f01e-autoround-tp2-mtp2-eager-f16-exact-context-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp2-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-24k", "match": {"active_context_tokens": 24576}, "state": "lab-measured", "label": "D17.76 · A76/102 · Grade C", "reason": "Exact cache-zero TP2 MTP2 eager cell with positive isolated acceptance, full quality, and exact same-topology target parity.", "evidence_id": "q38-f01e-autoround-tp2-mtp2-eager-f16-exact-context-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp2-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-32k", "match": {"active_context_tokens": 32768}, "state": "lab-measured", "label": "D17.70 · A74/106 · Grade C", "reason": "Exact cache-zero TP2 MTP2 eager cell with positive isolated acceptance, full quality, and exact same-topology target parity.", "evidence_id": "q38-f01e-autoround-tp2-mtp2-eager-f16-exact-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp2-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}}
+    ]
+  },
+  {
+    "id": "qwen38-tp2-vllm-xpu-autoround-f01e-mtp3-eager-depth",
+    "label": "Qwen3.8 TP2 · current f01e AutoRound eager MTP3 parent-scoped depth",
+    "description": "Seven exact selector cells for current-f01e AutoRound INT4 TP2 native-MTP3 eager F16-KV: five Grade C cache-zero target-parity measurements at 4K-32K, one 2K cell structurally excluded by the parent MTP2 token-90 quarantine with no MTP3 speed, and explicit missing x=0.",
+    "fixed_selectors": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "quantization": "AutoRound INT4", "tp": 2, "mtp": 3, "graph_mode": "off", "kv": "f16", "runtime_family": "vLLM XPU", "runtime_profile_id": "qwen38-tp2-vllm-xpu-autoround-native-mtp3-v1", "speculation_method": "native-mtp"},
+    "axes": [{"key": "active_context_tokens", "label": "Active context", "values": [0, 2048, 4096, 8192, 16384, 24576, 32768], "value_labels": {"0": "0", "2048": "2K", "4096": "4K", "8192": "8K", "16384": "16K", "24576": "24K", "32768": "32K"}}],
+    "rules": [
+      {"id": "default-exact-gap", "match": {"active_context_tokens": "*"}, "state": "missing", "label": "unmeasured exact cell", "reason": "x=0 has no exact fixture and is not inferred from configured capacity, another MTP depth, topology, or graph evidence.", "parent": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "queued", "trigger": "new-exact-zero-context-fixture"}},
+      {"id": "quarantined-2k-parent", "match": {"active_context_tokens": 2048}, "state": "quarantined", "label": "parent MTP2 token 90 divergence · no MTP3 speed", "reason": "The frozen parent TP2/MTP2 oracle diverged from TP2/MTP0 at token 90, so the MTP3 descendant contract structurally excluded 2K before launch. No MTP3 speed is measured or plotted.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-r1-result.json", "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp3-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "structurally-excluded-by-parent"}},
+      {"id": "measured-4k", "match": {"active_context_tokens": 4096}, "state": "lab-measured", "label": "D19.08 · A86/123 · Grade C", "reason": "Exact cache-zero TP2 MTP3 eager cell with positive isolated acceptance, full quality, and exact same-topology target parity.", "evidence_id": "q38-f01e-autoround-tp2-mtp3-eager-f16-exact-context-r1-grade-c", "point_x": 4096, "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp3-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-8k", "match": {"active_context_tokens": 8192}, "state": "lab-measured", "label": "D25.12 · A89/114 · Grade C", "reason": "Exact cache-zero TP2 MTP3 eager cell with positive isolated acceptance, full quality, and exact same-topology target parity.", "evidence_id": "q38-f01e-autoround-tp2-mtp3-eager-f16-exact-context-r1-grade-c", "point_x": 8192, "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp3-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-16k", "match": {"active_context_tokens": 16384}, "state": "lab-measured", "label": "D20.28 · A82/135 · Grade C", "reason": "Exact cache-zero TP2 MTP3 eager cell with positive isolated acceptance, full quality, and exact same-topology target parity.", "evidence_id": "q38-f01e-autoround-tp2-mtp3-eager-f16-exact-context-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp3-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-24k", "match": {"active_context_tokens": 24576}, "state": "lab-measured", "label": "D20.17 · A85/129 · Grade C", "reason": "Exact cache-zero TP2 MTP3 eager cell with positive isolated acceptance, full quality, and exact same-topology target parity.", "evidence_id": "q38-f01e-autoround-tp2-mtp3-eager-f16-exact-context-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp3-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-32k", "match": {"active_context_tokens": 32768}, "state": "lab-measured", "label": "D20.16 · A82/135 · Grade C", "reason": "Exact cache-zero TP2 MTP3 eager cell with positive isolated acceptance, full quality, and exact same-topology target parity.", "evidence_id": "q38-f01e-autoround-tp2-mtp3-eager-f16-exact-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp2-f01e-mtp3-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}}
     ]
   },
   {
