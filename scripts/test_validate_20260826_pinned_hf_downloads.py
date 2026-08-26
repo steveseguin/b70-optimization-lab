@@ -68,7 +68,7 @@ class ValidatorTests(unittest.TestCase):
             )
             self.assertEqual(MODULE.active_downloads(Path(temporary)), ["123"])
 
-    def test_selected_target_ignores_another_active_download(self):
+    def test_global_download_gate_still_detects_unselected_target(self):
         with tempfile.TemporaryDirectory() as temporary:
             proc = Path(temporary) / "123"
             proc.mkdir()
@@ -77,6 +77,8 @@ class ValidatorTests(unittest.TestCase):
                 b"/usr/bin/hf\0download\0" + qwen["repo_id"].encode() + b"\0"
             )
             self.assertEqual(MODULE.active_downloads(Path(temporary), (deepseek,)), [])
+            with self.assertRaises(MODULE.ValidationError):
+                MODULE.reject_live_downloads(Path(temporary))
 
     def test_single_target_plan_contains_only_selection(self):
         with mock.patch("builtins.print") as output:

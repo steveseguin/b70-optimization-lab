@@ -378,7 +378,9 @@ def main(argv: list[str] | None = None) -> int:
         raise ValidationError(f"--execute requires --ack {ACK}")
 
     # Fail before creating evidence or doing any expensive reads.
-    reject_live_downloads(targets=targets)
+    # Validation scope may be narrowed, but model-store I/O remains globally
+    # serialized: any pinned download on the shared USB device blocks hashing.
+    reject_live_downloads()
     trees = [(target, load_and_pin_tree(target)) for target in targets]
     for target, files in trees:
         validate_inventory(target, files)
