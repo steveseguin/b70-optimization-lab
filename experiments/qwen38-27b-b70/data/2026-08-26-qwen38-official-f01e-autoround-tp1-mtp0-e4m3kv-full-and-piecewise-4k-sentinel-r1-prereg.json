@@ -1,0 +1,141 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp1-mtp0-e4m3kv-full-and-piecewise-4k-sentinel-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp1-mtp0-e4m3kv-full-and-piecewise-4k-sentinel-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Measure exactly one current-f01e AutoRound TP1/MTP0/FULL_AND_PIECEWISE/fp8_e4m3 active-context 4K sentinel. Candidate token IDs must match both frozen same-image E4M3 eager and PIECEWISE 4K arrays. This packet authorizes no other cell, publication, or expansion.",
+  "coverage_contract": {
+    "path": "families/qwen-27b.json",
+    "id": "qwen38-tp1-vllm-xpu-target-matrix",
+    "selectors": {
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "tp": 1,
+      "mtp": 0,
+      "active_context_tokens": 4096,
+      "graph_mode": "FULL_AND_PIECEWISE",
+      "kv": "fp8_e4m3",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp1-vllm-xpu-target-only-v1",
+      "speculation_method": "none"
+    },
+    "preregistration_state": "missing",
+    "other_cells_authorized": 0
+  },
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "image_id": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 1,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0",
+    "mtp_depth": 0,
+    "speculative_config": null,
+    "kv_cache_dtype": "fp8_e4m3",
+    "graph_mode": "FULL_AND_PIECEWISE",
+    "graph_capture_sizes": [1, 2],
+    "max_cudagraph_capture_size": 2,
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "environment": {
+      "ZE_AFFINITY_MASK": "0",
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+      "VLLM_XPU_ENABLE_XPU_GRAPH": "1"
+    }
+  },
+  "dual_e4m3_oracles": {
+    "eager": {
+      "result": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-r1-result.json", "sha256": "0e3e8a9923e4904a33f8a4223aa197281ddb98fc93661dd4e6174aefa26f0d07"},
+      "exact_4k": {"path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1/exact-depth/depth-4096.json", "sha256": "1d541ec78830ba6455b4434c352fe5a44ba5000f5d9d5e6f4c171b7f1053884f", "output_token_ids_sha256": "a3d7ad63a22cfb897d9d7f69952e30e2036617776d18fb4c8a9be1513da522cd"},
+      "quality": {"path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1/quality.json", "sha256": "d5ff44e9134b7245effea61788ab7211d38ac71c7945a97dabc0491da31879d0"},
+      "terminal": {"path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1/terminal-receipt.json", "sha256": "ddf2d160dac21c5e110417410c84a113c0c89c2db2c0fa41a53943efad3d9eef"},
+      "startup_log": {"path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1/server-startup.log", "sha256": "a9875c99ea550af6ec6241e653246b761b6b5b0ee90e214520f53588ea71b177"}
+    },
+    "piecewise": {
+      "result": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-r1-result.json", "sha256": "cedc0601820d83c199daeaff419905bef4193bb5faba357efb8c9999dbeb5357"},
+      "exact_4k": {"path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1/exact-depth/depth-4096.json", "sha256": "cb4f7c4b0047240b9f01c876e6703211512df3ac2b6bbf2dd5846fa05ad6c528", "output_token_ids_sha256": "a3d7ad63a22cfb897d9d7f69952e30e2036617776d18fb4c8a9be1513da522cd"},
+      "quality": {"path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1/quality.json", "sha256": "db60abb6585ae1a6832142ca6881c40499b227d19ea43c595af643d1eca386c9"},
+      "terminal": {"path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1/terminal-receipt.json", "sha256": "9d9242b7899dc1260454d48f0472a1c7e554a09f516fb413d94b5ecb21e0ae77"},
+      "startup_log": {"path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1/server-startup.log", "sha256": "a8878270fb56c27f8ebfe87300ab22b648083e720659c99aa92a6f311efa8da5"}
+    },
+    "array_contract": "Both frozen arrays must contain 128 identical IDs with SHA a3d7ad63...; candidate IDs must equal both arrays exactly. F16 is not an oracle."
+  },
+  "comparison_only_full_graph_precedent": {
+    "result": {"path": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-b2dd9ce73d-tp1-exact-depth-r1-result.json", "sha256": "4c3390a42cc1e86b7becef4d9f9a52a8bb2dae937cd8ccecf3180a13366e75b5"},
+    "startup_log": {"path": "/home/steve/qwen38-current-main-runs/tp1-exact-depth-b2dd9ce73d-20260825-r1/01-exact-depths/server-startup.log", "sha256": "c6390fb1d99bd341d0338747d9a76796ce2a8cb6863b023fa15ef571b6868522"},
+    "authority": "Graph-shape precedent only: both PIECEWISE and FULL capture markers with sizes [1,2]. Its dated source, F16 KV, speed, and token IDs do not transfer."
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [4096],
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896,
+    "gate": "Every helper gate and cached_tokens=0 must pass; candidate IDs must exactly equal both frozen E4M3 arrays."
+  },
+  "quality_contract": {
+    "helper": "scripts/qwen38-text-quality-suite.py",
+    "baseline": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp1-mtp0-f16-graph-seed0-natural-eos-replay-a-baseline-quality/quality.json",
+    "baseline_sha256": "738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18",
+    "gate": "pass_all and baseline_match_all; seven exact cases; eight passing repeats with one hash; passing 8K needle; exactly 24 true baseline comparisons; cached_tokens=0 on all 16 requests."
+  },
+  "graph_topology_cache_model_cleanup_contract": {
+    "graph": "Require enforce_eager=False, resolved FULL_AND_PIECEWISE with capture sizes [1,2] and max 2, both mixed PIECEWISE and decode FULL capture markers, and Graph capturing finished.",
+    "topology": "TP1 only on GPU0; world_size=1 rank=0 local_rank=0 and TP rank 0 required.",
+    "cache": "Fresh ext4 cache root, prefix caching disabled, all checked requests cache-zero, and exactly rank_0_0 as the non-shared rank namespace.",
+    "model": "All 19 pinned model files must pass direct and ordinary verification before launch.",
+    "cleanup": "One server lifetime with global EXIT/INT/TERM cleanup; container absent, port closed, no model server, and no render owner at sealing."
+  },
+  "frozen_input_sha256": {
+    "protected_overlay_manifest": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "model_manifest": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "model_verifier": "5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9",
+    "depth_helper": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067",
+    "quality_helper": "67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d",
+    "prior_model_verification": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp1-mtp0-e4m3kv-full-and-piecewise-4k-sentinel-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-mtp0-e4m3kv-full-and-piecewise-4k-sentinel-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp1-mtp0-e4m3kv-full-and-piecewise-4k-sentinel-20260826-r1",
+    "port": 19523,
+    "container": "q38-f01e-ar-tp1-m0-e4kv-fap-4k-r1",
+    "served_model": "qwen38-f01e-ar-tp1-m0-e4kv-fap-4k-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp1-mtp0-e4m3kv-full-and-piecewise-4k-sentinel-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_gpu_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true
+  },
+  "terminal_classification": {
+    "passed-quality-clean-sentinel": "Exact 4K, dual E4M3 array parity, full quality, FULL_AND_PIECEWISE graph identity, TP1/cache/model identity, and cleanup pass.",
+    "quarantined-target-parity-failed": "Exact 4K passes but candidate IDs differ from either frozen E4M3 array.",
+    "quarantined-quality-failed": "Exact 4K and target parity pass but the explicit full quality contract fails.",
+    "quarantined-exact-depth-failed": "The exact 4K request fails; retain only diagnostic evidence.",
+    "unsupported": "Only an exact-image log line explicitly rejecting E4M3 KV.",
+    "failed": "Startup, identity, graph, topology, endpoint, model, cache, cleanup, or another non-explicit failure."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "historical_replacement_allowed": false,
+    "protected_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
+    "automatic_publication": false,
+    "automatic_descendant_expansion": false,
+    "automatic_descendant_execution": false,
+    "other_site_or_matrix_cells_authorized": 0,
+    "failed_or_quarantined_speed_publication_allowed": false,
+    "pass_authority": "A pass establishes only this one exact current-f01e TP1/MTP0/FULL_AND_PIECEWISE/fp8_e4m3/4K internal cell pending separate validation and publication."
+  }
+}
