@@ -14,7 +14,7 @@ source_dir=${build_root}/vllm-xpu-kernels-${kernel_head}-dynamic-mtp-active-widt
 dist_dir=${build_root}/dist
 context_dir=${build_root}/overlay-context
 patch=${repo_root}/experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-mtp-active-width-20260826.patch
-patch_sha256=656c0d6572b6130a2f6f0afc3528d46ef4fd5b7d98652571b11e5a66b139a177
+patch_sha256=68c486a9a10a2f7e85d7d88783a05f89919e931d2b81922f85be733bfb59f1b5
 dockerfile=${repo_root}/experiments/qwen38-27b-b70/docker/Dockerfile.fp8-w8a16-dynamic-mtp-active-width-r1
 
 for command_name in docker git sha256sum unzip; do

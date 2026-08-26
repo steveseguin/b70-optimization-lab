@@ -7,9 +7,9 @@ model_dir=${MODEL_DIR:?set MODEL_DIR to the downloaded Qwen3.8-27B-FP8 directory
 cache_dir=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new writable cache directory}
 container=${CONTAINER_NAME:-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2}
 port=${PORT:-18128}
-image_id=sha256:fe1f44b6ead7ce015ace715c98fa13ff9f44627fdc717d6bbf1efa9a5cffdbb2
+image_id=sha256:9918c4477d2d3bdbd84732c5beb13619a89740f9915b1d7393fb48f1d3c8ed72
 kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
-patch_sha256=656c0d6572b6130a2f6f0afc3528d46ef4fd5b7d98652571b11e5a66b139a177
+patch_sha256=68c486a9a10a2f7e85d7d88783a05f89919e931d2b81922f85be733bfb59f1b5
 xpu_extension_sha256=de253fa31df9acae6020b95da8d2286f5ff15d8fe3d51b59b71496cbf9311f62
 gdn_library_sha256=2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355
 

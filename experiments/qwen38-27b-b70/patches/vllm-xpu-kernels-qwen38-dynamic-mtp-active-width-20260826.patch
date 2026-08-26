@@ -70,10 +70,29 @@ index e1757be..6a55ea7 100644
    TORCH_CHECK(
        z.size(0) >= num_actual_tokens,
 diff --git a/tests/gdn_attn/test_gdn_attn.py b/tests/gdn_attn/test_gdn_attn.py
-index 00fb28e..9b39c74 100755
+index 00fb28e..3ab8f63 100755
 --- a/tests/gdn_attn/test_gdn_attn.py
 +++ b/tests/gdn_attn/test_gdn_attn.py
-@@ -806,7 +806,8 @@ def ref_gdn_attention_spec(
+@@ -709,7 +709,8 @@ def ref_gdn_attention_spec(
+     dtype = projected_states_qkvz.dtype
+     width = conv_weights.shape[-1]
+     rep = num_v_heads // num_k_heads
+-    K = spec_state_indices_tensor.shape[1]
++    state_width = spec_state_indices_tensor.shape[1]
++    K = num_actual_tokens // num_spec_decodes
+     qkv_elems_size = num_k_heads // tp_size * (
+         2 * head_k_dim + num_v_heads // num_k_heads * head_v_dim)
+ 
+@@ -740,7 +741,7 @@ def ref_gdn_attention_spec(
+         globals_ = spec_token_indx[start:end].to(torch.long)
+ 
+         naccepted = int(num_accepted_tokens[n].item())
+-        init_col = max(naccepted - 1, 0)
++        init_col = min(max(naccepted - 1, 0), state_width - 1)
+         init_slot = int(spec_state_indices_tensor[n, init_col].item())
+         final_conv_slot = int(spec_state_indices_tensor[n, K - 1].item())
+ 
+@@ -806,7 +807,8 @@ def ref_gdn_attention_spec(
  
  
  @pytest.mark.parametrize("num_spec_decodes", NUM_SPEC_DECODES)
@@ -83,7 +102,7 @@ index 00fb28e..9b39c74 100755
  @pytest.mark.parametrize("num_k_heads", [16])
  @pytest.mark.parametrize("head_k_dim", [128])
  @pytest.mark.parametrize("num_v_heads", [32])
-@@ -820,9 +821,9 @@ def ref_gdn_attention_spec(
+@@ -820,9 +822,9 @@ def ref_gdn_attention_spec(
                           ids=format_tc)
  @pytest.mark.parametrize("ssm_state_is_fp32", [False, True])
  @torch.inference_mode()
@@ -96,7 +115,7 @@ index 00fb28e..9b39c74 100755
                             dtype, ssm_state_is_fp32):
      """Pure spec-decode batch: num_prefills == num_decodes == 0,
      num_spec_decodes sequences each contributing num_spec_tokens tokens.
-@@ -880,15 +881,20 @@ def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, num_k_heads,
+@@ -880,15 +882,20 @@ def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, num_k_heads,
                          device=device)
      dt_bias = torch.randn(num_v_heads // tp_size, dtype=dtype, device=device)
  
@@ -124,7 +143,7 @@ index 00fb28e..9b39c74 100755
 -        device=device)
 +        accepted_counts, dtype=torch.int32, device=device)
  
-@@ -998,6 +1004,17 @@ def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, num_k_heads,
+@@ -998,6 +1005,17 @@ def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, num_k_heads,
                                         ref_ssm_state[slot],
                                         atol=atol,
                                         rtol=rtol)

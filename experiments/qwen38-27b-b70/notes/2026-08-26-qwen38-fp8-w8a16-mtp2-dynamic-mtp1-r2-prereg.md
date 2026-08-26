@@ -21,7 +21,7 @@ state-row width. It is a repair validation, not a threshold or policy sweep.
   `sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd`;
 - repair patch
   `vllm-xpu-kernels-qwen38-dynamic-mtp-active-width-20260826.patch`, SHA-256
-  `656c0d6572b6130a2f6f0afc3528d46ef4fd5b7d98652571b11e5a66b139a177`;
+  `68c486a9a10a2f7e85d7d88783a05f89919e931d2b81922f85be733bfb59f1b5`;
 - repaired `_xpu_C.abi3.so` SHA-256
   `de253fa31df9acae6020b95da8d2286f5ff15d8fe3d51b59b71496cbf9311f62`;
 - repaired `libgdn_attn_kernels_xe_2.so` SHA-256
@@ -29,7 +29,7 @@ state-row width. It is a repair validation, not a threshold or policy sweep.
 - R2 image
   `neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mtp-width-r1`,
   image ID
-  `sha256:fe1f44b6ead7ce015ace715c98fa13ff9f44627fdc717d6bbf1efa9a5cffdbb2`;
+  `sha256:9918c4477d2d3bdbd84732c5beb13619a89740f9915b1d7393fb48f1d3c8ed72`;
 - TP2 on B70 devices 0 and 1, FP16 activations/KV, block-W8A16 enabled,
   prefix cache disabled, max length 256, 128 slots, block 64, MBT512, direct
   oneCCL P2P, and a size-one PIECEWISE graph;
