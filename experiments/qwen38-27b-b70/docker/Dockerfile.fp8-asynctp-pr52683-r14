@@ -1,0 +1,22 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-r13
+FROM ${BASE_IMAGE}
+
+LABEL neural.download.build.lane="qwen38-fp8-asynctp-pr52683-r14" \
+      neural.download.base.image="neural-download/vllm-openai-xpu:f01e-kernel-1e90-r13" \
+      neural.download.base.id="sha256:9403883cdbec3df988f486815f9dd528eb98baf0cc73d04ef3631ff0ac6a35b0" \
+      neural.download.vllm.head="ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9" \
+      neural.download.kernel.head="1e90ffa672ba02f17a909da11838a4c55b199783" \
+      neural.download.contribution.pr="vllm-project/vllm#52683" \
+      neural.download.contribution.author="chaojun-zhang" \
+      neural.download.contribution.commit="15c15752da84d371888a9d0b145483a98721eed2" \
+      neural.download.overlay.sha256="f0dc37d32e467e5f9b00701491d1fa27911de9da813e7d422b337c7192209aca"
+
+COPY experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-asynctp-pr52683-20260826.patch /tmp/asynctp.patch
+
+RUN cd /workspace/vllm \
+    && test "$(git rev-parse HEAD)" = ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9 \
+    && printf '%s  %s\n' \
+       f0dc37d32e467e5f9b00701491d1fa27911de9da813e7d422b337c7192209aca \
+       /tmp/asynctp.patch | sha256sum -c - \
+    && patch -p1 --forward --fuzz=0 < /tmp/asynctp.patch \
+    && rm /tmp/asynctp.patch
