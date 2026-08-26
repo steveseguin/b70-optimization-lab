@@ -1,0 +1,34 @@
+name: git-bundle-portability
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/git-bundle-portability.yml"
+      - "data/git-bundle-portability-inventory-v1.json"
+      - "patches/**/*.bundle"
+      - "patches/**/*.provenance.json"
+      - "tools/validate-git-bundle-inventory.py"
+      - "tools/test_validate_git_bundle_inventory.py"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/git-bundle-portability.yml"
+      - "data/git-bundle-portability-inventory-v1.json"
+      - "patches/**/*.bundle"
+      - "patches/**/*.provenance.json"
+      - "tools/validate-git-bundle-inventory.py"
+      - "tools/test_validate_git_bundle_inventory.py"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run offline inventory policy regressions
+        run: python3 -m unittest tools/test_validate_git_bundle_inventory.py
+      - name: Prove public prerequisites and disposable restoration
+        run: >-
+          python3 tools/validate-git-bundle-inventory.py
+          --inventory data/git-bundle-portability-inventory-v1.json
+          --repo-root .
+          --verify-public-remotes

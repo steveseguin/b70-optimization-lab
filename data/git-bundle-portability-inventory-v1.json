@@ -1,0 +1,893 @@
+{
+  "schema": "neural.download.git-bundle-inventory.v1",
+  "bundle_roots": [
+    "patches"
+  ],
+  "legacy_allowlist_sha256": "328b186620ae3bc778f01a34500aa5d0df41432d2ec68db4f94f1e963a8257f1",
+  "policy": {
+    "legacy": "The 53 audited historical artifacts are frozen byte-for-byte and may not grow.",
+    "new_or_changed": "Every new or changed bundle requires a manifest-backed portability classification.",
+    "offline_ci": "Census, bytes, headers, and recovery declarations are checked without network access; self-contained manifests are also restored in an empty repository.",
+    "publication_ci": "Manifest-backed thin bundles additionally require a live public-ref ancestry/tree proof and disposable restore."
+  },
+  "audit_summary": {
+    "date": "2026-08-26",
+    "total_bundles": 54,
+    "legacy_frozen": 53,
+    "manifest_backed": 1,
+    "zero_prerequisite": 26,
+    "thin": 28
+  },
+  "bundles": [
+    {
+      "path": "patches/deepseek-v4-flash-reap-xpu-b70/oneccl-deepseek-v4-b70-wideepoch-record-20260715.bundle",
+      "sha256": "100d9c7f03e648501e174498a72e9da88751b42acc3a94828ff95db7c1d5849c",
+      "size": 3499,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "66499938b7a8b615e26361c52900e7aec306ce50"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/tags/deepseek-v4-b70-oneccl-record-20260715",
+          "tip": "48fda4f0e074db005596d6899d5227d3f0316c12"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/deepseek-v4-flash-reap-xpu-b70/vllm-deepseek-v4-k160-dspark7-80tps-record-20260718-public-anchor.bundle",
+      "sha256": "bdb02267d5a128665fa46ca0119e218df8596a43ccbbe41767d5543acc9a7096",
+      "size": 152050,
+      "signature": "# v2 git bundle",
+      "classification": "manifest-backed-thin-public-prerequisite",
+      "prerequisites": [
+        "382bbd51448b2f58c73b3e51d051bc352166ba91"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/tags/deepseek-v4-k160-vllm-record-20260718",
+          "tip": "264c7f2f7df21ddeeab32ecca0353133344f1ac9"
+        }
+      ],
+      "recovery_basis": "manifest-backed disposable restore audit; publication CI live-proves the public prerequisite and recovery refs",
+      "manifest": {
+        "path": "patches/deepseek-v4-flash-reap-xpu-b70/vllm-deepseek-v4-k160-dspark7-80tps-record-20260718-public-anchor.provenance.json",
+        "sha256": "02293e75c414ce221a0d7f926335f053deffadace961352d9abd4179b4578a4b"
+      }
+    },
+    {
+      "path": "patches/deepseek-v4-flash-reap-xpu-b70/vllm-deepseek-v4-k160-dspark7-80tps-record-20260718.bundle",
+      "sha256": "cebc81bedc22496dc82836b9419428e0377a3eb4e7ac213014a7306c7b30e825",
+      "size": 110741,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-public-recovery-tag",
+      "prerequisites": [
+        "61c87db645c256651b5a366f538898485077ad32"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/tags/deepseek-v4-k160-vllm-record-20260718",
+          "tip": "264c7f2f7df21ddeeab32ecca0353133344f1ac9"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: exact prerequisite published as refs/tags/deepseek-v4-k160-vllm-base-20260714"
+    },
+    {
+      "path": "patches/deepseek-v4-flash-reap-xpu-b70/vllm-xpu-kernels-deepseek-v4-k160-80tps-record-20260718.bundle",
+      "sha256": "4c04c7f501c780dc13f5db69d551e3da52f5cf1103c83cf10f64e57afffdb9d9",
+      "size": 105939,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "dda91d171fbc3f51d1d65a7f8839714b1efffd42"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/tags/deepseek-v4-k160-xpu-kernels-record-20260718",
+          "tip": "31315673737d95da0f79179c8f755260ef02c1d6"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-exact-prefill-chunks-4ddb91528-20260802.bundle",
+      "sha256": "2c96ceacbee8e4554254bb5f2a6b01436964d3ea86be3f0a78373526bc01cc61",
+      "size": 88521,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "1a7f61feffbc61b21b73f812d231c7426386ccdc"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-exact-prefill-chunks-20260802",
+          "tip": "4ddb915284d4442885f72bed48311fd04640977c"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-attention-gate-m12-rejected-2b64444-20260731.bundle",
+      "sha256": "ef132ee3a9a1e4794386db3b51a6147d932ad4d68dada5a851920c42169a3c6d",
+      "size": 1755,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "58608c6361f1a958a7e933bed0be8c88c35aa26e"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-attention-gate-m12-20260731",
+          "tip": "2b644445e573f37d67919ac854167159eecf5493"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-aug04-07-diagnostics-561698049-20260807.bundle",
+      "sha256": "bf32a3ecfd95ef5f90f8c89c26ba051afcaabcc15ce0448e61ec62c4b0899284",
+      "size": 105436,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "1a7f61feffbc61b21b73f812d231c7426386ccdc"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-shared-elementwise-m12-20260731",
+          "tip": "561698049656690a55ea0ca9826dceba0e33a9c7"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-confidence-tree-diagnostic-8b8cd5227-20260801.bundle",
+      "sha256": "f102dc5d3ade64880d340a189f3a5c08d97584a5558ea72b97deea579c7a6956",
+      "size": 46267717,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-confidence-tree-diag-20260731",
+          "tip": "8b8cd522754aeecc9fb26405fb8d34fc1b8c9aff"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-fp8-lm-head-negative-b90f950-20260731.bundle",
+      "sha256": "b14eae17b8364ebcafb40bc2379f90957b7d710e6e6d996bc7465d8105340c54",
+      "size": 2511,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "58608c6361f1a958a7e933bed0be8c88c35aa26e"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-dflash-fp8-lm-head-20260731",
+          "tip": "b90f9509bd5e7b7123753a0047ef7958d184d571"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-inline-attention-34b43849f-20260730.bundle",
+      "sha256": "fa2caf605a53b8c84aacf281d5e90e3eac2b989aa62f8fcd330d2d69fe821451",
+      "size": 99671,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-transitive-tracked-full",
+      "prerequisites": [
+        "e63b413ea1bbeb8a367ec390e097c478bd84b7ed"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-dflash-inline-attention-20260730",
+          "tip": "34b43849fc7c8ff8633f223469cc2a0d525c256e"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is local-only directly and transitively recoverable from later tracked full Laguna bundles"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+      "sha256": "18317f6a824bd8f3dc788225462cc292f8e572292061c83a0945e8da854cea98",
+      "size": 46269936,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-dflash-local-tp-20260731",
+          "tip": "448351379b4ced80891725dc16a4b7f14cdb5663"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dynamic-cutoff-00c8bbbb5-20260808.bundle",
+      "sha256": "a1f0025bf9bd7cfe06e5e565ce48683258b08b119ebd6fc7c71873b6a0de5510",
+      "size": 98141,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "561698049656690a55ea0ca9826dceba0e33a9c7"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-shared-elementwise-m12-20260731",
+          "tip": "00c8bbbb5c950abc69a27a2e733330652eece478"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dynamic-cutoff-ae15e59d4-20260808.bundle",
+      "sha256": "678c5aea8230264443d9d4ef2d329fbb4b4364b270eb6aef45dcd3fede52fd88",
+      "size": 97467,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "561698049656690a55ea0ca9826dceba0e33a9c7"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-shared-elementwise-m12-20260731",
+          "tip": "ae15e59d4d6ab67912de69011e6e5dd1ce2ce4b6"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-q8-fp8-draft-9565e7224-20260802.bundle",
+      "sha256": "d781e01a927e053448c0ce6032e430b2bf93d7ce612f7fefe4a4124fcb2e4aa1",
+      "size": 3198,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "1a7f61feffbc61b21b73f812d231c7426386ccdc"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-q8-fp8-draft-20260802",
+          "tip": "9565e7224b9d2d9e9aee9c985f5f5685ba44df2c"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-qknorm-rope-m12-58608c6-20260731.bundle",
+      "sha256": "b5f13674bc32058d22e5fe44ed90a4d4eac3f3abdb9849b9f34019aeca263d48",
+      "size": 46251864,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-qknorm-rope-m12-20260731",
+          "tip": "58608c6361f1a958a7e933bed0be8c88c35aa26e"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-rank-sum-attn-rejected-1ddb7d6bb-20260801.bundle",
+      "sha256": "8fc8fa3073a5aba06ce9962aa1f4c25d403497175d9c5ac84a3c313c125599e3",
+      "size": 7456,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "1a7f61feffbc61b21b73f812d231c7426386ccdc"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-rank-sum-attn-stack-20260731",
+          "tip": "1ddb7d6bbe2579e0dd07a8fe7edfc135432ab85e"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-shared-elementwise-m12-1a7f61fef-20260731.bundle",
+      "sha256": "52e1682aa7e7595f9e4807b6a45f7b2e29683a2d61dae155b1f1b823f8a3e82b",
+      "size": 46259054,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-shared-elementwise-m12-20260731",
+          "tip": "1a7f61feffbc61b21b73f812d231c7426386ccdc"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gather-prefix-bisection-b63557f78-20260801.bundle",
+      "sha256": "8ba974c3080f7aa741cdbfc46442a18d610960806d1276bc9ee571722191513f",
+      "size": 92805,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "68a4a5f3e44f2d1ab62c5d7cb3741e316914d32f"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-target-inline-gather-prefix-bisection-20260801",
+          "tip": "b63557f7838e1338f930075b8f163475aef4d23e"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-ce2f3dfc0-20260731.bundle",
+      "sha256": "231d391d4526e7816ba69e80d211aefb0df663699846d5211e50c659c1ee9ea7",
+      "size": 46265239,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-target-inline-gathers-20260731",
+          "tip": "ce2f3dfc02bce59095d8654d299c52b05c72d423"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-fixed-input-v2-68a4a5f3e-20260801.bundle",
+      "sha256": "a181c0036436860b24cacea057e1f285ddd1fcf75a9e010f3d32fecb65095fad",
+      "size": 46267087,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-target-inline-gathers-fixed-input-v2-20260801",
+          "tip": "68a4a5f3e44f2d1ab62c5d7cb3741e316914d32f"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-row0-parity-diagnostic-3b68edc75-20260801.bundle",
+      "sha256": "0c4206fffb55d2023ea59f278e7eb60a755bdbbb4c2fafeb5ca507aa9938b77f",
+      "size": 1553,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "b63557f7838e1338f930075b8f163475aef4d23e"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "HEAD",
+          "tip": "3b68edc7501c546b03994ea8b6d6fa7bf23cc088"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-width12-dflash-fp8-102tps-record-20260726.bundle",
+      "sha256": "56bb463925cf53ba20db81c980264fd2a993d1e76f15731ac5676674fa0b9126",
+      "size": 2428511,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "1d354c694eedf241b836319dba497345a5aa1167"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-width12-stack-clean-20260726",
+          "tip": "e596ef1543466ae1a05e5bb8091f58872e2b18ba"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-attention-gate-m12-rejected-0ecea92-20260731.bundle",
+      "sha256": "4d959374fc579ee8d2cb6503b6c8c8aedbc9635238f78c159b2f88b5bbc22477",
+      "size": 1951,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "69e8ad9119a9cc70c3906b82be6254dd0160f00e"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-attention-gate-m12-20260731",
+          "tip": "0ecea928c3b447b103bb0cd46ffe75ae94f2c065"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-attention-runtime-906190641-20260726.bundle",
+      "sha256": "8c53de764a0c903a5e627a1c7a54a9c3bb21b500479a644b86af4c83e948149e",
+      "size": 317239,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "11f42aa47ff51924b3d9527cfc2bfef5fd2d98e5"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-s-2.1-fwht-20260721",
+          "tip": "906190641d708b8028018c5dde653e265c835348"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-decode-grf128-e4163f9-20260731.bundle",
+      "sha256": "e21141feecf16de832ca841b0046c8ea523113795498c392ddc91c08833a5596",
+      "size": 1220922,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-decode-grf128-20260731",
+          "tip": "e4163f93574326b2772742e0f51372a5a3777aa5"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-exact-specialized-ec507e8-20260731.bundle",
+      "sha256": "8cf6b505bbb3f96f9c75c30cee46576af9972dc896dabc0dca0aaaf34e237c15",
+      "size": 1222767,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-exact-specialized-20260731",
+          "tip": "ec507e8b0b1bb7ca36adb81565e29c781fbc0cc2"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-mad-inplace-negative-7df9806e9-20260731.bundle",
+      "sha256": "735d958c6c5d47e49d5184bcb30cc166033b69f94c38b5081d5f42d727e0ade2",
+      "size": 1211818,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-mad-inplace-20260731",
+          "tip": "7df9806e9eb12fb8e880c7ba0c6b4a104ef73832"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-mad-simd32-negative-7557817d0-20260731.bundle",
+      "sha256": "38933d1eb3561fcddf6c00cea5d6c7d629bddc518b6593a0e67e17856047f496",
+      "size": 1212364,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-mad-simd32-20260731",
+          "tip": "7557817d0e8c564be74f2cd7717e0195c1cb3911"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-paired-attn-rejected-8a1b059-20260801.bundle",
+      "sha256": "c550ba260ade0f8639de40096b81a78fc820d4406d8abe4812dbfccb398f3a29",
+      "size": 1239492,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-paired-attn-20260731",
+          "tip": "8a1b059356eea1d7368ffaa67ac3dafe5543234d"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-qknorm-rope-m12-69e8ad9-20260731.bundle",
+      "sha256": "670883c59fb2f45c73919a42623431fd9376bcc1e1e6e5b80e6785b4905c1f1d",
+      "size": 1234985,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-qknorm-rope-m12-20260731",
+          "tip": "69e8ad9119a9cc70c3906b82be6254dd0160f00e"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-rank-sum-rmsnorm-rejected-ead1a160-20260801.bundle",
+      "sha256": "3bcf72afe09d0a6b68fdfeae1714aa0f5d711561135451dd7cef7c6248f7b488",
+      "size": 2300,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "99886d783372e621941228250091dc8ebdc1595d"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-rank-sum-rmsnorm-20260731",
+          "tip": "ead1a16036afe825816453b549ee94ed6978539e"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-shared-elementwise-m12-99886d783-20260731.bundle",
+      "sha256": "57807decf1aec8cfe7a7bab6319cdf540697116bbb41faf3f6a6ecabe161c342",
+      "size": 1233893,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-shared-elementwise-m12-20260731",
+          "tip": "99886d783372e621941228250091dc8ebdc1595d"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-transposed-scale-dist3-negative-588ce4e-20260731.bundle",
+      "sha256": "a7be5434b720c5a301e33f0a6894a8796b6f7cf10fa8b9c422b4b5c299fa6c3b",
+      "size": 1223787,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "HEAD",
+          "tip": "588ce4e636e7ad7561aec533bda85e2eaf35cdac"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-transposed-scale-noprefetch-negative-32aa4a4-20260731.bundle",
+      "sha256": "cbf4f4994fee46df8c4c7f2cbd84fb54a54425908cbee6961836868fc43ec126",
+      "size": 1232076,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "HEAD",
+          "tip": "32aa4a4057414163411d0388af10d896da1df442"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-transposed-scales-8dd94f2-20260731.bundle",
+      "sha256": "0c23d0c5a8bf358d9e20b095fe4b771273e01992468aa3b805207b04c7a44809",
+      "size": 1237890,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-transposed-scales-20260731",
+          "tip": "8dd94f2307db3b830fe07f212c4b36f719652a5c"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-width12-102tps-record-20260726.bundle",
+      "sha256": "7aeec0b55e7b40f26d993ddf6dfb978ec267da1ae1e89d9f54c6db4d80022ed3",
+      "size": 308642,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "11f42aa47ff51924b3d9527cfc2bfef5fd2d98e5"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-width12-router-clean-20260726",
+          "tip": "6f9dd3c3a7b1b677a992ca4f431a968408f9c816"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-bf16-scale-operand-static-negative-62fea48-20260801.bundle",
+      "sha256": "e47b98f834e97b196982c7b8a93d47c206e3992e1d118b10be563c1c2c2fabdb",
+      "size": 1217894,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-bf16-scale-operand-20260801",
+          "tip": "62fea48e7bc713d95b51c8cbebc8c6daf3278fef"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-direct-offset-scheduler-rejected-fabf61f-20260801.bundle",
+      "sha256": "69545175da059ca6fc22ab4d31f53214187f54f6605624ab446d41f9a41845dd",
+      "size": 1240617,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-deterministic-moe-scheduler-20260731",
+          "tip": "fabf61f6dd5ea95157db7b1401543ce2c8586480"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-expert-indexed-scheduler-rejected-6baa960-20260801.bundle",
+      "sha256": "cb03da677a3d6c67ebb6e5444cce423fb1a4f6b27eed348b5144c372339eda04",
+      "size": 1239818,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-deterministic-moe-scheduler-20260731",
+          "tip": "6baa9606700523680b342b2f5fe8b414cbbaa19d"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-flattened-deterministic-scheduler-rejected-ceaedba-20260801.bundle",
+      "sha256": "f9585f6202293b4f41df67ec6604a1c2afd08f04ada5978ae8c0fb00d4f87aef",
+      "size": 1226875,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-deterministic-moe-scheduler-20260731",
+          "tip": "ceaedbae9a3522854783a8d6ea2bba20e8ef697d"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-grouped-onednn-int4-exact-slower-00fbed3-20260801.bundle",
+      "sha256": "894743a7a4b30b9dcd1de5e401ef3bde3f1d6a769eb8255f2b4c1da3db526a56",
+      "size": 4813,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "99886d783372e621941228250091dc8ebdc1595d"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "HEAD",
+          "tip": "00fbed32f69b7e6288c656ae866c4bff3be33996"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-lossless-packed-scales-rejected-a0b6ed9-20260801.bundle",
+      "sha256": "73ab8c6eb0e4ef37848e44c9ee12704b1f19d5e5debcb95cde3b4702d45064a4",
+      "size": 1231812,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-lossless-packed-scales-20260731",
+          "tip": "a0b6ed99b2e60660d2bd0abb6feff5d5317094bb"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-m12-hybrid-nchunk-d7db058-20260801.bundle",
+      "sha256": "6d06dd70680b80a536eb5287d21032020840331d8febd336fed206a8fd6a9ee6",
+      "size": 1864,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "522ca66587f5db288c9d8c6d8db918889c6cc467"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-m12-hybrid-nchunk-20260801",
+          "tip": "d7db05849983f26e91cc4dce296806159c8d5f41"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-m12-mapped-gather-192x16-rejected-4174a07-20260801.bundle",
+      "sha256": "df12bf3157c2fa4d91f8a72ebc059be8a3351b61acf11401c99b116eff4fed77",
+      "size": 1235958,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-m12-mapped-gather-scale-add-20260801",
+          "tip": "4174a071690fc164823c90d29f29c8b98dae423a"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-m12-mapped-gather-below-gate-defec37-20260801.bundle",
+      "sha256": "868837f6841ea748dd5aa2ed1c413b20b69a04ee7f9726fe1fbc89933e6f5919",
+      "size": 1244660,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-m12-mapped-gather-scale-add-20260801",
+          "tip": "defec37d44526f55ab71287cabfe28251aad96c7"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-m12-no-kloop-barriers-9aa4754-20260801.bundle",
+      "sha256": "acbb2781921801cb2fa6eae1702bd98885315ffba09cc29373fb37ba7afc5853",
+      "size": 2305,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "99886d783372e621941228250091dc8ebdc1595d"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-m12-kloop-barrier-20260801",
+          "tip": "9aa4754644fd61a77281c45dddd80d63db6f3c0a"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-m12-packed-nmajor-522ca66-20260801.bundle",
+      "sha256": "71385642ad9419fd829b2e9534771803f8e30c00b8de17b254c64875dd50a367",
+      "size": 2166,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "99886d783372e621941228250091dc8ebdc1595d"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-m12-packed-nmajor-20260801",
+          "tip": "522ca66587f5db288c9d8c6d8db918889c6cc467"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-persistent-chunk4-scheduler-rejected-7ad886a-20260801.bundle",
+      "sha256": "8a837c25236d3769f8ade5736c9d233583cf809916030d8717c10dca0f1414ff",
+      "size": 1227087,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-persistent-chunk4-scheduler-20260731",
+          "tip": "7ad886aaf00fe431810f5ad8ea1b71b585771b06"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-persistent-worklist-scheduler-rejected-efe33d2-20260801.bundle",
+      "sha256": "ec0fb44bf54c96827bb62c4d6a816b9cd77ad31be5eba81910093891479cf2b1",
+      "size": 1244861,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-persistent-worklist-scheduler-20260731",
+          "tip": "efe33d2d3434dee15e240e86b0f89a72349b5572"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-scale-lane-dedup-exact-neutral-1ed3b0b-20260801.bundle",
+      "sha256": "46e70f98c009861d51468e346fef789aed75602b6117bddb36b809baaeecd94c",
+      "size": 1242089,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-self-contained",
+      "prerequisites": [],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/experiment/laguna-scale-lane-dedup-20260801",
+          "tip": "1ed3b0b7482376fede57ec36726eacc9f6faa6d3"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: zero-prerequisite bundle"
+    },
+    {
+      "path": "patches/muse-glimmer-30b-b70/muse-100-private-history.bundle",
+      "sha256": "21cb212747b32c74661943811d3f4c2c6550340a5e70b763428fdd5a45954308",
+      "size": 179517,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "030ebb558a5820b444a8f836ed5cdd46c9b4bd7a"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "refs/heads/muse-100-campaign",
+          "tip": "1ff6bcb6c1d9c175145bd4c212c24bb2fb13f539"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/qwen36-27b-autoround-int4-b70/determinism-closeout-20260818/vllm-determinism-commits.bundle",
+      "sha256": "eb565490b7875d63d91c9e26b4cc1c817b469fca57efdeb62b3177eb9f77fed3",
+      "size": 2319,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-fork-public-prerequisite",
+      "prerequisites": [
+        "95a76ff89173ff56e90a2ed384fde2cea3c015e6"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "HEAD",
+          "tip": "44fc8fde09fc311d3099dab10366b672d9142ea4"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is on a public project fork, not official upstream"
+    },
+    {
+      "path": "patches/qwen36-27b-autoround-int4-b70/record-20260711/vllm-record-commits.bundle",
+      "sha256": "672b86f07952e93a7d103beefce3ddd93f8a4d58613e710830e75e8331ab12fc",
+      "size": 263062,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "c51df43005726a09c6eb7348e8c1b00501c70a8e"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "HEAD",
+          "tip": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    },
+    {
+      "path": "patches/qwen36-27b-autoround-int4-b70/record-20260711/vllm-xpu-kernels-record-commits.bundle",
+      "sha256": "28280d89fb7a3b62565602dd0e074be4ee1911d748c64a8cc580a2e6def565bb",
+      "size": 88800,
+      "signature": "# v2 git bundle",
+      "classification": "legacy-thin-audited-recoverable",
+      "prerequisites": [
+        "28e1f5e74c15744b69cf3b760f6160ceabd15de0"
+      ],
+      "advertised_refs": [
+        {
+          "ref": "HEAD",
+          "tip": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171"
+        }
+      ],
+      "recovery_basis": "audited 2026-08-26: prerequisite is public or recoverable from a tracked full bundle"
+    }
+  ]
+}
