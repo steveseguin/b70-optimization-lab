@@ -1,0 +1,77 @@
+{
+  "schema": "neural.download.qwen38-official-fp8-tp4-http-depth-compact-result.v1",
+  "campaign_id": "qwen38-official-fp8-tp4-http-depth-20260826-r1",
+  "status": "passed-qualified-exact-depth",
+  "identity": {
+    "model_repository": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "model_manifest_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9"
+  },
+  "config": {
+    "tp": 4,
+    "cards": 4,
+    "mtp": 0,
+    "speculation": "none",
+    "graph": "on",
+    "graph_mode": "PIECEWISE",
+    "graph_capture_sizes": [1],
+    "kv": "f16",
+    "parallel_slots": 1,
+    "configured_max_context_tokens": 33024,
+    "max_num_batched_tokens": 4096,
+    "gpu_memory_utilization": 0.8,
+    "prefix_caching": false
+  },
+  "model_verification": {
+    "status": "verified",
+    "files_verified": 66,
+    "bytes_verified_each_read_path": 30866866928,
+    "direct_mode": "strict O_DIRECT; no fallback",
+    "ordinary_mode": "complete unbuffered ordinary read after all direct reads",
+    "paths_coherent": true,
+    "raw_sha256": "39097b3b61cbd577a2f32c40990469900a37b6551295403a28baa4e6dbe4405a"
+  },
+  "workload": "One-slot vLLM OpenAI-compatible HTTP completions; exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+  "axis": "active_context_tokens",
+  "points": [
+    {"x": 2048, "decode_tok_s": 35.526051366782006, "ttft_ms": 1972.8882819908904, "effective_prompt_throughput_proxy_tok_s": 1038.0719570868516, "cached_tokens": 0, "output_token_ids_sha256": "c23bf554e30205f7606c6ab9a137d5e53f5d5868d3a963d02109a3e7bf364d1b", "raw_sha256": "ab3512567242662c9f0be9a3537682ee1bf0df54f5b5ae4465a7e7c9a02ed349"},
+    {"x": 4096, "decode_tok_s": 34.898259891958816, "ttft_ms": 3662.974345003022, "effective_prompt_throughput_proxy_tok_s": 1118.216950000675, "cached_tokens": 0, "output_token_ids_sha256": "b751b0bfa737c4824dc37b5e3da89238b4f4197345fae8c4d7de8e66a694417e", "raw_sha256": "51545b08b00ae1abd38a1c85db20917cc0ca8d8c83ab5d826474e53e883f3f2f"},
+    {"x": 8192, "decode_tok_s": 33.969008846291906, "ttft_ms": 7200.292951005395, "effective_prompt_throughput_proxy_tok_s": 1137.7314861690636, "cached_tokens": 0, "output_token_ids_sha256": "b619ef25f938c18e11e67b21339fb95cf632520cb59c63a9cf211b0cbd46a0df", "raw_sha256": "b67f51c4878b38d445ba408725145c1921b516498fc538f56c186e4fc7b048f5"},
+    {"x": 16384, "decode_tok_s": 33.643737958666264, "ttft_ms": 14424.102268996648, "effective_prompt_throughput_proxy_tok_s": 1135.8765831282258, "cached_tokens": 0, "output_token_ids_sha256": "d33b03661a70c438ffc7d55dd6c80ae850f37350ff7c24702db3423106edc2cb", "raw_sha256": "9b3a14ead2c1893b5659a3273fc5bfcaa4aaa20f51d052118043af66da546f93"},
+    {"x": 24576, "decode_tok_s": 33.27243664089886, "ttft_ms": 21792.12021800049, "effective_prompt_throughput_proxy_tok_s": 1127.7470826220938, "cached_tokens": 0, "output_token_ids_sha256": "c89d818b02947c125f26355896823ff201cb7a0234571af166b62580101c6983", "raw_sha256": "17f49d907f6d81f58934d2c7ddedc1b4e1212af6cded18806e6722efb42c83c2"},
+    {"x": 32768, "decode_tok_s": 33.106580865553255, "ttft_ms": 29236.43605300458, "effective_prompt_throughput_proxy_tok_s": 1120.793243765855, "cached_tokens": 0, "output_token_ids_sha256": "98947e31c8ca0d0660722608218a7a6cb8f7022fb484df876e042a5a04d573c8", "raw_sha256": "b67eeed10243861053c93bae573cb8943174e2662cfbe3c257cd9805fa4cd81b"}
+  ],
+  "quality": {
+    "grade": "C",
+    "scope": "repeated-token exact-depth serving shape; not natural prose",
+    "all_six_depth_gates_passed": true,
+    "cache_zero_all_cells": true,
+    "exact_128_returned_token_ids_all_cells": true,
+    "interpolation_or_extrapolation": false
+  },
+  "cleanup": {
+    "status": "clean",
+    "status_file_sha256": "2e22da2ab13713309ac75219e525b8e06ed02f3f1963b8feef203fa25827f93d",
+    "container_absent_at_sealing": true,
+    "port_19457_closed_at_sealing": true
+  },
+  "authority": {
+    "site_cells": 6,
+    "zero_context_cell": 0,
+    "tp1_or_tp2_cells": 0,
+    "mtp_or_speculative_cells": 0,
+    "headline_or_protected_replacement": false,
+    "localmaxxing_submission": false,
+    "protected_decode_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]
+  },
+  "tracked_inputs": {
+    "preregistration": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp4-http-depth-r1-prereg.json", "sha256": "34ee40606f6349ba184febcd25ae18b4b43b851fe922fdbeaef382247ae32d6f"},
+    "runner": {"path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-fp8-tp4-http-depth-r1.sh", "sha256": "edb3338804e76be9ce6cd947fdeb6d3075cb22717deac680042b08b03796a8f3"}
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-fp8-tp4-http-depth-20260826-r1-attempt1",
+  "raw_summary_sha256": "e3f90f3e9355a06445e0f905d516a1b00416c6a4fd18c2226be66eddb92a8cfe",
+  "raw_result_manifest_sha256": "e0484e9b42dcfe01a6ea1be5f1e6edf3bed6da3f1dfe1cdca68c0f7b8a058656"
+}
