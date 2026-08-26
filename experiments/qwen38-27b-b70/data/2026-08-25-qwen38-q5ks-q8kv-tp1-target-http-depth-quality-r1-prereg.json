@@ -1,0 +1,141 @@
+{
+  "schema": "neural.download.qwen38-q5ks-target-http-depth-quality-prereg.v1",
+  "campaign_id": "qwen38-q5ks-q8kv-tp1-target-http-depth-quality-20260825-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Measure the current-weight Qwen3.8 UD-Q5_K_S target-only TP1 HTTP serving curve over exact active context, then require the full Qwen3.8 text-quality battery in the same fresh server lifetime.",
+  "model": {
+    "path": "/mnt/usb-models/llm-models/qwen3.8-27b-unsloth-gguf/Qwen3.8-27B-UD-Q5_K_S.gguf",
+    "size_bytes": 18665753504,
+    "sha256": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe",
+    "repository": "unsloth/Qwen3.8-27B-GGUF",
+    "revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502",
+    "quantization": "UD-Q5_K_S",
+    "relationship": "current Qwen3.8 target weights; quantized artifact is a subset of the Qwen3.8 27B family"
+  },
+  "runtime": {
+    "binary": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/llama-server",
+    "binary_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964",
+    "source_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+    "reported_version": "version: 0.2.0-dev (build 1, commit 9fee29e)",
+    "effective_local_shared_libraries": [
+      {"soname": "libllama-server-impl.so", "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libllama-server-impl.so", "size_bytes": 7497512, "sha256": "8d2507871a45c9aeab76aacfcd5d9b7b06b1fe5387db4e8774fc31c17b213534"},
+      {"soname": "libllama-common.so.0", "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libllama-common.so.0.2.0", "size_bytes": 5711400, "sha256": "50d4c2699b417d41d8f88f0bf868366532314b6298546d214d84c9ed109afb7e"},
+      {"soname": "libmtmd.so.0", "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libmtmd.so.0.2.0", "size_bytes": 2036256, "sha256": "7b2bf1015f9e853189168767e7473fe1b5a331c5ff484e005907ba246049e0c9"},
+      {"soname": "libllama.so.0", "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libllama.so.0.2.0", "size_bytes": 4099640, "sha256": "e43c73e0107c671f93ee2211269bb73f672d59353a331f44ff2ebdaaa4b1d6bf"},
+      {"soname": "libggml.so.0", "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libggml.so.0.21.0", "size_bytes": 55440, "sha256": "db46d7b720d042c212dbeb8391d1f7b5b4ff0114c00f62f80cf49dde9a2e19d5"},
+      {"soname": "libggml-cpu.so.0", "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libggml-cpu.so.0.21.0", "size_bytes": 1754880, "sha256": "d1fbb0b0e1bb82376db22303cc4cad68937668b3740ba69c7d2d336e84a52bb8"},
+      {"soname": "libggml-sycl.so.0", "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libggml-sycl.so.0.21.0", "size_bytes": 267560912, "sha256": "959fe7c30eea55d6a2225d970e81e0fb49cfbbf83a4332c79f79c3b0d5bf6b7f"},
+      {"soname": "libggml-base.so.0", "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libggml-base.so.0.21.0", "size_bytes": 1043168, "sha256": "d7675d35df93b61b5175370128527e1225e60ad330aaa8fe1b317ade9b90c4ab"}
+    ]
+  },
+  "fixture": {
+    "path": "data/qwen27-exact-depth/qwen36-6a9e13bd-exact-depth-v1.json",
+    "sha256": "85b1050c88b4c1e6cb9c4ce7f1580284cd2aa68243dad0d0dff16460decbe5ac",
+    "case_ids": ["depth-0", "depth-2048", "depth-4096", "depth-8192", "depth-16384", "depth-24576", "depth-32768"],
+    "prompt_token_ids_sha256": [
+      "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "a173e60e5047c0f080e0ea45680eecbb533d30946cfc2ae0e028c684bf18d1ba",
+      "aedf2eb779bfa4aad8f533c644ca94646977deae1c10221bff592f06785c76d0",
+      "6baa17bea14f0ecad7e4edf54a05256eafaef1d447a447569fd303371c671741",
+      "b7acffcd09d9466fd8382a72248f5447c59f4ee18572aff243ef29ee889883e7",
+      "0e0004c062890ee48b86fa426373baada8c1c277faaadb749d01689f4afaaa36",
+      "3c4526a112dfc70bc62205f4e7f060f14ee49ef748527cd58778c3c2c238302c"
+    ],
+    "evidence_grade": "C synthetic repeated-token exact-depth fixture; the separate natural-language quality battery is mandatory"
+  },
+  "clients": {
+    "exact_depth": {
+      "path": "scripts/bench-openai-token-depth-suite.py",
+      "sha256": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067",
+      "requests": 7,
+      "output_tokens": 128,
+      "primary_metric": "conventional HTTP serving decode rate over 99 intervals between streamed token-ID events 1 and 100"
+    },
+    "quality": {
+      "path": "scripts/qwen38-text-quality-suite.py",
+      "sha256": "67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d",
+      "interpreter": "/home/steve/.venvs/vllm-xpu/bin/python",
+      "interpreter_sha256": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8",
+      "tokenizer_path": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+      "repeat_runs": 2,
+      "long_context_tokens": 27200,
+      "requirements": "7/7 exact semantic canaries, two-repeat stability, long-context needle recall, and cached_tokens=0 on all ten quality requests"
+    }
+  },
+  "parent": {
+    "campaign_id": "qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-20260825-r1",
+    "manifest": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1-prereg.json",
+    "manifest_sha256": "d19087a3aa42d6757a7099a0dc1da028a8d52269654cb44283fe8c433539d2c7",
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260825-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1.py",
+    "runner_sha256": "b1a838b37aa0e46ce74d7cfc4406f931ca68bbb594e1a0cf9415d9a75b46c8f4",
+    "validator": "experiments/qwen38-27b-b70/scripts/validate-20260825-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1.py",
+    "validator_sha256": "33f1f6afb9b4775f617a01ee8c31ca99d759bcad1aeca2d8623cb52c68bedf53",
+    "terminal": "/mnt/fast-ai/bench-results/qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-20260825-r1/terminal-receipt.json",
+    "terminal_sha256": "c4e4d0447fffe1a7db9271c1c4dcee15ae476c369025f16b2309f57674bfcc28",
+    "identity": "/mnt/fast-ai/bench-results/qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-20260825-r1/identity.json",
+    "identity_sha256": "6d264d10a65fbd0d53a705ce7b970bff9d5f338e986f3367351717108adcb679",
+    "control_8k_receipt": "/mnt/fast-ai/bench-results/qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-20260825-r1/control-mtp0/depth-8192/exact-depth.json",
+    "control_8k_receipt_sha256": "063e618bf01030e54154027ed9f31fe3dad249d758bd78050de86f4ac4f09e64",
+    "required_control_output_token_ids_sha256": "e2f7a659a1b9fc93aeb8b766be5ceb4b9c9f835ad61b50023a0224401eed141c"
+  },
+  "selectors": {
+    "revision": "qwen3.8-27b-current-weights",
+    "target_quantization": "UD-Q5_K_S",
+    "tp": 1,
+    "mtp": 0,
+    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "target_kv": "q8_0",
+    "graph_mode": "off",
+    "fit": "off",
+    "transport": "HTTP /v1/completions"
+  },
+  "server_contract": {
+    "host": "127.0.0.1",
+    "port": 19440,
+    "model_alias": "qwen38-q5ks-q8kv-target-depth-r1",
+    "context_capacity": 33024,
+    "parallel": 1,
+    "cache_type_k": "q8_0",
+    "cache_type_v": "q8_0",
+    "graph": "off",
+    "fit": "off",
+    "spec_type": "none"
+  },
+  "execution_contract": {
+    "arm": "target-mtp0",
+    "fresh_server_lifetimes": 1,
+    "depth_order": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "quality_after_all_depths": true,
+    "completion_tokens_per_depth": 128,
+    "require_cached_tokens_zero_everywhere": true,
+    "require_parent_8k_output_parity": true,
+    "cleanup_required": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-q5ks-q8kv-tp1-target-http-depth-quality-20260825-r1",
+    "exact_ack": "RUN qwen38-q5ks-q8kv-tp1-target-http-depth-quality-20260825-r1",
+    "default_is_inert": true,
+    "requires_clean_pushed_main": true,
+    "create_only": true,
+    "requires_idle_gpu0_render_node": "/dev/dri/by-path/pci-0000:23:00.0-render",
+    "required_locks": [
+      "/run/lock/muse-glimmer-gpu-exclusive.lock",
+      "/tmp/b70-benchmark.lock",
+      "/tmp/b70-gpu0.lock",
+      "/run/user/1000/qwen36-b70-gpu-leases/gpu0.lock"
+    ],
+    "request_timeout_seconds": 900
+  },
+  "frozen_interpretation": {
+    "speed_floor": null,
+    "evidence_grade": "C",
+    "target_only_serving_curve_cells_if_all_gates_pass": 7,
+    "speculative_cells_authorized": 0,
+    "tp2_or_tp4_cells_authorized": 0,
+    "prefill_cells_authorized": 0,
+    "headline_or_protected_replacement_authorized": false,
+    "localmaxxing_submission_authorized": false,
+    "historical_featured_speeds_are_immutable": true,
+    "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]
+  }
+}
