@@ -1,0 +1,23 @@
+From 7b7a6769cfddae1a4001fbffc6b5743fcbd8a980 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 26 Aug 2026 18:17:59 -0400
+Subject: [PATCH 3/3] fix(build): include fused quant implementations
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ CMakeLists.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7c95eca..dd0976c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -470,6 +470,8 @@ if(BASIC_KERNELS_ENABLED)
+       "csrc/torch_bindings.cpp"
+       "csrc/quantization/fp8/fp8_quant.cpp"
+       "csrc/quantization/fp4/mxfp4_quant.cpp"
++      "csrc/quantization/fused_kernels/fused_silu_mul_block_quant.cpp"
++      "csrc/quantization/fused_kernels/fused_silu_mul_mxfp4_quant.cpp"
+       "csrc/xpu_view.cpp"
+       "csrc/attention/merge_attn_states.cpp"
+      "csrc/tensor_utils.cpp"

@@ -62,12 +62,14 @@ checkpoint expert block layout: 128 local experts with intermediate dimension
 1280, instead of refining the non-EP layout into 512 experts by 320. EP4 is
 therefore the preferred first correctness load.
 
-Each B70 exposes 31.890625 GiB. The first load will use 5 GiB/rank of UVA CPU
-weight offload and `gpu_memory_utilization=0.92`, leaving practical runtime and
-KV headroom. Real B70 microtests proved both BF16 matrix multiplication and FP8
-`scaled_mm` can consume pinned host-USM views exactly. Prefetch offload is not
-allowed yet because the current implementation constructs CUDA streams and
-events directly.
+Each B70 exposes 31.890625 GiB. The first load will use a 12-GiB/rank selective
+UVA allowance for only `ple_embedding.ngram_embedding.weight`, plus
+`gpu_memory_utilization=0.92`. The allowance covers the approximately
+11.92-GiB TP-local PLE shard while leaving all other weights resident; it is
+not general-weight offload. Real B70 microtests proved both BF16 matrix
+multiplication and FP8 `scaled_mm` can consume pinned host-USM views exactly.
+Prefetch offload is not allowed yet because the current implementation
+constructs CUDA streams and events directly.
 
 ## Kernel-package blocker found before load
 
@@ -122,8 +124,10 @@ After the native package gate passes:
 - target-only / MTP0;
 - eager, no graph, no compilation, no prefix cache;
 - 512-token model length, one sequence, 512 batched tokens;
-- PLE CPU process enabled;
-- UVA general-weight offload, 5 GiB/rank;
+- dedicated PLE CPU-process transport disabled: `VLLM_PLE_CPU_OFFLOAD` is
+  unset;
+- selective PLE UVA only: `--offload-backend uva`, `--cpu-offload-gb 12`, and
+  `--cpu-offload-params ple_embedding.ngram_embedding.weight`;
 - Triton MoE backend (native grouped MoE is not correctness-qualified);
 - GPU memory utilization 0.92;
 - external cache, temp, and log roots;

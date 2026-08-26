@@ -53,12 +53,51 @@
   },
   "first_load_budget": {
     "device_total_gib": 31.890625,
-    "cpu_offload_gib_per_rank": 5.0,
+    "cpu_offload_gib_per_rank": 12.0,
     "offload_backend": "uva",
+    "cpu_offload_params": [
+      "ple_embedding.ngram_embedding.weight"
+    ],
+    "ple_cpu_process_enabled": false,
+    "vllm_ple_cpu_offload": "unset",
     "moe_backend": "triton",
     "gpu_memory_utilization": 0.92,
     "prefetch_offload_allowed": false,
-    "reason": "prefetch uses CUDA-only streams/events; XPU UVA is proven"
+    "reason": "selective XPU UVA covers only the approximately 11.92-GiB TP-local PLE shard; prefetch uses CUDA-only streams/events"
+  },
+  "frozen_first_load": {
+    "tensor_parallel_size": 4,
+    "enable_expert_parallel": true,
+    "all2all_backend": "allgather_reducescatter",
+    "language_model_only": true,
+    "target_only": true,
+    "mtp_dose": 0,
+    "enforce_eager": true,
+    "max_model_len": 512,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 512,
+    "enable_prefix_caching": false,
+    "moe_backend": "triton",
+    "gpu_memory_utilization": 0.92,
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12,
+    "cpu_offload_params": "ple_embedding.ngram_embedding.weight",
+    "vllm_ple_cpu_offload": "unset",
+    "cli_args": [
+      "--tensor-parallel-size", "4",
+      "--enable-expert-parallel",
+      "--all2all-backend", "allgather_reducescatter",
+      "--language-model-only",
+      "--enforce-eager",
+      "--max-model-len", "512",
+      "--max-num-seqs", "1",
+      "--max-num-batched-tokens", "512",
+      "--moe-backend", "triton",
+      "--gpu-memory-utilization", "0.92",
+      "--offload-backend", "uva",
+      "--cpu-offload-gb", "12",
+      "--cpu-offload-params", "ple_embedding.ngram_embedding.weight"
+    ]
   },
   "status": "building current core and MoE schema modules; native grouped MoE deferred pending ABI and block-FP8 repair"
 }
