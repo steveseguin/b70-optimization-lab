@@ -1,0 +1,70 @@
+{
+  "schema": "neural.download.qwen38-fp8-http-capacity-screen-closeout.v1",
+  "campaign_id": "qwen38-fp8-tp2-http-capacity-screen-20260826-r2",
+  "state": "closed",
+  "classification": "diagnostic-capacity-screen-not-publishable",
+  "identity": {
+    "model_repository": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "model_manifest_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b",
+    "cards": 2,
+    "topology": "TP2",
+    "generation": "target-only / MTP0",
+    "kv_cache": "FP16"
+  },
+  "fixed_server": {
+    "max_model_len": 4096,
+    "max_num_batched_tokens": 256,
+    "prefix_cache": false,
+    "graph": "PIECEWISE capture size 1"
+  },
+  "control": {
+    "active_slots": 4,
+    "concurrency": 4,
+    "aggregate_tok_s": 81.08671564662076
+  },
+  "profiles": [
+    {
+      "active_slots": 8,
+      "result": "qwen38-fp8-tp2-http-capacity-screen-20260826-r2-p8-attempt1/result.json",
+      "result_sha256": "3dbf3c4d9da1da236681a257ae9734e5752055a653ee4fc49d3c497b338012fb",
+      "qualification_sha256": "3e00749e030b6b51b285d802c055170409fa67851206856dda31b55fc580e409",
+      "output_gate": "passed",
+      "cleanup": "clean",
+      "own_capacity_aggregate_tok_s": 155.15027434817694,
+      "gain_over_p4_control_percent": 91.33870833334552,
+      "screen_disposition": "valid diagnostic"
+    },
+    {
+      "active_slots": 16,
+      "result": "qwen38-fp8-tp2-http-capacity-screen-20260826-r2-p16-attempt1/result.json",
+      "result_sha256": "954d2ee7dc719113d80bb569bb5ebfc3f4466423072b52d5b072e6c52189885d",
+      "qualification_sha256": "eca8b372ea31df02c40e5f2487c5ba0945b76e7a49817b0293efecaee8930657",
+      "output_gate": "passed",
+      "cleanup": "clean",
+      "own_capacity_aggregate_tok_s": 280.9980405527971,
+      "gain_over_p4_control_percent": 246.54016790789518,
+      "screen_disposition": "valid diagnostic and highest contract-valid profile"
+    },
+    {
+      "active_slots": 32,
+      "result": "qwen38-fp8-tp2-http-capacity-screen-20260826-r2-p32-attempt1/result.json",
+      "result_sha256": "c0be8da7df48cc65a273e519341962311635476bba5a3d18e816a453fff50deb",
+      "qualification_sha256": "c927b7347443f7833abdd4682c38d18629ccd27355050f7d8bf86c176c7b1e43",
+      "output_gate": "passed",
+      "cleanup": "process-survived",
+      "observed_own_capacity_aggregate_tok_s": 469.85592111534976,
+      "observed_gain_over_p4_control_percent": 479.4487017614589,
+      "screen_disposition": "excluded diagnostic; frozen cleanup gate failed after the outer orchestration shell matched the process classifier"
+    }
+  ],
+  "selection": {
+    "highest_contract_valid_active_slots": 16,
+    "highest_contract_valid_aggregate_tok_s": 280.9980405527971,
+    "p32_confirmation_justified": true,
+    "publication": "none from R2",
+    "no_interpolation_or_extrapolation": true
+  }
+}
