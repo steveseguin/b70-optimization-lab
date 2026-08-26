@@ -1,0 +1,35 @@
+{
+  "kind": "attribution_microbenchmark_not_endpoint_throughput",
+  "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+  "torch": "2.13.0+xpu",
+  "kernel_package": "0.1.12.3",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "shape": {
+    "batch": 64,
+    "num_k_heads": 16,
+    "num_v_heads": 48,
+    "head_k_dim": 128,
+    "head_v_dim": 128,
+    "tp_size": 2,
+    "conv_width": 4,
+    "qkvz_width_per_rank": 8192,
+    "ba_width_per_rank": 48,
+    "qkv_width_per_rank": 5120
+  },
+  "warmup": 50,
+  "iterations_per_repeat": 100,
+  "repeats": 7,
+  "samples_us": [
+    218.92338,
+    218.93287,
+    218.78397,
+    218.78538,
+    218.72677,
+    218.87417000000002,
+    218.68868
+  ],
+  "median_us": 218.78538,
+  "min_us": 218.68868,
+  "max_us": 218.93287,
+  "outputs_finite": true
+}

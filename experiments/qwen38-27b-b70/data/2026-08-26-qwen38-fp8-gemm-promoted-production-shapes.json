@@ -1,0 +1,111 @@
+{
+  "kind": "attribution_microbenchmark_not_endpoint_throughput",
+  "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+  "torch": "2.13.0+xpu",
+  "kernel_package": "0.1.12.3",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "warmup": 20,
+  "iterations_per_repeat": 100,
+  "repeats": 7,
+  "rows": [
+    {
+      "name": "attention_qkv",
+      "m": 64,
+      "k": 5120,
+      "n": 4096,
+      "samples_us": [
+        73.28763000000001,
+        94.46433,
+        91.72143,
+        86.79613,
+        86.73403,
+        74.19592,
+        73.15061999999999
+      ],
+      "median_us": 86.73403,
+      "min_us": 73.15061999999999,
+      "max_us": 94.46433,
+      "output_identical_within_run": true,
+      "a_contiguous": true,
+      "b_contiguous": false,
+      "b_stride": [
+        1,
+        5120
+      ],
+      "a_scale_shape": [
+        64,
+        40
+      ],
+      "b_scale_shape": [
+        40,
+        32
+      ]
+    },
+    {
+      "name": "mlp_gate_up",
+      "m": 64,
+      "k": 5120,
+      "n": 8704,
+      "samples_us": [
+        194.75226,
+        177.22376,
+        155.56294,
+        155.81485,
+        155.30025,
+        155.35335,
+        155.09995
+      ],
+      "median_us": 155.56294,
+      "min_us": 155.09995,
+      "max_us": 194.75226,
+      "output_identical_within_run": true,
+      "a_contiguous": true,
+      "b_contiguous": false,
+      "b_stride": [
+        1,
+        5120
+      ],
+      "a_scale_shape": [
+        64,
+        40
+      ],
+      "b_scale_shape": [
+        40,
+        68
+      ]
+    },
+    {
+      "name": "mlp_down",
+      "m": 64,
+      "k": 8704,
+      "n": 5120,
+      "samples_us": [
+        133.21724,
+        127.50514,
+        127.57003999999999,
+        127.35753,
+        127.47144,
+        127.55244,
+        127.51944
+      ],
+      "median_us": 127.51944,
+      "min_us": 127.35753,
+      "max_us": 133.21724,
+      "output_identical_within_run": true,
+      "a_contiguous": true,
+      "b_contiguous": false,
+      "b_stride": [
+        1,
+        8704
+      ],
+      "a_scale_shape": [
+        64,
+        68
+      ],
+      "b_scale_shape": [
+        68,
+        40
+      ]
+    }
+  ]
+}
