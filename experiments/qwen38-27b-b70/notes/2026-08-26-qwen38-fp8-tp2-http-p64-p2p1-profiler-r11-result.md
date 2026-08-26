@@ -44,16 +44,21 @@ preserving the existing direct-P2P setting.
 ## FP8 scratchpad hypothesis
 
 The current oneDNN FP8 W8A8 implementation allocates a fresh scratchpad tensor
-inside every GEMM call. The rank-0 CPU table also reports 3,300
-`aten::empty_strided` calls and 112.984 ms of self CPU time over the eight
-profiled iterations. This correlation is a **hypothesis**, not causal proof:
-profiler overhead prevents translating it into an unprofiled speedup.
+inside every GEMM call. Source inspection shows that scratchpad uses
+`aten::empty`, not `aten::empty_strided`. Rank 0 reports 9,424 `aten::empty`
+calls and only 5.665 ms of total self CPU time over eight profiled iterations;
+even assigning that entire total to scratchpads gives an upper bound of only
+0.708 ms per iteration. The separate 112.984 ms `aten::empty_strided` total
+cannot be attributed to scratchpad allocation. Profiler overhead also prevents
+translating either number directly into an unprofiled speedup.
 
-The next bounded candidate is therefore a clean-build FP8 scratchpad cache,
-modeled after the existing INT8 cache. It must be tested first with varied
-inputs and repeated direct/graph execution to rule out asynchronous scratchpad
-aliasing, then against the frozen c64 endpoint harness. Nothing from this R11
-capture authorizes a package or website update.
+A clean-build FP8 scratchpad cache remains a cheap bounded secondary candidate,
+modeled after the existing INT8 cache, but it cannot plausibly close the target
+gap alone. It must be tested first with varied inputs and repeated direct/graph
+execution to rule out asynchronous scratchpad aliasing. The higher-value
+follow-up is the FP8 output-allocation path, including the newer
+`fp8_gemm_out` interface, followed by the frozen c64 endpoint harness. Nothing
+from this R11 capture authorizes a package or website update.
 
 ## Evidence
 
