@@ -2605,6 +2605,42 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(q38_q8_f16_graph_packet["grades"]["evidence"]["grade"], "C")
         self.assertNotIn("featured_metric", q38_q8_f16_graph_packet)
 
+        q38_q8_graph_q8kv = [
+            cell for cell in q38_target
+            if cell["selectors"]["artifact_id"]
+            == "qwen38-27b-ggmlorg-q8-0-0669b98"
+            and cell["selectors"]["graph_mode"] == "SYCL"
+            and cell["selectors"]["kv"] == "q8_0"
+        ]
+        self.assertEqual(len(q38_q8_graph_q8kv), 7)
+        closed_graph_q8kv = [
+            cell for cell in q38_q8_graph_q8kv if cell["state"] == "closed"
+        ]
+        self.assertEqual(len(closed_graph_q8kv), 1)
+        self.assertEqual(closed_graph_q8kv[0]["selectors"]["active_context_tokens"], 8192)
+        self.assertEqual(
+            closed_graph_q8kv[0]["packet_id"],
+            "qwen38-27b-q8weights-q8kv-sycl-graph-cache64-8k-closed",
+        )
+        self.assertNotIn("evidence_id", closed_graph_q8kv[0])
+        self.assertNotIn("point_x", closed_graph_q8kv[0])
+        self.assertTrue(all(
+            cell["state"] == "missing"
+            for cell in q38_q8_graph_q8kv
+            if cell["selectors"]["active_context_tokens"] != 8192
+        ))
+        q38_q8_graph_q8kv_packet = next(
+            packet for packet in family["packets"]
+            if packet["id"]
+            == "qwen38-27b-q8weights-q8kv-sycl-graph-cache64-8k-closed"
+        )
+        self.assertEqual(
+            q38_q8_graph_q8kv_packet["status"],
+            "closed-bounded-negative-long-quality-crash",
+        )
+        self.assertNotIn("featured_metric", q38_q8_graph_q8kv_packet)
+        self.assertIn("no measured speed", q38_q8_graph_q8kv_packet["coverage"])
+
         q38_q8_q8 = [
             cell for cell in q38_target
             if cell["selectors"]["artifact_id"]
@@ -2670,19 +2706,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(q38_q8_q8_packet["grades"]["evidence"]["grade"], "C")
         self.assertNotIn("featured_metric", q38_q8_q8_packet)
 
-        q38_q8_estimates = [
-            estimate for estimate in family["estimates"]
-            if estimate["id"].startswith(
-                "q38-q8weights-q8kv-tp1-context-estimate-v1-"
-            )
-        ]
-        self.assertEqual(len(q38_q8_estimates), 7)
-        self.assertTrue(all(
-            estimate["state"] == "estimated"
-            and estimate["record"]
-            == "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json"
-            for estimate in q38_q8_estimates
-        ))
+        self.assertEqual(family["estimates"], [])
         q38_q8_calibration = json.loads((
             MODULE.ROOT
             / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-estimator-calibration-r1.json"
@@ -3238,14 +3262,14 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 29 matrices", overview_html)
-        self.assertIn("586/2,001 classified", overview_html)
+        self.assertIn("587/2,001 classified", overview_html)
         for state, count, word in (
             ("lab-measured", "370", "measured"),
             ("lab-screened", "35", "screened"),
             ("quarantined", "115", "quarantined"),
-            ("closed", "8", "closed"),
+            ("closed", "9", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,415", "missing"),
+            ("missing", "1,414", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)

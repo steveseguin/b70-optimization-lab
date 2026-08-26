@@ -1,0 +1,83 @@
+{
+  "schema": "neural.download.qwen38-coverage-adjudication.v1",
+  "adjudication_id": "qwen38-retired-estimates-and-q8kv-graph-8k-closure-20260826",
+  "reviewed_at": "2026-08-26",
+  "estimate_registry_cleanup": {
+    "action": "remove-superseded-live-registry-entries-retain-historical-snapshots",
+    "removed_entry_count": 14,
+    "depths": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "groups": [
+      {
+        "estimate_id_prefix": "q38-q4kxl-q8-tp1-context-estimate-v1-",
+        "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+        "replacement_evidence_id": "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c",
+        "replacement_rule_id_prefix": "measured-q4kxl-q8-context-",
+        "historical_snapshot": {
+          "path": "data/qwen38-q4kxl-q8-tp1-context-estimate-v1.json",
+          "sha256": "9a2b1716b82b690df4f680076f7926b826295cc19f7e82546ca960973a2aebde"
+        }
+      },
+      {
+        "estimate_id_prefix": "q38-q8weights-q8kv-tp1-context-estimate-v1-",
+        "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+        "replacement_evidence_id": "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c",
+        "replacement_rule_id_prefix": "measured-q8weights-tp1-kv-q8-context-",
+        "historical_snapshot": {
+          "path": "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json",
+          "sha256": "0a53f1da68144fddba44153bfb468cc056dbc99d780e7655bbf20829be813d0f"
+        },
+        "historical_calibration": {
+          "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-estimator-calibration-r1.json",
+          "sha256": "1ba8a2936c2c65968ef0b8b72c5b2d22ba21dfedb6d9e1843b8764ff58808cb6",
+          "band_hits": 0,
+          "band_misses": 7
+        }
+      }
+    ],
+    "authority": "Every retired selector has an exact measured rule. The snapshot and calibration records remain historical evidence, but no estimate remains eligible to resolve or render as current coverage."
+  },
+  "q8weights_q8kv_graph_cache64_8k_closure": {
+    "classification": "structural-closed-negative-no-performance-cell",
+    "selectors": {
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "runtime_family": "llama.cpp SYCL",
+      "tp": 1,
+      "mtp": 0,
+      "active_context_tokens": 8192,
+      "graph_mode": "SYCL",
+      "graph_profile": "cache64",
+      "kv": "q8_0"
+    },
+    "coverage_rule_id": "closed-q8weights-tp1-q8kv-sycl-graph-cache64-context-8192",
+    "packet_id": "qwen38-27b-q8weights-q8kv-sycl-graph-cache64-8k-closed",
+    "source_result": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-target-sycl-graph-cache64-8k-sentinel-r1-result.json",
+      "sha256": "4c61b51fb2c3b8304fc58ed5a86728e9511e71db17082827f48060861e560e90"
+    },
+    "passed_before_failure": {
+      "exact_8k_gate": true,
+      "token_text_usage_parity": true,
+      "cached_tokens": 0
+    },
+    "failure": {
+      "stage": "long_context_case during prompt processing after 8192 tokens",
+      "source": "CHECK_TRY_ERROR(qptr->wait()) in ggml_sycl_fattn_kv_buffers::kv_buffer::ensure_half at ggml/src/ggml-sycl/fattn-buffers.cpp:23",
+      "reason": "Q8_0-KV long-context FlashAttention buffer conversion attempted a forbidden queue wait while command-graph recording was active"
+    },
+    "authority": {
+      "coverage_state": "closed",
+      "site_speed": false,
+      "performance_curve": false,
+      "headline_or_protected_replacement": false,
+      "other_depths_closed": false,
+      "reopen_trigger": "materially different graph implementation or a source fix that passes the complete quality battery"
+    }
+  },
+  "protected_decode_values": [
+    71.45427094575045,
+    30.329809361830037,
+    49.05894025767351,
+    71.9001988117144
+  ]
+}

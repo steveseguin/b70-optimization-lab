@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -29,10 +28,6 @@ class SiteEstimateTest(unittest.TestCase):
         cls.snapshot = json.loads(SNAPSHOT_PATH.read_text(encoding="utf-8"))
         cls.result = json.loads(RESULT_PATH.read_text(encoding="utf-8"))
         cls.calibration = json.loads(CALIBRATION_PATH.read_text(encoding="utf-8"))
-        cls.estimates = [
-            estimate for estimate in cls.family["estimates"]
-            if estimate["id"].startswith("q38-q8weights-q8kv-tp1-context-estimate-v1-")
-        ]
         cls.contracts = {contract["id"]: contract for contract in cls.family["coverage_contracts"]}
 
     def test_family_is_valid_and_exactly_seven_cells_are_measured(self) -> None:
@@ -66,22 +61,11 @@ class SiteEstimateTest(unittest.TestCase):
             for cell in measured_cells
         ))
 
-    def test_registry_values_are_exact_snapshot_projection(self) -> None:
-        self.assertEqual(len(self.estimates), 7)
-        snapshot_hash = hashlib.sha256(SNAPSHOT_PATH.read_bytes()).hexdigest()
-        by_depth = {point["active_context_tokens"]: point for point in self.snapshot["points"]}
-        for estimate in self.estimates:
-            point = by_depth[estimate["selectors"]["active_context_tokens"]]
-            self.assertEqual(estimate["value"], point["decode_tok_s"]["estimate"])
-            self.assertEqual(estimate["interval"]["low"], point["decode_tok_s"]["lower"])
-            self.assertEqual(estimate["interval"]["high"], point["decode_tok_s"]["upper"])
-            self.assertEqual(estimate["engine"]["snapshot_sha256"], snapshot_hash)
-            self.assertTrue(estimate["not_for_promotion"])
+    def test_live_registry_is_empty_while_snapshot_is_retained(self) -> None:
+        self.assertEqual(self.family["estimates"], [])
+        self.assertEqual(len(self.snapshot["points"]), 7)
 
     def test_evidence_and_optimization_grades_are_distinct(self) -> None:
-        for estimate in self.estimates:
-            self.assertEqual(estimate["evidence_grade"]["grade"], "D")
-            self.assertEqual(estimate["optimization_maturity"]["state"], "unassessed")
         self.assertEqual(self.snapshot["grades"]["evidence"]["grade"], "D")
         self.assertEqual(self.snapshot["grades"]["optimization_maturity"]["state"], "unassessed")
         self.assertEqual(self.snapshot["authority"]["measured_cells"], 0)
