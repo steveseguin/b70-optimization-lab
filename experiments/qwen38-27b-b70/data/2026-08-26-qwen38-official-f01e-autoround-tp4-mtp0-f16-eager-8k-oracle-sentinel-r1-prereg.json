@@ -1,0 +1,105 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp4-mtp0-f16-eager-oracle-sentinel-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Establish the current-f01e AutoRound TP4/MTP0/eager/F16 exact-8K target-only oracle parent on all four B70s. Freeze the TP4 output when exact depth, objective quality, identity, rank-cache isolation, and cleanup pass. Record frozen current-f01e TP1/MTP0 token parity and TP1 baseline agreement as conservative comparison grades, not prerequisites for the separate same-topology TP4 oracle.",
+  "prior_evidence": {
+    "tp_scale_basis": "Historical TP4 AutoRound controls prove this four-card topology can boot, but they used older runtime or graph identities and provide no current-f01e eager oracle.",
+    "current_image_scope": "Current-f01e TP1 MTP0/eager/F16 exact 8K and full quality are frozen. Token equality across TP1 and TP4 is a conservative empirical gate, never assumed.",
+    "rank_cache_basis": {"path": "experiments/qwen38-27b-b70/scripts/run-20260823-qwen38-rolling-nightly-strict-smoke.sh", "sha256": "cb2bfd95e7ad9956dae5bc22ccfa575c8742847c963143291a21505533598202", "contract": "vLLM compilation caches are rank-namespaced as rank_<rank>_0; graph-off should create no compile artifacts, otherwise all artifacts must be isolated across ranks 0-3 with no shared files."}
+  },
+  "reopen_basis": "TP4 speculative coverage requires a same-image, same-topology target-only oracle. This bounded exact-8K parent supplies it without altering any historical result.",
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "image_id": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 4,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0,1,2,3",
+    "mtp_depth": 0,
+    "kv_cache_dtype": "float16",
+    "graph_mode": "off",
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.6,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "server_delta": ["--tensor-parallel-size", "4", "--gpu-memory-utilization", "0.60", "--enforce-eager"],
+    "graph_environment": {"VLLM_XPU_ENABLE_XPU_GRAPH": "0", "VLLM_XPU_GRAPH": "0"},
+    "oneapi_device_selector": "unset",
+    "speculative_config": null
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [
+      8192
+    ],
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896,
+    "target_oracle": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3/eager-f16/exact-depth/depth-8192.json",
+      "sha256": "94f7d11862b2e35b057e7a95b3d529b89a4c2857d8886ce93e4b4d85b7385c34",
+      "output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53",
+      "terminal_receipt_sha256": "6cb6b3c8ae06eefe0c516c0dac057c20ca7837e6bae3b96e012a250f41dafa02",
+      "gate": "Compare all 128 TP4 candidate token IDs with the frozen TP1 target-only IDs. This is a conservative same-image cross-topology comparison, never inferred and not a TP4-oracle prerequisite. A mismatch creates an explicit lower-grade caveat and does not invalidate either topology."
+    }
+  },
+  "quality_contract": {
+    "helper": "scripts/qwen38-text-quality-suite.py",
+    "baseline": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp1-mtp0-f16-graph-seed0-natural-eos-replay-a-baseline-quality/quality.json",
+    "baseline_sha256": "738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18",
+    "objective_pass": "quality.json pass_all: seven exact cases, eight-repeat one-hash determinism, 8K needle, and cache zero",
+    "comparison_grade": "quality.json baseline_match_all records all 24 TP1-baseline comparisons separately",
+    "gate": "Objective quality pass_all is required after exact 8K. baseline_match_all is retained as a conservative cross-topology comparison; a false value creates a lower-grade caveat but does not prevent freezing the same-topology TP4 oracle."
+  },
+  "frozen_input_sha256": {
+    "protected_overlay_manifest": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "model_manifest": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "model_verifier": "5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9",
+    "depth_helper": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067",
+    "quality_helper": "67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d"
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1",
+    "port": 19481,
+    "container": "q38-f01e-ar-tp4-mtp0-f16-8k-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true
+  },
+  "terminal_classification": {
+    "passed-quality-clean-tp4-oracle-sentinel": "All four workers, exact depth, objective quality, TP1 token comparison, TP1 baseline comparison, graph-off identity, rank-cache isolation, and cleanup pass; freeze the candidate as the separate TP4 oracle.",
+    "passed-quality-clean-tp4-oracle-with-comparison-caveat": "All TP4-native prerequisites pass, but TP1 token parity or TP1 baseline agreement differs. Freeze the candidate as a lower-grade same-topology TP4 oracle with the exact comparison caveat recorded.",
+    "quarantined-objective-quality-failed": "Exact TP4 8K passes but objective quality.json pass_all is false; retain diagnostic evidence without freezing an oracle.",
+    "quarantined-exact-depth-failed": "The exact 8K request fails; retain its lower-grade diagnostic receipt without promotion or descendant authority.",
+    "failed": "Infrastructure/startup, worker topology, identity, rank-cache isolation, request, verification generation, or cleanup failure; preserve all raw evidence."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "historical_replacement_allowed": false,
+    "protected_full_and_piecewise_profile_untouched": true,
+    "prior_e4m3_value_replacement_allowed": false,
+    "new_value_is_additive_profile_specific_evidence": true,
+    "descendant_expansion_is_automatic": false,
+    "site_cells_filled_on_pass": 1,
+    "tp4_oracle_frozen_only_on_tp4_native_pass": true,
+    "cross_topology_target_or_baseline_mismatch_is_caveat_not_rejection": true
+  },
+  "target_only_contract": {"speculative_config_absent": true, "draft_model_absent": true, "oracle_role": "If fully passed, this exact output becomes the frozen same-topology TP4 MTP0 oracle for later TP4 MTP1-4."},
+  "cache_contract": {"filesystem": "ext4", "fresh": true, "writable_ntfs_forbidden": true, "policy": "vLLM rank_<rank>_0 namespaces under one fresh ext4 root; graph-off expects no compile artifacts, otherwise require all four rank namespaces and no shared compile files"}
+}
