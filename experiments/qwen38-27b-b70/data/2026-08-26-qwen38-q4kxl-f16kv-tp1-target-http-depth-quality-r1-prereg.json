@@ -1,0 +1,22 @@
+{
+  "schema": "neural.download.qwen38-q4kxl-f16kv-target-http-depth-quality-sibling-prereg.v1",
+  "campaign_id": "qwen38-q4kxl-f16kv-tp1-target-http-depth-quality-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Upgrade the already raw-measured current-weight Qwen3.8 UD-Q4_K_XL/F16-KV tuple to a seven-depth TP1 target-only HTTP serving curve with the full Qwen3.8 quality battery.",
+  "base": {
+    "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q5ks-f16kv-tp1-target-http-depth-quality-r1-prereg.json", "manifest_sha256": "b515543bd3899b925473f8cffc627dc89358aa227dc1efc11175ec3d5b3c6f6b",
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-q5ks-f16kv-tp1-target-http-depth-quality-r1.py", "runner_sha256": "1526b5c851c47cb6ea0511e514dbfd1f185d447d44947d0b400142f2ead5a3a6",
+    "validator": "experiments/qwen38-27b-b70/scripts/validate-20260826-qwen38-q5ks-f16kv-tp1-target-http-depth-quality-r1.py", "validator_sha256": "3743c1cea96a2121a141c3c7eef4ae94f0a2aab512c53377e36ee6aee0f32b9e",
+    "result": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q5ks-f16kv-tp1-target-http-depth-quality-r1-result.json", "result_sha256": "ee8cb67112e753832a62cdcb5d5449f5def065da0fbf83cbc8122cd7a193eda4",
+    "terminal": "/mnt/fast-ai/bench-results/qwen38-q5ks-f16kv-tp1-target-http-depth-quality-20260826-r1/terminal-receipt.json", "terminal_sha256": "4ec596d510ec9854e77ecb56aacd18763c68386512c0e9df3a77c3f902a81bd9",
+    "required_status": "completed-valid-target-only-f16kv-depth-quality",
+    "relationship": "passed same-family current-weight Q5_K_S/F16-KV runtime/workload base; speeds and outputs do not transfer across weight quantization"
+  },
+  "model": {"path": "/mnt/usb-models/llm-models/qwen3.8-27b-unsloth-gguf/Qwen3.8-27B-UD-Q4_K_XL.gguf", "size_bytes": 17559178144, "sha256": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e", "repository": "unsloth/Qwen3.8-27B-GGUF", "revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502", "quantization": "UD-Q4_K_XL", "relationship": "quantized artifact subset of the Qwen3.8 27B family"},
+  "existing_raw_evidence": {"path": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.json", "sha256": "219331863fd0dee7f14f705890f373c1208b9a45d8f6d54e5e6ae2fde0ee4c26", "variant": "UD-Q4_K_XL", "depths": [0, 2048, 4096, 8192, 16384, 24576, 32768], "protocol": "llama-bench tg128, five repetitions, F16 KV; shape evidence only"},
+  "selectors": {"revision": "qwen3.8-27b-current-weights", "target_quantization": "UD-Q4_K_XL", "tp": 1, "mtp": 0, "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768], "target_kv": "f16", "graph_mode": "off", "fit": "off", "transport": "HTTP /v1/completions"},
+  "server_contract": {"model_alias": "qwen38-q4kxl-f16kv-target-depth-r1", "cache_type_k": "f16", "cache_type_v": "f16", "context_capacity": 33024, "parallel": 1, "spec_type": "none"},
+  "execution_contract": {"arm": "target-mtp0", "fresh_server_lifetimes": 1, "depth_order": [0, 2048, 4096, 8192, 16384, 24576, 32768], "completion_tokens_per_depth": 128, "quality_after_all_depths": true, "require_cached_tokens_zero_everywhere": true, "require_q5_f16_base_passed": true, "require_cleanup": true},
+  "lifecycle": {"output_root": "/mnt/fast-ai/bench-results/qwen38-q4kxl-f16kv-tp1-target-http-depth-quality-20260826-r1", "exact_ack": "RUN qwen38-q4kxl-f16kv-tp1-target-http-depth-quality-20260826-r1", "default_is_inert": true, "requires_clean_pushed_main": true, "create_only": true},
+  "frozen_interpretation": {"speed_floor": null, "evidence_grade": "C", "target_only_q4kxl_f16_serving_curve_cells_if_all_gates_pass": 7, "other_quantization_cells_authorized": 0, "speculative_cells_authorized": 0, "tp2_or_tp4_cells_authorized": 0, "graph_cells_authorized": 0, "prefill_cells_authorized": 0, "headline_or_protected_replacement_authorized": false, "localmaxxing_submission_authorized": false, "historical_featured_speeds_are_immutable": true, "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]}
+}
