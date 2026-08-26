@@ -1,0 +1,120 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-mtp3-f16-eager-sentinel-compact-result.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp1-mtp3-f16-eager-8k-sentinel-20260826-r1",
+  "status": "passed-quality-clean-sentinel",
+  "identity": {
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "embedded_mtp_tensor": "model_extra_tensors.safetensors",
+    "embedded_mtp_tensor_sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de",
+    "external_speculator": null,
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "raw_sha256": {
+      "image-id.txt": "3f4cc79dc498548ebcc9fd65e0da396111d68903c453b83d9b613f2e0a8887fb",
+      "vllm-source-commit.txt": "b60f6014c07dfcf32c30278eede59198e8ac93c176f9685a38ff320ac76e376f",
+      "stack-versions.txt": "8c2197b31e85ddcd41a43d93103ccc6629acf521bf22d8759ed368ec0f57ba3f",
+      "server-args.shell.txt": "558f39c71e2c5bed53f6e9c3fddcdd0021a6d86e8f76b2e99ceeeba0ac5b5210",
+      "container-inspect.json": "fc3da6aaacf2e375e4a26090857a5286adbc7a616a0e3bf6602e04b5feef53be"
+    }
+  },
+  "config": {
+    "tp": 1,
+    "cards": 1,
+    "mtp": 3,
+    "speculative_method_requested": "qwen3_next_mtp",
+    "speculative_method_resolved": "mtp",
+    "num_speculative_tokens": 3,
+    "graph": "off",
+    "enforce_eager": true,
+    "kv": "f16",
+    "parallel_slots": 1,
+    "configured_max_context_tokens": 32896,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "prefix_caching": false,
+    "pythonhashseed": 0
+  },
+  "point": {
+    "x": 8192,
+    "decode_tok_s": 14.396504061843084,
+    "ttft_s": 6.790504153002985,
+    "ttft_ms": 6790.504153002985,
+    "effective_prompt_throughput_proxy_tok_s": 1206.3905441214151,
+    "cached_tokens": 0,
+    "completion_tokens": 128,
+    "output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53",
+    "raw_sha256": "963fed72d535b94ef1875b556e3260ff496de6b0426857ffb211969d0e7acda8"
+  },
+  "mechanism": {
+    "passed": true,
+    "drafted_tokens": 114,
+    "accepted_tokens": 89,
+    "acceptance_rate": 0.7807017543859649,
+    "isolated_to_exact_8k_request": true,
+    "raw_sha256": "a4ac63f7b5fe3c857fad2bab0940faaf5c3a5aa3f62a3c22088220a4e9e38aff"
+  },
+  "target_oracle": {
+    "passed": true,
+    "scope": "frozen same-image TP1/MTP0/eager/F16 exact-8K receipt; conservative cross-boot gate",
+    "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3/eager-f16/exact-depth/depth-8192.json",
+    "raw_sha256": "94f7d11862b2e35b057e7a95b3d529b89a4c2857d8886ce93e4b4d85b7385c34",
+    "candidate_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53",
+    "target_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53",
+    "token_count": 128,
+    "first_divergence": null
+  },
+  "quality": {
+    "grade": "C",
+    "scope": "one repeated-token exact-depth native-MTP3 sentinel plus the complete text-quality battery",
+    "exact_depth_gate_passed": true,
+    "exact_cases": 7,
+    "repeat_runs": 8,
+    "unique_repeat_hashes": 1,
+    "baseline_comparisons": 24,
+    "long_context_needle_passed": true,
+    "cache_zero_all_requests": true,
+    "interpolation_or_extrapolation": false,
+    "raw_sha256": "dc07649c9ccb2f422ca205b9b0d77c56d24f594c748d0c36a064d53477b1a238"
+  },
+  "model_verification": {
+    "status": "verified",
+    "files_verified": 19,
+    "direct_and_ordinary_paths_coherent": true,
+    "raw_sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+  },
+  "cleanup": {
+    "status": "clean",
+    "launch_git_head": "5aed44c284693e67210ff7e24217b4fca5314be9",
+    "terminal_receipt_sha256": "7a11b685a8395ad1a9f633585dee0a713ef3b905b44b1b77ccaca8514d0a7bfe",
+    "arm_result_sha256": "1a52e76d837dfd379226b426e7e563cccc09745d650b2ca5e7d078166ed06301"
+  },
+  "authority": {
+    "scope": "current f01e/ac7509e2 TP1/MTP3/eager/F16 exact-8K diagnostic parent only",
+    "site_or_family_publication_authorized": false,
+    "site_cells": 0,
+    "headline_graph_or_frontier_replacement": false,
+    "historical_or_protected_replacement": false,
+    "additive_profile_specific_evidence": true,
+    "other_depths_tp_mtp_graph_or_kv_inferred": false,
+    "automatic_descendant_expansion": false,
+    "separately_preregistered_expansion_authorized": true,
+    "descendant_execution_authorized_by_this_result": false,
+    "localmaxxing_submission": false,
+    "x0_remains_missing": true
+  },
+  "tracked_inputs": {
+    "preregistration": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp3-f16-eager-8k-sentinel-r1-prereg.json",
+      "sha256": "bfeb73a7817602ebb4c9e79ac4c1ba6145742cb1fb3240e4b9467d81f5378b0d"
+    },
+    "runner": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp1-mtp3-f16-eager-8k-sentinel-r1.sh",
+      "sha256": "3da0681e588650a8c1b856921d9b4c9f2aa30ec6d1f44178f69d1035ab6665f3"
+    }
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-mtp3-f16-eager-8k-sentinel-20260826-r1"
+}
