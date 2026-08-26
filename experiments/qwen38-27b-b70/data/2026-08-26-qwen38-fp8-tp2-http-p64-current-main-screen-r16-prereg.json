@@ -1,0 +1,74 @@
+{
+  "schema": "neural.download.qwen38-fp8-current-main-screen-preregistration.v1",
+  "campaign_id": "qwen38-fp8-tp2-http-p64-current-main-screen-20260826-r16",
+  "state": "preregistered-not-launched",
+  "purpose": "Measure whether the lab's later zero-overlay vLLM/XPU runtime improves official Qwen3.8-27B FP8 TP2 c64 throughput under the promoted request and collective profile.",
+  "protected_control": {
+    "result": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json",
+    "sha256": "01f73da0c2c61deed626302cdc22f631ec09c737565904dbc1e6680cf1b88df8",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "c64_median_tok_s": 774.394144,
+    "relationship": "immutable promoted comparison; R16 is a one-attempt screen and cannot replace it"
+  },
+  "candidate_identity": {
+    "model_repository": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "model_manifest_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb",
+    "image": "neural-download/vllm-openai-xpu:vllm-4af586e185-kernel-1e90ffa672-official",
+    "image_id": "sha256:cb8e41a716a896fdc641d85df1339eb7cc72db9185db5df7f08292ef9e5f1e3f",
+    "vllm_head": "4af586e185b028acf08312a4dee381b5998a137e",
+    "vllm_tree": "bc76e1de903d3f786d75e71bf85d05dca0a96b6b",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "xpu_kernel_wheel_sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+    "gdn_integration_source_sha256": "4ccb6db1fad79bd3aa49949069d71d887303d3198f4e4ad75b6790aed27c92da",
+    "source_overlay": "none",
+    "cards": 2,
+    "topology": "TP2",
+    "generation": "target-only / MTP0",
+    "model_dtype": "float16",
+    "kv_cache": "auto / FP16-family",
+    "ccl_topo_p2p_access": 1
+  },
+  "frozen_inputs": {
+    "runner": {
+      "path": "experiments/qwen38-27b-b70/scripts/run-qwen38-fp8-tp2-http-p64-current-main-screen-r16.sh",
+      "sha256": "ec1c266e166d2d46cb6b684167fcdd8d834d58c9eab721f585fd36be1e29b3c7"
+    },
+    "suite": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+      "sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4"
+    },
+    "oracle": {
+      "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-oracle-pilot-20260826-r1-attempt1/oracle-digests.json",
+      "sha256": "3499c3812ba1ad4cadda4a5503f00629c320e25fc6ce802a0774a31011447b1b"
+    },
+    "harness_sha256": "5860b8e75224d20f3a880b7a970cb07f00697562090e5489549c88b049a4eac2",
+    "qualifier_sha256": "9f2a50dbc5c5cdabfee742429fc3e2531044a262691e28e1a2da5469ba4696b1"
+  },
+  "server_profile": {
+    "endpoint": "vLLM OpenAI-compatible /v1/completions",
+    "max_model_len": 4096,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 256,
+    "prefix_cache": false,
+    "compilation": "PIECEWISE capture size 1",
+    "gpu_memory_utilization": 0.8
+  },
+  "measurement": {
+    "concurrency": [64],
+    "max_output_tokens": 128,
+    "fresh_server_attempts": 1,
+    "excluded_warmup": "one identical c64 group",
+    "required_output_gate": "64 complete 128-token responses, zero cached prompt tokens, complete raw token IDs, and no cross-base frozen-oracle collision",
+    "required_runtime_gates": ["direct model verification", "exact image/source/kernel identity", "P2P activation on both ranks", "block-scaled FP8 kernel selection", "clean shutdown"],
+    "no_interpolation_or_extrapolation": true
+  },
+  "decision": {
+    "objective_tok_s": 875.0,
+    "stretch_tok_s": 1000.0,
+    "promising_minimum_tok_s": 813.1138512,
+    "if_promising": "preregister two wholly fresh confirmation servers, recover c1-c64, and run a matching candidate-image control to attribute the runtime delta",
+    "if_below_promising": "preserve as a negative or neutral diagnostic; do not alter the promoted row",
+    "publication_authority": false
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schema": "neural.download.qwen38-fp8-asynctp-screen-result.v1",
+  "state": "closed-negative-no-performance-measurement",
+  "candidate": "vLLM PR #52683 XPU W8A8-FP8 static GEMM collective fusion",
+  "credit": {
+    "author": "chaojun-zhang",
+    "upstream_pr": "https://github.com/vllm-project/vllm/pull/52683",
+    "upstream_commit": "15c15752da84d371888a9d0b145483a98721eed2"
+  },
+  "attempts": [
+    {
+      "campaign": "qwen38-fp8-tp2-http-p64-asynctp-pr52683-screen-20260826-r14",
+      "state": "failed-before-health",
+      "benchmark_requests": 0,
+      "performance_value": null,
+      "cause": "the console entry point imported the unpatched installed vLLM package while R14 patched only /workspace/vllm",
+      "cleanup": "clean"
+    },
+    {
+      "campaign": "qwen38-fp8-tp2-http-p64-asynctp-pr52683-screen-20260826-r15",
+      "state": "failed-before-health",
+      "benchmark_requests": 0,
+      "performance_value": null,
+      "active_import_corrected": true,
+      "enabled_fusions": ["norm_quant", "act_quant", "sp", "gemm_comms"],
+      "async_tp_replacements": {
+        "static_compile_rank0": 0,
+        "static_compile_rank1": 0,
+        "dynamic_compile_rank0": 0,
+        "dynamic_compile_rank1": 0
+      },
+      "compile_seconds": {
+        "static_64": 105.79,
+        "dynamic_1_256": 70.05,
+        "total": 196.07
+      },
+      "exit_boundary": "engine exited during initial profiling/warmup after compilation; endpoint never became healthy",
+      "cleanup": "clean"
+    }
+  ],
+  "model_graph_evidence": {
+    "path_local_only": "/mnt/fast-ai/vllm-cache/q38-official-fp8-f01e/vllm-p64-asynctp-pr52683-screen-r15/torch_compile_cache/ab1f4e4760/rank_0_0/backbone/computation_graph.py",
+    "sha256": "83a4c4fa2e13e713a8c78901c09aee90a35765bc60f3a52180ba2102c63ab6a1",
+    "bytes": 2083329,
+    "observed_quantization": "per-token-group FP8 activation scales with group size 128 and block-scaled weight scales",
+    "observed_fp8_gemm_call_sites": 256,
+    "observed_all_reduce_call_sites": 129,
+    "observed_all_gather_call_sites": 0,
+    "observed_reduce_scatter_call_sites": 0
+  },
+  "conclusion": "The contributed static-scale XPU fusion is not applicable to this official block-scaled Qwen checkpoint. Supporting it requires a separate block-scale sequence-parallel rewrite that correctly communicates per-token group scales. No throughput claim, regression claim, or package change is authorized.",
+  "protected_c64_median_tok_s": 774.394144,
+  "protected_result_changed": false
+}
