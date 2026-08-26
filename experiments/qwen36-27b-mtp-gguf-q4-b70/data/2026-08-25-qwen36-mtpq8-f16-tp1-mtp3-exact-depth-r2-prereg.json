@@ -1,0 +1,49 @@
+{
+  "schema": "neural.download.qwen36-llama-mtp3-exact-depth-r2-retry-overlay.v1",
+  "campaign_id": "qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r2",
+  "state": "preregistered-not-launched",
+  "purpose": "Fresh create-only retry of R1 after its pre-GPU ldd parser false-negative; preserve the exact model/runtime/DSO/workload/gates and permit only leading whitespace before ldd SONAME rows.",
+  "base_packet": {
+    "manifest": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r1-prereg.json",
+    "manifest_sha256": "d01f67d8a90133c1fe427050d1f6d92310593381857390b6af9377a91857cbde",
+    "runner": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r1.py",
+    "runner_sha256": "e28d915fc261868fea041b6a1edad1f818de01ab01b6b5b3765f1e961b399322",
+    "validator": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/validate-20260825-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r1.py",
+    "validator_sha256": "23d9005bd09daa3dd8a6a74c19f6eb4caea33117bec8eacf10761afea4a82149"
+  },
+  "r1_failure": {
+    "run_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r1",
+    "terminal_receipt": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r1/terminal-receipt.json",
+    "terminal_receipt_sha256": "c368d3c965fda512b740477c1acb2463a98c26a86722faddffc5e6642a9cebb7",
+    "failure_record": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r1-pre-gpu-failure.json",
+    "failure_record_sha256": "2dee7095f531ec07268492ffaf1b6ec018003a81d815463b245d25e891e870ad",
+    "rows_reused": false,
+    "gpu_launches": 0,
+    "server_launches": 0
+  },
+  "sole_execution_delta": {
+    "old_ldd_pattern": "^{soname}\\s+=>\\s+(\\S+)",
+    "new_ldd_pattern": "^\\s*{soname}\\s+=>\\s+(\\S+)",
+    "meaning": "Accept GNU ldd's leading indentation only; canonical path equality and the exact eight-entry runtime-origin closed-set gate remain unchanged.",
+    "model_runtime_dso_or_workload_delta": false
+  },
+  "r2_lifecycle": {
+    "runner": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r2.py",
+    "validator": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/validate-20260825-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r2.py",
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r2",
+    "exact_ack": "RUN qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r2",
+    "r1_root_is_read_only": true,
+    "fresh_both_arms": true,
+    "artifacts_are_create_only": true
+  },
+  "frozen_interpretation": {
+    "speed_floor": null,
+    "cell_gain_if_all_fresh_r2_gates_pass": 7,
+    "r1_cell_gain": 0,
+    "r1_measurement_transfer_allowed": false,
+    "historical_featured_speeds_are_immutable": true,
+    "site_or_family_edit_authorized_before_result_and_quality_review": false,
+    "graph_claim_authorized": false,
+    "rebuild_or_rebind_authorized": false
+  }
+}

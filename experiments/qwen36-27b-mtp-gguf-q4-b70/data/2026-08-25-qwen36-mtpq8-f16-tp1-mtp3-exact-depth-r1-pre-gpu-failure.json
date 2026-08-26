@@ -1,0 +1,43 @@
+{
+  "schema": "neural.download.qwen36-llama-mtp3-exact-depth-pre-gpu-failure.v1",
+  "campaign_id": "qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r1",
+  "status": "failed-preserved-zero-cells",
+  "stage": "pre-gpu-runtime-ldd-closure-parser",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r1",
+  "terminal_receipt": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r1/terminal-receipt.json",
+  "terminal_receipt_sha256": "c368d3c965fda512b740477c1acb2463a98c26a86722faddffc5e6642a9cebb7",
+  "terminal_error": "GateError: ldd closure mismatch: libllama-server-impl.so",
+  "actions_completed": {
+    "gpu_launches": 0,
+    "server_launches": 0,
+    "benchmark_requests": 0,
+    "quality_requests": 0,
+    "matrix_cells": 0
+  },
+  "diagnosis": {
+    "classification": "harness-parser-false-negative",
+    "cause": "GNU ldd prefixes dependency rows with a tab, while the R1 runner anchored each SONAME at column zero. The first valid origin DSO was therefore reported missing.",
+    "old_pattern": "^{soname}\\s+=>\\s+(\\S+)",
+    "corrected_pattern": "^\\s*{soname}\\s+=>\\s+(\\S+)",
+    "runtime_drift": false,
+    "binary_rebuild_needed": false,
+    "rebinding_needed": false
+  },
+  "preserved_runtime_identity": {
+    "source_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+    "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+    "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+    "declared_origin_dso_count": 8,
+    "canonical_path_matches": 8,
+    "size_matches": 8,
+    "sha256_matches": 8
+  },
+  "frozen_interpretation": {
+    "r1_root_is_immutable": true,
+    "r1_rows_reusable": false,
+    "speed_or_quality_claim_authorized": false,
+    "site_or_family_edit_authorized": false,
+    "safest_retry": "Use a distinct create-only retry campaign/root with the exact same model, binary, runtime manifest, and eight-DSO closure; change only the ldd parser to tolerate leading whitespace.",
+    "do_not_rebuild_or_rebind": "The preserved closure is exact. A rebuilt server would create an unnecessary new execution identity and require fresh source/build/DSO qualification."
+  }
+}
