@@ -36,8 +36,10 @@ class FamilyCoverageTest(unittest.TestCase):
             "DSpark &middot; depth 7",
         ):
             self.assertIn(mode, index_html)
-        self.assertGreaterEqual(index_html.count("target-only MTP0"), 9)
-        self.assertIn("target-only / MTP0 = no draft", index_html)
+        # The picker says it in plain words: every route states whether MTP is on.
+        self.assertGreaterEqual(index_html.count("no MTP"), 9)
+        self.assertIn("MTP / DFlash / DSpark = a small helper drafts words ahead", index_html)
+        self.assertNotIn("status-ico", index_html)
 
     def test_home_picker_surfaces_existing_exact_32k_and_raw_aggregate_evidence(self) -> None:
         index_html = (MODULE.ROOT / "index.html").read_text()
@@ -68,18 +70,21 @@ class FamilyCoverageTest(unittest.TestCase):
                     rf">{expected:.2f}&dagger;(?:</a>)?</td>",
                 )
 
-        self.assertIn(">216.5 raw&dagger;</a>", index_html)
-        self.assertIn(">83.8 HTTP&dagger;</a>", index_html)
-        self.assertIn(">68.6 HTTP&dagger;</a>", index_html)
-        self.assertIn(">165.4 HTTP&dagger;</a>", index_html)
-        self.assertIn(">163.6 HTTP&dagger;</a>", index_html)
-        self.assertIn(">81.5 HTTP&dagger;</a>", index_html)
+        # Cells carry the number only; raw-engine vs HTTP lives in the tooltip.
+        self.assertIn(">216.5&dagger;</a>", index_html)
+        self.assertIn(">83.8&dagger;</a>", index_html)
+        self.assertIn(">68.6&dagger;</a>", index_html)
+        self.assertIn(">165.4&dagger;</a>", index_html)
+        self.assertIn(">163.6&dagger;</a>", index_html)
+        self.assertIn(">81.5&dagger;</a>", index_html)
+        self.assertNotIn("raw&dagger;", index_html)
+        self.assertNotIn("HTTP&dagger;", index_html)
         fp8_row = re.search(
             r"official FP8.*?</tr>", index_html, flags=re.DOTALL
         )
         self.assertIsNotNone(fp8_row)
         self.assertIn(">20.39&dagger;</a>", fp8_row.group(0))
-        self.assertIn(">81.5 HTTP&dagger;</a>", fp8_row.group(0))
+        self.assertIn(">81.5&dagger;</a>", fp8_row.group(0))
         self.assertIn("Only four requests are active", fp8_row.group(0))
         laguna_row = re.search(
             r"Laguna-S-2\.1.*?</tr>", index_html, flags=re.DOTALL
