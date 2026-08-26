@@ -1,0 +1,46 @@
+{
+  "date": "2026-08-26",
+  "status": "pass",
+  "device": "Intel Arc Pro B70",
+  "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-1b0e26a-b70",
+  "runtime_hashes": {
+    "_C.abi3.so": "fbdc570d3b056fbef662e5b3e72ec928ed90058a6f6c57615c4f6451da5aaa36",
+    "_moe_C.abi3.so": "c71e818c8a3affb586b5a3437c583430a00293fbf6d93f0090f9e1748402e5a3"
+  },
+  "backend": {
+    "requested": "triton",
+    "selected": "Fp8MoeBackend.TRITON",
+    "experts_class": "vllm.model_executor.layers.fused_moe.experts.triton_moe.TritonExperts",
+    "prepare_finalize_class": "vllm.model_executor.layers.fused_moe.prepare_finalize.no_dp_ep.MoEPrepareAndFinalizeNoDPEPModular"
+  },
+  "shape": {
+    "tokens": 2,
+    "hidden": 2560,
+    "intermediate": 640,
+    "experts": 16,
+    "topk": 10,
+    "block_shape": [128, 128]
+  },
+  "identity": {
+    "seed": 20260826,
+    "input_dtype": "bfloat16",
+    "output_dtype": "bfloat16",
+    "weight_dtype": "float8_e4m3fn",
+    "weight_placement": "resident XPU",
+    "activation_quantization": "dynamic 128",
+    "weight_quantization": "static 128x128"
+  },
+  "reference": "deterministic Torch block dequantization, per-128 activation QDQ, BF16-rounded GEMM1/GEMM2, FP32 fused SiLU",
+  "result": {
+    "finite": true,
+    "elements": 5120,
+    "max_abs_error": 0.0029296875,
+    "mean_abs_error": 0.000307253,
+    "rmse": 0.0004974363,
+    "atol": 0.035,
+    "rtol": 0.035,
+    "mismatches": 0,
+    "torch_assert_close": "pass"
+  },
+  "placement_boundary": "The frozen first load offloads only the PLE n-gram embedding. Expert FP8 weights remain resident, so expert-weight UVA is outside this load identity. The separate PLE pinned-host FP8 lookup and BF16 global-scale gate passed exactly."
+}
