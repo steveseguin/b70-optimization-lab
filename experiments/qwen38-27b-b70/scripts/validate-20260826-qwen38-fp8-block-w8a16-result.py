@@ -12,6 +12,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 DATA = ROOT / "experiments/qwen38-27b-b70/data"
 RAW = DATA / "qwen38-fp8-block-w8a16-tp2-p128-20260826-r1"
+DEPTH_W8A16 = DATA / "qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2"
+DEPTH_CONTROL = DATA / "qwen38-fp8-tp2-http-depth-20260826-r1-attempt1"
 SUMMARY = DATA / "2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json"
 PATCH = (
     ROOT
@@ -66,6 +68,40 @@ def main() -> int:
     )
     assert optimized_rate > 1000
 
+    depth_optimized = load(DEPTH_W8A16 / "summary.json")
+    depth_control = load(DEPTH_CONTROL / "summary.json")
+    assert depth_optimized["classification"] == "qualified-exact-depth"
+    assert depth_control["classification"] == "qualified-exact-depth"
+    assert len(summary["exact_context"]["points"]) == 6
+    for frozen, optimized_point, control_point in zip(
+        summary["exact_context"]["points"],
+        depth_optimized["points"],
+        depth_control["points"],
+        strict=True,
+    ):
+        depth = frozen["context_tokens"]
+        assert optimized_point["active_context_tokens"] == depth
+        assert control_point["active_context_tokens"] == depth
+        assert optimized_point["status"] == "passed"
+        assert optimized_point["cached_tokens_zero"] is True
+        close(optimized_point["decode_tok_s"], frozen["w8a16_decode_tok_s"])
+        close(control_point["decode_tok_s"], frozen["default_off_decode_tok_s"])
+        close(optimized_point["ttft_ms"], frozen["w8a16_ttft_ms"])
+        close(
+            (optimized_point["decode_tok_s"] / control_point["decode_tok_s"] - 1)
+            * 100,
+            frozen["decode_improvement_percent"],
+        )
+        close(
+            (1 - optimized_point["ttft_ms"] / control_point["ttft_ms"]) * 100,
+            frozen["ttft_reduction_percent"],
+        )
+        receipt = load(DEPTH_W8A16 / f"depth-{depth}.json")
+        assert receipt["gate"]["passed"] is True
+        assert receipt["response"]["output_token_ids_sha256"] == frozen[
+            "output_token_ids_sha256"
+        ]
+
     optimized_single = load(RAW / "w8a16-c1-p128-p40-o128.json")
     control_single = load(RAW / "default-off-c1-p40-o128.json")
     for result in (optimized_single, control_single):
@@ -115,6 +151,7 @@ def main() -> int:
         "Dockerfile.w8a16",
         "build-w8a16-image.sh",
         "run-w8a16-concurrency-server.sh",
+        "run-w8a16-depth-server.sh",
         "bench-w8a16-concurrency.sh",
         "verify-model-direct.sh",
     ):
@@ -127,6 +164,9 @@ def main() -> int:
                 "aggregate_w8a16_tok_s": optimized_rate,
                 "aggregate_default_off_tok_s": control_rate,
                 "single_w8a16_tok_s": optimized_single_rate,
+                "depth_32k_w8a16_tok_s": summary["exact_context"]["points"][-1][
+                    "w8a16_decode_tok_s"
+                ],
                 "concurrent_quality": "1024/1024",
                 "sequential_quality": "7/7 + repeat 8/8",
             },

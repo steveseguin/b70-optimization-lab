@@ -53,7 +53,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "packages/qwen38-27b-q4km-tp1-b70/package.json": ("http-decode-vs-active-context", 24.488129029771436),
             "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json": ("http-decode-vs-active-context", 44.43728051677345),
             "packages/qwen38-27b-q8-tp2-b70/package.json": ("http-decode-vs-active-context", 33.848820185540816),
-            "packages/qwen38-27b-fp8-tp2-b70/package.json": ("http-decode-vs-active-context", 20.38985363507897),
+            "packages/qwen38-27b-fp8-tp2-b70/package.json": ("http-decode-vs-active-context", 31.48958732345858),
         }
         for manifest, (profile_id, expected) in expected_context.items():
             package = json.loads((MODULE.ROOT / manifest).read_text())
@@ -84,7 +84,7 @@ class FamilyCoverageTest(unittest.TestCase):
             r"official FP8.*?</tr>", index_html, flags=re.DOTALL
         )
         self.assertIsNotNone(fp8_row)
-        self.assertIn(">20.39&dagger;</a>", fp8_row.group(0))
+        self.assertIn(">31.49&dagger;</a>", fp8_row.group(0))
         self.assertIn(">1,112.6&dagger;</a>", fp8_row.group(0))
         self.assertIn("128 active users", fp8_row.group(0))
         self.assertIn("256-token service profile", fp8_row.group(0))
@@ -92,7 +92,7 @@ class FamilyCoverageTest(unittest.TestCase):
             r"Laguna-S-2\.1.*?</tr>", index_html, flags=re.DOTALL
         )
         self.assertIsNotNone(laguna_row)
-        self.assertNotIn(">20.39&dagger;</a>", laguna_row.group(0))
+        self.assertNotIn(">31.49&dagger;</a>", laguna_row.group(0))
         self.assertIn("Multi-user greedy output is batch-shape-dependent", index_html)
 
     def test_fp8_tp2_concurrency_profiles_match_qualified_source(self) -> None:

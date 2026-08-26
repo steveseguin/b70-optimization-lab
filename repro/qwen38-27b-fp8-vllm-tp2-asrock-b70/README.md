@@ -32,8 +32,8 @@ canaries. Greedy token identity varies with batch shape, so this is an
 output-isolation-qualified shape variant, not a universal token-exact claim.
 
 This short-context p128 profile has a 256-token service limit. It is separate
-from the exact 2K-32K context measurements below; no long-context W8A16 value
-is inferred from it.
+from the directly measured one-slot W8A16 2K-32K profile below; no workload is
+inferred between the two services.
 
 ### Build the exact overlay
 
@@ -118,29 +118,41 @@ optimization opportunity.
 
 ## Exact 2K–32K service profile
 
-A separate preregistered one-slot service raised the configured capacity to
-33,024 tokens and measured six exact prompt depths. It retained the same
-model, image, TP2 topology, FP16 KV, target-only/MTP0 policy, and size-one
-PIECEWISE decode graph; only the service capacity, active prompt depth, one
-slot, and 4,096-token chunked-prefill batch identify this operating profile.
+A separate one-slot W8A16 service raised the configured capacity to 33,024
+tokens and measured six exact prompt depths. It retained the same model,
+overlay image, TP2 topology, FP16 activations/KV, target-only/MTP0 policy, and
+size-one PIECEWISE decode graph; only the service capacity, active prompt
+depth, one slot, and 4,096-token chunked-prefill batch identify this operating
+profile. The default-off values are the earlier same-shape control.
 
-| Exact prompt tokens | Decode tok/s | TTFT ms | Effective prompt proxy tok/s |
-| ---: | ---: | ---: | ---: |
-| 2,048 | 21.835160 | 1,385.137 | 1,478.554 |
-| 4,096 | 21.673278 | 2,605.858 | 1,571.843 |
-| 8,192 | 21.270146 | 5,191.968 | 1,577.822 |
-| 16,384 | 20.927452 | 10,533.231 | 1,555.458 |
-| 24,576 | 20.650133 | 16,139.140 | 1,522.758 |
-| 32,768 | 20.389854 | 21,872.674 | 1,498.125 |
+| Exact prompt tokens | Default-off decode | W8A16 decode | W8A16 TTFT ms | W8A16 prompt proxy tok/s |
+| ---: | ---: | ---: | ---: | ---: |
+| 2,048 | 21.835160 | **35.201648** | 1,011.401 | 2,024.915 |
+| 4,096 | 21.673278 | **34.756821** | 1,635.189 | 2,504.909 |
+| 8,192 | 21.270146 | **33.592729** | 3,219.230 | 2,544.708 |
+| 16,384 | 20.927452 | **32.830415** | 6,549.952 | 2,501.392 |
+| 24,576 | 20.650133 | **32.046666** | 10,072.020 | 2,440.027 |
+| 32,768 | 20.389854 | **31.489587** | 13,739.776 | 2,384.901 |
 
 All six receipts passed exact prompt usage, 128 returned token IDs, cache-zero,
 no-truncation, and no-context-shift gates. This is one fresh-server sample per
 point using a grade-C repeated-token shape fixture; no point is interpolated or
 extrapolated. The effective prompt proxy is `exact prompt tokens / measured
 HTTP TTFT seconds`, including scheduling and first-token work. It is not a
-server-only or kernel-only prefill rate. See the
-[`structured evidence`](../../experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json)
-and [`result note`](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-depth-r1-result.md).
+server-only or kernel-only prefill rate.
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-w8a16-depth-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-depth-server.sh
+
+PORT=18119 OUT_DIR=/path/to/new-w8a16-depth-result \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-depth.sh
+```
+
+See the [W8A16 structured evidence](../../experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json),
+[combined result note](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md), and
+[default-off control](../../experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json).
 
 ## Exact output-audited concurrency profile
 

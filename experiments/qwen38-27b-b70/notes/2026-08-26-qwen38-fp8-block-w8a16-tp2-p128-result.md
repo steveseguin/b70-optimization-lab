@@ -33,6 +33,27 @@ The same server measured a one-pass concurrency screen of 833.70, 980.90,
 c128 respectively. These are five observed points, not a fitted curve. The
 confirmed headline remains the conditioned c128 median above.
 
+## Exact 2K–32K context replay
+
+The same W8A16 overlay was replayed in the package's distinct one-slot,
+33,024-token-capacity service. All six exact-token fixtures passed cache-zero,
+no-truncation, 128-returned-token, and context-capacity gates.
+
+| Exact prompt | Default-off decode | W8A16 decode | Decode gain | W8A16 TTFT |
+| ---: | ---: | ---: | ---: | ---: |
+| 2,048 | 21.835160 | **35.201648** | +61.22% | 1.011 s |
+| 4,096 | 21.673278 | **34.756821** | +60.37% | 1.635 s |
+| 8,192 | 21.270146 | **33.592729** | +57.93% | 3.219 s |
+| 16,384 | 20.927452 | **32.830415** | +56.88% | 6.550 s |
+| 24,576 | 20.650133 | **32.046666** | +55.19% | 10.072 s |
+| 32,768 | 20.389854 | **31.489587** | **+54.44%** | **13.740 s** |
+
+At 32K the measured TTFT fell from 21.873 to 13.740 seconds, a 37.18%
+reduction. Each marker is one fresh-server sample using the existing grade-C
+repeated-token shape fixture. These are observed operating points, not a fit
+or a natural-prose latency claim. Raw receipts live in
+[`qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/`](../data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/).
+
 ## Quality and mechanism gates
 
 - 7/7 sequential exact-answer cases passed.
@@ -55,12 +76,13 @@ the default when the gate is absent.
 
 ## Boundaries and open work
 
-This result uses a 256-token-capacity, 128-active-slot service and short unique
-prompts. It does not replace or extrapolate the separate exact 2K-32K context
-profile. The model files were direct-I/O verified against all 66 publisher
-identities. The patch, Docker overlay, launch, benchmark, and raw receipts are
-now repository-local; a clean supported-host replay and beginner driver
-recovery path remain certification gaps.
+The 1,112.57 tok/s aggregate result uses a 256-token-capacity,
+128-active-slot service and short unique prompts. The 2K–32K rows use a
+separate one-slot service and are reported independently; no hybrid workload
+is inferred between them. The model files were direct-I/O verified against all
+66 publisher identities. The patch, Docker overlay, launch, benchmark, and raw
+receipts are repository-local; a clean supported-host replay and beginner
+driver recovery path remain certification gaps.
 
 Structured summary:
 [`2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json`](../data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json).

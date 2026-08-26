@@ -49,6 +49,19 @@
     "evidence_default_off": "qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/default-off-c128-measured-x5.json",
     "evidence_w8a16": "qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/w8a16-c128-measured-x5.json"
   },
+  "exact_context": {
+    "scope": "One-slot 33,024-token-capacity service, exact repeated-token prompt depths, 128 returned token IDs, cache zero, target-only/MTP0, P2P off. One fresh-server sample per point; no interpolation or extrapolation.",
+    "evidence_default_off": "qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json",
+    "evidence_w8a16": "qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
+    "points": [
+      {"context_tokens": 2048, "default_off_decode_tok_s": 21.83515985732775, "w8a16_decode_tok_s": 35.20164806346478, "decode_improvement_percent": 61.21543553367354, "w8a16_ttft_ms": 1011.4006400108337, "ttft_reduction_percent": 26.981927902285584, "output_token_ids_sha256": "3bb74bfa284138d8c74d604c0d6d4c628b242167ca3e321396927a3c4c0d97c6"},
+      {"context_tokens": 4096, "default_off_decode_tok_s": 21.67327818299236, "w8a16_decode_tok_s": 34.75682144803016, "decode_improvement_percent": 60.36716344694377, "w8a16_ttft_ms": 1635.189169086516, "ttft_reduction_percent": 37.249501202447874, "output_token_ids_sha256": "a3ad38a28e1d0182fbe50cc8a01e5f1b2b51242c7933659b2cc1cf6a1fc99e2f"},
+      {"context_tokens": 8192, "default_off_decode_tok_s": 21.270145761584512, "w8a16_decode_tok_s": 33.59272918386755, "decode_improvement_percent": 57.93370464126555, "w8a16_ttft_ms": 3219.2295970162377, "ttft_reduction_percent": 37.995963338812885, "output_token_ids_sha256": "8fee69bdff7ba6d822ba20d1ea3484f3cf0ecdb91caccbb6aa7e1037f870af19"},
+      {"context_tokens": 16384, "default_off_decode_tok_s": 20.927452277370538, "w8a16_decode_tok_s": 32.830414570491264, "decode_improvement_percent": 56.87726406138671, "w8a16_ttft_ms": 6549.952302942984, "ttft_reduction_percent": 37.81630587759246, "output_token_ids_sha256": "d33b03661a70c438ffc7d55dd6c80ae850f37350ff7c24702db3423106edc2cb"},
+      {"context_tokens": 24576, "default_off_decode_tok_s": 20.650132687274663, "w8a16_decode_tok_s": 32.04666551696565, "decode_improvement_percent": 55.18866635038104, "w8a16_ttft_ms": 10072.019987972453, "ttft_reduction_percent": 37.59258699170564, "output_token_ids_sha256": "337399b05c321156277842c7f156227143d8649dfcc1f3d9b35a2476248f5f16"},
+      {"context_tokens": 32768, "default_off_decode_tok_s": 20.38985363507897, "w8a16_decode_tok_s": 31.48958732345858, "decode_improvement_percent": 54.4375348986492, "w8a16_ttft_ms": 13739.775551017374, "ttft_reduction_percent": 37.18291870592319, "output_token_ids_sha256": "dd427b3c6d31e494da495f36df76d5e327163f35771e6936cc418b58e7fade1e"}
+    ]
+  },
   "measured_concurrency_screen": [
     {"concurrent_users": 64, "aggregate_tok_s": 833.6955167227709, "samples": 1},
     {"concurrent_users": 80, "aggregate_tok_s": 980.9004226113435, "samples": 1},
@@ -66,5 +79,5 @@
     "cross_base_oracle_collisions": 0,
     "note": "Greedy token identity varies with batch shape. The gate proves semantic canaries, complete outputs, cache-zero execution, and cross-prompt isolation; it does not claim universal sequential token identity at c128."
   },
-  "reporting_boundary": "Every performance value is directly measured. No interpolation or extrapolation. This short-context p128 service is a separate operating profile from the published 32K depth service."
+  "reporting_boundary": "Every performance value is directly measured. No interpolation or extrapolation. The short-context p128 aggregate service and one-slot 33,024-token context service are separate operating profiles and are never combined into one inferred workload."
 }

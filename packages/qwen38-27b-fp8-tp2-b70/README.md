@@ -6,8 +6,8 @@ FP8 model and a digest-pinned vLLM XPU container on two Intel Arc Pro B70
 decode. The lab's optional block-W8A16 overlay reached **`35.011369 tok/s`**
 for one fresh user and **`1,112.570323 tok/s`** aggregate at 128 active users,
 while passing the recorded sequential and concurrent quality gates. A separately measured
-33,024-token service profile reaches `20.389854 tok/s` decode at an exact 32K
-prompt with `21.873 s` TTFT. The target-only/MTP0 64-slot HTTP profile reaches
+33,024-token W8A16 service profile reaches `31.489587 tok/s` decode at an exact
+32K prompt with `13.740 s` TTFT. The target-only/MTP0 64-slot HTTP profile reaches
 `774.394144 tok/s` aggregate at 64 active users on the unpatched baseline.
 
 > **Status: candidate, not a beginner install guide.** The exact model,
@@ -134,14 +134,15 @@ one-slot service and run its exact-token sweep:
 ```bash
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 VLLM_CACHE_DIR=/path/to/vllm-depth-cache \
-  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-depth-server.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-depth-server.sh
 
 OUT_DIR=/path/to/depth-result \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-depth.sh
 ```
 
-This profile is target-only/MTP0 with FP16 KV, one service slot, 33,024-token
-capacity, and 4,096-token chunked-prefill batches. Its repeated-token fixture
+This profile is target-only/MTP0 with official block-FP8 weights, FP16
+activations/KV, the W8A16 overlay, one service slot, 33,024-token capacity,
+and 4,096-token chunked-prefill batches. Its repeated-token fixture
 is shape evidence, not natural-prose latency evidence. The published prompt
 rate is explicitly `prompt tokens / HTTP TTFT`; it includes scheduling and
 first-token work and is not a kernel-only prefill rate.

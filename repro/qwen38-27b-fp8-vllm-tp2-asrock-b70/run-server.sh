@@ -10,11 +10,13 @@ max_num_seqs="${MAX_NUM_SEQS:-4}"
 max_model_len="${MAX_MODEL_LEN:-4096}"
 max_num_batched_tokens="${MAX_NUM_BATCHED_TOKENS:-256}"
 ccl_p2p_access="${CCL_P2P_ACCESS:-0}"
+fp8_block_w8a16="${VLLM_XPU_FP8_BLOCK_W8A16:-0}"
 
 [[ "${max_num_seqs}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_NUM_SEQS must be positive\n' >&2; exit 1; }
 [[ "${max_model_len}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_MODEL_LEN must be positive\n' >&2; exit 1; }
 [[ "${max_num_batched_tokens}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_NUM_BATCHED_TOKENS must be positive\n' >&2; exit 1; }
 [[ "${ccl_p2p_access}" == 0 || "${ccl_p2p_access}" == 1 ]] || { printf 'CCL_P2P_ACCESS must be 0 or 1\n' >&2; exit 1; }
+[[ "${fp8_block_w8a16}" == 0 || "${fp8_block_w8a16}" == 1 ]] || { printf 'VLLM_XPU_FP8_BLOCK_W8A16 must be 0 or 1\n' >&2; exit 1; }
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
@@ -26,6 +28,11 @@ if docker ps -a --format '{{.Names}}' | grep -Fxq "${container}"; then
 fi
 
 mkdir -p "${cache_dir}"
+
+w8a16_env=()
+if [[ "${fp8_block_w8a16}" == 1 ]]; then
+    w8a16_env=(-e VLLM_XPU_FP8_BLOCK_W8A16=1)
+fi
 
 exec docker run --rm --name "${container}" \
     --memory 9g --memory-swap 12g \
@@ -42,6 +49,7 @@ exec docker run --rm --name "${container}" \
     -e VLLM_TARGET_DEVICE=xpu \
     -e VLLM_WORKER_MULTIPROC_METHOD=spawn \
     -e VLLM_XPU_ENABLE_XPU_GRAPH=1 \
+    "${w8a16_env[@]}" \
     -e PYTORCH_ALLOC_CONF=expandable_segments:True \
     -e CCL_ATL_TRANSPORT=ofi \
     -e FI_PROVIDER=tcp \

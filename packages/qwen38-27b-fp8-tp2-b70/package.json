@@ -80,6 +80,7 @@
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.w8a16",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-depth-server.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-depth.sh",
@@ -93,6 +94,7 @@
     "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/w8a16-c128-measured-x5.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/w8a16-c128-quality-1024.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json",
     "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-depth-r1-result.md",
     "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-prereg.json",
@@ -152,19 +154,19 @@
     },
     {
       "id": "http-decode-vs-active-context",
-      "label": "Official FP8 TP2 HTTP decode over exact active context",
+      "label": "Block-W8A16 official FP8 TP2 HTTP decode over exact active context",
       "metric": "decode",
       "unit": "tok/s",
       "x_label": "Exact active prompt tokens",
-      "scope": "One-slot vLLM HTTP completions on two B70s with official FP8 weights, FP16 KV, target-only/MTP0, 33,024-token capacity, cache disabled, and 128 returned token IDs. One fresh-server sample per measured point. The fixture is grade-C repeated-token shape evidence, not natural prose. No point is interpolated or extrapolated.",
-      "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json",
+      "scope": "One-slot vLLM HTTP completions on two B70s with official block-FP8 weights, FP16 activations/KV, the lab W8A16 dispatch, target-only/MTP0, 33,024-token capacity, cache disabled, and 128 returned token IDs. One fresh-server sample per measured point. The fixture is grade-C repeated-token shape evidence, not natural prose. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
       "points": [
-        {"context_tokens": 2048, "value": 21.83515985732775, "samples": 1},
-        {"context_tokens": 4096, "value": 21.67327818299236, "samples": 1},
-        {"context_tokens": 8192, "value": 21.270145761584512, "samples": 1},
-        {"context_tokens": 16384, "value": 20.927452277370538, "samples": 1},
-        {"context_tokens": 24576, "value": 20.650132687274663, "samples": 1},
-        {"context_tokens": 32768, "value": 20.38985363507897, "samples": 1}
+        {"context_tokens": 2048, "value": 35.20164806346478, "samples": 1},
+        {"context_tokens": 4096, "value": 34.75682144803016, "samples": 1},
+        {"context_tokens": 8192, "value": 33.59272918386755, "samples": 1},
+        {"context_tokens": 16384, "value": 32.830414570491264, "samples": 1},
+        {"context_tokens": 24576, "value": 32.04666551696565, "samples": 1},
+        {"context_tokens": 32768, "value": 31.48958732345858, "samples": 1}
       ]
     },
     {
@@ -174,31 +176,31 @@
       "unit": "tok/s",
       "x_label": "Exact submitted prompt tokens",
       "scope": "Derived from each exact measured request as submitted prompt tokens divided by HTTP TTFT seconds. It includes scheduling, chunked prefill, and first-token work and is not a server-only or kernel-only prefill rate. The grade-C fixture is repeated-token shape evidence. No point is interpolated or extrapolated.",
-      "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
       "points": [
-        {"context_tokens": 2048, "value": 1478.553658563211, "samples": 1},
-        {"context_tokens": 4096, "value": 1571.8428664639384, "samples": 1},
-        {"context_tokens": 8192, "value": 1577.8218142602484, "samples": 1},
-        {"context_tokens": 16384, "value": 1555.4581123342782, "samples": 1},
-        {"context_tokens": 24576, "value": 1522.757683089734, "samples": 1},
-        {"context_tokens": 32768, "value": 1498.1249964391839, "samples": 1}
+        {"context_tokens": 2048, "value": 2024.9146767180835, "samples": 1},
+        {"context_tokens": 4096, "value": 2504.9089594252846, "samples": 1},
+        {"context_tokens": 8192, "value": 2544.70821453456, "samples": 1},
+        {"context_tokens": 16384, "value": 2501.3922609235556, "samples": 1},
+        {"context_tokens": 24576, "value": 2440.0269289921525, "samples": 1},
+        {"context_tokens": 32768, "value": 2384.900676021135, "samples": 1}
       ]
     },
     {
       "id": "http-ttft-vs-active-context",
-      "label": "Official FP8 TP2 HTTP TTFT over exact active context",
+      "label": "Block-W8A16 official FP8 TP2 HTTP TTFT over exact active context",
       "metric": "ttft",
       "unit": "ms",
       "x_label": "Exact active prompt tokens",
       "scope": "Direct HTTP TTFT from the same six exact-token, cache-zero, one-slot receipts. The fixture is grade-C repeated-token shape evidence, not natural prose. One fresh-server sample per point; no interpolation or extrapolation.",
-      "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
       "points": [
-        {"context_tokens": 2048, "value": 1385.137420031242, "samples": 1},
-        {"context_tokens": 4096, "value": 2605.8584400452673, "samples": 1},
-        {"context_tokens": 8192, "value": 5191.96776591707, "samples": 1},
-        {"context_tokens": 16384, "value": 10533.231251989491, "samples": 1},
-        {"context_tokens": 24576, "value": 16139.140372048132, "samples": 1},
-        {"context_tokens": 32768, "value": 21872.674228041433, "samples": 1}
+        {"context_tokens": 2048, "value": 1011.4006400108337, "samples": 1},
+        {"context_tokens": 4096, "value": 1635.189169086516, "samples": 1},
+        {"context_tokens": 8192, "value": 3219.2295970162377, "samples": 1},
+        {"context_tokens": 16384, "value": 6549.952302942984, "samples": 1},
+        {"context_tokens": 24576, "value": 10072.019987972453, "samples": 1},
+        {"context_tokens": 32768, "value": 13739.775551017374, "samples": 1}
       ]
     },
     {
@@ -263,7 +265,6 @@
     "tested clean-host Intel driver and Docker installation",
     "clean-host endpoint replay",
     "beginner recovery flow",
-    "natural-prompt HTTP speed and TTFT context sweep",
-    "block-W8A16 exact 2K-32K context replay"
+    "natural-prompt HTTP speed and TTFT context sweep"
   ]
 }
