@@ -221,3 +221,21 @@ compile-cache path, and removes it during bounded cleanup. This is filesystem
 correctness for generated executable artifacts, not a model, kernel, topology,
 or decode configuration change. Structured evidence is in
 `data/20260826-tp4-first-load-attempt7.json`.
+
+Attempt 8 showed a separate asymmetric startup defect. Ranks 1--3 allocated
+the 11.92 GiB selective-UVA PLE table and completed model loading in about 435
+seconds. Rank 0 remained CPU-bound for more than 18 minutes in
+`UVAOffloader._maybe_offload_to_cpu`, copying the uninitialized accelerator PLE
+table to CPU before all checkpoint shards replace its usable rows. The attempt
+was stopped through the launcher's bounded cleanup path; no decode measurement
+was taken. Structured evidence is in
+`data/20260826-tp4-first-load-attempt8.json`.
+
+vLLM commit `bb4ad1cca6` makes skipping that initial copy an explicit
+parameter opt-in and applies it only to the Qwen4Exp PLE embedding weight. The
+ordinary offload path is unchanged, the FP8 scale is not marked, and the
+downloaded checkpoint's 128 FP8 shards exactly cover the TP4 table with no TP
+padding. The focused offloader/PLE/Qwen suite passes 68 tests; all 14 PLE tests
+pass independently. A real B70 microgate confirmed that the fresh pinned CPU
+allocation maps to a writable XPU UVA view. Patch artifact `vllm/0010`
+preserves the optimization. Attempt 9 advances only this source pin.

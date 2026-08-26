@@ -1,0 +1,33 @@
+{
+  "status": "bounded_negative",
+  "attempt": 8,
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "4382519af0eb5d68a1c57b97336dc746d93e7558",
+    "kernels_head": "7cf216774fb3c5eabf20d1f481d6548682604c37",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "enforce_eager": true,
+    "max_model_len": 512,
+    "offload": "selective UVA, PLE embedding only, 12 GiB/rank"
+  },
+  "result": {
+    "rank_1_to_3_model_load_seconds": [435.434436, 435.438574, 434.80287],
+    "rank_1_to_3_accelerator_gib": 31.61,
+    "rank_0_state": "CPU-bound in p.data.to(device=cpu) for the uninitialized 11.92 GiB PLE table",
+    "decode_measurement": null,
+    "termination": "manual Ctrl-C through launcher bounded process-group cleanup"
+  },
+  "diagnosis": {
+    "method": "read-only py-spy stack dump plus rank comparison",
+    "cause": "redundant accelerator-to-host copy before checkpoint load",
+    "fix_commit": "bb4ad1cca6459ab3246b1685cce0993f03fdbc93",
+    "fix_patch": "patches/qwen38-flash-next-fp8-b70/vllm/0010-Avoid-copying-uninitialized-PLE-weights-during-offlo.patch"
+  },
+  "evidence": {
+    "run_directory": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt8",
+    "server_log_sha256": "0a0feead93d0de1c237bf477b1141f4af23028b2a15e0974764b960dfb3e699a"
+  }
+}
