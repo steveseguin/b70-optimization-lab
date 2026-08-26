@@ -30,6 +30,10 @@ MTP2_LOCAL_RAW = DATA / "qwen38-fp8-w8a16-mtp2-local-argmax-20260826-r1"
 MTP2_LOCAL_SUMMARY = (
     DATA / "2026-08-26-qwen38-fp8-w8a16-mtp2-local-argmax-r1-summary.json"
 )
+MTP2_DYNAMIC_RAW = DATA / "qwen38-fp8-w8a16-mtp2-dynamic-20260826-r1"
+MTP2_DYNAMIC_SUMMARY = (
+    DATA / "2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-r1-summary.json"
+)
 PATCH = (
     ROOT
     / "experiments/qwen38-27b-b70/patches"
@@ -365,6 +369,118 @@ def main() -> int:
         "treatment"
     ]["patch_sha256"]
 
+    dynamic = load(MTP2_DYNAMIC_SUMMARY)
+    assert dynamic["classification"] == "measured-negative-screen"
+    assert dynamic["treatment"]["source_patch"] is None
+    assert dynamic["treatment"]["target_verification_changed"] is False
+    assert dynamic["treatment"]["speculative_config"][
+        "num_speculative_tokens_per_batch_size"
+    ] == [[1, 1, 2], [2, 128, 0]]
+    assert dynamic["decision"]["status"] == "closed-negative"
+    assert dynamic["decision"]["replication"] == (
+        "not run by preregistered stop rule"
+    )
+    assert "No value is interpolated or extrapolated" in dynamic[
+        "reporting_boundary"
+    ]
+
+    dynamic_quality = load(MTP2_DYNAMIC_RAW / "sequential-quality.json")
+    dynamic_hashes = [
+        case["sha256"] for case in dynamic_quality["exact_cases"]
+    ]
+    assert dynamic_quality["pass_all"] is True
+    assert dynamic_hashes == control_hashes
+    assert dynamic_quality["repeat_case"]["hashes"] == mtp2_control_quality[
+        "repeat_case"
+    ]["hashes"]
+    dynamic_quality_usages = [
+        case["usage"]["prompt_tokens_details"]["cached_tokens"]
+        for case in dynamic_quality["exact_cases"]
+    ] + [
+        run["usage"]["prompt_tokens_details"]["cached_tokens"]
+        for run in dynamic_quality["repeat_case"]["runs"]
+    ]
+    assert len(dynamic_quality_usages) == 15
+    assert all(value == 0 for value in dynamic_quality_usages)
+
+    dynamic_single = load(MTP2_DYNAMIC_RAW / "single-p40-o128.json")
+    dynamic_single_rate = dynamic_single["fresh_response_validity"][
+        "headline_tok_s_after_ttft"
+    ]
+    assert dynamic_single["fresh_response_validity"][
+        "cached_tokens_all_zero"
+    ] is True
+    close(
+        dynamic_single_rate,
+        dynamic["single_user"]["fresh_response_after_ttft_tok_s"],
+    )
+    close(
+        (dynamic_single_rate / mtp2_single_rate - 1) * 100,
+        dynamic["single_user"]["change_vs_static_mtp2_percent"],
+    )
+    assert dynamic["single_user"]["retention_gate_passed"] is True
+    assert dynamic_single_rate >= dynamic["single_user"]["retention_gate_tok_s"]
+
+    transition = load(MTP2_DYNAMIC_RAW / "excluded-c64-transition.json")
+    dynamic_c64 = load(MTP2_DYNAMIC_RAW / "c64-screen.json")
+    assert transition["classification"] == (
+        "output-isolation-qualified-shape-variant"
+    )
+    assert dynamic_c64["classification"] == (
+        "output-isolation-qualified-shape-variant"
+    )
+    assert len(transition["batches"]) == 1
+    assert len(dynamic_c64["batches"]) == 1
+    transition_batch = transition["batches"][0]
+    dynamic_batch = dynamic_c64["batches"][0]
+    validate_output_isolation_batch(transition_batch, 64)
+    validate_output_isolation_batch(dynamic_batch, 64)
+    dynamic_c64_rate = dynamic_batch["aggregate_tok_s_wall"]
+    close(
+        transition_batch["aggregate_tok_s_wall"],
+        dynamic["concurrency"]["excluded_transition_tok_s"],
+    )
+    close(
+        dynamic_c64_rate,
+        dynamic["concurrency"]["declared_aggregate_tok_s"],
+    )
+    close(
+        (dynamic_c64_rate / mtp2["concurrency"]["points"][0]["aggregate_tok_s"] - 1)
+        * 100,
+        dynamic["concurrency"]["change_vs_static_mtp2_percent"],
+    )
+    close(
+        (dynamic_c64_rate / mtp_points[64]["aggregate_tok_s"] - 1) * 100,
+        dynamic["concurrency"]["change_vs_static_mtp1_percent"],
+    )
+    base_ladder = load(RAW / "w8a16-c64-c128-ladder.json")
+    base_c64_rate = next(
+        batch["aggregate_tok_s_wall"]
+        for batch in base_ladder["batches"]
+        if batch["concurrency"] == 64
+    )
+    close(
+        (dynamic_c64_rate / base_c64_rate - 1) * 100,
+        dynamic["concurrency"]["change_vs_static_mtp0_same_shape_percent"],
+    )
+    assert dynamic["concurrency"]["gate_passed"] is False
+    assert dynamic_c64_rate < dynamic["concurrency"]["gate_tok_s"]
+    assert not (MTP2_DYNAMIC_RAW / "c64-replication.json").exists()
+    assert not (MTP2_DYNAMIC_RAW / "c64-quality-512.json").exists()
+
+    dynamic_inspect = load(MTP2_DYNAMIC_RAW / "docker-inspect.json")[0]
+    assert dynamic_inspect["Image"] == dynamic["runtime"]["image_id"]
+    dynamic_command = dynamic_inspect["Config"]["Cmd"]
+    dynamic_config = dynamic_command[
+        dynamic_command.index("--speculative-config") + 1
+    ]
+    assert '"num_speculative_tokens_per_batch_size":[[1,1,2],[2,128,0]]' in (
+        dynamic_config
+    )
+    dynamic_launcher = REPRO / "run-w8a16-mtp2-dynamic-server.sh"
+    assert dynamic_launcher.is_file()
+    assert "[[1,1,2],[2,128,0]]" in dynamic_launcher.read_text()
+
     assert mtp2["quality"]["sequential_evidence"] == [
         f"{MTP2_RAW.name}/sequential-quality.json",
         f"{MTP2_MBT768_RAW.name}/sequential-quality.json",
@@ -399,7 +515,7 @@ def main() -> int:
         )
         assert relative_quality in package_dependencies
 
-    ladder = load(RAW / "w8a16-c64-c128-ladder.json")
+    ladder = base_ladder
     measured = {
         row["concurrency"]: row["aggregate_tok_s_wall"] for row in ladder["batches"]
     }
@@ -439,6 +555,8 @@ def main() -> int:
                 ],
                 "mtp2_local_argmax_single_tok_s": local_single_rate,
                 "mtp2_local_argmax_c64_tok_s": local_c64_rate,
+                "mtp2_dynamic_single_tok_s": dynamic_single_rate,
+                "mtp2_dynamic_c64_tok_s": dynamic_c64_rate,
                 "depth_32k_w8a16_tok_s": summary["exact_context"]["points"][-1][
                     "w8a16_decode_tok_s"
                 ],

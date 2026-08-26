@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "classification": "measured-negative-screen",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "publisher_mtp_layers": 1,
+    "maximum_requested_speculative_tokens": 2,
+    "mode": "serial reuse of one publisher MTP layer; not native two-layer MTP"
+  },
+  "treatment": {
+    "name": "built-in batch-size-dependent speculative-token schedule",
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 2,
+      "num_speculative_tokens_per_batch_size": [
+        [1, 1, 2],
+        [2, 128, 0]
+      ]
+    },
+    "policy": "scheduler steps with one active request use MTP2; steps with 2-128 active requests use MTP0",
+    "source_patch": null,
+    "target_verification_changed": false
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image_id": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
+    "w8a16_environment_gate": "VLLM_XPU_FP8_BLOCK_W8A16=1"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "prefix_cache": false
+  },
+  "quality": {
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "exact_hash_match_vs_static_mtp2_control": true,
+    "cache_nonzero_requests": 0,
+    "evidence": "qwen38-fp8-w8a16-mtp2-dynamic-20260826-r1/sequential-quality.json"
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "fresh_response_after_ttft_tok_s": 83.33645264624778,
+    "wall_tok_s": 79.64130422788041,
+    "cached_tokens": 0,
+    "change_vs_static_mtp2_percent": -0.3706850950514151,
+    "retention_gate_tok_s": 82.810053,
+    "retention_gate_passed": true,
+    "evidence": "qwen38-fp8-w8a16-mtp2-dynamic-20260826-r1/single-p40-o128.json"
+  },
+  "concurrency": {
+    "concurrent_sequences": 64,
+    "excluded_transition_tok_s": 574.2086676220621,
+    "declared_aggregate_tok_s": 641.3283436189286,
+    "samples": 1,
+    "complete_tokens": "8192/8192",
+    "cached_tokens_all_zero": true,
+    "output_isolation": true,
+    "sequential_oracle_exact": "55/64",
+    "change_vs_static_mtp2_percent": -13.003669607359548,
+    "change_vs_static_mtp1_percent": -41.251062751591775,
+    "change_vs_static_mtp0_same_shape_percent": -23.07403233497419,
+    "gate_tok_s": 875,
+    "gate_passed": false,
+    "evidence": "qwen38-fp8-w8a16-mtp2-dynamic-20260826-r1/c64-screen.json",
+    "excluded_transition_evidence": "qwen38-fp8-w8a16-mtp2-dynamic-20260826-r1/excluded-c64-transition.json"
+  },
+  "decision": {
+    "status": "closed-negative",
+    "reason": "the declared c64 aggregate missed the frozen 875 tok/s gate and regressed versus static MTP0, MTP1, and MTP2 controls at the same shape",
+    "replication": "not run by preregistered stop rule",
+    "concurrent_semantic_canary": "not run by preregistered stop rule",
+    "threshold_sweep": "not authorized",
+    "context_ladder": "not authorized",
+    "promotion": "rejected"
+  },
+  "reporting_boundary": "All performance values are directly measured. The dynamic policy preserved the batch-size-one quality and retention gates but did not preserve c64 throughput. This screen does not isolate scheduler, resident-drafter, transition, graph-shape, or kernel costs, so it does not establish a causal mechanism for the aggregate regression. No value is interpolated or extrapolated."
+}

@@ -983,6 +983,14 @@ regressed c64 to `673.064810 tok/s` and missed the frozen 875 tok/s gate. No
 collective sub-variant or replication ran. See the
 [result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-w8a16-mtp2-local-argmax-r1-result.md).
 
+The built-in dynamic MTP2/MTP0 schedule is closed negative as well. Its exact
+`[(1,1,2), (2,128,0)]` policy retained `83.336453 tok/s` and exact static-MTP2
+quality for one user, but the separately declared, output-audited c64 batch
+reached only `641.328344 tok/s`. That misses the 875 tok/s gate and regresses
+versus the same-shape static MTP0, MTP1, and MTP2 controls. No replication or
+threshold sweep ran. See the
+[result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-r1-result.md).
+
 Resume and evidence:
 
 - [Qwen3.8 model board](README.md#qwen38-27b-model-board)
@@ -1003,6 +1011,7 @@ Resume and evidence:
 - [official FP8 direct-P2P c64 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.md)
 - [official FP8 block-W8A16 MTP0 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md)
 - [official FP8 block-W8A16 MTP1 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md)
+- [official FP8 dynamic MTP2/MTP0 negative result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-r1-result.md)
 
 Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
 prototype inherited from Qwen3.6 work. Both caused device faults/resets. Do not
