@@ -1,0 +1,16 @@
+ARG BASE_IMAGE=vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f
+FROM ${BASE_IMAGE}
+
+ARG KERNEL_WHEEL=vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl
+ARG KERNEL_WHEEL_SHA256=f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6
+
+COPY ${KERNEL_WHEEL} /tmp/${KERNEL_WHEEL}
+RUN test "$(sha256sum /tmp/${KERNEL_WHEEL} | awk '{print $1}')" = "${KERNEL_WHEEL_SHA256}" \
+    && uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/${KERNEL_WHEEL} \
+    && rm -f /tmp/${KERNEL_WHEEL} \
+    && /opt/venv/bin/python -c 'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, "fp8_gemm_out"); assert hasattr(torch.ops._xpu_C, "gdn_attention")'
+
+LABEL neural.download.base.digest="sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f" \
+      neural.download.kernel.head="1e90ffa672ba02f17a909da11838a4c55b199783" \
+      neural.download.kernel.wheel.sha256="f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6" \
+      neural.download.build.lane="qwen38-f01e-kernel-1e90-zero-vllm-overlay"

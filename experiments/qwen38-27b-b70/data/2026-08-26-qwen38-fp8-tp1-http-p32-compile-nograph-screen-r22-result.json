@@ -1,0 +1,19 @@
+{
+  "schema": "neural.download.qwen38-fp8-tp1-compile-nograph-screen-result.v1",
+  "state": "kv-fit-negative-no-measurement",
+  "campaign_id": "qwen38-fp8-tp1-http-p32-compile-nograph-screen-20260826-r22",
+  "server": {
+    "health_reached": false,
+    "requests_sent": 0,
+    "cleanup": "clean",
+    "gpu_memory_utilization": 0.968,
+    "reported_model_memory_gib": 27.57,
+    "available_kv_cache_memory_gib": -0.85,
+    "torch_compile_enabled": true,
+    "xpu_graph_enabled": false
+  },
+  "root_cause": "Torch-compiled execution itself left negative memory for cache blocks even with XPU graph capture disabled; vLLM refused to start.",
+  "interpretation": "The 0.24 GiB improvement over R20 is explained by the higher 0.968 memory budget. Disabling graph capture did not recover the roughly 2 GiB compile-versus-eager residency gap.",
+  "closure": "Official block-FP8 TP1 with FP16-family KV is closed on one B70 for this runtime: eager fits at 49.622256 tok/s c32, while both compiled profiles cannot allocate KV cache. No dual-replica rate may be inferred.",
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp1-http-p32-compile-nograph-screen-20260826-r22-attempt1"
+}
