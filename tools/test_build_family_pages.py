@@ -1964,6 +1964,104 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 0)
         self.assertTrue(all(cell["selectors"]["mtp"] == 0 for cell in q38_target))
+        q38_q4km_f16 = [
+            cell for cell in q38_target
+            if cell["selectors"]["artifact_id"]
+            == "qwen38-27b-ggmlorg-q4-k-m-0669b98"
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "f16"
+        ]
+        self.assertEqual(len(q38_q4km_f16), 7)
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in q38_q4km_f16],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertEqual(
+            q38_q4km_f16[0]["evidence_id"],
+            "q38-q4km-tp1-kv-f16-context",
+        )
+        self.assertIn("raw sweep", q38_q4km_f16[0]["label"])
+        self.assertEqual(
+            [point["x"] for point in series["q38-q4km-tp1-kv-f16-context"]["points"]],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(all(
+            cell["evidence_id"]
+            == "q38-q4km-tp1-f16kv-http-context-r1-grade-c"
+            and cell["packet_id"] == "qwen38-27b-q4km-tp1-b70"
+            and "HTTP" in cell["label"]
+            and "Grade C" in cell["label"]
+            for cell in q38_q4km_f16[1:]
+        ))
+        q38_q4km_f16_series = series[
+            "q38-q4km-tp1-f16kv-http-context-r1-grade-c"
+        ]
+        q38_q4km_http_result = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-depth-r1-result.json"
+        ).read_text())
+        self.assertEqual(q38_q4km_http_result["status"], "passed")
+        self.assertEqual(
+            q38_q4km_http_result["exact_depth_http"]["evidence_grade"],
+            "C synthetic repeated-token fixture; exact context shape, not representative natural prose",
+        )
+        self.assertEqual(
+            [point["x"] for point in q38_q4km_f16_series["points"]],
+            [
+                point["active_context_tokens"]
+                for point in q38_q4km_http_result["exact_depth_http"]["points"]
+            ],
+        )
+        self.assertEqual(
+            [point["decode_tok_s"] for point in q38_q4km_f16_series["points"]],
+            [
+                point["decode_tok_s"]
+                for point in q38_q4km_http_result["exact_depth_http"]["points"]
+            ],
+        )
+        self.assertEqual(
+            [point["ttft_ms"] for point in q38_q4km_f16_series["points"]],
+            [
+                point["ttft_ms"]
+                for point in q38_q4km_http_result["exact_depth_http"]["points"]
+            ],
+        )
+        self.assertEqual(
+            q38_q4km_http_result["realistic_http"]["registered_output_hashes_exact"],
+            12,
+        )
+        self.assertTrue(q38_q4km_http_result["realistic_http"]["cached_tokens_zero"])
+        self.assertIn("Separately", q38_q4km_f16_series["quality"])
+        self.assertIn("x=0 selector remains", q38_q4km_f16_series["caveat"])
+
+        q38_q4km_q8 = [
+            cell for cell in q38_target
+            if cell["selectors"]["artifact_id"]
+            == "qwen38-27b-ggmlorg-q4-k-m-0669b98"
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "q8_0"
+        ]
+        self.assertEqual(len(q38_q4km_q8), 7)
+        self.assertTrue(all(
+            cell["evidence_id"] == "q38-q4km-tp1-kv-q8-context"
+            and "raw sweep" in cell["label"]
+            for cell in q38_q4km_q8
+        ))
+
+        q38_q4km_view = next(
+            view for view in family["views"] if view["id"] == "context-kv"
+        )
+        self.assertEqual(q38_q4km_view["metrics"], ["decode_tok_s"])
+        self.assertEqual(
+            [item["measurement_ids"] for item in q38_q4km_view["series"]],
+            [
+                ["q38-q4km-tp1-f16kv-http-context-r1-grade-c"],
+                ["q38-q4km-tp1-kv-q8-context"],
+            ],
+        )
+        self.assertIn("F16 x=0 remains raw", q38_q4km_view["subtitle"])
+        self.assertIn("Q8_0 is the preserved raw-engine curve", q38_q4km_view["subtitle"])
+
         q38_q8_f16 = [
             cell for cell in q38_target
             if cell["selectors"]["artifact_id"]
