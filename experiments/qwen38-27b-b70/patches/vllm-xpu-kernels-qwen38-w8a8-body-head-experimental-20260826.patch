@@ -1,0 +1,330 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7c95eca3892b8523a196bc4fbc2b677b42a4372e..4a411bc49ee804fa697c037e3ca9b9bd2b7057fa 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -76,6 +76,8 @@ option(GDN_KERNELS_ENABLED "Build GDN attention kernels (gdn_attn TLA)" ON)
+ option(MQA_LOGITS_KERNELS_ENABLED "Build MQA logits kernels" ON)
+ option(XPU_SPECIFIC_KERNELS_ENABLED
+        "Build XPU-specific kernels (_xpu_C extension)" ON)
++option(LM_HEAD_INT8_SIDECAR_ENABLED
++       "Build isolated W8A8 linear kernels (_xpu_lm_head_C extension)" OFF)
+ option(XPUMEM_ALLOCATOR_ENABLED "Build xpumem_allocator extension" ON)
+ 
+ message(STATUS "")
+@@ -92,6 +94,8 @@ message(STATUS "  GDN_KERNELS_ENABLED          = ${GDN_KERNELS_ENABLED}")
+ message(STATUS "  MQA_LOGITS_KERNELS_ENABLED   = ${MQA_LOGITS_KERNELS_ENABLED}")
+ message(
+   STATUS "  XPU_SPECIFIC_KERNELS_ENABLED = ${XPU_SPECIFIC_KERNELS_ENABLED}")
++message(
++  STATUS "  LM_HEAD_INT8_SIDECAR_ENABLED = ${LM_HEAD_INT8_SIDECAR_ENABLED}")
+ message(STATUS "  XPUMEM_ALLOCATOR_ENABLED     = ${XPUMEM_ALLOCATOR_ENABLED}")
+ message(STATUS "")
+ 
+@@ -606,6 +610,38 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+     WITH_SOABI)
+ endif()
+ 
++if(LM_HEAD_INT8_SIDECAR_ENABLED)
++  message(STATUS "Enabling isolated _xpu_lm_head_C extension.")
++  set(VLLM_LM_HEAD_INT8_SRC
++      "csrc/xpu/lm_head_int8_bindings.cpp"
++      "csrc/xpu/quantization/int8_quant.cpp"
++      "csrc/xpu/onednn/onednn_matmul.cpp"
++      "csrc/xpu/onednn/onednn_runtime.cpp"
++      "csrc/xpu/utils.cpp")
++
++  define_gpu_extension_target(
++    _xpu_lm_head_C
++    DESTINATION
++    vllm_xpu_kernels
++    LANGUAGE
++    ${VLLM_GPU_LANG}
++    SOURCES
++    ${VLLM_LM_HEAD_INT8_SRC}
++    COMPILE_FLAGS
++    ${VLLM_GPU_COMPILE_FLAGS}
++    LINK_FLAGS
++    ${VLLM_GPU_LINK_FLAGS}
++    ARCHITECTURES
++    ${VLLM_GPU_ARCHES}
++    INCLUDE_DIRECTORIES
++    ${VLLM_XPU_INCLUDE_DIR}
++    LIBRARIES
++    ${ONEDNN_LIBRARY}
++    USE_SABI
++    3
++    WITH_SOABI)
++endif()
++
+ #
+ # _moe_C extension
+ #
+diff --git a/csrc/xpu/lm_head_int8_bindings.cpp b/csrc/xpu/lm_head_int8_bindings.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..d1b93bccc81aa85572c57b264e622868aba68820
+--- /dev/null
++++ b/csrc/xpu/lm_head_int8_bindings.cpp
+@@ -0,0 +1,123 @@
++#include "core/registration.h"
++#include "xpu/ops.h"
++
++#include <ATen/core/dispatch/Dispatcher.h>
++#include <torch/library.h>
++
++namespace {
++
++using fp8_gemm_signature = torch::Tensor(
++    const torch::Tensor&,
++    const torch::Tensor&,
++    std::optional<c10::ScalarType>,
++    const std::optional<torch::Tensor>&,
++    const std::optional<torch::Tensor>&,
++    const std::optional<torch::Tensor>&);
++
++using fp8_quant_signature = void(
++    const torch::Tensor&,
++    torch::Tensor&,
++    torch::Tensor&,
++    int64_t,
++    double,
++    double,
++    double,
++    bool,
++    bool,
++    bool);
++
++torch::Tensor hybrid_fp8_int8_linear(
++    const torch::Tensor& x,
++    const torch::Tensor& fp8_weight,
++    const torch::Tensor& fp8_weight_scale,
++    const torch::Tensor& int8_weight,
++    const torch::Tensor& int8_weight_scale,
++    int64_t min_tokens) {
++  const auto flat_x = x.reshape({-1, x.size(-1)});
++  if (flat_x.size(0) >= min_tokens) {
++    auto [x_q, x_scale] = per_token_quant_int8_xpu(flat_x);
++    return int8_gemm_w8a8(
++        x_q,
++        x_scale,
++        int8_weight,
++        int8_weight_scale,
++        x.scalar_type(),
++        std::nullopt);
++  }
++
++  static auto fp8_gemm = c10::Dispatcher::singleton()
++                              .findSchemaOrThrow("_xpu_C::fp8_gemm", "")
++                              .typed<fp8_gemm_signature>();
++  static auto fp8_quant = c10::Dispatcher::singleton()
++                               .findSchemaOrThrow(
++                                   "_C::per_token_group_fp8_quant", "")
++                               .typed<fp8_quant_signature>();
++  constexpr int64_t group_size = 128;
++  auto fp8_input = torch::empty_like(
++      flat_x, flat_x.options().dtype(torch::kFloat8_e4m3fn));
++  auto fp8_input_scale = torch::empty(
++      {flat_x.size(0), flat_x.size(1) / group_size},
++      flat_x.options().dtype(torch::kFloat32));
++  fp8_quant.call(
++      flat_x,
++      fp8_input,
++      fp8_input_scale,
++      group_size,
++      1.0e-10,
++      -448.0,
++      448.0,
++      false,
++      false,
++      false);
++  return fp8_gemm.call(
++      fp8_input,
++      fp8_weight.t(),
++      x.scalar_type(),
++      fp8_input_scale,
++      fp8_weight_scale.t(),
++      std::nullopt);
++}
++
++}  // namespace
++
++TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, ops) {
++  ops.def(
++      "int8_gemm_w8a8(Tensor A, Tensor A_scale, Tensor B, Tensor B_scale, "
++      "ScalarType? out_dtype, Tensor? bias) -> Tensor");
++  ops.impl("int8_gemm_w8a8", torch::kXPU, &int8_gemm_w8a8);
++
++  ops.def(
++      "int8_gemm_w8a8_out(Tensor A, Tensor A_scale, Tensor B, Tensor B_scale, "
++      "Tensor! output, Tensor? bias) -> Tensor");
++  ops.impl("int8_gemm_w8a8_out", torch::kXPU, &int8_gemm_w8a8_out);
++
++  ops.def("per_token_quant_int8_xpu(Tensor x) -> (Tensor, Tensor)");
++  ops.impl(
++      "per_token_quant_int8_xpu", torch::kXPU, &per_token_quant_int8_xpu);
++
++  ops.def(
++      "per_token_quant_int8_xpu_clip(Tensor x, float clip_ratio) -> "
++      "(Tensor, Tensor)");
++  ops.impl(
++      "per_token_quant_int8_xpu_clip",
++      torch::kXPU,
++      &per_token_quant_int8_xpu_clip);
++
++  ops.def(
++      "per_token_quant_int8_xpu_out(Tensor x, Tensor! q, Tensor! scales) -> "
++      "(Tensor, Tensor)");
++  ops.impl(
++      "per_token_quant_int8_xpu_out",
++      torch::kXPU,
++      &per_token_quant_int8_xpu_out);
++
++  ops.def(
++      "hybrid_fp8_int8_linear(Tensor x, "
++      "Tensor fp8_weight, Tensor fp8_weight_scale, "
++      "Tensor int8_weight, Tensor int8_weight_scale, int min_tokens) -> "
++      "Tensor");
++  ops.impl(
++      "hybrid_fp8_int8_linear", torch::kXPU, &hybrid_fp8_int8_linear);
++}
++
++REGISTER_EXTENSION(TORCH_EXTENSION_NAME)
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index dd44a659dcd408c0f0f6a542b56d5f94dec61e2e..bcfe95c3c1644b853de5c4ae30558cb215ef5dc0 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -78,6 +78,10 @@ torch::Tensor int8_gemm_w8a8_out(
+ std::tuple<torch::Tensor, torch::Tensor> per_token_quant_int8_xpu(
+     const torch::Tensor& x);
+ 
++std::tuple<torch::Tensor, torch::Tensor> per_token_quant_int8_xpu_clip(
++    const torch::Tensor& x,
++    double clip_ratio);
++
+ std::tuple<torch::Tensor, torch::Tensor> per_token_quant_int8_xpu_out(
+     const torch::Tensor& x,
+     torch::Tensor& q,
+diff --git a/csrc/xpu/quantization/int8_quant.cpp b/csrc/xpu/quantization/int8_quant.cpp
+index f5a922c27712624688c229ca4b99a14a555fc301..c76e967e2e61b274c3755721fd6ff72080a85b65 100644
+--- a/csrc/xpu/quantization/int8_quant.cpp
++++ b/csrc/xpu/quantization/int8_quant.cpp
+@@ -1,10 +1,29 @@
+ #include <sycl/sycl.hpp>
+ #include <torch/all.h>
+ 
++#include <cstdlib>
++
+ #include "utils.h"
+ 
+ namespace {
+ 
++float configured_clip_ratio() {
++  static const float ratio = [] {
++    const char* text = std::getenv("VLLM_XPU_FP8_BODY_INT8_ACT_CLIP_RATIO");
++    if (text == nullptr || *text == '\0') {
++      return 1.0f;
++    }
++    char* end = nullptr;
++    const float value = std::strtof(text, &end);
++    TORCH_CHECK(
++        end != text && *end == '\0' && value > 0.0f && value <= 1.0f,
++        "VLLM_XPU_FP8_BODY_INT8_ACT_CLIP_RATIO must be in (0, 1], got ",
++        text);
++    return value;
++  }();
++  return ratio;
++}
++
+ template <typename scalar_t>
+ float to_float(scalar_t value) {
+   return static_cast<float>(value);
+@@ -29,7 +48,8 @@ void launch_per_token_quant_int8(
+     int8_t* q,
+     float* scales,
+     int64_t rows,
+-    int64_t cols) {
++    int64_t cols,
++    float clip_ratio = 1.0f) {
+   constexpr int kBlockSize = 256;
+   auto& queue = vllm::xpu::vllmGetQueue();
+   sycl::range<1> local(kBlockSize);
+@@ -64,7 +84,8 @@ void launch_per_token_quant_int8(
+                 item.barrier(sycl::access::fence_space::local_space);
+               }
+ 
+-              const float absmax = sycl::fmax(local_max[0], 1.0e-10f);
++              const float absmax = sycl::fmax(
++                  local_max[0] * clip_ratio, 1.0e-10f);
+               const float scale = absmax / 127.0f;
+               if (local_id == 0) {
+                 scales[row] = scale;
+@@ -242,26 +263,67 @@ std::tuple<torch::Tensor, torch::Tensor> per_token_quant_int8_xpu(
+     return {q, scales};
+   }
+ 
++  const float clip_ratio = configured_clip_ratio();
++
+   if (x_contig.scalar_type() == torch::kFloat32) {
+     launch_per_token_quant_int8(
+         x_contig.data_ptr<float>(), q.data_ptr<int8_t>(), scales.data_ptr<float>(),
+-        rows, cols);
++        rows, cols, clip_ratio);
+   } else if (x_contig.scalar_type() == torch::kFloat16) {
+     launch_per_token_quant_int8(
+         reinterpret_cast<const sycl::half*>(x_contig.data_ptr()),
+         q.data_ptr<int8_t>(),
+         scales.data_ptr<float>(),
+         rows,
+-        cols);
++        cols,
++        clip_ratio);
+   } else {
+     launch_per_token_quant_int8(
+         reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(x_contig.data_ptr()),
+         q.data_ptr<int8_t>(),
+         scales.data_ptr<float>(),
+         rows,
+-        cols);
++        cols,
++        clip_ratio);
++  }
++
++  return {q, scales};
++}
++
++std::tuple<torch::Tensor, torch::Tensor> per_token_quant_int8_xpu_clip(
++    const torch::Tensor& x,
++    double clip_ratio) {
++  check_quant_input(x, "per_token_quant_int8_xpu_clip");
++  TORCH_CHECK(
++      clip_ratio > 0.0 && clip_ratio <= 1.0,
++      "clip_ratio must be in (0, 1], got ",
++      clip_ratio);
++
++  auto x_contig = x.contiguous();
++  const int64_t cols = x_contig.size(-1);
++  const int64_t rows = x_contig.numel() / cols;
++  auto q = torch::empty_like(x_contig, x_contig.options().dtype(torch::kInt8));
++  auto scales = torch::empty(
++      make_scale_shape(x_contig), x_contig.options().dtype(torch::kFloat32));
++  if (rows == 0 || cols == 0) {
++    return {q, scales};
+   }
+ 
++  const float ratio = static_cast<float>(clip_ratio);
++  if (x_contig.scalar_type() == torch::kFloat32) {
++    launch_per_token_quant_int8(
++        x_contig.data_ptr<float>(), q.data_ptr<int8_t>(),
++        scales.data_ptr<float>(), rows, cols, ratio);
++  } else if (x_contig.scalar_type() == torch::kFloat16) {
++    launch_per_token_quant_int8(
++        reinterpret_cast<const sycl::half*>(x_contig.data_ptr()),
++        q.data_ptr<int8_t>(), scales.data_ptr<float>(), rows, cols, ratio);
++  } else {
++    launch_per_token_quant_int8(
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++            x_contig.data_ptr()),
++        q.data_ptr<int8_t>(), scales.data_ptr<float>(), rows, cols, ratio);
++  }
+   return {q, scales};
+ }
+ 

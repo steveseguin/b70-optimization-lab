@@ -1,0 +1,75 @@
+{
+  "kind": "attribution_microbenchmark_not_endpoint_throughput",
+  "image": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+  "kernel_source_commit": "2dd55f380df753a10a88fcd9e96192561066e713",
+  "torch": "2.13.0+xpu",
+  "kernel_package": "0.1.12.3",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "shape": {
+    "m": 64,
+    "k": 5120,
+    "n": 124160
+  },
+  "dtype": "bfloat16",
+  "warmup": 10,
+  "iterations_per_repeat": 20,
+  "repeats": 5,
+  "rows": {
+    "bf16_linear": {
+      "samples_us": [
+        2436.4516,
+        2431.04855,
+        2430.21355,
+        2435.1426,
+        2432.87905
+      ],
+      "median_us": 2432.87905,
+      "min_us": 2430.21355,
+      "max_us": 2436.4516
+    },
+    "int8_quantize": {
+      "samples_us": [
+        7.50105,
+        7.47105,
+        7.47305,
+        7.4915,
+        7.51555
+      ],
+      "median_us": 7.4915,
+      "min_us": 7.47105,
+      "max_us": 7.51555
+    },
+    "int8_gemm_prequantized": {
+      "samples_us": [
+        1900.77475,
+        1881.7186499999998,
+        1877.0966,
+        1882.52215,
+        1888.0182
+      ],
+      "median_us": 1882.52215,
+      "min_us": 1877.0966,
+      "max_us": 1900.77475
+    },
+    "int8_quantize_plus_gemm": {
+      "samples_us": [
+        1915.57385,
+        1958.28515,
+        1950.85555,
+        1927.04195,
+        1925.8084
+      ],
+      "median_us": 1927.04195,
+      "min_us": 1915.57385,
+      "max_us": 1958.28515
+    }
+  },
+  "int8_speedup_x": 1.2624940780349903,
+  "int8_wall_reduction_percent": 20.79170766832819,
+  "synthetic_numerics": {
+    "argmax_equal_rows": 63,
+    "argmax_total_rows": 64,
+    "mean_abs_error": 0.014348499476909637,
+    "max_abs_error": 0.109375
+  }
+}

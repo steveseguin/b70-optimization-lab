@@ -1,0 +1,72 @@
+{
+  "kind": "attribution_microbenchmark_not_endpoint_throughput",
+  "image": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+  "kernel_source_commit": "2dd55f380df753a10a88fcd9e96192561066e713",
+  "torch": "2.13.0+xpu",
+  "kernel_package": "0.1.12.3",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "quantization": "per-token activation/per-output-channel weight INT8",
+  "dtype": "float16",
+  "warmup": 20,
+  "iterations_per_repeat": 100,
+  "repeats": 7,
+  "rows": [
+    {
+      "name": "attention_qkv",
+      "m": 64,
+      "k": 5120,
+      "n": 4096,
+      "samples_us": [
+        40.955040000000004,
+        46.95718,
+        45.149269999999994,
+        44.92167,
+        42.50165,
+        42.614050000000006,
+        42.662459999999996
+      ],
+      "median_us": 42.662459999999996,
+      "min_us": 40.955040000000004,
+      "max_us": 46.95718,
+      "output_identical_within_run": true
+    },
+    {
+      "name": "mlp_gate_up",
+      "m": 64,
+      "k": 5120,
+      "n": 8704,
+      "samples_us": [
+        114.93879,
+        114.92949,
+        114.39388000000001,
+        114.42797999999999,
+        114.56069000000001,
+        114.49338,
+        114.63278
+      ],
+      "median_us": 114.56069000000001,
+      "min_us": 114.39388000000001,
+      "max_us": 114.93879,
+      "output_identical_within_run": true
+    },
+    {
+      "name": "mlp_down",
+      "m": 64,
+      "k": 8704,
+      "n": 5120,
+      "samples_us": [
+        114.82368,
+        115.00259,
+        114.82339,
+        114.85018,
+        115.04229,
+        114.79317999999999,
+        115.16519
+      ],
+      "median_us": 114.85018,
+      "min_us": 114.79317999999999,
+      "max_us": 115.16519,
+      "output_identical_within_run": true
+    }
+  ]
+}

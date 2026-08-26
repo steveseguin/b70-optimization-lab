@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "campaign": "qwen38-official-fp8-tp2-w8a8-concurrency-screen-20260826",
+  "status": "closed-negative-for-promotion",
+  "no_extrapolation": true,
+  "hardware": {
+    "accelerators": "2x Intel Arc Pro B70",
+    "tensor_parallel_size": 2
+  },
+  "model": {
+    "identity": "Qwen3.8-27B official FP8",
+    "local_role": "direct-verified NVMe copy",
+    "quantization": "checkpoint block FP8; experimental body W8A8 repack"
+  },
+  "service_contract": {
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 256,
+    "prefix_caching": false,
+    "p2p": true,
+    "workload": "64 simultaneous HTTP completions, 128 generated tokens each, ignore_eos=true",
+    "boundary": "small-context fixed-shape throughput screen only"
+  },
+  "supported_fp8_control": {
+    "source": "qwen38-fp8-tp2-http-p64-p2p1-confirmation-20260826-r10-attempt1",
+    "single_user_tok_s": 21.52652386775253,
+    "concurrency_64_tok_s": 774.8481826779141,
+    "control_concurrent_quality": {
+      "contract": "128 active slots, three rounds of the seven exact-answer canaries",
+      "passed": 384,
+      "failed": 0
+    }
+  },
+  "fastest_exploratory_candidate": {
+    "label": "r74 body W8A8 clip=0.8175 plus INT8 output head, P2P enabled",
+    "aggregate_tok_s": [
+      891.8050658058633,
+      947.1320891779957,
+      952.5751065645351,
+      951.6720391401192
+    ],
+    "single_user_tok_s": [
+      32.45883481893687,
+      32.46047443067088,
+      32.4754520989186
+    ],
+    "warm_aggregate_max_tok_s": 952.5751065645351,
+    "initial_quality_gate": {
+      "sequential_exact_cases": "7/7",
+      "repeat_hashes": "5/5",
+      "concurrent_exact_answers": "128/128"
+    },
+    "promotion_status": "rejected",
+    "reason": "larger independent mixed-shape gates found arithmetic and code-answer regressions"
+  },
+  "expanded_concurrent_quality_screens": [
+    {
+      "label": "r82 clip=0.8175 plus INT8 head, fresh 64-slot graph",
+      "passed": 510,
+      "failed": 2,
+      "total": 512
+    },
+    {
+      "label": "r84 clip=0.8175, BF16 output head, fresh 64-slot graph",
+      "passed": 764,
+      "failed": 4,
+      "total": 768
+    },
+    {
+      "label": "r87 clip=0.815, producer/completion dependencies, scratch ring 1",
+      "passed": 959,
+      "failed": 321,
+      "total": 1280
+    },
+    {
+      "label": "r88 clip=0.815, producer/completion dependencies, scratch ring 16",
+      "passed": 509,
+      "failed": 3,
+      "total": 512
+    },
+    {
+      "label": "r89 clip=0.815, producer/completion dependencies, scratch ring 64",
+      "passed": 673,
+      "failed": 95,
+      "total": 768
+    },
+    {
+      "label": "r90 clip=0.815, producer/completion dependencies, zeroed scratch",
+      "passed": 452,
+      "failed": 60,
+      "total": 512
+    }
+  ],
+  "observed_wrong_answers": {
+    "arithmetic_expected_60": ["54", "57", "58"],
+    "code_expected_14": ["30"]
+  },
+  "decision": {
+    "target_875_crossed_as_speed_ceiling": true,
+    "target_875_crossed_as_quality_qualified_result": false,
+    "website_promotion": false,
+    "package_recipe": false,
+    "next_kernel_direction": "more accurate activation quantization or target-verified speculation; do not tune fixed clip ratios further"
+  }
+}
