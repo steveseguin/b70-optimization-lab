@@ -1,0 +1,45 @@
+{
+  "schema": "neural.download.qwen38-q5ks-external-mtp-route-8k-result.v1",
+  "campaign_id": "qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-20260825-r1",
+  "classification": "grade-c-deterministic-external-mtp-route-divergence",
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-20260825-r1",
+  "raw_file_count": 37,
+  "terminal_receipt_sha256": "c4e4d0447fffe1a7db9271c1c4dcee15ae476c369025f16b2309f57674bfcc28",
+  "identity": {
+    "target": "unsloth/Qwen3.8-27B-GGUF@4ca720788d1e01f1bff70c033e0d0028fd02e502 UD-Q5_K_S d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe",
+    "draft": "same revision external MTP Q4_0 50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+    "runtime": "llama.cpp 9fee29e9435f865ec0b811a783a6471a136d9317, binary ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964",
+    "configuration": "TP1, exact active 8192, 128 generated tokens, graph off, fit off, q8_0 target and draft KV, fresh lifetime per route, cache zero"
+  },
+  "control": {
+    "mtp": 0,
+    "serving_decode_tok_s_99_interval": 17.499247703365086,
+    "output_token_ids_sha256": "e2f7a659a1b9fc93aeb8b766be5ceb4b9c9f835ad61b50023a0224401eed141c",
+    "cleanup_passed": true
+  },
+  "candidates": [
+    {"mtp": 1, "serving_decode_tok_s_99_interval": 21.750429921645285, "accepted": 54, "generated": 72, "acceptance_ratio": 0.75, "output_token_ids_sha256": "6c8a98455d0ea4ea6fca2430e1d6ceb61129259a6fb3a1d72e9ef9e97174777c", "exact_target_parity": false, "cleanup_passed": true},
+    {"mtp": 2, "serving_decode_tok_s_99_interval": 24.99411125486185, "accepted": 70, "generated": 113, "acceptance_ratio": 0.61947, "output_token_ids_sha256": "6c8a98455d0ea4ea6fca2430e1d6ceb61129259a6fb3a1d72e9ef9e97174777c", "exact_target_parity": false, "cleanup_passed": true},
+    {"mtp": 3, "serving_decode_tok_s_99_interval": 24.286066239547786, "accepted": 79, "generated": 143, "acceptance_ratio": 0.55245, "output_token_ids_sha256": "6c8a98455d0ea4ea6fca2430e1d6ceb61129259a6fb3a1d72e9ef9e97174777c", "exact_target_parity": false, "cleanup_passed": true},
+    {"mtp": 4, "serving_decode_tok_s_99_interval": 22.85489181453138, "accepted": 83, "generated": 173, "acceptance_ratio": 0.47977, "output_token_ids_sha256": "6c8a98455d0ea4ea6fca2430e1d6ceb61129259a6fb3a1d72e9ef9e97174777c", "exact_target_parity": false, "cleanup_passed": true}
+  ],
+  "divergence": {
+    "all_candidate_streams_identical": true,
+    "first_zero_based_token_index": 6,
+    "control_token_id": 271,
+    "candidate_token_id": 1602,
+    "interpretation": "All external-MTP routes deterministically enter the same non-control stream. Positive draft counters and speedups do not establish target-faithful speculative decoding."
+  },
+  "quality": {
+    "candidate_batteries": "skipped by preregistered exact-parity gate",
+    "historical_package_canaries_transfer": false
+  },
+  "authority": {
+    "site_cells": 0,
+    "curve_expansion": false,
+    "speed_claim": false,
+    "headline_or_protected_replacement": false,
+    "localmaxxing_submission": false
+  },
+  "next_action": "Do not expand these MTP routes as faithful curves. Publish only as screened Grade C diagnostic coverage if the site schema clearly distinguishes it; prioritize target-only and other publishable matrix cells."
+}

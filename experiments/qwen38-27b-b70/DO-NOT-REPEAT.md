@@ -155,6 +155,14 @@ are not undocumented experiments; map them to these notebook sections:
 
 ## Evidence retention boundary
 
+- 2026-08-25: **The package-proven llama.cpp `9fee29e` external Q4_0 MTP
+  draft is not exact-target-faithful for Qwen3.8 UD-Q5_K_S at the sealed exact-8K
+  TP1/Q8-KV operating point.** MTP1–4 all engaged and accelerated the request,
+  but all four entered the same candidate stream and diverged from fresh MTP0 at
+  token index 6. Do not expand or promote those speculative curves without a
+  separately preregistered fix or newer-runtime cross-check. See
+  [`notes/2026-08-25-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1-result.md`](notes/2026-08-25-qwen38-q5ks-external-q4mtp-q8kv-tp1-route-8k-sentinel-r1-result.md).
+
 The repository contains durable decisions, structured summaries, hashes, and
 the exact Qwen3.8-specific source patches—including the unsafe patch so its
 design can be recognized. Large raw logs and many historical build trees remain
