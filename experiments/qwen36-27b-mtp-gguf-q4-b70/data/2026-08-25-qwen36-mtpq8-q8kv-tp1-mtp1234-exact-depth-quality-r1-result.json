@@ -1,0 +1,1349 @@
+{
+  "schema": "neural-download-exact-depth-quality-partial-result-v1",
+  "campaign_id": "qwen36-mtpq8-q8kv-tp1-mtp1234-exact-depth-quality-20260825-r1",
+  "classification": "failed-global-cross-kv-seal-partial-quality-positive-no-publication",
+  "reviewed_at": "2026-08-25",
+  "raw_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-q8kv-tp1-mtp1234-exact-depth-quality-20260825-r1",
+  "terminal_receipt_sha256": "a793930bc2d4a244c2c45bd5663e095bb109f6f13e3a1361823be71d84520bbf",
+  "identity_sha256": "6f022df0ab44ca57e36d0563bce4cb391d4cd80a483adb324fce5d12da8a69f6",
+  "raw_inventory": {
+    "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-q8kv-tp1-mtp1234-exact-depth-quality-r1-raw-inventory.json",
+    "sha256": "773ddfa27438272666a4b90b484a24021251884bcecb78feb64b41607b304a62",
+    "file_count": 133
+  },
+  "raw_terminal": {
+    "schema": "neural.download.qwen36-llama-mtp1234-q8kv-exact-depth-quality-terminal.v1",
+    "status": "failed-invalid-control-frame-do-not-publish",
+    "screen_gate": {
+      "checks": {
+        "all_arm_cleanup": true,
+        "candidate-mtp1_argv": true,
+        "candidate-mtp2_argv": true,
+        "candidate-mtp3_argv": true,
+        "candidate-mtp4_argv": true,
+        "control-mtp0_argv": true,
+        "frozen_authority": true,
+        "graph_off": true,
+        "manifest_identity": true,
+        "mtp0_control_all_seven": false,
+        "parent_identity": true,
+        "primary_identity": true,
+        "runtime_dso_closure": true
+      },
+      "passed": false
+    }
+  },
+  "scope": {
+    "revision": "qwen3.6-27b",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb",
+    "tp": 1,
+    "mtp_routes": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "active_context_tokens": [
+      0,
+      2048,
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "target_kv": "q8_0",
+    "draft_kv": "q8_0",
+    "graph_mode": "off",
+    "completion_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "measurement_class": "llama-server HTTP exact-depth serving decode"
+  },
+  "context_axis_disclosure": {
+    "x0_definition": "zero prior active context plus one explicit ordinary prompt token ID 90; usage.prompt_tokens=1; display x=0",
+    "x0_display_active_context_tokens": 0,
+    "x0_physical_prompt_tokens": 1,
+    "x0_literal_empty_prompt": false,
+    "x0_transport_token_ids": [
+      90
+    ]
+  },
+  "parent_hashes": {
+    "mtp3_r3_result": "3b8cd3ad0f66b52828331944a1d3bb4557d0bb156b36cca00914276bdfc0c76a",
+    "route_r2_terminal": "c2109be250e576e228a056e2f8fe15e668082ccd8a0698da4b3acba6b19cc35d"
+  },
+  "runtime_identity": {
+    "git_head": "857ad474157b1f6e8c2038e03abeced17dcc8ca3",
+    "origin_main": "857ad474157b1f6e8c2038e03abeced17dcc8ca3",
+    "model": {
+      "path": "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+      "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+      "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+      "sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "size_bytes": 29047084160
+    },
+    "runtime": {
+      "binary": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/llama-server",
+      "binary_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+      "ldd": [
+        "\tlinux-vdso.so.1 (0x00007a9d02300000)",
+        "\tlibllama-server-impl.so => /mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libllama-server-impl.so (0x00007a9d01c00000)",
+        "\tlibllama-common.so.0 => /mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libllama-common.so.0 (0x00007a9d01600000)",
+        "\tlibmtmd.so.0 => /mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libmtmd.so.0 (0x00007a9d01462000)",
+        "\tlibllama.so.0 => /mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libllama.so.0 (0x00007a9d01000000)",
+        "\tlibggml.so.0 => /mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml.so.0 (0x00007a9d022e9000)",
+        "\tlibggml-cpu.so.0 => /mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml-cpu.so.0 (0x00007a9d00c00000)",
+        "\tlibggml-sycl.so.0 => /mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml-sycl.so.0 (0x00007a9cfce00000)",
+        "\tlibggml-base.so.0 => /mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml-base.so.0 (0x00007a9d01b12000)",
+        "\tlibssl.so.3 => /lib/x86_64-linux-gnu/libssl.so.3 (0x00007a9d013b8000)",
+        "\tlibcrypto.so.3 => /lib/x86_64-linux-gnu/libcrypto.so.3 (0x00007a9cfc800000)",
+        "\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007a9cfc400000)",
+        "\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007a9d00f17000)",
+        "\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007a9d022a5000)",
+        "\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007a9cfc000000)",
+        "\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x00007a9cfa800000)",
+        "\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x00007a9cfc707000)",
+        "\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x00007a9cfa200000)",
+        "\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x00007a9d01aaf000)",
+        "\t/lib64/ld-linux-x86-64.so.2 (0x00007a9d02302000)",
+        "\tlibiomp5.so => /opt/intel/oneapi/compiler/2026.0/lib/libiomp5.so (0x00007a9cf9c00000)",
+        "\tlibze_loader.so.1 => /lib/x86_64-linux-gnu/libze_loader.so.1 (0x00007a9cfc27b000)",
+        "\tlibdnnl.so.3 => /opt/intel/oneapi/dnnl/2026.0/lib/libdnnl.so.3 (0x00007a9cf4000000)",
+        "\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x00007a9cf3c00000)",
+        "\tlibtbb.so.12 => /opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8/libtbb.so.12 (0x00007a9cf3800000)",
+        "\tlibmkl_sycl_blas.so.6 => /opt/intel/oneapi/mkl/2026.0/lib/libmkl_sycl_blas.so.6 (0x00007a9cefa00000)",
+        "\tlibmkl_intel_ilp64.so.3 => /opt/intel/oneapi/mkl/2026.0/lib/libmkl_intel_ilp64.so.3 (0x00007a9ceea00000)",
+        "\tlibmkl_tbb_thread.so.3 => /opt/intel/oneapi/mkl/2026.0/lib/libmkl_tbb_thread.so.3 (0x00007a9ceca00000)",
+        "\tlibmkl_core.so.3 => /opt/intel/oneapi/mkl/2026.0/lib/libmkl_core.so.3 (0x00007a9ce8200000)",
+        "\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007a9d0229a000)",
+        "\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007a9d02295000)",
+        "\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007a9d0228e000)",
+        "\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x00007a9ce7400000)",
+        "\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007a9d02272000)"
+      ],
+      "local_dsos": [
+        {
+          "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libllama-server-impl.so",
+          "sha256": "cbf95973702633d9b603a5f119cfb6f991acd869ee3f7472f71c005a6162913f",
+          "size_bytes": 7416464,
+          "soname": "libllama-server-impl.so"
+        },
+        {
+          "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libllama-common.so.0.0.10298",
+          "sha256": "6dfc358f766ed84a33879421a8a2747557ddea257fe7256c9a003caa19680aad",
+          "size_bytes": 5613104,
+          "soname": "libllama-common.so.0"
+        },
+        {
+          "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libmtmd.so.0.0.10298",
+          "sha256": "d213efaa5c43f93890034aae621509c9adf56e01d00e3aae6009430058c46a14",
+          "size_bytes": 1817200,
+          "soname": "libmtmd.so.0"
+        },
+        {
+          "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libllama.so.0.0.10298",
+          "sha256": "664613ebeab1e208585abd82319ead63327e6b2c9061321174d60c4caeb8bcdb",
+          "size_bytes": 3911408,
+          "soname": "libllama.so.0"
+        },
+        {
+          "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml.so.0.18.1",
+          "sha256": "c9c5d6a332f6f4f47af9afd57a2696ae0925b8e5433d39f50d4aee491217d79c",
+          "size_bytes": 55440,
+          "soname": "libggml.so.0"
+        },
+        {
+          "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml-cpu.so.0.18.1",
+          "sha256": "e964205599e02d875b2d861e743541285a9e5d5e7acc74bc67421eb0f50b170b",
+          "size_bytes": 1750784,
+          "soname": "libggml-cpu.so.0"
+        },
+        {
+          "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml-sycl.so.0.18.1",
+          "sha256": "eff26ef9562196d454fdc54cca7680304e6ce37e9a9d92ef3b514e8c34f3d0a0",
+          "size_bytes": 86885752,
+          "soname": "libggml-sycl.so.0"
+        },
+        {
+          "path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/libggml-base.so.0.18.1",
+          "sha256": "71876bc702d43f5da637844b53b70939d08b10e9293f90f9097f8da9ffdb52a4",
+          "size_bytes": 1043152,
+          "soname": "libggml-base.so.0"
+        }
+      ],
+      "manifest": "experiments/qwen36-27b-q8-gguf-b70/runtime-manifest-q8-vdr2-candidate.json",
+      "manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+      "source_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+      "version": "version: 10298 (15586e2d7)\nbuilt with IntelLLVM 2026.0.0 for Linux x86_64"
+    },
+    "runtime_environment": {
+      "GGML_SYCL_ENABLE_DNN": "0",
+      "GGML_SYCL_ENABLE_GRAPH": "0",
+      "GGML_SYCL_ENABLE_OPT": "1",
+      "GGML_SYCL_ENABLE_VMM": "1",
+      "GGML_SYCL_GRAPH_CACHE_SIZE": "0",
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:*",
+      "ZE_AFFINITY_MASK": "0"
+    },
+    "server_argv": {
+      "candidate-mtp1": [
+        "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/llama-server",
+        "-m",
+        "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+        "--alias",
+        "qwen36-mtpq8-q8kv-tp1-mtp1234-depth-quality-r1",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "19437",
+        "-dev",
+        "SYCL0",
+        "-ngl",
+        "all",
+        "-c",
+        "33024",
+        "-np",
+        "1",
+        "-b",
+        "1024",
+        "-ub",
+        "1024",
+        "-t",
+        "8",
+        "--threads-http",
+        "6",
+        "--poll",
+        "50",
+        "-lv",
+        "4",
+        "-ctk",
+        "q8_0",
+        "-ctv",
+        "q8_0",
+        "-fa",
+        "on",
+        "-fit",
+        "on",
+        "-fitt",
+        "1024",
+        "--spec-type",
+        "draft-mtp",
+        "--spec-draft-n-max",
+        "1",
+        "--spec-draft-n-min",
+        "0",
+        "--spec-draft-p-split",
+        "0.10",
+        "--spec-draft-p-min",
+        "0.00",
+        "--spec-draft-backend-sampling",
+        "--spec-draft-device",
+        "SYCL0",
+        "--spec-draft-ngl",
+        "all",
+        "--spec-draft-type-k",
+        "q8_0",
+        "--spec-draft-type-v",
+        "q8_0",
+        "--reasoning",
+        "off",
+        "--ctx-checkpoints",
+        "0",
+        "--cache-ram",
+        "0",
+        "--no-cache-idle-slots",
+        "--no-context-shift",
+        "--slots",
+        "--metrics",
+        "--jinja",
+        "--no-kv-unified",
+        "--cont-batching",
+        "--no-webui"
+      ],
+      "candidate-mtp2": [
+        "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/llama-server",
+        "-m",
+        "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+        "--alias",
+        "qwen36-mtpq8-q8kv-tp1-mtp1234-depth-quality-r1",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "19437",
+        "-dev",
+        "SYCL0",
+        "-ngl",
+        "all",
+        "-c",
+        "33024",
+        "-np",
+        "1",
+        "-b",
+        "1024",
+        "-ub",
+        "1024",
+        "-t",
+        "8",
+        "--threads-http",
+        "6",
+        "--poll",
+        "50",
+        "-lv",
+        "4",
+        "-ctk",
+        "q8_0",
+        "-ctv",
+        "q8_0",
+        "-fa",
+        "on",
+        "-fit",
+        "on",
+        "-fitt",
+        "1024",
+        "--spec-type",
+        "draft-mtp",
+        "--spec-draft-n-max",
+        "2",
+        "--spec-draft-n-min",
+        "0",
+        "--spec-draft-p-split",
+        "0.10",
+        "--spec-draft-p-min",
+        "0.00",
+        "--spec-draft-backend-sampling",
+        "--spec-draft-device",
+        "SYCL0",
+        "--spec-draft-ngl",
+        "all",
+        "--spec-draft-type-k",
+        "q8_0",
+        "--spec-draft-type-v",
+        "q8_0",
+        "--reasoning",
+        "off",
+        "--ctx-checkpoints",
+        "0",
+        "--cache-ram",
+        "0",
+        "--no-cache-idle-slots",
+        "--no-context-shift",
+        "--slots",
+        "--metrics",
+        "--jinja",
+        "--no-kv-unified",
+        "--cont-batching",
+        "--no-webui"
+      ],
+      "candidate-mtp3": [
+        "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/llama-server",
+        "-m",
+        "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+        "--alias",
+        "qwen36-mtpq8-q8kv-tp1-mtp1234-depth-quality-r1",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "19437",
+        "-dev",
+        "SYCL0",
+        "-ngl",
+        "all",
+        "-c",
+        "33024",
+        "-np",
+        "1",
+        "-b",
+        "1024",
+        "-ub",
+        "1024",
+        "-t",
+        "8",
+        "--threads-http",
+        "6",
+        "--poll",
+        "50",
+        "-lv",
+        "4",
+        "-ctk",
+        "q8_0",
+        "-ctv",
+        "q8_0",
+        "-fa",
+        "on",
+        "-fit",
+        "on",
+        "-fitt",
+        "1024",
+        "--spec-type",
+        "draft-mtp",
+        "--spec-draft-n-max",
+        "3",
+        "--spec-draft-n-min",
+        "0",
+        "--spec-draft-p-split",
+        "0.10",
+        "--spec-draft-p-min",
+        "0.00",
+        "--spec-draft-backend-sampling",
+        "--spec-draft-device",
+        "SYCL0",
+        "--spec-draft-ngl",
+        "all",
+        "--spec-draft-type-k",
+        "q8_0",
+        "--spec-draft-type-v",
+        "q8_0",
+        "--reasoning",
+        "off",
+        "--ctx-checkpoints",
+        "0",
+        "--cache-ram",
+        "0",
+        "--no-cache-idle-slots",
+        "--no-context-shift",
+        "--slots",
+        "--metrics",
+        "--jinja",
+        "--no-kv-unified",
+        "--cont-batching",
+        "--no-webui"
+      ],
+      "candidate-mtp4": [
+        "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/llama-server",
+        "-m",
+        "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+        "--alias",
+        "qwen36-mtpq8-q8kv-tp1-mtp1234-depth-quality-r1",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "19437",
+        "-dev",
+        "SYCL0",
+        "-ngl",
+        "all",
+        "-c",
+        "33024",
+        "-np",
+        "1",
+        "-b",
+        "1024",
+        "-ub",
+        "1024",
+        "-t",
+        "8",
+        "--threads-http",
+        "6",
+        "--poll",
+        "50",
+        "-lv",
+        "4",
+        "-ctk",
+        "q8_0",
+        "-ctv",
+        "q8_0",
+        "-fa",
+        "on",
+        "-fit",
+        "on",
+        "-fitt",
+        "1024",
+        "--spec-type",
+        "draft-mtp",
+        "--spec-draft-n-max",
+        "4",
+        "--spec-draft-n-min",
+        "0",
+        "--spec-draft-p-split",
+        "0.10",
+        "--spec-draft-p-min",
+        "0.00",
+        "--spec-draft-backend-sampling",
+        "--spec-draft-device",
+        "SYCL0",
+        "--spec-draft-ngl",
+        "all",
+        "--spec-draft-type-k",
+        "q8_0",
+        "--spec-draft-type-v",
+        "q8_0",
+        "--reasoning",
+        "off",
+        "--ctx-checkpoints",
+        "0",
+        "--cache-ram",
+        "0",
+        "--no-cache-idle-slots",
+        "--no-context-shift",
+        "--slots",
+        "--metrics",
+        "--jinja",
+        "--no-kv-unified",
+        "--cont-batching",
+        "--no-webui"
+      ],
+      "control-mtp0": [
+        "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/llama-server",
+        "-m",
+        "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf",
+        "--alias",
+        "qwen36-mtpq8-q8kv-tp1-mtp1234-depth-quality-r1",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "19437",
+        "-dev",
+        "SYCL0",
+        "-ngl",
+        "all",
+        "-c",
+        "33024",
+        "-np",
+        "1",
+        "-b",
+        "1024",
+        "-ub",
+        "1024",
+        "-t",
+        "8",
+        "--threads-http",
+        "6",
+        "--poll",
+        "50",
+        "-lv",
+        "4",
+        "-ctk",
+        "q8_0",
+        "-ctv",
+        "q8_0",
+        "-fa",
+        "on",
+        "-fit",
+        "on",
+        "-fitt",
+        "1024",
+        "--spec-type",
+        "none",
+        "--reasoning",
+        "off",
+        "--ctx-checkpoints",
+        "0",
+        "--cache-ram",
+        "0",
+        "--no-cache-idle-slots",
+        "--no-context-shift",
+        "--slots",
+        "--metrics",
+        "--jinja",
+        "--no-kv-unified",
+        "--cont-batching",
+        "--no-webui"
+      ]
+    }
+  },
+  "frozen_adjudication": {
+    "aggregate_passed": false,
+    "control_mismatch_vs_inherited_f16_sealed_depths": [
+      0,
+      2048,
+      24576
+    ],
+    "control_match_vs_inherited_f16_sealed_depths": [
+      4096,
+      8192,
+      16384,
+      32768
+    ],
+    "candidate_mismatch_vs_fresh_q8kv_control_depths": {
+      "1": [
+        2048
+      ],
+      "2": [
+        2048
+      ],
+      "3": [
+        2048
+      ],
+      "4": [
+        2048
+      ]
+    },
+    "candidate_fresh_q8kv_control_match_cells": 24,
+    "candidate_inherited_f16_sealed_match_cells": 17,
+    "candidate_combined_preregistered_pass_cells": 16,
+    "candidate_total_cells": 28,
+    "all_exact_requests_cached_zero": true,
+    "all_candidate_draft_counters_positive_and_conserved": true,
+    "quality_batteries_passed": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "all_five_lifetimes_cleanup_passed": true,
+    "interpretation": "The cross-KV inherited F16 seal fails for the fresh Q8KV control at x0, 2K, and 24K. At 2K MTP1, MTP2, MTP3, and MTP4 also differ from the fresh Q8KV control; MTP1 equals the inherited F16 hash while MTP2-4 share a third hash. This records observations only and does not infer a root cause."
+  },
+  "arms": [
+    {
+      "arm": "control-mtp0",
+      "mtp": 0,
+      "raw_arm_status": "failed-route-local-preserve",
+      "raw_arm_passed": false,
+      "error": null,
+      "cleanup_passed": true,
+      "model_alias_passed": true,
+      "quality": null,
+      "cells": [
+        {
+          "active_context_tokens": 0,
+          "serving_decode_tok_s_99_interval": 16.986218728326865,
+          "output_token_ids_sha256": "e6b3082570ef6282c188ba449d73b7337547dcd8f8759a5496a37748150b4595",
+          "receipt_sha256": "b6a0f4618effbc0c653f3d91199d82a1fe5e5e7da3a2327c1923d2b2b6113b8e",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": 1,
+          "draft_counters": null,
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 2048,
+          "serving_decode_tok_s_99_interval": 16.102320612118596,
+          "output_token_ids_sha256": "e11b5a317688e28bf0cd4b1e1d234b72327feb06a435357ef846acc5344a620d",
+          "receipt_sha256": "0ac996288382cc25e0648e97787a4f522106b528a8276c535eb989e1dc291d28",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": null,
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 4096,
+          "serving_decode_tok_s_99_interval": 15.374371776368921,
+          "output_token_ids_sha256": "42d63309f96d6032542de929b549d4526f25bc2286259342761a753d25563c44",
+          "receipt_sha256": "df3054f44ed9508b8ea18bf96fe805f0abaec3956931f4e8864c97a2b313d7a7",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": null,
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 8192,
+          "serving_decode_tok_s_99_interval": 14.088215281389214,
+          "output_token_ids_sha256": "a5d484b53727b903cd925d6521c100fdd2114094801253363661b370cb4692ef",
+          "receipt_sha256": "7c748ee19e0bfc50ed7dc42c3aef2c143bae22f36cb9f725cffb81011aef8e0b",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": null,
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 16384,
+          "serving_decode_tok_s_99_interval": 11.772319313344795,
+          "output_token_ids_sha256": "7ecae466bc3d45272bf2beb7793d42ac3641957f246ba7e0f34164c28a16abee",
+          "receipt_sha256": "4442c567637c167dcee5a3b0fff262a09a4ac91ac8c695339647f8fc9f8e9cfd",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": null,
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 24576,
+          "serving_decode_tok_s_99_interval": 10.149724514152872,
+          "output_token_ids_sha256": "a73459f89ea1825f876b9842bedff2afc4ddcc28cf7df2304b6240798022f3d3",
+          "receipt_sha256": "d1726d8a79ee9b1774c5d7cacd0eb7937375155c4a962fbe9cc2e3b1381f7ff3",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": null,
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 32768,
+          "serving_decode_tok_s_99_interval": 8.937736971433534,
+          "output_token_ids_sha256": "00b30bdc02a3becf407ee69cf97c02dd3e8dd7180d1e4f7cd2d8e0ae1f4f8181",
+          "receipt_sha256": "327e8de0e9725e19b008308cd5536b05eac5d55e87f79940a14451c2bf2f7700",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": null,
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        }
+      ]
+    },
+    {
+      "arm": "candidate-mtp1",
+      "mtp": 1,
+      "raw_arm_status": "failed-route-local-preserve",
+      "raw_arm_passed": false,
+      "error": null,
+      "cleanup_passed": true,
+      "model_alias_passed": true,
+      "quality": {
+        "raw_path": "candidate-mtp1/quality.json",
+        "raw_sha256": "8a664356cb0d7cfa5bd2c40a712c8385c9810595073ce7becab7d1660efb87a6",
+        "passed": true,
+        "exact_canaries": {
+          "count": 4,
+          "passed": true
+        },
+        "repeat": {
+          "repeats": 2,
+          "passed": true,
+          "unique_hashes": [
+            "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+          ]
+        },
+        "needle": {
+          "requested_context_tokens": 29400,
+          "actual_prompt_tokens": 27234,
+          "service_prompt_tokens": 27246,
+          "cached_tokens": 0,
+          "passed": true,
+          "output_sha256": "8772a18ffb56a2344b8cf7b44099653ef795b97a9bc5d8264007ea0df5d1481f"
+        },
+        "all_request_cached_tokens": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "cells": [
+        {
+          "active_context_tokens": 0,
+          "serving_decode_tok_s_99_interval": 28.59312857751069,
+          "output_token_ids_sha256": "e6b3082570ef6282c188ba449d73b7337547dcd8f8759a5496a37748150b4595",
+          "receipt_sha256": "68297c72064fcf8ab2efa8683a999abb4c2f99185777cda06a7fc1fbc16daa22",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": 1,
+          "draft_counters": {
+            "generated": 66,
+            "accepted": 60,
+            "ratio": 0.90909,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 2048,
+          "serving_decode_tok_s_99_interval": 25.736252367694537,
+          "output_token_ids_sha256": "15ae89335b6e0ad365cf9f9ad524d621befbaea3580940374943a7b2e02dcf72",
+          "receipt_sha256": "1b00ba55dac1c09eba63be051eed67e2aed06836c7b7647559d68dc1dfd810f4",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 69,
+            "accepted": 58,
+            "ratio": 0.84058,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": false,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 4096,
+          "serving_decode_tok_s_99_interval": 24.746691119924726,
+          "output_token_ids_sha256": "42d63309f96d6032542de929b549d4526f25bc2286259342761a753d25563c44",
+          "receipt_sha256": "3c08fc77684f101b93c517e88e6ca82df63fe932125443892ee911092b49f281",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 67,
+            "accepted": 60,
+            "ratio": 0.89552,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 8192,
+          "serving_decode_tok_s_99_interval": 22.663602094691615,
+          "output_token_ids_sha256": "a5d484b53727b903cd925d6521c100fdd2114094801253363661b370cb4692ef",
+          "receipt_sha256": "53b26697f1ac39eeed459bc02adb599108d8ef9f1ba449ac67f686fe74077e52",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 66,
+            "accepted": 61,
+            "ratio": 0.92424,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 16384,
+          "serving_decode_tok_s_99_interval": 17.989180750667835,
+          "output_token_ids_sha256": "7ecae466bc3d45272bf2beb7793d42ac3641957f246ba7e0f34164c28a16abee",
+          "receipt_sha256": "8cb247a8ac2945376643aa6ceb2f95432cd73c372f5b4a0c87dc350dff2f91e0",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 68,
+            "accepted": 58,
+            "ratio": 0.85294,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 24576,
+          "serving_decode_tok_s_99_interval": 16.14570300681782,
+          "output_token_ids_sha256": "a73459f89ea1825f876b9842bedff2afc4ddcc28cf7df2304b6240798022f3d3",
+          "receipt_sha256": "13f71b04930d42a9864c4fb7220ee951de3651e2b9e3fbe54572c28eb35bef5f",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 64,
+            "accepted": 62,
+            "ratio": 0.96875,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 32768,
+          "serving_decode_tok_s_99_interval": 13.526300732825208,
+          "output_token_ids_sha256": "00b30bdc02a3becf407ee69cf97c02dd3e8dd7180d1e4f7cd2d8e0ae1f4f8181",
+          "receipt_sha256": "2813a52eb778f32a93f26154b84b47ee8cfc30ac1ac8d290a4e865c3bc2c0356",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 67,
+            "accepted": 60,
+            "ratio": 0.89552,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        }
+      ]
+    },
+    {
+      "arm": "candidate-mtp2",
+      "mtp": 2,
+      "raw_arm_status": "failed-route-local-preserve",
+      "raw_arm_passed": false,
+      "error": null,
+      "cleanup_passed": true,
+      "model_alias_passed": true,
+      "quality": {
+        "raw_path": "candidate-mtp2/quality.json",
+        "raw_sha256": "55d44756101f86131e436eb0db2cff9e87a9fe100a7ce8142fceac480fbb3caf",
+        "passed": true,
+        "exact_canaries": {
+          "count": 4,
+          "passed": true
+        },
+        "repeat": {
+          "repeats": 2,
+          "passed": true,
+          "unique_hashes": [
+            "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+          ]
+        },
+        "needle": {
+          "requested_context_tokens": 29400,
+          "actual_prompt_tokens": 27234,
+          "service_prompt_tokens": 27246,
+          "cached_tokens": 0,
+          "passed": true,
+          "output_sha256": "8772a18ffb56a2344b8cf7b44099653ef795b97a9bc5d8264007ea0df5d1481f"
+        },
+        "all_request_cached_tokens": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "cells": [
+        {
+          "active_context_tokens": 0,
+          "serving_decode_tok_s_99_interval": 31.97670699349944,
+          "output_token_ids_sha256": "e6b3082570ef6282c188ba449d73b7337547dcd8f8759a5496a37748150b4595",
+          "receipt_sha256": "8ef7e0c6da9c43d2f01384c542b612e36f4dee1d56ffa335636eb9354c2d5ed2",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": 1,
+          "draft_counters": {
+            "generated": 91,
+            "accepted": 80,
+            "ratio": 0.87912,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 2048,
+          "serving_decode_tok_s_99_interval": 31.56312909605636,
+          "output_token_ids_sha256": "6177d7799a71763d852b589188137db878177ff878b600de0977a5182264b3b6",
+          "receipt_sha256": "a5ae86b1f6078b96b55792ff435dcc80e189054ca7f7545a773f6b218db2a158",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 109,
+            "accepted": 72,
+            "ratio": 0.66055,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": false,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 4096,
+          "serving_decode_tok_s_99_interval": 35.07549977230889,
+          "output_token_ids_sha256": "42d63309f96d6032542de929b549d4526f25bc2286259342761a753d25563c44",
+          "receipt_sha256": "910f7ad210c29bae75ac57beccf712b276d12276d8bc4c38d6b3a388e000a951",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 94,
+            "accepted": 80,
+            "ratio": 0.85106,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 8192,
+          "serving_decode_tok_s_99_interval": 34.48995791584065,
+          "output_token_ids_sha256": "a5d484b53727b903cd925d6521c100fdd2114094801253363661b370cb4692ef",
+          "receipt_sha256": "13a58234f89bf07d525494ad2bb9f0247b977e605cb507bfd81217566bd02c05",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 92,
+            "accepted": 80,
+            "ratio": 0.86957,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 16384,
+          "serving_decode_tok_s_99_interval": 26.717995040566702,
+          "output_token_ids_sha256": "7ecae466bc3d45272bf2beb7793d42ac3641957f246ba7e0f34164c28a16abee",
+          "receipt_sha256": "2439ce8368cd29c6b2cc3809a421eb6d1819918edb40284285de7de175d3ebc4",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 105,
+            "accepted": 73,
+            "ratio": 0.69524,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 24576,
+          "serving_decode_tok_s_99_interval": 30.418576667806192,
+          "output_token_ids_sha256": "a73459f89ea1825f876b9842bedff2afc4ddcc28cf7df2304b6240798022f3d3",
+          "receipt_sha256": "12e8d01be7f9cb8dca5f0cef40afd2adfe2eb1ba24df05f795217f66204f2c49",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 88,
+            "accepted": 83,
+            "ratio": 0.94318,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 32768,
+          "serving_decode_tok_s_99_interval": 25.46006315473091,
+          "output_token_ids_sha256": "00b30bdc02a3becf407ee69cf97c02dd3e8dd7180d1e4f7cd2d8e0ae1f4f8181",
+          "receipt_sha256": "ea8a2f4ebcb27f897c5b2877d1b57185348b093783102b904f9b5968e7961dcd",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 96,
+            "accepted": 78,
+            "ratio": 0.8125,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        }
+      ]
+    },
+    {
+      "arm": "candidate-mtp3",
+      "mtp": 3,
+      "raw_arm_status": "failed-route-local-preserve",
+      "raw_arm_passed": false,
+      "error": null,
+      "cleanup_passed": true,
+      "model_alias_passed": true,
+      "quality": {
+        "raw_path": "candidate-mtp3/quality.json",
+        "raw_sha256": "f9d46ae67bf37d78456a6af1147f9bc7f1f64bf6bb311fbb209ddbcdd81620f4",
+        "passed": true,
+        "exact_canaries": {
+          "count": 4,
+          "passed": true
+        },
+        "repeat": {
+          "repeats": 2,
+          "passed": true,
+          "unique_hashes": [
+            "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+          ]
+        },
+        "needle": {
+          "requested_context_tokens": 29400,
+          "actual_prompt_tokens": 27234,
+          "service_prompt_tokens": 27246,
+          "cached_tokens": 0,
+          "passed": true,
+          "output_sha256": "8772a18ffb56a2344b8cf7b44099653ef795b97a9bc5d8264007ea0df5d1481f"
+        },
+        "all_request_cached_tokens": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "cells": [
+        {
+          "active_context_tokens": 0,
+          "serving_decode_tok_s_99_interval": 33.04285157795767,
+          "output_token_ids_sha256": "e6b3082570ef6282c188ba449d73b7337547dcd8f8759a5496a37748150b4595",
+          "receipt_sha256": "ff5e869793fbd65f523fbeb87347db7942cd315f6a689d466ed1af73c37629a8",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": 1,
+          "draft_counters": {
+            "generated": 118,
+            "accepted": 86,
+            "ratio": 0.72881,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 2048,
+          "serving_decode_tok_s_99_interval": 32.90117361519262,
+          "output_token_ids_sha256": "6177d7799a71763d852b589188137db878177ff878b600de0977a5182264b3b6",
+          "receipt_sha256": "1e4e88113ccdff78168fc5f837d56834e8bc7d7b0cc7db5d00bdfbea3d0ca994",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 144,
+            "accepted": 78,
+            "ratio": 0.54167,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": false,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 4096,
+          "serving_decode_tok_s_99_interval": 38.343624665399055,
+          "output_token_ids_sha256": "42d63309f96d6032542de929b549d4526f25bc2286259342761a753d25563c44",
+          "receipt_sha256": "886cbe3f89186b8d22e9d0d620bb61efbcf16b39e107c5809036926659557e4b",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 115,
+            "accepted": 88,
+            "ratio": 0.76522,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 8192,
+          "serving_decode_tok_s_99_interval": 39.29184095949751,
+          "output_token_ids_sha256": "a5d484b53727b903cd925d6521c100fdd2114094801253363661b370cb4692ef",
+          "receipt_sha256": "7cf82dfde0f21f0a4e4ca53ddeb198f58f0bf6d37abf5a702449b301d14fb95e",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 108,
+            "accepted": 91,
+            "ratio": 0.84259,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 16384,
+          "serving_decode_tok_s_99_interval": 27.529402166218887,
+          "output_token_ids_sha256": "7ecae466bc3d45272bf2beb7793d42ac3641957f246ba7e0f34164c28a16abee",
+          "receipt_sha256": "9ea54bbaa21f018edd0ef3f3404b3f4ddf1083fd214dedbb6c6bff46725a7058",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 136,
+            "accepted": 80,
+            "ratio": 0.58824,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 24576,
+          "serving_decode_tok_s_99_interval": 35.839784382331345,
+          "output_token_ids_sha256": "a73459f89ea1825f876b9842bedff2afc4ddcc28cf7df2304b6240798022f3d3",
+          "receipt_sha256": "cc25c42a9de0ecd9aac019797d7763405daa6980a9b81fff358dc4d7fc9a1e23",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 100,
+            "accepted": 93,
+            "ratio": 0.93,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 32768,
+          "serving_decode_tok_s_99_interval": 27.315273731203273,
+          "output_token_ids_sha256": "00b30bdc02a3becf407ee69cf97c02dd3e8dd7180d1e4f7cd2d8e0ae1f4f8181",
+          "receipt_sha256": "50e3738afc8ac89a6df2ce614adb0f82c87081f6a54182ba8e2335cedd69c33d",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 119,
+            "accepted": 87,
+            "ratio": 0.73109,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        }
+      ]
+    },
+    {
+      "arm": "candidate-mtp4",
+      "mtp": 4,
+      "raw_arm_status": "failed-route-local-preserve",
+      "raw_arm_passed": false,
+      "error": null,
+      "cleanup_passed": true,
+      "model_alias_passed": true,
+      "quality": {
+        "raw_path": "candidate-mtp4/quality.json",
+        "raw_sha256": "a30072ee38db555c9974314ce352d34c9bfed7463c9bcf049e8f8e2800f12f24",
+        "passed": true,
+        "exact_canaries": {
+          "count": 4,
+          "passed": true
+        },
+        "repeat": {
+          "repeats": 2,
+          "passed": true,
+          "unique_hashes": [
+            "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+          ]
+        },
+        "needle": {
+          "requested_context_tokens": 29400,
+          "actual_prompt_tokens": 27234,
+          "service_prompt_tokens": 27246,
+          "cached_tokens": 0,
+          "passed": true,
+          "output_sha256": "8772a18ffb56a2344b8cf7b44099653ef795b97a9bc5d8264007ea0df5d1481f"
+        },
+        "all_request_cached_tokens": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "cells": [
+        {
+          "active_context_tokens": 0,
+          "serving_decode_tok_s_99_interval": 32.532651287035904,
+          "output_token_ids_sha256": "e6b3082570ef6282c188ba449d73b7337547dcd8f8759a5496a37748150b4595",
+          "receipt_sha256": "c7500bc406a591f922697fbe92faa2bf8e81c157fe11e03cff6a7726fb3a0c5a",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": 1,
+          "draft_counters": {
+            "generated": 149,
+            "accepted": 88,
+            "ratio": 0.5906,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 2048,
+          "serving_decode_tok_s_99_interval": 31.7962352026202,
+          "output_token_ids_sha256": "6177d7799a71763d852b589188137db878177ff878b600de0977a5182264b3b6",
+          "receipt_sha256": "f0514e6a7c064a9890773daa9434a5bcf1c90acc45363cfa0ba28ac8058d0857",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 179,
+            "accepted": 81,
+            "ratio": 0.45251,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": false,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 4096,
+          "serving_decode_tok_s_99_interval": 40.278465128077876,
+          "output_token_ids_sha256": "42d63309f96d6032542de929b549d4526f25bc2286259342761a753d25563c44",
+          "receipt_sha256": "a2223f899d2e26419765d2c578aaed8c695a74d15920be6088e94e428c9c3366",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 134,
+            "accepted": 93,
+            "ratio": 0.69403,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 8192,
+          "serving_decode_tok_s_99_interval": 39.86818885708825,
+          "output_token_ids_sha256": "a5d484b53727b903cd925d6521c100fdd2114094801253363661b370cb4692ef",
+          "receipt_sha256": "c6e2a85b476848f94cddfc40b8d6a39c461e452b98247477cd1498c7cc88e0c2",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 127,
+            "accepted": 95,
+            "ratio": 0.74803,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 16384,
+          "serving_decode_tok_s_99_interval": 27.68303839663632,
+          "output_token_ids_sha256": "7ecae466bc3d45272bf2beb7793d42ac3641957f246ba7e0f34164c28a16abee",
+          "receipt_sha256": "1ef1e6eda385920e27edc3d347e21c4f0c6002e496b59e95e82c8458affe1ca7",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 164,
+            "accepted": 85,
+            "ratio": 0.51829,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        },
+        {
+          "active_context_tokens": 24576,
+          "serving_decode_tok_s_99_interval": 39.252522368401124,
+          "output_token_ids_sha256": "a73459f89ea1825f876b9842bedff2afc4ddcc28cf7df2304b6240798022f3d3",
+          "receipt_sha256": "93524097f12aaf5d8fbc72de489160ef0fc54e955480fe95c362f4c2ecc2e9e3",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 108,
+            "accepted": 99,
+            "ratio": 0.91667,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": false,
+          "combined_preregistered_cell_gate_passed": false
+        },
+        {
+          "active_context_tokens": 32768,
+          "serving_decode_tok_s_99_interval": 26.704381979266895,
+          "output_token_ids_sha256": "00b30bdc02a3becf407ee69cf97c02dd3e8dd7180d1e4f7cd2d8e0ae1f4f8181",
+          "receipt_sha256": "50508952ea17e6c87592b6f75f02e9f0b58495ff270889df67c9b97b086a718f",
+          "cached_tokens": 0,
+          "usage_prompt_tokens": null,
+          "draft_counters": {
+            "generated": 144,
+            "accepted": 91,
+            "ratio": 0.63194,
+            "conservation_gate_passed": true
+          },
+          "matches_fresh_q8kv_control": true,
+          "matches_inherited_f16_sealed_hash": true,
+          "combined_preregistered_cell_gate_passed": true
+        }
+      ]
+    }
+  ],
+  "authority": {
+    "site_publication": false,
+    "family_matrix_cells": 0,
+    "graph_claim": false,
+    "headline_or_protected_replacement": false,
+    "localmaxxing_submission": false,
+    "record_submission": false,
+    "protected_speed_replacement": false,
+    "sealed_f16_result_replacement": false
+  },
+  "next_action": "Any salvage or rerun requires a separately preregistered Q8KV-local seal and explicit treatment of the 2K three-way output split."
+}
