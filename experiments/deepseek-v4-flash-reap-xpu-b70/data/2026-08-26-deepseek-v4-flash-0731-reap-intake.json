@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "status": "downloaded_pending_full_cryptographic_validation",
+  "model": {
+    "repo_id": "0xSero/DeepSeek-V4-Flash-0731-REAP",
+    "revision": "ddc04540efda3d2a0788b129f1fad828ddc19b60",
+    "path": "/mnt/usb-models/llm-models/DeepSeek-V4-Flash-0731-REAP",
+    "source_model": "deepseek-ai/DeepSeek-V4-Flash-0731",
+    "source_revision": "9e165c30e2704aec5d9d593cce3eebd58bbef1cb",
+    "classification": "newer-weight experimental K160 REAP candidate with transferred prior-observation ranking"
+  },
+  "inventory": {
+    "files": 80,
+    "bytes": 107818438413,
+    "shards": 48,
+    "shard_bytes": 107808354264,
+    "tensors": 45821,
+    "tensor_bytes": 107803320952,
+    "mtp_tensors": 2977,
+    "mtp_shards": [
+      "model-00046-of-00048.safetensors",
+      "model-00047-of-00048.safetensors",
+      "model-00048-of-00048.safetensors"
+    ]
+  },
+  "architecture": {
+    "layers": 43,
+    "hidden_size": 4096,
+    "routed_experts": 160,
+    "experts_per_token": 6,
+    "dspark_target_layers": [40, 41, 42],
+    "configured_context_tokens": 1048576,
+    "native_context_tokens": 65536,
+    "weight_quantization": "FP8 E4M3/UE8M0 block 128x128 dense plus MXFP4 experts"
+  },
+  "evidence_boundary": {
+    "publisher_structural_validation": "pass",
+    "publisher_runtime_smoke": "NVIDIA DGX Spark TP1 target-only 8K; not B70 evidence",
+    "local_inventory_and_size_validation": "pass",
+    "local_full_hash_and_header_validation": "pending until the Qwen transfer releases shared USB I/O",
+    "old_80_820_tok_s_inherited": false,
+    "old_token_hashes_inherited": false,
+    "old_dspark_pack_compatible": false
+  },
+  "first_runtime_identity": {
+    "hardware": "4x Intel Arc Pro B70 32GB",
+    "topology": "TP4+EP, DP1, PP1, concurrency1",
+    "vllm": "264c7f2f7df21ddeeab32ecca0353133344f1ac9",
+    "xpu_kernels": "31315673737d95da0f79179c8f755260ef02c1d6",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12",
+    "mode": "target-only eager checkpoint-isolation canary",
+    "record_optimization_overlay": "off"
+  }
+}

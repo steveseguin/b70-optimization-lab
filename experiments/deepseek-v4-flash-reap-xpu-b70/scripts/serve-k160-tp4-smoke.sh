@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root="/home/steve/llm-optimizations"
-revision="7c360e1cd4a5168099dbc54d16d929bf6df04990"
+revision="${MODEL_REVISION:-7c360e1cd4a5168099dbc54d16d929bf6df04990}"
 vllm_tree="${VLLM_TREE:-/home/steve/src/deepseek-v4-vllm-clean}"
 kernel_tree="${KERNEL_TREE:-/home/steve/src/deepseek-v4-xpu-kernels-clean}"
 vllm_commit="${VLLM_COMMIT:-61c87db645c256651b5a366f538898485077ad32}"
@@ -10,7 +10,9 @@ kernel_commit="${KERNEL_COMMIT:-d553fd2ac0cfc86edbb4fe9c65d567318931fe91}"
 model="${MODEL_PATH:-/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160}"
 python="${DEEPSEEK_PYTHON:-/home/steve/.venvs/deepseek-v4-xpu/bin/python}"
 vllm="${VLLM_CLI:-/home/steve/.venvs/deepseek-v4-xpu/bin/vllm}"
-verify="${root}/experiments/deepseek-v4-flash-reap-xpu-b70/scripts/verify-k160-artifact.sh"
+verify="${MODEL_VERIFY_SCRIPT:-${root}/experiments/deepseek-v4-flash-reap-xpu-b70/scripts/verify-k160-artifact.sh}"
+manifest_file="${MODEL_MANIFEST_FILE:-sha256sums.txt}"
+served_model_name="${SERVED_MODEL_NAME:-deepseek-v4-flash-k160}"
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 run_dir="${RUN_DIR:-/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-smoke-${stamp}}"
 port="${PORT:-18080}"
@@ -22,6 +24,7 @@ dp_size_local="${DP_SIZE_LOCAL:-${dp_size}}"
 test -x "${python}"
 test -x "${vllm}"
 test -d "${model}"
+test -f "${model}/${manifest_file}"
 test "$(git -C "${vllm_tree}" rev-parse HEAD)" = "${vllm_commit}"
 test "$(git -C "${kernel_tree}" rev-parse HEAD)" = "${kernel_commit}"
 test -z "$(git -C "${vllm_tree}" status --porcelain)"
@@ -93,6 +96,7 @@ export VLLM_XPU_V4_TP4_RING_MHC_POST_PRE="${VLLM_XPU_V4_TP4_RING_MHC_POST_PRE:-0
 export VLLM_XPU_V4_MHC_PRE_M1_SINGLE_KERNEL="${VLLM_XPU_V4_MHC_PRE_M1_SINGLE_KERNEL:-0}"
 export VLLM_XPU_V4_MHC_POST_PRE_M1_SINGLE_KERNEL="${VLLM_XPU_V4_MHC_POST_PRE_M1_SINGLE_KERNEL:-0}"
 export VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL="${VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL:-0}"
+export VLLM_XPU_V4_MHC_POST_PRE_M1_RMS="${VLLM_XPU_V4_MHC_POST_PRE_M1_RMS:-0}"
 default_fixed_mhc_max_m=0
 if [[ "${VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL}" == "1" ]]; then
   default_fixed_mhc_max_m=2
@@ -123,6 +127,8 @@ if [[ "${VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT}" == "1" ]]; then
 fi
 export VLLM_XPU_V4_COMPRESSOR_ROW_EXACT_MAX_M="${VLLM_XPU_V4_COMPRESSOR_ROW_EXACT_MAX_M:-${default_compressor_row_exact_max_m}}"
 export VLLM_XPU_V4_CAPTURE_CYCLE_WIDTH="${VLLM_XPU_V4_CAPTURE_CYCLE_WIDTH:-2}"
+export VLLM_XPU_V4_CAPTURE_CYCLE_DIR="${VLLM_XPU_V4_CAPTURE_CYCLE_DIR:-}"
+export VLLM_XPU_V4_CAPTURE_CYCLE_ARM_FILE="${VLLM_XPU_V4_CAPTURE_CYCLE_ARM_FILE:-/tmp/deepseek-v4-cycle-capture.arm}"
 export VLLM_XPU_V4_FORWARD_DEVICE_SYNC="${VLLM_XPU_V4_FORWARD_DEVICE_SYNC:-0}"
 export VLLM_XPU_V4_DIVERGENCE_CAPTURE_DIR="${VLLM_XPU_V4_DIVERGENCE_CAPTURE_DIR:-}"
 export VLLM_XPU_V4_DIVERGENCE_ARM_FILE="${VLLM_XPU_V4_DIVERGENCE_ARM_FILE:-/tmp/deepseek-v4-divergence-capture.arm}"
@@ -137,6 +143,7 @@ if [[ "${ONECCL_FORCE_PRELOAD}" == "1" || \
   export LD_PRELOAD="${oneccl_lib}/libccl.so.1.0${LD_PRELOAD:+:${LD_PRELOAD}}"
 fi
 export VLLM_XPU_LOG_FP8_LINEAR_SHAPES="${VLLM_XPU_LOG_FP8_LINEAR_SHAPES:-0}"
+export VLLM_XPU_USE_SAMPLER_KERNEL="${VLLM_XPU_USE_SAMPLER_KERNEL:-1}"
 export VLLM_XPU_V4_BLOCK_FP8_W8A16="${VLLM_XPU_V4_BLOCK_FP8_W8A16:-0}"
 export VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M="${VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M:-1}"
 export VLLM_XPU_V4_BLOCK_FP8_W8A16_SHAPES="${VLLM_XPU_V4_BLOCK_FP8_W8A16_SHAPES:-}"
@@ -146,6 +153,10 @@ export VLLM_XPU_V4_DIRECT_FP8_NUM_WARPS="${VLLM_XPU_V4_DIRECT_FP8_NUM_WARPS:-8}"
 export VLLM_XPU_V4_SPLIT_FP8_BLOCK_H="${VLLM_XPU_V4_SPLIT_FP8_BLOCK_H:-16}"
 export VLLM_XPU_V4_SPLIT_FP8_QK_NUM_WARPS="${VLLM_XPU_V4_SPLIT_FP8_QK_NUM_WARPS:-8}"
 export VLLM_XPU_V4_SPLIT_FP8_PV_NUM_WARPS="${VLLM_XPU_V4_SPLIT_FP8_PV_NUM_WARPS:-4}"
+export VLLM_CUSTOM_SCOPES_FOR_PROFILING="${VLLM_CUSTOM_SCOPES_FOR_PROFILING:-0}"
+export VLLM_MULTI_STREAM_GEMM_TOKEN_THRESHOLD="${VLLM_MULTI_STREAM_GEMM_TOKEN_THRESHOLD:-1024}"
+export TRITON_CACHE_AUTOTUNING="${TRITON_CACHE_AUTOTUNING:-1}"
+export VLLM_TRITON_FORCE_FIRST_CONFIG="${VLLM_TRITON_FORCE_FIRST_CONFIG:-0}"
 export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
 export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/deepseek-v4-k160-${revision}/vllm}"
 export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-/mnt/fast-ai/vllm-cache-exp/deepseek-v4-k160-${revision}/torchinductor}"
@@ -171,7 +182,7 @@ argv=(
   "${vllm}" serve "${model}"
   --host "${HOST:-127.0.0.1}"
   --port "${port}"
-  --served-model-name deepseek-v4-flash-k160
+  --served-model-name "${served_model_name}"
   --dtype auto
   --tensor-parallel-size "${tp_size}"
   --data-parallel-size "${dp_size}"
@@ -199,7 +210,14 @@ argv=(
 {
   printf 'model=%s\n' "$(readlink -f "${model}")"
   printf 'model_revision=%s\n' "${revision}"
-  printf 'artifact_manifest_sha256=%s\n' "$(sha256sum "${model}/sha256sums.txt" | awk '{print $1}')"
+  printf 'served_model_name=%s\n' "${served_model_name}"
+  printf 'artifact_manifest_file=%s\n' "${manifest_file}"
+  printf 'artifact_manifest_sha256=%s\n' "$(sha256sum "${model}/${manifest_file}" | awk '{print $1}')"
+  printf 'full_validation_summary=%s\n' "${DEEPSEEK_0731_VALIDATION_SUMMARY:-unset}"
+  if [[ -n "${DEEPSEEK_0731_VALIDATION_SUMMARY:-}" ]]; then
+    printf 'full_validation_summary_sha256=%s\n' \
+      "$(sha256sum "${DEEPSEEK_0731_VALIDATION_SUMMARY}" | awk '{print $1}')"
+  fi
   printf 'verify_manifest=%s\n' "${VERIFY_MANIFEST:-0}"
   printf 'vllm_tree=%s\n' "${vllm_tree}"
   printf 'vllm_commit=%s\n' "${vllm_commit}"
@@ -229,6 +247,7 @@ argv=(
   printf 'vllm_xpu_v4_mhc_pre_m1_single_kernel=%s\n' "${VLLM_XPU_V4_MHC_PRE_M1_SINGLE_KERNEL}"
   printf 'vllm_xpu_v4_mhc_post_pre_m1_single_kernel=%s\n' "${VLLM_XPU_V4_MHC_POST_PRE_M1_SINGLE_KERNEL}"
   printf 'vllm_xpu_v4_mhc_post_pre_m2_single_kernel=%s\n' "${VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL}"
+  printf 'vllm_xpu_v4_mhc_post_pre_m1_rms=%s\n' "${VLLM_XPU_V4_MHC_POST_PRE_M1_RMS}"
   printf 'vllm_xpu_v4_mhc_post_pre_fixed_width_max_m=%s\n' "${VLLM_XPU_V4_MHC_POST_PRE_FIXED_WIDTH_MAX_M}"
   printf 'vllm_xpu_v4_shared_expert_fused_act_quant=%s\n' "${VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT}"
   printf 'vllm_xpu_v4_shared_expert_fused_act_quant_max_m=%s\n' "${VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT_MAX_M}"
@@ -247,6 +266,8 @@ argv=(
   printf 'vllm_xpu_v4_compressor_batched_exact_max_m=%s\n' "${VLLM_XPU_V4_COMPRESSOR_BATCHED_EXACT_MAX_M}"
   printf 'vllm_xpu_v4_compressor_row_exact_max_m=%s\n' "${VLLM_XPU_V4_COMPRESSOR_ROW_EXACT_MAX_M}"
   printf 'vllm_xpu_v4_capture_cycle_width=%s\n' "${VLLM_XPU_V4_CAPTURE_CYCLE_WIDTH}"
+  printf 'vllm_xpu_v4_capture_cycle_dir=%s\n' "${VLLM_XPU_V4_CAPTURE_CYCLE_DIR}"
+  printf 'vllm_xpu_v4_capture_cycle_arm_file=%s\n' "${VLLM_XPU_V4_CAPTURE_CYCLE_ARM_FILE}"
   printf 'vllm_xpu_v4_forward_device_sync=%s\n' "${VLLM_XPU_V4_FORWARD_DEVICE_SYNC}"
   printf 'vllm_xpu_v4_divergence_capture_dir=%s\n' "${VLLM_XPU_V4_DIVERGENCE_CAPTURE_DIR}"
   printf 'vllm_xpu_v4_divergence_arm_file=%s\n' "${VLLM_XPU_V4_DIVERGENCE_ARM_FILE}"
@@ -257,6 +278,7 @@ argv=(
   printf 'vllm_xpu_expert_map_round_robin=%s\n' "${VLLM_XPU_EXPERT_MAP_ROUND_ROBIN}"
   printf 'ld_preload=%s\n' "${LD_PRELOAD:-}"
   printf 'vllm_xpu_log_fp8_linear_shapes=%s\n' "${VLLM_XPU_LOG_FP8_LINEAR_SHAPES}"
+  printf 'vllm_xpu_use_sampler_kernel=%s\n' "${VLLM_XPU_USE_SAMPLER_KERNEL}"
   printf 'vllm_xpu_v4_block_fp8_w8a16=%s\n' "${VLLM_XPU_V4_BLOCK_FP8_W8A16}"
   printf 'vllm_xpu_v4_block_fp8_w8a16_max_m=%s\n' "${VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M}"
   printf 'vllm_xpu_v4_block_fp8_w8a16_shapes=%s\n' "${VLLM_XPU_V4_BLOCK_FP8_W8A16_SHAPES}"
@@ -349,6 +371,8 @@ argv=(
   printf 'vllm_cache_root=%s\n' "${VLLM_CACHE_ROOT}"
   printf 'torchinductor_cache_dir=%s\n' "${TORCHINDUCTOR_CACHE_DIR}"
   printf 'vllm_multi_stream_gemm_token_threshold=%s\n' "${VLLM_MULTI_STREAM_GEMM_TOKEN_THRESHOLD:-default}"
+  printf 'triton_cache_autotuning=%s\n' "${TRITON_CACHE_AUTOTUNING}"
+  printf 'vllm_triton_force_first_config=%s\n' "${VLLM_TRITON_FORCE_FIRST_CONFIG}"
   printf 'vllm_extra_args=%s\n' "${VLLM_EXTRA_ARGS:-}"
   printf 'argv='
   printf '%q ' "${argv[@]}"
