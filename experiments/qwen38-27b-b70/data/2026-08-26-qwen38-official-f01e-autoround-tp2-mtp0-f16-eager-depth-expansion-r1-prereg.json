@@ -1,0 +1,130 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp2-mtp0-f16-eager-depth-expansion-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Create the missing current-f01e TP2/MTP0/eager/F16 target-only curve and same-topology TP2 oracle set at exact 2K, 4K, 8K, 16K, 24K, and 32K. Cross-topology equality is comparison evidence, never a prerequisite for freezing a quality-clean TP2-native receipt.",
+  "prior_evidence": {
+    "same_image_same_topology_parent_available": false,
+    "current_image_gap": "No current-f01e AutoRound TP2/MTP0/eager/F16 exact-depth sentinel or curve exists.",
+    "older_tp2_evidence": {
+      "campaign": "qwen38-b2dd9ce73d-tp2-exact-depth-quality-20260826-r1",
+      "identity_difference": "Older b2dd9ce73d source, graph FULL_AND_PIECEWISE, gpu-memory-utilization 0.9, and different cache/runtime contract. It is historical coverage only, not a parent or target oracle."
+    },
+    "current_cross_topology_controls": {
+      "token_receipts": "current-f01e TP1/MTP0/eager/F16 R3",
+      "quality_receipt": "current-f01e TP4/MTP0/eager/F16 depth expansion R1",
+      "policy": "Both are immutable comparison inputs. A mismatch is an explicit caveat and does not reject an otherwise objective-quality-clean TP2-native oracle."
+    }
+  },
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 2,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0,1",
+    "mtp_depth": 0,
+    "kv_cache_dtype": "float16",
+    "graph_mode": "off",
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.6,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "graph_environment": {
+      "VLLM_XPU_ENABLE_XPU_GRAPH": "0",
+      "VLLM_XPU_GRAPH": "0"
+    },
+    "oneapi_device_selector": "unset",
+    "speculative_config": null
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [
+      2048,
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "depth_zero_state": "missing",
+    "depth_zero_reason": "The exact fixture has no empty active-context case; a short ordinary prompt would not measure context zero.",
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896,
+    "tp1_cross_topology_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3/eager-f16/exact-depth",
+    "tp1_receipt_sha256": {
+      "2048": "b130cd570fdf72303c79b30c79704956adc73d1507e9909e5f6bf34a0ee20d5e",
+      "4096": "c9dbfb8b9cf8ef23bea5ebe2cb3199c82d678988106e2f619221236e4726dd9e",
+      "8192": "94f7d11862b2e35b057e7a95b3d529b89a4c2857d8886ce93e4b4d85b7385c34",
+      "16384": "69cab2ec785de5615c4a47ca666c68d579dc5d9a163a50c87461e35217d0a847",
+      "24576": "4902ceb508b2828f405f62e7c3b76c323074b03b904d67be2dfce64b159e23c4",
+      "32768": "668b1ae15d8497c7230565a6937514585e6dddcc56e685e1f0e146c902464598"
+    },
+    "comparison_policy": "Record exact token equality and first divergence for every depth. TP1 mismatch is a cross-topology caveat, not a TP2-native freeze rejection."
+  },
+  "quality_contract": {
+    "helper": "scripts/qwen38-text-quality-suite.py",
+    "baseline": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1/quality.json",
+    "baseline_sha256": "2172c3bdba148062487ba73980fee46a5f1f2501baa37ceb83ca0e058bcaa83f",
+    "objective_gate": "pass_all plus exactly seven exact, eight repeat, and one long-context usage records, all with cached_tokens == 0",
+    "baseline_mismatch_policy": "The current-image TP4 quality baseline is a cross-topology comparison caveat, not a TP2-native freeze rejection."
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "port": 19492,
+    "container": "q38-f01e-ar-tp2-mtp0-f16-depth-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true
+  },
+  "terminal_classification": {
+    "passed-quality-clean-depth-expansion": "All six exact TP2 depths, objective quality, TP2 topology, cache isolation, cleanup, and both comparison batteries pass; freeze all six TP2-native outputs.",
+    "passed-quality-clean-depth-expansion-with-comparison-caveat": "All TP2-native gates pass but one or more TP1 token or TP4 quality comparisons differ; freeze all six TP2-native outputs with explicit caveats.",
+    "partial-depth-expansion": "One or more exact-depth requests fail. If objective quality and all global gates pass, preserve and freeze only exact-passing TP2-native depths; never infer missing depths.",
+    "quarantined-objective-quality-failed": "Exact depths may pass, but objective quality or any cache-zero record fails; preserve evidence and freeze no TP2 oracle.",
+    "failed": "Infrastructure, identity, topology, cache, or cleanup fails; retain evidence and freeze no TP2 oracle."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "protected_decode_values_unchanged": [
+      71.45427094575045,
+      30.329809361830037,
+      49.05894025767351,
+      71.9001988117144
+    ],
+    "historical_replacement_allowed": false,
+    "protected_route_replacement_allowed": false,
+    "older_tp2_replacement_allowed": false,
+    "site_cells_filled_on_full_pass": 6,
+    "cross_topology_mismatch_is_caveat_not_rejection": true,
+    "same_topology_descendant_oracle_authority_requires_native_pass": true,
+    "automatic_publication_allowed": false,
+    "descendant_execution_authorized": false
+  },
+  "target_only_contract": {
+    "speculative_config_absent": true,
+    "draft_model_absent": true
+  },
+  "cache_contract": {
+    "filesystem": "ext4",
+    "fresh": true,
+    "rank_namespaces": [
+      "rank_0_0",
+      "rank_1_0"
+    ]
+  }
+}
