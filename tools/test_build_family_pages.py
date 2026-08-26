@@ -1603,6 +1603,9 @@ class FamilyCoverageTest(unittest.TestCase):
             "qwen38-tp1-vllm-xpu-autoround-mtp-matrix": 252,
             "qwen38-tp1-llamacpp-sycl-target-matrix": 112,
             "qwen38-tp1-llamacpp-sycl-mtp-package-matrix": 224,
+            "qwen38-tp2-llamacpp-sycl-q4km-http-depth": 7,
+            "qwen38-tp2-llamacpp-sycl-q8-http-depth": 7,
+            "qwen38-tp2-vllm-xpu-fp8-http-depth": 7,
         }
         self.assertEqual(set(contracts), set(expected_counts))
         self.assertEqual(self._errors(family), [])
@@ -1613,7 +1616,30 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertEqual(errors, [], contract_id)
             self.assertEqual(len(cells), expected_count, contract_id)
             all_cells.extend(cells)
-        self.assertEqual(len(all_cells), 1771)
+        self.assertEqual(len(all_cells), 1792)
+
+        for contract_id, evidence_id in (
+            ("qwen38-tp2-llamacpp-sycl-q4km-http-depth", "q38-q4km-tp2-f16kv-http-context-r1-grade-c"),
+            ("qwen38-tp2-llamacpp-sycl-q8-http-depth", "q38-q8weights-tp2-f16kv-http-context-r3-grade-c"),
+            ("qwen38-tp2-vllm-xpu-fp8-http-depth", "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c"),
+        ):
+            cells, errors = MODULE.expand_coverage_contract(contracts[contract_id])
+            self.assertEqual(errors, [], contract_id)
+            self.assertEqual(len(cells), 7, contract_id)
+            self.assertEqual(cells[0]["selectors"]["active_context_tokens"], 0)
+            self.assertEqual(cells[0]["state"], "missing")
+            self.assertEqual(
+                [cell["selectors"]["active_context_tokens"] for cell in cells[1:]],
+                [2048, 4096, 8192, 16384, 24576, 32768],
+            )
+            self.assertTrue(all(
+                cell["state"] == "lab-measured"
+                and cell["evidence_id"] == evidence_id
+                and cell["selectors"]["tp"] == 2
+                and cell["selectors"]["mtp"] == 0
+                and cell["selectors"]["kv"] == "f16"
+                for cell in cells[1:]
+            ))
 
         q36_cells = [
             cell
@@ -1947,6 +1973,8 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertFalse(r3_result["authority"]["direct_site_publication"])
 
         for contract_id, contract in contracts.items():
+            if "-tp2-" in contract_id:
+                continue
             axes = {axis["key"]: axis["values"] for axis in contract["axes"]}
             if "target-matrix" in contract_id:
                 self.assertEqual(axes["mtp"], [0])
@@ -2368,6 +2396,96 @@ class FamilyCoverageTest(unittest.TestCase):
         q38_q4kxl_raw_q8 = series["q38-q4kxl-tp1-kv-q8-context"]
         self.assertEqual(len(q38_q4kxl_raw_q8["points"]), 7)
         self.assertEqual(q38_q4kxl_raw_q8["config"]["kv"], "q8_0")
+        self.assertEqual(
+            q38_q4kxl_raw_q8["evidence"],
+            "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4kxl-q8-tp1-exact-depth-result.json",
+        )
+
+        q38_q4kxl_q8_http = [
+            cell for cell in q38_target
+            if cell["selectors"]["artifact_id"]
+            == "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207"
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "q8_0"
+        ]
+        self.assertEqual(len(q38_q4kxl_q8_http), 7)
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in q38_q4kxl_q8_http],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(all(
+            cell["state"] == "lab-measured"
+            and cell["evidence_id"]
+            == "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"
+            and cell["packet_id"]
+            == "qwen38-27b-q4kxl-q8kv-target-http-depth-grade-c"
+            and "HTTP" in cell["label"]
+            and "Grade C" in cell["label"]
+            for cell in q38_q4kxl_q8_http
+        ))
+        q38_q4kxl_q8_series = series[
+            "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"
+        ]
+        q38_q4kxl_q8_result = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-q8kv-tp1-target-http-depth-quality-r1-result.json"
+        ).read_text())
+        self.assertEqual(q38_q4kxl_q8_result["status"], "passed")
+        self.assertEqual(q38_q4kxl_q8_result["serving_curve"]["evidence_grade"], "C")
+        self.assertEqual(
+            [point["decode_tok_s"] for point in q38_q4kxl_q8_series["points"]],
+            [
+                cell["serving_decode_tok_s_99_interval"]
+                for cell in q38_q4kxl_q8_result["serving_curve"]["cells"]
+            ],
+        )
+        self.assertTrue(all(
+            point["cached_tokens"] == 0
+            for point in q38_q4kxl_q8_series["points"]
+        ))
+        self.assertEqual(q38_q4kxl_q8_series["config"]["mtp"], 0)
+        self.assertEqual(q38_q4kxl_q8_series["config"]["graph_mode"], "off")
+        self.assertEqual(q38_q4kxl_q8_series["config"]["fit"], "off")
+        self.assertEqual(q38_q4kxl_q8_series["config"]["kv"], "q8_0")
+        self.assertTrue(q38_q4kxl_q8_result["quality"]["pass_all"])
+        self.assertEqual(
+            q38_q4kxl_q8_result["quality"]["cache_zero_requests"],
+            {"passed": 10, "required": 10},
+        )
+        q38_q4kxl_q8_packet = next(
+            packet for packet in family["packets"]
+            if packet["id"] == "qwen38-27b-q4kxl-q8kv-target-http-depth-grade-c"
+        )
+        self.assertEqual(q38_q4kxl_q8_packet["grades"]["evidence"]["grade"], "C")
+        self.assertNotIn("featured_metric", q38_q4kxl_q8_packet)
+        self.assertTrue(
+            q38_q4kxl_q8_result["authority"][
+                "site_target_only_q4kxl_q8kv_curve_publication"
+            ]
+        )
+        self.assertEqual(
+            q38_q4kxl_q8_result["authority"][
+                "target_only_q4kxl_q8kv_serving_curve_cells"
+            ],
+            7,
+        )
+        for forbidden_authority in (
+            "f16_kv_cells",
+            "other_quantization_cells",
+            "speculative_cells",
+            "tp2_or_tp4_cells",
+            "graph_cells",
+            "prefill_cells",
+        ):
+            self.assertEqual(
+                q38_q4kxl_q8_result["authority"][forbidden_authority], 0
+            )
+        self.assertFalse(
+            q38_q4kxl_q8_result["authority"]["protected_or_headline_replacement"]
+        )
+        self.assertFalse(
+            q38_q4kxl_q8_result["authority"]["localmaxxing_submission"]
+        )
 
         q38_q4kxl_f16_view = next(
             view for view in family["views"]
@@ -2376,9 +2494,12 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(q38_q4kxl_f16_view["metrics"], ["decode_tok_s"])
         self.assertEqual(
             [item["measurement_ids"] for item in q38_q4kxl_f16_view["series"]],
-            [["q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c"]],
+            [
+                ["q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c"],
+                ["q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"],
+            ],
         )
-        self.assertIn("Q8_0 HTTP sibling pending", q38_q4kxl_f16_view["subtitle"])
+        self.assertIn("both full quality batteries passed", q38_q4kxl_f16_view["subtitle"])
 
         q38_q5ks_view = next(
             view for view in family["views"]
@@ -2437,13 +2558,13 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
-        self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("290/1,771 classified", overview_html)
+        self.assertIn("Coverage · 11 matrices", overview_html)
+        self.assertIn("308/1,792 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "195", "measured"),
+            ("lab-measured", "213", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,481", "missing"),
+            ("missing", "1,484", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -2460,8 +2581,8 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("21 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 21)
+        self.assertIn("22 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 22)
         self.assertIn(
             'data-family-view="context-q4kxl-f16-http"',
             deferred_html,

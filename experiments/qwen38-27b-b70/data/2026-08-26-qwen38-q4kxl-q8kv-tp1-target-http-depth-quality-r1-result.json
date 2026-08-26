@@ -1,0 +1,83 @@
+{
+  "schema": "neural.download.qwen38-q4kxl-q8kv-target-http-depth-quality-result.v1",
+  "campaign_id": "qwen38-q4kxl-q8kv-tp1-target-http-depth-quality-20260826-r1",
+  "status": "passed",
+  "classification": "grade-c-q8kv-exact-depth-serving-curve-with-full-qwen38-quality-battery",
+  "completed_at_utc": "2026-08-26T05:09:43.809884+00:00",
+  "identity": {
+    "git_head": "362e9aa2dd55349b7d4af5779151e2f742dc1604",
+    "model": {
+      "path": "/mnt/usb-models/llm-models/qwen3.8-27b-unsloth-gguf/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+      "repository": "unsloth/Qwen3.8-27B-GGUF",
+      "revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502",
+      "quantization": "UD-Q4_K_XL",
+      "size_bytes": 17559178144,
+      "sha256": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e",
+      "family_relationship": "current Qwen3.8 target weights; this quantized artifact is a subset of the Qwen3.8 27B family"
+    },
+    "runtime": {
+      "name": "llama.cpp",
+      "source_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+      "binary_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964",
+      "libggml_sycl_sha256": "959fe7c30eea55d6a2225d970e81e0fb49cfbbf83a4332c79f79c3b0d5bf6b7f"
+    },
+    "configuration": {"gpu": "one Intel Arc Pro B70", "tp": 1, "mtp": 0, "transport": "HTTP /v1/completions", "graph_mode": "off", "fit": "off", "flash_attention": "on", "target_kv": "q8_0", "context_capacity_tokens": 33024, "completion_tokens_per_cell": 128, "cache_ram": 0, "context_checkpoints": 0, "spec_type": "none"}
+  },
+  "serving_curve": {
+    "evidence_grade": "C",
+    "metric": "conventional HTTP serving decode tok/s over 99 intervals between streamed token-ID events 1 and 100",
+    "fixture": "synthetic repeated-token exact-depth fixture; separate natural-language quality battery required",
+    "context_axis_disclosure": {"x0": "zero prior active context plus one explicit ordinary prompt token", "positive_depths": "exact submitted token counts", "configured_capacity_is_not_active_context": true},
+    "cells": [
+      {"active_context_tokens": 0, "serving_decode_tok_s_99_interval": 21.769202757569552, "cached_tokens": 0, "output_token_ids_sha256": "dab29d7687ea2f3c58e9592665e8a4e14d7504ec873e580fb89ee9f1b9574883"},
+      {"active_context_tokens": 2048, "serving_decode_tok_s_99_interval": 20.267185566421563, "cached_tokens": 0, "output_token_ids_sha256": "55daa3fccbd5893601205e34d660ec1eccb3d5fdf5f53328e2afca61e0557631"},
+      {"active_context_tokens": 4096, "serving_decode_tok_s_99_interval": 19.088507810265277, "cached_tokens": 0, "output_token_ids_sha256": "66698ee7dccd3e65e98407f2cdd04b19705ced64670137a6524ede7b2c187d6a"},
+      {"active_context_tokens": 8192, "serving_decode_tok_s_99_interval": 17.118296247131028, "cached_tokens": 0, "output_token_ids_sha256": "d38b6e716fce36ad0f339b67d009ac94c2b3b64b69128050d2f15e1ac7b5d00c"},
+      {"active_context_tokens": 16384, "serving_decode_tok_s_99_interval": 13.830939568896348, "cached_tokens": 0, "output_token_ids_sha256": "76af0304a4d33053006a4471631681c16f3063c76ab1451792c42c5d023c07e2"},
+      {"active_context_tokens": 24576, "serving_decode_tok_s_99_interval": 11.64708116811193, "cached_tokens": 0, "output_token_ids_sha256": "9b7540f1408d31cf59181e21ab0c9733232f601d8afd8fb208dcbf12fd5cb159"},
+      {"active_context_tokens": 32768, "serving_decode_tok_s_99_interval": 10.07665400680413, "cached_tokens": 0, "output_token_ids_sha256": "3e7f1a4b1ab7e9ecd6f7dd4a4b5890192051a7d18643ba2e0b9f2f4a75bc9419"}
+    ]
+  },
+  "quality": {
+    "pass_all": true,
+    "exact_cases": {"passed": 7, "required": 7, "names": ["exact_ok", "copy_phrase", "arithmetic", "json_schema", "factual", "logic", "code_execution"]},
+    "repeat_stability": {"passed": true, "runs": 2, "unique_hashes": 1, "output_sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"},
+    "long_context_needle": {"passed": true, "requested_context_tokens": 27200, "actual_prompt_tokens_before_chat_template": 25200, "api_usage_prompt_tokens": 25212, "output_sha256": "1583fb313bb7b240d09b6419481427b0d55f5b21d4ec5c5317a343d667744ad1"},
+    "cache_zero_requests": {"passed": 10, "required": 10}
+  },
+  "f16_kv_sibling_context": {
+    "result_path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-target-http-depth-quality-r1-result.json",
+    "only_selector_delta": "target KV cache K/V f16 to q8_0",
+    "cells": [
+      {"active_context_tokens": 0, "f16_minus_q8_tok_s": 0.05712335159305226, "f16_over_q8_percent": 0.26240442624012594, "output_token_hash_equal": true},
+      {"active_context_tokens": 2048, "f16_minus_q8_tok_s": 1.0444893830038602, "f16_over_q8_percent": 5.1535985575341, "output_token_hash_equal": false},
+      {"active_context_tokens": 4096, "f16_minus_q8_tok_s": 1.7821322401259039, "f16_over_q8_percent": 9.336152714710998, "output_token_hash_equal": true},
+      {"active_context_tokens": 8192, "f16_minus_q8_tok_s": 2.901585380021732, "f16_over_q8_percent": 16.950199588396696, "output_token_hash_equal": false},
+      {"active_context_tokens": 16384, "f16_minus_q8_tok_s": 4.810171540366085, "f16_over_q8_percent": 34.778342544301324, "output_token_hash_equal": true},
+      {"active_context_tokens": 24576, "f16_minus_q8_tok_s": 5.7231916775001626, "f16_over_q8_percent": 49.13842013198515, "output_token_hash_equal": false},
+      {"active_context_tokens": 32768, "f16_minus_q8_tok_s": 6.3107893139859925, "f16_over_q8_percent": 62.62782576165375, "output_token_hash_equal": true}
+    ],
+    "summary": {"f16_faster_cells": 7, "measured_cells": 7, "exact_output_hash_matches": 4, "exact_output_hash_comparisons": 7},
+    "authority_boundary": "Both KV modes passed independent full batteries. Neither sibling transfers speed, hash, quality, or authority to the other."
+  },
+  "validation": {"all_terminal_checks_passed": true, "terminal_check_count": 16, "clean_shutdown": true, "forced_kill": false, "port_closed": true, "render_node_idle": true, "server_survivor": false},
+  "raw_artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-q4kxl-q8kv-tp1-target-http-depth-quality-20260826-r1",
+    "file_count": 24,
+    "sha256": {
+      "terminal-receipt.json": "de0d7ac0485fc03b492dc21e0557e66b22d14189953644346ada3c63f7ede64c",
+      "identity.json": "839c2010bcaddd8ee588b5383b53694a7a34ccb8192004707ab48391b9bd3e35",
+      "target-mtp0/quality.json": "189cda08eb82956888efc8261156957bc6652c661466e565923bd811947e775f",
+      "target-mtp0/depth-0/exact-depth.json": "0b8cca57e74ec2bf2c68980ae96084686514d0a46c05486790dbb52e0bf9df96",
+      "target-mtp0/depth-2048/exact-depth.json": "d35ab9f40a2693483ffb17d1b46550762d3643fbb789018ae77fa64425272efe",
+      "target-mtp0/depth-4096/exact-depth.json": "3f559375c61bd25dde8f6fdf7d5a4057c403837a5d76859d26fadea3811f38e7",
+      "target-mtp0/depth-8192/exact-depth.json": "ecfa7e55b9cb7ecf777ddda9c5f9bb0131e4df82d9ecf53243825056a4f29ef3",
+      "target-mtp0/depth-16384/exact-depth.json": "113c869e13c28b2fbea63fe147560b66467554617b6df9cbcd44a6481fc054a3",
+      "target-mtp0/depth-24576/exact-depth.json": "10ba2e4c86a1c9eb852a5c23d64f93c8da19363a9b5daf2ad7dad0774482ce31",
+      "target-mtp0/depth-32768/exact-depth.json": "490769fce8e61497a36ccd8b079256a5afa87961d014d09f46b231dd60d754f3",
+      "target-mtp0/server.log": "d4e0bb0705e923b68aaf0cbc0433bea9edd24987fc27c5c7e0f2321f1444c2fa"
+    }
+  },
+  "authority": {"site_target_only_q4kxl_q8kv_curve_publication": true, "target_only_q4kxl_q8kv_serving_curve_cells": 7, "f16_kv_cells": 0, "other_quantization_cells": 0, "speculative_cells": 0, "tp2_or_tp4_cells": 0, "graph_cells": 0, "prefill_cells": 0, "protected_or_headline_replacement": false, "localmaxxing_submission": false},
+  "scope_boundary": "This closes only current-weight Qwen3.8 UD-Q4_K_XL TP1 target-only, graph-off, fit-off, Q8_0-KV HTTP serving at 0/2/4/8/16/24/32K."
+}

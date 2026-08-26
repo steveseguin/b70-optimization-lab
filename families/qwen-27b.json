@@ -546,6 +546,28 @@
       "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-target-http-depth-quality-r1-result.json"
     },
     {
+      "id": "qwen38-27b-q4kxl-q8kv-target-http-depth-grade-c",
+      "label": "Qwen3.8 Q4_K_XL · TP1 target-only Q8_0-KV HTTP context curve",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "quality-battery-qualified-grade-c-http-curve",
+      "evidence_level": "B70-measured Grade C",
+      "coverage": ["target-only MTP0", "HTTP serving", "active context 0-32K", "Q8_0 KV", "full quality battery"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Qwen3.8 UD-Q4_K_XL target-only TP1 HTTP serving at seven exact active-context depths with graph and fit disabled and Q8_0 KV",
+          "basis": "all seven cache-zero depth receipts completed under one exact pinned identity; the full natural-language quality battery passed 7 exact cases, 2 repeat runs, and a 25,200-token long-context case, for 10/10 cache-zero quality requests. The synthetic exact-depth fixture and single campaign remain Grade C; no F16-KV, other-quantization, graph, prefill, speculative, TP2/TP4, headline, protected-score, or LocalMaxxing authority transfers.",
+          "reviewed_at": "2026-08-26",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-q8kv-tp1-target-http-depth-quality-r1-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-q8kv-tp1-target-http-depth-quality-r1-result.json"
+    },
+    {
       "id": "qwen38-27b-autoround-int4-mtp5-research",
       "label": "Qwen3.8 AutoRound INT4 · TP2 + MTP5",
       "revision": "qwen3.8-27b",
@@ -3751,6 +3773,37 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4kxl-q8-tp1-exact-depth-result.json"
     },
     {
+      "id": "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL target-only",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp1-llamacpp-sycl-target-only-v1",
+      "speculation_method": "none",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-q4kxl-q8kv-target-http-depth-grade-c-v1",
+      "measurement_class": "conventional-99-interval-exact-depth-http-serving-grade-c",
+      "promotion_status": "authorized-target-only-q4kxl-q8kv-site-curve-no-headline-or-submission",
+      "identity": {"model_revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502", "model_sha256": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e", "llama_server_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964", "terminal_receipt_sha256": "de0d7ac0485fc03b492dc21e0557e66b22d14189953644346ada3c63f7ede64c"},
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "fit": "off", "kv": "q8_0", "speculation": "none", "configured_max_context_tokens": 33024, "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "HTTP /v1/completions; exact submitted token depths; 128 generated tokens; cache zero; conventional 99-interval serving decode",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 21.769202757569552, "cached_tokens": 0, "output_token_ids_sha256": "dab29d7687ea2f3c58e9592665e8a4e14d7504ec873e580fb89ee9f1b9574883", "context_semantics": "zero prior active context plus one explicit ordinary prompt token"},
+        {"x": 2048, "decode_tok_s": 20.267185566421563, "cached_tokens": 0, "output_token_ids_sha256": "55daa3fccbd5893601205e34d660ec1eccb3d5fdf5f53328e2afca61e0557631"},
+        {"x": 4096, "decode_tok_s": 19.088507810265277, "cached_tokens": 0, "output_token_ids_sha256": "66698ee7dccd3e65e98407f2cdd04b19705ced64670137a6524ede7b2c187d6a"},
+        {"x": 8192, "decode_tok_s": 17.118296247131028, "cached_tokens": 0, "output_token_ids_sha256": "d38b6e716fce36ad0f339b67d009ac94c2b3b64b69128050d2f15e1ac7b5d00c"},
+        {"x": 16384, "decode_tok_s": 13.830939568896348, "cached_tokens": 0, "output_token_ids_sha256": "76af0304a4d33053006a4471631681c16f3063c76ab1451792c42c5d023c07e2"},
+        {"x": 24576, "decode_tok_s": 11.64708116811193, "cached_tokens": 0, "output_token_ids_sha256": "9b7540f1408d31cf59181e21ab0c9733232f601d8afd8fb208dcbf12fd5cb159"},
+        {"x": 32768, "decode_tok_s": 10.07665400680413, "cached_tokens": 0, "output_token_ids_sha256": "3e7f1a4b1ab7e9ecd6f7dd4a4b5890192051a7d18643ba2e0b9f2f4a75bc9419"}
+      ],
+      "quality": "Full Qwen3.8 quality battery passed: 7 exact cases, 2 repeat runs, one 25,200-token long-context case, and cached_tokens=0 on all 10 quality requests. All seven depth requests were also cache zero.",
+      "caveat": "Grade C target-only Q8_0-KV serving curve. The matched F16-KV sibling is separately qualified and transfers no authority into this result. No other quantization, graph, prefill, speculative, TP2/TP4, protected or headline replacement, or LocalMaxxing authority is authorized.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-q8kv-tp1-target-http-depth-quality-r1-result.json"
+    },
+    {
       "id": "q38-q5ks-flagship-tp1-kv-q8-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -3808,6 +3861,112 @@
       "quality": "Full Qwen3.8 quality battery passed: 7 exact cases, 2 repeat runs, one 25,200-token long-context case, and cached_tokens=0 on all 10 quality requests. All seven depth requests were also cache zero.",
       "caveat": "Grade C target-only serving curve. No prefill cells, speculative routes, TP2/TP4 cells, protected or headline replacement, or LocalMaxxing submission are authorized.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-q8kv-tp1-target-http-depth-quality-r1-result.json"
+    },
+    {
+      "id": "q38-q4km-tp2-f16kv-http-context-r1-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+      "quantization": "Q4_K_M",
+      "variant": "Q4_K_M target-only TP2",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp2-llamacpp-sycl-q4km-http-depth-v1",
+      "speculation_method": "none",
+      "runtime": "llama.cpp SYCL 4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126 + lab TP2 patch stack",
+      "profile_id": "q38-q4km-tp2-f16kv-http-depth-grade-c-v1",
+      "measurement_class": "conventional-99-interval-exact-depth-http-serving-grade-c",
+      "promotion_status": "authorized-six-cell-tp2-http-context-curve-no-x0-headline-or-submission",
+      "identity": {
+        "model_revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+        "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+        "llama_server_sha256": "6ae782c7e8f7a992e0eeced10ade2a84b3cbb9ba65c65cbb917e52d1ce09777d",
+        "libggml_sycl_sha256": "375f6d251b022b62367e73d2cd6b7eb0200efc9cc9c854a509af45950938c3ed",
+        "full_lab_patch_sha256": "f21e9b557c3d024527ac98d5f189cf7ea72fa8c38a5faf2a22ee339fd1988998"
+      },
+      "config": {"tp": 2, "mtp": 0, "graph": "off", "graph_mode": "off", "fit": "off", "kv": "f16", "reasoning_enabled": false, "speculation": "none", "tensor_split": "1,1", "parallel_slots": 1, "configured_max_context_tokens": 33024, "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "One-slot native HTTP /v1/completions; exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 2048, "decode_tok_s": 49.489490115227746, "ttft_ms": 1945.0462919194251, "cached_tokens": 0, "output_token_ids_sha256": "d559355d1174c49098c35dde4936c0166c02ab7d986777c465c9d6809ae92fca"},
+        {"x": 4096, "decode_tok_s": 49.01030658650703, "ttft_ms": 3860.131878987886, "cached_tokens": 0, "output_token_ids_sha256": "dcae63089f9a212510a1bc56f3db976fdf6f930afdbe04dd165ab0898375d109"},
+        {"x": 8192, "decode_tok_s": 48.30039279903885, "ttft_ms": 7861.680709989741, "cached_tokens": 0, "output_token_ids_sha256": "e9febe4f6f60a852c700465c030614b27a3c2fcf57967766ff04c1d97186828a"},
+        {"x": 16384, "decode_tok_s": 47.03057165241295, "ttft_ms": 16299.778147018515, "cached_tokens": 0, "output_token_ids_sha256": "12b2722e005cbb3e0e9e03e08b9757878e144589d9a1c82f3cd3d9c040e090d9"},
+        {"x": 24576, "decode_tok_s": 45.53456055073531, "ttft_ms": 25347.310534096323, "cached_tokens": 0, "output_token_ids_sha256": "503e5012677d99b037df86f2d9d53e66c5bcfd0c10c255dc94b880b4896f34f4"},
+        {"x": 32768, "decode_tok_s": 44.43728051677345, "ttft_ms": 35058.737567975186, "cached_tokens": 0, "output_token_ids_sha256": "ad3b7472e8bd747cc9b5033366f028638df46c7c1d22ecb778f5626165ce04ac"}
+      ],
+      "quality": "All six Grade C exact-depth requests passed exact submitted/reported prompt counts, 128-token output, cache-zero, no-truncation/context-shift, and timing gates. Separately, the same promoted Q4_K_M TP2 stack passed the 12-prompt realistic cache-zero suite with 12/12 registered output hashes.",
+      "caveat": "The repeated-token 2K-32K curve is Grade C shape evidence, not natural prose. No x=0 HTTP request was measured. The separate realistic suite does not fabricate that point or change the depth fixture's grade. No TP1, alternate KV, graph, prefill, concurrency, headline, protected-value, or submission authority transfers.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp2-http-depth-20260825-r1-attempt1/summary.json"
+    },
+    {
+      "id": "q38-q8weights-tp2-f16kv-http-context-r3-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "quantization": "Q8_0",
+      "variant": "Q8_0 target-only TP2",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp2-llamacpp-sycl-q8-http-depth-v1",
+      "speculation_method": "none",
+      "runtime": "llama.cpp SYCL 4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126 + lab TP2 patch stack",
+      "profile_id": "q38-q8weights-tp2-f16kv-http-depth-grade-c-v1",
+      "measurement_class": "conventional-99-interval-exact-depth-http-serving-grade-c",
+      "promotion_status": "authorized-six-cell-tp2-http-context-and-server-prefill-curve-no-x0-headline-or-submission",
+      "identity": {
+        "model_revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+        "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+        "llama_server_sha256": "6ae782c7e8f7a992e0eeced10ade2a84b3cbb9ba65c65cbb917e52d1ce09777d",
+        "libggml_sycl_sha256": "375f6d251b022b62367e73d2cd6b7eb0200efc9cc9c854a509af45950938c3ed"
+      },
+      "config": {"tp": 2, "mtp": 0, "graph": "off", "graph_mode": "off", "fit": "off", "kv": "f16", "reasoning_enabled": false, "speculation": "none", "tensor_split": "1,1", "parallel_slots": 1, "configured_max_context_tokens": 33024, "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "One-slot native HTTP /v1/completions; exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals; one server prompt-evaluation timing row per depth",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 2048, "decode_tok_s": 36.79674030798057, "prefill_tok_s": 1032.33, "ttft_ms": 2003.0714339809492, "cached_tokens": 0, "output_token_ids_sha256": "5b50b962a571834aa9a7beebe37929db23520f0749cbe0df2ab847421eea0f30"},
+        {"x": 4096, "decode_tok_s": 36.553471815162666, "prefill_tok_s": 1038.62, "ttft_ms": 3957.1460890583694, "cached_tokens": 0, "output_token_ids_sha256": "d6e637475049304d94d09bd553ade177f8831eab0754109f2df3c64d4865f256"},
+        {"x": 8192, "decode_tok_s": 36.01395813311342, "prefill_tok_s": 1019.69, "ttft_ms": 8047.487462987192, "cached_tokens": 0, "output_token_ids_sha256": "c58c7f49909bd0d4c9206f0ba0a4c8b086368344ec7b9bcf3a9ed53e6d956337"},
+        {"x": 16384, "decode_tok_s": 35.085401486482745, "prefill_tok_s": 983.52, "ttft_ms": 16681.124167051166, "cached_tokens": 0, "output_token_ids_sha256": "6729ff1c62f25b70f1c52df382839824037a3e5900b481e2a44eae106fdc4727"},
+        {"x": 24576, "decode_tok_s": 34.518837744162, "prefill_tok_s": 947.33, "ttft_ms": 25957.882561022416, "cached_tokens": 0, "output_token_ids_sha256": "c89d818b02947c125f26355896823ff201cb7a0234571af166b62580101c6983"},
+        {"x": 32768, "decode_tok_s": 33.848820185540816, "prefill_tok_s": 915.09, "ttft_ms": 35832.39820506424, "cached_tokens": 0, "output_token_ids_sha256": "747773a85e12c33128105d8b7163690e67e692ab4a048fb3d08a2f25f01c1186"}
+      ],
+      "quality": "All six Grade C exact-depth requests passed exact prompt-count, 128-token output, cache-zero, no-truncation/context-shift, timing, and single prompt-evaluation-row gates. The earlier 12-prompt quality-cleared headline used reasoning-enabled output and remains a distinct identity from this reasoning-off depth curve.",
+      "caveat": "The repeated-token 2K-32K curve is Grade C shape evidence, not natural prose. No x=0 HTTP request was measured. The historical reasoning-enabled package headline is not joined to this reasoning-off curve. No TP1, alternate KV, graph, concurrency, protected-value, or submission authority transfers.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-q8-tp2-http-depth-prefill-20260825-r3-attempt1/summary.json"
+    },
+    {
+      "id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-official-fp8-017b9c7",
+      "quantization": "FP8",
+      "variant": "Official FP8 target-only TP2",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp2-vllm-xpu-official-fp8-http-depth-v1",
+      "speculation_method": "none",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "profile_id": "q38-official-fp8-tp2-f16kv-http-depth-grade-c-v1",
+      "measurement_class": "conventional-99-interval-exact-depth-openai-http-serving-grade-c",
+      "promotion_status": "authorized-six-cell-tp2-http-context-curve-no-x0-headline-or-submission",
+      "identity": {
+        "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+        "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+        "vllm_source": "ac7509e2b",
+        "model_manifest_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb"
+      },
+      "config": {"tp": 2, "mtp": 0, "graph": "on", "graph_mode": "PIECEWISE", "graph_capture_sizes": [1], "kv": "f16", "speculation": "none", "parallel_slots": 1, "configured_max_context_tokens": 33024, "prefix_caching": false},
+      "workload": "One-slot vLLM OpenAI-compatible HTTP completions; exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 2048, "decode_tok_s": 21.83515985732775, "ttft_ms": 1385.137420031242, "effective_prompt_throughput_proxy_tok_s": 1478.553658563211, "cached_tokens": 0, "output_token_ids_sha256": "f504c0a691e466943c82b270087c30b09e5b39b11af600878cc3ddcc0f913105"},
+        {"x": 4096, "decode_tok_s": 21.67327818299236, "ttft_ms": 2605.8584400452673, "effective_prompt_throughput_proxy_tok_s": 1571.8428664639384, "cached_tokens": 0, "output_token_ids_sha256": "0f078254be0567e42025404c942fead803aec5e93225809777b7c1149be42a3d"},
+        {"x": 8192, "decode_tok_s": 21.270145761584512, "ttft_ms": 5191.96776591707, "effective_prompt_throughput_proxy_tok_s": 1577.8218142602484, "cached_tokens": 0, "output_token_ids_sha256": "e6fa5a350fef6d977e98c576716f400854d02e542f6315b2e4da35fe345f0f51"},
+        {"x": 16384, "decode_tok_s": 20.927452277370538, "ttft_ms": 10533.231251989491, "effective_prompt_throughput_proxy_tok_s": 1555.4581123342782, "cached_tokens": 0, "output_token_ids_sha256": "bbcad44e1415ae44a1a285618c47ee9d38000b71093ead24464180a86a2f38a1"},
+        {"x": 24576, "decode_tok_s": 20.650132687274663, "ttft_ms": 16139.140372048132, "effective_prompt_throughput_proxy_tok_s": 1522.757683089734, "cached_tokens": 0, "output_token_ids_sha256": "a8c694cad45bed222385b17937022a2b3463994776f528775482dbd147c41928"},
+        {"x": 32768, "decode_tok_s": 20.38985363507897, "ttft_ms": 21872.674228041433, "effective_prompt_throughput_proxy_tok_s": 1498.1249964391839, "cached_tokens": 0, "output_token_ids_sha256": "a19557e76af679995d75f7b64fd8cddb231f842d79a37d6a1b585efd478a852f"}
+      ],
+      "quality": "All six Grade C exact-depth requests passed exact prompt-count, 128-token output, cache-zero, no-truncation, and timing gates. The separately recorded size-one graph package battery passed seven exact cases, deterministic eight-run repeat, long-context needle, and oracle checks.",
+      "caveat": "The repeated-token 2K-32K curve is Grade C shape evidence, not natural prose. No x=0 HTTP request was measured. Effective prompt throughput is prompt tokens divided by observed HTTP TTFT and includes scheduling, chunked prefill, and first-token work; it is not server or kernel prefill and is not rendered as such. No llama.cpp, TP1, eager, alternate-KV, concurrency, headline, protected-value, or submission authority transfers.",
+      "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json"
     },
     {
       "id": "q36-q8-tp1-target-dnn-off-context",
@@ -4108,12 +4267,13 @@
     },
     {
       "id": "context-q4kxl-f16-http",
-      "title": "Q4_K_XL F16 HTTP context",
-      "subtitle": "Grade C · Qwen3.8 UD-Q4_K_XL target-only TP1 · graph and fit off · exact cache-zero HTTP serving through 32K · full quality battery passed · matched Q8_0 HTTP sibling pending and not plotted",
+      "title": "Q4_K_XL HTTP context × KV",
+      "subtitle": "Grade C · same Qwen3.8 UD-Q4_K_XL artifact and runtime · target-only TP1 · graph and fit off · exact cache-zero HTTP serving through 32K · both full quality batteries passed",
       "x_label": "active context tokens",
       "metrics": ["decode_tok_s"],
       "series": [
-        {"label": "F16 KV · HTTP · Grade C", "measurement_ids": ["q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c"]}
+        {"label": "F16 KV · HTTP · Grade C", "measurement_ids": ["q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c"]},
+        {"label": "Q8_0 KV · HTTP · Grade C", "measurement_ids": ["q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"]}
       ]
     },
     {
@@ -4125,6 +4285,18 @@
       "series": [
         {"label": "F16 KV · HTTP · Grade C", "measurement_ids": ["q38-q5ks-tp1-f16kv-target-http-context-r1-grade-c"]},
         {"label": "Q8_0 KV · HTTP · Grade C", "measurement_ids": ["q38-q5ks-tp1-q8kv-target-http-context-r1-grade-c"]}
+      ]
+    },
+    {
+      "id": "context-q38-tp2-http",
+      "title": "Qwen3.8 TP2 HTTP context × format",
+      "subtitle": "Grade C · exact cache-zero HTTP serving at 2K-32K for three separately pinned artifacts and runtimes; x=0 remains missing · Q4_K_M and Q8_0 use llama.cpp graph-off while official FP8 uses vLLM PIECEWISE · cross-format comparisons are descriptive, not causal, and quality scopes remain distinct",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "prefill_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "Q4_K_M · F16 KV · llama.cpp graph off", "measurement_ids": ["q38-q4km-tp2-f16kv-http-context-r1-grade-c"]},
+        {"label": "Q8_0 weights · F16 KV · llama.cpp graph off", "measurement_ids": ["q38-q8weights-tp2-f16kv-http-context-r3-grade-c"]},
+        {"label": "Official FP8 · F16 KV · vLLM PIECEWISE", "measurement_ids": ["q38-official-fp8-tp2-f16kv-http-context-r1-grade-c"]}
       ]
     },
     {
@@ -6085,11 +6257,12 @@
           "kv": "q8_0"
         },
         "state": "lab-measured",
-        "label": "D23.122 · P759.03 · raw sweep",
-        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "label": "D21.769 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed. x=0 is zero prior context plus one ordinary prompt token.",
+        "evidence_id": "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c",
         "point_x": 0,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-q8kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-q8kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -6106,11 +6279,12 @@
           "kv": "q8_0"
         },
         "state": "lab-measured",
-        "label": "D21.448 · P731.08 · raw sweep",
-        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "label": "D20.267 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c",
         "point_x": 2048,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-q8kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-q8kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -6127,11 +6301,12 @@
           "kv": "q8_0"
         },
         "state": "lab-measured",
-        "label": "D20.179 · P714.55 · raw sweep",
-        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "label": "D19.089 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c",
         "point_x": 4096,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-q8kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-q8kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -6148,11 +6323,12 @@
           "kv": "q8_0"
         },
         "state": "lab-measured",
-        "label": "D17.992 · P685.25 · raw sweep",
-        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "label": "D17.118 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c",
         "point_x": 8192,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-q8kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-q8kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -6169,11 +6345,12 @@
           "kv": "q8_0"
         },
         "state": "lab-measured",
-        "label": "D14.383 · P634.60 · raw sweep",
-        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "label": "D13.831 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c",
         "point_x": 16384,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-q8kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-q8kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -6190,11 +6367,12 @@
           "kv": "q8_0"
         },
         "state": "lab-measured",
-        "label": "D12.093 · P592.44 · raw sweep",
-        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "label": "D11.647 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c",
         "point_x": 24576,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-q8kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-q8kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -6211,11 +6389,12 @@
           "kv": "q8_0"
         },
         "state": "lab-measured",
-        "label": "D10.425 · P557.75 · raw sweep",
-        "reason": "Exact raw-engine depth point with five repetitions. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-q8-context",
+        "label": "D10.077 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c",
         "point_x": 32768,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-q8kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-q8kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -6417,6 +6596,90 @@
         "evidence_id": "q38-q5ks-q8kv-route8k-mtp4-grade-c", "packet_id": "qwen38-27b-q5ks-q8kv-external-mtp-8k-grade-c", "parent": "qwen38-q5ks-external-mtp-8k-route-sentinel",
         "retry": {"status": "classified-deterministic-divergence"}
       }
+    ]
+  },
+  {
+    "id": "qwen38-tp2-llamacpp-sycl-q4km-http-depth",
+    "label": "Qwen3.8 TP2 · llama.cpp SYCL Q4_K_M exact HTTP depth",
+    "description": "Seven exact selector cells for the pinned Q4_K_M TP2 target-only F16-KV graph-off HTTP lane: six Grade C cache-zero measurements at 2K-32K and an explicit missing x=0 cell.",
+    "fixed_selectors": {
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+      "tp": 2,
+      "mtp": 0,
+      "graph_mode": "off",
+      "kv": "f16",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp2-llamacpp-sycl-q4km-http-depth-v1",
+      "speculation_method": "none"
+    },
+    "axes": [
+      {"key": "active_context_tokens", "label": "Active context", "values": [0, 2048, 4096, 8192, 16384, 24576, 32768], "value_labels": {"0": "0", "2048": "2K", "4096": "4K", "8192": "8K", "16384": "16K", "24576": "24K", "32768": "32K"}}
+    ],
+    "rules": [
+      {"id": "default-exact-gap", "match": {"active_context_tokens": "*"}, "state": "missing", "label": "unmeasured exact cell", "reason": "No exact Q4_K_M HTTP request binds this selector; configured maximum context never substitutes for active context.", "parent": "qwen38-q4km-tp2-http-depth-20260825-r1", "retry": {"status": "queued", "trigger": "new-exact-http-run"}},
+      {"id": "measured-2k", "match": {"active_context_tokens": 2048}, "state": "lab-measured", "label": "D49.49 · T1,945", "reason": "Exact Grade C cache-zero HTTP depth cell.", "evidence_id": "q38-q4km-tp2-f16kv-http-context-r1-grade-c", "point_x": 2048, "packet_id": "qwen38-27b-q4km-tp2-asrock-b70", "parent": "qwen38-q4km-tp2-http-depth-20260825-r1", "retry": {"status": "complete"}},
+      {"id": "measured-4k", "match": {"active_context_tokens": 4096}, "state": "lab-measured", "label": "D49.01 · T3,860", "reason": "Exact Grade C cache-zero HTTP depth cell.", "evidence_id": "q38-q4km-tp2-f16kv-http-context-r1-grade-c", "point_x": 4096, "packet_id": "qwen38-27b-q4km-tp2-asrock-b70", "parent": "qwen38-q4km-tp2-http-depth-20260825-r1", "retry": {"status": "complete"}},
+      {"id": "measured-8k", "match": {"active_context_tokens": 8192}, "state": "lab-measured", "label": "D48.3 · T7,862", "reason": "Exact Grade C cache-zero HTTP depth cell.", "evidence_id": "q38-q4km-tp2-f16kv-http-context-r1-grade-c", "point_x": 8192, "packet_id": "qwen38-27b-q4km-tp2-asrock-b70", "parent": "qwen38-q4km-tp2-http-depth-20260825-r1", "retry": {"status": "complete"}},
+      {"id": "measured-16k", "match": {"active_context_tokens": 16384}, "state": "lab-measured", "label": "D47.03 · T16,300", "reason": "Exact Grade C cache-zero HTTP depth cell.", "evidence_id": "q38-q4km-tp2-f16kv-http-context-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-q4km-tp2-asrock-b70", "parent": "qwen38-q4km-tp2-http-depth-20260825-r1", "retry": {"status": "complete"}},
+      {"id": "measured-24k", "match": {"active_context_tokens": 24576}, "state": "lab-measured", "label": "D45.53 · T25,347", "reason": "Exact Grade C cache-zero HTTP depth cell.", "evidence_id": "q38-q4km-tp2-f16kv-http-context-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-q4km-tp2-asrock-b70", "parent": "qwen38-q4km-tp2-http-depth-20260825-r1", "retry": {"status": "complete"}},
+      {"id": "measured-32k", "match": {"active_context_tokens": 32768}, "state": "lab-measured", "label": "D44.44 · T35,059", "reason": "Exact Grade C cache-zero HTTP depth cell.", "evidence_id": "q38-q4km-tp2-f16kv-http-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-q4km-tp2-asrock-b70", "parent": "qwen38-q4km-tp2-http-depth-20260825-r1", "retry": {"status": "complete"}}
+    ]
+  },
+  {
+    "id": "qwen38-tp2-llamacpp-sycl-q8-http-depth",
+    "label": "Qwen3.8 TP2 · llama.cpp SYCL Q8_0 exact HTTP depth",
+    "description": "Seven exact selector cells for the pinned Q8_0-weight TP2 target-only F16-KV graph-off HTTP lane: six Grade C cache-zero measurements at 2K-32K and an explicit missing x=0 cell.",
+    "fixed_selectors": {
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "tp": 2,
+      "mtp": 0,
+      "graph_mode": "off",
+      "kv": "f16",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp2-llamacpp-sycl-q8-http-depth-v1",
+      "speculation_method": "none"
+    },
+    "axes": [
+      {"key": "active_context_tokens", "label": "Active context", "values": [0, 2048, 4096, 8192, 16384, 24576, 32768], "value_labels": {"0": "0", "2048": "2K", "4096": "4K", "8192": "8K", "16384": "16K", "24576": "24K", "32768": "32K"}}
+    ],
+    "rules": [
+      {"id": "default-exact-gap", "match": {"active_context_tokens": "*"}, "state": "missing", "label": "unmeasured exact cell", "reason": "No exact Q8_0-weight HTTP request binds this selector; configured maximum context never substitutes for active context.", "parent": "qwen38-q8-tp2-http-depth-prefill-20260825-r3", "retry": {"status": "queued", "trigger": "new-exact-http-run"}},
+      {"id": "measured-2k", "match": {"active_context_tokens": 2048}, "state": "lab-measured", "label": "D36.8 · P1,032 · T2,003", "reason": "Exact Grade C cache-zero HTTP depth cell with server prompt-evaluation timing.", "evidence_id": "q38-q8weights-tp2-f16kv-http-context-r3-grade-c", "point_x": 2048, "packet_id": "qwen38-27b-q8-tp2-asrock-b70", "parent": "qwen38-q8-tp2-http-depth-prefill-20260825-r3", "retry": {"status": "complete"}},
+      {"id": "measured-4k", "match": {"active_context_tokens": 4096}, "state": "lab-measured", "label": "D36.55 · P1,039 · T3,957", "reason": "Exact Grade C cache-zero HTTP depth cell with server prompt-evaluation timing.", "evidence_id": "q38-q8weights-tp2-f16kv-http-context-r3-grade-c", "point_x": 4096, "packet_id": "qwen38-27b-q8-tp2-asrock-b70", "parent": "qwen38-q8-tp2-http-depth-prefill-20260825-r3", "retry": {"status": "complete"}},
+      {"id": "measured-8k", "match": {"active_context_tokens": 8192}, "state": "lab-measured", "label": "D36.01 · P1,020 · T8,047", "reason": "Exact Grade C cache-zero HTTP depth cell with server prompt-evaluation timing.", "evidence_id": "q38-q8weights-tp2-f16kv-http-context-r3-grade-c", "point_x": 8192, "packet_id": "qwen38-27b-q8-tp2-asrock-b70", "parent": "qwen38-q8-tp2-http-depth-prefill-20260825-r3", "retry": {"status": "complete"}},
+      {"id": "measured-16k", "match": {"active_context_tokens": 16384}, "state": "lab-measured", "label": "D35.09 · P983.52 · T16,681", "reason": "Exact Grade C cache-zero HTTP depth cell with server prompt-evaluation timing.", "evidence_id": "q38-q8weights-tp2-f16kv-http-context-r3-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-q8-tp2-asrock-b70", "parent": "qwen38-q8-tp2-http-depth-prefill-20260825-r3", "retry": {"status": "complete"}},
+      {"id": "measured-24k", "match": {"active_context_tokens": 24576}, "state": "lab-measured", "label": "D34.52 · P947.33 · T25,958", "reason": "Exact Grade C cache-zero HTTP depth cell with server prompt-evaluation timing.", "evidence_id": "q38-q8weights-tp2-f16kv-http-context-r3-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-q8-tp2-asrock-b70", "parent": "qwen38-q8-tp2-http-depth-prefill-20260825-r3", "retry": {"status": "complete"}},
+      {"id": "measured-32k", "match": {"active_context_tokens": 32768}, "state": "lab-measured", "label": "D33.85 · P915.09 · T35,832", "reason": "Exact Grade C cache-zero HTTP depth cell with server prompt-evaluation timing.", "evidence_id": "q38-q8weights-tp2-f16kv-http-context-r3-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-q8-tp2-asrock-b70", "parent": "qwen38-q8-tp2-http-depth-prefill-20260825-r3", "retry": {"status": "complete"}}
+    ]
+  },
+  {
+    "id": "qwen38-tp2-vllm-xpu-fp8-http-depth",
+    "label": "Qwen3.8 TP2 · vLLM XPU official FP8 exact HTTP depth",
+    "description": "Seven exact selector cells for the pinned official-FP8 TP2 target-only F16-KV PIECEWISE HTTP lane: six Grade C cache-zero measurements at 2K-32K and an explicit missing x=0 cell.",
+    "fixed_selectors": {
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-official-fp8-017b9c7",
+      "tp": 2,
+      "mtp": 0,
+      "graph_mode": "PIECEWISE",
+      "kv": "f16",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp2-vllm-xpu-official-fp8-http-depth-v1",
+      "speculation_method": "none"
+    },
+    "axes": [
+      {"key": "active_context_tokens", "label": "Active context", "values": [0, 2048, 4096, 8192, 16384, 24576, 32768], "value_labels": {"0": "0", "2048": "2K", "4096": "4K", "8192": "8K", "16384": "16K", "24576": "24K", "32768": "32K"}}
+    ],
+    "rules": [
+      {"id": "default-exact-gap", "match": {"active_context_tokens": "*"}, "state": "missing", "label": "unmeasured exact cell", "reason": "No exact official-FP8 HTTP request binds this selector; configured maximum context never substitutes for active context.", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "queued", "trigger": "new-exact-http-run"}},
+      {"id": "measured-2k", "match": {"active_context_tokens": 2048}, "state": "lab-measured", "label": "D21.84 · T1,385", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 2048, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-4k", "match": {"active_context_tokens": 4096}, "state": "lab-measured", "label": "D21.67 · T2,606", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 4096, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-8k", "match": {"active_context_tokens": 8192}, "state": "lab-measured", "label": "D21.27 · T5,192", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 8192, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-16k", "match": {"active_context_tokens": 16384}, "state": "lab-measured", "label": "D20.93 · T10,533", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-24k", "match": {"active_context_tokens": 24576}, "state": "lab-measured", "label": "D20.65 · T16,139", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-32k", "match": {"active_context_tokens": 32768}, "state": "lab-measured", "label": "D20.39 · T21,873", "reason": "Exact Grade C cache-zero HTTP depth cell; prompt-throughput proxy is not server prefill.", "evidence_id": "q38-official-fp8-tp2-f16kv-http-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70", "parent": "qwen38-fp8-tp2-http-depth-20260826-r1", "retry": {"status": "complete"}}
     ]
   }
 ],
