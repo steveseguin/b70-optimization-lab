@@ -1,0 +1,210 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-mtp0-f16-piecewise-depth-human-adjudication.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp1-mtp0-f16-piecewise-depth-20260826-r3-human-adjudication",
+  "status": "mixed-depth-human-adjudicated-grade-c",
+  "identity": {
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "image_id": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3"
+  },
+  "config": {
+    "tp": 1,
+    "cards": 1,
+    "mtp": 0,
+    "speculation": "none",
+    "graph": "on",
+    "graph_mode": "PIECEWISE",
+    "graph_capture_sizes": [1],
+    "kv": "f16",
+    "configured_max_context_tokens": 32896,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "prefix_caching": false,
+    "pythonhashseed": 0,
+    "same_image_target_profile": "TP1/MTP0/eager/F16"
+  },
+  "metric_definition": {
+    "decode_field": "conventional_99_interval_tok_s",
+    "decode_semantics": "first 100 timestamped token events over 99 inter-token intervals after TTFT",
+    "interpolation_or_extrapolation": false
+  },
+  "coverage": {
+    "missing_depths": [0],
+    "lab_measured_depths": [2048, 4096, 16384, 24576, 32768],
+    "quarantined_depths": [8192],
+    "evidence_grade": "C"
+  },
+  "cells": [
+    {
+      "x": 0,
+      "publication_state": "missing",
+      "reason": "no exact zero-context measurement exists"
+    },
+    {
+      "x": 2048,
+      "evidence_grade": "C",
+      "cached_tokens": 0,
+      "completion_tokens": 128,
+      "candidate_token_ids_sha256": "c606180877a26135511d7c4213c48c6107d20368e5d107aefe2b0de795ef4e89",
+      "target_token_ids_sha256": "c606180877a26135511d7c4213c48c6107d20368e5d107aefe2b0de795ef4e89",
+      "piecewise_raw_sha256": "b52606700b0d628ba25cb0b3715be344474abce11da75d4c75b515fb209a4fc3",
+      "eager_target_raw_sha256": "b130cd570fdf72303c79b30c79704956adc73d1507e9909e5f6bf34a0ee20d5e",
+      "publication_state": "lab-measured",
+      "target_parity": true,
+      "decode_tok_s": 30.075429359128265,
+      "ttft_ms": 1363.4014569979627
+    },
+    {
+      "x": 4096,
+      "evidence_grade": "C",
+      "cached_tokens": 0,
+      "completion_tokens": 128,
+      "candidate_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0",
+      "target_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0",
+      "piecewise_raw_sha256": "dbe7523591ee8bf5722eeba2555dfa9243d00b35bf80bb758b2a26b2fa50b027",
+      "eager_target_raw_sha256": "c9dbfb8b9cf8ef23bea5ebe2cb3199c82d678988106e2f619221236e4726dd9e",
+      "publication_state": "lab-measured",
+      "target_parity": true,
+      "decode_tok_s": 29.41347238250489,
+      "ttft_ms": 2474.7674179961905
+    },
+    {
+      "x": 8192,
+      "evidence_grade": "C",
+      "cached_tokens": 0,
+      "completion_tokens": 128,
+      "candidate_token_ids_sha256": "dd31856f45269d222efe0f6f5f1ac9342b6c9ae55e5ce9129fc02b27abdb7e8e",
+      "target_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53",
+      "piecewise_raw_sha256": "b598392b48aa8b2b405f6c7279f3a421f2148ff919f91183ca48481a9374e0d7",
+      "eager_target_raw_sha256": "94f7d11862b2e35b057e7a95b3d529b89a4c2857d8886ce93e4b4d85b7385c34",
+      "publication_state": "quarantined",
+      "target_parity": false,
+      "reason": "same-image TP1/MTP0 PIECEWISE output diverges from eager TP1/MTP0 at token 99",
+      "speed_publication_authorized": false,
+      "first_divergence": {"zero_based": 98, "one_based": 99, "candidate": 411, "target": 579}
+    },
+    {
+      "x": 16384,
+      "evidence_grade": "C",
+      "cached_tokens": 0,
+      "completion_tokens": 128,
+      "candidate_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7",
+      "target_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7",
+      "piecewise_raw_sha256": "8a845c87875611d220c9ac4d117f86ac9606cf80fc24a6753c563a8e9cda6329",
+      "eager_target_raw_sha256": "69cab2ec785de5615c4a47ca666c68d579dc5d9a163a50c87461e35217d0a847",
+      "publication_state": "lab-measured",
+      "target_parity": true,
+      "decode_tok_s": 28.192761390148664,
+      "ttft_ms": 10545.48624700692
+    },
+    {
+      "x": 24576,
+      "evidence_grade": "C",
+      "cached_tokens": 0,
+      "completion_tokens": 128,
+      "candidate_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8",
+      "target_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8",
+      "piecewise_raw_sha256": "d029d52f16e786993373a7e011124154e11621a293639ea7eba217b5e9176955",
+      "eager_target_raw_sha256": "4902ceb508b2828f405f62e7c3b76c323074b03b904d67be2dfce64b159e23c4",
+      "publication_state": "lab-measured",
+      "target_parity": true,
+      "decode_tok_s": 27.463520678399885,
+      "ttft_ms": 16543.705064992537
+    },
+    {
+      "x": 32768,
+      "evidence_grade": "C",
+      "cached_tokens": 0,
+      "completion_tokens": 128,
+      "candidate_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786",
+      "target_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786",
+      "piecewise_raw_sha256": "9d737a5e1e1852970c5af5cf9d4e4abc57d85eebe3c606909d52eccc960e59e6",
+      "eager_target_raw_sha256": "668b1ae15d8497c7230565a6937514585e6dddcc56e685e1f0e146c902464598",
+      "publication_state": "lab-measured",
+      "target_parity": true,
+      "decode_tok_s": 26.759466347975422,
+      "ttft_ms": 22671.85614600021
+    }
+  ],
+  "evidence_controls": {
+    "original_validator_passes_but_does_not_compare_arms": true,
+    "original_validator_gap": "The frozen R3 validator independently verifies each arm's exact-depth, cache-zero, quality, identity, model, and terminal receipts, then reproduces all 12 compact points; it never compares PIECEWISE output token IDs with eager output token IDs at the same depth.",
+    "corrective_gate": "all 128 PIECEWISE token IDs must equal same-image eager MTP0 at the same exact depth",
+    "both_full_quality_batteries_passed": true,
+    "quality_scope_per_arm": "7/7 exact cases, 8/8 deterministic repeats with one hash, 8K needle, 24/24 baseline comparisons",
+    "quality_cache_zero": "32/32",
+    "model_verification": "verified 19 files through coherent O_DIRECT and ordinary reads",
+    "graph_identity": "PIECEWISE capture size 1; no FULL capture",
+    "topology": "TP1 world_size=1 rank=0 on level_zero:0",
+    "cache_isolation": "distinct eager-f16 and piecewise-f16 ext4 cache roots",
+    "cleanup": "terminal clean; both campaign containers absent and ports 19466/19467 closed at sealing"
+  },
+  "adjudication": {
+    "kind": "explicit-human-additive-per-depth-target-parity-adjudication",
+    "original_result_preserved_immutable": true,
+    "automatic_publication_authority": false,
+    "additive_family_integration_pending": true,
+    "selected_speed_depths": [2048, 4096, 16384, 24576, 32768],
+    "no_selected_speed_depths": [8192],
+    "missing_depths": [0],
+    "basis": "Each selected PIECEWISE cell passed the exact-depth and cache-zero gate, exactly matched all 128 same-image eager TP1/MTP0 target IDs at that depth, and inherits only the complete profile-specific graph/eager quality, identity, TP1 topology, isolated-cache, model-verification, and cleanup authority. Exact 8K passed those structural gates but diverged at token 99, so it is speedless and quarantined."
+  },
+  "authority": {
+    "additive_profile_specific_coverage_cells": 6,
+    "lab_measured_speed_cells": 5,
+    "quarantined_cells": 1,
+    "zero_context_cells": 0,
+    "other_mtp_graph_kv_tp_or_runtime_cells": 0,
+    "headline_or_protected_replacement": false,
+    "quarantined_8k_speed_selection": false,
+    "graph_mtp_descendant_authority": false,
+    "localmaxxing_submission": false,
+    "protected_decode_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]
+  },
+  "source_artifacts": {
+    "original_compact": {
+      "result_path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-r3-result.json",
+      "result_sha256": "81a6b4f6d936ab4a9a204e4d89ac3b8e7b01d7f40c099e7df69c62abacc87796",
+      "validator_path": "experiments/qwen38-27b-b70/scripts/validate-20260826-qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-r3-result.py",
+      "validator_sha256": "0269712f9b7610f76a1d336c1b11b9373ae0b97392aa3b055c0023c25845dc6e",
+      "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3",
+      "terminal_receipt_sha256": "6cb6b3c8ae06eefe0c516c0dac057c20ca7837e6bae3b96e012a250f41dafa02",
+      "model_verification_sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd",
+      "tracked_inputs": {
+        "preregistration": {
+          "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-r3-prereg.json",
+          "sha256": "00ebfddd0c2da052dc037a18b982c42309f8b46a3cd13789fcca0f097f0d4bfa"
+        },
+        "runner": {
+          "path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp1-f16-graphmodes-depth-r3.sh",
+          "sha256": "48145dc110a40476e4e1951fa3a8895d37ffd489ecde4fbcccceb03dc45c1e06"
+        }
+      }
+    },
+    "raw_receipts": {
+      "eager-f16": {
+        "arm_result_sha256": "3415a13903250b265956123606932722685bb8159b3590ad65848058c46376cc",
+        "quality_sha256": "d4c4904897b6d9ced18d650dae4944d44d32a30a8bd50ed99e5f6ace422d37e8",
+        "server_args_sha256": "6c5f4e5b04d6d361e72d281699cd58b5c8f63a948702fc323d1efe1b6c5ad8f6",
+        "server_startup_sha256": "a524062fc7da2e2df8e2298521c3b88a61790c379dae3002b65c3c8f4d718c8b",
+        "server_log_sha256": "e27446b1eadcee8a493e10b845d1256f619ce4505daca44561b542b4dbbb870e",
+        "container_inspect_sha256": "f6df4c8fd11940f68faa09f93083e1c63184aea798f47fcf581f6e8c2b248c1e",
+        "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3/eager-f16"
+      },
+      "piecewise-f16": {
+        "arm_result_sha256": "5bad018b79a80bd2c8c775771043f0ed9a5cda8237e281fbffdf97a7915695d6",
+        "quality_sha256": "347010956e862010faaa03ed909674f1e6fc3c9c951addc160ea3dd3a2c60d46",
+        "server_args_sha256": "8f86c415fd00ea219c43b026c2ef2e304adf51c5c8fe51596378c7d2e78fdf7f",
+        "server_startup_sha256": "b474e15431ff65c3d98cb8cbc9e63c53e920e6f0127373f8849d8ea8b8b3a2c5",
+        "server_log_sha256": "84fd0f00c2bcf871538a5e4141f1d09fd93696c919118f8473ba682607a66970",
+        "container_inspect_sha256": "a909eea6058a66251bc1d5806e8a61b1bc57506a99a9ea007fce0f308cd34aee",
+        "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp1-f16-graphmodes-depth-20260826-r3/piecewise-f16"
+      }
+    }
+  }
+}
