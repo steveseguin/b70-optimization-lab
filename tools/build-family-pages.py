@@ -3622,7 +3622,7 @@ def family_page(family: dict[str, Any]) -> str:
 <a class="skip" href="#main">Skip to content</a>
 <div class="site-nav"><div class="wrap">
   <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
-  <nav aria-label="Primary"><a href="../index.html">Home</a><a href="index.html" aria-current="page">Models</a><a href="../learn.html">Learn</a><a href="../guides.html">Guide library</a><a href="../index.html#lab-speeds">Benchmarks</a><a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></nav>
+  <nav aria-label="Primary"><a href="../index.html">Home</a><a href="index.html" aria-current="page">Models</a><a href="../learn.html">Learn</a><a href="../guides.html">Recipes</a><a href="../index.html#lab-speeds">Benchmarks</a><a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></nav>
 </div></div>
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / {esc(family.get('display_name'))}</p>
@@ -3643,9 +3643,9 @@ def family_page(family: dict[str, Any]) -> str:
   <div class="views-grid">{views}</div>{deferred_views_html}
   <details class="fine"><summary>Fine print</summary><p>{esc(boundary)}. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p>{closures_section}</details>
 {multiuser_html}{projection_html}
-  <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Guide library</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="{esc(source)}"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
+  <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Recipes</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="{esc(source)}"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>
-<footer><div class="wrap"><span>Unofficial lab, not affiliated with Intel. Measurements link to proof; estimates are labeled.</span><span><a href="../learn.html">Learn</a> · <a href="../guides.html">Guide library</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span></div></footer>
+<footer><div class="wrap"><span>Unofficial lab, not affiliated with Intel. Measurements link to proof; estimates are labeled.</span><span><a href="../learn.html">Learn</a> · <a href="../guides.html">Recipes</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span></div></footer>
 <script defer src="../learn/assets/mlbottleneck-bridge.js?v={bridge_version()}"></script>
 <script>
 (() => {{
@@ -3808,7 +3808,15 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="validate and fail if generated pages drift")
     args = parser.parse_args()
-    return generate(args.check)
+    rc = generate(args.check)
+    if rc == 0 and not args.check:
+        # models/index.html counts every family's packets, so it goes stale the
+        # moment a family manifest changes. Regenerating it here means a manifest
+        # commit can never leave CI's `git diff --exit-code -- models` red.
+        import subprocess
+
+        subprocess.run([sys.executable, str(ROOT / "tools" / "build-model-pages.py")], check=True)
+    return rc
 
 
 if __name__ == "__main__":
