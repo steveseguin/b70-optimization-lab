@@ -592,6 +592,31 @@
       "manifest": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-08-25-qwen36-mtpq8-f16-tp1-sycl-graph-quality-r1-result.md"
     },
     {
+      "id": "qwen36-27b-embedded-mtp-q4km-tp1-sycl-graph-profile",
+      "label": "Qwen3.6 embedded-MTP Q4_K_M · TP1 F16-KV SYCL graph profile",
+      "revision": "qwen3.6-27b",
+      "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "quality-qualified-family-research-profile-negative-optimization-result",
+      "evidence_level": "B70-verified raw-engine profile",
+      "coverage": ["prefill", "decode", "active context 0-32K", "F16 KV", "target-only MTP0", "SYCL graph phase", "quality", "patch identity"],
+      "grades": {
+        "evidence": {
+          "grade": "B",
+          "scope": "Qwen3.6 embedded-MTP Q4_K_M artifact run target-only at TP1 MTP0 with F16 KV and SYCL graph",
+          "basis": "seven exact five-repetition pp2048/tg128 cells retain per-phase graph counters and sealed model, binary, backend, DSO, source, and patch identities; a fresh 13-request cache-zero battery passed exact canaries, repeat determinism, and the approximately 29.4K-token needle, while clean-host replay and HTTP serving evidence remain absent; graph-on is slower than the matched protected graph-off control in both phases at every depth",
+          "reviewed_at": "2026-08-25",
+          "evidence": [
+            "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-exact-depth-r1-result.json",
+            "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-quality-r1-result.json"
+          ]
+        }
+      },
+      "manifest": "experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-quality-r1-result.md"
+    },
+    {
       "id": "qwen36-27b-q8-mtp3-tp1",
       "label": "Qwen3.6 Q8_0 · TP1 + integrated MTP3",
       "revision": "qwen3.6-27b",
@@ -2267,6 +2292,54 @@
       "evidence": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-exact-depth-result.json"
     },
     {
+      "id": "q36-q4km-tp1-graph-f16-context",
+      "state": "lab-measured",
+      "revision": "qwen3.6-27b",
+      "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+      "quantization": "Q4_K_M",
+      "variant": "Q4_K_M · embedded-MTP artifact · target-only MTP0 · F16 KV · SYCL graph",
+      "runtime": "llama.cpp SYCL fa0f3b25a47f346858a4d0d169f5181aa424b110 + graph cache evidence/pointer-stability/capacity chain",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen36-tp1-llamacpp-sycl-target-only-v1",
+      "speculation_method": "none",
+      "profile_id": "q36-q4km-f16-sycl-graph-raw-target-only-depth-v1",
+      "measurement_class": "llama-bench-raw-exact-depth-graph-sweep",
+      "promotion_status": "quality-qualified-family-profile-negative-optimization-result",
+      "quality_scope": "13/13 cache-zero requests: 4/4 exact canaries, 8/8 identical repeats, and one approximately 29.4K-token needle inside a 32K service; the tracked adjudication covers all seven shared-identity cells",
+      "identity": {
+        "model_revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+        "model_sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+        "source_head": "fa0f3b25a47f346858a4d0d169f5181aa424b110",
+        "bench_sha256": "8ea8fd14e6ac0c4a4b3a711db8997189d677df2a4f7f88d20609f59ca463a55e",
+        "graph_backend_sha256": "7d03bc06f46f188fd6ecd47034a878a2bd96d20a752a6a0731121176e101c8e2",
+        "dso_closure_count": 32,
+        "dso_closure_sha256": "381e09a3e6a3f9c932930f20d5d4cc7fd67eef2b2c6bfb39308724f13b570720"
+      },
+      "patch_chain": [
+        {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-evidence-port-20260825.patch", "sha256": "1a8589f894fde7d87aac35c59bc81e3701bf7f6d9ba54f35808ae262325d7892"},
+        {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-pointer-stable-r2-20260825.patch", "sha256": "1575acc5ee07b37eb98186a09d201a895d36501c223dc114110a43ee08f4e0a3"},
+        {"path": "patches/qwen36-27b-mtp-gguf-q4-b70/llamacpp-fa0-graph-cache-q8-capacity-scaled-r3-20260825.patch", "sha256": "3def9e5eeb42d9bd1dc4b0c759092572db178651ecafc5255943753bd8b485f6"}
+      ],
+      "config": {"tp": 1, "mtp": 0, "graph": "on", "graph_mode": "SYCL", "graph_cache_size": 8, "kv": "f16", "speculation": "none", "embedded_mtp_capability": true},
+      "workload": "llama-bench pp2048 plus tg128 at each exact active depth, five repetitions, fa=on; raw-engine shape metric",
+      "axis": "active_context_tokens",
+      "phase_classification": {"decode": "verified capture-and-replay at every depth", "prefill_depth_0": "capture-and-replay without cache-full", "prefill_depth_2k_through_32k": "mixed partial graph with positive cache-full"},
+      "comparison_to_graph_off": {"baseline_measurement_id": "q36-q4km-tp1-kv-f16-context", "all_seven_depths_slower_in_decode": true, "all_seven_depths_slower_in_prefill": true, "unweighted_mean_decode_delta_pct": -2.333593, "unweighted_mean_prefill_delta_pct": -8.137743, "classification": "negative-optimization-result"},
+      "points": [
+        {"x": 0, "decode_tok_s": 28.579918, "prefill_tok_s": 818.204240, "samples": 5, "decode_graph_phase": "verified-capture-and-replay", "prefill_graph_phase": "capture-and-replay-without-cache-full"},
+        {"x": 2048, "decode_tok_s": 28.049278, "prefill_tok_s": 800.162651, "samples": 5, "decode_graph_phase": "verified-capture-and-replay", "prefill_graph_phase": "mixed-partial-cache-full"},
+        {"x": 4096, "decode_tok_s": 27.664886, "prefill_tok_s": 780.493068, "samples": 5, "decode_graph_phase": "verified-capture-and-replay", "prefill_graph_phase": "mixed-partial-cache-full"},
+        {"x": 8192, "decode_tok_s": 27.180377, "prefill_tok_s": 746.470110, "samples": 5, "decode_graph_phase": "verified-capture-and-replay", "prefill_graph_phase": "mixed-partial-cache-full"},
+        {"x": 16384, "decode_tok_s": 26.233159, "prefill_tok_s": 688.173276, "samples": 5, "decode_graph_phase": "verified-capture-and-replay", "prefill_graph_phase": "mixed-partial-cache-full"},
+        {"x": 24576, "decode_tok_s": 25.366200, "prefill_tok_s": 644.830793, "samples": 5, "decode_graph_phase": "verified-capture-and-replay", "prefill_graph_phase": "mixed-partial-cache-full"},
+        {"x": 32768, "decode_tok_s": 24.569574, "prefill_tok_s": 606.643612, "samples": 5, "decode_graph_phase": "verified-capture-and-replay", "prefill_graph_phase": "mixed-partial-cache-full"}
+      ],
+      "quality": "Family ingestion binds the immutable R1 raw curve to the separate tracked quality-battery adjudication. The raw terminal alone grants no publication authority.",
+      "caveat": "Raw-engine pp2048/tg128 profile, not HTTP serving or record evidence. The artifact contains embedded MTP tensors, but this MTP0 run loaded no speculator and is target-only. Decode is fully graph-certified at all depths; prefill is fully graph-certified only at depth 0 and mixed partial above it. Graph-on is slower than the protected graph-off F16 series in both decode and prefill at every depth, so this is a negative optimization result and does not replace protected values.",
+      "evidence": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-exact-depth-r1-result.json",
+      "quality_evidence": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-quality-r1-result.json"
+    },
+    {
       "id": "q36-q4km-tp1-kv-q8-context",
       "state": "lab-measured",
       "revision": "qwen3.6-27b",
@@ -3356,6 +3429,17 @@
       ]
     },
     {
+      "id": "context-q36-q4km-f16-sycl-graph",
+      "title": "Qwen3.6 Q4_K_M F16-KV graph comparison",
+      "subtitle": "TP1 · target-only MTP0 · raw-engine pp2048/tg128 · graph decode is fully certified and prefill is mixed partial above depth 0 · graph-on is slower in both phases at all seven depths, so graph-off remains the recommended measured lane",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "prefill_tok_s"],
+      "series": [
+        {"label": "Graph off · protected control", "measurement_ids": ["q36-q4km-tp1-kv-f16-context"]},
+        {"label": "SYCL graph · quality-qualified negative", "measurement_ids": ["q36-q4km-tp1-graph-f16-context"]}
+      ]
+    },
+    {
       "id": "context-q36-q8-target",
       "title": "Qwen3.6 Q8 target-only context",
       "subtitle": "TP1 llama.cpp SYCL · discrete evidence, not a fitted curve · baseline x is one exact prompt count; each VDR2 x is the larger anchor of a disclosed two-prompt median with band-specific ubatch",
@@ -3924,6 +4008,13 @@
       {"id": "measured-q36-mtpq8-graph-q8-context-16384", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "SYCL", "kv": "q8_0"}, "state": "lab-measured", "label": "D12.713 · P747.51 · qualified raw graph", "reason": "Exact five-repetition raw-engine q8_0-KV cell covered by the tracked embedded-artifact quality adjudication. Decode is fully graph-certified, prefill is mixed partial, and graph-on is slower than the protected graph-off control.", "evidence_id": "q36-mtpq8-tp1-graph-q8-context", "point_x": 16384, "packet_id": "qwen36-27b-embedded-mtp-q8-tp1-sycl-graph-profile", "parent": "qwen36-tp1-sycl-graph-depth-curve", "retry": {"status": "complete"}},
       {"id": "measured-q36-mtpq8-graph-q8-context-24576", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "SYCL", "kv": "q8_0"}, "state": "lab-measured", "label": "D10.833 · P692.95 · qualified raw graph", "reason": "Exact five-repetition raw-engine q8_0-KV cell covered by the tracked embedded-artifact quality adjudication. Decode is fully graph-certified, prefill is mixed partial, and graph-on is slower than the protected graph-off control.", "evidence_id": "q36-mtpq8-tp1-graph-q8-context", "point_x": 24576, "packet_id": "qwen36-27b-embedded-mtp-q8-tp1-sycl-graph-profile", "parent": "qwen36-tp1-sycl-graph-depth-curve", "retry": {"status": "complete"}},
       {"id": "measured-q36-mtpq8-graph-q8-context-32768", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q8-0-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "SYCL", "kv": "q8_0"}, "state": "lab-measured", "label": "D9.475 · P644.91 · qualified raw graph", "reason": "Exact five-repetition raw-engine q8_0-KV cell covered by the tracked embedded-artifact quality adjudication. Decode is fully graph-certified, prefill is mixed partial, and graph-on is slower than the protected graph-off control.", "evidence_id": "q36-mtpq8-tp1-graph-q8-context", "point_x": 32768, "packet_id": "qwen36-27b-embedded-mtp-q8-tp1-sycl-graph-profile", "parent": "qwen36-tp1-sycl-graph-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-graph-f16-context-0", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "SYCL", "kv": "f16"}, "state": "lab-measured", "label": "D28.580 · P818.20 · qualified raw graph", "reason": "Exact five-repetition raw-engine cell covered by the tracked Q4_K_M quality adjudication. Both phases retain positive graph evidence, but graph-on is slower than the protected graph-off control and is not an optimization win.", "evidence_id": "q36-q4km-tp1-graph-f16-context", "point_x": 0, "packet_id": "qwen36-27b-embedded-mtp-q4km-tp1-sycl-graph-profile", "parent": "qwen36-tp1-sycl-graph-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-graph-f16-context-2048", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "SYCL", "kv": "f16"}, "state": "lab-measured", "label": "D28.049 · P800.16 · qualified raw graph", "reason": "Exact five-repetition raw-engine cell covered by the tracked Q4_K_M quality adjudication. Decode is fully graph-certified, prefill is mixed partial, and graph-on is slower than the protected graph-off control.", "evidence_id": "q36-q4km-tp1-graph-f16-context", "point_x": 2048, "packet_id": "qwen36-27b-embedded-mtp-q4km-tp1-sycl-graph-profile", "parent": "qwen36-tp1-sycl-graph-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-graph-f16-context-4096", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "SYCL", "kv": "f16"}, "state": "lab-measured", "label": "D27.665 · P780.49 · qualified raw graph", "reason": "Exact five-repetition raw-engine cell covered by the tracked Q4_K_M quality adjudication. Decode is fully graph-certified, prefill is mixed partial, and graph-on is slower than the protected graph-off control.", "evidence_id": "q36-q4km-tp1-graph-f16-context", "point_x": 4096, "packet_id": "qwen36-27b-embedded-mtp-q4km-tp1-sycl-graph-profile", "parent": "qwen36-tp1-sycl-graph-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-graph-f16-context-8192", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "SYCL", "kv": "f16"}, "state": "lab-measured", "label": "D27.180 · P746.47 · qualified raw graph", "reason": "Exact five-repetition raw-engine cell covered by the tracked Q4_K_M quality adjudication. Decode is fully graph-certified, prefill is mixed partial, and graph-on is slower than the protected graph-off control.", "evidence_id": "q36-q4km-tp1-graph-f16-context", "point_x": 8192, "packet_id": "qwen36-27b-embedded-mtp-q4km-tp1-sycl-graph-profile", "parent": "qwen36-tp1-sycl-graph-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-graph-f16-context-16384", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "SYCL", "kv": "f16"}, "state": "lab-measured", "label": "D26.233 · P688.17 · qualified raw graph", "reason": "Exact five-repetition raw-engine cell covered by the tracked Q4_K_M quality adjudication. Decode is fully graph-certified, prefill is mixed partial, and graph-on is slower than the protected graph-off control.", "evidence_id": "q36-q4km-tp1-graph-f16-context", "point_x": 16384, "packet_id": "qwen36-27b-embedded-mtp-q4km-tp1-sycl-graph-profile", "parent": "qwen36-tp1-sycl-graph-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-graph-f16-context-24576", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "SYCL", "kv": "f16"}, "state": "lab-measured", "label": "D25.366 · P644.83 · qualified raw graph", "reason": "Exact five-repetition raw-engine cell covered by the tracked Q4_K_M quality adjudication. Decode is fully graph-certified, prefill is mixed partial, and graph-on is slower than the protected graph-off control.", "evidence_id": "q36-q4km-tp1-graph-f16-context", "point_x": 24576, "packet_id": "qwen36-27b-embedded-mtp-q4km-tp1-sycl-graph-profile", "parent": "qwen36-tp1-sycl-graph-depth-curve", "retry": {"status": "complete"}},
+      {"id": "measured-q36-q4km-graph-f16-context-32768", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "SYCL", "kv": "f16"}, "state": "lab-measured", "label": "D24.570 · P606.64 · qualified raw graph", "reason": "Exact five-repetition raw-engine cell covered by the tracked Q4_K_M quality adjudication. Decode is fully graph-certified, prefill is mixed partial, and graph-on is slower than the protected graph-off control.", "evidence_id": "q36-q4km-tp1-graph-f16-context", "point_x": 32768, "packet_id": "qwen36-27b-embedded-mtp-q4km-tp1-sycl-graph-profile", "parent": "qwen36-tp1-sycl-graph-depth-curve", "retry": {"status": "complete"}},
       {"id": "measured-q36-q4km-f16-context-0", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D29.303 · P826.36 · raw sweep", "reason": "Exact raw-engine depth point with five repetitions. Performance, serving quality, and optimization maturity remain separate.", "evidence_id": "q36-q4km-tp1-kv-f16-context", "point_x": 0, "parent": "qwen36-tp1-raw-depth-sweep", "retry": {"status": "complete"}},
       {"id": "measured-q36-q4km-f16-context-2048", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D28.718 · P891.60 · raw sweep", "reason": "Exact raw-engine depth point with five repetitions. Performance, serving quality, and optimization maturity remain separate.", "evidence_id": "q36-q4km-tp1-kv-f16-context", "point_x": 2048, "parent": "qwen36-tp1-raw-depth-sweep", "retry": {"status": "complete"}},
       {"id": "measured-q36-q4km-f16-context-4096", "match": {"revision": "qwen3.6-27b", "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D28.424 · P869.41 · raw sweep", "reason": "Exact raw-engine depth point with five repetitions. Performance, serving quality, and optimization maturity remain separate.", "evidence_id": "q36-q4km-tp1-kv-f16-context", "point_x": 4096, "parent": "qwen36-tp1-raw-depth-sweep", "retry": {"status": "complete"}},

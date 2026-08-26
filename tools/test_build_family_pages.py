@@ -1541,9 +1541,9 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             sum(cell["state"] == "quarantined" for cell in q36_cells), 63
         )
-        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 896)
+        self.assertEqual(sum(cell["state"] == "missing" for cell in q36_cells), 889)
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q36_cells), 98
+            sum(cell["state"] == "lab-measured" for cell in q36_cells), 105
         )
         self.assertEqual(sum(cell["state"] == "estimated" for cell in q36_cells), 0)
 
@@ -1565,6 +1565,27 @@ class FamilyCoverageTest(unittest.TestCase):
                 and cell["selectors"]["kv"] == "f16"
                 and cell["selectors"]["mtp"] == 0
                 for cell in q36_embedded_graph_f16
+            )
+        )
+
+        q36_q4km_graph_f16 = [
+            cell
+            for cell in q36_cells
+            if cell.get("evidence_id") == "q36-q4km-tp1-graph-f16-context"
+        ]
+        self.assertEqual(len(q36_q4km_graph_f16), 7)
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in q36_q4km_graph_f16],
+            [0, 2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertTrue(
+            all(
+                cell["selectors"]["artifact_id"]
+                == "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb"
+                and cell["selectors"]["graph_mode"] == "SYCL"
+                and cell["selectors"]["kv"] == "f16"
+                and cell["selectors"]["mtp"] == 0
+                for cell in q36_q4km_graph_f16
             )
         )
 
@@ -1636,11 +1657,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("TP1 coverage · 8 matrices", overview_html)
-        self.assertIn("216/1,771 classified", overview_html)
+        self.assertIn("223/1,771 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "153", "measured"),
+            ("lab-measured", "160", "measured"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,555", "missing"),
+            ("missing", "1,548", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -1657,8 +1678,8 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("16 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 16)
+        self.assertIn("17 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 17)
 
         q36_context_view = next(
             view for view in family["views"]
