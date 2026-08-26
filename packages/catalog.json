@@ -2965,6 +2965,129 @@
       ],
       "performance_profiles": [
         {
+          "id": "http-decode-vs-active-context",
+          "label": "Qualified Q8_0 TP2 HTTP decode over exact active context",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_label": "Exact active prompt tokens",
+          "scope": "One-slot native HTTP completions on the exact Q8_0 TP2 stack, two B70s, equal tensor split, F16 KV, 33,024 configured context, cache disabled, no truncation or context shift, and 128 returned token IDs. The fixture is grade C repeated-token shape evidence, not natural prose. Every marker is measured; no point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/qwen38-q8-tp2-http-depth-prefill-20260825-r3-attempt1/summary.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 36.79674030798057,
+              "samples": 1
+            },
+            {
+              "context_tokens": 4096,
+              "value": 36.553471815162666,
+              "samples": 1
+            },
+            {
+              "context_tokens": 8192,
+              "value": 36.01395813311342,
+              "samples": 1
+            },
+            {
+              "context_tokens": 16384,
+              "value": 35.085401486482745,
+              "samples": 1
+            },
+            {
+              "context_tokens": 24576,
+              "value": 34.518837744162,
+              "samples": 1
+            },
+            {
+              "context_tokens": 32768,
+              "value": 33.848820185540816,
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "id": "http-prefill-vs-active-context",
+          "label": "Q8_0 TP2 server prompt evaluation",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_label": "Exact submitted prompt tokens",
+          "scope": "llama-server prompt-evaluation counters from the same fail-closed exact-depth replay. Exactly one timing row was required for every registered prompt depth. This is the repeated-token grade-C fixture, not natural prose or a derived TTFT estimate. Every marker is measured; no point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/qwen38-q8-tp2-http-depth-prefill-20260825-r3-attempt1/summary.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 1032.33,
+              "samples": 1
+            },
+            {
+              "context_tokens": 4096,
+              "value": 1038.62,
+              "samples": 1
+            },
+            {
+              "context_tokens": 8192,
+              "value": 1019.69,
+              "samples": 1
+            },
+            {
+              "context_tokens": 16384,
+              "value": 983.52,
+              "samples": 1
+            },
+            {
+              "context_tokens": 24576,
+              "value": 947.33,
+              "samples": 1
+            },
+            {
+              "context_tokens": 32768,
+              "value": 915.09,
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "id": "http-ttft-vs-active-context",
+          "label": "Qualified Q8_0 TP2 HTTP TTFT over exact active context",
+          "metric": "ttft",
+          "unit": "ms",
+          "x_label": "Exact active prompt tokens",
+          "scope": "TTFT from the same one-slot exact-token HTTP receipts as the decode and prompt-evaluation curves. Cache was zero and prompt counts were exact at every marker. The fixture is grade C repeated-token shape evidence and is not a natural-prose latency claim. Every marker is measured; no point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/qwen38-q8-tp2-http-depth-prefill-20260825-r3-attempt1/summary.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 2003.0714339809492,
+              "samples": 1
+            },
+            {
+              "context_tokens": 4096,
+              "value": 3957.1460890583694,
+              "samples": 1
+            },
+            {
+              "context_tokens": 8192,
+              "value": 8047.487462987192,
+              "samples": 1
+            },
+            {
+              "context_tokens": 16384,
+              "value": 16681.124167051166,
+              "samples": 1
+            },
+            {
+              "context_tokens": 24576,
+              "value": 25957.882561022416,
+              "samples": 1
+            },
+            {
+              "context_tokens": 32768,
+              "value": 35832.39820506424,
+              "samples": 1
+            }
+          ]
+        },
+        {
           "id": "http-output-audited-aggregate-vs-concurrent-users",
           "label": "Output-audited Q8_0 TP2 HTTP aggregate decode",
           "metric": "aggregate_decode",
@@ -3049,7 +3172,7 @@
         "launch": "QWEN38_SOURCE_DIR=/path/to/source QWEN38_BUILD_DIR=/path/to/build QWEN38_MODEL=/path/to/Qwen3.8-27B-Q8_0.gguf repro/qwen38-27b-q8-tp2-asrock-b70/run-server.sh",
         "health": "curl -fsS http://127.0.0.1:18088/health",
         "benchmark": "OUT=/path/to/result.json repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh",
-        "stop": "Stop the foreground server with Ctrl-C, then verify clean teardown with pgrep -af llama-server."
+        "stop": "Press Ctrl-C once in the foreground launcher and wait; then require pgrep -x llama-server to return no process. Do not signal both the systemd scope and child."
       },
       "dependencies": [
         "repro/qwen38-27b-q8-tp2-asrock-b70/README.md",
@@ -3068,6 +3191,10 @@
         "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-r2-prereg.json",
         "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-oracle-digests.json",
         "experiments/qwen38-27b-b70/scripts/run-qwen38-q8-tp2-http-concurrency-r2.sh",
+        "experiments/qwen38-27b-b70/data/qwen38-q8-tp2-http-depth-prefill-20260825-r3-attempt1/summary.json",
+        "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-depth-prefill-r3-prereg.json",
+        "experiments/qwen38-27b-b70/scripts/run-qwen38-q8-tp2-http-depth-prefill-r3.sh",
+        "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-package-throughput-launch-smoke.json",
         "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
       ],
       "known_limitations": [
@@ -3080,7 +3207,7 @@
         "tested platform installation",
         "clean-host replay",
         "beginner recovery flow",
-        "decode, prefill, and TTFT context sweep",
+        "natural-prompt HTTP speed and TTFT context sweep",
         "queued TTFT and per-request latency profile"
       ]
     }

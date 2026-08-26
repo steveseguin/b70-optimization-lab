@@ -94,8 +94,28 @@ c8-to-c16 drop is deliberately not smoothed. These are aggregate batch-wall
 rates, not queued TTFT or per-request latency. See the
 [evidence](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-r2-result.json).
 
+## Exact active-context profile
+
+The one-slot, reasoning-off HTTP service was also replayed at exact prompt
+depths. Each receipt returned 128 token IDs with zero cache reuse, no
+truncation, and no context shift. Server-reported prompt evaluation was
+captured directly; it is not estimated from TTFT.
+
+| Prompt tokens | Decode tok/s | Prefill tok/s | TTFT |
+| ---: | ---: | ---: | ---: |
+| 2,048 | 36.797 | 1,032.33 | 2.003 s |
+| 4,096 | 36.553 | 1,038.62 | 3.957 s |
+| 8,192 | 36.014 | 1,019.69 | 8.047 s |
+| 16,384 | 35.085 | 983.52 | 16.681 s |
+| 24,576 | 34.519 | 947.33 | 25.958 s |
+| 32,768 | **33.849** | 915.09 | 35.832 s |
+
+This is a grade-C repeated-token exact-shape fixture, not a natural-prose
+latency claim. Every marker is measured; no interpolation or extrapolation is
+used. See the [qualified replay](../../experiments/qwen38-27b-b70/data/qwen38-q8-tp2-http-depth-prefill-20260825-r3-attempt1/summary.json).
+
 ## Certification gaps
 
 The remaining work is a tested host installation path, clean-host replay,
-beginner recovery guide, exact active-context decode/prefill/TTFT curves, and
-queued TTFT/per-request latency.
+beginner recovery guide, natural-prompt HTTP context curves, and queued
+TTFT/per-request latency.

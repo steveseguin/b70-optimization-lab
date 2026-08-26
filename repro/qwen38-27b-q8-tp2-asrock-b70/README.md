@@ -206,10 +206,38 @@ the [qualified result](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q
 [preregistration](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-r2-prereg.json),
 and [compact oracle](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-concurrency-oracle-digests.json).
 
+The exact one-slot context replay measured the following target-only/MTP0
+service points:
+
+| Prompt tokens | Decode tok/s | Server prefill tok/s | TTFT |
+| ---: | ---: | ---: | ---: |
+| 2,048 | 36.797 | 1,032.33 | 2.003 s |
+| 4,096 | 36.553 | 1,038.62 | 3.957 s |
+| 8,192 | 36.014 | 1,019.69 | 8.047 s |
+| 16,384 | 35.085 | 983.52 | 16.681 s |
+| 24,576 | 34.519 | 947.33 | 25.958 s |
+| 32,768 | 33.849 | 915.09 | 35.832 s |
+
+The fail-closed replay required exact prompt depth, 128 output IDs, cache zero,
+no truncation/context shift, and exactly one server prompt-evaluation timing
+per registered depth. The fixture is repeated-token grade C, not natural
+prose, and no point is interpolated or extrapolated. See the
+[summary](../../experiments/qwen38-27b-b70/data/qwen38-q8-tp2-http-depth-prefill-20260825-r3-attempt1/summary.json)
+and [preregistration](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-depth-prefill-r3-prereg.json).
+
 The reference selector is `level_zero:1,0`, addressed as `SYCL0,SYCL1` by the
 server. Confirm enumeration on another host. The launcher is loopback-only,
 uses equal TP2, one slot, 8K context, F16 KV, FlashAttention, cache RAM zero,
 context checkpoints zero, fit off, and an 8/10 GiB host-memory scope.
+
+Stop the foreground launcher with one `Ctrl-C` and wait for cleanup to finish;
+then require `pgrep -x llama-server` to return no process. Do not separately
+signal both the systemd scope and its child, and do not wrap this foreground
+launcher in another timeout that broadcasts a second interrupt. This runtime
+has a known host-allocator abort on double-interrupt cleanup even after a
+successful request. A direct single-interrupt package smoke exited zero with
+both GPUs and firmware normal; see the
+[smoke receipt](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-package-throughput-launch-smoke.json).
 
 For the wider semantic test, run
 [`scripts/qwen38-text-quality-suite.py`](../../scripts/qwen38-text-quality-suite.py)

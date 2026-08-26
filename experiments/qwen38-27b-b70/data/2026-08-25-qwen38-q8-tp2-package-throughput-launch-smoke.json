@@ -1,0 +1,31 @@
+{
+  "schema": "neural.download.package-launch-smoke.v1",
+  "tested_at_utc": "2026-08-26T02:56:32Z",
+  "package": "qwen38-27b-q8-tp2-asrock-b70",
+  "launcher": "repro/qwen38-27b-q8-tp2-asrock-b70/run-throughput-server.sh",
+  "launcher_sha256": "b5dffa09f6d9dac8e0d00ef7a1e3a8ec0de904df5ac4710f581128b1e613c7aa",
+  "server_wrapper_sha256": "eff787aa745d4206bac4b637cd3311015b913cf246b19f9fc3d15e74a463d00b",
+  "profile": {
+    "cards": 2,
+    "topology": "TP2 tensor split 1,1",
+    "generation": "target-only / MTP0",
+    "parallel_slots": 64,
+    "context_tokens_total": 32768,
+    "kv_cache": "f16",
+    "prompt_cache": false
+  },
+  "checks": {
+    "health_status_ok": true,
+    "openai_chat_completion_content": "PACKAGE_TP2_OK",
+    "reasoning_content_absent": true,
+    "finish_reason": "stop",
+    "completion_tokens": 5,
+    "single_ctrl_c_exit_status": 0,
+    "llama_server_absent_after_exit": true,
+    "gpu_0_state_normal_after_exit": true,
+    "gpu_1_state_normal_after_exit": true,
+    "verify_mismatch": 0
+  },
+  "classification": "package-launcher-smoke-passed",
+  "boundary": "Health, one real OpenAI chat completion, and clean single-interrupt shutdown only; performance is published from the separate preregistered concurrency campaign."
+}

@@ -48,6 +48,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "packages/ornith-15-9b-q8-b70/package.json": ("decode-vs-context-depth", 39.83848),
             "packages/qwen38-27b-q4km-tp1-b70/package.json": ("http-decode-vs-active-context", 24.488129029771436),
             "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json": ("http-decode-vs-active-context", 44.43728051677345),
+            "packages/qwen38-27b-q8-tp2-b70/package.json": ("http-decode-vs-active-context", 33.848820185540816),
         }
         for manifest, (profile_id, expected) in expected_context.items():
             package = json.loads((MODULE.ROOT / manifest).read_text())
@@ -66,6 +67,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn(">83.8 HTTP&dagger;</a>", index_html)
         self.assertIn(">68.6 HTTP&dagger;</a>", index_html)
         self.assertIn(">165.4 HTTP&dagger;</a>", index_html)
+        self.assertIn(">163.6 HTTP&dagger;</a>", index_html)
         self.assertIn("Multi-user greedy output is batch-shape-dependent", index_html)
 
     def test_promoted_ornith_packet_and_family_stay_in_parity(self) -> None:

@@ -1,0 +1,252 @@
+0.00.329.497 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.331.127 W srv  llama_server: -----------------
+0.00.331.128 W srv  llama_server: CORS is set to allow all origins ('*') and no API key is set
+0.00.331.128 W srv  llama_server: this can be a security risk (cross-origin attacks)
+0.00.331.129 W srv  llama_server: more info: https://github.com/ggml-org/llama.cpp/pull/25655
+0.00.331.129 W srv  llama_server: -----------------
+0.00.332.639 I srv    load_model: loading model '/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/Qwen3.8-27B-Q8_0.gguf'
+Build with Macros:
+  GGML_SYCL_DNNL: yes
+  GGML_SYCL_F16: yes
+  GGML_SYCL_FORCE_MMQ: no
+  GGML_SYCL_GRAPH: no
+  GGML_SYCL_SUPPORT_LEVEL_ZERO_API: yes
+  GGML_SYCL_SUPPORT_VMM: yes
+SYCL doors | WDC        : UNAVAILABLE (built without GGML_SYCL_DNNL)
+SYCL doors | dispatch   : enable_mmq=1 (GGML_SYCL_ENABLE_MMQ)  mmvq_cap=16 mmvq_wide=16 (GGML_SYCL_MMVQ_CAP/WIDE)  mmq_cap=16 (GGML_SYCL_MMQ_CAP)  mmvq_eff[q8_0,dev0]=13 (f238 measured 12/13 vs WDC)  mmq_q8_reorder=1 mmq_q4k_reorder=0 (GGML_SYCL_MMQ_Q4K_REORDER)
+SYCL doors | ne1 reshape: mmvq_pad=1 (GGML_SYCL_MMVQ_PAD)  mmvq_split=1 (GGML_SYCL_MMVQ_SPLIT)  split_at=0 (row default)
+SYCL doors | mmvq_sg32  : 0 (GGML_SYCL_MMVQ_SG32; -1=auto PVC-only, 0=off [default], 1=force-on; q8_0 ne1=1 only; per-device resolution printed at first dispatch)
+SYCL doors | mmvq_phase : -1 (GGML_SYCL_MMVQ_PHASE; -1=auto PVC-only [default], 0=off, 1=force-on; all reorder MMVQ variants; de-phases the f376 ×3-stride HBM resonance; output NOT bit-identical to off [FP order]; per-device resolution printed at first dispatch)
+SYCL doors | q8 dedup   : 1 (GGML_SYCL_Q8_QUANT_DEDUP; 0=off, 1=on, 2=on+verify-hits [env-explicit]; poison=0 (GGML_SYCL_Q8_DEDUP_POISON))
+SYCL doors | fuse_ext   : 0x1F (GGML_SYCL_FUSE_EXT bitmask [env-explicit]; bit0=add_rms_mul bit1=add_softplus_mul bit2=l2norm_pair bit3=cont_sigmoid_mul; rides ENABLE_FUSION=1; poison=0 (GGML_SYCL_FUSE_POISON))
+SYCL doors | ne1 reshape: mmvq_chunk=-1 (GGML_SYCL_MMVQ_CHUNK) -- when non-zero the
+                          MMVQ dispatch ceiling is DECOUPLED from the instantiation
+                          ceiling (16); ne[1] above it is served as chunks, per-row.
+SYCL doors | mmq tiles  : AMPERE (SYCL_USE_XMX), WARP_SIZE=16  [-DMMQ_X_<T>_AMPERE / MMQ_Y_<T>_AMPERE / NWARPS_<T>_AMPERE]
+SYCL doors | mmq tiles  :   Q4_0   x=4    y=32   nwarps=4    wg_threads=64    flt/thr=2
+SYCL doors | mmq tiles  :   Q4_1   x=4    y=32   nwarps=4    wg_threads=64    flt/thr=2
+SYCL doors | mmq tiles  :   Q5_0   x=4    y=32   nwarps=4    wg_threads=64    flt/thr=2
+SYCL doors | mmq tiles  :   Q5_1   x=4    y=32   nwarps=4    wg_threads=64    flt/thr=2
+SYCL doors | mmq tiles  :   Q8_0   x=4    y=32   nwarps=4    wg_threads=64    flt/thr=2
+SYCL doors | mmq tiles  :   Q2_K   x=4    y=32   nwarps=4    wg_threads=64    flt/thr=2
+SYCL doors | mmq tiles  :   Q3_K   x=4    y=32   nwarps=4    wg_threads=64    flt/thr=2
+SYCL doors | mmq tiles  :   Q4_K   x=4    y=32   nwarps=4    wg_threads=64    flt/thr=2
+SYCL doors | mmq tiles  :   Q5_K   x=4    y=32   nwarps=4    wg_threads=64    flt/thr=2
+SYCL doors | mmq tiles  :   Q6_K   x=16   y=64   nwarps=8    wg_threads=128   flt/thr=8
+SYCL doors | ne1 machine:   dev0 BMG_G31_B70 (device_id=0xE223)
+SYCL doors | ne1 machine:   dev1 BMG_G31_B70 (device_id=0xE223)
+SYCL doors | mkl_direct : mkl_direct=1 (GGML_SYCL_MKL_DIRECT; unset=auto)  uniform_gpu_arch=1 -- f357: oneMKL jit:gemm is order-poisoned in a mixed-arch process; 0 routes sub-256^3 f32 GEMMs to oneDNN like everything else
+SYCL doors | ne1 route  :   [BMG_G31_B70] q8_0   mmvq_edge=13 mmq_window=(13,13] empty    [LIVE]
+SYCL doors | ne1 route  :   [BMG_G31_B70] q4_0   mmvq_edge=16 mmq_window=(16,16] empty    [LIVE]
+SYCL doors | ne1 route  :   [BMG_G31_B70] q4_K   mmvq_edge=24 mmq_window=(24,16] empty    [INERT: MMQ cannot read this type's reordered layout -- mmq_cap is documentation]
+SYCL doors | ne1 route  :   [BMG_G31_B70] q6_K   mmvq_edge=11 mmq_window=(11,16] OPEN*    [LIVE]
+SYCL doors | ne1 route  :   [BMG_G31_B70] q5_K   mmvq_edge=24 mmq_window=(24,8] empty    [INERT: MMQ cannot read this type's reordered layout -- mmq_cap is documentation]
+SYCL doors | ne1 route  :   [BMG_G31_B70] q3_K   mmvq_edge=8  mmq_window=(8,8] empty    [INERT: MMQ cannot read this type's reordered layout -- mmq_cap is documentation]
+SYCL doors | ne1 route  :   [BMG_G31_B70] nvfp4  mmvq_edge=8  mmq_window=(8,8] empty    [INERT: MMQ cannot read this type's reordered layout -- mmq_cap is documentation]
+SYCL doors | fattn      : mma=1 (GGML_SYCL_FATTN_MMA)  qkv_tile=0 (GGML_SYCL_FATTN_QKV_TILE)  kv_split=kernel-dep(VEC=nsm,TILE=xe_cores) (GGML_SYCL_FATTN_NSM_LEGACY)
+SYCL doors | correctness: deterministic=1 (GGML_SYCL_DETERMINISTIC)  input_async=0 (GGML_SYCL_INPUT_ASYNC)  set_tensor_staging=1 staging_mb=64 (GGML_SYCL_SET_TENSOR_STAGING[_MB])
+Running with Environment Variables:
+  GGML_SYCL_DEBUG: 0
+  GGML_SYCL_DEV2DEV_MEMCPY: 0 (SYCL API)
+  GGML_SYCL_ENABLE_DNN: 0
+  GGML_SYCL_FA_ONEDNN: 1
+  GGML_SYCL_ENABLE_FLASH_ATTN: 1
+  GGML_SYCL_ENABLE_GRAPH: graph disabled by compile flag
+  GGML_SYCL_ENABLE_OPT: 1
+  GGML_SYCL_ENABLE_VMM: 1
+  GGML_SYCL_ENABLE_FUSION: 1
+  GGML_SYCL_PRIORITIZE_DMMV: 0
+  GGML_SYCL_USE_ASYNC_MEM_OP: 1
+  GGML_SYCL_USE_LEVEL_ZERO_API: 1
+  GGML_SYCL_USM_SYSTEM: 0
+  GGML_SYCL_COMM_SINGLE_KERNEL: 1
+  GGML_SYCL_COMM_FUSED_Q8: 1
+  GGML_SYCL_FUSED_SWIGLU_Q8: 1
+  GGML_SYCL_FUSED_ATTN_Q8: 1
+  GGML_SYCL_FUSED_GDN_Q8: 1
+  GGML_SYCL_FUSED_MMVQ_PAIR: 1
+  GGML_SYCL_FUSED_MMVQ_SWIGLU_Q4K: 0
+  GGML_SYCL_FUSED_MMVQ_PAIR_GDN: 1
+  GGML_SYCL_FUSED_MMVQ_TRIPLE_ATTN: 1
+  GGML_SYCL_FUSED_MMVQ_TRIPLE_GDN: 1
+  GGML_SYCL_FUSED_MMVQ_QUAD_GDN: 1
+  GGML_SYCL_FUSED_GDN_BETA_SIGMOID: 1
+  GGML_SYCL_FUSED_CONCAT_STATE: 1
+  GGML_SYCL_FUSED_GDN_STATE_IO: 1
+  GGML_SYCL_FUSED_CONV_STATE_IO: 1
+SYCL doors | mmvq_phase : dev=0 arch=intel_gpu_bmg_g31 -> stock chunk order [auto: PVC only]
+SYCL doors | mmvq_phase : dev=1 arch=intel_gpu_bmg_g31 -> stock chunk order [auto: PVC only]
+SYCL doors | mmvq_sg32  : dev=0 arch=intel_gpu_bmg_g31 -> incumbent SG16 kernel [env forced-off]
+SYCL doors | mmvq_sg32  : dev=1 arch=intel_gpu_bmg_g31 -> incumbent SG16 kernel [env forced-off]
+0.18.739.766 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 33024, kv_unified = 'false'
+0.18.740.082 W srv          init: --cache-idle-slots requires --cache-ram, disabling
+0.18.747.654 I srv          init: chat template supports preserving reasoning, consider enabling it via --reasoning-preserve
+0.18.747.825 I srv  llama_server: model loaded
+0.18.747.830 I srv  llama_server: listening on http://127.0.0.1:18089
+0.19.183.477 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1
+0.19.183.524 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+SYCL doors | collective reduce vec4: 1 (GGML_SYCL_COMM_REDUCE_VEC4)
+SYCL doors | register-direct collective Q8 handoff: 2 (GGML_SYCL_COMM_DIRECT_Q8; 0=accepted, 2=register)
+0.24.189.552 I slot print_timing: id  0 | task 0 | n_decoded =    112, tg =  37.06 t/s, tg_3s =  37.06 t/s
+0.24.620.494 I slot print_timing: id  0 | task 0 | prompt eval time =    1983.86 ms /  2048 tokens (    0.97 ms per token,  1032.33 tokens per second)
+0.24.620.496 I slot print_timing: id  0 | task 0 |        eval time =    3453.08 ms /   128 tokens (   26.98 ms per token,    37.07 tokens per second)
+0.24.620.497 I slot print_timing: id  0 | task 0 |       total time =    5436.95 ms /  2176 tokens
+0.24.620.500 I slot print_timing: id  0 | task 0 |    graphs reused =        126
+0.24.638.184 I slot      release: id  0 | task 0 | stop processing: n_tokens = 2175, truncated = 0
+0.24.722.632 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 613230953166
+0.24.722.667 I slot launch_slot_: id  0 | task 130 | processing task, is_child = 0
+0.31.674.840 I slot print_timing: id  0 | task 130 | n_decoded =    111, tg =  36.90 t/s, tg_3s =  36.90 t/s
+0.32.137.463 I slot print_timing: id  0 | task 130 | prompt eval time =    3943.70 ms /  4096 tokens (    0.96 ms per token,  1038.62 tokens per second)
+0.32.137.465 I slot print_timing: id  0 | task 130 |        eval time =    3471.08 ms /   128 tokens (   27.12 ms per token,    36.88 tokens per second)
+0.32.137.465 I slot print_timing: id  0 | task 130 |       total time =    7414.78 ms /  4224 tokens
+0.32.137.466 I slot print_timing: id  0 | task 130 |    graphs reused =        252
+0.32.146.253 I slot      release: id  0 | task 130 | stop processing: n_tokens = 4223, truncated = 0
+0.32.224.602 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 613238461235
+0.32.224.635 I slot launch_slot_: id  0 | task 262 | processing task, is_child = 0
+0.35.953.330 I slot print_timing: id  0 | task 262 | prompt processing, n_tokens =   4096, progress = 0.50, t =   3.73 s / 1098.51 tokens per second
+0.36.957.216 I slot print_timing: id  0 | task 262 | prompt processing, n_tokens =   5120, progress = 0.62, t =   4.73 s / 1081.87 tokens per second
+0.37.969.732 I slot print_timing: id  0 | task 262 | prompt processing, n_tokens =   6144, progress = 0.75, t =   5.75 s / 1069.44 tokens per second
+0.38.992.919 I slot print_timing: id  0 | task 262 | prompt processing, n_tokens =   7168, progress = 0.88, t =   6.77 s / 1059.06 tokens per second
+0.43.265.054 I slot print_timing: id  0 | task 262 | n_decoded =    109, tg =  36.25 t/s, tg_3s =  36.25 t/s
+0.43.788.296 I slot print_timing: id  0 | task 262 | prompt eval time =    8033.83 ms /  8192 tokens (    0.98 ms per token,  1019.69 tokens per second)
+0.43.788.298 I slot print_timing: id  0 | task 262 |        eval time =    3529.82 ms /   128 tokens (   27.58 ms per token,    36.26 tokens per second)
+0.43.788.298 I slot print_timing: id  0 | task 262 |       total time =   11563.65 ms /  8320 tokens
+0.43.788.299 I slot print_timing: id  0 | task 262 |    graphs reused =        378
+0.43.788.529 I slot      release: id  0 | task 262 | stop processing: n_tokens = 8319, truncated = 0
+0.43.877.796 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 613250103511
+0.43.877.834 I slot launch_slot_: id  0 | task 398 | processing task, is_child = 0
+0.47.611.453 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =   4096, progress = 0.25, t =   3.72 s / 1099.61 tokens per second
+0.48.607.305 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =   5120, progress = 0.31, t =   4.73 s / 1082.58 tokens per second
+0.49.620.863 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =   6144, progress = 0.38, t =   5.74 s / 1069.82 tokens per second
+0.50.645.298 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =   7168, progress = 0.44, t =   6.77 s / 1059.19 tokens per second
+0.51.678.501 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =   8192, progress = 0.50, t =   7.80 s / 1050.17 tokens per second
+0.52.720.662 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =   9216, progress = 0.56, t =   8.84 s / 1042.20 tokens per second
+0.53.772.347 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =  10240, progress = 0.62, t =   9.89 s / 1034.92 tokens per second
+0.54.834.137 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =  11264, progress = 0.69, t =  10.96 s / 1028.09 tokens per second
+0.55.905.155 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =  12288, progress = 0.75, t =  12.03 s / 1021.68 tokens per second
+0.56.985.550 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =  13312, progress = 0.81, t =  13.11 s / 1015.59 tokens per second
+0.58.075.569 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =  14336, progress = 0.88, t =  14.20 s / 1009.74 tokens per second
+0.59.174.934 I slot print_timing: id  0 | task 398 | prompt processing, n_tokens =  15360, progress = 0.94, t =  15.30 s / 1004.11 tokens per second
+1.03.537.028 I slot print_timing: id  0 | task 398 | n_decoded =    106, tg =  35.33 t/s, tg_3s =  35.33 t/s
+1.04.166.464 I slot print_timing: id  0 | task 398 | prompt eval time =   16658.53 ms / 16384 tokens (    1.02 ms per token,   983.52 tokens per second)
+1.04.166.466 I slot print_timing: id  0 | task 398 |        eval time =    3630.09 ms /   128 tokens (   28.36 ms per token,    35.26 tokens per second)
+1.04.167.059 I slot print_timing: id  0 | task 398 |       total time =   20288.62 ms / 16512 tokens
+1.04.167.060 I slot print_timing: id  0 | task 398 |    graphs reused =        504
+1.04.167.434 I slot      release: id  0 | task 398 | stop processing: n_tokens = 16511, truncated = 0
+1.04.253.156 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 613270482417
+1.04.253.195 I slot launch_slot_: id  0 | task 542 | processing task, is_child = 0
+1.07.997.745 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =   4096, progress = 0.17, t =   3.74 s / 1093.86 tokens per second
+1.09.003.164 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =   5120, progress = 0.21, t =   4.75 s / 1077.90 tokens per second
+1.10.018.506 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =   6144, progress = 0.25, t =   5.77 s / 1065.69 tokens per second
+1.11.044.411 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =   7168, progress = 0.29, t =   6.79 s / 1055.48 tokens per second
+1.12.079.239 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =   8192, progress = 0.33, t =   7.83 s / 1046.76 tokens per second
+1.13.122.679 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =   9216, progress = 0.38, t =   8.87 s / 1039.07 tokens per second
+1.14.176.155 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  10240, progress = 0.42, t =   9.92 s / 1031.95 tokens per second
+1.15.239.029 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  11264, progress = 0.46, t =  10.99 s / 1025.32 tokens per second
+1.16.311.312 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  12288, progress = 0.50, t =  12.06 s / 1019.07 tokens per second
+1.17.394.433 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  13312, progress = 0.54, t =  13.14 s / 1013.00 tokens per second
+1.18.485.103 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  14336, progress = 0.58, t =  14.23 s / 1007.32 tokens per second
+1.19.585.109 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  15360, progress = 0.62, t =  15.33 s / 1001.83 tokens per second
+1.20.695.983 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  16384, progress = 0.67, t =  16.44 s / 996.43 tokens per second
+1.21.815.741 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  17408, progress = 0.71, t =  17.56 s / 991.20 tokens per second
+1.22.944.826 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  18432, progress = 0.75, t =  18.69 s / 986.11 tokens per second
+1.24.084.090 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  19456, progress = 0.79, t =  19.83 s / 981.10 tokens per second
+1.25.233.728 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  20480, progress = 0.83, t =  20.98 s / 976.14 tokens per second
+1.26.392.295 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  21504, progress = 0.88, t =  22.14 s / 971.31 tokens per second
+1.27.559.833 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  22528, progress = 0.92, t =  23.31 s / 966.59 tokens per second
+1.28.738.127 I slot print_timing: id  0 | task 542 | prompt processing, n_tokens =  23552, progress = 0.96, t =  24.48 s / 961.90 tokens per second
+1.33.208.117 I slot print_timing: id  0 | task 542 | n_decoded =    105, tg =  34.86 t/s, tg_3s =  34.86 t/s
+1.33.871.093 I slot print_timing: id  0 | task 542 | prompt eval time =   25942.48 ms / 24576 tokens (    1.06 ms per token,   947.33 tokens per second)
+1.33.871.095 I slot print_timing: id  0 | task 542 |        eval time =    3675.41 ms /   128 tokens (   28.71 ms per token,    34.83 tokens per second)
+1.33.871.096 I slot print_timing: id  0 | task 542 |       total time =   29617.89 ms / 24704 tokens
+1.33.871.096 I slot print_timing: id  0 | task 542 |    graphs reused =        630
+1.33.871.619 I slot      release: id  0 | task 542 | stop processing: n_tokens = 24703, truncated = 0
+1.33.967.470 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 613300186601
+1.33.967.511 I slot launch_slot_: id  0 | task 694 | processing task, is_child = 0
+1.37.703.227 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =   4096, progress = 0.12, t =   3.74 s / 1096.45 tokens per second
+1.38.710.446 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =   5120, progress = 0.16, t =   4.74 s / 1079.50 tokens per second
+1.39.728.527 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =   6144, progress = 0.19, t =   5.76 s / 1066.48 tokens per second
+1.40.756.048 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =   7168, progress = 0.22, t =   6.79 s / 1055.90 tokens per second
+1.41.791.763 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =   8192, progress = 0.25, t =   7.82 s / 1047.00 tokens per second
+1.42.836.794 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =   9216, progress = 0.28, t =   8.87 s / 1039.09 tokens per second
+1.43.893.271 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  10240, progress = 0.31, t =   9.93 s / 1031.66 tokens per second
+1.44.958.550 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  11264, progress = 0.34, t =  10.99 s / 1024.84 tokens per second
+1.46.033.442 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  12288, progress = 0.38, t =  12.07 s / 1018.41 tokens per second
+1.47.116.964 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  13312, progress = 0.41, t =  13.15 s / 1012.36 tokens per second
+1.48.208.618 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  14336, progress = 0.44, t =  14.24 s / 1006.66 tokens per second
+1.49.309.405 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  15360, progress = 0.47, t =  15.34 s / 1001.18 tokens per second
+1.50.428.464 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  16384, progress = 0.50, t =  16.45 s / 995.85 tokens per second
+1.51.540.617 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  17408, progress = 0.53, t =  17.57 s / 990.61 tokens per second
+1.52.670.193 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  18432, progress = 0.56, t =  18.70 s / 985.53 tokens per second
+1.53.809.287 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  19456, progress = 0.59, t =  19.84 s / 980.56 tokens per second
+1.54.962.148 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  20480, progress = 0.62, t =  20.99 s / 975.49 tokens per second
+1.56.117.651 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  21504, progress = 0.66, t =  22.15 s / 970.83 tokens per second
+1.57.285.453 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  22528, progress = 0.69, t =  23.32 s / 966.12 tokens per second
+1.58.463.373 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  23552, progress = 0.72, t =  24.50 s / 961.47 tokens per second
+1.59.650.931 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  24576, progress = 0.75, t =  25.68 s / 956.88 tokens per second
+2.00.847.599 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  25600, progress = 0.78, t =  26.88 s / 952.38 tokens per second
+2.02.053.415 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  26624, progress = 0.81, t =  28.09 s / 947.95 tokens per second
+2.03.268.376 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  27648, progress = 0.84, t =  29.30 s / 943.59 tokens per second
+2.04.493.015 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  28672, progress = 0.88, t =  30.53 s / 939.28 tokens per second
+2.05.727.542 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  29696, progress = 0.91, t =  31.76 s / 935.01 tokens per second
+2.06.971.439 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  30720, progress = 0.94, t =  33.00 s / 930.80 tokens per second
+2.08.224.490 I slot print_timing: id  0 | task 694 | prompt processing, n_tokens =  31744, progress = 0.97, t =  34.26 s / 926.64 tokens per second
+2.12.789.060 I slot print_timing: id  0 | task 694 | n_decoded =    103, tg =  34.18 t/s, tg_3s =  34.18 t/s
+2.13.525.000 I slot print_timing: id  0 | task 694 | prompt eval time =   35808.34 ms / 32768 tokens (    1.09 ms per token,   915.09 tokens per second)
+2.13.525.002 I slot print_timing: id  0 | task 694 |        eval time =    3749.14 ms /   128 tokens (   29.29 ms per token,    34.14 tokens per second)
+2.13.525.002 I slot print_timing: id  0 | task 694 |       total time =   39557.48 ms / 32896 tokens
+2.13.525.003 I slot print_timing: id  0 | task 694 |    graphs reused =        756
+2.13.525.674 I slot      release: id  0 | task 694 | stop processing: n_tokens = 32895, truncated = 0
+Received second interrupt, terminating immediately.
+[Q8-DEDUP] graph_computes=286122 quantize_launches=4090 dedup_hits=755340 bypass=0 fused_prefills=195072 fused_swiglu=97536 fused_attn=24384 fused_gdn=73152 fused_mmvq_pairs=97536 fused_q4k_mmvq_swiglu=0 fused_mmvq_gdn_pairs=0 fused_mmvq_attn_triples=24384 fused_mmvq_gdn_triples=0 fused_mmvq_gdn_quads=73152 fused_gdn_beta_sigmoids=106464 fused_concat_states=0 fused_gdn_state_ios=73152 fused_conv_state_ios=73152 fused_conv_silu_outputs=73152 fused_conv_silu_l2=73152 fused_rope_set_rows=35488 fused_qk_rope=0 fused_qk_norm_rope=24384 verified=0 VERIFY_MISMATCH=0 (door=1)
+level_zero backend failed with error: 37 (UR_RESULT_ERROR_UNINITIALIZED)
+Exception caught at file:/mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/ggml/src/ggml-sycl/ggml-sycl.cpp, line:7799, func:operator()
+SYCL error: CHECK_TRY_ERROR((stream)->wait()): Exception caught in this line of code.
+  in function ggml_backend_sycl_synchronize at /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/ggml/src/ggml-sycl/ggml-sycl.cpp:7799
+/mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/ggml/src/ggml-sycl/../ggml-sycl/common.hpp:159: SYCL error
+[New LWP 1721741]
+[New LWP 1721724]
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <https://debuginfod.ubuntu.com>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+warning: File "/opt/intel/oneapi/compiler/2026.1/lib/libsycl.so.9.0.0-gdb.py" auto-loading has been declined by your `auto-load safe-path' set to "$debugdir:$datadir/auto-load".
+To enable execution of this file add
+	add-auto-load-safe-path /opt/intel/oneapi/compiler/2026.1/lib/libsycl.so.9.0.0-gdb.py
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+To completely disable this security protection add
+	set auto-load safe-path /
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+For more information about this security protection see the
+"Auto-loading safe path" section in the GDB manual.  E.g., run from the shell:
+	info "(gdb)Auto-loading safe path"
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+0x00007d4a6a110913 in __GI___wait4 (pid=1721915, stat_loc=0x0, options=0, usage=0x0) at ../sysdeps/unix/sysv/linux/wait4.c:30
+warning: 30	../sysdeps/unix/sysv/linux/wait4.c: No such file or directory
+#0  0x00007d4a6a110913 in __GI___wait4 (pid=1721915, stat_loc=0x0, options=0, usage=0x0) at ../sysdeps/unix/sysv/linux/wait4.c:30
+30	in ../sysdeps/unix/sysv/linux/wait4.c
+#1  0x00007d4a7e6d1863 in ggml_print_backtrace () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libggml-base.so.0
+#2  0x00007d4a7e6d1a0b in ggml_abort () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libggml-base.so.0
+#3  0x00007d4a6b0795b8 in ggml_sycl_error(char const*, char const*, char const*, int, char const*) () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libggml-sycl.so.0
+#4  0x00007d4a6b0953fd in ggml_backend_sycl_synchronize(ggml_backend*) () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libggml-sycl.so.0
+#5  0x00007d4a7e6f67ad in ggml_backend_meta_synchronize(ggml_backend*) () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libggml-base.so.0
+#6  0x00007d4a7e6f0840 in ggml_backend_sched_synchronize () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libggml-base.so.0
+#7  0x00007d4a7d4c3929 in llama_context::synchronize() () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libllama.so.0
+#8  0x00007d4a7d4c3293 in llama_context::~llama_context() () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libllama.so.0
+#9  0x00007d4a7d4cd9be in llama_free () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libllama.so.0
+#10 0x00007d4a7dbf6314 in std::unique_ptr<common_init_result::impl, std::default_delete<common_init_result::impl> >::~unique_ptr() () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libllama-common.so.0
+#11 0x00007d4a7e1901a8 in server_context_impl::destroy() () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libllama-server-impl.so
+#12 0x00007d4a7e19050c in server_context_impl::~server_context_impl() () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libllama-server-impl.so
+#13 0x00007d4a7e1507e7 in server_context::~server_context() () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libllama-server-impl.so
+#14 0x00007d4a7e0ae3b9 in llama_server(common_params&, int, char**) () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libllama-server-impl.so
+#15 0x00007d4a7e09f87f in llama_server(int, char**) () from /mnt/fast-ai/src/llama.cpp-q38-q4k-glu-tp2/build-sycl-aot-bmg-g31-oneapi-2026.1.1/bin/libllama-server-impl.so
+#16 0x00007d4a6a02a1ca in __libc_start_call_main (main=main@entry=0x4064e0 <main>, argc=argc@entry=45, argv=argv@entry=0x7ffd3bf44f98) at ../sysdeps/nptl/libc_start_call_main.h:58
+warning: 58	../sysdeps/nptl/libc_start_call_main.h: No such file or directory
+#17 0x00007d4a6a02a28b in __libc_start_main_impl (main=0x4064e0 <main>, argc=45, argv=0x7ffd3bf44f98, init=<optimized out>, fini=<optimized out>, rtld_fini=<optimized out>, stack_end=0x7ffd3bf44f88) at ../csu/libc-start.c:360
+warning: 360	../csu/libc-start.c: No such file or directory
+#18 0x0000000000406415 in _start ()
+[Inferior 1 (process 1721722) detached]
+/usr/bin/timeout: the monitored command dumped core
