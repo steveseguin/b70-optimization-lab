@@ -613,17 +613,8 @@ Style genome (duotone-hixffp):
   <div class="wrap">
     <h2 id="t1">Lab-tested speeds <span class="key"><span class="dot">&#9679;</span> checked on our own machines</span></h2>
     <p class="sub">
-      Run and re-checked on the lab's own Arc Pro B70 machines; every number links to a proof
-      folder with the exact settings, logs, and quality checks behind it. Speed is the typical
-      single-user rate for the first hundred words of a fresh answer, unless noted; bars are scaled
-      to the fastest row. Proof links open the run's evidence folder (or the rankings sheet where a
-      route has no dedicated folder). <strong>Generation</strong> says whether the number is
-      target-only (<abbr title="multi-token prediction depth zero: no helper drafts ahead">MTP0</abbr>)
-      or uses an explicitly named speculative method and depth. Those modes are materially different
-      and should not be compared as though they were the same benchmark. One row per model &mdash; its headline deployment at the fewest cards;
-      other measured card counts sit in the More-cards column, and <sup>R</sup> marks research
-      lanes whose run-to-run determinism is still open. The Cards column says whether the count is
-      a requirement of the model's size or an optional tensor-parallel split.
+      Measured on the lab's own Arc Pro B70 machines and re-checked; every number links to its proof.
+      One row per model at its fewest cards &mdash; hover a column heading for what it means.
     </p>
     <div class="scroller benchmark-scroller" role="region" tabindex="0" aria-label="Lab benchmark table; scroll horizontally on narrow screens">
     <table aria-labelledby="t1">
@@ -632,18 +623,18 @@ Style genome (duotone-hixffp):
           <th scope="col">Model</th>
           <th scope="col"><abbr title="the program that loads and runs the model">Software</abbr></th>
           <th scope="col"><abbr title="how the model weights are compressed">Weights</abbr></th>
-          <th scope="col"><abbr title="target-only means no helper; MTP, DFlash, and DSpark are distinct speculative generation methods whose depths are shown explicitly">Generation</abbr></th>
-          <th scope="col" class="r">Cards</th>
-          <th scope="col" class="r">Speed (tok/s)</th>
-          <th scope="col" class="hide-s">More cards</th>
-          <th scope="col" class="hide-s">How measured</th>
-          <th scope="col">Proof</th>
+          <th scope="col"><abbr title="no MTP = nothing drafts ahead; MTP, DFlash, and DSpark are different speculative methods, shown with their depth. Compare within a mode, not across.">Generation</abbr></th>
+          <th scope="col" class="r"><abbr title="B70 cards the run used; a note says when fewer cards are untested or the split is optional">Cards</abbr></th>
+          <th scope="col" class="r"><abbr title="typical single-user rate over the first hundred words of a fresh answer, unless the row says otherwise; bars scale to the fastest row">Speed (tok/s)</abbr></th>
+          <th scope="col" class="hide-s"><abbr title="the same model measured at other card counts">More cards</abbr></th>
+          <th scope="col" class="hide-s"><abbr title="which statistic the number is">How measured</abbr></th>
+          <th scope="col"><abbr title="opens the run's evidence folder, or the rankings sheet where a route has no folder of its own">Proof</abbr></th>
         </tr>
       </thead>
       <tbody>
         <tr data-ml-model="ornith_1.5_35b_a3b" data-ml-quant="Q4_K_M" data-ml-quant-label="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="128" data-ml-output="100">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/ornith-1-5.html">Ornith 1.5 35B-A3B</a> <small>Qwen-derived MoE &middot; uses ~3B of 35B per word &middot; Aug 2026</small></th>
-          <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M + lab kernel stack</td><td class="mut">Target-only &middot; MTP0</td><td class="num r">1&times;</td>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M + lab kernel stack</td><td class="mut">no MTP</td><td class="num r">1&times;</td>
           <td class="num r" title="Mean of two fresh cache-zero conventional 99-interval suite medians; legacy 100-event compatibility mean 132.79 tok/s is retained in the proof">131.46<div class="ratebar max" style="width:100%" aria-hidden="true"></div><span class="visually-hidden">Fastest row in this table.</span></td>
           <td class="more-cards hide-s">&mdash;</td>
           <td class="mut hide-s">average of 2 fresh servers</td>
@@ -683,7 +674,7 @@ Style genome (duotone-hixffp):
         </tr>
         <tr data-ml-model="qwen3.6_35b_a3b" data-ml-quant="Quark W8A8 INT8" data-ml-quant-label="W8A8 INT8" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="128" data-ml-output="128">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/qwen-35b.html">Qwen3.6-35B-A3B</a> <small>long documents &middot; uses ~3B of 35B per word &middot; Apr 2026</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">Quark W8A8 INT8</td><td class="mut">Target-only &middot; MTP0</td><td class="num r">4&times;<small class="cards-note" title="W8A8 INT8 weights (~37 GB) do not fit one 32 GB card; the INT4 route in More cards runs on one">needs &ge;2</small></td>
+          <td class="mut">vLLM XPU</td><td class="mut">Quark W8A8 INT8</td><td class="mut">no MTP</td><td class="num r">4&times;<small class="cards-note" title="W8A8 INT8 weights (~37 GB) do not fit one 32 GB card; the INT4 route in More cards runs on one">needs &ge;2</small></td>
           <td class="num r" title="output, strict deep gate">93.55<div class="ratebar" style="width:71.2%" aria-hidden="true"></div></td>
           <td class="more-cards hide-s"><span title="AutoRound INT4 on a single card; experimental &mdash; fixed-seed determinism at high batch still open">&times;1 INT4 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/qwen36-35b-aggregate-throughput-evidence.md">90.91<sup>R</sup></a></span></td>
           <td class="mut hide-s">typical, strictest quality gate</td>
@@ -691,7 +682,7 @@ Style genome (duotone-hixffp):
         </tr>
         <tr data-ml-model="minimax_m2.7" data-ml-quant="AutoRound INT4" data-ml-quant-label="AutoRound INT4" data-ml-runtime="vllm" data-ml-runtime-label="vLLM XPU" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="512" data-ml-output="1536">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-verified: </span><a href="models/minimax-m2-7.html">MiniMax-M2.7</a> <small>remembers long conversations (32K) &middot; Mar 2026</small></th>
-          <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 W4A16</td><td class="mut">Target-only &middot; MTP0</td><td class="num r">4&times;<small class="cards-note" title="229B parameters at INT4 need all four cards">needs 4</small></td>
+          <td class="mut">vLLM XPU</td><td class="mut">AutoRound INT4 W4A16</td><td class="mut">no MTP</td><td class="num r">4&times;<small class="cards-note" title="229B parameters at INT4 need all four cards">needs 4</small></td>
           <td class="num r" title="mean of four clean long repeats">89.31<div class="ratebar" style="width:67.9%" aria-hidden="true"></div></td>
           <td class="more-cards hide-s">&mdash;</td>
           <td class="mut hide-s">average of 4 clean runs</td>
@@ -707,7 +698,7 @@ Style genome (duotone-hixffp):
         </tr>
         <tr data-ml-model="qwen3.8_27b" data-ml-quant="Q4_K_M" data-ml-quant-label="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="128" data-ml-output="128">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span><a href="models/qwen-27b.html">Qwen3.8-27B</a> <small>newest all-rounder &middot; reads pictures &middot; Aug 2026</small></th>
-          <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M</td><td class="mut">Target-only &middot; MTP0</td><td class="num r">1&times;</td>
+          <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M</td><td class="mut">no MTP</td><td class="num r">1&times;</td>
           <td class="num r" title="Conventional 99-interval median on the fixed cold 12-prompt suite; cache-zero, no speculation">27.82<div class="ratebar" style="width:21.2%" aria-hidden="true"></div></td>
           <td class="more-cards hide-s"><span title="Official FP8 checkpoint, Docker/vLLM, tensor-parallel across two cards">&times;2 FP8 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">21.71</a></span> &middot; <span title="AutoRound INT4 + MTP5 research lane; run-to-run determinism unresolved">&times;2 INT4+MTP5 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">101.17<sup>R</sup></a></span></td>
           <td class="mut hide-s">typical of the promoted 1-card package</td>
@@ -716,6 +707,7 @@ Style genome (duotone-hixffp):
       </tbody>
     </table>
     </div>
+    <p class="icon-key mut"><sup>R</sup> = research lane, run-to-run determinism still open &middot; hover a column heading for what it means &middot; every number links to its proof.</p>
   </div>
 </section>
 
@@ -733,13 +725,10 @@ Style genome (duotone-hixffp):
   <div class="wrap">
     <h2 id="t-headroom">How much faster could these get? <span class="key"><span class="dot hollow" aria-hidden="true">&#9675;</span> projected, not measured</span></h2>
     <p class="sub">
-      Each measured row above is compared with what the <a href="https://mlbottleneck.com/">ML Bottleneck</a> <small class="mut">(same author)</small>
-      physics engine projects for the same model, compression, card count, and software: a
-      <strong>tuned-run target</strong> (the best kernel efficiency anyone has demonstrated on that
-      stack) and the <strong>physical ceiling</strong> (memory bandwidth and compute with zero
-      overhead). The grade is optimization headroom against the tuned-run target, not model
-      quality: A+ is at or beyond the target, D means most of the projected headroom is still on
-      the table.
+      Each row above is compared with what the <a href="https://mlbottleneck.com/">ML Bottleneck</a> <small class="mut">(same author)</small>
+      physics engine projects for the same setup: a <strong>tuned-run target</strong> (the best
+      kernel efficiency shown on that stack) and the <strong>physical ceiling</strong> (zero-overhead
+      bandwidth and compute). The grade is headroom against the target, not model quality.
     </p>
     <p class="projection-status" data-headroom-status>Loading projections from mlbottleneck.com…</p>
     <div class="hr-grid" data-headroom-grid aria-live="polite"></div>
@@ -777,7 +766,7 @@ Style genome (duotone-hixffp):
           <th scope="col">Model</th>
           <th scope="col"><abbr title="the program that loads and runs the model">Software</abbr></th>
           <th scope="col"><abbr title="how the model weights are compressed">Weights</abbr></th>
-          <th scope="col"><abbr title="target-only means no helper; assisted generation methods are named explicitly">Generation</abbr></th>
+          <th scope="col"><abbr title="no MTP = nothing drafts ahead; assisted methods are named with their depth">Generation</abbr></th>
           <th scope="col" class="r">Cards</th>
           <th scope="col" class="r">Speed (tok/s)</th>
           <th scope="col">Proof</th>
@@ -786,7 +775,7 @@ Style genome (duotone-hixffp):
       <tbody>
         <tr data-ml-model="qwen3.6_27b" data-ml-quant="FP8" data-ml-quant-label="FP8" data-ml-runtime="vllm" data-ml-runtime-label="vLLM (Docker)" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="128" data-ml-output="128">
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">B70-tested: </span>Qwen3.6-27B <small>community setup we re-ran and confirmed</small></th>
-          <td class="mut">Docker / vLLM</td><td class="mut">FP8</td><td class="mut">Target-only &middot; MTP0</td><td class="num r">2&times;</td>
+          <td class="mut">Docker / vLLM</td><td class="mut">FP8</td><td class="mut">no MTP</td><td class="num r">2&times;</td>
           <td class="num r">30.17<div class="ratebar" style="width:22.9%" aria-hidden="true"></div></td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md">lab check</a></td>
         </tr>
@@ -802,7 +791,7 @@ Style genome (duotone-hixffp):
       <div>
         <p class="eyebrow">Community optimization</p>
         <h2>Made a model faster?</h2>
-        <p class="lead">Submit the patch, recipe, measurement, correction, or model lead. We review contributions manually and reproduce performance claims when the evidence and hardware allow. When your concrete contribution produces a verified improvement, we publish the measured boost and keep your name attached everywhere the work is used. Useful negative results receive acknowledgement too.</p>
+        <p class="lead">Send a patch, recipe, measurement, correction, or model lead. We reproduce claims when the evidence and hardware allow, publish the measured boost, and keep your name on the work everywhere it is used. Useful negative results get credit too.</p>
         <div class="contribute-actions">
           <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&amp;title=%5Bresult%5D%20">Submit an optimization</a>
           <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/contribution-verification.md">How validation works</a>

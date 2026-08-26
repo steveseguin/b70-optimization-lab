@@ -445,11 +445,11 @@ def page(pkg, all_pkgs, family=None):
 <div class="site-nav"><div class="wrap">
   <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
   <nav aria-label="Primary">
-    <a href="../index.html">Home</a>
     <a href="index.html" aria-current="page">Models</a>
     <a href="../learn.html">Learn</a>
     <a href="../guides.html">Recipes</a>
     <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a href="../index.html#contribute">Contribute</a>
     <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
   </nav>
 </div></div>
@@ -566,11 +566,11 @@ def index_page(pkgs, families):
 <div class="site-nav"><div class="wrap">
   <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
   <nav aria-label="Primary">
-    <a href="../index.html">Home</a>
     <a href="index.html" aria-current="page">Models</a>
     <a href="../learn.html">Learn</a>
     <a href="../guides.html">Recipes</a>
     <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a href="../index.html#contribute">Contribute</a>
     <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
   </nav>
 </div></div>

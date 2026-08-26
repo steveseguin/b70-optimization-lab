@@ -30,7 +30,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertGreaterEqual(index_html.count(">Weights</abbr>"), 2)
         self.assertGreaterEqual(index_html.count(">Generation</abbr>"), 2)
         for mode in (
-            "Target-only &middot; MTP0",
+            '<td class="mut">no MTP</td>',
             "MTP &middot; depth 3",
             "DFlash &middot; depth 11",
             "DSpark &middot; depth 7",

@@ -3622,7 +3622,7 @@ def family_page(family: dict[str, Any]) -> str:
 <a class="skip" href="#main">Skip to content</a>
 <div class="site-nav"><div class="wrap">
   <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
-  <nav aria-label="Primary"><a href="../index.html">Home</a><a href="index.html" aria-current="page">Models</a><a href="../learn.html">Learn</a><a href="../guides.html">Recipes</a><a href="../index.html#lab-speeds">Benchmarks</a><a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></nav>
+  <nav aria-label="Primary"><a href="index.html" aria-current="page">Models</a><a href="../learn.html">Learn</a><a href="../guides.html">Recipes</a><a href="../index.html#lab-speeds">Benchmarks</a><a href="../index.html#contribute">Contribute</a><a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></nav>
 </div></div>
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / {esc(family.get('display_name'))}</p>
