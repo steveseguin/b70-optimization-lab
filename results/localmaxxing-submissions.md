@@ -90,6 +90,8 @@ the conventional 99-interval field.
 
 | Model / lane | Hardware | Representative submitted result | LocalMaxxing ID | Evidence |
 | --- | --- | ---: | --- | --- |
+| LFM2.5 2.6B Q8_0 | 1x Arc Pro B70 | **132.351606 tok/s**, fixed cold realistic suite | [`cmt9m8h6i00ymli018jvpod9i`](https://www.localmaxxing.com/runs/cmt9m8h6i00ymli018jvpod9i) | [repro](../repro/lfm25-26b-q8-b70/README.md) |
+| Ornith 1.5 35B-A3B Q4_K_M | 1x Arc Pro B70 | **131.460231 tok/s**, mean of two fixed cold realistic-suite medians | [`cmt9m8gvg00yeli01ylok5hfn`](https://www.localmaxxing.com/runs/cmt9m8gvg00yeli01ylok5hfn) | [repro](../repro/ornith-15-35b-a3b-q4km-b70/README.md) |
 | Muse-Glimmer-30B UD-Q8_K_XL, TP4 pretrained DFlash | 4x Arc Pro B70 | **161.900 conventional interval median**, frozen 15-prompt cold suite, target-verified | `cmss8515c00n0ms01n3begqgg` | [packet](muse-glimmer-30b-q8-woq-b70/README.md); [repro](../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md) |
 | Poolside Laguna S 2.1 INT4, TP4+EP4 DFlash11 | 4x Arc Pro B70 | **125.462 conventional interval median; 126.729 historical compatibility formula**; exact cold width-12 suite with Q/K RMSNorm+RoPE and M12 shared-elementwise fusions | `cms9wuuf300cqpm01t5i285tq` | [qualified packet](laguna-s-2.1-int4-b70/README.md); [record evidence](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-shared-elementwise-m12-record.md) |
 | Qwen3.6 27B AutoRound INT4, TP2 | 2x Arc Pro B70 | 95.385 historical median under the July bar; newer strict review failed parity/determinism | `cmrh35ct50092mj01h7jgydqj` | [historical packet](qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json); [current validation](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md) |
@@ -102,10 +104,35 @@ the conventional 99-interval field.
 | MiniMax M2.7 AutoRound INT4 | 4x Arc Pro B70 | 65.752 output tok/s, quality-gated public row | `cmp6a5c1o00mpo3011hg8ncyp` | [packet](minimax-m27-int4-autoround-b70/README.md) |
 | DeepSeek V4 Flash uniform-K160, TP4+EP | 4x Arc Pro B70 | 80.820 median tok/s, target-verified DSpark7 sharded target argmax | `cmrquta9905w3lg013m5vxoqx` | [packet](deepseek-v4-flash-k160-b70/README.md); [repro](../repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md) |
 | DeepSeek V4 Flash uniform-K160, TP4+EP nonspec | 4x Arc Pro B70 | 43.767 median tok/s, direct routed-MoE + wide-epoch oneCCL | `cmrmnp7h81nntmj01lfenydgj` | [ledger](../experiments/deepseek-v4-flash-reap-xpu-b70/results/experiment-ledger.md) |
+| Nemotron 3.5 Lightning 30B-A3B UD-Q4_K_M | 1x Arc Pro B70 | **72.169452 tok/s**, fixed cold realistic suite | [`cmt9m8hgp00ysli017rhfj46x`](https://www.localmaxxing.com/runs/cmt9m8hgp00ysli017rhfj46x) | [repro](../repro/nemotron-35-lightning-30b-a3b-b70/README.md) |
+| Ornith 1.5 9B Q8_0 | 1x Arc Pro B70 | **49.588381 tok/s**, fixed cold realistic suite | [`cmt9m8ht100yxli01gdop0ol4`](https://www.localmaxxing.com/runs/cmt9m8ht100yxli01gdop0ol4) | [repro](../repro/ornith-15-9b-q8-b70/README.md) |
+| Qwen3.8 27B GGUF Q4_K_M, target-only TP1 | 1x Arc Pro B70 | **27.824790 tok/s**, fixed cold realistic suite | [`cmt9m8i0b00z3li01o1ragvte`](https://www.localmaxxing.com/runs/cmt9m8i0b00z3li01o1ragvte) | [repro](../repro/qwen38-27b-q4km-tp1-b70/README.md) |
 | Rapid model snapshots | 1x Arc Pro B70 | Multiple fixed cold realistic references | see [packet](rapid-model-snapshots-b70/README.md) | [performance index](scoreboard.md) |
 
 Current measured-but-unsubmitted work belongs in its model packet, not this
 public-submission index.
+
+Date: 2026-08-26
+
+Five new 1x Intel Arc Pro B70 package headlines were server-dry-run validated,
+submitted, read back through the authenticated API, and immediately approved.
+Each public record links both its neural.download model page and its repository
+reproduction packet. LocalMaxxing accepts one context length and one scalar
+output-throughput value per speed-test record, so context curves were not
+collapsed into a headline value. Raw aggregate-throughput observations were
+also withheld because the schema has no dedicated aggregate field; publishing
+them as `tokSOut` would conflate multi-user aggregate and single-stream decode.
+
+| Label | LocalMaxxing ID | Model | GPUs | Context | tok/s out | TTFT (ms) | tok/s total |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `ornith-15-35b-a3b-q4km-b70-twelve-feature-realistic-131tok-20260826` | [`cmt9m8gvg00yeli01ylok5hfn`](https://www.localmaxxing.com/runs/cmt9m8gvg00yeli01ylok5hfn) | Ornith 1.5 35B-A3B Q4_K_M | 1 | 8192 | **131.460231** | 153.244 | 126.681261 |
+| `lfm25-26b-q8-b70-realistic-132tok-20260826` | [`cmt9m8h6i00ymli018jvpod9i`](https://www.localmaxxing.com/runs/cmt9m8h6i00ymli018jvpod9i) | LFM2.5 2.6B Q8_0 | 1 | 8192 | **132.351606** | — | — |
+| `nemotron35-lightning-30b-a3b-udq4km-b70-realistic-72tok-20260826` | [`cmt9m8hgp00ysli017rhfj46x`](https://www.localmaxxing.com/runs/cmt9m8hgp00ysli017rhfj46x) | Nemotron 3.5 Lightning 30B-A3B UD-Q4_K_M | 1 | 8192 | **72.169452** | — | — |
+| `ornith-15-9b-q8-b70-realistic-49tok-20260826` | [`cmt9m8ht100yxli01gdop0ol4`](https://www.localmaxxing.com/runs/cmt9m8ht100yxli01gdop0ol4) | Ornith 1.5 9B Q8_0 | 1 | 8192 | **49.588381** | — | — |
+| `qwen38-27b-q4km-b70-tp1-target-only-realistic-27tok-20260826` | [`cmt9m8i0b00z3li01o1ragvte`](https://www.localmaxxing.com/runs/cmt9m8i0b00z3li01o1ragvte) | Qwen3.8 27B Q4_K_M, target-only TP1 | 1 | 8192 | **27.824790** | 255.418 | 27.455580 |
+
+Queue: [`../data/localmaxxing-neural-download-top-results-20260826.queue.json`](../data/localmaxxing-neural-download-top-results-20260826.queue.json).
+Receipt: [`../data/localmaxxing-responses/neural-download-top-results-20260826.response.json`](../data/localmaxxing-responses/neural-download-top-results-20260826.response.json).
 
 Date: 2026-08-18
 
