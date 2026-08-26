@@ -19,11 +19,12 @@ class SmallContextHttpTests(unittest.TestCase):
             'parallel_slots="${PARALLEL_SLOTS:-64}"',
             'ctx_size="${CTX_SIZE:-32768}"',
             'concurrency_points="${CONCURRENCY_POINTS:-1,2,4,8,16,32,64}"',
+            'allow_queueing="${ALLOW_QUEUEING:-0}"',
             '--ctx-size "${ctx_size}"',
             '--parallel "${parallel_slots}"',
             '--max-tokens 128',
             '--concurrency "${concurrency_points}"',
-            "a concurrency point exceeds PARALLEL_SLOTS",
+            "a concurrency point exceeds PARALLEL_SLOTS without ALLOW_QUEUEING=1",
         ):
             self.assertIn(fragment, self.text)
 

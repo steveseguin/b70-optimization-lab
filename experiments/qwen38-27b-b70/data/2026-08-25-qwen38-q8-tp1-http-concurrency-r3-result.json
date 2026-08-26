@@ -1,0 +1,121 @@
+{
+  "attempts": [
+    {
+      "checks": {
+        "cached_tokens_all_zero": true,
+        "classification": true,
+        "complete_token_id_identity_all": true,
+        "completion_tokens_128_all": true,
+        "cross_base_oracle_collision_count_zero": true
+      },
+      "oracle_exact": {
+        "1": "1/1",
+        "2": "2/2",
+        "4": "2/4",
+        "8": "5/8",
+        "16": "7/16"
+      },
+      "qualification_sha256": "ad24ffb00d5e83abdede47a2ebbcfce3330b9148e8bba3bb660fa1bf47bd37c0",
+      "rates": {
+        "1": 17.87588101247745,
+        "2": 29.317443531277053,
+        "4": 46.84539293127482,
+        "8": 66.03799657795116,
+        "16": 43.466514192671205
+      },
+      "result_sha256": "5eb46cf0c63699576414d46648130a29a7f2bfd83ab997951c4a9df83167907d",
+      "root": "experiments/qwen38-27b-b70/data/qwen38-q8-tp1-http-concurrency-20260825-r3-attempt1"
+    },
+    {
+      "checks": {
+        "cached_tokens_all_zero": true,
+        "classification": true,
+        "complete_token_id_identity_all": true,
+        "completion_tokens_128_all": true,
+        "cross_base_oracle_collision_count_zero": true
+      },
+      "oracle_exact": {
+        "1": "1/1",
+        "2": "2/2",
+        "4": "2/4",
+        "8": "3/8",
+        "16": "7/16"
+      },
+      "qualification_sha256": "8eb755186bc1f06d918a753b1acc82f0c26b38f5ed156cc0872811fa5561bd12",
+      "rates": {
+        "1": 17.80131312130304,
+        "2": 28.90249045491816,
+        "4": 46.70445479614611,
+        "8": 66.62180554676516,
+        "16": 43.7404381213442
+      },
+      "result_sha256": "17421bfeb53c8fed0d8610f9d08bc79608aac0935f35650ba941aa807018f30c",
+      "root": "experiments/qwen38-27b-b70/data/qwen38-q8-tp1-http-concurrency-20260825-r3-attempt2"
+    }
+  ],
+  "classification": "qualified-output-audited-http-concurrency",
+  "created_at_utc": "2026-08-26T01:23:24.329848+00:00",
+  "fresh_server_attempts": 2,
+  "label": "Qwen3.8 27B Q8_0 TP1 output-audited HTTP concurrency",
+  "max_relative_range_percent": 10.0,
+  "oracle_digests_sha256": "0d6d74f51ccbc747f9827b81c622747e3e9b05e8983ee773f6f16e4fe27a7282",
+  "points": [
+    {
+      "attempt_values_tok_s": [
+        17.87588101247745,
+        17.80131312130304
+      ],
+      "concurrent_users": 1,
+      "median_aggregate_tok_s": 17.838597066890244,
+      "median_per_user_tok_s": 17.838597066890244,
+      "relative_range_percent": 0.41801432531269106,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        29.317443531277053,
+        28.90249045491816
+      ],
+      "concurrent_users": 2,
+      "median_aggregate_tok_s": 29.109966993097608,
+      "median_per_user_tok_s": 14.554983496548804,
+      "relative_range_percent": 1.4254673543851364,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        46.84539293127482,
+        46.70445479614611
+      ],
+      "concurrent_users": 4,
+      "median_aggregate_tok_s": 46.77492386371047,
+      "median_per_user_tok_s": 11.693730965927617,
+      "relative_range_percent": 0.3013113084681218,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        66.03799657795116,
+        66.62180554676516
+      ],
+      "concurrent_users": 8,
+      "median_aggregate_tok_s": 66.32990106235816,
+      "median_per_user_tok_s": 8.29123763279477,
+      "relative_range_percent": 0.880159565239131,
+      "stability_passed": true
+    },
+    {
+      "attempt_values_tok_s": [
+        43.466514192671205,
+        43.7404381213442
+      ],
+      "concurrent_users": 16,
+      "median_aggregate_tok_s": 43.603476157007705,
+      "median_per_user_tok_s": 2.7252172598129816,
+      "relative_range_percent": 0.6282158048286,
+      "stability_passed": true
+    }
+  ],
+  "reporting_boundary": "Every point is the median of exact fresh-server attempts. No interpolation or extrapolation. Sequential identity is reported separately from output isolation.",
+  "schema": "neural.download.http-concurrency-aggregate.v1"
+}

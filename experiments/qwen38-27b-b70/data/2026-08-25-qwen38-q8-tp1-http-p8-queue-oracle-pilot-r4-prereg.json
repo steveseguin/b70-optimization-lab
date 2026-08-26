@@ -1,0 +1,41 @@
+{
+  "schema": "neural.download.queued-concurrency-oracle-pilot-preregistration.v1",
+  "campaign_id": "qwen38-q8-tp1-http-p8-queue-oracle-pilot-20260825-r4",
+  "state": "preregistered-not-launched",
+  "purpose": "Test whether eight active inference slots preserve the Q8 TP1 aggregate sweet spot while the HTTP server queues 16 to 64 simultaneous requests.",
+  "prior_qualified_result": {
+    "sha256": "9e6bd5768c8ca545099b78ae9eb5f5172be082d7ed18d91f0664e9486a036471",
+    "profile": "16 active slots, 8192 total context, F16 KV",
+    "aggregate_tok_s": {"8_users": 66.32990106235816, "16_users": 43.603476157007705},
+    "observation": "The stable 16-slot profile loses 34.26% aggregate throughput from 8 to 16 users."
+  },
+  "identity": {
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "runtime_base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "applied_source_diff_sha256": "f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e",
+    "server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "backend_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "cards": 1,
+    "topology": "TP1 on one Intel Arc Pro B70",
+    "weights": "Q8_0",
+    "generation": "target-only / MTP0"
+  },
+  "server_profile": {
+    "endpoint": "llama.cpp native HTTP /completion",
+    "context_tokens_total": 4096,
+    "active_parallel_slots": 8,
+    "nominal_context_tokens_per_active_slot": 512,
+    "incoming_concurrent_requests": [1, 2, 4, 8, 16, 32, 64],
+    "requests_above_eight": "queued by the server rather than allocated as additional inference slots",
+    "kv_cache": "f16",
+    "prompt_cache": false,
+    "slot_prompt_similarity": 0
+  },
+  "pilot": {
+    "max_output_tokens": 128,
+    "sequential_oracle_rows": 64,
+    "required_output_gate": "all sequential and queued responses return 128 complete raw token IDs, cached_tokens=0, and no cross-base oracle collision",
+    "publication_status": "pilot only; rates may not be published"
+  },
+  "next_step_if_passed": "Freeze compact 64-row token-ID digests and preregister two fresh-server p8 publication attempts with a <=10% pointwise stability gate."
+}

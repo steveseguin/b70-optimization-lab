@@ -23,6 +23,7 @@ qualification_mode="${QUALIFICATION_MODE:-identity}"
 parallel_slots="${PARALLEL_SLOTS:-64}"
 ctx_size="${CTX_SIZE:-32768}"
 concurrency_points="${CONCURRENCY_POINTS:-1,2,4,8,16,32,64}"
+allow_queueing="${ALLOW_QUEUEING:-0}"
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 case "${profile}" in
@@ -64,9 +65,10 @@ esac
 [[ "${parallel_slots}" =~ ^[1-9][0-9]*$ ]] || fail 'PARALLEL_SLOTS must be positive'
 [[ "${ctx_size}" =~ ^[1-9][0-9]*$ ]] || fail 'CTX_SIZE must be positive'
 [[ "${concurrency_points}" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]] || fail 'CONCURRENCY_POINTS must be comma-separated positive integers'
+[[ "${allow_queueing}" == 0 || "${allow_queueing}" == 1 ]] || fail 'ALLOW_QUEUEING must be 0 or 1'
 IFS=, read -r -a concurrency_values <<< "${concurrency_points}"
 for value in "${concurrency_values[@]}"; do
-  (( value <= parallel_slots )) || fail 'a concurrency point exceeds PARALLEL_SLOTS'
+  (( allow_queueing == 1 || value <= parallel_slots )) || fail 'a concurrency point exceeds PARALLEL_SLOTS without ALLOW_QUEUEING=1'
 done
 
 model="${model_dir}/${model_filename}"
