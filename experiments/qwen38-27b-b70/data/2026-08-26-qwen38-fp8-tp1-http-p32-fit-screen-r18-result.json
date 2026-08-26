@@ -1,0 +1,18 @@
+{
+  "schema": "neural.download.qwen38-fp8-tp1-fit-screen-result.v1",
+  "state": "infrastructure-failure-no-measurement",
+  "campaign_id": "qwen38-fp8-tp1-http-p32-fit-screen-20260826-r18",
+  "server": {
+    "container_id": "855ed9d1b286a1e5918189d115ec4e047ec256e7d165549c300ec02f9a3f613e",
+    "lifetime_seconds": 43,
+    "docker_exit_code": 1,
+    "oom_event_observed": false,
+    "health_reached": false,
+    "requests_sent": 0,
+    "cleanup": "clean"
+  },
+  "cause": "The inherited Docker --rm option destroyed the self-exited container before the runner copied its exception log. Live output observed during the run reached engine initialization, but neither that stream nor the terminal exception survived in the evidence directory.",
+  "interpretation": "This attempt cannot establish either a one-card fit boundary or a performance value. It is not an OOM-kill result and has no publication authority.",
+  "correction": "R19 keeps the identical model and serving/measurement profile but removes --rm and explicitly removes the container only after logs are captured.",
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp1-http-p32-fit-screen-20260826-r18-attempt1"
+}
