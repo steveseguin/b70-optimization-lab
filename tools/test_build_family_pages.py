@@ -3225,14 +3225,14 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 16 matrices", overview_html)
-        self.assertIn("477/1,910 classified", overview_html)
+        self.assertIn("482/1,910 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "292", "measured"),
+            ("lab-measured", "297", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "96", "quarantined"),
             ("closed", "6", "closed"),
             ("unsupported", "51", "unsupported"),
-            ("missing", "1,433", "missing"),
+            ("missing", "1,428", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3248,8 +3248,8 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("26 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 26)
+        self.assertIn("27 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 27)
         self.assertIn("Q4_K_M HTTP context × KV/graph", initial_html)
         self.assertIn("value=26.7217226139707 tok/s", initial_html)
         self.assertIn("value=23.221668353050664 tok/s", initial_html)
@@ -3282,20 +3282,22 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("Qwen3.8 AutoRound TP1 graph modes", deferred_html)
         self.assertIn("value=11.919327130453762 tok/s", deferred_html)
         self.assertIn("value=30.075429359128265 tok/s", deferred_html)
-        e4m3_sentinel = next(
+        self.assertIn('data-family-view="context-q38-tp1-autoround-eager-kv"', deferred_html)
+        self.assertIn("value=12.106811568755516 tok/s", deferred_html)
+        self.assertIn("value=12.157390534237836 tok/s", deferred_html)
+        e4m3_curve = next(
             item for item in family["series_measurements"]
-            if item["id"] == "q38-f01e-autoround-tp1-eager-e4m3kv-exact-8k-r1"
+            if item["id"] == "q38-f01e-autoround-tp1-eager-e4m3kv-exact-context-r1"
         )
-        self.assertEqual(e4m3_sentinel["config"]["kv"], "fp8_e4m3")
+        self.assertEqual(e4m3_curve["config"]["kv"], "fp8_e4m3")
         self.assertEqual(
-            e4m3_sentinel["points"],
-            [{
-                "x": 8192,
-                "decode_tok_s": 11.824452787933243,
-                "ttft_ms": 5965.314737986773,
-                "cached_tokens": 0,
-                "output_token_ids_sha256": "80363e2d6f67a92484cb7e1f347cf7765520b6f5a3ac8d1b1a3573d3cddcba67",
-            }],
+            [point["x"] for point in e4m3_curve["points"]],
+            [2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertEqual(
+            [point["decode_tok_s"] for point in e4m3_curve["points"]],
+            [12.106811568755516, 11.986857838637341, 12.085894881224178,
+             12.178365844454287, 12.15958526221534, 12.157390534237836],
         )
         q38_target_contract = next(
             item for item in family["coverage_contracts"]
@@ -3305,7 +3307,7 @@ class FamilyCoverageTest(unittest.TestCase):
             rule for rule in q38_target_contract["rules"]
             if rule["id"] == "measured-f01e-autoround-eager-e4m3kv-exact-8k"
         )
-        self.assertEqual(e4m3_rule["label"], "D11.82 · E4M3 KV · Grade C")
+        self.assertEqual(e4m3_rule["label"], "D12.09 · E4M3 KV · Grade C")
         self.assertEqual(e4m3_rule["match"]["active_context_tokens"], 8192)
         self.assertIn("Qwen3.8 AutoRound TP1/TP2/TP4 HTTP context", deferred_html)
         self.assertIn("value=48.15370845841339 tok/s", deferred_html)
