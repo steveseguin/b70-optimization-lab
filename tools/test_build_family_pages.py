@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from copy import deepcopy
 import hashlib
 import importlib.util
@@ -1600,6 +1601,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "qwen36-tp1-llamacpp-sycl-target-matrix": 168,
             "qwen38-tp1-vllm-xpu-target-matrix": 126,
             "qwen38-tp1-vllm-xpu-autoround-mtp-matrix": 252,
+            "qwen38-e9d1398-vllm-xpu-autoround-closure-matrix": 96,
             "qwen38-tp1-llamacpp-sycl-target-matrix": 112,
             "qwen38-tp1-llamacpp-sycl-mtp-package-matrix": 224,
             "qwen38-tp2-llamacpp-sycl-q4km-http-depth": 7,
@@ -1619,7 +1621,94 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertEqual(errors, [], contract_id)
             self.assertEqual(len(cells), expected_count, contract_id)
             all_cells.extend(cells)
-        self.assertEqual(len(all_cells), 1814)
+        self.assertEqual(len(all_cells), 1910)
+
+        fp8_tp1_cells, errors = MODULE.expand_coverage_contract(
+            contracts["qwen38-tp1-vllm-xpu-target-matrix"]
+        )
+        self.assertEqual(errors, [])
+        capacity_excluded = [
+            cell
+            for cell in fp8_tp1_cells
+            if cell["selectors"]["artifact_id"]
+            == "qwen38-27b-official-fp8-017b9c7"
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "f16"
+            and cell["state"] == "unsupported"
+        ]
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in capacity_excluded],
+            [16384, 24576, 32768],
+        )
+        self.assertTrue(all("8,448-token profile" in cell["label"] for cell in capacity_excluded))
+        official_fp8_x0 = next(
+            cell
+            for cell in fp8_tp1_cells
+            if cell["selectors"]["artifact_id"]
+            == "qwen38-27b-official-fp8-017b9c7"
+            and cell["selectors"]["active_context_tokens"] == 0
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "f16"
+        )
+        self.assertEqual(official_fp8_x0["state"], "missing")
+
+        e9d_contract = contracts[
+            "qwen38-e9d1398-vllm-xpu-autoround-closure-matrix"
+        ]
+        self.assertEqual(
+            e9d_contract["fixed_selectors"]["runtime"],
+            "vLLM XPU nightly e9d1398d9",
+        )
+        self.assertNotEqual(
+            e9d_contract["fixed_selectors"]["runtime"],
+            "vLLM XPU 0.27.2rc1.dev77+gac7509e2b.xpu",
+        )
+        e9d_cells, errors = MODULE.expand_coverage_contract(e9d_contract)
+        self.assertEqual(errors, [])
+        self.assertEqual(
+            Counter(cell["state"] for cell in e9d_cells),
+            Counter(
+                {
+                    "unsupported": 48,
+                    "quarantined": 33,
+                    "lab-measured": 9,
+                    "closed": 6,
+                }
+            ),
+        )
+        self.assertFalse(any(cell["state"] == "missing" for cell in e9d_cells))
+
+        q38_llama_cells, errors = MODULE.expand_coverage_contract(
+            contracts["qwen38-tp1-llamacpp-sycl-target-matrix"]
+        )
+        self.assertEqual(errors, [])
+        self.assertFalse(any(cell["state"] == "estimated" for cell in q38_llama_cells))
+        for artifact_id, evidence_id in (
+            (
+                "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+                "q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c",
+            ),
+            (
+                "qwen38-27b-ggmlorg-q8-0-0669b98",
+                "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c",
+            ),
+        ):
+            exact_replacements = [
+                cell
+                for cell in q38_llama_cells
+                if cell["selectors"]["artifact_id"] == artifact_id
+                and cell["selectors"]["graph_mode"] == "off"
+                and cell["selectors"]["kv"] == "q8_0"
+            ]
+            self.assertEqual(len(exact_replacements), 7)
+            self.assertTrue(
+                all(
+                    cell["state"] == "lab-measured"
+                    and cell["evidence_id"] == evidence_id
+                    and "estimate_id" not in cell
+                    for cell in exact_replacements
+                )
+            )
 
         for contract_id, evidence_id in (
             ("qwen38-tp2-llamacpp-sycl-q4km-http-depth", "q38-q4km-tp2-f16kv-http-context-r1-grade-c"),
@@ -3135,13 +3224,15 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
-        self.assertIn("Coverage · 15 matrices", overview_html)
-        self.assertIn("378/1,814 classified", overview_html)
+        self.assertIn("Coverage · 16 matrices", overview_html)
+        self.assertIn("477/1,910 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "283", "measured"),
+            ("lab-measured", "292", "measured"),
             ("lab-screened", "32", "screened"),
-            ("quarantined", "63", "quarantined"),
-            ("missing", "1,436", "missing"),
+            ("quarantined", "96", "quarantined"),
+            ("closed", "6", "closed"),
+            ("unsupported", "51", "unsupported"),
+            ("missing", "1,433", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)

@@ -5935,6 +5935,36 @@
         }
       },
       {
+        "id": "capacity-excluded-official-fp8-tp1-eager-f16-context-16384",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-official-fp8-017b9c7", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "f16"},
+        "state": "unsupported",
+        "label": "capacity-excluded · 8,448-token profile",
+        "reason": "The exact measured official-FP8 TP1 eager profile has an 8,448-token service capacity, so a 16K active-context request is outside this profile rather than unmeasured or estimated.",
+        "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp1-fit-depth-r2-result.json",
+        "parent": "qwen38-official-fp8-tp1-fit-depth-20260826-r2",
+        "retry": {"status": "blocked-on-capacity", "trigger": "new-larger-fit-profile"}
+      },
+      {
+        "id": "capacity-excluded-official-fp8-tp1-eager-f16-context-24576",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-official-fp8-017b9c7", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "off", "kv": "f16"},
+        "state": "unsupported",
+        "label": "capacity-excluded · 8,448-token profile",
+        "reason": "The exact measured official-FP8 TP1 eager profile has an 8,448-token service capacity, so a 24K active-context request is outside this profile rather than unmeasured or estimated.",
+        "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp1-fit-depth-r2-result.json",
+        "parent": "qwen38-official-fp8-tp1-fit-depth-20260826-r2",
+        "retry": {"status": "blocked-on-capacity", "trigger": "new-larger-fit-profile"}
+      },
+      {
+        "id": "capacity-excluded-official-fp8-tp1-eager-f16-context-32768",
+        "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-official-fp8-017b9c7", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"},
+        "state": "unsupported",
+        "label": "capacity-excluded · 8,448-token profile",
+        "reason": "The exact measured official-FP8 TP1 eager profile has an 8,448-token service capacity, so a 32K active-context request is outside this profile rather than unmeasured or estimated.",
+        "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-fp8-tp1-fit-depth-r2-result.json",
+        "parent": "qwen38-official-fp8-tp1-fit-depth-20260826-r2",
+        "retry": {"status": "blocked-on-capacity", "trigger": "new-larger-fit-profile"}
+      },
+      {
         "id": "measured-official-fp8-tp1-eager-f16-context-2048",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-official-fp8-017b9c7", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "f16"},
         "state": "lab-measured",
@@ -6169,6 +6199,73 @@
           "trigger": "parent-or-calibrated-estimate"
         }
       }
+    ]
+  },
+  {
+    "id": "qwen38-e9d1398-vllm-xpu-autoround-closure-matrix",
+    "label": "Qwen3.8 pinned e9d1398 · AutoRound decision closure",
+    "description": "The original 96-cell TP/MTP/graph/KV campaign, pinned only to vLLM XPU nightly e9d1398d9. Measured target and TP1 eager-MTP anchors remain measured; unsupported, closed, and quarantined descendants are explicit. Nothing in this contract transfers to f01e or another runtime.",
+    "fixed_selectors": {
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "runtime": "vLLM XPU nightly e9d1398d9",
+      "configured_max_context_tokens": 32768
+    },
+    "axes": [
+      {"key": "tp", "label": "Tensor parallel", "prefix": "TP", "values": [1, 2, 3, 4]},
+      {"key": "mtp", "label": "MTP depth", "prefix": "MTP", "values": [0, 1, 2, 3]},
+      {"key": "graph", "label": "Graph", "values": ["off", "on"]},
+      {"key": "kv", "label": "KV cache", "values": ["f16", "fp8_e4m3", "fp8_e5m2"], "value_labels": {"f16": "F16", "fp8_e4m3": "FP8 E4M3", "fp8_e5m2": "FP8 E5M2"}}
+    ],
+    "rules": [
+      {
+        "id": "default-unclassified",
+        "match": {"tp": "*", "mtp": "*", "graph": "*", "kv": "*"},
+        "state": "missing",
+        "label": "unclassified pinned cell",
+        "reason": "No pinned e9d decision binds this cell.",
+        "parent": "qwen38-nightly-combination-closure"
+      },
+      {
+        "id": "unsupported-tp3",
+        "match": {"tp": 3, "mtp": "*", "graph": "*", "kv": "*"},
+        "state": "unsupported",
+        "label": "TP3 unsupported · 16 GDN heads",
+        "reason": "The model's 16 GDN key heads cannot be evenly partitioned across TP3.",
+        "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json",
+        "parent": "qwen38-nightly-combination-closure",
+        "retry": {"status": "blocked-on-architecture", "trigger": "head-partitioning-support"}
+      },
+      {"id": "unsupported-tp1-e5m2", "match": {"tp": 1, "mtp": "*", "graph": "*", "kv": "fp8_e5m2"}, "state": "unsupported", "label": "E5M2 KV unsupported", "reason": "The pinned XPU FlashAttention backend rejects fp8_e5m2 KV at engine initialization.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-runtime", "trigger": "backend-e5m2-support"}},
+      {"id": "unsupported-tp2-e5m2", "match": {"tp": 2, "mtp": "*", "graph": "*", "kv": "fp8_e5m2"}, "state": "unsupported", "label": "E5M2 KV unsupported", "reason": "The pinned XPU FlashAttention backend rejects fp8_e5m2 KV at engine initialization.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-runtime", "trigger": "backend-e5m2-support"}},
+      {"id": "unsupported-tp4-e5m2", "match": {"tp": 4, "mtp": "*", "graph": "*", "kv": "fp8_e5m2"}, "state": "unsupported", "label": "E5M2 KV unsupported", "reason": "The pinned XPU FlashAttention backend rejects fp8_e5m2 KV at engine initialization.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-runtime", "trigger": "backend-e5m2-support"}},
+      {"id": "quarantined-tp1-e4m3", "match": {"tp": 1, "mtp": "*", "graph": "*", "kv": "fp8_e4m3"}, "state": "quarantined", "label": "e9d E4M3 output-divergent", "reason": "The pinned e9d least-compounded target-only anchor matched only 3/20 stable-set oracle outputs; its descendants remain quarantined only in this runtime.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "superseded-by-new-runtime-sentinel", "trigger": "profile-specific-quality-pass"}},
+      {"id": "quarantined-tp2-e4m3", "match": {"tp": 2, "mtp": "*", "graph": "*", "kv": "fp8_e4m3"}, "state": "quarantined", "label": "e9d E4M3 output-divergent", "reason": "The pinned e9d least-compounded target-only anchor matched only 3/20 stable-set oracle outputs; its descendants remain quarantined only in this runtime.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "superseded-by-new-runtime-sentinel", "trigger": "profile-specific-quality-pass"}},
+      {"id": "quarantined-tp4-e4m3", "match": {"tp": 4, "mtp": "*", "graph": "*", "kv": "fp8_e4m3"}, "state": "quarantined", "label": "e9d E4M3 output-divergent", "reason": "The pinned e9d least-compounded target-only anchor matched only 3/20 stable-set oracle outputs; its descendants remain quarantined only in this runtime.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "superseded-by-new-runtime-sentinel", "trigger": "profile-specific-quality-pass"}},
+      {"id": "measured-tp1-mtp0-eager-f16", "match": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16"}, "state": "lab-measured", "label": "diagnostic eager anchor", "reason": "Pinned e9d target-only diagnostic anchor.", "evidence_id": "q38-nightly-tp1-eager-diagnostic", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "complete"}},
+      {"id": "measured-tp2-mtp0-eager-f16", "match": {"tp": 2, "mtp": 0, "graph": "off", "kv": "f16"}, "state": "lab-measured", "label": "diagnostic eager anchor", "reason": "Pinned e9d target-only diagnostic anchor.", "evidence_id": "q38-nightly-tp2-eager-diagnostic", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "complete"}},
+      {"id": "measured-tp4-mtp0-eager-f16", "match": {"tp": 4, "mtp": 0, "graph": "off", "kv": "f16"}, "state": "lab-measured", "label": "diagnostic eager anchor", "reason": "Pinned e9d target-only diagnostic anchor.", "evidence_id": "q38-nightly-tp4-eager-diagnostic", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "complete"}},
+      {"id": "measured-tp1-mtp0-graph-f16", "match": {"tp": 1, "mtp": 0, "graph": "on", "kv": "f16"}, "state": "lab-measured", "label": "strict graph anchor", "reason": "Pinned e9d target-only strict graph anchor.", "evidence_id": "q38-nightly-tp1-graph-strict", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "complete"}},
+      {"id": "measured-tp2-mtp0-graph-f16", "match": {"tp": 2, "mtp": 0, "graph": "on", "kv": "f16"}, "state": "lab-measured", "label": "strict graph anchor", "reason": "Pinned e9d target-only strict graph anchor.", "evidence_id": "q38-nightly-tp2-graph-strict", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "complete"}},
+      {"id": "measured-tp4-mtp0-graph-f16", "match": {"tp": 4, "mtp": 0, "graph": "on", "kv": "f16"}, "state": "lab-measured", "label": "strict graph anchor", "reason": "Pinned e9d target-only strict graph anchor.", "evidence_id": "q38-nightly-tp4-graph-strict", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "complete"}},
+      {"id": "measured-tp1-mtp1-eager-f16", "match": {"tp": 1, "mtp": 1, "graph": "off", "kv": "f16"}, "state": "lab-measured", "label": "eager MTP1 diagnostic", "reason": "Pinned e9d TP1 eager MTP1 diagnostic anchor.", "evidence_id": "q38-nightly-tp1-mtp1-eager", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "complete"}},
+      {"id": "measured-tp1-mtp2-eager-f16", "match": {"tp": 1, "mtp": 2, "graph": "off", "kv": "f16"}, "state": "lab-measured", "label": "eager MTP2 diagnostic", "reason": "Pinned e9d TP1 eager MTP2 diagnostic anchor.", "evidence_id": "q38-nightly-tp1-mtp2-eager", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "complete"}},
+      {"id": "measured-tp1-mtp3-eager-f16", "match": {"tp": 1, "mtp": 3, "graph": "off", "kv": "f16"}, "state": "lab-measured", "label": "eager MTP3 diagnostic", "reason": "Pinned e9d TP1 eager MTP3 diagnostic anchor.", "evidence_id": "q38-nightly-tp1-mtp3-eager", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "complete"}},
+      {"id": "closed-tp2-mtp1-eager-f16", "match": {"tp": 2, "mtp": 1, "graph": "off", "kv": "f16"}, "state": "closed", "label": "closed by MTP expansion gate", "reason": "TP1 speculation collapse and the TP4 MTP2 expansion screen closed this pinned descendant.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-material-runtime-change"}},
+      {"id": "closed-tp4-mtp1-eager-f16", "match": {"tp": 4, "mtp": 1, "graph": "off", "kv": "f16"}, "state": "closed", "label": "closed by MTP expansion gate", "reason": "The TP4 MTP2 screen missed both frozen expansion floors, closing this pinned descendant.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-material-runtime-change"}},
+      {"id": "closed-tp2-mtp2-eager-f16", "match": {"tp": 2, "mtp": 2, "graph": "off", "kv": "f16"}, "state": "closed", "label": "booted; expansion rejected", "reason": "The pinned TP2 route booted and passed its canary, but the preregistered multi-TP expansion gate rejected a full run.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-material-runtime-change"}},
+      {"id": "closed-tp4-mtp2-eager-f16", "match": {"tp": 4, "mtp": 2, "graph": "off", "kv": "f16"}, "state": "closed", "label": "measured screen; expansion rejected", "reason": "The two-prompt TP4 MTP2 screen passed boot/canary but missed both frozen expansion floors.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-material-runtime-change"}},
+      {"id": "closed-tp2-mtp3-eager-f16", "match": {"tp": 2, "mtp": 3, "graph": "off", "kv": "f16"}, "state": "closed", "label": "closed by MTP2 expansion gate", "reason": "The pinned MTP2 multi-TP screen missed its expansion gate, so deeper MTP3 was not authorized.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-material-runtime-change"}},
+      {"id": "closed-tp4-mtp3-eager-f16", "match": {"tp": 4, "mtp": 3, "graph": "off", "kv": "f16"}, "state": "closed", "label": "closed by MTP2 expansion gate", "reason": "The pinned MTP2 multi-TP screen missed its expansion gate, so deeper MTP3 was not authorized.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-material-runtime-change"}},
+      {"id": "quarantined-tp1-mtp1-graph-f16", "match": {"tp": 1, "mtp": 1, "graph": "on", "kv": "f16"}, "state": "quarantined", "label": "graph + MTP corruption", "reason": "The pinned TP1 graph-plus-MTP anchor had zero draft acceptance and 0/25 oracle matches.", "evidence_id": "q38-nightly-tp1-mtp1-graph-corrupt", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-upstream-correctness-fix"}},
+      {"id": "quarantined-tp2-mtp1-graph-f16", "match": {"tp": 2, "mtp": 1, "graph": "on", "kv": "f16"}, "state": "quarantined", "label": "graph + MTP corruption quarantine", "reason": "The pinned graph-plus-MTP correctness failure closed this multi-GPU descendant.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-upstream-correctness-fix"}},
+      {"id": "quarantined-tp4-mtp1-graph-f16", "match": {"tp": 4, "mtp": 1, "graph": "on", "kv": "f16"}, "state": "quarantined", "label": "graph + MTP corruption quarantine", "reason": "The pinned graph-plus-MTP correctness failure closed this multi-GPU descendant.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-upstream-correctness-fix"}},
+      {"id": "quarantined-tp1-mtp2-graph-f16", "match": {"tp": 1, "mtp": 2, "graph": "on", "kv": "f16"}, "state": "quarantined", "label": "graph + MTP corruption quarantine", "reason": "The pinned TP1 graph-plus-MTP corruption anchor closes this dose without transferring to another runtime.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-upstream-correctness-fix"}},
+      {"id": "quarantined-tp2-mtp2-graph-f16", "match": {"tp": 2, "mtp": 2, "graph": "on", "kv": "f16"}, "state": "quarantined", "label": "graph + MTP corruption quarantine", "reason": "The pinned graph-plus-MTP correctness failure closed this multi-GPU descendant.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-upstream-correctness-fix"}},
+      {"id": "quarantined-tp4-mtp2-graph-f16", "match": {"tp": 4, "mtp": 2, "graph": "on", "kv": "f16"}, "state": "quarantined", "label": "graph + MTP corruption quarantine", "reason": "The pinned graph-plus-MTP correctness failure closed this multi-GPU descendant.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-upstream-correctness-fix"}},
+      {"id": "quarantined-tp1-mtp3-graph-f16", "match": {"tp": 1, "mtp": 3, "graph": "on", "kv": "f16"}, "state": "quarantined", "label": "graph + MTP corruption quarantine", "reason": "The pinned TP1 graph-plus-MTP corruption anchor closes this dose without transferring to another runtime.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-upstream-correctness-fix"}},
+      {"id": "quarantined-tp2-mtp3-graph-f16", "match": {"tp": 2, "mtp": 3, "graph": "on", "kv": "f16"}, "state": "quarantined", "label": "graph + MTP corruption quarantine", "reason": "The pinned graph-plus-MTP correctness failure closed this multi-GPU descendant.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-upstream-correctness-fix"}},
+      {"id": "quarantined-tp4-mtp3-graph-f16", "match": {"tp": 4, "mtp": 3, "graph": "on", "kv": "f16"}, "state": "quarantined", "label": "graph + MTP corruption quarantine", "reason": "The pinned graph-plus-MTP correctness failure closed this multi-GPU descendant.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-nightly-combination-closure.json", "parent": "qwen38-nightly-combination-closure", "retry": {"status": "blocked-on-upstream-correctness-fix"}}
     ]
   },
   {
