@@ -1,0 +1,40 @@
+{
+  "schema": "neural.download.qwen36-llama-mtp3-exact-depth-depth0-failure.v1",
+  "campaign_id": "qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r2",
+  "status": "failed-preserved-zero-cells",
+  "stage": "control-mtp0-depth-0-http-request",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r2",
+  "terminal_receipt_sha256": "cc9852aa95afa5441eb48b99601e5490c5c4098c3807501f3a690719d3fa117f",
+  "terminal_error": "RuntimeError: HTTP 400: {\"error\":{\"code\":400,\"message\":\"\\\"prompt\\\" must not be empty\",\"type\":\"invalid_request_error\"}}",
+  "identity_sha256": "4fa5567d40120bb03828c76fd7246657c5a13caf714fafc790e851cc37a6e30e",
+  "control_models_sha256": "51b0dd46ed0a9befe67f480d041bc542360c76aa828b5f8a15c72656ef9429b0",
+  "control_server_log_sha256": "ee1507c4000af12788345b0a65d45c76ecdb248a8df387b0a4d931122d0db34f",
+  "control_cleanup_sha256": "7d7185e7d24e6ef2fe837d19ac953c29494510a5f34f5c435f366ebb21368179",
+  "actions": {
+    "control_server_launches": 1,
+    "candidate_server_launches": 0,
+    "completed_benchmark_requests": 0,
+    "quality_requests": 0,
+    "matrix_cells": 0
+  },
+  "cleanup": {
+    "forced_kill": false,
+    "port_closed": true,
+    "render_node_idle": true,
+    "server_survivor": false,
+    "candidate_directory_present": false
+  },
+  "diagnosis": {
+    "classification": "request-contract-boundary",
+    "runtime_or_model_failure": false,
+    "cause": "The OpenAI-compatible llama-server endpoint rejects the fixture's literal empty input_ids array before inference. The fixture schema permits depth zero, but the HTTP API requires at least one prompt token.",
+    "positive_depth_evidence": "not attempted",
+    "candidate_evidence": "not attempted"
+  },
+  "frozen_interpretation": {
+    "r2_root_is_immutable": true,
+    "r2_rows_reusable": false,
+    "speed_quality_or_site_claim_authorized": false,
+    "safe_retry": "Define display x=0 as zero prior active context and submit one explicit ordinary registered token; disclose usage.prompt_tokens=1. Keep 2K-32K fixtures exact and unchanged."
+  }
+}

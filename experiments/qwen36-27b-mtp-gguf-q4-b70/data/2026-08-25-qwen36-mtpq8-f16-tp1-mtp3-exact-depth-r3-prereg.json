@@ -1,0 +1,61 @@
+{
+  "schema": "neural.download.qwen36-llama-mtp3-exact-depth-r3-zero-context-overlay.v1",
+  "campaign_id": "qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r3",
+  "state": "preregistered-not-launched",
+  "purpose": "Fresh retry after R2 proved llama-server rejects literal empty prompts; define display x=0 as zero prior active context plus one explicit ordinary prompt token while preserving exact 2K-32K fixtures.",
+  "base_packet": {
+    "manifest": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r2-prereg.json",
+    "manifest_sha256": "d50ad7774584c111ae82bbda1547c0c177e202eab6794e4a594284a4cfd0b1c5",
+    "runner": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r2.py",
+    "runner_sha256": "17b96c5813fb069eb53bb4981663d94dc6a5b9c265407243671e139ce7ec0a70",
+    "validator": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/validate-20260825-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r2.py",
+    "validator_sha256": "419e48fe5d5084465709cbef2f0326f2e87a1f1e8f60b0c0832f7c377417bd25"
+  },
+  "r2_failure": {
+    "run_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r2",
+    "terminal_receipt_sha256": "cc9852aa95afa5441eb48b99601e5490c5c4098c3807501f3a690719d3fa117f",
+    "failure_record": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r2-depth0-failure.json",
+    "failure_record_sha256": "ded15dee5fb1f2ec0e2bb871473435737dcef9088c61ccf1f9eee8337c958cc4",
+    "rows_reused": false,
+    "candidate_server_launches": 0
+  },
+  "zero_context_semantics": {
+    "display_context_axis_tokens": 0,
+    "definition": "zero prior active context before submitting the minimal explicit prompt token",
+    "literal_empty_prompt": false,
+    "submitted_prompt_token_ids": [90],
+    "submitted_prompt_token_count": 1,
+    "submitted_prompt_token_ids_sha256": "a84008063efed1c9b2748f2e71222aaa0449298aeabd82ca3314caf81d9c981e",
+    "token_source": "first prompt_token_ids element of depth-2048 in data/qwen27-exact-depth/qwen36-6a9e13bd-exact-depth-v1.json",
+    "token_is_special": false,
+    "expected_usage_prompt_tokens": 1,
+    "expected_cached_tokens": 0,
+    "required_site_disclosure": "x=0 denotes zero tokens active before the request; the HTTP request itself carries one explicit ordinary token and reports usage.prompt_tokens=1",
+    "not_equivalent_to": "a literal empty-prompt request or a raw-engine zero-token invocation"
+  },
+  "positive_depth_contract": {
+    "depths": [2048, 4096, 8192, 16384, 24576, 32768],
+    "delta_from_r2": false,
+    "fixture_sha256": "85b1050c88b4c1e6cb9c4ce7f1580284cd2aa68243dad0d0dff16460decbe5ac",
+    "meaning": "exact submitted and usage-confirmed active context tokens"
+  },
+  "r3_lifecycle": {
+    "runner": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r3.py",
+    "validator": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/validate-20260825-qwen36-mtpq8-f16-tp1-mtp3-exact-depth-r3.py",
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r3",
+    "exact_ack": "RUN qwen36-mtpq8-f16-tp1-mtp3-exact-depth-20260825-r3",
+    "r1_r2_roots_are_read_only": true,
+    "fresh_both_arms": true,
+    "artifacts_are_create_only": true
+  },
+  "frozen_interpretation": {
+    "speed_floor": null,
+    "cell_gain_if_all_fresh_r3_gates_pass": 7,
+    "r1_r2_cell_gain": 0,
+    "prior_measurement_transfer_allowed": false,
+    "zero_cell_requires_special_validator_disclosure": true,
+    "historical_featured_speeds_are_immutable": true,
+    "site_or_family_edit_authorized_before_result_and_quality_review": false,
+    "graph_claim_authorized": false
+  }
+}
