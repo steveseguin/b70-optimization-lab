@@ -41,7 +41,7 @@ expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e
 [[ -d "${vllm_src}/.git" && -d "${kernels_src}/.git" ]] || fail "source checkout is missing"
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ ! -e "${cache_dir}" ]] || fail "refusing to reuse ${cache_dir}"
-[[ ! -e "${VLLM_PLE_CPU_OFFLOAD+x}" ]] || fail "VLLM_PLE_CPU_OFFLOAD must be absent"
+[[ -z "${VLLM_PLE_CPU_OFFLOAD+x}" ]] || fail "VLLM_PLE_CPU_OFFLOAD must be absent"
 
 [[ "$(git -C "${vllm_src}" rev-parse HEAD)" == "${expected_vllm_head}" ]] || fail "vLLM overlay head changed"
 [[ "$(git -C "${kernels_src}" rev-parse HEAD)" == "${expected_kernels_head}" ]] || fail "kernel overlay head changed"
