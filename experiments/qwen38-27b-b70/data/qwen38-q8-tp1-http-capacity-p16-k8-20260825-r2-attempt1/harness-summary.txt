@@ -1,0 +1,36 @@
+{
+  "classification": "output-isolation-qualified-shape-variant",
+  "output": "/mnt/extended-ssd/b70-runs/qwen38-q8-tp1-http-capacity-p16-k8-20260825-r2-attempt1/result.json",
+  "batches": [
+    {
+      "concurrency": 1,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 18.4590670872324,
+      "oracle_exact": "1/1"
+    },
+    {
+      "concurrency": 2,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 30.043719552661884,
+      "oracle_exact": "1/2"
+    },
+    {
+      "concurrency": 4,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 48.1273329557224,
+      "oracle_exact": "2/4"
+    },
+    {
+      "concurrency": 8,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 68.77018690528047,
+      "oracle_exact": "4/8"
+    },
+    {
+      "concurrency": 16,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 44.09765714881015,
+      "oracle_exact": "7/16"
+    }
+  ]
+}

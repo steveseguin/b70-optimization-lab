@@ -1,0 +1,43 @@
+{
+  "schema": "neural.download.qwen38-q8-http-concurrency-preregistration.v1",
+  "campaign_id": "qwen38-q8-tp1-http-concurrency-20260825-r3",
+  "state": "preregistered-not-launched",
+  "purpose": "Measure output-audited native HTTP aggregate decode for the Qwen3.8 Q8_0 TP1 package on two fresh cache-off servers at the largest F16-KV capacity-discovery fit.",
+  "identity": {
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "runtime_base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "applied_source_diff_sha256": "f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e",
+    "server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "backend_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "oracle_digests_sha256": "0d6d74f51ccbc747f9827b81c622747e3e9b05e8983ee773f6f16e4fe27a7282",
+    "oracle_source_result_sha256": "2cbd400362cb4e2d8c50872faff9fe32e93b5c91a8129cce991fe791e8841827",
+    "cards": 1,
+    "topology": "TP1 on one Intel Arc Pro B70",
+    "weights": "Q8_0",
+    "generation": "target-only / MTP0"
+  },
+  "server_profile": {
+    "endpoint": "llama.cpp native HTTP /completion",
+    "context_tokens_total": 8192,
+    "parallel_slots": 16,
+    "nominal_context_tokens_per_slot": 512,
+    "kv_cache": "f16",
+    "prompt_cache": false,
+    "slot_prompt_similarity": 0
+  },
+  "measurement": {
+    "concurrency": [1, 2, 4, 8, 16],
+    "max_output_tokens": 128,
+    "fresh_server_attempts": 2,
+    "required_output_gate": "128 complete raw token IDs per response, zero reused prompt tokens, and no generated token digest equal to a frozen sequential oracle from another base task",
+    "required_stability_gate": "both fresh attempts pass; relative range at every point <=10%",
+    "sequential_identity": "reported but not required because greedy output may vary with batch shape"
+  },
+  "publication": {
+    "classification_if_passed": "output-isolation-qualified-shape-variant",
+    "aggregate": "median of the two fresh-server aggregate tok/s values at each exact concurrency",
+    "no_interpolation_or_extrapolation": true,
+    "capacity_pilot_rates_are_excluded": true,
+    "failed_points_remain_diagnostic": true
+  }
+}
