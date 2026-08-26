@@ -1,4 +1,5 @@
-FROM vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f
+ARG BASE_IMAGE=vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f
+FROM ${BASE_IMAGE}
 
 # The pinned kernel package already contains _xpu_C::fp8_gemm_w8a16. This
 # overlay installs the repository-patched default-off vLLM dispatch only.

@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "classification": "measured-candidate-profile",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "mtp_weights": "publisher-supplied mtp.safetensors",
+    "speculative_tokens": 1
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "xpu_kernel_version": "0.1.dev1+g1e90ffa67",
+    "mixed_spec_non_spec_fix_commits": [
+      "40541752f4f7fdef3cab471038c775e3f8d42838",
+      "1d5b4f5e5ddd8da96ea23c76d7e7421b00083fdb"
+    ],
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122",
+    "image_id": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
+    "w8a16_environment_gate": "VLLM_XPU_FP8_BLOCK_W8A16=1"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "gpu_memory_utilization": 0.96,
+    "prefix_cache": false,
+    "ccl_topo_p2p_access": 1,
+    "returned_tokens_per_request": 128
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "fresh_response_after_ttft_tok_s": 61.69957987620137,
+    "wall_tok_s": 58.90589137857145,
+    "ttft_s": 0.09838910505641252,
+    "cached_tokens": 0,
+    "control_mtp0_after_ttft_tok_s": 35.01136892707062,
+    "gain_vs_mtp0_percent": 76.227271,
+    "evidence": "qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-single-p40-o128.json"
+  },
+  "concurrency": {
+    "metric": "sum(completion_tokens) / synchronized HTTP batch wall time",
+    "points": [
+      {
+        "concurrent_sequences": 8,
+        "aggregate_tok_s": 351.03382883729853,
+        "per_user_tok_s": 43.879228604662316,
+        "samples": 1,
+        "evidence": "qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-replay-c8.json"
+      },
+      {
+        "concurrent_sequences": 16,
+        "aggregate_tok_s": 585.5252961601492,
+        "per_user_tok_s": 36.595331010009325,
+        "samples": 1,
+        "evidence": "qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-replay-c16.json"
+      },
+      {
+        "concurrent_sequences": 32,
+        "aggregate_tok_s": 800.4599610158504,
+        "per_user_tok_s": 25.014373781745324,
+        "samples": 1,
+        "evidence": "qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-replay-c32.json"
+      },
+      {
+        "concurrent_sequences": 64,
+        "aggregate_tok_s": 1091.6424596877368,
+        "per_user_tok_s": 17.056913432620888,
+        "samples": 3,
+        "statistic": "median",
+        "sample_values": [1078.3018145052197, 1093.6362581263286, 1091.6424596877368],
+        "evidence": "qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-c64-replication-x3.json"
+      },
+      {
+        "concurrent_sequences": 128,
+        "aggregate_tok_s": 1075.6341550111658,
+        "per_user_tok_s": 8.403391836024733,
+        "samples": 3,
+        "statistic": "median",
+        "sample_values": [973.9710869184357, 1075.6341550111658, 1082.8355122549851],
+        "evidence": "qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-c128-replication-x3.json"
+      }
+    ],
+    "measured_peak": {
+      "concurrent_sequences": 64,
+      "aggregate_tok_s": 1091.6424596877368,
+      "control_mtp0_same_c64_tok_s": 912.1914183881644,
+      "gain_vs_mtp0_same_c64_percent": 19.67252
+    },
+    "mtp0_c128_remains_faster_percent": 3.319895
+  },
+  "quality": {
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "concurrent_c64_exact_answer_canary": "512/512",
+    "cache_nonzero_requests": 0,
+    "sequential_evidence": "qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-sequential-quality.json",
+    "concurrent_evidence": "qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-c64-quality-512.json",
+    "greedy_output_note": "Complete token IDs and cross-task isolation passed, but some concurrent outputs differ from sequential greedy output because this runtime is batch-shape-dependent."
+  },
+  "failure_closed": {
+    "old_kernel_status": "rejected",
+    "failed_concurrency": 16,
+    "error": "causal_conv1d does not support spec-decode and non-spec (prefill + decode) tokens in the same invocation",
+    "evidence": "qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/r121-server.log"
+  },
+  "reporting_boundary": "All values are directly measured. The MTP1 service is a 256-token short-context profile and has no 32K result. No point is interpolated or extrapolated. MTP0 and MTP1 remain separate deployment identities."
+}

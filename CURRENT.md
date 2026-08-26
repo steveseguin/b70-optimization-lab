@@ -20,12 +20,13 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-Verified on 2026-08-15:
+Verified on 2026-08-26:
 
 - `muse-glimmer-bf16-fleet.service`: inactive;
 - `muse-glimmer-frontdoor.service`: inactive;
 - no listeners on `8000`, `18080`-`18089`, `19470`, or `19471`;
-- no `llama-server`, vLLM, or frontdoor process is running.
+- no Qwen benchmark listeners on `18110`-`18129`;
+- no `llama-server`, vLLM, or frontdoor process or container is running.
 
 The preserved Muse source/build remains under
 `/home/steve/src/llama.cpp-muse-100`. Do not reset, clean, rebuild, restart, or
@@ -946,6 +947,17 @@ raw token IDs with cache zero and passed output isolation. This closes the
 current c1-c64 short-context concurrency gap for the exact official-FP8
 TP2/MTP0/direct-P2P tuple without interpolation or extrapolation.
 
+The default-off block-W8A16 dispatch then raised this official-FP8 lane to
+`35.011369 tok/s` for one fresh cache-zero MTP0 response, `31.489587 tok/s` at
+the directly measured 32K point, and `1,112.570323 tok/s` conditioned median
+at c128. Publisher MTP depth 1 is a separate 256-token service identity: it
+measured `61.699580 tok/s` for one user and peaked at `1,091.642460 tok/s`
+median at c64, with 7/7 sequential cases, 8/8 repeat stability, and 512/512
+concurrent semantic cases passing. MTP1 has no 32K result; MTP0 remains 3.32%
+faster at its separate c128 optimum. The concurrent MTP1 service requires XPU
+kernels `1e90ffa672`, whose upstream mixed speculative/non-speculative GDN
+correction replaced an older kernel that aborted at c16.
+
 Resume and evidence:
 
 - [Qwen3.8 model board](README.md#qwen38-27b-model-board)
@@ -964,6 +976,8 @@ Resume and evidence:
 - [official FP8 vLLM/XPU TP2 reproduction](repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md)
 - [official FP8 graph result](experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md)
 - [official FP8 direct-P2P c64 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.md)
+- [official FP8 block-W8A16 MTP0 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md)
+- [official FP8 block-W8A16 MTP1 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md)
 
 Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
 prototype inherited from Qwen3.6 work. Both caused device faults/resets. Do not

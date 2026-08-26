@@ -73,6 +73,65 @@ directory. See the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-
 [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json),
 and [raw receipts](../../experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/).
 
+## Publisher-MTP1 interactive profile
+
+Qwen's official checkpoint includes `mtp.safetensors`. With one speculative
+token, the W8A16 dispatch, and the corrected mixed-batch XPU GDN kernel, the
+separate MTP1 service measures:
+
+| concurrent users | aggregate tok/s | per-user tok/s | samples |
+| ---: | ---: | ---: | ---: |
+| 1 | **61.699580** | 61.699580 | 1 fresh response |
+| 8 | 351.033829 | 43.879229 | 1 |
+| 16 | 585.525296 | 36.595331 | 1 |
+| 32 | 800.459961 | 25.014374 | 1 |
+| 64 | **1,091.642460** | 17.056913 | median of 3 |
+| 128 | 1,075.634155 | 8.403392 | median of 3 |
+
+MTP1 improves the one-user W8A16 result by `76.23%` and the same-c64 MTP0
+median by `19.67%`. MTP0 remains `3.32%` faster at its separate c128 optimum,
+so these are two deployment modes, not values to splice into one unnamed
+profile. MTP1 has a 256-token service limit and no measured 32K point.
+
+The old kernel aborts when continuous batching mixes MTP decode with new
+prefills. The selected kernel commit
+[`1e90ffa672`](https://github.com/vllm-project/vllm-xpu-kernels/commit/1e90ffa672ba02f17a909da11838a4c55b199783)
+contains upstream mixed-path fixes
+[`4054175`](https://github.com/vllm-project/vllm-xpu-kernels/commit/40541752f4f7fdef3cab471038c775e3f8d42838)
+and [`1d5b4f5`](https://github.com/vllm-project/vllm-xpu-kernels/commit/1d5b4f5e5ddd8da96ea23c76d7e7421b00083fdb).
+Build the exact kernel image and then the W8A16 overlay:
+
+```bash
+BUILD_ROOT=/path/to/dedicated-kernel-build \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-kernel-image.sh
+
+BUILD_ROOT=/path/to/dedicated-w8a16-build \
+BASE_IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-r13 \
+IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh
+```
+
+The kernel helper downloads and digest-checks the exact successful upstream
+GitHub Actions wheel and therefore requires authenticated `gh`. It fails
+closed if the artifact or digest is unavailable. Its pinned image definition is
+[`Dockerfile.fp8-kernel-1e90-r13`](../../experiments/qwen38-27b-b70/docker/Dockerfile.fp8-kernel-1e90-r13).
+Launch and validate MTP1:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-mtp1-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh
+
+OUT_DIR=/path/to/new-mtp1-attempt \
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1.sh
+```
+
+The selected service uses `max_num_batched_tokens=512`. The exact validation
+passed 7/7 sequential semantic cases, 8/8 repeat stability, and a 512/512 c64
+concurrent semantic canary. See the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md)
+and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-summary.json).
+
 ## Captured result
 
 - median decode after TTFT: **`21.708532 tok/s`**

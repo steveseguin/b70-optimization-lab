@@ -1,0 +1,83 @@
+[
+    {
+        "Architecture": "amd64",
+        "Config": {
+            "ArgsEscaped": true,
+            "Entrypoint": [
+                "vllm",
+                "serve"
+            ],
+            "Env": [
+                "PATH=/opt/venv/bin:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "DEBIAN_FRONTEND=noninteractive",
+                "VIRTUAL_ENV=/opt/venv",
+                "UV_PYTHON_INSTALL_DIR=/opt/uv/python",
+                "UV_HTTP_TIMEOUT=500",
+                "PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu",
+                "UV_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu",
+                "UV_INDEX_STRATEGY=unsafe-best-match",
+                "UV_LINK_MODE=copy",
+                "LD_LIBRARY_PATH=/tmp/ucx_install/lib:/opt/venv/lib:/usr/local/lib",
+                "VLLM_TARGET_DEVICE=xpu",
+                "VLLM_WORKER_MULTIPROC_METHOD=spawn"
+            ],
+            "Labels": {
+                "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+                "neural.download.build.lane": "qwen38-f01e-kernel-1e90-zero-vllm-overlay",
+                "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+                "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+                "org.opencontainers.image.version": "24.04"
+            },
+            "Shell": [
+                "bash",
+                "-c"
+            ],
+            "WorkingDir": "/workspace/vllm"
+        },
+        "Created": "2026-08-26T19:49:53.149164766Z",
+        "Descriptor": {
+            "digest": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "size": 5008
+        },
+        "Id": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
+        "Metadata": {
+            "LastTagTime": "2026-08-26T19:49:53.356215511Z"
+        },
+        "Os": "linux",
+        "Parent": "sha256:9403883cdbec3df988f486815f9dd528eb98baf0cc73d04ef3631ff0ac6a35b0",
+        "RepoDigests": [
+            "neural-download/vllm-openai-xpu@sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd"
+        ],
+        "RepoTags": [
+            "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122"
+        ],
+        "RootFS": {
+            "Layers": [
+                "sha256:42724e448bf499ec7d4b3c21d6cc68fe665ef677ed393c3dbb5357394e89ff91",
+                "sha256:6e0daf7833b70d66d5f1a3257deadfc733cea6eb70fc2a28a2710bbe6fd48ee3",
+                "sha256:5eee47704dd070cdbefd7b56d6a7c9908760c682cd25bfcabc9a6f1499c0ad86",
+                "sha256:9e813fffcaa0ca8c930d7e21c750b40a0d5d175c8216c9d14bd934c3d9bf7d70",
+                "sha256:1d39b99cde8161e5e4f74b6ffd92511f4c57d14725adbce394a855fa87e9d787",
+                "sha256:f1adb9f2814b94f5828b18074db149a08ce74fdf13ccb094d502ab5cb7307756",
+                "sha256:71aa28d3fa3bdc934fac6f5461784401a620de58750ab1405958f5d610d73a5f",
+                "sha256:092050bd252b179161bb01c291cd7fc9203118a8e44707a57969ab31c505f1cf",
+                "sha256:5e63bde4496a3065b2e8d861e65ae8da334269674595f1b99d695a51a466f71b",
+                "sha256:026f1c2d9f9df792624e9035d638f4f84d38d043a00e4545ad42bbff90fb8c96",
+                "sha256:e9ca8d6b3282aff80df2da01c2fd7f981883feb2cf16fdb3400140e642bd33d4",
+                "sha256:dc38a47632fb2b76225b78f9df4ac04aa1b01e8ac983e267882f36888c179623",
+                "sha256:6ddad800633e3e319655401acaf0c6c4386107762c41338c52680a05bbe50626",
+                "sha256:d67902c87efeb109dbe1e3e78279ae5281d09334012c802ff1a047a440c18abe",
+                "sha256:a13e48d5d3c63e330b60b47b2eec2a93e034142c5b450060153302807acdd7b2",
+                "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+                "sha256:c587105fef614a8cc6a397f4095f92a3738ca0dc811a6974d1ae9b9977621efd",
+                "sha256:2628dc497f2afc74ed2d386c75488ad117e501aa3527ec123e6bd47f3476d8a8",
+                "sha256:499e2b84cac37f685f7e121ec13156ef628efa537bbe2697aaa95c1b85bf2e0f",
+                "sha256:b83c19da0fe8a4e6ea1f5029cfb8b0e3324ec0fab022be281f17419e6f828d36",
+                "sha256:9c52396ddd7575c4382c795be80f25e63c98c629c9684a73401a2ff621fc09ad"
+            ],
+            "Type": "layers"
+        },
+        "Size": 5697354505
+    }
+]

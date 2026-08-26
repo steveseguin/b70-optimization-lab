@@ -10,14 +10,14 @@
     "model_family": "Qwen3.8",
     "publisher": "Alibaba / Qwen",
     "variant": "27B official FP8",
-    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with a pinned vLLM XPU image and the lab's optional default-off block-W8A16 overlay.",
+    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with distinct target-only/MTP0 and publisher-MTP1 profiles on the lab's optional default-off block-W8A16 overlay.",
     "quantization": "FP8",
     "runtime_label": "vLLM XPU",
     "operating_systems": ["Linux"],
     "delivery": ["container"],
     "modalities": ["text"],
     "use_cases": ["general", "coding", "long context"],
-    "tags": ["two cards", "Docker", "official checkpoint", "target only", "MTP0", "W8A16"],
+    "tags": ["two cards", "Docker", "official checkpoint", "target only", "MTP0", "MTP1", "W8A16"],
     "published_at": "2026-08-22",
     "featured_metric": {
       "value": 35.01136892707062,
@@ -37,6 +37,16 @@
       "status": "integrated",
       "validated_effect": "Against the exact same overlay image with the environment gate omitted, block W8A16 raised fresh single-user decode from 21.872717 to 35.011369 tok/s (+60.07%) and conditioned c128 aggregate decode from 860.460981 to 1112.570323 tok/s (+29.30%).",
       "evidence": "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md"
+    },
+    {
+      "id": "vllm-xpu-kernel-contributors",
+      "name": "vLLM XPU kernel contributors",
+      "kind": "external",
+      "profile": "https://github.com/vllm-project/vllm-xpu-kernels/commit/1d5b4f5e5ddd8da96ea23c76d7e7421b00083fdb",
+      "contribution": "Split and corrected the native GDN speculative/non-speculative paths so continuous batching can mix MTP decode and newly arriving prefill rows.",
+      "status": "integrated",
+      "validated_effect": "The older kernel aborted the c16 mixed workload. With the pinned upstream correction integrated, c16 completed and the selected MTP1 profile reached 1091.642460 tok/s at c64 while passing 512/512 concurrent semantic checks.",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md"
     }
   ],
   "hardware": {
@@ -55,6 +65,7 @@
     "kind": "container",
     "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
     "overlay_image_id_validated": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
+    "mtp1_overlay_image_id_validated": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
     "overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh"
   },
   "project_patches": {
@@ -62,7 +73,7 @@
     "items": [
       "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch"
     ],
-    "reason": "The optimized headline depends on the default-off block-W8A16 vLLM dispatch. The original upstream-image baseline remains available by omitting the overlay and environment gate."
+    "reason": "Both optimized profiles depend on the default-off block-W8A16 vLLM dispatch. Concurrent MTP1 additionally pins upstream XPU kernels at 1e90ffa672, including the mixed spec/non-spec GDN correction. The original upstream-image baseline remains available by omitting the overlay and environment gate."
   },
   "commands": {
     "preflight": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
@@ -79,19 +90,34 @@
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-concurrency-server.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.w8a16",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-kernel-image.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-depth-server.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-depth.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-concurrency.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
+    "experiments/qwen38-27b-b70/docker/Dockerfile.fp8-kernel-1e90-r13",
     "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
     "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json",
     "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch",
     "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md",
     "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md",
+    "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-summary.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-single-p40-o128.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-replay-c8.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-replay-c16.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-replay-c32.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-c64-replication-x3.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-c128-replication-x3.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-sequential-quality.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/mbt512-c64-quality-512.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp1-tp2-p128-screen-20260826-r1/r121-server.log",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/w8a16-c128-measured-x5.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/w8a16-c128-quality-1024.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
@@ -135,6 +161,23 @@
     "scripts/summarize-http-concurrency-attempts.py"
   ],
   "performance_profiles": [
+    {
+      "id": "http-block-w8a16-mtp1-output-audited-aggregate-vs-concurrent-users",
+      "label": "Block-W8A16 official FP8 TP2 + MTP1 aggregate decode",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "Measured short-context vLLM HTTP completions on two B70s with official block-FP8 target and publisher MTP weights, one speculative token, FP16 activations/KV, the lab block-W8A16 dispatch, XPU kernels 1e90ffa672 with the mixed spec/non-spec correction, direct oneCCL P2P access, 128 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, and 128 returned raw token IDs per response. c64 and c128 are medians of three repeats; the smaller cells are one post-conditioning sample. The 512/512 c64 semantic canary passed. Greedy output is batch-shape-dependent. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-summary.json",
+      "points": [
+        {"concurrent_sequences": 8, "value": 351.03382883729853, "per_user_value": 43.879228604662316, "samples": 1},
+        {"concurrent_sequences": 16, "value": 585.5252961601492, "per_user_value": 36.595331010009325, "samples": 1},
+        {"concurrent_sequences": 32, "value": 800.4599610158504, "per_user_value": 25.014373781745324, "samples": 1},
+        {"concurrent_sequences": 64, "value": 1091.6424596877368, "per_user_value": 17.056913432620888, "samples": 3},
+        {"concurrent_sequences": 128, "value": 1075.6341550111658, "per_user_value": 8.403391836024733, "samples": 3}
+      ]
+    },
     {
       "id": "http-block-w8a16-output-audited-aggregate-vs-concurrent-users",
       "label": "Block-W8A16 official FP8 TP2 aggregate decode",

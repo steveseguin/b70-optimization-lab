@@ -10,6 +10,11 @@ while passing the recorded sequential and concurrent quality gates. A separately
 32K prompt with `13.740 s` TTFT. The target-only/MTP0 64-slot HTTP profile reaches
 `774.394144 tok/s` aggregate at 64 active users on the unpatched baseline.
 
+The package also includes a separate publisher-MTP1 profile. It reaches
+**`61.699580 tok/s`** for one fresh user and **`1,091.642460 tok/s`** aggregate
+at 64 users. MTP1 is the faster interactive mode; target-only/MTP0 remains the
+highest-throughput mode. The site and guide keep those identities separate.
+
 > **Status: candidate, not a beginner install guide.** The exact model,
 > container, configuration, commands, and evidence are present. A clean Ubuntu
 > host installation of the Intel driver and Docker prerequisites has not yet
@@ -29,6 +34,14 @@ single-user decode from `21.872717` to `35.011369 tok/s` (+60.07%) and c128
 aggregate decode from `860.460981` to `1,112.570323 tok/s` (+29.30%). See the
 [W8A16 result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md)
 and the earlier [baseline evidence](../../experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md).
+
+**vLLM XPU kernel contributors — upstream mixed-batch fix:** upstream commits
+[`4054175`](https://github.com/vllm-project/vllm-xpu-kernels/commit/40541752f4f7fdef3cab471038c775e3f8d42838)
+and [`1d5b4f5`](https://github.com/vllm-project/vllm-xpu-kernels/commit/1d5b4f5e5ddd8da96ea23c76d7e7421b00083fdb)
+make concurrent MTP safe when speculative decode and newly arriving prefills
+share a scheduler step. The old kernel aborts this workload; the integrated
+fix reaches `1,091.64 tok/s` at c64. See the
+[MTP1 result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md).
 
 ## What you need
 
@@ -74,6 +87,25 @@ The helper applies the exact
 [patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch)
 and builds the repository-local Docker overlay. The model weights are not
 modified.
+
+The concurrent MTP1 profile additionally needs the pinned upstream XPU-kernel
+artifact. Build the kernel image, then place the same W8A16 overlay on top:
+
+```bash
+BUILD_ROOT=/path/to/dedicated-kernel-build \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-kernel-image.sh
+
+BUILD_ROOT=/path/to/dedicated-w8a16-build \
+BASE_IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-r13 \
+IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh
+```
+
+The first helper downloads the exact successful upstream GitHub Actions wheel,
+checks its SHA-256 digest, and installs it over the pinned official image. It
+requires `gh` authentication. If that upstream artifact expires, stop rather
+than silently substituting another wheel; clean-host source-build recovery is
+still an open packaging task.
 
 ## 3. Preflight
 
@@ -128,6 +160,24 @@ MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 That service is deliberately limited to 256 total tokens. Its 1,112.57 tok/s
 aggregate result must not be presented as a 32K-context measurement.
 
+For the distinct MTP1 interactive profile:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-mtp1-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh
+
+OUT_DIR=/path/to/new-mtp1-attempt \
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1.sh
+```
+
+This wrapper uses Qwen's bundled `mtp.safetensors`, one speculative token,
+the upstream mixed-batch GDN fix, and `max_num_batched_tokens=512`. It records
+single-user decode, an output-audited c8-c128 ladder, 7/7 sequential quality,
+8/8 repeat stability, and a 512-request c64 semantic canary. Its measured peak
+is c64; c128 is lower. It has no measured 32K point.
+
 For the measured 2K through 32K operating profile, launch the distinct
 one-slot service and run its exact-token sweep:
 
@@ -175,6 +225,8 @@ and [structured evidence](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen3
 docker stop -t 20 qwen38-fp8-tp2
 # If you launched the concurrency profile instead:
 docker stop -t 20 qwen38-fp8-tp2-concurrency
+# If you launched MTP1 instead:
+docker stop -t 20 qwen38-fp8-block-w8a16-mtp1-tp2-p128
 ```
 
 Do not interrupt graph initialization. If startup fails, preserve the complete

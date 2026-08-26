@@ -5,6 +5,7 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../.." && pwd)
 build_root=${BUILD_ROOT:?set BUILD_ROOT to a dedicated writable build directory}
 image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-block-w8a16-20260826}
+base_image=${BASE_IMAGE:-vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f}
 source_url=https://github.com/vllm-project/vllm.git
 source_commit=ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9
 source_dir=${build_root}/vllm-${source_commit}
@@ -19,7 +20,7 @@ command -v docker >/dev/null || { printf 'docker is required\n' >&2; exit 1; }
 }
 mkdir -p "${build_root}"
 
-if [[ ! -d "${source_dir}/.git" ]]; then
+if ! git -C "${source_dir}" rev-parse --git-dir >/dev/null 2>&1; then
   [[ ! -e "${source_dir}" ]] || {
     printf 'refusing non-git source path: %s\n' "${source_dir}" >&2
     exit 1
@@ -40,7 +41,12 @@ git -C "${source_dir}" apply --check "${patch}"
 git -C "${source_dir}" apply "${patch}"
 git -C "${source_dir}" diff --check
 
-docker build --pull=false --file "${dockerfile}" --tag "${image}" "${source_dir}"
+docker image inspect "${base_image}" >/dev/null 2>&1 || {
+  printf 'base image is missing: %s\n' "${base_image}" >&2
+  exit 1
+}
+docker build --pull=false --build-arg "BASE_IMAGE=${base_image}" \
+  --file "${dockerfile}" --tag "${image}" "${source_dir}"
 docker image inspect "${image}" --format '{{.Id}}'
 
 printf '%s\n' \
