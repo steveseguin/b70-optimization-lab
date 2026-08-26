@@ -1,8 +1,8 @@
 # Qwen3.8 Flash Next FP8 + DeepSeek V4 Flash 0731 REAP post-download gate
 
-Status: preregistered and **not executed**. Both downloads were still active
-when this gate was prepared on 2026-08-26. Downloaded bytes are not B70 runtime
-validation.
+Status: the Qwen target passed its pinned full validation at
+`2026-08-26T21:25:03Z`; the DeepSeek target remains pending. This storage pass
+is not B70 runtime validation.
 
 The inert validator is
 [`scripts/validate-20260826-pinned-hf-downloads.py`](../scripts/validate-20260826-pinned-hf-downloads.py).
@@ -45,6 +45,15 @@ The gate is fail-closed. A failure means quarantine and repair/redownload only
 the identified artifact; it does not authorize a benchmark, model-file edit,
 or reinterpretation of an older result. A pass authorizes only the separately
 preregistered B70 target-only bring-up.
+
+The completed Qwen evidence root is:
+
+`data/model-intake/post-download-validation-20260826/20260826T211840Z/`
+
+Its `summary.json` records `status=pass`; the hash log contains 144 passing
+file rows and the header log contains 131 passing shard rows. Qwen is therefore
+fully validated as a downloaded artifact, but no B70 load is authorized until
+the separate XPU runtime and memory gates close.
 
 After both downloads are visibly complete, the exact explicit invocation is:
 

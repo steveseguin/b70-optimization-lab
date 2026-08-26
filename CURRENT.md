@@ -855,12 +855,24 @@ score with a projection or a different accounting convention.
 
 ## Active Optimization Lane
 
-Qwen3.8 27B work is active. Accepted GGUF target-only results were measured on
-the two-ASRock-B70 reference host. Current AutoRound INT4 TP2 measurement uses
-a selected pair from the four-B70, 125-GiB host; the two-B70, 15-GiB host is a
-source/op-audit worker and must not run the full server. DFlash, MTP, prompt
-reuse, and other speculation are separate result classes and remain outside
-the target-only headline.
+Qwen3.8 Flash-Next FP8 is active as of 2026-08-26. Its pinned 185.56-GB download
+passed complete Git/LFS, tokenless dry-run, safetensors-header, payload-range,
+and 152,089-tensor index closure. It has not been loaded on a B70. The public
+day-zero vLLM implementation remains in open PRs 53896/53899, explicitly
+rejects XPU, and requires PLE host offload because the 172.76-GiB tensor
+payload cannot fit four 32-GiB cards. The immediate work is a current-main XPU
+port with exact FP8 PLE-scale handling and a proven TP4 memory budget, followed
+by a language-only eager MTP0 canary. See the
+[intake boundary](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-26-intake-and-xpu-bringup-boundary.md).
+
+The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
+not abandoned. Their accepted results, patches, and launch identities remain
+protected. Accepted Qwen3.8 27B GGUF target-only results were measured on the
+two-ASRock-B70 reference host. Its AutoRound INT4 TP2 work used a selected pair
+from the four-B70, 125-GiB host; the two-B70, 15-GiB host remains a source/op-
+audit worker and must not run the full server. DFlash, MTP, prompt reuse, and
+other speculation remain separate result classes and outside target-only
+headlines.
 
 All Git work is performed directly on `main`. Do not create branches or
 secondary worktrees. Use focused commits, patches, bundles, configs, and result
