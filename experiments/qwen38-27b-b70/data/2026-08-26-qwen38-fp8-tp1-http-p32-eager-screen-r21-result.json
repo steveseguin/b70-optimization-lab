@@ -1,0 +1,36 @@
+{
+  "schema": "neural.download.qwen38-fp8-tp1-eager-screen-result.v1",
+  "state": "complete-negative-performance-screen",
+  "campaign_id": "qwen38-fp8-tp1-http-p32-eager-screen-20260826-r21",
+  "fit": {
+    "server_healthy": true,
+    "reported_model_memory_gib": 27.57,
+    "available_kv_cache_memory_gib": 1.18,
+    "kv_cache_tokens": 1472,
+    "maximum_256_token_concurrency": 5.75,
+    "hybrid_cache_page_tokens": 832
+  },
+  "measurement": {
+    "concurrent_users": 32,
+    "aggregate_tok_s_wall": 49.6222562140054,
+    "excluded_warmup_tok_s": 49.54174326297449,
+    "ttft_ms_p50": 35811.649976007175,
+    "ttft_ms_p95": 64783.238367229926,
+    "end_to_end_ms_p50": 47388.166387507226,
+    "end_to_end_ms_p95": 76231.24444088317,
+    "output_classification": "output-isolation-qualified-shape-variant",
+    "completion_tokens_128_all": true,
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collision_count": 0,
+    "cleanup": "clean"
+  },
+  "decision": {
+    "single_replica_continuation_threshold_tok_s": 425.0,
+    "threshold_passed": false,
+    "dual_replica_measurement_authorized": false
+  },
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp1-http-p32-eager-screen-20260826-r21-attempt1",
+  "result_sha256": "b89068bf66d3d28d5b9733ef9293719100ec602826b1cd748bf6b8979678f3ce",
+  "qualification_sha256": "fec814d8544a421298ee4bde20047445f49ccb4e4ae486178ece7813517a13e2",
+  "conclusion": "Official FP8 can serve on one B70 only after disabling compile/graphs in this profile, but eager c32 throughput is far below the campaign target. Do not infer a two-replica rate."
+}
