@@ -9,7 +9,8 @@ class PacketTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):cls.runner=load_runner();cls.value=cls.runner.load_manifest()
     def test_only_capacity_and_identity_change(self):
-        self.assertEqual(self.value["execution_contract"]["graph_environment"]["GGML_SYCL_GRAPH_CACHE_SIZE"],"64");self.assertEqual(self.value["graph_acceptance"]["cache_limit"],64);self.assertEqual(self.value["graph_acceptance"]["minimum_direct_replays"],896);self.assertEqual(self.value["model"],self.runner.R2_VALUE["model"]);self.assertEqual(self.value["runtime"],self.runner.R2_VALUE["runtime"])
+        self.assertEqual(self.value["execution_contract"]["graph_environment"]["GGML_SYCL_GRAPH_CACHE_SIZE"],"64");self.assertEqual(self.value["selectors"]["graph_mode"],"SYCL graph cache64");self.assertEqual(self.value["server_contract"]["graph"],"SYCL cache64");self.assertEqual(self.value["graph_acceptance"]["cache_limit"],64);self.assertEqual(self.value["graph_acceptance"]["minimum_direct_replays"],896);self.assertEqual(self.value["model"],self.runner.R2_VALUE["model"]);self.assertEqual(self.value["runtime"],self.runner.R2_VALUE["runtime"])
+        self.runner.verify_base(self.runner.load_overlay())
     def test_cache64_parser_and_no_escalation(self):
         text="[SYCL-GRAPH] summary device=0 requested=1182 compatibility_rejected=0 device_unsupported=0 cache_entries=64 cache_limit=64 cache_hit=1000 cache_miss=182 cache_full=118 direct_replay=1000 recorded=64 created=64 updated=0 recreated=0 replayed=1064";self.assertEqual(self.runner.parse_graph_evidence(text)["direct_replay"],1000);self.assertTrue(self.runner.load_overlay()["mechanism_delta"]["no_further_capacity_escalation"])
     def test_inert_default(self):

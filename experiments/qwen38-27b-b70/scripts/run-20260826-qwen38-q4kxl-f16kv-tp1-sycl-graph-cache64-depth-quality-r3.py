@@ -43,10 +43,10 @@ def load_overlay() -> dict[str,Any]:
     return value
 
 def load_manifest() -> dict[str,Any]:
-    overlay=load_overlay(); value=copy.deepcopy(R2_VALUE); value["campaign_id"]=CAMPAIGN_ID; value["purpose"]=overlay["purpose"]; value["server_contract"]["model_alias"]="qwen38-q4kxl-f16kv-tp1-graph-cache64-depth-r3"; value["execution_contract"]["arm"]=ARM; value["execution_contract"]["graph_environment"]["GGML_SYCL_GRAPH_CACHE_SIZE"]="64"; value["graph_acceptance"]["cache_limit"]=64; value["lifecycle"].update(overlay["lifecycle"]); value["r2_capacity_parent"]=copy.deepcopy(overlay["preserved_r2_evidence"]); validate_manifest(value); return value
+    overlay=load_overlay(); value=copy.deepcopy(R2_VALUE); value["campaign_id"]=CAMPAIGN_ID; value["purpose"]=overlay["purpose"]; value["selectors"]["graph_mode"]="SYCL graph cache64"; value["server_contract"]["model_alias"]="qwen38-q4kxl-f16kv-tp1-graph-cache64-depth-r3"; value["server_contract"]["graph"]="SYCL cache64"; value["execution_contract"]["arm"]=ARM; value["execution_contract"]["graph_environment"]["GGML_SYCL_GRAPH_CACHE_SIZE"]="64"; value["graph_acceptance"]["cache_limit"]=64; value["lifecycle"].update(overlay["lifecycle"]); value["r2_capacity_parent"]=copy.deepcopy(overlay["preserved_r2_evidence"]); validate_manifest(value); return value
 
 def validate_manifest(value: dict[str,Any]) -> None:
-    if not (value.get("campaign_id")==CAMPAIGN_ID and value.get("server_contract",{}).get("model_alias")=="qwen38-q4kxl-f16kv-tp1-graph-cache64-depth-r3" and value.get("execution_contract",{}).get("arm")==ARM and value.get("execution_contract",{}).get("graph_environment")=={"GGML_SYCL_ENABLE_GRAPH":"1","GGML_SYCL_GRAPH_CACHE_SIZE":"64"} and value.get("graph_acceptance",{}).get("cache_limit")==64 and value.get("graph_acceptance",{}).get("minimum_direct_replays")==896 and value.get("lifecycle",{}).get("output_root")==f"/mnt/fast-ai/bench-results/{CAMPAIGN_ID}" and value.get("lifecycle",{}).get("exact_ack")==ACK and value.get("r2_capacity_parent")==load_overlay()["preserved_r2_evidence"]): raise GateError("effective cache64 R3 manifest invariant failed")
+    if not (value.get("campaign_id")==CAMPAIGN_ID and value.get("selectors",{}).get("graph_mode")=="SYCL graph cache64" and value.get("server_contract",{}).get("model_alias")=="qwen38-q4kxl-f16kv-tp1-graph-cache64-depth-r3" and value.get("server_contract",{}).get("graph")=="SYCL cache64" and value.get("execution_contract",{}).get("arm")==ARM and value.get("execution_contract",{}).get("graph_environment")=={"GGML_SYCL_ENABLE_GRAPH":"1","GGML_SYCL_GRAPH_CACHE_SIZE":"64"} and value.get("graph_acceptance",{}).get("cache_limit")==64 and value.get("graph_acceptance",{}).get("minimum_direct_replays")==896 and value.get("lifecycle",{}).get("output_root")==f"/mnt/fast-ai/bench-results/{CAMPAIGN_ID}" and value.get("lifecycle",{}).get("exact_ack")==ACK and value.get("r2_capacity_parent")==load_overlay()["preserved_r2_evidence"]): raise GateError("effective cache64 R3 manifest invariant failed")
 
 def merged_manifest(value: dict[str,Any]) -> dict[str,Any]:
     manifest=R2_MERGED(value); manifest["environment"]["GGML_SYCL_GRAPH_CACHE_SIZE"]="64"; return manifest
@@ -67,5 +67,10 @@ for module in (R2,R2.R1):
     module.OVERLAY=OVERLAY; module.VALIDATOR=VALIDATOR; module.CAMPAIGN_ID=CAMPAIGN_ID; module.ACK=ACK; module.ARM=ARM; module.load_overlay=load_overlay; module.load_manifest=load_manifest; module.validate_manifest=validate_manifest; module.merged_manifest=merged_manifest; module.parse_graph_evidence=parse_graph_evidence; module.static_check=static_check
 
 Execution=R2.Execution; EXPECTED_CLEANUP=R2.EXPECTED_CLEANUP; DEPTHS=R2.DEPTHS
+# The shared target-only validator calls this through its injected runner.
+# Earlier arms stopped before reaching that validator path. Translate its
+# graph-overlay argument back to the sealed target-only base overlay.
+def verify_base(_overlay: dict[str,Any]) -> None:
+    R2.R1.BASE.verify_base(R2.R1.BASE.load_overlay())
 def main() -> int: return R2.main()
 if __name__=="__main__": raise SystemExit(main())
