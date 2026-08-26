@@ -13,7 +13,7 @@ batch is never substituted for an unmeasured HTTP deployment.
 | headline single-user measurement | 14 / 14 | 100% |
 | directly measured decode at approximately 32K or 32K | 8 / 14 | 57% |
 | HTTP/service TTFT profile | 2 / 14 | 14% |
-| output-audited HTTP concurrency profile | 2 / 14 | 14% |
+| output-audited HTTP concurrency profile | 3 / 14 | 21% |
 | sequential-output-invariant HTTP concurrency profile | 0 / 14 | 0% |
 | clean-host installation and replay | 0 / 14 | 0% |
 
@@ -49,13 +49,38 @@ with 35.059 s TTFT. Its two-attempt 1→64-user aggregate curve peaks at
 zero, and the worst pointwise relative range was 1.717%. Greedy text remains
 batch-shape-dependent and is not described as sequentially invariant.
 
+Qwen3.8 Q8 TP1 now has a separately qualified F16-KV HTTP curve. The exact
+64-slot/32K and 32-slot/16K profiles fail device allocation on one 32 GiB B70;
+16 slots at 8K total context is the largest measured fit. Two fresh-server
+attempts passed the output-isolation and stability gates at 1/2/4/8/16 users.
+Aggregate decode peaks at 66.329901 tok/s at eight users and falls to
+43.603476 tok/s at 16, motivating a preregistered eight-active-slot queued
+HTTP follow-up. The capacity failures are not displayed as zero throughput.
+
+## Generation and topology comparison policy
+
+- Every public speed must state its generation mode. `Target-only / MTP0`
+  means no helper drafted tokens. A named `MTP`, `DFlash`, or `DSpark` result
+  states its own depth or policy; those mechanisms are not interchangeable.
+- MTP1/MTP2 cells are required only for an exact model/runtime identity that
+  has compatible draft weights and a controllable depth. Models without that
+  route stay `not applicable` or `not measured`; the site does not fabricate a
+  universal MTP ladder.
+- A depth ladder changes only depth. Quantization, target/draft artifacts,
+  runtime, topology, KV type, graph mode, prompt suite, and quality gate remain
+  fixed. Existing Qwen and Gemma family pages expose these matrices and keep
+  unmatched historical highs outside them.
+- TP1, TP2, TP3, and TP4 are different deployment tuples. A multi-card speed
+  never fills a one-card blank, and a missing topology is unknown unless a
+  retained boot/allocation result proves it unsupported.
+
 ## Exact missing work
 
 | priority | exact tuple or group | missing evidence | why it is still missing |
 | ---: | --- | --- | --- |
 | 1 | Qwen3.8 27B Q4_K_M TP1 | batch-shape-invariant greedy output for multi-user serving | Realistic HTTP speed/TTFT, exact 2K→32K service depth, and a preregistered output-audited stable HTTP capacity curve are now closed. The corrected 64-slot curve returns complete token IDs and has no cross-base collision, but strict sequential token identity varies for multi-user serving. |
 | 2 | Ornith 1.5 35B Q4_K_M TP1 | realistic HTTP TTFT/depth and qualified concurrency | Its context and raw 1→32 engine curves are complete; the service-shaped workload has not yet been run. |
-| 3 | LFM2.5, Nemotron 3.5, Ornith 9B | realistic HTTP TTFT/depth and qualified concurrency | These were first brought in as stock one-card packet baselines and depth-screened with `llama-bench`; package work outpaced service profiling. |
+| 3 | Qwen3.8 Q8 TP1, LFM2.5, Nemotron 3.5, Ornith 9B | realistic HTTP TTFT/depth; qualified concurrency for the three small/stock packages | Qwen Q8 now has output-audited HTTP concurrency but not realistic-prompt TTFT/depth. The other packages were first brought in as stock one-card baselines and depth-screened with `llama-bench`; package work outpaced service profiling. |
 | 4 | Laguna S, Muse-Glimmer, MiniMax M2.7 | decode/prefill/TTFT context curves and qualified concurrency | These are four-card or historical specialist stacks with much higher setup cost; only their promoted workloads were preserved. |
 | 5 | Qwen3.8 Q8/FP8 TP2 | 32K service/depth profiles and qualified concurrency | Exact two-card single-user baselines exist, but the Q4_K_M result cannot populate a different quant/runtime tuple. Q4_K_M TP2 is now closed for these service profiles. |
 | 6 | all 14 packages | clean-host Intel/oneAPI replay; beginner recovery outside Qwen Q4 TP1 | Every current result was reconstructed or replayed on an established lab host. Qwen Q4 TP1 now has a failure-oriented beginner recovery checklist plus a primary-source clean-host runbook and inventory receipt script. This host has overlapping oneAPI 2025.3/2026.0/2026.1 packages, so it correctly remains uncertified; only a fresh supported OS can close the badge. |
@@ -84,6 +109,21 @@ Measurements, not model popularity alone, set this order:
    one-card baselines and 32K raw curves. Their next value is user-shaped HTTP
    and concurrency coverage; speculative kernel work waits for a measured
    bottleneck.
+
+## What this two-card host can execute next
+
+The locally staged, exact artifacts support more Qwen work without another
+download: Qwen3.8 Q4_K_M/Q8_0/FP8/INT4 plus its MTP drafts, and Qwen3.6
+Q8_0/AutoRound INT4/DFlash plus its draft artifacts. The next matched service
+tuple after Q8 TP1 is Q8 TP2, then official FP8 TP2, followed by the remaining
+Qwen3.6 depth/topology cells where a compatible runtime exists.
+
+MiniMax M2.7 artifacts are staged but its promoted deployment needs four B70s,
+so this host cannot honestly fill that four-card service matrix. The first-wave
+LFM2.5/Nemotron/Ornith files are not presently mounted here; their existing
+measurements remain valid, but new service runs wait for local or network
+staging. Four-card Laguna, Muse, MiniMax, and DeepSeek gaps stay assigned to a
+four-card machine rather than being approximated here.
 
 ## Completion rule
 

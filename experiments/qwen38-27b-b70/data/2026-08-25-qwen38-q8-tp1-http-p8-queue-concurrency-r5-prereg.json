@@ -1,0 +1,45 @@
+{
+  "schema": "neural.download.queued-http-concurrency-preregistration.v1",
+  "campaign_id": "qwen38-q8-tp1-http-p8-queue-concurrency-20260825-r5",
+  "state": "preregistered-not-launched",
+  "purpose": "Qualify the eight-active-slot Q8 TP1 queued HTTP profile on two fresh servers after its pilot removed the p16 aggregate-throughput collapse.",
+  "identity": {
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "runtime_base_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "applied_source_diff_sha256": "f24d58bfddb12e7263c2b6974ce8fe2114b47d831f57fe329207ec0edb2f705e",
+    "server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "backend_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "oracle_digests_sha256": "c29cc1406709c0cbf52d012bf8aa333c4c649c64786d24b99a10902bcccee92d",
+    "oracle_source_result_sha256": "2e773274b7455286e2d0aaee04f035023a3c6593c6111e7dc38c5249a4d60d73",
+    "cards": 1,
+    "topology": "TP1 on one Intel Arc Pro B70",
+    "weights": "Q8_0",
+    "generation": "target-only / MTP0"
+  },
+  "server_profile": {
+    "endpoint": "llama.cpp native HTTP /completion",
+    "context_tokens_total": 4096,
+    "active_parallel_slots": 8,
+    "nominal_context_tokens_per_active_slot": 512,
+    "incoming_concurrent_requests": [1, 2, 4, 8, 16, 32, 64],
+    "requests_above_eight": "queued by the server",
+    "kv_cache": "f16",
+    "prompt_cache": false,
+    "slot_prompt_similarity": 0
+  },
+  "measurement": {
+    "max_output_tokens": 128,
+    "fresh_server_attempts": 2,
+    "required_output_gate": "128 complete raw token IDs per response, zero reused prompt tokens, and no generated token digest equal to a frozen sequential oracle from another base task",
+    "required_stability_gate": "both fresh attempts pass; relative range at every point <=10%",
+    "sequential_identity": "reported but not required because greedy output may vary with batch shape"
+  },
+  "publication": {
+    "classification_if_passed": "output-isolation-qualified-shape-variant",
+    "aggregate": "median of the two fresh-server aggregate tok/s values at each exact incoming concurrency",
+    "no_interpolation_or_extrapolation": true,
+    "pilot_rates_are_excluded": true,
+    "latency_boundary": "aggregate batch wall throughput only; this campaign does not qualify queued TTFT or per-request latency",
+    "failed_points_remain_diagnostic": true
+  }
+}
