@@ -3136,12 +3136,12 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 15 matrices", overview_html)
-        self.assertIn("377/1,814 classified", overview_html)
+        self.assertIn("378/1,814 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "282", "measured"),
+            ("lab-measured", "283", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "63", "quarantined"),
-            ("missing", "1,437", "missing"),
+            ("missing", "1,436", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3191,6 +3191,31 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("Qwen3.8 AutoRound TP1 graph modes", deferred_html)
         self.assertIn("value=11.919327130453762 tok/s", deferred_html)
         self.assertIn("value=30.075429359128265 tok/s", deferred_html)
+        e4m3_sentinel = next(
+            item for item in family["series_measurements"]
+            if item["id"] == "q38-f01e-autoround-tp1-eager-e4m3kv-exact-8k-r1"
+        )
+        self.assertEqual(e4m3_sentinel["config"]["kv"], "fp8_e4m3")
+        self.assertEqual(
+            e4m3_sentinel["points"],
+            [{
+                "x": 8192,
+                "decode_tok_s": 11.824452787933243,
+                "ttft_ms": 5965.314737986773,
+                "cached_tokens": 0,
+                "output_token_ids_sha256": "80363e2d6f67a92484cb7e1f347cf7765520b6f5a3ac8d1b1a3573d3cddcba67",
+            }],
+        )
+        q38_target_contract = next(
+            item for item in family["coverage_contracts"]
+            if item["id"] == "qwen38-tp1-vllm-xpu-target-matrix"
+        )
+        e4m3_rule = next(
+            rule for rule in q38_target_contract["rules"]
+            if rule["id"] == "measured-f01e-autoround-eager-e4m3kv-exact-8k"
+        )
+        self.assertEqual(e4m3_rule["label"], "D11.82 · E4M3 KV · Grade C")
+        self.assertEqual(e4m3_rule["match"]["active_context_tokens"], 8192)
         self.assertIn("Qwen3.8 AutoRound TP1/TP2/TP4 HTTP context", deferred_html)
         self.assertIn("value=48.15370845841339 tok/s", deferred_html)
         self.assertIn("value=42.33933781431878 tok/s", deferred_html)

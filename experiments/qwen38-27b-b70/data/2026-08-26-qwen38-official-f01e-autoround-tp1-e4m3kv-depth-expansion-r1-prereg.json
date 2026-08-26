@@ -1,0 +1,106 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-e4m3kv-depth-expansion-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Fill the six exact-context cells at 2K, 4K, 8K, 16K, 24K, and 32K on the identical f01e AutoRound TP1/MTP0/eager/E4M3-KV identity after the one-dose 8K sentinel passed exact measurement, the full frozen quality battery, and strict cleanup. Evidence is additive and cannot replace protected speeds.",
+  "reopen_basis": "The exact f01e TP1/MTP0/eager/E4M3-KV sentinel passed its 8K measurement, full quality battery, frozen baseline comparison, and strict cleanup. That result authorizes this separately preregistered six-depth expansion on the identical server identity.",
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "image_id": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 1,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0",
+    "mtp_depth": 0,
+    "kv_cache_dtype": "fp8_e4m3",
+    "graph_mode": "off",
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "server_delta": [
+      "--kv-cache-dtype",
+      "fp8_e4m3",
+      "--enforce-eager"
+    ]
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [
+      2048,
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896
+  },
+  "quality_contract": {
+    "helper": "scripts/qwen38-text-quality-suite.py",
+    "baseline": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp1-mtp0-f16-graph-seed0-natural-eos-replay-a-baseline-quality/quality.json",
+    "baseline_sha256": "738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18",
+    "full_pass": "seven exact cases, eight-repeat one-hash determinism, 8K needle, 24 baseline comparisons, and cache zero",
+    "gate": "A nonzero quality result quarantines the 8K measurement as output-divergent or otherwise quality-failed; it never authorizes descendants."
+  },
+  "frozen_input_sha256": {
+    "protected_overlay_manifest": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "model_manifest": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "model_verifier": "5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9",
+    "depth_helper": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067",
+    "quality_helper": "67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d"
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1",
+    "port": 19469,
+    "container": "q38-f01e-ar-e4m3kv-depth-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp1-e4m3kv-depth-expansion-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_gpu_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true
+  },
+  "terminal_classification": {
+    "passed-quality-clean-expansion": "All six exact-depth receipts and the full quality battery pass with clean shutdown.",
+    "quarantined-quality-failed": "All six exact-depth receipts pass but the full quality battery fails; retain measurements only as quarantined diagnostics.",
+    "incomplete-depth-expansion": "One or more exact-depth gates fail; retain passing depth receipts as screened evidence without promotion.",
+    "unsupported": "Only an explicit exact-image log line naming E4M3 KV cache and unsupported/invalid semantics qualifies.",
+    "failed": "All other startup, identity, request, cleanup, or harness failures."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "historical_replacement_allowed": false,
+    "protected_full_and_piecewise_profile_untouched": true,
+    "prior_e4m3_value_replacement_allowed": false,
+    "new_value_is_additive_profile_specific_evidence": true,
+    "descendant_expansion_is_automatic": false,
+    "site_publication_is_automatic": false
+  },
+  "authorization_evidence": {
+    "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-8k-sentinel-20260826-r1",
+    "terminal_state": "passed-quality-clean-sentinel",
+    "terminal_receipt_sha256": "1fabe9e75cbf3edb13baa3775e33dced1ad16034267f786a2b84bc17493b12ba",
+    "exact_8k_conventional_99_interval_tok_s": 11.824452787933243,
+    "exact_8k_gate_passed": true,
+    "full_quality_passed": true,
+    "full_baseline_match": true,
+    "quality_return_code": 0,
+    "cleanup_passed": true,
+    "note": "The expansion runner statically pins the terminal receipt hash before execution."
+  }
+}
