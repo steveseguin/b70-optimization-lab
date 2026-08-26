@@ -5,9 +5,10 @@ FP8 model and a digest-pinned vLLM XPU container on two Intel Arc Pro B70
 32 GiB cards. The lab reproduction reached `21.708532 tok/s` decode and passed
 the recorded semantic, repeat, and long-context gates. A separately measured
 33,024-token service profile reaches `20.389854 tok/s` decode at an exact 32K
-prompt with `21.873 s` TTFT. The target-only/MTP0 four-slot HTTP profile reaches
-`81.086716 tok/s` aggregate at four active users; c8-c64 remain near
-`81.5 tok/s` because excess requests queue.
+prompt with `21.873 s` TTFT. The target-only/MTP0 32-slot HTTP profile reaches
+`470.181647 tok/s` aggregate at 32 active users. Its c64 point is
+`474.536615 tok/s`, but those 64 requests exceed the active-slot limit and
+include queue wait.
 
 > **Status: candidate, not a beginner install guide.** The exact model,
 > container, configuration, commands, and evidence are present. A clean Ubuntu
@@ -117,7 +118,7 @@ rate is explicitly `prompt tokens / HTTP TTFT`; it includes scheduling and
 first-token work and is not a kernel-only prefill rate.
 
 For the distinct output-audited concurrency profile, start a new server with
-four active slots:
+32 active slots:
 
 ```bash
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
@@ -130,12 +131,12 @@ OUT_DIR=/path/to/new-attempt \
 
 The published profile uses two such attempts on separate fresh servers. Each
 request uses a unique short prompt, returns 128 raw token IDs, and must pass
-cache-zero and cross-task output-isolation checks. c1-c4 are active-service
-measurements. c8-c64 include queue wait: at c64 the median aggregate remains
-`81.493140 tok/s`, but median TTFT is `47.235 s` and p95 TTFT is `93.332 s`.
-That is a queueing limit, not useful 64-way scaling. See the
-[qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-result.md)
-and [structured evidence](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-result.json).
+cache-zero and cross-task output-isolation checks. c1-c32 are active-service
+measurements. At c32, aggregate throughput is `470.181647 tok/s` with median
+and p95 TTFT of `484.531 / 827.564 ms`. c64 includes queue wait: aggregate is
+`474.536615 tok/s`, while median/p95 TTFT rises to `4.721 / 9.375 s`. See the
+[qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p32-confirmation-r3-result.md)
+and [structured evidence](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p32-confirmation-r3-result.json).
 
 ## 5. Stop and recover
 

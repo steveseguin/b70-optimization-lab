@@ -3,7 +3,11 @@ set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../.." && pwd)
-model_dir="${1:-${MODEL_DIR:-/mnt/fast-ai/llm-models/qwen3.8-27b-fp8}}"
+model_dir="${1:-${MODEL_DIR:-}}"
+[[ -n "${model_dir}" ]] || {
+    printf 'pass the model directory or set MODEL_DIR\n' >&2
+    exit 1
+}
 if (( $# > 0 )); then
     shift
 fi

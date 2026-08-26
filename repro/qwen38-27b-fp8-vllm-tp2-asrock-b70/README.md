@@ -86,28 +86,29 @@ and [`result note`](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8
 
 A separate target-only/MTP0 service profile retained the same model, image,
 TP2 topology, FP16 KV, prefix-cache policy, and size-one graph while fixing
-maximum model length 4,096, maximum active sequences 4, and maximum batched
+maximum model length 4,096, maximum active sequences 32, and maximum batched
 tokens 256. Two preregistered fresh-server attempts measured each point:
 
 | concurrent HTTP users | aggregate tok/s | per-user tok/s | TTFT p50 / p95 ms | queued |
 | ---: | ---: | ---: | ---: | :---: |
-| 1 | 21.585295 | 21.585295 | 89.449 / 89.449 | no |
-| 2 | 41.347433 | 20.673717 | 127.086 / 177.017 | no |
-| 4 | 81.086716 | 20.271679 | 175.494 / 212.732 | no |
-| 8 | 81.244830 | 10.155604 | 3,291.121 / 6,499.807 | yes |
-| 16 | 81.434154 | 5.089635 | 9,556.379 / 19,041.603 | yes |
-| 32 | 81.503041 | 2.546970 | 22,114.973 / 44,144.486 | yes |
-| 64 | 81.493140 | 1.273330 | 47,234.926 / 93,332.472 | yes |
+| 1 | 21.552291 | 21.552291 | 94.877 / 94.877 | no |
+| 2 | 41.283248 | 20.641624 | 126.510 / 179.162 | no |
+| 4 | 80.883699 | 20.220925 | 229.458 / 229.668 | no |
+| 8 | 154.663420 | 19.332927 | 290.866 / 291.105 | no |
+| 16 | 281.199884 | 17.574993 | 304.845 / 444.262 | no |
+| 32 | 470.181647 | 14.693176 | 484.531 / 827.564 | no |
+| 64 | 474.536615 | 7.414635 | 4,720.881 / 9,375.086 | yes |
 
 All responses returned 128 complete raw token IDs and zero cached prompt
 tokens; no generated digest collided with a frozen sequential oracle belonging
-to another base task. The worst aggregate range was `0.1831%` and the worst
-latency range was `1.1354%`. Greedy output may vary with batch shape, so the
+to another base task. The worst aggregate range was `0.251%` and the worst
+latency range was `6.359%`. Greedy output may vary with batch shape, so the
 gate proves completion and output isolation rather than sequential token
 identity.
 
-The service saturates at c4. c8-c64 do not provide more useful capacity; they
-queue and sharply increase latency. Reproduce one attempt with:
+The service scales through c32. c64 is above the configured active-slot limit,
+so its latency includes queue wait and it is not evidence for 64 active users.
+Reproduce one attempt with:
 
 ```bash
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
@@ -120,9 +121,9 @@ OUT_DIR=/path/to/new-attempt \
 
 Stop it with `docker stop -t 20 qwen38-fp8-tp2-concurrency`, launch a fresh
 one, and use a different `OUT_DIR` for the second attempt. The
-[qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-result.md),
-[structured aggregate](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-result.json),
-[frozen preregistration](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-prereg.json),
+[qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p32-confirmation-r3-result.md),
+[structured aggregate](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p32-confirmation-r3-result.json),
+[frozen preregistration](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p32-confirmation-r3-prereg.json),
 [compact oracle](../../experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-oracle-pilot-20260826-r1-attempt1/oracle-digests.json),
 and exact [request suite](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json)
 are all in this repository. No point is interpolated or extrapolated.
@@ -153,10 +154,10 @@ with a recent `huggingface-cli`:
 ```bash
 huggingface-cli download Qwen/Qwen3.8-27B-FP8 \
   --revision 017b9c7af6b5689d5dd426a76e0bc077eb5ca20a \
-  --local-dir /mnt/fast-ai/llm-models/qwen3.8-27b-fp8
+  --local-dir /path/to/qwen3.8-27b-fp8
 
 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model.sh \
-  /mnt/fast-ai/llm-models/qwen3.8-27b-fp8
+  /path/to/qwen3.8-27b-fp8
 ```
 
 First pull the exact runtime image if it is not already present:
@@ -168,7 +169,7 @@ docker pull vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd
 Run the non-mutating preflight before serving:
 
 ```bash
-MODEL_DIR=/mnt/fast-ai/llm-models/qwen3.8-27b-fp8 \
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh
 ```
 
@@ -183,8 +184,8 @@ diagnostics, but the launcher now requires direct verification.
 ## Start and benchmark
 
 ```bash
-MODEL_DIR=/mnt/fast-ai/llm-models/qwen3.8-27b-fp8 \
-VLLM_CACHE_DIR=/mnt/fast-ai/vllm-cache/q38-official-fp8-f01e/vllm \
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/vllm-cache \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh
 ```
 

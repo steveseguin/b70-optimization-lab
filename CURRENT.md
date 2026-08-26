@@ -933,15 +933,16 @@ not natural prose, and the disclosed prompt-throughput proxy includes HTTP
 scheduling and first-token work. This closes the exact 32K/decode/TTFT gap for
 the official-FP8 TP2 tuple.
 
-The follow-up output-audited HTTP concurrency R3 then passed on two new fresh
-servers. At c1/c2/c4, aggregate throughput measured `21.585295 / 41.347433 /
-81.086716 tok/s`. Because the exact service allows four active sequences,
-c8/c16/c32/c64 are queued and remain flat at `81.244830 / 81.434154 /
-81.503041 / 81.493140 tok/s`; c64 median/p95 TTFT rises to `47.235 / 93.332 s`.
-All responses returned 128 raw token IDs with cache zero and passed output
-isolation. This closes concurrency and queued-latency coverage for the exact
-official-FP8 TP2/MTP0 tuple, but exposes active-slot capacity as the next
-matched optimization target.
+The first output-audited HTTP concurrency profile established a four-slot
+control at `81.086716 tok/s` for c4. A preregistered capacity screen then found
+that active service slots—not model compute—were the limit. The final p32
+confirmation passed on two wholly new servers: c1/c2/c4/c8/c16/c32 measured
+`21.552291 / 41.283248 / 80.883699 / 154.663420 / 281.199884 / 470.181647
+tok/s`. These are all active-slot points. c64 measured `474.536615 tok/s` but
+queues behind 32 slots; its median/p95 TTFT is `4.721 / 9.375 s`. All responses
+returned 128 raw token IDs with cache zero and passed output isolation. This
+closes the current short-context concurrency gap for the exact official-FP8
+TP2/MTP0 tuple without extrapolating a 64-active-user result.
 
 Resume and evidence:
 

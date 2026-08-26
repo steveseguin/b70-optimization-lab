@@ -76,7 +76,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn(">68.6&dagger;</a>", index_html)
         self.assertIn(">165.4&dagger;</a>", index_html)
         self.assertIn(">163.6&dagger;</a>", index_html)
-        self.assertIn(">81.5&dagger;</a>", index_html)
+        self.assertIn(">470.2&dagger;</a>", index_html)
         self.assertNotIn("raw&dagger;", index_html)
         self.assertNotIn("HTTP&dagger;", index_html)
         fp8_row = re.search(
@@ -84,8 +84,9 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(fp8_row)
         self.assertIn(">20.39&dagger;</a>", fp8_row.group(0))
-        self.assertIn(">81.5&dagger;</a>", fp8_row.group(0))
-        self.assertIn("Only four requests are active", fp8_row.group(0))
+        self.assertIn(">470.2&dagger;</a>", fp8_row.group(0))
+        self.assertIn("32 active users", fp8_row.group(0))
+        self.assertIn("c64 reaches 474.54 tok/s but queues", fp8_row.group(0))
         laguna_row = re.search(
             r"Laguna-S-2\.1.*?</tr>", index_html, flags=re.DOTALL
         )
@@ -103,7 +104,7 @@ class FamilyCoverageTest(unittest.TestCase):
         result = json.loads(
             (
                 MODULE.ROOT
-                / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-result.json"
+                / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p32-confirmation-r3-result.json"
             ).read_text()
         )
         profiles = {item["id"]: item for item in package["performance_profiles"]}
@@ -132,8 +133,8 @@ class FamilyCoverageTest(unittest.TestCase):
                 p95["points"][index]["value"],
                 source["latency_ms"]["ttft_ms_p95"]["median"],
             )
-        self.assertTrue(all(point["queued_profile"] for point in result["points"][3:]))
-        self.assertTrue(all(not point["queued_profile"] for point in result["points"][:3]))
+        self.assertTrue(result["points"][-1]["queued_profile"])
+        self.assertTrue(all(not point["queued_profile"] for point in result["points"][:-1]))
 
     def test_promoted_ornith_packet_and_family_stay_in_parity(self) -> None:
         family = json.loads((MODULE.ROOT / "families/ornith-1-5.json").read_text())
