@@ -1,0 +1,43 @@
+{
+  "schema": "neural.download.qwen38-fp8-gdn-compile-screen-result.v1",
+  "state": "complete-negative-screen",
+  "campaign_id": "qwen38-fp8-tp2-http-p64-gdn-compile-screen-20260826-r25",
+  "candidate": {
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_head": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_version": "0.1.12.3",
+    "torch_compile": true,
+    "cudagraph_mode": "NONE",
+    "gdn_core_split_ops_removed": true
+  },
+  "measurement": {
+    "concurrent_users": 64,
+    "aggregate_tok_s_wall": 725.1512967627506,
+    "excluded_warmup_tok_s": 722.7802441847602,
+    "ttft_ms_p50": 1396.4415755472146,
+    "ttft_ms_p95": 2144.271769595798,
+    "end_to_end_ms_p50": 11026.059452036861,
+    "end_to_end_ms_p95": 11239.819568087114,
+    "output_classification": "output-isolation-qualified-shape-variant",
+    "completion_tokens_128_all": true,
+    "complete_token_id_identity_all": true,
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collision_count": 0,
+    "p2p_activation_rank_count": 2,
+    "block_fp8_kernel_selected": true,
+    "effective_config_proved_gdn_unsplit": true,
+    "cleanup": "clean"
+  },
+  "comparison": {
+    "protected_c64_median_tok_s": 774.394144,
+    "delta_tok_s": -49.24284723724941,
+    "delta_percent": -6.358886830276623,
+    "promising_threshold_tok_s": 813.1138512,
+    "threshold_passed": false,
+    "remaining_gap_to_objective_percent": 20.664474283671552
+  },
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-gdn-compile-screen-20260826-r25-attempt1",
+  "result_sha256": "e94e75520e012ba94b3c466fbf2cceadda9e64e52a7abe699ef84e6ccf58c082",
+  "qualification_sha256": "951a1b1f81c1fc105b72c0a9945bf6aa5b0a9bdbb7c47e1371bc786aa959818b",
+  "conclusion": "Keeping the Qwen/XPU GDN core inside torch-compiled regions regresses c64 despite passing recurrent-state reuse and output-isolation gates. Retain the default GDN split points."
+}
