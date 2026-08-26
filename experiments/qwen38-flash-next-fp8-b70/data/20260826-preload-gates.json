@@ -1,0 +1,64 @@
+{
+  "date": "2026-08-26",
+  "model": {
+    "path": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+    "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "tree_sha256": "4a3793bd4a795ea6761b3d322200b4a1fd8300cdeb75cc127d330d513f590eb2"
+  },
+  "vllm": {
+    "upstream_base": "76cfe1cd88d30d525eec8be5bff75f8b77471c88",
+    "overlay_head": "48a350bcf6",
+    "commits": [
+      "3fd193010b",
+      "a6d6d48a1b",
+      "25482e7979",
+      "a1fa0b1bbf",
+      "b1b3a68da0",
+      "48a350bcf6"
+    ]
+  },
+  "meta_tp4": {
+    "ranks_passed": [0, 1, 2, 3],
+    "expert_parallel": false,
+    "parameter_bytes_per_rank": 33964389920,
+    "parameter_gib_per_rank": 31.631803065538406,
+    "bytes_by_dtype": {
+      "bfloat16": 3647434592,
+      "float32": 117966528,
+      "float8_e4m3fn": 30198988800
+    },
+    "expert_w13_shape": [512, 320, 2560]
+  },
+  "meta_tp4_ep4": {
+    "ranks_passed": [0, 1, 2, 3],
+    "expert_parallel": true,
+    "parameter_bytes_per_rank": 33853797920,
+    "parameter_gib_per_rank": 31.52880623936653,
+    "bytes_by_dtype": {
+      "bfloat16": 3647434592,
+      "float32": 7374528,
+      "float8_e4m3fn": 30198988800
+    },
+    "expert_w13_shape": [128, 1280, 2560]
+  },
+  "xpu_microgates": {
+    "hyperconnection": "all six operations exact against CPU reference",
+    "qsa_compressed_index": "pass",
+    "qsa_sparse_paged_attention": "pass; max_abs=0.0078125; tolerance=0.02",
+    "qsa_paged_mqa_scoring": "pass",
+    "qsa_topk_and_cache_store": "pass",
+    "ple_fp8_global_scale": "exact",
+    "uva_bfloat16_matmul": "exact",
+    "uva_fp8_scaled_mm": "exact"
+  },
+  "first_load_budget": {
+    "device_total_gib": 31.890625,
+    "cpu_offload_gib_per_rank": 5.0,
+    "offload_backend": "uva",
+    "gpu_memory_utilization": 0.92,
+    "prefetch_offload_allowed": false,
+    "reason": "prefetch uses CUDA-only streams/events; XPU UVA is proven"
+  },
+  "status": "blocked on isolated MoE-enabled XPU extension rebuild before first real load"
+}
+
