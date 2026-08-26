@@ -22,6 +22,16 @@ class SmallContextHttpTests(unittest.TestCase):
         for fragment in ("completion_tokens_128_all", "cached_tokens_all_zero", "oracle_hashes_exact_all"):
             self.assertIn(fragment, self.text)
 
+    def test_profiles_have_separate_model_identities(self) -> None:
+        for fragment in (
+            "PROFILE must be tp1, tp2, or q8_tp1",
+            "model_filename=Qwen3.8-27B-Q4_K_M.gguf",
+            "model_filename=Qwen3.8-27B-Q8_0.gguf",
+            "expected_model_sha=f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+            "model_label=qwen38-q8-tp1-http-smallctx",
+        ):
+            self.assertIn(fragment, self.text)
+
     def test_locks_precede_process_scan(self) -> None:
         self.assertLess(self.text.index("flock -n 7"), self.text.index("pgrep -af"))
 

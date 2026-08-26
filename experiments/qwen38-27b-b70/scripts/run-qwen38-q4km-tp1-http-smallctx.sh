@@ -20,21 +20,33 @@ api_mode="${API_MODE:-completions}"
 disable_prompt_cache="${DISABLE_PROMPT_CACHE:-0}"
 oracle_digests="${ORACLE_DIGESTS:-}"
 qualification_mode="${QUALIFICATION_MODE:-identity}"
-expected_model_sha=31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 case "${profile}" in
   tp1)
+    model_filename=Qwen3.8-27B-Q4_K_M.gguf
+    model_label=qwen38-q4km-tp1-http-smallctx
+    expected_model_sha=31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34
     expected_server_sha=35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545
     expected_backend_sha=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154
     ;;
   tp2)
+    model_filename=Qwen3.8-27B-Q4_K_M.gguf
+    model_label=qwen38-q4km-tp2-http-smallctx
+    expected_model_sha=31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34
     expected_server_sha=6ae782c7e8f7a992e0eeced10ade2a84b3cbb9ba65c65cbb917e52d1ce09777d
     expected_backend_sha=375f6d251b022b62367e73d2cd6b7eb0200efc9cc9c854a509af45950938c3ed
     expected_source_commit=a4349bcee933cd2b13820bc72fbe842e9c2f4b7a
     [[ -n "${source_dir}" && -d "${source_dir}/.git" ]] || fail 'TP2 requires SOURCE_DIR'
     ;;
-  *) fail 'PROFILE must be tp1 or tp2' ;;
+  q8_tp1)
+    model_filename=Qwen3.8-27B-Q8_0.gguf
+    model_label=qwen38-q8-tp1-http-smallctx
+    expected_model_sha=f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8
+    expected_server_sha=35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545
+    expected_backend_sha=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154
+    ;;
+  *) fail 'PROFILE must be tp1, tp2, or q8_tp1' ;;
 esac
 [[ -n "${model_dir}" && -n "${build_dir}" ]] || fail 'set MODEL_DIR and BUILD_DIR'
 [[ "${gpu_index}" =~ ^[0-9]+$ ]] || fail 'GPU_INDEX must be numeric'
@@ -47,7 +59,7 @@ esac
 [[ "${qualification_mode}" == identity || "${qualification_mode}" == isolation ]] || fail 'QUALIFICATION_MODE must be identity or isolation'
 [[ -z "${oracle_digests}" || -f "${oracle_digests}" ]] || fail 'ORACLE_DIGESTS does not exist'
 
-model="${model_dir}/Qwen3.8-27B-Q4_K_M.gguf"
+model="${model_dir}/${model_filename}"
 server="${build_dir}/bin/llama-server"
 backend="${build_dir}/bin/libggml-sycl.so"
 [[ -f "${model}" && -x "${server}" && -f "${backend}" ]] || fail 'model/server/backend missing'
@@ -177,7 +189,7 @@ curl -fsS "http://127.0.0.1:${port}/props" > "${run_dir}/props.json" || true
 curl -fsS "http://127.0.0.1:${port}/slots" > "${run_dir}/slots.json" || true
 
 harness_cmd=(python3 "${repo_root}/scripts/bench-openai-concurrency-oracle.py"
-  --base-url "http://127.0.0.1:${port}" --model "qwen38-q4km-${profile}-http-smallctx" \
+  --base-url "http://127.0.0.1:${port}" --model "${model_label}" \
   --api-mode "${api_mode}" --suite "${suite}" --concurrency 1,2,4,8,16,32,64 \
   --repeats "${harness_repeats}" --max-tokens 128 --seed 42 --timeout 900 \
   --request-extra-json '{"cache_prompt":false,"ignore_eos":true,"temperature":0}' \

@@ -1,0 +1,29 @@
+{
+  "schema": "neural.download.concurrency-oracle-pilot-preregistration.v1",
+  "campaign_id": "qwen38-q8-tp1-http-concurrency-oracle-pilot-20260825-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Generate a complete cache-zero sequential token-ID oracle for 64 fixed Q8 TP1 prompts before any publication attempts are specified.",
+  "identity": {
+    "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8",
+    "server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "backend_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "cards": 1,
+    "topology": "TP1 on one Intel Arc Pro B70"
+  },
+  "server_profile": {
+    "endpoint": "llama.cpp native HTTP /completion",
+    "context_tokens_total": 32768,
+    "parallel_slots": 64,
+    "kv_cache": "f16",
+    "prompt_cache": false,
+    "slot_prompt_similarity": 0
+  },
+  "pilot": {
+    "concurrency_points": [1, 2, 4, 8, 16, 32, 64],
+    "max_output_tokens": 128,
+    "sequential_oracle_rows": 64,
+    "required_oracle_gate": "all 64 sequential responses contain 128 complete raw token IDs and cached_tokens=0",
+    "publication_status": "pilot only; its concurrency values may not be published"
+  },
+  "next_step_if_passed": "Freeze only compact prompt/token-ID digests and preregister two fresh-server publication attempts with an output-isolation and pointwise stability gate."
+}
