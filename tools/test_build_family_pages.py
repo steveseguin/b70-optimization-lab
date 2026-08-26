@@ -1611,6 +1611,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "qwen38-tp2-vllm-xpu-autoround-http-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-http-depth": 7,
             "qwen38-tp2-vllm-xpu-autoround-f01e-eager-depth": 7,
+            "qwen38-tp2-vllm-xpu-autoround-f01e-mtp1-eager-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-eager-oracle-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-mtp1-eager-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-mtp2-eager-depth": 7,
@@ -1627,7 +1628,7 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertEqual(errors, [], contract_id)
             self.assertEqual(len(cells), expected_count, contract_id)
             all_cells.extend(cells)
-        self.assertEqual(len(all_cells), 1952)
+        self.assertEqual(len(all_cells), 1959)
 
         fp8_tp1_cells, errors = MODULE.expand_coverage_contract(
             contracts["qwen38-tp1-vllm-xpu-target-matrix"]
@@ -3230,15 +3231,15 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
-        self.assertIn("Coverage · 22 matrices", overview_html)
-        self.assertIn("549/1,952 classified", overview_html)
+        self.assertIn("Coverage · 23 matrices", overview_html)
+        self.assertIn("555/1,959 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "345", "measured"),
+            ("lab-measured", "351", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "107", "quarantined"),
             ("closed", "7", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,403", "missing"),
+            ("missing", "1,404", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3590,6 +3591,19 @@ class FamilyCoverageTest(unittest.TestCase):
             "2026-08-26-qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-r1-result.json",
             deferred_html,
         )
+        for speed in (
+            "11.882449351158243",
+            "14.954312648942505",
+            "15.224524397869173",
+            "13.775393901663984",
+            "13.73875750222011",
+            "13.917174301942318",
+        ):
+            self.assertIn(f"value={speed} tok/s", deferred_html)
+        self.assertIn(
+            "2026-08-26-qwen38-official-f01e-autoround-tp2-mtp1-f16-eager-depth-expansion-r1-result.json",
+            deferred_html,
+        )
         self.assertIn("value=9.647242826428695 tok/s", deferred_html)
         for speed in (
             "9.826154819323886",
@@ -3628,6 +3642,7 @@ class FamilyCoverageTest(unittest.TestCase):
                 ["q38-b2dd-tp1-graph-f16-exact-context"],
                 ["q38-autoround-tp2-f16kv-http-context-r1-grade-c"],
                 ["q38-f01e-autoround-tp2-eager-f16-exact-context-r1-grade-c"],
+                ["q38-f01e-autoround-tp2-mtp1-eager-f16-exact-context-r1-grade-c"],
                 ["q38-autoround-tp4-f16kv-http-context-r1-grade-c"],
                 ["q38-f01e-autoround-tp4-eager-f16-exact-8k-r1-grade-c"],
                 ["q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c"],
