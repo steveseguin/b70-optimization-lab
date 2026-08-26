@@ -243,12 +243,48 @@ out_path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 PY
 }
 
+write_cache_isolation() {
+  "$venv_python" - "$cache_root" "$root/rank-cache-isolation.json" <<'PY'
+import hashlib, json, pathlib, re, sys
+root, out = map(pathlib.Path, sys.argv[1:])
+files = sorted(path for path in root.rglob("*") if path.is_file())
+rank_pattern = re.compile(r"^rank_[0-9]+_[0-9]+$")
+rank_files, shared_files = {}, []
+for path in files:
+    rel = path.relative_to(root)
+    ranks = [part for part in rel.parts if rank_pattern.match(part)]
+    if ranks:
+        rank_files.setdefault(ranks[0], []).append(str(rel))
+    else:
+        shared_files.append(str(rel))
+expected = ["rank_0_0"]
+observed = sorted(rank_files)
+value = {
+    "schema": "neural.download.tp-rank-cache-isolation.v1",
+    "cache_root": str(root),
+    "total_files": len(files),
+    "expected_rank_namespaces": expected,
+    "observed_rank_namespaces": observed,
+    "rank_file_counts": {rank: len(rank_files.get(rank, [])) for rank in expected},
+    "shared_file_count": len(shared_files),
+    "shared_files_sha256": hashlib.sha256("\n".join(shared_files).encode()).hexdigest(),
+    "passed": observed == expected and all(rank_files.get(rank) for rank in expected),
+    "policy": "Only rank_0_0 is allowed for this TP1 run; shared AOT/cache files are inventoried separately.",
+}
+out.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+raise SystemExit(0 if value["passed"] else 1)
+PY
+}
+
 write_arm_result() {
   local state=$1 reason=$2 depth_rc=$3 quality_rc=$4 startup_ok=$5 runner_rc=$6 cleanup_ok=$7 acceptance_ok=$8 parent_ok=$9 quality_ok=${10}
   "$venv_python" - "$root/arm-result.json" "$state" "$reason" "$depth_rc" "$quality_rc" "$startup_ok" "$runner_rc" "$cleanup_ok" "$acceptance_ok" "$parent_ok" "$quality_ok" <<'PY'
 import datetime as dt, json, pathlib, sys
 path, state, reason, depth_rc, quality_rc, startup_ok, runner_rc, cleanup_ok, acceptance_ok, parent_ok, quality_ok = sys.argv[1:]
-value = {"schema":"neural.download.qwen38-official-autoround-mtp2-f16-piecewise-4k-sentinel-arm.v1", "created_at_utc":dt.datetime.now(dt.UTC).isoformat(), "state":state, "reason":reason, "exact_4k_return_code":int(depth_rc), "quality_return_code":int(quality_rc), "startup_identity_passed":startup_ok=="1", "cleanup_passed":cleanup_ok=="1", "acceptance_passed":acceptance_ok=="1", "dual_parent_verification_passed":parent_ok=="1", "quality_contract_passed":quality_ok=="1", "runner_return_code":int(runner_rc), "historical_replacement_allowed":False, "publication_authorized":False, "descendant_expansion_authorized":False, "descendant_execution_authorized":False}
+cache_path = pathlib.Path(path).parent / "rank-cache-isolation.json"
+try: cache_ok = json.loads(cache_path.read_text()).get("passed") is True
+except (OSError, json.JSONDecodeError): cache_ok = False
+value = {"schema":"neural.download.qwen38-official-autoround-mtp2-f16-piecewise-4k-sentinel-arm.v1", "created_at_utc":dt.datetime.now(dt.UTC).isoformat(), "state":state, "reason":reason, "exact_4k_return_code":int(depth_rc), "quality_return_code":int(quality_rc), "startup_identity_passed":startup_ok=="1", "rank_cache_isolation_passed":cache_ok, "cleanup_passed":cleanup_ok=="1", "acceptance_passed":acceptance_ok=="1", "dual_parent_verification_passed":parent_ok=="1", "quality_contract_passed":quality_ok=="1", "runner_return_code":int(runner_rc), "historical_replacement_allowed":False, "publication_authorized":False, "descendant_expansion_authorized":False, "descendant_execution_authorized":False}
 pathlib.Path(path).write_text(json.dumps(value, indent=2, sort_keys=True)+"\n")
 PY
 }
@@ -266,7 +302,7 @@ PY
 }
 
 run_sentinel() {
-  local startup_ok=0 depth_rc=125 quality_rc=125 runner_rc=0 cleanup_ok=0 acceptance_ok=0 parent_ok=0 quality_ok=0
+  local startup_ok=0 depth_rc=125 quality_rc=125 runner_rc=0 cleanup_ok=0 acceptance_ok=0 parent_ok=0 quality_ok=0 cache_ok=0
   local state=failed reason=unknown observed_image observed_head versions healthy=0 running i
   local -a args=(
     "$model" --host 0.0.0.0 --port 8000 --trust-remote-code
@@ -359,9 +395,11 @@ run_sentinel() {
     --output-json "$root/quality.json" > "$root/quality.stdout.log" 2>&1
   quality_rc=$?
   quality_contract_passed "$root/quality.json" && quality_ok=1
+  write_cache_isolation && cache_ok=1
   cleanup_active; strict_postcleanup && cleanup_ok=1
 
   if (( cleanup_ok == 0 )); then state=failed; reason=strict-postcleanup-failed; runner_rc=39
+  elif (( cache_ok == 0 )); then state=failed; reason=rank-cache-isolation-gate-failed; runner_rc=41
   elif (( runner_rc != 0 )); then state=failed; reason=models-metrics-or-verification-endpoint-failed; runner_rc=35
   elif (( depth_rc == 0 && quality_rc == 0 && acceptance_ok == 1 && parent_ok == 1 && quality_ok == 1 )); then state=passed-quality-clean-sentinel; reason=exact-4k-acceptance-dual-parent-quality-graph-topology-and-cleanup-passed; runner_rc=0
   elif (( depth_rc == 0 && acceptance_ok == 0 )); then state=quarantined-acceptance-failed; reason=exact-4k-passed-but-isolated-acceptance-failed; runner_rc=38

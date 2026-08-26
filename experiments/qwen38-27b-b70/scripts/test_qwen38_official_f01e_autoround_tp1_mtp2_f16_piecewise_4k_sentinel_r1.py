@@ -161,6 +161,10 @@ class ContractTests(unittest.TestCase):
             "cache root already exists",
             "output root must be ext4",
             "cache root must be ext4",
+            "write_cache_isolation",
+            'expected = ["rank_0_0"]',
+            "rank-cache-isolation-gate-failed",
+            '"rank_cache_isolation_passed":cache_ok',
         ):
             self.assertIn(token, self.runner)
 
