@@ -69,6 +69,14 @@ mode rejects corruption, cache reuse, missing/reordered/extra rows, prompt or
 suite drift, and decoding mismatches. Historical scorer behavior remains
 available only to interpret old evidence and is not a promotion gate.
 
+After an endpoint is ready, the frozen driver is
+`scripts/qualify-0731-reap-target-endpoint.sh`. Its `smoke` mode runs the
+strict ordered canaries against the initial 256-token server. Its `full` mode
+requires a server identity with at least 2K context and runs strict canaries,
+the quality-continuity suite, the cold 12-prompt performance suite with token
+IDs, then strict canaries again. It writes a checksummed qualification summary
+into the server run directory and refuses to overwrite prior evidence.
+
 The intended deliverable is a candidate neural.download package with exact
 model/runtime/patch identities, target-only and target-verified-speculation
 profiles kept distinct, and all unmeasured context cells explicitly pending.
