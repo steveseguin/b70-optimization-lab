@@ -1,6 +1,6 @@
 {
   "schema": "neural.download.qwen38-fp8-gdn-compile-screen-result.v1",
-  "state": "complete-negative-screen",
+  "state": "complete-no-win-comparison-corrected",
   "campaign_id": "qwen38-fp8-tp2-http-p64-gdn-compile-screen-20260826-r25",
   "candidate": {
     "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
@@ -29,9 +29,13 @@
     "cleanup": "clean"
   },
   "comparison": {
-    "protected_c64_median_tok_s": 774.394144,
-    "delta_tok_s": -49.24284723724941,
-    "delta_percent": -6.358886830276623,
+    "same_shape_promoted_control": "qwen38-fp8-tp2-http-p64-p2p1-screen-20260826-r9-attempt1",
+    "same_shape_control_tok_s": 730.5986394886512,
+    "same_shape_delta_tok_s": -5.447342725900541,
+    "same_shape_delta_percent": -0.7455999000645863,
+    "historical_ladder_conditioned_anchor_tok_s": 774.394144,
+    "historical_anchor_delta_percent": -6.358886830276623,
+    "historical_anchor_is_not_single_variable_comparator": true,
     "promising_threshold_tok_s": 813.1138512,
     "threshold_passed": false,
     "remaining_gap_to_objective_percent": 20.664474283671552
@@ -39,5 +43,5 @@
   "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-gdn-compile-screen-20260826-r25-attempt1",
   "result_sha256": "e94e75520e012ba94b3c466fbf2cceadda9e64e52a7abe699ef84e6ccf58c082",
   "qualification_sha256": "951a1b1f81c1fc105b72c0a9945bf6aa5b0a9bdbb7c47e1371bc786aa959818b",
-  "conclusion": "Keeping the Qwen/XPU GDN core inside torch-compiled regions regresses c64 despite passing recurrent-state reuse and output-isolation gates. Retain the default GDN split points."
+  "conclusion": "Corrected after R26: keeping GDN inside torch-compiled regions is a same-protocol -0.746% no-win, not a -6.359% regression. It passes recurrent-state reuse and output-isolation gates but offers no gain, so retain the default GDN split points. The 774.394144 ladder-conditioned anchor is not the single-variable comparator."
 }

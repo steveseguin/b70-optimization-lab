@@ -1,0 +1,45 @@
+{
+  "schema": "neural.download.qwen38-fp8-profiler-result.v1",
+  "state": "complete-diagnostic-comparison-corrected",
+  "campaign_id": "qwen38-fp8-tp2-http-p64-kernel-profiler-20260826-r26",
+  "measurement": {
+    "instrumented_aggregate_tok_s_wall": 409.6841779530028,
+    "throughput_is_disqualified_for_publication": true,
+    "classification": "output-isolation-qualified-shape-variant",
+    "complete_token_id_identity_all": true,
+    "completion_tokens_128_all": true,
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collision_count": 0,
+    "oracle_exact": "4/64",
+    "cleanup": "clean"
+  },
+  "profile_composition": {
+    "captured_engine_iterations": 8,
+    "candidate_decode_path_iterations": 5,
+    "candidate_chunk_or_mixed_path_iterations": 3,
+    "promoted_r11_decode_path_iterations": 7,
+    "promoted_r11_chunk_or_mixed_path_iterations": 1,
+    "derivation": "GDN call counts: candidate 240 native and 144 chunk versus R11 336 native and 48 chunk, with 48 GDN layers per engine iteration.",
+    "total_operator_times_are_not_composition_matched": true
+  },
+  "same_protocol_correction": {
+    "promoted_single_c64_control": "qwen38-fp8-tp2-http-p64-p2p1-screen-20260826-r9-attempt1",
+    "promoted_single_c64_tok_s": 730.5986394886512,
+    "candidate_single_c64_tok_s": 728.035937223874,
+    "delta_percent": -0.35076745647525387,
+    "historical_ladder_conditioned_anchor_tok_s": 774.3941438129216,
+    "ladder_conditioning_gain_over_single_c64_percent": 5.9944683656847575,
+    "conclusion": "The newer kernel is a same-protocol neutral/no-win, not a 5.99% regression. The apparent regression was almost exactly the unmatched ladder-conditioning effect."
+  },
+  "matched_operator_microbenchmarks": {
+    "fp8_mlp_5120x8704_delta_percent": 0.02154112026939714,
+    "fp8_mlp_8704x5120_delta_percent": 0.02658418198824286,
+    "gdn_decode_b64_delta_percent": 0.09936221515349786,
+    "conclusion": "The dominant FP8 MLP and pure-decode GDN device bodies are neutral between images."
+  },
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-kernel-profiler-20260826-r26",
+  "result_sha256": "e46423e62c48cd54ccd7d9f6a64bcdcc6cbea10e605d834388f35637f369f6ae",
+  "qualification_sha256": "fa32e2e195c6ab83b53599595d88edfae3c23f5d48af5b54a3942463ac51e6a2",
+  "profile_file_list_sha256": "5a69becee0af1824b3ee0ab74c90fe7becfc94037161551165f32cc0442c936f",
+  "next_step": "Run a within-server promoted-image c64-before, 1-to-32 preconditioning ladder, c64-after test. Only then compare candidate images under the same conditioning history."
+}

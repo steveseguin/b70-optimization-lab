@@ -59,16 +59,17 @@ under 0.708 ms/step—far below the target gap. Rebuilding a fourth version woul
 not be evidence-ranked work.
 
 A matched-image operator test also rules out FP8 GEMM device execution as the
-cause of the newer-kernel R23 regression. At the production M=64 block-scaled
+cause of R23's initially reported loss. At the production M=64 block-scaled
 shapes, promoted-versus-`1e90ffa` medians were 86.734/82.525 us for
 5120x4096, 155.563/155.596 us for 5120x8704, and 127.519/127.553 us for
 8704x5120. The two dominant MLP shapes differ by less than 0.03%. A matched
 Qwen3.8 TP2 GDN decode-b64 test was likewise neutral at 218.785/219.003 us
 (+0.10%). These are attribution microbenchmarks, not endpoint speeds; both
-reusable scripts and all four raw JSON outputs are retained below. R23's 5.99%
-endpoint loss therefore lies outside these two device bodies and requires an
-endpoint profiler comparison before any further kernel patch. Nothing from
-these diagnostics authorizes a package or website update.
+reusable scripts and all four raw JSON outputs are retained below. R26 later
+showed that R23's `-5.99%` was an unmatched comparison: it is `-0.351%` versus
+the same single-c64 promoted R9 protocol, while the 774.394 anchor followed a
+full smaller-concurrency ladder. See the R26 correction linked below. Nothing
+from these diagnostics authorizes a package or website update.
 
 ## Evidence
 
@@ -84,6 +85,7 @@ these diagnostics authorizes a package or website update.
 - [GDN attribution script](../scripts/qwen38-gdn-decode-production-shape.py)
 - [Promoted GDN samples](../data/2026-08-26-qwen38-gdn-promoted-decode-b64.json)
 - [Candidate GDN samples](../data/2026-08-26-qwen38-gdn-candidate-decode-b64.json)
+- [R26 comparison correction](2026-08-26-qwen38-fp8-tp2-http-p64-kernel-profiler-r26-result.md)
 
 The compressed rank traces, runtime identity, server command, direct model
 verification, and cleanup receipt are preserved in the same evidence directory.

@@ -1,6 +1,6 @@
 {
   "schema": "neural.download.qwen38-fp8-current-main-screen-result.v1",
-  "state": "complete-negative-screen",
+  "state": "complete-no-win-comparison-corrected",
   "campaign_id": "qwen38-fp8-tp2-http-p64-current-main-screen-20260826-r17",
   "candidate": {
     "image": "neural-download/vllm-openai-xpu:vllm-4af586e185-kernel-1e90ffa672-official",
@@ -24,14 +24,18 @@
     "cleanup": "clean"
   },
   "comparison": {
-    "protected_c64_median_tok_s": 774.394144,
-    "delta_tok_s": -38.30344598326941,
-    "delta_percent": -4.946257778164035,
+    "same_shape_promoted_control": "qwen38-fp8-tp2-http-p64-p2p1-screen-20260826-r9-attempt1",
+    "same_shape_control_tok_s": 730.5986394886512,
+    "same_shape_delta_tok_s": 5.492058528079403,
+    "same_shape_delta_percent": 0.7517203333314848,
+    "historical_ladder_conditioned_anchor_tok_s": 774.394144,
+    "historical_anchor_delta_percent": -4.946257778164035,
+    "historical_anchor_is_not_single_variable_comparator": true,
     "promising_threshold_tok_s": 813.1138512,
     "threshold_passed": false
   },
   "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-current-main-screen-20260826-r17-attempt1",
   "result_sha256": "b7c9437793d642d552d4034fb0d2099fc4633303d722fca954e93ac4e959532f",
   "qualification_sha256": "e8224392943f9a9647b7f262d71f0d454f76411b0941dd054a8235aee2e5a674",
-  "conclusion": "The later zero-overlay runtime regresses this exact official-FP8 c64 profile and does not advance to confirmation. The promoted result remains unchanged."
+  "conclusion": "Corrected after R26: the later zero-overlay runtime is +0.752% against the promoted image's same single-c64 R9 protocol, not a -4.946% regression. It remains below the preregistered 5% advancement floor and is therefore a no-win screen, not a promotion. The 774.394144 ladder-conditioned anchor remains unchanged."
 }

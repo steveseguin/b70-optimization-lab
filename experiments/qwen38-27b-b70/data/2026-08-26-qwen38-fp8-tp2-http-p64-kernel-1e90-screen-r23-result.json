@@ -1,6 +1,6 @@
 {
   "schema": "neural.download.qwen38-fp8-kernel-only-screen-result.v1",
-  "state": "complete-negative-screen",
+  "state": "complete-no-win-comparison-corrected",
   "campaign_id": "qwen38-fp8-tp2-http-p64-kernel-1e90-screen-20260826-r23",
   "candidate": {
     "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-r13",
@@ -30,9 +30,13 @@
     "cleanup": "clean"
   },
   "comparison": {
-    "protected_c64_median_tok_s": 774.394144,
-    "delta_tok_s": -46.35820677612594,
-    "delta_percent": -5.986383953870133,
+    "same_shape_promoted_control": "qwen38-fp8-tp2-http-p64-p2p1-screen-20260826-r9-attempt1",
+    "same_shape_control_tok_s": 730.5986394886512,
+    "same_shape_delta_tok_s": -2.562702264777222,
+    "same_shape_delta_percent": -0.35076745647525387,
+    "historical_ladder_conditioned_anchor_tok_s": 774.394144,
+    "historical_anchor_delta_percent": -5.986383953870133,
+    "historical_anchor_is_not_single_variable_comparator": true,
     "promising_threshold_tok_s": 813.1138512,
     "threshold_passed": false,
     "remaining_gap_to_objective_percent": 20.18637477382299
@@ -40,5 +44,5 @@
   "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-kernel-1e90-screen-20260826-r23-attempt1",
   "result_sha256": "47ae40d6dbe19037a9a1a9095edc804c48cd6531ed71be31798422cdb39bde13",
   "qualification_sha256": "32bbb95d728c830a570ea83b707ba96efef33238ab18848a7f34b9b731bd631a",
-  "conclusion": "The newer 1e90 XPU-kernel wheel regresses the exact promoted-vLLM c64 profile. It does not advance to confirmation, and the protected 774.394144 tok/s result remains unchanged."
+  "conclusion": "Corrected after R26: against the promoted image's same single-c64 protocol (R9), the newer kernel is a neutral/no-win -0.351%, not a -5.986% regression. The 774.394144 anchor was measured after the full 1-to-32 ladder and is not a single-variable comparator. The candidate still does not advance because it provides no measured gain; the protected anchor remains unchanged."
 }
