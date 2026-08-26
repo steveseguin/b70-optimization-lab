@@ -59,9 +59,9 @@
     "helper": "scripts/qwen38-text-quality-suite.py",
     "baseline": "/mnt/usb-models/bench-results/qwen38-27b-autoround-int4-b70/nightly-strict-20260823/tp1-mtp0-f16-graph-seed0-natural-eos-replay-a-baseline-quality/quality.json",
     "baseline_sha256": "738b8ed03746ed976c157bf9c392a2637de7c477b719c55f2d533b398adbef18",
-    "objective_pass": "quality.json pass_all: seven exact cases, eight-repeat one-hash determinism, 8K needle, and cache zero",
+    "objective_pass": "quality.json pass_all plus explicit prompt_tokens_details.cached_tokens == 0 for every usage across seven exact cases, all eight repeat runs, and the long-context case; missing cache telemetry fails closed",
     "comparison_grade": "quality.json baseline_match_all records all 24 TP1-baseline comparisons separately",
-    "gate": "Objective quality pass_all is required after exact 8K. baseline_match_all is retained as a conservative cross-topology comparison; a false value creates a lower-grade caveat but does not prevent freezing the same-topology TP4 oracle."
+    "gate": "Objective quality pass_all and all 16 explicit cache-zero usage records are required after exact 8K. baseline_match_all is retained as a conservative cross-topology comparison; a false value creates a lower-grade caveat but does not prevent freezing the same-topology TP4 oracle."
   },
   "frozen_input_sha256": {
     "protected_overlay_manifest": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",

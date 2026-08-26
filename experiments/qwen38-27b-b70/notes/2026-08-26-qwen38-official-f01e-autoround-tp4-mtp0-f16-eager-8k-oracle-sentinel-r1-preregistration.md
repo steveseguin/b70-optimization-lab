@@ -24,6 +24,9 @@ and TP4 must be numerically identical. The older TP1 quality baseline is also a
 comparison grade. Neither comparison is a prerequisite for a same-topology TP4
 oracle. Exact 8K, objective `quality.json` `pass_all`, exact runtime identity,
 four-worker topology, cache isolation, and cleanup are the native requirements.
+Objective quality also fails closed unless every usage record across all seven
+exact cases, all eight repeat runs, and the long-context case explicitly reports
+`prompt_tokens_details.cached_tokens == 0`; missing telemetry is a failure.
 If those pass while TP1 token parity or `baseline_match_all` differs, the output
 is frozen as a lower-grade TP4 oracle with the precise caveat recorded.
 

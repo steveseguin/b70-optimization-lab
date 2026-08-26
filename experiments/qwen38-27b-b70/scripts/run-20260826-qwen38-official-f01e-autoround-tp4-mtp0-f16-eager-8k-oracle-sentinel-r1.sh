@@ -193,6 +193,21 @@ out_path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 PY
 }
 
+quality_objective_gate() {
+  jq -e '
+    . as $q |
+    ($q.pass_all == true) and
+    (($q.exact_cases | type) == "array" and ($q.exact_cases | length) == 7) and
+    (($q.repeat_case.runs | type) == "array" and ($q.repeat_case.runs | length) == 8) and
+    (($q.long_context_case.usage | type) == "object") and
+    ([
+      $q.exact_cases[].usage,
+      $q.repeat_case.runs[].usage,
+      $q.long_context_case.usage
+    ] | length == 16 and all(.[]; (.prompt_tokens_details.cached_tokens? == 0)))
+  ' "$1"
+}
+
 write_arm_result() {
   local state=$1 reason=$2 depth_rc=$3 quality_rc=$4 startup_ok=$5 runner_rc=$6 cleanup_ok=$7 topology_ok=$8 target_ok=$9 cache_ok=${10} objective_quality_ok=${11} baseline_ok=${12}
   "$venv_python" - "$root/arm-result.json" "$state" "$reason" "$depth_rc" "$quality_rc" "$startup_ok" "$runner_rc" "$cleanup_ok" "$topology_ok" "$target_ok" "$cache_ok" "$objective_quality_ok" "$baseline_ok" <<'PY'
@@ -355,7 +370,7 @@ run_sentinel() {
     --baseline-json "$quality_baseline" --require-baseline \
     --output-json "$root/quality.json" > "$root/quality.stdout.log" 2>&1
   quality_rc=$?
-  jq -e '.pass_all == true' "$root/quality.json" >/dev/null 2>&1 && objective_quality_ok=1
+  quality_objective_gate "$root/quality.json" >/dev/null 2>&1 && objective_quality_ok=1
   jq -e '.baseline_match_all == true' "$root/quality.json" >/dev/null 2>&1 && baseline_ok=1
   cleanup_active
   strict_postcleanup && cleanup_ok=1

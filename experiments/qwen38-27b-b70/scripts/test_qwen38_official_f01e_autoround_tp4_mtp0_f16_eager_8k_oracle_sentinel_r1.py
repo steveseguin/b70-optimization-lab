@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
+import subprocess
 import unittest
 
 
@@ -84,7 +86,8 @@ class ContractTests(unittest.TestCase):
         self.assertIn("--require-baseline", self.runner)
         self.assertIn("--repeat-runs 8", self.runner)
         self.assertIn("--long-context-tokens 8192", self.runner)
-        self.assertIn("jq -e '.pass_all == true'", self.runner)
+        self.assertIn('($q.pass_all == true)', self.runner)
+        self.assertIn("quality_objective_gate \"$root/quality.json\"", self.runner)
         self.assertIn("jq -e '.baseline_match_all == true'", self.runner)
         self.assertIn(
             "depth_rc == 0 && objective_quality_ok == 1 && topology_ok == 1 && target_ok == 1 && baseline_ok == 1",
@@ -98,6 +101,57 @@ class ContractTests(unittest.TestCase):
         self.assertIn("passed-quality-clean-tp4-oracle-with-comparison-caveat", self.runner)
         self.assertIn("cross_topology_target_or_baseline_mismatch_is_caveat_not_rejection", json.dumps(self.manifest))
         self.assertEqual(self.runner.count("dockerc run -d"), 1)
+
+    def test_objective_quality_cache_zero_jq_fails_closed(self) -> None:
+        match = re.search(
+            r"quality_objective_gate\(\) \{\n  jq -e '(.*?)' \"\$1\"\n\}",
+            self.runner,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(match)
+        jq_filter = match.group(1)
+
+        def usage(cached: int | None = 0) -> dict:
+            details = {} if cached is None else {"cached_tokens": cached}
+            return {"prompt_tokens_details": details}
+
+        payload = {
+            "pass_all": True,
+            "exact_cases": [{"usage": usage()} for _ in range(7)],
+            "repeat_case": {"runs": [{"usage": usage()} for _ in range(8)]},
+            "long_context_case": {"usage": usage()},
+        }
+
+        def jq_passes(value: dict) -> bool:
+            completed = subprocess.run(
+                ["jq", "-e", jq_filter],
+                input=json.dumps(value),
+                text=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+            return completed.returncode == 0
+
+        self.assertTrue(jq_passes(payload))
+        missing = json.loads(json.dumps(payload))
+        missing["repeat_case"]["runs"][3]["usage"] = usage(None)
+        self.assertFalse(jq_passes(missing))
+        nonzero = json.loads(json.dumps(payload))
+        nonzero["long_context_case"]["usage"] = usage(1)
+        self.assertFalse(jq_passes(nonzero))
+        quality_failed = json.loads(json.dumps(payload))
+        quality_failed["pass_all"] = False
+        self.assertFalse(jq_passes(quality_failed))
+
+    def test_both_oracle_pass_states_require_objective_quality(self) -> None:
+        strong = (
+            "depth_rc == 0 && objective_quality_ok == 1 && topology_ok == 1 "
+            "&& target_ok == 1 && baseline_ok == 1"
+        )
+        caveated = "depth_rc == 0 && objective_quality_ok == 1 && topology_ok == 1"
+        self.assertIn(strong, self.runner)
+        self.assertIn(caveated, self.runner)
 
     def test_ext4_fresh_rank_cache_contract_is_fail_closed(self) -> None:
         cache = self.manifest["cache_contract"]
