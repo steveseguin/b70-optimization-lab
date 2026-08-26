@@ -568,6 +568,28 @@
       "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-r1-result.json"
     },
     {
+      "id": "qwen38-27b-autoround-int4-tp1-f01e-mtp1-eager-depth-grade-d",
+      "label": "Qwen3.8 AutoRound INT4 · TP1 current-image eager MTP1 partial depth",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "cards": 1,
+      "status": "mixed-partial-grade-d-human-adjudicated",
+      "evidence_level": "B70-measured Grade D partial",
+      "coverage": ["native MTP1", "HTTP serving", "exact context 4K/16K/24K/32K measured", "2K/8K quarantined", "F16 KV", "eager", "full quality battery", "x0 missing"],
+      "grades": {
+        "evidence": {
+          "grade": "D",
+          "scope": "AutoRound INT4 TP1 eager MTP1 serving at four exact target-parity active-context depths; two divergent depths are structurally quarantined",
+          "basis": "All six cache-zero depth and acceptance gates plus the full quality battery passed, but the whole arm correctly failed closed because 2K and 8K diverged at tokens 90 and 99. Explicit human coverage adjudication publishes only exact-parity 4K, 16K, 24K, and 32K as Grade D measured evidence; the divergent cells remain quarantined, x0 remains missing, and the fail-closed receipt is unchanged.",
+          "reviewed_at": "2026-08-26",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-r1-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-r1-result.json"
+    },
+    {
       "id": "qwen38-27b-official-fp8-tp1-eager-depth-grade-c",
       "label": "Qwen3.8 official FP8 · TP1 eager depth screen",
       "revision": "qwen3.8-27b",
@@ -3947,6 +3969,33 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-r1-result.json"
     },
     {
+      "id": "q38-f01e-autoround-tp1-mtp1-eager-f16-exact-context-r1-grade-d",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "variant": "AutoRound INT4 TP1 eager native MTP1 · F16 KV · partial Grade D",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp1-vllm-xpu-autoround-native-mtp-v1",
+      "runtime_snapshot_id": "f01e24f6-ac7509e2-official-image",
+      "speculation_method": "native-mtp",
+      "profile_id": "q38-f01e-autoround-tp1-mtp1-eager-f16-depth-grade-d-r1",
+      "measurement_class": "conventional-99-interval-exact-depth-openai-http-serving-grade-d-partial",
+      "config": {"tp": 1, "mtp": 1, "graph": "off", "graph_mode": "off", "enforce_eager": true, "kv": "f16", "configured_max_context_tokens": 32896, "prefix_caching": false},
+      "workload": "One-slot vLLM OpenAI-compatible HTTP completions; exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 4096, "decode_tok_s": 8.309260103763794, "ttft_ms": 2937.1183600014774, "cached_tokens": 0, "draft_acceptance_rate": 0.7887323943661971, "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"},
+        {"x": 16384, "decode_tok_s": 7.804595048897438, "ttft_ms": 12146.145694001461, "cached_tokens": 0, "draft_acceptance_rate": 0.8405797101449275, "output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7"},
+        {"x": 24576, "decode_tok_s": 7.615463263790375, "ttft_ms": 18746.035040996503, "cached_tokens": 0, "draft_acceptance_rate": 0.8142857142857143, "output_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8"},
+        {"x": 32768, "decode_tok_s": 7.72237631436256, "ttft_ms": 25747.598091998952, "cached_tokens": 0, "draft_acceptance_rate": 0.8142857142857143, "output_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786"}
+      ],
+      "quality": "All six exact-depth and acceptance gates and the full quality battery passed; the four published points also passed exact target-token parity.",
+      "caveat": "Partial Grade D curve under explicit human coverage adjudication. The whole arm remains fail-closed because 2K and 8K diverged at tokens 90 and 99; those cells are quarantined and x0 is missing. Published decode uses the conventional 99-interval metric, not the distinct historical 100-event field.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-r1-result.json"
+    },
+    {
       "id": "q38-b2dd-tp1-graph-f16-exact-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -5185,6 +5234,16 @@
       ]
     },
     {
+      "id": "context-q38-tp1-autoround-mtp1-partial",
+      "title": "Qwen3.8 AutoRound TP1 eager MTP1 partial depth",
+      "subtitle": "Grade D partial · current f01e/ac7509e2 image · F16 KV · exact target parity at 4K/16K/24K/32K · 2K/8K quarantined at tokens 90/99 · x=0 missing · conventional 99-interval decode",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "ttft_ms", "draft_acceptance_rate"],
+      "series": [
+        {"label": "MTP1 eager · exact-parity depths", "measurement_ids": ["q38-f01e-autoround-tp1-mtp1-eager-f16-exact-context-r1-grade-d"]}
+      ]
+    },
+    {
       "id": "context-q38-tp4-autoround-http",
       "title": "Qwen3.8 AutoRound TP1/TP2/TP4 HTTP context",
       "subtitle": "Grade C · exact cache-zero HTTP serving at 2K-32K · same current weights and b2dd9ce73d/1e90ffa672 zero-overlay runtime · MTP0 · F16 KV · vLLM FULL_AND_PIECEWISE · x=0 remains missing",
@@ -6396,7 +6455,13 @@
       {"id": "quarantined-f01e-autoround-mtp2-eager-f16-context-8192", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 2, "active_context_tokens": 8192, "graph_mode": "off", "kv": "f16"}, "state": "quarantined", "label": "MTP2 token-99 divergence · Grade D diagnostic", "reason": "Exact measurement, acceptance, and full quality passed, but the 8K output first diverged from the same-image target oracle at token 99; its speed remains diagnostic only.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-r1-result.json", "parent": "qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "blocked-on-exact-parity", "trigger": "same-profile-8k-parity-pass"}},
       {"id": "quarantined-f01e-autoround-mtp2-eager-f16-context-16384", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 2, "active_context_tokens": 16384, "graph_mode": "off", "kv": "f16"}, "state": "quarantined", "label": "MTP2 token-32 divergence · Grade D diagnostic", "reason": "Exact measurement, acceptance, and full quality passed, but the 16K output first diverged from the same-image target oracle at token 32; its speed remains diagnostic only.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-r1-result.json", "parent": "qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "blocked-on-exact-parity", "trigger": "same-profile-16k-parity-pass"}},
       {"id": "measured-f01e-autoround-mtp2-eager-f16-context-24576", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 2, "active_context_tokens": 24576, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D9.86 · MTP2 · Grade D partial", "reason": "Exact cache-zero depth, acceptance, full quality, and target-token parity passed; published by explicit per-depth human coverage adjudication while the whole arm remains fail-closed.", "evidence_id": "q38-f01e-autoround-tp1-mtp2-eager-f16-exact-context-r1-grade-d", "point_x": 24576, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-mtp2-eager-depth-grade-d", "parent": "qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
-      {"id": "measured-f01e-autoround-mtp2-eager-f16-context-32768", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 2, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D9.79 · MTP2 · Grade D partial", "reason": "Exact cache-zero depth, acceptance, full quality, and target-token parity passed; published by explicit per-depth human coverage adjudication while the whole arm remains fail-closed.", "evidence_id": "q38-f01e-autoround-tp1-mtp2-eager-f16-exact-context-r1-grade-d", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-mtp2-eager-depth-grade-d", "parent": "qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}}
+      {"id": "measured-f01e-autoround-mtp2-eager-f16-context-32768", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 2, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D9.79 · MTP2 · Grade D partial", "reason": "Exact cache-zero depth, acceptance, full quality, and target-token parity passed; published by explicit per-depth human coverage adjudication while the whole arm remains fail-closed.", "evidence_id": "q38-f01e-autoround-tp1-mtp2-eager-f16-exact-context-r1-grade-d", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-mtp2-eager-depth-grade-d", "parent": "qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "quarantined-f01e-autoround-mtp1-eager-f16-context-2048", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 1, "active_context_tokens": 2048, "graph_mode": "off", "kv": "f16"}, "state": "quarantined", "label": "MTP1 token-90 divergence · Grade D diagnostic", "reason": "Exact measurement, acceptance, and full quality passed, but the 2K output first diverged from the same-image target oracle at token 90; its speed remains diagnostic only.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-r1-result.json", "parent": "qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "blocked-on-exact-parity", "trigger": "same-profile-2k-parity-pass"}},
+      {"id": "measured-f01e-autoround-mtp1-eager-f16-context-4096", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 1, "active_context_tokens": 4096, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D8.31 · MTP1 · Grade D partial", "reason": "Exact cache-zero depth, acceptance, full quality, and target-token parity passed; published by explicit per-depth human coverage adjudication while the whole arm remains fail-closed.", "evidence_id": "q38-f01e-autoround-tp1-mtp1-eager-f16-exact-context-r1-grade-d", "point_x": 4096, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-mtp1-eager-depth-grade-d", "parent": "qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "quarantined-f01e-autoround-mtp1-eager-f16-context-8192", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 1, "active_context_tokens": 8192, "graph_mode": "off", "kv": "f16"}, "state": "quarantined", "label": "MTP1 token-99 divergence · Grade D diagnostic", "reason": "Exact measurement, acceptance, and full quality passed, but the 8K output first diverged from the same-image target oracle at token 99; its speed remains diagnostic only.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-r1-result.json", "parent": "qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "blocked-on-exact-parity", "trigger": "same-profile-8k-parity-pass"}},
+      {"id": "measured-f01e-autoround-mtp1-eager-f16-context-16384", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 1, "active_context_tokens": 16384, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D7.80 · MTP1 · Grade D partial", "reason": "Exact cache-zero depth, acceptance, full quality, and target-token parity passed; published by explicit per-depth human coverage adjudication while the whole arm remains fail-closed.", "evidence_id": "q38-f01e-autoround-tp1-mtp1-eager-f16-exact-context-r1-grade-d", "point_x": 16384, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-mtp1-eager-depth-grade-d", "parent": "qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-mtp1-eager-f16-context-24576", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 1, "active_context_tokens": 24576, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D7.62 · MTP1 · Grade D partial", "reason": "Exact cache-zero depth, acceptance, full quality, and target-token parity passed; published by explicit per-depth human coverage adjudication while the whole arm remains fail-closed.", "evidence_id": "q38-f01e-autoround-tp1-mtp1-eager-f16-exact-context-r1-grade-d", "point_x": 24576, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-mtp1-eager-depth-grade-d", "parent": "qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-f01e-autoround-mtp1-eager-f16-context-32768", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 1, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D7.72 · MTP1 · Grade D partial", "reason": "Exact cache-zero depth, acceptance, full quality, and target-token parity passed; published by explicit per-depth human coverage adjudication while the whole arm remains fail-closed.", "evidence_id": "q38-f01e-autoround-tp1-mtp1-eager-f16-exact-context-r1-grade-d", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-mtp1-eager-depth-grade-d", "parent": "qwen38-official-f01e-autoround-tp1-mtp1-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}}
     ]
   },
   {
