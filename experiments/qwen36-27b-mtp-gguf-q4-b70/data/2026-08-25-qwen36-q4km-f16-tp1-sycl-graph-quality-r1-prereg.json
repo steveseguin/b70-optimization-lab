@@ -1,0 +1,72 @@
+{
+  "schema": "neural.download.qwen36-llama-sycl-graph-q4km-f16-quality-overlay.v1",
+  "campaign_id": "qwen36-q4km-f16-tp1-sycl-graph-quality-20260825-r1",
+  "state": "sealed-preregistered-not-launched",
+  "purpose": "Certify the shared embedded-MTP Q4_K_M artifact TP1/MTP0/SYCL-graph/F16-KV tuple behind all seven passed exact-depth cells with the unchanged 13-request service battery.",
+  "base_quality_packet": {
+    "manifest_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-mtpq8-f16-tp1-sycl-graph-quality-r1-prereg.json",
+    "manifest_sha256": "2b4b9adc17c65ccf60669d95604398de44afb74a9ef1c818909eb5e190a642ca",
+    "runner_path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-mtpq8-f16-tp1-sycl-graph-quality-r1.py",
+    "runner_sha256": "5d342a3dceb2f2cfda63e2a95872eeaae59a911f1cdf24c9ae170e5eab8f4db7"
+  },
+  "sealed_service_lifecycle_implementation": {
+    "path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q8-q8kv-tp1-sycl-graph-quality-r1.py",
+    "sha256": "1c03886b21a0033a6b0e47468fa15d9983ae43bc6c9ad4d05c6a0dfbd81de8a4",
+    "scope": "Reuse only the passed isolated service execution lifecycle with rebound manifest, complete Q4_K_M model, F16 curve, selectors, port, gates, and authority."
+  },
+  "curve_parent": {
+    "campaign_id": "qwen36-q4km-f16-tp1-sycl-graph-exact-depth-20260825-r1",
+    "preregistration": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-sycl-graph-exact-depth-r1-prereg.json", "sha256": "d2f8de4d70013cfca6100236f35857d024b0573e81d6047a37581c76322d0561"},
+    "runner": {"path": "experiments/qwen36-27b-mtp-gguf-q4-b70/scripts/run-20260825-qwen36-q4km-f16-tp1-sycl-graph-exact-depth-r1.py", "sha256": "0841a3beabc945c9b9c7443add3fd09fcef1a1dabab85b380cc75ee3c6c6c364"},
+    "terminal_receipt": {"path": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-sycl-graph-exact-depth-20260825-r1/terminal-receipt.json", "sha256": "4f77a7bfb27db085ace94c5c427b67f4ca918544b24522c7d3f082aff9a2cb1b"},
+    "exact_depth_receipt": {"path": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-sycl-graph-exact-depth-20260825-r1/exact-depth-receipt.json", "sha256": "0a4c1298a3115aa458b8f89706d533826692f2a76ffbc865f07ea1d241821076"},
+    "metadata": {"path": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-sycl-graph-exact-depth-20260825-r1/metadata.json", "sha256": "07dd8c8f677da133486b30d4da6a91e8fa2ae734dd450f0288244105cf1e77d2"},
+    "graph_evidence": {"path": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-sycl-graph-exact-depth-20260825-r1/graph-evidence.json", "sha256": "879d7e7d191bc9b6ad5e8fb6468896a3ea93f990b45885c09ec452436c60fe9e"},
+    "depths": [0, 2048, 4096, 8192, 16384, 24576, 32768]
+  },
+  "model_identity_delta": {
+    "only_runtime_delta_from_embedded_q8_f16_quality": "replace complete embedded-MTP Q8_0 model/artifact/quantization with complete embedded-MTP Q4_K_M identity; F16 KV and target-only MTP0 remain unchanged",
+    "artifact_id": "qwen36-27b-unsloth-mtp-q4-k-m-5cb35eb",
+    "quantization": "Q4_K_M",
+    "model": {
+      "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+      "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+      "revision_binding": "The retained local MODEL-IDENTITIES.md and accepted graph-off packet bind this exact Q4_K_M filename, size, and SHA-256 to the pinned repository revision.",
+      "revision_binding_source": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/MODEL-IDENTITIES.md",
+      "retained_identity_evidence": "experiments/qwen36-27b-mtp-gguf-q4-b70/data/2026-08-25-qwen36-q4km-f16-tp1-exact-depth-result.json",
+      "path": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_K_M.gguf",
+      "size_bytes": 17106773120,
+      "sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+      "direct_sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+      "ordinary_sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+      "embedded_mtp_capability": true
+    },
+    "service_alias": "qwen36-q4km-f16-tp1-graph-quality-r1",
+    "service_port": 19439
+  },
+  "preserved": {
+    "f16_kv": true,
+    "mtp0_target_only_spec_none": true,
+    "source_server_backend_graph_environment_and_cache8": true,
+    "three_patch_chain_and_33_dso_closure": true,
+    "four_exact_eight_repeat_and_long_context_contract": true,
+    "long_context_claim": "approximately 29.4K actual prompt tokens inside a 32K service",
+    "cached_tokens_zero_on_all_13_requests": true,
+    "mixed_partial_prefill_disclosure": true,
+    "raw_engine_speed_unchanged": true
+  },
+  "lifecycle": {
+    "output_root": "/mnt/fast-ai/bench-results/qwen36-q4km-f16-tp1-sycl-graph-quality-20260825-r1",
+    "exact_ack": "RUN qwen36-q4km-f16-tp1-sycl-graph-quality-20260825-r1",
+    "create_only": true
+  },
+  "raw_terminal_writer_caveat": {"preserve_inherited_exact_depth_schema_and_quality_claim_authorized_false": true, "tracked_adjudication_required_after_pass": true},
+  "authority": {
+    "quality_may_cover_all_seven_q4km_f16_curve_cells_on_pass": true,
+    "per_depth_quality_reruns_required": false,
+    "site_publication_authorized": false,
+    "record_or_submission_authorized": false,
+    "protected_graph_off_values_may_be_replaced": false,
+    "publication_requires_tracked_adjudication_and_separate_ingestion": true
+  }
+}
