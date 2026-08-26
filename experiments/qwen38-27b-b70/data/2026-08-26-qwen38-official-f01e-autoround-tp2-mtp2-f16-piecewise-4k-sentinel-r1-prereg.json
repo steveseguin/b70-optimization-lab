@@ -1,0 +1,261 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp2-mtp2-f16-piecewise-4k-sentinel-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp2-mtp2-f16-piecewise-4k-sentinel-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Run exactly one bounded current-f01e TP2/PIECEWISE/native-MTP2/F16 exact-4K sentinel against the strongest correct same-image TP2/MTP0 PIECEWISE exact-4K target oracle, with TP2/MTP2 eager exact 4K used only as mechanism evidence. This packet authorizes no other depth, profile, publication, expansion, replacement, or descendant.",
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "image_id": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 2,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0,1",
+    "mtp_depth": 2,
+    "kv_cache_dtype": "float16",
+    "graph_mode": "PIECEWISE",
+    "graph_capture_sizes": [
+      1
+    ],
+    "max_cudagraph_capture_size": 1,
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.6,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 2
+    },
+    "startup_speculator_identity": {
+      "method": "mtp",
+      "num_spec_tokens": 2
+    }
+  },
+  "parent_authority": {
+    "tp2_mtp0_piecewise_result": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp0-f16-piecewise-depth-r1-result.json",
+      "sha256": "207fc55180663d03fbac2dd123465e54f0284b8f461d6f67f66c6ca29a4902b5",
+      "scope": "Only the clean exact 4K TP2/MTP0 PIECEWISE cell is the target oracle for this sentinel. Its other depths, diagnostic speeds, and publication decisions do not transfer."
+    },
+    "piecewise_mtp0_4k": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-piecewise-depth-20260826-r1/exact-depth/depth-4096.json",
+      "sha256": "947a2459afdd8fb88e2ed6373a67e80cb2b4f20daaf78532d6ed362ee9472e94",
+      "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"
+    },
+    "piecewise_mtp0_verification_4k": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-piecewise-depth-20260826-r1/verification/depth-4096.json",
+      "sha256": "67520414365605b347170ce8b4a65503a4ef81fd184371160b0f683e33c27b76"
+    },
+    "piecewise_mtp0_quality": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-piecewise-depth-20260826-r1/quality.json",
+      "sha256": "f5c2f3854d77df834c725f892fd3ae7640c7f848baeafa66a7d5640ec797eabb"
+    },
+    "piecewise_mtp0_rank_cache": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-piecewise-depth-20260826-r1/rank-cache-isolation.json",
+      "sha256": "7b077fd56e8acbfc1b470d08c530a393e07360a3eaf14d55b002e0c45227a393"
+    },
+    "piecewise_mtp0_model_verification": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-piecewise-depth-20260826-r1/model-verification.json",
+      "sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+    },
+    "piecewise_mtp0_terminal": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-piecewise-depth-20260826-r1/terminal-receipt.json",
+      "sha256": "eca9071c07c34c0138389999c0adb7af0a37fe8c6771a92f17f6ba9a06f6947f"
+    }
+  },
+  "same_topology_mtp2_eager_evidence": {
+    "result": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-r1-result.json",
+      "sha256": "309b350ec50bd47caa1f05e08443ec83bcbfe77f47c8307535ba408dc9a7eed7"
+    },
+    "exact_4k": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1/exact-depth/depth-4096.json",
+      "sha256": "426062cbce3657bd19babf89cd469d4ca048867638d48489cd0ac344db4dbe96",
+      "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"
+    },
+    "verification_4k": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1/verification/depth-4096.json",
+      "sha256": "70b4f07912a9aaa5408b06823b61a6f6df838959eed7d55c8f65e062011d372d",
+      "drafted_tokens": 94,
+      "accepted_tokens": 80
+    },
+    "quality": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1/quality.json",
+      "sha256": "df1c8a434d229f0b673f40fd8ee77cd659c953cdfaaaaf536c3191cf1903e1e9"
+    },
+    "rank_cache": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1/rank-cache-isolation.txt",
+      "sha256": "227f75f7f7397569a0a0e11204ce78285a058d00f49949ec58063eb329481c3c"
+    },
+    "model_verification": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1/model-verification.json",
+      "sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"
+    },
+    "terminal": {
+      "path": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1/terminal-receipt.json",
+      "sha256": "a803293e6273fc968161982f337c2962b64e99b2e8ff5a1ef3de7285895e5707"
+    },
+    "authority": "Mechanism, positive isolated acceptance, target parity, baseline quality, and topology precedent for exact TP2/MTP2 eager F16 4K only; eager speed, quarantined eager 2K, and all other eager depths do not transfer."
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [
+      4096
+    ],
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896,
+    "candidate_gate": "The candidate exact request must pass every depth-helper gate and report cached_tokens=0.",
+    "target_gate": "All 128 candidate token IDs must exactly equal the clean same-image TP2/MTP0 PIECEWISE 4K target oracle. The pinned TP2/MTP2 eager 4K token array must first equal that target. No TP1 graph evidence or other depth is tested or inferred."
+  },
+  "quality_contract": {
+    "helper": "scripts/qwen38-text-quality-suite.py",
+    "baseline": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1/quality.json",
+    "baseline_sha256": "df1c8a434d229f0b673f40fd8ee77cd659c953cdfaaaaf536c3191cf1903e1e9",
+    "gate": "Candidate must independently satisfy pass_all, baseline_match_all, seven passing exact cases, eight passing identical repeats with one unique hash, a passing 8K needle, exactly 24 true baseline comparisons, and cached_tokens=0 on all 16 quality requests. The needle is quality-only and creates no exact-8K graph cell."
+  },
+  "topology_and_graph_contract": {
+    "topology": "TP2 only on ZE_AFFINITY_MASK=0,1; world_size=2/local_world_size=2 plus world ranks and local ranks 0-1 are required. No ONEAPI_DEVICE_SELECTOR and no other topology authority are allowed.",
+    "graph": "enforce_eager=False; PIECEWISE size-one capture; mixed prefill-decode PIECEWISE marker and Graph capturing finished required; FULL decode capture forbidden.",
+    "speculation": "Resolved native method mtp, target model path, and num_spec_tokens=2 required. Drafted and accepted counter deltas are isolated around exact 4K and must both be positive, finite, and conserved.",
+    "cache": "Fresh dedicated ext4 cache root, prefix cache disabled, exact and every quality request cache-zero, and exactly rank_0_0 and rank_1_0 namespaces required.",
+    "model": "All 19 pinned model files must pass direct and ordinary verification before launch.",
+    "cleanup": "One fresh container/server lifetime, global EXIT/INT/TERM cleanup, container absent, port closed, no EngineCore/vLLM/llama server, and no render users at sealing."
+  },
+  "frozen_input_sha256": {
+    "protected_overlay_manifest": "4eb3eeb81e40099a64ba0444743074e6b044295ff566c1abc11d864902abb454",
+    "model_manifest": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "model_verifier": "5bca853ae644099cb18c58b458dd04dfcc0844d7644f074c4350539504d80ce9",
+    "depth_helper": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067",
+    "quality_helper": "67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d"
+  },
+  "speculator_binding": {
+    "type": "native embedded Qwen MTP; no external draft model",
+    "method_requested": "qwen3_next_mtp",
+    "method_resolved_expected": "mtp",
+    "num_speculative_tokens": 2,
+    "mtp_num_hidden_layers": 1,
+    "mtp_tensor_count": 29,
+    "mtp_tensor_file": "model_extra_tensors.safetensors",
+    "mtp_tensor_file_size": 298305576,
+    "mtp_tensor_sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de"
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp2-mtp2-f16-piecewise-4k-sentinel-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp2-f16-piecewise-4k-sentinel-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp2-mtp2-f16-piecewise-4k-sentinel-20260826-r1",
+    "port": 19527,
+    "container": "q38-f01e-ar-tp2-mtp2-pw-f16-4k-r1",
+    "served_model": "qwen38-f01e-ar-tp2-mtp2-pw-f16-4k-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp2-mtp2-f16-piecewise-4k-sentinel-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_tp2_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true,
+    "clean_pushed_main_required": true
+  },
+  "terminal_classification": {
+    "passed-quality-clean-sentinel": "Exact 4K, isolated positive MTP2 drafting/acceptance, exact TP2/MTP0 PIECEWISE target equality, full objective and baseline quality, TP2 graph/topology/cache/model identity, and cleanup all pass.",
+    "quarantined-acceptance-failed": "Exact 4K passes but isolated accepted speculation is not proven.",
+    "quarantined-parent-parity-failed": "Exact 4K passes but candidate tokens differ from the pinned TP2/MTP0 PIECEWISE target or the pinned TP2/MTP2 eager mechanism evidence no longer equals that target.",
+    "quarantined-quality-failed": "Exact 4K and mechanism/parity gates pass but the explicit full quality audit fails.",
+    "quarantined-exact-depth-failed": "The exact 4K request fails; retain only diagnostic evidence.",
+    "unsupported": "Only an exact-image log line explicitly classifying native MTP/speculation as unsupported.",
+    "failed": "Startup, identity, graph, topology, endpoint, model, rank cache, cleanup, or another non-explicit failure."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "historical_replacement_allowed": false,
+    "protected_values_unchanged": [
+      71.45427094575045,
+      30.329809361830037,
+      49.05894025767351,
+      71.9001988117144
+    ],
+    "automatic_publication": false,
+    "automatic_descendant_expansion": false,
+    "automatic_descendant_execution": false,
+    "other_site_or_matrix_cells_authorized": 0,
+    "pass_authority": "A pass establishes only this exact current-f01e TP2/PIECEWISE/native-MTP2/F16/4K internal cell pending separate validation and human publication.",
+    "only_exact_4k_authorized": true,
+    "other_depths_tp_mtp_graph_or_kv_inferred": false,
+    "site_cells_filled_automatically": 0
+  },
+  "coverage_contract": {
+    "path": "families/qwen-27b.json",
+    "proposal_id": "qwen38-tp2-vllm-xpu-autoround-f01e-mtp2-piecewise-depth",
+    "state": "proposed-not-written-to-family",
+    "label": "Qwen3.8 TP2 · current f01e AutoRound PIECEWISE MTP2 depth",
+    "description": "Seven exact current-f01e AutoRound INT4 TP2 native-MTP2 PIECEWISE F16-KV selectors. This sentinel may supply exact 4K only after validation and human publication; x0/2K/8K/16K/24K/32K remain missing.",
+    "fixed_selectors": {
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "tp": 2,
+      "mtp": 2,
+      "graph_mode": "PIECEWISE",
+      "kv": "f16",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp2-vllm-xpu-autoround-native-mtp2-piecewise-v1",
+      "speculation_method": "native-mtp"
+    },
+    "axis": {
+      "key": "active_context_tokens",
+      "values": [
+        0,
+        2048,
+        4096,
+        8192,
+        16384,
+        24576,
+        32768
+      ]
+    },
+    "proposed_rules": [
+      {
+        "state": "missing",
+        "values": [
+          0,
+          2048,
+          8192,
+          16384,
+          24576,
+          32768
+        ],
+        "count": 6,
+        "reason": "No exact qualified TP2/MTP2/PIECEWISE observation exists; no value is inferred from eager, TP1, MTP0, configured capacity, or this 4K sentinel."
+      },
+      {
+        "state": "preregistered-not-measured",
+        "values": [
+          4096
+        ],
+        "count": 1,
+        "parent": "qwen38-official-f01e-autoround-tp2-mtp2-f16-piecewise-4k-sentinel-20260826-r1",
+        "reason": "Only this bounded exact-4K sentinel may create evidence, pending separate validation and publication."
+      }
+    ],
+    "measured_before_run": 0,
+    "missing_before_run": 7,
+    "maximum_cells_this_packet_can_fill": 1,
+    "other_cells_authorized": 0
+  },
+  "excluded_authority": {
+    "tp1_mtp2_piecewise_graph": {
+      "state": "posthoc-audit-only-not-authority",
+      "original_campaign": "qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-20260826-r1",
+      "reason": "The original TP1/MTP2 PIECEWISE runner omitted its cache gate. A posthoc cache audit may preserve diagnostic context but cannot serve as parent, oracle, topology, cache, correctness, speed, or publication authority for this TP2 sentinel.",
+      "consumed_by_runner": false
+    }
+  }
+}
