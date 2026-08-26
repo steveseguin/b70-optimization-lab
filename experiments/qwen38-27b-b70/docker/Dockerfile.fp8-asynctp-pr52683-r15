@@ -1,0 +1,29 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-asynctp-pr52683-r14
+FROM ${BASE_IMAGE}
+
+LABEL neural.download.build.lane="qwen38-fp8-asynctp-pr52683-r15-active-import" \
+      neural.download.base.id="sha256:89b832cff662e0021f10371637b7396044280baf25bb4abe424dd9d5c82d0049" \
+      neural.download.runtime.import="/opt/venv/lib/python3.12/site-packages/vllm" \
+      neural.download.contribution.pr="vllm-project/vllm#52683" \
+      neural.download.contribution.author="chaojun-zhang" \
+      neural.download.contribution.commit="15c15752da84d371888a9d0b145483a98721eed2" \
+      neural.download.overlay.sha256="f0dc37d32e467e5f9b00701491d1fa27911de9da813e7d422b337c7192209aca"
+
+RUN install -m 0644 /workspace/vllm/vllm/_xpu_ops.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py \
+    && install -m 0644 /workspace/vllm/vllm/compilation/passes/fusion/collective_fusion.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/compilation/passes/fusion/collective_fusion.py \
+    && install -m 0644 /workspace/vllm/vllm/compilation/passes/pass_manager.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/compilation/passes/pass_manager.py \
+    && install -m 0644 /workspace/vllm/vllm/platforms/xpu.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/platforms/xpu.py \
+    && printf '%s  %s\n' \
+       088ba0ab7dafcf979432c2fab628aaf1996b892a56ddb3cc8fda6efba120df31 \
+       /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py \
+       7d4b74e9ba46108617b902b928feca728d9e29853a3f5acb4dc5d12ef98b3146 \
+       /opt/venv/lib/python3.12/site-packages/vllm/compilation/passes/fusion/collective_fusion.py \
+       c6de50da2e70b16ef73a66d880664b7883568acfe8a53112bdc9a8bad7d45e42 \
+       /opt/venv/lib/python3.12/site-packages/vllm/compilation/passes/pass_manager.py \
+       570c493b331fde176f2b5a73d65f63b01f5cf9a5b9ea45018057ffabaac19821 \
+       /opt/venv/lib/python3.12/site-packages/vllm/platforms/xpu.py \
+       | sha256sum -c -
