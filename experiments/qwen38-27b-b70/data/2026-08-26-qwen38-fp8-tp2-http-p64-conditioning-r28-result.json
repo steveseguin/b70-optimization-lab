@@ -1,0 +1,39 @@
+{
+  "schema": "neural.download.qwen38-fp8-conditioning-result.v1",
+  "state": "complete-nonpersistent",
+  "campaign_id": "qwen38-fp8-tp2-http-p64-conditioning-20260826-r28",
+  "classification": "output-isolation-qualified-shape-variant",
+  "measurements": {
+    "c64_before_tok_s": 726.621851745267,
+    "ladder_terminal_c64_after_1_tok_s": 773.5484600189383,
+    "immediate_c64_after_2_tok_s": 722.3466451490625,
+    "after_1_delta_percent": 6.4581884182203675,
+    "after_2_delta_percent": -0.5883674687096052,
+    "post_conditioning_median_tok_s": 747.9475525840004,
+    "post_conditioning_median_delta_percent": 2.934910474755381,
+    "post_conditioning_relative_range_percent": 6.84564241075251,
+    "persistence_gate_max_percent": 2.0,
+    "persistence_gate_passed": false
+  },
+  "latency_attribution": {
+    "c64_before_ttft_p50_ms": 1431.9356424966827,
+    "ladder_terminal_ttft_p50_ms": 765.141952491831,
+    "immediate_repeat_ttft_p50_ms": 1511.7808210197836,
+    "c64_before_post_ttft_per_user_median_tok_s": 13.365970065019514,
+    "ladder_terminal_post_ttft_per_user_median_tok_s": 13.323708923754229,
+    "immediate_repeat_post_ttft_per_user_median_tok_s": 13.363164279577436,
+    "conclusion": "The transient aggregate gain is TTFT/order driven. Median per-request post-TTFT decode rate remains approximately 13.32 to 13.37 tok/s and does not improve after the ladder."
+  },
+  "gates": {
+    "completion_tokens_128_all": true,
+    "complete_token_id_identity_all": true,
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collision_count": 0,
+    "cleanup": "clean"
+  },
+  "conclusion": "The ladder-terminal 773.548460 tok/s point reproduces R10's approximately 774 tok/s endpoint, but the next c64 batch immediately returns to 722.346645. The effect is not persistent and must not be packaged as an optimization or described as sustained c64 capacity.",
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-conditioning-20260826-r28-attempt1",
+  "result_sha256": "8e101739760e5ad43eef30499d0165ffcb0e57df432915674da40bd0b1320d08",
+  "qualification_sha256": "dbdf5ef6d52ca92131fe9ac45f7915c7d53798ba79a0b53baa3c7521c10876dd",
+  "next_step": "Optimize or measure sustained post-TTFT decode directly; do not spend more runs trying to promote the transient ladder-terminal wall-rate spike."
+}

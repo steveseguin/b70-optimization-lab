@@ -31,10 +31,10 @@ were `+0.022%` and `+0.027%` for the two dominant FP8 MLP shapes and `+0.099%`
 for pure-decode GDN b64. The newer wheel is therefore a no-win, not a measured
 device-body regression.
 
-The next experiment is a within-server conditioning factorial: c64 before,
-then the c1→32 ladder, then repeated c64 after. This will establish whether the
-6% effect is persistent runtime conditioning, measurement-order bias, or
-ordinary run variance before any package or guide changes.
+R28 subsequently completed the within-server conditioning factorial. The
+ladder-terminal c64 rose to `773.548460`, but the immediate repeat fell to
+`722.346645`; the effect failed persistence and was entirely associated with
+TTFT rather than median post-TTFT decode. It is not a package optimization.
 
 ## Evidence
 
@@ -43,3 +43,4 @@ ordinary run variance before any package or guide changes.
 - [Raw evidence and traces](../data/qwen38-fp8-tp2-http-p64-kernel-profiler-20260826-r26/)
 - [Derived runner](../scripts/run-qwen38-fp8-tp2-http-p64-kernel-profiler-r26.sh)
 - [Promoted R11 analysis](2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-profiler-r11-result.md)
+- [R28 conditioning closure](2026-08-26-qwen38-fp8-tp2-http-p64-conditioning-r28-result.md)

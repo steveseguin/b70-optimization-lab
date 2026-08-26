@@ -1,0 +1,123 @@
+{
+  "classification": "output-isolation-qualified-shape-variant",
+  "output": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-http-p64-conditioning-20260826-r28-attempt1/conditioning-phases/c64_before.json",
+  "batches": [
+    {
+      "concurrency": 64,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 726.621851745267,
+      "oracle_exact": "5/64"
+    }
+  ]
+}
+{
+  "classification": "output-isolation-qualified-shape-variant",
+  "output": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-http-p64-conditioning-20260826-r28-attempt1/conditioning-phases/conditioning_ladder_with_c64_after_1.json",
+  "batches": [
+    {
+      "concurrency": 1,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 21.5667311724233,
+      "oracle_exact": "0/1"
+    },
+    {
+      "concurrency": 2,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 41.37917957747057,
+      "oracle_exact": "0/2"
+    },
+    {
+      "concurrency": 4,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 81.47043832625829,
+      "oracle_exact": "0/4"
+    },
+    {
+      "concurrency": 8,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 157.85499117514686,
+      "oracle_exact": "0/8"
+    },
+    {
+      "concurrency": 16,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 292.2687087495852,
+      "oracle_exact": "1/16"
+    },
+    {
+      "concurrency": 32,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 502.50452000866335,
+      "oracle_exact": "5/32"
+    },
+    {
+      "concurrency": 64,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 773.5484600189383,
+      "oracle_exact": "5/64"
+    }
+  ]
+}
+{
+  "classification": "output-isolation-qualified-shape-variant",
+  "output": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-http-p64-conditioning-20260826-r28-attempt1/conditioning-phases/c64_after_2.json",
+  "batches": [
+    {
+      "concurrency": 64,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 722.3466451490625,
+      "oracle_exact": "7/64"
+    }
+  ]
+}
+{
+  "classification": "output-isolation-qualified-shape-variant",
+  "output": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-http-p64-conditioning-20260826-r28-attempt1/result.json",
+  "batches": [
+    {
+      "phase": "c64_before",
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 726.621851745267
+    },
+    {
+      "phase": "conditioning_ladder_with_c64_after_1",
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 21.5667311724233
+    },
+    {
+      "phase": "conditioning_ladder_with_c64_after_1",
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 41.37917957747057
+    },
+    {
+      "phase": "conditioning_ladder_with_c64_after_1",
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 81.47043832625829
+    },
+    {
+      "phase": "conditioning_ladder_with_c64_after_1",
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 157.85499117514686
+    },
+    {
+      "phase": "conditioning_ladder_with_c64_after_1",
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 292.2687087495852
+    },
+    {
+      "phase": "conditioning_ladder_with_c64_after_1",
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 502.50452000866335
+    },
+    {
+      "phase": "conditioning_ladder_with_c64_after_1",
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 773.5484600189383
+    },
+    {
+      "phase": "c64_after_2",
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 722.3466451490625
+    }
+  ]
+}
