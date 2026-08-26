@@ -977,6 +977,12 @@ not run by the frozen stop rule. It is not native two-layer MTP or a candidate
 default. See the
 [result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-result.md).
 
+The exact draft local-argmax follow-up is also closed negative. It matched the
+MTP2 sequential control exactly, retained `82.823927 tok/s` for one user, but
+regressed c64 to `673.064810 tok/s` and missed the frozen 875 tok/s gate. No
+collective sub-variant or replication ran. See the
+[result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-w8a16-mtp2-local-argmax-r1-result.md).
+
 Resume and evidence:
 
 - [Qwen3.8 model board](README.md#qwen38-27b-model-board)

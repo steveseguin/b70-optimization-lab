@@ -26,10 +26,19 @@ MTP2_MBT768_RAW = (
 MTP2_SUMMARY = (
     DATA / "2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-summary.json"
 )
+MTP2_LOCAL_RAW = DATA / "qwen38-fp8-w8a16-mtp2-local-argmax-20260826-r1"
+MTP2_LOCAL_SUMMARY = (
+    DATA / "2026-08-26-qwen38-fp8-w8a16-mtp2-local-argmax-r1-summary.json"
+)
 PATCH = (
     ROOT
     / "experiments/qwen38-27b-b70/patches"
     / "vllm-qwen38-fp8-block-w8a16-20260826.patch"
+)
+LOCAL_ARGMAX_PATCH = (
+    ROOT
+    / "experiments/qwen38-27b-b70/patches"
+    / "vllm-qwen38-next-mtp-local-argmax-hook-20260826.patch"
 )
 REPRO = ROOT / "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70"
 MTP_KERNEL_DOCKERFILE = (
@@ -285,6 +294,77 @@ def main() -> int:
         assert all(case["pass"] for case in mtp2_quality["exact_cases"])
         assert mtp2_quality["repeat_case"]["pass"] is True
 
+    local = load(MTP2_LOCAL_SUMMARY)
+    assert local["classification"] == "measured-negative-screen"
+    assert local["treatment"]["target_verification_changed"] is False
+    assert local["decision"]["status"] == "closed-negative"
+    assert local["decision"]["replication"] == (
+        "not run by preregistered stop rule"
+    )
+    assert "No value is interpolated or extrapolated" in local[
+        "reporting_boundary"
+    ]
+
+    local_quality = load(MTP2_LOCAL_RAW / "sequential-quality.json")
+    mtp2_control_quality = load(MTP2_RAW / "sequential-quality.json")
+    control_hashes = [
+        case["sha256"] for case in mtp2_control_quality["exact_cases"]
+    ]
+    local_hashes = [case["sha256"] for case in local_quality["exact_cases"]]
+    assert local_quality["pass_all"] is True
+    assert local_hashes == control_hashes
+    assert local_quality["repeat_case"]["unique_hashes"] == mtp2_control_quality[
+        "repeat_case"
+    ]["unique_hashes"]
+    local_quality_usages = [
+        case["usage"]["prompt_tokens_details"]["cached_tokens"]
+        for case in local_quality["exact_cases"]
+    ] + [
+        run["usage"]["prompt_tokens_details"]["cached_tokens"]
+        for run in local_quality["repeat_case"]["runs"]
+    ]
+    assert all(value == 0 for value in local_quality_usages)
+
+    local_single = load(MTP2_LOCAL_RAW / "single-p40-o128.json")
+    local_single_rate = local_single["fresh_response_validity"][
+        "headline_tok_s_after_ttft"
+    ]
+    assert local_single["fresh_response_validity"]["cached_tokens_all_zero"] is True
+    close(local_single_rate, local["single_user"]["fresh_response_after_ttft_tok_s"])
+    close(
+        (local_single_rate / mtp2_single_rate - 1) * 100,
+        local["single_user"]["change_vs_mtp2_control_percent"],
+    )
+    assert local["single_user"]["retention_gate_passed"] is True
+    assert local["single_user"]["material_improvement"] is False
+
+    local_c64 = load(MTP2_LOCAL_RAW / "c64-screen.json")
+    assert local_c64["classification"] == "output-isolation-qualified-shape-variant"
+    assert len(local_c64["batches"]) == 1
+    local_batch = local_c64["batches"][0]
+    validate_output_isolation_batch(local_batch, 64)
+    local_c64_rate = local_batch["aggregate_tok_s_wall"]
+    close(local_c64_rate, local["concurrency"]["aggregate_tok_s"])
+    close(
+        (local_c64_rate / mtp2["concurrency"]["points"][0]["aggregate_tok_s"] - 1)
+        * 100,
+        local["concurrency"]["change_vs_mtp2_control_percent"],
+    )
+    assert local["concurrency"]["gate_passed"] is False
+    assert local_c64_rate < local["concurrency"]["gate_tok_s"]
+    assert not (MTP2_LOCAL_RAW / "c64-replication.json").exists()
+    assert not (MTP2_LOCAL_RAW / "c64-quality-512.json").exists()
+
+    local_inspect = load(MTP2_LOCAL_RAW / "docker-inspect.json")[0]
+    assert local_inspect["Image"] == local["runtime"]["image_id"]
+    labels = local_inspect["Config"]["Labels"]
+    assert labels["neural.download.mtp.local_argmax.patch.sha256"] == local[
+        "treatment"
+    ]["patch_sha256"]
+    assert hashlib.sha256(LOCAL_ARGMAX_PATCH.read_bytes()).hexdigest() == local[
+        "treatment"
+    ]["patch_sha256"]
+
     assert mtp2["quality"]["sequential_evidence"] == [
         f"{MTP2_RAW.name}/sequential-quality.json",
         f"{MTP2_MBT768_RAW.name}/sequential-quality.json",
@@ -357,6 +437,8 @@ def main() -> int:
                 "mtp2_reuse_c64_tok_s": mtp2["concurrency"]["points"][0][
                     "aggregate_tok_s"
                 ],
+                "mtp2_local_argmax_single_tok_s": local_single_rate,
+                "mtp2_local_argmax_c64_tok_s": local_c64_rate,
                 "depth_32k_w8a16_tok_s": summary["exact_context"]["points"][-1][
                     "w8a16_decode_tok_s"
                 ],
