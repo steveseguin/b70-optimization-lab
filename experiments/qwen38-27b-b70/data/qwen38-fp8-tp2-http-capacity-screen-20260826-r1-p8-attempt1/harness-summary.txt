@@ -1,0 +1,48 @@
+{
+  "classification": "output-isolation-qualified-shape-variant",
+  "output": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-http-capacity-screen-20260826-r1-p8-attempt1/result.json",
+  "batches": [
+    {
+      "concurrency": 1,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 21.553746053946153,
+      "oracle_exact": "0/1"
+    },
+    {
+      "concurrency": 2,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 41.245440808877795,
+      "oracle_exact": "0/2"
+    },
+    {
+      "concurrency": 4,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 80.99138799284245,
+      "oracle_exact": "0/4"
+    },
+    {
+      "concurrency": 8,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 155.0516041030702,
+      "oracle_exact": "0/8"
+    },
+    {
+      "concurrency": 16,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 155.51807592171104,
+      "oracle_exact": "1/16"
+    },
+    {
+      "concurrency": 32,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 155.3627443964859,
+      "oracle_exact": "2/32"
+    },
+    {
+      "concurrency": 64,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 155.52802131782806,
+      "oracle_exact": "6/64"
+    }
+  ]
+}

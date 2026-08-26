@@ -1,0 +1,61 @@
+{
+  "schema": "neural.download.qwen38-fp8-http-capacity-screen-preregistration.v1",
+  "campaign_id": "qwen38-fp8-tp2-http-capacity-screen-20260826-r2",
+  "state": "preregistered-not-launched",
+  "classification": "diagnostic-capacity-screen-not-publishable",
+  "purpose": "Repeat the full p8/p16/p32 screen after fixing only the false-positive cleanup process classifier.",
+  "identity": {
+    "model_repository": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "model_manifest_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b",
+    "cards": 2,
+    "topology": "TP2",
+    "generation": "target-only / MTP0",
+    "kv_cache": "FP16"
+  },
+  "frozen_inputs": {
+    "oracle": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-oracle-pilot-20260826-r1-attempt1/oracle-digests.json",
+    "oracle_sha256": "3499c3812ba1ad4cadda4a5503f00629c320e25fc6ce802a0774a31011447b1b",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "runner": "experiments/qwen38-27b-b70/scripts/run-qwen38-fp8-tp2-http-capacity-screen-r2.sh",
+    "runner_sha256": "aa224b45cc13caa2b112215458970450efca0fedef91353eef2d041fc3bbcd00",
+    "harness": "scripts/bench-openai-concurrency-oracle.py",
+    "harness_sha256": "5860b8e75224d20f3a880b7a970cb07f00697562090e5489549c88b049a4eac2",
+    "qualifier": "scripts/qualify-openai-concurrency-attempt.py",
+    "qualifier_sha256": "dfff1497987243998cb6f1d1408183d2a261e8ca4bd48ec79cbac827038f934c",
+    "excluded_warmup_client": "scripts/bench-openai-single-decode.py",
+    "excluded_warmup_client_sha256": "bcbd08b7101d55e2941f26fefabb0b03f32795a2ee04e127a35b493fe4eb1cbb"
+  },
+  "r1_exclusion": {
+    "closeout": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-capacity-screen-r1-closeout.json",
+    "p8_result_sha256": "6982591558c3c49cfb1f3ddc2d2d8a3a87bbade1da93e659ab7dfeca7baf4067",
+    "reason": "frozen cleanup status failed; no R1 value may enter R2 selection or publication"
+  },
+  "screen": {
+    "order": [8, 16, 32],
+    "fresh_server_attempts_per_profile": 1,
+    "concurrency": [1, 2, 4, 8, 16, 32, 64],
+    "max_output_tokens": 128,
+    "fixed_server": {
+      "max_model_len": 4096,
+      "max_num_batched_tokens": 256,
+      "prefix_cache": false,
+      "graph": "PIECEWISE capture size 1",
+      "excluded_warmup": "one distinct p128/g128 request"
+    },
+    "only_changed_setting": "max_num_seqs equals 8, 16, or 32",
+    "required_output_gate": "128 complete raw token IDs per response, zero cached prompt tokens, and no cross-base frozen-oracle collision",
+    "required_cleanup": "container removed, no residual model process, port closed"
+  },
+  "selection": {
+    "control_p4_c4_aggregate_tok_s": 81.08671564662076,
+    "primary": "highest aggregate tok/s at the profile's own unqueued capacity point",
+    "minimum_gain_over_p4_control_percent": 5.0,
+    "publication": "none from this screen",
+    "confirmation_if_promising": "two new fresh servers with <=10% aggregate throughput range and <=15% TTFT/end-to-end p50/p95 range at every point",
+    "no_interpolation_or_extrapolation": true
+  }
+}

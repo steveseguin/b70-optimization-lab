@@ -1,0 +1,35 @@
+{
+  "schema": "neural.download.qwen38-fp8-http-capacity-screen-closeout.v1",
+  "campaign_id": "qwen38-fp8-tp2-http-capacity-screen-20260826-r1",
+  "classification": "failed-incomplete-harness-cleanup-classifier",
+  "attempts_planned": [8, 16, 32],
+  "attempts_run": [8],
+  "attempts_not_run": [16, 32],
+  "failed_frozen_check": "cleanup-status.txt reported process-survived",
+  "cause": "The cleanup pgrep matched the still-running timeout parent whose argv contained the qwen38-fp8 script filename; it did not identify a surviving model process.",
+  "independent_postflight": {
+    "container_absent": true,
+    "vllm_process_absent": true,
+    "port_18089_closed": true
+  },
+  "p8_diagnostic": {
+    "classification": "output-isolation-qualified-shape-variant",
+    "result_sha256": "6982591558c3c49cfb1f3ddc2d2d8a3a87bbade1da93e659ab7dfeca7baf4067",
+    "qualification_sha256": "591fb2425ed7246a44ebb2cd5471970b2fb22823fa5b7e972dd40ac03fb41710",
+    "cached_tokens_all_zero": true,
+    "completion_tokens_128_all": true,
+    "cross_base_oracle_collision_count": 0,
+    "aggregate_tok_s": {
+      "1": 21.553746053946153,
+      "2": 41.245440808877795,
+      "4": 80.99138799284245,
+      "8": 155.0516041030702,
+      "16": 155.51807592171104,
+      "32": 155.3627443964859,
+      "64": 155.52802131782806
+    },
+    "publication_status": "excluded diagnostic; R1 cleanup requirement failed"
+  },
+  "repair": "R2 excludes the exact runner and timeout parent PIDs by parsed PID field rather than substring-filtering only the runner shell PID.",
+  "next": "Rerun p8, p16, and p32 on three new fresh servers under R2; do not reuse R1 p8 in selection or publication."
+}
